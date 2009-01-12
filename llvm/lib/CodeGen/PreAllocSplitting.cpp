@@ -639,6 +639,8 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
         EndIndex = LIs->getMBBEndIdx(MBB);
       
       LI->addRange(LiveRange(StartIndex, EndIndex+1, ret));
+      if (intrablock)
+        LI->addKill(ret, EndIndex);
     } else {
       Phis[MBB] = ret = LI->getNextValue(~0U, /*FIXME*/ 0,
                                           LIs->getVNInfoAllocator());
@@ -673,6 +675,8 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
       } else
         EndIndex = LIs->getMBBEndIdx(MBB);
       LI->addRange(LiveRange(StartIndex, EndIndex+1, ret));
+      if (intrablock)
+        LI->addKill(ret, EndIndex);
     }
   } else if (ContainsDefs && !ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[MBB];
@@ -808,7 +812,8 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
   // Memoize results so we don't have to recompute them.
   if (!intrablock) LiveOut[MBB] = ret;
   else {
-    NewVNs[use] = ret;
+    if (!NewVNs.count(use))
+      NewVNs[use] = ret;
     Visited.insert(use);
   }
 
@@ -1124,13 +1129,14 @@ bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
   if (KillPt->getParent() == BarrierMBB) {
     UpdateRegisterInterval(ValNo, LIs->getUseIndex(KillIdx)+1,
                            LIs->getDefIndex(RestoreIdx));
-
+    
     ++NumSplits;
     ++NumRemats;
     return true;
   }
 
   RepairLiveInterval(CurrLI, ValNo, DefMI, RestoreIdx);
+  
   ++NumSplits;
   ++NumRemats;
   return true;  
@@ -1210,10 +1216,6 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
 
   MachineInstr *DefMI = (ValNo->def != ~0U)
     ? LIs->getInstructionFromIndex(ValNo->def) : NULL;
-
-  // If this would create a new join point, do not split.
-  if (DefMI && createsNewJoin(LR, DefMI->getParent(), Barrier->getParent()))
-    return false;
 
   // Find all references in the barrier mbb.
   SmallPtrSet<MachineInstr*, 4> RefsInMBB;
@@ -1355,6 +1357,8 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs) {
   while (!Intervals.empty()) {
     if (PreSplitLimit != -1 && (int)NumSplits == PreSplitLimit)
       break;
+    else if (NumSplits == 4)
+      Change |= Change;
     LiveInterval *LI = Intervals.back();
     Intervals.pop_back();
     Change |= SplitRegLiveInterval(LI);
