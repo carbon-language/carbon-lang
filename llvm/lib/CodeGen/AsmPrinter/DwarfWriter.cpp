@@ -2629,13 +2629,13 @@ private:
     if (!RootScope) return;
 
     // Get the subprogram debug information entry.
-    DISubprogram *SPD = cast<DISubprogram>(RootScope->getDesc());
+    DISubprogram SPD(RootScope->getDesc()->getGV());
 
     // Get the compile unit context.
-    CompileUnit *Unit = FindCompileUnit(SPD->getCompileUnit());
+    CompileUnit *Unit = FindCompileUnit(SPD.getCompileUnit());
 
     // Get the subprogram die.
-    DIE *SPDie = Unit->getDieMapSlotFor(SPD->getGV());
+    DIE *SPDie = Unit->getDieMapSlotFor(SPD.getGV());
     assert(SPDie && "Missing subprogram descriptor");
 
     // Add the function bounds.
