@@ -1249,7 +1249,10 @@ public:
   DbgScope(DbgScope *P, DIDescriptor *D)
   : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0), Scopes(), Variables()
   {}
-  ~DbgScope();
+  ~DbgScope() {
+    for (unsigned i = 0, N = Scopes.size(); i < N; ++i) delete Scopes[i];
+    for (unsigned j = 0, M = Variables.size(); j < M; ++j) delete Variables[j];
+  }
   
   // Accessors.
   DbgScope *getParent()        const { return Parent; }
@@ -3821,6 +3824,14 @@ public:
 
     DebugFrames.push_back(FunctionDebugFrameInfo(SubprogramCount,
                                                  MMI->getFrameMoves()));
+
+    // Clear debug info
+    if (RootDbgScope) {
+      delete RootDbgScope;
+      DbgScopeMap.clear();
+      RootDbgScope = NULL;
+    }
+    Lines.clear();
   }
 };
 
