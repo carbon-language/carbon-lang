@@ -1,4 +1,5 @@
 // RUN: %llvmgcc -O2 -S %s -o - | not grep alloca
+// RUN: %llvmgcc -S %s -o - | grep store | not grep {align 8}
 
 enum {
  PP_C,
