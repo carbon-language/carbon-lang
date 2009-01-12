@@ -552,7 +552,7 @@ All Global Variables and Functions have one of the following types of linkage:
   <dd>"<tt>dllimport</tt>" linkage causes the compiler to reference a function
     or variable via a global pointer to a pointer that is set up by the DLL
     exporting the symbol. On Microsoft Windows targets, the pointer name is
-    formed by combining <code>_imp__</code> and the function or variable name.
+    formed by combining <code>__imp_</code> and the function or variable name.
   </dd>
 
   <dt><tt><b><a name="linkage_dllexport">dllexport</a></b></tt>: </dt>
@@ -560,7 +560,7 @@ All Global Variables and Functions have one of the following types of linkage:
   <dd>"<tt>dllexport</tt>" linkage causes the compiler to provide a global
     pointer to a pointer in a DLL, so that it can be referenced with the
     <tt>dllimport</tt> attribute. On Microsoft Windows targets, the pointer
-    name is formed by combining <code>_imp__</code> and the function or variable
+    name is formed by combining <code>__imp_</code> and the function or variable
     name.
   </dd>
 
