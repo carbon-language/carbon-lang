@@ -69,10 +69,6 @@ static bool AddressMightEscape(const Value *V) {
       if (cast<CallInst>(I)->paramHasAttr(UI.getOperandNo(), 
                                           Attribute::NoCapture))
         continue;
-
-      // FIXME: MemIntrinsics should have their operands marked nocapture!
-      if (isa<MemIntrinsic>(I))
-        continue;  // next use
       return true;
     case Instruction::Invoke:
       // If the argument to the call has the nocapture attribute, then the call

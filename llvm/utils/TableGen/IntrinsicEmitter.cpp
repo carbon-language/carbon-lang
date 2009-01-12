@@ -423,8 +423,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
   OS << "    break;\n";
   OS << "  }\n";
   OS << "  AttributeWithIndex AWI[" << MaxArgAttrs+1 << "];\n";
-  OS << "  AWI[0] = AttributeWithIndex::get(~0, Attr);\n";
-  OS << "  unsigned NumAttrs = 1;\n";
+  OS << "  unsigned NumAttrs = 0;\n";
   OS << "  switch (id) {\n";
   OS << "  default: break;\n";
   
@@ -441,17 +440,33 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
 
     unsigned NumArgsWithAttrs = 0;
 
-    // FIXME: EMIT ATTRS
+    while (!ArgAttrs.empty()) {
+      unsigned ArgNo = ArgAttrs[0].first;
+      
+      OS << "    AWI[" << NumArgsWithAttrs++ << "] = AttributeWithIndex::get("
+         << ArgNo+1 << ", 0";
+
+      while (!ArgAttrs.empty() && ArgAttrs[0].first == ArgNo) {
+        switch (ArgAttrs[0].second) {
+        default: assert(0 && "Unknown arg attribute");
+        case CodeGenIntrinsic::NoCapture:
+          OS << "|Attribute::NoCapture";
+          break;
+        }
+        ArgAttrs.erase(ArgAttrs.begin());
+      }
+      OS << ");\n";
+    }
     
-    
-    OS << "    NumAttrs = " << NumArgsWithAttrs+1 << ";\n";
+    OS << "    NumAttrs = " << NumArgsWithAttrs << ";\n";
     OS << "    break;\n";
   }
   
   OS << "  }\n";
-  OS << "  return AttrListPtr::get(AWI, NumAttrs);\n";
+  OS << "  AWI[NumAttrs] = AttributeWithIndex::get(~0, Attr);\n";
+  OS << "  return AttrListPtr::get(AWI, NumAttrs+1);\n";
   OS << "}\n";
-  OS << "#endif\n\n";
+  OS << "#endif // GET_INTRINSIC_ATTRIBUTES\n\n";
 }
 
 void IntrinsicEmitter::
