@@ -39,11 +39,11 @@ SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
 
 /// CheckForPhysRegDependency - Check if the dependency between def and use of
 /// a specified operand is a physical register dependency. If so, returns the
-/// register.
+/// register and the cost of copying the register.
 static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
                                       const TargetRegisterInfo *TRI, 
                                       const TargetInstrInfo *TII,
-                                      unsigned &PhysReg) {
+                                      unsigned &PhysReg, int &Cost) {
   if (Op != 2 || User->getOpcode() != ISD::CopyToReg)
     return;
 
@@ -55,8 +55,12 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
   if (Def->isMachineOpcode()) {
     const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
     if (ResNo >= II.getNumDefs() &&
-        II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg)
+        II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg) {
       PhysReg = Reg;
+      const TargetRegisterClass *RC =
+        TRI->getPhysicalRegisterRegClass(Reg, Def->getValueType(ResNo));
+      Cost = RC->getCopyCost();
+    }
   }
 }
 
@@ -179,10 +183,18 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         bool isChain = OpVT == MVT::Other;
 
         unsigned PhysReg = 0;
+        int Cost = 1;
         // Determine if this is a physical register dependency.
-        CheckForPhysRegDependency(OpN, N, i, TRI, TII, PhysReg);
+        CheckForPhysRegDependency(OpN, N, i, TRI, TII, PhysReg, Cost);
         assert((PhysReg == 0 || !isChain) &&
                "Chain dependence via physreg data?");
+        // FIXME: See ScheduleDAGSDNodes::EmitCopyFromReg. For now, scheduler
+        // emits a copy from the physical register to a virtual register unless
+        // it requires a cross class copy (cost < 0). That means we are only
+        // treating "expensive to copy" register dependency as physical register
+        // dependency. This may change in the future though.
+        if (Cost >= 0)
+          PhysReg = 0;
         SU->addPred(SDep(OpSU, isChain ? SDep::Order : SDep::Data,
                          OpSU->Latency, PhysReg));
       }
@@ -252,10 +264,12 @@ unsigned ScheduleDAGSDNodes::ComputeMemOperandsEnd(SDNode *Node) {
 
 
 void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {
-  if (SU->getNode())
-    SU->getNode()->dump(DAG);
-  else
-    cerr << "CROSS RC COPY ";
+  if (!SU->getNode()) {
+    cerr << "PHYS REG COPY\n";
+    return;
+  }
+
+  SU->getNode()->dump(DAG);
   cerr << "\n";
   SmallVector<SDNode *, 4> FlaggedNodes;
   for (SDNode *N = SU->getNode()->getFlaggedNode(); N; N = N->getFlaggedNode())

@@ -629,6 +629,12 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
 
     // For pre-regalloc scheduling, create instructions corresponding to the
     // SDNode and any flagged SDNodes and append them to the block.
+    if (!SU->getNode()) {
+      // Emit a copy.
+      EmitPhysRegCopy(SU, CopyVRBaseMap);
+      continue;
+    }
+
     SmallVector<SDNode *, 4> FlaggedNodes;
     for (SDNode *N = SU->getNode()->getFlaggedNode(); N; N = N->getFlaggedNode())
       FlaggedNodes.push_back(N);
@@ -636,10 +642,7 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
       EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, VRBaseMap);
       FlaggedNodes.pop_back();
     }
-    if (!SU->getNode())
-      EmitCrossRCCopy(SU, CopyVRBaseMap);
-    else
-      EmitNode(SU->getNode(), SU->OrigNode != SU, VRBaseMap);
+    EmitNode(SU->getNode(), SU->OrigNode != SU, VRBaseMap);
   }
 
   return BB;

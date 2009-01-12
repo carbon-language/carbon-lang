@@ -36,7 +36,7 @@ void ScheduleDAG::EmitNoop() {
   TII->insertNoop(*BB, BB->end());
 }
 
-void ScheduleDAG::EmitCrossRCCopy(SUnit *SU,
+void ScheduleDAG::EmitPhysRegCopy(SUnit *SU,
                                   DenseMap<SUnit*, unsigned> &VRBaseMap) {
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
@@ -49,12 +49,11 @@ void ScheduleDAG::EmitCrossRCCopy(SUnit *SU,
       unsigned Reg = 0;
       for (SUnit::const_succ_iterator II = SU->Succs.begin(),
              EE = SU->Succs.end(); II != EE; ++II) {
-        if (I->getReg()) {
-          Reg = I->getReg();
+        if (II->getReg()) {
+          Reg = II->getReg();
           break;
         }
       }
-      assert(I->getReg() && "Unknown physical register!");
       TII->copyRegToReg(*BB, BB->end(), Reg, VRI->second,
                         SU->CopyDstRC, SU->CopySrcRC);
     } else {

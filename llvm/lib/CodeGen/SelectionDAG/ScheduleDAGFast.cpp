@@ -28,7 +28,7 @@ using namespace llvm;
 
 STATISTIC(NumUnfolds,    "Number of nodes unfolded");
 STATISTIC(NumDups,       "Number of duplicated nodes");
-STATISTIC(NumCCCopies,   "Number of cross class copies");
+STATISTIC(NumPRCopies,   "Number of physical copies");
 
 static RegisterScheduler
   fastDAGScheduler("fast", "Fast suboptimal list scheduling",
@@ -93,10 +93,10 @@ private:
   void ReleasePred(SUnit *SU, SDep *PredEdge);
   void ScheduleNodeBottomUp(SUnit*, unsigned);
   SUnit *CopyAndMoveSuccessors(SUnit*);
-  void InsertCCCopiesAndMoveSuccs(SUnit*, unsigned,
-                                  const TargetRegisterClass*,
-                                  const TargetRegisterClass*,
-                                  SmallVector<SUnit*, 2>&);
+  void InsertCopiesAndMoveSuccs(SUnit*, unsigned,
+                                const TargetRegisterClass*,
+                                const TargetRegisterClass*,
+                                SmallVector<SUnit*, 2>&);
   bool DelayForLiveRegsBottomUp(SUnit*, SmallVector<unsigned, 4>&);
   void ListScheduleBottomUp();
 
@@ -361,17 +361,16 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
       DelDeps.push_back(std::make_pair(SuccSU, D));
     }
   }
-  for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
+  for (unsigned i = 0, e = DelDeps.size(); i != e; ++i)
     RemovePred(DelDeps[i].first, DelDeps[i].second);
-  }
 
   ++NumDups;
   return NewSU;
 }
 
-/// InsertCCCopiesAndMoveSuccs - Insert expensive cross register class copies
-/// and move all scheduled successors of the given SUnit to the last copy.
-void ScheduleDAGFast::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
+/// InsertCopiesAndMoveSuccs - Insert register copies and move all
+/// scheduled successors of the given SUnit to the last copy.
+void ScheduleDAGFast::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
                                               const TargetRegisterClass *DestRC,
                                               const TargetRegisterClass *SrcRC,
                                                SmallVector<SUnit*, 2> &Copies) {
@@ -408,7 +407,7 @@ void ScheduleDAGFast::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
   Copies.push_back(CopyFromSU);
   Copies.push_back(CopyToSU);
 
-  ++NumCCCopies;
+  ++NumPRCopies;
 }
 
 /// getPhysicalRegisterVT - Returns the ValueType of the physical register
@@ -524,19 +523,22 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
         assert(LRegs.size() == 1 && "Can't handle this yet!");
         unsigned Reg = LRegs[0];
         SUnit *LRDef = LiveRegDefs[Reg];
-        SUnit *NewDef = CopyAndMoveSuccessors(LRDef);
+        MVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
+        const TargetRegisterClass *RC =
+          TRI->getPhysicalRegisterRegClass(Reg, VT);
+        const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);
+
+        // If cross copy register class is null, then it must be possible copy
+        // the value directly. Do not try duplicate the def.
+        SUnit *NewDef = 0;
+        if (DestRC)
+          NewDef = CopyAndMoveSuccessors(LRDef);
+        else
+          DestRC = RC;
         if (!NewDef) {
-          // Issue expensive cross register class copies.
-          MVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
-          const TargetRegisterClass *RC =
-            TRI->getPhysicalRegisterRegClass(Reg, VT);
-          const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);
-          if (!DestRC) {
-            assert(false && "Don't know how to copy this physical register!");
-            abort();
-          }
+          // Issue copies, these can be expensive cross register class copies.
           SmallVector<SUnit*, 2> Copies;
-          InsertCCCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
+          InsertCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
           DOUT << "Adding an edge from SU # " << TrySU->NodeNum
                << " to SU #" << Copies.front()->NodeNum << "\n";
           AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,

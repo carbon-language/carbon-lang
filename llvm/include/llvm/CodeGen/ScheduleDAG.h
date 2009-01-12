@@ -485,7 +485,7 @@ namespace llvm {
   protected:
     void AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO);
 
-    void EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
+    void EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
 
     /// ForceUnitLatencies - Return true if all scheduling edges should be given a
     /// latency value of one.  The default is to return false; schedulers may

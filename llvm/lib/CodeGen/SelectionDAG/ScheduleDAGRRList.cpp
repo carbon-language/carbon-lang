@@ -35,7 +35,7 @@ using namespace llvm;
 STATISTIC(NumBacktracks, "Number of times scheduler backtracked");
 STATISTIC(NumUnfolds,    "Number of nodes unfolded");
 STATISTIC(NumDups,       "Number of duplicated nodes");
-STATISTIC(NumCCCopies,   "Number of cross class copies");
+STATISTIC(NumPRCopies,   "Number of physical register copies");
 
 static RegisterScheduler
   burrListDAGScheduler("list-burr",
@@ -121,10 +121,10 @@ private:
   void UnscheduleNodeBottomUp(SUnit*);
   void BacktrackBottomUp(SUnit*, unsigned, unsigned&);
   SUnit *CopyAndMoveSuccessors(SUnit*);
-  void InsertCCCopiesAndMoveSuccs(SUnit*, unsigned,
-                                  const TargetRegisterClass*,
-                                  const TargetRegisterClass*,
-                                  SmallVector<SUnit*, 2>&);
+  void InsertCopiesAndMoveSuccs(SUnit*, unsigned,
+                                const TargetRegisterClass*,
+                                const TargetRegisterClass*,
+                                SmallVector<SUnit*, 2>&);
   bool DelayForLiveRegsBottomUp(SUnit*, SmallVector<unsigned, 4>&);
   void ListScheduleTopDown();
   void ListScheduleBottomUp();
@@ -517,11 +517,11 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   return NewSU;
 }
 
-/// InsertCCCopiesAndMoveSuccs - Insert expensive cross register class copies
-/// and move all scheduled successors of the given SUnit to the last copy.
-void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
-                                              const TargetRegisterClass *DestRC,
-                                              const TargetRegisterClass *SrcRC,
+/// InsertCopiesAndMoveSuccs - Insert register copies and move all
+/// scheduled successors of the given SUnit to the last copy.
+void ScheduleDAGRRList::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
+                                               const TargetRegisterClass *DestRC,
+                                               const TargetRegisterClass *SrcRC,
                                                SmallVector<SUnit*, 2> &Copies) {
   SUnit *CopyFromSU = CreateNewSUnit(NULL);
   CopyFromSU->CopySrcRC = SrcRC;
@@ -546,9 +546,8 @@ void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
       DelDeps.push_back(std::make_pair(SuccSU, *I));
     }
   }
-  for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
+  for (unsigned i = 0, e = DelDeps.size(); i != e; ++i)
     RemovePred(DelDeps[i].first, DelDeps[i].second);
-  }
 
   AddPred(CopyFromSU, SDep(SU, SDep::Data, SU->Latency, Reg));
   AddPred(CopyToSU, SDep(CopyFromSU, SDep::Data, CopyFromSU->Latency, 0));
@@ -559,7 +558,7 @@ void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
   Copies.push_back(CopyFromSU);
   Copies.push_back(CopyToSU);
 
-  ++NumCCCopies;
+  ++NumPRCopies;
 }
 
 /// getPhysicalRegisterVT - Returns the ValueType of the physical register
@@ -705,27 +704,32 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
       }
 
       if (!CurSU) {
-        // Can't backtrack. Try duplicating the nodes that produces these
-        // "expensive to copy" values to break the dependency. In case even
-        // that doesn't work, insert cross class copies.
+        // Can't backtrack. If it's too expensive to copy the value, then try
+        // duplicate the nodes that produces these "too expensive to copy"
+        // values to break the dependency. In case even that doesn't work,
+        // insert cross class copies.
+        // If it's not too expensive, i.e. cost != -1, issue copies.
         SUnit *TrySU = NotReady[0];
         SmallVector<unsigned, 4> &LRegs = LRegsMap[TrySU];
         assert(LRegs.size() == 1 && "Can't handle this yet!");
         unsigned Reg = LRegs[0];
         SUnit *LRDef = LiveRegDefs[Reg];
-        SUnit *NewDef = CopyAndMoveSuccessors(LRDef);
+        MVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
+        const TargetRegisterClass *RC =
+          TRI->getPhysicalRegisterRegClass(Reg, VT);
+        const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);
+
+        // If cross copy register class is null, then it must be possible copy
+        // the value directly. Do not try duplicate the def.
+        SUnit *NewDef = 0;
+        if (DestRC)
+          NewDef = CopyAndMoveSuccessors(LRDef);
+        else
+          DestRC = RC;
         if (!NewDef) {
-          // Issue expensive cross register class copies.
-          MVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
-          const TargetRegisterClass *RC =
-            TRI->getPhysicalRegisterRegClass(Reg, VT);
-          const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);
-          if (!DestRC) {
-            assert(false && "Don't know how to copy this physical register!");
-            abort();
-          }
+          // Issue copies, these can be expensive cross register class copies.
           SmallVector<SUnit*, 2> Copies;
-          InsertCCCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
+          InsertCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
           DOUT << "Adding an edge from SU #" << TrySU->NodeNum
                << " to SU #" << Copies.front()->NodeNum << "\n";
           AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
