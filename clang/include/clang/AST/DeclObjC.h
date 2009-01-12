@@ -602,10 +602,6 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
   virtual ~ObjCProtocolDecl();
   
 public:
-    
-  /// Destroy - Call destructors and release memory.
-  virtual void Destroy(ASTContext& C);
-  
   static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC, 
                                   SourceLocation L, IdentifierInfo *Id);
 

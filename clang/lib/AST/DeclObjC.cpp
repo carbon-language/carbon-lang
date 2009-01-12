@@ -73,13 +73,9 @@ void ObjCInterfaceDecl::Destroy(ASTContext& C) {
   for (ivar_iterator I=ivar_begin(), E=ivar_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
   
-  for (method_iterator I=meth_begin(), E=meth_end(); I!=E; ++I)
-    if (*I) const_cast<ObjCMethodDecl*>((*I))->Destroy(C);
-
   // FIXME: Because there is no clear ownership
   //  role between ObjCInterfaceDecls and the ObjCPropertyDecls that they
   //  reference, we destroy ObjCPropertyDecls in ~TranslationUnit.
-
   Decl::Destroy(C);
 }
 
@@ -113,20 +109,6 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
 
 ObjCProtocolDecl::~ObjCProtocolDecl() {
   delete [] PropertyDecl;
-}
-
-void ObjCProtocolDecl::Destroy(ASTContext& C) {
-  
-  // Referenced Protocols are not owned, so don't Destroy them.
-  
-  for (method_iterator I=meth_begin(), E=meth_end(); I!=E; ++I)
-    if (*I) const_cast<ObjCMethodDecl*>((*I))->Destroy(C);
-  
-  // FIXME: Because there is no clear ownership
-  //  role between ObjCProtocolDecls and the ObjCPropertyDecls that they
-  //  reference, we destroy ObjCPropertyDecls in ~TranslationUnit.
-  
-  Decl::Destroy(C);
 }
 
 
