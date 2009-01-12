@@ -251,6 +251,38 @@ MaybeConstructOverloadSet(ASTContext &Context,
   return *I;
 }
 
+/// getNonFieldDeclScope - Retrieves the innermost scope, starting
+/// from S, where a non-field would be declared. This routine copes
+/// with the difference between C and C++ scoping rules in structs and
+/// unions. For example, the following code is well-formed in C but
+/// ill-formed in C++:
+/// @code
+/// struct S6 {
+///   enum { BAR } e;
+/// };
+/// 
+/// void test_S6() {
+///   struct S6 a;
+///   a.e = BAR;
+/// }
+/// @endcode
+/// For the declaration of BAR, this routine will return a different
+/// scope. The scope S will be the scope of the unnamed enumeration
+/// within S6. In C++, this routine will return the scope associated
+/// with S6, because the enumeration's scope is a transparent
+/// context but structures can contain non-field names. In C, this
+/// routine will return the translation unit scope, since the
+/// enumeration's scope is a transparent context and structures cannot
+/// contain non-field names.
+Scope *Sema::getNonFieldDeclScope(Scope *S) {
+  while (((S->getFlags() & Scope::DeclScope) == 0) ||
+         (S->getEntity() && 
+          ((DeclContext *)S->getEntity())->isTransparentContext()) ||
+         (S->isClassScope() && !getLangOptions().CPlusPlus))
+    S = S->getParent();
+  return S;
+}
+
 /// LookupDecl - Look up the inner-most declaration in the specified
 /// namespace. NamespaceNameOnly - during lookup only namespace names
 /// are considered as required in C++ [basic.lookup.udir] 3.4.6.p1
@@ -2999,7 +3031,9 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     // Find the scope where we'll be declaring the tag.
     while (S->isClassScope() || 
            (getLangOptions().CPlusPlus && S->isFunctionPrototypeScope()) ||
-           ((S->getFlags() & Scope::DeclScope) == 0))
+           ((S->getFlags() & Scope::DeclScope) == 0) ||
+           (S->getEntity() && 
+            ((DeclContext *)S->getEntity())->isTransparentContext()))
       S = S->getParent();
   }
 
@@ -3065,10 +3099,7 @@ CreateNewDecl:
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {
-    // The scope passed in may not be a decl scope.  Zip up the scope tree until
-    // we find one that is.
-    while ((S->getFlags() & Scope::DeclScope) == 0)
-      S = S->getParent();
+    S = getNonFieldDeclScope(S);
     
     // Add it to the decl chain.
     if (LexicalContext != CurContext) {
@@ -3509,8 +3540,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
 
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
   // we find one that is.
-  while ((S->getFlags() & Scope::DeclScope) == 0)
-    S = S->getParent();
+  S = getNonFieldDeclScope(S);
   
   // Verify that there isn't already something declared with this name in this
   // scope.

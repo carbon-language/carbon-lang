@@ -848,7 +848,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
   llvm::SmallVector<DeclTy*, 32> AllIvarDecls;
   llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
 
-  ParseScope ClassScope(this, Scope::DeclScope);
+  ParseScope ClassScope(this, Scope::DeclScope|Scope::ClassScope);
 
   SourceLocation LBraceLoc = ConsumeBrace(); // the "{"
   

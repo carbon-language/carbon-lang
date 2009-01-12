@@ -35,3 +35,31 @@ int test_struct_scope_3(struct S4 * s4) { // expected-warning{{declaration of 's
 }
 
 void f(struct S5 { int y; } s5); // expected-warning{{declaration of 'struct S5' will not be visible outside of this function}}
+
+// PR clang/3312
+struct S6 {
+        enum { BAR } e;
+};
+
+void test_S6() {
+        struct S6 a;
+        a.e = BAR;
+}
+
+// <rdar://problem/6487669>
+typedef struct z_foo_s {
+  struct bar_baz *baz;
+} z_foo;
+typedef z_foo *z_foop;
+struct bar_baz {
+  enum {
+    SQUAT, FLAG, DICT4, DICT3, DICT2, DICT1, DICT0, HOP, CHECK4, CHECK3, CHECK2, CHECK1, DONE, BAD
+  } mode;
+  int             nowrap;
+};
+int 
+wizbiz_quxPoof(z)
+  z_foop       z;
+{
+  z->baz->mode = z->baz->nowrap ? HOP : SQUAT;
+}

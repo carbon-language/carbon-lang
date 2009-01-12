@@ -506,6 +506,8 @@ public:
   // we will need a better way to specify lookup criteria for things
   // like template specializations, explicit template instantiations, etc.
 
+  Scope *getNonFieldDeclScope(Scope *S);
+
   /// More parsing and symbol table subroutines.
   Decl *LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                    const DeclContext *LookupCtx = 0,
