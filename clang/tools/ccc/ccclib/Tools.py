@@ -163,6 +163,19 @@ class Darwin_X86_LinkTool(Tool):
         major,minor,minorminor = self.darwinVersion
         return '%d.%d.%d' % (10, major-4, minor)
 
+    def getMacosxVersionTuple(self, arglist):
+        arg = arglist.getLastArg(arglist.parser.m_macosxVersionMinOption)
+        if arg:
+            version = arglist.getValue(arg)
+            components = version.split('.')
+            try:
+                return tuple(map(int, components))
+            except:
+                raise ArgumentError,"invalid version number %r" % version
+        else:
+            major,minor,minorminor = self.darwinVersion
+            return (10, major-4, minor)
+
     def addDarwinArch(self, cmd_args, arch, arglist):
         # Derived from darwin_arch spec.
         cmd_args.append('-arch')
@@ -411,6 +424,7 @@ class Darwin_X86_LinkTool(Tool):
 
         cmd_args.extend(arglist.render(output))
 
+        macosxVersion = self.getMacosxVersionTuple(arglist)
         if (not arglist.getLastArg(arglist.parser.AOption) and
             not arglist.getLastArg(arglist.parser.nostdlibOption) and
             not arglist.getLastArg(arglist.parser.nostartfilesOption)):
@@ -420,7 +434,7 @@ class Darwin_X86_LinkTool(Tool):
                 if arglist.getLastArg(arglist.parser.m_iphoneosVersionMinOption):
                     cmd_args.append('-ldylib1.o')
                 else:
-                    if self.macosxVersionCmp('<', '10.5', arglist):
+                    if macosxVersion < (10,5):
                         cmd_args.append('-ldylib1.o')
                     else:
                         cmd_args.append('-ldylib1.10.5.o')
@@ -457,7 +471,7 @@ class Darwin_X86_LinkTool(Tool):
                                     if arglist.getLastArg(arglist.parser.m_iphoneosVersionMinOption):
                                         cmd_args.append('-lcrt1.o')
                                     else:
-                                        if self.macosxVersionCmp('<', '10.5', arglist):
+                                        if macosxVersion < (10,5):
                                             cmd_args.append('-lcrt1.o')
                                         else:
                                             cmd_args.append('-lcrt1.10.5.o')
@@ -467,7 +481,7 @@ class Darwin_X86_LinkTool(Tool):
 
             if arglist.getLastArg(arglist.parser.sharedLibgccOption):
                 if not arglist.getLastArg(arglist.parser.m_iphoneosVersionMinOption):
-                    if self.macosxVersionCmp('<', '10.5', arglist):
+                    if macosxVersion < (10,5):
                         # FIXME: gcc does a library search for this
                         # file, this will be be broken currently.
                         cmd_args.append('crt3.o')
@@ -518,16 +532,15 @@ class Darwin_X86_LinkTool(Tool):
             elif (arglist.getLastArg(arglist.parser.sharedLibgccOption) or
                   arglist.getLastArg(arglist.parser.f_exceptionsOption) or
                   arglist.getLastArg(arglist.parser.f_gnuRuntimeOption)):
-                if self.macosxVersionCmp('<', '10.5', arglist):
+                if macosxVersion < (10,5):
                     cmd_args.append('-lgcc_s.10.4')
                 else:
                     cmd_args.append('-lgcc_s.10.5')
                 cmd_args.append('-lgcc')
             else:
-                if (self.macosxVersionCmp('<', '10.5', arglist) and
-                    self.macosxVersionCmp('>=', '10.3.9', arglist)):
+                if macosxVersion < (10,5) and macosxVersion >= (10,3,9):
                     cmd_args.append('-lgcc_s.10.4')
-                else:
+                if macosxVersion >= (10,5):
                     cmd_args.append('-lgcc_s.10.5')
                 cmd_args.append('-lgcc')
 
@@ -550,11 +563,6 @@ class Darwin_X86_LinkTool(Tool):
         # cases (basically whenever we have a c-family input we are
         # compiling, I think). Find out why this is the condition, and
         # implement. See link_command spec for more details.
-
-    def macosxVersionCmp(self, cmp, version, arglist):
-        import sys
-        print >>sys.stderr, 'FIXME: macosxVersionCmp unimplemented.'
-        return False
 
 class LipoTool(Tool):
     def __init__(self):
