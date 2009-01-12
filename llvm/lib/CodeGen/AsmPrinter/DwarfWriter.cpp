@@ -2538,51 +2538,6 @@ private:
     return VariableDie;
   }
 
-  unsigned RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
-    CompileUnit *Unit = DW_CUs[V];
-    assert (Unit && "Unable to find CompileUnit");
-    unsigned ID = MMI->NextLabelID();
-    Lines.push_back(SrcLineInfo(Line, Col, Unit->getID(), ID));
-    return ID;
-  }
-  
-  unsigned getRecordSourceLineCount() {
-    return Lines.size();
-  }
-                            
-  unsigned RecordSource(const std::string &Directory,
-                        const std::string &File) {
-    unsigned DID = Directories.insert(Directory);
-    return SrcFiles.insert(SrcFileInfo(DID,File));
-  }
-
-  /// RecordRegionStart - Indicate the start of a region.
-  ///
-  unsigned RecordRegionStart(GlobalVariable *V) {
-    DbgScope *Scope = getOrCreateScope(V);
-    unsigned ID = MMI->NextLabelID();
-    if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
-    return ID;
-  }
-
-  /// RecordRegionEnd - Indicate the end of a region.
-  ///
-  unsigned RecordRegionEnd(GlobalVariable *V) {
-    DbgScope *Scope = getOrCreateScope(V);
-    unsigned ID = MMI->NextLabelID();
-    Scope->setEndLabelID(ID);
-    return ID;
-  }
-
-  /// RecordVariable - Indicate the declaration of  a local variable.
-  ///
-  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
-    DbgScope *Scope = getOrCreateScope(GV);
-    DIVariable *VD = new DIVariable(GV);
-    DbgVariable *DV = new DbgVariable(VD, FrameIndex);
-    Scope->AddVariable(DV);
-  }
-
   /// getOrCreateScope - Returns the scope associated with the given descriptor.
   ///
   DbgScope *getOrCreateScope(GlobalVariable *V) {
@@ -3833,6 +3788,67 @@ public:
     }
     Lines.clear();
   }
+
+public:
+
+  /// RecordSourceLine - Records location information and associates it with a 
+  /// label. Returns a unique label ID used to generate a label and provide
+  /// correspondence to the source line list.
+  unsigned RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
+    CompileUnit *Unit = DW_CUs[V];
+    assert (Unit && "Unable to find CompileUnit");
+    unsigned ID = MMI->NextLabelID();
+    Lines.push_back(SrcLineInfo(Line, Col, Unit->getID(), ID));
+    return ID;
+  }
+  
+  /// RecordSourceLine - Records location information and associates it with a 
+  /// label. Returns a unique label ID used to generate a label and provide
+  /// correspondence to the source line list.
+  unsigned RecordSourceLine(unsigned Line, unsigned Col, unsigned Src) {
+    unsigned ID = MMI->NextLabelID();
+    Lines.push_back(SrcLineInfo(Line, Col, Src, ID));
+    return ID;
+  }
+
+  unsigned getRecordSourceLineCount() {
+    return Lines.size();
+  }
+                            
+  /// RecordSource - Register a source file with debug info. Returns an source
+  /// ID.
+  unsigned RecordSource(const std::string &Directory,
+                        const std::string &File) {
+    unsigned DID = Directories.insert(Directory);
+    return SrcFiles.insert(SrcFileInfo(DID,File));
+  }
+
+  /// RecordRegionStart - Indicate the start of a region.
+  ///
+  unsigned RecordRegionStart(GlobalVariable *V) {
+    DbgScope *Scope = getOrCreateScope(V);
+    unsigned ID = MMI->NextLabelID();
+    if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
+    return ID;
+  }
+
+  /// RecordRegionEnd - Indicate the end of a region.
+  ///
+  unsigned RecordRegionEnd(GlobalVariable *V) {
+    DbgScope *Scope = getOrCreateScope(V);
+    unsigned ID = MMI->NextLabelID();
+    Scope->setEndLabelID(ID);
+    return ID;
+  }
+
+  /// RecordVariable - Indicate the declaration of  a local variable.
+  ///
+  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
+    DbgScope *Scope = getOrCreateScope(GV);
+    DIVariable *VD = new DIVariable(GV);
+    DbgVariable *DV = new DbgVariable(VD, FrameIndex);
+    Scope->AddVariable(DV);
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -4926,4 +4942,34 @@ void DwarfWriter::EndFunction(MachineFunction *MF) {
   if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI())
     // Clear function debug information.
     MMI->EndFunction();
+}
+
+/// RecordSourceLine - Records location information and associates it with a 
+/// label. Returns a unique label ID used to generate a label and provide
+/// correspondence to the source line list.
+unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col, 
+                                       unsigned Src) {
+  return DD->RecordSourceLine(Line, Col, Src);
+}
+
+/// RecordSource - Register a source file with debug info. Returns an source
+/// ID.
+unsigned DwarfWriter::RecordSource(const std::string &Dir, 
+                                   const std::string &File) {
+  return DD->RecordSource(Dir, File);
+}
+
+/// RecordRegionStart - Indicate the start of a region.
+unsigned DwarfWriter::RecordRegionStart(GlobalVariable *V) {
+  return DD->RecordRegionStart(V);
+}
+
+/// RecordRegionEnd - Indicate the end of a region.
+unsigned DwarfWriter::RecordRegionEnd(GlobalVariable *V) {
+  return DD->RecordRegionEnd(V);
+}
+
+/// getRecordSourceLineCount - Count source lines.
+unsigned DwarfWriter::getRecordSourceLineCount() {
+  return DD->getRecordSourceLineCount();
 }

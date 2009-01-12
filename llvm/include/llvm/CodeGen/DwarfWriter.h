@@ -30,6 +30,7 @@ class DwarfException;
 class MachineModuleInfo;
 class MachineFunction;
 class Module;
+class GlobalVariable;
 class TargetAsmInfo;
 class raw_ostream;
 
@@ -73,6 +74,25 @@ public:
   /// EndFunction - Gather and emit post-function debug information.
   ///
   void EndFunction(MachineFunction *MF);
+
+
+  /// label. Returns a unique label ID used to generate a label and provide
+  /// correspondence to the source line list.
+  unsigned RecordSourceLine(unsigned Line, unsigned Col, unsigned Src);
+
+  /// RecordSource - Register a source file with debug info. Returns an source
+  /// ID.
+  unsigned RecordSource(const std::string &Dir, const std::string &File);
+
+  /// RecordRegionStart - Indicate the start of a region.
+  unsigned RecordRegionStart(GlobalVariable *V);
+
+  /// RecordRegionEnd - Indicate the end of a region.
+  unsigned RecordRegionEnd(GlobalVariable *V);
+
+  /// getRecordSourceLineCount - Count source lines.
+  unsigned getRecordSourceLineCount();
+
 };
 
 
