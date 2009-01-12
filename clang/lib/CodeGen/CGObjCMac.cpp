@@ -767,7 +767,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
                                  const ConstantVector &OptInstanceMethods,
                                  const ConstantVector &OptClassMethods) {
   uint64_t Size = 
-    CGM.getTargetData().getABITypeSize(ObjCTypes.ProtocolExtensionTy);
+    CGM.getTargetData().getTypePaddedSize(ObjCTypes.ProtocolExtensionTy);
   std::vector<llvm::Constant*> Values(4);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   Values[1] = 
@@ -876,7 +876,7 @@ llvm::Constant *CGObjCMac::EmitPropertyList(const std::string &Name,
     return llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
 
   unsigned PropertySize = 
-    CGM.getTargetData().getABITypeSize(ObjCTypes.PropertyTy);
+    CGM.getTargetData().getTypePaddedSize(ObjCTypes.PropertyTy);
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, PropertySize);
   Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Properties.size());
@@ -950,7 +950,7 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
   };
  */
 void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
-  unsigned Size = CGM.getTargetData().getABITypeSize(ObjCTypes.CategoryTy);
+  unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.CategoryTy);
 
   // FIXME: This is poor design, the OCD should have a pointer to the
   // category decl. Additionally, note that Category can be null for
@@ -1082,7 +1082,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   const llvm::Type *InterfaceTy = 
    CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(Interface));
   unsigned Flags = eClassFlags_Factory;
-  unsigned Size = CGM.getTargetData().getABITypeSize(InterfaceTy);
+  unsigned Size = CGM.getTargetData().getTypePaddedSize(InterfaceTy);
 
   // FIXME: Set CXX-structors flag.
   if (IsClassHidden(ID->getClassInterface()))
@@ -1165,7 +1165,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                          const llvm::Type *InterfaceTy,
                                          const ConstantVector &Methods) {
   unsigned Flags = eClassFlags_Meta;
-  unsigned Size = CGM.getTargetData().getABITypeSize(ObjCTypes.ClassTy);
+  unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassTy);
 
   if (IsClassHidden(ID->getClassInterface()))
     Flags |= eClassFlags_Hidden;
@@ -1268,7 +1268,7 @@ llvm::Constant *CGObjCMac::EmitMetaClassRef(const ObjCInterfaceDecl *ID) {
 llvm::Constant *
 CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   uint64_t Size = 
-    CGM.getTargetData().getABITypeSize(ObjCTypes.ClassExtensionTy);
+    CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassExtensionTy);
 
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
@@ -1935,7 +1935,7 @@ void CGObjCMac::EmitImageInfo() {
 static const int ModuleVersion = 7;
 
 void CGObjCMac::EmitModuleInfo() {
-  uint64_t Size = CGM.getTargetData().getABITypeSize(ObjCTypes.ModuleTy);
+  uint64_t Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.ModuleTy);
   
   std::vector<llvm::Constant*> Values(4);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, ModuleVersion);

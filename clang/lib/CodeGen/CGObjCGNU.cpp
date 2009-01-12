@@ -698,7 +698,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   const llvm::Type *ObjTy = 0;
   if (!LateBoundIVars()) {
     ObjTy = CGM.getTypes().ConvertType(Context.getObjCInterfaceType(ClassDecl));
-    instanceSize = CGM.getTargetData().getABITypeSize(ObjTy);
+    instanceSize = CGM.getTargetData().getTypePaddedSize(ObjTy);
   } else {
     // This is required by newer ObjC runtimes.
     assert(0 && "Late-bound instance variables not yet supported");

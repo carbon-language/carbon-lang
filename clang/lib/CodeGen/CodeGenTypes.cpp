@@ -460,7 +460,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
        Field != FieldEnd; ++Field) {
     uint64_t offset = RL.getFieldOffset(curField);
     const llvm::Type *Ty = CGT.ConvertTypeRecursive(Field->getType());
-    uint64_t size = CGT.getTargetData().getABITypeSizeInBits(Ty);
+    uint64_t size = CGT.getTargetData().getTypePaddedSizeInBits(Ty);
 
     if (Field->isBitField()) {
       Expr *BitWidth = Field->getBitWidth();
@@ -498,7 +498,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   }
 
   STy = llvm::StructType::get(LLVMFields, true);
-  assert(CGT.getTargetData().getABITypeSizeInBits(STy) == RL.getSize());
+  assert(CGT.getTargetData().getTypePaddedSizeInBits(STy) == RL.getSize());
 }
 
 /// layoutUnionFields - Do the actual work and lay out all fields. Create
@@ -532,5 +532,5 @@ void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
   // structures should be aligning them appropriately anyway.
   // FIXME: We can be a bit more intuitive in a lot of cases.
   STy = llvm::ArrayType::get(llvm::Type::Int8Ty, RL.getSize() / 8);
-  assert(CGT.getTargetData().getABITypeSizeInBits(STy) == RL.getSize());
+  assert(CGT.getTargetData().getTypePaddedSizeInBits(STy) == RL.getSize());
 }
