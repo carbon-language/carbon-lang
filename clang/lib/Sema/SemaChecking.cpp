@@ -369,6 +369,51 @@ bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
   return false;
 }
 
+// Handle i > 1 ? "x" : "y", recursivelly
+bool Sema::SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
+                                  unsigned format_idx) {
+
+  switch (E->getStmtClass()) {
+  case Stmt::ConditionalOperatorClass: {
+    ConditionalOperator *C = cast<ConditionalOperator>(E);
+    return SemaCheckStringLiteral(C->getLHS(), TheCall,
+                                  HasVAListArg, format_idx)
+        && SemaCheckStringLiteral(C->getRHS(), TheCall,
+                                  HasVAListArg, format_idx);
+  }
+
+  case Stmt::ImplicitCastExprClass: {
+    ImplicitCastExpr *Expr = dyn_cast<ImplicitCastExpr>(E);
+    return SemaCheckStringLiteral(Expr->getSubExpr(), TheCall, HasVAListArg,
+                                  format_idx);
+  }
+
+  case Stmt::ParenExprClass: {
+    ParenExpr *Expr = dyn_cast<ParenExpr>(E);
+    return SemaCheckStringLiteral(Expr->getSubExpr(), TheCall, HasVAListArg,
+                                  format_idx);
+  }
+
+  default: {
+    ObjCStringLiteral *ObjCFExpr = dyn_cast<ObjCStringLiteral>(E);
+    StringLiteral *StrE = NULL;
+
+    if (ObjCFExpr)
+      StrE = ObjCFExpr->getString();
+    else
+      StrE = dyn_cast<StringLiteral>(E);
+
+    if (StrE) {
+      CheckPrintfString(StrE, E, TheCall, HasVAListArg, format_idx);
+      return true;
+    }
+    
+    return false;
+  }
+  }
+}
+
+
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for
 /// correct use of format strings.  
 ///
@@ -444,15 +489,9 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
   // C string (e.g. "%d")
   // ObjC string uses the same format specifiers as C string, so we can use 
   // the same format string checking logic for both ObjC and C strings.
-  ObjCStringLiteral *ObjCFExpr = dyn_cast<ObjCStringLiteral>(OrigFormatExpr);
-  StringLiteral *FExpr = NULL;
+  bool isFExpr = SemaCheckStringLiteral(OrigFormatExpr, TheCall, HasVAListArg, format_idx);
 
-  if(ObjCFExpr != NULL) 
-    FExpr = ObjCFExpr->getString();
-  else
-    FExpr = dyn_cast<StringLiteral>(OrigFormatExpr);
-
-  if (FExpr == NULL) {
+  if (!isFExpr) {
     // For vprintf* functions (i.e., HasVAListArg==true), we add a
     // special check to see if the format string is a function parameter
     // of the function calling the printf function.  If the function
@@ -475,13 +514,18 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(OrigFormatExpr))
         if (isa<ParmVarDecl>(DR->getDecl()))
           return;
-    
+
     Diag(TheCall->getArg(format_idx)->getLocStart(), 
          diag::warn_printf_not_string_constant)
       << OrigFormatExpr->getSourceRange();
     return;
   }
+}
 
+void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
+      CallExpr *TheCall, bool HasVAListArg, unsigned format_idx) {
+
+  ObjCStringLiteral *ObjCFExpr = dyn_cast<ObjCStringLiteral>(OrigFormatExpr);
   // CHECK: is the format string a wide literal?
   if (FExpr->isWide()) {
     Diag(FExpr->getLocStart(),

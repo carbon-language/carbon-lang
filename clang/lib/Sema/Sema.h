@@ -1516,6 +1516,11 @@ private:
   Action::ExprResult SemaBuiltinShuffleVector(CallExpr *TheCall);
   bool SemaBuiltinPrefetch(CallExpr *TheCall); 
   bool SemaBuiltinObjectSize(CallExpr *TheCall); 
+  bool SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
+                              unsigned format_idx);
+  void CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
+                         CallExpr *TheCall, bool HasVAListArg,
+                         unsigned format_idx);
   void CheckPrintfArguments(CallExpr *TheCall,
                             bool HasVAListArg, unsigned format_idx);
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
