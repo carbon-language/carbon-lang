@@ -802,6 +802,14 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
   }
+  else if (BaseExpr->getStmtClass() == Expr::ObjCPropertyRefExprClass ||
+           BaseExpr->getStmtClass() == Expr::ObjCKVCRefExprClass) {
+    RValue RV = EmitObjCPropertyGet(BaseExpr);
+    BaseValue = RV.getAggregateAddr();
+    if (BaseExpr->getType()->isUnionType())
+      isUnion = true;
+    CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
+  }
   else {
     LValue BaseLV = EmitLValue(BaseExpr);
     if (BaseLV.isObjCIvar())
