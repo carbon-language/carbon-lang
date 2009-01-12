@@ -104,7 +104,7 @@ static int64_t GetOffsetFromIndex(const GetElementPtrInst *GEP, unsigned Idx,
     
     // Otherwise, we have a sequential type like an array or vector.  Multiply
     // the index by the ElementSize.
-    uint64_t Size = TD.getABITypeSize(GTI.getIndexedType());
+    uint64_t Size = TD.getTypePaddedSize(GTI.getIndexedType());
     Offset += Size*OpC->getSExtValue();
   }
 
@@ -511,7 +511,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
   if (!srcArraySize)
     return false;
 
-  uint64_t srcSize = TD.getABITypeSize(srcAlloca->getAllocatedType()) *
+  uint64_t srcSize = TD.getTypePaddedSize(srcAlloca->getAllocatedType()) *
     srcArraySize->getZExtValue();
 
   if (cpyLength->getZExtValue() < srcSize)
@@ -526,7 +526,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
     if (!destArraySize)
       return false;
 
-    uint64_t destSize = TD.getABITypeSize(A->getAllocatedType()) *
+    uint64_t destSize = TD.getTypePaddedSize(A->getAllocatedType()) *
       destArraySize->getZExtValue();
 
     if (destSize < srcSize)
@@ -538,7 +538,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
       return false;
 
     const Type* StructTy = cast<PointerType>(A->getType())->getElementType();
-    uint64_t destSize = TD.getABITypeSize(StructTy);
+    uint64_t destSize = TD.getTypePaddedSize(StructTy);
 
     if (destSize < srcSize)
       return false;

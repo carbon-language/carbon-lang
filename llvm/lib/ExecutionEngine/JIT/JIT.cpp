@@ -562,7 +562,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     // emit it into memory.  It goes in the same array as the generated
     // code, jump tables, etc.
     const Type *GlobalType = GV->getType()->getElementType();
-    size_t S = getTargetData()->getABITypeSize(GlobalType);
+    size_t S = getTargetData()->getTypePaddedSize(GlobalType);
     size_t A = getTargetData()->getPreferredAlignment(GV);
     if (GV->isThreadLocal()) {
       MutexGuard locked(lock);
@@ -617,7 +617,7 @@ void *JIT::recompileAndRelinkFunction(Function *F) {
 ///
 char* JIT::getMemoryForGV(const GlobalVariable* GV) {
   const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)getTargetData()->getABITypeSize(ElTy);
+  size_t GVSize = (size_t)getTargetData()->getTypePaddedSize(ElTy);
   if (GV->isThreadLocal()) {
     MutexGuard locked(lock);
     return TJI.allocateThreadLocalMemory(GVSize);

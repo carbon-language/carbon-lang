@@ -817,7 +817,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
           cast<ConstantInt>(AddrInst->getOperand(i))->getZExtValue();
         ConstantOffset += SL->getElementOffset(Idx);
       } else {
-        uint64_t TypeSize = TD->getABITypeSize(GTI.getIndexedType());
+        uint64_t TypeSize = TD->getTypePaddedSize(GTI.getIndexedType());
         if (ConstantInt *CI = dyn_cast<ConstantInt>(AddrInst->getOperand(i))) {
           ConstantOffset += CI->getSExtValue()*TypeSize;
         } else if (TypeSize) {  // Scales of zero don't do anything.

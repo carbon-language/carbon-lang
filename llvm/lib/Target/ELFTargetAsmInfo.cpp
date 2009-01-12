@@ -109,7 +109,7 @@ ELFTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
   // FIXME: string here is temporary, until stuff will fully land in.
   // We cannot use {Four,Eight,Sixteen}ByteConstantSection here, since it's
   // currently directly used by asmprinter.
-  unsigned Size = TD->getABITypeSize(Ty);
+  unsigned Size = TD->getTypePaddedSize(Ty);
   if (Size == 4 || Size == 8 || Size == 16) {
     std::string Name =  ".rodata.cst" + utostr(Size);
 
@@ -128,7 +128,7 @@ ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
   const ConstantArray *CVA = cast<ConstantArray>(C);
   const Type *Ty = CVA->getType()->getElementType();
 
-  unsigned Size = TD->getABITypeSize(Ty);
+  unsigned Size = TD->getTypePaddedSize(Ty);
   if (Size <= 16) {
     assert(getCStringSection() && "Should have string section prefix");
 

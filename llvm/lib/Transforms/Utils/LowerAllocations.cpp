@@ -115,7 +115,8 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       // malloc(type) becomes sbyte *malloc(size)
       Value *MallocArg;
       if (LowerMallocArgToInteger)
-        MallocArg = ConstantInt::get(Type::Int64Ty, TD.getABITypeSize(AllocTy));
+        MallocArg = ConstantInt::get(Type::Int64Ty,
+                                     TD.getTypePaddedSize(AllocTy));
       else
         MallocArg = ConstantExpr::getSizeOf(AllocTy);
       MallocArg = ConstantExpr::getTruncOrBitCast(cast<Constant>(MallocArg), 

@@ -173,21 +173,21 @@ public:
     return 8*getTypeStoreSize(Ty);
   }
 
-  /// getABITypeSize - Return the offset in bytes between successive objects
+  /// getTypePaddedSize - Return the offset in bytes between successive objects
   /// of the specified type, including alignment padding.  This is the amount
   /// that alloca reserves for this type.  For example, returns 12 or 16 for
   /// x86_fp80, depending on alignment.
-  uint64_t getABITypeSize(const Type* Ty) const {
+  uint64_t getTypePaddedSize(const Type* Ty) const {
     // Round up to the next alignment boundary.
     return RoundUpAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
   }
 
-  /// getABITypeSizeInBits - Return the offset in bits between successive
+  /// getTypePaddedSizeInBits - Return the offset in bits between successive
   /// objects of the specified type, including alignment padding; always a
   /// multiple of 8.  This is the amount that alloca reserves for this type.
   /// For example, returns 96 or 128 for x86_fp80, depending on alignment.
-  uint64_t getABITypeSizeInBits(const Type* Ty) const {
-    return 8*getABITypeSize(Ty);
+  uint64_t getTypePaddedSizeInBits(const Type* Ty) const {
+    return 8*getTypePaddedSize(Ty);
   }
 
   /// getABITypeAlignment - Return the minimum ABI-required alignment for the

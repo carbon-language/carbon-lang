@@ -214,7 +214,7 @@ emitGlobal(const GlobalVariable *GV)
 
     EmitAlignment(Align, GV, 2);
     
-    unsigned Size = TD->getABITypeSize(C->getType());
+    unsigned Size = TD->getTypePaddedSize(C->getType());
     if (GV->isThreadLocal()) {
       Size *= MaxThreads;
     }

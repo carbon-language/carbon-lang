@@ -76,7 +76,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
         Offset += TD.getStructLayout(ST)->getElementOffset(CI->getZExtValue());
       } else {
         const SequentialType *SQT = cast<SequentialType>(*GTI);
-        Offset += TD.getABITypeSize(SQT->getElementType())*CI->getSExtValue();
+        Offset += TD.getTypePaddedSize(SQT->getElementType())*CI->getSExtValue();
       }
     }
     return true;

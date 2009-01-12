@@ -386,7 +386,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
         unsigned Idx = cast<ConstantInt>(Op)->getZExtValue();
         Disp += SL->getElementOffset(Idx);
       } else {
-        uint64_t S = TD.getABITypeSize(GTI.getIndexedType());
+        uint64_t S = TD.getTypePaddedSize(GTI.getIndexedType());
         if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
           // Constant-offset addressing.
           Disp += CI->getSExtValue() * S;
@@ -1469,7 +1469,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   unsigned Align = TD.getPreferredTypeAlignmentShift(C->getType());
   if (Align == 0) {
     // Alignment of vector types.  FIXME!
-    Align = TD.getABITypeSize(C->getType());
+    Align = TD.getTypePaddedSize(C->getType());
     Align = Log2_64(Align);
   }
   

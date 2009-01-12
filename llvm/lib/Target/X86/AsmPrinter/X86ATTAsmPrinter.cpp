@@ -75,7 +75,7 @@ static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
       Ty = cast<PointerType>(Ty)->getElementType();
 
     // Size should be aligned to DWORD boundary
-    Size += ((TD->getABITypeSize(Ty) + 3)/4)*4;
+    Size += ((TD->getTypePaddedSize(Ty) + 3)/4)*4;
   }
 
   // We're not supporting tooooo huge arguments :)
@@ -767,7 +767,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
-  unsigned Size = TD->getABITypeSize(Type);
+  unsigned Size = TD->getTypePaddedSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   printVisibility(name, GVar->getVisibility());

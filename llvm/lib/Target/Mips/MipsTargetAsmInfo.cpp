@@ -66,7 +66,7 @@ SectionKindForGlobal(const GlobalValue *GV) const {
 
   if (isa<GlobalVariable>(GV)) {
     const TargetData *TD = TM.getTargetData();
-    unsigned Size = TD->getABITypeSize(GV->getType()->getElementType());
+    unsigned Size = TD->getTypePaddedSize(GV->getType()->getElementType());
     unsigned Threshold = Subtarget->getSSectionThreshold();
 
     if (Size > 0 && Size <= Threshold) {

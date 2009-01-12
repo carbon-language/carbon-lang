@@ -503,7 +503,7 @@ unsigned MachineConstantPool::getConstantPoolIndex(Constant *C,
   unsigned Offset = 0;
   if (!Constants.empty()) {
     Offset = Constants.back().getOffset();
-    Offset += TD->getABITypeSize(Constants.back().getType());
+    Offset += TD->getTypePaddedSize(Constants.back().getType());
     Offset = (Offset+AlignMask)&~AlignMask;
   }
   
@@ -527,7 +527,7 @@ unsigned MachineConstantPool::getConstantPoolIndex(MachineConstantPoolValue *V,
   unsigned Offset = 0;
   if (!Constants.empty()) {
     Offset = Constants.back().getOffset();
-    Offset += TD->getABITypeSize(Constants.back().getType());
+    Offset += TD->getTypePaddedSize(Constants.back().getType());
     Offset = (Offset+AlignMask)&~AlignMask;
   }
   

@@ -216,7 +216,7 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
-  unsigned Size = TD->getABITypeSize(C->getType());
+  unsigned Size = TD->getTypePaddedSize(C->getType());
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   // 0: Switch to section

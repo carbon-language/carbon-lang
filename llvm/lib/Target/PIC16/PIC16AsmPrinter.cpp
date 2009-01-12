@@ -299,7 +299,7 @@ void PIC16AsmPrinter::EmitUnInitData (Module &M)
         continue;
 
       const Type *Ty = C->getType();
-      unsigned Size = TD->getABITypeSize(Ty);
+      unsigned Size = TD->getTypePaddedSize(Ty);
       O << name << " " <<"RES"<< " " << Size ;
       O << "\n";
     }
@@ -327,7 +327,7 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   O << CurrentFnName << ".retval:\n";
   const Type *RetType = F->getReturnType();
   if (RetType->getTypeID() != Type::VoidTyID) {
-    unsigned RetSize = TD->getABITypeSize(RetType);
+    unsigned RetSize = TD->getTypePaddedSize(RetType);
     if (RetSize > 0)
       O << CurrentFnName << ".retval" << " RES " << RetSize;
    }
@@ -337,7 +337,7 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
        AI != AE; ++AI) {
     std::string ArgName = Mang->getValueName(AI);
     const Type *ArgTy = AI->getType();
-    unsigned ArgSize = TD->getABITypeSize(ArgTy);
+    unsigned ArgSize = TD->getTypePaddedSize(ArgTy);
     O << CurrentFnName << ".args." << ArgName << " RES " << ArgSize; 
   }
   // Emit the function variables. 
@@ -357,7 +357,7 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
    
     Constant *C = I->getInitializer();
     const Type *Ty = C->getType();
-    unsigned Size = TD->getABITypeSize(Ty);
+    unsigned Size = TD->getTypePaddedSize(Ty);
     // Emit memory reserve directive.
     O << VarName << "  RES  " << Size << "\n";
   }

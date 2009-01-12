@@ -459,7 +459,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
         const Type *IndexedTy = GTI.getIndexedType();
         if (!IndexedTy->isSized()) return;
         unsigned GEPOpiBits = Index->getType()->getPrimitiveSizeInBits();
-        uint64_t TypeSize = TD ? TD->getABITypeSize(IndexedTy) : 1;
+        uint64_t TypeSize = TD ? TD->getTypePaddedSize(IndexedTy) : 1;
         LocalMask = APInt::getAllOnesValue(GEPOpiBits);
         LocalKnownZero = LocalKnownOne = APInt(GEPOpiBits, 0);
         ComputeMaskedBits(Index, LocalMask,

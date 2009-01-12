@@ -106,7 +106,7 @@ inline const Section*
 XCoreTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
   const TargetData *TD = TM.getTargetData();
 
-  unsigned Size = TD->getABITypeSize(Ty);
+  unsigned Size = TD->getTypePaddedSize(Ty);
   if (Size == 4 || Size == 8 || Size == 16) {
     std::string Name =  ".cp.const" + utostr(Size);
 

@@ -195,7 +195,7 @@ static bool isObjectSmallerThan(const Value *V, unsigned Size,
   }
   
   if (AccessTy->isSized())
-    return TD.getABITypeSize(AccessTy) < Size;
+    return TD.getTypePaddedSize(AccessTy) < Size;
   return false;
 }
 

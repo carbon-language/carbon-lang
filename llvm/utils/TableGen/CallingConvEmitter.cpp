@@ -163,7 +163,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
         O << Size << ", ";
       else
         O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
-          "->getABITypeSize(LocVT.getTypeForMVT()), ";
+          "->getTypePaddedSize(LocVT.getTypeForMVT()), ";
       if (Align)
         O << Align;
       else

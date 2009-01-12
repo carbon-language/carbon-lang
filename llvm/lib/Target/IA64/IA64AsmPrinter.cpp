@@ -266,7 +266,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   O << "\n\n";
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
-  unsigned Size = TD->getABITypeSize(C->getType());
+  unsigned Size = TD->getTypePaddedSize(C->getType());
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   printVisibility(name, GVar->getVisibility());

@@ -273,7 +273,7 @@ bool FastISel::SelectGetElementPtr(User *I) {
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
         if (CI->getZExtValue() == 0) continue;
         uint64_t Offs = 
-          TD.getABITypeSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
+          TD.getTypePaddedSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         N = FastEmit_ri_(VT, ISD::ADD, N, Offs, VT);
         if (N == 0)
           // Unhandled operand. Halt "fast" selection and bail.
@@ -282,7 +282,7 @@ bool FastISel::SelectGetElementPtr(User *I) {
       }
       
       // N = N + Idx * ElementSize;
-      uint64_t ElementSize = TD.getABITypeSize(Ty);
+      uint64_t ElementSize = TD.getTypePaddedSize(Ty);
       unsigned IdxN = getRegForGEPIndex(Idx);
       if (IdxN == 0)
         // Unhandled operand. Halt "fast" selection and bail.

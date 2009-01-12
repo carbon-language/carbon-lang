@@ -330,7 +330,7 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp) {
       Value *OpVal = getCastedVersionOf(opcode, *i);
       SCEVHandle Idx = SE->getSCEV(OpVal);
 
-      uint64_t TypeSize = TD->getABITypeSize(GTI.getIndexedType());
+      uint64_t TypeSize = TD->getTypePaddedSize(GTI.getIndexedType());
       if (TypeSize != 1)
         Idx = SE->getMulExpr(Idx,
                             SE->getConstant(ConstantInt::get(UIntPtrTy,

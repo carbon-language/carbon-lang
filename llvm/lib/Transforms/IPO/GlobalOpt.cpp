@@ -511,7 +511,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
       return 0; // It's not worth it.
     NewGlobals.reserve(NumElements);
     
-    uint64_t EltSize = TD.getABITypeSize(STy->getElementType());
+    uint64_t EltSize = TD.getTypePaddedSize(STy->getElementType());
     unsigned EltAlign = TD.getABITypeAlignment(STy->getElementType());
     for (unsigned i = 0, e = NumElements; i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
@@ -1445,7 +1445,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
     // (2048 bytes currently), as we don't want to introduce a 16M global or
     // something.
     if (NElements->getZExtValue()*
-        TD.getABITypeSize(MI->getAllocatedType()) < 2048) {
+        TD.getTypePaddedSize(MI->getAllocatedType()) < 2048) {
       GVI = OptimizeGlobalAddressOfMalloc(GV, MI);
       return true;
     }

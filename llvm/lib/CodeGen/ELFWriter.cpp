@@ -276,7 +276,7 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
 
   unsigned Align = TM.getTargetData()->getPreferredAlignment(GV);
   unsigned Size  =
-    TM.getTargetData()->getABITypeSize(GV->getType()->getElementType());
+    TM.getTargetData()->getTypePaddedSize(GV->getType()->getElementType());
 
   // If this global has a zero initializer, it is part of the .bss or common
   // section.

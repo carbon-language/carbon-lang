@@ -825,7 +825,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
-  unsigned Size = TD->getABITypeSize(Type);
+  unsigned Size = TD->getTypePaddedSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
   bool isDarwin = Subtarget->isTargetDarwin();
 

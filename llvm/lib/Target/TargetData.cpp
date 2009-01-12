@@ -58,7 +58,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
     StructAlignment = std::max(TyAlign, StructAlignment);
 
     MemberOffsets[i] = StructSize;
-    StructSize += TD.getABITypeSize(Ty); // Consume space for this data item
+    StructSize += TD.getTypePaddedSize(Ty); // Consume space for this data item
   }
 
   // Empty structures have alignment of 1 byte.
@@ -425,7 +425,7 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
     return getPointerSizeInBits();
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    return getABITypeSizeInBits(ATy->getElementType())*ATy->getNumElements();
+    return getTypePaddedSizeInBits(ATy->getElementType())*ATy->getNumElements();
   }
   case Type::StructTyID:
     // Get the layout annotation... which is lazily created on demand.
@@ -568,7 +568,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
 
       // Get the array index and the size of each array element.
       int64_t arrayIdx = cast<ConstantInt>(Indices[CurIDX])->getSExtValue();
-      Result += arrayIdx * (int64_t)getABITypeSize(Ty);
+      Result += arrayIdx * (int64_t)getTypePaddedSize(Ty);
     }
   }
 

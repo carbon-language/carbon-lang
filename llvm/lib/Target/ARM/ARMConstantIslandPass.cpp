@@ -295,7 +295,7 @@ void ARMConstantIslands::DoInitialPlacement(MachineFunction &Fn,
   
   const TargetData &TD = *Fn.getTarget().getTargetData();
   for (unsigned i = 0, e = CPs.size(); i != e; ++i) {
-    unsigned Size = TD.getABITypeSize(CPs[i].getType());
+    unsigned Size = TD.getTypePaddedSize(CPs[i].getType());
     // Verify that all constant pool entries are a multiple of 4 bytes.  If not,
     // we would have to pad them out or something so that instructions stay
     // aligned.

@@ -529,7 +529,7 @@ void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
-  unsigned Size = TD->getABITypeSize(Type);
+  unsigned Size = TD->getTypePaddedSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   SwitchToSection(TAI->SectionForGlobal(GVar));

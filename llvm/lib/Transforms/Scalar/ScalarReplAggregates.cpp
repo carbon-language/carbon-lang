@@ -243,7 +243,7 @@ bool SROA::performScalarRepl(Function &F) {
          isa<ArrayType>(AI->getAllocatedType())) &&
         AI->getAllocatedType()->isSized() &&
         // Do not promote any struct whose size is larger than "128" bytes.
-        TD->getABITypeSize(AI->getAllocatedType()) < SRThreshold &&
+        TD->getTypePaddedSize(AI->getAllocatedType()) < SRThreshold &&
         // Do not promote any struct into more than "32" separate vars.
         getNumSAElements(AI->getAllocatedType()) < SRThreshold/4) {
       // Check that all of the users of the allocation are capable of being
@@ -562,7 +562,7 @@ void SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI,
   
   // If not the whole aggregate, give up.
   if (Length->getZExtValue() !=
-      TD->getABITypeSize(AI->getType()->getElementType()))
+      TD->getTypePaddedSize(AI->getType()->getElementType()))
     return MarkUnsafe(Info);
   
   // We only know about memcpy/memset/memmove.
@@ -595,8 +595,8 @@ void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
       // cast a {i32,i32}* to i64* and store through it.  This is similar to the
       // memcpy case and occurs in various "byval" cases and emulated memcpys.
       if (isa<IntegerType>(SI->getOperand(0)->getType()) &&
-          TD->getABITypeSize(SI->getOperand(0)->getType()) == 
-          TD->getABITypeSize(AI->getType()->getElementType())) {
+          TD->getTypePaddedSize(SI->getOperand(0)->getType()) ==
+          TD->getTypePaddedSize(AI->getType()->getElementType())) {
         Info.isMemCpyDst = true;
         continue;
       }
@@ -607,8 +607,8 @@ void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
       // cast a {i32,i32}* to i64* and load through it.  This is similar to the
       // memcpy case and occurs in various "byval" cases and emulated memcpys.
       if (isa<IntegerType>(LI->getType()) &&
-          TD->getABITypeSize(LI->getType()) == 
-          TD->getABITypeSize(AI->getType()->getElementType())) {
+          TD->getTypePaddedSize(LI->getType()) ==
+          TD->getTypePaddedSize(AI->getType()->getElementType())) {
         Info.isMemCpySrc = true;
         continue;
       }
@@ -789,7 +789,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
       OtherElt = new BitCastInst(OtherElt, BytePtrTy,OtherElt->getNameStr(),
                                  MI);
     
-    unsigned EltSize = TD->getABITypeSize(EltTy);
+    unsigned EltSize = TD->getTypePaddedSize(EltTy);
     
     // Finally, insert the meminst for this element.
     if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
@@ -823,13 +823,13 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
   // and store the element value to the individual alloca.
   Value *SrcVal = SI->getOperand(0);
   const Type *AllocaEltTy = AI->getType()->getElementType();
-  uint64_t AllocaSizeBits = TD->getABITypeSizeInBits(AllocaEltTy);
+  uint64_t AllocaSizeBits = TD->getTypePaddedSizeInBits(AllocaEltTy);
   
   // If this isn't a store of an integer to the whole alloca, it may be a store
   // to the first element.  Just ignore the store in this case and normal SROA
   // will handle it.
   if (!isa<IntegerType>(SrcVal->getType()) ||
-      TD->getABITypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
+      TD->getTypePaddedSizeInBits(SrcVal->getType()) != AllocaSizeBits)
     return;
 
   DOUT << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << *SI;
@@ -845,7 +845,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       uint64_t Shift = Layout->getElementOffsetInBits(i);
       
       if (TD->isBigEndian())
-        Shift = AllocaSizeBits-Shift-TD->getABITypeSizeInBits(FieldTy);
+        Shift = AllocaSizeBits-Shift-TD->getTypePaddedSizeInBits(FieldTy);
       
       Value *EltVal = SrcVal;
       if (Shift) {
@@ -880,7 +880,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
   } else {
     const ArrayType *ATy = cast<ArrayType>(AllocaEltTy);
     const Type *ArrayEltTy = ATy->getElementType();
-    uint64_t ElementOffset = TD->getABITypeSizeInBits(ArrayEltTy);
+    uint64_t ElementOffset = TD->getTypePaddedSizeInBits(ArrayEltTy);
     uint64_t ElementSizeBits = TD->getTypeSizeInBits(ArrayEltTy);
 
     uint64_t Shift;
@@ -935,13 +935,13 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
   // Extract each element out of the NewElts according to its structure offset
   // and form the result value.
   const Type *AllocaEltTy = AI->getType()->getElementType();
-  uint64_t AllocaSizeBits = TD->getABITypeSizeInBits(AllocaEltTy);
+  uint64_t AllocaSizeBits = TD->getTypePaddedSizeInBits(AllocaEltTy);
   
   // If this isn't a load of the whole alloca to an integer, it may be a load
   // of the first element.  Just ignore the load in this case and normal SROA
   // will handle it.
   if (!isa<IntegerType>(LI->getType()) ||
-      TD->getABITypeSizeInBits(LI->getType()) != AllocaSizeBits)
+      TD->getTypePaddedSizeInBits(LI->getType()) != AllocaSizeBits)
     return;
   
   DOUT << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << *LI;
@@ -954,7 +954,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
     Layout = TD->getStructLayout(EltSTy);
   } else {
     const Type *ArrayEltTy = cast<ArrayType>(AllocaEltTy)->getElementType();
-    ArrayEltBitOffset = TD->getABITypeSizeInBits(ArrayEltTy);
+    ArrayEltBitOffset = TD->getTypePaddedSizeInBits(ArrayEltTy);
   }    
     
   Value *ResultVal = Constant::getNullValue(LI->getType());
@@ -1048,7 +1048,7 @@ static bool HasPadding(const Type *Ty, const TargetData &TD) {
   } else if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
     return HasPadding(VTy->getElementType(), TD);
   }
-  return TD.getTypeSizeInBits(Ty) != TD.getABITypeSizeInBits(Ty);
+  return TD.getTypeSizeInBits(Ty) != TD.getTypePaddedSizeInBits(Ty);
 }
 
 /// isSafeStructAllocaToScalarRepl - Check to see if the specified allocation of
@@ -1270,7 +1270,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
       // Check to see if this is stepping over an element: GEP Ptr, int C
       if (GEP->getNumOperands() == 2 && isa<ConstantInt>(GEP->getOperand(1))) {
         unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getZExtValue();
-        unsigned ElSize = TD->getABITypeSize(PTy->getElementType());
+        unsigned ElSize = TD->getTypePaddedSize(PTy->getElementType());
         unsigned BitOffset = Idx*ElSize*8;
         if (BitOffset > 64 || !isPowerOf2_32(ElSize)) return 0;
         
@@ -1279,7 +1279,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         if (SubElt == 0) return 0;
         if (SubElt != Type::VoidTy && SubElt->isInteger()) {
           const Type *NewTy = 
-            getIntAtLeastAsBigAs(TD->getABITypeSizeInBits(SubElt)+BitOffset);
+            getIntAtLeastAsBigAs(TD->getTypePaddedSizeInBits(SubElt)+BitOffset);
           if (NewTy == 0 || MergeInType(NewTy, UsedType, *TD)) return 0;
           continue;
         }
@@ -1320,7 +1320,8 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         } else {
           return 0;
         }
-        const Type *NTy = getIntAtLeastAsBigAs(TD->getABITypeSizeInBits(AggTy));
+        const Type *NTy =
+          getIntAtLeastAsBigAs(TD->getTypePaddedSizeInBits(AggTy));
         if (NTy == 0 || MergeInType(NTy, UsedType, *TD)) return 0;
         const Type *SubTy = CanConvertToScalar(GEP, IsNotTrivial);
         if (SubTy == 0) return 0;
@@ -1396,7 +1397,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       const PointerType *AggPtrTy = 
         cast<PointerType>(GEP->getOperand(0)->getType());
       unsigned AggSizeInBits =
-        TD->getABITypeSizeInBits(AggPtrTy->getElementType());
+        TD->getTypePaddedSizeInBits(AggPtrTy->getElementType());
 
       // Check to see if this is stepping over an element: GEP Ptr, int C
       unsigned NewOffset = Offset;
@@ -1417,7 +1418,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       const Type *AggTy = AggPtrTy->getElementType();
       if (const SequentialType *SeqTy = dyn_cast<SequentialType>(AggTy)) {
         unsigned ElSizeBits =
-          TD->getABITypeSizeInBits(SeqTy->getElementType());
+          TD->getTypePaddedSizeInBits(SeqTy->getElementType());
 
         NewOffset += ElSizeBits*Idx;
       } else {
@@ -1471,7 +1472,7 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
     // Otherwise it must be an element access.
     unsigned Elt = 0;
     if (Offset) {
-      unsigned EltSize = TD->getABITypeSizeInBits(VTy->getElementType());
+      unsigned EltSize = TD->getTypePaddedSizeInBits(VTy->getElementType());
       Elt = Offset/EltSize;
       Offset -= EltSize*Elt;
     }
@@ -1557,7 +1558,7 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
       SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
     } else {
       // Must be an element insertion.
-      unsigned Elt = Offset/TD->getABITypeSizeInBits(PTy->getElementType());
+      unsigned Elt = Offset/TD->getTypePaddedSizeInBits(PTy->getElementType());
       SV = InsertElementInst::Create(Old, SV,
                                      ConstantInt::get(Type::Int32Ty, Elt),
                                      "tmp", SI);
