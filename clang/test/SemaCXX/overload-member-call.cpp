@@ -17,6 +17,23 @@ struct X {
   static double& g(double); // expected-note{{candidate function}}
 
   void h(int);
+
+  void test_member() {
+    float& f1 = f(0);
+    float& f2 = g(0);
+    double& d1 = g(0.0);
+  }
+
+  void test_member_const() const {
+    int &i1 = f(0);
+    int &i2 = g(0);
+    double& d1 = g(0.0);
+  }
+
+  static void test_member_static() {
+    double& d1 = g(0.0);
+    g(0); // expected-error{{call to 'g' is ambiguous; candidates are:}}
+  }
 };
 
 void test(X x, const X xc, X* xp, const X* xcp, volatile X xv, volatile X* xvp) {
