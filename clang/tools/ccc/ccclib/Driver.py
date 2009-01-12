@@ -299,9 +299,8 @@ class Driver(object):
                     self.claim(inputTypeOpt)
                     klass = inputType
                 inputs.append((klass, a))
-            elif a.opt is self.parser.filelistOption:
-                # Treat as a linker input. Investigate how gcc is
-                # handling this.
+            elif a.opt.isLinkerInput:
+                # Treat as a linker input.
                 #
                 # FIXME: This might not be good enough. We may
                 # need to introduce another type for this case, so
@@ -528,15 +527,21 @@ class Driver(object):
                         args.getLastArg(self.parser.saveTempsOption2))
         hasNoIntegratedCPP = args.getLastArg(self.parser.noIntegratedCPPOption)
         hasPipe = args.getLastArg(self.parser.pipeOption)
+
+        # FIXME: forward will die, this isn't really how things are
+        # done, instead everything comes from the arglist. For this we
+        # need a DerivedArgList for handling -Xarch, and some way to
+        # still figure out what to forward to the generic gcc tool.
         forward = []
         for a in args:
             if a.opt is self.parser.inputOption:
                 pass
 
             # FIXME: Needs to be part of option.
-            elif a.opt.name in ('-E', '-S', '-c',
-                                '-arch', '-fsyntax-only', '-combine', '-x',
-                                '-###'):
+            elif (a.opt.name in ('-E', '-S', '-c',
+                                 '-arch', '-fsyntax-only', '-combine', '-x',
+                                 '-###') or
+                  a.opt.isLinkerInput):
                 pass
 
             else:
@@ -648,10 +653,10 @@ class Driver(object):
                 # 
                 # FIXME: gcc has some special case in here so that it doesn't
                 # create output files if they would conflict with an input.
-                inputName = args.getValue(baseInput)
                 if phase.type is Types.ImageType:
                     namedOutput = "a.out"
                 else:
+                    inputName = args.getValue(baseInput)
                     base,_ = os.path.splitext(inputName)
                     assert phase.type.tempSuffix is not None
                     namedOutput = base + '.' + phase.type.tempSuffix

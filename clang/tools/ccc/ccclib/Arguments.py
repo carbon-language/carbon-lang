@@ -1,7 +1,10 @@
 class Option(object):
     """Root option class."""
-    def __init__(self, name):
+
+    def __init__(self, name, isLinkerInput=False, noOptAsInput=False):
         self.name = name
+        self.isLinkerInput = isLinkerInput
+        self.noOptAsInput = noOptAsInput
 
     def accept(self, index, arg, it):
         """accept(index, arg, iterator) -> Arg or None
@@ -48,6 +51,15 @@ class JoinedOption(Option):
     def accept(self, index, arg, it):        
         if arg.startswith(self.name):
             return JoinedValueArg(index, self)
+
+class CommaJoinedOption(Option):
+    """An option which literally prefixs its argument, but which
+    conceptually may have an arbitrary number of arguments which are
+    separated by commas."""
+
+    def accept(self, index, arg, it):
+        if arg.startswith(self.name):
+            return CommaJoinedValuesArg(index, self)
 
 class SeparateOption(Option):
     """An option which is followed by its value."""
@@ -111,7 +123,7 @@ class Arg(object):
         assert opt is not None
         self.index = index
         self.opt = opt
-        
+
     def __repr__(self):
         return '<%s index=%r opt=%r>' % (self.__class__.__name__,
                                          self.index,
@@ -124,6 +136,9 @@ class Arg(object):
         given the source argument array."""
         assert self.opt
         return [self.opt.name]
+
+    def renderAsInput(self, args):
+        return self.render(args)
 
 class ValueArg(Arg):
     """ValueArg - An instance of an option which has an argument."""
@@ -150,6 +165,11 @@ class JoinedValueArg(ValueArg):
     def render(self, args):
         return [self.opt.name + self.getValue(args)]
 
+    def renderAsInput(self, args):
+        if self.opt.noOptAsInput:
+            return [self.getValue(args)]
+        return self.render(args)
+
 class SeparateValueArg(ValueArg):
     """SeparateValueArg - A single value argument where the value
     follows the option in the argument vector."""
@@ -159,6 +179,11 @@ class SeparateValueArg(ValueArg):
 
     def render(self, args):
         return [self.opt.name, self.getValue(args)]
+
+    def renderAsInput(self, args):
+        if self.opt.noOptAsInput:
+            return [self.getValue(args)]
+        return self.render(args)
 
 class MultipleValuesArg(Arg):
     """MultipleValuesArg - An argument with multiple values which
@@ -172,6 +197,23 @@ class MultipleValuesArg(Arg):
 
     def render(self, args):
         return [self.opt.name] + self.getValues(args)
+
+class CommaJoinedValuesArg(Arg):
+    """CommaJoinedValuesArg - An argument with multiple values joined
+    by commas and joined (suffixed) to the option.
+    
+    The key point of this arg is that it renders its values into
+    separate arguments, which allows it to be used as a generic
+    mechanism for passing arguments through to tools."""
+    
+    def getValues(self, args):
+        return args.getInputString(self.index)[len(self.opt.name):].split(',')
+
+    def render(self, args):
+        return [self.opt.name + ','.join(self.getValues(args))]
+    
+    def renderAsInput(self, args):
+        return self.getValues(args)
 
 # FIXME: Man, this is lame. It is only used by -Xarch. Maybe easier to
 # just special case?
@@ -299,6 +341,9 @@ class ArgList:
     def render(self, arg):
         return arg.render(self)
 
+    def renderAsInput(self, arg):
+        return arg.renderAsInput(self)
+
     def getValue(self, arg):
         return arg.getValue(self)
 
@@ -367,7 +412,7 @@ class OptionParser:
         self.addOption(FlagOption('-v'))
 
         # Input/output stuff
-        self.oOption = self.addOption(JoinedOrSeparateOption('-o'))
+        self.oOption = self.addOption(JoinedOrSeparateOption('-o', noOptAsInput=True))
         self.xOption = self.addOption(JoinedOrSeparateOption('-x'))
 
         self.ObjCOption = self.addOption(FlagOption('-ObjC'))
@@ -385,14 +430,14 @@ class OptionParser:
 
         # Blanket pass-through options.
 
-        self.addOption(JoinedOption('-Wa,'))
+        self.addOption(CommaJoinedOption('-Wa,'))
         self.addOption(SeparateOption('-Xassembler'))
 
-        self.addOption(JoinedOption('-Wp,'))
+        self.addOption(CommaJoinedOption('-Wp,'))
         self.addOption(SeparateOption('-Xpreprocessor'))
 
-        self.addOption(JoinedOption('-Wl,'))
-        self.addOption(SeparateOption('-Xlinker'))
+        self.addOption(CommaJoinedOption('-Wl,', isLinkerInput=True))
+        self.addOption(SeparateOption('-Xlinker', isLinkerInput=True, noOptAsInput=True))
 
         ####
         # Bring on the random garbage.
@@ -456,6 +501,9 @@ class OptionParser:
         self.addOption(FlagOption('-traditional'))
         self.addOption(FlagOption('--traditional'))
         self.addOption(FlagOption('-no_dead_strip_inits_and_terms'))
+        self.addOption(JoinedOption('-weak-l', isLinkerInput=True))
+        self.addOption(SeparateOption('-weak_framework', isLinkerInput=True))
+        self.addOption(SeparateOption('-weak_library', isLinkerInput=True))
         self.whyloadOption = self.addOption(FlagOption('-whyload'))
         self.whatsloadedOption = self.addOption(FlagOption('-whatsloaded'))
         self.sectalignOption = self.addOption(MultiArgOption('-sectalign', numArgs=3))
@@ -496,10 +544,8 @@ class OptionParser:
         self.Zunexported_symbols_listOption = self.addOption(JoinedOrSeparateOption('-Zunexported_symbols_list'))
         self.Zweak_reference_mismatchesOption = self.addOption(JoinedOrSeparateOption('-Zweak_reference_mismatches'))
 
-        # I dunno why these don't end up working when joined. Maybe
-        # because of translation?
-        self.filelistOption = self.addOption(SeparateOption('-filelist'))
-        self.addOption(SeparateOption('-framework'))
+        self.addOption(SeparateOption('-filelist', isLinkerInput=True))
+        self.addOption(SeparateOption('-framework', isLinkerInput=True))
         # FIXME: Alias.
         self.addOption(SeparateOption('-install_name'))
         self.Zinstall_nameOption = self.addOption(JoinedOrSeparateOption('-Zinstall_name'))
@@ -532,7 +578,7 @@ class OptionParser:
         self.addOption(JoinedOrSeparateOption('-U'))
         self.ZOption = self.addOption(JoinedOrSeparateOption('-Z'))
 
-        self.addOption(JoinedOrSeparateOption('-l'))
+        self.addOption(JoinedOrSeparateOption('-l', isLinkerInput=True))
         self.uOption = self.addOption(JoinedOrSeparateOption('-u'))
         self.tOption = self.addOption(JoinedOrSeparateOption('-t'))
         self.yOption = self.addOption(JoinedOption('-y'))

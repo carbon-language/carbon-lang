@@ -52,7 +52,13 @@ class GCC_Common_Tool(Tool):
             if isinstance(input.source, Jobs.PipedJob):
                 cmd_args.append('-')
             else:
-                cmd_args.append(arglist.getValue(input.source))
+                assert isinstance(input.source, Arguments.Arg)
+                # If this is a linker input then assume we can forward
+                # just by rendering.
+                if input.source.opt.isLinkerInput:
+                    cmd_args.extend(arglist.render(input.source))
+                else:
+                    cmd_args.extend(arglist.renderAsInput(input.source))
 
         jobs.addJob(Jobs.Command('gcc', cmd_args))
 
@@ -113,7 +119,7 @@ class DarwinAssembleTool(Tool):
         if isinstance(input.source, Jobs.PipedJob):
             cmd_args.append('-')
         else:
-            cmd_args.append(arglist.getValue(input.source))
+            cmd_args.extend(arglist.renderAsInput(input.source))
         jobs.addJob(Jobs.Command('as', cmd_args))
 
 class GCC_AssembleTool(GCC_Common_Tool):
@@ -471,7 +477,7 @@ class Darwin10_X86_LinkTool(Tool):
                          "-L/usr/lib/gcc/i686-apple-darwin10/4.2.1/../../.."])
 
         for input in inputs:
-            cmd_args.append(arglist.getValue(input.source))
+            cmd_args.extend(arglist.renderAsInput(input.source))
 
         if (arglist.getLastArg(arglist.parser.f_profileArcsOption) or
             arglist.getLastArg(arglist.parser.f_profileGenerateOption) or
@@ -548,5 +554,5 @@ class LipoTool(Tool):
         cmd_args = ['-create']
         cmd_args.extend(arglist.render(output))
         for input in inputs:
-            cmd_args.append(arglist.getValue(input.source))
+            cmd_args.extend(arglist.renderAsInput(input.source))
         jobs.addJob(Jobs.Command('lipo', cmd_args))
