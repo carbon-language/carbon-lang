@@ -699,6 +699,51 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
   }
 }
 
+/// isPropertyReadonly - Return true if property is readonly, by searching
+/// for the property in the class and in its categories and implementations
+///
+bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
+                              ObjCInterfaceDecl *IDecl) const {
+  // by far the most common case.
+  if (!PDecl->isReadOnly())
+    return false;
+  // Even if property is ready only, if interface has a user defined setter, 
+  // it is not considered read only.
+  if (IDecl->getInstanceMethod(PDecl->getSetterName()))
+    return false;
+  
+  // Main class has the property as 'readonly'. Must search
+  // through the category list to see if the property's 
+  // attribute has been over-ridden to 'readwrite'.
+  for (ObjCCategoryDecl *Category = IDecl->getCategoryList();
+       Category; Category = Category->getNextClassCategory()) {
+    // Even if property is ready only, if a category has a user defined setter, 
+    // it is not considered read only. 
+    if (Category->getInstanceMethod(PDecl->getSetterName()))
+      return false;
+    ObjCPropertyDecl *P = 
+    Category->FindPropertyDeclaration(PDecl->getIdentifier());
+    if (P && !P->isReadOnly())
+      return false;
+  }
+  
+  // Also, check for definition of a setter method in the implementation if
+  // all else failed.
+  if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(CurContext)) {
+    if (ObjCImplementationDecl *IMD = 
+        dyn_cast<ObjCImplementationDecl>(OMD->getDeclContext())) {
+      if (IMD->getInstanceMethod(PDecl->getSetterName()))
+        return false;
+    }
+    else if (ObjCCategoryImplDecl *CIMD = 
+             dyn_cast<ObjCCategoryImplDecl>(OMD->getDeclContext())) {
+      if (CIMD->getInstanceMethod(PDecl->getSetterName()))
+        return false;
+    }
+  }
+  return true;
+}
+
 /// FIXME: Type hierarchies in Objective-C can be deep. We could most
 /// likely improve the efficiency of selector lookups and type
 /// checking by associating with each protocol / interface / category

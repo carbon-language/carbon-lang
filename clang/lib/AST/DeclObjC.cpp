@@ -251,34 +251,6 @@ void ObjCMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
   }
 }
 
-/// isPropertyReadonly - Return true if property is readonly, by searching
-/// for the property in the class and in its categories.
-///
-bool ObjCInterfaceDecl::isPropertyReadonly(ObjCPropertyDecl *PDecl) const
-{
-  // Even if property is ready only, if interface has a user defined setter, 
-  // it is not considered read only. 
-  if (!PDecl->isReadOnly() || getInstanceMethod(PDecl->getSetterName()))
-    return false;
-
-  // Main class has the property as 'readonly'. Must search
-  // through the category list to see if the property's 
-  // attribute has been over-ridden to 'readwrite'.
-  for (ObjCCategoryDecl *Category = getCategoryList();
-       Category; Category = Category->getNextClassCategory()) {
-    // Even if property is ready only, if a category has a user defined setter, 
-    // it is not considered read only. 
-    if (Category->getInstanceMethod(PDecl->getSetterName()))
-      return false;
-    ObjCPropertyDecl *P = 
-      Category->FindPropertyDeclaration(PDecl->getIdentifier());
-    if (P && !P->isReadOnly())
-      return false;
-  }
-
-  return true;
-}
-
 /// FindCategoryDeclaration - Finds category declaration in the list of
 /// categories for this class and returns it. Name of the category is passed
 /// in 'CategoryId'. If category not found, return 0;

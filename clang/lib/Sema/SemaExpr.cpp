@@ -2920,10 +2920,33 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   return InvalidOperands(Loc, lex, rex);
 }
 
+/// IsReadonlyProperty - Verify that otherwise a valid l-value expression
+/// is a read-only property; return true if so. A readonly property expression
+/// depends on various declarations and thus must be treated specially.
+///
+static bool IsReadonlyProperty(Expr *E, Sema &S) 
+{
+  if (E->getStmtClass() == Expr::ObjCPropertyRefExprClass) {
+    const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(E);
+    if (ObjCPropertyDecl *PDecl = PropExpr->getProperty()) {
+      QualType BaseType = PropExpr->getBase()->getType();
+      if (const PointerType *PTy = BaseType->getAsPointerType())
+        if (const ObjCInterfaceType *IFTy = 
+            PTy->getPointeeType()->getAsObjCInterfaceType())
+          if (ObjCInterfaceDecl *IFace = IFTy->getDecl())
+            if (S.isPropertyReadonly(PDecl, IFace))
+              return true;
+    }
+  }
+  return false;
+}
+
 /// CheckForModifiableLvalue - Verify that E is a modifiable lvalue.  If not,
 /// emit an error and return true.  If so, return false.
 static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
-  Expr::isModifiableLvalueResult IsLV = E->isModifiableLvalue(S.Context); 
+  Expr::isModifiableLvalueResult IsLV = E->isModifiableLvalue(S.Context);
+  if (IsLV == Expr::MLV_Valid && IsReadonlyProperty(E, S))
+    IsLV = Expr::MLV_ReadonlyProperty;
   if (IsLV == Expr::MLV_Valid)
     return false;
   

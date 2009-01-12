@@ -604,19 +604,7 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
     if (!BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
       return MLV_NotBlockQualified;
   }
-  // Assigning to a readonly property?
-  if (getStmtClass() == ObjCPropertyRefExprClass) {
-    const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(this);
-    if (ObjCPropertyDecl *PDecl = PropExpr->getProperty()) {
-      QualType BaseType = PropExpr->getBase()->getType();
-      if (const PointerType *PTy = BaseType->getAsPointerType())
-        if (const ObjCInterfaceType *IFTy = 
-            PTy->getPointeeType()->getAsObjCInterfaceType())
-          if (ObjCInterfaceDecl *IFace = IFTy->getDecl())
-            if (IFace->isPropertyReadonly(PDecl))
-              return MLV_ReadonlyProperty;
-    }
-  }
+  
   // Assigning to an 'implicit' property?
   else if (getStmtClass() == ObjCKVCRefExprClass) {
     const ObjCKVCRefExpr* KVCExpr = cast<ObjCKVCRefExpr>(this);

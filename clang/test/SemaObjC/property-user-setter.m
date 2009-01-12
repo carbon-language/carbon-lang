@@ -23,3 +23,39 @@
   self.z = 2; // expected-error {{assigning to property with 'readonly' attribute not allowed}}
 }
 @end
+
+// Test when property is 'readonly' but it has a setter in
+// its implementation only.
+@interface I1  {
+}
+@property(readonly) int identifier;
+@end
+
+
+@implementation I1
+@dynamic identifier;
+- (void)setIdentifier:(int)ident {}
+
+- (id)initWithIdentifier:(int)Arg {
+    self.identifier = 0;
+}
+
+@end
+
+
+// Also in a category implementation
+@interface I1(CAT)  
+@property(readonly) int rprop;
+@end
+
+
+@implementation I1(CAT)
+@dynamic rprop;
+- (void)setRprop:(int)ident {}
+
+- (id)initWithIdentifier:(int)Arg {
+    self.rprop = 0;
+}
+
+@end
+

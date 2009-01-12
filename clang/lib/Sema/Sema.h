@@ -538,6 +538,9 @@ public:
                                    ObjCMethodDecl *IntfMethod);
 
   NamespaceDecl *GetStdNamespace();
+  
+  bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl,
+                          ObjCInterfaceDecl *IDecl) const;
                            
   /// CheckProtocolMethodDefs - This routine checks unimplemented
   /// methods declared in protocol, and those referenced by it.
