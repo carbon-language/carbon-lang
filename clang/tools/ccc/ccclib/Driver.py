@@ -58,6 +58,12 @@ class Driver(object):
         
         return platform.system().lower()
 
+    def getHostReleaseName(self):
+        if self.cccHostRelease:
+            return self.cccHostRelease
+        
+        return platform.release()
+
     ###
 
     def run(self, argv):
@@ -74,7 +80,8 @@ class Driver(object):
 
         # FIXME: How to handle override of host? ccc specific options?
         # Abuse -b?
-        self.cccHostBits = self.cccHostMachine = self.cccHostSystem = None
+        self.cccHostBits = self.cccHostMachine = None
+        self.cccHostSystem = self.cccHostRelease = None
         while argv and argv[0].startswith('-ccc-'):
             opt,argv = argv[0][5:],argv[1:]
 
@@ -88,6 +95,8 @@ class Driver(object):
                 self.cccHostMachine,argv = argv[0],argv[1:]
             elif opt == 'host-system':
                 self.cccHostSystem,argv = argv[0],argv[1:]
+            elif opt == 'host-release':
+                self.cccHostRelease,argv = argv[0],argv[1:]
             else:
                 raise ValueError,"Invalid ccc option: %r" % cccPrintOptions
 

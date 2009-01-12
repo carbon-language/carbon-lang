@@ -23,6 +23,17 @@ class HostInfo(object):
 # Darwin
 
 class DarwinHostInfo(HostInfo):
+    def __init__(self, driver):
+        super(DarwinHostInfo, self).__init__(driver)
+        
+        # FIXME: Find right regex for this.
+        import re
+        m = re.match(r'([0-9]+)\.([0-9]+)\.([0-9]+)', driver.getHostReleaseName())
+        if not m:
+            raise RuntimeError,"Unable to determine Darwin version."
+        self.darwinVersion = tuple(map(int, m.groups()))
+        self.gccVersion = (4,2,1)
+
     def useDriverDriver(self):
         return True
 
@@ -31,7 +42,9 @@ class DarwinHostInfo(HostInfo):
 
     def getToolChainForArch(self, arch):
         if arch in ('i386', 'x86_64'):
-            return ToolChain.Darwin10_X86_ToolChain(self.driver)
+            return ToolChain.Darwin_X86_ToolChain(self.driver,
+                                                  self.darwinVersion,
+                                                  self.gccVersion)
 
         return ToolChain.Generic_GCC_ToolChain(self.driver)
 

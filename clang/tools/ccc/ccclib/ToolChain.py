@@ -14,15 +14,16 @@ class ToolChain(object):
         some particular action."""
         abstract
 
-class Darwin10_X86_ToolChain(ToolChain):
-    def __init__(self, driver):
-        super(Darwin10_X86_ToolChain, self).__init__(driver)
+class Darwin_X86_ToolChain(ToolChain):
+    def __init__(self, driver, darwinVersion, gccVersion):
+        super(Darwin_X86_ToolChain, self).__init__(driver)
         self.toolMap = {
             Phases.PreprocessPhase : Tools.GCC_PreprocessTool(),
             Phases.CompilePhase : Tools.GCC_CompileTool(),
             Phases.PrecompilePhase : Tools.GCC_PrecompileTool(),
             Phases.AssemblePhase : Tools.DarwinAssembleTool(),
-            Phases.LinkPhase : Tools.Darwin10_X86_LinkTool(),
+            Phases.LinkPhase : Tools.Darwin_X86_LinkTool(darwinVersion,
+                                                         gccVersion),
             Phases.LipoPhase : Tools.LipoTool(),
             }
 

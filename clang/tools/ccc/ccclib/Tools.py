@@ -144,10 +144,24 @@ class GCC_LinkTool(GCC_Common_Tool):
                                                       output, outputType, args, arglist,
                                                       [])
 
-class Darwin10_X86_LinkTool(Tool):
-    kCollect2Path = '/usr/libexec/gcc/i686-apple-darwin10/4.2.1/collect2'
-    def __init__(self):
-        super(Darwin10_X86_LinkTool, self).__init__('collect2')
+class Darwin_X86_LinkTool(Tool):
+    def __init__(self, darwinVersion, gccVersion):
+        super(Darwin_X86_LinkTool, self).__init__('collect2')
+        assert isinstance(darwinVersion, tuple) and len(darwinVersion) == 3
+        assert isinstance(gccVersion, tuple) and len(gccVersion) == 3
+        self.darwinVersion = darwinVersion
+        self.gccVersion = gccVersion
+
+    def getCollect2Path(self):
+        return '/usr/libexec/gcc/%s/collect2' % self.getToolChainDir()
+        
+    def getToolChainDir(self):
+        return 'i686-apple-darwin%d/%s' % (self.darwinVersion[0],
+                                           '.'.join(map(str,self.gccVersion)))
+
+    def getMacosxVersionMin(self):
+        major,minor,minorminor = self.darwinVersion
+        return '%d.%d.%d' % (10, major-4, minor)
 
     def addDarwinArch(self, cmd_args, arch, arglist):
         # Derived from darwin_arch spec.
@@ -279,9 +293,7 @@ class Darwin10_X86_LinkTool(Tool):
                 # following that; it must be getting over-ridden
                 # somewhere.
                 cmd_args.append('-macosx_version_min')
-                # FIXME: De-hardcode.
-                cmd_args.append('10.6.0')
-                pass
+                cmd_args.append(self.getMacosxVersionMin())
         else:
             # addAll doesn't make sense here but this is what gcc
             # does.
@@ -467,14 +479,15 @@ class Darwin10_X86_LinkTool(Tool):
             cmd_args.append('-lgomp')
 
         # FIXME: Derive these correctly.
-        if arglist.getValue(arch) == 'x86_64':
-            cmd_args.extend(["-L/usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64",
-                             "-L/usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64"])
-        cmd_args.extend(["-L/usr/lib/i686-apple-darwin10/4.2.1",
-                         "-L/usr/lib/gcc/i686-apple-darwin10/4.2.1",
-                         "-L/usr/lib/gcc/i686-apple-darwin10/4.2.1",
-                         "-L/usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1",
-                         "-L/usr/lib/gcc/i686-apple-darwin10/4.2.1/../../.."])
+        tcDir = self.getToolChainDir()
+        if arglist.getValue(arch) == 'x86_64':            
+            cmd_args.extend(["-L/usr/lib/gcc/%s/x86_64" % tcDir,
+                             "-L/usr/lib/gcc/%s/x86_64" % tcDir])
+        cmd_args.extend(["-L/usr/lib/%s" % tcDir,
+                         "-L/usr/lib/gcc/%s" % tcDir,
+                         "-L/usr/lib/gcc/%s" % tcDir,
+                         "-L/usr/lib/gcc/%s/../../../%s" % (tcDir,tcDir),
+                         "-L/usr/lib/gcc/%s/../../.." % tcDir])
 
         for input in inputs:
             cmd_args.extend(arglist.renderAsInput(input.source))
@@ -531,7 +544,7 @@ class Darwin10_X86_LinkTool(Tool):
         arglist.addAllArgs(cmd_args, arglist.parser.TOption)
         arglist.addAllArgs(cmd_args, arglist.parser.FOption)
 
-        jobs.addJob(Jobs.Command(self.kCollect2Path, cmd_args))
+        jobs.addJob(Jobs.Command(self.getCollect2Path(), cmd_args))
 
         # FIXME: We need to add a dsymutil job here in some particular
         # cases (basically whenever we have a c-family input we are
