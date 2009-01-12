@@ -3596,10 +3596,16 @@ public:
 
   /// SetDebugInfo - Create global DIEs and emit initial debug info sections.
   /// This is inovked by the target AsmPrinter.
-  void SetDebugInfo() {
-    // FIXME - Check if the module has debug info or not.
+  void SetDebugInfo(MachineModuleInfo *mmi) {
+
       // Create all the compile unit DIEs.
       ConstructCompileUnits();
+      
+      if (DW_CUs.empty())
+        return;
+
+      MMI = mmi;
+      shouldEmit = true;
 
       // Create DIEs for each of the externally visible global variables.
       ConstructGlobalVariableDIEs();
