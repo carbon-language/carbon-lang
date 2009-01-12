@@ -146,6 +146,9 @@ class ValueArg(Arg):
     def getValue(self, args):
         abstract
 
+    def getValues(self, args):
+        return [self.getValue(args)]
+
 class PositionalArg(ValueArg):
     """PositionalArg - A simple positional argument."""
 
@@ -260,6 +263,16 @@ class ArgList:
         # all) arg(s) with little overhead.
         for arg in self.args:
             if arg.opt is option:
+                yield arg
+
+    def getArgs2(self, optionA, optionB):
+        """getArgs2 - Iterate over all arguments for two options, in
+        the order they were specified."""
+        # As long as getArgs is efficient, we can easily make this
+        # efficient by iterating both at once and always taking the
+        # earlier arg.
+        for arg in self.args:
+            if arg.opt in (optionA, optionB):
                 yield arg
 
     def getLastArg(self, option):
@@ -430,8 +443,8 @@ class OptionParser:
 
         # Blanket pass-through options.
 
-        self.addOption(CommaJoinedOption('-Wa,'))
-        self.addOption(SeparateOption('-Xassembler'))
+        self.WaOption = self.addOption(CommaJoinedOption('-Wa,'))
+        self.XassemblerOption = self.addOption(SeparateOption('-Xassembler'))
 
         self.addOption(CommaJoinedOption('-Wp,'))
         self.addOption(SeparateOption('-Xpreprocessor'))
@@ -600,8 +613,12 @@ class OptionParser:
         # FIXME: Naming convention.
         self.dOption = self.addOption(FlagOption('-d'))
         self.addOption(JoinedOption('-d'))
-        self.addOption(JoinedOption('-g'))
 
+        # Take care on extension, the Darwin assembler wants to add a
+        # flag for any -g* option.
+        self.gOption = self.addOption(JoinedOption('-g'))
+
+        self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext'))
         self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions'))
         self.f_objcOption = self.addOption(FlagOption('-fobjc'))
         self.f_openmpOption = self.addOption(FlagOption('-fopenmp'))
@@ -619,6 +636,7 @@ class OptionParser:
         self.m_64Option = self.addOption(FlagOption('-m64'))
         self.m_iphoneosVersionMinOption = self.addOption(JoinedOption('-miphoneos-version-min='))
         self.m_macosxVersionMinOption = self.addOption(JoinedOption('-mmacosx-version-min='))
+        self.m_kernelOption = self.addOption(FlagOption('-mkernel'))
 
         # Ugh. Need to disambiguate our naming convetion. -m x goes to
         # the linker sometimes, wheres -mxxxx is used for a variety of

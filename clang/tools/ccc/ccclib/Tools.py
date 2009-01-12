@@ -112,14 +112,32 @@ class DarwinAssembleTool(Tool):
         input = inputs[0]
 
         cmd_args = []
+        
+        if arglist.getLastArg(arglist.parser.gOption):
+            cmd_args.append('--gstabs')
+
+        # Derived from asm spec.
         if arch:
             cmd_args.extend(arglist.render(arch))
         cmd_args.append('-force_cpusubtype_ALL')
         cmd_args.extend(arglist.render(output))
+        if (arglist.getLastArg(arglist.parser.m_kernelOption) or
+            arglist.getLastArg(arglist.parser.staticOption) or
+            arglist.getLastArg(arglist.parser.f_appleKextOption)):
+            if not arglist.getLastArg(arglist.parser.ZdynamicOption):
+                cmd_args.append('-static')
+
+        for arg in arglist.getArgs2(arglist.parser.WaOption,
+                                    arglist.parser.XassemblerOption):
+            cmd_args.extend(arglist.getValues(arg))
+
         if isinstance(input.source, Jobs.PipedJob):
             cmd_args.append('-')
         else:
             cmd_args.extend(arglist.renderAsInput(input.source))
+            
+        # asm_final spec is empty.
+
         jobs.addJob(Jobs.Command('as', cmd_args))
 
 class GCC_AssembleTool(GCC_Common_Tool):
