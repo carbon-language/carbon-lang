@@ -395,7 +395,7 @@ class Darwin_X86_CompileTool(Tool):
         # which doesn't introduce a dependency on the output argument
         # we are given.
         outputOpt = arglist.getLastArg(arglist.parser.oOption)
-        if outputOpt is output:
+        if outputOpt and outputOpt is output:
             cmd_args.append('-auxbase-strip')
             cmd_args.append(arglist.getValue(outputOpt))
         else:
