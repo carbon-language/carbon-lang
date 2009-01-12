@@ -298,22 +298,91 @@ class Darwin_X86_CompileTool(Tool):
             # FIXME: There is a spec command to remove
             # -fpredictive-compilation args here. Investigate.
 
-        # FIXME: cc1_options
-
-        if arch:
-            cmd_args.extend(arglist.render(arch))
-        if isinstance(output, Jobs.PipedJob):
-            cmd_args.extend(['-o', '-'])
-        elif output is None:
-            cmd_args.append('-fsyntax-only')
-        else:
-            cmd_args.extend(arglist.render(output))
-
+        # FIXME: This is from previously & not part of the spec,
+        # integrate properly.
         for input in inputs:
             if isinstance(input.source, Jobs.PipedJob):
                 cmd_args.append('-')
             else:
                 cmd_args.extend(arglist.renderAsInput(input.source))
+
+        # Derived from cc1_options spec.
+        if (arglist.getLastArg(arglist.parser.fastOption) or
+            arglist.getLastArg(arglist.parser.fastfOption) or
+            arglist.getLastArg(arglist.parser.fastcpOption)):
+            cmd_args.append('-O3')
+            
+        if (arglist.getLastArg(arglist.parser.pgOption) and
+            arglist.getLastArg(arglist.parser.f_omitFramePointerOption)):
+            raise ValueError,"-pg and -fomit-frame-pointer are incompatible"
+
+        # FIXME: cc1 spec
+
+        if not arglist.getLastArg(arglist.parser.QOption):
+            cmd_args.append('-quiet')
+
+        cmd_args.append('-dumpbase')
+        # FIXME: Get correct basename.
+        cmd_args.append('FIXME')
+
+        # FIXME: d*
+        # FIXME: m*
+        # FIXME: a*
+
+        # FIXME: This is wrong, what is supposed to happen is we
+        # should be using the immediate output if we have a "named
+        # output" from the user, and otherwise derive one from the
+        # input name.
+        outputOpt = arglist.getLastArg(arglist.parser.oOption)
+        if outputOpt:
+            cmd_args.append('-auxbase-strip')
+            cmd_args.append(arglist.getValue(outputOpt))
+        else:
+            cmd_args.append('-auxbase')
+            # FIXME: Add proper basename.
+            cmd_args.append('FIXME')
+
+        # FIXME: g*
+            
+        arglist.addAllArgs(cmd_args, arglist.parser.OOption)
+        # FIXME: -Wall is getting some special treatment. Investigate.
+        arglist.addAllArgs2(cmd_args, arglist.parser.WOption, arglist.parser.pedanticOption)
+        arglist.addLastArg(cmd_args, arglist.parser.wOption)
+        arglist.addAllArgs3(cmd_args, arglist.parser.stdOption, arglist.parser.ansiOption, arglist.parser.trigraphsOption)
+        if arglist.getLastArg(arglist.parser.vOption):
+            cmd_args.append('-version')
+        if arglist.getLastArg(arglist.parser.pgOption):
+            cmd_args.append('-p')
+        arglist.addLastArg(cmd_args, arglist.parser.pOption)
+        
+        # FIXME: f*
+
+        arglist.addLastArg(cmd_args, arglist.parser.undefOption)
+        if arglist.getLastArg(arglist.parser.QnOption):
+            cmd_args.append('-fno-ident')
+         
+        # FIXME: This isn't correct.
+        #arglist.addLastArg(cmd_args, arglist.parser._helpOption)
+        #arglist.addLastArg(cmd_args, arglist.parser._targetHelpOption)
+
+        if isinstance(output, Jobs.PipedJob):
+            cmd_args.extend(['-o', '-'])
+        elif output is None:
+            cmd_args.extend(['-o', '/dev/null'])
+        else:
+            cmd_args.extend(arglist.render(output))
+  
+        # FIXME: Still don't get what is happening here. Investigate.
+        arglist.addAllArgs(cmd_args, arglist.parser._paramOption)
+
+        if (arglist.getLastArg(arglist.parser.f_mudflapOption) or
+            arglist.getLastArg(arglist.parser.f_mudflapthOption)):
+            cmd_args.append('-fno-builtin')
+            cmd_args.append('-fno-merge-constants')
+
+        if arglist.getLastArg(arglist.parser.coverageOption):
+            cmd_args.append('-fprofile-arcs')
+            cmd_args.append('-ftest-coverage')
 
         jobs.addJob(Jobs.Command(self.toolChain.getProgramPath(cc1Name), 
                                  cmd_args))

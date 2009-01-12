@@ -452,7 +452,10 @@ class OptionParser:
 
         # FIXME: Weird, gcc claims this here in help but I'm not sure why;
         # perhaps interaction with preprocessor? Investigate.
-        self.addOption(JoinedOption('-std='))
+        
+        # FIXME: This is broken in Darwin cc1, it wants std* and this
+        # is std=. May need an option group for this as well.
+        self.stdOption = self.addOption(JoinedOption('-std='))
         self.addOption(JoinedOrSeparateOption('--sysroot'))
 
         # Version control
@@ -484,7 +487,7 @@ class OptionParser:
         self.MTOption = self.addOption(JoinedOrSeparateOption('-MT'))
         self.MQOption = self.addOption(JoinedOrSeparateOption('-MQ'))
         self.MachOption = self.addOption(FlagOption('-Mach'))
-        self.addOption(FlagOption('-undef'))
+        self.undefOption = self.addOption(FlagOption('-undef'))
 
         self.wOption = self.addOption(FlagOption('-w'))
         self.addOption(JoinedOrSeparateOption('-allowable_client'))
@@ -535,6 +538,7 @@ class OptionParser:
         self.addOption(FlagOption('-R'))
         self.POption = self.addOption(FlagOption('-P'))
         self.QOption = self.addOption(FlagOption('-Q'))
+        self.QnOption = self.addOption(FlagOption('-Qn'))
         self.addOption(FlagOption('-all_load'))
         self.addOption(FlagOption('--constant-cfstrings'))
         self.traditionalOption = self.addOption(FlagOption('-traditional'))
@@ -597,9 +601,8 @@ class OptionParser:
         self.eOption = self.addOption(JoinedOrSeparateOption('-e'))
         self.rOption = self.addOption(JoinedOrSeparateOption('-r'))
 
-        # Is this actually declared anywhere? I can only find it in a
-        # spec. :(
         self.pgOption = self.addOption(FlagOption('-pg'))
+        self.pOption = self.addOption(FlagOption('-p'))
 
         doNotReallySupport = 1
         if doNotReallySupport:
@@ -650,6 +653,10 @@ class OptionParser:
         self.g3Option = self.addOption(JoinedOption('-g3'))
         self.gOption = self.addOption(JoinedOption('-g'))
 
+        self.fastOption = self.addOption(FlagOption('-fast'))
+        self.fastfOption = self.addOption(FlagOption('-fastf'))
+        self.fastcpOption = self.addOption(FlagOption('-fastcp'))
+
         self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext'))
         self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions'))
         self.f_objcOption = self.addOption(FlagOption('-fobjc'))
@@ -679,12 +686,16 @@ class OptionParser:
         self.mOption = self.addOption(SeparateOption('-m'))
         self.addOption(JoinedOption('-m'))
 
+        self.ansiOption = self.addOption(FlagOption('-ansi'))
+        self.trigraphsOption = self.addOption(FlagOption('-trigraphs'))
+        self.pedanticOption = self.addOption(FlagOption('-pedantic'))
         self.addOption(JoinedOption('-i'))
-        self.addOption(JoinedOption('-O'))
-        self.addOption(JoinedOption('-W'))
+        self.OOption = self.addOption(JoinedOption('-O'))
+        self.WOption = self.addOption(JoinedOption('-W'))
         # FIXME: Weird. This option isn't really separate, --param=a=b
-        # works. An alias somewhere?
-        self.addOption(SeparateOption('--param'))
+        # works. There is something else going on which interprets the
+        # '='.
+        self._paramOption = self.addOption(SeparateOption('--param'))
 
         # FIXME: What is this? Seems to do something on Linux. I think
         # only one is valid, but have a log that uses both.
