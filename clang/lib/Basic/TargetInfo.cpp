@@ -147,6 +147,8 @@ const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const {
 bool TargetInfo::validateOutputConstraint(const char *Name, 
                                           ConstraintInfo &info) const
 {
+  info = CI_None;
+
   // An output constraint must start with '=' or '+'
   if (*Name != '=' && *Name != '+')
     return false;
@@ -188,6 +190,8 @@ bool TargetInfo::validateOutputConstraint(const char *Name,
 bool TargetInfo::validateInputConstraint(const char *Name,
                                          unsigned NumOutputs,
                                          ConstraintInfo &info) const {
+  info = CI_None;
+
   while (*Name) {
     switch (*Name) {
     default:
