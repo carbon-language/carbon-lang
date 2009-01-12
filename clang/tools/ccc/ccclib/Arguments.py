@@ -468,8 +468,8 @@ class OptionParser:
         self.WaOption = self.addOption(CommaJoinedOption('-Wa,'))
         self.XassemblerOption = self.addOption(SeparateOption('-Xassembler'))
 
-        self.addOption(CommaJoinedOption('-Wp,'))
-        self.addOption(SeparateOption('-Xpreprocessor'))
+        self.WpOption = self.addOption(CommaJoinedOption('-Wp,'))
+        self.XpreprocessorOption = self.addOption(SeparateOption('-Xpreprocessor'))
 
         self.addOption(CommaJoinedOption('-Wl,', isLinkerInput=True))
         self.addOption(SeparateOption('-Xlinker', isLinkerInput=True, noOptAsInput=True))

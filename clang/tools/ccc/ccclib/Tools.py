@@ -219,6 +219,15 @@ class Darwin_X86_CompileTool(Tool):
             not arglist.getLastArg(arglist.parser.f_noEliminateUnusedDebugSymbolsOption)):
             cmd_args.append('-feliminate-unused-debug-symbols')
 
+    def getBaseInputName(self, inputs, arglist):
+        # FIXME: gcc uses a temporary name here when the base
+        # input is stdin, but only in auxbase. Investigate.
+        baseInputValue = arglist.getValue(inputs[0].baseInput)
+        return os.path.basename(baseInputValue)
+    
+    def getBaseInputStem(self, inputs, arglist):
+        return os.path.splitext(self.getBaseInputName(inputs, arglist))[0]
+
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, args, arglist):
         inputType = inputs[0].type
@@ -278,22 +287,22 @@ class Darwin_X86_CompileTool(Tool):
 
             if arglist.getLastArg(arglist.parser.MDOption):
                 cmd_args.append('-MD')
+                # FIXME: Think about this more.
                 outputOpt = arglist.getLastArg(arglist.parser.oOption)
                 if outputOpt:
                     base,ext = os.path.splitext(arglist.getValue(outputOpt))
                     cmd_args.append(base+'.d')
                 else:
-                    # FIXME: Get correct basename.
-                    cmd_args.append('FIXME.d')
+                    cmd_args.append(self.getBaseInputStem(inputs, arglist)+'.d')
             if arglist.getLastArg(arglist.parser.MMDOption):
                 cmd_args.append('-MMD')
+                # FIXME: Think about this more.
                 outputOpt = arglist.getLastArg(arglist.parser.oOption)
                 if outputOpt:
                     base,ext = os.path.splitext(arglist.getValue(outputOpt))
                     cmd_args.append(base+'.d')
                 else:
-                    # FIXME: Get correct basename.
-                    cmd_args.append('FIXME.d')
+                    cmd_args.append(self.getBaseInputStem(inputs, arglist)+'.d')
             arglist.addLastArg(cmd_args, arglist.parser.MOption)
             arglist.addLastArg(cmd_args, arglist.parser.MMOption)
             arglist.addAllArgs(cmd_args, arglist.parser.MFOption)
@@ -324,9 +333,15 @@ class Darwin_X86_CompileTool(Tool):
 
             # FIXME: Add i*
 
-            # FIXME: %Z
+            for input in inputs:
+                if isinstance(input.source, Jobs.PipedJob):
+                    cmd_args.append('-')
+                else:
+                    cmd_args.extend(arglist.renderAsInput(input.source))
 
-            # FIXME: %i
+            for arg in arglist.getArgs2(arglist.parser.WpOption,
+                                        arglist.parser.XpreprocessorOption):
+                cmd_args.extend(arglist.getValues(arg))
 
             if arglist.getLastArg(arglist.parser.f_mudflapOption):
                 cmd_args.append('-D_MUDFLAP')
@@ -343,13 +358,11 @@ class Darwin_X86_CompileTool(Tool):
             # FIXME: There is a spec command to remove
             # -fpredictive-compilation args here. Investigate.
 
-        # FIXME: This is from previously & not part of the spec,
-        # integrate properly.
-        for input in inputs:
-            if isinstance(input.source, Jobs.PipedJob):
-                cmd_args.append('-')
-            else:
-                cmd_args.extend(arglist.renderAsInput(input.source))
+            for input in inputs:
+                if isinstance(input.source, Jobs.PipedJob):
+                    cmd_args.append('-')
+                else:
+                    cmd_args.extend(arglist.renderAsInput(input.source))
 
         # Derived from cc1_options spec.
         if (arglist.getLastArg(arglist.parser.fastOption) or
@@ -367,25 +380,27 @@ class Darwin_X86_CompileTool(Tool):
             cmd_args.append('-quiet')
 
         cmd_args.append('-dumpbase')
-        # FIXME: Get correct basename.
-        cmd_args.append('FIXME')
+        cmd_args.append(self.getBaseInputName(inputs, arglist))
 
         # FIXME: d*
         # FIXME: m*
         # FIXME: a*
 
-        # FIXME: This is wrong, what is supposed to happen is we
-        # should be using the immediate output if we have a "named
-        # output" from the user, and otherwise derive one from the
-        # input name.
+        # FIXME: The goal is to use the user provided -o if that is
+        # our final output, otherwise to drive from the original input
+        # name.
+        #
+        # This implementation is close, but gcc also does this for -S
+        # which is broken, and it would be nice to find a cleaner way
+        # which doesn't introduce a dependency on the output argument
+        # we are given.
         outputOpt = arglist.getLastArg(arglist.parser.oOption)
-        if outputOpt:
+        if outputOpt is output:
             cmd_args.append('-auxbase-strip')
             cmd_args.append(arglist.getValue(outputOpt))
         else:
             cmd_args.append('-auxbase')
-            # FIXME: Add proper basename.
-            cmd_args.append('FIXME')
+            cmd_args.append(self.getBaseInputStem(inputs, arglist))
 
         # FIXME: g*
             
