@@ -156,8 +156,15 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 
   // Promote additional arguments to variadic methods.
   if (Method->isVariadic()) {
-    for (unsigned i = NumNamedArgs; i < NumArgs; ++i)
+    for (unsigned i = NumNamedArgs; i < NumArgs; ++i) {
+      if (!Args[i]->getType()->isPODType()) {
+        Diag(Args[i]->getLocStart(), 
+             diag::warn_cannot_pass_non_pod_arg_to_vararg) << 
+        Args[i]->getType() << 2; // Method
+      }
+      
       DefaultArgumentPromotion(Args[i]);
+    }
   } else {
     // Check for extra arguments to non-variadic methods.
     if (NumArgs != NumNamedArgs) {

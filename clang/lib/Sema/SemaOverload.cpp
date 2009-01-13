@@ -3576,6 +3576,13 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     // Promote the arguments (C99 6.5.2.2p7).
     for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
       Expr *Arg = Args[i];
+        
+      if (!Arg->getType()->isPODType()) {
+        Diag(Arg->getLocStart(), 
+             diag::warn_cannot_pass_non_pod_arg_to_vararg) << 
+        Arg->getType() << 2; // Method
+      }
+
       DefaultArgumentPromotion(Arg);
       TheCall->setArg(i + 1, Arg);
     }

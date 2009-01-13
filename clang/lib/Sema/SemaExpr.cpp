@@ -1688,6 +1688,17 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     // Promote the arguments (C99 6.5.2.2p7).
     for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
       Expr *Arg = Args[i];
+      if (!Arg->getType()->isPODType()) {
+        int CallType = 0;
+        if (Fn->getType()->isBlockPointerType())
+          CallType = 1; // Block
+        else if (isa<MemberExpr>(Fn))
+          CallType = 2;
+        
+        Diag(Arg->getLocStart(), 
+             diag::warn_cannot_pass_non_pod_arg_to_vararg) << 
+        Arg->getType() << CallType;
+      }
       DefaultArgumentPromotion(Arg);
       Call->setArg(i, Arg);
     }
