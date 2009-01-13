@@ -452,7 +452,7 @@ SVal RegionStoreManager::ArrayToPointer(SVal Array) {
   const MemRegion* R = cast<loc::MemRegionVal>(&Array)->getRegion();
   const TypedRegion* ArrayR = dyn_cast<TypedRegion>(R);
   
-  if (ArrayR)
+  if (!ArrayR)
     return UnknownVal();
   
   nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
