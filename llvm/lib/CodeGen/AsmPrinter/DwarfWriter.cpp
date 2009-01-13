@@ -3604,6 +3604,7 @@ public:
 
       MMI = mmi;
       shouldEmit = true;
+      MMI->setDebugInfoAvailability(true);
 
       // Create DIEs for each of the externally visible global variables.
       ConstructGlobalVariableDIEs();

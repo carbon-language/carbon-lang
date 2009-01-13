@@ -1630,6 +1630,7 @@ MachineModuleInfo::MachineModuleInfo()
 , Personalities()
 , CallsEHReturn(0)
 , CallsUnwindInit(0)
+, DbgInfoAvailable(false)
 {
   // Always emit "no personality" info
   Personalities.push_back(NULL);

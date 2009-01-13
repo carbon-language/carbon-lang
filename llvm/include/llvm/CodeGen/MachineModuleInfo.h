@@ -1041,6 +1041,10 @@ private:
 
   bool CallsEHReturn;
   bool CallsUnwindInit;
+ 
+  /// DbgInfoAvailable - True if debugging information is available
+  /// in this module.
+  bool DbgInfoAvailable;
 public:
   static char ID; // Pass identification, replacement for typeid
 
@@ -1082,8 +1086,9 @@ public:
   
   /// hasDebugInfo - Returns true if valid debug info is present.
   ///
-  bool hasDebugInfo() const { return !CompileUnits.empty(); }
-  
+  bool hasDebugInfo() const { return DbgInfoAvailable; }
+  void setDebugInfoAvailability(bool avail) { DbgInfoAvailable = true; }
+
   bool callsEHReturn() const { return CallsEHReturn; }
   void setCallsEHReturn(bool b) { CallsEHReturn = b; }
 
