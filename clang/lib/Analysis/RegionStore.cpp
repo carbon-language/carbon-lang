@@ -969,6 +969,8 @@ const GRState* RegionStoreManager::KillStruct(const GRState* St,
     if (const SubRegion* sr = dyn_cast<SubRegion>(r))
       if (sr->isSubRegionOf(R))
         store = Remove(store, Loc::MakeVal(sr));
+    // FIXME: Maybe we should also remove the bindings for the "views" of the
+    // subregions.
   }
 
   return StateMgr.MakeStateWithStore(St, store);
