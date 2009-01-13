@@ -15,7 +15,7 @@
 
 #include "LegalizeTypes.h"
 #include "llvm/CallingConv.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
@@ -628,13 +628,11 @@ namespace {
   class VISIBILITY_HIDDEN NodeUpdateListener :
     public SelectionDAG::DAGUpdateListener {
     DAGTypeLegalizer &DTL;
-    SmallVectorImpl<SDNode*> &NodesToAnalyze;
-    SmallPtrSet<SDNode*, 16> &NodesDeleted;
+    SmallSetVector<SDNode*, 16> &NodesToAnalyze;
   public:
     explicit NodeUpdateListener(DAGTypeLegalizer &dtl,
-                                SmallVectorImpl<SDNode*> &nta,
-                                SmallPtrSet<SDNode*, 16> &nd)
-      : DTL(dtl), NodesToAnalyze(nta), NodesDeleted(nd) {}
+                                SmallSetVector<SDNode*, 16> &nta)
+      : DTL(dtl), NodesToAnalyze(nta) {}
 
     virtual void NodeDeleted(SDNode *N, SDNode *E) {
       assert(N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
@@ -647,14 +645,14 @@ namespace {
 
       // In theory the deleted node could also have been scheduled for analysis.
       // So add it to the set of nodes which will not be analyzed.
-      NodesDeleted.insert(N);
+      NodesToAnalyze.remove(N);
 
       // In general nothing needs to be done for E, since it didn't change but
       // only gained new uses.  However N -> E was just added to ReplacedValues,
       // and the result of a ReplacedValues mapping is not allowed to be marked
       // NewNode.  So if E is marked NewNode, then it needs to be analyzed.
       if (E->getNodeId() == DAGTypeLegalizer::NewNode)
-        NodesToAnalyze.push_back(E);
+        NodesToAnalyze.insert(E);
     }
 
     virtual void NodeUpdated(SDNode *N) {
@@ -664,7 +662,7 @@ namespace {
       assert(N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
              N->getNodeId() != DAGTypeLegalizer::Processed &&
              "Invalid node ID for RAUW deletion!");
-      NodesToAnalyze.push_back(N);
+      NodesToAnalyze.insert(N);
     }
   };
 }
@@ -684,9 +682,8 @@ void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
 
   // Anything that used the old node should now use the new one.  Note that this
   // can potentially cause recursive merging.
-  SmallVector<SDNode*, 16> NodesToAnalyze;
-  SmallPtrSet<SDNode*, 16> NodesDeleted;
-  NodeUpdateListener NUL(*this, NodesToAnalyze, NodesDeleted);
+  SmallSetVector<SDNode*, 16> NodesToAnalyze;
+  NodeUpdateListener NUL(*this, NodesToAnalyze);
   DAG.ReplaceAllUsesOfValueWith(From, To, &NUL);
 
   // The old node may still be present in a map like ExpandedIntegers or
@@ -697,10 +694,6 @@ void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
   while (!NodesToAnalyze.empty()) {
     SDNode *N = NodesToAnalyze.back();
     NodesToAnalyze.pop_back();
-
-    // Do not analyze deleted nodes!
-    if (NodesDeleted.count(N))
-      continue;
 
     // Analyze the node's operands and recalculate the node ID.
     assert(N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
