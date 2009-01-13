@@ -918,7 +918,6 @@ def CMP64mi32 : RIi32<0x81, MRM7m, (outs),
 } // Defs = [EFLAGS]
 
 // Bit tests.
-// TODO: BT with immediate operands.
 // TODO: BTC, BTR, and BTS
 let Defs = [EFLAGS] in {
 def BT64rr : RI<0xA3, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
@@ -929,6 +928,18 @@ def BT64mr : RI<0xA3, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
                "bt{q}\t{$src2, $src1|$src1, $src2}",
                [(X86bt (loadi64 addr:$src1), GR64:$src2),
                 (implicit EFLAGS)]>, TB;
+
+def BT64ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR64:$src1, i64i8imm:$src2),
+                "bt{q}\t{$src2, $src1|$src1, $src2}",
+                [(X86bt GR64:$src1, i64immSExt8:$src2),
+                 (implicit EFLAGS)]>, TB;
+// Note that these instructions don't need FastBTMem because that
+// only applies when the other operand is in a register. When it's
+// an immediate, bt is still fast.
+def BT64mi8 : Ii8<0xBA, MRM4m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
+                "bt{q}\t{$src2, $src1|$src1, $src2}",
+                [(X86bt (loadi64 addr:$src1), i64immSExt8:$src2),
+                 (implicit EFLAGS)]>, TB;
 } // Defs = [EFLAGS]
 
 // Conditional moves

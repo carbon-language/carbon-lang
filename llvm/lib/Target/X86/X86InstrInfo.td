@@ -2672,7 +2672,6 @@ def CMP32ri8 : Ii8<0x83, MRM7r,
 } // Defs = [EFLAGS]
 
 // Bit tests.
-// TODO: BT with immediate operands
 // TODO: BTC, BTR, and BTS
 let Defs = [EFLAGS] in {
 def BT16rr : I<0xA3, MRMDestReg, (outs), (ins GR16:$src1, GR16:$src2),
@@ -2691,6 +2690,26 @@ def BT32mr : I<0xA3, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
                "bt{l}\t{$src2, $src1|$src1, $src2}",
                [(X86bt (loadi32 addr:$src1), GR32:$src2),
                 (implicit EFLAGS)]>, TB, Requires<[FastBTMem]>;
+
+def BT16ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR16:$src1, i16i8imm:$src2),
+                "bt{w}\t{$src2, $src1|$src1, $src2}",
+                [(X86bt GR16:$src1, i16immSExt8:$src2),
+                 (implicit EFLAGS)]>, OpSize, TB;
+def BT32ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR32:$src1, i32i8imm:$src2),
+                "bt{l}\t{$src2, $src1|$src1, $src2}",
+                [(X86bt GR32:$src1, i32immSExt8:$src2),
+                 (implicit EFLAGS)]>, TB;
+// Note that these instructions don't need FastBTMem because that
+// only applies when the other operand is in a register. When it's
+// an immediate, bt is still fast.
+def BT16mi8 : Ii8<0xBA, MRM4m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
+                "bt{w}\t{$src2, $src1|$src1, $src2}",
+                [(X86bt (loadi16 addr:$src1), i16immSExt8:$src2),
+                 (implicit EFLAGS)]>, OpSize, TB;
+def BT32mi8 : Ii8<0xBA, MRM4m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
+                "bt{l}\t{$src2, $src1|$src1, $src2}",
+                [(X86bt (loadi32 addr:$src1), i32immSExt8:$src2),
+                 (implicit EFLAGS)]>, TB;
 } // Defs = [EFLAGS]
 
 // Sign/Zero extenders
