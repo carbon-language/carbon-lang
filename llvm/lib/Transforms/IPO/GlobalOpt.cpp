@@ -1715,7 +1715,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     } else if (GS.StoredType == GlobalStatus::isStoredOnce) {
       // If the initial value for the global was an undef value, and if only
       // one other value was stored into it, we can just change the
-      // initializer to be an undef value, then delete all stores to the
+      // initializer to be the stored value, then delete all stores to the
       // global.  This allows us to mark it constant.
       if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue))
         if (isa<UndefValue>(GV->getInitializer())) {
