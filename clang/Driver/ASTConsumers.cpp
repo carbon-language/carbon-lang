@@ -586,9 +586,15 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     Out << ND->getNameAsString();
     break;
   }
-  case Decl::Enum:
-    Out << "[enum]";
+  case Decl::Enum: {
+    EnumDecl* ED = EnumDecl::castFromDeclContext(DC);
+    if (ED->isDefinition())
+      Out << "[enum] ";
+    else
+      Out << "<enum> ";
+    Out << ED->getNameAsString();
     break;
+  }
   case Decl::Record: {
     RecordDecl* RD = RecordDecl::castFromDeclContext(DC);
     if (RD->isDefinition())
