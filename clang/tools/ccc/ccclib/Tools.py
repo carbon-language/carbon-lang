@@ -390,20 +390,6 @@ class Darwin_X86_CompileTool(Tool):
         cmd_args.append(self.getBaseInputName(inputs, arglist))
 
         arglist.addAllArgs(cmd_args, arglist.parser.dGroup)
-        
-        # FIXME: Figure out where these are coming from and
-        # dehardcode.
-        if not arglist.getLastArg(arglist.parser.m_macosxVersionMinOption):
-            cmd_args.append('-mmacosx-version-min=' + 
-                            self.toolChain.getMacosxVersionMin())
-        if (not arglist.getLastArg(arglist.parser.m_32Option) and
-            not arglist.getLastArg(arglist.parser.m_64Option)):
-            if arglist.getValue(arch) == 'x86_64':
-                cmd_args.append('-m64')
-            else:
-                cmd_args.append('-m32')
-        if not arglist.getLastArg(arglist.parser.m_tuneOption):
-            cmd_args.append('-mtune=core2')
 
         arglist.addAllArgs(cmd_args, arglist.parser.mGroup)
         arglist.addAllArgs(cmd_args, arglist.parser.aGroup)
@@ -428,7 +414,7 @@ class Darwin_X86_CompileTool(Tool):
             
         arglist.addAllArgs(cmd_args, arglist.parser.OOption)
         # FIXME: -Wall is getting some special treatment. Investigate.
-        arglist.addAllArgs2(cmd_args, arglist.parser.WOption, arglist.parser.pedanticOption)
+        arglist.addAllArgs2(cmd_args, arglist.parser.WGroup, arglist.parser.pedanticOption)
         arglist.addLastArg(cmd_args, arglist.parser.wOption)
         arglist.addAllArgs3(cmd_args, arglist.parser.stdOption, arglist.parser.ansiOption, arglist.parser.trigraphsOption)
         if arglist.getLastArg(arglist.parser.vOption):

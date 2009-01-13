@@ -74,6 +74,46 @@ class Darwin_X86_ToolChain(ToolChain):
         assert isinstance(action, Phases.JobAction)
         return self.toolMap[action.phase.__class__]
 
+    def translateArgs(self, args, arch):
+        args = super(Darwin_X86_ToolChain, self).translateArgs(args, arch)
+        
+        # If arch hasn't been bound we don't need to do anything yet.
+        if not arch:
+            return args
+
+        al = Arguments.DerivedArgList(args)
+        if not args.getLastArg(args.parser.m_macosxVersionMinOption):
+            al.append(al.makeJoinedArg(self.getMacosxVersionMin(),
+                                       args.parser.m_macosxVersionMinOption))
+        for arg in args:
+            if arg.opt is args.parser.f_constantCfstringsOption:
+                al.append(al.makeFlagArg(args.parser.m_constantCfstringsOption))
+            elif arg.opt is args.parser.f_noConstantCfstringsOption:
+                al.append(al.makeFlagArg(args.parser.m_noConstantCfstringsOption))
+            elif arg.opt is args.parser.WnonportableCfstringsOption:
+                al.append(al.makeFlagArg(args.parser.m_warnNonportableCfstringsOption))
+            elif arg.opt is args.parser.WnoNonportableCfstringsOption:
+                al.append(al.makeFlagArg(args.parser.m_noWarnNonportableCfstringsOption))
+            elif arg.opt is args.parser.f_pascalStringsOption:
+                al.append(al.makeFlagArg(args.parser.m_pascalStringsOption))
+            elif arg.opt is args.parser.f_noPascalStringsOption:
+                al.append(al.makeFlagArg(args.parser.m_noPascalStringsOption))
+            else:
+                al.append(arg)
+
+        # FIXME: Actually, gcc always adds this, but it is filtered
+        # for duplicates somewhere. This also changes the order of
+        # things, so look it up.
+        if arch and args.getValue(arch) == 'x86_64':
+            if not args.getLastArg(args.parser.m_64Option):
+                al.append(al.makeFlagArg(args.parser.m_64Option))
+
+        if not args.getLastArg(args.parser.m_tuneOption):
+            al.append(al.makeJoinedArg('core2',
+                                       args.parser.m_tuneOption))
+
+        return al
+
 class Generic_GCC_ToolChain(ToolChain):
     """Generic_GCC_ToolChain - A tool chain using the 'gcc' command to
     perform all subcommands; this relies on gcc translating the

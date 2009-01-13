@@ -335,7 +335,7 @@ class Driver(object):
                     # revert to unknown. I think this is more likely a
                     # bug / unintended behavior in gcc. Not very
                     # important though.
-                    inputType = ObjectType
+                    inputType = Types.ObjectType
 
         # We claim things here so that options for which we silently allow
         # override only ever claim the used option.

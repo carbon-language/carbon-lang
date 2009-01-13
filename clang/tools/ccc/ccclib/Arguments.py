@@ -396,6 +396,10 @@ class ArgList(object):
         return SeparateValueArg(self.makeIndex(option.name, string),
                                 option)
 
+    def makeJoinedArg(self, string, option):
+        return JoinedValueArg(self.makeIndex(option.name + string),
+                              option)
+
     # Support use as a simple arg list.
 
     def __iter__(self):
@@ -724,6 +728,10 @@ class OptionParser:
         self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions', self.fGroup))
         self.f_objcOption = self.addOption(FlagOption('-fobjc', self.fGroup))
         self.f_openmpOption = self.addOption(FlagOption('-fopenmp', self.fGroup))
+        self.f_constantCfstringsOption = self.addOption(FlagOption('-fconstant-cfstrings', self.fGroup))
+        self.f_noConstantCfstringsOption = self.addOption(FlagOption('-fno-constant-cfstrings', self.fGroup))
+        self.f_pascalStringsOption = self.addOption(FlagOption('-fpascal-strings', self.fGroup))
+        self.f_noPascalStringsOption = self.addOption(FlagOption('-fno-pascal-strings', self.fGroup))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.fGroup))
         self.f_mudflapOption = self.addOption(FlagOption('-fmudflap', self.fGroup))
         self.f_mudflapthOption = self.addOption(FlagOption('-fmudflapth', self.fGroup))
@@ -745,6 +753,12 @@ class OptionParser:
         self.m_iphoneosVersionMinOption = self.addOption(JoinedOption('-miphoneos-version-min=', self.mGroup))
         self.m_kernelOption = self.addOption(FlagOption('-mkernel', self.mGroup))
         self.m_macosxVersionMinOption = self.addOption(JoinedOption('-mmacosx-version-min=', self.mGroup))
+        self.m_constantCfstringsOption = self.addOption(FlagOption('-mconstant-cfstrings', self.mGroup))
+        self.m_noConstantCfstringsOption = self.addOption(FlagOption('-mno-constant-cfstrings', self.mGroup))
+        self.m_warnNonportableCfstringsOption = self.addOption(FlagOption('-mwarn-nonportable-cfstrings', self.mGroup))
+        self.m_noWarnNonportableCfstringsOption = self.addOption(FlagOption('-mno-warn-nonportable-cfstrings', self.mGroup))
+        self.m_pascalStringsOption = self.addOption(FlagOption('-mpascal-strings', self.mGroup))
+        self.m_noPascalStringsOption = self.addOption(FlagOption('-mno-pascal-strings', self.mGroup))
         self.m_tuneOption = self.addOption(JoinedOption('-mtune=', self.mGroup))
 
         # Ugh. Need to disambiguate our naming convetion. -m x goes to
@@ -761,7 +775,10 @@ class OptionParser:
         self.trigraphsOption = self.addOption(FlagOption('-trigraphs'))
         self.pedanticOption = self.addOption(FlagOption('-pedantic'))
         self.OOption = self.addOption(JoinedOption('-O'))
-        self.WOption = self.addOption(JoinedOption('-W'))
+        self.WGroup = OptionGroup('-W')
+        self.WnonportableCfstringsOption = self.addOption(JoinedOption('-Wnonportable-cfstrings', self.WGroup))
+        self.WnoNonportableCfstringsOption = self.addOption(JoinedOption('-Wno-nonportable-cfstrings', self.WGroup))
+        self.WOption = self.addOption(JoinedOption('-W', self.WGroup))
         # FIXME: Weird. This option isn't really separate, --param=a=b
         # works. There is something else going on which interprets the
         # '='.
