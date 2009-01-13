@@ -1,4 +1,3 @@
-// XFAIL
 // RUN: clang -checker-simple -analyzer-store-region -verify %s
 
 char f1() {
