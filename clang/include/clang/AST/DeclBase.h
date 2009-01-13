@@ -376,6 +376,10 @@ protected:
 public:
   ~DeclContext();
 
+  Decl::Kind getDeclKind() const {
+    return DeclKind;
+  }
+
   /// getParent - Returns the containing DeclContext if this is a ScopedDecl,
   /// else returns NULL.
   const DeclContext *getParent() const;

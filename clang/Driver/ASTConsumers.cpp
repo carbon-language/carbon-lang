@@ -575,8 +575,7 @@ public:
 void DeclContextPrinter::PrintDeclContext(const DeclContext* DC, 
                                           unsigned Indentation) {
   // Print DeclContext name.
-  Decl::Kind DK = DeclContext::KindTrait<DeclContext>::getKind(DC);
-  switch (DK) {
+  switch (DC->getDeclKind()) {
   case Decl::TranslationUnit:
     Out << "[translation unit] " << DC;
     break;
