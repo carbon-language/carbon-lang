@@ -34,10 +34,10 @@ class PTHManager;
 class PTHSpellingSearch {
   PTHManager& PTHMgr;
   
-  const char* TableBeg;
-  const char* TableEnd;
+  const char* const TableBeg;
+  const char* const TableEnd;
   
-  unsigned SpellingsLeft;
+  const unsigned NumSpellings;
   const char* LinearItr;
   
 public:
@@ -50,7 +50,7 @@ public:
     : PTHMgr(pm),
       TableBeg(tableBeg),
       TableEnd(tableBeg + numSpellings*SpellingEntrySize),
-      SpellingsLeft(numSpellings),
+      NumSpellings(numSpellings),
       LinearItr(tableBeg) {}
 };  
   
@@ -101,8 +101,6 @@ class PTHManager {
   /// getSpellingAtPTHOffset - Used by PTHLexer classes to get the cached 
   ///  spelling for a token.
   unsigned getSpellingAtPTHOffset(unsigned PTHOffset, const char*& Buffer);
-
-  unsigned getSpelling(unsigned FileID, unsigned fpos, const char *& Buffer);
   
 public:
   
@@ -111,11 +109,13 @@ public:
   /// Create - This method creates PTHManager objects.  The 'file' argument
   ///  is the name of the PTH file.  This method returns NULL upon failure.
   static PTHManager* Create(const std::string& file, Preprocessor& PP);
-  
+
   /// CreateLexer - Return a PTHLexer that "lexes" the cached tokens for the
   ///  specified file.  This method returns NULL if no cached tokens exist.
   ///  It is the responsibility of the caller to 'delete' the returned object.
-  PTHLexer* CreateLexer(unsigned FileID, const FileEntry* FE);  
+  PTHLexer* CreateLexer(unsigned FileID, const FileEntry* FE);
+  
+  unsigned getSpelling(unsigned FileID, unsigned fpos, const char *& Buffer);
 };
   
 }  // end namespace clang

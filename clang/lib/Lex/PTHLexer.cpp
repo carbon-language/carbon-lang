@@ -23,7 +23,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Support/Streams.h"
 
 using namespace clang;
 
@@ -311,8 +310,8 @@ unsigned PTHManager::getSpelling(unsigned FileID, unsigned fpos,
 
   if (I == SpellingMap.end())
       return 0;
-    
-  return I->second->getSpellingBinarySearch(fpos, Buffer);  
+
+  return I->second->getSpellingBinarySearch(fpos, Buffer);
 }
 
 unsigned PTHManager::getSpellingAtPTHOffset(unsigned PTHOffset,
@@ -335,7 +334,7 @@ unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned fpos,
   const char* p = LinearItr;
   unsigned len = 0;
   
-  if (!SpellingsLeft)
+  if (p == TableEnd)
     return getSpellingBinarySearch(fpos, Buffer);
   
   do {
@@ -348,8 +347,6 @@ unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned fpos,
     if (TokOffset > fpos)
       return getSpellingBinarySearch(fpos, Buffer);
     
-    --SpellingsLeft;
-    
     // Did we find a matching token offset for this spelling?
     if (TokOffset == fpos) {
       uint32_t SpellingPTHOffset = 
@@ -358,14 +355,15 @@ unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned fpos,
         | (((uint32_t) ((uint8_t) p[6])) << 16)
         | (((uint32_t) ((uint8_t) p[7])) << 24);
       
+      p += SpellingEntrySize;
       len = PTHMgr.getSpellingAtPTHOffset(SpellingPTHOffset, Buffer);
       break;
     }
 
     // No match.  Keep on looking.
-    p += sizeof(uint32_t)*2;
+    p += SpellingEntrySize;
   }
-  while (SpellingsLeft);
+  while (p != TableEnd);
 
   LinearItr = p;
   return len;
@@ -374,13 +372,18 @@ unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned fpos,
 unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
                                                     const char *& Buffer) {
   
-  assert ((TableEnd - TableBeg) % SpellingEntrySize == 0);
+  assert((TableEnd - TableBeg) % SpellingEntrySize == 0);
+  
+  if (TableEnd == TableBeg)
+    return 0;
+  
+  assert(TableEnd > TableBeg);
   
   unsigned min = 0;
   const char* tb = TableBeg;
-  unsigned max = (TableEnd - tb) / SpellingEntrySize;
+  unsigned max = NumSpellings;
 
-  while (min != max) {
+  do {
     unsigned i = (max - min) / 2 + min;
     const char* p = tb + (i * SpellingEntrySize);
     
@@ -392,6 +395,7 @@ unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
     
     if (TokOffset > fpos) {
       max = i;
+      assert(!(max == min) || (min == i));
       continue;
     }
     
@@ -408,6 +412,7 @@ unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
     
     return PTHMgr.getSpellingAtPTHOffset(SpellingPTHOffset, Buffer);
   }
+  while (min != max);
   
   return 0;
 }
@@ -415,13 +420,11 @@ unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
 unsigned PTHLexer::getSpelling(SourceLocation sloc, const char *&Buffer) {
   SourceManager& SM = PP->getSourceManager();
   sloc = SM.getPhysicalLoc(sloc);
-  unsigned fid = SM.getCanonicalFileID(sloc);
+  unsigned fid = sloc.getFileID();
   unsigned fpos = SM.getFullFilePos(sloc);
   
-  if (fid == FileID)
-    return MySpellingSrch.getSpellingLinearSearch(fpos, Buffer);
-
-  return PTHMgr.getSpelling(fid, fpos, Buffer);
+  return (fid == FileID ) ? MySpellingSrch.getSpellingLinearSearch(fpos, Buffer)
+                          : PTHMgr.getSpelling(fid, fpos, Buffer);  
 }
 
 //===----------------------------------------------------------------------===//

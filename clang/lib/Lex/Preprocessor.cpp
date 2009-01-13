@@ -195,9 +195,20 @@ void Preprocessor::PrintStats() {
 /// UCNs, etc.
 std::string Preprocessor::getSpelling(const Token &Tok) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
+  const char* TokStart;
+  
+  if (PTH) {
+    SourceLocation sloc = SourceMgr.getPhysicalLoc(Tok.getLocation());
+    unsigned fid = sloc.getFileID();
+    unsigned fpos = SourceMgr.getFullFilePos(sloc);
+    if (unsigned len = PTH->getSpelling(fid, fpos, TokStart)) {
+      assert(!Tok.needsCleaning());
+      return std::string(TokStart, TokStart+len);
+    }
+  }
   
   // If this token contains nothing interesting, return it directly.
-  const char *TokStart = SourceMgr.getCharacterData(Tok.getLocation());
+  TokStart = SourceMgr.getCharacterData(Tok.getLocation());
   if (!Tok.needsCleaning())
     return std::string(TokStart, TokStart+Tok.getLength());
   
@@ -238,21 +249,32 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
   }
 
   // If using PTH, try and get the spelling from the PTH file.
-  if (CurPTHLexer) {
-    // We perform the const_cast<> here because we will only have a PTHLexer 
-    // when grabbing a stream of tokens from the PTH file (and thus the
-    // Preprocessor state is allowed to change).  The PTHLexer can assume we are
-    // getting token spellings in the order of tokens, and thus can update
-    // its internal state so that it can quickly fetch spellings from the PTH
-    // file.
-    unsigned len =
-      const_cast<PTHLexer*>(CurPTHLexer.get())->getSpelling(Tok.getLocation(),
-                                                            Buffer);
+  if (PTH) {
+    unsigned len;
     
+    if (CurPTHLexer) {
+      // We perform the const_cast<> here because we will only have a PTHLexer 
+      // when grabbing a stream of tokens from the PTH file (and thus the
+      // Preprocessor state is allowed to change).  The PTHLexer can assume we are
+      // getting token spellings in the order of tokens, and thus can update
+      // its internal state so that it can quickly fetch spellings from the PTH
+      // file.
+      len =
+        const_cast<PTHLexer*>(CurPTHLexer.get())->getSpelling(Tok.getLocation(),
+                                                              Buffer);      
+    }
+    else {
+      SourceLocation sloc = SourceMgr.getPhysicalLoc(Tok.getLocation());
+      unsigned fid = sloc.getFileID();
+      unsigned fpos = SourceMgr.getFullFilePos(sloc);      
+      len = PTH->getSpelling(fid, fpos, Buffer);      
+    }
+
     // Did we find a spelling?  If so return its length.  Otherwise fall
     // back to the default behavior for getting the spelling by looking at
-    // at the source code.
-    if (len) return len;
+    // at the source code.    
+    if (len)
+      return len;
   }
 
   // Otherwise, compute the start of the token in the input lexer buffer.
