@@ -329,7 +329,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N) {
   if (TLI.isBigEndian())
     std::swap(Lo, Hi);
 
-  // Signed extend to the promoted type.
+  // Extend to the promoted type.
   SDValue Odd = DAG.getNode(ISD::TRUNCATE, MVT::i1, OldIdx);
   SDValue Res = DAG.getNode(ISD::SELECT, NewVT, Odd, Hi, Lo);
   return DAG.getNode(ISD::ANY_EXTEND, TLI.getTypeToTransformTo(OldVT), Res);
