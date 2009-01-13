@@ -14,7 +14,7 @@
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 #define LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 
-#include "llvm/Instruction.h"
+#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
@@ -104,8 +104,6 @@ namespace llvm {
 
     Value *visitUDivExpr(SCEVUDivExpr *S);
 
-    Value *visitSDivExpr(SCEVSDivExpr *S);
-
     Value *visitAddRecExpr(SCEVAddRecExpr *S);
 
     Value *visitSMaxExpr(SCEVSMaxExpr *S);
@@ -119,3 +117,4 @@ namespace llvm {
 }
 
 #endif
+

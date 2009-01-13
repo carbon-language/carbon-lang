@@ -143,15 +143,6 @@ Value *SCEVExpander::visitUDivExpr(SCEVUDivExpr *S) {
   return InsertBinop(Instruction::UDiv, LHS, RHS, InsertPt);
 }
 
-Value *SCEVExpander::visitSDivExpr(SCEVSDivExpr *S) {
-  // Do not fold sdiv into ashr, unless you know that LHS is positive. On
-  // negative values, it rounds the wrong way.
-
-  Value *LHS = expand(S->getLHS());
-  Value *RHS = expand(S->getRHS());
-  return InsertBinop(Instruction::SDiv, LHS, RHS, InsertPt);
-}
-
 Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   const Type *Ty = S->getType();
   const Loop *L = S->getLoop();

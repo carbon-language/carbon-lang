@@ -25,7 +25,7 @@ namespace llvm {
     // These should be ordered in terms of increasing complexity to make the
     // folders simpler.
     scConstant, scTruncate, scZeroExtend, scSignExtend, scAddExpr, scMulExpr,
-    scUDivExpr, scSDivExpr, scAddRecExpr, scUMaxExpr, scSMaxExpr, scUnknown,
+    scUDivExpr, scAddRecExpr, scUMaxExpr, scSMaxExpr, scUnknown,
     scCouldNotCompute
   };
 
@@ -358,55 +358,6 @@ namespace llvm {
 
 
   //===--------------------------------------------------------------------===//
-  /// SCEVSDivExpr - This class represents a binary signed division operation.
-  ///
-  class SCEVSDivExpr : public SCEV {
-    friend class ScalarEvolution;
-
-    SCEVHandle LHS, RHS;
-    SCEVSDivExpr(const SCEVHandle &lhs, const SCEVHandle &rhs)
-      : SCEV(scSDivExpr), LHS(lhs), RHS(rhs) {}
-
-    virtual ~SCEVSDivExpr();
-  public:
-    const SCEVHandle &getLHS() const { return LHS; }
-    const SCEVHandle &getRHS() const { return RHS; }
-
-    virtual bool isLoopInvariant(const Loop *L) const {
-      return LHS->isLoopInvariant(L) && RHS->isLoopInvariant(L);
-    }
-
-    virtual bool hasComputableLoopEvolution(const Loop *L) const {
-      return LHS->hasComputableLoopEvolution(L) &&
-             RHS->hasComputableLoopEvolution(L);
-    }
-
-    SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                                 const SCEVHandle &Conc,
-                                                 ScalarEvolution &SE) const {
-      SCEVHandle L = LHS->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
-      SCEVHandle R = RHS->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
-      if (L == LHS && R == RHS)
-        return this;
-      else
-        return SE.getSDivExpr(L, R);
-    }
-
-
-    virtual const Type *getType() const;
-
-    void print(std::ostream &OS) const;
-    void print(std::ostream *OS) const { if (OS) print(*OS); }
-
-    /// Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const SCEVSDivExpr *S) { return true; }
-    static inline bool classof(const SCEV *S) {
-      return S->getSCEVType() == scSDivExpr;
-    }
-  };
-
-
-  //===--------------------------------------------------------------------===//
   /// SCEVAddRecExpr - This node represents a polynomial recurrence on the trip
   /// count of the specified loop.
   ///
@@ -599,8 +550,6 @@ namespace llvm {
         return ((SC*)this)->visitMulExpr((SCEVMulExpr*)S);
       case scUDivExpr:
         return ((SC*)this)->visitUDivExpr((SCEVUDivExpr*)S);
-      case scSDivExpr:
-        return ((SC*)this)->visitSDivExpr((SCEVSDivExpr*)S);
       case scAddRecExpr:
         return ((SC*)this)->visitAddRecExpr((SCEVAddRecExpr*)S);
       case scSMaxExpr:
