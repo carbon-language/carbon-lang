@@ -1744,7 +1744,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     // less conservative check. It's possible a sub-register is defined before
     // v1024 (or live in) and live out of BB1.
     if (RHS.containsOneValue() &&
-	li_->intervalIsInOneMBB(RHS) &&
+        li_->intervalIsInOneMBB(RHS) &&
         li_->getApproximateInstructionCount(RHS) <= 10) {
       // Perform a more exhaustive check for some common cases.
       if (li_->conflictsWithPhysRegRef(RHS, LHS.reg, true, JoinedCopies))
