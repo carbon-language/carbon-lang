@@ -2675,11 +2675,11 @@ def CMP32ri8 : Ii8<0x83, MRM7r,
 // TODO: BT with immediate operands
 // TODO: BTC, BTR, and BTS
 let Defs = [EFLAGS] in {
-def BT16rr : I<0xA3, MRMSrcReg, (outs), (ins GR16:$src1, GR16:$src2),
+def BT16rr : I<0xA3, MRMDestReg, (outs), (ins GR16:$src1, GR16:$src2),
                "bt{w}\t{$src2, $src1|$src1, $src2}",
                [(X86bt GR16:$src1, GR16:$src2),
                 (implicit EFLAGS)]>, OpSize, TB;
-def BT32rr : I<0xA3, MRMSrcReg, (outs), (ins GR32:$src1, GR32:$src2),
+def BT32rr : I<0xA3, MRMDestReg, (outs), (ins GR32:$src1, GR32:$src2),
                "bt{l}\t{$src2, $src1|$src1, $src2}",
                [(X86bt GR32:$src1, GR32:$src2),
                 (implicit EFLAGS)]>, TB;
