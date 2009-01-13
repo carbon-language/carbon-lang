@@ -3023,7 +3023,14 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
   if (CompoundType.isNull()) {
     // Simple assignment "x = y".
     ConvTy = CheckSingleAssignmentConstraints(LHSType, RHS);
-    
+    // Special case of NSObject attributes on c-style pointer types.
+    if (ConvTy == IncompatiblePointer &&
+        ((Context.isObjCNSObjectType(LHSType) &&
+          Context.isObjCObjectPointerType(RHSType)) ||
+         (Context.isObjCNSObjectType(RHSType) &&
+          Context.isObjCObjectPointerType(LHSType))))
+      ConvTy = Compatible;
+  
     // If the RHS is a unary plus or minus, check to see if they = and + are
     // right next to each other.  If so, the user may have typo'd "x =+ 4"
     // instead of "x += 4".

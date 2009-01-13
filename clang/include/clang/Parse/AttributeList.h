@@ -76,6 +76,7 @@ public:
     AT_blocks,
     AT_sentinel,
     AT_const,
+    AT_nsobject,
     UnknownAttribute
   };
   

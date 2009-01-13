@@ -42,6 +42,7 @@ public:
     NoReturn,
     NoThrow,
     ObjCGC,
+    ObjCNSObject,
     Packed,
     StdCall,
     TransparentUnion,
@@ -418,6 +419,15 @@ public:
   static bool classof(const ObjCGCAttr *A) { return true; }
 };
 
+class ObjCNSObjectAttr : public Attr {
+// Implement isa/cast/dyncast/etc.
+public:
+  ObjCNSObjectAttr() : Attr(ObjCNSObject) {}
+  
+static bool classof(const Attr *A) { return A->getKind() == ObjCNSObject; }
+static bool classof(const ObjCNSObjectAttr *A) { return true; }
+};
+  
 class BlocksAttr : public Attr {
 public:
   enum BlocksAttrTypes {
@@ -433,7 +443,7 @@ public:
   // Implement isa/cast/dyncast/etc.
 
   static bool classof(const Attr *A) { return A->getKind() == Blocks; }
-  static bool classof(const ObjCGCAttr *A) { return true; }
+  static bool classof(const BlocksAttr *A) { return true; }
 };
 
 }  // end namespace clang

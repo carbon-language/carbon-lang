@@ -412,6 +412,8 @@ DIAG(err_expected_asm_operand, ERROR,
      "expected string literal or '[' for asm operand")
 DIAG(err_expected_selector_for_method, ERROR,
      "expected selector for Objective-C method")
+DIAG(err_nsobject_attribute, ERROR,
+     "__attribute ((NSObject)) is for pointer types only")
 
 DIAG(err_unexpected_at, ERROR,
      "unexpected '@' in program")

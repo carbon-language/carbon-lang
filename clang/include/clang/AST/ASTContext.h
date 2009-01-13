@@ -356,6 +356,10 @@ public:
   /// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
   /// ID type).
   bool isObjCObjectPointerType(QualType Ty) const;
+  
+  /// isObjCNSObjectType - Return true if this is an NSObject object with
+  /// its NSObject attribute set.
+  bool isObjCNSObjectType(QualType Ty) const;
     
   //===--------------------------------------------------------------------===//
   //                         Type Sizing and Analysis

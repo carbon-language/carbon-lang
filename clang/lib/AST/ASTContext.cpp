@@ -2078,6 +2078,19 @@ QualType ASTContext::getFromTargetType(unsigned Type) const {
 //                        Type Predicates.
 //===----------------------------------------------------------------------===//
 
+/// isObjCNSObjectType - Return true if this is an NSObject object using
+/// NSObject attribute on a c-style pointer type.
+/// FIXME - Make it work directly on types.
+///
+bool ASTContext::isObjCNSObjectType(QualType Ty) const {
+  if (TypedefType *TDT = dyn_cast<TypedefType>(Ty)) {
+    if (TypedefDecl *TD = TDT->getDecl())
+      if (TD->getAttr<ObjCNSObjectAttr>())
+        return true;
+  }
+  return false;  
+}
+
 /// isObjCObjectPointerType - Returns true if type is an Objective-C pointer
 /// to an object type.  This includes "id" and "Class" (two 'special' pointers
 /// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
@@ -2101,7 +2114,11 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
     return true;
   
   // If this a pointer to an interface (e.g. NSString*), it is ok.
-  return Ty->getAsPointerType()->getPointeeType()->isObjCInterfaceType();
+  if (Ty->getAsPointerType()->getPointeeType()->isObjCInterfaceType())
+    return true;
+  
+  // If is has NSObject attribute, OK as well.
+  return isObjCNSObjectType(Ty);
 }
 
 //===----------------------------------------------------------------------===//
