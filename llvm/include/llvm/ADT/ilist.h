@@ -384,6 +384,13 @@ public:
     return New;
   }
 
+  iterator insertAfter(iterator where, NodeTy *New) {
+    if (empty()) 
+      return insert(begin(), New);
+    else
+      return insert(++where, New);
+  }
+
   NodeTy *remove(iterator &IT) {
     assert(IT != end() && "Cannot remove end of list!");
     NodeTy *Node = &*IT;

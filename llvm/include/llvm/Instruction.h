@@ -101,6 +101,10 @@ public:
   /// immediately before the specified instruction.
   void insertBefore(Instruction *InsertPos);
 
+  /// insertAfter - Insert an unlinked instructions into a basic block
+  /// immediately after the specified instruction.
+  void insertAfter(Instruction *InsertPos);
+
   /// moveBefore - Unlink this instruction from its current basic block and
   /// insert it into the basic block that MovePos lives in, right before
   /// MovePos.

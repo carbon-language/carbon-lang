@@ -74,6 +74,12 @@ void Instruction::insertBefore(Instruction *InsertPos) {
   InsertPos->getParent()->getInstList().insert(InsertPos, this);
 }
 
+/// insertAfter - Insert an unlinked instructions into a basic block
+/// immediately after the specified instruction.
+void Instruction::insertAfter(Instruction *InsertPos) {
+  InsertPos->getParent()->getInstList().insertAfter(InsertPos, this);
+}
+
 /// moveBefore - Unlink this instruction from its current basic block and
 /// insert it into the basic block that MovePos lives in, right before
 /// MovePos.
