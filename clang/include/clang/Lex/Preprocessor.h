@@ -449,6 +449,20 @@ public:
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer) const;
   
+  /// getPhysicalCharacterAt - Return a pointer to the start of the specified
+  ///  location in the appropriate MemoryBuffer.
+  char getPhysicalCharacterAt(SourceLocation SL) const {
+    if (PTH) {
+      SL = SourceMgr.getPhysicalLoc(SL);
+      unsigned fid = SourceMgr.getCanonicalFileID(SL);
+      unsigned fpos = SourceMgr.getFullFilePos(SL);      
+      const char* data;
+      if (PTH->getSpelling(fid, fpos, data))
+        return *data;
+    }
+
+    return *SourceMgr.getCharacterData(SL);
+  }
   
   /// CreateString - Plop the specified string into a scratch buffer and return
   /// a location for it.  If specified, the source location provides a source

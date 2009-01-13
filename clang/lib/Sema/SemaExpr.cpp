@@ -846,13 +846,13 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   // fast path for a single digit (which is quite common). A single digit 
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
-    const char *Ty = PP.getSourceManager().getCharacterData(Tok.getLocation());
-    
+    const char Ty = PP.getPhysicalCharacterAt(Tok.getLocation());
     unsigned IntSize =static_cast<unsigned>(Context.getTypeSize(Context.IntTy));
-    return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, *Ty-'0'),
+    return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, Ty-'0'),
                                          Context.IntTy, 
                                          Tok.getLocation()));
   }
+
   llvm::SmallString<512> IntegerBuffer;
   // Add padding so that NumericLiteralParser can overread by one character.
   IntegerBuffer.resize(Tok.getLength()+1);

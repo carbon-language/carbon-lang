@@ -423,7 +423,7 @@ unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
 unsigned PTHLexer::getSpelling(SourceLocation sloc, const char *&Buffer) {
   SourceManager& SM = PP->getSourceManager();
   sloc = SM.getPhysicalLoc(sloc);
-  unsigned fid = sloc.getFileID();
+  unsigned fid = SM.getCanonicalFileID(sloc);
   unsigned fpos = SM.getFullFilePos(sloc);
   
   return (fid == FileID ) ? MySpellingSrch.getSpellingLinearSearch(fpos, Buffer)

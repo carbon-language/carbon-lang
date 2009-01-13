@@ -199,7 +199,7 @@ std::string Preprocessor::getSpelling(const Token &Tok) const {
   
   if (PTH) {
     SourceLocation sloc = SourceMgr.getPhysicalLoc(Tok.getLocation());
-    unsigned fid = sloc.getFileID();
+    unsigned fid = SourceMgr.getCanonicalFileID(sloc);
     unsigned fpos = SourceMgr.getFullFilePos(sloc);
     if (unsigned len = PTH->getSpelling(fid, fpos, TokStart)) {
       assert(!Tok.needsCleaning());
@@ -265,7 +265,7 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
     }
     else {
       SourceLocation sloc = SourceMgr.getPhysicalLoc(Tok.getLocation());
-      unsigned fid = sloc.getFileID();
+      unsigned fid = SourceMgr.getCanonicalFileID(sloc);
       unsigned fpos = SourceMgr.getFullFilePos(sloc);      
       len = PTH->getSpelling(fid, fpos, Buffer);      
     }
