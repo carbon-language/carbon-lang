@@ -51,6 +51,10 @@ class PIC16RegisterInfo : public PIC16GenRegisterInfo {
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                         int SPAdj, RegScavenger *RS=NULL) const;
 
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const;
+
   virtual void emitPrologue(MachineFunction &MF) const;
   virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
   virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const;

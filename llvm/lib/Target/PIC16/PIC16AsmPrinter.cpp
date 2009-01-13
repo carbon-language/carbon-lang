@@ -24,6 +24,33 @@
 using namespace llvm;
 
 #include "PIC16GenAsmWriter.inc"
+bool PIC16AsmPrinter::inSameBank (char *s1, char *s2){
+
+  assert (s1 && s2 && "Null pointer assignment");
+
+  if ((*s1 == '.') && (*s2 == '.')) { //skip if they both start with '.'
+    s1++;
+    s2++;
+  }
+  while (*s1 && *s2) {
+    if (*s1 != *s2) 
+      goto _NotInSameBank;
+
+    if ((*s1 == '.') && (*s2 == '.')) //both symbols in same function
+      goto _InSameBank;               //in the same bank
+
+    s1++;
+    s2++;
+  }
+
+  if (*s1 && *s1) {
+  _InSameBank:
+    return true;
+  }
+
+ _NotInSameBank:
+  return false;
+}
 
 bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   std::string NewBankselLabel;
@@ -45,8 +72,8 @@ bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       // generate banksel.
       const MachineOperand &BS = MI->getOperand(Operands-1);
       if (((int)BS.getImm() == 1) &&
-          (strcmp (CurrentBankselLabelInBasicBlock.c_str(),
-                   NewBankselLabel.c_str()))) {
+          (!inSameBank ((char *)CurrentBankselLabelInBasicBlock.c_str(),
+			(char *)NewBankselLabel.c_str()))) {
         CurrentBankselLabelInBasicBlock = NewBankselLabel;
         O << "\tbanksel ";
         printOperand(MI, Operands-2);
@@ -73,9 +100,11 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Emit the function variables.
   emitFunctionData(MF);
   std::string codeSection;
-  codeSection = "code." + CurrentFnName + ".#";
+  codeSection = "code." + CurrentFnName + ".# " + "CODE";
+  const Section *fCodeSection = TAI->getNamedSection(codeSection.c_str(),
+                                               SectionFlags::Code);
   O <<  "\n";
-  SwitchToTextSection (codeSection.c_str(),F);
+  SwitchToSection (fCodeSection);
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -130,10 +159,20 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       O << MO.getSymbolName();
       break;
 
+    case MachineOperand::MO_MachineBasicBlock:
+      printBasicBlockLabel(MO.getMBB());
+      return;
+
     default:
       assert(0 && " Operand type not supported.");
   }
 }
+
+void PIC16AsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
+  int CC = (int)MI->getOperand(opNum).getImm();
+  O << PIC16CondCodeToString((PIC16CC::CondCodes)CC);
+}
+
 
 bool PIC16AsmPrinter::doInitialization (Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
@@ -166,6 +205,10 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
       O << "\tglobal " << Name << ".args\n";
     }
   }
+
+  // Emit header file to include declaration of library functions
+  O << "\t#include C16IntrinsicCalls.INC\n";
+
   // Emit declarations for external globals.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; I++) {
@@ -177,8 +220,7 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
   }
 }
 void PIC16AsmPrinter::EmitInitData (Module &M) {
-  std::string iDataSection = "idata.#";
-  SwitchToDataSection(iDataSection.c_str());
+  SwitchToSection(TAI->getDataSection());
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (!I->hasInitializer())   // External global require no code.
@@ -244,8 +286,7 @@ void PIC16AsmPrinter::EmitConstantValueOnly(const Constant* CV) {
 
 void PIC16AsmPrinter::EmitRomData (Module &M)
 {
-  std::string romDataSection = "romdata.#";
-  SwitchToRomDataSection(romDataSection.c_str());
+  SwitchToSection(TAI->getReadOnlySection());
   IsRomData = true;
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
@@ -274,11 +315,9 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
   IsRomData = false;
 }
 
-
 void PIC16AsmPrinter::EmitUnInitData (Module &M)
 {
-  std::string uDataSection = "udata.#";
-  SwitchToUDataSection(uDataSection.c_str());
+  SwitchToSection(TAI->getBSSSection_());
   const TargetData *TD = TM.getTargetData();
 
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -300,6 +339,7 @@ void PIC16AsmPrinter::EmitUnInitData (Module &M)
 
       const Type *Ty = C->getType();
       unsigned Size = TD->getTypePaddedSize(Ty);
+
       O << name << " " <<"RES"<< " " << Size ;
       O << "\n";
     }
@@ -317,29 +357,24 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   std::string FuncName = Mang->getValueName(F);
   const Module *M = F->getParent();
   const TargetData *TD = TM.getTargetData();
-
+  unsigned FrameSize = 0;
   // Emit the data section name.
   O << "\n"; 
-  std::string fDataSection = "fdata." + CurrentFnName + ".#";
-  SwitchToUDataSection(fDataSection.c_str(), F);
+  std::string SectionName = "fdata." + CurrentFnName + ".# " + "UDATA";
+
+  const Section *fDataSection = TAI->getNamedSection(SectionName.c_str(),
+                                               SectionFlags::Writeable);
+  SwitchToSection(fDataSection);
   
   //Emit function return value.
   O << CurrentFnName << ".retval:\n";
   const Type *RetType = F->getReturnType();
-  if (RetType->getTypeID() != Type::VoidTyID) {
-    unsigned RetSize = TD->getTypePaddedSize(RetType);
-    if (RetSize > 0)
-      O << CurrentFnName << ".retval" << " RES " << RetSize;
-   }
+  unsigned RetSize = 0; 
+  if (RetType->getTypeID() != Type::VoidTyID) 
+    RetSize = TD->getTypePaddedSize(RetType);
+  
   // Emit function arguments.
   O << CurrentFnName << ".args:\n";
-  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-       AI != AE; ++AI) {
-    std::string ArgName = Mang->getValueName(AI);
-    const Type *ArgTy = AI->getType();
-    unsigned ArgSize = TD->getTypePaddedSize(ArgTy);
-    O << CurrentFnName << ".args." << ArgName << " RES " << ArgSize; 
-  }
   // Emit the function variables. 
    
   // In PIC16 all the function arguments and local variables are global.
@@ -358,22 +393,28 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     Constant *C = I->getInitializer();
     const Type *Ty = C->getType();
     unsigned Size = TD->getTypePaddedSize(Ty);
+    FrameSize += Size; 
     // Emit memory reserve directive.
     O << VarName << "  RES  " << Size << "\n";
   }
-  emitFunctionTempData(MF);
+  emitFunctionTempData(MF, FrameSize);
+  if (RetSize > FrameSize)
+    O << CurrentFnName << ".dummy" << "RES" << (RetSize - FrameSize); 
 }
 
-void PIC16AsmPrinter::emitFunctionTempData(MachineFunction &MF) {
+void PIC16AsmPrinter::emitFunctionTempData(MachineFunction &MF,
+                                           unsigned &FrameSize) {
   // Emit temporary variables.
   MachineFrameInfo *FrameInfo = MF.getFrameInfo();
   if (FrameInfo->hasStackObjects()) {
     int indexBegin = FrameInfo->getObjectIndexBegin();
     int indexEnd = FrameInfo->getObjectIndexEnd();
 
-    if (indexBegin < indexEnd)
+    if (indexBegin < indexEnd) { 
+      FrameSize += indexEnd - indexBegin; 
       O << CurrentFnName << ".tmp RES"<< " " 
         <<indexEnd - indexBegin <<"\n";
+    } 
     /*
     while (indexBegin < indexEnd) {
         O << CurrentFnName << "_tmp_" << indexBegin << " " << "RES"<< " " 
@@ -383,56 +424,3 @@ void PIC16AsmPrinter::emitFunctionTempData(MachineFunction &MF) {
     */
   }
 }
-
-/// The function is same as AsmPrinter::SwitchtoDataSection except the call
-/// to getUDataSectionStartSuffix.
-void PIC16AsmPrinter::SwitchToUDataSection(const char *NewSection,
-                                           const GlobalValue *GV) {
-  std::string NS;
-  if (GV && GV->hasSection())
-    NS = TAI->getSwitchToSectionDirective() + GV->getSection();
-  else
-    NS = NewSection;
-
-  // If we're already in this section, we're done.
-  if (CurrentSection == NS) return;
-
-  // Close the current section, if applicable.
-  if (TAI->getSectionEndDirectiveSuffix() && !CurrentSection.empty())
-    O << CurrentSection << TAI->getSectionEndDirectiveSuffix() << '\n';
-
-  CurrentSection = NS;
-
-  if (!CurrentSection.empty()){}
-    O << CurrentSection << (static_cast<const PIC16TargetAsmInfo *>(TAI))->
-                            getUDataSectionStartSuffix() << '\n';
-
-  IsInTextSection = false;
-}
-
-/// The function is same as AsmPrinter::SwitchtoDataSection except the call
-/// to getRomDataSectionStartSuffix.
-void PIC16AsmPrinter::SwitchToRomDataSection(const char *NewSection,
-                                             const GlobalValue *GV) {
-  std::string NS;
-  if (GV && GV->hasSection())
-    NS = TAI->getSwitchToSectionDirective() + GV->getSection();
-  else
-    NS = NewSection;
-
-  // If we're already in this section, we're done.
-  if (CurrentSection == NS) return;
-
-  // Close the current section, if applicable.
-  if (TAI->getSectionEndDirectiveSuffix() && !CurrentSection.empty())
-    O << CurrentSection << TAI->getSectionEndDirectiveSuffix() << '\n';
-
-  CurrentSection = NS;
-
-  if (!CurrentSection.empty()) {}
-    O << CurrentSection << (static_cast< const PIC16TargetAsmInfo *>(TAI))->
-                            getRomDataSectionStartSuffix() << '\n';
-
-  IsInTextSection = false;
-}
-

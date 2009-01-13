@@ -79,4 +79,13 @@ unsigned PIC16RegisterInfo::getRARegister() const {
   return 0;
 }
 
+// This function eliminates ADJCALLSTACKDOWN,
+// ADJCALLSTACKUP pseudo instructions
+void PIC16RegisterInfo::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
+  // Simply discard ADJCALLSTACKDOWN,
+  // ADJCALLSTACKUP instructions.
+  MBB.erase(I);
+}
 

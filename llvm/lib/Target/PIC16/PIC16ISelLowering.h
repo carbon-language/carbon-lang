@@ -29,7 +29,9 @@ namespace llvm {
       Lo,            // Low 8-bits of GlobalAddress.
       Hi,            // High 8-bits of GlobalAddress.
       PIC16Load,
+      PIC16LdWF,
       PIC16Store,
+      PIC16StWF,
       Banksel,
       MTLO,
       MTHI,
@@ -38,6 +40,10 @@ namespace llvm {
       LRLF,          // PIC16 Logical shift right
       RLF,           // Rotate left through carry
       RRF,           // Rotate right through carry
+      CALL,          // PIC16 Call instruction 
+      SUBCC,	     // Compare for equality or inequality.
+      SELECT_ICC,    // Psuedo to be caught in schedular and expanded to brcond.
+      BRCOND,        // Conditional branch.
       Dummy
     };
 
@@ -46,7 +52,20 @@ namespace llvm {
       RAM_SPACE = 0,   // RAM address space
       ROM_SPACE = 1    // ROM address space number is 1
     };
+    enum PIC16LibCall {
+      SRA_I8,
+      SLL_I8,
+      SRL_I8,
+      SRA_I16,
+      SLL_I16,
+      SRL_I16,
+      SRA_I32,
+      SLL_I32,
+      SRL_I32,
+      PIC16UnknownCall
+    };
   }
+
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Implementation
@@ -58,25 +77,37 @@ namespace llvm {
     /// getTargetNodeName - This method returns the name of a target specific
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
+    /// getSetCCResultType - Return the ISD::SETCC ValueType
+    virtual MVT getSetCCResultType(MVT ValType) const;
     SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerADDE(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerADDC(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerSUBE(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerSUBC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerADD(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSUB(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBinOp(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCallReturn(SDValue Op, SDValue Chain, SDValue FrameAddress,
+                            SDValue InFlag, SelectionDAG &DAG);
+    SDValue LowerCallArguments(SDValue Op, SDValue Chain, SDValue FrameAddress,
+                               SDValue InFlag, SelectionDAG &DAG);
+    SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
+    SDValue getPIC16Cmp(SDValue LHS, SDValue RHS, unsigned OrigCC, SDValue &CC,
+                        SelectionDAG &DAG);
+    virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                        MachineBasicBlock *MBB);
 
-    /// ReplaceNodeResults - Replace the results of node with an illegal result
-    /// type with new values built out of custom code.
-    ///
-    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+
+    virtual void ReplaceNodeResults(SDNode *N,
+                                    SmallVectorImpl<SDValue> &Results,
                                     SelectionDAG &DAG);
-
     SDValue ExpandStore(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandLoad(SDNode *N, SelectionDAG &DAG);
-//    SDNode *ExpandAdd(SDNode *N, SelectionDAG &DAG);
+    //SDValue ExpandAdd(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG);
+    SDValue ExpandExternalSymbol(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandShift(SDNode *N, SelectionDAG &DAG);
+    SDValue ExpandFrameIndex(SDNode *N, SelectionDAG &DAG);
 
     SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
     SDValue PerformPIC16LoadCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
@@ -95,6 +126,8 @@ namespace llvm {
     // code at one place. In case of any change in future it will
     // help maintain the code
     SDValue getChain(SDValue &Op);
+    
+    SDValue getOutFlag(SDValue &Op);
 
 
     // Extract the Lo and Hi component of Op. 
@@ -108,13 +141,44 @@ namespace llvm {
     void LegalizeAddress(SDValue Ptr, SelectionDAG &DAG, SDValue &Chain, 
                          SDValue &NewPtr, unsigned &Offset);
 
+    // FrameIndex should be broken down into ExternalSymbol and FrameOffset. 
+    void LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG, SDValue &ES, 
+                            int &Offset);
+
     // We can not have both operands of a binary operation in W.
     // This function is used to put one operand on stack and generate a load.
     SDValue ConvertToMemOperand(SDValue Op, SelectionDAG &DAG); 
 
+    // This function checks if we need to put an operand of an operation on
+    // stack and generate a load or not.
+    bool NeedToConvertToMemOp(SDValue Op, unsigned &MemOp); 
+
     /// Subtarget - Keep a pointer to the PIC16Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const PIC16Subtarget *Subtarget;
+
+
+    // Extending the LIB Call framework of LLVM
+    // To hold the names of PIC16LibCalls
+    const char *PIC16LibCallNames[PIC16ISD::PIC16UnknownCall]; 
+
+    // To set and retrieve the lib call names
+    void setPIC16LibCallName(PIC16ISD::PIC16LibCall Call, const char *Name);
+    const char *getPIC16LibCallName(PIC16ISD::PIC16LibCall Call);
+
+    // Make PIC16 LibCall
+    SDValue MakePIC16LibCall(PIC16ISD::PIC16LibCall Call, MVT RetVT, 
+                             const SDValue *Ops, unsigned NumOps, bool isSigned,
+                             SelectionDAG &DAG);
+
+    // Check if operation has a direct load operand.
+    inline bool isDirectLoad(const SDValue Op);
+
+    // Create the symbol and index for function frame
+    void getCurrentFrameIndex(SelectionDAG &DAG, SDValue &ES, 
+                              unsigned SlotSize, int &FI);
+
+    SDValue getCurrentFrame(SelectionDAG &DAG);
   };
 } // namespace llvm
 

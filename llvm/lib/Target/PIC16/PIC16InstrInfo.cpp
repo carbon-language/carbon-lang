@@ -125,20 +125,29 @@ bool PIC16InstrInfo::copyRegToReg (MachineBasicBlock &MBB,
                                    const TargetRegisterClass *SrcRC) const {
   if (DestRC == PIC16::FSR16RegisterClass) {
     BuildMI(MBB, I, get(PIC16::copy_fsr), DestReg).addReg(SrcReg);
+    return true;
   }
 
-  return true;
+  if (DestRC == PIC16::GPRRegisterClass) {
+    BuildMI(MBB, I, get(PIC16::copy_w), DestReg).addReg(SrcReg);
+    return true;
+  }
+
+  // Not yet supported.
+  return false;
 }
 
 bool PIC16InstrInfo::isMoveInstr(const MachineInstr &MI,
                                          unsigned &SrcReg,
                                          unsigned &DestReg) const {
 
-  if (MI.getOpcode() == PIC16::copy_fsr) {
+  if (MI.getOpcode() == PIC16::copy_fsr
+      || MI.getOpcode() == PIC16::copy_w) {
     DestReg = MI.getOperand(0).getReg();
     SrcReg = MI.getOperand(1).getReg();
     return true;
   }
+
   return false;
 }
 

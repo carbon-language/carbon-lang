@@ -13,6 +13,7 @@
 
 #include "PIC16TargetAsmInfo.h"
 #include "PIC16TargetMachine.h"
+#include "llvm/GlobalValue.h"
 
 using namespace llvm;
 
@@ -23,9 +24,12 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   Data8bitsDirective = " db ";
   Data16bitsDirective = " db ";
   Data32bitsDirective = " db ";
-  DataSectionStartSuffix = " IDATA ";
-  UDataSectionStartSuffix = " UDATA ";
-  TextSectionStartSuffix = " CODE ";
-  RomDataSectionStartSuffix = " ROMDATA ";
   ZeroDirective = NULL;
+  AsciiDirective = " dt ";
+  AscizDirective = NULL;
+  BSSSection_  = getNamedSection("udata.# UDATA",
+                              SectionFlags::Writeable | SectionFlags::BSS);
+  ReadOnlySection = getNamedSection("romdata.# ROMDATA", SectionFlags::None);
+  DataSection = getNamedSection("idata.# IDATA", SectionFlags::Writeable);
+  SwitchToSectionDirective = "";
 }
