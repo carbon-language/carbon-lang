@@ -1731,7 +1731,20 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     // If it's coalescing a virtual register to a physical register, estimate
     // its live interval length. This is the *cost* of scanning an entire live
     // interval. If the cost is low, we'll do an exhaustive check instead.
+
+    // If this is something like this:
+    // BB1:
+    // v1024 = op
+    // ...
+    // BB2:
+    // ...
+    // RAX   = v1024
+    //
+    // That is, the live interval of v1024 crosses a bb. Then we can't rely on
+    // less conservative check. It's possible a sub-register is defined before
+    // v1024 (or live in) and live out of BB1.
     if (RHS.containsOneValue() &&
+	li_->intervalIsInOneMBB(RHS) &&
         li_->getApproximateInstructionCount(RHS) <= 10) {
       // Perform a more exhaustive check for some common cases.
       if (li_->conflictsWithPhysRegRef(RHS, LHS.reg, true, JoinedCopies))
