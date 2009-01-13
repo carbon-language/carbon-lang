@@ -391,6 +391,10 @@ namespace llvm {
     /// computeNumbering - Compute the index numbering.
     void computeNumbering();
 
+    /// intervalIsInOneMBB - Returns true if the specified interval is entirely
+    /// within a single basic block.
+    bool intervalIsInOneMBB(const LiveInterval &li) const;
+
   private:      
     /// computeIntervals - Compute live intervals.
     void computeIntervals();
@@ -461,10 +465,6 @@ namespace llvm {
     /// VNInfo that's after the specified index but is within the basic block.
     bool anyKillInMBBAfterIdx(const LiveInterval &li, const VNInfo *VNI,
                               MachineBasicBlock *MBB, unsigned Idx) const;
-
-    /// intervalIsInOneMBB - Returns true if the specified interval is entirely
-    /// within a single basic block.
-    bool intervalIsInOneMBB(const LiveInterval &li) const;
 
     /// hasAllocatableSuperReg - Return true if the specified physical register
     /// has any super register that's allocatable.
