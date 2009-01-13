@@ -816,8 +816,12 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 
   // Top down: release successors
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I)
+       I != E; ++I) {
+    assert(!I->isAssignedRegDep() &&
+           "The list-tdrr scheduler doesn't yet support physreg dependencies!");
+
     ReleaseSucc(SU, &*I);
+  }
 
   SU->isScheduled = true;
   AvailableQueue->ScheduledNode(SU);

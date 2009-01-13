@@ -1,9 +1,10 @@
 ; RUN: llvm-as < %s | llc -pre-RA-sched=default
-; RUN: llvm-as < %s | llc -pre-RA-sched=list-td
-; RUN: llvm-as < %s | llc -pre-RA-sched=list-tdrr
 ; RUN: llvm-as < %s | llc -pre-RA-sched=list-burr
 ; RUN: llvm-as < %s | llc -pre-RA-sched=fast
 ; PR859
+
+; The top-down schedulers are excluded here because they don't yet support
+; targets that use physreg defs.
 
 declare i32 @printf(i8*, i32, float)
 
