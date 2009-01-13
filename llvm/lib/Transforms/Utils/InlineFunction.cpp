@@ -150,11 +150,8 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
                                          CallGraph &CG) {
   const Function *Caller = CS.getInstruction()->getParent()->getParent();
   const Function *Callee = CS.getCalledFunction();
-
-  // Update the call graph by deleting the edge from Callee to Caller
   CallGraphNode *CalleeNode = CG[Callee];
   CallGraphNode *CallerNode = CG[Caller];
-  CallerNode->removeCallEdgeFor(CS);
 
   // Since we inlined some uninlined call sites in the callee into the caller,
   // add edges from the caller to all of the callees of the callee.
@@ -171,6 +168,9 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
         CallerNode->addCalledFunction(CallSite::get(NewCall), I->second);
     }
   }
+  // Update the call graph by deleting the edge from Callee to Caller.  We must
+  // do this after the loop above in case Caller and Callee are the same.
+  CallerNode->removeCallEdgeFor(CS);
 }
 
 
