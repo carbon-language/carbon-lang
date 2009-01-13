@@ -10775,12 +10775,17 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
     }
   }
 
-  // If alloca'ing a zero byte object, replace the alloca with a null pointer.
-  // Note that we only do this for alloca's, because malloc should allocate and
-  // return a unique pointer, even for a zero byte allocation.
-  if (isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized() &&
-      TD->getTypePaddedSize(AI.getAllocatedType()) == 0)
-    return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
+  if (isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized()) {
+    // If alloca'ing a zero byte object, replace the alloca with a null pointer.
+    // Note that we only do this for alloca's, because malloc should allocate and
+    // return a unique pointer, even for a zero byte allocation.
+    if (TD->getTypePaddedSize(AI.getAllocatedType()) == 0)
+      return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
+
+    // If the alignment is 0 (unspecified), assign it the preferred alignment.
+    if (AI.getAlignment() == 0)
+      AI.setAlignment(TD->getPrefTypeAlignment(AI.getAllocatedType()));
+  }
 
   return 0;
 }

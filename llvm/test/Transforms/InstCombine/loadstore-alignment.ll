@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {, align 16} | count 12
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {, align 16} | count 14
 
 @x = external global <2 x i64>, align 16
 @xx = external global [13 x <2 x i64>], align 16
