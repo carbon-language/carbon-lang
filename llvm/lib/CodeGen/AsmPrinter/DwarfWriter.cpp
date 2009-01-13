@@ -4985,6 +4985,12 @@ unsigned DwarfWriter::getRecordSourceLineCount() {
   return DD->getRecordSourceLineCount();
 }
 
+/// RecordVariable - Indicate the declaration of  a local variable.
+///
+void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
+  DD->RecordVariable(GV, FrameIndex);
+}
+
 /// hasDebugInfo - Return true if debug info intrinsics are seen in 
 /// this module.
 bool DwarfWriter::hasDebugInfo() {

@@ -32,7 +32,7 @@ namespace llvm {
   class GlobalVariable;
   class MachineConstantPoolEntry;
   class MachineConstantPoolValue;
-  class MachineModuleInfo;
+  class DwarfWriter;
   class Mangler;
   class Section;
   class TargetAsmInfo;
@@ -51,10 +51,10 @@ namespace llvm {
     ///
     unsigned FunctionNumber;
 
-    /// MachineModuleInfo - This is needed because printDeclare() has to insert
-    /// DebugVariable entries into the dwarf table. This is a short term hack
+    /// DW -This is needed because printDeclare() has to insert
+    /// DbgVariable entries into the dwarf table. This is a short term hack
     /// that ought be fixed soon.
-    MachineModuleInfo *MMI;
+    DwarfWriter *DW;
     
     // GCMetadataPrinters - The garbage collection metadata printer table.
     typedef DenseMap<GCStrategy*,GCMetadataPrinter*> gcp_map_type;

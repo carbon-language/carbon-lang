@@ -93,6 +93,10 @@ public:
   /// getRecordSourceLineCount - Count source lines.
   unsigned getRecordSourceLineCount();
 
+  /// RecordVariable - Indicate the declaration of  a local variable.
+  ///
+  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex);
+
   /// hasDebugInfo - Return true if debug info intrinsics are seen in 
   /// this module.
   bool hasDebugInfo();

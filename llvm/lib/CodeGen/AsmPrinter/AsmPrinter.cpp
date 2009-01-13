@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -162,9 +163,9 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   SwitchToDataSection("");   // Reset back to no section.
   
-  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>();
   if (MMI) MMI->AnalyzeModule(M);
-  
+  DW = getAnalysisToUpdate<DwarfWriter>();
   return false;
 }
 
@@ -1419,9 +1420,9 @@ void AsmPrinter::printLabel(unsigned Id) const {
 /// FIXME: It doesn't really print anything rather it inserts a DebugVariable
 /// entry into dwarf table.
 void AsmPrinter::printDeclare(const MachineInstr *MI) const {
-  int FI = MI->getOperand(0).getIndex();
+  unsigned FI = MI->getOperand(0).getIndex();
   GlobalValue *GV = MI->getOperand(1).getGlobal();
-  MMI->RecordVariable(GV, FI);
+  DW->RecordVariable(cast<GlobalVariable>(GV), FI);
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
