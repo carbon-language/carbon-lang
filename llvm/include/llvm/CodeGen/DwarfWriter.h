@@ -97,9 +97,6 @@ public:
   ///
   void RecordVariable(GlobalVariable *GV, unsigned FrameIndex);
 
-  /// hasDebugInfo - Return true if debug info intrinsics are seen in 
-  /// this module.
-  bool hasDebugInfo();
 };
 
 
