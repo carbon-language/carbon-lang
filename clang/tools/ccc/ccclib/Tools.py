@@ -115,8 +115,7 @@ class Darwin_AssembleTool(Tool):
 
         cmd_args = []
         
-        if (arglist.getLastArg(arglist.parser.gOption) or
-            arglist.getLastArg(arglist.parser.g3Option)):
+        if arglist.getLastArg(arglist.parser.gGroup):
             cmd_args.append('--gstabs')
 
         # Derived from asm spec.
@@ -332,7 +331,7 @@ class Darwin_X86_CompileTool(Tool):
                                 arglist.parser.UOption,
                                 arglist.parser.AOption)
 
-            # FIXME: Add i*
+            arglist.addAllArgs(cmd_args, arglist.parser.iGroup)
 
             for input in inputs:
                 if isinstance(input.source, Jobs.PipedJob):
@@ -383,24 +382,24 @@ class Darwin_X86_CompileTool(Tool):
         cmd_args.append('-dumpbase')
         cmd_args.append(self.getBaseInputName(inputs, arglist))
 
-        # FIXME: d*
+        arglist.addAllArgs(cmd_args, arglist.parser.dGroup)
         
         # FIXME: Figure out where these are coming from and
         # dehardcode.
-        arg = arglist.getLastArg(arglist.parser.m_macosxVersionMinOption)
-        if arg:
-            cmd_args.extend(arglist.render(arg))
-        else:
+        if not arglist.getLastArg(arglist.parser.m_macosxVersionMinOption):
             cmd_args.append('-mmacosx-version-min=' + 
                             self.toolChain.getMacosxVersionMin())
-        if arglist.getValue(arch) == 'x86_64':
-            cmd_args.append('-m64')
-        else:
-            cmd_args.append('-m32')
-        cmd_args.append('-mtune=core2')
+        if (not arglist.getLastArg(arglist.parser.m_32Option) and
+            not arglist.getLastArg(arglist.parser.m_64Option)):
+            if arglist.getValue(arch) == 'x86_64':
+                cmd_args.append('-m64')
+            else:
+                cmd_args.append('-m32')
+        if not arglist.getLastArg(arglist.parser.m_tuneOption):
+            cmd_args.append('-mtune=core2')
 
-        # FIXME: m*
-        # FIXME: a*
+        arglist.addAllArgs(cmd_args, arglist.parser.mGroup)
+        arglist.addAllArgs(cmd_args, arglist.parser.aGroup)
 
         # FIXME: The goal is to use the user provided -o if that is
         # our final output, otherwise to drive from the original input
@@ -418,7 +417,7 @@ class Darwin_X86_CompileTool(Tool):
             cmd_args.append('-auxbase')
             cmd_args.append(self.getBaseInputStem(inputs, arglist))
 
-        # FIXME: g*
+        arglist.addAllArgs(cmd_args, arglist.parser.gGroup)
             
         arglist.addAllArgs(cmd_args, arglist.parser.OOption)
         # FIXME: -Wall is getting some special treatment. Investigate.
@@ -431,7 +430,9 @@ class Darwin_X86_CompileTool(Tool):
             cmd_args.append('-p')
         arglist.addLastArg(cmd_args, arglist.parser.pOption)
         
-        # FIXME: f*
+        # ccc treats -fsyntax-only specially.
+        arglist.addAllArgs2(cmd_args, arglist.parser.fGroup, 
+                            arglist.parser.syntaxOnlyOption)
 
         arglist.addLastArg(cmd_args, arglist.parser.undefOption)
         if arglist.getLastArg(arglist.parser.QnOption):

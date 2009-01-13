@@ -1,10 +1,24 @@
 class Option(object):
-    """Root option class."""
+    """Option - Root option class."""
 
-    def __init__(self, name, isLinkerInput=False, noOptAsInput=False):
+    def __init__(self, name, group=None, isLinkerInput=False, noOptAsInput=False):
+        assert group is None or isinstance(group, OptionGroup)
         self.name = name
+        self.group = group
         self.isLinkerInput = isLinkerInput
         self.noOptAsInput = noOptAsInput
+
+    def matches(self, opt):
+        """matches(opt) -> bool
+        
+        Predicate for whether this option is part of the given option
+        (which may be a group)."""
+        if self is opt:
+            return True
+        elif self.group:
+            return self.group.matches(opt)
+        else:
+            return False
 
     def accept(self, index, arg, it):
         """accept(index, arg, iterator) -> Arg or None
@@ -20,6 +34,16 @@ class Option(object):
         return '<%s name=%r>' % (self.__class__.__name__,
                                  self.name)
 
+class OptionGroup(Option):
+    """OptionGroup - A fake option class used to group options so that
+    the driver can efficiently refer to an entire set of options."""
+
+    def __init__(self, name):
+        super(OptionGroup, self).__init__(name)
+
+    def accept(self, index, arg, it):
+        raise RuntimeError,"accept() should never be called on an OptionGroup"
+        
 # Dummy options
 
 class InputOption(Option):
@@ -253,6 +277,7 @@ class ArgList:
         self.argv = list(argv)
         self.syntheticArgv = []
         self.lastArgs = {}
+        self.lastGroupArgs = {}
         self.args = []
 
     def getArgs(self, option):
@@ -262,7 +287,7 @@ class ArgList:
         # tail). This gives us efficient access to the (first, last,
         # all) arg(s) with little overhead.
         for arg in self.args:
-            if arg.opt is option:
+            if arg.opt.matches(option):
                 yield arg
 
     def getArgs2(self, optionA, optionB):
@@ -272,14 +297,17 @@ class ArgList:
         # efficient by iterating both at once and always taking the
         # earlier arg.
         for arg in self.args:
-            if arg.opt in (optionA, optionB):
+            if (arg.opt.matches(optionA) or
+                arg.opt.matches(optionB)):
                 yield arg
 
     def getArgs3(self, optionA, optionB, optionC):
         """getArgs3 - Iterate over all arguments for three options, in
         the order they were specified."""
         for arg in self.args:
-            if arg.opt in (optionA, optionB, optionC):
+            if (arg.opt.matches(optionA) or
+                arg.opt.matches(optionB) or
+                arg.opt.matches(optionC)):
                 yield arg
 
     def getLastArg(self, option):
@@ -365,6 +393,8 @@ class ArgList:
     def append(self, arg):
         self.args.append(arg)
         self.lastArgs[arg.opt] = arg
+        if arg.opt.group is not None:
+            self.lastArgs[arg.opt.group] = arg
 
     # Forwarding methods.
     #
@@ -497,9 +527,14 @@ class OptionParser:
         self.dylinkerOption = self.addOption(FlagOption('-dylinker'))
         self.dylinker_install_nameOption = self.addOption(JoinedOrSeparateOption('-dylinker_install_name'))
         self.addOption(JoinedOrSeparateOption('-exported_symbols_list'))
-        self.addOption(JoinedOrSeparateOption('-idirafter'))
-        self.addOption(JoinedOrSeparateOption('-iquote'))
-        self.isysrootOption = self.addOption(JoinedOrSeparateOption('-isysroot'))
+
+        self.iGroup = OptionGroup('-i')
+        self.addOption(JoinedOrSeparateOption('-idirafter', self.iGroup))
+        self.addOption(JoinedOrSeparateOption('-iquote', self.iGroup))
+        self.isysrootOption = self.addOption(JoinedOrSeparateOption('-isysroot', self.iGroup))
+        self.addOption(JoinedOrSeparateOption('-include', self.iGroup))
+        self.addOption(JoinedOption('-i', self.iGroup))
+
         self.keep_private_externsOption = self.addOption(JoinedOrSeparateOption('-keep_private_externs'))
         self.private_bundleOption = self.addOption(FlagOption('-private_bundle'))
         self.seg1addrOption = self.addOption(JoinedOrSeparateOption('-seg1addr'))
@@ -612,7 +647,6 @@ class OptionParser:
 
         # C options for testing
 
-        self.addOption(JoinedOrSeparateOption('-include'))
         # FIXME: This is broken, we need -A as a single option to send
         # stuff to cc1, but the way the ld spec is constructed it
         # wants to see -A options but only as a separate arg.
@@ -646,52 +680,63 @@ class OptionParser:
         # -dumpspecs? How is this handled in gcc?
         # FIXME: Naming convention.
         self.dOption = self.addOption(FlagOption('-d'))
-        self.addOption(JoinedOption('-d'))
 
-        # Take care on extension, the Darwin assembler wants to add a
-        # flag for any -g* option.
-        self.g3Option = self.addOption(JoinedOption('-g3'))
-        self.gOption = self.addOption(JoinedOption('-g'))
+        # Use a group for this in anticipation of adding more -d
+        # options explicitly. Note that we don't put many -d things in
+        # the -d group (like -dylinker, or '-d' by itself) because it
+        # is really a gcc bug that it ships these to cc1.
+        self.dGroup = OptionGroup('-d')
+        self.addOption(JoinedOption('-d', group=self.dGroup))
 
-        self.fastOption = self.addOption(FlagOption('-fast'))
-        self.fastfOption = self.addOption(FlagOption('-fastf'))
-        self.fastcpOption = self.addOption(FlagOption('-fastcp'))
+        self.gGroup = OptionGroup('-g')
+        self.g3Option = self.addOption(JoinedOption('-g3', self.gGroup))
+        self.gOption = self.addOption(JoinedOption('-g', self.gGroup))
 
-        self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext'))
-        self.f_noEliminateUnusedDebugSymbolsOption = self.addOption(FlagOption('-fno-eliminate-unused-debug-symbols'))
-        self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions'))
-        self.f_objcOption = self.addOption(FlagOption('-fobjc'))
-        self.f_openmpOption = self.addOption(FlagOption('-fopenmp'))
-        self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime'))
-        self.f_mudflapOption = self.addOption(FlagOption('-fmudflap'))
-        self.f_mudflapthOption = self.addOption(FlagOption('-fmudflapth'))
-        self.f_nestedFunctionsOption = self.addOption(FlagOption('-fnested-functions'))
-        self.f_pieOption = self.addOption(FlagOption('-fpie'))
-        self.f_profileArcsOption = self.addOption(FlagOption('-fprofile-arcs'))
-        self.f_profileGenerateOption = self.addOption(FlagOption('-fprofile-generate'))
-        self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile'))
-        self.f_traditionalOption = self.addOption(FlagOption('-ftraditional'))
+        self.fGroup = OptionGroup('-f')
+        self.fastOption = self.addOption(FlagOption('-fast', self.fGroup))
+        self.fastfOption = self.addOption(FlagOption('-fastf', self.fGroup))
+        self.fastcpOption = self.addOption(FlagOption('-fastcp', self.fGroup))
+
+        self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext', self.fGroup))
+        self.f_noEliminateUnusedDebugSymbolsOption = self.addOption(FlagOption('-fno-eliminate-unused-debug-symbols', self.fGroup))
+        self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions', self.fGroup))
+        self.f_objcOption = self.addOption(FlagOption('-fobjc', self.fGroup))
+        self.f_openmpOption = self.addOption(FlagOption('-fopenmp', self.fGroup))
+        self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.fGroup))
+        self.f_mudflapOption = self.addOption(FlagOption('-fmudflap', self.fGroup))
+        self.f_mudflapthOption = self.addOption(FlagOption('-fmudflapth', self.fGroup))
+        self.f_nestedFunctionsOption = self.addOption(FlagOption('-fnested-functions', self.fGroup))
+        self.f_pieOption = self.addOption(FlagOption('-fpie', self.fGroup))
+        self.f_profileArcsOption = self.addOption(FlagOption('-fprofile-arcs', self.fGroup))
+        self.f_profileGenerateOption = self.addOption(FlagOption('-fprofile-generate', self.fGroup))
+        self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile', self.fGroup))
+        self.f_traditionalOption = self.addOption(FlagOption('-ftraditional', self.fGroup))
         self.coverageOption = self.addOption(FlagOption('-coverage'))
         self.coverageOption2 = self.addOption(FlagOption('--coverage'))
         self.addOption(JoinedOption('-f'))
 
-        self.m_32Option = self.addOption(FlagOption('-m32'))
-        self.m_64Option = self.addOption(FlagOption('-m64'))
-        self.m_dynamicNoPicOption = self.addOption(JoinedOption('-mdynamic-no-pic'))
-        self.m_iphoneosVersionMinOption = self.addOption(JoinedOption('-miphoneos-version-min='))
-        self.m_macosxVersionMinOption = self.addOption(JoinedOption('-mmacosx-version-min='))
-        self.m_kernelOption = self.addOption(FlagOption('-mkernel'))
+        self.mGroup = OptionGroup('-m')
+        self.m_32Option = self.addOption(FlagOption('-m32', self.mGroup))
+        self.m_64Option = self.addOption(FlagOption('-m64', self.mGroup))
+        self.m_dynamicNoPicOption = self.addOption(JoinedOption('-mdynamic-no-pic', self.mGroup))
+        self.m_iphoneosVersionMinOption = self.addOption(JoinedOption('-miphoneos-version-min=', self.mGroup))
+        self.m_kernelOption = self.addOption(FlagOption('-mkernel', self.mGroup))
+        self.m_macosxVersionMinOption = self.addOption(JoinedOption('-mmacosx-version-min=', self.mGroup))
+        self.m_tuneOption = self.addOption(JoinedOption('-mtune=', self.mGroup))
 
         # Ugh. Need to disambiguate our naming convetion. -m x goes to
         # the linker sometimes, wheres -mxxxx is used for a variety of
         # other things.
         self.mOption = self.addOption(SeparateOption('-m'))
-        self.addOption(JoinedOption('-m'))
+        self.addOption(JoinedOption('-m', self.mGroup))
 
-        self.ansiOption = self.addOption(FlagOption('-ansi'))
+        # FIXME: Why does Darwin send -a* to cc1?
+        self.aGroup = OptionGroup('-a')
+        self.ansiOption = self.addOption(FlagOption('-ansi', self.aGroup))
+        self.aOption = self.addOption(JoinedOption('-a', self.aGroup))
+
         self.trigraphsOption = self.addOption(FlagOption('-trigraphs'))
         self.pedanticOption = self.addOption(FlagOption('-pedantic'))
-        self.addOption(JoinedOption('-i'))
         self.OOption = self.addOption(JoinedOption('-O'))
         self.WOption = self.addOption(JoinedOption('-W'))
         # FIXME: Weird. This option isn't really separate, --param=a=b
