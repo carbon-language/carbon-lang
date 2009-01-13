@@ -644,6 +644,18 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     else
       Out << "<function> ";
     Out << FD->getNameAsString();
+    // Print the parameters.
+    Out << "(";
+    bool PrintComma = false;
+    for (FunctionDecl::param_const_iterator I = FD->param_begin(), 
+           E = FD->param_end(); I != E; ++I) {
+      if (PrintComma)
+        Out << ", ";
+      else
+        PrintComma = true;
+      Out << (*I)->getNameAsString();
+    }
+    Out << ")";
     break;
   }
   case Decl::CXXMethod: {
@@ -655,6 +667,18 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     else
       Out << "<c++ method> ";
     Out << D->getNameAsString();
+    // Print the parameters.
+    Out << "(";
+    bool PrintComma = false;
+    for (FunctionDecl::param_const_iterator I = D->param_begin(), 
+           E = D->param_end(); I != E; ++I) {
+      if (PrintComma)
+        Out << ", ";
+      else
+        PrintComma = true;
+      Out << (*I)->getNameAsString();
+    }
+    Out << ")";
 
     // Check the semantic DeclContext.
     DeclContext* SemaDC = D->getDeclContext();
@@ -673,6 +697,19 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     else
       Out << "<c++ ctor> ";
     Out << D->getNameAsString();
+    // Print the parameters.
+    Out << "(";
+    bool PrintComma = false;
+    for (FunctionDecl::param_const_iterator I = D->param_begin(), 
+           E = D->param_end(); I != E; ++I) {
+      if (PrintComma)
+        Out << ", ";
+      else
+        PrintComma = true;
+      Out << (*I)->getNameAsString();
+    }
+    Out << ")";
+
     // Check the semantic DC.
     DeclContext* SemaDC = D->getDeclContext();
     DeclContext* LexicalDC = D->getLexicalDeclContext();
