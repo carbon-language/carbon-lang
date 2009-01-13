@@ -1912,8 +1912,8 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
     // We can't check any more until template instantiation time.
   } else if (!castType->isScalarType() && !castType->isVectorType()) {
     // GCC struct/union extension: allow cast to self.
-    if (Context.getCanonicalType(castType) !=
-        Context.getCanonicalType(castExpr->getType()) ||
+    if (Context.getCanonicalType(castType).getUnqualifiedType() !=
+        Context.getCanonicalType(castExpr->getType().getUnqualifiedType()) ||
         (!castType->isStructureType() && !castType->isUnionType())) {
       // Reject any other conversions to non-scalar types.
       return Diag(TyR.getBegin(), diag::err_typecheck_cond_expect_scalar)
