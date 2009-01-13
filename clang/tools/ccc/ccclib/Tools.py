@@ -204,10 +204,10 @@ class Darwin_X86_CompileTool(Tool):
         # FIXME: As with ld, something else is going on. My best guess
         # is gcc is faking an -mmacosx-version-min
         # somewhere. Investigate.
-        if (not arglist.getLastArg(arglist.parser.m_macosxVersionMinOption) and
-            not arglist.getLastArg(arglist.parser.m_iphoneosVersionMinOption)):
-            cmd_args.append('-mmacosx-version-min=' + 
-                            self.toolChain.getMacosxVersionMin())
+#        if (not arglist.getLastArg(arglist.parser.m_macosxVersionMinOption) and
+#            not arglist.getLastArg(arglist.parser.m_iphoneosVersionMinOption)):
+#            cmd_args.append('-mmacosx-version-min=' + 
+#                            self.toolChain.getMacosxVersionMin())
 
         # FIXME: Remove faltivec
         # FIXME: Remove mno-fused-madd
@@ -384,6 +384,21 @@ class Darwin_X86_CompileTool(Tool):
         cmd_args.append(self.getBaseInputName(inputs, arglist))
 
         # FIXME: d*
+        
+        # FIXME: Figure out where these are coming from and
+        # dehardcode.
+        arg = arglist.getLastArg(arglist.parser.m_macosxVersionMinOption)
+        if arg:
+            cmd_args.extend(arglist.render(arg))
+        else:
+            cmd_args.append('-mmacosx-version-min=' + 
+                            self.toolChain.getMacosxVersionMin())
+        if arglist.getValue(arch) == 'x86_64':
+            cmd_args.append('-m64')
+        else:
+            cmd_args.append('-m32')
+        cmd_args.append('-mtune=core2')
+
         # FIXME: m*
         # FIXME: a*
 
