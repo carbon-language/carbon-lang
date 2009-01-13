@@ -1668,6 +1668,22 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 // Transfer functions: Miscellaneous statements.
 //===----------------------------------------------------------------------===//
 
+void GRExprEngine::VisitCastPointerToInteger(SVal V, const GRState* state,
+                                             QualType PtrTy,
+                                             Expr* CastE, NodeTy* Pred,
+                                             NodeSet& Dst) {
+  if (!V.isUnknownOrUndef()) {
+    // FIXME: Determine if the number of bits of the target type is 
+    // equal or exceeds the number of bits to store the pointer value.
+    // If not, flag an error.
+    unsigned bits = getContext().getTypeSize(PtrTy);  
+    V = nonloc::LocAsInteger::Make(getBasicVals(), cast<Loc>(V), bits);
+  }
+  
+  MakeNode(Dst, CastE, Pred, BindExpr(state, CastE, V));
+}
+
+  
 void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   NodeSet S1;
   QualType T = CastE->getType();
@@ -1724,14 +1740,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   
     // Check for casts from pointers to integers.
     if (T->isIntegerType() && Loc::IsLocType(ExTy)) {
-      unsigned bits = getContext().getTypeSize(ExTy);
-    
-      // FIXME: Determine if the number of bits of the target type is 
-      // equal or exceeds the number of bits to store the pointer value.
-      // If not, flag an error.
-      
-      V = nonloc::LocAsInteger::Make(getBasicVals(), cast<Loc>(V), bits);
-      MakeNode(Dst, CastE, N, BindExpr(St, CastE, V));
+      VisitCastPointerToInteger(V, St, ExTy, CastE, N, Dst);
       continue;
     }
     
@@ -1744,11 +1753,24 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
         continue;
       }
 
-    // Check for casts from array type to pointer type.
+    // Check for casts from array type to another type.
     if (ExTy->isArrayType()) {
-      assert(T->isPointerType());
+      // We will always decay to a pointer.
       V = StateMgr.ArrayToPointer(V);
-      MakeNode(Dst, CastE, N, BindExpr(St, CastE, V));
+      
+      // Are we casting from an array to a pointer?  If so just pass on
+      // the decayed value.
+      if (T->isPointerType()) {
+        MakeNode(Dst, CastE, N, BindExpr(St, CastE, V));
+        continue;
+      }
+      
+      // Are we casting from an array to an integer?  If so, cast the decayed
+      // pointer value to an integer.
+      assert(T->isIntegerType());
+      QualType ElemTy = cast<ArrayType>(ExTy)->getElementType();
+      QualType PointerTy = getContext().getPointerType(ElemTy);
+      VisitCastPointerToInteger(V, St, PointerTy, CastE, N, Dst);
       continue;
     }
 

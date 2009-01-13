@@ -542,6 +542,11 @@ protected:
   
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
   void VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst);
+
+  /// VisitCastPointerToInteger - Transfer function (called by VisitCast) that
+  ///  handles pointer to integer casts and array to integer casts.
+  void VisitCastPointerToInteger(SVal V, const GRState* state, QualType PtrTy,
+                                 Expr* CastE, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitCompoundLiteralExpr - Transfer function logic for compound literals.
   void VisitCompoundLiteralExpr(CompoundLiteralExpr* CL, NodeTy* Pred,

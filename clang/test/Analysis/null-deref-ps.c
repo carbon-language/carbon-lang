@@ -52,6 +52,27 @@ int f4(int *p) {
   return *q; // expected-warning{{Dereference of null pointer.}}
 }
 
+int f4_b() {
+  short array[2];
+  uintptr_t x = array; // expected-warning{{incompatible pointer to integer conversion initializing}}
+  short *p = x; // expected-warning{{incompatible integer to pointer conversion initializing}}
+  
+  // The following branch should be infeasible.
+  if (!(p = &array[0])) {
+    p = 0;
+    *p = 1; // no-warning
+  }
+  
+  if (p) {
+    *p = 5; // no-warning
+    p = 0;
+  }
+  else return;
+
+  *p += 10; // expected-warning{{Dereference of null pointer}}
+}
+
+
 int f5() {
   
   char *s = "hello world";
