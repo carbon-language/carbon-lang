@@ -2682,14 +2682,18 @@ def BT32rr : I<0xA3, MRMDestReg, (outs), (ins GR32:$src1, GR32:$src2),
                "bt{l}\t{$src2, $src1|$src1, $src2}",
                [(X86bt GR32:$src1, GR32:$src2),
                 (implicit EFLAGS)]>, TB;
-def BT16mr : I<0xA3, MRMDestMem, (outs), (ins i16mem:$src1, GR16:$src2),
-               "bt{w}\t{$src2, $src1|$src1, $src2}",
-               [(X86bt (loadi16 addr:$src1), GR16:$src2),
-                (implicit EFLAGS)]>, OpSize, TB, Requires<[FastBTMem]>;
-def BT32mr : I<0xA3, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
-               "bt{l}\t{$src2, $src1|$src1, $src2}",
-               [(X86bt (loadi32 addr:$src1), GR32:$src2),
-                (implicit EFLAGS)]>, TB, Requires<[FastBTMem]>;
+
+// Unlike with the register+register form, the memory+register form of the
+// bt instruction does not ignore the high bits of the index. From ISel's
+// perspective, this is pretty bizarre. Disable these instructions for now.
+//def BT16mr : I<0xA3, MRMDestMem, (outs), (ins i16mem:$src1, GR16:$src2),
+//               "bt{w}\t{$src2, $src1|$src1, $src2}",
+//               [(X86bt (loadi16 addr:$src1), GR16:$src2),
+//                (implicit EFLAGS)]>, OpSize, TB, Requires<[FastBTMem]>;
+//def BT32mr : I<0xA3, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
+//               "bt{l}\t{$src2, $src1|$src1, $src2}",
+//               [(X86bt (loadi32 addr:$src1), GR32:$src2),
+//                (implicit EFLAGS)]>, TB, Requires<[FastBTMem]>;
 
 def BT16ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR16:$src1, i16i8imm:$src2),
                 "bt{w}\t{$src2, $src1|$src1, $src2}",

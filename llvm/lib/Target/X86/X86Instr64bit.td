@@ -924,10 +924,14 @@ def BT64rr : RI<0xA3, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                "bt{q}\t{$src2, $src1|$src1, $src2}",
                [(X86bt GR64:$src1, GR64:$src2),
                 (implicit EFLAGS)]>, TB;
-def BT64mr : RI<0xA3, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
-               "bt{q}\t{$src2, $src1|$src1, $src2}",
-               [(X86bt (loadi64 addr:$src1), GR64:$src2),
-                (implicit EFLAGS)]>, TB;
+
+// Unlike with the register+register form, the memory+register form of the
+// bt instruction does not ignore the high bits of the index. From ISel's
+// perspective, this is pretty bizarre. Disable these instructions for now.
+//def BT64mr : RI<0xA3, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
+//               "bt{q}\t{$src2, $src1|$src1, $src2}",
+//               [(X86bt (loadi64 addr:$src1), GR64:$src2),
+//                (implicit EFLAGS)]>, TB;
 
 def BT64ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR64:$src1, i64i8imm:$src2),
                 "bt{q}\t{$src2, $src1|$src1, $src2}",
