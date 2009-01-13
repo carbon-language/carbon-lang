@@ -5033,7 +5033,6 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   // Lower (X & (1 << N)) == 0 to BT.
   // Lower ((X >>u N) & 1) != 0 to BT.
   // Lower ((X >>s N) & 1) != 0 to BT.
-  // FIXME: Is i386 or later or available only on some chips?
   if (Op0.getOpcode() == ISD::AND &&
       Op0.hasOneUse() &&
       Op1.getOpcode() == ISD::Constant &&
