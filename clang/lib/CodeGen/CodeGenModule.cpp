@@ -150,14 +150,14 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 /// AddGlobalCtor - Add a function to the list that will be called before
 /// main() runs.
 void CodeGenModule::AddGlobalCtor(llvm::Function * Ctor, int Priority) {
-  // TODO: Type coercion of void()* types.
+  // FIXME: Type coercion of void()* types.
   GlobalCtors.push_back(std::make_pair(Ctor, Priority));
 }
 
 /// AddGlobalDtor - Add a function to the list that will be called
 /// when the module is unloaded.
 void CodeGenModule::AddGlobalDtor(llvm::Function * Dtor, int Priority) {
-  // TODO: Type coercion of void()* types.
+  // FIXME: Type coercion of void()* types.
   GlobalDtors.push_back(std::make_pair(Dtor, Priority));
 }
 
@@ -214,7 +214,7 @@ static void SetGlobalValueAttributes(const Decl *D,
                                      bool IsInline,
                                      llvm::GlobalValue *GV,
                                      bool ForDefinition) {
-  // TODO: Set up linkage and many other things.  Note, this is a simple 
+  // FIXME: Set up linkage and many other things.  Note, this is a simple 
   // approximation of what we really want.
   if (!ForDefinition) {
     // Only a few attributes are set on declarations.
@@ -247,6 +247,8 @@ static void SetGlobalValueAttributes(const Decl *D,
     }
   }
 
+  // FIXME: Figure out the relative priority of the attribute,
+  // -fvisibility, and private_extern.
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
     setGlobalVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
@@ -451,7 +453,9 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
   } else if (const VarDecl *VD = cast<VarDecl>(Global)) {
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
 
-    isDef = !(VD->getStorageClass() == VarDecl::Extern && VD->getInit() == 0);
+    isDef = !((VD->getStorageClass() == VarDecl::Extern ||
+               VD->getStorageClass() == VarDecl::PrivateExtern) && 
+              VD->getInit() == 0);
     isStatic = VD->getStorageClass() == VarDecl::Static;
   } else {
     assert(0 && "Invalid argument to EmitGlobal");
@@ -492,11 +496,24 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
 
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
-  if (!Entry)
-    Entry = new llvm::GlobalVariable(Ty, false, 
-                                     llvm::GlobalValue::ExternalLinkage,
-                                     0, D->getNameAsString(), &getModule(), 0,
-                                     ASTTy.getAddressSpace());
+  if (!Entry) {
+    llvm::GlobalVariable *GV = 
+      new llvm::GlobalVariable(Ty, false, 
+                               llvm::GlobalValue::ExternalLinkage,
+                               0, D->getNameAsString(), &getModule(), 0,
+                               ASTTy.getAddressSpace());
+    Entry = GV;
+
+    // Handle things which are present even on external declarations.
+
+    // FIXME: This code is overly simple and should be merged with
+    // other global handling.
+
+    GV->setConstant(D->getType().isConstant(Context));
+
+    if (D->getStorageClass() == VarDecl::PrivateExtern)
+      setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
+  }
   
   // Make sure the result is of the correct type.
   return llvm::ConstantExpr::getBitCast(Entry, PTy);
@@ -626,8 +643,12 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
         GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
       break;
     case VarDecl::Extern:
+      // FIXME: common
+      break;
+      
     case VarDecl::PrivateExtern:
-      // todo: common
+      GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+      // FIXME: common
       break;
     }
   }
