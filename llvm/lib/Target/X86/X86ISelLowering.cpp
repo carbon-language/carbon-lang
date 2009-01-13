@@ -5034,7 +5034,9 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   // Lower ((X >>u N) & 1) != 0 to BT.
   // Lower ((X >>s N) & 1) != 0 to BT.
   // FIXME: Is i386 or later or available only on some chips?
-  if (Op0.getOpcode() == ISD::AND && Op1.getOpcode() == ISD::Constant &&
+  if (Op0.getOpcode() == ISD::AND &&
+      Op0.hasOneUse() &&
+      Op1.getOpcode() == ISD::Constant &&
       Op0.getOperand(1).getOpcode() == ISD::Constant &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
     ConstantSDNode *AndRHS = cast<ConstantSDNode>(Op0.getOperand(1));
