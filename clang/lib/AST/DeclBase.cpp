@@ -332,6 +332,9 @@ void Decl::swapAttrs(Decl *RHS) {
 
 
 void Decl::Destroy(ASTContext& C) {
+#if 0
+  // FIXME: This causes double-destroys in some cases, so it is
+  // disabled at the moment.
   if (ScopedDecl* SD = dyn_cast<ScopedDecl>(this)) {    
 
     // Observe the unrolled recursion.  By setting N->NextDeclarator = 0x0
@@ -347,7 +350,8 @@ void Decl::Destroy(ASTContext& C) {
       N = Tmp;
     }
   }  
-  
+#endif
+
   this->~Decl();
   C.getAllocator().Deallocate((void *)this);
 }
