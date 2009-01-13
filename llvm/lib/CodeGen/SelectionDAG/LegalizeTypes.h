@@ -65,7 +65,7 @@ private:
     ExpandFloat,     // Split this float type into two of half the size.
     ScalarizeVector, // Replace this one-element vector with its element type.
     SplitVector,     // This vector type should be split into smaller vectors.
-    WidenVector      // This vector type should be widened into larger vectors.
+    WidenVector      // This vector type should be widened into a larger vector.
   };
 
   /// ValueTypeActions - This is a bitvector that contains two bits for each
@@ -73,11 +73,7 @@ private:
   /// enum from TargetLowering.  This can be queried with "getTypeAction(VT)".
   TargetLowering::ValueTypeActionImpl ValueTypeActions;
 
-  /// getTypeAction - Return how we should legalize values of this type, either
-  /// it is already legal, or we need to promote it to a larger integer type, or
-  /// we need to expand it into multiple registers of a smaller integer type, or
-  /// we need to split a vector type into smaller vector types, or we need to
-  /// convert it to a different type of the same size.
+  /// getTypeAction - Return how we should legalize values of this type.
   LegalizeAction getTypeAction(MVT VT) const {
     switch (ValueTypeActions.getTypeAction(VT)) {
     default:
@@ -118,12 +114,14 @@ private:
   }
 
   /// IgnoreNodeResults - Pretend all of this node's results are legal.
+  /// FIXME: Remove once PR2957 is done.
   bool IgnoreNodeResults(SDNode *N) const {
     return N->getOpcode() == ISD::TargetConstant ||
            IgnoredNodesResultsSet.count(N);
   }
 
   /// IgnoredNode - Set of nodes whose result don't need to be legal.
+  /// FIXME: Remove once PR2957 is done.
   DenseSet<SDNode*> IgnoredNodesResultsSet;
 
   /// PromotedIntegers - For integer nodes that are below legal width, this map
@@ -150,8 +148,8 @@ private:
   /// which operands are the expanded version of the input.
   DenseMap<SDValue, std::pair<SDValue, SDValue> > SplitVectors;
 
-  /// WidenVectors - For vector nodes that need to be widened, indicates
-  /// the widen value to use.
+  /// WidenedVectors - For vector nodes that need to be widened, indicates
+  /// the widened value to use.
   DenseMap<SDValue, SDValue> WidenedVectors;
 
   /// ReplacedValues - For values that have been replaced with another,
@@ -570,6 +568,13 @@ private:
   //===--------------------------------------------------------------------===//
   // Vector Widening Support: LegalizeVectorTypes.cpp
   //===--------------------------------------------------------------------===//
+
+  /// GetWidenedVector - Given a processed vector Op which was widened into a
+  /// larger vector, this method returns the larger vector.  The elements of
+  /// the returned vector consist of the elements of Op followed by elements
+  /// containing rubbish.  For example, if Op is a v2i32 that was widened to a
+  /// v4i32, then this method returns a v4i32 for which the first two elements
+  /// are the same as those of Op, while the last two elements contain rubbish.
   SDValue GetWidenedVector(SDValue Op) {
     SDValue &WidenedOp = WidenedVectors[Op];
     RemapValue(WidenedOp);

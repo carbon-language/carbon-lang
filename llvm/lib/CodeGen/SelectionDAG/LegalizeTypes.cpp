@@ -574,6 +574,12 @@ void DAGTypeLegalizer::ExpungeNode(SDNode *N) {
     RemapValue(I->second);
   }
 
+  for (DenseMap<SDValue, SDValue>::iterator I = WidenedVectors.begin(),
+       E = WidenedVectors.end(); I != E; ++I) {
+    assert(I->first.getNode() != N);
+    RemapValue(I->second);
+  }
+
   for (DenseMap<SDValue, std::pair<SDValue, SDValue> >::iterator
        I = ExpandedIntegers.begin(), E = ExpandedIntegers.end(); I != E; ++I){
     assert(I->first.getNode() != N);
@@ -817,7 +823,7 @@ void DAGTypeLegalizer::SetWidenedVector(SDValue Op, SDValue Result) {
   AnalyzeNewValue(Result);
 
   SDValue &OpEntry = WidenedVectors[Op];
-  assert(OpEntry.getNode() == 0 && "Node is already promoted!");
+  assert(OpEntry.getNode() == 0 && "Node already widened!");
   OpEntry = Result;
 }
 
