@@ -75,8 +75,8 @@ void SUnit::addPred(const SDep &D) {
     ++NumPredsLeft;
   if (!isScheduled)
     ++N->NumSuccsLeft;
-  N->Succs.push_back(P);
   Preds.push_back(D);
+  N->Succs.push_back(P);
   if (P.getLatency() != 0) {
     this->setDepthDirty();
     N->setHeightDirty();
@@ -105,8 +105,8 @@ void SUnit::removePred(const SDep &D) {
         }
       assert(FoundSucc && "Mismatching preds / succs lists!");
       Preds.erase(I);
-      // Update the bookkeeping;
-      if (D.getKind() == SDep::Data) {
+      // Update the bookkeeping.
+      if (P.getKind() == SDep::Data) {
         --NumPreds;
         --N->NumSuccs;
       }
