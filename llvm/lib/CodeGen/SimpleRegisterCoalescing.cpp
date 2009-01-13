@@ -104,8 +104,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   // BValNo is a value number in B that is defined by a copy from A.  'B3' in
   // the example above.
   LiveInterval::iterator BLR = IntB.FindLiveRangeContaining(CopyIdx);
-  if (BLR == IntB.end()) // Should never happen!
-    return false;
+  assert(BLR != IntB.end() && "Live range not found!");
   VNInfo *BValNo = BLR->valno;
   
   // Get the location that B is defined at.  Two options: either this value has
@@ -116,8 +115,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   
   // AValNo is the value number in A that defines the copy, A3 in the example.
   LiveInterval::iterator ALR = IntA.FindLiveRangeContaining(CopyIdx-1);
-  if (ALR == IntA.end()) // Should never happen!
-    return false;
+  assert(ALR != IntA.end() && "Live range not found!");
   VNInfo *AValNo = ALR->valno;
   // If it's re-defined by an early clobber somewhere in the live range, then
   // it's not safe to eliminate the copy. FIXME: This is a temporary workaround.
@@ -153,8 +151,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   
   // Get the LiveRange in IntB that this value number starts with.
   LiveInterval::iterator ValLR = IntB.FindLiveRangeContaining(AValNo->def-1);
-  if (ValLR == IntB.end()) // Should never happen!
-    return false;
+  assert(ValLR != IntB.end() && "Live range not found!");
   
   // Make sure that the end of the live range is inside the same block as
   // CopyMI.
@@ -288,8 +285,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   // BValNo is a value number in B that is defined by a copy from A. 'B3' in
   // the example above.
   LiveInterval::iterator BLR = IntB.FindLiveRangeContaining(CopyIdx);
-  if (BLR == IntB.end()) // Should never happen!
-    return false;
+  assert(BLR != IntB.end() && "Live range not found!");
   VNInfo *BValNo = BLR->valno;
   
   // Get the location that B is defined at.  Two options: either this value has
@@ -300,8 +296,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   
   // AValNo is the value number in A that defines the copy, A3 in the example.
   LiveInterval::iterator ALR = IntA.FindLiveRangeContaining(CopyIdx-1);
-  if (ALR == IntA.end()) // Should never happen!
-    return false;
+  assert(ALR != IntA.end() && "Live range not found!");
   VNInfo *AValNo = ALR->valno;
   // If other defs can reach uses of this def, then it's not safe to perform
   // the optimization.
@@ -462,8 +457,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
                                                        MachineInstr *CopyMI) {
   unsigned CopyIdx = li_->getUseIndex(li_->getInstructionIndex(CopyMI));
   LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx);
-  if (SrcLR == SrcInt.end()) // Should never happen!
-    return false;
+  assert(SrcLR != SrcInt.end() && "Live range not found!");
   VNInfo *ValNo = SrcLR->valno;
   // If other defs can reach uses of this def, then it's not safe to perform
   // the optimization.
