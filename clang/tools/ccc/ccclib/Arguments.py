@@ -713,9 +713,10 @@ class OptionParser:
         self.f_profileGenerateOption = self.addOption(FlagOption('-fprofile-generate', self.fGroup))
         self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile', self.fGroup))
         self.f_traditionalOption = self.addOption(FlagOption('-ftraditional', self.fGroup))
+        self.addOption(JoinedOption('-f', self.fGroup))
+
         self.coverageOption = self.addOption(FlagOption('-coverage'))
         self.coverageOption2 = self.addOption(FlagOption('--coverage'))
-        self.addOption(JoinedOption('-f'))
 
         self.mGroup = OptionGroup('-m')
         self.m_32Option = self.addOption(FlagOption('-m32', self.mGroup))
