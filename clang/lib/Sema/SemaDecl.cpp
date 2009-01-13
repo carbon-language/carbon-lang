@@ -875,7 +875,15 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
       return Tag;
   }
 
+  // Permit typedefs without declarators as a Microsoft extension.
   if (!DS.isMissingDeclaratorOk()) {
+    if (getLangOptions().Microsoft &&
+        DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
+      Diag(DS.getSourceRange().getBegin(), diag::ext_no_declarators)
+        << DS.getSourceRange();
+      return Tag;
+    }
+
     // FIXME: This diagnostic is emitted even when various previous
     // errors occurred (see e.g. test/Sema/decl-invalid.c). However,
     // DeclSpec has no means of communicating this information, and the
