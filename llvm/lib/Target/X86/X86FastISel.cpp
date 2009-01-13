@@ -51,6 +51,7 @@ class X86FastISel : public FastISel {
 public:
   explicit X86FastISel(MachineFunction &mf,
                        MachineModuleInfo *mmi,
+                       DwarfWriter *dw,
                        DenseMap<const Value *, unsigned> &vm,
                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                        DenseMap<const AllocaInst *, int> &am
@@ -58,7 +59,7 @@ public:
                        , SmallSet<Instruction*, 8> &cil
 #endif
                        )
-    : FastISel(mf, mmi, vm, bm, am
+    : FastISel(mf, mmi, dw, vm, bm, am
 #ifndef NDEBUG
                , cil
 #endif
@@ -1512,6 +1513,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(AllocaInst *C) {
 namespace llvm {
   llvm::FastISel *X86::createFastISel(MachineFunction &mf,
                         MachineModuleInfo *mmi,
+                        DwarfWriter *dw,
                         DenseMap<const Value *, unsigned> &vm,
                         DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                         DenseMap<const AllocaInst *, int> &am
@@ -1519,7 +1521,7 @@ namespace llvm {
                         , SmallSet<Instruction*, 8> &cil
 #endif
                         ) {
-    return new X86FastISel(mf, mmi, vm, bm, am
+    return new X86FastISel(mf, mmi, dw, vm, bm, am
 #ifndef NDEBUG
                            , cil
 #endif

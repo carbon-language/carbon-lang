@@ -39,7 +39,7 @@ class GlobalValue;
 class MachineBasicBlock;
 class MachineConstantPoolValue;
 class SDNode;
-class CompileUnitDesc;
+class Value;
 template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
@@ -586,7 +586,7 @@ namespace ISD {
 
     // DBG_STOPPOINT - This node is used to represent a source location for
     // debug info.  It takes token chain as input, and carries a line number,
-    // column number, and a pointer to a CompileUnitDesc object identifying
+    // column number, and a pointer to a CompileUnit object identifying
     // the containing compilation unit.  It produces a token chain as output.
     DBG_STOPPOINT,
     
@@ -1981,12 +1981,12 @@ class DbgStopPointSDNode : public SDNode {
   SDUse Chain;
   unsigned Line;
   unsigned Column;
-  const CompileUnitDesc *CU;
+  Value *CU;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   DbgStopPointSDNode(SDValue ch, unsigned l, unsigned c,
-                     const CompileUnitDesc *cu)
+                     Value *cu)
     : SDNode(ISD::DBG_STOPPOINT, getSDVTList(MVT::Other)),
       Line(l), Column(c), CU(cu) {
     Chain = ch;
@@ -1995,7 +1995,7 @@ protected:
 public:
   unsigned getLine() const { return Line; }
   unsigned getColumn() const { return Column; }
-  const CompileUnitDesc *getCompileUnit() const { return CU; }
+  Value *getCompileUnit() const { return CU; }
 
   static bool classof(const DbgStopPointSDNode *) { return true; }
   static bool classof(const SDNode *N) {

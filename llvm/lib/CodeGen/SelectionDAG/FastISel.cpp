@@ -47,6 +47,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/DwarfWriter.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -315,14 +317,13 @@ bool FastISel::SelectCall(User *I) {
   default: break;
   case Intrinsic::dbg_stoppoint: {
     DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
-    if (MMI && SPI->getContext() && MMI->Verify(SPI->getContext())) {
-      DebugInfoDesc *DD = MMI->getDescFor(SPI->getContext());
-      assert(DD && "Not a debug information descriptor");
-      const CompileUnitDesc *CompileUnit = cast<CompileUnitDesc>(DD);
-      unsigned SrcFile = MMI->RecordSource(CompileUnit);
+    if (DW && SPI->getContext()) {
+      DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
+      unsigned SrcFile = DW->RecordSource(CU.getDirectory(),
+                                          CU.getFilename());
       unsigned Line = SPI->getLine();
       unsigned Col = SPI->getColumn();
-      unsigned ID = MMI->RecordSourceLine(Line, Col, SrcFile);
+      unsigned ID = DW->RecordSourceLine(Line, Col, SrcFile);
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
       BuildMI(MBB, II).addImm(ID);
     }
@@ -330,8 +331,9 @@ bool FastISel::SelectCall(User *I) {
   }
   case Intrinsic::dbg_region_start: {
     DbgRegionStartInst *RSI = cast<DbgRegionStartInst>(I);
-    if (MMI && RSI->getContext() && MMI->Verify(RSI->getContext())) {
-      unsigned ID = MMI->RecordRegionStart(RSI->getContext());
+    if (DW && RSI->getContext()) {
+      unsigned ID = 
+        DW->RecordRegionStart(cast<GlobalVariable>(RSI->getContext()));
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
       BuildMI(MBB, II).addImm(ID);
     }
@@ -339,30 +341,31 @@ bool FastISel::SelectCall(User *I) {
   }
   case Intrinsic::dbg_region_end: {
     DbgRegionEndInst *REI = cast<DbgRegionEndInst>(I);
-    if (MMI && REI->getContext() && MMI->Verify(REI->getContext())) {
-      unsigned ID = MMI->RecordRegionEnd(REI->getContext());
+    if (DW && REI->getContext()) {
+      unsigned ID = 
+        DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
       BuildMI(MBB, II).addImm(ID);
     }
     return true;
   }
   case Intrinsic::dbg_func_start: {
-    if (!MMI) return true;
+    if (!DW) return true;
     DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
     Value *SP = FSI->getSubprogram();
-    if (SP && MMI->Verify(SP)) {
+    if (SP) {
       // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
       // what (most?) gdb expects.
-      DebugInfoDesc *DD = MMI->getDescFor(SP);
-      assert(DD && "Not a debug information descriptor");
-      SubprogramDesc *Subprogram = cast<SubprogramDesc>(DD);
-      const CompileUnitDesc *CompileUnit = Subprogram->getFile();
-      unsigned SrcFile = MMI->RecordSource(CompileUnit);
+      DISubprogram Subprogram(cast<GlobalVariable>(SP));
+      DICompileUnit CompileUnit = Subprogram.getCompileUnit();
+      unsigned SrcFile = DW->RecordSource(CompileUnit.getDirectory(),
+                                          CompileUnit.getFilename());
       // Record the source line but does not create a label for the normal
       // function start. It will be emitted at asm emission time. However,
       // create a label if this is a beginning of inlined function.
-      unsigned LabelID = MMI->RecordSourceLine(Subprogram->getLine(), 0, SrcFile);
-      if (MMI->getSourceLines().size() != 1) {
+      unsigned LabelID = 
+        DW->RecordSourceLine(Subprogram.getLineNumber(), 0, SrcFile);
+      if (DW->getRecordSourceLineCount() != 1) {
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
         BuildMI(MBB, II).addImm(LabelID);
       }
@@ -372,7 +375,7 @@ bool FastISel::SelectCall(User *I) {
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
     Value *Variable = DI->getVariable();
-    if (MMI && Variable && MMI->Verify(Variable)) {
+    if (DW && Variable) {
       // Determine the address of the declared object.
       Value *Address = DI->getAddress();
       if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
@@ -682,6 +685,7 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
 
 FastISel::FastISel(MachineFunction &mf,
                    MachineModuleInfo *mmi,
+                   DwarfWriter *dw,
                    DenseMap<const Value *, unsigned> &vm,
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                    DenseMap<const AllocaInst *, int> &am
@@ -698,6 +702,7 @@ FastISel::FastISel(MachineFunction &mf,
 #endif
     MF(mf),
     MMI(mmi),
+    DW(dw),
     MRI(MF.getRegInfo()),
     MFI(*MF.getFrameInfo()),
     MCP(*MF.getConstantPool()),

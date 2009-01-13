@@ -28,6 +28,7 @@ class MachineConstantPool;
 class MachineFunction;
 class MachineFrameInfo;
 class MachineModuleInfo;
+class DwarfWriter;
 class MachineRegisterInfo;
 class TargetData;
 class TargetInstrInfo;
@@ -50,6 +51,7 @@ protected:
 #endif
   MachineFunction &MF;
   MachineModuleInfo *MMI;
+  DwarfWriter *DW;
   MachineRegisterInfo &MRI;
   MachineFrameInfo &MFI;
   MachineConstantPool &MCP;
@@ -115,6 +117,7 @@ public:
 protected:
   FastISel(MachineFunction &mf,
            MachineModuleInfo *mmi,
+           DwarfWriter *dw,
            DenseMap<const Value *, unsigned> &vm,
            DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
            DenseMap<const AllocaInst *, int> &am

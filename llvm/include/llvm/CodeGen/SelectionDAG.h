@@ -136,6 +136,7 @@ public:
   TargetLowering &getTargetLoweringInfo() const { return TLI; }
   FunctionLoweringInfo &getFunctionLoweringInfo() const { return FLI; }
   MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
+  DwarfWriter *getDwarfWriter() const { return DW; }
 
   /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.
   ///
@@ -312,7 +313,7 @@ public:
   SDValue getValueType(MVT);
   SDValue getRegister(unsigned Reg, MVT VT);
   SDValue getDbgStopPoint(SDValue Root, unsigned Line, unsigned Col,
-                            const CompileUnitDesc *CU);
+                          Value *CU);
   SDValue getLabel(unsigned Opcode, SDValue Root, unsigned LabelID);
 
   SDValue getCopyToReg(SDValue Chain, unsigned Reg, SDValue N) {

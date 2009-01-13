@@ -327,7 +327,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
       // Mark landing pad.
       FuncInfo->MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 
-  SelectAllBasicBlocks(Fn, MF, MMI, TII);
+  SelectAllBasicBlocks(Fn, MF, MMI, DW, TII);
 
   // If the first basic block in the function has live ins that need to be
   // copied into vregs, emit the copies into the top of the block before
@@ -696,11 +696,12 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
 void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
                                             MachineModuleInfo *MMI,
+                                            DwarfWriter *DW,
                                             const TargetInstrInfo &TII) {
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = 0;
   if (EnableFastISel)
-    FastIS = TLI.createFastISel(*FuncInfo->MF, MMI,
+    FastIS = TLI.createFastISel(*FuncInfo->MF, MMI, DW,
                                 FuncInfo->ValueMap,
                                 FuncInfo->MBBMap,
                                 FuncInfo->StaticAllocaMap

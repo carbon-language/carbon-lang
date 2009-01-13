@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
@@ -177,7 +178,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op += " #" + utostr(R->getReg());
     }
   } else if (const DbgStopPointSDNode *D = dyn_cast<DbgStopPointSDNode>(Node)) {
-    Op += ": " + D->getCompileUnit()->getFileName();
+    DICompileUnit CU(cast<GlobalVariable>(D->getCompileUnit()));
+    Op += ": " + CU.getFilename();
     Op += ":" + utostr(D->getLine());
     if (D->getColumn() != 0)
       Op += ":" + utostr(D->getColumn());

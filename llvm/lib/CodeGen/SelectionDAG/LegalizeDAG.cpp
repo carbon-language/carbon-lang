@@ -16,6 +16,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/DwarfWriter.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -26,6 +28,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
@@ -1258,15 +1261,17 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Promote:
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
-      MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+      DwarfWriter *DW = DAG.getDwarfWriter();
       bool useDEBUG_LOC = TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other);
       bool useLABEL = TLI.isOperationLegal(ISD::DBG_LABEL, MVT::Other);
       
       const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(Node);
-      if (MMI && (useDEBUG_LOC || useLABEL)) {
-        const CompileUnitDesc *CompileUnit = DSP->getCompileUnit();
-        unsigned SrcFile = MMI->RecordSource(CompileUnit);
-
+      GlobalVariable *CU_GV = cast<GlobalVariable>(DSP->getCompileUnit());
+      if (DW && (useDEBUG_LOC || useLABEL) && !CU_GV->isDeclaration()) {
+        DICompileUnit CU(cast<GlobalVariable>(DSP->getCompileUnit()));
+        unsigned SrcFile = DW->RecordSource(CU.getDirectory(),
+                                            CU.getFilename());
+        
         unsigned Line = DSP->getLine();
         unsigned Col = DSP->getColumn();
         
@@ -1276,7 +1281,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                               DAG.getConstant(SrcFile, MVT::i32) };
           Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops, 4);
         } else {
-          unsigned ID = MMI->RecordSourceLine(Line, Col, SrcFile);
+          unsigned ID = DW->RecordSourceLine(Line, Col, SrcFile);
           Result = DAG.getLabel(ISD::DBG_LABEL, Tmp1, ID);
         }
       } else {

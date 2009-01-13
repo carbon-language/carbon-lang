@@ -29,6 +29,7 @@ namespace llvm {
   class MachineFunction;
   class MachineInstr;
   class MachineModuleInfo;
+  class DwarfWriter;
   class TargetLowering;
   class TargetInstrInfo;
   class FunctionLoweringInfo;
@@ -110,6 +111,7 @@ protected:
 private:
   void SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
                             MachineModuleInfo *MMI,
+                            DwarfWriter *DW,
                             const TargetInstrInfo &TII);
   void FinishBasicBlock();
 
