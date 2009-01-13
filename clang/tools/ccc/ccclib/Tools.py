@@ -115,8 +115,10 @@ class Darwin_AssembleTool(Tool):
 
         cmd_args = []
         
-        if arglist.getLastArg(arglist.parser.gGroup):
-            cmd_args.append('--gstabs')
+        # Bit of a hack, this is only used for original inputs.
+        if input.isOriginalInput():
+            if arglist.getLastArg(arglist.parser.gGroup):
+                cmd_args.append('--gstabs')
 
         # Derived from asm spec.
         if arch:
@@ -442,13 +444,20 @@ class Darwin_X86_CompileTool(Tool):
         #arglist.addLastArg(cmd_args, arglist.parser._helpOption)
         #arglist.addLastArg(cmd_args, arglist.parser._targetHelpOption)
 
+        # There is no need for this level of compatibility, but it
+        # makes diffing easier.
+        outputAtEnd = (not arglist.getLastArg(arglist.parser.syntaxOnlyOption) and
+                       not arglist.getLastArg(arglist.parser.SOption))
         if isinstance(output, Jobs.PipedJob):
-            cmd_args.extend(['-o', '-'])
+            output_args = ['-o', '-']
         elif output is None:
-            cmd_args.extend(['-o', '/dev/null'])
+            output_args = ['-o', '/dev/null']
         else:
-            cmd_args.extend(arglist.render(output))
-  
+            output_args = arglist.render(output)
+
+        if not outputAtEnd:
+            cmd_args.extend(output_args)
+
         # FIXME: Still don't get what is happening here. Investigate.
         arglist.addAllArgs(cmd_args, arglist.parser._paramOption)
 
@@ -460,6 +469,9 @@ class Darwin_X86_CompileTool(Tool):
         if arglist.getLastArg(arglist.parser.coverageOption):
             cmd_args.append('-fprofile-arcs')
             cmd_args.append('-ftest-coverage')
+
+        if outputAtEnd:
+            cmd_args.extend(output_args)
 
         jobs.addJob(Jobs.Command(self.toolChain.getProgramPath(cc1Name), 
                                  cmd_args))

@@ -573,7 +573,7 @@ class Driver(object):
         elif hasNoIntegratedCPP:
             self.claim(hasNoIntegratedCPP)
         
-
+        # FIXME: Move to... somewhere else.
         class InputInfo:
             def __init__(self, source, type, baseInput):
                 self.source = source
@@ -583,6 +583,9 @@ class Driver(object):
             def __repr__(self):
                 return '%s(%r, %r, %r)' % (self.__class__.__name__,
                                            self.source, self.type, self.baseInput)
+            
+            def isOriginalInput(self):
+                return self.source is self.baseInput
 
         def createJobs(tc, phase, forwardArgs,
                        canAcceptPipe=False, atTopLevel=False, arch=None):
