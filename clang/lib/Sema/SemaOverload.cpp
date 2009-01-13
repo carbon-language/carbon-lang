@@ -1115,7 +1115,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
     CXXRecordDecl *ToRecordDecl = ToRecordType->getDecl();
     DeclarationName ConstructorName 
       = Context.DeclarationNames.getCXXConstructorName(
-                                             Context.getCanonicalType(ToType));
+                        Context.getCanonicalType(ToType).getUnqualifiedType());
     DeclContext::lookup_iterator Con, ConEnd;
     for (llvm::tie(Con, ConEnd) = ToRecordDecl->lookup(ConstructorName);
          Con != ConEnd; ++Con) {

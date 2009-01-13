@@ -172,3 +172,14 @@ void test_arrow(Arrow1 a1, Arrow2 a2, const Arrow2 a3) {
   int &i2 = a2->m;
   a3->m; // expected-error{{no viable overloaded 'operator->'; candidate is}}
 }
+
+struct CopyConBase {
+};
+
+struct CopyCon : public CopyConBase {
+  CopyCon(const CopyConBase &Base);
+
+  CopyCon(const CopyConBase *Base) {
+    *this = *Base;
+  }
+};
