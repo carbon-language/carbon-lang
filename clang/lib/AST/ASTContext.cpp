@@ -1775,6 +1775,16 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
                              true /* outermost type */);
 }
 
+static void EncodeBitField(const ASTContext *Context, std::string& S, 
+                           FieldDecl *FD) {
+  const Expr *E = FD->getBitWidth();
+  assert(E && "bitfield width not there - getObjCEncodingForTypeImpl");
+  ASTContext *Ctx = const_cast<ASTContext*>(Context);
+  unsigned N = E->getIntegerConstantExprValue(*Ctx).getZExtValue();
+  S += 'b';
+  S += llvm::utostr(N);
+}
+
 void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandPointedToStructures,
                                             bool ExpandStructures,
@@ -1782,12 +1792,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool OutermostType) const {
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
     if (FD && FD->isBitField()) {
-      const Expr *E = FD->getBitWidth();
-      assert(E && "bitfield width not there - getObjCEncodingForTypeImpl");
-      ASTContext *Ctx = const_cast<ASTContext*>(this);
-      unsigned N = E->getIntegerConstantExprValue(*Ctx).getZExtValue();
-      S += 'b';
-      S += llvm::utostr(N);
+      EncodeBitField(this, S, FD);
     }
     else {
       char encoding;
@@ -1949,7 +1954,10 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
     S += RDecl->isUnion() ? ')' : '}';
   } else if (T->isEnumeralType()) {
-    S += 'i';
+    if (FD && FD->isBitField())
+      EncodeBitField(this, S, FD);
+    else
+      S += 'i';
   } else if (T->isBlockPointerType()) {
     S += '^'; // This type string is the same as general pointers.
   } else if (T->isObjCInterfaceType()) {
