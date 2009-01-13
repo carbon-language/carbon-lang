@@ -25,9 +25,14 @@ class Tool(object):
 
 class GCC_Common_Tool(Tool):
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args, arglist,
+                     output, outputType, arglist,
                      extraArgs):
-        cmd_args = sum(map(arglist.render, args),[]) + extraArgs
+        cmd_args = []
+        for arg in arglist.args:
+            if arg.opt.forwardToGCC():
+                cmd_args.extend(arglist.render(arg))
+
+        cmd_args.extend(extraArgs)
         if arch:
             cmd_args.extend(arglist.render(arch))
         if isinstance(output, Jobs.PipedJob):
@@ -70,9 +75,9 @@ class GCC_PreprocessTool(GCC_Common_Tool):
                                                   Tool.eFlagsPipedOutput))
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args, arglist):
+                     output, outputType, arglist):
         return super(GCC_PreprocessTool, self).constructJob(phase, arch, jobs, inputs,
-                                                            output, outputType, args, arglist,
+                                                            output, outputType, arglist,
                                                             ['-E'])
 
 class GCC_CompileTool(GCC_Common_Tool):
@@ -83,9 +88,9 @@ class GCC_CompileTool(GCC_Common_Tool):
                                                Tool.eFlagsIntegratedCPP))
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args, arglist):
+                     output, outputType, arglist):
         return super(GCC_CompileTool, self).constructJob(phase, arch, jobs, inputs,
-                                                         output, outputType, args, arglist,
+                                                         output, outputType, arglist,
                                                          ['-S'])
 
 class GCC_PrecompileTool(GCC_Common_Tool):
@@ -95,9 +100,9 @@ class GCC_PrecompileTool(GCC_Common_Tool):
                                                   Tool.eFlagsIntegratedCPP))
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args, arglist):
+                     output, outputType, arglist):
         return super(GCC_PrecompileTool, self).constructJob(phase, arch, jobs, inputs,
-                                                            output, outputType, args, arglist,
+                                                            output, outputType, arglist,
                                                             [])
 
 class Darwin_AssembleTool(Tool):
@@ -107,7 +112,7 @@ class Darwin_AssembleTool(Tool):
         self.toolChain = toolChain
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args, arglist):
+                     output, outputType, arglist):
         assert len(inputs) == 1
         assert outputType is Types.ObjectType
 
@@ -152,9 +157,9 @@ class GCC_AssembleTool(GCC_Common_Tool):
         super(GCC_AssembleTool, self).__init__('gcc (as)')
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args, arglist):
+                     output, outputType, arglist):
         return super(GCC_AssembleTool, self).constructJob(phase, arch, jobs, inputs,
-                                                          output, outputType, args, arglist,
+                                                          output, outputType, arglist,
                                                           ['-c'])
 
 class GCC_LinkTool(GCC_Common_Tool):
@@ -162,9 +167,9 @@ class GCC_LinkTool(GCC_Common_Tool):
         super(GCC_LinkTool, self).__init__('gcc (ld)')
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args, arglist):
+                     output, outputType, arglist):
         return super(GCC_LinkTool, self).constructJob(phase, arch, jobs, inputs,
-                                                      output, outputType, args, arglist,
+                                                      output, outputType, arglist,
                                                       [])
 
 class Darwin_X86_CompileTool(Tool):
@@ -217,7 +222,7 @@ class Darwin_X86_CompileTool(Tool):
         # FIXME: Remove mcpu=G4
         # FIXME: Remove mcpu=G5
 
-        if (arglist.getLastArg(arglist.parser.gOption) and
+        if (arglist.getLastArg(arglist.parser.gGroup) and
             not arglist.getLastArg(arglist.parser.f_noEliminateUnusedDebugSymbolsOption)):
             cmd_args.append('-feliminate-unused-debug-symbols')
 
@@ -231,7 +236,7 @@ class Darwin_X86_CompileTool(Tool):
         return os.path.splitext(self.getBaseInputName(inputs, arglist))[0]
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, args, arglist):
+                     output, outputType, arglist):
         inputType = inputs[0].type
         assert not [i for i in inputs if i.type != inputType]
 
@@ -705,7 +710,7 @@ class Darwin_X86_LinkTool(Tool):
         arglist.addLastArg(cmd_args, arglist.parser.MachOption)
 
     def constructJob(self, phase, arch, jobs, inputs,
-                     output, outputType, args, arglist):
+                     output, outputType, arglist):
         assert outputType is Types.ImageType
 
         # The logic here is derived from gcc's behavior; most of which
@@ -896,7 +901,7 @@ class LipoTool(Tool):
         super(LipoTool, self).__init__('lipo')
 
     def constructJob(self, phase, arch, jobs, inputs,
-                     output, outputType, args, arglist):
+                     output, outputType, arglist):
         assert outputType is Types.ImageType
 
         cmd_args = ['-create']

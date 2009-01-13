@@ -538,25 +538,6 @@ class Driver(object):
         hasTraditionalCPP = args.getLastArg(self.parser.traditionalCPPOption)
         hasPipe = args.getLastArg(self.parser.pipeOption)
 
-        # FIXME: forward will die, this isn't really how things are
-        # done, instead everything comes from the arglist. For this we
-        # need a DerivedArgList for handling -Xarch, and some way to
-        # still figure out what to forward to the generic gcc tool.
-        forward = []
-        for a in args:
-            if a.opt is self.parser.inputOption:
-                pass
-
-            # FIXME: Needs to be part of option.
-            elif (a.opt.name in ('-E', '-S', '-c',
-                                 '-arch', '-fsyntax-only', '-combine', '-x',
-                                 '-###') or
-                  a.opt.isLinkerInput):
-                pass
-
-            else:
-                forward.append(a)
-
         # We claim things here so that options for which we silently allow
         # override only ever claim the used option.
         if hasPipe:
@@ -587,32 +568,20 @@ class Driver(object):
             def isOriginalInput(self):
                 return self.source is self.baseInput
 
-        def createJobs(tc, phase, forwardArgs,
-                       canAcceptPipe=False, atTopLevel=False, arch=None):
+        def createJobs(tc, phase,
+                       canAcceptPipe=False, atTopLevel=False, arch=None,
+                       tcArgs=None):
             if isinstance(phase, Phases.InputAction):
                 return InputInfo(phase.filename, phase.type, phase.filename)
             elif isinstance(phase, Phases.BindArchAction):
                 archName = args.getValue(phase.arch)
                 tc = self.hostInfo.getToolChainForArch(archName)
-                filteredArgs = []
-                for arg in forwardArgs:
-                    if arg.opt is self.parser.archOption:
-                        if arg is phase.arch:
-                            filteredArgs.append(arg)
-                    elif arg.opt is self.parser.XarchOption:
-                        # FIXME: gcc-dd has another conditional for passing
-                        # through, when the arch conditional array has an empty
-                        # string. Why?
-                        if args.getJoinedValue(arg) == archName:
-                            # FIXME: This is wrong, we don't want a
-                            # unknown arg we want an actual parsed
-                            # version of this arg.
-                            filteredArgs.append(args.makeUnknownArg(args.getSeparateValue(arg)))
-                    else:
-                        filteredArgs.append(arg)
-                        
-                return createJobs(tc, phase.inputs[0], filteredArgs,
-                                  canAcceptPipe, atTopLevel, phase.arch)
+                return createJobs(tc, phase.inputs[0],
+                                  canAcceptPipe, atTopLevel, phase.arch,
+                                  tcArgs=None)
+
+            if tcArgs is None:
+                tcArgs = tc.translateArgs(args, arch)
 
             assert isinstance(phase, Phases.JobAction)
             tool = tc.selectTool(phase)
@@ -633,7 +602,7 @@ class Driver(object):
 
             # Only try to use pipes when exactly one input.
             canAcceptPipe = len(inputList) == 1 and tool.acceptsPipedInput()
-            inputs = [createJobs(tc, p, forwardArgs, canAcceptPipe, False, arch) 
+            inputs = [createJobs(tc, p, canAcceptPipe, False, arch, tcArgs) 
                       for p in inputList]
 
             # Determine if we should output to a pipe.
@@ -693,7 +662,7 @@ class Driver(object):
                                                   self.parser.oOption)
 
             tool.constructJob(phase, arch, jobList, inputs, output, phase.type,
-                              forwardArgs, args)
+                              tcArgs)
 
             return InputInfo(output, phase.type, baseInput)
 
@@ -704,7 +673,7 @@ class Driver(object):
             raise ValueError,"Cannot specify -o when generating multiple files."
 
         for phase in phases:
-            createJobs(self.toolChain, phase, forward, 
+            createJobs(self.toolChain, phase, 
                        canAcceptPipe=True, atTopLevel=True)
 
         return jobs

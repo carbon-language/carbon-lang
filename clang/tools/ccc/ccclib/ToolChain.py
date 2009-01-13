@@ -1,3 +1,4 @@
+import Arguments
 import Phases
 import Tools
 
@@ -14,6 +15,32 @@ class ToolChain(object):
         some particular action."""
         abstract
 
+    def translateArgs(self, args, arch):
+        """translateArgs - Callback to allow argument translation for
+        an entire toolchain."""
+
+        # FIXME: Would be nice to move arch handling out of generic
+        # code.
+        if arch:
+            archName = args.getValue(arch)
+            al = Arguments.DerivedArgList(args)
+            for arg in args.args:
+                if arg.opt is args.parser.archOption:
+                    if arg is arch:
+                        al.append(arg)
+                elif arg.opt is args.parser.XarchOption:
+                    if args.getJoinedValue(arg) == archName:
+                        # FIXME: Fix this.
+                        arg = args.parser.lookupOptForArg(Arguments.InputIndex(0, arg.index.pos + 1),
+                                                          args.getSeparateValue(arg),
+                                                          iter([]))
+                        al.append(arg)
+                else:
+                    al.append(arg)
+            return al
+        else:
+            return args
+
 class Darwin_X86_ToolChain(ToolChain):
     def __init__(self, driver, darwinVersion, gccVersion):
         super(Darwin_X86_ToolChain, self).__init__(driver)
@@ -24,7 +51,7 @@ class Darwin_X86_ToolChain(ToolChain):
 
         self.toolMap = {
             Phases.PreprocessPhase : Tools.GCC_PreprocessTool(),
-            Phases.CompilePhase : Tools.GCC_CompileTool(),
+            Phases.CompilePhase : Tools.Darwin_X86_CompileTool(self),
             Phases.PrecompilePhase : Tools.GCC_PrecompileTool(),
             Phases.AssemblePhase : Tools.Darwin_AssembleTool(self),
             Phases.LinkPhase : Tools.Darwin_X86_LinkTool(self),

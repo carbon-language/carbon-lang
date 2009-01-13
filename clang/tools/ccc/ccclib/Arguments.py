@@ -34,6 +34,18 @@ class Option(object):
         return '<%s name=%r>' % (self.__class__.__name__,
                                  self.name)
 
+    def forwardToGCC(self):
+        # FIXME: Get rid of this hack.
+        if self.name == '<input>':
+            return False
+
+        if self.isLinkerInput:
+            return False
+
+        return self.name not in  ('-E', '-S', '-c',
+                                  '-arch', '-fsyntax-only', '-combine', '-x',
+                                  '-###')
+
 class OptionGroup(Option):
     """OptionGroup - A fake option class used to group options so that
     the driver can efficiently refer to an entire set of options."""
@@ -268,16 +280,15 @@ class InputIndex:
     def __repr__(self):
         return 'InputIndex(%d, %d)' % (self.sourceId, self.pos)
 
-class ArgList:
-    """ArgList - Collect an input argument vector along with a set of parsed Args
-    and supporting information."""
+class ArgList(object):
+    """ArgList - Collect an input argument vector along with a set of
+    parsed Args and supporting information."""
 
     def __init__(self, parser, argv):
         self.parser = parser
         self.argv = list(argv)
         self.syntheticArgv = []
         self.lastArgs = {}
-        self.lastGroupArgs = {}
         self.args = []
 
     def getArgs(self, option):
@@ -418,6 +429,15 @@ class ArgList:
     def getJoinedValue(self, arg):
         return arg.getJoinedValue(self)
 
+class DerivedArgList(ArgList):
+    def __init__(self, args):
+        super(DerivedArgList, self).__init__(args.parser, args.argv)
+        self.parser = args.parser
+        self.argv = args.argv
+        self.syntheticArgv = args.syntheticArgv
+        self.lastArgs = {}
+        self.args = []
+        
 ###
     
 class OptionParser:
