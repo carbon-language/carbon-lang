@@ -647,46 +647,69 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     break;
   }
   case Decl::CXXMethod: {
-    CXXMethodDecl* CMD = CXXMethodDecl::castFromDeclContext(DC);
-    if (CMD->isOutOfLineDefinition())
+    CXXMethodDecl* D = CXXMethodDecl::castFromDeclContext(DC);
+    if (D->isOutOfLineDefinition())
       Out << "[c++ method] ";
+    else if (D->isImplicit())
+      Out << "(c++ method) ";
     else
       Out << "<c++ method> ";
-    Out << CMD->getNameAsString();
+    Out << D->getNameAsString();
 
     // Check the semantic DeclContext.
-    DeclContext* SemaDC = CMD->getDeclContext();
-    DeclContext* LexicalDC = CMD->getLexicalDeclContext();
-    if (SemaDC != LexicalDC) {
+    DeclContext* SemaDC = D->getDeclContext();
+    DeclContext* LexicalDC = D->getLexicalDeclContext();
+    if (SemaDC != LexicalDC)
       Out << " [[" << SemaDC << "]]";
-    }
+
     break;
   }
   case Decl::CXXConstructor: {
-    CXXConstructorDecl* CMD = CXXConstructorDecl::castFromDeclContext(DC);
-    if (CMD->isOutOfLineDefinition())
+    CXXConstructorDecl* D = CXXConstructorDecl::castFromDeclContext(DC);
+    if (D->isOutOfLineDefinition())
       Out << "[c++ ctor] ";
+    else if (D->isImplicit())
+      Out << "(c++ ctor) ";
     else
       Out << "<c++ ctor> ";
-    Out << CMD->getNameAsString();
+    Out << D->getNameAsString();
+    // Check the semantic DC.
+    DeclContext* SemaDC = D->getDeclContext();
+    DeclContext* LexicalDC = D->getLexicalDeclContext();
+    if (SemaDC != LexicalDC)
+      Out << " [[" << SemaDC << "]]";
     break;
   }
   case Decl::CXXDestructor: {
-    CXXDestructorDecl* CMD = CXXDestructorDecl::castFromDeclContext(DC);
-    if (CMD->isOutOfLineDefinition())
+    CXXDestructorDecl* D = CXXDestructorDecl::castFromDeclContext(DC);
+    if (D->isOutOfLineDefinition())
       Out << "[c++ dtor] ";
+    else if (D->isImplicit())
+      Out << "(c++ dtor) ";
     else
       Out << "<c++ dtor> ";
-    Out << CMD->getNameAsString();
+    Out << D->getNameAsString();
+    // Check the semantic DC.
+    DeclContext* SemaDC = D->getDeclContext();
+    DeclContext* LexicalDC = D->getLexicalDeclContext();
+    if (SemaDC != LexicalDC)
+      Out << " [[" << SemaDC << "]]";
     break;
   }
   case Decl::CXXConversion: {
-    CXXConversionDecl* CMD = CXXConversionDecl::castFromDeclContext(DC);
-    if (CMD->isOutOfLineDefinition())
+    CXXConversionDecl* D = CXXConversionDecl::castFromDeclContext(DC);
+    if (D->isOutOfLineDefinition())
       Out << "[c++ conversion] ";
+    else if (D->isImplicit())
+      Out << "(c++ conversion) ";
     else
       Out << "<c++ conversion> ";
-    Out << CMD->getNameAsString();
+    Out << D->getNameAsString();
+    // Check the semantic DC.
+    DeclContext* SemaDC = D->getDeclContext();
+    DeclContext* LexicalDC = D->getLexicalDeclContext();
+    if (SemaDC != LexicalDC)
+      Out << " [[" << SemaDC << "]]";
     break;
   }
 
