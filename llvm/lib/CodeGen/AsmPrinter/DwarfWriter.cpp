@@ -749,10 +749,6 @@ public:
 /// with a source file.
 class CompileUnit {
 private:
-  /// Desc - Compile unit debug descriptor.
-  ///
-  CompileUnitDesc *Desc;
-
   /// ID - File identifier for source.
   ///
   unsigned ID;
@@ -761,14 +757,12 @@ private:
   ///
   DIE *Die;
 
-  /// DescToDieMap - Tracks the mapping of unit level debug informaton
-  /// descriptors to debug information entries.
-  std::map<DebugInfoDesc *, DIE *> DescToDieMap;
+  /// GVToDieMap - Tracks the mapping of unit level debug informaton
+  /// variables to debug information entries.
   DenseMap<GlobalVariable *, DIE *> GVToDieMap;
 
-  /// DescToDIEntryMap - Tracks the mapping of unit level debug informaton
+  /// GVToDIEntryMap - Tracks the mapping of unit level debug informaton
   /// descriptors to debug information entries using a DIEntry proxy.
-  std::map<DebugInfoDesc *, DIEntry *> DescToDIEntryMap;
   DenseMap<GlobalVariable *, DIEntry *> GVToDIEntryMap;
 
   /// Globals - A map of globally visible named entities for this unit.
@@ -785,21 +779,8 @@ private:
 
 public:
   CompileUnit(unsigned I, DIE *D)
-    : ID(I), Die(D), DescToDieMap(), GVToDieMap(), DescToDIEntryMap(),
+    : ID(I), Die(D), GVToDieMap(),
       GVToDIEntryMap(), Globals(), DiesSet(InitDiesSetSize), Dies()
-  {}
-
-  CompileUnit(CompileUnitDesc *CUD, unsigned I, DIE *D)
-  : Desc(CUD)
-  , ID(I)
-  , Die(D)
-  , DescToDieMap()
-  , GVToDieMap()
-  , DescToDIEntryMap()
-  , GVToDIEntryMap()
-  , Globals()
-  , DiesSet(InitDiesSetSize)
-  , Dies()
   {}
 
   ~CompileUnit() {
@@ -810,7 +791,6 @@ public:
   }
 
   // Accessors.
-  CompileUnitDesc *getDesc() const { return Desc; }
   unsigned getID()           const { return ID; }
   DIE* getDie()              const { return Die; }
   std::map<std::string, DIE *> &getGlobals() { return Globals; }
@@ -828,19 +808,13 @@ public:
   }
 
   /// getDieMapSlotFor - Returns the debug information entry map slot for the
-  /// specified debug descriptor.
-  DIE *&getDieMapSlotFor(DebugInfoDesc *DID) {
-    return DescToDieMap[DID];
-  }
+  /// specified debug variable.
   DIE *&getDieMapSlotFor(GlobalVariable *GV) {
     return GVToDieMap[GV];
   }
 
   /// getDIEntrySlotFor - Returns the debug information entry proxy slot for the
-  /// specified debug descriptor.
-  DIEntry *&getDIEntrySlotFor(DebugInfoDesc *DID) {
-    return DescToDIEntryMap[DID];
-  }
+  /// specified debug variable.
   DIEntry *&getDIEntrySlotFor(GlobalVariable *GV) {
     return GVToDIEntryMap[GV];
   }
@@ -1204,7 +1178,7 @@ public:
 
   /// operator== - Used by UniqueVector to locate entry.
   ///
-  bool operator==(const SourceFileInfo &SI) const {
+  bool operator==(const SrcFileInfo &SI) const {
     return getDirectoryID() == SI.getDirectoryID() && getName() == SI.getName();
   }
 
@@ -1316,10 +1290,6 @@ private:
   /// StringPool - A UniqueVector of strings used by indirect references.
   ///
   UniqueVector<std::string> StringPool;
-
-  /// UnitMap - Map debug information descriptor to compile unit.
-  ///
-  std::map<DebugInfoDesc *, CompileUnit *> DescToUnitMap;
 
   /// SectionMap - Provides a unique id per text section.
   ///
@@ -1574,17 +1544,6 @@ private:
 
   /// AddSourceLine - Add location information to specified debug information
   /// entry.
-  void AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line) {
-    if (File && Line) {
-      CompileUnit *FileUnit = FindCompileUnit(File);
-      unsigned FileID = FileUnit->getID();
-      AddUInt(Die, DW_AT_decl_file, 0, FileID);
-      AddUInt(Die, DW_AT_decl_line, 0, Line);
-    }
-  }
-
-  /// AddSourceLine - Add location information to specified debug information
-  /// entry.
   void AddSourceLine(DIE *Die, DIVariable *V) {
     unsigned FileID = 0;
     unsigned Line = V->getLineNumber();
@@ -1687,46 +1646,6 @@ private:
     if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
     DIE *PointerTypeDie =  Unit->AddDie(Buffer);
     AddDIEntry(Entity, DW_AT_type, DW_FORM_ref4, PointerTypeDie);
-  }
-
-  /// AddType - Add a new type attribute to the specified entity.
-  ///
-  void AddType(DIE *Entity, TypeDesc *TyDesc, CompileUnit *Unit) {
-    if (!TyDesc) {
-      AddBasicType(Entity, Unit, "", DW_ATE_signed, sizeof(int32_t));
-    } else {
-      // Check for pre-existence.
-      DIEntry *&Slot = Unit->getDIEntrySlotFor(TyDesc);
-
-      // If it exists then use the existing value.
-      if (Slot) {
-        Entity->AddValue(DW_AT_type, DW_FORM_ref4, Slot);
-        return;
-      }
-
-      if (SubprogramDesc *SubprogramTy = dyn_cast<SubprogramDesc>(TyDesc)) {
-        // FIXME - Not sure why programs and variables are coming through here.
-        // Short cut for handling subprogram types (not really a TyDesc.)
-        AddPointerType(Entity, Unit, SubprogramTy->getName());
-      } else if (GlobalVariableDesc *GlobalTy =
-                                         dyn_cast<GlobalVariableDesc>(TyDesc)) {
-        // FIXME - Not sure why programs and variables are coming through here.
-        // Short cut for handling global variable types (not really a TyDesc.)
-        AddPointerType(Entity, Unit, GlobalTy->getName());
-      } else {
-        // Set up proxy.
-        Slot = NewDIEntry();
-
-        // Construct type.
-        DIE Buffer(DW_TAG_base_type);
-        ConstructType(Buffer, TyDesc, Unit);
-
-        // Add debug information entry to entity and unit.
-        DIE *Die = Unit->AddDie(Buffer);
-        SetDIEntry(Slot, Die);
-        Entity->AddValue(DW_AT_type, DW_FORM_ref4, Slot);
-      }
-    }
   }
 
   /// AddType - Add a new type attribute to the specified entity.
@@ -2040,332 +1959,6 @@ private:
     Buffer.AddChild(MemberDie);
   }
 
-  /// ConstructType - Adds all the required attributes to the type.
-  ///
-  void ConstructType(DIE &Buffer, TypeDesc *TyDesc, CompileUnit *Unit) {
-    // Get core information.
-    const std::string &Name = TyDesc->getName();
-    uint64_t Size = TyDesc->getSize() >> 3;
-
-    if (BasicTypeDesc *BasicTy = dyn_cast<BasicTypeDesc>(TyDesc)) {
-      // Fundamental types like int, float, bool
-      Buffer.setTag(DW_TAG_base_type);
-      AddUInt(&Buffer, DW_AT_encoding,  DW_FORM_data1, BasicTy->getEncoding());
-    } else if (DerivedTypeDesc *DerivedTy = dyn_cast<DerivedTypeDesc>(TyDesc)) {
-      // Fetch tag.
-      unsigned Tag = DerivedTy->getTag();
-      // FIXME - Workaround for templates.
-      if (Tag == DW_TAG_inheritance) Tag = DW_TAG_reference_type;
-      // Pointers, typedefs et al.
-      Buffer.setTag(Tag);
-      // Map to main type, void will not have a type.
-      if (TypeDesc *FromTy = DerivedTy->getFromType())
-        AddType(&Buffer, FromTy, Unit);
-    } else if (CompositeTypeDesc *CompTy = dyn_cast<CompositeTypeDesc>(TyDesc)){
-      // Fetch tag.
-      unsigned Tag = CompTy->getTag();
-
-      // Set tag accordingly.
-      if (Tag == DW_TAG_vector_type)
-        Buffer.setTag(DW_TAG_array_type);
-      else
-        Buffer.setTag(Tag);
-
-      std::vector<DebugInfoDesc *> &Elements = CompTy->getElements();
-
-      switch (Tag) {
-      case DW_TAG_vector_type:
-        AddUInt(&Buffer, DW_AT_GNU_vector, DW_FORM_flag, 1);
-        // Fall thru
-      case DW_TAG_array_type: {
-        // Add element type.
-        if (TypeDesc *FromTy = CompTy->getFromType())
-          AddType(&Buffer, FromTy, Unit);
-
-        // Don't emit size attribute.
-        Size = 0;
-
-        // Construct an anonymous type for index type.
-        DIE Buffer(DW_TAG_base_type);
-        AddUInt(&Buffer, DW_AT_byte_size, 0, sizeof(int32_t));
-        AddUInt(&Buffer, DW_AT_encoding, DW_FORM_data1, DW_ATE_signed);
-        DIE *IndexTy = Unit->AddDie(Buffer);
-
-        // Add subranges to array type.
-        for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
-          SubrangeDesc *SRD = cast<SubrangeDesc>(Elements[i]);
-          int64_t Lo = SRD->getLo();
-          int64_t Hi = SRD->getHi();
-          DIE *Subrange = new DIE(DW_TAG_subrange_type);
-
-          // If a range is available.
-          if (Lo != Hi) {
-            AddDIEntry(Subrange, DW_AT_type, DW_FORM_ref4, IndexTy);
-            // Only add low if non-zero.
-            if (Lo) AddSInt(Subrange, DW_AT_lower_bound, 0, Lo);
-            AddSInt(Subrange, DW_AT_upper_bound, 0, Hi);
-          }
-
-          Buffer.AddChild(Subrange);
-        }
-        break;
-      }
-      case DW_TAG_structure_type:
-      case DW_TAG_union_type: {
-        // Add elements to structure type.
-        for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
-          DebugInfoDesc *Element = Elements[i];
-
-          if (DerivedTypeDesc *MemberDesc = dyn_cast<DerivedTypeDesc>(Element)){
-            // Add field or base class.
-            unsigned Tag = MemberDesc->getTag();
-
-            // Extract the basic information.
-            const std::string &Name = MemberDesc->getName();
-            uint64_t Size = MemberDesc->getSize();
-            uint64_t Align = MemberDesc->getAlign();
-            uint64_t Offset = MemberDesc->getOffset();
-
-            // Construct member debug information entry.
-            DIE *Member = new DIE(Tag);
-
-            // Add name if not "".
-            if (!Name.empty())
-              AddString(Member, DW_AT_name, DW_FORM_string, Name);
-
-            // Add location if available.
-            AddSourceLine(Member, MemberDesc->getFile(), MemberDesc->getLine());
-
-            // Most of the time the field info is the same as the members.
-            uint64_t FieldSize = Size;
-            uint64_t FieldAlign = Align;
-            uint64_t FieldOffset = Offset;
-
-            // Set the member type.
-            TypeDesc *FromTy = MemberDesc->getFromType();
-            AddType(Member, FromTy, Unit);
-
-            // Walk up typedefs until a real size is found.
-            while (FromTy) {
-              if (FromTy->getTag() != DW_TAG_typedef) {
-                FieldSize = FromTy->getSize();
-                FieldAlign = FromTy->getAlign();
-                break;
-              }
-
-              FromTy = cast<DerivedTypeDesc>(FromTy)->getFromType();
-            }
-
-            // Unless we have a bit field.
-            if (Tag == DW_TAG_member && FieldSize != Size) {
-              // Construct the alignment mask.
-              uint64_t AlignMask = ~(FieldAlign - 1);
-              // Determine the high bit + 1 of the declared size.
-              uint64_t HiMark = (Offset + FieldSize) & AlignMask;
-              // Work backwards to determine the base offset of the field.
-              FieldOffset = HiMark - FieldSize;
-              // Now normalize offset to the field.
-              Offset -= FieldOffset;
-
-              // Maybe we need to work from the other end.
-              if (TD->isLittleEndian()) Offset = FieldSize - (Offset + Size);
-
-              // Add size and offset.
-              AddUInt(Member, DW_AT_byte_size, 0, FieldSize >> 3);
-              AddUInt(Member, DW_AT_bit_size, 0, Size);
-              AddUInt(Member, DW_AT_bit_offset, 0, Offset);
-            }
-
-            // Add computation for offset.
-            DIEBlock *Block = new DIEBlock();
-            AddUInt(Block, 0, DW_FORM_data1, DW_OP_plus_uconst);
-            AddUInt(Block, 0, DW_FORM_udata, FieldOffset >> 3);
-            AddBlock(Member, DW_AT_data_member_location, 0, Block);
-
-            // Add accessibility (public default unless is base class.
-            if (MemberDesc->isProtected()) {
-              AddUInt(Member, DW_AT_accessibility, 0, DW_ACCESS_protected);
-            } else if (MemberDesc->isPrivate()) {
-              AddUInt(Member, DW_AT_accessibility, 0, DW_ACCESS_private);
-            } else if (Tag == DW_TAG_inheritance) {
-              AddUInt(Member, DW_AT_accessibility, 0, DW_ACCESS_public);
-            }
-
-            Buffer.AddChild(Member);
-          } else if (GlobalVariableDesc *StaticDesc =
-                                        dyn_cast<GlobalVariableDesc>(Element)) {
-            // Add static member.
-
-            // Construct member debug information entry.
-            DIE *Static = new DIE(DW_TAG_variable);
-
-            // Add name and mangled name.
-            const std::string &Name = StaticDesc->getName();
-            const std::string &LinkageName = StaticDesc->getLinkageName();
-            AddString(Static, DW_AT_name, DW_FORM_string, Name);
-            if (!LinkageName.empty()) {
-              AddString(Static, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                                LinkageName);
-            }
-
-            // Add location.
-            AddSourceLine(Static, StaticDesc->getFile(), StaticDesc->getLine());
-
-            // Add type.
-            if (TypeDesc *StaticTy = StaticDesc->getType())
-              AddType(Static, StaticTy, Unit);
-
-            // Add flags.
-            if (!StaticDesc->isStatic())
-              AddUInt(Static, DW_AT_external, DW_FORM_flag, 1);
-            AddUInt(Static, DW_AT_declaration, DW_FORM_flag, 1);
-
-            Buffer.AddChild(Static);
-          } else if (SubprogramDesc *MethodDesc =
-                                            dyn_cast<SubprogramDesc>(Element)) {
-            // Add member function.
-
-            // Construct member debug information entry.
-            DIE *Method = new DIE(DW_TAG_subprogram);
-
-            // Add name and mangled name.
-            const std::string &Name = MethodDesc->getName();
-            const std::string &LinkageName = MethodDesc->getLinkageName();
-
-            AddString(Method, DW_AT_name, DW_FORM_string, Name);
-            bool IsCTor = TyDesc->getName() == Name;
-
-            if (!LinkageName.empty()) {
-              AddString(Method, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                                LinkageName);
-            }
-
-            // Add location.
-            AddSourceLine(Method, MethodDesc->getFile(), MethodDesc->getLine());
-
-            // Add type.
-            if (CompositeTypeDesc *MethodTy =
-                   dyn_cast_or_null<CompositeTypeDesc>(MethodDesc->getType())) {
-              // Get argument information.
-              std::vector<DebugInfoDesc *> &Args = MethodTy->getElements();
-
-              // If not a ctor.
-              if (!IsCTor) {
-                // Add return type.
-                AddType(Method, dyn_cast<TypeDesc>(Args[0]), Unit);
-              }
-
-              // Add arguments.
-              for (unsigned i = 1, N = Args.size(); i < N; ++i) {
-                DIE *Arg = new DIE(DW_TAG_formal_parameter);
-                AddType(Arg, cast<TypeDesc>(Args[i]), Unit);
-                AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1);
-                Method->AddChild(Arg);
-              }
-            }
-
-            // Add flags.
-            if (!MethodDesc->isStatic())
-              AddUInt(Method, DW_AT_external, DW_FORM_flag, 1);
-            AddUInt(Method, DW_AT_declaration, DW_FORM_flag, 1);
-
-            Buffer.AddChild(Method);
-          }
-        }
-        break;
-      }
-      case DW_TAG_enumeration_type: {
-        // Add enumerators to enumeration type.
-        for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
-          EnumeratorDesc *ED = cast<EnumeratorDesc>(Elements[i]);
-          const std::string &Name = ED->getName();
-          int64_t Value = ED->getValue();
-          DIE *Enumerator = new DIE(DW_TAG_enumerator);
-          AddString(Enumerator, DW_AT_name, DW_FORM_string, Name);
-          AddSInt(Enumerator, DW_AT_const_value, DW_FORM_sdata, Value);
-          Buffer.AddChild(Enumerator);
-        }
-
-        break;
-      }
-      case DW_TAG_subroutine_type: {
-        // Add prototype flag.
-        AddUInt(&Buffer, DW_AT_prototyped, DW_FORM_flag, 1);
-        // Add return type.
-        AddType(&Buffer, dyn_cast<TypeDesc>(Elements[0]), Unit);
-
-        // Add arguments.
-        for (unsigned i = 1, N = Elements.size(); i < N; ++i) {
-          DIE *Arg = new DIE(DW_TAG_formal_parameter);
-          AddType(Arg, cast<TypeDesc>(Elements[i]), Unit);
-          Buffer.AddChild(Arg);
-        }
-
-        break;
-      }
-      default: break;
-      }
-    }
-
-    // Add name if not anonymous or intermediate type.
-    if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
-
-    // Add size if non-zero (derived types might be zero-sized.)
-    if (Size)
-      AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
-    else if (isa<CompositeTypeDesc>(TyDesc)) {
-      // If TyDesc is a composite type, then add size even if it's zero unless
-      // it's a forward declaration.
-      if (TyDesc->isForwardDecl())
-        AddUInt(&Buffer, DW_AT_declaration, DW_FORM_flag, 1);
-      else
-        AddUInt(&Buffer, DW_AT_byte_size, 0, 0);
-    }
-
-    // Add source line info if available and TyDesc is not a forward
-    // declaration.
-    if (!TyDesc->isForwardDecl())
-      AddSourceLine(&Buffer, TyDesc->getFile(), TyDesc->getLine());
-  }
-
-  /// NewCompileUnit - Create new compile unit and it's debug information entry.
-  ///
-  CompileUnit *NewCompileUnit(CompileUnitDesc *UnitDesc, unsigned ID) {
-    // Construct debug information entry.
-    DIE *Die = new DIE(DW_TAG_compile_unit);
-    AddSectionOffset(Die, DW_AT_stmt_list, DW_FORM_data4,
-              DWLabel("section_line", 0), DWLabel("section_line", 0), false);
-    AddString(Die, DW_AT_producer,  DW_FORM_string, UnitDesc->getProducer());
-    AddUInt  (Die, DW_AT_language,  DW_FORM_data1,  UnitDesc->getLanguage());
-    AddString(Die, DW_AT_name,      DW_FORM_string, UnitDesc->getFileName());
-    if (!UnitDesc->getDirectory().empty())
-      AddString(Die, DW_AT_comp_dir,  DW_FORM_string, UnitDesc->getDirectory());
-
-    // Construct compile unit.
-    CompileUnit *Unit = new CompileUnit(UnitDesc, ID, Die);
-
-    // Add Unit to compile unit map.
-    DescToUnitMap[UnitDesc] = Unit;
-
-    return Unit;
-  }
-
-  /// GetBaseCompileUnit - Get the main compile unit.
-  ///
-  CompileUnit *GetBaseCompileUnit() const {
-    CompileUnit *Unit = CompileUnits[0];
-    assert(Unit && "Missing compile unit.");
-    return Unit;
-  }
-
-  /// FindCompileUnit - Get the compile unit for the given descriptor.
-  ///
-  CompileUnit *FindCompileUnit(CompileUnitDesc *UnitDesc) {
-    CompileUnit *Unit = DescToUnitMap[UnitDesc];
-    assert(Unit && "Missing compile unit.");
-    return Unit;
-  }
-
   /// FindCompileUnit - Get the compile unit for the given descriptor.                    
   ///                                                                                     
   CompileUnit *FindCompileUnit(DICompileUnit Unit) {
@@ -2374,136 +1967,7 @@ private:
     return DW_Unit;
   }
 
-  /// NewGlobalVariable - Add a new global variable DIE.
-  ///
-  DIE *NewGlobalVariable(GlobalVariableDesc *GVD) {
-    // Get the compile unit context.
-    CompileUnitDesc *UnitDesc =
-      static_cast<CompileUnitDesc *>(GVD->getContext());
-    CompileUnit *Unit = GetBaseCompileUnit();
-
-    // Check for pre-existence.
-    DIE *&Slot = Unit->getDieMapSlotFor(GVD);
-    if (Slot) return Slot;
-
-    // Get the global variable itself.
-    GlobalVariable *GV = GVD->getGlobalVariable();
-
-    const std::string &Name = GVD->getName();
-    const std::string &FullName = GVD->getFullName();
-    const std::string &LinkageName = GVD->getLinkageName();
-    // Create the global's variable DIE.
-    DIE *VariableDie = new DIE(DW_TAG_variable);
-    AddString(VariableDie, DW_AT_name, DW_FORM_string, Name);
-    if (!LinkageName.empty()) {
-      AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                             LinkageName);
-    }
-    AddType(VariableDie, GVD->getType(), Unit);
-    if (!GVD->isStatic())
-      AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);
-
-    // Add source line info if available.
-    AddSourceLine(VariableDie, UnitDesc, GVD->getLine());
-
-    // Add address.
-    DIEBlock *Block = new DIEBlock();
-    AddUInt(Block, 0, DW_FORM_data1, DW_OP_addr);
-    AddObjectLabel(Block, 0, DW_FORM_udata, Asm->getGlobalLinkName(GV));
-    AddBlock(VariableDie, DW_AT_location, 0, Block);
-
-    // Add to map.
-    Slot = VariableDie;
-
-    // Add to context owner.
-    Unit->getDie()->AddChild(VariableDie);
-
-    // Expose as global.
-    // FIXME - need to check external flag.
-    Unit->AddGlobal(FullName, VariableDie);
-
-    return VariableDie;
-  }
-
-  /// NewSubprogram - Add a new subprogram DIE.
-  ///
-  DIE *NewSubprogram(SubprogramDesc *SPD) {
-    // Get the compile unit context.
-    CompileUnitDesc *UnitDesc =
-      static_cast<CompileUnitDesc *>(SPD->getContext());
-    CompileUnit *Unit = GetBaseCompileUnit();
-
-    // Check for pre-existence.
-    DIE *&Slot = Unit->getDieMapSlotFor(SPD);
-    if (Slot) return Slot;
-
-    // Gather the details (simplify add attribute code.)
-    const std::string &Name = SPD->getName();
-    const std::string &FullName = SPD->getFullName();
-    const std::string &LinkageName = SPD->getLinkageName();
-
-    DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
-    AddString(SubprogramDie, DW_AT_name, DW_FORM_string, Name);
-    if (!LinkageName.empty()) {
-      AddString(SubprogramDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                               LinkageName);
-    }
-    if (SPD->getType()) AddType(SubprogramDie, SPD->getType(), Unit);
-    if (!SPD->isStatic())
-      AddUInt(SubprogramDie, DW_AT_external, DW_FORM_flag, 1);
-    AddUInt(SubprogramDie, DW_AT_prototyped, DW_FORM_flag, 1);
-
-    // Add source line info if available.
-    AddSourceLine(SubprogramDie, UnitDesc, SPD->getLine());
-
-    // Add to map.
-    Slot = SubprogramDie;
-
-    // Add to context owner.
-    Unit->getDie()->AddChild(SubprogramDie);
-
-    // Expose as global.
-    Unit->AddGlobal(FullName, SubprogramDie);
-
-    return SubprogramDie;
-  }
-
-  /// NewScopeVariable - Create a new scope variable.
-  ///
-  DIE *NewScopeVariable(DebugVariable *DV, CompileUnit *Unit) {
-    // Get the descriptor.
-    VariableDesc *VD = DV->getDesc();
-
-    // Translate tag to proper Dwarf tag.  The result variable is dropped for
-    // now.
-    unsigned Tag;
-    switch (VD->getTag()) {
-    case DW_TAG_return_variable:  return NULL;
-    case DW_TAG_arg_variable:     Tag = DW_TAG_formal_parameter; break;
-    case DW_TAG_auto_variable:    // fall thru
-    default:                      Tag = DW_TAG_variable; break;
-    }
-
-    // Define variable debug information entry.
-    DIE *VariableDie = new DIE(Tag);
-    AddString(VariableDie, DW_AT_name, DW_FORM_string, VD->getName());
-
-    // Add source line info if available.
-    AddSourceLine(VariableDie, VD->getFile(), VD->getLine());
-
-    // Add variable type.
-    AddType(VariableDie, VD->getType(), Unit);
-
-    // Add variable address.
-    MachineLocation Location;
-    Location.set(RI->getFrameRegister(*MF),
-                 RI->getFrameIndexOffset(*MF, DV->getFrameIndex()));
-    AddAddress(VariableDie, DW_AT_location, Location);
-
-    return VariableDie;
-  }
-
-  /// NewScopeVariable - Create a new scope variable.
+  /// NewDbgScopeVariable - Create a new scope variable.
   ///
   DIE *NewDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
     // Get the descriptor.
@@ -2668,125 +2132,6 @@ private:
 
         // Get the subprogram die.
         DIE *SPDie = Unit->getDieMapSlotFor(SPD->getGV());
-        assert(SPDie && "Missing subprogram descriptor");
-
-        // Add the function bounds.
-        AddLabel(SPDie, DW_AT_low_pc, DW_FORM_addr,
-                 DWLabel("func_begin", SubprogramCount));
-        AddLabel(SPDie, DW_AT_high_pc, DW_FORM_addr,
-                 DWLabel("func_end", SubprogramCount));
-
-        MachineLocation Location(RI->getFrameRegister(*MF));
-        AddAddress(SPDie, DW_AT_frame_base, Location);
-        return;
-      }
-    }
-#if 0
-    // FIXME: This is causing an abort because C++ mangled names are compared
-    // with their unmangled counterparts. See PR2885. Don't do this assert.
-    assert(0 && "Couldn't find DIE for machine function!");
-#endif
-  }
-
-  /// ConstructScope - Construct the components of a scope.
-  ///
-  void ConstructScope(DebugScope *ParentScope,
-                      unsigned ParentStartID, unsigned ParentEndID,
-                      DIE *ParentDie, CompileUnit *Unit) {
-    // Add variables to scope.
-    std::vector<DebugVariable *> &Variables = ParentScope->getVariables();
-    for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
-      DIE *VariableDie = NewScopeVariable(Variables[i], Unit);
-      if (VariableDie) ParentDie->AddChild(VariableDie);
-    }
-
-    // Add nested scopes.
-    std::vector<DebugScope *> &Scopes = ParentScope->getScopes();
-    for (unsigned j = 0, M = Scopes.size(); j < M; ++j) {
-      // Define the Scope debug information entry.
-      DebugScope *Scope = Scopes[j];
-      // FIXME - Ignore inlined functions for the time being.
-      if (!Scope->getParent()) continue;
-
-      unsigned StartID = MMI->MappedLabel(Scope->getStartLabelID());
-      unsigned EndID = MMI->MappedLabel(Scope->getEndLabelID());
-
-      // Ignore empty scopes.
-      if (StartID == EndID && StartID != 0) continue;
-      if (Scope->getScopes().empty() && Scope->getVariables().empty()) continue;
-
-      if (StartID == ParentStartID && EndID == ParentEndID) {
-        // Just add stuff to the parent scope.
-        ConstructScope(Scope, ParentStartID, ParentEndID, ParentDie, Unit);
-      } else {
-        DIE *ScopeDie = new DIE(DW_TAG_lexical_block);
-
-        // Add the scope bounds.
-        if (StartID) {
-          AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
-                             DWLabel("label", StartID));
-        } else {
-          AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
-                             DWLabel("func_begin", SubprogramCount));
-        }
-        if (EndID) {
-          AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
-                             DWLabel("label", EndID));
-        } else {
-          AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
-                             DWLabel("func_end", SubprogramCount));
-        }
-
-        // Add the scope contents.
-        ConstructScope(Scope, StartID, EndID, ScopeDie, Unit);
-        ParentDie->AddChild(ScopeDie);
-      }
-    }
-  }
-
-  /// ConstructRootScope - Construct the scope for the subprogram.
-  ///
-  void ConstructRootScope(DebugScope *RootScope) {
-    // Exit if there is no root scope.
-    if (!RootScope) return;
-
-    // Get the subprogram debug information entry.
-    SubprogramDesc *SPD = cast<SubprogramDesc>(RootScope->getDesc());
-
-    // Get the compile unit context.
-    CompileUnit *Unit = GetBaseCompileUnit();
-
-    // Get the subprogram die.
-    DIE *SPDie = Unit->getDieMapSlotFor(SPD);
-    assert(SPDie && "Missing subprogram descriptor");
-
-    // Add the function bounds.
-    AddLabel(SPDie, DW_AT_low_pc, DW_FORM_addr,
-                    DWLabel("func_begin", SubprogramCount));
-    AddLabel(SPDie, DW_AT_high_pc, DW_FORM_addr,
-                    DWLabel("func_end", SubprogramCount));
-    MachineLocation Location(RI->getFrameRegister(*MF));
-    AddAddress(SPDie, DW_AT_frame_base, Location);
-
-    ConstructScope(RootScope, 0, 0, SPDie, Unit);
-  }
-
-  /// ConstructDefaultScope - Construct a default scope for the subprogram.
-  ///
-  void ConstructDefaultScope(MachineFunction *MF) {
-    // Find the correct subprogram descriptor.
-    std::vector<SubprogramDesc *> Subprograms;
-    MMI->getAnchoredDescriptors<SubprogramDesc>(*M, Subprograms);
-
-    for (unsigned i = 0, N = Subprograms.size(); i < N; ++i) {
-      SubprogramDesc *SPD = Subprograms[i];
-
-      if (SPD->getName() == MF->getFunction()->getName()) {
-        // Get the compile unit context.
-        CompileUnit *Unit = GetBaseCompileUnit();
-
-        // Get the subprogram die.
-        DIE *SPDie = Unit->getDieMapSlotFor(SPD);
         assert(SPDie && "Missing subprogram descriptor");
 
         // Add the function bounds.
@@ -3443,18 +2788,6 @@ private:
     }
   }
 
-  /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
-  /// header file.
-  void ConstructCompileUnitDIEs() {
-    const UniqueVector<CompileUnitDesc *> CUW = MMI->getCompileUnits();
-
-    for (unsigned i = 1, N = CUW.size(); i <= N; ++i) {
-      unsigned ID = MMI->RecordSource(CUW[i]);
-      CompileUnit *Unit = NewCompileUnit(CUW[i], ID);
-      CompileUnits.push_back(Unit);
-    }
-  }
-
   /// ConstructGlobalVariableDIEs - Create DIEs for each of the externally 
   /// visible global variables.
   void ConstructGlobalVariableDIEs() {
@@ -3502,18 +2835,6 @@ private:
     }
   }
 
-  /// ConstructGlobalDIEs - Create DIEs for each of the externally visible
-  /// global variables.
-  void ConstructGlobalDIEs() {
-    std::vector<GlobalVariableDesc *> GlobalVariables;
-    MMI->getAnchoredDescriptors<GlobalVariableDesc>(*M, GlobalVariables);
-
-    for (unsigned i = 0, N = GlobalVariables.size(); i < N; ++i) {
-      GlobalVariableDesc *GVD = GlobalVariables[i];
-      NewGlobalVariable(GVD);
-    }
-  }
-
   /// ConstructSubprograms - Create DIEs for each of the externally visible
   /// subprograms.
   void ConstructSubprograms() {
@@ -3553,18 +2874,6 @@ private:
     }
   }
 
-  /// ConstructSubprogramDIEs - Create DIEs for each of the externally visible
-  /// subprograms.
-  void ConstructSubprogramDIEs() {
-    std::vector<SubprogramDesc *> Subprograms;
-    MMI->getAnchoredDescriptors<SubprogramDesc>(*M, Subprograms);
-
-    for (unsigned i = 0, N = Subprograms.size(); i < N; ++i) {
-      SubprogramDesc *SPD = Subprograms[i];
-      NewSubprogram(SPD);
-    }
-  }
-
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
@@ -3577,7 +2886,6 @@ public:
   , ValuesSet(InitValuesSetSize)
   , Values()
   , StringPool()
-  , DescToUnitMap()
   , SectionMap()
   , SectionSourceLines()
   , didInitial(false)
@@ -3630,47 +2938,6 @@ public:
 
       // Emit initial sections
       EmitInitial();
-  }
-
-  /// SetModuleInfo - Set machine module information when it's known that pass
-  /// manager has created it.  Set by the target AsmPrinter.
-  void SetModuleInfo(MachineModuleInfo *mmi) {
-    assert (0 && "Who is this?");
-    // Make sure initial declarations are made.
-    if (!MMI && mmi->hasDebugInfo()) {
-      MMI = mmi;
-      shouldEmit = true;
-
-      // Create all the compile unit DIEs.
-      ConstructCompileUnitDIEs();
-
-      // Create DIEs for each of the externally visible global variables.
-      ConstructGlobalDIEs();
-
-      // Create DIEs for each of the externally visible subprograms.
-      ConstructSubprogramDIEs();
-
-      // Prime section data.
-      SectionMap.insert(TAI->getTextSection());
-
-      // Print out .file directives to specify files for .loc directives. These
-      // are printed out early so that they precede any .loc directives.
-      if (TAI->hasDotLocAndDotFile()) {
-        const UniqueVector<SourceFileInfo> &SourceFiles = MMI->getSourceFiles();
-        const UniqueVector<std::string> &Directories = MMI->getDirectories();
-        for (unsigned i = 1, e = SourceFiles.size(); i <= e; ++i) {
-          sys::Path FullPath(Directories[SourceFiles[i].getDirectoryID()]);
-          bool AppendOk = FullPath.appendComponent(SourceFiles[i].getName());
-          assert(AppendOk && "Could not append filename to directory!");
-          AppendOk = false;
-          Asm->EmitFile(i, FullPath.toString());
-          Asm->EOL();
-        }
-      }
-
-      // Emit initial sections
-      EmitInitial();
-    }
   }
 
   /// BeginModule - Emit all Dwarf sections that should come prior to the
@@ -4991,3 +4258,4 @@ unsigned DwarfWriter::getRecordSourceLineCount() {
 void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
   DD->RecordVariable(GV, FrameIndex);
 }
+

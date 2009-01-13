@@ -2041,7 +2041,7 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
   GlobalVariable *GV = dyn_cast<GlobalVariable>(GA->getGlobal());
   if (!GV) return false;
   MachineModuleInfo *MMI = getMachineModuleInfo();
-  return MMI && MMI->hasDebugInfo() && MMI->isVerified(GV);
+  return MMI && MMI->hasDebugInfo();
 }
 
 
