@@ -689,6 +689,8 @@ class OptionParser:
         self.addOption(JoinedOption('-d', group=self.dGroup))
 
         self.gGroup = OptionGroup('-g')
+        self.gstabsOption = self.addOption(JoinedOption('-gstabs', self.gGroup))
+        self.g0Option = self.addOption(JoinedOption('-g0', self.gGroup))
         self.g3Option = self.addOption(JoinedOption('-g3', self.gGroup))
         self.gOption = self.addOption(JoinedOption('-g', self.gGroup))
 

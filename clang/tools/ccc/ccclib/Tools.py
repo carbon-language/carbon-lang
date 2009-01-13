@@ -879,10 +879,17 @@ class Darwin_X86_LinkTool(Tool):
         jobs.addJob(Jobs.Command(self.toolChain.getProgramPath('collect2'), 
                                  cmd_args))
 
-        # FIXME: We need to add a dsymutil job here in some particular
-        # cases (basically whenever we have a c-family input we are
-        # compiling, I think). Find out why this is the condition, and
-        # implement. See link_command spec for more details.
+        if (arglist.getLastArg(arglist.parser.gGroup) and
+            not arglist.getLastArg(arglist.parser.gstabsOption) and
+            not arglist.getLastArg(arglist.parser.g0Option)):
+            # FIXME: This is gross, but matches gcc. The test only
+            # considers the suffix (not the -x type), and then only of the
+            # first input.
+            inputSuffix = os.path.splitext(arglist.getValue(inputs[0].baseInput))[1]        
+            if inputSuffix in ('.c','.cc','.C','.cpp','.cp',
+                               '.c++','.cxx','.CPP','.m','.mm'):
+                jobs.addJob(Jobs.Command('dsymutil', 
+                                         arglist.renderAsInput(output)))
 
 class LipoTool(Tool):
     def __init__(self):
