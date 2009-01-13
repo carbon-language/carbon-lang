@@ -38,6 +38,8 @@ ASTConsumer *CreateASTDumper();
 
 ASTConsumer *CreateASTViewer();
 
+ASTConsumer *CreateDeclContextPrinter();
+
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     const std::string& OutFile,
                                     Diagnostic &Diags,

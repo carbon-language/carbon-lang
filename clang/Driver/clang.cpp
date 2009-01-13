@@ -83,6 +83,7 @@ enum ProgActions {
   ASTPrint,                     // Parse ASTs and print them.
   ASTDump,                      // Parse ASTs and dump them.
   ASTView,                      // Parse ASTs and view them in Graphviz.
+  PrintDeclContext,             // Print DeclContext and their Decls.
   TestSerialization,            // Run experimental serialization code.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
@@ -122,6 +123,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs and then debug dump them"),
              clEnumValN(ASTView, "ast-view",
                         "Build ASTs and view them with GraphViz"),
+             clEnumValN(PrintDeclContext, "print-decl-contexts",
+                        "Print DeclContexts and their Decls."),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serialization code"),
              clEnumValN(EmitAssembly, "S",
@@ -1245,6 +1248,9 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case ASTView:
       return CreateASTViewer();   
+
+    case PrintDeclContext:
+      return CreateDeclContextPrinter();
       
     case EmitHTML:
       return CreateHTMLPrinter(OutputFile, Diag, PP, PPF);

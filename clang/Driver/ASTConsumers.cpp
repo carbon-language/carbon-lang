@@ -555,6 +555,225 @@ namespace {
 ASTConsumer *clang::CreateASTViewer() { return new ASTViewer(); }
 
 //===----------------------------------------------------------------------===//
+/// DeclContextPrinter - Decl and DeclContext Visualization
+
+namespace {
+
+class DeclContextPrinter : public ASTConsumer {
+  llvm::raw_ostream& Out;
+public:
+  DeclContextPrinter() : Out(llvm::errs()) {}
+
+  void HandleTranslationUnit(TranslationUnit& TU) {
+    TranslationUnitDecl* TUD = TU.getContext().getTranslationUnitDecl();
+    PrintDeclContext(TUD, 4);
+  }
+
+  void PrintDeclContext(const DeclContext* DC, unsigned Indentation);
+};
+
+void DeclContextPrinter::PrintDeclContext(const DeclContext* DC, 
+                                          unsigned Indentation) {
+  // Print DeclContext name.
+  Decl::Kind DK = DeclContext::KindTrait<DeclContext>::getKind(DC);
+  switch (DK) {
+  case Decl::TranslationUnit:
+    Out << "[translation unit] " << DC;
+    break;
+  case Decl::Namespace: {
+    Out << "[namespace] ";
+    NamespaceDecl* ND = NamespaceDecl::castFromDeclContext(DC);
+    Out << ND->getNameAsString();
+    break;
+  }
+  case Decl::Enum:
+    Out << "[enum]";
+    break;
+  case Decl::Record: {
+    RecordDecl* RD = RecordDecl::castFromDeclContext(DC);
+    if (RD->isDefinition())
+      Out << "[struct] ";
+    else
+      Out << "<struct> ";
+    Out << RD->getNameAsString();
+    break;
+  }
+  case Decl::CXXRecord: {
+    CXXRecordDecl* RD = CXXRecordDecl::castFromDeclContext(DC);
+    if (RD->isDefinition())
+      Out << "[class] ";
+    else
+      Out << "<class> ";
+    Out << RD->getNameAsString() << " " << DC;
+    break;
+  }
+  case Decl::ObjCMethod:
+    Out << "[objc method]";
+    break;
+  case Decl::ObjCInterface:
+    Out << "[objc interface]";
+    break;
+  case Decl::ObjCCategory:
+    Out << "[objc category]";
+    break;
+  case Decl::ObjCProtocol:
+    Out << "[objc protocol]";
+    break;
+  case Decl::ObjCImplementation:
+    Out << "[objc implementation]";
+    break;
+  case Decl::ObjCCategoryImpl:
+    Out << "[objc categoryimpl]";
+    break;
+  case Decl::LinkageSpec:
+    Out << "[linkage spec]";
+    break;
+  case Decl::Block:
+    Out << "[block]";
+    break;
+  case Decl::Function: {
+    FunctionDecl* FD = FunctionDecl::castFromDeclContext(DC);
+    if (FD->isThisDeclarationADefinition())
+      Out << "[function] ";
+    else
+      Out << "<function> ";
+    Out << FD->getNameAsString();
+    break;
+  }
+  case Decl::CXXMethod: {
+    CXXMethodDecl* CMD = CXXMethodDecl::castFromDeclContext(DC);
+    if (CMD->isOutOfLineDefinition())
+      Out << "[c++ method] ";
+    else
+      Out << "<c++ method> ";
+    Out << CMD->getNameAsString();
+
+    // Check the semantic DeclContext.
+    DeclContext* SemaDC = CMD->getDeclContext();
+    DeclContext* LexicalDC = CMD->getLexicalDeclContext();
+    if (SemaDC != LexicalDC) {
+      Out << " [[" << SemaDC << "]]";
+    }
+    break;
+  }
+  case Decl::CXXConstructor: {
+    CXXConstructorDecl* CMD = CXXConstructorDecl::castFromDeclContext(DC);
+    if (CMD->isOutOfLineDefinition())
+      Out << "[c++ ctor] ";
+    else
+      Out << "<c++ ctor> ";
+    Out << CMD->getNameAsString();
+    break;
+  }
+  case Decl::CXXDestructor: {
+    CXXDestructorDecl* CMD = CXXDestructorDecl::castFromDeclContext(DC);
+    if (CMD->isOutOfLineDefinition())
+      Out << "[c++ dtor] ";
+    else
+      Out << "<c++ dtor> ";
+    Out << CMD->getNameAsString();
+    break;
+  }
+  case Decl::CXXConversion: {
+    CXXConversionDecl* CMD = CXXConversionDecl::castFromDeclContext(DC);
+    if (CMD->isOutOfLineDefinition())
+      Out << "[c++ conversion] ";
+    else
+      Out << "<c++ conversion> ";
+    Out << CMD->getNameAsString();
+    break;
+  }
+
+  default:
+    assert(0 && "a decl that inherits DeclContext isn't handled");
+  }
+
+  Out << "\n";
+
+  // Print decls in the DeclContext.
+  for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
+       I != E; ++I) {
+    for (unsigned i = 0; i < Indentation; ++i)
+      Out << " ";
+
+    Decl::Kind DK = I->getKind();
+    switch (DK) {
+    case Decl::Namespace:
+    case Decl::Enum:
+    case Decl::Record:
+    case Decl::CXXRecord:
+    case Decl::ObjCMethod:
+    case Decl::ObjCInterface:
+    case Decl::ObjCCategory: 
+    case Decl::ObjCProtocol:
+    case Decl::ObjCImplementation:
+    case Decl::ObjCCategoryImpl:
+    case Decl::LinkageSpec:
+    case Decl::Block:
+    case Decl::Function:
+    case Decl::CXXMethod:
+    case Decl::CXXConstructor:
+    case Decl::CXXDestructor:
+    case Decl::CXXConversion:
+    {
+      DeclContext* DC = Decl::castToDeclContext(*I);
+      PrintDeclContext(DC, Indentation+4);
+      break;
+    }
+    case Decl::Field: {
+      FieldDecl* FD = cast<FieldDecl>(*I);
+      Out << "<field> " << FD->getNameAsString() << "\n";
+      break;
+    }
+    case Decl::Typedef: {
+      TypedefDecl* TD = cast<TypedefDecl>(*I);
+      Out << "<typedef> " << TD->getNameAsString() << "\n";
+      break;
+    }
+    case Decl::EnumConstant: {
+      EnumConstantDecl* ECD = cast<EnumConstantDecl>(*I);
+      Out << "<enum constant> " << ECD->getNameAsString() << "\n";
+      break;
+    }
+    case Decl::Var: {
+      VarDecl* VD = cast<VarDecl>(*I);
+      Out << "<var> " << VD->getNameAsString() << "\n";
+      break;
+    }
+    case Decl::ImplicitParam: {
+      ImplicitParamDecl* IPD = cast<ImplicitParamDecl>(*I);
+      Out << "<implicit parameter> " << IPD->getNameAsString() << "\n";
+      break;
+    }
+    case Decl::CXXClassVar: {
+      CXXClassVarDecl* CVD = cast<CXXClassVarDecl>(*I);
+      Out << "<static member var> " << CVD->getNameAsString() << "\n";
+      break;
+    }
+    case Decl::ParmVar: {
+      ParmVarDecl* PVD = cast<ParmVarDecl>(*I);
+      Out << "<parameter> " << PVD->getNameAsString() << "\n";
+      break;
+    }
+    case Decl::ObjCProperty: {
+      ObjCPropertyDecl* OPD = cast<ObjCPropertyDecl>(*I);
+      Out << "<objc property> " << OPD->getNameAsString() << "\n";
+      break;
+    }
+    default:
+      fprintf(stderr, "DeclKind: %d\n", DK);
+      assert(0 && "decl unhandled");
+    }
+  }
+}
+
+}
+
+ASTConsumer *clang::CreateDeclContextPrinter() { 
+  return new DeclContextPrinter(); 
+}
+
+//===----------------------------------------------------------------------===//
 /// InheritanceViewer - C++ Inheritance Visualization
 
 namespace {
