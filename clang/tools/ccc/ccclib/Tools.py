@@ -177,11 +177,12 @@ class Darwin_X86_CompileTool(Tool):
     def addCPPArgs(self, cmd_args, arch, arglist):
         # Derived from cpp spec.
 
-        # FIXME: The gcc spec is broken here, it refers to dynamic but
-        # that has been translated.
         if arglist.getLastArg(arglist.parser.staticOption):
-            if not arglist.getLastArg(arglist.parser.ZdynamicOption):
-                cmd_args.append('-D__STATIC__')
+            # The gcc spec is broken here, it refers to dynamic but
+            # that has been translated. Start by being bug compatible.
+            
+            # if not arglist.getLastArg(arglist.parser.ZdynamicOption):
+            cmd_args.append('-D__STATIC__')
         else:
             cmd_args.append('-D__DYNAMIC__')
         
