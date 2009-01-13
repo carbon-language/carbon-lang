@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -2040,8 +2041,8 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
   if (GA->getOffset() != 0) return false;
   GlobalVariable *GV = dyn_cast<GlobalVariable>(GA->getGlobal());
   if (!GV) return false;
-  MachineModuleInfo *MMI = getMachineModuleInfo();
-  return MMI && MMI->hasDebugInfo() && MMI->isVerified(GV);
+  DwarfWriter *DW = getDwarfWriter();
+  return DW && DW->hasDebugInfo();
 }
 
 
