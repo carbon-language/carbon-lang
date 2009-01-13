@@ -400,6 +400,9 @@ unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
     }
     
     if (TokOffset < fpos) {
+      if (i == min)
+        break;
+      
       min = i;
       continue;
     }
