@@ -458,7 +458,8 @@ public:
                              OverloadCandidateSet& CandidateSet);
   void AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys, 
                            Expr **Args, unsigned NumArgs,
-                           OverloadCandidateSet& CandidateSet);
+                           OverloadCandidateSet& CandidateSet,
+                           bool IsAssignmentOperator = false);
   void AddBuiltinOperatorCandidates(OverloadedOperatorKind Op, 
                                     Expr **Args, unsigned NumArgs, 
                                     OverloadCandidateSet& CandidateSet);

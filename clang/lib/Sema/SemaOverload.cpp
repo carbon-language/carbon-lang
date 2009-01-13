@@ -2199,10 +2199,13 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
 /// AddBuiltinCandidate - Add a candidate for a built-in
 /// operator. ResultTy and ParamTys are the result and parameter types
 /// of the built-in candidate, respectively. Args and NumArgs are the
-/// arguments being passed to the candidate.
+/// arguments being passed to the candidate. IsAssignmentOperator
+/// should be true when this built-in candidate is an assignment
+/// operator.
 void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys, 
                                Expr **Args, unsigned NumArgs,
-                               OverloadCandidateSet& CandidateSet) {
+                               OverloadCandidateSet& CandidateSet,
+                               bool IsAssignmentOperator) {
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
@@ -2218,8 +2221,21 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
   Candidate.Viable = true;
   Candidate.Conversions.resize(NumArgs);
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+    // C++ [over.match.oper]p4:
+    //   For the built-in assignment operators, conversions of the
+    //   left operand are restricted as follows:
+    //     -- no temporaries are introduced to hold the left operand, and
+    //     -- no user-defined conversions are applied to the left
+    //        operand to achieve a type match with the left-most
+    //        parameter of a built-in candidate. 
+    //
+    // We block these conversions by turning off user-defined
+    // conversions, since that is the only way that initialization of
+    // a reference to a non-class type can occur from something that
+    // is not of the same type.
     Candidate.Conversions[ArgIdx] 
-      = TryCopyInitialization(Args[ArgIdx], ParamTys[ArgIdx], false);
+      = TryCopyInitialization(Args[ArgIdx], ParamTys[ArgIdx], 
+                              ArgIdx == 0 && IsAssignmentOperator);
     if (Candidate.Conversions[ArgIdx].ConversionKind 
         == ImplicitConversionSequence::BadConversion) {
       Candidate.Viable = false;
@@ -2794,13 +2810,15 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       // T& operator=(T&, T)
       ParamTypes[0] = Context.getReferenceType(*Enum);
       ParamTypes[1] = *Enum;
-      AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+      AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                          /*IsAssignmentOperator=*/true);
 
       if (!Context.getCanonicalType(*Enum).isVolatileQualified()) {
         // volatile T& operator=(volatile T&, T)
         ParamTypes[0] = Context.getReferenceType((*Enum).withVolatile());
         ParamTypes[1] = *Enum;
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                            /*IsAssignmentOperator=*/true);
       }
     }
     // Fall through.
@@ -2830,12 +2848,14 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
       // non-volatile version
       ParamTypes[0] = Context.getReferenceType(*Ptr);
-      AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+      AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                          /*IsAssigmentOperator=*/Op == OO_Equal);
 
       if (!Context.getCanonicalType(*Ptr).isVolatileQualified()) {
         // volatile version
         ParamTypes[0] = Context.getReferenceType((*Ptr).withVolatile());
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                            /*IsAssigmentOperator=*/Op == OO_Equal);
       }
     }
     // Fall through.
@@ -2862,12 +2882,14 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
         // Add this built-in operator as a candidate (VQ is empty).
         ParamTypes[0] = Context.getReferenceType(ArithmeticTypes[Left]);
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                            /*IsAssigmentOperator=*/Op == OO_Equal);
 
         // Add this built-in operator as a candidate (VQ is 'volatile').
         ParamTypes[0] = ArithmeticTypes[Left].withVolatile();
         ParamTypes[0] = Context.getReferenceType(ParamTypes[0]);
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                            /*IsAssigmentOperator=*/Op == OO_Equal);
       }
     }
     break;

@@ -115,3 +115,8 @@ void test_with_ptrs(VolatileIntPtr vip, ConstIntPtr cip, ShortRef sr,
   int const &icr2 = 17[cip];
 }
 
+// C++ [over.match.open]p4
+
+void test_assign_restrictions(ShortRef& sr) {
+  sr = (short)0; // expected-error{{incompatible type assigning 'short', expected 'struct ShortRef'}}
+}
