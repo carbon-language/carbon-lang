@@ -466,7 +466,7 @@ class Driver(object):
                 hasDashM = arg
 
         if not archs:
-            archs.append(args.makeSeparateArg(self.hostInfo.getArchName(),
+            archs.append(args.makeSeparateArg(self.hostInfo.getArchName(args),
                                               self.parser.archOption))
 
         actions = self.buildNormalPipeline(args)

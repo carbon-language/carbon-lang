@@ -8,7 +8,7 @@ class HostInfo(object):
     def __init__(self, driver):
         self.driver = driver
 
-    def getArchName(self):
+    def getArchName(self, args):
         abstract
 
     def useDriverDriver(self):
@@ -38,7 +38,7 @@ class DarwinHostInfo(HostInfo):
         return True
 
     def getToolChain(self):
-        return self.getToolChainForArch(self.getArchName())
+        return self.getToolChainForArch(self.getArchName(None))
 
     def getToolChainForArch(self, arch):
         if arch in ('i386', 'x86_64'):
@@ -49,19 +49,27 @@ class DarwinHostInfo(HostInfo):
         return ToolChain.Generic_GCC_ToolChain(self.driver)
 
 class DarwinPPCHostInfo(DarwinHostInfo):
-    def getArchName(self):
+    def getArchName(self, args):
+        if args and args.getLastArg(args.parser.m_64Option):
+            return 'ppc64'
         return 'ppc'
 
 class DarwinPPC_64HostInfo(DarwinHostInfo):
-    def getArchName(self):
+    def getArchName(self, args):
+        if args and args.getLastArg(args.parser.m_32Option):
+            return 'ppc'
         return 'ppc64'
 
 class DarwinX86HostInfo(DarwinHostInfo):
-    def getArchName(self):
+    def getArchName(self, args):
+        if args and args.getLastArg(args.parser.m_64Option):
+            return 'x86_64'
         return 'i386'
 
 class DarwinX86_64HostInfo(DarwinHostInfo):
-    def getArchName(self):
+    def getArchName(self, args):
+        if args and args.getLastArg(args.parser.m_32Option):
+            return 'i386'
         return 'x86_64'
 
 def getDarwinHostInfo(driver):
