@@ -130,6 +130,8 @@ namespace {
 
     virtual bool doFinalization(Module &M) {
       // Free memory...
+      delete IL;
+      delete TD;
       delete Mang;
       FPConstantMap.clear();
       TypeNames.clear();
