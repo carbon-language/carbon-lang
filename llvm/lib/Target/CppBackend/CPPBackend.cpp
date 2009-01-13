@@ -450,28 +450,25 @@ namespace {
         unsigned index = PAL.getSlot(i).Index;
         Attributes attrs = PAL.getSlot(i).Attrs;
         Out << "PAWI.Index = " << index << "U; PAWI.Attrs = 0 ";
-        if (attrs & Attribute::SExt)
-          Out << " | Attribute::SExt";
-        if (attrs & Attribute::ZExt)
-          Out << " | Attribute::ZExt";
-        if (attrs & Attribute::StructRet)
-          Out << " | Attribute::StructRet";
-        if (attrs & Attribute::InReg)
-          Out << " | Attribute::InReg";
-        if (attrs & Attribute::NoReturn)
-          Out << " | Attribute::NoReturn";
-        if (attrs & Attribute::NoUnwind)
-          Out << " | Attribute::NoUnwind";
-        if (attrs & Attribute::ByVal)
-          Out << " | Attribute::ByVal";
-        if (attrs & Attribute::NoAlias)
-          Out << " | Attribute::NoAlias";
-        if (attrs & Attribute::Nest)
-          Out << " | Attribute::Nest";
-        if (attrs & Attribute::ReadNone)
-          Out << " | Attribute::ReadNone";
-        if (attrs & Attribute::ReadOnly)
-          Out << " | Attribute::ReadOnly";
+#define HANDLE_ATTR(X)                 \
+        if (attrs & Attribute::X)      \
+          Out << " | Attribute::" #X;  \
+        attrs &= ~Attribute::X;
+        
+        HANDLE_ATTR(SExt);
+        HANDLE_ATTR(ZExt);
+        HANDLE_ATTR(StructRet);
+        HANDLE_ATTR(InReg);
+        HANDLE_ATTR(NoReturn);
+        HANDLE_ATTR(NoUnwind);
+        HANDLE_ATTR(ByVal);
+        HANDLE_ATTR(NoAlias);
+        HANDLE_ATTR(Nest);
+        HANDLE_ATTR(ReadNone);
+        HANDLE_ATTR(ReadOnly);
+        HANDLE_ATTR(NoCapture);
+#undef HANDLE_ATTR
+        assert(attrs == 0 && "Unhandled attribute!");
         Out << ";";
         nl(Out);
         Out << "Attrs.push_back(PAWI);";
