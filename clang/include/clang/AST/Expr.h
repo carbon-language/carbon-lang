@@ -728,7 +728,7 @@ public:
     return SourceRange(getLHS()->getLocStart(), RBracketLoc);
   }
   
-  virtual SourceLocation getExprLoc() const { return RBracketLoc; }
+  virtual SourceLocation getExprLoc() const { return getBase()->getExprLoc(); }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ArraySubscriptExprClass; 
