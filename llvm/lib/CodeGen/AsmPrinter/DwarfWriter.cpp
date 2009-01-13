@@ -2545,7 +2545,7 @@ private:
     if (!Slot) {
       // FIXME - breaks down when the context is an inlined function.
       DIDescriptor ParentDesc;
-      DIDescriptor *DB = new DIBlock(V);
+      DIDescriptor *DB = new DIDescriptor(V);
       if (DIBlock *Block = dyn_cast<DIBlock>(DB)) {
         ParentDesc = Block->getContext();
       }
@@ -2627,6 +2627,7 @@ private:
   void ConstructRootDbgScope(DbgScope *RootScope) {
     // Exit if there is no root scope.
     if (!RootScope) return;
+    if (!RootScope->getDesc()->isNull()) return;
 
     // Get the subprogram debug information entry.
     DISubprogram SPD(RootScope->getDesc()->getGV());
@@ -3100,9 +3101,6 @@ private:
     Asm->EmitInt8(0); Asm->EOL("DW_LNS_const_add_pc arg count");
     Asm->EmitInt8(1); Asm->EOL("DW_LNS_fixed_advance_pc arg count");
 
-    const UniqueVector<std::string> &Directories = MMI->getDirectories();
-    const UniqueVector<SourceFileInfo> &SourceFiles = MMI->getSourceFiles();
-
     // Emit directories.
     for (unsigned DirectoryID = 1, NDID = Directories.size();
                   DirectoryID <= NDID; ++DirectoryID) {
@@ -3111,9 +3109,9 @@ private:
     Asm->EmitInt8(0); Asm->EOL("End of directories");
 
     // Emit files.
-    for (unsigned SourceID = 1, NSID = SourceFiles.size();
+    for (unsigned SourceID = 1, NSID = SrcFiles.size();
                  SourceID <= NSID; ++SourceID) {
-      const SourceFileInfo &SourceFile = SourceFiles[SourceID];
+      const SrcFileInfo &SourceFile = SrcFiles[SourceID];
       Asm->EmitString(SourceFile.getName());
       Asm->EOL("Source");
       Asm->EmitULEB128Bytes(SourceFile.getDirectoryID());
@@ -3151,7 +3149,7 @@ private:
         if (!LabelID) continue;
 
         unsigned SourceID = LineInfo.getSourceID();
-        const SourceFileInfo &SourceFile = SourceFiles[SourceID];
+        const SrcFileInfo &SourceFile = SrcFiles[SourceID];
         unsigned DirectoryID = SourceFile.getDirectoryID();
         if (VerboseAsm)
           Asm->EOL(Directories[DirectoryID]
@@ -3636,6 +3634,7 @@ public:
   /// SetModuleInfo - Set machine module information when it's known that pass
   /// manager has created it.  Set by the target AsmPrinter.
   void SetModuleInfo(MachineModuleInfo *mmi) {
+    assert (0 && "Who is this?");
     // Make sure initial declarations are made.
     if (!MMI && mmi->hasDebugInfo()) {
       MMI = mmi;
@@ -3776,8 +3775,8 @@ public:
     }
 
     // Construct scopes for subprogram.
-    if (MMI->getRootScope())
-      ConstructRootScope(MMI->getRootScope());
+    if (RootDbgScope)
+      ConstructRootDbgScope(RootDbgScope);
     else
       // FIXME: This is wrong. We are essentially getting past a problem with
       // debug information not being able to handle unreachable blocks that have
@@ -3787,7 +3786,7 @@ public:
       // scope, i.e., one that encompasses the whole function. This isn't
       // desirable. And a better way of handling this (and all of the debugging
       // information) needs to be explored.
-      ConstructDefaultScope(MF);
+      ConstructDefaultDbgScope(MF);
 
     DebugFrames.push_back(FunctionDebugFrameInfo(SubprogramCount,
                                                  MMI->getFrameMoves()));
@@ -4927,7 +4926,7 @@ void DwarfWriter::BeginModule(Module *M,
   DD = new DwarfDebug(OS, A, T);
   DE->BeginModule(M);
   DD->BeginModule(M);
-  DD->SetModuleInfo(MMI);
+  DD->SetDebugInfo(MMI);
   DE->SetModuleInfo(MMI);
 }
 
