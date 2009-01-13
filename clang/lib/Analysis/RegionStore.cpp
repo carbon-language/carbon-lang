@@ -36,7 +36,7 @@ typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionBindingsTy;
 //  MemRegions can be layered on top of each other.  This GDM entry tracks
 //  what are the MemRegions that layer a given MemRegion.
 //
-typedef llvm::ImmutableList<const MemRegion*> RegionViews;
+typedef llvm::ImmutableSet<const MemRegion*> RegionViews;
 namespace { class VISIBILITY_HIDDEN RegionViewMap {}; }
 static int RegionViewMapIndex = 0;
 namespace clang {
@@ -68,10 +68,11 @@ namespace clang {
 // Region "killsets".
 //===----------------------------------------------------------------------===//
 //
-// RegionStore lazily adds value bindings to regions when the analyzer
-//  handles assignment statements.  Killsets track which default values have
-//  been killed, thus distinguishing between "unknown" values and default
-//  values.
+// RegionStore lazily adds value bindings to regions when the analyzer handles
+//  assignment statements.  Killsets track which default values have been
+//  killed, thus distinguishing between "unknown" values and default
+//  values. Regions are added to killset only when they are assigned "unknown"
+//  directly, otherwise we should have their value in the region bindings.
 //
 namespace { class VISIBILITY_HIDDEN RegionKills {}; }
 static int RegionKillsIndex = 0;
@@ -83,11 +84,11 @@ namespace clang {
 }
 
 //===----------------------------------------------------------------------===//
-// Regions with default values of '0'.
+// Regions with default values.
 //===----------------------------------------------------------------------===//
 //
-// This GDM entry tracks what regions have a default value of 0 if they
-// have no bound value and have not been killed.
+// This GDM entry tracks what regions have a default value if they have no bound
+// value and have not been killed.
 //
 namespace { class VISIBILITY_HIDDEN RegionDefaultValue {}; }
 static int RegionDefaultValueIndex = 0;
@@ -234,6 +235,9 @@ private:
 
   const GRState* BindStruct(const GRState* St, const TypedRegion* R, SVal V);
 
+  /// KillStruct - Set the entire struct to unknown. 
+  const GRState* KillStruct(const GRState* St, const TypedRegion* R);
+
   // Utility methods.
   BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
   ASTContext& getContext() { return StateMgr.getContext(); }
@@ -241,6 +245,8 @@ private:
 
   const GRState* AddRegionView(const GRState* St,
                                const MemRegion* View, const MemRegion* Base);
+  const GRState* RemoveRegionView(const GRState* St,
+                                  const MemRegion* View, const MemRegion* Base);
 };
 
 } // end anonymous namespace
@@ -910,6 +916,9 @@ RegionStoreManager::BindStruct(const GRState* St, const TypedRegion* R, SVal V){
   RecordDecl* RD = RT->getDecl();
   assert(RD->isDefinition());
 
+  if (V.isUnknown())
+    return KillStruct(St, R);
+
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
   RecordDecl::field_iterator FI = RD->field_begin(), FE = RD->field_end();
@@ -941,6 +950,30 @@ RegionStoreManager::BindStruct(const GRState* St, const TypedRegion* R, SVal V){
   return St;
 }
 
+const GRState* RegionStoreManager::KillStruct(const GRState* St,
+                                              const TypedRegion* R){
+  GRStateRef state(St, StateMgr);
+
+  // Kill the struct region because it is assigned "unknown".
+  St = state.add<RegionKills>(R);
+  
+  // Set the default value of the struct region to "unknown".
+  St = state.set<RegionDefaultValue>(R, UnknownVal());
+
+  Store store = St->getStore();
+  RegionBindingsTy B = GetRegionBindings(store);
+
+  // Remove all bindings for the subregions of the struct.
+  for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    const MemRegion* r = I.getKey();
+    if (const SubRegion* sr = dyn_cast<SubRegion>(r))
+      if (sr->isSubRegionOf(R))
+        store = Remove(store, Loc::MakeVal(sr));
+  }
+
+  return StateMgr.MakeStateWithStore(St, store);
+}
+
 const GRState* RegionStoreManager::AddRegionView(const GRState* St,
                                                  const MemRegion* View,
                                                  const MemRegion* Base) {
@@ -948,11 +981,30 @@ const GRState* RegionStoreManager::AddRegionView(const GRState* St,
 
   // First, retrieve the region view of the base region.
   const RegionViews* d = state.get<RegionViewMap>(Base);
-  RegionViews L = d ? *d : RVFactory.GetEmptyList();
+  RegionViews L = d ? *d : RVFactory.GetEmptySet();
 
   // Now add View to the region view.
-  L = RVFactory.Add(View, L);
+  L = RVFactory.Add(L, View);
 
   // Create a new state with the new region view.
   return state.set<RegionViewMap>(Base, L);
+}
+
+const GRState* RegionStoreManager::RemoveRegionView(const GRState* St,
+                                                    const MemRegion* View,
+                                                    const MemRegion* Base) {
+  GRStateRef state(St, StateMgr);
+
+  // Retrieve the region view of the base region.
+  const RegionViews* d = state.get<RegionViewMap>(Base);
+
+  // If the base region has no view, return.
+  if (!d)
+    return St;
+
+  // Remove the view.
+  RegionViews V = *d;
+  V = RVFactory.Remove(V, View);
+
+  return state.set<RegionViewMap>(Base, V);
 }

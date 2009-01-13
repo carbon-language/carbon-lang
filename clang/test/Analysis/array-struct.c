@@ -46,6 +46,7 @@ void f4() {
 }
 
 // Struct variable in lvalue context.
+// Assign UnknownVal to the whole struct.
 void f5() {
   struct s data;
   g1(&data);
