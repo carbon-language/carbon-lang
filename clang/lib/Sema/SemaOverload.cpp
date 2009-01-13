@@ -3542,25 +3542,31 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                                     ResultTy, RParenLoc));
   delete [] MethodArgs;
 
+  // We may have default arguments. If so, we need to allocate more
+  // slots in the call for them.
+  if (NumArgs < NumArgsInProto)
+    TheCall->setNumArgs(NumArgsInProto + 1);
+  else if (NumArgs > NumArgsInProto)
+    NumArgsToCheck = NumArgsInProto;
+
   // Initialize the implicit object parameter.
-  if (!PerformObjectArgumentInitialization(Object, Method))
+  if (PerformObjectArgumentInitialization(Object, Method))
     return true;
   TheCall->setArg(0, Object);
 
   // Check the argument types.
   for (unsigned i = 0; i != NumArgsToCheck; i++) {
-    QualType ProtoArgType = Proto->getArgType(i);
-
     Expr *Arg;
-    if (i < NumArgs) 
+    if (i < NumArgs) {
       Arg = Args[i];
-    else 
+      
+      // Pass the argument.
+      QualType ProtoArgType = Proto->getArgType(i);
+      if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
+        return true;
+    } else {
       Arg = new CXXDefaultArgExpr(Method->getParamDecl(i));
-    QualType ArgType = Arg->getType();
-        
-    // Pass the argument.
-    if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
-      return true;
+    }
 
     TheCall->setArg(i + 1, Arg);
   }

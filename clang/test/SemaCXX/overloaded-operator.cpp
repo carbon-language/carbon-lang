@@ -124,17 +124,29 @@ void test_comma(X x, Y y) {
   X& xr = (x, x);
 }
 
-
 struct Callable {
   int& operator()(int, double = 2.71828); // expected-note{{candidate function}}
   float& operator()(int, double, long, ...); // expected-note{{candidate function}}
+
+  double& operator()(float); // expected-note{{candidate function}}
 };
 
-void test_callable(Callable c) {
+struct Callable2 {
+  int& operator()(int i = 0);
+  double& operator()(...) const;
+};
+
+void test_callable(Callable c, Callable2 c2, const Callable2& c2c) {
   int &ir = c(1);
   float &fr = c(1, 3.14159, 17, 42);
 
   c(); // expected-error{{no matching function for call to object of type 'struct Callable'; candidates are:}}
+
+  double &dr = c(1.0f);
+
+  int &ir2 = c2();
+  int &ir3 = c2(1);
+  double &fr2 = c2c();
 }
 
 typedef float FLOAT;

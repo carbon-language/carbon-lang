@@ -33,6 +33,10 @@ namespace N {
 namespace N {
   struct f1 {
     static int member;
+
+    typedef int type;
+
+    void foo(type);
   };
 
   void test_f1() {
@@ -40,8 +44,13 @@ namespace N {
   }
 }
 
+void N::f1::foo(int) { }
+
 namespace N {
-  float& f1(int);
+  float& f1(int x) {
+    N::f1::type& i1 = x;
+    // FIXME: currently fails    f1::type& i2 = x;
+  }
 
   struct f2 {
     static int member;
