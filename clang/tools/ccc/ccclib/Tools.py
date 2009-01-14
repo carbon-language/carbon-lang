@@ -191,13 +191,8 @@ class Clang_CompileTool(Tool):
             raise ValueError,"Unexpected output type for clang tool."
 
         arglist.addAllArgs(cmd_args, arglist.parser.vOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOnlyOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.f_nextRuntimeOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.f_gnuRuntimeOption)
         arglist.addAllArgs2(cmd_args, arglist.parser.DOption, arglist.parser.UOption)
         arglist.addAllArgs2(cmd_args, arglist.parser.IOption, arglist.parser.FOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.stdOption)
         arglist.addAllArgs(cmd_args, arglist.parser.m_macosxVersionMinOption)
 
         # Special case debug options to only pass -g to clang. This is
@@ -205,11 +200,30 @@ class Clang_CompileTool(Tool):
         if arglist.getLastArg(arglist.parser.gGroup):
             cmd_args.append('-g')
 
+        arglist.addLastArg(cmd_args, arglist.parser.nostdincOption)
+
         # FIXME: Clang isn't going to accept just anything here.
         arglist.addAllArgs(cmd_args, arglist.parser.iGroup)
 
         # FIXME: Dehardcode this.
         cmd_args.append('-fblocks')
+
+        arglist.addAllArgs(cmd_args, arglist.parser.OOption)
+        arglist.addAllArgs2(cmd_args, arglist.parser.ClangWGroup, arglist.parser.pedanticGroup)
+        arglist.addLastArg(cmd_args, arglist.parser.wOption)
+        arglist.addAllArgs3(cmd_args, arglist.parser.stdOption, arglist.parser.ansiOption, arglist.parser.trigraphsOption)
+
+        arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOnlyOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.f_nextRuntimeOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.f_gnuRuntimeOption)
+        arglist.addLastArg(cmd_args, arglist.parser.f_exceptionsOption)
+        arglist.addLastArg(cmd_args, arglist.parser.f_laxVectorConversionsOption)
+        arglist.addLastArg(cmd_args, arglist.parser.f_msExtensionsOption)
+        arglist.addLastArg(cmd_args, arglist.parser.f_noCaretDiagnosticsOption)
+        arglist.addLastArg(cmd_args, arglist.parser.f_noShowColumnOption)
+        arglist.addLastArg(cmd_args, arglist.parser.f_pascalStringsOption)
+        arglist.addLastArg(cmd_args, arglist.parser.f_writableStringsOption)
 
         if arch is not None:
             cmd_args.extend(arglist.render(arch))
@@ -474,10 +488,10 @@ class Darwin_X86_CompileTool(Tool):
             cmd_args.append(self.getBaseInputStem(inputs, arglist))
 
         arglist.addAllArgs(cmd_args, arglist.parser.gGroup)
-            
+
         arglist.addAllArgs(cmd_args, arglist.parser.OOption)
         # FIXME: -Wall is getting some special treatment. Investigate.
-        arglist.addAllArgs2(cmd_args, arglist.parser.WGroup, arglist.parser.pedanticOption)
+        arglist.addAllArgs2(cmd_args, arglist.parser.WGroup, arglist.parser.pedanticGroup)
         arglist.addLastArg(cmd_args, arglist.parser.wOption)
         arglist.addAllArgs3(cmd_args, arglist.parser.stdOption, arglist.parser.ansiOption, arglist.parser.trigraphsOption)
         if arglist.getLastArg(arglist.parser.vOption):

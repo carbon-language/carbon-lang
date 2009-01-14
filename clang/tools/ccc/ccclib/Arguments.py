@@ -50,8 +50,8 @@ class OptionGroup(Option):
     """OptionGroup - A fake option class used to group options so that
     the driver can efficiently refer to an entire set of options."""
 
-    def __init__(self, name):
-        super(OptionGroup, self).__init__(name)
+    def __init__(self, name, group=None):
+        super(OptionGroup, self).__init__(name, group)
 
     def accept(self, index, arg, it):
         raise RuntimeError,"accept() should never be called on an OptionGroup"
@@ -671,6 +671,8 @@ class OptionParser:
 
         # C options for testing
 
+        self.trigraphsOption = self.addOption(FlagOption('-trigraphs'))
+
         # FIXME: This is broken, we need -A as a single option to send
         # stuff to cc1, but the way the ld spec is constructed it
         # wants to see -A options but only as a separate arg.
@@ -718,33 +720,42 @@ class OptionParser:
         self.g3Option = self.addOption(JoinedOption('-g3', self.gGroup))
         self.gOption = self.addOption(JoinedOption('-g', self.gGroup))
 
+        # FIXME: How should we handle clang specific options? Do we
+        # want to avoid passing them to gcc/cc1 (which will generally
+        # not eat them), or should we let the user sort it out.
+
         self.fGroup = OptionGroup('-f')
         self.fastOption = self.addOption(FlagOption('-fast', self.fGroup))
         self.fastfOption = self.addOption(FlagOption('-fastf', self.fGroup))
         self.fastcpOption = self.addOption(FlagOption('-fastcp', self.fGroup))
 
         self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext', self.fGroup))
-        self.f_noEliminateUnusedDebugSymbolsOption = self.addOption(FlagOption('-fno-eliminate-unused-debug-symbols', self.fGroup))
-        self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions', self.fGroup))
-        self.f_objcOption = self.addOption(FlagOption('-fobjc', self.fGroup))
-        self.f_objcGcOption = self.addOption(FlagOption('-fobjc-gc', self.fGroup))
-        self.f_objcGcOnlyOption = self.addOption(FlagOption('-fobjc-gc-only', self.fGroup))
-        self.f_openmpOption = self.addOption(FlagOption('-fopenmp', self.fGroup))
-        self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.fGroup))
-        self.f_nextRuntimeOption = self.addOption(FlagOption('-fnext-runtime', self.fGroup))
         self.f_constantCfstringsOption = self.addOption(FlagOption('-fconstant-cfstrings', self.fGroup))
-        self.f_noConstantCfstringsOption = self.addOption(FlagOption('-fno-constant-cfstrings', self.fGroup))
-        self.f_pascalStringsOption = self.addOption(FlagOption('-fpascal-strings', self.fGroup))
-        self.f_noPascalStringsOption = self.addOption(FlagOption('-fno-pascal-strings', self.fGroup))
+        self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile', self.fGroup))
+        self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions', self.fGroup))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.fGroup))
+        self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.fGroup))
+        self.f_laxVectorConversionsOption = self.addOption(FlagOption('-flax-vector-conversions', self.fGroup))
+        self.f_msExtensionsOption = self.addOption(FlagOption('-fms-extensions', self.fGroup))
         self.f_mudflapOption = self.addOption(FlagOption('-fmudflap', self.fGroup))
         self.f_mudflapthOption = self.addOption(FlagOption('-fmudflapth', self.fGroup))
         self.f_nestedFunctionsOption = self.addOption(FlagOption('-fnested-functions', self.fGroup))
+        self.f_nextRuntimeOption = self.addOption(FlagOption('-fnext-runtime', self.fGroup))
+        self.f_noCaretDiagnosticsOption = self.addOption(FlagOption('-fno-caret-diagnostics', self.fGroup))
+        self.f_noConstantCfstringsOption = self.addOption(FlagOption('-fno-constant-cfstrings', self.fGroup))
+        self.f_noEliminateUnusedDebugSymbolsOption = self.addOption(FlagOption('-fno-eliminate-unused-debug-symbols', self.fGroup))
+        self.f_noPascalStringsOption = self.addOption(FlagOption('-fno-pascal-strings', self.fGroup))
+        self.f_noShowColumnOption = self.addOption(FlagOption('-fno-show-column', self.fGroup))
+        self.f_objcGcOnlyOption = self.addOption(FlagOption('-fobjc-gc-only', self.fGroup))
+        self.f_objcGcOption = self.addOption(FlagOption('-fobjc-gc', self.fGroup))
+        self.f_objcOption = self.addOption(FlagOption('-fobjc', self.fGroup))
+        self.f_openmpOption = self.addOption(FlagOption('-fopenmp', self.fGroup))
+        self.f_pascalStringsOption = self.addOption(FlagOption('-fpascal-strings', self.fGroup))
         self.f_pieOption = self.addOption(FlagOption('-fpie', self.fGroup))
         self.f_profileArcsOption = self.addOption(FlagOption('-fprofile-arcs', self.fGroup))
         self.f_profileGenerateOption = self.addOption(FlagOption('-fprofile-generate', self.fGroup))
-        self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile', self.fGroup))
         self.f_traditionalOption = self.addOption(FlagOption('-ftraditional', self.fGroup))
+        self.f_writableStringsOption = self.addOption(FlagOption('-fwritable-strings', self.fGroup))
         self.addOption(JoinedOption('-f', self.fGroup))
 
         self.coverageOption = self.addOption(FlagOption('-coverage'))
@@ -776,13 +787,26 @@ class OptionParser:
         self.ansiOption = self.addOption(FlagOption('-ansi', self.aGroup))
         self.aOption = self.addOption(JoinedOption('-a', self.aGroup))
 
-        self.trigraphsOption = self.addOption(FlagOption('-trigraphs'))
-        self.pedanticOption = self.addOption(FlagOption('-pedantic'))
+        self.pedanticGroup = OptionGroup('-pedantic')
+        self.pedanticOption = self.addOption(FlagOption('-pedantic', self.pedanticGroup))
+        self.pedanticErrorsOption = self.addOption(FlagOption('-pedantic-errors', self.pedanticGroup))
         self.OOption = self.addOption(JoinedOption('-O'))
+
         self.WGroup = OptionGroup('-W')
+        self.ClangWGroup = OptionGroup('-W', self.WGroup)
+
+        self.addOption(JoinedOption('-Wunused-macros', self.ClangWGroup))
+        self.addOption(JoinedOption('-Wfloat-equal', self.ClangWGroup))
+        self.addOption(JoinedOption('-Wreadonly-setter-attrs', self.ClangWGroup))
+        self.addOption(JoinedOption('-Wno-format-nonliteral', self.ClangWGroup))
+        self.addOption(JoinedOption('-Wundef', self.ClangWGroup))
+        self.addOption(JoinedOption('-Wimplicit-function-declaration', self.ClangWGroup))
+        self.addOption(JoinedOption('-Wno-strict-selector-match', self.ClangWGroup))
+
         self.WnonportableCfstringsOption = self.addOption(JoinedOption('-Wnonportable-cfstrings', self.WGroup))
         self.WnoNonportableCfstringsOption = self.addOption(JoinedOption('-Wno-nonportable-cfstrings', self.WGroup))
         self.WOption = self.addOption(JoinedOption('-W', self.WGroup))
+
         # FIXME: Weird. This option isn't really separate, --param=a=b
         # works. There is something else going on which interprets the
         # '='.
