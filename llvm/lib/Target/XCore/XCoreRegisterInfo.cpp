@@ -211,19 +211,18 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   
   bool FP = hasFP(MF);
   
+  unsigned Reg = MI.getOperand(0).getReg();
+  bool isKill = MI.getOpcode() == XCore::STWFI && MI.getOperand(0).isKill();
+
+  assert(XCore::GRRegsRegisterClass->contains(Reg) &&
+         "Unexpected register operand");
+  
+  MachineBasicBlock &MBB = *MI.getParent();
+  
   if (FP) {
     bool isUs = isImmUs(Offset);
-    MachineBasicBlock &MBB = *MI.getParent();
     unsigned FramePtr = XCore::R10;
-    unsigned Reg = MI.getOperand(0).getReg();
-    bool isKill = MI.getOperand(0).isKill();
     
-    if (Reg == XCore::LR) {
-      // The LR should have been save in the prologue.
-      cerr << "saving LR to FP unimplemented\n";
-      abort();
-    }
-
     MachineInstr *New = 0;
     if (!isUs) {
       if (!RS) {
@@ -234,18 +233,18 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                                  SPAdj);
       loadConstant(MBB, II, ScratchReg, Offset);
       switch (MI.getOpcode()) {
-      case XCore::LDWSP_lru6:
+      case XCore::LDWFI:
         New = BuildMI(MBB, II, TII.get(XCore::LDW_3r), Reg)
               .addReg(FramePtr)
               .addReg(ScratchReg, false, false, true);
         break;
-      case XCore::STWSP_lru6:
+      case XCore::STWFI:
         New = BuildMI(MBB, II, TII.get(XCore::STW_3r))
               .addReg(Reg, false, false, isKill)
               .addReg(FramePtr)
               .addReg(ScratchReg, false, false, true);
         break;
-      case XCore::LDAWSP_lru6:
+      case XCore::LDAWFI:
         New = BuildMI(MBB, II, TII.get(XCore::LDAWF_l3r), Reg)
               .addReg(FramePtr)
               .addReg(ScratchReg, false, false, true);
@@ -255,18 +254,18 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       }
     } else {
       switch (MI.getOpcode()) {
-      case XCore::LDWSP_lru6:
+      case XCore::LDWFI:
         New = BuildMI(MBB, II, TII.get(XCore::LDW_2rus), Reg)
               .addReg(FramePtr)
               .addImm(Offset);
         break;
-      case XCore::STWSP_lru6:
+      case XCore::STWFI:
         New = BuildMI(MBB, II, TII.get(XCore::STW_2rus))
               .addReg(Reg, false, false, isKill)
               .addReg(FramePtr)
               .addImm(Offset);
         break;
-      case XCore::LDAWSP_lru6:
+      case XCore::LDAWFI:
         New = BuildMI(MBB, II, TII.get(XCore::LDAWF_l2rus), Reg)
               .addReg(FramePtr)
               .addImm(Offset);
@@ -275,9 +274,6 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         assert(0 && "Unexpected Opcode\n");
       }
     }
-    
-    // Erase old instruction.
-    MBB.erase(II);
   } else {
     bool isU6 = isImmU6(Offset);
     if (!isU6 && !isImmU16(Offset)) {
@@ -286,25 +282,30 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       abort();
     }
 
-    int NewOpcode = MI.getOpcode();
-
-    switch (NewOpcode) {
-    case XCore::LDWSP_lru6:
+    switch (MI.getOpcode()) {
+    int NewOpcode;
+    case XCore::LDWFI:
       NewOpcode = (isU6) ? XCore::LDWSP_ru6 : XCore::LDWSP_lru6;
+      BuildMI(MBB, II, TII.get(NewOpcode), Reg)
+            .addImm(Offset);
       break;
-    case XCore::STWSP_lru6:
+    case XCore::STWFI:
       NewOpcode = (isU6) ? XCore::STWSP_ru6 : XCore::STWSP_lru6;
+      BuildMI(MBB, II, TII.get(NewOpcode))
+            .addReg(Reg, false, false, isKill)
+            .addImm(Offset);
       break;
-    case XCore::LDAWSP_lru6:
+    case XCore::LDAWFI:
       NewOpcode = (isU6) ? XCore::LDAWSP_ru6 : XCore::LDAWSP_lru6;
+      BuildMI(MBB, II, TII.get(NewOpcode), Reg)
+            .addImm(Offset);
       break;
     default:
       assert(0 && "Unexpected Opcode\n");
     }
-
-    MI.setDesc(TII.get(NewOpcode));
-    FrameOp.ChangeToImmediate(Offset);
   }
+  // Erase old instruction.
+  MBB.erase(II);
 }
 
 void
@@ -372,8 +373,7 @@ storeToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   int Opcode = isU6 ? XCore::STWSP_ru6 : XCore::STWSP_lru6;
   BuildMI(MBB, I, TII.get(Opcode))
     .addReg(SrcReg)
-    .addImm(Offset)
-    .addImm(0);
+    .addImm(Offset);
 }
 
 void XCoreRegisterInfo::
@@ -388,8 +388,7 @@ loadFromStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
   int Opcode = isU6 ? XCore::LDWSP_ru6 : XCore::LDWSP_lru6;
   BuildMI(MBB, I, TII.get(Opcode), DstReg)
-    .addImm(Offset)
-    .addImm(0);
+    .addImm(Offset);
 }
 
 void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {

@@ -349,6 +349,18 @@ def ADJCALLSTACKUP : PseudoInstXCore<(outs), (ins i32imm:$amt1, i32imm:$amt2),
                             [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
 
+def LDWFI : PseudoInstXCore<(outs GRRegs:$dst), (ins MEMii:$addr),
+                             "${:comment} LDWFI $dst, $addr",
+                             [(set GRRegs:$dst, (load ADDRspii:$addr))]>;
+
+def LDAWFI : PseudoInstXCore<(outs GRRegs:$dst), (ins MEMii:$addr),
+                             "${:comment} LDAWFI $dst, $addr",
+                             [(set GRRegs:$dst, ADDRspii:$addr)]>;
+
+def STWFI : PseudoInstXCore<(outs), (ins GRRegs:$src, MEMii:$addr),
+                            "${:comment} STWFI $src, $addr",
+                            [(store GRRegs:$src, ADDRspii:$addr)]>;
+
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.
 let usesCustomDAGSchedInserter = 1 in {
@@ -543,51 +555,41 @@ let mayLoad = 1, isReMaterializable = 1 in
 defm LDWCP : FRU6_LRU6_cp<"ldw">;
 
 let Uses = [SP] in {
-let mayStore=1 in
+let mayStore=1 in {
 def STWSP_ru6 : _FRU6<
-                 (outs), (ins GRRegs:$dst, MEMii:$b),
-                 "stw $dst, sp[$b]",
-                 []>;
+                 (outs), (ins GRRegs:$val, i32imm:$index),
+                 "stw $val, sp[$index]",
+                 [(XCoreStwsp GRRegs:$val, immU6:$index)]>;
 
 def STWSP_lru6 : _FLRU6<
-                 (outs), (ins GRRegs:$dst, MEMii:$b),
-                 "stw $dst, sp[$b]",
-                 [(store GRRegs:$dst, ADDRspii:$b)]>;
+                 (outs), (ins GRRegs:$val, i32imm:$index),
+                 "stw $val, sp[$index]",
+                 [(XCoreStwsp GRRegs:$val, immU16:$index)]>;
+}
 
-let mayStore=1 in
-def STWSP_ru6_2 : _FRU6<
-                 (outs), (ins GRRegs:$dst, i32imm:$b),
-                 "stw $dst, sp[$b]",
-                 []>;
-
-def STWSP_lru6_2 : _FLRU6<
-                 (outs), (ins GRRegs:$dst, i32imm:$b),
-                 "stw $dst, sp[$b]",
-                 [(store GRRegs:$dst, ADDRspii:$b)]>;
-
-let mayLoad=1 in
+let mayLoad=1 in {
 def LDWSP_ru6 : _FRU6<
-                 (outs GRRegs:$dst), (ins MEMii:$b),
+                 (outs GRRegs:$dst), (ins i32imm:$b),
                  "ldw $dst, sp[$b]",
                  []>;
 
 def LDWSP_lru6 : _FLRU6<
-                 (outs GRRegs:$dst), (ins MEMii:$b),
+                 (outs GRRegs:$dst), (ins i32imm:$b),
                  "ldw $dst, sp[$b]",
-                 [(set GRRegs:$dst, (load ADDRspii:$b))]>;
+                 []>;
+}
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1 in {
 def LDAWSP_ru6 : _FRU6<
-                 (outs GRRegs:$dst), (ins MEMii:$b),
+                 (outs GRRegs:$dst), (ins i32imm:$b),
                  "ldaw $dst, sp[$b]",
                  []>;
 
 def LDAWSP_lru6 : _FLRU6<
-                 (outs GRRegs:$dst), (ins MEMii:$b),
+                 (outs GRRegs:$dst), (ins i32imm:$b),
                  "ldaw $dst, sp[$b]",
-                 [(set GRRegs: $dst, ADDRspii:$b)]>;
+                 []>;
 
-let neverHasSideEffects = 1 in {
 def LDAWSP_ru6_RRegs : _FRU6<
                  (outs RRegs:$dst), (ins i32imm:$b),
                  "ldaw $dst, sp[$b]",
@@ -808,10 +810,6 @@ def GETID_0R : _F0R<(outs), (ins),
 
 def : Pat<(XCoreBranchLink tglobaladdr:$addr), (BL_lu10 tglobaladdr:$addr)>;
 def : Pat<(XCoreBranchLink texternalsym:$addr), (BL_lu10 texternalsym:$addr)>;
-def : Pat<(XCoreStwsp GRRegs:$val, immU6:$index),
-          (STWSP_ru6_2 GRRegs:$val, immU6:$index)>;
-def : Pat<(XCoreStwsp GRRegs:$val, immU16:$index),
-          (STWSP_lru6_2 GRRegs:$val, immU16:$index)>;
 
 /// sext_inreg
 def : Pat<(sext_inreg GRRegs:$b, i1), (SEXT_rus GRRegs:$b, 1)>;

@@ -77,7 +77,7 @@ bool XCoreInstrInfo::isMoveInstr(const MachineInstr &MI,
 unsigned
 XCoreInstrInfo::isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const{
   int Opcode = MI->getOpcode();
-  if (Opcode == XCore::LDWSP_ru6 || Opcode == XCore::LDWSP_lru6) 
+  if (Opcode == XCore::LDWFI) 
   {
     if ((MI->getOperand(1).isFI()) && // is a stack slot
         (MI->getOperand(2).isImm()) &&  // the imm is zero
@@ -99,19 +99,11 @@ unsigned
 XCoreInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                    int &FrameIndex) const {
   int Opcode = MI->getOpcode();
-  if (Opcode == XCore::STWSP_ru6 || Opcode == XCore::STWSP_lru6) 
+  if (Opcode == XCore::STWFI)
   {
     if ((MI->getOperand(1).isFI()) && // is a stack slot
         (MI->getOperand(2).isImm()) &&  // the imm is zero
-        (isZeroImm(MI->getOperand(2)))) 
-    {
-      FrameIndex = MI->getOperand(1).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-  }
-  else if (Opcode == XCore::STWSP_ru6_2 || Opcode == XCore::STWSP_lru6_2)
-  {
-    if (MI->getOperand(1).isFI())
+        (isZeroImm(MI->getOperand(2))))
     {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
@@ -387,8 +379,8 @@ void XCoreInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                   unsigned SrcReg, bool isKill, int FrameIndex,
                                   const TargetRegisterClass *RC) const
 {
-  BuildMI(MBB, I, get(XCore::STWSP_lru6)).addReg(SrcReg, false, false, isKill)
-                                         .addFrameIndex(FrameIndex).addImm(0);
+  BuildMI(MBB, I, get(XCore::STWFI)).addReg(SrcReg, false, false, isKill)
+                                    .addFrameIndex(FrameIndex).addImm(0);
 }
 
 void XCoreInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
@@ -404,8 +396,8 @@ void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                   unsigned DestReg, int FrameIndex,
                                   const TargetRegisterClass *RC) const
 {
-  BuildMI(MBB, I, get(XCore::LDWSP_lru6), DestReg).addFrameIndex(FrameIndex)
-                                                  .addImm(0);
+  BuildMI(MBB, I, get(XCore::LDWFI), DestReg).addFrameIndex(FrameIndex)
+                                             .addImm(0);
 }
 
 void XCoreInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
