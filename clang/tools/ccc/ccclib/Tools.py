@@ -459,16 +459,16 @@ class Darwin_X86_CompileTool(Tool):
 
         # FIXME: The goal is to use the user provided -o if that is
         # our final output, otherwise to drive from the original input
-        # name.
-        #
-        # This implementation is close, but gcc also does this for -S
-        # which is broken, and it would be nice to find a cleaner way
-        # which doesn't introduce a dependency on the output argument
-        # we are given.
-        outputOpt = arglist.getLastArg(arglist.parser.oOption)
-        if outputOpt and outputOpt is output:
-            cmd_args.append('-auxbase-strip')
-            cmd_args.append(arglist.getValue(outputOpt))
+        # name. Find a clean way to go about this.
+        if (arglist.getLastArg(arglist.parser.cOption) or
+            arglist.getLastArg(arglist.parser.SOption)):            
+            outputOpt = arglist.getLastArg(arglist.parser.oOption)
+            if outputOpt:
+                cmd_args.append('-auxbase-strip')
+                cmd_args.append(arglist.getValue(outputOpt))
+            else:
+                cmd_args.append('-auxbase')
+                cmd_args.append(self.getBaseInputStem(inputs, arglist))
         else:
             cmd_args.append('-auxbase')
             cmd_args.append(self.getBaseInputStem(inputs, arglist))
