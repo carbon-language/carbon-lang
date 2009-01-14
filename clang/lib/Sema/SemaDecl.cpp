@@ -1120,13 +1120,22 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   return Anon;
 }
 
-bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType) {  
+bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType, 
+                                  bool DirectInit) {  
   // Get the type before calling CheckSingleAssignmentConstraints(), since
   // it can promote the expression.
   QualType InitType = Init->getType(); 
 
-  if (getLangOptions().CPlusPlus)
-    return PerformCopyInitialization(Init, DeclType, "initializing");
+  if (getLangOptions().CPlusPlus) {
+    // FIXME: I dislike this error message. A lot.
+    if (PerformImplicitConversion(Init, DeclType, "initializing", DirectInit))
+      return Diag(Init->getSourceRange().getBegin(),
+                  diag::err_typecheck_convert_incompatible)
+        << DeclType << Init->getType() << "initializing" 
+        << Init->getSourceRange();
+
+    return false;
+  }
 
   AssignConvertType ConvTy = CheckSingleAssignmentConstraints(DeclType, Init);
   return DiagnoseAssignmentResult(ConvTy, Init->getLocStart(), DeclType,
@@ -1169,7 +1178,8 @@ StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
 
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                  SourceLocation InitLoc,
-                                 DeclarationName InitEntity) {
+                                 DeclarationName InitEntity,
+                                 bool DirectInit) {
   if (DeclType->isDependentType() || Init->isTypeDependent())
     return false;
 
@@ -1178,7 +1188,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   //   (8.3.2), shall be initialized by an object, or function, of
   //   type T or by an object that can be converted into a T.
   if (DeclType->isReferenceType())
-    return CheckReferenceInit(Init, DeclType);
+    return CheckReferenceInit(Init, DeclType, 0, false, DirectInit);
 
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
@@ -1208,7 +1218,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
         CXXConstructorDecl *Constructor 
           = PerformInitializationByConstructor(DeclType, &Init, 1,
                                                InitLoc, Init->getSourceRange(),
-                                               InitEntity, IK_Copy);
+                                               InitEntity, 
+                                               DirectInit? IK_Direct : IK_Copy);
         return Constructor == 0;
       }
 
@@ -1244,7 +1255,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       return Diag(Init->getLocStart(), diag::err_array_init_list_required)
         << Init->getSourceRange();
 
-    return CheckSingleInitializer(Init, DeclType);
+    return CheckSingleInitializer(Init, DeclType, DirectInit);
   } else if (getLangOptions().CPlusPlus) {
     // C++ [dcl.init]p14:
     //   [...] If the class is an aggregate (8.5.1), and the initializer
@@ -2366,6 +2377,13 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
 }
 
 void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init) {
+  AddInitializerToDecl(dcl, move(init), /*DirectInit=*/false);
+}
+
+/// AddInitializerToDecl - Adds the initializer Init to the
+/// declaration dcl. If DirectInit is true, this is C++ direct
+/// initialization rather than copy initialization.
+void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
   Decl *RealDecl = static_cast<Decl *>(dcl);
   Expr *Init = static_cast<Expr *>(init.release());
   assert(Init && "missing initializer");
@@ -2394,7 +2412,7 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init) {
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
       if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
-                                VDecl->getDeclName()))
+                                VDecl->getDeclName(), DirectInit))
         VDecl->setInvalidDecl();
       
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
@@ -2408,7 +2426,7 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init) {
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!VDecl->isInvalidDecl())
       if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
-                                VDecl->getDeclName()))
+                                VDecl->getDeclName(), DirectInit))
         VDecl->setInvalidDecl();
     
     // C++ 3.6.2p2, allow dynamic initialization of static initializers.

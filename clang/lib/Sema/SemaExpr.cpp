@@ -1873,7 +1873,7 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   }
 
   if (CheckInitializerTypes(literalExpr, literalType, LParenLoc, 
-                            DeclarationName()))
+                            DeclarationName(), /*FIXME:DirectInit=*/false))
     return true;
 
   bool isFileScope = getCurFunctionOrMethodDecl() == 0;
@@ -3546,10 +3546,10 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
         // operator node.
-        if (PerformCopyInitialization(lhs, Best->BuiltinTypes.ParamTypes[0],
-                                      "passing") ||
-            PerformCopyInitialization(rhs, Best->BuiltinTypes.ParamTypes[1],
-                                      "passing"))
+        if (PerformImplicitConversion(lhs, Best->BuiltinTypes.ParamTypes[0],
+                                      Best->Conversions[0], "passing") ||
+            PerformImplicitConversion(rhs, Best->BuiltinTypes.ParamTypes[1],
+                                      Best->Conversions[1], "passing"))
           return true;
 
         break;
@@ -3644,8 +3644,8 @@ Action::ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
         // operator node.
-        if (PerformCopyInitialization(Input, Best->BuiltinTypes.ParamTypes[0],
-                                      "passing"))
+        if (PerformImplicitConversion(Input, Best->BuiltinTypes.ParamTypes[0],
+                                      Best->Conversions[0], "passing"))
           return true;
 
         break;

@@ -10,14 +10,14 @@ void test() {
   while (int f()=0) ; // expected-error {{a function type is not allowed here}}
 
   struct S {} s;
-  if (s) ++x; // expected-error {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
-  while (struct S x=s) ; // expected-error {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
-  do ; while (s); // expected-error {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
-  for (;s;) ; // expected-error {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
+  if (s) ++x; // expected-error {{value of type 'struct S' is not contextually convertible to 'bool'}}
+  while (struct S x=s) ; // expected-error {{value of type 'struct S' is not contextually convertible to 'bool'}}
+  do ; while (s); // expected-error {{value of type 'struct S' is not contextually convertible to 'bool'}}
+  for (;s;) ; // expected-error {{value of type 'struct S' is not contextually convertible to 'bool'}}
   switch (s) {} // expected-error {{statement requires expression of integer type ('struct S' invalid)}}
 
-  while (struct S {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize 'x' with an rvalue of type 'int'}} expected-error {{expression must have bool type}}
-  while (struct {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize 'x' with an rvalue of type 'int'}} expected-error {{expression must have bool type}}
+  while (struct S {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize 'x' with an rvalue of type 'int'}} expected-error {{value of type 'struct S' is not contextually convertible to 'bool'}}
+  while (struct {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize 'x' with an rvalue of type 'int'}} expected-error {{value of type 'struct <anonymous>' is not contextually convertible to 'bool'}}
   switch (enum {E} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{incompatible type}}
 
   if (int x=0) { // expected-note {{previous definition is here}}

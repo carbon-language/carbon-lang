@@ -1349,7 +1349,7 @@ DIAG(err_invalid_use_of_array_type, ERROR,
 DIAG(err_type_defined_in_condition, ERROR,
      "types may not be defined in conditions")
 DIAG(err_typecheck_bool_condition, ERROR,
-    "expression must have bool type (or be convertible to bool) (%0 invalid)")
+     "value of type %0 is not contextually convertible to 'bool'")
 DIAG(err_expected_class_or_namespace, ERROR,
      "expected a class or namespace")
 DIAG(err_invalid_declarator_scope, ERROR,
@@ -1581,6 +1581,10 @@ DIAG(warn_conv_to_void_not_used, WARNING,
 
 DIAG(warn_not_compound_assign, WARNING,
      "use of unary operator that may be intended as compound assignment (%0=)")
+
+// C++0x explicit conversion operators
+DIAG(warn_explicit_conversion_functions, WARNING,
+     "explicit conversion functions are a C++0x extension")
 
 // CHECK: printf format string errors
 DIAG(warn_printf_not_string_constant, WARNING,

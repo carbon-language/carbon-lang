@@ -281,7 +281,8 @@ public:
   virtual void ActOnParamUnparsedDefaultArgument(DeclTy *param, 
                                                  SourceLocation EqualLoc);
   virtual void ActOnParamDefaultArgumentError(DeclTy *param);
-  void AddInitializerToDecl(DeclTy *dcl, ExprArg init);
+  virtual void AddInitializerToDecl(DeclTy *dcl, ExprArg init);
+  void AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit);
   void ActOnUninitializedDecl(DeclTy *dcl);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
@@ -390,7 +391,8 @@ public:
                   OverloadedFunctionDecl::function_iterator &MatchedDecl);
   ImplicitConversionSequence 
   TryImplicitConversion(Expr* From, QualType ToType,
-                        bool SuppressUserConversions = false);
+                        bool SuppressUserConversions = false,
+                        bool AllowExplicit = false);
   bool IsStandardConversion(Expr *From, QualType ToType, 
                             StandardConversionSequence& SCS);
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);
@@ -402,7 +404,8 @@ public:
   bool CheckPointerConversion(Expr *From, QualType ToType);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
   bool IsUserDefinedConversion(Expr *From, QualType ToType, 
-                               UserDefinedConversionSequence& User);
+                               UserDefinedConversionSequence& User,
+                               bool AllowExplicit = false);
 
   ImplicitConversionSequence::CompareKind 
   CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,
@@ -429,6 +432,9 @@ public:
   ImplicitConversionSequence
   TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method);
   bool PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method);
+
+  ImplicitConversionSequence TryContextuallyConvertToBool(Expr *From);
+  bool PerformContextuallyConvertToBool(Expr *&From);
 
   /// OverloadingResult - Capture the result of performing overload
   /// resolution.
@@ -459,7 +465,8 @@ public:
   void AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys, 
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet& CandidateSet,
-                           bool IsAssignmentOperator = false);
+                           bool IsAssignmentOperator = false,
+                           unsigned NumContextualBoolArguments = 0);
   void AddBuiltinOperatorCandidates(OverloadedOperatorKind Op, 
                                     Expr **Args, unsigned NumArgs, 
                                     OverloadCandidateSet& CandidateSet);
@@ -497,7 +504,7 @@ public:
   ExprResult BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
                                       SourceLocation MemberLoc,
                                       IdentifierInfo &Member);
-                                           
+               
   /// Helpers for dealing with function parameters.
   bool CheckParmsForFunctionDef(FunctionDecl *FD);
   void CheckCXXDefaultArguments(FunctionDecl *FD);
@@ -1360,6 +1367,9 @@ public:
   bool IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType);
 
   bool PerformImplicitConversion(Expr *&From, QualType ToType, 
+                                 const char *Flavor, bool AllowExplicit = false);
+  bool PerformImplicitConversion(Expr *&From, QualType ToType, 
+                                 const ImplicitConversionSequence& ICS,
                                  const char *Flavor);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const StandardConversionSequence& SCS,
@@ -1416,8 +1426,10 @@ public:
   /// type checking declaration initializers (C99 6.7.8)
   friend class InitListChecker;
   bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType,
-                             SourceLocation InitLoc,DeclarationName InitEntity);
-  bool CheckSingleInitializer(Expr *&simpleInit, QualType declType);
+                             SourceLocation InitLoc,DeclarationName InitEntity,
+                             bool DirectInit);
+  bool CheckSingleInitializer(Expr *&simpleInit, QualType declType,
+                              bool DirectInit);
   bool CheckForConstantInitializer(Expr *e, QualType t);
   bool CheckArithmeticConstantExpression(const Expr* e);
   bool CheckAddressConstantExpression(const Expr* e);
@@ -1455,7 +1467,8 @@ public:
 
   bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType &declType,
                           ImplicitConversionSequence *ICS = 0,
-                          bool SuppressUserConversions = false);
+                          bool SuppressUserConversions = false,
+                          bool AllowExplicit = false);
 
   /// CheckCastTypes - Check type constraints for casting between types.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr);

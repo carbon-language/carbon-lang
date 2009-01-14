@@ -291,7 +291,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       // Object is direct-initialized.
       // FIXME: WHAT DeclarationName do we pass in here?
       if (CheckInitializerTypes(ConsArgs[0], AllocType, StartLoc,
-                                DeclarationName() /*AllocType.getAsString()*/))
+                                DeclarationName() /*AllocType.getAsString()*/,
+                                /*DirectInit=*/true))
         return true;
     } else {
       Diag(StartLoc, diag::err_builtin_direct_init_more_than_one_arg)
@@ -650,13 +651,7 @@ bool Sema::CheckCXXBooleanCondition(Expr *&CondExpr) {
   // The value of a condition that is an expression is the value of the
   // expression, implicitly converted to bool.
   //
-  QualType Ty = CondExpr->getType(); // Save the type.
-  AssignConvertType
-    ConvTy = CheckSingleAssignmentConstraints(Context.BoolTy, CondExpr);
-  if (ConvTy == Incompatible)
-    return Diag(CondExpr->getLocStart(), diag::err_typecheck_bool_condition)
-      << Ty << CondExpr->getSourceRange();
-  return false;
+  return PerformContextuallyConvertToBool(CondExpr);
 }
 
 /// Helper function to determine whether this is the (deprecated) C++
@@ -694,12 +689,27 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
 /// expression From to the type ToType. Returns true if there was an
 /// error, false otherwise. The expression From is replaced with the
 /// converted expression. Flavor is the kind of conversion we're
-/// performing, used in the error message.
+/// performing, used in the error message. If @p AllowExplicit,
+/// explicit user-defined conversions are permitted.
 bool 
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
-                                const char *Flavor)
+                                const char *Flavor, bool AllowExplicit)
 {
-  ImplicitConversionSequence ICS = TryImplicitConversion(From, ToType);
+  ImplicitConversionSequence ICS = TryImplicitConversion(From, ToType, false,
+                                                         AllowExplicit);
+  return PerformImplicitConversion(From, ToType, ICS, Flavor);
+}
+
+/// PerformImplicitConversion - Perform an implicit conversion of the
+/// expression From to the type ToType using the pre-computed implicit
+/// conversion sequence ICS. Returns true if there was an error, false
+/// otherwise. The expression From is replaced with the converted
+/// expression. Flavor is the kind of conversion we're performing,
+/// used in the error message.
+bool
+Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
+                                const ImplicitConversionSequence &ICS,
+                                const char* Flavor) {
   switch (ICS.ConversionKind) {
   case ImplicitConversionSequence::StandardConversion:
     if (PerformImplicitConversion(From, ToType, ICS.Standard, Flavor))
@@ -710,7 +720,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: This is, of course, wrong. We'll need to actually call
     // the constructor or conversion operator, and then cope with the
     // standard conversions.
-    ImpCastExprToType(From, ToType);
+    ImpCastExprToType(From, ToType.getNonReferenceType(), 
+                      ToType->isReferenceType());
     return false;
 
   case ImplicitConversionSequence::EllipsisConversion:
@@ -734,8 +745,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 bool 
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 const StandardConversionSequence& SCS,
-                                const char *Flavor)
-{
+                                const char *Flavor) {
   // Overall FIXME: we are recomputing too many types here and doing
   // far too much extra work. What this means is that we need to keep
   // track of more information that is computed when we try the

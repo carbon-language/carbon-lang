@@ -193,7 +193,7 @@ void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType,
       return;
     }
     Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
-    if (SemaRef->CheckSingleInitializer(expr, DeclType))
+    if (SemaRef->CheckSingleInitializer(expr, DeclType, false))
       hadError = true; // types weren't compatible.
     else if (savExpr != expr)
       // The type was promoted, update initializer list.

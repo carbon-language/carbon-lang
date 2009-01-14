@@ -361,15 +361,18 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
 ///
 /// If @p SuppressUserConversions, then user-defined conversions are
 /// not permitted.
+/// If @p AllowExplicit, then explicit user-defined conversions are
+/// permitted.
 ImplicitConversionSequence
 Sema::TryImplicitConversion(Expr* From, QualType ToType,
-                            bool SuppressUserConversions)
+                            bool SuppressUserConversions,
+                            bool AllowExplict)
 {
   ImplicitConversionSequence ICS;
   if (IsStandardConversion(From, ToType, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
   else if (!SuppressUserConversions &&
-           IsUserDefinedConversion(From, ToType, ICS.UserDefined)) {
+           IsUserDefinedConversion(From, ToType, ICS.UserDefined, AllowExplict)) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
     // C++ [over.ics.user]p4:
     //   A conversion of an expression of class type to the same class
@@ -1097,9 +1100,12 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType)
 /// exists, User will contain the user-defined conversion sequence
 /// that performs such a conversion and this routine will return
 /// true. Otherwise, this routine returns false and User is
-/// unspecified.
+/// unspecified. AllowExplicit is true if the conversion should
+/// consider C++0x "explicit" conversion functions as well as
+/// non-explicit conversion functions (C++0x [class.conv.fct]p2).
 bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType, 
-                                   UserDefinedConversionSequence& User)
+                                   UserDefinedConversionSequence& User,
+                                   bool AllowExplicit)
 {
   OverloadCandidateSet CandidateSet;
   if (const CXXRecordType *ToRecordType 
@@ -1137,7 +1143,8 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
            = Conversions->function_begin();
          Func != Conversions->function_end(); ++Func) {
       CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
-      AddConversionCandidate(Conv, From, ToType, CandidateSet);
+      if (AllowExplicit || !Conv->isExplicit())
+        AddConversionCandidate(Conv, From, ToType, CandidateSet);
     }
   }
 
@@ -1748,6 +1755,24 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
   return false;
 }
 
+/// TryContextuallyConvertToBool - Attempt to contextually convert the
+/// expression From to bool (C++0x [conv]p3).
+ImplicitConversionSequence Sema::TryContextuallyConvertToBool(Expr *From) {
+  return TryImplicitConversion(From, Context.BoolTy, false, true);
+}
+
+/// PerformContextuallyConvertToBool - Perform a contextual conversion
+/// of the expression From to bool (C++0x [conv]p3).
+bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
+  ImplicitConversionSequence ICS = TryContextuallyConvertToBool(From);
+  if (!PerformImplicitConversion(From, Context.BoolTy, ICS, "converting"))
+    return false;
+
+  return Diag(From->getSourceRange().getBegin(), 
+              diag::err_typecheck_bool_condition)
+    << From->getType() << From->getSourceRange();
+}
+
 /// AddOverloadCandidate - Adds the given function to the set of
 /// candidate functions, using the given function call arguments.  If
 /// @p SuppressUserConversions, then don't allow user-defined
@@ -2201,11 +2226,14 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
 /// of the built-in candidate, respectively. Args and NumArgs are the
 /// arguments being passed to the candidate. IsAssignmentOperator
 /// should be true when this built-in candidate is an assignment
-/// operator.
+/// operator. NumContextualBoolArguments is the number of arguments
+/// (at the beginning of the argument list) that will be contextually
+/// converted to bool.
 void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys, 
                                Expr **Args, unsigned NumArgs,
                                OverloadCandidateSet& CandidateSet,
-                               bool IsAssignmentOperator) {
+                               bool IsAssignmentOperator,
+                               unsigned NumContextualBoolArguments) {
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
@@ -2233,9 +2261,15 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
     // conversions, since that is the only way that initialization of
     // a reference to a non-class type can occur from something that
     // is not of the same type.
-    Candidate.Conversions[ArgIdx] 
-      = TryCopyInitialization(Args[ArgIdx], ParamTys[ArgIdx], 
-                              ArgIdx == 0 && IsAssignmentOperator);
+    if (ArgIdx < NumContextualBoolArguments) {
+      assert(ParamTys[ArgIdx] == Context.BoolTy && 
+             "Contextual conversion to bool requires bool type");
+      Candidate.Conversions[ArgIdx] = TryContextuallyConvertToBool(Args[ArgIdx]);
+    } else {
+      Candidate.Conversions[ArgIdx] 
+        = TryCopyInitialization(Args[ArgIdx], ParamTys[ArgIdx], 
+                                ArgIdx == 0 && IsAssignmentOperator);
+    }
     if (Candidate.Conversions[ArgIdx].ConversionKind 
         == ImplicitConversionSequence::BadConversion) {
       Candidate.Viable = false;
@@ -2309,7 +2343,8 @@ public:
 
   BuiltinCandidateTypeSet(ASTContext &Context) : Context(Context) { }
 
-  void AddTypesConvertedFrom(QualType Ty, bool AllowUserConversions = true);
+  void AddTypesConvertedFrom(QualType Ty, bool AllowUserConversions,
+                             bool AllowExplicitConversions);
 
   /// pointer_begin - First pointer type found;
   iterator pointer_begin() { return PointerTypes.begin(); }
@@ -2358,9 +2393,15 @@ bool BuiltinCandidateTypeSet::AddWithMoreQualifiedTypeVariants(QualType Ty) {
 
 /// AddTypesConvertedFrom - Add each of the types to which the type @p
 /// Ty can be implicit converted to the given set of @p Types. We're
-/// primarily interested in pointer types, enumeration types,
-void BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
-                                                    bool AllowUserConversions) {
+/// primarily interested in pointer types and enumeration types.
+/// AllowUserConversions is true if we should look at the conversion
+/// functions of a class type, and AllowExplicitConversions if we
+/// should also include the explicit conversion functions of a class
+/// type.
+void 
+BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
+                                               bool AllowUserConversions,
+                                               bool AllowExplicitConversions) {
   // Only deal with canonical types.
   Ty = Context.getCanonicalType(Ty);
 
@@ -2399,7 +2440,7 @@ void BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
 
         // Add the pointer type, recursively, so that we get all of
         // the indirect base classes, too.
-        AddTypesConvertedFrom(Context.getPointerType(BaseTy), false);
+        AddTypesConvertedFrom(Context.getPointerType(BaseTy), false, false);
       }
     }
   } else if (Ty->isEnumeralType()) {
@@ -2414,7 +2455,8 @@ void BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
              = Conversions->function_begin();
            Func != Conversions->function_end(); ++Func) {
         CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
-        AddTypesConvertedFrom(Conv->getConversionType(), false);
+        if (AllowExplicitConversions || !Conv->isExplicit())
+          AddTypesConvertedFrom(Conv->getConversionType(), false, false);
       }
     }
   }
@@ -2461,7 +2503,11 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       Op == OO_ArrowStar || Op == OO_PlusPlus || Op == OO_MinusMinus ||
       (Op == OO_Star && NumArgs == 1)) {
     for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
-      CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType());
+      CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType(),
+                                           true,
+                                           (Op == OO_Exclaim ||
+                                            Op == OO_AmpAmp ||
+                                            Op == OO_PipePipe));
   }
 
   bool isComparison = false;
@@ -2811,14 +2857,14 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       ParamTypes[0] = Context.getReferenceType(*Enum);
       ParamTypes[1] = *Enum;
       AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                          /*IsAssignmentOperator=*/true);
+                          /*IsAssignmentOperator=*/false);
 
       if (!Context.getCanonicalType(*Enum).isVolatileQualified()) {
         // volatile T& operator=(volatile T&, T)
         ParamTypes[0] = Context.getReferenceType((*Enum).withVolatile());
         ParamTypes[1] = *Enum;
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                            /*IsAssignmentOperator=*/true);
+                            /*IsAssignmentOperator=*/false);
       }
     }
     // Fall through.
@@ -2919,8 +2965,6 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         ParamTypes[1] = ArithmeticTypes[Right];
 
         // Add this built-in operator as a candidate (VQ is empty).
-        // FIXME: We should be caching these declarations somewhere,
-        // rather than re-building them every time.
         ParamTypes[0] = Context.getReferenceType(ArithmeticTypes[Left]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
 
@@ -2942,7 +2986,9 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //        bool        operator&&(bool, bool);     [BELOW]
     //        bool        operator||(bool, bool);     [BELOW]
     QualType ParamTy = Context.BoolTy;
-    AddBuiltinCandidate(ParamTy, &ParamTy, Args, 1, CandidateSet);
+    AddBuiltinCandidate(ParamTy, &ParamTy, Args, 1, CandidateSet,
+                        /*IsAssignmentOperator=*/false,
+                        /*NumContextualBoolArguments=*/1);
     break;
   }
 
@@ -2956,7 +3002,9 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //        bool        operator&&(bool, bool);
     //        bool        operator||(bool, bool);
     QualType ParamTypes[2] = { Context.BoolTy, Context.BoolTy };
-    AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
+    AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet,
+                        /*IsAssignmentOperator=*/false,
+                        /*NumContextualBoolArguments=*/2);
     break;
   }
 

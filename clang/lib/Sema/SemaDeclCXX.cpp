@@ -128,7 +128,8 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
   Expr *DefaultArgPtr = DefaultArg.get();
   bool DefaultInitFailed = CheckInitializerTypes(DefaultArgPtr, ParamType,
                                                  EqualLoc,
-                                                 Param->getDeclName());
+                                                 Param->getDeclName(),
+                                                 /*DirectInit=*/false);
   if (DefaultArgPtr != DefaultArg.get()) {
     DefaultArg.take();
     DefaultArg.reset(DefaultArgPtr);
@@ -1299,6 +1300,12 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   R = Context.getFunctionType(ConvType, 0, 0, false, 
                               R->getAsFunctionTypeProto()->getTypeQuals());
 
+  // C++0x explicit conversion operators.
+  if (D.getDeclSpec().isExplicitSpecified() && !getLangOptions().CPlusPlus0x)
+    Diag(D.getDeclSpec().getExplicitSpecLoc(), 
+         diag::warn_explicit_conversion_functions)
+      << SourceRange(D.getDeclSpec().getExplicitSpecLoc());
+
   return isInvalid;
 }
 
@@ -1538,7 +1545,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
 
   assert(NumExprs == 1 && "Expected 1 expression");
   // Set the init expression, handles conversions.
-  AddInitializerToDecl(Dcl, ExprArg(*this, ExprTys[0]));
+  AddInitializerToDecl(Dcl, ExprArg(*this, ExprTys[0]), /*DirectInit=*/true);
 }
 
 /// PerformInitializationByConstructor - Perform initialization by
@@ -1677,10 +1684,13 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
 ///
 /// When @p SuppressUserConversions, user-defined conversions are
 /// suppressed.
+/// When @p AllowExplicit, we also permit explicit user-defined
+/// conversion functions.
 bool 
 Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, 
                          ImplicitConversionSequence *ICS,
-                         bool SuppressUserConversions) {
+                         bool SuppressUserConversions,
+                         bool AllowExplicit) {
   assert(DeclType->isReferenceType() && "Reference init needs a reference");
 
   QualType T1 = DeclType->getAsReferenceType()->getPointeeType();
@@ -1780,7 +1790,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
       // If the conversion function doesn't return a reference type,
       // it can't be considered for this conversion.
       // FIXME: This will change when we support rvalue references.
-      if (Conv->getConversionType()->isReferenceType())
+      if (Conv->getConversionType()->isReferenceType() &&
+          (AllowExplicit || !Conv->isExplicit()))
         AddConversionCandidate(Conv, Init, DeclType, CandidateSet);
     }
 
