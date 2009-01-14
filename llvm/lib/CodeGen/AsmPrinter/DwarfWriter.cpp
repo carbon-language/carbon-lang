@@ -2091,7 +2091,7 @@ private:
   void ConstructRootDbgScope(DbgScope *RootScope) {
     // Exit if there is no root scope.
     if (!RootScope) return;
-    if (!RootScope->getDesc()->isNull()) return;
+    if (RootScope->getDesc()->isNull()) return;
 
     // Get the subprogram debug information entry.
     DISubprogram SPD(RootScope->getDesc()->getGV());
