@@ -467,7 +467,7 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
       Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
                                            FT->getArgType(i), VarDecl::None, 0,
                                            0));
-    New->setParams(&Params[0], Params.size());
+    New->setParams(Context, &Params[0], Params.size());
   }
   
   
@@ -1591,7 +1591,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
           Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
       }
   
-      NewFD->setParams(&Params[0], Params.size());
+      NewFD->setParams(Context, &Params[0], Params.size());
     } else if (R->getAsTypedefType()) {
       // When we're declaring a function with a typedef, as in the
       // following example, we'll need to synthesize (unnamed)
@@ -1620,7 +1620,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
                                                0, 0));
         }
 
-        NewFD->setParams(&Params[0], Params.size());
+        NewFD->setParams(Context, &Params[0], Params.size());
       }
     }
 

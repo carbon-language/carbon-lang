@@ -875,7 +875,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
                                                  ArgType, VarDecl::None, 0, 0);
-    CopyConstructor->setParams(&FromParam, 1);
+    CopyConstructor->setParams(Context, &FromParam, 1);
 
     ClassDecl->addedConstructor(Context, CopyConstructor);
     ClassDecl->addDecl(CopyConstructor);
@@ -952,7 +952,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
                                                  ArgType, VarDecl::None, 0, 0);
-    CopyAssignment->setParams(&FromParam, 1);
+    CopyAssignment->setParams(Context, &FromParam, 1);
 
     // Don't call addedAssignmentOperator. There is no way to distinguish an
     // implicit from an explicit assignment operator.

@@ -271,14 +271,16 @@ unsigned FunctionDecl::getNumParams() const {
   return getNumTypeParams(getType());
 }
 
-void FunctionDecl::setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
+void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
+                             unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
   assert(NumParams == getNumTypeParams(getType()) &&
          "Parameter count mismatch!");
   
   // Zero params -> null pointer.
   if (NumParams) {
-    ParamInfo = new ParmVarDecl*[NumParams];
+    void *Mem = C.getAllocator().Allocate<ParmVarDecl*>(NumParams);
+    ParamInfo = new (Mem) ParmVarDecl*[NumParams];
     memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
   }
 }
