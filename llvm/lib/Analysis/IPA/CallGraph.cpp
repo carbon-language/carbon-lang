@@ -247,8 +247,8 @@ void CallGraphNode::print(std::ostream &OS) const {
     OS << "Call graph node <<null function: 0x" << this << ">>:\n";
 
   for (const_iterator I = begin(), E = end(); I != E; ++I)
-    if (I->second->getFunction())
-      OS << "  Calls function '" << I->second->getFunction()->getName() <<"'\n";
+    if (Function *FI = I->second->getFunction())
+      OS << "  Calls function '" << FI->getName() <<"'\n";
   else
     OS << "  Calls external node\n";
   OS << "\n";
