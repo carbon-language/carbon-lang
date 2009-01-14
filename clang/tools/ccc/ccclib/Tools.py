@@ -172,6 +172,19 @@ class GCC_LinkTool(GCC_Common_Tool):
                                                       output, outputType, arglist,
                                                       [])
 
+class Clang_CompileTool(GCC_Common_Tool):
+    def __init__(self):
+        super(Clang_CompileTool, self).__init__('clang',
+                                              (Tool.eFlagsPipedInput |
+                                               Tool.eFlagsPipedOutput |
+                                               Tool.eFlagsIntegratedCPP))
+
+    def constructJob(self, phase, arch, jobs, inputs, 
+                     output, outputType, arglist):
+        return super(Clang_CompileTool, self).constructJob(phase, arch, jobs, inputs,
+                                                           output, outputType, arglist,
+                                                           ['-S'])
+
 class Darwin_X86_CompileTool(Tool):
     def __init__(self, toolChain):
         super(Darwin_X86_CompileTool, self).__init__('cc1',

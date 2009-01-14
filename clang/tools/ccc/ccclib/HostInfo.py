@@ -44,7 +44,8 @@ class DarwinHostInfo(HostInfo):
         if arch in ('i386', 'x86_64'):
             return ToolChain.Darwin_X86_ToolChain(self.driver,
                                                   self.darwinVersion,
-                                                  self.gccVersion)
+                                                  self.gccVersion,
+                                                  arch)
 
         return ToolChain.Generic_GCC_ToolChain(self.driver)
 

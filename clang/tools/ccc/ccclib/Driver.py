@@ -29,6 +29,11 @@ class Driver(object):
     def __init__(self):
         self.hostInfo = None
         self.parser = Arguments.OptionParser()
+        self.cccHostBits = self.cccHostMachine = None
+        self.cccHostSystem = self.cccHostRelease = None
+        self.cccCXX = False
+        self.cccClang = False
+        self.cccFallback = False
 
     # Host queries which can be forcibly over-riden by the user for
     # testing purposes.
@@ -80,8 +85,6 @@ class Driver(object):
 
         # FIXME: How to handle override of host? ccc specific options?
         # Abuse -b?
-        self.cccHostBits = self.cccHostMachine = None
-        self.cccHostSystem = self.cccHostRelease = None
         while argv and argv[0].startswith('-ccc-'):
             opt,argv = argv[0][5:],argv[1:]
 
@@ -89,6 +92,12 @@ class Driver(object):
                 cccPrintOptions = True
             elif opt == 'print-phases':
                 cccPrintPhases = True
+            elif opt == 'cxx':
+                self.cccCXX = True
+            elif opt == 'clang':
+                self.cccClang = True
+            elif opt == 'fallback':
+                self.cccFallback = True
             elif opt == 'host-bits':
                 self.cccHostBits,argv = argv[0],argv[1:]
             elif opt == 'host-machine':

@@ -1,6 +1,7 @@
 import Arguments
 import Phases
 import Tools
+import Types
 
 ###
 
@@ -42,12 +43,13 @@ class ToolChain(object):
             return args
 
 class Darwin_X86_ToolChain(ToolChain):
-    def __init__(self, driver, darwinVersion, gccVersion):
+    def __init__(self, driver, darwinVersion, gccVersion, archName):
         super(Darwin_X86_ToolChain, self).__init__(driver)
         assert isinstance(darwinVersion, tuple) and len(darwinVersion) == 3
         assert isinstance(gccVersion, tuple) and len(gccVersion) == 3
         self.darwinVersion = darwinVersion
         self.gccVersion = gccVersion
+        self.archName = archName
 
         self.toolMap = {
             Phases.PreprocessPhase : Tools.GCC_PreprocessTool(),
@@ -57,6 +59,7 @@ class Darwin_X86_ToolChain(ToolChain):
             Phases.LinkPhase : Tools.Darwin_X86_LinkTool(self),
             Phases.LipoPhase : Tools.LipoTool(),
             }
+        self.clangTool = Tools.Clang_CompileTool()
 
     def getToolChainDir(self):
         return 'i686-apple-darwin%d/%s' % (self.darwinVersion[0],
@@ -72,6 +75,13 @@ class Darwin_X86_ToolChain(ToolChain):
 
     def selectTool(self, action):
         assert isinstance(action, Phases.JobAction)
+        
+        if (self.driver.cccClang and
+            self.archName == 'i386' and
+            action.inputs[0].type in (Types.CType, Types.CTypeNoPP) and
+            isinstance(action.phase, Phases.CompilePhase)):
+            return self.clangTool
+
         return self.toolMap[action.phase.__class__]
 
     def translateArgs(self, args, arch):
