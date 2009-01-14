@@ -1749,8 +1749,7 @@ bool IPSCCP::runOnModule(Module &M) {
       } else {
         for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
           Instruction *Inst = BI++;
-          if (Inst->getType() == Type::VoidTy ||
-              isa<TerminatorInst>(Inst))
+          if (Inst->getType() == Type::VoidTy)
             continue;
           
           LatticeVal &IV = Values[Inst];
@@ -1766,7 +1765,7 @@ bool IPSCCP::runOnModule(Module &M) {
           Inst->replaceAllUsesWith(Const);
           
           // Delete the instruction.
-          if (!isa<CallInst>(Inst))
+          if (!isa<CallInst>(Inst) && !isa<TerminatorInst>(Inst))
             Inst->eraseFromParent();
 
           // Hey, we just changed something!
