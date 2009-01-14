@@ -78,7 +78,8 @@ class Darwin_X86_ToolChain(ToolChain):
         
         if (self.driver.cccClang and
             self.archName == 'i386' and
-            action.inputs[0].type in (Types.CType, Types.CTypeNoPP) and
+            action.inputs[0].type in (Types.CType, Types.CTypeNoPP,
+                                      Types.ObjCType, Types.ObjCTypeNoPP) and
             isinstance(action.phase, Phases.CompilePhase)):
             return self.clangTool
 
