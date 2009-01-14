@@ -733,44 +733,46 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
 /// if the loaded value is dynamically null, then we know that they cannot be
 /// reachable with a null optimize away the load.
 static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
-  std::vector<LoadInst*> Loads;
   bool Changed = false;
 
+  // Keep track of whether we are able to remove all the uses of the global
+  // other than the store that defines it.
+  bool AllNonStoreUsesGone = true;
+  
   // Replace all uses of loads with uses of uses of the stored value.
-  for (Value::use_iterator GUI = GV->use_begin(), E = GV->use_end();
-       GUI != E; ++GUI)
-    if (LoadInst *LI = dyn_cast<LoadInst>(*GUI)) {
-      Loads.push_back(LI);
+  for (Value::use_iterator GUI = GV->use_begin(), E = GV->use_end(); GUI != E;){
+    User *GlobalUser = *GUI++;
+    if (LoadInst *LI = dyn_cast<LoadInst>(GlobalUser)) {
       Changed |= OptimizeAwayTrappingUsesOfValue(LI, LV);
+      // If we were able to delete all uses of the loads
+      if (LI->use_empty()) {
+        LI->eraseFromParent();
+        Changed = true;
+      } else {
+        AllNonStoreUsesGone = false;
+      }
+    } else if (isa<StoreInst>(GlobalUser)) {
+      // Ignore the store that stores "LV" to the global.
+      assert(GlobalUser->getOperand(1) == GV &&
+             "Must be storing *to* the global");
     } else {
-      // If we get here we could have stores, selects, or phi nodes whose values
-      // are loaded.
-      assert((isa<StoreInst>(*GUI) || isa<PHINode>(*GUI) ||
-              isa<SelectInst>(*GUI) || isa<ConstantExpr>(*GUI)) &&
-             "Only expect load and stores!");
+      AllNonStoreUsesGone = false;
+
+      // If we get here we could have other crazy uses that are transitively
+      // loaded.
+      assert((isa<PHINode>(GlobalUser) || isa<SelectInst>(GlobalUser) ||
+              isa<ConstantExpr>(GlobalUser)) && "Only expect load and stores!");
     }
+  }
 
   if (Changed) {
     DOUT << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV;
     ++NumGlobUses;
   }
 
-  // Delete all of the loads we can, keeping track of whether we nuked them all!
-  bool AllLoadsGone = true;
-  while (!Loads.empty()) {
-    LoadInst *L = Loads.back();
-    if (L->use_empty()) {
-      L->eraseFromParent();
-      Changed = true;
-    } else {
-      AllLoadsGone = false;
-    }
-    Loads.pop_back();
-  }
-
   // If we nuked all of the loads, then none of the stores are needed either,
   // nor is the global.
-  if (AllLoadsGone) {
+  if (AllNonStoreUsesGone) {
     DOUT << "  *** GLOBAL NOW DEAD!\n";
     CleanupConstantGlobalUsers(GV, 0);
     if (GV->use_empty()) {
