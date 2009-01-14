@@ -12,6 +12,7 @@
 // Only works on ppc, x86 and x86_64.  Should generalize?
 // FIXME: Un-XFAIL this test for Linux when debug stuff is working again.
 // XFAIL: alpha|ia64|arm|linux
+// XFAIL: *
 
 #include <stdlib.h>
 
