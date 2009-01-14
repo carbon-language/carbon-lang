@@ -76,12 +76,15 @@ class Darwin_X86_ToolChain(ToolChain):
     def selectTool(self, action):
         assert isinstance(action, Phases.JobAction)
         
-        if (self.driver.cccClang and
-            self.archName == 'i386' and
-            action.inputs[0].type in (Types.CType, Types.CTypeNoPP,
-                                      Types.ObjCType, Types.ObjCTypeNoPP) and
-            isinstance(action.phase, Phases.CompilePhase)):
-            return self.clangTool
+        if self.driver.cccClang and self.archName == 'i386':
+            if (action.inputs[0].type in (Types.CType, Types.CTypeNoPP,
+                                          Types.ObjCType, Types.ObjCTypeNoPP) and
+                isinstance(action.phase, Phases.CompilePhase)):
+                return self.clangTool
+            elif (action.inputs[0].type in (Types.CHeaderType, Types.CHeaderNoPPType,
+                                            Types.ObjCHeaderType, Types.ObjCHeaderNoPPType) and
+                  isinstance(action.phase, Phases.PrecompilePhase)):
+                return self.clangTool
 
         return self.toolMap[action.phase.__class__]
 

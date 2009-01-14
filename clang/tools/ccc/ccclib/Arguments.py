@@ -556,7 +556,7 @@ class OptionParser:
         self.addOption(JoinedOrSeparateOption('-idirafter', self.iGroup))
         self.addOption(JoinedOrSeparateOption('-iquote', self.iGroup))
         self.isysrootOption = self.addOption(JoinedOrSeparateOption('-isysroot', self.iGroup))
-        self.addOption(JoinedOrSeparateOption('-include', self.iGroup))
+        self.includeOption = self.addOption(JoinedOrSeparateOption('-include', self.iGroup))
         self.addOption(JoinedOption('-i', self.iGroup))
 
         self.keep_private_externsOption = self.addOption(JoinedOrSeparateOption('-keep_private_externs'))

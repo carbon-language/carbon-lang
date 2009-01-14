@@ -183,10 +183,28 @@ class Clang_CompileTool(Tool):
                      output, outputType, arglist):
         cmd_args = []
 
+        patchOutputNameForPTH = False
         if output is None:
             cmd_args.append('-fsyntax-only')
         elif outputType is Types.AsmTypeNoPP:
             cmd_args.append('-S')
+        elif outputType is Types.PCHType:
+            # No special option needed, driven by -x. However, we
+            # patch the output name to try and not conflict with gcc.
+            patchOutputNameForPTH = True
+
+            # FIXME: This is a total hack. Copy the input header file
+            # to the output, so that it can be -include'd by clang.
+            assert len(inputs) == 1
+            assert not isinstance(output, Jobs.PipedJob)
+            assert not isinstance(inputs[0].source, Jobs.PipedJob)
+            inputPath = arglist.getValue(inputs[0].source)
+            outputPath = os.path.join(os.path.dirname(arglist.getValue(output)),
+                                      os.path.basename(inputPath))
+            # Only do copy when the output doesn't exist.
+            if not os.path.exists(outputPath):
+                import shutil
+                shutil.copyfile(inputPath, outputPath)
         else:
             raise ValueError,"Unexpected output type for clang tool."
 
@@ -204,6 +222,13 @@ class Clang_CompileTool(Tool):
 
         # FIXME: Clang isn't going to accept just anything here.
         arglist.addAllArgs(cmd_args, arglist.parser.iGroup)
+
+        # Automatically load .pth files which match -include options.
+        for arg in arglist.getArgs(arglist.parser.includeOption):
+            pthPath = arglist.getValue(arg) + '.pth'
+            if os.path.exists(pthPath):
+                cmd_args.append('-token-cache')
+                cmd_args.append(pthPath)
 
         # FIXME: Dehardcode this.
         cmd_args.append('-fblocks')
@@ -228,7 +253,17 @@ class Clang_CompileTool(Tool):
         if arch is not None:
             cmd_args.extend(arglist.render(arch))
 
-        cmd_args.extend(arglist.render(output))
+        if isinstance(output, Jobs.PipedJob):
+            cmd_args.extend(['-o', '-'])
+        else:
+            if patchOutputNameForPTH:
+                base,suffix = os.path.splitext(arglist.getValue(output))
+                if suffix == '.gch':
+                    suffix = '.pth'
+                cmd_args.append('-o')
+                cmd_args.append(base + suffix)
+            else:
+                cmd_args.extend(arglist.render(output))
 
         for input in inputs:
             cmd_args.append('-x')
