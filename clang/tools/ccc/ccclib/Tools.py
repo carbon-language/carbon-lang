@@ -241,6 +241,7 @@ class Darwin_X86_CompileTool(Tool):
         assert not [i for i in inputs if i.type != inputType]
 
         usePP = False
+        isCXX = False
         if inputType is Types.CType:
             cc1Name = 'cc1'
             usePP = True
@@ -256,15 +257,19 @@ class Darwin_X86_CompileTool(Tool):
         elif inputType is Types.CXXType:
             cc1Name = 'cc1plus'
             usePP = True
+            isCXX = True
         elif inputType is Types.CXXTypeNoPP:
             cc1Name = 'cc1plus'
             usePP = False
+            isCXX = True
         elif inputType is Types.ObjCXXType:
             cc1Name = 'cc1objplus'
             usePP = True
+            isCXX = True
         elif inputType is Types.ObjCXXTypeNoPP:
             cc1Name = 'cc1objplus'
             usePP = False
+            isCXX = True
         else:
             raise RuntimeError,"Unexpected input type for Darwin compile tool."
 
@@ -274,6 +279,8 @@ class Darwin_X86_CompileTool(Tool):
             raise ValueError,"-traditional is not supported without -E"
 
         if usePP:
+            # Derived from cpp_options.
+
             # Derived from cpp_unique_options.
 
             if (arglist.getLastArg(arglist.parser.COption) or
@@ -360,6 +367,7 @@ class Darwin_X86_CompileTool(Tool):
                 cmd_args.append('-D_MUDFLAPTH')
                 cmd_args.append('-include')
                 cmd_args.append('mf-runtime.h')
+            
         else:
             cmd_args.append('-fpreprocessed')
             # FIXME: There is a spec command to remove
@@ -460,6 +468,9 @@ class Darwin_X86_CompileTool(Tool):
         if arglist.getLastArg(arglist.parser.coverageOption):
             cmd_args.append('-fprofile-arcs')
             cmd_args.append('-ftest-coverage')
+
+        if isCXX:
+            cmd_args.append('-D__private_extern__=extern')
 
         if outputAtEnd:
             cmd_args.extend(output_args)
