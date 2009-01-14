@@ -126,11 +126,11 @@ def captureDriverInfo(cmd, args):
     return CompileInfo(out,err,res)
 
 def main():
-    import sys
+    import os, sys
 
     args = sys.argv[1:]
-    driverA = 'gcc'
-    driverB = 'xcc'
+    driverA = os.getenv('DRIVER_A') or 'gcc'
+    driverB = os.getenv('DRIVER_B') or 'xcc'
 
     infoA = captureDriverInfo(driverA, args)
     infoB = captureDriverInfo(driverB, args)
