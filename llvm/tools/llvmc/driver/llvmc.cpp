@@ -37,7 +37,7 @@ using namespace llvmc;
 cl::list<std::string> InputFilenames(cl::Positional, cl::desc("<input file>"),
                                      cl::ZeroOrMore);
 cl::opt<std::string> OutputFilename("o", cl::desc("Output file name"),
-                                    cl::value_desc("file"));
+                                    cl::value_desc("file"), cl::Prefix);
 cl::list<std::string> Languages("x",
           cl::desc("Specify the language of the following input files"),
           cl::ZeroOrMore);
