@@ -197,7 +197,7 @@ NoCaretDiagnostics("fno-caret-diagnostics",
 static llvm::cl::opt<std::string>
 InheritanceViewCls("cxx-inheritance-view",
                    llvm::cl::value_desc("class name"),
-                   llvm::cl::desc("View C++ inhertance for a specified class"));
+                  llvm::cl::desc("View C++ inheritance for a specified class"));
 
 //===----------------------------------------------------------------------===//
 // Analyzer Options.
@@ -655,7 +655,7 @@ SuppressSystemWarnings("suppress-system-warnings",
                        llvm::cl::init(true));
 
 static llvm::cl::opt<bool>
-WarnUnusedMacros("Wunused_macros",
+WarnUnusedMacros("Wunused-macros",
          llvm::cl::desc("Warn for unused macros in the main translation unit"));
 
 static llvm::cl::opt<bool>
