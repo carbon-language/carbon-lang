@@ -731,8 +731,8 @@ public:
   
   // Internals
   
-  static bool isNotAlreadyContainedIn(LoopBase<BlockT> *SubLoop,
-                                      LoopBase<BlockT> *ParentLoop) {
+  static bool isNotAlreadyContainedIn(const LoopBase<BlockT> *SubLoop,
+                                      const LoopBase<BlockT> *ParentLoop) {
     if (SubLoop == 0) return true;
     if (SubLoop == ParentLoop) return false;
     return isNotAlreadyContainedIn(SubLoop->getParentLoop(), ParentLoop);

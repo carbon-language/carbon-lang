@@ -130,6 +130,12 @@ namespace {
     /// dependent on random ordering of pointers in the process.
     SmallVector<SCEVHandle, 16> StrideOrder;
 
+    /// GEPlist - A list of the GEP's that have been remembered in the SCEV
+    /// data structures.  SCEV does not know to update these when the operands
+    /// of the GEP are changed, which means we cannot leave them live across
+    /// loops.
+    SmallVector<GetElementPtrInst *, 16> GEPlist;
+
     /// CastedValues - As we need to cast values to uintptr_t, this keeps track
     /// of the casted version of each value.  This is accessed by
     /// getCastedVersionOf.
@@ -191,7 +197,7 @@ private:
     bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
                            const SCEVHandle *&CondStride);
     bool RequiresTypeConversion(const Type *Ty, const Type *NewTy);
-    int64_t CheckForIVReuse(bool, bool, bool, const SCEVHandle&,
+    SCEVHandle CheckForIVReuse(bool, bool, bool, const SCEVHandle&,
                              IVExpr&, const Type*,
                              const std::vector<BasedUser>& UsersToProcess);
     bool ValidStride(bool, int64_t,
@@ -340,13 +346,58 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp) {
   }
 
   SE->setSCEV(GEP, GEPVal);
+  GEPlist.push_back(GEP);
   return GEPVal;
+}
+
+/// containsAddRecFromDifferentLoop - Determine whether expression S involves a 
+/// subexpression that is an AddRec from a loop other than L.  An outer loop 
+/// of L is OK, but not an inner loop nor a disjoint loop.
+static bool containsAddRecFromDifferentLoop(SCEVHandle S, Loop *L) {
+  // This is very common, put it first.
+  if (isa<SCEVConstant>(S))
+    return false;
+  if (SCEVCommutativeExpr *AE = dyn_cast<SCEVCommutativeExpr>(S)) {
+    for (unsigned int i=0; i< AE->getNumOperands(); i++)
+      if (containsAddRecFromDifferentLoop(AE->getOperand(i), L))
+        return true;
+    return false;
+  }
+  if (SCEVAddRecExpr *AE = dyn_cast<SCEVAddRecExpr>(S)) {
+    if (const Loop *newLoop = AE->getLoop()) {
+      if (newLoop == L)
+        return false;
+      // if newLoop is an outer loop of L, this is OK.
+      if (!LoopInfoBase<BasicBlock>::isNotAlreadyContainedIn(L, newLoop))
+        return false;
+    }
+    return true;
+  }
+  if (SCEVUDivExpr *DE = dyn_cast<SCEVUDivExpr>(S))
+    return containsAddRecFromDifferentLoop(DE->getLHS(), L) ||
+           containsAddRecFromDifferentLoop(DE->getRHS(), L);
+#if 0
+  // SCEVSDivExpr has been backed out temporarily, but will be back; we'll 
+  // need this when it is.
+  if (SCEVSDivExpr *DE = dyn_cast<SCEVSDivExpr>(S))
+    return containsAddRecFromDifferentLoop(DE->getLHS(), L) ||
+           containsAddRecFromDifferentLoop(DE->getRHS(), L);
+#endif
+  if (SCEVTruncateExpr *TE = dyn_cast<SCEVTruncateExpr>(S))
+    return containsAddRecFromDifferentLoop(TE->getOperand(), L);
+  if (SCEVZeroExtendExpr *ZE = dyn_cast<SCEVZeroExtendExpr>(S))
+    return containsAddRecFromDifferentLoop(ZE->getOperand(), L);
+  if (SCEVSignExtendExpr *SE = dyn_cast<SCEVSignExtendExpr>(S))
+    return containsAddRecFromDifferentLoop(SE->getOperand(), L);
+  return false;
 }
 
 /// getSCEVStartAndStride - Compute the start and stride of this expression,
 /// returning false if the expression is not a start/stride pair, or true if it
 /// is.  The stride must be a loop invariant expression, but the start may be
-/// a mix of loop invariant and loop variant expressions.
+/// a mix of loop invariant and loop variant expressions.  The start cannot,
+/// however, contain an AddRec from a different loop, unless that loop is an
+/// outer loop of the current loop.
 static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
                                   SCEVHandle &Start, SCEVHandle &Stride,
                                   ScalarEvolution *SE) {
@@ -377,6 +428,12 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
   
   // FIXME: Generalize to non-affine IV's.
   if (!AddRec->isAffine()) return false;
+
+  // If Start contains an SCEVAddRecExpr from a different loop, other than an
+  // outer loop of the current loop, reject it.  SCEV has no concept of operating
+  // on one loop at a time so don't confuse it with such expressions.
+  if (containsAddRecFromDifferentLoop(Start, L))
+    return false;
 
   Start = SE->getAddExpr(Start, AddRec->getOperand(0));
   
@@ -508,14 +565,22 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
     if (isa<PHINode>(User) && Processed.count(User))
       continue;
 
-    // If this is an instruction defined in a nested loop, or outside this loop,
-    // don't recurse into it.
+    // Descend recursively, but not into PHI nodes outside the current loop.
+    // It's important to see the entire expression outside the loop to get
+    // choices that depend on addressing mode use right, although we won't
+    // consider references ouside the loop in all cases.
+    // If User is already in Processed, we don't want to recurse into it again,
+    // but do want to record a second reference in the same instruction.
     bool AddUserToIVUsers = false;
     if (LI->getLoopFor(User->getParent()) != L) {
-      DOUT << "FOUND USER in other loop: " << *User
-           << "   OF SCEV: " << *ISE << "\n";
-      AddUserToIVUsers = true;
-    } else if (!AddUsersIfInteresting(User, L, Processed)) {
+      if (isa<PHINode>(User) || Processed.count(User) ||
+          !AddUsersIfInteresting(User, L, Processed)) {
+        DOUT << "FOUND USER in other loop: " << *User
+             << "   OF SCEV: " << *ISE << "\n";
+        AddUserToIVUsers = true;
+      }
+    } else if (Processed.count(User) || 
+               !AddUsersIfInteresting(User, L, Processed)) {
       DOUT << "FOUND USER: " << *User
            << "   OF SCEV: " << *ISE << "\n";
       AddUserToIVUsers = true;
@@ -704,34 +769,45 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
   PHINode *PN = cast<PHINode>(Inst);
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) == OperandValToReplace) {
-      // If this is a critical edge, split the edge so that we do not insert the
-      // code on all predecessor/successor paths.  We do this unless this is the
-      // canonical backedge for this loop, as this can make some inserted code
-      // be in an illegal position.
-      BasicBlock *PHIPred = PN->getIncomingBlock(i);
-      if (e != 1 && PHIPred->getTerminator()->getNumSuccessors() > 1 &&
-          (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
-        
-        // First step, split the critical edge.
-        SplitCriticalEdge(PHIPred, PN->getParent(), P, false);
-            
-        // Next step: move the basic block.  In particular, if the PHI node
-        // is outside of the loop, and PredTI is in the loop, we want to
-        // move the block to be immediately before the PHI block, not
-        // immediately after PredTI.
-        if (L->contains(PHIPred) && !L->contains(PN->getParent())) {
-          BasicBlock *NewBB = PN->getIncomingBlock(i);
-          NewBB->moveBefore(PN->getParent());
-        }
-        
-        // Splitting the edge can reduce the number of PHI entries we have.
-        e = PN->getNumIncomingValues();
-      }
+      // If the original expression is outside the loop, put the replacement
+      // code in the same place as the original expression,
+      // which need not be an immediate predecessor of this PHI.  This way we 
+      // need only one copy of it even if it is referenced multiple times in
+      // the PHI.  We don't do this when the original expression is inside the
+      // loop because multiple copies sometimes do useful sinking of code in that
+      // case(?).
+      Instruction *OldLoc = dyn_cast<Instruction>(OperandValToReplace);
+      if (L->contains(OldLoc->getParent())) {
+        // If this is a critical edge, split the edge so that we do not insert the
+        // code on all predecessor/successor paths.  We do this unless this is the
+        // canonical backedge for this loop, as this can make some inserted code
+        // be in an illegal position.
+        BasicBlock *PHIPred = PN->getIncomingBlock(i);
+        if (e != 1 && PHIPred->getTerminator()->getNumSuccessors() > 1 &&
+            (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
 
+          // First step, split the critical edge.
+          SplitCriticalEdge(PHIPred, PN->getParent(), P, false);
+
+          // Next step: move the basic block.  In particular, if the PHI node
+          // is outside of the loop, and PredTI is in the loop, we want to
+          // move the block to be immediately before the PHI block, not
+          // immediately after PredTI.
+          if (L->contains(PHIPred) && !L->contains(PN->getParent())) {
+            BasicBlock *NewBB = PN->getIncomingBlock(i);
+            NewBB->moveBefore(PN->getParent());
+          }
+
+          // Splitting the edge can reduce the number of PHI entries we have.
+          e = PN->getNumIncomingValues();
+        }
+      }
       Value *&Code = InsertedCode[PN->getIncomingBlock(i)];
       if (!Code) {
         // Insert the code into the end of the predecessor block.
-        Instruction *InsertPt = PN->getIncomingBlock(i)->getTerminator();
+        Instruction *InsertPt = (L->contains(OldLoc->getParent())) ?
+                                PN->getIncomingBlock(i)->getTerminator() :
+                                OldLoc->getParent()->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
 
         // Adjust the type back to match the PHI. Note that we can't use
@@ -1168,7 +1244,12 @@ bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty1,
 /// mode scale component and optional base reg. This allows the users of
 /// this stride to be rewritten as prev iv * factor. It returns 0 if no
 /// reuse is possible.  Factors can be negative on same targets, e.g. ARM.
-int64_t LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
+///
+/// If all uses are outside the loop, we don't require that all multiplies
+/// be folded into the addressing mode, nor even that the factor be constant; 
+/// a multiply (executed once) outside the loop is better than another IV 
+/// within.  Well, usually.
+SCEVHandle LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                                 bool AllUsesAreAddresses,
                                 bool AllUsesAreOutsideLoop,
                                 const SCEVHandle &Stride, 
@@ -1180,7 +1261,7 @@ int64_t LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
          ++NewStride) {
       std::map<SCEVHandle, IVsOfOneStride>::iterator SI = 
                 IVsByStride.find(StrideOrder[NewStride]);
-      if (SI == IVsByStride.end()) 
+      if (SI == IVsByStride.end() || !isa<SCEVConstant>(SI->first))
         continue;
       int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
       if (SI->first != Stride &&
@@ -1202,11 +1283,53 @@ int64_t LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
           if (II->Base->isZero() &&
               !RequiresTypeConversion(II->Base->getType(), Ty)) {
             IV = *II;
-            return Scale;
+            return SE->getIntegerSCEV(Scale, Stride->getType());
           }
     }
+  } else if (AllUsesAreOutsideLoop) {
+    // Accept nonconstant strides here; it is really really right to substitute
+    // an existing IV if we can.
+    for (unsigned NewStride = 0, e = StrideOrder.size(); NewStride != e;
+         ++NewStride) {
+      std::map<SCEVHandle, IVsOfOneStride>::iterator SI = 
+                IVsByStride.find(StrideOrder[NewStride]);
+      if (SI == IVsByStride.end() || !isa<SCEVConstant>(SI->first))
+        continue;
+      int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
+      if (SI->first != Stride && SSInt != 1)
+        continue;
+      for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
+             IE = SI->second.IVs.end(); II != IE; ++II)
+        // Accept nonzero base here.
+        // Only reuse previous IV if it would not require a type conversion.
+        if (!RequiresTypeConversion(II->Base->getType(), Ty)) {
+          IV = *II;
+          return Stride;
+        }
+    }
+    // Special case, old IV is -1*x and this one is x.  Can treat this one as
+    // -1*old.
+    for (unsigned NewStride = 0, e = StrideOrder.size(); NewStride != e;
+         ++NewStride) {
+      std::map<SCEVHandle, IVsOfOneStride>::iterator SI = 
+                IVsByStride.find(StrideOrder[NewStride]);
+      if (SI == IVsByStride.end()) 
+        continue;
+      if (SCEVMulExpr *ME = dyn_cast<SCEVMulExpr>(SI->first))
+        if (SCEVConstant *SC = dyn_cast<SCEVConstant>(ME->getOperand(0)))
+          if (Stride == ME->getOperand(1) &&
+              SC->getValue()->getSExtValue() == -1LL)
+            for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
+                   IE = SI->second.IVs.end(); II != IE; ++II)
+              // Accept nonzero base here.
+              // Only reuse previous IV if it would not require type conversion.
+              if (!RequiresTypeConversion(II->Base->getType(), Ty)) {
+                IV = *II;
+                return SE->getIntegerSCEV(-1LL, Stride->getType());
+              }
+    }
   }
-  return 0;
+  return SE->getIntegerSCEV(0, Stride->getType());
 }
 
 /// PartitionByIsUseOfPostIncrementedValue - Simple boolean predicate that
@@ -1357,12 +1480,13 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
                    SE->getIntegerSCEV(0, Type::Int32Ty),
                    0, 0);
-  int64_t RewriteFactor = 0;
-  RewriteFactor = CheckForIVReuse(HaveCommonExprs, AllUsesAreAddresses,
+  SCEVHandle RewriteFactor = 
+                  CheckForIVReuse(HaveCommonExprs, AllUsesAreAddresses,
                                   AllUsesAreOutsideLoop,
                                   Stride, ReuseIV, CommonExprs->getType(),
                                   UsersToProcess);
-  if (RewriteFactor != 0) {
+  if (!isa<SCEVConstant>(RewriteFactor) || 
+      !cast<SCEVConstant>(RewriteFactor)->isZero()) {
     DOUT << "BASED ON IV of STRIDE " << *ReuseIV.Stride
          << " and BASE " << *ReuseIV.Base << " :\n";
     NewPHI = ReuseIV.PHI;
@@ -1390,7 +1514,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   Value *CommonBaseV
     = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt);
 
-  if (RewriteFactor == 0) {
+  if (isa<SCEVConstant>(RewriteFactor) &&
+      cast<SCEVConstant>(RewriteFactor)->isZero()) {
     // Create a new Phi for this base, and stick it in the loop header.
     NewPHI = PHINode::Create(ReplacedTy, "iv.", PhiInsertBefore);
     ++NumInserted;
@@ -1537,18 +1662,33 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
       // If we are reusing the iv, then it must be multiplied by a constant
       // factor take advantage of addressing mode scale component.
-      if (RewriteFactor != 0) {
-        RewriteExpr = SE->getMulExpr(SE->getIntegerSCEV(RewriteFactor,
-                                                        RewriteExpr->getType()),
+      if (!isa<SCEVConstant>(RewriteFactor) ||
+          !cast<SCEVConstant>(RewriteFactor)->isZero()) {
+        // If we're reusing an IV with a nonzero base (currently this happens
+        // only when all reuses are outside the loop) subtract that base here.
+        // The base has been used to initialize the PHI node but we don't want
+        // it here.
+        if (!ReuseIV.Base->isZero())
+          RewriteExpr = SE->getMinusSCEV(RewriteExpr, ReuseIV.Base);
+
+        // Multiply old variable, with base removed, by new scale factor.
+        RewriteExpr = SE->getMulExpr(RewriteFactor,
                                      RewriteExpr);
 
         // The common base is emitted in the loop preheader. But since we
         // are reusing an IV, it has not been used to initialize the PHI node.
         // Add it to the expression used to rewrite the uses.
+        // When this use is outside the loop, we earlier subtracted the
+        // common base, and are adding it back here.  Use the same expression
+        // as before, rather than CommonBaseV, so DAGCombiner will zap it.
         if (!isa<ConstantInt>(CommonBaseV) ||
-            !cast<ConstantInt>(CommonBaseV)->isZero())
-          RewriteExpr = SE->getAddExpr(RewriteExpr,
+            !cast<ConstantInt>(CommonBaseV)->isZero()) {
+          if (L->contains(User.Inst->getParent()))
+            RewriteExpr = SE->getAddExpr(RewriteExpr,
                                        SE->getUnknown(CommonBaseV));
+          else
+            RewriteExpr = SE->getAddExpr(RewriteExpr, CommonExprs);
+        }
       }
 
       // Now that we know what we need to do, insert code before User for the
@@ -2174,6 +2314,9 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   IVUsesByStride.clear();
   IVsByStride.clear();
   StrideOrder.clear();
+  for (unsigned i=0; i<GEPlist.size(); i++)
+    SE->deleteValueFromRecords(GEPlist[i]);
+  GEPlist.clear();  
 
   // Clean up after ourselves
   if (!DeadInsts.empty()) {
