@@ -75,6 +75,9 @@ class ASTContext {
   llvm::DenseMap<const ObjCInterfaceDecl*, 
                  const ASTRecordLayout*> ASTObjCInterfaces;
   
+  // FIXME: Shouldn't ASTRecordForInterface/ASTFieldForIvarRef and
+  // addRecordToClass/getFieldDecl be part of the backend (i.e. CodeGenTypes and
+  // CodeGenFunction)?
   llvm::DenseMap<const ObjCInterfaceDecl*,
                  const RecordDecl*> ASTRecordForInterface;
   llvm::DenseMap<const ObjCIvarRefExpr*, const FieldDecl*> ASTFieldForIvarRef;
