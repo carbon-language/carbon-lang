@@ -1671,7 +1671,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     } else {
       for (unsigned i = 1, E = I.getNumOperands(); i != E; ++i) {
         Operand = I.getOperand(i);
-        if (Operand->getType() != TheType) {
+        if (Operand && Operand->getType() != TheType) {
           PrintAllTypes = true;    // We have differing types!  Print them all!
           break;
         }
