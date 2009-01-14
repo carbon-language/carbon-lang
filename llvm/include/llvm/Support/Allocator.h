@@ -31,6 +31,11 @@ public:
   template <typename T>
   T *Allocate() { return static_cast<T*>(malloc(sizeof(T))); }
   
+  template <typename T>
+  T *Allocate(size_t Num) { 
+    return static_cast<T*>(malloc(sizeof(T)*Num));
+  }
+  
   void Deallocate(void *Ptr) { free(Ptr); }
 
   void PrintStats() const {}
