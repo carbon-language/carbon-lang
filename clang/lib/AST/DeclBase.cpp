@@ -88,6 +88,7 @@ const char *Decl::getDeclKindName() const {
   case CXXRecord:           return "CXXRecord";
   case Enum:                return "Enum";
   case Block:               return "Block";
+  case Field:               return "Field";
   }
 }
 
@@ -405,10 +406,13 @@ DeclContext::~DeclContext() {
 }
 
 void DeclContext::DestroyDecls(ASTContext &C) {
-  for (decl_iterator D = decls_begin(); D != decls_end(); ++D) {
-    // FIXME: assert that this condition holds.
-    if ((*D)->getLexicalDeclContext() == this)
-      (*D)->Destroy(C);
+  for (decl_iterator D = decls_begin(); D != decls_end(); ) {
+   // FIXME: assert that this condition holds.
+   if ((*D)->getLexicalDeclContext() == this)
+     // Advance the cursor (via NextDeclInScope) *before* doing the Destroy.
+     (*D++)->Destroy(C);
+   else
+     ++D;
   }
 }
 
