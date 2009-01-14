@@ -33,6 +33,7 @@ class Driver(object):
         self.cccHostSystem = self.cccHostRelease = None
         self.cccCXX = False
         self.cccClang = False
+        self.cccEcho = False
         self.cccFallback = False
 
     # Host queries which can be forcibly over-riden by the user for
@@ -69,6 +70,16 @@ class Driver(object):
         
         return platform.release()
 
+    def getenvBool(self, name):
+        var = os.getenv(name)
+        if not var:
+            return False
+
+        try:
+            return bool(int(var))
+        except:
+            return False
+
     ###
 
     def run(self, argv):
@@ -85,6 +96,13 @@ class Driver(object):
 
         # FIXME: How to handle override of host? ccc specific options?
         # Abuse -b?
+        if self.getenvBool('CCC_CLANG'):
+            self.cccClang = True
+        if self.getenvBool('CCC_ECHO'):
+            self.cccEcho = True
+        if self.getenvBool('CCC_FALLBACK'):
+            self.cccFallback = True
+
         while argv and argv[0].startswith('-ccc-'):
             opt,argv = argv[0][5:],argv[1:]
 
@@ -96,6 +114,8 @@ class Driver(object):
                 self.cccCXX = True
             elif opt == 'clang':
                 self.cccClang = True
+            elif opt == 'echo':
+                self.cccEcho = True
             elif opt == 'fallback':
                 self.cccFallback = True
             elif opt == 'host-bits':
@@ -173,6 +193,9 @@ class Driver(object):
 
         for j in jobs.iterjobs():
             if isinstance(j, Jobs.Command):
+                if self.cccEcho:
+                    print ' '.join(map(repr,j.getArgv()))
+                    sys.stdout.flush()
                 res = os.spawnvp(os.P_WAIT, j.executable, j.getArgv())
                 if res:
                     sys.exit(res)
