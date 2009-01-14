@@ -172,18 +172,60 @@ class GCC_LinkTool(GCC_Common_Tool):
                                                       output, outputType, arglist,
                                                       [])
 
-class Clang_CompileTool(GCC_Common_Tool):
+class Clang_CompileTool(Tool):
     def __init__(self):
         super(Clang_CompileTool, self).__init__('clang',
-                                              (Tool.eFlagsPipedInput |
-                                               Tool.eFlagsPipedOutput |
-                                               Tool.eFlagsIntegratedCPP))
+                                   (Tool.eFlagsPipedInput |
+                                    Tool.eFlagsPipedOutput |
+                                    Tool.eFlagsIntegratedCPP))
 
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, arglist):
-        return super(Clang_CompileTool, self).constructJob(phase, arch, jobs, inputs,
-                                                           output, outputType, arglist,
-                                                           ['-S'])
+        cmd_args = []
+
+        if output is None:
+            cmd_args.append('-fsyntax-only')
+        elif outputType is Types.AsmTypeNoPP:
+            cmd_args.append('-S')
+        else:
+            raise ValueError,"Unexpected output type for clang tool."
+
+        arglist.addAllArgs(cmd_args, arglist.parser.vOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOnlyOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.f_nextRuntimeOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.f_gnuRuntimeOption)
+        arglist.addAllArgs2(cmd_args, arglist.parser.DOption, arglist.parser.UOption)
+        arglist.addAllArgs2(cmd_args, arglist.parser.IOption, arglist.parser.FOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.stdOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.m_macosxVersionMinOption)
+
+        # Special case debug options to only pass -g to clang. This is
+        # wrong.
+        if arglist.getLastArg(arglist.parser.gGroup):
+            cmd_args.append('-g')
+
+        # FIXME: Clang isn't going to accept just anything here.
+        arglist.addAllArgs(cmd_args, arglist.parser.iGroup)
+
+        # FIXME: Dehardcode this.
+        cmd_args.append('-fblocks')
+
+        if arch is not None:
+            cmd_args.extend(arglist.render(arch))
+
+        cmd_args.extend(arglist.render(output))
+
+        for input in inputs:
+            cmd_args.append('-x')
+            cmd_args.append(input.type.name)
+            if isinstance(input.source, Jobs.PipedJob):
+                cmd_args.append('-')
+            else:
+                cmd_args.extend(arglist.renderAsInput(input.source))
+            
+        jobs.addJob(Jobs.Command('clang', cmd_args))
+        
 
 class Darwin_X86_CompileTool(Tool):
     def __init__(self, toolChain):
