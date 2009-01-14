@@ -18,6 +18,7 @@
 #include "IdentifierResolver.h"
 #include "CXXFieldCollector.h"
 #include "SemaOverload.h"
+#include "clang/AST/DeclBase.h"
 #include "clang/Parse/Action.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
@@ -516,26 +517,206 @@ public:
 
   Scope *getNonFieldDeclScope(Scope *S);
 
-  /// More parsing and symbol table subroutines.
-  Decl *LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
-                   const DeclContext *LookupCtx = 0,
-                   bool enableLazyBuiltinCreation = true,
-                   bool LookInParent = true,
-                   bool NamespaceNameOnly = false);
+  /// \name Name lookup
+  ///
+  /// These routines provide name lookup that is used during semantic
+  /// analysis to resolve the various kinds of names (identifiers,
+  /// overloaded operator names, constructor names, etc.) into zero or
+  /// more declarations within a particular scope. The major entry
+  /// points are LookupName, which performs unqualified name lookup,
+  /// and LookupQualifiedName, which performs qualified name lookup. 
+  ///
+  /// All name lookup is performed based on some specific criteria,
+  /// which specify what names will be visible to name lookup and how
+  /// far name lookup should work. These criteria are important both
+  /// for capturing language semantics (certain lookups will ignore
+  /// certain names, for example) and for performance, since name
+  /// lookup is often a bottleneck in the compilation of C++. Name
+  /// lookup criteria is specified via the LookupCriteria class.
+  ///
+  /// The results of name lookup can vary based on the kind of name
+  /// lookup performed, the current language, and the translation
+  /// unit. In C, for example, name lookup will either return nothing
+  /// (no entity found) or a single declaration. In C++, name lookup
+  /// can additionally refer to a set of overloaded functions or
+  /// result in an ambiguity. All of the possible results of name
+  /// lookup are captured by the LookupResult class, which provides
+  /// the ability to distinguish among them.
+  //@{
 
-  Decl *LookupNamespaceName(DeclarationName Name, Scope *S,
-                            const DeclContext *LookupCtx) {
-    return LookupDecl(Name, Decl::IDNS_Tag | Decl::IDNS_Ordinary, S,
-                      LookupCtx,
-                      /* enableLazyBuiltinCreation */ false,
-                      /* LookInParent */ true,
-                      /* NamespaceNameOnly */ true);
-  }
+  /// @brief Describes the criteria by which name lookup will
+  /// determine whether a given name will be found.
+  ///
+  /// The LookupCriteria class captures the information required to
+  /// direct name lookup to find the appropriate kind of name. It
+  /// includes information about which kinds of names to consider
+  /// (ordinary names, tag names, class/struct/union member names,
+  /// namespace names, etc.) and where to look for those
+  /// names. LookupCriteria is used throughout semantic analysis to
+  /// specify how to search for a name, e.g., with the LookupName and
+  /// LookupQualifiedName functions.
+  struct LookupCriteria {
+    /// NameKind - The kinds of names that we are looking for. 
+    enum NameKind {
+      /// Ordinary - Ordinary name lookup, which finds ordinary names
+      /// (functions, variables, typedefs, etc.) in C and most kinds
+      /// of names (functions, variables, members, types, etc.) in
+      /// C++.
+      Ordinary,
+      /// Tag - Tag name lookup, which finds the names of enums,
+      /// classes, structs, and unions.
+      Tag,
+      /// Member - Member name lookup, which finds the names of
+      /// class/struct/union members.
+      Member,
+      /// NestedNameSpecifier - Look up of a name that precedes the
+      /// '::' scope resolution operator in C++. This lookup
+      /// completely ignores operator, function, and enumerator names
+      /// (C++ [basic.lookup.qual]p1).
+      NestedNameSpecifier,
+      /// Namespace - Look up a namespace name within a C++
+      /// using directive or namespace alias definition, ignoring
+      /// non-namespace names (C++ [basic.lookup.udir]p1).
+      Namespace
+    } Kind;
+
+    /// AllowLazyBuiltinCreation - If true, permits name lookup to
+    /// lazily build declarations for built-in names, e.g.,
+    /// __builtin_expect.
+    bool AllowLazyBuiltinCreation;
+
+    /// RedeclarationOnly - If true, the lookup will only
+    /// consider entities within the scope where the lookup
+    /// began. Entities that might otherwise meet the lookup criteria
+    /// but are not within the original lookup scope will be ignored.
+    bool RedeclarationOnly;
+
+    /// IDNS - Bitwise OR of the appropriate Decl::IDNS_* flags that
+    /// describe the namespaces where we should look for names. This
+    /// field is determined by the kind of name we're searching for.
+    unsigned IDNS;
+
+    LookupCriteria(NameKind K, bool RedeclarationOnly, bool CPlusPlus);
+    
+    bool isLookupResult(Decl *D) const;
+  };
+
+  /// @brief Represents the results of name lookup.
+  ///
+  /// An instance of the LookupResult class captures the results of a
+  /// single name lookup, which can return no result (nothing found),
+  /// a single declaration, a set of overloaded functions, or an
+  /// ambiguity. Use the getKind() method to determine which of these
+  /// results occurred for a given lookup. 
+  ///
+  /// Any non-ambiguous lookup can be converted into a single
+  /// (possibly NULL) @c Decl* via a conversion function or the
+  /// getAsDecl() method. This conversion permits the common-case
+  /// usage in C and Objective-C where name lookup will always return
+  /// a single declaration.
+  class LookupResult {
+    /// The kind of entity that is actually stored within the
+    /// LookupResult object.
+    mutable enum {
+      /// First is a single declaration (a Decl*), which may be NULL.
+      SingleDecl,
+      /// [First, Last) is an iterator range represented as opaque
+      /// pointers used to reconstruct IdentifierResolver::iterators.
+      OverloadedDeclFromIdResolver,
+      /// [First, Last) is an iterator range represented as opaque
+      /// pointers used to reconstruct DeclContext::lookup_iterators.
+      OverloadedDeclFromDeclContext,
+      /// FIXME: Cope with ambiguous name lookup.
+      AmbiguousLookup
+    } StoredKind;
+
+    /// The first lookup result, whose contents depend on the kind of
+    /// lookup result. This may be a Decl* (if StoredKind ==
+    /// SingleDecl), the opaque pointer from an
+    /// IdentifierResolver::iterator (if StoredKind ==
+    /// OverloadedDeclFromIdResolver), or a
+    /// DeclContext::lookup_iterator (if StoredKind ==
+    /// OverloadedDeclFromDeclContext).
+    mutable uintptr_t First;
+
+    /// The last lookup result, whose contents depend on the kind of
+    /// lookup result. This may be unused (if StoredKind ==
+    /// SingleDecl) or it may have the same type as First (for
+    /// overloaded function declarations).
+    mutable uintptr_t Last;
+
+    /// Context - The context in which we will build any
+    /// OverloadedFunctionDecl nodes needed by the conversion to
+    /// Decl*.
+    ASTContext *Context;
+
+  public:
+    /// @brief The kind of entity found by name lookup.
+    enum LookupKind {
+      /// @brief No entity found met the criteria.
+      NotFound = 0,
+      /// @brief Name lookup found a single declaration that met the
+      /// criteria.
+      Found,
+      /// @brief Name lookup found a set of overloaded functions that
+      /// met the criteria.
+      FoundOverloaded,
+      /// @brief Name lookup resulted in an ambiguity, e.g., because
+      /// the name was found in two different base classes.
+      Ambiguous
+    };
+
+    LookupResult(ASTContext &Context, Decl *D) 
+      : StoredKind(SingleDecl), First(reinterpret_cast<uintptr_t>(D)),
+        Last(0), Context(&Context) { }
+
+    LookupResult(ASTContext &Context, 
+                 IdentifierResolver::iterator F, IdentifierResolver::iterator L)
+      : StoredKind(OverloadedDeclFromIdResolver),
+        First(F.getAsOpaqueValue()), Last(L.getAsOpaqueValue()), 
+        Context(&Context) { }
+
+    LookupResult(ASTContext &Context, 
+                 DeclContext::lookup_iterator F, DeclContext::lookup_iterator L)
+      : StoredKind(OverloadedDeclFromDeclContext),
+        First(reinterpret_cast<uintptr_t>(F)), 
+        Last(reinterpret_cast<uintptr_t>(L)),
+        Context(&Context) { }
+
+    LookupKind getKind() const;
+
+    /// @brief Determine whether name look found something.
+    operator bool() const { return getKind() != NotFound; }
+
+    /// @brief Allows conversion of a lookup result into a
+    /// declaration, with the same behavior as getAsDecl.
+    operator Decl*() const { return getAsDecl(); }
+
+    Decl* getAsDecl() const;
+  };
+
+  LookupResult LookupName(Scope *S, DeclarationName Name, 
+                          LookupCriteria Criteria);
+  LookupResult LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
+                                   LookupCriteria Criteria);
+  LookupResult LookupParsedName(Scope *S, const CXXScopeSpec &SS, 
+                                DeclarationName Name, LookupCriteria Criteria);
+  
+  LookupResult LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
+                          const DeclContext *LookupCtx = 0,
+                          bool enableLazyBuiltinCreation = true,
+                          bool LookInParent = true,
+                          bool NamespaceNameOnly = false);
+  //@}
+  
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, 
                                   Scope *S);
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
+
+  // More parsing and symbol table subroutines.
+
   // Decl attributes - this routine is the top level dispatcher. 
   void ProcessDeclAttributes(Decl *D, const Declarator &PD);
   void ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList);

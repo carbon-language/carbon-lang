@@ -3843,7 +3843,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
     FieldDecl *MemberDecl 
       = dyn_cast_or_null<FieldDecl>(LookupDecl(OC.U.IdentInfo, 
                                                Decl::IDNS_Ordinary,
-                                               S, RD, false, false));
+                                               S, RD, false, false).getAsDecl());
     if (!MemberDecl)
       return Diag(BuiltinLoc, diag::err_typecheck_no_member)
        << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd);

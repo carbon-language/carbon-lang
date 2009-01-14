@@ -1393,7 +1393,7 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // in that declarative region, it is treated as an original-namespace-name.
 
     Decl *PrevDecl =
-      LookupDecl(II, Decl::IDNS_Tag | Decl::IDNS_Ordinary, DeclRegionScope, 0,
+      LookupDecl(II, Decl::IDNS_Ordinary, DeclRegionScope, 0,
                 /*enableLazyBuiltinCreation=*/false, 
                 /*LookupInParent=*/false);
     
@@ -1454,10 +1454,18 @@ Sema::DeclTy *Sema::ActOnUsingDirective(Scope *S,
   assert(IdentLoc.isValid() && "Invalid NamespceName location.");
 
   // FIXME: This still requires lot more checks, and AST support.
-  // Lookup namespace name.
-  DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
 
-  if (Decl *NS = LookupNamespaceName(NamespcName, S, DC)) {
+  // Lookup namespace name.
+  LookupCriteria Criteria(LookupCriteria::Namespace, /*RedeclarationOnly=*/false, 
+                          /*CPlusPlus=*/true);
+  Decl *NS = 0;
+  if (SS.isSet())
+    NS = LookupQualifiedName(static_cast<DeclContext*>(SS.getScopeRep()), 
+                             NamespcName, Criteria);
+  else
+    NS = LookupName(S, NamespcName, Criteria);
+
+  if (NS) {
     assert(isa<NamespaceDecl>(NS) && "expected namespace decl");
   } else {
     Diag(IdentLoc, diag::err_expected_namespace_name) << SS.getRange();

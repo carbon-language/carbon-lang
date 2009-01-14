@@ -205,52 +205,6 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
   return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
 }
 
-/// MaybeConstructOverloadSet - Name lookup has determined that the
-/// elements in [I, IEnd) have the name that we are looking for, and
-/// *I is a match for the namespace. This routine returns an
-/// appropriate Decl for name lookup, which may either be *I or an
-/// OverloadeFunctionDecl that represents the overloaded functions in
-/// [I, IEnd). 
-///
-/// The existance of this routine is temporary; LookupDecl should
-/// probably be able to return multiple results, to deal with cases of
-/// ambiguity and overloaded functions without needing to create a
-/// Decl node.
-template<typename DeclIterator>
-static Decl *
-MaybeConstructOverloadSet(ASTContext &Context, 
-                          DeclIterator I, DeclIterator IEnd) {
-  assert(I != IEnd && "Iterator range cannot be empty");
-  assert(!isa<OverloadedFunctionDecl>(*I) && 
-         "Cannot have an overloaded function");
-
-  if (isa<FunctionDecl>(*I)) {
-    // If we found a function, there might be more functions. If
-    // so, collect them into an overload set.
-    DeclIterator Last = I;
-    OverloadedFunctionDecl *Ovl = 0;
-    for (++Last; Last != IEnd && isa<FunctionDecl>(*Last); ++Last) {
-      if (!Ovl) {
-        // FIXME: We leak this overload set. Eventually, we want to
-        // stop building the declarations for these overload sets, so
-        // there will be nothing to leak.
-        Ovl = OverloadedFunctionDecl::Create(Context, 
-                                         cast<ScopedDecl>(*I)->getDeclContext(),
-                                             (*I)->getDeclName());
-        Ovl->addOverload(cast<FunctionDecl>(*I));
-      }
-      Ovl->addOverload(cast<FunctionDecl>(*Last));
-    }
-    
-    // If we had more than one function, we built an overload
-    // set. Return it.
-    if (Ovl)
-      return Ovl;
-  }
-  
-  return *I;
-}
-
 /// getNonFieldDeclScope - Retrieves the innermost scope, starting
 /// from S, where a non-field would be declared. This routine copes
 /// with the difference between C and C++ scoping rules in structs and
@@ -288,150 +242,37 @@ Scope *Sema::getNonFieldDeclScope(Scope *S) {
 /// are considered as required in C++ [basic.lookup.udir] 3.4.6.p1
 /// 'When looking up a namespace-name in a using-directive or
 /// namespace-alias-definition, only namespace names are considered.'
-Decl *Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
-                       const DeclContext *LookupCtx,
-                       bool enableLazyBuiltinCreation,
-                       bool LookInParent,
-                       bool NamespaceNameOnly) {
-  if (!Name) return 0;
-  unsigned NS = NSI;
+///
+/// Note: The use of this routine is deprecated. Please use
+/// LookupName, LookupQualifiedName, or LookupParsedName instead.
+Sema::LookupResult
+Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
+                 const DeclContext *LookupCtx,
+                 bool enableLazyBuiltinCreation,
+                 bool LookInParent,
+                 bool NamespaceNameOnly) {
+  LookupCriteria::NameKind Kind;
+  if (NSI == Decl::IDNS_Ordinary) {
+    if (NamespaceNameOnly)
+      Kind = LookupCriteria::Namespace;
+    else
+      Kind = LookupCriteria::Ordinary;
+  } else if (NSI == Decl::IDNS_Tag) 
+    Kind = LookupCriteria::Tag;
+  else if (NSI == Decl::IDNS_Member)
+    Kind = LookupCriteria::Member;
+  else
+    assert(false && "Unable to grok LookupDecl NSI argument");
 
-  // In C++, ordinary and member lookup will always find all
-  // kinds of names.
-  if (getLangOptions().CPlusPlus && 
-      (NS & (Decl::IDNS_Ordinary | Decl::IDNS_Member)))
-    NS |= Decl::IDNS_Tag | Decl::IDNS_Member | Decl::IDNS_Ordinary;
+  if (LookupCtx)
+    return LookupQualifiedName(const_cast<DeclContext *>(LookupCtx), Name, 
+                               LookupCriteria(Kind, !LookInParent,
+                                              getLangOptions().CPlusPlus));
 
-  if (LookupCtx == 0 && !getLangOptions().CPlusPlus) {
-    // Unqualified name lookup in C/Objective-C is purely lexical, so
-    // search in the declarations attached to the name.
-    assert(!LookupCtx && "Can't perform qualified name lookup here");
-    assert(!NamespaceNameOnly && "Can't perform namespace name lookup here");
-
-    // For the purposes of unqualified name lookup, structs and unions
-    // don't have scopes at all. For example:
-    //
-    //   struct X {
-    //     struct T { int i; } x;
-    //   };
-    //
-    //   void f() {
-    //     struct T t; // okay: T is defined lexically within X, but
-    //                 // semantically at global scope
-    //   };
-    //
-    // FIXME: Is there a better way to deal with this?
-    DeclContext *SearchCtx = CurContext;
-    while (isa<RecordDecl>(SearchCtx) || isa<EnumDecl>(SearchCtx))
-      SearchCtx = SearchCtx->getParent();
-    IdentifierResolver::iterator I
-      = IdResolver.begin(Name, SearchCtx, LookInParent);
-    
-    // Scan up the scope chain looking for a decl that matches this
-    // identifier that is in the appropriate namespace.  This search
-    // should not take long, as shadowing of names is uncommon, and
-    // deep shadowing is extremely uncommon.
-    for (; I != IdResolver.end(); ++I)
-      if ((*I)->isInIdentifierNamespace(NS))
-        return *I;
-  } else if (LookupCtx) {
-    // If we're performing qualified name lookup (e.g., lookup into a
-    // struct), find fields as part of ordinary name lookup.
-    if (NS & Decl::IDNS_Ordinary)
-      NS |= Decl::IDNS_Member;
-
-    // Perform qualified name lookup into the LookupCtx.
-    // FIXME: Will need to look into base classes and such.
-    DeclContext::lookup_const_iterator I, E;
-    for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I)
-      if ((*I)->isInIdentifierNamespace(NS)) {
-        // Ignore non-namespace names if we're only looking for namespaces.
-        if (NamespaceNameOnly && !isa<NamespaceDecl>(*I)) continue;
-        
-        return MaybeConstructOverloadSet(Context, I, E);
-      }
-  } else {
-    // Name lookup for ordinary names and tag names in C++ requires
-    // looking into scopes that aren't strictly lexical, and
-    // therefore we walk through the context as well as walking
-    // through the scopes.
-    IdentifierResolver::iterator 
-      I = IdResolver.begin(Name, CurContext, true/*LookInParentCtx*/),
-      IEnd = IdResolver.end();
-    for (; S; S = S->getParent()) {
-      // Check whether the IdResolver has anything in this scope.
-      // FIXME: The isDeclScope check could be expensive. Can we do better?
-      for (; I != IEnd && S->isDeclScope(*I); ++I) {
-        if ((*I)->isInIdentifierNamespace(NS)) {
-          // Ignore non-namespace names if we're only looking for namespaces.
-          if (NamespaceNameOnly && !isa<NamespaceDecl>(*I))
-            continue;
-
-          // We found something.  Look for anything else in our scope
-          // with this same name and in an acceptable identifier
-          // namespace, so that we can construct an overload set if we
-          // need to.
-          IdentifierResolver::iterator LastI = I;
-          for (++LastI; LastI != IEnd; ++LastI) {
-            if (!(*LastI)->isInIdentifierNamespace(NS) ||
-                !S->isDeclScope(*LastI))
-              break;
-          }
-          return MaybeConstructOverloadSet(Context, I, LastI);
-        }
-      }
-      
-      // If there is an entity associated with this scope, it's a
-      // DeclContext. We might need to perform qualified lookup into
-      // it.
-      DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
-      while (Ctx && Ctx->isFunctionOrMethod())
-        Ctx = Ctx->getParent();
-      while (Ctx && (Ctx->isNamespace() || Ctx->isRecord())) {
-        // Look for declarations of this name in this scope.
-        DeclContext::lookup_const_iterator I, E;
-        for (llvm::tie(I, E) = Ctx->lookup(Name); I != E; ++I) {
-          // FIXME: Cache this result in the IdResolver
-          if ((*I)->isInIdentifierNamespace(NS)) {
-            if (NamespaceNameOnly && !isa<NamespaceDecl>(*I))
-              continue;
-            return MaybeConstructOverloadSet(Context, I, E);
-          }
-        }
-        
-        if (!LookInParent && !Ctx->isTransparentContext())
-          return 0;
-
-        Ctx = Ctx->getParent();
-      }
-    }
-  }
-
-  // If we didn't find a use of this identifier, and if the identifier
-  // corresponds to a compiler builtin, create the decl object for the builtin
-  // now, injecting it into translation unit scope, and return it.
-  if (NS & Decl::IDNS_Ordinary) {
-    IdentifierInfo *II = Name.getAsIdentifierInfo();
-    if (enableLazyBuiltinCreation && II &&
-        (LookupCtx == 0 || isa<TranslationUnitDecl>(LookupCtx))) {
-      // If this is a builtin on this (or all) targets, create the decl.
-      if (unsigned BuiltinID = II->getBuiltinID())
-        return LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID, S);
-    }
-    if (getLangOptions().ObjC1 && II) {
-      // @interface and @compatibility_alias introduce typedef-like names.
-      // Unlike typedef's, they can only be introduced at file-scope (and are 
-      // therefore not scoped decls). They can, however, be shadowed by
-      // other names in IDNS_Ordinary.
-      ObjCInterfaceDeclsTy::iterator IDI = ObjCInterfaceDecls.find(II);
-      if (IDI != ObjCInterfaceDecls.end())
-        return IDI->second;
-      ObjCAliasTy::iterator I = ObjCAliasDecls.find(II);
-      if (I != ObjCAliasDecls.end())
-        return I->second->getClassInterface();
-    }
-  }
-  return 0;
+  // Unqualified lookup
+  return LookupName(S, Name, 
+                    LookupCriteria(Kind, !LookInParent,
+                                   getLangOptions().CPlusPlus));
 }
 
 void Sema::InitBuiltinVaListType() {
@@ -489,7 +330,7 @@ NamespaceDecl *Sema::GetStdNamespace() {
   if (!StdNamespace) {
     IdentifierInfo *StdIdent = &PP.getIdentifierTable().get("std");
     DeclContext *Global = Context.getTranslationUnitDecl();
-    Decl *Std = LookupDecl(StdIdent, Decl::IDNS_Tag | Decl::IDNS_Ordinary,
+    Decl *Std = LookupDecl(StdIdent, Decl::IDNS_Ordinary,
                            0, Global, /*enableLazyBuiltinCreation=*/false);
     StdNamespace = dyn_cast_or_null<NamespaceDecl>(Std);
   }
@@ -2944,7 +2785,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 
     DC = static_cast<DeclContext*>(SS.getScopeRep());
     // Look-up name inside 'foo::'.
-    PrevDecl = dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag,S,DC));
+    PrevDecl = dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag,S,DC)
+                                           .getAsDecl());
 
     // A tag 'foo::bar' must already exist.
     if (PrevDecl == 0) {
@@ -2956,7 +2798,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     // If this is a named struct, check to see if there was a previous forward
     // declaration or definition.
     // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
-    PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S));
+    PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S)
+                                              .getAsDecl());
 
     if (!getLangOptions().CPlusPlus && TK != TK_Reference) {
       // FIXME: This makes sure that we ignore the contexts associated

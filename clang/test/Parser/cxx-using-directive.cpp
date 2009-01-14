@@ -31,3 +31,10 @@ using namespace A ; // expected-error{{expected namespace name}}
 using namespace ::A // expected-error{{expected namespace name}}
                     B ; // expected-error{{expected ';' after namespace name}}
 
+void test_nslookup() {
+  int B;
+  class C;
+  using namespace B;
+  using namespace C;
+}
+

@@ -19,54 +19,6 @@
 using namespace clang;
 
 
-namespace {
-  Decl *LookupNestedName(DeclContext *LookupCtx, bool LookInParentCtx,
-                         DeclarationName Name, bool &IdIsUndeclared,
-                         ASTContext &Context) {
-    if (LookupCtx && !LookInParentCtx) {
-      IdIsUndeclared = true;
-      DeclContext::lookup_const_iterator I, E;
-      for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I) {
-       IdIsUndeclared = false;
-       if (((*I)->isInIdentifierNamespace(Decl::IDNS_Tag)) || 
-           isa<TypedefDecl>(*I))
-         return *I;
-      }
-
-      return 0;
-    }
-
-    // FIXME: Decouple this from the IdentifierResolver so that we can
-    // deal with lookups into the semantic parent contexts that aren't
-    // lexical parent contexts.
-
-    IdentifierResolver::iterator
-      I = IdentifierResolver::begin(Name, LookupCtx, LookInParentCtx),
-      E = IdentifierResolver::end();
-
-    if (I == E) {
-      IdIsUndeclared = true;
-      return 0;
-    }
-    IdIsUndeclared = false;
-
-    // C++ 3.4.3p1 :
-    // During the lookup for a name preceding the :: scope resolution operator,
-    // object, function, and enumerator names are ignored. If the name found is
-    // not a class-name or namespace-name, the program is ill-formed.
-
-    for (; I != E; ++I) {
-      if (isa<TypedefDecl>(*I)) {
-        break;
-      }
-      if (((*I)->getIdentifierNamespace() & Decl::IDNS_Tag))
-        break;    
-    }
-
-    return (I != E ? *I : 0);
-  }
-} // anonymous namespace
-
 /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
 /// global scope ('::').
 Sema::CXXScopeTy *Sema::ActOnCXXGlobalScopeSpecifier(Scope *S,
@@ -85,16 +37,10 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II) {
-  DeclContext *DC = static_cast<DeclContext*>(SS.getScopeRep());
-  Decl *SD;
-  bool IdIsUndeclared;
-
-  if (DC)
-    SD = LookupNestedName(DC, false/*LookInParentCtx*/, &II, IdIsUndeclared,
-                         Context);
-  else
-    SD = LookupNestedName(CurContext, true/*LookInParent*/, &II, 
-                          IdIsUndeclared, Context);
+  Decl *SD = LookupParsedName(S, SS, &II,
+                              LookupCriteria(LookupCriteria::NestedNameSpecifier, 
+                                             /*RedeclarationOnly=*/false, 
+                                             /*CPlusPlus=*/true));
 
   if (SD) {
     if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
@@ -104,19 +50,29 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
       return cast<DeclContext>(SD);
     }
 
+    // FIXME: C++0x scoped enums
+
     // Fall through to produce an error: we found something that isn't
     // a class or a namespace.
   }
 
+  // If we didn't find anything during our lookup, try again with
+  // ordinary name lookup, which can help us produce better error
+  // messages.
+  if (!SD)
+    SD = LookupParsedName(S, SS, &II,
+                          LookupCriteria(LookupCriteria::Ordinary,
+                                         /*RedeclarationOnly=*/false, 
+                                         /*CPlusPlus=*/true));
   unsigned DiagID;
-  if (!IdIsUndeclared)
+  if (SD)
     DiagID = diag::err_expected_class_or_namespace;
-  else if (DC)
+  else if (SS.isSet())
     DiagID = diag::err_typecheck_no_member;
   else
     DiagID = diag::err_undeclared_var_use;
 
-  if (DC)
+  if (SS.isSet())
     Diag(IdLoc, DiagID) << &II << SS.getRange();
   else
     Diag(IdLoc, DiagID) << &II;

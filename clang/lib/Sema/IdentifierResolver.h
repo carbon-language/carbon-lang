@@ -181,6 +181,14 @@ public:
       return *this;
     }
 
+    uintptr_t getAsOpaqueValue() const { return Ptr; }
+    
+    static iterator getFromOpaqueValue(uintptr_t P) {
+      iterator Result(0);
+      Result.Ptr = P;
+      return Result;
+    }
+    
   private:
     void PreIncIter();
   };
