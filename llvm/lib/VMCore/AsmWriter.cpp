@@ -1671,6 +1671,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     } else {
       for (unsigned i = 1, E = I.getNumOperands(); i != E; ++i) {
         Operand = I.getOperand(i);
+        // note that Operand shouldn't be null, but the test helps make dump()
+        // more tolerant of malformed IR
         if (Operand && Operand->getType() != TheType) {
           PrintAllTypes = true;    // We have differing types!  Print them all!
           break;
