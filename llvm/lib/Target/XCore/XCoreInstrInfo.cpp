@@ -363,7 +363,7 @@ bool XCoreInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   
   if (SrcRC == XCore::RRegsRegisterClass && SrcReg == XCore::SP &&
     DestRC == XCore::GRRegsRegisterClass) {
-    BuildMI(MBB, I, get(XCore::LDAWSP_ru6), DestReg).addImm(0).addImm(0);
+    BuildMI(MBB, I, get(XCore::LDAWSP_ru6), DestReg).addImm(0);
     return true;
   }
   if (DestRC == XCore::RRegsRegisterClass && DestReg == XCore::SP &&

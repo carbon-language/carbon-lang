@@ -481,7 +481,6 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Set the FP from the SP.
     unsigned FramePtr = XCore::R10;
     BuildMI(MBB, MBBI, TII.get(XCore::LDAWSP_ru6), FramePtr)
-      .addImm(0)
       .addImm(0);
     if (emitFrameMoves) {
       // Show FP is now valid.
