@@ -19,6 +19,7 @@
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Constants.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -98,6 +99,25 @@ getGlobalVariablesUsing(Module &M, const std::string &RootName,
   // If present and linkonce then scan for users.                                         
   if (UseRoot && UseRoot->hasLinkOnceLinkage())
     getGlobalVariablesUsing(UseRoot, Result);
+}
+
+/// getGlobalVariable - Return either a direct or cast Global value.
+///
+static GlobalVariable *getGlobalVariable(Value *V) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    return GV;
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->getOpcode() == Instruction::BitCast) {
+      return dyn_cast<GlobalVariable>(CE->getOperand(0));
+    } else if (CE->getOpcode() == Instruction::GetElementPtr) {
+      for (unsigned int i=1; i<CE->getNumOperands(); i++) {
+        if (!CE->getOperand(i)->isNullValue())
+          return NULL;
+      }
+      return dyn_cast<GlobalVariable>(CE->getOperand(0));
+    }
+  }
+  return NULL;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3056,6 +3076,26 @@ public:
 
 public:
 
+  /// ValidDebugInfo - Return true if V represents valid debug info value.
+  bool ValidDebugInfo(Value *V) {
+    GlobalVariable *GV = getGlobalVariable(V);
+    if (!GV)
+      return false;
+    
+    if (GV->getLinkage() != GlobalValue::InternalLinkage
+        && GV->getLinkage() != GlobalValue::LinkOnceLinkage)
+      return false;
+
+    DIDescriptor DI(GV);
+    // Check current version. Allow Version6 for now.
+    unsigned Version = DI.getVersion();
+    if (Version != DIDescriptor::Version7 && Version != DIDescriptor::Version6)
+      return false;
+
+    //FIXME - Check individual descriptors.
+    return true;
+  }
+
   /// RecordSourceLine - Records location information and associates it with a 
   /// label. Returns a unique label ID used to generate a label and provide
   /// correspondence to the source line list.
@@ -4219,6 +4259,11 @@ void DwarfWriter::EndFunction(MachineFunction *MF) {
   if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI())
     // Clear function debug information.
     MMI->EndFunction();
+}
+
+/// ValidDebugInfo - Return true if V represents valid debug info value.
+bool DwarfWriter::ValidDebugInfo(Value *V) {
+  return DD->ValidDebugInfo(V);
 }
 
 /// RecordSourceLine - Records location information and associates it with a 

@@ -29,6 +29,7 @@ class DwarfDebug;
 class DwarfException;
 class MachineModuleInfo;
 class MachineFunction;
+class Value;
 class Module;
 class GlobalVariable;
 class TargetAsmInfo;
@@ -75,6 +76,8 @@ public:
   ///
   void EndFunction(MachineFunction *MF);
 
+  /// ValidDebugInfo - Return true if V represents valid debug info value.
+  bool ValidDebugInfo(Value *V);
 
   /// label. Returns a unique label ID used to generate a label and provide
   /// correspondence to the source line list.
