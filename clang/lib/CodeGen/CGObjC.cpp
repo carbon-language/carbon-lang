@@ -301,15 +301,14 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
                                  EmitScalarExpr(E->getBase()), 
                                  false, CallArgList());
   }
-  else if (const ObjCKVCRefExpr *E = dyn_cast<ObjCKVCRefExpr>(Exp)) {
+  else {
+    const ObjCKVCRefExpr *E = cast<ObjCKVCRefExpr>(Exp);
     Selector S = E->getGetterMethod()->getSelector();
     return CGM.getObjCRuntime().
              GenerateMessageSend(*this, Exp->getType(), S, 
                                  EmitScalarExpr(E->getBase()), 
                                  false, CallArgList());
   }
-  else
-    assert (0 && "bad expression node in EmitObjCPropertyGet");
 }
 
 void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,

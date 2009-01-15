@@ -490,7 +490,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
   //   the result of the lookup.
   // FIXME: support using declarations!
   QualType SubobjectType;
-  int SubobjectNumber;
+  int SubobjectNumber = 0;
   for (BasePaths::paths_iterator Path = Paths.begin(), PathEnd = Paths.end();
        Path != PathEnd; ++Path) {
     const BasePathElement &PathElement = Path->back();

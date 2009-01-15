@@ -1219,6 +1219,7 @@ bool Expr::isEvaluatable(ASTContext &Ctx) const {
 APSInt Expr::EvaluateAsInt(ASTContext &Ctx) const {
   EvalResult EvalResult;
   bool Result = Evaluate(EvalResult, Ctx);
+  Result = Result;
   assert(Result && "Could not evaluate expression");
   assert(EvalResult.Val.isInt() && "Expression did not evaluate to integer");
 

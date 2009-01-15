@@ -24,6 +24,8 @@ void SymbolRef::print(llvm::raw_ostream& os) const {
 
 SymbolRef SymbolManager::getSymbol(const MemRegion* R) {
   switch (R->getKind()) {
+  default:
+    assert(0 && "unprocessed region");
   case MemRegion::VarRegionKind:
     return getSymbol(cast<VarRegion>(R)->getDecl());
   
@@ -38,8 +40,6 @@ SymbolRef SymbolManager::getSymbol(const MemRegion* R) {
     const FieldRegion* FR = cast<FieldRegion>(R);
     return getFieldSymbol(FR->getSuperRegion(), FR->getDecl());
   }
-  default:
-    assert(0 && "unprocessed region");
   }
 }
 
