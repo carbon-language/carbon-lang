@@ -100,7 +100,7 @@ namespace llvm {
     virtual bool getPreIndexedAddressParts(SDNode *N, SDValue &Base,
                                            SDValue &Offset,
                                            ISD::MemIndexedMode &AM,
-                                           SelectionDAG &DAG);
+                                           SelectionDAG &DAG) const;
 
     /// getPostIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if this node can be
@@ -108,7 +108,7 @@ namespace llvm {
     virtual bool getPostIndexedAddressParts(SDNode *N, SDNode *Op,
                                             SDValue &Base, SDValue &Offset,
                                             ISD::MemIndexedMode &AM,
-                                            SelectionDAG &DAG);
+                                            SelectionDAG &DAG) const;
 
     virtual void computeMaskedBitsForTargetNode(const SDValue Op,
                                                 const APInt &Mask,

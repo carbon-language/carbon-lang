@@ -239,30 +239,30 @@ namespace llvm {
     virtual bool getPreIndexedAddressParts(SDNode *N, SDValue &Base,
                                            SDValue &Offset,
                                            ISD::MemIndexedMode &AM,
-                                           SelectionDAG &DAG);
+                                           SelectionDAG &DAG) const;
     
     /// SelectAddressRegReg - Given the specified addressed, check to see if it
     /// can be represented as an indexed [r+r] operation.  Returns false if it
     /// can be more efficiently represented with [r+imm].
     bool SelectAddressRegReg(SDValue N, SDValue &Base, SDValue &Index,
-                             SelectionDAG &DAG);
+                             SelectionDAG &DAG) const;
     
     /// SelectAddressRegImm - Returns true if the address N can be represented
     /// by a base register plus a signed 16-bit displacement [r+imm], and if it
     /// is not better represented as reg+reg.
     bool SelectAddressRegImm(SDValue N, SDValue &Disp, SDValue &Base,
-                             SelectionDAG &DAG);
+                             SelectionDAG &DAG) const;
     
     /// SelectAddressRegRegOnly - Given the specified addressed, force it to be
     /// represented as an indexed [r+r] operation.
     bool SelectAddressRegRegOnly(SDValue N, SDValue &Base, SDValue &Index,
-                                 SelectionDAG &DAG);
+                                 SelectionDAG &DAG) const;
 
     /// SelectAddressRegImmShift - Returns true if the address N can be
     /// represented by a base register plus a signed 14-bit displacement
     /// [r+imm*4].  Suitable for use by STD and friends.
     bool SelectAddressRegImmShift(SDValue N, SDValue &Disp, SDValue &Base,
-                                  SelectionDAG &DAG);
+                                  SelectionDAG &DAG) const;
 
     
     /// LowerOperation - Provide custom lowering hooks for some operations.

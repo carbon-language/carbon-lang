@@ -1726,7 +1726,7 @@ bool
 ARMTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
                                              SDValue &Offset,
                                              ISD::MemIndexedMode &AM,
-                                             SelectionDAG &DAG) {
+                                             SelectionDAG &DAG) const {
   if (Subtarget->isThumb())
     return false;
 
@@ -1760,7 +1760,7 @@ bool ARMTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
                                                    SDValue &Base,
                                                    SDValue &Offset,
                                                    ISD::MemIndexedMode &AM,
-                                                   SelectionDAG &DAG) {
+                                                   SelectionDAG &DAG) const {
   if (Subtarget->isThumb())
     return false;
 

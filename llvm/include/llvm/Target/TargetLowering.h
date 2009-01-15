@@ -676,7 +676,7 @@ public:
   virtual bool getPreIndexedAddressParts(SDNode *N, SDValue &Base,
                                          SDValue &Offset,
                                          ISD::MemIndexedMode &AM,
-                                         SelectionDAG &DAG) {
+                                         SelectionDAG &DAG) const {
     return false;
   }
   
@@ -686,7 +686,7 @@ public:
   virtual bool getPostIndexedAddressParts(SDNode *N, SDNode *Op,
                                           SDValue &Base, SDValue &Offset,
                                           ISD::MemIndexedMode &AM,
-                                          SelectionDAG &DAG) {
+                                          SelectionDAG &DAG) const {
     return false;
   }
   

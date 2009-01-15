@@ -766,7 +766,7 @@ static bool isIntS16Immediate(SDValue Op, short &Imm) {
 /// can be more efficiently represented with [r+imm].
 bool PPCTargetLowering::SelectAddressRegReg(SDValue N, SDValue &Base,
                                             SDValue &Index,
-                                            SelectionDAG &DAG) {
+                                            SelectionDAG &DAG) const {
   short imm = 0;
   if (N.getOpcode() == ISD::ADD) {
     if (isIntS16Immediate(N.getOperand(1), imm))
@@ -813,7 +813,8 @@ bool PPCTargetLowering::SelectAddressRegReg(SDValue N, SDValue &Base,
 /// a signed 16-bit displacement [r+imm], and if it is not better
 /// represented as reg+reg.
 bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
-                                            SDValue &Base, SelectionDAG &DAG){
+                                            SDValue &Base,
+                                            SelectionDAG &DAG) const {
   // If this can be more profitably realized as r+r, fail.
   if (SelectAddressRegReg(N, Disp, Base, DAG))
     return false;
@@ -898,7 +899,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
 /// represented as an indexed [r+r] operation.
 bool PPCTargetLowering::SelectAddressRegRegOnly(SDValue N, SDValue &Base,
                                                 SDValue &Index,
-                                                SelectionDAG &DAG) {
+                                                SelectionDAG &DAG) const {
   // Check to see if we can easily represent this as an [r+r] address.  This
   // will fail if it thinks that the address is more profitably represented as
   // reg+imm, e.g. where imm = 0.
@@ -925,7 +926,7 @@ bool PPCTargetLowering::SelectAddressRegRegOnly(SDValue N, SDValue &Base,
 /// [r+imm*4].  Suitable for use by STD and friends.
 bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
                                                  SDValue &Base,
-                                                 SelectionDAG &DAG) {
+                                                 SelectionDAG &DAG) const {
   // If this can be more profitably realized as r+r, fail.
   if (SelectAddressRegReg(N, Disp, Base, DAG))
     return false;
@@ -1013,7 +1014,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
 bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
                                                   SDValue &Offset,
                                                   ISD::MemIndexedMode &AM,
-                                                  SelectionDAG &DAG) {
+                                                  SelectionDAG &DAG) const {
   // Disabled by default for now.
   if (!EnablePPCPreinc) return false;
   
