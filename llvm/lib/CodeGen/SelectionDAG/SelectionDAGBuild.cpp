@@ -1490,10 +1490,11 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
   MachineBasicBlock *Return = FuncInfo.MBBMap[I.getSuccessor(0)];
   MachineBasicBlock *LandingPad = FuncInfo.MBBMap[I.getSuccessor(1)];
 
-  if (isa<InlineAsm>(I.getCalledValue()))
+  const Value *Callee(I.getCalledValue());
+  if (isa<InlineAsm>(Callee))
     visitInlineAsm(&I);
   else
-    LowerCallTo(&I, getValue(I.getOperand(0)), false, LandingPad);
+    LowerCallTo(&I, getValue(Callee), false, LandingPad);
 
   // If the value of the invoke is used outside of its defining block, make it
   // available as a virtual register.
