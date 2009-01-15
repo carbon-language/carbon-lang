@@ -1735,6 +1735,7 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
     assert(0 && "Do not know how to widen this operator's operand!");
     abort();
 
+  case ISD::BIT_CONVERT:        Res = WidenVecOp_BIT_CONVERT(N); break;
   case ISD::CONCAT_VECTORS:     Res = WidenVecOp_CONCAT_VECTORS(N); break;
   case ISD::EXTRACT_VECTOR_ELT: Res = WidenVecOp_EXTRACT_VECTOR_ELT(N); break;
   case ISD::STORE:              Res = WidenVecOp_STORE(N); break;
@@ -1784,6 +1785,36 @@ SDValue DAGTypeLegalizer::WidenVecOp_Convert(SDNode *N) {
                                      DAG.getIntPtrConstant(i)));
 
   return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], NumElts);
+}
+
+SDValue DAGTypeLegalizer::WidenVecOp_BIT_CONVERT(SDNode *N) {
+  MVT VT = N->getValueType(0);
+  SDValue InOp = GetWidenedVector(N->getOperand(0));
+  MVT InWidenVT = InOp.getValueType();
+
+  // Check if we can convert between two legal vector types and extract.
+  unsigned InWidenSize = InWidenVT.getSizeInBits();
+  unsigned Size = VT.getSizeInBits();
+  if (InWidenSize % Size == 0 && !VT.isVector()) {
+    unsigned NewNumElts = InWidenSize / Size;
+    MVT NewVT = MVT::getVectorVT(VT, NewNumElts);
+    if (TLI.isTypeLegal(NewVT)) {
+      SDValue BitOp = DAG.getNode(ISD::BIT_CONVERT, NewVT, InOp);
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, VT, BitOp,
+                         DAG.getIntPtrConstant(0));
+    }
+  }
+
+  // Lower the bit-convert to a store/load from the stack. Create the stack
+  // frame object.  Make sure it is aligned for both the source and destination
+  // types.
+  SDValue FIPtr = DAG.CreateStackTemporary(InWidenVT, VT);
+
+  // Emit a store to the stack slot.
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), InOp, FIPtr, NULL, 0);
+
+  // Result is a load from the stack slot.
+  return DAG.getLoad(VT, Store, FIPtr, NULL, 0);
 }
 
 SDValue DAGTypeLegalizer::WidenVecOp_CONCAT_VECTORS(SDNode *N) {
