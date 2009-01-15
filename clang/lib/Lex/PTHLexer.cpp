@@ -656,7 +656,7 @@ IdentifierInfo* PTHManager::get(const char *NameStart, const char *NameEnd) {
     max = i;
     assert(!(max == min) || (min == i));
   }
-  while (1);
+  while (min != max);
   
   return 0;
 }
