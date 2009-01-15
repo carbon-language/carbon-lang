@@ -223,6 +223,9 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
 
   // If the third value is 1, then it's folding either a load or a store.
   static const unsigned OpTbl0[][3] = {
+    { X86::BT16ri8,     X86::BT16mi8, 1 },
+    { X86::BT32ri8,     X86::BT32mi8, 1 },
+    { X86::BT64ri8,     X86::BT64mi8, 1 },
     { X86::CALL32r,     X86::CALL32m, 1 },
     { X86::CALL64r,     X86::CALL64m, 1 },
     { X86::CMP16ri,     X86::CMP16mi, 1 },
