@@ -395,7 +395,7 @@ namespace {
 
     bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
                                     unsigned CastOpc,
-                                    int &NumCastsRemoved);
+                                    int &NumCastsRemoved, bool &SeenTrunc);
     unsigned GetOrEnforceKnownAlignment(Value *V,
                                         unsigned PrefAlign = 0);
 
@@ -7497,9 +7497,10 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
 /// If CastOpc is a sext or zext, we are asking if the low bits of the value can
 /// bit computed in a larger type, which is then and'd or sext_in_reg'd to get
 /// the final result.
-bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
-                                              unsigned CastOpc,
-                                              int &NumCastsRemoved) {
+bool
+InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
+                                         unsigned CastOpc,
+                                         int &NumCastsRemoved, bool &SeenTrunc){
   // We can always evaluate constants in another type.
   if (isa<ConstantInt>(V))
     return true;
@@ -7519,6 +7520,8 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
       // casts first.
       if (!isa<CastInst>(I->getOperand(0)) && I->hasOneUse())
         ++NumCastsRemoved;
+      if (isa<TruncInst>(I))
+        SeenTrunc = true;
       return true;
     }
   }
@@ -7527,7 +7530,8 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
   // require duplicating the instruction in general, which isn't profitable.
   if (!I->hasOneUse()) return false;
 
-  switch (I->getOpcode()) {
+  unsigned Opc = I->getOpcode();
+  switch (Opc) {
   case Instruction::Add:
   case Instruction::Sub:
   case Instruction::Mul:
@@ -7536,9 +7540,9 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
   case Instruction::Xor:
     // These operators can all arbitrarily be extended or truncated.
     return CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
-                                      NumCastsRemoved) &&
+                                      NumCastsRemoved, SeenTrunc) &&
            CanEvaluateInDifferentType(I->getOperand(1), Ty, CastOpc,
-                                      NumCastsRemoved);
+                                      NumCastsRemoved, SeenTrunc);
 
   case Instruction::Shl:
     // If we are truncating the result of this SHL, and if it's a shift of a
@@ -7548,7 +7552,7 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
       if (BitWidth < OrigTy->getBitWidth() && 
           CI->getLimitedValue(BitWidth) < BitWidth)
         return CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
-                                          NumCastsRemoved);
+                                          NumCastsRemoved, SeenTrunc);
     }
     break;
   case Instruction::LShr:
@@ -7563,7 +7567,7 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
             APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth)) &&
           CI->getLimitedValue(BitWidth) < BitWidth) {
         return CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
-                                          NumCastsRemoved);
+                                          NumCastsRemoved, SeenTrunc);
       }
     }
     break;
@@ -7573,22 +7577,27 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
     // If this is the same kind of case as our original (e.g. zext+zext), we
     // can safely replace it.  Note that replacing it does not reduce the number
     // of casts in the input.
-    if (I->getOpcode() == CastOpc)
+    if (Opc == CastOpc)
+      return true;
+
+    // sext (zext ty1), ty2 -> zext ty2
+    if (CastOpc == Instruction::SExt && Opc == Instruction::ZExt &&
+        I->hasOneUse())
       return true;
     break;
   case Instruction::Select: {
     SelectInst *SI = cast<SelectInst>(I);
     return CanEvaluateInDifferentType(SI->getTrueValue(), Ty, CastOpc,
-                                      NumCastsRemoved) &&
+                                      NumCastsRemoved, SeenTrunc) &&
            CanEvaluateInDifferentType(SI->getFalseValue(), Ty, CastOpc,
-                                      NumCastsRemoved);
+                                      NumCastsRemoved, SeenTrunc);
   }
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
       if (!CanEvaluateInDifferentType(PN->getIncomingValue(i), Ty, CastOpc,
-                                      NumCastsRemoved))
+                                      NumCastsRemoved, SeenTrunc))
         return false;
     return true;
   }
@@ -7611,7 +7620,8 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
   // Otherwise, it must be an instruction.
   Instruction *I = cast<Instruction>(V);
   Instruction *Res = 0;
-  switch (I->getOpcode()) {
+  unsigned Opc = I->getOpcode();
+  switch (Opc) {
   case Instruction::Add:
   case Instruction::Sub:
   case Instruction::Mul:
@@ -7623,8 +7633,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
   case Instruction::Shl: {
     Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty, isSigned);
     Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
-    Res = BinaryOperator::Create((Instruction::BinaryOps)I->getOpcode(),
-                                 LHS, RHS);
+    Res = BinaryOperator::Create((Instruction::BinaryOps)Opc, LHS, RHS);
     break;
   }    
   case Instruction::Trunc:
@@ -7808,7 +7817,6 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
 }
 
 
-
 /// Only the TRUNC, ZEXT, SEXT, and BITCAST can both operand and result as
 /// integer types. This function implements the common transforms for all those
 /// cases.
@@ -7838,16 +7846,18 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
 
   // Attempt to propagate the cast into the instruction for int->int casts.
   int NumCastsRemoved = 0;
+  bool SeenTrunc = false;
   if (!isa<BitCastInst>(CI) &&
       CanEvaluateInDifferentType(SrcI, cast<IntegerType>(DestTy),
-                                 CI.getOpcode(), NumCastsRemoved)) {
+                                 CI.getOpcode(), NumCastsRemoved, SeenTrunc)) {
     // If this cast is a truncate, evaluting in a different type always
     // eliminates the cast, so it is always a win.  If this is a zero-extension,
     // we need to do an AND to maintain the clear top-part of the computation,
     // so we require that the input have eliminated at least one cast.  If this
     // is a sign extension, we insert two new casts (to do the extension) so we
     // require that two casts have been eliminated.
-    bool DoXForm;
+    bool DoXForm = false;
+    bool JustReplace = false;
     switch (CI.getOpcode()) {
     default:
       // All the others use floating point so we shouldn't actually 
@@ -7858,10 +7868,27 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       break;
     case Instruction::ZExt:
       DoXForm = NumCastsRemoved >= 1;
+      // TODO: Check if we need to insert an AND.
       break;
-    case Instruction::SExt:
+    case Instruction::SExt: {
       DoXForm = NumCastsRemoved >= 2;
+      if (!SeenTrunc) {
+        // Do we have to emit a truncate to SrcBitSize followed by a sext?
+        //
+        // It's not safe to eliminate the trunc + sext pair if one of the
+        // eliminated cast is a truncate. e.g.
+        // t2 = trunc i32 t1 to i16
+        // t3 = sext i16 t2 to i32
+        // !=
+        // i32 t1
+        unsigned NumSignBits = ComputeNumSignBits(&CI);
+        if (NumSignBits > (DestBitSize - SrcBitSize)) {
+          DoXForm = true;
+          JustReplace = true;
+        }
+      }
       break;
+    }
     }
     
     if (DoXForm) {
@@ -7882,6 +7909,10 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         return BinaryOperator::CreateAnd(Res, C);
       }
       case Instruction::SExt:
+        if (JustReplace)
+          // Just replace this cast with the result.
+          return ReplaceInstUsesWith(CI, Res);
+
         // We need to emit a cast to truncate, then a cast to sext.
         return CastInst::Create(Instruction::SExt,
             InsertCastBefore(Instruction::Trunc, Res, Src->getType(), 
@@ -12420,5 +12451,3 @@ bool InstCombiner::runOnFunction(Function &F) {
 FunctionPass *llvm::createInstructionCombiningPass() {
   return new InstCombiner();
 }
-
-
