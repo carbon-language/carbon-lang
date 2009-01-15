@@ -155,6 +155,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
+  case Function::PrivateLinkage:
     break;
    case Function::ExternalLinkage:
      O << "\t.globl " << CurrentFnName << "\n";
@@ -169,7 +170,6 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   O << "\t.ent " << CurrentFnName << "\n";
 
-  assert (!F->hasPrivateLinkage() && "add private prefix.");
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
@@ -238,6 +238,7 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       O << TAI->getGlobalDirective() << name << "\n";
       break;
     case GlobalValue::InternalLinkage:
+    case GlobalValue::PrivateLinkage:
       break;
     default:
       assert(0 && "Unknown linkage type!");

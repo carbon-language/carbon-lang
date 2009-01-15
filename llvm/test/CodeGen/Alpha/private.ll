@@ -1,10 +1,10 @@
 ; Test to make sure that the 'private' is used correctly.
 ;
-; RUN: llvm-as < %s | llc > %t
-; RUN: grep .Lfoo: %t
-; RUN: grep call.*\.Lfoo %t
-; RUN: grep .Lbaz: %t
-; RUN: grep movl.*\.Lbaz %t
+; RUN: llvm-as < %s | llc -march=alpha > %t
+; RUN: grep \\\$foo: %t
+; RUN: grep bsr.*\\\$\\\$foo %t
+; RUN: grep \\\$baz: %t
+; RUN: grep ldah.*\\\$baz %t
 
 declare void @foo()
 
