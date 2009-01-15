@@ -262,16 +262,21 @@ separate option groups syntactically.
 
 * Possible option types:
 
-   - ``switch_option`` - a simple boolean switch, for example ``-time``.
+   - ``switch_option`` - a simple boolean switch without arguments,
+     for example ``-O2`` or ``-time``.
 
-   - ``parameter_option`` - option that takes an argument, for example
-     ``-std=c99``;
+   - ``parameter_option`` - option that takes one argument, for
+     example ``-std=c99``. It is also allowed to use spaces instead of
+     the equality sign: ``-std c99``.
 
    - ``parameter_list_option`` - same as the above, but more than one
-     occurence of the option is allowed.
+     option occurence is allowed.
 
-   - ``prefix_option`` - same as the parameter_option, but the option name
-     and parameter value are not separated.
+   - ``prefix_option`` - same as the parameter_option, but the option
+     name and argument do not have to be separated. Example:
+     ``-ofile``. This can be also specified as ``-o file``; however,
+     ``-o=file`` will be parsed incorrectly (``=file`` will be
+     interpreted as option value).
 
    - ``prefix_list_option`` - same as the above, but more than one
      occurence of the option is allowed; example: ``-lm -lpthread``.

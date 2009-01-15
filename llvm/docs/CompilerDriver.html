@@ -263,13 +263,18 @@ separate option groups syntactically.</p>
 <li><p class="first">Possible option types:</p>
 <blockquote>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">switch_option</span></tt> - a simple boolean switch, for example <tt class="docutils literal"><span class="pre">-time</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">parameter_option</span></tt> - option that takes an argument, for example
-<tt class="docutils literal"><span class="pre">-std=c99</span></tt>;</li>
+<li><tt class="docutils literal"><span class="pre">switch_option</span></tt> - a simple boolean switch without arguments,
+for example <tt class="docutils literal"><span class="pre">-O2</span></tt> or <tt class="docutils literal"><span class="pre">-time</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">parameter_option</span></tt> - option that takes one argument, for
+example <tt class="docutils literal"><span class="pre">-std=c99</span></tt>. It is also allowed to use spaces instead of
+the equality sign: <tt class="docutils literal"><span class="pre">-std</span> <span class="pre">c99</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">parameter_list_option</span></tt> - same as the above, but more than one
-occurence of the option is allowed.</li>
-<li><tt class="docutils literal"><span class="pre">prefix_option</span></tt> - same as the parameter_option, but the option name
-and parameter value are not separated.</li>
+option occurence is allowed.</li>
+<li><tt class="docutils literal"><span class="pre">prefix_option</span></tt> - same as the parameter_option, but the option
+name and argument do not have to be separated. Example:
+<tt class="docutils literal"><span class="pre">-ofile</span></tt>. This can be also specified as <tt class="docutils literal"><span class="pre">-o</span> <span class="pre">file</span></tt>; however,
+<tt class="docutils literal"><span class="pre">-o=file</span></tt> will be parsed incorrectly (<tt class="docutils literal"><span class="pre">=file</span></tt> will be
+interpreted as option value).</li>
 <li><tt class="docutils literal"><span class="pre">prefix_list_option</span></tt> - same as the above, but more than one
 occurence of the option is allowed; example: <tt class="docutils literal"><span class="pre">-lm</span> <span class="pre">-lpthread</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">alias_option</span></tt> - a special option type for creating
@@ -588,7 +593,7 @@ status code.</p>
 <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a><br />
 <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br />
 
-Last modified: $Date$
+Last modified: $Date: 2008-12-11 11:34:48 -0600 (Thu, 11 Dec 2008) $
 </address></div>
 </div>
 </div>
