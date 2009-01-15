@@ -39,12 +39,28 @@ Sema::TypeTy *Sema::isTypeName(IdentifierInfo &II, Scope *S,
       return 0;
     DC = static_cast<DeclContext*>(SS->getScopeRep());
   }
-  Decl *IIDecl = LookupDecl(&II, Decl::IDNS_Ordinary, S, DC, false);
+  LookupResult Result = LookupDecl(&II, Decl::IDNS_Ordinary, S, DC, false);
 
-  if (IIDecl && (isa<TypedefDecl>(IIDecl) || 
-                 isa<ObjCInterfaceDecl>(IIDecl) ||
-                 isa<TagDecl>(IIDecl) ||
-		 isa<TemplateTypeParmDecl>(IIDecl)))
+  Decl *IIDecl = 0;
+  switch (Result.getKind()) {
+  case LookupResult::NotFound:
+  case LookupResult::FoundOverloaded:
+  case LookupResult::AmbiguousBaseSubobjectTypes:
+  case LookupResult::AmbiguousBaseSubobjects:
+    // FIXME: In the event of an ambiguous lookup, we could visit all of
+    // the entities found to determine whether they are all types. This
+    // might provide better diagnostics.
+    return 0;
+
+  case LookupResult::Found:
+    IIDecl = Result.getAsDecl();
+    break;
+  }
+
+  if (isa<TypedefDecl>(IIDecl) || 
+      isa<ObjCInterfaceDecl>(IIDecl) ||
+      isa<TagDecl>(IIDecl) ||
+      isa<TemplateTypeParmDecl>(IIDecl))
     return IIDecl;
   return 0;
 }

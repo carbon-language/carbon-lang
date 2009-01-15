@@ -20,6 +20,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/Diagnostic.h"
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <string>
@@ -45,6 +46,17 @@ void BasePaths::clear() {
   DetectedVirtual = 0;
 }
 
+/// @brief Swaps the contents of this BasePaths structure with the
+/// contents of Other.
+void BasePaths::swap(BasePaths &Other) {
+  Paths.swap(Other.Paths);
+  ClassSubobjects.swap(Other.ClassSubobjects);
+  std::swap(FindAmbiguities, Other.FindAmbiguities);
+  std::swap(RecordPaths, Other.RecordPaths);
+  std::swap(DetectVirtual, Other.DetectVirtual);
+  std::swap(DetectedVirtual, Other.DetectedVirtual);
+}
+
 /// IsDerivedFrom - Determine whether the type Derived is derived from
 /// the type Base, ignoring qualifiers on Base and Derived. This
 /// routine does not assess whether an actual conversion from a
@@ -65,8 +77,6 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base) {
 /// ambiguous paths (if @c Paths.isFindingAmbiguities()) and record
 /// information about all of the paths (if @c Paths.isRecordingPaths()).
 bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
-  bool FoundPath = false;
-
   Derived = Context.getCanonicalType(Derived).getUnqualifiedType();
   Base = Context.getCanonicalType(Base).getUnqualifiedType();
 
@@ -76,71 +86,112 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
   if (Derived == Base)
     return false;
 
-  if (const RecordType *DerivedType = Derived->getAsRecordType()) {
-    const CXXRecordDecl *Decl 
-      = static_cast<const CXXRecordDecl *>(DerivedType->getDecl());
-    for (CXXRecordDecl::base_class_const_iterator BaseSpec = Decl->bases_begin();
-         BaseSpec != Decl->bases_end(); ++BaseSpec) {
-      // Find the record of the base class subobjects for this type.
-      QualType BaseType = Context.getCanonicalType(BaseSpec->getType());
-      BaseType = BaseType.getUnqualifiedType();
-      
-      // Determine whether we need to visit this base class at all,
-      // updating the count of subobjects appropriately.
-      std::pair<bool, unsigned>& Subobjects = Paths.ClassSubobjects[BaseType];
-      bool VisitBase = true;
-      bool SetVirtual = false;
-      if (BaseSpec->isVirtual()) {
-        VisitBase = !Subobjects.first;
-        Subobjects.first = true;
-        if (Paths.isDetectingVirtual() && Paths.DetectedVirtual == 0) {
-          // If this is the first virtual we find, remember it. If it turns out
-          // there is no base path here, we'll reset it later.
-          Paths.DetectedVirtual = static_cast<const CXXRecordType*>(
-            BaseType->getAsRecordType());
-          SetVirtual = true;
-        }
-      } else
-        ++Subobjects.second;
+  return LookupInBases(cast<CXXRecordType>(Derived->getAsRecordType())->getDecl(),
+                       MemberLookupCriteria(Base), Paths);
+}
 
+/// LookupInBases - Look for something that meets the specified
+/// Criteria within the base classes of Class (or any of its base
+/// classes, transitively). This routine populates BasePaths with the
+/// list of paths that one can take to find the entity that meets the
+/// search criteria, and returns true if any such entity is found. The
+/// various options passed to the BasePath constructor will affect the
+/// behavior of this lookup, e.g., whether it finds ambiguities,
+/// records paths, or attempts to detect the use of virtual base
+/// classes.
+bool Sema::LookupInBases(CXXRecordDecl *Class, 
+                         const MemberLookupCriteria& Criteria,
+                         BasePaths &Paths) {
+  bool FoundPath = false;
+
+  for (CXXRecordDecl::base_class_const_iterator BaseSpec = Class->bases_begin(),
+                                             BaseSpecEnd = Class->bases_end(); 
+       BaseSpec != BaseSpecEnd; ++BaseSpec) {
+    // Find the record of the base class subobjects for this type.
+    QualType BaseType = Context.getCanonicalType(BaseSpec->getType());
+    BaseType = BaseType.getUnqualifiedType();
+    
+    // Determine whether we need to visit this base class at all,
+    // updating the count of subobjects appropriately.
+    std::pair<bool, unsigned>& Subobjects = Paths.ClassSubobjects[BaseType];
+    bool VisitBase = true;
+    bool SetVirtual = false;
+    if (BaseSpec->isVirtual()) {
+      VisitBase = !Subobjects.first;
+      Subobjects.first = true;
+      if (Paths.isDetectingVirtual() && Paths.DetectedVirtual == 0) {
+        // If this is the first virtual we find, remember it. If it turns out
+        // there is no base path here, we'll reset it later.
+        Paths.DetectedVirtual = cast<CXXRecordType>(BaseType->getAsRecordType());
+        SetVirtual = true;
+      }
+    } else
+      ++Subobjects.second;
+
+    if (Paths.isRecordingPaths()) {
+      // Add this base specifier to the current path.
+      BasePathElement Element;
+      Element.Base = &*BaseSpec;
+      if (BaseSpec->isVirtual())
+        Element.SubobjectNumber = 0;
+      else
+        Element.SubobjectNumber = Subobjects.second;
+      Paths.ScratchPath.push_back(Element);
+    }
+
+    CXXRecordDecl *BaseRecord 
+      = cast<CXXRecordDecl>(BaseSpec->getType()->getAsRecordType()->getDecl());
+
+    // Either look at the base class type or look into the base class
+    // type to see if we've found a member that meets the search
+    // criteria.
+    bool FoundPathToThisBase = false;
+    if (Criteria.LookupBase) {
+      FoundPathToThisBase 
+        = (Context.getCanonicalType(BaseSpec->getType()) == Criteria.Base);
+    } else {
+      Paths.ScratchPath.Decls = BaseRecord->lookup(Criteria.Name);
+      while (Paths.ScratchPath.Decls.first != Paths.ScratchPath.Decls.second) {
+        if (Criteria.Criteria.isLookupResult(*Paths.ScratchPath.Decls.first)) {
+          FoundPathToThisBase = true;
+          break;
+        }
+        ++Paths.ScratchPath.Decls.first;
+      }
+    }
+
+    if (FoundPathToThisBase) {
+      // We've found a path that terminates that this base.
+      FoundPath = true;
       if (Paths.isRecordingPaths()) {
-        // Add this base specifier to the current path.
-        BasePathElement Element;
-        Element.Base = &*BaseSpec;
-        if (BaseSpec->isVirtual())
-          Element.SubobjectNumber = 0;
-        else
-          Element.SubobjectNumber = Subobjects.second;
-        Paths.ScratchPath.push_back(Element);
+        // We have a path. Make a copy of it before moving on.
+        Paths.Paths.push_back(Paths.ScratchPath);
+      } else if (!Paths.isFindingAmbiguities()) {
+        // We found a path and we don't care about ambiguities;
+        // return immediately.
+        return FoundPath;
       }
+    } 
+    // C++ [class.member.lookup]p2:
+    //   A member name f in one sub-object B hides a member name f in
+    //   a sub-object A if A is a base class sub-object of B. Any
+    //   declarations that are so hidden are eliminated from
+    //   consideration.
+    else if (VisitBase && LookupInBases(BaseRecord, Criteria, Paths)) {
+      // There is a path to a base class that meets the criteria. If we're not
+      // collecting paths or finding ambiguities, we're done.
+      FoundPath = true;
+      if (!Paths.isFindingAmbiguities())
+        return FoundPath;
+    }
 
-      if (Context.getCanonicalType(BaseSpec->getType()) == Base) {
-        // We've found the base we're looking for.
-        FoundPath = true;
-        if (Paths.isRecordingPaths()) {
-          // We have a path. Make a copy of it before moving on.
-          Paths.Paths.push_back(Paths.ScratchPath);
-        } else if (!Paths.isFindingAmbiguities()) {
-          // We found a path and we don't care about ambiguities;
-          // return immediately.
-          return FoundPath;
-        }
-      } else if (VisitBase && IsDerivedFrom(BaseSpec->getType(), Base, Paths)) {
-        // There is a path to the base we want. If we're not
-        // collecting paths or finding ambiguities, we're done.
-        FoundPath = true;
-        if (!Paths.isFindingAmbiguities())
-          return FoundPath;
-      }
-
-      // Pop this base specifier off the current path (if we're
-      // collecting paths).
-      if (Paths.isRecordingPaths())
-        Paths.ScratchPath.pop_back();
-      // If we set a virtual earlier, and this isn't a path, forget it again.
-      if (SetVirtual && !FoundPath) {
-        Paths.DetectedVirtual = 0;
-      }
+    // Pop this base specifier off the current path (if we're
+    // collecting paths).
+    if (Paths.isRecordingPaths())
+      Paths.ScratchPath.pop_back();
+    // If we set a virtual earlier, and this isn't a path, forget it again.
+    if (SetVirtual && !FoundPath) {
+      Paths.DetectedVirtual = 0;
     }
   }
 
@@ -208,4 +259,3 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
     << Derived << Base << PathDisplayStr << Range;
   return true;
 }
-

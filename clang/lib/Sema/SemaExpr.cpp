@@ -546,14 +546,22 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   }
 
   // Could be enum-constant, value decl, instance variable, etc.
-  Decl *D;
+  Decl *D = 0;
+  LookupResult Lookup;
   if (SS && !SS->isEmpty()) {
     DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
     if (DC == 0)
       return true;
-    D = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
+    Lookup = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
   } else
-    D = LookupDecl(Name, Decl::IDNS_Ordinary, S);
+    Lookup = LookupDecl(Name, Decl::IDNS_Ordinary, S);
+
+  if (Lookup.isAmbiguous())
+    return DiagnoseAmbiguousLookup(Lookup, Name, Loc, 
+                                   SS && SS->isSet()? SS->getRange() 
+                                                    : SourceRange());
+  else
+    D = Lookup.getAsDecl();
 
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
@@ -1444,11 +1452,21 @@ ActOnMemberReferenceExpr(Scope *S, ExprTy *Base, SourceLocation OpLoc,
     // The record definition is complete, now make sure the member is valid.
     // FIXME: Qualified name lookup for C++ is a bit more complicated
     // than this.
-    Decl *MemberDecl = LookupDecl(DeclarationName(&Member), Decl::IDNS_Ordinary,
-                                  S, RDecl, false, false);
-    if (!MemberDecl)
+    LookupResult Result 
+      = LookupQualifiedName(RDecl, DeclarationName(&Member), 
+                            LookupCriteria(LookupCriteria::Member,
+                                           /*RedeclarationOnly=*/false, 
+                                           getLangOptions().CPlusPlus));
+
+    Decl *MemberDecl = 0;
+    if (!Result)
       return Diag(MemberLoc, diag::err_typecheck_no_member)
                << &Member << BaseExpr->getSourceRange();
+    else if (Result.isAmbiguous())
+      return DiagnoseAmbiguousLookup(Result, DeclarationName(&Member),
+                                     MemberLoc, BaseExpr->getSourceRange());
+    else 
+      MemberDecl = Result;
 
     if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl)) {
       // We may have found a field within an anonymous union or struct

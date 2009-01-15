@@ -71,6 +71,7 @@ namespace clang {
   class ObjCContainerDecl;
   struct BlockSemaInfo;
   class BasePaths;
+  class MemberLookupCriteria;
 
 /// PragmaPackStack - Simple class to wrap the stack used by #pragma
 /// pack.
@@ -596,6 +597,10 @@ public:
     /// field is determined by the kind of name we're searching for.
     unsigned IDNS;
 
+    LookupCriteria() 
+      : Kind(Ordinary), AllowLazyBuiltinCreation(true), 
+        RedeclarationOnly(false), IDNS(Decl::IDNS_Ordinary) { }
+
     LookupCriteria(NameKind K, bool RedeclarationOnly, bool CPlusPlus);
     
     bool isLookupResult(Decl *D) const;
@@ -620,13 +625,19 @@ public:
     mutable enum {
       /// First is a single declaration (a Decl*), which may be NULL.
       SingleDecl,
+
       /// [First, Last) is an iterator range represented as opaque
       /// pointers used to reconstruct IdentifierResolver::iterators.
       OverloadedDeclFromIdResolver,
+
       /// [First, Last) is an iterator range represented as opaque
       /// pointers used to reconstruct DeclContext::lookup_iterators.
       OverloadedDeclFromDeclContext,
-      /// FIXME: Cope with ambiguous name lookup.
+
+      /// First is a pointer to a BasePaths structure, which is owned
+      /// by the LookupResult. Last is non-zero to indicate that the
+      /// ambiguity is caused by two names found in base class
+      /// subobjects of different types.
       AmbiguousLookup
     } StoredKind;
 
@@ -634,15 +645,16 @@ public:
     /// lookup result. This may be a Decl* (if StoredKind ==
     /// SingleDecl), the opaque pointer from an
     /// IdentifierResolver::iterator (if StoredKind ==
-    /// OverloadedDeclFromIdResolver), or a
-    /// DeclContext::lookup_iterator (if StoredKind ==
-    /// OverloadedDeclFromDeclContext).
+    /// OverloadedDeclFromIdResolver), a DeclContext::lookup_iterator
+    /// (if StoredKind == OverloadedDeclFromDeclContext), or a
+    /// BasePaths pointer (if StoredKind == AmbiguousLookup).
     mutable uintptr_t First;
 
     /// The last lookup result, whose contents depend on the kind of
     /// lookup result. This may be unused (if StoredKind ==
-    /// SingleDecl) or it may have the same type as First (for
-    /// overloaded function declarations).
+    /// SingleDecl), it may have the same type as First (for
+    /// overloaded function declarations), or is may be used as a
+    /// Boolean value (if StoredKind == AmbiguousLookup).
     mutable uintptr_t Last;
 
     /// Context - The context in which we will build any
@@ -655,32 +667,62 @@ public:
     enum LookupKind {
       /// @brief No entity found met the criteria.
       NotFound = 0,
+
       /// @brief Name lookup found a single declaration that met the
-      /// criteria.
+      /// criteria. getAsDecl will return this declaration.
       Found,
+
       /// @brief Name lookup found a set of overloaded functions that
-      /// met the criteria.
+      /// met the criteria. getAsDecl will turn this set of overloaded
+      /// functions into an OverloadedFunctionDecl.
       FoundOverloaded,
-      /// @brief Name lookup resulted in an ambiguity, e.g., because
-      /// the name was found in two different base classes.
-      Ambiguous
+
+      /// Name lookup results in an ambiguity because multiple
+      /// entities that meet the lookup criteria were found in
+      /// subobjects of different types. For example:
+      /// @code
+      /// struct A { void f(int); }
+      /// struct B { void f(double); }
+      /// struct C : A, B { };
+      /// void test(C c) { 
+      ///   c.f(0); // error: A::f and B::f come from subobjects of different
+      ///           // types. overload resolution is not performed.
+      /// }
+      /// @endcode
+      AmbiguousBaseSubobjectTypes,
+
+      /// Name lookup results in an ambiguity because multiple
+      /// nonstatic entities that meet the lookup criteria were found
+      /// in different subobjects of the same type. For example:
+      /// @code
+      /// struct A { int x; };
+      /// struct B : A { };
+      /// struct C : A { };
+      /// struct D : B, C { };
+      /// int test(D d) {
+      ///   return d.x; // error: 'x' is found in two A subobjects (of B and C)
+      /// }
+      /// @endcode
+      AmbiguousBaseSubobjects
     };
+
+    LookupResult() : StoredKind(SingleDecl), First(0), Last(0), Context(0) { }
 
     LookupResult(ASTContext &Context, Decl *D) 
       : StoredKind(SingleDecl), First(reinterpret_cast<uintptr_t>(D)),
         Last(0), Context(&Context) { }
 
     LookupResult(ASTContext &Context, 
-                 IdentifierResolver::iterator F, IdentifierResolver::iterator L)
-      : StoredKind(OverloadedDeclFromIdResolver),
-        First(F.getAsOpaqueValue()), Last(L.getAsOpaqueValue()), 
-        Context(&Context) { }
+                 IdentifierResolver::iterator F, IdentifierResolver::iterator L);
 
     LookupResult(ASTContext &Context, 
-                 DeclContext::lookup_iterator F, DeclContext::lookup_iterator L)
-      : StoredKind(OverloadedDeclFromDeclContext),
-        First(reinterpret_cast<uintptr_t>(F)), 
-        Last(reinterpret_cast<uintptr_t>(L)),
+                 DeclContext::lookup_iterator F, DeclContext::lookup_iterator L);
+
+    LookupResult(ASTContext &Context, BasePaths *Paths, 
+                 bool DifferentSubobjectTypes)
+      : StoredKind(AmbiguousLookup), 
+        First(reinterpret_cast<uintptr_t>(Paths)),
+        Last(DifferentSubobjectTypes? 1 : 0),
         Context(&Context) { }
 
     LookupKind getKind() const;
@@ -688,11 +730,16 @@ public:
     /// @brief Determine whether name look found something.
     operator bool() const { return getKind() != NotFound; }
 
+    /// @brief Determines whether the lookup resulted in an ambiguity.
+    bool isAmbiguous() const { return StoredKind == AmbiguousLookup; }
+
     /// @brief Allows conversion of a lookup result into a
     /// declaration, with the same behavior as getAsDecl.
     operator Decl*() const { return getAsDecl(); }
 
     Decl* getAsDecl() const;
+
+    BasePaths *getBasePaths() const;
   };
 
   LookupResult LookupName(Scope *S, DeclarationName Name, 
@@ -701,12 +748,15 @@ public:
                                    LookupCriteria Criteria);
   LookupResult LookupParsedName(Scope *S, const CXXScopeSpec &SS, 
                                 DeclarationName Name, LookupCriteria Criteria);
-  
   LookupResult LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                           const DeclContext *LookupCtx = 0,
                           bool enableLazyBuiltinCreation = true,
                           bool LookInParent = true,
                           bool NamespaceNameOnly = false);
+
+  bool DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
+                               SourceLocation NameLoc, 
+                               SourceRange LookupRange = SourceRange());
   //@}
   
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
@@ -1270,7 +1320,8 @@ public:
 
   bool IsDerivedFrom(QualType Derived, QualType Base);
   bool IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths);
-
+  bool LookupInBases(CXXRecordDecl *Class, const MemberLookupCriteria& Criteria,
+                     BasePaths &Paths);
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range);
 

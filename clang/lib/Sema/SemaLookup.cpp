@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "Sema.h"
+#include "SemaInherit.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -125,6 +127,46 @@ bool Sema::LookupCriteria::isLookupResult(Decl *D) const {
   return false;
 }
 
+Sema::LookupResult::LookupResult(ASTContext &Context, 
+                                 IdentifierResolver::iterator F, 
+                                 IdentifierResolver::iterator L)
+  : Context(&Context) {
+  if (F != L && isa<FunctionDecl>(*F)) {
+    IdentifierResolver::iterator Next = F;
+    ++Next;
+    if (Next != L && isa<FunctionDecl>(*Next)) {
+      StoredKind = OverloadedDeclFromIdResolver;
+      First = F.getAsOpaqueValue();
+      Last = L.getAsOpaqueValue();
+      return;
+    }
+  } 
+    
+  StoredKind = SingleDecl;
+  First = reinterpret_cast<uintptr_t>(*F);
+  Last = 0;
+}
+
+Sema::LookupResult::LookupResult(ASTContext &Context, 
+                                 DeclContext::lookup_iterator F, 
+                                 DeclContext::lookup_iterator L)
+  : Context(&Context) {
+  if (F != L && isa<FunctionDecl>(*F)) {
+    DeclContext::lookup_iterator Next = F;
+    ++Next;
+    if (Next != L && isa<FunctionDecl>(*Next)) {
+      StoredKind = OverloadedDeclFromDeclContext;
+      First = reinterpret_cast<uintptr_t>(F);
+      Last = reinterpret_cast<uintptr_t>(L);
+      return;
+    }
+  }
+  
+  StoredKind = SingleDecl;
+  First = reinterpret_cast<uintptr_t>(*F);
+  Last = 0;
+}
+
 /// @brief Determine the result of name lookup.
 Sema::LookupResult::LookupKind Sema::LookupResult::getKind() const {
   switch (StoredKind) {
@@ -136,11 +178,11 @@ Sema::LookupResult::LookupKind Sema::LookupResult::getKind() const {
     return FoundOverloaded;
 
   case AmbiguousLookup:
-    return Ambiguous;
+    return Last? AmbiguousBaseSubobjectTypes : AmbiguousBaseSubobjects;
   }
 
-  // We can't get here, but GCC complains nonetheless.
-  return Ambiguous;
+  // We can't ever get here.
+  return NotFound;
 }
 
 /// @brief Converts the result of name lookup into a single (possible
@@ -178,6 +220,14 @@ Decl *Sema::LookupResult::getAsDecl() const {
   }
 
   return 0;
+}
+
+/// @brief Retrieves the BasePaths structure describing an ambiguous
+/// name lookup.
+BasePaths *Sema::LookupResult::getBasePaths() const {
+  assert((StoredKind == AmbiguousLookup) && 
+         "getBasePaths can only be used on an ambiguous lookup");
+  return reinterpret_cast<BasePaths *>(First);
 }
 
 /// @brief Perform unqualified name lookup starting from a given
@@ -379,13 +429,99 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
     Criteria.IDNS |= Decl::IDNS_Member;
 
   // Perform qualified name lookup into the LookupCtx.
-  // FIXME: Will need to look into base classes and such.
   DeclContext::lookup_iterator I, E;
   for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I)
     if (Criteria.isLookupResult(*I))
       return LookupResult(Context, I, E);
 
-  return LookupResult(Context, 0);
+  // If this isn't a C++ class or we aren't allowed to look into base
+  // classes, we're done.
+  if (Criteria.RedeclarationOnly || !isa<CXXRecordDecl>(LookupCtx))
+    return LookupResult(Context, 0);
+
+  // Perform lookup into our base classes.
+  BasePaths Paths;
+
+  // Look for this member in our base classes
+  if (!LookupInBases(cast<CXXRecordDecl>(LookupCtx), 
+                     MemberLookupCriteria(Name, Criteria), Paths))
+    return LookupResult(Context, 0);
+
+  // C++ [class.member.lookup]p2:
+  //   [...] If the resulting set of declarations are not all from
+  //   sub-objects of the same type, or the set has a nonstatic member
+  //   and includes members from distinct sub-objects, there is an
+  //   ambiguity and the program is ill-formed. Otherwise that set is
+  //   the result of the lookup.
+  // FIXME: support using declarations!
+  QualType SubobjectType;
+  int SubobjectNumber;
+  for (BasePaths::paths_iterator Path = Paths.begin(), PathEnd = Paths.end();
+       Path != PathEnd; ++Path) {
+    const BasePathElement &PathElement = Path->back();
+
+    // Determine whether we're looking at a distinct sub-object or not.
+    if (SubobjectType.isNull()) {
+      // This is the first subobject we've looked at. Record it's type.
+      SubobjectType = Context.getCanonicalType(PathElement.Base->getType());
+      SubobjectNumber = PathElement.SubobjectNumber;
+    } else if (SubobjectType 
+                 != Context.getCanonicalType(PathElement.Base->getType())) {
+      // We found members of the given name in two subobjects of
+      // different types. This lookup is ambiguous.
+      BasePaths *PathsOnHeap = new BasePaths;
+      PathsOnHeap->swap(Paths);
+      return LookupResult(Context, PathsOnHeap, true);
+    } else if (SubobjectNumber != PathElement.SubobjectNumber) {
+      // We have a different subobject of the same type.
+
+      // C++ [class.member.lookup]p5:
+      //   A static member, a nested type or an enumerator defined in
+      //   a base class T can unambiguously be found even if an object
+      //   has more than one base class subobject of type T. 
+      ScopedDecl *FirstDecl = *Path->Decls.first;
+      if (isa<VarDecl>(FirstDecl) ||
+          isa<TypeDecl>(FirstDecl) ||
+          isa<EnumConstantDecl>(FirstDecl))
+        continue;
+
+      if (isa<CXXMethodDecl>(FirstDecl)) {
+        // Determine whether all of the methods are static.
+        bool AllMethodsAreStatic = true;
+        for (DeclContext::lookup_iterator Func = Path->Decls.first;
+             Func != Path->Decls.second; ++Func) {
+          if (!isa<CXXMethodDecl>(*Func)) {
+            assert(isa<TagDecl>(*Func) && "Non-function must be a tag decl");
+            break;
+          }
+
+          if (!cast<CXXMethodDecl>(*Func)->isStatic()) {
+            AllMethodsAreStatic = false;
+            break;
+          }
+        }
+
+        if (AllMethodsAreStatic)
+          continue;
+      }
+
+      // We have found a nonstatic member name in multiple, distinct
+      // subobjects. Name lookup is ambiguous.
+      BasePaths *PathsOnHeap = new BasePaths;
+      PathsOnHeap->swap(Paths);
+      return LookupResult(Context, PathsOnHeap, false);
+    }
+  }
+
+  // Lookup in a base class succeeded; return these results.
+
+  // If we found a function declaration, return an overload set.
+  if (isa<FunctionDecl>(*Paths.front().Decls.first))
+    return LookupResult(Context, 
+                        Paths.front().Decls.first, Paths.front().Decls.second);
+
+  // We found a non-function declaration; return a single declaration.
+  return LookupResult(Context, *Paths.front().Decls.first);
 }
 
 /// @brief Performs name lookup for a name that was parsed in the
@@ -419,4 +555,41 @@ Sema::LookupParsedName(Scope *S, const CXXScopeSpec &SS,
   return LookupName(S, Name, Criteria);
 }
 
+/// @brief Produce a diagnostic describing the ambiguity that resulted
+/// from name lookup.
+///
+/// @param Result       The ambiguous name lookup result.
+/// 
+/// @param Name         The name of the entity that name lookup was
+/// searching for.
+///
+/// @param NameLoc      The location of the name within the source code.
+///
+/// @param LookupRange  A source range that provides more
+/// source-location information concerning the lookup itself. For
+/// example, this range might highlight a nested-name-specifier that
+/// precedes the name.
+///
+/// @returns true
+bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
+                                   SourceLocation NameLoc, 
+                                   SourceRange LookupRange) {
+  assert(Result.isAmbiguous() && "Lookup result must be ambiguous");
+
+  if (Result.getKind() == LookupResult::AmbiguousBaseSubobjects) {
+    BasePaths *Paths = Result.getBasePaths();
+    QualType SubobjectType = Paths->front().back().Base->getType();
+    return Diag(NameLoc, diag::err_ambiguous_member_multiple_subobjects)
+      << Name << SubobjectType << LookupRange;
+  } 
+
+  assert(Result.getKind() == LookupResult::AmbiguousBaseSubobjectTypes &&
+         "Unhandled form of name lookup ambiguity");
+
+  Diag(NameLoc, diag::err_ambiguous_member_multiple_subobject_types)
+    << Name << LookupRange;
+
+  // FIXME: point out the members we found using notes.
+  return true;
+}
 

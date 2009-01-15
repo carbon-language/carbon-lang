@@ -16,6 +16,8 @@
 #ifndef LLVM_CLANG_SEMA_INHERIT_H
 #define LLVM_CLANG_SEMA_INHERIT_H
 
+#include "clang/AST/DeclarationName.h"
+#include "clang/AST/DeclBase.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
 #include "llvm/ADT/SmallVector.h"
@@ -48,12 +50,17 @@ namespace clang {
 
   /// BasePath - Represents a path from a specific derived class
   /// (which is not represented as part of the path) to a particular
-  /// (direct or indirect) base class subobject. Individual elements
+  /// (direct or indirect) base class subobject that contains some
+  /// number of declarations with the same name. Individual elements
   /// in the path are described by the BasePathElement structure,
   /// which captures both the link from a derived class to one of its
   /// direct bases and identification describing which base class
-  /// subobject is being used. 
-  typedef llvm::SmallVector<BasePathElement, 4> BasePath;
+  /// subobject is being used.
+  struct BasePath : public llvm::SmallVector<BasePathElement, 4> {
+    /// Decls - The set of declarations found inside this base class
+    /// subobject.
+    DeclContext::lookup_result Decls;
+  };
 
   /// BasePaths - Represents the set of paths from a derived class to
   /// one of its (direct or indirect) bases. For example, given the
@@ -137,6 +144,9 @@ namespace clang {
     paths_iterator begin() const { return Paths.begin(); }
     paths_iterator end()   const { return Paths.end(); }
 
+    BasePath&       front()       { return Paths.front(); }
+    const BasePath& front() const { return Paths.front(); }
+
     bool isAmbiguous(QualType BaseType);
 
     /// isFindingAmbiguities - Whether we are finding multiple paths
@@ -159,6 +169,41 @@ namespace clang {
     }
 
     void clear();
+
+    void swap(BasePaths &Other);
+  };
+
+  /// MemberLookupCriteria - Criteria for performing lookup of a
+  /// member of a C++ class. Objects of this type are used to direct
+  /// Sema::LookupCXXClassMember.
+  struct MemberLookupCriteria {
+    /// MemberLookupCriteria - Constructs member lookup criteria to
+    /// search for a base class of type Base.
+    explicit MemberLookupCriteria(QualType Base) 
+      : LookupBase(true), Base(Base) { }
+
+    /// MemberLookupCriteria - Constructs member lookup criteria to
+    /// search for a class member with the given Name.
+    explicit MemberLookupCriteria(DeclarationName Name, 
+                                  Sema::LookupCriteria Criteria) 
+      : LookupBase(false), Name(Name), Criteria(Criteria) { }
+
+    /// LookupBase - True if we are looking for a base class (whose
+    /// type is Base). If false, we are looking for a named member of
+    /// the class (with the name Name).
+    bool LookupBase;
+
+    /// Base - The type of the base class we're searching for, if
+    /// LookupBase is true.
+    QualType Base;
+
+    /// Name - The name of the member we're searching for, if
+    /// LookupBase is false.
+    DeclarationName Name;
+
+    /// Criteria - The criteria by which we evaluate a named member,
+    /// if LookupBase is false.
+    Sema::LookupCriteria Criteria;
   };
 }
 
