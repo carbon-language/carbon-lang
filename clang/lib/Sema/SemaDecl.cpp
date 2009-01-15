@@ -2228,7 +2228,14 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   // Allow block exprs at top level.
   if (Init->getType()->isBlockPointerType())
     return false;
-    
+
+  // GCC cast to union extension
+  // note: the validity of the cast expr is checked by CheckCastTypes()
+  if (CastExpr *C = dyn_cast<CastExpr>(Init)) {
+    QualType T = C->getType();
+    return T->isUnionType() && CheckForConstantInitializer(C->getSubExpr(), T);
+  }
+
   InitializerElementNotConstant(Init);
   return true;
 }
