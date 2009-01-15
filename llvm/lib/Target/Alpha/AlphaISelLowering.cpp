@@ -513,7 +513,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i64, GSDN->getOffset());
 
     //    if (!GV->hasWeakLinkage() && !GV->isDeclaration() && !GV->hasLinkOnceLinkage()) {
-    if (GV->hasInternalLinkage()) {
+    if (GV->hasLocalLinkage()) {
       SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, GA,
                                 DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
       SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, GA, Hi);

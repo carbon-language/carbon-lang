@@ -56,7 +56,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
       // Extra load is needed for all externally visible.
       if (isDirectCall)
         return false;
-      if (GV->hasInternalLinkage() || GV->hasHiddenVisibility())
+      if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())
         return false;
       return true;
     } else if (isTargetCygMing() || isTargetWindows()) {
@@ -79,7 +79,7 @@ bool X86Subtarget::GVRequiresRegister(const GlobalValue *GV,
   // returns false.
   if (TM.getRelocationModel() == Reloc::PIC_)
     return !isDirectCall && 
-      (GV->hasInternalLinkage() || GV->hasExternalLinkage());
+      (GV->hasLocalLinkage() || GV->hasExternalLinkage());
   return false;
 }
 

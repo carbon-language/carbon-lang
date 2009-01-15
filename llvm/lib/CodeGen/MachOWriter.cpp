@@ -371,7 +371,7 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
       SecDataOut.outbyte(0);
   }
   // Globals without external linkage apparently do not go in the symbol table.
-  if (GV->getLinkage() != GlobalValue::InternalLinkage) {
+  if (!GV->hasLocalLinkage()) {
     MachOSym Sym(GV, Mang->getValueName(GV), Sec->Index, TM);
     Sym.n_value = Sec->size;
     SymbolTable.push_back(Sym);
@@ -958,6 +958,9 @@ MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
   case GlobalValue::ExternalLinkage:
     GVName = TAI->getGlobalPrefix() + name;
     n_type |= GV->hasHiddenVisibility() ? N_PEXT : N_EXT;
+    break;
+  case GlobalValue::PrivateLinkage:
+    GVName = TAI->getPrivateGlobalPrefix() + name;
     break;
   case GlobalValue::InternalLinkage:
     GVName = TAI->getGlobalPrefix() + name;

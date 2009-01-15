@@ -199,7 +199,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   // If there is only one call of the function, and it has internal linkage,
   // make it almost guaranteed to be inlined.
   //
-  if (Callee->hasInternalLinkage() && Callee->hasOneUse())
+  if (Callee->hasLocalLinkage() && Callee->hasOneUse())
     InlineCost -= 15000;
   
   // If this function uses the coldcc calling convention, prefer not to inline

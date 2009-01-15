@@ -139,7 +139,7 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool AsmPrinter::doInitialization(Module &M) {
-  Mang = new Mangler(M, TAI->getGlobalPrefix());
+  Mang = new Mangler(M, TAI->getGlobalPrefix(), TAI->getPrivateGlobalPrefix());
   
   GCModuleInfo *MI = getAnalysisToUpdate<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
@@ -199,7 +199,7 @@ bool AsmPrinter::doFinalization(Module &M) {
         O << "\t.globl\t" << Name << '\n';
       else if (I->hasWeakLinkage())
         O << TAI->getWeakRefDirective() << Name << '\n';
-      else if (!I->hasInternalLinkage())
+      else if (!I->hasLocalLinkage())
         assert(0 && "Invalid alias linkage");
 
       printVisibility(Name, I->getVisibility());

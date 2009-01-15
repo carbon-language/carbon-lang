@@ -50,7 +50,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
     if (I->hasName()) {
       if (I->isDeclaration())
         UndefinedSymbols.insert(I->getName());
-      else if (!I->hasInternalLinkage()) {
+      else if (!I->hasLocalLinkage()) {
         assert(!I->hasDLLImportLinkage()
                && "Found dllimported non-external symbol!");
         DefinedSymbols.insert(I->getName());
@@ -62,7 +62,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
     if (I->hasName()) {
       if (I->isDeclaration())
         UndefinedSymbols.insert(I->getName());
-      else if (!I->hasInternalLinkage()) {
+      else if (!I->hasLocalLinkage()) {
         assert(!I->hasDLLImportLinkage()
                && "Found dllimported non-external symbol!");
         DefinedSymbols.insert(I->getName());

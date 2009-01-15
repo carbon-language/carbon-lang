@@ -584,6 +584,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
+  case Function::PrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
@@ -686,7 +687,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
-      (GVar->hasInternalLinkage() || GVar->hasExternalLinkage() ||
+      (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
        GVar->mayBeOverridden())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
@@ -695,7 +696,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
         O << "\t.type " << name << ", @object\n";
         O << name << ":\n";
         O << "\t.zero " << Size << '\n';
-      } else if (GVar->hasInternalLinkage()) {
+      } else if (GVar->hasLocalLinkage()) {
         O << TAI->getLCOMMDirective() << name << ',' << Size;
       } else {
         O << ".comm " << name << ',' << Size;
@@ -723,6 +724,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       << "\t.type " << name << ", @object\n";
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
+   case GlobalValue::PrivateLinkage:
     break;
    default:
     cerr << "Unknown linkage type!";
@@ -911,7 +913,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
-      (GVar->hasInternalLinkage() || GVar->hasExternalLinkage() ||
+      (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
        GVar->mayBeOverridden())) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
@@ -919,7 +921,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       O << "\t.globl " << name << '\n';
       O << "\t.zerofill __DATA, __common, " << name << ", "
         << Size << ", " << Align;
-    } else if (GVar->hasInternalLinkage()) {
+    } else if (GVar->hasLocalLinkage()) {
       O << TAI->getLCOMMDirective() << name << ',' << Size << ',' << Align;
     } else if (!GVar->hasCommonLinkage()) {
       O << "\t.globl " << name << '\n'

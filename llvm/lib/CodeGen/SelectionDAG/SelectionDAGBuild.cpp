@@ -4276,7 +4276,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     // Check for well-known libc/libm calls.  If the function is internal, it
     // can't be a library call.
     unsigned NameLen = F->getNameLen();
-    if (!F->hasInternalLinkage() && NameLen) {
+    if (!F->hasLocalLinkage() && NameLen) {
       const char *NameStr = F->getNameStart();
       if (NameStr[0] == 'c' &&
           ((NameLen == 8 && !strcmp(NameStr, "copysign")) ||

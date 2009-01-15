@@ -453,6 +453,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(declare); KEYWORD(define);
   KEYWORD(global);  KEYWORD(constant);
 
+  KEYWORD(private);
   KEYWORD(internal);
   KEYWORD(linkonce);
   KEYWORD(weak);

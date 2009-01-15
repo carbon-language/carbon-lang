@@ -113,6 +113,7 @@ bool LLParser::ParseTopLevelEntities() {
     // optional leading prefixes, the production is:
     // GlobalVar ::= OptionalLinkage OptionalVisibility OptionalThreadLocal
     //               OptionalAddrSpace ('constant'|'global') ...
+    case lltok::kw_private:       // OptionalLinkage
     case lltok::kw_internal:      // OptionalLinkage
     case lltok::kw_weak:          // OptionalLinkage
     case lltok::kw_linkonce:      // OptionalLinkage
@@ -375,7 +376,8 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 
   if (Linkage != GlobalValue::ExternalLinkage &&
       Linkage != GlobalValue::WeakLinkage &&
-      Linkage != GlobalValue::InternalLinkage)
+      Linkage != GlobalValue::InternalLinkage &&
+      Linkage != GlobalValue::PrivateLinkage)
     return Error(LinkageLoc, "invalid linkage type for alias");
   
   Constant *Aliasee;
@@ -738,6 +740,7 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
 
 /// ParseOptionalLinkage
 ///   ::= /*empty*/
+///   ::= 'private'
 ///   ::= 'internal'
 ///   ::= 'weak'
 ///   ::= 'linkonce'
@@ -751,6 +754,7 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   HasLinkage = false;
   switch (Lex.getKind()) {
   default:                    Res = GlobalValue::ExternalLinkage; return false;
+  case lltok::kw_private:     Res = GlobalValue::PrivateLinkage; break;
   case lltok::kw_internal:    Res = GlobalValue::InternalLinkage; break;
   case lltok::kw_weak:        Res = GlobalValue::WeakLinkage; break;
   case lltok::kw_linkonce:    Res = GlobalValue::LinkOnceLinkage; break;
@@ -2065,6 +2069,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
     if (isDefine)
       return Error(LinkageLoc, "invalid linkage for function definition");
     break;
+  case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
   case GlobalValue::LinkOnceLinkage:
   case GlobalValue::WeakLinkage:

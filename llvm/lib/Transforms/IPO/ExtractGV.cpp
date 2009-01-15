@@ -63,7 +63,7 @@ namespace {
                   I != E; ++I) {
                if (CallInst* callInst = dyn_cast<CallInst>(&*I)) {
                  Function* Callee = callInst->getCalledFunction();
-                 if (Callee && Callee->hasInternalLinkage())
+                 if (Callee && Callee->hasLocalLinkage())
                    Callee->setLinkage(GlobalValue::ExternalLinkage);
                }
              }
@@ -85,6 +85,7 @@ namespace {
 
     bool isolateGV(Module &M) {
       // Mark all globals internal
+      // FIXME: what should we do with private linkage?
       for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
         if (!I->isDeclaration()) {
           I->setLinkage(GlobalValue::InternalLinkage);

@@ -245,7 +245,7 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
   Function *G = FnVec[j];
 
   if (!F->mayBeOverridden()) {
-    if (G->hasInternalLinkage()) {
+    if (G->hasLocalLinkage()) {
       F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
       G->replaceAllUsesWith(F);
       G->eraseFromParent();
@@ -329,7 +329,7 @@ bool MergeFunctions::runOnModule(Module &M) {
     if (F->isDeclaration() || F->isIntrinsic())
       continue;
 
-    if (!F->hasInternalLinkage() && !F->hasExternalLinkage() &&
+    if (!F->hasLocalLinkage() && !F->hasExternalLinkage() &&
         !F->hasWeakLinkage())
       continue;
 

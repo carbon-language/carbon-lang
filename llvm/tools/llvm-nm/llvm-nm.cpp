@@ -68,6 +68,7 @@ namespace {
 }
 
 static char TypeCharForSymbol(GlobalValue &GV) {
+  /* FIXME: what to do with private linkage? */
   if (GV.isDeclaration())                                  return 'U';
   if (GV.hasLinkOnceLinkage())                             return 'C';
   if (GV.hasCommonLinkage())                               return 'C';
@@ -91,7 +92,7 @@ static void DumpSymbolNameForGlobalValue(GlobalValue &GV) {
     return;
   if ((TypeChar == 'U') && DefinedOnly)
     return;
-  if (GV.hasInternalLinkage () && ExternalOnly)
+  if (GV.hasLocalLinkage () && ExternalOnly)
     return;
   if (OutputFormat == posix) {
     std::cout << GV.getName () << " " << TypeCharForSymbol (GV) << " "

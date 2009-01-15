@@ -554,7 +554,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     addGlobalMapping(GV, Ptr);
     }
   } else {
-    if (isGVCompilationDisabled() && !GV->hasInternalLinkage()) {
+    if (isGVCompilationDisabled() && !GV->hasLocalLinkage()) {
       cerr << "Compilation of non-internal GlobalValue is disabled!\n";
       abort();
     }

@@ -98,8 +98,6 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   static unsigned BBNumber = 0;
 
   O << "\n\n";
-  // What's my mangled name?
-  CurrentFnName = Mang->getValueName(MF.getFunction());
 
   // Print out the label for the function.
   const Function *F = MF.getFunction();
@@ -168,7 +166,10 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_GlobalAddress:
-    O << Mang->getValueName(MO.getGlobal());
+    {
+      const GlobalValue *GV = MO.getGlobal();
+      O << Mang->getValueName(GV);
+    }
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
@@ -218,7 +219,7 @@ void SparcAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
 }
 
 bool SparcAsmPrinter::doInitialization(Module &M) {
-  Mang = new Mangler(M);
+  Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix());
   return false; // success
 }
 
@@ -255,10 +256,10 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&
-        (GVar->hasInternalLinkage() || GVar->mayBeOverridden())) {
+        (GVar->hasLocalLinkage() || GVar->mayBeOverridden())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (GVar->hasInternalLinkage())
+      if (GVar->hasLocalLinkage())
         O << "\t.local " << name << '\n';
 
       O << TAI->getCOMMDirective() << name << ',' << Size;
@@ -284,6 +285,7 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     // If external or appending, declare as a global symbol
     O << TAI->getGlobalDirective() << name << '\n';
     // FALL THROUGH
+   case GlobalValue::PrivateLinkage:
    case GlobalValue::InternalLinkage:
     break;
    case GlobalValue::GhostLinkage:

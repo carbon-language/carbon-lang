@@ -188,7 +188,7 @@ public:
   /// getOrInsertFunction - Look up the specified function in the module symbol
   /// table.  Four possibilities:
   ///   1. If it does not exist, add a prototype for the function and return it.
-  ///   2. If it exists, and has internal linkage, the existing function is
+  ///   2. If it exists, and has a local linkage, the existing function is
   ///      renamed and a new one is inserted.
   ///   3. Otherwise, if the existing function has the correct prototype, return
   ///      the existing function.

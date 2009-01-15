@@ -1084,7 +1084,7 @@ void Andersens::CollectConstraints(Module &M) {
     // At some point we should just add constraints for the escaping functions
     // at solve time, but this slows down solving. For now, we simply mark
     // address taken functions as escaping and treat them as external.
-    if (!F->hasInternalLinkage() || AnalyzeUsesOfFunction(F))
+    if (!F->hasLocalLinkage() || AnalyzeUsesOfFunction(F))
       AddConstraintsForNonInternalLinkage(F);
 
     if (!F->isDeclaration()) {

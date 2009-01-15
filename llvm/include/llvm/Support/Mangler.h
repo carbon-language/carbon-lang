@@ -29,6 +29,7 @@ class Mangler {
   /// symbol is marked as not needing this prefix.
   const char *Prefix;
   
+  const char *PrivatePrefix;
   /// UseQuotes - If this is set, the target accepts global names in quotes, 
   /// e.g. "foo bar" is a legal name.  This syntax is used instead of escaping
   /// the space character.  By default, this is false.
@@ -58,7 +59,7 @@ public:
 
   // Mangler ctor - if a prefix is specified, it will be prepended onto all
   // symbols.
-  Mangler(Module &M, const char *Prefix = "");
+  Mangler(Module &M, const char *Prefix = "", const char *privatePrefix = "");
 
   /// setUseQuotes - If UseQuotes is set to true, this target accepts quoted
   /// strings for assembler labels.

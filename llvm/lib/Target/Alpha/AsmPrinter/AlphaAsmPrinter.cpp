@@ -169,6 +169,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   O << "\t.ent " << CurrentFnName << "\n";
 
+  assert (!F->hasPrivateLinkage() && "add private prefix.");
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.

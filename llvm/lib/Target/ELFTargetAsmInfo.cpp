@@ -44,6 +44,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
      default: assert(0 && "Unknown linkage type!");
+     case Function::PrivateLinkage:
      case Function::InternalLinkage:
      case Function::DLLExportLinkage:
      case Function::ExternalLinkage:
@@ -184,4 +185,3 @@ std::string ELFTargetAsmInfo::printSectionFlags(unsigned flags) const {
 
   return Flags;
 }
-

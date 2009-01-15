@@ -1149,6 +1149,7 @@ void AssemblyWriter::printModule(const Module *M) {
 
 static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
   switch (LT) {
+  case GlobalValue::PrivateLinkage:      Out << "private "; break;
   case GlobalValue::InternalLinkage:     Out << "internal "; break;
   case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
   case GlobalValue::WeakLinkage:         Out << "weak "; break;

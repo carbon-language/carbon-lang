@@ -174,6 +174,8 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &F) {
   case GlobalValue::WeakLinkage:
     FnSym.SetBind(ELFWriter::ELFSym::STB_WEAK);
     break;
+  case GlobalValue::PrivateLinkage:
+    assert (0 && "PrivateLinkage should not be in the symbol table.");
   case GlobalValue::InternalLinkage:
     FnSym.SetBind(ELFWriter::ELFSym::STB_LOCAL);
     break;
@@ -329,7 +331,8 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
 
     // Set the idx of the .bss section
     BSSSym.SectionIdx = BSSSection.SectionIdx;
-    SymbolTable.push_back(BSSSym);
+    if (!GV->hasPrivateLinkage())
+      SymbolTable.push_back(BSSSym);
 
     // Reserve space in the .bss section for this symbol.
     BSSSection.Size += Size;

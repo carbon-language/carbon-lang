@@ -203,7 +203,7 @@ public:
   /// and out of the specified function (which cannot have its address taken),
   /// this method must be called.
   void AddTrackedFunction(Function *F) {
-    assert(F->hasInternalLinkage() && "Can only track internal functions!");
+    assert(F->hasLocalLinkage() && "Can only track internal functions!");
     // Add an entry, F -> undef.
     if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
@@ -609,7 +609,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
 
   Function *F = I.getParent()->getParent();
   // If we are tracking the return value of this function, merge it in.
-  if (!F->hasInternalLinkage())
+  if (!F->hasLocalLinkage())
     return;
 
   if (!TrackedRetVals.empty() && I.getNumOperands() == 1) {
@@ -1170,7 +1170,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
   // The common case is that we aren't tracking the callee, either because we
   // are not doing interprocedural analysis or the callee is indirect, or is
   // external.  Handle these cases first.
-  if (F == 0 || !F->hasInternalLinkage()) {
+  if (F == 0 || !F->hasLocalLinkage()) {
 CallOverdefined:
     // Void return and not tracking callee, just bail.
     if (I->getType() == Type::VoidTy) return;
@@ -1656,7 +1656,7 @@ bool IPSCCP::runOnModule(Module &M) {
   // taken or that are external as overdefined.
   //
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
-    if (!F->hasInternalLinkage() || AddressIsTaken(F)) {
+    if (!F->hasLocalLinkage() || AddressIsTaken(F)) {
       if (!F->isDeclaration())
         Solver.MarkBlockExecutable(F->begin());
       for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
@@ -1671,7 +1671,7 @@ bool IPSCCP::runOnModule(Module &M) {
   // their addresses taken, we can propagate constants through them.
   for (Module::global_iterator G = M.global_begin(), E = M.global_end();
        G != E; ++G)
-    if (!G->isConstant() && G->hasInternalLinkage() && !AddressIsTaken(G))
+    if (!G->isConstant() && G->hasLocalLinkage() && !AddressIsTaken(G))
       Solver.TrackValueOfGlobalVariable(G);
 
   // Solve for constants.

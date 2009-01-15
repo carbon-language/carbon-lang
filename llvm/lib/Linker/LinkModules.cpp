@@ -1,4 +1,4 @@
-//===- lib/Linker/LinkModules.cpp - Module Linker Implementation ----------===//
+ //===- lib/Linker/LinkModules.cpp - Module Linker Implementation ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -415,7 +415,7 @@ static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
 
   // If there is a conflict, rename the conflict.
   if (GlobalValue *ConflictGV = cast_or_null<GlobalValue>(ST.lookup(Name))) {
-    assert(ConflictGV->hasInternalLinkage() &&
+    assert(ConflictGV->hasLocalLinkage() &&
            "Not conflicting with a static global, should link instead!");
     GV->takeName(ConflictGV);
     ConflictGV->setName(Name);    // This will cause ConflictGV to get renamed
@@ -444,7 +444,7 @@ static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
 static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
                              GlobalValue::LinkageTypes &LT, bool &LinkFromSrc,
                              std::string *Err) {
-  assert((!Dest || !Src->hasInternalLinkage()) &&
+  assert((!Dest || !Src->hasLocalLinkage()) &&
          "If Src has internal linkage, Dest shouldn't be set!");
   if (!Dest) {
     // Linking something to nothing.
@@ -536,13 +536,13 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
     // Check to see if may have to link the global with the global, alias or
     // function.
-    if (SGV->hasName() && !SGV->hasInternalLinkage())
+    if (SGV->hasName() && !SGV->hasLocalLinkage())
       DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SGV->getNameStart(),
                                                         SGV->getNameEnd()));
     
     // If we found a global with the same name in the dest module, but it has
     // internal linkage, we are really not doing any linkage here.
-    if (DGV && DGV->hasInternalLinkage())
+    if (DGV && DGV->hasLocalLinkage())
       DGV = 0;
     
     // If types don't agree due to opaque types, try to resolve them.
@@ -573,7 +573,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // If the LLVM runtime renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename
       // it.
-      if (!NewDGV->hasInternalLinkage() && NewDGV->getName() != SGV->getName())
+      if (!NewDGV->hasLocalLinkage() && NewDGV->getName() != SGV->getName())
         ForceRenaming(NewDGV, SGV->getName());
 
       // Make sure to remember this mapping.
@@ -643,7 +643,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
       // If the symbol table renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename.
-      if (NewDGV->getName() != SGV->getName() && !NewDGV->hasInternalLinkage())
+      if (NewDGV->getName() != SGV->getName() && !NewDGV->hasLocalLinkage())
         ForceRenaming(NewDGV, SGV->getName());
       
       // Inherit const as appropriate.
@@ -687,10 +687,12 @@ CalculateAliasLinkage(const GlobalValue *SGV, const GlobalValue *DGV) {
     return GlobalValue::ExternalLinkage;
   else if (SGV->hasWeakLinkage() || DGV->hasWeakLinkage())
     return GlobalValue::WeakLinkage;
-  else {
-    assert(SGV->hasInternalLinkage() && DGV->hasInternalLinkage() &&
-           "Unexpected linkage type");
+  else if (SGV->hasInternalLinkage() && DGV->hasInternalLinkage())
     return GlobalValue::InternalLinkage;
+  else {
+    assert (SGV->hasPrivateLinkage() && DGV->hasPrivateLinkage() &&
+	    "Unexpected linkage type");
+    return GlobalValue::PrivateLinkage;
   }
 }
 
@@ -715,7 +717,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     GlobalValue* DGV = NULL;
 
     // Try to find something 'similar' to SGA in destination module.
-    if (!DGV && !SGA->hasInternalLinkage()) {
+    if (!DGV && !SGA->hasLocalLinkage()) {
       DGV = Dest->getNamedAlias(SGA->getName());
 
       // If types don't agree due to opaque types, try to resolve them.
@@ -723,7 +725,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
         RecursiveResolveTypes(SGA->getType(), DGV->getType());
     }
 
-    if (!DGV && !SGA->hasInternalLinkage()) {
+    if (!DGV && !SGA->hasLocalLinkage()) {
       DGV = Dest->getGlobalVariable(SGA->getName());
 
       // If types don't agree due to opaque types, try to resolve them.
@@ -731,7 +733,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
         RecursiveResolveTypes(SGA->getType(), DGV->getType());
     }
 
-    if (!DGV && !SGA->hasInternalLinkage()) {
+    if (!DGV && !SGA->hasLocalLinkage()) {
       DGV = Dest->getFunction(SGA->getName());
 
       // If types don't agree due to opaque types, try to resolve them.
@@ -740,7 +742,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     }
 
     // No linking to be performed on internal stuff.
-    if (DGV && DGV->hasInternalLinkage())
+    if (DGV && DGV->hasLocalLinkage())
       DGV = NULL;
 
     if (GlobalAlias *DGA = dyn_cast_or_null<GlobalAlias>(DGV)) {
@@ -831,7 +833,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     // If the symbol table renamed the alias, but it is an externally visible
     // symbol, DGA must be an global value with internal linkage. Rename it.
     if (NewGA->getName() != SGA->getName() &&
-        !NewGA->hasInternalLinkage())
+        !NewGA->hasLocalLinkage())
       ForceRenaming(NewGA, SGA->getName());
 
     // Remember this mapping so uses in the source module get remapped
@@ -912,13 +914,13 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     
     // Check to see if may have to link the function with the global, alias or
     // function.
-    if (SF->hasName() && !SF->hasInternalLinkage())
+    if (SF->hasName() && !SF->hasLocalLinkage())
       DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SF->getNameStart(),
                                                         SF->getNameEnd()));
     
     // If we found a global with the same name in the dest module, but it has
     // internal linkage, we are really not doing any linkage here.
-    if (DGV && DGV->hasInternalLinkage())
+    if (DGV && DGV->hasLocalLinkage())
       DGV = 0;
 
     // If types don't agree due to opaque types, try to resolve them.
@@ -943,7 +945,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // If the LLVM runtime renamed the function, but it is an externally
       // visible symbol, DF must be an existing function with internal linkage.
       // Rename it.
-      if (!NewDF->hasInternalLinkage() && NewDF->getName() != SF->getName())
+      if (!NewDF->hasLocalLinkage() && NewDF->getName() != SF->getName())
         ForceRenaming(NewDF, SF->getName());
       
       // ... and remember this mapping...
@@ -982,7 +984,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // If the symbol table renamed the function, but it is an externally
       // visible symbol, DF must be an existing function with internal 
       // linkage.  Rename it.
-      if (NewDF->getName() != SF->getName() && !NewDF->hasInternalLinkage())
+      if (NewDF->getName() != SF->getName() && !NewDF->hasLocalLinkage())
         ForceRenaming(NewDF, SF->getName());
       
       // Remember this mapping so uses in the source module get remapped

@@ -35,6 +35,7 @@ public:
     WeakLinkage,        ///< Keep one copy of named function when linking (weak)
     AppendingLinkage,   ///< Special purpose, only applies to global arrays
     InternalLinkage,    ///< Rename collisions when linking (static functions)
+    PrivateLinkage,     ///< Like Internal, but omit from symbol table
     DLLImportLinkage,   ///< Function to be imported from DLL
     DLLExportLinkage,   ///< Function to be accessible from DLL
     ExternalWeakLinkage,///< ExternalWeak linkage description
@@ -104,6 +105,10 @@ public:
   bool hasCommonLinkage()     const { return Linkage == CommonLinkage; }
   bool hasAppendingLinkage()  const { return Linkage == AppendingLinkage; }
   bool hasInternalLinkage()   const { return Linkage == InternalLinkage; }
+  bool hasPrivateLinkage()    const { return Linkage == PrivateLinkage; }
+  bool hasLocalLinkage()      const {
+    return Linkage == InternalLinkage || Linkage == PrivateLinkage;
+  }
   bool hasDLLImportLinkage()  const { return Linkage == DLLImportLinkage; }
   bool hasDLLExportLinkage()  const { return Linkage == DLLExportLinkage; }
   bool hasExternalWeakLinkage() const { return Linkage == ExternalWeakLinkage; }

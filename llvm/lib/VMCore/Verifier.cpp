@@ -350,7 +350,7 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
           GV.hasExternalWeakLinkage() ||
           GV.hasGhostLinkage() ||
           (isa<GlobalAlias>(GV) &&
-           (GV.hasInternalLinkage() || GV.hasWeakLinkage())),
+           (GV.hasLocalLinkage() || GV.hasWeakLinkage())),
   "Global is external, but doesn't have external or dllimport or weak linkage!",
           &GV);
 
@@ -384,7 +384,7 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
 void Verifier::visitGlobalAlias(GlobalAlias &GA) {
   Assert1(!GA.getName().empty(),
           "Alias name cannot be empty!", &GA);
-  Assert1(GA.hasExternalLinkage() || GA.hasInternalLinkage() ||
+  Assert1(GA.hasExternalLinkage() || GA.hasLocalLinkage() ||
           GA.hasWeakLinkage(),
           "Alias should have external or external weak linkage!", &GA);
   Assert1(GA.getAliasee(),

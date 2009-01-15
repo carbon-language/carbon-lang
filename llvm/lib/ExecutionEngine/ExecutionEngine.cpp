@@ -249,7 +249,7 @@ void ExecutionEngine::runStaticConstructorsDestructors(Module *module, bool isDt
  // an old-style (llvmgcc3) static ctor with __main linked in and in use.  If
  // this is the case, don't execute any of the global ctors, __main will do
  // it.
- if (!GV || GV->isDeclaration() || GV->hasInternalLinkage()) return;
+ if (!GV || GV->isDeclaration() || GV->hasLocalLinkage()) return;
  
  // Should be an array of '{ int, void ()* }' structs.  The first value is
  // the init priority, which we ignore.
@@ -893,7 +893,7 @@ void ExecutionEngine::emitGlobals() {
       for (Module::const_global_iterator I = M.global_begin(),
            E = M.global_end(); I != E; ++I) {
         const GlobalValue *GV = I;
-        if (GV->hasInternalLinkage() || GV->isDeclaration() ||
+        if (GV->hasLocalLinkage() || GV->isDeclaration() ||
             GV->hasAppendingLinkage() || !GV->hasName())
           continue;// Ignore external globals and globals with internal linkage.
           

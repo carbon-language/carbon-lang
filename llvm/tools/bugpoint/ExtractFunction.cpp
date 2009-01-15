@@ -199,7 +199,7 @@ static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
 /// prune appropriate entries out of M1s list.
 static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2){
   GlobalVariable *GV = M1->getNamedGlobal(GlobalName);
-  if (!GV || GV->isDeclaration() || GV->hasInternalLinkage() ||
+  if (!GV || GV->isDeclaration() || GV->hasLocalLinkage() ||
       !GV->use_empty()) return;
   
   std::vector<std::pair<Function*, int> > M1Tors, M2Tors;

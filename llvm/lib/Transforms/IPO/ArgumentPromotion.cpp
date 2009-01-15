@@ -114,7 +114,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   Function *F = CGN->getFunction();
 
   // Make sure that it is local to this module.
-  if (!F || !F->hasInternalLinkage()) return false;
+  if (!F || !F->hasLocalLinkage()) return false;
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
   SmallVector<std::pair<Argument*, unsigned>, 16> PointerArgs;

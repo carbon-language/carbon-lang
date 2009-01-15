@@ -82,7 +82,7 @@ bool SRETPromotion::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   Function *F = CGN->getFunction();
 
-  if (!F || F->isDeclaration() || !F->hasInternalLinkage())
+  if (!F || F->isDeclaration() || !F->hasLocalLinkage())
     return false;
 
   // Make sure that function returns struct.

@@ -121,9 +121,10 @@ bool InternalizePass::runOnModule(Module &M) {
   bool Changed = false;
 
   // Mark all functions not in the api as internal.
+  // FIXME: maybe use private linkage?
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isDeclaration() &&         // Function must be defined here
-        !I->hasInternalLinkage() &&  // Can't already have internal linkage
+        !I->hasLocalLinkage() &&  // Can't already have internal linkage
         !ExternalNames.count(I->getName())) {// Not marked to keep external?
       I->setLinkage(GlobalValue::InternalLinkage);
       // Remove a callgraph edge from the external node to this function.
@@ -149,9 +150,10 @@ bool InternalizePass::runOnModule(Module &M) {
 
   // Mark all global variables with initializers that are not in the api as
   // internal as well.
+  // FIXME: maybe use private linkage?
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    if (!I->isDeclaration() && !I->hasInternalLinkage() &&
+    if (!I->isDeclaration() && !I->hasLocalLinkage() &&
         !ExternalNames.count(I->getName())) {
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;

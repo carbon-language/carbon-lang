@@ -153,7 +153,7 @@ Constant *Module::getOrInsertFunction(const std::string &Name,
   }
 
   // Okay, the function exists.  Does it have externally visible linkage?
-  if (F->hasInternalLinkage()) {
+  if (F->hasLocalLinkage()) {
     // Clear the function's name.
     F->setName("");
     // Retry, now there won't be a conflict.
@@ -238,14 +238,14 @@ Function *Module::getFunction(const char *Name) const {
 /// symbol table.  If it does not exist, return null.  The type argument
 /// should be the underlying type of the global, i.e., it should not have
 /// the top-level PointerType, which represents the address of the global.
-/// If AllowInternal is set to true, this function will return types that
-/// have InternalLinkage. By default, these types are not returned.
+/// If AllowLocal is set to true, this function will return types that
+/// have an local. By default, these types are not returned.
 ///
 GlobalVariable *Module::getGlobalVariable(const std::string &Name,
-                                          bool AllowInternal) const {
+                                          bool AllowLocal) const {
   if (Value *V = ValSymTab->lookup(Name)) {
     GlobalVariable *Result = dyn_cast<GlobalVariable>(V);
-    if (Result && (AllowInternal || !Result->hasInternalLinkage()))
+    if (Result && (AllowLocal || !Result->hasLocalLinkage()))
       return Result;
   }
   return 0;
@@ -376,4 +376,3 @@ void Module::removeLibrary(const std::string& Lib) {
       return;
     }
 }
-

@@ -349,10 +349,10 @@ MSILWriter::ValueType MSILWriter::getValueLocation(const Value* V) {
     return ArgumentVT;
   // Function
   else if (const Function* F = dyn_cast<Function>(V))
-    return F->hasInternalLinkage() ? InternalVT : GlobalVT;
+    return F->hasLocalLinkage() ? InternalVT : GlobalVT;
   // Variable
   else if (const GlobalVariable* G = dyn_cast<GlobalVariable>(V))
-    return G->hasInternalLinkage() ? InternalVT : GlobalVT;
+    return G->hasLocalLinkage() ? InternalVT : GlobalVT;
   // Constant
   else if (isa<Constant>(V))
     return isa<ConstantExpr>(V) ? ConstExprVT : ConstVT;
@@ -1401,7 +1401,7 @@ void MSILWriter::printStaticInitializerList() {
 void MSILWriter::printFunction(const Function& F) {
   bool isSigned = F.paramHasAttr(0, Attribute::SExt);
   Out << "\n.method static ";
-  Out << (F.hasInternalLinkage() ? "private " : "public ");
+  Out << (F.hasLocalLinkage() ? "private " : "public ");
   if (F.isVarArg()) Out << "vararg ";
   Out << getTypeName(F.getReturnType(),isSigned) << 
     getConvModopt(F.getCallingConv()) << getValueName(&F) << '\n';

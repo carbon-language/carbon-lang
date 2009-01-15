@@ -112,7 +112,7 @@ private:
     CallGraphNode *Node = getOrInsertFunction(F);
 
     // If this function has external linkage, anything could call it.
-    if (!F->hasInternalLinkage()) {
+    if (!F->hasLocalLinkage()) {
       ExternalCallingNode->addCalledFunction(CallSite(), Node);
 
       // Found the entry point?

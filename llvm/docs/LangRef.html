@@ -480,13 +480,20 @@ All Global Variables and Functions have one of the following types of linkage:
 
 <dl>
 
+  <dt><tt><b><a name="linkage_private">private</a></b></tt>: </dt>
+
+  <dd>Global values with private linkage are only directly accessible by
+  objects in the current module.  In particular, linking code into a module with
+  an private global value may cause the private to be renamed as necessary to
+  avoid collisions.  Because the symbol is private to the module, all
+  references can be updated. This doesn't show up in any symbol table in the
+  object file.
+  </dd>
+
   <dt><tt><b><a name="linkage_internal">internal</a></b></tt>: </dt>
 
-  <dd>Global values with internal linkage are only directly accessible by
-  objects in the current module.  In particular, linking code into a module with
-  an internal global value may cause the internal to be renamed as necessary to
-  avoid collisions.  Because the symbol is internal to the module, all
-  references can be updated.  This corresponds to the notion of the
+  <dd> Similar to private, but the value show as a local symbol (STB_LOCAL in
+  the case of ELF) in the object file. This corresponds to the notion of the
   '<tt>static</tt>' keyword in C.
   </dd>
 

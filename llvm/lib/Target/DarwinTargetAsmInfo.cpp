@@ -61,7 +61,7 @@ DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
                                           Mangler *Mang) const {
   if (GV==0)
     return false;
-  if (GV->hasInternalLinkage() && !isa<Function>(GV) &&
+  if (GV->hasLocalLinkage() && !isa<Function>(GV) &&
       ((strlen(getPrivateGlobalPrefix()) != 0 &&
         Mang->getValueName(GV).substr(0,strlen(getPrivateGlobalPrefix())) ==
           getPrivateGlobalPrefix()) ||

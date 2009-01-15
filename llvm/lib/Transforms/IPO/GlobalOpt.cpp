@@ -464,7 +464,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
   if (!GlobalUsersSafeToSRA(GV))
     return 0;
   
-  assert(GV->hasInternalLinkage() && !GV->isConstant());
+  assert(GV->hasLocalLinkage() && !GV->isConstant());
   Constant *Init = GV->getInitializer();
   const Type *Ty = Init->getType();
 
@@ -1808,12 +1808,12 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
   for (Module::iterator FI = M.begin(), E = M.end(); FI != E; ) {
     Function *F = FI++;
     F->removeDeadConstantUsers();
-    if (F->use_empty() && (F->hasInternalLinkage() ||
+    if (F->use_empty() && (F->hasLocalLinkage() ||
                            F->hasLinkOnceLinkage())) {
       M.getFunctionList().erase(F);
       Changed = true;
       ++NumFnDeleted;
-    } else if (F->hasInternalLinkage()) {
+    } else if (F->hasLocalLinkage()) {
       if (F->getCallingConv() == CallingConv::C && !F->isVarArg() &&
           OnlyCalledDirectly(F)) {
         // If this function has C calling conventions, is not a varargs
@@ -1843,7 +1843,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
   for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
        GVI != E; ) {
     GlobalVariable *GV = GVI++;
-    if (!GV->isConstant() && GV->hasInternalLinkage() &&
+    if (!GV->isConstant() && GV->hasLocalLinkage() &&
         GV->hasInitializer())
       Changed |= ProcessInternalGlobal(GV, GVI);
   }
@@ -1982,7 +1982,7 @@ static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues,
 /// globals.  This should be kept up to date with CommitValueTo.
 static bool isSimpleEnoughPointerToCommit(Constant *C) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
-    if (!GV->hasExternalLinkage() && !GV->hasInternalLinkage())
+    if (!GV->hasExternalLinkage() && !GV->hasLocalLinkage())
       return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
     return !GV->isDeclaration();  // reject external globals.
   }
@@ -1991,7 +1991,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
     if (CE->getOpcode() == Instruction::GetElementPtr &&
         isa<GlobalVariable>(CE->getOperand(0))) {
       GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
-      if (!GV->hasExternalLinkage() && !GV->hasInternalLinkage())
+      if (!GV->hasExternalLinkage() && !GV->hasLocalLinkage())
         return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
       return GV->hasInitializer() &&
              ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);

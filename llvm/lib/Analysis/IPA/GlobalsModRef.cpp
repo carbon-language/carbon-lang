@@ -164,7 +164,7 @@ Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 void GlobalsModRef::AnalyzeGlobals(Module &M) {
   std::vector<Function*> Readers, Writers;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->hasInternalLinkage()) {
+    if (I->hasLocalLinkage()) {
       if (!AnalyzeUsesOfPointer(I, Readers, Writers)) {
         // Remember that we are tracking this global.
         NonAddressTakenGlobals.insert(I);
@@ -175,7 +175,7 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
 
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    if (I->hasInternalLinkage()) {
+    if (I->hasLocalLinkage()) {
       if (!AnalyzeUsesOfPointer(I, Readers, Writers)) {
         // Remember that we are tracking this global, and the mod/ref fns
         NonAddressTakenGlobals.insert(I);
@@ -504,7 +504,7 @@ GlobalsModRef::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   // If we are asking for mod/ref info of a direct call with a pointer to a
   // global we are tracking, return information if we have it.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(P->getUnderlyingObject()))
-    if (GV->hasInternalLinkage())
+    if (GV->hasLocalLinkage())
       if (Function *F = CS.getCalledFunction())
         if (NonAddressTakenGlobals.count(GV))
           if (FunctionRecord *FR = getFunctionInfo(F))

@@ -172,7 +172,7 @@ ModulePass *llvm::createDeadArgHackingPass() { return new DAH(); }
 /// llvm.vastart is never called, the varargs list is dead for the function.
 bool DAE::DeleteDeadVarargs(Function &Fn) {
   assert(Fn.getFunctionType()->isVarArg() && "Function isn't varargs!");
-  if (Fn.isDeclaration() || !Fn.hasInternalLinkage()) return false;
+  if (Fn.isDeclaration() || !Fn.hasLocalLinkage()) return false;
 
   // Ensure that the function is only directly called.
   for (Value::use_iterator I = Fn.use_begin(), E = Fn.use_end(); I != E; ++I) {
@@ -424,7 +424,7 @@ void DAE::SurveyFunction(Function &F) {
         return;
       }
 
-  if (!F.hasInternalLinkage() && (!ShouldHackArguments() || F.isIntrinsic())) {
+  if (!F.hasLocalLinkage() && (!ShouldHackArguments() || F.isIntrinsic())) {
     MarkLive(F);
     return;
   }

@@ -216,7 +216,7 @@ bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
 
   // if this is a internal constant string, there is a special
   // section for it, but not in small data/bss.
-  if (GVA->hasInitializer() && GV->hasInternalLinkage()) {
+  if (GVA->hasInitializer() && GV->hasLocalLinkage()) {
     Constant *C = GVA->getInitializer();
     const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
     if (CVA && CVA->isCString()) 
@@ -489,7 +489,7 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
     SDValue ResNode = DAG.getLoad(MVT::i32, DAG.getEntryNode(), GA, NULL, 0);
     // On functions and global targets not internal linked only
     // a load from got/GP is necessary for PIC to work.
-    if (!GV->hasInternalLinkage() || isa<Function>(GV))
+    if (!GV->hasLocalLinkage() || isa<Function>(GV))
       return ResNode;
     SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
     return DAG.getNode(ISD::ADD, MVT::i32, ResNode, Lo);

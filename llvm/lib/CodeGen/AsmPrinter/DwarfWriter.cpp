@@ -3272,7 +3272,8 @@ private:
     // Externally visible entry into the functions eh frame info.
     // If the corresponding function is static, this should not be
     // externally visible.
-    if (linkage != Function::InternalLinkage) {
+    if (linkage != Function::InternalLinkage &&
+	linkage != Function::PrivateLinkage) {
       if (const char *GlobalEHDirective = TAI->getGlobalEHDirective())
         O << GlobalEHDirective << EHFrameInfo.FnName << "\n";
     }

@@ -147,14 +147,20 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
     Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(GlobalID++);
   } else {
     Name = makeNameProper(GV->getName() + Suffix, Prefix);
+    std::string prefix;
+    if (GV->hasPrivateLinkage())
+      prefix = PrivatePrefix;
+    else
+      prefix = "";
+    Name = prefix + Name;
   }
 
   return Name;
 }
 
-Mangler::Mangler(Module &M, const char *prefix)
-  : Prefix(prefix), UseQuotes(false), PreserveAsmNames(false),
-    Count(0), TypeCounter(0) {
+Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix)
+  : Prefix(prefix), PrivatePrefix (privatePrefix), UseQuotes(false),
+    PreserveAsmNames(false), Count(0), TypeCounter(0) {
   std::fill(AcceptableChars, array_endof(AcceptableChars), 0);
 
   // Letters and numbers are acceptable.

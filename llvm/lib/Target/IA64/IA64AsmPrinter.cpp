@@ -275,10 +275,10 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&
-        (GVar->hasInternalLinkage() || GVar->mayBeOverridden())) {
+        (GVar->hasLocalLinkage() || GVar->mayBeOverridden())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (GVar->hasInternalLinkage()) {
+      if (GVar->hasLocalLinkage()) {
         O << "\t.lcomm " << name << "#," << Size
           << ',' << (1 << Align);
         O << '\n';
@@ -307,6 +307,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     O << TAI->getGlobalDirective() << name << '\n';
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
+   case GlobalValue::PrivateLinkage:
     break;
    case GlobalValue::GhostLinkage:
     cerr << "GhostLinkage cannot appear in IA64AsmPrinter!\n";

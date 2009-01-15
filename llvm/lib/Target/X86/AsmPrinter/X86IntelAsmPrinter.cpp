@@ -145,6 +145,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     FnAlign = 1;
   switch (F->getLinkage()) {
   default: assert(0 && "Unsupported linkage type!");
+  case Function::PrivateLinkage:
   case Function::InternalLinkage:
     EmitAlignment(FnAlign);
     break;

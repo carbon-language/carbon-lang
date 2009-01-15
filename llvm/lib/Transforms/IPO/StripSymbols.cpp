@@ -95,7 +95,7 @@ static void RemoveDeadConstant(Constant *C) {
         OnlyUsedBy(C->getOperand(i), C)) 
       Operands.insert(C->getOperand(i));
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
-    if (!GV->hasInternalLinkage()) return;   // Don't delete non static globals.
+    if (!GV->hasLocalLinkage()) return;   // Don't delete non static globals.
     GV->eraseFromParent();
   }
   else if (!isa<Function>(C))
@@ -114,7 +114,7 @@ static void StripSymtab(ValueSymbolTable &ST, bool PreserveDbgInfo) {
   for (ValueSymbolTable::iterator VI = ST.begin(), VE = ST.end(); VI != VE; ) {
     Value *V = VI->getValue();
     ++VI;
-    if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()) {
+    if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasLocalLinkage()) {
       if (!PreserveDbgInfo || strncmp(V->getNameStart(), "llvm.dbg", 8))
         // Set name to "", removing from symbol table!
         V->setName("");
@@ -162,13 +162,13 @@ bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
+    if (I->hasLocalLinkage() && llvmUsedValues.count(I) == 0)
       if (!PreserveDbgInfo || strncmp(I->getNameStart(), "llvm.dbg", 8))
         I->setName("");     // Internal symbols can't participate in linkage
   }
   
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
+    if (I->hasLocalLinkage() && llvmUsedValues.count(I) == 0)
       if (!PreserveDbgInfo || strncmp(I->getNameStart(), "llvm.dbg", 8))
         I->setName("");     // Internal symbols can't participate in linkage
     StripSymtab(I->getValueSymbolTable(), PreserveDbgInfo);
@@ -268,6 +268,7 @@ bool StripDebugInfo(Module &M) {
 
   // llvm.dbg.compile_units and llvm.dbg.subprograms are marked as linkonce
   // but since we are removing all debug information, make them internal now.
+  // FIXME: Use private linkage maybe?
   if (Constant *C = M.getNamedGlobal("llvm.dbg.compile_units"))
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
       GV->setLinkage(GlobalValue::InternalLinkage);
@@ -299,7 +300,7 @@ bool StripDebugInfo(Module &M) {
     Constant *C = DeadConstants.back();
     DeadConstants.pop_back();
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
-      if (GV->hasInternalLinkage())
+      if (GV->hasLocalLinkage())
         RemoveDeadConstant(GV);
     }
     else
@@ -329,4 +330,3 @@ bool StripSymbols::runOnModule(Module &M) {
 bool StripNonDebugSymbols::runOnModule(Module &M) {
   return StripSymbolNames(M, true);
 }
-

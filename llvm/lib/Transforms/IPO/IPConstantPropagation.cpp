@@ -63,7 +63,7 @@ bool IPCP::runOnModule(Module &M) {
       if (!I->isDeclaration()) {
         // Delete any klingons.
         I->removeDeadConstantUsers();
-        if (I->hasInternalLinkage())
+        if (I->hasLocalLinkage())
           LocalChange |= PropagateConstantsIntoArguments(*I);
         Changed |= PropagateConstantReturn(*I);
       }

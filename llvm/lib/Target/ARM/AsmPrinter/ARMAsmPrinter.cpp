@@ -197,6 +197,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
+  case Function::PrivateLinkage:
   case Function::InternalLinkage:
     SwitchToTextSection("\t.text", F);
     break;
@@ -847,11 +848,11 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       }
     }
 
-    if (GVar->hasInternalLinkage() || GVar->mayBeOverridden()) {
+    if (GVar->hasLocalLinkage() || GVar->mayBeOverridden()) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (isDarwin) {
-        if (GVar->hasInternalLinkage()) {
+        if (GVar->hasLocalLinkage()) {
           O << TAI->getLCOMMDirective()  << name << "," << Size
             << ',' << Align;
         } else if (GVar->hasCommonLinkage()) {
@@ -869,7 +870,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
           return;
         }
       } else if (TAI->getLCOMMDirective() != NULL) {
-        if (GVar->hasInternalLinkage()) {
+        if (GVar->hasLocalLinkage()) {
           O << TAI->getLCOMMDirective() << name << "," << Size;
         } else {
           O << TAI->getCOMMDirective()  << name << "," << Size;
@@ -878,7 +879,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
         }
       } else {
         SwitchToSection(TAI->SectionForGlobal(GVar));
-        if (GVar->hasInternalLinkage())
+        if (GVar->hasLocalLinkage())
           O << "\t.local\t" << name << "\n";
         O << TAI->getCOMMDirective()  << name << "," << Size;
         if (TAI->getCOMMDirectiveTakesAlignment())
@@ -909,6 +910,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::ExternalLinkage:
     O << "\t.globl " << name << "\n";
     // FALL THROUGH
+   case GlobalValue::PrivateLinkage:
    case GlobalValue::InternalLinkage:
     break;
    default:

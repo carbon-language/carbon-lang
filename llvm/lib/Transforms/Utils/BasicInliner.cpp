@@ -130,7 +130,7 @@ void BasicInlinerImpl::inlineFunctions() {
         
         // Inline
         if (InlineFunction(CS, NULL, TD)) {
-          if (Callee->use_empty() && Callee->hasInternalLinkage())
+          if (Callee->use_empty() && Callee->hasLocalLinkage())
             DeadFunctions.insert(Callee);
           Changed = true;
           CallSites.erase(CallSites.begin() + index);

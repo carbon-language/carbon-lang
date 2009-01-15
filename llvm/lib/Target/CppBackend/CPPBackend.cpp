@@ -292,6 +292,8 @@ namespace {
     switch (LT) {
     case GlobalValue::InternalLinkage:
       Out << "GlobalValue::InternalLinkage"; break;
+    case GlobalValue::PrivateLinkage:
+      Out << "GlobalValue::PrivateLinkage"; break;
     case GlobalValue::LinkOnceLinkage:
       Out << "GlobalValue::LinkOnceLinkage "; break;
     case GlobalValue::WeakLinkage:

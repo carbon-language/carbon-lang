@@ -198,6 +198,7 @@ emitGlobal(const GlobalVariable *GV)
       }
       // FALL THROUGH
     case GlobalValue::InternalLinkage:
+    case GlobalValue::PrivateLinkage:
       break;
     case GlobalValue::GhostLinkage:
       cerr << "Should not have any unmaterialized functions!\n";
@@ -259,6 +260,7 @@ emitFunctionStart(MachineFunction &MF)
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
+  case Function::PrivateLinkage:
     break;
   case Function::ExternalLinkage:
     emitGlobalDirective(CurrentFnName);
@@ -298,9 +300,6 @@ bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 
   // Print out jump tables referenced by the function
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
-
-  // What's my mangled name?
-  CurrentFnName = Mang->getValueName(MF.getFunction());
 
   // Emit the function start directives
   emitFunctionStart(MF);
@@ -367,9 +366,12 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     printBasicBlockLabel(MO.getMBB());
     break;
   case MachineOperand::MO_GlobalAddress:
-    O << Mang->getValueName(MO.getGlobal());
-    if (MO.getGlobal()->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(MO.getGlobal());
+    {
+      const GlobalValue *GV = MO.getGlobal();
+      O << Mang->getValueName(GV);
+      if (GV->hasExternalWeakLinkage())
+        ExtWeakSymbols.insert(GV);
+    }
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();

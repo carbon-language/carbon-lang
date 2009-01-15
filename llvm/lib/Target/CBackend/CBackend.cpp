@@ -1910,7 +1910,7 @@ bool CWriter::doInitialization(Module &M) {
         if (getGlobalVariableClass(I))
           continue;
 
-        if (I->hasInternalLinkage())
+        if (I->hasLocalLinkage())
           Out << "static ";
         else
           Out << "extern ";
@@ -1946,7 +1946,7 @@ bool CWriter::doInitialization(Module &M) {
         if (getGlobalVariableClass(I))
           continue;
 
-        if (I->hasInternalLinkage())
+        if (I->hasLocalLinkage())
           Out << "static ";
         else if (I->hasDLLImportLinkage())
           Out << "__declspec(dllimport) ";
@@ -2190,7 +2190,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   /// isStructReturn - Should this function actually return a struct by-value?
   bool isStructReturn = F->hasStructRetAttr();
   
-  if (F->hasInternalLinkage()) Out << "static ";
+  if (F->hasLocalLinkage()) Out << "static ";
   if (F->hasDLLImportLinkage()) Out << "__declspec(dllimport) ";
   if (F->hasDLLExportLinkage()) Out << "__declspec(dllexport) ";  
   switch (F->getCallingConv()) {

@@ -72,7 +72,7 @@ bool ConstantMerge::runOnModule(Module &M) {
       
       // If this GV is dead, remove it.
       GV->removeDeadConstantUsers();
-      if (GV->use_empty() && GV->hasInternalLinkage()) {
+      if (GV->use_empty() && GV->hasLocalLinkage()) {
         GV->eraseFromParent();
         continue;
       }
@@ -86,7 +86,7 @@ bool ConstantMerge::runOnModule(Module &M) {
 
         if (Slot == 0) {    // Nope, add it to the map.
           Slot = GV;
-        } else if (GV->hasInternalLinkage()) {    // Yup, this is a duplicate!
+        } else if (GV->hasLocalLinkage()) {    // Yup, this is a duplicate!
           // Make all uses of the duplicate constant use the canonical version.
           Replacements.push_back(std::make_pair(GV, Slot));
         }

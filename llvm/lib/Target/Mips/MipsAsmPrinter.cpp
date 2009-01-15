@@ -275,9 +275,6 @@ runOnMachineFunction(MachineFunction &MF)
 
   O << "\n\n";
 
-  // What's my mangled name?
-  CurrentFnName = Mang->getValueName(MF.getFunction());
-
   // Emit the function start directives
   emitFunctionStart(MF);
 
@@ -384,7 +381,10 @@ printOperand(const MachineInstr *MI, int opNum)
       return;
 
     case MachineOperand::MO_GlobalAddress:
-      O << Mang->getValueName(MO.getGlobal());
+      {
+        const GlobalValue *GV = MO.getGlobal();
+        O << Mang->getValueName(GV);
+      }
       break;
 
     case MachineOperand::MO_ExternalSymbol:
@@ -449,7 +449,7 @@ printFCCOperand(const MachineInstr *MI, int opNum, const char *Modifier)
 bool MipsAsmPrinter::
 doInitialization(Module &M) 
 {
-  Mang = new Mangler(M);
+  Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix());
 
   // Tell the assembler which ABI we are using
   O << "\t.section .mdebug." << emitCurrentABIString() << '\n';
@@ -502,10 +502,10 @@ printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&
-        (GVar->hasInternalLinkage() || GVar->mayBeOverridden())) {
+        (GVar->hasLocalLinkage() || GVar->mayBeOverridden())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (GVar->hasInternalLinkage())
+      if (GVar->hasLocalLinkage())
         O << "\t.local\t" << name << '\n';
 
       O << TAI->getCOMMDirective() << name << ',' << Size;
@@ -531,6 +531,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
     // If external or appending, declare as a global symbol
     O << TAI->getGlobalDirective() << name << '\n';
     // Fall Through
+   case GlobalValue::PrivateLinkage:
    case GlobalValue::InternalLinkage:
     if (CVA && CVA->isCString())
       printSizeAndType = false;

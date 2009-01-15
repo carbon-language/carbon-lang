@@ -159,6 +159,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
+  case Function::PrivateLinkage:
     EmitAlignment(FnAlign, F);
     break;
   case Function::DLLExportLinkage:
@@ -188,7 +189,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   else if (Subtarget->isTargetCygMing()) {
     O << "\t.def\t " << CurrentFnName
       << ";\t.scl\t" <<
-      (F->getLinkage() == Function::InternalLinkage ? COFF::C_STAT : COFF::C_EXT)
+      (F->hasInternalLinkage() ? COFF::C_STAT : COFF::C_EXT)
       << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
       << ";\t.endef\n";
   }
@@ -421,7 +422,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         if (shouldPrintPLT(TM, Subtarget)) {
           // Assemble call via PLT for externally visible symbols
           if (!GV->hasHiddenVisibility() && !GV->hasProtectedVisibility() &&
-              !GV->hasInternalLinkage())
+              !GV->hasLocalLinkage())
             O << "@PLT";
         }
         if (Subtarget->isTargetCygMing() && GV->isDeclaration())
@@ -789,11 +790,11 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     }
 
     if (!GVar->isThreadLocal() &&
-        (GVar->hasInternalLinkage() || GVar->mayBeOverridden())) {
+        (GVar->hasLocalLinkage() || GVar->mayBeOverridden())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (TAI->getLCOMMDirective() != NULL) {
-        if (GVar->hasInternalLinkage()) {
+        if (GVar->hasLocalLinkage()) {
           O << TAI->getLCOMMDirective() << name << ',' << Size;
           if (Subtarget->isTargetDarwin())
             O << ',' << Align;
@@ -813,7 +814,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
         }
       } else {
         if (!Subtarget->isTargetCygMing()) {
-          if (GVar->hasInternalLinkage())
+          if (GVar->hasLocalLinkage())
             O << "\t.local\t" << name << '\n';
         }
         O << TAI->getCOMMDirective()  << name << ',' << Size;
@@ -849,6 +850,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     // If external or appending, declare as a global symbol
     O << "\t.globl " << name << '\n';
     // FALL THROUGH
+  case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
      break;
   default:
