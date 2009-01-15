@@ -7581,8 +7581,7 @@ InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
       return true;
 
     // sext (zext ty1), ty2 -> zext ty2
-    if (CastOpc == Instruction::SExt && Opc == Instruction::ZExt &&
-        I->hasOneUse())
+    if (CastOpc == Instruction::SExt && Opc == Instruction::ZExt)
       return true;
     break;
   case Instruction::Select: {
