@@ -263,6 +263,12 @@ public:
   MachineInstr *remove(MachineInstr *I)  { return Insts.remove(I); }
   void clear()                           { Insts.clear(); }
 
+  /// splice - Take an instruction from MBB 'Other' at the position From,
+  /// and insert it into this MBB right before 'where'.
+  void splice(iterator where, MachineBasicBlock *Other, iterator From) {
+    Insts.splice(where, Other->Insts, From);
+  }
+
   /// splice - Take a block of instructions from MBB 'Other' in the range [From,
   /// To), and insert them into this MBB right before 'where'.
   void splice(iterator where, MachineBasicBlock *Other, iterator From,
