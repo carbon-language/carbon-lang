@@ -141,8 +141,8 @@ namespace llvm {
                                       const TargetMachine *TM,
                                       MachineBasicBlock *BB,
                                       bool Fast) {
-    TargetLowering &TLI = IS->getTargetLowering();
-    
+    const TargetLowering &TLI = IS->getTargetLowering();
+
     if (Fast)
       return createFastDAGScheduler(IS, DAG, TM, BB, Fast);
     if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
@@ -399,7 +399,7 @@ static bool IsPossiblyOverwrittenArgumentOfTailCall(SDValue Op,
 /// CheckDAGForTailCallsAndFixThem - This Function looks for CALL nodes in the
 /// DAG and fixes their tailcall attribute operand.
 static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG, 
-                                           TargetLowering& TLI) {
+                                           const TargetLowering& TLI) {
   SDNode * Ret = NULL;
   SDValue Terminator = DAG.getRoot();
 

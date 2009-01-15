@@ -4982,7 +4982,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
       return "<<Unknown Machine Node>>";
     }
     if (G) {
-      TargetLowering &TLI = G->getTargetLoweringInfo();
+      const TargetLowering &TLI = G->getTargetLoweringInfo();
       const char *Name = TLI.getTargetNodeName(getOpcode());
       if (Name) return Name;
       return "<<Unknown Target Node>>";

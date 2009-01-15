@@ -736,7 +736,7 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
 /// ExpandUnalignedLoad - Expands an unaligned load to 2 half-size loads.
 static
 SDValue ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
-                            TargetLowering &TLI) {
+                            const TargetLowering &TLI) {
   int SVOffset = LD->getSrcValueOffset();
   SDValue Chain = LD->getChain();
   SDValue Ptr = LD->getBasePtr();

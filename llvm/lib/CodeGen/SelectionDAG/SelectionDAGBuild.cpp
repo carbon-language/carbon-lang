@@ -380,7 +380,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG,
                                   MVT ValueVT,
                                   ISD::NodeType AssertOp = ISD::DELETED_NODE) {
   assert(NumParts > 0 && "No parts to assemble!");
-  TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDValue Val = Parts[0];
 
   if (NumParts > 1) {
@@ -525,7 +525,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG,
 static void getCopyToParts(SelectionDAG &DAG, SDValue Val,
                            SDValue *Parts, unsigned NumParts, MVT PartVT,
                            ISD::NodeType ExtendKind = ISD::ANY_EXTEND) {
-  TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   MVT PtrVT = TLI.getPointerTy();
   MVT ValueVT = Val.getValueType();
   unsigned PartBits = PartVT.getSizeInBits();
@@ -648,8 +648,7 @@ static void getCopyToParts(SelectionDAG &DAG, SDValue Val,
   // Handle a multi-element vector.
   MVT IntermediateVT, RegisterVT;
   unsigned NumIntermediates;
-  unsigned NumRegs =
-    DAG.getTargetLoweringInfo()
+  unsigned NumRegs = TLI
       .getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
                               RegisterVT);
   unsigned NumElements = ValueVT.getVectorNumElements();
@@ -4819,7 +4818,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
 /// processed uses a memory 'm' constraint.
 static bool
 hasInlineAsmMemConstraint(std::vector<InlineAsm::ConstraintInfo> &CInfos,
-                          TargetLowering &TLI) {
+                          const TargetLowering &TLI) {
   for (unsigned i = 0, e = CInfos.size(); i != e; ++i) {
     InlineAsm::ConstraintInfo &CI = CInfos[i];
     for (unsigned j = 0, ee = CI.Codes.size(); j != ee; ++j) {
