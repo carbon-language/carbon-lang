@@ -1427,6 +1427,10 @@ DIAG(ext_typecheck_cond_one_void, EXTENSION,
      "C99 forbids conditional expressions with only one void side")
 DIAG(ext_typecheck_cast_nonscalar, EXTENSION,
      "C99 forbids casting nonscalar type %0 to the same type")
+DIAG(ext_typecheck_cast_to_union, EXTENSION,
+     "C99 forbids casts to union type")
+DIAG(err_typecheck_cast_to_union_no_type, ERROR,
+     "cast to union type from type %0 not present in union")
 DIAG(err_typecheck_expect_scalar_operand, ERROR,
      "operand of type %0 where arithmetic or pointer type is required")
 DIAG(err_typecheck_cond_incompatible_operands, ERROR,
