@@ -92,8 +92,8 @@ bool XCoreDAGToDAGISel::SelectADDRspii(SDValue Op, SDValue Addr,
     ConstantSDNode *CN = 0;
     if ((FIN = dyn_cast<FrameIndexSDNode>(Addr.getOperand(0)))
       && (CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
-      && (CN->getSExtValue() % 4 == 0)) {
-      // Constant word offset from frame pointer
+      && (CN->getSExtValue() % 4 == 0 && CN->getSExtValue() >= 0)) {
+      // Constant positive word offset from frame index
       Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
       Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
       return true;
