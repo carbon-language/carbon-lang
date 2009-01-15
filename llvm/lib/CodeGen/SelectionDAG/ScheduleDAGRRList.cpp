@@ -18,6 +18,7 @@
 #define DEBUG_TYPE "pre-RA-sched"
 #include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -72,10 +73,10 @@ private:
   ScheduleDAGTopologicalSort Topo;
 
 public:
-  ScheduleDAGRRList(SelectionDAG *dag, MachineBasicBlock *bb,
-                    const TargetMachine &tm, bool isbottomup,
+  ScheduleDAGRRList(MachineFunction &mf,
+                    bool isbottomup,
                     SchedulingPriorityQueue *availqueue)
-    : ScheduleDAGSDNodes(dag, bb, tm), isBottomUp(isbottomup),
+    : ScheduleDAGSDNodes(mf), isBottomUp(isbottomup),
       AvailableQueue(availqueue), Topo(SUnits) {
     }
 
@@ -1346,32 +1347,29 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 //===----------------------------------------------------------------------===//
 
 llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
-                                                    SelectionDAG *DAG,
-                                                    const TargetMachine *TM,
-                                                    MachineBasicBlock *BB,
                                                     bool) {
-  const TargetInstrInfo *TII = TM->getInstrInfo();
-  const TargetRegisterInfo *TRI = TM->getRegisterInfo();
+  const TargetMachine &TM = IS->TM;
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   
   BURegReductionPriorityQueue *PQ = new BURegReductionPriorityQueue(TII, TRI);
 
   ScheduleDAGRRList *SD =
-    new ScheduleDAGRRList(DAG, BB, *TM, true, PQ);
+    new ScheduleDAGRRList(*IS->MF, true, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  
 }
 
 llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
-                                                    SelectionDAG *DAG,
-                                                    const TargetMachine *TM,
-                                                    MachineBasicBlock *BB,
                                                     bool) {
-  const TargetInstrInfo *TII = TM->getInstrInfo();
-  const TargetRegisterInfo *TRI = TM->getRegisterInfo();
+  const TargetMachine &TM = IS->TM;
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   
   TDRegReductionPriorityQueue *PQ = new TDRegReductionPriorityQueue(TII, TRI);
 
-  ScheduleDAGRRList *SD = new ScheduleDAGRRList(DAG, BB, *TM, false, PQ);
+  ScheduleDAGRRList *SD =
+    new ScheduleDAGRRList(*IS->MF, false, PQ);
   PQ->setScheduleDAG(SD);
   return SD;
 }

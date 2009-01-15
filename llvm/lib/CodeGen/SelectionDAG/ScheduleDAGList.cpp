@@ -25,7 +25,6 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
@@ -62,11 +61,10 @@ private:
   HazardRecognizer *HazardRec;
 
 public:
-  ScheduleDAGList(SelectionDAG *dag, MachineBasicBlock *bb,
-                  const TargetMachine &tm,
+  ScheduleDAGList(MachineFunction &mf,
                   SchedulingPriorityQueue *availqueue,
                   HazardRecognizer *HR)
-    : ScheduleDAGSDNodes(dag, bb, tm),
+    : ScheduleDAGSDNodes(mf),
       AvailableQueue(availqueue), HazardRec(HR) {
     }
 
@@ -268,10 +266,8 @@ void ScheduleDAGList::ListScheduleTopDown() {
 /// new hazard recognizer. This scheduler takes ownership of the hazard
 /// recognizer and deletes it when done.
 ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAGISel *IS,
-                                            SelectionDAG *DAG,
-                                            const TargetMachine *TM,
-                                            MachineBasicBlock *BB, bool Fast) {
-  return new ScheduleDAGList(DAG, BB, *TM,
+                                            bool Fast) {
+  return new ScheduleDAGList(*IS->MF,
                              new LatencyPriorityQueue(),
                              IS->CreateTargetHazardRecognizer());
 }

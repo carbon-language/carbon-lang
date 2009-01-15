@@ -41,9 +41,11 @@ namespace llvm {
 /// pattern-matching instruction selectors.
 class SelectionDAGISel : public FunctionPass {
 public:
+  const TargetMachine &TM;
   TargetLowering &TLI;
-  MachineRegisterInfo *RegInfo;
   FunctionLoweringInfo *FuncInfo;
+  MachineFunction *MF;
+  MachineRegisterInfo *RegInfo;
   SelectionDAG *CurDAG;
   SelectionDAGLowering *SDL;
   MachineBasicBlock *BB;
@@ -52,7 +54,7 @@ public:
   bool Fast;
   static char ID;
 
-  explicit SelectionDAGISel(TargetLowering &tli, bool fast = false);
+  explicit SelectionDAGISel(TargetMachine &tm, bool fast = false);
   virtual ~SelectionDAGISel();
   
   TargetLowering &getTargetLowering() { return TLI; }

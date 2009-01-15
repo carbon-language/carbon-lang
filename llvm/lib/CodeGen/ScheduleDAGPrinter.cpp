@@ -34,7 +34,7 @@ namespace llvm {
   template<>
   struct DOTGraphTraits<ScheduleDAG*> : public DefaultDOTGraphTraits {
     static std::string getGraphName(const ScheduleDAG *G) {
-      return G->MF->getFunction()->getName();
+      return G->MF.getFunction()->getName();
     }
 
     static bool renderGraphFromBottomUp() {
@@ -83,8 +83,8 @@ std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
 void ScheduleDAG::viewGraph() {
 // This code is only for debugging!
 #ifndef NDEBUG
-  ViewGraph(this, "dag." + MF->getFunction()->getName(),
-            "Scheduling-Units Graph for " + MF->getFunction()->getName() + ':' +
+  ViewGraph(this, "dag." + MF.getFunction()->getName(),
+            "Scheduling-Units Graph for " + MF.getFunction()->getName() + ':' +
             BB->getBasicBlock()->getName());
 #else
   cerr << "ScheduleDAG::viewGraph is only available in debug builds on "

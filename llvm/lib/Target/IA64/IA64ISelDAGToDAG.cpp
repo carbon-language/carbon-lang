@@ -38,7 +38,7 @@ namespace {
     unsigned GlobalBaseReg;
   public:
     explicit IA64DAGToDAGISel(IA64TargetMachine &TM)
-      : SelectionDAGISel(*TM.getTargetLowering()) {}
+      : SelectionDAGISel(TM) {}
     
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary

@@ -227,7 +227,7 @@ class SPUDAGToDAGISel :
 
 public:
   explicit SPUDAGToDAGISel(SPUTargetMachine &tm) :
-    SelectionDAGISel(*tm.getTargetLowering()),
+    SelectionDAGISel(tm),
     TM(tm),
     SPUtli(*tm.getTargetLowering())
   {}

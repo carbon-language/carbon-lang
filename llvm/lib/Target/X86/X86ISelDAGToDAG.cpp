@@ -126,7 +126,7 @@ namespace {
 
   public:
     X86DAGToDAGISel(X86TargetMachine &tm, bool fast)
-      : SelectionDAGISel(*tm.getTargetLowering(), fast),
+      : SelectionDAGISel(tm, fast),
         TM(tm), X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
         OptForSize(false) {}

@@ -22,9 +22,8 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-ScheduleDAGSDNodes::ScheduleDAGSDNodes(SelectionDAG *dag, MachineBasicBlock *bb,
-                                       const TargetMachine &tm)
-  : ScheduleDAG(dag, bb, tm) {
+ScheduleDAGSDNodes::ScheduleDAGSDNodes(MachineFunction &mf)
+  : ScheduleDAG(mf) {
 }
 
 SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {

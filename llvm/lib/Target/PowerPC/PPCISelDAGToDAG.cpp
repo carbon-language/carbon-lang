@@ -44,7 +44,7 @@ namespace {
     unsigned GlobalBaseReg;
   public:
     explicit PPCDAGToDAGISel(PPCTargetMachine &tm)
-      : SelectionDAGISel(*tm.getTargetLowering()), TM(tm),
+      : SelectionDAGISel(tm), TM(tm),
         PPCLowering(*TM.getTargetLowering()),
         PPCSubTarget(*TM.getSubtargetImpl()) {}
     

@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
 
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
   class MachineLoopInfo;
@@ -25,11 +26,22 @@ namespace llvm {
     const MachineLoopInfo &MLI;
     const MachineDominatorTree &MDT;
 
+    /// Defs, Uses - Remember where defs and uses of each physical register
+    /// are as we iterate upward through the instructions. This is allocated
+    /// here instead of inside BuildSchedGraph to avoid the need for it to be
+    /// initialized and destructed for each block.
+    std::vector<SUnit *> Defs[TargetRegisterInfo::FirstVirtualRegister];
+    std::vector<SUnit *> Uses[TargetRegisterInfo::FirstVirtualRegister];
+
+    /// PendingLoads - Remember where unknown loads are after the most recent
+    /// unknown store, as we iterate. As with Defs and Uses, this is here
+    /// to minimize construction/destruction.
+    std::vector<SUnit *> PendingLoads;
+
   public:
-    ScheduleDAGInstrs(MachineBasicBlock *bb,
-                      const TargetMachine &tm,
-                      const MachineLoopInfo &mli,
-                      const MachineDominatorTree &mdt);
+    explicit ScheduleDAGInstrs(MachineFunction &mf,
+                               const MachineLoopInfo &mli,
+                               const MachineDominatorTree &mdt);
 
     virtual ~ScheduleDAGInstrs() {}
 

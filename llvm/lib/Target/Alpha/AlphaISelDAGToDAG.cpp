@@ -143,7 +143,7 @@ namespace {
 
   public:
     explicit AlphaDAGToDAGISel(AlphaTargetMachine &TM)
-      : SelectionDAGISel(*TM.getTargetLowering())
+      : SelectionDAGISel(TM)
     {}
 
     /// getI64Imm - Return a target constant with the specified value, of type

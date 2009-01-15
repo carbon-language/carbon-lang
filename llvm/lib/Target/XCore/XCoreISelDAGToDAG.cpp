@@ -42,7 +42,7 @@ namespace {
 
   public:
     XCoreDAGToDAGISel(XCoreTargetMachine &TM)
-      : SelectionDAGISel(*TM.getTargetLowering()),
+      : SelectionDAGISel(TM),
         Lowering(*TM.getTargetLowering()), 
         Subtarget(*TM.getSubtargetImpl()) { }
 

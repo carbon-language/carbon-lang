@@ -29,7 +29,7 @@
 using namespace llvm;
 
 void ScheduleDAG::AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO) {
-  MI->addMemOperand(*MF, MO);
+  MI->addMemOperand(MF, MO);
 }
 
 void ScheduleDAG::EmitNoop() {

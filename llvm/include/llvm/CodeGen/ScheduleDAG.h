@@ -421,15 +421,14 @@ namespace llvm {
     const TargetInstrInfo *TII;           // Target instruction information
     const TargetRegisterInfo *TRI;        // Target processor register info
     TargetLowering *TLI;                  // Target lowering info
-    MachineFunction *MF;                  // Machine function
+    MachineFunction &MF;                  // Machine function
     MachineRegisterInfo &MRI;             // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
                                           // represent noop instructions.
     std::vector<SUnit> SUnits;            // The scheduling units.
 
-    ScheduleDAG(SelectionDAG *dag, MachineBasicBlock *bb,
-                const TargetMachine &tm);
+    explicit ScheduleDAG(MachineFunction &mf);
 
     virtual ~ScheduleDAG();
 
@@ -440,7 +439,7 @@ namespace llvm {
   
     /// Run - perform scheduling.
     ///
-    void Run();
+    void Run(SelectionDAG *DAG, MachineBasicBlock *MBB);
 
     /// BuildSchedGraph - Build SUnits and set up their Preds and Succs
     /// to form the scheduling dependency graph.

@@ -55,7 +55,7 @@ class VISIBILITY_HIDDEN MipsDAGToDAGISel : public SelectionDAGISel {
  
 public:
   explicit MipsDAGToDAGISel(MipsTargetMachine &tm) :
-  SelectionDAGISel(*tm.getTargetLowering()),
+  SelectionDAGISel(tm),
   TM(tm), Subtarget(tm.getSubtarget<MipsSubtarget>()) {}
   
   virtual void InstructionSelect();

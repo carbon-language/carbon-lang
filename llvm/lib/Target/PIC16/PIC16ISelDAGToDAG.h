@@ -35,7 +35,7 @@ class VISIBILITY_HIDDEN PIC16DAGToDAGISel : public SelectionDAGISel {
 
 public:
   explicit PIC16DAGToDAGISel(PIC16TargetMachine &tm) : 
-        SelectionDAGISel(PIC16Lowering),
+        SelectionDAGISel(tm),
         TM(tm), PIC16Lowering(*TM.getTargetLowering()) {}
   
   // Pass Name

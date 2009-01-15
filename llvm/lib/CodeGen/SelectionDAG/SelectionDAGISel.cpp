@@ -137,19 +137,16 @@ namespace llvm {
   /// createDefaultScheduler - This creates an instruction scheduler appropriate
   /// for the target.
   ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
-                                      SelectionDAG *DAG,
-                                      const TargetMachine *TM,
-                                      MachineBasicBlock *BB,
                                       bool Fast) {
     const TargetLowering &TLI = IS->getTargetLowering();
 
     if (Fast)
-      return createFastDAGScheduler(IS, DAG, TM, BB, Fast);
+      return createFastDAGScheduler(IS, Fast);
     if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
-      return createTDListDAGScheduler(IS, DAG, TM, BB, Fast);
+      return createTDListDAGScheduler(IS, Fast);
     assert(TLI.getSchedulingPreference() ==
          TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
-    return createBURRListDAGScheduler(IS, DAG, TM, BB, Fast);
+    return createBURRListDAGScheduler(IS, Fast);
   }
 }
 
@@ -266,8 +263,8 @@ static void EmitLiveInCopies(MachineBasicBlock *EntryMBB,
 // SelectionDAGISel code
 //===----------------------------------------------------------------------===//
 
-SelectionDAGISel::SelectionDAGISel(TargetLowering &tli, bool fast) :
-  FunctionPass(&ID), TLI(tli),
+SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, bool fast) :
+  FunctionPass(&ID), TM(tm), TLI(*tm.getTargetLowering()),
   FuncInfo(new FunctionLoweringInfo(TLI)),
   CurDAG(new SelectionDAG(TLI, *FuncInfo)),
   SDL(new SelectionDAGLowering(*CurDAG, TLI, *FuncInfo)),
@@ -304,22 +301,21 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   AA = &getAnalysis<AliasAnalysis>();
 
   TargetMachine &TM = TLI.getTargetMachine();
-  MachineFunction &MF = MachineFunction::construct(&Fn, TM);
-  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  MF = &MachineFunction::construct(&Fn, TM);
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
 
-  if (MF.getFunction()->hasGC())
-    GFI = &getAnalysis<GCModuleInfo>().getFunctionInfo(*MF.getFunction());
+  if (MF->getFunction()->hasGC())
+    GFI = &getAnalysis<GCModuleInfo>().getFunctionInfo(*MF->getFunction());
   else
     GFI = 0;
-  RegInfo = &MF.getRegInfo();
+  RegInfo = &MF->getRegInfo();
   DOUT << "\n\n\n=== " << Fn.getName() << "\n";
 
-  FuncInfo->set(Fn, MF, EnableFastISel);
+  FuncInfo->set(Fn, *MF, EnableFastISel);
   MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>();
   DwarfWriter *DW = getAnalysisToUpdate<DwarfWriter>();
-  CurDAG->init(MF, MMI, DW);
+  CurDAG->init(*MF, MMI, DW);
   SDL->init(GFI, *AA);
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
@@ -327,17 +323,17 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
       // Mark landing pad.
       FuncInfo->MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 
-  SelectAllBasicBlocks(Fn, MF, MMI, DW, TII);
+  SelectAllBasicBlocks(Fn, *MF, MMI, DW, TII);
 
   // If the first basic block in the function has live ins that need to be
   // copied into vregs, emit the copies into the top of the block before
   // emitting the code for the block.
-  EmitLiveInCopies(MF.begin(), MRI, TRI, TII);
+  EmitLiveInCopies(MF->begin(), *RegInfo, TRI, TII);
 
   // Add function live-ins to entry block live-in set.
   for (MachineRegisterInfo::livein_iterator I = RegInfo->livein_begin(),
          E = RegInfo->livein_end(); I != E; ++I)
-    MF.begin()->addLiveIn(I->first);
+    MF->begin()->addLiveIn(I->first);
 
 #ifndef NDEBUG
   assert(FuncInfo->CatchInfoFound.size() == FuncInfo->CatchInfoLost.size() &&
@@ -365,7 +361,7 @@ static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
 /// IsFixedFrameObjectWithPosOffset - Check if object is a fixed frame object and
 /// whether object offset >= 0.
 static bool
-IsFixedFrameObjectWithPosOffset(MachineFrameInfo * MFI, SDValue Op) {
+IsFixedFrameObjectWithPosOffset(MachineFrameInfo *MFI, SDValue Op) {
   if (!isa<FrameIndexSDNode>(Op)) return false;
 
   FrameIndexSDNode * FrameIdxNode = dyn_cast<FrameIndexSDNode>(Op);
@@ -380,7 +376,7 @@ IsFixedFrameObjectWithPosOffset(MachineFrameInfo * MFI, SDValue Op) {
 /// assumes all arguments sourcing from FORMAL_ARGUMENTS or a CopyFromReg with
 /// virtual registers would be overwritten by direct lowering.
 static bool IsPossiblyOverwrittenArgumentOfTailCall(SDValue Op,
-                                                    MachineFrameInfo * MFI) {
+                                                    MachineFrameInfo *MFI) {
   RegisterSDNode * OpReg = NULL;
   if (Op.getOpcode() == ISD::FORMAL_ARGUMENTS ||
       (Op.getOpcode()== ISD::CopyFromReg &&
@@ -694,14 +690,15 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   DEBUG(BB->dump());
 }  
 
-void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
+void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
+                                            MachineFunction &MF,
                                             MachineModuleInfo *MMI,
                                             DwarfWriter *DW,
                                             const TargetInstrInfo &TII) {
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = 0;
   if (EnableFastISel)
-    FastIS = TLI.createFastISel(*FuncInfo->MF, MMI, DW,
+    FastIS = TLI.createFastISel(MF, MMI, DW,
                                 FuncInfo->ValueMap,
                                 FuncInfo->MBBMap,
                                 FuncInfo->StaticAllocaMap
@@ -1075,9 +1072,8 @@ ScheduleDAG *SelectionDAGISel::Schedule() {
     RegisterScheduler::setDefault(Ctor);
   }
   
-  TargetMachine &TM = getTargetLowering().getTargetMachine();
-  ScheduleDAG *Scheduler = Ctor(this, CurDAG, &TM, BB, Fast);
-  Scheduler->Run();
+  ScheduleDAG *Scheduler = Ctor(this, Fast);
+  Scheduler->Run(CurDAG, BB);
 
   return Scheduler;
 }

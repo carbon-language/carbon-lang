@@ -46,7 +46,7 @@ class ARMDAGToDAGISel : public SelectionDAGISel {
 
 public:
   explicit ARMDAGToDAGISel(ARMTargetMachine &tm)
-    : SelectionDAGISel(*tm.getTargetLowering()), TM(tm),
+    : SelectionDAGISel(tm), TM(tm),
     Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
   }
 

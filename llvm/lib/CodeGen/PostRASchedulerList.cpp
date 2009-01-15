@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
@@ -78,11 +79,17 @@ namespace {
     /// Topo - A topological ordering for SUnits.
     ScheduleDAGTopologicalSort Topo;
 
+    /// AllocatableSet - The set of allocatable registers.
+    /// We'll be ignoring anti-dependencies on non-allocatable registers,
+    /// because they may not be safe to break.
+    const BitVector AllocatableSet;
+
   public:
-    SchedulePostRATDList(MachineBasicBlock *mbb, const TargetMachine &tm,
+    SchedulePostRATDList(MachineFunction &MF,
                          const MachineLoopInfo &MLI,
                          const MachineDominatorTree &MDT)
-      : ScheduleDAGInstrs(mbb, tm, MLI, MDT), Topo(SUnits) {}
+      : ScheduleDAGInstrs(MF, MLI, MDT), Topo(SUnits),
+        AllocatableSet(TRI->getAllocatableSet(MF)) {}
 
     void Schedule();
 
@@ -100,13 +107,13 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   const MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   const MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
 
+  SchedulePostRATDList Scheduler(Fn, MLI, MDT);
+
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB) {
 
-    SchedulePostRATDList Scheduler(MBB, Fn.getTarget(), MLI, MDT);
-
-    Scheduler.Run();
+    Scheduler.Run(0, MBB);
 
     Scheduler.EmitSchedule();
   }
@@ -194,10 +201,6 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
 
   DOUT << "Critical path has total latency "
        << (Max ? Max->getDepth() + Max->Latency : 0) << "\n";
-
-  // We'll be ignoring anti-dependencies on non-allocatable registers, because
-  // they may not be safe to break.
-  const BitVector AllocatableSet = TRI->getAllocatableSet(*MF);
 
   // Track progress along the critical path through the SUnit graph as we walk
   // the instructions.
@@ -444,8 +447,8 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     // TODO: Instead of picking the first free register, consider which might
     // be the best.
     if (AntiDepReg != 0) {
-      for (TargetRegisterClass::iterator R = RC->allocation_order_begin(*MF),
-           RE = RC->allocation_order_end(*MF); R != RE; ++R) {
+      for (TargetRegisterClass::iterator R = RC->allocation_order_begin(MF),
+           RE = RC->allocation_order_end(MF); R != RE; ++R) {
         unsigned NewReg = *R;
         // Don't replace a register with itself.
         if (NewReg == AntiDepReg) continue;

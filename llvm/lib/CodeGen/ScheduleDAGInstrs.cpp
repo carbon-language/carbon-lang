@@ -52,16 +52,18 @@ namespace {
            LE = Header->livein_end(); LI != LE; ++LI)
         LoopLiveIns.insert(*LI);
 
-      VisitRegion(MDT.getNode(Header), Loop, LoopLiveIns);
+      const MachineDomTreeNode *Node = MDT.getNode(Header);
+      const MachineBasicBlock *MBB = Node->getBlock();
+      assert(Loop->contains(MBB) &&
+             "Loop does not contain header!");
+      VisitRegion(Node, MBB, Loop, LoopLiveIns);
     }
 
   private:
     void VisitRegion(const MachineDomTreeNode *Node,
+                     const MachineBasicBlock *MBB,
                      const MachineLoop *Loop,
                      const SmallSet<unsigned, 8> &LoopLiveIns) {
-      MachineBasicBlock *MBB = Node->getBlock();
-      if (!Loop->contains(MBB)) return;
-
       unsigned Count = 0;
       for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
            I != E; ++I, ++Count) {
@@ -77,32 +79,27 @@ namespace {
       }
 
       const std::vector<MachineDomTreeNode*> &Children = Node->getChildren();
-      for (unsigned I = 0, E = Children.size(); I != E; ++I)
-        VisitRegion(Children[I], Loop, LoopLiveIns);
+      for (std::vector<MachineDomTreeNode*>::const_iterator I =
+           Children.begin(), E = Children.end(); I != E; ++I) {
+        const MachineDomTreeNode *ChildNode = *I;
+        MachineBasicBlock *ChildBlock = ChildNode->getBlock();
+        if (Loop->contains(ChildBlock))
+          VisitRegion(ChildNode, ChildBlock, Loop, LoopLiveIns);
+      }
     }
   };
 }
 
-ScheduleDAGInstrs::ScheduleDAGInstrs(MachineBasicBlock *bb,
-                                     const TargetMachine &tm,
+ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineLoopInfo &mli,
                                      const MachineDominatorTree &mdt)
-  : ScheduleDAG(0, bb, tm), MLI(mli), MDT(mdt) {}
+  : ScheduleDAG(mf), MLI(mli), MDT(mdt) {}
 
 void ScheduleDAGInstrs::BuildSchedGraph() {
-  SUnits.clear();
   SUnits.reserve(BB->size());
 
   // We build scheduling units by walking a block's instruction list from bottom
   // to top.
-
-  // Remember where defs and uses of each physical register are as we procede.
-  std::vector<SUnit *> Defs[TargetRegisterInfo::FirstVirtualRegister] = {};
-  std::vector<SUnit *> Uses[TargetRegisterInfo::FirstVirtualRegister] = {};
-
-  // Remember where unknown loads are after the most recent unknown store
-  // as we procede.
-  std::vector<SUnit *> PendingLoads;
 
   // Remember where a generic side-effecting instruction is as we procede. If
   // ChainMMO is null, this is assumed to have arbitrary side-effects. If
@@ -378,6 +375,12 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
     if (TID.isTerminator() || MI->isLabel())
       Terminator = SU;
   }
+
+  for (int i = 0, e = TRI->getNumRegs(); i != e; ++i) {
+    Defs[i].clear();
+    Uses[i].clear();
+  }
+  PendingLoads.clear();
 }
 
 void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {

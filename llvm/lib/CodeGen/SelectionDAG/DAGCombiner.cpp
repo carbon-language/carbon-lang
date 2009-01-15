@@ -49,7 +49,7 @@ namespace {
 
   class VISIBILITY_HIDDEN DAGCombiner {
     SelectionDAG &DAG;
-    TargetLowering &TLI;
+    const TargetLowering &TLI;
     CombineLevel Level;
     bool LegalOperations;
     bool LegalTypes;
@@ -2836,7 +2836,7 @@ SDValue DAGCombiner::visitSETCC(SDNode *N) {
 static bool ExtendUsesToFormExtLoad(SDNode *N, SDValue N0,
                                     unsigned ExtOpc,
                                     SmallVector<SDNode*, 4> &ExtendNodes,
-                                    TargetLowering &TLI) {
+                                    const TargetLowering &TLI) {
   bool HasCopyToRegUses = false;
   bool isTruncFree = TLI.isTruncateFree(N->getValueType(0), N0.getValueType());
   for (SDNode::use_iterator UI = N0.getNode()->use_begin(),

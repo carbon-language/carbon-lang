@@ -21,14 +21,13 @@
 #include <climits>
 using namespace llvm;
 
-ScheduleDAG::ScheduleDAG(SelectionDAG *dag, MachineBasicBlock *bb,
-                         const TargetMachine &tm)
-  : DAG(dag), BB(bb), TM(tm), MRI(BB->getParent()->getRegInfo()) {
-  TII = TM.getInstrInfo();
-  MF  = BB->getParent();
-  TRI = TM.getRegisterInfo();
-  TLI = TM.getTargetLowering();
-  ConstPool = MF->getConstantPool();
+ScheduleDAG::ScheduleDAG(MachineFunction &mf)
+  : DAG(0), BB(0), TM(mf.getTarget()),
+    TII(TM.getInstrInfo()),
+    TRI(TM.getRegisterInfo()),
+    TLI(TM.getTargetLowering()),
+    MF(mf), MRI(mf.getRegInfo()),
+    ConstPool(MF.getConstantPool()) {
 }
 
 ScheduleDAG::~ScheduleDAG() {}
@@ -46,7 +45,12 @@ void ScheduleDAG::dumpSchedule() const {
 
 /// Run - perform scheduling.
 ///
-void ScheduleDAG::Run() {
+void ScheduleDAG::Run(SelectionDAG *dag, MachineBasicBlock *bb) {
+  SUnits.clear();
+  Sequence.clear();
+  DAG = dag;
+  BB = bb;
+
   Schedule();
   
   DOUT << "*** Final schedule ***\n";

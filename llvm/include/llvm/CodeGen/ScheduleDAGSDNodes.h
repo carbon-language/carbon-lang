@@ -74,8 +74,7 @@ namespace llvm {
   ///
   class ScheduleDAGSDNodes : public ScheduleDAG {
   public:
-    ScheduleDAGSDNodes(SelectionDAG *dag, MachineBasicBlock *bb,
-                       const TargetMachine &tm);
+    explicit ScheduleDAGSDNodes(MachineFunction &mf);
 
     virtual ~ScheduleDAGSDNodes() {}
 

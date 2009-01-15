@@ -14,9 +14,9 @@
 #define DEBUG_TYPE "pre-RA-sched"
 #include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
@@ -71,9 +71,8 @@ private:
   std::vector<unsigned> LiveRegCycles;
 
 public:
-  ScheduleDAGFast(SelectionDAG *dag, MachineBasicBlock *bb,
-                  const TargetMachine &tm)
-    : ScheduleDAGSDNodes(dag, bb, tm) {}
+  ScheduleDAGFast(MachineFunction &mf)
+    : ScheduleDAGSDNodes(mf) {}
 
   void Schedule();
 
@@ -619,9 +618,6 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-llvm::ScheduleDAG* llvm::createFastDAGScheduler(SelectionDAGISel *IS,
-                                                SelectionDAG *DAG,
-                                                const TargetMachine *TM,
-                                                MachineBasicBlock *BB, bool) {
-  return new ScheduleDAGFast(DAG, BB, *TM);
+llvm::ScheduleDAG* llvm::createFastDAGScheduler(SelectionDAGISel *IS, bool) {
+  return new ScheduleDAGFast(*IS->MF);
 }
