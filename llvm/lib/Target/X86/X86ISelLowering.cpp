@@ -8036,7 +8036,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 /// When and where to widen is target dependent based on the cost of
 /// scalarizing vs using the wider vector type.
 
-MVT X86TargetLowering::getWidenVectorType(MVT VT) {
+MVT X86TargetLowering::getWidenVectorType(MVT VT) const {
   assert(VT.isVector());
   if (isTypeLegal(VT))
     return VT;

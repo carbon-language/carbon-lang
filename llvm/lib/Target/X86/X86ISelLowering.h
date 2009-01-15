@@ -499,7 +499,7 @@ namespace llvm {
     /// If there is no vector type that we want to widen to, returns MVT::Other
     /// When and were to widen is target dependent based on the cost of
     /// scalarizing vs using the wider vector type.
-    virtual MVT getWidenVectorType(MVT VT);
+    virtual MVT getWidenVectorType(MVT VT) const;
 
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
