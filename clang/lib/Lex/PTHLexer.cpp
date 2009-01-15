@@ -538,11 +538,12 @@ PTHManager* PTHManager::Create(const std::string& file, Preprocessor& PP) {
   // Compute the address of the index table at the end of the PTH file.
   // This table contains the offset of the file lookup table, the
   // persistent ID -> identifer data table.
-  const char* EndTable = BufEnd - sizeof(uint32_t)*3;
+  // FIXME: We should just embed this offset in the PTH file.
+  const char* EndTable = BufEnd - sizeof(uint32_t)*4;
   
   // Construct the file lookup table.  This will be used for mapping from
   // FileEntry*'s to cached tokens.
-  const char* FileTableOffset = EndTable + sizeof(uint32_t)*2;
+  const char* FileTableOffset = EndTable + sizeof(uint32_t)*3;
   const char* FileTable = BufBeg + Read32(FileTableOffset);
   
   if (!(FileTable > BufBeg && FileTable < BufEnd)) {

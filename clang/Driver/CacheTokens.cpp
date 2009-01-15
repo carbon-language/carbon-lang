@@ -102,7 +102,7 @@ class VISIBILITY_HIDDEN PTHWriter {
     for ( ; I != E ; ++I) Out << *I;
   }
   
-  std::pair<Offset,Offset> EmitIdentifierTable();
+  std::pair<Offset,std::pair<Offset, Offset> > EmitIdentifierTable();
   Offset EmitFileTable();
   PCHEntry LexTokens(Lexer& L);
   void EmitCachedSpellings();
@@ -171,57 +171,66 @@ namespace {
 struct VISIBILITY_HIDDEN IDData {
   const IdentifierInfo* II;
   uint32_t FileOffset;
-  const IdentifierTable::const_iterator::value_type* Str;
+};
+  
+class VISIBILITY_HIDDEN CompareIDDataIndex {
+  IDData* Table;
+public:  
+  CompareIDDataIndex(IDData* table) : Table(table) {}
+
+  bool operator()(unsigned i, unsigned j) const {
+    // Assume that IdentifierInfo::getName() returns a '\0' terminated string.
+    return strcmp(Table[i].II->getName(), Table[j].II->getName()) < 0;    
+  }
 };
 }
 
-std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
-  
-  const IdentifierTable& T = PP.getIdentifierTable();
+std::pair<Offset,std::pair<Offset,Offset> >
+PTHWriter::EmitIdentifierTable() {  
+  llvm::BumpPtrAllocator Alloc;
 
   // Build an inverse map from persistent IDs -> IdentifierInfo*.
-  typedef std::vector<IDData> InverseIDMap;
-  InverseIDMap IIDMap;
-  IIDMap.resize(idcount);
+  IDData* IIDMap = Alloc.Allocate<IDData>(idcount);
   
   // Generate mapping from persistent IDs -> IdentifierInfo*.
   for (IDMap::iterator I=IM.begin(), E=IM.end(); I!=E; ++I) {
     // Decrement by 1 because we are using a vector for the lookup and
     // 0 is reserved for NULL.
     assert(I->second > 0);
-    assert(I->second-1 < IIDMap.size());
-    IIDMap[I->second-1].II = I->first;
-  }
-
-  // Get the string data associated with the IdentifierInfo.
-  for (IdentifierTable::const_iterator I=T.begin(), E=T.end(); I!=E; ++I) {
-    IDMap::iterator IDI = IM.find(&(I->getValue()));
-    if (IDI == IM.end()) continue;
-    IIDMap[IDI->second-1].Str = &(*I);
-  }
+    assert(I->second-1 < idcount);
+    unsigned idx = I->second-1;
+    IIDMap[idx].II = I->first;
+  }  
   
+  // We want to write out the strings in lexical order to support binary
+  // search of strings to identifiers.  Create such a table.
+  unsigned *LexicalOrder = Alloc.Allocate<unsigned>(idcount);
+  for (unsigned i = 0; i < idcount ; ++i ) LexicalOrder[i] = i;
+  std::sort(LexicalOrder, LexicalOrder+idcount, CompareIDDataIndex(IIDMap));
+  
+  // Write out the lexically-sorted table of persistent ids.
+  Offset LexicalOff = Out.tell();
+  for (unsigned i = 0; i < idcount ; ++i) Emit32(LexicalOrder[i]);
+  
+  // Write out the string data itself.
   Offset DataOff = Out.tell();
     
-  for (InverseIDMap::iterator I=IIDMap.begin(), E=IIDMap.end(); I!=E; ++I) {
-    // Record the location for this data.
-    I->FileOffset = Out.tell();
-    // Write out the keyword.
-    unsigned len = I->Str->getKeyLength();  
+  for (unsigned i = 0; i < idcount; ++i) {
+    IDData& d = IIDMap[i];
+    d.FileOffset = Out.tell();            // Record the location for this data.  
+    unsigned len = d.II->getLength(); // Write out the string length.
     Emit32(len);
-    const char* buf = I->Str->getKeyData();    
+    const char* buf = d.II->getName(); // Write out the string data.
     EmitBuf(buf, buf+len);  
   }
   
   // Now emit the table mapping from persistent IDs to PTH file offsets.  
   Offset IDOff = Out.tell();
-  
-  // Emit the number of identifiers.
-  Emit32(idcount);
+  Emit32(idcount);  // Emit the number of identifiers.
+  for (unsigned i = 0 ; i < idcount; ++i) Emit32(IIDMap[i].FileOffset);
 
-  for (InverseIDMap::iterator I=IIDMap.begin(), E=IIDMap.end(); I!=E; ++I)
-    Emit32(I->FileOffset);
 
-  return std::make_pair(DataOff, IDOff);
+  return std::make_pair(DataOff, std::make_pair(IDOff, LexicalOff));
 }
 
 Offset PTHWriter::EmitFileTable() {
@@ -473,7 +482,8 @@ void PTHWriter::GeneratePTH() {
   }
 
   // Write out the identifier table.
-  std::pair<Offset,Offset> IdTableOff = EmitIdentifierTable();
+  const std::pair<Offset, std::pair<Offset,Offset> >& IdTableOff 
+    = EmitIdentifierTable();
   
   // Write out the cached strings table.
   EmitCachedSpellings();
@@ -483,7 +493,8 @@ void PTHWriter::GeneratePTH() {
   
   // Finally, write out the offset table at the end.
   Emit32(IdTableOff.first);
-  Emit32(IdTableOff.second);
+  Emit32(IdTableOff.second.first);
+  Emit32(IdTableOff.second.second);
   Emit32(FileTableOff);
 }
 
