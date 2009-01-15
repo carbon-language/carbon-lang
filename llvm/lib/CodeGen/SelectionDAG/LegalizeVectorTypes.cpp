@@ -1886,7 +1886,8 @@ SDValue DAGTypeLegalizer::WidenVecOp_STORE(SDNode *N) {
 //  VecVT: Vector value type whose size we must match.
 // Returns NewVecVT and NewEltVT - the vector type and its associated
 // element type.
-static void FindAssocWidenVecType(TargetLowering &TLI, unsigned Width, MVT VecVT,
+static void FindAssocWidenVecType(const TargetLowering &TLI, unsigned Width,
+                                  MVT VecVT,
                                   MVT& NewEltVT, MVT& NewVecVT) {
   unsigned EltWidth = Width + 1;
   if (TLI.isTypeLegal(VecVT)) {

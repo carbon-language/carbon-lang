@@ -542,7 +542,7 @@ void SelectionDAGLegalize::HandleOp(SDValue Op) {
 /// ExpandConstantFP - Expands the ConstantFP node to an integer constant or
 /// a load from the constant pool.
 static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
-                                  SelectionDAG &DAG, TargetLowering &TLI) {
+                                SelectionDAG &DAG, const TargetLowering &TLI) {
   bool Extend = false;
 
   // If a FP immediate is precise when represented as a float and if the
@@ -591,7 +591,8 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
 /// operations.
 static
 SDValue ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT NVT,
-                                    SelectionDAG &DAG, TargetLowering &TLI) {
+                                    SelectionDAG &DAG,
+                                    const TargetLowering &TLI) {
   MVT VT = Node->getValueType(0);
   MVT SrcVT = Node->getOperand(1).getValueType();
   assert((SrcVT == MVT::f32 || SrcVT == MVT::f64) &&
@@ -633,7 +634,7 @@ SDValue ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT NVT,
 /// ExpandUnalignedStore - Expands an unaligned store to 2 half-size stores.
 static
 SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
-                             TargetLowering &TLI) {
+                             const TargetLowering &TLI) {
   SDValue Chain = ST->getChain();
   SDValue Ptr = ST->getBasePtr();
   SDValue Val = ST->getValue();
@@ -8301,7 +8302,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
 //  Width: Preferred width of element type
 //  VVT:   Vector value type whose size we must match.
 // Returns VecEVT and EVT - the vector type and its associated element type
-static void FindWidenVecType(TargetLowering &TLI, unsigned Width, MVT VVT,
+static void FindWidenVecType(const TargetLowering &TLI, unsigned Width, MVT VVT,
                              MVT& EVT, MVT& VecEVT) {
   // We start with the preferred width, make it a power of 2 and see if
   // we can find a vector type of that width. If not, we reduce it by
