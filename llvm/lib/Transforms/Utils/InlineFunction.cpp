@@ -155,8 +155,18 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
 
   // Since we inlined some uninlined call sites in the callee into the caller,
   // add edges from the caller to all of the callees of the callee.
-  for (CallGraphNode::iterator I = CalleeNode->begin(),
-       E = CalleeNode->end(); I != E; ++I) {
+  CallGraphNode::iterator I = CalleeNode->begin(), E = CalleeNode->end();
+
+  // Consider the case where CalleeNode == CallerNode.
+  typedef std::pair<CallSite, CallGraphNode*> CallRecord;
+  std::vector<CallRecord> CallCache;
+  if (CalleeNode == CallerNode) {
+    CallCache.assign(I, E);
+    I = CallCache.begin();
+    E = CallCache.end();
+  }
+
+  for (; I != E; ++I) {
     const Instruction *OrigCall = I->first.getInstruction();
 
     DenseMap<const Value*, Value*>::iterator VMI = ValueMap.find(OrigCall);
@@ -514,8 +524,8 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       TheCall->replaceAllUsesWith(PHI);
     }
 
-    // Loop over all of the return instructions adding entries to the PHI node as
-    // appropriate.
+    // Loop over all of the return instructions adding entries to the PHI node
+    // as appropriate.
     if (PHI) {
       for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
         ReturnInst *RI = Returns[i];
