@@ -3684,8 +3684,9 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     ECD->setInitVal(InitVal);
     
     // Adjust the Expr initializer and type.
-    ECD->setInitExpr(new ImplicitCastExpr(NewTy, ECD->getInitExpr(), 
-                                          /*isLvalue=*/false));
+    if (ECD->getInitExpr())
+      ECD->setInitExpr(new ImplicitCastExpr(NewTy, ECD->getInitExpr(), 
+                                            /*isLvalue=*/false));
     if (getLangOptions().CPlusPlus)
       // C++ [dcl.enum]p4: Following the closing brace of an
       // enum-specifier, each enumerator has the type of its
