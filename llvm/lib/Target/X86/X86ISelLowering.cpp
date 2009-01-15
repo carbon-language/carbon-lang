@@ -766,12 +766,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     // information.
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v16i8, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
-    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Legal);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4f32, Custom);
 
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v16i8, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v8i16, Custom);
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Legal);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
 
     if (Subtarget->is64Bit()) {
@@ -4248,6 +4248,10 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op,
                     DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, Op.getOperand(0)),
                                     Op.getOperand(1));
     return DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Extract);
+  } else if (VT == MVT::i32) {
+    // ExtractPS works with constant index.
+    if (isa<ConstantSDNode>(Op.getOperand(1)))
+      return Op;
   }
   return SDValue();
 }
@@ -4362,6 +4366,10 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG){
     //   combine either bitwise AND or insert of float 0.0 to set these bits.
     N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getZExtValue() << 4);
     return DAG.getNode(X86ISD::INSERTPS, VT, N0, N1, N2);
+  } else if (EVT == MVT::i32) {
+    // InsertPS works with constant index.
+    if (isa<ConstantSDNode>(N2))
+      return Op;
   }
   return SDValue();
 }
