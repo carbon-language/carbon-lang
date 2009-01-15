@@ -669,7 +669,7 @@ unsigned TargetLowering::getVectorTypeBreakdown(MVT VT,
 /// If there is no vector type that we want to widen to, returns MVT::Other
 /// When and where to widen is target dependent based on the cost of
 /// scalarizing vs using the wider vector type.
-MVT TargetLowering::getWidenVectorType(MVT VT) {
+MVT TargetLowering::getWidenVectorType(MVT VT) const {
   assert(VT.isVector());
   if (isTypeLegal(VT))
     return VT;
