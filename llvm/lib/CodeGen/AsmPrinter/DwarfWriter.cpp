@@ -1212,7 +1212,7 @@ public:
 class DbgScope {
 private:
   DbgScope *Parent;                   // Parent to this scope.
-  DIDescriptor *Desc;                 // Debug info descriptor for scope.
+  DIDescriptor Desc;                 // Debug info descriptor for scope.
                                       // Either subprogram or block.
   unsigned StartLabelID;              // Label ID of the beginning of scope.
   unsigned EndLabelID;                // Label ID of the end of scope.
@@ -1220,7 +1220,7 @@ private:
   SmallVector<DbgVariable *, 8> Variables;// Variables declared in scope.
   
 public:
-  DbgScope(DbgScope *P, DIDescriptor *D)
+  DbgScope(DbgScope *P, DIDescriptor D)
   : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0), Scopes(), Variables()
   {}
   ~DbgScope() {
@@ -1230,7 +1230,7 @@ public:
   
   // Accessors.
   DbgScope *getParent()        const { return Parent; }
-  DIDescriptor *getDesc()       const { return Desc; }
+  DIDescriptor getDesc()       const { return Desc; }
   unsigned getStartLabelID()     const { return StartLabelID; }
   unsigned getEndLabelID()       const { return EndLabelID; }
   SmallVector<DbgScope *, 4> &getScopes() { return Scopes; }
@@ -1307,7 +1307,7 @@ private:
   ///
   bool shouldEmit;
 
-  // RootScope - Top level scope for the current function.
+  // RootDbgScope - Top level scope for the current function.
   //
   DbgScope *RootDbgScope;
   
@@ -2009,13 +2009,14 @@ private:
     if (!Slot) {
       // FIXME - breaks down when the context is an inlined function.
       DIDescriptor ParentDesc;
-      DIDescriptor *DB = new DIDescriptor(V);
-      if (DIBlock *Block = dyn_cast<DIBlock>(DB)) {
-        ParentDesc = Block->getContext();
+      DIDescriptor Desc(V);
+      if (Desc.getTag() == dwarf::DW_TAG_lexical_block) {
+        DIBlock Block(V);
+        ParentDesc = Block.getContext();
       }
       DbgScope *Parent = ParentDesc.isNull() ? 
         NULL : getOrCreateScope(ParentDesc.getGV());
-      Slot = new DbgScope(Parent, DB);
+      Slot = new DbgScope(Parent, Desc);
       if (Parent) {
         Parent->AddScope(Slot);
       } else if (RootDbgScope) {
@@ -2091,10 +2092,12 @@ private:
   void ConstructRootDbgScope(DbgScope *RootScope) {
     // Exit if there is no root scope.
     if (!RootScope) return;
-    if (RootScope->getDesc()->isNull()) return;
+    DIDescriptor Desc = RootScope->getDesc();
+    if (Desc.isNull())
+      return;
 
     // Get the subprogram debug information entry.
-    DISubprogram SPD(RootScope->getDesc()->getGV());
+    DISubprogram SPD(Desc.getGV());
 
     // Get the compile unit context.
     CompileUnit *Unit = FindCompileUnit(SPD.getCompileUnit());
@@ -3123,7 +3126,18 @@ public:
   /// RecordVariable - Indicate the declaration of  a local variable.
   ///
   void RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
-    DbgScope *Scope = getOrCreateScope(GV);
+    DIDescriptor Desc(GV);
+    DbgScope *Scope = NULL;
+    if (Desc.getTag() == DW_TAG_variable) {
+      // GV is a global variable.
+      DIGlobalVariable DG(GV);
+      Scope = getOrCreateScope(DG.getContext().getGV());
+    } else {
+      // or GV is a local variable.
+      DIVariable DV(GV);
+      Scope = getOrCreateScope(DV.getContext().getGV());
+    }
+    assert (Scope && "Unable to find variable' scope");
     DIVariable *VD = new DIVariable(GV);
     DbgVariable *DV = new DbgVariable(VD, FrameIndex);
     Scope->AddVariable(DV);
