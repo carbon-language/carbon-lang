@@ -191,7 +191,9 @@ private:  // Cached tokens state.
 
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
-               SourceManager &SM, HeaderSearch &Headers);
+               SourceManager &SM, HeaderSearch &Headers,
+               IdentifierInfoLookup* IILookup);
+
   ~Preprocessor();
 
   Diagnostic &getDiagnostics() const { return Diags; }

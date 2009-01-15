@@ -16,7 +16,9 @@
 
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Allocator.h"
 #include <string>
 
 namespace llvm {
@@ -26,8 +28,6 @@ namespace llvm {
 namespace clang {
 
 class FileEntry;
-class IdentifierInfo;
-class IdentifierTable;
 class PTHLexer;
 class PTHManager;
 
@@ -54,7 +54,7 @@ public:
       LinearItr(tableBeg) {}
 };  
   
-class PTHManager {
+class PTHManager : public IdentifierInfoLookup {
   friend class PTHLexer;
   friend class PTHSpellingSearch;
   
@@ -63,6 +63,9 @@ class PTHManager {
   
   /// A map from FileIDs to SpellingSearch objects.
   llvm::DenseMap<unsigned,PTHSpellingSearch*> SpellingMap;
+  
+  /// Alloc - Allocator used for IdentifierInfo objects.
+  llvm::BumpPtrAllocator Alloc;
   
   /// IdMap - A lazily generated cache mapping from persistent identifiers to
   ///  IdentifierInfo*.
@@ -75,47 +78,59 @@ class PTHManager {
   /// IdDataTable - Array representing the mapping from persistent IDs to the
   ///  data offset within the PTH file containing the information to
   ///  reconsitute an IdentifierInfo.
-  const char* IdDataTable;
+  const char* const IdDataTable;
   
-  /// ITable - The IdentifierTable used for the translation unit being lexed.
-  IdentifierTable& ITable;
+  /// SortedIdTable - Array ordering persistent identifier IDs by the lexical
+  ///  order of their corresponding strings.  This is used by get().
+  const char* const SortedIdTable;
+  
+  /// NumIds - The number of identifiers in the PTH file.
+  const unsigned NumIds;
 
   /// PP - The Preprocessor object that will use this PTHManager to create
   ///  PTHLexer objects.
-  Preprocessor& PP;
+  Preprocessor* PP;
   
   /// This constructor is intended to only be called by the static 'Create'
   /// method.
   PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
              const char* idDataTable, IdentifierInfo** perIDCache,
-             Preprocessor& pp);
+             const char* sortedIdTable, unsigned numIds);
 
   // Do not implement.
   PTHManager();
   void operator=(const PTHManager&);
   
-  /// GetIdentifierInfo - Used by PTHManager to reconstruct IdentifierInfo
-  ///  objects from the PTH file.
-  IdentifierInfo* GetIdentifierInfo(unsigned);
-  
   /// getSpellingAtPTHOffset - Used by PTHLexer classes to get the cached 
   ///  spelling for a token.
   unsigned getSpellingAtPTHOffset(unsigned PTHOffset, const char*& Buffer);
   
-public:
   
+  /// GetIdentifierInfo - Used to reconstruct IdentifierInfo objects from the
+  ///  PTH file.
+  IdentifierInfo* GetIdentifierInfo(unsigned);
+  
+public:  
   ~PTHManager();
+  
+  /// get - Return the identifier token info for the specified named identifier.
+  ///  Unlike the version in IdentifierTable, this returns a pointer instead
+  ///  of a reference.  If the pointer is NULL then the IdentifierInfo cannot
+  ///  be found.
+  IdentifierInfo* get(const char *NameStart, const char *NameEnd);
   
   /// Create - This method creates PTHManager objects.  The 'file' argument
   ///  is the name of the PTH file.  This method returns NULL upon failure.
-  static PTHManager* Create(const std::string& file, Preprocessor& PP);
+  static PTHManager* Create(const std::string& file);
 
+  void setPreprocessor(Preprocessor* pp) { PP = pp; }    
+  
   /// CreateLexer - Return a PTHLexer that "lexes" the cached tokens for the
   ///  specified file.  This method returns NULL if no cached tokens exist.
   ///  It is the responsibility of the caller to 'delete' the returned object.
   PTHLexer* CreateLexer(unsigned FileID, const FileEntry* FE);
   
-  unsigned getSpelling(unsigned FileID, unsigned fpos, const char *& Buffer);
+  unsigned getSpelling(unsigned FileID, unsigned fpos, const char *& Buffer);  
 };
   
 }  // end namespace clang

@@ -955,12 +955,6 @@ static bool InitializePreprocessor(Preprocessor &PP,
   PredefineBuffer.push_back(0);
   PP.setPredefines(&PredefineBuffer[0]);
   
-  // Use PTH.
-  if (!TokenCache.empty()) {
-    PTHManager* PM = PTHManager::Create(TokenCache, PP);
-    if (PM) PP.setPTHManager(PM);    
-  }
-  
   // Once we've read this, we're done.
   return false;
 }
@@ -1142,18 +1136,33 @@ public:
   virtual ~DriverPreprocessorFactory() {}
   
   virtual Preprocessor* CreatePreprocessor() {
-    Preprocessor* PP = new Preprocessor(Diags, LangInfo, Target,
-                                        SourceMgr, HeaderInfo);
+    llvm::OwningPtr<PTHManager> PTHMgr;
+
+    // Use PTH?
+    if (!TokenCache.empty())
+      PTHMgr.reset(PTHManager::Create(TokenCache));
+    
+    // Create the Preprocessor.
+    llvm::OwningPtr<Preprocessor> PP(new Preprocessor(Diags, LangInfo, Target,
+                                                      SourceMgr, HeaderInfo,
+                                                      PTHMgr.get()));
+    
+    // Note that this is different then passing PTHMgr to Preprocessor's ctor.
+    // That argument is used as the IdentifierInfoLookup argument to
+    // IdentifierTable's ctor.
+    if (PTHMgr) {
+      PTHMgr->setPreprocessor(PP.get());
+      PP->setPTHManager(PTHMgr.take());
+    }
     
     if (InitializePreprocessor(*PP, InitializeSourceMgr, InFile)) {
-      delete PP;
       return NULL;
     }
     
     /// FIXME: PP can only handle one callback
     if (ProgAction != PrintPreprocessedInput) {    
       const char* ErrStr;
-      bool DFG = CreateDependencyFileGen(PP, OutputFile, InFile, ErrStr);
+      bool DFG = CreateDependencyFileGen(PP.get(), OutputFile, InFile, ErrStr);
        if (!DFG && ErrStr) {
         fprintf(stderr, "%s", ErrStr);
         return NULL;
@@ -1161,7 +1170,7 @@ public:
     }
 
     InitializeSourceMgr = false;
-    return PP;
+    return PP.take();
   }
 };
 }

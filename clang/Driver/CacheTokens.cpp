@@ -24,6 +24,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Streams.h"
 
 using namespace clang;
 
@@ -179,8 +180,20 @@ public:
   CompareIDDataIndex(IDData* table) : Table(table) {}
 
   bool operator()(unsigned i, unsigned j) const {
-    // Assume that IdentifierInfo::getName() returns a '\0' terminated string.
-    return strcmp(Table[i].II->getName(), Table[j].II->getName()) < 0;    
+    const IdentifierInfo* II_i = Table[i].II;
+    const IdentifierInfo* II_j = Table[j].II;
+
+    unsigned i_len = II_i->getLength();
+    unsigned j_len = II_j->getLength();
+    
+    if (i_len > j_len)
+      return false;
+    
+    if (i_len < j_len)
+      return true;
+
+    // Otherwise, compare the strings themselves!
+    return strncmp(II_i->getName(), II_j->getName(), i_len) < 0;    
   }
 };
 }
@@ -221,14 +234,16 @@ PTHWriter::EmitIdentifierTable() {
     unsigned len = d.II->getLength(); // Write out the string length.
     Emit32(len);
     const char* buf = d.II->getName(); // Write out the string data.
-    EmitBuf(buf, buf+len);  
+    EmitBuf(buf, buf+len);
+    // Emit a null character for those clients expecting that IdentifierInfo
+    // strings are null terminated.
+    Emit8('\0');
   }
   
   // Now emit the table mapping from persistent IDs to PTH file offsets.  
   Offset IDOff = Out.tell();
   Emit32(idcount);  // Emit the number of identifiers.
   for (unsigned i = 0 ; i < idcount; ++i) Emit32(IIDMap[i].FileOffset);
-
 
   return std::make_pair(DataOff, std::make_pair(IDOff, LexicalOff));
 }

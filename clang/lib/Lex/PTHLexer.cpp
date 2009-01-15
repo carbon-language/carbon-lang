@@ -506,9 +506,10 @@ public:
 
 PTHManager::PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
                        const char* idDataTable, IdentifierInfo** perIDCache, 
-                       Preprocessor& pp)
+                       const char* sortedIdTable, unsigned numIds)
 : Buf(buf), PerIDCache(perIDCache), FileLookup(fileLookup),
-  IdDataTable(idDataTable), ITable(pp.getIdentifierTable()), PP(pp) {}
+  IdDataTable(idDataTable), SortedIdTable(sortedIdTable),
+  NumIds(numIds), PP(0) {}
 
 PTHManager::~PTHManager() {
   delete Buf;
@@ -516,7 +517,7 @@ PTHManager::~PTHManager() {
   free(PerIDCache);
 }
 
-PTHManager* PTHManager::Create(const std::string& file, Preprocessor& PP) {
+PTHManager* PTHManager::Create(const std::string& file) {
   
   // Memory map the PTH file.
   llvm::OwningPtr<llvm::MemoryBuffer>
@@ -563,6 +564,14 @@ PTHManager* PTHManager::Create(const std::string& file, Preprocessor& PP) {
     return 0; // FIXME: Proper error diagnostic?
   }
   
+  // Get the location of the lexigraphically-sorted table of persistent IDs.
+  const char* SortedIdTableOffset = EndTable + sizeof(uint32_t)*2;
+  const char* SortedIdTable = BufBeg + Read32(SortedIdTableOffset);
+  if (!(SortedIdTable > BufBeg && SortedIdTable < BufEnd)) {
+    assert(false && "Invalid PTH file.");
+    return 0; // FIXME: Proper error diagnostic?
+  }
+  
   // Get the number of IdentifierInfos and pre-allocate the identifier cache.
   uint32_t NumIds = Read32(IData);
 
@@ -577,14 +586,15 @@ PTHManager* PTHManager::Create(const std::string& file, Preprocessor& PP) {
     return 0;
   }
   
-  // Create the new lexer.
-  return new PTHManager(File.take(), FL.take(), IData, PerIDCache, PP);
+  // Create the new PTHManager.
+  return new PTHManager(File.take(), FL.take(), IData, PerIDCache,
+                        SortedIdTable, NumIds);
 }
 
 IdentifierInfo* PTHManager::GetIdentifierInfo(unsigned persistentID) {
     
   // Check if the IdentifierInfo has already been resolved.
-  IdentifierInfo*& II = PerIDCache[persistentID];
+  IdentifierInfo* II = PerIDCache[persistentID];
   if (II) return II;
   
   // Look in the PTH file for the string data for the IdentifierInfo object.
@@ -592,13 +602,65 @@ IdentifierInfo* PTHManager::GetIdentifierInfo(unsigned persistentID) {
   const char* IDData = Buf->getBufferStart() + Read32(TableEntry);
   assert(IDData < Buf->getBufferEnd());
   
-  // Read the length of the string.
-  uint32_t len = Read32(IDData);  
+  // Allocate the object.
+  std::pair<IdentifierInfo,const char*> *Mem =
+    Alloc.Allocate<std::pair<IdentifierInfo,const char*> >();
+
+  Mem->second = IDData;
+  II = new ((void*) Mem) IdentifierInfo(true);
   
-  // Get the IdentifierInfo* with the specified string.
-  II = &ITable.get(IDData, IDData+len);
+  // Store the new IdentifierInfo in the cache.
+  PerIDCache[persistentID] = II;
   return II;
 }
+
+IdentifierInfo* PTHManager::get(const char *NameStart, const char *NameEnd) {
+  unsigned min = 0;
+  unsigned max = NumIds;
+  unsigned len = NameEnd - NameStart;
+  
+  do {
+    unsigned i = (max - min) / 2 + min;
+    const char* p = SortedIdTable + (i * 4);
+    
+    // Read the persistentID.
+    unsigned perID = 
+      ((unsigned) ((uint8_t) p[0]))
+      | (((unsigned) ((uint8_t) p[1])) << 8)
+      | (((unsigned) ((uint8_t) p[2])) << 16)
+      | (((unsigned) ((uint8_t) p[3])) << 24);
+    
+    // Get the IdentifierInfo.
+    IdentifierInfo* II = GetIdentifierInfo(perID);
+    
+    // First compare the lengths.
+    unsigned IILen = II->getLength();
+    if (len < IILen) goto IsLess;
+    if (len > IILen) goto IsGreater;
+    
+    // Now compare the strings!
+    {
+      signed comp = strncmp(NameStart, II->getName(), len);
+      if (comp < 0) goto IsLess;
+      if (comp > 0) goto IsGreater;
+    }    
+    // We found a match!
+    return II;
+    
+  IsGreater:
+    if (i == min) break;
+    min = i;
+    continue;
+    
+  IsLess:
+    max = i;
+    assert(!(max == min) || (min == i));
+  }
+  while (1);
+  
+  return 0;
+}
+
 
 PTHLexer* PTHManager::CreateLexer(unsigned FileID, const FileEntry* FE) {
   
@@ -634,6 +696,7 @@ PTHLexer* PTHManager::CreateLexer(unsigned FileID, const FileEntry* FE) {
   PTHSpellingSearch* ss = new PTHSpellingSearch(*this, len, spellingTable);
   SpellingMap[FileID] = ss;
   
-  return new PTHLexer(PP, SourceLocation::getFileLoc(FileID, 0), data, ppcond,
+  assert(PP && "No preprocessor set yet!");
+  return new PTHLexer(*PP, SourceLocation::getFileLoc(FileID, 0), data, ppcond,
                       *ss, *this); 
 }

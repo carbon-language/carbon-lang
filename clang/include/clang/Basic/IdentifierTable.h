@@ -19,6 +19,7 @@
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include <string> 
 #include <cassert> 
@@ -55,12 +56,13 @@ class IdentifierInfo {
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
-  // 10 bits left in 32-bit word.
+  bool IndirectString         : 1; // True if the string is stored indirectly.
+  // 9 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
 public:
-  IdentifierInfo();
+  IdentifierInfo(bool usesIndirectString = false);
 
   /// isStr - Return true if this is the identifier for the specified string.
   /// This is intended to be used for string literals only: II->isStr("foo").
@@ -73,6 +75,13 @@ public:
   /// string is properly null terminated.
   ///
   const char *getName() const {
+    if (IndirectString) {
+      // The 'this' pointer really points to a 
+      // std::pair<IdentifierInfo, const char*>, where internal pointer
+      // points to the external string data.
+      return ((std::pair<IdentifierInfo, const char*>*) this)->second + 4;
+    }
+
     // We know that this is embedded into a StringMapEntry, and it knows how to
     // efficiently find the string.
     return llvm::StringMapEntry<IdentifierInfo>::
@@ -82,6 +91,17 @@ public:
   /// getLength - Efficiently return the length of this identifier info.
   ///
   unsigned getLength() const {
+    if (IndirectString) {
+      // The 'this' pointer really points to a 
+      // std::pair<IdentifierInfo, const char*>, where internal pointer
+      // points to the external string data.
+      const char* p = ((std::pair<IdentifierInfo, const char*>*) this)->second;
+      return ((unsigned) p[0])
+        | (((unsigned) p[1]) << 8)
+        | (((unsigned) p[2]) << 16)
+        | (((unsigned) p[3]) << 24);      
+    }
+    
     return llvm::StringMapEntry<IdentifierInfo>::
                     GetStringMapEntryFromValue(*this).getKeyLength();
   }
@@ -161,6 +181,20 @@ public:
   void Read(llvm::Deserializer& D);  
 };
 
+/// IdentifierInfoLookup - An abstract class used by IdentifierTable that
+///  provides an interface for for performing lookups from strings
+/// (const char *) to IdentiferInfo objects.
+class IdentifierInfoLookup {
+public:
+  virtual ~IdentifierInfoLookup();
+  
+  /// get - Return the identifier token info for the specified named identifier.
+  ///  Unlike the version in IdentifierTable, this returns a pointer instead
+  ///  of a reference.  If the pointer is NULL then the IdentifierInfo cannot
+  ///  be found.
+  virtual IdentifierInfo* get(const char *NameStart, const char *NameEnd) = 0;
+};  
+  
 /// IdentifierTable - This table implements an efficient mapping from strings to
 /// IdentifierInfo nodes.  It has no other purpose, but this is an
 /// extremely performance-critical piece of the code, as each occurrance of
@@ -170,15 +204,27 @@ class IdentifierTable {
   // BumpPtrAllocator!
   typedef llvm::StringMap<IdentifierInfo, llvm::BumpPtrAllocator> HashTableTy;
   HashTableTy HashTable;
+  
+  IdentifierInfoLookup* ExternalLookup;
 
 public:
   /// IdentifierTable ctor - Create the identifier table, populating it with
   /// info about the language keywords for the language specified by LangOpts.
-  IdentifierTable(const LangOptions &LangOpts);
+  IdentifierTable(const LangOptions &LangOpts,
+                  IdentifierInfoLookup* externalLookup = 0);
+  
+  llvm::BumpPtrAllocator& getAllocator() {
+    return HashTable.getAllocator();
+  }
   
   /// get - Return the identifier token info for the specified named identifier.
   ///
   IdentifierInfo &get(const char *NameStart, const char *NameEnd) {
+    if (ExternalLookup) {
+      IdentifierInfo* II = ExternalLookup->get(NameStart, NameEnd);
+      if (II) return *II;
+    }
+
     return HashTable.GetOrCreateValue(NameStart, NameEnd).getValue();
   }
   

@@ -25,7 +25,7 @@ using namespace clang;
 // IdentifierInfo Implementation
 //===----------------------------------------------------------------------===//
 
-IdentifierInfo::IdentifierInfo() {
+IdentifierInfo::IdentifierInfo(bool usesIndirectString) {
   TokenID = tok::identifier;
   ObjCOrBuiltinID = 0;
   HasMacro = false;
@@ -33,15 +33,19 @@ IdentifierInfo::IdentifierInfo() {
   IsPoisoned = false;
   IsCPPOperatorKeyword = false;
   FETokenInfo = 0;
+  IndirectString = usesIndirectString;
 }
 
 //===----------------------------------------------------------------------===//
 // IdentifierTable Implementation
 //===----------------------------------------------------------------------===//
 
-IdentifierTable::IdentifierTable(const LangOptions &LangOpts)
-  // Start with space for 8K identifiers.
-  : HashTable(8192) {
+IdentifierInfoLookup::~IdentifierInfoLookup() {}
+
+IdentifierTable::IdentifierTable(const LangOptions &LangOpts,
+                                 IdentifierInfoLookup* externalLookup)
+  : HashTable(8192), // Start with space for 8K identifiers.
+    ExternalLookup(externalLookup) {
 
   // Populate the identifier table with info about keywords for the current
   // language.
@@ -50,7 +54,7 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts)
 
 // This cstor is intended to be used only for serialization.
 IdentifierTable::IdentifierTable() 
-  : HashTable(8192) { }
+  : HashTable(8192), ExternalLookup(0) { }
 
 //===----------------------------------------------------------------------===//
 // Language Keyword Implementation
