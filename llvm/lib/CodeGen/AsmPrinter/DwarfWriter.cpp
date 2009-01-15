@@ -1668,13 +1668,15 @@ private:
 
     // Construct type.
     DIE Buffer(DW_TAG_base_type);
-    if (DIBasicType *BT = dyn_cast<DIBasicType>(&Ty))
-      ConstructTypeDIE(DW_Unit, Buffer, BT);
-    else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Ty))
-      ConstructTypeDIE(DW_Unit, Buffer, DT);
-    else if (DICompositeType *CT = dyn_cast<DICompositeType>(&Ty))
-      ConstructTypeDIE(DW_Unit, Buffer, CT);
-
+    if (Ty.isBasicType(Ty.getTag()))
+      ConstructTypeDIE(DW_Unit, Buffer, DIBasicType(Ty.getGV()));
+    else if (Ty.isDerivedType(Ty.getTag()))
+      ConstructTypeDIE(DW_Unit, Buffer, DIDerivedType(Ty.getGV()));
+    else {
+      assert (Ty.isCompositeType(Ty.getTag()) && "Unknown kind of DIType");
+      ConstructTypeDIE(DW_Unit, Buffer, DICompositeType(Ty.getGV()));
+    }
+    
     // Add debug information entry to entity and unit.
     DIE *Die = DW_Unit->AddDie(Buffer);
     SetDIEntry(Slot, Die);
@@ -1683,33 +1685,33 @@ private:
 
   /// ConstructTypeDIE - Construct basic type die from DIBasicType.
   void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
-                        DIBasicType *BTy) {
+                        DIBasicType BTy) {
     
     // Get core information.
-    const std::string &Name = BTy->getName();
+    const std::string &Name = BTy.getName();
     Buffer.setTag(DW_TAG_base_type);
-    AddUInt(&Buffer, DW_AT_encoding,  DW_FORM_data1, BTy->getEncoding());
+    AddUInt(&Buffer, DW_AT_encoding,  DW_FORM_data1, BTy.getEncoding());
     // Add name if not anonymous or intermediate type.
     if (!Name.empty())
       AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
-    uint64_t Size = BTy->getSizeInBits() >> 3;
+    uint64_t Size = BTy.getSizeInBits() >> 3;
     AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
   }
 
   /// ConstructTypeDIE - Construct derived type die from DIDerivedType.
   void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
-                        DIDerivedType *DTy) {
+                        DIDerivedType DTy) {
 
     // Get core information.
-    const std::string &Name = DTy->getName();
-    uint64_t Size = DTy->getSizeInBits() >> 3;
-    unsigned Tag = DTy->getTag();
+    const std::string &Name = DTy.getName();
+    uint64_t Size = DTy.getSizeInBits() >> 3;
+    unsigned Tag = DTy.getTag();
     // FIXME - Workaround for templates.
     if (Tag == DW_TAG_inheritance) Tag = DW_TAG_reference_type;
 
     Buffer.setTag(Tag);
     // Map to main type, void will not have a type.
-    DIType FromTy = DTy->getTypeDerivedFrom();
+    DIType FromTy = DTy.getTypeDerivedFrom();
     AddType(DW_Unit, &Buffer, FromTy);
 
     // Add name if not anonymous or intermediate type.
@@ -1721,26 +1723,26 @@ private:
 
     // Add source line info if available and TyDesc is not a forward
     // declaration.
-    // FIXME - Enable this. if (!DTy->isForwardDecl())
+    // FIXME - Enable this. if (!DTy.isForwardDecl())
     // FIXME - Enable this.     AddSourceLine(&Buffer, *DTy);
   }
 
   /// ConstructTypeDIE - Construct type DIE from DICompositeType.
   void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
-                        DICompositeType *CTy) {
+                        DICompositeType CTy) {
 
     // Get core information.                                                              
-    const std::string &Name = CTy->getName();
-    uint64_t Size = CTy->getSizeInBits() >> 3;
-    unsigned Tag = CTy->getTag();
+    const std::string &Name = CTy.getName();
+    uint64_t Size = CTy.getSizeInBits() >> 3;
+    unsigned Tag = CTy.getTag();
     switch (Tag) {
     case DW_TAG_vector_type:
     case DW_TAG_array_type:
-      ConstructArrayTypeDIE(DW_Unit, Buffer, CTy);
+      ConstructArrayTypeDIE(DW_Unit, Buffer, &CTy);
       break;
     //FIXME - Enable this. 
     // case DW_TAG_enumeration_type:
-    //  DIArray Elements = CTy->getTypeArray();
+    //  DIArray Elements = CTy.getTypeArray();
     //  // Add enumerators to enumeration type.
     //  for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) 
     //   ConstructEnumTypeDIE(Buffer, &Elements.getElement(i));
@@ -1749,27 +1751,17 @@ private:
       {
         // Add prototype flag.
         AddUInt(&Buffer, DW_AT_prototyped, DW_FORM_flag, 1);
-        DIArray Elements = CTy->getTypeArray();
+        DIArray Elements = CTy.getTypeArray();
         // Add return type.
         DIDescriptor RTy = Elements.getElement(0);
-        if (DIBasicType *BT = dyn_cast<DIBasicType>(&RTy))
-          AddType(DW_Unit, &Buffer, *BT);
-        else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&RTy))
-          AddType(DW_Unit, &Buffer, *DT);
-        else if (DICompositeType *CT = dyn_cast<DICompositeType>(&RTy))
-          AddType(DW_Unit, &Buffer, *CT);
+        AddType(DW_Unit, &Buffer, DIType(RTy.getGV()));
 
         //AddType(DW_Unit, &Buffer, Elements.getElement(0));
         // Add arguments.
         for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
           DIE *Arg = new DIE(DW_TAG_formal_parameter);
           DIDescriptor Ty = Elements.getElement(i);
-          if (DIBasicType *BT = dyn_cast<DIBasicType>(&Ty))
-            AddType(DW_Unit, &Buffer, *BT);
-          else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Ty))
-            AddType(DW_Unit, &Buffer, *DT);
-          else if (DICompositeType *CT = dyn_cast<DICompositeType>(&Ty))
-            AddType(DW_Unit, &Buffer, *CT);
+          AddType(DW_Unit, &Buffer, DIType(Ty.getGV()));
           Buffer.AddChild(Arg);
         }
       }
@@ -1778,16 +1770,20 @@ private:
     case DW_TAG_union_type: 
       {
         // Add elements to structure type.
-        DIArray Elements = CTy->getTypeArray();
+        DIArray Elements = CTy.getTypeArray();
         // Add elements to structure type.
         for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
           DIDescriptor Element = Elements.getElement(i);
-          if (DISubprogram *SP = dyn_cast<DISubprogram>(&Element))
-            ConstructFieldTypeDIE(DW_Unit, Buffer, SP);
-          else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Element))
+          if (Element.getTag() == dwarf::DW_TAG_subprogram)
+            ConstructFieldTypeDIE(DW_Unit, Buffer, DISubprogram(Element.getGV()));
+          else if (Element.getTag() == dwarf::DW_TAG_variable)
+            ConstructFieldTypeDIE(DW_Unit, Buffer, 
+                                  DIGlobalVariable(Element.getGV()));
+          else {
+            DIDerivedType DT = DIDerivedType(Element.getGV());
+            assert (DT.isDerivedType(DT.getTag()) && "Unexpected strcut element");
             ConstructFieldTypeDIE(DW_Unit, Buffer, DT);
-          else if (DIGlobalVariable *GV = dyn_cast<DIGlobalVariable>(&Element))
-            ConstructFieldTypeDIE(DW_Unit, Buffer, GV);
+          }
         }
       }
       break;
@@ -1804,7 +1800,7 @@ private:
     else {
       // Add zero size even if it is not a forward declaration.
       // FIXME - Enable this.
-      //      if (!CTy->isDefinition())
+      //      if (!CTy.isDefinition())
       //        AddUInt(&Buffer, DW_AT_declaration, DW_FORM_flag, 1);
       //      else
       //        AddUInt(&Buffer, DW_AT_byte_size, 0, 0); 
@@ -1813,14 +1809,14 @@ private:
     // Add source line info if available and TyDesc is not a forward
     // declaration.
     // FIXME - Enable this.
-    // if (CTy->isForwardDecl())                                            
+    // if (CTy.isForwardDecl())                                            
     //   AddSourceLine(&Buffer, *CTy);                                    
   }
   
   // ConstructSubrangeDIE - Construct subrange DIE from DISubrange.
-  void ConstructSubrangeDIE (DIE &Buffer, DISubrange *SR, DIE *IndexTy) {
-    int64_t L = SR->getLo();
-    int64_t H = SR->getHi();
+  void ConstructSubrangeDIE (DIE &Buffer, DISubrange SR, DIE *IndexTy) {
+    int64_t L = SR.getLo();
+    int64_t H = SR.getHi();
     DIE *DW_Subrange = new DIE(DW_TAG_subrange_type);
     if (L != H) {
       AddDIEntry(DW_Subrange, DW_AT_type, DW_FORM_ref4, IndexTy);
@@ -1851,8 +1847,8 @@ private:
     // Add subranges to array type.
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIDescriptor Element = Elements.getElement(i);
-      if (DISubrange *SR = dyn_cast<DISubrange>(&Element))
-        ConstructSubrangeDIE(Buffer, SR, IndexTy);
+      if (Element.getTag() == dwarf::DW_TAG_subrange_type)
+        ConstructSubrangeDIE(Buffer, DISubrange(Element.getGV()), IndexTy);
     }
   }
 
@@ -1870,16 +1866,16 @@ private:
 
   /// ConstructFieldTypeDIE - Construct variable DIE for a struct field.
   void ConstructFieldTypeDIE(CompileUnit *DW_Unit,
-                             DIE &Buffer, DIGlobalVariable *V) {
+                             DIE &Buffer, DIGlobalVariable V) {
 
     DIE *VariableDie = new DIE(DW_TAG_variable);
-    const std::string &LinkageName = V->getLinkageName();
+    const std::string &LinkageName = V.getLinkageName();
     if (!LinkageName.empty())
       AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
                 LinkageName);
     // FIXME - Enable this. AddSourceLine(VariableDie, V);
-    AddType(DW_Unit, VariableDie, V->getType());
-    if (!V->isLocalToUnit())
+    AddType(DW_Unit, VariableDie, V.getType());
+    if (!V.isLocalToUnit())
       AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);
     AddUInt(VariableDie, DW_AT_declaration, DW_FORM_flag, 1);
     Buffer.AddChild(VariableDie);
@@ -1887,62 +1883,49 @@ private:
 
   /// ConstructFieldTypeDIE - Construct subprogram DIE for a struct field.
   void ConstructFieldTypeDIE(CompileUnit *DW_Unit,
-                             DIE &Buffer, DISubprogram *SP,
+                             DIE &Buffer, DISubprogram SP,
                              bool IsConstructor = false) {
     DIE *Method = new DIE(DW_TAG_subprogram);
-    AddString(Method, DW_AT_name, DW_FORM_string, SP->getName());
-    const std::string &LinkageName = SP->getLinkageName();
+    AddString(Method, DW_AT_name, DW_FORM_string, SP.getName());
+    const std::string &LinkageName = SP.getLinkageName();
     if (!LinkageName.empty())
       AddString(Method, DW_AT_MIPS_linkage_name, DW_FORM_string, LinkageName);
     // FIXME - Enable this. AddSourceLine(Method, SP);
 
-    DICompositeType MTy = SP->getType();
+    DICompositeType MTy = SP.getType();
     DIArray Args = MTy.getTypeArray();
 
     // Add Return Type.
-    if (!IsConstructor) {
-      DIDescriptor Ty = Args.getElement(0);
-      if (DIBasicType *BT = dyn_cast<DIBasicType>(&Ty))
-        AddType(DW_Unit, Method, *BT);
-      else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Ty))
-        AddType(DW_Unit, Method, *DT);
-      else if (DICompositeType *CT = dyn_cast<DICompositeType>(&Ty))
-        AddType(DW_Unit, Method, *CT);
-    }
+    if (!IsConstructor) 
+      AddType(DW_Unit, Method, DIType(Args.getElement(0).getGV()));
 
     // Add arguments.
     for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
       DIE *Arg = new DIE(DW_TAG_formal_parameter);
-      DIDescriptor Ty = Args.getElement(i);
-      if (DIBasicType *BT = dyn_cast<DIBasicType>(&Ty))
-        AddType(DW_Unit, Method, *BT);
-      else if (DIDerivedType *DT = dyn_cast<DIDerivedType>(&Ty))
-        AddType(DW_Unit, Method, *DT);
-      else if (DICompositeType *CT = dyn_cast<DICompositeType>(&Ty))
-        AddType(DW_Unit, Method, *CT);
+      AddType(DW_Unit, Method, DIType(Args.getElement(i).getGV()));
       AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
       Method->AddChild(Arg);
     }
 
-    if (!SP->isLocalToUnit())
+    if (!SP.isLocalToUnit())
       AddUInt(Method, DW_AT_external, DW_FORM_flag, 1);                     
     Buffer.AddChild(Method);
   }
 
-  /// COnstructFieldTypeDIE - Construct derived type DIE for a struct field.
+  /// ConstructFieldTypeDIE - Construct derived type DIE for a struct field.
  void ConstructFieldTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
-                            DIDerivedType *DTy) {
-    unsigned Tag = DTy->getTag();
+                            DIDerivedType DTy) {
+    unsigned Tag = DTy.getTag();
     DIE *MemberDie = new DIE(Tag);
-    if (!DTy->getName().empty())
-      AddString(MemberDie, DW_AT_name, DW_FORM_string, DTy->getName());
+    if (!DTy.getName().empty())
+      AddString(MemberDie, DW_AT_name, DW_FORM_string, DTy.getName());
     // FIXME - Enable this. AddSourceLine(MemberDie, DTy);
 
-    DIType FromTy = DTy->getTypeDerivedFrom();
+    DIType FromTy = DTy.getTypeDerivedFrom();
     AddType(DW_Unit, MemberDie, FromTy);
 
-    uint64_t Size = DTy->getSizeInBits();
-    uint64_t Offset = DTy->getOffsetInBits();
+    uint64_t Size = DTy.getSizeInBits();
+    uint64_t Offset = DTy.getOffsetInBits();
 
     // FIXME Handle bitfields                                                      
 

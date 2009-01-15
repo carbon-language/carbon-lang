@@ -160,6 +160,7 @@ namespace llvm {
     // ctor.
     DIType(GlobalVariable *GV, bool, bool) : DIDescriptor(GV) {}
 
+  public:
     /// isDerivedType - Return true if the specified tag is legal for
     /// DIDerivedType.
     static bool isDerivedType(unsigned TAG);
