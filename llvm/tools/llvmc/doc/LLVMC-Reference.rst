@@ -294,10 +294,11 @@ separate option groups syntactically.
 
    - ``required`` - this option is obligatory.
 
-   - ``hidden`` - this option should not appear in the ``--help``
-     output (but should appear in the ``--help-hidden`` output).
+   - ``hidden`` - the description of this option will not appear in
+     the ``--help`` output (but will appear in the ``--help-hidden``
+     output).
 
-   - ``really_hidden`` - the option should not appear in any help
+   - ``really_hidden`` - the option will not be mentioned in any help
      output.
 
    - ``extern`` - this option is defined in some other plugin, see below.
@@ -307,7 +308,7 @@ External options
 
 Sometimes, when linking several plugins together, one plugin needs to
 access options defined in some other plugin. Because of the way
-options are implemented, such options should be marked as
+options are implemented, such options must be marked as
 ``extern``. This is what the ``extern`` option property is
 for. Example::
 
@@ -614,13 +615,13 @@ Ghostview_ are installed. There is also a ``--dump-graph`` option that
 creates a Graphviz source file (``compilation-graph.dot``) in the
 current directory.
 
-Another useful option is ``--check-graph``. It checks the compilation
-graph for common errors like mismatched output/input language names,
-multiple default edges and cycles. These checks can't be performed at
-compile-time because the plugins can load code dynamically. When
-invoked with ``--check-graph``, ``llvmc`` doesn't perform any
-compilation tasks and returns the number of encountered errors as its
-status code.
+Another useful ``llvmc`` option is ``--check-graph``. It checks the
+compilation graph for common errors like mismatched output/input
+language names, multiple default edges and cycles. These checks can't
+be performed at compile-time because the plugins can load code
+dynamically. When invoked with ``--check-graph``, ``llvmc`` doesn't
+perform any compilation tasks and returns the number of encountered
+errors as its status code.
 
 .. _Graphviz: http://www.graphviz.org/
 .. _Ghostview: http://pages.cs.wisc.edu/~ghost/
