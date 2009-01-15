@@ -74,6 +74,7 @@ public:
   // Operators.
   //  case Expr::UnaryOperatorClass:
   //  case Expr::CastExprClass: 
+  void VisitCStyleCastExpr(CStyleCastExpr *E);
   void VisitImplicitCastExpr(ImplicitCastExpr *E);
   void VisitCallExpr(const CallExpr *E);
   void VisitStmtExpr(const StmtExpr *E);
@@ -126,6 +127,18 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 //===----------------------------------------------------------------------===//
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
+
+void AggExprEmitter::VisitCStyleCastExpr(CStyleCastExpr *E) {
+  // GCC union extension
+  if (E->getType()->isUnionType()) {
+    RecordDecl *SD = E->getType()->getAsRecordType()->getDecl();
+    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, *SD->field_begin(), true, 0);
+    EmitInitializationToLValue(E->getSubExpr(), FieldLoc);
+    return;
+  }
+
+  Visit(E->getSubExpr());
+}
 
 void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   assert(CGF.getContext().typesAreCompatible(
@@ -467,7 +480,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     // Unions only initialize one field.
     // (things can get weird with designators, but they aren't
     // supported yet.)
-    if (E->getType()->isUnionType())
+    if (isUnion)
       break;
   }
 }
