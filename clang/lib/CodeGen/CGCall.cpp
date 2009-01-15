@@ -303,12 +303,21 @@ public:
   virtual ABIArgInfo classifyArgumentType(QualType RetTy,
                                           ASTContext &Context) const;
 };
+
+
+/// X86_32ABIInfo - The X86_64 ABI information.
+class X86_64ABIInfo : public ABIInfo {
+public:
+  virtual ABIArgInfo classifyReturnType(QualType RetTy, 
+                                        ASTContext &Context) const;
+
+  virtual ABIArgInfo classifyArgumentType(QualType RetTy,
+                                          ASTContext &Context) const;
+};
 }
 
 ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context) const {
-  assert(!RetTy->isArrayType() && 
-         "Array types cannot be passed directly.");
   if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
     // Classify "single element" structs as their element type.
     const FieldDecl *SeltFD = isSingleElementStruct(RetTy);
@@ -354,7 +363,6 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
                                               ASTContext &Context) const {
-  assert(!Ty->isArrayType() && "Array types cannot be passed directly.");
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
     // Structures with flexible arrays are always byval.
     if (const RecordType *RT = Ty->getAsStructureType())
@@ -381,6 +389,16 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
   }
 }
 
+ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
+                                            ASTContext &Context) const {
+  return ABIArgInfo::getDefault();
+}
+
+ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
+                                              ASTContext &Context) const {
+  return ABIArgInfo::getDefault();
+}
+
 ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context) const {
   return ABIArgInfo::getDefault();
@@ -388,7 +406,6 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
 
 ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
                                               ASTContext &Context) const {
-  assert(!Ty->isArrayType() && "Array types cannot be passed directly.");
   return ABIArgInfo::getDefault();
 }
 
@@ -400,8 +417,12 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
   // to free it.
   const char *TargetPrefix = getContext().Target.getTargetPrefix();
   if (strcmp(TargetPrefix, "x86") == 0) {
-    if (getContext().Target.getPointerWidth(0) == 32) 
+    switch (getContext().Target.getPointerWidth(0)) {
+    case 32:
       return *(TheABIInfo = new X86_32ABIInfo());
+    case 64:
+      return *(TheABIInfo = new X86_64ABIInfo());
+    }
   }
 
   return *(TheABIInfo = new DefaultABIInfo);
