@@ -1293,7 +1293,23 @@ public:
       return getOperand(getNumOperands()-1).getNode();
     return 0;
   }
-  
+
+  // If this is a pseudo op, like copyfromreg, look to see if there is a
+  // real target node flagged to it.  If so, return the target node.
+  const SDNode *getFlaggedMachineNode() const {
+    const SDNode *FoundNode = this;
+
+    // Climb up flag edges until a machine-opcode node is found, or the
+    // end of the chain is reached.
+    while (!FoundNode->isMachineOpcode()) {
+      const SDNode *N = FoundNode->getFlaggedNode();
+      if (!N) break;
+      FoundNode = N;
+    }
+
+    return FoundNode;
+  }
+
   /// getNumValues - Return the number of values defined/returned by this
   /// operator.
   ///

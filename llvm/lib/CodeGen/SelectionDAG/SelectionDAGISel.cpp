@@ -34,6 +34,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAGSDNodes.h"
+#include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/DwarfWriter.h"
@@ -1079,8 +1080,8 @@ ScheduleDAG *SelectionDAGISel::Schedule() {
 }
 
 
-HazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {
-  return new HazardRecognizer();
+ScheduleHazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {
+  return new ScheduleHazardRecognizer();
 }
 
 //===----------------------------------------------------------------------===//

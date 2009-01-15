@@ -15,13 +15,14 @@
 #ifndef SPUHAZRECS_H
 #define SPUHAZRECS_H
 
-#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
-#include "SPUInstrInfo.h"
+#include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 
 namespace llvm {
+
+class TargetInstrInfo;
   
 /// SPUHazardRecognizer
-class SPUHazardRecognizer : public HazardRecognizer
+class SPUHazardRecognizer : public ScheduleHazardRecognizer
 {
 private:
   const TargetInstrInfo &TII;
@@ -29,8 +30,8 @@ private:
 
 public:
   SPUHazardRecognizer(const TargetInstrInfo &TII);
-  virtual HazardType getHazardType(SDNode *Node);
-  virtual void EmitInstruction(SDNode *Node);
+  virtual HazardType getHazardType(SUnit *SU);
+  virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();
   virtual void EmitNoop();
 };
@@ -38,4 +39,3 @@ public:
 } // end namespace llvm
 
 #endif
-

@@ -21,6 +21,7 @@
 #define DEBUG_TYPE "pre-RA-sched"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
 #include "llvm/CodeGen/ScheduleDAGSDNodes.h"
+#include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -58,12 +59,12 @@ private:
   std::vector<SUnit*> PendingQueue;
 
   /// HazardRec - The hazard recognizer to use.
-  HazardRecognizer *HazardRec;
+  ScheduleHazardRecognizer *HazardRec;
 
 public:
   ScheduleDAGList(MachineFunction &mf,
                   SchedulingPriorityQueue *availqueue,
-                  HazardRecognizer *HR)
+                  ScheduleHazardRecognizer *HR)
     : ScheduleDAGSDNodes(mf),
       AvailableQueue(availqueue), HazardRec(HR) {
     }
@@ -81,9 +82,6 @@ private:
   void ListScheduleTopDown();
 };
 }  // end anonymous namespace
-
-HazardRecognizer::~HazardRecognizer() {}
-
 
 /// Schedule - Schedule the DAG using list scheduling.
 void ScheduleDAGList::Schedule() {
@@ -190,31 +188,20 @@ void ScheduleDAGList::ListScheduleTopDown() {
     }
 
     SUnit *FoundSUnit = 0;
-    SDNode *FoundNode = 0;
     
     bool HasNoopHazards = false;
     while (!AvailableQueue->empty()) {
       SUnit *CurSUnit = AvailableQueue->pop();
       
-      // Get the node represented by this SUnit.
-      FoundNode = CurSUnit->getNode();
-      
-      // If this is a pseudo op, like copyfromreg, look to see if there is a
-      // real target node flagged to it.  If so, use the target node.
-      while (!FoundNode->isMachineOpcode()) {
-        SDNode *N = FoundNode->getFlaggedNode();
-        if (!N) break;
-        FoundNode = N;
-      }
-    
-      HazardRecognizer::HazardType HT = HazardRec->getHazardType(FoundNode);
-      if (HT == HazardRecognizer::NoHazard) {
+      ScheduleHazardRecognizer::HazardType HT =
+        HazardRec->getHazardType(CurSUnit);
+      if (HT == ScheduleHazardRecognizer::NoHazard) {
         FoundSUnit = CurSUnit;
         break;
       }
     
       // Remember if this is a noop hazard.
-      HasNoopHazards |= HT == HazardRecognizer::NoopHazard;
+      HasNoopHazards |= HT == ScheduleHazardRecognizer::NoopHazard;
       
       NotReady.push_back(CurSUnit);
     }
@@ -228,7 +215,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
     // If we found a node to schedule, do it now.
     if (FoundSUnit) {
       ScheduleNodeTopDown(FoundSUnit, CurCycle);
-      HazardRec->EmitInstruction(FoundNode);
+      HazardRec->EmitInstruction(FoundSUnit);
 
       // If this is a pseudo-op node, we don't want to increment the current
       // cycle.

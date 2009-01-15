@@ -14,7 +14,8 @@
 #ifndef PPCHAZRECS_H
 #define PPCHAZRECS_H
 
-#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
+#include "llvm/CodeGen/ScheduleHazardRecognizer.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "PPCInstrInfo.h"
 
 namespace llvm {
@@ -25,7 +26,7 @@ namespace llvm {
 /// avoid structural hazards that cause significant performance penalties (e.g.
 /// setting the CTR register then branching through it within a dispatch group),
 /// or storing then loading from the same address within a dispatch group.
-class PPCHazardRecognizer970 : public HazardRecognizer {
+class PPCHazardRecognizer970 : public ScheduleHazardRecognizer {
   const TargetInstrInfo &TII;
   
   unsigned NumIssued;  // Number of insts issued, including advanced cycles.
@@ -47,8 +48,8 @@ class PPCHazardRecognizer970 : public HazardRecognizer {
   
 public:
   PPCHazardRecognizer970(const TargetInstrInfo &TII);
-  virtual HazardType getHazardType(SDNode *Node);
-  virtual void EmitInstruction(SDNode *Node);
+  virtual HazardType getHazardType(SUnit *SU);
+  virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();
   virtual void EmitNoop();
   

@@ -15,6 +15,7 @@
 #include "PPCHazardRecognizers.h"
 #include "PPC.h"
 #include "PPCInstrInfo.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
@@ -118,8 +119,9 @@ isLoadOfStoredAddress(unsigned LoadSize, SDValue Ptr1, SDValue Ptr2) const {
 /// terminate terminate the dispatch group.  We turn NoopHazard for any
 /// instructions that wouldn't terminate the dispatch group that would cause a
 /// pipeline flush.
-HazardRecognizer::HazardType PPCHazardRecognizer970::
-getHazardType(SDNode *Node) {
+ScheduleHazardRecognizer::HazardType PPCHazardRecognizer970::
+getHazardType(SUnit *SU) {
+  const SDNode *Node = SU->getNode()->getFlaggedMachineNode();
   bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType = 
     GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
@@ -217,7 +219,8 @@ getHazardType(SDNode *Node) {
   return NoHazard;
 }
 
-void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
+void PPCHazardRecognizer970::EmitInstruction(SUnit *SU) {
+  const SDNode *Node = SU->getNode()->getFlaggedMachineNode();
   bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType = 
     GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,

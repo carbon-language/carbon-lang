@@ -17,6 +17,8 @@
 #include "SPUHazardRecognizers.h"
 #include "SPU.h"
 #include "SPUInstrInfo.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -38,14 +40,15 @@ SPUHazardRecognizer::SPUHazardRecognizer(const TargetInstrInfo &tii) :
 /// instruction. Currently returns NoHazard.
 ///
 /// \return NoHazard
-HazardRecognizer::HazardType
-SPUHazardRecognizer::getHazardType(SDNode *Node)
+ScheduleHazardRecognizer::HazardType
+SPUHazardRecognizer::getHazardType(SUnit *SU)
 {
   // Initial thoughts on how to do this, but this code cannot work unless the
   // function's prolog and epilog code are also being scheduled so that we can
   // accurately determine which pipeline is being scheduled.
 #if 0
-  HazardRecognizer::HazardType retval = NoHazard;
+  const SDNode *Node = SU->getNode()->getFlaggedMachineNode();
+  ScheduleHazardRecognizer::HazardType retval = NoHazard;
   bool mustBeOdd = false;
 
   switch (Node->getOpcode()) {
@@ -120,7 +123,7 @@ SPUHazardRecognizer::getHazardType(SDNode *Node)
 #endif
 }
 
-void SPUHazardRecognizer::EmitInstruction(SDNode *Node)
+void SPUHazardRecognizer::EmitInstruction(SUnit *SU)
 {
 }
 

@@ -33,7 +33,7 @@ namespace llvm {
   class TargetLowering;
   class TargetInstrInfo;
   class FunctionLoweringInfo;
-  class HazardRecognizer;
+  class ScheduleHazardRecognizer;
   class GCFunctionInfo;
   class ScheduleDAG;
  
@@ -93,7 +93,7 @@ public:
   
   /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
   /// to use for this target when scheduling the DAG.
-  virtual HazardRecognizer *CreateTargetHazardRecognizer();
+  virtual ScheduleHazardRecognizer *CreateTargetHazardRecognizer();
   
 protected:
   /// DAGSize - Size of DAG being instruction selected.

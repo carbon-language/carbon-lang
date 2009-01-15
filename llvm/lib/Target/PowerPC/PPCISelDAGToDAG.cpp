@@ -181,7 +181,7 @@ namespace {
     
     /// CreateTargetHazardRecognizer - Return the hazard recognizer to use for
     /// this target when scheduling the DAG.
-    virtual HazardRecognizer *CreateTargetHazardRecognizer() {
+    virtual ScheduleHazardRecognizer *CreateTargetHazardRecognizer() {
       // Should use subtarget info to pick the right hazard recognizer.  For
       // now, always return a PPC970 recognizer.
       const TargetInstrInfo *II = TM.getInstrInfo();

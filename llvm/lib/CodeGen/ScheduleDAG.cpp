@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "pre-RA-sched"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -561,3 +562,5 @@ void ScheduleDAGTopologicalSort::Allocate(int n, int index) {
 ScheduleDAGTopologicalSort::ScheduleDAGTopologicalSort(
                                                      std::vector<SUnit> &sunits)
  : SUnits(sunits) {}
+
+ScheduleHazardRecognizer::~ScheduleHazardRecognizer() {}
