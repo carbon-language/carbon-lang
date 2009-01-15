@@ -8,8 +8,6 @@
 //
 // Any resemblance to libsimdmath or the Cell SDK simdmath library is
 // purely and completely coincidental.
-//
-// Primary author: Scott Michel (scottm@aero.org)
 //===----------------------------------------------------------------------===//
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~

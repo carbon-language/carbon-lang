@@ -18,11 +18,13 @@
 #include "SPUHazardRecognizers.h"
 #include "SPUFrameInfo.h"
 #include "SPURegisterNames.h"
+#include "SPUTargetMachine.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Constants.h"
@@ -252,6 +254,26 @@ public:
   /// getSmallIPtrImm - Return a target constant of pointer type.
   inline SDValue getSmallIPtrImm(unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, SPUtli.getPointerTy());
+  }
+
+  SDNode *emitBuildVector(SDValue build_vec) {
+    std::vector<Constant*> CV;
+
+    for (size_t i = 0; i < build_vec.getNumOperands(); ++i) {
+      ConstantSDNode *V = dyn_cast<ConstantSDNode>(build_vec.getOperand(i));
+      CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
+    }
+
+    Constant *CP = ConstantVector::get(CV);
+    SDValue CPIdx = CurDAG->getConstantPool(CP, SPUtli.getPointerTy());
+    unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
+    SDValue CGPoolOffset =
+            SPU::LowerConstantPool(CPIdx, *CurDAG,
+                                   SPUtli.getSPUTargetMachine());
+    return SelectCode(CurDAG->getLoad(build_vec.getValueType(),
+                      CurDAG->getEntryNode(), CGPoolOffset,
+                      PseudoSourceValue::getConstantPool(), 0,
+                      false, Alignment));
   }
 
   /// Select - Convert the specified operand from a target-independent to a
@@ -647,22 +669,82 @@ SPUDAGToDAGISel::Select(SDValue Op) {
                                              TFI, Imm0), 0);
       n_ops = 2;
     }
-  } else if (Opc == ISD::ZERO_EXTEND) {
-    // (zero_extend:i16 (and:i8 <arg>, <const>))
-    const SDValue &Op1 = N->getOperand(0);
+  } else if ((Opc == ISD::ZERO_EXTEND || Opc == ISD::ANY_EXTEND)
+             && OpVT == MVT::i64) {
+    SDValue Op0 = Op.getOperand(0);
+    MVT Op0VT = Op0.getValueType();
+    MVT Op0VecVT = MVT::getVectorVT(Op0VT, (128 / Op0VT.getSizeInBits()));
+    MVT OpVecVT = MVT::getVectorVT(OpVT, (128 / OpVT.getSizeInBits()));
+    SDValue shufMask;
 
-    if (Op.getValueType() == MVT::i16 && Op1.getValueType() == MVT::i8) {
-      if (Op1.getOpcode() == ISD::AND) {
-        // Fold this into a single ANDHI. This is often seen in expansions of i1
-        // to i8, then i8 to i16 in logical/branching operations.
-        DEBUG(cerr << "CellSPU: Coalescing (zero_extend:i16 (and:i8 "
-                      "<arg>, <const>))\n");
-        NewOpc = SPU::ANDHIi8i16;
-        Ops[0] = Op1.getOperand(0);
-        Ops[1] = Op1.getOperand(1);
-        n_ops = 2;
-      }
+    switch (Op0VT.getSimpleVT()) {
+    default:
+      cerr << "CellSPU Select: Unhandled zero/any extend MVT\n";
+      abort();
+      /*NOTREACHED*/
+      break;
+    case MVT::i32:
+      shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                             CurDAG->getConstant(0x80808080, MVT::i32),
+                             CurDAG->getConstant(0x00010203, MVT::i32),
+                             CurDAG->getConstant(0x80808080, MVT::i32),
+                             CurDAG->getConstant(0x08090a0b, MVT::i32));
+      break;
+
+    case MVT::i16:
+      shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                             CurDAG->getConstant(0x80808080, MVT::i32),
+                             CurDAG->getConstant(0x80800203, MVT::i32),
+                             CurDAG->getConstant(0x80808080, MVT::i32),
+                             CurDAG->getConstant(0x80800a0b, MVT::i32));
+      break;
+
+    case MVT::i8:
+      shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                             CurDAG->getConstant(0x80808080, MVT::i32),
+                             CurDAG->getConstant(0x80808003, MVT::i32),
+                             CurDAG->getConstant(0x80808080, MVT::i32),
+                             CurDAG->getConstant(0x8080800b, MVT::i32));
+      break;
     }
+
+    SDNode *shufMaskLoad = emitBuildVector(shufMask);
+    SDNode *PromoteScalar =
+            SelectCode(CurDAG->getNode(SPUISD::PREFSLOT2VEC, Op0VecVT, Op0));
+
+    SDValue zextShuffle =
+            CurDAG->getNode(SPUISD::SHUFB, OpVecVT,
+                                       SDValue(PromoteScalar, 0),
+                                       SDValue(PromoteScalar, 0),
+                                       SDValue(shufMaskLoad, 0));
+
+    // N.B.: BIT_CONVERT replaces and updates the zextShuffle node, so we
+    // re-use it in the VEC2PREFSLOT selection without needing to explicitly
+    // call SelectCode (it's already done for us.)
+    SelectCode(CurDAG->getNode(ISD::BIT_CONVERT, OpVecVT, zextShuffle));
+    return SelectCode(CurDAG->getNode(SPUISD::VEC2PREFSLOT, OpVT,
+                                      zextShuffle));
+  } else if (Opc == ISD::ADD && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
+    SDNode *CGLoad =
+            emitBuildVector(SPU::getCarryGenerateShufMask(*CurDAG));
+
+    return SelectCode(CurDAG->getNode(SPUISD::ADD64_MARKER, OpVT,
+                                      Op.getOperand(0), Op.getOperand(1),
+                                      SDValue(CGLoad, 0)));
+  } else if (Opc == ISD::SUB && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
+    SDNode *CGLoad =
+            emitBuildVector(SPU::getBorrowGenerateShufMask(*CurDAG));
+
+    return SelectCode(CurDAG->getNode(SPUISD::SUB64_MARKER, OpVT,
+                                      Op.getOperand(0), Op.getOperand(1),
+                                      SDValue(CGLoad, 0)));
+  } else if (Opc == ISD::MUL && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
+    SDNode *CGLoad =
+            emitBuildVector(SPU::getCarryGenerateShufMask(*CurDAG));
+
+    return SelectCode(CurDAG->getNode(SPUISD::MUL64_MARKER, OpVT,
+                                      Op.getOperand(0), Op.getOperand(1),
+                                      SDValue(CGLoad, 0)));
   } else if (Opc == ISD::SHL) {
     if (OpVT == MVT::i64) {
       return SelectSHLi64(Op, OpVT);

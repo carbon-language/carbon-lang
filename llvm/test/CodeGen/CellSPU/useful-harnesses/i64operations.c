@@ -7,6 +7,7 @@ int64_t         tval_c = 1234567890001LL;
 int64_t         tval_d = 10001LL;
 int64_t         tval_e = 10000LL;
 uint64_t        tval_f = 0xffffff0750135eb9;
+int64_t		tval_g = -1;
 
 /* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
 
@@ -546,6 +547,12 @@ test_i64_variable_shift(const char *func_name, int64_t (*func)(int64_t, int), in
 
 /* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
 
+int64_t i64_mul(int64_t a, int64_t b) {
+  return a * b;
+}
+
+/* ~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~- */
+
 int
 main(void)
 {
@@ -553,12 +560,13 @@ main(void)
   const char     *something_failed = "  %d tests failed.\n";
   const char     *all_tests_passed = "  All tests passed.\n";
 
-  printf("tval_a = %20lld (0x%020llx)\n", tval_a, tval_a);
-  printf("tval_b = %20lld (0x%020llx)\n", tval_b, tval_b);
-  printf("tval_c = %20lld (0x%020llx)\n", tval_c, tval_c);
-  printf("tval_d = %20lld (0x%020llx)\n", tval_d, tval_d);
-  printf("tval_e = %20lld (0x%020llx)\n", tval_e, tval_e);
-  printf("tval_f = %20llu (0x%020llx)\n", tval_f, tval_f);
+  printf("tval_a = %20lld (0x%016llx)\n", tval_a, tval_a);
+  printf("tval_b = %20lld (0x%016llx)\n", tval_b, tval_b);
+  printf("tval_c = %20lld (0x%016llx)\n", tval_c, tval_c);
+  printf("tval_d = %20lld (0x%016llx)\n", tval_d, tval_d);
+  printf("tval_e = %20lld (0x%016llx)\n", tval_e, tval_e);
+  printf("tval_f = %20llu (0x%016llx)\n", tval_f, tval_f);
+  printf("tval_g = %20llu (0x%016llx)\n", tval_g, tval_g);
   printf("----------------------------------------\n");
 
   for (i = 0; i < ARR_SIZE(int64_preds); ++i) {
@@ -646,6 +654,18 @@ main(void)
   } else {
     printf("  All tests passed.\n");
   }
+
+  printf("----------------------------------------\n");
+
+  int64_t result;
+  
+  result = i64_mul(tval_g, tval_g);
+  printf("%20lld * %20lld = %20lld (0x%016llx)\n", tval_g, tval_g, result, result);
+  result = i64_mul(tval_d, tval_e);
+  printf("%20lld * %20lld = %20lld (0x%016llx)\n", tval_d, tval_e, result, result);
+  /* 0xba7a664f13077c9 */
+  result = i64_mul(tval_a, tval_b);
+  printf("%20lld * %20lld = %20lld (0x%016llx)\n", tval_a, tval_b, result, result);
 
   printf("----------------------------------------\n");
 

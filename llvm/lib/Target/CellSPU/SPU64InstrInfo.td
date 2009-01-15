@@ -2,7 +2,6 @@
 //
 //                     Cell SPU 64-bit operations
 //
-// Primary author: Scott Michel (scottm@aero.org)
 //===----------------------------------------------------------------------===//
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
@@ -240,3 +239,145 @@ def : Pat<(setge (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
 // i64 setult:
 def : I64SETCCNegCond<setlt, I64GEr64>;
 def : I64SELECTNegCond<setlt, I64GEr64>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// v2i64, i64 add
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+class v2i64_add_cg<dag lhs, dag rhs>:
+    CodeFrag<(CGv4i32 lhs, rhs)>;
+
+class v2i64_add_1<dag lhs, dag rhs, dag cg, dag cg_mask>:
+    CodeFrag<(ADDXv4i32 lhs, rhs, (SHUFBv4i32 cg, cg, cg_mask))>;
+
+class v2i64_add<dag lhs, dag rhs, dag cg_mask>:
+    v2i64_add_1<lhs, rhs, v2i64_add_cg<lhs, rhs>.Fragment, cg_mask>;
+
+def : Pat<(SPUadd64 R64C:$rA, R64C:$rB, (v4i32 VECREG:$rCGmask)),
+           (ORi64_v2i64 v2i64_add<(ORv2i64_i64 R64C:$rA),
+                                  (ORv2i64_i64 R64C:$rB),
+                                  (v4i32 VECREG:$rCGmask)>.Fragment)>;
+
+def : Pat<(SPUadd64 (v2i64 VECREG:$rA), (v2i64 VECREG:$rB),
+                    (v4i32 VECREG:$rCGmask)),
+           v2i64_add<(v2i64 VECREG:$rA),
+                     (v2i64 VECREG:$rB),
+                     (v4i32 VECREG:$rCGmask)>.Fragment>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// v2i64, i64 subtraction
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+class v2i64_sub_bg<dag lhs, dag rhs>: CodeFrag<(BGv4i32 lhs, rhs)>;
+
+class v2i64_sub<dag lhs, dag rhs, dag bg, dag bg_mask>:
+    CodeFrag<(SFXv4i32 lhs, rhs, (SHUFBv4i32 bg, bg, bg_mask))>;
+
+def : Pat<(SPUsub64 R64C:$rA, R64C:$rB, (v4i32 VECREG:$rCGmask)),
+           (ORi64_v2i64 v2i64_sub<(ORv2i64_i64 R64C:$rA),
+                                  (ORv2i64_i64 R64C:$rB),
+                                  v2i64_sub_bg<(ORv2i64_i64 R64C:$rA),
+                                               (ORv2i64_i64 R64C:$rB)>.Fragment,
+                                  (v4i32 VECREG:$rCGmask)>.Fragment)>;
+
+def : Pat<(SPUsub64 (v2i64 VECREG:$rA), (v2i64 VECREG:$rB),
+                    (v4i32 VECREG:$rCGmask)),
+           v2i64_sub<(v2i64 VECREG:$rA),
+                     (v2i64 VECREG:$rB),
+                     v2i64_sub_bg<(v2i64 VECREG:$rA),
+                                  (v2i64 VECREG:$rB)>.Fragment,
+                     (v4i32 VECREG:$rCGmask)>.Fragment>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// v2i64, i64 multiply
+//
+// Note: i64 multiply is simply the vector->scalar conversion of the
+// full-on v2i64 multiply, since the entire vector has to be manipulated
+// anyway.
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+class v2i64_mul_ahi64<dag rA> :
+    CodeFrag<(SELBv4i32 rA, (ILv4i32 0), (FSMBIv4i32 0x0f0f))>;
+
+class v2i64_mul_bhi64<dag rB> :
+    CodeFrag<(SELBv4i32 rB, (ILv4i32 0), (FSMBIv4i32 0x0f0f))>;
+
+class v2i64_mul_alo64<dag rB> :
+    CodeFrag<(SELBv4i32 rB, (ILv4i32 0), (FSMBIv4i32 0xf0f0))>;
+
+class v2i64_mul_blo64<dag rB> :
+    CodeFrag<(SELBv4i32 rB, (ILv4i32 0), (FSMBIv4i32 0xf0f0))>;
+
+class v2i64_mul_ashlq2<dag rA>:
+    CodeFrag<(SHLQBYIv4i32 rA, 0x2)>;
+
+class v2i64_mul_ashlq4<dag rA>:
+    CodeFrag<(SHLQBYIv4i32 rA, 0x4)>;
+
+class v2i64_mul_bshlq2<dag rB> :
+    CodeFrag<(SHLQBYIv4i32 rB, 0x2)>;
+
+class v2i64_mul_bshlq4<dag rB> :
+    CodeFrag<(SHLQBYIv4i32 rB, 0x4)>;
+
+class v2i64_highprod<dag rA, dag rB>:
+    CodeFrag<(Av4i32
+                (Av4i32
+                  (MPYUv4i32 v2i64_mul_bshlq4<rB>.Fragment,     // a1 x b3
+                             v2i64_mul_ahi64<rA>.Fragment),
+                  (MPYHv4i32 v2i64_mul_ahi64<rA>.Fragment,      // a0 x b3
+                             v2i64_mul_bshlq4<rB>.Fragment)),
+                (Av4i32
+                  (MPYHv4i32 v2i64_mul_bhi64<rB>.Fragment,
+                             v2i64_mul_ashlq4<rA>.Fragment),
+                  (Av4i32
+                    (MPYHv4i32 v2i64_mul_ashlq4<rA>.Fragment,
+                               v2i64_mul_bhi64<rB>.Fragment),
+                    (Av4i32
+                      (MPYUv4i32 v2i64_mul_ashlq4<rA>.Fragment,
+                                 v2i64_mul_bhi64<rB>.Fragment),
+                      (Av4i32
+                        (MPYHv4i32 v2i64_mul_ashlq2<rA>.Fragment,
+                                   v2i64_mul_bshlq2<rB>.Fragment),
+                        (MPYUv4i32 v2i64_mul_ashlq2<rA>.Fragment,
+                                   v2i64_mul_bshlq2<rB>.Fragment))))))>;
+
+class v2i64_mul_a3_b3<dag rA, dag rB>:
+    CodeFrag<(MPYUv4i32 v2i64_mul_alo64<rA>.Fragment,
+                        v2i64_mul_blo64<rB>.Fragment)>;
+
+class v2i64_mul_a2_b3<dag rA, dag rB>:
+    CodeFrag<(SELBv4i32 (SHLQBYIv4i32
+                          (MPYHHUv4i32 v2i64_mul_alo64<rA>.Fragment,
+                                       v2i64_mul_bshlq2<rB>.Fragment), 0x2),
+                        (ILv4i32 0),
+                        (FSMBIv4i32 0xc3c3))>;
+
+class v2i64_mul_a3_b2<dag rA, dag rB>:
+    CodeFrag<(SELBv4i32 (SHLQBYIv4i32
+                          (MPYHHUv4i32 v2i64_mul_blo64<rB>.Fragment,
+                                       v2i64_mul_ashlq2<rA>.Fragment), 0x2),
+                        (ILv4i32 0),
+                        (FSMBIv4i32 0xc3c3))>;
+
+class v2i64_lowsum<dag rA, dag rB, dag rCGmask>:
+    v2i64_add<v2i64_add<v2i64_mul_a3_b3<rA, rB>.Fragment,
+                        v2i64_mul_a2_b3<rA, rB>.Fragment, rCGmask>.Fragment,
+              v2i64_mul_a3_b2<rA, rB>.Fragment, rCGmask>;
+
+class v2i64_mul<dag rA, dag rB, dag rCGmask>:
+    v2i64_add<v2i64_lowsum<rA, rB, rCGmask>.Fragment,
+              (SELBv4i32 v2i64_highprod<rA, rB>.Fragment,
+                         (ILv4i32 0),
+                         (FSMBIv4i32 0x0f0f)),
+              rCGmask>;
+
+def : Pat<(SPUmul64 R64C:$rA, R64C:$rB, (v4i32 VECREG:$rCGmask)),
+          (ORi64_v2i64 v2i64_mul<(ORv2i64_i64 R64C:$rA),
+                                 (ORv2i64_i64 R64C:$rB),
+                                 (v4i32 VECREG:$rCGmask)>.Fragment)>;
+
+def : Pat<(SPUmul64 (v2i64 VECREG:$rA), (v2i64 VECREG:$rB),
+                    (v4i32 VECREG:$rCGmask)),
+          v2i64_mul<(v2i64 VECREG:$rA), (v2i64 VECREG:$rB),
+                    (v4i32 VECREG:$rCGmask)>.Fragment>;

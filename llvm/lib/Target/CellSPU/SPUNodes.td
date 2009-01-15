@@ -61,17 +61,19 @@ def SPUselb_type: SDTypeProfile<1, 3, [
 def SPUvecshift_type: SDTypeProfile<1, 2, [
   SDTCisSameAs<0, 1>, SDTCisInt<2>]>;
 
+// "marker" type for i64 operators that need a shuffle mask
+// (i.e., uses cg or bg or another instruction that needs to
+// use shufb to get things in the right place.)
+// Op0: The result
+// Op1, 2: LHS, RHS
+// Op3: Carry-generate shuffle mask
+
+def SPUmarker_type : SDTypeProfile<1, 3, [
+  SDTCisInt<0>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2> ]>;
+
 //===----------------------------------------------------------------------===//
 // Synthetic/pseudo-instructions
 //===----------------------------------------------------------------------===//
-
-/// Add extended, carry generate:
-def SPUaddx : SDNode<"SPUISD::ADD_EXTENDED", SPUIntTrinaryOp, []>;
-def SPUcarry_gen : SDNode<"SPUISD::CARRY_GENERATE", SDTIntBinOp, []>;
-
-// Subtract extended, borrow generate
-def SPUsubx : SDNode<"SPUISD::SUB_EXTENDED", SPUIntTrinaryOp, []>;
-def SPUborrow_gen : SDNode<"SPUISD::BORROW_GENERATE", SDTIntBinOp, []>;
 
 // SPU CNTB:
 def SPUcntb : SDNode<"SPUISD::CNTB", SDTIntUnaryOp>;
@@ -126,6 +128,12 @@ def SPUaform : SDNode<"SPUISD::AFormAddr", SDTIntBinOp, []>;
 
 // Indirect [D-Form "imm($reg)" and X-Form "$reg($reg)"] addresses
 def SPUindirect : SDNode<"SPUISD::IndirectAddr", SDTIntBinOp, []>;
+
+// i64 markers: supplies extra operands used to generate the i64 operator
+// instruction sequences
+def SPUadd64 : SDNode<"SPUISD::ADD64_MARKER", SPUmarker_type, []>;
+def SPUsub64 : SDNode<"SPUISD::SUB64_MARKER", SPUmarker_type, []>;
+def SPUmul64 : SDNode<"SPUISD::MUL64_MARKER", SPUmarker_type, []>;
 
 //===----------------------------------------------------------------------===//
 // Constraints: (taken from PPCInstrInfo.td)

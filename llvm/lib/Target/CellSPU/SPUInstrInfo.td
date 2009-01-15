@@ -705,17 +705,14 @@ class ADDXInst<dag OOL, dag IOL, list<dag> pattern>:
 class ADDXVecInst<ValueType vectype>:
     ADDXInst<(outs VECREG:$rT),
              (ins VECREG:$rA, VECREG:$rB, VECREG:$rCarry),
-             [(set (vectype VECREG:$rT),
-                   (SPUaddx (vectype VECREG:$rA), (vectype VECREG:$rB),
-                            (vectype VECREG:$rCarry)))]>,
+             [/* no pattern */]>,
     RegConstraint<"$rCarry = $rT">,
     NoEncode<"$rCarry">;
 
 class ADDXRegInst<RegisterClass rclass>:
     ADDXInst<(outs rclass:$rT),
              (ins rclass:$rA, rclass:$rB, rclass:$rCarry),
-             [(set rclass:$rT,
-                   (SPUaddx rclass:$rA, rclass:$rB, rclass:$rCarry))]>,
+             [/* no pattern */]>,
     RegConstraint<"$rCarry = $rT">,
     NoEncode<"$rCarry">;
 
@@ -737,14 +734,12 @@ class CGInst<dag OOL, dag IOL, list<dag> pattern>:
 class CGVecInst<ValueType vectype>:
     CGInst<(outs VECREG:$rT),
            (ins VECREG:$rA, VECREG:$rB),
-             [(set (vectype VECREG:$rT),
-                   (SPUcarry_gen (vectype VECREG:$rA), (vectype VECREG:$rB)))]>;
+           [/* no pattern */]>;
 
 class CGRegInst<RegisterClass rclass>:
     CGInst<(outs rclass:$rT),
            (ins rclass:$rA, rclass:$rB),
-             [(set rclass:$rT,
-                   (SPUcarry_gen rclass:$rA, rclass:$rB))]>;
+           [/* no pattern */]>;
 
 multiclass CarryGenerate {
   def v2i64 : CGVecInst<v2i64>;
@@ -765,17 +760,14 @@ class SFXInst<dag OOL, dag IOL, list<dag> pattern>:
 class SFXVecInst<ValueType vectype>:
     SFXInst<(outs VECREG:$rT),
             (ins VECREG:$rA, VECREG:$rB, VECREG:$rCarry),
-             [(set (vectype VECREG:$rT),
-                   (SPUsubx (vectype VECREG:$rA), (vectype VECREG:$rB),
-                            (vectype VECREG:$rCarry)))]>,
+             [/* no pattern */]>,
     RegConstraint<"$rCarry = $rT">,
     NoEncode<"$rCarry">;
 
 class SFXRegInst<RegisterClass rclass>:
     SFXInst<(outs rclass:$rT),
             (ins rclass:$rA, rclass:$rB, rclass:$rCarry),
-             [(set rclass:$rT,
-                   (SPUsubx rclass:$rA, rclass:$rB, rclass:$rCarry))]>,
+             [/* no pattern */]>,
     RegConstraint<"$rCarry = $rT">,
     NoEncode<"$rCarry">;
 
@@ -797,14 +789,12 @@ class BGInst<dag OOL, dag IOL, list<dag> pattern>:
 class BGVecInst<ValueType vectype>:
     BGInst<(outs VECREG:$rT),
            (ins VECREG:$rA, VECREG:$rB),
-           [(set (vectype VECREG:$rT),
-                 (SPUborrow_gen (vectype VECREG:$rA), (vectype VECREG:$rB)))]>;
+           [/* no pattern */]>;
 
 class BGRegInst<RegisterClass rclass>:
     BGInst<(outs rclass:$rT),
            (ins rclass:$rA, rclass:$rB),
-           [(set rclass:$rT,
-                 (SPUborrow_gen rclass:$rA, rclass:$rB))]>;
+           [/* no pattern */]>;
 
 multiclass BorrowGenerate {
   def v4i32 : BGVecInst<v4i32>;
@@ -894,7 +884,7 @@ class MPYAInst<dag OOL, dag IOL, list<dag> pattern>:
           "mpya\t$rT, $rA, $rB, $rC", IntegerMulDiv,
           pattern>;
           
-def MPYAvec:
+def MPYAv4i32:
   MPYAInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
            [(set (v4i32 VECREG:$rT),
                  (add (v4i32 (bitconvert (mul (v8i16 VECREG:$rA),
@@ -939,7 +929,7 @@ class MPYSInst<dag OOL, dag IOL>:
       "mpys\t$rT, $rA, $rB", IntegerMulDiv,
       [/* no pattern */]>;
 
-def MPYSvec:
+def MPYSv4i32:
     MPYSInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB)>;
     
 def MPYSr16:
@@ -972,14 +962,20 @@ def MPYHHAvec:
 def MPYHHAr32:
     MPYHHAInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB)>;
 
-// mpyhhu: Multiply high-high, unsigned
+// mpyhhu: Multiply high-high, unsigned, e.g.:
+//
+// +-------+-------+   +-------+-------+   +---------+
+// |  a0   .  a1   | x |  b0   .  b1   | = | a0 x b0 |
+// +-------+-------+   +-------+-------+   +---------+
+//
+// where a0, b0 are the upper 16 bits of the 32-bit word
 
 class MPYHHUInst<dag OOL, dag IOL>:
     RRForm<0b01110011110, OOL, IOL,
       "mpyhhu\t$rT, $rA, $rB", IntegerMulDiv,
       [/* no pattern */]>;
 
-def MPYHHUvec:
+def MPYHHUv4i32:
     MPYHHUInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB)>;
     
 def MPYHHUr32:

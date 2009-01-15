@@ -52,10 +52,11 @@ namespace llvm {
       ROTBYTES_LEFT_BITS,       ///< Rotate bytes left by bit shift count
       SELECT_MASK,              ///< Select Mask (FSM, FSMB, FSMH, FSMBI)
       SELB,                     ///< Select bits -> (b & mask) | (a & ~mask)
-      ADD_EXTENDED,             ///< Add extended, with carry
-      CARRY_GENERATE,           ///< Carry generate for ADD_EXTENDED
-      SUB_EXTENDED,             ///< Subtract extended, with borrow
-      BORROW_GENERATE,          ///< Borrow generate for SUB_EXTENDED
+      // Markers: These aren't used to generate target-dependent nodes, but
+      // are used during instruction selection.
+      ADD64_MARKER,             ///< i64 addition marker
+      SUB64_MARKER,             ///< i64 subtraction marker
+      MUL64_MARKER,             ///< i64 multiply marker
       LAST_SPUISD               ///< Last user-defined instruction
     };
   }
@@ -74,6 +75,12 @@ namespace llvm {
                               MVT ValueType);
     SDValue get_v4i32_imm(SDNode *N, SelectionDAG &DAG);
     SDValue get_v2i64_imm(SDNode *N, SelectionDAG &DAG);
+
+    SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG,
+                              const SPUTargetMachine &TM);
+
+    SDValue getBorrowGenerateShufMask(SelectionDAG &DAG);
+    SDValue getCarryGenerateShufMask(SelectionDAG &DAG);
   }
 
   class SPUTargetMachine;            // forward dec'l.
@@ -86,7 +93,17 @@ namespace llvm {
     SPUTargetMachine &SPUTM;
 
   public:
+    //! The venerable constructor
+    /*!
+     This is where the CellSPU backend sets operation handling (i.e., legal,
+     custom, expand or promote.)
+     */
     SPUTargetLowering(SPUTargetMachine &TM);
+
+    //! Get the target machine
+    SPUTargetMachine &getSPUTargetMachine() {
+      return SPUTM;
+    }
 
     /// getTargetNodeName() - This method returns the name of a target specific
     /// DAG node.

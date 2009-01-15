@@ -78,6 +78,7 @@ namespace {
 
     return retval;
   }
+
 }
 
 SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
@@ -208,13 +209,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Custom lower i8, i32 and i64 multiplications
   setOperationAction(ISD::MUL,  MVT::i8,     Custom);
   setOperationAction(ISD::MUL,  MVT::i32,    Legal);
-  setOperationAction(ISD::MUL,  MVT::i64,    Expand);   // libcall
+  setOperationAction(ISD::MUL,  MVT::i64,    Legal);
 
   // Need to custom handle (some) common i8, i64 math ops
   setOperationAction(ISD::ADD,  MVT::i8,     Custom);
-  setOperationAction(ISD::ADD,  MVT::i64,    Custom);
+  setOperationAction(ISD::ADD,  MVT::i64,    Legal);
   setOperationAction(ISD::SUB,  MVT::i8,     Custom);
-  setOperationAction(ISD::SUB,  MVT::i64,    Custom);
+  setOperationAction(ISD::SUB,  MVT::i64,    Legal);
 
   // SPU does not have BSWAP. It does have i32 support CTLZ.
   // CTPOP has to be custom lowered.
@@ -242,11 +243,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::SETCC, MVT::i16,   Legal);
   setOperationAction(ISD::SETCC, MVT::i32,   Legal);
   setOperationAction(ISD::SETCC, MVT::i64,   Legal);
-
-  // Zero extension and sign extension for i64 have to be
-  // custom legalized
-  setOperationAction(ISD::ZERO_EXTEND, MVT::i64, Custom);
-  setOperationAction(ISD::ANY_EXTEND,  MVT::i64, Custom);
 
   // Custom lower i128 -> i64 truncates
   setOperationAction(ISD::TRUNCATE, MVT::i64, Custom);
@@ -416,10 +412,9 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::VEC_ROTR] = "SPUISD::VEC_ROTR";
     node_names[(unsigned) SPUISD::SELECT_MASK] = "SPUISD::SELECT_MASK";
     node_names[(unsigned) SPUISD::SELB] = "SPUISD::SELB";
-    node_names[(unsigned) SPUISD::ADD_EXTENDED] = "SPUISD::ADD_EXTENDED";
-    node_names[(unsigned) SPUISD::CARRY_GENERATE] = "SPUISD::CARRY_GENERATE";
-    node_names[(unsigned) SPUISD::SUB_EXTENDED] = "SPUISD::SUB_EXTENDED";
-    node_names[(unsigned) SPUISD::BORROW_GENERATE] = "SPUISD::BORROW_GENERATE";
+    node_names[(unsigned) SPUISD::ADD64_MARKER] = "SPUISD::ADD64_MARKER";
+    node_names[(unsigned) SPUISD::SUB64_MARKER] = "SPUISD::SUB64_MARKER";
+    node_names[(unsigned) SPUISD::MUL64_MARKER] = "SPUISD::MUL64_MARKER";
   }
 
   std::map<unsigned, const char *>::iterator i = node_names.find(Opcode);
@@ -778,8 +773,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   return SDValue();
 }
 
-/// Generate the address of a constant pool entry.
-static SDValue
+//! Generate the address of a constant pool entry.
+SDValue
 LowerConstantPool(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   MVT PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
@@ -803,6 +798,12 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
          "LowerConstantPool: Relocation model other than static"
          " not supported.");
   return SDValue();
+}
+
+//! Alternate entry point for generating the address of a constant pool entry
+SDValue
+SPU::LowerConstantPool(SDValue Op, SelectionDAG &DAG, const SPUTargetMachine &TM) {
+  return ::LowerConstantPool(Op, DAG, TM.getSubtargetImpl());
 }
 
 static SDValue
@@ -2185,123 +2186,34 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc,
   return SDValue();
 }
 
-static SDValue LowerI64Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
-{
-  MVT VT = Op.getValueType();
-  MVT VecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
+//! Generate the carry-generate shuffle mask.
+SDValue SPU::getCarryGenerateShufMask(SelectionDAG &DAG) {
+SmallVector<SDValue, 16> ShufBytes;
 
-  SDValue Op0 = Op.getOperand(0);
+// Create the shuffle mask for "rotating" the borrow up one register slot
+// once the borrow is generated.
+ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
+ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
+ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
+ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
 
-  switch (Opc) {
-  case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND: {
-    MVT Op0VT = Op0.getValueType();
-    MVT Op0VecVT = MVT::getVectorVT(Op0VT, (128 / Op0VT.getSizeInBits()));
+return DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                   &ShufBytes[0], ShufBytes.size());
+}
 
-    SDValue PromoteScalar =
-            DAG.getNode(SPUISD::PREFSLOT2VEC, Op0VecVT, Op0);
+//! Generate the borrow-generate shuffle mask
+SDValue SPU::getBorrowGenerateShufMask(SelectionDAG &DAG) {
+SmallVector<SDValue, 16> ShufBytes;
 
-    // Use a shuffle to zero extend the i32 to i64 directly:
-    SDValue shufMask;
+// Create the shuffle mask for "rotating" the borrow up one register slot
+// once the borrow is generated.
+ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
+ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
+ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
+ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
 
-    switch (Op0VT.getSimpleVT()) {
-    default:
-      cerr << "CellSPU LowerI64Math: Unhandled zero/any extend MVT\n";
-      abort();
-      /*NOTREACHED*/
-      break;
-    case MVT::i32:
-      shufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                             DAG.getConstant(0x80808080, MVT::i32),
-                             DAG.getConstant(0x00010203, MVT::i32),
-                             DAG.getConstant(0x80808080, MVT::i32),
-                             DAG.getConstant(0x08090a0b, MVT::i32));
-        break;
-
-    case MVT::i16:
-      shufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                             DAG.getConstant(0x80808080, MVT::i32),
-                             DAG.getConstant(0x80800203, MVT::i32),
-                             DAG.getConstant(0x80808080, MVT::i32),
-                             DAG.getConstant(0x80800a0b, MVT::i32));
-      break;
-
-    case MVT::i8:
-      shufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                             DAG.getConstant(0x80808080, MVT::i32),
-                             DAG.getConstant(0x80808003, MVT::i32),
-                             DAG.getConstant(0x80808080, MVT::i32),
-                             DAG.getConstant(0x8080800b, MVT::i32));
-      break;
-    }
-
-    SDValue zextShuffle = DAG.getNode(SPUISD::SHUFB, Op0VecVT,
-                                      PromoteScalar, PromoteScalar, shufMask);
-
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
-                       DAG.getNode(ISD::BIT_CONVERT, VecVT, zextShuffle));
-  }
-
-  case ISD::ADD: {
-    // Turn operands into vectors to satisfy type checking (shufb works on
-    // vectors)
-    SDValue Op0 =
-      DAG.getNode(SPUISD::PREFSLOT2VEC, MVT::v2i64, Op.getOperand(0));
-    SDValue Op1 =
-      DAG.getNode(SPUISD::PREFSLOT2VEC, MVT::v2i64, Op.getOperand(1));
-    SmallVector<SDValue, 16> ShufBytes;
-
-    // Create the shuffle mask for "rotating" the borrow up one register slot
-    // once the borrow is generated.
-    ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
-    ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
-    ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
-    ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
-
-    SDValue CarryGen =
-      DAG.getNode(SPUISD::CARRY_GENERATE, MVT::v2i64, Op0, Op1);
-    SDValue ShiftedCarry =
-      DAG.getNode(SPUISD::SHUFB, MVT::v2i64,
-                  CarryGen, CarryGen,
-                  DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                              &ShufBytes[0], ShufBytes.size()));
-
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, MVT::i64,
-                       DAG.getNode(SPUISD::ADD_EXTENDED, MVT::v2i64,
-                                   Op0, Op1, ShiftedCarry));
-  }
-
-  case ISD::SUB: {
-    // Turn operands into vectors to satisfy type checking (shufb works on
-    // vectors)
-    SDValue Op0 =
-      DAG.getNode(SPUISD::PREFSLOT2VEC, MVT::v2i64, Op.getOperand(0));
-    SDValue Op1 =
-      DAG.getNode(SPUISD::PREFSLOT2VEC, MVT::v2i64, Op.getOperand(1));
-    SmallVector<SDValue, 16> ShufBytes;
-
-    // Create the shuffle mask for "rotating" the borrow up one register slot
-    // once the borrow is generated.
-    ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
-    ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
-    ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
-    ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
-
-    SDValue BorrowGen =
-      DAG.getNode(SPUISD::BORROW_GENERATE, MVT::v2i64, Op0, Op1);
-    SDValue ShiftedBorrow =
-      DAG.getNode(SPUISD::SHUFB, MVT::v2i64,
-                  BorrowGen, BorrowGen,
-                  DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                              &ShufBytes[0], ShufBytes.size()));
-
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, MVT::i64,
-                       DAG.getNode(SPUISD::SUB_EXTENDED, MVT::v2i64,
-                                   Op0, Op1, ShiftedBorrow));
-  }
-  }
-
-  return SDValue();
+return DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                   &ShufBytes[0], ShufBytes.size());
 }
 
 //! Lower byte immediate operations for v16i8 vectors:
@@ -2576,11 +2488,6 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   case ISD::RET:
     return LowerRET(Op, DAG, getTargetMachine());
 
-
-  case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND:
-    return LowerI64Math(Op, DAG, Opc);
-
   // i8, i64 math ops:
   case ISD::ADD:
   case ISD::SUB:
@@ -2591,8 +2498,6 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   case ISD::SRA: {
     if (VT == MVT::i8)
       return LowerI8Math(Op, DAG, Opc, *this);
-    else if (VT == MVT::i64)
-      return LowerI64Math(Op, DAG, Opc);
     break;
   }
 
@@ -2831,6 +2736,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
     break;
   }
   }
+  
   // Otherwise, return unchanged.
 #ifndef NDEBUG
   if (Result.getNode()) {
