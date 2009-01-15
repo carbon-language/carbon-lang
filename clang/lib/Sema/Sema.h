@@ -638,7 +638,11 @@ public:
       /// by the LookupResult. Last is non-zero to indicate that the
       /// ambiguity is caused by two names found in base class
       /// subobjects of different types.
-      AmbiguousLookup
+      AmbiguousLookup,
+
+      /// We've moved from this object. There should not be any
+      /// attempts to look at its state.
+      Dead
     } StoredKind;
 
     /// The first lookup result, whose contents depend on the kind of
@@ -706,7 +710,9 @@ public:
       AmbiguousBaseSubobjects
     };
 
-    LookupResult() : StoredKind(SingleDecl), First(0), Last(0), Context(0) { }
+    LookupResult() : StoredKind(Dead), First(0), Last(0), Context(0) { }
+
+    LookupResult(const LookupResult& Other);
 
     LookupResult(ASTContext &Context, Decl *D) 
       : StoredKind(SingleDecl), First(reinterpret_cast<uintptr_t>(D)),
@@ -724,6 +730,10 @@ public:
         First(reinterpret_cast<uintptr_t>(Paths)),
         Last(DifferentSubobjectTypes? 1 : 0),
         Context(&Context) { }
+
+    ~LookupResult();
+
+    LookupResult& operator=(const LookupResult& Other);
 
     LookupKind getKind() const;
 

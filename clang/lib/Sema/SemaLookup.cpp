@@ -127,6 +127,15 @@ bool Sema::LookupCriteria::isLookupResult(Decl *D) const {
   return false;
 }
 
+/// @brief Moves the name-lookup results from Other to the
+/// newly-constructed LookupResult.
+Sema::LookupResult::LookupResult(const LookupResult& Other) 
+  : StoredKind(Other.StoredKind), First(Other.First), Last(Other.Last),
+    Context(Other.Context) {
+  Other.StoredKind = Dead;
+}
+
+/// @brief Moves the name-lookup results from Other to this LookupResult.
 Sema::LookupResult::LookupResult(ASTContext &Context, 
                                  IdentifierResolver::iterator F, 
                                  IdentifierResolver::iterator L)
@@ -167,6 +176,25 @@ Sema::LookupResult::LookupResult(ASTContext &Context,
   Last = 0;
 }
 
+Sema::LookupResult::~LookupResult() {
+  if (StoredKind == AmbiguousLookup)
+    delete getBasePaths();
+}
+
+Sema::LookupResult& Sema::LookupResult::operator=(const LookupResult& Other) {
+  if (StoredKind == AmbiguousLookup)
+    delete getBasePaths();
+
+  StoredKind = Other.StoredKind;
+  First = Other.First;
+  Last = Other.Last;
+  Context = Other.Context;
+
+  Other.StoredKind = Dead;
+  return *this;
+}
+
+
 /// @brief Determine the result of name lookup.
 Sema::LookupResult::LookupKind Sema::LookupResult::getKind() const {
   switch (StoredKind) {
@@ -179,6 +207,10 @@ Sema::LookupResult::LookupKind Sema::LookupResult::getKind() const {
 
   case AmbiguousLookup:
     return Last? AmbiguousBaseSubobjectTypes : AmbiguousBaseSubobjects;
+
+  case Dead:
+    assert(false && "Attempt to look at a dead LookupResult");
+    break;
   }
 
   // We can't ever get here.
@@ -217,6 +249,9 @@ Decl *Sema::LookupResult::getAsDecl() const {
     assert(false && 
            "Name lookup returned an ambiguity that could not be handled");
     break;
+
+  case Dead:
+    assert(false && "Attempt to look at a dead LookupResult");
   }
 
   return 0;
