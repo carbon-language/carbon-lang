@@ -1,5 +1,7 @@
 // RUN: clang -fsyntax-only -verify -fblocks %s
 
+extern char version[];
+
 class C {
 public:
   C(int);
@@ -14,6 +16,7 @@ void t1()
   C c(10);
   
   g(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic function; call will abort at runtime}}
+  g(10, version);
 }
 
 void t2()
@@ -21,8 +24,10 @@ void t2()
   C c(10);
 
   c.g(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic method; call will abort at runtime}}
+  c.g(10, version);
   
   C::h(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic function; call will abort at runtime}}
+  C::h(10, version);
 }
 
 int (^block)(int, ...);
@@ -32,6 +37,7 @@ void t3()
   C c(10);
   
   block(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic block; call will abort at runtime}}
+  block(10, version);
 }
 
 class D {
@@ -46,4 +52,5 @@ void t4()
   D d;
   
   d(10, c); // expected-warning{{Line 48: cannot pass object of non-POD type 'class C' through variadic method; call will abort at runtime}}
+  d(10, version);
 }

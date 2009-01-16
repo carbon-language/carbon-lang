@@ -1523,6 +1523,17 @@ public:
   // do not have a prototype. Integer promotions are performed on each 
   // argument, and arguments that have type float are promoted to double.
   void DefaultArgumentPromotion(Expr *&Expr);
+
+  // Used for emitting the right warning by DefaultVariadicArgumentPromotion
+  enum VariadicCallType {
+    VariadicFunction,
+    VariadicBlock,
+    VariadicMethod
+  };
+  
+  // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
+  // will warn if the resulting type is not a POD type.
+  void DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT);
   
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary
