@@ -95,12 +95,46 @@ class Darwin_X86_ToolChain(ToolChain):
         if not arch:
             return args
 
+        # FIXME: We really want to get out of the tool chain level
+        # argument translation business, as it makes the driver
+        # functionality much more opaque. For now, we follow gcc
+        # closely solely for the purpose of easily achieving feature
+        # parity & testability. Once we have something that works, we
+        # should reevaluate each translation and try to push it down
+        # into tool specific logic.
+
         al = Arguments.DerivedArgList(args)
         if not args.getLastArg(args.parser.m_macosxVersionMinOption):
             al.append(al.makeJoinedArg(self.getMacosxVersionMin(),
                                        args.parser.m_macosxVersionMinOption))
         for arg in args:
-            if arg.opt is args.parser.f_constantCfstringsOption:
+            # Sob. These is strictly gcc compatible for the time
+            # being. Apple gcc translates options twice, which means
+            # that self-expanding options add duplicates.
+            if arg.opt is args.parser.m_kernelOption:
+                al.append(arg)
+                al.append(al.makeFlagArg(args.parser.staticOption))
+                al.append(al.makeFlagArg(args.parser.staticOption))
+            elif arg.opt is args.parser.dependencyFileOption:
+                al.append(al.makeSeparateArg(args.getValue(arg),
+                                             args.parser.MFOption))
+            elif arg.opt is args.parser.gfullOption:
+                al.append(al.makeFlagArg(args.parser.gOption))
+                al.append(al.makeFlagArg(args.parser.f_noEliminateUnusedDebugSymbolsOption))
+            elif arg.opt is args.parser.gusedOption:
+                al.append(al.makeFlagArg(args.parser.gOption))
+                al.append(al.makeFlagArg(args.parser.f_eliminateUnusedDebugSymbolsOption))
+            elif arg.opt is args.parser.f_appleKextOption:
+                al.append(arg)
+                al.append(al.makeFlagArg(args.parser.staticOption))
+                al.append(al.makeFlagArg(args.parser.staticOption))
+            elif arg.opt is args.parser.f_terminatedVtablesOption:
+                al.append(al.makeFlagArg(args.parser.f_appleKextOption))
+                al.append(al.makeFlagArg(args.parser.staticOption))
+            elif arg.opt is args.parser.f_indirectVirtualCallsOption:
+                al.append(al.makeFlagArg(args.parser.f_appleKextOption))
+                al.append(al.makeFlagArg(args.parser.staticOption))
+            elif arg.opt is args.parser.f_constantCfstringsOption:
                 al.append(al.makeFlagArg(args.parser.m_constantCfstringsOption))
             elif arg.opt is args.parser.f_noConstantCfstringsOption:
                 al.append(al.makeFlagArg(args.parser.m_noConstantCfstringsOption))

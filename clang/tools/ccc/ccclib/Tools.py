@@ -619,9 +619,8 @@ class Darwin_X86_LinkTool(Tool):
 
     def addLinkArgs(self, cmd_args, arch, arglist):
         # Derived from link spec.
-        if arglist.getLastArg(arglist.parser.staticOption):
-            cmd_args.append('-static')
-        else:
+        arglist.addAllArgs(cmd_args, arglist.parser.staticOption)
+        if not arglist.getLastArg(arglist.parser.staticOption):
             cmd_args.append('-dynamic')
         if arglist.getLastArg(arglist.parser.f_gnuRuntimeOption):
             # FIXME: Replace -lobjc in forward args with
