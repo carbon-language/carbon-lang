@@ -155,7 +155,7 @@ namespace {
       if (C == Other)
         return NoHazard;
       unsigned Score = 0;
-      for (int i = 0; i != array_lengthof(Window); ++i)
+      for (unsigned i = 0; i != array_lengthof(Window); ++i)
         if (Window[i] == C)
           Score += i + 1;
       if (Score > array_lengthof(Window) * 2)
