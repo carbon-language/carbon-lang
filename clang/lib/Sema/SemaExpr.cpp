@@ -295,7 +295,7 @@ Action::ExprResult
 Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   assert(NumStringToks && "Must have at least one string!");
 
-  StringLiteralParser Literal(StringToks, NumStringToks, PP, Context.Target);
+  StringLiteralParser Literal(StringToks, NumStringToks, PP);
   if (Literal.hadError)
     return ExprResult(true);
 
@@ -303,12 +303,6 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   for (unsigned i = 0; i != NumStringToks; ++i)
     StringTokLocs.push_back(StringToks[i].getLocation());
 
-  // Verify that pascal strings aren't too large.
-  if (Literal.Pascal && Literal.GetStringLength() > 256)
-    return Diag(StringToks[0].getLocation(), diag::err_pascal_string_too_long)
-      << SourceRange(StringToks[0].getLocation(),
-                     StringToks[NumStringToks-1].getLocation());
-  
   QualType StrTy = Context.CharTy;
   if (Literal.AnyWide) StrTy = Context.getWCharType();
   if (Literal.Pascal) StrTy = Context.UnsignedCharTy;

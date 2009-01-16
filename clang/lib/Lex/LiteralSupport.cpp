@@ -647,8 +647,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 ///
 StringLiteralParser::
 StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
-                    Preprocessor &pp, TargetInfo &t)
-  : PP(pp), Target(t) {
+                    Preprocessor &pp) : PP(pp) {
   // Scan all of the string portions, remember the max individual token length,
   // computing a bound on the concatenated string length, and see whether any
   // piece is a wide-string.  If any of the string portions is a wide-string
@@ -684,7 +683,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
   // query the target.  As such, wchar_tByteWidth is only valid if AnyWide=true.
   wchar_tByteWidth = ~0U;
   if (AnyWide) {
-    wchar_tByteWidth = Target.getWCharWidth();
+    wchar_tByteWidth = PP.getTargetInfo().getWCharWidth();
     assert((wchar_tByteWidth & 7) == 0 && "Assumes wchar_t is byte multiple!");
     wchar_tByteWidth /= 8;
   }
@@ -787,6 +786,15 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     *ResultPtr++ = 0;
   }
     
-  if (Pascal) 
+  if (Pascal) {
     ResultBuf[0] = ResultPtr-&ResultBuf[0]-1;
+
+    // Verify that pascal strings aren't too large.
+    if (GetStringLength() > 256)
+      PP.Diag(StringToks[0].getLocation(), diag::err_pascal_string_too_long)
+        << SourceRange(StringToks[0].getLocation(),
+                       StringToks[NumStringToks-1].getLocation());
+    hadError = 1;
+    return;
+  }
 }

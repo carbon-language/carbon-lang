@@ -141,7 +141,6 @@ public:
 /// literals) (C99 5.1.1.2p1).
 class StringLiteralParser {
   Preprocessor &PP;
-  TargetInfo &Target;
   
   unsigned MaxTokenLength;
   unsigned SizeBound;
@@ -150,7 +149,7 @@ class StringLiteralParser {
   char *ResultPtr; // cursor
 public:
   StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
-                      Preprocessor &PP, TargetInfo &T);
+                      Preprocessor &PP);
   bool hadError;
   bool AnyWide;
   bool Pascal;
