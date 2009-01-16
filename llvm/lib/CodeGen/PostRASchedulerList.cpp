@@ -264,7 +264,7 @@ static SDep *CriticalPathStep(SUnit *SU) {
 bool SchedulePostRATDList::BreakAntiDependencies() {
   // The code below assumes that there is at least one instruction,
   // so just duck out immediately if the block is empty.
-  if (BB->empty()) return false;
+  if (SUnits.empty()) return false;
 
   // Find the node at the bottom of the critical path.
   SUnit *Max = 0;
@@ -275,7 +275,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   }
 
   DOUT << "Critical path has total latency "
-       << (Max ? Max->getDepth() + Max->Latency : 0) << "\n";
+       << (Max->getDepth() + Max->Latency) << "\n";
 
   // Track progress along the critical path through the SUnit graph as we walk
   // the instructions.
