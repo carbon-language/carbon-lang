@@ -277,6 +277,10 @@ public:
   }
   DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
                           bool IsFunctionDefinition);
+  ScopedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+                                      QualType R, ScopedDecl *LastDeclarator,
+                                      Decl* PreDecl, bool IsFunctionDefinition,
+                                      bool& InvalidDecl);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
                                          SourceLocation EqualLoc,

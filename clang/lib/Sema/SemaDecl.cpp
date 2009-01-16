@@ -1325,294 +1325,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
       }
     }
   } else if (R.getTypePtr()->isFunctionType()) {
-    FunctionDecl::StorageClass SC = FunctionDecl::None;
-    switch (D.getDeclSpec().getStorageClassSpec()) {
-      default: assert(0 && "Unknown storage class!");
-      case DeclSpec::SCS_auto:
-      case DeclSpec::SCS_register:
-      case DeclSpec::SCS_mutable:
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func);
-        InvalidDecl = true;
-        break;
-      case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
-      case DeclSpec::SCS_extern:      SC = FunctionDecl::Extern; break;
-      case DeclSpec::SCS_static:      SC = FunctionDecl::Static; break;
-      case DeclSpec::SCS_private_extern: SC = FunctionDecl::PrivateExtern;break;
-    }
-
-    bool isInline = D.getDeclSpec().isInlineSpecified();
-    // bool isVirtual = D.getDeclSpec().isVirtualSpecified();
-    bool isExplicit = D.getDeclSpec().isExplicitSpecified();
-
-    FunctionDecl *NewFD;
-    if (D.getKind() == Declarator::DK_Constructor) {
-      // This is a C++ constructor declaration.
-      assert(DC->isRecord() &&
-             "Constructors can only be declared in a member context");
-
-      InvalidDecl = InvalidDecl || CheckConstructorDeclarator(D, R, SC);
-
-      // Create the new declaration
-      NewFD = CXXConstructorDecl::Create(Context, 
-                                         cast<CXXRecordDecl>(DC),
-                                         D.getIdentifierLoc(), Name, R,
-                                         isExplicit, isInline,
-                                         /*isImplicitlyDeclared=*/false);
-
-      if (InvalidDecl)
-        NewFD->setInvalidDecl();
-    } else if (D.getKind() == Declarator::DK_Destructor) {
-      // This is a C++ destructor declaration.
-      if (DC->isRecord()) {
-        InvalidDecl = InvalidDecl || CheckDestructorDeclarator(D, R, SC);
-
-        NewFD = CXXDestructorDecl::Create(Context,
-                                          cast<CXXRecordDecl>(DC),
-                                          D.getIdentifierLoc(), Name, R, 
-                                          isInline,
-                                          /*isImplicitlyDeclared=*/false);
-
-        if (InvalidDecl)
-          NewFD->setInvalidDecl();
-      } else {
-        Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
-
-        // Create a FunctionDecl to satisfy the function definition parsing
-        // code path.
-        NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
-                                     Name, R, SC, isInline, LastDeclarator,
-                                     // FIXME: Move to DeclGroup...
-                                   D.getDeclSpec().getSourceRange().getBegin());
-        InvalidDecl = true;
-        NewFD->setInvalidDecl();
-      }
-    } else if (D.getKind() == Declarator::DK_Conversion) {
-      if (!DC->isRecord()) {
-        Diag(D.getIdentifierLoc(),
-             diag::err_conv_function_not_member);
-        return 0;
-      } else {
-        InvalidDecl = InvalidDecl || CheckConversionDeclarator(D, R, SC);
-
-        NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                          D.getIdentifierLoc(), Name, R,
-                                          isInline, isExplicit);
-        
-        if (InvalidDecl)
-          NewFD->setInvalidDecl();
-      }
-    } else if (DC->isRecord()) {
-      // This is a C++ method declaration.
-      NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                    D.getIdentifierLoc(), Name, R,
-                                    (SC == FunctionDecl::Static), isInline,
-                                    LastDeclarator);
-    } else {
-      NewFD = FunctionDecl::Create(Context, DC,
-                                   D.getIdentifierLoc(),
-                                   Name, R, SC, isInline, LastDeclarator,
-                                   // FIXME: Move to DeclGroup...
-                                   D.getDeclSpec().getSourceRange().getBegin());
-    }
-
-    // Set the lexical context. If the declarator has a C++
-    // scope specifier, the lexical context will be different
-    // from the semantic context.
-    NewFD->setLexicalDeclContext(CurContext);
-
-    // Handle GNU asm-label extension (encoded as an attribute).
-    if (Expr *E = (Expr*) D.getAsmLabel()) {
-      // The parser guarantees this is a string.
-      StringLiteral *SE = cast<StringLiteral>(E);  
-      NewFD->addAttr(new AsmLabelAttr(std::string(SE->getStrData(),
-                                                  SE->getByteLength())));
-    }
-
-    // Copy the parameter declarations from the declarator D to
-    // the function declaration NewFD, if they are available.
-    if (D.getNumTypeObjects() > 0) {
-      DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
-
-      // Create Decl objects for each parameter, adding them to the
-      // FunctionDecl.
-      llvm::SmallVector<ParmVarDecl*, 16> Params;
-  
-      // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs
-      // function that takes no arguments, not a function that takes a
-      // single void argument.
-      // We let through "const void" here because Sema::GetTypeForDeclarator
-      // already checks for that case.
-      if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
-          FTI.ArgInfo[0].Param &&
-          ((ParmVarDecl*)FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
-        // empty arg list, don't push any params.
-        ParmVarDecl *Param = (ParmVarDecl*)FTI.ArgInfo[0].Param;
-
-        // In C++, the empty parameter-type-list must be spelled "void"; a
-        // typedef of void is not permitted.
-        if (getLangOptions().CPlusPlus &&
-            Param->getType().getUnqualifiedType() != Context.VoidTy) {
-          Diag(Param->getLocation(), diag::ext_param_typedef_of_void);
-        }
-      } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
-        for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-          Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
-      }
-  
-      NewFD->setParams(Context, &Params[0], Params.size());
-    } else if (R->getAsTypedefType()) {
-      // When we're declaring a function with a typedef, as in the
-      // following example, we'll need to synthesize (unnamed)
-      // parameters for use in the declaration.
-      //
-      // @code
-      // typedef void fn(int);
-      // fn f;
-      // @endcode
-      const FunctionTypeProto *FT = R->getAsFunctionTypeProto();
-      if (!FT) {
-        // This is a typedef of a function with no prototype, so we
-        // don't need to do anything.
-      } else if ((FT->getNumArgs() == 0) ||
-          (FT->getNumArgs() == 1 && !FT->isVariadic() &&
-           FT->getArgType(0)->isVoidType())) {
-        // This is a zero-argument function. We don't need to do anything.
-      } else {
-        // Synthesize a parameter for each argument type.
-        llvm::SmallVector<ParmVarDecl*, 16> Params;
-        for (FunctionTypeProto::arg_type_iterator ArgType = FT->arg_type_begin();
-             ArgType != FT->arg_type_end(); ++ArgType) {
-          Params.push_back(ParmVarDecl::Create(Context, DC,
-                                               SourceLocation(), 0,
-                                               *ArgType, VarDecl::None,
-                                               0, 0));
-        }
-
-        NewFD->setParams(Context, &Params[0], Params.size());
-      }
-    }
-
-    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD))
-      InvalidDecl = InvalidDecl || CheckConstructor(Constructor);
-    else if (isa<CXXDestructorDecl>(NewFD)) {
-      CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
-      Record->setUserDeclaredDestructor(true);
-      // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
-      // user-defined destructor.
-      Record->setPOD(false);
-    } else if (CXXConversionDecl *Conversion =
-               dyn_cast<CXXConversionDecl>(NewFD))
-      ActOnConversionDeclarator(Conversion);
-
-    // Extra checking for C++ overloaded operators (C++ [over.oper]).
-    if (NewFD->isOverloadedOperator() &&
-        CheckOverloadedOperatorDeclaration(NewFD))
-      NewFD->setInvalidDecl();
-    
-    // Merge the decl with the existing one if appropriate. Since C functions
-    // are in a flat namespace, make sure we consider decls in outer scopes.
-    if (PrevDecl &&
-        (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, DC, S))) {
-      bool Redeclaration = false;
-
-      // If C++, determine whether NewFD is an overload of PrevDecl or
-      // a declaration that requires merging. If it's an overload,
-      // there's no more work to do here; we'll just add the new
-      // function to the scope.
-      OverloadedFunctionDecl::function_iterator MatchedDecl;
-      if (!getLangOptions().CPlusPlus ||
-          !IsOverload(NewFD, PrevDecl, MatchedDecl)) {
-        Decl *OldDecl = PrevDecl;
-
-        // If PrevDecl was an overloaded function, extract the
-        // FunctionDecl that matched.
-        if (isa<OverloadedFunctionDecl>(PrevDecl))
-          OldDecl = *MatchedDecl;
-
-        // NewFD and PrevDecl represent declarations that need to be
-        // merged. 
-        NewFD = MergeFunctionDecl(NewFD, OldDecl, Redeclaration);
-
-        if (NewFD == 0) return 0;
-        if (Redeclaration) {
-          NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
-
-          // An out-of-line member function declaration must also be a
-          // definition (C++ [dcl.meaning]p1).
-          if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
-              !InvalidDecl) {
-            Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
-              << D.getCXXScopeSpec().getRange();
-            NewFD->setInvalidDecl();
-          }
-        }
-      }
-
-      if (!Redeclaration && D.getCXXScopeSpec().isSet()) {
-        // The user tried to provide an out-of-line definition for a
-        // member function, but there was no such member function
-        // declared (C++ [class.mfct]p2). For example:
-        // 
-        // class X {
-        //   void f() const;
-        // }; 
-        //
-        // void X::f() { } // ill-formed
-        //
-        // Complain about this problem, and attempt to suggest close
-        // matches (e.g., those that differ only in cv-qualifiers and
-        // whether the parameter types are references).
-        Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
-          << cast<CXXRecordDecl>(DC)->getDeclName() 
-          << D.getCXXScopeSpec().getRange();
-        InvalidDecl = true;
-        
-        PrevDecl = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
-        if (!PrevDecl) {
-          // Nothing to suggest.
-        } else if (OverloadedFunctionDecl *Ovl 
-                   = dyn_cast<OverloadedFunctionDecl>(PrevDecl)) {
-          for (OverloadedFunctionDecl::function_iterator 
-                 Func = Ovl->function_begin(),
-                 FuncEnd = Ovl->function_end();
-               Func != FuncEnd; ++Func) {
-            if (isNearlyMatchingMemberFunction(Context, *Func, NewFD))
-              Diag((*Func)->getLocation(), diag::note_member_def_close_match);
-            
-          }
-        } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(PrevDecl)) {
-          // Suggest this no matter how mismatched it is; it's the only
-          // thing we have.
-          unsigned diag;
-          if (isNearlyMatchingMemberFunction(Context, Method, NewFD))
-            diag = diag::note_member_def_close_match;
-          else if (Method->getBody())
-            diag = diag::note_previous_definition;
-          else
-            diag = diag::note_previous_declaration;
-          Diag(Method->getLocation(), diag);
-        }
-        
-        PrevDecl = 0;
-      }
-    }
-    // Handle attributes. We need to have merged decls when handling attributes
-    // (for example to check for conflicts, etc).
-    ProcessDeclAttributes(NewFD, D);
-    New = NewFD;
-
-    if (getLangOptions().CPlusPlus) {
-      // In C++, check default arguments now that we have merged decls.
-      CheckCXXDefaultArguments(NewFD);
-
-      // An out-of-line member function declaration must also be a
-      // definition (C++ [dcl.meaning]p1).
-      if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() && !InvalidDecl) {
-        Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
-          << D.getCXXScopeSpec().getRange();
-        InvalidDecl = true;
-      }
-    }
+    New = ActOnFunctionDeclarator(S, D, DC, R, LastDeclarator, PrevDecl, 
+                                  IsFunctionDefinition, InvalidDecl);
   } else {
     // Check that there are no default arguments (C++ only).
     if (getLangOptions().CPlusPlus)
@@ -1714,6 +1428,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     }
     New = NewVD;
   }
+
+  if (New == 0)
+    return 0;
   
   // Set the lexical context. If the declarator has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
@@ -1727,6 +1444,304 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     New->setInvalidDecl();
   
   return New;
+}
+
+ScopedDecl* 
+Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+                              QualType R, ScopedDecl *LastDeclarator,
+                              Decl* PrevDecl, bool IsFunctionDefinition,
+                              bool& InvalidDecl) {
+  assert(R.getTypePtr()->isFunctionType());
+
+  DeclarationName Name = GetNameForDeclarator(D);
+  FunctionDecl::StorageClass SC = FunctionDecl::None;
+  switch (D.getDeclSpec().getStorageClassSpec()) {
+  default: assert(0 && "Unknown storage class!");
+  case DeclSpec::SCS_auto:
+  case DeclSpec::SCS_register:
+  case DeclSpec::SCS_mutable:
+    Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func);
+    InvalidDecl = true;
+    break;
+  case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
+  case DeclSpec::SCS_extern:      SC = FunctionDecl::Extern; break;
+  case DeclSpec::SCS_static:      SC = FunctionDecl::Static; break;
+  case DeclSpec::SCS_private_extern: SC = FunctionDecl::PrivateExtern;break;
+  }
+
+  bool isInline = D.getDeclSpec().isInlineSpecified();
+  // bool isVirtual = D.getDeclSpec().isVirtualSpecified();
+  bool isExplicit = D.getDeclSpec().isExplicitSpecified();
+
+  FunctionDecl *NewFD;
+  if (D.getKind() == Declarator::DK_Constructor) {
+    // This is a C++ constructor declaration.
+    assert(DC->isRecord() &&
+           "Constructors can only be declared in a member context");
+
+    InvalidDecl = InvalidDecl || CheckConstructorDeclarator(D, R, SC);
+
+    // Create the new declaration
+    NewFD = CXXConstructorDecl::Create(Context, 
+                                       cast<CXXRecordDecl>(DC),
+                                       D.getIdentifierLoc(), Name, R,
+                                       isExplicit, isInline,
+                                       /*isImplicitlyDeclared=*/false);
+
+    if (InvalidDecl)
+      NewFD->setInvalidDecl();
+  } else if (D.getKind() == Declarator::DK_Destructor) {
+    // This is a C++ destructor declaration.
+    if (DC->isRecord()) {
+      InvalidDecl = InvalidDecl || CheckDestructorDeclarator(D, R, SC);
+
+      NewFD = CXXDestructorDecl::Create(Context,
+                                        cast<CXXRecordDecl>(DC),
+                                        D.getIdentifierLoc(), Name, R, 
+                                        isInline,
+                                        /*isImplicitlyDeclared=*/false);
+
+      if (InvalidDecl)
+        NewFD->setInvalidDecl();
+    } else {
+      Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
+
+      // Create a FunctionDecl to satisfy the function definition parsing
+      // code path.
+      NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
+                                   Name, R, SC, isInline, LastDeclarator,
+                                   // FIXME: Move to DeclGroup...
+                                   D.getDeclSpec().getSourceRange().getBegin());
+      InvalidDecl = true;
+      NewFD->setInvalidDecl();
+    }
+  } else if (D.getKind() == Declarator::DK_Conversion) {
+    if (!DC->isRecord()) {
+      Diag(D.getIdentifierLoc(),
+           diag::err_conv_function_not_member);
+      return 0;
+    } else {
+      InvalidDecl = InvalidDecl || CheckConversionDeclarator(D, R, SC);
+
+      NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
+                                        D.getIdentifierLoc(), Name, R,
+                                        isInline, isExplicit);
+        
+      if (InvalidDecl)
+        NewFD->setInvalidDecl();
+    }
+  } else if (DC->isRecord()) {
+    // This is a C++ method declaration.
+    NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
+                                  D.getIdentifierLoc(), Name, R,
+                                  (SC == FunctionDecl::Static), isInline,
+                                  LastDeclarator);
+  } else {
+    NewFD = FunctionDecl::Create(Context, DC,
+                                 D.getIdentifierLoc(),
+                                 Name, R, SC, isInline, LastDeclarator,
+                                 // FIXME: Move to DeclGroup...
+                                 D.getDeclSpec().getSourceRange().getBegin());
+  }
+
+  // Set the lexical context. If the declarator has a C++
+  // scope specifier, the lexical context will be different
+  // from the semantic context.
+  NewFD->setLexicalDeclContext(CurContext);
+
+  // Handle GNU asm-label extension (encoded as an attribute).
+  if (Expr *E = (Expr*) D.getAsmLabel()) {
+    // The parser guarantees this is a string.
+    StringLiteral *SE = cast<StringLiteral>(E);  
+    NewFD->addAttr(new AsmLabelAttr(std::string(SE->getStrData(),
+                                                SE->getByteLength())));
+  }
+
+  // Copy the parameter declarations from the declarator D to
+  // the function declaration NewFD, if they are available.
+  if (D.getNumTypeObjects() > 0) {
+    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+
+    // Create Decl objects for each parameter, adding them to the
+    // FunctionDecl.
+    llvm::SmallVector<ParmVarDecl*, 16> Params;
+  
+    // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs
+    // function that takes no arguments, not a function that takes a
+    // single void argument.
+    // We let through "const void" here because Sema::GetTypeForDeclarator
+    // already checks for that case.
+    if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
+        FTI.ArgInfo[0].Param &&
+        ((ParmVarDecl*)FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
+      // empty arg list, don't push any params.
+      ParmVarDecl *Param = (ParmVarDecl*)FTI.ArgInfo[0].Param;
+
+      // In C++, the empty parameter-type-list must be spelled "void"; a
+      // typedef of void is not permitted.
+      if (getLangOptions().CPlusPlus &&
+          Param->getType().getUnqualifiedType() != Context.VoidTy) {
+        Diag(Param->getLocation(), diag::ext_param_typedef_of_void);
+      }
+    } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
+      for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
+        Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
+    }
+  
+    NewFD->setParams(Context, &Params[0], Params.size());
+  } else if (R->getAsTypedefType()) {
+    // When we're declaring a function with a typedef, as in the
+    // following example, we'll need to synthesize (unnamed)
+    // parameters for use in the declaration.
+    //
+    // @code
+    // typedef void fn(int);
+    // fn f;
+    // @endcode
+    const FunctionTypeProto *FT = R->getAsFunctionTypeProto();
+    if (!FT) {
+      // This is a typedef of a function with no prototype, so we
+      // don't need to do anything.
+    } else if ((FT->getNumArgs() == 0) ||
+               (FT->getNumArgs() == 1 && !FT->isVariadic() &&
+                FT->getArgType(0)->isVoidType())) {
+      // This is a zero-argument function. We don't need to do anything.
+    } else {
+      // Synthesize a parameter for each argument type.
+      llvm::SmallVector<ParmVarDecl*, 16> Params;
+      for (FunctionTypeProto::arg_type_iterator ArgType = FT->arg_type_begin();
+           ArgType != FT->arg_type_end(); ++ArgType) {
+        Params.push_back(ParmVarDecl::Create(Context, DC,
+                                             SourceLocation(), 0,
+                                             *ArgType, VarDecl::None,
+                                             0, 0));
+      }
+
+      NewFD->setParams(Context, &Params[0], Params.size());
+    }
+  }
+
+  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD))
+    InvalidDecl = InvalidDecl || CheckConstructor(Constructor);
+  else if (isa<CXXDestructorDecl>(NewFD)) {
+    CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
+    Record->setUserDeclaredDestructor(true);
+    // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
+    // user-defined destructor.
+    Record->setPOD(false);
+  } else if (CXXConversionDecl *Conversion =
+             dyn_cast<CXXConversionDecl>(NewFD))
+    ActOnConversionDeclarator(Conversion);
+
+  // Extra checking for C++ overloaded operators (C++ [over.oper]).
+  if (NewFD->isOverloadedOperator() &&
+      CheckOverloadedOperatorDeclaration(NewFD))
+    NewFD->setInvalidDecl();
+    
+  // Merge the decl with the existing one if appropriate. Since C functions
+  // are in a flat namespace, make sure we consider decls in outer scopes.
+  if (PrevDecl &&
+      (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, DC, S))) {
+    bool Redeclaration = false;
+
+    // If C++, determine whether NewFD is an overload of PrevDecl or
+    // a declaration that requires merging. If it's an overload,
+    // there's no more work to do here; we'll just add the new
+    // function to the scope.
+    OverloadedFunctionDecl::function_iterator MatchedDecl;
+    if (!getLangOptions().CPlusPlus ||
+        !IsOverload(NewFD, PrevDecl, MatchedDecl)) {
+      Decl *OldDecl = PrevDecl;
+
+      // If PrevDecl was an overloaded function, extract the
+      // FunctionDecl that matched.
+      if (isa<OverloadedFunctionDecl>(PrevDecl))
+        OldDecl = *MatchedDecl;
+
+      // NewFD and PrevDecl represent declarations that need to be
+      // merged. 
+      NewFD = MergeFunctionDecl(NewFD, OldDecl, Redeclaration);
+
+      if (NewFD == 0) return 0;
+      if (Redeclaration) {
+        NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
+
+        // An out-of-line member function declaration must also be a
+        // definition (C++ [dcl.meaning]p1).
+        if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
+            !InvalidDecl) {
+          Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
+            << D.getCXXScopeSpec().getRange();
+          NewFD->setInvalidDecl();
+        }
+      }
+    }
+
+    if (!Redeclaration && D.getCXXScopeSpec().isSet()) {
+      // The user tried to provide an out-of-line definition for a
+      // member function, but there was no such member function
+      // declared (C++ [class.mfct]p2). For example:
+      // 
+      // class X {
+      //   void f() const;
+      // }; 
+      //
+      // void X::f() { } // ill-formed
+      //
+      // Complain about this problem, and attempt to suggest close
+      // matches (e.g., those that differ only in cv-qualifiers and
+      // whether the parameter types are references).
+      Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
+        << cast<CXXRecordDecl>(DC)->getDeclName() 
+        << D.getCXXScopeSpec().getRange();
+      InvalidDecl = true;
+        
+      PrevDecl = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
+      if (!PrevDecl) {
+        // Nothing to suggest.
+      } else if (OverloadedFunctionDecl *Ovl 
+                 = dyn_cast<OverloadedFunctionDecl>(PrevDecl)) {
+        for (OverloadedFunctionDecl::function_iterator 
+               Func = Ovl->function_begin(),
+               FuncEnd = Ovl->function_end();
+             Func != FuncEnd; ++Func) {
+          if (isNearlyMatchingMemberFunction(Context, *Func, NewFD))
+            Diag((*Func)->getLocation(), diag::note_member_def_close_match);
+            
+        }
+      } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(PrevDecl)) {
+        // Suggest this no matter how mismatched it is; it's the only
+        // thing we have.
+        unsigned diag;
+        if (isNearlyMatchingMemberFunction(Context, Method, NewFD))
+          diag = diag::note_member_def_close_match;
+        else if (Method->getBody())
+          diag = diag::note_previous_definition;
+        else
+          diag = diag::note_previous_declaration;
+        Diag(Method->getLocation(), diag);
+      }
+        
+      PrevDecl = 0;
+    }
+  }
+  // Handle attributes. We need to have merged decls when handling attributes
+  // (for example to check for conflicts, etc).
+  ProcessDeclAttributes(NewFD, D);
+
+  if (getLangOptions().CPlusPlus) {
+    // In C++, check default arguments now that we have merged decls.
+    CheckCXXDefaultArguments(NewFD);
+
+    // An out-of-line member function declaration must also be a
+    // definition (C++ [dcl.meaning]p1).
+    if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() && !InvalidDecl) {
+      Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
+        << D.getCXXScopeSpec().getRange();
+      InvalidDecl = true;
+    }
+  }
+  return NewFD;
 }
 
 void Sema::InitializerElementNotConstant(const Expr *Init) {
