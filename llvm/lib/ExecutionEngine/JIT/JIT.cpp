@@ -554,7 +554,10 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     addGlobalMapping(GV, Ptr);
     }
   } else {
-    if (isGVCompilationDisabled() && !GV->hasLocalLinkage()) {
+    // GlobalVariable's which are not "constant" will cause trouble in a server
+    // situation. It's returned in the same block of memory as code which may
+    // not be writable.
+    if (isGVCompilationDisabled() && !GV->isConstant()) {
       cerr << "Compilation of non-internal GlobalValue is disabled!\n";
       abort();
     }
