@@ -873,19 +873,20 @@ public:
   virtual OwningStmtResult ActOnStartOfSwitchStmt(ExprArg Cond);
   virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                  StmtArg Switch, StmtArg Body);
-  virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
-                                    StmtTy *Body);
-  virtual StmtResult ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,
-                                 SourceLocation WhileLoc, ExprTy *Cond);
-  
-  virtual StmtResult ActOnForStmt(SourceLocation ForLoc, 
-                                  SourceLocation LParenLoc, 
-                                  StmtTy *First, ExprTy *Second, ExprTy *Third,
-                                  SourceLocation RParenLoc, StmtTy *Body);
-  virtual StmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc, 
-                                  SourceLocation LParenLoc, 
-                                  StmtTy *First, ExprTy *Second,
-                                  SourceLocation RParenLoc, StmtTy *Body);
+  virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprArg Cond,
+                                          StmtArg Body);
+  virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
+                                       SourceLocation WhileLoc, ExprArg Cond);
+
+  virtual OwningStmtResult ActOnForStmt(SourceLocation ForLoc,
+                                        SourceLocation LParenLoc,
+                                        StmtArg First, ExprArg Second,
+                                        ExprArg Third, SourceLocation RParenLoc,
+                                        StmtArg Body);
+  virtual OwningStmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc,
+                                       SourceLocation LParenLoc,
+                                       StmtArg First, ExprArg Second,
+                                       SourceLocation RParenLoc, StmtArg Body);
   
   virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                                    SourceLocation LabelLoc,

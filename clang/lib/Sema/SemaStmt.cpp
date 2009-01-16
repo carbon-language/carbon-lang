@@ -532,52 +532,57 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   return Owned(SS);
 }
 
-Action::StmtResult
-Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
-  Expr *condExpr = (Expr *)Cond;
+Action::OwningStmtResult
+Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprArg Cond, StmtArg Body) {
+  Expr *condExpr = (Expr *)Cond.release();
   assert(condExpr && "ActOnWhileStmt(): missing expression");
-  
+
   DefaultFunctionArrayConversion(condExpr);
+  Cond = condExpr;
   QualType condType = condExpr->getType();
-  
+
   if (getLangOptions().CPlusPlus) {
     if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
-      return true;
+      return StmtError();
   } else if (!condType->isScalarType()) // C99 6.8.5p2
-    return Diag(WhileLoc, diag::err_typecheck_statement_requires_scalar)
-      << condType << condExpr->getSourceRange();
+    return StmtError(Diag(WhileLoc,
+      diag::err_typecheck_statement_requires_scalar)
+      << condType << condExpr->getSourceRange());
 
-  return new WhileStmt(condExpr, (Stmt*)Body, WhileLoc);
+  Cond.release();
+  return Owned(new WhileStmt(condExpr, (Stmt*)Body.release(), WhileLoc));
 }
 
-Action::StmtResult
-Sema::ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,
-                  SourceLocation WhileLoc, ExprTy *Cond) {
-  Expr *condExpr = (Expr *)Cond;
+Action::OwningStmtResult
+Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
+                  SourceLocation WhileLoc, ExprArg Cond) {
+  Expr *condExpr = (Expr *)Cond.release();
   assert(condExpr && "ActOnDoStmt(): missing expression");
-  
+
   DefaultFunctionArrayConversion(condExpr);
+  Cond = condExpr;
   QualType condType = condExpr->getType();
-  
+
   if (getLangOptions().CPlusPlus) {
     if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
-      return true;
+      return StmtError();
   } else if (!condType->isScalarType()) // C99 6.8.5p2
-    return Diag(DoLoc, diag::err_typecheck_statement_requires_scalar)
-      << condType << condExpr->getSourceRange();
+    return StmtError(Diag(DoLoc, diag::err_typecheck_statement_requires_scalar)
+      << condType << condExpr->getSourceRange());
 
-  return new DoStmt((Stmt*)Body, condExpr, DoLoc);
+  Cond.release();
+  return Owned(new DoStmt((Stmt*)Body.release(), condExpr, DoLoc));
 }
 
-Action::StmtResult 
-Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
-                   StmtTy *first, ExprTy *second, ExprTy *third,
-                   SourceLocation RParenLoc, StmtTy *body) {
-  Stmt *First  = static_cast<Stmt*>(first);
-  Expr *Second = static_cast<Expr*>(second);
-  Expr *Third  = static_cast<Expr*>(third);
-  Stmt *Body  = static_cast<Stmt*>(body);
-  
+Action::OwningStmtResult
+Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
+                   StmtArg first, ExprArg second, ExprArg third,
+                   SourceLocation RParenLoc, StmtArg body) {
+  Stmt *First  = static_cast<Stmt*>(first.get());
+  Expr *Second = static_cast<Expr*>(second.get());
+  Expr *Third  = static_cast<Expr*>(third.get());
+  Stmt *Body  = static_cast<Stmt*>(body.get());
+
   if (!getLangOptions().CPlusPlus) {
     if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
       // C99 6.8.5p3: The declaration part of a 'for' statement shall only
@@ -597,32 +602,37 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
-    
+
     if (getLangOptions().CPlusPlus) {
       if (CheckCXXBooleanCondition(Second)) // C++ 6.4p4
-        return true;
+        return StmtError();
     } else if (!SecondType->isScalarType()) // C99 6.8.5p2
-      return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar)
-        << SecondType << Second->getSourceRange();
+      return StmtError(Diag(ForLoc,
+                            diag::err_typecheck_statement_requires_scalar)
+        << SecondType << Second->getSourceRange());
   }
-  return new ForStmt(First, Second, Third, Body, ForLoc);
+  first.release();
+  second.release();
+  third.release();
+  body.release();
+  return Owned(new ForStmt(First, Second, Third, Body, ForLoc));
 }
 
-Action::StmtResult 
-Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc, 
-                                 SourceLocation LParenLoc, 
-                                 StmtTy *first, ExprTy *second,
-                                 SourceLocation RParenLoc, StmtTy *body) {
-  Stmt *First  = static_cast<Stmt*>(first);
-  Expr *Second = static_cast<Expr*>(second);
-  Stmt *Body  = static_cast<Stmt*>(body);
+Action::OwningStmtResult
+Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
+                                 SourceLocation LParenLoc,
+                                 StmtArg first, ExprArg second,
+                                 SourceLocation RParenLoc, StmtArg body) {
+  Stmt *First  = static_cast<Stmt*>(first.get());
+  Expr *Second = static_cast<Expr*>(second.get());
+  Stmt *Body  = static_cast<Stmt*>(body.get());
   if (First) {
     QualType FirstType;
     if (DeclStmt *DS = dyn_cast<DeclStmt>(First)) {
       if (!DS->hasSolitaryDecl())
-        return Diag((*DS->decl_begin())->getLocation(),
-                    diag::err_toomany_element_decls);
-      
+        return StmtError(Diag((*DS->decl_begin())->getLocation(),
+                         diag::err_toomany_element_decls));
+
       ScopedDecl *D = DS->getSolitaryDecl();
       FirstType = cast<ValueDecl>(D)->getType();
       // C99 6.8.5p3: The declaration part of a 'for' statement shall only
@@ -630,15 +640,17 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       // 'register'.
       VarDecl *VD = cast<VarDecl>(D);
       if (VD->isBlockVarDecl() && !VD->hasLocalStorage())
-        return Diag(VD->getLocation(), diag::err_non_variable_decl_in_for);
+        return StmtError(Diag(VD->getLocation(),
+                              diag::err_non_variable_decl_in_for));
     } else {
       Expr::isLvalueResult lval = cast<Expr>(First)->isLvalue(Context);
-      
-      if (lval != Expr::LV_Valid)
-        return Diag(First->getLocStart(), diag::err_selector_element_not_lvalue)
-          << First->getSourceRange();
 
-      FirstType = static_cast<Expr*>(first)->getType();        
+      if (lval != Expr::LV_Valid)
+        return StmtError(Diag(First->getLocStart(),
+                   diag::err_selector_element_not_lvalue)
+          << First->getSourceRange());
+
+      FirstType = static_cast<Expr*>(First)->getType();        
     }
     if (!Context.isObjCObjectPointerType(FirstType))
         Diag(ForLoc, diag::err_selector_element_type)
@@ -651,7 +663,11 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       Diag(ForLoc, diag::err_collection_expr_type)
         << SecondType << Second->getSourceRange();
   }
-  return new ObjCForCollectionStmt(First, Second, Body, ForLoc, RParenLoc);
+  first.release();
+  second.release();
+  body.release();
+  return Owned(new ObjCForCollectionStmt(First, Second, Body,
+                                         ForLoc, RParenLoc));
 }
 
 Action::StmtResult 

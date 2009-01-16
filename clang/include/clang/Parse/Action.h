@@ -416,25 +416,26 @@ public:
     return StmtEmpty();
   }
 
-  virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
-                                    StmtTy *Body) {
-    return 0;
+  virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprArg Cond,
+                                          StmtArg Body) {
+    return StmtEmpty();
   }
-  virtual StmtResult ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,
-                                 SourceLocation WhileLoc, ExprTy *Cond) {
-    return 0;
+  virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
+                                       SourceLocation WhileLoc, ExprArg Cond) {
+    return StmtEmpty();
   }
-  virtual StmtResult ActOnForStmt(SourceLocation ForLoc, 
-                                  SourceLocation LParenLoc, 
-                                  StmtTy *First, ExprTy *Second, ExprTy *Third,
-                                  SourceLocation RParenLoc, StmtTy *Body) {
-    return 0;
+  virtual OwningStmtResult ActOnForStmt(SourceLocation ForLoc,
+                                        SourceLocation LParenLoc,
+                                        StmtArg First, ExprArg Second,
+                                        ExprArg Third, SourceLocation RParenLoc,
+                                        StmtArg Body) {
+    return StmtEmpty();
   }
-  virtual StmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc, 
-                                  SourceLocation LParenLoc, 
-                                  StmtTy *First, ExprTy *Second,
-                                  SourceLocation RParenLoc, StmtTy *Body) {
-    return 0;
+  virtual OwningStmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc,
+                                       SourceLocation LParenLoc,
+                                       StmtArg First, ExprArg Second,
+                                       SourceLocation RParenLoc, StmtArg Body) {
+    return StmtEmpty();
   }
   virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                                    SourceLocation LabelLoc,

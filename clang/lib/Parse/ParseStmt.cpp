@@ -722,7 +722,8 @@ Parser::OwningStmtResult Parser::ParseWhileStatement() {
   if (Cond.isInvalid() || Body.isInvalid())
     return StmtError();
 
-  return Owned(Actions.ActOnWhileStmt(WhileLoc, Cond.release(),Body.release()));
+  return Actions.ActOnWhileStmt(WhileLoc, move_convert(Cond),
+                                move_convert(Body));
 }
 
 /// ParseDoStatement
@@ -786,8 +787,8 @@ Parser::OwningStmtResult Parser::ParseDoStatement() {
   if (Cond.isInvalid() || Body.isInvalid())
     return StmtError();
 
-  return Owned(Actions.ActOnDoStmt(DoLoc, Body.release(), WhileLoc,
-                                   Cond.release()));
+  return Actions.ActOnDoStmt(DoLoc, move_convert(Body), WhileLoc,
+                             move_convert(Cond));
 }
 
 /// ParseForStatement
@@ -843,8 +844,8 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
   OwningExprResult Value(Actions);
 
   bool ForEach = false;
-  OwningStmtResult FirstPart(Actions), ThirdPart(Actions);
-  OwningExprResult SecondPart(Actions);
+  OwningStmtResult FirstPart(Actions);
+  OwningExprResult SecondPart(Actions), ThirdPart(Actions);
 
   // Parse the first part of the for specifier.
   if (Tok.is(tok::semi)) {  // for (;
@@ -903,11 +904,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
     if (Tok.is(tok::r_paren)) {  // for (...;...;)
       // no third part.
     } else {
-      Value = ParseExpression();
-      if (!Value.isInvalid()) {
-        // Turn the expression into a stmt.
-        ThirdPart = Actions.ActOnExprStmt(move_convert(Value));
-      }
+      ThirdPart = ParseExpression();
     }
   }
   // Match the ')'.
@@ -940,14 +937,14 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
     return StmtError();
 
   if (!ForEach)
-    return Owned(Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart.release(),
-                                      SecondPart.release(), ThirdPart.release(),
-                                      RParenLoc, Body.release()));
+    return Actions.ActOnForStmt(ForLoc, LParenLoc, move_convert(FirstPart),
+                              move_convert(SecondPart), move_convert(ThirdPart),
+                              RParenLoc, move_convert(Body));
   else
-    return Owned(Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
-                                                    FirstPart.release(),
-                                                    SecondPart.release(),
-                                                    RParenLoc, Body.release()));
+    return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
+                                              move_convert(FirstPart),
+                                              move_convert(SecondPart),
+                                              RParenLoc, move_convert(Body));
 }
 
 /// ParseGotoStatement
