@@ -698,7 +698,7 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
 /// This function adds V's value ID to Vals.  If the value ID is higher than the
 /// instruction ID, then it is a forward reference, and it also includes the
 /// type ID.
-static bool PushValueAndType(Value *V, unsigned InstID,
+static bool PushValueAndType(const Value *V, unsigned InstID,
                              SmallVector<unsigned, 64> &Vals, 
                              ValueEnumerator &VE) {
   unsigned ValID = VE.getValueID(V);
@@ -825,16 +825,17 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals.push_back(VE.getValueID(I.getOperand(i)));
     break;
   case Instruction::Invoke: {
-    const PointerType *PTy = cast<PointerType>(I.getOperand(0)->getType());
+    const InvokeInst *II = cast<InvokeInst>(&I);
+    const Value *Callee(II->getCalledValue());
+    const PointerType *PTy = cast<PointerType>(Callee->getType());
     const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
     Code = bitc::FUNC_CODE_INST_INVOKE;
     
-    const InvokeInst *II = cast<InvokeInst>(&I);
     Vals.push_back(VE.getAttributeID(II->getAttributes()));
     Vals.push_back(II->getCallingConv());
     Vals.push_back(VE.getValueID(II->getNormalDest()));
     Vals.push_back(VE.getValueID(II->getUnwindDest()));
-    PushValueAndType(I.getOperand(0), InstID, Vals, VE); // callee
+    PushValueAndType(Callee, InstID, Vals, VE);
     
     // Emit value #'s for the fixed parameters.
     for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
