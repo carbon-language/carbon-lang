@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -36,11 +37,17 @@
 #include <map>
 using namespace llvm;
 
+STATISTIC(NumNoops, "Number of noops inserted");
 STATISTIC(NumStalls, "Number of pipeline stalls");
 
 static cl::opt<bool>
 EnableAntiDepBreaking("break-anti-dependencies",
                       cl::desc("Break post-RA scheduling anti-dependencies"),
+                      cl::init(true), cl::Hidden);
+
+static cl::opt<bool>
+EnablePostRAHazardAvoidance("avoid-hazards",
+                      cl::desc("Enable simple hazard-avoidance"),
                       cl::init(true), cl::Hidden);
 
 namespace {
@@ -84,12 +91,21 @@ namespace {
     /// because they may not be safe to break.
     const BitVector AllocatableSet;
 
+    /// HazardRec - The hazard recognizer to use.
+    ScheduleHazardRecognizer *HazardRec;
+
   public:
     SchedulePostRATDList(MachineFunction &MF,
                          const MachineLoopInfo &MLI,
-                         const MachineDominatorTree &MDT)
+                         const MachineDominatorTree &MDT,
+                         ScheduleHazardRecognizer *HR)
       : ScheduleDAGInstrs(MF, MLI, MDT), Topo(SUnits),
-        AllocatableSet(TRI->getAllocatableSet(MF)) {}
+        AllocatableSet(TRI->getAllocatableSet(MF)),
+        HazardRec(HR) {}
+
+    ~SchedulePostRATDList() {
+      delete HazardRec;
+    }
 
     void Schedule();
 
@@ -99,6 +115,62 @@ namespace {
     void ListScheduleTopDown();
     bool BreakAntiDependencies();
   };
+
+  /// SimpleHazardRecognizer - A *very* simple hazard recognizer. It uses
+  /// a coarse classification and attempts to avoid that instructions of
+  /// a given class aren't grouped too densely together.
+  class SimpleHazardRecognizer : public ScheduleHazardRecognizer {
+    /// Class - A simple classification for SUnits.
+    enum Class {
+      Other, Load, Store
+    };
+
+    /// Window - The Class values of the most recently issued
+    /// instructions.
+    Class Window[8];
+
+    /// getClass - Classify the given SUnit.
+    Class getClass(const SUnit *SU) {
+      const MachineInstr *MI = SU->getInstr();
+      const TargetInstrDesc &TID = MI->getDesc();
+      if (TID.mayLoad())
+        return Load;
+      if (TID.mayStore())
+        return Store;
+      return Other;
+    }
+
+    /// Step - Rotate the existing entries in Window and insert the
+    /// given class value in position as the most recent.
+    void Step(Class C) {
+      std::copy(Window+1, array_endof(Window), Window);
+      Window[array_lengthof(Window)-1] = C;
+    }
+
+  public:
+    SimpleHazardRecognizer() : Window() {}
+
+    virtual HazardType getHazardType(SUnit *SU) {
+      Class C = getClass(SU);
+      if (C == Other)
+        return NoHazard;
+      unsigned Score = 0;
+      for (int i = 0; i != array_lengthof(Window); ++i)
+        if (Window[i] == C)
+          Score += i + 1;
+      if (Score > array_lengthof(Window) * 2)
+        return Hazard;
+      return NoHazard;
+    }
+
+    virtual void EmitInstruction(SUnit *SU) {
+      Step(getClass(SU));
+    }
+
+    virtual void AdvanceCycle() {
+      Step(Other);
+    }
+  };
 }
 
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
@@ -106,8 +178,11 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 
   const MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   const MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
+  ScheduleHazardRecognizer *HR = EnablePostRAHazardAvoidance ?
+                                 new SimpleHazardRecognizer :
+                                 new ScheduleHazardRecognizer();
 
-  SchedulePostRATDList Scheduler(Fn, MLI, MDT);
+  SchedulePostRATDList Scheduler(Fn, MLI, MDT, HR);
 
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
@@ -634,6 +709,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
   
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
+  std::vector<SUnit*> NotReady;
   Sequence.reserve(SUnits.size());
   while (!AvailableQueue.empty() || !PendingQueue.empty()) {
     // Check to see if any of the pending instructions are ready to issue.  If
@@ -650,27 +726,62 @@ void SchedulePostRATDList::ListScheduleTopDown() {
         MinDepth = PendingQueue[i]->getDepth();
     }
     
-    // If there are no instructions available, don't try to issue anything.
+    // If there are no instructions available, don't try to issue anything, and
+    // don't advance the hazard recognizer.
     if (AvailableQueue.empty()) {
       CurCycle = MinDepth != ~0u ? MinDepth : CurCycle + 1;
       continue;
     }
 
-    SUnit *FoundSUnit = AvailableQueue.pop();
-    
+    SUnit *FoundSUnit = 0;
+
+    bool HasNoopHazards = false;
+    while (!AvailableQueue.empty()) {
+      SUnit *CurSUnit = AvailableQueue.pop();
+
+      ScheduleHazardRecognizer::HazardType HT =
+        HazardRec->getHazardType(CurSUnit);
+      if (HT == ScheduleHazardRecognizer::NoHazard) {
+        FoundSUnit = CurSUnit;
+        break;
+      }
+
+      // Remember if this is a noop hazard.
+      HasNoopHazards |= HT == ScheduleHazardRecognizer::NoopHazard;
+
+      NotReady.push_back(CurSUnit);
+    }
+
+    // Add the nodes that aren't ready back onto the available list.
+    if (!NotReady.empty()) {
+      AvailableQueue.push_all(NotReady);
+      NotReady.clear();
+    }
+
     // If we found a node to schedule, do it now.
     if (FoundSUnit) {
       ScheduleNodeTopDown(FoundSUnit, CurCycle);
+      HazardRec->EmitInstruction(FoundSUnit);
 
       // If this is a pseudo-op node, we don't want to increment the current
       // cycle.
       if (FoundSUnit->Latency)  // Don't increment CurCycle for pseudo-ops!
-        ++CurCycle;        
-    } else {
+        ++CurCycle;
+    } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
       DOUT << "*** Advancing cycle, no work to do\n";
+      HazardRec->AdvanceCycle();
       ++NumStalls;
+      ++CurCycle;
+    } else {
+      // Otherwise, we have no instructions to issue and we have instructions
+      // that will fault if we don't do this right.  This is the case for
+      // processors without pipeline interlocks and other cases.
+      DOUT << "*** Emitting noop\n";
+      HazardRec->EmitNoop();
+      Sequence.push_back(0);   // NULL here means noop
+      ++NumNoops;
       ++CurCycle;
     }
   }

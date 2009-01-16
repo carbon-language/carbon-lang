@@ -55,7 +55,10 @@ public:
 
   /// EmitNoop - This callback is invoked when a noop was added to the
   /// instruction stream.
-  virtual void EmitNoop() {}
+  virtual void EmitNoop() {
+    // Default implementation: count it as a cycle.
+    AdvanceCycle();
+  }
 };
 
 }

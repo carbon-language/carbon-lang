@@ -51,7 +51,6 @@ public:
   virtual HazardType getHazardType(SUnit *SU);
   virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();
-  virtual void EmitNoop();
   
 private:
   /// EndDispatchGroup - Called when we are finishing a new dispatch group.

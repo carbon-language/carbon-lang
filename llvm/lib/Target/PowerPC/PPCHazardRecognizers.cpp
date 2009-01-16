@@ -302,7 +302,3 @@ void PPCHazardRecognizer970::AdvanceCycle() {
   if (NumIssued == 5)
     EndDispatchGroup();
 }
-
-void PPCHazardRecognizer970::EmitNoop() {
-  AdvanceCycle();
-}

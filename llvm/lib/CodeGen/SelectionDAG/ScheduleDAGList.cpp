@@ -234,7 +234,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       // processors without pipeline interlocks and other cases.
       DOUT << "*** Emitting noop\n";
       HazardRec->EmitNoop();
-      Sequence.push_back(0);   // NULL SUnit* -> noop
+      Sequence.push_back(0);   // NULL here means noop
       ++NumNoops;
       ++CurCycle;
     }
