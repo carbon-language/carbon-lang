@@ -686,7 +686,14 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
     Align /= 8;  // Return alignment in bytes, not bits.
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Align));
   }
-  
+  if (TypeToSize->isObjCInterfaceType()) {
+    ObjCInterfaceDecl *OI = TypeToSize->getAsObjCInterfaceType()->getDecl();
+    const RecordDecl *RD = CGF.getContext().addRecordToClass(OI);
+    const Type *Key =
+      CGF.getContext().getTagDeclType(
+                    const_cast<TagDecl*>(dyn_cast<TagDecl>(RD))).getTypePtr();
+    TypeToSize = Key->getDesugaredType();
+  }  
   std::pair<uint64_t, unsigned> Info = CGF.getContext().getTypeInfo(TypeToSize);
   
   uint64_t Val = E->isSizeOf() ? Info.first : Info.second;
