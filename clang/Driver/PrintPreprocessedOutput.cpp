@@ -209,7 +209,7 @@ void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
     
     for (unsigned i = 0, e = Str.size(); i != e; ++i) {
       unsigned char Char = Str[i];
-      if (isprint(Char) && Char != '\\')
+      if (isprint(Char) && Char != '\\' && Char != '"')
         OS << (char)Char;
       else  // Output anything hard as an octal escape.
         OS << '\\'
