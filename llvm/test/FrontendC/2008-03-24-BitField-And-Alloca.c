@@ -1,6 +1,5 @@
 // RUN: %llvmgcc -O2 -S %s -o - | not grep alloca
 // RUN: %llvmgcc -m32 -S %s -o - | grep store | not grep {align 8}
-// XFAIL: *
 
 enum {
  PP_C,
