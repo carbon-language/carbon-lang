@@ -239,8 +239,9 @@ Sema::ExprResult Sema::ActOnClassMessage(
     if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl)) {
       const ObjCInterfaceType *OCIT;
       OCIT = OCTD->getUnderlyingType()->getAsObjCInterfaceType();
-      if (OCIT)
-        ClassDecl = OCIT->getDecl();
+      if (!OCIT)
+        return Diag(receiverLoc, diag::err_invalid_receiver_to_message);
+      ClassDecl = OCIT->getDecl();
     }
   }
   assert(ClassDecl && "missing interface declaration");
