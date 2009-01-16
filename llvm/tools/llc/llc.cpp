@@ -53,7 +53,7 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-static cl::opt<bool> Fast("fast", 
+static cl::opt<bool> Fast("fast",
       cl::desc("Generate code quickly, potentially sacrificing code quality"));
 
 static cl::opt<std::string>
@@ -64,13 +64,13 @@ static cl::opt<const TargetMachineRegistry::entry*, false,
 MArch("march", cl::desc("Architecture to generate code for:"));
 
 static cl::opt<std::string>
-MCPU("mcpu", 
+MCPU("mcpu",
   cl::desc("Target a specific cpu type (-mcpu=help for details)"),
   cl::value_desc("cpu-name"),
   cl::init(""));
 
 static cl::list<std::string>
-MAttrs("mattr", 
+MAttrs("mattr",
   cl::CommaSeparated,
   cl::desc("Target specific attributes (-mattr=help for details)"),
   cl::value_desc("a1,+a2,-a3,..."));
@@ -134,14 +134,14 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
 
     return Out;
   }
-  
+
   if (InputFilename == "-") {
     OutputFilename = "-";
     return &outs();
   }
 
   OutputFilename = GetFileNameRoot(InputFilename);
-    
+
   bool Binary = false;
   switch (FileType) {
   case TargetMachine::AssemblyFile:
@@ -164,7 +164,7 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
     Binary = true;
     break;
   }
-  
+
   if (!Force && std::ifstream(OutputFilename.c_str())) {
     // If force is not specified, make sure not to overwrite a file!
     std::cerr << ProgName << ": error opening '" << OutputFilename
@@ -172,11 +172,11 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
                           << "Use -f command line argument to force output\n";
     return 0;
   }
-  
+
   // Make sure that the Out file gets unlinked from the disk if we get a
   // SIGINT
   sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-  
+
   std::string error;
   raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), Binary, error);
   if (!error.empty()) {
@@ -184,7 +184,7 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
     delete Out;
     return 0;
   }
-  
+
   return Out;
 }
 
@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
   // Load the module to be compiled...
   std::string ErrorMessage;
   std::auto_ptr<Module> M;
-  
+
   std::auto_ptr<MemoryBuffer> Buffer(
                    MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage));
   if (Buffer.get())
@@ -209,11 +209,11 @@ int main(int argc, char **argv) {
     return 1;
   }
   Module &mod = *M.get();
-  
+
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())
     mod.setTargetTriple(TargetTriple);
-  
+
   // Allocate target machine.  First, check whether the user has
   // explicitly specified an architecture to compile for.
   if (MArch == 0) {
@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
       Features.AddFeature(MAttrs[i]);
     FeaturesStr = Features.getString();
   }
-  
+
   std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, FeaturesStr));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
   // Figure out where we are going to send the output...
   raw_ostream *Out = GetOutputStream(argv[0]);
   if (Out == 0) return 1;
-  
+
   // If this target requires addPassesToEmitWholeFile, do it now.  This is
   // used by strange things like the C backend.
   if (Target.WantsWholeFile()) {
@@ -252,7 +252,7 @@ int main(int argc, char **argv) {
     PM.add(new TargetData(*Target.getTargetData()));
     if (!NoVerify)
       PM.add(createVerifierPass());
-    
+
     // Ask the target to add backend passes as necessary.
     if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, Fast)) {
       std::cerr << argv[0] << ": target does not support generation of this"
@@ -268,12 +268,12 @@ int main(int argc, char **argv) {
     ExistingModuleProvider Provider(M.release());
     FunctionPassManager Passes(&Provider);
     Passes.add(new TargetData(*Target.getTargetData()));
-    
+
 #ifndef NDEBUG
     if (!NoVerify)
       Passes.add(createVerifierPass());
 #endif
-  
+
     // Ask the target to add backend passes as necessary.
     MachineCodeEmitter *MCE = 0;
 
@@ -306,18 +306,18 @@ int main(int argc, char **argv) {
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
     }
-  
+
     Passes.doInitialization();
-  
+
     // Run our queue of passes all at once now, efficiently.
     // TODO: this could lazily stream functions out of the module.
     for (Module::iterator I = mod.begin(), E = mod.end(); I != E; ++I)
       if (!I->isDeclaration())
         Passes.run(*I);
-    
+
     Passes.doFinalization();
   }
-    
+
   // Delete the ostream if it's not a stdout stream
   if (Out != &outs()) delete Out;
 

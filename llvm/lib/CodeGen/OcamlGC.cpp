@@ -9,11 +9,11 @@
 //
 // This file implements lowering for the llvm.gc* intrinsics compatible with
 // Objective Caml 3.10.0, which uses a liveness-accurate static stack map.
-// 
+//
 // The frametable emitter is in OcamlGCPrinter.cpp.
 //
 //===----------------------------------------------------------------------===//
-                        
+
 #include "llvm/CodeGen/GCs.h"
 #include "llvm/CodeGen/GCStrategy.h"
 

@@ -26,13 +26,13 @@ static cl::opt<const TargetMachineRegistry::entry*, false,
 MArch("march", cl::desc("Architecture to generate assembly for:"));
 
 static cl::opt<std::string>
-MCPU("mcpu", 
+MCPU("mcpu",
   cl::desc("Target a specific cpu type (-mcpu=help for details)"),
   cl::value_desc("cpu-name"),
   cl::init(""));
 
 static cl::list<std::string>
-MAttrs("mattr", 
+MAttrs("mattr",
   cl::CommaSeparated,
   cl::desc("Target specific attributes (-mattr=help for details)"),
   cl::value_desc("a1,+a2,-a3,..."));
