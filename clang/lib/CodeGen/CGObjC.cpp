@@ -302,11 +302,11 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
                                  false, CallArgList());
   }
   else {
-    const ObjCKVCRefExpr *E = cast<ObjCKVCRefExpr>(Exp);
-    Selector S = E->getGetterMethod()->getSelector();
+    const ObjCKVCRefExpr *KE = cast<ObjCKVCRefExpr>(Exp);
+    Selector S = KE->getGetterMethod()->getSelector();
     return CGM.getObjCRuntime().
              GenerateMessageSend(*this, Exp->getType(), S, 
-                                 EmitScalarExpr(E->getBase()), 
+                                 EmitScalarExpr(KE->getBase()), 
                                  false, CallArgList());
   }
 }
