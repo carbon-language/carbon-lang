@@ -43,8 +43,9 @@ const char *Stmt::getStmtClassName() const {
 }
 
 void Stmt::DestroyChildren(ASTContext& C) {
-  for (child_iterator I = child_begin(), E = child_end(); I !=E; ++I)
-    if (Stmt* Child = *I) Child->Destroy(C);
+  for (child_iterator I = child_begin(), E = child_end(); I !=E; ) {
+    if (Stmt* Child = *I++) Child->Destroy(C);
+  }
 }
 
 void Stmt::Destroy(ASTContext& C) {
