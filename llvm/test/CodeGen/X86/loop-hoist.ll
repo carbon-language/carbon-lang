@@ -2,7 +2,8 @@
 ; RUN:   llc -relocation-model=dynamic-no-pic -mtriple=i686-apple-darwin8.7.2 |\
 ; RUN:   grep L_Arr.non_lazy_ptr
 ; RUN: llvm-as < %s | \
-; RUN:   llc -relocation-model=dynamic-no-pic -mtriple=i686-apple-darwin8.7.2 |\
+; RUN:   llc -disable-post-RA-scheduler=true \
+; RUN:       -relocation-model=dynamic-no-pic -mtriple=i686-apple-darwin8.7.2 |\
 ; RUN:   %prcontext L_Arr.non_lazy_ptr 1 | grep {4(%esp)}
 
 @Arr = external global [0 x i32]		; <[0 x i32]*> [#uses=1]
