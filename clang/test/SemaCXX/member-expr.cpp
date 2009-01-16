@@ -13,8 +13,8 @@ void test(X* xp, X x) {
   int i2 = xp->f();
   x.E; // expected-error{{cannot refer to type member 'E' with '.'}}
   xp->E; // expected-error{{cannot refer to type member 'E' with '->'}}
-  // FIXME: lookup needs to find enumerators  int i3 = x.Enumerator;
-  // FIXME:  int i4 = xp->Enumerator;
+  int i3 = x.Enumerator;
+  int i4 = xp->Enumerator;
   x.mem = 1;
   xp->mem = 2;
   float f1 = x.g();
