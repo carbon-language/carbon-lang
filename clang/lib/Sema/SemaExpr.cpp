@@ -851,12 +851,12 @@ Sema::ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
 }
 
 Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
-  // fast path for a single digit (which is quite common). A single digit 
+  // Fast path for a single digit (which is quite common).  A single digit 
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
-    const char Ty = PP.getPhysicalCharacterAt(Tok.getLocation());
-    unsigned IntSize =static_cast<unsigned>(Context.getTypeSize(Context.IntTy));
-    return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, Ty-'0'),
+    const char Val = PP.getSpelledCharacterAt(Tok.getLocation());
+    unsigned IntSize = Context.Target.getIntWidth();
+    return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, Val-'0'),
                                          Context.IntTy, 
                                          Tok.getLocation()));
   }

@@ -451,16 +451,16 @@ public:
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer) const;
   
-  /// getPhysicalCharacterAt - Return a pointer to the start of the specified
-  ///  location in the appropriate MemoryBuffer.
-  char getPhysicalCharacterAt(SourceLocation SL) const {
+  /// getSpelledCharacterAt - Return a pointer to the start of the specified
+  /// location in the appropriate MemoryBuffer.
+  char getSpelledCharacterAt(SourceLocation SL) const {
     if (PTH) {
       SL = SourceMgr.getSpellingLoc(SL);
-      unsigned fid = SourceMgr.getCanonicalFileID(SL);
-      unsigned fpos = SourceMgr.getFullFilePos(SL);      
-      const char* data;
-      if (PTH->getSpelling(fid, fpos, data))
-        return *data;
+      unsigned FID = SourceMgr.getCanonicalFileID(SL);
+      unsigned FPos = SourceMgr.getFullFilePos(SL);      
+      const char *Data;
+      if (PTH->getSpelling(FID, FPos, Data))
+        return *Data;
     }
 
     return *SourceMgr.getCharacterData(SL);
