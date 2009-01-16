@@ -663,9 +663,19 @@ void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
 
   // FIXME: this doesn't print wstrings right.
   for (unsigned i = 0, e = Str->getByteLength(); i != e; ++i) {
-    switch (Str->getStrData()[i]) {
-    default: OS << Str->getStrData()[i]; break;
-    // Handle some common ones to make dumps prettier.
+    unsigned char Char = Str->getStrData()[i];
+    
+    switch (Char) {
+    default:
+      if (isprint(Char))
+        OS << (char)Char;
+      else  // Output anything hard as an octal escape.
+        OS << '\\'
+        << (char)('0'+ ((Char >> 6) & 7))
+        << (char)('0'+ ((Char >> 3) & 7))
+        << (char)('0'+ ((Char >> 0) & 7));
+      break;
+    // Handle some common non-printable cases to make dumps prettier.
     case '\\': OS << "\\\\"; break;
     case '"': OS << "\\\""; break;
     case '\n': OS << "\\n"; break;
