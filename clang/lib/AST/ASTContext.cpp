@@ -2488,6 +2488,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 //===----------------------------------------------------------------------===//
 //                         Integer Predicates
 //===----------------------------------------------------------------------===//
+
 unsigned ASTContext::getIntWidth(QualType T) {
   if (T == BoolTy)
     return 1;

@@ -187,9 +187,9 @@ namespace SrcMgr {
   /// the token came from.  An actual macro SourceLocation stores deltas from
   /// these positions.
   class MacroIDInfo {
-    SourceLocation VirtualLoc, SpellingLoc;
+    SourceLocation InstantiationLoc, SpellingLoc;
   public:
-    SourceLocation getVirtualLoc() const { return VirtualLoc; }
+    SourceLocation getInstantiationLoc() const { return InstantiationLoc; }
     SourceLocation getSpellingLoc() const { return SpellingLoc; }
     
     /// get - Return a MacroID for a macro expansion.  VL specifies
@@ -198,7 +198,7 @@ namespace SrcMgr {
     /// come from).  Both VL and PL refer to normal File SLocs.
     static MacroIDInfo get(SourceLocation VL, SourceLocation SL) {
       MacroIDInfo X;
-      X.VirtualLoc = VL;
+      X.InstantiationLoc = VL;
       X.SpellingLoc = SL;
       return X;
     }
@@ -384,7 +384,7 @@ public:
     // File locations work.
     if (Loc.isFileID()) return Loc;
     
-    return MacroIDs[Loc.getMacroID()].getVirtualLoc();
+    return MacroIDs[Loc.getMacroID()].getInstantiationLoc();
   }
   
   /// getSpellingLoc - Given a SourceLocation object, return the spelling

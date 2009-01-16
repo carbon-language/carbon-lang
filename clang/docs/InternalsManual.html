@@ -437,7 +437,7 @@ source code of the program.  Important design points include:</p>
 
 <p>In practice, the SourceLocation works together with the SourceManager class
 to encode two pieces of information about a location: it's spelling location
-and it's virtual location.  For most tokens, these will be the same.  However,
+and it's instantiation location.  For most tokens, these will be the same.  However,
 for a macro expansion (or tokens that came from a _Pragma directive) these will
 describe the location of the characters corresponding to the token and the
 location where the token was used (i.e. the macro instantiation point or the 

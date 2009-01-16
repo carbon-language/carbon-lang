@@ -166,7 +166,7 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation SpellingLoc,
     
     // The instanitation point and source SpellingLoc have to exactly match to
     // reuse (for now).  We could allow "nearby" instantiations in the future.
-    if (LastOne.getVirtualLoc() != InstantLoc ||
+    if (LastOne.getInstantiationLoc() != InstantLoc ||
         LastOne.getSpellingLoc().getFileID() != SpellingLoc.getFileID())
       continue;
   
@@ -480,13 +480,13 @@ FileIDInfo FileIDInfo::ReadVal(llvm::Deserializer& D) {
 }
 
 void MacroIDInfo::Emit(llvm::Serializer& S) const {
-  S.Emit(VirtualLoc);
+  S.Emit(InstantiationLoc);
   S.Emit(SpellingLoc);
 }
 
 MacroIDInfo MacroIDInfo::ReadVal(llvm::Deserializer& D) {
   MacroIDInfo I;
-  I.VirtualLoc = SourceLocation::ReadVal(D);
+  I.InstantiationLoc = SourceLocation::ReadVal(D);
   I.SpellingLoc = SourceLocation::ReadVal(D);
   return I;
 }
