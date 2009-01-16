@@ -38,74 +38,74 @@ SourceRange SourceRange::ReadVal(llvm::Deserializer& D) {
 }
 
 FullSourceLoc FullSourceLoc::getInstantiationLoc() const {
-  assert (isValid());
-  return FullSourceLoc(SrcMgr->getInstantiationLoc(Loc), *SrcMgr);
+  assert(isValid());
+  return FullSourceLoc(SrcMgr->getInstantiationLoc(*this), *SrcMgr);
 }
 
 FullSourceLoc FullSourceLoc::getSpellingLoc() const {
   assert(isValid());
-  return FullSourceLoc(SrcMgr->getSpellingLoc(Loc), *SrcMgr);
+  return FullSourceLoc(SrcMgr->getSpellingLoc(*this), *SrcMgr);
 }
 
 FullSourceLoc FullSourceLoc::getIncludeLoc() const {
-  assert (isValid());
-  return FullSourceLoc(SrcMgr->getIncludeLoc(Loc), *SrcMgr);
+  assert(isValid());
+  return FullSourceLoc(SrcMgr->getIncludeLoc(*this), *SrcMgr);
 }
 
 unsigned FullSourceLoc::getLineNumber() const {
-  assert (isValid());
-  return SrcMgr->getLineNumber(Loc);
+  assert(isValid());
+  return SrcMgr->getLineNumber(*this);
 }
 
 unsigned FullSourceLoc::getColumnNumber() const {
-  assert (isValid());
-  return SrcMgr->getColumnNumber(Loc);
+  assert(isValid());
+  return SrcMgr->getColumnNumber(*this);
 }
 
 
 unsigned FullSourceLoc::getInstantiationLineNumber() const {
-  assert (isValid());
-  return SrcMgr->getInstantiationLineNumber(Loc);
+  assert(isValid());
+  return SrcMgr->getInstantiationLineNumber(*this);
 }
 
 unsigned FullSourceLoc::getInstantiationColumnNumber() const {
-  assert (isValid());
-  return SrcMgr->getInstantiationColumnNumber(Loc);
+  assert(isValid());
+  return SrcMgr->getInstantiationColumnNumber(*this);
 }
 
 unsigned FullSourceLoc::getSpellingLineNumber() const {
-  assert (isValid());
-  return SrcMgr->getSpellingLineNumber(Loc);
+  assert(isValid());
+  return SrcMgr->getSpellingLineNumber(*this);
 }
 
 unsigned FullSourceLoc::getSpellingColumnNumber() const {
-  assert (isValid());
-  return SrcMgr->getSpellingColumnNumber(Loc);
+  assert(isValid());
+  return SrcMgr->getSpellingColumnNumber(*this);
 }
 
 const char* FullSourceLoc::getSourceName() const {
-  assert (isValid());
-  return SrcMgr->getSourceName(Loc);
+  assert(isValid());
+  return SrcMgr->getSourceName(*this);
 }
 
 const FileEntry* FullSourceLoc::getFileEntryForLoc() const { 
-  assert (isValid());
-  return SrcMgr->getFileEntryForLoc(Loc);
+  assert(isValid());
+  return SrcMgr->getFileEntryForLoc(*this);
 }
 
 bool FullSourceLoc::isInSystemHeader() const {
-  assert (isValid());
-  return SrcMgr->isInSystemHeader(Loc);
+  assert(isValid());
+  return SrcMgr->isInSystemHeader(*this);
 }
 
 const char *FullSourceLoc::getCharacterData() const {
   assert(isValid());
-  return SrcMgr->getCharacterData(Loc);
+  return SrcMgr->getCharacterData(*this);
 }
 
 const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
-  assert (isValid());
-  return SrcMgr->getBuffer(Loc.getFileID());
+  assert(isValid());
+  return SrcMgr->getBuffer(getFileID());
 }
 
 void FullSourceLoc::dump() const {
@@ -114,7 +114,7 @@ void FullSourceLoc::dump() const {
     return;
   }
   
-  if (Loc.isFileID()) {
+  if (isFileID()) {
     // The instantiation and spelling pos is identical for file locs.
     fprintf(stderr, "File Loc from '%s': %d: %d\n",
             getSourceName(), getInstantiationLineNumber(),

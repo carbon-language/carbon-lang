@@ -207,24 +207,18 @@ public:
   static SourceRange ReadVal(llvm::Deserializer& D);
 };
   
-/// FullSourceLoc - A tuple containing both a SourceLocation
-///  and its associated SourceManager.  Useful for argument passing to functions
-///  that expect both objects.
-class FullSourceLoc {
-  SourceLocation Loc;
+/// FullSourceLoc - A SourceLocation and its associated SourceManager.  Useful
+/// for argument passing to functions that expect both objects.
+class FullSourceLoc : public SourceLocation {
   SourceManager* SrcMgr;
 public:
   // Creates a FullSourceLoc where isValid() returns false.
-  explicit FullSourceLoc() 
-    : Loc(SourceLocation()), SrcMgr((SourceManager*) 0) {}
+  explicit FullSourceLoc() : SrcMgr((SourceManager*) 0) {}
 
-  explicit FullSourceLoc(SourceLocation loc, SourceManager& smgr) 
-    : Loc(loc), SrcMgr(&smgr) {}
+  explicit FullSourceLoc(SourceLocation Loc, SourceManager &SM) 
+    : SourceLocation(Loc), SrcMgr(&SM) {}
     
-  bool isValid() const { return Loc.isValid(); }
-  bool isInvalid() const { return Loc.isInvalid(); }
-  
-  SourceLocation getLocation() const { return Loc; }
+  SourceLocation getLocation() const { return *this; }
   
   SourceManager& getManager() {
     assert (SrcMgr && "SourceManager is NULL.");
@@ -258,19 +252,20 @@ public:
 
   bool isInSystemHeader() const;
   
-  bool operator==(const FullSourceLoc& RHS) const {
-    return SrcMgr == RHS.SrcMgr && Loc == RHS.Loc;
-  }
-  
-  bool operator!=(const FullSourceLoc& RHS) const {
-    return SrcMgr != RHS.SrcMgr || Loc != RHS.Loc;
-  }    
-
   /// Prints information about this FullSourceLoc to stderr. Useful for
   ///  debugging.
   void dump() const;
 };
 
+inline bool operator==(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {
+  return LHS.getRawEncoding() == RHS.getRawEncoding() &&
+         &LHS.getManager() == &RHS.getManager();
+}
+
+inline bool operator!=(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {
+  return !(LHS == RHS);
+}
+  
 }  // end namespace clang
 
 #endif
