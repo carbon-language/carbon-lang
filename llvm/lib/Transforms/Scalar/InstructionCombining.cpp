@@ -11169,7 +11169,11 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   if (!SrcPTy->isInteger() && !isa<PointerType>(SrcPTy))
     return 0;
   
-  if (IC.getTargetData().getTypeSizeInBits(SrcPTy) !=
+  // If the pointers point into different address spaces or if they point to
+  // values with different sizes, we can't do the transformation.
+  if (SrcTy->getAddressSpace() != 
+        cast<PointerType>(CI->getType())->getAddressSpace() ||
+      IC.getTargetData().getTypeSizeInBits(SrcPTy) !=
       IC.getTargetData().getTypeSizeInBits(DestPTy))
     return 0;
 
