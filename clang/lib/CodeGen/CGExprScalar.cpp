@@ -692,7 +692,7 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
     const Type *Key =
       CGF.getContext().getTagDeclType(
                     const_cast<TagDecl*>(dyn_cast<TagDecl>(RD))).getTypePtr();
-    TypeToSize = Key->getDesugaredType();
+    TypeToSize = QualType(Key->getAsRecordType(), 0);
   }  
   std::pair<uint64_t, unsigned> Info = CGF.getContext().getTypeInfo(TypeToSize);
   
