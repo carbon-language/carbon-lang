@@ -121,9 +121,9 @@ namespace SrcMgr {
   /// is a byte offset from the start of this.
   ///
   /// FileID's are used to compute the location of a character in memory as well
-  /// as the logical source location, which can be differ from the spelling
-  /// location.  It is different when #line's are active or when macros have
-  /// been expanded.
+  /// as the instantiation source location, which can be differ from the
+  /// spelling location.  It is different when #line's are active or when macros
+  /// have been expanded.
   ///
   /// Each FileID has include stack information, indicating where it came from.
   /// For the primary translation unit, it comes from SourceLocation() aka 0.
@@ -228,13 +228,12 @@ namespace clang {
 /// files and assigns unique FileID's for each unique #include chain.
 ///
 /// The SourceManager can be queried for information about SourceLocation
-/// objects, turning them into either spelling or logical locations.  Spelling
-/// locations represent where the bytes corresponding to a token came from and
-/// logical locations represent where the location is in the user's view.  In
-/// the case of a macro expansion, for example, the spelling location indicates
-/// where the expanded token came from and the logical location specifies where
-/// it was expanded.  Logical locations are also influenced by #line directives,
-/// etc.
+/// objects, turning them into either spelling or instantiation locations.
+/// Spelling locations represent where the bytes corresponding to a token came
+/// from and instantiation locations represent where the location is in the
+/// user's view.  In the case of a macro expansion, for example, the spelling
+/// location indicates where the expanded token came from and the instantiation
+/// location specifies where it was expanded.
 class SourceManager {
   /// FileInfos - Memoized information about all of the files tracked by this
   /// SourceManager.  This set allows us to merge ContentCache entries based
@@ -338,7 +337,7 @@ public:
   /// SourceLocation.  If this is a macro expansion, this transparently figures
   /// out which file includes the file being expanded into.
   SourceLocation getIncludeLoc(SourceLocation ID) const {
-    return getFIDInfo(getLogicalLoc(ID).getFileID())->getIncludeLoc();
+    return getFIDInfo(getInstantiationLoc(ID).getFileID())->getIncludeLoc();
   }
   
   /// getCharacterData - Return a pointer to the start of the specified location
@@ -348,15 +347,15 @@ public:
   /// getColumnNumber - Return the column # for the specified file position.
   /// This is significantly cheaper to compute than the line number.  This
   /// returns zero if the column number isn't known.  This may only be called on
-  /// a file sloc, so you must choose a spelling or logical location before
-  /// calling this method.
+  /// a file sloc, so you must choose a spelling or instantiation location
+  /// before calling this method.
   unsigned getColumnNumber(SourceLocation Loc) const;
   
   unsigned getSpellingColumnNumber(SourceLocation Loc) const {
     return getColumnNumber(getSpellingLoc(Loc));
   }
-  unsigned getLogicalColumnNumber(SourceLocation Loc) const {
-    return getColumnNumber(getLogicalLoc(Loc));
+  unsigned getInstantiationColumnNumber(SourceLocation Loc) const {
+    return getColumnNumber(getInstantiationLoc(Loc));
   }
   
   
@@ -366,8 +365,8 @@ public:
   /// about to emit a diagnostic.
   unsigned getLineNumber(SourceLocation Loc) const;
 
-  unsigned getLogicalLineNumber(SourceLocation Loc) const {
-    return getLineNumber(getLogicalLoc(Loc));
+  unsigned getInstantiationLineNumber(SourceLocation Loc) const {
+    return getLineNumber(getInstantiationLoc(Loc));
   }
   unsigned getSpellingLineNumber(SourceLocation Loc) const {
     return getLineNumber(getSpellingLoc(Loc));
@@ -378,9 +377,9 @@ public:
   /// etc.
   const char *getSourceName(SourceLocation Loc) const;
 
-  /// Given a SourceLocation object, return the logical location referenced by
-  /// the ID.  This logical location is subject to #line directives, etc.
-  SourceLocation getLogicalLoc(SourceLocation Loc) const {
+  /// Given a SourceLocation object, return the instantiation location
+  /// referenced by the ID.
+  SourceLocation getInstantiationLoc(SourceLocation Loc) const {
     // File locations work.
     if (Loc.isFileID()) return Loc;
     
@@ -450,7 +449,7 @@ public:
     
   /// getFullFilePos - This (efficient) method returns the offset from the start
   /// of the file that the specified spelling SourceLocation represents.  This
-  /// returns the location of the actual character data, not the logical file
+  /// returns the location of the actual character data, not the instantiation
   /// position.
   unsigned getFullFilePos(SourceLocation SpellingLoc) const {
     return getDecomposedFileLoc(SpellingLoc).second;

@@ -55,7 +55,7 @@ static void AddFID(FIDMap& FIDs,
                    llvm::SmallVectorImpl<unsigned>& V,
                    SourceManager& SM, SourceLocation L) {
 
-  unsigned fid = SM.getCanonicalFileID(SM.getLogicalLoc(L));
+  unsigned fid = SM.getCanonicalFileID(SM.getInstantiationLoc(L));
   FIDMap::iterator I = FIDs.find(fid);
   if (I != FIDs.end()) return;
   FIDs[fid] = V.size();
@@ -64,8 +64,7 @@ static void AddFID(FIDMap& FIDs,
 
 static unsigned GetFID(const FIDMap& FIDs,
                        SourceManager& SM, SourceLocation L) {
-
-  unsigned fid = SM.getCanonicalFileID(SM.getLogicalLoc(L));
+  unsigned fid = SM.getCanonicalFileID(SM.getInstantiationLoc(L));
   FIDMap::const_iterator I = FIDs.find(fid);
   assert (I != FIDs.end());
   return I->second;
@@ -82,9 +81,9 @@ static void EmitLocation(llvm::raw_ostream& o, SourceManager& SM,
 
   Indent(o, indent) << "<dict>\n";
   Indent(o, indent) << " <key>line</key><integer>"
-                    << SM.getLogicalLineNumber(L) << "</integer>\n";
+                    << SM.getInstantiationLineNumber(L) << "</integer>\n";
   Indent(o, indent) << " <key>col</key><integer>"
-                    << SM.getLogicalColumnNumber(L) << "</integer>\n";
+                    << SM.getInstantiationColumnNumber(L) << "</integer>\n";
   Indent(o, indent) << " <key>file</key><integer>"
                     << GetFID(FM, SM, L) << "</integer>\n";
   Indent(o, indent) << "</dict>\n";

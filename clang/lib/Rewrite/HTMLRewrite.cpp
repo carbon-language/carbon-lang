@@ -31,8 +31,8 @@ using namespace clang;
 void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
                           const char *StartTag, const char *EndTag) {
   SourceManager &SM = R.getSourceMgr();
-  B = SM.getLogicalLoc(B);
-  E = SM.getLogicalLoc(E);
+  B = SM.getInstantiationLoc(B);
+  E = SM.getInstantiationLoc(E);
   unsigned FileID = SM.getCanonicalFileID(B);
   assert(SM.getCanonicalFileID(E) == FileID && "B/E not in the same file!");
 
@@ -442,8 +442,8 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor& PP) {
       continue;
     }
     
-    // Ignore tokens whose logical location was not the main file.
-    SourceLocation LLoc = SourceMgr.getLogicalLoc(Tok.getLocation());
+    // Ignore tokens whose instantiation location was not the main file.
+    SourceLocation LLoc = SourceMgr.getInstantiationLoc(Tok.getLocation());
     std::pair<unsigned, unsigned> LLocInfo = 
       SourceMgr.getDecomposedFileLoc(LLoc);
     
@@ -476,7 +476,7 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor& PP) {
     // instantiation.  It would be really nice to pop up a window with all the
     // spelling of the tokens or something.
     while (!Tok.is(tok::eof) &&
-           SourceMgr.getLogicalLoc(Tok.getLocation()) == LLoc) {
+           SourceMgr.getInstantiationLoc(Tok.getLocation()) == LLoc) {
       // Insert a newline if the macro expansion is getting large.
       if (LineLen > 60) {
         Expansion += "<br>";

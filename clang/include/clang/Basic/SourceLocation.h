@@ -236,15 +236,15 @@ public:
     return *SrcMgr;
   }
   
-  FullSourceLoc getLogicalLoc() const;
+  FullSourceLoc getInstantiationLoc() const;
   FullSourceLoc getSpellingLoc() const;
   FullSourceLoc getIncludeLoc() const;
 
   unsigned getLineNumber() const;
   unsigned getColumnNumber() const;
   
-  unsigned getLogicalLineNumber() const;
-  unsigned getLogicalColumnNumber() const;
+  unsigned getInstantiationLineNumber() const;
+  unsigned getInstantiationColumnNumber() const;
 
   unsigned getSpellingLineNumber() const;
   unsigned getSpellingColumnNumber() const;

@@ -167,7 +167,7 @@ static bool PrintProblem(SourceManager &SourceMgr,
 
   for (const_diag_iterator I = diag_begin, E = diag_end; I != E; ++I)
     fprintf(stderr, "  Line %d: %s\n",
-            SourceMgr.getLogicalLineNumber(I->first),
+            SourceMgr.getInstantiationLineNumber(I->first),
             I->second.c_str());
 
   return true;
@@ -185,12 +185,12 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
   DiagList DiffList;
 
   for (const_diag_iterator I = d1_begin, E = d1_end; I != E; ++I) {
-    unsigned LineNo1 = SourceMgr.getLogicalLineNumber(I->first);
+    unsigned LineNo1 = SourceMgr.getInstantiationLineNumber(I->first);
     const std::string &Diag1 = I->second;
     bool Found = false;
 
     for (const_diag_iterator II = d2_begin, IE = d2_end; II != IE; ++II) {
-      unsigned LineNo2 = SourceMgr.getLogicalLineNumber(II->first);
+      unsigned LineNo2 = SourceMgr.getInstantiationLineNumber(II->first);
       if (LineNo1 != LineNo2) continue;
 
       const std::string &Diag2 = II->second;

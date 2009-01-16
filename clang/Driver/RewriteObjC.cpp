@@ -557,7 +557,7 @@ void RewriteObjC::HandleTopLevelDecl(Decl *D) {
   // #included file.  If the former, rewrite it now.  If the later, check to see
   // if we rewrote the #include/#import.
   SourceLocation Loc = D->getLocation();
-  Loc = SM->getLogicalLoc(Loc);
+  Loc = SM->getInstantiationLoc(Loc);
   
   // If this is for a builtin, ignore it.
   if (Loc.isInvalid()) return;

@@ -37,9 +37,9 @@ SourceRange SourceRange::ReadVal(llvm::Deserializer& D) {
   return SourceRange(A,B);
 }
 
-FullSourceLoc FullSourceLoc::getLogicalLoc() const {
+FullSourceLoc FullSourceLoc::getInstantiationLoc() const {
   assert (isValid());
-  return FullSourceLoc(SrcMgr->getLogicalLoc(Loc), *SrcMgr);
+  return FullSourceLoc(SrcMgr->getInstantiationLoc(Loc), *SrcMgr);
 }
 
 FullSourceLoc FullSourceLoc::getSpellingLoc() const {
@@ -63,14 +63,14 @@ unsigned FullSourceLoc::getColumnNumber() const {
 }
 
 
-unsigned FullSourceLoc::getLogicalLineNumber() const {
+unsigned FullSourceLoc::getInstantiationLineNumber() const {
   assert (isValid());
-  return SrcMgr->getLogicalLineNumber(Loc);
+  return SrcMgr->getInstantiationLineNumber(Loc);
 }
 
-unsigned FullSourceLoc::getLogicalColumnNumber() const {
+unsigned FullSourceLoc::getInstantiationColumnNumber() const {
   assert (isValid());
-  return SrcMgr->getLogicalColumnNumber(Loc);
+  return SrcMgr->getInstantiationColumnNumber(Loc);
 }
 
 unsigned FullSourceLoc::getSpellingLineNumber() const {
@@ -120,15 +120,15 @@ void FullSourceLoc::dump() const {
   }
   
   if (isFileID()) {
-    // The logical and spelling pos is identical for file locs.
+    // The instantiation and spelling pos is identical for file locs.
     fprintf(stderr, "File Loc from '%s': %d: %d\n",
-            getSourceName(), getLogicalLineNumber(),
-            getLogicalColumnNumber());
+            getSourceName(), getInstantiationLineNumber(),
+            getInstantiationColumnNumber());
   } else {
     fprintf(stderr, "Macro Loc (\n  Spelling: ");
     getSpellingLoc().dump();
-    fprintf(stderr, "  Logical: ");
-    getLogicalLoc().dump();
+    fprintf(stderr, "  Instantiation: ");
+    getInstantiationLoc().dump();
     fprintf(stderr, ")\n");
   }
 }

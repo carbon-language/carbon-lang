@@ -244,7 +244,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     Identifier.setFlagValue(Token::StartOfLine , isAtStartOfLine);
     Identifier.setFlagValue(Token::LeadingSpace, hasLeadingSpace);
     
-    // Update the tokens location to include both its logical and physical
+    // Update the tokens location to include both its instantiation and physical
     // locations.
     SourceLocation Loc =
       SourceMgr.getInstantiationLoc(Identifier.getLocation(), InstantiateLoc);
@@ -453,7 +453,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     // it will tokenize as a number (and not run into stuff after it in the temp
     // buffer).
     sprintf(TmpBuffer, "%u ",
-            SourceMgr.getLogicalLineNumber(Tok.getLocation()));
+            SourceMgr.getInstantiationLineNumber(Tok.getLocation()));
     unsigned Length = strlen(TmpBuffer)-1;
     Tok.setKind(tok::numeric_constant);
     Tok.setLength(Length);
@@ -470,7 +470,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     }
     
     // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
-    std::string FN = SourceMgr.getSourceName(SourceMgr.getLogicalLoc(Loc));
+    std::string FN =SourceMgr.getSourceName(SourceMgr.getInstantiationLoc(Loc));
     FN = '"' + Lexer::Stringify(FN) + '"';
     Tok.setKind(tok::string_literal);
     Tok.setLength(FN.size());

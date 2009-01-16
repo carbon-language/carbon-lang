@@ -125,7 +125,8 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
     SourceManager &SM = CGM.getContext().getSourceManager();
     llvm::Constant *Ann =
-      CGM.EmitAnnotateAttr(GV, AA, SM.getLogicalLineNumber(D.getLocation()));
+      CGM.EmitAnnotateAttr(GV, AA, 
+                           SM.getInstantiationLineNumber(D.getLocation()));
     CGM.AddAnnotation(Ann);
   }
 

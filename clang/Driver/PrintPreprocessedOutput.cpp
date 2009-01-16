@@ -103,7 +103,7 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
 /// #line directive.  This returns false if already at the specified line, true
 /// if some newlines were emitted.
 bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
-  unsigned LineNo = PP.getSourceManager().getLogicalLineNumber(Loc);
+  unsigned LineNo = PP.getSourceManager().getInstantiationLineNumber(Loc);
 
   if (DisableLineMarkers) {
     if (LineNo == CurLine) return false;
@@ -124,7 +124,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     if (LineNo-CurLine == 1)
       OS << '\n';
     else if (LineNo == CurLine)
-      return false;    // Spelling line moved, but logical line didn't.
+      return false;    // Spelling line moved, but instantiation line didn't.
     else {
       const char *NewLines = "\n\n\n\n\n\n\n\n";
       OS.write(NewLines, LineNo-CurLine);
@@ -157,7 +157,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
     // strange behavior.
   }
   
-  Loc = SourceMgr.getLogicalLoc(Loc);
+  Loc = SourceMgr.getInstantiationLoc(Loc);
   CurLine = SourceMgr.getLineNumber(Loc);
 
   if (DisableLineMarkers) return;
@@ -200,7 +200,7 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
 /// is called for the first token on each new line.  If this really is the start
 /// of a new logical line, handle it and return true, otherwise return false.
 /// This may not be the start of a logical line because the "start of line"
-/// marker is set for spelling lines, not logical ones.
+/// marker is set for spelling lines, not instantiation ones.
 bool PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   // Figure out what line we went to and insert the appropriate number of
   // newline characters.
@@ -210,7 +210,7 @@ bool PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   // Print out space characters so that the first token on a line is
   // indented for easy reading.
   const SourceManager &SourceMgr = PP.getSourceManager();
-  unsigned ColNo = SourceMgr.getLogicalColumnNumber(Tok.getLocation());
+  unsigned ColNo = SourceMgr.getInstantiationColumnNumber(Tok.getLocation());
   
   // This hack prevents stuff like:
   // #define HASH #

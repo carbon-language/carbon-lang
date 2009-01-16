@@ -155,8 +155,8 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation SpellingLoc,
   // where the characters are actually located.
   SpellingLoc = getSpellingLoc(SpellingLoc);
   
-  // Resolve InstantLoc down to a real logical location.
-  InstantLoc = getLogicalLoc(InstantLoc);
+  // Resolve InstantLoc down to a real instantiation location.
+  InstantLoc = getInstantiationLoc(InstantLoc);
   
   
   // If the last macro id is close to the currently requested location, try to

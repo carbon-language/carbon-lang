@@ -113,7 +113,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
   // that aren't in the preprocessed view, we have macros that expand to no
   // tokens, or macro arguments etc.
   while (RawTok.isNot(tok::eof) || PPTok.isNot(tok::eof)) {
-    SourceLocation PPLoc = SM.getLogicalLoc(PPTok.getLocation());
+    SourceLocation PPLoc = SM.getInstantiationLoc(PPTok.getLocation());
 
     // If PPTok is from a different source file, ignore it.
     if (!SM.isFromMainFile(PPLoc)) {
@@ -198,7 +198,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
     while (PPOffs < RawOffs) {
       Expansion += ' ' + PP.getSpelling(PPTok);
       PP.Lex(PPTok);
-      PPLoc = SM.getLogicalLoc(PPTok.getLocation());
+      PPLoc = SM.getInstantiationLoc(PPTok.getLocation());
       PPOffs = SM.getFullFilePos(PPLoc);
     }
     Expansion += ' ';

@@ -212,7 +212,8 @@ public:
         const CompoundLiteralExpr* CL = CR->getLiteralExpr();
         os << "Address of stack memory associated with a compound literal "
               "declared on line "
-            << BR.getSourceManager().getLogicalLineNumber(CL->getLocStart())
+            << BR.getSourceManager()
+                    .getInstantiationLineNumber(CL->getLocStart())
             << " returned.";
         
         R = CL->getSourceRange();
@@ -223,7 +224,7 @@ public:
         R = ARE->getSourceRange();
         
         os << "Address of stack memory allocated by call to alloca() on line "
-           << BR.getSourceManager().getLogicalLineNumber(L)
+           << BR.getSourceManager().getInstantiationLineNumber(L)
            << " returned.";
       }      
       else {        

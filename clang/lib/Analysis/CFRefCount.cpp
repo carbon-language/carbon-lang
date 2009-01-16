@@ -2541,7 +2541,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   Stmt* FirstStmt = cast<PostStmt>(AllocNode->getLocation()).getStmt();
 
   SourceManager& SMgr = BR.getContext().getSourceManager();
-  unsigned AllocLine = SMgr.getLogicalLineNumber(FirstStmt->getLocStart());
+  unsigned AllocLine =SMgr.getInstantiationLineNumber(FirstStmt->getLocStart());
 
   // Get the leak site.  We may have multiple ExplodedNodes (one with the
   // leak) that occur on the same line number; if the node with the leak
@@ -2559,7 +2559,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   
   Stmt* S = getStmt(BR);  // This is the statement where the leak occured.
   assert (S);
-  unsigned EndLine = SMgr.getLogicalLineNumber(S->getLocStart());
+  unsigned EndLine = SMgr.getInstantiationLineNumber(S->getLocStart());
 
   // Look in the *trimmed* graph at the immediate predecessor of EndN.  Does
   // it occur on the same line?
@@ -2574,7 +2574,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
     Stmt* SPred = PredPS->getStmt();
     
     // Predecessor at same line?
-    if (SMgr.getLogicalLineNumber(SPred->getLocStart()) != EndLine) {
+    if (SMgr.getInstantiationLineNumber(SPred->getLocStart()) != EndLine) {
       Hint = PathDiagnosticPiece::Below;
       S = SPred;
     }

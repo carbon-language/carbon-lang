@@ -591,7 +591,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (const AnnotateAttr *AA = D->getAttr<AnnotateAttr>()) {
     SourceManager &SM = Context.getSourceManager();
     AddAnnotation(EmitAnnotateAttr(GV, AA,
-                                   SM.getLogicalLineNumber(D->getLocation())));
+                              SM.getInstantiationLineNumber(D->getLocation())));
   }
 
   GV->setInitializer(Init);

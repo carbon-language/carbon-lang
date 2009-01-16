@@ -23,7 +23,7 @@ void TextDiagnosticPrinter::
 PrintIncludeStack(FullSourceLoc Pos) {
   if (Pos.isInvalid()) return;
 
-  Pos = Pos.getLogicalLoc();
+  Pos = Pos.getInstantiationLoc();
 
   // Print out the other include frames first.
   PrintIncludeStack(Pos.getIncludeLoc());
@@ -44,20 +44,21 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
          "Expect a correspondence between source and caret line!");
   if (!R.isValid()) return;
 
-  SourceLocation LogicalStart = SourceMgr.getLogicalLoc(R.getBegin());
-  unsigned StartLineNo = SourceMgr.getLineNumber(LogicalStart);
-  if (StartLineNo > LineNo || LogicalStart.getFileID() != FileID)
+  SourceLocation InstantiationStart =
+    SourceMgr.getInstantiationLoc(R.getBegin());
+  unsigned StartLineNo = SourceMgr.getLineNumber(InstantiationStart);
+  if (StartLineNo > LineNo || InstantiationStart.getFileID() != FileID)
     return;  // No intersection.
   
-  SourceLocation LogicalEnd = SourceMgr.getLogicalLoc(R.getEnd());
-  unsigned EndLineNo = SourceMgr.getLineNumber(LogicalEnd);
-  if (EndLineNo < LineNo || LogicalEnd.getFileID() != FileID)
+  SourceLocation InstantiationEnd = SourceMgr.getInstantiationLoc(R.getEnd());
+  unsigned EndLineNo = SourceMgr.getLineNumber(InstantiationEnd);
+  if (EndLineNo < LineNo || InstantiationEnd.getFileID() != FileID)
     return;  // No intersection.
   
   // Compute the column number of the start.
   unsigned StartColNo = 0;
   if (StartLineNo == LineNo) {
-    StartColNo = SourceMgr.getLogicalColumnNumber(R.getBegin());
+    StartColNo = SourceMgr.getInstantiationColumnNumber(R.getBegin());
     if (StartColNo) --StartColNo;  // Zero base the col #.
   }
 
@@ -69,7 +70,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   // Compute the column number of the end.
   unsigned EndColNo = CaretLine.size();
   if (EndLineNo == LineNo) {
-    EndColNo = SourceMgr.getLogicalColumnNumber(R.getEnd());
+    EndColNo = SourceMgr.getInstantiationColumnNumber(R.getEnd());
     if (EndColNo) {
       --EndColNo;  // Zero base the col #.
       
@@ -102,7 +103,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   const FullSourceLoc &Pos = Info.getLocation();
   
   if (Pos.isValid()) {
-    FullSourceLoc LPos = Pos.getLogicalLoc();
+    FullSourceLoc LPos = Pos.getInstantiationLoc();
     LineNo = LPos.getLineNumber();
     FileID = LPos.getLocation().getFileID();
     
@@ -116,14 +117,14 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     // Compute the column number.  Rewind from the current position to the start
     // of the line.
     ColNo = LPos.getColumnNumber();
-    const char *TokLogicalPtr = LPos.getCharacterData();
-    LineStart = TokLogicalPtr-ColNo+1;  // Column # is 1-based
+    const char *TokInstantiationPtr = LPos.getCharacterData();
+    LineStart = TokInstantiationPtr-ColNo+1;  // Column # is 1-based
 
     // Compute the line end.  Scan forward from the error position to the end of
     // the line.
     const llvm::MemoryBuffer *Buffer = LPos.getBuffer();
     const char *BufEnd = Buffer->getBufferEnd();
-    LineEnd = TokLogicalPtr;
+    LineEnd = TokInstantiationPtr;
     while (LineEnd != BufEnd && 
            *LineEnd != '\n' && *LineEnd != '\r')
       ++LineEnd;

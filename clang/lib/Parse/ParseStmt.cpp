@@ -1037,11 +1037,11 @@ Parser::OwningStmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
     // that the rest of the line is an assembly-language statement.
     SourceManager &SrcMgr = PP.getSourceManager();
     SourceLocation TokLoc = Tok.getLocation();
-    unsigned lineNo = SrcMgr.getLogicalLineNumber(TokLoc);
+    unsigned LineNo = SrcMgr.getInstantiationLineNumber(TokLoc);
     do {
       ConsumeAnyToken();
       TokLoc = Tok.getLocation();
-    } while ((SrcMgr.getLogicalLineNumber(TokLoc) == lineNo) && 
+    } while ((SrcMgr.getInstantiationLineNumber(TokLoc) == LineNo) && 
              Tok.isNot(tok::r_brace) && Tok.isNot(tok::semi) && 
              Tok.isNot(tok::eof));
   }

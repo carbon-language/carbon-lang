@@ -94,7 +94,7 @@ static void ExecutionContinues(std::ostringstream& os, SourceManager& SMgr,
     os << ' ';
   
   os << "Execution continues on line "
-     << SMgr.getLogicalLineNumber(S->getLocStart()) << '.';
+     << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
 }
 
 
@@ -534,7 +534,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           std::ostringstream os;
           
           os << "Control jumps to line "
-             << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+             << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
           
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
           break;
@@ -548,23 +548,17 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
 
           if (Stmt* S = Dst->getLabel())
             switch (S->getStmtClass()) {
-                
-            default: {
+            default:
               os << "No cases match in the switch statement. "
                     "Control jumps to line "
-                 << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
-                break;
-            }
-                
-            case Stmt::DefaultStmtClass: {                            
-              os << "Control jumps to the 'default' case at line "
-                 << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
-              
+                 << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
               break;
-            }
+            case Stmt::DefaultStmtClass:
+              os << "Control jumps to the 'default' case at line "
+                 << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
+              break;
               
             case Stmt::CaseStmtClass: {
-              
               os << "Control jumps to 'case ";
               
               CaseStmt* Case = cast<CaseStmt>(S);              
@@ -602,10 +596,9 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
               }              
               
               os << ":'  at line " 
-                 << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+                 << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
               
               break;
-              
             }
           }
           else {

@@ -140,7 +140,7 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
 }
 
 void Preprocessor::DumpLocation(SourceLocation Loc) const {
-  SourceLocation LogLoc = SourceMgr.getLogicalLoc(Loc);
+  SourceLocation LogLoc = SourceMgr.getInstantiationLoc(Loc);
   llvm::cerr << SourceMgr.getSourceName(LogLoc) << ':'
              << SourceMgr.getLineNumber(LogLoc) << ':'
              << SourceMgr.getColumnNumber(LogLoc);
@@ -314,7 +314,7 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   // confusing.
   if (CharNo == 0 || TokStart.isMacroID()) return TokStart;
   
-  // Figure out how many physical characters away the specified logical
+  // Figure out how many physical characters away the specified instantiation
   // character is.  This needs to take into consideration newlines and
   // trigraphs.
   const char *TokPtr = SourceMgr.getCharacterData(TokStart);

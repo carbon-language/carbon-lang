@@ -130,9 +130,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   bool FileIDInitialized = false;
   
   // Verify that the entire path is from the same FileID.
-  for (PathDiagnostic::const_iterator I=D.begin(), E=D.end(); I != E; ++I) {
-    
-    FullSourceLoc L = I->getLocation().getLogicalLoc();
+  for (PathDiagnostic::const_iterator I = D.begin(), E = D.end(); I != E; ++I) {
+    FullSourceLoc L = I->getLocation().getInstantiationLoc();
     
     if (!L.isFileID())
       return; // FIXME: Emit a warning?
@@ -148,7 +147,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
                                              RE=I->ranges_end(); RI!=RE; ++RI) {
       
-      SourceLocation L = SMgr.getLogicalLoc(RI->getBegin());
+      SourceLocation L = SMgr.getInstantiationLoc(RI->getBegin());
 
       if (!L.isFileID())
         return; // FIXME: Emit a warning?      
@@ -156,7 +155,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
       if (SMgr.getCanonicalFileID(L) != FileID)
         return; // FIXME: Emit a warning?
       
-      L = SMgr.getLogicalLoc(RI->getEnd());
+      L = SMgr.getInstantiationLoc(RI->getEnd());
       
       if (!L.isFileID())
         return; // FIXME: Emit a warning?      
@@ -230,9 +229,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
        << html::EscapeText(Entry->getName())
        << "</td></tr>\n<tr><td class=\"rowname\">Location:</td><td>"
           "<a href=\"#EndPath\">line "      
-       << (*D.rbegin()).getLocation().getLogicalLineNumber()
+       << (*D.rbegin()).getLocation().getInstantiationLineNumber()
        << ", column "
-       << (*D.rbegin()).getLocation().getLogicalColumnNumber()
+       << (*D.rbegin()).getLocation().getInstantiationColumnNumber()
        << "</a></td></tr>\n"
           "<tr><td class=\"rowname\">Description:</td><td>"
        << D.getDescription() << "</td></tr>\n";
@@ -280,8 +279,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   {
     std::string s;
     llvm::raw_string_ostream os(s);
-    os << "\n<!-- BUGLINE " << D.back()->getLocation().getLogicalLineNumber()
-       << " -->\n";
+    os << "\n<!-- BUGLINE "
+       << D.back()->getLocation().getInstantiationLineNumber() << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
   
@@ -344,7 +343,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
     return;  
   
   SourceManager& SM = R.getSourceMgr();
-  FullSourceLoc LPos = Pos.getLogicalLoc();
+  FullSourceLoc LPos = Pos.getInstantiationLoc();
   unsigned FileID = SM.getCanonicalFileID(LPos.getLocation());
 
   assert (&LPos.getManager() == &SM && "SourceManagers are different!");
@@ -359,11 +358,11 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
   // of the line.
   
   unsigned ColNo = LPos.getColumnNumber();
-  const char *TokLogicalPtr = LPos.getCharacterData();
-  const char *LineStart = TokLogicalPtr-ColNo;
+  const char *TokInstantiationPtr = LPos.getCharacterData();
+  const char *LineStart = TokInstantiationPtr-ColNo;
 
   // Only compute LineEnd if we display below a line.
-  const char *LineEnd = TokLogicalPtr;
+  const char *LineEnd = TokInstantiationPtr;
   
   if (P.getDisplayHint() == PathDiagnosticPiece::Below) {
     const char* FileEnd = Buf->getBufferEnd();
@@ -376,7 +375,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
   
   unsigned PosNo = 0;
   
-  for (const char* c = LineStart; c != TokLogicalPtr; ++c)
+  for (const char* c = LineStart; c != TokInstantiationPtr; ++c)
     PosNo += *c == '\t' ? 8 : 1;
   
   // Create the html for the message.
@@ -471,21 +470,21 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, unsigned BugFileID,
   
   SourceManager& SM = R.getSourceMgr();
   
-  SourceLocation LogicalStart = SM.getLogicalLoc(Range.getBegin());
-  unsigned StartLineNo = SM.getLineNumber(LogicalStart);
+  SourceLocation InstantiationStart = SM.getInstantiationLoc(Range.getBegin());
+  unsigned StartLineNo = SM.getLineNumber(InstantiationStart);
   
-  SourceLocation LogicalEnd = SM.getLogicalLoc(Range.getEnd());
-  unsigned EndLineNo = SM.getLineNumber(LogicalEnd);
+  SourceLocation InstantiationEnd = SM.getInstantiationLoc(Range.getEnd());
+  unsigned EndLineNo = SM.getLineNumber(InstantiationEnd);
   
   if (EndLineNo < StartLineNo)
     return;
   
-  if (SM.getCanonicalFileID(LogicalStart) != BugFileID ||
-      SM.getCanonicalFileID(LogicalEnd) != BugFileID)
+  if (SM.getCanonicalFileID(InstantiationStart) != BugFileID ||
+      SM.getCanonicalFileID(InstantiationEnd) != BugFileID)
     return;
     
   // Compute the column number of the end.
-  unsigned EndColNo = SM.getColumnNumber(LogicalEnd);
+  unsigned EndColNo = SM.getColumnNumber(InstantiationEnd);
   unsigned OldEndColNo = EndColNo;
 
   if (EndColNo) {
@@ -496,8 +495,9 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, unsigned BugFileID,
   // Highlight the range.  Make the span tag the outermost tag for the
   // selected range.
     
-  SourceLocation E = LogicalEnd.getFileLocWithOffset(EndColNo - OldEndColNo);
+  SourceLocation E =
+    InstantiationEnd.getFileLocWithOffset(EndColNo - OldEndColNo);
   
-  html::HighlightRange(R, LogicalStart, E,
+  html::HighlightRange(R, InstantiationStart, E,
                        "<span class=\"mrange\">", "</span>");
 }

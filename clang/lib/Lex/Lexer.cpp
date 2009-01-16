@@ -179,7 +179,7 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
                                    const SourceManager &SM) {
   // If this comes from a macro expansion, we really do want the macro name, not
   // the token this macro expanded to.
-  Loc = SM.getLogicalLoc(Loc);
+  Loc = SM.getInstantiationLoc(Loc);
   
   const char *StrData = SM.getCharacterData(Loc);
   
@@ -284,12 +284,12 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
   // spelling location.
   SourceManager &SourceMgr = PP.getSourceManager();
   
-  // Create a new SLoc which is expanded from logical(FileLoc) but whose
+  // Create a new SLoc which is expanded from Instantiation(FileLoc) but whose
   // characters come from spelling(FileLoc)+Offset.
-  SourceLocation VirtLoc = SourceMgr.getLogicalLoc(FileLoc);
+  SourceLocation InstLoc = SourceMgr.getInstantiationLoc(FileLoc);
   SourceLocation SpellingLoc = SourceMgr.getSpellingLoc(FileLoc);
   SpellingLoc = SourceLocation::getFileLoc(SpellingLoc.getFileID(), CharNo);
-  return SourceMgr.getInstantiationLoc(SpellingLoc, VirtLoc);
+  return SourceMgr.getInstantiationLoc(SpellingLoc, InstLoc);
 }
 
 /// getSourceLocation - Return a source location identifier for the specified

@@ -41,7 +41,7 @@ CGDebugInfo::~CGDebugInfo() {
 
 void CGDebugInfo::setLocation(SourceLocation Loc) {
   if (Loc.isValid())
-    CurLoc = M->getContext().getSourceManager().getLogicalLoc(Loc);
+    CurLoc = M->getContext().getSourceManager().getInstantiationLoc(Loc);
 }
 
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new
@@ -157,7 +157,7 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
 
   SourceManager &SM = M->getContext().getSourceManager();
-  uint64_t Line = SM.getLogicalLineNumber(DefLoc);
+  uint64_t Line = SM.getInstantiationLineNumber(DefLoc);
 
   return DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, Unit,
                                         TyName, DefUnit, Line, 0, 0, 0, 0, Src);
@@ -209,7 +209,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   std::string Name = Decl->getNameAsString();
 
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(Decl->getLocation());
-  uint64_t Line = SM.getLogicalLineNumber(Decl->getLocation());
+  unsigned Line = SM.getInstantiationLineNumber(Decl->getLocation());
   
   
   // Records and classes and unions can all be recursive.  To handle them, we
@@ -247,11 +247,11 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     // Get the location for the field.
     SourceLocation FieldDefLoc = Field->getLocation();
     llvm::DICompileUnit FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
-    uint64_t FieldLine = SM.getLogicalLineNumber(FieldDefLoc);
+    unsigned FieldLine = SM.getInstantiationLineNumber(FieldDefLoc);
     
     // Bit size, align and offset of the type.
     uint64_t FieldSize = M->getContext().getTypeSize(Ty);
-    uint64_t FieldAlign = M->getContext().getTypeAlign(Ty);
+    unsigned FieldAlign = M->getContext().getTypeAlign(Ty);
     uint64_t FieldOffset = RL.getFieldOffset(FieldNo);    
     
     // Create a DW_TAG_member node to remember the offset of this field in the
@@ -305,11 +305,11 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   SourceLocation DefLoc = Decl->getLocation();
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
   SourceManager &SM = M->getContext().getSourceManager();
-  uint64_t Line = SM.getLogicalLineNumber(DefLoc);
+  unsigned Line = SM.getInstantiationLineNumber(DefLoc);
   
   // Size and align of the type.
   uint64_t Size = M->getContext().getTypeSize(Ty);
-  uint64_t Align = M->getContext().getTypeAlign(Ty);
+  unsigned Align = M->getContext().getTypeAlign(Ty);
   
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
                                           Unit, EnumName, DefUnit, Line,
@@ -428,7 +428,7 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
   // FIXME: Why is this using CurLoc???
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
   SourceManager &SM = M->getContext().getSourceManager();
-  uint64_t LineNo = SM.getLogicalLineNumber(CurLoc);
+  unsigned LineNo = SM.getInstantiationLineNumber(CurLoc);
   
   llvm::DISubprogram SP =
     DebugFactory.CreateSubprogram(Unit, Name, Name, "", Unit, LineNo,
@@ -457,8 +457,8 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
 
   // Get the appropriate compile unit.
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
-  DebugFactory.InsertStopPoint(Unit, SM.getLogicalLineNumber(CurLoc),
-                               SM.getLogicalColumnNumber(CurLoc),
+  DebugFactory.InsertStopPoint(Unit, SM.getInstantiationLineNumber(CurLoc),
+                               SM.getInstantiationColumnNumber(CurLoc),
                                Builder.GetInsertBlock()); 
 }
 
@@ -492,7 +492,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
 
   // Get location information.
   SourceManager &SM = M->getContext().getSourceManager();
-  uint64_t Line = SM.getLogicalLineNumber(Decl->getLocation());
+  unsigned Line = SM.getInstantiationLineNumber(Decl->getLocation());
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
   
   // Create the descriptor for the variable.
@@ -525,7 +525,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   // Create global variable debug descriptor.
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
   SourceManager &SM = M->getContext().getSourceManager();
-  uint64_t LineNo = SM.getLogicalLineNumber(Decl->getLocation());
+  unsigned LineNo = SM.getInstantiationLineNumber(Decl->getLocation());
 
   std::string Name = Decl->getNameAsString();
 
