@@ -127,7 +127,7 @@ class Driver(object):
             elif opt == 'host-release':
                 self.cccHostRelease,argv = argv[0],argv[1:]
             else:
-                raise ValueError,"Invalid ccc option: %r" % cccPrintOptions
+                raise ValueError,"Invalid ccc option: %r" % opt
 
         self.hostInfo = HostInfo.getHostInfo(self)
         self.toolChain = self.hostInfo.getToolChain()
