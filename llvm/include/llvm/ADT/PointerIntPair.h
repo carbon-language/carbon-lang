@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_POINTERINTPAIR_H
 #define LLVM_ADT_POINTERINTPAIR_H
 
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 
 namespace llvm {
