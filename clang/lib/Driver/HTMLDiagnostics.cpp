@@ -133,9 +133,6 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   for (PathDiagnostic::const_iterator I = D.begin(), E = D.end(); I != E; ++I) {
     FullSourceLoc L = I->getLocation().getInstantiationLoc();
     
-    if (!L.isFileID())
-      return; // FIXME: Emit a warning?
-    
     if (!FileIDInitialized) {
       FileID = L.getCanonicalFileID();
       FileIDInitialized = true;
