@@ -105,7 +105,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   if (Pos.isValid()) {
     FullSourceLoc LPos = Pos.getInstantiationLoc();
     LineNo = LPos.getLineNumber();
-    FileID = LPos.getLocation().getFileID();
+    FileID = LPos.getFileID();
     
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.

@@ -26,13 +26,13 @@ void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic::Level Level,
   switch (Level) {
   default: assert(0 && "Diagnostic not handled during diagnostic buffering!");
   case Diagnostic::Note:
-    Notes.push_back(std::make_pair(Info.getLocation().getLocation(), Str));
+    Notes.push_back(std::make_pair(Info.getLocation(), Str));
     break;
   case Diagnostic::Warning:
-    Warnings.push_back(std::make_pair(Info.getLocation().getLocation(), Str));
+    Warnings.push_back(std::make_pair(Info.getLocation(), Str));
     break;
   case Diagnostic::Error:
-    Errors.push_back(std::make_pair(Info.getLocation().getLocation(), Str));
+    Errors.push_back(std::make_pair(Info.getLocation(), Str));
     break;
   }
 }

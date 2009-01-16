@@ -109,7 +109,7 @@ static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   FullSourceLoc L = P.getLocation();
 
   Indent(o, indent) << "<key>location</key>\n";
-  EmitLocation(o, SM, L.getLocation(), FM, indent);
+  EmitLocation(o, SM, L, FM, indent);
 
   // Output the ranges (if any).
   PathDiagnosticPiece::range_iterator RI = P.ranges_begin(),
@@ -174,7 +174,7 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
   llvm::SmallVector<unsigned, 10> Fids;
   
   for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I) {
-    AddFID(FM, Fids, SM, I->getLocation().getLocation());
+    AddFID(FM, Fids, SM, I->getLocation());
 
     for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
                                              RE=I->ranges_end(); RI!=RE; ++RI) {      

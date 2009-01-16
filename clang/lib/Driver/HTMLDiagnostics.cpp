@@ -133,9 +133,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     FullSourceLoc L = I->getLocation().getInstantiationLoc();
     
     if (!FileIDInitialized) {
-      FileID = SMgr.getCanonicalFileID(L.getLocation());
+      FileID = SMgr.getCanonicalFileID(L);
       FileIDInitialized = true;
-    } else if (SMgr.getCanonicalFileID(L.getLocation()) != FileID)
+    } else if (SMgr.getCanonicalFileID(L) != FileID)
       return; // FIXME: Emit a warning?
     
     // Check the source ranges.
@@ -339,11 +339,11 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
   
   SourceManager& SM = R.getSourceMgr();
   FullSourceLoc LPos = Pos.getInstantiationLoc();
-  unsigned FileID = SM.getCanonicalFileID(LPos.getLocation());
+  unsigned FileID = SM.getCanonicalFileID(LPos);
 
   assert (&LPos.getManager() == &SM && "SourceManagers are different!");
   
-  if (SM.getCanonicalFileID(LPos.getLocation()) != BugFileID)
+  if (SM.getCanonicalFileID(LPos) != BugFileID)
     return;
   
   const llvm::MemoryBuffer *Buf = SM.getBuffer(FileID);
@@ -351,7 +351,6 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
   
   // Compute the column number.  Rewind from the current position to the start
   // of the line.
-  
   unsigned ColNo = LPos.getColumnNumber();
   const char *TokInstantiationPtr = LPos.getCharacterData();
   const char *LineStart = TokInstantiationPtr-ColNo;

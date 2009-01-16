@@ -218,8 +218,6 @@ public:
   explicit FullSourceLoc(SourceLocation Loc, SourceManager &SM) 
     : SourceLocation(Loc), SrcMgr(&SM) {}
     
-  SourceLocation getLocation() const { return *this; }
-  
   SourceManager& getManager() {
     assert (SrcMgr && "SourceManager is NULL.");
     return *SrcMgr;
