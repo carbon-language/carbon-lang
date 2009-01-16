@@ -400,7 +400,8 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
   }
   
   // If the pragma is lexically sound, notify any interested PPCallbacks.
-  Callbacks->PragmaComment(CommentLoc, II, ArgumentString);
+  if (Callbacks)
+    Callbacks->PragmaComment(CommentLoc, II, ArgumentString);
 }
 
 
