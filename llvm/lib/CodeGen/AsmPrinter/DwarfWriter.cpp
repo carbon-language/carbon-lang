@@ -1791,6 +1791,11 @@ private:
       {
         // Add elements to structure type.
         DIArray Elements = CTy.getTypeArray();
+
+        // A forward struct declared type may not have elements available.
+        if (Elements.isNull())
+          break;
+
         // Add elements to structure type.
         for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
           DIDescriptor Element = Elements.getElement(i);
