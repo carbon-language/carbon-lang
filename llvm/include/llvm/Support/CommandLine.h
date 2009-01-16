@@ -155,6 +155,7 @@ class Option {
   int NumOccurrences;     // The number of times specified
   int Flags;              // Flags for the argument
   unsigned Position;      // Position of last occurrence of the option
+  unsigned AdditionalVals;// Greater than 0 for multi-valued option.
   Option *NextRegistered; // Singly linked list of registered options.
 public:
   const char *ArgStr;     // The argument string itself (ex: "help", "o")
@@ -179,6 +180,7 @@ public:
     return Flags & MiscMask;
   }
   inline unsigned getPosition() const { return Position; }
+  inline unsigned getNumAdditionalVals() const { return AdditionalVals; }
 
   // hasArgStr - Return true if the argstr != ""
   bool hasArgStr() const { return ArgStr[0] != 0; }
@@ -206,11 +208,14 @@ public:
 protected:
   explicit Option(unsigned DefaultFlags)
     : NumOccurrences(0), Flags(DefaultFlags | NormalFormatting), Position(0),
-      NextRegistered(0), ArgStr(""), HelpStr(""), ValueStr("") {
+      AdditionalVals(0), NextRegistered(0),
+      ArgStr(""), HelpStr(""), ValueStr("") {
     assert(getNumOccurrencesFlag() != 0 &&
            getOptionHiddenFlag() != 0 && "Not all default flags specified!");
   }
 
+  inline void setNumAdditionalVals(unsigned n)
+  { AdditionalVals = n; }
 public:
   // addArgument - Register this argument with the commandline system.
   //
@@ -231,7 +236,7 @@ public:
   // addOccurrence - Wrapper around handleOccurrence that enforces Flags
   //
   bool addOccurrence(unsigned pos, const char *ArgName,
-                     const std::string &Value);
+                     const std::string &Value, bool MultiArg = false);
 
   // Prints option name followed by message.  Always returns true.
   bool error(std::string Message, const char *ArgName = 0);
@@ -1000,6 +1005,10 @@ public:
     return Positions[optnum];
   }
 
+  void setNumAdditionalVals(unsigned n) {
+    Option::setNumAdditionalVals(n);
+  }
+
   // One option...
   template<class M0t>
   explicit list(const M0t &M0) : Option(ZeroOrMore | NotHidden) {
@@ -1064,6 +1073,16 @@ public:
     done();
   }
 };
+
+// multi_arg - Modifier to set the number of additional values.
+struct multi_val {
+  unsigned AdditionalVals;
+  explicit multi_val(unsigned N) : AdditionalVals(N) {}
+
+  template <typename D, typename S, typename P>
+  void apply(list<D, S, P> &L) const { L.setNumAdditionalVals(AdditionalVals); }
+};
+
 
 //===----------------------------------------------------------------------===//
 // bits_storage class

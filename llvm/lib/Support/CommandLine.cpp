@@ -172,6 +172,9 @@ static Option *LookupOption(const char *&Arg, const char *&Value,
 static inline bool ProvideOption(Option *Handler, const char *ArgName,
                                  const char *Value, int argc, char **argv,
                                  int &i) {
+  // Is this a multi-argument option?
+  unsigned NumAdditionalVals = Handler->getNumAdditionalVals();
+
   // Enforce value requirements
   switch (Handler->getValueExpectedFlag()) {
   case ValueRequired:
@@ -184,6 +187,10 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
     }
     break;
   case ValueDisallowed:
+    if (NumAdditionalVals > 0)
+      return Handler->error(": multi-valued option specified"
+      " with ValueDisallowed modifier!");
+
     if (Value)
       return Handler->error(" does not allow a value! '" +
                             std::string(Value) + "' specified.");
@@ -198,8 +205,35 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
     break;
   }
 
-  // Run the handler now!
-  return Handler->addOccurrence(i, ArgName, Value ? Value : "");
+  // If this isn't a multi-arg option, just run the handler.
+  if (NumAdditionalVals == 0) {
+    return Handler->addOccurrence(i, ArgName, Value ? Value : "");
+  }
+  // If it is, run the handle several times.
+  else {
+    bool MultiArg = false;
+
+    if (Value) {
+      if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
+        return true;
+      --NumAdditionalVals;
+      MultiArg = true;
+    }
+
+    while (NumAdditionalVals > 0) {
+
+      if (i+1 < argc) {
+        Value = argv[++i];
+      } else {
+        return Handler->error(": not enough values!");
+      }
+      if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
+        return true;
+      MultiArg = true;
+      --NumAdditionalVals;
+    }
+    return false;
+  }
 }
 
 static bool ProvidePositionalOption(Option *Handler, const std::string &Arg,
@@ -738,8 +772,10 @@ bool Option::error(std::string Message, const char *ArgName) {
 }
 
 bool Option::addOccurrence(unsigned pos, const char *ArgName,
-                           const std::string &Value) {
-  NumOccurrences++;   // Increment the number of times we have been seen
+                           const std::string &Value,
+                           bool MultiArg) {
+  if (!MultiArg)
+    NumOccurrences++;   // Increment the number of times we have been seen
 
   switch (getNumOccurrencesFlag()) {
   case Optional:

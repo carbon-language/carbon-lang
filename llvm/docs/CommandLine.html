@@ -1146,6 +1146,17 @@ specify macro options where the option name doesn't equal the enum name.  For
 this macro, the first argument is the enum value, the second is the flag name,
 and the second is the description.</li>
 
+<li><a name="cl::multi_val">The <b><tt>cl::multi_val</tt></b></a>
+attribute specifies that this option takes has multiple values
+(example: <tt>-sectalign segname sectname sectvalue</tt>). This
+attribute takes one unsigned argument - the number of values for the
+option. This attribute is valid only on <tt>cl::list</tt> options (and
+will fail with compile error if you try to use it with other option
+types). It is allowed to use all of the usual modifiers on
+multi-valued options (besides <tt>cl::ValueDisallowed</tt>,
+obviously).</li>
+
+
 </ol>
 
 You will get a compile time error if you try to use cl::values with a parser
