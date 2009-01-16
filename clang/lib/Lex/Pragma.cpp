@@ -312,6 +312,74 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   }
 }
 
+/// HandlePragmaComment - Handle the microsoft #pragma comment extension.  The
+/// syntax is:
+///   #pragma comment(linker, "foo")
+/// 'linker' is one of five identifiers: compiler, exestr, lib, linker, user.
+/// "foo" is a string, which is fully macro expanded, and permits string
+/// concatenation, embeded escape characters etc.  See MSDN for more details.
+void Preprocessor::HandlePragmaComment(Token &Tok) {
+  SourceLocation CommentLoc = Tok.getLocation();
+  Lex(Tok);
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(CommentLoc, diag::err_pragma_comment_malformed);
+    return;
+  }
+  
+  // Read the identifier.
+  Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    Diag(CommentLoc, diag::err_pragma_comment_malformed);
+    return;
+  }
+  
+  // Verify that this is one of the 5 whitelisted options.
+  // FIXME: warn that 'exestr' is deprecated.
+  const IdentifierInfo *II = Tok.getIdentifierInfo();
+  if (!II->isStr("compiler") && !II->isStr("exestr") && !II->isStr("lib") && 
+      !II->isStr("linker") && !II->isStr("user")) {
+    Diag(Tok.getLocation(), diag::err_pragma_comment_unknown_kind);
+    return;
+  }
+  
+  // Check for optional string.
+  // FIXME: If the kind is "compiler" warn if the string is present (it is
+  // ignored).
+  // FIXME: 'lib' requires a comment string.
+  // FIXME: 'linker' requires a comment string, and has a specific list of
+  // things that are allowable.
+  Lex(Tok);
+  if (Tok.is(tok::comma)) {
+    // FIXME: for now, we parse but ignore the string.
+    Lex(Tok);
+
+    // We need at least one string.
+    if (Tok.getKind() != tok::string_literal) {
+      Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
+      return;
+    }
+
+    // String concatenation allows multiple strings, which can even come from
+    // macro expansion.
+    // "foo " "bar" "Baz"
+    while (Tok.getKind() == tok::string_literal)
+      Lex(Tok);
+  }
+  
+  if (Tok.isNot(tok::r_paren)) {
+    Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
+    return;
+  }
+  Lex(Tok);
+
+  if (Tok.isNot(tok::eom)) {
+    Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
+    return;
+  }
+}
+
+
+
 
 /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
 /// If 'Namespace' is non-null, then it is a token required to exist on the
@@ -413,6 +481,14 @@ struct PragmaDependencyHandler : public PragmaHandler {
     PP.HandlePragmaDependency(DepToken);
   }
 };
+  
+/// PragmaCommentHandler - "#pragma comment ...".
+struct PragmaCommentHandler : public PragmaHandler {
+  PragmaCommentHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
+    PP.HandlePragmaComment(CommentTok);
+  }
+};
 }  // end anonymous namespace
 
 
@@ -426,4 +502,8 @@ void Preprocessor::RegisterBuiltinPragmas() {
                                           getIdentifierInfo("system_header")));
   AddPragmaHandler("GCC", new PragmaDependencyHandler(
                                           getIdentifierInfo("dependency")));
+  
+  // MS extensions.
+  if (Features.Microsoft)
+    AddPragmaHandler(0, new PragmaCommentHandler(getIdentifierInfo("comment")));
 }

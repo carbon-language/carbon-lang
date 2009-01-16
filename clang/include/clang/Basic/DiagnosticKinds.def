@@ -241,6 +241,10 @@ DIAG(err_pp_used_poisoned_id, ERROR,
      "attempt to use a poisoned identifier")
 DIAG(err__Pragma_malformed, ERROR,
      "_Pragma takes a parenthesized string literal")
+DIAG(err_pragma_comment_malformed, ERROR,
+     "pragma comment requires parenthesized identifier and optional string")
+DIAG(err_pragma_comment_unknown_kind, ERROR,
+     "unknown kind of pragma comment")
 DIAG(err_defined_macro_name, ERROR,
      "'defined' cannot be used as a macro name")
 DIAG(err_paste_at_start, ERROR,

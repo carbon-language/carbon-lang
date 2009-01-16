@@ -726,6 +726,7 @@ public:
   void HandlePragmaPoison(Token &PoisonTok);
   void HandlePragmaSystemHeader(Token &SysHeaderTok);
   void HandlePragmaDependency(Token &DependencyTok);
+  void HandlePragmaComment(Token &CommentTok);
 };
 
 /// PreprocessorFactory - A generic factory interface for lazily creating
