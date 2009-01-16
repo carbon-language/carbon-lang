@@ -1287,43 +1287,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
 
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
-    // Typedef declarators cannot be qualified (C++ [dcl.meaning]p1).
-    if (D.getCXXScopeSpec().isSet()) {
-      Diag(D.getIdentifierLoc(), diag::err_qualified_typedef_declarator)
-        << D.getCXXScopeSpec().getRange();
-      InvalidDecl = true;
-      // Pretend we didn't see the scope specifier.
-      DC = 0;
-    }
-
-    // Check that there are no default arguments (C++ only).
-    if (getLangOptions().CPlusPlus)
-      CheckExtraCXXDefaultArguments(D);
-
-    TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, LastDeclarator);
-    if (!NewTD) return 0;
-
-    // Handle attributes prior to checking for duplicates in MergeVarDecl
-    ProcessDeclAttributes(NewTD, D);
-    // Merge the decl with the existing one if appropriate. If the decl is
-    // in an outer scope, it isn't the same thing.
-    if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
-      NewTD = MergeTypeDefDecl(NewTD, PrevDecl);
-      if (NewTD == 0) return 0;
-    }
-    New = NewTD;
-    if (S->getFnParent() == 0) {
-      // C99 6.7.7p2: If a typedef name specifies a variably modified type
-      // then it shall have block scope.
-      if (NewTD->getUnderlyingType()->isVariablyModifiedType()) {
-        if (NewTD->getUnderlyingType()->isVariableArrayType())
-          Diag(D.getIdentifierLoc(), diag::err_vla_decl_in_file_scope);
-        else
-          Diag(D.getIdentifierLoc(), diag::err_vm_decl_in_file_scope);
-
-        InvalidDecl = true;
-      }
-    }
+    New = ActOnTypedefDeclarator(S, D, DC, R, LastDeclarator, PrevDecl,
+                                 InvalidDecl);
   } else if (R.getTypePtr()->isFunctionType()) {
     New = ActOnFunctionDeclarator(S, D, DC, R, LastDeclarator, PrevDecl, 
                                   IsFunctionDefinition, InvalidDecl);
@@ -1347,6 +1312,50 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     New->setInvalidDecl();
   
   return New;
+}
+
+ScopedDecl*
+Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+                             QualType R, ScopedDecl* LastDeclarator,
+                             Decl* PrevDecl, bool& InvalidDecl) {
+  // Typedef declarators cannot be qualified (C++ [dcl.meaning]p1).
+  if (D.getCXXScopeSpec().isSet()) {
+    Diag(D.getIdentifierLoc(), diag::err_qualified_typedef_declarator)
+      << D.getCXXScopeSpec().getRange();
+    InvalidDecl = true;
+    // Pretend we didn't see the scope specifier.
+    DC = 0;
+  }
+
+  // Check that there are no default arguments (C++ only).
+  if (getLangOptions().CPlusPlus)
+    CheckExtraCXXDefaultArguments(D);
+
+  TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, LastDeclarator);
+  if (!NewTD) return 0;
+
+  // Handle attributes prior to checking for duplicates in MergeVarDecl
+  ProcessDeclAttributes(NewTD, D);
+  // Merge the decl with the existing one if appropriate. If the decl is
+  // in an outer scope, it isn't the same thing.
+  if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
+    NewTD = MergeTypeDefDecl(NewTD, PrevDecl);
+    if (NewTD == 0) return 0;
+  }
+
+  if (S->getFnParent() == 0) {
+    // C99 6.7.7p2: If a typedef name specifies a variably modified type
+    // then it shall have block scope.
+    if (NewTD->getUnderlyingType()->isVariablyModifiedType()) {
+      if (NewTD->getUnderlyingType()->isVariableArrayType())
+        Diag(D.getIdentifierLoc(), diag::err_vla_decl_in_file_scope);
+      else
+        Diag(D.getIdentifierLoc(), diag::err_vm_decl_in_file_scope);
+
+      InvalidDecl = true;
+    }
+  }
+  return NewTD;
 }
 
 ScopedDecl*

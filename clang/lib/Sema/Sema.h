@@ -277,6 +277,9 @@ public:
   }
   DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
                           bool IsFunctionDefinition);
+  ScopedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+                                     QualType R, ScopedDecl* LastDeclarator,
+                                     Decl* PrevDecl, bool& InvalidDecl);
   ScopedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                       QualType R, ScopedDecl* LastDeclarator,
                                       Decl* PrevDecl, bool& InvalidDecl);
