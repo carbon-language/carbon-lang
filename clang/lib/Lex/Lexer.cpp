@@ -1300,7 +1300,8 @@ LexNextToken:
     
     // If the next token is obviously a // or /* */ comment, skip it efficiently
     // too (without going through the big switch stmt).
-    if (CurPtr[0] == '/' && CurPtr[1] == '/' && !inKeepCommentMode()) {
+    if (CurPtr[0] == '/' && CurPtr[1] == '/' && !inKeepCommentMode() &&
+        Features.BCPLComment) {
       SkipBCPLComment(Result, CurPtr+2);
       goto SkipIgnoredUnits;
     } else if (CurPtr[0] == '/' && CurPtr[1] == '*' && !inKeepCommentMode()) {
@@ -1480,18 +1481,32 @@ LexNextToken:
     // 6.4.9: Comments
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '/') {         // BCPL comment.
-      if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
-        return; // KeepCommentMode
+      // Even if BCPL comments are disabled (e.g. in C89 mode), we generally
+      // want to lex this as a comment.  There is one problem with this though,
+      // that in one particular corner case, this can change the behavior of the
+      // resultant program.  For example, In  "foo //**/ bar", C89 would lex
+      // this as "foo / bar" and langauges with BCPL comments would lex it as
+      // "foo".  Check to see if the character after the second slash is a '*'.
+      // If so, we will lex that as a "/" instead of the start of a comment.
+      if (Features.BCPLComment ||
+          getCharAndSize(CurPtr+SizeTmp, SizeTmp2) != '*') {
+        if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
+          return; // KeepCommentMode
       
-      // It is common for the tokens immediately after a // comment to be
-      // whitespace (indentation for the next line).  Instead of going through
-      // the big switch, handle it efficiently now.
-      goto SkipIgnoredUnits;
-    } else if (Char == '*') {  // /**/ comment.
+        // It is common for the tokens immediately after a // comment to be
+        // whitespace (indentation for the next line).  Instead of going through
+        // the big switch, handle it efficiently now.
+        goto SkipIgnoredUnits;
+      }
+    }
+      
+    if (Char == '*') {  // /**/ comment.
       if (SkipBlockComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
         return; // KeepCommentMode
       goto LexNextToken;   // GCC isn't tail call eliminating.
-    } else if (Char == '=') {
+    }
+      
+    if (Char == '=') {
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
       Kind = tok::slashequal;
     } else {
