@@ -13,6 +13,8 @@
 #pragma comment(foo)    // expected-error {{unknown kind of pragma comment}}
 #pragma comment(compiler,)     // expected-error {{pragma comment requires}}
 #define foo compiler
-#pragma comment(foo)   // macro expand kind?
+#pragma comment(foo)   // macro expand kind.
 #pragma comment(foo) x // expected-error {{pragma comment requires}}
+
+#pragma comment(user, "foo\abar\nbaz\tsome	thing")
 

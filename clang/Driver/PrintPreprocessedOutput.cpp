@@ -67,7 +67,9 @@ public:
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            SrcMgr::CharacteristicKind FileType);
   virtual void Ident(SourceLocation Loc, const std::string &str);
-  
+  virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind, 
+                             const std::string &Str);
+
 
   bool HandleFirstTokOnLine(Token &Tok);
   bool MoveToLine(SourceLocation Loc);
@@ -186,7 +188,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   }
 }
 
-/// HandleIdent - Handle #ident directives when read by the preprocessor.
+/// Ident - Handle #ident directives when read by the preprocessor.
 ///
 void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
   MoveToLine(Loc);
@@ -195,6 +197,33 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
   OS.write(&S[0], S.size());
   EmittedTokensOnThisLine = true;
 }
+
+void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
+                                             const IdentifierInfo *Kind, 
+                                             const std::string &Str) {
+  MoveToLine(Loc);
+  OS << "#pragma comment(" << Kind->getName();
+  
+  if (!Str.empty()) {
+    OS << ", \"";
+    
+    for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+      unsigned char Char = Str[i];
+      if (isprint(Char) && Char != '\\')
+        OS << (char)Char;
+      else  // Output anything hard as an octal escape.
+        OS << '\\'
+           << (char)('0'+ ((Char >> 6) & 7))
+           << (char)('0'+ ((Char >> 3) & 7))
+           << (char)('0'+ ((Char >> 0) & 7));
+    }
+    OS << '"';
+  }
+  
+  OS << ')';
+  EmittedTokensOnThisLine = true;
+}
+
 
 /// HandleFirstTokOnLine - When emitting a preprocessed file in -E mode, this
 /// is called for the first token on each new line.  If this really is the start
