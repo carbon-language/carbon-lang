@@ -3083,6 +3083,10 @@ public:
 
   /// ValidDebugInfo - Return true if V represents valid debug info value.
   bool ValidDebugInfo(Value *V) {
+
+    if (!shouldEmit)
+      return false;
+
     GlobalVariable *GV = getGlobalVariable(V);
     if (!GV)
       return false;
