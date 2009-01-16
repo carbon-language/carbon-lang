@@ -1328,105 +1328,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     New = ActOnFunctionDeclarator(S, D, DC, R, LastDeclarator, PrevDecl, 
                                   IsFunctionDefinition, InvalidDecl);
   } else {
-    // Check that there are no default arguments (C++ only).
-    if (getLangOptions().CPlusPlus)
-      CheckExtraCXXDefaultArguments(D);
-
-    if (R.getTypePtr()->isObjCInterfaceType()) {
-      Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object)
-        << D.getIdentifier();
-      InvalidDecl = true;
-    }
-
-    VarDecl *NewVD;
-    VarDecl::StorageClass SC;
-    switch (D.getDeclSpec().getStorageClassSpec()) {
-    default: assert(0 && "Unknown storage class!");
-    case DeclSpec::SCS_unspecified:    SC = VarDecl::None; break;
-    case DeclSpec::SCS_extern:         SC = VarDecl::Extern; break;
-    case DeclSpec::SCS_static:         SC = VarDecl::Static; break;
-    case DeclSpec::SCS_auto:           SC = VarDecl::Auto; break;
-    case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
-    case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
-    case DeclSpec::SCS_mutable:
-      // mutable can only appear on non-static class members, so it's always
-      // an error here
-      Diag(D.getIdentifierLoc(), diag::err_mutable_nonmember);
-      InvalidDecl = true;
-      SC = VarDecl::None;
-      break;
-    }
-
-    IdentifierInfo *II = Name.getAsIdentifierInfo();
-    if (!II) {
-      Diag(D.getIdentifierLoc(), diag::err_bad_variable_name)
-       << Name.getAsString();
-      return 0;
-    }
-
-    if (DC->isRecord()) {
-      // This is a static data member for a C++ class.
-      NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                      D.getIdentifierLoc(), II,
-                                      R, LastDeclarator);
-    } else {
-      bool ThreadSpecified = D.getDeclSpec().isThreadSpecified();
-      if (S->getFnParent() == 0) {
-        // C99 6.9p2: The storage-class specifiers auto and register shall not
-        // appear in the declaration specifiers in an external declaration.
-        if (SC == VarDecl::Auto || SC == VarDecl::Register) {
-          Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope);
-          InvalidDecl = true;
-        }
-      }
-      NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
-                              II, R, SC, LastDeclarator,
-                              // FIXME: Move to DeclGroup...
-                              D.getDeclSpec().getSourceRange().getBegin());
-      NewVD->setThreadSpecified(ThreadSpecified);
-    }
-    // Handle attributes prior to checking for duplicates in MergeVarDecl
-    ProcessDeclAttributes(NewVD, D);
-
-    // Handle GNU asm-label extension (encoded as an attribute).
-    if (Expr *E = (Expr*) D.getAsmLabel()) {
-      // The parser guarantees this is a string.
-      StringLiteral *SE = cast<StringLiteral>(E);  
-      NewVD->addAttr(new AsmLabelAttr(std::string(SE->getStrData(),
-                                                  SE->getByteLength())));
-    }
-
-    // Emit an error if an address space was applied to decl with local storage.
-    // This includes arrays of objects with address space qualifiers, but not
-    // automatic variables that point to other address spaces.
-    // ISO/IEC TR 18037 S5.1.2
-    if (NewVD->hasLocalStorage() && (NewVD->getType().getAddressSpace() != 0)) {
-      Diag(D.getIdentifierLoc(), diag::err_as_qualified_auto_decl);
-      InvalidDecl = true;
-    }
-    // Merge the decl with the existing one if appropriate. If the decl is
-    // in an outer scope, it isn't the same thing.
-    if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
-      if (isa<FieldDecl>(PrevDecl) && D.getCXXScopeSpec().isSet()) {
-        // The user tried to define a non-static data member
-        // out-of-line (C++ [dcl.meaning]p1).
-        Diag(NewVD->getLocation(), diag::err_nonstatic_member_out_of_line)
-          << D.getCXXScopeSpec().getRange();
-        NewVD->Destroy(Context);
-        return 0;
-      }
-
-      NewVD = MergeVarDecl(NewVD, PrevDecl);
-      if (NewVD == 0) return 0;
-
-      if (D.getCXXScopeSpec().isSet()) {
-        // No previous declaration in the qualifying scope.
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
-          << Name << D.getCXXScopeSpec().getRange();
-        InvalidDecl = true;
-      }
-    }
-    New = NewVD;
+    New = ActOnVariableDeclarator(S, D, DC, R, LastDeclarator, PrevDecl, 
+                                  InvalidDecl);
   }
 
   if (New == 0)
@@ -1444,6 +1347,113 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     New->setInvalidDecl();
   
   return New;
+}
+
+ScopedDecl*
+Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+                              QualType R, ScopedDecl* LastDeclarator,
+                              Decl* PrevDecl, bool& InvalidDecl) {
+  DeclarationName Name = GetNameForDeclarator(D);
+
+  // Check that there are no default arguments (C++ only).
+  if (getLangOptions().CPlusPlus)
+    CheckExtraCXXDefaultArguments(D);
+
+  if (R.getTypePtr()->isObjCInterfaceType()) {
+    Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object)
+      << D.getIdentifier();
+    InvalidDecl = true;
+  }
+
+  VarDecl *NewVD;
+  VarDecl::StorageClass SC;
+  switch (D.getDeclSpec().getStorageClassSpec()) {
+  default: assert(0 && "Unknown storage class!");
+  case DeclSpec::SCS_unspecified:    SC = VarDecl::None; break;
+  case DeclSpec::SCS_extern:         SC = VarDecl::Extern; break;
+  case DeclSpec::SCS_static:         SC = VarDecl::Static; break;
+  case DeclSpec::SCS_auto:           SC = VarDecl::Auto; break;
+  case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
+  case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
+  case DeclSpec::SCS_mutable:
+    // mutable can only appear on non-static class members, so it's always
+    // an error here
+    Diag(D.getIdentifierLoc(), diag::err_mutable_nonmember);
+    InvalidDecl = true;
+    SC = VarDecl::None;
+    break;
+  }
+
+  IdentifierInfo *II = Name.getAsIdentifierInfo();
+  if (!II) {
+    Diag(D.getIdentifierLoc(), diag::err_bad_variable_name)
+      << Name.getAsString();
+    return 0;
+  }
+
+  if (DC->isRecord()) {
+    // This is a static data member for a C++ class.
+    NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(DC),
+                                    D.getIdentifierLoc(), II,
+                                    R, LastDeclarator);
+  } else {
+    bool ThreadSpecified = D.getDeclSpec().isThreadSpecified();
+    if (S->getFnParent() == 0) {
+      // C99 6.9p2: The storage-class specifiers auto and register shall not
+      // appear in the declaration specifiers in an external declaration.
+      if (SC == VarDecl::Auto || SC == VarDecl::Register) {
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope);
+        InvalidDecl = true;
+      }
+    }
+    NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
+                            II, R, SC, LastDeclarator,
+                            // FIXME: Move to DeclGroup...
+                            D.getDeclSpec().getSourceRange().getBegin());
+    NewVD->setThreadSpecified(ThreadSpecified);
+  }
+  // Handle attributes prior to checking for duplicates in MergeVarDecl
+  ProcessDeclAttributes(NewVD, D);
+
+  // Handle GNU asm-label extension (encoded as an attribute).
+  if (Expr *E = (Expr*) D.getAsmLabel()) {
+    // The parser guarantees this is a string.
+    StringLiteral *SE = cast<StringLiteral>(E);  
+    NewVD->addAttr(new AsmLabelAttr(std::string(SE->getStrData(),
+                                                SE->getByteLength())));
+  }
+
+  // Emit an error if an address space was applied to decl with local storage.
+  // This includes arrays of objects with address space qualifiers, but not
+  // automatic variables that point to other address spaces.
+  // ISO/IEC TR 18037 S5.1.2
+  if (NewVD->hasLocalStorage() && (NewVD->getType().getAddressSpace() != 0)) {
+    Diag(D.getIdentifierLoc(), diag::err_as_qualified_auto_decl);
+    InvalidDecl = true;
+  }
+  // Merge the decl with the existing one if appropriate. If the decl is
+  // in an outer scope, it isn't the same thing.
+  if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
+    if (isa<FieldDecl>(PrevDecl) && D.getCXXScopeSpec().isSet()) {
+      // The user tried to define a non-static data member
+      // out-of-line (C++ [dcl.meaning]p1).
+      Diag(NewVD->getLocation(), diag::err_nonstatic_member_out_of_line)
+        << D.getCXXScopeSpec().getRange();
+      NewVD->Destroy(Context);
+      return 0;
+    }
+
+    NewVD = MergeVarDecl(NewVD, PrevDecl);
+    if (NewVD == 0) return 0;
+
+    if (D.getCXXScopeSpec().isSet()) {
+      // No previous declaration in the qualifying scope.
+      Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
+        << Name << D.getCXXScopeSpec().getRange();
+      InvalidDecl = true;
+    }
+  }
+  return NewVD;
 }
 
 ScopedDecl* 
