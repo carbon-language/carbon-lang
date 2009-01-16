@@ -1060,16 +1060,23 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   // Finally, if this identifier already had a macro defined for it, verify that
   // the macro bodies are identical and free the old definition.
   if (MacroInfo *OtherMI = getMacroInfo(MacroNameTok.getIdentifierInfo())) {
-    if (!OtherMI->isUsed())
-      Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
+    // It is very common for system headers to have tons of macro redefinitions
+    // and for warnings to be disabled in system headers.  If this is the case,
+    // then don't bother calling MacroInfo::isIdenticalTo.
+    if (!Diags.getSuppressSystemWarnings() ||
+        !SourceMgr.isInSystemHeader(DefineTok.getLocation())) {
+      if (!OtherMI->isUsed())
+        Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
 
-    // Macros must be identical.  This means all tokes and whitespace separation
-    // must be the same.  C99 6.10.3.2.
-    if (!MI->isIdenticalTo(*OtherMI, *this)) {
-      Diag(MI->getDefinitionLoc(), diag::ext_pp_macro_redef)
-        << MacroNameTok.getIdentifierInfo();
-      Diag(OtherMI->getDefinitionLoc(), diag::note_previous_definition);
+      // Macros must be identical.  This means all tokes and whitespace
+      // separation must be the same.  C99 6.10.3.2.
+      if (!MI->isIdenticalTo(*OtherMI, *this)) {
+        Diag(MI->getDefinitionLoc(), diag::ext_pp_macro_redef)
+          << MacroNameTok.getIdentifierInfo();
+        Diag(OtherMI->getDefinitionLoc(), diag::note_previous_definition);
+      }
     }
+    
     ReleaseMacroInfo(OtherMI);
   }
   
