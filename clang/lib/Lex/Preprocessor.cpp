@@ -260,15 +260,13 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
       // getting token spellings in the order of tokens, and thus can update
       // its internal state so that it can quickly fetch spellings from the PTH
       // file.
-      Len =
-        const_cast<PTHLexer*>(CurPTHLexer.get())->getSpelling(Tok.getLocation(),
-                                                              Buffer);      
+      Len = CurPTHLexer.get()->getSpelling(Tok.getLocation(), Buffer);      
     }
     else {
-      SourceLocation sloc = SourceMgr.getSpellingLoc(Tok.getLocation());
-      unsigned fid = SourceMgr.getCanonicalFileID(sloc);
-      unsigned fpos = SourceMgr.getFullFilePos(sloc);      
-      Len = PTH->getSpelling(fid, fpos, Buffer);      
+      SourceLocation SLoc = SourceMgr.getSpellingLoc(Tok.getLocation());
+      unsigned FID = SourceMgr.getCanonicalFileID(SLoc);
+      unsigned FPos = SourceMgr.getFullFilePos(SLoc);      
+      Len = PTH->getSpelling(FID, FPos, Buffer);      
     }
 
     // Did we find a spelling?  If so return its length.  Otherwise fall
