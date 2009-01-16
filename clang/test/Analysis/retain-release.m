@@ -237,3 +237,10 @@ void f11() {
   CFRelease(s1); // expected-warning{{Incorrect decrement of the reference count}}
 }
 
+// PR 3337: Handle functions declared using typedefs.
+typedef CFTypeRef CREATEFUN();
+CREATEFUN MyCreateFun;
+
+void f12() {
+  CFTypeRef o = MyCreateFun(); // expected-warning {{leak}}
+}
