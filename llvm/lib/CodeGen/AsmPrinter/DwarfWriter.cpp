@@ -1215,14 +1215,14 @@ public:
 ///
 class DbgVariable {
 private:
-  DIVariable *Var;                   // Variable Descriptor.
+  DIVariable Var;                   // Variable Descriptor.
   unsigned FrameIndex;               // Variable frame index.
 
 public:
-  DbgVariable(DIVariable *V, unsigned I) : Var(V), FrameIndex(I)  {}
+  DbgVariable(DIVariable V, unsigned I) : Var(V), FrameIndex(I)  {}
   
   // Accessors.
-  DIVariable *getVariable()  const { return Var; }
+  DIVariable getVariable()  const { return Var; }
   unsigned getFrameIndex() const { return FrameIndex; }
 };
 
@@ -1564,7 +1564,7 @@ private:
 
   /// AddSourceLine - Add location information to specified debug information
   /// entry.
-  void AddSourceLine(DIE *Die, DIVariable *V) {
+  void AddSourceLine(DIE *Die, const DIVariable *V) {
     unsigned FileID = 0;
     unsigned Line = V->getLineNumber();
     if (V->getVersion() < DIDescriptor::Version7) {
@@ -1583,7 +1583,7 @@ private:
 
   /// AddSourceLine - Add location information to specified debug information
   /// entry.
-  void AddSourceLine(DIE *Die, DIGlobal *G) {
+  void AddSourceLine(DIE *Die, const DIGlobal *G) {
     unsigned FileID = 0;
     unsigned Line = G->getLineNumber();
     if (G->getVersion() < DIDescriptor::Version7) {
@@ -1600,18 +1600,18 @@ private:
     AddUInt(Die, DW_AT_decl_line, 0, Line);
   }
 
-  void AddSourceLine(DIE *Die, DIType *G) {
+  void AddSourceLine(DIE *Die, const DIType *Ty) {
     unsigned FileID = 0;
-    unsigned Line = G->getLineNumber();
-    if (G->getVersion() < DIDescriptor::Version7) {
+    unsigned Line = Ty->getLineNumber();
+    if (Ty->getVersion() < DIDescriptor::Version7) {
       // Version6 or earlier. Use compile unit info to get file id.
-      CompileUnit *Unit = FindCompileUnit(G->getCompileUnit());
+      CompileUnit *Unit = FindCompileUnit(Ty->getCompileUnit());
       FileID = Unit->getID();
     } else {
-      // Version7 or newer, use filename and directory info from DIGlobal
+      // Version7 or newer, use filename and directory info from DIType
       // directly.
-      unsigned DID = Directories.idFor(G->getDirectory());
-      FileID = SrcFiles.idFor(SrcFileInfo(DID, G->getFilename()));
+      unsigned DID = Directories.idFor(Ty->getDirectory());
+      FileID = SrcFiles.idFor(SrcFileInfo(DID, Ty->getFilename()));
     }
     AddUInt(Die, DW_AT_decl_file, 0, FileID);
     AddUInt(Die, DW_AT_decl_line, 0, Line);
@@ -1979,12 +1979,12 @@ private:
   ///
   DIE *NewDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
     // Get the descriptor.
-    DIVariable *VD = DV->getVariable();
+    const DIVariable &VD = DV->getVariable();
 
     // Translate tag to proper Dwarf tag.  The result variable is dropped for
     // now.
     unsigned Tag;
-    switch (VD->getTag()) {
+    switch (VD.getTag()) {
     case DW_TAG_return_variable:  return NULL;
     case DW_TAG_arg_variable:     Tag = DW_TAG_formal_parameter; break;
     case DW_TAG_auto_variable:    // fall thru
@@ -1993,13 +1993,13 @@ private:
 
     // Define variable debug information entry.
     DIE *VariableDie = new DIE(Tag);
-    AddString(VariableDie, DW_AT_name, DW_FORM_string, VD->getName());
+    AddString(VariableDie, DW_AT_name, DW_FORM_string, VD.getName());
 
     // Add source line info if available.
-    AddSourceLine(VariableDie, VD);
+    AddSourceLine(VariableDie, &VD);
 
     // Add variable type.
-    AddType(Unit, VariableDie, VD->getType());
+    AddType(Unit, VariableDie, VD.getType());
 
     // Add variable address.
     MachineLocation Location;
@@ -2135,14 +2135,14 @@ private:
     for (std::vector<GlobalVariable *>::iterator I = Result.begin(),
            E = Result.end(); I != E; ++I) {
 
-      DISubprogram *SPD = new DISubprogram(*I);
+      DISubprogram SPD(*I);
 
-      if (SPD->getName() == MF->getFunction()->getName()) {
+      if (SPD.getName() == MF->getFunction()->getName()) {
         // Get the compile unit context.
-        CompileUnit *Unit = FindCompileUnit(SPD->getCompileUnit());
+        CompileUnit *Unit = FindCompileUnit(SPD.getCompileUnit());
 
         // Get the subprogram die.
-        DIE *SPDie = Unit->getDieMapSlotFor(SPD->getGV());
+        DIE *SPDie = Unit->getDieMapSlotFor(SPD.getGV());
         assert(SPDie && "Missing subprogram descriptor");
 
         // Add the function bounds.
@@ -2780,22 +2780,22 @@ private:
     getGlobalVariablesUsing(*M, CUName, Result);
     for (std::vector<GlobalVariable *>::iterator RI = Result.begin(),
            RE = Result.end(); RI != RE; ++RI) {
-      DICompileUnit *DIUnit = new DICompileUnit(*RI);
-      unsigned ID = RecordSource(DIUnit->getDirectory(),
-                                 DIUnit->getFilename());
+      DICompileUnit DIUnit(*RI);
+      unsigned ID = RecordSource(DIUnit.getDirectory(),
+                                 DIUnit.getFilename());
 
       DIE *Die = new DIE(DW_TAG_compile_unit);
       AddSectionOffset(Die, DW_AT_stmt_list, DW_FORM_data4,
                        DWLabel("section_line", 0), DWLabel("section_line", 0),
                        false);
-      AddString(Die, DW_AT_producer, DW_FORM_string, DIUnit->getProducer());
-      AddUInt(Die, DW_AT_language, DW_FORM_data1, DIUnit->getLanguage());
-      AddString(Die, DW_AT_name, DW_FORM_string, DIUnit->getFilename());
-      if (!DIUnit->getDirectory().empty())
-        AddString(Die, DW_AT_comp_dir, DW_FORM_string, DIUnit->getDirectory());
+      AddString(Die, DW_AT_producer, DW_FORM_string, DIUnit.getProducer());
+      AddUInt(Die, DW_AT_language, DW_FORM_data1, DIUnit.getLanguage());
+      AddString(Die, DW_AT_name, DW_FORM_string, DIUnit.getFilename());
+      if (!DIUnit.getDirectory().empty())
+        AddString(Die, DW_AT_comp_dir, DW_FORM_string, DIUnit.getDirectory());
 
       CompileUnit *Unit = new CompileUnit(ID, Die);
-      DW_CUs[DIUnit->getGV()] = Unit;
+      DW_CUs[DIUnit.getGV()] = Unit;
     }
   }
 
@@ -2807,32 +2807,32 @@ private:
     getGlobalVariablesUsing(*M, GVName, Result);
     for (std::vector<GlobalVariable *>::iterator GVI = Result.begin(),
            GVE = Result.end(); GVI != GVE; ++GVI) {
-      DIGlobalVariable *DI_GV = new DIGlobalVariable(*GVI);
-      CompileUnit *DW_Unit = FindCompileUnit(DI_GV->getCompileUnit());
+      DIGlobalVariable DI_GV(*GVI);
+      CompileUnit *DW_Unit = FindCompileUnit(DI_GV.getCompileUnit());
 
       // Check for pre-existence.
-      DIE *&Slot = DW_Unit->getDieMapSlotFor(DI_GV->getGV());
+      DIE *&Slot = DW_Unit->getDieMapSlotFor(DI_GV.getGV());
       if (Slot) continue;
 
       DIE *VariableDie = new DIE(DW_TAG_variable);
-      AddString(VariableDie, DW_AT_name, DW_FORM_string, DI_GV->getName());
-      const std::string &LinkageName  = DI_GV->getLinkageName();
+      AddString(VariableDie, DW_AT_name, DW_FORM_string, DI_GV.getName());
+      const std::string &LinkageName  = DI_GV.getLinkageName();
       if (!LinkageName.empty())
         AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
                   LinkageName);
-      AddType(DW_Unit, VariableDie, DI_GV->getType());
+      AddType(DW_Unit, VariableDie, DI_GV.getType());
 
-      if (!DI_GV->isLocalToUnit())
+      if (!DI_GV.isLocalToUnit())
         AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);              
 
       // Add source line info, if available.
-      AddSourceLine(VariableDie, DI_GV);
+      AddSourceLine(VariableDie, &DI_GV);
 
       // Add address.
       DIEBlock *Block = new DIEBlock();
       AddUInt(Block, 0, DW_FORM_data1, DW_OP_addr);
       AddObjectLabel(Block, 0, DW_FORM_udata,
-                     Asm->getGlobalLinkName(DI_GV->getGV()));
+                     Asm->getGlobalLinkName(DI_GV.getGV()));
       AddBlock(VariableDie, DW_AT_location, 0, Block);
 
       //Add to map.
@@ -2842,7 +2842,7 @@ private:
       DW_Unit->getDie()->AddChild(VariableDie);
 
       //Expose as global. FIXME - need to check external flag.
-      DW_Unit->AddGlobal(DI_GV->getName(), VariableDie);
+      DW_Unit->AddGlobal(DI_GV.getName(), VariableDie);
     }
   }
 
@@ -2856,32 +2856,32 @@ private:
     for (std::vector<GlobalVariable *>::iterator RI = Result.begin(),
            RE = Result.end(); RI != RE; ++RI) {
 
-      DISubprogram *SP = new DISubprogram(*RI);
-      CompileUnit *Unit = FindCompileUnit(SP->getCompileUnit());
+      DISubprogram SP(*RI);
+      CompileUnit *Unit = FindCompileUnit(SP.getCompileUnit());
 
       // Check for pre-existence.                                                         
-      DIE *&Slot = Unit->getDieMapSlotFor(SP->getGV());
+      DIE *&Slot = Unit->getDieMapSlotFor(SP.getGV());
       if (Slot) continue;
 
       DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
-      AddString(SubprogramDie, DW_AT_name, DW_FORM_string, SP->getName());
-      const std::string &LinkageName = SP->getLinkageName();
+      AddString(SubprogramDie, DW_AT_name, DW_FORM_string, SP.getName());
+      const std::string &LinkageName = SP.getLinkageName();
       if (!LinkageName.empty())
         AddString(SubprogramDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
                   LinkageName);
-      DIType SPTy = SP->getType();
+      DIType SPTy = SP.getType();
       AddType(Unit, SubprogramDie, SPTy);
-      if (!SP->isLocalToUnit())
+      if (!SP.isLocalToUnit())
         AddUInt(SubprogramDie, DW_AT_external, DW_FORM_flag, 1);
       AddUInt(SubprogramDie, DW_AT_prototyped, DW_FORM_flag, 1);
 
-      AddSourceLine(SubprogramDie, SP);
+      AddSourceLine(SubprogramDie, &SP);
       //Add to map.
       Slot = SubprogramDie;
       //Add to context owner.
       Unit->getDie()->AddChild(SubprogramDie);
       //Expose as global.
-      Unit->AddGlobal(SP->getName(), SubprogramDie);
+      Unit->AddGlobal(SP.getName(), SubprogramDie);
     }
   }
 
@@ -3170,8 +3170,7 @@ public:
       Scope = getOrCreateScope(DV.getContext().getGV());
     }
     assert (Scope && "Unable to find variable' scope");
-    DIVariable *VD = new DIVariable(GV);
-    DbgVariable *DV = new DbgVariable(VD, FrameIndex);
+    DbgVariable *DV = new DbgVariable(DIVariable(GV), FrameIndex);
     Scope->AddVariable(DV);
   }
 };
