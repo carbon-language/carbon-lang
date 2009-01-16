@@ -1466,7 +1466,7 @@ X86TargetLowering::LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
                       PseudoSourceValue::getStack(), LocMemOffset);
 }
 
-/// EmitTailCallLoadRetAddr - Emit a load of return adress if tail call
+/// EmitTailCallLoadRetAddr - Emit a load of return address if tail call
 /// optimization is performed and it is required.
 SDValue 
 X86TargetLowering::EmitTailCallLoadRetAddr(SelectionDAG &DAG, 
@@ -1480,8 +1480,9 @@ X86TargetLowering::EmitTailCallLoadRetAddr(SelectionDAG &DAG,
   // Adjust the Return address stack slot.
   MVT VT = getPointerTy();
   OutRetAddr = getReturnAddressFrameIndex(DAG);
+
   // Load the "old" Return address.
-  OutRetAddr = DAG.getLoad(VT, Chain,OutRetAddr, NULL, 0);
+  OutRetAddr = DAG.getLoad(VT, Chain, OutRetAddr, NULL, 0);
   return SDValue(OutRetAddr.getNode(), 1);
 }
 
@@ -1949,10 +1950,10 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
   int ReturnAddrIndex = FuncInfo->getRAIndex();
-  uint64_t SlotSize = TD->getPointerSize();
 
   if (ReturnAddrIndex == 0) {
     // Set up a frame object for the return address.
+    uint64_t SlotSize = TD->getPointerSize();
     ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(SlotSize, -SlotSize);
     FuncInfo->setRAIndex(ReturnAddrIndex);
   }
@@ -5891,11 +5892,19 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
-  // Depths > 0 not supported yet!
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
-    return SDValue();
-  
-  // Just load the return address
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+
+  if (Depth > 0) {
+    SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
+    SDValue Offset =
+      DAG.getConstant(TD->getPointerSize(),
+                      Subtarget->is64Bit() ? MVT::i64 : MVT::i32);
+    return DAG.getLoad(getPointerTy(), DAG.getEntryNode(),
+                       DAG.getNode(ISD::ADD, getPointerTy(), FrameAddr, Offset),
+                       NULL, 0);
+  }
+
+  // Just load the return address.
   SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
   return DAG.getLoad(getPointerTy(), DAG.getEntryNode(), RetAddrFI, NULL, 0);
 }
