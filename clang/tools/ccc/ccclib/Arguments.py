@@ -1,3 +1,16 @@
+
+###
+
+class InvalidArgumentsError(ValueError):
+    """InvalidArgumentsError - The driver arguments are invalid or
+    inconsistent."""
+
+class MissingArgumentError(ValueError):
+    """MissingArgumentError - An option required an argument but none
+    was given."""
+
+###
+
 class Option(object):
     """Option - Root option class."""
 

@@ -375,12 +375,12 @@ class Darwin_X86_CompileTool(Tool):
             usePP = False
             isCXX = True
         else:
-            raise RuntimeError,"Unexpected input type for Darwin compile tool."
+            raise ValueError,"Unexpected input type for Darwin compile tool."
 
         cmd_args = []
         if (arglist.getLastArg(arglist.parser.traditionalOption) or
             arglist.getLastArg(arglist.parser.f_traditionalOption)):
-            raise ValueError,"-traditional is not supported without -E"
+            raise Arguments.InvalidArgumentsError("-traditional is not supported without -E")
 
         if usePP:
             # Derived from cpp_options.
@@ -390,7 +390,7 @@ class Darwin_X86_CompileTool(Tool):
             if (arglist.getLastArg(arglist.parser.COption) or
                 arglist.getLastArg(arglist.parser.CCOption)):
                 if not arglist.getLastArg(arglist.parser.EOption):
-                    raise ValueError,"-C or -CC is not supported without -E"
+                    raise Arguments.InvalidArgumentsError("-C or -CC is not supported without -E")
             if not arglist.getLastArg(arglist.parser.QOption):
                 cmd_args.append('-quiet')
             arglist.addAllArgs(cmd_args, arglist.parser.nostdincOption)
@@ -491,7 +491,7 @@ class Darwin_X86_CompileTool(Tool):
             
         if (arglist.getLastArg(arglist.parser.pgOption) and
             arglist.getLastArg(arglist.parser.f_omitFramePointerOption)):
-            raise ValueError,"-pg and -fomit-frame-pointer are incompatible"
+            raise Arguments.InvalidArgumentsError("-pg and -fomit-frame-pointer are incompatible")
 
         self.addCC1Args(cmd_args, arch, arglist)
 
@@ -596,7 +596,7 @@ class Darwin_X86_LinkTool(Tool):
             try:
                 return tuple(map(int, components))
             except:
-                raise ValueError,"invalid version number %r" % version
+                raise Arguments.InvalidArgumentsError("invalid version number %r" % version)
         else:
             major,minor,minorminor = self.toolChain.darwinVersion
             return (10, major-4, minor)

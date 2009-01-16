@@ -19,14 +19,10 @@ import Util
 
 ####
 
-class MissingArgumentError(ValueError):
-    """MissingArgumentError - An option required an argument but none
-    was given."""
-
-###
-
 class Driver(object):
-    def __init__(self):
+    def __init__(self, driverName, driverDir):
+        self.driverName = driverName
+        self.driverDir = driverDir
         self.hostInfo = None
         self.parser = Arguments.OptionParser()
         self.cccHostBits = self.cccHostMachine = None
@@ -104,7 +100,8 @@ class Driver(object):
             self.cccFallback = True
 
         while argv and argv[0].startswith('-ccc-'):
-            opt,argv = argv[0][5:],argv[1:]
+            fullOpt,argv = argv[0],argv[1:]
+            opt = fullOpt[5:]
 
             if opt == 'print-options':
                 cccPrintOptions = True
@@ -127,7 +124,7 @@ class Driver(object):
             elif opt == 'host-release':
                 self.cccHostRelease,argv = argv[0],argv[1:]
             else:
-                raise ValueError,"Invalid ccc option: %r" % opt
+                raise Arguments.InvalidArgumentsError("invalid option: %r" % fullOpt)
 
         self.hostInfo = HostInfo.getHostInfo(self)
         self.toolChain = self.hostInfo.getToolChain()
@@ -209,7 +206,7 @@ class Driver(object):
         pass
 
     def warning(self, message):
-        print >>sys.stderr,'%s: %s' % (sys.argv[0], message)
+        print >>sys.stderr,'%s: %s' % (self.driverName, message)
 
     def printOptions(self, args):
         for i,arg in enumerate(args):
@@ -325,8 +322,9 @@ class Driver(object):
         inputs = []
         for a in args:
             if a.opt is self.parser.inputOption:
+                inputValue = args.getValue(a)
                 if inputType is None:
-                    base,ext = os.path.splitext(args.getValue(a))
+                    base,ext = os.path.splitext(inputValue)
                     if ext and ext in Types.kTypeSuffixMap:
                         klass = Types.kTypeSuffixMap[ext]
                     else:
@@ -339,7 +337,15 @@ class Driver(object):
                     assert inputTypeOpt is not None
                     self.claim(inputTypeOpt)
                     klass = inputType
-                inputs.append((klass, a))
+
+                # Check that the file exists. It isn't clear this is
+                # worth doing, since the tool presumably does this
+                # anyway, and this just adds an extra stat to the
+                # equation, but this is gcc compatible.
+                if not os.path.exists(inputValue):
+                    self.warning("%s: No such file or directory" % inputValue)
+                else:
+                    inputs.append((klass, a))
             elif a.opt.isLinkerInput:
                 # Treat as a linker input.
                 #
@@ -348,13 +354,8 @@ class Driver(object):
                 # that other code which needs to know the inputs
                 # handles this properly. Best not to try and lipo
                 # this, for example.
-                #
-                # FIXME: Actually, this is just flat out broken, the
-                # tools expect inputs to be accessible by .getValue
-                # but that of course only yields the argument.
                 inputs.append((Types.ObjectType, a))
             elif a.opt is self.parser.xOption:
-                self.claim(a)
                 inputTypeOpt = a
                 value = args.getValue(a)
                 if value in Types.kTypeSpecifierMap:
@@ -396,7 +397,11 @@ class Driver(object):
 
         # FIXME: Support -combine.
         if hasCombine:
-            raise NotImplementedError,"-combine is not yet supported."
+            raise NotImplementedError,"-combine is not yet supported"
+        
+        if (not inputs and 
+            not args.getLastArg(self.parser.hashHashHashOption)):
+            raise Arguments.InvalidArgumentsError("no input files")
 
         actions = []
         linkerInputs = []
@@ -511,9 +516,9 @@ class Driver(object):
         # these cause downstream.
         if len(archs) > 1:
             if hasDashM:
-                raise ValueError,"Cannot use -M options with multiple arch flags."
+                raise Arguments.InvalidArgumentsError("Cannot use -M options with multiple arch flags.")
             elif hasSaveTemps:
-                raise ValueError,"Cannot use -save-temps with multiple arch flags."
+                raise Arguments.InvalidArgumentsError("Cannot use -save-temps with multiple arch flags.")
 
         # Execute once per arch.
         finalActions = []
@@ -531,7 +536,7 @@ class Driver(object):
             # developers.
             if (len(archs) > 1 and
                 p.type not in (Types.NothingType,Types.ObjectType,Types.ImageType)):
-                raise ValueError,'Cannot use %s output with multiple arch flags.' % p.type.name
+                raise Arguments.InvalidArgumentsError('Cannot use %s output with multiple arch flags.' % p.type.name)
 
             inputs = []
             for arch in archs:
@@ -701,8 +706,7 @@ class Driver(object):
         # It is an error to provide a -o option if we are making multiple
         # output files.
         if finalOutput and len([a for a in phases if a.type is not Types.NothingType]) > 1:
-            # FIXME: Custom exception.
-            raise ValueError,"Cannot specify -o when generating multiple files."
+            raise Arguments.InvalidArgumentsError("cannot specify -o when generating multiple files")
 
         for phase in phases:
             createJobs(self.toolChain, phase, 
