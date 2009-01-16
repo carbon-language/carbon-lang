@@ -535,7 +535,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       }
     }
 
-    // Add a branch to the merge points and remove retrun instructions.
+    // Add a branch to the merge points and remove return instructions.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       ReturnInst *RI = Returns[i];
       BranchInst::Create(AfterCallBB, RI);
