@@ -721,7 +721,9 @@ class OptionParser:
         self.gstabsOption = self.addOption(JoinedOption('-gstabs', self.gGroup))
         self.g0Option = self.addOption(JoinedOption('-g0', self.gGroup))
         self.g3Option = self.addOption(JoinedOption('-g3', self.gGroup))
-        self.gOption = self.addOption(JoinedOption('-g', self.gGroup))
+        # FIXME: Naming.
+        self.gOption = self.addOption(FlagOption('-g', self.gGroup))
+        self.addOption(JoinedOption('-g', self.gGroup))
 
         # FIXME: How should we handle clang specific options? Do we
         # want to avoid passing them to gcc/cc1 (which will generally

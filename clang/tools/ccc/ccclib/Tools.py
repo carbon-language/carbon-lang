@@ -326,7 +326,7 @@ class Darwin_X86_CompileTool(Tool):
         # FIXME: Remove mcpu=G4
         # FIXME: Remove mcpu=G5
 
-        if (arglist.getLastArg(arglist.parser.gGroup) and
+        if (arglist.getLastArg(arglist.parser.gOption) and
             not arglist.getLastArg(arglist.parser.f_noEliminateUnusedDebugSymbolsOption)):
             cmd_args.append('-feliminate-unused-debug-symbols')
 
