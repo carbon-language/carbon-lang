@@ -14,6 +14,7 @@
 
 #include "clang/Lex/Pragma.h"
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
@@ -125,7 +126,11 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
     return;
   }
   
-  // The _Pragma is lexically sound.  Destringize according to C99 6.10.9.1.
+  // The _Pragma is lexically sound.  Destringize according to C99 6.10.9.1:
+  // "The string literal is destringized by deleting the L prefix, if present,
+  // deleting the leading and trailing double-quotes, replacing each escape
+  // sequence \" by a double-quote, and replacing each escape sequence \\ by a
+  // single backslash."
   if (StrVal[0] == 'L')  // Remove L prefix.
     StrVal.erase(StrVal.begin());
   assert(StrVal[0] == '"' && StrVal[StrVal.size()-1] == '"' &&
@@ -342,16 +347,11 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
     return;
   }
   
-  // Check for optional string.
-  // FIXME: If the kind is "compiler" warn if the string is present (it is
-  // ignored).
-  // FIXME: 'lib' requires a comment string.
-  // FIXME: 'linker' requires a comment string, and has a specific list of
-  // things that are allowable.
+  // Read the optional string if present.
   Lex(Tok);
+  std::string ArgumentString;
   if (Tok.is(tok::comma)) {
-    // FIXME: for now, we parse but ignore the string.
-    Lex(Tok);
+    Lex(Tok); // eat the comma.
 
     // We need at least one string.
     if (Tok.getKind() != tok::string_literal) {
@@ -362,20 +362,45 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
     // String concatenation allows multiple strings, which can even come from
     // macro expansion.
     // "foo " "bar" "Baz"
-    while (Tok.getKind() == tok::string_literal)
+    llvm::SmallVector<Token, 4> StrToks;
+    while (Tok.getKind() == tok::string_literal) {
+      StrToks.push_back(Tok);
       Lex(Tok);
+    }
+
+    // Concatenate and parse the strings.
+    StringLiteralParser Literal(&StrToks[0], StrToks.size(), *this);
+    assert(!Literal.AnyWide && "Didn't allow wide strings in");
+    if (Literal.hadError)
+      return;
+    if (Literal.Pascal) {
+      Diag(StrToks[0].getLocation(), diag::err_pragma_comment_malformed);
+      return;
+    }
+
+    ArgumentString = std::string(Literal.GetString(),
+                                 Literal.GetString()+Literal.GetStringLength());
   }
+  
+  // FIXME: If the kind is "compiler" warn if the string is present (it is
+  // ignored).
+  // FIXME: 'lib' requires a comment string.
+  // FIXME: 'linker' requires a comment string, and has a specific list of
+  // things that are allowable.
   
   if (Tok.isNot(tok::r_paren)) {
     Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
     return;
   }
-  Lex(Tok);
+  Lex(Tok);  // eat the r_paren.
 
   if (Tok.isNot(tok::eom)) {
     Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
     return;
   }
+  
+  // If the pragma is lexically sound, notify any interested PPCallbacks.
+  Callbacks->PragmaComment(CommentLoc, II, ArgumentString);
 }
 
 

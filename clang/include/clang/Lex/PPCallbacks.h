@@ -20,6 +20,7 @@
 
 namespace clang {
   class SourceLocation;
+  class IdentifierInfo;
     
 /// PPCallbacks - This interface provides a way to observe the actions of the
 /// preprocessor as it does its thing.  Clients can define their hooks here to
@@ -44,6 +45,13 @@ public:
   /// Ident - This callback is invoked when a #ident or #sccs directive is read.
   ///
   virtual void Ident(SourceLocation Loc, const std::string &str) {
+  }
+  
+  /// PragmaComment - This callback is invoked when a #pragma comment directive
+  /// is read.
+  ///
+  virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind, 
+                             const std::string &Str) {
   }
   
 };
