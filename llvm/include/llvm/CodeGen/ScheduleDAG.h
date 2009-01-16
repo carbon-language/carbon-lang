@@ -250,6 +250,7 @@ namespace llvm {
     bool isAvailable      : 1;          // True once available.
     bool isScheduled      : 1;          // True once scheduled.
     bool isScheduleHigh   : 1;          // True if preferable to schedule high.
+    bool isCloned         : 1;          // True if this node has been cloned.
   private:
     bool isDepthCurrent   : 1;          // True if Depth is current.
     bool isHeightCurrent  : 1;          // True if Height is current.
@@ -266,8 +267,8 @@ namespace llvm {
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        isScheduleHigh(false), isDepthCurrent(false), isHeightCurrent(false),
-        Depth(0), Height(0),
+        isScheduleHigh(false), isCloned(false),
+        isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
     /// SUnit - Construct an SUnit for post-regalloc scheduling to represent
@@ -277,8 +278,8 @@ namespace llvm {
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        isScheduleHigh(false), isDepthCurrent(false), isHeightCurrent(false),
-        Depth(0), Height(0),
+        isScheduleHigh(false), isCloned(false),
+        isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
     /// setNode - Assign the representative SDNode for this SUnit.

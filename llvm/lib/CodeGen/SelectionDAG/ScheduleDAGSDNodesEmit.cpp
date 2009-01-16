@@ -46,7 +46,8 @@ getInstrOperandRegClass(const TargetRegisterInfo *TRI,
 /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
 /// implicit physical register output.
 void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
-                                         bool IsClone, unsigned SrcReg,
+                                         bool IsClone, bool IsCloned,
+                                         unsigned SrcReg,
                                          DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
@@ -64,44 +65,45 @@ void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   // the CopyToReg'd destination register instead of creating a new vreg.
   bool MatchReg = true;
   const TargetRegisterClass *UseRC = NULL;
-  for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
-       UI != E; ++UI) {
-    SDNode *User = *UI;
-    bool Match = true;
-    if (User->getOpcode() == ISD::CopyToReg && 
-        User->getOperand(2).getNode() == Node &&
-        User->getOperand(2).getResNo() == ResNo) {
-      unsigned DestReg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
-      if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
-        VRBase = DestReg;
-        Match = false;
-      } else if (DestReg != SrcReg)
-        Match = false;
-    } else {
-      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
-        SDValue Op = User->getOperand(i);
-        if (Op.getNode() != Node || Op.getResNo() != ResNo)
-          continue;
-        MVT VT = Node->getValueType(Op.getResNo());
-        if (VT == MVT::Other || VT == MVT::Flag)
-          continue;
-        Match = false;
-        if (User->isMachineOpcode()) {
-          const TargetInstrDesc &II = TII->get(User->getMachineOpcode());
-          const TargetRegisterClass *RC =
-            getInstrOperandRegClass(TRI,TII,II,i+II.getNumDefs());
-          if (!UseRC)
-            UseRC = RC;
-          else if (RC)
-            assert(UseRC == RC &&
-                   "Multiple uses expecting different register classes!");
+  if (!IsClone && !IsCloned)
+    for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+         UI != E; ++UI) {
+      SDNode *User = *UI;
+      bool Match = true;
+      if (User->getOpcode() == ISD::CopyToReg && 
+          User->getOperand(2).getNode() == Node &&
+          User->getOperand(2).getResNo() == ResNo) {
+        unsigned DestReg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
+        if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
+          VRBase = DestReg;
+          Match = false;
+        } else if (DestReg != SrcReg)
+          Match = false;
+      } else {
+        for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
+          SDValue Op = User->getOperand(i);
+          if (Op.getNode() != Node || Op.getResNo() != ResNo)
+            continue;
+          MVT VT = Node->getValueType(Op.getResNo());
+          if (VT == MVT::Other || VT == MVT::Flag)
+            continue;
+          Match = false;
+          if (User->isMachineOpcode()) {
+            const TargetInstrDesc &II = TII->get(User->getMachineOpcode());
+            const TargetRegisterClass *RC =
+              getInstrOperandRegClass(TRI,TII,II,i+II.getNumDefs());
+            if (!UseRC)
+              UseRC = RC;
+            else if (RC)
+              assert(UseRC == RC &&
+                     "Multiple uses expecting different register classes!");
+          }
         }
       }
+      MatchReg &= Match;
+      if (VRBase)
+        break;
     }
-    MatchReg &= Match;
-    if (VRBase)
-      break;
-  }
 
   MVT VT = Node->getValueType(ResNo);
   const TargetRegisterClass *SrcRC = 0, *DstRC = 0;
@@ -157,7 +159,8 @@ unsigned ScheduleDAGSDNodes::getDstOfOnlyCopyToRegUse(SDNode *Node,
 }
 
 void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
-                                       const TargetInstrDesc &II, bool IsClone,
+                                       const TargetInstrDesc &II,
+                                       bool IsClone, bool IsCloned,
                                        DenseMap<SDValue, unsigned> &VRBaseMap) {
   assert(Node->getMachineOpcode() != TargetInstrInfo::IMPLICIT_DEF &&
          "IMPLICIT_DEF should have been handled as a special case elsewhere!");
@@ -167,20 +170,22 @@ void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     // is a vreg, use the CopyToReg'd destination register instead of creating
     // a new vreg.
     unsigned VRBase = 0;
-    for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
-         UI != E; ++UI) {
-      SDNode *User = *UI;
-      if (User->getOpcode() == ISD::CopyToReg && 
-          User->getOperand(2).getNode() == Node &&
-          User->getOperand(2).getResNo() == i) {
-        unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
-        if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-          VRBase = Reg;
-          MI->addOperand(MachineOperand::CreateReg(Reg, true));
-          break;
+
+    if (!IsClone && !IsCloned)
+      for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+           UI != E; ++UI) {
+        SDNode *User = *UI;
+        if (User->getOpcode() == ISD::CopyToReg && 
+            User->getOperand(2).getNode() == Node &&
+            User->getOperand(2).getResNo() == i) {
+          unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
+          if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+            VRBase = Reg;
+            MI->addOperand(MachineOperand::CreateReg(Reg, true));
+            break;
+          }
         }
       }
-    }
 
     // Create the result registers for this node and add the result regs to
     // the machine instruction.
@@ -452,7 +457,7 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
 
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
-void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone,
+void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
                                   DenseMap<SDValue, unsigned> &VRBaseMap) {
   // If machine instruction
   if (Node->isMachineOpcode()) {
@@ -489,7 +494,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone,
     // Add result register values for things that are defined by this
     // instruction.
     if (NumResults)
-      CreateVirtualRegisters(Node, MI, II, IsClone, VRBaseMap);
+      CreateVirtualRegisters(Node, MI, II, IsClone, IsCloned, VRBaseMap);
     
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
@@ -512,7 +517,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone,
       for (unsigned i = II.getNumDefs(); i < NumResults; ++i) {
         unsigned Reg = II.getImplicitDefs()[i - II.getNumDefs()];
         if (Node->hasAnyUseOfValue(i))
-          EmitCopyFromReg(Node, i, IsClone, Reg, VRBaseMap);
+          EmitCopyFromReg(Node, i, IsClone, IsCloned, Reg, VRBaseMap);
       }
     }
     return;
@@ -559,7 +564,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone,
   }
   case ISD::CopyFromReg: {
     unsigned SrcReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
-    EmitCopyFromReg(Node, 0, IsClone, SrcReg, VRBaseMap);
+    EmitCopyFromReg(Node, 0, IsClone, IsCloned, SrcReg, VRBaseMap);
     break;
   }
   case ISD::INLINEASM: {
@@ -636,13 +641,14 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
     }
 
     SmallVector<SDNode *, 4> FlaggedNodes;
-    for (SDNode *N = SU->getNode()->getFlaggedNode(); N; N = N->getFlaggedNode())
+    for (SDNode *N = SU->getNode()->getFlaggedNode(); N;
+         N = N->getFlaggedNode())
       FlaggedNodes.push_back(N);
     while (!FlaggedNodes.empty()) {
-      EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, VRBaseMap);
+      EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, SU->isCloned,VRBaseMap);
       FlaggedNodes.pop_back();
     }
-    EmitNode(SU->getNode(), SU->OrigNode != SU, VRBaseMap);
+    EmitNode(SU->getNode(), SU->OrigNode != SU, SU->isCloned, VRBaseMap);
   }
 
   return BB;

@@ -107,7 +107,7 @@ namespace llvm {
     /// VRBaseMap contains, for each already emitted node, the first virtual
     /// register number for the results of the node.
     ///
-    void EmitNode(SDNode *Node, bool IsClone,
+    void EmitNode(SDNode *Node, bool IsClone, bool HasClone,
                   DenseMap<SDValue, unsigned> &VRBaseMap);
     
     virtual MachineBasicBlock *EmitSchedule();
@@ -144,11 +144,12 @@ namespace llvm {
     /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
     /// implicit physical register output.
     void EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone,
-                         unsigned SrcReg,
+                         bool IsCloned, unsigned SrcReg,
                          DenseMap<SDValue, unsigned> &VRBaseMap);
     
     void CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                 const TargetInstrDesc &II, bool IsClone,
+                                bool IsCloned,
                                 DenseMap<SDValue, unsigned> &VRBaseMap);
 
     /// BuildSchedUnits, AddSchedEdges - Helper functions for BuildSchedGraph.

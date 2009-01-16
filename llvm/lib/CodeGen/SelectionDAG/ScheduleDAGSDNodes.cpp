@@ -33,6 +33,7 @@ SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
   SU->isTwoAddress = Old->isTwoAddress;
   SU->isCommutable = Old->isCommutable;
   SU->hasPhysRegDefs = Old->hasPhysRegDefs;
+  Old->isCloned = true;
   return SU;
 }
 
