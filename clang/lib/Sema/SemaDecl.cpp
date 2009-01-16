@@ -275,11 +275,11 @@ Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
       Kind = LookupCriteria::Ordinary;
   } else if (NSI == Decl::IDNS_Tag) 
     Kind = LookupCriteria::Tag;
-  else if (NSI == Decl::IDNS_Member)
+  else {
+    assert(NSI == Decl::IDNS_Member &&"Unable to grok LookupDecl NSI argument");
     Kind = LookupCriteria::Member;
-  else
-    assert(false && "Unable to grok LookupDecl NSI argument");
-
+  }
+  
   if (LookupCtx)
     return LookupQualifiedName(const_cast<DeclContext *>(LookupCtx), Name, 
                                LookupCriteria(Kind, !LookInParent,
