@@ -254,3 +254,10 @@ define i1 @test37(i32 %a) {
         ret i1 %e
 }
 
+define i64 @test38(i32 %a) {
+	%1 = icmp eq i32 %a, -2
+	%2 = zext i1 %1 to i8
+	%3 = xor i8 %2, 1
+	%4 = zext i8 %3 to i64
+        ret i64 %4
+}
