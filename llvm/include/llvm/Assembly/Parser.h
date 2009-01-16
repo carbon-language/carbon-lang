@@ -61,12 +61,7 @@ public:
 
   void setFilename(const std::string &F) { Filename = F; }
   
-  // getMessage - Return the message passed in at construction time plus extra
-  // information extracted from the options used to parse with...
-  //
-  const std::string getMessage() const;
-
-  inline const std::string &getRawMessage() const {   // Just the raw message...
+  inline const std::string &getRawMessage() const {   // Just the raw message.
     return Message;
   }
 
