@@ -925,7 +925,8 @@ public:
       TreePatternNode *InstPatNode =
         isRoot ? (InstPat ? InstPat->getTree(0) : Pattern)
                : (InstPat ? InstPat->getTree(0) : NULL);
-      if (InstPatNode && InstPatNode->getOperator()->getName() == "set") {
+      if (InstPatNode && !InstPatNode->isLeaf() &&
+          InstPatNode->getOperator()->getName() == "set") {
         InstPatNode = InstPatNode->getChild(InstPatNode->getNumChildren()-1);
       }
       bool IsVariadic = isRoot && II.isVariadic;
