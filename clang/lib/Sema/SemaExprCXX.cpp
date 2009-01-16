@@ -764,7 +764,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   if (SCS.CopyConstructor) {
     // FIXME: Create a temporary object by calling the copy
     // constructor.
-    ImpCastExprToType(From, ToType);
+    ImpCastExprToType(From, ToType.getNonReferenceType(), 
+                      ToType->isReferenceType());
     return false;
   }
 
@@ -849,7 +850,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Qualification:
-    ImpCastExprToType(From, ToType);
+    ImpCastExprToType(From, ToType.getNonReferenceType(), 
+                      ToType->isReferenceType());
     break;
 
   default:

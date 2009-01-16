@@ -1076,7 +1076,8 @@ class RecordDecl : public TagDecl {
   /// If so, this cannot be contained in arrays or other structs as a member.
   bool HasFlexibleArrayMember : 1;
 
-  ///
+  /// AnonymousStructOrUnion - Whether this is the type of an
+  /// anonymous struct or union.
   bool AnonymousStructOrUnion : 1;
 
 protected:

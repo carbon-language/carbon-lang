@@ -59,10 +59,10 @@ void D::test_lookup() {
   f(0); // expected-error{{non-static member 'f' found in multiple base-class subobjects of type 'struct A'}}
   static_f(0); // okay
 
-  // FIXME: should work  E e = D::enumerator; // okay
+  E e = enumerator; // okay
   type t = 0; // okay
 
-  // FIXME:  E2 e2 = D::enumerator2; // okay
+  E2 e2 = enumerator2; // okay
 
   E3 e3; // expected-error{{member 'E3' found in multiple base classes of different types}}
 }
