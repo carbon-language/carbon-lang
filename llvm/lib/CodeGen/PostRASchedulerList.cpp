@@ -442,7 +442,9 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
           AntiDepReg = Edge->getReg();
           assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
           // Don't break anti-dependencies on non-allocatable registers.
-          if (AllocatableSet.test(AntiDepReg)) {
+          if (!AllocatableSet.test(AntiDepReg))
+            AntiDepReg = 0;
+          else {
             // If the SUnit has other dependencies on the SUnit that it
             // anti-depends on, don't bother breaking the anti-dependency
             // since those edges would prevent such units from being
