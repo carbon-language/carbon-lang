@@ -1074,7 +1074,7 @@ ScheduleDAG *SelectionDAGISel::Schedule() {
   }
   
   ScheduleDAG *Scheduler = Ctor(this, Fast);
-  Scheduler->Run(CurDAG, BB);
+  Scheduler->Run(CurDAG, BB, BB->end(), BB->end());
 
   return Scheduler;
 }

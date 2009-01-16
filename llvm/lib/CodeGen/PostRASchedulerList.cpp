@@ -187,9 +187,17 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB) {
+    // Schedule each sequence of instructions not interrupted by a label
+    // or anything else that effectively needs to shut down scheduling.
+    MachineBasicBlock::iterator Current = MBB->begin(), End = MBB->end();
+    for (MachineBasicBlock::iterator MI = Current; MI != End; ++MI)
+      if (MI->getDesc().isTerminator() || MI->isLabel()) {
+        Scheduler.Run(0, MBB, Current, MI);
+        Scheduler.EmitSchedule();
+        Current = next(MI);
+      }
 
-    Scheduler.Run(0, MBB);
-
+    Scheduler.Run(0, MBB, Current, End);
     Scheduler.EmitSchedule();
   }
 

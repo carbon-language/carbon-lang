@@ -418,6 +418,8 @@ namespace llvm {
   public:
     SelectionDAG *DAG;                    // DAG of the current basic block
     MachineBasicBlock *BB;                // Current basic block
+    MachineBasicBlock::iterator Begin;    // The beginning of the range to be scheduled.
+    MachineBasicBlock::iterator End;      // The end of the range to be scheduled.
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
     const TargetRegisterInfo *TRI;        // Target processor register info
@@ -440,7 +442,9 @@ namespace llvm {
   
     /// Run - perform scheduling.
     ///
-    void Run(SelectionDAG *DAG, MachineBasicBlock *MBB);
+    void Run(SelectionDAG *DAG, MachineBasicBlock *MBB,
+             MachineBasicBlock::iterator Begin,
+             MachineBasicBlock::iterator End);
 
     /// BuildSchedGraph - Build SUnits and set up their Preds and Succs
     /// to form the scheduling dependency graph.

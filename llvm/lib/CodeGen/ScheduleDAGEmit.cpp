@@ -33,7 +33,7 @@ void ScheduleDAG::AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO) {
 }
 
 void ScheduleDAG::EmitNoop() {
-  TII->insertNoop(*BB, BB->end());
+  TII->insertNoop(*BB, End);
 }
 
 void ScheduleDAG::EmitPhysRegCopy(SUnit *SU,
@@ -54,7 +54,7 @@ void ScheduleDAG::EmitPhysRegCopy(SUnit *SU,
           break;
         }
       }
-      TII->copyRegToReg(*BB, BB->end(), Reg, VRI->second,
+      TII->copyRegToReg(*BB, End, Reg, VRI->second,
                         SU->CopyDstRC, SU->CopySrcRC);
     } else {
       // Copy from physical register.
@@ -63,7 +63,7 @@ void ScheduleDAG::EmitPhysRegCopy(SUnit *SU,
       bool isNew = VRBaseMap.insert(std::make_pair(SU, VRBase)).second;
       isNew = isNew; // Silence compiler warning.
       assert(isNew && "Node emitted out of order - early");
-      TII->copyRegToReg(*BB, BB->end(), VRBase, I->getReg(),
+      TII->copyRegToReg(*BB, End, VRBase, I->getReg(),
                         SU->CopyDstRC, SU->CopySrcRC);
     }
     break;

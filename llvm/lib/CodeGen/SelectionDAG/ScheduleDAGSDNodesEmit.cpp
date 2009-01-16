@@ -127,7 +127,7 @@ void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
     // Create the reg, emit the copy.
     VRBase = MRI.createVirtualRegister(DstRC);
     bool Emitted =
-      TII->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, DstRC, SrcRC);
+      TII->copyRegToReg(*BB, End, VRBase, SrcReg, DstRC, SrcRC);
     Emitted = Emitted; // Silence compiler warning.
     assert(Emitted && "Unable to issue a copy instruction!");
   }
@@ -410,7 +410,7 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
-    BB->push_back(MI);    
+    BB->insert(End, MI);
   } else if (Opc == TargetInstrInfo::INSERT_SUBREG ||
              Opc == TargetInstrInfo::SUBREG_TO_REG) {
     SDValue N0 = Node->getOperand(0);
@@ -445,7 +445,7 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     // Add the subregster being inserted
     AddOperand(MI, N1, 0, 0, VRBaseMap);
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
-    BB->push_back(MI);
+    BB->insert(End, MI);
   } else
     assert(0 && "Node is not insert_subreg, extract_subreg, or subreg_to_reg");
      
@@ -505,12 +505,13 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     for (unsigned i = NodeOperands; i != MemOperandsEnd; ++i)
       AddMemOperand(MI, cast<MemOperandSDNode>(Node->getOperand(i))->MO);
 
-    if (II.usesCustomDAGSchedInsertionHook())
+    if (II.usesCustomDAGSchedInsertionHook()) {
       // Insert this instruction into the basic block using a target
       // specific inserter which may returns a new basic block.
       BB = TLI->EmitInstrWithCustomInserter(MI, BB);
-    else
-      BB->push_back(MI);
+      Begin = End = BB->end();
+    } else
+      BB->insert(End, MI);
 
     // Additional results must be an physical register def.
     if (HasPhysRegOuts) {
@@ -559,7 +560,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     else
       DstTRC = TRI->getPhysicalRegisterRegClass(DestReg,
                                             Node->getOperand(1).getValueType());
-    TII->copyRegToReg(*BB, BB->end(), DestReg, SrcReg, DstTRC, SrcTRC);
+    TII->copyRegToReg(*BB, End, DestReg, SrcReg, DstTRC, SrcTRC);
     break;
   }
   case ISD::CopyFromReg: {
@@ -614,7 +615,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
         break;
       }
     }
-    BB->push_back(MI);
+    BB->insert(End, MI);
     break;
   }
   }

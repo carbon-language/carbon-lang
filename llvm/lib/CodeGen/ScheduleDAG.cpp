@@ -46,11 +46,18 @@ void ScheduleDAG::dumpSchedule() const {
 
 /// Run - perform scheduling.
 ///
-void ScheduleDAG::Run(SelectionDAG *dag, MachineBasicBlock *bb) {
+void ScheduleDAG::Run(SelectionDAG *dag, MachineBasicBlock *bb,
+                      MachineBasicBlock::iterator begin,
+                      MachineBasicBlock::iterator end) {
+  assert((!dag || begin == end) &&
+         "An instruction range was given for SelectionDAG scheduling!");
+
   SUnits.clear();
   Sequence.clear();
   DAG = dag;
   BB = bb;
+  Begin = begin;
+  End = end;
 
   Schedule();
   

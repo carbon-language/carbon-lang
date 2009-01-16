@@ -112,9 +112,15 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
   std::map<const Value *, SUnit *> MemDefs;
   std::map<const Value *, std::vector<SUnit *> > MemUses;
 
-  // Terminators can perform control transfers, we we need to make sure that
-  // all the work of the block is done before the terminator.
+  // If we have an SUnit which is representing a terminator instruction, we
+  // can use it as a place-holder successor for inter-block dependencies.
   SUnit *Terminator = 0;
+
+  // Terminators can perform control transfers, we we need to make sure that
+  // all the work of the block is done before the terminator. Labels can
+  // mark points of interest for various types of meta-data (eg. EH data),
+  // and we need to make sure nothing is scheduled around them.
+  SUnit *SchedulingBarrier = 0;
 
   LoopDependencies LoopRegs(MLI, MDT);
 
@@ -137,7 +143,7 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
   unsigned SpecialAddressLatency =
     TM.getSubtarget<TargetSubtarget>().getSpecialAddressLatency();
 
-  for (MachineBasicBlock::iterator MII = BB->end(), MIE = BB->begin();
+  for (MachineBasicBlock::iterator MII = End, MIE = Begin;
        MII != MIE; --MII) {
     MachineInstr *MI = prior(MII);
     const TargetInstrDesc &TID = MI->getDesc();
@@ -368,11 +374,26 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
       }
     }
 
-    // Add chain edges from the terminator to ensure that all the work of the
-    // block is completed before any control transfers.
-    if (Terminator && SU->Succs.empty())
-      Terminator->addPred(SDep(SU, SDep::Order, SU->Latency));
+    // Add chain edges from terminators and labels to ensure that no
+    // instructions are scheduled past them.
+    if (SchedulingBarrier && SU->Succs.empty())
+      SchedulingBarrier->addPred(SDep(SU, SDep::Order, SU->Latency));
+    // If we encounter a mid-block label, we need to go back and add
+    // dependencies on SUnits we've already processed to prevent the
+    // label from moving downward.
+    if (MI->isLabel())
+      for (SUnit *I = SU; I != &SUnits[0]; --I) {
+        SUnit *SuccSU = SU-1;
+        SuccSU->addPred(SDep(SU, SDep::Order, SU->Latency));
+        MachineInstr *SuccMI = SuccSU->getInstr();
+        if (SuccMI->getDesc().isTerminator() || SuccMI->isLabel())
+          break;
+      }
+    // If this instruction obstructs all scheduling, remember it.
     if (TID.isTerminator() || MI->isLabel())
+      SchedulingBarrier = SU;
+    // If this instruction is a terminator, remember it.
+    if (TID.isTerminator())
       Terminator = SU;
   }
 
@@ -413,8 +434,11 @@ std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
 MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
   // For MachineInstr-based scheduling, we're rescheduling the instructions in
   // the block, so start by removing them from the block.
-  while (!BB->empty())
-    BB->remove(BB->begin());
+  while (Begin != End) {
+    MachineBasicBlock::iterator I = Begin;
+    ++Begin;
+    BB->remove(I);
+  }
 
   // Then re-insert them according to the given schedule.
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
@@ -425,7 +449,7 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
       continue;
     }
 
-    BB->push_back(SU->getInstr());
+    BB->insert(End, SU->getInstr());
   }
 
   return BB;
