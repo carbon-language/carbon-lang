@@ -613,8 +613,8 @@ public:
       std::string Fn = CP->getSelectFunc();
       unsigned NumOps = CP->getNumOperands();
       for (unsigned i = 0; i < NumOps; ++i) {
-        emitDecl("CPTmp" + utostr(i));
-        emitCode("SDValue CPTmp" + utostr(i) + ";");
+        emitDecl("CPTmp" + RootName + "_" + utostr(i));
+        emitCode("SDValue CPTmp" + RootName + "_" + utostr(i) + ";");
       }
       if (CP->hasProperty(SDNPHasChain)) {
         emitDecl("CPInChain");
@@ -625,7 +625,7 @@ public:
 
       std::string Code = Fn + "(" + RootName + ", " + RootName;
       for (unsigned i = 0; i < NumOps; i++)
-        Code += ", CPTmp" + utostr(i);
+        Code += ", CPTmp" + RootName + "_" + utostr(i);
       if (CP->hasProperty(SDNPHasChain)) {
         ChainName = "Chain" + ChainSuffix;
         Code += ", CPInChain, Chain" + ChainSuffix;
@@ -687,8 +687,8 @@ public:
           std::string Fn = CP->getSelectFunc();
           unsigned NumOps = CP->getNumOperands();
           for (unsigned i = 0; i < NumOps; ++i) {
-            emitDecl("CPTmp" + utostr(i));
-            emitCode("SDValue CPTmp" + utostr(i) + ";");
+            emitDecl("CPTmp" + RootName + "_" + utostr(i));
+            emitCode("SDValue CPTmp" + RootName + "_" + utostr(i) + ";");
           }
           if (CP->hasProperty(SDNPHasChain)) {
             const SDNodeInfo &PInfo = CGP.getSDNodeInfo(Parent->getOperator());
@@ -713,7 +713,7 @@ public:
           }
           Code += RootName;
           for (unsigned i = 0; i < NumOps; i++)
-            Code += ", CPTmp" + utostr(i);
+            Code += ", CPTmp" + RootName + "_" + utostr(i);
           if (CP->hasProperty(SDNPHasChain))
             Code += ", CPInChain, Chain" + ChainSuffix;
           emitCheck(Code + ")");
@@ -862,7 +862,7 @@ public:
         NodeOps.push_back(Val);
       } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, CGP))) {
         for (unsigned i = 0; i < CP->getNumOperands(); ++i) {
-          NodeOps.push_back("CPTmp" + utostr(i));
+          NodeOps.push_back("CPTmp" + Val + "_" + utostr(i));
         }
       } else {
         // This node, probably wrapped in a SDNodeXForm, behaves like a leaf
