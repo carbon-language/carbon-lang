@@ -793,6 +793,10 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
     return false;
   }
 
+  // sizeof (objc class) ?
+  if (SrcTy->isObjCInterfaceType())
+    return false;
+  
   bool isSizeOf = E->isSizeOf();
   
   // GCC extension: sizeof(function) = 1.
