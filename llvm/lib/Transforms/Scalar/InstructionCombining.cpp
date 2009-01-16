@@ -11145,53 +11145,56 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   Value *CastOp = CI->getOperand(0);
 
   const Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
-  if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
-    const Type *SrcPTy = SrcTy->getElementType();
+  const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType());
+  if (SrcTy == 0) return 0;
+  
+  const Type *SrcPTy = SrcTy->getElementType();
 
-    if (DestPTy->isInteger() || isa<PointerType>(DestPTy)) {
-      // If the source is an array, the code below will not succeed.  Check to
-      // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
-      // constants.
-      if (const ArrayType *ASrcTy = dyn_cast<ArrayType>(SrcPTy))
-        if (Constant *CSrc = dyn_cast<Constant>(CastOp))
-          if (ASrcTy->getNumElements() != 0) {
-            Value* Idxs[2];
-            Idxs[0] = Idxs[1] = Constant::getNullValue(Type::Int32Ty);
-            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs, 2);
-            SrcTy = cast<PointerType>(CastOp->getType());
-            SrcPTy = SrcTy->getElementType();
-          }
-
-      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
-          IC.getTargetData().getTypeSizeInBits(SrcPTy) ==
-               IC.getTargetData().getTypeSizeInBits(DestPTy)) {
-
-        // Okay, we are casting from one integer or pointer type to another of
-        // the same size.  Instead of casting the pointer before 
-        // the store, cast the value to be stored.
-        Value *NewCast;
-        Value *SIOp0 = SI.getOperand(0);
-        Instruction::CastOps opcode = Instruction::BitCast;
-        const Type* CastSrcTy = SIOp0->getType();
-        const Type* CastDstTy = SrcPTy;
-        if (isa<PointerType>(CastDstTy)) {
-          if (CastSrcTy->isInteger())
-            opcode = Instruction::IntToPtr;
-        } else if (isa<IntegerType>(CastDstTy)) {
-          if (isa<PointerType>(SIOp0->getType()))
-            opcode = Instruction::PtrToInt;
-        }
-        if (Constant *C = dyn_cast<Constant>(SIOp0))
-          NewCast = ConstantExpr::getCast(opcode, C, CastDstTy);
-        else
-          NewCast = IC.InsertNewInstBefore(
-            CastInst::Create(opcode, SIOp0, CastDstTy, SIOp0->getName()+".c"), 
-            SI);
-        return new StoreInst(NewCast, CastOp);
+  if (!DestPTy->isInteger() && !isa<PointerType>(DestPTy))
+    return 0;
+  
+  // If the source is an array, the code below will not succeed.  Check to
+  // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
+  // constants.
+  if (const ArrayType *ASrcTy = dyn_cast<ArrayType>(SrcPTy))
+    if (Constant *CSrc = dyn_cast<Constant>(CastOp))
+      if (ASrcTy->getNumElements() != 0) {
+        Value* Idxs[2];
+        Idxs[0] = Idxs[1] = Constant::getNullValue(Type::Int32Ty);
+        CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs, 2);
+        SrcTy = cast<PointerType>(CastOp->getType());
+        SrcPTy = SrcTy->getElementType();
       }
-    }
+
+  if (!SrcPTy->isInteger() && !isa<PointerType>(SrcPTy))
+    return 0;
+  
+  if (IC.getTargetData().getTypeSizeInBits(SrcPTy) !=
+      IC.getTargetData().getTypeSizeInBits(DestPTy))
+    return 0;
+
+  // Okay, we are casting from one integer or pointer type to another of
+  // the same size.  Instead of casting the pointer before 
+  // the store, cast the value to be stored.
+  Value *NewCast;
+  Value *SIOp0 = SI.getOperand(0);
+  Instruction::CastOps opcode = Instruction::BitCast;
+  const Type* CastSrcTy = SIOp0->getType();
+  const Type* CastDstTy = SrcPTy;
+  if (isa<PointerType>(CastDstTy)) {
+    if (CastSrcTy->isInteger())
+      opcode = Instruction::IntToPtr;
+  } else if (isa<IntegerType>(CastDstTy)) {
+    if (isa<PointerType>(SIOp0->getType()))
+      opcode = Instruction::PtrToInt;
   }
-  return 0;
+  if (Constant *C = dyn_cast<Constant>(SIOp0))
+    NewCast = ConstantExpr::getCast(opcode, C, CastDstTy);
+  else
+    NewCast = IC.InsertNewInstBefore(
+      CastInst::Create(opcode, SIOp0, CastDstTy, SIOp0->getName()+".c"), 
+      SI);
+  return new StoreInst(NewCast, CastOp);
 }
 
 /// equivalentAddressValues - Test if A and B will obviously have the same
