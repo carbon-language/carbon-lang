@@ -47,8 +47,8 @@ public:
     
     // bits 28...9 -> MacroID number.
     MacroIDBits       = 20,
-    // bits 8...0  -> Macro Physical offset
-    MacroPhysOffsBits = 9,
+    // bits 8...0  -> Macro spelling offset
+    MacroSpellingOffsBits = 9,
     
     
     // Useful constants.
@@ -84,23 +84,23 @@ public:
     return L;
   }
   
-  static bool isValidMacroPhysOffs(int Val) {
+  static bool isValidMacroSpellingOffs(int Val) {
     if (Val >= 0)
-      return Val < (1 << (MacroPhysOffsBits-1));
-    return -Val <= (1 << (MacroPhysOffsBits-1));
+      return Val < (1 << (MacroSpellingOffsBits-1));
+    return -Val <= (1 << (MacroSpellingOffsBits-1));
   }
   
-  static SourceLocation getMacroLoc(unsigned MacroID, int PhysOffs){
+  static SourceLocation getMacroLoc(unsigned MacroID, int SpellingOffs) {
     assert(MacroID < (1 << MacroIDBits) && "Too many macros!");
-    assert(isValidMacroPhysOffs(PhysOffs) && "Physoffs too large!");
+    assert(isValidMacroSpellingOffs(SpellingOffs) &&"spelling offs too large!");
     
     // Mask off sign bits.
-    PhysOffs &= (1 << MacroPhysOffsBits)-1;
+    SpellingOffs &= (1 << MacroSpellingOffsBits)-1;
     
     SourceLocation L;
     L.ID = (1 << 31) |
-           (MacroID << MacroPhysOffsBits) |
-           PhysOffs;
+           (MacroID << MacroSpellingOffsBits) |
+           SpellingOffs;
     return L;
   }
   
@@ -125,14 +125,14 @@ public:
 
   unsigned getMacroID() const {
     assert(isMacroID() && "Is not a macro id!");
-    return (ID >> MacroPhysOffsBits) & ((1 << MacroIDBits)-1);
+    return (ID >> MacroSpellingOffsBits) & ((1 << MacroIDBits)-1);
   }
   
-  int getMacroPhysOffs() const {
+  int getMacroSpellingOffs() const {
     assert(isMacroID() && "Is not a macro id!");
-    int Val = ID & ((1 << MacroPhysOffsBits)-1);
+    int Val = ID & ((1 << MacroSpellingOffsBits)-1);
     // Sign extend it properly.
-    unsigned ShAmt = sizeof(int)*8 - MacroPhysOffsBits;
+    unsigned ShAmt = sizeof(int)*8 - MacroSpellingOffsBits;
     return (Val << ShAmt) >> ShAmt;
   }
   
@@ -237,7 +237,7 @@ public:
   }
   
   FullSourceLoc getLogicalLoc() const;
-  FullSourceLoc getPhysicalLoc() const;
+  FullSourceLoc getSpellingLoc() const;
   FullSourceLoc getIncludeLoc() const;
 
   unsigned getLineNumber() const;
@@ -246,8 +246,8 @@ public:
   unsigned getLogicalLineNumber() const;
   unsigned getLogicalColumnNumber() const;
 
-  unsigned getPhysicalLineNumber() const;
-  unsigned getPhysicalColumnNumber() const;
+  unsigned getSpellingLineNumber() const;
+  unsigned getSpellingColumnNumber() const;
 
   const char *getCharacterData() const;
   

@@ -121,7 +121,7 @@ namespace SrcMgr {
   /// is a byte offset from the start of this.
   ///
   /// FileID's are used to compute the location of a character in memory as well
-  /// as the logical source location, which can be differ from the physical
+  /// as the logical source location, which can be differ from the spelling
   /// location.  It is different when #line's are active or when macros have
   /// been expanded.
   ///
@@ -183,23 +183,23 @@ namespace SrcMgr {
   
   /// MacroIDInfo - Macro SourceLocations refer to these records by their ID.
   /// Each MacroIDInfo encodes the Instantiation location - where the macro was
-  /// instantiated, and the PhysicalLoc - where the actual character data for
+  /// instantiated, and the SpellingLoc - where the actual character data for
   /// the token came from.  An actual macro SourceLocation stores deltas from
   /// these positions.
   class MacroIDInfo {
-    SourceLocation VirtualLoc, PhysicalLoc;
+    SourceLocation VirtualLoc, SpellingLoc;
   public:
     SourceLocation getVirtualLoc() const { return VirtualLoc; }
-    SourceLocation getPhysicalLoc() const { return PhysicalLoc; }
+    SourceLocation getSpellingLoc() const { return SpellingLoc; }
     
     /// get - Return a MacroID for a macro expansion.  VL specifies
-    /// the instantiation location (where the macro is expanded), and PL
-    /// specifies the physical location (where the characters from the token
+    /// the instantiation location (where the macro is expanded), and SL
+    /// specifies the spelling location (where the characters from the token
     /// come from).  Both VL and PL refer to normal File SLocs.
-    static MacroIDInfo get(SourceLocation VL, SourceLocation PL) {
+    static MacroIDInfo get(SourceLocation VL, SourceLocation SL) {
       MacroIDInfo X;
       X.VirtualLoc = VL;
-      X.PhysicalLoc = PL;
+      X.SpellingLoc = SL;
       return X;
     }
     
@@ -228,10 +228,10 @@ namespace clang {
 /// files and assigns unique FileID's for each unique #include chain.
 ///
 /// The SourceManager can be queried for information about SourceLocation
-/// objects, turning them into either physical or logical locations.  Physical
+/// objects, turning them into either spelling or logical locations.  Spelling
 /// locations represent where the bytes corresponding to a token came from and
 /// logical locations represent where the location is in the user's view.  In
-/// the case of a macro expansion, for example, the physical location indicates
+/// the case of a macro expansion, for example, the spelling location indicates
 /// where the expanded token came from and the logical location specifies where
 /// it was expanded.  Logical locations are also influenced by #line directives,
 /// etc.
@@ -348,19 +348,19 @@ public:
   /// getColumnNumber - Return the column # for the specified file position.
   /// This is significantly cheaper to compute than the line number.  This
   /// returns zero if the column number isn't known.  This may only be called on
-  /// a file sloc, so you must choose a physical or logical location before
+  /// a file sloc, so you must choose a spelling or logical location before
   /// calling this method.
   unsigned getColumnNumber(SourceLocation Loc) const;
   
-  unsigned getPhysicalColumnNumber(SourceLocation Loc) const {
-    return getColumnNumber(getPhysicalLoc(Loc));
+  unsigned getSpellingColumnNumber(SourceLocation Loc) const {
+    return getColumnNumber(getSpellingLoc(Loc));
   }
   unsigned getLogicalColumnNumber(SourceLocation Loc) const {
     return getColumnNumber(getLogicalLoc(Loc));
   }
   
   
-  /// getLineNumber - Given a SourceLocation, return the physical line number
+  /// getLineNumber - Given a SourceLocation, return the spelling line number
   /// for the position indicated.  This requires building and caching a table of
   /// line offsets for the MemoryBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
@@ -369,8 +369,8 @@ public:
   unsigned getLogicalLineNumber(SourceLocation Loc) const {
     return getLineNumber(getLogicalLoc(Loc));
   }
-  unsigned getPhysicalLineNumber(SourceLocation Loc) const {
-    return getLineNumber(getPhysicalLoc(Loc));
+  unsigned getSpellingLineNumber(SourceLocation Loc) const {
+    return getLineNumber(getSpellingLoc(Loc));
   }
   
   /// getSourceName - This method returns the name of the file or buffer that
@@ -381,33 +381,35 @@ public:
   /// Given a SourceLocation object, return the logical location referenced by
   /// the ID.  This logical location is subject to #line directives, etc.
   SourceLocation getLogicalLoc(SourceLocation Loc) const {
-    // File locations are both physical and logical.
+    // File locations work.
     if (Loc.isFileID()) return Loc;
-
+    
     return MacroIDs[Loc.getMacroID()].getVirtualLoc();
   }
   
-  /// getPhysicalLoc - Given a SourceLocation object, return the physical
-  /// location referenced by the ID.
-  SourceLocation getPhysicalLoc(SourceLocation Loc) const {
-    // File locations are both physical and logical.
+  /// getSpellingLoc - Given a SourceLocation object, return the spelling
+  /// location referenced by the ID.  This is the place where the characters
+  /// that make up the lexed token can be found.
+  SourceLocation getSpellingLoc(SourceLocation Loc) const {
+    // File locations work!
     if (Loc.isFileID()) return Loc;
     
-    SourceLocation PLoc = MacroIDs[Loc.getMacroID()].getPhysicalLoc();
-    return PLoc.getFileLocWithOffset(Loc.getMacroPhysOffs());
+    // Look up the macro token's spelling location.
+    SourceLocation PLoc = MacroIDs[Loc.getMacroID()].getSpellingLoc();
+    return PLoc.getFileLocWithOffset(Loc.getMacroSpellingOffs());
   }
 
-  /// getContentCacheForLoc - Return the ContentCache for the physloc of the 
-  /// specified SourceLocation, if one exists.
+  /// getContentCacheForLoc - Return the ContentCache for the spelling loc of
+  /// the specified SourceLocation, if one exists.
   const SrcMgr::ContentCache* getContentCacheForLoc(SourceLocation Loc) const {
-    Loc = getPhysicalLoc(Loc);
+    Loc = getSpellingLoc(Loc);
     unsigned FileID = Loc.getFileID();
     assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
     return FileIDs[FileID-1].getContentCache();
   }
   
-  /// getFileEntryForLoc - Return the FileEntry record for the physloc of the
-  ///  specified SourceLocation, if one exists.
+  /// getFileEntryForLoc - Return the FileEntry record for the spelling loc of
+  /// the specified SourceLocation, if one exists.
   const FileEntry* getFileEntryForLoc(SourceLocation Loc) const {
     return getContentCacheForLoc(Loc)->Entry;
   }
@@ -422,8 +424,8 @@ public:
   ///  into multiple chunks.  This method returns the unique FileID without
   ///  chunk information for a given SourceLocation.  Use this method when
   ///  you want to compare FileIDs across SourceLocations.
-  unsigned getCanonicalFileID(SourceLocation PhysLoc) const {
-    return getDecomposedFileLoc(PhysLoc).first;
+  unsigned getCanonicalFileID(SourceLocation SpellingLoc) const {
+    return getDecomposedFileLoc(SpellingLoc).first;
   }    
   
   /// getDecomposedFileLoc - Decompose the specified file location into a raw
@@ -447,11 +449,11 @@ public:
   }
     
   /// getFullFilePos - This (efficient) method returns the offset from the start
-  /// of the file that the specified physical SourceLocation represents.  This
-  /// returns the location of the physical character data, not the logical file
+  /// of the file that the specified spelling SourceLocation represents.  This
+  /// returns the location of the actual character data, not the logical file
   /// position.
-  unsigned getFullFilePos(SourceLocation PhysLoc) const {
-    return getDecomposedFileLoc(PhysLoc).second;
+  unsigned getFullFilePos(SourceLocation SpellingLoc) const {
+    return getDecomposedFileLoc(SpellingLoc).second;
   }
   
   /// isFromSameFile - Returns true if both SourceLocations correspond to
@@ -471,7 +473,7 @@ public:
     return getFileCharacteristic(Loc) != SrcMgr::C_User;
   }
   SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const {
-    return getFIDInfo(getPhysicalLoc(Loc).getFileID())->getFileCharacteristic();
+    return getFIDInfo(getSpellingLoc(Loc).getFileID())->getFileCharacteristic();
   }
   SrcMgr::CharacteristicKind getFileCharacteristic(unsigned FileID) const {
     return getFIDInfo(FileID)->getFileCharacteristic();

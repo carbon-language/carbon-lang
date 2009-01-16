@@ -68,7 +68,7 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
     Features(pp.getLangOptions()) {
       
   SourceManager &SourceMgr = PP->getSourceManager();
-  unsigned InputFileID = SourceMgr.getPhysicalLoc(FileLoc).getFileID();
+  unsigned InputFileID = SourceMgr.getSpellingLoc(FileLoc).getFileID();
   const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(InputFileID);
       
   Is_PragmaLexer = false;
@@ -281,15 +281,15 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
                                         unsigned CharNo) {
   // Otherwise, we're lexing "mapped tokens".  This is used for things like
   // _Pragma handling.  Combine the instantiation location of FileLoc with the
-  // physical location.
+  // spelling location.
   SourceManager &SourceMgr = PP.getSourceManager();
   
   // Create a new SLoc which is expanded from logical(FileLoc) but whose
-  // characters come from phys(FileLoc)+Offset.
+  // characters come from spelling(FileLoc)+Offset.
   SourceLocation VirtLoc = SourceMgr.getLogicalLoc(FileLoc);
-  SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(FileLoc);
-  PhysLoc = SourceLocation::getFileLoc(PhysLoc.getFileID(), CharNo);
-  return SourceMgr.getInstantiationLoc(PhysLoc, VirtLoc);
+  SourceLocation SpellingLoc = SourceMgr.getSpellingLoc(FileLoc);
+  SpellingLoc = SourceLocation::getFileLoc(SpellingLoc.getFileID(), CharNo);
+  return SourceMgr.getInstantiationLoc(SpellingLoc, VirtLoc);
 }
 
 /// getSourceLocation - Return a source location identifier for the specified

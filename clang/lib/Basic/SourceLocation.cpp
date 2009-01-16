@@ -42,9 +42,9 @@ FullSourceLoc FullSourceLoc::getLogicalLoc() const {
   return FullSourceLoc(SrcMgr->getLogicalLoc(Loc), *SrcMgr);
 }
 
-FullSourceLoc FullSourceLoc::getPhysicalLoc() const {
-  assert (isValid());
-  return FullSourceLoc(SrcMgr->getPhysicalLoc(Loc), *SrcMgr);
+FullSourceLoc FullSourceLoc::getSpellingLoc() const {
+  assert(isValid());
+  return FullSourceLoc(SrcMgr->getSpellingLoc(Loc), *SrcMgr);
 }
 
 FullSourceLoc FullSourceLoc::getIncludeLoc() const {
@@ -73,14 +73,14 @@ unsigned FullSourceLoc::getLogicalColumnNumber() const {
   return SrcMgr->getLogicalColumnNumber(Loc);
 }
 
-unsigned FullSourceLoc::getPhysicalLineNumber() const {
+unsigned FullSourceLoc::getSpellingLineNumber() const {
   assert (isValid());
-  return SrcMgr->getPhysicalLineNumber(Loc);
+  return SrcMgr->getSpellingLineNumber(Loc);
 }
 
-unsigned FullSourceLoc::getPhysicalColumnNumber() const {
+unsigned FullSourceLoc::getSpellingColumnNumber() const {
   assert (isValid());
-  return SrcMgr->getPhysicalColumnNumber(Loc);
+  return SrcMgr->getSpellingColumnNumber(Loc);
 }
 
 const char* FullSourceLoc::getSourceName() const {
@@ -120,13 +120,13 @@ void FullSourceLoc::dump() const {
   }
   
   if (isFileID()) {
-    // The logical and physical pos is identical for file locs.
+    // The logical and spelling pos is identical for file locs.
     fprintf(stderr, "File Loc from '%s': %d: %d\n",
             getSourceName(), getLogicalLineNumber(),
             getLogicalColumnNumber());
   } else {
-    fprintf(stderr, "Macro Loc (\n  Physical: ");
-    getPhysicalLoc().dump();
+    fprintf(stderr, "Macro Loc (\n  Spelling: ");
+    getSpellingLoc().dump();
     fprintf(stderr, "  Logical: ");
     getLogicalLoc().dump();
     fprintf(stderr, ")\n");

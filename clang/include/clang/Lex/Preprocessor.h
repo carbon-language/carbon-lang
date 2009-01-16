@@ -455,7 +455,7 @@ public:
   ///  location in the appropriate MemoryBuffer.
   char getPhysicalCharacterAt(SourceLocation SL) const {
     if (PTH) {
-      SL = SourceMgr.getPhysicalLoc(SL);
+      SL = SourceMgr.getSpellingLoc(SL);
       unsigned fid = SourceMgr.getCanonicalFileID(SL);
       unsigned fpos = SourceMgr.getFullFilePos(SL);      
       const char* data;

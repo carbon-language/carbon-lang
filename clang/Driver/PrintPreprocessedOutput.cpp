@@ -124,7 +124,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     if (LineNo-CurLine == 1)
       OS << '\n';
     else if (LineNo == CurLine)
-      return false;    // Phys line moved, but logical line didn't.
+      return false;    // Spelling line moved, but logical line didn't.
     else {
       const char *NewLines = "\n\n\n\n\n\n\n\n";
       OS.write(NewLines, LineNo-CurLine);
@@ -200,7 +200,7 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
 /// is called for the first token on each new line.  If this really is the start
 /// of a new logical line, handle it and return true, otherwise return false.
 /// This may not be the start of a logical line because the "start of line"
-/// marker is set for physical lines, not logical ones.
+/// marker is set for spelling lines, not logical ones.
 bool PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   // Figure out what line we went to and insert the appropriate number of
   // newline characters.
@@ -319,7 +319,7 @@ static void InitAvoidConcatTokenInfo() {
 static bool StartsWithL(const Token &Tok, Preprocessor &PP) {
   if (!Tok.needsCleaning()) {
     SourceManager &SrcMgr = PP.getSourceManager();
-    return *SrcMgr.getCharacterData(SrcMgr.getPhysicalLoc(Tok.getLocation()))
+    return *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()))
                == 'L';
   }
   
@@ -339,7 +339,7 @@ static bool IsIdentifierL(const Token &Tok, Preprocessor &PP) {
     if (Tok.getLength() != 1)
       return false;
     SourceManager &SrcMgr = PP.getSourceManager();
-    return *SrcMgr.getCharacterData(SrcMgr.getPhysicalLoc(Tok.getLocation()))
+    return *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()))
                == 'L';
   }
   
@@ -403,7 +403,7 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
   } else if (!Tok.needsCleaning()) {
     SourceManager &SrcMgr = PP.getSourceManager();
     FirstChar =
-      *SrcMgr.getCharacterData(SrcMgr.getPhysicalLoc(Tok.getLocation()));
+      *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()));
   } else if (Tok.getLength() < 256) {
     const char *TokPtr = Buffer;
     PP.getSpelling(Tok, TokPtr);

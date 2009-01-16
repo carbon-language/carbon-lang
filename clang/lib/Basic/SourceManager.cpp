@@ -146,14 +146,14 @@ unsigned SourceManager::createFileID(const ContentCache *File,
 }
 
 /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
-/// that a token from physloc PhysLoc should actually be referenced from
+/// that a token from SpellingLoc should actually be referenced from
 /// InstantiationLoc.
-SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
+SourceLocation SourceManager::getInstantiationLoc(SourceLocation SpellingLoc,
                                                   SourceLocation InstantLoc) {
   // The specified source location may be a mapped location, due to a macro
   // instantiation or #line directive.  Strip off this information to find out
   // where the characters are actually located.
-  PhysLoc = getPhysicalLoc(PhysLoc);
+  SpellingLoc = getSpellingLoc(SpellingLoc);
   
   // Resolve InstantLoc down to a real logical location.
   InstantLoc = getLogicalLoc(InstantLoc);
@@ -164,21 +164,21 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
   for (int i = MacroIDs.size()-1, e = MacroIDs.size()-6; i >= 0 && i != e; --i){
     MacroIDInfo &LastOne = MacroIDs[i];
     
-    // The instanitation point and source physloc have to exactly match to reuse
-    // (for now).  We could allow "nearby" instantiations in the future.
+    // The instanitation point and source SpellingLoc have to exactly match to
+    // reuse (for now).  We could allow "nearby" instantiations in the future.
     if (LastOne.getVirtualLoc() != InstantLoc ||
-        LastOne.getPhysicalLoc().getFileID() != PhysLoc.getFileID())
+        LastOne.getSpellingLoc().getFileID() != SpellingLoc.getFileID())
       continue;
   
-    // Check to see if the physloc of the token came from near enough to reuse.
-    int PhysDelta = PhysLoc.getRawFilePos() -
-                    LastOne.getPhysicalLoc().getRawFilePos();
-    if (SourceLocation::isValidMacroPhysOffs(PhysDelta))
-      return SourceLocation::getMacroLoc(i, PhysDelta);
+    // Check to see if the spellloc of the token came from near enough to reuse.
+    int SpellDelta = SpellingLoc.getRawFilePos() -
+                     LastOne.getSpellingLoc().getRawFilePos();
+    if (SourceLocation::isValidMacroSpellingOffs(SpellDelta))
+      return SourceLocation::getMacroLoc(i, SpellDelta);
   }
   
  
-  MacroIDs.push_back(MacroIDInfo::get(InstantLoc, PhysLoc));
+  MacroIDs.push_back(MacroIDInfo::get(InstantLoc, SpellingLoc));
   return SourceLocation::getMacroLoc(MacroIDs.size()-1, 0);
 }
 
@@ -196,7 +196,7 @@ SourceManager::getBufferData(unsigned FileID) const {
 const char *SourceManager::getCharacterData(SourceLocation SL) const {
   // Note that this is a hot function in the getSpelling() path, which is
   // heavily used by -E mode.
-  SL = getPhysicalLoc(SL);
+  SL = getSpellingLoc(SL);
   
   // Note that calling 'getBuffer()' may lazily page in a source file.
   return getContentCache(SL.getFileID())->getBuffer()->getBufferStart() + 
@@ -279,7 +279,7 @@ static void ComputeLineNumbers(ContentCache* FI) {
   std::copy(LineOffsets.begin(), LineOffsets.end(), FI->SourceLineCache);
 }
 
-/// getLineNumber - Given a SourceLocation, return the physical line number
+/// getLineNumber - Given a SourceLocation, return the spelling line number
 /// for the position indicated.  This requires building and caching a table of
 /// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
@@ -481,13 +481,13 @@ FileIDInfo FileIDInfo::ReadVal(llvm::Deserializer& D) {
 
 void MacroIDInfo::Emit(llvm::Serializer& S) const {
   S.Emit(VirtualLoc);
-  S.Emit(PhysicalLoc);
+  S.Emit(SpellingLoc);
 }
 
 MacroIDInfo MacroIDInfo::ReadVal(llvm::Deserializer& D) {
   MacroIDInfo I;
   I.VirtualLoc = SourceLocation::ReadVal(D);
-  I.PhysicalLoc = SourceLocation::ReadVal(D);
+  I.SpellingLoc = SourceLocation::ReadVal(D);
   return I;
 }
 

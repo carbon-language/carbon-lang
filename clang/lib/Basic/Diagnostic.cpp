@@ -244,7 +244,7 @@ void Diagnostic::ProcessDiag() {
       Info.getID() < diag::NUM_BUILTIN_DIAGNOSTICS &&
       getBuiltinDiagClass(Info.getID()) != ERROR &&
       Info.getLocation().isValid() &&
-      Info.getLocation().getPhysicalLoc().isInSystemHeader())
+      Info.getLocation().getSpellingLoc().isInSystemHeader())
     return;
   
   if (DiagLevel >= Diagnostic::Error) {

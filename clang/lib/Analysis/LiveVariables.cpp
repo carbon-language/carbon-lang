@@ -358,13 +358,13 @@ void LiveVariables::dumpLiveness(const ValTy& V, SourceManager& SM) const {
   for (AnalysisDataTy::decl_iterator I = AD.begin_decl(),
                                      E = AD.end_decl(); I!=E; ++I)
     if (V.getDeclBit(I->second)) {      
-      SourceLocation PhysLoc = SM.getPhysicalLoc(I->first->getLocation());
+      SourceLocation SpellingLoc = SM.getSpellingLoc(I->first->getLocation());
     
       fprintf(stderr, "  %s <%s:%u:%u>\n", 
               I->first->getIdentifier()->getName(),
-              SM.getSourceName(PhysLoc),
-              SM.getLineNumber(PhysLoc),
-              SM.getColumnNumber(PhysLoc));
+              SM.getSourceName(SpellingLoc),
+              SM.getLineNumber(SpellingLoc),
+              SM.getColumnNumber(SpellingLoc));
     }
 }                                  
 

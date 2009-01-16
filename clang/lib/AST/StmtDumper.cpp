@@ -152,21 +152,22 @@ namespace  {
 //===----------------------------------------------------------------------===//
 
 void StmtDumper::DumpLocation(SourceLocation Loc) {
-  SourceLocation PhysLoc = SM->getPhysicalLoc(Loc);
+  SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
 
   // The general format we print out is filename:line:col, but we drop pieces
   // that haven't changed since the last loc printed.
-  const char *Filename = SM->getSourceName(PhysLoc);
-  unsigned LineNo = SM->getLineNumber(PhysLoc);
+  const char *Filename = SM->getSourceName(SpellingLoc);
+  unsigned LineNo = SM->getLineNumber(SpellingLoc);
+  unsigned ColNo = SM->getColumnNumber(SpellingLoc);
   if (strcmp(Filename, LastLocFilename) != 0) {
-    fprintf(stderr, "%s:%u:%u", Filename, LineNo, SM->getColumnNumber(PhysLoc));
+    fprintf(stderr, "%s:%u:%u", Filename, LineNo, ColNo);
     LastLocFilename = Filename;
     LastLocLine = LineNo;
   } else if (LineNo != LastLocLine) {
-    fprintf(stderr, "line:%u:%u", LineNo, SM->getColumnNumber(PhysLoc));
+    fprintf(stderr, "line:%u:%u", LineNo, ColNo);
     LastLocLine = LineNo;
   } else {
-    fprintf(stderr, "col:%u", SM->getColumnNumber(PhysLoc));
+    fprintf(stderr, "col:%u", ColNo);
   }
 }
 

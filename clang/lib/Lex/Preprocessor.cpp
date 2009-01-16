@@ -145,10 +145,10 @@ void Preprocessor::DumpLocation(SourceLocation Loc) const {
              << SourceMgr.getLineNumber(LogLoc) << ':'
              << SourceMgr.getColumnNumber(LogLoc);
   
-  SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Loc);
-  if (PhysLoc != LogLoc) {
-    llvm::cerr << " <PhysLoc=";
-    DumpLocation(PhysLoc);
+  SourceLocation SpellingLoc = SourceMgr.getSpellingLoc(Loc);
+  if (SpellingLoc != LogLoc) {
+    llvm::cerr << " <SpellingLoc=";
+    DumpLocation(SpellingLoc);
     llvm::cerr << ">";
   }
 }
@@ -199,12 +199,12 @@ std::string Preprocessor::getSpelling(const Token &Tok) const {
   const char* TokStart;
   
   if (PTH) {
-    SourceLocation sloc = SourceMgr.getPhysicalLoc(Tok.getLocation());
-    unsigned fid = SourceMgr.getCanonicalFileID(sloc);
-    unsigned fpos = SourceMgr.getFullFilePos(sloc);
-    if (unsigned len = PTH->getSpelling(fid, fpos, TokStart)) {
+    SourceLocation SLoc = SourceMgr.getSpellingLoc(Tok.getLocation());
+    unsigned fid = SourceMgr.getCanonicalFileID(SLoc);
+    unsigned fpos = SourceMgr.getFullFilePos(SLoc);
+    if (unsigned Len = PTH->getSpelling(fid, fpos, TokStart)) {
       assert(!Tok.needsCleaning());
-      return std::string(TokStart, TokStart+len);
+      return std::string(TokStart, TokStart+Len);
     }
   }
   
@@ -251,7 +251,7 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
 
   // If using PTH, try and get the spelling from the PTH file.
   if (PTH) {
-    unsigned len;
+    unsigned Len;
     
     if (CurPTHLexer) {
       // We perform the const_cast<> here because we will only have a PTHLexer 
@@ -260,22 +260,22 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
       // getting token spellings in the order of tokens, and thus can update
       // its internal state so that it can quickly fetch spellings from the PTH
       // file.
-      len =
+      Len =
         const_cast<PTHLexer*>(CurPTHLexer.get())->getSpelling(Tok.getLocation(),
                                                               Buffer);      
     }
     else {
-      SourceLocation sloc = SourceMgr.getPhysicalLoc(Tok.getLocation());
+      SourceLocation sloc = SourceMgr.getSpellingLoc(Tok.getLocation());
       unsigned fid = SourceMgr.getCanonicalFileID(sloc);
       unsigned fpos = SourceMgr.getFullFilePos(sloc);      
-      len = PTH->getSpelling(fid, fpos, Buffer);      
+      Len = PTH->getSpelling(fid, fpos, Buffer);      
     }
 
     // Did we find a spelling?  If so return its length.  Otherwise fall
     // back to the default behavior for getting the spelling by looking at
     // at the source code.    
-    if (len)
-      return len;
+    if (Len)
+      return Len;
   }
 
   // Otherwise, compute the start of the token in the input lexer buffer.
