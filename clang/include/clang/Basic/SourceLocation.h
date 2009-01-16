@@ -258,8 +258,6 @@ public:
 
   bool isInSystemHeader() const;
   
-  unsigned getCanonicalFileID() const;
-  
   bool operator==(const FullSourceLoc& RHS) const {
     return SrcMgr == RHS.SrcMgr && Loc == RHS.Loc;
   }

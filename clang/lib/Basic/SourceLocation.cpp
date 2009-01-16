@@ -98,19 +98,14 @@ bool FullSourceLoc::isInSystemHeader() const {
   return SrcMgr->isInSystemHeader(Loc);
 }
 
-
-const char * FullSourceLoc::getCharacterData() const {
-  assert (isValid());
+const char *FullSourceLoc::getCharacterData() const {
+  assert(isValid());
   return SrcMgr->getCharacterData(Loc);
 }
 
 const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
   assert (isValid());
   return SrcMgr->getBuffer(Loc.getFileID());
-}
-
-unsigned FullSourceLoc::getCanonicalFileID() const {
-  return SrcMgr->getCanonicalFileID(Loc);
 }
 
 void FullSourceLoc::dump() const {

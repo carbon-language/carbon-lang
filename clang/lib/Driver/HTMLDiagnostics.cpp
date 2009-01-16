@@ -124,8 +124,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   if (noDir)
     return;
   
-  SourceManager& SMgr = D.begin()->getLocation().getManager();
-
+  SourceManager &SMgr = D.begin()->getLocation().getManager();
   unsigned FileID = 0;
   bool FileIDInitialized = false;
   
@@ -134,10 +133,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     FullSourceLoc L = I->getLocation().getInstantiationLoc();
     
     if (!FileIDInitialized) {
-      FileID = L.getCanonicalFileID();
+      FileID = SMgr.getCanonicalFileID(L.getLocation());
       FileIDInitialized = true;
-    }
-    else if (L.getCanonicalFileID() != FileID)
+    } else if (SMgr.getCanonicalFileID(L.getLocation()) != FileID)
       return; // FIXME: Emit a warning?
     
     // Check the source ranges.
@@ -345,7 +343,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
 
   assert (&LPos.getManager() == &SM && "SourceManagers are different!");
   
-  if (LPos.getCanonicalFileID() != BugFileID)
+  if (SM.getCanonicalFileID(LPos.getLocation()) != BugFileID)
     return;
   
   const llvm::MemoryBuffer *Buf = SM.getBuffer(FileID);
