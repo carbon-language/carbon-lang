@@ -436,7 +436,7 @@ source code of the program.  Important design points include:</p>
 </ol>
 
 <p>In practice, the SourceLocation works together with the SourceManager class
-to encode two pieces of information about a location: it's physical location
+to encode two pieces of information about a location: it's spelling location
 and it's virtual location.  For most tokens, these will be the same.  However,
 for a macro expansion (or tokens that came from a _Pragma directive) these will
 describe the location of the characters corresponding to the token and the
@@ -453,7 +453,7 @@ from this.</p>
 tracked correctly.  If it is ever incorrect, the front-end may get confused and
 die.  The reason for this is that the notion of the 'spelling' of a Token in
 Clang depends on being able to find the original input characters for the token.
-This concept maps directly to the "physical" location for the token.</p>
+This concept maps directly to the "spelling location" for the token.</p>
 
 <!-- ======================================================================= -->
 <h2 id="liblex">The Lexer and Preprocessor Library</h2>
