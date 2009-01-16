@@ -254,15 +254,8 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
     unsigned Len;
     
     if (CurPTHLexer) {
-      // We perform the const_cast<> here because we will only have a PTHLexer 
-      // when grabbing a stream of tokens from the PTH file (and thus the
-      // Preprocessor state is allowed to change).  The PTHLexer can assume we are
-      // getting token spellings in the order of tokens, and thus can update
-      // its internal state so that it can quickly fetch spellings from the PTH
-      // file.
       Len = CurPTHLexer.get()->getSpelling(Tok.getLocation(), Buffer);      
-    }
-    else {
+    } else {
       SourceLocation SLoc = SourceMgr.getSpellingLoc(Tok.getLocation());
       unsigned FID = SourceMgr.getCanonicalFileID(SLoc);
       unsigned FPos = SourceMgr.getFullFilePos(SLoc);      
