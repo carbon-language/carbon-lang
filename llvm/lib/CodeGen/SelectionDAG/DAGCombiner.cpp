@@ -3358,7 +3358,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       : DAG.getExtLoad(ExtType, VT, LN0->getChain(), NewPtr,
                        LN0->getSrcValue(), LN0->getSrcValueOffset() + PtrOff,
                        EVT, LN0->isVolatile(), NewAlign);
-    AddToWorkList(N);
+    AddToWorkList(Load.Node);
     if (CombineSRL) {
       WorkListRemover DeadNodes(*this);
       DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1),
@@ -3366,6 +3366,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       CombineTo(N->getOperand(0).getNode(), Load);
     } else
       CombineTo(N0.getNode(), Load, Load.getValue(1));
+    
     if (ShAmt) {
       if (Opc == ISD::SIGN_EXTEND_INREG)
         return DAG.getNode(Opc, VT, Load, N->getOperand(1));
