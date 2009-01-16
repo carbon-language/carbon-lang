@@ -4272,7 +4272,7 @@ void DwarfWriter::EndFunction(MachineFunction *MF) {
 
 /// ValidDebugInfo - Return true if V represents valid debug info value.
 bool DwarfWriter::ValidDebugInfo(Value *V) {
-  return DD->ValidDebugInfo(V);
+  return DD && DD->ValidDebugInfo(V);
 }
 
 /// RecordSourceLine - Records location information and associates it with a 
