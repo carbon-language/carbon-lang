@@ -17,6 +17,7 @@
 #ifndef LLVM_TARGET_TARGETMACHINEREGISTRY_H
 #define LLVM_TARGET_TARGETMACHINEREGISTRY_H
 
+#include "llvm/Module.h"
 #include "llvm/Support/Registry.h"
 
 namespace llvm {

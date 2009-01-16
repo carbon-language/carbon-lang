@@ -15,6 +15,7 @@
 #include "JIT.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/Support/RegistryParser.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetMachine.h"
@@ -22,7 +23,7 @@
 using namespace llvm;
 
 static cl::opt<const TargetMachineRegistry::entry*, false,
-               TargetMachineRegistry::Parser>
+               RegistryParser<TargetMachine> >
 MArch("march", cl::desc("Architecture to generate assembly for:"));
 
 static cl::opt<std::string>

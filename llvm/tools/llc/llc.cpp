@@ -27,10 +27,11 @@
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
-#include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/RegistryParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Signals.h"
@@ -60,7 +61,7 @@ static cl::opt<std::string>
 TargetTriple("mtriple", cl::desc("Override target triple for module"));
 
 static cl::opt<const TargetMachineRegistry::entry*, false,
-               TargetMachineRegistry::Parser>
+               RegistryParser<TargetMachine> >
 MArch("march", cl::desc("Architecture to generate code for:"));
 
 static cl::opt<std::string>

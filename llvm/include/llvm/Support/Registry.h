@@ -14,8 +14,6 @@
 #ifndef LLVM_SUPPORT_REGISTRY_H
 #define LLVM_SUPPORT_REGISTRY_H
 
-#include "llvm/Support/CommandLine.h"
-
 namespace llvm {
   /// A simple registry entry which provides only a name, description, and
   /// no-argument constructor.
@@ -204,33 +202,7 @@ namespace llvm {
         : Entry(Name, Desc, CtorFn), Node(Entry) {}
     };
 
-
-    /// A command-line parser for a registry. Use like such:
-    ///
-    ///   static cl::opt<Registry<Collector>::entry, false,
-    ///                  Registry<Collector>::Parser>
-    ///   GCOpt("gc", cl::desc("Garbage collector to use."),
-    ///               cl::value_desc());
-    ///
-    /// To make use of the value:
-    ///
-    ///   Collector *TheCollector = GCOpt->instantiate();
-    ///
-    class Parser : public cl::parser<const typename U::entry*>, public listener{
-      typedef U traits;
-      typedef typename U::entry entry;
-
-    protected:
-      void registered(const entry &E) {
-        addLiteralOption(traits::nameof(E), &E, traits::descof(E));
-      }
-
-    public:
-      void initialize(cl::Option &O) {
-        listener::init();
-        cl::parser<const typename U::entry*>::initialize(O);
-      }
-    };
+    /// Registry::Parser now lives in llvm/Support/RegistryParser.h.
 
   };
 
