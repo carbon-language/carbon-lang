@@ -688,11 +688,9 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   }
   if (TypeToSize->isObjCInterfaceType()) {
     ObjCInterfaceDecl *OI = TypeToSize->getAsObjCInterfaceType()->getDecl();
-    const RecordDecl *RD = CGF.getContext().addRecordToClass(OI);
-    const Type *Key =
-      CGF.getContext().getTagDeclType(
-                    const_cast<TagDecl*>(dyn_cast<TagDecl>(RD))).getTypePtr();
-    TypeToSize = QualType(Key->getAsRecordType(), 0);
+    RecordDecl *RD = const_cast<RecordDecl*>(
+                                        CGF.getContext().addRecordToClass(OI));
+    TypeToSize =  CGF.getContext().getTagDeclType(static_cast<TagDecl*>(RD));
   }  
   std::pair<uint64_t, unsigned> Info = CGF.getContext().getTypeInfo(TypeToSize);
   
