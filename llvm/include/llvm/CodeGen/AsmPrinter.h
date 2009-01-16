@@ -317,7 +317,7 @@ namespace llvm {
 
     /// EmitConstantValueOnly - Print out the specified constant, without a
     /// storage class.  Only constants of first-class type are allowed here.
-    virtual void EmitConstantValueOnly(const Constant *CV);
+    void EmitConstantValueOnly(const Constant *CV);
 
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
     void EmitGlobalConstant(const Constant* CV);
