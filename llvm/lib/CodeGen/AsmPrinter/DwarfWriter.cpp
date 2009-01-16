@@ -1290,17 +1290,17 @@ private:
   ///
   std::vector<DIEAbbrev *> Abbreviations;
 
-  /// ValuesSet - Used to uniquely define values.
-  ///
-  // Directories - Uniquing vector for directories.                                       
+  /// Directories - Uniquing vector for directories.                                       
   UniqueVector<std::string> Directories;
 
-  // SourceFiles - Uniquing vector for source files.                                      
+  /// SourceFiles - Uniquing vector for source files.                                      
   UniqueVector<SrcFileInfo> SrcFiles;
 
-  // Lines - List of of source line correspondence.
+  /// Lines - List of of source line correspondence.
   std::vector<SrcLineInfo> Lines;
 
+  /// ValuesSet - Used to uniquely define values.
+  ///
   FoldingSet<DIEValue> ValuesSet;
 
   /// Values - A list of all the unique values in use.
