@@ -927,7 +927,11 @@ void Interpreter::visitShl(BinaryOperator &I) {
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue Dest;
-  Dest.IntVal = Src1.IntVal.shl(Src2.IntVal.getZExtValue());
+  if (Src2.IntVal.getZExtValue() < Src1.IntVal.getBitWidth())
+    Dest.IntVal = Src1.IntVal.shl(Src2.IntVal.getZExtValue());
+  else
+    Dest.IntVal = Src1.IntVal;
+  
   SetValue(&I, Dest, SF);
 }
 
@@ -936,7 +940,11 @@ void Interpreter::visitLShr(BinaryOperator &I) {
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue Dest;
-  Dest.IntVal =  Src1.IntVal.lshr(Src2.IntVal.getZExtValue());
+  if (Src2.IntVal.getZExtValue() < Src1.IntVal.getBitWidth())
+    Dest.IntVal = Src1.IntVal.lshr(Src2.IntVal.getZExtValue());
+  else
+    Dest.IntVal = Src1.IntVal;
+  
   SetValue(&I, Dest, SF);
 }
 
@@ -944,8 +952,12 @@ void Interpreter::visitAShr(BinaryOperator &I) {
   ExecutionContext &SF = ECStack.back();
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
-  GenericValue Dest; 
-  Dest.IntVal = Src1.IntVal.ashr(Src2.IntVal.getZExtValue());
+  GenericValue Dest;
+  if (Src2.IntVal.getZExtValue() < Src1.IntVal.getBitWidth())
+    Dest.IntVal = Src1.IntVal.ashr(Src2.IntVal.getZExtValue());
+  else
+    Dest.IntVal = Src1.IntVal;
+  
   SetValue(&I, Dest, SF);
 }
 
