@@ -358,6 +358,7 @@ NamespaceDecl *Sema::GetStdNamespace() {
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
 TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
+  bool objc_types = false;
   // Allow multiple definitions for ObjC built-in typedefs.
   // FIXME: Verify the underlying types are equivalent!
   if (getLangOptions().ObjC1) {
@@ -368,21 +369,25 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
       if (!TypeID->isStr("id"))
         break;
       Context.setObjCIdType(New);
-      return New;
+      objc_types = true;
+      break;
     case 5:
       if (!TypeID->isStr("Class"))
         break;
       Context.setObjCClassType(New);
+      objc_types = true;
       return New;
     case 3:
       if (!TypeID->isStr("SEL"))
         break;
       Context.setObjCSelType(New);
+      objc_types = true;
       return New;
     case 8:
       if (!TypeID->isStr("Protocol"))
         break;
       Context.setObjCProtoType(New->getUnderlyingType());
+      objc_types = true;
       return New;
     }
     // Fall through - the typedef name was not a builtin type.
@@ -392,7 +397,8 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
       << New->getDeclName();
-    Diag(OldD->getLocation(), diag::note_previous_definition);
+    if (!objc_types)
+      Diag(OldD->getLocation(), diag::note_previous_definition);
     return New;
   }
   
@@ -403,10 +409,11 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
       Context.getCanonicalType(New->getUnderlyingType())) {
     Diag(New->getLocation(), diag::err_redefinition_different_typedef)
       << New->getUnderlyingType() << Old->getUnderlyingType();
-    Diag(Old->getLocation(), diag::note_previous_definition);
+    if (!objc_types)
+      Diag(Old->getLocation(), diag::note_previous_definition);
     return New;
   }
-  
+  if (objc_types) return New;
   if (getLangOptions().Microsoft) return New;
 
   // C++ [dcl.typedef]p2:

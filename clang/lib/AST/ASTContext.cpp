@@ -2012,9 +2012,13 @@ void ASTContext::setObjCIdType(TypedefDecl *TD)
 
   // typedef struct objc_object *id;
   const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
-  assert(ptr && "'id' incorrectly typed");
+  // User error - caller will issue diagnostics.
+  if (!ptr)
+    return;
   const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
-  assert(rec && "'id' incorrectly typed");
+  // User error - caller will issue diagnostics.
+  if (!rec)
+    return;
   IdStructType = rec;
 }
 
@@ -2024,9 +2028,11 @@ void ASTContext::setObjCSelType(TypedefDecl *TD)
 
   // typedef struct objc_selector *SEL;
   const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
-  assert(ptr && "'SEL' incorrectly typed");
+  if (!ptr)
+    return;
   const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
-  assert(rec && "'SEL' incorrectly typed");
+  if (!rec)
+    return;
   SelStructType = rec;
 }
 
