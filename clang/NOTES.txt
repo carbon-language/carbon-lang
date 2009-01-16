@@ -11,6 +11,13 @@ To time GCC preprocessing speed without output, use:
    "time gcc -MM file"
 This is similar to -Eonly.
 
+//===---------------------------------------------------------------------===//
+
+Creating and using a PTH file for performance measurement (use a release-asserts
+build).
+
+$ clang -x objective-c-header INPUTS/Cocoa_h.m -o /tmp/tokencache
+$ clang -token-cache /tmp/tokencache INPUTS/Cocoa_h.m
 
 //===---------------------------------------------------------------------===//
 
