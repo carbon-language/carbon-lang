@@ -19,10 +19,12 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "IA64InstrInfo.h"
 #include "IA64ISelLowering.h"
+#include "IA64Subtarget.h"
 
 namespace llvm {
 
 class IA64TargetMachine : public LLVMTargetMachine {
+  IA64Subtarget    Subtarget;
   const TargetData DataLayout;       // Calculates type size & alignment
   IA64InstrInfo      InstrInfo;
   TargetFrameInfo    FrameInfo;
@@ -37,6 +39,7 @@ public:
 
   virtual const IA64InstrInfo      *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo    *getFrameInfo() const { return &FrameInfo; }
+  virtual const IA64Subtarget  *getSubtargetImpl() const { return &Subtarget; }
   virtual       IA64TargetLowering *getTargetLowering() const { 
     return const_cast<IA64TargetLowering*>(&TLInfo);
   }
