@@ -1232,11 +1232,11 @@ public:
 class DbgScope {
 private:
   DbgScope *Parent;                   // Parent to this scope.
-  DIDescriptor Desc;                 // Debug info descriptor for scope.
+  DIDescriptor Desc;                  // Debug info descriptor for scope.
                                       // Either subprogram or block.
   unsigned StartLabelID;              // Label ID of the beginning of scope.
   unsigned EndLabelID;                // Label ID of the end of scope.
-  SmallVector<DbgScope *, 4> Scopes;     // Scopes defined in scope.
+  SmallVector<DbgScope *, 4> Scopes;  // Scopes defined in scope.
   SmallVector<DbgVariable *, 8> Variables;// Variables declared in scope.
   
 public:
@@ -1249,8 +1249,8 @@ public:
   }
   
   // Accessors.
-  DbgScope *getParent()        const { return Parent; }
-  DIDescriptor getDesc()       const { return Desc; }
+  DbgScope *getParent()          const { return Parent; }
+  DIDescriptor getDesc()         const { return Desc; }
   unsigned getStartLabelID()     const { return StartLabelID; }
   unsigned getEndLabelID()       const { return EndLabelID; }
   SmallVector<DbgScope *, 4> &getScopes() { return Scopes; }
