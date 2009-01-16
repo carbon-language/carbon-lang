@@ -119,7 +119,7 @@ void FullSourceLoc::dump() const {
     return;
   }
   
-  if (isFileID()) {
+  if (Loc.isFileID()) {
     // The instantiation and spelling pos is identical for file locs.
     fprintf(stderr, "File Loc from '%s': %d: %d\n",
             getSourceName(), getInstantiationLineNumber(),
