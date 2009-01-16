@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/TypeTraits.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -231,6 +232,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
 
     case CXXThisExprClass:
       return CXXThisExpr::CreateImpl(D, C);
+
+    case CXXTemporaryObjectExprClass:
+      return CXXTemporaryObjectExpr::CreateImpl(D, C);
 
     case CXXZeroInitValueExprClass:
       return CXXZeroInitValueExpr::CreateImpl(D, C);
@@ -1440,6 +1444,40 @@ CXXThisExpr* CXXThisExpr::CreateImpl(llvm::Deserializer& D, ASTContext&) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   return new CXXThisExpr(Loc, Ty);
 }
+
+void CXXTemporaryObjectExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(TyBeginLoc);
+  S.Emit(RParenLoc);
+  S.EmitPtr(cast<Decl>(Constructor));
+  S.EmitInt(NumArgs);
+  if (NumArgs > 0)
+    S.BatchEmitOwnedPtrs(NumArgs, Args);
+}
+
+CXXTemporaryObjectExpr *
+CXXTemporaryObjectExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  QualType writtenTy = QualType::ReadVal(D);
+  SourceLocation tyBeginLoc = SourceLocation::ReadVal(D);
+  SourceLocation rParenLoc = SourceLocation::ReadVal(D);
+  CXXConstructorDecl * Cons = cast_or_null<CXXConstructorDecl>(D.ReadPtr<Decl>());
+  unsigned NumArgs = D.ReadInt();
+  Stmt** Args = 0;
+  if (NumArgs > 0) {
+    Args = new Stmt*[NumArgs];
+    D.BatchReadOwnedPtrs(NumArgs, Args, C);
+  }
+
+  CXXTemporaryObjectExpr * Result 
+    = new CXXTemporaryObjectExpr(Cons, writtenTy, tyBeginLoc, 
+                                 (Expr**)Args, NumArgs, rParenLoc);
+
+  if (NumArgs > 0)
+    delete [] Args;
+
+  return Result;
+}
+
 
 void CXXZeroInitValueExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());

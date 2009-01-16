@@ -61,6 +61,14 @@ Stmt::child_iterator CXXDefaultArgExpr::child_end() {
   return child_iterator();
 }
 
+// CXXTemporaryObjectExpr
+Stmt::child_iterator CXXTemporaryObjectExpr::child_begin() { 
+  return child_iterator(Args);
+}
+Stmt::child_iterator CXXTemporaryObjectExpr::child_end() {
+  return child_iterator(Args + NumArgs);
+}
+
 // CXXZeroInitValueExpr
 Stmt::child_iterator CXXZeroInitValueExpr::child_begin() { 
   return child_iterator();
@@ -218,4 +226,24 @@ const char *CXXNamedCastExpr::getCastName() const {
   case CXXConstCastExprClass:       return "const_cast";
   default:                          return "<invalid cast>";
   }
+}
+
+CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(CXXConstructorDecl *Cons,
+                                               QualType writtenTy,
+                                               SourceLocation tyBeginLoc, 
+                                               Expr **Args,
+                                               unsigned NumArgs, 
+                                               SourceLocation rParenLoc)
+  : Expr(CXXTemporaryObjectExprClass, writtenTy),
+    TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc),
+    Constructor(Cons), Args(0), NumArgs(NumArgs) {
+  if (NumArgs > 0) {
+    this->Args = new Stmt*[NumArgs];
+    for (unsigned i = 0; i < NumArgs; ++i)
+      this->Args[i] = Args[i];
+  }
+}
+
+CXXTemporaryObjectExpr::~CXXTemporaryObjectExpr() {
+  delete [] Args;
 }

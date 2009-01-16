@@ -120,21 +120,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   SourceLocation TyBeginLoc = TypeRange.getBegin();
   SourceRange FullRange = SourceRange(TyBeginLoc, RParenLoc);
 
-  if (const RecordType *RT = Ty->getAsRecordType()) {
-    // C++ 5.2.3p1:
-    // If the simple-type-specifier specifies a class type, the class type shall
-    // be complete.
-    //
-    if (!RT->getDecl()->isDefinition())
-      return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use)
-        << Ty << FullRange;
-
-    unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
-                                    "class constructors are not supported yet");
-    return Diag(TyBeginLoc, DiagID);
-  }
-
-  // C++ 5.2.3p1:
+  // C++ [expr.type.conv]p1:
   // If the expression list is a single expression, the type conversion
   // expression is equivalent (in definedness, and if defined in meaning) to the
   // corresponding cast expression.
@@ -146,7 +132,30 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                      Exprs[0], RParenLoc);
   }
 
-  // C++ 5.2.3p1:
+  if (const RecordType *RT = Ty->getAsRecordType()) {
+    CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
+    
+    if (NumExprs > 1 || Record->hasUserDeclaredConstructor()) {
+      CXXConstructorDecl *Constructor
+        = PerformInitializationByConstructor(Ty, Exprs, NumExprs,
+                                             TypeRange.getBegin(),
+                                             SourceRange(TypeRange.getBegin(),
+                                                         RParenLoc),
+                                             DeclarationName(),
+                                             IK_Direct);
+      
+      if (!Constructor)
+        return true;
+
+      return new CXXTemporaryObjectExpr(Constructor, Ty, TyBeginLoc, 
+                                        Exprs, NumExprs, RParenLoc);
+    }
+
+    // Fall through to value-initialize an object of class type that
+    // doesn't have a user-declared default constructor.
+  }
+
+  // C++ [expr.type.conv]p1:
   // If the expression list specifies more than a single value, the type shall
   // be a class with a suitably declared constructor.
   //
@@ -156,7 +165,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
 
   assert(NumExprs == 0 && "Expected 0 expressions");
 
-  // C++ 5.2.3p2:
+  // C++ [expr.type.conv]p2:
   // The expression T(), where T is a simple-type-specifier for a non-array
   // complete object type or the (possibly cv-qualified) void type, creates an
   // rvalue of the specified type, which is value-initialized.

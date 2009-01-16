@@ -399,9 +399,70 @@ public:
       CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// @brief Represents a C++ functional cast expression that builds a
+/// temporary object.
+///
+/// This expression type represents a C++ "functional" cast 
+/// (C++[expr.type.conv]) with N != 1 arguments that invokes a
+/// constructor to build a temporary object. If N == 0 but no
+/// constructor will be called (because the functional cast is
+/// performing a value-initialized an object whose class type has no
+/// user-declared constructors), CXXZeroInitValueExpr will represent
+/// the functional cast. Finally, with N == 1 arguments the functional
+/// cast expression will be represented by CXXFunctionalCastExpr.
+/// Example:
+/// @code
+/// struct X { X(int, float); }
+///
+/// X create_X() {
+///   return X(1, 3.14f); // creates a CXXTemporaryObjectExpr
+/// };
+/// @endcode
+class CXXTemporaryObjectExpr : public Expr {
+  SourceLocation TyBeginLoc;
+  SourceLocation RParenLoc;
+  CXXConstructorDecl *Constructor;
+  Stmt **Args;
+  unsigned NumArgs;
+
+public:
+  CXXTemporaryObjectExpr(CXXConstructorDecl *Cons, QualType writtenTy,
+                         SourceLocation tyBeginLoc, Expr **Args,
+                         unsigned NumArgs, SourceLocation rParenLoc);
+
+  ~CXXTemporaryObjectExpr();
+
+  SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  
+  typedef ExprIterator arg_iterator;
+  typedef ConstExprIterator const_arg_iterator;
+    
+  arg_iterator arg_begin() { return Args; }
+  arg_iterator arg_end() { return Args + NumArgs; }
+  const_arg_iterator arg_begin() const { return Args; }
+  const_arg_iterator arg_end() const { return Args + NumArgs; }
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(TyBeginLoc, RParenLoc);
+  }
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXTemporaryObjectExprClass;
+  }
+  static bool classof(const CXXTemporaryObjectExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXTemporaryObjectExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
 /// CXXZeroInitValueExpr - [C++ 5.2.3p2]
-/// Expression "T()" which creates a value-initialized Rvalue of non-class
-/// type T.
+/// Expression "T()" which creates a value-initialized rvalue of type
+/// T, which is either a non-class type or a class type without any
+/// user-defined constructors.
 ///
 class CXXZeroInitValueExpr : public Expr {
   SourceLocation TyBeginLoc;

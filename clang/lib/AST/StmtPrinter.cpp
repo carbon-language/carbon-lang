@@ -989,6 +989,19 @@ void StmtPrinter::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *Node) {
+  OS << Node->getType().getAsString();
+  OS << "(";
+  for (CXXTemporaryObjectExpr::arg_iterator Arg = Node->arg_begin(),
+                                         ArgEnd = Node->arg_end(); 
+       Arg != ArgEnd; ++Arg) {
+    if (Arg != Node->arg_begin())
+      OS << ", ";
+    PrintExpr(*Arg);
+  }
+  OS << ")";
+}
+
 void StmtPrinter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *Node) {
   OS << Node->getType().getAsString() << "()";
 }
