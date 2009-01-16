@@ -20,6 +20,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
+#include <set>
 
 using namespace clang;
 
@@ -476,6 +477,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 
   // Perform lookup into our base classes.
   BasePaths Paths;
+  Paths.setOrigin(Context.getTypeDeclType(cast<RecordDecl>(LookupCtx)));
 
   // Look for this member in our base classes
   if (!LookupInBases(cast<CXXRecordDecl>(LookupCtx), 
@@ -611,11 +613,19 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
                                    SourceRange LookupRange) {
   assert(Result.isAmbiguous() && "Lookup result must be ambiguous");
 
+  BasePaths *Paths = Result.getBasePaths();
   if (Result.getKind() == LookupResult::AmbiguousBaseSubobjects) {
-    BasePaths *Paths = Result.getBasePaths();
     QualType SubobjectType = Paths->front().back().Base->getType();
-    return Diag(NameLoc, diag::err_ambiguous_member_multiple_subobjects)
-      << Name << SubobjectType << LookupRange;
+    Diag(NameLoc, diag::err_ambiguous_member_multiple_subobjects)
+      << Name << SubobjectType << getAmbiguousPathsDisplayString(*Paths)
+      << LookupRange;
+
+    DeclContext::lookup_iterator Found = Paths->front().Decls.first;
+    while (isa<CXXMethodDecl>(*Found) && cast<CXXMethodDecl>(*Found)->isStatic())
+      ++Found;
+
+    Diag((*Found)->getLocation(), diag::note_ambiguous_member_found);
+    return true;
   } 
 
   assert(Result.getKind() == LookupResult::AmbiguousBaseSubobjectTypes &&
@@ -624,7 +634,13 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
   Diag(NameLoc, diag::err_ambiguous_member_multiple_subobject_types)
     << Name << LookupRange;
 
-  // FIXME: point out the members we found using notes.
+  std::set<ScopedDecl *> DeclsPrinted;
+  for (BasePaths::paths_iterator Path = Paths->begin(), PathEnd = Paths->end();
+       Path != PathEnd; ++Path) {
+    ScopedDecl *D = *Path->Decls.first;
+    if (DeclsPrinted.insert(D).second)
+      Diag(D->getLocation(), diag::note_ambiguous_member_found);
+  }
+
   return true;
 }
-

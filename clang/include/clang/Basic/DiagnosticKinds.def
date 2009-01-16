@@ -1542,9 +1542,11 @@ DIAG(err_ambiguous_derived_to_base_conv, ERROR,
 
 // C++ member name lookup
 DIAG(err_ambiguous_member_multiple_subobjects, ERROR,
-     "non-static member %0 found in multiple base-class subobjects of type %1")
+     "non-static member %0 found in multiple base-class subobjects of type %1:%2")
 DIAG(err_ambiguous_member_multiple_subobject_types, ERROR,
      "member %0 found in multiple base classes of different types")
+DIAG(note_ambiguous_member_found, NOTE,
+     "member found by ambiguous name lookup")
 
 // C++ operator overloading
 DIAG(err_operator_overload_needs_class_or_enum, ERROR,

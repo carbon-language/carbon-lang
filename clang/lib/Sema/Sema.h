@@ -25,6 +25,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
+#include <string>
 #include <vector>
 
 namespace llvm {
@@ -1334,6 +1335,7 @@ public:
                      BasePaths &Paths);
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range);
+  std::string getAmbiguousPathsDisplayString(BasePaths &Paths);
 
   //===--------------------------------------------------------------------===//
   // C++ Overloaded Operators [C++ 13.5]

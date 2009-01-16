@@ -49,6 +49,7 @@ void BasePaths::clear() {
 /// @brief Swaps the contents of this BasePaths structure with the
 /// contents of Other.
 void BasePaths::swap(BasePaths &Other) {
+  std::swap(Origin, Other.Origin);
   Paths.swap(Other.Paths);
   ClassSubobjects.swap(Other.ClassSubobjects);
   std::swap(FindAmbiguities, Other.FindAmbiguities);
@@ -86,6 +87,7 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
   if (Derived == Base)
     return false;
 
+  Paths.setOrigin(Derived);
   return LookupInBases(cast<CXXRecordType>(Derived->getAsRecordType())->getDecl(),
                        MemberLookupCriteria(Base), Paths);
 }
@@ -240,6 +242,26 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   // D -> B -> A, that will be used to illustrate the ambiguous
   // conversions in the diagnostic. We only print one of the paths
   // to each base class subobject.
+  std::string PathDisplayStr = getAmbiguousPathsDisplayString(Paths);
+  
+  Diag(Loc, diag::err_ambiguous_derived_to_base_conv)
+    << Derived << Base << PathDisplayStr << Range;
+  return true;
+}
+
+/// @brief Builds a string representing ambiguous paths from a
+/// specific derived class to different subobjects of the same base
+/// class.
+///
+/// This function builds a string that can be used in error messages
+/// to show the different paths that one can take through the
+/// inheritance hierarchy to go from the derived class to different
+/// subobjects of a base class. The result looks something like this:
+/// @code
+/// struct D -> struct B -> struct A
+/// struct D -> struct C -> struct A
+/// @endcode
+std::string Sema::getAmbiguousPathsDisplayString(BasePaths &Paths) {
   std::string PathDisplayStr;
   std::set<unsigned> DisplayedPaths;
   for (BasePaths::paths_iterator Path = Paths.begin(); 
@@ -248,14 +270,12 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
       // We haven't displayed a path to this particular base
       // class subobject yet.
       PathDisplayStr += "\n    ";
-      PathDisplayStr += Derived.getAsString();
+      PathDisplayStr += Paths.getOrigin().getAsString();
       for (BasePath::const_iterator Element = Path->begin(); 
            Element != Path->end(); ++Element)
         PathDisplayStr += " -> " + Element->Base->getType().getAsString(); 
     }
   }
-  
-  Diag(Loc, diag::err_ambiguous_derived_to_base_conv)
-    << Derived << Base << PathDisplayStr << Range;
-  return true;
+
+  return PathDisplayStr;
 }

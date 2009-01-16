@@ -92,6 +92,9 @@ namespace clang {
   /// refer to the same base class subobject of type A (the virtual
   /// one), there is no ambiguity.
   class BasePaths {
+    /// Origin - The type from which this search originated.
+    QualType Origin;
+
     /// Paths - The actual set of paths that can be taken from the
     /// derived class to the same base class.
     std::list<BasePath> Paths;
@@ -167,6 +170,11 @@ namespace clang {
     const CXXRecordType* getDetectedVirtual() const {
       return DetectedVirtual;
     }
+
+    /// @brief Retrieve the type from which this base-paths search
+    /// began
+    QualType getOrigin() const { return Origin; }
+    void setOrigin(QualType Type) { Origin = Type; }
 
     void clear();
 
