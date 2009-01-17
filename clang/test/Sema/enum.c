@@ -63,3 +63,6 @@ void foo() {
   enum xpto; // expected-warning{{ISO C forbids forward references to 'enum' types}}
   enum xpto; // expected-warning{{ISO C forbids forward references to 'enum' types}}
 }
+
+// <rdar://problem/6503878>
+typedef enum { X = 0 }; // expected-warning{{typedef requires a name}}

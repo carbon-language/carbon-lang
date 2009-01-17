@@ -741,9 +741,9 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
 
   // Permit typedefs without declarators as a Microsoft extension.
   if (!DS.isMissingDeclaratorOk()) {
-    if (getLangOptions().Microsoft &&
-        DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
-      Diag(DS.getSourceRange().getBegin(), diag::ext_no_declarators)
+    if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef &&
+        Tag && isa<EnumDecl>(Tag)) {
+      Diag(DS.getSourceRange().getBegin(), diag::warn_no_declarators)
         << DS.getSourceRange();
       return Tag;
     }

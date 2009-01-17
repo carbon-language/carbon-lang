@@ -599,8 +599,8 @@ DIAG(err_expected_unqualified_id, ERROR,
      "expected unqualified-id")
 DIAG(err_no_declarators, ERROR,
      "declaration does not declare anything")
-DIAG(ext_no_declarators, EXTENSION,
-     "typedef without a name is a Microsoft extension")
+DIAG(warn_no_declarators, WARNING,
+     "typedef requires a name")
 DIAG(err_func_def_no_params, ERROR,
      "function definition does not declare parameters")
 DIAG(err_expected_lparen_after_type, ERROR,
