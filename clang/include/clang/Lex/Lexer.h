@@ -69,6 +69,8 @@ class Lexer : public PreprocessorLexer {
   Lexer(const Lexer&);          // DO NOT IMPLEMENT
   void operator=(const Lexer&); // DO NOT IMPLEMENT
   friend class Preprocessor;
+  
+  void InitLexer(const char *BufStart, const char *BufPtr, const char *BufEnd);
 public:
     
   /// Lexer constructor - Create a new lexer object for the specified buffer

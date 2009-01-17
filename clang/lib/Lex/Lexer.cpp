@@ -57,13 +57,46 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
 // Lexer Class Implementation
 //===----------------------------------------------------------------------===//
 
+void Lexer::InitLexer(const char *BufStart, const char *BufPtr, 
+                      const char *BufEnd) {
+  InitCharacterInfo();
+  
+  BufferStart = BufStart;
+  BufferPtr = BufPtr;
+  BufferEnd = BufEnd;
+  
+  assert(BufEnd[0] == 0 &&
+         "We assume that the input buffer has a null character at the end"
+         " to simplify lexing!");
+  
+  Is_PragmaLexer = false;
+
+  // Start of the file is a start of line.
+  IsAtStartOfLine = true;
+  
+  // We are not after parsing a #.
+  ParsingPreprocessorDirective = false;
+  
+  // We are not after parsing #include.
+  ParsingFilename = false;
+  
+  // We are not in raw mode.  Raw mode disables diagnostics and interpretation
+  // of tokens (e.g. identifiers, thus disabling macro expansion).  It is used
+  // to quickly lex the tokens of the buffer, e.g. when handling a "#if 0" block
+  // or otherwise skipping over tokens.
+  LexingRawMode = false;
+  
+  // Default to not keeping comments.
+  ExtendedTokenMode = 0;
+}
+
 
 /// Lexer constructor - Create a new lexer object for the specified buffer
 /// with the specified preprocessor managing the lexing process.  This lexer
 /// assumes that the associated file buffer and Preprocessor objects will
 /// outlive it, so it doesn't take ownership of either of them.
 Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP,
-             const char *BufStart, const char *BufEnd)
+             const char *BufPtr, const char *BufEnd)
 // FIXME: This is really horrible and only needed for _Pragma lexers, split this
 // out of the main lexer path!
   : PreprocessorLexer(&PP, 
@@ -75,38 +108,15 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP,
   SourceManager &SourceMgr = PP.getSourceManager();
   const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(getFileID());
       
-  Is_PragmaLexer = false;
-  InitCharacterInfo();
-  
-  // BufferStart must always be InputFile->getBufferStart().
-  BufferStart = InputFile->getBufferStart();
-  
   // BufferPtr and BufferEnd can start out somewhere inside the current buffer.
   // If unspecified, they starts at the start/end of the buffer.
-  BufferPtr = BufStart ? BufStart : BufferStart;
-  BufferEnd = BufEnd ? BufEnd : InputFile->getBufferEnd();
-
-  assert(BufferEnd[0] == 0 &&
-         "We assume that the input buffer has a null character at the end"
-         " to simplify lexing!");
-  
-  // Start of the file is a start of line.
-  IsAtStartOfLine = true;
-
-  // We are not after parsing a #.
-  ParsingPreprocessorDirective = false;
-
-  // We are not after parsing #include.
-  ParsingFilename = false;
-
-  // We are not in raw mode.  Raw mode disables diagnostics and interpretation
-  // of tokens (e.g. identifiers, thus disabling macro expansion).  It is used
-  // to quickly lex the tokens of the buffer, e.g. when handling a "#if 0" block
-  // or otherwise skipping over tokens.
-  LexingRawMode = false;
+  const char *BufStart = InputFile->getBufferStart();
+  if (BufPtr == 0) BufPtr = BufStart;
+  if (BufEnd == 0) BufEnd = InputFile->getBufferEnd();
+      
+  InitLexer(BufStart, BufPtr, BufEnd);
   
   // Default to keeping comments if the preprocessor wants them.
-  ExtendedTokenMode = 0;
   SetCommentRetentionState(PP.getCommentRetentionState());
 }
 
@@ -114,37 +124,20 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP,
 /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
 /// range will outlive it, so it doesn't take ownership of it.
 Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
-             const char *BufStart, const char *BufEnd,
+             const char *BufPtr, const char *BufEnd,
              const llvm::MemoryBuffer *FromFile)
   : FileLoc(fileloc), Features(features) {
       
-  Is_PragmaLexer = false;
-  InitCharacterInfo();
-  
+
   // If a MemoryBuffer was specified, use its start as BufferStart. This affects
   // the source location objects produced by this lexer.
-  BufferStart = FromFile ? FromFile->getBufferStart() : BufStart;
-  BufferPtr = BufStart;
-  BufferEnd = BufEnd;
-  
-  assert(BufferEnd[0] == 0 &&
-         "We assume that the input buffer has a null character at the end"
-         " to simplify lexing!");
-  
-  // Start of the file is a start of line.
-  IsAtStartOfLine = true;
-  
-  // We are not after parsing a #.
-  ParsingPreprocessorDirective = false;
-  
-  // We are not after parsing #include.
-  ParsingFilename = false;
+  const char *BufStart = BufPtr;
+  if (FromFile) BufStart = FromFile->getBufferStart();
+
+  InitLexer(BufStart, BufPtr, BufEnd);
   
   // We *are* in raw mode.
   LexingRawMode = true;
-  
-  // Default to not keeping comments in raw mode.
-  ExtendedTokenMode = 0;
 }
 
 
