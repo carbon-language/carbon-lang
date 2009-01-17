@@ -285,11 +285,11 @@ void CallGraphNode::removeAnyCallEdgeTo(CallGraphNode *Callee) {
 /// removeOneAbstractEdgeTo - Remove one edge associated with a null callsite
 /// from this node to the specified callee function.
 void CallGraphNode::removeOneAbstractEdgeTo(CallGraphNode *Callee) {
-  for (unsigned i = CalledFunctions.size(); ; --i) {
-    assert(i && "Cannot find callee to remove!");
-    CallRecord &CR = CalledFunctions[i-1];
+  for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
+    assert(I != CalledFunctions.end() && "Cannot find callee to remove!");
+    CallRecord &CR = *I;
     if (CR.second == Callee && !CR.first.getInstruction()) {
-      CalledFunctions.erase(CalledFunctions.begin()+i-1);
+      CalledFunctions.erase(I);
       return;
     }
   }
@@ -299,10 +299,10 @@ void CallGraphNode::removeOneAbstractEdgeTo(CallGraphNode *Callee) {
 /// New CallSite instead.  Note that this method takes linear time, so it
 /// should be used sparingly.
 void CallGraphNode::replaceCallSite(CallSite Old, CallSite New) {
-  for (unsigned i = CalledFunctions.size(); ; --i) {
-    assert(i && "Cannot find callsite to replace!");
-    if (CalledFunctions[i-1].first == Old) {
-      CalledFunctions[i-1].first = New;
+  for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
+    assert(I != CalledFunctions.end() && "Cannot find callsite to replace!");
+    if (I->first == Old) {
+      I->first = New;
       return;
     }
   }
