@@ -793,21 +793,14 @@ private:
   ///
   FoldingSet<DIE> DiesSet;
 
-  /// Dies - List of all dies in the compile unit.
-  ///
-  std::vector<DIE *> Dies;
-
 public:
   CompileUnit(unsigned I, DIE *D)
     : ID(I), Die(D), GVToDieMap(),
-      GVToDIEntryMap(), Globals(), DiesSet(InitDiesSetSize), Dies()
+      GVToDIEntryMap(), Globals(), DiesSet(InitDiesSetSize)
   {}
 
   ~CompileUnit() {
     delete Die;
-
-    for (unsigned i = 0, N = Dies.size(); i < N; ++i)
-      delete Dies[i];
   }
 
   // Accessors.
@@ -1277,9 +1270,8 @@ private:
   // Attributes used to construct specific Dwarf sections.
   //
 
-  /// CompileUnits - All the compile units involved in this build.  The index
+  /// DW_CUs - All the compile units involved in this build.  The index
   /// of each entry in this vector corresponds to the sources in MMI.
-  std::vector<CompileUnit *> CompileUnits;
   DenseMap<Value *, CompileUnit *> DW_CUs;
 
   /// AbbreviationsSet - Used to uniquely define abbreviations.
@@ -1779,7 +1771,6 @@ private:
         DIDescriptor RTy = Elements.getElement(0);
         AddType(DW_Unit, &Buffer, DIType(RTy.getGV()));
 
-        //AddType(DW_Unit, &Buffer, Elements.getElement(0));
         // Add arguments.
         for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
           DIE *Arg = new DIE(DW_TAG_formal_parameter);
@@ -2894,7 +2885,6 @@ public:
   //
   DwarfDebug(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
   : Dwarf(OS, A, T, "dbg")
-  , CompileUnits()
   , AbbreviationsSet(InitAbbreviationsSetSize)
   , Abbreviations()
   , ValuesSet(InitValuesSetSize)
@@ -2908,8 +2898,6 @@ public:
   {
   }
   virtual ~DwarfDebug() {
-    for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i)
-      delete CompileUnits[i];
     for (unsigned j = 0, M = Values.size(); j < M; ++j)
       delete Values[j];
   }
