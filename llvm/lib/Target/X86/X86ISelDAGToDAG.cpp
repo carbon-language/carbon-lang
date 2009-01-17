@@ -817,7 +817,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
           AM.IndexReg = ShVal.getNode()->getOperand(0);
           ConstantSDNode *AddVal =
             cast<ConstantSDNode>(ShVal.getNode()->getOperand(1));
-          uint64_t Disp = AM.Disp + (AddVal->getZExtValue() << Val);
+          uint64_t Disp = AM.Disp + (AddVal->getSExtValue() << Val);
           if (!is64Bit || isInt32(Disp))
             AM.Disp = Disp;
           else
@@ -858,7 +858,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
             Reg = MulVal.getNode()->getOperand(0);
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(MulVal.getNode()->getOperand(1));
-            uint64_t Disp = AM.Disp + AddVal->getZExtValue() *
+            uint64_t Disp = AM.Disp + AddVal->getSExtValue() *
                                       CN->getZExtValue();
             if (!is64Bit || isInt32(Disp))
               AM.Disp = Disp;
@@ -874,19 +874,18 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     }
     break;
 
-  case ISD::ADD:
-    {
-      X86ISelAddressMode Backup = AM;
-      if (!MatchAddress(N.getNode()->getOperand(0), AM, false, Depth+1) &&
-          !MatchAddress(N.getNode()->getOperand(1), AM, false, Depth+1))
-        return false;
-      AM = Backup;
-      if (!MatchAddress(N.getNode()->getOperand(1), AM, false, Depth+1) &&
-          !MatchAddress(N.getNode()->getOperand(0), AM, false, Depth+1))
-        return false;
-      AM = Backup;
-    }
+  case ISD::ADD: {
+    X86ISelAddressMode Backup = AM;
+    if (!MatchAddress(N.getNode()->getOperand(0), AM, false, Depth+1) &&
+        !MatchAddress(N.getNode()->getOperand(1), AM, false, Depth+1))
+      return false;
+    AM = Backup;
+    if (!MatchAddress(N.getNode()->getOperand(1), AM, false, Depth+1) &&
+        !MatchAddress(N.getNode()->getOperand(0), AM, false, Depth+1))
+      return false;
+    AM = Backup;
     break;
+  }
 
   case ISD::OR:
     // Handle "X | C" as "X + C" iff X is known to have C bits clear.
