@@ -119,8 +119,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     if (X86ScalarSSEf64) {
       // We have an impenetrably clever algorithm for ui64->double only.
       setOperationAction(ISD::UINT_TO_FP   , MVT::i64  , Custom);
-      // If SSE i64 SINT_TO_FP is not available, expand i32 UINT_TO_FP.
-      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Expand);
+
+      // We have faster algorithm for ui32->single only.
+      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Custom);
     } else
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Promote);
   }
@@ -4744,51 +4745,44 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   return Result;
 }
 
-SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
-  MVT SrcVT = Op.getOperand(0).getValueType();
-  assert(SrcVT.getSimpleVT() == MVT::i64 && "Unknown UINT_TO_FP to lower!");
-  
-  // We only handle SSE2 f64 target here; caller can handle the rest.
-  if (Op.getValueType() != MVT::f64 || !X86ScalarSSEf64)
-    return SDValue();
-  
-  // This algorithm is not obvious.  Here it is in C code, more or less:
-/*
- double uint64_to_double( uint32_t hi, uint32_t lo )
-  {
-    static const __m128i exp = { 0x4330000045300000ULL, 0 };
-    static const __m128d bias = { 0x1.0p84, 0x1.0p52 };
+// LowerUINT_TO_FP_i64 - 64-bit unsigned integer to double expansion.
+SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op, SelectionDAG &DAG) {
+  // This algorithm is not obvious. Here it is in C code, more or less:
+  /*
+    double uint64_to_double( uint32_t hi, uint32_t lo ) {
+      static const __m128i exp = { 0x4330000045300000ULL, 0 };
+      static const __m128d bias = { 0x1.0p84, 0x1.0p52 };
 
-    // copy ints to xmm registers
-    __m128i xh = _mm_cvtsi32_si128( hi );
-    __m128i xl = _mm_cvtsi32_si128( lo );
+      // Copy ints to xmm registers.
+      __m128i xh = _mm_cvtsi32_si128( hi );
+      __m128i xl = _mm_cvtsi32_si128( lo );
 
-    // combine into low half of a single xmm register
-    __m128i x = _mm_unpacklo_epi32( xh, xl );
-    __m128d d;
-    double sd;
+      // Combine into low half of a single xmm register.
+      __m128i x = _mm_unpacklo_epi32( xh, xl );
+      __m128d d;
+      double sd;
 
-    // merge in appropriate exponents to give the integer bits the 
-    // right magnitude
-    x = _mm_unpacklo_epi32( x, exp );
+      // Merge in appropriate exponents to give the integer bits the right
+      // magnitude.
+      x = _mm_unpacklo_epi32( x, exp );
 
-    // subtract away the biases to deal with the IEEE-754 double precision
-    // implicit 1
-    d = _mm_sub_pd( (__m128d) x, bias );
+      // Subtract away the biases to deal with the IEEE-754 double precision
+      // implicit 1.
+      d = _mm_sub_pd( (__m128d) x, bias );
 
-    // All conversions up to here are exact. The correctly rounded result is 
-    // calculated using the
-    // current rounding mode using the following horizontal add.
-    d = _mm_add_sd( d, _mm_unpackhi_pd( d, d ) );
-    _mm_store_sd( &sd, d );   //since we are returning doubles in XMM, this
-    // store doesn't really need to be here (except maybe to zero the other
-    // double)
-    return sd;
-  }
-*/
+      // All conversions up to here are exact. The correctly rounded result is
+      // calculated using the current rounding mode using the following
+      // horizontal add.
+      d = _mm_add_sd( d, _mm_unpackhi_pd( d, d ) );
+      _mm_store_sd( &sd, d );   // Because we are returning doubles in XMM, this
+                                // store doesn't really need to be here (except
+                                // maybe to zero the other double)
+      return sd;
+    }
+  */
 
   // Build some magic constants.
-  std::vector<Constant*>CV0;
+  std::vector<Constant*> CV0;
   CV0.push_back(ConstantInt::get(APInt(32, 0x45300000)));
   CV0.push_back(ConstantInt::get(APInt(32, 0x43300000)));
   CV0.push_back(ConstantInt::get(APInt(32, 0)));
@@ -4796,7 +4790,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   Constant *C0 = ConstantVector::get(CV0);
   SDValue CPIdx0 = DAG.getConstantPool(C0, getPointerTy(), 4);
 
-  std::vector<Constant*>CV1;
+  std::vector<Constant*> CV1;
   CV1.push_back(ConstantFP::get(APFloat(APInt(64, 0x4530000000000000ULL))));
   CV1.push_back(ConstantFP::get(APFloat(APInt(64, 0x4330000000000000ULL))));
   Constant *C1 = ConstantVector::get(CV1);
@@ -4826,19 +4820,79 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   SDValue Unpck1 = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v4i32,
                                 XR1, XR2, UnpcklMask);
   SDValue CLod0 = DAG.getLoad(MVT::v4i32, DAG.getEntryNode(), CPIdx0,
-                         PseudoSourceValue::getConstantPool(), 0, false, 16);
+                              PseudoSourceValue::getConstantPool(), 0,
+                              false, 16);
   SDValue Unpck2 = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v4i32,
-                                Unpck1, CLod0, UnpcklMask);
+                               Unpck1, CLod0, UnpcklMask);
   SDValue XR2F = DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, Unpck2);
   SDValue CLod1 = DAG.getLoad(MVT::v2f64, CLod0.getValue(1), CPIdx1,
-                         PseudoSourceValue::getConstantPool(), 0, false, 16);
+                              PseudoSourceValue::getConstantPool(), 0,
+                              false, 16);
   SDValue Sub = DAG.getNode(ISD::FSUB, MVT::v2f64, XR2F, CLod1);
+
   // Add the halves; easiest way is to swap them into another reg first.
   SDValue Shuf = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v2f64,
                              Sub, Sub, ShufMask);
   SDValue Add = DAG.getNode(ISD::FADD, MVT::v2f64, Shuf, Sub);
   return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::f64, Add,
                      DAG.getIntPtrConstant(0));
+}
+
+// LowerUINT_TO_FP_i32 - 32-bit unsigned integer to float expansion.
+SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op, SelectionDAG &DAG) {
+  // FP constant to bias correct the final result.
+  SDValue Bias = DAG.getConstantFP(BitsToDouble(0x4330000000000000ULL),
+                                   MVT::f64);
+
+  // Load the 32-bit value into an XMM register.
+  SDValue Load = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4i32,
+                             DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
+                                         Op.getOperand(0),
+                                         DAG.getIntPtrConstant(0)));
+
+  Load = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::f64,
+                     DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, Load),
+                     DAG.getIntPtrConstant(0));
+
+  // Or the load with the bias.
+  SDValue Or = DAG.getNode(ISD::OR, MVT::v2i64,
+                           DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64,
+                                       DAG.getNode(ISD::SCALAR_TO_VECTOR,
+                                                   MVT::v2f64, Bias)),
+                           DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64,
+                                       DAG.getNode(ISD::SCALAR_TO_VECTOR,
+                                                   MVT::v2f64, Load)));
+  Or = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::f64,
+                   DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, Or),
+                   DAG.getIntPtrConstant(0));
+
+  // Subtract the bias.
+  SDValue Sub = DAG.getNode(ISD::FSUB, MVT::f64, Or, Bias);
+
+  // Handle final rounding.
+  return DAG.getNode(ISD::FP_ROUND, MVT::f32, Sub,
+                     DAG.getIntPtrConstant(0));
+}
+
+SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
+  MVT SrcVT = Op.getOperand(0).getValueType();
+
+  if (SrcVT == MVT::i64) {
+    // We only handle SSE2 f64 target here; caller can handle the rest.
+    if (Op.getValueType() != MVT::f64 || !X86ScalarSSEf64)
+      return SDValue();
+    
+    return LowerUINT_TO_FP_i64(Op, DAG);
+  } else if (SrcVT == MVT::i32) {
+    // We only handle SSE2 f32 target here; caller can handle the rest.
+    if (Op.getValueType() != MVT::f32 || !X86ScalarSSEf32)
+      return SDValue();
+    
+    return LowerUINT_TO_FP_i32(Op, DAG);
+  }
+
+  assert(0 && "Unknown UINT_TO_FP to lower!");
+  return SDValue();
 }
 
 std::pair<SDValue,SDValue> X86TargetLowering::
