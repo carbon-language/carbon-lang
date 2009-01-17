@@ -320,18 +320,16 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   while (CharNo && Lexer::isObviouslySimpleCharacter(*TokPtr))
     ++TokPtr, --CharNo, ++PhysOffset;
   
-  // If we have a character that may be a trigraph or escaped newline, create a
+  // If we have a character that may be a trigraph or escaped newline, use a
   // lexer to parse it correctly.
   if (CharNo != 0) {
-    // Create a lexer starting at this token position.
-    Lexer TheLexer(TokStart, *this, TokPtr);
-    Token Tok;
     // Skip over characters the remaining characters.
-    const char *TokStartPtr = TokPtr;
-    for (; CharNo; --CharNo)
-      TheLexer.getAndAdvanceChar(TokPtr, Tok);
-    
-    PhysOffset += TokPtr-TokStartPtr;
+    for (; CharNo; --CharNo) {
+      unsigned Size;
+      Lexer::getCharAndSizeNoWarn(TokPtr, Size, Features);
+      TokPtr += Size;
+      PhysOffset += Size;
+    }
   }
   
   return TokStart.getFileLocWithOffset(PhysOffset);
