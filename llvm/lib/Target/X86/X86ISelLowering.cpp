@@ -121,11 +121,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::UINT_TO_FP   , MVT::i64  , Custom);
 
       // We have faster algorithm for ui32->single only.
-#if 0
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Custom);
-#else
-      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Expand);
-#endif
     } else
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Promote);
   }
@@ -4874,8 +4870,17 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op, SelectionDAG &DAG) {
   SDValue Sub = DAG.getNode(ISD::FSUB, MVT::f64, Or, Bias);
 
   // Handle final rounding.
-  return DAG.getNode(ISD::FP_ROUND, MVT::f32, Sub,
-                     DAG.getIntPtrConstant(0));
+  MVT DestVT = Op.getValueType();
+
+  if (DestVT.bitsLT(MVT::f64)) {
+    return DAG.getNode(ISD::FP_ROUND, DestVT, Sub,
+                       DAG.getIntPtrConstant(0));
+  } else if (DestVT.bitsGT(MVT::f64)) {
+    return DAG.getNode(ISD::FP_EXTEND, DestVT, Sub);
+  }
+
+  // Handle final rounding.
+  return Sub;
 }
 
 SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
@@ -4885,13 +4890,9 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
     // We only handle SSE2 f64 target here; caller can handle the rest.
     if (Op.getValueType() != MVT::f64 || !X86ScalarSSEf64)
       return SDValue();
-    
+
     return LowerUINT_TO_FP_i64(Op, DAG);
   } else if (SrcVT == MVT::i32) {
-    // We only handle SSE2 f32 target here; caller can handle the rest.
-    if (Op.getValueType() != MVT::f32 || !X86ScalarSSEf32)
-      return SDValue();
-    
     return LowerUINT_TO_FP_i32(Op, DAG);
   }
 
