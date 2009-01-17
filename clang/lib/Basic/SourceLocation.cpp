@@ -37,6 +37,12 @@ SourceRange SourceRange::ReadVal(llvm::Deserializer& D) {
   return SourceRange(A,B);
 }
 
+FileID FullSourceLoc::getFileID() const {
+  assert(isValid());
+  return SrcMgr->getCanonicalFileID(*this);
+}
+
+
 FullSourceLoc FullSourceLoc::getInstantiationLoc() const {
   assert(isValid());
   return FullSourceLoc(SrcMgr->getInstantiationLoc(*this), *SrcMgr);

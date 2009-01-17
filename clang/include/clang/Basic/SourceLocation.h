@@ -68,10 +68,10 @@ public:
   enum {
     // FileID Layout:
     // bit 31: 0 -> FileID, 1 -> MacroID (invalid for FileID)
-    //     30...17 -> FileID of source location, index into SourceManager table.
-    FileIDBits  = 14,
-    //      0...16 -> Index into the chunk of the specified FileID.
-    FilePosBits = 32-1-FileIDBits,
+    //     30...17 -> ChunkID of location, index into SourceManager table.
+    ChunkIDBits  = 14,
+    //      0...16 -> Index into the chunk of the specified ChunkID.
+    FilePosBits = 32-1-ChunkIDBits,
     
     // MacroID Layout:
     // bit 31: 1 -> MacroID, 0 -> FileID (invalid for MacroID)
@@ -100,20 +100,20 @@ public:
   bool isValid() const { return ID != 0; }
   bool isInvalid() const { return ID == 0; }
   
-  static SourceLocation getFileLoc(unsigned FileID, unsigned FilePos) {
+  static SourceLocation getFileLoc(unsigned ChunkID, unsigned FilePos) {
     SourceLocation L;
     // If a FilePos is larger than (1<<FilePosBits), the SourceManager makes
-    // enough consequtive FileIDs that we have one for each chunk.
+    // enough consequtive ChunkIDs that we have one for each chunk.
     if (FilePos >= ChunkSize) {
-      FileID += FilePos >> FilePosBits;
+      ChunkID += FilePos >> FilePosBits;
       FilePos &= ChunkSize-1;
     }
     
-    // FIXME: Find a way to handle out of FileID bits!  Maybe MaxFileID is an
+    // FIXME: Find a way to handle out of ChunkID bits!  Maybe MaxFileID is an
     // escape of some sort?
-    assert(FileID < (1 << FileIDBits) && "Out of fileid's");
+    assert(ChunkID < (1 << ChunkIDBits) && "Out of ChunkID's");
     
-    L.ID = (FileID << FilePosBits) | FilePos;
+    L.ID = (ChunkID << FilePosBits) | FilePos;
     return L;
   }
   
@@ -138,16 +138,16 @@ public:
   }
   
   
-  /// getFileID - Return the file identifier for this SourceLocation.  This
-  /// FileID can be used with the SourceManager object to obtain an entire
+  /// getChunkID - Return the chunk identifier for this SourceLocation.  This
+  /// ChunkID can be used with the SourceManager object to obtain an entire
   /// include stack for a file position reference.
-  unsigned getFileID() const {
+  unsigned getChunkID() const {
     assert(isFileID() && "can't get the file id of a non-file sloc!");
     return ID >> FilePosBits;
   }
   
   /// getRawFilePos - Return the byte offset from the start of the file-chunk
-  /// referred to by FileID.  This method should not be used to get the offset
+  /// referred to by ChunkID.  This method should not be used to get the offset
   /// from the start of the file, instead you should use
   /// SourceManager::getDecomposedFileLoc.  This method will be 
   //  incorrect for large files.
@@ -172,14 +172,14 @@ public:
   /// getFileLocWithOffset - Return a source location with the specified offset
   /// from this file SourceLocation.
   SourceLocation getFileLocWithOffset(int Offset) const {
-    unsigned FileID = getFileID();
+    unsigned ChunkID = getChunkID();
     Offset += getRawFilePos();
     // Handle negative offsets correctly.
     while (Offset < 0) {
-      --FileID;
+      --ChunkID;
       Offset += ChunkSize;
     }
-    return getFileLoc(FileID, Offset);
+    return getFileLoc(ChunkID, Offset);
   }
   
   /// getRawEncoding - When a SourceLocation itself cannot be used, this returns
@@ -260,6 +260,8 @@ public:
     assert (SrcMgr && "SourceManager is NULL.");
     return *SrcMgr;
   }
+  
+  FileID getFileID() const;
   
   FullSourceLoc getInstantiationLoc() const;
   FullSourceLoc getSpellingLoc() const;

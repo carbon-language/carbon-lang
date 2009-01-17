@@ -321,7 +321,7 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
   // characters come from spelling(FileLoc)+Offset.
   SourceLocation InstLoc = SourceMgr.getInstantiationLoc(FileLoc);
   SourceLocation SpellingLoc = SourceMgr.getSpellingLoc(FileLoc);
-  SpellingLoc = SourceLocation::getFileLoc(SpellingLoc.getFileID(), CharNo);
+  SpellingLoc = SourceLocation::getFileLoc(SpellingLoc.getChunkID(), CharNo);
   return SourceMgr.getInstantiationLoc(SpellingLoc, InstLoc);
 }
 
@@ -335,7 +335,7 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
   // the file id from FileLoc with the offset specified.
   unsigned CharNo = Loc-BufferStart;
   if (FileLoc.isFileID())
-    return SourceLocation::getFileLoc(FileLoc.getFileID(), CharNo);
+    return SourceLocation::getFileLoc(FileLoc.getChunkID(), CharNo);
   
   // Otherwise, this is the _Pragma lexer case, which pretends that all of the
   // tokens are lexed from where the _Pragma was defined.

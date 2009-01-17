@@ -40,7 +40,7 @@ public:
 
   void HighlightRange(const SourceRange &R,
                       const SourceManager& SrcMgr,
-                      unsigned LineNo, unsigned FileID,
+                      unsigned LineNo, FileID FID,
                       std::string &CaretLine,
                       const std::string &SourceLine);
 

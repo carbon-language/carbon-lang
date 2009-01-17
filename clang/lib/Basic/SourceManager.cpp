@@ -121,7 +121,7 @@ FileID SourceManager::createFileID(const ContentCache *File,
   unsigned FileSize = File->getSize();
   if (FileSize+1 < (1 << SourceLocation::FilePosBits)) {
     FileIDs.push_back(FileIDInfo::get(IncludePos, 0, File, FileCharacter));
-    assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
+    assert(FileIDs.size() < (1 << SourceLocation::ChunkIDBits) &&
            "Ran out of file ID's!");
     return FileID::Create(FileIDs.size());
   }
@@ -138,7 +138,7 @@ FileID SourceManager::createFileID(const ContentCache *File,
     FileSize -= (1 << SourceLocation::FilePosBits);
   }
 
-  assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
+  assert(FileIDs.size() < (1 << SourceLocation::ChunkIDBits) &&
          "Ran out of file ID's!");
   return FileID::Create(Result);
 }
@@ -165,7 +165,7 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation SpellingLoc,
     // The instanitation point and source SpellingLoc have to exactly match to
     // reuse (for now).  We could allow "nearby" instantiations in the future.
     if (LastOne.getInstantiationLoc() != InstantLoc ||
-        LastOne.getSpellingLoc().getFileID() != SpellingLoc.getFileID())
+        LastOne.getSpellingLoc().getChunkID() != SpellingLoc.getChunkID())
       continue;
   
     // Check to see if the spellloc of the token came from near enough to reuse.
@@ -215,7 +215,7 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
 /// this is significantly cheaper to compute than the line number.  This returns
 /// zero if the column number isn't known.
 unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
-  if (Loc.getFileID() == 0) return 0;
+  if (Loc.getChunkID() == 0) return 0;
   
   std::pair<FileID, unsigned> LocInfo = getDecomposedFileLoc(Loc);
   unsigned FilePos = LocInfo.second;
@@ -232,7 +232,7 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
 /// the SourceLocation specifies.  This can be modified with #line directives,
 /// etc.
 const char *SourceManager::getSourceName(SourceLocation Loc) const {
-  if (Loc.getFileID() == 0) return "";
+  if (Loc.getChunkID() == 0) return "";
   
   // To get the source name, first consult the FileEntry (if one exists) before
   // the MemBuffer as this will avoid unnecessarily paging in the MemBuffer.
@@ -290,7 +290,7 @@ static void ComputeLineNumbers(ContentCache* FI) {
 /// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
 unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
-  if (Loc.getFileID() == 0) return 0;
+  if (Loc.getChunkID() == 0) return 0;
 
   ContentCache *Content;
   

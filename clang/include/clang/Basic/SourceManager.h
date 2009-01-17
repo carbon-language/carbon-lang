@@ -350,7 +350,7 @@ public:
   /// SourceLocation.  If this is a macro expansion, this transparently figures
   /// out which file includes the file being expanded into.
   SourceLocation getIncludeLoc(SourceLocation ID) const {
-    return getFIDInfo(getInstantiationLoc(ID).getFileID())->getIncludeLoc();
+    return getFIDInfo(getInstantiationLoc(ID).getChunkID())->getIncludeLoc();
   }
   
   /// getCharacterData - Return a pointer to the start of the specified location
@@ -415,9 +415,9 @@ public:
   /// the specified SourceLocation, if one exists.
   const SrcMgr::ContentCache* getContentCacheForLoc(SourceLocation Loc) const {
     Loc = getSpellingLoc(Loc);
-    unsigned FileID = Loc.getFileID();
-    assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
-    return FileIDs[FileID-1].getContentCache();
+    unsigned ChunkID = Loc.getChunkID();
+    assert(ChunkID-1 < FileIDs.size() && "Invalid FileID!");
+    return FileIDs[ChunkID-1].getContentCache();
   }
   
   /// getFileEntryForLoc - Return the FileEntry record for the spelling loc of
@@ -447,7 +447,7 @@ public:
     assert(Loc.isFileID() && "Isn't a File SourceLocation");
     
     // TODO: Add a flag "is first chunk" to SLOC.
-    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
+    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getChunkID());
       
     // If this file has been split up into chunks, factor in the chunk number
     // that the FileID references.
@@ -455,9 +455,9 @@ public:
     unsigned Offset = Loc.getRawFilePos();
     Offset += (ChunkNo << SourceLocation::FilePosBits);
 
-    assert(Loc.getFileID() >= ChunkNo && "Unexpected offset");
+    assert(Loc.getChunkID() >= ChunkNo && "Unexpected offset");
     
-    return std::make_pair(FileID::Create(Loc.getFileID()-ChunkNo), Offset);
+    return std::make_pair(FileID::Create(Loc.getChunkID()-ChunkNo), Offset);
   }
     
   /// getFullFilePos - This (efficient) method returns the offset from the start
@@ -485,7 +485,8 @@ public:
     return getFileCharacteristic(Loc) != SrcMgr::C_User;
   }
   SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const {
-    return getFIDInfo(getSpellingLoc(Loc).getFileID())->getFileCharacteristic();
+    return getFIDInfo(getSpellingLoc(Loc).getChunkID())
+                  ->getFileCharacteristic();
   }
   SrcMgr::CharacteristicKind getFileCharacteristic(FileID FID) const {
     return getFIDInfo(FID)->getFileCharacteristic();
