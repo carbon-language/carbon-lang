@@ -630,10 +630,10 @@ public:
   /// getAsDecl() method. This conversion permits the common-case
   /// usage in C and Objective-C where name lookup will always return
   /// a single declaration.
-  class LookupResult {
+  struct LookupResult {
     /// The kind of entity that is actually stored within the
     /// LookupResult object.
-    mutable enum {
+    enum {
       /// First is a single declaration (a Decl*), which may be NULL.
       SingleDecl,
 
@@ -649,11 +649,7 @@ public:
       /// by the LookupResult. Last is non-zero to indicate that the
       /// ambiguity is caused by two names found in base class
       /// subobjects of different types.
-      AmbiguousLookup,
-
-      /// We've moved from this object. There should not be any
-      /// attempts to look at its state.
-      Dead
+      AmbiguousLookup
     } StoredKind;
 
     /// The first lookup result, whose contents depend on the kind of
@@ -677,7 +673,6 @@ public:
     /// Decl*.
     ASTContext *Context;
 
-  public:
     /// @brief The kind of entity found by name lookup.
     enum LookupKind {
       /// @brief No entity found met the criteria.
@@ -721,30 +716,32 @@ public:
       AmbiguousBaseSubobjects
     };
 
-    LookupResult() : StoredKind(Dead), First(0), Last(0), Context(0) { }
+    static LookupResult CreateLookupResult(ASTContext &Context, Decl *D) {
+      LookupResult Result;
+      Result.StoredKind = SingleDecl;
+      Result.First = reinterpret_cast<uintptr_t>(D);
+      Result.Last = 0;
+      Result.Context = &Context;
+      return Result;
+    }
 
-    LookupResult(const LookupResult& Other);
+    static LookupResult CreateLookupResult(ASTContext &Context, 
+                                           IdentifierResolver::iterator F, 
+                                           IdentifierResolver::iterator L);
 
-    LookupResult(ASTContext &Context, Decl *D) 
-      : StoredKind(SingleDecl), First(reinterpret_cast<uintptr_t>(D)),
-        Last(0), Context(&Context) { }
+    static LookupResult CreateLookupResult(ASTContext &Context, 
+                                           DeclContext::lookup_iterator F, 
+                                           DeclContext::lookup_iterator L);
 
-    LookupResult(ASTContext &Context, 
-                 IdentifierResolver::iterator F, IdentifierResolver::iterator L);
-
-    LookupResult(ASTContext &Context, 
-                 DeclContext::lookup_iterator F, DeclContext::lookup_iterator L);
-
-    LookupResult(ASTContext &Context, BasePaths *Paths, 
-                 bool DifferentSubobjectTypes)
-      : StoredKind(AmbiguousLookup), 
-        First(reinterpret_cast<uintptr_t>(Paths)),
-        Last(DifferentSubobjectTypes? 1 : 0),
-        Context(&Context) { }
-
-    ~LookupResult();
-
-    LookupResult& operator=(const LookupResult& Other);
+    static LookupResult CreateLookupResult(ASTContext &Context, BasePaths *Paths, 
+                                           bool DifferentSubobjectTypes) {
+      LookupResult Result;
+      Result.StoredKind = AmbiguousLookup;
+      Result.First = reinterpret_cast<uintptr_t>(Paths);
+      Result.Last = DifferentSubobjectTypes? 1 : 0;
+      Result.Context = &Context;
+      return Result;
+    }
 
     LookupKind getKind() const;
 
