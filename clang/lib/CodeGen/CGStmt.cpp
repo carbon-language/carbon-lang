@@ -977,7 +977,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     
     TargetInfo::ConstraintInfo Info;
     bool result = Target.validateInputConstraint(InputConstraint.c_str(),
-                                                 NumConstraints, Info);
+                                                 S.begin_output_names(),
+                                                 S.end_output_names(),
+                                                 Info);
     assert(result && "Failed to parse input constraint"); result=result;
     
     if (i != 0 || S.getNumOutputs() > 0)

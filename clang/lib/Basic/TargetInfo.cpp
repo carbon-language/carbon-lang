@@ -188,7 +188,8 @@ bool TargetInfo::validateOutputConstraint(const char *Name,
 }
 
 bool TargetInfo::validateInputConstraint(const char *Name,
-                                         unsigned NumOutputs,
+                                         const std::string *OutputNamesBegin,
+                                         const std::string *OutputNamesEnd,
                                          ConstraintInfo &info) const {
   info = CI_None;
 
@@ -197,8 +198,9 @@ bool TargetInfo::validateInputConstraint(const char *Name,
     default:
       // Check if we have a matching constraint
       if (*Name >= '0' && *Name <= '9') {
+        unsigned NumOutputs = OutputNamesEnd - OutputNamesBegin;
         unsigned i = *Name - '0';
-        
+  
         // Check if matching constraint is out of bounds.
         if (i >= NumOutputs)
           return false;

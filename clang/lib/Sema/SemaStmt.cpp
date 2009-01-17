@@ -897,7 +897,8 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     
     TargetInfo::ConstraintInfo info;
     if (!Context.Target.validateInputConstraint(InputConstraint.c_str(),
-                                                NumOutputs, info)) {
+                                                &Names[0],
+                                                &Names[0] + NumOutputs, info)) {
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(),
                   diag::err_asm_invalid_input_constraint) << InputConstraint;

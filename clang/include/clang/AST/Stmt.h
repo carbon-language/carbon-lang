@@ -944,6 +944,16 @@ public:
   const_outputs_iterator begin_outputs() const { return &Exprs[0]; }
   const_outputs_iterator end_outputs() const { return &Exprs[0] + NumOutputs; }
   
+  // Input name iterator.
+  
+  const std::string *begin_output_names() const {
+    return &Names[0];
+  }
+  
+  const std::string *end_output_names() const {
+    return &Names[0] + NumOutputs;
+  }
+  
   // Child iterators  
   
   virtual child_iterator child_begin();
