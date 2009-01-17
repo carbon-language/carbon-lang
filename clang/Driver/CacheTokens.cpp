@@ -480,8 +480,7 @@ void PTHWriter::GeneratePTH() {
     if (!P.isAbsolute())
       continue;
 
-    PCHMap::iterator PI = PM.find(FE); // Have we already processed this file?
-    if (PI != PM.end()) continue;
+    assert(!PM.count(FE) && "fileinfo's are not uniqued on FileEntry?");
     
     const llvm::MemoryBuffer *B = C.getBuffer();
     if (!B) continue;
