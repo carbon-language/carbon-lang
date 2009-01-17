@@ -399,6 +399,11 @@ class Driver(object):
         if hasCombine:
             raise NotImplementedError,"-combine is not yet supported"
         
+        # Reject -Z* at the top level for now.
+        arg = args.getLastArg(self.parser.ZOption)
+        if arg:
+            raise Arguments.InvalidArgumentsError("%s: unsupported use of internal gcc option" % ' '.join(args.render(arg)))
+
         if (not inputs and 
             not args.getLastArg(self.parser.hashHashHashOption)):
             raise Arguments.InvalidArgumentsError("no input files")

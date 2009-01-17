@@ -132,7 +132,7 @@ class Darwin_AssembleTool(Tool):
         if (arglist.getLastArg(arglist.parser.m_kernelOption) or
             arglist.getLastArg(arglist.parser.staticOption) or
             arglist.getLastArg(arglist.parser.f_appleKextOption)):
-            if not arglist.getLastArg(arglist.parser.ZdynamicOption):
+            if not arglist.getLastArg(arglist.parser.dynamicOption):
                 cmd_args.append('-static')
 
         for arg in arglist.getArgs2(arglist.parser.WaOption,
@@ -291,7 +291,7 @@ class Darwin_X86_CompileTool(Tool):
             # The gcc spec is broken here, it refers to dynamic but
             # that has been translated. Start by being bug compatible.
             
-            # if not arglist.getLastArg(arglist.parser.ZdynamicOption):
+            # if not arglist.getLastArg(arglist.parser.dynamicOption):
             cmd_args.append('-D__STATIC__')
         else:
             cmd_args.append('-D__DYNAMIC__')
@@ -627,16 +627,16 @@ class Darwin_X86_LinkTool(Tool):
             # -lobjc-gnu. How do we wish to handle such things?
             pass
 
-        if not arglist.getLastArg(arglist.parser.ZdynamiclibOption):
-            if arglist.getLastArg(arglist.parser.Zforce_cpusubtype_ALLOption):
+        if not arglist.getLastArg(arglist.parser.dynamiclibOption):
+            if arglist.getLastArg(arglist.parser.force_cpusubtype_ALLOption):
                 self.addDarwinArch(cmd_args, arch, arglist)
                 cmd_args.append('-force_cpusubtype_all')
             else:
                 self.addDarwinSubArch(cmd_args, arch, arglist)
         
-            if arglist.getLastArg(arglist.parser.ZbundleOption):
+            if arglist.getLastArg(arglist.parser.bundleOption):
                 cmd_args.append('-bundle')
-            arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zbundle_loaderOption,
+            arglist.addAllArgsTranslated(cmd_args, arglist.parser.bundle_loaderOption,
                                          '-bundle_loader')
             arglist.addAllArgs(cmd_args, arglist.parser.client_nameOption)
             if arglist.getLastArg(arglist.parser.compatibility_versionOption):
@@ -646,19 +646,19 @@ class Darwin_X86_LinkTool(Tool):
             if arglist.getLastArg(arglist.parser.current_versionOption):
                 print >>sys.stderr, "-current_version only allowed with -dynamiclib"
                 sys.exit(1)
-            if arglist.getLastArg(arglist.parser.Zforce_flat_namespaceOption):
+            if arglist.getLastArg(arglist.parser.force_flat_namespaceOption):
                 cmd_args.append('-force_flat_namespace')
-            if arglist.getLastArg(arglist.parser.Zinstall_nameOption):
+            if arglist.getLastArg(arglist.parser.install_nameOption):
                 print >>sys.stderr, "-install_name only allowed with -dynamiclib"
                 sys.exit(1)
             arglist.addLastArg(cmd_args, arglist.parser.keep_private_externsOption)
             arglist.addLastArg(cmd_args, arglist.parser.private_bundleOption)
         else:
             cmd_args.append('-dylib')
-            if arglist.getLastArg(arglist.parser.ZbundleOption):
+            if arglist.getLastArg(arglist.parser.bundleOption):
                 print >>sys.stderr, "-bundle not allowed with -dynamiclib"
                 sys.exit(1)
-            if arglist.getLastArg(arglist.parser.Zbundle_loaderOption):
+            if arglist.getLastArg(arglist.parser.bundle_loaderOption):
                 print >>sys.stderr, "-bundle_loader not allowed with -dynamiclib"
                 sys.exit(1)
             if arglist.getLastArg(arglist.parser.client_nameOption):
@@ -669,17 +669,17 @@ class Darwin_X86_LinkTool(Tool):
             arglist.addAllArgsTranslated(cmd_args, arglist.parser.current_versionOption,
                                          '-dylib_current_version')
  
-            if arglist.getLastArg(arglist.parser.Zforce_cpusubtype_ALLOption):
+            if arglist.getLastArg(arglist.parser.force_cpusubtype_ALLOption):
                 self.addDarwinArch(cmd_args, arch, arglist)
                 # NOTE: We don't add -force_cpusubtype_ALL on this path. Ok.
             else:
                 self.addDarwinSubArch(cmd_args, arch, arglist)
         
-            if arglist.getLastArg(arglist.parser.Zforce_flat_namespaceOption):
+            if arglist.getLastArg(arglist.parser.force_flat_namespaceOption):
                 print >>sys.stderr, "-force_flat_namespace not allowed with -dynamiclib"
                 sys.exit(1)
 
-            arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zinstall_nameOption,
+            arglist.addAllArgsTranslated(cmd_args, arglist.parser.install_nameOption,
                                          '-dylib_install_name')
 
             if arglist.getLastArg(arglist.parser.keep_private_externsOption):
@@ -689,37 +689,37 @@ class Darwin_X86_LinkTool(Tool):
                 print >>sys.stderr, "-private_bundle not allowed with -dynamiclib"
                 sys.exit(1)
 
-        if arglist.getLastArg(arglist.parser.Zall_loadOption):
+        if arglist.getLastArg(arglist.parser.all_loadOption):
             cmd_args.append('-all_load')
 
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zallowable_clientOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.allowable_clientOption,
                                      '-allowable_client')
 
-        if arglist.getLastArg(arglist.parser.Zbind_at_loadOption):
+        if arglist.getLastArg(arglist.parser.bind_at_loadOption):
             cmd_args.append('-bind_at_load')
 
-        if arglist.getLastArg(arglist.parser.Zdead_stripOption):
+        if arglist.getLastArg(arglist.parser.dead_stripOption):
             cmd_args.append('-dead_strip')
         
-        if arglist.getLastArg(arglist.parser.Zno_dead_strip_inits_and_termsOption):
+        if arglist.getLastArg(arglist.parser.no_dead_strip_inits_and_termsOption):
             cmd_args.append('-no_dead_strip_inits_and_terms')
         
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zdylib_fileOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.dylib_fileOption,
                                      '-dylib_file')
 
-        if arglist.getLastArg(arglist.parser.ZdynamicOption):
+        if arglist.getLastArg(arglist.parser.dynamicOption):
             cmd_args.append('-dynamic')
 
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zexported_symbols_listOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.exported_symbols_listOption,
                                      '-exported_symbols_list')
 
-        if arglist.getLastArg(arglist.parser.Zflat_namespaceOption):
+        if arglist.getLastArg(arglist.parser.flat_namespaceOption):
             cmd_args.append('-flat_namespace')
 
         arglist.addAllArgs(cmd_args, arglist.parser.headerpad_max_install_namesOption)
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zimage_baseOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.image_baseOption,
                                      '-image_base')
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.ZinitOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.initOption,
                                      '-init')
 
         if not arglist.getLastArg(arglist.parser.m_macosxVersionMinOption):
@@ -741,16 +741,16 @@ class Darwin_X86_LinkTool(Tool):
                                      '-iphoneos_version_min')        
         arglist.addLastArg(cmd_args, arglist.parser.nomultidefsOption)
         
-        if arglist.getLastArg(arglist.parser.Zmulti_moduleOption):
+        if arglist.getLastArg(arglist.parser.multi_moduleOption):
             cmd_args.append('-multi_module')
         
-        if arglist.getLastArg(arglist.parser.Zsingle_moduleOption):
+        if arglist.getLastArg(arglist.parser.single_moduleOption):
             cmd_args.append('-single_module')
 
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zmultiply_definedOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.multiply_definedOption,
                                      '-multiply_defined')
 
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.ZmultiplydefinedunusedOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.multiply_defined_unusedOption,
                                      '-multiply_defined_unused')
 
         if arglist.getLastArg(arglist.parser.f_pieOption):
@@ -765,31 +765,31 @@ class Darwin_X86_LinkTool(Tool):
         arglist.addAllArgs(cmd_args, arglist.parser.sectorderOption)
         arglist.addAllArgs(cmd_args, arglist.parser.seg1addrOption)
         arglist.addAllArgs(cmd_args, arglist.parser.segprotOption)
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.ZsegaddrOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.segaddrOption,
                                      '-segaddr')
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zsegs_read_only_addrOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.segs_read_only_addrOption,
                                      '-segs_read_only_addr')
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zsegs_read_write_addrOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.segs_read_write_addrOption,
                                      '-segs_read_write_addr')
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zseg_addr_tableOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.seg_addr_tableOption,
                                      '-seg_addr_table')
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zfn_seg_addr_table_filenameOption,
-                                     '-fn_seg_addr_table_filename')
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.seg_addr_table_filenameOption,
+                                     '-seg_addr_table_filename')
         arglist.addAllArgs(cmd_args, arglist.parser.sub_libraryOption)
         arglist.addAllArgs(cmd_args, arglist.parser.sub_umbrellaOption)
         arglist.addAllArgsTranslated(cmd_args, arglist.parser.isysrootOption,
                                      '-syslibroot')
         arglist.addLastArg(cmd_args, arglist.parser.twolevel_namespaceOption)
         arglist.addLastArg(cmd_args, arglist.parser.twolevel_namespace_hintsOption)
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.ZumbrellaOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.umbrellaOption,
                                      '-umbrella')
         arglist.addAllArgs(cmd_args, arglist.parser.undefinedOption)
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zunexported_symbols_listOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.unexported_symbols_listOption,
                                      '-unexported_symbols_list')
-        arglist.addAllArgsTranslated(cmd_args, arglist.parser.Zweak_reference_mismatchesOption,
+        arglist.addAllArgsTranslated(cmd_args, arglist.parser.weak_reference_mismatchesOption,
                                      '-weak_reference_mismatches')
         
-        if not arglist.getLastArg(arglist.parser.Zweak_reference_mismatchesOption):
+        if not arglist.getLastArg(arglist.parser.weak_reference_mismatchesOption):
             cmd_args.append('-weak_reference_mismatches')
             cmd_args.append('non-weak')
 
@@ -853,7 +853,7 @@ class Darwin_X86_LinkTool(Tool):
             not arglist.getLastArg(arglist.parser.nostdlibOption) and
             not arglist.getLastArg(arglist.parser.nostartfilesOption)):
             # Derived from startfile spec.
-            if arglist.getLastArg(arglist.parser.ZdynamiclibOption):
+            if arglist.getLastArg(arglist.parser.dynamiclibOption):
                 # Derived from darwin_dylib1 spec.
                 if arglist.getLastArg(arglist.parser.m_iphoneosVersionMinOption):
                     cmd_args.append('-ldylib1.o')
@@ -863,7 +863,7 @@ class Darwin_X86_LinkTool(Tool):
                     else:
                         cmd_args.append('-ldylib1.10.5.o')
             else:
-                if arglist.getLastArg(arglist.parser.ZbundleOption):
+                if arglist.getLastArg(arglist.parser.bundleOption):
                     if not arglist.getLastArg(arglist.parser.staticOption):
                         cmd_args.append('-lbundle1.o')
                 else:
