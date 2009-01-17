@@ -668,7 +668,8 @@ IdentifierInfo* PTHManager::get(const char *NameStart, const char *NameEnd) {
 }
 
 
-PTHLexer* PTHManager::CreateLexer(FileID FID, const FileEntry* FE) {
+PTHLexer *PTHManager::CreateLexer(FileID FID) {
+  const FileEntry *FE = PP->getSourceManager().getFileEntryForID(FID);
   if (!FE)
     return 0;
   

@@ -128,7 +128,7 @@ public:
   /// CreateLexer - Return a PTHLexer that "lexes" the cached tokens for the
   ///  specified file.  This method returns NULL if no cached tokens exist.
   ///  It is the responsibility of the caller to 'delete' the returned object.
-  PTHLexer *CreateLexer(FileID FID, const FileEntry *FE);
+  PTHLexer *CreateLexer(FileID FID);
   
   unsigned getSpelling(SourceLocation Loc, const char *&Buffer);  
 private:

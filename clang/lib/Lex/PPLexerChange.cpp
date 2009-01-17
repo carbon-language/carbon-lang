@@ -74,7 +74,7 @@ void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir) {
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
   if (PTH) {
-    if (PTHLexer *PL = PTH->CreateLexer(FID, SourceMgr.getFileEntryForID(FID)))
+    if (PTHLexer *PL = PTH->CreateLexer(FID))
       return EnterSourceFileWithPTH(PL, CurDir);
   }
   EnterSourceFileWithLexer(new Lexer(FID, *this), CurDir);
