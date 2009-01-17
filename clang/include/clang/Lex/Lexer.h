@@ -78,9 +78,7 @@ public:
   /// assumes that the associated file buffer and Preprocessor objects will
   /// outlive it, so it doesn't take ownership of either of them.
   Lexer(FileID FID, Preprocessor &PP);
-  Lexer(SourceLocation FileLoc, Preprocessor &PP,
-        const char *BufStart, const char *BufEnd);
-  
+
   /// Lexer constructor - Create a new raw lexer object.  This object is only
   /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
   /// range will outlive it, so it doesn't take ownership of it.
@@ -91,6 +89,13 @@ public:
   /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
   /// range will outlive it, so it doesn't take ownership of it.
   Lexer(FileID FID, const SourceManager &SM, const LangOptions &Features);
+  
+  /// Create_PragmaLexer: Lexer constructor - Create a new lexer object for
+  /// _Pragma expansion.  This has a variety of magic semantics that this method
+  /// sets up.  It returns a new'd Lexer that must be delete'd when done.
+  static Lexer *Create_PragmaLexer(SourceLocation TokStartLoc, unsigned TokLen,
+                                   Preprocessor &PP);
+  
   
   /// getFeatures - Return the language features currently enabled.  NOTE: this
   /// lexer modifies features as a file is parsed!

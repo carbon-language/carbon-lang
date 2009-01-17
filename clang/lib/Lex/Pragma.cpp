@@ -157,19 +157,12 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   // Plop the string (including the newline and trailing null) into a buffer
   // where we can lex it.
   SourceLocation TokLoc = CreateString(&StrVal[0], StrVal.size(), StrLoc);
-  const char *StrData = SourceMgr.getCharacterData(TokLoc);
 
   // Make and enter a lexer object so that we lex and expand the tokens just
   // like any others.
-  Lexer *TL = new Lexer(TokLoc, *this,
-                        StrData, StrData+StrVal.size()-1 /* no null */);
-  
-  // Ensure that the lexer thinks it is inside a directive, so that end \n will
-  // return an EOM token.
-  TL->ParsingPreprocessorDirective = true;
-  
-  // This lexer really is for _Pragma.
-  TL->Is_PragmaLexer = true;
+  Lexer *TL = Lexer::Create_PragmaLexer(TokLoc,
+                                        // do not include the null in the count.
+                                        StrVal.size()-1, *this);
 
   EnterSourceFileWithLexer(TL, 0);
 

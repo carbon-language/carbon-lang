@@ -108,27 +108,6 @@ Lexer::Lexer(FileID FID, Preprocessor &PP)
   SetCommentRetentionState(PP.getCommentRetentionState());
 }
 
-/// Lexer constructor - Create a new lexer object for the specified buffer
-/// with the specified preprocessor managing the lexing process.  This lexer
-/// assumes that the associated file buffer and Preprocessor objects will
-/// outlive it, so it doesn't take ownership of either of them.
-Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP,
-             const char *BufPtr, const char *BufEnd)
-// FIXME: This is really horrible and only needed for _Pragma lexers, split this
-// out of the main lexer path!
-  : PreprocessorLexer(&PP, 
-                      PP.getSourceManager().getCanonicalFileID(
-                      PP.getSourceManager().getSpellingLoc(fileloc))),
-    FileLoc(fileloc),
-    Features(PP.getLangOptions()) {
-      
-  InitLexer(PP.getSourceManager().getBuffer(getFileID())->getBufferStart(),
-            BufPtr, BufEnd);
-  
-  // Default to keeping comments if the preprocessor wants them.
-  SetCommentRetentionState(PP.getCommentRetentionState());
-}
-
 /// Lexer constructor - Create a new raw lexer object.  This object is only
 /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
 /// range will outlive it, so it doesn't take ownership of it.
@@ -154,6 +133,50 @@ Lexer::Lexer(FileID FID, const SourceManager &SM, const LangOptions &features)
   
   // We *are* in raw mode.
   LexingRawMode = true;
+}
+
+/// Create_PragmaLexer: Lexer constructor - Create a new lexer object for
+/// _Pragma expansion.  This has a variety of magic semantics that this method
+/// sets up.  It returns a new'd Lexer that must be delete'd when done.
+///
+/// On entrance to this routine, TokStartLoc is a macro location which has a
+/// spelling loc that indicates the bytes to be lexed for the token and an
+/// instantiation location that indicates where all lexed tokens should be
+/// "expanded from".
+///
+/// FIXME: It would really be nice to make _Pragma just be a wrapper around a
+/// normal lexer that remaps tokens as they fly by.  This would require making
+/// Preprocessor::Lex virtual.  Given that, we could just dump in a magic lexer
+/// interface that could handle this stuff.  This would pull GetMappedTokenLoc
+/// out of the critical path of the lexer!
+///
+Lexer *Lexer::Create_PragmaLexer(SourceLocation TokStartLoc, unsigned TokLen,
+                                 Preprocessor &PP) {
+  SourceManager &SM = PP.getSourceManager();
+  SourceLocation SpellingLoc = SM.getSpellingLoc(TokStartLoc);
+
+  // Create the lexer as if we were going to lex the file normally.
+  Lexer *L = new Lexer(SM.getCanonicalFileID(SpellingLoc), PP);
+  
+  // Now that the lexer is created, change the start/end locations so that we
+  // just lex the subsection of the file that we want.  This is lexing from a
+  // scratch buffer.
+  const char *StrData = SM.getCharacterData(SpellingLoc);
+  
+  L->BufferPtr = StrData;
+  L->BufferEnd = StrData+TokLen;
+
+  // Set the SourceLocation with the remapping information.  This ensures that
+  // GetMappedTokenLoc will remap the tokens as they are lexed.
+  L->FileLoc = TokStartLoc;
+  
+  // Ensure that the lexer thinks it is inside a directive, so that end \n will
+  // return an EOM token.
+  L->ParsingPreprocessorDirective = true;
+  
+  // This lexer really is for _Pragma.
+  L->Is_PragmaLexer = true;
+  return L;
 }
 
 
