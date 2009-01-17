@@ -34,6 +34,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   DoubleAlign = 64;
   LongDoubleWidth = 64;
   LongDoubleAlign = 64;
+  IntMaxTWidth = 64;
   SizeType = UnsignedLong;
   PtrDiffType = SignedLong;
   IntMaxType = SignedLongLong;

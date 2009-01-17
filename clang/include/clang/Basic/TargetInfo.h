@@ -44,6 +44,7 @@ protected:
   unsigned char LongDoubleWidth, LongDoubleAlign;
   unsigned char LongWidth, LongAlign;
   unsigned char LongLongWidth, LongLongAlign;
+  unsigned char IntMaxTWidth;
   const char *DescriptionString;
   const char *UserLabelPrefix;
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
@@ -150,8 +151,7 @@ public:
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.  
   unsigned getIntMaxTWidth() const {
-    // FIXME: implement correctly.
-    return 64;
+    return IntMaxTWidth;
   }
   
   /// getUserLabelPrefix - This returns the default value of the
