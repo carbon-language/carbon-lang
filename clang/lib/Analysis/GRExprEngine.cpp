@@ -698,10 +698,8 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
 
 /// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
 ///  nodes by processing the 'effects' of a switch statement.
-void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
-  
-  typedef SwitchNodeBuilder::iterator iterator;
-  
+void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {  
+  typedef SwitchNodeBuilder::iterator iterator;  
   const GRState* St = builder.getState();  
   Expr* CondE = builder.getCondition();
   SVal  CondV = GetSVal(St, CondE);
@@ -711,38 +709,32 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
     UndefBranches.insert(N);
     return;
   }
-  
-  const GRState*  DefaultSt = St;
-  
-  // While most of this can be assumed (such as the signedness), having it
-  // just computed makes sure everything makes the same assumptions end-to-end.
-  
-  unsigned bits = getContext().getTypeSize(CondE->getType());
 
-  APSInt V1(bits, false);
-  APSInt V2 = V1;
+  const GRState*  DefaultSt = St;  
   bool DefaultFeasible = false;
   
   for (iterator I = builder.begin(), EI = builder.end(); I != EI; ++I) {
-
     CaseStmt* Case = cast<CaseStmt>(I.getCase());
+
+    // Evaluate the LHS of the case value.
+    Expr::EvalResult V1;
+    bool b = Case->getLHS()->Evaluate(V1, getContext());    
     
-    // Evaluate the case.
-    if (!Case->getLHS()->isIntegerConstantExpr(V1, getContext(), 0, true)) {
-      assert (false && "Case condition must evaluate to an integer constant.");
-      return;
-    }
-    
+    // Sanity checks.  These go away in Release builds.
+    assert(b && V1.Val.isInt() && !V1.HasSideEffects 
+             && "Case condition must evaluate to an integer constant.");
+    b = b; // silence unused variable warning    
+    assert(V1.Val.getInt().getBitWidth() == 
+           getContext().getTypeSize(CondE->getType()));
+           
     // Get the RHS of the case, if it exists.
+    Expr::EvalResult V2;
     
     if (Expr* E = Case->getRHS()) {
-      if (!E->isIntegerConstantExpr(V2, getContext(), 0, true)) {
-        assert (false &&
-                "Case condition (RHS) must evaluate to an integer constant.");
-        return ;
-      }
-      
-      assert (V1 <= V2);
+      b = E->Evaluate(V2, getContext());
+      assert(b && V2.Val.isInt() && !V2.HasSideEffects 
+             && "Case condition must evaluate to an integer constant.");
+      b = b; // silence unused variable warning
     }
     else
       V2 = V1;
@@ -752,12 +744,10 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
     //  This should be easy once we have "ranges" for NonLVals.
         
     do {
-      nonloc::ConcreteInt CaseVal(getBasicVals().getValue(V1));
-      
+      nonloc::ConcreteInt CaseVal(getBasicVals().getValue(V1.Val.getInt()));      
       SVal Res = EvalBinOp(BinaryOperator::EQ, CondV, CaseVal);
       
-      // Now "assume" that the case matches.
-      
+      // Now "assume" that the case matches.      
       bool isFeasible = false;      
       const GRState* StNew = Assume(St, Res, true, isFeasible);
       
@@ -783,11 +773,11 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       }
 
       // Concretize the next value in the range.
-      if (V1 == V2)
+      if (V1.Val.getInt() == V2.Val.getInt())
         break;
       
-      ++V1;
-      assert (V1 <= V2);
+      ++V1.Val.getInt();
+      assert (V1.Val.getInt() <= V2.Val.getInt());
       
     } while (true);
   }

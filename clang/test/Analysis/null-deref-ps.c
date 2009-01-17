@@ -188,3 +188,26 @@ void f11b(unsigned i) {
   }
 }
 
+// Test case for switch statements with weird case arms.
+typedef int     BOOL, *PBOOL, *LPBOOL;
+typedef long    LONG_PTR, *PLONG_PTR;
+typedef unsigned long ULONG_PTR, *PULONG_PTR;
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
+typedef LONG_PTR LRESULT;
+typedef struct _F12ITEM *HF12ITEM;
+
+void f12(HF12ITEM i, char *q) {
+  char *p = 0;
+  switch ((DWORD_PTR) i) {
+  case 0 ... 10:
+    p = q;
+    break;
+  case (DWORD_PTR) ((HF12ITEM) - 65535):
+    return;
+  default:
+    return;
+  }
+  
+  *p = 1; // no-warning
+}
+
