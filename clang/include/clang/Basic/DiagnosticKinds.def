@@ -416,6 +416,8 @@ DIAG(err_expected_asm_operand, ERROR,
      "expected string literal or '[' for asm operand")
 DIAG(err_expected_selector_for_method, ERROR,
      "expected selector for Objective-C method")
+DIAG(err_object_as_method_param, ERROR,
+     "can not use an object as parameter to a method")
 DIAG(err_nsobject_attribute, ERROR,
      "__attribute ((NSObject)) is for pointer types only")
 

@@ -1349,6 +1349,11 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
       }
       else if (argType->isFunctionType())
         argType = Context.getPointerType(argType);
+      else if (argType->isObjCInterfaceType()) {
+        // FIXME! provide more precise location for the parameter
+        Diag(MethodLoc, diag::err_object_as_method_param);
+        return 0;
+      }
     } else
       argType = Context.getObjCIdType();
     ParmVarDecl* Param;
