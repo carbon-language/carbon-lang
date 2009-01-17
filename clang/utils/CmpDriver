@@ -135,17 +135,21 @@ def main():
     infoA = captureDriverInfo(driverA, args)
     infoB = captureDriverInfo(driverB, args)
 
+    differ = False
+
     # Compare stdout.
     if infoA.stdout != infoB.stdout:
         print '-- STDOUT DIFFERS -'
         print 'A: ',infoA.stdout
         print 'B: ',infoB.stdout
+        differ = True
 
     # Compare stderr.
     if infoA.stderr != infoB.stderr:
         print '-- STDERR DIFFERS -'
         print 'A: ',infoA.stderr
         print 'B: ',infoB.stderr
+        differ = True
 
     # Compare commands.
     for i,(a,b) in enumerate(zip(infoA.commands, infoB.commands)):
@@ -164,12 +168,17 @@ def main():
                 else:
                     print 'mismatch: A: %s' % aElt
                     print '          B: %s' % bElt
+        differ = True
 
     # Compare result codes.
     if infoA.exitCode != infoB.exitCode:
         print '-- EXIT CODES DIFFER -'
         print 'A: ',infoA.exitCode
         print 'B: ',infoB.exitCode
+        differ = True
+
+    if differ:
+        sys.exit(1)
 
 if __name__ == '__main__':
    main()
