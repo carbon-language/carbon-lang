@@ -77,7 +77,7 @@ public:
   /// with the specified preprocessor managing the lexing process.  This lexer
   /// assumes that the associated file buffer and Preprocessor objects will
   /// outlive it, so it doesn't take ownership of either of them.
-  Lexer(SourceLocation FileLoc, Preprocessor &PP);
+  Lexer(FileID FID, Preprocessor &PP);
   Lexer(SourceLocation FileLoc, Preprocessor &PP,
         const char *BufStart, const char *BufEnd);
   

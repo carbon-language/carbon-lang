@@ -94,17 +94,12 @@ void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
 /// with the specified preprocessor managing the lexing process.  This lexer
 /// assumes that the associated file buffer and Preprocessor objects will
 /// outlive it, so it doesn't take ownership of either of them.
-Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP)
-// FIXME: This is really horrible and only needed for _Pragma lexers, split this
-// out of the main lexer path!
-: PreprocessorLexer(&PP, 
-                    PP.getSourceManager().getCanonicalFileID(
-                               PP.getSourceManager().getSpellingLoc(fileloc))),
-  FileLoc(fileloc),
-  Features(PP.getLangOptions()) {
+Lexer::Lexer(FileID FID, Preprocessor &PP)
+  : PreprocessorLexer(&PP, FID),
+    FileLoc(PP.getSourceManager().getLocForStartOfFile(FID)),
+    Features(PP.getLangOptions()) {
   
-  SourceManager &SourceMgr = PP.getSourceManager();
-  const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(getFileID());
+  const llvm::MemoryBuffer *InputFile = PP.getSourceManager().getBuffer(FID);
   
   InitLexer(InputFile->getBufferStart(), InputFile->getBufferStart(),
             InputFile->getBufferEnd());
@@ -124,7 +119,7 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP,
   : PreprocessorLexer(&PP, 
                       PP.getSourceManager().getCanonicalFileID(
                       PP.getSourceManager().getSpellingLoc(fileloc))),
-                      FileLoc(fileloc),
+    FileLoc(fileloc),
     Features(PP.getLangOptions()) {
       
   InitLexer(PP.getSourceManager().getBuffer(getFileID())->getBufferStart(),

@@ -74,16 +74,10 @@ void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir) {
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
   if (PTH) {
-    PTHLexer *PL = PTH->CreateLexer(FID, SourceMgr.getFileEntryForID(FID));
-
-    if (PL) {
-      EnterSourceFileWithPTH(PL, CurDir);
-      return;
-    }
+    if (PTHLexer *PL = PTH->CreateLexer(FID, SourceMgr.getFileEntryForID(FID)))
+      return EnterSourceFileWithPTH(PL, CurDir);
   }
-  
-  Lexer *TheLexer = new Lexer(SourceMgr.getLocForStartOfFile(FID), *this);
-  EnterSourceFileWithLexer(TheLexer, CurDir);
+  EnterSourceFileWithLexer(new Lexer(FID, *this), CurDir);
 }  
 
 /// EnterSourceFileWithLexer - Add a source file to the top of the include stack
