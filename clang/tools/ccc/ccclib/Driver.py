@@ -197,7 +197,29 @@ class Driver(object):
                 if res:
                     sys.exit(res)
             elif isinstance(j, Jobs.PipedJob):
-                raise NotImplementedError,"Piped jobs aren't implemented yet."
+                import subprocess
+                procs = []
+                for sj in j.commands:
+                    if self.cccEcho:
+                        print ' '.join(map(repr,sj.getArgv()))
+                        sys.stdout.flush()
+
+                    if not procs:
+                        stdin = None
+                    else:
+                        stdin = procs[-1].stdout
+                    if sj is j.commands[-1]:
+                        stdout = None
+                    else:
+                        stdout = subprocess.PIPE
+                    procs.append(subprocess.Popen(sj.getArgv(), 
+                                                  executable=sj.executable,
+                                                  stdin=stdin,
+                                                  stdout=stdout))
+                for proc in procs:
+                    res = proc.wait()
+                    if res:
+                        sys.exit(res)
             else:
                 raise ValueError,'Encountered unknown job.'
 
@@ -585,7 +607,9 @@ class Driver(object):
         if hasPipe:
             self.claim(hasPipe)
             # FIXME: Hack, override -pipe till we support it.
-            hasPipe = None
+            if hasSaveTemps:
+                self.warning('-pipe ignored because -save-temps specified')
+                hasPipe = None
         # Claim these here. Its not completely accurate but any warnings
         # about these being unused are likely to be noise anyway.
         if hasSaveTemps:

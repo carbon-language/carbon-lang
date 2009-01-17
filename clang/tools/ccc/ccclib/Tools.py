@@ -141,7 +141,7 @@ class Darwin_AssembleTool(Tool):
 
         cmd_args.extend(arglist.render(output))
         if isinstance(input.source, Jobs.PipedJob):
-            cmd_args.append('-')
+            pass
         else:
             cmd_args.extend(arglist.renderAsInput(input.source))
             
