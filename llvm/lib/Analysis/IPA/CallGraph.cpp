@@ -260,10 +260,10 @@ void CallGraphNode::dump() const { print(cerr); }
 /// specified call site.  Note that this method takes linear time, so it
 /// should be used sparingly.
 void CallGraphNode::removeCallEdgeFor(CallSite CS) {
-  for (unsigned i = CalledFunctions.size(); ; --i) {
-    assert(i && "Cannot find callsite to remove!");
-    if (CalledFunctions[i-1].first == CS) {
-      CalledFunctions.erase(CalledFunctions.begin()+i-1);
+  for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
+    assert(I != CalledFunctions.end() && "Cannot find callsite to remove!");
+    if (I->first == CS) {
+      CalledFunctions.erase(I);
       return;
     }
   }
