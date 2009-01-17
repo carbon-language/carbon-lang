@@ -1332,15 +1332,11 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       
   case DumpRawTokens: {
     SourceManager &SM = PP.getSourceManager();
-    std::pair<const char*,const char*> File =
-      SM.getBufferData(SM.getMainFileID());
     // Start lexing the specified input file.
-    Lexer RawLex(SM.getLocForStartOfFile(SM.getMainFileID()),
-                 PP.getLangOptions(), File.first, File.second);
+    Lexer RawLex(SM.getMainFileID(), SM, PP.getLangOptions());
     RawLex.SetKeepWhitespaceMode(true);
 
     Token RawTok;
-
     RawLex.LexFromRawLexer(RawTok);
     while (RawTok.isNot(tok::eof)) {
       PP.DumpToken(RawTok, true);

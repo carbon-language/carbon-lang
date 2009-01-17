@@ -87,6 +87,11 @@ public:
         const char *BufStart, const char *BufEnd,
         const llvm::MemoryBuffer *FromFile = 0);
   
+  /// Lexer constructor - Create a new raw lexer object.  This object is only
+  /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
+  /// range will outlive it, so it doesn't take ownership of it.
+  Lexer(FileID FID, const SourceManager &SM, const LangOptions &Features);
+  
   /// getFeatures - Return the language features currently enabled.  NOTE: this
   /// lexer modifies features as a file is parsed!
   const LangOptions &getFeatures() const { return Features; }
@@ -166,6 +171,7 @@ public:
     ExtendedTokenMode = Mode ? 1 : 0;
   }
   
+  const char *getBufferStart() const { return BufferStart; }
   
   /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.

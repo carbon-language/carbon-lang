@@ -344,11 +344,8 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
   RewriteBuffer &RB = R.getEditBuffer(FID);
 
   const SourceManager &SourceMgr = PP.getSourceManager();
-  std::pair<const char*, const char*> File = SourceMgr.getBufferData(FID);
-  const char *BufferStart = File.first;
-  
-  Lexer L(SourceMgr.getLocForStartOfFile(FID),
-          PP.getLangOptions(), File.first, File.second);
+  Lexer L(FID, SourceMgr, PP.getLangOptions());
+  const char *BufferStart = L.getBufferStart();
   
   // Inform the preprocessor that we want to retain comments as tokens, so we 
   // can highlight them.

@@ -127,7 +127,6 @@ Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
              const char *BufPtr, const char *BufEnd,
              const llvm::MemoryBuffer *FromFile)
   : FileLoc(fileloc), Features(features) {
-      
 
   // If a MemoryBuffer was specified, use its start as BufferStart. This affects
   // the source location objects produced by this lexer.
@@ -135,6 +134,20 @@ Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
   if (FromFile) BufStart = FromFile->getBufferStart();
 
   InitLexer(BufStart, BufPtr, BufEnd);
+  
+  // We *are* in raw mode.
+  LexingRawMode = true;
+}
+
+/// Lexer constructor - Create a new raw lexer object.  This object is only
+/// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
+/// range will outlive it, so it doesn't take ownership of it.
+Lexer::Lexer(FileID FID, const SourceManager &SM, const LangOptions &features)
+  : FileLoc(SM.getLocForStartOfFile(FID)), Features(features) {
+  const llvm::MemoryBuffer *FromFile = SM.getBuffer(FID);
+
+  InitLexer(FromFile->getBufferStart(), FromFile->getBufferStart(), 
+            FromFile->getBufferEnd());
   
   // We *are* in raw mode.
   LexingRawMode = true;

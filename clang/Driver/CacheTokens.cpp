@@ -486,8 +486,7 @@ void PTHWriter::GeneratePTH() {
     if (!B) continue;
 
     FileID FID = SM.createFileID(FE, SourceLocation(), SrcMgr::C_User);
-    Lexer L(SM.getLocForStartOfFile(FID), LOpts,
-            B->getBufferStart(), B->getBufferEnd(), B);
+    Lexer L(FID, SM, LOpts);
     PM[FE] = LexTokens(L);
   }
 

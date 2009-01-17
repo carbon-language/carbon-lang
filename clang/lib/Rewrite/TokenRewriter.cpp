@@ -22,11 +22,8 @@ TokenRewriter::TokenRewriter(FileID FID, SourceManager &SM,
                              const LangOptions &LangOpts) {
   ScratchBuf.reset(new ScratchBuffer(SM));
   
-  std::pair<const char*,const char*> File = SM.getBufferData(FID);
-  
   // Create a lexer to lex all the tokens of the main file in raw mode.
-  Lexer RawLex(SM.getLocForStartOfFile(FID),
-               LangOpts, File.first, File.second);
+  Lexer RawLex(FID, SM, LangOpts);
   
   // Return all comments and whitespace as tokens.
   RawLex.SetKeepWhitespaceMode(true);
