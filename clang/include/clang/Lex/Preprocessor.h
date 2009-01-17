@@ -455,7 +455,6 @@ public:
   /// location in the appropriate MemoryBuffer.
   char getSpelledCharacterAt(SourceLocation SL) const {
     if (PTH) {
-      SL = SourceMgr.getSpellingLoc(SL);
       const char *Data;
       if (PTH->getSpelling(SL, Data))
         return *Data;

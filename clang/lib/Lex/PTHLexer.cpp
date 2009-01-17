@@ -311,8 +311,9 @@ unsigned PTHManager::getSpelling(FileID FID, unsigned FPos,
 }
 
 unsigned PTHManager::getSpelling(SourceLocation Loc, const char *&Buffer) {
-  std::pair<FileID, unsigned> LocInfo =
-    PP->getSourceManager().getDecomposedFileLoc(Loc);
+  SourceManager &SM = PP->getSourceManager();
+  Loc = SM.getSpellingLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedFileLoc(Loc);
   return getSpelling(LocInfo.first, LocInfo.second, Buffer);
 }
 

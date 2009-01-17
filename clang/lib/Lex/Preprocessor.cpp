@@ -199,8 +199,7 @@ std::string Preprocessor::getSpelling(const Token &Tok) const {
   const char* TokStart;
   
   if (PTH) {
-    SourceLocation SLoc = SourceMgr.getSpellingLoc(Tok.getLocation());
-    if (unsigned Len = PTH->getSpelling(SLoc, TokStart)) {
+    if (unsigned Len = PTH->getSpelling(Tok.getLocation(), TokStart)) {
       assert(!Tok.needsCleaning());
       return std::string(TokStart, TokStart+Len);
     }
@@ -254,8 +253,7 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
     if (CurPTHLexer) {
       Len = CurPTHLexer.get()->getSpelling(Tok.getLocation(), Buffer);      
     } else {
-      Len = PTH->getSpelling(SourceMgr.getSpellingLoc(Tok.getLocation()),
-                             Buffer);      
+      Len = PTH->getSpelling(Tok.getLocation(), Buffer);      
     }
 
     // Did we find a spelling?  If so return its length.  Otherwise fall
