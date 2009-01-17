@@ -121,7 +121,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::UINT_TO_FP   , MVT::i64  , Custom);
 
       // We have faster algorithm for ui32->single only.
+#if 0
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Custom);
+#else
+      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Expand);
+#endif
     } else
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Promote);
   }
