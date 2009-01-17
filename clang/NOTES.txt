@@ -98,14 +98,6 @@ TODO: Fast #Import:
        #undef.
 
 //===---------------------------------------------------------------------===//
-
-TODO: New language feature: Configuration queries:
-  - Instead of #ifdef __POWERPC__, use "if (strcmp(`cpu`, __POWERPC__))", or
-    some other, better, syntax.
-  - Use it to increase the number of "architecture-clean" #import'd files,
-    allowing a single index to be used for all fat slices.
-
-//===---------------------------------------------------------------------===//
 // Specifying targets:  -triple and -arch
 ===---------------------------------------------------------------------===//
 
