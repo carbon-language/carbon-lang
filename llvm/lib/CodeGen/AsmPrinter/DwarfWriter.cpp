@@ -1795,19 +1795,19 @@ private:
           DIDescriptor Element = Elements.getElement(i);
           DIE *ElemDie = NULL;
           if (Element.getTag() == dwarf::DW_TAG_subprogram)
-	    ElemDie = CreateSubprogramDIE(DW_Unit, 
-					  DISubprogram(Element.getGV()));
+            ElemDie = CreateSubprogramDIE(DW_Unit, 
+                                          DISubprogram(Element.getGV()));
           else if (Element.getTag() == dwarf::DW_TAG_variable) // ???
             ElemDie = CreateGlobalVariableDIE(DW_Unit, 
                                               DIGlobalVariable(Element.getGV()));
           else {
             DIDerivedType DT = DIDerivedType(Element.getGV());
             assert (DT.isDerivedType(DT.getTag()) 
-		    && "Unexpected struct element type");
-	    ElemDie = new DIE(DT.getTag());
-	    AddType(DW_Unit, ElemDie, DT);
+                    && "Unexpected struct element type");
+            ElemDie = new DIE(DT.getTag());
+            AddType(DW_Unit, ElemDie, DT);
           }
-	  Buffer.AddChild(ElemDie);
+          Buffer.AddChild(ElemDie);
         }
       }
       break;
@@ -1845,8 +1845,8 @@ private:
     if (L != H) {
       AddDIEntry(DW_Subrange, DW_AT_type, DW_FORM_ref4, IndexTy);
       if (L)
-	AddSInt(DW_Subrange, DW_AT_lower_bound, 0, L);
-        AddSInt(DW_Subrange, DW_AT_upper_bound, 0, H);
+        AddSInt(DW_Subrange, DW_AT_lower_bound, 0, L);
+      AddSInt(DW_Subrange, DW_AT_upper_bound, 0, H);
     }
     Buffer.AddChild(DW_Subrange);
   }
@@ -1905,14 +1905,14 @@ private:
 
   /// CreateSubprogramDIE - Create new DIE using SP.
   DIE *CreateSubprogramDIE(CompileUnit *DW_Unit,
-			   const  DISubprogram &SP,
-			   bool IsConstructor = false) {
+                           const  DISubprogram &SP,
+                           bool IsConstructor = false) {
     DIE *SPDie = new DIE(DW_TAG_subprogram);
     AddString(SPDie, DW_AT_name, DW_FORM_string, SP.getName());
     const std::string &LinkageName = SP.getLinkageName();
     if (!LinkageName.empty())
       AddString(SPDie, DW_AT_MIPS_linkage_name, DW_FORM_string, 
-		LinkageName);
+                LinkageName);
     AddSourceLine(SPDie, &SP);
 
     DICompositeType SPTy = SP.getType();
@@ -1925,10 +1925,10 @@ private:
     // Add arguments.
     if (!Args.isNull())
       for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
-	DIE *Arg = new DIE(DW_TAG_formal_parameter);
-	AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
-	AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
-	SPDie->AddChild(Arg);
+        DIE *Arg = new DIE(DW_TAG_formal_parameter);
+        AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
+        AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
+        SPDie->AddChild(Arg);
       }
     
     if (!SP.isLocalToUnit())
@@ -2606,7 +2606,7 @@ private:
     Asm->EOL("FDE address range");
 
     EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves, 
-		   false);
+                   false);
 
     Asm->EmitAlignment(2, 0, 0, false);
     EmitLabel("debug_frame_end", DebugFrameInfo.Number);
@@ -2637,7 +2637,7 @@ private:
       Asm->EOL("Offset of Compilation Unit Info");
       
       EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),
-		     true);
+                     true);
       Asm->EOL("Compilation Unit Length");
       
       std::map<std::string, DIE *> &Globals = Unit->getGlobals();
@@ -3266,7 +3266,7 @@ private:
     // If the corresponding function is static, this should not be
     // externally visible.
     if (linkage != Function::InternalLinkage &&
-	linkage != Function::PrivateLinkage) {
+        linkage != Function::PrivateLinkage) {
       if (const char *GlobalEHDirective = TAI->getGlobalEHDirective())
         O << GlobalEHDirective << EHFrameInfo.FnName << "\n";
     }
@@ -3344,7 +3344,7 @@ private:
       // Indicate locations of function specific  callee saved registers in
       // frame.
       EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves, 
-		     true);
+                     true);
 
       // On Darwin the linker honors the alignment of eh_frame, which means it
       // must be 8-byte on 64-bit targets to match what gcc does.  Otherwise
