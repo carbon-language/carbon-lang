@@ -44,7 +44,10 @@ namespace N {
   }
 }
 
-void N::f1::foo(int) { }
+void N::f1::foo(int i) { 
+  f1::member = i; 
+  f1::type &ir = i;
+}
 
 namespace N {
   float& f1(int x) {
@@ -93,4 +96,17 @@ void test_a() {
   a::a::a::i = 4;
 }
   
+struct Undef {
+  typedef int type;
+
+  Undef::type member;
+
+  static int size = sizeof(Undef); // expected-error{{invalid application of 'sizeof' to an incomplete type 'struct Undef'}}
+
+  int f();
+};
+
+int Undef::f() {
+  return sizeof(Undef);
+}
 

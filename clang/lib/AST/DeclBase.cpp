@@ -442,37 +442,15 @@ DeclContext *DeclContext::getPrimaryContext() {
     return static_cast<NamespaceDecl*>(this)->getOriginalNamespace();
 
   case Decl::Enum:
-#if 0
-    // FIXME: See the comment for CXXRecord, below.
-    // The declaration associated with the enumeration type is our
-    // primary context.
-    return Context.getTypeDeclType(static_cast<EnumDecl*>(this))
-             ->getAsEnumType()->getDecl();
-#else
-    return this;
-#endif
-
   case Decl::Record:
-  case Decl::CXXRecord: {
-    // The declaration associated with the type is be our primary
-    // context. 
-#if 0
-    // FIXME: This is what we expect to do. However, it doesn't work
-    // because ASTContext::setTagDefinition changes the result of
-    // Context.getTypeDeclType, meaning that our "primary" declaration
-    // of a RecordDecl/CXXRecordDecl will change, and we won't be able
-    // to find any values inserted into the earlier "primary"
-    // declaration. We need better tracking of redeclarations and
-    // definitions.
-    QualType Type = Context.getTypeDeclType(static_cast<RecordDecl*>(this));
-    return Type->getAsRecordType()->getDecl();
-#else
-    // FIXME: This hack will work for now, because the declaration we
-    // create when we're defining the record is the one we'll use as
-    // the definition later.
+  case Decl::CXXRecord:
+    // If this is a tag type that has a definition or is currently
+    // being defined, that definition is our primary context.
+    if (TagType *TagT = cast_or_null<TagType>(cast<TagDecl>(this)->TypeForDecl))
+      if (TagT->isBeingDefined() || 
+          (TagT->getDecl() && TagT->getDecl()->isDefinition()))
+        return TagT->getDecl();
     return this;
-#endif
-  }
 
   case Decl::ObjCMethod:
     return this;

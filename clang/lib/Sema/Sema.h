@@ -319,7 +319,7 @@ public:
   virtual DeclTy *BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS, 
                                               RecordDecl *Record);
 
-  virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
+  virtual DeclTy *ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,
                            IdentifierInfo *Name, SourceLocation NameLoc,
                            AttributeList *Attr,

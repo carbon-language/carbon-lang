@@ -253,17 +253,20 @@ public:
   /// Prints information about this FullSourceLoc to stderr. Useful for
   ///  debugging.
   void dump() const;
+
+  friend inline bool 
+  operator==(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {
+    return LHS.getRawEncoding() == RHS.getRawEncoding() &&
+          LHS.SrcMgr == RHS.SrcMgr;
+  }
+
+  friend inline bool 
+  operator!=(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {
+    return !(LHS == RHS);
+  }
+
 };
-
-inline bool operator==(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {
-  return LHS.getRawEncoding() == RHS.getRawEncoding() &&
-         &LHS.getManager() == &RHS.getManager();
-}
-
-inline bool operator!=(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {
-  return !(LHS == RHS);
-}
-  
+ 
 }  // end namespace clang
 
 #endif

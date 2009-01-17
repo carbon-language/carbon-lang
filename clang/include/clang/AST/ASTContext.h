@@ -543,14 +543,6 @@ private:
   void InitBuiltinTypes();
   void InitBuiltinType(QualType &R, BuiltinType::Kind K);
   
-  /// setTagDefinition - Used by RecordDecl::completeDefinition and
-  /// EnumDecl::completeDefinition to inform 
-  /// about which RecordDecl/EnumDecl serves as the definition of a particular
-  /// struct/union/class/enum.
-  void setTagDefinition(TagDecl* R);
-  friend class EnumDecl;
-  friend class RecordDecl;
-
   // Return the ObjC type encoding for a given type.
   void getObjCEncodingForTypeImpl(QualType t, std::string &S, 
                                   bool ExpandPointedToStructures,

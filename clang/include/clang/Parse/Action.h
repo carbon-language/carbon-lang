@@ -310,7 +310,7 @@ public:
     TK_Declaration, // Fwd decl of a tag:   'struct foo;'
     TK_Definition   // Definition of a tag: 'struct foo { int X; } Y;'
   };
-  virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
+  virtual DeclTy *ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,
                            IdentifierInfo *Name, SourceLocation NameLoc,
                            AttributeList *Attr,

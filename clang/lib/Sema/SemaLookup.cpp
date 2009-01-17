@@ -625,6 +625,7 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
       ++Found;
 
     Diag((*Found)->getLocation(), diag::note_ambiguous_member_found);
+
     return true;
   } 
 

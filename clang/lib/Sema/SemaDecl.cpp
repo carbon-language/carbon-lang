@@ -2813,9 +2813,9 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
 
 /// ActOnTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
 /// former case, Name will be non-null.  In the later case, Name will be null.
-/// TagType indicates what kind of tag this is. TK indicates whether this is a
+/// TagSpec indicates what kind of tag this is. TK indicates whether this is a
 /// reference/declaration/definition of a tag.
-Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
+Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr,
@@ -2825,7 +2825,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
          "Nameless record must be a definition!");
   
   TagDecl::TagKind Kind;
-  switch (TagType) {
+  switch (TagSpec) {
   default: assert(0 && "Unknown tag type!");
   case DeclSpec::TST_struct: Kind = TagDecl::TK_struct; break;
   case DeclSpec::TST_union:  Kind = TagDecl::TK_union; break;
@@ -2837,6 +2837,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   DeclContext *DC = CurContext;
   DeclContext *LexicalContext = CurContext;
   ScopedDecl *PrevDecl = 0;
+
+  bool Invalid = false;
 
   if (Name && SS.isNotEmpty()) {
     // We have a nested-name tag ('struct foo::bar').
@@ -2898,6 +2900,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
           // Recover by making this an anonymous redefinition.
           Name = 0;
           PrevDecl = 0;
+          Invalid = true;
         } else {
           // If this is a use, just return the declaration we found.
 
@@ -2913,15 +2916,29 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
             if (TagDecl *Def = PrevTagDecl->getDefinition(Context)) {
               Diag(NameLoc, diag::err_redefinition) << Name;
               Diag(Def->getLocation(), diag::note_previous_definition);
-              // If this is a redefinition, recover by making this struct be
-              // anonymous, which will make any later references get the previous
-              // definition.
+              // If this is a redefinition, recover by making this
+              // struct be anonymous, which will make any later
+              // references get the previous definition.
               Name = 0;
               PrevDecl = 0;
+              Invalid = true;
+            } else {
+              // If the type is currently being defined, complain
+              // about a nested redefinition.
+              TagType *Tag = cast<TagType>(Context.getTagDeclType(PrevTagDecl));
+              if (Tag->isBeingDefined()) {
+                Diag(NameLoc, diag::err_nested_redefinition) << Name;
+                Diag(PrevTagDecl->getLocation(), 
+                     diag::note_previous_definition);
+                Name = 0;
+                PrevDecl = 0;
+                Invalid = true;
+              }
             }
+
             // Okay, this is definition of a previously declared or referenced
             // tag PrevDecl. We're going to create a new Decl for it.
-          } 
+          }
         }
         // If we get here we have (another) forward declaration or we
         // have a definition.  Just create a new decl.        
@@ -2944,6 +2961,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
         Diag(PrevDecl->getLocation(), diag::note_previous_definition);
         Name = 0;
         PrevDecl = 0;
+        Invalid = true;
       } else {
         // The existing declaration isn't relevant to us; we're in a
         // new scope, so clear out the previous declaration.
@@ -3034,16 +3052,23 @@ CreateNewDecl:
       New->addAttr(new PackedAttr(Alignment * 8));
   }
 
+  if (Invalid)
+    New->setInvalidDecl();
+
   if (Attr)
     ProcessDeclAttributeList(New, Attr);
 
-  // If we're declaring or defining 
+  // If we're declaring or defining a tag in function prototype scope
+  // in C, note that this type can only be used within the function.
   if (Name && S->isFunctionPrototypeScope() && !getLangOptions().CPlusPlus)
     Diag(Loc, diag::warn_decl_in_param_list) << Context.getTagDeclType(New);
 
   // Set the lexical context. If the tag has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
   New->setLexicalDeclContext(LexicalContext);
+
+  if (TK == TK_Definition)
+    New->startDefinition();
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {
@@ -3332,22 +3357,6 @@ void Sema::ActOnFields(Scope* S,
   assert(EnclosingDecl && "missing record or interface decl");
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
   
-  if (Record) {
-    QualType RecordType = Context.getTypeDeclType(Record);
-    if (RecordType->getAsRecordType()->getDecl()->isDefinition()) {
-      RecordDecl *Def = RecordType->getAsRecordType()->getDecl();
-      // Diagnose code like:
-      //     struct S { struct S {} X; };
-      // We discover this when we complete the outer S.  Reject and ignore the
-      // outer S.
-      Diag(Def->getLocation(), diag::err_nested_redefinition)
-        << Def->getDeclName();
-      Diag(RecLoc, diag::note_previous_definition);
-      Record->setInvalidDecl();
-      return;
-    }
-  }
-  
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
   llvm::SmallVector<FieldDecl*, 32> RecFields;
@@ -3564,19 +3573,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   EnumDecl *Enum = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
   QualType EnumType = Context.getTypeDeclType(Enum);
   
-  if (EnumType->getAsEnumType()->getDecl()->isDefinition()) {
-    EnumDecl *Def = EnumType->getAsEnumType()->getDecl();
-    // Diagnose code like:
-    //   enum e0 {
-    //     E0 = sizeof(enum e0 { E1 })
-    //   };
-    Diag(Def->getLocation(), diag::err_nested_redefinition)
-      << Enum->getDeclName();
-    Diag(Enum->getLocation(), diag::note_previous_definition);
-    Enum->setInvalidDecl();
-    return;
-  }
-
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
   // emit a warning.

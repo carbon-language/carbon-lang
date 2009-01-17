@@ -144,13 +144,8 @@ void EnumDecl::Destroy(ASTContext& C) {
 
 void EnumDecl::completeDefinition(ASTContext &C, QualType NewType) {
   assert(!isDefinition() && "Cannot redefine enums!");
-  setDefinition(true);
-
   IntegerType = NewType;
-
-  // Let ASTContext know that this is the defining EnumDecl for this
-  // type.
-  C.setTagDefinition(this);
+  TagDecl::completeDefinition();
 }
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
@@ -311,6 +306,20 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
 
+void TagDecl::startDefinition() {
+  cast<TagType>(TypeForDecl)->decl.setPointer(this);
+  cast<TagType>(TypeForDecl)->decl.setInt(1);
+}
+
+void TagDecl::completeDefinition() {
+  assert((!TypeForDecl || 
+          cast<TagType>(TypeForDecl)->decl.getPointer() == this) &&
+         "Attempt to redefine a tag definition?");
+  IsDefinition = true;
+  cast<TagType>(TypeForDecl)->decl.setPointer(this);
+  cast<TagType>(TypeForDecl)->decl.setInt(0);
+}
+
 TagDecl* TagDecl::getDefinition(ASTContext& C) const {
   QualType T = C.getTypeDeclType(const_cast<TagDecl*>(this));
   TagDecl* D = cast<TagDecl>(cast<TagType>(T)->getDecl());  
@@ -351,12 +360,7 @@ void RecordDecl::Destroy(ASTContext& C) {
 /// complete.
 void RecordDecl::completeDefinition(ASTContext& C) {
   assert(!isDefinition() && "Cannot redefine record!");
-
-  setDefinition(true);
-  
-  // Let ASTContext know that this is the defining RecordDecl for this
-  // type.
-  C.setTagDefinition(this);
+  TagDecl::completeDefinition();
 }
 
 //===----------------------------------------------------------------------===//

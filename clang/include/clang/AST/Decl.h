@@ -887,6 +887,9 @@ class TypeDecl : public ScopedDecl {
   /// ASTContext::getTagDeclType, and ASTContext::getTemplateTypeParmType.
   Type *TypeForDecl;
   friend class ASTContext;
+  friend class DeclContext;
+  friend class TagDecl;
+
 protected:
   TypeDecl(Kind DK, DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id, ScopedDecl *PrevDecl)
@@ -965,6 +968,16 @@ public:
     return IsDefinition;
   }
   
+  /// @brief Starts the definition of this tag declaration.
+  /// 
+  /// This method should be invoked at the beginning of the definition
+  /// of this tag declaration. It will set the tag type into a state
+  /// where it is in the process of being defined.
+  void startDefinition();
+
+  /// @brief Completes the definition of this tag declaration.
+  void completeDefinition();
+
   /// getDefinition - Returns the TagDecl that actually defines this 
   ///  struct/union/class/enum.  When determining whether or not a
   ///  struct/union/class/enum is completely defined, one should use this method
@@ -998,6 +1011,14 @@ public:
     return D->getKind() >= TagFirst && D->getKind() <= TagLast;
   }
   static bool classof(const TagDecl *D) { return true; }
+
+  static DeclContext *castToDeclContext(const TagDecl *D) {
+    return static_cast<DeclContext *>(const_cast<TagDecl*>(D));
+  }
+  static TagDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<TagDecl *>(const_cast<DeclContext*>(DC));
+  }
+
 protected:
   void setDefinition(bool V) { IsDefinition = V; }
 };

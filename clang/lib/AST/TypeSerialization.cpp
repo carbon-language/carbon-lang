@@ -258,7 +258,8 @@ Type* TagType::CreateImpl(ASTContext& Context, Deserializer& D) {
   Types.push_back(T);
   
   // Deserialize the decl.
-  T->decl = cast<TagDecl>(D.ReadOwnedPtr<Decl>(Context));
+  T->decl.setPointer(cast<TagDecl>(D.ReadOwnedPtr<Decl>(Context)));
+  T->decl.setInt(0);
 
   return T;
 }

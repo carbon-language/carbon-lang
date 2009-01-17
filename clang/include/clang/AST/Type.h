@@ -1194,19 +1194,30 @@ protected:
 };
 
 class TagType : public Type {
-  TagDecl *decl;
+  /// Stores the TagDecl associated with this type. The decl will
+  /// point to the TagDecl that actually defines the entity (or is a
+  /// definition in progress), if there is such a definition. The
+  /// single-bit value will be non-zero when this tag is in the
+  /// process of being defined.
+  llvm::PointerIntPair<TagDecl *, 1> decl;
   friend class ASTContext;
+  friend class TagDecl;
 
 protected:
   // FIXME: We'll need the user to pass in information about whether
   // this type is dependent or not, because we don't have enough
   // information to compute it here.
   TagType(TagDecl *D, QualType can) 
-    : Type(Tagged, can, /*Dependent=*/false), decl(D) {}
+    : Type(Tagged, can, /*Dependent=*/false), decl(D, 0) {}
 
 public:   
-  TagDecl *getDecl() const { return decl; }
+  TagDecl *getDecl() const { return decl.getPointer(); }
   
+  /// @brief Determines whether this type is in the process of being
+  /// defined. 
+  bool isBeingDefined() const { return decl.getInt(); }
+  void setBeingDefined(bool Def) { decl.setInt(Def? 1 : 0); }
+
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Tagged; }

@@ -1076,11 +1076,6 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
-void ASTContext::setTagDefinition(TagDecl* D) {
-  assert (D->isDefinition());
-  cast<TagType>(D->TypeForDecl)->decl = D;  
-}
-
 /// getTypedefType - Return the unique reference to the type for the
 /// specified typename decl.
 QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
