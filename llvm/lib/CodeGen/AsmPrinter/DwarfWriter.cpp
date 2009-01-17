@@ -1775,7 +1775,7 @@ private:
         for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
           DIE *Arg = new DIE(DW_TAG_formal_parameter);
           DIDescriptor Ty = Elements.getElement(i);
-          AddType(DW_Unit, &Buffer, DIType(Ty.getGV()));
+          AddType(DW_Unit, Arg, DIType(Ty.getGV()));
           Buffer.AddChild(Arg);
         }
       }
@@ -1921,7 +1921,7 @@ private:
     // Add arguments.
     for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
       DIE *Arg = new DIE(DW_TAG_formal_parameter);
-      AddType(DW_Unit, Method, DIType(Args.getElement(i).getGV()));
+      AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
       AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
       Method->AddChild(Arg);
     }
