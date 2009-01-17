@@ -478,31 +478,11 @@ public:
     return getFIDInfo(FileID)->getFileCharacteristic();
   }
   
-  // Iterators over FileIDs.
-  
-  class fileid_iterator {
-    std::vector<SrcMgr::FileIDInfo>::iterator I;
-    unsigned fid;
-  public:
-    fileid_iterator(std::vector<SrcMgr::FileIDInfo>::iterator i, unsigned f)
-      : I(i), fid(f) {}
-    
-    bool operator==(const fileid_iterator& X) const { return X.fid == fid; }
-    bool operator!=(const fileid_iterator& X) const { return X.fid != fid; }
-    fileid_iterator& operator++() { ++fid; ++I; return *this; }
-    
-    unsigned getFileID() const { return fid; }
-    SrcMgr::FileIDInfo& getFileIDInfo() { return *I; }
-  };
-  
-  fileid_iterator fileid_begin() {
-    return fileid_iterator(FileIDs.begin(), 1);
-  }
-  
-  fileid_iterator fileid_end() {
-    return fileid_iterator(FileIDs.end(), FileIDs.size()+1);
-  }
-  
+  // Iterators over FileInfos.
+  typedef std::set<SrcMgr::ContentCache>::const_iterator fileinfo_iterator;
+  fileinfo_iterator fileinfo_begin() const { return FileInfos.begin(); }
+  fileinfo_iterator fileinfo_end() const { return FileInfos.end(); }
+
   /// PrintStats - Print statistics to stderr.
   ///
   void PrintStats() const;

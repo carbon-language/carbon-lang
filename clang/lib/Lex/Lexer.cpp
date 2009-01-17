@@ -112,8 +112,7 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
 Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
              const char *BufStart, const char *BufEnd,
              const llvm::MemoryBuffer *FromFile)
-  : PreprocessorLexer(), FileLoc(fileloc),
-    Features(features) {
+  : FileLoc(fileloc), Features(features) {
       
   Is_PragmaLexer = false;
   InitCharacterInfo();

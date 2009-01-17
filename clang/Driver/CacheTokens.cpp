@@ -467,17 +467,13 @@ void PTHWriter::EmitCachedSpellings() {
 void PTHWriter::GeneratePTH() {
   // Iterate over all the files in SourceManager.  Create a lexer
   // for each file and cache the tokens.
-  SourceManager& SM = PP.getSourceManager();
-  const LangOptions& LOpts = PP.getLangOptions();
+  SourceManager &SM = PP.getSourceManager();
+  const LangOptions &LOpts = PP.getLangOptions();
   
-  for (SourceManager::fileid_iterator I=SM.fileid_begin(), E=SM.fileid_end();
-       I!=E; ++I) {
-    
-    const SrcMgr::ContentCache* C = I.getFileIDInfo().getContentCache();
-    if (!C) continue;
-
-    const FileEntry* FE = C->Entry;    // Does this entry correspond to a file?    
-    if (!FE) continue;
+  for (SourceManager::fileinfo_iterator I = SM.fileinfo_begin(),
+       E = SM.fileinfo_end(); I != E; ++I) {
+    const SrcMgr::ContentCache &C = *I;
+    const FileEntry *FE = C.Entry;
     
     // FIXME: Handle files with non-absolute paths.
     llvm::sys::Path P(FE->getName());
@@ -487,12 +483,12 @@ void PTHWriter::GeneratePTH() {
     PCHMap::iterator PI = PM.find(FE); // Have we already processed this file?
     if (PI != PM.end()) continue;
     
-    const llvm::MemoryBuffer* B = C->getBuffer();
+    const llvm::MemoryBuffer *B = C.getBuffer();
     if (!B) continue;
-    
-    Lexer L(SourceLocation::getFileLoc(I.getFileID(), 0), LOpts,
-            B->getBufferStart(), B->getBufferEnd(), B);
 
+    unsigned FID = SM.createFileID(FE, SourceLocation(), SrcMgr::C_User);
+    Lexer L(SourceLocation::getFileLoc(FID, 0), LOpts,
+            B->getBufferStart(), B->getBufferEnd(), B);
     PM[FE] = LexTokens(L);
   }
 
