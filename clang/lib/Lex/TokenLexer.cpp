@@ -392,11 +392,11 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       SourceManager &SourceMgr = PP.getSourceManager();
       const char *ResultStrData = SourceMgr.getCharacterData(ResultTokLoc);
       
-      const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(ResultTokLoc);
-      
       // Make a lexer object so that we lex and expand the paste result.
-      Lexer TL(ResultTokLoc, PP.getLangOptions(), ResultStrData, 
-               ResultStrData+LHSLen+RHSLen /*don't include null*/, Buffer);
+      Lexer TL(ResultTokLoc, PP.getLangOptions(), 
+               SourceMgr.getBufferData(ResultTokLoc).first,
+               ResultStrData, 
+               ResultStrData+LHSLen+RHSLen /*don't include null*/);
       
       // Lex a token in raw mode.  This way it won't look up identifiers
       // automatically, lexing off the end will return an eof token, and

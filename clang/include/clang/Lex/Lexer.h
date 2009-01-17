@@ -84,8 +84,7 @@ public:
   /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
   /// range will outlive it, so it doesn't take ownership of it.
   Lexer(SourceLocation FileLoc, const LangOptions &Features,
-        const char *BufStart, const char *BufEnd,
-        const llvm::MemoryBuffer *FromFile = 0);
+        const char *BufStart, const char *BufPtr, const char *BufEnd);
   
   /// Lexer constructor - Create a new raw lexer object.  This object is only
   /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text

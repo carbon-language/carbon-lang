@@ -124,14 +124,8 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP,
 /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
 /// range will outlive it, so it doesn't take ownership of it.
 Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
-             const char *BufPtr, const char *BufEnd,
-             const llvm::MemoryBuffer *FromFile)
+             const char *BufStart, const char *BufPtr, const char *BufEnd)
   : FileLoc(fileloc), Features(features) {
-
-  // If a MemoryBuffer was specified, use its start as BufferStart. This affects
-  // the source location objects produced by this lexer.
-  const char *BufStart = BufPtr;
-  if (FromFile) BufStart = FromFile->getBufferStart();
 
   InitLexer(BufStart, BufPtr, BufEnd);
   
@@ -197,7 +191,7 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   // all obviously single-char tokens.  This could use 
   // Lexer::isObviouslySimpleCharacter for example to handle identifiers or
   // something.
-  const char *BufEnd = SM.getBufferData(Loc).second;
+  std::pair<const char *,const char *> Buffer = SM.getBufferData(Loc);
   
   // Create a langops struct and enable trigraphs.  This is sufficient for
   // measuring tokens.
@@ -205,7 +199,7 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   LangOpts.Trigraphs = true;
   
   // Create a lexer starting at the beginning of this token.
-  Lexer TheLexer(Loc, LangOpts, StrData, BufEnd);
+  Lexer TheLexer(Loc, LangOpts, Buffer.first, StrData, Buffer.second);
   Token TheTok;
   TheLexer.LexFromRawLexer(TheTok);
   return TheTok.getLength();
