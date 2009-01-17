@@ -325,6 +325,11 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
             << FD.D.getSourceRange();
           continue;
         }
+        if (FD.BitfieldSize) {
+          Diag(AtLoc, diag::err_objc_property_bitfield)
+            << FD.D.getSourceRange();
+          continue;
+        }
         
         // Install the property declarator into interfaceDecl.
         IdentifierInfo *SelName =
