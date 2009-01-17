@@ -67,24 +67,24 @@ class DIEValue;
 //===----------------------------------------------------------------------===//
 /// Utility routines.
 ///
-/// getGlobalVariablesUsing - Return all of the GlobalVariables which have the            
-/// specified value in their initializer somewhere.                                       
+/// getGlobalVariablesUsing - Return all of the GlobalVariables which have the
+/// specified value in their initializer somewhere.
 static void
 getGlobalVariablesUsing(Value *V, std::vector<GlobalVariable*> &Result) {
-  // Scan though value users.                                                             
+  // Scan though value users. 
   for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I)) {
-      // If the user is a GlobalVariable then add to result.                              
+      // If the user is a GlobalVariable then add to result. 
       Result.push_back(GV);
     } else if (Constant *C = dyn_cast<Constant>(*I)) {
-      // If the user is a constant variable then scan its users                           
+      // If the user is a constant variable then scan its users.
       getGlobalVariablesUsing(C, Result);
     }
   }
 }
 
-/// getGlobalVariablesUsing - Return all of the GlobalVariables that use the              
-/// named GlobalVariable.                                                                 
+/// getGlobalVariablesUsing - Return all of the GlobalVariables that use the
+/// named GlobalVariable. 
 static void
 getGlobalVariablesUsing(Module &M, const std::string &RootName,
                         std::vector<GlobalVariable*> &Result) {
@@ -92,11 +92,11 @@ getGlobalVariablesUsing(Module &M, const std::string &RootName,
   FieldTypes.push_back(Type::Int32Ty);
   FieldTypes.push_back(Type::Int32Ty);
 
-  // Get the GlobalVariable root.                                                         
+  // Get the GlobalVariable root.
   GlobalVariable *UseRoot = M.getGlobalVariable(RootName,
                                                 StructType::get(FieldTypes));
 
-  // If present and linkonce then scan for users.                                         
+  // If present and linkonce then scan for users.
   if (UseRoot && UseRoot->hasLinkOnceLinkage())
     getGlobalVariablesUsing(UseRoot, Result);
 }
@@ -1282,10 +1282,10 @@ private:
   ///
   std::vector<DIEAbbrev *> Abbreviations;
 
-  /// Directories - Uniquing vector for directories.                                       
+  /// Directories - Uniquing vector for directories.
   UniqueVector<std::string> Directories;
 
-  /// SourceFiles - Uniquing vector for source files.                                      
+  /// SourceFiles - Uniquing vector for source files.
   UniqueVector<SrcFileInfo> SrcFiles;
 
   /// Lines - List of of source line correspondence.
@@ -1746,7 +1746,7 @@ private:
     /// FIXME - Enable this asap.
     return;
 
-    // Get core information.                                                              
+    // Get core information.
     const std::string &Name = CTy.getName();
     uint64_t Size = CTy.getSizeInBits() >> 3;
     unsigned Tag = CTy.getTag();
@@ -1793,16 +1793,21 @@ private:
         // Add elements to structure type.
         for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
           DIDescriptor Element = Elements.getElement(i);
+          DIE *ElemDie = NULL;
           if (Element.getTag() == dwarf::DW_TAG_subprogram)
-            ConstructFieldTypeDIE(DW_Unit, Buffer, DISubprogram(Element.getGV()));
-          else if (Element.getTag() == dwarf::DW_TAG_variable)
-            ConstructFieldTypeDIE(DW_Unit, Buffer, 
-                                  DIGlobalVariable(Element.getGV()));
+	    ElemDie = CreateSubprogramDIE(DW_Unit, 
+					  DISubprogram(Element.getGV()));
+          else if (Element.getTag() == dwarf::DW_TAG_variable) // ???
+            ElemDie = CreateGlobalVariableDIE(DW_Unit, 
+                                              DIGlobalVariable(Element.getGV()));
           else {
             DIDerivedType DT = DIDerivedType(Element.getGV());
-            assert (DT.isDerivedType(DT.getTag()) && "Unexpected strcut element");
-            ConstructFieldTypeDIE(DW_Unit, Buffer, DT);
+            assert (DT.isDerivedType(DT.getTag()) 
+		    && "Unexpected struct element type");
+	    ElemDie = new DIE(DT.getTag());
+	    AddType(DW_Unit, ElemDie, DT);
           }
+	  Buffer.AddChild(ElemDie);
         }
       }
       break;
@@ -1883,86 +1888,56 @@ private:
     Buffer.AddChild(Enumerator);
   }
 
-  /// ConstructFieldTypeDIE - Construct variable DIE for a struct field.
-  void ConstructFieldTypeDIE(CompileUnit *DW_Unit,
-                             DIE &Buffer, DIGlobalVariable V) {
-
-    DIE *VariableDie = new DIE(DW_TAG_variable);
-    const std::string &LinkageName = V.getLinkageName();
+  /// CreateGlobalVariableDIE - Create new DIE using GV.
+  DIE *CreateGlobalVariableDIE(CompileUnit *DW_Unit, const DIGlobalVariable &GV) 
+  {
+    DIE *GVDie = new DIE(DW_TAG_variable);
+    AddString(GVDie, DW_AT_name, DW_FORM_string, GV.getName());
+    const std::string &LinkageName = GV.getLinkageName();
     if (!LinkageName.empty())
-      AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                LinkageName);
-    // FIXME - Enable this. AddSourceLine(VariableDie, V);
-    AddType(DW_Unit, VariableDie, V.getType());
-    if (!V.isLocalToUnit())
-      AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);
-    AddUInt(VariableDie, DW_AT_declaration, DW_FORM_flag, 1);
-    Buffer.AddChild(VariableDie);
+      AddString(GVDie, DW_AT_MIPS_linkage_name, DW_FORM_string, LinkageName);
+    AddType(DW_Unit, GVDie, GV.getType());
+    if (!GV.isLocalToUnit())
+      AddUInt(GVDie, DW_AT_external, DW_FORM_flag, 1);
+    AddSourceLine(GVDie, &GV);
+    return GVDie;
   }
 
-  /// ConstructFieldTypeDIE - Construct subprogram DIE for a struct field.
-  void ConstructFieldTypeDIE(CompileUnit *DW_Unit,
-                             DIE &Buffer, DISubprogram SP,
-                             bool IsConstructor = false) {
-    DIE *Method = new DIE(DW_TAG_subprogram);
-    AddString(Method, DW_AT_name, DW_FORM_string, SP.getName());
+  /// CreateSubprogramDIE - Create new DIE using SP.
+  DIE *CreateSubprogramDIE(CompileUnit *DW_Unit,
+			   const  DISubprogram &SP,
+			   bool IsConstructor = false) {
+    DIE *SPDie = new DIE(DW_TAG_subprogram);
+    AddString(SPDie, DW_AT_name, DW_FORM_string, SP.getName());
     const std::string &LinkageName = SP.getLinkageName();
     if (!LinkageName.empty())
-      AddString(Method, DW_AT_MIPS_linkage_name, DW_FORM_string, LinkageName);
-    // FIXME - Enable this. AddSourceLine(Method, SP);
+      AddString(SPDie, DW_AT_MIPS_linkage_name, DW_FORM_string, 
+		LinkageName);
+    AddSourceLine(SPDie, &SP);
 
-    DICompositeType MTy = SP.getType();
-    DIArray Args = MTy.getTypeArray();
-
+    DICompositeType SPTy = SP.getType();
+    DIArray Args = SPTy.getTypeArray();
+    
     // Add Return Type.
     if (!IsConstructor) 
-      AddType(DW_Unit, Method, DIType(Args.getElement(0).getGV()));
-
+      AddType(DW_Unit, SPDie, DIType(Args.getElement(0).getGV()));
+    
     // Add arguments.
-    for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
-      DIE *Arg = new DIE(DW_TAG_formal_parameter);
-      AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
-      AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
-      Method->AddChild(Arg);
-    }
-
+    if (!Args.isNull())
+      for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
+	DIE *Arg = new DIE(DW_TAG_formal_parameter);
+	AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
+	AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
+	SPDie->AddChild(Arg);
+      }
+    
     if (!SP.isLocalToUnit())
-      AddUInt(Method, DW_AT_external, DW_FORM_flag, 1);                     
-    Buffer.AddChild(Method);
+      AddUInt(SPDie, DW_AT_external, DW_FORM_flag, 1);                     
+    return SPDie;
   }
 
-  /// ConstructFieldTypeDIE - Construct derived type DIE for a struct field.
- void ConstructFieldTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
-                            DIDerivedType DTy) {
-    unsigned Tag = DTy.getTag();
-    DIE *MemberDie = new DIE(Tag);
-    if (!DTy.getName().empty())
-      AddString(MemberDie, DW_AT_name, DW_FORM_string, DTy.getName());
-    // FIXME - Enable this. AddSourceLine(MemberDie, DTy);
-
-    DIType FromTy = DTy.getTypeDerivedFrom();
-    AddType(DW_Unit, MemberDie, FromTy);
-
-    uint64_t Size = DTy.getSizeInBits();
-    uint64_t Offset = DTy.getOffsetInBits();
-
-    // FIXME Handle bitfields                                                      
-
-    // Add size.
-    AddUInt(MemberDie, DW_AT_bit_size, 0, Size);
-    // Add computation for offset.                                                        
-    DIEBlock *Block = new DIEBlock();
-    AddUInt(Block, 0, DW_FORM_data1, DW_OP_plus_uconst);
-    AddUInt(Block, 0, DW_FORM_udata, Offset >> 3);
-    AddBlock(MemberDie, DW_AT_data_member_location, 0, Block);
-
-    // FIXME Handle DW_AT_accessibility.
-
-    Buffer.AddChild(MemberDie);
-  }
-
-  /// FindCompileUnit - Get the compile unit for the given descriptor.                    
-  ///                                                                                     
+  /// FindCompileUnit - Get the compile unit for the given descriptor. 
+  ///
   CompileUnit *FindCompileUnit(DICompileUnit Unit) {
     CompileUnit *DW_Unit = DW_CUs[Unit.getGV()];
     assert(DW_Unit && "Missing compile unit.");
@@ -2630,7 +2605,8 @@ private:
                    "func_begin", DebugFrameInfo.Number);
     Asm->EOL("FDE address range");
 
-    EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves, false);
+    EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves, 
+		   false);
 
     Asm->EmitAlignment(2, 0, 0, false);
     EmitLabel("debug_frame_end", DebugFrameInfo.Number);
@@ -2660,7 +2636,8 @@ private:
                         Unit->getID(), 0, true, false);
       Asm->EOL("Offset of Compilation Unit Info");
       
-      EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),true);
+      EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),
+		     true);
       Asm->EOL("Compilation Unit Length");
       
       std::map<std::string, DIE *> &Globals = Unit->getGlobals();
@@ -2808,19 +2785,7 @@ private:
       DIE *&Slot = DW_Unit->getDieMapSlotFor(DI_GV.getGV());
       if (Slot) continue;
 
-      DIE *VariableDie = new DIE(DW_TAG_variable);
-      AddString(VariableDie, DW_AT_name, DW_FORM_string, DI_GV.getName());
-      const std::string &LinkageName  = DI_GV.getLinkageName();
-      if (!LinkageName.empty())
-        AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                  LinkageName);
-      AddType(DW_Unit, VariableDie, DI_GV.getType());
-
-      if (!DI_GV.isLocalToUnit())
-        AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);              
-
-      // Add source line info, if available.
-      AddSourceLine(VariableDie, &DI_GV);
+      DIE *VariableDie = CreateGlobalVariableDIE(DW_Unit, DI_GV);
 
       // Add address.
       DIEBlock *Block = new DIEBlock();
@@ -2853,23 +2818,12 @@ private:
       DISubprogram SP(*RI);
       CompileUnit *Unit = FindCompileUnit(SP.getCompileUnit());
 
-      // Check for pre-existence.                                                         
+      // Check for pre-existence.
       DIE *&Slot = Unit->getDieMapSlotFor(SP.getGV());
       if (Slot) continue;
 
-      DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
-      AddString(SubprogramDie, DW_AT_name, DW_FORM_string, SP.getName());
-      const std::string &LinkageName = SP.getLinkageName();
-      if (!LinkageName.empty())
-        AddString(SubprogramDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                  LinkageName);
-      DIType SPTy = SP.getType();
-      AddType(Unit, SubprogramDie, SPTy);
-      if (!SP.isLocalToUnit())
-        AddUInt(SubprogramDie, DW_AT_external, DW_FORM_flag, 1);
-      AddUInt(SubprogramDie, DW_AT_prototyped, DW_FORM_flag, 1);
+      DIE *SubprogramDie = CreateSubprogramDIE(Unit, SP);
 
-      AddSourceLine(SubprogramDie, &SP);
       //Add to map.
       Slot = SubprogramDie;
       //Add to context owner.
@@ -3389,7 +3343,8 @@ private:
 
       // Indicate locations of function specific  callee saved registers in
       // frame.
-      EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves, true);
+      EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves, 
+		     true);
 
       // On Darwin the linker honors the alignment of eh_frame, which means it
       // must be 8-byte on 64-bit targets to match what gcc does.  Otherwise
