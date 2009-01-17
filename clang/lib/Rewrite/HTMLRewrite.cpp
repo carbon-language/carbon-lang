@@ -33,8 +33,8 @@ void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
   SourceManager &SM = R.getSourceMgr();
   B = SM.getInstantiationLoc(B);
   E = SM.getInstantiationLoc(E);
-  unsigned FileID = SM.getCanonicalFileID(B);
-  assert(SM.getCanonicalFileID(E) == FileID && "B/E not in the same file!");
+  FileID FID = SM.getCanonicalFileID(B);
+  assert(SM.getCanonicalFileID(E) == FID && "B/E not in the same file!");
 
   unsigned BOffset = SM.getFullFilePos(B);
   unsigned EOffset = SM.getFullFilePos(E);
@@ -42,8 +42,8 @@ void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
   // Include the whole end token in the range.
   EOffset += Lexer::MeasureTokenLength(E, R.getSourceMgr());
   
-  HighlightRange(R.getEditBuffer(FileID), BOffset, EOffset,
-                 SM.getBufferData(FileID).first, StartTag, EndTag);
+  HighlightRange(R.getEditBuffer(FID), BOffset, EOffset,
+                 SM.getBufferData(FID).first, StartTag, EndTag);
 }
 
 /// HighlightRange - This is the same as the above method, but takes
@@ -97,16 +97,16 @@ void html::HighlightRange(RewriteBuffer &RB, unsigned B, unsigned E,
   }
 }
 
-void html::EscapeText(Rewriter& R, unsigned FileID,
+void html::EscapeText(Rewriter &R, FileID FID,
                       bool EscapeSpaces, bool ReplaceTabs) {
   
-  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
+  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FID);
   const char* C = Buf->getBufferStart();
   const char* FileEnd = Buf->getBufferEnd();
   
   assert (C <= FileEnd);
   
-  RewriteBuffer &RB = R.getEditBuffer(FileID);
+  RewriteBuffer &RB = R.getEditBuffer(FID);
 
   unsigned ColNo = 0;
   for (unsigned FilePos = 0; C != FileEnd ; ++C, ++FilePos) {
@@ -217,13 +217,13 @@ static void AddLineNumber(RewriteBuffer &RB, unsigned LineNo,
   }
 }
 
-void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
+void html::AddLineNumbers(Rewriter& R, FileID FID) {
 
-  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
+  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FID);
   const char* FileBeg = Buf->getBufferStart();
   const char* FileEnd = Buf->getBufferEnd();
   const char* C = FileBeg;
-  RewriteBuffer &RB = R.getEditBuffer(FileID);
+  RewriteBuffer &RB = R.getEditBuffer(FID);
   
   assert (C <= FileEnd);
   
@@ -263,15 +263,15 @@ void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
   RB.InsertTextAfter(FileEnd - FileBeg, "</table>", strlen("</table>"));
 }
 
-void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID, 
+void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID, 
                                              const char *title) {
 
-  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
+  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FID);
   const char* FileStart = Buf->getBufferStart();
   const char* FileEnd = Buf->getBufferEnd();
 
-  SourceLocation StartLoc = SourceLocation::getFileLoc(FileID, 0);
-  SourceLocation EndLoc = SourceLocation::getFileLoc(FileID, FileEnd-FileStart);
+  SourceLocation StartLoc = R.getSourceMgr().getLocForStartOfFile(FID);
+  SourceLocation EndLoc = StartLoc.getFileLocWithOffset(FileEnd-FileStart);
 
   std::string s;
   llvm::raw_string_ostream os(s);
@@ -340,15 +340,15 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID,
 /// information about keywords, macro expansions etc.  This uses the macro
 /// table state from the end of the file, so it won't be perfectly perfect,
 /// but it will be reasonably close.
-void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
-  RewriteBuffer &RB = R.getEditBuffer(FileID);
+void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
+  RewriteBuffer &RB = R.getEditBuffer(FID);
 
   const SourceManager &SourceMgr = PP.getSourceManager();
-  std::pair<const char*, const char*> File = SourceMgr.getBufferData(FileID);
+  std::pair<const char*, const char*> File = SourceMgr.getBufferData(FID);
   const char *BufferStart = File.first;
   
-  Lexer L(SourceLocation::getFileLoc(FileID, 0), PP.getLangOptions(),
-          File.first, File.second);
+  Lexer L(SourceMgr.getLocForStartOfFile(FID),
+          PP.getLangOptions(), File.first, File.second);
   
   // Inform the preprocessor that we want to retain comments as tokens, so we 
   // can highlight them.
@@ -421,9 +421,9 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
 /// file, to reexpand macros and insert (into the HTML) information about the
 /// macro expansions.  This won't be perfectly perfect, but it will be
 /// reasonably close.
-void html::HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor& PP) {
+void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
   
-  RewriteBuffer &RB = R.getEditBuffer(FileID);
+  RewriteBuffer &RB = R.getEditBuffer(FID);
   
   // Inform the preprocessor that we don't want comments.
   PP.SetCommentRetentionState(false, false);
@@ -444,10 +444,10 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor& PP) {
     
     // Ignore tokens whose instantiation location was not the main file.
     SourceLocation LLoc = SourceMgr.getInstantiationLoc(Tok.getLocation());
-    std::pair<unsigned, unsigned> LLocInfo = 
+    std::pair<FileID, unsigned> LLocInfo = 
       SourceMgr.getDecomposedFileLoc(LLoc);
     
-    if (LLocInfo.first != FileID) {
+    if (LLocInfo.first != FID) {
       PP.Lex(Tok);
       continue;
     }
@@ -496,9 +496,9 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor& PP) {
   }
 }
 
-void html::HighlightMacros(Rewriter &R, unsigned FileID,
+void html::HighlightMacros(Rewriter &R, FileID FID,
                            PreprocessorFactory &PPF) {
   
   llvm::OwningPtr<Preprocessor> PP(PPF.CreatePreprocessor());
-  HighlightMacros(R, FileID, *PP);
+  HighlightMacros(R, FID, *PP);
 }

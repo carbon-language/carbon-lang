@@ -48,7 +48,7 @@ namespace clang {
   public:
     /// TokenRewriter - This creates a TokenRewriter for the file with the
     /// specified FileID.
-    TokenRewriter(unsigned FileID, SourceManager &SM, const LangOptions &LO);
+    TokenRewriter(FileID FID, SourceManager &SM, const LangOptions &LO);
     ~TokenRewriter();
     
     typedef std::list<Token>::const_iterator token_iterator;

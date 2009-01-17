@@ -17,14 +17,6 @@
 #include "clang/Basic/SourceManager.h"
 using namespace clang;
 
-PreprocessorLexer::PreprocessorLexer(Preprocessor* pp, SourceLocation L)
-  :  PP(pp), FileID(pp->getSourceManager().getSpellingLoc(L).getFileID()),
-     ParsingPreprocessorDirective(false),
-     ParsingFilename(false),
-     LexingRawMode(false) {}
-
-PreprocessorLexer::~PreprocessorLexer() {}
-
 /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
 /// (potentially) macro expand the filename.
 void PreprocessorLexer::LexIncludeFilename(Token &FilenameTok) {
@@ -44,4 +36,10 @@ void PreprocessorLexer::LexIncludeFilename(Token &FilenameTok) {
   // No filename?
   if (FilenameTok.is(tok::eom))
     PP->Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+}
+
+/// getFileEntry - Return the FileEntry corresponding to this FileID.  Like
+/// getFileID(), this only works for lexers with attached preprocessors.
+const FileEntry *PreprocessorLexer::getFileEntry() const {
+  return PP->getSourceManager().getFileEntryForID(getFileID());
 }

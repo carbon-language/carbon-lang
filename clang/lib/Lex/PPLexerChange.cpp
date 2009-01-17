@@ -66,8 +66,7 @@ PreprocessorLexer *Preprocessor::getCurrentFileLexer() const {
 /// EnterSourceFile - Add a source file to the top of the include stack and
 /// start lexing tokens from it instead of the current buffer.  Return true
 /// on failure.
-void Preprocessor::EnterSourceFile(unsigned FileID,
-                                   const DirectoryLookup *CurDir) {
+void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir) {
   assert(CurTokenLexer == 0 && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
   
@@ -75,8 +74,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
   if (PTH) {
-    PTHLexer* PL =
-      PTH->CreateLexer(FileID, getSourceManager().getFileEntryForID(FileID));
+    PTHLexer *PL = PTH->CreateLexer(FID, SourceMgr.getFileEntryForID(FID));
 
     if (PL) {
       EnterSourceFileWithPTH(PL, CurDir);
@@ -84,7 +82,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
     }
   }
   
-  Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
+  Lexer *TheLexer = new Lexer(SourceMgr.getLocForStartOfFile(FID), *this);
   EnterSourceFileWithLexer(TheLexer, CurDir);
 }  
 
@@ -125,10 +123,9 @@ void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL,
 
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks) {
-    unsigned FileID = CurPPLexer->getFileID();
-    SrcMgr::CharacteristicKind FileType =
-      SourceMgr.getFileCharacteristic(CurPPLexer->getFileID());    
-    Callbacks->FileChanged(SourceLocation::getFileLoc(FileID, 0),
+    FileID FID = CurPPLexer->getFileID();
+    SrcMgr::CharacteristicKind FileType = SourceMgr.getFileCharacteristic(FID);
+    Callbacks->FileChanged(SourceMgr.getLocForStartOfFile(FID),
                            PPCallbacks::EnterFile, FileType);
   }
 }

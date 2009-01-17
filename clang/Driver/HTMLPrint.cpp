@@ -60,19 +60,19 @@ HTMLPrinter::~HTMLPrinter() {
     return;
 
   // Format the file.
-  unsigned FileID = R.getSourceMgr().getMainFileID();
-  const FileEntry* Entry = R.getSourceMgr().getFileEntryForID(FileID);
+  FileID FID = R.getSourceMgr().getMainFileID();
+  const FileEntry* Entry = R.getSourceMgr().getFileEntryForID(FID);
   
-  html::AddLineNumbers(R, FileID);
-  html::AddHeaderFooterInternalBuiltinCSS(R, FileID, Entry->getName());
+  html::AddLineNumbers(R, FID);
+  html::AddHeaderFooterInternalBuiltinCSS(R, FID, Entry->getName());
 
   // If we have a preprocessor, relex the file and syntax highlight.
   // We might not have a preprocessor if we come from a deserialized AST file,
   // for example.
   
-  if (PP) html::SyntaxHighlight(R, FileID, *PP);
-  if (PPF) html::HighlightMacros(R, FileID, *PP);
-  html::EscapeText(R, FileID, false, true);
+  if (PP) html::SyntaxHighlight(R, FID, *PP);
+  if (PPF) html::HighlightMacros(R, FID, *PP);
+  html::EscapeText(R, FID, false, true);
   
   // Open the output.
   FILE *OutputFILE;
@@ -87,7 +87,7 @@ HTMLPrinter::~HTMLPrinter() {
   }
   
   // Emit the HTML.
-  const RewriteBuffer &RewriteBuf = R.getEditBuffer(FileID);
+  const RewriteBuffer &RewriteBuf = R.getEditBuffer(FID);
   char *Buffer = (char*)malloc(RewriteBuf.size());
   std::copy(RewriteBuf.begin(), RewriteBuf.end(), Buffer);
   fwrite(Buffer, 1, RewriteBuf.size(), OutputFILE);

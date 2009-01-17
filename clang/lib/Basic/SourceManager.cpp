@@ -111,7 +111,7 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
 /// createFileID - Create a new fileID for the specified ContentCache and
 /// include position.  This works regardless of whether the ContentCache
 /// corresponds to a file or some other input source.
-unsigned SourceManager::createFileID(const ContentCache *File,
+FileID SourceManager::createFileID(const ContentCache *File,
                                      SourceLocation IncludePos,
                                      SrcMgr::CharacteristicKind FileCharacter) {
   // If FileEnt is really large (e.g. it's a large .i file), we may not be able
@@ -123,7 +123,7 @@ unsigned SourceManager::createFileID(const ContentCache *File,
     FileIDs.push_back(FileIDInfo::get(IncludePos, 0, File, FileCharacter));
     assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
            "Ran out of file ID's!");
-    return FileIDs.size();
+    return FileID::Create(FileIDs.size());
   }
   
   // Create one FileID for each chunk of the file.
@@ -140,7 +140,7 @@ unsigned SourceManager::createFileID(const ContentCache *File,
 
   assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
          "Ran out of file ID's!");
-  return Result;
+  return FileID::Create(Result);
 }
 
 /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
@@ -181,12 +181,19 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation SpellingLoc,
 }
 
 /// getBufferData - Return a pointer to the start and end of the character
-/// data for the specified FileID.
+/// data for the specified location.
 std::pair<const char*, const char*> 
-SourceManager::getBufferData(unsigned FileID) const {
-  const llvm::MemoryBuffer *Buf = getBuffer(FileID);
+SourceManager::getBufferData(SourceLocation Loc) const {
+  const llvm::MemoryBuffer *Buf = getBuffer(Loc);
   return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
 }
+
+std::pair<const char*, const char*>
+SourceManager::getBufferData(FileID FID) const {
+  const llvm::MemoryBuffer *Buf = getBuffer(FID);
+  return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
+}
+
 
 
 /// getCharacterData - Return a pointer to the start of the specified location
@@ -196,9 +203,11 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
   // heavily used by -E mode.
   SL = getSpellingLoc(SL);
   
+  std::pair<FileID, unsigned> LocInfo = getDecomposedFileLoc(SL);
+  
   // Note that calling 'getBuffer()' may lazily page in a source file.
-  return getContentCache(SL.getFileID())->getBuffer()->getBufferStart() + 
-         getFullFilePos(SL);
+  return getContentCache(LocInfo.first)->getBuffer()->getBufferStart() + 
+         LocInfo.second;
 }
 
 
@@ -206,12 +215,12 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
 /// this is significantly cheaper to compute than the line number.  This returns
 /// zero if the column number isn't known.
 unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
-  unsigned FileID = Loc.getFileID();
-  if (FileID == 0) return 0;
+  if (Loc.getFileID() == 0) return 0;
   
-  unsigned FilePos = getFullFilePos(Loc);
-  const MemoryBuffer *Buffer = getBuffer(FileID);
-  const char *Buf = Buffer->getBufferStart();
+  std::pair<FileID, unsigned> LocInfo = getDecomposedFileLoc(Loc);
+  unsigned FilePos = LocInfo.second;
+  
+  const char *Buf = getBuffer(LocInfo.first)->getBufferStart();
 
   unsigned LineStart = FilePos;
   while (LineStart && Buf[LineStart-1] != '\n' && Buf[LineStart-1] != '\r')
@@ -223,12 +232,11 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
 /// the SourceLocation specifies.  This can be modified with #line directives,
 /// etc.
 const char *SourceManager::getSourceName(SourceLocation Loc) const {
-  unsigned FileID = Loc.getFileID();
-  if (FileID == 0) return "";
+  if (Loc.getFileID() == 0) return "";
   
   // To get the source name, first consult the FileEntry (if one exists) before
   // the MemBuffer as this will avoid unnecessarily paging in the MemBuffer.
-  const SrcMgr::ContentCache* C = getContentCache(FileID);
+  const SrcMgr::ContentCache *C = getContentCacheForLoc(Loc);
   return C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
 }
 
@@ -282,15 +290,16 @@ static void ComputeLineNumbers(ContentCache* FI) {
 /// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
 unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
-  unsigned FileID = Loc.getFileID();
-  if (FileID == 0) return 0;
+  if (Loc.getFileID() == 0) return 0;
 
-  ContentCache* Content;
+  ContentCache *Content;
   
-  if (LastLineNoFileIDQuery == FileID)
+  std::pair<FileID, unsigned> LocInfo = getDecomposedFileLoc(Loc);
+  
+  if (LastLineNoFileIDQuery == LocInfo.first)
     Content = LastLineNoContentCache;
   else
-    Content = const_cast<ContentCache*>(getContentCache(FileID));
+    Content = const_cast<ContentCache*>(getContentCache(LocInfo.first));
   
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
@@ -303,12 +312,12 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
   unsigned *SourceLineCacheStart = SourceLineCache;
   unsigned *SourceLineCacheEnd = SourceLineCache + Content->NumLines;
   
-  unsigned QueriedFilePos = getFullFilePos(Loc)+1;
+  unsigned QueriedFilePos = LocInfo.second+1;
 
   // If the previous query was to the same file, we know both the file pos from
   // that query and the line number returned.  This allows us to narrow the
   // search space from the entire file to something near the match.
-  if (LastLineNoFileIDQuery == FileID) {
+  if (LastLineNoFileIDQuery == LocInfo.first) {
     if (QueriedFilePos >= LastLineNoFilePos) {
       SourceLineCache = SourceLineCache+LastLineNoResult-1;
       
@@ -362,7 +371,7 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
     = std::lower_bound(SourceLineCache, SourceLineCacheEnd, QueriedFilePos);
   unsigned LineNo = Pos-SourceLineCacheStart;
   
-  LastLineNoFileIDQuery = FileID;
+  LastLineNoFileIDQuery = LocInfo.first;
   LastLineNoContentCache = Content;
   LastLineNoFilePos = QueriedFilePos;
   LastLineNoResult = LineNo;
@@ -492,7 +501,7 @@ MacroIDInfo MacroIDInfo::ReadVal(llvm::Deserializer& D) {
 void SourceManager::Emit(llvm::Serializer& S) const {
   S.EnterBlock();
   S.EmitPtr(this);
-  S.EmitInt(MainFileID);
+  S.EmitInt(MainFileID.getOpaqueValue());
   
   // Emit: FileInfos.  Just emit the file name.
   S.EnterBlock();    
@@ -527,7 +536,7 @@ SourceManager::CreateAndRegister(llvm::Deserializer& D, FileManager& FMgr){
   D.RegisterPtr(M);
   
   // Read: the FileID of the main source file of the translation unit.
-  M->MainFileID = D.ReadInt();
+  M->MainFileID = FileID::Create(D.ReadInt());
   
   std::vector<char> Buf;
     

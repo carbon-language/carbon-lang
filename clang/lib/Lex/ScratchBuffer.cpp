@@ -24,7 +24,6 @@ static const unsigned ScratchBufSize = 4060;
 ScratchBuffer::ScratchBuffer(SourceManager &SM) : SourceMgr(SM), CurBuffer(0) {
   // Set BytesUsed so that the first call to getToken will require an alloc.
   BytesUsed = ScratchBufSize;
-  FileID = 0;
 }
 
 /// getToken - Splat the specified text into a temporary MemoryBuffer and
@@ -44,7 +43,7 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len) {
   assert(BytesUsed-Len < (1 << SourceLocation::FilePosBits) &&
          "Out of range file position!");
   
-  return SourceLocation::getFileLoc(FileID, BytesUsed-Len);
+  return BufferStartLoc.getFileLocWithOffset(BytesUsed-Len);
 }
 
 
@@ -66,7 +65,8 @@ void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
   
   llvm::MemoryBuffer *Buf = 
     llvm::MemoryBuffer::getNewMemBuffer(RequestLen, "<scratch space>");
-  FileID = SourceMgr.createFileIDForMemBuffer(Buf);
+  FileID FID = SourceMgr.createFileIDForMemBuffer(Buf);
+  BufferStartLoc = SourceMgr.getLocForStartOfFile(FID);
   CurBuffer = const_cast<char*>(Buf->getBufferStart());
   BytesUsed = 0;
 }

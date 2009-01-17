@@ -919,14 +919,14 @@ static bool InitializePreprocessor(Preprocessor &PP,
     if (InFile != "-") {
       const FileEntry *File = FileMgr.getFile(InFile);
       if (File) SourceMgr.createMainFileID(File, SourceLocation());
-      if (SourceMgr.getMainFileID() == 0) {
+      if (SourceMgr.getMainFileID().isInvalid()) {
         fprintf(stderr, "Error reading '%s'!\n",InFile.c_str());
         return true;
       }
     } else {
       llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
       if (SB) SourceMgr.createMainFileIDForMemBuffer(SB);
-      if (SourceMgr.getMainFileID() == 0) {
+      if (SourceMgr.getMainFileID().isInvalid()) {
         fprintf(stderr, "Error reading standard input!  Empty?\n");
         return true;
       }
@@ -1335,7 +1335,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     std::pair<const char*,const char*> File =
       SM.getBufferData(SM.getMainFileID());
     // Start lexing the specified input file.
-    Lexer RawLex(SourceLocation::getFileLoc(SM.getMainFileID(), 0),
+    Lexer RawLex(SM.getLocForStartOfFile(SM.getMainFileID()),
                  PP.getLangOptions(), File.first, File.second);
     RawLex.SetKeepWhitespaceMode(true);
 

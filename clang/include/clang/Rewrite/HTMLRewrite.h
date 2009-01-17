@@ -51,7 +51,7 @@ namespace html {
   
   /// EscapeText - HTMLize a specified file so that special characters are
   /// are translated so that they are not interpreted as HTML tags.
-  void EscapeText(Rewriter& R, unsigned FileID,
+  void EscapeText(Rewriter& R, FileID FID,
                   bool EscapeSpaces = false, bool ReplacesTabs = true);
 
   /// EscapeText - HTMLized the provided string so that special characters
@@ -61,29 +61,21 @@ namespace html {
   std::string EscapeText(const std::string& s,
                          bool EscapeSpaces = false, bool ReplaceTabs = true);
 
-  void AddLineNumbers(Rewriter& R, unsigned FileID);  
+  void AddLineNumbers(Rewriter& R, FileID FID);  
   
-  void AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID, 
+  void AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID, 
                                          const char *title = NULL);
 
   /// SyntaxHighlight - Relex the specified FileID and annotate the HTML with
   /// information about keywords, comments, etc.
-  void SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP);
+  void SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP);
 
   /// HighlightMacros - This uses the macro table state from the end of the
   /// file, to reexpand macros and insert (into the HTML) information about the
   /// macro expansions.  This won't be perfectly perfect, but it will be
   /// reasonably close.
-  void HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor &PP);
-  
-  
-  void HighlightMacros(Rewriter &R, unsigned FileID, PreprocessorFactory &PPF);
-    
-  
-
-
-
-  
+  void HighlightMacros(Rewriter &R, FileID FID, Preprocessor &PP);
+  void HighlightMacros(Rewriter &R, FileID FID, PreprocessorFactory &PPF);
 } // end html namespace
 } // end clang namespace
 

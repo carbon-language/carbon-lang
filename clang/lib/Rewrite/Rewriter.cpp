@@ -71,8 +71,8 @@ int Rewriter::getRangeSize(SourceRange Range) const {
   if (!isRewritable(Range.getBegin()) ||
       !isRewritable(Range.getEnd())) return -1;
   
-  unsigned StartOff, StartFileID;
-  unsigned EndOff  , EndFileID;
+  FileID StartFileID, EndFileID;
+  unsigned StartOff, EndOff;
   
   StartOff = getLocationOffsetAndFileID(Range.getBegin(), StartFileID);
   EndOff   = getLocationOffsetAndFileID(Range.getEnd(), EndFileID);
@@ -82,7 +82,7 @@ int Rewriter::getRangeSize(SourceRange Range) const {
   
   // If edits have been made to this buffer, the delta between the range may
   // have changed.
-  std::map<unsigned, RewriteBuffer>::const_iterator I =
+  std::map<FileID, RewriteBuffer>::const_iterator I =
     RewriteBuffers.find(StartFileID);
   if (I != RewriteBuffers.end()) {
     const RewriteBuffer &RB = I->second;
@@ -109,8 +109,8 @@ std::string Rewriter::getRewritenText(SourceRange Range) const {
       !isRewritable(Range.getEnd()))
     return "";
   
-  unsigned StartOff, StartFileID;
-  unsigned EndOff  , EndFileID;
+  FileID StartFileID, EndFileID;
+  unsigned StartOff, EndOff;
   StartOff = getLocationOffsetAndFileID(Range.getBegin(), StartFileID);
   EndOff   = getLocationOffsetAndFileID(Range.getEnd(), EndFileID);
   
@@ -119,7 +119,7 @@ std::string Rewriter::getRewritenText(SourceRange Range) const {
   
   // If edits have been made to this buffer, the delta between the range may
   // have changed.
-  std::map<unsigned, RewriteBuffer>::const_iterator I =
+  std::map<FileID, RewriteBuffer>::const_iterator I =
     RewriteBuffers.find(StartFileID);
   if (I == RewriteBuffers.end()) {
     // If the buffer hasn't been rewritten, just return the text from the input.
@@ -149,24 +149,24 @@ std::string Rewriter::getRewritenText(SourceRange Range) const {
 }
 
 unsigned Rewriter::getLocationOffsetAndFileID(SourceLocation Loc,
-                                              unsigned &FileID) const {
+                                              FileID &FID) const {
   assert(Loc.isValid() && "Invalid location");
-  std::pair<unsigned,unsigned> V = SourceMgr->getDecomposedFileLoc(Loc);
-  FileID = V.first;
+  std::pair<FileID,unsigned> V = SourceMgr->getDecomposedFileLoc(Loc);
+  FID = V.first;
   return V.second;
 }
 
 
 /// getEditBuffer - Get or create a RewriteBuffer for the specified FileID.
 ///
-RewriteBuffer &Rewriter::getEditBuffer(unsigned FileID) {
-  std::map<unsigned, RewriteBuffer>::iterator I =
-    RewriteBuffers.lower_bound(FileID);
-  if (I != RewriteBuffers.end() && I->first == FileID) 
+RewriteBuffer &Rewriter::getEditBuffer(FileID FID) {
+  std::map<FileID, RewriteBuffer>::iterator I =
+    RewriteBuffers.lower_bound(FID);
+  if (I != RewriteBuffers.end() && I->first == FID) 
     return I->second;
-  I = RewriteBuffers.insert(I, std::make_pair(FileID, RewriteBuffer()));
+  I = RewriteBuffers.insert(I, std::make_pair(FID, RewriteBuffer()));
   
-  std::pair<const char*, const char*> MB = SourceMgr->getBufferData(FileID);
+  std::pair<const char*, const char*> MB = SourceMgr->getBufferData(FID);
   I->second.Initialize(MB.first, MB.second);
   
   return I->second;
@@ -177,18 +177,18 @@ RewriteBuffer &Rewriter::getEditBuffer(unsigned FileID) {
 bool Rewriter::InsertText(SourceLocation Loc, const char *StrData,
                           unsigned StrLen, bool InsertAfter) {
   if (!isRewritable(Loc)) return true;
-  unsigned FileID;
-  unsigned StartOffs = getLocationOffsetAndFileID(Loc, FileID);
-  getEditBuffer(FileID).InsertText(StartOffs, StrData, StrLen, InsertAfter);
+  FileID FID;
+  unsigned StartOffs = getLocationOffsetAndFileID(Loc, FID);
+  getEditBuffer(FID).InsertText(StartOffs, StrData, StrLen, InsertAfter);
   return false;
 }
 
 /// RemoveText - Remove the specified text region.
 bool Rewriter::RemoveText(SourceLocation Start, unsigned Length) {
   if (!isRewritable(Start)) return true;
-  unsigned FileID;
-  unsigned StartOffs = getLocationOffsetAndFileID(Start, FileID);
-  getEditBuffer(FileID).RemoveText(StartOffs, Length);
+  FileID FID;
+  unsigned StartOffs = getLocationOffsetAndFileID(Start, FID);
+  getEditBuffer(FID).RemoveText(StartOffs, Length);
   return false;
 }
 
@@ -198,7 +198,7 @@ bool Rewriter::RemoveText(SourceLocation Start, unsigned Length) {
 bool Rewriter::ReplaceText(SourceLocation Start, unsigned OrigLength,
                            const char *NewStr, unsigned NewLength) {
   if (!isRewritable(Start)) return true;
-  unsigned StartFileID;
+  FileID StartFileID;
   unsigned StartOffs = getLocationOffsetAndFileID(Start, StartFileID);
   
   getEditBuffer(StartFileID).ReplaceText(StartOffs, OrigLength,

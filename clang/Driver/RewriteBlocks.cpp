@@ -37,7 +37,7 @@ class RewriteBlocks : public ASTConsumer {
 
   ASTContext *Context;
   SourceManager *SM;
-  unsigned MainFileID;
+  FileID MainFileID;
   const char *MainFileStart, *MainFileEnd;
 
   // Block expressions.
@@ -223,7 +223,7 @@ void RewriteBlocks::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_EXTERN void *_NSConcreteStackBlock;\n";
   Preamble += "#endif\n";
   
-  InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
+  InsertText(SM->getLocForStartOfFile(MainFileID), 
              Preamble.c_str(), Preamble.size());
 }
 

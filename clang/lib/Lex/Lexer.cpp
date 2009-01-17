@@ -62,14 +62,18 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
 /// with the specified preprocessor managing the lexing process.  This lexer
 /// assumes that the associated file buffer and Preprocessor objects will
 /// outlive it, so it doesn't take ownership of either of them.
-Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
+Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP,
              const char *BufStart, const char *BufEnd)
-  : PreprocessorLexer(&pp, fileloc), FileLoc(fileloc),
-    Features(pp.getLangOptions()) {
+// FIXME: This is really horrible and only needed for _Pragma lexers, split this
+// out of the main lexer path!
+  : PreprocessorLexer(&PP, 
+                      PP.getSourceManager().getCanonicalFileID(
+                      PP.getSourceManager().getSpellingLoc(fileloc))),
+                      FileLoc(fileloc),
+    Features(PP.getLangOptions()) {
       
-  SourceManager &SourceMgr = PP->getSourceManager();
-  unsigned InputFileID = SourceMgr.getSpellingLoc(FileLoc).getFileID();
-  const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(InputFileID);
+  SourceManager &SourceMgr = PP.getSourceManager();
+  const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(getFileID());
       
   Is_PragmaLexer = false;
   InitCharacterInfo();
@@ -103,7 +107,7 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
   
   // Default to keeping comments if the preprocessor wants them.
   ExtendedTokenMode = 0;
-  SetCommentRetentionState(PP->getCommentRetentionState());
+  SetCommentRetentionState(PP.getCommentRetentionState());
 }
 
 /// Lexer constructor - Create a new raw lexer object.  This object is only
@@ -187,9 +191,7 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   // all obviously single-char tokens.  This could use 
   // Lexer::isObviouslySimpleCharacter for example to handle identifiers or
   // something.
-  
-  
-  const char *BufEnd = SM.getBufferData(Loc.getFileID()).second;
+  const char *BufEnd = SM.getBufferData(Loc).second;
   
   // Create a langops struct and enable trigraphs.  This is sufficient for
   // measuring tokens.
@@ -303,6 +305,8 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
   if (FileLoc.isFileID())
     return SourceLocation::getFileLoc(FileLoc.getFileID(), CharNo);
   
+  // Otherwise, this is the _Pragma lexer case, which pretends that all of the
+  // tokens are lexed from where the _Pragma was defined.
   assert(PP && "This doesn't work on raw lexers");
   return GetMappedTokenLoc(*PP, FileLoc, CharNo);
 }

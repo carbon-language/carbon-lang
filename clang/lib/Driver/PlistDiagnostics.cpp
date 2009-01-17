@@ -20,9 +20,9 @@
 #include "llvm/System/Path.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-
 using namespace clang;
-typedef llvm::DenseMap<unsigned,unsigned> FIDMap;
+
+typedef llvm::DenseMap<FileID, unsigned> FIDMap;
 
 namespace clang {
   class Preprocessor;
@@ -51,27 +51,28 @@ clang::CreatePlistDiagnosticClient(const std::string& s,
   return new PlistDiagnostics(s);
 }
 
-static void AddFID(FIDMap& FIDs,
-                   llvm::SmallVectorImpl<unsigned>& V,
+static void AddFID(FIDMap &FIDs,
+                   llvm::SmallVectorImpl<FileID> &V,
                    SourceManager& SM, SourceLocation L) {
 
-  unsigned fid = SM.getCanonicalFileID(SM.getInstantiationLoc(L));
-  FIDMap::iterator I = FIDs.find(fid);
+  FileID FID = SM.getCanonicalFileID(SM.getInstantiationLoc(L));
+  FIDMap::iterator I = FIDs.find(FID);
   if (I != FIDs.end()) return;
-  FIDs[fid] = V.size();
-  V.push_back(fid);
+  FIDs[FID] = V.size();
+  V.push_back(FID);
 }
 
 static unsigned GetFID(const FIDMap& FIDs,
                        SourceManager& SM, SourceLocation L) {
-  unsigned fid = SM.getCanonicalFileID(SM.getInstantiationLoc(L));
-  FIDMap::const_iterator I = FIDs.find(fid);
-  assert (I != FIDs.end());
+  FileID FID = SM.getCanonicalFileID(SM.getInstantiationLoc(L));
+  FIDMap::const_iterator I = FIDs.find(FID);
+  assert(I != FIDs.end());
   return I->second;
 }
 
 static llvm::raw_ostream& Indent(llvm::raw_ostream& o, const unsigned indent) {
-  for (unsigned i = 0; i < indent; ++i) o << ' ';
+  for (unsigned i = 0; i < indent; ++i)
+    o << ' ';
   return o;
 }
 
@@ -171,7 +172,7 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
   // Build up a set of FIDs that we use by scanning the locations and
   // ranges of the diagnostics.
   FIDMap FM;
-  llvm::SmallVector<unsigned, 10> Fids;
+  llvm::SmallVector<FileID, 10> Fids;
   
   for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I) {
     AddFID(FM, Fids, SM, I->getLocation());
@@ -214,7 +215,7 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
        " <key>files</key>\n"
        " <array>\n";
   
-  for (llvm::SmallVectorImpl<unsigned>::iterator I=Fids.begin(), E=Fids.end();
+  for (llvm::SmallVectorImpl<FileID>::iterator I=Fids.begin(), E=Fids.end();
        I!=E; ++I)
     o << "  <string>" << SM.getFileEntryForID(*I)->getName() << "</string>\n";    
   

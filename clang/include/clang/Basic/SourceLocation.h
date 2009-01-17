@@ -18,13 +18,46 @@
 #include "llvm/Bitcode/SerializationFwd.h"
 
 namespace llvm {
-class MemoryBuffer;
+  class MemoryBuffer;
+  template <typename T> struct DenseMapInfo;
 }
 
 namespace clang {
   
 class SourceManager;
 class FileEntry;
+  
+/// FileID - This is an opaque identifier used by SourceManager which refers to
+/// a source file (MemoryBuffer) along with its #include path and #line data.
+///
+class FileID {
+  /// ID - Opaque identifier, 0 is "invalid".
+  unsigned ID;
+public:
+  FileID() : ID(0) {}
+  
+  bool isInvalid() const { return ID == 0; }
+  
+  bool operator==(const FileID &RHS) const { return ID == RHS.ID; }
+  bool operator<(const FileID &RHS) const { return ID < RHS.ID; }
+  bool operator<=(const FileID &RHS) const { return ID <= RHS.ID; }
+  bool operator!=(const FileID &RHS) const { return !(*this == RHS); }
+  bool operator>(const FileID &RHS) const { return RHS < *this; }
+  bool operator>=(const FileID &RHS) const { return RHS <= *this; }
+  
+  static FileID getSentinel() { return Create(~0U); }
+  unsigned getHashValue() const { return ID; }
+  
+private:
+  friend class SourceManager;
+  static FileID Create(unsigned V) {
+    FileID F;
+    F.ID = V;
+    return F;
+  }
+  unsigned getOpaqueValue() const { return ID; }
+};
+  
     
 /// SourceLocation - This is a carefully crafted 32-bit identifier that encodes
 /// a full include stack, line and column number information for a position in
@@ -268,5 +301,30 @@ public:
 };
  
 }  // end namespace clang
+
+namespace llvm {
+  /// Define DenseMapInfo so that FileID's can be used as keys in DenseMap and
+  /// DenseSets.
+  template <>
+  struct DenseMapInfo<clang::FileID> {
+    static inline clang::FileID getEmptyKey() {
+      return clang::FileID();
+    }
+    static inline clang::FileID getTombstoneKey() {
+      return clang::FileID::getSentinel(); 
+    }
+    
+    static unsigned getHashValue(clang::FileID S) {
+      return S.getHashValue();
+    }
+    
+    static bool isEqual(clang::FileID LHS, clang::FileID RHS) {
+      return LHS == RHS;
+    }
+    
+    static bool isPod() { return true; }
+  };
+  
+}  // end namespace llvm
 
 #endif

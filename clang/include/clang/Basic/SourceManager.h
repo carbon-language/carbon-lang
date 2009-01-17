@@ -256,47 +256,47 @@ class SourceManager {
   
   /// LastLineNo - These ivars serve as a cache used in the getLineNumber
   /// method which is used to speedup getLineNumber calls to nearby locations.
-  mutable unsigned LastLineNoFileIDQuery;
+  mutable FileID LastLineNoFileIDQuery;
   mutable SrcMgr::ContentCache *LastLineNoContentCache;
   mutable unsigned LastLineNoFilePos;
   mutable unsigned LastLineNoResult;
   
   /// MainFileID - The file ID for the main source file of the translation unit.
-  unsigned MainFileID;
+  FileID MainFileID;
 
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);  
 public:
-  SourceManager() : LastLineNoFileIDQuery(~0U), MainFileID(0) {}
+  SourceManager() {}
   ~SourceManager() {}
   
   void clearIDTables() {
-    MainFileID = 0;
+    MainFileID = FileID();
     FileIDs.clear();
     MacroIDs.clear();
-    LastLineNoFileIDQuery = ~0U;
+    LastLineNoFileIDQuery = FileID();
     LastLineNoContentCache = 0;
   }
   
   /// getMainFileID - Returns the FileID of the main source file.
-  unsigned getMainFileID() const { return MainFileID; }
+  FileID getMainFileID() const { return MainFileID; }
   
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
-  unsigned createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
+  FileID createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
                         SrcMgr::CharacteristicKind FileCharacter) {
     const SrcMgr::ContentCache *IR = getContentCache(SourceFile);
-    if (IR == 0) return 0;    // Error opening file?
+    if (IR == 0) return FileID();    // Error opening file?
     return createFileID(IR, IncludePos, FileCharacter);
   }
   
   /// createMainFileID - Create the FileID for the main source file.
-  unsigned createMainFileID(const FileEntry *SourceFile,
+  FileID createMainFileID(const FileEntry *SourceFile,
                             SourceLocation IncludePos) {
     
-    assert (MainFileID == 0 && "MainFileID already set!");
+    assert(MainFileID.isInvalid() && "MainFileID already set!");
     MainFileID = createFileID(SourceFile, IncludePos, SrcMgr::C_User);
     return MainFileID;
   }
@@ -304,7 +304,7 @@ public:
   /// createFileIDForMemBuffer - Create a new FileID that represents the
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
-  unsigned createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
+  FileID createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
     return createFileID(createMemBufferContentCache(Buffer), SourceLocation(),
                         SrcMgr::C_User);
   }
@@ -312,11 +312,18 @@ public:
   /// createMainFileIDForMembuffer - Create the FileID for a memory buffer
   ///  that will represent the FileID for the main source.  One example
   ///  of when this would be used is when the main source is read from STDIN.
-  unsigned createMainFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
-    assert (MainFileID == 0 && "MainFileID already set!");
+  FileID createMainFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
+    assert(MainFileID.isInvalid() && "MainFileID already set!");
     MainFileID = createFileIDForMemBuffer(Buffer);
     return MainFileID;
   }
+  
+  /// getLocForStartOfFile - Return the source location corresponding to the
+  /// first byte of the specified file.
+  SourceLocation getLocForStartOfFile(FileID FID) const {
+    return SourceLocation::getFileLoc(FID.ID, 0);
+  }
+  
   
   /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
   /// that a token at Loc should actually be referenced from InstantiationLoc.
@@ -325,13 +332,19 @@ public:
   
   /// getBuffer - Return the buffer for the specified FileID.
   ///
-  const llvm::MemoryBuffer *getBuffer(unsigned FileID) const {
-    return getContentCache(FileID)->getBuffer();
+  const llvm::MemoryBuffer *getBuffer(FileID FID) const {
+    return getContentCache(FID)->getBuffer();
   }
+  
+  const llvm::MemoryBuffer *getBuffer(SourceLocation Loc) const {
+    return getContentCacheForLoc(Loc)->getBuffer();
+  }
+  
   
   /// getBufferData - Return a pointer to the start and end of the character
   /// data for the specified FileID.
-  std::pair<const char*, const char*> getBufferData(unsigned FileID) const;
+  std::pair<const char*, const char*> getBufferData(SourceLocation Loc) const;
+  std::pair<const char*, const char*> getBufferData(FileID FID) const;
   
   /// getIncludeLoc - Return the location of the #include for the specified
   /// SourceLocation.  If this is a macro expansion, this transparently figures
@@ -414,8 +427,8 @@ public:
   }
   
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
-  const FileEntry* getFileEntryForID(unsigned id) const {
-    return getContentCache(id)->Entry;
+  const FileEntry *getFileEntryForID(FileID FID) const {
+    return getContentCache(FID)->Entry;
   }
   
   /// getCanonicalFileID - Return the canonical FileID for a SourceLocation.
@@ -423,14 +436,14 @@ public:
   ///  into multiple chunks.  This method returns the unique FileID without
   ///  chunk information for a given SourceLocation.  Use this method when
   ///  you want to compare FileIDs across SourceLocations.
-  unsigned getCanonicalFileID(SourceLocation SpellingLoc) const {
+  FileID getCanonicalFileID(SourceLocation SpellingLoc) const {
     return getDecomposedFileLoc(SpellingLoc).first;
   }    
   
   /// getDecomposedFileLoc - Decompose the specified file location into a raw
   /// FileID + Offset pair.  The first element is the FileID, the second is the
   /// offset from the start of the buffer of the location.
-  std::pair<unsigned, unsigned> getDecomposedFileLoc(SourceLocation Loc) const {
+  std::pair<FileID, unsigned> getDecomposedFileLoc(SourceLocation Loc) const {
     assert(Loc.isFileID() && "Isn't a File SourceLocation");
     
     // TODO: Add a flag "is first chunk" to SLOC.
@@ -444,7 +457,7 @@ public:
 
     assert(Loc.getFileID() >= ChunkNo && "Unexpected offset");
     
-    return std::make_pair(Loc.getFileID()-ChunkNo, Offset);
+    return std::make_pair(FileID::Create(Loc.getFileID()-ChunkNo), Offset);
   }
     
   /// getFullFilePos - This (efficient) method returns the offset from the start
@@ -474,8 +487,8 @@ public:
   SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const {
     return getFIDInfo(getSpellingLoc(Loc).getFileID())->getFileCharacteristic();
   }
-  SrcMgr::CharacteristicKind getFileCharacteristic(unsigned FileID) const {
-    return getFIDInfo(FileID)->getFileCharacteristic();
+  SrcMgr::CharacteristicKind getFileCharacteristic(FileID FID) const {
+    return getFIDInfo(FID)->getFileCharacteristic();
   }
   
   // Iterators over FileInfos.
@@ -500,26 +513,29 @@ private:
   /// createFileID - Create a new fileID for the specified ContentCache and
   ///  include position.  This works regardless of whether the ContentCache
   ///  corresponds to a file or some other input source.
-  unsigned createFileID(const SrcMgr::ContentCache* File,
-                        SourceLocation IncludePos,
-                        SrcMgr::CharacteristicKind DirCharacter);
+  FileID createFileID(const SrcMgr::ContentCache* File,
+                      SourceLocation IncludePos,
+                      SrcMgr::CharacteristicKind DirCharacter);
     
   /// getContentCache - Create or return a cached ContentCache for the specified
   ///  file.  This returns null on failure.
-  const SrcMgr::ContentCache* getContentCache(const FileEntry* SourceFile);
+  const SrcMgr::ContentCache* getContentCache(const FileEntry *SourceFile);
 
   /// createMemBufferContentCache - Create a new ContentCache for the specified
   ///  memory buffer.
   const SrcMgr::ContentCache* 
-  createMemBufferContentCache(const llvm::MemoryBuffer* Buf);
+  createMemBufferContentCache(const llvm::MemoryBuffer *Buf);
 
-  const SrcMgr::FileIDInfo* getFIDInfo(unsigned FileID) const {
-    assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
-    return &FileIDs[FileID-1];
+  const SrcMgr::FileIDInfo *getFIDInfo(unsigned FID) const {
+    assert(FID-1 < FileIDs.size() && "Invalid FileID!");
+    return &FileIDs[FID-1];
+  }
+  const SrcMgr::FileIDInfo *getFIDInfo(FileID FID) const {
+    return getFIDInfo(FID.ID);
   }
   
-  const SrcMgr::ContentCache *getContentCache(unsigned FileID) const {
-    return getContentCache(getFIDInfo(FileID));
+  const SrcMgr::ContentCache *getContentCache(FileID FID) const {
+    return getContentCache(getFIDInfo(FID.ID));
   }
   
   /// Return the ContentCache structure for the specified FileID.  

@@ -200,9 +200,7 @@ std::string Preprocessor::getSpelling(const Token &Tok) const {
   
   if (PTH) {
     SourceLocation SLoc = SourceMgr.getSpellingLoc(Tok.getLocation());
-    unsigned fid = SourceMgr.getCanonicalFileID(SLoc);
-    unsigned fpos = SourceMgr.getFullFilePos(SLoc);
-    if (unsigned Len = PTH->getSpelling(fid, fpos, TokStart)) {
+    if (unsigned Len = PTH->getSpelling(SLoc, TokStart)) {
       assert(!Tok.needsCleaning());
       return std::string(TokStart, TokStart+Len);
     }
@@ -256,10 +254,8 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
     if (CurPTHLexer) {
       Len = CurPTHLexer.get()->getSpelling(Tok.getLocation(), Buffer);      
     } else {
-      SourceLocation SLoc = SourceMgr.getSpellingLoc(Tok.getLocation());
-      unsigned FID = SourceMgr.getCanonicalFileID(SLoc);
-      unsigned FPos = SourceMgr.getFullFilePos(SLoc);      
-      Len = PTH->getSpelling(FID, FPos, Buffer);      
+      Len = PTH->getSpelling(SourceMgr.getSpellingLoc(Tok.getLocation()),
+                             Buffer);      
     }
 
     // Did we find a spelling?  If so return its length.  Otherwise fall
@@ -656,15 +652,14 @@ static void InitializePredefinedMacros(Preprocessor &PP,
 /// which implicitly adds the builtin defines etc.
 void Preprocessor::EnterMainSourceFile() {
   
-  unsigned MainFileID = SourceMgr.getMainFileID();
+  FileID MainFileID = SourceMgr.getMainFileID();
   
   // Enter the main file source buffer.
   EnterSourceFile(MainFileID, 0);
   
   // Tell the header info that the main file was entered.  If the file is later
   // #imported, it won't be re-entered.
-  if (const FileEntry *FE = 
-        SourceMgr.getFileEntryForLoc(SourceLocation::getFileLoc(MainFileID, 0)))
+  if (const FileEntry *FE = SourceMgr.getFileEntryForID(MainFileID))
     HeaderInfo.IncrementIncludeCount(FE);
     
   std::vector<char> PrologFile;
@@ -685,11 +680,11 @@ void Preprocessor::EnterMainSourceFile() {
     llvm::MemoryBuffer::getMemBufferCopy(&PrologFile.front(),&PrologFile.back(),
                                          "<predefines>");
   assert(SB && "Cannot fail to create predefined source buffer");
-  unsigned FileID = SourceMgr.createFileIDForMemBuffer(SB);
-  assert(FileID && "Could not create FileID for predefines?");
+  FileID FID = SourceMgr.createFileIDForMemBuffer(SB);
+  assert(!FID.isInvalid() && "Could not create FileID for predefines?");
   
   // Start parsing the predefines.
-  EnterSourceFile(FileID, 0);
+  EnterSourceFile(FID, 0);
 }
 
 

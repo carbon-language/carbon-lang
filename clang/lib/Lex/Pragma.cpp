@@ -191,10 +191,8 @@ void Preprocessor::HandlePragmaOnce(Token &OnceTok) {
   }
   
   // Get the current file lexer we're looking at.  Ignore _Pragma 'files' etc.
-  unsigned FileID = getCurrentFileLexer()->getFileID();
-  
   // Mark the file as a once-only file now.
-  HeaderInfo.MarkFileIncludeOnce(SourceMgr.getFileEntryForID(FileID));
+  HeaderInfo.MarkFileIncludeOnce(getCurrentFileLexer()->getFileEntry());
 }
 
 void Preprocessor::HandlePragmaMark() {
@@ -256,8 +254,7 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
   PreprocessorLexer *TheLexer = getCurrentFileLexer();
   
   // Mark the file as a system header.
-  const FileEntry *File = SourceMgr.getFileEntryForID(TheLexer->getFileID());
-  HeaderInfo.MarkFileSystemHeader(File);
+  HeaderInfo.MarkFileSystemHeader(TheLexer->getFileEntry());
   
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks)
@@ -299,8 +296,7 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
     return;
   }
   
-  unsigned FileID = getCurrentFileLexer()->getFileID();
-  const FileEntry *CurFile = SourceMgr.getFileEntryForID(FileID);
+  const FileEntry *CurFile = getCurrentFileLexer()->getFileEntry();
 
   // If this file is older than the file it depends on, emit a diagnostic.
   if (CurFile && CurFile->getModificationTime() < File->getModificationTime()) {

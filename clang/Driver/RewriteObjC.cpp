@@ -47,7 +47,7 @@ namespace {
     ASTContext *Context;
     SourceManager *SM;
     TranslationUnitDecl *TUDecl;
-    unsigned MainFileID;
+    FileID MainFileID;
     const char *MainFileStart, *MainFileEnd;
     SourceLocation LastIncLoc;
     
@@ -597,7 +597,7 @@ void RewriteObjC::HandleTopLevelDecl(Decl *D) {
 //===----------------------------------------------------------------------===//
 
 void RewriteObjC::RewriteInclude() {
-  SourceLocation LocStart = SourceLocation::getFileLoc(MainFileID, 0);
+  SourceLocation LocStart = SM->getLocForStartOfFile(MainFileID);
   std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
   const char *MainBufStart = MainBuf.first;
   const char *MainBufEnd = MainBuf.second;
@@ -645,8 +645,8 @@ void RewriteObjC::RewriteTabs() {
     unsigned Spaces = 8-(VCol & 7);
     
     // Get the location of the tab.
-    SourceLocation TabLoc =
-      SourceLocation::getFileLoc(MainFileID, BufPtr-MainBufStart);
+    SourceLocation TabLoc = SM->getLocForStartOfFile(MainFileID);
+    TabLoc = TabLoc.getFileLocWithOffset(BufPtr-MainBufStart);
     
     // Rewrite the single tab character into a sequence of spaces.
     ReplaceText(TabLoc, 1, "        ", Spaces);
@@ -4501,7 +4501,7 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
   
   RewriteInclude();
   
-  InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
+  InsertText(SM->getLocForStartOfFile(MainFileID), 
              Preamble.c_str(), Preamble.size(), false);
   
   if (ClassImplementation.size() || CategoryImplementation.size())

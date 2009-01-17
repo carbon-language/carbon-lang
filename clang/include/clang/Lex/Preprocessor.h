@@ -284,7 +284,7 @@ public:
   /// EnterSourceFile - Add a source file to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.  If isMainFile
   /// is true, this is the main file for the translation unit.
-  void EnterSourceFile(unsigned CurFileID, const DirectoryLookup *Dir);
+  void EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
   /// tokens from it instead of the current buffer.  Args specifies the
@@ -456,10 +456,8 @@ public:
   char getSpelledCharacterAt(SourceLocation SL) const {
     if (PTH) {
       SL = SourceMgr.getSpellingLoc(SL);
-      unsigned FID = SourceMgr.getCanonicalFileID(SL);
-      unsigned FPos = SourceMgr.getFullFilePos(SL);      
       const char *Data;
-      if (PTH->getSpelling(FID, FPos, Data))
+      if (PTH->getSpelling(SL, Data))
         return *Data;
     }
 

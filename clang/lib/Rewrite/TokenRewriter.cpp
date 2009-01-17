@@ -18,14 +18,14 @@
 #include "clang/Basic/SourceManager.h"
 using namespace clang;
 
-TokenRewriter::TokenRewriter(unsigned FileID, SourceManager &SM,
+TokenRewriter::TokenRewriter(FileID FID, SourceManager &SM,
                              const LangOptions &LangOpts) {
   ScratchBuf.reset(new ScratchBuffer(SM));
   
-  std::pair<const char*,const char*> File = SM.getBufferData(FileID);
+  std::pair<const char*,const char*> File = SM.getBufferData(FID);
   
   // Create a lexer to lex all the tokens of the main file in raw mode.
-  Lexer RawLex(SourceLocation::getFileLoc(FileID, 0),
+  Lexer RawLex(SM.getLocForStartOfFile(FID),
                LangOpts, File.first, File.second);
   
   // Return all comments and whitespace as tokens.

@@ -485,8 +485,8 @@ void PTHWriter::GeneratePTH() {
     const llvm::MemoryBuffer *B = C.getBuffer();
     if (!B) continue;
 
-    unsigned FID = SM.createFileID(FE, SourceLocation(), SrcMgr::C_User);
-    Lexer L(SourceLocation::getFileLoc(FID, 0), LOpts,
+    FileID FID = SM.createFileID(FE, SourceLocation(), SrcMgr::C_User);
+    Lexer L(SM.getLocForStartOfFile(FID), LOpts,
             B->getBufferStart(), B->getBufferEnd(), B);
     PM[FE] = LexTokens(L);
   }

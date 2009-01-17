@@ -62,7 +62,7 @@ class PTHManager : public IdentifierInfoLookup {
   const llvm::MemoryBuffer* Buf;
   
   /// A map from FileIDs to SpellingSearch objects.
-  llvm::DenseMap<unsigned,PTHSpellingSearch*> SpellingMap;
+  llvm::DenseMap<FileID, PTHSpellingSearch*> SpellingMap;
   
   /// Alloc - Allocator used for IdentifierInfo objects.
   llvm::BumpPtrAllocator Alloc;
@@ -117,20 +117,22 @@ public:
   ///  Unlike the version in IdentifierTable, this returns a pointer instead
   ///  of a reference.  If the pointer is NULL then the IdentifierInfo cannot
   ///  be found.
-  IdentifierInfo* get(const char *NameStart, const char *NameEnd);
+  IdentifierInfo *get(const char *NameStart, const char *NameEnd);
   
   /// Create - This method creates PTHManager objects.  The 'file' argument
   ///  is the name of the PTH file.  This method returns NULL upon failure.
-  static PTHManager* Create(const std::string& file);
+  static PTHManager *Create(const std::string& file);
 
-  void setPreprocessor(Preprocessor* pp) { PP = pp; }    
+  void setPreprocessor(Preprocessor *pp) { PP = pp; }    
   
   /// CreateLexer - Return a PTHLexer that "lexes" the cached tokens for the
   ///  specified file.  This method returns NULL if no cached tokens exist.
   ///  It is the responsibility of the caller to 'delete' the returned object.
-  PTHLexer* CreateLexer(unsigned FileID, const FileEntry* FE);
+  PTHLexer *CreateLexer(FileID FID, const FileEntry *FE);
   
-  unsigned getSpelling(unsigned FileID, unsigned fpos, const char *& Buffer);  
+  unsigned getSpelling(SourceLocation Loc, const char *&Buffer);  
+private:
+  unsigned getSpelling(FileID FID, unsigned fpos, const char *& Buffer);  
 };
   
 }  // end namespace clang

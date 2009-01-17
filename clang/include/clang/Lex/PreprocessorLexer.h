@@ -27,8 +27,8 @@ class PreprocessorLexer {
 protected:
   Preprocessor *PP;              // Preprocessor object controlling lexing.
 
-  /// The SourceManager fileID corresponding to the file being lexed.
-  const unsigned FileID;
+  /// The SourceManager FileID corresponding to the file being lexed.
+  const FileID FID;
   
   //===--------------------------------------------------------------------===//
   // Context-specific lexing flags set by the preprocessor.
@@ -67,15 +67,17 @@ protected:
   void operator=(const PreprocessorLexer&); // DO NOT IMPLEMENT
   friend class Preprocessor;
   
-  PreprocessorLexer(Preprocessor* pp, SourceLocation L);
-
+  PreprocessorLexer(Preprocessor *pp, FileID fid)
+    : PP(pp), FID(fid), ParsingPreprocessorDirective(false),
+      ParsingFilename(false), LexingRawMode(false) {}
+  
   PreprocessorLexer()
-    : PP(0), FileID(0),
+    : PP(0), 
       ParsingPreprocessorDirective(false),
       ParsingFilename(false),
       LexingRawMode(false) {}
   
-  virtual ~PreprocessorLexer();
+  virtual ~PreprocessorLexer() {}
   
   virtual void IndirectLex(Token& Result) = 0;
   
@@ -143,11 +145,15 @@ public:
   /// getPP - Return the preprocessor object for this lexer.
   Preprocessor *getPP() const { return PP; }
   
-  unsigned getFileID() const { 
+  FileID getFileID() const { 
     assert(PP &&
       "PreprocessorLexer::getFileID() should only be used with a Preprocessor");
-    return FileID;
+    return FID;
   }
+  
+  /// getFileEntry - Return the FileEntry corresponding to this FileID.  Like
+  /// getFileID(), this only works for lexers with attached preprocessors.
+  const FileEntry *getFileEntry() const;
 };
 
 }  // end namespace clang

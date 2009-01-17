@@ -23,7 +23,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
-
 using namespace clang;
 
 #define DISK_TOKEN_SIZE (1+1+3+4+2)
@@ -48,15 +47,14 @@ static inline uint32_t Read32(const char*& data) {
 // PTHLexer methods.
 //===----------------------------------------------------------------------===//
 
-PTHLexer::PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D,
-                   const char* ppcond,
-                   PTHSpellingSearch& mySpellingSrch,
-                   PTHManager& PM)
-  : PreprocessorLexer(&pp, fileloc), TokBuf(D), CurPtr(D), LastHashTokPtr(0),
+PTHLexer::PTHLexer(Preprocessor &PP, FileID FID, const char *D,
+                   const char *ppcond,
+                   PTHSpellingSearch &mySpellingSrch, PTHManager &PM)
+  : PreprocessorLexer(&PP, FID), TokBuf(D), CurPtr(D), LastHashTokPtr(0),
     PPCond(ppcond), CurPPCondPtr(ppcond), MySpellingSrch(mySpellingSrch),
-    PTHMgr(PM)
-{      
-  FileID = fileloc.getFileID();
+    PTHMgr(PM) {
+      
+  FileStartLoc = PP.getSourceManager().getLocForStartOfFile(FID);
 }
 
 void PTHLexer::Lex(Token& Tok) {
@@ -96,7 +94,7 @@ LexNextToken:
   Tok.setFlag(flags);
   assert(!LexingRawMode);
   Tok.setIdentifierInfo(perID ? PTHMgr.GetIdentifierInfo(perID-1) : 0);
-  Tok.setLocation(SourceLocation::getFileLoc(FileID, FileOffset));
+  Tok.setLocation(FileStartLoc.getFileLocWithOffset(FileOffset));
   Tok.setLength(Len);
 
   //===--------------------------------------==//
@@ -295,23 +293,27 @@ SourceLocation PTHLexer::getSourceLocation() {
     | (((uint32_t) ((uint8_t) p[1])) << 8)
     | (((uint32_t) ((uint8_t) p[2])) << 16)
     | (((uint32_t) ((uint8_t) p[3])) << 24);
-  return SourceLocation::getFileLoc(FileID, offset);
+  return FileStartLoc.getFileLocWithOffset(offset);
 }
 
 //===----------------------------------------------------------------------===//
 // getSpelling() - Use cached data in PTH files for getSpelling().
 //===----------------------------------------------------------------------===//
 
-unsigned PTHManager::getSpelling(unsigned FileID, unsigned fpos,
-                                 const char *& Buffer) {
-  
-  llvm::DenseMap<unsigned,PTHSpellingSearch*>::iterator I =
-    SpellingMap.find(FileID);
+unsigned PTHManager::getSpelling(FileID FID, unsigned FPos,
+                                 const char *&Buffer) {
+  llvm::DenseMap<FileID, PTHSpellingSearch*>::iterator I =SpellingMap.find(FID);
 
   if (I == SpellingMap.end())
       return 0;
 
-  return I->second->getSpellingBinarySearch(fpos, Buffer);
+  return I->second->getSpellingBinarySearch(FPos, Buffer);
+}
+
+unsigned PTHManager::getSpelling(SourceLocation Loc, const char *&Buffer) {
+  std::pair<FileID, unsigned> LocInfo =
+    PP->getSourceManager().getDecomposedFileLoc(Loc);
+  return getSpelling(LocInfo.first, LocInfo.second, Buffer);
 }
 
 unsigned PTHManager::getSpellingAtPTHOffset(unsigned PTHOffset,
@@ -420,14 +422,17 @@ unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
   return 0;
 }
 
-unsigned PTHLexer::getSpelling(SourceLocation sloc, const char *&Buffer) {
-  SourceManager& SM = PP->getSourceManager();
-  sloc = SM.getSpellingLoc(sloc);
-  unsigned fid = SM.getCanonicalFileID(sloc);
-  unsigned fpos = SM.getFullFilePos(sloc);
+unsigned PTHLexer::getSpelling(SourceLocation Loc, const char *&Buffer) {
+  SourceManager &SM = PP->getSourceManager();
+  Loc = SM.getSpellingLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedFileLoc(Loc);
+
+  FileID FID = LocInfo.first;
+  unsigned FPos = LocInfo.second;
   
-  return (fid == FileID ) ? MySpellingSrch.getSpellingLinearSearch(fpos, Buffer)
-                          : PTHMgr.getSpelling(fid, fpos, Buffer);  
+  if (FID == getFileID())
+    return MySpellingSrch.getSpellingLinearSearch(FPos, Buffer);
+  return PTHMgr.getSpelling(FID, FPos, Buffer);  
 }
 
 //===----------------------------------------------------------------------===//
@@ -662,15 +667,14 @@ IdentifierInfo* PTHManager::get(const char *NameStart, const char *NameEnd) {
 }
 
 
-PTHLexer* PTHManager::CreateLexer(unsigned FileID, const FileEntry* FE) {
-  
+PTHLexer* PTHManager::CreateLexer(FileID FID, const FileEntry* FE) {
   if (!FE)
     return 0;
   
   // Lookup the FileEntry object in our file lookup data structure.  It will
   // return a variant that indicates whether or not there is an offset within
   // the PTH file that contains cached tokens.
-  PTHFileLookup::Val FileData = ((PTHFileLookup*) FileLookup)->Lookup(FE);
+  PTHFileLookup::Val FileData = ((PTHFileLookup*)FileLookup)->Lookup(FE);
   
   if (!FileData.isValid()) // No tokens available.
     return 0;
@@ -694,9 +698,8 @@ PTHLexer* PTHManager::CreateLexer(unsigned FileID, const FileEntry* FE) {
   
   // Create the SpellingSearch object for this FileID.
   PTHSpellingSearch* ss = new PTHSpellingSearch(*this, len, spellingTable);
-  SpellingMap[FileID] = ss;
+  SpellingMap[FID] = ss;
   
   assert(PP && "No preprocessor set yet!");
-  return new PTHLexer(*PP, SourceLocation::getFileLoc(FileID, 0), data, ppcond,
-                      *ss, *this); 
+  return new PTHLexer(*PP, FID, data, ppcond, *ss, *this); 
 }

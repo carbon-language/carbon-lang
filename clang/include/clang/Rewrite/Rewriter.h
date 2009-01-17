@@ -118,7 +118,7 @@ private:  // Methods only usable by Rewriter.
 class Rewriter {
   SourceManager *SourceMgr;
   
-  std::map<unsigned, RewriteBuffer> RewriteBuffers;
+  std::map<FileID, RewriteBuffer> RewriteBuffers;
 public:
   explicit Rewriter(SourceManager &SM) : SourceMgr(&SM) {}
   explicit Rewriter() : SourceMgr(0) {}
@@ -205,9 +205,9 @@ public:
   
   /// getRewriteBufferFor - Return the rewrite buffer for the specified FileID.
   /// If no modification has been made to it, return null.
-  const RewriteBuffer *getRewriteBufferFor(unsigned FileID) const {
-    std::map<unsigned, RewriteBuffer>::const_iterator I =
-      RewriteBuffers.find(FileID);
+  const RewriteBuffer *getRewriteBufferFor(FileID FID) const {
+    std::map<FileID, RewriteBuffer>::const_iterator I =
+      RewriteBuffers.find(FID);
     return I == RewriteBuffers.end() ? 0 : &I->second;
   }
 
@@ -215,11 +215,10 @@ public:
   /// buffer, and allows you to write on it directly.  This is useful if you
   /// want efficient low-level access to apis for scribbling on one specific
   /// FileID's buffer.
-  RewriteBuffer &getEditBuffer(unsigned FileID);
+  RewriteBuffer &getEditBuffer(FileID FID);
 
 private:
-  unsigned getLocationOffsetAndFileID(SourceLocation Loc,
-                                      unsigned &FileID) const;
+  unsigned getLocationOffsetAndFileID(SourceLocation Loc, FileID &FID) const;
 };
   
 } // end namespace clang

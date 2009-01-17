@@ -49,10 +49,10 @@ public:
   
   virtual void HandlePathDiagnostic(const PathDiagnostic* D);
   
-  void HandlePiece(Rewriter& R, unsigned BugFileID,
+  void HandlePiece(Rewriter& R, FileID BugFileID,
                    const PathDiagnosticPiece& P, unsigned num, unsigned max);
   
-  void HighlightRange(Rewriter& R, unsigned BugFileID, SourceRange Range);
+  void HighlightRange(Rewriter& R, FileID BugFileID, SourceRange Range);
 
   void ReportDiag(const PathDiagnostic& D);
 };
@@ -125,17 +125,15 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     return;
   
   SourceManager &SMgr = D.begin()->getLocation().getManager();
-  unsigned FileID = 0;
-  bool FileIDInitialized = false;
+  FileID FID;
   
   // Verify that the entire path is from the same FileID.
   for (PathDiagnostic::const_iterator I = D.begin(), E = D.end(); I != E; ++I) {
     FullSourceLoc L = I->getLocation().getInstantiationLoc();
     
-    if (!FileIDInitialized) {
-      FileID = SMgr.getCanonicalFileID(L);
-      FileIDInitialized = true;
-    } else if (SMgr.getCanonicalFileID(L) != FileID)
+    if (FID.isInvalid()) {
+      FID = SMgr.getCanonicalFileID(L);
+    } else if (SMgr.getCanonicalFileID(L) != FID)
       return; // FIXME: Emit a warning?
     
     // Check the source ranges.
@@ -147,7 +145,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
       if (!L.isFileID())
         return; // FIXME: Emit a warning?      
       
-      if (SMgr.getCanonicalFileID(L) != FileID)
+      if (SMgr.getCanonicalFileID(L) != FID)
         return; // FIXME: Emit a warning?
       
       L = SMgr.getInstantiationLoc(RI->getEnd());
@@ -155,12 +153,12 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
       if (!L.isFileID())
         return; // FIXME: Emit a warning?      
       
-      if (SMgr.getCanonicalFileID(L) != FileID)
+      if (SMgr.getCanonicalFileID(L) != FID)
         return; // FIXME: Emit a warning?
     }
   }
   
-  if (!FileIDInitialized)
+  if (FID.isInvalid())
     return; // FIXME: Emit a warning?
   
   // Create a new rewriter to generate HTML.
@@ -174,31 +172,31 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   for (PathDiagnostic::const_reverse_iterator I=D.rbegin(), E=D.rend();
         I!=E; ++I, --n) {
     
-    HandlePiece(R, FileID, *I, n, max);
+    HandlePiece(R, FID, *I, n, max);
   }
   
   // Add line numbers, header, footer, etc.
   
-  // unsigned FileID = R.getSourceMgr().getMainFileID();
-  html::EscapeText(R, FileID);
-  html::AddLineNumbers(R, FileID);
+  // unsigned FID = R.getSourceMgr().getMainFileID();
+  html::EscapeText(R, FID);
+  html::AddLineNumbers(R, FID);
   
   // If we have a preprocessor, relex the file and syntax highlight.
   // We might not have a preprocessor if we come from a deserialized AST file,
   // for example.
   
-  if (PP) html::SyntaxHighlight(R, FileID, *PP);
+  if (PP) html::SyntaxHighlight(R, FID, *PP);
 
   // FIXME: We eventually want to use PPF to create a fresh Preprocessor,
   //  once we have worked out the bugs.
   //
-  // if (PPF) html::HighlightMacros(R, FileID, *PPF);
+  // if (PPF) html::HighlightMacros(R, FID, *PPF);
   //
-  if (PP) html::HighlightMacros(R, FileID, *PP);
+  if (PP) html::HighlightMacros(R, FID, *PP);
   
   // Get the full directory name of the analyzed file.
 
-  const FileEntry* Entry = SMgr.getFileEntryForID(FileID);
+  const FileEntry* Entry = SMgr.getFileEntryForID(FID);
   
   // This is a cludge; basically we want to append either the full
   // working directory if we have no directory information.  This is
@@ -241,7 +239,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     os << "</table>\n<!-- REPORTSUMMARYEXTRA -->\n"
           "<h3>Annotated Source Code</h3>\n";    
     
-    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
   // Embed meta-data tags.
@@ -252,7 +250,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     std::string s;
     llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGDESC " << BugDesc << " -->\n";
-    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
   const std::string& BugCategory = D.getCategory();
@@ -261,14 +259,14 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     std::string s;
     llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGCATEGORY " << BugCategory << " -->\n";
-    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
   {
     std::string s;
     llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGFILE " << DirName << Entry->getName() << " -->\n";
-    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
   {
@@ -276,22 +274,22 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGLINE "
        << D.back()->getLocation().getInstantiationLineNumber() << " -->\n";
-    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
   {
     std::string s;
     llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGPATHLENGTH " << D.size() << " -->\n";
-    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
 
   // Add CSS, header, and footer.
   
-  html::AddHeaderFooterInternalBuiltinCSS(R, FileID, Entry->getName());
+  html::AddHeaderFooterInternalBuiltinCSS(R, FID, Entry->getName());
   
   // Get the rewrite buffer.
-  const RewriteBuffer *Buf = R.getRewriteBufferFor(FileID);
+  const RewriteBuffer *Buf = R.getRewriteBufferFor(FID);
   
   if (!Buf) {
     llvm::cerr << "warning: no diagnostics generated for main file.\n";
@@ -325,28 +323,26 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
       os << *I;
 }
 
-void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
+void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
                                   const PathDiagnosticPiece& P,
                                   unsigned num, unsigned max) {
   
   // For now, just draw a box above the line in question, and emit the
   // warning.
-  
   FullSourceLoc Pos = P.getLocation();
   
   if (!Pos.isValid())
     return;  
   
-  SourceManager& SM = R.getSourceMgr();
+  SourceManager &SM = R.getSourceMgr();
   FullSourceLoc LPos = Pos.getInstantiationLoc();
-  unsigned FileID = SM.getCanonicalFileID(LPos);
-
-  assert (&LPos.getManager() == &SM && "SourceManagers are different!");
+  FileID FID = SM.getCanonicalFileID(LPos);
+  assert(&LPos.getManager() == &SM && "SourceManagers are different!");
   
   if (SM.getCanonicalFileID(LPos) != BugFileID)
     return;
   
-  const llvm::MemoryBuffer *Buf = SM.getBuffer(FileID);
+  const llvm::MemoryBuffer *Buf = SM.getBuffer(FID);
   const char* FileStart = Buf->getBufferStart();  
   
   // Compute the column number.  Rewind from the current position to the start
@@ -436,30 +432,30 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
     os << html::EscapeText(Msg) << "</div></td></tr>";
 
     // Insert the new html.
-    unsigned DisplayPos = 0;
-    
+    unsigned DisplayPos;
     switch (P.getDisplayHint()) {
-      case PathDiagnosticPiece::Above:
-        DisplayPos = LineStart - FileStart;
-        break;
-      case PathDiagnosticPiece::Below:
-        DisplayPos = LineEnd - FileStart;
-        break;
-      default:
-        assert (false && "Unhandled hint.");
+    default: assert(0 && "Unhandled hint.");
+    case PathDiagnosticPiece::Above:
+      DisplayPos = LineStart - FileStart;
+      break;
+    case PathDiagnosticPiece::Below:
+      DisplayPos = LineEnd - FileStart;
+      break;
     }
-      
-    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, DisplayPos), os.str());
+    
+    SourceLocation Loc = 
+      SM.getLocForStartOfFile(FID).getFileLocWithOffset(DisplayPos);
+    R.InsertStrBefore(Loc, os.str());
   }
   
   // Now highlight the ranges.
   
   for (const SourceRange *I = P.ranges_begin(), *E = P.ranges_end();
         I != E; ++I)
-    HighlightRange(R, FileID, *I);
+    HighlightRange(R, FID, *I);
 }
 
-void HTMLDiagnostics::HighlightRange(Rewriter& R, unsigned BugFileID,
+void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
                                      SourceRange Range) {
   
   SourceManager& SM = R.getSourceMgr();

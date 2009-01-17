@@ -394,8 +394,8 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
   if (!FromDir) {
-    unsigned FileID = getCurrentFileLexer()->getFileID();
-    CurFileEnt = SourceMgr.getFileEntryForID(FileID);
+    FileID FID = getCurrentFileLexer()->getFileID();
+    CurFileEnt = SourceMgr.getFileEntryForID(FID);
   }
   
   // Do a standard file entry lookup.
@@ -786,16 +786,16 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
           SourceMgr.getFileCharacteristic(getCurrentFileLexer()->getFileID()));
   
   // Look up the file, create a File ID for it.
-  unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation(),
-                                           FileCharacter);
-  if (FileID == 0) {
+  FileID FID = SourceMgr.createFileID(File, FilenameTok.getLocation(),
+                                      FileCharacter);
+  if (FID.isInvalid()) {
     Diag(FilenameTok, diag::err_pp_file_not_found)
       << std::string(FilenameStart, FilenameEnd);
     return;
   }
 
   // Finally, if all is good, enter the new file!
-  EnterSourceFile(FileID, CurDir);
+  EnterSourceFile(FID, CurDir);
 }
 
 /// HandleIncludeNextDirective - Implements #include_next.

@@ -903,10 +903,10 @@ public:
       return;
     
     SourceManager& SourceMgr = TU.getContext().getSourceManager();
-    unsigned ID = SourceMgr.getMainFileID();
-    assert (ID && "MainFileID not set!");
+    FileID ID = SourceMgr.getMainFileID();
+    assert(!ID.isInvalid() && "MainFileID not set!");
     const FileEntry* FE = SourceMgr.getFileEntryForID(ID);
-    assert (FE && "No FileEntry for main file.");
+    assert(FE && "No FileEntry for main file.");
     
     // FIXME: This is not portable to Windows.
     // FIXME: This logic should probably be moved elsewhere later.

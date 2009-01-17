@@ -14,9 +14,10 @@
 #ifndef LLVM_CLANG_SCRATCHBUFFER_H
 #define LLVM_CLANG_SCRATCHBUFFER_H
 
+#include "clang/Basic/SourceLocation.h"
+
 namespace clang {
   class SourceManager;
-  class SourceLocation;
 
 /// ScratchBuffer - This class exposes a simple interface for the dynamic
 /// construction of tokens.  This is used for builtin macros (e.g. __LINE__) as
@@ -24,7 +25,7 @@ namespace clang {
 class ScratchBuffer {
   SourceManager &SourceMgr;
   char *CurBuffer;
-  unsigned FileID;
+  SourceLocation BufferStartLoc;
   unsigned BytesUsed;
 public:
   ScratchBuffer(SourceManager &SM);

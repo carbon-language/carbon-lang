@@ -23,9 +23,7 @@ class PTHManager;
 class PTHSpellingSearch;
   
 class PTHLexer : public PreprocessorLexer {
-private:
-  /// FileID - The SourceManager FileID for the original source file.
-  unsigned FileID;
+  SourceLocation FileStartLoc;
   
   /// TokBuf - Buffer from PTH file containing raw token data.
   const char* TokBuf;
@@ -66,10 +64,8 @@ protected:
   friend class PTHManager;
 
   /// Create a PTHLexer for the specified token stream.
-  PTHLexer(Preprocessor& pp, SourceLocation fileloc, const char* D, 
-           const char* ppcond,
-           PTHSpellingSearch& mySpellingSrch,
-           PTHManager& PM);
+  PTHLexer(Preprocessor& pp, FileID FID, const char *D, const char* ppcond,
+           PTHSpellingSearch& mySpellingSrch, PTHManager &PM);
 public:  
 
   ~PTHLexer() {}
