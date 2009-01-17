@@ -1295,6 +1295,21 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   return GV;
 }
 
+/// countInheritedIvars - count number of ivars in class and its super class(s)
+///
+static int countInheritedIvars(const ObjCInterfaceDecl *OI) {
+  int count = 0;
+  if (!OI)
+    return 0;
+  const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
+  if (SuperClass)
+    count += countInheritedIvars(SuperClass);
+  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
+       E = OI->ivar_end(); I != E; ++I)
+    ++count;
+  return count;
+}
+
 /*
   struct objc_ivar {
     char *ivar_name;
@@ -1322,18 +1337,23 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
 
   const llvm::StructLayout *Layout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
-  for (ObjCInterfaceDecl::ivar_iterator 
-         i = ID->getClassInterface()->ivar_begin(),
-         e = ID->getClassInterface()->ivar_end(); i != e; ++i) {
-    const ObjCIvarDecl *V = *i;
-    ObjCInterfaceDecl *OID = 
-      const_cast<ObjCInterfaceDecl *>(ID->getClassInterface());
-    FieldDecl *Field = OID->lookupFieldDeclForIvar(CGM.getContext(), V);
-    unsigned Offset = 
-      Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+  ObjCInterfaceDecl *OID = 
+    const_cast<ObjCInterfaceDecl *>(ID->getClassInterface());
+  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass());
+  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
+  RecordDecl::field_iterator ifield = RD->field_begin();
+  while (countSuperClassIvars-- > 0)
+    ++ifield;
+  for (RecordDecl::field_iterator e = RD->field_end(); ifield != e; ++ifield) {
+    FieldDecl *Field = *ifield;
+    unsigned Offset = Layout->getElementOffset(CGM.getTypes().
+                                               getLLVMFieldNo(Field));
+    if (Field->getIdentifier())
+      Ivar[0] = GetMethodVarName(Field->getIdentifier());
+    else
+      Ivar[0] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
     std::string TypeStr;
-    Ivar[0] = GetMethodVarName(V->getIdentifier());
-    CGM.getContext().getObjCEncodingForType(V->getType(), TypeStr, Field);
+    CGM.getContext().getObjCEncodingForType(Field->getType(), TypeStr, Field);
     Ivar[1] = GetMethodVarType(TypeStr);
     Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, Offset);
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));
