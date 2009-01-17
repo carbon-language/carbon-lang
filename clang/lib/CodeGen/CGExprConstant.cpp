@@ -61,6 +61,12 @@ public:
   }
   
   llvm::Constant *VisitCastExpr(CastExpr* E) {
+    // GCC cast to union extension
+    if (E->getType()->isUnionType()) {
+      const llvm::Type *Ty = ConvertType(E->getType());
+      return EmitUnion(CGM.EmitConstantExpr(E->getSubExpr(), CGF), Ty);
+    }
+
     llvm::Constant *C = Visit(E->getSubExpr());
     
     return EmitConversion(C, E->getSubExpr()->getType(), E->getType());    
@@ -217,6 +223,27 @@ public:
     return llvm::ConstantStruct::get(SType, Elts);
   }
 
+  llvm::Constant *EmitUnion(llvm::Constant *C, const llvm::Type *Ty) {
+    // Build a struct with the union sub-element as the first member,
+    // and padded to the appropriate size
+    std::vector<llvm::Constant*> Elts;
+    std::vector<const llvm::Type*> Types;
+    Elts.push_back(C);
+    Types.push_back(C->getType());
+    unsigned CurSize = CGM.getTargetData().getTypeStoreSize(C->getType());
+    unsigned TotalSize = CGM.getTargetData().getTypeStoreSize(Ty);
+    while (CurSize < TotalSize) {
+      Elts.push_back(llvm::Constant::getNullValue(llvm::Type::Int8Ty));
+      Types.push_back(llvm::Type::Int8Ty);
+      CurSize++;
+    }
+
+    // This always generates a packed struct
+    // FIXME: Try to generate an unpacked struct when we can
+    llvm::StructType* STy = llvm::StructType::get(Types, true);
+    return llvm::ConstantStruct::get(STy, Elts);
+  }
+
   llvm::Constant *EmitUnionInitialization(InitListExpr *ILE) {
     RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
     const llvm::Type *Ty = ConvertType(ILE->getType());
@@ -248,26 +275,7 @@ public:
       return llvm::ConstantArray::get(RetTy, Elts);
     }
 
-    llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(0), CGF);
-
-    // Build a struct with the union sub-element as the first member,
-    // and padded to the appropriate size
-    std::vector<llvm::Constant*> Elts;
-    std::vector<const llvm::Type*> Types;
-    Elts.push_back(C);
-    Types.push_back(C->getType());
-    unsigned CurSize = CGM.getTargetData().getTypeStoreSize(C->getType());
-    unsigned TotalSize = CGM.getTargetData().getTypeStoreSize(Ty);
-    while (CurSize < TotalSize) {
-      Elts.push_back(llvm::Constant::getNullValue(llvm::Type::Int8Ty));
-      Types.push_back(llvm::Type::Int8Ty);
-      CurSize++;
-    }
-
-    // This always generates a packed struct
-    // FIXME: Try to generate an unpacked struct when we can
-    llvm::StructType* STy = llvm::StructType::get(Types, true);
-    return llvm::ConstantStruct::get(STy, Elts);
+    return EmitUnion(CGM.EmitConstantExpr(ILE->getInit(0), CGF), Ty);
   }
 
   llvm::Constant *EmitVectorInitialization(InitListExpr *ILE) {
