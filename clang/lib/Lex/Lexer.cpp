@@ -216,15 +216,15 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   // the token this macro expanded to.
   Loc = SM.getInstantiationLoc(Loc);
   
-  const char *StrData = SM.getCharacterData(Loc);
-  
   // TODO: this could be special cased for common tokens like identifiers, ')',
   // etc to make this faster, if it mattered.  Just look at StrData[0] to handle
   // all obviously single-char tokens.  This could use 
   // Lexer::isObviouslySimpleCharacter for example to handle identifiers or
   // something.
-  std::pair<const char *,const char *> Buffer = SM.getBufferData(Loc);
-  
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedFileLoc(Loc);
+  std::pair<const char *,const char *> Buffer = SM.getBufferData(LocInfo.first);
+  const char *StrData = Buffer.first+LocInfo.second;
+
   // Create a langops struct and enable trigraphs.  This is sufficient for
   // measuring tokens.
   LangOptions LangOpts;
