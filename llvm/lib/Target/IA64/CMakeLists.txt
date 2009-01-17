@@ -15,6 +15,7 @@ add_llvm_target(IA64
   IA64ISelDAGToDAG.cpp
   IA64ISelLowering.cpp
   IA64RegisterInfo.cpp
+  IA64Subtarget.cpp
   IA64TargetAsmInfo.cpp
   IA64TargetMachine.cpp
   )
