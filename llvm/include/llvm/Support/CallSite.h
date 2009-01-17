@@ -43,11 +43,9 @@ public:
   CallSite(const CallSite &CS) : I(CS.I) {}
   CallSite &operator=(const CallSite &CS) { I = CS.I; return *this; }
 
-  bool operator==(const CallSite &CS) const { return getInstruction()
-                                                == CS.getInstruction(); }
-  bool operator!=(const CallSite &CS) const { return getInstruction()
-                                                != CS.getInstruction(); }
-  
+  bool operator==(const CallSite &CS) const { return I == CS.I; }
+  bool operator!=(const CallSite &CS) const { return I != CS.I; }
+
   /// CallSite::get - This static method is sort of like a constructor.  It will
   /// create an appropriate call site for a Call or Invoke instruction, but it
   /// can also create a null initialized CallSite object for something which is
