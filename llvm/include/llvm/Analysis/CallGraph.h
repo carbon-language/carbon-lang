@@ -174,6 +174,8 @@ class CallGraphNode {
 
   CallGraphNode(const CallGraphNode &);           // Do not implement
 public:
+  typedef std::vector<CallRecord> CalledFunctionsVector;
+
   //===---------------------------------------------------------------------
   // Accessor methods...
   //

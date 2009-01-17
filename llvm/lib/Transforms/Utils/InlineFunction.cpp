@@ -158,8 +158,7 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
   CallGraphNode::iterator I = CalleeNode->begin(), E = CalleeNode->end();
 
   // Consider the case where CalleeNode == CallerNode.
-  typedef std::pair<CallSite, CallGraphNode*> CallRecord;
-  std::vector<CallRecord> CallCache;
+  CallGraphNode::CalledFunctionsVector CallCache;
   if (CalleeNode == CallerNode) {
     CallCache.assign(I, E);
     I = CallCache.begin();
