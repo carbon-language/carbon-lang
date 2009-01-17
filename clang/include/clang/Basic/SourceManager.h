@@ -51,24 +51,24 @@ namespace SrcMgr {
   class ContentCache {
     /// Buffer - The actual buffer containing the characters from the input
     /// file.  This is owned by the ContentCache object.
-    const llvm::MemoryBuffer* Buffer;
+    mutable const llvm::MemoryBuffer *Buffer;
 
   public:
     /// Reference to the file entry.  This reference does not own
     /// the FileEntry object.  It is possible for this to be NULL if
     /// the ContentCache encapsulates an imaginary text buffer.
-    const FileEntry* Entry;
+    const FileEntry *Entry;
     
     /// SourceLineCache - A new[]'d array of offsets for each source line.  This
     /// is lazily computed.  This is owned by the ContentCache object.
-    unsigned* SourceLineCache;
+    unsigned *SourceLineCache;
     
     /// NumLines - The number of lines in this ContentCache.  This is only valid
     /// if SourceLineCache is non-null.
     unsigned NumLines;
     
     /// getBuffer - Returns the memory buffer for the associated content.
-    const llvm::MemoryBuffer* getBuffer() const;
+    const llvm::MemoryBuffer *getBuffer() const;
     
     /// getSize - Returns the size of the content encapsulated by this
     ///  ContentCache. This can be the size of the source file or the size of an
@@ -81,12 +81,12 @@ namespace SrcMgr {
     ///  instantiated.
     unsigned getSizeBytesMapped() const;
     
-    void setBuffer(const llvm::MemoryBuffer* B) {
+    void setBuffer(const llvm::MemoryBuffer *B) {
       assert(!Buffer && "MemoryBuffer already set.");
       Buffer = B;
     }
         
-    ContentCache(const FileEntry* e = NULL)
+    ContentCache(const FileEntry *e = NULL)
       : Buffer(NULL), Entry(e), SourceLineCache(NULL), NumLines(0) {}
 
     ~ContentCache();
@@ -94,7 +94,7 @@ namespace SrcMgr {
     /// The copy ctor does not allow copies where source object has either
     ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
     ///  is not transfered, so this is a logical error.
-    ContentCache(const ContentCache& RHS) : Buffer(NULL),SourceLineCache(NULL) {
+    ContentCache(const ContentCache &RHS) : Buffer(NULL),SourceLineCache(NULL) {
       Entry = RHS.Entry;
 
       assert (RHS.Buffer == NULL && RHS.SourceLineCache == NULL
@@ -104,16 +104,16 @@ namespace SrcMgr {
     }
     
     /// Emit - Emit this ContentCache to Bitcode.
-    void Emit(llvm::Serializer& S) const;
+    void Emit(llvm::Serializer &S) const;
     
     /// ReadToSourceManager - Reconstitute a ContentCache from Bitcode
     //   and store it in the specified SourceManager.
-    static void ReadToSourceManager(llvm::Deserializer& D, SourceManager& SMgr,
-                                    FileManager* FMgr, std::vector<char>&  Buf);
+    static void ReadToSourceManager(llvm::Deserializer &D, SourceManager &SM,
+                                    FileManager *FMgr, std::vector<char> &Buf);
     
   private:
     // Disable assignments.
-    ContentCache& operator=(const ContentCache& RHS);    
+    ContentCache &operator=(const ContentCache& RHS);    
   };  
 
   /// FileIDInfo - Information about a FileID, basically just the logical file
@@ -150,7 +150,7 @@ namespace SrcMgr {
     unsigned FileCharacteristic : 2;
     
     /// Content - Information about the source buffer itself.
-    const ContentCache* Content;
+    const ContentCache *Content;
 
   public:
     /// get - Return a FileIDInfo object.

@@ -56,9 +56,7 @@ const llvm::MemoryBuffer* ContentCache::getBuffer() const {
   if (!Buffer && Entry) {
     // FIXME: Should we support a way to not have to do this check over
     //   and over if we cannot open the file?
-    // FIXME: This const_cast is ugly.  Should we make getBuffer() non-const?
-    const_cast<ContentCache*>(this)->Buffer = 
-      MemoryBuffer::getFile(Entry->getName(), 0, Entry->getSize());
+    Buffer = MemoryBuffer::getFile(Entry->getName(), 0, Entry->getSize());
   }
 #endif
   return Buffer;
