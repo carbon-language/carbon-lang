@@ -118,12 +118,9 @@ static void FindExpectedDiags(Preprocessor &PP,
   // Create a raw lexer to pull all the comments out of the main file.  We don't
   // want to look in #include'd headers for expected-error strings.
   FileID FID = PP.getSourceManager().getMainFileID();
-  std::pair<const char*,const char*> File =
-    PP.getSourceManager().getBufferData(FID);
   
   // Create a lexer to lex all the tokens of the main file in raw mode.
-  Lexer RawLex(PP.getSourceManager().getLocForStartOfFile(FID),
-               PP.getLangOptions(), File.first, File.second);
+  Lexer RawLex(FID, PP.getSourceManager(), PP.getLangOptions());
   
   // Return comments as tokens, this is how we find expected diagnostics.
   RawLex.SetCommentRetentionState(true);

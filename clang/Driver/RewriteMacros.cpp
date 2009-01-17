@@ -61,12 +61,10 @@ static const Token &GetNextRawTok(const std::vector<Token> &RawTokens,
 static void LexRawTokensFromMainFile(Preprocessor &PP,
                                      std::vector<Token> &RawTokens) {
   SourceManager &SM = PP.getSourceManager();
-  std::pair<const char*,const char*> File =SM.getBufferData(SM.getMainFileID());
   
   // Create a lexer to lex all the tokens of the main file in raw mode.  Even
   // though it is in raw mode, it will not return comments.
-  Lexer RawLex(SM.getLocForStartOfFile(SM.getMainFileID()),
-               PP.getLangOptions(), File.first, File.second);
+  Lexer RawLex(SM.getMainFileID(), SM, PP.getLangOptions());
 
   // Switch on comment lexing because we really do want them.
   RawLex.SetCommentRetentionState(true);
