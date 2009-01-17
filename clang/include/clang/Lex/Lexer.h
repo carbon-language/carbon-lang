@@ -77,8 +77,9 @@ public:
   /// with the specified preprocessor managing the lexing process.  This lexer
   /// assumes that the associated file buffer and Preprocessor objects will
   /// outlive it, so it doesn't take ownership of either of them.
+  Lexer(SourceLocation FileLoc, Preprocessor &PP);
   Lexer(SourceLocation FileLoc, Preprocessor &PP,
-        const char *BufStart = 0, const char *BufEnd = 0);
+        const char *BufStart, const char *BufEnd);
   
   /// Lexer constructor - Create a new raw lexer object.  This object is only
   /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
@@ -310,6 +311,7 @@ private:
   /// getCharAndSizeSlow - Handle the slow/uncommon case of the getCharAndSize
   /// method.
   char getCharAndSizeSlow(const char *Ptr, unsigned &Size, Token *Tok = 0);
+public:
   
   /// getCharAndSizeNoWarn - Like the getCharAndSize method, but does not ever
   /// emit a warning.
@@ -325,6 +327,7 @@ private:
     Size = 0;
     return getCharAndSizeSlowNoWarn(Ptr, Size, Features);
   }
+private:
   
   /// getCharAndSizeSlowNoWarn - Same as getCharAndSizeSlow, but never emits a
   /// diagnostic.

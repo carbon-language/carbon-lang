@@ -90,6 +90,28 @@ void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
   ExtendedTokenMode = 0;
 }
 
+/// Lexer constructor - Create a new lexer object for the specified buffer
+/// with the specified preprocessor managing the lexing process.  This lexer
+/// assumes that the associated file buffer and Preprocessor objects will
+/// outlive it, so it doesn't take ownership of either of them.
+Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP)
+// FIXME: This is really horrible and only needed for _Pragma lexers, split this
+// out of the main lexer path!
+: PreprocessorLexer(&PP, 
+                    PP.getSourceManager().getCanonicalFileID(
+                               PP.getSourceManager().getSpellingLoc(fileloc))),
+  FileLoc(fileloc),
+  Features(PP.getLangOptions()) {
+  
+  SourceManager &SourceMgr = PP.getSourceManager();
+  const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(getFileID());
+  
+  InitLexer(InputFile->getBufferStart(), InputFile->getBufferStart(),
+            InputFile->getBufferEnd());
+  
+  // Default to keeping comments if the preprocessor wants them.
+  SetCommentRetentionState(PP.getCommentRetentionState());
+}
 
 /// Lexer constructor - Create a new lexer object for the specified buffer
 /// with the specified preprocessor managing the lexing process.  This lexer
@@ -105,16 +127,8 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &PP,
                       FileLoc(fileloc),
     Features(PP.getLangOptions()) {
       
-  SourceManager &SourceMgr = PP.getSourceManager();
-  const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(getFileID());
-      
-  // BufferPtr and BufferEnd can start out somewhere inside the current buffer.
-  // If unspecified, they starts at the start/end of the buffer.
-  const char *BufStart = InputFile->getBufferStart();
-  if (BufPtr == 0) BufPtr = BufStart;
-  if (BufEnd == 0) BufEnd = InputFile->getBufferEnd();
-      
-  InitLexer(BufStart, BufPtr, BufEnd);
+  InitLexer(PP.getSourceManager().getBuffer(getFileID())->getBufferStart(),
+            BufPtr, BufEnd);
   
   // Default to keeping comments if the preprocessor wants them.
   SetCommentRetentionState(PP.getCommentRetentionState());
