@@ -1751,6 +1751,9 @@ private:
   void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DICompositeType CTy) {
 
+    /// FIXME - Enable this asap.
+    return;
+
     // Get core information.                                                              
     const std::string &Name = CTy.getName();
     uint64_t Size = CTy.getSizeInBits() >> 3;
