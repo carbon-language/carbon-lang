@@ -679,10 +679,10 @@ class Driver(object):
                 # phase and there was no user override.  
                 # 
                 # FIXME: What is the best way to handle this?
-                if (atTopLevel and 
-                    isinstance(phase, Phases.PreprocessPhase) and 
-                    not finalOutput):
-                    outputToPipe = True
+                if atTopLevel:
+                    if (isinstance(phase.phase, Phases.PreprocessPhase) and 
+                        not finalOutput):
+                        outputToPipe = True
                 elif hasPipe:
                     outputToPipe = True
 
