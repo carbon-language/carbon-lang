@@ -178,6 +178,7 @@ bool TargetInfo::validateOutputConstraint(const char *Name,
       info = (ConstraintInfo)(info|CI_AllowsMemory);
       break;
     case 'g': // general register, memory operand or immediate integer.
+    case 'X': // any operand.
       info = (ConstraintInfo)(info|CI_AllowsMemory|CI_AllowsRegister);
       break;
     }
@@ -263,6 +264,7 @@ bool TargetInfo::validateInputConstraint(const char *Name,
       info = (ConstraintInfo)(info|CI_AllowsMemory);
       break;
     case 'g': // general register, memory operand or immediate integer.
+    case 'X': // any operand.
       info = (ConstraintInfo)(info|CI_AllowsMemory|CI_AllowsRegister);
       break;
     }
