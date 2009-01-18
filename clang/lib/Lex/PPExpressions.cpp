@@ -91,7 +91,8 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     // into a simple 0, unless it is the C++ keyword "true", in which case it
     // turns into "1".
     if (II->getPPKeywordID() != tok::pp_defined) {
-      PP.Diag(PeekTok, diag::warn_pp_undef_identifier) << II;
+      if (ValueLive)
+        PP.Diag(PeekTok, diag::warn_pp_undef_identifier) << II;
       Result.Val = II->getTokenID() == tok::kw_true;
       Result.Val.setIsUnsigned(false);  // "0" is signed intmax_t 0.
       Result.setRange(PeekTok.getLocation());

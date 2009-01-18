@@ -1,4 +1,4 @@
-/* RUN: clang -E %s -DNO_ERRORS &&
+/* RUN: clang -E %s -DNO_ERRORS -Werror -Wundef &&
    RUN: not clang -E %s
  */
 
@@ -44,3 +44,9 @@ baz
 
 
 #endif
+
+// rdar://6505352
+// -Wundef should not warn about use of undefined identifier if not live.
+#if (!defined(XXX) || XXX > 42)
+#endif
+
