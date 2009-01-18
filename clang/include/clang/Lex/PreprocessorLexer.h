@@ -16,7 +16,7 @@
 
 #include "clang/Lex/MultipleIncludeOpt.h"
 #include "clang/Lex/Token.h"
-#include <vector>
+#include "llvm/ADT/SmallVector.h"
 #include <string>
 	
 namespace clang {
@@ -61,7 +61,7 @@ protected:
   
   /// ConditionalStack - Information about the set of #if/#ifdef/#ifndef blocks
   /// we are currently in.
-  std::vector<PPConditionalInfo> ConditionalStack;
+  llvm::SmallVector<PPConditionalInfo, 4> ConditionalStack;
   
   PreprocessorLexer(const PreprocessorLexer&);          // DO NOT IMPLEMENT
   void operator=(const PreprocessorLexer&); // DO NOT IMPLEMENT
