@@ -837,7 +837,10 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed)
 }
 
 static std::string SimplifyConstraint(const char* Constraint,
-                                      TargetInfo &Target) {
+                                      TargetInfo &Target,
+                                      const std::string *OutputNamesBegin = 0,
+                                      const std::string *OutputNamesEnd = 0)
+{
   std::string Result;
   
   while (*Constraint) {
@@ -853,6 +856,17 @@ static std::string SimplifyConstraint(const char* Constraint,
     case 'g':
       Result += "imr";
       break;
+    case '[': {
+      assert(OutputNamesBegin && OutputNamesEnd &&
+             "Must pass output names to constraints with a symbolic name");
+      unsigned Index;
+      bool result = Target.resolveSymbolicName(Constraint, 
+                                               OutputNamesBegin,
+                                               OutputNamesEnd, Index);
+      assert(result && "Could not resolve symbolic name");
+      Result += llvm::utostr(Index);
+      break;
+    }
     }
     
     Constraint++;
@@ -986,7 +1000,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       Constraints += ',';
     
     // Simplify the input constraint.
-    InputConstraint = SimplifyConstraint(InputConstraint.c_str(), Target);
+    InputConstraint = SimplifyConstraint(InputConstraint.c_str(), Target,
+                                         S.begin_output_names(),
+                                         S.end_output_names());
 
     llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, Constraints);
     
