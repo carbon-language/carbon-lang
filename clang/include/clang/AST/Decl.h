@@ -664,7 +664,7 @@ protected:
       SClass(S), IsInline(isInline), IsVirtual(false), IsPure(false),
       TypeSpecStartLoc(TSSL) {}
 
-  virtual ~FunctionDecl();
+  virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
 
 public:

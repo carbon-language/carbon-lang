@@ -224,17 +224,15 @@ VarDecl::~VarDecl() {
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//
 
-FunctionDecl::~FunctionDecl() {
-  delete[] ParamInfo;
-}
-
 void FunctionDecl::Destroy(ASTContext& C) {
   if (Body)
     Body->Destroy(C);
 
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     (*I)->Destroy(C);
-    
+
+  C.getAllocator().Deallocate(ParamInfo);
+
   Decl::Destroy(C);
 }
 
