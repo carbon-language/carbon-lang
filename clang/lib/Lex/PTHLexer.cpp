@@ -86,23 +86,13 @@ LexNextToken:
   // Shadow CurPtr into an automatic variable.
   const unsigned char *CurPtrShadow = CurPtr;  
 
-  // Read in the data for the token.  14 bytes in total.
-  tok::TokenKind k = (tok::TokenKind) CurPtrShadow[0];
-  Token::TokenFlags flags = (Token::TokenFlags) CurPtrShadow[1];
-    
-  uint32_t perID = ((uint32_t) CurPtrShadow[2])
-      | (((uint32_t) CurPtrShadow[3]) << 8)
-      | (((uint32_t) CurPtrShadow[4]) << 16);
-  
-  uint32_t FileOffset = ((uint32_t) CurPtrShadow[5])
-      | (((uint32_t) CurPtrShadow[6]) << 8)
-      | (((uint32_t) CurPtrShadow[7]) << 16)
-      | (((uint32_t) CurPtrShadow[8]) << 24);
-  
-  uint32_t Len = ((uint32_t) CurPtrShadow[9])
-      | (((uint32_t) CurPtrShadow[10]) << 8);
-  
-  CurPtr = CurPtrShadow + DISK_TOKEN_SIZE;
+  // Read in the data for the token.
+  tok::TokenKind k = (tok::TokenKind) Read8(CurPtrShadow);
+  Token::TokenFlags flags = (Token::TokenFlags) Read8(CurPtrShadow);
+  uint32_t perID = Read24(CurPtrShadow);
+  uint32_t FileOffset = Read32(CurPtrShadow);
+  uint32_t Len = Read16(CurPtrShadow);
+  CurPtr = CurPtrShadow;
   
   //===--------------------------------------==//
   // Construct the token itself.
@@ -302,18 +292,14 @@ bool PTHLexer::SkipBlock() {
 }
 
 SourceLocation PTHLexer::getSourceLocation() {
-  // getLocation is not on the hot path.  It is used to get the location of
-  // the next token when transitioning back to this lexer when done
+  // getSourceLocation is not on the hot path.  It is used to get the location
+  // of the next token when transitioning back to this lexer when done
   // handling a #included file.  Just read the necessary data from the token
   // data buffer to construct the SourceLocation object.
   // NOTE: This is a virtual function; hence it is defined out-of-line.
-  const unsigned char* p = CurPtr + (1 + 1 + 3);
-  uint32_t offset = 
-       ((uint32_t) ((uint8_t) p[0]))
-    | (((uint32_t) ((uint8_t) p[1])) << 8)
-    | (((uint32_t) ((uint8_t) p[2])) << 16)
-    | (((uint32_t) ((uint8_t) p[3])) << 24);
-  return FileStartLoc.getFileLocWithOffset(offset);
+  const unsigned char *OffsetPtr = CurPtr + (1 + 1 + 3);
+  uint32_t Offset = Read32(OffsetPtr);
+  return FileStartLoc.getFileLocWithOffset(Offset);
 }
 
 //===----------------------------------------------------------------------===//
@@ -325,7 +311,7 @@ unsigned PTHManager::getSpelling(FileID FID, unsigned FPos,
   llvm::DenseMap<FileID, PTHSpellingSearch*>::iterator I =SpellingMap.find(FID);
 
   if (I == SpellingMap.end())
-      return 0;
+    return 0;
 
   return I->second->getSpellingBinarySearch(FPos, Buffer);
 }
@@ -339,91 +325,69 @@ unsigned PTHManager::getSpelling(SourceLocation Loc, const char *&Buffer) {
 
 unsigned PTHManager::getSpellingAtPTHOffset(unsigned PTHOffset,
                                             const char *&Buffer) {
-
-  const char* p = Buf->getBufferStart() + PTHOffset;
-  assert(p < Buf->getBufferEnd());
+  assert(PTHOffset < Buf->getBufferSize());
+  const unsigned char* Ptr =
+    (const unsigned char*)Buf->getBufferStart() + PTHOffset;
   
   // The string is prefixed by 16 bits for its length, followed by the string
   // itself.
-  unsigned len = ((unsigned) ((uint8_t) p[0]))
-    | (((unsigned) ((uint8_t) p[1])) << 8);
-
-  Buffer = p + 2;
-  return len;
+  unsigned Len = Read16(Ptr);
+  Buffer = (const char *)Ptr;
+  return Len;
 }
 
-unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned fpos,
+unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned FPos,
                                                     const char *&Buffer) {
-  const unsigned char* p = LinearItr;
-  unsigned len = 0;
+  const unsigned char *Ptr = LinearItr;
+  unsigned Len = 0;
   
-  if (p == TableEnd)
-    return getSpellingBinarySearch(fpos, Buffer);
+  if (Ptr == TableEnd)
+    return getSpellingBinarySearch(FPos, Buffer);
   
   do {
-    uint32_t TokOffset = 
-      ((uint32_t) ((uint8_t) p[0]))
-      | (((uint32_t) ((uint8_t) p[1])) << 8)
-      | (((uint32_t) ((uint8_t) p[2])) << 16)
-      | (((uint32_t) ((uint8_t) p[3])) << 24);
+    uint32_t TokOffset = Read32(Ptr);
     
-    if (TokOffset > fpos)
-      return getSpellingBinarySearch(fpos, Buffer);
+    if (TokOffset > FPos)
+      return getSpellingBinarySearch(FPos, Buffer);
     
     // Did we find a matching token offset for this spelling?
-    if (TokOffset == fpos) {
-      uint32_t SpellingPTHOffset = 
-        ((uint32_t) ((uint8_t) p[4]))
-        | (((uint32_t) ((uint8_t) p[5])) << 8)
-        | (((uint32_t) ((uint8_t) p[6])) << 16)
-        | (((uint32_t) ((uint8_t) p[7])) << 24);
-      
-      p += SpellingEntrySize;
-      len = PTHMgr.getSpellingAtPTHOffset(SpellingPTHOffset, Buffer);
+    if (TokOffset == FPos) {
+      uint32_t SpellingPTHOffset = Read32(Ptr);
+      Len = PTHMgr.getSpellingAtPTHOffset(SpellingPTHOffset, Buffer);
       break;
     }
+  } while (Ptr != TableEnd);
 
-    // No match.  Keep on looking.
-    p += SpellingEntrySize;
-  }
-  while (p != TableEnd);
-
-  LinearItr = p;
-  return len;
+  LinearItr = Ptr;
+  return Len;
 }
 
 
-unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
+unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned FPos,
                                                     const char *&Buffer) {
   
   assert((TableEnd - TableBeg) % SpellingEntrySize == 0);
+  assert(TableEnd >= TableBeg);
   
   if (TableEnd == TableBeg)
     return 0;
   
-  assert(TableEnd > TableBeg);
-  
   unsigned min = 0;
-  const unsigned char* tb = TableBeg;
+  const unsigned char *tb = TableBeg;
   unsigned max = NumSpellings;
 
   do {
     unsigned i = (max - min) / 2 + min;
-    const unsigned char* p = tb + (i * SpellingEntrySize);
+    const unsigned char *Ptr = tb + (i * SpellingEntrySize);
     
-    uint32_t TokOffset = 
-      ((uint32_t) ((uint8_t) p[0]))
-      | (((uint32_t) ((uint8_t) p[1])) << 8)
-      | (((uint32_t) ((uint8_t) p[2])) << 16)
-      | (((uint32_t) ((uint8_t) p[3])) << 24);
-    
-    if (TokOffset > fpos) {
+    uint32_t TokOffset = Read32(Ptr);
+    if (TokOffset > FPos) {
       max = i;
       assert(!(max == min) || (min == i));
       continue;
     }
     
-    if (TokOffset < fpos) {
+    if (TokOffset < FPos) {
       if (i == min)
         break;
       
@@ -431,12 +395,7 @@ unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
       continue;
     }
     
-    uint32_t SpellingPTHOffset = 
-        ((uint32_t) ((uint8_t) p[4]))
-        | (((uint32_t) ((uint8_t) p[5])) << 8)
-        | (((uint32_t) ((uint8_t) p[6])) << 16)
-        | (((uint32_t) ((uint8_t) p[7])) << 24);
-    
+    uint32_t SpellingPTHOffset = Read32(Ptr);
     return PTHMgr.getSpellingAtPTHOffset(SpellingPTHOffset, Buffer);
   }
   while (min != max);
@@ -472,28 +431,27 @@ public:
     uint32_t TokenOff;
     uint32_t PPCondOff;
     uint32_t SpellingOff;
-    
   public:
     Val() : TokenOff(~0) {}
     Val(uint32_t toff, uint32_t poff, uint32_t soff)
       : TokenOff(toff), PPCondOff(poff), SpellingOff(soff) {}
     
+    bool isValid() const { return TokenOff != ~((uint32_t)0); }
+
     uint32_t getTokenOffset() const {
-      assert(TokenOff != ~((uint32_t)0) && "PTHFileLookup entry initialized.");
+      assert(isValid() && "PTHFileLookup entry initialized.");
       return TokenOff;
     }
     
     uint32_t getPPCondOffset() const {
-      assert(TokenOff != ~((uint32_t)0) && "PTHFileLookup entry initialized.");
+      assert(isValid() && "PTHFileLookup entry initialized.");
       return PPCondOff;
     }
     
     uint32_t getSpellingOffset() const {
-      assert(TokenOff != ~((uint32_t)0) && "PTHFileLookup entry initialized.");
+      assert(isValid() && "PTHFileLookup entry initialized.");
       return SpellingOff;
     }
-    
-    bool isValid() const { return TokenOff != ~((uint32_t)0); }
   };
   
 private:
@@ -512,15 +470,15 @@ public:
     uint32_t N = Read32(D);     // Read the length of the table.
     
     for ( ; N > 0; --N) {       // The rest of the data is the table itself.
-      uint32_t len = Read32(D);
+      uint32_t Len = Read32(D);
       const char* s = (const char *)D;
-      D += len;
+      D += Len;
 
       uint32_t TokenOff = Read32(D);
       uint32_t PPCondOff = Read32(D);
       uint32_t SpellingOff = Read32(D);
 
-      FileMap.GetOrCreateValue(s, s+len).getValue() =
+      FileMap.GetOrCreateValue(s, s+Len).getValue() =
         Val(TokenOff, PPCondOff, SpellingOff);      
     }
   }
@@ -546,7 +504,6 @@ PTHManager::~PTHManager() {
 }
 
 PTHManager* PTHManager::Create(const std::string& file) {
-  
   // Memory map the PTH file.
   llvm::OwningPtr<llvm::MemoryBuffer>
   File(llvm::MemoryBuffer::getFile(file.c_str()));
@@ -646,30 +603,26 @@ IdentifierInfo* PTHManager::GetIdentifierInfo(unsigned persistentID) {
 IdentifierInfo* PTHManager::get(const char *NameStart, const char *NameEnd) {
   unsigned min = 0;
   unsigned max = NumIds;
-  unsigned len = NameEnd - NameStart;
+  unsigned Len = NameEnd - NameStart;
   
   do {
     unsigned i = (max - min) / 2 + min;
-    const unsigned char* p = SortedIdTable + (i * 4);
+    const unsigned char *Ptr = SortedIdTable + (i * 4);
     
     // Read the persistentID.
-    unsigned perID = 
-      ((unsigned) ((uint8_t) p[0]))
-      | (((unsigned) ((uint8_t) p[1])) << 8)
-      | (((unsigned) ((uint8_t) p[2])) << 16)
-      | (((unsigned) ((uint8_t) p[3])) << 24);
+    unsigned perID = Read32(Ptr);
     
     // Get the IdentifierInfo.
     IdentifierInfo* II = GetIdentifierInfo(perID);
     
     // First compare the lengths.
     unsigned IILen = II->getLength();
-    if (len < IILen) goto IsLess;
-    if (len > IILen) goto IsGreater;
+    if (Len < IILen) goto IsLess;
+    if (Len > IILen) goto IsGreater;
     
     // Now compare the strings!
     {
-      signed comp = strncmp(NameStart, II->getName(), len);
+      signed comp = strncmp(NameStart, II->getName(), Len);
       if (comp < 0) goto IsLess;
       if (comp > 0) goto IsGreater;
     }    
@@ -710,19 +663,19 @@ PTHLexer *PTHManager::CreateLexer(FileID FID) {
 
   // Get the location of pp-conditional table.
   const unsigned char* ppcond = BufStart + FileData.getPPCondOffset();
-  uint32_t len = Read32(ppcond);
-  if (len == 0) ppcond = 0;
+  uint32_t Len = Read32(ppcond);
+  if (Len == 0) ppcond = 0;
   
   // Get the location of the spelling table.
   const unsigned char* spellingTable = BufStart + FileData.getSpellingOffset();
   
-  len = Read32(spellingTable);
-  if (len == 0) spellingTable = 0;
+  Len = Read32(spellingTable);
+  if (Len == 0) spellingTable = 0;
 
   assert(data < (const unsigned char*)Buf->getBufferEnd());
   
   // Create the SpellingSearch object for this FileID.
-  PTHSpellingSearch* ss = new PTHSpellingSearch(*this, len, spellingTable);
+  PTHSpellingSearch* ss = new PTHSpellingSearch(*this, Len, spellingTable);
   SpellingMap[FID] = ss;
   
   assert(PP && "No preprocessor set yet!");
