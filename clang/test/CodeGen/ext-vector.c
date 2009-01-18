@@ -6,6 +6,8 @@ typedef __attribute__(( ext_vector_type(4) )) int int4;
 
 float4 foo = (float4){ 1.0, 2.0, 3.0, 4.0 };
 
+const float4 bar = (float4){ 1.0, 2.0, 3.0, __builtin_inff() };
+
 float4 test1(float4 V) {
   return V.wzyx+V;
 }

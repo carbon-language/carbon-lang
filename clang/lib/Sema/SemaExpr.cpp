@@ -2925,13 +2925,14 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
     return lType;
   
   const VectorType *VTy = lType->getAsVectorType();
-
-  // FIXME: need to deal with non-32b int / non-64b long long
   unsigned TypeSize = Context.getTypeSize(VTy->getElementType());
-  if (TypeSize == 32) {
+  if (TypeSize == Context.getTypeSize(Context.IntTy))
     return Context.getExtVectorType(Context.IntTy, VTy->getNumElements());
-  }
-  assert(TypeSize == 64 && "Unhandled vector element size in vector compare");
+  else if (TypeSize == Context.getTypeSize(Context.LongTy))
+    return Context.getExtVectorType(Context.LongTy, VTy->getNumElements());
+
+  assert(TypeSize == Context.getTypeSize(Context.LongLongTy) && 
+         "Unhandled vector element size in vector compare");
   return Context.getExtVectorType(Context.LongLongTy, VTy->getNumElements());
 }
 

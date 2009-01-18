@@ -2187,11 +2187,9 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
-  Expr::EvalResult Result;
-
   Init = Init->IgnoreParens();
 
-  if (Init->Evaluate(Result, Context) && !Result.HasSideEffects)
+  if (Init->isEvaluatable(Context))
     return false;
 
   // Look through CXXDefaultArgExprs; they have no meaning in this context.

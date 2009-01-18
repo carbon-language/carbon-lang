@@ -487,6 +487,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     //   An assignment expression [...] is not an lvalue.
     return LV_InvalidExpression;
   }
+  // FIXME: OverloadExprClass
   case CallExprClass: 
   case CXXOperatorCallExprClass:
   case CXXMemberCallExprClass: {
@@ -701,6 +702,10 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     break;
   case StringLiteralClass:
     return true;
+  case CompoundLiteralExprClass: {
+    const Expr *Exp = cast<CompoundLiteralExpr>(this)->getInitializer();
+    return Exp->isConstantExpr(Ctx, Loc);
+  }
   case InitListExprClass: {
     const InitListExpr *Exp = cast<InitListExpr>(this);
     unsigned numInits = Exp->getNumInits();

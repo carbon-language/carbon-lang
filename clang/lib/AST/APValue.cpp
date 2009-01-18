@@ -91,7 +91,9 @@ void APValue::print(llvm::raw_ostream &OS) const {
     OS << "Float: " << GetApproxValue(getFloat());
     return;
   case Vector:
-    OS << "Vector: <todo>";
+    OS << "Vector: " << getVectorElt(0);
+    for (unsigned i = 1; i != getVectorLength(); ++i) 
+      OS << ", " << getVectorElt(i);
     return;
   case ComplexInt:
     OS << "ComplexInt: " << getComplexIntReal() << ", " << getComplexIntImag();

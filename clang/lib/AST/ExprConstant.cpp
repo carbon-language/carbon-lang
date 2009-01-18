@@ -318,6 +318,78 @@ APValue PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
 }
 
 //===----------------------------------------------------------------------===//
+// Vector Evaluation
+//===----------------------------------------------------------------------===//
+
+namespace {
+  class VISIBILITY_HIDDEN VectorExprEvaluator
+  : public StmtVisitor<VectorExprEvaluator, APValue> {
+    EvalInfo &Info;
+  public:
+    
+    VectorExprEvaluator(EvalInfo &info) : Info(info) {}
+    
+    APValue VisitStmt(Stmt *S) {
+      return APValue();
+    }
+    
+    APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+    APValue VisitCastExpr(const CastExpr* E);
+    APValue VisitCompoundLiteralExpr(const CompoundLiteralExpr *E);
+    APValue VisitInitListExpr(const InitListExpr *E);
+  };
+} // end anonymous namespace
+
+static bool EvaluateVector(const Expr* E, APValue& Result, EvalInfo &Info) {
+  if (!E->getType()->isVectorType())
+    return false;
+  Result = VectorExprEvaluator(Info).Visit(const_cast<Expr*>(E));
+  return !Result.isUninit();
+}
+
+APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
+  const Expr* SE = E->getSubExpr();
+
+  // Check for vector->vector bitcast.
+  if (SE->getType()->isVectorType())
+    return this->Visit(const_cast<Expr*>(SE));
+
+  return APValue();
+}
+
+APValue 
+VectorExprEvaluator::VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
+  return this->Visit(const_cast<Expr*>(E->getInitializer()));
+}
+
+APValue 
+VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
+  const VectorType *VT = E->getType()->getAsVectorType();
+  unsigned NumInits = E->getNumInits();
+
+  if (!VT || VT->getNumElements() != NumInits)
+    return APValue();
+  
+  QualType EltTy = VT->getElementType();
+  llvm::SmallVector<APValue, 4> Elements;
+
+  for (unsigned i = 0; i < NumInits; i++) {
+    if (EltTy->isIntegerType()) {
+      llvm::APSInt sInt(32);
+      if (!EvaluateInteger(E->getInit(i), sInt, Info))
+        return APValue();
+      Elements.push_back(APValue(sInt));
+    } else {
+      llvm::APFloat f(0.0);
+      if (!EvaluateFloat(E->getInit(i), f, Info))
+        return APValue();
+      Elements.push_back(APValue(f));
+    }
+  }
+  return APValue(&Elements[0], Elements.size());
+}
+
+//===----------------------------------------------------------------------===//
 // Integer Evaluation
 //===----------------------------------------------------------------------===//
 
@@ -1067,6 +1139,7 @@ bool FloatExprEvaluator::VisitFloatingLiteral(const FloatingLiteral *E) {
 
 bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
   Expr* SubExpr = E->getSubExpr();
+  
   const llvm::fltSemantics& destSemantics =
       Info.Ctx.getFloatTypeSemantics(E->getType());
   if (SubExpr->getType()->isIntegralType()) {
@@ -1189,7 +1262,10 @@ APValue ComplexFloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
 bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result);
 
-  if (getType()->isIntegerType()) {
+  if (getType()->isVectorType()) {
+    if (!EvaluateVector(this, Result.Val, Info))
+      return false;
+  } else if (getType()->isIntegerType()) {
     llvm::APSInt sInt(32);
     if (!EvaluateInteger(this, sInt, Info))
       return false;
