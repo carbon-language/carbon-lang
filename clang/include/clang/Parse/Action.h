@@ -1276,9 +1276,11 @@ class MinimalAction : public Action {
   Scope *TUScope;
   IdentifierTable &Idents;
   Preprocessor &PP;
+  void *TypeNameInfoTablePtr;
 public:
   MinimalAction(Preprocessor &pp);
-  
+  ~MinimalAction();
+
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
   virtual TypeTy *isTypeName(IdentifierInfo &II, Scope *S,

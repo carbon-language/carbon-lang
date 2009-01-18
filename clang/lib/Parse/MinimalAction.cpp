@@ -14,42 +14,64 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/RecyclingAllocator.h"
 using namespace clang;
 
 /// TypeNameInfo - A link exists here for each scope that an identifier is
 /// defined.
-struct TypeNameInfo {
-  TypeNameInfo *Prev;
-  bool isTypeName;
-  
-  TypeNameInfo(bool istypename, TypeNameInfo *prev) {
-    isTypeName = istypename;
-    Prev = prev;
-  }
-};
+namespace {
+  struct TypeNameInfo {
+    TypeNameInfo *Prev;
+    bool isTypeName;
+    
+    TypeNameInfo(bool istypename, TypeNameInfo *prev) {
+      isTypeName = istypename;
+      Prev = prev;
+    }
+  };
+
+  struct TypeNameInfoTable {
+    llvm::RecyclingAllocator<llvm::BumpPtrAllocator, TypeNameInfo> Allocator;
+    
+    void AddEntry(bool isTypename, IdentifierInfo *II) {
+      TypeNameInfo *TI = Allocator.Allocate<TypeNameInfo>();
+      new (TI) TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
+      II->setFETokenInfo(TI);
+    }
+    
+    void DeleteEntry(TypeNameInfo *Entry) {
+      Entry->~TypeNameInfo();
+      Allocator.Deallocate(Entry);
+    }
+  };
+}
+
+static TypeNameInfoTable *getTable(void *TP) {
+  return static_cast<TypeNameInfoTable*>(TP);
+}
 
 MinimalAction::MinimalAction(Preprocessor &pp) 
-  : Idents(pp.getIdentifierTable()), PP(pp) {}
+  : Idents(pp.getIdentifierTable()), PP(pp) {
+  TypeNameInfoTablePtr = new TypeNameInfoTable();
+}
+
+MinimalAction::~MinimalAction() {
+  delete getTable(TypeNameInfoTablePtr);
+}
 
 void MinimalAction::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
   if (!PP.getLangOptions().ObjC1) return;
 
-  // recognize the ObjC built-in type identifiers. 
-  IdentifierInfo *II;
-  TypeNameInfo *TI;
-  II = &Idents.get("id");
-  TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
-  II->setFETokenInfo(TI);
-  II = &Idents.get("SEL");
-  TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
-  II->setFETokenInfo(TI);
-  II = &Idents.get("Class");
-  TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
-  II->setFETokenInfo(TI);
-  II = &Idents.get("Protocol");
-  TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
-  II->setFETokenInfo(TI);
+
+  TypeNameInfoTable &TNIT = *getTable(TypeNameInfoTablePtr);
+  
+  // Recognize the ObjC built-in type identifiers as types. 
+  TNIT.AddEntry(true, &Idents.get("id"));
+  TNIT.AddEntry(true, &Idents.get("SEL"));
+  TNIT.AddEntry(true, &Idents.get("Class"));
+  TNIT.AddEntry(true, &Idents.get("Protocol"));
 }
 
 /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
@@ -101,9 +123,8 @@ MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
   // It does need to handle the uncommon case of shadowing a typedef name with a
   // non-typedef name. e.g. { typedef int a; a xx; { int a; } }
   if (weCurrentlyHaveTypeInfo || isTypeName) {
-    TypeNameInfo *TI = new TypeNameInfo(isTypeName, weCurrentlyHaveTypeInfo);
-
-    II->setFETokenInfo(TI);
+    // Allocate and add the 'TypeNameInfo' "decl".
+    getTable(TypeNameInfoTablePtr)->AddEntry(isTypeName, II);
   
     // Remember that this needs to be removed when the scope is popped.
     S->AddDecl(II);
@@ -121,10 +142,8 @@ MinimalAction::ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                         unsigned NumProtocols,
                                         SourceLocation EndProtoLoc,
                                         AttributeList *AttrList) {
-  TypeNameInfo *TI =
-    new TypeNameInfo(1, ClassName->getFETokenInfo<TypeNameInfo>());
-
-  ClassName->setFETokenInfo(TI);
+  // Allocate and add the 'TypeNameInfo' "decl".
+  getTable(TypeNameInfoTablePtr)->AddEntry(true, ClassName);
   return 0;
 }
 
@@ -134,10 +153,8 @@ Action::DeclTy *
 MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                 IdentifierInfo **IdentList, unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
-    TypeNameInfo *TI =
-      new TypeNameInfo(1, IdentList[i]->getFETokenInfo<TypeNameInfo>());
-
-    IdentList[i]->setFETokenInfo(TI);
+    // Allocate and add the 'TypeNameInfo' "decl".
+    getTable(TypeNameInfoTablePtr)->AddEntry(true, IdentList[i]);
   
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(IdentList[i]);
@@ -148,6 +165,8 @@ MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
 /// ActOnPopScope - When a scope is popped, if any typedefs are now
 /// out-of-scope, they are removed from the IdentifierInfo::FETokenInfo field.
 void MinimalAction::ActOnPopScope(SourceLocation Loc, Scope *S) {
+  TypeNameInfoTable &Table = *getTable(TypeNameInfoTablePtr);
+  
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
     IdentifierInfo &II = *static_cast<IdentifierInfo*>(*I);
@@ -156,7 +175,7 @@ void MinimalAction::ActOnPopScope(SourceLocation Loc, Scope *S) {
     
     if (TI) {
       TypeNameInfo *Next = TI->Prev;
-      delete TI;
+      Table.DeleteEntry(TI);
       
       II.setFETokenInfo(Next);
     }
