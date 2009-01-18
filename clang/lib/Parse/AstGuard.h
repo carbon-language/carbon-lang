@@ -61,7 +61,7 @@ namespace clang
   typedef ASTVector<&Action::DeleteExpr, 12> ExprVector;
 
   template <ASTDestroyer Destroyer, unsigned N> inline
-  ASTMultiPtr<Destroyer> move_convert(ASTVector<Destroyer, N> &vec) {
+  ASTMultiPtr<Destroyer> move_arg(ASTVector<Destroyer, N> &vec) {
     return ASTMultiPtr<Destroyer>(vec.getActions(), vec.take(), vec.size());
   }
 }

@@ -357,8 +357,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
                      "top-level asm block");
 
     if (!Result.isInvalid())
-      return Actions.ActOnFileScopeAsmDecl(Tok.getLocation(),
-                                           move_convert(Result));
+      return Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), move_arg(Result));
     return 0;
   }
   case tok::at:

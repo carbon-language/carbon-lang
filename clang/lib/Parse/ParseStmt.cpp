@@ -118,7 +118,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       }
       // Otherwise, eat the semicolon.
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-      return Actions.ActOnExprStmt(move_convert(Expr));
+      return Actions.ActOnExprStmt(move_arg(Expr));
     }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
@@ -217,7 +217,7 @@ Parser::OwningStmtResult Parser::ParseLabeledStatement() {
 
   return Actions.ActOnLabelStmt(IdentTok.getLocation(),
                                 IdentTok.getIdentifierInfo(),
-                                ColonLoc, move_convert(SubStmt));
+                                ColonLoc, move_arg(SubStmt));
 }
 
 /// ParseCaseStatement
@@ -271,9 +271,8 @@ Parser::OwningStmtResult Parser::ParseCaseStatement() {
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
-  return Actions.ActOnCaseStmt(CaseLoc, move_convert(LHS), DotDotDotLoc,
-                               move_convert(RHS), ColonLoc,
-                               move_convert(SubStmt));
+  return Actions.ActOnCaseStmt(CaseLoc, move_arg(LHS), DotDotDotLoc,
+                               move_arg(RHS), ColonLoc, move_arg(SubStmt));
 }
 
 /// ParseDefaultStatement
@@ -304,7 +303,7 @@ Parser::OwningStmtResult Parser::ParseDefaultStatement() {
     return StmtError();
 
   return Actions.ActOnDefaultStmt(DefaultLoc, ColonLoc,
-                                  move_convert(SubStmt), CurScope);
+                                  move_arg(SubStmt), CurScope);
 }
 
 
@@ -390,17 +389,17 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
           SkipUntil(tok::semi);
           continue;
         }
-        
+
         // Add the __extension__ node to the AST.
         Res = Actions.ActOnUnaryOp(CurScope, ExtLoc, tok::kw___extension__, 
                                    Res.release());
         if (Res.isInvalid())
           continue;
-        
+
         // Eat the semicolon at the end of stmt and convert the expr into a
         // statement.
         ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-        R = Actions.ActOnExprStmt(move_convert(Res));
+        R = Actions.ActOnExprStmt(move_arg(Res));
       }
     }
 
@@ -415,7 +414,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   }
 
   SourceLocation RBraceLoc = ConsumeBrace();
-  return Actions.ActOnCompoundStmt(LBraceLoc, RBraceLoc, move_convert(Stmts),
+  return Actions.ActOnCompoundStmt(LBraceLoc, RBraceLoc, move_arg(Stmts),
                                    isStmtExpr);
 }
 
@@ -575,9 +574,8 @@ Parser::OwningStmtResult Parser::ParseIfStatement() {
   if (ElseStmt.isInvalid())
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
 
-  return Actions.ActOnIfStmt(IfLoc, move_convert(CondExp),
-                             move_convert(ThenStmt), ElseLoc,
-                             move_convert(ElseStmt));
+  return Actions.ActOnIfStmt(IfLoc, move_arg(CondExp), move_arg(ThenStmt),
+                             ElseLoc, move_arg(ElseStmt));
 }
 
 /// ParseSwitchStatement
@@ -620,7 +618,7 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement() {
 
   OwningStmtResult Switch(Actions);
   if (!Cond.isInvalid())
-    Switch = Actions.ActOnStartOfSwitchStmt(move_convert(Cond));
+    Switch = Actions.ActOnStartOfSwitchStmt(move_arg(Cond));
 
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -652,8 +650,8 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement() {
   if (Cond.isInvalid())
     return StmtError();
 
-  return Actions.ActOnFinishSwitchStmt(SwitchLoc, move_convert(Switch),
-                                       move_convert(Body));
+  return Actions.ActOnFinishSwitchStmt(SwitchLoc, move_arg(Switch),
+                                       move_arg(Body));
 }
 
 /// ParseWhileStatement
@@ -722,8 +720,7 @@ Parser::OwningStmtResult Parser::ParseWhileStatement() {
   if (Cond.isInvalid() || Body.isInvalid())
     return StmtError();
 
-  return Actions.ActOnWhileStmt(WhileLoc, move_convert(Cond),
-                                move_convert(Body));
+  return Actions.ActOnWhileStmt(WhileLoc, move_arg(Cond), move_arg(Body));
 }
 
 /// ParseDoStatement
@@ -787,8 +784,7 @@ Parser::OwningStmtResult Parser::ParseDoStatement() {
   if (Cond.isInvalid() || Body.isInvalid())
     return StmtError();
 
-  return Actions.ActOnDoStmt(DoLoc, move_convert(Body), WhileLoc,
-                             move_convert(Cond));
+  return Actions.ActOnDoStmt(DoLoc, move_arg(Body), WhileLoc, move_arg(Cond));
 }
 
 /// ParseForStatement
@@ -870,7 +866,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
 
     // Turn the expression into a stmt.
     if (!Value.isInvalid())
-      FirstPart = Actions.ActOnExprStmt(move_convert(Value));
+      FirstPart = Actions.ActOnExprStmt(move_arg(Value));
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
@@ -937,14 +933,14 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
     return StmtError();
 
   if (!ForEach)
-    return Actions.ActOnForStmt(ForLoc, LParenLoc, move_convert(FirstPart),
-                              move_convert(SecondPart), move_convert(ThirdPart),
-                              RParenLoc, move_convert(Body));
+    return Actions.ActOnForStmt(ForLoc, LParenLoc, move_arg(FirstPart),
+                              move_arg(SecondPart), move_arg(ThirdPart),
+                              RParenLoc, move_arg(Body));
   else
     return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
-                                              move_convert(FirstPart),
-                                              move_convert(SecondPart),
-                                              RParenLoc, move_convert(Body));
+                                              move_arg(FirstPart),
+                                              move_arg(SecondPart),
+                                              RParenLoc, move_arg(Body));
 }
 
 /// ParseGotoStatement
@@ -972,7 +968,7 @@ Parser::OwningStmtResult Parser::ParseGotoStatement() {
       SkipUntil(tok::semi, false, true);
       return StmtError();
     }
-    Res = Actions.ActOnIndirectGotoStmt(GotoLoc, StarLoc, move_convert(R));
+    Res = Actions.ActOnIndirectGotoStmt(GotoLoc, StarLoc, move_arg(R));
   } else {
     Diag(Tok, diag::err_expected_ident);
     return StmtError();
@@ -1018,7 +1014,7 @@ Parser::OwningStmtResult Parser::ParseReturnStatement() {
       return StmtError();
     }
   }
-  return Actions.ActOnReturnStmt(ReturnLoc, move_convert(R));
+  return Actions.ActOnReturnStmt(ReturnLoc, move_arg(R));
 }
 
 /// FuzzyParseMicrosoftAsmStatement. When -fms-extensions is enabled, this
@@ -1157,8 +1153,8 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
 
   return Actions.ActOnAsmStmt(AsmLoc, isSimple, isVolatile,
                               NumOutputs, NumInputs, &Names[0],
-                              move_convert(Constraints), move_convert(Exprs),
-                              move_convert(AsmString), move_convert(Clobbers),
+                              move_arg(Constraints), move_arg(Exprs),
+                              move_arg(AsmString), move_arg(Clobbers),
                               RParenLoc);
 }
 
@@ -1243,7 +1239,7 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl,
   if (FnBody.isInvalid())
     FnBody = Actions.ActOnCompoundStmt(L, R, MultiStmtArg(Actions), false);
 
-  return Actions.ActOnFinishFunctionBody(Decl, move_convert(FnBody));
+  return Actions.ActOnFinishFunctionBody(Decl, move_arg(FnBody));
 }
 
 /// ParseCXXTryBlock - Parse a C++ try-block.
@@ -1277,8 +1273,8 @@ Parser::OwningStmtResult Parser::ParseCXXTryBlock() {
   if (Handlers.empty())
     return StmtError();
 
-  return Actions.ActOnCXXTryBlock(TryLoc, move_convert(TryBlock),
-                                  move_convert(Handlers));
+  return Actions.ActOnCXXTryBlock(TryLoc, move_arg(TryBlock),
+                                  move_arg(Handlers));
 }
 
 /// ParseCXXCatchBlock - Parse a C++ catch block, called handler in the standard
@@ -1329,6 +1325,5 @@ Parser::OwningStmtResult Parser::ParseCXXCatchBlock() {
   if (Block.isInvalid())
     return move(Block);
 
-  return Actions.ActOnCXXCatchBlock(CatchLoc, ExceptionDecl,
-                                    move_convert(Block));
+  return Actions.ActOnCXXCatchBlock(CatchLoc, ExceptionDecl, move_arg(Block));
 }

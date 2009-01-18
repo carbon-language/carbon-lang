@@ -99,7 +99,7 @@
 // OwningResult object -> ResultMover -> OwningResult argument to
 // OwningPtr(OwningResult) -> OwningPtr -> PtrMover -> final OwningPtr
 // This conversion sequence is too complex to be allowed. Thus the special
-// move_convert functions, which help the compiler out with some explicit
+// move_* functions, which help the compiler out with some explicit
 // conversions.
 
 namespace clang
@@ -472,12 +472,12 @@ namespace clang
   // These are necessary because of ambiguity problems.
 
   template <ASTDestroyer Destroyer> inline
-  ASTOwningPtr<Destroyer> move_convert(ASTOwningResult<Destroyer> &ptr) {
+  ASTOwningPtr<Destroyer> move_arg(ASTOwningResult<Destroyer> &ptr) {
     return ASTOwningPtr<Destroyer>(ptr.ptr_move());
   }
 
   template <ASTDestroyer Destroyer> inline
-  ASTOwningResult<Destroyer> move_convert(ASTOwningPtr<Destroyer> &ptr) {
+  ASTOwningResult<Destroyer> move_res(ASTOwningPtr<Destroyer> &ptr) {
     return ASTOwningResult<Destroyer>(moving::ASTPtrMover<Destroyer>(ptr));
   }
 

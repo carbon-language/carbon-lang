@@ -1202,7 +1202,7 @@ Parser::OwningStmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
     }
   }
   ConsumeToken(); // consume ';'
-  return Actions.ActOnObjCAtThrowStmt(atLoc, move_convert(Res));
+  return Actions.ActOnObjCAtThrowStmt(atLoc, move_arg(Res));
 }
 
 /// objc-synchronized-statement:
@@ -1239,8 +1239,8 @@ Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   BodyScope.Exit();
   if (SynchBody.isInvalid())
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
-  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, move_convert(Res),
-                                             move_convert(SynchBody));
+  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, move_arg(Res),
+                                             move_arg(SynchBody));
 }
 
 ///  objc-try-catch-statement:
@@ -1313,8 +1313,8 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         if (CatchBody.isInvalid())
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
         CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
-          RParenLoc, move_convert(FirstPart), move_convert(CatchBody),
-          move_convert(CatchStmts));
+                        RParenLoc, move_arg(FirstPart), move_arg(CatchBody),
+                        move_arg(CatchStmts));
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
           << "@catch clause";
@@ -1334,7 +1334,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       if (FinallyBody.isInvalid())
         FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc,
-                                                   move_convert(FinallyBody));
+                                                   move_arg(FinallyBody));
       catch_or_finally_seen = true;
       break;
     }
@@ -1343,9 +1343,9 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(atLoc, diag::err_missing_catch_finally);
     return StmtError();
   }
-  return Actions.ActOnObjCAtTryStmt(atLoc, move_convert(TryBody),
-                                    move_convert(CatchStmts),
-                                    move_convert(FinallyStmt));
+  return Actions.ActOnObjCAtTryStmt(atLoc, move_arg(TryBody),
+                                    move_arg(CatchStmts),
+                                    move_arg(FinallyStmt));
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
@@ -1387,7 +1387,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   BodyScope.Exit();
 
   // TODO: Pass argument information.
-  Actions.ActOnFinishFunctionBody(MDecl, move_convert(FnBody));
+  Actions.ActOnFinishFunctionBody(MDecl, move_arg(FnBody));
   return MDecl;
 }
 
@@ -1408,7 +1408,7 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   }
   // Otherwise, eat the semicolon.
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-  return Actions.ActOnExprStmt(move_convert(Res));
+  return Actions.ActOnExprStmt(move_arg(Res));
 }
 
 Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
@@ -1459,7 +1459,7 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   }
 
   return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
-                                        0, move_convert(Res));
+                                        0, move_arg(Res));
 }
 
 /// ParseObjCMessageExpressionBody - Having parsed "'[' objc-receiver", parse
