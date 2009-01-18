@@ -191,8 +191,8 @@ class Driver(object):
         for j in jobs.iterjobs():
             if isinstance(j, Jobs.Command):
                 if self.cccEcho:
-                    print ' '.join(map(repr,j.getArgv()))
-                    sys.stdout.flush()
+                    print >>sys.stderr, ' '.join(map(repr,j.getArgv()))
+                    sys.stderr.flush()
                 res = os.spawnvp(os.P_WAIT, j.executable, j.getArgv())
                 if res:
                     sys.exit(res)
@@ -201,7 +201,7 @@ class Driver(object):
                 procs = []
                 for sj in j.commands:
                     if self.cccEcho:
-                        print ' '.join(map(repr,sj.getArgv()))
+                        print >> sys.stderr, ' '.join(map(repr,sj.getArgv()))
                         sys.stdout.flush()
 
                     if not procs:
