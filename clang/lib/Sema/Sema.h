@@ -901,18 +901,17 @@ public:
   OwningStmtResult ActOnBlockReturnStmt(SourceLocation ReturnLoc,
                                         Expr *RetValExp);
 
-  virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
-                                  bool IsSimple,
-                                  bool IsVolatile,
-                                  unsigned NumOutputs,
-                                  unsigned NumInputs,
-                                  std::string *Names,
-                                  ExprTy **Constraints,
-                                  ExprTy **Exprs,
-                                  ExprTy *AsmString,
-                                  unsigned NumClobbers,
-                                  ExprTy **Clobbers,
-                                  SourceLocation RParenLoc);
+  virtual OwningStmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                        bool IsSimple,
+                                        bool IsVolatile,
+                                        unsigned NumOutputs,
+                                        unsigned NumInputs,
+                                        std::string *Names,
+                                        MultiExprArg Constraints,
+                                        MultiExprArg Exprs,
+                                        ExprArg AsmString,
+                                        MultiExprArg Clobbers,
+                                        SourceLocation RParenLoc);
   
   virtual StmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc, 
                                           SourceLocation RParen, StmtTy *Parm, 

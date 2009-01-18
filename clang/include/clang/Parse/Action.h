@@ -459,21 +459,20 @@ public:
                                            ExprArg RetValExp) {
     return StmtEmpty();
   }
-  virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
-                                  bool IsSimple,                                  
-                                  bool IsVolatile,
-                                  unsigned NumOutputs,
-                                  unsigned NumInputs,
-                                  std::string *Names,
-                                  ExprTy **Constraints,
-                                  ExprTy **Exprs,
-                                  ExprTy *AsmString,
-                                  unsigned NumClobbers,
-                                  ExprTy **Clobbers,
-                                  SourceLocation RParenLoc) {
-    return 0;
+  virtual OwningStmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                        bool IsSimple,                                  
+                                        bool IsVolatile,
+                                        unsigned NumOutputs,
+                                        unsigned NumInputs,
+                                        std::string *Names,
+                                        MultiExprArg Constraints,
+                                        MultiExprArg Exprs,
+                                        ExprArg AsmString,
+                                        MultiExprArg Clobbers,
+                                        SourceLocation RParenLoc) {
+    return StmtEmpty();
   }
-  
+
   // Objective-c statements
   virtual StmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc, 
                                           SourceLocation RParen, StmtTy *Parm, 

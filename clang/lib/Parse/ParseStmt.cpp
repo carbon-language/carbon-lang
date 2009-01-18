@@ -1155,12 +1155,11 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
     RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
   }
 
-  return Owned(Actions.ActOnAsmStmt(AsmLoc, isSimple, isVolatile,
-                                    NumOutputs, NumInputs,
-                                    &Names[0], Constraints.take(),
-                                    Exprs.take(), AsmString.release(),
-                                    Clobbers.size(), Clobbers.take(),
-                                    RParenLoc));
+  return Actions.ActOnAsmStmt(AsmLoc, isSimple, isVolatile,
+                              NumOutputs, NumInputs, &Names[0],
+                              move_convert(Constraints), move_convert(Exprs),
+                              move_convert(AsmString), move_convert(Clobbers),
+                              RParenLoc);
 }
 
 /// ParseAsmOperands - Parse the asm-operands production as used by
