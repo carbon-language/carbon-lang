@@ -1586,7 +1586,9 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
 
   // If nothing else, we can make a libcall.
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i32)
+  if (VT == MVT::i16)
+    LC = RTLIB::MUL_I16;
+  else if (VT == MVT::i32)
     LC = RTLIB::MUL_I32;
   else if (VT == MVT::i64)
     LC = RTLIB::MUL_I64;
@@ -1662,7 +1664,9 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
   bool isSigned;
   if (N->getOpcode() == ISD::SHL) {
     isSigned = false; /*sign irrelevant*/
-    if (VT == MVT::i32)
+    if (VT == MVT::i16)
+      LC = RTLIB::SHL_I16;
+    else if (VT == MVT::i32)
       LC = RTLIB::SHL_I32;
     else if (VT == MVT::i64)
       LC = RTLIB::SHL_I64;
@@ -1670,7 +1674,9 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
       LC = RTLIB::SHL_I128;
   } else if (N->getOpcode() == ISD::SRL) {
     isSigned = false;
-    if (VT == MVT::i32)
+    if (VT == MVT::i16)
+      LC = RTLIB::SRL_I16;
+    else if (VT == MVT::i32)
       LC = RTLIB::SRL_I32;
     else if (VT == MVT::i64)
       LC = RTLIB::SRL_I64;
@@ -1679,7 +1685,9 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
   } else {
     assert(N->getOpcode() == ISD::SRA && "Unknown shift!");
     isSigned = true;
-    if (VT == MVT::i32)
+    if (VT == MVT::i16)
+      LC = RTLIB::SRA_I16;
+    else if (VT == MVT::i32)
       LC = RTLIB::SRA_I32;
     else if (VT == MVT::i64)
       LC = RTLIB::SRA_I64;

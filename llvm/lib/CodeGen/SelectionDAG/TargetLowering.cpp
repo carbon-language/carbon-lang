@@ -29,15 +29,19 @@ using namespace llvm;
 /// InitLibcallNames - Set default libcall names.
 ///
 static void InitLibcallNames(const char **Names) {
+  Names[RTLIB::SHL_I16] = "__ashli16";
   Names[RTLIB::SHL_I32] = "__ashlsi3";
   Names[RTLIB::SHL_I64] = "__ashldi3";
   Names[RTLIB::SHL_I128] = "__ashlti3";
+  Names[RTLIB::SRL_I16] = "__lshri16";
   Names[RTLIB::SRL_I32] = "__lshrsi3";
   Names[RTLIB::SRL_I64] = "__lshrdi3";
   Names[RTLIB::SRL_I128] = "__lshrti3";
+  Names[RTLIB::SRA_I16] = "__ashri16";
   Names[RTLIB::SRA_I32] = "__ashrsi3";
   Names[RTLIB::SRA_I64] = "__ashrdi3";
   Names[RTLIB::SRA_I128] = "__ashrti3";
+  Names[RTLIB::MUL_I16] = "__muli16";
   Names[RTLIB::MUL_I32] = "__mulsi3";
   Names[RTLIB::MUL_I64] = "__muldi3";
   Names[RTLIB::MUL_I128] = "__multi3";
