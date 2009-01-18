@@ -31,24 +31,43 @@ using namespace clang;
 // Utility methods for reading from the mmap'ed PTH file.
 //===----------------------------------------------------------------------===//
 
-static inline uint8_t Read8(const char*& data) {
-  return (uint8_t) *(data++);
-}
-
-static inline uint32_t Read32(const char*& data) {
-  uint32_t V = (uint32_t) Read8(data);
-  V |= (((uint32_t) Read8(data)) << 8);
-  V |= (((uint32_t) Read8(data)) << 16);
-  V |= (((uint32_t) Read8(data)) << 24);
+static inline uint8_t Read8(const unsigned char *&Data) {
+  uint8_t V = Data[0];
+  Data += 1;
   return V;
 }
+
+static inline uint16_t Read16(const unsigned char *&Data) {
+  uint16_t V = ((uint16_t)Data[0] <<  0) |
+               ((uint16_t)Data[1] <<  8);
+  Data += 2;
+  return V;
+}
+
+static inline uint32_t Read24(const unsigned char *&Data) {
+  uint32_t V = ((uint32_t)Data[0] <<  0) |
+               ((uint32_t)Data[1] <<  8) |
+               ((uint32_t)Data[2] << 16);
+  Data += 3;
+  return V;
+}
+
+static inline uint32_t Read32(const unsigned char *&Data) {
+  uint32_t V = ((uint32_t)Data[0] <<  0) |
+               ((uint32_t)Data[1] <<  8) |
+               ((uint32_t)Data[2] << 16) |
+               ((uint32_t)Data[3] << 24);
+  Data += 4;
+  return V;
+}
+
 
 //===----------------------------------------------------------------------===//
 // PTHLexer methods.
 //===----------------------------------------------------------------------===//
 
-PTHLexer::PTHLexer(Preprocessor &PP, FileID FID, const char *D,
-                   const char *ppcond,
+PTHLexer::PTHLexer(Preprocessor &PP, FileID FID, const unsigned char *D,
+                   const unsigned char *ppcond,
                    PTHSpellingSearch &mySpellingSrch, PTHManager &PM)
   : PreprocessorLexer(&PP, FID), TokBuf(D), CurPtr(D), LastHashTokPtr(0),
     PPCond(ppcond), CurPPCondPtr(ppcond), MySpellingSrch(mySpellingSrch),
@@ -65,7 +84,7 @@ LexNextToken:
   //===--------------------------------------==//
   
   // Shadow CurPtr into an automatic variable.
-  const unsigned char *CurPtrShadow = (const unsigned char*) CurPtr;  
+  const unsigned char *CurPtrShadow = CurPtr;  
 
   // Read in the data for the token.  14 bytes in total.
   tok::TokenKind k = (tok::TokenKind) CurPtrShadow[0];
@@ -83,7 +102,7 @@ LexNextToken:
   uint32_t Len = ((uint32_t) CurPtrShadow[9])
       | (((uint32_t) CurPtrShadow[10]) << 8);
   
-  CurPtr = (const char*) (CurPtrShadow + DISK_TOKEN_SIZE);
+  CurPtr = CurPtrShadow + DISK_TOKEN_SIZE;
   
   //===--------------------------------------==//
   // Construct the token itself.
@@ -168,7 +187,7 @@ void PTHLexer::DiscardToEndOfLine() {
   // Skip tokens by only peeking at their token kind and the flags.
   // We don't need to actually reconstruct full tokens from the token buffer.
   // This saves some copies and it also reduces IdentifierInfo* lookup.
-  const char* p = CurPtr;
+  const unsigned char* p = CurPtr;
   while (1) {
     // Read the token kind.  Are we at the end of the file?
     tok::TokenKind x = (tok::TokenKind) (uint8_t) *p;
@@ -190,7 +209,7 @@ bool PTHLexer::SkipBlock() {
   assert(CurPPCondPtr && "No cached PP conditional information.");
   assert(LastHashTokPtr && "No known '#' token.");
   
-  const char* HashEntryI = 0;
+  const unsigned char* HashEntryI = 0;
   uint32_t Offset; 
   uint32_t TableIdx;
   
@@ -212,11 +231,12 @@ bool PTHLexer::SkipBlock() {
       // In the side-table we are still at an entry for a '#' token that
       // is earlier than the last one we saw.  Check if the location we would
       // stride gets us closer.
-      const char* NextPPCondPtr = PPCond + TableIdx*(sizeof(uint32_t)*2);
+      const unsigned char* NextPPCondPtr =
+        PPCond + TableIdx*(sizeof(uint32_t)*2);
       assert(NextPPCondPtr >= CurPPCondPtr);
       // Read where we should jump to.
       uint32_t TmpOffset = Read32(NextPPCondPtr);
-      const char* HashEntryJ = TokBuf + TmpOffset;
+      const unsigned char* HashEntryJ = TokBuf + TmpOffset;
       
       if (HashEntryJ <= LastHashTokPtr) {
         // Jump directly to the next entry in the side table.
@@ -232,7 +252,7 @@ bool PTHLexer::SkipBlock() {
   assert(TableIdx && "No jumping from #endifs.");
   
   // Update our side-table iterator.
-  const char* NextPPCondPtr = PPCond + TableIdx*(sizeof(uint32_t)*2);
+  const unsigned char* NextPPCondPtr = PPCond + TableIdx*(sizeof(uint32_t)*2);
   assert(NextPPCondPtr >= CurPPCondPtr);
   CurPPCondPtr = NextPPCondPtr;
   
@@ -272,7 +292,7 @@ bool PTHLexer::SkipBlock() {
   LastHashTokPtr = CurPtr;
 
   // Skip the '#' token.
-  assert(((tok::TokenKind) (unsigned char) *CurPtr) == tok::hash);
+  assert(((tok::TokenKind)*CurPtr) == tok::hash);
   CurPtr += DISK_TOKEN_SIZE;
   
   // Did we reach a #endif?  If so, go ahead and consume that token as well.
@@ -287,7 +307,7 @@ SourceLocation PTHLexer::getSourceLocation() {
   // handling a #included file.  Just read the necessary data from the token
   // data buffer to construct the SourceLocation object.
   // NOTE: This is a virtual function; hence it is defined out-of-line.
-  const char* p = CurPtr + (1 + 1 + 3);
+  const unsigned char* p = CurPtr + (1 + 1 + 3);
   uint32_t offset = 
        ((uint32_t) ((uint8_t) p[0]))
     | (((uint32_t) ((uint8_t) p[1])) << 8)
@@ -318,7 +338,7 @@ unsigned PTHManager::getSpelling(SourceLocation Loc, const char *&Buffer) {
 }
 
 unsigned PTHManager::getSpellingAtPTHOffset(unsigned PTHOffset,
-                                            const char *& Buffer) {
+                                            const char *&Buffer) {
 
   const char* p = Buf->getBufferStart() + PTHOffset;
   assert(p < Buf->getBufferEnd());
@@ -334,7 +354,7 @@ unsigned PTHManager::getSpellingAtPTHOffset(unsigned PTHOffset,
 
 unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned fpos,
                                                     const char *&Buffer) {
-  const char* p = LinearItr;
+  const unsigned char* p = LinearItr;
   unsigned len = 0;
   
   if (p == TableEnd)
@@ -372,8 +392,9 @@ unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned fpos,
   return len;
 }
 
+
 unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
-                                                    const char *& Buffer) {
+                                                    const char *&Buffer) {
   
   assert((TableEnd - TableBeg) % SpellingEntrySize == 0);
   
@@ -383,12 +404,12 @@ unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned fpos,
   assert(TableEnd > TableBeg);
   
   unsigned min = 0;
-  const char* tb = TableBeg;
+  const unsigned char* tb = TableBeg;
   unsigned max = NumSpellings;
 
   do {
     unsigned i = (max - min) / 2 + min;
-    const char* p = tb + (i * SpellingEntrySize);
+    const unsigned char* p = tb + (i * SpellingEntrySize);
     
     uint32_t TokOffset = 
       ((uint32_t) ((uint8_t) p[0]))
@@ -487,12 +508,12 @@ public:
     return FileMap.GetOrCreateValue(s, s+size).getValue();
   }
   
-  void ReadTable(const char* D) {    
+  void ReadTable(const unsigned char* D) {    
     uint32_t N = Read32(D);     // Read the length of the table.
     
     for ( ; N > 0; --N) {       // The rest of the data is the table itself.
       uint32_t len = Read32(D);
-      const char* s = D;
+      const char* s = (const char *)D;
       D += len;
 
       uint32_t TokenOff = Read32(D);
@@ -511,8 +532,9 @@ public:
 //===----------------------------------------------------------------------===//
 
 PTHManager::PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
-                       const char* idDataTable, IdentifierInfo** perIDCache, 
-                       const char* sortedIdTable, unsigned numIds)
+                       const unsigned char* idDataTable,
+                       IdentifierInfo** perIDCache, 
+                       const unsigned char* sortedIdTable, unsigned numIds)
 : Buf(buf), PerIDCache(perIDCache), FileLookup(fileLookup),
   IdDataTable(idDataTable), SortedIdTable(sortedIdTable),
   NumIds(numIds), PP(0) {}
@@ -534,8 +556,8 @@ PTHManager* PTHManager::Create(const std::string& file) {
   
   // Get the buffer ranges and check if there are at least three 32-bit
   // words at the end of the file.
-  const char* BufBeg = File->getBufferStart();
-  const char* BufEnd = File->getBufferEnd();
+  const unsigned char* BufBeg = (unsigned char*)File->getBufferStart();
+  const unsigned char* BufEnd = (unsigned char*)File->getBufferEnd();
   
   if(!(BufEnd > BufBeg + sizeof(uint32_t)*3)) {
     assert(false && "Invalid PTH file.");
@@ -546,12 +568,12 @@ PTHManager* PTHManager::Create(const std::string& file) {
   // This table contains the offset of the file lookup table, the
   // persistent ID -> identifer data table.
   // FIXME: We should just embed this offset in the PTH file.
-  const char* EndTable = BufEnd - sizeof(uint32_t)*4;
+  const unsigned char* EndTable = BufEnd - sizeof(uint32_t)*4;
   
   // Construct the file lookup table.  This will be used for mapping from
   // FileEntry*'s to cached tokens.
-  const char* FileTableOffset = EndTable + sizeof(uint32_t)*3;
-  const char* FileTable = BufBeg + Read32(FileTableOffset);
+  const unsigned char* FileTableOffset = EndTable + sizeof(uint32_t)*3;
+  const unsigned char* FileTable = BufBeg + Read32(FileTableOffset);
   
   if (!(FileTable > BufBeg && FileTable < BufEnd)) {
     assert(false && "Invalid PTH file.");
@@ -563,16 +585,16 @@ PTHManager* PTHManager::Create(const std::string& file) {
   
   // Get the location of the table mapping from persistent ids to the
   // data needed to reconstruct identifiers.
-  const char* IDTableOffset = EndTable + sizeof(uint32_t)*1;
-  const char* IData = BufBeg + Read32(IDTableOffset);
+  const unsigned char* IDTableOffset = EndTable + sizeof(uint32_t)*1;
+  const unsigned char* IData = BufBeg + Read32(IDTableOffset);
   if (!(IData > BufBeg && IData < BufEnd)) {
     assert(false && "Invalid PTH file.");
     return 0; // FIXME: Proper error diagnostic?
   }
   
   // Get the location of the lexigraphically-sorted table of persistent IDs.
-  const char* SortedIdTableOffset = EndTable + sizeof(uint32_t)*2;
-  const char* SortedIdTable = BufBeg + Read32(SortedIdTableOffset);
+  const unsigned char* SortedIdTableOffset = EndTable + sizeof(uint32_t)*2;
+  const unsigned char* SortedIdTable = BufBeg + Read32(SortedIdTableOffset);
   if (!(SortedIdTable > BufBeg && SortedIdTable < BufEnd)) {
     assert(false && "Invalid PTH file.");
     return 0; // FIXME: Proper error diagnostic?
@@ -585,7 +607,7 @@ PTHManager* PTHManager::Create(const std::string& file) {
   // so that we in the best case only zero out memory once when the OS returns
   // us new pages.
   IdentifierInfo** PerIDCache =
-    (IdentifierInfo**) calloc(NumIds, sizeof(*PerIDCache));
+    (IdentifierInfo**)calloc(NumIds, sizeof(*PerIDCache));
   
   if (!PerIDCache) {
     assert(false && "Could not allocate Persistent ID cache.");
@@ -604,13 +626,14 @@ IdentifierInfo* PTHManager::GetIdentifierInfo(unsigned persistentID) {
   if (II) return II;
   
   // Look in the PTH file for the string data for the IdentifierInfo object.
-  const char* TableEntry = IdDataTable + sizeof(uint32_t) * persistentID;
-  const char* IDData = Buf->getBufferStart() + Read32(TableEntry);
-  assert(IDData < Buf->getBufferEnd());
+  const unsigned char* TableEntry = IdDataTable + sizeof(uint32_t)*persistentID;
+  const unsigned char* IDData =
+    (const unsigned char*)Buf->getBufferStart() + Read32(TableEntry);
+  assert(IDData < (const unsigned char*)Buf->getBufferEnd());
   
   // Allocate the object.
-  std::pair<IdentifierInfo,const char*> *Mem =
-    Alloc.Allocate<std::pair<IdentifierInfo,const char*> >();
+  std::pair<IdentifierInfo,const unsigned char*> *Mem =
+    Alloc.Allocate<std::pair<IdentifierInfo,const unsigned char*> >();
 
   Mem->second = IDData;
   II = new ((void*) Mem) IdentifierInfo(true);
@@ -627,7 +650,7 @@ IdentifierInfo* PTHManager::get(const char *NameStart, const char *NameEnd) {
   
   do {
     unsigned i = (max - min) / 2 + min;
-    const char* p = SortedIdTable + (i * 4);
+    const unsigned char* p = SortedIdTable + (i * 4);
     
     // Read the persistentID.
     unsigned perID = 
@@ -681,22 +704,22 @@ PTHLexer *PTHManager::CreateLexer(FileID FID) {
   if (!FileData.isValid()) // No tokens available.
     return 0;
   
+  const unsigned char *BufStart = (const unsigned char *)Buf->getBufferStart();
   // Compute the offset of the token data within the buffer.
-  const char* data = Buf->getBufferStart() + FileData.getTokenOffset();
+  const unsigned char* data = BufStart + FileData.getTokenOffset();
 
   // Get the location of pp-conditional table.
-  const char* ppcond = Buf->getBufferStart() + FileData.getPPCondOffset();
+  const unsigned char* ppcond = BufStart + FileData.getPPCondOffset();
   uint32_t len = Read32(ppcond);
   if (len == 0) ppcond = 0;
   
   // Get the location of the spelling table.
-  const char* spellingTable = Buf->getBufferStart() +
-                              FileData.getSpellingOffset();
+  const unsigned char* spellingTable = BufStart + FileData.getSpellingOffset();
   
   len = Read32(spellingTable);
   if (len == 0) spellingTable = 0;
 
-  assert(data < Buf->getBufferEnd());
+  assert(data < (const unsigned char*)Buf->getBufferEnd());
   
   // Create the SpellingSearch object for this FileID.
   PTHSpellingSearch* ss = new PTHSpellingSearch(*this, len, spellingTable);

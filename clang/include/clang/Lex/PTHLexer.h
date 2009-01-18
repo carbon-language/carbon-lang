@@ -26,24 +26,24 @@ class PTHLexer : public PreprocessorLexer {
   SourceLocation FileStartLoc;
   
   /// TokBuf - Buffer from PTH file containing raw token data.
-  const char* TokBuf;
+  const unsigned char* TokBuf;
   
   /// CurPtr - Pointer into current offset of the token buffer where
   ///  the next token will be read.
-  const char* CurPtr;
+  const unsigned char* CurPtr;
     
   /// LastHashTokPtr - Pointer into TokBuf of the last processed '#'
   ///  token that appears at the start of a line.
-  const char* LastHashTokPtr;
+  const unsigned char* LastHashTokPtr;
   
   /// PPCond - Pointer to a side table in the PTH file that provides a
   ///  a consise summary of the preproccessor conditional block structure.
   ///  This is used to perform quick skipping of conditional blocks.
-  const char* PPCond;
+  const unsigned char* PPCond;
   
   /// CurPPCondPtr - Pointer inside PPCond that refers to the next entry
   ///  to process when doing quick skipping of preprocessor blocks.
-  const char* CurPPCondPtr;
+  const unsigned char* CurPPCondPtr;
 
   /// MySpellingMgr - Reference to the spelling manager used to get spellings
   ///  for the source file indicated by \c FileID.
@@ -64,7 +64,8 @@ protected:
   friend class PTHManager;
 
   /// Create a PTHLexer for the specified token stream.
-  PTHLexer(Preprocessor& pp, FileID FID, const char *D, const char* ppcond,
+  PTHLexer(Preprocessor& pp, FileID FID, const unsigned char *D,
+           const unsigned char* ppcond,
            PTHSpellingSearch& mySpellingSrch, PTHManager &PM);
 public:  
 
@@ -87,7 +88,7 @@ public:
     // whether or not we are at a token with kind tok::eof or tok::l_paren.
     // Just read the first byte from the current token pointer to determine
     // its kind.
-    tok::TokenKind x = (tok::TokenKind) (unsigned char) *CurPtr;
+    tok::TokenKind x = (tok::TokenKind)*CurPtr;
     return x == tok::eof ? 2 : x == tok::l_paren;
   }    
 

@@ -34,11 +34,11 @@ class PTHManager;
 class PTHSpellingSearch {
   PTHManager& PTHMgr;
   
-  const char* const TableBeg;
-  const char* const TableEnd;
+  const unsigned char* const TableBeg;
+  const unsigned char* const TableEnd;
   
   const unsigned NumSpellings;
-  const char* LinearItr;
+  const unsigned char* LinearItr;
   
 public:
   enum { SpellingEntrySize = 4*2 };
@@ -46,7 +46,8 @@ public:
   unsigned getSpellingBinarySearch(unsigned fpos, const char *&Buffer);
   unsigned getSpellingLinearSearch(unsigned fpos, const char *&Buffer);
   
-  PTHSpellingSearch(PTHManager& pm, unsigned numSpellings, const char* tableBeg)
+  PTHSpellingSearch(PTHManager& pm, unsigned numSpellings,
+                    const unsigned char* tableBeg)
     : PTHMgr(pm),
       TableBeg(tableBeg),
       TableEnd(tableBeg + numSpellings*SpellingEntrySize),
@@ -78,11 +79,11 @@ class PTHManager : public IdentifierInfoLookup {
   /// IdDataTable - Array representing the mapping from persistent IDs to the
   ///  data offset within the PTH file containing the information to
   ///  reconsitute an IdentifierInfo.
-  const char* const IdDataTable;
+  const unsigned char* const IdDataTable;
   
   /// SortedIdTable - Array ordering persistent identifier IDs by the lexical
   ///  order of their corresponding strings.  This is used by get().
-  const char* const SortedIdTable;
+  const unsigned char* const SortedIdTable;
   
   /// NumIds - The number of identifiers in the PTH file.
   const unsigned NumIds;
@@ -94,8 +95,8 @@ class PTHManager : public IdentifierInfoLookup {
   /// This constructor is intended to only be called by the static 'Create'
   /// method.
   PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
-             const char* idDataTable, IdentifierInfo** perIDCache,
-             const char* sortedIdTable, unsigned numIds);
+             const unsigned char* idDataTable, IdentifierInfo** perIDCache,
+             const unsigned char* sortedIdTable, unsigned numIds);
 
   // Do not implement.
   PTHManager();
