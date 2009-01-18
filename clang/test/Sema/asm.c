@@ -10,7 +10,11 @@ f()
   
   asm ("foo\n" : "=a" (f())); // expected-error {{invalid lvalue in asm output}}
   asm ("foo\n" : "=a" (i + 2)); // expected-error {{invalid lvalue in asm output}}
-  
+
+  asm ("foo\n" : [symbolic_name] "=a" (i) : "[symbolic_name]" (i));
+  asm ("foo\n" : "=a" (i) : "[" (i)); // expected-error {{invalid input constraint '[' in asm}}
+  asm ("foo\n" : "=a" (i) : "[foo" (i)); // expected-error {{invalid input constraint '[foo' in asm}}
+  asm ("foo\n" : "=a" (i) : "[symbolic_name]" (i)); // expected-error {{invalid input constraint '[symbolic_name]' in asm}}
 }
 
 void

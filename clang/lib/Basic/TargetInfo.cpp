@@ -188,6 +188,36 @@ bool TargetInfo::validateOutputConstraint(const char *Name,
   return true;
 }
 
+bool TargetInfo::resolveSymbolicName(const char *&Name,
+                                     const std::string *OutputNamesBegin,
+                                     const std::string *OutputNamesEnd,
+                                     unsigned &Index) const
+{
+  assert(*Name == '[' && "Symbolic name did not start with '['");
+
+  Name++;
+  const char *Start = Name;
+  while (*Name && *Name != ']')
+    Name++;
+  
+  if (!*Name) {
+    // Missing ']'
+    return false;
+  }
+  
+  std::string SymbolicName(Start, Name - Start);
+  
+  Index = 0;
+  for (const std::string *it = OutputNamesBegin; 
+       it != OutputNamesEnd; 
+       ++it, Index++) {
+    if (SymbolicName == *it)
+      return true;
+  }
+
+  return false;
+}
+
 bool TargetInfo::validateInputConstraint(const char *Name,
                                          const std::string *OutputNamesBegin,
                                          const std::string *OutputNamesEnd,
@@ -210,7 +240,15 @@ bool TargetInfo::validateInputConstraint(const char *Name,
         // add more constraints as we hit it.  Eventually, an unknown
         // constraint should just be treated as 'g'.
         return false;
-      }        
+      }
+      break;
+    case '[': {
+      unsigned Index = 0;
+      if (!resolveSymbolicName(Name, OutputNamesBegin, OutputNamesEnd, Index))
+        return false;
+    
+      break;
+    }          
     case '%': // commutative
       // FIXME: Fail if % is used with the last operand.
       break;

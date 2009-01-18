@@ -980,7 +980,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
                                                  S.begin_output_names(),
                                                  S.end_output_names(),
                                                  Info);
-    assert(result && "Failed to parse input constraint"); result=result;
+    assert(result && "Failed to parse input constraint");
     
     if (i != 0 || S.getNumOutputs() > 0)
       Constraints += ',';

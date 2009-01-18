@@ -202,7 +202,11 @@ public:
                                const std::string *OutputNamesBegin,
                                const std::string *OutputNamesEnd,
                                ConstraintInfo &info) const;
-
+  bool resolveSymbolicName(const char *&Name,
+                           const std::string *OutputNamesBegin,
+                           const std::string *OutputNamesEnd,
+                           unsigned &Index) const;
+  
   virtual std::string convertConstraint(const char Constraint) const {
     return std::string(1, Constraint);
   }
