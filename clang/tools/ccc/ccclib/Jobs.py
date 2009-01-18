@@ -33,7 +33,7 @@ class PipedJob(Job):
     """PipedJob - A sequence of piped commands."""
 
     def __init__(self, commands):
-        assert all_true(args, lambda x: isinstance(x, Arguments.Command))
+        assert Util.all_true(commands, lambda x: isinstance(x, Arguments.Command))
         self.commands = list(commands)
 
     def addJob(self, job):
