@@ -73,6 +73,7 @@ static bool AddressMightEscape(const Value *V) {
     case Instruction::Invoke:
       // If the argument to the call has the nocapture attribute, then the call
       // may store or load to the pointer, but it cannot escape.
+      // Do compensate for the two BB operands, i.e. Arg1 is at index 3!
       if (cast<InvokeInst>(I)->paramHasAttr(UI.getOperandNo()-2,
                                             Attribute::NoCapture))
         continue;
