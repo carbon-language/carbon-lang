@@ -596,15 +596,9 @@ PTHManager* PTHManager::Create(const std::string& file) {
   return new PTHManager(File.take(), FL.take(), IData, PerIDCache,
                         SortedIdTable, NumIds);
 }
-
-IdentifierInfo* PTHManager::GetIdentifierInfo(unsigned persistentID) {
-    
-  // Check if the IdentifierInfo has already been resolved.
-  IdentifierInfo* II = PerIDCache[persistentID];
-  if (II) return II;
-  
+IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
   // Look in the PTH file for the string data for the IdentifierInfo object.
-  const unsigned char* TableEntry = IdDataTable + sizeof(uint32_t)*persistentID;
+  const unsigned char* TableEntry = IdDataTable + sizeof(uint32_t)*PersistentID;
   const unsigned char* IDData =
     (const unsigned char*)Buf->getBufferStart() + Read32(TableEntry);
   assert(IDData < (const unsigned char*)Buf->getBufferEnd());
@@ -614,10 +608,10 @@ IdentifierInfo* PTHManager::GetIdentifierInfo(unsigned persistentID) {
     Alloc.Allocate<std::pair<IdentifierInfo,const unsigned char*> >();
 
   Mem->second = IDData;
-  II = new ((void*) Mem) IdentifierInfo(true);
+  IdentifierInfo *II = new ((void*) Mem) IdentifierInfo(true);
   
   // Store the new IdentifierInfo in the cache.
-  PerIDCache[persistentID] = II;
+  PerIDCache[PersistentID] = II;
   return II;
 }
 

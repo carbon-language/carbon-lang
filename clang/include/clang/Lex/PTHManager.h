@@ -109,7 +109,13 @@ class PTHManager : public IdentifierInfoLookup {
   
   /// GetIdentifierInfo - Used to reconstruct IdentifierInfo objects from the
   ///  PTH file.
-  IdentifierInfo* GetIdentifierInfo(unsigned);
+  inline IdentifierInfo* GetIdentifierInfo(unsigned PersistentID) {
+    // Check if the IdentifierInfo has already been resolved.
+    if (IdentifierInfo* II = PerIDCache[PersistentID])
+      return II;
+    return LazilyCreateIdentifierInfo(PersistentID);
+  }
+  IdentifierInfo* LazilyCreateIdentifierInfo(unsigned PersistentID);
   
 public:  
   ~PTHManager();
