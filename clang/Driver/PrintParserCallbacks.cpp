@@ -381,37 +381,38 @@ namespace {
     }
 
     // Objective-c statements
-    virtual StmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc, 
-                                            SourceLocation RParen, StmtTy *Parm, 
-                                            StmtTy *Body, StmtTy *CatchList) {
+    virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
+                                                  SourceLocation RParen,
+                                                  StmtArg Parm, StmtArg Body,
+                                                  StmtArg CatchList) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-  
-    virtual StmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc, 
-                                              StmtTy *Body) {
+
+    virtual OwningStmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
+                                                    StmtArg Body) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-  
-    virtual StmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc, 
-                                          StmtTy *Try, 
-                                          StmtTy *Catch, StmtTy *Finally) {
+
+    virtual OwningStmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc,
+                                                StmtArg Try, StmtArg Catch,
+                                                StmtArg Finally) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-  
-    virtual StmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc, 
-                                            StmtTy *Throw) {
+
+    virtual OwningStmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
+                                                  ExprArg Throw) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-  
-    virtual StmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, 
-                                                   ExprTy *SynchExpr, 
-                                                   StmtTy *SynchBody) {
+
+    virtual OwningStmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc,
+                                                         ExprArg SynchExpr,
+                                                         StmtArg SynchBody) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
 
     // C++ Statements

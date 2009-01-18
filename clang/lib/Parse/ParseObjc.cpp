@@ -1202,7 +1202,7 @@ Parser::OwningStmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
     }
   }
   ConsumeToken(); // consume ';'
-  return Owned(Actions.ActOnObjCAtThrowStmt(atLoc, Res.release()));
+  return Actions.ActOnObjCAtThrowStmt(atLoc, move_convert(Res));
 }
 
 /// objc-synchronized-statement:
@@ -1239,8 +1239,8 @@ Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   BodyScope.Exit();
   if (SynchBody.isInvalid())
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
-  return Owned(Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.release(),
-                                                   SynchBody.release()));
+  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, move_convert(Res),
+                                             move_convert(SynchBody));
 }
 
 ///  objc-try-catch-statement:
@@ -1313,8 +1313,8 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         if (CatchBody.isInvalid())
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
         CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
-          RParenLoc, FirstPart.release(), CatchBody.release(),
-          CatchStmts.release());
+          RParenLoc, move_convert(FirstPart), move_convert(CatchBody),
+          move_convert(CatchStmts));
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
           << "@catch clause";
@@ -1334,7 +1334,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       if (FinallyBody.isInvalid())
         FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc,
-                                                   FinallyBody.release());
+                                                   move_convert(FinallyBody));
       catch_or_finally_seen = true;
       break;
     }
@@ -1343,9 +1343,9 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(atLoc, diag::err_missing_catch_finally);
     return StmtError();
   }
-  return Owned(Actions.ActOnObjCAtTryStmt(atLoc, TryBody.release(),
-                                          CatchStmts.release(),
-                                          FinallyStmt.release()));
+  return Actions.ActOnObjCAtTryStmt(atLoc, move_convert(TryBody),
+                                    move_convert(CatchStmts),
+                                    move_convert(FinallyStmt));
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'

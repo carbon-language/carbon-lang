@@ -935,44 +935,42 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                            Clobbers, RParenLoc));
 }
 
-Action::StmtResult
-Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc, 
-                           SourceLocation RParen, StmtTy *Parm, 
-                           StmtTy *Body, StmtTy *CatchList) {
-  ObjCAtCatchStmt *CS = new ObjCAtCatchStmt(AtLoc, RParen, 
-    static_cast<Stmt*>(Parm), static_cast<Stmt*>(Body), 
-    static_cast<Stmt*>(CatchList));
-  return CatchList ? CatchList : CS;
+Action::OwningStmtResult
+Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
+                           SourceLocation RParen, StmtArg Parm,
+                           StmtArg Body, StmtArg catchList) {
+  Stmt *CatchList = static_cast<Stmt*>(catchList.release());
+  ObjCAtCatchStmt *CS = new ObjCAtCatchStmt(AtLoc, RParen,
+    static_cast<Stmt*>(Parm.release()), static_cast<Stmt*>(Body.release()),
+    CatchList);
+  return Owned(CatchList ? CatchList : CS);
 }
 
-Action::StmtResult
-Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, StmtTy *Body) {
-  ObjCAtFinallyStmt *FS = new ObjCAtFinallyStmt(AtLoc, 
-                                                static_cast<Stmt*>(Body));
-  return FS;
+Action::OwningStmtResult
+Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, StmtArg Body) {
+  return Owned(new ObjCAtFinallyStmt(AtLoc,
+                                     static_cast<Stmt*>(Body.release())));
 }
 
-Action::StmtResult
-Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, 
-                         StmtTy *Try, StmtTy *Catch, StmtTy *Finally) {
-  ObjCAtTryStmt *TS = new ObjCAtTryStmt(AtLoc, static_cast<Stmt*>(Try), 
-                                        static_cast<Stmt*>(Catch), 
-                                        static_cast<Stmt*>(Finally));
-  return TS;
+Action::OwningStmtResult
+Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
+                         StmtArg Try, StmtArg Catch, StmtArg Finally) {
+  return Owned(new ObjCAtTryStmt(AtLoc, static_cast<Stmt*>(Try.release()),
+                                        static_cast<Stmt*>(Catch.release()),
+                                        static_cast<Stmt*>(Finally.release())));
 }
 
-Action::StmtResult
-Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, StmtTy *Throw) {
-  ObjCAtThrowStmt *TS = new ObjCAtThrowStmt(AtLoc, static_cast<Stmt*>(Throw));
-  return TS;
+Action::OwningStmtResult
+Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg Throw) {
+  return Owned(new ObjCAtThrowStmt(AtLoc, static_cast<Expr*>(Throw.release())));
 }
 
-Action::StmtResult
-Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprTy *SynchExpr, 
-                                  StmtTy *SynchBody) {
-  ObjCAtSynchronizedStmt *SS = new ObjCAtSynchronizedStmt(AtLoc, 
-    static_cast<Stmt*>(SynchExpr), static_cast<Stmt*>(SynchBody));
-  return SS;
+Action::OwningStmtResult
+Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
+                                  StmtArg SynchBody) {
+  return Owned(new ObjCAtSynchronizedStmt(AtLoc,
+                     static_cast<Stmt*>(SynchExpr.release()),
+                     static_cast<Stmt*>(SynchBody.release())));
 }
 
 /// ActOnCXXCatchBlock - Takes an exception declaration and a handler block

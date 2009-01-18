@@ -474,32 +474,33 @@ public:
   }
 
   // Objective-c statements
-  virtual StmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc, 
-                                          SourceLocation RParen, StmtTy *Parm, 
-                                          StmtTy *Body, StmtTy *CatchList) {
-    return 0;
+  virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
+                                                SourceLocation RParen,
+                                                StmtArg Parm, StmtArg Body,
+                                                StmtArg CatchList) {
+    return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc, 
-                                            StmtTy *Body) {
-    return 0;
+
+  virtual OwningStmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
+                                                  StmtArg Body) {
+    return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc, 
-                                        StmtTy *Try, 
-                                        StmtTy *Catch, StmtTy *Finally) {
-    return 0;
+
+  virtual OwningStmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc,
+                                              StmtArg Try, StmtArg Catch,
+                                              StmtArg Finally) {
+    return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc, 
-                                          StmtTy *Throw) {
-    return 0;
+
+  virtual OwningStmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
+                                                ExprArg Throw) {
+    return StmtEmpty();
   }
-  
-  virtual StmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, 
-                                        ExprTy *SynchExpr, 
-                                        StmtTy *SynchBody) {
-    return 0;
+
+  virtual OwningStmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc,
+                                                       ExprArg SynchExpr,
+                                                       StmtArg SynchBody) {
+    return StmtEmpty();
   }
 
   // C++ Statements

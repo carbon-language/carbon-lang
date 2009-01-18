@@ -912,23 +912,24 @@ public:
                                         ExprArg AsmString,
                                         MultiExprArg Clobbers,
                                         SourceLocation RParenLoc);
-  
-  virtual StmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc, 
-                                          SourceLocation RParen, StmtTy *Parm, 
-                                          StmtTy *Body, StmtTy *CatchList);
-  
-  virtual StmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc, 
-                                            StmtTy *Body);
-  
-  virtual StmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc, 
-                                        StmtTy *Try, 
-                                        StmtTy *Catch, StmtTy *Finally);
-  
-  virtual StmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc, 
-                                          StmtTy *Throw);
-  virtual StmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, 
-                                                 ExprTy *SynchExpr, 
-                                                 StmtTy *SynchBody);
+
+  virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
+                                                SourceLocation RParen,
+                                                StmtArg Parm, StmtArg Body,
+                                                StmtArg CatchList);
+
+  virtual OwningStmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
+                                                  StmtArg Body);
+
+  virtual OwningStmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc,
+                                              StmtArg Try,
+                                              StmtArg Catch, StmtArg Finally);
+
+  virtual OwningStmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
+                                                ExprArg Throw);
+  virtual OwningStmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc,
+                                                       ExprArg SynchExpr,
+                                                       StmtArg SynchBody);
 
   virtual DeclTy *ActOnExceptionDeclarator(Scope *S, Declarator &D);
   virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
