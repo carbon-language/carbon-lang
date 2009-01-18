@@ -523,20 +523,20 @@ public:
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
   //===--------------------------------------------------------------------===//
-  
+
   // Primary Expressions.
-  
+
   /// ActOnIdentifierExpr - Parse an identifier in expression context.
   /// 'HasTrailingLParen' indicates whether or not the identifier has a '('
   /// token immediately after it.
   /// An optional CXXScopeSpec can be passed to indicate the C++ scope (class or
   /// namespace) that the identifier must be a member of.
   /// i.e. for "foo::bar", 'II' will be "bar" and 'SS' will be "foo::".
-  virtual ExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
-                                         IdentifierInfo &II,
-                                         bool HasTrailingLParen,
-                                         const CXXScopeSpec *SS = 0) {
-    return 0;
+  virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
+                                               IdentifierInfo &II,
+                                               bool HasTrailingLParen,
+                                               const CXXScopeSpec *SS = 0) {
+    return ExprEmpty();
   }
 
   /// ActOnOperatorFunctionIdExpr - Parse a C++ overloaded operator
@@ -544,45 +544,48 @@ public:
   /// similar to ActOnIdentifierExpr, except that instead of providing
   /// an identifier the parser provides the kind of overloaded
   /// operator that was parsed.
-  virtual ExprResult ActOnCXXOperatorFunctionIdExpr(Scope *S, 
-                                                    SourceLocation OperatorLoc,
-                                                    OverloadedOperatorKind Op,
-                                                    bool HasTrailingLParen,
-                                                    const CXXScopeSpec &SS) {
-    return 0;
+  virtual OwningExprResult ActOnCXXOperatorFunctionIdExpr(
+                             Scope *S, SourceLocation OperatorLoc,
+                             OverloadedOperatorKind Op,
+                             bool HasTrailingLParen, const CXXScopeSpec &SS) {
+    return ExprEmpty();
   }
-  
+
   /// ActOnCXXConversionFunctionExpr - Parse a C++ conversion function
   /// name (e.g., @c operator void const *) as an expression. This is
   /// very similar to ActOnIdentifierExpr, except that instead of
   /// providing an identifier the parser provides the type of the
   /// conversion function.
-  virtual ExprResult ActOnCXXConversionFunctionExpr(Scope *S, 
-                                                    SourceLocation OperatorLoc,
-                                                    TypeTy *Type,
-                                                    bool HasTrailingLParen,
-                                                    const CXXScopeSpec &SS) {
-    return 0;
+  virtual OwningExprResult ActOnCXXConversionFunctionExpr(
+                             Scope *S, SourceLocation OperatorLoc,
+                             TypeTy *Type, bool HasTrailingLParen,
+                             const CXXScopeSpec &SS) {
+    return ExprEmpty();
   }
 
-  virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
-                                         tok::TokenKind Kind) {
-    return 0;
+  virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
+                                               tok::TokenKind Kind) {
+    return ExprEmpty();
   }
-  virtual ExprResult ActOnCharacterConstant(const Token &) { return 0; }
-  virtual ExprResult ActOnNumericConstant(const Token &) { return 0; }
-  
+  virtual OwningExprResult ActOnCharacterConstant(const Token &) {
+    return ExprEmpty();
+  }
+  virtual OwningExprResult ActOnNumericConstant(const Token &) {
+    return ExprEmpty();
+  }
+
   /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks) {
-    return 0;
+  virtual OwningExprResult ActOnStringLiteral(const Token *Toks,
+                                              unsigned NumToks) {
+    return ExprEmpty();
   }
-  
-  virtual ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
-                                    ExprTy *Val) {
-    return Val;  // Default impl returns operand.
+
+  virtual OwningExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
+                                          ExprArg Val) {
+    return move_res(Val);  // Default impl returns operand.
   }
-  
+
   // Postfix Expressions.
   virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
                                          tok::TokenKind Kind, ExprTy *Input) {

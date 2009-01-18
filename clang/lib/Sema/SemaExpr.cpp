@@ -290,14 +290,14 @@ QualType Sema::UsualArithmeticConversionsType(QualType lhs, QualType rhs) {
 /// concatenation ([C99 5.1.1.2, translation phase #6]), so it may come from
 /// multiple tokens.  However, the common case is that StringToks points to one
 /// string.
-/// 
-Action::ExprResult
+///
+Action::OwningExprResult
 Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   assert(NumStringToks && "Must have at least one string!");
 
   StringLiteralParser Literal(StringToks, NumStringToks, PP);
   if (Literal.hadError)
-    return ExprResult(true);
+    return ExprError();
 
   llvm::SmallVector<SourceLocation, 4> StringTokLocs;
   for (unsigned i = 0; i != NumStringToks; ++i)
@@ -310,19 +310,19 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
   if (getLangOptions().CPlusPlus)
     StrTy.addConst();
-  
+
   // Get an array type for the string, according to C99 6.4.5.  This includes
   // the nul terminator character as well as the string length for pascal
   // strings.
   StrTy = Context.getConstantArrayType(StrTy,
                                    llvm::APInt(32, Literal.GetStringLength()+1),
                                        ArrayType::Normal, 0);
-  
+
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
-  return new StringLiteral(Literal.GetString(), Literal.GetStringLength(), 
-                           Literal.AnyWide, StrTy, 
-                           StringToks[0].getLocation(),
-                           StringToks[NumStringToks-1].getLocation());
+  return Owned(new StringLiteral(Literal.GetString(), Literal.GetStringLength(),
+                                 Literal.AnyWide, StrTy,
+                                 StringToks[0].getLocation(),
+                                 StringToks[NumStringToks-1].getLocation()));
 }
 
 /// ShouldSnapshotBlockValueReference - Return true if a reference inside of
@@ -358,12 +358,12 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
 /// ActOnIdentifierExpr - The parser read an identifier in expression context,
 /// validate it per-C99 6.5.1.  HasTrailingLParen indicates whether this
 /// identifier is used in a function call context.
-/// LookupCtx is only used for a C++ qualified-id (foo::bar) to indicate the
+/// SS is only used for a C++ qualified-id (foo::bar) to indicate the
 /// class or namespace that the identifier must be a member of.
-Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
-                                           IdentifierInfo &II,
-                                           bool HasTrailingLParen,
-                                           const CXXScopeSpec *SS) {
+Sema::OwningExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
+                                                 IdentifierInfo &II,
+                                                 bool HasTrailingLParen,
+                                                 const CXXScopeSpec *SS) {
   return ActOnDeclarationNameExpr(S, Loc, &II, HasTrailingLParen, SS);
 }
 
@@ -409,7 +409,7 @@ static ScopedDecl *getObjectForAnonymousRecordDecl(RecordDecl *Record) {
   return 0;
 }
 
-Sema::ExprResult 
+Sema::OwningExprResult
 Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
                                                FieldDecl *Field,
                                                Expr *BaseObjectExpr,
@@ -484,15 +484,15 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
           BaseObjectIsPointer = true;
         }
       } else {
-        return Diag(Loc, diag::err_invalid_member_use_in_static_method)
-          << Field->getDeclName();
+        return ExprError(Diag(Loc,diag::err_invalid_member_use_in_static_method)
+          << Field->getDeclName());
       }
       ExtraQuals = MD->getTypeQualifiers();
     }
 
     if (!BaseObjectExpr) 
-      return Diag(Loc, diag::err_invalid_non_static_member_use)
-        << Field->getDeclName();
+      return ExprError(Diag(Loc, diag::err_invalid_non_static_member_use)
+        << Field->getDeclName());
   }
 
   // Build the implicit member references to the field of the
@@ -514,7 +514,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     OpLoc = SourceLocation();
   }
 
-  return Result;  
+  return Owned(Result);
 }
 
 /// ActOnDeclarationNameExpr - The parser has read some kind of name
@@ -535,11 +535,10 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
 /// If ForceResolution is true, then we will attempt to resolve the
 /// name even if it looks like a dependent name. This option is off by
 /// default.
-Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
-                                                DeclarationName Name,
-                                                bool HasTrailingLParen,
-                                                const CXXScopeSpec *SS,
-                                                bool ForceResolution) {
+Sema::OwningExprResult
+Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
+                               DeclarationName Name, bool HasTrailingLParen,
+                               const CXXScopeSpec *SS, bool ForceResolution) {
   if (S->getTemplateParamParent() && Name.getAsIdentifierInfo() &&
       HasTrailingLParen && !SS && !ForceResolution) {
     // We've seen something of the form
@@ -550,8 +549,8 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     // to represent this name. Then, if it turns out that none of the
     // arguments are type-dependent, we'll force the resolution of the
     // dependent name at that point.
-    return new CXXDependentNameExpr(Name.getAsIdentifierInfo(),
-                                    Context.DependentTy, Loc);
+    return Owned(new CXXDependentNameExpr(Name.getAsIdentifierInfo(),
+                                          Context.DependentTy, Loc));
   }
 
   // Could be enum-constant, value decl, instance variable, etc.
@@ -560,16 +559,17 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   if (SS && !SS->isEmpty()) {
     DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
     if (DC == 0)
-      return true;
+      return ExprError();
     Lookup = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
   } else
     Lookup = LookupDecl(Name, Decl::IDNS_Ordinary, S);
 
-  if (Lookup.isAmbiguous())
-    return DiagnoseAmbiguousLookup(Lookup, Name, Loc, 
-                                   SS && SS->isSet()? SS->getRange() 
-                                                    : SourceRange());
-  else
+  if (Lookup.isAmbiguous()) {
+    DiagnoseAmbiguousLookup(Lookup, Name, Loc,
+                            SS && SS->isSet() ? SS->getRange()
+                                              : SourceRange());
+    return ExprError();
+  } else
     D = Lookup.getAsDecl();
 
   // If this reference is in an Objective-C method, then ivar lookup happens as
@@ -588,18 +588,19 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         // FIXME: This should use a new expr for a direct reference, don't turn
         // this into Self->ivar, just return a BareIVarExpr or something.
         IdentifierInfo &II = Context.Idents.get("self");
-        ExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
-        ObjCIvarRefExpr *MRef=  new ObjCIvarRefExpr(IV, IV->getType(), Loc, 
-                                  static_cast<Expr*>(SelfExpr.Val), true, true);
+        OwningExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
+        ObjCIvarRefExpr *MRef = new ObjCIvarRefExpr(IV, IV->getType(), Loc,
+                                  static_cast<Expr*>(SelfExpr.release()),
+                                  true, true);
         Context.setFieldDecl(IFace, IV, MRef);
-        return MRef;
+        return Owned(MRef);
       }
     }
     // Needed to implement property "super.method" notation.
     if (SD == 0 && II->isStr("super")) {
       QualType T = Context.getPointerType(Context.getObjCInterfaceType(
                      getCurMethodDecl()->getClassInterface()));
-      return new ObjCSuperExpr(Loc, T);
+      return Owned(new ObjCSuperExpr(Loc, T));
     }
   }
   if (D == 0) {
@@ -612,13 +613,14 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
       if (SS && !SS->isEmpty())
-        return Diag(Loc, diag::err_typecheck_no_member)
-          << Name << SS->getRange();
+        return ExprError(Diag(Loc, diag::err_typecheck_no_member)
+          << Name << SS->getRange());
       else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
                Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
-        return Diag(Loc, diag::err_undeclared_use) << Name.getAsString();
+        return ExprError(Diag(Loc, diag::err_undeclared_use)
+          << Name.getAsString());
       else
-        return Diag(Loc, diag::err_undeclared_var_use) << Name;
+        return ExprError(Diag(Loc, diag::err_undeclared_var_use) << Name);
     }
   }
 
@@ -627,7 +629,7 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   if (FieldDecl *FD = dyn_cast<FieldDecl>(D))
     if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion())
       return BuildAnonymousStructUnionMemberReference(Loc, FD);
-  
+
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
     if (!MD->isStatic()) {
       // C++ [class.mfct.nonstatic]p2: 
@@ -678,8 +680,8 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           // Build the implicit member access expression.
           Expr *This = new CXXThisExpr(SourceLocation(),
                                        MD->getThisType(Context));
-          return new MemberExpr(This, true, cast<NamedDecl>(D), 
-                                SourceLocation(), MemberType);
+          return Owned(new MemberExpr(This, true, cast<NamedDecl>(D),
+                                      SourceLocation(), MemberType));
         }
       }
     }
@@ -689,34 +691,35 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
       if (MD->isStatic())
         // "invalid use of member 'x' in static member function"
-        return Diag(Loc, diag::err_invalid_member_use_in_static_method)
-          << FD->getDeclName();
+        return ExprError(Diag(Loc,diag::err_invalid_member_use_in_static_method)
+          << FD->getDeclName());
     }
 
     // Any other ways we could have found the field in a well-formed
     // program would have been turned into implicit member expressions
     // above.
-    return Diag(Loc, diag::err_invalid_non_static_member_use)
-      << FD->getDeclName();
+    return ExprError(Diag(Loc, diag::err_invalid_non_static_member_use)
+      << FD->getDeclName());
   }
 
   if (isa<TypedefDecl>(D))
-    return Diag(Loc, diag::err_unexpected_typedef) << Name;
+    return ExprError(Diag(Loc, diag::err_unexpected_typedef) << Name);
   if (isa<ObjCInterfaceDecl>(D))
-    return Diag(Loc, diag::err_unexpected_interface) << Name;
+    return ExprError(Diag(Loc, diag::err_unexpected_interface) << Name);
   if (isa<NamespaceDecl>(D))
-    return Diag(Loc, diag::err_unexpected_namespace) << Name;
+    return ExprError(Diag(Loc, diag::err_unexpected_namespace) << Name);
 
   // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
   if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
-    return BuildDeclRefExpr(Ovl, Context.OverloadTy, Loc, false, false, SS);
+    return Owned(BuildDeclRefExpr(Ovl, Context.OverloadTy, Loc,
+                                  false, false, SS));
 
   ValueDecl *VD = cast<ValueDecl>(D);
-  
+
   // check if referencing an identifier with __attribute__((deprecated)).
   if (VD->getAttr<DeprecatedAttr>())
-    Diag(Loc, diag::warn_deprecated) << VD->getDeclName();
-  
+    ExprError(Diag(Loc, diag::warn_deprecated) << VD->getDeclName());
+
   if (VarDecl *Var = dyn_cast<VarDecl>(VD)) {
     if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
       Scope *CheckS = S;
@@ -724,9 +727,11 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         if (CheckS->isWithinElse() && 
             CheckS->getControlParent()->isDeclScope(Var)) {
           if (Var->getType()->isBooleanType())
-            Diag(Loc, diag::warn_value_always_false) << Var->getDeclName();
+            ExprError(Diag(Loc, diag::warn_value_always_false)
+              << Var->getDeclName());
           else
-            Diag(Loc, diag::warn_value_always_zero) << Var->getDeclName();
+            ExprError(Diag(Loc, diag::warn_value_always_zero)
+              << Var->getDeclName());
           break;
         }
 
@@ -740,8 +745,8 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
 
   // Only create DeclRefExpr's for valid Decl's.
   if (VD->isInvalidDecl())
-    return true;
-  
+    return ExprError();
+
   // If the identifier reference is inside a block, and it refers to a value
   // that is outside the block, create a BlockDeclRefExpr instead of a
   // DeclRefExpr.  This ensures the value is treated as a copy-in snapshot when
@@ -753,13 +758,13 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
     // The BlocksAttr indicates the variable is bound by-reference.
     if (VD->getAttr<BlocksAttr>())
-      return new BlockDeclRefExpr(VD, VD->getType().getNonReferenceType(), 
-                                  Loc, true);
-      
+      return Owned(new BlockDeclRefExpr(VD, VD->getType().getNonReferenceType(),
+                                        Loc, true));
+
     // Variable will be bound by-copy, make it const within the closure.
     VD->getType().addConst();
-    return new BlockDeclRefExpr(VD, VD->getType().getNonReferenceType(), 
-                                Loc, false);
+    return Owned(new BlockDeclRefExpr(VD, VD->getType().getNonReferenceType(),
+                                      Loc, false));
   }
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
@@ -807,14 +812,14 @@ Sema::ExprResult Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     //      (FIXME!).
   }
 
-  return BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
-                          TypeDependent, ValueDependent, SS);
+  return Owned(BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
+                                TypeDependent, ValueDependent, SS));
 }
 
-Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
-                                           tok::TokenKind Kind) {
+Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
+                                                 tok::TokenKind Kind) {
   PredefinedExpr::IdentType IT;
-  
+
   switch (Kind) {
   default: assert(0 && "Unknown simple primary expr!");
   case tok::kw___func__: IT = PredefinedExpr::Func; break; // [C99 6.4.2.2]
@@ -834,57 +839,56 @@ Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
     // __PRETTY_FUNCTION__ -> "top level", the others produce an empty string.
     Length = IT == PredefinedExpr::PrettyFunction ? strlen("top level") : 0;
   }
-  
-  
+
+
   llvm::APInt LengthI(32, Length + 1);
   QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);
   ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal, 0);
-  return new PredefinedExpr(Loc, ResTy, IT);
+  return Owned(new PredefinedExpr(Loc, ResTy, IT));
 }
 
-Sema::ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
+Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
   llvm::SmallString<16> CharBuffer;
   CharBuffer.resize(Tok.getLength());
   const char *ThisTokBegin = &CharBuffer[0];
   unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
-  
+
   CharLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength,
                             Tok.getLocation(), PP);
   if (Literal.hadError())
-    return ExprResult(true);
+    return ExprError();
 
   QualType type = getLangOptions().CPlusPlus ? Context.CharTy : Context.IntTy;
 
-  return new CharacterLiteral(Literal.getValue(), Literal.isWide(), type,
-                              Tok.getLocation());
+  return Owned(new CharacterLiteral(Literal.getValue(), Literal.isWide(), type,
+                                    Tok.getLocation()));
 }
 
-Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
-  // Fast path for a single digit (which is quite common).  A single digit 
+Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
+  // Fast path for a single digit (which is quite common).  A single digit
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
     const char Val = PP.getSpelledCharacterAt(Tok.getLocation());
     unsigned IntSize = Context.Target.getIntWidth();
-    return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, Val-'0'),
-                                         Context.IntTy, 
-                                         Tok.getLocation()));
+    return Owned(new IntegerLiteral(llvm::APInt(IntSize, Val-'0'),
+                                    Context.IntTy, Tok.getLocation()));
   }
 
   llvm::SmallString<512> IntegerBuffer;
   // Add padding so that NumericLiteralParser can overread by one character.
   IntegerBuffer.resize(Tok.getLength()+1);
   const char *ThisTokBegin = &IntegerBuffer[0];
-  
+
   // Get the spelling of the token, which eliminates trigraphs, etc.
   unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
-  
+
   NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
                                Tok.getLocation(), PP);
   if (Literal.hadError)
-    return ExprResult(true);
-  
+    return ExprError();
+
   Expr *Res;
-  
+
   if (Literal.isFloatingLiteral()) {
     QualType Ty;
     if (Literal.isFloat)
@@ -900,9 +904,9 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
     bool isExact = false;
     Res = new FloatingLiteral(Literal.GetFloatValue(Format, &isExact), &isExact,
                               Ty, Tok.getLocation());
-    
+
   } else if (!Literal.isIntegerLiteral()) {
-    return ExprResult(true);
+    return ExprError();
   } else {
     QualType Ty;
 
@@ -913,7 +917,7 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
     // Get the value in the widest-possible width.
     llvm::APInt ResultVal(Context.Target.getIntMaxTWidth(), 0);
-   
+
     if (Literal.GetIntegerValue(ResultVal)) {
       // If this value didn't fit into uintmax_t, warn and force to ull.
       Diag(Tok.getLocation(), diag::warn_integer_too_large);
@@ -923,7 +927,7 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
     } else {
       // If this value fits into a ULL, try to figure out what else it fits into
       // according to the rules of C99 6.4.4.1p5.
-      
+
       // Octal, Hexadecimal, and integers with a U suffix are allowed to
       // be an unsigned int.
       bool AllowUnsigned = Literal.isUnsigned || Literal.getRadix() != 10;
@@ -933,7 +937,7 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       if (!Literal.isLong && !Literal.isLongLong) {
         // Are int/unsigned possibilities?
         unsigned IntSize = Context.Target.getIntWidth();
-        
+
         // Does it fit in a unsigned int?
         if (ResultVal.isIntN(IntSize)) {
           // Does it fit in a signed int?
@@ -944,11 +948,11 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
           Width = IntSize;
         }
       }
-      
+
       // Are long/unsigned long possibilities?
       if (Ty.isNull() && !Literal.isLongLong) {
         unsigned LongSize = Context.Target.getLongWidth();
-     
+
         // Does it fit in a unsigned long?
         if (ResultVal.isIntN(LongSize)) {
           // Does it fit in a signed long?
@@ -958,12 +962,12 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
             Ty = Context.UnsignedLongTy;
           Width = LongSize;
         }
-      }      
-      
+      }
+
       // Finally, check long long if needed.
       if (Ty.isNull()) {
         unsigned LongLongSize = Context.Target.getLongLongWidth();
-        
+
         // Does it fit in a unsigned long long?
         if (ResultVal.isIntN(LongLongSize)) {
           // Does it fit in a signed long long?
@@ -974,7 +978,7 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
           Width = LongLongSize;
         }
       }
-      
+
       // If we still couldn't decide a type, we probably have something that
       // does not fit in a signed long long, but has no U suffix.
       if (Ty.isNull()) {
@@ -982,26 +986,26 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
         Ty = Context.UnsignedLongLongTy;
         Width = Context.Target.getLongLongWidth();
       }
-      
+
       if (ResultVal.getBitWidth() != Width)
         ResultVal.trunc(Width);
     }
 
     Res = new IntegerLiteral(ResultVal, Ty, Tok.getLocation());
   }
-  
+
   // If this is an imaginary literal, create the ImaginaryLiteral wrapper.
   if (Literal.isImaginary)
     Res = new ImaginaryLiteral(Res, Context.getComplexType(Res->getType()));
-  
-  return Res;
+
+  return Owned(Res);
 }
 
-Action::ExprResult Sema::ActOnParenExpr(SourceLocation L, SourceLocation R,
-                                        ExprTy *Val) {
-  Expr *E = (Expr *)Val;
+Action::OwningExprResult Sema::ActOnParenExpr(SourceLocation L,
+                                              SourceLocation R, ExprArg Val) {
+  Expr *E = (Expr *)Val.release();
   assert((E != 0) && "ActOnParenExpr() missing expr");
-  return new ParenExpr(L, R, E);
+  return Owned(new ParenExpr(L, R, E));
 }
 
 /// The UsualUnaryConversions() function is *not* called by this routine.
@@ -1477,8 +1481,9 @@ ActOnMemberReferenceExpr(Scope *S, ExprTy *Base, SourceLocation OpLoc,
       // We may have found a field within an anonymous union or struct
       // (C++ [class.union]).
       if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion())
-        return BuildAnonymousStructUnionMemberReference(MemberLoc, FD, 
-                                                        BaseExpr, OpLoc);
+        return BuildAnonymousStructUnionMemberReference(MemberLoc, FD,
+                                                        BaseExpr, OpLoc)
+                  .release();
 
       // Figure out the type of the member; see C99 6.5.2.3p3, C++ [expr.ref]
       // FIXME: Handle address space modifiers
@@ -1743,16 +1748,17 @@ Sema::ActOnCallExpr(Scope *S, ExprTy *fn, SourceLocation LParenLoc,
       else {
         // Resolve the CXXDependentNameExpr to an actual identifier;
         // it wasn't really a dependent name after all.
-        ExprResult Resolved 
-          = ActOnDeclarationNameExpr(S, FnName->getLocation(), FnName->getName(),
+        OwningExprResult Resolved
+          = ActOnDeclarationNameExpr(S, FnName->getLocation(),
+                                     FnName->getName(),
                                      /*HasTrailingLParen=*/true,
                                      /*SS=*/0,
                                      /*ForceResolution=*/true);
-        if (Resolved.isInvalid)
+        if (Resolved.isInvalid())
           return true;
         else {
           delete Fn;
-          Fn = (Expr *)Resolved.Val;
+          Fn = (Expr *)Resolved.release();
         }                                         
       }
     } else

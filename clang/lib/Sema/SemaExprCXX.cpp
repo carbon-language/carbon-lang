@@ -26,7 +26,7 @@ using namespace clang;
 /// very similar to ActOnIdentifierExpr, except that instead of
 /// providing an identifier the parser provides the type of the
 /// conversion function.
-Sema::ExprResult 
+Sema::OwningExprResult
 Sema::ActOnCXXConversionFunctionExpr(Scope *S, SourceLocation OperatorLoc,
                                      TypeTy *Ty, bool HasTrailingLParen,
                                      const CXXScopeSpec &SS) {
@@ -34,7 +34,7 @@ Sema::ActOnCXXConversionFunctionExpr(Scope *S, SourceLocation OperatorLoc,
   QualType ConvTypeCanon = Context.getCanonicalType(ConvType);
   DeclarationName ConvName 
     = Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
-  return ActOnDeclarationNameExpr(S, OperatorLoc, ConvName, HasTrailingLParen, 
+  return ActOnDeclarationNameExpr(S, OperatorLoc, ConvName, HasTrailingLParen,
                                   &SS);
 }
 
@@ -43,7 +43,7 @@ Sema::ActOnCXXConversionFunctionExpr(Scope *S, SourceLocation OperatorLoc,
 /// similar to ActOnIdentifierExpr, except that instead of providing
 /// an identifier the parser provides the kind of overloaded
 /// operator that was parsed.
-Sema::ExprResult 
+Sema::OwningExprResult
 Sema::ActOnCXXOperatorFunctionIdExpr(Scope *S, SourceLocation OperatorLoc,
                                      OverloadedOperatorKind Op,
                                      bool HasTrailingLParen,

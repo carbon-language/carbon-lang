@@ -154,19 +154,18 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression() {
     // Consume the identifier so that we can see if it is followed by a '('.
     IdentifierInfo &II = *Tok.getIdentifierInfo();
     SourceLocation L = ConsumeToken();
-    return Owned(Actions.ActOnIdentifierExpr(CurScope, L, II,
-                                             Tok.is(tok::l_paren), &SS));
+    return Actions.ActOnIdentifierExpr(CurScope, L, II,
+                                       Tok.is(tok::l_paren), &SS);
   }
 
   case tok::kw_operator: {
     SourceLocation OperatorLoc = Tok.getLocation();
     if (OverloadedOperatorKind Op = TryParseOperatorFunctionId())
-      return Owned(Actions.ActOnCXXOperatorFunctionIdExpr(
-                         CurScope, OperatorLoc, Op, Tok.is(tok::l_paren), SS));
+      return Actions.ActOnCXXOperatorFunctionIdExpr(
+                   CurScope, OperatorLoc, Op, Tok.is(tok::l_paren), SS);
     if (TypeTy *Type = ParseConversionFunctionId())
-      return Owned(Actions.ActOnCXXConversionFunctionExpr(CurScope, OperatorLoc,
-                                                          Type,
-                                                     Tok.is(tok::l_paren), SS));
+      return Actions.ActOnCXXConversionFunctionExpr(CurScope, OperatorLoc, Type,
+                                                    Tok.is(tok::l_paren), SS);
 
     // We already complained about a bad conversion-function-id,
     // above.

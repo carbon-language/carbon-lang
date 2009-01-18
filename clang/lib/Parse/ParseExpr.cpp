@@ -1119,7 +1119,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
     ExprType = SimpleExpr;
     if (!Result.isInvalid() && Tok.is(tok::r_paren))
       Result = Actions.ActOnParenExpr(OpenLoc, Tok.getLocation(),
-                                      Result.release());
+                                      move_arg(Result));
   }
 
   // Match the ')'.
@@ -1155,7 +1155,7 @@ Parser::OwningExprResult Parser::ParseStringLiteralExpression() {
   } while (isTokenStringLiteral());
 
   // Pass the set of string tokens, ready for concatenation, to the actions.
-  return Owned(Actions.ActOnStringLiteral(&StringToks[0], StringToks.size()));
+  return Actions.ActOnStringLiteral(&StringToks[0], StringToks.size());
 }
 
 /// ParseExpressionList - Used for C/C++ (argument-)expression-list.

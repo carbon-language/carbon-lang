@@ -943,16 +943,16 @@ public:
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
   // Primary Expressions.
-  virtual ExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
-                                         IdentifierInfo &II,
-                                         bool HasTrailingLParen,
-                                         const CXXScopeSpec *SS = 0);
-  virtual ExprResult ActOnCXXOperatorFunctionIdExpr(Scope *S, 
+  virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
+                                               IdentifierInfo &II,
+                                               bool HasTrailingLParen,
+                                               const CXXScopeSpec *SS = 0);
+  virtual OwningExprResult ActOnCXXOperatorFunctionIdExpr(Scope *S,
                                                     SourceLocation OperatorLoc,
                                                     OverloadedOperatorKind Op,
                                                     bool HasTrailingLParen,
                                                     const CXXScopeSpec &SS);
-  virtual ExprResult ActOnCXXConversionFunctionExpr(Scope *S, 
+  virtual OwningExprResult ActOnCXXConversionFunctionExpr(Scope *S,
                                                     SourceLocation OperatorLoc,
                                                     TypeTy *Ty,
                                                     bool HasTrailingLParen,
@@ -960,29 +960,28 @@ public:
   DeclRefExpr *BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                                 bool TypeDependent, bool ValueDependent,
                                 const CXXScopeSpec *SS = 0);
-  ExprResult 
+  OwningExprResult
   BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
                                            FieldDecl *Field,
                                            Expr *BaseObjectExpr = 0,
                                       SourceLocation OpLoc = SourceLocation());
-  ExprResult ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
-                                      DeclarationName Name,
-                                      bool HasTrailingLParen,
-                                      const CXXScopeSpec *SS,
-                                      bool ForceResolution = false);
-                                      
+  OwningExprResult ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
+                                            DeclarationName Name,
+                                            bool HasTrailingLParen,
+                                            const CXXScopeSpec *SS,
+                                            bool ForceResolution = false);
 
-  virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
-                                         tok::TokenKind Kind);
-  virtual ExprResult ActOnNumericConstant(const Token &);
-  virtual ExprResult ActOnCharacterConstant(const Token &);
-  virtual ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
-                                    ExprTy *Val);
+  virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
+                                               tok::TokenKind Kind);
+  virtual OwningExprResult ActOnNumericConstant(const Token &);
+  virtual OwningExprResult ActOnCharacterConstant(const Token &);
+  virtual OwningExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
+                                          ExprArg Val);
 
   /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks);
-    
+  virtual OwningExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks);
+
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   virtual ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc, 
                                   tok::TokenKind Op, ExprTy *Input);

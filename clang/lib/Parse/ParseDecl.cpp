@@ -2105,7 +2105,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   } else if (Tok.getKind() == tok::numeric_constant &&
              GetLookAheadToken(1).is(tok::r_square)) {
     // [4] is very common.  Parse the numeric constant expression.
-    OwningExprResult ExprRes(Actions, Actions.ActOnNumericConstant(Tok));
+    OwningExprResult ExprRes(Actions.ActOnNumericConstant(Tok));
     ConsumeToken();
 
     MatchRHSPunctuation(tok::r_square, StartLoc);

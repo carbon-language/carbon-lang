@@ -438,49 +438,66 @@ namespace {
     //===--------------------------------------------------------------------===//
     // Expression Parsing Callbacks.
     //===--------------------------------------------------------------------===//
-  
+
     // Primary Expressions.
-  
+
     /// ActOnIdentifierExpr - Parse an identifier in expression context.
     /// 'HasTrailingLParen' indicates whether or not the identifier has a '('
     /// token immediately after it.
-    virtual ExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
-                                           IdentifierInfo &II,
-                                           bool HasTrailingLParen,
-                                           const CXXScopeSpec *SS) {
+    virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
+                                                 IdentifierInfo &II,
+                                                 bool HasTrailingLParen,
+                                                 const CXXScopeSpec *SS) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
-    }
-  
-    virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
-                                           tok::TokenKind Kind) {
-      llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
 
-    virtual ExprResult ActOnCharacterConstant(const Token &) { 
+    virtual OwningExprResult ActOnCXXOperatorFunctionIdExpr(
+                               Scope *S, SourceLocation OperatorLoc,
+                               OverloadedOperatorKind Op,
+                               bool HasTrailingLParen, const CXXScopeSpec &SS) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0; 
+      return ExprEmpty();
     }
 
-    virtual ExprResult ActOnNumericConstant(const Token &) { 
+    virtual OwningExprResult ActOnCXXConversionFunctionExpr(
+                               Scope *S, SourceLocation OperatorLoc,
+                               TypeTy *Type, bool HasTrailingLParen,
+                               const CXXScopeSpec &SS) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0; 
+      return ExprEmpty();
     }
-  
+
+    virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
+                                                 tok::TokenKind Kind) {
+      llvm::cout << __FUNCTION__ << "\n";
+      return ExprEmpty();
+    }
+
+    virtual OwningExprResult ActOnCharacterConstant(const Token &) { 
+      llvm::cout << __FUNCTION__ << "\n";
+      return ExprEmpty();
+    }
+
+    virtual OwningExprResult ActOnNumericConstant(const Token &) { 
+      llvm::cout << __FUNCTION__ << "\n";
+      return ExprEmpty();
+    }
+
     /// ActOnStringLiteral - The specified tokens were lexed as pasted string
     /// fragments (e.g. "foo" "bar" L"baz").
-    virtual ExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks) {
+    virtual OwningExprResult ActOnStringLiteral(const Token *Toks,
+                                                unsigned NumToks) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-  
-    virtual ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
-                                      ExprTy *Val) {
+
+    virtual OwningExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
+                                            ExprArg Val) {
       llvm::cout << __FUNCTION__ << "\n";
-      return Val;  // Default impl returns operand.
+      return move_res(Val);  // Default impl returns operand.
     }
-  
+
     // Postfix Expressions.
     virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
                                            tok::TokenKind Kind, ExprTy *Input) {
