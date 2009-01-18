@@ -24,7 +24,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
@@ -48,9 +48,6 @@ namespace {
 
     // AddNoCaptureAttrs - Deduce nocapture attributes for the SCC.
     bool AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC);
-
-    // isCaptured - Return true if this pointer value may be captured.
-    bool isCaptured(Function &F, Value *V);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -181,82 +178,6 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
   return MadeChange;
 }
 
-/// isCaptured - Return true if this pointer value may be captured.
-bool FunctionAttrs::isCaptured(Function &F, Value *V) {
-  SmallVector<Use*, 16> Worklist;
-  SmallSet<Use*, 16> Visited;
-
-  for (Value::use_iterator UI = V->use_begin(), UE = V->use_end(); UI != UE;
-       ++UI) {
-    Use *U = &UI.getUse();
-    Visited.insert(U);
-    Worklist.push_back(U);
-  }
-
-  while (!Worklist.empty()) {
-    Use *U = Worklist.pop_back_val();
-    Instruction *I = cast<Instruction>(U->getUser());
-    V = U->get();
-
-    switch (I->getOpcode()) {
-    case Instruction::Call:
-    case Instruction::Invoke: {
-      CallSite CS = CallSite::get(I);
-      // Not captured if the callee is readonly and doesn't return a copy
-      // through its return value.
-      if (CS.onlyReadsMemory() && I->getType() == Type::VoidTy)
-        break;
-
-      // Not captured if only passed via 'nocapture' arguments.  Note that
-      // calling a function pointer does not in itself cause the pointer to
-      // be captured.  This is a subtle point considering that (for example)
-      // the callee might return its own address.  It is analogous to saying
-      // that loading a value from a pointer does not cause the pointer to be
-      // captured, even though the loaded value might be the pointer itself
-      // (think of self-referential objects).
-      CallSite::arg_iterator B = CS.arg_begin(), E = CS.arg_end();
-      for (CallSite::arg_iterator A = B; A != E; ++A)
-        if (A->get() == V && !CS.paramHasAttr(A - B + 1, Attribute::NoCapture))
-          // The parameter is not marked 'nocapture' - captured.
-          return true;
-      // Only passed via 'nocapture' arguments, or is the called function - not
-      // captured.
-      break;
-    }
-    case Instruction::Free:
-      // Freeing a pointer does not cause it to be captured.
-      break;
-    case Instruction::Load:
-      // Loading from a pointer does not cause it to be captured.
-      break;
-    case Instruction::Store:
-      if (V == I->getOperand(0))
-        // Stored the pointer - it may be captured.
-        return true;
-      // Storing to the pointee does not cause the pointer to be captured.
-      break;
-    case Instruction::BitCast:
-    case Instruction::GetElementPtr:
-    case Instruction::PHI:
-    case Instruction::Select:
-      // The original value is not captured via this if the new value isn't.
-      for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI) {
-        Use *U = &UI.getUse();
-        if (Visited.insert(U))
-          Worklist.push_back(U);
-      }
-      break;
-    default:
-      // Something else - be conservative and say it is captured.
-      return true;
-    }
-  }
-
-  // All uses examined - not captured.
-  return false;
-}
-
 /// AddNoCaptureAttrs - Deduce nocapture attributes for the SCC.
 bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
   bool Changed = false;
@@ -277,7 +198,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
 
     for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end(); A!=E; ++A)
       if (isa<PointerType>(A->getType()) && !A->hasNoCaptureAttr() &&
-          !isCaptured(*F, A)) {
+          !PointerMayBeCaptured(A, true)) {
         A->addAttr(Attribute::NoCapture);
         ++NumNoCapture;
         Changed = true;

@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -34,56 +35,6 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // Useful predicates
 //===----------------------------------------------------------------------===//
-
-// Determine if a value escapes from the function it is contained in (being
-// returned by the function does not count as escaping here).  If a value local
-// to the function does not escape, there is no way another function can mod/ref
-// it.  We do this by looking at its uses and determining if they can escape
-// (recursively).
-static bool AddressMightEscape(const Value *V) {
-  for (Value::use_const_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ++UI) {
-    const Instruction *I = cast<Instruction>(*UI);
-    switch (I->getOpcode()) {
-    case Instruction::Load: 
-      break; //next use.
-    case Instruction::Store:
-      if (I->getOperand(0) == V)
-        return true; // Escapes if the pointer is stored.
-      break; // next use.
-    case Instruction::GetElementPtr:
-      if (AddressMightEscape(I))
-        return true;
-      break; // next use.
-    case Instruction::BitCast:
-      if (AddressMightEscape(I))
-        return true;
-      break; // next use
-    case Instruction::Ret:
-      // If returned, the address will escape to calling functions, but no
-      // callees could modify it.
-      break; // next use
-    case Instruction::Call:
-      // If the argument to the call has the nocapture attribute, then the call
-      // may store or load to the pointer, but it cannot escape.
-      if (cast<CallInst>(I)->paramHasAttr(UI.getOperandNo(), 
-                                          Attribute::NoCapture))
-        continue;
-      return true;
-    case Instruction::Invoke:
-      // If the argument to the call has the nocapture attribute, then the call
-      // may store or load to the pointer, but it cannot escape.
-      // Do compensate for the two BB operands, i.e. Arg1 is at index 3!
-      if (cast<InvokeInst>(I)->paramHasAttr(UI.getOperandNo()-2,
-                                            Attribute::NoCapture))
-        continue;
-      return true;
-    default:
-      return true;
-    }
-  }
-  return false;
-}
 
 static const User *isGEP(const Value *V) {
   if (isa<GetElementPtrInst>(V) ||
@@ -158,7 +109,7 @@ static bool isKnownNonNull(const Value *V) {
 static bool isNonEscapingLocalObject(const Value *V) {
   // If this is a local allocation, check to see if it escapes.
   if (isa<AllocationInst>(V) || isNoAliasCall(V))
-    return !AddressMightEscape(V);
+    return !PointerMayBeCaptured(V, false);
 
   // If this is an argument that corresponds to a byval or noalias argument,
   // then it has not escaped before entering the function.  Check if it escapes
@@ -168,7 +119,7 @@ static bool isNonEscapingLocalObject(const Value *V) {
       // Don't bother analyzing arguments already known not to escape.
       if (A->hasNoCaptureAttr())
         return true;
-      return !AddressMightEscape(V);
+      return !PointerMayBeCaptured(V, false);
     }
   return false;
 }
