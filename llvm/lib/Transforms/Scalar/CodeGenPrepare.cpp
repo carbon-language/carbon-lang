@@ -688,7 +688,8 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
   // to see if ScaleReg is actually X+C.  If so, we can turn this into adding
   // X*Scale + C*Scale to addr mode.
   ConstantInt *CI; Value *AddLHS;
-  if (match(ScaleReg, m_Add(m_Value(AddLHS), m_ConstantInt(CI)))) {
+  if (isa<Instruction>(ScaleReg) &&  // not a constant expr.
+      match(ScaleReg, m_Add(m_Value(AddLHS), m_ConstantInt(CI)))) {
     TestAddrMode.ScaledReg = AddLHS;
     TestAddrMode.BaseOffs += CI->getSExtValue()*TestAddrMode.Scale;
       
