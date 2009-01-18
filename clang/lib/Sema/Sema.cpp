@@ -151,7 +151,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast. 
 /// If there is already an implicit cast, merge into the existing one.
-  /// If isLvalue, the result of the cast is an lvalue.
+/// If isLvalue, the result of the cast is an lvalue.
 void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty, bool isLvalue) {
   QualType ExprTy = Context.getCanonicalType(Expr->getType());
   QualType TypeTy = Context.getCanonicalType(Ty);

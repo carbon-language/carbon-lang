@@ -631,6 +631,8 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_vec_ext_v2di:
   case X86::BI__builtin_ia32_vec_ext_v4sf:
   case X86::BI__builtin_ia32_vec_ext_v4si:
+  case X86::BI__builtin_ia32_vec_ext_v8hi:
+  case X86::BI__builtin_ia32_vec_ext_v4hi:
   case X86::BI__builtin_ia32_vec_ext_v2df:
     return Builder.CreateExtractElement(Ops[0], Ops[1], "result");
   case X86::BI__builtin_ia32_cmpordss:

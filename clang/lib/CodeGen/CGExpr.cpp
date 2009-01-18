@@ -309,8 +309,8 @@ RValue CodeGenFunction::EmitLoadOfKVCRefLValue(LValue LV,
   return EmitObjCPropertyGet(LV.getKVCRefExpr());
 }
 
-// If this is a reference to a subset of the elements of a vector, either
-// shuffle the input or extract/insert them as appropriate.
+// If this is a reference to a subset of the elements of a vector, create an
+// appropriate shufflevector.
 RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
                                                          QualType ExprType) {
   llvm::Value *Vec = Builder.CreateLoad(LV.getExtVectorAddr(),
@@ -326,41 +326,21 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
   }
-  
-  // If the source and destination have the same number of elements, use a
-  // vector shuffle instead of insert/extracts.
+
+  // Always use shuffle vector to try to retain the original program structure
   unsigned NumResultElts = ExprVT->getNumElements();
-  unsigned NumSourceElts =
-    cast<llvm::VectorType>(Vec->getType())->getNumElements();
   
-  if (NumResultElts == NumSourceElts) {
-    llvm::SmallVector<llvm::Constant*, 4> Mask;
-    for (unsigned i = 0; i != NumResultElts; ++i) {
-      unsigned InIdx = getAccessedFieldNo(i, Elts);
-      Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
-    }
-    
-    llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
-    Vec = Builder.CreateShuffleVector(Vec,
-                                      llvm::UndefValue::get(Vec->getType()),
-                                      MaskV, "tmp");
-    return RValue::get(Vec);
-  }
-  
-  // Start out with an undef of the result type.
-  llvm::Value *Result = llvm::UndefValue::get(ConvertType(ExprType));
-  
-  // Extract/Insert each element of the result.
+  llvm::SmallVector<llvm::Constant*, 4> Mask;
   for (unsigned i = 0; i != NumResultElts; ++i) {
     unsigned InIdx = getAccessedFieldNo(i, Elts);
-    llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
-    Elt = Builder.CreateExtractElement(Vec, Elt, "tmp");
-    
-    llvm::Value *OutIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
-    Result = Builder.CreateInsertElement(Result, Elt, OutIdx, "tmp");
+    Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
   }
   
-  return RValue::get(Result);
+  llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+  Vec = Builder.CreateShuffleVector(Vec,
+                                    llvm::UndefValue::get(Vec->getType()),
+                                    MaskV, "tmp");
+  return RValue::get(Vec);
 }
 
 
@@ -548,15 +528,54 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   
   if (const VectorType *VTy = Ty->getAsVectorType()) {
     unsigned NumSrcElts = VTy->getNumElements();
-
-    // Extract/Insert each element.
-    for (unsigned i = 0; i != NumSrcElts; ++i) {
-      llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
-      Elt = Builder.CreateExtractElement(SrcVal, Elt, "tmp");
-      
-      unsigned Idx = getAccessedFieldNo(i, Elts);
-      llvm::Value *OutIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Idx);
-      Vec = Builder.CreateInsertElement(Vec, Elt, OutIdx, "tmp");
+    unsigned NumDstElts =
+       cast<llvm::VectorType>(Vec->getType())->getNumElements();
+    if (NumDstElts == NumSrcElts) {
+      // Use shuffle vector is the src and destination are the same number
+      // of elements
+      llvm::SmallVector<llvm::Constant*, 4> Mask;
+      for (unsigned i = 0; i != NumSrcElts; ++i) {
+        unsigned InIdx = getAccessedFieldNo(i, Elts);
+        Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
+      }
+    
+      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+      Vec = Builder.CreateShuffleVector(SrcVal,
+                                        llvm::UndefValue::get(Vec->getType()),
+                                        MaskV, "tmp");
+    }
+    else if (NumDstElts > NumSrcElts) {
+      // Extended the source vector to the same length and then shuffle it
+      // into the destination.
+      // FIXME: since we're shuffling with undef, can we just use the indices
+      //        into that?  This could be simpler.
+      llvm::SmallVector<llvm::Constant*, 4> ExtMask;
+      unsigned i;
+      for (i = 0; i != NumSrcElts; ++i)
+        ExtMask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, i));
+      for (; i != NumDstElts; ++i)
+        ExtMask.push_back(llvm::UndefValue::get(llvm::Type::Int32Ty));
+      llvm::Value *ExtMaskV = llvm::ConstantVector::get(&ExtMask[0],
+                                                        ExtMask.size());
+      llvm::Value *ExtSrcVal = Builder.CreateShuffleVector(SrcVal,
+                                        llvm::UndefValue::get(SrcVal->getType()),
+                                        ExtMaskV, "tmp");
+      // build identity
+      llvm::SmallVector<llvm::Constant*, 4> Mask;
+      for (unsigned i = 0; i != NumDstElts; ++i) {
+        Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, i));
+      }
+      // modify when what gets shuffled in
+      for (unsigned i = 0; i != NumSrcElts; ++i) {
+        unsigned Idx = getAccessedFieldNo(i, Elts);
+        Mask[Idx] =llvm::ConstantInt::get(llvm::Type::Int32Ty, i+NumDstElts);
+      }
+      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+      Vec = Builder.CreateShuffleVector(Vec, ExtSrcVal, MaskV, "tmp");
+    }
+    else {
+      // We should never shorten the vector
+      assert(0 && "unexpected shorten vector length");
     }
   } else {
     // If the Src is a scalar (not a vector) it must be updating one element.

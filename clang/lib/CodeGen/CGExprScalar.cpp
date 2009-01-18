@@ -409,10 +409,26 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   }
   
   // A scalar can be splatted to an extended vector of the same element type
-  if (DstType->isExtVectorType() && !isa<VectorType>(SrcType) &&
-      cast<llvm::VectorType>(DstTy)->getElementType() == Src->getType())
-    return CGF.EmitVector(&Src, DstType->getAsVectorType()->getNumElements(), 
-                          true);
+  if (DstType->isExtVectorType() && !isa<VectorType>(SrcType)) {
+    // Cast the scalar to element type
+    QualType EltTy = DstType->getAsExtVectorType()->getElementType();
+    llvm::Value *Elt = EmitScalarConversion(Src, SrcType, EltTy);
+
+    // Insert the element in element zero of an undef vector
+    llvm::Value *UnV = llvm::UndefValue::get(DstTy);
+    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+    UnV = Builder.CreateInsertElement(UnV, Elt, Idx, "tmp");
+
+    // Splat the element across to all elements
+    llvm::SmallVector<llvm::Constant*, 16> Args;
+    unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
+    for (unsigned i = 0; i < NumElements; i++)
+      Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+    
+    llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], NumElements);
+    llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
+    return Yay;
+  }
 
   // Allow bitcast from vector to integer/fp of the same size.
   if (isa<llvm::VectorType>(Src->getType()) ||

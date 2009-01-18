@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace clang;
 
@@ -284,8 +285,11 @@ ASTContext::getTypeInfo(const Type *T) {
     std::pair<uint64_t, unsigned> EltInfo = 
       getTypeInfo(cast<VectorType>(T)->getElementType());
     Width = EltInfo.first*cast<VectorType>(T)->getNumElements();
-    // FIXME: This isn't right for unusual vectors
     Align = Width;
+    // If the alignment is not a power of 2, round up to the next power of 2.
+    // This happens for non-power-of-2 length vectors.
+    // FIXME: this should probably be a target property.
+    Align = 1 << llvm::Log2_32_Ceil(Align);
     break;
   }
 
