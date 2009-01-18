@@ -4880,14 +4880,9 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
 SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   // (vextract (scalar_to_vector val, 0) -> val
   SDValue InVec = N->getOperand(0);
-  SDValue EltNo = N->getOperand(1);
 
-  if (isa<ConstantSDNode>(EltNo)) {
-    unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
-    if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR && Elt == 0) {
-      return InVec.getOperand(0);
-    }
-  }
+ if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR)
+   return InVec.getOperand(0);
 
   // Perform only after legalization to ensure build_vector / vector_shuffle
   // optimizations have already been done.
@@ -4896,6 +4891,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   // (vextract (v4f32 load $addr), c) -> (f32 load $addr+c*size)
   // (vextract (v4f32 s2v (f32 load $addr)), c) -> (f32 load $addr+c*size)
   // (vextract (v4f32 shuffle (load $addr), <1,u,u,u>), 0) -> (f32 load $addr)
+  SDValue EltNo = N->getOperand(1);
 
   if (isa<ConstantSDNode>(EltNo)) {
     unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
