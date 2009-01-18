@@ -969,14 +969,18 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   default: return false;  // Not safe / profitable to hoist.
   case Instruction::Add:
   case Instruction::Sub:
+    // FP arithmetic might trap. Not worth doing for vector ops.
+    if (I->getType()->isFloatingPoint() || isa<VectorType>(I->getType()))
+      return false;
+    break;
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    if (!I->getOperand(0)->getType()->isInteger())
-      // FP arithmetic might trap. Not worth doing for vector ops.
+    // Don't mess with vector operations.
+    if (isa<VectorType>(I->getType()))
       return false;
     break;   // These are all cheap and non-trapping instructions.
   }
