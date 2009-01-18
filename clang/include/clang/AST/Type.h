@@ -1028,7 +1028,7 @@ public:
 class FunctionTypeNoProto : public FunctionType, public llvm::FoldingSetNode {
   FunctionTypeNoProto(QualType Result, QualType Canonical)
     : FunctionType(FunctionNoProto, Result, false, 0, Canonical, 
-		   /*Dependent=*/false) {}
+                   /*Dependent=*/false) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   // No additional state past what FunctionType provides.
@@ -1062,7 +1062,7 @@ class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
   static bool hasAnyDependentType(const QualType *ArgArray, unsigned numArgs) {
     for (unsigned Idx = 0; Idx < numArgs; ++Idx)
       if (ArgArray[Idx]->isDependentType())
-	return true;
+    return true;
 
     return false;
   }
@@ -1070,8 +1070,8 @@ class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
   FunctionTypeProto(QualType Result, const QualType *ArgArray, unsigned numArgs,
                     bool isVariadic, unsigned typeQuals, QualType Canonical)
     : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
-		   (Result->isDependentType() || 
-		    hasAnyDependentType(ArgArray, numArgs))),
+                   (Result->isDependentType() || 
+                    hasAnyDependentType(ArgArray, numArgs))),
       NumArgs(numArgs) {
     // Fill in the trailing argument array.
     QualType *ArgInfo = reinterpret_cast<QualType *>(this+1);;
@@ -1447,7 +1447,7 @@ class ObjCQualifiedIdType : public Type,
     
   ObjCQualifiedIdType(ObjCProtocolDecl **Protos, unsigned NumP)
     : Type(ObjCQualifiedId, QualType()/*these are always canonical*/,
-	   /*Dependent=*/false), 
+           /*Dependent=*/false), 
   Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
