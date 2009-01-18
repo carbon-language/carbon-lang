@@ -107,9 +107,9 @@ LexNextToken:
   const unsigned char *CurPtrShadow = CurPtr;  
 
   // Read in the data for the token.
-  tok::TokenKind k = (tok::TokenKind) Read8(CurPtrShadow);
-  Token::TokenFlags flags = (Token::TokenFlags) Read8(CurPtrShadow);
-  uint32_t perID = Read24(CurPtrShadow);
+  tok::TokenKind TKind = (tok::TokenKind) Read8(CurPtrShadow);
+  Token::TokenFlags TFlags = (Token::TokenFlags) Read8(CurPtrShadow);
+  uint32_t IdentifierID = Read24(CurPtrShadow);
   uint32_t FileOffset = Read32(CurPtrShadow);
   uint32_t Len = Read16(CurPtrShadow);
   CurPtr = CurPtrShadow;
@@ -119,10 +119,11 @@ LexNextToken:
   //===--------------------------------------==//
   
   Tok.startToken();
-  Tok.setKind(k);
-  Tok.setFlag(flags);
+  Tok.setKind(TKind);
+  Tok.setFlag(TFlags);
   assert(!LexingRawMode);
-  Tok.setIdentifierInfo(perID ? PTHMgr.GetIdentifierInfo(perID-1) : 0);
+  if (IdentifierID)
+    Tok.setIdentifierInfo(PTHMgr.GetIdentifierInfo(IdentifierID-1));
   Tok.setLocation(FileStartLoc.getFileLocWithOffset(FileOffset));
   Tok.setLength(Len);
 
@@ -137,12 +138,12 @@ LexNextToken:
     << '\n';
 #endif  
 
-  if (k == tok::identifier) {
+  if (TKind == tok::identifier) {
     MIOpt.ReadToken();
     return PP->HandleIdentifier(Tok);
   }
   
-  if (k == tok::eof) {
+  if (TKind == tok::eof) {
     // Save the end-of-file token.
     EofToken = Tok;
     
@@ -159,7 +160,7 @@ LexNextToken:
     return PPCache->Lex(Tok);
   }
   
-  if (k == tok::hash && Tok.isAtStartOfLine()) {
+  if (TKind == tok::hash && Tok.isAtStartOfLine()) {
     LastHashTokPtr = CurPtr - DISK_TOKEN_SIZE;
     assert(!LexingRawMode);
     PP->HandleDirective(Tok);
@@ -170,7 +171,7 @@ LexNextToken:
     return PP->Lex(Tok);
   }
   
-  if (k == tok::eom) {
+  if (TKind == tok::eom) {
     assert(ParsingPreprocessorDirective);
     ParsingPreprocessorDirective = false;
     return;
