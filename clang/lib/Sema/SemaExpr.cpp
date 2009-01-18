@@ -1296,12 +1296,7 @@ ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, SourceLocation LLoc,
   } else if (const VectorType *VTy = LHSTy->getAsVectorType()) {
     BaseExpr = LHSExp;    // vectors: V[123]
     IndexExpr = RHSExp;
-    
-    // Component access limited to variables (reject vec4.rg[1]).
-    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr) &&
-        !isa<ExtVectorElementExpr>(BaseExpr))
-      return Diag(LLoc, diag::err_ext_vector_component_access)
-        << SourceRange(LLoc, RLoc);
+
     // FIXME: need to deal with const...
     ResultType = VTy->getElementType();
   } else {
@@ -1633,11 +1628,6 @@ ActOnMemberReferenceExpr(Scope *S, ExprTy *Base, SourceLocation OpLoc,
   }  
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType() && OpKind == tok::period) {
-    // Component access limited to variables (reject vec4.rg.g).
-    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr) &&
-        !isa<ExtVectorElementExpr>(BaseExpr))
-      return Diag(MemberLoc, diag::err_ext_vector_component_access)
-               << BaseExpr->getSourceRange();
     QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return true;

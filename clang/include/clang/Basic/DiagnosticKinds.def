@@ -861,8 +861,6 @@ DIAG(err_ext_vector_component_requires_even, ERROR,
      "vector component access invalid for odd-sized type %0")
 DIAG(err_ext_vector_component_name_illegal, ERROR,
      "illegal vector component name '%0'")
-DIAG(err_ext_vector_component_access, ERROR,
-     "vector component access limited to variables")
 DIAG(err_attribute_address_space_not_int, ERROR,
      "address space attribute requires an integer constant")
 DIAG(err_attribute_address_multiple_qualifiers, ERROR,
