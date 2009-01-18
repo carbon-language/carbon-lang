@@ -1173,12 +1173,15 @@ bool ExtVectorElementExpr::containsDuplicateElements() const {
 /// getEncodedElementAccess - We encode the fields as a llvm ConstantArray.
 void ExtVectorElementExpr::getEncodedElementAccess(
                                   llvm::SmallVectorImpl<unsigned> &Elts) const {
-  bool isHi =   Accessor.isStr("hi");
-  bool isLo =   Accessor.isStr("lo");
-  bool isEven = Accessor.isStr("e");
-  bool isOdd  = Accessor.isStr("o");
-    
   const char *compStr = Accessor.getName();
+  if (*compStr == 's')
+    compStr++;
+ 
+  bool isHi =   !strcmp(compStr, "hi");
+  bool isLo =   !strcmp(compStr, "lo");
+  bool isEven = !strcmp(compStr, "even");
+  bool isOdd  = !strcmp(compStr, "odd");
+    
   for (unsigned i = 0, e = getNumElements(); i != e; ++i) {
     uint64_t Index;
     

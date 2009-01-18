@@ -900,7 +900,7 @@ protected:
     Type(Vector, canonType, vecType->isDependentType()), 
     ElementType(vecType), NumElements(nElements) {} 
   VectorType(TypeClass tc, QualType vecType, unsigned nElements, 
-	     QualType canonType) 
+             QualType canonType) 
     : Type(tc, canonType, vecType->isDependentType()), ElementType(vecType), 
       NumElements(nElements) {} 
   friend class ASTContext;  // ASTContext creates these.
@@ -945,29 +945,31 @@ public:
     case 'w': return 3;
     }
   }
-  static int getColorAccessorIdx(char c) {
+  static int getNumericAccessorIdx(char c) {
     switch (c) {
-    default: return -1;
-    case 'r': return 0;
-    case 'g': return 1;
-    case 'b': return 2;
-    case 'a': return 3;
+      default: return -1;
+      case '0': return 0;
+      case '1': return 1;
+      case '2': return 2;
+      case '3': return 3;
+      case '4': return 4;
+      case '5': return 5;
+      case '6': return 6;
+      case '7': return 7;
+      case '8': return 8;
+      case '9': return 9;
+      case 'a': return 10;
+      case 'b': return 11;
+      case 'c': return 12;
+      case 'd': return 13;
+      case 'e': return 14;
+      case 'f': return 15;
     }
   }
-  static int getTextureAccessorIdx(char c) {
-    switch (c) {
-    default: return -1;
-    case 's': return 0;
-    case 't': return 1;
-    case 'p': return 2;
-    case 'q': return 3;
-    }
-  };
   
   static int getAccessorIdx(char c) {
     if (int idx = getPointAccessorIdx(c)+1) return idx-1;
-    if (int idx = getColorAccessorIdx(c)+1) return idx-1;
-    return getTextureAccessorIdx(c);
+    return getNumericAccessorIdx(c);
   }
   
   bool isAccessorWithinNumElements(char c) const {

@@ -1325,64 +1325,61 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
                         IdentifierInfo &CompName, SourceLocation CompLoc) {
   const ExtVectorType *vecType = baseType->getAsExtVectorType();
 
-  // This flag determines whether or not the component is to be treated as a 
-  // special name, or a regular GLSL-style component access.
-  bool SpecialComponent = false;
-  
   // The vector accessor can't exceed the number of elements.
   const char *compStr = CompName.getName();
-  if (strlen(compStr) > vecType->getNumElements()) {
-    Diag(OpLoc, diag::err_ext_vector_component_exceeds_length)
-      << baseType << SourceRange(CompLoc);
-    return QualType();
-  }
+
+  // This flag determines whether or not the component is one of the four 
+  // special names that indicate a subset of exactly half the elements are
+  // to be selected.
+  bool HalvingSwizzle = false;
+  
+  // This flag determines whether or not CompName has an 's' char prefix,
+  // indicating that it is a string of hex values to be used as vector indices.
+  bool HexSwizzle = *compStr == 's';
 
   // Check that we've found one of the special components, or that the component
   // names must come from the same set.
   if (!strcmp(compStr, "hi") || !strcmp(compStr, "lo") || 
-      !strcmp(compStr, "e") || !strcmp(compStr, "o")) {
-    SpecialComponent = true;
+      !strcmp(compStr, "even") || !strcmp(compStr, "odd")) {
+    HalvingSwizzle = true;
   } else if (vecType->getPointAccessorIdx(*compStr) != -1) {
     do
       compStr++;
     while (*compStr && vecType->getPointAccessorIdx(*compStr) != -1);
-  } else if (vecType->getColorAccessorIdx(*compStr) != -1) {
+  } else if (HexSwizzle || vecType->getNumericAccessorIdx(*compStr) != -1) {
     do
       compStr++;
-    while (*compStr && vecType->getColorAccessorIdx(*compStr) != -1);
-  } else if (vecType->getTextureAccessorIdx(*compStr) != -1) {
-    do 
-      compStr++;
-    while (*compStr && vecType->getTextureAccessorIdx(*compStr) != -1);
+    while (*compStr && vecType->getNumericAccessorIdx(*compStr) != -1);
   }
-    
-  if (!SpecialComponent && *compStr) { 
+
+  if (!HalvingSwizzle && *compStr) { 
     // We didn't get to the end of the string. This means the component names
     // didn't come from the same set *or* we encountered an illegal name.
     Diag(OpLoc, diag::err_ext_vector_component_name_illegal)
       << std::string(compStr,compStr+1) << SourceRange(CompLoc);
     return QualType();
   }
-  // Each component accessor can't exceed the vector type.
-  compStr = CompName.getName();
-  while (*compStr) {
-    if (vecType->isAccessorWithinNumElements(*compStr))
+  
+  // Ensure no component accessor exceeds the width of the vector type it
+  // operates on.
+  if (!HalvingSwizzle) {
+    compStr = CompName.getName();
+
+    if (HexSwizzle)
       compStr++;
-    else
-      break;
-  }
-  if (!SpecialComponent && *compStr) { 
-    // We didn't get to the end of the string. This means a component accessor
-    // exceeds the number of elements in the vector.
-    Diag(OpLoc, diag::err_ext_vector_component_exceeds_length)
-      << baseType << SourceRange(CompLoc);
-    return QualType();
+
+    while (*compStr) {
+      if (!vecType->isAccessorWithinNumElements(*compStr++)) {
+        Diag(OpLoc, diag::err_ext_vector_component_exceeds_length)
+          << baseType << SourceRange(CompLoc);
+        return QualType();
+      }
+    }
   }
 
-  // If we have a special component name, verify that the current vector length
-  // is an even number, since all special component names return exactly half
-  // the elements.
-  if (SpecialComponent && (vecType->getNumElements() & 1U)) {
+  // If this is a halving swizzle, verify that the base type has an even
+  // number of elements.
+  if (HalvingSwizzle && (vecType->getNumElements() & 1U)) {
     Diag(OpLoc, diag::err_ext_vector_component_requires_even)
       << baseType << SourceRange(CompLoc);
     return QualType();
@@ -1391,9 +1388,13 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   // The component accessor looks fine - now we need to compute the actual type.
   // The vector type is implied by the component accessor. For example, 
   // vec4.b is a float, vec4.xy is a vec2, vec4.rgb is a vec3, etc.
+  // vec4.s0 is a float, vec4.s23 is a vec3, etc.
   // vec4.hi, vec4.lo, vec4.e, and vec4.o all return vec2.
-  unsigned CompSize = SpecialComponent ? vecType->getNumElements() / 2
-                                       : CompName.getLength();
+  unsigned CompSize = HalvingSwizzle ? vecType->getNumElements() / 2
+                                     : CompName.getLength();
+  if (HexSwizzle)
+    CompSize--;
+
   if (CompSize == 1)
     return vecType->getElementType();
     
