@@ -697,6 +697,19 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       
       return llvm::ConstantStruct::get(Complex, 2);
     }
+    case APValue::Vector: {
+      llvm::SmallVector<llvm::Constant *, 4> Inits;
+      unsigned NumElts = Result.Val.getVectorLength();
+      
+      for (unsigned i = 0; i != NumElts; ++i) {
+        APValue &Elt = Result.Val.getVectorElt(i);
+        if (Elt.isInt())
+          Inits.push_back(llvm::ConstantInt::get(Elt.getInt()));
+        else
+          Inits.push_back(llvm::ConstantFP::get(Elt.getFloat()));
+      }
+      return llvm::ConstantVector::get(&Inits[0], Inits.size());
+    }
     }
   }
 

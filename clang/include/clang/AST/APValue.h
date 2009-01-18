@@ -32,7 +32,8 @@ public:
     Float,
     ComplexInt,
     ComplexFloat,
-    LValue
+    LValue,
+    Vector
   };
 private:
   ValueKind Kind;
@@ -49,6 +50,11 @@ private:
   struct LV {
     Expr* Base;
     uint64_t Offset;
+  };
+  struct Vec {
+    APValue *Elts;
+    unsigned NumElts;
+    ~Vec() { delete[] Elts; }
   };
   
   enum {
@@ -67,6 +73,9 @@ public:
   }
   explicit APValue(const APFloat &F) : Kind(Uninitialized) {
     MakeFloat(); setFloat(F);
+  }
+  explicit APValue(const APValue *E, unsigned N) : Kind(Uninitialized) {
+    MakeVector(); setVector(E, N);
   }
   APValue(const APSInt &R, const APSInt &I) : Kind(Uninitialized) {
     MakeComplexInt(); setComplexInt(R, I);
@@ -91,6 +100,7 @@ public:
   bool isComplexInt() const { return Kind == ComplexInt; }
   bool isComplexFloat() const { return Kind == ComplexFloat; }
   bool isLValue() const { return Kind == LValue; }
+  bool isVector() const { return Kind == Vector; }
   
   void print(llvm::raw_ostream &OS) const;
   void dump() const;
@@ -109,6 +119,15 @@ public:
   }
   const APFloat &getFloat() const {
     return const_cast<APValue*>(this)->getFloat();
+  }
+  
+  APValue &getVectorElt(unsigned i) const {
+    assert(isVector() && "Invalid accessor");
+    return ((Vec*)(void*)Data)->Elts[i];
+  }
+  unsigned getVectorLength() const {
+    assert(isVector() && "Invalid accessor");
+    return ((Vec*)(void *)Data)->NumElts;
   }
   
   APSInt &getComplexIntReal() {
@@ -160,6 +179,13 @@ public:
     assert(isFloat() && "Invalid accessor");
     *(APFloat*)(void*)Data = F;
   }
+  void setVector(const APValue *E, unsigned N) {
+    assert(isVector() && "Invalid accessor");
+    ((Vec*)(void*)Data)->Elts = new APValue[N];
+    ((Vec*)(void*)Data)->NumElts = N;
+    for (unsigned i = 0; i != N; ++i)
+      ((Vec*)(void*)Data)->Elts[i] = E[i];
+  }
   void setComplexInt(const APSInt &R, const APSInt &I) {
     assert(isComplexInt() && "Invalid accessor");
     ((ComplexAPSInt*)(void*)Data)->Real = R;
@@ -189,6 +215,11 @@ private:
     assert(isUninit() && "Bad state change");
     new ((APFloat*)(void*)Data) APFloat(0.0);
     Kind = Float;
+  }
+  void MakeVector() {
+    assert(isUninit() && "Bad state change");
+    new ((Vec*)(void*)Data) Vec();
+    Kind = Vector;
   }
   void MakeComplexInt() {
     assert(isUninit() && "Bad state change");
