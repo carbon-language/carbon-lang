@@ -630,7 +630,7 @@ class Darwin_X86_LinkTool(Tool):
         if not arglist.getLastArg(arglist.parser.dynamiclibOption):
             if arglist.getLastArg(arglist.parser.force_cpusubtype_ALLOption):
                 self.addDarwinArch(cmd_args, arch, arglist)
-                cmd_args.append('-force_cpusubtype_all')
+                cmd_args.append('-force_cpusubtype_ALL')
             else:
                 self.addDarwinSubArch(cmd_args, arch, arglist)
         
