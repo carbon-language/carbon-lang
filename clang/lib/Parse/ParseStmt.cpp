@@ -972,7 +972,7 @@ Parser::OwningStmtResult Parser::ParseGotoStatement() {
       SkipUntil(tok::semi, false, true);
       return StmtError();
     }
-    Res = Actions.ActOnIndirectGotoStmt(GotoLoc, StarLoc, R.release());
+    Res = Actions.ActOnIndirectGotoStmt(GotoLoc, StarLoc, move_convert(R));
   } else {
     Diag(Tok, diag::err_expected_ident);
     return StmtError();
@@ -989,7 +989,7 @@ Parser::OwningStmtResult Parser::ParseGotoStatement() {
 ///
 Parser::OwningStmtResult Parser::ParseContinueStatement() {
   SourceLocation ContinueLoc = ConsumeToken();  // eat the 'continue'.
-  return Owned(Actions.ActOnContinueStmt(ContinueLoc, CurScope));
+  return Actions.ActOnContinueStmt(ContinueLoc, CurScope);
 }
 
 /// ParseBreakStatement
@@ -1000,7 +1000,7 @@ Parser::OwningStmtResult Parser::ParseContinueStatement() {
 ///
 Parser::OwningStmtResult Parser::ParseBreakStatement() {
   SourceLocation BreakLoc = ConsumeToken();  // eat the 'break'.
-  return Owned(Actions.ActOnBreakStmt(BreakLoc, CurScope));
+  return Actions.ActOnBreakStmt(BreakLoc, CurScope);
 }
 
 /// ParseReturnStatement
@@ -1018,7 +1018,7 @@ Parser::OwningStmtResult Parser::ParseReturnStatement() {
       return StmtError();
     }
   }
-  return Owned(Actions.ActOnReturnStmt(ReturnLoc, R.release()));
+  return Actions.ActOnReturnStmt(ReturnLoc, move_convert(R));
 }
 
 /// FuzzyParseMicrosoftAsmStatement. When -fms-extensions is enabled, this

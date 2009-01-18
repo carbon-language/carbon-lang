@@ -884,21 +884,23 @@ public:
                                        SourceLocation LParenLoc,
                                        StmtArg First, ExprArg Second,
                                        SourceLocation RParenLoc, StmtArg Body);
-  
-  virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
-                                   SourceLocation LabelLoc,
-                                   IdentifierInfo *LabelII);
-  virtual StmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
-                                           SourceLocation StarLoc,
-                                           ExprTy *DestExp);
-  virtual StmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
-                                       Scope *CurScope);
-  virtual StmtResult ActOnBreakStmt(SourceLocation GotoLoc, Scope *CurScope);
-  
-  virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
-                                     ExprTy *RetValExp);
-  StmtResult ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp);
-  
+
+  virtual OwningStmtResult ActOnGotoStmt(SourceLocation GotoLoc,
+                                         SourceLocation LabelLoc,
+                                         IdentifierInfo *LabelII);
+  virtual OwningStmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
+                                                 SourceLocation StarLoc,
+                                                 ExprArg DestExp);
+  virtual OwningStmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
+                                             Scope *CurScope);
+  virtual OwningStmtResult ActOnBreakStmt(SourceLocation GotoLoc,
+                                          Scope *CurScope);
+
+  virtual OwningStmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
+                                           ExprArg RetValExp);
+  OwningStmtResult ActOnBlockReturnStmt(SourceLocation ReturnLoc,
+                                        Expr *RetValExp);
+
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
                                   bool IsSimple,
                                   bool IsVolatile,

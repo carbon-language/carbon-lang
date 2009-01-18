@@ -338,31 +338,32 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
-    virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
-                                     SourceLocation LabelLoc,
-                                     IdentifierInfo *LabelII) {
+    virtual OwningStmtResult ActOnGotoStmt(SourceLocation GotoLoc,
+                                           SourceLocation LabelLoc,
+                                           IdentifierInfo *LabelII) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-    virtual StmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
-                                             SourceLocation StarLoc,
-                                             ExprTy *DestExp) {
+    virtual OwningStmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
+                                                   SourceLocation StarLoc,
+                                                   ExprArg DestExp) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-    virtual StmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
-                                         Scope *CurScope) {
+    virtual OwningStmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
+                                               Scope *CurScope) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-    virtual StmtResult ActOnBreakStmt(SourceLocation GotoLoc, Scope *CurScope) {
+    virtual OwningStmtResult ActOnBreakStmt(SourceLocation GotoLoc,
+                                            Scope *CurScope) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
-    virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
-                                       ExprTy *RetValExp) {
+    virtual OwningStmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
+                                             ExprArg RetValExp) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return StmtEmpty();
     }
     virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
                                     bool IsSimple,                                  

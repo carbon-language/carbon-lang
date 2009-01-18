@@ -437,26 +437,27 @@ public:
                                        SourceLocation RParenLoc, StmtArg Body) {
     return StmtEmpty();
   }
-  virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
-                                   SourceLocation LabelLoc,
-                                   IdentifierInfo *LabelII) {
-    return 0;
+  virtual OwningStmtResult ActOnGotoStmt(SourceLocation GotoLoc,
+                                         SourceLocation LabelLoc,
+                                         IdentifierInfo *LabelII) {
+    return StmtEmpty();
   }
-  virtual StmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
-                                           SourceLocation StarLoc,
-                                           ExprTy *DestExp) {
-    return 0;
+  virtual OwningStmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
+                                                 SourceLocation StarLoc,
+                                                 ExprArg DestExp) {
+    return StmtEmpty();
   }
-  virtual StmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
-                                       Scope *CurScope) {
-    return 0;
+  virtual OwningStmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
+                                             Scope *CurScope) {
+    return StmtEmpty();
   }
-  virtual StmtResult ActOnBreakStmt(SourceLocation GotoLoc, Scope *CurScope) {
-    return 0;
+  virtual OwningStmtResult ActOnBreakStmt(SourceLocation GotoLoc,
+                                          Scope *CurScope) {
+    return StmtEmpty();
   }
-  virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
-                                     ExprTy *RetValExp) {
-    return 0;
+  virtual OwningStmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
+                                           ExprArg RetValExp) {
+    return StmtEmpty();
   }
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
                                   bool IsSimple,                                  

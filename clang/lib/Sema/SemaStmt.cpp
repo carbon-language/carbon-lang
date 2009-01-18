@@ -670,12 +670,12 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
                                          ForLoc, RParenLoc));
 }
 
-Action::StmtResult 
+Action::OwningStmtResult
 Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
                     IdentifierInfo *LabelII) {
   // If we are in a block, reject all gotos for now.
   if (CurBlock)
-    return Diag(GotoLoc, diag::err_goto_in_block);
+    return StmtError(Diag(GotoLoc, diag::err_goto_in_block));
 
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = LabelMap[LabelII];
@@ -683,47 +683,45 @@ Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
   // If we haven't seen this label yet, create a forward reference.
   if (LabelDecl == 0)
     LabelDecl = new LabelStmt(LabelLoc, LabelII, 0);
-  
-  return new GotoStmt(LabelDecl, GotoLoc, LabelLoc);
+
+  return Owned(new GotoStmt(LabelDecl, GotoLoc, LabelLoc));
 }
 
-Action::StmtResult 
+Action::OwningStmtResult
 Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
-                            ExprTy *DestExp) {
+                            ExprArg DestExp) {
   // FIXME: Verify that the operand is convertible to void*.
-  
-  return new IndirectGotoStmt((Expr*)DestExp);
+
+  return Owned(new IndirectGotoStmt((Expr*)DestExp.release()));
 }
 
-Action::StmtResult 
+Action::OwningStmtResult
 Sema::ActOnContinueStmt(SourceLocation ContinueLoc, Scope *CurScope) {
   Scope *S = CurScope->getContinueParent();
   if (!S) {
     // C99 6.8.6.2p1: A break shall appear only in or as a loop body.
-    Diag(ContinueLoc, diag::err_continue_not_in_loop);
-    return true;
+    return StmtError(Diag(ContinueLoc, diag::err_continue_not_in_loop));
   }
-  
-  return new ContinueStmt(ContinueLoc);
+
+  return Owned(new ContinueStmt(ContinueLoc));
 }
 
-Action::StmtResult 
+Action::OwningStmtResult
 Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
   Scope *S = CurScope->getBreakParent();
   if (!S) {
     // C99 6.8.6.3p1: A break shall appear only in or as a switch/loop body.
-    Diag(BreakLoc, diag::err_break_not_in_loop_or_switch);
-    return true;
+    return StmtError(Diag(BreakLoc, diag::err_break_not_in_loop_or_switch));
   }
-  
-  return new BreakStmt(BreakLoc);
+
+  return Owned(new BreakStmt(BreakLoc));
 }
 
 /// ActOnBlockReturnStmt - Utility routine to figure out block's return type.
 ///
-Action::StmtResult
+Action::OwningStmtResult
 Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
- 
+
   // If this is the first return we've seen in the block, infer the type of
   // the block from it.
   if (CurBlock->ReturnType == 0) {
@@ -734,9 +732,9 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       CurBlock->ReturnType = RetValExp->getType().getTypePtr();
     } else
       CurBlock->ReturnType = Context.VoidTy.getTypePtr();
-    return new ReturnStmt(ReturnLoc, RetValExp);
+    return Owned(new ReturnStmt(ReturnLoc, RetValExp));
   }
-  
+
   // Otherwise, verify that this result type matches the previous one.  We are
   // pickier with blocks than for normal functions because we don't have GCC
   // compatibility to worry about here.
@@ -746,38 +744,37 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       delete RetValExp;
       RetValExp = 0;
     }
-    return new ReturnStmt(ReturnLoc, RetValExp);
+    return Owned(new ReturnStmt(ReturnLoc, RetValExp));
   }
-  
-  if (!RetValExp) {
-    Diag(ReturnLoc, diag::err_block_return_missing_expr);
-    return true;
-  }
-  
+
+  if (!RetValExp)
+    return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
+
   // we have a non-void block with an expression, continue checking
   QualType RetValType = RetValExp->getType();
-  
+
   // For now, restrict multiple return statements in a block to have 
   // strict compatible types only.
   QualType BlockQT = QualType(CurBlock->ReturnType, 0);
   if (Context.getCanonicalType(BlockQT).getTypePtr() 
       != Context.getCanonicalType(RetValType).getTypePtr()) {
+    // FIXME: non-localizable string in diagnostic
     DiagnoseAssignmentResult(Incompatible, ReturnLoc, BlockQT,
                              RetValType, RetValExp, "returning");
-    return true;
+    return StmtError();
   }
-  
+
   if (RetValExp) CheckReturnStackAddr(RetValExp, BlockQT, ReturnLoc);
-  
-  return new ReturnStmt(ReturnLoc, (Expr*)RetValExp);
+
+  return Owned(new ReturnStmt(ReturnLoc, RetValExp));
 }
 
-Action::StmtResult
-Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
-  Expr *RetValExp = static_cast<Expr *>(rex);
+Action::OwningStmtResult
+Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
+  Expr *RetValExp = static_cast<Expr *>(rex.release());
   if (CurBlock)
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
-  
+
   QualType FnRetType;
   if (FunctionDecl *FD = getCurFunctionDecl())
     FnRetType = FD->getResultType();
@@ -789,7 +786,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
       unsigned D = diag::ext_return_has_expr;
       if (RetValExp->getType()->isVoidType())
         D = diag::ext_return_has_void_expr;
-      
+
       // return (some void expression); is legal in C++.
       if (D != diag::ext_return_has_void_expr ||
           !getLangOptions().CPlusPlus) {
@@ -799,9 +796,9 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
           << RetValExp->getSourceRange();
       }
     }
-    return new ReturnStmt(ReturnLoc, RetValExp);
+    return Owned(new ReturnStmt(ReturnLoc, RetValExp));
   }
-  
+
   if (!RetValExp) {
     unsigned DiagID = diag::warn_return_missing_expr;  // C90 6.6.6.4p4
     // C99 6.8.6.4p1 (ext_ since GCC warns)
@@ -811,27 +808,27 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
       Diag(ReturnLoc, DiagID) << FD->getIdentifier() << 0/*fn*/;
     else
       Diag(ReturnLoc, DiagID) << getCurMethodDecl()->getDeclName() << 1/*meth*/;
-    return new ReturnStmt(ReturnLoc, (Expr*)0);
+    return Owned(new ReturnStmt(ReturnLoc, (Expr*)0));
   }
-  
+
   if (!FnRetType->isDependentType() && !RetValExp->isTypeDependent()) {
     // we have a non-void function with an expression, continue checking
     QualType RetValType = RetValExp->getType();
-    
+
     // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
     // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
-    // function return.  
-    
+    // function return.
+
     // In C++ the return statement is handled via a copy initialization.
-    // the C version of which boils down to
-    // CheckSingleAssignmentConstraints.
+    // the C version of which boils down to CheckSingleAssignmentConstraints.
+    // FIXME: Leaks RetValExp.
     if (PerformCopyInitialization(RetValExp, FnRetType, "returning"))
-      return true;
-  
+      return StmtError();
+
     if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
   }
 
-  return new ReturnStmt(ReturnLoc, (Expr*)RetValExp);
+  return Owned(new ReturnStmt(ReturnLoc, RetValExp));
 }
 
 Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
