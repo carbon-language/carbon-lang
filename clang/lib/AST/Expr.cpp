@@ -1160,6 +1160,17 @@ unsigned ExtVectorElementExpr::getNumElements() const {
 bool ExtVectorElementExpr::containsDuplicateElements() const {
   const char *compStr = Accessor.getName();
   unsigned length = Accessor.getLength();
+
+  // Halving swizzles do not contain duplicate elements.
+  if (!strcmp(compStr, "hi") || !strcmp(compStr, "lo") || 
+      !strcmp(compStr, "even") || !strcmp(compStr, "odd"))
+    return false;
+  
+  // Advance past s-char prefix on hex swizzles.
+  if (*compStr == 's') {
+    compStr++;
+    length--;
+  }
   
   for (unsigned i = 0; i != length-1; i++) {
     const char *s = compStr+i;

@@ -136,7 +136,7 @@ typedef __attribute__((ext_vector_type(4))) float float4;
 void f5() {
   float4 t0 = (float4) { 0, 1, 2, 3 };
   float4 t1 = t0;
-  t0.lo.e = t1.hi.x;
+  t0.lo.even = t1.hi.x;
 }
 
 void f6() {

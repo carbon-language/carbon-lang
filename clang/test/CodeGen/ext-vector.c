@@ -15,7 +15,7 @@ float4 vec4, vec4_2;
 float f;
 
 void test2() {
-    vec2 = vec4.rg;  // shorten
+    vec2 = vec4.xy;  // shorten
     f = vec2.x;      // extract elt
     vec4 = vec4.yyyy;  // splat
     
