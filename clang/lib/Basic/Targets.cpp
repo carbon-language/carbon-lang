@@ -43,7 +43,8 @@ static void getSolarisDefines(std::vector<char> &Defs) {
   Define(Defs, "__SOLARIS__");
 }
 
-static void getFreeBSDDefines(std::vector<char> &Defs, bool is64Bit, const char *Triple) {
+static void getFreeBSDDefines(std::vector<char> &Defs, bool is64Bit,
+                              const char *Triple) {
   // FreeBSD defines; list based off of gcc output
 
   const char *FreeBSD = strstr(Triple, "-freebsd");
