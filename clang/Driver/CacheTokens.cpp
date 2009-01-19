@@ -133,12 +133,13 @@ uint32_t PTHWriter::ResolveID(const IdentifierInfo* II) {
 
 void PTHWriter::EmitToken(const Token& T) {
   uint32_t fpos = PP.getSourceManager().getFullFilePos(T.getLocation());
-  Emit8(T.getKind());
-  Emit8(T.getFlags());
-  Emit24(ResolveID(T.getIdentifierInfo()));
+  
+  Emit32(((uint32_t) T.getKind()) |
+         (((uint32_t) T.getFlags()) << 8) |
+         (((uint32_t) T.getLength()) << 16));
+  Emit32(ResolveID(T.getIdentifierInfo()));
   Emit32(fpos);
-  Emit16(T.getLength());
-
+  
   // For specific tokens we cache their spelling.
   if (T.getIdentifierInfo())
     return;
@@ -270,9 +271,10 @@ Offset PTHWriter::EmitFileTable() {
 }
 
 PCHEntry PTHWriter::LexTokens(Lexer& L) {
-
-  // Record the location within the token file.
-  Offset off = (Offset) Out.tell();
+  // Pad 0's so that we emit tokens to a 4-byte alignment.
+  // This speed up reading them back in.
+  Offset off = (Offset) Out.tell();  
+  for (unsigned Pad = off % 4 ; Pad != 0 ; --Pad, ++off) Emit8(0);
   
   // Keep track of matching '#if' ... '#endif'.
   typedef std::vector<std::pair<Offset, unsigned> > PPCondTable;

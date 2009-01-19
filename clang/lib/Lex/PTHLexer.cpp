@@ -25,7 +25,7 @@
 #include "llvm/ADT/OwningPtr.h"
 using namespace clang;
 
-#define DISK_TOKEN_SIZE (1+1+3+4+2)
+#define DISK_TOKEN_SIZE (1+1+2+4+4)
 
 //===----------------------------------------------------------------------===//
 // Utility methods for reading from the mmap'ed PTH file.
@@ -107,11 +107,14 @@ LexNextToken:
   const unsigned char *CurPtrShadow = CurPtr;  
 
   // Read in the data for the token.
-  tok::TokenKind TKind = (tok::TokenKind) Read8(CurPtrShadow);
-  Token::TokenFlags TFlags = (Token::TokenFlags) Read8(CurPtrShadow);
-  uint32_t IdentifierID = Read24(CurPtrShadow);
+  unsigned Word0 = Read32(CurPtrShadow);
+  uint32_t IdentifierID = Read32(CurPtrShadow);
   uint32_t FileOffset = Read32(CurPtrShadow);
-  uint32_t Len = Read16(CurPtrShadow);
+  
+  tok::TokenKind TKind = (tok::TokenKind) (Word0 & 0xFF);
+  Token::TokenFlags TFlags = (Token::TokenFlags) ((Word0 >> 8) & 0xFF);
+  uint32_t Len = Word0 >> 16;
+
   CurPtr = CurPtrShadow;
   
   //===--------------------------------------==//
