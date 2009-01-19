@@ -21,6 +21,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -172,6 +173,74 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   return true;
 }
 
+/// BlockIsReachableFrom - Return true if there is a path from StartBB to
+/// DestBB.  We do this by recursively walking the CFG from DestBB up to StartBB
+/// unwind we either reach StartBB or find an unreachable chunk of the CFG.
+/// 
+/// Each entry in VisitedBlocks is either 0 -> not visited, 1 -> known reachable
+/// 2 -> known unreachable, 3 -> visitation in progress.
+static bool BlockIsReachableFrom(BasicBlock *StartBB, BasicBlock *DestBB,
+                               DenseMap<BasicBlock*, unsigned> &VisitedBlocks) {
+  if (StartBB == DestBB) return true;
+  
+  unsigned &BlockEntry = VisitedBlocks[DestBB];
+  if (BlockEntry == 1) return true;       // Known reachable!
+  if (BlockEntry == 2 ||                  // Known unreachable.
+      BlockEntry == 3)                    // Found a loop.
+    return false;
+  
+  // If BlockEntry is 0, this is the first time we've seen this block.  Mark it
+  // as being visited and recurse up predecessors.
+  BlockEntry = 3;
+  
+  for (pred_iterator PI = pred_begin(DestBB), E = pred_end(DestBB); PI != E;
+       ++PI) {
+    if (BlockIsReachableFrom(StartBB, *PI, VisitedBlocks)) {
+      VisitedBlocks[DestBB] = 1;
+      return true;
+    }
+  }
+  
+  // If we scanned all of our predecessors and we couldn't find a path to 
+  // StartBB, then this block must be unreachable for sure.  Record this to
+  // prevent visitation of this block in the future.
+  VisitedBlocks[DestBB] = 2;
+  return false;
+}
+
+/// RemoveUnreachableUsersOf - For each user of Inst, scan up the CFG until we
+/// find Inst.  If Inst is found, then the user is live, otherwise it is dead.
+/// Remove dead users.  This is basically a poor-man's dominance query, and is
+/// worst-case linear time in the number of blocks in the function.
+static void RemoveUnreachableUsersOf(Instruction *Inst) {
+  DenseMap<BasicBlock*, unsigned> VisitedBlocks;
+  
+  BasicBlock *InstBB = Inst->getParent();
+  for (Instruction::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
+       UI != E;) {
+    Instruction *User = cast<Instruction>(*UI);
+    Use &TheUse = UI.getUse();
+    
+    if (PHINode *PN = dyn_cast<PHINode>(User)) {
+      unsigned UseOp = UI.getOperandNo();
+      ++UI;
+      
+      if (BlockIsReachableFrom(InstBB, PN->getIncomingBlock(UseOp/2),
+                               VisitedBlocks))
+        continue;
+    } else {
+      ++UI;
+      if (BlockIsReachableFrom(InstBB, User->getParent(),
+                               VisitedBlocks))
+        continue;
+    }
+    // If there is no path from Inst to this User, then this user is in dead
+    // code.  Just replace uses of Inst with undef.
+    TheUse = UndefValue::get(Inst->getType());
+  }
+}
+
+
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB contains an unconditional
 /// branch to Succ, and contains no instructions other than PHI nodes and the
 /// branch.  If possible, eliminate BB.
@@ -216,12 +285,18 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
   }
   
   if (isa<PHINode>(&BB->front())) {
-    SmallVector<BasicBlock*, 16>
-    OldSuccPreds(pred_begin(Succ), pred_end(Succ));
+    SmallVector<BasicBlock*, 16> OldSuccPreds(pred_begin(Succ),
+                                              pred_end(Succ));
     
     // Move all PHI nodes in BB to Succ if they are alive, otherwise
     // delete them.
     while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+      // The algorithm below will not work if there are users of PN that are in
+      // unreachable blocks.  These users will not be properly dominated by the
+      // instruction, but the IR is valid because dead code does not need to
+      // obey dominance properties.
+      RemoveUnreachableUsersOf(PN);
+      
       if (PN->use_empty()) {
         // Just remove the dead phi.  This happens if Succ's PHIs were the only
         // users of the PHI nodes.
