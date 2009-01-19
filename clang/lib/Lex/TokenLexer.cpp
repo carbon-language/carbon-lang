@@ -388,13 +388,21 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     } else {
       PP.IncrementPasteCounter(false);
       
-      // Make a lexer to lex this string from.
+      assert(ResultTokLoc.isFileID() &&
+             "Should be a raw location into scratch buffer");
       SourceManager &SourceMgr = PP.getSourceManager();
-      const char *ResultStrData = SourceMgr.getCharacterData(ResultTokLoc);
+      std::pair<FileID, unsigned> LocInfo =
+        SourceMgr.getDecomposedFileLoc(ResultTokLoc);
+      
+      const char *ScratchBufStart =SourceMgr.getBufferData(LocInfo.first).first;
+      
+      // Make a lexer to lex this string from.  Lex just this one token.
+      const char *ResultStrData = ScratchBufStart+LocInfo.second;
       
       // Make a lexer object so that we lex and expand the paste result.
-      Lexer TL(ResultTokLoc, PP.getLangOptions(), 
-               SourceMgr.getBufferData(ResultTokLoc).first,
+      Lexer TL(SourceMgr.getLocForStartOfFile(LocInfo.first),
+               PP.getLangOptions(), 
+               ScratchBufStart,
                ResultStrData, 
                ResultStrData+LHSLen+RHSLen /*don't include null*/);
       

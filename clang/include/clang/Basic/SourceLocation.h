@@ -64,6 +64,7 @@ private:
 /// an input translation unit.
 class SourceLocation {
   unsigned ID;
+  friend class SourceManager;
 public:
   enum {
     // FileID Layout:
@@ -100,6 +101,7 @@ public:
   bool isValid() const { return ID != 0; }
   bool isInvalid() const { return ID == 0; }
   
+private:
   static SourceLocation getFileLoc(unsigned ChunkID, unsigned FilePos) {
     SourceLocation L;
     // If a FilePos is larger than (1<<FilePosBits), the SourceManager makes
@@ -116,6 +118,7 @@ public:
     L.ID = (ChunkID << FilePosBits) | FilePos;
     return L;
   }
+public:
   
   static bool isValidMacroSpellingOffs(int Val) {
     if (Val >= 0)

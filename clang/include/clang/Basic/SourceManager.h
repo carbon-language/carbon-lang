@@ -324,7 +324,6 @@ public:
     return SourceLocation::getFileLoc(FID.ID, 0);
   }
   
-  
   /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
   /// that a token at Loc should actually be referenced from InstantiationLoc.
   SourceLocation getInstantiationLoc(SourceLocation Loc,

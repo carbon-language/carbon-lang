@@ -93,8 +93,9 @@ public:
   /// Create_PragmaLexer: Lexer constructor - Create a new lexer object for
   /// _Pragma expansion.  This has a variety of magic semantics that this method
   /// sets up.  It returns a new'd Lexer that must be delete'd when done.
-  static Lexer *Create_PragmaLexer(SourceLocation TokStartLoc, unsigned TokLen,
-                                   Preprocessor &PP);
+  static Lexer *Create_PragmaLexer(SourceLocation SpellingLoc, 
+                                   SourceLocation InstantiationLoc,
+                                   unsigned TokLen, Preprocessor &PP);
   
   
   /// getFeatures - Return the language features currently enabled.  NOTE: this

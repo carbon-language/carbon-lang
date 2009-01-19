@@ -150,13 +150,14 @@ Lexer::Lexer(FileID FID, const SourceManager &SM, const LangOptions &features)
 /// interface that could handle this stuff.  This would pull GetMappedTokenLoc
 /// out of the critical path of the lexer!
 ///
-Lexer *Lexer::Create_PragmaLexer(SourceLocation TokStartLoc, unsigned TokLen,
-                                 Preprocessor &PP) {
+Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc, 
+                                 SourceLocation InstantiationLoc,
+                                 unsigned TokLen, Preprocessor &PP) {
   SourceManager &SM = PP.getSourceManager();
-  SourceLocation SpellingLoc = SM.getSpellingLoc(TokStartLoc);
 
   // Create the lexer as if we were going to lex the file normally.
-  Lexer *L = new Lexer(SM.getCanonicalFileID(SpellingLoc), PP);
+  FileID SpellingFID = SM.getCanonicalFileID(SpellingLoc);
+  Lexer *L = new Lexer(SpellingFID, PP);
   
   // Now that the lexer is created, change the start/end locations so that we
   // just lex the subsection of the file that we want.  This is lexing from a
@@ -168,7 +169,8 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation TokStartLoc, unsigned TokLen,
 
   // Set the SourceLocation with the remapping information.  This ensures that
   // GetMappedTokenLoc will remap the tokens as they are lexed.
-  L->FileLoc = TokStartLoc;
+  L->FileLoc = SM.getInstantiationLoc(SM.getLocForStartOfFile(SpellingFID),
+                                      InstantiationLoc);
   
   // Ensure that the lexer thinks it is inside a directive, so that end \n will
   // return an EOM token.
@@ -321,7 +323,7 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
   // characters come from spelling(FileLoc)+Offset.
   SourceLocation InstLoc = SourceMgr.getInstantiationLoc(FileLoc);
   SourceLocation SpellingLoc = SourceMgr.getSpellingLoc(FileLoc);
-  SpellingLoc = SourceLocation::getFileLoc(SpellingLoc.getChunkID(), CharNo);
+  SpellingLoc = SpellingLoc.getFileLocWithOffset(CharNo);
   return SourceMgr.getInstantiationLoc(SpellingLoc, InstLoc);
 }
 
@@ -335,7 +337,7 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
   // the file id from FileLoc with the offset specified.
   unsigned CharNo = Loc-BufferStart;
   if (FileLoc.isFileID())
-    return SourceLocation::getFileLoc(FileLoc.getChunkID(), CharNo);
+    return FileLoc.getFileLocWithOffset(CharNo);
   
   // Otherwise, this is the _Pragma lexer case, which pretends that all of the
   // tokens are lexed from where the _Pragma was defined.
