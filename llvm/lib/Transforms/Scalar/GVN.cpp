@@ -1251,7 +1251,7 @@ Value* GVN::AttemptRedundancyElimination(Instruction* orig, unsigned valno) {
     DenseMap<BasicBlock*, ValueNumberScope*>::iterator LA =
                                                        localAvail.find(Current);
     if (LA == localAvail.end()) return 0;
-    DenseMap<unsigned, Value*>::iterator V = LA->second->table.find(valno);
+    DenseMap<uint32_t, Value*>::iterator V = LA->second->table.find(valno);
     
     if (V != LA->second->table.end()) {
       // Found an instance, record it.

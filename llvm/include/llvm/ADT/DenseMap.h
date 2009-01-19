@@ -44,12 +44,23 @@ struct DenseMapInfo<T*> {
 };
 
 // Provide DenseMapInfo for unsigned ints.
-template<> struct DenseMapInfo<uint32_t> {
-  static inline uint32_t getEmptyKey() { return ~0; }
-  static inline uint32_t getTombstoneKey() { return ~0 - 1; }
-  static unsigned getHashValue(const uint32_t& Val) { return Val * 37; }
+template<> struct DenseMapInfo<unsigned> {
+  static inline unsigned getEmptyKey() { return ~0; }
+  static inline unsigned getTombstoneKey() { return ~0 - 1; }
+  static unsigned getHashValue(const unsigned& Val) { return Val * 37; }
   static bool isPod() { return true; }
-  static bool isEqual(const uint32_t& LHS, const uint32_t& RHS) {
+  static bool isEqual(const unsigned& LHS, const unsigned& RHS) {
+  return LHS == RHS;
+  }
+};
+
+// Provide DenseMapInfo for unsigned longs.
+template<> struct DenseMapInfo<unsigned long> {
+  static inline unsigned long getEmptyKey() { return ~0L; }
+  static inline unsigned long getTombstoneKey() { return ~0L - 1L; }
+  static unsigned getHashValue(const unsigned long& Val) { return Val * 37L; }
+  static bool isPod() { return true; }
+  static bool isEqual(const unsigned long& LHS, const unsigned long& RHS) {
   return LHS == RHS;
   }
 };
