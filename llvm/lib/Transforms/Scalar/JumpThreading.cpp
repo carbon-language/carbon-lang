@@ -419,6 +419,11 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
 /// switches out of repeated 'if' conditions.
 bool JumpThreading::ProcessSwitchOnDuplicateCond(BasicBlock *PredBB,
                                                  BasicBlock *DestBB) {
+  // Can't thread edge to self.
+  if (PredBB == DestBB)
+    return false;
+  
+  
   SwitchInst *PredSI = cast<SwitchInst>(PredBB->getTerminator());
   SwitchInst *DestSI = cast<SwitchInst>(DestBB->getTerminator());
 
