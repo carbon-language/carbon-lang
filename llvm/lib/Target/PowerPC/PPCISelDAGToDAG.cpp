@@ -1114,8 +1114,8 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
           N2.getOperand(1).getOpcode() == PPCISD::Lo)
         N2 = N2.getOperand(0).getOperand(1).getOperand(0);
       else if (N2.getOperand(0).getOpcode() == ISD::ADD &&
-               N2.getOperand(0).getOperand(0).getOpcode() == PPCISD::GlobalBaseReg &&
-               N2.getOperand(0).getOperand(1).getOpcode() == PPCISD::Lo &&
+          N2.getOperand(0).getOperand(0).getOpcode() == PPCISD::GlobalBaseReg &&
+          N2.getOperand(0).getOperand(1).getOpcode() == PPCISD::Lo &&
                N2.getOperand(1).getOpcode() == PPCISD::Hi)
         N2 = N2.getOperand(0).getOperand(1).getOperand(0);
       else if (N2.getOperand(0).getOpcode() == PPCISD::Hi &&
