@@ -542,42 +542,45 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
-  
-    virtual ExprResult ActOnCompoundLiteral(SourceLocation LParen, TypeTy *Ty,
-                                            SourceLocation RParen, ExprTy *Op) {
+
+    virtual OwningExprResult ActOnCompoundLiteral(SourceLocation LParen,
+                                                  TypeTy *Ty,
+                                                  SourceLocation RParen,
+                                                  ExprArg Op) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-    virtual ExprResult ActOnInitList(SourceLocation LParenLoc,
-                                     ExprTy **InitList, unsigned NumInit,
-                                     InitListDesignations &Designators,
-                                     SourceLocation RParenLoc) {
+    virtual OwningExprResult ActOnInitList(SourceLocation LParenLoc,
+                                           MultiExprArg InitList,
+                                           InitListDesignations &Designators,
+                                           SourceLocation RParenLoc) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-    virtual ExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
-                                     SourceLocation RParenLoc, ExprTy *Op) {
+    virtual OwningExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+                                           SourceLocation RParenLoc,ExprArg Op){
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-  
-    virtual ExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc, 
-                                  tok::TokenKind Kind,
-                                  ExprTy *LHS, ExprTy *RHS) {
+
+    virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
+                                        tok::TokenKind Kind,
+                                        ExprArg LHS, ExprArg RHS) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
 
     /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
     /// in the case of a the GNU conditional expr extension.
-    virtual ExprResult ActOnConditionalOp(SourceLocation QuestionLoc, 
-                                          SourceLocation ColonLoc,
-                                          ExprTy *Cond, ExprTy *LHS, ExprTy *RHS){
+    virtual OwningExprResult ActOnConditionalOp(SourceLocation QuestionLoc,
+                                                SourceLocation ColonLoc,
+                                                ExprArg Cond, ExprArg LHS,
+                                                ExprArg RHS) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-  
-    //===---------------------- GNU Extension Expressions -------------------===//
+
+    //===--------------------- GNU Extension Expressions ------------------===//
 
     virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
                                       IdentifierInfo *LabelII) { // "&&foo"

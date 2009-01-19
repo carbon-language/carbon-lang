@@ -1896,50 +1896,52 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   return Owned(TheCall.take());
 }
 
-Action::ExprResult Sema::
-ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
-                     SourceLocation RParenLoc, ExprTy *InitExpr) {
+Action::OwningExprResult
+Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
+                           SourceLocation RParenLoc, ExprArg InitExpr) {
   assert((Ty != 0) && "ActOnCompoundLiteral(): missing type");
   QualType literalType = QualType::getFromOpaquePtr(Ty);
   // FIXME: put back this assert when initializers are worked out.
   //assert((InitExpr != 0) && "ActOnCompoundLiteral(): missing expression");
-  Expr *literalExpr = static_cast<Expr*>(InitExpr);
+  Expr *literalExpr = static_cast<Expr*>(InitExpr.get());
 
   if (literalType->isArrayType()) {
     if (literalType->isVariableArrayType())
-      return Diag(LParenLoc, diag::err_variable_object_no_init)
-        << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd());
+      return ExprError(Diag(LParenLoc, diag::err_variable_object_no_init)
+        << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd()));
   } else if (DiagnoseIncompleteType(LParenLoc, literalType,
                                     diag::err_typecheck_decl_incomplete_type,
                 SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd())))
-    return true;
+    return ExprError();
 
-  if (CheckInitializerTypes(literalExpr, literalType, LParenLoc, 
+  if (CheckInitializerTypes(literalExpr, literalType, LParenLoc,
                             DeclarationName(), /*FIXME:DirectInit=*/false))
-    return true;
+    return ExprError();
 
   bool isFileScope = getCurFunctionOrMethodDecl() == 0;
   if (isFileScope) { // 6.5.2.5p3
     if (CheckForConstantInitializer(literalExpr, literalType))
-      return true;
+      return ExprError();
   }
-  return new CompoundLiteralExpr(LParenLoc, literalType, literalExpr,
-                                 isFileScope);
+  InitExpr.release();
+  return Owned(new CompoundLiteralExpr(LParenLoc, literalType, literalExpr,
+                                       isFileScope));
 }
 
-Action::ExprResult Sema::
-ActOnInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
-              InitListDesignations &Designators,
-              SourceLocation RBraceLoc) {
-  Expr **InitList = reinterpret_cast<Expr**>(initlist);
+Action::OwningExprResult
+Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
+                    InitListDesignations &Designators,
+                    SourceLocation RBraceLoc) {
+  unsigned NumInit = initlist.size();
+  Expr **InitList = reinterpret_cast<Expr**>(initlist.release());
 
   // Semantic analysis for initializers is done by ActOnDeclarator() and
   // CheckInitializer() - it requires knowledge of the object being intialized. 
-  
+
   InitListExpr *E = new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc,
                                      Designators.hasAnyDesignators());
   E->setType(Context.VoidTy); // FIXME: just a place holder for now.
-  return E;
+  return Owned(E);
 }
 
 /// CheckCastTypes - Check type constraints for casting between types.
@@ -2013,17 +2015,19 @@ bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
   return false;
 }
 
-Action::ExprResult Sema::
-ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
-              SourceLocation RParenLoc, ExprTy *Op) {
-  assert((Ty != 0) && (Op != 0) && "ActOnCastExpr(): missing type or expr");
+Action::OwningExprResult
+Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+                    SourceLocation RParenLoc, ExprArg Op) {
+  assert((Ty != 0) && (Op.get() != 0) &&
+         "ActOnCastExpr(): missing type or expr");
 
-  Expr *castExpr = static_cast<Expr*>(Op);
+  Expr *castExpr = static_cast<Expr*>(Op.release());
   QualType castType = QualType::getFromOpaquePtr(Ty);
 
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr))
-    return true;
-  return new CStyleCastExpr(castType, castExpr, castType, LParenLoc, RParenLoc);
+    return ExprError();
+  return Owned(new CStyleCastExpr(castType, castExpr, castType,
+                                  LParenLoc, RParenLoc));
 }
 
 /// Note that lex is not null here, even if this is the gnu "x ?: y" extension.
@@ -2221,25 +2225,29 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
 
 /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
 /// in the case of a the GNU conditional expr extension.
-Action::ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc, 
-                                            SourceLocation ColonLoc,
-                                            ExprTy *Cond, ExprTy *LHS,
-                                            ExprTy *RHS) {
-  Expr *CondExpr = (Expr *) Cond;
-  Expr *LHSExpr = (Expr *) LHS, *RHSExpr = (Expr *) RHS;
+Action::OwningExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
+                                                  SourceLocation ColonLoc,
+                                                  ExprArg Cond, ExprArg LHS,
+                                                  ExprArg RHS) {
+  Expr *CondExpr = (Expr *) Cond.get();
+  Expr *LHSExpr = (Expr *) LHS.get(), *RHSExpr = (Expr *) RHS.get();
 
   // If this is the gnu "x ?: y" extension, analyze the types as though the LHS
   // was the condition.
   bool isLHSNull = LHSExpr == 0;
   if (isLHSNull)
     LHSExpr = CondExpr;
-  
-  QualType result = CheckConditionalOperands(CondExpr, LHSExpr, 
+
+  QualType result = CheckConditionalOperands(CondExpr, LHSExpr,
                                              RHSExpr, QuestionLoc);
   if (result.isNull())
-    return true;
-  return new ConditionalOperator(CondExpr, isLHSNull ? 0 : LHSExpr,
-                                 RHSExpr, result);
+    return ExprError();
+
+  Cond.release();
+  LHS.release();
+  RHS.release();
+  return Owned(new ConditionalOperator(CondExpr, isLHSNull ? 0 : LHSExpr,
+                                       RHSExpr, result));
 }
 
 
@@ -3420,9 +3428,9 @@ static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
 /// CreateBuiltinBinOp - Creates a new built-in binary operation with
 /// operator @p Opc at location @c TokLoc. This routine only supports
 /// built-in operations; ActOnBinOp handles overloaded operators.
-Action::ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc, 
-                                            unsigned Op,
-                                            Expr *lhs, Expr *rhs) {
+Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
+                                                  unsigned Op,
+                                                  Expr *lhs, Expr *rhs) {
   QualType ResultTy;  // Result type of the binary operator.
   QualType CompTy;    // Computation type for compound assignments (e.g. '+=')
   BinaryOperator::Opcode Opc = (BinaryOperator::Opcode)Op;
@@ -3508,19 +3516,20 @@ Action::ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     break;
   }
   if (ResultTy.isNull())
-    return true;
+    return ExprError();
   if (CompTy.isNull())
-    return new BinaryOperator(lhs, rhs, Opc, ResultTy, OpLoc);
+    return Owned(new BinaryOperator(lhs, rhs, Opc, ResultTy, OpLoc));
   else
-    return new CompoundAssignOperator(lhs, rhs, Opc, ResultTy, CompTy, OpLoc);  
+    return Owned(new CompoundAssignOperator(lhs, rhs, Opc, ResultTy,
+                                            CompTy, OpLoc));
 }
 
 // Binary Operators.  'Tok' is the token for the operator.
-Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc, 
-                                    tok::TokenKind Kind, 
-                                    ExprTy *LHS, ExprTy *RHS) {
+Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
+                                          tok::TokenKind Kind,
+                                          ExprArg LHS, ExprArg RHS) {
   BinaryOperator::Opcode Opc = ConvertTokenKindToBinaryOpcode(Kind);
-  Expr *lhs = (Expr *)LHS, *rhs = (Expr*)RHS;
+  Expr *lhs = (Expr *)LHS.release(), *rhs = (Expr*)RHS.release();
 
   assert((lhs != 0) && "ActOnBinOp(): missing left expression");
   assert((rhs != 0) && "ActOnBinOp(): missing right expression");
@@ -3530,10 +3539,12 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
   // lookup for operator+.
   if (lhs->isTypeDependent() || rhs->isTypeDependent()) {
     if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign)
-      return new CompoundAssignOperator(lhs, rhs, Opc, Context.DependentTy, 
-                                        Context.DependentTy, TokLoc);
+      return Owned(new CompoundAssignOperator(lhs, rhs, Opc,
+                                              Context.DependentTy,
+                                              Context.DependentTy, TokLoc));
     else
-      return new BinaryOperator(lhs, rhs, Opc, Context.DependentTy, TokLoc);
+      return Owned(new BinaryOperator(lhs, rhs, Opc, Context.DependentTy,
+                                      TokLoc));
   }
 
   if (getLangOptions().CPlusPlus &&
@@ -3546,7 +3557,7 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
         !(lhs->getType()->isRecordType() || lhs->getType()->isEnumeralType())) {
       return CreateBuiltinBinOp(TokLoc, Opc, lhs, rhs);
     }
-    
+
     // Determine which overloaded operator we're dealing with.
     static const OverloadedOperatorKind OverOps[] = {
       OO_Star, OO_Slash, OO_Percent,
@@ -3591,27 +3602,27 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
           if (PerformObjectArgumentInitialization(lhs, Method) ||
               PerformCopyInitialization(rhs, FnDecl->getParamDecl(0)->getType(),
                                         "passing"))
-            return true;
+            return ExprError();
         } else {
           // Convert the arguments.
           if (PerformCopyInitialization(lhs, FnDecl->getParamDecl(0)->getType(),
                                         "passing") ||
               PerformCopyInitialization(rhs, FnDecl->getParamDecl(1)->getType(),
                                         "passing"))
-            return true;
+            return ExprError();
         }
 
         // Determine the result type
-        QualType ResultTy 
+        QualType ResultTy
           = FnDecl->getType()->getAsFunctionType()->getResultType();
         ResultTy = ResultTy.getNonReferenceType();
-        
+
         // Build the actual expression node.
-        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(), 
+        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(),
                                        SourceLocation());
         UsualUnaryConversions(FnExpr);
 
-        return new CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, TokLoc);
+        return Owned(new CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy,TokLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
@@ -3620,10 +3631,10 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                       Best->Conversions[0], "passing") ||
             PerformImplicitConversion(rhs, Best->BuiltinTypes.ParamTypes[1],
                                       Best->Conversions[1], "passing"))
-          return true;
+          return ExprError();
 
         break;
-      } 
+      }
     }
 
     case OR_No_Viable_Function:
@@ -3636,14 +3647,14 @@ Action::ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
           << BinaryOperator::getOpcodeStr(Opc)
           << lhs->getSourceRange() << rhs->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-      return true;
+      return ExprError();
     }
 
     // Either we found no viable overloaded operator or we matched a
     // built-in operator. In either case, fall through to trying to
     // build a built-in operation.
-  } 
-  
+  }
+
   // Build a built-in binary operation.
   return CreateBuiltinBinOp(TokLoc, Opc, lhs, rhs);
 }

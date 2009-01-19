@@ -253,8 +253,8 @@ Parser::OwningExprResult Parser::ParseBraceInitializer() {
   if (Tok.is(tok::r_brace)) {
     Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
     // Match the '}'.
-    return Owned(Actions.ActOnInitList(LBraceLoc, 0, 0, InitExprDesignations,
-                                       ConsumeBrace()));
+    return Actions.ActOnInitList(LBraceLoc, Action::MultiExprArg(Actions),
+                                 InitExprDesignations, ConsumeBrace());
   }
 
   bool InitExprsOk = true;
@@ -309,9 +309,8 @@ Parser::OwningExprResult Parser::ParseBraceInitializer() {
     if (Tok.is(tok::r_brace)) break;
   }
   if (InitExprsOk && Tok.is(tok::r_brace))
-    return Owned(Actions.ActOnInitList(LBraceLoc, InitExprs.take(),
-                                       InitExprs.size(),
-                                       InitExprDesignations, ConsumeBrace()));
+    return Actions.ActOnInitList(LBraceLoc, move_arg(InitExprs),
+                                 InitExprDesignations, ConsumeBrace());
 
   // Match the '}'.
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);

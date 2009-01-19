@@ -315,12 +315,12 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
       // Combine the LHS and RHS into the LHS (e.g. build AST).
       if (TernaryMiddle.isInvalid())
         LHS = Actions.ActOnBinOp(CurScope, OpToken.getLocation(),
-                                 OpToken.getKind(), LHS.release(),
-                                 RHS.release());
+                                 OpToken.getKind(), move_arg(LHS),
+                                 move_arg(RHS));
       else
         LHS = Actions.ActOnConditionalOp(OpToken.getLocation(), ColonLoc,
-                                         LHS.release(), TernaryMiddle.release(),
-                                         RHS.release());
+                                         move_arg(LHS), move_arg(TernaryMiddle),
+                                         move_arg(RHS));
     }
   }
 }
@@ -472,7 +472,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       Res = ParseCastExpression(false);
       if (!Res.isInvalid())
         Res = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc,
-                                    Res.release());
+                                    move_arg(Res));
       return move(Res);
     }
 
@@ -1097,11 +1097,11 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
       Result = ParseInitializer();
       ExprType = CompoundLiteral;
       if (!Result.isInvalid())
-        return Owned(Actions.ActOnCompoundLiteral(OpenLoc, Ty, RParenLoc,
-                                                  Result.release()));
+        return Actions.ActOnCompoundLiteral(OpenLoc, Ty, RParenLoc,
+                                            move_arg(Result));
       return move(Result);
     }
-    
+
     if (ExprType == CastExpr) {
       // Note that this doesn't parse the subsequence cast-expression, it just
       // returns the parsed type to the callee.
@@ -1109,7 +1109,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
       CastTy = Ty;
       return OwningExprResult(Actions);
     }
-    
+
     Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
     return ExprError();
   } else {

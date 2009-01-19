@@ -255,7 +255,7 @@ public:
   OwningStmtResult Owned(Stmt* S) { return OwningStmtResult(*this, S); }
 
   virtual void ActOnEndOfTranslationUnit();
-  
+
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
@@ -310,7 +310,7 @@ public:
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, DeclTy *D);
   virtual void ObjCActOnStartOfMethodDef(Scope *S, DeclTy *D);
-  
+
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body);
   virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
 
@@ -1029,29 +1029,31 @@ public:
                                          SourceLocation *CommaLocs,
                                          SourceLocation RParenLoc);
 
-  virtual ExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
-                                   SourceLocation RParenLoc, ExprTy *Op);
-                                   
-  virtual ExprResult ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
-                                          SourceLocation RParenLoc, ExprTy *Op);
-  
-  virtual ExprResult ActOnInitList(SourceLocation LParenLoc, 
-                                   ExprTy **InitList, unsigned NumInit,
-                                   InitListDesignations &Designators,
-                                   SourceLocation RParenLoc);
-                                   
-  virtual ExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc, 
-                                tok::TokenKind Kind,
-                                ExprTy *LHS,ExprTy *RHS);
-  ExprResult CreateBuiltinBinOp(SourceLocation TokLoc, 
-                                unsigned Opc,
-                                Expr *lhs, Expr *rhs);
+  virtual OwningExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+                                         SourceLocation RParenLoc, ExprArg Op);
+
+  virtual OwningExprResult ActOnCompoundLiteral(SourceLocation LParenLoc,
+                                                TypeTy *Ty,
+                                                SourceLocation RParenLoc,
+                                                ExprArg Op);
+
+  virtual OwningExprResult ActOnInitList(SourceLocation LParenLoc,
+                                         MultiExprArg InitList,
+                                         InitListDesignations &Designators,
+                                         SourceLocation RParenLoc);
+
+  virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
+                                      tok::TokenKind Kind,
+                                      ExprArg LHS, ExprArg RHS);
+  OwningExprResult CreateBuiltinBinOp(SourceLocation TokLoc,
+                                      unsigned Opc, Expr *lhs, Expr *rhs);
 
   /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.
-  virtual ExprResult ActOnConditionalOp(SourceLocation QuestionLoc, 
-                                        SourceLocation ColonLoc,
-                                        ExprTy *Cond, ExprTy *LHS, ExprTy *RHS);
+  virtual OwningExprResult ActOnConditionalOp(SourceLocation QuestionLoc,
+                                              SourceLocation ColonLoc,
+                                              ExprArg Cond, ExprArg LHS,
+                                              ExprArg RHS);
 
   /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
   virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,

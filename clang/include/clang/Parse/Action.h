@@ -629,35 +629,38 @@ public:
     return ExprEmpty();
   }
 
-  virtual ExprResult ActOnCompoundLiteral(SourceLocation LParen, TypeTy *Ty,
-                                          SourceLocation RParen, ExprTy *Op) {
-    return 0;
+  virtual OwningExprResult ActOnCompoundLiteral(SourceLocation LParen,
+                                                TypeTy *Ty,
+                                                SourceLocation RParen,
+                                                ExprArg Op) {
+    return ExprEmpty();
   }
-  virtual ExprResult ActOnInitList(SourceLocation LParenLoc,
-                                   ExprTy **InitList, unsigned NumInit,
-                                   InitListDesignations &Designators,
-                                   SourceLocation RParenLoc) {
-    return 0;
+  virtual OwningExprResult ActOnInitList(SourceLocation LParenLoc,
+                                         MultiExprArg InitList,
+                                         InitListDesignations &Designators,
+                                         SourceLocation RParenLoc) {
+    return ExprEmpty();
   }
-  virtual ExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
-                                   SourceLocation RParenLoc, ExprTy *Op) {
-    return 0;
+  virtual OwningExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+                                         SourceLocation RParenLoc, ExprArg Op) {
+    return ExprEmpty();
   }
-  
-  virtual ExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc, 
-                                tok::TokenKind Kind,
-                                ExprTy *LHS, ExprTy *RHS) {
-    return 0;
+
+  virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
+                                      tok::TokenKind Kind,
+                                      ExprArg LHS, ExprArg RHS) {
+    return ExprEmpty();
   }
 
   /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.
-  virtual ExprResult ActOnConditionalOp(SourceLocation QuestionLoc, 
-                                        SourceLocation ColonLoc,
-                                        ExprTy *Cond, ExprTy *LHS, ExprTy *RHS){
-    return 0;
+  virtual OwningExprResult ActOnConditionalOp(SourceLocation QuestionLoc,
+                                              SourceLocation ColonLoc,
+                                              ExprArg Cond, ExprArg LHS,
+                                              ExprArg RHS) {
+    return ExprEmpty();
   }
-  
+
   //===---------------------- GNU Extension Expressions -------------------===//
 
   virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
