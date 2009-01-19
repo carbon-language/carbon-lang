@@ -286,7 +286,7 @@ public:
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
   FileID createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
-                        SrcMgr::CharacteristicKind FileCharacter) {
+                      SrcMgr::CharacteristicKind FileCharacter) {
     const SrcMgr::ContentCache *IR = getContentCache(SourceFile);
     if (IR == 0) return FileID();    // Error opening file?
     return createFileID(IR, IncludePos, FileCharacter);
@@ -294,8 +294,7 @@ public:
   
   /// createMainFileID - Create the FileID for the main source file.
   FileID createMainFileID(const FileEntry *SourceFile,
-                            SourceLocation IncludePos) {
-    
+                          SourceLocation IncludePos) {
     assert(MainFileID.isInvalid() && "MainFileID already set!");
     MainFileID = createFileID(SourceFile, IncludePos, SrcMgr::C_User);
     return MainFileID;
@@ -334,11 +333,6 @@ public:
   const llvm::MemoryBuffer *getBuffer(FileID FID) const {
     return getContentCache(FID)->getBuffer();
   }
-  
-  const llvm::MemoryBuffer *getBuffer(SourceLocation Loc) const {
-    return getContentCacheForLoc(Loc)->getBuffer();
-  }
-  
   
   /// getBufferData - Return a pointer to the start and end of the character
   /// data for the specified FileID.

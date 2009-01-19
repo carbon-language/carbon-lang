@@ -184,7 +184,7 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation SpellingLoc,
 /// data for the specified location.
 std::pair<const char*, const char*> 
 SourceManager::getBufferData(SourceLocation Loc) const {
-  const llvm::MemoryBuffer *Buf = getBuffer(Loc);
+  const llvm::MemoryBuffer *Buf = getBuffer(getCanonicalFileID(Loc));
   return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
 }
 

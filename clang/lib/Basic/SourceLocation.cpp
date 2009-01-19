@@ -111,7 +111,7 @@ const char *FullSourceLoc::getCharacterData() const {
 
 const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
   assert(isValid());
-  return SrcMgr->getBuffer(*this);
+  return SrcMgr->getBuffer(SrcMgr->getCanonicalFileID(*this));
 }
 
 void FullSourceLoc::dump() const {
