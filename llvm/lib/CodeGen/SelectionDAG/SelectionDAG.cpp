@@ -557,14 +557,7 @@ void SelectionDAG::RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes,
         DeadNodes.push_back(Operand);
     }
 
-    if (N->OperandsNeedDelete)
-      delete[] N->OperandList;
-
-    N->OperandList = 0;
-    N->NumOperands = 0;
-    
-    // Finally, remove N itself.
-    NodeAllocator.Deallocate(AllNodes.remove(N));
+    DeallocateNode(N);
   }
 }
 
@@ -585,16 +578,23 @@ void SelectionDAG::DeleteNode(SDNode *N) {
 }
 
 void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
+  assert(N != AllNodes.begin());
+
   // Drop all of the operands and decrement used node's use counts.
   for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
     I->getVal()->removeUser(std::distance(N->op_begin(), I), N);
 
-  if (N->OperandsNeedDelete) {
+  DeallocateNode(N);
+}
+
+void SelectionDAG::DeallocateNode(SDNode *N) {
+  if (N->OperandsNeedDelete)
     delete[] N->OperandList;
-    N->OperandList = 0;
-  }
   
-  assert(N != AllNodes.begin());
+  // Set the opcode to DELETED_NODE to help catch bugs when node
+  // memory is reallocated.
+  N->NodeType = ISD::DELETED_NODE;
+
   NodeAllocator.Deallocate(AllNodes.remove(N));
 }
 
@@ -786,17 +786,8 @@ SelectionDAG::~SelectionDAG() {
 void SelectionDAG::allnodes_clear() {
   assert(&*AllNodes.begin() == &EntryNode);
   AllNodes.remove(AllNodes.begin());
-  while (!AllNodes.empty()) {
-    SDNode *N = AllNodes.remove(AllNodes.begin());
-    N->SetNextInBucket(0);
-
-    if (N->OperandsNeedDelete) {
-      delete [] N->OperandList;
-      N->OperandList = 0;
-    }
-
-    NodeAllocator.Deallocate(N);
-  }
+  while (!AllNodes.empty())
+    DeallocateNode(AllNodes.begin());
 }
 
 void SelectionDAG::clear() {
@@ -4736,36 +4727,6 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
 //===----------------------------------------------------------------------===//
 //                              SDNode Class
 //===----------------------------------------------------------------------===//
-
-// Out-of-line virtual method to give class a home.
-void SDNode::ANCHOR() {}
-void UnarySDNode::ANCHOR() {}
-void BinarySDNode::ANCHOR() {}
-void TernarySDNode::ANCHOR() {}
-void HandleSDNode::ANCHOR() {}
-void ConstantSDNode::ANCHOR() {}
-void ConstantFPSDNode::ANCHOR() {}
-void GlobalAddressSDNode::ANCHOR() {}
-void FrameIndexSDNode::ANCHOR() {}
-void JumpTableSDNode::ANCHOR() {}
-void ConstantPoolSDNode::ANCHOR() {}
-void BasicBlockSDNode::ANCHOR() {}
-void SrcValueSDNode::ANCHOR() {}
-void MemOperandSDNode::ANCHOR() {}
-void RegisterSDNode::ANCHOR() {}
-void DbgStopPointSDNode::ANCHOR() {}
-void LabelSDNode::ANCHOR() {}
-void ExternalSymbolSDNode::ANCHOR() {}
-void CondCodeSDNode::ANCHOR() {}
-void ARG_FLAGSSDNode::ANCHOR() {}
-void VTSDNode::ANCHOR() {}
-void MemSDNode::ANCHOR() {}
-void LoadSDNode::ANCHOR() {}
-void StoreSDNode::ANCHOR() {}
-void AtomicSDNode::ANCHOR() {}
-void MemIntrinsicSDNode::ANCHOR() {}
-void CallSDNode::ANCHOR() {}
-void CvtRndSatSDNode::ANCHOR() {}
 
 HandleSDNode::~HandleSDNode() {
   DropOperands();

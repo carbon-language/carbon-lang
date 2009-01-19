@@ -800,6 +800,7 @@ private:
                                void *&InsertPos);
 
   void DeleteNodeNotInCSEMaps(SDNode *N);
+  void DeallocateNode(SDNode *N);
 
   unsigned getMVTAlignment(MVT MemoryVT) const;
 

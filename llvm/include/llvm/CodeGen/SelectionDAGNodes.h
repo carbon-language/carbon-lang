@@ -1119,14 +1119,7 @@ private:
   /// addUse - add SDUse to the list of uses.
   void addUse(SDUse &U) { U.addToList(&Uses); }
 
-  // Out-of-line virtual method to give class a home.
-  virtual void ANCHOR();
 public:
-  virtual ~SDNode() {
-    assert(NumOperands == 0 && "Operand list not cleared before deletion");
-    NodeType = ISD::DELETED_NODE;
-  }
-  
   //===--------------------------------------------------------------------===//
   //  Accessors
   //
@@ -1470,7 +1463,6 @@ inline bool SDValue::hasOneUse() const {
 /// UnarySDNode - This class is used for single-operand SDNodes.  This is solely
 /// to allow co-allocation of node operands with the node itself.
 class UnarySDNode : public SDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   SDUse Op;
 public:
   UnarySDNode(unsigned Opc, SDVTList VTs, SDValue X)
@@ -1483,7 +1475,6 @@ public:
 /// BinarySDNode - This class is used for two-operand SDNodes.  This is solely
 /// to allow co-allocation of node operands with the node itself.
 class BinarySDNode : public SDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   SDUse Ops[2];
 public:
   BinarySDNode(unsigned Opc, SDVTList VTs, SDValue X, SDValue Y)
@@ -1497,7 +1488,6 @@ public:
 /// TernarySDNode - This class is used for three-operand SDNodes. This is solely
 /// to allow co-allocation of node operands with the node itself.
 class TernarySDNode : public SDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   SDUse Ops[3];
 public:
   TernarySDNode(unsigned Opc, SDVTList VTs, SDValue X, SDValue Y,
@@ -1516,7 +1506,6 @@ public:
 /// operand.  This node should be directly created by end-users and not added to
 /// the AllNodes list.
 class HandleSDNode : public SDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   SDUse Op;
 public:
   // FIXME: Remove the "noinline" attribute once <rdar://problem/5852746> is
@@ -1536,8 +1525,6 @@ public:
 
 /// Abstact virtual class for operations for memory operations
 class MemSDNode : public SDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-
 private:
   // MemoryVT - VT of in-memory value.
   MVT MemoryVT;
@@ -1613,10 +1600,9 @@ public:
 /// AtomicSDNode - A SDNode reprenting atomic operations.
 ///
 class AtomicSDNode : public MemSDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   SDUse Ops[4];
   
- public:
+public:
   // Opc:   opcode for atomic
   // VTL:    value type list
   // Chain:  memory chain for operaand
@@ -1678,7 +1664,6 @@ class AtomicSDNode : public MemSDNode {
 /// memory and need an associated memory operand.
 ///
 class MemIntrinsicSDNode : public MemSDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.  
   bool ReadMem;  // Intrinsic reads memory
   bool WriteMem; // Intrinsic writes memory
 public:
@@ -1706,7 +1691,6 @@ public:
 
 class ConstantSDNode : public SDNode {
   const ConstantInt *Value;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   ConstantSDNode(bool isTarget, const ConstantInt *val, MVT VT)
@@ -1732,7 +1716,6 @@ public:
 
 class ConstantFPSDNode : public SDNode {
   const ConstantFP *Value;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   ConstantFPSDNode(bool isTarget, const ConstantFP *val, MVT VT)
@@ -1776,7 +1759,6 @@ public:
 class GlobalAddressSDNode : public SDNode {
   GlobalValue *TheGlobal;
   int64_t Offset;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT VT,
@@ -1797,7 +1779,6 @@ public:
 
 class FrameIndexSDNode : public SDNode {
   int FI;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   FrameIndexSDNode(int fi, MVT VT, bool isTarg)
@@ -1817,7 +1798,6 @@ public:
 
 class JumpTableSDNode : public SDNode {
   int JTI;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   JumpTableSDNode(int jti, MVT VT, bool isTarg)
@@ -1842,7 +1822,6 @@ class ConstantPoolSDNode : public SDNode {
   } Val;
   int Offset;  // It's a MachineConstantPoolValue if top bit is set.
   unsigned Alignment;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   ConstantPoolSDNode(bool isTarget, Constant *c, MVT VT, int o=0)
@@ -1908,7 +1887,6 @@ public:
 
 class BasicBlockSDNode : public SDNode {
   MachineBasicBlock *MBB;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   explicit BasicBlockSDNode(MachineBasicBlock *mbb)
@@ -1934,7 +1912,6 @@ public:
 ///
 class SrcValueSDNode : public SDNode {
   const Value *V;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   /// Create a SrcValue for a general value.
@@ -1957,7 +1934,6 @@ public:
 /// and ISD::STORE have been lowered.
 ///
 class MemOperandSDNode : public SDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   /// Create a MachineMemOperand node
@@ -1977,7 +1953,6 @@ public:
 
 class RegisterSDNode : public SDNode {
   unsigned Reg;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   RegisterSDNode(unsigned reg, MVT VT)
@@ -1998,7 +1973,6 @@ class DbgStopPointSDNode : public SDNode {
   unsigned Line;
   unsigned Column;
   Value *CU;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   DbgStopPointSDNode(SDValue ch, unsigned l, unsigned c,
@@ -2022,7 +1996,6 @@ public:
 class LabelSDNode : public SDNode {
   SDUse Chain;
   unsigned LabelID;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   LabelSDNode(unsigned NodeTy, SDValue ch, unsigned id)
@@ -2042,7 +2015,6 @@ public:
 
 class ExternalSymbolSDNode : public SDNode {
   const char *Symbol;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   ExternalSymbolSDNode(bool isTarget, const char *Sym, MVT VT)
@@ -2062,7 +2034,6 @@ public:
 
 class CondCodeSDNode : public SDNode {
   ISD::CondCode Condition;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   explicit CondCodeSDNode(ISD::CondCode Cond)
@@ -2082,7 +2053,6 @@ public:
 /// future and most targets don't support it.
 class CvtRndSatSDNode : public SDNode {
   ISD::CvtCode CvtCode;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   explicit CvtRndSatSDNode(MVT VT, const SDValue *Ops, unsigned NumOps,
@@ -2187,7 +2157,6 @@ namespace ISD {
 /// ARG_FLAGSSDNode - Leaf node holding parameter flags.
 class ARG_FLAGSSDNode : public SDNode {
   ISD::ArgFlagsTy TheFlags;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   explicit ARG_FLAGSSDNode(ISD::ArgFlagsTy Flags)
@@ -2211,7 +2180,6 @@ class CallSDNode : public SDNode {
   // will expand the size of the representation.  At the moment we only
   // need Inreg.
   bool Inreg;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   CallSDNode(unsigned cc, bool isvararg, bool istailcall, bool isinreg,
@@ -2256,7 +2224,6 @@ public:
 /// to parameterize some operations.
 class VTSDNode : public SDNode {
   MVT ValueType;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   explicit VTSDNode(MVT VT)
@@ -2323,7 +2290,6 @@ public:
 /// LoadSDNode - This class is used to represent ISD::LOAD nodes.
 ///
 class LoadSDNode : public LSBaseSDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   LoadSDNode(SDValue *ChainPtrOff, SDVTList VTs,
@@ -2353,7 +2319,6 @@ public:
 /// StoreSDNode - This class is used to represent ISD::STORE nodes.
 ///
 class StoreSDNode : public LSBaseSDNode {
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   StoreSDNode(SDValue *ChainValuePtrOff, SDVTList VTs,
