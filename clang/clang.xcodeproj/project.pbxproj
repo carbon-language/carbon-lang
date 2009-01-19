@@ -43,6 +43,7 @@
 		355BD0510EBFB040001A9DFF /* PlistDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 355BD0500EBFB040001A9DFF /* PlistDiagnostics.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
+		357EA27D0F2526F300439B60 /* SemaLookup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 357EA27C0F2526F300439B60 /* SemaLookup.cpp */; };
 		3580CC0C0D072E5C00C5E4F4 /* LangOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */; };
 		35839B0B0CDF845F006ED061 /* StmtSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35839B090CDF845F006ED061 /* StmtSerialization.cpp */; };
 		35839B0C0CDF845F006ED061 /* TypeSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */; };
@@ -350,6 +351,7 @@
 		356B89760D9BFDC100CBEBE9 /* BasicObjCFoundationChecks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicObjCFoundationChecks.h; path = lib/Analysis/BasicObjCFoundationChecks.h; sourceTree = "<group>"; };
 		356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = lib/Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
 		35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = SourceLocation.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		357EA27C0F2526F300439B60 /* SemaLookup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaLookup.cpp; path = lib/Sema/SemaLookup.cpp; sourceTree = "<group>"; };
 		3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = LangOptions.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35839B090CDF845F006ED061 /* StmtSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = StmtSerialization.cpp; path = lib/AST/StmtSerialization.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = TypeSerialization.cpp; path = lib/AST/TypeSerialization.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -860,6 +862,7 @@
 		DE67E7070C020EAB00F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
+				357EA27C0F2526F300439B60 /* SemaLookup.cpp */,
 				35585DBD0EAFBC4500D0A97A /* CXXFieldCollector.h */,
 				3527124F0DAFE54700C76352 /* IdentifierResolver.h */,
 				352712500DAFE54700C76352 /* IdentifierResolver.cpp */,
@@ -1361,6 +1364,7 @@
 				353141E70EE5AAE100FBCFCA /* ManagerRegistry.cpp in Sources */,
 				353959D50EE5F88A00E82461 /* ParseTemplate.cpp in Sources */,
 				3591853F0EFB1088000039AF /* SemaTemplate.cpp in Sources */,
+				357EA27D0F2526F300439B60 /* SemaLookup.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
