@@ -118,9 +118,10 @@ void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL,
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks) {
     FileID FID = CurPPLexer->getFileID();
-    SrcMgr::CharacteristicKind FileType = SourceMgr.getFileCharacteristic(FID);
-    Callbacks->FileChanged(SourceMgr.getLocForStartOfFile(FID),
-                           PPCallbacks::EnterFile, FileType);
+    SourceLocation EnterLoc = SourceMgr.getLocForStartOfFile(FID);
+    SrcMgr::CharacteristicKind FileType =
+      SourceMgr.getFileCharacteristic(EnterLoc);
+    Callbacks->FileChanged(EnterLoc, PPCallbacks::EnterFile, FileType);
   }
 }
 
@@ -194,9 +195,9 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     // Notify the client, if desired, that we are in a new source file.
     if (Callbacks && !isEndOfMacro && CurPPLexer) {
       SrcMgr::CharacteristicKind FileType =
-        SourceMgr.getFileCharacteristic(CurPPLexer->getFileID());
-        Callbacks->FileChanged(CurPPLexer->getSourceLocation(),
-                               PPCallbacks::ExitFile, FileType); 
+        SourceMgr.getFileCharacteristic(CurPPLexer->getSourceLocation());
+      Callbacks->FileChanged(CurPPLexer->getSourceLocation(),
+                             PPCallbacks::ExitFile, FileType); 
     }
 
     // Client should lex another token.
