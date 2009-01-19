@@ -984,6 +984,12 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
       return false;
     break;   // These are all cheap and non-trapping instructions.
   }
+  
+  // If the instruction is obviously dead, don't try to predicate it.
+  if (I->use_empty()) {
+    I->eraseFromParent();
+    return true;
+  }
 
   // Can we speculatively execute the instruction? And what is the value 
   // if the condition is false? Consider the phi uses, if the incoming value
@@ -992,20 +998,25 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   BasicBlock *BIParent = BI->getParent();
   SmallVector<PHINode*, 4> PHIUses;
   Value *FalseV = NULL;
+  
+  BasicBlock *BB2 = BB1->getTerminator()->getSuccessor(0);
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
        UI != E; ++UI) {
+    // Ignore any user that is not a PHI node in BB2.  These can only occur in
+    // unreachable blocks, because they would not be dominated by the instr.
     PHINode *PN = dyn_cast<PHINode>(UI);
-    if (!PN)
-      continue;
+    if (!PN || PN->getParent() != BB2)
+      return false;
     PHIUses.push_back(PN);
+    
     Value *PHIV = PN->getIncomingValueForBlock(BIParent);
     if (!FalseV)
       FalseV = PHIV;
     else if (FalseV != PHIV)
-      return false;  // Don't know the value when condition is false.
+      return false;  // Inconsistent value when condition is false.
   }
-  if (!FalseV)  // Can this happen?
-    return false;
+  
+  assert(FalseV && "Must have at least one user, and it must be a PHI");
 
   // Do not hoist the instruction if any of its operands are defined but not
   // used in this BB. The transformation will prevent the operand from
