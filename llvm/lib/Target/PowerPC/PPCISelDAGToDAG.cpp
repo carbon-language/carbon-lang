@@ -1107,10 +1107,21 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N1);
     if (!FINode)
       break;
-    if (N2.getOpcode() == ISD::ADD &&
-        N2.getOperand(0).getOpcode() == PPCISD::Hi &&
-        N2.getOperand(1).getOpcode() == PPCISD::Lo)
-      N2 = N2.getOperand(0).getOperand(0);
+    if (N2.getOpcode() == ISD::ADD) {
+      if (N2.getOperand(0).getOpcode() == ISD::ADD &&
+          N2.getOperand(0).getOperand(0).getOpcode() == PPCISD::GlobalBaseReg &&
+          N2.getOperand(0).getOperand(1).getOpcode() == PPCISD::Hi &&
+          N2.getOperand(1).getOpcode() == PPCISD::Lo)
+        N2 = N2.getOperand(0).getOperand(1).getOperand(0);
+      else if (N2.getOperand(0).getOpcode() == ISD::ADD &&
+               N2.getOperand(0).getOperand(0).getOpcode() == PPCISD::GlobalBaseReg &&
+               N2.getOperand(0).getOperand(1).getOpcode() == PPCISD::Lo &&
+               N2.getOperand(1).getOpcode() == PPCISD::Hi)
+        N2 = N2.getOperand(0).getOperand(1).getOperand(0);
+      else if (N2.getOperand(0).getOpcode() == PPCISD::Hi &&
+               N2.getOperand(1).getOpcode() == PPCISD::Lo)
+        N2 = N2.getOperand(0).getOperand(0);
+    }
     if (!isa<GlobalAddressSDNode>(N2))
       break;
     int FI = cast<FrameIndexSDNode>(N1)->getIndex();
