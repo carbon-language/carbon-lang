@@ -24,52 +24,54 @@ using namespace clang;
 
 /// CheckFunctionCall - Check a direct function call for various correctness
 /// and safety properties not strictly enforced by the C type system.
-Action::ExprResult
-Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
-  llvm::OwningPtr<CallExpr> TheCall(TheCallRaw);
+Action::OwningExprResult
+Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
+  OwningExprResult TheCallResult(Owned(TheCall));
   // Get the IdentifierInfo* for the called function.
   IdentifierInfo *FnInfo = FDecl->getIdentifier();
 
   // None of the checks below are needed for functions that don't have
   // simple names (e.g., C++ conversion functions).
   if (!FnInfo)
-    return TheCall.take();
+    return move(TheCallResult);
 
   switch (FnInfo->getBuiltinID()) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");
     if (CheckBuiltinCFStringArgument(TheCall->getArg(0)))
-      return true;
-    return TheCall.take();
+      return ExprError();
+    return move(TheCallResult);
   case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
-    if (SemaBuiltinVAStart(TheCall.get()))
-      return true;
-    return TheCall.take();
+    if (SemaBuiltinVAStart(TheCall))
+      return ExprError();
+    return move(TheCallResult);
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:
   case Builtin::BI__builtin_isless:
   case Builtin::BI__builtin_islessequal:
   case Builtin::BI__builtin_islessgreater:
   case Builtin::BI__builtin_isunordered:
-    if (SemaBuiltinUnorderedCompare(TheCall.get()))
-      return true;
-    return TheCall.take();
+    if (SemaBuiltinUnorderedCompare(TheCall))
+      return ExprError();
+    return move(TheCallResult);
   case Builtin::BI__builtin_return_address:
   case Builtin::BI__builtin_frame_address:
-    if (SemaBuiltinStackAddress(TheCall.get()))
-      return true;
-    return TheCall.take();
+    if (SemaBuiltinStackAddress(TheCall))
+      return ExprError();
+    return move(TheCallResult);
   case Builtin::BI__builtin_shufflevector:
-    return SemaBuiltinShuffleVector(TheCall.get());
+    return SemaBuiltinShuffleVector(TheCall);
+    // TheCall will be freed by the smart pointer here, but that's fine, since
+    // SemaBuiltinShuffleVector guts it, but then doesn't release it.
   case Builtin::BI__builtin_prefetch:
-    if (SemaBuiltinPrefetch(TheCall.get()))
-      return true;
-    return TheCall.take();
+    if (SemaBuiltinPrefetch(TheCall))
+      return ExprError();
+    return move(TheCallResult);
   case Builtin::BI__builtin_object_size:
-    if (SemaBuiltinObjectSize(TheCall.get()))
-      return true;
+    if (SemaBuiltinObjectSize(TheCall))
+      return ExprError();
   }
 
   // FIXME: This mechanism should be abstracted to be less fragile and
@@ -79,15 +81,15 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
   // Search the KnownFunctionIDs for the identifier.
   unsigned i = 0, e = id_num_known_functions;
   for (; i != e; ++i) { if (KnownFunctionIDs[i] == FnInfo) break; }
-  if (i == e) return TheCall.take();
-  
+  if (i == e) return move(TheCallResult);
+
   // Printf checking.
   if (i <= id_vprintf) {
     // Retrieve the index of the format string parameter and determine
     // if the function is passed a va_arg argument.
     unsigned format_idx = 0;
     bool HasVAListArg = false;
-    
+
     switch (i) {
     default: assert(false && "No format string argument index.");
     case id_NSLog:         format_idx = 0; break;
@@ -106,11 +108,11 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
     case id_vsprintf_chk:  format_idx = 3; HasVAListArg = true; break;
     case id_vprintf:       format_idx = 0; HasVAListArg = true; break;
     }
-    
-    CheckPrintfArguments(TheCall.get(), HasVAListArg, format_idx);       
+
+    CheckPrintfArguments(TheCall, HasVAListArg, format_idx);
   }
-  
-  return TheCall.take();
+
+  return move(TheCallResult);
 }
 
 /// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
@@ -250,10 +252,11 @@ bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
 
 /// SemaBuiltinShuffleVector - Handle __builtin_shufflevector.
 // This is declared to take (...), so we have to check everything.
-Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
+Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 3)
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-      << 0 /*function call*/ << TheCall->getSourceRange();
+    return ExprError(Diag(TheCall->getLocEnd(),
+                          diag::err_typecheck_call_too_few_args)
+      << 0 /*function call*/ << TheCall->getSourceRange());
 
   QualType FAType = TheCall->getArg(0)->getType();
   QualType SAType = TheCall->getArg(1)->getType();
@@ -262,7 +265,7 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector)
       << SourceRange(TheCall->getArg(0)->getLocStart(), 
                      TheCall->getArg(1)->getLocEnd());
-    return true;
+    return ExprError();
   }
 
   if (Context.getCanonicalType(FAType).getUnqualifiedType() !=
@@ -270,29 +273,31 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
       << SourceRange(TheCall->getArg(0)->getLocStart(), 
                      TheCall->getArg(1)->getLocEnd());
-    return true;
+    return ExprError();
   }
 
   unsigned numElements = FAType->getAsVectorType()->getNumElements();
   if (TheCall->getNumArgs() != numElements+2) {
     if (TheCall->getNumArgs() < numElements+2)
-      return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-               << 0 /*function call*/ << TheCall->getSourceRange();
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args)
-             << 0 /*function call*/ << TheCall->getSourceRange();
+      return ExprError(Diag(TheCall->getLocEnd(),
+                            diag::err_typecheck_call_too_few_args)
+               << 0 /*function call*/ << TheCall->getSourceRange());
+    return ExprError(Diag(TheCall->getLocEnd(),
+                          diag::err_typecheck_call_too_many_args)
+             << 0 /*function call*/ << TheCall->getSourceRange());
   }
 
   for (unsigned i = 2; i < TheCall->getNumArgs(); i++) {
     llvm::APSInt Result(32);
     if (!TheCall->getArg(i)->isIntegerConstantExpr(Result, Context))
-      return Diag(TheCall->getLocStart(),
+      return ExprError(Diag(TheCall->getLocStart(),
                   diag::err_shufflevector_nonconstant_argument)
-                << TheCall->getArg(i)->getSourceRange();
-    
+                << TheCall->getArg(i)->getSourceRange());
+
     if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2)
-      return Diag(TheCall->getLocStart(),
+      return ExprError(Diag(TheCall->getLocStart(),
                   diag::err_shufflevector_argument_too_large)
-               << TheCall->getArg(i)->getSourceRange();
+               << TheCall->getArg(i)->getSourceRange());
   }
 
   llvm::SmallVector<Expr*, 32> exprs;
@@ -302,9 +307,9 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     TheCall->setArg(i, 0);
   }
 
-  return new ShuffleVectorExpr(exprs.begin(), numElements+2, FAType,
-                               TheCall->getCallee()->getLocStart(),
-                               TheCall->getRParenLoc());
+  return Owned(new ShuffleVectorExpr(exprs.begin(), numElements+2, FAType,
+                                     TheCall->getCallee()->getLocStart(),
+                                     TheCall->getRParenLoc()));
 }
 
 /// SemaBuiltinPrefetch - Handle __builtin_prefetch.
@@ -1030,12 +1035,12 @@ void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
   }
   
   // Check for comparisons with builtin types.
-  if (EmitWarning)           
+  if (EmitWarning)
     if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
       if (isCallBuiltin(CL))
         EmitWarning = false;
   
-  if (EmitWarning)            
+  if (EmitWarning)
     if (CallExpr* CR = dyn_cast<CallExpr>(RightExprSansParen))
       if (isCallBuiltin(CR))
         EmitWarning = false;

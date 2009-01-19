@@ -3436,7 +3436,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                               RParenLoc))
     return true;
 
-  return CheckFunctionCall(Method, TheCall.take());
+  return CheckFunctionCall(Method, TheCall.take()).release();
 }
 
 /// BuildCallToObjectOfClassType - Build a call to an object of class
@@ -3548,11 +3548,12 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     // object parameter to a function pointer. Perform the conversion
     // on the object argument, then let ActOnCallExpr finish the job.
     // FIXME: Represent the user-defined conversion in the AST!
-    ImpCastExprToType(Object, 
+    ImpCastExprToType(Object,
                       Conv->getConversionType().getNonReferenceType(),
                       Conv->getConversionType()->isReferenceType());
-    return ActOnCallExpr(S, (ExprTy*)Object, LParenLoc, (ExprTy**)Args, NumArgs,
-                         CommaLocs, RParenLoc);
+    return ActOnCallExpr(S, ExprArg(*this, Object), LParenLoc,
+                         MultiExprArg(*this, (ExprTy**)Args, NumArgs),
+                         CommaLocs, RParenLoc).release();
   }
 
   // We found an overloaded operator(). Build a CXXOperatorCallExpr
@@ -3630,7 +3631,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     }
   }
 
-  return CheckFunctionCall(Method, TheCall.take());
+  return CheckFunctionCall(Method, TheCall.take()).release();
 }
 
 /// BuildOverloadedArrowExpr - Build a call to an overloaded @c operator->
@@ -3700,7 +3701,8 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
   Base = new CXXOperatorCallExpr(FnExpr, &Base, 1, 
                                  Method->getResultType().getNonReferenceType(),
                                  OpLoc);
-  return ActOnMemberReferenceExpr(S, Base, OpLoc, tok::arrow, MemberLoc, Member);
+  return ActOnMemberReferenceExpr(S, ExprArg(*this, Base), OpLoc, tok::arrow,
+                                  MemberLoc, Member).release();
 }
 
 /// FixOverloadedFunctionReference - E is an expression that refers to

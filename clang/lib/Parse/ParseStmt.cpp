@@ -391,8 +391,8 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         }
 
         // Add the __extension__ node to the AST.
-        Res = Actions.ActOnUnaryOp(CurScope, ExtLoc, tok::kw___extension__, 
-                                   Res.release());
+        Res = Actions.ActOnUnaryOp(CurScope, ExtLoc, tok::kw___extension__,
+                                   move_arg(Res));
         if (Res.isInvalid())
           continue;
 

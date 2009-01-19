@@ -249,6 +249,9 @@ public:
   virtual void DeleteStmt(StmtTy *S);
 
   OwningExprResult Owned(Expr* E) { return OwningExprResult(*this, E); }
+  OwningExprResult Owned(ExprResult R) {
+    return R.isInvalid ? ExprError() : OwningExprResult(*this, R.Val);
+  }
   OwningStmtResult Owned(Stmt* S) { return OwningStmtResult(*this, S); }
 
   virtual void ActOnEndOfTranslationUnit();
@@ -980,44 +983,47 @@ public:
 
   /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual OwningExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks);
+  virtual OwningExprResult ActOnStringLiteral(const Token *Toks,
+                                              unsigned NumToks);
 
   // Binary/Unary Operators.  'Tok' is the token for the operator.
-  virtual ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc, 
-                                  tok::TokenKind Op, ExprTy *Input);
-  virtual ExprResult 
+  virtual OwningExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
+                                        tok::TokenKind Op, ExprArg Input);
+  virtual OwningExprResult
     ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
                            void *TyOrEx, const SourceRange &ArgRange);
 
   bool CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc,
                                  const SourceRange &R, bool isSizeof);
-  
-  virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
-                                         tok::TokenKind Kind, ExprTy *Input);
-  
-  virtual ExprResult ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, 
-                                             SourceLocation LLoc, ExprTy *Idx,
-                                             SourceLocation RLoc);
-  virtual ExprResult ActOnMemberReferenceExpr(Scope *S, ExprTy *Base,
-                                              SourceLocation OpLoc,
-                                              tok::TokenKind OpKind,
-                                              SourceLocation MemberLoc,
-                                              IdentifierInfo &Member);
-  bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn, 
+
+  virtual OwningExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
+                                               tok::TokenKind Kind,
+                                               ExprArg Input);
+
+  virtual OwningExprResult ActOnArraySubscriptExpr(Scope *S, ExprArg Base,
+                                                   SourceLocation LLoc,
+                                                   ExprArg Idx,
+                                                   SourceLocation RLoc);
+  virtual OwningExprResult ActOnMemberReferenceExpr(Scope *S, ExprArg Base,
+                                                    SourceLocation OpLoc,
+                                                    tok::TokenKind OpKind,
+                                                    SourceLocation MemberLoc,
+                                                    IdentifierInfo &Member);
+  bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                                FunctionDecl *FDecl,
                                const FunctionTypeProto *Proto,
                                Expr **Args, unsigned NumArgs,
                                SourceLocation RParenLoc);
-  
+
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
   /// locations.
-  virtual ExprResult ActOnCallExpr(Scope *S, ExprTy *Fn, 
-                                   SourceLocation LParenLoc,
-                                   ExprTy **Args, unsigned NumArgs,
-                                   SourceLocation *CommaLocs,
-                                   SourceLocation RParenLoc);
-  
+  virtual OwningExprResult ActOnCallExpr(Scope *S, ExprArg Fn,
+                                         SourceLocation LParenLoc,
+                                         MultiExprArg Args,
+                                         SourceLocation *CommaLocs,
+                                         SourceLocation RParenLoc);
+
   virtual ExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                    SourceLocation RParenLoc, ExprTy *Op);
                                    
@@ -1782,16 +1788,17 @@ public:
   /// Returns false on success.
   bool VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
                       QualType FieldTy, const Expr *BitWidth);
-  
+
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
 private:
-  Action::ExprResult CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall);
+  Action::OwningExprResult CheckFunctionCall(FunctionDecl *FDecl,
+                                             CallExpr *TheCall);
   bool CheckBuiltinCFStringArgument(Expr* Arg);
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
   bool SemaBuiltinStackAddress(CallExpr *TheCall);
-  Action::ExprResult SemaBuiltinShuffleVector(CallExpr *TheCall);
+  Action::OwningExprResult SemaBuiltinShuffleVector(CallExpr *TheCall);
   bool SemaBuiltinPrefetch(CallExpr *TheCall); 
   bool SemaBuiltinObjectSize(CallExpr *TheCall); 
   bool SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,

@@ -499,50 +499,48 @@ namespace {
     }
 
     // Postfix Expressions.
-    virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
-                                           tok::TokenKind Kind, ExprTy *Input) {
+    virtual OwningExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
+                                                 tok::TokenKind Kind,
+                                                 ExprArg Input) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-    virtual ExprResult ActOnArraySubscriptExpr(Scope *S, ExprTy *Base, 
-                                               SourceLocation LLoc, ExprTy *Idx,
-                                               SourceLocation RLoc) {
+    virtual OwningExprResult ActOnArraySubscriptExpr(Scope *S, ExprArg Base,
+                                                     SourceLocation LLoc,
+                                                     ExprArg Idx,
+                                                     SourceLocation RLoc) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-    virtual ExprResult ActOnMemberReferenceExpr(Scope *S, ExprTy *Base,
-                                                SourceLocation OpLoc,
-                                                tok::TokenKind OpKind,
-                                                SourceLocation MemberLoc,
-                                                IdentifierInfo &Member) {
+    virtual OwningExprResult ActOnMemberReferenceExpr(Scope *S, ExprArg Base,
+                                                      SourceLocation OpLoc,
+                                                      tok::TokenKind OpKind,
+                                                      SourceLocation MemberLoc,
+                                                      IdentifierInfo &Member) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-  
-    /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
-    /// This provides the location of the left/right parens and a list of comma
-    /// locations.  There are guaranteed to be one fewer commas than arguments,
-    /// unless there are zero arguments.
-    virtual ExprResult ActOnCallExpr(Scope *S, ExprTy *Fn, 
-                                     SourceLocation LParenLoc,
-                                     ExprTy **Args, unsigned NumArgs,
-                                     SourceLocation *CommaLocs,
-                                     SourceLocation RParenLoc) {
+
+    virtual OwningExprResult ActOnCallExpr(Scope *S, ExprArg Fn,
+                                           SourceLocation LParenLoc,
+                                           MultiExprArg Args,
+                                           SourceLocation *CommaLocs,
+                                           SourceLocation RParenLoc) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-  
+
     // Unary Operators.  'Tok' is the token for the operator.
-    virtual ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc, 
-                                    tok::TokenKind Op, ExprTy *Input) {
+    virtual OwningExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
+                                          tok::TokenKind Op, ExprArg Input) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
-    virtual ExprResult 
-    ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
-                           void *TyOrEx, const SourceRange &ArgRange) {
+    virtual OwningExprResult
+      ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
+                             void *TyOrEx, const SourceRange &ArgRange) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return ExprEmpty();
     }
   
     virtual ExprResult ActOnCompoundLiteral(SourceLocation LParen, TypeTy *Ty,

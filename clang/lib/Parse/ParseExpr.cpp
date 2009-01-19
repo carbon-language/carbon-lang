@@ -548,8 +548,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(true);
     if (!Res.isInvalid())
-      Res = Owned(Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind,
-                                       Res.release()));
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move_arg(Res));
     return move(Res);
   }
   case tok::amp:           // unary-expression: '&' cast-expression
@@ -563,7 +562,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.release());
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move_arg(Res));
     return move(Res);
   }
 
@@ -573,7 +572,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, Res.release());
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move_arg(Res));
     return move(Res);
   }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
@@ -736,8 +735,8 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       SourceLocation RLoc = Tok.getLocation();
 
       if (!LHS.isInvalid() && !Idx.isInvalid() && Tok.is(tok::r_square)) {
-        LHS = Actions.ActOnArraySubscriptExpr(CurScope, LHS.release(), Loc,
-                                              Idx.release(), RLoc);
+        LHS = Actions.ActOnArraySubscriptExpr(CurScope, move_arg(LHS), Loc,
+                                              move_arg(Idx), RLoc);
       } else
         LHS = ExprError();
 
@@ -763,9 +762,8 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       if (!LHS.isInvalid() && Tok.is(tok::r_paren)) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
-        LHS = Actions.ActOnCallExpr(CurScope, LHS.release(), Loc,
-                                    ArgExprs.take(),
-                                    ArgExprs.size(), &CommaLocs[0],
+        LHS = Actions.ActOnCallExpr(CurScope, move_arg(LHS), Loc,
+                                    move_arg(ArgExprs), &CommaLocs[0],
                                     Tok.getLocation());
       }
 
@@ -783,7 +781,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       }
 
       if (!LHS.isInvalid()) {
-        LHS = Actions.ActOnMemberReferenceExpr(CurScope, LHS.release(), OpLoc,
+        LHS = Actions.ActOnMemberReferenceExpr(CurScope, move_arg(LHS), OpLoc,
                                                OpKind, Tok.getLocation(),
                                                *Tok.getIdentifierInfo());
       }
@@ -794,7 +792,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
       if (!LHS.isInvalid()) {
         LHS = Actions.ActOnPostfixUnaryOp(CurScope, Tok.getLocation(), 
-                                          Tok.getKind(), LHS.release());
+                                          Tok.getKind(), move_arg(LHS));
       }
       ConsumeToken();
       break;
@@ -834,10 +832,10 @@ Parser::OwningExprResult Parser::ParseSizeofAlignofExpression() {
     // If ParseParenExpression parsed a '(typename)' sequence only, the this is
     // sizeof/alignof a type.  Otherwise, it is sizeof/alignof an expression.
     if (ExprType == CastExpr)
-      return Owned(Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
+      return Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
                                             OpTok.is(tok::kw_sizeof),
                                             /*isType=*/true, CastTy,
-                                            SourceRange(LParenLoc, RParenLoc)));
+                                            SourceRange(LParenLoc, RParenLoc));
 
     // If this is a parenthesized expression, it is the start of a 
     // unary-expression, but doesn't include any postfix pieces.  Parse these
