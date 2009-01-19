@@ -1405,7 +1405,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         InFlag =
           CurDAG->getCopyToReg(CurDAG->getEntryNode(),
                                LoReg, N0, SDValue()).getValue(1);
-        if (isSigned) {
+        if (isSigned && !CurDAG->SignBitIsZero(N0)) {
           // Sign extend the low part into the high part.
           InFlag =
             SDValue(CurDAG->getTargetNode(SExtOpcode, MVT::Flag, InFlag), 0);
