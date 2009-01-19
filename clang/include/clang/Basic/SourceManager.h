@@ -47,7 +47,7 @@ namespace SrcMgr {
   };
   
   /// ContentCache - Once instance of this struct is kept for every file
-  ///  loaded or used.  This object owns the MemoryBuffer object.
+  /// loaded or used.  This object owns the MemoryBuffer object.
   class ContentCache {
     /// Buffer - The actual buffer containing the characters from the input
     /// file.  This is owned by the ContentCache object.
@@ -278,9 +278,25 @@ public:
     LastLineNoFileIDQuery = FileID();
     LastLineNoContentCache = 0;
   }
-  
+
+  //===--------------------------------------------------------------------===//
+  // MainFileID creation and querying methods.
+  //===--------------------------------------------------------------------===//
+
   /// getMainFileID - Returns the FileID of the main source file.
   FileID getMainFileID() const { return MainFileID; }
+  
+  /// createMainFileID - Create the FileID for the main source file.
+  FileID createMainFileID(const FileEntry *SourceFile,
+                          SourceLocation IncludePos) {
+    assert(MainFileID.isInvalid() && "MainFileID already set!");
+    MainFileID = createFileID(SourceFile, IncludePos, SrcMgr::C_User);
+    return MainFileID;
+  }
+  
+  //===--------------------------------------------------------------------===//
+  // Methods to create new FileID's.
+  //===--------------------------------------------------------------------===//
   
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on
@@ -290,14 +306,6 @@ public:
     const SrcMgr::ContentCache *IR = getContentCache(SourceFile);
     if (IR == 0) return FileID();    // Error opening file?
     return createFileID(IR, IncludePos, FileCharacter);
-  }
-  
-  /// createMainFileID - Create the FileID for the main source file.
-  FileID createMainFileID(const FileEntry *SourceFile,
-                          SourceLocation IncludePos) {
-    assert(MainFileID.isInvalid() && "MainFileID already set!");
-    MainFileID = createFileID(SourceFile, IncludePos, SrcMgr::C_User);
-    return MainFileID;
   }
   
   /// createFileIDForMemBuffer - Create a new FileID that represents the
@@ -316,6 +324,30 @@ public:
     MainFileID = createFileIDForMemBuffer(Buffer);
     return MainFileID;
   }
+
+  //===--------------------------------------------------------------------===//
+  // FileID manipulation methods.
+  //===--------------------------------------------------------------------===//
+  
+  /// getBuffer - Return the buffer for the specified FileID.
+  ///
+  const llvm::MemoryBuffer *getBuffer(FileID FID) const {
+    return getContentCache(FID)->getBuffer();
+  }
+  
+  /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
+  const FileEntry *getFileEntryForID(FileID FID) const {
+    return getContentCache(FID)->Entry;
+  }
+  
+  /// getBufferData - Return a pointer to the start and end of the source buffer
+  /// data for the specified FileID.
+  std::pair<const char*, const char*> getBufferData(FileID FID) const;
+  
+  
+  //===--------------------------------------------------------------------===//
+  // SourceLocation manipulation methods.
+  //===--------------------------------------------------------------------===//
   
   /// getLocForStartOfFile - Return the source location corresponding to the
   /// first byte of the specified file.
@@ -328,17 +360,7 @@ public:
   SourceLocation getInstantiationLoc(SourceLocation Loc,
                                      SourceLocation InstantiationLoc);
   
-  /// getBuffer - Return the buffer for the specified FileID.
-  ///
-  const llvm::MemoryBuffer *getBuffer(FileID FID) const {
-    return getContentCache(FID)->getBuffer();
-  }
-  
-  /// getBufferData - Return a pointer to the start and end of the source buffer
-  /// data for the specified FileID.
-  std::pair<const char*, const char*> getBufferData(FileID FID) const;
-  
-  /// getIncludeLoc - Return the location of the #include for the specified
+   /// getIncludeLoc - Return the location of the #include for the specified
   /// SourceLocation.  If this is a macro expansion, this transparently figures
   /// out which file includes the file being expanded into.
   SourceLocation getIncludeLoc(SourceLocation ID) const {
@@ -403,12 +425,6 @@ public:
     return PLoc.getFileLocWithOffset(Loc.getMacroSpellingOffs());
   }
 
-  
-  /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
-  const FileEntry *getFileEntryForID(FileID FID) const {
-    return getContentCache(FID)->Entry;
-  }
-  
   /// getDecomposedFileLoc - Decompose the specified file location into a raw
   /// FileID + Offset pair.  The first element is the FileID, the second is the
   /// offset from the start of the buffer of the location.
@@ -463,9 +479,10 @@ public:
     return getFIDInfo(getSpellingLoc(Loc).getChunkID())
                   ->getFileCharacteristic();
   }
-  SrcMgr::CharacteristicKind getFileCharacteristic(FileID FID) const {
-    return getFIDInfo(FID)->getFileCharacteristic();
-  }
+  
+  //===--------------------------------------------------------------------===//
+  // Other miscellaneous methods.
+  //===--------------------------------------------------------------------===//
   
   // Iterators over FileInfos.
   typedef std::set<SrcMgr::ContentCache>::const_iterator fileinfo_iterator;
