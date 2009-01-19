@@ -403,14 +403,6 @@ public:
     return PLoc.getFileLocWithOffset(Loc.getMacroSpellingOffs());
   }
 
-  /// getContentCacheForLoc - Return the ContentCache for the spelling loc of
-  /// the specified SourceLocation, if one exists.
-  const SrcMgr::ContentCache* getContentCacheForLoc(SourceLocation Loc) const {
-    Loc = getSpellingLoc(Loc);
-    unsigned ChunkID = Loc.getChunkID();
-    assert(ChunkID-1 < FileIDs.size() && "Invalid FileID!");
-    return FileIDs[ChunkID-1].getContentCache();
-  }
   
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
   const FileEntry *getFileEntryForID(FileID FID) const {

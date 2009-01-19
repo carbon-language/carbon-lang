@@ -228,9 +228,12 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
 const char *SourceManager::getSourceName(SourceLocation Loc) const {
   if (Loc.getChunkID() == 0) return "";
   
+  Loc = getSpellingLoc(Loc);
+  unsigned ChunkID = Loc.getChunkID();
+  const SrcMgr::ContentCache *C = getFIDInfo(ChunkID)->getContentCache();
+  
   // To get the source name, first consult the FileEntry (if one exists) before
   // the MemBuffer as this will avoid unnecessarily paging in the MemBuffer.
-  const SrcMgr::ContentCache *C = getContentCacheForLoc(Loc);
   return C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
 }
 
