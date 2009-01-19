@@ -334,9 +334,8 @@ public:
     return getContentCache(FID)->getBuffer();
   }
   
-  /// getBufferData - Return a pointer to the start and end of the character
+  /// getBufferData - Return a pointer to the start and end of the source buffer
   /// data for the specified FileID.
-  std::pair<const char*, const char*> getBufferData(SourceLocation Loc) const;
   std::pair<const char*, const char*> getBufferData(FileID FID) const;
   
   /// getIncludeLoc - Return the location of the #include for the specified
