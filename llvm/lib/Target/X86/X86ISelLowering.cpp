@@ -4858,10 +4858,10 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op, SelectionDAG &DAG) {
   SDValue Or = DAG.getNode(ISD::OR, MVT::v2i64,
                            DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64,
                                        DAG.getNode(ISD::SCALAR_TO_VECTOR,
-                                                   MVT::v2f64, Bias)),
+                                                   MVT::v2f64, Load)),
                            DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64,
                                        DAG.getNode(ISD::SCALAR_TO_VECTOR,
-                                                   MVT::v2f64, Load)));
+                                                   MVT::v2f64, Bias)));
   Or = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::f64,
                    DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, Or),
                    DAG.getIntPtrConstant(0));
