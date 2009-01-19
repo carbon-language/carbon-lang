@@ -101,6 +101,7 @@ public:
   bool isValid() const { return ID != 0; }
   bool isInvalid() const { return ID == 0; }
   
+private:
   /// getChunkID - Return the chunk identifier for this SourceLocation.  This
   /// ChunkID can be used with the SourceManager object to obtain an entire
   /// include stack for a file position reference.
@@ -108,13 +109,12 @@ public:
     assert(isFileID() && "can't get the file id of a non-file sloc!");
     return ID >> FilePosBits;
   }
-  
+
   unsigned getMacroID() const {
     assert(isMacroID() && "Is not a macro id!");
     return (ID >> MacroSpellingOffsBits) & ((1 << MacroIDBits)-1);
   }
   
-private:
   static SourceLocation getFileLoc(unsigned ChunkID, unsigned FilePos) {
     SourceLocation L;
     // If a FilePos is larger than (1<<FilePosBits), the SourceManager makes
@@ -191,10 +191,6 @@ public:
   unsigned getRawEncoding() const { return ID; }
   
   
-  bool operator<(const SourceLocation &RHS) const {
-    return ID < RHS.ID;
-  }
-  
   /// getFromRawEncoding - Turn a raw encoding of a SourceLocation object into
   /// a real SourceLocation.
   static SourceLocation getFromRawEncoding(unsigned Encoding) {
@@ -216,6 +212,10 @@ inline bool operator==(const SourceLocation &LHS, const SourceLocation &RHS) {
 
 inline bool operator!=(const SourceLocation &LHS, const SourceLocation &RHS) {
   return !(LHS == RHS);
+}
+  
+inline bool operator<(const SourceLocation &LHS, const SourceLocation &RHS) {
+  return LHS.getRawEncoding() < RHS.getRawEncoding();
 }
 
 /// SourceRange - a trival tuple used to represent a source range.
