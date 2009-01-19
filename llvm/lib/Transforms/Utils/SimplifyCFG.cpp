@@ -221,31 +221,33 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
     
     // Move all PHI nodes in BB to Succ if they are alive, otherwise
     // delete them.
-    while (PHINode *PN = dyn_cast<PHINode>(&BB->front()))
+    while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
       if (PN->use_empty()) {
         // Just remove the dead phi.  This happens if Succ's PHIs were the only
         // users of the PHI nodes.
         PN->eraseFromParent();
-      } else {
-        // The instruction is alive, so this means that BB must dominate all
-        // predecessors of Succ (Since all uses of the PN are after its
-        // definition, so in Succ or a block dominated by Succ. If a predecessor
-        // of Succ would not be dominated by BB, PN would violate the def before
-        // use SSA demand). Therefore, we can simply move the phi node to the
-        // next block.
-        Succ->getInstList().splice(Succ->begin(),
-                                   BB->getInstList(), BB->begin());
-        
-        // We need to add new entries for the PHI node to account for
-        // predecessors of Succ that the PHI node does not take into
-        // account.  At this point, since we know that BB dominated succ and all
-        // of its predecessors, this means that we should any newly added
-        // incoming edges should use the PHI node itself as the value for these
-        // edges, because they are loop back edges.
-        for (unsigned i = 0, e = OldSuccPreds.size(); i != e; ++i)
-          if (OldSuccPreds[i] != BB)
-            PN->addIncoming(PN, OldSuccPreds[i]);
+        continue;
       }
+    
+      // The instruction is alive, so this means that BB must dominate all
+      // predecessors of Succ (Since all uses of the PN are after its
+      // definition, so in Succ or a block dominated by Succ. If a predecessor
+      // of Succ would not be dominated by BB, PN would violate the def before
+      // use SSA demand). Therefore, we can simply move the phi node to the
+      // next block.
+      Succ->getInstList().splice(Succ->begin(),
+                                 BB->getInstList(), BB->begin());
+      
+      // We need to add new entries for the PHI node to account for
+      // predecessors of Succ that the PHI node does not take into
+      // account.  At this point, since we know that BB dominated succ and all
+      // of its predecessors, this means that we should any newly added
+      // incoming edges should use the PHI node itself as the value for these
+      // edges, because they are loop back edges.
+      for (unsigned i = 0, e = OldSuccPreds.size(); i != e; ++i)
+        if (OldSuccPreds[i] != BB)
+          PN->addIncoming(PN, OldSuccPreds[i]);
+    }
   }
     
   // Everything that jumped to BB now goes to Succ.
