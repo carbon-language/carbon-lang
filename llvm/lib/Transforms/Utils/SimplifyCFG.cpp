@@ -1423,11 +1423,21 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
   if ((!isa<CmpInst>(Cond) && !isa<BinaryOperator>(Cond)) ||
       Cond->getParent() != BB || &BB->front() != Cond || !Cond->hasOneUse())
     return false;
-      
+  
   // Make sure the instruction after the condition is the cond branch.
   BasicBlock::iterator CondIt = Cond; ++CondIt;
   if (&*CondIt != BI)
     return false;
+
+  // Cond is known to be a compare or binary operator.  Check to make sure that
+  // neither operand is a potentially-trapping constant expression.
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Cond->getOperand(0)))
+    if (CE->canTrap())
+      return false;
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Cond->getOperand(1)))
+    if (CE->canTrap())
+      return false;
+  
   
   // Finally, don't infinitely unroll conditional loops.
   BasicBlock *TrueDest  = BI->getSuccessor(0);
@@ -1438,6 +1448,7 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
     BasicBlock *PredBlock = *PI;
     BranchInst *PBI = dyn_cast<BranchInst>(PredBlock->getTerminator());
+    
     // Check that we have two conditional branches.  If there is a PHI node in
     // the common successor, verify that the same value flows in from both
     // blocks.
@@ -1459,6 +1470,8 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
     else
       continue;
 
+    DOUT << "FOLDING BRANCH TO COMMON DEST:\n" << *PBI << *BB;
+    
     // If we need to invert the condition in the pred block to match, do so now.
     if (InvertPredCond) {
       Value *NewCond =
