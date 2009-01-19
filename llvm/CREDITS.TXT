@@ -61,6 +61,14 @@ D: Register allocator improvements
 D: Loop optimizer improvements
 D: Target-independent code generator improvements
 
+N: Dan Villiom Podlaski Christiansen
+E: danchr@gmail.com
+E: danchr@cs.au.dk
+W: http://villiom.dk
+D: LLVM Makefile improvements
+D: Clang diagnostic & driver tweaks
+S: Aarhus, Denmark
+
 N: Jeff Cohen
 E: jeffc@jolt-lang.org
 W: http://jolt-lang.org
