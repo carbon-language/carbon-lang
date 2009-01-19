@@ -1531,7 +1531,7 @@ APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
   integerPart *x = new integerPart[parts];
   bool ignored;
   fs = V.convertToInteger(x, parts * integerPartWidth, true,
-                          rmNearestTiesToEven, &ignored);
+                          rmTowardZero, &ignored);
   if (fs==opInvalidOp)
     return fs;
 
@@ -1811,7 +1811,9 @@ APFloat::convertToSignExtendedInteger(integerPart *parts, unsigned int width,
   if (exponent < 0) {
     /* Our absolute value is less than one; truncate everything.  */
     APInt::tcSet(parts, 0, dstPartsCount);
-    truncatedBits = semantics->precision;
+    /* For exponent -1 the integer bit represents .5, look at that.
+       For smaller exponents leftmost truncated bit is 0. */
+    truncatedBits = semantics->precision -1U - exponent;
   } else {
     /* We want the most significant (exponent + 1) bits; the rest are
        truncated.  */
