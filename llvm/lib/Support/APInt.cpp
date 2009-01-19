@@ -1085,7 +1085,7 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
     return APInt(BitWidth, 0);
 
   // If none of the bits are shifted out, the result is *this. This avoids
-  // issues with shifting byt he size of the integer type, which produces 
+  // issues with shifting by the size of the integer type, which produces 
   // undefined results in the code below. This is also an optimization.
   if (shiftAmt == 0)
     return *this;
@@ -1133,7 +1133,7 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
 /// Left-shift this APInt by shiftAmt.
 /// @brief Left-shift function.
 APInt APInt::shl(const APInt &shiftAmt) const {
-  // It's undefined behavior in C to shift by BitWidth or greater, but
+  // It's undefined behavior in C to shift by BitWidth or greater.
   return shl((uint32_t)shiftAmt.getLimitedValue(BitWidth));
 }
 
