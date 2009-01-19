@@ -30,22 +30,21 @@ bool QualType::isConstant(ASTContext &Ctx) const {
   return false;
 }
 
-void Type::Destroy(ASTContext& C) { delete this; }
-
-void FunctionTypeProto::Destroy(ASTContext& C) {
-  // Destroy the object, but don't call delete.  These are malloc'd.
-  this->~FunctionTypeProto();
-  free(this);  
+void Type::Destroy(ASTContext& C) {
+  this->~Type();
+  C.getAllocator().Deallocate(this);
 }
 
 void VariableArrayType::Destroy(ASTContext& C) {
   SizeExpr->Destroy(C);
-  delete this;  
+  this->~VariableArrayType();
+  C.getAllocator().Deallocate(this);
 }
 
 void DependentSizedArrayType::Destroy(ASTContext& C) {
   SizeExpr->Destroy(C);
-  delete this;
+  this->~DependentSizedArrayType();
+  C.getAllocator().Deallocate(this);
 }
 
 /// getArrayElementTypeNoTypeQual - If this is an array type, return the

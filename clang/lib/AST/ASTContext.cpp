@@ -172,7 +172,8 @@ void ASTContext::PrintStats() const {
 
 
 void ASTContext::InitBuiltinType(QualType &R, BuiltinType::Kind K) {
-  Types.push_back((R = QualType(new BuiltinType(K),0)).getTypePtr());
+  void *Mem = Allocator.Allocate<BuiltinType>();
+  Types.push_back((R = QualType(new (Mem) BuiltinType(K),0)).getTypePtr());
 }
 
 void ASTContext::InitBuiltinTypes() {
@@ -678,7 +679,8 @@ QualType ASTContext::getASQualType(QualType T, unsigned AddressSpace) {
     ASQualType *NewIP = ASQualTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  ASQualType *New = new ASQualType(T.getTypePtr(), Canonical, AddressSpace);
+  void *Mem = Allocator.Allocate<ASQualType>();
+  ASQualType *New = new (Mem) ASQualType(T.getTypePtr(), Canonical, AddressSpace);
   ASQualTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, T.getCVRQualifiers());
@@ -707,7 +709,8 @@ QualType ASTContext::getComplexType(QualType T) {
     ComplexType *NewIP = ComplexTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  ComplexType *New = new ComplexType(T, Canonical);
+  void *Mem = Allocator.Allocate<ComplexType>();
+  ComplexType *New = new (Mem) ComplexType(T, Canonical);
   Types.push_back(New);
   ComplexTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -736,7 +739,8 @@ QualType ASTContext::getPointerType(QualType T) {
     PointerType *NewIP = PointerTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  PointerType *New = new PointerType(T, Canonical);
+  void *Mem = Allocator.Allocate<PointerType>();
+  PointerType *New = new (Mem) PointerType(T, Canonical);
   Types.push_back(New);
   PointerTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -767,7 +771,8 @@ QualType ASTContext::getBlockPointerType(QualType T) {
       BlockPointerTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  BlockPointerType *New = new BlockPointerType(T, Canonical);
+  void *Mem = Allocator.Allocate<BlockPointerType>();
+  BlockPointerType *New = new (Mem) BlockPointerType(T, Canonical);
   Types.push_back(New);
   BlockPointerTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -796,7 +801,8 @@ QualType ASTContext::getReferenceType(QualType T) {
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
 
-  ReferenceType *New = new ReferenceType(T, Canonical);
+  void *Mem = Allocator.Allocate<ReferenceType>();
+  ReferenceType *New = new (Mem) ReferenceType(T, Canonical);
   Types.push_back(New);
   ReferenceTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -828,8 +834,9 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   
-  ConstantArrayType *New = new ConstantArrayType(EltTy, Canonical, ArySize,
-                                                 ASM, EltTypeQuals);
+  void *Mem = Allocator.Allocate<ConstantArrayType>();
+  ConstantArrayType *New =
+    new (Mem) ConstantArrayType(EltTy, Canonical, ArySize, ASM, EltTypeQuals);
   ConstantArrayTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
@@ -843,8 +850,9 @@ QualType ASTContext::getVariableArrayType(QualType EltTy, Expr *NumElts,
   // Since we don't unique expressions, it isn't possible to unique VLA's
   // that have an expression provided for their size.
 
-  VariableArrayType *New = new VariableArrayType(EltTy, QualType(), NumElts, 
-                                                 ASM, EltTypeQuals);
+  void *Mem = Allocator.Allocate<VariableArrayType>();
+  VariableArrayType *New =
+    new (Mem) VariableArrayType(EltTy, QualType(), NumElts, ASM, EltTypeQuals);
 
   VariableArrayTypes.push_back(New);
   Types.push_back(New);
@@ -864,9 +872,10 @@ QualType ASTContext::getDependentSizedArrayType(QualType EltTy, Expr *NumElts,
   // Since we don't unique expressions, it isn't possible to unique
   // dependently-sized array types.
 
-  DependentSizedArrayType *New 
-    = new DependentSizedArrayType(EltTy, QualType(), NumElts, 
-                                  ASM, EltTypeQuals);
+  void *Mem = Allocator.Allocate<DependentSizedArrayType>();
+  DependentSizedArrayType *New =
+      new (Mem) DependentSizedArrayType(EltTy, QualType(), NumElts, 
+                                        ASM, EltTypeQuals);
 
   DependentSizedArrayTypes.push_back(New);
   Types.push_back(New);
@@ -898,8 +907,9 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
 
-  IncompleteArrayType *New = new IncompleteArrayType(EltTy, Canonical,
-                                                     ASM, EltTypeQuals);
+  void *Mem = Allocator.Allocate<IncompleteArrayType>();
+  IncompleteArrayType *New = new (Mem) IncompleteArrayType(EltTy, Canonical,
+                                                           ASM, EltTypeQuals);
 
   IncompleteArrayTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
@@ -931,7 +941,8 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts) {
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  VectorType *New = new VectorType(vecType, NumElts, Canonical);
+  void *Mem = Allocator.Allocate<VectorType>();
+  VectorType *New = new (Mem) VectorType(vecType, NumElts, Canonical);
   VectorTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
@@ -962,7 +973,8 @@ QualType ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) {
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  ExtVectorType *New = new ExtVectorType(vecType, NumElts, Canonical);
+  void *Mem = Allocator.Allocate<ExtVectorType>();
+  ExtVectorType *New = new (Mem) ExtVectorType(vecType, NumElts, Canonical);
   VectorTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
@@ -1037,11 +1049,12 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   
-  // FunctionTypeProto objects are not allocated with new because they have a
-  // variable size array (for parameter types) at the end of them.
+  // FunctionTypeProto objects are allocated with extra bytes after them
+  // for a variable size array (for parameter types) at the end of them.
+  // FIXME: Can we do better than forcing a 16-byte alignment?
   FunctionTypeProto *FTP = 
-    (FunctionTypeProto*)malloc(sizeof(FunctionTypeProto) + 
-                               NumArgs*sizeof(QualType));
+    (FunctionTypeProto*)Allocator.Allocate(sizeof(FunctionTypeProto) + 
+                                           NumArgs*sizeof(QualType), 16);
   new (FTP) FunctionTypeProto(ResultTy, ArgArray, NumArgs, isVariadic,
                               TypeQuals, Canonical);
   Types.push_back(FTP);
@@ -1063,16 +1076,29 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
     return getObjCInterfaceType(ObjCInterface);
 
   if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(Decl)) {
-    Decl->TypeForDecl = PrevDecl ? PrevDecl->TypeForDecl
-                                 : new CXXRecordType(CXXRecord);
+    if (PrevDecl)
+      Decl->TypeForDecl = PrevDecl->TypeForDecl;
+    else {
+      void *Mem = Allocator.Allocate<CXXRecordType>();
+      Decl->TypeForDecl = new (Mem) CXXRecordType(CXXRecord);
+    }
   }
   else if (RecordDecl *Record = dyn_cast<RecordDecl>(Decl)) {
-    Decl->TypeForDecl = PrevDecl ? PrevDecl->TypeForDecl
-                                 : new RecordType(Record);
+    if (PrevDecl)
+      Decl->TypeForDecl = PrevDecl->TypeForDecl;
+    else {
+      void *Mem = Allocator.Allocate<RecordType>();
+      Decl->TypeForDecl = new (Mem) RecordType(Record);
+    }
   }
-  else if (EnumDecl *Enum = dyn_cast<EnumDecl>(Decl))
-    Decl->TypeForDecl = PrevDecl ? PrevDecl->TypeForDecl
-                                 : new EnumType(Enum);
+  else if (EnumDecl *Enum = dyn_cast<EnumDecl>(Decl)) {
+    if (PrevDecl)
+      Decl->TypeForDecl = PrevDecl->TypeForDecl;
+    else {
+      void *Mem = Allocator.Allocate<EnumType>();
+      Decl->TypeForDecl = new (Mem) EnumType(Enum);
+    }
+  }
   else
     assert(false && "TypeDecl without a type?");
 
@@ -1086,7 +1112,8 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
   QualType Canonical = getCanonicalType(Decl->getUnderlyingType());
-  Decl->TypeForDecl = new TypedefType(Type::TypeName, Decl, Canonical);
+  void *Mem = Allocator.Allocate<TypedefType>();
+  Decl->TypeForDecl = new (Mem) TypedefType(Type::TypeName, Decl, Canonical);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }
@@ -1095,7 +1122,8 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
 /// for the specified template type parameter declaration. 
 QualType ASTContext::getTemplateTypeParmType(TemplateTypeParmDecl *Decl) {
   if (!Decl->TypeForDecl) {
-    Decl->TypeForDecl = new TemplateTypeParmType(Decl);
+    void *Mem = Allocator.Allocate<TemplateTypeParmType>();
+    Decl->TypeForDecl = new (Mem) TemplateTypeParmType(Decl);
     Types.push_back(Decl->TypeForDecl);
   }
   return QualType(Decl->TypeForDecl, 0);
@@ -1106,7 +1134,8 @@ QualType ASTContext::getTemplateTypeParmType(TemplateTypeParmDecl *Decl) {
 QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
-  Decl->TypeForDecl = new ObjCInterfaceType(Type::ObjCInterface, Decl);
+  void *Mem = Allocator.Allocate<ObjCInterfaceType>();
+  Decl->TypeForDecl = new (Mem) ObjCInterfaceType(Type::ObjCInterface, Decl);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }
@@ -1147,8 +1176,10 @@ QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
     return QualType(QT, 0);
   
   // No Match;
+  void *Mem = Allocator.Allocate<ObjCQualifiedInterfaceType>();
   ObjCQualifiedInterfaceType *QType =
-    new ObjCQualifiedInterfaceType(Decl, Protocols, NumProtocols);
+    new (Mem) ObjCQualifiedInterfaceType(Decl, Protocols, NumProtocols);
+
   Types.push_back(QType);
   ObjCQualifiedInterfaceTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);
@@ -1170,7 +1201,9 @@ QualType ASTContext::getObjCQualifiedIdType(ObjCProtocolDecl **Protocols,
     return QualType(QT, 0);
   
   // No Match;
-  ObjCQualifiedIdType *QType = new ObjCQualifiedIdType(Protocols, NumProtocols);
+  void *Mem = Allocator.Allocate<ObjCQualifiedIdType>();
+  ObjCQualifiedIdType *QType =
+    new (Mem) ObjCQualifiedIdType(Protocols, NumProtocols);
   Types.push_back(QType);
   ObjCQualifiedIdTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);
@@ -1195,7 +1228,8 @@ QualType ASTContext::getTypeOfExpr(Expr *tofExpr) {
 /// on canonical type's (which are always unique).
 QualType ASTContext::getTypeOfType(QualType tofType) {
   QualType Canonical = getCanonicalType(tofType);
-  TypeOfType *tot = new TypeOfType(tofType, Canonical);
+  void *Mem = Allocator.Allocate<TypeOfType>();
+  TypeOfType *tot = new (Mem) TypeOfType(tofType, Canonical);
   Types.push_back(tot);
   return QualType(tot, 0);
 }

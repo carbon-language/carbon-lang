@@ -1086,7 +1086,6 @@ class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
   /// holds the argument types.
   
   friend class ASTContext;  // ASTContext creates these.
-  virtual void Destroy(ASTContext& C);
 
 public:
   unsigned getNumArgs() const { return NumArgs; }
