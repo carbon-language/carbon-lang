@@ -156,7 +156,7 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
   SourceManager &SM = PP.getSourceManager();
 
   // Create the lexer as if we were going to lex the file normally.
-  FileID SpellingFID = SM.getCanonicalFileID(SpellingLoc);
+  FileID SpellingFID = SM.getFileID(SpellingLoc);
   Lexer *L = new Lexer(SpellingFID, PP);
   
   // Now that the lexer is created, change the start/end locations so that we

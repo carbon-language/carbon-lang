@@ -409,15 +409,6 @@ public:
     return getContentCache(FID)->Entry;
   }
   
-  /// getCanonicalFileID - Return the canonical FileID for a SourceLocation.
-  ///  A file can have multiple FileIDs if it is large enough to be broken
-  ///  into multiple chunks.  This method returns the unique FileID without
-  ///  chunk information for a given SourceLocation.  Use this method when
-  ///  you want to compare FileIDs across SourceLocations.
-  FileID getCanonicalFileID(SourceLocation SpellingLoc) const {
-    return getDecomposedFileLoc(SpellingLoc).first;
-  }    
-  
   /// getDecomposedFileLoc - Decompose the specified file location into a raw
   /// FileID + Offset pair.  The first element is the FileID, the second is the
   /// offset from the start of the buffer of the location.
@@ -437,7 +428,13 @@ public:
     
     return std::make_pair(FileID::Create(Loc.getChunkID()-ChunkNo), Offset);
   }
-    
+  
+  /// getFileID - Return the FileID for a SourceLocation.
+  ///
+  FileID getFileID(SourceLocation SpellingLoc) const {
+    return getDecomposedFileLoc(SpellingLoc).first;
+  }    
+  
   /// getFullFilePos - This (efficient) method returns the offset from the start
   /// of the file that the specified spelling SourceLocation represents.  This
   /// returns the location of the actual character data, not the instantiation
@@ -449,13 +446,13 @@ public:
   /// isFromSameFile - Returns true if both SourceLocations correspond to
   ///  the same file.
   bool isFromSameFile(SourceLocation Loc1, SourceLocation Loc2) const {
-    return getCanonicalFileID(Loc1) == getCanonicalFileID(Loc2);
+    return getFileID(Loc1) == getFileID(Loc2);
   }
   
   /// isFromMainFile - Returns true if the file of provided SourceLocation is
   ///   the main file.
   bool isFromMainFile(SourceLocation Loc) const {
-    return getCanonicalFileID(Loc) == getMainFileID();
+    return getFileID(Loc) == getMainFileID();
   } 
 
   /// isInSystemHeader - Returns if a SourceLocation is in a system header.

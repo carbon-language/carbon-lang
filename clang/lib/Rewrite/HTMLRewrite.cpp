@@ -33,8 +33,8 @@ void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
   SourceManager &SM = R.getSourceMgr();
   B = SM.getInstantiationLoc(B);
   E = SM.getInstantiationLoc(E);
-  FileID FID = SM.getCanonicalFileID(B);
-  assert(SM.getCanonicalFileID(E) == FID && "B/E not in the same file!");
+  FileID FID = SM.getFileID(B);
+  assert(SM.getFileID(E) == FID && "B/E not in the same file!");
 
   unsigned BOffset = SM.getFullFilePos(B);
   unsigned EOffset = SM.getFullFilePos(E);

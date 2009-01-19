@@ -48,13 +48,13 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     SourceMgr.getInstantiationLoc(R.getBegin());
   unsigned StartLineNo = SourceMgr.getLineNumber(InstantiationStart);
   if (StartLineNo > LineNo ||
-      SourceMgr.getCanonicalFileID(InstantiationStart) != FID)
+      SourceMgr.getFileID(InstantiationStart) != FID)
     return;  // No intersection.
   
   SourceLocation InstantiationEnd = SourceMgr.getInstantiationLoc(R.getEnd());
   unsigned EndLineNo = SourceMgr.getLineNumber(InstantiationEnd);
   if (EndLineNo < LineNo ||
-      SourceMgr.getCanonicalFileID(InstantiationEnd) != FID)
+      SourceMgr.getFileID(InstantiationEnd) != FID)
     return;  // No intersection.
   
   // Compute the column number of the start.

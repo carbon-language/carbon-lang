@@ -26,7 +26,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include <fstream>
-
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -132,8 +131,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     FullSourceLoc L = I->getLocation().getInstantiationLoc();
     
     if (FID.isInvalid()) {
-      FID = SMgr.getCanonicalFileID(L);
-    } else if (SMgr.getCanonicalFileID(L) != FID)
+      FID = SMgr.getFileID(L);
+    } else if (SMgr.getFileID(L) != FID)
       return; // FIXME: Emit a warning?
     
     // Check the source ranges.
@@ -142,19 +141,13 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
       
       SourceLocation L = SMgr.getInstantiationLoc(RI->getBegin());
 
-      if (!L.isFileID())
-        return; // FIXME: Emit a warning?      
-      
-      if (SMgr.getCanonicalFileID(L) != FID)
+      if (!L.isFileID() || SMgr.getFileID(L) != FID)
         return; // FIXME: Emit a warning?
       
       L = SMgr.getInstantiationLoc(RI->getEnd());
       
-      if (!L.isFileID())
+      if (!L.isFileID() || SMgr.getFileID(L) != FID)
         return; // FIXME: Emit a warning?      
-      
-      if (SMgr.getCanonicalFileID(L) != FID)
-        return; // FIXME: Emit a warning?
     }
   }
   
@@ -336,10 +329,10 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   
   SourceManager &SM = R.getSourceMgr();
   FullSourceLoc LPos = Pos.getInstantiationLoc();
-  FileID FID = SM.getCanonicalFileID(LPos);
+  FileID FID = SM.getFileID(LPos);
   assert(&LPos.getManager() == &SM && "SourceManagers are different!");
   
-  if (SM.getCanonicalFileID(LPos) != BugFileID)
+  if (SM.getFileID(LPos) != BugFileID)
     return;
   
   const llvm::MemoryBuffer *Buf = SM.getBuffer(FID);
@@ -469,8 +462,8 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
   if (EndLineNo < StartLineNo)
     return;
   
-  if (SM.getCanonicalFileID(InstantiationStart) != BugFileID ||
-      SM.getCanonicalFileID(InstantiationEnd) != BugFileID)
+  if (SM.getFileID(InstantiationStart) != BugFileID ||
+      SM.getFileID(InstantiationEnd) != BugFileID)
     return;
     
   // Compute the column number of the end.

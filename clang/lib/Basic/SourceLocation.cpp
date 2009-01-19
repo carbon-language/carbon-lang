@@ -39,7 +39,7 @@ SourceRange SourceRange::ReadVal(llvm::Deserializer& D) {
 
 FileID FullSourceLoc::getFileID() const {
   assert(isValid());
-  return SrcMgr->getCanonicalFileID(*this);
+  return SrcMgr->getFileID(*this);
 }
 
 
@@ -106,7 +106,7 @@ const char *FullSourceLoc::getCharacterData() const {
 
 const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
   assert(isValid());
-  return SrcMgr->getBuffer(SrcMgr->getCanonicalFileID(*this));
+  return SrcMgr->getBuffer(SrcMgr->getFileID(*this));
 }
 
 void FullSourceLoc::dump() const {

@@ -51,20 +51,18 @@ clang::CreatePlistDiagnosticClient(const std::string& s,
   return new PlistDiagnostics(s);
 }
 
-static void AddFID(FIDMap &FIDs,
-                   llvm::SmallVectorImpl<FileID> &V,
+static void AddFID(FIDMap &FIDs, llvm::SmallVectorImpl<FileID> &V,
                    SourceManager& SM, SourceLocation L) {
 
-  FileID FID = SM.getCanonicalFileID(SM.getInstantiationLoc(L));
+  FileID FID = SM.getFileID(SM.getInstantiationLoc(L));
   FIDMap::iterator I = FIDs.find(FID);
   if (I != FIDs.end()) return;
   FIDs[FID] = V.size();
   V.push_back(FID);
 }
 
-static unsigned GetFID(const FIDMap& FIDs,
-                       SourceManager& SM, SourceLocation L) {
-  FileID FID = SM.getCanonicalFileID(SM.getInstantiationLoc(L));
+static unsigned GetFID(const FIDMap& FIDs, SourceManager& SM, SourceLocation L){
+  FileID FID = SM.getFileID(SM.getInstantiationLoc(L));
   FIDMap::const_iterator I = FIDs.find(FID);
   assert(I != FIDs.end());
   return I->second;
@@ -178,7 +176,7 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
     AddFID(FM, Fids, SM, I->getLocation());
 
     for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
-                                             RE=I->ranges_end(); RI!=RE; ++RI) {      
+                                             RE=I->ranges_end(); RI!=RE; ++RI) {
       AddFID(FM, Fids, SM, RI->getBegin());
       AddFID(FM, Fids, SM, RI->getEnd());
     }
@@ -229,7 +227,8 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
   o << " </array>\n";
     
   // Output the bug type and bug category.  
-  o << " <key>description</key>\n <string>" << D->getDescription() << "</string>\n"
+  o << " <key>description</key>\n <string>" << D->getDescription()
+    << "</string>\n"
        " <key>category</key>\n <string>" << D->getCategory() << "</string>\n";
 
   // Finish.
