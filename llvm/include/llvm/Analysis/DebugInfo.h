@@ -78,7 +78,6 @@ namespace llvm {
     unsigned getTag() const {
       return getUnsignedField(0) & ~VersionMask;
     }
-    static inline bool classof(const DIDescriptor *D) { return true; }
   };
   
   /// DIAnchor - A wrapper for various anchor descriptors.
@@ -96,10 +95,6 @@ namespace llvm {
     
     int64_t getLo() const { return (int64_t)getUInt64Field(1); }
     int64_t getHi() const { return (int64_t)getUInt64Field(2); }
-    static inline bool classof(const DISubrange *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return D->getTag() == dwarf::DW_TAG_subrange_type;
-    }
   };
   
   /// DIArray - This descriptor holds an array of descriptors.
@@ -110,12 +105,6 @@ namespace llvm {
     unsigned getNumElements() const;
     DIDescriptor getElement(unsigned Idx) const {
       return getDescriptorField(Idx);
-    }
-
-    static inline bool classof(const DIArray *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return D->getTag() == dwarf::DW_TAG_array_type 
-        || D->getTag() == dwarf::DW_AT_GNU_vector;
     }
   };
   
@@ -128,11 +117,6 @@ namespace llvm {
     std::string getFilename() const  { return getStringField(3); }
     std::string getDirectory() const { return getStringField(4); }
     std::string getProducer() const  { return getStringField(5); }
-
-    static inline bool classof(const DICompileUnit *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return D->getTag() == dwarf::DW_TAG_compile_unit;
-    }
   };
 
   /// DIEnumerator - A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
@@ -144,10 +128,6 @@ namespace llvm {
     
     std::string getName() const  { return getStringField(1); }
     uint64_t getEnumValue() const { return getUInt64Field(2); }
-    static inline bool classof(const DIEnumerator *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return D->getTag() == dwarf::DW_TAG_enumerator;
-    }
   };
   
   /// DIType - This is a wrapper for a type.
@@ -200,13 +180,6 @@ namespace llvm {
       assert (0 && "Invalid DIDescriptor");
       return "";
     }
-
-    static inline bool classof(const DIType *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      unsigned Tag = D->getTag();
-      return isBasicType(Tag) || isDerivedType(Tag) || isCompositeType(Tag);
-    }
-
   };
   
   /// DIBasicType - A basic type, like 'int' or 'float'.
@@ -231,11 +204,6 @@ namespace llvm {
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
     std::string getFilename() const { return getStringField(10); }
     std::string getDirectory() const { return getStringField(11); }
-
-    static inline bool classof(const DIDerivedType *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return isDerivedType(D->getTag());
-    }
   };
 
   
@@ -249,11 +217,6 @@ namespace llvm {
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
     std::string getFilename() const { return getStringField(11); }
     std::string getDirectory() const { return getStringField(12); }
-    
-    static inline bool classof(const DIDerivedType *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return isCompositeType(D->getTag());
-    }
   };
   
   /// DIGlobal - This is a common class for global variables and subprograms.
@@ -300,12 +263,6 @@ namespace llvm {
       assert (0 && "Invalid DIDescriptor");
       return "";
     }
-
-    static inline bool classof(const DIGlobal *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      unsigned Tag = D->getTag();
-      return isSubprogram(Tag) || isGlobalVariable(Tag);
-    }
   };
   
   
@@ -316,10 +273,6 @@ namespace llvm {
     std::string getFilename() const { return getStringField(11); }
     std::string getDirectory() const { return getStringField(12); }
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
-    static inline bool classof(const DISubprogram *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return isSubprogram(D->getTag());
-    }
   };
   
   /// DIGlobalVariable - This is a wrapper for a global variable.
@@ -330,10 +283,6 @@ namespace llvm {
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
     std::string getFilename() const { return getStringField(12); }
     std::string getDirectory() const { return getStringField(13); }
-    static inline bool classof(const DIGlobalVariable *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return isGlobalVariable(D->getTag());
-    }
   };
   
   
@@ -354,10 +303,6 @@ namespace llvm {
     
     /// isVariable - Return true if the specified tag is legal for DIVariable.
     static bool isVariable(unsigned Tag);
-    static inline bool classof(const DIVariable *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return isVariable(D->getTag());
-    }
   };
   
   
@@ -367,10 +312,6 @@ namespace llvm {
     explicit DIBlock(GlobalVariable *GV = 0);
     
     DIDescriptor getContext() const { return getDescriptorField(1); }
-    static inline bool classof(const DIBlock *) { return true; }
-    static inline bool classof(const DIDescriptor *D) {
-      return D->getTag() == dwarf::DW_TAG_lexical_block;
-    }
   };
   
   /// DIFactory - This object assists with the construction of the various
