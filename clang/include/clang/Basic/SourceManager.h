@@ -412,12 +412,6 @@ public:
     return FileIDs[ChunkID-1].getContentCache();
   }
   
-  /// getFileEntryForLoc - Return the FileEntry record for the spelling loc of
-  /// the specified SourceLocation, if one exists.
-  const FileEntry* getFileEntryForLoc(SourceLocation Loc) const {
-    return getContentCacheForLoc(Loc)->Entry;
-  }
-  
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
   const FileEntry *getFileEntryForID(FileID FID) const {
     return getContentCache(FID)->Entry;

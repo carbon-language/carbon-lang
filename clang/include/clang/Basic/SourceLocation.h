@@ -283,7 +283,6 @@ public:
   const llvm::MemoryBuffer* getBuffer() const;
   
   const char* getSourceName() const;
-  const FileEntry* getFileEntryForLoc() const;
 
   bool isInSystemHeader() const;
   

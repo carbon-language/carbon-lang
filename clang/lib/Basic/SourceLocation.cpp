@@ -94,11 +94,6 @@ const char* FullSourceLoc::getSourceName() const {
   return SrcMgr->getSourceName(*this);
 }
 
-const FileEntry* FullSourceLoc::getFileEntryForLoc() const { 
-  assert(isValid());
-  return SrcMgr->getFileEntryForLoc(*this);
-}
-
 bool FullSourceLoc::isInSystemHeader() const {
   assert(isValid());
   return SrcMgr->isInSystemHeader(*this);

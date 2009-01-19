@@ -51,7 +51,7 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     return llvm::DICompileUnit();
 
   SourceManager &SM = M->getContext().getSourceManager();
-  const FileEntry *FE = SM.getFileEntryForLoc(Loc);
+  const FileEntry *FE = SM.getFileEntryForID(SM.getCanonicalFileID(Loc));
   if (FE == 0) return llvm::DICompileUnit();
     
   // See if this compile unit has been used before.
