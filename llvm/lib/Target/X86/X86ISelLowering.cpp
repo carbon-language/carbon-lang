@@ -4884,8 +4884,15 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
-  MVT SrcVT = Op.getOperand(0).getValueType();
+  SDValue N0 = Op.getOperand(0);
 
+  // Now not UINT_TO_FP is legal (it's marked custom), dag combiner won't
+  // optimize it to a SINT_TO_FP when the sign bit is known zero. Perform
+  // the optimization here.
+  if (DAG.SignBitIsZero(N0))
+    return DAG.getNode(ISD::SINT_TO_FP, Op.getValueType(), N0);
+
+  MVT SrcVT = N0.getValueType();
   if (SrcVT == MVT::i64) {
     // We only handle SSE2 f64 target here; caller can handle the rest.
     if (Op.getValueType() != MVT::f64 || !X86ScalarSSEf64)
