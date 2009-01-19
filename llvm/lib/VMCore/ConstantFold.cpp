@@ -655,11 +655,15 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     case Instruction::SDiv:
       if (CI2->equalsInt(1))
         return const_cast<Constant*>(C1);                     // X / 1 == X
+      if (CI2->equalsInt(0))
+        return UndefValue::get(CI2->getType());               // X / 0 == undef
       break;
     case Instruction::URem:
     case Instruction::SRem:
       if (CI2->equalsInt(1))
         return Constant::getNullValue(CI2->getType());        // X % 1 == 0
+      if (CI2->equalsInt(0))
+        return UndefValue::get(CI2->getType());               // X % 0 == undef
       break;
     case Instruction::And:
       if (CI2->isZero()) return const_cast<Constant*>(C2);    // X & 0 == 0
@@ -733,24 +737,20 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       case Instruction::Mul:     
         return ConstantInt::get(C1V * C2V);
       case Instruction::UDiv:
-        if (CI2->isNullValue())                  
-          return 0;        // X / 0 -> can't fold
+        assert(!CI2->isNullValue() && "Div by zero handled above");
         return ConstantInt::get(C1V.udiv(C2V));
       case Instruction::SDiv:
-        if (CI2->isNullValue()) 
-          return 0;        // X / 0 -> can't fold
+        assert(!CI2->isNullValue() && "Div by zero handled above");
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
-          return 0;        // MIN_INT / -1 -> overflow
+          return UndefValue::get(CI1->getType());   // MIN_INT / -1 -> undef
         return ConstantInt::get(C1V.sdiv(C2V));
       case Instruction::URem:
-        if (C2->isNullValue()) 
-          return 0;        // X / 0 -> can't fold
+        assert(!CI2->isNullValue() && "Div by zero handled above");
         return ConstantInt::get(C1V.urem(C2V));
-      case Instruction::SRem:    
-        if (CI2->isNullValue()) 
-          return 0;        // X % 0 -> can't fold
+      case Instruction::SRem:
+        assert(!CI2->isNullValue() && "Div by zero handled above");
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
-          return 0;        // MIN_INT % -1 -> overflow
+          return UndefValue::get(CI1->getType());   // MIN_INT % -1 -> undef
         return ConstantInt::get(C1V.srem(C2V));
       case Instruction::And:
         return ConstantInt::get(C1V & C2V);
