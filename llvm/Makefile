@@ -54,6 +54,17 @@ ifeq ($(MAKECMDGOALS),tools-only)
   OPTIONAL_DIRS :=
 endif
 
+ifeq ($(MAKECMDGOALS),install-clang)
+  DIRS := tools/clang/Driver tools/clang/lib/Headers tools/clang/tools/ccc
+  OPTIONAL_DIRS :=
+  NO_INSTALL = 1
+endif
+
+ifeq ($(MAKECMDGOALS),clang-only)
+  DIRS := $(filter-out tools runtime docs, $(DIRS)) tools/clang
+  OPTIONAL_DIRS :=
+endif
+
 ifeq ($(MAKECMDGOALS),unittests)
   DIRS := $(filter-out tools runtime docs, $(DIRS)) utils unittests
   OPTIONAL_DIRS :=
@@ -113,8 +124,10 @@ dist-hook::
 	  $(TopDistDir)/include/llvm/Support/DataTypes.h  \
 	  $(TopDistDir)/include/llvm/Support/ThreadSupport.h
 
+clang-only: all
 tools-only: all
 libs-only: all
+install-clang: install
 install-libs: install
 
 #------------------------------------------------------------------------
