@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
  fooFunc(&(struct foo){ 1, 2 });
 }
 
-struct Incomplete;
+struct Incomplete; // expected-note{{forward declaration of 'struct Incomplete'}}
 struct Incomplete* I1 = &(struct Incomplete){1, 2, 3}; // -expected-error {{variable has incomplete type}}
 void IncompleteFunc(unsigned x) {
   struct Incomplete* I2 = (struct foo[x]){1, 2, 3}; // -expected-error {{variable-sized object may not be initialized}}

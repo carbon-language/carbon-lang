@@ -352,9 +352,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
 
       // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
       // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
-      if (T->isIncompleteType()) { 
-        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type)
-          << T;
+      if (DiagnoseIncompleteType(D.getIdentifierLoc(), T, 
+                                 diag::err_illegal_decl_array_incomplete_type)) {
         T = Context.IntTy;
         D.setInvalidType(true);
       } else if (T->isFunctionType()) {
@@ -690,4 +689,67 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
   }
 }
 
+/// @brief If the type T is incomplete and cannot be completed,
+/// produce a suitable diagnostic.
+///
+/// This routine checks whether the type @p T is complete in any
+/// context where a complete type is required. If @p T is a complete
+/// type, returns false. If @p T is incomplete, issues the diagnostic
+/// @p diag (giving it the type @p T) and returns true.
+///
+/// @param Loc  The location in the source that the incomplete type
+/// diagnostic should refer to.
+///
+/// @param T  The type that this routine is examining for completeness.
+///
+/// @param diag The diagnostic value (e.g., 
+/// @c diag::err_typecheck_decl_incomplete_type) that will be used
+/// for the error message if @p T is incomplete.
+///
+/// @param Range1  An optional range in the source code that will be a
+/// part of the "incomplete type" error message.
+///
+/// @param Range2  An optional range in the source code that will be a
+/// part of the "incomplete type" error message.
+///
+/// @param PrintType If non-NULL, the type that should be printed
+/// instead of @p T. This parameter should be used when the type that
+/// we're checking for incompleteness isn't the type that should be
+/// displayed to the user, e.g., when T is a type and PrintType is a
+/// pointer to T.
+///
+/// @returns @c true if @p T is incomplete and a diagnostic was emitted,
+/// @c false otherwise.
+///
+/// @todo When Clang gets proper support for C++ templates, this
+/// routine will also be able perform template instantiation when @p T
+/// is a class template specialization.
+bool Sema::DiagnoseIncompleteType(SourceLocation Loc, QualType T, unsigned diag,
+                                  SourceRange Range1, SourceRange Range2,
+                                  QualType PrintType) {
+  // If we have a complete type, we're done.
+  if (!T->isIncompleteType())
+    return false;
 
+  if (PrintType.isNull())
+    PrintType = T;
+
+  // We have an incomplete type. Produce a diagnostic.
+  Diag(Loc, diag) << PrintType << Range1 << Range2;
+
+  // If the type was a forward declaration of a class/struct/union
+  // type, produce 
+  const TagType *Tag = 0;
+  if (const RecordType *Record = T->getAsRecordType())
+    Tag = Record;
+  else if (const EnumType *Enum = T->getAsEnumType())
+    Tag = Enum;
+
+  if (Tag && !Tag->getDecl()->isInvalidDecl())
+    Diag(Tag->getDecl()->getLocation(), 
+         Tag->isBeingDefined() ? diag::note_type_being_defined
+                               : diag::note_forward_declaration)
+        << QualType(Tag, 0);
+
+  return true;
+}

@@ -270,6 +270,11 @@ public:
 
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
 
+  bool DiagnoseIncompleteType(SourceLocation Loc, QualType T, unsigned diag,
+                              SourceRange Range1 = SourceRange(),
+                              SourceRange Range2 = SourceRange(),
+                              QualType PrintType = QualType());
+
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //

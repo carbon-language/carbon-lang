@@ -339,8 +339,9 @@ Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
   // C++ [class.derived]p2:
   //   The class-name in a base-specifier shall not be an incompletely
   //   defined class.
-  if (BaseType->isIncompleteType())
-    return Diag(BaseLoc, diag::err_incomplete_base_class) << SpecifierRange;
+  if (DiagnoseIncompleteType(BaseLoc, BaseType, diag::err_incomplete_base_class,
+                             SpecifierRange))
+    return true;
 
   // If the base class is polymorphic, the new one is, too.
   RecordDecl *BaseDecl = BaseType->getAsRecordType()->getDecl();
@@ -2179,17 +2180,19 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
   // incomplete type, other than [cv] void*.
   QualType BaseType = ExDeclType;
   int Mode = 0; // 0 for direct type, 1 for pointer, 2 for reference
+  unsigned DK = diag::err_catch_incomplete;
   if (const PointerType *Ptr = BaseType->getAsPointerType()) {
     BaseType = Ptr->getPointeeType();
     Mode = 1;
+    DK = diag::err_catch_incomplete_ptr;
   } else if(const ReferenceType *Ref = BaseType->getAsReferenceType()) {
     BaseType = Ref->getPointeeType();
     Mode = 2;
+    DK = diag::err_catch_incomplete_ref;
   }
-  if ((Mode == 0 || !BaseType->isVoidType()) && BaseType->isIncompleteType()) {
+  if ((Mode == 0 || !BaseType->isVoidType()) && 
+      DiagnoseIncompleteType(Begin, BaseType, DK))
     Invalid = true;
-    Diag(Begin, diag::err_catch_incomplete) << BaseType << Mode;
-  }
 
   // FIXME: Need to test for ability to copy-construct and destroy the
   // exception variable.

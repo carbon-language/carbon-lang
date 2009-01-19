@@ -685,11 +685,10 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (DestPointee->isVoidType()) {
     assert(DestPointer && "Reference to void is not possible");
   } else if (DestRecord) {
-    if (!DestRecord->getDecl()->isDefinition()) {
-      Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_incomplete)
-        << DestPointee.getUnqualifiedType() << DestRange;
+    if (Self.DiagnoseIncompleteType(OpRange.getBegin(), DestPointee, 
+                                    diag::err_bad_dynamic_cast_incomplete,
+                                    DestRange))
       return;
-    }
   } else {
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class)
       << DestPointee.getUnqualifiedType() << DestRange;
@@ -720,11 +719,10 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 
   const RecordType *SrcRecord = SrcPointee->getAsRecordType();
   if (SrcRecord) {
-    if (!SrcRecord->getDecl()->isDefinition()) {
-      Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_incomplete)
-        << SrcPointee.getUnqualifiedType() << SrcExpr->getSourceRange();
+    if (Self.DiagnoseIncompleteType(OpRange.getBegin(), SrcPointee,
+                                    diag::err_bad_dynamic_cast_incomplete,
+                                    SrcExpr->getSourceRange()))
       return;
-    }
   } else {
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class)
       << SrcPointee.getUnqualifiedType() << SrcExpr->getSourceRange();

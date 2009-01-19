@@ -1021,10 +1021,11 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
   else if (exprType->isVoidType())
     Diag(OpLoc, diag::ext_sizeof_void_type)
       << (isSizeof ? "sizeof" : "__alignof") << ExprRange;
-  else if (exprType->isIncompleteType())
-    return Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
-                                  diag::err_alignof_incomplete_type)
-      << exprType << ExprRange;
+  else 
+    return DiagnoseIncompleteType(OpLoc, exprType,
+                                  isSizeof ? diag::err_sizeof_incomplete_type : 
+                                             diag::err_alignof_incomplete_type,
+                                  ExprRange);
 
   return false;
 }
@@ -1466,9 +1467,11 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // of the ObjC 'id' struct.
   if (const RecordType *RTy = BaseType->getAsRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
-    if (RTy->isIncompleteType())
-      return ExprError(Diag(OpLoc, diag::err_typecheck_incomplete_tag)
-               << RDecl->getDeclName() << BaseExpr->getSourceRange());
+    if (DiagnoseIncompleteType(OpLoc, BaseType, 
+                               diag::err_typecheck_incomplete_tag,
+                               BaseExpr->getSourceRange()))
+      return ExprError();
+
     // The record definition is complete, now make sure the member is valid.
     // FIXME: Qualified name lookup for C++ is a bit more complicated
     // than this.
@@ -1906,11 +1909,10 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
     if (literalType->isVariableArrayType())
       return Diag(LParenLoc, diag::err_variable_object_no_init)
         << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd());
-  } else if (literalType->isIncompleteType()) {
-    return Diag(LParenLoc, diag::err_typecheck_decl_incomplete_type)
-      << literalType
-      << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd());
-  }
+  } else if (DiagnoseIncompleteType(LParenLoc, literalType,
+                                    diag::err_typecheck_decl_incomplete_type,
+                SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd())))
+    return true;
 
   if (CheckInitializerTypes(literalExpr, literalType, LParenLoc, 
                             DeclarationName(), /*FIXME:DirectInit=*/false))
@@ -2643,9 +2645,15 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
         if (PTy->getPointeeType()->isVoidType()) {
           Diag(Loc, diag::ext_gnu_void_ptr)
             << lex->getSourceRange() << rex->getSourceRange();
-        } else {
-          Diag(Loc, diag::err_typecheck_arithmetic_incomplete_type)
+        } else if (PTy->getPointeeType()->isFunctionType()) {
+          Diag(Loc, diag::err_typecheck_pointer_arith_function_type)
             << lex->getType() << lex->getSourceRange();
+          return QualType();
+        } else {
+          DiagnoseIncompleteType(Loc, PTy->getPointeeType(), 
+                                 diag::err_typecheck_arithmetic_incomplete_type,
+                                 lex->getSourceRange(), SourceRange(),
+                                 lex->getType());
           return QualType();
         }
       }
@@ -3038,9 +3046,9 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
     break;
   case Expr::MLV_IncompleteType:
   case Expr::MLV_IncompleteVoidType:
-    Diag = diag::err_typecheck_incomplete_type_not_modifiable_lvalue;
-    NeedType = true;
-    break;
+    return S.DiagnoseIncompleteType(Loc, E->getType(), 
+                      diag::err_typecheck_incomplete_type_not_modifiable_lvalue,
+                                    E->getSourceRange());
   case Expr::MLV_DuplicateVectorComponents:
     Diag = diag::err_typecheck_duplicate_vector_components_not_mlvalue;
     break;
@@ -3155,9 +3163,15 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
     } else if (PT->getPointeeType()->isVoidType()) {
       // Pointer to void is extension.
       Diag(OpLoc, diag::ext_gnu_void_ptr) << Op->getSourceRange();
-    } else {
-      Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type)
+    } else if (PT->getPointeeType()->isFunctionType()) {
+      Diag(OpLoc, diag::err_typecheck_pointer_arith_function_type)
         << ResType << Op->getSourceRange();
+      return QualType();
+    } else {
+      DiagnoseIncompleteType(OpLoc, PT->getPointeeType(), 
+                             diag::err_typecheck_arithmetic_incomplete_type,
+                             Op->getSourceRange(), SourceRange(),
+                             ResType);
       return QualType();
     }
   } else if (ResType->isComplexType()) {

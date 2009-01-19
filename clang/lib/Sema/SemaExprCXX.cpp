@@ -172,9 +172,10 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   //
   if (Ty->isArrayType())
     return Diag(TyBeginLoc, diag::err_value_init_for_array_type) << FullRange;
-  if (!Ty->isDependentType() && Ty->isIncompleteType() && !Ty->isVoidType())
-    return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use) 
-             << Ty << FullRange;
+  if (!Ty->isDependentType() && !Ty->isVoidType() &&
+      DiagnoseIncompleteType(TyBeginLoc, Ty, 
+                             diag::err_invalid_incomplete_type_use, FullRange))
+    return true;
 
   return new CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
 }
@@ -578,9 +579,10 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   }
 
   QualType Pointee = Type->getAsPointerType()->getPointeeType();
-  if (Pointee->isIncompleteType() && !Pointee->isVoidType())
-    Diag(StartLoc, diag::warn_delete_incomplete)
-      << Pointee << Ex->getSourceRange();
+  if (!Pointee->isVoidType() && 
+      DiagnoseIncompleteType(StartLoc, Pointee, diag::warn_delete_incomplete,
+                             Ex->getSourceRange()))
+    return true;
   else if (!Pointee->isObjectType()) {
     Diag(StartLoc, diag::err_delete_operand)
       << Type << Ex->getSourceRange();

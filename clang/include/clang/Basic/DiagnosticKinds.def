@@ -36,7 +36,10 @@ DIAG(note_previous_use, NOTE,
      "previous use is here")
 DIAG(note_duplicate_case_prev, NOTE,
      "previous case defined here")
-
+DIAG(note_forward_declaration, NOTE,
+     "forward declaration of %0")
+DIAG(note_type_being_defined, NOTE,
+     "definition of %0 is not complete until the closing '}'")
 /// note_matching - this is used as a continuation of a previous diagnostic,
 /// e.g. to specify the '(' when we expected a ')'.
 DIAG(note_matching, NOTE,
@@ -1117,7 +1120,7 @@ DIAG(err_func_returning_array_function, ERROR,
 DIAG(err_field_declared_as_function, ERROR,
      "field %0 declared as a function")
 DIAG(err_field_incomplete, ERROR,
-     "field %0 has incomplete type")
+     "field has incomplete type %0")
 DIAG(err_variable_sized_type_in_struct, EXTENSION,
      "variable sized type %0 must be at end of struct or class")
 DIAG(err_flexible_array_empty_struct, ERROR,
@@ -1235,6 +1238,8 @@ DIAG(err_typecheck_illegal_increment_decrement, ERROR,
      "cannot modify value of type %0")
 DIAG(err_typecheck_arithmetic_incomplete_type, ERROR,
      "arithmetic on pointer to incomplete type %0")
+DIAG(err_typecheck_pointer_arith_function_type, ERROR,
+     "arithmetic on pointer to function type %0")
 DIAG(err_typecheck_decl_incomplete_type, ERROR,
      "variable has incomplete type %0")
 // FIXME: Use %select
@@ -1341,8 +1346,12 @@ DIAG(err_decrement_bool, ERROR,
      "cannot decrement expression of type bool")
 DIAG(warn_increment_bool, WARNING,
      "incrementing expression of type bool is deprecated")
+DIAG(err_catch_incomplete_ptr, ERROR,
+     "cannot catch pointer to incomplete type %0")
+DIAG(err_catch_incomplete_ref, ERROR,
+     "cannot catch reference to incomplete type %0")
 DIAG(err_catch_incomplete, ERROR,
-     "cannot catch%select{| pointer to| reference to}1 incomplete type %0")
+     "cannot catch incomplete type %0")
 DIAG(err_qualified_catch_declarator, ERROR,
      "exception declarator cannot be qualified")
 DIAG(err_early_catch_all, ERROR,

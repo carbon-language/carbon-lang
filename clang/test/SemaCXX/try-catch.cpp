@@ -1,6 +1,6 @@
 // RUN: clang -fsyntax-only -verify %s
 
-struct A;
+struct A; // expected-note{{forward declaration of 'struct A'}}
 
 void f()
 {

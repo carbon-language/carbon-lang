@@ -1,6 +1,6 @@
 // RUN: clang -fsyntax-only -verify -pedantic %s
 
-struct s; 
+struct s;  // expected-note {{forward declaration of 'struct s'}}
 struct s* t (struct s z[]) {   // expected-error {{array has incomplete element type}}
   return z;
 }

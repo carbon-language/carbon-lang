@@ -8,7 +8,7 @@ struct S // expected-note {{candidate}}
   S(double, int); // expected-note {{candidate}} expected-note {{candidate}}
   S(float, int); // expected-note {{candidate}} expected-note {{candidate}}
 };
-struct T;
+struct T; // expected-note{{forward declaration of 'struct T'}}
 struct U
 {
   // A special new, to verify that the global version isn't used.

@@ -65,6 +65,6 @@ int test6248081() {
   [10]  // expected-error {{expected expression}}
 }
 
-struct forward;
+struct forward; // expected-note{{forward declaration of 'struct forward'}}
 void x(struct forward* x) {switch(x->a) {}} // expected-error {{incomplete definition of type}}
 

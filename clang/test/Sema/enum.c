@@ -21,7 +21,9 @@ int test() {
   return sizeof(enum e) ;
 }
 
-enum gccForwardEnumExtension ve; // expected-error {{variable has incomplete type 'enum gccForwardEnumExtension'}} expected-warning{{ISO C forbids forward references to 'enum' types}}
+enum gccForwardEnumExtension ve; // expected-error {{variable has incomplete type 'enum gccForwardEnumExtension'}} \
+                                 // expected-warning{{ISO C forbids forward references to 'enum' types}} \
+                                 // expected-note{{forward declaration of 'enum gccForwardEnumExtension'}}
 
 int test2(int i)
 {
@@ -52,7 +54,7 @@ enum someenum {};  // expected-warning {{use of empty enum extension}}
 
 // <rdar://problem/6093889>
 enum e0 { // expected-note {{previous definition is here}}
-  E0 = sizeof(enum e0 { E1 }) // expected-error {{nested redefinition}}
+  E0 = sizeof(enum e0 { E1 }), // expected-error {{nested redefinition}}
 };
 
 // PR3173
@@ -66,3 +68,8 @@ void foo() {
 
 // <rdar://problem/6503878>
 typedef enum { X = 0 }; // expected-warning{{typedef requires a name}}
+
+
+enum NotYetComplete { // expected-note{{definition of 'enum NotYetComplete' is not complete until the closing '}'}}
+  NYC1 = sizeof(enum NotYetComplete) // expected-error{{invalid application of 'sizeof' to an incomplete type 'enum NotYetComplete'}}
+};

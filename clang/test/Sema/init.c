@@ -71,7 +71,8 @@ int sym_fw1a_scr[] = {
 
 // PR3001
 struct s1 s2 = {
-    .a = sizeof(struct s3), // expected-error {{invalid application of 'sizeof'}}
+    .a = sizeof(struct s3), // expected-error {{invalid application of 'sizeof'}} \
+                            // expected-note{{forward declaration of 'struct s3'}}
     .b = bogus // expected-error {{use of undeclared identifier 'bogus'}}
 }
 

@@ -1,6 +1,6 @@
 // RUN: clang %s -fsyntax-only -verify -pedantic
 
-typedef struct S S;
+typedef struct S S; // expected-note{{forward declaration of 'struct S'}}
 void a(S* b, void* c) {
   b++;       // expected-error {{arithmetic on pointer to incomplete type}}
   b += 1;    // expected-error {{arithmetic on pointer to incomplete type}}
@@ -9,6 +9,6 @@ void a(S* b, void* c) {
   b = 1+b;   // expected-error {{arithmetic on pointer to incomplete type}}
   /* The next couple tests are only pedantic warnings in gcc */
   void (*d)(S*,void*) = a;
-  d += 1;    // expected-error {{pointer to incomplete type}}
-  d++;       // expected-error {{pointer to incomplete type}}
+  d += 1;    // expected-error {{arithmetic on pointer to function type}}}
+  d++;       // expected-error {{arithmetic on pointer to function type}}}
 }

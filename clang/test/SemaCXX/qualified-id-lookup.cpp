@@ -96,7 +96,7 @@ void test_a() {
   a::a::a::i = 4;
 }
   
-struct Undef {
+struct Undef { // expected-note{{definition of 'struct Undef' is not complete until the closing '}'}}
   typedef int type;
 
   Undef::type member;
