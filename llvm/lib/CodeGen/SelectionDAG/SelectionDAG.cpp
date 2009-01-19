@@ -4388,9 +4388,16 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
          "Cannot replace with this method!");
   assert(From != To.getNode() && "Cannot replace uses of with self");
 
-  while (!From->use_empty()) {
-    SDNode::use_iterator UI = From->use_begin();
+  // Iterate over all the existing uses of From. This specifically avoids
+  // visiting any new uses of From that arrise while the replacement is
+  // happening, because any such uses would be the result of CSE: If an
+  // existing node looks like From after one of its operands is replaced
+  // by To, we don't want to replace of all its users with To too.
+  // See PR3018 for more info.
+  SDNode::use_iterator UI = From->use_begin(), UE = From->use_end();
+  while (UI != UE) {
     SDNode *U = *UI;
+    do ++UI; while (UI != UE && *UI == U);
 
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
@@ -4437,9 +4444,12 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
   if (From == To)
     return;
 
-  while (!From->use_empty()) {
-    SDNode::use_iterator UI = From->use_begin();
+  // Iterate over just the existing users of From. See the comments in
+  // the ReplaceAllUsesWith above.
+  SDNode::use_iterator UI = From->use_begin(), UE = From->use_end();
+  while (UI != UE) {
     SDNode *U = *UI;
+    do ++UI; while (UI != UE && *UI == U);
 
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
@@ -4480,9 +4490,12 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
   if (From->getNumValues() == 1)  // Handle the simple case efficiently.
     return ReplaceAllUsesWith(SDValue(From, 0), To[0], UpdateListener);
 
-  while (!From->use_empty()) {
-    SDNode::use_iterator UI = From->use_begin();
+  // Iterate over just the existing users of From. See the comments in
+  // the ReplaceAllUsesWith above.
+  SDNode::use_iterator UI = From->use_begin(), UE = From->use_end();
+  while (UI != UE) {
     SDNode *U = *UI;
+    do ++UI; while (UI != UE && *UI == U);
 
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);

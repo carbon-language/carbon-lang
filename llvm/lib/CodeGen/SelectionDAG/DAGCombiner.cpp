@@ -522,12 +522,17 @@ SDValue DAGCombiner::CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
     }
   }
   
-  // Nodes can be reintroduced into the worklist.  Make sure we do not
-  // process a node that has been replaced.
-  removeFromWorkList(N);
+  // Finally, if the node is now dead, remove it from the graph.  The node
+  // may not be dead if the replacement process recursively simplified to
+  // something else needing this node.
+  if (N->use_empty()) {
+    // Nodes can be reintroduced into the worklist.  Make sure we do not
+    // process a node that has been replaced.
+    removeFromWorkList(N);
   
-  // Finally, since the node is now dead, remove it from the graph.
-  DAG.DeleteNode(N);
+    // Finally, since the node is now dead, remove it from the graph.
+    DAG.DeleteNode(N);
+  }
   return SDValue(N, 0);
 }
 
@@ -658,12 +663,17 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
     for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
       AddToWorkList(N->getOperand(i).getNode());
       
-    // Nodes can be reintroduced into the worklist.  Make sure we do not
-    // process a node that has been replaced.
-    removeFromWorkList(N);
+    // Finally, if the node is now dead, remove it from the graph.  The node
+    // may not be dead if the replacement process recursively simplified to
+    // something else needing this node.
+    if (N->use_empty()) {
+      // Nodes can be reintroduced into the worklist.  Make sure we do not
+      // process a node that has been replaced.
+      removeFromWorkList(N);
     
-    // Finally, since the node is now dead, remove it from the graph.
-    DAG.DeleteNode(N);
+      // Finally, since the node is now dead, remove it from the graph.
+      DAG.DeleteNode(N);
+    }
   }
   
   // If the root changed (e.g. it was a dead load, update the root).
