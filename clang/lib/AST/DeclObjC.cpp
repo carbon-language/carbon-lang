@@ -364,8 +364,7 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
         return property;
   }
   
-  const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(this);
-  if (OID) {
+  if (const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(this)) {
     // Look through categories.
     for (ObjCCategoryDecl *Category = OID->getCategoryList();
          Category; Category = Category->getNextClassCategory()) {
@@ -383,6 +382,16 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
     }
     if (OID->getSuperClass())
       return OID->getSuperClass()->FindPropertyDeclaration(PropertyId);
+  }
+  else if (const ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(this)) {
+    // Look through protocols.
+    for (ObjCInterfaceDecl::protocol_iterator I = OCD->protocol_begin(),
+         E = OCD->protocol_end(); I != E; ++I) {
+      ObjCProtocolDecl *Protocol = *I;
+      ObjCPropertyDecl *property = Protocol->FindPropertyDeclaration(PropertyId);
+      if (property)
+        return property;
+    }
   }
   return 0;
 }
