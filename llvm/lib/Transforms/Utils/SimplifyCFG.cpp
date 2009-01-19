@@ -74,11 +74,11 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
     PN->addIncoming(PN->getIncomingValueForBlock(ExistPred), NewPred);
 }
 
-// CanPropagatePredecessorsForPHIs - Return true if we can fold BB, an
-// almost-empty BB ending in an unconditional branch to Succ, into succ.
-//
-// Assumption: Succ is the single successor for BB.
-//
+/// CanPropagatePredecessorsForPHIs - Return true if we can fold BB, an
+/// almost-empty BB ending in an unconditional branch to Succ, into succ.
+///
+/// Assumption: Succ is the single successor for BB.
+///
 static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   assert(*succ_begin(BB) == Succ && "Succ is not successor of BB!");
 
@@ -347,15 +347,15 @@ static Value *GetIfCondition(BasicBlock *BB,
 }
 
 
-// If we have a merge point of an "if condition" as accepted above, return true
-// if the specified value dominates the block.  We don't handle the true
-// generality of domination here, just a special case which works well enough
-// for us.
-//
-// If AggressiveInsts is non-null, and if V does not dominate BB, we check to
-// see if V (which must be an instruction) is cheap to compute and is
-// non-trapping.  If both are true, the instruction is inserted into the set and
-// true is returned.
+/// DominatesMergePoint - If we have a merge point of an "if condition" as
+/// accepted above, return true if the specified value dominates the block.  We
+/// don't handle the true generality of domination here, just a special case
+/// which works well enough for us.
+///
+/// If AggressiveInsts is non-null, and if V does not dominate BB, we check to
+/// see if V (which must be an instruction) is cheap to compute and is
+/// non-trapping.  If both are true, the instruction is inserted into the set
+/// and true is returned.
 static bool DominatesMergePoint(Value *V, BasicBlock *BB,
                                 std::set<Instruction*> *AggressiveInsts) {
   Instruction *I = dyn_cast<Instruction>(V);
@@ -426,9 +426,9 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   return true;
 }
 
-// GatherConstantSetEQs - Given a potentially 'or'd together collection of 
-// icmp_eq instructions that compare a value against a constant, return the 
-// value being compared, and stick the constant into the Values vector.
+/// GatherConstantSetEQs - Given a potentially 'or'd together collection of
+/// icmp_eq instructions that compare a value against a constant, return the
+/// value being compared, and stick the constant into the Values vector.
 static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
     if (Inst->getOpcode() == Instruction::ICmp &&
@@ -450,9 +450,9 @@ static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
   return 0;
 }
 
-// GatherConstantSetNEs - Given a potentially 'and'd together collection of
-// setne instructions that compare a value against a constant, return the value
-// being compared, and stick the constant into the Values vector.
+/// GatherConstantSetNEs - Given a potentially 'and'd together collection of
+/// setne instructions that compare a value against a constant, return the value
+/// being compared, and stick the constant into the Values vector.
 static Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values){
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
     if (Inst->getOpcode() == Instruction::ICmp &&
@@ -473,8 +473,6 @@ static Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values){
   }
   return 0;
 }
-
-
 
 /// GatherValueComparisons - If the specified Cond is an 'and' or 'or' of a
 /// bunch of comparisons of one value against constants, return the value and
@@ -532,8 +530,8 @@ static Value *isValueEqualityComparison(TerminatorInst *TI) {
   return 0;
 }
 
-/// Given a value comparison instruction, decode all of the 'cases' that it
-/// represents and return the 'default' block.
+/// GetValueEqualityComparisonCases - Given a value comparison instruction,
+/// decode all of the 'cases' that it represents and return the 'default' block.
 static BasicBlock *
 GetValueEqualityComparisonCases(TerminatorInst *TI,
                                 std::vector<std::pair<ConstantInt*,
@@ -554,8 +552,8 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
 }
 
 
-// EliminateBlockCases - Given a vector of bb/value pairs, remove any entries
-// in the list that match the specified block.
+/// EliminateBlockCases - Given a vector of bb/value pairs, remove any entries
+/// in the list that match the specified block.
 static void EliminateBlockCases(BasicBlock *BB,
                std::vector<std::pair<ConstantInt*, BasicBlock*> > &Cases) {
   for (unsigned i = 0, e = Cases.size(); i != e; ++i)
@@ -565,8 +563,8 @@ static void EliminateBlockCases(BasicBlock *BB,
     }
 }
 
-// ValuesOverlap - Return true if there are any keys in C1 that exist in C2 as
-// well.
+/// ValuesOverlap - Return true if there are any keys in C1 that exist in C2 as
+/// well.
 static bool
 ValuesOverlap(std::vector<std::pair<ConstantInt*, BasicBlock*> > &C1,
               std::vector<std::pair<ConstantInt*, BasicBlock*> > &C2) {
@@ -600,12 +598,12 @@ ValuesOverlap(std::vector<std::pair<ConstantInt*, BasicBlock*> > &C1,
   return false;
 }
 
-// SimplifyEqualityComparisonWithOnlyPredecessor - If TI is known to be a
-// terminator instruction and its block is known to only have a single
-// predecessor block, check to see if that predecessor is also a value
-// comparison with the same value, and if that comparison determines the outcome
-// of this comparison.  If so, simplify TI.  This does a very limited form of
-// jump threading.
+/// SimplifyEqualityComparisonWithOnlyPredecessor - If TI is known to be a
+/// terminator instruction and its block is known to only have a single
+/// predecessor block, check to see if that predecessor is also a value
+/// comparison with the same value, and if that comparison determines the
+/// outcome of this comparison.  If so, simplify TI.  This does a very limited
+/// form of jump threading.
 static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
                                                           BasicBlock *Pred) {
   Value *PredVal = isValueEqualityComparison(Pred->getTerminator());
@@ -716,10 +714,10 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
   return false;
 }
 
-// FoldValueComparisonIntoPredecessors - The specified terminator is a value
-// equality comparison instruction (either a switch or a branch on "X == c").
-// See if any of the predecessors of the terminator block are value comparisons
-// on the same value.  If so, and if safe to do so, fold them together.
+/// FoldValueComparisonIntoPredecessors - The specified terminator is a value
+/// equality comparison instruction (either a switch or a branch on "X == c").
+/// See if any of the predecessors of the terminator block are value comparisons
+/// on the same value.  If so, and if safe to do so, fold them together.
 static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
   BasicBlock *BB = TI->getParent();
   Value *CV = isValueEqualityComparison(TI);  // CondVal
@@ -1684,13 +1682,13 @@ namespace {
   };
 }
 
-// SimplifyCFG - This function is used to do simplification of a CFG.  For
-// example, it adjusts branches to branches to eliminate the extra hop, it
-// eliminates unreachable basic blocks, and does other "peephole" optimization
-// of the CFG.  It returns true if a modification was made.
-//
-// WARNING:  The entry node of a function may not be simplified.
-//
+/// SimplifyCFG - This function is used to do simplification of a CFG.  For
+/// example, it adjusts branches to branches to eliminate the extra hop, it
+/// eliminates unreachable basic blocks, and does other "peephole" optimization
+/// of the CFG.  It returns true if a modification was made.
+///
+/// WARNING:  The entry node of a function may not be simplified.
+///
 bool llvm::SimplifyCFG(BasicBlock *BB) {
   bool Changed = false;
   Function *M = BB->getParent();
