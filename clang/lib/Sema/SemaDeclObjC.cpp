@@ -1698,6 +1698,21 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
           << property->getDeclName() << Ivar->getDeclName();
         return 0;
       }
+      else {
+        // FIXME! Rules for properties are somewhat different that those
+        // for assignments. Use a new routine to consolidate all cases;
+        // specifically for property redeclarations as well as for ivars.
+        QualType lhsType = 
+                    Context.getCanonicalType(PropType).getUnqualifiedType();
+        QualType rhsType = 
+                    Context.getCanonicalType(IvarType).getUnqualifiedType();
+        if (lhsType != rhsType && 
+            lhsType->isArithmeticType()) {
+          Diag(PropertyLoc, diag::error_property_ivar_type)
+          << property->getDeclName() << Ivar->getDeclName();
+          return 0;
+        }
+      }
     }
   } else if (PropertyIvar) {
     // @dynamic
