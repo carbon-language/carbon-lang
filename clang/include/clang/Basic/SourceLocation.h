@@ -65,7 +65,6 @@ private:
 class SourceLocation {
   unsigned ID;
   friend class SourceManager;
-public:
   enum {
     // FileID Layout:
     // bit 31: 0 -> FileID, 1 -> MacroID (invalid for FileID)
@@ -88,6 +87,7 @@ public:
     // Useful constants.
     ChunkSize = (1 << FilePosBits)
   };
+public:
 
   SourceLocation() : ID(0) {}  // 0 is an invalid FileID.
   

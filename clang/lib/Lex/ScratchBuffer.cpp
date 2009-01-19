@@ -40,9 +40,6 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len) {
   // Remember that we used these bytes.
   BytesUsed += Len;
 
-  assert(BytesUsed-Len < (1 << SourceLocation::FilePosBits) &&
-         "Out of range file position!");
-  
   return BufferStartLoc.getFileLocWithOffset(BytesUsed-Len);
 }
 
