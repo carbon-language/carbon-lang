@@ -101,6 +101,19 @@ public:
   bool isValid() const { return ID != 0; }
   bool isInvalid() const { return ID == 0; }
   
+  /// getChunkID - Return the chunk identifier for this SourceLocation.  This
+  /// ChunkID can be used with the SourceManager object to obtain an entire
+  /// include stack for a file position reference.
+  unsigned getChunkID() const {
+    assert(isFileID() && "can't get the file id of a non-file sloc!");
+    return ID >> FilePosBits;
+  }
+  
+  unsigned getMacroID() const {
+    assert(isMacroID() && "Is not a macro id!");
+    return (ID >> MacroSpellingOffsBits) & ((1 << MacroIDBits)-1);
+  }
+  
 private:
   static SourceLocation getFileLoc(unsigned ChunkID, unsigned FilePos) {
     SourceLocation L;
@@ -118,7 +131,6 @@ private:
     L.ID = (ChunkID << FilePosBits) | FilePos;
     return L;
   }
-public:
   
   static bool isValidMacroSpellingOffs(int Val) {
     if (Val >= 0)
@@ -139,16 +151,7 @@ public:
            SpellingOffs;
     return L;
   }
-  
-  
-  /// getChunkID - Return the chunk identifier for this SourceLocation.  This
-  /// ChunkID can be used with the SourceManager object to obtain an entire
-  /// include stack for a file position reference.
-  unsigned getChunkID() const {
-    assert(isFileID() && "can't get the file id of a non-file sloc!");
-    return ID >> FilePosBits;
-  }
-  
+
   /// getRawFilePos - Return the byte offset from the start of the file-chunk
   /// referred to by ChunkID.  This method should not be used to get the offset
   /// from the start of the file, instead you should use
@@ -159,11 +162,6 @@ public:
     return ID & (ChunkSize-1);
   }
 
-  unsigned getMacroID() const {
-    assert(isMacroID() && "Is not a macro id!");
-    return (ID >> MacroSpellingOffsBits) & ((1 << MacroIDBits)-1);
-  }
-  
   int getMacroSpellingOffs() const {
     assert(isMacroID() && "Is not a macro id!");
     int Val = ID & ((1 << MacroSpellingOffsBits)-1);
@@ -171,6 +169,7 @@ public:
     unsigned ShAmt = sizeof(int)*8 - MacroSpellingOffsBits;
     return (Val << ShAmt) >> ShAmt;
   }
+public:
   
   /// getFileLocWithOffset - Return a source location with the specified offset
   /// from this file SourceLocation.
