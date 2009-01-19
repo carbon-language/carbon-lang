@@ -932,7 +932,7 @@ public:
 /// @end
 ///
 /// Typically, instance variables are specified in the class interface, 
-/// *not* in the implemenentation. Nevertheless (for legacy reasons), we
+/// *not* in the implementation. Nevertheless (for legacy reasons), we
 /// allow instance variables to be specified in the implementation. When
 /// specified, they need to be *identical* to the interface. Now that we
 /// have support for non-fragile ivars in ObjC 2.0, we can consider removing
