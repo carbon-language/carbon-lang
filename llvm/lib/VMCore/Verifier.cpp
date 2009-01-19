@@ -1332,6 +1332,11 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   switch (ID) {
   default:
     break;
+  case Intrinsic::dbg_declare:		// llvm.dbg.declare
+    if (Constant *C = dyn_cast<Constant>(CI.getOperand(1)))
+      Assert1(C && !isa<ConstantPointerNull>(C),
+              "invalid llvm.dbg.declare intrinsic call", &CI);
+    break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove:
   case Intrinsic::memset:

@@ -8,7 +8,9 @@ declare void @llvm.dbg.declare({ }*, { }*) nounwind
 
 define i32 @isascii(i32 %_c) nounwind {
 entry:
-        call void @llvm.dbg.declare({ }* null, { }* bitcast (%llvm.dbg.variable.type* @llvm.dbg.variable24 to { }*))
+	%j = alloca i32
+	%0 = bitcast i32* %j to { }*
+        call void @llvm.dbg.declare({ }* %0, { }* bitcast (%llvm.dbg.variable.type* @llvm.dbg.variable24 to { }*))
         unreachable
 }
 
