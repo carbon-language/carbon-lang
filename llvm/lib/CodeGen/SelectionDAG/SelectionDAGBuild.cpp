@@ -3747,7 +3747,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_stoppoint: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-    if (DW && SPI.getContext() && DW->ValidDebugInfo(SPI.getContext()))
+    if (DW && DW->ValidDebugInfo(SPI.getContext()))
       DAG.setRoot(DAG.getDbgStopPoint(getRoot(),
                                       SPI.getLine(),
                                       SPI.getColumn(),
@@ -3757,7 +3757,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_start: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
-    if (DW && RSI.getContext() && DW->ValidDebugInfo(RSI.getContext())) {
+    if (DW && DW->ValidDebugInfo(RSI.getContext())) {
       unsigned LabelID =
         DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
       DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getRoot(), LabelID));
@@ -3768,7 +3768,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_end: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
-    if (DW && REI.getContext() && DW->ValidDebugInfo(REI.getContext())) {
+    if (DW && DW->ValidDebugInfo(REI.getContext())) {
       unsigned LabelID =
         DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
       DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getRoot(), LabelID));
@@ -3803,7 +3803,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
     Value *Variable = DI.getVariable();
-    if (DW && Variable && DW->ValidDebugInfo(Variable))
+    if (DW && DW->ValidDebugInfo(Variable))
       DAG.setRoot(DAG.getNode(ISD::DECLARE, MVT::Other, getRoot(),
                               getValue(DI.getAddress()), getValue(Variable)));
     return 0;

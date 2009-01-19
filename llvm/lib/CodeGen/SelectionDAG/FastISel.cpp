@@ -317,7 +317,7 @@ bool FastISel::SelectCall(User *I) {
   default: break;
   case Intrinsic::dbg_stoppoint: {
     DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
-    if (DW && SPI->getContext() && DW->ValidDebugInfo(SPI->getContext())) {
+    if (DW && DW->ValidDebugInfo(SPI->getContext())) {
       DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
       unsigned SrcFile = DW->RecordSource(CU.getDirectory(),
                                           CU.getFilename());
@@ -331,7 +331,7 @@ bool FastISel::SelectCall(User *I) {
   }
   case Intrinsic::dbg_region_start: {
     DbgRegionStartInst *RSI = cast<DbgRegionStartInst>(I);
-    if (DW && RSI->getContext() && DW->ValidDebugInfo(RSI->getContext())) {
+    if (DW && DW->ValidDebugInfo(RSI->getContext())) {
       unsigned ID = 
         DW->RecordRegionStart(cast<GlobalVariable>(RSI->getContext()));
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
@@ -341,7 +341,7 @@ bool FastISel::SelectCall(User *I) {
   }
   case Intrinsic::dbg_region_end: {
     DbgRegionEndInst *REI = cast<DbgRegionEndInst>(I);
-    if (DW && REI->getContext() && DW->ValidDebugInfo(REI->getContext())) {
+    if (DW && DW->ValidDebugInfo(REI->getContext())) {
       unsigned ID = 
         DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
@@ -353,7 +353,7 @@ bool FastISel::SelectCall(User *I) {
     if (!DW) return true;
     DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
     Value *SP = FSI->getSubprogram();
-    if (SP && DW->ValidDebugInfo(SP)) {
+    if (DW->ValidDebugInfo(SP)) {
       // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
       // what (most?) gdb expects.
       DISubprogram Subprogram(cast<GlobalVariable>(SP));
@@ -375,7 +375,7 @@ bool FastISel::SelectCall(User *I) {
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
     Value *Variable = DI->getVariable();
-    if (DW && Variable && DW->ValidDebugInfo(Variable)) {
+    if (DW && DW->ValidDebugInfo(Variable)) {
       // Determine the address of the declared object.
       Value *Address = DI->getAddress();
       if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))

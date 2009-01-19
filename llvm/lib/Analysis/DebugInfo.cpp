@@ -180,6 +180,100 @@ unsigned DIArray::getNumElements() const {
   return C->getNumOperands();
 }
 
+/// Verify - Verify that a compile unit is well formed.
+bool DICompileUnit::Verify() const {
+  if (isNull()) 
+    return false;
+  if (getFilename().empty()) 
+    return false;
+  // It is possible that directory and produce string is empty.
+  return true;
+}
+
+/// Verify - Verify that a type descriptor is well formed.
+bool DIType::Verify() const {
+  if (isNull()) 
+    return false;
+  if (getContext().isNull()) 
+    return false;
+
+  DICompileUnit CU = getCompileUnit();
+  if (!CU.isNull() && !CU.Verify()) 
+    return false;
+  return true;
+}
+
+/// Verify - Verify that a composite type descriptor is well formed.
+bool DICompositeType::Verify() const {
+  if (isNull()) 
+    return false;
+  if (getContext().isNull()) 
+    return false;
+
+  DICompileUnit CU = getCompileUnit();
+  if (!CU.isNull() && !CU.Verify()) 
+    return false;
+  return true;
+}
+
+/// Verify - Verify that a subprogram descriptor is well formed.
+bool DISubprogram::Verify() const {
+  if (isNull())
+    return false;
+  
+  if (getContext().isNull())
+    return false;
+
+  DICompileUnit CU = getCompileUnit();
+  if (!CU.Verify()) 
+    return false;
+
+  DICompositeType Ty = getType();
+  if (!Ty.isNull() && !Ty.Verify())
+    return false;
+  return true;
+}
+
+/// Verify - Verify that a global variable descriptor is well formed.
+bool DIGlobalVariable::Verify() const {
+  if (isNull())
+    return false;
+  
+  if (getContext().isNull())
+    return false;
+
+  DICompileUnit CU = getCompileUnit();
+  if (!CU.Verify()) 
+    return false;
+
+  DIType Ty = getType();
+  if (!Ty.Verify())
+    return false;
+
+  if (!getGlobal())
+    return false;
+
+  return true;
+}
+
+/// Verify - Verify that a variable descriptor is well formed.
+bool DIVariable::Verify() const {
+  if (isNull())
+    return false;
+  
+  if (getContext().isNull())
+    return false;
+
+  DIType Ty = getType();
+  if (!Ty.Verify())
+    return false;
+
+
+  return true;
+}
+
+
+
 //===----------------------------------------------------------------------===//
 // DIFactory: Basic Helpers
 //===----------------------------------------------------------------------===//

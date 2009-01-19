@@ -78,6 +78,7 @@ namespace llvm {
     unsigned getTag() const {
       return getUnsignedField(0) & ~VersionMask;
     }
+    
   };
   
   /// DIAnchor - A wrapper for various anchor descriptors.
@@ -117,6 +118,8 @@ namespace llvm {
     std::string getFilename() const  { return getStringField(3); }
     std::string getDirectory() const { return getStringField(4); }
     std::string getProducer() const  { return getStringField(5); }
+    /// Verify - Verify that a compile unit is well formed.
+    bool Verify() const;
   };
 
   /// DIEnumerator - A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
@@ -155,6 +158,8 @@ namespace llvm {
       return TAG == dwarf::DW_TAG_base_type;
     }
 
+    /// Verify - Verify that a type descriptor is well formed.
+    bool Verify() const;
   public:
     explicit DIType(GlobalVariable *GV);
     explicit DIType() {}
@@ -217,6 +222,9 @@ namespace llvm {
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
     std::string getFilename() const { return getStringField(11); }
     std::string getDirectory() const { return getStringField(12); }
+
+    /// Verify - Verify that a composite type descriptor is well formed.
+    bool Verify() const;
   };
   
   /// DIGlobal - This is a common class for global variables and subprograms.
@@ -273,6 +281,9 @@ namespace llvm {
     std::string getFilename() const { return getStringField(11); }
     std::string getDirectory() const { return getStringField(12); }
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
+
+    /// Verify - Verify that a subprogram descriptor is well formed.
+    bool Verify() const;
   };
   
   /// DIGlobalVariable - This is a wrapper for a global variable.
@@ -283,6 +294,9 @@ namespace llvm {
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
     std::string getFilename() const { return getStringField(12); }
     std::string getDirectory() const { return getStringField(13); }
+
+    /// Verify - Verify that a global variable descriptor is well formed.
+    bool Verify() const;
   };
   
   
@@ -303,6 +317,9 @@ namespace llvm {
     
     /// isVariable - Return true if the specified tag is legal for DIVariable.
     static bool isVariable(unsigned Tag);
+
+    /// Verify - Verify that a variable descriptor is well formed.
+    bool Verify() const;
   };
   
   

@@ -3029,6 +3029,9 @@ public:
   /// ValidDebugInfo - Return true if V represents valid debug info value.
   bool ValidDebugInfo(Value *V) {
 
+    if (!V)
+      return false;
+
     if (!shouldEmit)
       return false;
 
@@ -3046,7 +3049,21 @@ public:
     if (Version != DIDescriptor::Version7 && Version != DIDescriptor::Version6)
       return false;
 
-    //FIXME - Check individual descriptors.
+    unsigned Tag = DI.getTag();
+    switch (Tag) {
+    case DW_TAG_variable:
+      assert (DIVariable(GV).Verify() && "Invalid DebugInfo value");
+      break;
+    case DW_TAG_compile_unit:
+      assert (DICompileUnit(GV).Verify() && "Invalid DebugInfo value");
+      break;
+    case DW_TAG_subprogram:
+      assert (DISubprogram(GV).Verify() && "Invalid DebugInfo value");
+      break;
+    default:
+      break;
+    }
+
     return true;
   }
 
