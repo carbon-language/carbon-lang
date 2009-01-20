@@ -1559,6 +1559,11 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   // fold the conditions into logical ops and one cond br.
   if (&BB->front() != BI)
     return false;
+
+  
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(BI->getCondition()))
+    if (CE->canTrap())
+      return false;
   
   int PBIOp, BIOp;
   if (PBI->getSuccessor(0) == BI->getSuccessor(0))
