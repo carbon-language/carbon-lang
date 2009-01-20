@@ -358,25 +358,26 @@ void Decl::swapAttrs(Decl *RHS) {
 
 void Decl::Destroy(ASTContext& C) {
 #if 0
-  // FIXME: This causes double-destroys in some cases, so it is
-  // disabled at the moment.
+  // FIXME: Once ownership is fully understood, we can enable this code
+  if (DeclContext *DC = dyn_cast<DeclContext>(this))
+    DC->decls_begin()->Destroy(C);
 
-  // Observe the unrolled recursion.  By setting N->NextDeclarator = 0x0
+  // Observe the unrolled recursion.  By setting N->NextDeclInScope = 0x0
   // within the loop, only the Destroy method for the first Decl
   // will deallocate all of the Decls in a chain.
   
-  Decl* N = SD->getNextDeclarator();
+  Decl* N = NextDeclInScope;
   
   while (N) {
-    Decl* Tmp = N->getNextDeclarator();
-    N->NextDeclarator = 0x0;
+    Decl* Tmp = N->NextDeclInScope;
+    N->NextDeclInScope = 0;
     N->Destroy(C);
     N = Tmp;
   }  
-#endif
 
   this->~Decl();
   C.getAllocator().Deallocate((void *)this);
+#endif
 }
 
 Decl *Decl::castFromDeclContext (const DeclContext *D) {
@@ -427,14 +428,8 @@ DeclContext::~DeclContext() {
 }
 
 void DeclContext::DestroyDecls(ASTContext &C) {
-  for (decl_iterator D = decls_begin(); D != decls_end(); ) {
-   // FIXME: assert that this condition holds.
-   if ((*D)->getLexicalDeclContext() == this)
-     // Advance the cursor (via NextDeclInScope) *before* doing the Destroy.
-     (*D++)->Destroy(C);
-   else
-     ++D;
-  }
+  for (decl_iterator D = decls_begin(); D != decls_end(); )
+    (*D++)->Destroy(C);
 }
 
 bool DeclContext::isTransparentContext() const {

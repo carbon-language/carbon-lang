@@ -58,7 +58,6 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
     // skipping something.
     if (ADecl) {
       Decl* D = static_cast<Decl*>(ADecl);      
-      TU->AddTopLevelDecl(D); // TranslationUnit now owns the Decl.
       Consumer->HandleTopLevelDecl(D);
     }
   };

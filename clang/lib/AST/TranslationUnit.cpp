@@ -31,78 +31,6 @@ enum { BasicMetadataBlock = 1,
        DeclsBlock = 3 };
 
 TranslationUnit::~TranslationUnit() {
-  if (OwnsDecls) {
-    llvm::DenseSet<Decl*> Killed;
-    for (std::vector<Decl*>::reverse_iterator I=TopLevelDecls.rbegin(), 
-                                              E=TopLevelDecls.rend(); 
-         I!=E; ++I) {
-      if (Killed.count(*I)) continue;
-
-      Killed.insert(*I);
-      
-      // FIXME: This is a horrible hack.  Because there is no clear ownership
-      //  role between ObjCInterfaceDecls and the ObjCPropertyDecls that they
-      //  reference, we need to destroy ObjCPropertyDecls here.  This will
-      //  eventually be fixed when the ownership of ObjCPropertyDecls gets
-      //  cleaned up.
-      if (ObjCInterfaceDecl* IDecl = dyn_cast<ObjCInterfaceDecl>(*I))
-        for (ObjCInterfaceDecl::prop_iterator ID=IDecl->prop_begin(),
-             ED=IDecl->prop_end(); ID!=ED; ++ID) {
-          if (!*ID || Killed.count(*ID)) continue;
-          Killed.insert(*ID);
-          (*ID)->Destroy(*Context);
-        }
-      
-      // FIXME: This is a horrible hack.  Because there is no clear ownership
-      //  role between ObjCProtocolDecls and the ObjCPropertyDecls that they
-      //  reference, we need to destroy ObjCPropertyDecls here.  This will
-      //  eventually be fixed when the ownership of ObjCPropertyDecls gets
-      //  cleaned up.
-      if (ObjCProtocolDecl* PDecl = dyn_cast<ObjCProtocolDecl>(*I))
-        for (ObjCProtocolDecl::prop_iterator ID=PDecl->prop_begin(),
-             ED=PDecl->prop_end(); ID!=ED; ++ID) {
-          if (!*ID || Killed.count(*ID)) continue;
-          Killed.insert(*ID);
-          (*ID)->Destroy(*Context);
-        }
-            
-      // FIXME: There is no clear ownership policy now for ObjCInterfaceDecls
-      //  referenced by ObjCClassDecls.  Some of them can be forward decls that
-      //  are never later defined (and forward decls can be referenced by
-      //  multiple ObjCClassDecls) or the ObjCInterfaceDecl later
-      //  becomes a real definition. 
-      //  Ideally we should have separate objects for forward declarations and
-      //  definitions, obviating this problem.  Because of this situation,
-      //  referenced ObjCInterfaceDecls are destroyed here.      
-      if (ObjCClassDecl* CDecl = dyn_cast<ObjCClassDecl>(*I))
-        for (ObjCClassDecl::iterator ID=CDecl->begin(),
-             ED=CDecl->end(); ID!=ED; ++ID) {          
-          if (!*ID || Killed.count(*ID)) continue;
-          Killed.insert(*ID);
-          (*ID)->Destroy(*Context);
-        }
-      
-      // FIXME: There is no clear ownership policy now for ObjCProtocolDecls
-      //  referenced by ObjCForwardProtocolDecl.  Some of them can be forward 
-      //  decls that are never later defined (and forward decls can be
-      //  referenced by multiple ObjCClassDecls) or the ObjCProtocolDecl 
-      //  later becomes a real definition. 
-      //  Ideally we should have separate objects for forward declarations and
-      //  definitions, obviating this problem.  Because of this situation,
-      //  referenced ObjCProtocolDecls are destroyed here.  
-      if (ObjCForwardProtocolDecl* FDec = dyn_cast<ObjCForwardProtocolDecl>(*I))
-        for (ObjCForwardProtocolDecl::iterator ID=FDec->begin(),
-             ED=FDec->end(); ID!=ED; ++ID) {          
-          if (!*ID || Killed.count(*ID)) continue;
-          Killed.insert(*ID);
-          (*ID)->Destroy(*Context);
-        }
-      
-            
-      (*I)->Destroy(*Context);
-    }
-  }
-
   if (OwnsMetaData && Context) {
     // The ASTContext object has the sole references to the IdentifierTable
     // Selectors, and the Target information.  Go and delete them, since
@@ -192,22 +120,6 @@ bool clang::EmitASTBitcodeFile(const TranslationUnit& TU,
 }
 
 void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
-
-  // ===---------------------------------------------------===/
-  //      Serialize the top-level decls.
-  // ===---------------------------------------------------===/  
-  
-  Sezr.EnterBlock(DeclsBlock);
-
-  // Only serialize the head of a decl chain.  The ASTConsumer interfaces
-  // provides us with each top-level decl, including those nested in
-  // a decl chain, so we may be passed decls that are already serialized.  
-  for (const_iterator I=begin(), E=end(); I!=E; ++I) 
-      if (!Sezr.isRegistered(*I))
-        Sezr.EmitOwnedPtr(*I);
-  
-  Sezr.ExitBlock();
-  
   // ===---------------------------------------------------===/
   //      Serialize the "Translation Unit" metadata.
   // ===---------------------------------------------------===/
@@ -333,15 +245,6 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   Dezr.JumpTo(ASTContextBlockLoc);
   TU->Context = Dezr.ReadOwnedPtr<ASTContext>();
   
-  // "Rewind" the stream.  Find the block with the serialized top-level decls.
-  Dezr.Rewind();
-  FoundBlock = Dezr.SkipToBlock(DeclsBlock);
-  assert (FoundBlock);
-  llvm::Deserializer::Location DeclBlockLoc = Dezr.getCurrentBlockLocation();
-  
-  while (!Dezr.FinishedBlock(DeclBlockLoc))
-    TU->AddTopLevelDecl(Dezr.ReadOwnedPtr<Decl>(*TU->Context));
-
   return TU;
 }
 

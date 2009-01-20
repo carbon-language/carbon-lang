@@ -319,7 +319,6 @@ RecordDecl::~RecordDecl() {
 }
 
 void RecordDecl::Destroy(ASTContext& C) {
-  DeclContext::DestroyDecls(C);
   TagDecl::Destroy(C);
 }
 

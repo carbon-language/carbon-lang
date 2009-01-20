@@ -14,9 +14,9 @@
 #define LLVM_CLANG_TRANSLATION_UNIT_H
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/System/Path.h"
-#include <vector>
 #include <string>
 
 namespace clang {
@@ -32,7 +32,6 @@ class FileEntry;
   
 class TranslationUnit {
   ASTContext* Context;
-  std::vector<Decl*> TopLevelDecls;
   bool OwnsMetaData;
   bool OwnsDecls;
 
@@ -61,20 +60,12 @@ public:
 
   ASTContext&        getContext() { return *Context; }
   const ASTContext&  getContext() const { return *Context; }
-  
-  /// AddTopLevelDecl - Add a top-level declaration to the translation unit.
-  ///  Ownership of the Decl is transfered to the TranslationUnit object.
-  void AddTopLevelDecl(Decl* d) {
-    TopLevelDecls.push_back(d);
+
+  typedef DeclContext::decl_iterator iterator;
+  iterator begin() const { 
+    return Context->getTranslationUnitDecl()->decls_begin(); 
   }
-  
-  typedef std::vector<Decl*>::iterator iterator;  
-  iterator begin() { return TopLevelDecls.begin(); }
-  iterator end() { return TopLevelDecls.end(); }
-  
-  typedef std::vector<Decl*>::const_iterator const_iterator;  
-  const_iterator begin() const { return TopLevelDecls.begin(); }
-  const_iterator end() const { return TopLevelDecls.end(); }  
+  iterator end() const { return Context->getTranslationUnitDecl()->decls_end(); }
 };
   
 /// EmitASTBitcodeFile - Emit a translation unit to a bitcode file.
