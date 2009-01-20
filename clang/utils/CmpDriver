@@ -168,7 +168,7 @@ def main():
                 else:
                     print 'mismatch: A: %s' % aElt
                     print '          B: %s' % bElt
-        differ = True
+            differ = True
 
     # Compare result codes.
     if infoA.exitCode != infoB.exitCode:

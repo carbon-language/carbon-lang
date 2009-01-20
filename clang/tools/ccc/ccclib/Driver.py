@@ -662,6 +662,7 @@ class Driver(object):
                 not hasSaveTemps and
                 tool.hasIntegratedCPP()):
                 if (len(phase.inputs) == 1 and 
+                    isinstance(phase.inputs[0], Phases.JobAction) and
                     isinstance(phase.inputs[0].phase, Phases.PreprocessPhase)):
                     useIntegratedCPP = True
                     inputList = phase.inputs[0].inputs

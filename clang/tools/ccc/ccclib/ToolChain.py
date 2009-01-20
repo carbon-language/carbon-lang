@@ -52,7 +52,7 @@ class Darwin_X86_ToolChain(ToolChain):
         self.archName = archName
 
         self.toolMap = {
-            Phases.PreprocessPhase : Tools.GCC_PreprocessTool(),
+            Phases.PreprocessPhase : Tools.Darwin_X86_PreprocessTool(self),
             Phases.CompilePhase : Tools.Darwin_X86_CompileTool(self),
             Phases.PrecompilePhase : Tools.GCC_PrecompileTool(),
             Phases.AssemblePhase : Tools.Darwin_AssembleTool(self),

@@ -549,7 +549,8 @@ class OptionParser:
         self.MTOption = self.addOption(JoinedOrSeparateOption('-MT'))
         self.MQOption = self.addOption(JoinedOrSeparateOption('-MQ'))
         self.MachOption = self.addOption(FlagOption('-Mach'))
-        self.undefOption = self.addOption(FlagOption('-undef'))
+        self.uGroup = OptionGroup('-u')
+        self.undefOption = self.addOption(FlagOption('-undef', self.uGroup))
 
         self.wOption = self.addOption(FlagOption('-w'))
         self.bundle_loaderOption = self.addOption(SeparateOption('-bundle_loader'))
@@ -575,8 +576,8 @@ class OptionParser:
         self.segprotOption = self.addOption(JoinedOrSeparateOption('-segprot'))
         self.sub_libraryOption = self.addOption(JoinedOrSeparateOption('-sub_library'))
         self.sub_umbrellaOption = self.addOption(JoinedOrSeparateOption('-sub_umbrella'))
-        self.umbrellaOption = self.addOption(SeparateOption('-umbrella'))
-        self.undefinedOption = self.addOption(JoinedOrSeparateOption('-undefined'))
+        self.umbrellaOption = self.addOption(SeparateOption('-umbrella', self.uGroup))
+        self.undefinedOption = self.addOption(JoinedOrSeparateOption('-undefined', self.uGroup))
         self.headerpad_max_install_namesOption = self.addOption(JoinedOption('-headerpad_max_install_names'))
         self.twolevel_namespaceOption = self.addOption(FlagOption('-twolevel_namespace'))
         self.twolevel_namespace_hintsOption = self.addOption(FlagOption('-twolevel_namespace_hints'))
@@ -647,7 +648,7 @@ class OptionParser:
         # FIXME: This probably isn't necessary.
         self.segs_read_Option = self.addOption(JoinedOption('-segs_read_'))
         self.single_moduleOption = self.addOption(FlagOption('-single_module'))
-        self.unexported_symbols_listOption = self.addOption(SeparateOption('-unexported_symbols_list'))
+        self.unexported_symbols_listOption = self.addOption(SeparateOption('-unexported_symbols_list', self.uGroup))
         self.weak_reference_mismatchesOption = self.addOption(SeparateOption('-weak_reference_mismatches'))
 
         self.addOption(SeparateOption('-filelist', isLinkerInput=True))
@@ -685,7 +686,7 @@ class OptionParser:
         self.ZOption = self.addOption(JoinedOrSeparateOption('-Z'))
 
         self.addOption(JoinedOrSeparateOption('-l', isLinkerInput=True))
-        self.uOption = self.addOption(JoinedOrSeparateOption('-u'))
+        self.uOption = self.addOption(JoinedOrSeparateOption('-u', self.uGroup))
         self.tOption = self.addOption(JoinedOrSeparateOption('-t'))
         self.yOption = self.addOption(JoinedOption('-y'))
 
@@ -751,6 +752,7 @@ class OptionParser:
         self.f_noEliminateUnusedDebugSymbolsOption = self.addOption(FlagOption('-fno-eliminate-unused-debug-symbols', self.fGroup))
         self.f_noPascalStringsOption = self.addOption(FlagOption('-fno-pascal-strings', self.fGroup))
         self.f_noShowColumnOption = self.addOption(FlagOption('-fno-show-column', self.fGroup))
+        self.f_noWorkingDirectoryOption = self.addOption(FlagOption('-fno-working-directory', self.fGroup))
         self.f_objcGcOnlyOption = self.addOption(FlagOption('-fobjc-gc-only', self.fGroup))
         self.f_objcGcOption = self.addOption(FlagOption('-fobjc-gc', self.fGroup))
         self.f_objcOption = self.addOption(FlagOption('-fobjc', self.fGroup))

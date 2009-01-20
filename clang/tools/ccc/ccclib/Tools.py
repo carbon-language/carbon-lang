@@ -275,29 +275,29 @@ class Clang_CompileTool(Tool):
             
         jobs.addJob(Jobs.Command('clang', cmd_args))
         
-
-class Darwin_X86_CompileTool(Tool):
-    def __init__(self, toolChain):
-        super(Darwin_X86_CompileTool, self).__init__('cc1',
-                                                     (Tool.eFlagsPipedInput |
-                                                      Tool.eFlagsPipedOutput |
-                                                      Tool.eFlagsIntegratedCPP))
-        self.toolChain = toolChain
-
-    def addCPPArgs(self, cmd_args, arch, arglist):
-        # Derived from cpp spec.
-
-        if arglist.getLastArg(arglist.parser.staticOption):
-            # The gcc spec is broken here, it refers to dynamic but
-            # that has been translated. Start by being bug compatible.
-            
-            # if not arglist.getLastArg(arglist.parser.dynamicOption):
-            cmd_args.append('-D__STATIC__')
-        else:
-            cmd_args.append('-D__DYNAMIC__')
+class Darwin_X86_CC1Tool(Tool):
+    def getCC1Name(self, type):
+        """getCC1Name(type) -> name, use-cpp, is-cxx"""
         
-        if arglist.getLastArg(arglist.parser.pthreadOption):
-            cmd_args.append('-D_REENTRANT')
+        # FIXME: Get bool results from elsewhere.
+        if type is Types.CType:
+            return 'cc1',True,False
+        elif type is Types.CTypeNoPP:
+            return 'cc1',False,False
+        elif type is Types.ObjCType:
+            return 'cc1obj',True,False
+        elif type is Types.ObjCTypeNoPP:
+            return 'cc1obj',True,False
+        elif type is Types.CXXType:
+            return 'cc1plus',True,True
+        elif type is Types.CXXTypeNoPP:
+            return 'cc1plus',False,True
+        elif type is Types.ObjCXXType:
+            return 'cc1objplus',True,True
+        elif type is Types.ObjCXXTypeNoPP:
+            return 'cc1objplus',False,True
+        else:
+            raise ValueError,"Unexpected type for Darwin compile tool."
         
     def addCC1Args(self, cmd_args, arch, arglist):
         # Derived from cc1 spec.
@@ -330,159 +330,7 @@ class Darwin_X86_CompileTool(Tool):
             not arglist.getLastArg(arglist.parser.f_noEliminateUnusedDebugSymbolsOption)):
             cmd_args.append('-feliminate-unused-debug-symbols')
 
-    def getBaseInputName(self, inputs, arglist):
-        # FIXME: gcc uses a temporary name here when the base
-        # input is stdin, but only in auxbase. Investigate.
-        baseInputValue = arglist.getValue(inputs[0].baseInput)
-        return os.path.basename(baseInputValue)
-    
-    def getBaseInputStem(self, inputs, arglist):
-        return os.path.splitext(self.getBaseInputName(inputs, arglist))[0]
-
-    def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
-        inputType = inputs[0].type
-        assert not [i for i in inputs if i.type != inputType]
-
-        usePP = False
-        isCXX = False
-        if inputType is Types.CType:
-            cc1Name = 'cc1'
-            usePP = True
-        elif inputType is Types.CTypeNoPP:
-            cc1Name = 'cc1'
-            usePP = False
-        elif inputType is Types.ObjCType:
-            cc1Name = 'cc1obj'
-            usePP = True
-        elif inputType is Types.ObjCTypeNoPP:
-            cc1Name = 'cc1obj'
-            usePP = False
-        elif inputType is Types.CXXType:
-            cc1Name = 'cc1plus'
-            usePP = True
-            isCXX = True
-        elif inputType is Types.CXXTypeNoPP:
-            cc1Name = 'cc1plus'
-            usePP = False
-            isCXX = True
-        elif inputType is Types.ObjCXXType:
-            cc1Name = 'cc1objplus'
-            usePP = True
-            isCXX = True
-        elif inputType is Types.ObjCXXTypeNoPP:
-            cc1Name = 'cc1objplus'
-            usePP = False
-            isCXX = True
-        else:
-            raise ValueError,"Unexpected input type for Darwin compile tool."
-
-        cmd_args = []
-        if (arglist.getLastArg(arglist.parser.traditionalOption) or
-            arglist.getLastArg(arglist.parser.f_traditionalOption)):
-            raise Arguments.InvalidArgumentsError("-traditional is not supported without -E")
-
-        if usePP:
-            # Derived from cpp_options.
-
-            # Derived from cpp_unique_options.
-
-            if (arglist.getLastArg(arglist.parser.COption) or
-                arglist.getLastArg(arglist.parser.CCOption)):
-                if not arglist.getLastArg(arglist.parser.EOption):
-                    raise Arguments.InvalidArgumentsError("-C or -CC is not supported without -E")
-            if not arglist.getLastArg(arglist.parser.QOption):
-                cmd_args.append('-quiet')
-            arglist.addAllArgs(cmd_args, arglist.parser.nostdincOption)
-            arglist.addLastArg(cmd_args, arglist.parser.vOption)
-            arglist.addAllArgs2(cmd_args, arglist.parser.IOption, arglist.parser.FOption)
-            arglist.addLastArg(cmd_args, arglist.parser.POption)
-
-            # FIXME: Handle %I properly.
-            if arglist.getValue(arch) == 'x86_64':
-                cmd_args.append('-imultilib')
-                cmd_args.append('x86_64')
-
-            if arglist.getLastArg(arglist.parser.MDOption):
-                cmd_args.append('-MD')
-                # FIXME: Think about this more.
-                outputOpt = arglist.getLastArg(arglist.parser.oOption)
-                if outputOpt:
-                    base,ext = os.path.splitext(arglist.getValue(outputOpt))
-                    cmd_args.append(base+'.d')
-                else:
-                    cmd_args.append(self.getBaseInputStem(inputs, arglist)+'.d')
-            if arglist.getLastArg(arglist.parser.MMDOption):
-                cmd_args.append('-MMD')
-                # FIXME: Think about this more.
-                outputOpt = arglist.getLastArg(arglist.parser.oOption)
-                if outputOpt:
-                    base,ext = os.path.splitext(arglist.getValue(outputOpt))
-                    cmd_args.append(base+'.d')
-                else:
-                    cmd_args.append(self.getBaseInputStem(inputs, arglist)+'.d')
-            arglist.addLastArg(cmd_args, arglist.parser.MOption)
-            arglist.addLastArg(cmd_args, arglist.parser.MMOption)
-            arglist.addAllArgs(cmd_args, arglist.parser.MFOption)
-            arglist.addLastArg(cmd_args, arglist.parser.MGOption)
-            arglist.addLastArg(cmd_args, arglist.parser.MPOption)
-            arglist.addAllArgs(cmd_args, arglist.parser.MQOption)
-            arglist.addAllArgs(cmd_args, arglist.parser.MTOption)
-            if (not arglist.getLastArg(arglist.parser.MOption) and
-                not arglist.getLastArg(arglist.parser.MMOption) and
-                (arglist.getLastArg(arglist.parser.MDOption) or
-                 arglist.getLastArg(arglist.parser.MMDOption))):
-                outputOpt = arglist.getLastArg(arglist.parser.oOption)
-                if outputOpt:
-                    cmd_args.append('-MQ')
-                    cmd_args.append(arglist.getValue(outputOpt))
-
-            arglist.addLastArg(cmd_args, arglist.parser.remapOption)
-            if arglist.getLastArg(arglist.parser.g3Option):
-                cmd_args.append('-dD')
-            arglist.addLastArg(cmd_args, arglist.parser.HOption)
-
-            self.addCPPArgs(cmd_args, arch, arglist)
-
-            arglist.addAllArgs3(cmd_args, 
-                                arglist.parser.DOption,
-                                arglist.parser.UOption,
-                                arglist.parser.AOption)
-
-            arglist.addAllArgs(cmd_args, arglist.parser.iGroup)
-
-            for input in inputs:
-                if isinstance(input.source, Jobs.PipedJob):
-                    cmd_args.append('-')
-                else:
-                    cmd_args.extend(arglist.renderAsInput(input.source))
-
-            for arg in arglist.getArgs2(arglist.parser.WpOption,
-                                        arglist.parser.XpreprocessorOption):
-                cmd_args.extend(arglist.getValues(arg))
-
-            if arglist.getLastArg(arglist.parser.f_mudflapOption):
-                cmd_args.append('-D_MUDFLAP')
-                cmd_args.append('-include')
-                cmd_args.append('mf-runtime.h')
-
-            if arglist.getLastArg(arglist.parser.f_mudflapthOption):
-                cmd_args.append('-D_MUDFLAP')
-                cmd_args.append('-D_MUDFLAPTH')
-                cmd_args.append('-include')
-                cmd_args.append('mf-runtime.h')
-            
-        else:
-            cmd_args.append('-fpreprocessed')
-            # FIXME: There is a spec command to remove
-            # -fpredictive-compilation args here. Investigate.
-
-            for input in inputs:
-                if isinstance(input.source, Jobs.PipedJob):
-                    cmd_args.append('-')
-                else:
-                    cmd_args.extend(arglist.renderAsInput(input.source))
-
+    def addCC1OptionsArgs(self, cmd_args, arch, arglist, inputs, output_args, isCXX):
         # Derived from cc1_options spec.
         if (arglist.getLastArg(arglist.parser.fastOption) or
             arglist.getLastArg(arglist.parser.fastfOption) or
@@ -539,7 +387,7 @@ class Darwin_X86_CompileTool(Tool):
         arglist.addAllArgs2(cmd_args, arglist.parser.fGroup, 
                             arglist.parser.syntaxOnlyOption)
 
-        arglist.addLastArg(cmd_args, arglist.parser.undefOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.undefOption)
         if arglist.getLastArg(arglist.parser.QnOption):
             cmd_args.append('-fno-ident')
          
@@ -547,18 +395,7 @@ class Darwin_X86_CompileTool(Tool):
         #arglist.addLastArg(cmd_args, arglist.parser._helpOption)
         #arglist.addLastArg(cmd_args, arglist.parser._targetHelpOption)
 
-        # There is no need for this level of compatibility, but it
-        # makes diffing easier.
-        outputAtEnd = (not arglist.getLastArg(arglist.parser.syntaxOnlyOption) and
-                       not arglist.getLastArg(arglist.parser.SOption))
-        if isinstance(output, Jobs.PipedJob):
-            output_args = ['-o', '-']
-        elif output is None:
-            output_args = ['-o', '/dev/null']
-        else:
-            output_args = arglist.render(output)
-
-        if not outputAtEnd:
+        if output_args:
             cmd_args.extend(output_args)
 
         # FIXME: Still don't get what is happening here. Investigate.
@@ -576,13 +413,247 @@ class Darwin_X86_CompileTool(Tool):
         if isCXX:
             cmd_args.append('-D__private_extern__=extern')
 
-        if outputAtEnd:
-            cmd_args.extend(output_args)
+    def getBaseInputName(self, inputs, arglist):
+        # FIXME: gcc uses a temporary name here when the base
+        # input is stdin, but only in auxbase. Investigate.
+        baseInputValue = arglist.getValue(inputs[0].baseInput)
+        return os.path.basename(baseInputValue)
+    
+    def getBaseInputStem(self, inputs, arglist):
+        return os.path.splitext(self.getBaseInputName(inputs, arglist))[0]
+
+    def getOutputArgs(self, arglist, output, isCPP=False):
+        if isinstance(output, Jobs.PipedJob):
+            if isCPP:
+                output_args = []
+            else:
+                output_args = ['-o', '-']
+        elif output is None:
+            output_args = ['-o', '/dev/null']
+        else:
+            output_args = arglist.render(output)
+
+        # There is no need for this level of compatibility, but it
+        # makes diffing easier.
+        if (not arglist.getLastArg(arglist.parser.syntaxOnlyOption) and
+            not arglist.getLastArg(arglist.parser.SOption)):
+            return [], output_args
+        else:
+            return output_args, []
+
+    def addCPPOptionsArgs(self, cmd_args, arch, arglist, inputs,
+                          output_args, isCXX):
+        # Derived from cpp_options.
+        self.addCPPUniqueOptionsArgs(cmd_args, arch, arglist, inputs)
+        
+        self.addCC1Args(cmd_args, arch, arglist)
+
+        # NOTE: The code below has some commonality with cpp_options,
+        # but in classic gcc style ends up sending things in different
+        # orders. This may be a good merge candidate once we drop
+        # pedantic compatibility.
+
+        arglist.addAllArgs(cmd_args, arglist.parser.mGroup)
+        arglist.addAllArgs3(cmd_args, arglist.parser.stdOption, 
+                            arglist.parser.ansiOption, 
+                            arglist.parser.trigraphsOption)
+        arglist.addAllArgs2(cmd_args, arglist.parser.WGroup, 
+                            arglist.parser.pedanticGroup)
+        arglist.addLastArg(cmd_args, arglist.parser.wOption)
+
+        # ccc treats -fsyntax-only specially.
+        arglist.addAllArgs2(cmd_args, arglist.parser.fGroup, 
+                            arglist.parser.syntaxOnlyOption)
+
+        if (arglist.getLastArg(arglist.parser.gGroup) and
+            not arglist.getLastArg(arglist.parser.g0Option) and
+            not arglist.getLastArg(arglist.parser.f_noWorkingDirectoryOption)):
+            cmd_args.append('-fworking-directory')
+
+        arglist.addAllArgs(cmd_args, arglist.parser.OOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.undefOption)
+        if arglist.getLastArg(arglist.parser.saveTempsOption):
+            cmd_args.append('-fpch-preprocess')
+
+    def addCPPUniqueOptionsArgs(self, cmd_args, arch, arglist, inputs):
+        # Derived from cpp_unique_options.
+
+        if (arglist.getLastArg(arglist.parser.COption) or
+            arglist.getLastArg(arglist.parser.CCOption)):
+            if not arglist.getLastArg(arglist.parser.EOption):
+                raise Arguments.InvalidArgumentsError("-C or -CC is not supported without -E")
+        if not arglist.getLastArg(arglist.parser.QOption):
+            cmd_args.append('-quiet')
+        arglist.addAllArgs(cmd_args, arglist.parser.nostdincOption)
+        arglist.addLastArg(cmd_args, arglist.parser.vOption)
+        arglist.addAllArgs2(cmd_args, arglist.parser.IOption, arglist.parser.FOption)
+        arglist.addLastArg(cmd_args, arglist.parser.POption)
+
+        # FIXME: Handle %I properly.
+        if arglist.getValue(arch) == 'x86_64':
+            cmd_args.append('-imultilib')
+            cmd_args.append('x86_64')
+
+        if arglist.getLastArg(arglist.parser.MDOption):
+            cmd_args.append('-MD')
+            # FIXME: Think about this more.
+            outputOpt = arglist.getLastArg(arglist.parser.oOption)
+            if outputOpt:
+                base,ext = os.path.splitext(arglist.getValue(outputOpt))
+                cmd_args.append(base+'.d')
+            else:
+                cmd_args.append(self.getBaseInputStem(inputs, arglist)+'.d')
+        if arglist.getLastArg(arglist.parser.MMDOption):
+            cmd_args.append('-MMD')
+            # FIXME: Think about this more.
+            outputOpt = arglist.getLastArg(arglist.parser.oOption)
+            if outputOpt:
+                base,ext = os.path.splitext(arglist.getValue(outputOpt))
+                cmd_args.append(base+'.d')
+            else:
+                cmd_args.append(self.getBaseInputStem(inputs, arglist)+'.d')
+        arglist.addLastArg(cmd_args, arglist.parser.MOption)
+        arglist.addLastArg(cmd_args, arglist.parser.MMOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.MFOption)
+        arglist.addLastArg(cmd_args, arglist.parser.MGOption)
+        arglist.addLastArg(cmd_args, arglist.parser.MPOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.MQOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.MTOption)
+        if (not arglist.getLastArg(arglist.parser.MOption) and
+            not arglist.getLastArg(arglist.parser.MMOption) and
+            (arglist.getLastArg(arglist.parser.MDOption) or
+             arglist.getLastArg(arglist.parser.MMDOption))):
+            outputOpt = arglist.getLastArg(arglist.parser.oOption)
+            if outputOpt:
+                cmd_args.append('-MQ')
+                cmd_args.append(arglist.getValue(outputOpt))
+
+        arglist.addLastArg(cmd_args, arglist.parser.remapOption)
+        if arglist.getLastArg(arglist.parser.g3Option):
+            cmd_args.append('-dD')
+        arglist.addLastArg(cmd_args, arglist.parser.HOption)
+
+        self.addCPPArgs(cmd_args, arch, arglist)
+
+        arglist.addAllArgs3(cmd_args, 
+                            arglist.parser.DOption,
+                            arglist.parser.UOption,
+                            arglist.parser.AOption)
+
+        arglist.addAllArgs(cmd_args, arglist.parser.iGroup)
+
+        for input in inputs:
+            if isinstance(input.source, Jobs.PipedJob):
+                cmd_args.append('-')
+            else:
+                cmd_args.extend(arglist.renderAsInput(input.source))
+
+        for arg in arglist.getArgs2(arglist.parser.WpOption,
+                                    arglist.parser.XpreprocessorOption):
+            cmd_args.extend(arglist.getValues(arg))
+
+        if arglist.getLastArg(arglist.parser.f_mudflapOption):
+            cmd_args.append('-D_MUDFLAP')
+            cmd_args.append('-include')
+            cmd_args.append('mf-runtime.h')
+
+        if arglist.getLastArg(arglist.parser.f_mudflapthOption):
+            cmd_args.append('-D_MUDFLAP')
+            cmd_args.append('-D_MUDFLAPTH')
+            cmd_args.append('-include')
+            cmd_args.append('mf-runtime.h')
+
+    def addCPPArgs(self, cmd_args, arch, arglist):
+        # Derived from cpp spec.
+
+        if arglist.getLastArg(arglist.parser.staticOption):
+            # The gcc spec is broken here, it refers to dynamic but
+            # that has been translated. Start by being bug compatible.
+            
+            # if not arglist.getLastArg(arglist.parser.dynamicOption):
+            cmd_args.append('-D__STATIC__')
+        else:
+            cmd_args.append('-D__DYNAMIC__')
+        
+        if arglist.getLastArg(arglist.parser.pthreadOption):
+            cmd_args.append('-D_REENTRANT')
+        
+class Darwin_X86_PreprocessTool(Darwin_X86_CC1Tool):
+    def __init__(self, toolChain):
+        super(Darwin_X86_PreprocessTool, self).__init__('cpp',
+                                                        (Tool.eFlagsPipedInput |
+                                                         Tool.eFlagsPipedOutput))
+        self.toolChain = toolChain
+    
+    def constructJob(self, phase, arch, jobs, inputs, 
+                     output, outputType, arglist):
+        inputType = inputs[0].type
+        assert not [i for i in inputs if i.type != inputType]
+
+        cc1Name,usePP,isCXX = self.getCC1Name(inputType)
+
+        cmd_args = ['-E']
+        if (arglist.getLastArg(arglist.parser.traditionalOption) or
+            arglist.getLastArg(arglist.parser.f_traditionalOption) or
+            arglist.getLastArg(arglist.parser.traditionalCPPOption)):
+            cmd_args.append('-traditional-cpp')
+
+        early_output_args, end_output_args = self.getOutputArgs(arglist, output,
+                                                                isCPP=True)
+        self.addCPPOptionsArgs(cmd_args, arch, arglist, inputs, 
+                               early_output_args, isCXX)
+        cmd_args.extend(end_output_args)
+
+        arglist.addAllArgs(cmd_args, arglist.parser.dGroup)
+
+        jobs.addJob(Jobs.Command(self.toolChain.getProgramPath(cc1Name), 
+                                 cmd_args))
+    
+class Darwin_X86_CompileTool(Darwin_X86_CC1Tool):
+    def __init__(self, toolChain):
+        super(Darwin_X86_CompileTool, self).__init__('cc1',
+                                                     (Tool.eFlagsPipedInput |
+                                                      Tool.eFlagsPipedOutput |
+                                                      Tool.eFlagsIntegratedCPP))
+        self.toolChain = toolChain
+
+    def constructJob(self, phase, arch, jobs, inputs, 
+                     output, outputType, arglist):
+        inputType = inputs[0].type
+        assert not [i for i in inputs if i.type != inputType]
+
+        cc1Name,usePP,isCXX = self.getCC1Name(inputType)
+
+        cmd_args = []
+        if (arglist.getLastArg(arglist.parser.traditionalOption) or
+            arglist.getLastArg(arglist.parser.f_traditionalOption)):
+            raise Arguments.InvalidArgumentsError("-traditional is not supported without -E")
+
+        early_output_args, end_output_args = self.getOutputArgs(arglist, output)
+        if usePP:
+            self.addCPPUniqueOptionsArgs(cmd_args, arch, arglist, inputs)
+            self.addCC1OptionsArgs(cmd_args, arch, arglist, inputs,
+                                   early_output_args, isCXX)
+            cmd_args.extend(end_output_args)
+        else:
+            cmd_args.append('-fpreprocessed')
+            
+            # FIXME: There is a spec command to remove
+            # -fpredictive-compilation args here. Investigate.
+
+            for input in inputs:
+                if isinstance(input.source, Jobs.PipedJob):
+                    cmd_args.append('-')
+                else:
+                    cmd_args.extend(arglist.renderAsInput(input.source))
+
+            self.addCC1OptionsArgs(cmd_args, arch, arglist, inputs, 
+                                   early_output_args, isCXX)
+            cmd_args.extend(end_output_args)
 
         jobs.addJob(Jobs.Command(self.toolChain.getProgramPath(cc1Name), 
                                  cmd_args))
 
-        
 class Darwin_X86_LinkTool(Tool):
     def __init__(self, toolChain):
         super(Darwin_X86_LinkTool, self).__init__('collect2')
@@ -840,7 +911,7 @@ class Darwin_X86_LinkTool(Tool):
         arglist.addLastArg(cmd_args, arglist.parser.dOption)
         arglist.addLastArg(cmd_args, arglist.parser.tOption)
         arglist.addLastArg(cmd_args, arglist.parser.ZOption)
-        arglist.addLastArg(cmd_args, arglist.parser.uOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.uGroup)
         arglist.addLastArg(cmd_args, arglist.parser.AOption)
         arglist.addLastArg(cmd_args, arglist.parser.eOption)
         arglist.addLastArg(cmd_args, arglist.parser.mOption)
