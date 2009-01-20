@@ -1040,6 +1040,75 @@ SimpleRegisterCoalescing::HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
 }
 
 
+/// CanJoinExtractSubRegToPhysReg - Return true if it's possible to coalesce
+/// an extract_subreg where dst is a physical register, e.g.
+/// cl = EXTRACT_SUBREG reg1024, 1
+bool
+SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(MachineInstr *CopyMI,
+                                        unsigned DstReg, unsigned SrcReg,
+                                        unsigned SubIdx, unsigned &RealDstReg) {
+  if (CopyMI->getOperand(1).getSubReg()) {
+    DOUT << "\tSrc of extract_subreg already coalesced with reg"
+         << " of a super-class.\n";
+    return false; // Not coalescable.
+  }
+
+  const TargetRegisterClass *RC = mri_->getRegClass(SrcReg);
+  RealDstReg = getMatchingSuperReg(DstReg, SubIdx, RC, tri_);
+  assert(RealDstReg && "Invalid extract_subreg instruction!");
+
+  // For this type of EXTRACT_SUBREG, conservatively
+  // check if the live interval of the source register interfere with the
+  // actual super physical register we are trying to coalesce with.
+  LiveInterval &RHS = li_->getInterval(SrcReg);
+  if (li_->hasInterval(RealDstReg) &&
+      RHS.overlaps(li_->getInterval(RealDstReg))) {
+    DOUT << "Interfere with register ";
+    DEBUG(li_->getInterval(RealDstReg).print(DOUT, tri_));
+    return false; // Not coalescable
+  }
+  for (const unsigned* SR = tri_->getSubRegisters(RealDstReg); *SR; ++SR)
+    if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
+      DOUT << "Interfere with sub-register ";
+      DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+      return false; // Not coalescable
+    }
+  return true;
+}
+
+/// CanJoinInsertSubRegToPhysReg - Return true if it's possible to coalesce
+/// an insert_subreg where src is a physical register, e.g.
+/// reg1024 = INSERT_SUBREG reg1024, c1, 0
+bool
+SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(MachineInstr *CopyMI,
+                                        unsigned DstReg, unsigned SrcReg,
+                                        unsigned SubIdx, unsigned &RealSrcReg) {
+  if (CopyMI->getOperand(1).getSubReg()) {
+    DOUT << "\tSrc of insert_subreg already coalesced with reg"
+         << " of a super-class.\n";
+    return false; // Not coalescable.
+  }
+  const TargetRegisterClass *RC = mri_->getRegClass(DstReg);
+  RealSrcReg = getMatchingSuperReg(SrcReg, SubIdx, RC, tri_);
+  assert(RealSrcReg && "Invalid extract_subreg instruction!");
+
+  LiveInterval &RHS = li_->getInterval(DstReg);
+  if (li_->hasInterval(RealSrcReg) &&
+      RHS.overlaps(li_->getInterval(RealSrcReg))) {
+    DOUT << "Interfere with register ";
+    DEBUG(li_->getInterval(RealSrcReg).print(DOUT, tri_));
+    return false; // Not coalescable
+  }
+  for (const unsigned* SR = tri_->getSubRegisters(RealSrcReg); *SR; ++SR)
+    if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
+      DOUT << "Interfere with sub-register ";
+      DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+      return false; // Not coalescable
+    }
+  return true;
+}
+
+
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
 /// if the copy was successfully coalesced away. If it is not currently
@@ -1135,43 +1204,15 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         DstReg = tri_->getSubReg(DstReg, SubIdx);
       SubIdx = 0;
     } else if ((DstIsPhys && isExtSubReg) || (SrcIsPhys && isInsSubReg)) {
-      // If this is a extract_subreg where dst is a physical register, e.g.
-      // cl = EXTRACT_SUBREG reg1024, 1
-      // then create and update the actual physical register allocated to RHS.
-      // Ditto for
-      // reg1024 = INSERT_SUBREG r1024, cl, 1
-      if (CopyMI->getOperand(1).getSubReg()) {
-        DOUT << "\tSrc of extract_ / insert_subreg already coalesced with reg"
-             << " of a super-class.\n";
-        return false; // Not coalescable.
-      }
-      const TargetRegisterClass *RC =
-        mri_->getRegClass(isExtSubReg ? SrcReg : DstReg);
       if (isExtSubReg) {
-        RealDstReg = getMatchingSuperReg(DstReg, SubIdx, RC, tri_);
-        assert(RealDstReg && "Invalid extract_subreg instruction!");
-      } else {
-        RealSrcReg = getMatchingSuperReg(SrcReg, SubIdx, RC, tri_);
-        assert(RealSrcReg && "Invalid extract_subreg instruction!");
-      }
-
-      // For this type of EXTRACT_SUBREG, conservatively
-      // check if the live interval of the source register interfere with the
-      // actual super physical register we are trying to coalesce with.
-      unsigned PhysReg = isExtSubReg ? RealDstReg : RealSrcReg;
-      LiveInterval &RHS = li_->getInterval(isExtSubReg ? SrcReg : DstReg);
-      if (li_->hasInterval(PhysReg) &&
-          RHS.overlaps(li_->getInterval(PhysReg))) {
-        DOUT << "Interfere with register ";
-        DEBUG(li_->getInterval(PhysReg).print(DOUT, tri_));
-        return false; // Not coalescable
-      }
-      for (const unsigned* SR = tri_->getSubRegisters(PhysReg); *SR; ++SR)
-        if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
-          DOUT << "Interfere with sub-register ";
-          DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+        if (!CanJoinExtractSubRegToPhysReg(CopyMI, DstReg, SrcReg, SubIdx,
+                                           RealDstReg))
           return false; // Not coalescable
-        }
+      } else {
+        if (!CanJoinInsertSubRegToPhysReg(CopyMI, DstReg, SrcReg, SubIdx,
+                                          RealSrcReg))
+          return false; // Not coalescable
+      }
       SubIdx = 0;
     } else {
       unsigned OldSubIdx = isExtSubReg ? CopyMI->getOperand(0).getSubReg()

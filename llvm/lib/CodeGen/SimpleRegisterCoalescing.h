@@ -232,6 +232,20 @@ namespace llvm {
     bool HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
                                      unsigned VirtReg, unsigned PhysReg);
 
+    /// CanJoinExtractSubRegToPhysReg - Return true if it's possible to coalesce
+    /// an extract_subreg where dst is a physical register, e.g.
+    /// cl = EXTRACT_SUBREG reg1024, 1
+    bool CanJoinExtractSubRegToPhysReg(MachineInstr *CopyMI,
+                                       unsigned DstReg, unsigned SrcReg,
+                                       unsigned SubIdx, unsigned &RealDstReg);
+
+    /// CanJoinInsertSubRegToPhysReg - Return true if it's possible to coalesce
+    /// an insert_subreg where src is a physical register, e.g.
+    /// reg1024 = INSERT_SUBREG reg1024, c1, 0
+    bool CanJoinInsertSubRegToPhysReg(MachineInstr *CopyMI,
+                                      unsigned DstReg, unsigned SrcReg,
+                                      unsigned SubIdx, unsigned &RealDstReg);
+
     /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
     /// the specified live interval is defined by a copy from the specified
     /// register.
