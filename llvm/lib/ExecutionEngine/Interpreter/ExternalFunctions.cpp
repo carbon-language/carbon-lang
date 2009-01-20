@@ -149,7 +149,7 @@ static void *ffiValueFor(const Type *Ty, const GenericValue &AV,
       }
     case Type::FloatTyID: {
       float *FloatPtr = (float *) ArgDataPtr;
-      *FloatPtr = AV.DoubleVal;
+      *FloatPtr = AV.FloatVal;
       return ArgDataPtr;
     }
     case Type::DoubleTyID: {
