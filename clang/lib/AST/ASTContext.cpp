@@ -1699,9 +1699,30 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
 }
 
 /// getObjCEncodingForPropertyDecl - Return the encoded type for this
-/// method declaration. If non-NULL, Container must be either an
+/// property declaration. If non-NULL, Container must be either an
 /// ObjCCategoryImplDecl or ObjCImplementationDecl; it should only be
 /// NULL when getting encodings for protocol properties.
+/// Property attributes are stored as a comma-delimited C string. The simple 
+/// attributes readonly and bycopy are encoded as single characters. The 
+/// parametrized attributes, getter=name, setter=name, and ivar=name, are 
+/// encoded as single characters, followed by an identifier. Property types 
+/// are also encoded as a parametrized attribute. The characters used to encode 
+/// these attributes are defined by the following enumeration:
+/// @code
+/// enum PropertyAttributes {
+/// kPropertyReadOnly = 'R',   // property is read-only.
+/// kPropertyBycopy = 'C',     // property is a copy of the value last assigned
+/// kPropertyByref = '&',  // property is a reference to the value last assigned
+/// kPropertyDynamic = 'D',    // property is dynamic
+/// kPropertyGetter = 'G',     // followed by getter selector name
+/// kPropertySetter = 'S',     // followed by setter selector name
+/// kPropertyInstanceVariable = 'V'  // followed by instance variable  name
+/// kPropertyType = 't'              // followed by old-style type encoding.
+/// kPropertyWeak = 'W'              // 'weak' property
+/// kPropertyStrong = 'P'            // property GC'able
+/// kPropertyNonAtomic = 'N'         // property non-atomic
+/// };
+/// @endcode
 void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD, 
                                                 const Decl *Container,
                                                 std::string& S) {
