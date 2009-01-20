@@ -373,11 +373,14 @@ Sema::OwningExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
 DeclRefExpr *Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                                     bool TypeDependent, bool ValueDependent,
                                     const CXXScopeSpec *SS) {
-  if (SS && !SS->isEmpty())
-    return new QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent,
-                                    SS->getRange().getBegin());
-  else
-    return new DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
+  if (SS && !SS->isEmpty()) {
+    void *Mem = Context.getAllocator().Allocate<QualifiedDeclRefExpr>();
+    return new (Mem) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
+                       ValueDependent, SS->getRange().getBegin());
+  } else {
+    void *Mem = Context.getAllocator().Allocate<DeclRefExpr>();
+    return new (Mem) DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
+  }
 }
 
 /// getObjectForAnonymousRecordDecl - Retrieve the (unnamed) field or
@@ -549,8 +552,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     // to represent this name. Then, if it turns out that none of the
     // arguments are type-dependent, we'll force the resolution of the
     // dependent name at that point.
-    return Owned(new CXXDependentNameExpr(Name.getAsIdentifierInfo(),
-                                          Context.DependentTy, Loc));
+    void *Mem = Context.getAllocator().Allocate<CXXDependentNameExpr>();
+    return Owned(new (Mem) CXXDependentNameExpr(Name.getAsIdentifierInfo(),
+                                                Context.DependentTy, Loc));
   }
 
   // Could be enum-constant, value decl, instance variable, etc.
@@ -756,14 +760,15 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   //
   if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
     // The BlocksAttr indicates the variable is bound by-reference.
+    void *Mem = Context.getAllocator().Allocate<BlockDeclRefExpr>();
     if (VD->getAttr<BlocksAttr>())
-      return Owned(new BlockDeclRefExpr(VD, VD->getType().getNonReferenceType(),
-                                        Loc, true));
+      return Owned(new (Mem) BlockDeclRefExpr(VD, 
+                               VD->getType().getNonReferenceType(), Loc, true));
 
     // Variable will be bound by-copy, make it const within the closure.
     VD->getType().addConst();
-    return Owned(new BlockDeclRefExpr(VD, VD->getType().getNonReferenceType(),
-                                      Loc, false));
+    return Owned(new (Mem) BlockDeclRefExpr(VD, 
+                             VD->getType().getNonReferenceType(), Loc, false));
   }
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
@@ -859,8 +864,9 @@ Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
 
   QualType type = getLangOptions().CPlusPlus ? Context.CharTy : Context.IntTy;
 
-  return Owned(new CharacterLiteral(Literal.getValue(), Literal.isWide(), type,
-                                    Tok.getLocation()));
+  void *Mem = Context.getAllocator().Allocate<CharacterLiteral>();
+  return Owned(new (Mem) CharacterLiteral(Literal.getValue(), Literal.isWide(),
+                                    type, Tok.getLocation()));
 }
 
 Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
@@ -869,8 +875,9 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   if (Tok.getLength() == 1) {
     const char Val = PP.getSpelledCharacterAt(Tok.getLocation());
     unsigned IntSize = Context.Target.getIntWidth();
-    return Owned(new IntegerLiteral(llvm::APInt(IntSize, Val-'0'),
-                                    Context.IntTy, Tok.getLocation()));
+    void *Mem = Context.getAllocator().Allocate<IntegerLiteral>();
+    return Owned(new (Mem) IntegerLiteral(llvm::APInt(IntSize, Val-'0'),
+                    Context.IntTy, Tok.getLocation()));
   }
 
   llvm::SmallString<512> IntegerBuffer;
@@ -901,8 +908,9 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
     // isExact will be set by GetFloatValue().
     bool isExact = false;
-    Res = new FloatingLiteral(Literal.GetFloatValue(Format, &isExact), &isExact,
-                              Ty, Tok.getLocation());
+    void *Mem = Context.getAllocator().Allocate<FloatingLiteral>();
+    Res = new (Mem) FloatingLiteral(Literal.GetFloatValue(Format, &isExact), 
+                                    &isExact, Ty, Tok.getLocation());
 
   } else if (!Literal.isIntegerLiteral()) {
     return ExprError();
@@ -989,8 +997,8 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       if (ResultVal.getBitWidth() != Width)
         ResultVal.trunc(Width);
     }
-
-    Res = new IntegerLiteral(ResultVal, Ty, Tok.getLocation());
+    void *Mem = Context.getAllocator().Allocate<IntegerLiteral>();
+    Res = new (Mem) IntegerLiteral(ResultVal, Ty, Tok.getLocation());
   }
 
   // If this is an imaginary literal, create the ImaginaryLiteral wrapper.
@@ -1004,7 +1012,8 @@ Action::OwningExprResult Sema::ActOnParenExpr(SourceLocation L,
                                               SourceLocation R, ExprArg Val) {
   Expr *E = (Expr *)Val.release();
   assert((E != 0) && "ActOnParenExpr() missing expr");
-  return Owned(new ParenExpr(L, R, E));
+  void *Mem = Context.getAllocator().Allocate<ParenExpr>();
+  return Owned(new (Mem) ParenExpr(L, R, E));
 }
 
 /// The UsualUnaryConversions() function is *not* called by this routine.
@@ -1056,7 +1065,8 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
     return ExprError();
 
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  return Owned(new SizeOfAlignOfExpr(isSizeof, isType, TyOrEx,
+  void *Mem = Context.getAllocator().Allocate<SizeOfAlignOfExpr>();
+  return Owned(new (Mem) SizeOfAlignOfExpr(isSizeof, isType, TyOrEx,
                                      Context.getSizeType(), OpLoc,
                                      Range.getEnd()));
 }
@@ -1146,12 +1156,15 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
         ResultTy = ResultTy.getNonReferenceType();
 
         // Build the actual expression node.
-        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(),
+        void *Mem = Context.getAllocator().Allocate<DeclRefExpr>();
+        Expr *FnExpr = new (Mem) DeclRefExpr(FnDecl, FnDecl->getType(),
                                        SourceLocation());
         UsualUnaryConversions(FnExpr);
 
         Input.release();
-        return Owned(new CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, OpLoc));
+        Mem = Context.getAllocator().Allocate<CXXOperatorCallExpr>();
+        return Owned(new (Mem) CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, 
+                                                   OpLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in

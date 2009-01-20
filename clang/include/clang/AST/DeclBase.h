@@ -471,6 +471,7 @@ public:
   Decl::Kind getDeclKind() const {
     return DeclKind;
   }
+  const char *getDeclKindName() const;
 
   /// getParent - Returns the containing DeclContext if this is a Decl,
   /// else returns NULL.

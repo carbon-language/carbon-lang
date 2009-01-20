@@ -92,6 +92,35 @@ const char *Decl::getDeclKindName() const {
   }
 }
 
+const char *DeclContext::getDeclKindName() const {
+  switch (DeclKind) {
+  default: assert(0 && "Unknown decl kind!");
+  case Decl::TranslationUnit:     return "TranslationUnit";
+  case Decl::Namespace:           return "Namespace";
+  case Decl::OverloadedFunction:  return "OverloadedFunction";
+  case Decl::Typedef:             return "Typedef";
+  case Decl::Function:            return "Function";
+  case Decl::Var:                 return "Var";
+  case Decl::ParmVar:             return "ParmVar";
+  case Decl::OriginalParmVar:     return "OriginalParmVar";
+  case Decl::EnumConstant:        return "EnumConstant";
+  case Decl::ObjCIvar:            return "ObjCIvar";
+  case Decl::ObjCInterface:       return "ObjCInterface";
+  case Decl::ObjCImplementation:  return "ObjCImplementation";
+  case Decl::ObjCClass:           return "ObjCClass";
+  case Decl::ObjCMethod:          return "ObjCMethod";
+  case Decl::ObjCProtocol:        return "ObjCProtocol";
+  case Decl::ObjCProperty:        return "ObjCProperty";
+  case Decl::ObjCPropertyImpl:    return "ObjCPropertyImpl";
+  case Decl::ObjCForwardProtocol: return "ObjCForwardProtocol"; 
+  case Decl::Record:              return "Record";
+  case Decl::CXXRecord:           return "CXXRecord";
+  case Decl::Enum:                return "Enum";
+  case Decl::Block:               return "Block";
+  case Decl::Field:               return "Field";
+  }
+}
+
 bool Decl::CollectingStats(bool Enable) {
   if (Enable)
     StatSwitch = true;
