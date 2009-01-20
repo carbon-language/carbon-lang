@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep {br i1 } | count 4
+; XFAIL: *
 ; PR3354
 ; Do not merge bb1 into the entry block, it might trap.
 
