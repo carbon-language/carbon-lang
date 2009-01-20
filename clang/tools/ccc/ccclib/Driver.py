@@ -720,7 +720,13 @@ class Driver(object):
                     output = finalOutput
                 # Contruct a named destination?
                 elif atTopLevel or hasSaveTemps:
-                    output = args.makeSeparateArg(os.path.basename(namedOutput),
+                    # As an annoying special case, pch generation
+                    # doesn't strip the pathname.
+                    if phase.type is Types.PCHType:
+                        outputName = namedOutput
+                    else:
+                        outputName = os.path.basename(namedOutput)
+                    output = args.makeSeparateArg(outputName,
                                                   self.parser.oOption)
                 else:
                     # Output to temp file...
