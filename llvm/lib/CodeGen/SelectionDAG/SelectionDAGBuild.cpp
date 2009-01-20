@@ -2958,11 +2958,12 @@ GetSignificand(SelectionDAG &DAG, SDValue Op) {
 ///
 /// where Op is the hexidecimal representation of floating point value.
 static SDValue
-GetExponent(SelectionDAG &DAG, SDValue Op) {
+GetExponent(SelectionDAG &DAG, SDValue Op, const TargetLowering &TLI) {
     SDValue t1 = DAG.getNode(ISD::SRL, MVT::i32, Op,
-                             DAG.getConstant(23, MVT::i32));
+                             DAG.getConstant(23, TLI.getShiftAmountTy()));
     SDValue t2 = DAG.getNode(ISD::SUB, MVT::i32, t1,
                              DAG.getConstant(127, MVT::i32));
+    //    SDValue t3 = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, t2);
     return DAG.getNode(ISD::UINT_TO_FP, MVT::f32, t2);
 }
 
@@ -3029,7 +3030,7 @@ SelectionDAGLowering::visitExp(CallInst &I) {
 
     //   IntegerPartOfX <<= 23;
     IntegerPartOfX = DAG.getNode(ISD::SHL, MVT::i32, IntegerPartOfX,
-                                 DAG.getConstant(23, MVT::i32));
+                                 DAG.getConstant(23, TLI.getShiftAmountTy()));
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3140,7 +3141,7 @@ SelectionDAGLowering::visitLog(CallInst &I) {
     SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
 
     // Scale the exponent by log(2) [0.69314718f].
-    SDValue Exp = GetExponent(DAG, Op1);
+    SDValue Exp = GetExponent(DAG, Op1, TLI);
     SDValue LogOfExponent = DAG.getNode(ISD::FMUL, MVT::f32, Exp,
                                         getF32Constant(DAG, 0x3f317218));
 
@@ -3246,7 +3247,7 @@ SelectionDAGLowering::visitLog2(CallInst &I) {
     SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
 
     // Get the exponent.
-    SDValue LogOfExponent = GetExponent(DAG, Op1);
+    SDValue LogOfExponent = GetExponent(DAG, Op1, TLI);
 
     // Get the significand and build it into a floating-point number with
     // exponent of 1.
@@ -3351,7 +3352,7 @@ SelectionDAGLowering::visitLog10(CallInst &I) {
     SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
 
     // Scale the exponent by log10(2) [0.30102999f].
-    SDValue Exp = GetExponent(DAG, Op1);
+    SDValue Exp = GetExponent(DAG, Op1, TLI);
     SDValue LogOfExponent = DAG.getNode(ISD::FMUL, MVT::f32, Exp,
                                         getF32Constant(DAG, 0x3e9a209a));
 
@@ -3455,7 +3456,7 @@ SelectionDAGLowering::visitExp2(CallInst &I) {
 
     //   IntegerPartOfX <<= 23;
     IntegerPartOfX = DAG.getNode(ISD::SHL, MVT::i32, IntegerPartOfX,
-                                 DAG.getConstant(23, MVT::i32));
+                                 DAG.getConstant(23, TLI.getShiftAmountTy()));
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3584,7 +3585,7 @@ SelectionDAGLowering::visitPow(CallInst &I) {
 
     //   IntegerPartOfX <<= 23;
     IntegerPartOfX = DAG.getNode(ISD::SHL, MVT::i32, IntegerPartOfX,
-                                 DAG.getConstant(23, MVT::i32));
+                                 DAG.getConstant(23, TLI.getShiftAmountTy()));
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
