@@ -1003,7 +1003,8 @@ QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   
-  FunctionTypeNoProto *New = new FunctionTypeNoProto(ResultTy, Canonical);
+  void *Mem = Allocator.Allocate(sizeof(FunctionTypeNoProto), 8);
+  FunctionTypeNoProto *New = new (Mem) FunctionTypeNoProto(ResultTy, Canonical);
   Types.push_back(New);
   FunctionTypeNoProtos.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -1216,7 +1217,8 @@ QualType ASTContext::getObjCQualifiedIdType(ObjCProtocolDecl **Protocols,
 /// on canonical type's (which are always unique).
 QualType ASTContext::getTypeOfExpr(Expr *tofExpr) {
   QualType Canonical = getCanonicalType(tofExpr->getType());
-  TypeOfExpr *toe = new TypeOfExpr(tofExpr, Canonical);
+  void *Mem = Allocator.Allocate(sizeof(TypeOfExpr), 8);
+  TypeOfExpr *toe = new (Mem) TypeOfExpr(tofExpr, Canonical);
   Types.push_back(toe);
   return QualType(toe, 0);
 }
