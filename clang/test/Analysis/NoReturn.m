@@ -1,5 +1,5 @@
-// RUN: clang -checker-simple -verify %s &&
-// RUN: clang -checker-cfref -verify %s
+// RUN: clang -analyze -checker-simple -verify %s &&
+// RUN: clang -analyze -checker-cfref -verify %s
 
 #include <stdarg.h>
 

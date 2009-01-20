@@ -1,4 +1,4 @@
-// RUN: clang -checker-cfref -verify %s
+// RUN: clang -analyze -checker-cfref -verify %s
 
 // This is a test case for the issue reported in PR 2819:
 //  http://llvm.org/bugs/show_bug.cgi?id=2819

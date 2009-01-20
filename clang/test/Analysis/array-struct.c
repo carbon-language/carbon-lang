@@ -1,5 +1,5 @@
-// RUN: clang -checker-simple -verify %s
-// DISABLE: clang -checker-simple -analyzer-store-region -verify %s
+// RUN: clang -analyze -checker-simple -verify %s
+// DISABLE: clang -analyze -checker-simple -analyzer-store-region -verify %s
 
 struct s {
   int data;

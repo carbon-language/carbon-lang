@@ -1,4 +1,4 @@
-// RUN: clang -checker-cfref --verify -fblocks %s
+// RUN: clang -analyze -checker-cfref --verify -fblocks %s
 
 // Reduced test case from crash in <rdar://problem/6253157>
 @class NSObject;

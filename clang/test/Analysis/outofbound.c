@@ -1,4 +1,4 @@
-// RUN: clang -checker-simple -analyzer-store-region -verify %s
+// RUN: clang -analyze -checker-simple -analyzer-store-region -verify %s
 
 char f1() {
   char* s = "abcd";

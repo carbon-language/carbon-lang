@@ -1,4 +1,4 @@
-// RUN: clang -checker-cfref -verify %s
+// RUN: clang -analyze -checker-cfref -verify %s
 
 typedef const struct __CFString * CFStringRef;
 typedef const struct __CFAllocator * CFAllocatorRef;

@@ -1,4 +1,4 @@
-// RUN: clang -checker-cfref -verify %s
+// RUN: clang -analyze -checker-cfref -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

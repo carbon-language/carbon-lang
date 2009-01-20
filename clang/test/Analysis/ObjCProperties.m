@@ -1,4 +1,4 @@
-// RUN: clang -checker-simple %s -verify
+// RUN: clang -analyze -checker-simple %s -verify
 
 // The point of this test cases is to exercise properties in the static
 // analyzer

@@ -1,5 +1,5 @@
-// RUN: clang -checker-cfref -verify %s &&
-// RUN: clang -checker-cfref -analyzer-store-region -verify %s
+// RUN: clang -analyze -checker-cfref -verify %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store-region -verify %s
 
 struct FPRec {
   void (*my_func)(int * x);  

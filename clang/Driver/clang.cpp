@@ -107,6 +107,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run preprocessor, emit preprocessed file"),
              clEnumValN(DumpRawTokens, "dump-raw-tokens",
                         "Lex file in raw mode and dump raw tokens"),
+             clEnumValN(RunAnalysis, "analyze",
+                        "Run static analysis engine"),
              clEnumValN(DumpTokens, "dump-tokens",
                         "Run preprocessor, dump internal rep of tokens"),
              clEnumValN(ParseNoop, "parse-noop",
@@ -1298,7 +1300,6 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateBlockRewriter(InFile, OutputFile, Diag, LangOpts);
       
     case RunAnalysis:
-      assert (!AnalysisList.empty());
       return CreateAnalysisConsumer(&AnalysisList[0],
                                     &AnalysisList[0]+AnalysisList.size(),
                                     AnalysisStoreOpt, AnalysisDiagOpt,
@@ -1545,10 +1546,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
   
-  // Are we invoking one or more source analyses?
-  if (!AnalysisList.empty() && ProgAction == ParseSyntaxOnly)
-    ProgAction = RunAnalysis;  
-  else if (!InheritanceViewCls.empty())  // C++ visualization?
+  if (!InheritanceViewCls.empty())  // C++ visualization?
     ProgAction = InheritanceView;
     
   llvm::OwningPtr<SourceManager> SourceMgr;

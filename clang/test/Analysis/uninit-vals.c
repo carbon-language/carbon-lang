@@ -1,4 +1,4 @@
-// RUN: clang -warn-uninit-values -verify %s
+// RUN: clang -analyze -warn-uninit-values -verify %s
 
 int f1() {
   int x;

@@ -1,5 +1,5 @@
-// RUN: clang -checker-cfref %s --analyzer-store-basic -verify
-// DISABLE: clang -checker-cfref %s --analyzer-store-region -verify
+// RUN: clang -analyze -checker-cfref %s --analyzer-store-basic -verify
+// DISABLE: clang -analyze -checker-cfref %s --analyzer-store-region -verify
 
 typedef int bar_return_t;
 typedef struct {

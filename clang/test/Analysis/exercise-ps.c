@@ -1,4 +1,4 @@
-// RUN: clang -checker-simple -verify %s
+// RUN: clang -analyze -checker-simple -verify %s
 //
 // Just exercise the analyzer (no assertions).
 

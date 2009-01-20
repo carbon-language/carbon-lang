@@ -1,4 +1,4 @@
-// RUN: clang -checker-cfref -verify %s
+// RUN: clang -analyze -checker-cfref -verify %s
 
 // This test case was reported in <rdar:problem/6080742>.
 // It tests path-sensitivity with respect to '!(cfstring != 0)' (negation of inequality).

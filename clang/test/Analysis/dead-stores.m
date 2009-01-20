@@ -1,4 +1,4 @@
-// RUN: clang -warn-dead-stores -verify %s
+// RUN: clang -analyze -warn-dead-stores -verify %s
 
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;

@@ -1,6 +1,6 @@
-// RUN: clang -warn-dead-stores -verify %s &&
-// RUN: clang -checker-simple -warn-dead-stores -verify %s &&
-// RUN: clang -warn-dead-stores -checker-simple -verify %s
+// RUN: clang -analyze -warn-dead-stores -verify %s &&
+// RUN: clang -analyze -checker-simple -warn-dead-stores -verify %s &&
+// RUN: clang -analyze -warn-dead-stores -checker-simple -verify %s
 
 
 void f1() {

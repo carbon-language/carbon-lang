@@ -1,4 +1,4 @@
-// RUN: clang -warn-objc-missing-dealloc %s -verify
+// RUN: clang -analyze -warn-objc-missing-dealloc %s -verify
 
 // Tests for the checker which checks missing/extra ivar 'release' calls 
 // in dealloc.

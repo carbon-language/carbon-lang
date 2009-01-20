@@ -1,4 +1,4 @@
-// RUN: clang -warn-dead-stores -warn-uninit-values -verify %s
+// RUN: clang -analyze -warn-dead-stores -warn-uninit-values -verify %s
 
 void f1()
 {

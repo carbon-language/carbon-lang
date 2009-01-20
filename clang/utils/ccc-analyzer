@@ -89,6 +89,7 @@ sub Analyze {
     push @CmdArgs,'-DIBOutlet=__attribute__((iboutlet))';
     push @CmdArgs,@$Args;
     @CmdArgsSansAnalyses = @CmdArgs;
+    push @CmdArgs,'--analyze';
     push @CmdArgs,(split /\s/,$Analyses);
     $RunAnalyzer = 1;
   }
