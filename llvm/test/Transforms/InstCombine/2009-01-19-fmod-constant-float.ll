@@ -11,7 +11,7 @@ entry:
 	%retval = alloca float		; <float*> [#uses=2]
 	%0 = alloca float		; <float*> [#uses=2]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%1 = call double @fmod(double 1.000000e-01, double 1.000000e+00) nounwind readonly		; <double> [#uses=1]
+	%1 = frem double 1.000000e-01, 1.000000e+00	; <double> [#uses=1]
 	%2 = fptrunc double %1 to float		; <float> [#uses=1]
 	store float %2, float* %0, align 4
 	%3 = load float* %0, align 4		; <float> [#uses=1]
@@ -23,14 +23,12 @@ return:		; preds = %entry
 	ret float %retval1
 }
 
-declare double @fmod(double, double) nounwind readonly
-
 define float @test2() nounwind {
 entry:
 	%retval = alloca float		; <float*> [#uses=2]
 	%0 = alloca float		; <float*> [#uses=2]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%1 = call double @fmod(double -1.000000e-01, double 1.000000e+00) nounwind readonly		; <double> [#uses=1]
+	%1 = frem double -1.000000e-01, 1.000000e+00	; <double> [#uses=1]
 	%2 = fptrunc double %1 to float		; <float> [#uses=1]
 	store float %2, float* %0, align 4
 	%3 = load float* %0, align 4		; <float> [#uses=1]
@@ -47,7 +45,7 @@ entry:
 	%retval = alloca float		; <float*> [#uses=2]
 	%0 = alloca float		; <float*> [#uses=2]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%1 = call double @fmod(double 1.000000e-01, double -1.000000e+00) nounwind readonly		; <double> [#uses=1]
+	%1 = frem double 1.000000e-01, -1.000000e+00	; <double> [#uses=1]
 	%2 = fptrunc double %1 to float		; <float> [#uses=1]
 	store float %2, float* %0, align 4
 	%3 = load float* %0, align 4		; <float> [#uses=1]
@@ -64,7 +62,7 @@ entry:
 	%retval = alloca float		; <float*> [#uses=2]
 	%0 = alloca float		; <float*> [#uses=2]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%1 = call double @fmod(double -1.000000e-01, double -1.000000e+00) nounwind readonly		; <double> [#uses=1]
+	%1 = frem double -1.000000e-01, -1.000000e+00	; <double> [#uses=1]
 	%2 = fptrunc double %1 to float		; <float> [#uses=1]
 	store float %2, float* %0, align 4
 	%3 = load float* %0, align 4		; <float> [#uses=1]
