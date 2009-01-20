@@ -1802,13 +1802,9 @@ private:
           else if (Element.getTag() == dwarf::DW_TAG_variable) // ???
             ElemDie = CreateGlobalVariableDIE(DW_Unit, 
                                               DIGlobalVariable(Element.getGV()));
-          else {
-            DIDerivedType DT = DIDerivedType(Element.getGV());
-            assert (DT.isDerivedType(DT.getTag()) 
-                    && "Unexpected struct element type");
-            ElemDie = new DIE(DT.getTag());
-            AddType(DW_Unit, ElemDie, DT);
-          }
+          else
+            ElemDie = CreateMemberDIE(DW_Unit, 
+                                      DIDerivedType(Element.getGV()));
           Buffer.AddChild(ElemDie);
         }
       }
@@ -1901,6 +1897,27 @@ private:
       AddUInt(GVDie, DW_AT_external, DW_FORM_flag, 1);
     AddSourceLine(GVDie, &GV);
     return GVDie;
+  }
+
+  /// CreateMemberDIE - Create new member DIE.
+  DIE *CreateMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT) {
+    DIE *MemberDie = new DIE(DT.getTag());
+    std::string Name = DT.getName();
+    if (!Name.empty())
+      AddString(MemberDie, DW_AT_name, DW_FORM_string, Name);
+
+    AddType(DW_Unit, MemberDie, DT.getTypeDerivedFrom());
+
+    AddSourceLine(MemberDie, &DT);
+
+    AddUInt(MemberDie, DW_AT_bit_size, 0, DT.getSizeInBits());
+    DIEBlock *Block = new DIEBlock();
+    AddUInt(Block, 0, DW_FORM_data1, DW_OP_plus_uconst);
+    AddUInt(Block, 0, DW_FORM_udata, DT.getOffsetInBits() >> 3);
+    AddBlock(MemberDie, DW_AT_data_member_location, 0, Block);
+
+    // FIXME - Handle DW_AT_accessibility
+    return MemberDie;
   }
 
   /// CreateSubprogramDIE - Create new DIE using SP.
