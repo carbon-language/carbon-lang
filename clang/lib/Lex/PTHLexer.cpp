@@ -611,7 +611,7 @@ IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
     Alloc.Allocate<std::pair<IdentifierInfo,const unsigned char*> >();
 
   Mem->second = IDData;
-  IdentifierInfo *II = new ((void*) Mem) IdentifierInfo(true);
+  IdentifierInfo *II = new ((void*) Mem) IdentifierInfo();
   
   // Store the new IdentifierInfo in the cache.
   PerIDCache[PersistentID] = II;

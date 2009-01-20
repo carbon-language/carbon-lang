@@ -25,7 +25,7 @@ using namespace clang;
 // IdentifierInfo Implementation
 //===----------------------------------------------------------------------===//
 
-IdentifierInfo::IdentifierInfo(bool usesIndirectString) {
+IdentifierInfo::IdentifierInfo() {
   TokenID = tok::identifier;
   ObjCOrBuiltinID = 0;
   HasMacro = false;
@@ -33,7 +33,7 @@ IdentifierInfo::IdentifierInfo(bool usesIndirectString) {
   IsPoisoned = false;
   IsCPPOperatorKeyword = false;
   FETokenInfo = 0;
-  IndirectString = usesIndirectString;
+  Entry = 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -224,7 +224,7 @@ void IdentifierTable::PrintStats() const {
   unsigned MaxIdentifierLength = 0;
   
   // TODO: Figure out maximum times an identifier had to probe for -stats.
-  for (llvm::StringMap<IdentifierInfo, llvm::BumpPtrAllocator>::const_iterator
+  for (llvm::StringMap<IdentifierInfo*, llvm::BumpPtrAllocator>::const_iterator
        I = HashTable.begin(), E = HashTable.end(); I != E; ++I) {
     unsigned IdLen = I->getKeyLength();
     AverageIdentifierSize += IdLen;
@@ -428,7 +428,7 @@ void IdentifierTable::Emit(llvm::Serializer& S) const {
   
   for (iterator I=begin(), E=end(); I != E; ++I) {
     const char* Key = I->getKeyData();
-    const IdentifierInfo* Info = &I->getValue();
+    const IdentifierInfo* Info = I->getValue();
     
     bool KeyRegistered = S.isRegistered(Key);
     bool InfoRegistered = S.isRegistered(Info);
@@ -461,17 +461,11 @@ IdentifierTable* IdentifierTable::CreateAndRegister(llvm::Deserializer& D) {
     llvm::SerializedPtrID KeyPtrID = D.ReadPtrID();
     
     D.ReadCStr(buff);
+    IdentifierInfo *II = &t->get(&buff[0], &buff[0] + buff.size());
+    II->Read(D);
     
-    llvm::StringMapEntry<IdentifierInfo>& Entry =
-      t->HashTable.GetOrCreateValue(&buff[0],&buff[0]+buff.size());
-    
-    D.Read(Entry.getValue());
-    
-    if (InfoPtrID)
-      D.RegisterRef(InfoPtrID,Entry.getValue());
-    
-    if (KeyPtrID)
-      D.RegisterPtr(KeyPtrID,Entry.getKeyData());
+    if (InfoPtrID) D.RegisterRef(InfoPtrID, II);
+    if (KeyPtrID)  D.RegisterPtr(KeyPtrID, II->getName());
   }
   
   return t;

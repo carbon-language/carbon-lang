@@ -31,6 +31,7 @@ namespace llvm {
 namespace clang {
   struct LangOptions;
   class IdentifierInfo;
+  class IdentifierTable;
   class SourceLocation;
   class MultiKeywordSelector; // private class used by Selector
   class DeclarationName;      // AST class that stores declaration names
@@ -56,14 +57,19 @@ class IdentifierInfo {
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
-  bool IndirectString         : 1; // True if the string is stored indirectly.
   // 9 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
+  llvm::StringMapEntry<IdentifierInfo*> *Entry;
+  
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
-public:
-  IdentifierInfo(bool usesIndirectString = false);
 
+  friend class IdentifierTable;  
+
+public:
+  IdentifierInfo();
+
+  
   /// isStr - Return true if this is the identifier for the specified string.
   /// This is intended to be used for string literals only: II->isStr("foo").
   template <std::size_t StrLen>
@@ -74,36 +80,26 @@ public:
   /// getName - Return the actual string for this identifier.  The returned 
   /// string is properly null terminated.
   ///
-  const char *getName() const {
-    if (IndirectString) {
-      // The 'this' pointer really points to a 
-      // std::pair<IdentifierInfo, const char*>, where internal pointer
-      // points to the external string data.
-      return ((std::pair<IdentifierInfo, const char*>*) this)->second + 4;
-    }
-
-    // We know that this is embedded into a StringMapEntry, and it knows how to
-    // efficiently find the string.
-    return llvm::StringMapEntry<IdentifierInfo>::
-                  GetStringMapEntryFromValue(*this).getKeyData();
+  const char *getName() const {    
+    if (Entry) return Entry->getKeyData();
+    // The 'this' pointer really points to a 
+    // std::pair<IdentifierInfo, const char*>, where internal pointer
+    // points to the external string data.
+    return ((std::pair<IdentifierInfo, const char*>*) this)->second + 4;
   }
   
   /// getLength - Efficiently return the length of this identifier info.
   ///
   unsigned getLength() const {
-    if (IndirectString) {
-      // The 'this' pointer really points to a 
-      // std::pair<IdentifierInfo, const char*>, where internal pointer
-      // points to the external string data.
-      const char* p = ((std::pair<IdentifierInfo, const char*>*) this)->second;
-      return ((unsigned) p[0])
-        | (((unsigned) p[1]) << 8)
-        | (((unsigned) p[2]) << 16)
-        | (((unsigned) p[3]) << 24);      
-    }
-    
-    return llvm::StringMapEntry<IdentifierInfo>::
-                    GetStringMapEntryFromValue(*this).getKeyLength();
+    if (Entry) return Entry->getKeyLength();
+    // The 'this' pointer really points to a 
+    // std::pair<IdentifierInfo, const char*>, where internal pointer
+    // points to the external string data.
+    const char* p = ((std::pair<IdentifierInfo, const char*>*) this)->second;
+    return ((unsigned) p[0])
+      | (((unsigned) p[1]) << 8)
+      | (((unsigned) p[2]) << 16)
+      | (((unsigned) p[3]) << 24);   
   }
   
   /// hasMacroDefinition - Return true if this identifier is #defined to some
@@ -202,7 +198,7 @@ public:
 class IdentifierTable {
   // Shark shows that using MallocAllocator is *much* slower than using this
   // BumpPtrAllocator!
-  typedef llvm::StringMap<IdentifierInfo, llvm::BumpPtrAllocator> HashTableTy;
+  typedef llvm::StringMap<IdentifierInfo*, llvm::BumpPtrAllocator> HashTableTy;
   HashTableTy HashTable;
   
   IdentifierInfoLookup* ExternalLookup;
@@ -220,12 +216,29 @@ public:
   /// get - Return the identifier token info for the specified named identifier.
   ///
   IdentifierInfo &get(const char *NameStart, const char *NameEnd) {
-    if (ExternalLookup) {
-      IdentifierInfo* II = ExternalLookup->get(NameStart, NameEnd);
-      if (II) return *II;
+    llvm::StringMapEntry<IdentifierInfo*> &Entry =
+      HashTable.GetOrCreateValue(NameStart, NameEnd, 0);
+    
+    IdentifierInfo *II = Entry.getValue();
+    
+    if (!II) {
+      while (1) {
+        if (ExternalLookup) {
+          II = ExternalLookup->get(NameStart, NameEnd);          
+          if (II) break;
+        }
+        
+        void *Mem = getAllocator().Allocate<IdentifierInfo>();
+        II = new (Mem) IdentifierInfo();
+        break;
+      }
+
+      Entry.setValue(II);
+      II->Entry = &Entry;
     }
 
-    return HashTable.GetOrCreateValue(NameStart, NameEnd).getValue();
+    assert(II->Entry != 0);
+    return *II;
   }
   
   IdentifierInfo &get(const char *Name) {
@@ -237,11 +250,13 @@ public:
     return get(NameBytes, NameBytes+Name.size());
   }
 
+private:
   typedef HashTableTy::const_iterator iterator;
   typedef HashTableTy::const_iterator const_iterator;
   
   iterator begin() const { return HashTable.begin(); }
   iterator end() const   { return HashTable.end(); }
+public:
   
   unsigned size() const { return HashTable.size(); }
   
