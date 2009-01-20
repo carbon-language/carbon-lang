@@ -779,11 +779,11 @@ private:
 
   /// GVToDieMap - Tracks the mapping of unit level debug informaton
   /// variables to debug information entries.
-  DenseMap<GlobalVariable *, DIE *> GVToDieMap;
+  std::map<GlobalVariable *, DIE *> GVToDieMap;
 
   /// GVToDIEntryMap - Tracks the mapping of unit level debug informaton
   /// descriptors to debug information entries using a DIEntry proxy.
-  DenseMap<GlobalVariable *, DIEntry *> GVToDIEntryMap;
+  std::map<GlobalVariable *, DIEntry *> GVToDIEntryMap;
 
   /// Globals - A map of globally visible named entities for this unit.
   ///
