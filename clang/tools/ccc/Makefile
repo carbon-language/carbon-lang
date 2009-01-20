@@ -13,16 +13,16 @@ include $(LEVEL)/Makefile.common
 
 install-local:: $(PROJ_bindir)/ccc $(PROJ_bindir)/ccclib
 
-Extra := $(wildcard ccclib/*.py)
+Extra := $(wildcard $(PROJ_SRC_ROOT)/tools/clang/tools/ccc/ccclib/*.py)
 
 $(PROJ_bindir)/ccclib : $(Extra)
 	$(Echo) Installing ccclib.
-	$(Verb) mkdir -p $(PROJ_bindir)/ccclib
-	$(Verb) cp $? $(PROJ_bindir)/ccclib
-	$(Verb) python -m compileall $(PROJ_bindir)/ccclib 
-	$(Verb) touch $(PROJ_bindir)/ccclib
+	$(Verb) mkdir -p "$(PROJ_bindir)/ccclib"
+	$(Verb) cp -p $? "$(PROJ_bindir)/ccclib"
+	$(Verb) python -m compileall -d "$(PROJ_prefix)/bin/ccclib" "$(PROJ_bindir)/ccclib"
+	$(Verb) touch "$(PROJ_bindir)/ccclib"
 
 $(PROJ_bindir)/ccc : ccc
 	$(Echo) Installing $< shell script.
-	$(Verb) cat $< > $@
-	$(Verb) chmod 0755 $@
+	$(Verb) cat $< > "$@"
+	$(Verb) chmod 0755 "$@"
