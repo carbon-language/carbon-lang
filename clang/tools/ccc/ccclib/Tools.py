@@ -24,15 +24,17 @@ class Tool(object):
         return not not (self.flags & Tool.eFlagsIntegratedCPP)
 
 class GCC_Common_Tool(Tool):
+    def getGCCExtraArgs(self):
+        return []
+
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist,
-                     extraArgs):
+                     output, outputType, arglist, linkingOutput):
         cmd_args = []
         for arg in arglist.args:
             if arg.opt.forwardToGCC():
                 cmd_args.extend(arglist.render(arg))
 
-        cmd_args.extend(extraArgs)
+        cmd_args.extend(self.getGCCExtraArgs())
         if arch:
             cmd_args.extend(arglist.render(arch))
         if isinstance(output, Jobs.PipedJob):
@@ -41,6 +43,12 @@ class GCC_Common_Tool(Tool):
             cmd_args.append('-fsyntax-only')
         else:
             cmd_args.extend(arglist.render(output))
+
+        if (isinstance(self, GCC_LinkTool) and
+            linkingOutput):
+            cmd_args.append('-Wl,-arch_multiple')
+            cmd_args.append('-Wl,-final_output,' + 
+                            arglist.getValue(linkingOutput))
 
         # Only pass -x if gcc will understand it; otherwise hope gcc
         # understands the suffix correctly. The main use case this
@@ -74,11 +82,8 @@ class GCC_PreprocessTool(GCC_Common_Tool):
                                                  (Tool.eFlagsPipedInput |
                                                   Tool.eFlagsPipedOutput))
 
-    def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
-        return super(GCC_PreprocessTool, self).constructJob(phase, arch, jobs, inputs,
-                                                            output, outputType, arglist,
-                                                            ['-E'])
+    def getGCCExtraArgs(self):
+        return ['-E']
 
 class GCC_CompileTool(GCC_Common_Tool):
     def __init__(self):
@@ -87,11 +92,8 @@ class GCC_CompileTool(GCC_Common_Tool):
                                                Tool.eFlagsPipedOutput |
                                                Tool.eFlagsIntegratedCPP))
 
-    def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
-        return super(GCC_CompileTool, self).constructJob(phase, arch, jobs, inputs,
-                                                         output, outputType, arglist,
-                                                         ['-S'])
+    def getGCCExtraArgs(self):
+        return ['-S']
 
 class GCC_PrecompileTool(GCC_Common_Tool):
     def __init__(self):
@@ -99,11 +101,21 @@ class GCC_PrecompileTool(GCC_Common_Tool):
                                                  (Tool.eFlagsPipedInput |
                                                   Tool.eFlagsIntegratedCPP))
 
-    def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
-        return super(GCC_PrecompileTool, self).constructJob(phase, arch, jobs, inputs,
-                                                            output, outputType, arglist,
-                                                            [])
+    def getGCCExtraArgs(self):
+        return []
+
+class GCC_AssembleTool(GCC_Common_Tool):
+    def __init__(self):
+        # We can't generally assume the assembler can take or output
+        # on pipes.
+        super(GCC_AssembleTool, self).__init__('gcc (as)')
+
+    def getGCCExtraArgs(self):
+        return ['-c']
+
+class GCC_LinkTool(GCC_Common_Tool):
+    def __init__(self):
+        super(GCC_LinkTool, self).__init__('gcc (ld)')
 
 class Darwin_AssembleTool(Tool):
     def __init__(self, toolChain):
@@ -112,7 +124,7 @@ class Darwin_AssembleTool(Tool):
         self.toolChain = toolChain
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
+                     output, outputType, arglist, linkingOutput):
         assert len(inputs) == 1
         assert outputType is Types.ObjectType
 
@@ -150,28 +162,6 @@ class Darwin_AssembleTool(Tool):
         jobs.addJob(Jobs.Command(self.toolChain.getProgramPath('as'), 
                                  cmd_args))
 
-class GCC_AssembleTool(GCC_Common_Tool):
-    def __init__(self):
-        # We can't generally assume the assembler can take or output
-        # on pipes.
-        super(GCC_AssembleTool, self).__init__('gcc (as)')
-
-    def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
-        return super(GCC_AssembleTool, self).constructJob(phase, arch, jobs, inputs,
-                                                          output, outputType, arglist,
-                                                          ['-c'])
-
-class GCC_LinkTool(GCC_Common_Tool):
-    def __init__(self):
-        super(GCC_LinkTool, self).__init__('gcc (ld)')
-
-    def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
-        return super(GCC_LinkTool, self).constructJob(phase, arch, jobs, inputs,
-                                                      output, outputType, arglist,
-                                                      [])
-
 class Clang_CompileTool(Tool):
     def __init__(self):
         super(Clang_CompileTool, self).__init__('clang',
@@ -180,7 +170,7 @@ class Clang_CompileTool(Tool):
                                     Tool.eFlagsIntegratedCPP))
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
+                     output, outputType, arglist, linkingOutput):
         cmd_args = []
 
         patchOutputNameForPTH = False
@@ -580,7 +570,7 @@ class Darwin_X86_PreprocessTool(Darwin_X86_CC1Tool):
         self.toolChain = toolChain
     
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
+                     output, outputType, arglist, linkingOutput):
         inputType = inputs[0].type
         assert not [i for i in inputs if i.type != inputType]
 
@@ -611,7 +601,7 @@ class Darwin_X86_CompileTool(Darwin_X86_CC1Tool):
         self.toolChain = toolChain
 
     def constructJob(self, phase, arch, jobs, inputs, 
-                     output, outputType, arglist):
+                     output, outputType, arglist, linkingOutput):
         inputType = inputs[0].type
         assert not [i for i in inputs if i.type != inputType]
 
@@ -897,7 +887,7 @@ class Darwin_X86_LinkTool(Tool):
         arglist.addLastArg(cmd_args, arglist.parser.MachOption)
 
     def constructJob(self, phase, arch, jobs, inputs,
-                     output, outputType, arglist):
+                     output, outputType, arglist, linkingOutput):
         assert outputType is Types.ImageType
 
         # The logic here is derived from gcc's behavior; most of which
@@ -1017,6 +1007,11 @@ class Darwin_X86_LinkTool(Tool):
         for input in inputs:
             cmd_args.extend(arglist.renderAsInput(input.source))
 
+        if linkingOutput:
+            cmd_args.append('-arch_multiple')
+            cmd_args.append('-final_output')
+            cmd_args.append(arglist.getValue(linkingOutput))
+
         if (arglist.getLastArg(arglist.parser.f_profileArcsOption) or
             arglist.getLastArg(arglist.parser.f_profileGenerateOption) or
             arglist.getLastArg(arglist.parser.f_createProfileOption) or
@@ -1088,7 +1083,7 @@ class LipoTool(Tool):
         super(LipoTool, self).__init__('lipo')
 
     def constructJob(self, phase, arch, jobs, inputs,
-                     output, outputType, arglist):
+                     output, outputType, arglist, linkingOutput):
         assert outputType is Types.ImageType
 
         cmd_args = ['-create']

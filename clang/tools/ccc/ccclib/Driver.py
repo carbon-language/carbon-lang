@@ -521,14 +521,17 @@ class Driver(object):
     def buildPipeline(self, args):
         # FIXME: We need to handle canonicalization of the specified arch.
 
-        archs = []
+        archs = {}
         hasDashM = args.getLastArg(self.parser.MGroup)
         hasSaveTemps = (args.getLastArg(self.parser.saveTempsOption) or 
                         args.getLastArg(self.parser.saveTempsOption2))
         for arg in args:
             if arg.opt is self.parser.archOption:
-                archs.append(arg)
-
+                # FIXME: Canonicalize this.
+                archName = args.getValue(arg)
+                archs[archName] = arg
+        
+        archs = archs.values()
         if not archs:
             archs.append(args.makeSeparateArg(self.hostInfo.getArchName(args),
                                               self.parser.archOption))
@@ -578,18 +581,6 @@ class Driver(object):
                                                      inputs, 
                                                      p.type))
 
-        # FIXME: We need to add -Wl,arch_multiple and -Wl,final_output in
-        # certain cases. This may be icky because we need to figure out the
-        # mode first. Current plan is to hack on the pipeline once it is built
-        # and we know what is being spit out. This avoids having to handling
-        # things like -c and -combine in multiple places.
-        #
-        # The annoying one of these is -Wl,final_output because it involves
-        # communication across different phases.
-        #
-        # Hopefully we can do this purely as part of the binding, but
-        # leaving comment here for now until it is clear this works.
-
         return finalActions
 
     def bindPhases(self, phases, args):
@@ -636,7 +627,7 @@ class Driver(object):
 
         def createJobs(tc, phase,
                        canAcceptPipe=False, atTopLevel=False, arch=None,
-                       tcArgs=None):
+                       tcArgs=None, linkingOutput=None):
             if isinstance(phase, Phases.InputAction):
                 return InputInfo(phase.filename, phase.type, phase.filename)
             elif isinstance(phase, Phases.BindArchAction):
@@ -644,7 +635,7 @@ class Driver(object):
                 tc = self.hostInfo.getToolChainForArch(archName)
                 return createJobs(tc, phase.inputs[0],
                                   canAcceptPipe, atTopLevel, phase.arch,
-                                  tcArgs=None)
+                                  None, linkingOutput)
 
             if tcArgs is None:
                 tcArgs = tc.translateArgs(args, arch)
@@ -669,7 +660,8 @@ class Driver(object):
 
             # Only try to use pipes when exactly one input.
             canAcceptPipe = len(inputList) == 1 and tool.acceptsPipedInput()
-            inputs = [createJobs(tc, p, canAcceptPipe, False, arch, tcArgs) 
+            inputs = [createJobs(tc, p, canAcceptPipe, False, 
+                                 arch, tcArgs, linkingOutput)
                       for p in inputList]
 
             # Determine if we should output to a pipe.
@@ -691,51 +683,12 @@ class Driver(object):
             jobList = jobs
             if canAcceptPipe and isinstance(inputs[0].source, Jobs.PipedJob):
                 jobList = inputs[0].source
-
-            # Figure out where to put the output.
+                
             baseInput = inputs[0].baseInput
-            if phase.type == Types.NothingType:
-                output = None            
-            elif outputToPipe:
-                if isinstance(jobList, Jobs.PipedJob):
-                    output = jobList
-                else:
-                    jobList = output = Jobs.PipedJob([])
-                    jobs.addJob(output)
-            else:
-                # Figure out what the derived output location would be.
-                # 
-                # FIXME: gcc has some special case in here so that it doesn't
-                # create output files if they would conflict with an input.
-                if phase.type is Types.ImageType:
-                    namedOutput = "a.out"
-                else:
-                    inputName = args.getValue(baseInput)
-                    base,_ = os.path.splitext(inputName)
-                    assert phase.type.tempSuffix is not None
-                    namedOutput = base + '.' + phase.type.tempSuffix
-
-                # Output to user requested destination?
-                if atTopLevel and finalOutput:
-                    output = finalOutput
-                # Contruct a named destination?
-                elif atTopLevel or hasSaveTemps:
-                    # As an annoying special case, pch generation
-                    # doesn't strip the pathname.
-                    if phase.type is Types.PCHType:
-                        outputName = namedOutput
-                    else:
-                        outputName = os.path.basename(namedOutput)
-                    output = args.makeSeparateArg(outputName,
-                                                  self.parser.oOption)
-                else:
-                    # Output to temp file...
-                    fd,filename = tempfile.mkstemp(suffix='.'+phase.type.tempSuffix)
-                    output = args.makeSeparateArg(filename,
-                                                  self.parser.oOption)
-
+            output = self.getOutputName(phase, outputToPipe, jobs, jobList, baseInput, 
+                                        args, atTopLevel, hasSaveTemps, finalOutput)
             tool.constructJob(phase, arch, jobList, inputs, output, phase.type,
-                              tcArgs)
+                              tcArgs, linkingOutput)
 
             return InputInfo(output, phase.type, baseInput)
 
@@ -745,7 +698,68 @@ class Driver(object):
             raise Arguments.InvalidArgumentsError("cannot specify -o when generating multiple files")
 
         for phase in phases:
+            # If we are linking an image for multiple archs then the
+            # linker wants -arch_multiple and -final_output <final image
+            # name>. Unfortunately this requires some gross contortions.
+            #
+            # FIXME: This is a hack; find a cleaner way to integrate this
+            # into the process.        
+            linkingOutput = None
+            if (isinstance(phase, Phases.JobAction) and
+                isinstance(phase.phase, Phases.LipoPhase)):
+                finalOutput = args.getLastArg(self.parser.oOption)
+                if finalOutput:
+                    linkingOutput = finalOutput
+                else:
+                    linkingOutput = args.makeSeparateArg('a.out',
+                                                         self.parser.oOption)
+
             createJobs(self.toolChain, phase, 
-                       canAcceptPipe=True, atTopLevel=True)
+                       canAcceptPipe=True, atTopLevel=True,
+                       linkingOutput=linkingOutput)
 
         return jobs
+
+    def getOutputName(self, phase, outputToPipe, jobs, jobList, baseInput, 
+                      args, atTopLevel, hasSaveTemps, finalOutput):
+        # Figure out where to put the output.
+        if phase.type == Types.NothingType:
+            output = None            
+        elif outputToPipe:
+            if isinstance(jobList, Jobs.PipedJob):
+                output = jobList
+            else:
+                jobList = output = Jobs.PipedJob([])
+                jobs.addJob(output)
+        else:
+            # Figure out what the derived output location would be.
+            # 
+            # FIXME: gcc has some special case in here so that it doesn't
+            # create output files if they would conflict with an input.
+            if phase.type is Types.ImageType:
+                namedOutput = "a.out"
+            else:
+                inputName = args.getValue(baseInput)
+                base,_ = os.path.splitext(inputName)
+                assert phase.type.tempSuffix is not None
+                namedOutput = base + '.' + phase.type.tempSuffix
+
+            # Output to user requested destination?
+            if atTopLevel and finalOutput:
+                output = finalOutput
+            # Contruct a named destination?
+            elif atTopLevel or hasSaveTemps:
+                # As an annoying special case, pch generation
+                # doesn't strip the pathname.
+                if phase.type is Types.PCHType:
+                    outputName = namedOutput
+                else:
+                    outputName = os.path.basename(namedOutput)
+                output = args.makeSeparateArg(outputName,
+                                              self.parser.oOption)
+            else:
+                # Output to temp file...
+                fd,filename = tempfile.mkstemp(suffix='.'+phase.type.tempSuffix)
+                output = args.makeSeparateArg(filename,
+                                              self.parser.oOption)
+        return output
