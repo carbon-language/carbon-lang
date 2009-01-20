@@ -1743,9 +1743,6 @@ private:
   void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DICompositeType CTy) {
 
-    /// FIXME - Enable this asap.
-    return;
-
     // Get core information.
     const std::string &Name = CTy.getName();
     uint64_t Size = CTy.getSizeInBits() >> 3;
@@ -1859,7 +1856,6 @@ private:
       AddUInt(&Buffer, DW_AT_GNU_vector, DW_FORM_flag, 1);
     
     DIArray Elements = CTy->getTypeArray();
-    // FIXME - Enable this. 
     AddType(DW_Unit, &Buffer, CTy->getTypeDerivedFrom());
 
     // Construct an anonymous type for index type.

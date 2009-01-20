@@ -118,6 +118,7 @@ namespace llvm {
     std::string getFilename() const  { return getStringField(3); }
     std::string getDirectory() const { return getStringField(4); }
     std::string getProducer() const  { return getStringField(5); }
+
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
   };
