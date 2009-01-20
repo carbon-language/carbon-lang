@@ -1820,19 +1820,16 @@ private:
     if (Size)
       AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
     else {
-      // Add zero size even if it is not a forward declaration.
-      // FIXME - Enable this.
-      //      if (!CTy.isDefinition())
-      //        AddUInt(&Buffer, DW_AT_declaration, DW_FORM_flag, 1);
-      //      else
-      //        AddUInt(&Buffer, DW_AT_byte_size, 0, 0); 
+      // Add zero size if it is not a forward declaration.
+      if (CTy.isForwardDecl())
+        AddUInt(&Buffer, DW_AT_declaration, DW_FORM_flag, 1);
+      else
+        AddUInt(&Buffer, DW_AT_byte_size, 0, 0); 
     }
 
-    // Add source line info if available and TyDesc is not a forward
-    // declaration.
-    // FIXME - Enable this.
-    // if (CTy.isForwardDecl())                                            
-    //   AddSourceLine(&Buffer, *CTy);                                    
+    // Add source line info if available.
+    if (!CTy.isForwardDecl())
+      AddSourceLine(&Buffer, &CTy);
   }
   
   // ConstructSubrangeDIE - Construct subrange DIE from DISubrange.

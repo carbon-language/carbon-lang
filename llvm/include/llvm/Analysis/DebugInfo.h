@@ -129,6 +129,13 @@ namespace llvm {
   /// FIXME: Types should be factored much better so that CV qualifiers and
   /// others do not require a huge and empty descriptor full of zeros.
   class DIType : public DIDescriptor {
+  public:
+    enum {
+      FlagPrivate   = 1 << 0,
+      FlagProtected = 1 << 1,
+      FlagFwdDecl  = 1 << 2
+    };
+
   protected:
     DIType(GlobalVariable *GV, unsigned Tag) : DIDescriptor(GV, Tag) {}
     // This ctor is used when the Tag has already been validated by a derived
@@ -167,6 +174,9 @@ namespace llvm {
     // carry this is just plain insane.
     uint64_t getOffsetInBits() const    { return getUInt64Field(7); }
     unsigned getFlags() const           { return getUnsignedField(8); }
+    bool isPrivate() const              { return (getFlags() & FlagPrivate) != 0; }
+    bool isProtected() const            { return (getFlags() & FlagProtected) != 0; }
+    bool isForwardDecl() const          { return (getFlags() & FlagFwdDecl) != 0; }
 
     virtual std::string getFilename() const { 
       assert (0 && "Invalid DIDescriptor");
