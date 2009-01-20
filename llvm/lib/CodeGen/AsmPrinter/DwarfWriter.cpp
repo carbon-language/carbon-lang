@@ -1752,13 +1752,18 @@ private:
     case DW_TAG_array_type:
       ConstructArrayTypeDIE(DW_Unit, Buffer, &CTy);
       break;
-    //FIXME - Enable this. 
-    // case DW_TAG_enumeration_type:
-    //  DIArray Elements = CTy.getTypeArray();
-    //  // Add enumerators to enumeration type.
-    //  for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) 
-    //   ConstructEnumTypeDIE(Buffer, &Elements.getElement(i));
-    //  break;
+    case DW_TAG_enumeration_type:
+      {
+        DIArray Elements = CTy.getTypeArray();
+        // Add enumerators to enumeration type.
+        for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
+          DIE *ElemDie = NULL;
+          DIEnumerator Enum(Elements.getElement(i).getGV());
+          ElemDie = ConstructEnumTypeDIE(DW_Unit, &Enum);
+          Buffer.AddChild(ElemDie);
+        }
+      }
+      break;
     case DW_TAG_subroutine_type: 
       {
         // Add prototype flag.
@@ -1874,14 +1879,13 @@ private:
 
   /// ConstructEnumTypeDIE - Construct enum type DIE from 
   /// DIEnumerator.
-  void ConstructEnumTypeDIE(CompileUnit *DW_Unit, 
-                            DIE &Buffer, DIEnumerator *ETy) {
+  DIE *ConstructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy) {
 
     DIE *Enumerator = new DIE(DW_TAG_enumerator);
     AddString(Enumerator, DW_AT_name, DW_FORM_string, ETy->getName());
     int64_t Value = ETy->getEnumValue();                             
     AddSInt(Enumerator, DW_AT_const_value, DW_FORM_sdata, Value);
-    Buffer.AddChild(Enumerator);
+    return Enumerator;
   }
 
   /// CreateGlobalVariableDIE - Create new DIE using GV.
