@@ -2772,7 +2772,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   Error = Error; // Silence warning.
   assert(!Error && "Error setting up implicit decl!");
   Declarator D(DS, Declarator::BlockContext);
-  D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, 0, 0, 0, Loc));
+  D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, 0, 0, 0, Loc, D));
   D.SetIdentifier(&II, Loc);
   
   // Insert this function into translation-unit scope.

@@ -18,6 +18,7 @@
 #include "clang/Parse/AttributeList.h"
 #include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/PointerIntPair.h"
 
 namespace clang {
   struct LangOptions;
@@ -240,7 +241,6 @@ public:
            getTypeSpecComplex() != DeclSpec::TSC_unspecified ||
            getTypeSpecSign() != DeclSpec::TSS_unspecified;
   }
-  
   
   /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this
   /// DeclSpec includes.
@@ -486,7 +486,7 @@ struct DeclaratorChunk {
     /// declaration of a member function), it will be stored here as a
     /// sequence of tokens to be parsed once the class definition is
     /// complete. Non-NULL indicates that there is a default argument.
-    CachedTokens   *DefaultArgTokens;
+    CachedTokens *DefaultArgTokens;
 
     ParamInfo() {}
     ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::DeclTy *param,
@@ -509,6 +509,9 @@ struct DeclaratorChunk {
     /// The qualifier bitmask values are the same as in QualType. 
     unsigned TypeQuals : 3;
 
+    /// DeleteArgInfo - If this is true, we need to delete[] ArgInfo.
+    bool DeleteArgInfo : 1;
+
     /// NumArgs - This is the number of formal arguments provided for the
     /// declarator.
     unsigned NumArgs;
@@ -519,7 +522,8 @@ struct DeclaratorChunk {
     ParamInfo *ArgInfo;
     
     void destroy() {
-      delete[] ArgInfo;
+      if (DeleteArgInfo)
+        delete[] ArgInfo;
     }
   };
 
@@ -538,6 +542,16 @@ struct DeclaratorChunk {
     BlockPointerTypeInfo Cls;
   };
   
+  void destroy() {
+    switch (Kind) {
+    default: assert(0 && "Unknown decl type!");
+    case DeclaratorChunk::Function:     return Fun.destroy();
+    case DeclaratorChunk::Pointer:      return Ptr.destroy();
+    case DeclaratorChunk::BlockPointer: return Cls.destroy();
+    case DeclaratorChunk::Reference:    return Ref.destroy();
+    case DeclaratorChunk::Array:        return Arr.destroy();
+    }
+  }
   
   /// getAttrs - If there are attributes applied to this declaratorchunk, return
   /// them.
@@ -592,26 +606,13 @@ struct DeclaratorChunk {
     return I;
   }
   
-  /// getFunction - Return a DeclaratorChunk for a function.
+  /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
+  /// "TheDeclarator" is the declarator that this will be added to.
   static DeclaratorChunk getFunction(bool hasProto, bool isVariadic,
                                      ParamInfo *ArgInfo, unsigned NumArgs,
-                                     unsigned TypeQuals, SourceLocation Loc) {
-    DeclaratorChunk I;
-    I.Kind             = Function;
-    I.Loc              = Loc;
-    I.Fun.hasPrototype = hasProto;
-    I.Fun.isVariadic   = isVariadic;
-    I.Fun.TypeQuals    = TypeQuals;
-    I.Fun.NumArgs      = NumArgs;
-    I.Fun.ArgInfo      = 0;
-    
-    // new[] an argument array if needed.
-    if (NumArgs) {
-      I.Fun.ArgInfo = new DeclaratorChunk::ParamInfo[NumArgs];
-      memcpy(I.Fun.ArgInfo, ArgInfo, sizeof(ArgInfo[0])*NumArgs);
-    }
-    return I;
-  }
+                                     unsigned TypeQuals, SourceLocation Loc,
+                                     Declarator &TheDeclarator);
+  
   /// getBlockPointer - Return a DeclaratorChunk for a block.
   ///
   static DeclaratorChunk getBlockPointer(unsigned TypeQuals, 
@@ -635,13 +636,8 @@ struct DeclaratorChunk {
 /// Instances of this class should be a transient object that lives on the
 /// stack, not objects that are allocated in large quantities on the heap.
 class Declarator {
-  const DeclSpec &DS;
-  CXXScopeSpec SS;
-  IdentifierInfo *Identifier;
-  SourceLocation IdentifierLoc;
-  
 public:
-  enum TheContext {
+   enum TheContext {
     FileContext,         // File scope declaration.
     PrototypeContext,    // Within a function prototype.
     KNRTypeListContext,  // K&R type definition list for formals.
@@ -666,6 +662,11 @@ public:
   };
 
 private:
+  const DeclSpec &DS;
+  CXXScopeSpec SS;
+  IdentifierInfo *Identifier;
+  SourceLocation IdentifierLoc;
+  
   /// Context - Where we are parsing this declarator.
   ///
   TheContext Context;
@@ -702,10 +703,18 @@ private:
     OverloadedOperatorKind OperatorKind;
   };
 
+  /// InlineParams - This is a local array used for the first function decl
+  /// chunk to avoid going to the heap for the common case when we have one
+  /// function chunk in the declarator.
+  friend class DeclaratorChunk;
+  DeclaratorChunk::ParamInfo InlineParams[16];
+  bool InlineParamsUsed;
+  
 public:
   Declarator(const DeclSpec &ds, TheContext C)
     : DS(ds), Identifier(0), Context(C), Kind(DK_Abstract), InvalidType(false),
-      GroupingParens(false), AttrList(0), AsmLabel(0), Type(0) {
+      GroupingParens(false), AttrList(0), AsmLabel(0), Type(0),
+      InlineParamsUsed(false) {
   }
   
   ~Declarator() {
@@ -741,25 +750,14 @@ public:
     IdentifierLoc = SourceLocation();
     Kind = DK_Abstract;
 
-    for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i) {
-      if (DeclTypeInfo[i].Kind == DeclaratorChunk::Function)
-        DeclTypeInfo[i].Fun.destroy();
-      else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Pointer)
-        DeclTypeInfo[i].Ptr.destroy();
-      else if (DeclTypeInfo[i].Kind == DeclaratorChunk::BlockPointer)
-        DeclTypeInfo[i].Cls.destroy();
-      else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Reference)
-        DeclTypeInfo[i].Ref.destroy();
-      else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Array)
-        DeclTypeInfo[i].Arr.destroy();
-      else
-        assert(0 && "Unknown decl type!");
-    }
+    for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i)
+      DeclTypeInfo[i].destroy();
     DeclTypeInfo.clear();
     delete AttrList;
     AttrList = 0;
     AsmLabel = 0;
     Type = 0;
+    InlineParamsUsed = false;
   }
   
   /// mayOmitIdentifier - Return true if the identifier is either optional or
@@ -783,7 +781,7 @@ public:
     return !hasGroupingParens() &&
            (Context == FileContext  ||
             Context == BlockContext ||
-            Context == ForContext     );
+            Context == ForContext);
   }
   
   /// isPastIdentifier - Return true if we have parsed beyond the point where
@@ -907,7 +905,6 @@ struct FieldDeclarator {
     BitfieldSize = 0;
   }
 };
-
 
 } // end namespace clang
 

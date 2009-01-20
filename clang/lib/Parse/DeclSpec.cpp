@@ -14,6 +14,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
 
@@ -23,6 +24,43 @@ static DiagnosticBuilder Diag(Diagnostic &D, SourceLocation Loc,
 }
 
 
+/// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
+/// "TheDeclarator" is the declarator that this will be added to.
+DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
+                                             ParamInfo *ArgInfo,
+                                             unsigned NumArgs,
+                                             unsigned TypeQuals,
+                                             SourceLocation Loc,
+                                             Declarator &TheDeclarator) {
+  DeclaratorChunk I;
+  I.Kind             = Function;
+  I.Loc              = Loc;
+  I.Fun.hasPrototype = hasProto;
+  I.Fun.isVariadic   = isVariadic;
+  I.Fun.DeleteArgInfo = false;
+  I.Fun.TypeQuals    = TypeQuals;
+  I.Fun.NumArgs      = NumArgs;
+  I.Fun.ArgInfo      = 0;
+  
+  // new[] an argument array if needed.
+  if (NumArgs) {
+    // If the 'InlineParams' in Declarator is unused and big enough, put our
+    // parameter list there (in an effort to avoid new/delete traffic).  If it
+    // is already used (consider a function returning a function pointer) or too
+    // small (function taking too many arguments), go to the heap.
+    if (!TheDeclarator.InlineParamsUsed && 
+        NumArgs <= llvm::array_lengthof(TheDeclarator.InlineParams)) {
+      I.Fun.ArgInfo = TheDeclarator.InlineParams;
+      I.Fun.DeleteArgInfo = false;
+      TheDeclarator.InlineParamsUsed = true;
+    } else {
+      I.Fun.ArgInfo = new DeclaratorChunk::ParamInfo[NumArgs];
+      I.Fun.DeleteArgInfo = true;
+    }
+    memcpy(I.Fun.ArgInfo, ArgInfo, sizeof(ArgInfo[0])*NumArgs);
+  }
+  return I;
+}
 
 /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this
 ///

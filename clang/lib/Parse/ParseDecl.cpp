@@ -1854,7 +1854,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                                /*variadic*/ false,
                                                /*arglist*/ 0, 0,
                                                DS.getTypeQualifiers(),
-                                               LParenLoc));
+                                               LParenLoc, D));
     return;
   } 
   
@@ -2013,7 +2013,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/true, IsVariadic,
                                              &ParamInfo[0], ParamInfo.size(),
                                              DS.getTypeQualifiers(),
-                                             LParenLoc));
+                                             LParenLoc, D));
 }
 
 /// ParseFunctionDeclaratorIdentifierList - While parsing a function declarator
@@ -2080,7 +2080,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
   // has no prototype.
   D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/false, /*varargs*/false,
                                              &ParamInfo[0], ParamInfo.size(),
-                                             /*TypeQuals*/0, LParenLoc));
+                                             /*TypeQuals*/0, LParenLoc, D));
   
   // If we have the closing ')', eat it and we're done.
   MatchRHSPunctuation(tok::r_paren, LParenLoc);
