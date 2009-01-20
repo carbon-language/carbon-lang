@@ -280,21 +280,21 @@ class Darwin_X86_CC1Tool(Tool):
         """getCC1Name(type) -> name, use-cpp, is-cxx"""
         
         # FIXME: Get bool results from elsewhere.
-        if type is Types.CType:
+        if type is Types.CType or type is Types.CHeaderType:
             return 'cc1',True,False
-        elif type is Types.CTypeNoPP:
+        elif type is Types.CTypeNoPP or type is Types.CHeaderNoPPType:
             return 'cc1',False,False
-        elif type is Types.ObjCType:
+        elif type is Types.ObjCType or type is Types.ObjCHeaderType:
             return 'cc1obj',True,False
-        elif type is Types.ObjCTypeNoPP:
+        elif type is Types.ObjCTypeNoPP or type is Types.ObjCHeaderNoPPTypeP:
             return 'cc1obj',True,False
-        elif type is Types.CXXType:
+        elif type is Types.CXXType or type is Types.CXXHeaderType:
             return 'cc1plus',True,True
-        elif type is Types.CXXTypeNoPP:
+        elif type is Types.CXXTypeNoPP or type is Types.CXXHeaderNoPPType:
             return 'cc1plus',False,True
-        elif type is Types.ObjCXXType:
+        elif type is Types.ObjCXXType or type is Types.ObjCXXHeaderType:
             return 'cc1objplus',True,True
-        elif type is Types.ObjCXXTypeNoPP:
+        elif type is Types.ObjCXXTypeNoPP or type is Types.ObjCXXHeaderNoPPType:
             return 'cc1objplus',False,True
         else:
             raise ValueError,"Unexpected type for Darwin compile tool."
@@ -622,7 +622,10 @@ class Darwin_X86_CompileTool(Darwin_X86_CC1Tool):
             arglist.getLastArg(arglist.parser.f_traditionalOption)):
             raise Arguments.InvalidArgumentsError("-traditional is not supported without -E")
 
-        output_args = self.getOutputArgs(arglist, output)
+        if outputType is Types.PCHType:
+            output_args = []
+        else:
+            output_args = self.getOutputArgs(arglist, output)
     
         # There is no need for this level of compatibility, but it
         # makes diffing easier.
@@ -653,6 +656,17 @@ class Darwin_X86_CompileTool(Darwin_X86_CC1Tool):
                                    early_output_args, isCXX)
             cmd_args.extend(end_output_args)
 
+        if outputType is Types.PCHType:
+            assert output is not None and not isinstance(output, Jobs.PipedJob)
+
+            cmd_args.append('-o')
+            # NOTE: gcc uses a temp .s file for this, but there
+            # doesn't seem to be a good reason.
+            cmd_args.append('/dev/null')
+            
+            cmd_args.append('--output-pch=')
+            cmd_args.append(arglist.getValue(output))            
+            
         jobs.addJob(Jobs.Command(self.toolChain.getProgramPath(cc1Name), 
                                  cmd_args))
 

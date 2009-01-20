@@ -54,7 +54,7 @@ class Darwin_X86_ToolChain(ToolChain):
         self.toolMap = {
             Phases.PreprocessPhase : Tools.Darwin_X86_PreprocessTool(self),
             Phases.CompilePhase : Tools.Darwin_X86_CompileTool(self),
-            Phases.PrecompilePhase : Tools.GCC_PrecompileTool(),
+            Phases.PrecompilePhase : Tools.Darwin_X86_CompileTool(self),
             Phases.AssemblePhase : Tools.Darwin_AssembleTool(self),
             Phases.LinkPhase : Tools.Darwin_X86_LinkTool(self),
             Phases.LipoPhase : Tools.LipoTool(),
