@@ -338,6 +338,8 @@ class Driver(object):
         hasDashC = args.getLastArg(self.parser.cOption)
         hasDashE = args.getLastArg(self.parser.EOption)
         hasDashS = args.getLastArg(self.parser.SOption)
+        hasDashM = args.getLastArg(self.parser.MOption)
+        hasDashMM = args.getLastArg(self.parser.MMOption)
 
         inputType = None
         inputTypeOpt = None
@@ -401,7 +403,7 @@ class Driver(object):
         finalPhaseOpt = None
 
         # Determine what compilation mode we are in.
-        if hasDashE:
+        if hasDashE or hasDashM or hasDashMM:
             finalPhase = Phases.Phase.eOrderPreprocess
             finalPhaseOpt = hasDashE
         elif hasSyntaxOnly:
@@ -520,14 +522,12 @@ class Driver(object):
         # FIXME: We need to handle canonicalization of the specified arch.
 
         archs = []
-        hasDashM = None
+        hasDashM = args.getLastArg(self.parser.MGroup)
         hasSaveTemps = (args.getLastArg(self.parser.saveTempsOption) or 
                         args.getLastArg(self.parser.saveTempsOption2))
         for arg in args:
             if arg.opt is self.parser.archOption:
                 archs.append(arg)
-            elif arg.opt.name.startswith('-M'):
-                hasDashM = arg
 
         if not archs:
             archs.append(args.makeSeparateArg(self.hostInfo.getArchName(args),

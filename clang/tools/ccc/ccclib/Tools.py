@@ -425,27 +425,21 @@ class Darwin_X86_CC1Tool(Tool):
     def getOutputArgs(self, arglist, output, isCPP=False):
         if isinstance(output, Jobs.PipedJob):
             if isCPP:
-                output_args = []
+                return []
             else:
-                output_args = ['-o', '-']
+                return ['-o', '-']
         elif output is None:
-            output_args = ['-o', '/dev/null']
+            return ['-o', '/dev/null']
         else:
-            output_args = arglist.render(output)
-
-        # There is no need for this level of compatibility, but it
-        # makes diffing easier.
-        if (not arglist.getLastArg(arglist.parser.syntaxOnlyOption) and
-            not arglist.getLastArg(arglist.parser.SOption)):
-            return [], output_args
-        else:
-            return output_args, []
+            return arglist.render(output)
 
     def addCPPOptionsArgs(self, cmd_args, arch, arglist, inputs,
                           output_args, isCXX):
         # Derived from cpp_options.
         self.addCPPUniqueOptionsArgs(cmd_args, arch, arglist, inputs)
         
+        cmd_args.extend(output_args)
+
         self.addCC1Args(cmd_args, arch, arglist)
 
         # NOTE: The code below has some commonality with cpp_options,
@@ -598,11 +592,10 @@ class Darwin_X86_PreprocessTool(Darwin_X86_CC1Tool):
             arglist.getLastArg(arglist.parser.traditionalCPPOption)):
             cmd_args.append('-traditional-cpp')
 
-        early_output_args, end_output_args = self.getOutputArgs(arglist, output,
-                                                                isCPP=True)
+        output_args = self.getOutputArgs(arglist, output,
+                                         isCPP=True)
         self.addCPPOptionsArgs(cmd_args, arch, arglist, inputs, 
-                               early_output_args, isCXX)
-        cmd_args.extend(end_output_args)
+                               output_args, isCXX)
 
         arglist.addAllArgs(cmd_args, arglist.parser.dGroup)
 
@@ -629,7 +622,16 @@ class Darwin_X86_CompileTool(Darwin_X86_CC1Tool):
             arglist.getLastArg(arglist.parser.f_traditionalOption)):
             raise Arguments.InvalidArgumentsError("-traditional is not supported without -E")
 
-        early_output_args, end_output_args = self.getOutputArgs(arglist, output)
+        output_args = self.getOutputArgs(arglist, output)
+    
+        # There is no need for this level of compatibility, but it
+        # makes diffing easier.
+        if (not arglist.getLastArg(arglist.parser.syntaxOnlyOption) and
+            not arglist.getLastArg(arglist.parser.SOption)):
+            early_output_args, end_output_args = [], output_args
+        else:
+            early_output_args, end_output_args = output_args, []
+
         if usePP:
             self.addCPPUniqueOptionsArgs(cmd_args, arch, arglist, inputs)
             self.addCC1OptionsArgs(cmd_args, arch, arglist, inputs,
