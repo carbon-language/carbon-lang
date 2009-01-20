@@ -39,6 +39,9 @@ public:
   
   virtual ~DeadStoreObs() {}
   
+  bool isConsumedExpr(Expr* E) const;
+  
+  
   void Report(VarDecl* V, DeadStoreKind dsk, SourceLocation L, SourceRange R) {
 
     std::string name = V->getNameAsString();
@@ -145,10 +148,9 @@ public:
               return;
             
           // Otherwise, issue a warning.
-          DeadStoreKind dsk = 
-            Parents.isSubExpr(B)
-            ? Enclosing 
-            : (isIncrement(VD,B) ? DeadIncrement : Standard);
+          DeadStoreKind dsk = isConsumedExpr(B)
+                              ? Enclosing 
+                              : (isIncrement(VD,B) ? DeadIncrement : Standard);
           
           CheckVarDecl(VD, DR, B->getRHS(), dsk, AD, Live);
         }              
@@ -161,7 +163,7 @@ public:
       //  about preincrements to dead variables when the preincrement occurs
       //  as a subexpression.  This can lead to false negatives, e.g. "(++x);"
       //  A generalized dead code checker should find such issues.
-      if (U->isPrefix() && Parents.isSubExpr(U))
+      if (U->isPrefix() && isConsumedExpr(U))
         return;
 
       Expr *Ex = U->getSubExpr()->IgnoreParenCasts();
@@ -202,6 +204,43 @@ public:
 };
   
 } // end anonymous namespace
+
+bool DeadStoreObs::isConsumedExpr(Expr* E) const {
+  Stmt *P = Parents.getParent(E);
+  Stmt *DirectChild = E;
+  
+  // Ignore parents that are parentheses or casts.
+  while (P && (isa<ParenExpr>(E) || isa<CastExpr>(E))) {
+    DirectChild = P;
+    P = Parents.getParent(P);
+  }
+  
+  if (!P)
+    return false;
+  
+  switch (P->getStmtClass()) {
+    default:
+      return isa<Expr>(P);
+    case Stmt::BinaryOperatorClass: {
+      BinaryOperator *BE = cast<BinaryOperator>(P);
+      return BE->getOpcode()==BinaryOperator::Comma && DirectChild==BE->getLHS();
+    }
+    case Stmt::ForStmtClass:
+      return DirectChild == cast<ForStmt>(P)->getCond();
+    case Stmt::WhileStmtClass:
+      return DirectChild == cast<WhileStmt>(P)->getCond();      
+    case Stmt::DoStmtClass:
+      return DirectChild == cast<DoStmt>(P)->getCond();
+    case Stmt::IfStmtClass:
+      return DirectChild == cast<IfStmt>(P)->getCond();
+    case Stmt::IndirectGotoStmtClass:
+      return DirectChild == cast<IndirectGotoStmt>(P)->getTarget();
+    case Stmt::SwitchStmtClass:
+      return DirectChild == cast<SwitchStmt>(P)->getCond();
+    case Stmt::ReturnStmtClass:
+      return true;
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // Driver function to invoke the Dead-Stores checker on a CFG.

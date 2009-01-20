@@ -45,11 +45,3 @@ Stmt* ParentMap::getParent(Stmt* S) const {
   MapTy::iterator I = M->find(S);
   return I == M->end() ? 0 : I->second;
 }
-
-bool ParentMap::isSubExpr(Stmt* S) const {
-  if (!isa<Expr>(S))
-    return false;
-  
-  Stmt* P = getParent(S);
-  return P ? !isa<CompoundStmt>(P) : false;
-}

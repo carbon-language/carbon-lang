@@ -28,8 +28,6 @@ public:
   bool hasParent(Stmt* S) const {
     return !getParent(S);
   }
-  
-  bool isSubExpr(Stmt *S) const;
 };
   
 } // end clang namespace

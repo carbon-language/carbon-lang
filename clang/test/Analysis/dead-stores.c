@@ -79,9 +79,8 @@ int f11() {
 
 int f11b() {
   int x = 4;
-  return ++x; // no-warning
+  return ((((++x)))); // no-warning
 }
-
 
 int f12a(int y) {
   int x = y;  // expected-warning{{never read}}
@@ -131,4 +130,20 @@ int f16(int x) {
 int f17() {
   int x = 1;
   x = x; // no-warning
+}
+
+// <rdar://problem/6506065>
+// The values of dead stores are only "consumed" in an enclosing expression
+// what that value is actually used.  In other words, don't say "Although the value stored to 'x' is used...".
+int f18() {
+   int x = 0; // no-warning
+   if (1)
+      x = 10;  // expected-warning{{Value stored to 'x' is never read}}
+   while (1)
+      x = 10;  // expected-warning{{Value stored to 'x' is never read}}
+   do
+      x = 10;   // expected-warning{{Value stored to 'x' is never read}}
+   while (1);
+
+   return (x = 10); // expected-warning{{Although the value stored to 'x' is used in the enclosing expression, the value is never actually read from 'x'}}
 }
