@@ -1559,7 +1559,7 @@ private:
   void AddSourceLine(DIE *Die, const DIVariable *V) {
     unsigned FileID = 0;
     unsigned Line = V->getLineNumber();
-    if (V->getVersion() < DIDescriptor::Version7) {
+    if (V->getVersion() <= LLVMDebugVersion6) {
       // Version6 or earlier. Use compile unit info to get file id.
       CompileUnit *Unit = FindCompileUnit(V->getCompileUnit());
       FileID = Unit->getID();
@@ -1578,7 +1578,7 @@ private:
   void AddSourceLine(DIE *Die, const DIGlobal *G) {
     unsigned FileID = 0;
     unsigned Line = G->getLineNumber();
-    if (G->getVersion() < DIDescriptor::Version7) {
+    if (G->getVersion() < LLVMDebugVersion6) {
       // Version6 or earlier. Use compile unit info to get file id.
       CompileUnit *Unit = FindCompileUnit(G->getCompileUnit());
       FileID = Unit->getID();
@@ -1595,7 +1595,7 @@ private:
   void AddSourceLine(DIE *Die, const DIType *Ty) {
     unsigned FileID = 0;
     unsigned Line = Ty->getLineNumber();
-    if (Ty->getVersion() < DIDescriptor::Version7) {
+    if (Ty->getVersion() <= LLVMDebugVersion6) {
       // Version6 or earlier. Use compile unit info to get file id.
       CompileUnit *Unit = FindCompileUnit(Ty->getCompileUnit());
       FileID = Unit->getID();
@@ -3046,7 +3046,7 @@ public:
     DIDescriptor DI(GV);
     // Check current version. Allow Version6 for now.
     unsigned Version = DI.getVersion();
-    if (Version != DIDescriptor::Version7 && Version != DIDescriptor::Version6)
+    if (Version != LLVMDebugVersion && Version != LLVMDebugVersion6)
       return false;
 
     unsigned Tag = DI.getTag();

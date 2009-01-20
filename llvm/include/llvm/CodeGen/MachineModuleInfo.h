@@ -55,17 +55,6 @@ class PointerType;
 class StructType;
 
 //===----------------------------------------------------------------------===//
-// Debug info constants.
-
-enum {
-  LLVMDebugVersion = (7 << 16),         // Current version of debug information.
-  LLVMDebugVersion6 = (6 << 16),        // Constant for version 6.
-  LLVMDebugVersion5 = (5 << 16),        // Constant for version 5.
-  LLVMDebugVersion4 = (4 << 16),        // Constant for version 4.
-  LLVMDebugVersionMask = 0xffff0000     // Mask for version number.
-};
-
-//===----------------------------------------------------------------------===//
 /// SourceLineInfo - This class is used to record source line correspondence.
 ///
 class SourceLineInfo {

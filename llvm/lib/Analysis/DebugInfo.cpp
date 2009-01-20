@@ -291,9 +291,9 @@ Constant *DIFactory::getCastToEmpty(DIDescriptor D) {
 }
 
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
-  assert((TAG & DIDescriptor::VersionMask) == 0 &&
+  assert((TAG & LLVMDebugVersionMask) == 0 &&
          "Tag too large for debug encoding!");
-  return ConstantInt::get(Type::Int32Ty, TAG | DIDescriptor::Version7);
+  return ConstantInt::get(Type::Int32Ty, TAG | LLVMDebugVersion);
 }
 
 Constant *DIFactory::GetStringConstant(const std::string &String) {

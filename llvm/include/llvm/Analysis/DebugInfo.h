@@ -32,15 +32,6 @@ namespace llvm {
   class Instruction;
 
   class DIDescriptor {
-  public:
-    enum {
-      Version7    = 7 << 16,     // Current version of debug information.
-      Version6    = 6 << 16,     // Constant for version 6.
-      Version5    = 5 << 16,     // Constant for version 5.
-      Version4    = 4 << 16,     // Constant for version 4.
-      VersionMask = 0xffff0000   // Mask for version number.
-    };
-
   protected:    
     GlobalVariable *GV;
 
@@ -72,11 +63,11 @@ namespace llvm {
     GlobalVariable *getGV() const { return GV; }
 
     unsigned getVersion() const {
-      return getUnsignedField(0) & VersionMask;
+      return getUnsignedField(0) & LLVMDebugVersionMask;
     }
 
     unsigned getTag() const {
-      return getUnsignedField(0) & ~VersionMask;
+      return getUnsignedField(0) & ~LLVMDebugVersionMask;
     }
 
   };
