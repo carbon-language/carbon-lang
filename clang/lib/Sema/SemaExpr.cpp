@@ -864,9 +864,9 @@ Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
 
   QualType type = getLangOptions().CPlusPlus ? Context.CharTy : Context.IntTy;
 
-  void *Mem = Context.getAllocator().Allocate<CharacterLiteral>();
-  return Owned(new (Mem) CharacterLiteral(Literal.getValue(), Literal.isWide(),
-                                    type, Tok.getLocation()));
+  return Owned(new (Context) CharacterLiteral(Literal.getValue(),
+                                              Literal.isWide(),
+                                              type, Tok.getLocation()));
 }
 
 Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
@@ -908,9 +908,8 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
     // isExact will be set by GetFloatValue().
     bool isExact = false;
-    void *Mem = Context.getAllocator().Allocate<FloatingLiteral>();
-    Res = new (Mem) FloatingLiteral(Literal.GetFloatValue(Format, &isExact), 
-                                    &isExact, Ty, Tok.getLocation());
+    Res = new (Context) FloatingLiteral(Literal.GetFloatValue(Format, &isExact),
+                                        &isExact, Ty, Tok.getLocation());
 
   } else if (!Literal.isIntegerLiteral()) {
     return ExprError();
@@ -997,8 +996,7 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       if (ResultVal.getBitWidth() != Width)
         ResultVal.trunc(Width);
     }
-    void *Mem = Context.getAllocator().Allocate<IntegerLiteral>();
-    Res = new (Mem) IntegerLiteral(ResultVal, Ty, Tok.getLocation());
+    Res = new (Context) IntegerLiteral(ResultVal, Ty, Tok.getLocation());
   }
 
   // If this is an imaginary literal, create the ImaginaryLiteral wrapper.

@@ -550,9 +550,48 @@ private:
                                   FieldDecl *Field,
                                   bool OutermostType = false,
                                   bool EncodingProperty = false) const;
-  
+
 };
-  
+
 }  // end namespace clang
+
+// operator new and delete aren't allowed inside namespaces.
+// The throw specifications are mandated by the standard.
+/// @brief Placement new for using the ASTContext's allocator.
+///
+/// This placement form of operator new uses the ASTContext's allocator for
+/// obtaining memory. It is a non-throwing new, which means that it returns
+/// null on error. (If that is what the allocator does. The current does, so if
+/// this ever changes, this operator will have to be changed, too.)
+/// Usage looks like this (assuming there's an ASTContext 'Context' in scope):
+/// @code
+/// // Default alignment (16)
+/// IntegerLiteral *Ex = new (Context) IntegerLiteral(arguments);
+/// // Specific alignment
+/// IntegerLiteral *Ex2 = new (Context, 8) IntegerLiteral(arguments);
+/// @endcode
+/// Please note that you cannot use delete on the pointer; it must be
+/// deallocated using an explicit destructor call followed by
+/// @c Context.getAllocator().Deallocate(Ptr)
+///
+/// @param Bytes The number of bytes to allocate. Calculated by the compiler.
+/// @param C The ASTContext that provides the allocator.
+/// @param Alignment The alignment of the allocated memory (if the allocator
+///                  supports it, which the current one doesn't).
+/// @return The allocated memory. Could be NULL.
+inline void *operator new(size_t Bytes, clang::ASTContext &C,
+                          size_t Alignment = 16) throw () {
+  return C.getAllocator().Allocate(Bytes, Alignment);
+}
+/// @brief Placement delete companion to the new above.
+///
+/// This operator is just a companion to the new above. There is no way of
+/// invoking it directly; see the new operator for more details. This operator
+/// is called implicitly by the compiler if a placement new expression using
+/// the ASTContext throws in the object constructor.
+inline void operator delete(void *Ptr, clang::ASTContext &C, size_t = 16)
+              throw () {
+  C.getAllocator().Deallocate(Ptr);
+}
 
 #endif
