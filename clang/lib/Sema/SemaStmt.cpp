@@ -896,18 +896,27 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                   diag::err_asm_invalid_input_constraint) << InputConstraint);
     }
 
-    // Check that the input exprs aren't of type void.
     ParenExpr *InputExpr = cast<ParenExpr>(Exprs[i]);
-    if (InputExpr->getType()->isVoidType()) {
 
-      return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
-                  diag::err_asm_invalid_type_in_input)
-        << InputExpr->getType() << InputConstraint
-        << InputExpr->getSubExpr()->getSourceRange());
+    // Only allow void types for memory constraints.
+    if (info & TargetInfo::CI_AllowsMemory) {
+
+      if (InputExpr->isLvalue(Context) != Expr::LV_Valid)
+        return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
+                              diag::err_asm_invalid_lvalue_in_input)
+          << InputConstraint << InputExpr->getSubExpr()->getSourceRange());
     }
 
-    if (info & TargetInfo::CI_AllowsRegister)
+    if (info & TargetInfo::CI_AllowsRegister) {
+      if (InputExpr->getType()->isVoidType()) {
+        return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
+                              diag::err_asm_invalid_type_in_input)
+          << InputExpr->getType() << InputConstraint 
+          << InputExpr->getSubExpr()->getSourceRange());
+      }
+      
       DefaultFunctionArrayConversion(Exprs[i]);
+    }
   }
 
   // Check that the clobbers are valid.
