@@ -335,7 +335,7 @@ bool LiveVariables::hasRegisterUseBelow(unsigned Reg,
   return true;
 }
 
-bool LiveVariables::HandlePhysRegKill(unsigned Reg) {
+bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
   if (!PhysRegUse[Reg] && !PhysRegDef[Reg])
     return false;
 
@@ -373,8 +373,10 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg) {
       }
     }
   }
-  if (LastRefOrPartRef == PhysRegDef[Reg])
-    // Not used at all.
+
+  if (LastRefOrPartRef == PhysRegDef[Reg] && LastRefOrPartRef != MI)
+    // If the last reference is the last def, then it's not used at all.
+    // That is, unless we are currently processing the last reference itself.
     LastRefOrPartRef->addRegisterDead(Reg, TRI, true);
 
   /* Partial uses. Mark register def dead and add implicit def of
@@ -427,14 +429,14 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 
   // Start from the largest piece, find the last time any part of the register
   // is referenced.
-  if (!HandlePhysRegKill(Reg)) {
+  if (!HandlePhysRegKill(Reg, MI)) {
     // Only some of the sub-registers are used.
     for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
          unsigned SubReg = *SubRegs; ++SubRegs) {
       if (!Live.count(SubReg))
         // Skip if this sub-register isn't defined.
         continue;
-      if (HandlePhysRegKill(SubReg)) {
+      if (HandlePhysRegKill(SubReg, MI)) {
         Live.erase(SubReg);
         for (const unsigned *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
           Live.erase(*SS);
@@ -475,7 +477,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
           }
         } else {
           // Otherwise, the super register is killed.
-          if (HandlePhysRegKill(SuperReg)) {
+          if (HandlePhysRegKill(SuperReg, MI)) {
             PhysRegDef[SuperReg]  = NULL;
             PhysRegUse[SuperReg]  = NULL;
             for (const unsigned *SS = TRI->getSubRegisters(SuperReg); *SS; ++SS) {
@@ -558,13 +560,13 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       SmallVector<unsigned, 4> DefRegs;
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
         const MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg() && MO.getReg()) {
-          unsigned MOReg = MO.getReg();
-          if (MO.isUse())
-            UseRegs.push_back(MOReg);
-          if (MO.isDef())
-            DefRegs.push_back(MOReg);
-        }
+        if (!MO.isReg() || MO.getReg() == 0)
+          continue;
+        unsigned MOReg = MO.getReg();
+        if (MO.isUse())
+          UseRegs.push_back(MOReg);
+        if (MO.isDef())
+          DefRegs.push_back(MOReg);
       }
 
       // Process all uses.

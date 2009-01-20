@@ -146,7 +146,7 @@ private:   // Intermediate data structures
   /// HandlePhysRegKill - Add kills of Reg and its sub-registers to the
   /// uses. Pay special attention to the sub-register uses which may come below
   /// the last use of the whole register.
-  bool HandlePhysRegKill(unsigned Reg);
+  bool HandlePhysRegKill(unsigned Reg, MachineInstr *MI);
 
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
