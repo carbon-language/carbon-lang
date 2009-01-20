@@ -1753,8 +1753,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       if (!TargetRegisterInfo::isVirtualRegister(VirtReg)) {
         // Check to see if this is a noop copy.  If so, eliminate the
         // instruction before considering the dest reg to be changed.
-        unsigned Src, Dst;
-        if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+        unsigned Src, Dst, SrcSR, DstSR;
+        if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst) {
           ++NumDCE;
           DOUT << "Removing now-noop copy: " << MI;
           SmallVector<unsigned, 2> KillRegs;
@@ -1840,8 +1840,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // Check to see if this is a noop copy.  If so, eliminate the
         // instruction before considering the dest reg to be changed.
         {
-          unsigned Src, Dst;
-          if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+          unsigned Src, Dst, SrcSR, DstSR;
+          if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst) {
             ++NumDCE;
             DOUT << "Removing now-noop copy: " << MI;
             InvalidateKills(MI, RegKills, KillOps);

@@ -846,9 +846,9 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     VNInfo* NewVN = LI->getNextValue(DefIdx, 0, Alloc);
     
     // If the def is a move, set the copy field.
-    unsigned source, dest;
-    if (TII->isMoveInstr(*DI, source, dest))
-      if (dest == LI->reg)
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (TII->isMoveInstr(*DI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
+      if (DstReg == LI->reg)
         NewVN->copy = &*DI;
     
     NewVNs[&*DI] = NewVN;

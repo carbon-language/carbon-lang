@@ -189,9 +189,9 @@ static void EmitLiveInCopy(MachineBasicBlock *MBB,
   // don't coalesce. Also, only coalesce away a virtual register to virtual
   // register copy.
   bool Coalesced = false;
-  unsigned SrcReg, DstReg;
+  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
   if (NumUses == 1 &&
-      TII.isMoveInstr(*UseMI, SrcReg, DstReg) &&
+      TII.isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
       TargetRegisterInfo::isVirtualRegister(DstReg)) {
     VirtReg = DstReg;
     Coalesced = true;

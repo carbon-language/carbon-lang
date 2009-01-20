@@ -51,7 +51,10 @@ const TargetRegisterClass *ARMInstrInfo::getPointerRegClass() const {
 /// leave the source and dest operands in the passed parameters.
 ///
 bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
-                               unsigned &SrcReg, unsigned &DstReg) const {
+                               unsigned &SrcReg, unsigned &DstReg,
+                               unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
+  SrcSubIdx = DstSubIdx = 0; // No sub-registers.
+
   unsigned oc = MI.getOpcode();
   switch (oc) {
   default:

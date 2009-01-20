@@ -359,10 +359,10 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
          iItr != iEnd; ++iItr) {
 
       const MachineInstr *instr = &*iItr;
-      unsigned srcReg, dstReg;
+      unsigned srcReg, dstReg, srcSubReg, dstSubReg;
 
       // If this isn't a copy then continue to the next instruction.
-      if (!tii->isMoveInstr(*instr, srcReg, dstReg))
+      if (!tii->isMoveInstr(*instr, srcReg, dstReg, srcSubReg, dstSubReg))
         continue;
 
       // If the registers are already the same our job is nice and easy.

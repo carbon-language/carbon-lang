@@ -663,8 +663,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
 }
 
 bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
-                               unsigned& sourceReg,
-                               unsigned& destReg) const {
+                               unsigned &SrcReg, unsigned &DstReg,
+                               unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
   switch (MI.getOpcode()) {
   default:
     return false;
@@ -697,8 +697,10 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&
            "invalid register-register move instruction");
-    sourceReg = MI.getOperand(1).getReg();
-    destReg = MI.getOperand(0).getReg();
+    SrcReg = MI.getOperand(1).getReg();
+    DstReg = MI.getOperand(0).getReg();
+    SrcSubIdx = MI.getOperand(1).getSubReg();
+    DstSubIdx = MI.getOperand(0).getSubReg();
     return true;
   }
 }

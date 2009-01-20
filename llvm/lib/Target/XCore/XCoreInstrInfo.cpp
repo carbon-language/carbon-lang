@@ -49,7 +49,10 @@ static bool isZeroImm(const MachineOperand &op) {
 /// leave the source and dest operands in the passed parameters.
 ///
 bool XCoreInstrInfo::isMoveInstr(const MachineInstr &MI,
-                                 unsigned &SrcReg, unsigned &DstReg) const {
+                                 unsigned &SrcReg, unsigned &DstReg,
+                                 unsigned &SrcSR, unsigned &DstSR) const {
+  SrcSR = DstSR = 0; // No sub-registers.
+
   // We look for 4 kinds of patterns here:
   // add dst, src, 0
   // sub dst, src, 0

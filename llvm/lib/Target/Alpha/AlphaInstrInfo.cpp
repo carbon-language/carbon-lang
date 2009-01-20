@@ -25,8 +25,8 @@ AlphaInstrInfo::AlphaInstrInfo()
 
 
 bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
-                                 unsigned& sourceReg,
-                                 unsigned& destReg) const {
+                                 unsigned& sourceReg, unsigned& destReg,
+                                 unsigned& SrcSR, unsigned& DstSR) const {
   unsigned oc = MI.getOpcode();
   if (oc == Alpha::BISr   || 
       oc == Alpha::CPYSS  || 
@@ -43,6 +43,7 @@ bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
     if (MI.getOperand(1).getReg() == MI.getOperand(2).getReg()) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
+      SrcSR = DstSR = 0;
       return true;
     }
   }

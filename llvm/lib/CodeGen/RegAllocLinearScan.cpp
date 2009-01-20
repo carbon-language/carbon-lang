@@ -253,8 +253,9 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
   if (!vni->def || vni->def == ~1U || vni->def == ~0U)
     return Reg;
   MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
-  unsigned SrcReg, DstReg;
-  if (!CopyMI || !tii_->isMoveInstr(*CopyMI, SrcReg, DstReg))
+  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+  if (!CopyMI ||
+      !tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubReg, DstSubReg))
     return Reg;
   if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     if (!vrm_->isAssignedReg(SrcReg))
@@ -695,8 +696,9 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     VNInfo *vni = cur->begin()->valno;
     if (vni->def && vni->def != ~1U && vni->def != ~0U) {
       MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
-      unsigned SrcReg, DstReg;
-      if (CopyMI && tii_->isMoveInstr(*CopyMI, SrcReg, DstReg)) {
+      unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+      if (CopyMI &&
+          tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubReg, DstSubReg)) {
         unsigned Reg = 0;
         if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
           Reg = SrcReg;

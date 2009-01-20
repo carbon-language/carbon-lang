@@ -386,8 +386,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
       else
         BKills.push_back(li_->getUseIndex(UseIdx)+1);
     }
-    unsigned SrcReg, DstReg;
-    if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg))
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
       continue;
     if (DstReg == IntB.reg) {
       // This copy will become a noop. If it's defining a new val#,
@@ -563,8 +563,9 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
       if (OldSubIdx)
           UseDstReg = tri_->getSubReg(DstReg, OldSubIdx);
 
-      unsigned CopySrcReg, CopyDstReg;
-      if (tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg) &&
+      unsigned CopySrcReg, CopyDstReg, CopySrcSubIdx, CopyDstSubIdx;
+      if (tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg,
+                            CopySrcSubIdx, CopyDstSubIdx) &&
           CopySrcReg != CopyDstReg &&
           CopySrcReg == SrcReg && CopyDstReg != UseDstReg) {
         // If the use is a copy and it won't be coalesced away, and its source
@@ -595,9 +596,10 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
     // After updating the operand, check if the machine instruction has
     // become a copy. If so, update its val# information.
     const TargetInstrDesc &TID = UseMI->getDesc();
-    unsigned CopySrcReg, CopyDstReg;
+    unsigned CopySrcReg, CopyDstReg, CopySrcSubIdx, CopyDstSubIdx;
     if (TID.getNumDefs() == 1 && TID.getNumOperands() > 2 &&
-        tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg) &&
+        tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg,
+                          CopySrcSubIdx, CopyDstSubIdx) &&
         CopySrcReg != CopyDstReg &&
         (TargetRegisterInfo::isVirtualRegister(CopyDstReg) ||
          allocatableRegs_[CopyDstReg])) {
@@ -818,8 +820,8 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
     // of last use.
     LastUse->setIsKill();
     removeRange(li, li_->getDefIndex(LastUseIdx), LR->end, li_, tri_);
-    unsigned SrcReg, DstReg;
-    if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg) &&
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         DstReg == li.reg) {
       // Last use is itself an identity code.
       int DeadIdx = LastUseMI->findRegisterDefOperandIdx(li.reg, false, tri_);
@@ -873,8 +875,8 @@ bool SimpleRegisterCoalescing::CanCoalesceWithImpDef(MachineInstr *CopyMI,
     if (ULR == li.end() || ULR->valno != LR->valno)
       continue;
     // If the use is not a use, then it's not safe to coalesce the move.
-    unsigned SrcReg, DstReg;
-    if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg)) {
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
       if (UseMI->getOpcode() == TargetInstrInfo::INSERT_SUBREG &&
           UseMI->getOperand(1).getReg() == li.reg)
         continue;
@@ -911,8 +913,9 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
     if (ULR == li.end() || ULR->valno != VNI)
       continue;
     // If the use is a copy, turn it into an identity copy.
-    unsigned SrcReg, DstReg;
-    if (tii_->isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == li.reg) {
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+        SrcReg == li.reg) {
       // Each use MI may have multiple uses of this register. Change them all.
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
@@ -1123,8 +1126,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   DOUT << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI;
 
-  unsigned SrcReg;
-  unsigned DstReg;
+  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
   bool isExtSubReg = CopyMI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG;
   bool isInsSubReg = CopyMI->getOpcode() == TargetInstrInfo::INSERT_SUBREG;
   unsigned SubIdx = 0;
@@ -1139,7 +1141,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     }
     DstReg = CopyMI->getOperand(0).getReg();
     SrcReg = CopyMI->getOperand(2).getReg();
-  } else if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg)) {
+  } else if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
     assert(0 && "Unrecognized copy instruction!");
     return false;
   }
@@ -1428,10 +1430,11 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       if (!vni->def || vni->def == ~1U || vni->def == ~0U)
         continue;
       MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
-      unsigned NewSrcReg, NewDstReg;
+      unsigned NewSrcReg, NewDstReg, NewSrcSubIdx, NewDstSubIdx;
       if (CopyMI &&
           JoinedCopies.count(CopyMI) == 0 &&
-          tii_->isMoveInstr(*CopyMI, NewSrcReg, NewDstReg)) {
+          tii_->isMoveInstr(*CopyMI, NewSrcReg, NewDstReg,
+                            NewSrcSubIdx, NewDstSubIdx)) {
         unsigned LoopDepth = loopInfo->getLoopDepth(CopyMBB);
         JoinQueue->push(CopyRec(CopyMI, LoopDepth,
                                 isBackEdgeCopy(CopyMI, DstReg)));
@@ -1570,8 +1573,9 @@ bool SimpleRegisterCoalescing::RangeIsDefinedByCopyFromReg(LiveInterval &li,
     // It's a sub-register live interval, we may not have precise information.
     // Re-compute it.
     MachineInstr *DefMI = li_->getInstructionFromIndex(LR->start);
-    unsigned SrcReg, DstReg;
-    if (DefMI && tii_->isMoveInstr(*DefMI, SrcReg, DstReg) &&
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (DefMI &&
+        tii_->isMoveInstr(*DefMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         DstReg == li.reg && SrcReg == Reg) {
       // Cache computed info.
       LR->valno->def  = LR->start;
@@ -2070,14 +2074,14 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
     MachineInstr *Inst = MII++;
     
     // If this isn't a copy nor a extract_subreg, we can't join intervals.
-    unsigned SrcReg, DstReg;
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (Inst->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(1).getReg();
     } else if (Inst->getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(2).getReg();
-    } else if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg))
+    } else if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
       continue;
 
     bool SrcIsPhys = TargetRegisterInfo::isPhysicalRegister(SrcReg);
@@ -2243,8 +2247,9 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
            E = mri_->use_end(); I != E; ++I) {
       MachineOperand &Use = I.getOperand();
       MachineInstr *UseMI = Use.getParent();
-      unsigned SrcReg, DstReg;
-      if (tii_->isMoveInstr(*UseMI, SrcReg, DstReg) && SrcReg == DstReg)
+      unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+      if (tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+          SrcReg == DstReg)
         // Ignore identity copies.
         continue;
       unsigned Idx = li_->getInstructionIndex(UseMI);
@@ -2269,8 +2274,9 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
       return NULL;
 
     // Ignore identity copies.
-    unsigned SrcReg, DstReg;
-    if (!(tii_->isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg))
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (!(tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+          SrcReg == DstReg))
       for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
         MachineOperand &Use = MI->getOperand(i);
         if (Use.isReg() && Use.isUse() && Use.getReg() &&
@@ -2389,10 +2395,10 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
     for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
          mii != mie; ) {
       MachineInstr *MI = mii;
-      unsigned SrcReg, DstReg;
+      unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
       if (JoinedCopies.count(MI)) {
         // Delete all coalesced copies.
-        if (!tii_->isMoveInstr(*MI, SrcReg, DstReg)) {
+        if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
           assert((MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
                   MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG) &&
                  "Unrecognized copy instruction");
@@ -2441,7 +2447,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       }
 
       // If the move will be an identity move delete it
-      bool isMove = tii_->isMoveInstr(*MI, SrcReg, DstReg);
+      bool isMove= tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx);
       if (isMove && SrcReg == DstReg) {
         if (li_->hasInterval(SrcReg)) {
           LiveInterval &RegInt = li_->getInterval(SrcReg);

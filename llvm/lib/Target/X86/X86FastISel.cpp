@@ -783,9 +783,9 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
             const MachineInstr &MI = *RI;
 
             if (MI.modifiesRegister(Reg)) {
-              unsigned Src, Dst;
+              unsigned Src, Dst, SrcSR, DstSR;
 
-              if (getInstrInfo()->isMoveInstr(MI, Src, Dst)) {
+              if (getInstrInfo()->isMoveInstr(MI, Src, Dst, SrcSR, DstSR)) {
                 Reg = Src;
                 continue;
               }

@@ -960,8 +960,9 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     }
     
     // Finally, if this is a noop copy instruction, zap it.
-    unsigned SrcReg, DstReg;
-    if (TII->isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg)
+    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+    if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
+        SrcReg == DstReg)
       MBB.erase(MI);
   }
 

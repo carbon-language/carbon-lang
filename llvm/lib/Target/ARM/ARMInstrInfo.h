@@ -155,11 +155,12 @@ public:
   /// This is used for addressing modes.
   virtual const TargetRegisterClass *getPointerRegClass() const;
 
-  /// Return true if the instruction is a register to register move and
-  /// leave the source and dest operands in the passed parameters.
-  ///
+  /// Return true if the instruction is a register to register move and return
+  /// the source and dest operands and their sub-register indices by reference.
   virtual bool isMoveInstr(const MachineInstr &MI,
-                           unsigned &SrcReg, unsigned &DstReg) const;
+                           unsigned &SrcReg, unsigned &DstReg,
+                           unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
+
   virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
                                        int &FrameIndex) const;
   virtual unsigned isStoreToStackSlot(const MachineInstr *MI,

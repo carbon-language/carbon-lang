@@ -30,13 +30,11 @@ public:
   ///
   virtual const IA64RegisterInfo &getRegisterInfo() const { return RI; }
 
-  //
-  // Return true if the instruction is a register to register move and
-  // leave the source and dest operands in the passed parameters.
-  //
-  virtual bool isMoveInstr(const MachineInstr& MI,
-                           unsigned& sourceReg,
-                           unsigned& destReg) const;
+  /// Return true if the instruction is a register to register move and return
+  /// the source and dest operands and their sub-register indices by reference.
+  virtual bool isMoveInstr(const MachineInstr &MI,
+                           unsigned &SrcReg, unsigned &DstReg,
+                           unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                             const SmallVectorImpl<MachineOperand> &Cond) const;

@@ -33,7 +33,10 @@ static bool isZeroImm(const MachineOperand &op) {
 /// leave the source and dest operands in the passed parameters.
 ///
 bool SparcInstrInfo::isMoveInstr(const MachineInstr &MI,
-                                 unsigned &SrcReg, unsigned &DstReg) const {
+                                 unsigned &SrcReg, unsigned &DstReg,
+                                 unsigned &SrcSR, unsigned &DstSR) const {
+  SrcSR = DstSR = 0; // No sub-registers.
+
   // We look for 3 kinds of patterns here:
   // or with G0 or 0
   // add with G0 or 0

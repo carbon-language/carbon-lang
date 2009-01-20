@@ -402,8 +402,8 @@ void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
   // Check for mov mnemonic
-  unsigned src, dst;
-  if (TM.getInstrInfo()->isMoveInstr(*MI, src, dst)) {
+  unsigned src, dst, srcSR, dstSR;
+  if (TM.getInstrInfo()->isMoveInstr(*MI, src, dst, srcSR, dstSR)) {
     O << "\tmov ";
     O << TM.getRegisterInfo()->get(dst).AsmName;
     O << ", ";
