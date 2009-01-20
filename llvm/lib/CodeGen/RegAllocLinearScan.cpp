@@ -249,7 +249,7 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
   if ((cur.preference && cur.preference == Reg) || !cur.containsOneValue())
     return Reg;
 
-  VNInfo *vni = cur.getValNumInfo(0);
+  VNInfo *vni = cur.begin()->valno;
   if (!vni->def || vni->def == ~1U || vni->def == ~0U)
     return Reg;
   MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
@@ -686,13 +686,13 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   unsigned StartPosition = cur->beginNumber();
   const TargetRegisterClass *RCLeader = RelatedRegClasses.getLeaderValue(RC);
 
-  // If this live interval is defined by a move instruction and its source is
-  // assigned a physical register that is compatible with the target register
-  // class, then we should try to assign it the same register.
+  // If start of this live interval is defined by a move instruction and its
+  // source is assigned a physical register that is compatible with the target
+  // register class, then we should try to assign it the same register.
   // This can happen when the move is from a larger register class to a smaller
   // one, e.g. X86::mov32to32_. These move instructions are not coalescable.
-  if (!cur->preference && cur->containsOneValue()) {
-    VNInfo *vni = cur->getValNumInfo(0);
+  if (!cur->preference && cur->hasAtLeastOneValue()) {
+    VNInfo *vni = cur->begin()->valno;
     if (vni->def && vni->def != ~1U && vni->def != ~0U) {
       MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
       unsigned SrcReg, DstReg;
