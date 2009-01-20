@@ -50,7 +50,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                              TargetData *TD, unsigned Depth) {
   assert(V && "No Value?");
   assert(Depth <= 6 && "Limit Search Depth");
-  uint32_t BitWidth = Mask.getBitWidth();
+  unsigned BitWidth = Mask.getBitWidth();
   assert((V->getType()->isInteger() || isa<PointerType>(V->getType())) &&
          "Not integer or pointer type!");
   assert((!TD || TD->getTypeSizeInBits(V->getType()) == BitWidth) &&
@@ -215,7 +215,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     // Note that we handle pointer operands here because of inttoptr/ptrtoint
     // which fall through here.
     const Type *SrcTy = I->getOperand(0)->getType();
-    uint32_t SrcBitWidth = TD ?
+    unsigned SrcBitWidth = TD ?
       TD->getTypeSizeInBits(SrcTy) :
       SrcTy->getPrimitiveSizeInBits();
     APInt MaskIn(Mask);
@@ -243,7 +243,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
-    uint32_t SrcBitWidth = SrcTy->getBitWidth();
+    unsigned SrcBitWidth = SrcTy->getBitWidth();
       
     APInt MaskIn(Mask); 
     MaskIn.trunc(SrcBitWidth);
@@ -403,7 +403,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     ComputeMaskedBits(I->getOperand(1), AllOnes, KnownZero2, KnownOne2,
                       TD, Depth+1);
 
-    uint32_t Leaders = std::max(KnownZero.countLeadingOnes(),
+    unsigned Leaders = std::max(KnownZero.countLeadingOnes(),
                                 KnownZero2.countLeadingOnes());
     KnownOne.clear();
     KnownZero = APInt::getHighBitsSet(BitWidth, Leaders) & Mask;
@@ -465,8 +465,8 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
         ComputeMaskedBits(Index, LocalMask,
                           LocalKnownZero, LocalKnownOne, TD, Depth+1);
         TrailZ = std::min(TrailZ,
-                          CountTrailingZeros_64(TypeSize) +
-                            LocalKnownZero.countTrailingOnes());
+                          unsigned(CountTrailingZeros_64(TypeSize) +
+                                   LocalKnownZero.countTrailingOnes()));
       }
     }
     
