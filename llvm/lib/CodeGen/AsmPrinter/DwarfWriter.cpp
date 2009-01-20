@@ -2791,7 +2791,7 @@ private:
       DIEBlock *Block = new DIEBlock();
       AddUInt(Block, 0, DW_FORM_data1, DW_OP_addr);
       AddObjectLabel(Block, 0, DW_FORM_udata,
-                     Asm->getGlobalLinkName(DI_GV.getGV()));
+                     Asm->getGlobalLinkName(DI_GV.getGlobal()));
       AddBlock(VariableDie, DW_AT_location, 0, Block);
 
       //Add to map.
