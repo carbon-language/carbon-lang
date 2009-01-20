@@ -3529,11 +3529,14 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   }
   if (ResultTy.isNull())
     return ExprError();
-  if (CompTy.isNull())
-    return Owned(new BinaryOperator(lhs, rhs, Opc, ResultTy, OpLoc));
-  else
-    return Owned(new CompoundAssignOperator(lhs, rhs, Opc, ResultTy,
-                                            CompTy, OpLoc));
+  if (CompTy.isNull()) {
+    void *Mem = Context.getAllocator().Allocate<BinaryOperator>();
+    return Owned(new (Mem) BinaryOperator(lhs, rhs, Opc, ResultTy, OpLoc));
+  } else {
+    void *Mem = Context.getAllocator().Allocate<CompoundAssignOperator>();
+    return Owned(new (Mem) CompoundAssignOperator(lhs, rhs, Opc, ResultTy,
+                                                  CompTy, OpLoc));
+  }
 }
 
 // Binary Operators.  'Tok' is the token for the operator.
@@ -3550,13 +3553,16 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
   // FIXME: We'll need to perform some caching of the result of name
   // lookup for operator+.
   if (lhs->isTypeDependent() || rhs->isTypeDependent()) {
-    if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign)
-      return Owned(new CompoundAssignOperator(lhs, rhs, Opc,
+    if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) {
+      void *Mem = Context.getAllocator().Allocate<CompoundAssignOperator>();
+      return Owned(new (Mem) CompoundAssignOperator(lhs, rhs, Opc,
                                               Context.DependentTy,
                                               Context.DependentTy, TokLoc));
-    else
-      return Owned(new BinaryOperator(lhs, rhs, Opc, Context.DependentTy,
-                                      TokLoc));
+    } else {
+      void *Mem = Context.getAllocator().Allocate<BinaryOperator>();
+      return Owned(new (Mem) BinaryOperator(lhs, rhs, Opc, Context.DependentTy,
+                                            TokLoc));
+    }
   }
 
   if (getLangOptions().CPlusPlus &&
@@ -3832,7 +3838,8 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
   if (resultType.isNull())
     return ExprError();
   input.release();
-  return Owned(new UnaryOperator(Input, Opc, resultType, OpLoc));
+  void *Mem = Context.getAllocator().Allocate<UnaryOperator>();
+  return Owned(new (Mem) UnaryOperator(Input, Opc, resultType, OpLoc));
 }
 
 /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
