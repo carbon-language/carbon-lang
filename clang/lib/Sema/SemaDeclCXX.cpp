@@ -1202,12 +1202,7 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
     Diag(D.getIdentifierLoc(), diag::err_destructor_with_params);
 
     // Delete the parameters.
-    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
-    if (FTI.NumArgs) {
-      delete [] FTI.ArgInfo;
-      FTI.NumArgs = 0;
-      FTI.ArgInfo = 0;
-    }
+    D.getTypeObject(0).Fun.freeArgs();
   }
 
   // Make sure the destructor isn't variadic.  
@@ -1264,12 +1259,7 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
     Diag(D.getIdentifierLoc(), diag::err_conv_function_with_params);
 
     // Delete the parameters.
-    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
-    if (FTI.NumArgs) {
-      delete [] FTI.ArgInfo;
-      FTI.NumArgs = 0;
-      FTI.ArgInfo = 0;
-    }
+    D.getTypeObject(0).Fun.freeArgs();
   }
 
   // Make sure the conversion function isn't variadic.  

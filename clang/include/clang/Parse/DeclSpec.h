@@ -521,6 +521,16 @@ struct DeclaratorChunk {
     /// there are no arguments specified.
     ParamInfo *ArgInfo;
     
+    /// freeArgs - reset the argument list to having zero arguments.  This is
+    /// used in various places for error recovery.
+    void freeArgs() {
+      if (DeleteArgInfo) {
+        delete[] ArgInfo;
+        DeleteArgInfo = false;
+      }
+      NumArgs = 0;
+    }
+    
     void destroy() {
       if (DeleteArgInfo)
         delete[] ArgInfo;
