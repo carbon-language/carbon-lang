@@ -714,17 +714,17 @@ static inline int __attribute__((__always_inline__)) _mm_movemask_ps(__m128 a)
 
 #define _MM_MASK_MASK (0x1f80)
 #define _MM_EXCEPT_MASK (0x003f)
-#define _MM_FLUSH_MASK (0x8000)
+#define _MM_FLUSH_ZERO_MASK (0x8000)
 #define _MM_ROUND_MASK (0x6000)
 
 #define _MM_GET_EXCEPTION_MASK() (_mm_getcsr() & _MM_MASK_MASK)
 #define _MM_GET_EXCEPTION_STATE() (_mm_getcsr() & _MM_EXCEPT_MASK)
-#define _MM_GET_FLUSH_ZERO_MODE() (_mm_getcsr() & _MM_FLUSH_MASK)
+#define _MM_GET_FLUSH_ZERO_MODE() (_mm_getcsr() & _MM_FLUSH_ZERO_MASK)
 #define _MM_GET_ROUNDING_MODE() (_mm_getcsr() & _MM_ROUND_MASK)
 
-#define _MM_SET_EXCEPTION_MASK(x) (_mm_setcsr((_mm_getcsr() & ~_MM_FLUSH_MASK) | (x)))
+#define _MM_SET_EXCEPTION_MASK(x) (_mm_setcsr((_mm_getcsr() & ~_MM_MASK_MASK) | (x)))
 #define _MM_SET_EXCEPTION_STATE(x) (_mm_setcsr((_mm_getcsr() & ~_MM_EXCEPT_MASK) | (x)))
-#define _MM_SET_FLUSH_ZERO_MODE(x) (_mm_setcsr((_mm_getcsr() & ~_MM_FLUSH_MASK) | (x)))
+#define _MM_SET_FLUSH_ZERO_MODE(x) (_mm_setcsr((_mm_getcsr() & ~_MM_FLUSH_ZERO_MASK) | (x)))
 #define _MM_SET_ROUNDING_MODE(x) (_mm_setcsr((_mm_getcsr() & ~_MM_ROUND_MASK) | (x)))
 
 #define _MM_TRANSPOSE4_PS(row0, row1, row2, row3) \
