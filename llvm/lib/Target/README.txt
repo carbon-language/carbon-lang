@@ -1651,3 +1651,25 @@ globalopt to remove the "stored only" global.
 
 //===---------------------------------------------------------------------===//
 
+This code:
+
+define inreg i32 @foo(i8* inreg %p) nounwind {
+  %tmp0 = load i8* %p
+  %tmp1 = ashr i8 %tmp0, 5
+  %tmp2 = sext i8 %tmp1 to i32
+  ret i32 %tmp2
+}
+
+could be dagcombine'd to a sign-extending load with a shift.
+For example, on x86 this currently gets this:
+
+	movb	(%eax), %al
+	sarb	$5, %al
+	movsbl	%al, %eax
+
+while it could get this:
+
+	movsbl	(%eax), %eax
+	sarl	$5, %eax
+
+//===---------------------------------------------------------------------===//
