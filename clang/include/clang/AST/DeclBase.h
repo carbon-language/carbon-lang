@@ -457,6 +457,8 @@ class DeclContext {
   /// DenseMap. Othewise, it is an array.
   bool isLookupMap() const { return LookupPtr.getInt() == LookupIsMap; }
 
+  static Decl *getNextDeclInScope(Decl *D) { return D->NextDeclInScope; }
+
 protected:
    DeclContext(Decl::Kind K) 
      : DeclKind(K), LookupPtr(), FirstDecl(0), LastDecl(0) { }
@@ -809,7 +811,7 @@ inline bool Decl::isDefinedOutsideFunctionOrMethod() const {
 }
 
 inline DeclContext::decl_iterator& DeclContext::decl_iterator::operator++() {
-  Current = Current->NextDeclInScope;
+  Current = getNextDeclInScope(Current);
   return *this;
 }
 
