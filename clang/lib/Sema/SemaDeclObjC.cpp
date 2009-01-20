@@ -592,7 +592,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   
   ObjCImplementationDecl* IMPDecl = 
     ObjCImplementationDecl::Create(Context, CurContext, AtClassImplLoc, 
-                                   ClassName, IDecl, SDecl);
+                                   IDecl, SDecl);
   
   // FIXME: PushOnScopeChains?
   CurContext->addDecl(IMPDecl);
@@ -613,7 +613,7 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
                                     ObjCIvarDecl **ivars, unsigned numIvars,
                                     SourceLocation RBrace) {
   assert(ImpDecl && "missing implementation decl");
-  ObjCInterfaceDecl* IDecl = getObjCInterfaceDecl(ImpDecl->getIdentifier());
+  ObjCInterfaceDecl* IDecl = ImpDecl->getClassInterface();
   if (!IDecl)
     return;
   /// Check case of non-existing @interface decl.
@@ -1143,7 +1143,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   property->getIdentifier(),
                                                   property->getType(),
                                                   VarDecl::None,
-                                                  0, 0);
+                                                  0);
       SetterMethod->setMethodParams(&Argument, 1);
       CD->addDecl(SetterMethod);
     } else
@@ -1258,7 +1258,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
   }
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
     IC->setLocEnd(AtEndLoc);
-    if (ObjCInterfaceDecl* IDecl = getObjCInterfaceDecl(IC->getIdentifier()))
+    if (ObjCInterfaceDecl* IDecl = IC->getClassInterface())
       ImplMethodsVsClassMethods(IC, IDecl);
   } else if (ObjCCategoryImplDecl* CatImplClass = 
                                    dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
@@ -1361,12 +1361,12 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
       Param = ParmVarDecl::Create(Context, ObjCMethod,
                                   SourceLocation(/*FIXME*/),
                                   ArgNames[i], argType,
-                                  VarDecl::None, 0, 0);
+                                  VarDecl::None, 0);
     else
       Param = ParmVarWithOriginalTypeDecl::Create(Context, ObjCMethod,
                                   SourceLocation(/*FIXME*/),
                                   ArgNames[i], argType, originalArgType,
-                                  VarDecl::None, 0, 0);
+                                  VarDecl::None, 0);
     
     Param->setObjCDeclQualifier(
       CvtQTToAstBitMask(ArgQT[i].getObjCDeclQualifier()));
@@ -1544,7 +1544,7 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                                                         FD.D.getIdentifier(),
                                                         T,
                                                         VarDecl::None,
-                                                        0, 0);
+                                                        0);
             SetterDecl->setMethodParams(&Argument, 1);
             PIDecl->setSetterMethodDecl(SetterDecl);
           }
@@ -1634,7 +1634,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   ObjCImplementationDecl *IC = 0;
   ObjCCategoryImplDecl* CatImplClass = 0;
   if ((IC = dyn_cast<ObjCImplementationDecl>(ClassImpDecl))) {
-    IDecl = getObjCInterfaceDecl(IC->getIdentifier());
+    IDecl = IC->getClassInterface();
     // We always synthesize an interface for an implementation
     // without an interface decl. So, IDecl is always non-zero.
     assert(IDecl && 

@@ -262,8 +262,32 @@ void Decl::addDeclKind(Kind k) {
 // Decl Implementation
 //===----------------------------------------------------------------------===//
 
+void Decl::setDeclContext(DeclContext *DC) {
+  if (isOutOfSemaDC())
+    delete getMultipleDC();
+  
+  DeclCtx = reinterpret_cast<uintptr_t>(DC);
+}
+
+void Decl::setLexicalDeclContext(DeclContext *DC) {
+  if (DC == getLexicalDeclContext())
+    return;
+
+  if (isInSemaDC()) {
+    MultipleDC *MDC = new MultipleDC();
+    MDC->SemanticDC = getDeclContext();
+    MDC->LexicalDC = DC;
+    DeclCtx = reinterpret_cast<uintptr_t>(MDC) | 0x1;
+  } else {
+    getMultipleDC()->LexicalDC = DC;
+  }
+}
+
 // Out-of-line virtual method providing a home for Decl.
 Decl::~Decl() {
+  if (isOutOfSemaDC())
+    delete getMultipleDC();
+
   if (!HasAttrs)
     return;
   
@@ -336,20 +360,18 @@ void Decl::Destroy(ASTContext& C) {
 #if 0
   // FIXME: This causes double-destroys in some cases, so it is
   // disabled at the moment.
-  if (ScopedDecl* SD = dyn_cast<ScopedDecl>(this)) {    
 
-    // Observe the unrolled recursion.  By setting N->NextDeclarator = 0x0
-    // within the loop, only the Destroy method for the first ScopedDecl
-    // will deallocate all of the ScopedDecls in a chain.
-    
-    ScopedDecl* N = SD->getNextDeclarator();
-    
-    while (N) {
-      ScopedDecl* Tmp = N->getNextDeclarator();
-      N->NextDeclarator = 0x0;
-      N->Destroy(C);
-      N = Tmp;
-    }
+  // Observe the unrolled recursion.  By setting N->NextDeclarator = 0x0
+  // within the loop, only the Destroy method for the first Decl
+  // will deallocate all of the Decls in a chain.
+  
+  Decl* N = SD->getNextDeclarator();
+  
+  while (N) {
+    Decl* Tmp = N->getNextDeclarator();
+    N->NextDeclarator = 0x0;
+    N->Destroy(C);
+    N = Tmp;
   }  
 #endif
 
@@ -370,17 +392,16 @@ DeclContext *Decl::castToDeclContext(const Decl *D) {
 //===----------------------------------------------------------------------===//
 
 const DeclContext *DeclContext::getParent() const {
-  if (const ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
-    return SD->getDeclContext();
-  else if (const BlockDecl *BD = dyn_cast<BlockDecl>(this))
-    return BD->getParentContext();
-  else
-    return NULL;
+  if (const Decl *D = dyn_cast<Decl>(this))
+    return D->getDeclContext();
+
+  return NULL;
 }
 
 const DeclContext *DeclContext::getLexicalParent() const {
-  if (const ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
-    return SD->getLexicalDeclContext();
+  if (const Decl *D = dyn_cast<Decl>(this))
+    return D->getLexicalDeclContext();
+
   return getParent();
 }
 
@@ -391,7 +412,7 @@ const DeclContext *DeclContext::getLexicalParent() const {
 // implemented in terms of DenseMap anyway. However, this data
 // structure is really space-inefficient, so we'll have to do
 // something.
-typedef llvm::DenseMap<DeclarationName, std::vector<ScopedDecl*> >
+typedef llvm::DenseMap<DeclarationName, std::vector<NamedDecl*> >
   StoredDeclsMap;
 
 DeclContext::~DeclContext() {
@@ -400,7 +421,7 @@ DeclContext::~DeclContext() {
     StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
     delete Map;
   } else {
-    ScopedDecl **Array = static_cast<ScopedDecl**>(LookupPtr.getPointer());
+    NamedDecl **Array = static_cast<NamedDecl**>(LookupPtr.getPointer());
     delete [] Array;
   }
 }
@@ -500,7 +521,7 @@ DeclContext *DeclContext::getNextContext() {
   }
 }
 
-void DeclContext::addDecl(ScopedDecl *D) {
+void DeclContext::addDecl(Decl *D) {
   assert(D->getLexicalDeclContext() == this && "Decl inserted into wrong lexical context");
   assert(!D->NextDeclInScope && D != LastDecl && 
          "Decl already inserted into a DeclContext");
@@ -511,7 +532,9 @@ void DeclContext::addDecl(ScopedDecl *D) {
   } else {
     FirstDecl = LastDecl = D;
   }
-  D->getDeclContext()->insert(D);
+
+  if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
+    ND->getDeclContext()->insert(ND);
 }
 
 /// buildLookup - Build the lookup data structure with all of the
@@ -522,7 +545,8 @@ void DeclContext::buildLookup(DeclContext *DCtx) {
     for (decl_iterator D = DCtx->decls_begin(), DEnd = DCtx->decls_end(); 
          D != DEnd; ++D) {
       // Insert this declaration into the lookup structure
-      insertImpl(*D);
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
+        insertImpl(ND);
 
       // If this declaration is itself a transparent declaration context,
       // add its members (recursively).
@@ -556,7 +580,7 @@ DeclContext::lookup(DeclarationName Name) {
 
   // We have a small array. Look into it.
   unsigned Size = LookupPtr.getInt();
-  ScopedDecl **Array = static_cast<ScopedDecl**>(LookupPtr.getPointer());
+  NamedDecl **Array = static_cast<NamedDecl**>(LookupPtr.getPointer());
   for (unsigned Idx = 0; Idx != Size; ++Idx)
     if (Array[Idx]->getDeclName() == Name) {
       unsigned Last = Idx + 1;
@@ -581,7 +605,7 @@ const DeclContext *DeclContext::getLookupContext() const {
   return Ctx;
 }
 
-void DeclContext::insert(ScopedDecl *D) {
+void DeclContext::insert(NamedDecl *D) {
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this) {
     PrimaryContext->insert(D);
@@ -600,7 +624,7 @@ void DeclContext::insert(ScopedDecl *D) {
     getParent()->insert(D);
 }
 
-void DeclContext::insertImpl(ScopedDecl *D) {
+void DeclContext::insertImpl(NamedDecl *D) {
   // Skip unnamed declarations.
   if (!D->getDeclName())
     return;
@@ -612,12 +636,12 @@ void DeclContext::insertImpl(ScopedDecl *D) {
 
     // The lookup data is stored as an array. Search through the array
     // to find the insertion location.
-    ScopedDecl **Array;
+    NamedDecl **Array;
     if (Size == 0) {
-      Array = new ScopedDecl*[LookupIsMap - 1];
+      Array = new NamedDecl*[LookupIsMap - 1];
       LookupPtr.setPointer(Array);
     } else {
-      Array = static_cast<ScopedDecl **>(LookupPtr.getPointer());
+      Array = static_cast<NamedDecl **>(LookupPtr.getPointer());
     }
 
     // We always keep declarations of the same name next to each other
@@ -688,9 +712,9 @@ void DeclContext::insertImpl(ScopedDecl *D) {
   if (Pos != Map->end()) {
     if (MayBeRedeclaration) {
       // Determine if this declaration is actually a redeclaration.
-      std::vector<ScopedDecl *>::iterator Redecl
+      std::vector<NamedDecl *>::iterator Redecl
         = std::find_if(Pos->second.begin(), Pos->second.end(),
-                     std::bind1st(std::mem_fun(&ScopedDecl::declarationReplaces),
+                     std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
                                   D));
       if (Redecl != Pos->second.end()) {
         *Redecl = D;
@@ -702,7 +726,7 @@ void DeclContext::insertImpl(ScopedDecl *D) {
     if (D->getIdentifierNamespace() == Decl::IDNS_Tag || Pos->second.empty())
       Pos->second.push_back(D);
     else if (Pos->second.back()->getIdentifierNamespace() == Decl::IDNS_Tag) {
-      ScopedDecl *TagD = Pos->second.back();
+      NamedDecl *TagD = Pos->second.back();
       Pos->second.back() = D;
       Pos->second.push_back(TagD);
     } else

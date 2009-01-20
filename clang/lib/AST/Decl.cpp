@@ -44,17 +44,17 @@ void NamespaceDecl::Destroy(ASTContext& C) {
 
 
 ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
-    SourceLocation L, IdentifierInfo *Id, QualType T, ScopedDecl *PrevDecl) {
+    SourceLocation L, IdentifierInfo *Id, QualType T) {
   void *Mem = C.getAllocator().Allocate<ImplicitParamDecl>();
-  return new (Mem) ImplicitParamDecl(ImplicitParam, DC, L, Id, T, PrevDecl);
+  return new (Mem) ImplicitParamDecl(ImplicitParam, DC, L, Id, T);
 }
 
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, StorageClass S,
-                                 Expr *DefArg, ScopedDecl *PrevDecl) {
+                                 Expr *DefArg) {
   void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
-  return new (Mem) ParmVarDecl(ParmVar, DC, L, Id, T, S, DefArg, PrevDecl);
+  return new (Mem) ParmVarDecl(ParmVar, DC, L, Id, T, S, DefArg);
 }
 
 QualType ParmVarDecl::getOriginalType() const {
@@ -68,20 +68,18 @@ ParmVarWithOriginalTypeDecl *ParmVarWithOriginalTypeDecl::Create(
                                  ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, QualType OT, StorageClass S,
-                                 Expr *DefArg, ScopedDecl *PrevDecl) {
+                                 Expr *DefArg) {
   void *Mem = C.getAllocator().Allocate<ParmVarWithOriginalTypeDecl>();
-  return new (Mem) ParmVarWithOriginalTypeDecl(DC, L, Id, T, OT, S, 
-                                               DefArg, PrevDecl);
+  return new (Mem) ParmVarWithOriginalTypeDecl(DC, L, Id, T, OT, S, DefArg);
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, 
                                    DeclarationName N, QualType T, 
                                    StorageClass S, bool isInline, 
-                                   ScopedDecl *PrevDecl,
                                    SourceLocation TypeSpecStartLoc) {
   void *Mem = C.getAllocator().Allocate<FunctionDecl>();
-  return new (Mem) FunctionDecl(Function, DC, L, N, T, S, isInline, PrevDecl,
+  return new (Mem) FunctionDecl(Function, DC, L, N, T, S, isInline,
                                 TypeSpecStartLoc);
 }
 
@@ -92,9 +90,9 @@ BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
 
 FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                              IdentifierInfo *Id, QualType T, Expr *BW,
-                             bool Mutable, ScopedDecl *PrevDecl) {
+                             bool Mutable) {
   void *Mem = C.getAllocator().Allocate<FieldDecl>();
-  return new (Mem) FieldDecl(Decl::Field, DC, L, Id, T, BW, Mutable, PrevDecl);
+  return new (Mem) FieldDecl(Decl::Field, DC, L, Id, T, BW, Mutable);
 }
 
 bool FieldDecl::isAnonymousStructOrUnion() const {
@@ -110,10 +108,9 @@ bool FieldDecl::isAnonymousStructOrUnion() const {
 EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
                                            SourceLocation L,
                                            IdentifierInfo *Id, QualType T,
-                                           Expr *E, const llvm::APSInt &V, 
-                                           ScopedDecl *PrevDecl){
+                                           Expr *E, const llvm::APSInt &V) {
   void *Mem = C.getAllocator().Allocate<EnumConstantDecl>();
-  return new (Mem) EnumConstantDecl(CD, L, Id, T, E, V, PrevDecl);
+  return new (Mem) EnumConstantDecl(CD, L, Id, T, E, V);
 }
 
 void EnumConstantDecl::Destroy(ASTContext& C) {
@@ -123,17 +120,16 @@ void EnumConstantDecl::Destroy(ASTContext& C) {
 
 TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L,
-                                 IdentifierInfo *Id, QualType T,
-                                 ScopedDecl *PD) {
+                                 IdentifierInfo *Id, QualType T) {
   void *Mem = C.getAllocator().Allocate<TypedefDecl>();
-  return new (Mem) TypedefDecl(DC, L, Id, T, PD);
+  return new (Mem) TypedefDecl(DC, L, Id, T);
 }
 
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                            IdentifierInfo *Id,
                            EnumDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<EnumDecl>();
-  EnumDecl *Enum = new (Mem) EnumDecl(DC, L, Id, 0);
+  EnumDecl *Enum = new (Mem) EnumDecl(DC, L, Id);
   C.getTypeDeclType(Enum, PrevDecl);
   return Enum;
 }
@@ -148,44 +144,18 @@ void EnumDecl::completeDefinition(ASTContext &C, QualType NewType) {
   TagDecl::completeDefinition();
 }
 
-FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
+FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L,
                                            StringLiteral *Str) {
   void *Mem = C.getAllocator().Allocate<FileScopeAsmDecl>();
-  return new (Mem) FileScopeAsmDecl(L, Str);
+  return new (Mem) FileScopeAsmDecl(DC, L, Str);
 }
 
 //===----------------------------------------------------------------------===//
-// ScopedDecl Implementation
+// NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
-void ScopedDecl::setDeclContext(DeclContext *DC) {
-  if (isOutOfSemaDC())
-    delete getMultipleDC();
-  
-  DeclCtx = reinterpret_cast<uintptr_t>(DC);
-}
-
-void ScopedDecl::setLexicalDeclContext(DeclContext *DC) {
-  if (DC == getLexicalDeclContext())
-    return;
-
-  if (isInSemaDC()) {
-    MultipleDC *MDC = new MultipleDC();
-    MDC->SemanticDC = getDeclContext();
-    MDC->LexicalDC = DC;
-    DeclCtx = reinterpret_cast<uintptr_t>(MDC) | 0x1;
-  } else {
-    getMultipleDC()->LexicalDC = DC;
-  }
-}
-
-ScopedDecl::~ScopedDecl() {
-  if (isOutOfSemaDC())
-    delete getMultipleDC();
-}
-
-bool ScopedDecl::declarationReplaces(NamedDecl *OldD) const {
+bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
   assert(getDeclName() == OldD->getDeclName() && "Declaration name mismatch");
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))
@@ -198,17 +168,16 @@ bool ScopedDecl::declarationReplaces(NamedDecl *OldD) const {
   return this->getKind() == OldD->getKind();
 }
 
+
 //===----------------------------------------------------------------------===//
 // VarDecl Implementation
 //===----------------------------------------------------------------------===//
 
-VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
-                         SourceLocation L,
-                         IdentifierInfo *Id, QualType T,
-                         StorageClass S, ScopedDecl *PrevDecl,
+VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
+                         IdentifierInfo *Id, QualType T, StorageClass S, 
                          SourceLocation TypeSpecStartLoc) {
   void *Mem = C.getAllocator().Allocate<VarDecl>();
-  return new (Mem) VarDecl(Var, DC, L, Id, T, S, PrevDecl, TypeSpecStartLoc);
+  return new (Mem) VarDecl(Var, DC, L, Id, T, S, TypeSpecStartLoc);
 }
 
 void VarDecl::Destroy(ASTContext& C) {
@@ -330,7 +299,7 @@ TagDecl* TagDecl::getDefinition(ASTContext& C) const {
 
 RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
                        IdentifierInfo *Id)
-  : TagDecl(DK, TK, DC, L, Id, 0) {
+  : TagDecl(DK, TK, DC, L, Id) {
   HasFlexibleArrayMember = false;
   AnonymousStructOrUnion = false;
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");

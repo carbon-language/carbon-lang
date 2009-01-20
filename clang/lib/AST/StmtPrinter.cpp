@@ -522,11 +522,7 @@ void StmtPrinter::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *Node) {
   NamedDecl *D = Node->getDecl();
 
   // Build up a stack of contexts.
-  DeclContext *Ctx = 0;
-  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
-    Ctx = SD->getDeclContext();
-  else if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
-    Ctx = Ovl->getDeclContext();
+  DeclContext *Ctx = D->getDeclContext();
   for (; Ctx; Ctx = Ctx->getParent())
     if (!Ctx->isTransparentContext())
       Contexts.push_back(Ctx);
@@ -535,8 +531,8 @@ void StmtPrinter::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *Node) {
     DeclContext *Ctx = Contexts.back();
     if (isa<TranslationUnitDecl>(Ctx))
       OS << "::";
-    else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(Ctx))
-      OS << SD->getNameAsString() << "::";
+    else if (NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
+      OS << ND->getNameAsString() << "::";
     Contexts.pop_back();
   }
 

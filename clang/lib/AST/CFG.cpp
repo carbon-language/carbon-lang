@@ -42,7 +42,7 @@ struct VISIBILITY_HIDDEN SaveAndRestore {
   T old_value;
 };
   
-static SourceLocation GetEndLoc(ScopedDecl* D) {
+static SourceLocation GetEndLoc(Decl* D) {
   if (VarDecl* VD = dyn_cast<VarDecl>(D))
     if (Expr* Ex = VD->getInit())
       return Ex->getSourceRange().getEnd();
@@ -150,7 +150,7 @@ private:
   CFGBlock* addStmt(Stmt* Terminator);
   CFGBlock* WalkAST(Stmt* Terminator, bool AlwaysAddStmt);
   CFGBlock* WalkAST_VisitChildren(Stmt* Terminator);
-  CFGBlock* WalkAST_VisitDeclSubExpr(ScopedDecl* D);
+  CFGBlock* WalkAST_VisitDeclSubExpr(Decl* D);
   CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* Terminator);
   void FinishBlock(CFGBlock* B);
   
@@ -363,7 +363,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
         return WalkAST_VisitDeclSubExpr(DS->getSolitaryDecl());
       }
       else {
-        typedef llvm::SmallVector<ScopedDecl*,10> BufTy;
+        typedef llvm::SmallVector<Decl*,10> BufTy;
         BufTy Buf;        
         CFGBlock* B = 0;
 
@@ -384,7 +384,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
           // that Decl* will not get deallocated because the destroy method
           // of DG is never called.
           DeclGroupOwningRef DG(*I);
-          ScopedDecl* D = *I;
+          Decl* D = *I;
           void* Mem = cfg->getAllocator().Allocate(sizeof(DeclStmt), A);
           
           DeclStmt* DS = new (Mem) DeclStmt(DG, D->getLocation(),
@@ -486,7 +486,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
   
 /// WalkAST_VisitDeclSubExpr - Utility method to add block-level expressions
 ///  for initializers in Decls.
-CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExpr(ScopedDecl* D) {
+CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExpr(Decl* D) {
   VarDecl* VD = dyn_cast<VarDecl>(D);
 
   if (!VD)

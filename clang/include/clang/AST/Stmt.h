@@ -30,7 +30,6 @@ namespace clang {
   class ASTContext;
   class Expr;
   class Decl;
-  class ScopedDecl;
   class QualType;
   class IdentifierInfo;
   class SourceManager;
@@ -209,16 +208,16 @@ public:
     return DG.hasSolitaryDecl();
   }
  
-  const ScopedDecl* getSolitaryDecl() const {
+  const Decl* getSolitaryDecl() const {
     assert (hasSolitaryDecl() &&
             "Caller assumes this DeclStmt points to one Decl*");
-    return llvm::cast<ScopedDecl>(*DG.begin());
+    return llvm::cast<Decl>(*DG.begin());
   }
   
-  ScopedDecl* getSolitaryDecl() {
+  Decl* getSolitaryDecl() {
     assert (hasSolitaryDecl() &&
             "Caller assumes this DeclStmt points to one Decl*");
-    return llvm::cast<ScopedDecl>(*DG.begin());
+    return llvm::cast<Decl>(*DG.begin());
   }  
 
   SourceLocation getStartLoc() const { return StartLoc; }
@@ -248,8 +247,8 @@ public:
     bool operator!=(const decl_iterator& R) const {
       return R.I != I;
     }
-    ScopedDecl* operator*() const {
-      return llvm::cast<ScopedDecl>(*I);
+    Decl* operator*() const {
+      return llvm::cast<Decl>(*I);
     }
   };
     
@@ -264,8 +263,8 @@ public:
     bool operator!=(const const_decl_iterator& R) const {
       return R.I != I;
     }
-    ScopedDecl* operator*() const {
-      return llvm::cast<ScopedDecl>(*I);
+    Decl* operator*() const {
+      return llvm::cast<Decl>(*I);
     }
   };
   

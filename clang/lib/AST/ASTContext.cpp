@@ -537,7 +537,7 @@ const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D)
                                           RecFields[i]->getLocation(), 
                                           RecFields[i]->getIdentifier(),
                                           RecFields[i]->getType(), 
-                                          RecFields[i]->getBitWidth(), false, 0);
+                                          RecFields[i]->getBitWidth(), false);
     NewRD->addDecl(Field);
   }
   NewRD->completeDefinition(*this);
@@ -1586,7 +1586,7 @@ QualType ASTContext::getCFConstantStringType() {
       FieldDecl *Field = FieldDecl::Create(*this, CFConstantStringTypeDecl, 
                                            SourceLocation(), 0,
                                            FieldTypes[i], /*BitWidth=*/0, 
-                                           /*Mutable=*/false, /*PrevDecl=*/0);
+                                           /*Mutable=*/false);
       CFConstantStringTypeDecl->addDecl(Field);
     }
 
@@ -1616,7 +1616,7 @@ QualType ASTContext::getObjCFastEnumerationStateType()
                                            ObjCFastEnumerationStateTypeDecl, 
                                            SourceLocation(), 0, 
                                            FieldTypes[i], /*BitWidth=*/0, 
-                                           /*Mutable=*/false, /*PrevDecl=*/0);
+                                           /*Mutable=*/false);
       ObjCFastEnumerationStateTypeDecl->addDecl(Field);
     }
     

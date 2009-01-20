@@ -40,7 +40,6 @@ namespace clang {
   class DeclContext;
   class DeclSpec;
   class NamedDecl;
-  class ScopedDecl;
   class Stmt;
   class Expr;
   class InitListExpr;
@@ -285,16 +284,16 @@ public:
   }
   DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
                           bool IsFunctionDefinition);
-  ScopedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                     QualType R, ScopedDecl* LastDeclarator,
-                                     Decl* PrevDecl, bool& InvalidDecl);
-  ScopedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                      QualType R, ScopedDecl* LastDeclarator,
+  NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+                                    QualType R, Decl* LastDeclarator,
+                                    Decl* PrevDecl, bool& InvalidDecl);
+  NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+                                      QualType R, Decl* LastDeclarator,
                                       Decl* PrevDecl, bool& InvalidDecl);
-  ScopedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                      QualType R, ScopedDecl *LastDeclarator,
-                                      Decl* PrevDecl, bool IsFunctionDefinition,
-                                      bool& InvalidDecl);
+  NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+                                     QualType R, Decl *LastDeclarator,
+                                     Decl* PrevDecl, bool IsFunctionDefinition,
+                                     bool& InvalidDecl);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
                                          SourceLocation EqualLoc,
@@ -399,7 +398,7 @@ public:
 
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
-                                ScopedDecl *LastDecl);
+                                Decl *LastDecl);
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
   FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old, 
                                   bool &Redeclaration);
@@ -786,10 +785,10 @@ public:
   //@}
   
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
-  ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, 
-                                  Scope *S);
-  ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
+  NamedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, 
                                  Scope *S);
+  NamedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
+                                      Scope *S);
 
   // More parsing and symbol table subroutines.
 

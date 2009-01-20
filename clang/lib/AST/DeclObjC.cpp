@@ -166,11 +166,10 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
 ObjCImplementationDecl *
 ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC, 
                                SourceLocation L,
-                               IdentifierInfo *Id,
                                ObjCInterfaceDecl *ClassInterface,
                                ObjCInterfaceDecl *SuperDecl) {
   void *Mem = C.getAllocator().Allocate<ObjCImplementationDecl>();
-  return new (Mem) ObjCImplementationDecl(DC, L, Id, ClassInterface, SuperDecl);
+  return new (Mem) ObjCImplementationDecl(DC, L, ClassInterface, SuperDecl);
 }
 
 ObjCCompatibleAliasDecl *
@@ -213,12 +212,12 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
   SelfDecl = ImplicitParamDecl::Create(Context, this, 
                                        SourceLocation(), 
                                        &Context.Idents.get("self"),
-                                       selfTy, 0);
+                                       selfTy);
 
   CmdDecl = ImplicitParamDecl::Create(Context, this, 
                                       SourceLocation(), 
                                       &Context.Idents.get("_cmd"), 
-                                      Context.getObjCSelType(), 0);
+                                      Context.getObjCSelType());
 }
 
 void ObjCMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,

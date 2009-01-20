@@ -16,6 +16,8 @@
 
 #include "clang/AST/Attr.h"
 #include "clang/AST/Type.h"
+// FIXME: Layering violation
+#include "clang/Parse/AccessSpecifier.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/PointerIntPair.h"
 
@@ -24,7 +26,6 @@ class DeclContext;
 class TranslationUnitDecl;
 class NamespaceDecl;
 class NamedDecl;
-class ScopedDecl;
 class FunctionDecl;
 class CXXRecordDecl;
 class EnumDecl;
@@ -53,53 +54,51 @@ public:
          TranslationUnit,  // [DeclContext]
     //   NamedDecl
            OverloadedFunction,
-    //     ScopedDecl
-             Field,
-               ObjCIvar,
-               ObjCAtDefsField,
-             Namespace,  // [DeclContext]
-    //       TypeDecl
-               Typedef,
-    //         TagDecl // [DeclContext]
-                 Enum,  
-                 Record,
-                   CXXRecord,  
- 	       TemplateTypeParm,
-    //       ValueDecl
-               EnumConstant,
-               Function,  // [DeclContext]
-                 CXXMethod,
-                   CXXConstructor,
-                   CXXDestructor,
-                   CXXConversion,
-               Var,
-                 ImplicitParam,
-                 CXXClassVar,
-                 ParmVar,
-                   OriginalParmVar,
-  	         NonTypeTemplateParm,
-             LinkageSpec, // [DeclContext]
-             ObjCMethod,  // [DeclContext]
+           Field,
+             ObjCIvar,
+             ObjCAtDefsField,
+           Namespace,  // [DeclContext]
+    //     TypeDecl
+             Typedef,
+    //       TagDecl // [DeclContext]
+               Enum,  
+               Record,
+                 CXXRecord,  
+ 	     TemplateTypeParm,
+    //     ValueDecl
+             EnumConstant,
+             Function,  // [DeclContext]
+               CXXMethod,
+                 CXXConstructor,
+                 CXXDestructor,
+                 CXXConversion,
+             Var,
+               ImplicitParam,
+               CXXClassVar,
+               ParmVar,
+                 OriginalParmVar,
+  	       NonTypeTemplateParm,
+           ObjCMethod,  // [DeclContext]
            ObjCContainer, // [DeclContext]
              ObjCCategory,
              ObjCProtocol,
              ObjCInterface,
              ObjCCategoryImpl,  // [DeclContext]
-             ObjCImplementation, // [DeclContext]
              ObjCProperty,
              ObjCCompatibleAlias,
-             ObjCClass,
-             ObjCForwardProtocol,
-             ObjCPropertyImpl,
+         LinkageSpec, // [DeclContext]
+         ObjCPropertyImpl,
+         ObjCImplementation, // [DeclContext]
+         ObjCForwardProtocol,
+         ObjCClass,
          FileScopeAsm,
-	     Block, // [DeclContext]
+         Block, // [DeclContext]
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
-    NamedFirst    = OverloadedFunction, NamedLast   = NonTypeTemplateParm,
+    NamedFirst    = OverloadedFunction, NamedLast   = ObjCCompatibleAlias,
     ObjCContainerFirst = ObjCContainer, ObjCContainerLast = ObjCInterface,
     FieldFirst         = Field        , FieldLast     = ObjCAtDefsField,
-    ScopedFirst        = Field        , ScopedLast    = ObjCPropertyImpl,
     TypeFirst          = Typedef      , TypeLast      = TemplateTypeParm,
     TagFirst           = Enum         , TagLast       = CXXRecord,
     RecordFirst        = Record       , RecordLast    = CXXRecord,
@@ -136,6 +135,46 @@ private:
   /// Loc - The location that this decl.
   SourceLocation Loc;
   
+  /// NextDeclarator - If this decl was part of a multi-declarator declaration,
+  /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
+  Decl *NextDeclarator;
+  
+  /// NextDeclInScope - The next declaration within the same lexical
+  /// DeclContext. These pointers form the linked list that is
+  /// traversed via DeclContext's decls_begin()/decls_end().
+  /// FIXME: If NextDeclarator is non-NULL, will it always be the same
+  /// as NextDeclInScope? If so, we can use a
+  /// PointerIntPair<Decl*, 1> to make Decl smaller.
+  Decl *NextDeclInScope;
+
+  friend class DeclContext;
+
+  /// DeclCtx - Holds either a DeclContext* or a MultipleDC*.
+  /// For declarations that don't contain C++ scope specifiers, it contains
+  /// the DeclContext where the Decl was declared.
+  /// For declarations with C++ scope specifiers, it contains a MultipleDC*
+  /// with the context where it semantically belongs (SemanticDC) and the
+  /// context where it was lexically declared (LexicalDC).
+  /// e.g.:
+  ///
+  ///   namespace A {
+  ///      void f(); // SemanticDC == LexicalDC == 'namespace A'
+  ///   }
+  ///   void A::f(); // SemanticDC == namespace 'A'
+  ///                // LexicalDC == global namespace
+  uintptr_t DeclCtx;
+
+  struct MultipleDC {
+    DeclContext *SemanticDC;
+    DeclContext *LexicalDC;
+  };
+
+  inline bool isInSemaDC() const { return (DeclCtx & 0x1) == 0; }
+  inline bool isOutOfSemaDC() const { return (DeclCtx & 0x1) != 0; }
+  inline MultipleDC *getMultipleDC() const {
+    return reinterpret_cast<MultipleDC*>(DeclCtx & ~0x1);
+  }
+
   /// DeclKind - This indicates which class this is.
   Kind DeclKind   :  8;
   
@@ -149,18 +188,24 @@ private:
   /// the implementation rather than explicitly written by the user.
   bool Implicit : 1;
 
- protected:
+protected:
   /// Access - Used by C++ decls for the access specifier.
   // NOTE: VC++ treats enums as signed, avoid using the AccessSpecifier enum
   unsigned Access : 2;
   friend class CXXClassMemberWrapper;
 
-  Decl(Kind DK, SourceLocation L) : Loc(L), DeclKind(DK), InvalidDecl(0),
-    HasAttrs(false), Implicit(false) {
+  Decl(Kind DK, DeclContext *DC, SourceLocation L) 
+    : Loc(L), NextDeclarator(0), NextDeclInScope(0), 
+      DeclCtx(reinterpret_cast<uintptr_t>(DC)), DeclKind(DK), InvalidDecl(0),
+      HasAttrs(false), Implicit(false) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
 
   virtual ~Decl();
+
+  /// setDeclContext - Set both the semantic and lexical DeclContext
+  /// to DC.
+  void setDeclContext(DeclContext *DC);
 
 public:
   SourceLocation getLocation() const { return Loc; }
@@ -169,6 +214,19 @@ public:
   Kind getKind() const { return DeclKind; }
   const char *getDeclKindName() const;
   
+  const DeclContext *getDeclContext() const {
+    if (isInSemaDC())
+      return reinterpret_cast<DeclContext*>(DeclCtx);
+    return getMultipleDC()->SemanticDC;
+  }
+  DeclContext *getDeclContext() {
+    return const_cast<DeclContext*>(
+                         const_cast<const Decl*>(this)->getDeclContext());
+  }
+
+  void setAccess(AccessSpecifier AS) { Access = AS; }
+  AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
+
   void addAttr(Attr *attr);
   const Attr *getAttrs() const;
   void swapAttrs(Decl *D);
@@ -233,6 +291,41 @@ public:
     return getIdentifierNamespace() & NS;
   }
   
+  /// getLexicalDeclContext - The declaration context where this Decl was
+  /// lexically declared (LexicalDC). May be different from
+  /// getDeclContext() (SemanticDC).
+  /// e.g.:
+  ///
+  ///   namespace A {
+  ///      void f(); // SemanticDC == LexicalDC == 'namespace A'
+  ///   }
+  ///   void A::f(); // SemanticDC == namespace 'A'
+  ///                // LexicalDC == global namespace
+  const DeclContext *getLexicalDeclContext() const {
+    if (isInSemaDC())
+      return reinterpret_cast<DeclContext*>(DeclCtx);
+    return getMultipleDC()->LexicalDC;
+  }
+  DeclContext *getLexicalDeclContext() {
+    return const_cast<DeclContext*>(
+                  const_cast<const Decl*>(this)->getLexicalDeclContext());
+  }
+
+  void setLexicalDeclContext(DeclContext *DC);
+
+  /// getNextDeclarator - If this decl was part of a multi-declarator
+  /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
+  /// declarator.  Otherwise it returns null.
+  Decl *getNextDeclarator() { return NextDeclarator; }
+  const Decl *getNextDeclarator() const { return NextDeclarator; }
+  void setNextDeclarator(Decl *N) { NextDeclarator = N; }
+  
+  // isDefinedOutsideFunctionOrMethod - This predicate returns true if this
+  // scoped decl is defined outside the current function or method.  This is
+  // roughly global variables and functions, but also handles enums (which could
+  // be defined inside or outside a function etc).
+  bool isDefinedOutsideFunctionOrMethod() const;
+
   // getBody - If this Decl represents a declaration for a body of code,
   //  such as a function or method definition, this method returns the top-level
   //  Stmt* of that body.  Otherwise this method returns null.  
@@ -268,9 +361,6 @@ protected:
     // FIXME: This will eventually be a pure virtual function.
     assert (false && "Not implemented.");
   }
-  
-  void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// DeclContext - This is used only as base class of specific decl types that
@@ -300,21 +390,21 @@ class DeclContext {
   /// declarations within this context. If the context contains fewer
   /// than seven declarations, the number of declarations is provided
   /// in the 3 lowest-order bits and the upper bits are treated as a
-  /// pointer to an array of ScopedDecl pointers. If the context
+  /// pointer to an array of NamedDecl pointers. If the context
   /// contains seven or more declarations, the upper bits are treated
-  /// as a pointer to a DenseMap<DeclarationName, std::vector<ScopedDecl>>.
+  /// as a pointer to a DenseMap<DeclarationName, std::vector<NamedDecl*>>.
   /// FIXME: We need a better data structure for this.
   llvm::PointerIntPair<void*, 3> LookupPtr;
 
   /// FirstDecl - The first declaration stored within this declaration
   /// context.
-  ScopedDecl *FirstDecl;
+  Decl *FirstDecl;
 
   /// LastDecl - The last declaration stored within this declaration
   /// context. FIXME: We could probably cache this value somewhere
   /// outside of the DeclContext, to reduce the size of DeclContext by
   /// another pointer.
-  ScopedDecl *LastDecl;
+  Decl *LastDecl;
 
   // Used in the CastTo template to get the DeclKind
   // from a Decl or a DeclContext. DeclContext doesn't have a getKind() method
@@ -380,7 +470,7 @@ public:
     return DeclKind;
   }
 
-  /// getParent - Returns the containing DeclContext if this is a ScopedDecl,
+  /// getParent - Returns the containing DeclContext if this is a Decl,
   /// else returns NULL.
   const DeclContext *getParent() const;
   DeclContext *getParent() {
@@ -494,17 +584,17 @@ public:
   /// within this context.
   class decl_iterator {
     /// Current - The current declaration.
-    ScopedDecl *Current;
+    Decl *Current;
 
   public:
-    typedef ScopedDecl*               value_type;
-    typedef ScopedDecl*               reference;
-    typedef ScopedDecl*               pointer;
+    typedef Decl*                     value_type;
+    typedef Decl*                     reference;
+    typedef Decl*                     pointer;
     typedef std::forward_iterator_tag iterator_category;
     typedef std::ptrdiff_t            difference_type;
 
     decl_iterator() : Current(0) { }
-    explicit decl_iterator(ScopedDecl *C) : Current(C) { }
+    explicit decl_iterator(Decl *C) : Current(C) { }
 
     reference operator*() const { return Current; }
     pointer operator->() const { return Current; }
@@ -616,17 +706,17 @@ public:
 
   /// addDecl - Add the declaration D to this scope, and into data structure
   /// for name lookup. 
-  void addDecl(ScopedDecl *D);
+  void addDecl(Decl *D);
 
   void buildLookup(DeclContext *DCtx);
 
   /// lookup_iterator - An iterator that provides access to the results
   /// of looking up a name within this context.
-  typedef ScopedDecl **lookup_iterator;
+  typedef NamedDecl **lookup_iterator;
 
   /// lookup_const_iterator - An iterator that provides non-mutable
   /// access to the results of lookup up a name within this context.
-  typedef ScopedDecl * const * lookup_const_iterator;
+  typedef NamedDecl * const * lookup_const_iterator;
 
   typedef std::pair<lookup_iterator, lookup_iterator> lookup_result;
   typedef std::pair<lookup_const_iterator, lookup_const_iterator>
@@ -653,7 +743,7 @@ public:
   /// that this replacement is semantically correct, e.g., that
   /// declarations are only replaced by later declarations of the same
   /// entity and not a declaration of some other kind of entity.
-  void insert(ScopedDecl *D);
+  void insert(NamedDecl *D);
 
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
@@ -695,7 +785,7 @@ public:
   static bool classof(const BlockDecl *D) { return true; }
 
 private:
-  void insertImpl(ScopedDecl *D);
+  void insertImpl(NamedDecl *D);
 
   void EmitOutRec(llvm::Serializer& S) const;
   void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
@@ -709,6 +799,18 @@ template<> struct DeclContext::KindTrait<DeclContext> {
 
 inline bool Decl::isTemplateParameter() const {
   return getKind() == TemplateTypeParm || getKind() == NonTypeTemplateParm;
+}
+
+inline bool Decl::isDefinedOutsideFunctionOrMethod() const {
+  if (getDeclContext())
+    return !getDeclContext()->getLookupContext()->isFunctionOrMethod();
+  else
+    return true;
+}
+
+inline DeclContext::decl_iterator& DeclContext::decl_iterator::operator++() {
+  Current = Current->NextDeclInScope;
+  return *this;
 }
 
 } // end clang.

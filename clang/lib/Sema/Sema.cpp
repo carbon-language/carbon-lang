@@ -79,7 +79,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TypedefDecl *SelTypedef = TypedefDecl::Create(Context, CurContext,
                                                 SourceLocation(),
                                                 &Context.Idents.get("SEL"),
-                                                SelT, 0);
+                                                SelT);
   PushOnScopeChains(SelTypedef, TUScope);
   Context.setObjCSelType(SelTypedef);
 
@@ -88,7 +88,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   QualType ClassT = Context.getPointerType(Context.getTagDeclType(ClassTag));
   TypedefDecl *ClassTypedef = 
     TypedefDecl::Create(Context, CurContext, SourceLocation(),
-                        &Context.Idents.get("Class"), ClassT, 0);
+                        &Context.Idents.get("Class"), ClassT);
   PushOnScopeChains(ClassTag, TUScope);
   PushOnScopeChains(ClassTypedef, TUScope);
   Context.setObjCClassType(ClassTypedef);
@@ -108,7 +108,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TypedefDecl *IdTypedef = TypedefDecl::Create(Context, CurContext,
                                                SourceLocation(),
                                                &Context.Idents.get("id"),
-                                               ObjT, 0);
+                                               ObjT);
   PushOnScopeChains(IdTypedef, TUScope);
   Context.setObjCIdType(IdTypedef);
 }
@@ -223,7 +223,7 @@ NamedDecl *Sema::getCurFunctionOrMethodDecl() {
   while (isa<BlockDecl>(DC))
     DC = DC->getParent();
   if (isa<ObjCMethodDecl>(DC) || isa<FunctionDecl>(DC))
-    return cast<ScopedDecl>(DC);
+    return cast<NamedDecl>(DC);
   return 0;
 }
 

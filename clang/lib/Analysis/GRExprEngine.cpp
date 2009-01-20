@@ -1813,7 +1813,7 @@ void GRExprEngine::VisitCompoundLiteralExpr(CompoundLiteralExpr* CL,
 void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {  
 
   // The CFG has one DeclStmt per Decl.  
-  ScopedDecl* D = *DS->decl_begin();
+  Decl* D = *DS->decl_begin();
   
   if (!D || !isa<VarDecl>(D))
     return;

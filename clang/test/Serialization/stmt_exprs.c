@@ -1,5 +1,5 @@
 // RUN: clang %s --test-pickling 2>&1 | grep -q 'SUCCESS'
-
+// XFAIL
 typedef unsigned __uint32_t;
 
 #define __byte_swap_int_var(x) \

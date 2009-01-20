@@ -383,11 +383,11 @@ DeclRefExpr *Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Lo
 /// getObjectForAnonymousRecordDecl - Retrieve the (unnamed) field or
 /// variable corresponding to the anonymous union or struct whose type
 /// is Record.
-static ScopedDecl *getObjectForAnonymousRecordDecl(RecordDecl *Record) {
+static Decl *getObjectForAnonymousRecordDecl(RecordDecl *Record) {
   assert(Record->isAnonymousStructOrUnion() && 
          "Record must be an anonymous struct or union!");
   
-  // FIXME: Once ScopedDecls are directly linked together, this will
+  // FIXME: Once Decls are directly linked together, this will
   // be an O(1) operation rather than a slow walk through DeclContext's
   // vector (which itself will be eliminated). DeclGroups might make
   // this even better.
@@ -400,7 +400,7 @@ static ScopedDecl *getObjectForAnonymousRecordDecl(RecordDecl *Record) {
       // follows its type in the list of declarations.
       ++D;
       assert(D != DEnd && "Missing object for anonymous record");
-      assert(!cast<ScopedDecl>(*D)->getDeclName() && "Decl should be unnamed");
+      assert(!cast<NamedDecl>(*D)->getDeclName() && "Decl should be unnamed");
       return *D;
     }
   }
@@ -429,7 +429,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   DeclContext *Ctx = Field->getDeclContext();
   do {
     RecordDecl *Record = cast<RecordDecl>(Ctx);
-    ScopedDecl *AnonObject = getObjectForAnonymousRecordDecl(Record);
+    Decl *AnonObject = getObjectForAnonymousRecordDecl(Record);
     if (FieldDecl *AnonField = dyn_cast<FieldDecl>(AnonObject))
       AnonFields.push_back(AnonField);
     else {
@@ -576,13 +576,12 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // well.
   IdentifierInfo *II = Name.getAsIdentifierInfo();
   if (II && getCurMethodDecl()) {
-    ScopedDecl *SD = dyn_cast_or_null<ScopedDecl>(D);
     // There are two cases to handle here.  1) scoped lookup could have failed,
     // in which case we should look for an ivar.  2) scoped lookup could have
     // found a decl, but that decl is outside the current method (i.e. a global
     // variable).  In these two cases, we do a lookup for an ivar with this
     // name, if the lookup suceeds, we replace it our current decl.
-    if (SD == 0 || SD->isDefinedOutsideFunctionOrMethod()) {
+    if (D == 0 || D->isDefinedOutsideFunctionOrMethod()) {
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
       if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II)) {
         // FIXME: This should use a new expr for a direct reference, don't turn
@@ -597,7 +596,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       }
     }
     // Needed to implement property "super.method" notation.
-    if (SD == 0 && II->isStr("super")) {
+    if (D == 0 && II->isStr("super")) {
       QualType T = Context.getPointerType(Context.getObjCInterfaceType(
                      getCurMethodDecl()->getClassInterface()));
       return Owned(new ObjCSuperExpr(Loc, T));

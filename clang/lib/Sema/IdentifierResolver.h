@@ -29,8 +29,8 @@ namespace clang {
 class IdentifierResolver {
 
   /// LookupContext - A wrapper for DeclContext. DeclContext is only part of
-  /// ScopedDecls, LookupContext can be used with all decls (assumes
-  /// translation unit context for non ScopedDecls).
+  /// Decls, LookupContext can be used with all decls (assumes
+  /// translation unit context for non Decls).
   class LookupContext {
     const DeclContext *Ctx;
 
@@ -42,7 +42,7 @@ class IdentifierResolver {
       return reinterpret_cast<DeclContext*>(-1);
     }
 
-    /// getContext - Returns translation unit context for non ScopedDecls and
+    /// getContext - Returns translation unit context for non Decls and
     /// for EnumConstantDecls returns the parent context of their EnumDecl.
     static DeclContext *getContext(Decl *D);
 

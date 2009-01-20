@@ -37,7 +37,7 @@ class TemplateTypeParmDecl : public TypeDecl {
 
   TemplateTypeParmDecl(DeclContext *DC, SourceLocation L,
                        IdentifierInfo *Id, bool Typename)
-    : TypeDecl(TemplateTypeParm, DC, L, Id, 0), Typename(Typename) { }
+    : TypeDecl(TemplateTypeParm, DC, L, Id), Typename(Typename) { }
 
 public:
   static TemplateTypeParmDecl *Create(ASTContext &C, DeclContext *DC,
@@ -74,7 +74,7 @@ class NonTypeTemplateParmDecl : public VarDecl {
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, 
                           IdentifierInfo *Id, QualType T,
                           SourceLocation TSSL = SourceLocation())
-    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, VarDecl::None, 0, TSSL) { }
+    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, VarDecl::None, TSSL) { }
 
 public:
   static NonTypeTemplateParmDecl *
@@ -100,7 +100,7 @@ public:
 class OverloadedFunctionDecl : public NamedDecl {
 protected:
   OverloadedFunctionDecl(DeclContext *DC, DeclarationName N)
-    : NamedDecl(OverloadedFunction, SourceLocation(), N) { }
+    : NamedDecl(OverloadedFunction, DC, SourceLocation(), N) { }
 
   /// Functions - the set of overloaded functions contained in this
   /// overload set.
@@ -446,15 +446,15 @@ class CXXMethodDecl : public FunctionDecl {
 protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation L,
                 DeclarationName N, QualType T,
-                bool isStatic, bool isInline, ScopedDecl *PrevDecl)
+                bool isStatic, bool isInline)
     : FunctionDecl(DK, RD, L, N, T, (isStatic ? Static : None),
-                   isInline, PrevDecl) {}
+                   isInline) {}
 
 public:
   static CXXMethodDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                               SourceLocation L, DeclarationName N,
                               QualType T, bool isStatic = false,
-                              bool isInline = false,  ScopedDecl *PrevDecl = 0);
+                              bool isInline = false);
   
   bool isStatic() const { return getStorageClass() == Static; }
   bool isInstance() const { return !isStatic(); }
@@ -633,8 +633,7 @@ class CXXConstructorDecl : public CXXMethodDecl {
   CXXConstructorDecl(CXXRecordDecl *RD, SourceLocation L,
                      DeclarationName N, QualType T,
                      bool isExplicit, bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXConstructor, RD, L, N, T, false, isInline, 
-                    /*PrevDecl=*/0),
+    : CXXMethodDecl(CXXConstructor, RD, L, N, T, false, isInline),
       Explicit(isExplicit), ImplicitlyDefined(false) { 
     setImplicit(isImplicitlyDeclared);
   }
@@ -739,8 +738,7 @@ class CXXDestructorDecl : public CXXMethodDecl {
   CXXDestructorDecl(CXXRecordDecl *RD, SourceLocation L,
                     DeclarationName N, QualType T,
                     bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXDestructor, RD, L, N, T, false, isInline, 
-                    /*PrevDecl=*/0),
+    : CXXMethodDecl(CXXDestructor, RD, L, N, T, false, isInline),
       ImplicitlyDefined(false) { 
     setImplicit(isImplicitlyDeclared);
   }
@@ -807,8 +805,7 @@ class CXXConversionDecl : public CXXMethodDecl {
   CXXConversionDecl(CXXRecordDecl *RD, SourceLocation L,
                     DeclarationName N, QualType T, 
                     bool isInline, bool isExplicit)
-    : CXXMethodDecl(CXXConversion, RD, L, N, T, false, isInline, 
-                    /*PrevDecl=*/0),
+    : CXXMethodDecl(CXXConversion, RD, L, N, T, false, isInline),
       Explicit(isExplicit) { }
 
 public:
@@ -852,12 +849,12 @@ public:
 class CXXClassVarDecl : public VarDecl {
 
   CXXClassVarDecl(CXXRecordDecl *RD, SourceLocation L,
-              IdentifierInfo *Id, QualType T, ScopedDecl *PrevDecl)
-    : VarDecl(CXXClassVar, RD, L, Id, T, None, PrevDecl) {}
+              IdentifierInfo *Id, QualType T)
+    : VarDecl(CXXClassVar, RD, L, Id, T, None) {}
 public:
   static CXXClassVarDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                              SourceLocation L,IdentifierInfo *Id,
-                             QualType T, ScopedDecl *PrevDecl);
+                             QualType T);
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == CXXClassVar; }
@@ -879,6 +876,7 @@ protected:
 /// CXXClassMemberWrapper - A wrapper class for C++ class member decls.
 /// Common functions like set/getAccess are included here to avoid bloating
 /// the interface of non-C++ specific decl classes, like NamedDecl.
+/// FIXME: Doug would like to remove this class.
 class CXXClassMemberWrapper {
   Decl *MD;
 
@@ -897,24 +895,18 @@ public:
   }
 
   CXXRecordDecl *getParent() const {
-    if (ScopedDecl *SD = dyn_cast<ScopedDecl>(MD)) {
-      return cast<CXXRecordDecl>(SD->getDeclContext());
-    }
-    return cast<CXXRecordDecl>(cast<FieldDecl>(MD)->getDeclContext());
+    return dyn_cast<CXXRecordDecl>(MD->getDeclContext());
   }
 
   static bool isMember(Decl *D) {
-    if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-      return isa<CXXRecordDecl>(SD->getDeclContext());
-    }
-    return isa<FieldDecl>(D);
+    return isa<CXXRecordDecl>(D->getDeclContext());
   }
 };
   
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
 ///   extern "C" void foo();
 ///
-class LinkageSpecDecl : public ScopedDecl, public DeclContext {
+class LinkageSpecDecl : public Decl, public DeclContext {
 public:
   /// LanguageIDs - Used to represent the language in a linkage
   /// specification.  The values are part of the serialization abi for
@@ -932,7 +924,7 @@ private:
 
   LinkageSpecDecl(DeclContext *DC, SourceLocation L, LanguageIDs lang, 
                   bool Braces)
-    : ScopedDecl(LinkageSpec, DC, L, DeclarationName(), 0), 
+    : Decl(LinkageSpec, DC, L), 
       DeclContext(LinkageSpec), Language(lang), HadBraces(Braces) { }
 
 public:

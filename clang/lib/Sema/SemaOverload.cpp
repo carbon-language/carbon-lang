@@ -2193,20 +2193,17 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
       // operator names can only be ordinary identifiers.
 
       // Ignore member functions. 
-      if (ScopedDecl *SD = dyn_cast<ScopedDecl>(*I)) {
-        if (SD->getDeclContext()->isRecord())
-          continue;
-      } 
+      if ((*I)->getDeclContext()->isRecord())
+        continue;
 
       // We found something with this name. We're done.
       break;
     }
 
-    if (I != IEnd && isa<ScopedDecl>(*I)) {
-      ScopedDecl *FirstDecl = cast<ScopedDecl>(*I);
+    if (I != IEnd) {
+      Decl *FirstDecl = *I;
       for (; I != IEnd; ++I) {
-        ScopedDecl *SD = cast<ScopedDecl>(*I);
-        if (FirstDecl->getDeclContext() != SD->getDeclContext())
+        if (FirstDecl->getDeclContext() != (*I)->getDeclContext())
           break;
 
         if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*I))

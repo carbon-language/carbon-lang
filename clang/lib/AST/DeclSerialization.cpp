@@ -31,8 +31,25 @@ using namespace clang;
 void Decl::Emit(Serializer& S) const {
   S.EmitInt(getKind());
   EmitImpl(S);
+  S.Emit(getLocation());
+  S.EmitBool(InvalidDecl);
+  // FIXME: HasAttrs?
+  S.EmitBool(Implicit);
+  S.EmitInt(Access);
+  S.EmitPtr(cast_or_null<Decl>(getDeclContext()));  // From Decl.
+  S.EmitPtr(cast_or_null<Decl>(getLexicalDeclContext()));  // From Decl.
+  S.EmitPtr(NextDeclarator);
   if (const DeclContext *DC = dyn_cast<const DeclContext>(this))
     DC->EmitOutRec(S);
+  
+  if (getDeclContext() && 
+      !getDeclContext()->isFunctionOrMethod()) {
+    S.EmitBool(true);
+    S.EmitOwnedPtr(NextDeclInScope);
+  } else {
+    S.EmitBool(false);
+    S.EmitPtr(NextDeclInScope);
+  }
 }
 
 Decl* Decl::Create(Deserializer& D, ASTContext& C) {
@@ -101,22 +118,39 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
       break;
   }
 
+  Dcl->Loc = SourceLocation::ReadVal(D);                 // From Decl.
+  Dcl->InvalidDecl = D.ReadBool();
+  // FIXME: HasAttrs?
+  Dcl->Implicit = D.ReadBool();
+  Dcl->Access = D.ReadInt();
+
+  assert(Dcl->DeclCtx == 0);
+
+  const SerializedPtrID &SemaDCPtrID = D.ReadPtrID();
+  const SerializedPtrID &LexicalDCPtrID = D.ReadPtrID();
+
+  if (SemaDCPtrID == LexicalDCPtrID) {
+    // Allow back-patching.  Observe that we register the variable of the
+    // *object* for back-patching. Its actual value will get filled in later.
+    D.ReadUIntPtr(Dcl->DeclCtx, SemaDCPtrID); 
+  }
+  else {
+    MultipleDC *MDC = new MultipleDC();
+    Dcl->DeclCtx = reinterpret_cast<uintptr_t>(MDC) | 0x1;
+    // Allow back-patching.  Observe that we register the variable of the
+    // *object* for back-patching. Its actual value will get filled in later.
+    D.ReadPtr(MDC->SemanticDC, SemaDCPtrID);
+    D.ReadPtr(MDC->LexicalDC, LexicalDCPtrID);
+  }
+  D.ReadPtr(Dcl->NextDeclarator);
   if (DeclContext *DC = dyn_cast<DeclContext>(Dcl))
     DC->ReadOutRec(D, C);
-
+  bool OwnsNext = D.ReadBool();
+  if (OwnsNext)
+    Dcl->NextDeclInScope = D.ReadOwnedPtr<Decl>(C);
+  else 
+    D.ReadPtr(Dcl->NextDeclInScope);
   return Dcl;
-}
-
-//===----------------------------------------------------------------------===//
-//      Common serialization logic for subclasses of Decl.
-//===----------------------------------------------------------------------===//
-
-void Decl::EmitInRec(Serializer& S) const {
-  S.Emit(getLocation());                    // From Decl.
-}
-
-void Decl::ReadInRec(Deserializer& D, ASTContext& C) {
-  Loc = SourceLocation::ReadVal(D);                 // From Decl.
 }
 
 //===----------------------------------------------------------------------===//
@@ -124,36 +158,22 @@ void Decl::ReadInRec(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 void DeclContext::EmitOutRec(Serializer& S) const {
-#if 0
-  // FIXME: it would be far easier to just serialize FirstDecl and let
-  // ScopedDecl do the work of serializing NextDeclInScope.
-  S.EmitInt(Decls.size());
-  for (decl_iterator D = decls_begin(); D != decls_end(); ++D) {
-    bool Owned = ((*D)->getLexicalDeclContext() == this &&
-                  DeclKind != Decl::TranslationUnit &&
-                  !isFunctionOrMethod());
-    S.EmitBool(Owned);
-    if (Owned)
-      S.EmitOwnedPtr(*D);
-    else
-      S.EmitPtr(*D);
-  }
-#endif
+  bool Owned = !isFunctionOrMethod();
+  S.EmitBool(Owned);
+  if (Owned)
+    S.EmitOwnedPtr(FirstDecl);
+  else
+    S.EmitPtr(FirstDecl);
+  S.EmitPtr(LastDecl);
 }
 
 void DeclContext::ReadOutRec(Deserializer& D, ASTContext& C) {
-#if 0
-  // FIXME: See comment in DeclContext::EmitOutRec
-  unsigned NumDecls = D.ReadInt();
-  Decls.resize(NumDecls);
-  for (unsigned Idx = 0; Idx < NumDecls; ++Idx) {
-    bool Owned = D.ReadBool();
-    if (Owned)
-      Decls[Idx] = cast_or_null<ScopedDecl>(D.ReadOwnedPtr<Decl>(C));
-    else
-      D.ReadPtr<ScopedDecl>(Decls[Idx]);
-  }
-#endif
+  bool Owned = D.ReadBool();
+  if (Owned)
+    FirstDecl = cast_or_null<Decl>(D.ReadOwnedPtr<Decl>(C));
+  else
+    D.ReadPtr(FirstDecl);
+  D.ReadPtr(LastDecl);
 }
 
 //===----------------------------------------------------------------------===//
@@ -161,7 +181,6 @@ void DeclContext::ReadOutRec(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 void NamedDecl::EmitInRec(Serializer& S) const {
-  Decl::EmitInRec(S);
   S.EmitInt(Name.getNameKind());
 
   switch (Name.getNameKind()) {
@@ -188,8 +207,6 @@ void NamedDecl::EmitInRec(Serializer& S) const {
 }
 
 void NamedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
-  Decl::ReadInRec(D, C);
-
   DeclarationName::NameKind Kind 
     = static_cast<DeclarationName::NameKind>(D.ReadInt());
   switch (Kind) {
@@ -229,64 +246,16 @@ void NamedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
 }
 
 //===----------------------------------------------------------------------===//
-//      Common serialization logic for subclasses of ScopedDecl.
-//===----------------------------------------------------------------------===//
-
-void ScopedDecl::EmitInRec(Serializer& S) const {
-  NamedDecl::EmitInRec(S);
-  S.EmitPtr(cast_or_null<Decl>(getDeclContext()));  // From ScopedDecl.
-  S.EmitPtr(cast_or_null<Decl>(getLexicalDeclContext()));  // From ScopedDecl.
-}
-
-void ScopedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
-  NamedDecl::ReadInRec(D, C);
-
-  assert(DeclCtx == 0);
-
-  const SerializedPtrID &SemaDCPtrID = D.ReadPtrID();
-  const SerializedPtrID &LexicalDCPtrID = D.ReadPtrID();
-
-  if (SemaDCPtrID == LexicalDCPtrID) {
-    // Allow back-patching.  Observe that we register the variable of the
-    // *object* for back-patching. Its actual value will get filled in later.
-    D.ReadUIntPtr(DeclCtx, SemaDCPtrID); 
-  }
-  else {
-    MultipleDC *MDC = new MultipleDC();
-    DeclCtx = reinterpret_cast<uintptr_t>(MDC) | 0x1;
-    // Allow back-patching.  Observe that we register the variable of the
-    // *object* for back-patching. Its actual value will get filled in later.
-    D.ReadPtr(MDC->SemanticDC, SemaDCPtrID);
-    D.ReadPtr(MDC->LexicalDC, LexicalDCPtrID);
-  }
-}
-    
-  //===------------------------------------------------------------===//
-  // NOTE: Not all subclasses of ScopedDecl will use the "OutRec"     //
-  //   methods.  This is because owned pointers are usually "batched" //
-  //   together for efficiency.                                       //
-  //===------------------------------------------------------------===//
-
-void ScopedDecl::EmitOutRec(Serializer& S) const {
-  S.EmitOwnedPtr(getNextDeclarator());   // From ScopedDecl.
-}
-
-void ScopedDecl::ReadOutRec(Deserializer& D, ASTContext& C) {
-  NextDeclarator = 
-    cast_or_null<ScopedDecl>(D.ReadOwnedPtr<Decl>(C)); // From ScopedDecl.
-}
-
-//===----------------------------------------------------------------------===//
 //      Common serialization logic for subclasses of ValueDecl.
 //===----------------------------------------------------------------------===//
 
 void ValueDecl::EmitInRec(Serializer& S) const {
-  ScopedDecl::EmitInRec(S);
+  NamedDecl::EmitInRec(S);
   S.Emit(getType());                        // From ValueDecl.
 }
 
 void ValueDecl::ReadInRec(Deserializer& D, ASTContext& C) {
-  ScopedDecl::ReadInRec(D, C);
+  NamedDecl::ReadInRec(D, C);
   DeclType = QualType::ReadVal(D);          // From ValueDecl.
 }
 
@@ -304,26 +273,13 @@ void VarDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   SClass = static_cast<StorageClass>(D.ReadInt());  // From VarDecl. 
 }
 
-    //===------------------------------------------------------------===//
-    // NOTE: VarDecl has its own "OutRec" methods that doesn't use      //
-    //  the one define in ScopedDecl.  This is to batch emit the        //
-    //  owned pointers, which results in a smaller output.
-    //===------------------------------------------------------------===//
-
 void VarDecl::EmitOutRec(Serializer& S) const {
-  // Emit these last because they will create records of their own.
-  S.BatchEmitOwnedPtrs(getInit(),            // From VarDecl.
-                       getNextDeclarator()); // From ScopedDecl.  
+  // Emit this last because it will create a record of its own.
+  S.EmitOwnedPtr(getInit());
 }
 
 void VarDecl::ReadOutRec(Deserializer& D, ASTContext& C) {
-  Decl* next_declarator;
-  
-  D.BatchReadOwnedPtrs(Init,             // From VarDecl.
-                       next_declarator,  // From ScopedDecl.
-                       C);
-  
-  setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
+  Init = D.ReadOwnedPtr<Stmt>(C);
 }
 
 
@@ -343,7 +299,6 @@ void VarDecl::ReadImpl(Deserializer& D, ASTContext& C) {
 
 void TranslationUnitDecl::EmitImpl(llvm::Serializer& S) const
 {
-  Decl::EmitInRec(S);
 }
 
 TranslationUnitDecl* TranslationUnitDecl::CreateImpl(Deserializer& D,
@@ -351,8 +306,6 @@ TranslationUnitDecl* TranslationUnitDecl::CreateImpl(Deserializer& D,
   void *Mem = C.getAllocator().Allocate<TranslationUnitDecl>();
   TranslationUnitDecl* decl = new (Mem) TranslationUnitDecl();
  
-  decl->Decl::ReadInRec(D, C);
-  
   return decl;
 }
 
@@ -362,20 +315,18 @@ TranslationUnitDecl* TranslationUnitDecl::CreateImpl(Deserializer& D,
 
 void NamespaceDecl::EmitImpl(llvm::Serializer& S) const
 {
-  ScopedDecl::EmitInRec(S);
+  NamedDecl::EmitInRec(S);
   S.Emit(getLBracLoc());
   S.Emit(getRBracLoc());
-  ScopedDecl::EmitOutRec(S);
 }
 
 NamespaceDecl* NamespaceDecl::CreateImpl(Deserializer& D, ASTContext& C) {  
   void *Mem = C.getAllocator().Allocate<NamespaceDecl>();
   NamespaceDecl* decl = new (Mem) NamespaceDecl(0, SourceLocation(), 0);
  
-  decl->ScopedDecl::ReadInRec(D, C);
+  decl->NamedDecl::ReadInRec(D, C);
   decl->LBracLoc = SourceLocation::ReadVal(D);
   decl->RBracLoc = SourceLocation::ReadVal(D);
-  decl->ScopedDecl::ReadOutRec(D, C);
   
   return decl;
 }
@@ -387,7 +338,7 @@ NamespaceDecl* NamespaceDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 VarDecl* VarDecl::CreateImpl(Deserializer& D, ASTContext& C) {  
   void *Mem = C.getAllocator().Allocate<VarDecl>();
   VarDecl* decl =
-    new (Mem) VarDecl(Var, 0, SourceLocation(), NULL, QualType(), None, NULL);
+    new (Mem) VarDecl(Var, 0, SourceLocation(), NULL, QualType(), None);
  
   decl->VarDecl::ReadImpl(D, C);
   return decl;
@@ -407,7 +358,7 @@ ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
   ParmVarDecl* decl = new (Mem)
     ParmVarDecl(ParmVar,
-                0, SourceLocation(), NULL, QualType(), None, NULL, NULL);
+                0, SourceLocation(), NULL, QualType(), None, NULL);
   
   decl->VarDecl::ReadImpl(D, C);
   decl->objcDeclQualifier = static_cast<ObjCDeclQualifier>(D.ReadInt());
@@ -429,7 +380,7 @@ ParmVarWithOriginalTypeDecl* ParmVarWithOriginalTypeDecl::CreateImpl(
   void *Mem = C.getAllocator().Allocate<ParmVarWithOriginalTypeDecl>();
   ParmVarWithOriginalTypeDecl* decl = new (Mem)
     ParmVarWithOriginalTypeDecl(0, SourceLocation(), NULL, QualType(), 
-                                QualType(), None, NULL, NULL);
+                                QualType(), None, NULL);
   
   decl->ParmVarDecl::ReadImpl(D, C);
   decl->OriginalType = QualType::ReadVal(D);
@@ -440,22 +391,18 @@ ParmVarWithOriginalTypeDecl* ParmVarWithOriginalTypeDecl::CreateImpl(
 //===----------------------------------------------------------------------===//
 
 void EnumDecl::EmitImpl(Serializer& S) const {
-  ScopedDecl::EmitInRec(S);
+  NamedDecl::EmitInRec(S);
   S.EmitBool(isDefinition());
   S.Emit(IntegerType);
-  S.EmitOwnedPtr(getNextDeclarator());
 }
 
 EnumDecl* EnumDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   void *Mem = C.getAllocator().Allocate<EnumDecl>();
-  EnumDecl* decl = new (Mem) EnumDecl(0, SourceLocation(), NULL, NULL);
+  EnumDecl* decl = new (Mem) EnumDecl(0, SourceLocation(), NULL);
   
-  decl->ScopedDecl::ReadInRec(D, C);
+  decl->NamedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
   decl->IntegerType = QualType::ReadVal(D);
-  
-  Decl* next_declarator = D.ReadOwnedPtr<Decl>(C);
-  decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
   
   return decl;
 }
@@ -467,7 +414,7 @@ EnumDecl* EnumDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 void EnumConstantDecl::EmitImpl(Serializer& S) const {
   S.Emit(Val);
   ValueDecl::EmitInRec(S);
-  S.BatchEmitOwnedPtrs(getNextDeclarator(),Init);
+  S.EmitOwnedPtr(Init);
 }
  
 EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D, ASTContext& C) {
@@ -476,16 +423,10 @@ EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   
   void *Mem = C.getAllocator().Allocate<EnumConstantDecl>();
   EnumConstantDecl* decl = new (Mem)
-    EnumConstantDecl(0, SourceLocation(), NULL, QualType(), NULL, val, NULL);
+    EnumConstantDecl(0, SourceLocation(), NULL, QualType(), NULL, val);
   
   decl->ValueDecl::ReadInRec(D, C);
-  
-  Decl* next_declarator;
-  
-  D.BatchReadOwnedPtrs(next_declarator, decl->Init, C);
-  
-  decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
-
+  decl->Init = D.ReadOwnedPtr<Stmt>(C);
   return decl;    
 }
 
@@ -496,14 +437,14 @@ EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 void FieldDecl::EmitImpl(Serializer& S) const {
   S.EmitBool(Mutable);
   S.Emit(getType());
-  ScopedDecl::EmitInRec(S);
+  NamedDecl::EmitInRec(S);
   S.EmitOwnedPtr(BitWidth);  
 }
 
 FieldDecl* FieldDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   void *Mem = C.getAllocator().Allocate<FieldDecl>();
   FieldDecl* decl = new (Mem) FieldDecl(Field, 0, SourceLocation(), NULL, 
-                                        QualType(), 0, false, 0);
+                                        QualType(), 0, false);
   decl->Mutable = D.ReadBool();
   decl->DeclType.ReadBackpatch(D);  
   decl->ReadInRec(D, C);
@@ -527,12 +468,11 @@ void FunctionDecl::EmitImpl(Serializer& S) const {
   if (ParamInfo != NULL) {
     S.EmitBool(true);
     S.EmitInt(getNumParams());
-    S.BatchEmitOwnedPtrs(getNumParams(),&ParamInfo[0], Body,
-                         getNextDeclarator());
+    S.BatchEmitOwnedPtrs(getNumParams(),&ParamInfo[0], Body);
   }
   else {
     S.EmitBool(false);
-    S.BatchEmitOwnedPtrs(Body,getNextDeclarator());  
+    S.EmitOwnedPtr(Body);
   }
 }
 
@@ -543,13 +483,11 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   void *Mem = C.getAllocator().Allocate<FunctionDecl>();
   FunctionDecl* decl = new (Mem)
     FunctionDecl(Function, 0, SourceLocation(), DeclarationName(),
-                 QualType(), SClass, IsInline, 0);
+                 QualType(), SClass, IsInline);
   
   decl->ValueDecl::ReadInRec(D, C);
   D.ReadPtr(decl->PreviousDeclaration);
 
-  Decl* next_declarator;
-  
   int numParams = 0;
   bool hasParamDecls = D.ReadBool();
   if (hasParamDecls)
@@ -562,11 +500,9 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   if (hasParamDecls)
     D.BatchReadOwnedPtrs(numParams,
                          reinterpret_cast<Decl**>(&decl->ParamInfo[0]),
-                         decl->Body, next_declarator, C);
+                         decl->Body, C);
   else
-    D.BatchReadOwnedPtrs(decl->Body, next_declarator, C);
-  
-  decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
+    decl->Body = D.ReadOwnedPtr<Stmt>(C);
   
   return decl;
 }
@@ -622,11 +558,10 @@ OverloadedFunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 void RecordDecl::EmitImpl(Serializer& S) const {
   S.EmitInt(getTagKind());
 
-  ScopedDecl::EmitInRec(S);
+  NamedDecl::EmitInRec(S);
   S.EmitBool(isDefinition());
   S.EmitBool(hasFlexibleArrayMember());
   S.EmitBool(isAnonymousStructOrUnion());
-  ScopedDecl::EmitOutRec(S);
 }
 
 RecordDecl* RecordDecl::CreateImpl(Deserializer& D, ASTContext& C) {
@@ -635,11 +570,10 @@ RecordDecl* RecordDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
   RecordDecl* decl = new (Mem) RecordDecl(Record, TK, 0, SourceLocation(), NULL);
     
-  decl->ScopedDecl::ReadInRec(D, C);
+  decl->NamedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
   decl->setHasFlexibleArrayMember(D.ReadBool());
   decl->setAnonymousStructOrUnion(D.ReadBool());
-  decl->ScopedDecl::ReadOutRec(D, C);
     
   return decl;
 }
@@ -650,18 +584,16 @@ RecordDecl* RecordDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 
 void TypedefDecl::EmitImpl(Serializer& S) const {
   S.Emit(UnderlyingType);
-  ScopedDecl::EmitInRec(S);
-  ScopedDecl::EmitOutRec(S);
+  NamedDecl::EmitInRec(S);
 }
 
 TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType T = QualType::ReadVal(D);
   
   void *Mem = C.getAllocator().Allocate<TypedefDecl>();
-  TypedefDecl* decl = new (Mem) TypedefDecl(0, SourceLocation(), NULL, T, NULL);
+  TypedefDecl* decl = new (Mem) TypedefDecl(0, SourceLocation(), NULL, T);
   
-  decl->ScopedDecl::ReadInRec(D, C);
-  decl->ScopedDecl::ReadOutRec(D, C);
+  decl->NamedDecl::ReadInRec(D, C);
 
   return decl;
 }
@@ -672,8 +604,7 @@ TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 
 void TemplateTypeParmDecl::EmitImpl(Serializer& S) const {
   S.EmitBool(Typename);
-  ScopedDecl::EmitInRec(S);
-  ScopedDecl::EmitOutRec(S);
+  NamedDecl::EmitInRec(S);
 }
 
 TemplateTypeParmDecl *
@@ -682,8 +613,7 @@ TemplateTypeParmDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   void *Mem = C.getAllocator().Allocate<TemplateTypeParmDecl>();
   TemplateTypeParmDecl *decl
     = new (Mem) TemplateTypeParmDecl(0, SourceLocation(), NULL, Typename);
-  decl->ScopedDecl::ReadInRec(D, C);
-  decl->ScopedDecl::ReadOutRec(D, C);
+  decl->NamedDecl::ReadInRec(D, C);
   return decl;
 }
 
@@ -692,13 +622,11 @@ TemplateTypeParmDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 void LinkageSpecDecl::EmitInRec(Serializer& S) const {
-  Decl::EmitInRec(S);
   S.EmitInt(getLanguage());
   S.EmitBool(HadBraces);
 }
 
 void LinkageSpecDecl::ReadInRec(Deserializer& D, ASTContext& C) {
-  Decl::ReadInRec(D, C);
   Language = static_cast<LanguageIDs>(D.ReadInt());
   HadBraces = D.ReadBool();
 }
@@ -709,15 +637,13 @@ void LinkageSpecDecl::ReadInRec(Deserializer& D, ASTContext& C) {
 
 void FileScopeAsmDecl::EmitImpl(llvm::Serializer& S) const
 {
-  Decl::EmitInRec(S);
   S.EmitOwnedPtr(AsmString);
 }
 
 FileScopeAsmDecl* FileScopeAsmDecl::CreateImpl(Deserializer& D, ASTContext& C) { 
   void *Mem = C.getAllocator().Allocate<FileScopeAsmDecl>();
-  FileScopeAsmDecl* decl = new (Mem) FileScopeAsmDecl(SourceLocation(), 0);
+  FileScopeAsmDecl* decl = new (Mem) FileScopeAsmDecl(0, SourceLocation(), 0);
 
-  decl->Decl::ReadInRec(D, C);
   decl->AsmString = cast<StringLiteral>(D.ReadOwnedPtr<Expr>(C));
 //  D.ReadOwnedPtr(D.ReadOwnedPtr<StringLiteral>())<#T * * Ptr#>, <#bool AutoRegister#>)(decl->AsmString);
   

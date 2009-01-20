@@ -88,8 +88,8 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
   if (isa<ObjCMethodDecl>(DC))
     return Context.getTranslationUnitDecl();
 
-  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(DC))
-    return SD->getLexicalDeclContext();
+  if (Decl *D = dyn_cast<Decl>(DC))
+    return D->getLexicalDeclContext();
 
   return DC->getLexicalParent();
 }
@@ -121,8 +121,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
   // Add scoped declarations into their context, so that they can be
   // found later. Declarations without a context won't be inserted
   // into any context.
-  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
-    CurContext->addDecl(SD);
+  CurContext->addDecl(D);
 
   // C++ [basic.scope]p4:
   //   -- exactly one declaration shall declare a class name or
@@ -178,7 +177,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
       = std::find_if(IdResolver.begin(FD->getDeclName(), DC, 
                                       false/*LookInParentCtx*/),
                      IdResolver.end(),
-                     std::bind1st(std::mem_fun(&ScopedDecl::declarationReplaces),
+                     std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
                                   FD));
     if (Redecl != IdResolver.end()) {
       // There is already a declaration of a function on our
@@ -303,8 +302,8 @@ void Sema::InitBuiltinVaListType() {
 
 /// LazilyCreateBuiltin - The specified Builtin-ID was first used at file scope.
 /// lazily create a decl for it.
-ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
-                                      Scope *S) {
+NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
+                                     Scope *S) {
   Builtin::ID BID = (Builtin::ID)bid;
 
   if (Context.BuiltinInfo.hasVAListUse(BID))
@@ -314,7 +313,7 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   FunctionDecl *New = FunctionDecl::Create(Context,
                                            Context.getTranslationUnitDecl(),
                                            SourceLocation(), II, R,
-                                           FunctionDecl::Extern, false, 0);
+                                           FunctionDecl::Extern, false);
   
   // Create Decl objects for each parameter, adding them to the
   // FunctionDecl.
@@ -322,8 +321,7 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     llvm::SmallVector<ParmVarDecl*, 16> Params;
     for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
       Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
-                                           FT->getArgType(i), VarDecl::None, 0,
-                                           0));
+                                           FT->getArgType(i), VarDecl::None, 0));
     New->setParams(Context, &Params[0], Params.size());
   }
   
@@ -921,13 +919,12 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   }
 
   // Create a declaration for this anonymous struct/union. 
-  ScopedDecl *Anon = 0;
+  NamedDecl *Anon = 0;
   if (RecordDecl *OwningClass = dyn_cast<RecordDecl>(Owner)) {
     Anon = FieldDecl::Create(Context, OwningClass, Record->getLocation(),
                              /*IdentifierInfo=*/0, 
                              Context.getTypeDeclType(Record),
-                             /*BitWidth=*/0, /*Mutable=*/false,
-                             /*PrevDecl=*/0);
+                             /*BitWidth=*/0, /*Mutable=*/false);
     Anon->setAccess(AS_public);
     if (getLangOptions().CPlusPlus)
       FieldCollector->Add(cast<FieldDecl>(Anon));
@@ -953,8 +950,7 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     Anon = VarDecl::Create(Context, Owner, Record->getLocation(),
                            /*IdentifierInfo=*/0, 
                            Context.getTypeDeclType(Record),
-                           SC, /*FIXME:LastDeclarator=*/0,
-                           DS.getSourceRange().getBegin());
+                           SC, DS.getSourceRange().getBegin());
   }
   Anon->setImplicit();
 
@@ -1206,7 +1202,7 @@ static bool isNearlyMatchingMemberFunction(ASTContext &Context,
 Sema::DeclTy *
 Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
                       bool IsFunctionDefinition) {
-  ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
+  NamedDecl *LastDeclarator = dyn_cast_or_null<NamedDecl>((Decl *)lastDecl);
   DeclarationName Name = GetNameForDeclarator(D);
 
   // All of these full declarators require an identifier.  If it doesn't have
@@ -1227,7 +1223,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   
   DeclContext *DC;
   Decl *PrevDecl;
-  ScopedDecl *New;
+  NamedDecl *New;
   bool InvalidDecl = false;
  
   // See if this is a redefinition of a variable in the same scope.
@@ -1320,9 +1316,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   return New;
 }
 
-ScopedDecl*
+NamedDecl*
 Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                             QualType R, ScopedDecl* LastDeclarator,
+                             QualType R, Decl* LastDeclarator,
                              Decl* PrevDecl, bool& InvalidDecl) {
   // Typedef declarators cannot be qualified (C++ [dcl.meaning]p1).
   if (D.getCXXScopeSpec().isSet()) {
@@ -1364,9 +1360,9 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   return NewTD;
 }
 
-ScopedDecl*
+NamedDecl*
 Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                              QualType R, ScopedDecl* LastDeclarator,
+                              QualType R, Decl* LastDeclarator,
                               Decl* PrevDecl, bool& InvalidDecl) {
   DeclarationName Name = GetNameForDeclarator(D);
 
@@ -1410,7 +1406,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // This is a static data member for a C++ class.
     NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                     D.getIdentifierLoc(), II,
-                                    R, LastDeclarator);
+                                    R);
   } else {
     bool ThreadSpecified = D.getDeclSpec().isThreadSpecified();
     if (S->getFnParent() == 0) {
@@ -1422,11 +1418,13 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       }
     }
     NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
-                            II, R, SC, LastDeclarator,
+                            II, R, SC, 
                             // FIXME: Move to DeclGroup...
                             D.getDeclSpec().getSourceRange().getBegin());
     NewVD->setThreadSpecified(ThreadSpecified);
   }
+  NewVD->setNextDeclarator(LastDeclarator);
+
   // Handle attributes prior to checking for duplicates in MergeVarDecl
   ProcessDeclAttributes(NewVD, D);
 
@@ -1471,9 +1469,9 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   return NewVD;
 }
 
-ScopedDecl* 
+NamedDecl* 
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                              QualType R, ScopedDecl *LastDeclarator,
+                              QualType R, Decl *LastDeclarator,
                               Decl* PrevDecl, bool IsFunctionDefinition,
                               bool& InvalidDecl) {
   assert(R.getTypePtr()->isFunctionType());
@@ -1534,7 +1532,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // Create a FunctionDecl to satisfy the function definition parsing
       // code path.
       NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
-                                   Name, R, SC, isInline, LastDeclarator,
+                                   Name, R, SC, isInline, 
                                    // FIXME: Move to DeclGroup...
                                    D.getDeclSpec().getSourceRange().getBegin());
       InvalidDecl = true;
@@ -1559,15 +1557,15 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // This is a C++ method declaration.
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                   D.getIdentifierLoc(), Name, R,
-                                  (SC == FunctionDecl::Static), isInline,
-                                  LastDeclarator);
+                                  (SC == FunctionDecl::Static), isInline);
   } else {
     NewFD = FunctionDecl::Create(Context, DC,
                                  D.getIdentifierLoc(),
-                                 Name, R, SC, isInline, LastDeclarator,
+                                 Name, R, SC, isInline, 
                                  // FIXME: Move to DeclGroup...
                                  D.getDeclSpec().getSourceRange().getBegin());
   }
+  NewFD->setNextDeclarator(LastDeclarator);
 
   // Set the lexical context. If the declarator has a C++
   // scope specifier, the lexical context will be different
@@ -1639,7 +1637,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         Params.push_back(ParmVarDecl::Create(Context, DC,
                                              SourceLocation(), 0,
                                              *ArgType, VarDecl::None,
-                                             0, 0));
+                                             0));
       }
 
       NewFD->setParams(Context, &Params[0], Params.size());
@@ -2299,8 +2297,7 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
   
   VarDecl *VDecl = dyn_cast<VarDecl>(RealDecl);
   if (!VDecl) {
-    Diag(dyn_cast<ScopedDecl>(RealDecl)->getLocation(), 
-         diag::err_illegal_initializer);
+    Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
     RealDecl->setInvalidDecl();
     return;
   }  
@@ -2442,13 +2439,13 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   if (GroupDecl == 0)
     return 0;
   
-  ScopedDecl *Group = dyn_cast<ScopedDecl>(GroupDecl);
-  ScopedDecl *NewGroup = 0;
+  Decl *Group = dyn_cast<Decl>(GroupDecl);
+  Decl *NewGroup = 0;
   if (Group->getNextDeclarator() == 0) 
     NewGroup = Group;
   else { // reverse the list.
     while (Group) {
-      ScopedDecl *Next = Group->getNextDeclarator();
+      Decl *Next = Group->getNextDeclarator();
       Group->setNextDeclarator(NewGroup);
       NewGroup = Group;
       Group = Next;
@@ -2456,7 +2453,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   }
   // Perform semantic analysis that depends on having fully processed both
   // the declarator and initializer.
-  for (ScopedDecl *ID = NewGroup; ID; ID = ID->getNextDeclarator()) {
+  for (Decl *ID = NewGroup; ID; ID = ID->getNextDeclarator()) {
     VarDecl *IDecl = dyn_cast<VarDecl>(ID);
     if (!IDecl)
       continue;
@@ -2608,7 +2605,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, 
                                          D.getIdentifierLoc(), II,
                                          parmDeclType, StorageClass, 
-                                         0, 0);
+                                         0);
   
   if (D.getInvalidType())
     New->setInvalidDecl();
@@ -2756,8 +2753,8 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
 
 /// ImplicitlyDefineFunction - An undeclared identifier was used in a function
 /// call, forming a call to an implicitly defined function (per C99 6.5.1p2).
-ScopedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, 
-                                           IdentifierInfo &II, Scope *S) {
+NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, 
+                                          IdentifierInfo &II, Scope *S) {
   // Extension in C99.  Legal in C90, but warn about it.
   if (getLangOptions().C99)
     Diag(Loc, diag::ext_implicit_function_decl) << &II;
@@ -2794,7 +2791,7 @@ ScopedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
 
 
 TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
-                                    ScopedDecl *LastDeclarator) {
+                                    Decl *LastDeclarator) {
   assert(D.getIdentifier() && "Wrong callback for declspec without declarator");
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
@@ -2802,7 +2799,8 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
   TypedefDecl *NewTD = TypedefDecl::Create(Context, CurContext,
                                            D.getIdentifierLoc(),
                                            D.getIdentifier(), 
-                                           T, LastDeclarator);
+                                           T);
+  NewTD->setNextDeclarator(LastDeclarator);
   if (D.getInvalidType())
     NewTD->setInvalidDecl();
   return NewTD;
@@ -2833,7 +2831,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   DeclContext *SearchDC = CurContext;
   DeclContext *DC = CurContext;
   DeclContext *LexicalContext = CurContext;
-  ScopedDecl *PrevDecl = 0;
+  Decl *PrevDecl = 0;
 
   bool Invalid = false;
 
@@ -2860,9 +2858,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   } else {
     // If this is a named struct, check to see if there was a previous forward
     // declaration or definition.
-    // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
-    PrevDecl = dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S)
-                                              .getAsDecl());
+    PrevDecl = dyn_cast_or_null<NamedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S)
+                                             .getAsDecl());
 
     if (!getLangOptions().CPlusPlus && TK != TK_Reference) {
       // FIXME: This makes sure that we ignore the contexts associated
@@ -3222,8 +3219,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
   NewFD = FieldDecl::Create(Context, Record,
                             Loc, II, T, BitWidth,
                             D.getDeclSpec().getStorageClassSpec() ==
-                              DeclSpec::SCS_mutable,
-                            /*PrevDecl=*/0);
+                              DeclSpec::SCS_mutable);
 
   if (II) {
     Decl *PrevDecl 
@@ -3556,8 +3552,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   
   EnumConstantDecl *New = 
     EnumConstantDecl::Create(Context, TheEnumDecl, IdLoc, Id, EltTy,
-                             Val, EnumVal,
-                             LastEnumConst);
+                             Val, EnumVal);
   
   // Register this decl in the current scope stack.
   PushOnScopeChains(New, S);
@@ -3739,7 +3734,7 @@ Sema::DeclTy *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
                                           ExprArg expr) {
   StringLiteral *AsmString = cast<StringLiteral>((Expr*)expr.release());
 
-  return FileScopeAsmDecl::Create(Context, Loc, AsmString);
+  return FileScopeAsmDecl::Create(Context, CurContext, Loc, AsmString);
 }
 
 

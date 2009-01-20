@@ -421,13 +421,6 @@ void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases,
 /// bitfield width if there is one and 'InitExpr' specifies the initializer if
 /// any. 'LastInGroup' is non-null for cases where one declspec has multiple
 /// declarators on it.
-///
-/// FIXME: The note below is out-of-date.
-/// NOTE: Because of CXXFieldDecl's inability to be chained like ScopedDecls, if
-/// an instance field is declared, a new CXXFieldDecl is created but the method
-/// does *not* return it; it returns LastInGroup instead. The other C++ members
-/// (which are all ScopedDecls) are returned after appending them to
-/// LastInGroup.
 Sema::DeclTy *
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                ExprTy *BW, ExprTy *InitExpr,
@@ -876,7 +869,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
-                                                 ArgType, VarDecl::None, 0, 0);
+                                                 ArgType, VarDecl::None, 0);
     CopyConstructor->setParams(Context, &FromParam, 1);
 
     ClassDecl->addedConstructor(Context, CopyConstructor);
@@ -945,7 +938,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       CXXMethodDecl::Create(Context, ClassDecl, ClassDecl->getLocation(), Name,
                             Context.getFunctionType(RetType, &ArgType, 1,
                                                     false, 0),
-                            /*isStatic=*/false, /*isInline=*/true, 0);
+                            /*isStatic=*/false, /*isInline=*/true);
     CopyAssignment->setAccess(AS_public);
     CopyAssignment->setImplicit();
 
@@ -953,7 +946,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
-                                                 ArgType, VarDecl::None, 0, 0);
+                                                 ArgType, VarDecl::None, 0);
     CopyAssignment->setParams(Context, &FromParam, 1);
 
     // Don't call addedAssignmentOperator. There is no way to distinguish an
@@ -2211,7 +2204,7 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
   }
 
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-                                    II, ExDeclType, VarDecl::None, 0, Begin);
+                                    II, ExDeclType, VarDecl::None, Begin);
   if (D.getInvalidType() || Invalid)
     ExDecl->setInvalidDecl();
 

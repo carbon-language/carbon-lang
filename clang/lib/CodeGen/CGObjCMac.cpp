@@ -2397,9 +2397,9 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                       SourceLocation(),
                                       &Ctx.Idents.get("_objc_super"));  
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
-                                Ctx.getObjCIdType(), 0, false, 0));
+                                Ctx.getObjCIdType(), 0, false));
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
-                                Ctx.getObjCClassType(), 0, false, 0));
+                                Ctx.getObjCClassType(), 0, false));
   RD->completeDefinition(Ctx);
 
   SuperCTy = Ctx.getTagDeclType(RD);

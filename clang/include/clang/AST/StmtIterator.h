@@ -20,7 +20,6 @@
 namespace clang {
 
 class Stmt;
-class ScopedDecl;
 class Decl;
 class VariableArrayType;
   
@@ -29,7 +28,7 @@ protected:
   enum { DeclMode = 0x1, SizeOfTypeVAMode = 0x2, DeclGroupMode = 0x3,
          Flags = 0x3 };
   
-  union { Stmt** stmt; ScopedDecl* decl; Decl** DGI; };
+  union { Stmt** stmt; Decl* decl; Decl** DGI; };
   uintptr_t RawVAPtr;  
   Decl** DGE;
 
@@ -65,7 +64,7 @@ protected:
   Stmt*& GetDeclExpr() const;
 
   StmtIteratorBase(Stmt** s) : stmt(s), RawVAPtr(0) {}
-  StmtIteratorBase(ScopedDecl* d);
+  StmtIteratorBase(Decl* d);
   StmtIteratorBase(VariableArrayType* t);
   StmtIteratorBase(Decl** dgi, Decl** dge);
   StmtIteratorBase() : stmt(NULL), RawVAPtr(0) {}
@@ -83,7 +82,7 @@ public:
   StmtIteratorImpl() {}                                                
   StmtIteratorImpl(Stmt** s) : StmtIteratorBase(s) {}
   StmtIteratorImpl(Decl** dgi, Decl** dge) : StmtIteratorBase(dgi, dge) {}
-  StmtIteratorImpl(ScopedDecl* d) : StmtIteratorBase(d) {}
+  StmtIteratorImpl(Decl* d) : StmtIteratorBase(d) {}
   StmtIteratorImpl(VariableArrayType* t) : StmtIteratorBase(t) {}
   
   DERIVED& operator++() {
@@ -128,7 +127,7 @@ struct StmtIterator : public StmtIteratorImpl<StmtIterator,Stmt*&> {
    : StmtIteratorImpl<StmtIterator,Stmt*&>(dgi, dge) {}
 
   StmtIterator(VariableArrayType* t):StmtIteratorImpl<StmtIterator,Stmt*&>(t) {}
-  StmtIterator(ScopedDecl* D) : StmtIteratorImpl<StmtIterator,Stmt*&>(D) {}
+  StmtIterator(Decl* D) : StmtIteratorImpl<StmtIterator,Stmt*&>(D) {}
 };
 
 struct ConstStmtIterator : public StmtIteratorImpl<ConstStmtIterator,

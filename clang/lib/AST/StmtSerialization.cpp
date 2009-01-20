@@ -547,45 +547,15 @@ DeclStmt* DeclStmt::CreateImpl(Deserializer& D, ASTContext& C) {
 void DeclRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
-  
-  // Some DeclRefExprs can actually hold the owning reference to a FunctionDecl.
-  // This occurs when an implicitly defined function is called, and
-  // the decl does not appear in the source file.  We thus check if the
-  // decl pointer has been registered, and if not, emit an owned pointer.
-
-  // FIXME: While this will work for serialization, it won't work for
-  //  memory management.  The only reason this works for serialization is
-  //  because we are tracking all serialized pointers.  Either DeclRefExpr
-  //  needs an explicit bit indicating that it owns the the object,
-  //  or we need a different ownership model.
-  
-  const Decl* d = getDecl();
-  
-  if (!S.isRegistered(d)) {
-    assert (isa<FunctionDecl>(d) 
-     && "DeclRefExpr can only own FunctionDecls for implicitly def. funcs.");
-
-    S.EmitBool(true);
-    S.EmitOwnedPtr(d);
-  }
-  else {
-    S.EmitBool(false);
-    S.EmitPtr(d);
-  }
+  S.EmitPtr(getDecl());
 }
 
 DeclRefExpr* DeclRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);  
-  bool OwnsDecl = D.ReadBool();
-  NamedDecl* decl;
-  
-  if (!OwnsDecl)
-    D.ReadPtr(decl,false); // No backpatching.
-  else
-    decl = cast<NamedDecl>(D.ReadOwnedPtr<Decl>(C));
-  
-  return new DeclRefExpr(decl,T,Loc);
+  DeclRefExpr *DRE = new DeclRefExpr(0, T, Loc);
+  D.ReadPtr(DRE->D);
+  return DRE;
 }
 
 void DefaultStmt::EmitImpl(Serializer& S) const {

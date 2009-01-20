@@ -1025,7 +1025,7 @@ Stmt *RewriteBlocks::RewriteFunctionBody(Stmt *S) {
     for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
          DI != DE; ++DI) {
       
-      ScopedDecl *SD = *DI;
+      Decl *SD = *DI;
       if (ValueDecl *ND = dyn_cast<ValueDecl>(SD)) {
         if (isBlockPointerType(ND->getType()))
           RewriteBlockPointerDecl(ND);

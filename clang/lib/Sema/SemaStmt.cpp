@@ -43,14 +43,14 @@ Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclTy *decl,
   if (decl == 0)
     return StmtError();
 
-  ScopedDecl *SD = cast<ScopedDecl>(static_cast<Decl *>(decl));
+  Decl *D = static_cast<Decl *>(decl);
 
   // This is a temporary hack until we are always passing around
   // DeclGroupRefs.
   llvm::SmallVector<Decl*, 10> decls;
-  while (SD) { 
-    ScopedDecl* d = SD;
-    SD = SD->getNextDeclarator();
+  while (D) { 
+    Decl* d = D;
+    D = D->getNextDeclarator();
     d->setNextDeclarator(0);
     decls.push_back(d);
   }
@@ -86,7 +86,7 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
       /*empty*/;
     
     if (i != NumElts) {
-      ScopedDecl *D = *cast<DeclStmt>(Elts[i])->decl_begin();
+      Decl *D = *cast<DeclStmt>(Elts[i])->decl_begin();
       Diag(D->getLocation(), diag::ext_mixed_decls_code);
     }
   }
@@ -633,7 +633,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
         return StmtError(Diag((*DS->decl_begin())->getLocation(),
                          diag::err_toomany_element_decls));
 
-      ScopedDecl *D = DS->getSolitaryDecl();
+      Decl *D = DS->getSolitaryDecl();
       FirstType = cast<ValueDecl>(D)->getType();
       // C99 6.8.5p3: The declaration part of a 'for' statement shall only
       // declare identifiers for objects having storage class 'auto' or

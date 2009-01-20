@@ -93,7 +93,7 @@ public:
 /// A selector represents a unique name for a method. The selector names for
 /// the above methods are setMenu:, menu, replaceSubview:with:, and defaultMenu.
 ///
-class ObjCMethodDecl : public ScopedDecl, public DeclContext {
+class ObjCMethodDecl : public NamedDecl, public DeclContext {
 public:
   enum ImplementationControl { None, Required, Optional };
 private:
@@ -142,7 +142,7 @@ private:
                  bool isVariadic = false,
                  bool isSynthesized = false,
                  ImplementationControl impControl = None)
-  : ScopedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo, 0),
+  : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
     DeclContext(ObjCMethod),
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
@@ -251,13 +251,13 @@ public:
 /// ObjCProtocolDecl. 
 /// FIXME: Use for ObjC implementation decls.
 ///
-class ObjCContainerDecl : public ScopedDecl, public DeclContext {
+class ObjCContainerDecl : public NamedDecl, public DeclContext {
   SourceLocation AtEndLoc; // marks the end of the method container.
 public:
 
   ObjCContainerDecl(Kind DK, DeclContext *DC, SourceLocation L, 
                     IdentifierInfo *Id)
-    : ScopedDecl(DK, DC, L, Id), DeclContext(DK) {}
+    : NamedDecl(DK, DC, L, Id), DeclContext(DK) {}
 
   virtual ~ObjCContainerDecl();
 
@@ -510,7 +510,7 @@ public:
 private:
   ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
                AccessControl ac, Expr *BW)
-    : FieldDecl(ObjCIvar, 0, L, Id, T, BW, /*Mutable=*/false, 0), 
+    : FieldDecl(ObjCIvar, 0, L, Id, T, BW, /*Mutable=*/false), 
       DeclAccess(ac) {}
   
 public:
@@ -541,7 +541,7 @@ class ObjCAtDefsFieldDecl : public FieldDecl {
 private:
   ObjCAtDefsFieldDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                       QualType T, Expr *BW)
-    : FieldDecl(ObjCAtDefsField, DC, L, Id, T, BW, /*Mutable=*/false, 0) {}
+    : FieldDecl(ObjCAtDefsField, DC, L, Id, T, BW, /*Mutable=*/false) {}
   
 public:
   static ObjCAtDefsFieldDecl *Create(ASTContext &C, DeclContext *DC,
@@ -646,13 +646,13 @@ public:
 /// @class NSCursor, NSImage, NSPasteboard, NSWindow;
 ///
 /// FIXME: This could be a transparent DeclContext (!)
-class ObjCClassDecl : public ScopedDecl {
+class ObjCClassDecl : public Decl {
   ObjCInterfaceDecl **ForwardDecls;
   unsigned NumForwardDecls;
   
   ObjCClassDecl(DeclContext *DC, SourceLocation L, 
                 ObjCInterfaceDecl **Elts, unsigned nElts)
-    : ScopedDecl(ObjCClass, DC, L, DeclarationName()) { 
+    : Decl(ObjCClass, DC, L) { 
     if (nElts) {
       ForwardDecls = new ObjCInterfaceDecl*[nElts];
       memcpy(ForwardDecls, Elts, nElts*sizeof(ObjCInterfaceDecl*));
@@ -693,13 +693,13 @@ public:
 /// @protocol NSTextInput, NSChangeSpelling, NSDraggingInfo;
 /// 
 /// FIXME: Should this be a transparent DeclContext?
-class ObjCForwardProtocolDecl : public ScopedDecl {
+class ObjCForwardProtocolDecl : public Decl {
   ObjCProtocolDecl **ReferencedProtocols;
   unsigned NumReferencedProtocols;
   
   ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
                           ObjCProtocolDecl **Elts, unsigned nElts)
-    : ScopedDecl(ObjCForwardProtocol, DC, L, DeclarationName()) { 
+    : Decl(ObjCForwardProtocol, DC, L) { 
     NumReferencedProtocols = nElts;
     if (nElts) {
       ReferencedProtocols = new ObjCProtocolDecl*[nElts];
@@ -836,7 +836,7 @@ public:
 ///  @dynamic p1,d1;
 /// @end
 ///
-class ObjCCategoryImplDecl : public ScopedDecl, public DeclContext {
+class ObjCCategoryImplDecl : public NamedDecl, public DeclContext {
   /// Class interface for this category implementation
   ObjCInterfaceDecl *ClassInterface;
 
@@ -853,7 +853,7 @@ class ObjCCategoryImplDecl : public ScopedDecl, public DeclContext {
 
   ObjCCategoryImplDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                        ObjCInterfaceDecl *classInterface)
-    : ScopedDecl(ObjCCategoryImpl, DC, L, Id), DeclContext(ObjCCategoryImpl),
+    : NamedDecl(ObjCCategoryImpl, DC, L, Id), DeclContext(ObjCCategoryImpl),
       ClassInterface(classInterface) {}
 public:
   static ObjCCategoryImplDecl *Create(ASTContext &C, DeclContext *DC,
@@ -939,7 +939,7 @@ public:
 /// the legacy semantics and allow developers to move private ivar declarations
 /// from the class interface to the class implementation (but I digress:-)
 ///
-class ObjCImplementationDecl : public ScopedDecl, public DeclContext {
+class ObjCImplementationDecl : public Decl, public DeclContext {
   /// Class interface for this implementation
   ObjCInterfaceDecl *ClassInterface;
   
@@ -961,15 +961,15 @@ class ObjCImplementationDecl : public ScopedDecl, public DeclContext {
   
   SourceLocation EndLoc;
 
-  ObjCImplementationDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
+  ObjCImplementationDecl(DeclContext *DC, SourceLocation L, 
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl)
-    : ScopedDecl(ObjCImplementation, DC, L, Id), DeclContext(ObjCImplementation),
+    : Decl(ObjCImplementation, DC, L), DeclContext(ObjCImplementation),
       ClassInterface(classInterface), SuperClass(superDecl),
       Ivars(0), NumIvars(0) {}
 public:  
   static ObjCImplementationDecl *Create(ASTContext &C, DeclContext *DC, 
-                                        SourceLocation L, IdentifierInfo *Id,
+                                        SourceLocation L, 
                                         ObjCInterfaceDecl *classInterface,
                                         ObjCInterfaceDecl *superDecl);
   
@@ -1005,6 +1005,25 @@ public:
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
   
+  /// getIdentifier - Get the identifier that names the class
+  /// interface associated with this implementation.
+  IdentifierInfo *getIdentifier() const { 
+    return getClassInterface()->getIdentifier(); 
+  }
+
+  /// getNameAsCString - Get the name of identifier for the class
+  /// interface associated with this implementation as a C string
+  /// (const char*).
+  const char *getNameAsCString() const {
+    assert(getIdentifier() && "Name is not a simple identifier");
+    return getIdentifier()->getName();
+  }
+
+  /// @brief Get the name of the class associated with this interface.
+  std::string getNameAsString() const {
+    return getClassInterface()->getNameAsString();
+  }
+
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   const ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
@@ -1054,13 +1073,13 @@ public:
 
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is 
 /// declared as @compatibility_alias alias class.
-class ObjCCompatibleAliasDecl : public ScopedDecl {
+class ObjCCompatibleAliasDecl : public NamedDecl {
   /// Class that this is an alias of.
   ObjCInterfaceDecl *AliasedClass;
   
   ObjCCompatibleAliasDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                           ObjCInterfaceDecl* aliasedClass)
-    : ScopedDecl(ObjCCompatibleAlias, DC, L, Id), AliasedClass(aliasedClass) {}
+    : NamedDecl(ObjCCompatibleAlias, DC, L, Id), AliasedClass(aliasedClass) {}
 public:
   static ObjCCompatibleAliasDecl *Create(ASTContext &C, DeclContext *DC,
                                          SourceLocation L, IdentifierInfo *Id,
@@ -1080,7 +1099,7 @@ public:
 /// For example:
 /// @property (assign, readwrite) int MyProperty;
 ///
-class ObjCPropertyDecl : public ScopedDecl {
+class ObjCPropertyDecl : public NamedDecl {
 public:
   enum PropertyAttributeKind {
     OBJC_PR_noattr    = 0x00, 
@@ -1111,7 +1130,7 @@ private:
 
   ObjCPropertyDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
                    QualType T)
-    : ScopedDecl(ObjCProperty, DC, L, Id), DeclType(T),
+    : NamedDecl(ObjCProperty, DC, L, Id), DeclType(T),
       PropertyAttributes(OBJC_PR_noattr), PropertyImplementation(None),
       GetterName(Selector()), 
       SetterName(Selector()),
@@ -1183,7 +1202,7 @@ public:
 /// in a class or category implementation block. For example:
 /// @synthesize prop1 = ivar1;
 ///
-class ObjCPropertyImplDecl : public ScopedDecl {
+class ObjCPropertyImplDecl : public Decl {
 public:
   enum Kind {
     Synthesize,
@@ -1201,7 +1220,7 @@ private:
                        ObjCPropertyDecl *property, 
                        Kind PK, 
                        ObjCIvarDecl *ivarDecl)
-    : ScopedDecl(ObjCPropertyImpl, DC, L, DeclarationName()), AtLoc(atLoc), 
+    : Decl(ObjCPropertyImpl, DC, L), AtLoc(atLoc), 
       PropertyDecl(property), PropertyIvarDecl(ivarDecl) {
     assert (PK == Dynamic || PropertyIvarDecl);
   }

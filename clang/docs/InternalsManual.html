@@ -1019,14 +1019,12 @@ malloc'd objects are at least 8 byte aligned.</p>
   (de-)serialization.</dd>
 </dl>
 
-<p>The declarations stored within each declaration context are
-  called <i>scoped declarations</i> and the AST nodes for each of
-  these declarations are 
-  derived from the <code>ScopedDecl</code> class, which provides
-  information about the context in which that declaration lives. One
+<p>All declarations are stored within a declaration context, and one
+  can query
+  information about the context in which each declaration lives. One
   can retrieve the <code>DeclContext</code> that contains a
-  particular <code>ScopedDecl</code>
-  using <code>ScopedDecl::getDeclContext</code>. However, see the
+  particular <code>Decl</code>
+  using <code>Decl::getDeclContext</code>. However, see the
   section <a href="#LexicalAndSemanticContexts">Lexical and Semantic
   Contexts</a> for more information about how to interpret this
   context information.</p>
@@ -1065,15 +1063,14 @@ void g(int);
   primarily use this semantics-centric view.</p>
 
 <h4 id="LexicalAndSemanticContexts">Lexical and Semantic Contexts</h4>
-<p>Each scoped declaration (whose AST node derived
-  from <code>ScopedDecl</code>) has two potentially different
+<p>Each declaration has two potentially different
   declaration contexts: a <i>lexical</i> context, which corresponds to
   the source-centric view of the declaration context, and
   a <i>semantic</i> context, which corresponds to the
   semantics-centric view. The lexical context is accessible
-  via <code>ScopedDecl::getLexicalDeclContext</code> while the
+  via <code>Decl::getLexicalDeclContext</code> while the
   semantic context is accessible
-  via <code>ScopedDecl::getDeclContext</code>, both of which return
+  via <code>Decl::getDeclContext</code>, both of which return
   <code>DeclContext</code> pointers. For most declarations, the two
   contexts are identical. For example:</p>
 

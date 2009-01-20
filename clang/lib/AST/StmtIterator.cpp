@@ -114,7 +114,7 @@ bool StmtIteratorBase::HandleDecl(Decl* D) {
   return false;  
 }
 
-StmtIteratorBase::StmtIteratorBase(ScopedDecl* d)
+StmtIteratorBase::StmtIteratorBase(Decl* d)
   : decl(d), RawVAPtr(DeclMode) {
   assert (decl);
   NextDecl(false);

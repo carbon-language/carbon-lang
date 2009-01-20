@@ -37,16 +37,15 @@ class CFGRecStmtDeclVisitor : public CFGRecStmtVisitor<ImplClass> {
 public:  
 
   void VisitDeclRefExpr(DeclRefExpr* DR) {
-    for (ScopedDecl* D = dyn_cast<ScopedDecl>(DR->getDecl()); D != NULL; 
-         D = D->getNextDeclarator())
-      static_cast<ImplClass*>(this)->VisitScopedDecl(D); 
+    for (Decl* D = DR->getDecl(); D != NULL; D = D->getNextDeclarator())
+      static_cast<ImplClass*>(this)->VisitDecl(D); 
   }
   
   void VisitDeclStmt(DeclStmt* DS) {
     for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
         DI != DE; ++DI) {
-      ScopedDecl* D = *DI;
-      static_cast<ImplClass*>(this)->VisitScopedDecl(D); 
+      Decl* D = *DI;
+      static_cast<ImplClass*>(this)->VisitDecl(D); 
       // Visit the initializer.
       if (VarDecl* VD = dyn_cast<VarDecl>(D))
         if (Expr* I = VD->getInit())
@@ -54,7 +53,7 @@ public:
     }
   }
     
-  void VisitScopedDecl(ScopedDecl* D) {
+  void VisitDecl(Decl* D) {
     switch (D->getKind()) {
         DISPATCH_CASE(Function,FunctionDecl)
         DISPATCH_CASE(Var,VarDecl)

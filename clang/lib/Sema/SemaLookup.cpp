@@ -53,8 +53,7 @@ MaybeConstructOverloadSet(ASTContext &Context,
         // FIXME: We leak this overload set. Eventually, we want to
         // stop building the declarations for these overload sets, so
         // there will be nothing to leak.
-        Ovl = OverloadedFunctionDecl::Create(Context, 
-                                         cast<ScopedDecl>(*I)->getDeclContext(),
+        Ovl = OverloadedFunctionDecl::Create(Context, (*I)->getDeclContext(),
                                              (*I)->getDeclName());
         Ovl->addOverload(cast<FunctionDecl>(*I));
       }
@@ -491,7 +490,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
       //   A static member, a nested type or an enumerator defined in
       //   a base class T can unambiguously be found even if an object
       //   has more than one base class subobject of type T. 
-      ScopedDecl *FirstDecl = *Path->Decls.first;
+      Decl *FirstDecl = *Path->Decls.first;
       if (isa<VarDecl>(FirstDecl) ||
           isa<TypeDecl>(FirstDecl) ||
           isa<EnumConstantDecl>(FirstDecl))
@@ -610,10 +609,10 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
   Diag(NameLoc, diag::err_ambiguous_member_multiple_subobject_types)
     << Name << LookupRange;
 
-  std::set<ScopedDecl *> DeclsPrinted;
+  std::set<Decl *> DeclsPrinted;
   for (BasePaths::paths_iterator Path = Paths->begin(), PathEnd = Paths->end();
        Path != PathEnd; ++Path) {
-    ScopedDecl *D = *Path->Decls.first;
+    Decl *D = *Path->Decls.first;
     if (DeclsPrinted.insert(D).second)
       Diag(D->getLocation(), diag::note_ambiguous_member_found);
   }

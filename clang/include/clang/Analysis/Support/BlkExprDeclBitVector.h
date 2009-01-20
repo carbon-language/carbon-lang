@@ -18,7 +18,7 @@
 #define LLVM_CLANG_STMTDECLBVDVAL_H
 
 #include "clang/AST/CFG.h"
-#include "clang/AST/Decl.h" // for ScopedDecl* -> NamedDecl* conversion
+#include "clang/AST/Decl.h" // for Decl* -> NamedDecl* conversion
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 
@@ -117,12 +117,12 @@ struct DeclBitVector_Types {
     }
     
     llvm::BitVector::reference
-    operator()(const ScopedDecl* SD, const AnalysisDataTy& AD) {
-      return getBit(AD.getIdx(SD));
+    operator()(const NamedDecl* ND, const AnalysisDataTy& AD) {
+      return getBit(AD.getIdx(ND));
     }
 
-    bool operator()(const ScopedDecl* SD, const AnalysisDataTy& AD) const {
-      return getBit(AD.getIdx(SD));
+    bool operator()(const NamedDecl* ND, const AnalysisDataTy& AD) const {
+      return getBit(AD.getIdx(ND));
     }
     
     llvm::BitVector::reference getDeclBit(unsigned i) { return DeclBV[i]; }    

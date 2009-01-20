@@ -46,19 +46,10 @@ public:
 // LookupContext Implementation
 //===----------------------------------------------------------------------===//
 
-/// getContext - Returns translation unit context for non ScopedDecls and
+/// getContext - Returns translation unit context for non Decls and
 /// for EnumConstantDecls returns the parent context of their EnumDecl.
 DeclContext *IdentifierResolver::LookupContext::getContext(Decl *D) {
-  DeclContext *Ctx;
-
-  if (EnumConstantDecl *EnumD = dyn_cast<EnumConstantDecl>(D)) {
-    Ctx = EnumD->getDeclContext()->getParent();
-  } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
-    Ctx = SD->getDeclContext(); 
-  else if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
-    Ctx = Ovl->getDeclContext();
-  else
-    return TUCtx();
+  DeclContext *Ctx = D->getDeclContext();
 
   if (!Ctx) // FIXME: HACK! We shouldn't end up with a NULL context here.
     return TUCtx();

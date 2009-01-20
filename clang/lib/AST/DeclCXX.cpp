@@ -210,11 +210,9 @@ void CXXRecordDecl::addConversionFunction(ASTContext &Context,
 CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation L, DeclarationName N,
-                      QualType T, bool isStatic, bool isInline,
-                      ScopedDecl *PrevDecl) {
+                      QualType T, bool isStatic, bool isInline) {
   void *Mem = C.getAllocator().Allocate<CXXMethodDecl>();
-  return new (Mem) CXXMethodDecl(CXXMethod, RD, L, N, T, isStatic, isInline, 
-                                 PrevDecl);
+  return new (Mem) CXXMethodDecl(CXXMethod, RD, L, N, T, isStatic, isInline);
 }
 
 QualType CXXMethodDecl::getThisType(ASTContext &C) const {
@@ -355,9 +353,9 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 
 CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, IdentifierInfo *Id,
-                                   QualType T, ScopedDecl *PrevDecl) {
+                                   QualType T) {
   void *Mem = C.getAllocator().Allocate<CXXClassVarDecl>();
-  return new (Mem) CXXClassVarDecl(RD, L, Id, T, PrevDecl);
+  return new (Mem) CXXClassVarDecl(RD, L, Id, T);
 }
 
 OverloadedFunctionDecl *

@@ -31,9 +31,10 @@ class StringLiteral;
 /// FIXME: The TranslationUnit class should probably be modified to serve as
 /// the top decl context. It would have ownership of the top decls so that the
 /// AST is self-contained and easily de/serializable.
+/// FIXME: TranslationUnitDecl isn't really a Decl (!)
 class TranslationUnitDecl : public Decl, public DeclContext {
   TranslationUnitDecl()
-    : Decl(TranslationUnit, SourceLocation()),
+    : Decl(TranslationUnit, 0, SourceLocation()),
       DeclContext(TranslationUnit) {}
 public:
   static TranslationUnitDecl *Create(ASTContext &C);
@@ -66,13 +67,13 @@ class NamedDecl : public Decl {
   DeclarationName Name;
 
 protected:
-  NamedDecl(Kind DK, SourceLocation L, DeclarationName N)
-    : Decl(DK, L), Name(N) {}
+  NamedDecl(Kind DK, DeclContext *DC, SourceLocation L, DeclarationName N)
+    : Decl(DK, DC, L), Name(N) {}
   
-public:
-  NamedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id)
-    : Decl(DK, L), Name(Id) {}
+  NamedDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
+    : Decl(DK, DC, L), Name(Id) {}
 
+public:
   /// getIdentifier - Get the identifier that names this declaration,
   /// if there is one. This will return NULL if this declaration has
   /// no name (e.g., for an unnamed class) or if the name is a special
@@ -98,6 +99,15 @@ public:
   /// For simple declarations, getNameAsCString() should suffice.
   std::string getNameAsString() const { return Name.getAsString(); }
   
+  /// declarationReplaces - Determine whether this declaration, if
+  /// known to be well-formed within its context, will replace the
+  /// declaration OldD if introduced into scope. A declaration will
+  /// replace another declaration if, for example, it is a
+  /// redeclaration of the same variable or function, but not if it is
+  /// a declaration of a different kind (function vs. class) or an
+  /// overloaded function.
+  bool declarationReplaces(NamedDecl *OldD) const;
+
   static bool classof(const Decl *D) {
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
   }
@@ -108,143 +118,8 @@ protected:
   void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// ScopedDecl - Represent lexically scoped names, used for all ValueDecl's
-/// and TypeDecl's.
-class ScopedDecl : public NamedDecl {
-  /// NextDeclarator - If this decl was part of a multi-declarator declaration,
-  /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
-  ScopedDecl *NextDeclarator;
-  
-  /// NextDeclInScope - The next declaration within the same lexical
-  /// DeclContext. These pointers form the linked list that is
-  /// traversed via DeclContext's decls_begin()/decls_end().
-  /// FIXME: If NextDeclarator is non-NULL, will it always be the same
-  /// as NextDeclInScope? If so, we can use a
-  /// PointerIntPair<ScopedDecl*, 1> to make ScopedDecl smaller.
-  ScopedDecl *NextDeclInScope;
-
-  friend class DeclContext;
-  friend class DeclContext::decl_iterator;
-
-  /// DeclCtx - Holds either a DeclContext* or a MultipleDC*.
-  /// For declarations that don't contain C++ scope specifiers, it contains
-  /// the DeclContext where the ScopedDecl was declared.
-  /// For declarations with C++ scope specifiers, it contains a MultipleDC*
-  /// with the context where it semantically belongs (SemanticDC) and the
-  /// context where it was lexically declared (LexicalDC).
-  /// e.g.:
-  ///
-  ///   namespace A {
-  ///      void f(); // SemanticDC == LexicalDC == 'namespace A'
-  ///   }
-  ///   void A::f(); // SemanticDC == namespace 'A'
-  ///                // LexicalDC == global namespace
-  uintptr_t DeclCtx;
-
-  struct MultipleDC {
-    DeclContext *SemanticDC;
-    DeclContext *LexicalDC;
-  };
-
-  inline bool isInSemaDC() const { return (DeclCtx & 0x1) == 0; }
-  inline bool isOutOfSemaDC() const { return (DeclCtx & 0x1) != 0; }
-  inline MultipleDC *getMultipleDC() const {
-    return reinterpret_cast<MultipleDC*>(DeclCtx & ~0x1);
-  }
-
-protected:
-  ScopedDecl(Kind DK, DeclContext *DC, SourceLocation L,
-             DeclarationName N, ScopedDecl *PrevDecl = 0)
-    : NamedDecl(DK, L, N), NextDeclarator(PrevDecl), NextDeclInScope(0),
-      DeclCtx(reinterpret_cast<uintptr_t>(DC)) {}
-
-  virtual ~ScopedDecl();
-
-  /// setDeclContext - Set both the semantic and lexical DeclContext
-  /// to DC.
-  void setDeclContext(DeclContext *DC);
-
-public:
-  const DeclContext *getDeclContext() const {
-    if (isInSemaDC())
-      return reinterpret_cast<DeclContext*>(DeclCtx);
-    return getMultipleDC()->SemanticDC;
-  }
-  DeclContext *getDeclContext() {
-    return const_cast<DeclContext*>(
-                         const_cast<const ScopedDecl*>(this)->getDeclContext());
-  }
-
-  void setAccess(AccessSpecifier AS) { Access = AS; }
-  AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
-
-  /// getLexicalDeclContext - The declaration context where this ScopedDecl was
-  /// lexically declared (LexicalDC). May be different from
-  /// getDeclContext() (SemanticDC).
-  /// e.g.:
-  ///
-  ///   namespace A {
-  ///      void f(); // SemanticDC == LexicalDC == 'namespace A'
-  ///   }
-  ///   void A::f(); // SemanticDC == namespace 'A'
-  ///                // LexicalDC == global namespace
-  const DeclContext *getLexicalDeclContext() const {
-    if (isInSemaDC())
-      return reinterpret_cast<DeclContext*>(DeclCtx);
-    return getMultipleDC()->LexicalDC;
-  }
-  DeclContext *getLexicalDeclContext() {
-    return const_cast<DeclContext*>(
-                  const_cast<const ScopedDecl*>(this)->getLexicalDeclContext());
-  }
-
-  void setLexicalDeclContext(DeclContext *DC);
-
-  /// getNextDeclarator - If this decl was part of a multi-declarator
-  /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
-  /// declarator.  Otherwise it returns null.
-  ScopedDecl *getNextDeclarator() { return NextDeclarator; }
-  const ScopedDecl *getNextDeclarator() const { return NextDeclarator; }
-  void setNextDeclarator(ScopedDecl *N) { NextDeclarator = N; }
-  
-  // isDefinedOutsideFunctionOrMethod - This predicate returns true if this
-  // scoped decl is defined outside the current function or method.  This is
-  // roughly global variables and functions, but also handles enums (which could
-  // be defined inside or outside a function etc).
-  bool isDefinedOutsideFunctionOrMethod() const {
-    if (getDeclContext())
-      return !getDeclContext()->getLookupContext()->isFunctionOrMethod();
-    else
-      return true;
-  }
-
-  /// declarationReplaces - Determine whether this declaration, if
-  /// known to be well-formed within its context, will replace the
-  /// declaration OldD if introduced into scope. A declaration will
-  /// replace another declaration if, for example, it is a
-  /// redeclaration of the same variable or function, but not if it is
-  /// a declaration of a different kind (function vs. class) or an
-  /// overloaded function.
-  bool declarationReplaces(NamedDecl *OldD) const;
-
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= ScopedFirst && D->getKind() <= ScopedLast;
-  }
-  static bool classof(const ScopedDecl *D) { return true; }
-  
-protected:
-  void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
-  
-  void EmitOutRec(llvm::Serializer& S) const;
-  void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
-  
-  friend void Decl::Destroy(ASTContext& C);
-};
-
 /// NamespaceDecl - Represent a C++ namespace.
-class NamespaceDecl : public ScopedDecl, public DeclContext {
+class NamespaceDecl : public NamedDecl, public DeclContext {
   SourceLocation LBracLoc, RBracLoc;
   
   // For extended namespace definitions:
@@ -260,7 +135,7 @@ class NamespaceDecl : public ScopedDecl, public DeclContext {
   NamespaceDecl *OrigNamespace;
 
   NamespaceDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
-    : ScopedDecl(Namespace, DC, L, Id, 0), DeclContext(Namespace) {
+    : NamedDecl(Namespace, DC, L, Id), DeclContext(Namespace) {
       OrigNamespace = this;
   }
 public:
@@ -314,13 +189,13 @@ protected:
 /// ValueDecl - Represent the declaration of a variable (in which case it is 
 /// an lvalue) a function (in which case it is a function designator) or
 /// an enum constant. 
-class ValueDecl : public ScopedDecl {
+class ValueDecl : public NamedDecl {
   QualType DeclType;
 
 protected:
   ValueDecl(Kind DK, DeclContext *DC, SourceLocation L,
-            DeclarationName N, QualType T, ScopedDecl *PrevDecl) 
-    : ScopedDecl(DK, DC, L, N, PrevDecl), DeclType(T) {}
+            DeclarationName N, QualType T) 
+    : NamedDecl(DK, DC, L, N), DeclType(T) {}
 public:
   QualType getType() const { return DeclType; }
   void setType(QualType newType) { DeclType = newType; }
@@ -359,9 +234,8 @@ private:
   friend class StmtIteratorBase;
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-          QualType T, StorageClass SC, ScopedDecl *PrevDecl, 
-          SourceLocation TSSL = SourceLocation())
-    : ValueDecl(DK, DC, L, Id, T, PrevDecl), Init(0),
+          QualType T, StorageClass SC, SourceLocation TSSL = SourceLocation())
+    : ValueDecl(DK, DC, L, Id, T), Init(0),
           ThreadSpecified(false), HasCXXDirectInit(false),
           DeclaredInCondition(false), TypeSpecStartLoc(TSSL) { 
     SClass = SC; 
@@ -369,7 +243,7 @@ protected:
 public:
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
-                         QualType T, StorageClass S, ScopedDecl *PrevDecl,
+                         QualType T, StorageClass S,
                          SourceLocation TypeSpecStartLoc = SourceLocation());
 
   virtual ~VarDecl();
@@ -480,12 +354,12 @@ protected:
 class ImplicitParamDecl : public VarDecl {
 protected:
   ImplicitParamDecl(Kind DK, DeclContext *DC, SourceLocation L,
-            IdentifierInfo *Id, QualType T, ScopedDecl *PrevDecl) 
-    : VarDecl(DK, DC, L, Id, T, VarDecl::None, PrevDecl) {}
+            IdentifierInfo *Id, QualType Tw) 
+    : VarDecl(DK, DC, L, Id, Tw, VarDecl::None) {}
 public:
   static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
-                         QualType T, ScopedDecl *PrevDecl);
+                         QualType T);
   // Implement isa/cast/dyncast/etc.
   static bool classof(const ImplicitParamDecl *D) { return true; }
   static bool classof(const Decl *D) { return D->getKind() == ImplicitParam; }
@@ -503,15 +377,14 @@ class ParmVarDecl : public VarDecl {
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, StorageClass S,
-              Expr *DefArg, ScopedDecl *PrevDecl)
-    : VarDecl(DK, DC, L, Id, T, S, PrevDecl), 
+              Expr *DefArg)
+    : VarDecl(DK, DC, L, Id, T, S), 
       objcDeclQualifier(OBJC_TQ_None), DefaultArg(DefArg) {}
 
 public:
   static ParmVarDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L,IdentifierInfo *Id,
-                             QualType T, StorageClass S, Expr *DefArg,
-                             ScopedDecl *PrevDecl);
+                             QualType T, StorageClass S, Expr *DefArg);
   
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);
@@ -582,15 +455,13 @@ private:
   ParmVarWithOriginalTypeDecl(DeclContext *DC, SourceLocation L,
                               IdentifierInfo *Id, QualType T, 
                               QualType OT, StorageClass S,
-                              Expr *DefArg, ScopedDecl *PrevDecl)
-  : ParmVarDecl(OriginalParmVar,
-                DC, L, Id, T, S, DefArg, PrevDecl), OriginalType(OT) {}
+                              Expr *DefArg)
+  : ParmVarDecl(OriginalParmVar, DC, L, Id, T, S, DefArg), OriginalType(OT) {}
 public:
     static ParmVarWithOriginalTypeDecl *Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L,IdentifierInfo *Id,
                                QualType T, QualType OT,
-                               StorageClass S, Expr *DefArg,
-                               ScopedDecl *PrevDecl);
+                               StorageClass S, Expr *DefArg);
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == OriginalParmVar; }
@@ -656,9 +527,9 @@ private:
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
                DeclarationName N, QualType T,
-               StorageClass S, bool isInline, ScopedDecl *PrevDecl,
+               StorageClass S, bool isInline,
                SourceLocation TSSL = SourceLocation())
-    : ValueDecl(DK, DC, L, N, T, PrevDecl), 
+    : ValueDecl(DK, DC, L, N, T), 
       DeclContext(DK),
       ParamInfo(0), Body(0), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), IsVirtual(false), IsPure(false),
@@ -670,8 +541,7 @@ protected:
 public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               DeclarationName N, QualType T, 
-                              StorageClass S = None, bool isInline = false, 
-                              ScopedDecl *PrevDecl = 0,
+                              StorageClass S = None, bool isInline = false,
                               SourceLocation TSStartLoc = SourceLocation());  
   
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
@@ -784,22 +654,21 @@ protected:
 
 /// FieldDecl - An instance of this class is created by Sema::ActOnField to 
 /// represent a member of a struct/union/class.
-class FieldDecl : public ScopedDecl {
+class FieldDecl : public NamedDecl {
   bool Mutable : 1;
   QualType DeclType;  
   Expr *BitWidth;
 protected:
   FieldDecl(Kind DK, DeclContext *DC, SourceLocation L, 
-            IdentifierInfo *Id, QualType T, Expr *BW, bool Mutable, 
-            ScopedDecl *PrevDecl)
-    : ScopedDecl(DK, DC, L, Id, PrevDecl), Mutable(Mutable), DeclType(T), 
+            IdentifierInfo *Id, QualType T, Expr *BW, bool Mutable)
+    : NamedDecl(DK, DC, L, Id), Mutable(Mutable), DeclType(T), 
       BitWidth(BW)
       { }
 
 public:
   static FieldDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L, 
                            IdentifierInfo *Id, QualType T, Expr *BW, 
-                           bool Mutable, ScopedDecl *PrevDecl);
+                           bool Mutable);
 
   QualType getType() const { return DeclType; }
 
@@ -842,8 +711,8 @@ class EnumConstantDecl : public ValueDecl {
 protected:
   EnumConstantDecl(DeclContext *DC, SourceLocation L,
                    IdentifierInfo *Id, QualType T, Expr *E,
-                   const llvm::APSInt &V, ScopedDecl *PrevDecl)
-    : ValueDecl(EnumConstant, DC, L, Id, T, PrevDecl), Init((Stmt*)E), Val(V) {}
+                   const llvm::APSInt &V)
+    : ValueDecl(EnumConstant, DC, L, Id, T), Init((Stmt*)E), Val(V) {}
 
   virtual ~EnumConstantDecl() {}
 public:
@@ -851,7 +720,7 @@ public:
   static EnumConstantDecl *Create(ASTContext &C, EnumDecl *DC,
                                   SourceLocation L, IdentifierInfo *Id,
                                   QualType T, Expr *E,
-                                  const llvm::APSInt &V, ScopedDecl *PrevDecl);
+                                  const llvm::APSInt &V);
   
   virtual void Destroy(ASTContext& C);
 
@@ -881,7 +750,7 @@ protected:
 
 /// TypeDecl - Represents a declaration of a type.
 ///
-class TypeDecl : public ScopedDecl {
+class TypeDecl : public NamedDecl {
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getTypedefType,
   /// ASTContext::getTagDeclType, and ASTContext::getTemplateTypeParmType.
@@ -892,8 +761,8 @@ class TypeDecl : public ScopedDecl {
 
 protected:
   TypeDecl(Kind DK, DeclContext *DC, SourceLocation L,
-           IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : ScopedDecl(DK, DC, L, Id, PrevDecl), TypeForDecl(0) {}
+           IdentifierInfo *Id)
+    : NamedDecl(DK, DC, L, Id), TypeForDecl(0) {}
 
 public:
   // Implement isa/cast/dyncast/etc.
@@ -908,15 +777,15 @@ class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
   QualType UnderlyingType;
   TypedefDecl(DeclContext *DC, SourceLocation L,
-              IdentifierInfo *Id, QualType T, ScopedDecl *PD) 
-    : TypeDecl(Typedef, DC, L, Id, PD), UnderlyingType(T) {}
+              IdentifierInfo *Id, QualType T) 
+    : TypeDecl(Typedef, DC, L, Id), UnderlyingType(T) {}
 
   virtual ~TypedefDecl() {}
 public:
   
   static TypedefDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L,IdentifierInfo *Id,
-                             QualType T, ScopedDecl *PD);
+                             QualType T);
   
   QualType getUnderlyingType() const { return UnderlyingType; }
   void setUnderlyingType(QualType newType) { UnderlyingType = newType; }
@@ -955,8 +824,8 @@ private:
   bool IsDefinition : 1;
 protected:
   TagDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
-          IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : TypeDecl(DK, DC, L, Id, PrevDecl), DeclContext(DK) {
+          IdentifierInfo *Id)
+    : TypeDecl(DK, DC, L, Id), DeclContext(DK) {
     assert((DK != Enum || TK == TK_enum) &&"EnumDecl not matched with TK_enum");
     TagDeclKind = TK;
     IsDefinition = false;
@@ -1032,8 +901,8 @@ class EnumDecl : public TagDecl {
   QualType IntegerType;
   
   EnumDecl(DeclContext *DC, SourceLocation L,
-           IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : TagDecl(Enum, TK_enum, DC, L, Id, PrevDecl) {
+           IdentifierInfo *Id)
+    : TagDecl(Enum, TK_enum, DC, L, Id) {
       IntegerType = QualType();
     }
 public:
@@ -1186,11 +1055,11 @@ protected:
 
 class FileScopeAsmDecl : public Decl {
   StringLiteral *AsmString;
-  FileScopeAsmDecl(SourceLocation L, StringLiteral *asmstring)
-    : Decl(FileScopeAsm, L), AsmString(asmstring) {}
+  FileScopeAsmDecl(DeclContext *DC, SourceLocation L, StringLiteral *asmstring)
+    : Decl(FileScopeAsm, DC, L), AsmString(asmstring) {}
 public:
-  static FileScopeAsmDecl *Create(ASTContext &C, SourceLocation L,
-                                  StringLiteral *Str);
+  static FileScopeAsmDecl *Create(ASTContext &C, DeclContext *DC,
+                                  SourceLocation L, StringLiteral *Str);
 
   const StringLiteral *getAsmString() const { return AsmString; }
   StringLiteral *getAsmString() { return AsmString; }
@@ -1216,11 +1085,9 @@ class BlockDecl : public Decl, public DeclContext {
   llvm::SmallVector<ParmVarDecl*, 8> Args;
   Stmt *Body;
   
-  // Since BlockDecl's aren't named/scoped, we need to store the context.
-  DeclContext *ParentContext;
 protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
-    : Decl(Block, CaretLoc), DeclContext(Block), Body(0), ParentContext(DC) {}
+    : Decl(Block, DC, CaretLoc), DeclContext(Block), Body(0) {}
 
   virtual ~BlockDecl();
   virtual void Destroy(ASTContext& C);
@@ -1237,8 +1104,6 @@ public:
     Args.clear(); 
     Args.insert(Args.begin(), args, args+numargs);
   }
-  const DeclContext *getParentContext() const { return ParentContext; }
-  DeclContext *getParentContext() { return ParentContext; }
   
   /// arg_iterator - Iterate over the ParmVarDecl's for this block.
   typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator param_iterator;
@@ -1265,11 +1130,6 @@ protected:
 
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
-
-inline DeclContext::decl_iterator& DeclContext::decl_iterator::operator++() {
-  Current = Current->NextDeclInScope;
-  return *this;
-}
 
 }  // end namespace clang
 

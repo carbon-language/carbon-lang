@@ -122,8 +122,8 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     Out << "asm(";
     AD->getAsmString()->printPretty(Out);
     Out << ")\n";
-  } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-    Out << "Read top-level variable decl: '" << SD->getNameAsString() << "'\n";
+  } else if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+    Out << "Read top-level variable decl: '" << ND->getNameAsString() << "'\n";
   } else {
     assert(0 && "Unknown decl type!");
   }
@@ -480,8 +480,8 @@ namespace {
         }
       } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
         PrintTypeDefDecl(TD);
-      } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-        Out << "Read top-level variable decl: '" << SD->getNameAsString()
+      } else if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+        Out << "Read top-level variable decl: '" << ND->getNameAsString()
             << "'\n";
       } else if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
         Out << "Read objc interface '" << OID->getNameAsString() << "'\n";
