@@ -800,7 +800,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
         //   definition, the members of the anonymous union are
         //   considered to have been defined in the scope in which the
         //   anonymous union is declared.
-        Owner->insert(*F);
+        Owner->makeDeclVisibleInContext(*F);
         S->AddDecl(*F);
         IdResolver.AddDecl(*F);
       }

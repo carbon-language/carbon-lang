@@ -529,7 +529,7 @@ void DeclContext::addDecl(Decl *D) {
   }
 
   if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
-    ND->getDeclContext()->insert(ND);
+    ND->getDeclContext()->makeDeclVisibleInContext(ND);
 }
 
 /// buildLookup - Build the lookup data structure with all of the
@@ -541,7 +541,7 @@ void DeclContext::buildLookup(DeclContext *DCtx) {
          D != DEnd; ++D) {
       // Insert this declaration into the lookup structure
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        insertImpl(ND);
+        makeDeclVisibleInContextImpl(ND);
 
       // If this declaration is itself a transparent declaration context,
       // add its members (recursively).
@@ -600,10 +600,10 @@ const DeclContext *DeclContext::getLookupContext() const {
   return Ctx;
 }
 
-void DeclContext::insert(NamedDecl *D) {
+void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this) {
-    PrimaryContext->insert(D);
+    PrimaryContext->makeDeclVisibleInContext(D);
     return;
   }
 
@@ -611,15 +611,15 @@ void DeclContext::insert(NamedDecl *D) {
   // into it. Otherwise, be lazy and don't build that structure until
   // someone asks for it.
   if (LookupPtr.getPointer())
-    insertImpl(D);
+    makeDeclVisibleInContextImpl(D);
 
   // If we are a transparent context, insert into our parent context,
   // too. This operation is recursive.
   if (isTransparentContext())
-    getParent()->insert(D);
+    getParent()->makeDeclVisibleInContext(D);
 }
 
-void DeclContext::insertImpl(NamedDecl *D) {
+void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   // Skip unnamed declarations.
   if (!D->getDeclName())
     return;
@@ -694,7 +694,7 @@ void DeclContext::insertImpl(NamedDecl *D) {
     LookupPtr.setPointer(Map);
     LookupPtr.setInt(LookupIsMap);
     for (unsigned Idx = 0; Idx != LookupIsMap - 1; ++Idx) 
-      insertImpl(Array[Idx]);
+      makeDeclVisibleInContextImpl(Array[Idx]);
     delete [] Array;
 
     // Fall through to perform insertion into the map.

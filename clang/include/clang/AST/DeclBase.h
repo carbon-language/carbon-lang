@@ -706,11 +706,19 @@ public:
     }
   };
 
-  /// addDecl - Add the declaration D to this scope, and into data structure
-  /// for name lookup. 
+  /// @brief Add the declaration D into this context.
+  ///
+  /// This routine should be invoked when the declaration D has first
+  /// been declared, to place D into the context where it was
+  /// (lexically) defined. Every declaration must be added to one
+  /// (and only one!) context, where it can be visited via
+  /// [decls_begin(), decls_end()). Once a declaration has been added
+  /// to its lexical context, the corresponding DeclContext owns the
+  /// declaration.
+  ///
+  /// If D is also a NamedDecl, it will be made visible within its
+  /// semantic context via makeDeclVisibleInContext.
   void addDecl(Decl *D);
-
-  void buildLookup(DeclContext *DCtx);
 
   /// lookup_iterator - An iterator that provides access to the results
   /// of looking up a name within this context.
@@ -726,26 +734,27 @@ public:
 
   /// lookup - Find the declarations (if any) with the given Name in
   /// this context. Returns a range of iterators that contains all of
-  /// the declarations with this name (which may be 0, 1, or more
-  /// declarations). If two declarations are returned, the declaration
-  /// in the "ordinary" identifier namespace will precede the
-  /// declaration in the "tag" identifier namespace (e.g., values
-  /// before types). Note that this routine will not look into parent
-  /// contexts.
+  /// the declarations with this name, with object, function, member,
+  /// and enumerator names preceding any tag name. Note that this
+  /// routine will not look into parent contexts.
   lookup_result lookup(DeclarationName Name);
   lookup_const_result lookup(DeclarationName Name) const;
 
-  /// insert - Insert the declaration D into this context. Up to two
-  /// declarations with the same name can be inserted into a single
-  /// declaration context, one in the "tag" namespace (e.g., for
-  /// classes and enums) and one in the "ordinary" namespaces (e.g.,
-  /// for variables, functions, and other values). Note that, if there
-  /// is already a declaration with the same name and identifier
-  /// namespace, D will replace it. It is up to the caller to ensure
-  /// that this replacement is semantically correct, e.g., that
-  /// declarations are only replaced by later declarations of the same
-  /// entity and not a declaration of some other kind of entity.
-  void insert(NamedDecl *D);
+  /// @brief Makes a declaration visible within this context.
+  ///
+  /// This routine makes the declaration D visible to name lookup
+  /// within this context and, if this is a transparent context,
+  /// within its parent contexts up to the first enclosing
+  /// non-transparent context. Making a declaration visible within a
+  /// context does not transfer ownership of a declaration, and a
+  /// declaration can be visible in many contexts that aren't its
+  /// lexical context.
+  ///
+  /// If D is a redeclaration of an existing declaration that is
+  /// visible from this context, as determined by
+  /// NamedDecl::declarationReplaces, the previous declaration will be
+  /// replaced with D.
+  void makeDeclVisibleInContext(NamedDecl *D);
 
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
@@ -787,7 +796,8 @@ public:
   static bool classof(const BlockDecl *D) { return true; }
 
 private:
-  void insertImpl(NamedDecl *D);
+  void buildLookup(DeclContext *DCtx);
+  void makeDeclVisibleInContextImpl(NamedDecl *D);
 
   void EmitOutRec(llvm::Serializer& S) const;
   void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
