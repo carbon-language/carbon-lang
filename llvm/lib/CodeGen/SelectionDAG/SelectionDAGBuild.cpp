@@ -2945,26 +2945,27 @@ void AddCatchInfo(CallInst &I, MachineModuleInfo *MMI,
 /// where Op is the hexidecimal representation of floating point value.
 static SDValue
 GetSignificand(SelectionDAG &DAG, SDValue Op) {
-    SDValue t1 = DAG.getNode(ISD::AND, MVT::i32, Op,
-                             DAG.getConstant(0x007fffff, MVT::i32));
-    SDValue t2 = DAG.getNode(ISD::OR, MVT::i32, t1,
-                             DAG.getConstant(0x3f800000, MVT::i32));
-    return DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t2);
+  SDValue t1 = DAG.getNode(ISD::AND, MVT::i32, Op,
+                           DAG.getConstant(0x007fffff, MVT::i32));
+  SDValue t2 = DAG.getNode(ISD::OR, MVT::i32, t1,
+                           DAG.getConstant(0x3f800000, MVT::i32));
+  return DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t2);
 }
 
 /// GetExponent - Get the exponent:
 ///
-///   (float)((Op1 >> 23) - 127);
+///   (float)(int)(((Op & 0x7f800000) >> 23) - 127);
 ///
 /// where Op is the hexidecimal representation of floating point value.
 static SDValue
 GetExponent(SelectionDAG &DAG, SDValue Op, const TargetLowering &TLI) {
-    SDValue t1 = DAG.getNode(ISD::SRL, MVT::i32, Op,
-                             DAG.getConstant(23, TLI.getShiftAmountTy()));
-    SDValue t2 = DAG.getNode(ISD::SUB, MVT::i32, t1,
-                             DAG.getConstant(127, MVT::i32));
-    //    SDValue t3 = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, t2);
-    return DAG.getNode(ISD::UINT_TO_FP, MVT::f32, t2);
+  SDValue t0 = DAG.getNode(ISD::AND, MVT::i32, Op,
+                           DAG.getConstant(0x7f800000, MVT::i32));
+  SDValue t1 = DAG.getNode(ISD::SRL, MVT::i32, t0,
+                           DAG.getConstant(23, TLI.getShiftAmountTy()));
+  SDValue t2 = DAG.getNode(ISD::SUB, MVT::i32, t1,
+                           DAG.getConstant(127, MVT::i32));
+  return DAG.getNode(ISD::SINT_TO_FP, MVT::f32, t2);
 }
 
 /// getF32Constant - Get 32-bit floating point constant.
