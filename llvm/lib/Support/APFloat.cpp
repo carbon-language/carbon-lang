@@ -1514,7 +1514,45 @@ APFloat::divide(const APFloat &rhs, roundingMode rounding_mode)
   return fs;
 }
 
-/* Normalized remainder.  This is not currently doing TRT.  */
+/* Normalized remainder.  This is not currently correct in all cases.  */
+APFloat::opStatus
+APFloat::remainder(const APFloat &rhs)
+{
+  opStatus fs;
+  APFloat V = *this;
+  unsigned int origSign = sign;
+
+  assertArithmeticOK(*semantics);
+  fs = V.divide(rhs, rmNearestTiesToEven);
+  if (fs == opDivByZero)
+    return fs;
+
+  int parts = partCount();
+  integerPart *x = new integerPart[parts];
+  bool ignored;
+  fs = V.convertToInteger(x, parts * integerPartWidth, true,
+                          rmNearestTiesToEven, &ignored);
+  if (fs==opInvalidOp)
+    return fs;
+
+  fs = V.convertFromZeroExtendedInteger(x, parts * integerPartWidth, true,
+                                        rmNearestTiesToEven);
+  assert(fs==opOK);   // should always work
+
+  fs = V.multiply(rhs, rmNearestTiesToEven);
+  assert(fs==opOK || fs==opInexact);   // should not overflow or underflow
+
+  fs = subtract(V, rmNearestTiesToEven);
+  assert(fs==opOK || fs==opInexact);   // likewise
+
+  if (isZero())
+    sign = origSign;    // IEEE754 requires this
+  delete[] x;
+  return fs;
+}
+
+/* Normalized llvm frem (C fmod).  
+   This is not currently correct in all cases.  */
 APFloat::opStatus
 APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
 {

@@ -207,6 +207,9 @@ namespace llvm {
     opStatus subtract(const APFloat &, roundingMode);
     opStatus multiply(const APFloat &, roundingMode);
     opStatus divide(const APFloat &, roundingMode);
+    /* IEEE remainder. */
+    opStatus remainder(const APFloat &);
+    /* C fmod, or llvm frem. */
     opStatus mod(const APFloat &, roundingMode);
     opStatus fusedMultiplyAdd(const APFloat &, const APFloat &, roundingMode);
 
