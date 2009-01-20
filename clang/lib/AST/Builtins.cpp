@@ -142,6 +142,23 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     Type = Context.getBuiltinVaListType();
     assert(!Type.isNull() && "builtin va list type not initialized!");
     break;
+  case 'A':
+    // This is a "reference" to a va_list; however, what exactly
+    // this means depends on how va_list is defined. There are two
+    // different kinds of va_list: ones passed by value, and ones
+    // passed by reference.  An example of a by-value va_list is
+    // x86, where va_list is a char*. An example of by-ref va_list
+    // is x86-64, where va_list is a __va_list_tag[1]. For x86,
+    // we want this argument to be a char*&; for x86-64, we want
+    // it to be a __va_list_tag*.
+    Type = Context.getBuiltinVaListType();
+    assert(!Type.isNull() && "builtin va list type not initialized!");
+    if (Type->isArrayType()) {
+      Type = Context.getArrayDecayedType(Type);
+    } else {
+      Type = Context.getReferenceType(Type);
+    }
+    break;
   case 'V': {
     char *End;
     

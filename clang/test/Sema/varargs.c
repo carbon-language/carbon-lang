@@ -43,3 +43,12 @@ void f6(int a, ...) {
   __builtin_va_list ap;
   __builtin_va_start(ap); // expected-error {{too few arguments to function}}
 }
+
+// PR3350
+void
+foo(__builtin_va_list authors, ...) {
+  __builtin_va_start (authors, authors);
+  (void)__builtin_va_arg(authors, int);
+  __builtin_va_end (authors);
+}
+

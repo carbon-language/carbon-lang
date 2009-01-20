@@ -81,7 +81,7 @@ public:
   /// hasVAListUse - Return true of the specified builtin uses __builtin_va_list
   /// as an operand or return type.
   bool hasVAListUse(unsigned ID) const {
-    return strchr(GetRecord(ID).Type, 'a') != 0;
+    return strpbrk(GetRecord(ID).Type, "Aa") != 0;
   }
   
   /// GetBuiltinType - Return the type for the specified builtin.

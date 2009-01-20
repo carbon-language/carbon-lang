@@ -33,6 +33,7 @@
 //  z -> size_t
 //  F -> constant CFString
 //  a -> __builtin_va_list
+//  A -> "reference" to __builtin_va_list
 //  V -> Vector, following num elements and a base type.
 //  . -> "...".  This may only occur at the end of the function list.
 //
@@ -115,10 +116,10 @@ BUILTIN(__builtin_bswap64, "ULLiULLi", "nc")
 BUILTIN(__builtin_constant_p, "Us.", "nc")
 BUILTIN(__builtin_classify_type, "i.", "nc")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
-BUILTIN(__builtin_va_start, "va&.", "n")
-BUILTIN(__builtin_va_end, "va&", "n")
-BUILTIN(__builtin_va_copy, "va&a", "n")
-BUILTIN(__builtin_stdarg_start, "va&.", "n")
+BUILTIN(__builtin_va_start, "vA.", "n")
+BUILTIN(__builtin_va_end, "vA", "n")
+BUILTIN(__builtin_va_copy, "vAA", "n")
+BUILTIN(__builtin_stdarg_start, "vA.", "n")
 BUILTIN(__builtin_bzero, "vv*z", "n")
 BUILTIN(__builtin_memcpy, "v*v*vC*z", "n")
 BUILTIN(__builtin_memmove, "v*v*vC*z", "n")
