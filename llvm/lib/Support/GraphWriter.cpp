@@ -57,8 +57,8 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
     sys::Path gv(LLVM_PATH_GV);
     args.clear();
     args.push_back(gv.c_str());
-    args.push_back("--spartan");
     args.push_back(PSFilename.c_str());
+    args.push_back("-spartan");
     args.push_back(0);
     
     ErrMsg.clear();
