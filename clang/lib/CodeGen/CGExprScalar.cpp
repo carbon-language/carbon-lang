@@ -1286,7 +1286,7 @@ Value *ScalarExprEmitter::VisitOverloadExpr(OverloadExpr *E) {
 }
 
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
-  llvm::Value *ArgValue = EmitLValue(VE->getSubExpr()).getAddress();
+  llvm::Value *ArgValue = CGF.EmitVAListRef(VE->getSubExpr());
 
   llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
 

@@ -460,3 +460,10 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty)
   
   return 0;
 }
+
+llvm::Value* CodeGenFunction::EmitVAListRef(const Expr* E) {
+  if (CGM.getContext().getBuiltinVaListType()->isArrayType()) {
+    return EmitScalarExpr(E);
+  }
+  return EmitLValue(E).getAddress();
+}

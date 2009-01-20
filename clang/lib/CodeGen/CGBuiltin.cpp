@@ -53,12 +53,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
   case Builtin::BI__builtin_va_end: {
-    Value *ArgValue;
-    if (CGM.getContext().getBuiltinVaListType()->isArrayType()) {
-      ArgValue = EmitScalarExpr(E->getArg(0));
-    } else {
-      ArgValue = EmitLValue(E->getArg(0)).getAddress();
-    }
+    Value *ArgValue = EmitVAListRef(E->getArg(0));;
     const llvm::Type *DestType = 
       llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     if (ArgValue->getType() != DestType)
@@ -70,14 +65,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::get(Builder.CreateCall(CGM.getIntrinsic(inst), ArgValue));
   }
   case Builtin::BI__builtin_va_copy: {
-    Value *DstPtr, *SrcPtr;
-    if (CGM.getContext().getBuiltinVaListType()->isArrayType()) {
-      DstPtr = EmitScalarExpr(E->getArg(0));
-      SrcPtr = EmitScalarExpr(E->getArg(1));
-    } else {
-      DstPtr = EmitLValue(E->getArg(0)).getAddress();
-      SrcPtr = EmitLValue(E->getArg(1)).getAddress();
-    }
+    Value *DstPtr = EmitVAListRef(E->getArg(0));
+    Value *SrcPtr = EmitVAListRef(E->getArg(1));
 
     const llvm::Type *Type = 
       llvm::PointerType::getUnqual(llvm::Type::Int8Ty);

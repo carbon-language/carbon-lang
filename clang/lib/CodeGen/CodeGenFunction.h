@@ -314,6 +314,11 @@ public:
   RValue EmitAnyExpr(const Expr *E, llvm::Value *AggLoc = 0, 
                      bool isAggLocVolatile = false);
 
+  // EmitVAListRef - Emit a "reference" to a va_list; this is either the
+  // address or the value of the expression, depending on how va_list is
+  // defined.
+  llvm::Value *EmitVAListRef(const Expr *E);
+
   /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result
   /// will always be accessible even if no aggregate location is
   /// provided.
