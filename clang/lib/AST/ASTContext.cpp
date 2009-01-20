@@ -1744,9 +1744,11 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
   S = "T";
 
   // Encode result type.
-  // FIXME: GCC uses a generating_property_type_encoding mode during
-  // this part. Investigate.
-  getObjCEncodingForType(PD->getType(), S);
+  // GCC has some special rules regarding encoding of properties which
+  // closely resembles encoding of ivars.
+  getObjCEncodingForTypeImpl(PD->getType(), S, true, true, NULL, 
+                             true /* outermost type */,
+                             true /* encoding for property */);
 
   if (PD->isReadOnly()) {
     S += ",R";
@@ -1763,6 +1765,9 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
   if (Dynamic)
     S += ",D";
 
+  if (PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic)
+    S += ",N";
+  
   if (PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
     S += ",G";
     S += PD->getGetterName().getAsString();
@@ -1822,7 +1827,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandPointedToStructures,
                                             bool ExpandStructures,
                                             FieldDecl *FD,
-                                            bool OutermostType) const {
+                                            bool OutermostType,
+                                            bool EncodingProperty) const {
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
     if (FD && FD->isBitField()) {
       EncodeBitField(this, S, FD);
@@ -1854,10 +1860,23 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
   }
   else if (T->isObjCQualifiedIdType()) {
-    // Treat id<P...> same as 'id' for encoding purposes.
-    return getObjCEncodingForTypeImpl(getObjCIdType(), S, 
-                                      ExpandPointedToStructures,
-                                      ExpandStructures, FD);    
+    getObjCEncodingForTypeImpl(getObjCIdType(), S, 
+                               ExpandPointedToStructures,
+                               ExpandStructures, FD);
+    if (FD || EncodingProperty) {
+      // Note that we do extended encoding of protocol qualifer list
+      // Only when doing ivar or property encoding.
+      const ObjCQualifiedIdType *QIDT = T->getAsObjCQualifiedIdType();
+      S += '"';
+      for (unsigned i =0; i < QIDT->getNumProtocols(); i++) {
+        ObjCProtocolDecl *Proto = QIDT->getProtocols(i);
+        S += '<';
+        S += Proto->getNameAsString();
+        S += '>';
+      }
+      S += '"';
+    }
+    return;
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
@@ -1908,10 +1927,17 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         return;
       }
       S += '@';
-      if (FD) {
-        ObjCInterfaceDecl *OI = PointeeTy->getAsObjCInterfaceType()->getDecl();
+      if (FD || EncodingProperty) {
+        const ObjCInterfaceType *OIT = PointeeTy->getAsObjCInterfaceType();
+        ObjCInterfaceDecl *OI = OIT->getDecl();
         S += '"';
         S += OI->getNameAsCString();
+        for (unsigned i =0; i < OIT->getNumProtocols(); i++) {
+          ObjCProtocolDecl *Proto = OIT->getProtocol(i);
+          S += '<';
+          S += Proto->getNameAsString();
+          S += '>';
+        } 
         S += '"';
       }
       return;

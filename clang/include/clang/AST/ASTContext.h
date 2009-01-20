@@ -548,7 +548,8 @@ private:
                                   bool ExpandPointedToStructures,
                                   bool ExpandStructures,
                                   FieldDecl *Field,
-                                  bool OutermostType = false) const;
+                                  bool OutermostType = false,
+                                  bool EncodingProperty = false) const;
   
 };
   
