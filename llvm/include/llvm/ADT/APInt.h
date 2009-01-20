@@ -69,7 +69,7 @@ namespace llvm {
 ///
 /// @brief Class for arbitrary precision integers.
 class APInt {
-  uint32_t BitWidth;      ///< The number of bits in this APInt.
+  unsigned BitWidth;      ///< The number of bits in this APInt.
 
   /// This union is used to store the integer value. When the
   /// integer bit-width <= 64, it uses VAL, otherwise it uses pVal.
@@ -89,7 +89,7 @@ class APInt {
   /// This constructor is used only internally for speed of construction of
   /// temporaries. It is unsafe for general use so it is not public.
   /// @brief Fast internal constructor
-  APInt(uint64_t* val, uint32_t bits) : BitWidth(bits), pVal(val) { }
+  APInt(uint64_t* val, unsigned bits) : BitWidth(bits), pVal(val) { }
 
   /// @returns true if the number of bits <= 64, false otherwise.
   /// @brief Determine if this APInt just has one word to store value.
@@ -99,14 +99,14 @@ class APInt {
 
   /// @returns the word position for the specified bit position.
   /// @brief Determine which word a bit is in.
-  static uint32_t whichWord(uint32_t bitPosition) {
+  static unsigned whichWord(unsigned bitPosition) {
     return bitPosition / APINT_BITS_PER_WORD;
   }
 
   /// @returns the bit position in a word for the specified bit position
   /// in the APInt.
   /// @brief Determine which bit in a word a bit is in.
-  static uint32_t whichBit(uint32_t bitPosition) {
+  static unsigned whichBit(unsigned bitPosition) {
     return bitPosition % APINT_BITS_PER_WORD;
   }
 
@@ -115,7 +115,7 @@ class APInt {
   /// corresponding word.
   /// @returns a uint64_t with only bit at "whichBit(bitPosition)" set
   /// @brief Get a single bit mask.
-  static uint64_t maskBit(uint32_t bitPosition) {
+  static uint64_t maskBit(unsigned bitPosition) {
     return 1ULL << whichBit(bitPosition);
   }
 
@@ -126,7 +126,7 @@ class APInt {
   /// @brief Clear unused high order bits
   APInt& clearUnusedBits() {
     // Compute how many bits are used in the final word
-    uint32_t wordBits = BitWidth % APINT_BITS_PER_WORD;
+    unsigned wordBits = BitWidth % APINT_BITS_PER_WORD;
     if (wordBits == 0)
       // If all bits are used, we want to leave the value alone. This also
       // avoids the undefined behavior of >> when the shift is the same size as
@@ -144,13 +144,13 @@ class APInt {
 
   /// @returns the corresponding word for the specified bit position.
   /// @brief Get the word corresponding to a bit position
-  uint64_t getWord(uint32_t bitPosition) const {
+  uint64_t getWord(unsigned bitPosition) const {
     return isSingleWord() ? VAL : pVal[whichWord(bitPosition)];
   }
 
   /// This is used by the constructors that take string arguments.
   /// @brief Convert a char array into an APInt
-  void fromString(uint32_t numBits, const char *strStart, uint32_t slen,
+  void fromString(unsigned numBits, const char *strStart, unsigned slen,
                   uint8_t radix);
 
   /// This is used by the toString method to divide by the radix. It simply
@@ -158,18 +158,18 @@ class APInt {
   /// has specific constraints on its inputs. If those constraints are not met
   /// then it provides a simpler form of divide.
   /// @brief An internal division function for dividing APInts.
-  static void divide(const APInt LHS, uint32_t lhsWords,
-                     const APInt &RHS, uint32_t rhsWords,
+  static void divide(const APInt LHS, unsigned lhsWords,
+                     const APInt &RHS, unsigned rhsWords,
                      APInt *Quotient, APInt *Remainder);
 
   /// out-of-line slow case for inline constructor
-  void initSlowCase(uint32_t numBits, uint64_t val, bool isSigned);
+  void initSlowCase(unsigned numBits, uint64_t val, bool isSigned);
 
   /// out-of-line slow case for inline copy constructor
   void initSlowCase(const APInt& that);
 
   /// out-of-line slow case for shl
-  APInt shlSlowCase(uint32_t shiftAmt) const;
+  APInt shlSlowCase(unsigned shiftAmt) const;
 
   /// out-of-line slow case for operator&
   APInt AndSlowCase(const APInt& RHS) const;
@@ -190,13 +190,13 @@ class APInt {
   bool EqualSlowCase(uint64_t Val) const;
 
   /// out-of-line slow case for countLeadingZeros
-  uint32_t countLeadingZerosSlowCase() const;
+  unsigned countLeadingZerosSlowCase() const;
 
   /// out-of-line slow case for countTrailingOnes
-  uint32_t countTrailingOnesSlowCase() const;
+  unsigned countTrailingOnesSlowCase() const;
 
   /// out-of-line slow case for countPopulation
-  uint32_t countPopulationSlowCase() const;
+  unsigned countPopulationSlowCase() const;
 
 public:
   /// @name Constructors
@@ -209,7 +209,7 @@ public:
   /// @param val the initial value of the APInt
   /// @param isSigned how to treat signedness of val
   /// @brief Create a new APInt of numBits width, initialized as val.
-  APInt(uint32_t numBits, uint64_t val, bool isSigned = false)
+  APInt(unsigned numBits, uint64_t val, bool isSigned = false)
     : BitWidth(numBits), VAL(0) {
     assert(BitWidth && "bitwidth too small");
     if (isSingleWord())
@@ -225,7 +225,7 @@ public:
   /// @param numWords the number of words in bigVal
   /// @param bigVal a sequence of words to form the initial value of the APInt
   /// @brief Construct an APInt of numBits width, initialized as bigVal[].
-  APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[]);
+  APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[]);
 
   /// This constructor interprets the slen characters starting at StrStart as
   /// a string in the given radix. The interpretation stops when the first
@@ -237,7 +237,7 @@ public:
   /// @param slen the maximum number of characters to interpret
   /// @param radix the radix to use for the conversion
   /// @brief Construct an APInt from a string representation.
-  APInt(uint32_t numBits, const char strStart[], uint32_t slen, uint8_t radix);
+  APInt(unsigned numBits, const char strStart[], unsigned slen, uint8_t radix);
 
   /// Simply makes *this a copy of that.
   /// @brief Copy Constructor.
@@ -331,7 +331,7 @@ public:
   }
 
   /// @brief Check if this APInt has an N-bits unsigned integer value.
-  bool isIntN(uint32_t N) const {
+  bool isIntN(unsigned N) const {
     assert(N && "N == 0 ???");
     if (N >= getBitWidth())
       return true;
@@ -344,7 +344,7 @@ public:
   }
 
   /// @brief Check if this APInt has an N-bits signed integer value.
-  bool isSignedIntN(uint32_t N) const {
+  bool isSignedIntN(unsigned N) const {
     assert(N && "N == 0 ???");
     return getMinSignedBits() <= N;
   }
@@ -373,53 +373,53 @@ public:
   /// @name Value Generators
   /// @{
   /// @brief Gets maximum unsigned value of APInt for specific bit width.
-  static APInt getMaxValue(uint32_t numBits) {
+  static APInt getMaxValue(unsigned numBits) {
     return APInt(numBits, 0).set();
   }
 
   /// @brief Gets maximum signed value of APInt for a specific bit width.
-  static APInt getSignedMaxValue(uint32_t numBits) {
+  static APInt getSignedMaxValue(unsigned numBits) {
     return APInt(numBits, 0).set().clear(numBits - 1);
   }
 
   /// @brief Gets minimum unsigned value of APInt for a specific bit width.
-  static APInt getMinValue(uint32_t numBits) {
+  static APInt getMinValue(unsigned numBits) {
     return APInt(numBits, 0);
   }
 
   /// @brief Gets minimum signed value of APInt for a specific bit width.
-  static APInt getSignedMinValue(uint32_t numBits) {
+  static APInt getSignedMinValue(unsigned numBits) {
     return APInt(numBits, 0).set(numBits - 1);
   }
 
   /// getSignBit - This is just a wrapper function of getSignedMinValue(), and
   /// it helps code readability when we want to get a SignBit.
   /// @brief Get the SignBit for a specific bit width.
-  static APInt getSignBit(uint32_t BitWidth) {
+  static APInt getSignBit(unsigned BitWidth) {
     return getSignedMinValue(BitWidth);
   }
 
   /// @returns the all-ones value for an APInt of the specified bit-width.
   /// @brief Get the all-ones value.
-  static APInt getAllOnesValue(uint32_t numBits) {
+  static APInt getAllOnesValue(unsigned numBits) {
     return APInt(numBits, 0).set();
   }
 
   /// @returns the '0' value for an APInt of the specified bit-width.
   /// @brief Get the '0' value.
-  static APInt getNullValue(uint32_t numBits) {
+  static APInt getNullValue(unsigned numBits) {
     return APInt(numBits, 0);
   }
 
   /// Get an APInt with the same BitWidth as this APInt, just zero mask
   /// the low bits and right shift to the least significant bit.
   /// @returns the high "numBits" bits of this APInt.
-  APInt getHiBits(uint32_t numBits) const;
+  APInt getHiBits(unsigned numBits) const;
 
   /// Get an APInt with the same BitWidth as this APInt, just zero mask
   /// the high bits.
   /// @returns the low "numBits" bits of this APInt.
-  APInt getLoBits(uint32_t numBits) const;
+  APInt getLoBits(unsigned numBits) const;
 
   /// Constructs an APInt value that has a contiguous range of bits set. The
   /// bits from loBit (inclusive) to hiBit (exclusive) will be set. All other
@@ -431,7 +431,7 @@ public:
   /// @param hiBit the index of the highest bit set.
   /// @returns An APInt value with the requested bits set.
   /// @brief Get a value with a block of bits set.
-  static APInt getBitsSet(uint32_t numBits, uint32_t loBit, uint32_t hiBit) {
+  static APInt getBitsSet(unsigned numBits, unsigned loBit, unsigned hiBit) {
     assert(hiBit <= numBits && "hiBit out of range");
     assert(loBit < numBits && "loBit out of range");
     if (hiBit < loBit)
@@ -444,12 +444,12 @@ public:
   /// @param numBits the bitwidth of the result
   /// @param hiBitsSet the number of high-order bits set in the result.
   /// @brief Get a value with high bits set
-  static APInt getHighBitsSet(uint32_t numBits, uint32_t hiBitsSet) {
+  static APInt getHighBitsSet(unsigned numBits, unsigned hiBitsSet) {
     assert(hiBitsSet <= numBits && "Too many bits to set!");
     // Handle a degenerate case, to avoid shifting by word size
     if (hiBitsSet == 0)
       return APInt(numBits, 0);
-    uint32_t shiftAmt = numBits - hiBitsSet;
+    unsigned shiftAmt = numBits - hiBitsSet;
     // For small values, return quickly
     if (numBits <= APINT_BITS_PER_WORD)
       return APInt(numBits, ~0ULL << shiftAmt);
@@ -460,7 +460,7 @@ public:
   /// @param numBits the bitwidth of the result
   /// @param loBitsSet the number of low-order bits set in the result.
   /// @brief Get a value with low bits set
-  static APInt getLowBitsSet(uint32_t numBits, uint32_t loBitsSet) {
+  static APInt getLowBitsSet(unsigned numBits, unsigned loBitsSet) {
     assert(loBitsSet <= numBits && "Too many bits to set!");
     // Handle a degenerate case, to avoid shifting by word size
     if (loBitsSet == 0)
@@ -594,7 +594,7 @@ public:
   /// Shifts *this left by shiftAmt and assigns the result to *this.
   /// @returns *this after shifting left by shiftAmt
   /// @brief Left-shift assignment function.
-  APInt& operator<<=(uint32_t shiftAmt) {
+  APInt& operator<<=(unsigned shiftAmt) {
     *this = shl(shiftAmt);
     return *this;
   }
@@ -669,15 +669,15 @@ public:
 
   /// Arithmetic right-shift this APInt by shiftAmt.
   /// @brief Arithmetic right-shift function.
-  APInt ashr(uint32_t shiftAmt) const;
+  APInt ashr(unsigned shiftAmt) const;
 
   /// Logical right-shift this APInt by shiftAmt.
   /// @brief Logical right-shift function.
-  APInt lshr(uint32_t shiftAmt) const;
+  APInt lshr(unsigned shiftAmt) const;
 
   /// Left-shift this APInt by shiftAmt.
   /// @brief Left-shift function.
-  APInt shl(uint32_t shiftAmt) const {
+  APInt shl(unsigned shiftAmt) const {
     assert(shiftAmt <= BitWidth && "Invalid shift amount");
     if (isSingleWord()) {
       if (shiftAmt == BitWidth)
@@ -688,10 +688,10 @@ public:
   }
 
   /// @brief Rotate left by rotateAmt.
-  APInt rotl(uint32_t rotateAmt) const;
+  APInt rotl(unsigned rotateAmt) const;
 
   /// @brief Rotate right by rotateAmt.
-  APInt rotr(uint32_t rotateAmt) const;
+  APInt rotr(unsigned rotateAmt) const;
 
   /// Arithmetic right-shift this APInt by shiftAmt.
   /// @brief Arithmetic right-shift function.
@@ -781,7 +781,7 @@ public:
 
   /// @returns the bit value at bitPosition
   /// @brief Array-indexing support.
-  bool operator[](uint32_t bitPosition) const;
+  bool operator[](unsigned bitPosition) const;
 
   /// @}
   /// @name Comparison Operators
@@ -910,30 +910,30 @@ public:
   /// Truncate the APInt to a specified width. It is an error to specify a width
   /// that is greater than or equal to the current width.
   /// @brief Truncate to new width.
-  APInt &trunc(uint32_t width);
+  APInt &trunc(unsigned width);
 
   /// This operation sign extends the APInt to a new width. If the high order
   /// bit is set, the fill on the left will be done with 1 bits, otherwise zero.
   /// It is an error to specify a width that is less than or equal to the
   /// current width.
   /// @brief Sign extend to a new width.
-  APInt &sext(uint32_t width);
+  APInt &sext(unsigned width);
 
   /// This operation zero extends the APInt to a new width. The high order bits
   /// are filled with 0 bits.  It is an error to specify a width that is less
   /// than or equal to the current width.
   /// @brief Zero extend to a new width.
-  APInt &zext(uint32_t width);
+  APInt &zext(unsigned width);
 
   /// Make this APInt have the bit width given by \p width. The value is sign
   /// extended, truncated, or left alone to make it that width.
   /// @brief Sign extend or truncate to width
-  APInt &sextOrTrunc(uint32_t width);
+  APInt &sextOrTrunc(unsigned width);
 
   /// Make this APInt have the bit width given by \p width. The value is zero
   /// extended, truncated, or left alone to make it that width.
   /// @brief Zero extend or truncate to width
-  APInt &zextOrTrunc(uint32_t width);
+  APInt &zextOrTrunc(unsigned width);
 
   /// @}
   /// @name Bit Manipulation Operators
@@ -946,7 +946,7 @@ public:
     }
 
     // Set all the bits in all the words.
-    for (uint32_t i = 0; i < getNumWords(); ++i)
+    for (unsigned i = 0; i < getNumWords(); ++i)
       pVal[i] = -1ULL;
     // Clear the unused ones
     return clearUnusedBits();
@@ -954,7 +954,7 @@ public:
 
   /// Set the given bit to 1 whose position is given as "bitPosition".
   /// @brief Set a given bit to 1.
-  APInt& set(uint32_t bitPosition);
+  APInt& set(unsigned bitPosition);
 
   /// @brief Set every bit to 0.
   APInt& clear() {
@@ -967,7 +967,7 @@ public:
 
   /// Set the given bit to 0 whose position is given as "bitPosition".
   /// @brief Set a given bit to 0.
-  APInt& clear(uint32_t bitPosition);
+  APInt& clear(unsigned bitPosition);
 
   /// @brief Toggle every bit to its opposite value.
   APInt& flip() {
@@ -975,7 +975,7 @@ public:
       VAL ^= -1ULL;
       return clearUnusedBits();
     }
-    for (uint32_t i = 0; i < getNumWords(); ++i)
+    for (unsigned i = 0; i < getNumWords(); ++i)
       pVal[i] ^= -1ULL;
     return clearUnusedBits();
   }
@@ -983,21 +983,21 @@ public:
   /// Toggle a given bit to its opposite value whose position is given
   /// as "bitPosition".
   /// @brief Toggles a given bit to its opposite value.
-  APInt& flip(uint32_t bitPosition);
+  APInt& flip(unsigned bitPosition);
 
   /// @}
   /// @name Value Characterization Functions
   /// @{
 
   /// @returns the total number of bits.
-  uint32_t getBitWidth() const {
+  unsigned getBitWidth() const {
     return BitWidth;
   }
 
   /// Here one word's bitwidth equals to that of uint64_t.
   /// @returns the number of words to hold the integer value of this APInt.
   /// @brief Get the number of words.
-  uint32_t getNumWords() const {
+  unsigned getNumWords() const {
     return (BitWidth + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
   }
 
@@ -1005,14 +1005,14 @@ public:
   /// bit width minus the number of leading zeros. This is used in several
   /// computations to see how "wide" the value is.
   /// @brief Compute the number of active bits in the value
-  uint32_t getActiveBits() const {
+  unsigned getActiveBits() const {
     return BitWidth - countLeadingZeros();
   }
 
   /// This function returns the number of active words in the value of this
   /// APInt. This is used in conjunction with getActiveData to extract the raw
   /// value of the APInt.
-  uint32_t getActiveWords() const {
+  unsigned getActiveWords() const {
     return whichWord(getActiveBits()-1) + 1;
   }
 
@@ -1023,7 +1023,7 @@ public:
   /// example, -1 can be written as 0b1 or 0xFFFFFFFFFF. 0b1 is shorter and so
   /// for -1, this function will always return 1.
   /// @brief Get the minimum bit size for this signed APInt
-  uint32_t getMinSignedBits() const {
+  unsigned getMinSignedBits() const {
     if (isNegative())
       return BitWidth - countLeadingOnes() + 1;
     return getActiveBits()+1;
@@ -1055,7 +1055,7 @@ public:
   /// This method determines how many bits are required to hold the APInt
   /// equivalent of the string given by \p str of length \p slen.
   /// @brief Get bits required for string value.
-  static uint32_t getBitsNeeded(const char* str, uint32_t slen, uint8_t radix);
+  static unsigned getBitsNeeded(const char* str, unsigned slen, uint8_t radix);
 
   /// countLeadingZeros - This function is an APInt version of the
   /// countLeadingZeros_{32,64} functions in MathExtras.h. It counts the number
@@ -1063,9 +1063,9 @@ public:
   /// @returns BitWidth if the value is zero.
   /// @returns the number of zeros from the most significant bit to the first
   /// one bits.
-  uint32_t countLeadingZeros() const {
+  unsigned countLeadingZeros() const {
     if (isSingleWord()) {
-      uint32_t unusedBits = APINT_BITS_PER_WORD - BitWidth;
+      unsigned unusedBits = APINT_BITS_PER_WORD - BitWidth;
       return CountLeadingZeros_64(VAL) - unusedBits;
     }
     return countLeadingZerosSlowCase();
@@ -1077,7 +1077,7 @@ public:
   /// @returns 0 if the high order bit is not set
   /// @returns the number of 1 bits from the most significant to the least
   /// @brief Count the number of leading one bits.
-  uint32_t countLeadingOnes() const;
+  unsigned countLeadingOnes() const;
 
   /// countTrailingZeros - This function is an APInt version of the
   /// countTrailingZeros_{32,64} functions in MathExtras.h. It counts
@@ -1086,7 +1086,7 @@ public:
   /// @returns the number of zeros from the least significant bit to the first
   /// one bit.
   /// @brief Count the number of trailing zero bits.
-  uint32_t countTrailingZeros() const;
+  unsigned countTrailingZeros() const;
 
   /// countTrailingOnes - This function is an APInt version of the
   /// countTrailingOnes_{32,64} functions in MathExtras.h. It counts
@@ -1095,7 +1095,7 @@ public:
   /// @returns the number of ones from the least significant bit to the first
   /// zero bit.
   /// @brief Count the number of trailing one bits.
-  uint32_t countTrailingOnes() const {
+  unsigned countTrailingOnes() const {
     if (isSingleWord())
       return CountTrailingOnes_64(VAL);
     return countTrailingOnesSlowCase();
@@ -1107,7 +1107,7 @@ public:
   /// @returns 0 if the value is zero.
   /// @returns the number of set bits.
   /// @brief Count the number of bits set.
-  uint32_t countPopulation() const {
+  unsigned countPopulation() const {
     if (isSingleWord())
       return CountPopulation_64(VAL);
     return countPopulationSlowCase();
@@ -1175,10 +1175,10 @@ public:
   /// @brief Converts APInt bits to a double
   float bitsToFloat() const {
     union {
-      uint32_t I;
+      unsigned I;
       float F;
     } T;
-    T.I = uint32_t((isSingleWord() ? VAL : pVal[0]));
+    T.I = unsigned((isSingleWord() ? VAL : pVal[0]));
     return T.F;
   }
 
@@ -1205,7 +1205,7 @@ public:
   /// @brief Converts a float to APInt bits.
   APInt& floatToBits(float V) {
     union {
-      uint32_t I;
+      unsigned I;
       float F;
     } T;
     T.F = V;
@@ -1221,7 +1221,7 @@ public:
   /// @{
 
   /// @returns the floor log base 2 of this APInt.
-  uint32_t logBase2() const {
+  unsigned logBase2() const {
     return BitWidth - 1 - countLeadingZeros();
   }
 
@@ -1413,25 +1413,25 @@ inline APInt umax(const APInt &A, const APInt &B) {
 }
 
 /// @brief Check if the specified APInt has a N-bits unsigned integer value.
-inline bool isIntN(uint32_t N, const APInt& APIVal) {
+inline bool isIntN(unsigned N, const APInt& APIVal) {
   return APIVal.isIntN(N);
 }
 
 /// @brief Check if the specified APInt has a N-bits signed integer value.
-inline bool isSignedIntN(uint32_t N, const APInt& APIVal) {
+inline bool isSignedIntN(unsigned N, const APInt& APIVal) {
   return APIVal.isSignedIntN(N);
 }
 
 /// @returns true if the argument APInt value is a sequence of ones
 /// starting at the least significant bit with the remainder zero.
-inline bool isMask(uint32_t numBits, const APInt& APIVal) {
+inline bool isMask(unsigned numBits, const APInt& APIVal) {
   return numBits <= APIVal.getBitWidth() &&
     APIVal == APInt::getLowBitsSet(APIVal.getBitWidth(), numBits);
 }
 
 /// @returns true if the argument APInt value contains a sequence of ones
 /// with the remainder zero.
-inline bool isShiftedMask(uint32_t numBits, const APInt& APIVal) {
+inline bool isShiftedMask(unsigned numBits, const APInt& APIVal) {
   return isMask(numBits, (APIVal - APInt(numBits,1)) | APIVal);
 }
 
@@ -1441,7 +1441,7 @@ inline APInt byteSwap(const APInt& APIVal) {
 }
 
 /// @returns the floor log base 2 of the specified APInt value.
-inline uint32_t logBase2(const APInt& APIVal) {
+inline unsigned logBase2(const APInt& APIVal) {
   return APIVal.logBase2();
 }
 
@@ -1476,29 +1476,29 @@ inline float RoundSignedAPIntToFloat(const APInt& APIVal) {
 
 /// RoundDoubleToAPInt - This function convert a double value to an APInt value.
 /// @brief Converts the given double value into a APInt.
-APInt RoundDoubleToAPInt(double Double, uint32_t width);
+APInt RoundDoubleToAPInt(double Double, unsigned width);
 
 /// RoundFloatToAPInt - Converts a float value into an APInt value.
 /// @brief Converts a float value into a APInt.
-inline APInt RoundFloatToAPInt(float Float, uint32_t width) {
+inline APInt RoundFloatToAPInt(float Float, unsigned width) {
   return RoundDoubleToAPInt(double(Float), width);
 }
 
 /// Arithmetic right-shift the APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
-inline APInt ashr(const APInt& LHS, uint32_t shiftAmt) {
+inline APInt ashr(const APInt& LHS, unsigned shiftAmt) {
   return LHS.ashr(shiftAmt);
 }
 
 /// Logical right-shift the APInt by shiftAmt.
 /// @brief Logical right-shift function.
-inline APInt lshr(const APInt& LHS, uint32_t shiftAmt) {
+inline APInt lshr(const APInt& LHS, unsigned shiftAmt) {
   return LHS.lshr(shiftAmt);
 }
 
 /// Left-shift the APInt by shiftAmt.
 /// @brief Left-shift function.
-inline APInt shl(const APInt& LHS, uint32_t shiftAmt) {
+inline APInt shl(const APInt& LHS, unsigned shiftAmt) {
   return LHS.shl(shiftAmt);
 }
 
