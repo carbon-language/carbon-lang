@@ -208,7 +208,7 @@ public:
 
   /// findRegisterDefOperand - Wrapper for findRegisterDefOperandIdx, it returns
   /// a pointer to the MachineOperand rather than an index.
-  MachineOperand *findRegisterDefOperand(unsigned Reg,bool isDead = false,
+  MachineOperand *findRegisterDefOperand(unsigned Reg, bool isDead = false,
                                          const TargetRegisterInfo *TRI = NULL) {
     int Idx = findRegisterDefOperandIdx(Reg, isDead, TRI);
     return (Idx == -1) ? NULL : &getOperand(Idx);
