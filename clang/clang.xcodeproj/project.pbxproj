@@ -862,7 +862,6 @@
 		DE67E7070C020EAB00F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
-				357EA27C0F2526F300439B60 /* SemaLookup.cpp */,
 				35585DBD0EAFBC4500D0A97A /* CXXFieldCollector.h */,
 				3527124F0DAFE54700C76352 /* IdentifierResolver.h */,
 				352712500DAFE54700C76352 /* IdentifierResolver.cpp */,
@@ -881,6 +880,7 @@
 				3557D1EF0EB13BB700C59739 /* SemaInherit.cpp */,
 				DE3B921C0EB1A81400D01046 /* SemaInherit.h */,
 				3599299A0DE2425300A8A33E /* SemaInit.cpp */,
+				357EA27C0F2526F300439B60 /* SemaLookup.cpp */,
 				35E194680ECB82FB00F21733 /* SemaNamedCast.cpp */,
 				35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */,
 				35585DBF0EAFBC4500D0A97A /* SemaOverload.h */,
