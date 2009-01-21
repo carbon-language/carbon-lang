@@ -22,9 +22,16 @@ set expandtab
 highlight WhitespaceEOL ctermbg=DarkYellow guibg=DarkYellow
 match WhitespaceEOL /\s\+$/
 
+" Enable filetype detection
+filetype on
+
 " Optional
 " C/C++ programming helpers
-set cindent
+augroup csrc
+  au!
+  autocmd FileType *      set nocindent smartindent
+  autocmd FileType c,cpp  set cindent
+augroup END
 " Set a few indentation parameters. See the VIM help for cinoptions-values for
 " details.  These aren't absolute rules; they're just an approximation of
 " common style in LLVM source.
@@ -34,9 +41,6 @@ set smarttab
 
 " Highlight syntax in programming languages
 syntax on
-
-" Enable filetype detection
-filetype on
 
 " LLVM Makefiles can have names such as Makefile.rules or TEST.nightly.Makefile,
 " so it's important to categorize them as such.
