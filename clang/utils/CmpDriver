@@ -152,7 +152,16 @@ def main():
         differ = True
 
     # Compare commands.
-    for i,(a,b) in enumerate(zip(infoA.commands, infoB.commands)):
+    for i,(a,b) in enumerate(map(None, infoA.commands, infoB.commands)):
+        if a is None:
+            print 'A MISSING:',' '.join(b)
+            differ = True
+            continue
+        elif b is None:
+            print 'B MISSING:',' '.join(a)
+            differ = True
+            continue
+
         diff = DriverZipperDiff(a,b)
         diffs = list(diff.getDiffs())
         if diffs:
@@ -169,7 +178,7 @@ def main():
                     print 'mismatch: A: %s' % aElt
                     print '          B: %s' % bElt
             differ = True
-
+    
     # Compare result codes.
     if infoA.exitCode != infoB.exitCode:
         print '-- EXIT CODES DIFFER -'
