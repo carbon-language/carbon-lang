@@ -452,11 +452,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     switch (Tok.getKind()) {
     default: 
-      // Try to parse a type-specifier; if we found one, continue. If it's not
-      // a type, this falls through.
-      if (ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, TemplateParams))
-        continue;
-
     DoneWithDeclSpec:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
@@ -506,7 +501,29 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       continue;
     }
-
+        
+    case tok::annot_typename: {
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
+                                     Tok.getAnnotationValue());
+      DS.SetRangeEnd(Tok.getAnnotationEndLoc());
+      ConsumeToken(); // The typename
+      
+      // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
+      // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
+      // Objective-C interface.  If we don't have Objective-C or a '<', this is
+      // just a normal reference to a typedef name.
+      if (!Tok.is(tok::less) || !getLang().ObjC1)
+        continue;
+      
+      SourceLocation EndProtoLoc;
+      llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
+      ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
+      DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
+      
+      DS.SetRangeEnd(EndProtoLoc);
+      continue;
+    }
+        
       // typedef-name
     case tok::identifier: {
       // In C++, check to see if this is a scope specifier like foo::bar::, if
@@ -621,15 +638,97 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw_inline:
       isInvalid = DS.SetFunctionSpecInline(Loc, PrevSpec);
       break;
-
     case tok::kw_virtual:
       isInvalid = DS.SetFunctionSpecVirtual(Loc, PrevSpec);
       break;
-
     case tok::kw_explicit:
       isInvalid = DS.SetFunctionSpecExplicit(Loc, PrevSpec);
       break;
-      
+
+    // type-specifier
+    case tok::kw_short:
+      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec);
+      break;
+    case tok::kw_long:
+      if (DS.getTypeSpecWidth() != DeclSpec::TSW_long)
+        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_long, Loc, PrevSpec);
+      else
+        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_longlong, Loc, PrevSpec);
+      break;
+    case tok::kw_signed:
+      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_signed, Loc, PrevSpec);
+      break;
+    case tok::kw_unsigned:
+      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, Loc, PrevSpec);
+      break;
+    case tok::kw__Complex:
+      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_complex, Loc, PrevSpec);
+      break;
+    case tok::kw__Imaginary:
+      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_imaginary, Loc, PrevSpec);
+      break;
+    case tok::kw_void:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec);
+      break;
+    case tok::kw_char:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec);
+      break;
+    case tok::kw_int:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
+      break;
+    case tok::kw_float:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec);
+      break;
+    case tok::kw_double:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec);
+      break;
+    case tok::kw_wchar_t:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec);
+      break;
+    case tok::kw_bool:
+    case tok::kw__Bool:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec);
+      break;
+    case tok::kw__Decimal32:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal32, Loc, PrevSpec);
+      break;
+    case tok::kw__Decimal64:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal64, Loc, PrevSpec);
+      break;
+    case tok::kw__Decimal128:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, Loc, PrevSpec);
+      break;
+
+    // class-specifier:
+    case tok::kw_class:
+    case tok::kw_struct:
+    case tok::kw_union:
+      ParseClassSpecifier(DS, TemplateParams);
+      continue;
+
+    // enum-specifier:
+    case tok::kw_enum:
+      ParseEnumSpecifier(DS);
+      continue;
+
+    // cv-qualifier:
+    case tok::kw_const:
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_const, Loc, PrevSpec,getLang())*2;
+      break;
+    case tok::kw_volatile:
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec,
+                                 getLang())*2;
+      break;
+    case tok::kw_restrict:
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
+                                 getLang())*2;
+      break;
+
+    // GNU typeof support.
+    case tok::kw_typeof:
+      ParseTypeofSpecifier(DS);
+      continue;
+
     case tok::less:
       // GCC ObjC supports types like "<SomeProtocol>" as a synonym for
       // "id<SomeProtocol>".  This is hopelessly old fashioned and dangerous,
