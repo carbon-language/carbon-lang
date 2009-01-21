@@ -1219,6 +1219,10 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   MachineInstr *DefMI = (ValNo->def != ~0U)
     ? LIs->getInstructionFromIndex(ValNo->def) : NULL;
 
+  // If this would create a new join point, do not split.
+  if (DefMI && createsNewJoin(LR, DefMI->getParent(), Barrier->getParent()))
+    return false;
+
   // Find all references in the barrier mbb.
   SmallPtrSet<MachineInstr*, 4> RefsInMBB;
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(CurrLI->reg),
