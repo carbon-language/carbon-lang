@@ -125,11 +125,19 @@ LexNextToken:
   Tok.setKind(TKind);
   Tok.setFlag(TFlags);
   assert(!LexingRawMode);
-  if (IdentifierID)
-    Tok.setIdentifierInfo(PTHMgr.GetIdentifierInfo(IdentifierID-1));
   Tok.setLocation(FileStartLoc.getFileLocWithOffset(FileOffset));
   Tok.setLength(Len);
 
+  // Handle identifiers.
+  if (IdentifierID) {
+    MIOpt.ReadToken();
+    IdentifierInfo *II = PTHMgr.GetIdentifierInfo(IdentifierID-1);
+    Tok.setIdentifierInfo(II);
+    if (II->isHandleIdentifierCase())
+      PP->HandleIdentifier(Tok);
+    return;
+  }
+  
   //===--------------------------------------==//
   // Process the token.
   //===--------------------------------------==//
@@ -141,13 +149,6 @@ LexNextToken:
     << '\n';
 #endif  
 
-  if (TKind == tok::identifier) {
-    MIOpt.ReadToken();
-    if (Tok.getIdentifierInfo()->isHandleIdentifierCase())
-      PP->HandleIdentifier(Tok);
-    return;
-  }
-  
   if (TKind == tok::eof) {
     // Save the end-of-file token.
     EofToken = Tok;
