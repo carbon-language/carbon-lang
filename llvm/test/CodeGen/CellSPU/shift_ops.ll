@@ -1,20 +1,20 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep -w shlh      %t1.s | count 9
-; RUN: grep -w shlhi     %t1.s | count 3
-; RUN: grep -w shl       %t1.s | count 9
-; RUN: grep -w shli      %t1.s | count 3
-; RUN: grep -w xshw      %t1.s | count 5
-; RUN: grep -w and       %t1.s | count 5
-; RUN: grep -w andi      %t1.s | count 2
-; RUN: grep -w rotmi     %t1.s | count 2
-; RUN: grep -w rotqmbyi  %t1.s | count 1
-; RUN: grep -w rotqmbii  %t1.s | count 2
-; RUN: grep -w rotqmby   %t1.s | count 1
-; RUN: grep -w rotqmbi   %t1.s | count 1
-; RUN: grep -w rotqbyi   %t1.s | count 1
-; RUN: grep -w rotqbii   %t1.s | count 2
-; RUN: grep -w rotqbybi  %t1.s | count 1
-; RUN: grep -w sfi       %t1.s | count 3
+; RUN: grep {shlh	}  %t1.s | count 9
+; RUN: grep {shlhi	}  %t1.s | count 3
+; RUN: grep {shl	}  %t1.s | count 9
+; RUN: grep {shli	}  %t1.s | count 3
+; RUN: grep {xshw	}  %t1.s | count 5
+; RUN: grep {and	}  %t1.s | count 5
+; RUN: grep {andi	}  %t1.s | count 2
+; RUN: grep {rotmi	}  %t1.s | count 2
+; RUN: grep {rotqmbyi	}  %t1.s | count 1
+; RUN: grep {rotqmbii	}  %t1.s | count 2
+; RUN: grep {rotqmby	}  %t1.s | count 1
+; RUN: grep {rotqmbi	}  %t1.s | count 1
+; RUN: grep {rotqbyi	}  %t1.s | count 1
+; RUN: grep {rotqbii	}  %t1.s | count 2
+; RUN: grep {rotqbybi	}  %t1.s | count 1
+; RUN: grep {sfi	}  %t1.s | count 3
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
