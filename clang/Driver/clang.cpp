@@ -595,7 +595,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   // If in a conformant language mode (e.g. -std=c99) Blocks defaults to off
   // even if they are normally on for the target.  In GNU modes (e.g.
   // -std=gnu99) the default for blocks depends on the target settings.
-  if (LangStd < lang_gnu_START)
+  // However, blocks are not turned off when compiling Obj-C or Obj-C++ code.
+  if (!Options.ObjC1 && LangStd < lang_gnu_START)
     Options.Blocks = 0;
   
   Options.DollarIdents = 1;  // FIXME: Really a target property.
