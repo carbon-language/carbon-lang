@@ -324,7 +324,7 @@ SourceLocation PTHLexer::getSourceLocation() {
   // handling a #included file.  Just read the necessary data from the token
   // data buffer to construct the SourceLocation object.
   // NOTE: This is a virtual function; hence it is defined out-of-line.
-  const unsigned char *OffsetPtr = CurPtr + (1 + 1 + 3);
+  const unsigned char *OffsetPtr = CurPtr + (DISK_TOKEN_SIZE - 4);
   uint32_t Offset = Read32(OffsetPtr);
   return FileStartLoc.getFileLocWithOffset(Offset);
 }
