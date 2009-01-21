@@ -411,9 +411,19 @@ bool X86TargetAsmInfo<BaseTAI>::ExpandInlineAsm(CallInst *CI) const {
 
     // bswap $0
     if (AsmPieces.size() == 2 &&
-        AsmPieces[0] == "bswap" && AsmPieces[1] == "$0") {
+        AsmPieces[0] == "bswap" && (AsmPieces[1] == "$0" ||
+                                    AsmPieces[1] == "${0:q}")) {
       // No need to check constraints, nothing other than the equivalent of
       // "=r,0" would be valid here.
+      return LowerToBSwap(CI);
+    }
+    // rorw $$8, ${0:w}  -->  llvm.bswap.i16
+    if (CI->getType() == Type::Int16Ty &&
+        AsmPieces.size() == 3 &&
+        AsmPieces[0] == "rorw" &&
+        AsmPieces[1] == "$$8," &&
+        AsmPieces[2] == "${0:w}" &&
+        IA->getConstraintString() == "=r,0,~{dirflag},~{fpsr},~{flags},~{cc}") {
       return LowerToBSwap(CI);
     }
     break;
