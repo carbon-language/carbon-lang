@@ -273,6 +273,33 @@ protected:
   /// to prevent them from being clobbered.
   std::vector<llvm::GlobalVariable*> UsedGlobals;
 
+  /// GetNameForMethod - Return a name for the given method.
+  /// \param[out] NameOut - The return value.
+  void GetNameForMethod(const ObjCMethodDecl *OMD,
+                        const ObjCContainerDecl *CD,
+                        std::string &NameOut);
+  
+  /// GetMethodVarName - Return a unique constant for the given
+  /// selector's name. The return value has type char *.
+  llvm::Constant *GetMethodVarName(Selector Sel);
+  llvm::Constant *GetMethodVarName(IdentifierInfo *Ident);
+  llvm::Constant *GetMethodVarName(const std::string &Name);
+  
+  /// GetMethodVarType - Return a unique constant for the given
+  /// selector's name. The return value has type char *.
+  
+  // FIXME: This is a horrible name.
+  llvm::Constant *GetMethodVarType(const ObjCMethodDecl *D);
+  llvm::Constant *GetMethodVarType(const std::string &Name);
+  
+  /// GetPropertyName - Return a unique constant for the given
+  /// name. The return value has type char *.
+  llvm::Constant *GetPropertyName(IdentifierInfo *Ident);
+  
+  // FIXME: This can be dropped once string functions are unified.
+  llvm::Constant *GetPropertyTypeString(const ObjCPropertyDecl *PD,
+                                        const Decl *Container);
+  
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
   { }
@@ -405,33 +432,6 @@ private:
   /// GetClassName - Return a unique constant for the given selector's
   /// name. The return value has type char *.
   llvm::Constant *GetClassName(IdentifierInfo *Ident);
-
-  /// GetMethodVarName - Return a unique constant for the given
-  /// selector's name. The return value has type char *.
-  llvm::Constant *GetMethodVarName(Selector Sel);
-  llvm::Constant *GetMethodVarName(IdentifierInfo *Ident);
-  llvm::Constant *GetMethodVarName(const std::string &Name);
-
-  /// GetMethodVarType - Return a unique constant for the given
-  /// selector's name. The return value has type char *.
-
-  // FIXME: This is a horrible name.
-  llvm::Constant *GetMethodVarType(const ObjCMethodDecl *D);
-  llvm::Constant *GetMethodVarType(const std::string &Name);
-
-  /// GetPropertyName - Return a unique constant for the given
-  /// name. The return value has type char *.
-  llvm::Constant *GetPropertyName(IdentifierInfo *Ident);
-
-  // FIXME: This can be dropped once string functions are unified.
-  llvm::Constant *GetPropertyTypeString(const ObjCPropertyDecl *PD,
-                                        const Decl *Container);
-
-  /// GetNameForMethod - Return a name for the given method.
-  /// \param[out] NameOut - The return value.
-  void GetNameForMethod(const ObjCMethodDecl *OMD,
-                        const ObjCContainerDecl *CD,
-                        std::string &NameOut);
 
 public:
   CGObjCMac(CodeGen::CodeGenModule &cgm);
@@ -2102,7 +2102,7 @@ llvm::Constant *CGObjCMac::GetClassName(IdentifierInfo *Ident) {
   return getConstantGEP(Entry, 0, 0);
 }
 
-llvm::Constant *CGObjCMac::GetMethodVarName(Selector Sel) {
+llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
   llvm::GlobalVariable *&Entry = MethodVarNames[Sel];
 
   if (!Entry) {
@@ -2121,16 +2121,16 @@ llvm::Constant *CGObjCMac::GetMethodVarName(Selector Sel) {
 }
 
 // FIXME: Merge into a single cstring creation function.
-llvm::Constant *CGObjCMac::GetMethodVarName(IdentifierInfo *ID) {
+llvm::Constant *CGObjCCommonMac::GetMethodVarName(IdentifierInfo *ID) {
   return GetMethodVarName(CGM.getContext().Selectors.getNullarySelector(ID));
 }
 
 // FIXME: Merge into a single cstring creation function.
-llvm::Constant *CGObjCMac::GetMethodVarName(const std::string &Name) {
+llvm::Constant *CGObjCCommonMac::GetMethodVarName(const std::string &Name) {
   return GetMethodVarName(&CGM.getContext().Idents.get(Name));
 }
 
-llvm::Constant *CGObjCMac::GetMethodVarType(const std::string &Name) {
+llvm::Constant *CGObjCCommonMac::GetMethodVarType(const std::string &Name) {
   llvm::GlobalVariable *&Entry = MethodVarTypes[Name];
 
   if (!Entry) {
@@ -2148,7 +2148,7 @@ llvm::Constant *CGObjCMac::GetMethodVarType(const std::string &Name) {
 }
 
 // FIXME: Merge into a single cstring creation function.
-llvm::Constant *CGObjCMac::GetMethodVarType(const ObjCMethodDecl *D) {
+llvm::Constant *CGObjCCommonMac::GetMethodVarType(const ObjCMethodDecl *D) {
   std::string TypeStr;
   CGM.getContext().getObjCEncodingForMethodDecl(const_cast<ObjCMethodDecl*>(D),
                                                 TypeStr);
@@ -2156,7 +2156,7 @@ llvm::Constant *CGObjCMac::GetMethodVarType(const ObjCMethodDecl *D) {
 }
 
 // FIXME: Merge into a single cstring creation function.
-llvm::Constant *CGObjCMac::GetPropertyName(IdentifierInfo *Ident) {
+llvm::Constant *CGObjCCommonMac::GetPropertyName(IdentifierInfo *Ident) {
   llvm::GlobalVariable *&Entry = PropertyNames[Ident];
   
   if (!Entry) {
@@ -2175,16 +2175,16 @@ llvm::Constant *CGObjCMac::GetPropertyName(IdentifierInfo *Ident) {
 
 // FIXME: Merge into a single cstring creation function.
 // FIXME: This Decl should be more precise.
-llvm::Constant *CGObjCMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
+llvm::Constant *CGObjCCommonMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
                                                  const Decl *Container) {
   std::string TypeStr;
   CGM.getContext().getObjCEncodingForPropertyDecl(PD, Container, TypeStr);
   return GetPropertyName(&CGM.getContext().Idents.get(TypeStr));
 }
 
-void CGObjCMac::GetNameForMethod(const ObjCMethodDecl *D, 
-                                 const ObjCContainerDecl *CD,
-                                 std::string &NameOut) {
+void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D, 
+                                       const ObjCContainerDecl *CD,
+                                       std::string &NameOut) {
   // FIXME: Find the mangling GCC uses.
   NameOut = (D->isInstanceMethod() ? "-" : "+");
   NameOut += '[';
