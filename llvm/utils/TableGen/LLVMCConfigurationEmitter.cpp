@@ -1866,7 +1866,7 @@ void EmitHookDeclarations(const ToolDescriptions& ToolDescs, std::ostream& O) {
   O << "namespace hooks {\n";
   for (StringMap<unsigned>::const_iterator B = HookNames.begin(),
          E = HookNames.end(); B != E; ++B) {
-    O << Indent1 << "const char* " << B->first() << "(";
+    O << Indent1 << "std::string " << B->first() << "(";
 
     for (unsigned i = 0, j = B->second; i < j; ++i) {
       O << "const char* Arg" << i << (i+1 == j ? "" : ", ");

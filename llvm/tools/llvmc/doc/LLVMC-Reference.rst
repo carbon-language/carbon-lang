@@ -565,7 +565,7 @@ or names in the configuration file. This can be easily achieved via
 the hooks mechanism. To write your own hooks, just add their
 definitions to the ``PluginMain.cpp`` or drop a ``.cpp`` file into the
 your plugin directory. Hooks should live in the ``hooks`` namespace
-and have the signature ``const char* hooks::MyHookName ([const char*
+and have the signature ``std::string hooks::MyHookName ([const char*
 Arg0 [ const char* Arg2 [, ...]]])``. They can be used from the
 ``cmd_line`` tool property::
 
