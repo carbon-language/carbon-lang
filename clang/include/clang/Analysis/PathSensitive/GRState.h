@@ -334,8 +334,6 @@ public:
   MemRegionManager& getRegionManager() { return StoreMgr->getRegionManager(); }
   StoreManager& getStoreManager() { return *StoreMgr; }
 
-  typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
-
   const GRState* BindDecl(const GRState* St, const VarDecl* VD, SVal IVal) {
     // Store manager should return a persistent state.
     return StoreMgr->BindDecl(St, VD, IVal);
@@ -356,8 +354,7 @@ public:
   }
 
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
-                                    const LiveVariables& Liveness,
-                                    DeadSymbolsTy& DeadSyms);
+                                    SymbolReaper& SymReaper);
 
   const GRState* RemoveSubExprBindings(const GRState* St) {
     GRState NewSt = *St;

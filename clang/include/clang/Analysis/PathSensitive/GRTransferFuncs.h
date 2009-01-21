@@ -108,9 +108,8 @@ public:
                                GRExprEngine& Engine,
                                GRStmtNodeBuilder<GRState>& Builder,
                                ExplodedNode<GRState>* Pred,
-                               Stmt* S,
-                               const GRState* St,
-                               const GRStateManager::DeadSymbolsTy& Dead) {}
+                               Stmt* S, const GRState* state,
+                               SymbolReaper& SymReaper) {}
   
   // Return statements.  
   virtual void EvalReturn(ExplodedNodeSet<GRState>& Dst,

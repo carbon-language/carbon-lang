@@ -88,10 +88,10 @@ public:
   /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
   ///  It returns a new Store with these values removed, and populates LSymbols
   ///  and DSymbols with the known set of live and dead symbols respectively.
-  Store RemoveDeadBindings(const GRState* state, Stmt* Loc,
-                           const LiveVariables& Live,
-                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
-                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
+  Store
+  RemoveDeadBindings(const GRState* state, Stmt* Loc,
+                     SymbolReaper& SymReaper,
+                     llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   void iterBindings(Store store, BindingsHandler& f);
 
@@ -344,9 +344,9 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
 
 Store
 BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
-                          const LiveVariables& Liveness,
-                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
-                          LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
+                                      SymbolReaper& SymReaper,
+                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
+{
   
   Store store = state->getStore();
   VarBindingsTy B = GetVarBindings(store);
@@ -354,12 +354,12 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   
   // Iterate over the variable bindings.
   for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I)
-    if (Liveness.isLive(Loc, I.getKey())) {
+    if (SymReaper.isLive(Loc, I.getKey())) {
       RegionRoots.push_back(MRMgr.getVarRegion(I.getKey()));      
       SVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
-        LSymbols.insert(*SI);
+        SymReaper.markLive(*SI);
     }
   
   // Scan for live variables and live symbols.
@@ -371,7 +371,7 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
     
     while (MR) {
       if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(MR)) {
-        LSymbols.insert(SymR->getSymbol());
+        SymReaper.markLive(SymR->getSymbol());
         break;
       }
       else if (const VarRegion* R = dyn_cast<VarRegion>(MR)) {
@@ -382,8 +382,8 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
         SVal X = Retrieve(state, loc::MemRegionVal(R));
     
         // FIXME: We need to handle symbols nested in region definitions.
-        for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
-          LSymbols.insert(*SI);
+        for (symbol_iterator SI=X.symbol_begin(),SE=X.symbol_end();SI!=SE;++SI)
+          SymReaper.markLive(*SI);
     
         if (!isa<loc::MemRegionVal>(X))
           break;
@@ -408,7 +408,7 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
       SVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
-        if (!LSymbols.count(*SI)) DSymbols.insert(*SI);
+        SymReaper.maybeDead(*SI);
     }
   }
   

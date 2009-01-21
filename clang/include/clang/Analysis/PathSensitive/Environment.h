@@ -139,10 +139,10 @@ public:
   Environment BindExpr(const Environment& Env, Stmt* E, SVal V,
                        bool isBlkExpr, bool Invalidate);
 
-  Environment RemoveDeadBindings(Environment Env, Stmt* Loc,
-                              const LiveVariables& Liveness,
-                              llvm::SmallVectorImpl<const MemRegion*>& DRoots,
-                              StoreManager::LiveSymbolsTy& LSymbols);
+  Environment
+  RemoveDeadBindings(Environment Env, Stmt* Loc, SymbolReaper& SymReaper,
+                     llvm::SmallVectorImpl<const MemRegion*>& DRoots);
+
 };
   
 } // end clang namespace

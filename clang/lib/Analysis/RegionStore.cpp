@@ -195,11 +195,8 @@ public:
   ///  It returns a new Store with these values removed, and populates LSymbols
   //   and DSymbols with the known set of live and dead symbols respectively.
   Store RemoveDeadBindings(const GRState* state, Stmt* Loc,
-                           const LiveVariables& Live,
-                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
-                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
-
-  void UpdateLiveSymbols(SVal X, LiveSymbolsTy& LSymbols);
+                           SymbolReaper& SymReaper,
+                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   const GRState* BindDecl(const GRState* St, const VarDecl* VD, SVal InitVal);
 
@@ -696,15 +693,15 @@ const GRState* RegionStoreManager::setExtent(const GRState* St,
 }
 
 
-void RegionStoreManager::UpdateLiveSymbols(SVal X, LiveSymbolsTy& LSymbols) {
-  for (SVal::symbol_iterator SI=X.symbol_begin(),SE=X.symbol_end();SI!=SE;++SI)
-    LSymbols.insert(*SI);
+static void UpdateLiveSymbols(SVal X, SymbolReaper& SymReaper) {
+  for (SVal::symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end();SI!=SE;++SI)
+    SymReaper.markLive(*SI);
 }
 
 Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc, 
-                                             const LiveVariables& Live,
-                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
-                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
+                                             SymbolReaper& SymReaper,
+                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
+{
 
   Store store = state->getStore();
   RegionBindingsTy B = GetRegionBindings(store);
@@ -732,7 +729,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion* R = I.getKey();
     if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
-      if (Live.isLive(Loc, VR->getDecl()))
+      if (SymReaper.isLive(Loc, VR->getDecl()))
         RegionRoots.push_back(VR); // This is a live "root".
     }
     else {
@@ -748,7 +745,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
       // to also mark SuperR as a root (as it may not have a value directly
       // bound to it in the store).
       if (const VarRegion* VR = dyn_cast<VarRegion>(SuperR)) {
-        if (Live.isLive(Loc, VR->getDecl()))
+        if (SymReaper.isLive(Loc, VR->getDecl()))
           RegionRoots.push_back(VR); // This is a live "root".
       }
     } 
@@ -773,13 +770,13 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
     // Mark the symbol for any live SymbolicRegion as "live".  This means we
     // should continue to track that symbol.
     if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
-      LSymbols.insert(SymR->getSymbol());
+      SymReaper.markLive(SymR->getSymbol());
 
     // Get the data binding for R (if any).
     RegionBindingsTy::data_type* Xptr = B.lookup(R);
     if (Xptr) {
       SVal X = *Xptr;
-      UpdateLiveSymbols(X, LSymbols); // Update the set of live symbols.
+      UpdateLiveSymbols(X, SymReaper); // Update the set of live symbols.
     
       // If X is a region, then add it the RegionRoots.
       if (loc::MemRegionVal* RegionX = dyn_cast<loc::MemRegionVal>(&X))
@@ -811,14 +808,12 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
     store = Remove(store, Loc::MakeVal(R));
 
     // Mark all non-live symbols that this region references as dead.
-    if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R)) {
-      SymbolRef Sym = SymR->getSymbol();
-      if (!LSymbols.count(Sym)) DSymbols.insert(Sym);
-    }
+    if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
+      SymReaper.maybeDead(SymR->getSymbol());
 
     SVal X = I.getData();
     SVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
-    for (; SI != SE; ++SI) { if (!LSymbols.count(*SI)) DSymbols.insert(*SI); }
+    for (; SI != SE; ++SI) SymReaper.maybeDead(*SI);
   }
   
   return store;

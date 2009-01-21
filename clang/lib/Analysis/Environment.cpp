@@ -108,9 +108,8 @@ Environment EnvironmentManager::BindExpr(const Environment& Env, Stmt* E,SVal V,
 
 Environment 
 EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
-                                const LiveVariables& Liveness,
-                                llvm::SmallVectorImpl<const MemRegion*>& DRoots,
-                                StoreManager::LiveSymbolsTy& LSymbols) {
+                                       SymbolReaper& SymReaper,
+                              llvm::SmallVectorImpl<const MemRegion*>& DRoots) {
   
   // Drop bindings for subexpressions.
   Env = RemoveSubExprBindings(Env);
@@ -120,19 +119,18 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
        I != E; ++I) {
     Stmt* BlkExpr = I.getKey();
 
-    if (Liveness.isLive(Loc, BlkExpr)) {
+    if (SymReaper.isLive(Loc, BlkExpr)) {
       SVal X = I.getData();
 
       // If the block expr's value is a memory region, then mark that region.
       if (isa<loc::MemRegionVal>(X))
         DRoots.push_back(cast<loc::MemRegionVal>(X).getRegion());
 
-
       // Mark all symbols in the block expr's value.
       for (SVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
-           SI != SE; ++SI) {
-        LSymbols.insert(*SI);
-      }
+           SI != SE; ++SI)
+        SymReaper.markLive(*SI);
+
     } else {
       // The block expr is dead.
       SVal X = I.getData();

@@ -17,10 +17,12 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
-#include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/DenseMap.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/ImmutableSet.h"
 
 namespace llvm {
   class raw_ostream;
@@ -292,7 +294,44 @@ public:
     return getSymbolData(ID).getType(*this);
   }
 };
+  
+class SymbolReaper {
+  typedef llvm::ImmutableSet<SymbolRef> SetTy;
+  typedef SetTy::Factory FactoryTy;
+  
+  FactoryTy F;
+  SetTy TheLiving;
+  SetTy TheDead;
+  LiveVariables& Liveness;
+  SymbolManager& SymMgr;
+  
+public:
+  SymbolReaper(LiveVariables& liveness, SymbolManager& symmgr)
+  : TheLiving(F.GetEmptySet()), TheDead(F.GetEmptySet()),
+    Liveness(liveness), SymMgr(symmgr) {}
 
+  bool isLive(SymbolRef sym);
+
+  bool isLive(const Stmt* Loc, const Stmt* ExprVal) const {
+    return Liveness.isLive(Loc, ExprVal);
+  }
+
+  bool isLive(const Stmt* Loc, const VarDecl* VD) const {
+    return Liveness.isLive(Loc, VD);
+  }
+  
+  void markLive(SymbolRef sym);
+  bool maybeDead(SymbolRef sym);
+  
+  typedef SetTy::iterator dead_iterator;
+  dead_iterator dead_begin() const { return TheDead.begin(); }
+  dead_iterator dead_end() const { return TheDead.end(); }
+  
+  bool hasDeadSymbols() const {
+    return !TheDead.isEmpty();
+  }
+};
+  
 } // end clang namespace
 
 #endif

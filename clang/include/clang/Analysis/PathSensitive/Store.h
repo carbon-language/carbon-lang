@@ -28,16 +28,11 @@ typedef const void* Store;
 
 class GRState;  
 class GRStateManager;
-class LiveVariables;
 class Stmt;
 class Expr;
 class ObjCIvarDecl;
 
 class StoreManager {
-public:
-  typedef llvm::SmallSet<SymbolRef, 20>      LiveSymbolsTy;
-  typedef llvm::DenseSet<SymbolRef>          DeadSymbolsTy;
-
 protected:
   /// MRMgr - Manages region objects associated with this StoreManager.
   MemRegionManager MRMgr;
@@ -55,12 +50,7 @@ public:
   ///   lazily computed.
   /// \return The value bound to the location \c loc.
   virtual SVal Retrieve(const GRState* state, Loc loc,
-                        QualType T = QualType()) = 0;  
-
-//  /// Retrieves the value bound to the specified region.
-//  SVal GetRegionSVal(const GRState* state, const MemRegion* R) {
-//    return Retrieve(state, loc::MemRegionVal(R));
-//  }
+                        QualType T = QualType()) = 0;
 
   /// Return a state with the specified value bound to the given location.
   /// \param[in] state The analysis state.
@@ -129,9 +119,8 @@ public:
   virtual const MemRegion* getSelfRegion(Store store) = 0;
 
   virtual Store
-  RemoveDeadBindings(const GRState* state, Stmt* Loc, const LiveVariables& Live,
-                     llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
-                     LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) = 0;
+  RemoveDeadBindings(const GRState* state, Stmt* Loc, SymbolReaper& SymReaper,
+                     llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 
   virtual const GRState* BindDecl(const GRState* St, const VarDecl* VD, 
                                   SVal InitVal) = 0;

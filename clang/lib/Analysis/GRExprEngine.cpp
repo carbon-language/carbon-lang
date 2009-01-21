@@ -211,18 +211,17 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   if (BatchAuditor)
     Builder->setAuditor(BatchAuditor.get());
   
+    
   // Create the cleaned state.  
-  if (PurgeDead)
-    CleanedState = StateMgr.RemoveDeadBindings(EntryNode->getState(), 
-                                               CurrentStmt,
-                                               Liveness, DeadSymbols);
-  else
-    CleanedState = EntryNode->getState();
-  
+  SymbolReaper SymReaper(Liveness, SymMgr);  
+  CleanedState = PurgeDead ? StateMgr.RemoveDeadBindings(EntryNode->getState(), 
+                                                         CurrentStmt, SymReaper)
+                           : EntryNode->getState();
+
   // Process any special transfer function for dead symbols.
   NodeSet Tmp;
   
-  if (DeadSymbols.empty())
+  if (!SymReaper.hasDeadSymbols())
     Tmp.Add(EntryNode);
   else {
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
@@ -232,7 +231,7 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
     Builder->PurgingDeadSymbols = true;
     
     getTF().EvalDeadSymbols(Tmp, *this, *Builder, EntryNode, S, 
-                        CleanedState, DeadSymbols);
+                            CleanedState, SymReaper);
 
     if (!Builder->BuildSinks && !Builder->HasGeneratedNode)
       Tmp.Add(EntryNode);

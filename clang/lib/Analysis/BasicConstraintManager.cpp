@@ -82,9 +82,8 @@ public:
   bool isNotEqual(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
   bool isEqual(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
 
-  const GRState* RemoveDeadBindings(const GRState* St,
-                                    StoreManager::LiveSymbolsTy& LSymbols,
-                                    StoreManager::DeadSymbolsTy& DSymbols);
+  const GRState* RemoveDeadBindings(const GRState* St, SymbolReaper& SymReaper);
+
 
   void print(const GRState* St, std::ostream& Out, 
              const char* nl, const char *sep);
@@ -504,19 +503,17 @@ bool BasicConstraintManager::isEqual(const GRState* St, SymbolRef sym,
 
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
 /// as marked in LSymbols, mark it as dead in DSymbols.
-const GRState* BasicConstraintManager::RemoveDeadBindings(const GRState* St,
-                                        StoreManager::LiveSymbolsTy& LSymbols,
-                                        StoreManager::DeadSymbolsTy& DSymbols) {
+const GRState*
+BasicConstraintManager::RemoveDeadBindings(const GRState* St,
+                                           SymbolReaper& SymReaper) {
+
   GRStateRef state(St, StateMgr);
   ConstEqTy CE = state.get<ConstEqTy>();
   ConstEqTy::Factory& CEFactory = state.get_context<ConstEqTy>();
 
   for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I) {
-    SymbolRef sym = I.getKey();        
-    if (!LSymbols.count(sym)) {
-      DSymbols.insert(sym);
-      CE = CEFactory.Remove(CE, sym);
-    }
+    SymbolRef sym = I.getKey();
+    if (SymReaper.maybeDead(sym)) CE = CEFactory.Remove(CE, sym);
   }
   state = state.set<ConstEqTy>(CE);
 
@@ -525,10 +522,7 @@ const GRState* BasicConstraintManager::RemoveDeadBindings(const GRState* St,
 
   for (ConstNotEqTy::iterator I = CNE.begin(), E = CNE.end(); I != E; ++I) {
     SymbolRef sym = I.getKey();    
-    if (!LSymbols.count(sym)) {
-      DSymbols.insert(sym);
-      CNE = CNEFactory.Remove(CNE, sym);
-    }
+    if (SymReaper.maybeDead(sym)) CNE = CNEFactory.Remove(CNE, sym);
   }
   
   return state.set<ConstNotEqTy>(CNE);

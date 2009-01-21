@@ -158,3 +158,21 @@ QualType SymbolData::getType(const SymbolManager& SymMgr) const {
 }
 
 SymbolManager::~SymbolManager() {}
+
+void SymbolReaper::markLive(SymbolRef sym) {
+  TheLiving = F.Add(TheLiving, sym);
+  TheDead = F.Remove(TheDead, sym);
+}
+
+bool SymbolReaper::maybeDead(SymbolRef sym) {
+  if (isLive(sym))
+    return false;
+  
+  TheDead = F.Add(TheDead, sym);
+  return true;
+}
+
+bool SymbolReaper::isLive(SymbolRef sym) {  
+  return TheLiving.contains(sym);
+}
+  

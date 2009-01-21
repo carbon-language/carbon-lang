@@ -55,11 +55,7 @@ protected:
   /// Liveness - live-variables information the ValueDecl* and block-level
   ///  Expr* in the CFG.  Used to prune out dead state.
   LiveVariables& Liveness;
-  
-  /// DeadSymbols - A scratch set used to record the set of symbols that
-  ///  were just marked dead by a call to GRStateManager::RemoveDeadBindings.
-  GRStateManager::DeadSymbolsTy DeadSymbols;
-  
+
   /// Builder - The current GRStmtNodeBuilder which is used when building the
   ///  nodes for a given statement.
   StmtNodeBuilder* Builder;

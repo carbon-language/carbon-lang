@@ -34,9 +34,8 @@ GRStateManager::~GRStateManager() {
 
 const GRState*
 GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
-                                   const LiveVariables& Liveness,
-                                   DeadSymbolsTy& DSymbols) {  
-  
+                                   SymbolReaper& SymReaper) {
+
   // This code essentially performs a "mark-and-sweep" of the VariableBindings.
   // The roots are any Block-level exprs and Decls that our liveness algorithm
   // tells us are live.  We then see what Decls they may reference, and keep
@@ -44,19 +43,17 @@ GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   // frequency of which this method is called should be experimented with
   // for optimum performance.
   llvm::SmallVector<const MemRegion*, 10> RegionRoots;
-  StoreManager::LiveSymbolsTy LSymbols;
   GRState NewState = *state;
 
-  NewState.Env = EnvMgr.RemoveDeadBindings(NewState.Env, Loc, Liveness,
-                                           RegionRoots, LSymbols);
+  NewState.Env = EnvMgr.RemoveDeadBindings(NewState.Env, Loc, SymReaper,
+                                           RegionRoots);
 
   // Clean up the store.
-  DSymbols.clear();
-  NewState.St = StoreMgr->RemoveDeadBindings(&NewState, Loc, Liveness,
-                                             RegionRoots, LSymbols, DSymbols);
+  NewState.St = StoreMgr->RemoveDeadBindings(&NewState, Loc, SymReaper,
+                                             RegionRoots);
 
   return ConstraintMgr->RemoveDeadBindings(getPersistentState(NewState),
-                                           LSymbols, DSymbols);
+                                           SymReaper);
 }
 
 const GRState* GRStateManager::Unbind(const GRState* St, Loc LV) {

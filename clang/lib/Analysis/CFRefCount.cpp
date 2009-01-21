@@ -1367,9 +1367,9 @@ public:
                                GRExprEngine& Engine,
                                GRStmtNodeBuilder<GRState>& Builder,
                                ExplodedNode<GRState>* Pred,
-                               Stmt* S,
-                               const GRState* St,
-                               const GRStateManager::DeadSymbolsTy& Dead);
+                               Stmt* S, const GRState* state,
+                               SymbolReaper& SymReaper);
+
   // Return statements.
   
   virtual void EvalReturn(ExplodedNodeSet<GRState>& Dst,
@@ -1915,20 +1915,18 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
                                  ExplodedNode<GRState>* Pred,
                                  Stmt* S,
                                  const GRState* St,
-                                 const GRStateManager::DeadSymbolsTy& Dead) {
+                                 SymbolReaper& SymReaper) {
     
   // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.
   
   RefBindings B = St->get<RefBindings>();
   llvm::SmallVector<std::pair<SymbolRef,bool>, 10> Leaked;
   
-  for (GRStateManager::DeadSymbolsTy::const_iterator
-       I=Dead.begin(), E=Dead.end(); I!=E; ++I) {
+  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
+        E = SymReaper.dead_end(); I != E; ++I) {
     
     const RefVal* T = B.lookup(*I);
-
-    if (!T)
-      continue;
+    if (!T) continue;
     
     bool hasLeak = false;
     

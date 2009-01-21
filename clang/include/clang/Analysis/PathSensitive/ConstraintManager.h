@@ -46,8 +46,7 @@ public:
                        const llvm::APSInt& V) const = 0;
 
   virtual const GRState* RemoveDeadBindings(const GRState* St,
-                                    StoreManager::LiveSymbolsTy& LSymbols,
-                                    StoreManager::DeadSymbolsTy& DSymbols) = 0;
+                                            SymbolReaper& SymReaper) = 0;
 
   virtual void print(const GRState* St, std::ostream& Out, 
                      const char* nl, const char *sep) = 0;
