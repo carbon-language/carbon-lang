@@ -475,17 +475,19 @@ class OptionParser:
         self.dumpversionOption = self.addOption(FlagOption('-dumpversion'))
         self.dumpmachineOption = self.addOption(FlagOption('-dumpmachine'))
         self.printSearchDirsOption = self.addOption(FlagOption('-print-search-dirs'))
-        self.printLibgccFileNameOption = self.addOption(FlagOption('-print-libgcc-file-name'))
-        # FIXME: Hrm, where does this come from? It isn't always true that
-        # we take both - and --. For example, gcc --S ... ends up sending
-        # -fS to cc1. Investigate.
-        #
-        # FIXME: Need to implement some form of alias support inside
-        # getLastOption to handle this.
-        self.printLibgccFileNameOption2 = self.addOption(FlagOption('--print-libgcc-file-name'))
-        self.printFileNameOption = self.addOption(JoinedOption('-print-file-name='))
-        self.printProgNameOption = self.addOption(JoinedOption('-print-prog-name='))
-        self.printProgNameOption2 = self.addOption(JoinedOption('--print-prog-name='))
+
+        self.printLibgccFileNameOption = OptionGroup('-print-libgcc-file-name')
+        self.addOption(FlagOption('-print-libgcc-file-name', self.printLibgccFileNameOption))
+        self.addOption(FlagOption('--print-libgcc-file-name', self.printLibgccFileNameOption))
+
+        self.printFileNameOption = OptionGroup('-print-file-name=')
+        self.addOption(JoinedOption('-print-file-name=', self.printFileNameOption))
+        self.addOption(JoinedOption('--print-file-name=', self.printFileNameOption))
+
+        self.printProgNameOption = OptionGroup('-print-prog-name=')
+        self.addOption(JoinedOption('-print-prog-name=', self.printProgNameOption))
+        self.addOption(JoinedOption('--print-prog-name=', self.printProgNameOption))
+
         self.printMultiDirectoryOption = self.addOption(FlagOption('-print-multi-directory'))
         self.printMultiLibOption = self.addOption(FlagOption('-print-multi-lib'))
         self.addOption(FlagOption('-print-multi-os-directory'))
@@ -501,8 +503,11 @@ class OptionParser:
         self.combineOption = self.addOption(FlagOption('-combine'))
         self.noIntegratedCPPOption = self.addOption(FlagOption('-no-integrated-cpp'))
         self.pipeOption = self.addOption(FlagOption('-pipe'))
-        self.saveTempsOption = self.addOption(FlagOption('-save-temps'))
-        self.saveTempsOption2 = self.addOption(FlagOption('--save-temps'))
+
+        self.saveTempsOption = OptionGroup('-save-temps')
+        self.addOption(FlagOption('-save-temps', self.saveTempsOption))
+        self.addOption(FlagOption('--save-temps', self.saveTempsOption))
+
         # FIXME: Error out if this is used.
         self.addOption(JoinedOption('-specs='))
         # FIXME: Implement.
@@ -806,13 +811,13 @@ class OptionParser:
         self.WGroup = OptionGroup('-W')
         self.ClangWGroup = OptionGroup('-W', self.WGroup)
 
-        self.addOption(JoinedOption('-Wunused-macros', self.ClangWGroup))
-        self.addOption(JoinedOption('-Wfloat-equal', self.ClangWGroup))
-        self.addOption(JoinedOption('-Wreadonly-setter-attrs', self.ClangWGroup))
-        self.addOption(JoinedOption('-Wno-format-nonliteral', self.ClangWGroup))
-        self.addOption(JoinedOption('-Wundef', self.ClangWGroup))
-        self.addOption(JoinedOption('-Wimplicit-function-declaration', self.ClangWGroup))
-        self.addOption(JoinedOption('-Wno-strict-selector-match', self.ClangWGroup))
+        self.addOption(FlagOption('-Wunused-macros', self.ClangWGroup))
+        self.addOption(FlagOption('-Wfloat-equal', self.ClangWGroup))
+        self.addOption(FlagOption('-Wreadonly-setter-attrs', self.ClangWGroup))
+        self.addOption(FlagOption('-Wno-format-nonliteral', self.ClangWGroup))
+        self.addOption(FlagOption('-Wundef', self.ClangWGroup))
+        self.addOption(FlagOption('-Wimplicit-function-declaration', self.ClangWGroup))
+        self.addOption(FlagOption('-Wno-strict-selector-match', self.ClangWGroup))
 
         self.WnonportableCfstringsOption = self.addOption(JoinedOption('-Wnonportable-cfstrings', self.WGroup))
         self.WnoNonportableCfstringsOption = self.addOption(JoinedOption('-Wno-nonportable-cfstrings', self.WGroup))

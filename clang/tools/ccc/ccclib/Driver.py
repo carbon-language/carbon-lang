@@ -538,8 +538,7 @@ class Driver(object):
 
         archs = {}
         hasDashM = args.getLastArg(self.parser.MGroup)
-        hasSaveTemps = (args.getLastArg(self.parser.saveTempsOption) or 
-                        args.getLastArg(self.parser.saveTempsOption2))
+        hasSaveTemps = args.getLastArg(self.parser.saveTempsOption)
         for arg in args:
             if arg.opt is self.parser.archOption:
                 # FIXME: Canonicalize this.
@@ -602,8 +601,7 @@ class Driver(object):
         jobs = Jobs.JobList()
 
         finalOutput = args.getLastArg(self.parser.oOption)
-        hasSaveTemps = (args.getLastArg(self.parser.saveTempsOption) or
-                        args.getLastArg(self.parser.saveTempsOption2))
+        hasSaveTemps = args.getLastArg(self.parser.saveTempsOption)
         hasNoIntegratedCPP = args.getLastArg(self.parser.noIntegratedCPPOption)
         hasTraditionalCPP = args.getLastArg(self.parser.traditionalCPPOption)
         hasPipe = args.getLastArg(self.parser.pipeOption)
