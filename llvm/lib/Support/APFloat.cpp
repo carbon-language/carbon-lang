@@ -599,7 +599,8 @@ APFloat::copySignificand(const APFloat &rhs)
 }
 
 /* Make this number a NaN, with an arbitrary but deterministic value
-   for the significand.  */
+   for the significand.  If double or longer, this is a signalling NaN,
+   which may not be ideal. */
 void
 APFloat::makeNaN(void)
 {

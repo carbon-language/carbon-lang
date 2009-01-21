@@ -640,6 +640,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
       // make sure that we only output it in exponential format if we can parse
       // the value back and get the same value.
       //
+      bool ignored;
       bool isDouble = &CFP->getValueAPF().getSemantics()==&APFloat::IEEEdouble;
       double Val = isDouble ? CFP->getValueAPF().convertToDouble() :
                               CFP->getValueAPF().convertToFloat();
@@ -659,11 +660,20 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
         }
       }
       // Otherwise we could not reparse it to exactly the same value, so we must
-      // output the string in hexadecimal format!
+      // output the string in hexadecimal format!  Note that loading and storing
+      // floating point types changes the bits of NaNs on some hosts, notably
+      // x86, so we must not use these types.
       assert(sizeof(double) == sizeof(uint64_t) &&
              "assuming that double is 64 bits!");
       char Buffer[40];
-      Out << "0x" << utohex_buffer(uint64_t(DoubleToBits(Val)), Buffer+40);
+      APFloat apf = CFP->getValueAPF();
+      // Floats are represented in ASCII IR as double, convert.
+      if (!isDouble)
+        apf.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, 
+                          &ignored);
+      Out << "0x" << 
+              utohex_buffer(uint64_t(apf.bitcastToAPInt().getZExtValue()), 
+                            Buffer+40);
       return;
     }
     

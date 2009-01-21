@@ -61,12 +61,6 @@ void FoldingSetNodeID::AddInteger(unsigned long long I) {
   if ((uint64_t)(int)I != I)
     Bits.push_back(unsigned(I >> 32));
 }
-void FoldingSetNodeID::AddFloat(float F) {
-  Bits.push_back(FloatToBits(F));
-}
-void FoldingSetNodeID::AddDouble(double D) {
- AddInteger(DoubleToBits(D));
-}
 
 void FoldingSetNodeID::AddString(const char *String) {
   unsigned Size = static_cast<unsigned>(strlen(String));

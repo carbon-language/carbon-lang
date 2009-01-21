@@ -361,7 +361,9 @@ inline float BitsToFloat(uint32_t Bits) {
 }
 
 /// DoubleToBits - This function takes a double and returns the bit
-/// equivalent 64-bit integer.
+/// equivalent 64-bit integer.  Note that copying doubles around
+/// changes the bits of NaNs on some hosts, notably x86, so this
+/// routine cannot be used if these bits are needed.
 inline uint64_t DoubleToBits(double Double) {
   union {
     uint64_t L;
@@ -372,7 +374,9 @@ inline uint64_t DoubleToBits(double Double) {
 }
 
 /// FloatToBits - This function takes a float and returns the bit
-/// equivalent 32-bit integer.
+/// equivalent 32-bit integer.  Note that copying floats around
+/// changes the bits of NaNs on some hosts, notably x86, so this
+/// routine cannot be used if these bits are needed.
 inline uint32_t FloatToBits(float Float) {
   union {
     uint32_t I;

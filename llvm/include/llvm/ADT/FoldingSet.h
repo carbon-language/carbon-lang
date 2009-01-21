@@ -225,8 +225,6 @@ public:
   void AddInteger(unsigned long I);
   void AddInteger(long long I);
   void AddInteger(unsigned long long I);
-  void AddFloat(float F);
-  void AddDouble(double D);
   void AddString(const std::string &String);
   void AddString(const char* String);
 
