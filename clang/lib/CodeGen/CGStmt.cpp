@@ -863,7 +863,7 @@ static std::string SimplifyConstraint(const char* Constraint,
       bool result = Target.resolveSymbolicName(Constraint, 
                                                OutputNamesBegin,
                                                OutputNamesEnd, Index);
-      assert(result && "Could not resolve symbolic name");
+      assert(result && "Could not resolve symbolic name"); result=result;
       Result += llvm::utostr(Index);
       break;
     }
@@ -993,7 +993,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     bool result = Target.validateInputConstraint(InputConstraint.c_str(),
                                                  S.begin_output_names(),
                                                  S.end_output_names(),
-                                                 Info);
+                                                 Info); result=result;
     assert(result && "Failed to parse input constraint");
     
     if (i != 0 || S.getNumOutputs() > 0)
