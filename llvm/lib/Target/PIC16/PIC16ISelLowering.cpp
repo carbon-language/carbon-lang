@@ -762,9 +762,11 @@ SDValue PIC16TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) {
   return Call;
 }
 
-void PIC16TargetLowering::LowerOperationWrapper(SDValue Op, 
-                                             SmallVectorImpl<SDValue>&Results,
-                                             SelectionDAG &DAG) {
+void
+PIC16TargetLowering::LowerOperationWrapper(SDNode *N,
+                                           SmallVectorImpl<SDValue>&Results,
+                                           SelectionDAG &DAG) {
+  SDValue Op = SDValue(N, 0);
   SDValue Res;
   unsigned i;
   switch (Op.getOpcode()) {
@@ -783,12 +785,12 @@ void PIC16TargetLowering::LowerOperationWrapper(SDValue Op,
       return; 
     }
   }
-  SDNode *N = Res.getNode();
+
+  N = Res.getNode();
   unsigned NumValues = N->getNumValues(); 
-  for (i=0; i< NumValues ; i++) {
+  for (i = 0; i < NumValues ; i++) {
     Results.push_back(SDValue(N, i)); 
   }
-
 }
 
 SDValue PIC16TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {

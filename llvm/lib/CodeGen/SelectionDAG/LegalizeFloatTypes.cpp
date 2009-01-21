@@ -722,7 +722,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   Lo = Hi = SDValue();
 
   // See if the target wants to custom expand this node.
-  if (CustomLowerResults(N, ResNo, true))
+  if (CustomLowerResults(N, N->getValueType(ResNo), true))
     return;
 
   switch (N->getOpcode()) {

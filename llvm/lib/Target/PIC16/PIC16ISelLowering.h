@@ -97,9 +97,9 @@ namespace llvm {
     virtual void ReplaceNodeResults(SDNode *N,
                                     SmallVectorImpl<SDValue> &Results,
                                     SelectionDAG &DAG);
-    virtual void LowerOperationWrapper(SDValue Op,
-                                    SmallVectorImpl<SDValue> &Results,
-                                    SelectionDAG &DAG);
+    virtual void LowerOperationWrapper(SDNode *N,
+                                       SmallVectorImpl<SDValue> &Results,
+                                       SelectionDAG &DAG);
 
     SDValue ExpandStore(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandLoad(SDNode *N, SelectionDAG &DAG);

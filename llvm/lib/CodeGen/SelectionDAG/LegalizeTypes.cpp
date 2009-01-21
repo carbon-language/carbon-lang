@@ -848,27 +848,23 @@ SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
 
 /// CustomLowerResults - Replace the node's results with custom code provided
 /// by the target and return "true", or do nothing and return "false".
-/// The last parameter is FALSE if we are dealing with a node with legal 
+/// The last parameter is FALSE if we are dealing with a node with legal
 /// result types and illegal operand. The second parameter denotes the illegal
 /// OperandNo in that case.
 /// The last parameter being TRUE means we are dealing with a
-/// node with illegal result types. The second parameter denotes the illegal 
+/// node with illegal result types. The second parameter denotes the illegal
 /// ResNo in that case.
-bool DAGTypeLegalizer::CustomLowerResults(SDNode *N, unsigned Num, 
+bool DAGTypeLegalizer::CustomLowerResults(SDNode *N, MVT VT,
                                           bool LegalizeResult) {
-  // Get the type of illegal Result or Operand.
-  MVT ValueTy = (LegalizeResult) ? N->getValueType(Num) 
-                                 : N->getOperand(Num).getValueType();
-    
   // See if the target wants to custom lower this node.
-  if (TLI.getOperationAction(N->getOpcode(), ValueTy) != TargetLowering::Custom)
+  if (TLI.getOperationAction(N->getOpcode(), VT) != TargetLowering::Custom)
     return false;
 
   SmallVector<SDValue, 8> Results;
   if (LegalizeResult)
     TLI.ReplaceNodeResults(N, Results, DAG);
   else
-    TLI.LowerOperationWrapper(SDValue(N, 0), Results, DAG);
+    TLI.LowerOperationWrapper(N, Results, DAG);
 
   if (Results.empty())
     // The target didn't want to custom lower it after all.

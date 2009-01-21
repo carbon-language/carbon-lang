@@ -31,10 +31,10 @@ using namespace llvm;
 /// expansion, we just know that (at least) one result needs promotion.
 void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Promote integer result: "; N->dump(&DAG); cerr << "\n");
-  SDValue Result = SDValue();
+  SDValue Res = SDValue();
 
   // See if the target wants to custom expand this node.
-  if (CustomLowerResults(N, ResNo, true))
+  if (CustomLowerResults(N, N->getValueType(ResNo), true))
     return;
 
   switch (N->getOpcode()) {
@@ -45,58 +45,58 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
 #endif
     assert(0 && "Do not know how to promote this operator!");
     abort();
-  case ISD::AssertSext:  Result = PromoteIntRes_AssertSext(N); break;
-  case ISD::AssertZext:  Result = PromoteIntRes_AssertZext(N); break;
-  case ISD::BIT_CONVERT: Result = PromoteIntRes_BIT_CONVERT(N); break;
-  case ISD::BSWAP:       Result = PromoteIntRes_BSWAP(N); break;
-  case ISD::BUILD_PAIR:  Result = PromoteIntRes_BUILD_PAIR(N); break;
-  case ISD::Constant:    Result = PromoteIntRes_Constant(N); break;
+  case ISD::AssertSext:  Res = PromoteIntRes_AssertSext(N); break;
+  case ISD::AssertZext:  Res = PromoteIntRes_AssertZext(N); break;
+  case ISD::BIT_CONVERT: Res = PromoteIntRes_BIT_CONVERT(N); break;
+  case ISD::BSWAP:       Res = PromoteIntRes_BSWAP(N); break;
+  case ISD::BUILD_PAIR:  Res = PromoteIntRes_BUILD_PAIR(N); break;
+  case ISD::Constant:    Res = PromoteIntRes_Constant(N); break;
   case ISD::CONVERT_RNDSAT:
-                         Result = PromoteIntRes_CONVERT_RNDSAT(N); break;
-  case ISD::CTLZ:        Result = PromoteIntRes_CTLZ(N); break;
-  case ISD::CTPOP:       Result = PromoteIntRes_CTPOP(N); break;
-  case ISD::CTTZ:        Result = PromoteIntRes_CTTZ(N); break;
+                         Res = PromoteIntRes_CONVERT_RNDSAT(N); break;
+  case ISD::CTLZ:        Res = PromoteIntRes_CTLZ(N); break;
+  case ISD::CTPOP:       Res = PromoteIntRes_CTPOP(N); break;
+  case ISD::CTTZ:        Res = PromoteIntRes_CTTZ(N); break;
   case ISD::EXTRACT_VECTOR_ELT:
-                         Result = PromoteIntRes_EXTRACT_VECTOR_ELT(N); break;
-  case ISD::LOAD:        Result = PromoteIntRes_LOAD(cast<LoadSDNode>(N));break;
-  case ISD::SELECT:      Result = PromoteIntRes_SELECT(N); break;
-  case ISD::SELECT_CC:   Result = PromoteIntRes_SELECT_CC(N); break;
-  case ISD::SETCC:       Result = PromoteIntRes_SETCC(N); break;
-  case ISD::SHL:         Result = PromoteIntRes_SHL(N); break;
+                         Res = PromoteIntRes_EXTRACT_VECTOR_ELT(N); break;
+  case ISD::LOAD:        Res = PromoteIntRes_LOAD(cast<LoadSDNode>(N));break;
+  case ISD::SELECT:      Res = PromoteIntRes_SELECT(N); break;
+  case ISD::SELECT_CC:   Res = PromoteIntRes_SELECT_CC(N); break;
+  case ISD::SETCC:       Res = PromoteIntRes_SETCC(N); break;
+  case ISD::SHL:         Res = PromoteIntRes_SHL(N); break;
   case ISD::SIGN_EXTEND_INREG:
-                         Result = PromoteIntRes_SIGN_EXTEND_INREG(N); break;
-  case ISD::SRA:         Result = PromoteIntRes_SRA(N); break;
-  case ISD::SRL:         Result = PromoteIntRes_SRL(N); break;
-  case ISD::TRUNCATE:    Result = PromoteIntRes_TRUNCATE(N); break;
-  case ISD::UNDEF:       Result = PromoteIntRes_UNDEF(N); break;
-  case ISD::VAARG:       Result = PromoteIntRes_VAARG(N); break;
+                         Res = PromoteIntRes_SIGN_EXTEND_INREG(N); break;
+  case ISD::SRA:         Res = PromoteIntRes_SRA(N); break;
+  case ISD::SRL:         Res = PromoteIntRes_SRL(N); break;
+  case ISD::TRUNCATE:    Res = PromoteIntRes_TRUNCATE(N); break;
+  case ISD::UNDEF:       Res = PromoteIntRes_UNDEF(N); break;
+  case ISD::VAARG:       Res = PromoteIntRes_VAARG(N); break;
 
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND:  Result = PromoteIntRes_INT_EXTEND(N); break;
+  case ISD::ANY_EXTEND:  Res = PromoteIntRes_INT_EXTEND(N); break;
 
   case ISD::FP_TO_SINT:
-  case ISD::FP_TO_UINT:  Result = PromoteIntRes_FP_TO_XINT(N); break;
+  case ISD::FP_TO_UINT:  Res = PromoteIntRes_FP_TO_XINT(N); break;
 
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
   case ISD::ADD:
   case ISD::SUB:
-  case ISD::MUL:         Result = PromoteIntRes_SimpleIntBinOp(N); break;
+  case ISD::MUL:         Res = PromoteIntRes_SimpleIntBinOp(N); break;
 
   case ISD::SDIV:
-  case ISD::SREM:        Result = PromoteIntRes_SDIV(N); break;
+  case ISD::SREM:        Res = PromoteIntRes_SDIV(N); break;
 
   case ISD::UDIV:
-  case ISD::UREM:        Result = PromoteIntRes_UDIV(N); break;
+  case ISD::UREM:        Res = PromoteIntRes_UDIV(N); break;
 
   case ISD::SADDO:
-  case ISD::SSUBO:       Result = PromoteIntRes_SADDSUBO(N, ResNo); break;
+  case ISD::SSUBO:       Res = PromoteIntRes_SADDSUBO(N, ResNo); break;
   case ISD::UADDO:
-  case ISD::USUBO:       Result = PromoteIntRes_UADDSUBO(N, ResNo); break;
+  case ISD::USUBO:       Res = PromoteIntRes_UADDSUBO(N, ResNo); break;
   case ISD::SMULO:
-  case ISD::UMULO:       Result = PromoteIntRes_XMULO(N, ResNo); break;
+  case ISD::UMULO:       Res = PromoteIntRes_XMULO(N, ResNo); break;
 
   case ISD::ATOMIC_LOAD_ADD:
   case ISD::ATOMIC_LOAD_SUB:
@@ -109,15 +109,15 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_UMAX:
   case ISD::ATOMIC_SWAP:
-    Result = PromoteIntRes_Atomic1(cast<AtomicSDNode>(N)); break;
+    Res = PromoteIntRes_Atomic1(cast<AtomicSDNode>(N)); break;
 
   case ISD::ATOMIC_CMP_SWAP:
-    Result = PromoteIntRes_Atomic2(cast<AtomicSDNode>(N)); break;
+    Res = PromoteIntRes_Atomic2(cast<AtomicSDNode>(N)); break;
   }
 
-  // If Result is null, the sub-method took care of registering the result.
-  if (Result.getNode())
-    SetPromotedInteger(SDValue(N, ResNo), Result);
+  // If the result is null then the sub-method took care of registering it.
+  if (Res.getNode())
+    SetPromotedInteger(SDValue(N, ResNo), Res);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_AssertSext(SDNode *N) {
@@ -623,7 +623,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Promote integer operand: "; N->dump(&DAG); cerr << "\n");
   SDValue Res = SDValue();
 
-  if (CustomLowerResults(N, OpNo, false))
+  if (CustomLowerResults(N, N->getOperand(OpNo).getValueType(), false))
     return false;
 
   switch (N->getOpcode()) {
@@ -656,9 +656,9 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::UINT_TO_FP:   Res = PromoteIntOp_UINT_TO_FP(N); break;
   case ISD::ZERO_EXTEND:  Res = PromoteIntOp_ZERO_EXTEND(N); break;
   }
-  
+
   // If the result is null, the sub-method took care of registering results etc.
-  if (! Res.getNode()) return false;
+  if (!Res.getNode()) return false;
 
   // If the result is N, the sub-method updated N in place.  Tell the legalizer
   // core about this.
@@ -918,7 +918,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   Lo = Hi = SDValue();
 
   // See if the target wants to custom expand this node.
-  if (CustomLowerResults(N, ResNo, true))
+  if (CustomLowerResults(N, N->getValueType(ResNo), true))
     return;
 
   switch (N->getOpcode()) {
@@ -1848,7 +1848,7 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Expand integer operand: "; N->dump(&DAG); cerr << "\n");
   SDValue Res = SDValue();
 
-  if (CustomLowerResults(N, OpNo, false))
+  if (CustomLowerResults(N, N->getOperand(OpNo).getValueType(), false))
     return false;
 
   switch (N->getOpcode()) {
