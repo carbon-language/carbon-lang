@@ -40,8 +40,8 @@ class CGObjCGNU : public CodeGen::CGObjCRuntime {
 private:
   CodeGen::CodeGenModule &CGM;
   llvm::Module &TheModule;
-  const llvm::PointerType *SelectorTy;
-  const llvm::Type *ExpectedSelTy;
+  const llvm::StructType *SelStructTy;
+  const llvm::Type *SelectorTy;
   const llvm::Type *PtrToInt8Ty;
   const llvm::Type *IMPTy;
   const llvm::Type *IdTy;
@@ -168,12 +168,11 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   PtrToInt8Ty = 
     llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // Get the selector Type.
-  SelectorTy = cast<llvm::PointerType>(
-	  CGM.getTypes().ConvertType(CGM.getContext().getObjCSelType()));
-
-  ExpectedSelTy = 
-    CGM.getTypes().ConvertType(CGM.getContext().getObjCSelType());
-
+  SelStructTy = llvm::StructType::get(
+      PtrToInt8Ty,
+      PtrToInt8Ty,
+      NULL);
+  SelectorTy = llvm::PointerType::getUnqual(SelStructTy);
   PtrToIntTy = llvm::PointerType::getUnqual(IntTy);
   PtrTy = PtrToInt8Ty;
  
@@ -797,9 +796,6 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       ExistingProtocols.empty() && TypedSelectors.empty() &&
       UntypedSelectors.empty())
     return NULL;
-
-  const llvm::StructType *SelStructTy = 
-    cast<llvm::StructType>(SelectorTy->getElementType());
 
   // Name the ObjC types to make the IR a bit easier to read
   TheModule.addTypeName(".objc_selector", SelectorTy);
