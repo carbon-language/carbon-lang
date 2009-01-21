@@ -143,7 +143,9 @@ LexNextToken:
 
   if (TKind == tok::identifier) {
     MIOpt.ReadToken();
-    return PP->HandleIdentifier(Tok);
+    if (Tok.getIdentifierInfo()->isHandleIdentifierCase())
+      PP->HandleIdentifier(Tok);
+    return;
   }
   
   if (TKind == tok::eof) {

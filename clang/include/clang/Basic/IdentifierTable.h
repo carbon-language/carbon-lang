@@ -57,7 +57,8 @@ class IdentifierInfo {
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
-  // 9 bits left in 32-bit word.
+  bool NeedsHandleIdentifier  : 1; // See "RecomputeNeedsHandleIdentifier".
+  // 8 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
   
@@ -107,13 +108,28 @@ public:
   bool hasMacroDefinition() const {
     return HasMacro;
   }
-  void setHasMacroDefinition(bool Val) { HasMacro = Val; }
+  void setHasMacroDefinition(bool Val) {
+    if (HasMacro == Val) return;
+    
+    HasMacro = Val;
+    if (Val)
+      NeedsHandleIdentifier = 1;
+    else
+      RecomputeNeedsHandleIdentifier();
+  }
   
   /// get/setTokenID - If this is a source-language token (e.g. 'for'), this API
   /// can be used to cause the lexer to map identifiers to source-language
   /// tokens.
   tok::TokenKind getTokenID() const { return (tok::TokenKind)TokenID; }
-  void setTokenID(tok::TokenKind ID) { TokenID = ID; }
+  void setTokenID(tok::TokenKind ID) {
+    TokenID = ID;
+  
+    if (ID != tok::identifier)
+      NeedsHandleIdentifier = 1;
+    else
+      RecomputeNeedsHandleIdentifier();
+  }
   
   /// getPPKeywordID - Return the preprocessor keyword ID for this identifier.
   /// For example, "define" will return tok::pp_define.
@@ -149,19 +165,36 @@ public:
   /// language token is an extension.  This controls extension warnings, and is
   /// only valid if a custom token ID is set.
   bool isExtensionToken() const { return IsExtension; }
-  void setIsExtensionToken(bool Val) { IsExtension = Val; }
+  void setIsExtensionToken(bool Val) {
+    IsExtension = Val;
+    if (Val)
+      NeedsHandleIdentifier = 1;
+    else
+      RecomputeNeedsHandleIdentifier();
+  }
   
   /// setIsPoisoned - Mark this identifier as poisoned.  After poisoning, the
   /// Preprocessor will emit an error every time this token is used.
-  void setIsPoisoned(bool Value = true) { IsPoisoned = Value; }
+  void setIsPoisoned(bool Value = true) {
+    IsPoisoned = Value;
+    if (Value)
+      NeedsHandleIdentifier = 1;
+    else
+      RecomputeNeedsHandleIdentifier();
+  }
   
   /// isPoisoned - Return true if this token has been poisoned.
   bool isPoisoned() const { return IsPoisoned; }
   
   /// isCPlusPlusOperatorKeyword/setIsCPlusPlusOperatorKeyword controls whether
   /// this identifier is a C++ alternate representation of an operator.
-  void setIsCPlusPlusOperatorKeyword(bool Val = true)
-    { IsCPPOperatorKeyword = Val; }
+  void setIsCPlusPlusOperatorKeyword(bool Val = true) {
+    IsCPPOperatorKeyword = Val;
+    if (Val)
+      NeedsHandleIdentifier = 1;
+    else
+      RecomputeNeedsHandleIdentifier();
+  }
   bool isCPlusPlusOperatorKeyword() const { return IsCPPOperatorKeyword; }
 
   /// getFETokenInfo/setFETokenInfo - The language front-end is allowed to
@@ -169,12 +202,31 @@ public:
   template<typename T>
   T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }
   void setFETokenInfo(void *T) { FETokenInfo = T; }
+
+  /// isHandleIdentifierCase - Return true if the Preprocessor::HandleIdentifier
+  /// must be called on a token of this identifier.  If this returns false, we
+  /// know that HandleIdentifier will not affect the token.
+  bool isHandleIdentifierCase() const { return NeedsHandleIdentifier; }
   
   /// Emit - Serialize this IdentifierInfo to a bitstream.
   void Emit(llvm::Serializer& S) const;
   
   /// Read - Deserialize an IdentifierInfo object from a bitstream.
   void Read(llvm::Deserializer& D);  
+  
+private:
+  /// RecomputeNeedsHandleIdentifier - The Preprocessor::HandleIdentifier does
+  /// several special (but rare) things to identifiers of various sorts.  For
+  /// example, it changes the "for" keyword token from tok::identifier to
+  /// tok::for.
+  ///
+  /// This method is very tied to the definition of HandleIdentifier.  Any
+  /// change to it should be reflected here.
+  void RecomputeNeedsHandleIdentifier() {
+    NeedsHandleIdentifier =
+      (isPoisoned() | hasMacroDefinition() | isCPlusPlusOperatorKeyword() |
+       isExtensionToken()) || getTokenID() != tok::identifier;
+  }
 };
 
 /// IdentifierInfoLookup - An abstract class used by IdentifierTable that

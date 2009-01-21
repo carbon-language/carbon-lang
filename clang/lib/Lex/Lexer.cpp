@@ -560,7 +560,9 @@ FinishIdentifier:
     
     // Finally, now that we know we have an identifier, pass this off to the
     // preprocessor, which may macro expand it or something.
-    return PP->HandleIdentifier(Result);
+    if (Result.getIdentifierInfo()->isHandleIdentifierCase())
+      PP->HandleIdentifier(Result);
+    return;
   }
   
   // Otherwise, $,\,? in identifier found.  Enter slower path.

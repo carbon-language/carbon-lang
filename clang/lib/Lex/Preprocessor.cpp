@@ -718,6 +718,11 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
 /// HandleIdentifier - This callback is invoked when the lexer reads an
 /// identifier.  This callback looks up the identifier in the map and/or
 /// potentially macro expands it or turns it into a named token (like 'for').
+///
+/// Note that callers of this method are guarded by checking the
+/// IdentifierInfo's 'isHandleIdentifierCase' bit.  If this method changes, the
+/// IdentifierInfo methods that compute these properties will need to change to
+/// match.
 void Preprocessor::HandleIdentifier(Token &Identifier) {
   assert(Identifier.getIdentifierInfo() &&
          "Can't handle identifiers without identifier info!");

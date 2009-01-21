@@ -32,6 +32,7 @@ IdentifierInfo::IdentifierInfo() {
   IsExtension = false;
   IsPoisoned = false;
   IsCPPOperatorKeyword = false;
+  NeedsHandleIdentifier = false;
   FETokenInfo = 0;
   Entry = 0;
 }

@@ -326,8 +326,9 @@ void TokenLexer::Lex(Token &Tok) {
   }
   
   // Handle recursive expansion!
-  if (Tok.getIdentifierInfo() && !DisableMacroExpansion)
-    return PP.HandleIdentifier(Tok);
+  if (Tok.getIdentifierInfo() && !DisableMacroExpansion &&
+      Tok.getIdentifierInfo()->isHandleIdentifierCase())
+    PP.HandleIdentifier(Tok);
 
   // Otherwise, return a normal token.
 }
