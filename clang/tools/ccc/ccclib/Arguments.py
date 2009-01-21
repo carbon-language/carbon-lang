@@ -527,6 +527,8 @@ class OptionParser:
 
         # Blanket pass-through options.
 
+        self.WAOption = self.addOption(CommaJoinedOption('-WA,'))        
+
         self.WaOption = self.addOption(CommaJoinedOption('-Wa,'))
         self.XassemblerOption = self.addOption(SeparateOption('-Xassembler'))
 
@@ -830,6 +832,9 @@ class OptionParser:
         self.addOption(JoinedOrSeparateOption('-B'))
         self.addOption(JoinedOrSeparateOption('-V'))
         self.addOption(JoinedOrSeparateOption('-b'))
+
+        # Clang static analyzer options (also see -WA,).
+        self.analyzeOption = self.addOption(FlagOption('--analyze'))
 
     def addOption(self, opt):
         self.options.append(opt)

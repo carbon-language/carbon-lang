@@ -30,7 +30,7 @@
 // RUN: xcc -ccc-host-system unknown -ccc-print-phases -E %s > %t &&
 // RUN: not grep ': compiler, ' %t &&
 // RUN: xcc -ccc-host-system unknown -ccc-print-phases -fsyntax-only %s > %t &&
-// RUN: grep ': compiler, {1}, nothing' %t &&
+// RUN: grep ': syntax-only, {1}, nothing' %t &&
 // RUN: not grep ': assembler, ' %t &&
 // RUN: xcc -ccc-host-system unknown -ccc-print-phases -S %s > %t &&
 // RUN: not grep ': assembler, ' %t &&

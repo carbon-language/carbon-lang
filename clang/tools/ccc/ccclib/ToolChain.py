@@ -51,15 +51,17 @@ class Darwin_X86_ToolChain(ToolChain):
         self.gccVersion = gccVersion
         self.archName = archName
 
+        self.clangTool = Tools.Clang_CompileTool(self)
         self.toolMap = {
             Phases.PreprocessPhase : Tools.Darwin_X86_PreprocessTool(self),
+            Phases.AnalyzePhase : self.clangTool,
+            Phases.SyntaxOnlyPhase : Tools.Darwin_X86_CompileTool(self),
             Phases.CompilePhase : Tools.Darwin_X86_CompileTool(self),
             Phases.PrecompilePhase : Tools.Darwin_X86_CompileTool(self),
             Phases.AssemblePhase : Tools.Darwin_AssembleTool(self),
             Phases.LinkPhase : Tools.Darwin_X86_LinkTool(self),
             Phases.LipoPhase : Tools.LipoTool(),
             }
-        self.clangTool = Tools.Clang_CompileTool()
 
     def getToolChainDir(self):
         return 'i686-apple-darwin%d/%s' % (self.darwinVersion[0],
@@ -171,6 +173,8 @@ class Generic_GCC_ToolChain(ToolChain):
         super(Generic_GCC_ToolChain, self).__init__(driver)
         self.toolMap = {
             Phases.PreprocessPhase : Tools.GCC_PreprocessTool(),
+            Phases.AnalyzePhase : Tools.Clang_CompileTool(self),
+            Phases.SyntaxOnlyPhase : Tools.GCC_CompileTool(),
             Phases.CompilePhase : Tools.GCC_CompileTool(),
             Phases.PrecompilePhase : Tools.GCC_PrecompileTool(),
             Phases.AssemblePhase : Tools.GCC_AssembleTool(),

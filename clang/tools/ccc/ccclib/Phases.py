@@ -68,6 +68,14 @@ class PrecompilePhase(Phase):
     def __init__(self):
         super(PrecompilePhase, self).__init__("precompiler", Phase.eOrderCompile)
 
+class AnalyzePhase(Phase):
+    def __init__(self):
+        super(AnalyzePhase, self).__init__("analyze", Phase.eOrderCompile)
+
+class SyntaxOnlyPhase(Phase):
+    def __init__(self):
+        super(SyntaxOnlyPhase, self).__init__("syntax-only", Phase.eOrderCompile)
+
 class CompilePhase(Phase):
     def __init__(self):
         super(CompilePhase, self).__init__("compiler", Phase.eOrderCompile)

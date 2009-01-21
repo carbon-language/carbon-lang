@@ -69,6 +69,7 @@ FortranType = InputType('f95-cpp-input', FortranTypeNoPP, canBeUserSpecified=Tru
 JavaType = InputType('java', canBeUserSpecified=True)
 
 # Misc.
+PlistType = InputType('plist', tempSuffix='plist')
 PCHType = InputType('precompiled-header', tempSuffix='gch')
 ObjectType = InputType('object', tempSuffix='o')
 TreelangType = InputType('treelang', canBeUserSpecified=True)

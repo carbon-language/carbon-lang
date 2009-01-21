@@ -333,6 +333,7 @@ class Driver(object):
             sys.exit(1)
 
     def buildNormalPipeline(self, args):
+        hasAnalyze = args.getLastArg(self.parser.analyzeOption)
         hasCombine = args.getLastArg(self.parser.combineOption)
         hasSyntaxOnly = args.getLastArg(self.parser.syntaxOnlyOption)
         hasDashC = args.getLastArg(self.parser.cOption)
@@ -406,6 +407,9 @@ class Driver(object):
         if hasDashE or hasDashM or hasDashMM:
             finalPhase = Phases.Phase.eOrderPreprocess
             finalPhaseOpt = hasDashE
+        elif hasAnalyze:
+            finalPhase = Phases.Phase.eOrderCompile
+            finalPhaseOpt = hasAnalyze
         elif hasSyntaxOnly:
             finalPhase = Phases.Phase.eOrderCompile
             finalPhaseOpt = hasSyntaxOnly
@@ -455,6 +459,10 @@ class Driver(object):
                                  linkPhase])
             elif klass.onlyPrecompile:
                 sequence.append(Phases.PrecompilePhase())
+            elif hasAnalyze:
+                sequence.append(Phases.AnalyzePhase())
+            elif hasSyntaxOnly:
+                sequence.append(Phases.SyntaxOnlyPhase())
             else:
                 sequence.extend([Phases.CompilePhase(),
                                  Phases.AssemblePhase(),
@@ -487,11 +495,18 @@ class Driver(object):
                             current = Phases.JobAction(transition,
                                                        [current],
                                                        Types.PCHType)
+                        elif isinstance(transition, Phases.AnalyzePhase):
+                            output = Types.PlistType
+                            current = Phases.JobAction(transition,
+                                                       [current],
+                                                       output)
+                        elif isinstance(transition, Phases.SyntaxOnlyPhase):
+                            output = Types.NothingType
+                            current = Phases.JobAction(transition,
+                                                       [current],
+                                                       output)
                         elif isinstance(transition, Phases.CompilePhase):
-                            if hasSyntaxOnly:
-                                output = Types.NothingType
-                            else:
-                                output = Types.AsmTypeNoPP
+                            output = Types.AsmTypeNoPP
                             current = Phases.JobAction(transition,
                                                        [current],
                                                        output)

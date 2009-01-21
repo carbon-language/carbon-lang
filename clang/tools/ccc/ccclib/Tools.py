@@ -3,6 +3,7 @@ import sys # FIXME: Shouldn't be needed.
 
 import Arguments
 import Jobs
+import Phases
 import Types
 
 class Tool(object):
@@ -39,9 +40,10 @@ class GCC_Common_Tool(Tool):
             cmd_args.extend(arglist.render(arch))
         if isinstance(output, Jobs.PipedJob):
             cmd_args.extend(['-o', '-'])
-        elif output is None:
+        elif isinstance(phase.phase, Phases.SyntaxOnlyPhase):
             cmd_args.append('-fsyntax-only')
         else:
+            assert output
             cmd_args.extend(arglist.render(output))
 
         if (isinstance(self, GCC_LinkTool) and
@@ -163,18 +165,22 @@ class Darwin_AssembleTool(Tool):
                                  cmd_args))
 
 class Clang_CompileTool(Tool):
-    def __init__(self):
+    def __init__(self, toolChain):
         super(Clang_CompileTool, self).__init__('clang',
                                    (Tool.eFlagsPipedInput |
                                     Tool.eFlagsPipedOutput |
                                     Tool.eFlagsIntegratedCPP))
+        self.toolChain = toolChain
 
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, arglist, linkingOutput):
         cmd_args = []
 
         patchOutputNameForPTH = False
-        if output is None:
+
+        if isinstance(phase.phase, Phases.AnalyzePhase):
+            cmd_args.append('-analyze')
+        elif isinstance(phase.phase, Phases.SyntaxOnlyPhase):
             cmd_args.append('-fsyntax-only')
         elif outputType is Types.AsmTypeNoPP:
             cmd_args.append('-S')
@@ -197,6 +203,22 @@ class Clang_CompileTool(Tool):
                 shutil.copyfile(inputPath, outputPath)
         else:
             raise ValueError,"Unexpected output type for clang tool."
+
+        if isinstance(phase.phase, Phases.AnalyzePhase):
+            # Add default argument set.
+            #
+            # FIXME: Move into clang?
+            cmd_args.extend(['-warn-dead-stores',
+                             '-checker-cfref',
+                             '-warn-objc-methodsigs',
+                             '-warn-objc-missing-dealloc',
+                             '-warn-objc-unused-ivars'])
+            
+            cmd_args.append('-analyzer-output-plist')
+
+            # Add -WA, arguments when running as analyzer.
+            for arg in arglist.getArgs(arglist.parser.WAOption):
+                cmd_args.extend(arglist.renderAsInput(arg))
 
         arglist.addAllArgs(cmd_args, arglist.parser.vOption)
         arglist.addAllArgs2(cmd_args, arglist.parser.DOption, arglist.parser.UOption)
@@ -252,7 +274,7 @@ class Clang_CompileTool(Tool):
                     suffix = '.pth'
                 cmd_args.append('-o')
                 cmd_args.append(base + suffix)
-            else:
+            elif output:
                 cmd_args.extend(arglist.render(output))
 
         for input in inputs:
