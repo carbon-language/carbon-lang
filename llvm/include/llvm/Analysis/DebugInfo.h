@@ -133,7 +133,7 @@ namespace llvm {
     enum {
       FlagPrivate   = 1 << 0,
       FlagProtected = 1 << 1,
-      FlagFwdDecl  = 1 << 2
+      FlagFwdDecl   = 1 << 2
     };
 
   protected:

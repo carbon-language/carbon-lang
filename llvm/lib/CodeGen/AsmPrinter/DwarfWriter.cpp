@@ -1913,7 +1913,11 @@ private:
     AddUInt(Block, 0, DW_FORM_udata, DT.getOffsetInBits() >> 3);
     AddBlock(MemberDie, DW_AT_data_member_location, 0, Block);
 
-    // FIXME - Handle DW_AT_accessibility
+    if (DT.isProtected())
+      AddUInt(MemberDie, DW_AT_accessibility, 0, DW_ACCESS_protected);
+    else if (DT.isPrivate())
+      AddUInt(MemberDie, DW_AT_accessibility, 0, DW_ACCESS_private);
+
     return MemberDie;
   }
 
