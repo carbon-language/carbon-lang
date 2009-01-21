@@ -319,7 +319,8 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
                                        ArrayType::Normal, 0);
 
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
-  return Owned(new StringLiteral(Literal.GetString(), Literal.GetStringLength(),
+  return Owned(new (Context) StringLiteral(Literal.GetString(), 
+                                 Literal.GetStringLength(),
                                  Literal.AnyWide, StrTy,
                                  StringToks[0].getLocation(),
                                  StringToks[NumStringToks-1].getLocation()));
@@ -373,14 +374,11 @@ Sema::OwningExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
 DeclRefExpr *Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                                     bool TypeDependent, bool ValueDependent,
                                     const CXXScopeSpec *SS) {
-  if (SS && !SS->isEmpty()) {
-    void *Mem = Context.getAllocator().Allocate<QualifiedDeclRefExpr>();
-    return new (Mem) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
+  if (SS && !SS->isEmpty())
+    return new (Context) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
                        ValueDependent, SS->getRange().getBegin());
-  } else {
-    void *Mem = Context.getAllocator().Allocate<DeclRefExpr>();
-    return new (Mem) DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
-  }
+  else
+    return new (Context) DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
 }
 
 /// getObjectForAnonymousRecordDecl - Retrieve the (unnamed) field or
@@ -454,7 +452,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     // therefore, not part of another non-anonymous record).
     delete BaseObjectExpr;
 
-    BaseObjectExpr = new DeclRefExpr(BaseObject, BaseObject->getType(),
+    BaseObjectExpr = new (Context) DeclRefExpr(BaseObject,BaseObject->getType(),
                                      SourceLocation());
     ExtraQuals 
       = Context.getCanonicalType(BaseObject->getType()).getCVRQualifiers();
@@ -482,7 +480,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
                == Context.getCanonicalType(ThisType)) ||
             IsDerivedFrom(ThisType, AnonFieldType)) {
           // Our base object expression is "this".
-          BaseObjectExpr = new CXXThisExpr(SourceLocation(),
+          BaseObjectExpr = new (Context) CXXThisExpr(SourceLocation(),
                                            MD->getThisType(Context));
           BaseObjectIsPointer = true;
         }
@@ -510,8 +508,8 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
         = MemberType.getCVRQualifiers() | ExtraQuals;
       MemberType = MemberType.getQualifiedType(combinedQualifiers);
     }
-    Result = new MemberExpr(Result, BaseObjectIsPointer, *FI,
-                            OpLoc, MemberType);
+    Result = new (Context) MemberExpr(Result, BaseObjectIsPointer, *FI,
+                                      OpLoc, MemberType);
     BaseObjectIsPointer = false;
     ExtraQuals = Context.getCanonicalType(MemberType).getCVRQualifiers();
     OpLoc = SourceLocation();
@@ -552,9 +550,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     // to represent this name. Then, if it turns out that none of the
     // arguments are type-dependent, we'll force the resolution of the
     // dependent name at that point.
-    void *Mem = Context.getAllocator().Allocate<CXXDependentNameExpr>();
-    return Owned(new (Mem) CXXDependentNameExpr(Name.getAsIdentifierInfo(),
-                                                Context.DependentTy, Loc));
+    return Owned(new (Context) CXXDependentNameExpr(Name.getAsIdentifierInfo(),
+                                                    Context.DependentTy, Loc));
   }
 
   // Could be enum-constant, value decl, instance variable, etc.
@@ -592,8 +589,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         // this into Self->ivar, just return a BareIVarExpr or something.
         IdentifierInfo &II = Context.Idents.get("self");
         OwningExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
-        ObjCIvarRefExpr *MRef = new ObjCIvarRefExpr(IV, IV->getType(), Loc,
-                                  static_cast<Expr*>(SelfExpr.release()),
+        ObjCIvarRefExpr *MRef = new (Context) ObjCIvarRefExpr(IV, IV->getType(), 
+                                  Loc, static_cast<Expr*>(SelfExpr.release()),
                                   true, true);
         Context.setFieldDecl(IFace, IV, MRef);
         return Owned(MRef);
@@ -603,7 +600,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     if (D == 0 && II->isStr("super")) {
       QualType T = Context.getPointerType(Context.getObjCInterfaceType(
                      getCurMethodDecl()->getClassInterface()));
-      return Owned(new ObjCSuperExpr(Loc, T));
+      return Owned(new (Context) ObjCSuperExpr(Loc, T));
     }
   }
   if (D == 0) {
@@ -681,9 +678,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                == Context.getCanonicalType(ThisType)) ||
             IsDerivedFrom(ThisType, CtxType)) {
           // Build the implicit member access expression.
-          Expr *This = new CXXThisExpr(SourceLocation(),
+          Expr *This = new (Context) CXXThisExpr(SourceLocation(),
                                        MD->getThisType(Context));
-          return Owned(new MemberExpr(This, true, cast<NamedDecl>(D),
+          return Owned(new (Context) MemberExpr(This, true, cast<NamedDecl>(D),
                                       SourceLocation(), MemberType));
         }
       }
@@ -760,14 +757,13 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   //
   if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
     // The BlocksAttr indicates the variable is bound by-reference.
-    void *Mem = Context.getAllocator().Allocate<BlockDeclRefExpr>();
     if (VD->getAttr<BlocksAttr>())
-      return Owned(new (Mem) BlockDeclRefExpr(VD, 
+      return Owned(new (Context) BlockDeclRefExpr(VD, 
                                VD->getType().getNonReferenceType(), Loc, true));
 
     // Variable will be bound by-copy, make it const within the closure.
     VD->getType().addConst();
-    return Owned(new (Mem) BlockDeclRefExpr(VD, 
+    return Owned(new (Context) BlockDeclRefExpr(VD, 
                              VD->getType().getNonReferenceType(), Loc, false));
   }
   // If this reference is not in a block or if the referenced variable is
@@ -848,7 +844,7 @@ Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
   llvm::APInt LengthI(32, Length + 1);
   QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);
   ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal, 0);
-  return Owned(new PredefinedExpr(Loc, ResTy, IT));
+  return Owned(new (Context) PredefinedExpr(Loc, ResTy, IT));
 }
 
 Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
@@ -875,8 +871,7 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   if (Tok.getLength() == 1) {
     const char Val = PP.getSpelledCharacterAt(Tok.getLocation());
     unsigned IntSize = Context.Target.getIntWidth();
-    void *Mem = Context.getAllocator().Allocate<IntegerLiteral>();
-    return Owned(new (Mem) IntegerLiteral(llvm::APInt(IntSize, Val-'0'),
+    return Owned(new (Context) IntegerLiteral(llvm::APInt(IntSize, Val-'0'),
                     Context.IntTy, Tok.getLocation()));
   }
 
@@ -1001,7 +996,8 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
   // If this is an imaginary literal, create the ImaginaryLiteral wrapper.
   if (Literal.isImaginary)
-    Res = new ImaginaryLiteral(Res, Context.getComplexType(Res->getType()));
+    Res = new (Context) ImaginaryLiteral(Res, 
+                                        Context.getComplexType(Res->getType()));
 
   return Owned(Res);
 }
@@ -1010,8 +1006,7 @@ Action::OwningExprResult Sema::ActOnParenExpr(SourceLocation L,
                                               SourceLocation R, ExprArg Val) {
   Expr *E = (Expr *)Val.release();
   assert((E != 0) && "ActOnParenExpr() missing expr");
-  void *Mem = Context.getAllocator().Allocate<ParenExpr>();
-  return Owned(new (Mem) ParenExpr(L, R, E));
+  return Owned(new (Context) ParenExpr(L, R, E));
 }
 
 /// The UsualUnaryConversions() function is *not* called by this routine.
@@ -1063,8 +1058,7 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
     return ExprError();
 
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  void *Mem = Context.getAllocator().Allocate<SizeOfAlignOfExpr>();
-  return Owned(new (Mem) SizeOfAlignOfExpr(isSizeof, isType, TyOrEx,
+  return Owned(new (Context) SizeOfAlignOfExpr(isSizeof, isType, TyOrEx,
                                      Context.getSizeType(), OpLoc,
                                      Range.getEnd()));
 }
@@ -1116,9 +1110,8 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
     //     argument will have value zero.
     Expr *Args[2] = { 
       Arg, 
-      new IntegerLiteral(llvm::APInt(Context.Target.getIntWidth(), 0, 
-                                     /*isSigned=*/true), 
-                         Context.IntTy, SourceLocation())
+      new (Context) IntegerLiteral(llvm::APInt(Context.Target.getIntWidth(), 0, 
+                          /*isSigned=*/true), Context.IntTy, SourceLocation())
     };
 
     // Build the candidate set for overloading
@@ -1154,14 +1147,12 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
         ResultTy = ResultTy.getNonReferenceType();
 
         // Build the actual expression node.
-        void *Mem = Context.getAllocator().Allocate<DeclRefExpr>();
-        Expr *FnExpr = new (Mem) DeclRefExpr(FnDecl, FnDecl->getType(),
+        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
                                        SourceLocation());
         UsualUnaryConversions(FnExpr);
 
         Input.release();
-        Mem = Context.getAllocator().Allocate<CXXOperatorCallExpr>();
-        return Owned(new (Mem) CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, 
+        return Owned(new (Context)CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, 
                                                    OpLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then
@@ -1198,7 +1189,7 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
   if (result.isNull())
     return ExprError();
   Input.release();
-  return Owned(new UnaryOperator(Arg, Opc, result, OpLoc));
+  return Owned(new (Context) UnaryOperator(Arg, Opc, result, OpLoc));
 }
 
 Action::OwningExprResult
@@ -1253,13 +1244,14 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
         ResultTy = ResultTy.getNonReferenceType();
 
         // Build the actual expression node.
-        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(), 
+        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(), 
                                        SourceLocation());
         UsualUnaryConversions(FnExpr);
 
         Base.release();
         Idx.release();
-        return Owned(new CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, LLoc));
+        return Owned(new (Context) CXXOperatorCallExpr(FnExpr, Args, 2, 
+                                                       ResultTy, LLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
@@ -1341,7 +1333,8 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
 
   Base.release();
   Idx.release();
-  return Owned(new ArraySubscriptExpr(LHSExp, RHSExp, ResultType, RLoc));
+  return Owned(new (Context) ArraySubscriptExpr(LHSExp, RHSExp, 
+                                                ResultType, RLoc));
 }
 
 QualType Sema::
@@ -1522,21 +1515,21 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         MemberType = MemberType.getQualifiedType(combinedQualifiers);
       }
 
-      return Owned(new MemberExpr(BaseExpr, OpKind == tok::arrow, FD,
-                                  MemberLoc, MemberType));
+      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, FD,
+                                            MemberLoc, MemberType));
     } else if (CXXClassVarDecl *Var = dyn_cast<CXXClassVarDecl>(MemberDecl))
-      return Owned(new MemberExpr(BaseExpr, OpKind == tok::arrow,
+      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
                                   Var, MemberLoc,
                                   Var->getType().getNonReferenceType()));
     else if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(MemberDecl))
-      return Owned(new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberFn,
-                                  MemberLoc, MemberFn->getType()));
+      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, 
+                                  MemberFn, MemberLoc, MemberFn->getType()));
     else if (OverloadedFunctionDecl *Ovl
              = dyn_cast<OverloadedFunctionDecl>(MemberDecl))
-      return Owned(new MemberExpr(BaseExpr, OpKind == tok::arrow, Ovl,
+      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, Ovl,
                                   MemberLoc, Context.OverloadTy));
     else if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl))
-      return Owned(new MemberExpr(BaseExpr, OpKind == tok::arrow, Enum,
+      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, Enum,
                                   MemberLoc, Enum->getType()));
     else if (isa<TypeDecl>(MemberDecl))
       return ExprError(Diag(MemberLoc,diag::err_typecheck_member_reference_type)
@@ -1554,8 +1547,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // (*Obj).ivar.
   if (const ObjCInterfaceType *IFTy = BaseType->getAsObjCInterfaceType()) {
     if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member)) {
-      ObjCIvarRefExpr *MRef= new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc,
-                                                 BaseExpr,
+      ObjCIvarRefExpr *MRef= new (Context) ObjCIvarRefExpr(IV, IV->getType(), 
+                                                 MemberLoc, BaseExpr,
                                                  OpKind == tok::arrow);
       Context.setFieldDecl(IFTy->getDecl(), IV, MRef);
       return Owned(MRef);
@@ -1575,14 +1568,14 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
     // Search for a declared property first.
     if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member))
-      return Owned(new ObjCPropertyRefExpr(PD, PD->getType(),
+      return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
                                            MemberLoc, BaseExpr));
 
     // Check protocols on qualified interfaces.
     for (ObjCInterfaceType::qual_iterator I = IFTy->qual_begin(),
          E = IFTy->qual_end(); I != E; ++I)
       if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member))
-        return Owned(new ObjCPropertyRefExpr(PD, PD->getType(),
+        return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
                                              MemberLoc, BaseExpr));
 
     // If that failed, look for an "implicit" property by seeing if the nullary
@@ -1634,8 +1627,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       }
 
       // FIXME: we must check that the setter has property type.
-      return Owned(new ObjCKVCRefExpr(Getter, Getter->getResultType(), Setter,
-                                      MemberLoc, BaseExpr));
+      return Owned(new (Context) ObjCKVCRefExpr(Getter, Getter->getResultType(), 
+                                      Setter, MemberLoc, BaseExpr));
     }
 
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
@@ -1648,13 +1641,13 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
          E = QIdTy->qual_end(); I != E; ++I) {
       if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member))
-        return Owned(new ObjCPropertyRefExpr(PD, PD->getType(),
+        return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
                                              MemberLoc, BaseExpr));
       // Also must look for a getter name which uses property syntax.
       Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
       if (ObjCMethodDecl *OMD = (*I)->getInstanceMethod(Sel)) {
-        return Owned(new ObjCMessageExpr(BaseExpr, Sel, OMD->getResultType(),
-                                         OMD, OpLoc, MemberLoc, NULL, 0));
+        return Owned(new (Context) ObjCMessageExpr(BaseExpr, Sel, 
+                        OMD->getResultType(), OMD, OpLoc, MemberLoc, NULL, 0));
       }
     }
 
@@ -1666,7 +1659,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return ExprError();
-    return Owned(new ExtVectorElementExpr(ret, BaseExpr, Member, MemberLoc));
+    return Owned(new (Context) ExtVectorElementExpr(ret, BaseExpr, Member, 
+                                                    MemberLoc));
   }
 
   return ExprError(Diag(MemberLoc,
@@ -1730,7 +1724,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
         return true;
     } else 
       // We already type-checked the argument, so we know it works.
-      Arg = new CXXDefaultArgExpr(FDecl->getParamDecl(i));
+      Arg = new (Context) CXXDefaultArgExpr(FDecl->getParamDecl(i));
     QualType ArgType = Arg->getType();
         
     Call->setArg(i, Arg);
@@ -1800,8 +1794,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // FIXME: Will need to cache the results of name lookup (including
   // ADL) in Fn.
   if (Dependent)
-    return Owned(new CallExpr(Fn, Args, NumArgs,
-                              Context.DependentTy, RParenLoc));
+    return Owned(new (Context) CallExpr(Fn, Args, NumArgs,
+                                        Context.DependentTy, RParenLoc));
 
   // Determine whether this is a call to an object (C++ [over.call.object]).
   if (getLangOptions().CPlusPlus && Fn->getType()->isRecordType())
@@ -1839,12 +1833,12 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     // Update Fn to refer to the actual function selected.
     Expr *NewFn = 0;
     if (QualifiedDeclRefExpr *QDRExpr = dyn_cast<QualifiedDeclRefExpr>(DRExpr))
-      NewFn = new QualifiedDeclRefExpr(FDecl, FDecl->getType(), 
+      NewFn = new (Context) QualifiedDeclRefExpr(FDecl, FDecl->getType(), 
                                        QDRExpr->getLocation(), false, false,
                                        QDRExpr->getSourceRange().getBegin());
     else
-      NewFn = new DeclRefExpr(FDecl, FDecl->getType(), 
-                              Fn->getSourceRange().getBegin());
+      NewFn = new (Context) DeclRefExpr(FDecl, FDecl->getType(), 
+                                        Fn->getSourceRange().getBegin());
     Fn->Destroy(Context);
     Fn = NewFn;
   }
@@ -1856,7 +1850,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // of arguments and function on error.
   // FIXME: Except that llvm::OwningPtr uses delete, when it really must be
   // Destroy(), or nothing gets cleaned up.
-  llvm::OwningPtr<CallExpr> TheCall(new CallExpr(Fn, Args, NumArgs,
+  llvm::OwningPtr<CallExpr> TheCall(new (Context) CallExpr(Fn, Args, NumArgs,
                                                  Context.BoolTy, RParenLoc));
 
   const FunctionType *FuncT;
@@ -1934,8 +1928,8 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
       return ExprError();
   }
   InitExpr.release();
-  return Owned(new CompoundLiteralExpr(LParenLoc, literalType, literalExpr,
-                                       isFileScope));
+  return Owned(new (Context) CompoundLiteralExpr(LParenLoc, literalType, 
+                                                 literalExpr, isFileScope));
 }
 
 Action::OwningExprResult
@@ -1948,8 +1942,8 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
   // Semantic analysis for initializers is done by ActOnDeclarator() and
   // CheckInitializer() - it requires knowledge of the object being intialized. 
 
-  InitListExpr *E = new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc,
-                                     Designators.hasAnyDesignators());
+  InitListExpr *E = new (Context) InitListExpr(LBraceLoc, InitList, NumInit, 
+                                    RBraceLoc, Designators.hasAnyDesignators());
   E->setType(Context.VoidTy); // FIXME: just a place holder for now.
   return Owned(E);
 }
@@ -2036,7 +2030,7 @@ Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr))
     return ExprError();
-  return Owned(new CStyleCastExpr(castType, castExpr, castType,
+  return Owned(new (Context) CStyleCastExpr(castType, castExpr, castType,
                                   LParenLoc, RParenLoc));
 }
 
@@ -2256,8 +2250,9 @@ Action::OwningExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
   Cond.release();
   LHS.release();
   RHS.release();
-  return Owned(new ConditionalOperator(CondExpr, isLHSNull ? 0 : LHSExpr,
-                                       RHSExpr, result));
+  return Owned(new (Context) ConditionalOperator(CondExpr, 
+                                                 isLHSNull ? 0 : LHSExpr,
+                                                 RHSExpr, result));
 }
 
 
@@ -3527,14 +3522,11 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   }
   if (ResultTy.isNull())
     return ExprError();
-  if (CompTy.isNull()) {
-    void *Mem = Context.getAllocator().Allocate<BinaryOperator>();
-    return Owned(new (Mem) BinaryOperator(lhs, rhs, Opc, ResultTy, OpLoc));
-  } else {
-    void *Mem = Context.getAllocator().Allocate<CompoundAssignOperator>();
-    return Owned(new (Mem) CompoundAssignOperator(lhs, rhs, Opc, ResultTy,
+  if (CompTy.isNull())
+    return Owned(new (Context) BinaryOperator(lhs, rhs, Opc, ResultTy, OpLoc));
+  else
+    return Owned(new (Context) CompoundAssignOperator(lhs, rhs, Opc, ResultTy,
                                                   CompTy, OpLoc));
-  }
 }
 
 // Binary Operators.  'Tok' is the token for the operator.
@@ -3551,16 +3543,13 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
   // FIXME: We'll need to perform some caching of the result of name
   // lookup for operator+.
   if (lhs->isTypeDependent() || rhs->isTypeDependent()) {
-    if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) {
-      void *Mem = Context.getAllocator().Allocate<CompoundAssignOperator>();
-      return Owned(new (Mem) CompoundAssignOperator(lhs, rhs, Opc,
+    if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign)
+      return Owned(new (Context) CompoundAssignOperator(lhs, rhs, Opc,
                                               Context.DependentTy,
                                               Context.DependentTy, TokLoc));
-    } else {
-      void *Mem = Context.getAllocator().Allocate<BinaryOperator>();
-      return Owned(new (Mem) BinaryOperator(lhs, rhs, Opc, Context.DependentTy,
-                                            TokLoc));
-    }
+    else
+      return Owned(new (Context) BinaryOperator(lhs, rhs, Opc, Context.DependentTy,
+                                                TokLoc));
   }
 
   if (getLangOptions().CPlusPlus &&
@@ -3634,11 +3623,12 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
         ResultTy = ResultTy.getNonReferenceType();
 
         // Build the actual expression node.
-        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(),
-                                       SourceLocation());
+        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
+                                                 SourceLocation());
         UsualUnaryConversions(FnExpr);
 
-        return Owned(new CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy,TokLoc));
+        return Owned(new (Context) CXXOperatorCallExpr(FnExpr, Args, 2, 
+                                                       ResultTy, TokLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
@@ -3733,13 +3723,13 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
         ResultTy = ResultTy.getNonReferenceType();
 
         // Build the actual expression node.
-        Expr *FnExpr = new DeclRefExpr(FnDecl, FnDecl->getType(), 
-                                       SourceLocation());
+        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(), 
+                                                 SourceLocation());
         UsualUnaryConversions(FnExpr);
 
         input.release();
-        return Owned(new CXXOperatorCallExpr(FnExpr, &Input, 1,
-                                             ResultTy, OpLoc));
+        return Owned(new (Context) CXXOperatorCallExpr(FnExpr, &Input, 1,
+                                                       ResultTy, OpLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
@@ -3836,8 +3826,7 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
   if (resultType.isNull())
     return ExprError();
   input.release();
-  void *Mem = Context.getAllocator().Allocate<UnaryOperator>();
-  return Owned(new (Mem) UnaryOperator(Input, Opc, resultType, OpLoc));
+  return Owned(new (Context) UnaryOperator(Input, Opc, resultType, OpLoc));
 }
 
 /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
@@ -3850,11 +3839,11 @@ Sema::ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
   // If we haven't seen this label yet, create a forward reference. It
   // will be validated and/or cleaned up in ActOnFinishFunctionBody.
   if (LabelDecl == 0)
-    LabelDecl = new LabelStmt(LabLoc, LabelII, 0);
+    LabelDecl = new (Context) LabelStmt(LabLoc, LabelII, 0);
   
   // Create the AST node.  The address of a label always has type 'void*'.
-  return new AddrLabelExpr(OpLoc, LabLoc, LabelDecl,
-                           Context.getPointerType(Context.VoidTy));
+  return new (Context) AddrLabelExpr(OpLoc, LabLoc, LabelDecl,
+                                     Context.getPointerType(Context.VoidTy));
 }
 
 Sema::ExprResult Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
@@ -3884,7 +3873,7 @@ Sema::ExprResult Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
       Ty = LastExpr->getType();
   }
   
-  return new StmtExpr(Compound, Ty, LPLoc, RPLoc);
+  return new (Context) StmtExpr(Compound, Ty, LPLoc, RPLoc);
 }
 
 Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
@@ -3905,7 +3894,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   
   // Otherwise, create a compound literal expression as the base, and
   // iteratively process the offsetof designators.
-  Expr *Res = new CompoundLiteralExpr(SourceLocation(), ArgTy, 0, false);
+  Expr *Res = new (Context) CompoundLiteralExpr(SourceLocation(), ArgTy, 0, 
+                                                false);
   
   // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
   // GCC extension, diagnose them.
@@ -3931,7 +3921,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         return Diag(Idx->getLocStart(), diag::err_typecheck_subscript)
           << Idx->getSourceRange();
       
-      Res = new ArraySubscriptExpr(Res, Idx, AT->getElementType(), OC.LocEnd);
+      Res = new (Context) ArraySubscriptExpr(Res, Idx, AT->getElementType(), 
+                                             OC.LocEnd);
       continue;
     }
     
@@ -3955,12 +3946,12 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
     // FIXME: Verify that MemberDecl isn't a bitfield.
     // MemberDecl->getType() doesn't get the right qualifiers, but it doesn't
     // matter here.
-    Res = new MemberExpr(Res, false, MemberDecl, OC.LocEnd, 
-                         MemberDecl->getType().getNonReferenceType());
+    Res = new (Context) MemberExpr(Res, false, MemberDecl, OC.LocEnd, 
+                                   MemberDecl->getType().getNonReferenceType());
   }
   
-  return new UnaryOperator(Res, UnaryOperator::OffsetOf, Context.getSizeType(),
-                           BuiltinLoc);
+  return new (Context) UnaryOperator(Res, UnaryOperator::OffsetOf, 
+                                     Context.getSizeType(), BuiltinLoc);
 }
 
 
@@ -3972,7 +3963,8 @@ Sema::ExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
   
   assert((!argT1.isNull() && !argT2.isNull()) && "Missing type argument(s)");
   
-  return new TypesCompatibleExpr(Context.IntTy, BuiltinLoc, argT1, argT2,RPLoc);
+  return new (Context) TypesCompatibleExpr(Context.IntTy, BuiltinLoc, argT1, 
+                                           argT2, RPLoc);
 }
 
 Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond, 
@@ -3994,7 +3986,8 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
   // If the condition is > zero, then the AST type is the same as the LSHExpr.
   QualType resType = condEval.getZExtValue() ? LHSExpr->getType() : 
                                                RHSExpr->getType();
-  return new ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr, resType, RPLoc);
+  return new (Context) ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr, 
+                                  resType, RPLoc);
 }
 
 //===----------------------------------------------------------------------===//
@@ -4092,7 +4085,7 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
   BlockTy = Context.getBlockPointerType(BlockTy);
   
   BSI->TheDecl->setBody(Body.take());
-  return new BlockExpr(BSI->TheDecl, BlockTy);
+  return new (Context) BlockExpr(BSI->TheDecl, BlockTy);
 }
 
 /// ExprsMatchFnType - return true if the Exprs in array Args have
@@ -4168,7 +4161,7 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
           << OE->getFn()->getSourceRange();
       // Remember our match, and continue processing the remaining arguments
       // to catch any errors.
-      OE = new OverloadExpr(Args, NumArgs, i, 
+      OE = new (Context) OverloadExpr(Args, NumArgs, i, 
                             FnType->getResultType().getNonReferenceType(),
                             BuiltinLoc, RParenLoc);
     }
@@ -4215,7 +4208,7 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   
   // FIXME: Warn if a non-POD type is passed in.
   
-  return new VAArgExpr(BuiltinLoc, E, T.getNonReferenceType(), RPLoc);
+  return new (Context) VAArgExpr(BuiltinLoc, E, T.getNonReferenceType(), RPLoc);
 }
 
 Sema::ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
@@ -4227,7 +4220,7 @@ Sema::ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   else
     Ty = Context.LongTy;
 
-  return new GNUNullExpr(Ty, TokenLoc);
+  return new (Context) GNUNullExpr(Ty, TokenLoc);
 }
 
 bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
