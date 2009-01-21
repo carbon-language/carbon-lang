@@ -1,3 +1,5 @@
+import os
+
 import Arguments
 import Phases
 import Tools
@@ -8,8 +10,18 @@ import Types
 class ToolChain(object):
     """ToolChain - Provide mappings of Actions to Tools."""
 
-    def __init__(self, driver):
+    def __init__(self, driver, 
+                 filePathPrefixes=[],
+                 programPathPrefixes=[]):
         self.driver = driver
+        self.filePathPrefixes = list(filePathPrefixes)
+        self.programPathPrefixes = list(programPathPrefixes)
+
+    def getFilePath(self, name):
+        return self.driver.getFilePath(name, self)
+        
+    def getProgramPath(self, name):
+        return self.driver.getProgramPath(name, self)
 
     def selectTool(self, action):
         """selectTool - Return a Tool instance to use for handling
@@ -63,13 +75,24 @@ class Darwin_X86_ToolChain(ToolChain):
             Phases.LipoPhase : Tools.LipoTool(),
             }
 
+        self.filePathPrefixes.append(os.path.join(self.driver.driverDir,
+                                                  '../lib/gcc',
+                                                  self.getToolChainDir()))
+        self.filePathPrefixes.append(os.path.join(self.driver.driverDir,
+                                                  '/usr/lib/gcc',
+                                                  self.getToolChainDir()))
+
+        self.programPathPrefixes.append(os.path.join(self.driver.driverDir,
+                                                  '../libexec/gcc',
+                                                  self.getToolChainDir()))
+        self.programPathPrefixes.append(os.path.join(self.driver.driverDir,
+                                                  '/usr/libexec/gcc',
+                                                  self.getToolChainDir()))
+        self.programPathPrefixes.append(self.driver.driverDir)
+
     def getToolChainDir(self):
         return 'i686-apple-darwin%d/%s' % (self.darwinVersion[0],
                                            '.'.join(map(str,self.gccVersion)))
-
-    def getProgramPath(self, name):
-        # FIXME: Implement proper search.
-        return '/usr/libexec/gcc/%s/%s' % (self.getToolChainDir(), name)
 
     def getMacosxVersionMin(self):
         major,minor,minorminor = self.darwinVersion

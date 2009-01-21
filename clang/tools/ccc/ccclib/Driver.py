@@ -78,6 +78,24 @@ class Driver(object):
 
     ###
 
+    def getFilePath(self, name, toolChain=None):
+        tc = toolChain or self.toolChain
+        for p in tc.filePathPrefixes:
+            path = os.path.join(p, name)
+            if os.path.exists(path):
+                return path
+        return name
+
+    def getProgramPath(self, name, toolChain=None):
+        tc = toolChain or self.toolChain
+        for p in tc.programPathPrefixes:
+            path = os.path.join(p, name)
+            if os.path.exists(path):
+                return path
+        return name
+
+    ###
+
     def run(self, argv):
         # FIXME: Things to support from environment: GCC_EXEC_PREFIX,
         # COMPILER_PATH, LIBRARY_PATH, LPATH, CC_PRINT_OPTIONS,
@@ -287,50 +305,32 @@ class Driver(object):
         # FIXME: Do we want to report "argument unused" type errors in the
         # presence of things like -dumpmachine and -print-search-dirs?
         # Probably not.
-        arg = args.getLastArg(self.parser.dumpmachineOption)
+        arg = (args.getLastArg(self.parser.dumpmachineOption) or
+               args.getLastArg(self.parser.dumpversionOption) or
+               args.getLastArg(self.parser.printSearchDirsOption))
         if arg:
-            print 'FIXME: %s' % arg.opt.name
-            sys.exit(1)
+            raise NotImplementedError('%s unsupported' % arg.opt.name)
 
-        arg = args.getLastArg(self.parser.dumpspecsOption)
+        arg = (args.getLastArg(self.parser.dumpspecsOption) or
+               args.getLastArg(self.parser.printMultiDirectoryOption) or
+               args.getLastArg(self.parser.printMultiLibOption))
         if arg:
-            print 'FIXME: %s' % arg.opt.name
-            sys.exit(1)
-
-        arg = args.getLastArg(self.parser.dumpversionOption)
-        if arg:
-            print 'FIXME: %s' % arg.opt.name
-            sys.exit(1)
+            raise Arguments.InvalidArgumentsError('%s unsupported by this driver' % arg.opt.name)
 
         arg = args.getLastArg(self.parser.printFileNameOption)
         if arg:
-            print 'FIXME: %s' % arg.opt.name
-            sys.exit(1)
-
-        arg = args.getLastArg(self.parser.printMultiDirectoryOption)
-        if arg:
-            print 'FIXME: %s' % arg.opt.name
-            sys.exit(1)
-
-        arg = args.getLastArg(self.parser.printMultiLibOption)
-        if arg:
-            print 'FIXME: %s' % arg.opt.name
-            sys.exit(1)
+            print self.getFilePath(args.getValue(arg))
+            sys.exit(0)
 
         arg = args.getLastArg(self.parser.printProgNameOption)
         if arg:
-            print 'FIXME: %s' % arg.opt.name
-            sys.exit(1)
+            print self.getProgramPath(args.getValue(arg))
+            sys.exit(0)
 
-        arg = args.getLastArg(self.parser.printLibgccFilenameOption)
+        arg = args.getLastArg(self.parser.printLibgccFileNameOption)
         if arg:
-            print 'FIXME: %s' % arg.opt.name
-            sys.exit(1)
-
-        arg = args.getLastArg(self.parser.printSearchDirsOption)
-        if arg:
-            print 'FIXME: %s' % arg.opt.name
-            sys.exit(1)
+            print self.getFilePath('libgcc.a')
+            sys.exit(0)
 
     def buildNormalPipeline(self, args):
         hasAnalyze = args.getLastArg(self.parser.analyzeOption)

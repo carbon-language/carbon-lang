@@ -475,7 +475,7 @@ class OptionParser:
         self.dumpversionOption = self.addOption(FlagOption('-dumpversion'))
         self.dumpmachineOption = self.addOption(FlagOption('-dumpmachine'))
         self.printSearchDirsOption = self.addOption(FlagOption('-print-search-dirs'))
-        self.printLibgccFilenameOption = self.addOption(FlagOption('-print-libgcc-file-name'))
+        self.printLibgccFileNameOption = self.addOption(FlagOption('-print-libgcc-file-name'))
         # FIXME: Hrm, where does this come from? It isn't always true that
         # we take both - and --. For example, gcc --S ... ends up sending
         # -fS to cc1. Investigate.

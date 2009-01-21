@@ -285,7 +285,8 @@ class Clang_CompileTool(Tool):
             else:
                 cmd_args.extend(arglist.renderAsInput(input.source))
             
-        jobs.addJob(Jobs.Command('clang', cmd_args))
+        jobs.addJob(Jobs.Command(self.toolChain.getProgramPath('clang'), 
+                                 cmd_args))
         
 class Darwin_X86_CC1Tool(Tool):
     def getCC1Name(self, type):
