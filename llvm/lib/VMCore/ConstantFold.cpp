@@ -802,16 +802,6 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         (void)C3V.divide(C2V, APFloat::rmNearestTiesToEven);
         return ConstantFP::get(C3V);
       case Instruction::FRem:
-        if (C2V.isZero()) {
-          // IEEE 754, Section 7.1, #5
-          if (CFP1->getType() == Type::DoubleTy)
-            return ConstantFP::get(APFloat(std::numeric_limits<double>::
-                                           quiet_NaN()));
-          if (CFP1->getType() == Type::FloatTy)
-            return ConstantFP::get(APFloat(std::numeric_limits<float>::
-                                           quiet_NaN()));
-          break;
-        }
         (void)C3V.mod(C2V, APFloat::rmNearestTiesToEven);
         return ConstantFP::get(C3V);
       }

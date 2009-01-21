@@ -293,6 +293,7 @@ namespace llvm {
     opStatus addOrSubtractSpecials(const APFloat &, bool subtract);
     opStatus divideSpecials(const APFloat &);
     opStatus multiplySpecials(const APFloat &);
+    opStatus modSpecials(const APFloat &);
 
     /* Miscellany.  */
     void makeNaN(void);

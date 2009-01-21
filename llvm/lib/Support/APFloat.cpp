@@ -1405,6 +1405,42 @@ APFloat::divideSpecials(const APFloat &rhs)
   }
 }
 
+APFloat::opStatus
+APFloat::modSpecials(const APFloat &rhs)
+{
+  switch(convolve(category, rhs.category)) {
+  default:
+    assert(0);
+
+  case convolve(fcNaN, fcZero):
+  case convolve(fcNaN, fcNormal):
+  case convolve(fcNaN, fcInfinity):
+  case convolve(fcNaN, fcNaN):
+  case convolve(fcZero, fcInfinity):
+  case convolve(fcZero, fcNormal):
+  case convolve(fcNormal, fcInfinity):
+    return opOK;
+
+  case convolve(fcZero, fcNaN):
+  case convolve(fcNormal, fcNaN):
+  case convolve(fcInfinity, fcNaN):
+    category = fcNaN;
+    copySignificand(rhs);
+    return opOK;
+
+  case convolve(fcNormal, fcZero):
+  case convolve(fcInfinity, fcZero):
+  case convolve(fcInfinity, fcNormal):
+  case convolve(fcInfinity, fcInfinity):
+  case convolve(fcZero, fcZero):
+    makeNaN();
+    return opInvalidOp;
+
+  case convolve(fcNormal, fcNormal):
+    return opOK;
+  }
+}
+
 /* Change sign.  */
 void
 APFloat::changeSign()
@@ -1557,35 +1593,39 @@ APFloat::opStatus
 APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
 {
   opStatus fs;
-  APFloat V = *this;
-  unsigned int origSign = sign;
-
   assertArithmeticOK(*semantics);
-  fs = V.divide(rhs, rmNearestTiesToEven);
-  if (fs == opDivByZero)
-    return fs;
+  fs = modSpecials(rhs);
 
-  int parts = partCount();
-  integerPart *x = new integerPart[parts];
-  bool ignored;
-  fs = V.convertToInteger(x, parts * integerPartWidth, true,
-                          rmTowardZero, &ignored);
-  if (fs==opInvalidOp)
-    return fs;
+  if (category == fcNormal && rhs.category == fcNormal) {
+    APFloat V = *this;
+    unsigned int origSign = sign;
 
-  fs = V.convertFromZeroExtendedInteger(x, parts * integerPartWidth, true,
-                                        rmNearestTiesToEven);
-  assert(fs==opOK);   // should always work
+    fs = V.divide(rhs, rmNearestTiesToEven);
+    if (fs == opDivByZero)
+      return fs;
 
-  fs = V.multiply(rhs, rounding_mode);
-  assert(fs==opOK || fs==opInexact);   // should not overflow or underflow
+    int parts = partCount();
+    integerPart *x = new integerPart[parts];
+    bool ignored;
+    fs = V.convertToInteger(x, parts * integerPartWidth, true,
+                            rmTowardZero, &ignored);
+    if (fs==opInvalidOp)
+      return fs;
 
-  fs = subtract(V, rounding_mode);
-  assert(fs==opOK || fs==opInexact);   // likewise
+    fs = V.convertFromZeroExtendedInteger(x, parts * integerPartWidth, true,
+                                          rmNearestTiesToEven);
+    assert(fs==opOK);   // should always work
 
-  if (isZero())
-    sign = origSign;    // IEEE754 requires this
-  delete[] x;
+    fs = V.multiply(rhs, rounding_mode);
+    assert(fs==opOK || fs==opInexact);   // should not overflow or underflow
+
+    fs = subtract(V, rounding_mode);
+    assert(fs==opOK || fs==opInexact);   // likewise
+
+    if (isZero())
+      sign = origSign;    // IEEE754 requires this
+    delete[] x;
+  }
   return fs;
 }
 

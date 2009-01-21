@@ -2954,11 +2954,6 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
 Instruction *InstCombiner::commonRemTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  // 0 % X == 0 for integer, we don't need to preserve faults!
-  if (Constant *LHS = dyn_cast<Constant>(Op0))
-    if (LHS->isNullValue())
-      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-
   if (isa<UndefValue>(Op0)) {             // undef % X -> 0
     if (I.getType()->isFPOrFPVector())
       return ReplaceInstUsesWith(I, Op0);  // X % undef -> undef (could be SNaN)
@@ -2983,6 +2978,11 @@ Instruction *InstCombiner::commonIRemTransforms(BinaryOperator &I) {
 
   if (Instruction *common = commonRemTransforms(I))
     return common;
+
+  // 0 % X == 0 for integer, we don't need to preserve faults!
+  if (Constant *LHS = dyn_cast<Constant>(Op0))
+    if (LHS->isNullValue())
+      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // X % 0 == undef, we don't need to preserve faults!
