@@ -31,7 +31,11 @@ namespace PIC16CC {
     LT,
     LE,
     GT,
-    GE
+    GE,
+    ULT,
+    UGT,
+    ULE,
+    UGE
   };
 }
 
@@ -41,9 +45,29 @@ namespace PIC16CC {
     case PIC16CC::NE:  return "ne";
     case PIC16CC::EQ:   return "eq";
     case PIC16CC::LT:   return "lt";
+    case PIC16CC::ULT:   return "lt";
     case PIC16CC::LE:  return "le";
     case PIC16CC::GT:  return "gt";
+    case PIC16CC::UGT:  return "gt";
     case PIC16CC::GE:   return "ge";
+    }
+  }
+
+  inline static bool isSignedComparison(PIC16CC::CondCodes CC) {
+    switch (CC) {
+    default: assert(0 && "Unknown condition code");
+    case PIC16CC::NE:  
+    case PIC16CC::EQ: 
+    case PIC16CC::LT:
+    case PIC16CC::LE:
+    case PIC16CC::GE:
+    case PIC16CC::GT:
+      return true;
+    case PIC16CC::ULT:
+    case PIC16CC::UGT:
+    case PIC16CC::ULE:
+    case PIC16CC::UGE:
+      return false;   // condition codes for unsigned comparison. 
     }
   }
 

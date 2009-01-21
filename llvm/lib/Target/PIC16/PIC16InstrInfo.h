@@ -61,8 +61,8 @@ public:
                             const TargetRegisterClass *DestRC,
                             const TargetRegisterClass *SrcRC) const;
   virtual bool isMoveInstr(const MachineInstr &MI,
-                           unsigned &SrcReg, unsigned &DstReg,
-                           unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
+                           unsigned &SrcReg,
+                           unsigned &DestReg) const;
 
 };
 

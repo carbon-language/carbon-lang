@@ -41,21 +41,27 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setShiftAmountFlavor(Extend);
 
   // SRA library call names
-  setPIC16LibCallName(PIC16ISD::SRA_I8, "__intrinsics.sra.i8");
-  setPIC16LibCallName(PIC16ISD::SRA_I16, "__intrinsics.sra.i16");
-  setPIC16LibCallName(PIC16ISD::SRA_I32, "__intrinsics.sra.i32");
+  setPIC16LibcallName(PIC16ISD::SRA_I8, "__intrinsics.sra.i8");
+  setLibcallName(RTLIB::SRA_I16, "__intrinsics.sra.i16");
+  setLibcallName(RTLIB::SRA_I32, "__intrinsics.sra.i32");
 
-  // SLL library call names
-  setPIC16LibCallName(PIC16ISD::SLL_I8, "__intrinsics.sll.i8");
-  setPIC16LibCallName(PIC16ISD::SLL_I16, "__intrinsics.sll.i16");
-  setPIC16LibCallName(PIC16ISD::SLL_I32, "__intrinsics.sll.i32");
+  // SHL library call names
+  setPIC16LibcallName(PIC16ISD::SLL_I8, "__intrinsics.sll.i8");
+  setLibcallName(RTLIB::SHL_I16, "__intrinsics.sll.i16");
+  setLibcallName(RTLIB::SHL_I32, "__intrinsics.sll.i32");
 
   // SRL library call names
-  setPIC16LibCallName(PIC16ISD::SRL_I8, "__intrinsics.srl.i8");
-  setPIC16LibCallName(PIC16ISD::SRL_I16, "__intrinsics.srl.i16");
-  setPIC16LibCallName(PIC16ISD::SRL_I32, "__intrinsics.srl.i32");
+  setPIC16LibcallName(PIC16ISD::SRL_I8, "__intrinsics.srl.i8");
+  setLibcallName(RTLIB::SRL_I16, "__intrinsics.srl.i16");
+  setLibcallName(RTLIB::SRL_I32, "__intrinsics.srl.i32");
+
+  // MUL Library call names
+  setPIC16LibcallName(PIC16ISD::MUL_I8, "__intrinsics.mul.i8");
+  setLibcallName(RTLIB::MUL_I16, "__intrinsics.mul.i16");
+  setLibcallName(RTLIB::MUL_I32, "__intrinsics.mul.i32");
 
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
+  setOperationAction(ISD::ExternalSymbol, MVT::i16, Custom);
 
   setOperationAction(ISD::LOAD,   MVT::i8,  Legal);
   setOperationAction(ISD::LOAD,   MVT::i16, Custom);
@@ -69,7 +75,7 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setOperationAction(ISD::ADDC,    MVT::i8,  Custom);
   setOperationAction(ISD::SUBE,    MVT::i8,  Custom);
   setOperationAction(ISD::SUBC,    MVT::i8,  Custom);
-  setOperationAction(ISD::ADD,    MVT::i8,  Legal);
+  setOperationAction(ISD::ADD,    MVT::i8,  Custom);
   setOperationAction(ISD::ADD,    MVT::i16, Custom);
 
   setOperationAction(ISD::OR,     MVT::i8,  Custom);
@@ -80,16 +86,44 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setOperationAction(ISD::CALL,   MVT::i16, Custom);
   setOperationAction(ISD::RET,    MVT::Other, Custom);
 
-  setOperationAction(ISD::SRA,    MVT::i8,  Custom);
-  setOperationAction(ISD::SRA,    MVT::i16, Custom);
-  setOperationAction(ISD::SRA,    MVT::i32, Custom);
+  setOperationAction(ISD::MUL,    MVT::i8,  Custom); 
+  setOperationAction(ISD::MUL,    MVT::i16, Expand);
+  setOperationAction(ISD::MUL,    MVT::i32, Expand);
 
-  setOperationAction(ISD::SHL,    MVT::i8, Custom);
-  setOperationAction(ISD::SHL,    MVT::i16, Custom);
-  setOperationAction(ISD::SHL,    MVT::i32, Custom);
-  setOperationAction(ISD::SRL,    MVT::i8, Custom);
-  setOperationAction(ISD::SRL,    MVT::i16, Custom);
-  setOperationAction(ISD::SRL,    MVT::i32, Custom);
+  setOperationAction(ISD::SMUL_LOHI,    MVT::i8,  Expand);
+  setOperationAction(ISD::SMUL_LOHI,    MVT::i16, Expand);
+  setOperationAction(ISD::SMUL_LOHI,    MVT::i32, Expand);
+  setOperationAction(ISD::UMUL_LOHI,    MVT::i8,  Expand);
+  setOperationAction(ISD::UMUL_LOHI,    MVT::i16, Expand);
+  setOperationAction(ISD::UMUL_LOHI,    MVT::i32, Expand);
+  setOperationAction(ISD::MULHU,        MVT::i8, Expand);
+  setOperationAction(ISD::MULHU,        MVT::i16, Expand);
+  setOperationAction(ISD::MULHU,        MVT::i32, Expand);
+  setOperationAction(ISD::MULHS,        MVT::i8, Expand);
+  setOperationAction(ISD::MULHS,        MVT::i16, Expand);
+  setOperationAction(ISD::MULHS,        MVT::i32, Expand);
+
+  setOperationAction(ISD::SRA,    MVT::i8,  Custom);
+  setOperationAction(ISD::SRA,    MVT::i16, Expand);
+  setOperationAction(ISD::SRA,    MVT::i32, Expand);
+  setOperationAction(ISD::SHL,    MVT::i8,  Custom);
+  setOperationAction(ISD::SHL,    MVT::i16, Expand);
+  setOperationAction(ISD::SHL,    MVT::i32, Expand);
+  setOperationAction(ISD::SRL,    MVT::i8,  Custom);
+  setOperationAction(ISD::SRL,    MVT::i16, Expand);
+  setOperationAction(ISD::SRL,    MVT::i32, Expand);
+
+  // PIC16 does not support shift parts
+  setOperationAction(ISD::SRA_PARTS,    MVT::i8,  Expand);
+  setOperationAction(ISD::SRA_PARTS,    MVT::i16, Expand);
+  setOperationAction(ISD::SRA_PARTS,    MVT::i32, Expand);
+  setOperationAction(ISD::SHL_PARTS,    MVT::i8, Expand);
+  setOperationAction(ISD::SHL_PARTS,    MVT::i16, Expand);
+  setOperationAction(ISD::SHL_PARTS,    MVT::i32, Expand);
+  setOperationAction(ISD::SRL_PARTS,    MVT::i8, Expand);
+  setOperationAction(ISD::SRL_PARTS,    MVT::i16, Expand);
+  setOperationAction(ISD::SRL_PARTS,    MVT::i32, Expand);
+
 
   // PIC16 does not have a SETCC, expand it to SELECT_CC.
   setOperationAction(ISD::SETCC,  MVT::i8, Expand);
@@ -124,18 +158,18 @@ MVT PIC16TargetLowering::getSetCCResultType(MVT ValType) const {
 
 
 void 
-PIC16TargetLowering::setPIC16LibCallName(PIC16ISD::PIC16LibCall Call,
+PIC16TargetLowering::setPIC16LibcallName(PIC16ISD::PIC16Libcall Call,
                                          const char *Name) {
- PIC16LibCallNames[Call] = Name; 
+ PIC16LibcallNames[Call] = Name; 
 }
 
 const char *
-PIC16TargetLowering::getPIC16LibCallName(PIC16ISD::PIC16LibCall Call) {
- return PIC16LibCallNames[Call];
+PIC16TargetLowering::getPIC16LibcallName(PIC16ISD::PIC16Libcall Call) {
+ return PIC16LibcallNames[Call];
 }
 
 SDValue
-PIC16TargetLowering::MakePIC16LibCall(PIC16ISD::PIC16LibCall Call,
+PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
                                       MVT RetVT, const SDValue *Ops,
                                       unsigned NumOps, bool isSigned,
                                       SelectionDAG &DAG) {
@@ -151,7 +185,7 @@ PIC16TargetLowering::MakePIC16LibCall(PIC16ISD::PIC16LibCall Call,
    Entry.isZExt = !isSigned;
    Args.push_back(Entry);
  }
- SDValue Callee = DAG.getExternalSymbol(getPIC16LibCallName(Call), MVT::i8);
+ SDValue Callee = DAG.getExternalSymbol(getPIC16LibcallName(Call), MVT::i8);
 
   const Type *RetTy = RetVT.getTypeForMVT();
   std::pair<SDValue,SDValue> CallInfo = 
@@ -247,15 +281,6 @@ void PIC16TargetLowering::ReplaceNodeResults(SDNode *N,
     case ISD::ADD:
       // Results.push_back(ExpandAdd(N, DAG));
       return;
-    case ISD::SHL:
-    case ISD::SRL:
-    case ISD::SRA:
-    {
-      SDValue Res = ExpandShift(N, DAG);
-      if (Res.getNode())
-        Results.push_back(Res);
-      return;
-    }
     case ISD::FrameIndex:
       Results.push_back(ExpandFrameIndex(N, DAG));
       return;
@@ -708,92 +733,62 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
   return DAG.getNode(ISD::MERGE_VALUES, Tys, BP, Chain);
 }
 
-SDValue PIC16TargetLowering::ExpandShift(SDNode *N, SelectionDAG &DAG) {
+SDValue PIC16TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) {
+  // We should have handled larger operands in type legalizer itself.
+  assert (Op.getValueType() == MVT::i8 && "illegal shift to lower");
+ 
+  SDNode *N = Op.getNode();
   SDValue Value = N->getOperand(0);
   SDValue Amt = N->getOperand(1);
-  SDValue BCF, BCFInput;
-  SDValue ShfCom;   // Shift Component - Lo component should be shifted
-  SDValue RotCom;   // Rotate Component- Hi component should be rotated
-
-  PIC16ISD::PIC16LibCall CallCode;
-
-  // Shift amount should be MVT::i8 only. If it is more than that then 
-  // extract MVT::i8 from that
-  if (Amt.getValueType() == MVT::i8) {
-    // Do Nothing - This is ok
-  } else if (Amt.getValueType() == MVT::i16) {
-    SDValue Lo, Hi;
-    GetExpandedParts(Amt, DAG, Lo, Hi);
-    Amt = Lo;  // Take the Lo part as amount
-
-  } else if (Amt.getValueType() == MVT::i32) {
-    SDValue Lo, Hi;
-    // Get MVT::i16 Components
-    GetExpandedParts(Amt, DAG, Lo, Hi);
-    // Get MVT::i8 Components    
-    GetExpandedParts(Lo, DAG, Lo, Hi);
-    Amt = Lo;
-    
-  } else {
-    assert ( 0 && "Invalid Shift amount");
-  }
-
-  // Shift library call will always have two operands
-  if (N->getValueType(0) == MVT::i8) {
-    switch (N->getOpcode()) {
-    case ISD::SRA:
-      CallCode = PIC16ISD::SRA_I8;
-      break;
-    case ISD::SHL:
-      CallCode = PIC16ISD::SLL_I8;
-      break;
-    case ISD::SRL:
-      CallCode = PIC16ISD::SRL_I8;
-      break;
-    default:
-      assert ( 0 && "This shift is not implemented yet.");
-      return SDValue();
-    }
-  } else if (N->getValueType(0) == MVT::i16) {
-    switch (N->getOpcode()) {
-    case ISD::SRA:
-      CallCode = PIC16ISD::SRA_I16;
-      break;
-    case ISD::SHL:
-      CallCode = PIC16ISD::SLL_I16;
-      break;
-    case ISD::SRL:
-      CallCode = PIC16ISD::SRL_I16;
-      break;
-    default:
-      assert ( 0 && "This shift is not implemented yet.");
-      return SDValue();
-    }
-  } else if (N->getValueType(0) == MVT::i32) {
-    switch (N->getOpcode()) {
-    case ISD::SRA:
-      CallCode = PIC16ISD::SRA_I32;
-      break;
-    case ISD::SHL:
-      CallCode = PIC16ISD::SLL_I32;
-      break;
-    case ISD::SRL:
-      CallCode = PIC16ISD::SRL_I32;
-      break;
-    default:
-      assert ( 0 && "This shift is not implemented yet.");
-      return SDValue();
-    }
-  } else {
-    //assert ( 0 && "Shift for this value type not yet implemented.");
+  PIC16ISD::PIC16Libcall CallCode;
+  switch (N->getOpcode()) {
+  case ISD::SRA:
+    CallCode = PIC16ISD::SRA_I8;
+    break;
+  case ISD::SHL:
+    CallCode = PIC16ISD::SLL_I8;
+    break;
+  case ISD::SRL:
+    CallCode = PIC16ISD::SRL_I8;
+    break;
+  default:
+    assert ( 0 && "This shift is not implemented yet.");
     return SDValue();
   }
-
   SmallVector<SDValue, 2> Ops(2);
   Ops[0] = Value;
   Ops[1] = Amt;
-  SDValue Call = MakePIC16LibCall(CallCode, N->getValueType(0), &Ops[0], 2, true, DAG);
+  SDValue Call = MakePIC16Libcall(CallCode, N->getValueType(0), &Ops[0], 2, true, DAG);
   return Call;
+}
+
+void PIC16TargetLowering::LowerOperationWrapper(SDValue Op, 
+                                             SmallVectorImpl<SDValue>&Results,
+                                             SelectionDAG &DAG) {
+  SDValue Res;
+  unsigned i;
+  switch (Op.getOpcode()) {
+    case ISD::FORMAL_ARGUMENTS:
+      Res = LowerFORMAL_ARGUMENTS(Op, DAG); break;
+    case ISD::LOAD:
+      Res = ExpandLoad(Op.getNode(), DAG); break;
+    case ISD::CALL:
+      Res = LowerCALL(Op, DAG); break;
+    default: {
+      // All other operations are handled in LowerOperation.
+      Res = LowerOperation(Op, DAG);
+      if (Res.getNode())
+        Results.push_back(Res);
+        
+      return; 
+    }
+  }
+  SDNode *N = Res.getNode();
+  unsigned NumValues = N->getNumValues(); 
+  for (i=0; i< NumValues ; i++) {
+    Results.push_back(SDValue(N, i)); 
+  }
+
 }
 
 SDValue PIC16TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -815,14 +810,12 @@ SDValue PIC16TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     case ISD::SHL:
     case ISD::SRA:
     case ISD::SRL:
-      return ExpandShift(Op.getNode(), DAG);
+      return LowerShift(Op, DAG);
     case ISD::OR:
     case ISD::AND:
     case ISD::XOR:
       return LowerBinOp(Op, DAG);
     case ISD::CALL:
-      // This is called only from LegalizeDAG. No call is made to
-      // legalize CALL node from LegalizeType.
       return LowerCALL(Op, DAG);
     case ISD::RET:
       return LowerRET(Op, DAG);
@@ -1142,6 +1135,9 @@ SDValue PIC16TargetLowering:: LowerADD(SDValue Op, SelectionDAG &DAG) {
     else
       return DAG.getNode(Op.getOpcode(), Tys, Op.getOperand(MemOp ^ 1), NewVal);
   }
+  else if (Op.getOpcode() == ISD::ADD) {
+    return Op;
+  }
   else {
     return SDValue();
   }
@@ -1219,10 +1215,10 @@ static PIC16CC::CondCodes IntCCToPIC16CC(ISD::CondCode CC) {
   case ISD::SETGE:  return PIC16CC::GE;
   case ISD::SETLT:  return PIC16CC::LT;
   case ISD::SETLE:  return PIC16CC::LE;
-  case ISD::SETULT: return PIC16CC::LT;
+  case ISD::SETULT: return PIC16CC::ULT;
   case ISD::SETULE: return PIC16CC::LE;
   case ISD::SETUGE: return PIC16CC::GE;
-  case ISD::SETUGT: return PIC16CC::GT;
+  case ISD::SETUGT: return PIC16CC::UGT;
   }
 }
 
@@ -1268,11 +1264,23 @@ SDValue PIC16TargetLowering::getPIC16Cmp(SDValue LHS, SDValue RHS,
     case PIC16CC::GT:
       CondCode = PIC16CC::LT; 
       break;
+    case PIC16CC::ULT:
+      CondCode = PIC16CC::UGT; 
+      break;
+    case PIC16CC::UGT:
+      CondCode = PIC16CC::ULT; 
+      break;
     case PIC16CC::GE:
       CondCode = PIC16CC::LE; 
       break;
     case PIC16CC::LE:
       CondCode = PIC16CC::GE;
+      break;
+    case PIC16CC::ULE:
+      CondCode = PIC16CC::UGE;
+      break;
+    case PIC16CC::UGE:
+      CondCode = PIC16CC::ULE;
       break;
     }
   }
@@ -1280,6 +1288,12 @@ SDValue PIC16TargetLowering::getPIC16Cmp(SDValue LHS, SDValue RHS,
   PIC16CC = DAG.getConstant(CondCode, MVT::i8);
   SDVTList VTs = DAG.getVTList (MVT::i8, MVT::Flag);
 
+  // These are signed comparisons. 
+  SDValue Mask = DAG.getConstant(128, MVT::i8);
+  if (isSignedComparison(CondCode)) {
+    LHS = DAG.getNode (ISD::XOR, MVT::i8, LHS, Mask); 
+    RHS = DAG.getNode (ISD::XOR, MVT::i8, RHS, Mask); 
+  }
   // We can use a subtract operation to set the condition codes. But
   // we need to put one operand in memory if required.
   // Nothing to do if the first operand is already a direct load and it has

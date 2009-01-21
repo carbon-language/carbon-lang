@@ -52,16 +52,11 @@ namespace llvm {
       RAM_SPACE = 0,   // RAM address space
       ROM_SPACE = 1    // ROM address space number is 1
     };
-    enum PIC16LibCall {
+    enum PIC16Libcall {
+      MUL_I8,
       SRA_I8,
       SLL_I8,
       SRL_I8,
-      SRA_I16,
-      SLL_I16,
-      SRL_I16,
-      SRA_I32,
-      SLL_I32,
-      SRL_I32,
       PIC16UnknownCall
     };
   }
@@ -79,8 +74,8 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
     /// getSetCCResultType - Return the ISD::SETCC ValueType
     virtual MVT getSetCCResultType(MVT ValType) const;
-    SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerShift(SDValue Op, SelectionDAG &DAG);
     SDValue LowerADD(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSUB(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBinOp(SDValue Op, SelectionDAG &DAG);
@@ -98,15 +93,19 @@ namespace llvm {
                                                         MachineBasicBlock *MBB);
 
 
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     virtual void ReplaceNodeResults(SDNode *N,
                                     SmallVectorImpl<SDValue> &Results,
                                     SelectionDAG &DAG);
+    virtual void LowerOperationWrapper(SDValue Op,
+                                    SmallVectorImpl<SDValue> &Results,
+                                    SelectionDAG &DAG);
+
     SDValue ExpandStore(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandLoad(SDNode *N, SelectionDAG &DAG);
     //SDValue ExpandAdd(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandExternalSymbol(SDNode *N, SelectionDAG &DAG);
-    SDValue ExpandShift(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandFrameIndex(SDNode *N, SelectionDAG &DAG);
 
     SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
@@ -159,15 +158,15 @@ namespace llvm {
 
 
     // Extending the LIB Call framework of LLVM
-    // To hold the names of PIC16LibCalls
-    const char *PIC16LibCallNames[PIC16ISD::PIC16UnknownCall]; 
+    // To hold the names of PIC16Libcalls
+    const char *PIC16LibcallNames[PIC16ISD::PIC16UnknownCall]; 
 
     // To set and retrieve the lib call names
-    void setPIC16LibCallName(PIC16ISD::PIC16LibCall Call, const char *Name);
-    const char *getPIC16LibCallName(PIC16ISD::PIC16LibCall Call);
+    void setPIC16LibcallName(PIC16ISD::PIC16Libcall Call, const char *Name);
+    const char *getPIC16LibcallName(PIC16ISD::PIC16Libcall Call);
 
-    // Make PIC16 LibCall
-    SDValue MakePIC16LibCall(PIC16ISD::PIC16LibCall Call, MVT RetVT, 
+    // Make PIC16 Libcall
+    SDValue MakePIC16Libcall(PIC16ISD::PIC16Libcall Call, MVT RetVT, 
                              const SDValue *Ops, unsigned NumOps, bool isSigned,
                              SelectionDAG &DAG);
 

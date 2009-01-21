@@ -138,9 +138,8 @@ bool PIC16InstrInfo::copyRegToReg (MachineBasicBlock &MBB,
 }
 
 bool PIC16InstrInfo::isMoveInstr(const MachineInstr &MI,
-                                 unsigned &SrcReg, unsigned &DestReg,
-                                 unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
-  SrcSubIdx = DstSubIdx = 0; // No sub-registers.
+                                         unsigned &SrcReg,
+                                         unsigned &DestReg) const {
 
   if (MI.getOpcode() == PIC16::copy_fsr
       || MI.getOpcode() == PIC16::copy_w) {
