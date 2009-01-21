@@ -2,6 +2,7 @@
 ; RUN: llvm-as < %s | opt -simplifycfg -instcombine | llvm-dis | grep 0x7FF80000FFFFFFFF | count 5
 ; RUN: llvm-as < %s | opt -simplifycfg -instcombine | llvm-dis | grep {0\\.0} | count 3
 ; RUN: llvm-as < %s | opt -simplifycfg -instcombine | llvm-dis | grep {3\\.5} | count 1
+; XFAIL: x86_64
 
 ; ModuleID = 'apf.c'
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
