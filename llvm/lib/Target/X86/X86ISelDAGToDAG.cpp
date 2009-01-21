@@ -1381,9 +1381,10 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 
       SDValue Tmp0, Tmp1, Tmp2, Tmp3;
       bool foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
+      bool signBitIsZero = CurDAG->SignBitIsZero(N0);
 
       SDValue InFlag;
-      if (NVT == MVT::i8 && !isSigned) {
+      if (NVT == MVT::i8 && (!isSigned || signBitIsZero)) {
         // Special case for div8, just use a move with zero extension to AX to
         // clear the upper 8 bits (AH).
         SDValue Tmp0, Tmp1, Tmp2, Tmp3, Move, Chain;
@@ -1405,7 +1406,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         InFlag =
           CurDAG->getCopyToReg(CurDAG->getEntryNode(),
                                LoReg, N0, SDValue()).getValue(1);
-        if (isSigned && !CurDAG->SignBitIsZero(N0)) {
+        if (isSigned && !signBitIsZero) {
           // Sign extend the low part into the high part.
           InFlag =
             SDValue(CurDAG->getTargetNode(SExtOpcode, MVT::Flag, InFlag), 0);
