@@ -484,6 +484,10 @@ private:
 public:
   PTHFileLookup() {};
   
+  bool isEmpty() const {
+    return FileMap.empty();
+  }
+  
   Val Lookup(const FileEntry* FE) {
     const char* s = FE->getName();
     unsigned size = strlen(s);
@@ -563,12 +567,16 @@ PTHManager* PTHManager::Create(const std::string& file) {
   
   llvm::OwningPtr<PTHFileLookup> FL(new PTHFileLookup());
   FL->ReadTable(FileTable);
+
+  if (FL->isEmpty())
+    return 0;
   
   // Get the location of the table mapping from persistent ids to the
   // data needed to reconstruct identifiers.
   const unsigned char* IDTableOffset = EndTable + sizeof(uint32_t)*1;
   const unsigned char* IData = BufBeg + Read32(IDTableOffset);
-  if (!(IData > BufBeg && IData < BufEnd)) {
+  
+  if (!(IData >= BufBeg && IData < BufEnd)) {
     assert(false && "Invalid PTH file.");
     return 0; // FIXME: Proper error diagnostic?
   }
@@ -576,25 +584,27 @@ PTHManager* PTHManager::Create(const std::string& file) {
   // Get the location of the lexigraphically-sorted table of persistent IDs.
   const unsigned char* SortedIdTableOffset = EndTable + sizeof(uint32_t)*2;
   const unsigned char* SortedIdTable = BufBeg + Read32(SortedIdTableOffset);
-  if (!(SortedIdTable > BufBeg && SortedIdTable < BufEnd)) {
+  if (!(SortedIdTable >= BufBeg && SortedIdTable < BufEnd)) {
     assert(false && "Invalid PTH file.");
     return 0; // FIXME: Proper error diagnostic?
   }
   
   // Get the number of IdentifierInfos and pre-allocate the identifier cache.
   uint32_t NumIds = Read32(IData);
-
+  
   // Pre-allocate the peristent ID -> IdentifierInfo* cache.  We use calloc()
   // so that we in the best case only zero out memory once when the OS returns
   // us new pages.
-  IdentifierInfo** PerIDCache =
-    (IdentifierInfo**)calloc(NumIds, sizeof(*PerIDCache));
+  IdentifierInfo** PerIDCache = 0;
   
-  if (!PerIDCache) {
-    assert(false && "Could not allocate Persistent ID cache.");
-    return 0;
+  if (NumIds) {
+    PerIDCache = (IdentifierInfo**)calloc(NumIds, sizeof(*PerIDCache));  
+    if (!PerIDCache) {
+      assert(false && "Could not allocate Persistent ID cache.");
+      return 0;
+    }
   }
-  
+
   // Create the new PTHManager.
   return new PTHManager(File.take(), FL.take(), IData, PerIDCache,
                         SortedIdTable, NumIds);
