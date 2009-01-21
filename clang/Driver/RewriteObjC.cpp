@@ -456,10 +456,11 @@ void RewriteObjC::Initialize(ASTContext &context) {
      
   Rewrite.setSourceMgr(Context->getSourceManager());
   
+  Preamble = "#line 2\n";
   // declaring objc_selector outside the parameter list removes a silly
   // scope related warning...
   if (IsHeader)
-    Preamble = "#pragma once\n";
+    Preamble += "#pragma once\n";
   Preamble += "struct objc_selector; struct objc_class;\n";
   Preamble += "struct __rw_objc_super { struct objc_object *object; ";
   Preamble += "struct objc_object *superClass; ";
