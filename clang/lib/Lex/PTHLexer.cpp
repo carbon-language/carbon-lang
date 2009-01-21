@@ -50,22 +50,6 @@ static inline uint16_t Read16(const unsigned char *&Data) {
   return V;
 }
 
-static inline uint32_t Read24(const unsigned char *&Data) {
-// Targets that directly support unaligned little-endian 16-bit loads can just
-// use them.
-#if defined(__i386__) || defined(__x86_64__)
-  uint32_t V = ((uint16_t*)Data)[0] | 
-                 ((uint32_t)Data[2] << 16);
-#else
-  uint32_t V = ((uint32_t)Data[0] <<  0) |
-               ((uint32_t)Data[1] <<  8) |
-               ((uint32_t)Data[2] << 16);
-#endif
-  
-  Data += 3;
-  return V;
-}
-
 static inline uint32_t Read32(const unsigned char *&Data) {
 // Targets that directly support unaligned little-endian 32-bit loads can just
 // use them.
@@ -104,18 +88,18 @@ LexNextToken:
   //===--------------------------------------==//
   
   // Shadow CurPtr into an automatic variable.
-  const unsigned char *CurPtrShadow = CurPtr;  
+  const unsigned *CurPtrShadow = (const unsigned *)CurPtr;  
 
   // Read in the data for the token.
-  unsigned Word0 = Read32(CurPtrShadow);
-  uint32_t IdentifierID = Read32(CurPtrShadow);
-  uint32_t FileOffset = Read32(CurPtrShadow);
+  unsigned Word0 = CurPtrShadow[0];
+  unsigned IdentifierID = CurPtrShadow[1];
+  unsigned FileOffset = CurPtrShadow[2];
   
   tok::TokenKind TKind = (tok::TokenKind) (Word0 & 0xFF);
   Token::TokenFlags TFlags = (Token::TokenFlags) ((Word0 >> 8) & 0xFF);
-  uint32_t Len = Word0 >> 16;
+  unsigned Len = Word0 >> 16;
 
-  CurPtr = CurPtrShadow;
+  CurPtr = (const unsigned char*)(CurPtrShadow+3);
   
   //===--------------------------------------==//
   // Construct the token itself.
