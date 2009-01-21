@@ -685,8 +685,8 @@ class Driver(object):
                 jobList = inputs[0].source
                 
             baseInput = inputs[0].baseInput
-            output = self.getOutputName(phase, outputToPipe, jobs, jobList, baseInput, 
-                                        args, atTopLevel, hasSaveTemps, finalOutput)
+            output,jobList = self.getOutputName(phase, outputToPipe, jobs, jobList, baseInput, 
+                                                args, atTopLevel, hasSaveTemps, finalOutput)
             tool.constructJob(phase, arch, jobList, inputs, output, phase.type,
                               tcArgs, linkingOutput)
 
@@ -762,4 +762,4 @@ class Driver(object):
                 fd,filename = tempfile.mkstemp(suffix='.'+phase.type.tempSuffix)
                 output = args.makeSeparateArg(filename,
                                               self.parser.oOption)
-        return output
+        return output,jobList
