@@ -680,6 +680,11 @@ public:
   /// informed about nodes that are deleted and modified due to recursive
   /// changes in the dag.
   ///
+  /// These functions only replace all existing uses. It's possible that as
+  /// these replacements are being performed, CSE may cause the From node
+  /// to be given new uses. These new uses of From are left in place, and
+  /// not automatically transfered to To.
+  ///
   void ReplaceAllUsesWith(SDValue From, SDValue Op,
                           DAGUpdateListener *UpdateListener = 0);
   void ReplaceAllUsesWith(SDNode *From, SDNode *To,
