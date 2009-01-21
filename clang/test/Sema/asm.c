@@ -46,5 +46,11 @@ void test4(const volatile void *addr)
     asm ("nop" : : "r"(test4(addr))); // expected-error {{invalid type 'void' in asm input for constraint 'r'}}
     asm ("nop" : : "m"(test4(addr))); // expected-error {{invalid lvalue in asm input for constraint 'm'}}
 
-    asm("nop" : : "m"(f())); // expected-error {{invalid lvalue in asm input for constraint 'm'}}
+    asm ("nop" : : "m"(f())); // expected-error {{invalid lvalue in asm input for constraint 'm'}}
+}
+
+// <rdar://problem/6512595>
+void test5()
+{
+  asm("nop" : : "X" (8)); 
 }

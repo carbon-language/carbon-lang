@@ -899,8 +899,8 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     ParenExpr *InputExpr = cast<ParenExpr>(Exprs[i]);
 
     // Only allow void types for memory constraints.
-    if (info & TargetInfo::CI_AllowsMemory) {
-
+    if ((info & TargetInfo::CI_AllowsMemory) 
+        && !(info & TargetInfo::CI_AllowsRegister)) {
       if (InputExpr->isLvalue(Context) != Expr::LV_Valid)
         return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
                               diag::err_asm_invalid_lvalue_in_input)
