@@ -31,19 +31,17 @@ namespace clang {
 
 namespace {
   class VISIBILITY_HIDDEN PlistDiagnostics : public PathDiagnosticClient {
-    llvm::sys::Path Directory, FilePrefix;
-    bool createdDir, noDir;
+    std::vector<const PathDiagnostic*> BatchedDiags;
+    const std::string OutputFile;
   public:
     PlistDiagnostics(const std::string& prefix);
-    ~PlistDiagnostics() {}
+    ~PlistDiagnostics();
     void HandlePathDiagnostic(const PathDiagnostic* D);  
   };  
 } // end anonymous namespace
 
-PlistDiagnostics::PlistDiagnostics(const std::string& prefix)
-  : Directory(prefix), FilePrefix(prefix), createdDir(false), noDir(false) {
-  FilePrefix.appendComponent("report"); // All Plist files begin with "report" 
-}
+PlistDiagnostics::PlistDiagnostics(const std::string& output)
+  : OutputFile(output) {}
 
 PathDiagnosticClient*
 clang::CreatePlistDiagnosticClient(const std::string& s,
@@ -139,72 +137,54 @@ static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
 }
 
 void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
-
-  // Create an owning smart pointer for 'D' just so that we auto-free it
-  // when we exit this method.
-  llvm::OwningPtr<PathDiagnostic> OwnedD(const_cast<PathDiagnostic*>(D));
+  if (!D)
+    return;
   
-  // Create the directory to contain the plist files if it is missing.
-  if (!createdDir) {
-    createdDir = true;
-    std::string ErrorMsg;
-    Directory.createDirectoryOnDisk(true, &ErrorMsg);
-  
-    if (!Directory.isDirectory()) {
-      llvm::errs() << "warning: could not create directory '"
-                  << Directory.toString() << "'\n"
-                  << "reason: " << ErrorMsg << '\n'; 
-      
-      noDir = true;
-      
-      return;
-    }
+  if (D->empty()) {
+    delete D;
+    return;
   }
   
-  if (noDir)
-    return;
+  BatchedDiags.push_back(D);
+}
 
-  // Get the source manager.
-  SourceManager& SM = D->begin()->getLocation().getManager();
+PlistDiagnostics::~PlistDiagnostics() { 
 
   // Build up a set of FIDs that we use by scanning the locations and
   // ranges of the diagnostics.
   FIDMap FM;
   llvm::SmallVector<FileID, 10> Fids;
-  
-  for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I) {
-    AddFID(FM, Fids, SM, I->getLocation());
+  SourceManager& SM = (*BatchedDiags.begin())->begin()->getLocation().getManager();
 
-    for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
-                                             RE=I->ranges_end(); RI!=RE; ++RI) {
-      AddFID(FM, Fids, SM, RI->getBegin());
-      AddFID(FM, Fids, SM, RI->getEnd());
+  for (std::vector<const PathDiagnostic*>::iterator DI = BatchedDiags.begin(),
+       DE = BatchedDiags.end(); DI != DE; ++DI) {
+    
+    const PathDiagnostic *D = *DI;
+  
+    for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I!=E; ++I) {
+      AddFID(FM, Fids, SM, I->getLocation());
+    
+      for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
+           RE=I->ranges_end(); RI!=RE; ++RI) {
+        AddFID(FM, Fids, SM, RI->getBegin());
+        AddFID(FM, Fids, SM, RI->getEnd());
+      }
     }
   }
 
-  // Create a path for the target Plist file.
-  llvm::sys::Path F(FilePrefix);
-  F.makeUnique(false, NULL);
-  
-  // Rename the file with an Plist extension.
-  llvm::sys::Path H(F);
-  H.appendSuffix("plist");
-  F.renamePathOnDisk(H, NULL);
-  
-  // Now create the plist file.
+  // Open the file.
   std::string ErrMsg;
-  llvm::raw_fd_ostream o(H.toString().c_str(), false, ErrMsg);
-  
+  llvm::raw_fd_ostream o(OutputFile.c_str(), false, ErrMsg);
   if (!ErrMsg.empty()) {
-    llvm::errs() << "warning: could not creat file: " << H.toString() << '\n';
+    llvm::errs() << "warning: could not creat file: " << OutputFile << '\n';
     return;
   }
   
   // Write the plist header.
   o << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-       "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" "
-       "http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
-       "<plist version=\"1.0\">\n";
+  "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" "
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+  "<plist version=\"1.0\">\n";
   
   // Write the root object: a <dict> containing...
   //  - "files", an <array> mapping from FIDs to file names
@@ -221,16 +201,34 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
        " <key>diagnostics</key>\n"
        " <array>\n";
   
-  for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I)
-    ReportDiag(o, *I, FM, SM);
+  for (std::vector<const PathDiagnostic*>::iterator DI=BatchedDiags.begin(),
+       DE = BatchedDiags.end(); DI!=DE; ++DI) {
+       
+    o << "  <dict>\n"
+         "   <key>path</key>\n";
+    
+    const PathDiagnostic *D = *DI;
+    // Create an owning smart pointer for 'D' just so that we auto-free it
+    // when we exit this method.
+    llvm::OwningPtr<PathDiagnostic> OwnedD(const_cast<PathDiagnostic*>(D));
+
+    o << "   <array>\n";
+  
+    for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I)
+      ReportDiag(o, *I, FM, SM);
+    
+    o << "   </array>\n";
+    
+    // Output the bug type and bug category.  
+    o << "   <key>description</key>\n <string>" << D->getDescription()
+      << "</string>\n"
+      << "   <key>category</key>\n   <string>" << D->getCategory()
+      << "</string>\n"
+      << "  </dict>\n";    
+  }
 
   o << " </array>\n";
-    
-  // Output the bug type and bug category.  
-  o << " <key>description</key>\n <string>" << D->getDescription()
-    << "</string>\n"
-       " <key>category</key>\n <string>" << D->getCategory() << "</string>\n";
-
+  
   // Finish.
   o << "</dict>\n</plist>";
 }

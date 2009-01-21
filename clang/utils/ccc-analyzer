@@ -17,10 +17,20 @@ use warnings;
 use Cwd qw/ getcwd abs_path /;
 use File::Temp qw/ tempfile /;
 use File::Path qw / mkpath /;
+use File::Basename;
 
 my $CC = $ENV{'CCC_CC'};
 if (!defined $CC) { $CC = "gcc"; }
- 
+my $CleanupFile;
+my $ResultFile;
+
+# Remove any stale files at exit.
+END { 
+  if (defined $CleanupFile && -z $CleanupFile) {
+    `rm -f $CleanupFile`;
+  }
+}
+
 ##----------------------------------------------------------------------------##
 #  Process Clang Crashes.
 ##----------------------------------------------------------------------------##
@@ -114,9 +124,15 @@ sub Analyze {
     print STDERR "#SHELL (cd '$dir' && @PrintArgs)\n";
   }
   
-  if ($RunAnalyzer and defined($HtmlDir)) {
-    push @CmdArgs,'-o';
-    push @CmdArgs,$HtmlDir;
+  if ($RunAnalyzer) {
+    if (defined $ResultFile) {
+      push @CmdArgs,'-o';
+      push @CmdArgs, $ResultFile;
+    }
+    elsif (defined $HtmlDir) {
+      push @CmdArgs,'-o';
+      push @CmdArgs, $HtmlDir;
+    }
   }
   
   if (defined $ENV{'CCC_UBI'}) {   
@@ -430,6 +446,14 @@ if ($Action eq 'compile' or $Action eq 'link') {
     
     if (defined $OutputFormat) {
       push @AnalyzeArgs, "-analyzer-output-" . $OutputFormat;
+      if ($OutputFormat eq "plist") {
+        # Change "Output" to be a file.
+        my ($h, $f) = tempfile("report-XXXXXX", SUFFIX => ".plist",
+                               DIR => $HtmlDir);
+        $ResultFile = $f;
+        $CleanupFile = $f;
+      }
+      
     }
 
     push @AnalyzeArgs,@CompileOpts;

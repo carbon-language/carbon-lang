@@ -211,9 +211,9 @@ void NamedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
     = static_cast<DeclarationName::NameKind>(D.ReadInt());
   switch (Kind) {
   case DeclarationName::Identifier: {
-    IdentifierInfo *Identifier;
-    D.ReadPtr(Identifier);
-    Name = Identifier;
+    // Don't allow back-patching.  The IdentifierInfo table must already
+    // be loaded.
+    Name = D.ReadPtr<IdentifierInfo>();
     break;
   }
 
