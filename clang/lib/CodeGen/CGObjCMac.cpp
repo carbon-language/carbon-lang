@@ -2251,6 +2251,10 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   const llvm::Type *T = Types.ConvertType(Ctx.getObjCProtoType());
   ExternalProtocolPtrTy = llvm::PointerType::getUnqual(T);
 
+  // struct _objc_method_description {
+  //   SEL name;
+  //   char *types;
+  // }
   MethodDescriptionTy = 
     llvm::StructType::get(SelectorPtrTy,
                           Int8PtrTy,
@@ -2258,39 +2262,63 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_method_description", 
                               MethodDescriptionTy);
 
+  // struct _objc_method_description_list {
+  //   int count;
+  //   struct _objc_method_description[1];
+  // }
   MethodDescriptionListTy = 
     llvm::StructType::get(IntTy,
                           llvm::ArrayType::get(MethodDescriptionTy, 0),
                           NULL);
   CGM.getModule().addTypeName("struct._objc_method_description_list", 
                               MethodDescriptionListTy);
+  
+  // struct _objc_method_description_list *
   MethodDescriptionListPtrTy = 
     llvm::PointerType::getUnqual(MethodDescriptionListTy);
 
+  // struct _objc_property {
+  //   char *name;
+  //   char *attributes; 
+  // }
   PropertyTy = llvm::StructType::get(Int8PtrTy,
                                      Int8PtrTy,
                                      NULL);
   CGM.getModule().addTypeName("struct._objc_property", 
                               PropertyTy);
 
+  // struct _objc_property_list {
+  //   uint32_t entsize;      // sizeof(struct _objc_property)
+  //   uint32_t count_of_properties;
+  //   struct _objc_property prop_list[count_of_properties];
+  // }
   PropertyListTy = llvm::StructType::get(IntTy,
                                          IntTy,
                                          llvm::ArrayType::get(PropertyTy, 0),
                                          NULL);
   CGM.getModule().addTypeName("struct._objc_property_list", 
                               PropertyListTy);
+  // struct _objc_property_list *
   PropertyListPtrTy = llvm::PointerType::getUnqual(PropertyListTy);
 
   // Protocol description structures
 
+  // struct _objc_protocol_extension {
+  //   uint32_t size;  // sizeof(struct _objc_protocol_extension)
+  //   struct _objc_method_description_list *optional_instance_methods;
+  //   struct _objc_method_description_list *optional_class_methods;
+  //   struct _objc_property_list *instance_properties;
+  // }
   ProtocolExtensionTy = 
-    llvm::StructType::get(Types.ConvertType(Ctx.IntTy),
-                          llvm::PointerType::getUnqual(MethodDescriptionListTy),
-                          llvm::PointerType::getUnqual(MethodDescriptionListTy),
+    llvm::StructType::get(IntTy,
+                          MethodDescriptionListPtrTy,
+                          MethodDescriptionListPtrTy,
                           PropertyListPtrTy,
                           NULL);
   CGM.getModule().addTypeName("struct._objc_protocol_extension", 
                               ProtocolExtensionTy);
+  
+  // struct _objc_protocol_extension *
   ProtocolExtensionPtrTy = llvm::PointerType::getUnqual(ProtocolExtensionTy);
 
   // Handle recursive construction of Protocol and ProtocolList types
@@ -2304,7 +2332,14 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                             NULL);
   cast<llvm::OpaqueType>(ProtocolListTyHolder.get())->refineAbstractTypeTo(T);
 
-  T = llvm::StructType::get(llvm::PointerType::getUnqual(ProtocolExtensionTy),
+  // struct _objc_protocol {
+  //   struct _objc_protocol_extension *isa;
+  //   char *protocol_name;
+  //   struct _objc_protocol **_objc_protocol_list;
+  //   struct _objc_method_description_list *instance_methods;
+  //   struct _objc_method_description_list *class_methods;
+  // }
+  T = llvm::StructType::get(ProtocolExtensionPtrTy,
                             Int8PtrTy,
                             llvm::PointerType::getUnqual(ProtocolListTyHolder),
                             MethodDescriptionListPtrTy,
@@ -2315,38 +2350,53 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   ProtocolListTy = cast<llvm::StructType>(ProtocolListTyHolder.get());
   CGM.getModule().addTypeName("struct._objc_protocol_list", 
                               ProtocolListTy);
+  // struct _objc_protocol_list *
   ProtocolListPtrTy = llvm::PointerType::getUnqual(ProtocolListTy);
 
   ProtocolTy = cast<llvm::StructType>(ProtocolTyHolder.get());
-  CGM.getModule().addTypeName("struct.__objc_protocol", ProtocolTy);
+  CGM.getModule().addTypeName("struct._objc_protocol", ProtocolTy);
   ProtocolPtrTy = llvm::PointerType::getUnqual(ProtocolTy);
 
   // Class description structures
 
+  // struct _objc_ivar {
+  //   char *ivar_name;
+  //   char *ivar_type;
+  //   int  ivar_offset;
+  // }
   IvarTy = llvm::StructType::get(Int8PtrTy, 
                                  Int8PtrTy, 
                                  IntTy, 
                                  NULL);
   CGM.getModule().addTypeName("struct._objc_ivar", IvarTy);
 
+  // struct _objc_ivar_list *
   IvarListTy = llvm::OpaqueType::get();
   CGM.getModule().addTypeName("struct._objc_ivar_list", IvarListTy);
   IvarListPtrTy = llvm::PointerType::getUnqual(IvarListTy);
 
+  // struct _objc_method {
+  //   SEL _cmd;
+  //   char *method_type;
+  //   char *_imp;
+  // }
   MethodTy = llvm::StructType::get(SelectorPtrTy,
                                    Int8PtrTy,
                                    Int8PtrTy,
                                    NULL);
   CGM.getModule().addTypeName("struct._objc_method", MethodTy);
   
+  // struct _objc_method_list *
   MethodListTy = llvm::OpaqueType::get();
   CGM.getModule().addTypeName("struct._objc_method_list", MethodListTy);
   MethodListPtrTy = llvm::PointerType::getUnqual(MethodListTy);
 
+  // struct _objc_cache *
   CacheTy = llvm::OpaqueType::get();
   CGM.getModule().addTypeName("struct._objc_cache", CacheTy);
   CachePtrTy = llvm::PointerType::getUnqual(CacheTy);
 
+  // struct _objc_class_extension *
   ClassExtensionTy = 
     llvm::StructType::get(IntTy,
                           Int8PtrTy,
@@ -2357,6 +2407,20 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 
   llvm::PATypeHolder ClassTyHolder = llvm::OpaqueType::get();
 
+  // struct _objc_class {
+  //   Class isa;
+  //   Class super_class;
+  //   char *name;
+  //   long version;
+  //   long info;
+  //   long instance_size;
+  //   struct _objc_ivar_list *ivars;
+  //   struct _objc_method_list *methods;
+  //   struct _objc_cache *cache;
+  //   struct _objc_protocol_list *protocols;
+  //   char *ivar_layout;
+  //   struct _objc_class_ext *ext;
+  // };
   T = llvm::StructType::get(llvm::PointerType::getUnqual(ClassTyHolder),
                             llvm::PointerType::getUnqual(ClassTyHolder),
                             Int8PtrTy,
@@ -2376,6 +2440,14 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_class", ClassTy);
   ClassPtrTy = llvm::PointerType::getUnqual(ClassTy);
 
+  // struct _objc_category {
+  //   char *category_name;
+  //   char *class_name;
+  //   struct _objc_method_list *instance_method;
+  //   struct _objc_method_list *class_method;
+  //   uint32_t size;  // sizeof(struct _objc_category)
+  //   struct _objc_property_list *instance_properties;// category's @property
+  // }
   CategoryTy = llvm::StructType::get(Int8PtrTy,
                                      Int8PtrTy,
                                      MethodListPtrTy,
@@ -2393,6 +2465,11 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 
   // FIXME: This is leaked.
   // FIXME: Merge with rewriter code?
+  
+  // struct _objc_super {
+  //   id self;
+  //   Class cls;
+  // }
   RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
                                       SourceLocation(),
                                       &Ctx.Idents.get("_objc_super"));  
@@ -2410,6 +2487,13 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 
   // Global metadata structures
 
+  // struct _objc_symtab {
+  //   long sel_ref_cnt;
+  //   SEL *refs;
+  //   short cls_def_cnt;
+  //   short cat_def_cnt;
+  //   char *defs[cls_def_cnt + cat_def_cnt];
+  // }
   SymtabTy = llvm::StructType::get(LongTy,
                                    SelectorPtrTy,
                                    ShortTy,
