@@ -799,7 +799,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     return NULL;
 
   const llvm::StructType *SelStructTy = 
-    cast<llvm::StructType>(SelectorTy->getTypeAtIndex(0U));
+    cast<llvm::StructType>(SelectorTy->getElementType());
 
   // Name the ObjC types to make the IR a bit easier to read
   TheModule.addTypeName(".objc_selector", SelectorTy);
