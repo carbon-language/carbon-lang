@@ -388,23 +388,22 @@ static void ExpandResponseFiles(int argc, char** argv,
       // Check that the response file is not empty (mmap'ing empty
       // files can be problematic).
       const sys::FileStatus *FileStat = respFile.getFileStatus();
-      if (!FileStat)
-        continue;
-      if (FileStat->getSize() == 0)
-        continue;
+      if (FileStat && FileStat->getSize() != 0) {
 
-      // Mmap the response file into memory.
-      OwningPtr<MemoryBuffer>
-        respFilePtr(MemoryBuffer::getFile(respFile.c_str()));
+        // Mmap the response file into memory.
+        OwningPtr<MemoryBuffer>
+          respFilePtr(MemoryBuffer::getFile(respFile.c_str()));
 
-      if (respFilePtr == 0)
-        continue;
-
-      ParseCStringVector(newArgv, respFilePtr->getBufferStart());
+        // If we could open the file, parse its contents, otherwise
+        // pass the @file option verbatim.
+        // TODO: support recursion.
+        if (respFilePtr != 0) {
+          ParseCStringVector(newArgv, respFilePtr->getBufferStart());
+          continue;
+        }
+      }
     }
-    else {
-      newArgv.push_back(strdup(arg));
-    }
+    newArgv.push_back(strdup(arg));
   }
 }
 

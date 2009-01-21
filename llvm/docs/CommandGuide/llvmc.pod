@@ -78,7 +78,23 @@ options intended for developers.
 
 Print version information and exit.
 
+=item B<@>I<file>
+
+Read command-line options from I<file>. The options read are inserted
+in place of the original @I<file> option. If I<file> does not exist, or
+cannot be read, then the option will be treated literally, and not
+removed.
+
+Options in I<file> are separated by whitespace. A whitespace character
+may be included in an option by surrounding the entire option in
+either single or double quotes. Any character (including a backslash)
+may be included by prefixing the character to be included with a
+backslash. The file may itself contain additional @I<file> options;
+any such options will be processed recursively.
+
+
 =back
+
 
 =head2 Control Options
 
