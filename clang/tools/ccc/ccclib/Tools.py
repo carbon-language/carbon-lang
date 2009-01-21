@@ -1006,9 +1006,7 @@ class Darwin_X86_LinkTool(Tool):
             if arglist.getLastArg(arglist.parser.sharedLibgccOption):
                 if not arglist.getLastArg(arglist.parser.m_iphoneosVersionMinOption):
                     if macosxVersion < (10,5):
-                        # FIXME: gcc does a library search for this
-                        # file, this will be be broken currently.
-                        cmd_args.append('crt3.o')
+                        cmd_args.append(self.toolChain.getFilePath('crt3.o'))
 
         arglist.addAllArgs(cmd_args, arglist.parser.LOption)
         

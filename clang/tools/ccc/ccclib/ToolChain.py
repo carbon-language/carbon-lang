@@ -75,19 +75,25 @@ class Darwin_X86_ToolChain(ToolChain):
             Phases.LipoPhase : Tools.LipoTool(),
             }
 
+        if archName == 'x86_64':
+            self.filePathPrefixes.append(os.path.join(self.driver.driverDir,
+                                                      '../lib/gcc',
+                                                      self.getToolChainDir(),
+                                                      'x86_64'))
+            self.filePathPrefixes.append(os.path.join('/usr/lib/gcc',
+                                                      self.getToolChainDir(),
+                                                      'x86_64'))
         self.filePathPrefixes.append(os.path.join(self.driver.driverDir,
                                                   '../lib/gcc',
                                                   self.getToolChainDir()))
-        self.filePathPrefixes.append(os.path.join(self.driver.driverDir,
-                                                  '/usr/lib/gcc',
+        self.filePathPrefixes.append(os.path.join('/usr/lib/gcc',
                                                   self.getToolChainDir()))
 
         self.programPathPrefixes.append(os.path.join(self.driver.driverDir,
                                                   '../libexec/gcc',
                                                   self.getToolChainDir()))
-        self.programPathPrefixes.append(os.path.join(self.driver.driverDir,
-                                                  '/usr/libexec/gcc',
-                                                  self.getToolChainDir()))
+        self.programPathPrefixes.append(os.path.join('/usr/libexec/gcc',
+                                                     self.getToolChainDir()))
         self.programPathPrefixes.append(self.driver.driverDir)
 
     def getToolChainDir(self):
