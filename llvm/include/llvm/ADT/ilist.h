@@ -422,7 +422,7 @@ public:
 
   // erase - remove a node from the controlled sequence... and delete it.
   iterator erase(iterator where) {
-    deleteNode(remove(where));
+    this->deleteNode(remove(where));
     return where;
   }
 
