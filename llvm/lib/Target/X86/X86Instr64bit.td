@@ -766,7 +766,7 @@ def SHRD64mri8 : RIi8<0xAC, MRMDestMem,
 //  Logical Instructions...
 //
 
-let isTwoAddress = 1 in
+let isTwoAddress = 1 , AddedComplexity = 15 in
 def NOT64r : RI<0xF7, MRM2r, (outs GR64:$dst), (ins GR64:$src), "not{q}\t$dst",
                 [(set GR64:$dst, (not GR64:$src))]>;
 def NOT64m : RI<0xF7, MRM2m, (outs), (ins i64mem:$dst), "not{q}\t$dst",
