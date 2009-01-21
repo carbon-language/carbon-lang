@@ -185,9 +185,8 @@ namespace {
     void
     printDFormAddr(const MachineInstr *MI, unsigned OpNo)
     {
-      const MachineOperand &MO = MI->getOperand(OpNo);
-      assert(MO.isImm() &&
-             "printDFormAddr first operand is not immedate");
+      assert(MI->getOperand(OpNo).isImm() &&
+             "printDFormAddr first operand is not immediate");
       int64_t value = int64_t(MI->getOperand(OpNo).getImm());
       int16_t value16 = int16_t(value);
       assert((value16 >= -(1 << (9+4)) && value16 <= (1 << (9+4)) - 1)
