@@ -13,7 +13,7 @@ LINK_COMPONENTS = support system
 REQUIRES_EH := 1
 
 ifneq ($(BUILTIN_PLUGINS),)
-USEDLIBS = $(patsubst %,LLVMC%,$(BUILTIN_PLUGINS))
+USEDLIBS = $(patsubst %,plugin_llvmc_%,$(BUILTIN_PLUGINS))
 endif
 
 include $(LEVEL)/Makefile.common

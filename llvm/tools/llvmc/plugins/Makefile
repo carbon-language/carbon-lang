@@ -21,7 +21,7 @@ else # LLVMC_PLUGIN
 
 LEVEL = ../../../..
 
-LIBRARYNAME := $(patsubst %,LLVMC%,$(LLVMC_PLUGIN))
+LIBRARYNAME := $(patsubst %,plugin_llvmc_%,$(LLVMC_PLUGIN))
 REQUIRES_EH = 1
 
 ifndef BUILTIN_LLVMC_PLUGIN
