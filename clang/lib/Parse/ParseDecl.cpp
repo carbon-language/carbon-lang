@@ -511,9 +511,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::identifier: {
       // In C++, check to see if this is a scope specifier like foo::bar::, if
       // so handle it as such.  This is important for ctor parsing.
-      if (getLang().CPlusPlus &&
-        TryAnnotateCXXScopeToken())
-          continue;
+      if (getLang().CPlusPlus && TryAnnotateCXXScopeToken())
+        continue;
       
       // This identifier can only be a typedef name if we haven't already seen
       // a type-specifier.  Without this check we misparse:
@@ -842,7 +841,9 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
-    return PP.getLangOptions().Microsoft;
+    if (!PP.getLangOptions().Microsoft) return false;
+    ConsumeToken();
+    return true;
 
   default:
     // Not a type-specifier; do nothing.
