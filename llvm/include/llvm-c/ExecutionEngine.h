@@ -95,6 +95,8 @@ LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE);
 void LLVMAddGlobalMapping(LLVMExecutionEngineRef EE, LLVMValueRef Global,
                           void* Addr);
 
+void *LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global);
+
 #ifdef __cplusplus
 }
 

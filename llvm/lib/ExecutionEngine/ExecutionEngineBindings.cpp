@@ -199,3 +199,7 @@ void LLVMAddGlobalMapping(LLVMExecutionEngineRef EE, LLVMValueRef Global,
                           void* Addr) {
   unwrap(EE)->addGlobalMapping(unwrap<GlobalValue>(Global), Addr);
 }
+
+void *LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global) {
+  return unwrap(EE)->getPointerToGlobal(unwrap<GlobalValue>(Global));
+}
