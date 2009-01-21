@@ -66,22 +66,6 @@ static inline uint32_t Read24(const unsigned char *&Data) {
   return V;
 }
 
-static inline uint32_t Read24(const unsigned char *&Data) {
-// Targets that directly support unaligned little-endian 16-bit loads can just
-// use them.
-#if defined(__i386__) || defined(__x86_64__)
-  uint32_t V = ((uint16_t*)Data)[0] | 
-                 ((uint32_t)Data[2] << 16);
-#else
-  uint32_t V = ((uint32_t)Data[0] <<  0) |
-               ((uint32_t)Data[1] <<  8) |
-               ((uint32_t)Data[2] << 16);
-#endif
-  
-  Data += 3;
-  return V;
-}
-
 static inline uint32_t Read32(const unsigned char *&Data) {
 // Targets that directly support unaligned little-endian 32-bit loads can just
 // use them.
