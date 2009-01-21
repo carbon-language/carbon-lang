@@ -511,6 +511,9 @@ SDValue DAGCombiner::CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
   DOUT << "\nReplacing.1 "; DEBUG(N->dump(&DAG));
   DOUT << "\nWith: "; DEBUG(To[0].getNode()->dump(&DAG));
   DOUT << " and " << NumTo-1 << " other values\n";
+  DEBUG(for (unsigned i = 0, e = NumTo; i != e; ++i)
+          assert(N->getValueType(i) == To[i].getValueType() &&
+                 "Cannot combine value to value of different type!"));
   WorkListRemover DeadNodes(*this);
   DAG.ReplaceAllUsesWith(N, To, &DeadNodes);
   
@@ -3310,7 +3313,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   ISD::LoadExtType ExtType = ISD::NON_EXTLOAD;
   SDValue N0 = N->getOperand(0);
   MVT VT = N->getValueType(0);
-  MVT EVT = N->getValueType(0);
+  MVT EVT = VT;
 
   // This transformation isn't valid for vector loads.
   if (VT.isVector())
@@ -3327,7 +3330,6 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
 
   unsigned EVTBits = EVT.getSizeInBits();
   unsigned ShAmt = 0;
-  bool CombineSRL =  false;
   if (N0.getOpcode() == ISD::SRL && N0.hasOneUse()) {
     if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
       ShAmt = N01->getZExtValue();
@@ -3336,7 +3338,6 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
         N0 = N0.getOperand(0);
         if (N0.getValueType().getSizeInBits() <= EVTBits)
           return SDValue();
-        CombineSRL = true;
       }
     }
   }
@@ -3368,22 +3369,12 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       : DAG.getExtLoad(ExtType, VT, LN0->getChain(), NewPtr,
                        LN0->getSrcValue(), LN0->getSrcValueOffset() + PtrOff,
                        EVT, LN0->isVolatile(), NewAlign);
-    AddToWorkList(Load.getNode());
-    if (CombineSRL) {
-      WorkListRemover DeadNodes(*this);
-      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1),
-                                    &DeadNodes);
-      CombineTo(N->getOperand(0).getNode(), Load);
-    } else
-      CombineTo(N0.getNode(), Load, Load.getValue(1));
-    
-    if (ShAmt) {
-      if (Opc == ISD::SIGN_EXTEND_INREG)
-        return DAG.getNode(Opc, VT, Load, N->getOperand(1));
-      else
-        return DAG.getNode(Opc, VT, Load);
-    }
-    return SDValue(N, 0);   // Return N so it doesn't get rechecked!
+    // Replace the old load's chain with the new load's chain.
+    WorkListRemover DeadNodes(*this);
+    DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1),
+                                  &DeadNodes);
+    // Return the new loaded value.
+    return Load;
   }
 
   return SDValue();
