@@ -403,7 +403,7 @@ public:
       Head = NextNode;
     this->setPrev(NextNode, PrevNode);
     IT = NextNode;
-    removeNodeFromList(Node);  // Notify traits that we removed a node...
+    this->removeNodeFromList(Node);  // Notify traits that we removed a node...
 
     // Set the next/prev pointers of the current node to null.  This isn't
     // strictly required, but this catches errors where a node is removed from
