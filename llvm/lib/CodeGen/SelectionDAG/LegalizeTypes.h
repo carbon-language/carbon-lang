@@ -191,7 +191,7 @@ private:
   // Common routines.
   SDValue BitConvertToInteger(SDValue Op);
   SDValue CreateStackStoreLoad(SDValue Op, MVT DestVT);
-  bool CustomLowerResults(SDNode *N, unsigned ResNo);
+  bool CustomLowerResults(SDNode *N, unsigned ResNo, bool LegalizeResult);
   SDValue GetVectorElementPointer(SDValue VecPtr, MVT EltVT, SDValue Index);
   SDValue JoinIntegers(SDValue Lo, SDValue Hi);
   SDValue LibCallify(RTLIB::Libcall LC, SDNode *N, bool isSigned);

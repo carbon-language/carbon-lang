@@ -1131,6 +1131,23 @@ public:
     return SDValue();
   }
 
+  /// LowerOperationWrapper - This callback is invoked by the type legalizer 
+  /// to legalize operation with illegal operand types but legal result types; 
+  /// It replaces the LowerOperation callback in the type Legalizer.
+  /// The reason we can not do away with LowerOperation entirely is that 
+  /// LegalizeDAG isn't yet ready to use this callback.
+  
+  /// The target places new result values for the node in Results (their number 
+  /// and types must exactly match those of the original return values of 
+  /// the node), or leaves Results empty, which indicates that the node is not 
+  /// to be custom lowered after all. 
+  /// In its default implementation it calls the LowerOperation.
+
+  virtual void LowerOperationWrapper(SDValue Op,
+                                     SmallVectorImpl<SDValue> &Results,
+                                     SelectionDAG &DAG);
+
+
   /// LowerOperation - This callback is invoked for operations that are 
   /// unsupported by the target, which are registered to use 'custom' lowering,
   /// and whose defined values are all legal.

@@ -34,7 +34,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   SDValue Result = SDValue();
 
   // See if the target wants to custom expand this node.
-  if (CustomLowerResults(N, ResNo))
+  if (CustomLowerResults(N, ResNo, true))
     return;
 
   switch (N->getOpcode()) {
@@ -623,45 +623,42 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Promote integer operand: "; N->dump(&DAG); cerr << "\n");
   SDValue Res = SDValue();
 
-  if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
-      == TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDValue(N, 0), DAG);
+  if (CustomLowerResults(N, OpNo, false))
+    return false;
 
-  if (Res.getNode() == 0) {
-    switch (N->getOpcode()) {
-      default:
+  switch (N->getOpcode()) {
+    default:
   #ifndef NDEBUG
-      cerr << "PromoteIntegerOperand Op #" << OpNo << ": ";
-      N->dump(&DAG); cerr << "\n";
+    cerr << "PromoteIntegerOperand Op #" << OpNo << ": ";
+    N->dump(&DAG); cerr << "\n";
   #endif
-      assert(0 && "Do not know how to promote this operator's operand!");
-      abort();
+    assert(0 && "Do not know how to promote this operator's operand!");
+    abort();
 
-    case ISD::ANY_EXTEND:   Res = PromoteIntOp_ANY_EXTEND(N); break;
-    case ISD::BR_CC:        Res = PromoteIntOp_BR_CC(N, OpNo); break;
-    case ISD::BRCOND:       Res = PromoteIntOp_BRCOND(N, OpNo); break;
-    case ISD::BUILD_PAIR:   Res = PromoteIntOp_BUILD_PAIR(N); break;
-    case ISD::BUILD_VECTOR: Res = PromoteIntOp_BUILD_VECTOR(N); break;
-    case ISD::CONVERT_RNDSAT:
-                            Res = PromoteIntOp_CONVERT_RNDSAT(N); break;
-    case ISD::INSERT_VECTOR_ELT:
-                            Res = PromoteIntOp_INSERT_VECTOR_ELT(N, OpNo);break;
-    case ISD::MEMBARRIER:   Res = PromoteIntOp_MEMBARRIER(N); break;
-    case ISD::SELECT:       Res = PromoteIntOp_SELECT(N, OpNo); break;
-    case ISD::SELECT_CC:    Res = PromoteIntOp_SELECT_CC(N, OpNo); break;
-    case ISD::SETCC:        Res = PromoteIntOp_SETCC(N, OpNo); break;
-    case ISD::SIGN_EXTEND:  Res = PromoteIntOp_SIGN_EXTEND(N); break;
-    case ISD::SINT_TO_FP:   Res = PromoteIntOp_SINT_TO_FP(N); break;
-    case ISD::STORE:        Res = PromoteIntOp_STORE(cast<StoreSDNode>(N),
-                                                     OpNo); break;
-    case ISD::TRUNCATE:     Res = PromoteIntOp_TRUNCATE(N); break;
-    case ISD::UINT_TO_FP:   Res = PromoteIntOp_UINT_TO_FP(N); break;
-    case ISD::ZERO_EXTEND:  Res = PromoteIntOp_ZERO_EXTEND(N); break;
-    }
+  case ISD::ANY_EXTEND:   Res = PromoteIntOp_ANY_EXTEND(N); break;
+  case ISD::BR_CC:        Res = PromoteIntOp_BR_CC(N, OpNo); break;
+  case ISD::BRCOND:       Res = PromoteIntOp_BRCOND(N, OpNo); break;
+  case ISD::BUILD_PAIR:   Res = PromoteIntOp_BUILD_PAIR(N); break;
+  case ISD::BUILD_VECTOR: Res = PromoteIntOp_BUILD_VECTOR(N); break;
+  case ISD::CONVERT_RNDSAT:
+                          Res = PromoteIntOp_CONVERT_RNDSAT(N); break;
+  case ISD::INSERT_VECTOR_ELT:
+                          Res = PromoteIntOp_INSERT_VECTOR_ELT(N, OpNo);break;
+  case ISD::MEMBARRIER:   Res = PromoteIntOp_MEMBARRIER(N); break;
+  case ISD::SELECT:       Res = PromoteIntOp_SELECT(N, OpNo); break;
+  case ISD::SELECT_CC:    Res = PromoteIntOp_SELECT_CC(N, OpNo); break;
+  case ISD::SETCC:        Res = PromoteIntOp_SETCC(N, OpNo); break;
+  case ISD::SIGN_EXTEND:  Res = PromoteIntOp_SIGN_EXTEND(N); break;
+  case ISD::SINT_TO_FP:   Res = PromoteIntOp_SINT_TO_FP(N); break;
+  case ISD::STORE:        Res = PromoteIntOp_STORE(cast<StoreSDNode>(N),
+                                                   OpNo); break;
+  case ISD::TRUNCATE:     Res = PromoteIntOp_TRUNCATE(N); break;
+  case ISD::UINT_TO_FP:   Res = PromoteIntOp_UINT_TO_FP(N); break;
+  case ISD::ZERO_EXTEND:  Res = PromoteIntOp_ZERO_EXTEND(N); break;
   }
-
+  
   // If the result is null, the sub-method took care of registering results etc.
-  if (!Res.getNode()) return false;
+  if (! Res.getNode()) return false;
 
   // If the result is N, the sub-method updated N in place.  Tell the legalizer
   // core about this.
@@ -921,7 +918,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   Lo = Hi = SDValue();
 
   // See if the target wants to custom expand this node.
-  if (CustomLowerResults(N, ResNo))
+  if (CustomLowerResults(N, ResNo, true))
     return;
 
   switch (N->getOpcode()) {
@@ -1851,35 +1848,32 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Expand integer operand: "; N->dump(&DAG); cerr << "\n");
   SDValue Res = SDValue();
 
-  if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
-      == TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDValue(N, 0), DAG);
+  if (CustomLowerResults(N, OpNo, false))
+    return false;
 
-  if (Res.getNode() == 0) {
-    switch (N->getOpcode()) {
-    default:
+  switch (N->getOpcode()) {
+  default:
   #ifndef NDEBUG
-      cerr << "ExpandIntegerOperand Op #" << OpNo << ": ";
-      N->dump(&DAG); cerr << "\n";
+    cerr << "ExpandIntegerOperand Op #" << OpNo << ": ";
+    N->dump(&DAG); cerr << "\n";
   #endif
-      assert(0 && "Do not know how to expand this operator's operand!");
-      abort();
+    assert(0 && "Do not know how to expand this operator's operand!");
+    abort();
 
-    case ISD::BUILD_VECTOR:      Res = ExpandOp_BUILD_VECTOR(N); break;
-    case ISD::BIT_CONVERT:       Res = ExpandOp_BIT_CONVERT(N); break;
-    case ISD::EXTRACT_ELEMENT:   Res = ExpandOp_EXTRACT_ELEMENT(N); break;
-    case ISD::INSERT_VECTOR_ELT: Res = ExpandOp_INSERT_VECTOR_ELT(N); break;
-    case ISD::SCALAR_TO_VECTOR:  Res = ExpandOp_SCALAR_TO_VECTOR(N); break;
+  case ISD::BUILD_VECTOR:      Res = ExpandOp_BUILD_VECTOR(N); break;
+  case ISD::BIT_CONVERT:       Res = ExpandOp_BIT_CONVERT(N); break;
+  case ISD::EXTRACT_ELEMENT:   Res = ExpandOp_EXTRACT_ELEMENT(N); break;
+  case ISD::INSERT_VECTOR_ELT: Res = ExpandOp_INSERT_VECTOR_ELT(N); break;
+  case ISD::SCALAR_TO_VECTOR:  Res = ExpandOp_SCALAR_TO_VECTOR(N); break;
 
-    case ISD::BR_CC:      Res = ExpandIntOp_BR_CC(N); break;
-    case ISD::SELECT_CC:  Res = ExpandIntOp_SELECT_CC(N); break;
-    case ISD::SETCC:      Res = ExpandIntOp_SETCC(N); break;
-    case ISD::SINT_TO_FP: Res = ExpandIntOp_SINT_TO_FP(N); break;
-    case ISD::STORE:      Res = ExpandIntOp_STORE(cast<StoreSDNode>(N), OpNo);
-                          break;
-    case ISD::TRUNCATE:   Res = ExpandIntOp_TRUNCATE(N); break;
-    case ISD::UINT_TO_FP: Res = ExpandIntOp_UINT_TO_FP(N); break;
-    }
+  case ISD::BR_CC:      Res = ExpandIntOp_BR_CC(N); break;
+  case ISD::SELECT_CC:  Res = ExpandIntOp_SELECT_CC(N); break;
+  case ISD::SETCC:      Res = ExpandIntOp_SETCC(N); break;
+  case ISD::SINT_TO_FP: Res = ExpandIntOp_SINT_TO_FP(N); break;
+  case ISD::STORE:      Res = ExpandIntOp_STORE(cast<StoreSDNode>(N), OpNo);
+    break;
+  case ISD::TRUNCATE:   Res = ExpandIntOp_TRUNCATE(N); break;
+  case ISD::UINT_TO_FP: Res = ExpandIntOp_UINT_TO_FP(N); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.

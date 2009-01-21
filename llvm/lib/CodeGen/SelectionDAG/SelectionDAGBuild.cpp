@@ -5568,6 +5568,15 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   return std::make_pair(Res, Chain);
 }
 
+void TargetLowering::LowerOperationWrapper(SDValue Op, 
+                                          SmallVectorImpl<SDValue> &Results,
+                                          SelectionDAG &DAG) {
+  SDValue Res;
+  Res = LowerOperation(Op, DAG);
+  if (Res.getNode())
+    Results.push_back(Res);
+}
+
 SDValue TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   assert(0 && "LowerOperation not implemented for this target!");
   abort();
