@@ -39,7 +39,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
 
   if (Features.ObjC1) {
     if (Features.NeXTRuntime) {
-      Runtime = CreateMacObjCRuntime(*this);
+      Runtime = Features.ObjCModernABI ? CreateMacModernObjCRuntime(*this) 
+                                       : CreateMacObjCRuntime(*this);
     } else {
       Runtime = CreateGNUObjCRuntime(*this);
     }

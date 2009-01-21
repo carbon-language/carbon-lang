@@ -483,6 +483,9 @@ LaxVectorConversions("flax-vector-conversions",
 static llvm::cl::opt<bool>
 EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"));
 
+static llvm::cl::opt<bool>
+ObjCModernABI("fobjc-modern-abi", llvm::cl::desc("enable objective-c's modern abi"));
+
 
 // FIXME: This (and all GCC -f options) really come in -f... and
 // -fno-... forms, and additionally support automagic behavior when
@@ -614,6 +617,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     Options.NeXTRuntime = 1;
   else if (GNURuntime)
     Options.NeXTRuntime = 0;
+
+  if (ObjCModernABI)
+    Options.ObjCModernABI = 1;
 }
 
 static llvm::cl::opt<bool>

@@ -35,20 +35,14 @@ namespace {
   // FIXME: We should find a nicer way to make the labels for
   // metadata, string concatenation is lame.
 
-/// ObjCTypesHelper - Helper class that encapsulates lazy
-/// construction of varies types used during ObjC generation.
-class ObjCTypesHelper {
-private:
-  CodeGen::CodeGenModule &CGM;  
+class ObjCCommonTypesHelper {
+protected:
+  CodeGen::CodeGenModule &CGM;
   
-  llvm::Function *MessageSendFn, *MessageSendStretFn, *MessageSendFpretFn;
-  llvm::Function *MessageSendSuperFn, *MessageSendSuperStretFn, 
-    *MessageSendSuperFpretFn;
-
 public:
   const llvm::Type *ShortTy, *IntTy, *LongTy;
   const llvm::Type *Int8PtrTy;
-
+  
   /// ObjectPtrTy - LLVM type for object handles (typeof(id))
   const llvm::Type *ObjectPtrTy;
   
@@ -60,17 +54,31 @@ public:
   /// ProtocolPtrTy - LLVM type for external protocol handles
   /// (typeof(Protocol))
   const llvm::Type *ExternalProtocolPtrTy;
-
+  
   // SuperCTy - clang type for struct objc_super.
   QualType SuperCTy;
   // SuperPtrCTy - clang type for struct objc_super *.
   QualType SuperPtrCTy;
-
+  
   /// SuperTy - LLVM type for struct objc_super.
   const llvm::StructType *SuperTy;
   /// SuperPtrTy - LLVM type for struct objc_super *.
   const llvm::Type *SuperPtrTy;
+  
+  ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm);
+  ~ObjCCommonTypesHelper(){}
+};
 
+/// ObjCTypesHelper - Helper class that encapsulates lazy
+/// construction of varies types used during ObjC generation.
+class ObjCTypesHelper : public ObjCCommonTypesHelper {
+private:
+  
+  llvm::Function *MessageSendFn, *MessageSendStretFn, *MessageSendFpretFn;
+  llvm::Function *MessageSendSuperFn, *MessageSendSuperStretFn, 
+    *MessageSendSuperFpretFn;
+
+public:
   /// SymtabTy - LLVM type for struct objc_symtab.
   const llvm::StructType *SymtabTy;
   /// SymtabPtrTy - LLVM type for struct objc_symtab *.
@@ -183,7 +191,7 @@ public:
   
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
-  ~ObjCTypesHelper();
+  ~ObjCTypesHelper() {}
 
 
   llvm::Function *getSendFn(bool IsSuper) {
@@ -199,13 +207,20 @@ public:
   }
 };
 
-class CGObjCMac : public CodeGen::CGObjCRuntime {
-private:
-  CodeGen::CodeGenModule &CGM;  
-  ObjCTypesHelper ObjCTypes;
-  /// ObjCABI - FIXME: Not sure yet.
+/// ObjCModernTypesHelper - will have all types needed by objective-c's
+/// modern abi
+class ObjCModernTypesHelper : public ObjCCommonTypesHelper {
+public:
+  ObjCModernTypesHelper(CodeGen::CodeGenModule &cgm);
+  ~ObjCModernTypesHelper(){}
+};
+  
+class CGObjCCommonMac : public CodeGen::CGObjCRuntime {
+protected:
+  CodeGen::CodeGenModule &CGM;
+  // FIXME! May not be needing this after all.
   unsigned ObjCABI;
-
+  
   /// LazySymbols - Symbols to generate a lazy reference for. See
   /// DefinedSymbols and FinishModule().
   std::set<IdentifierInfo*> LazySymbols;
@@ -215,49 +230,57 @@ private:
   /// special linker symbols which ensure that Objective-C modules are
   /// linked properly.
   std::set<IdentifierInfo*> DefinedSymbols;
-
+  
   /// ClassNames - uniqued class names.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> ClassNames;
-
+  
   /// MethodVarNames - uniqued method variable names.
   llvm::DenseMap<Selector, llvm::GlobalVariable*> MethodVarNames;
-
+  
   /// MethodVarTypes - uniqued method type signatures. We have to use
   /// a StringMap here because have no other unique reference.
   llvm::StringMap<llvm::GlobalVariable*> MethodVarTypes;
-
+  
   /// MethodDefinitions - map of methods which have been defined in
   /// this translation unit.
   llvm::DenseMap<const ObjCMethodDecl*, llvm::Function*> MethodDefinitions;
-
+  
   /// PropertyNames - uniqued method variable names.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> PropertyNames;
-
+  
   /// ClassReferences - uniqued class references.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> ClassReferences;
-
+  
   /// SelectorReferences - uniqued selector references.
   llvm::DenseMap<Selector, llvm::GlobalVariable*> SelectorReferences;
-
+  
   /// Protocols - Protocols for which an objc_protocol structure has
   /// been emitted. Forward declarations are handled by creating an
   /// empty structure whose initializer is filled in when/if defined.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> Protocols;
-
+  
   /// DefinedProtocols - Protocols which have actually been
   /// defined. We should not need this, see FIXME in GenerateProtocol.
   llvm::DenseSet<IdentifierInfo*> DefinedProtocols;
-
+  
   /// DefinedClasses - List of defined classes.
   std::vector<llvm::GlobalValue*> DefinedClasses;
-
+  
   /// DefinedCategories - List of defined categories.
   std::vector<llvm::GlobalValue*> DefinedCategories;
-
+  
   /// UsedGlobals - List of globals to pack into the llvm.used metadata
   /// to prevent them from being clobbered.
   std::vector<llvm::GlobalVariable*> UsedGlobals;
 
+public:
+  CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
+  { }
+};
+  
+class CGObjCMac : public CGObjCCommonMac {
+private:
+  ObjCTypesHelper ObjCTypes;
   /// EmitImageInfo - Emit the image info marker used to encode some module
   /// level information.
   void EmitImageInfo();
@@ -467,6 +490,14 @@ public:
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
 };
+  
+class CGObjCModernMac : public CGObjCCommonMac {
+private:
+  ObjCModernTypesHelper ObjCTypes;
+public:
+  CGObjCModernMac(CodeGen::CodeGenModule &cgm);
+};
+  
 } // end anonymous namespace
 
 /* *** Helper Functions *** */
@@ -484,15 +515,10 @@ static llvm::Constant *getConstantGEP(llvm::Constant *C,
 
 /* *** CGObjCMac Public Interface *** */
  
-CGObjCMac::CGObjCMac(CodeGen::CodeGenModule &cgm) 
-  : CGM(cgm),
-    ObjCTypes(cgm),
-    ObjCABI(1)
+CGObjCMac::CGObjCMac(CodeGen::CodeGenModule &cgm) : CGObjCCommonMac(cgm),
+                                                    ObjCTypes(cgm)
 {
-  // FIXME: How does this get set in GCC? And what does it even mean?
-  if (ObjCTypes.LongTy != CGM.getTypes().ConvertType(CGM.getContext().IntTy))
-      ObjCABI = 2;
-
+  ObjCABI = 1;
   EmitImageInfo();  
 }
 
@@ -2229,14 +2255,21 @@ void CGObjCMac::FinishModule() {
   CGM.getModule().appendModuleInlineAsm(s.str());
 }
 
+CGObjCModernMac::CGObjCModernMac(CodeGen::CodeGenModule &cgm) 
+  : CGObjCCommonMac(cgm),
+  ObjCTypes(cgm)
+{
+  ObjCABI = 2;
+}
+
 /* *** */
 
-ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
-  : CGM(cgm)
+ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
+: CGM(cgm)
 {
   CodeGen::CodeGenTypes &Types = CGM.getTypes();
   ASTContext &Ctx = CGM.getContext();
-
+  
   ShortTy = Types.ConvertType(Ctx.ShortTy);
   IntTy = Types.ConvertType(Ctx.IntTy);
   LongTy = Types.ConvertType(Ctx.LongTy);
@@ -2250,7 +2283,41 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   // that the IR comes out a bit cleaner.
   const llvm::Type *T = Types.ConvertType(Ctx.getObjCProtoType());
   ExternalProtocolPtrTy = llvm::PointerType::getUnqual(T);
+  
+  // I'm not sure I like this. The implicit coordination is a bit
+  // gross. We should solve this in a reasonable fashion because this
+  // is a pretty common task (match some runtime data structure with
+  // an LLVM data structure).
+  
+  // FIXME: This is leaked.
+  // FIXME: Merge with rewriter code?
+  
+  // struct _objc_super {
+  //   id self;
+  //   Class cls;
+  // }
+  RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
+                                      SourceLocation(),
+                                      &Ctx.Idents.get("_objc_super"));  
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
+                                Ctx.getObjCIdType(), 0, false));
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+                                Ctx.getObjCClassType(), 0, false));
+  RD->completeDefinition(Ctx);
+  
+  SuperCTy = Ctx.getTagDeclType(RD);
+  SuperPtrCTy = Ctx.getPointerType(SuperCTy);
+  
+  SuperTy = cast<llvm::StructType>(Types.ConvertType(SuperCTy));
+  SuperPtrTy = llvm::PointerType::getUnqual(SuperTy);  
+}
 
+ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
+  : ObjCCommonTypesHelper(cgm)
+{
+  CodeGen::CodeGenTypes &Types = CGM.getTypes();
+  ASTContext &Ctx = CGM.getContext();
+  
   // struct _objc_method_description {
   //   SEL name;
   //   char *types;
@@ -2326,10 +2393,11 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   llvm::PATypeHolder ProtocolTyHolder = llvm::OpaqueType::get();
   llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get();
 
-  T = llvm::StructType::get(llvm::PointerType::getUnqual(ProtocolListTyHolder),
-                            LongTy,
-                            llvm::ArrayType::get(ProtocolTyHolder, 0),
-                            NULL);
+  const llvm::Type *T = 
+    llvm::StructType::get(llvm::PointerType::getUnqual(ProtocolListTyHolder),
+                          LongTy,
+                          llvm::ArrayType::get(ProtocolTyHolder, 0),
+                          NULL);
   cast<llvm::OpaqueType>(ProtocolListTyHolder.get())->refineAbstractTypeTo(T);
 
   // struct _objc_protocol {
@@ -2457,33 +2525,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                      PropertyListPtrTy,
                                      NULL);
   CGM.getModule().addTypeName("struct._objc_category", CategoryTy);
-
-  // I'm not sure I like this. The implicit coordination is a bit
-  // gross. We should solve this in a reasonable fashion because this
-  // is a pretty common task (match some runtime data structure with
-  // an LLVM data structure).
-
-  // FIXME: This is leaked.
-  // FIXME: Merge with rewriter code?
-  
-  // struct _objc_super {
-  //   id self;
-  //   Class cls;
-  // }
-  RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
-                                      SourceLocation(),
-                                      &Ctx.Idents.get("_objc_super"));  
-  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
-                                Ctx.getObjCIdType(), 0, false));
-  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
-                                Ctx.getObjCClassType(), 0, false));
-  RD->completeDefinition(Ctx);
-
-  SuperCTy = Ctx.getTagDeclType(RD);
-  SuperPtrCTy = Ctx.getPointerType(SuperCTy);
-
-  SuperTy = cast<llvm::StructType>(Types.ConvertType(SuperCTy));
-  SuperPtrTy = llvm::PointerType::getUnqual(SuperTy);
 
   // Global metadata structures
 
@@ -2711,7 +2752,9 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   
 }
 
-ObjCTypesHelper::~ObjCTypesHelper() {
+ObjCModernTypesHelper::ObjCModernTypesHelper(CodeGen::CodeGenModule &cgm) 
+: ObjCCommonTypesHelper(cgm)
+{
 }
 
 /* *** */
@@ -2719,4 +2762,10 @@ ObjCTypesHelper::~ObjCTypesHelper() {
 CodeGen::CGObjCRuntime *
 CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
   return new CGObjCMac(CGM);
+}
+
+CodeGen::CGObjCRuntime *
+CodeGen::CreateMacModernObjCRuntime(CodeGen::CodeGenModule &CGM) {
+  return 0;
+ // return new CGObjCModernMac(CGM);
 }
