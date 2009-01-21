@@ -1109,7 +1109,7 @@ static inline void __attribute__((__always_inline__)) _mm_pause(void)
   __asm__ volatile ("pause");
 }
 
-#define _MM_SHUFFLE(x, y) (((x) << 1) | (y))
+#define _MM_SHUFFLE2(x, y) (((x) << 1) | (y))
 
 #endif /* __SSE2__ */
 
