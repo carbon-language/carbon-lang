@@ -323,10 +323,8 @@ SVal RegionStoreManager::getLValueField(const GRState* St, SVal Base,
 
 SVal RegionStoreManager::getLValueElement(const GRState* St, 
                                           SVal Base, SVal Offset) {
-  if (Base.isUnknownOrUndef())
-    return Base;
 
-  if (isa<loc::SymbolVal>(Base))
+  if (Base.isUnknownOrUndef() || isa<loc::SymbolVal>(Base))
     return Base;
 
   loc::MemRegionVal& BaseL = cast<loc::MemRegionVal>(Base);
