@@ -249,7 +249,9 @@ public:
 
   OwningExprResult Owned(Expr* E) { return OwningExprResult(*this, E); }
   OwningExprResult Owned(ExprResult R) {
-    return R.isInvalid ? ExprError() : OwningExprResult(*this, R.Val);
+    if (R.isInvalid)
+      return ExprError();
+    return OwningExprResult(*this, R.Val);
   }
   OwningStmtResult Owned(Stmt* S) { return OwningStmtResult(*this, S); }
 
