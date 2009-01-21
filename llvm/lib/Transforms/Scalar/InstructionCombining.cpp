@@ -1284,7 +1284,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
                              KnownZero2, KnownOne2, Depth+1))
       return true;
 
-    uint32_t Leaders = KnownZero2.countLeadingOnes();
+    unsigned Leaders = KnownZero2.countLeadingOnes();
     if (SimplifyDemandedBits(I->getOperand(1), AllOnes,
                              KnownZero2, KnownOne2, Depth+1))
       return true;
