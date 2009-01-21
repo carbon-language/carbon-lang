@@ -1,6 +1,4 @@
-// RUN: clang -analyze -checker-cfref -verify %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store-region -verify %s
-
+// RUN: clang -analyze -checker-cfref -analyzer-store-basic -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -80,153 +78,25 @@ extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn stat
 // Test cases.
 //===----------------------------------------------------------------------===//
 
-CFAbsoluteTime f1() {
-  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
-  CFDateRef date = CFDateCreate(0, t);
-  CFRetain(date);
-  CFRelease(date);
-  CFDateGetAbsoluteTime(date); // no-warning
-  CFRelease(date);
-  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released.}}
-  return t;
-}
-
-CFAbsoluteTime f2() {
-  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
-  CFDateRef date = CFDateCreate(0, t);  
-  [((NSDate*) date) retain];
-  CFRelease(date);
-  CFDateGetAbsoluteTime(date); // no-warning
-  [((NSDate*) date) release];
-  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released.}}
-  return t;
-}
-
-
-NSDate* global_x;
-
 // Test to see if we supresss an error when we store the pointer
-// to a global.
+// to a struct.  This is because the value "escapes" the basic reasoning
+// of basic store.
 
-CFAbsoluteTime f3() {
+struct foo {
+  NSDate* f;
+};
+
+CFAbsoluteTime f4() {
+  struct foo x;
+  
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
   CFDateRef date = CFDateCreate(0, t);  
   [((NSDate*) date) retain];
   CFRelease(date);
   CFDateGetAbsoluteTime(date); // no-warning
-  global_x = (NSDate*) date;  
+  x.f = (NSDate*) date;  
   [((NSDate*) date) release];
   t = CFDateGetAbsoluteTime(date);   // no-warning
   return t;
 }
 
-//---------------------------------------------------------------------------
-// Test case 'f4' differs for region store and basic store.  See
-// retain-release-region-store.m and retain-release-basic-store.m.
-//---------------------------------------------------------------------------
-
-// Test a leak.
-
-CFAbsoluteTime f5(int x) {  
-  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
-  CFDateRef date = CFDateCreate(0, t);
-  
-  if (x)
-    CFRelease(date);
-  
-  return t; // expected-warning{{leak}}
-}
-
-// Test a leak involving the return.
-
-CFDateRef f6(int x) {  
-  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
-  CFRetain(date);
-  return date; // expected-warning{{leak}}
-}
-
-// Test a leak involving an overwrite.
-
-CFDateRef f7() {
-  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
-  CFRetain(date); //expected-warning{{leak}}
-  date = CFDateCreate(0, CFAbsoluteTimeGetCurrent()); 
-  return date;
-}
-
-// Generalization of Create rule.  MyDateCreate returns a CFXXXTypeRef, and
-// has the word create.
-CFDateRef MyDateCreate();
-
-CFDateRef f8() {
-  CFDateRef date = MyDateCreate();
-  CFRetain(date);  
-  return date; // expected-warning{{leak}}
-}
-
-CFDateRef f9() {
-  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
-  int *p = 0;
-  // test that the checker assumes that CFDateCreate returns a non-null
-  // pointer
-  if (!date) *p = 1; // no-warning
-  return date;
-}
-
-// Handle DiskArbitration API:
-//
-// http://developer.apple.com/DOCUMENTATION/DARWIN/Reference/DiscArbitrationFramework/
-//
-void f10(io_service_t media, DADiskRef d, CFStringRef s) {
-  DADiskRef disk = DADiskCreateFromBSDName(kCFAllocatorDefault, 0, "hello");
-  if (disk) NSLog(@"ok"); // expected-warning{{leak}}
-  
-  disk = DADiskCreateFromIOMedia(kCFAllocatorDefault, 0, media);
-  if (disk) NSLog(@"ok"); // expected-warning{{leak}}
-
-  CFDictionaryRef dict = DADiskCopyDescription(d); 
-  if (dict) NSLog(@"ok"); // expected-warning{{leak}}
-  
-  disk = DADiskCopyWholeDisk(d);
-  if (disk) NSLog(@"ok"); // expected-warning{{leak}}
-    
-  DADissenterRef dissenter = DADissenterCreate(kCFAllocatorDefault,
-                                                kDAReturnSuccess, s);
-  if (dissenter) NSLog(@"ok"); // expected-warning{{leak}}
-  
-  DASessionRef session = DASessionCreate(kCFAllocatorDefault);
-  if (session) NSLog(@"ok"); // expected-warning{{leak}}
-}
-
-// Test retain/release checker with CFString and CFMutableArray.
-void f11() {
-  // Create the array.
-  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
-
-  // Create a string.
-  CFStringRef s1 = CFStringCreateWithCString(0, "hello world",
-                                             kCFStringEncodingUTF8);
-
-  // Add the string to the array.
-  CFArrayAppendValue(A, s1);
-  
-  // Decrement the reference count.
-  CFRelease(s1); // no-warning
-  
-  // Get the string.  We don't own it.
-  s1 = (CFStringRef) CFArrayGetValueAtIndex(A, 0);
-  
-  // Release the array.
-  CFRelease(A); // no-warning
-  
-  // Release the string.  This is a bug.
-  CFRelease(s1); // expected-warning{{Incorrect decrement of the reference count}}
-}
-
-// PR 3337: Handle functions declared using typedefs.
-typedef CFTypeRef CREATEFUN();
-CREATEFUN MyCreateFun;
-
-void f12() {
-  CFTypeRef o = MyCreateFun(); // expected-warning {{leak}}
-}

@@ -652,37 +652,33 @@ const GRState* RegionStoreManager::Bind(const GRState* St, Loc L, SVal V) {
 }
 
 Store RegionStoreManager::Remove(Store store, Loc L) {
-  RegionBindingsTy B = GetRegionBindings(store);
-
-  const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion();
-  assert(R);
-
-  return RBFactory.Remove(B, R).getRoot();
+  const MemRegion* R = 0;
+  
+  if (isa<loc::MemRegionVal>(L))
+    R = cast<loc::MemRegionVal>(L).getRegion();
+  else if (isa<loc::SymbolVal>(L))
+    R = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(L).getSymbol());
+  
+  if (R) {
+    RegionBindingsTy B = GetRegionBindings(store);  
+    return RBFactory.Remove(B, R).getRoot();
+  }
+  
+  return store;
 }
 
 const GRState* RegionStoreManager::BindDecl(const GRState* St, 
                                             const VarDecl* VD, SVal InitVal) {
-  // All static variables are treated as symbolic values.
-  if (VD->hasGlobalStorage())
-    return St;
-
-  // Process local variables.
 
   QualType T = VD->getType();
-  
   VarRegion* VR = MRMgr.getVarRegion(VD);
-  
-  if (Loc::IsLocType(T) || T->isIntegerType())
-    return Bind(St, Loc::MakeVal(VR), InitVal);
 
-  else if (T->isArrayType())
+  if (T->isArrayType())
     return BindArray(St, VR, InitVal);
-
-  else if (T->isStructureType())
+  if (T->isStructureType())
     return BindStruct(St, VR, InitVal);
 
-  // Other types of variable are not supported yet.
-  return St;
+  return Bind(St, Loc::MakeVal(VR), InitVal);
 }
 
 // FIXME: this method should be merged into Bind().
