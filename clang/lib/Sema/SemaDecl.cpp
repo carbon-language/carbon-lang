@@ -2564,18 +2564,20 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // Can this happen for params?  We already checked that they don't conflict
   // among each other.  Here they can only shadow globals, which is ok.
   IdentifierInfo *II = D.getIdentifier();
-  if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
-    if (PrevDecl->isTemplateParameter()) {
-      // Maybe we will complain about the shadowed template parameter.
-      DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
-      // Just pretend that we didn't see the previous declaration.
-      PrevDecl = 0;
-    } else if (S->isDeclScope(PrevDecl)) {
-      Diag(D.getIdentifierLoc(), diag::err_param_redefinition) << II;
+  if (II) {
+    if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
+      if (PrevDecl->isTemplateParameter()) {
+        // Maybe we will complain about the shadowed template parameter.
+        DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
+        // Just pretend that we didn't see the previous declaration.
+        PrevDecl = 0;
+      } else if (S->isDeclScope(PrevDecl)) {
+        Diag(D.getIdentifierLoc(), diag::err_param_redefinition) << II;
 
-      // Recover by removing the name
-      II = 0;
-      D.SetIdentifier(0, D.getIdentifierLoc());
+        // Recover by removing the name
+        II = 0;
+        D.SetIdentifier(0, D.getIdentifierLoc());
+      }
     }
   }
 
@@ -2855,11 +2857,11 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
       Name = 0;
       goto CreateNewDecl;
     }
-  } else {
+  } else if (Name) {
     // If this is a named struct, check to see if there was a previous forward
     // declaration or definition.
     PrevDecl = dyn_cast_or_null<NamedDecl>(LookupDecl(Name, Decl::IDNS_Tag,S)
-                                             .getAsDecl());
+                                           .getAsDecl());
 
     if (!getLangOptions().CPlusPlus && TK != TK_Reference) {
       // FIXME: This makes sure that we ignore the contexts associated
