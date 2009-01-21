@@ -1235,12 +1235,15 @@ let isTwoAddress = 0 in {
 }
 } // Defs = [EFLAGS]
 
+// Match xor -1 to not. Favors these over a move imm + xor to save code size.
+let AddedComplexity = 15 in {
 def NOT8r  : I<0xF6, MRM2r, (outs GR8 :$dst), (ins GR8 :$src), "not{b}\t$dst",
                [(set GR8:$dst, (not GR8:$src))]>;
 def NOT16r : I<0xF7, MRM2r, (outs GR16:$dst), (ins GR16:$src), "not{w}\t$dst",
                [(set GR16:$dst, (not GR16:$src))]>, OpSize;
 def NOT32r : I<0xF7, MRM2r, (outs GR32:$dst), (ins GR32:$src), "not{l}\t$dst",
                [(set GR32:$dst, (not GR32:$src))]>;
+}
 let isTwoAddress = 0 in {
   def NOT8m  : I<0xF6, MRM2m, (outs), (ins i8mem :$dst), "not{b}\t$dst",
                  [(store (not (loadi8 addr:$dst)), addr:$dst)]>;
