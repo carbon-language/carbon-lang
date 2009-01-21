@@ -1127,9 +1127,11 @@ bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
   LIs->InsertMachineInstrInMaps(prior(RestorePt), RestoreIdx);
   
   if (KillPt->getParent() == BarrierMBB) {
-    UpdateRegisterInterval(ValNo, LIs->getUseIndex(KillIdx)+1,
+    VNInfo* After = UpdateRegisterInterval(ValNo, LIs->getUseIndex(KillIdx)+1,
                            LIs->getDefIndex(RestoreIdx));
     
+    RenumberValno(After);
+
     ++NumSplits;
     ++NumRemats;
     return true;
@@ -1312,9 +1314,11 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     UpdateSpillSlotInterval(ValNo, LIs->getUseIndex(SpillIndex)+1,
                             LIs->getDefIndex(RestoreIndex));
 
-    UpdateRegisterInterval(ValNo, LIs->getUseIndex(SpillIndex)+1,
+    VNInfo* After = UpdateRegisterInterval(ValNo,
+                           LIs->getUseIndex(SpillIndex)+1,
                            LIs->getDefIndex(RestoreIndex));
-    
+    RenumberValno(After);
+   
     ++NumSplits;
     return true;
   }
