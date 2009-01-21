@@ -118,6 +118,15 @@ std::string EscapeVariableName(const std::string& Var) {
   return ret;
 }
 
+/// oneOf - Does the input string contain this character?
+bool oneOf(const char* lst, char c) {
+  while (*lst) {
+    if (*lst++ == c)
+      return true;
+  }
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 /// Back-end specific code
 
@@ -1041,39 +1050,157 @@ void EmitCaseConstructHandler(const Init* Dag, const char* IndentLevel,
   }
 }
 
+/// TokenizeCmdline - converts from "$CALL(HookName, 'Arg1', 'Arg2')/path" to
+/// ["$CALL(", "HookName", "Arg1", "Arg2", ")/path"] .
+/// Helper function used by EmitCmdLineVecFill and.
+void TokenizeCmdline(const std::string& CmdLine, StrVector& Out) {
+  const char* Delimiters = " \t\n\v\f\r";
+  enum TokenizerState
+  { Normal, SpecialCommand, InsideSpecialCommand, InsideQuotationMarks }
+  cur_st  = Normal;
+  Out.push_back("");
+
+  std::string::size_type B = CmdLine.find_first_not_of(Delimiters),
+    E = CmdLine.size();
+  if (B == std::string::npos)
+    throw "Empty command-line string!";
+  for (; B != E; ++B) {
+    char cur_ch = CmdLine[B];
+
+    switch (cur_st) {
+    case Normal:
+      if (cur_ch == '$') {
+        cur_st = SpecialCommand;
+        break;
+      }
+      if (oneOf(Delimiters, cur_ch)) {
+        // Skip whitespace
+        B = CmdLine.find_first_not_of(Delimiters, B);
+        if (B == std::string::npos) {
+          B = E-1;
+          continue;
+        }
+        --B;
+        Out.push_back("");
+        continue;
+      }
+      break;
+
+
+    case SpecialCommand:
+      if (oneOf(Delimiters, cur_ch)) {
+        cur_st = Normal;
+        Out.push_back("");
+        continue;
+      }
+      if (cur_ch == '(') {
+        Out.push_back("");
+        cur_st = InsideSpecialCommand;
+        continue;
+      }
+      break;
+
+    case InsideSpecialCommand:
+      if (oneOf(Delimiters, cur_ch)) {
+        continue;
+      }
+      if (cur_ch == '\'') {
+        cur_st = InsideQuotationMarks;
+        Out.push_back("");
+        continue;
+      }
+      if (cur_ch == ')') {
+        cur_st = Normal;
+        Out.push_back("");
+      }
+      if (cur_ch == ',') {
+        continue;
+      }
+
+      break;
+
+    case InsideQuotationMarks:
+      if (cur_ch == '\'') {
+        cur_st = InsideSpecialCommand;
+        continue;
+      }
+      break;
+    }
+
+    Out.back().push_back(cur_ch);
+  }
+}
+
+template <class I, class S>
+void checkedIncrement(I& P, I E, S ErrorString) {
+  ++P;
+  if (P == E)
+    throw ErrorString;
+}
+
 /// SubstituteSpecialCommands - Perform string substitution for $CALL
 /// and $ENV. Helper function used by EmitCmdLineVecFill().
-std::string SubstituteSpecialCommands(const std::string& cmd) {
-  size_t cparen = cmd.find(")");
-  std::string ret;
+StrVector::const_iterator SubstituteSpecialCommands
+(StrVector::const_iterator Pos, StrVector::const_iterator End, std::ostream& O)
+{
 
-  if (cmd.find("$CALL(") == 0) {
-    if (cmd.size() == 6)
+  const std::string& cmd = *Pos;
+
+  if (cmd == "$CALL") {
+    checkedIncrement(Pos, End, "Syntax error in $CALL invocation!");
+    const std::string& CmdName = *Pos;
+
+    if (CmdName == ")")
       throw std::string("$CALL invocation: empty argument list!");
 
-    ret += "hooks::";
-    ret += std::string(cmd.begin() + 6, cmd.begin() + cparen);
-    ret += "()";
-  }
-  else if (cmd.find("$ENV(") == 0) {
-    if (cmd.size() == 5)
-      throw std::string("$ENV invocation: empty argument list!");
+    O << "hooks::";
+    O << CmdName << "(";
 
-    ret += "checkCString(std::getenv(\"";
-    ret += std::string(cmd.begin() + 5, cmd.begin() + cparen);
-    ret += "\"))";
+
+    bool firstIteration = true;
+    while (true) {
+      checkedIncrement(Pos, End, "Syntax error in $CALL invocation!");
+      const std::string& Arg = *Pos;
+      assert(Arg.size() != 0);
+
+      if (Arg[0] == ')')
+        break;
+
+      if (firstIteration)
+        firstIteration = false;
+      else
+        O << ", ";
+
+      O << '"' << Arg << '"';
+    }
+
+    O << ')';
+
+  }
+  else if (cmd == "$ENV") {
+    checkedIncrement(Pos, End, "Syntax error in $ENV invocation!");
+    const std::string& EnvName = *Pos;
+
+    if (EnvName == ")")
+      throw "$ENV invocation: empty argument list!";
+
+    O << "checkCString(std::getenv(\"";
+    O << EnvName;
+    O << "\"))";
+
+    checkedIncrement(Pos, End, "Syntax error in $ENV invocation!");
   }
   else {
     throw "Unknown special command: " + cmd;
   }
 
-  if (cmd.begin() + cparen + 1 != cmd.end()) {
-    ret += " + std::string(\"";
-    ret += (cmd.c_str() + cparen + 1);
-    ret += "\")";
-  }
+  const std::string& Leftover = *Pos;
+  assert(Leftover.at(0) == ')');
+  if (Leftover.size() != 1)
+    O << " + std::string(\"" << (Leftover.c_str() + 1) << "\")";
+  O << ')';
 
-  return ret;
+  return Pos;
 }
 
 /// EmitCmdLineVecFill - Emit code that fills in the command line
@@ -1082,14 +1209,28 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
                         bool IsJoin, const char* IndentLevel,
                         std::ostream& O) {
   StrVector StrVec;
-  SplitString(InitPtrToString(CmdLine), StrVec);
+  TokenizeCmdline(InitPtrToString(CmdLine), StrVec);
+
   if (StrVec.empty())
     throw "Tool " + ToolName + " has empty command line!";
 
-  StrVector::const_iterator I = StrVec.begin();
-  ++I;
-  for (StrVector::const_iterator E = StrVec.end(); I != E; ++I) {
+  StrVector::const_iterator I = StrVec.begin(), E = StrVec.end();
+
+  // If there is a hook invocation on the place of the first command, skip it.
+  if (StrVec[0][0] == '$') {
+    while (I != E && (*I)[0] != ')' )
+      ++I;
+
+    // Skip the ')' symbol.
+    ++I;
+  }
+  else {
+    ++I;
+  }
+
+  for (; I != E; ++I) {
     const std::string& cmd = *I;
+    //    std::cerr << cmd;
     O << IndentLevel;
     if (cmd.at(0) == '$') {
       if (cmd == "$INFILE") {
@@ -1105,7 +1246,8 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
         O << "vec.push_back(out_file);\n";
       }
       else {
-        O << "vec.push_back(" << SubstituteSpecialCommands(cmd);
+        O << "vec.push_back(";
+        I = SubstituteSpecialCommands(I, E, O);
         O << ");\n";
       }
     }
@@ -1113,10 +1255,13 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
       O << "vec.push_back(\"" << cmd << "\");\n";
     }
   }
-  O << IndentLevel << "cmd = "
-    << ((StrVec[0][0] == '$') ? SubstituteSpecialCommands(StrVec[0])
-        : "\"" + StrVec[0] + "\"")
-    << ";\n";
+  O << IndentLevel << "cmd = ";
+
+  if (StrVec[0][0] == '$')
+    SubstituteSpecialCommands(StrVec.begin(), StrVec.end(), O);
+  else
+    O << '"' << StrVec[0] << '"';
+  O << ";\n";
 }
 
 /// EmitCmdLineVecFillCallback - A function object wrapper around
@@ -1650,22 +1795,39 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
 /// $CALL(HookName) in the provided command line string. Helper
 /// function used by FillInHookNames().
 class ExtractHookNames {
-  llvm::StringSet<>& HookNames_;
+  llvm::StringMap<unsigned>& HookNames_;
 public:
-  ExtractHookNames(llvm::StringSet<>& HookNames)
-  : HookNames_(HookNames_) {}
+  ExtractHookNames(llvm::StringMap<unsigned>& HookNames)
+  : HookNames_(HookNames) {}
 
   void operator()(const Init* CmdLine) {
     StrVector cmds;
-    llvm::SplitString(InitPtrToString(CmdLine), cmds);
+    TokenizeCmdline(InitPtrToString(CmdLine), cmds);
     for (StrVector::const_iterator B = cmds.begin(), E = cmds.end();
          B != E; ++B) {
       const std::string& cmd = *B;
-      if (cmd.find("$CALL(") == 0) {
-        if (cmd.size() == 6)
-          throw std::string("$CALL invocation: empty argument list!");
-        HookNames_.insert(std::string(cmd.begin() + 6,
-                                     cmd.begin() + cmd.find(")")));
+
+      if (cmd == "$CALL") {
+        unsigned NumArgs = 0;
+        checkedIncrement(B, E, "Syntax error in $CALL invocation!");
+        const std::string& HookName = *B;
+
+
+        if (HookName.at(0) == ')')
+          throw "$CALL invoked with no arguments!";
+
+        while (++B != E && B->at(0) != ')') {
+          ++NumArgs;
+        }
+
+        StringMap<unsigned>::const_iterator H = HookNames_.find(HookName);
+
+        if (H != HookNames_.end() && H->second != NumArgs)
+          throw "Overloading of hooks is not allowed. Overloaded hook: "
+            + HookName;
+        else
+          HookNames_[HookName] = NumArgs;
+
       }
     }
   }
@@ -1674,7 +1836,7 @@ public:
 /// FillInHookNames - Actually extract the hook names from all command
 /// line strings. Helper function used by EmitHookDeclarations().
 void FillInHookNames(const ToolDescriptions& ToolDescs,
-                     llvm::StringSet<>& HookNames)
+                     llvm::StringMap<unsigned>& HookNames)
 {
   // For all command lines:
   for (ToolDescriptions::const_iterator B = ToolDescs.begin(),
@@ -1695,16 +1857,23 @@ void FillInHookNames(const ToolDescriptions& ToolDescs,
 /// property records and emit hook function declaration for each
 /// instance of $CALL(HookName).
 void EmitHookDeclarations(const ToolDescriptions& ToolDescs, std::ostream& O) {
-  llvm::StringSet<> HookNames;
+  llvm::StringMap<unsigned> HookNames;
+
   FillInHookNames(ToolDescs, HookNames);
   if (HookNames.empty())
     return;
 
   O << "namespace hooks {\n";
-  for (StringSet<>::const_iterator B = HookNames.begin(), E = HookNames.end();
-       B != E; ++B)
-    O << Indent1 << "std::string " << B->first() << "();\n";
+  for (StringMap<unsigned>::const_iterator B = HookNames.begin(),
+         E = HookNames.end(); B != E; ++B) {
+    O << Indent1 << "const char* " << B->first() << "(";
 
+    for (unsigned i = 0, j = B->second; i < j; ++i) {
+      O << "const char* Arg" << i << (i+1 == j ? "" : ", ");
+    }
+
+    O <<");\n";
+  }
   O << "}\n\n";
 }
 
