@@ -685,26 +685,26 @@ SPUDAGToDAGISel::Select(SDValue Op) {
       break;
     case MVT::i32:
       shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                             CurDAG->getConstant(0x80808080, MVT::i32),
-                             CurDAG->getConstant(0x00010203, MVT::i32),
-                             CurDAG->getConstant(0x80808080, MVT::i32),
-                             CurDAG->getConstant(0x08090a0b, MVT::i32));
+                                 CurDAG->getConstant(0x80808080, MVT::i32),
+                                 CurDAG->getConstant(0x00010203, MVT::i32),
+                                 CurDAG->getConstant(0x80808080, MVT::i32),
+                                 CurDAG->getConstant(0x08090a0b, MVT::i32));
       break;
 
     case MVT::i16:
       shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                             CurDAG->getConstant(0x80808080, MVT::i32),
-                             CurDAG->getConstant(0x80800203, MVT::i32),
-                             CurDAG->getConstant(0x80808080, MVT::i32),
-                             CurDAG->getConstant(0x80800a0b, MVT::i32));
+                                 CurDAG->getConstant(0x80808080, MVT::i32),
+                                 CurDAG->getConstant(0x80800203, MVT::i32),
+                                 CurDAG->getConstant(0x80808080, MVT::i32),
+                                 CurDAG->getConstant(0x80800a0b, MVT::i32));
       break;
 
     case MVT::i8:
       shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                             CurDAG->getConstant(0x80808080, MVT::i32),
-                             CurDAG->getConstant(0x80808003, MVT::i32),
-                             CurDAG->getConstant(0x80808080, MVT::i32),
-                             CurDAG->getConstant(0x8080800b, MVT::i32));
+                                 CurDAG->getConstant(0x80808080, MVT::i32),
+                                 CurDAG->getConstant(0x80808003, MVT::i32),
+                                 CurDAG->getConstant(0x80808080, MVT::i32),
+                                 CurDAG->getConstant(0x8080800b, MVT::i32));
       break;
     }
 
@@ -714,9 +714,9 @@ SPUDAGToDAGISel::Select(SDValue Op) {
 
     SDValue zextShuffle =
             CurDAG->getNode(SPUISD::SHUFB, OpVecVT,
-                                       SDValue(PromoteScalar, 0),
-                                       SDValue(PromoteScalar, 0),
-                                       SDValue(shufMaskLoad, 0));
+                            SDValue(PromoteScalar, 0),
+                            SDValue(PromoteScalar, 0),
+                            SDValue(shufMaskLoad, 0));
 
     // N.B.: BIT_CONVERT replaces and updates the zextShuffle node, so we
     // re-use it in the VEC2PREFSLOT selection without needing to explicitly
@@ -724,6 +724,27 @@ SPUDAGToDAGISel::Select(SDValue Op) {
     SelectCode(CurDAG->getNode(ISD::BIT_CONVERT, OpVecVT, zextShuffle));
     return SelectCode(CurDAG->getNode(SPUISD::VEC2PREFSLOT, OpVT,
                                       zextShuffle));
+  } else if (Opc == ISD::ADD && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
+    SDNode *CGLoad =
+            emitBuildVector(SPU::getCarryGenerateShufMask(*CurDAG));
+
+    return SelectCode(CurDAG->getNode(SPUISD::ADD64_MARKER, OpVT,
+                                      Op.getOperand(0), Op.getOperand(1),
+                                      SDValue(CGLoad, 0)));
+  } else if (Opc == ISD::SUB && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
+    SDNode *CGLoad =
+            emitBuildVector(SPU::getBorrowGenerateShufMask(*CurDAG));
+
+    return SelectCode(CurDAG->getNode(SPUISD::SUB64_MARKER, OpVT,
+                                      Op.getOperand(0), Op.getOperand(1),
+                                      SDValue(CGLoad, 0)));
+  } else if (Opc == ISD::MUL && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
+    SDNode *CGLoad =
+            emitBuildVector(SPU::getCarryGenerateShufMask(*CurDAG));
+
+    return SelectCode(CurDAG->getNode(SPUISD::MUL64_MARKER, OpVT,
+                                      Op.getOperand(0), Op.getOperand(1),
+                                      SDValue(CGLoad, 0)));
   } else if (Opc == ISD::ADD && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
     SDNode *CGLoad =
             emitBuildVector(SPU::getCarryGenerateShufMask(*CurDAG));

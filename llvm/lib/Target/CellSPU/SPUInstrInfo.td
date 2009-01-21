@@ -1259,9 +1259,6 @@ multiclass BitwiseAnd
   def fabs32: ANDInst<(outs R32FP:$rT), (ins R32FP:$rA, R32C:$rB),
                       [/* Intentionally does not match a pattern */]>;
 
-  def fabs64: ANDInst<(outs R64FP:$rT), (ins R64FP:$rA, VECREG:$rB),
-                      [/* Intentionally does not match a pattern */]>;
-
   // Could use v4i32, but won't for clarity
   def fabsvec: ANDInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
                        [/* Intentionally does not match a pattern */]>;
@@ -1408,12 +1405,12 @@ class ORRegInst<RegisterClass rclass>:
 // These are effectively no-ops, but need to exist for proper type conversion
 // and type coercion.
 
-class ORCvtForm<dag OOL, dag IOL>
+class ORCvtForm<dag OOL, dag IOL, list<dag> pattern = [/* no pattern */]>
           : SPUInstr<OOL, IOL, "or\t$rT, $rA, $rA", IntegerOp> {
   bits<7> RA;
   bits<7> RT;
 
-  let Pattern = [/* no pattern */];
+  let Pattern = pattern;
 
   let Inst{0-10} = 0b10000010000;
   let Inst{11-17} = RA;
@@ -1427,29 +1424,29 @@ class ORPromoteScalar<RegisterClass rclass>:
 class ORExtractElt<RegisterClass rclass>:
     ORCvtForm<(outs rclass:$rT), (ins VECREG:$rA)>;
 
-class ORCvtRegGPRC<RegisterClass rclass>:
-    ORCvtForm<(outs GPRC:$rT), (ins rclass:$rA)>;
+/* class ORCvtRegGPRC<RegisterClass rclass>:
+    ORCvtForm<(outs GPRC:$rT), (ins rclass:$rA)>; */
 
-class ORCvtVecGPRC:
-    ORCvtForm<(outs GPRC:$rT), (ins VECREG:$rA)>;
+/* class ORCvtVecGPRC:
+    ORCvtForm<(outs GPRC:$rT), (ins VECREG:$rA)>; */
 
-class ORCvtGPRCReg<RegisterClass rclass>:
-    ORCvtForm<(outs rclass:$rT), (ins GPRC:$rA)>;
+/* class ORCvtGPRCReg<RegisterClass rclass>:
+    ORCvtForm<(outs rclass:$rT), (ins GPRC:$rA)>; */
     
-class ORCvtFormR32Reg<RegisterClass rclass>:
-    ORCvtForm<(outs rclass:$rT), (ins R32C:$rA)>;
+class ORCvtFormR32Reg<RegisterClass rclass, list<dag> pattern = [ ]>:
+    ORCvtForm<(outs rclass:$rT), (ins R32C:$rA), pattern>;
     
-class ORCvtFormRegR32<RegisterClass rclass>:
-    ORCvtForm<(outs R32C:$rT), (ins rclass:$rA)>;
+class ORCvtFormRegR32<RegisterClass rclass, list<dag> pattern = [ ]>:
+    ORCvtForm<(outs R32C:$rT), (ins rclass:$rA), pattern>;
 
-class ORCvtFormR64Reg<RegisterClass rclass>:
-    ORCvtForm<(outs rclass:$rT), (ins R64C:$rA)>;
+class ORCvtFormR64Reg<RegisterClass rclass, list<dag> pattern = [ ]>:
+    ORCvtForm<(outs rclass:$rT), (ins R64C:$rA), pattern>;
     
-class ORCvtFormRegR64<RegisterClass rclass>:
-    ORCvtForm<(outs R64C:$rT), (ins rclass:$rA)>;
+class ORCvtFormRegR64<RegisterClass rclass, list<dag> pattern = [ ]>:
+    ORCvtForm<(outs R64C:$rT), (ins rclass:$rA), pattern>;
 
-class ORCvtGPRCVec:
-    ORCvtForm<(outs VECREG:$rT), (ins GPRC:$rA)>;
+/* class ORCvtGPRCVec:
+    ORCvtForm<(outs VECREG:$rT), (ins GPRC:$rA)>; */
 
 multiclass BitwiseOr
 {
@@ -1468,10 +1465,11 @@ multiclass BitwiseOr
                           (v2f64 (bitconvert (or (v2i64 VECREG:$rA),
                                                  (v2i64 VECREG:$rB)))))]>;
 
-  def r64: ORRegInst<R64C>;
-  def r32: ORRegInst<R32C>;
-  def r16: ORRegInst<R16C>;
-  def r8:  ORRegInst<R8C>;
+  def r128: ORRegInst<GPRC>;
+  def r64:  ORRegInst<R64C>;
+  def r32:  ORRegInst<R32C>;
+  def r16:  ORRegInst<R16C>;
+  def r8:   ORRegInst<R8C>;
 
   // OR instructions used to copy f32 and f64 registers.
   def f32: ORInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
@@ -1496,6 +1494,7 @@ multiclass BitwiseOr
   def f32_v4f32: ORExtractElt<R32FP>;
   def f64_v2f64: ORExtractElt<R64FP>;
 
+/*
   // Conversion from GPRC to register
   def i128_r64:  ORCvtRegGPRC<R64C>;
   def i128_f64:  ORCvtRegGPRC<R64FP>;
@@ -1517,7 +1516,8 @@ multiclass BitwiseOr
 
   // Conversion from vector to GPRC
   def vec_i128:  ORCvtGPRCVec;
-  
+*/
+/*
   // Conversion from register to R32C:
   def r16_r32:   ORCvtFormRegR32<R16C>;
   def r8_r32:    ORCvtFormRegR32<R8C>;
@@ -1535,6 +1535,18 @@ multiclass BitwiseOr
   def r64_r32:   ORCvtFormRegR64<R32C>;
   def r64_r16:   ORCvtFormRegR64<R16C>;
   def r64_r8:    ORCvtFormRegR64<R8C>;
+*/
+
+  // bitconvert patterns:
+  def r32_f32:   ORCvtFormR32Reg<R32FP,
+                                 [(set R32FP:$rT, (bitconvert R32C:$rA))]>;
+  def f32_r32:   ORCvtFormRegR32<R32FP,
+                                 [(set R32C:$rT, (bitconvert R32FP:$rA))]>;
+
+  def r64_f64:   ORCvtFormR64Reg<R64FP,
+                                 [(set R64FP:$rT, (bitconvert R64C:$rA))]>;
+  def f64_r64:   ORCvtFormRegR64<R64FP,
+                                 [(set R64C:$rT, (bitconvert R64FP:$rA))]>;
 }
 
 defm OR : BitwiseOr;
@@ -1960,7 +1972,7 @@ multiclass SelectBits
 			       (v4f32 VECREG:$rB),
 			       (v4f32 VECREG:$rA)))]>;
 
-  // SELBr64_cond is defined further down, look for i64 comparisons
+  // SELBr64_cond is defined in SPU64InstrInfo.td
   def r32_cond:   SELBRegCondInst<R32C, R32C>;
   def f32_cond:   SELBRegCondInst<R32C, R32FP>;
   def r16_cond:   SELBRegCondInst<R16C, R16C>;
@@ -2146,14 +2158,6 @@ class SHLHVecInst<ValueType vectype>:
              [(set (vectype VECREG:$rT),
                    (SPUvec_shl (vectype VECREG:$rA), R16C:$rB))]>;
 
-// $rB gets promoted to 32-bit register type when confronted with
-// this llvm assembly code:
-//
-// define i16 @shlh_i16_1(i16 %arg1, i16 %arg2) {
-//      %A = shl i16 %arg1, %arg2
-//      ret i16 %A
-// }
-
 multiclass ShiftLeftHalfword
 {
   def v8i16: SHLHVecInst<v8i16>;
@@ -2250,6 +2254,10 @@ class SHLQBIVecInst<ValueType vectype>:
                [(set (vectype VECREG:$rT),
                      (SPUshlquad_l_bits (vectype VECREG:$rA), R32C:$rB))]>;
 
+class SHLQBIRegInst<RegisterClass rclass>:
+    SHLQBIInst<(outs rclass:$rT), (ins rclass:$rA, R32C:$rB),
+               [/* no pattern */]>;
+
 multiclass ShiftLeftQuadByBits
 {
   def v16i8: SHLQBIVecInst<v16i8>;
@@ -2258,6 +2266,8 @@ multiclass ShiftLeftQuadByBits
   def v4f32: SHLQBIVecInst<v4f32>;
   def v2i64: SHLQBIVecInst<v2i64>;
   def v2f64: SHLQBIVecInst<v2f64>;
+
+  def r128:  SHLQBIRegInst<GPRC>;
 }
 
 defm SHLQBI : ShiftLeftQuadByBits;
@@ -2334,6 +2344,32 @@ multiclass ShiftLeftQuadBytesImm
 }
 
 defm SHLQBYI : ShiftLeftQuadBytesImm;
+
+class SHLQBYBIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b00111001111, OOL, IOL, "shlqbybi\t$rT, $rA, $rB",
+           RotateShift, pattern>;
+
+class SHLQBYBIVecInst<ValueType vectype>:
+    SHLQBYBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+                [/* no pattern */]>;
+
+class SHLQBYBIRegInst<RegisterClass rclass>:
+    SHLQBYBIInst<(outs rclass:$rT), (ins rclass:$rA, R32C:$rB),
+                 [/* no pattern */]>;
+
+multiclass ShiftLeftQuadBytesBitCount
+{
+  def v16i8: SHLQBYBIVecInst<v16i8>;
+  def v8i16: SHLQBYBIVecInst<v8i16>;
+  def v4i32: SHLQBYBIVecInst<v4i32>;
+  def v4f32: SHLQBYBIVecInst<v4f32>;
+  def v2i64: SHLQBYBIVecInst<v2i64>;
+  def v2f64: SHLQBYBIVecInst<v2f64>;
+
+  def r128:  SHLQBYBIRegInst<GPRC>;
+}
+
+defm SHLQBYBI : ShiftLeftQuadBytesBitCount;
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // Rotate halfword:
@@ -4284,13 +4320,6 @@ def : Pat<(fabs R32FP:$rA),
 def : Pat<(fabs (v4f32 VECREG:$rA)),
           (ANDfabsvec (v4f32 VECREG:$rA),
                       (v4f32 (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f)))>;
-
-def : Pat<(fabs R64FP:$rA),
-          (ANDfabs64 R64FP:$rA, (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f))>;
-
-def : Pat<(fabs (v2f64 VECREG:$rA)),
-          (ANDfabsvec (v2f64 VECREG:$rA),
-                      (v2f64 (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f)))>;
 
 //===----------------------------------------------------------------------===//
 // Hint for branch instructions:

@@ -61,7 +61,7 @@ namespace llvm {
     };
   }
 
-  /// Predicates that are used for node matching:
+  //! Utility functions specific to CellSPU-only:
   namespace SPU {
     SDValue get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
                              MVT ValueType);
@@ -78,6 +78,7 @@ namespace llvm {
 
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG,
                               const SPUTargetMachine &TM);
+    SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG);
 
     SDValue getBorrowGenerateShufMask(SelectionDAG &DAG);
     SDValue getCarryGenerateShufMask(SelectionDAG &DAG);

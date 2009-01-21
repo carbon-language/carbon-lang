@@ -3294,6 +3294,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         LC = GetFPLibCall(VT, RTLIB::POW_F32, RTLIB::POW_F64, RTLIB::POW_F80,
                           RTLIB::POW_PPCF128);
         break;
+      case ISD::FDIV:
+        LC = GetFPLibCall(VT, RTLIB::DIV_F32, RTLIB::DIV_F64, RTLIB::DIV_F80,
+                          RTLIB::DIV_PPCF128);
+        break;
       default: break;
       }
       if (LC != RTLIB::UNKNOWN_LIBCALL) {

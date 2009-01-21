@@ -134,6 +134,7 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORi64_v2i64:
   case SPU::ORf32_v4f32:
   case SPU::ORf64_v2f64:
+/*
   case SPU::ORi128_r64:
   case SPU::ORi128_f64:
   case SPU::ORi128_r32:
@@ -148,6 +149,8 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORr16_i128:
   case SPU::ORr8_i128:
   case SPU::ORvec_i128:
+*/
+/*
   case SPU::ORr16_r32:
   case SPU::ORr8_r32:
   case SPU::ORr32_r16:
@@ -158,7 +161,11 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORr64_r32:
   case SPU::ORr64_r16:
   case SPU::ORr64_r8:
-  {
+*/
+  case SPU::ORf32_r32:
+  case SPU::ORr32_f32:
+  case SPU::ORf64_r64:
+  case SPU::ORr64_f64: {
     assert(MI.getNumOperands() == 2 &&
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&

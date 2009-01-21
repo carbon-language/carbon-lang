@@ -33,6 +33,13 @@ def SELBr64_cond:
    SELBInst<(outs R64C:$rT), (ins R64C:$rA, R64C:$rB, VECREG:$rC),
             [/* no pattern */]>;
 
+// The generic i64 select pattern, which assumes that the comparison result
+// is in a 32-bit register that contains a select mask pattern (i.e., gather
+// bits result):
+
+def : Pat<(select R32C:$rCond, R64C:$rFalse, R64C:$rTrue),
+          (SELBr64_cond R64C:$rTrue, R64C:$rFalse, (FSMr32 R32C:$rCond))>;
+
 // select the negative condition:
 class I64SELECTNegCond<PatFrag cond, CodeFrag compare>:
   Pat<(select (i32 (cond R64C:$rA, R64C:$rB)), R64C:$rTrue, R64C:$rFalse),
@@ -42,13 +49,6 @@ class I64SELECTNegCond<PatFrag cond, CodeFrag compare>:
 class I64SETCCNegCond<PatFrag cond, CodeFrag compare>:
   Pat<(cond R64C:$rA, R64C:$rB),
       (XORIr32 compare.Fragment, -1)>;
-
-// The generic i64 select pattern, which assumes that the comparison result
-// is in a 32-bit register that contains a select mask pattern (i.e., gather
-// bits result):
-
-def : Pat<(select R32C:$rCond, R64C:$rFalse, R64C:$rTrue),
-          (SELBr64_cond R64C:$rTrue, R64C:$rFalse, (FSMr32 R32C:$rCond))>;
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // The i64 seteq fragment that does the scalar->vector conversion and
@@ -331,8 +331,8 @@ class v2i64_highprod<dag rA, dag rB>:
                   (MPYHv4i32 v2i64_mul_bhi64<rB>.Fragment,
                              v2i64_mul_ashlq4<rA>.Fragment),
                   (Av4i32
-                    (MPYHv4i32 v2i64_mul_ashlq4<rA>.Fragment,
-                               v2i64_mul_bhi64<rB>.Fragment),
+                      (MPYHv4i32 v2i64_mul_ashlq4<rA>.Fragment,
+                                 v2i64_mul_bhi64<rB>.Fragment),
                     (Av4i32
                       (MPYUv4i32 v2i64_mul_ashlq4<rA>.Fragment,
                                  v2i64_mul_bhi64<rB>.Fragment),
@@ -381,3 +381,14 @@ def : Pat<(SPUmul64 (v2i64 VECREG:$rA), (v2i64 VECREG:$rB),
                     (v4i32 VECREG:$rCGmask)),
           v2i64_mul<(v2i64 VECREG:$rA), (v2i64 VECREG:$rB),
                     (v4i32 VECREG:$rCGmask)>.Fragment>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// f64 comparisons
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+// selb instruction definition for i64. Note that the selection mask is
+// a vector, produced by various forms of FSM:
+def SELBf64_cond:
+   SELBInst<(outs R64FP:$rT), (ins R64FP:$rA, R64FP:$rB, R32C:$rC),
+            [(set R64FP:$rT,
+                  (select R32C:$rC, R64FP:$rB, R64FP:$rA))]>;

@@ -92,6 +92,9 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setUseUnderscoreSetJmp(true);
   setUseUnderscoreLongJmp(true);
 
+  // Set RTLIB libcall names as used by SPU:
+  setLibcallName(RTLIB::DIV_F64, "__fast_divdf3");
+
   // Set up the SPU's register classes:
   addRegisterClass(MVT::i8,   SPU::R8CRegisterClass);
   addRegisterClass(MVT::i16,  SPU::R16CRegisterClass);
@@ -183,6 +186,9 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
 
+  // Make sure that DAGCombine doesn't insert illegal 64-bit constants
+  setOperationAction(ISD::FABS,  MVT::f64, Custom);
+
   // SPU can do rotate right and left, so legalize it... but customize for i8
   // because instructions don't exist.
 
@@ -243,6 +249,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::SETCC, MVT::i16,   Legal);
   setOperationAction(ISD::SETCC, MVT::i32,   Legal);
   setOperationAction(ISD::SETCC, MVT::i64,   Legal);
+  setOperationAction(ISD::SETCC, MVT::f64,   Custom);
 
   // Custom lower i128 -> i64 truncates
   setOperationAction(ISD::TRUNCATE, MVT::i64, Custom);
@@ -410,6 +417,9 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::VEC_SRA] = "SPUISD::VEC_SRA";
     node_names[(unsigned) SPUISD::VEC_ROTL] = "SPUISD::VEC_ROTL";
     node_names[(unsigned) SPUISD::VEC_ROTR] = "SPUISD::VEC_ROTR";
+    node_names[(unsigned) SPUISD::ROTBYTES_LEFT] = "SPUISD::ROTBYTES_LEFT";
+    node_names[(unsigned) SPUISD::ROTBYTES_LEFT_BITS] =
+            "SPUISD::ROTBYTES_LEFT_BITS";
     node_names[(unsigned) SPUISD::SELECT_MASK] = "SPUISD::SELECT_MASK";
     node_names[(unsigned) SPUISD::SELB] = "SPUISD::SELB";
     node_names[(unsigned) SPUISD::ADD64_MARKER] = "SPUISD::ADD64_MARKER";
@@ -1552,12 +1562,9 @@ static bool isConstantSplat(const uint64_t Bits128[2],
   return false;  // Can't be a splat if two pieces don't match.
 }
 
-// If this is a case we can't handle, return null and let the default
-// expansion code take care of it.  If we CAN select this case, and if it
-// selects to a single instruction, return Op.  Otherwise, if we can codegen
-// this case more efficiently than a constant pool load, lower it to the
-// sequence of ops that should be used.
-static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
+//! Lower a BUILD_VECTOR instruction creatively:
+SDValue
+SPU::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
   // If this is a vector of constants or undefs, get the bits.  A bit in
   // UndefBits is set if the corresponding element of the vector is an
@@ -1575,6 +1582,11 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
 
   switch (VT.getSimpleVT()) {
   default:
+    cerr << "CellSPU: Unhandled VT in LowerBUILD_VECTOR, VT = "
+         << VT.getMVTString()
+         << "\n";
+    abort();
+    /*NOTREACHED*/
   case MVT::v4f32: {
     uint32_t Value32 = SplatBits;
     assert(SplatSize == 4
@@ -2188,32 +2200,32 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc,
 
 //! Generate the carry-generate shuffle mask.
 SDValue SPU::getCarryGenerateShufMask(SelectionDAG &DAG) {
-SmallVector<SDValue, 16> ShufBytes;
+  SmallVector<SDValue, 16 > ShufBytes;
 
-// Create the shuffle mask for "rotating" the borrow up one register slot
-// once the borrow is generated.
-ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
-ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
-ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
-ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
+  // Create the shuffle mask for "rotating" the borrow up one register slot
+  // once the borrow is generated.
+  ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
+  ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
+  ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
+  ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
 
-return DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                   &ShufBytes[0], ShufBytes.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                     &ShufBytes[0], ShufBytes.size());
 }
 
 //! Generate the borrow-generate shuffle mask
 SDValue SPU::getBorrowGenerateShufMask(SelectionDAG &DAG) {
-SmallVector<SDValue, 16> ShufBytes;
+  SmallVector<SDValue, 16 > ShufBytes;
 
-// Create the shuffle mask for "rotating" the borrow up one register slot
-// once the borrow is generated.
-ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
-ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
-ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
-ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
+  // Create the shuffle mask for "rotating" the borrow up one register slot
+  // once the borrow is generated.
+  ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
+  ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
+  ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
+  ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
 
-return DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                   &ShufBytes[0], ShufBytes.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                     &ShufBytes[0], ShufBytes.size());
 }
 
 //! Lower byte immediate operations for v16i8 vectors:
@@ -2372,6 +2384,83 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
+//! Lower ISD::FABS
+/*!
+ DAGCombine does the same basic reduction: convert the double to i64 and mask
+ off the sign bit. Unfortunately, DAGCombine inserts the i64 constant, which
+ CellSPU has to legalize. Hence, the custom lowering.
+ */
+
+static SDValue LowerFABS(SDValue Op, SelectionDAG &DAG) {
+  MVT OpVT = Op.getValueType();
+  MVT IntVT(MVT::i64);
+  SDValue Op0 = Op.getOperand(0);
+
+  assert(OpVT == MVT::f64 && "LowerFABS: expecting MVT::f64!\n");
+
+  SDValue iABS =
+          DAG.getNode(ISD::AND, IntVT,
+                      DAG.getNode(ISD::BIT_CONVERT, IntVT, Op0),
+                      DAG.getConstant(~IntVT.getIntegerVTSignBit(), IntVT));
+
+  return DAG.getNode(ISD::BIT_CONVERT, MVT::f64, iABS);
+}
+
+//! Lower ISD::SETCC
+/*!
+ This handles MVT::f64 (double floating point) condition lowering
+ */
+
+static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
+                          const TargetLowering &TLI) {
+  SDValue lhs = Op.getOperand(0);
+  SDValue rhs = Op.getOperand(1);
+  CondCodeSDNode *CC = dyn_cast<CondCodeSDNode > (Op.getOperand(2));
+  MVT lhsVT = lhs.getValueType();
+  SDValue posNaN = DAG.getConstant(0x7ff0000000000001ULL, MVT::i64);
+
+  assert(CC != 0 && "LowerSETCC: CondCodeSDNode should not be null here!\n");
+  assert(lhsVT == MVT::f64 && "LowerSETCC: type other than MVT::64\n");
+
+  switch (CC->get()) {
+  case ISD::SETOEQ:
+  case ISD::SETOGT:
+  case ISD::SETOGE:
+  case ISD::SETOLT:
+  case ISD::SETOLE:
+  case ISD::SETONE:
+    cerr << "CellSPU ISel Select: unimplemented f64 condition\n";
+    abort();
+    break;
+  case ISD::SETO: {
+    SDValue lhsfabs = DAG.getNode(ISD::FABS, MVT::f64, lhs);
+    SDValue i64lhs =
+            DAG.getNode(ISD::BIT_CONVERT, MVT::i64, lhsfabs);
+
+    return DAG.getSetCC(MVT::i32, i64lhs, posNaN, ISD::SETLT);
+  }
+  case ISD::SETUO: {
+    SDValue lhsfabs = DAG.getNode(ISD::FABS, MVT::f64, lhs);
+    SDValue i64lhs =
+            DAG.getNode(ISD::BIT_CONVERT, MVT::i64, lhsfabs);
+
+    return DAG.getSetCC(MVT::i32, i64lhs, posNaN, ISD::SETGE);
+  }
+  case ISD::SETUEQ:
+  case ISD::SETUGT:
+  case ISD::SETUGE:
+  case ISD::SETULT:
+  case ISD::SETULE:
+  case ISD::SETUNE:
+  default:
+    cerr << "CellSPU ISel Select: unimplemented f64 condition\n";
+    abort();
+    break;
+  }
+
+  return SDValue();
+}
+
 //! Lower ISD::SELECT_CC
 /*!
   ISD::SELECT_CC can (generally) be implemented directly on the SPU using the
@@ -2501,9 +2590,12 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     break;
   }
 
+  case ISD::FABS:
+    return LowerFABS(Op, DAG);
+
   // Vector-related lowering.
   case ISD::BUILD_VECTOR:
-    return LowerBUILD_VECTOR(Op, DAG);
+    return SPU::LowerBUILD_VECTOR(Op, DAG);
   case ISD::SCALAR_TO_VECTOR:
     return LowerSCALAR_TO_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:
@@ -2529,6 +2621,9 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
 
   case ISD::SELECT_CC:
     return LowerSELECT_CC(Op, DAG, *this);
+
+  case ISD::SETCC:
+    return LowerSETCC(Op, DAG, *this);
 
   case ISD::TRUNCATE:
     return LowerTRUNCATE(Op, DAG);
@@ -2656,8 +2751,8 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   }
   case SPUISD::IndirectAddr: {
     if (!ST->usingLargeMem() && Op0.getOpcode() == SPUISD::AFormAddr) {
-      ConstantSDNode *CN = cast<ConstantSDNode>(N->getOperand(1));
-      if (CN->getZExtValue() == 0) {
+      ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1));
+      if (CN != 0 && CN->getZExtValue() == 0) {
         // (SPUindirect (SPUaform <addr>, 0), 0) ->
         // (SPUaform <addr>, 0)
 
@@ -2736,7 +2831,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
     break;
   }
   }
-  
+
   // Otherwise, return unchanged.
 #ifndef NDEBUG
   if (Result.getNode()) {
@@ -2809,41 +2904,18 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
                                                   unsigned Depth ) const {
 #if 0
   const uint64_t uint64_sizebits = sizeof(uint64_t) * 8;
-#endif
 
   switch (Op.getOpcode()) {
   default:
     // KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);
     break;
-
-#if 0
   case CALL:
   case SHUFB:
   case SHUFFLE_MASK:
   case CNTB:
-#endif
-
-  case SPUISD::PREFSLOT2VEC: {
-    SDValue Op0 = Op.getOperand(0);
-    MVT Op0VT = Op0.getValueType();
-    unsigned Op0VTBits = Op0VT.getSizeInBits();
-    uint64_t InMask = Op0VT.getIntegerVTBitMask();
-    KnownZero |= APInt(Op0VTBits, ~InMask, false);
-    KnownOne |= APInt(Op0VTBits, InMask, false);
-    break;
-  }
-
+  case SPUISD::PREFSLOT2VEC:
   case SPUISD::LDRESULT:
-  case SPUISD::VEC2PREFSLOT: {
-    MVT OpVT = Op.getValueType();
-    unsigned OpVTBits = OpVT.getSizeInBits();
-    uint64_t InMask = OpVT.getIntegerVTBitMask();
-    KnownZero |= APInt(OpVTBits, ~InMask, false);
-    KnownOne |= APInt(OpVTBits, InMask, false);
-    break;
-  }
-
-#if 0
+  case SPUISD::VEC2PREFSLOT:
   case SPUISD::SHLQUAD_L_BITS:
   case SPUISD::SHLQUAD_L_BYTES:
   case SPUISD::VEC_SHL:
@@ -2854,8 +2926,8 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   case SPUISD::ROTBYTES_LEFT:
   case SPUISD::SELECT_MASK:
   case SPUISD::SELB:
-#endif
   }
+#endif
 }
 
 unsigned

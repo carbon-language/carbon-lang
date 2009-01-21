@@ -8,7 +8,7 @@ Department in The Aerospace Corporation:
 - Mark Thomas (floating point instructions)
 - Michael AuYeung (intrinsics)
 - Chandler Carruth (LLVM expertise)
-- Nehal Desai (debugging, RoadRunner SPU expertise)
+- Nehal Desai (debugging, i32 operations, RoadRunner SPU expertise)
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -36,7 +36,7 @@ to add 'spu' to configure's --enable-targets option, e.g.:
 
 TODO:
 * Create a machine pass for performing dual-pipeline scheduling specifically
-  for CellSPU, handle inserting branch prediction instructions.
+  for CellSPU, and insert branch prediction instructions as needed.
 
 * i32 instructions:
 
@@ -48,20 +48,43 @@ TODO:
   * sign and zero extension: done
   * addition: done
   * subtraction: needed
-  * multiplication: work-in-progress
+  * multiplication: done
 
 * i128 support:
 
-  * zero extension: done
+  * zero extension, any extension: done
   * sign extension: needed
   * arithmetic operators (add, sub, mul, div): needed
+  * logical operations (and, or, shl, srl, sra, xor, nor, nand): needed
 
-* Double floating point support
+    * or: done
 
-  This was started. "What's missing?" to be filled in.
+* f64 support
+
+  * Comparison operators:
+    SETOEQ              unimplemented
+    SETOGT              unimplemented
+    SETOGE              unimplemented
+    SETOLT              unimplemented
+    SETOLE              unimplemented
+    SETONE              unimplemented
+    SETO                done (lowered)
+    SETUO               done (lowered)
+    SETUEQ              unimplemented
+    SETUGT              unimplemented
+    SETUGE              unimplemented
+    SETULT              unimplemented
+    SETULE              unimplemented
+    SETUNE              unimplemented
+
+* LLVM vector suport
+
+  * VSETCC needs to be implemented. It's pretty straightforward to code, but
+    needs implementation.
 
 * Intrinsics
 
-  Lots of progress. "What's missing/incomplete?" to be filled in.
+  * spu.h instrinsics added but not tested. Need to have an operational
+    llvm-spu-gcc in order to write a unit test harness.
 
 ===-------------------------------------------------------------------------===
