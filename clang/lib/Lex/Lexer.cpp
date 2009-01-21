@@ -556,11 +556,11 @@ FinishIdentifier:
     
     // Fill in Result.IdentifierInfo, looking up the identifier in the
     // identifier table.
-    PP->LookUpIdentifierInfo(Result, IdStart);
+    IdentifierInfo *II = PP->LookUpIdentifierInfo(Result, IdStart);
     
     // Finally, now that we know we have an identifier, pass this off to the
     // preprocessor, which may macro expand it or something.
-    if (Result.getIdentifierInfo()->isHandleIdentifierCase())
+    if (II->isHandleIdentifierCase())
       PP->HandleIdentifier(Result);
     return;
   }
