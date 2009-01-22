@@ -560,10 +560,8 @@ ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
 # in the file so they get built before dependencies
 #---------------------------------------------------------
 
-$(PROJ_bindir): $(PROJ_bindir)/.dir
-$(PROJ_libdir): $(PROJ_libdir)/.dir
-$(PROJ_includedir): $(PROJ_includedir)/.dir
-$(PROJ_etcdir): $(PROJ_etcdir)/.dir
+$(PROJ_bindir) $(PROJ_libdir) $(PROJ_includedir) $(PROJ_etcdir):
+	$(Verb) $(MKDIR) $@
 
 # To create other directories, as needed, and timestamp their creation
 %/.dir:
@@ -863,7 +861,7 @@ DestSharedLib = $(PROJ_libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
 
 install-local:: $(DestSharedLib)
 
-$(DestSharedLib): $(PROJ_libdir) $(LibName.LA)
+$(DestSharedLib): $(LibName.LA) | $(PROJ_libdir)
 	$(Echo) Installing $(BuildMode) Shared Library $(DestSharedLib)
 	$(Verb) $(LTInstall) $(LibName.LA) $(DestSharedLib)
 	$(Verb) $(LIBTOOL) --finish $(PROJ_libdir)
@@ -930,7 +928,7 @@ uninstall-local::
 else
 install-local:: $(DestBytecodeLib)
 
-$(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA)
+$(DestBytecodeLib): $(LibName.BCA) | $(BytecodeDestDir)
 	$(Echo) Installing $(BuildMode) Bytecode Archive $(DestBytecodeLib)
 	$(Verb) $(DataInstall) $(LibName.BCA) $(DestBytecodeLib)
 
@@ -977,7 +975,7 @@ DestRelinkedLib = $(PROJ_libdir)/$(LIBRARYNAME).o
 
 install-local:: $(DestRelinkedLib)
 
-$(DestRelinkedLib): $(PROJ_libdir) $(LibName.O)
+$(DestRelinkedLib): $(LibName.O) | $(PROJ_libdir)
 	$(Echo) Installing $(BuildMode) Object Library $(DestRelinkedLib)
 	$(Verb) $(LTInstall) $(LibName.O) $(DestRelinkedLib)
 
@@ -1017,7 +1015,7 @@ DestArchiveLib := $(PROJ_libdir)/lib$(LIBRARYNAME).a
 
 install-local:: $(DestArchiveLib)
 
-$(DestArchiveLib): $(PROJ_libdir) $(LibName.A)
+$(DestArchiveLib): $(LibName.A) | $(PROJ_libdir)
 	$(Echo) Installing $(BuildMode) Archive Library $(DestArchiveLib)
 	$(Verb) $(MKDIR) $(PROJ_libdir)
 	$(Verb) $(LTInstall) $(LibName.A) $(DestArchiveLib)
@@ -1079,7 +1077,7 @@ DestTool = $(PROJ_bindir)/$(TOOLNAME)
 
 install-local:: $(DestTool)
 
-$(DestTool): $(PROJ_bindir) $(ToolBuildPath)
+$(DestTool): $(ToolBuildPath) | $(PROJ_bindir)
 	$(Echo) Installing $(BuildMode) $(DestTool)
 	$(Verb) $(ProgInstall) $(ToolBuildPath) $(DestTool)
 
