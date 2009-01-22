@@ -259,8 +259,9 @@ protected:
                           uint64_t Imm);
 
   /// FastEmitInst_extractsubreg - Emit a MachineInstr for an extract_subreg
-  /// from a specified index of a superregister.
-  unsigned FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx);
+  /// from a specified index of a superregister to a specified type.
+  unsigned FastEmitInst_extractsubreg(MVT::SimpleValueType RetVT,
+                                      unsigned Op0, uint32_t Idx);
 
   /// FastEmitBranch - Emit an unconditional branch to the given block,
   /// unless it is the immediate (fall-through) successor, and update

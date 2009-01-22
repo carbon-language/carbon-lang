@@ -440,7 +440,8 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
                 Operands.PrintArguments(OS, *Memo.PhysRegs);
                 OS << ");\n";
               } else {
-                OS << "extractsubreg(Op0, ";
+                OS << "extractsubreg(" << getName(RetVT);
+                OS << ", Op0, ";
                 OS << (unsigned)Memo.SubRegNo;
                 OS << ");\n";
               }
@@ -534,7 +535,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
               Operands.PrintArguments(OS, *Memo.PhysRegs);
               OS << ");\n";
             } else {
-              OS << "extractsubreg(Op0, ";
+              OS << "extractsubreg(RetVT, Op0, ";
               OS << (unsigned)Memo.SubRegNo;
               OS << ");\n";
             }

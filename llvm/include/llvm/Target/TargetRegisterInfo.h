@@ -60,8 +60,6 @@ private:
   const vt_iterator VTs;
   const sc_iterator SubClasses;
   const sc_iterator SuperClasses;
-  const sc_iterator SubRegClasses;
-  const sc_iterator SuperRegClasses;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const int CopyCost;
   const iterator RegsBegin, RegsEnd;
@@ -70,12 +68,9 @@ public:
                       const MVT *vts,
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
-                      const TargetRegisterClass * const *subregcs,
-                      const TargetRegisterClass * const *superregcs,
                       unsigned RS, unsigned Al, int CC,
                       iterator RB, iterator RE)
     : ID(id), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
-    SubRegClasses(subregcs), SuperRegClasses(superregcs),
     RegSize(RS), Alignment(Al), CopyCost(CC), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
   
@@ -166,30 +161,6 @@ public:
   
   sc_iterator superclasses_end() const {
     sc_iterator I = SuperClasses;
-    while (*I != NULL) ++I;
-    return I;
-  }
-  
-  /// subregclasses_begin / subregclasses_end - Loop over all of
-  /// the subregister classes of this register class.
-  sc_iterator subregclasses_begin() const {
-    return SubRegClasses;
-  }
-  
-  sc_iterator subregclasses_end() const {
-    sc_iterator I = SubRegClasses;
-    while (*I != NULL) ++I;
-    return I;
-  }
-  
-  /// superregclasses_begin / superregclasses_end - Loop over all of
-  /// the superregister classes of this register class.
-  sc_iterator superregclasses_begin() const {
-    return SuperRegClasses;
-  }
-  
-  sc_iterator superregclasses_end() const {
-    sc_iterator I = SuperRegClasses;
     while (*I != NULL) ++I;
     return I;
   }

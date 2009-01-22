@@ -1011,7 +1011,8 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
   BuildMI(MBB, TII.get(CopyOpc), CopyReg).addReg(InputReg);
 
   // Then issue an extract_subreg.
-  unsigned ResultReg = FastEmitInst_extractsubreg(CopyReg, X86::SUBREG_8BIT);
+  unsigned ResultReg = FastEmitInst_extractsubreg(DstVT.getSimpleVT(),
+                                                  CopyReg, X86::SUBREG_8BIT);
   if (!ResultReg)
     return false;
 

@@ -943,11 +943,11 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx) {
+unsigned FastISel::FastEmitInst_extractsubreg(MVT::SimpleValueType RetVT,
+                                              unsigned Op0, uint32_t Idx) {
   const TargetRegisterClass* RC = MRI.getRegClass(Op0);
-  const TargetRegisterClass* SRC = *(RC->subregclasses_begin()+Idx-1);
   
-  unsigned ResultReg = createResultReg(SRC);
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(RetVT));
   const TargetInstrDesc &II = TII.get(TargetInstrInfo::EXTRACT_SUBREG);
   
   if (II.getNumDefs() >= 1)
