@@ -2759,15 +2759,15 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
   }
   // fold select C, 0, X -> ~C & X
   if (VT == VT0 && VT == MVT::i1 && N1C && N1C->isNullValue()) {
-    SDValue XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(1, VT));
-    AddToWorkList(XORNode.getNode());
-    return DAG.getNode(ISD::AND, VT, XORNode, N2);
+    SDValue NOTNode = DAG.getNOT(N0, VT);
+    AddToWorkList(NOTNode.getNode());
+    return DAG.getNode(ISD::AND, VT, NOTNode, N2);
   }
   // fold select C, X, 1 -> ~C | X
   if (VT == VT0 && VT == MVT::i1 && N2C && N2C->getAPIntValue() == 1) {
-    SDValue XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(1, VT));
-    AddToWorkList(XORNode.getNode());
-    return DAG.getNode(ISD::OR, VT, XORNode, N1);
+    SDValue NOTNode = DAG.getNOT(N0, VT);
+    AddToWorkList(NOTNode.getNode());
+    return DAG.getNode(ISD::OR, VT, NOTNode, N1);
   }
   // fold select C, X, 0 -> C & X
   // FIXME: this should check for C type == X type, not i1?
@@ -5574,8 +5574,7 @@ SDValue DAGCombiner::SimplifySelectCC(SDValue N0, SDValue N1,
     if (N1C && N1C->isNullValue() && CC == ISD::SETGT) { 
       SDValue NegN0 = DAG.getNode(ISD::SUB, XType, DAG.getConstant(0, XType),
                                     N0);
-      SDValue NotN0 = DAG.getNode(ISD::XOR, XType, N0, 
-                                    DAG.getConstant(~0ULL, XType));
+      SDValue NotN0 = DAG.getNOT(N0, XType);
       return DAG.getNode(ISD::SRL, XType, 
                          DAG.getNode(ISD::AND, XType, NegN0, NotN0),
                          DAG.getConstant(XType.getSizeInBits()-1,

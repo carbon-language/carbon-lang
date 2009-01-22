@@ -1798,39 +1798,39 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
   if (N0.getValueType() == MVT::i1 && foldBooleans) {
     switch (Cond) {
     default: assert(0 && "Unknown integer setcc!");
-    case ISD::SETEQ:  // X == Y  -> (X^Y)^1
+    case ISD::SETEQ:  // X == Y  -> ~(X^Y)
       Temp = DAG.getNode(ISD::XOR, MVT::i1, N0, N1);
-      N0 = DAG.getNode(ISD::XOR, MVT::i1, Temp, DAG.getConstant(1, MVT::i1));
+      N0 = DAG.getNOT(Temp, MVT::i1);
       if (!DCI.isCalledByLegalizer())
         DCI.AddToWorklist(Temp.getNode());
       break;
     case ISD::SETNE:  // X != Y   -->  (X^Y)
       N0 = DAG.getNode(ISD::XOR, MVT::i1, N0, N1);
       break;
-    case ISD::SETGT:  // X >s Y   -->  X == 0 & Y == 1  -->  X^1 & Y
-    case ISD::SETULT: // X <u Y   -->  X == 0 & Y == 1  -->  X^1 & Y
-      Temp = DAG.getNode(ISD::XOR, MVT::i1, N0, DAG.getConstant(1, MVT::i1));
+    case ISD::SETGT:  // X >s Y   -->  X == 0 & Y == 1  -->  ~X & Y
+    case ISD::SETULT: // X <u Y   -->  X == 0 & Y == 1  -->  ~X & Y
+      Temp = DAG.getNOT(N0, MVT::i1);
       N0 = DAG.getNode(ISD::AND, MVT::i1, N1, Temp);
       if (!DCI.isCalledByLegalizer())
         DCI.AddToWorklist(Temp.getNode());
       break;
-    case ISD::SETLT:  // X <s Y   --> X == 1 & Y == 0  -->  Y^1 & X
-    case ISD::SETUGT: // X >u Y   --> X == 1 & Y == 0  -->  Y^1 & X
-      Temp = DAG.getNode(ISD::XOR, MVT::i1, N1, DAG.getConstant(1, MVT::i1));
+    case ISD::SETLT:  // X <s Y   --> X == 1 & Y == 0  -->  ~Y & X
+    case ISD::SETUGT: // X >u Y   --> X == 1 & Y == 0  -->  ~Y & X
+      Temp = DAG.getNOT(N1, MVT::i1);
       N0 = DAG.getNode(ISD::AND, MVT::i1, N0, Temp);
       if (!DCI.isCalledByLegalizer())
         DCI.AddToWorklist(Temp.getNode());
       break;
-    case ISD::SETULE: // X <=u Y  --> X == 0 | Y == 1  -->  X^1 | Y
-    case ISD::SETGE:  // X >=s Y  --> X == 0 | Y == 1  -->  X^1 | Y
-      Temp = DAG.getNode(ISD::XOR, MVT::i1, N0, DAG.getConstant(1, MVT::i1));
+    case ISD::SETULE: // X <=u Y  --> X == 0 | Y == 1  -->  ~X | Y
+    case ISD::SETGE:  // X >=s Y  --> X == 0 | Y == 1  -->  ~X | Y
+      Temp = DAG.getNOT(N0, MVT::i1);
       N0 = DAG.getNode(ISD::OR, MVT::i1, N1, Temp);
       if (!DCI.isCalledByLegalizer())
         DCI.AddToWorklist(Temp.getNode());
       break;
-    case ISD::SETUGE: // X >=u Y  --> X == 1 | Y == 0  -->  Y^1 | X
-    case ISD::SETLE:  // X <=s Y  --> X == 1 | Y == 0  -->  Y^1 | X
-      Temp = DAG.getNode(ISD::XOR, MVT::i1, N1, DAG.getConstant(1, MVT::i1));
+    case ISD::SETUGE: // X >=u Y  --> X == 1 | Y == 0  -->  ~Y | X
+    case ISD::SETLE:  // X <=s Y  --> X == 1 | Y == 0  -->  ~Y | X
+      Temp = DAG.getNOT(N1, MVT::i1);
       N0 = DAG.getNode(ISD::OR, MVT::i1, N0, Temp);
       break;
     }

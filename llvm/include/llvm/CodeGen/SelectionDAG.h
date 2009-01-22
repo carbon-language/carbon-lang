@@ -366,6 +366,9 @@ public:
   /// value assuming it was the smaller SrcTy value.
   SDValue getZeroExtendInReg(SDValue Op, MVT SrcTy);
   
+  /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
+  SDValue getNOT(SDValue Val, MVT VT);
+
   /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have
   /// a flag result (to ensure it's not CSE'd).
   SDValue getCALLSEQ_START(SDValue Chain, SDValue Op) {

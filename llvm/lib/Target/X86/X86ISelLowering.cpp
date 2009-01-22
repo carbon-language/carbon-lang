@@ -5253,14 +5253,9 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
   SDValue Result = DAG.getNode(Opc, VT, Op0, Op1);
 
   // If the logical-not of the result is required, perform that now.
-  if (Invert) {
-    MVT EltVT = VT.getVectorElementType();
-    SDValue NegOne = DAG.getConstant(EltVT.getIntegerVTBitMask(), EltVT);
-    std::vector<SDValue> NegOnes(VT.getVectorNumElements(), NegOne);
-    SDValue NegOneV = DAG.getNode(ISD::BUILD_VECTOR, VT, &NegOnes[0],
-                                    NegOnes.size());
-    Result = DAG.getNode(ISD::XOR, VT, Result, NegOneV);
-  }
+  if (Invert)
+    Result = DAG.getNOT(Result, VT);
+
   return Result;
 }
 
