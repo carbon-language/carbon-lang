@@ -92,6 +92,11 @@ bool SymbolReaper::maybeDead(SymbolRef sym) {
 }
 
 bool SymbolReaper::isLive(SymbolRef sym) {
-  return TheLiving.contains(sym);
+  if (TheLiving.contains(sym))
+    return true;
+  
+  // Interogate the symbol.  It may derive from an input value to
+  // the analyzed function/method.
+  return isa<SymbolRegionRValue>(SymMgr.getSymbolData(sym));
 }
   
