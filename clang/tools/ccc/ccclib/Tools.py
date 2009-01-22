@@ -219,6 +219,58 @@ class Clang_CompileTool(Tool):
             # Add -WA, arguments when running as analyzer.
             for arg in arglist.getArgs(arglist.parser.WAOption):
                 cmd_args.extend(arglist.renderAsInput(arg))
+        else:
+            # Perform argument translation for LLVM backend. This
+            # performs some care in reconciling with llvm-gcc. The
+            # issue is that llvm-gcc translates these options based on
+            # the values in cc1, whereas we are processing based on
+            # the driver arguments.
+            #
+            # FIXME: This is currently broken for -f flags when -fno
+            # variants are present.
+
+            # This comes from the default translation the driver + cc1
+            # would do to enable flag_pic.
+            # 
+            # FIXME: Centralize this code.
+            picEnabled = (arglist.getLastArg(arglist.parser.f_PICOption) or
+                          arglist.getLastArg(arglist.parser.f_picOption) or
+                          arglist.getLastArg(arglist.parser.f_PIEOption) or
+                          arglist.getLastArg(arglist.parser.f_pieOption) or
+                          (not arglist.getLastArg(arglist.parser.m_kernelOption) and
+                          not arglist.getLastArg(arglist.parser.staticOption) and
+                          not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption)))
+
+            archName = arglist.getValue(arch)
+            if (archName == 'x86_64' or 
+                picEnabled):
+                cmd_args.append('--relocation-model=pic')
+            else:
+                cmd_args.append('--relocation-model=static')
+
+            if arglist.getLastArg(arglist.parser.f_timeReportOption):
+                cmd_args.append('--time-passes')
+            # FIXME: Set --enable-unsafe-fp-math.
+            if not arglist.getLastArg(arglist.parser.f_omitFramePointerOption):
+                cmd_args.append('--disable-fp-elim')
+            if not arglist.getLastArg(arglist.parser.f_zeroInitializedInBssOption):
+                cmd_args.append('--nozero-initialized-in-bss')
+            if arglist.getLastArg(arglist.parser.dAOption):
+                cmd_args.append('--asm-verbose')
+            if arglist.getLastArg(arglist.parser.f_debugPassStructureOption):
+                cmd_args.append('--debug-pass=Structure')
+            if arglist.getLastArg(arglist.parser.f_debugPassArgumentsOption):
+                cmd_args.append('--debug-pass=Arguments')
+            # FIXME: set --inline-threshhold=50 if (optimize_size || optimize < 3)
+            if arglist.getLastArg(arglist.parser.f_unwindTablesOption):
+                cmd_args.append('--unwind-tables')
+
+            arg = arglist.getLastArg(arglist.parser.f_limitedPrecisionOption)
+            if arg:
+                cmd_args.append('--limit-float-precision')
+                cmd_args.append(arglist.getValue(arg))
+            
+            # FIXME: Add --stack-protector-buffer-size=<xxx> on -fstack-protect.
 
         arglist.addAllArgs(cmd_args, arglist.parser.vOption)
         arglist.addAllArgs2(cmd_args, arglist.parser.DOption, arglist.parser.UOption)
@@ -937,7 +989,7 @@ class Darwin_X86_LinkTool(Tool):
 
         # FIXME: gcc has %{x} in here. How could this ever happen?
         # Cruft?
-        arglist.addLastArg(cmd_args, arglist.parser.dOption)
+        arglist.addLastArg(cmd_args, arglist.parser.dGroup)
         arglist.addLastArg(cmd_args, arglist.parser.tOption)
         arglist.addLastArg(cmd_args, arglist.parser.ZOption)
         arglist.addAllArgs(cmd_args, arglist.parser.uGroup)

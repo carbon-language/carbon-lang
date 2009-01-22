@@ -713,7 +713,9 @@ class OptionParser:
         # FIXME: What to do about the ambiguity of options like
         # -dumpspecs? How is this handled in gcc?
         # FIXME: Naming convention.
-        self.dOption = self.addOption(FlagOption('-d'))
+        self.dGroup = OptionGroup('-d')
+        self.dAOption = self.addOption(FlagOption('-dA', self.dGroup))
+        self.addOption(FlagOption('-d', self.dGroup))
 
         # Use a group for this in anticipation of adding more -d
         # options explicitly. Note that we don't put many -d things in
@@ -744,12 +746,15 @@ class OptionParser:
         self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext', self.fGroup))
         self.f_constantCfstringsOption = self.addOption(FlagOption('-fconstant-cfstrings', self.fGroup))
         self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile', self.fGroup))
+        self.f_debugPassArgumentsOption = self.addOption(FlagOption('-fdebug-pass-arguments', self.fGroup))
+        self.f_debugPassStructureOption = self.addOption(FlagOption('-fdebug-pass-structure', self.fGroup))
         self.f_eliminateUnusedDebugSymbolsOption = self.addOption(FlagOption('-feliminate-unused-debug-symbols', self.fGroup))
         self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions', self.fGroup))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.fGroup))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.fGroup))
         self.f_indirectVirtualCallsOption = self.addOption(FlagOption('-findirect-virtual-calls', self.fGroup))
         self.f_laxVectorConversionsOption = self.addOption(FlagOption('-flax-vector-conversions', self.fGroup))
+        self.f_limitedPrecisionOption = self.addOption(JoinedOption('-flimited-precision=', self.fGroup))
         self.f_msExtensionsOption = self.addOption(FlagOption('-fms-extensions', self.fGroup))
         self.f_mudflapOption = self.addOption(FlagOption('-fmudflap', self.fGroup))
         self.f_mudflapthOption = self.addOption(FlagOption('-fmudflapth', self.fGroup))
@@ -764,14 +769,21 @@ class OptionParser:
         self.f_objcGcOnlyOption = self.addOption(FlagOption('-fobjc-gc-only', self.fGroup))
         self.f_objcGcOption = self.addOption(FlagOption('-fobjc-gc', self.fGroup))
         self.f_objcOption = self.addOption(FlagOption('-fobjc', self.fGroup))
+        self.f_omitFramePointerOption = self.addOption(FlagOption('-fomit-frame-pointer', self.fGroup))
         self.f_openmpOption = self.addOption(FlagOption('-fopenmp', self.fGroup))
         self.f_pascalStringsOption = self.addOption(FlagOption('-fpascal-strings', self.fGroup))
         self.f_pieOption = self.addOption(FlagOption('-fpie', self.fGroup))
+        self.f_PIEOption = self.addOption(FlagOption('-fPIE', self.fGroup))
+        self.f_picOption = self.addOption(FlagOption('-fpic', self.fGroup))
+        self.f_PICOption = self.addOption(FlagOption('-fPIC', self.fGroup))
         self.f_profileArcsOption = self.addOption(FlagOption('-fprofile-arcs', self.fGroup))
         self.f_profileGenerateOption = self.addOption(FlagOption('-fprofile-generate', self.fGroup))
         self.f_terminatedVtablesOption = self.addOption(FlagOption('-fterminated-vtables', self.fGroup))
+        self.f_timeReportOption = self.addOption(FlagOption('-ftime-report', self.fGroup))
         self.f_traditionalOption = self.addOption(FlagOption('-ftraditional', self.fGroup))
+        self.f_unwindTablesOption = self.addOption(FlagOption('-funwind-tables', self.fGroup))
         self.f_writableStringsOption = self.addOption(FlagOption('-fwritable-strings', self.fGroup))
+        self.f_zeroInitializedInBssOption = self.addOption(FlagOption('-fzero-initialized-in-bss', self.fGroup))
         self.addOption(JoinedOption('-f', self.fGroup))
 
         self.coverageOption = self.addOption(FlagOption('-coverage'))
