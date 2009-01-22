@@ -1,4 +1,6 @@
-// RUN: clang -analyze -checker-cfref --verify -fblocks %s
+// RUN: clang -analyze -checker-cfref --analyzer-store-basic --verify -fblocks %s &&
+// RUN: clang -analyze -checker-cfref --analyzer-store-region --verify -fblocks %s
+
 
 // Reduced test case from crash in <rdar://problem/6253157>
 @class NSObject;
@@ -41,20 +43,6 @@ void divzeroassumeB(unsigned x, unsigned j) {
   if (j == 0) x /= 0;     // no-warning
   if (j == 0) x /= j;     // no-warning
   if (j == 0) x = x / 0;  // no-warning
-}
-
-// PR 2948 (testcase; crash on VisitLValue for union types)
-// http://llvm.org/bugs/show_bug.cgi?id=2948
-
-void checkaccess_union() {
-  int ret = 0, status;
-  if (((((__extension__ (((union {
-    __typeof (status) __in; int __i;}
-    )
-    {
-      .__in = (status)}
-      ).__i))) & 0xff00) >> 8) == 1)
-        ret = 1;
 }
 
 // InitListExpr processing
