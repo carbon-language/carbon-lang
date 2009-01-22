@@ -65,6 +65,25 @@ public:
   /// SuperPtrTy - LLVM type for struct objc_super *.
   const llvm::Type *SuperPtrTy;
   
+  llvm::Function *GetPropertyFn, *SetPropertyFn;
+  
+  llvm::Function *EnumerationMutationFn;
+  
+  /// GcReadWeakFn -- LLVM objc_read_weak (id *src) function.
+  llvm::Function *GcReadWeakFn;
+  
+  /// GcAssignWeakFn -- LLVM objc_assign_weak function.
+  llvm::Function *GcAssignWeakFn;
+  
+  /// GcAssignGlobalFn -- LLVM objc_assign_global function.
+  llvm::Function *GcAssignGlobalFn;
+  
+  /// GcAssignIvarFn -- LLVM objc_assign_ivar function.
+  llvm::Function *GcAssignIvarFn;
+  
+  /// GcAssignStrongCastFn -- LLVM objc_assign_strongCast function.
+  llvm::Function *GcAssignStrongCastFn;
+    
   ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCCommonTypesHelper(){}
 };
@@ -143,9 +162,6 @@ public:
   const llvm::Type *MethodListTy;
   /// MethodListPtrTy - LLVM type for struct objc_method_list *.
   const llvm::Type *MethodListPtrTy;
-
-  llvm::Function *GetPropertyFn, *SetPropertyFn;
-  llvm::Function *EnumerationMutationFn;
   
   /// ExceptionDataTy - LLVM type for struct _objc_exception_data.
   const llvm::Type *ExceptionDataTy;
@@ -173,21 +189,6 @@ public:
   
   /// SyncExitFn - LLVM object_sync_exit function.
   llvm::Function *SyncExitFn;
-  
-  /// GcReadWeakFn -- LLVM objc_read_weak (id *src) function.
-  llvm::Function *GcReadWeakFn;
-  
-  /// GcAssignWeakFn -- LLVM objc_assign_weak function.
-  llvm::Function *GcAssignWeakFn;
-  
-  /// GcAssignGlobalFn -- LLVM objc_assign_global function.
-  llvm::Function *GcAssignGlobalFn;
-  
-  /// GcAssignIvarFn -- LLVM objc_assign_ivar function.
-  llvm::Function *GcAssignIvarFn;
-  
-  /// GcAssignStrongCastFn -- LLVM objc_assign_strongCast function.
-  llvm::Function *GcAssignStrongCastFn;
   
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
@@ -2309,15 +2310,83 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   SuperPtrCTy = Ctx.getPointerType(SuperCTy);
   
   SuperTy = cast<llvm::StructType>(Types.ConvertType(SuperCTy));
-  SuperPtrTy = llvm::PointerType::getUnqual(SuperTy);  
+  SuperPtrTy = llvm::PointerType::getUnqual(SuperTy); 
+  
+  // Property manipulation functions.
+  
+  // id objc_getProperty (id, SEL, ptrdiff_t, bool)
+  std::vector<const llvm::Type*> Params;
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(SelectorPtrTy);
+  Params.push_back(LongTy);
+  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
+  GetPropertyFn =
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                    Params,
+                                                    false),
+                            "objc_getProperty");
+  
+  // void objc_setProperty (id, SEL, ptrdiff_t, id, bool, bool)
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(SelectorPtrTy);
+  Params.push_back(LongTy);
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
+  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
+  SetPropertyFn =
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                    Params,
+                                                    false),
+                            "objc_setProperty");
+  // Enumeration mutation.
+  
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  EnumerationMutationFn = 
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                    Params,
+                                                    false),
+                            "objc_enumerationMutation");
+  
+  // gc's API
+  // id objc_read_weak (id *)
+  Params.clear();
+  Params.push_back(PtrObjectPtrTy);
+  GcReadWeakFn =
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                    Params,
+                                                    false),
+                            "objc_read_weak");
+  // id objc_assign_weak (id, id *)                                      
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(PtrObjectPtrTy);
+  GcAssignWeakFn = 
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                    Params,
+                                                    false),
+                            "objc_assign_weak");
+  GcAssignGlobalFn =
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                    Params,
+                                                    false),
+                            "objc_assign_global");
+  GcAssignIvarFn =
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                    Params,
+                                                    false),
+                            "objc_assign_ivar");
+  GcAssignStrongCastFn =
+  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                    Params,
+                                                    false),
+                            "objc_assign_strongCast");
 }
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
   : ObjCCommonTypesHelper(cgm)
 {
-  CodeGen::CodeGenTypes &Types = CGM.getTypes();
-  ASTContext &Ctx = CGM.getContext();
-  
   // struct _objc_method_description {
   //   SEL name;
   //   char *types;
@@ -2544,6 +2613,12 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_symtab", SymtabTy);
   SymtabPtrTy = llvm::PointerType::getUnqual(SymtabTy);
 
+  // struct _objc_module {
+  //   long version;
+  //   long size;   // sizeof(struct _objc_module)
+  //   char *name;
+  //   struct _objc_symtab* symtab;
+  //  }
   ModuleTy = 
     llvm::StructType::get(LongTy,
                           LongTy,
@@ -2554,6 +2629,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 
   // Message send functions.
 
+  // id objc_msgSend (id, SEL, ...)
   std::vector<const llvm::Type*> Params;
   Params.push_back(ObjectPtrTy);
   Params.push_back(SelectorPtrTy);
@@ -2563,8 +2639,8 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       true),
                               "objc_msgSend");
   
+  // id objc_msgSend_stret (id, SEL, ...)
   Params.clear();
-  Params.push_back(Int8PtrTy);
   Params.push_back(ObjectPtrTy);
   Params.push_back(SelectorPtrTy);
   MessageSendStretFn = 
@@ -2573,16 +2649,19 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       true),
                               "objc_msgSend_stret");
 
+  // 
   Params.clear();
   Params.push_back(ObjectPtrTy);
   Params.push_back(SelectorPtrTy);
   // FIXME: This should be long double on x86_64?
+  // [double | long double] objc_msgSend_fpret(id self, SEL op, ...)
   MessageSendFpretFn = 
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::DoubleTy,
                                                       Params,
                                                       true),
                               "objc_msgSend_fpret");
   
+  // id objc_msgSendSuper(struct objc_super *super, SEL op, ...)
   Params.clear();
   Params.push_back(SuperPtrTy);
   Params.push_back(SelectorPtrTy);
@@ -2592,6 +2671,8 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       true),
                               "objc_msgSendSuper");
 
+  // void objc_msgSendSuper_stret(void * stretAddr, struct objc_super *super, 
+  //                              SEL op, ...)
   Params.clear();
   Params.push_back(Int8PtrTy);
   Params.push_back(SuperPtrTy);
@@ -2604,42 +2685,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 
   // There is no objc_msgSendSuper_fpret? How can that work?
   MessageSendSuperFpretFn = MessageSendSuperFn;
-  
-  // Property manipulation functions.
-
-  Params.clear();
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(SelectorPtrTy);
-  Params.push_back(LongTy);
-  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
-  GetPropertyFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      false),
-                              "objc_getProperty");
-  
-  Params.clear();
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(SelectorPtrTy);
-  Params.push_back(LongTy);
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
-  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
-  SetPropertyFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                      Params,
-                                                      false),
-                              "objc_setProperty");
-
-  // Enumeration mutation.
-
-  Params.clear();
-  Params.push_back(ObjectPtrTy);
-  EnumerationMutationFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                      Params,
-                                                      false),
-                              "objc_enumerationMutation");
   
   // FIXME: This is the size of the setjmp buffer and should be 
   // target specific. 18 is what's used on 32-bit X86.
@@ -2715,40 +2760,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       Params,
                                                       false),
                               "_setjmp");
-  
-  // gc's API
-  // id objc_read_weak (id *)
-  Params.clear();
-  Params.push_back(PtrObjectPtrTy);
-  GcReadWeakFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      false),
-                              "objc_read_weak");
-  // id objc_assign_weak (id, id *)                                      
-  Params.clear();
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(PtrObjectPtrTy);
-  GcAssignWeakFn = 
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                    Params,
-                                                    false),
-                           "objc_assign_weak");
-  GcAssignGlobalFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      false),
-                           "objc_assign_global");
-  GcAssignIvarFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      false),
-                           "objc_assign_ivar");
-  GcAssignStrongCastFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      false),
-                           "objc_assign_strongCast");
   
 }
 
