@@ -1673,3 +1673,13 @@ while it could get this:
 	sarl	$5, %eax
 
 //===---------------------------------------------------------------------===//
+
+GCC PR31029:
+
+int test(int x) { return 1-x == x; }     // --> return false
+int test2(int x) { return 2-x == x; }    // --> return x == 1 ?
+
+Always foldable for odd constants, what is the rule for even?
+
+//===---------------------------------------------------------------------===//
+
