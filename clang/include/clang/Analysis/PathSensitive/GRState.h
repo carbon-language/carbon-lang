@@ -310,7 +310,7 @@ public:
     ISetFactory(alloc),
     GDMFactory(alloc),
     BasicVals(Ctx, alloc),
-    SymMgr(alloc),
+    SymMgr(Ctx, alloc),
     Alloc(alloc),
     cfg(c),
     codedecl(cd),

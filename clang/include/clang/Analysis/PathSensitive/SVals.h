@@ -72,17 +72,9 @@ public:
     return !(*this == R);
   }
 
-  /// MakeSymbolValue - make a unique symbol value for the region R according to
-  /// its kind. R should be a scalar region. The symbol value T has the same
-  /// type as R's rvalue type.
-  static SVal MakeSymbolValue(SymbolManager& SymMgr, const MemRegion* R, 
-                              QualType T);
+  /// GetRValueSymbolVal - make a unique symbol for value of R.
+  static SVal GetRValueSymbolVal(SymbolManager& SymMgr, const MemRegion* R);
 
-  static SVal GetSymbolValue(SymbolManager& SymMgr, VarDecl *D);
-  static SVal getSymbolValue(SymbolManager& SymMgr, const MemRegion* R,
-                             const llvm::APSInt* Idx, QualType T);
-  static SVal getSymbolValue(SymbolManager& SymMgr, const MemRegion* R,
-                             const FieldDecl* FD, QualType T);
   
   inline bool isUnknown() const {
     return getRawKind() == UnknownKind;

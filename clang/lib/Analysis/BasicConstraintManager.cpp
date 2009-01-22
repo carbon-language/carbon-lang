@@ -204,13 +204,12 @@ BasicConstraintManager::AssumeAux(const GRState* St,NonLoc Cond,
   case nonloc::SymbolValKind: {
     nonloc::SymbolVal& SV = cast<nonloc::SymbolVal>(Cond);
     SymbolRef sym = SV.getSymbol();
-
+    QualType T =  SymMgr.getType(sym);
+    
     if (Assumption)
-      return AssumeSymNE(St, sym, BasicVals.getValue(0, SymMgr.getType(sym)),
-                         isFeasible);
+      return AssumeSymNE(St, sym, BasicVals.getValue(0, T), isFeasible);
     else
-      return AssumeSymEQ(St, sym, BasicVals.getValue(0, SymMgr.getType(sym)),
-                         isFeasible);
+      return AssumeSymEQ(St, sym, BasicVals.getValue(0, T), isFeasible);
   }
 
   case nonloc::SymIntConstraintValKind:

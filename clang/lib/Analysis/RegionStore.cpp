@@ -552,8 +552,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   // We treat function parameters as symbolic values.
   if (const VarRegion* VR = dyn_cast<VarRegion>(R))
     if (isa<ParmVarDecl>(VR->getDecl()))
-      return SVal::MakeSymbolValue(getSymbolManager(), VR,
-                                   VR->getRValueType(getContext()));
+      return SVal::GetRValueSymbolVal(getSymbolManager(), VR);
   
   if (MRMgr.onStack(R) || MRMgr.onHeap(R)) {
     // All stack variables are considered to have undefined values
@@ -564,8 +563,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   }
 
   // All other values are symbolic.
-  return SVal::MakeSymbolValue(getSymbolManager(), R, 
-			  cast<TypedRegion>(R)->getRValueType(getContext()));
+  return SVal::GetRValueSymbolVal(getSymbolManager(), R);
 
   // FIXME: consider default values for elements and fields.
 }
@@ -603,8 +601,7 @@ SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
       if (MRMgr.onStack(FR) || MRMgr.onHeap(FR))
         FieldValue = UndefinedVal();
       else
-        FieldValue = SVal::MakeSymbolValue(getSymbolManager(), FR,
-                                           FR->getRValueType(getContext()));
+        FieldValue = SVal::GetRValueSymbolVal(getSymbolManager(), FR);        
     }
 
     StructVal = getBasicVals().consVals(FieldValue, StructVal);

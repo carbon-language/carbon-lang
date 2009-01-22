@@ -454,12 +454,13 @@ Store BasicStoreManager::getInitialStore() {
       if (Loc::IsLocType(T) || T->isIntegerType()) {
         // Initialize globals and parameters to symbolic values.
         // Initialize local variables to undefined.
+        const MemRegion *R = StateMgr.getRegion(VD);
         SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
                   isa<ImplicitParamDecl>(VD))
-                 ? SVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
-                 : UndefinedVal();
+              ? SVal::GetRValueSymbolVal(StateMgr.getSymbolManager(), R)
+              : UndefinedVal();
 
-        St = BindInternal(St, Loc::MakeVal(MRMgr.getVarRegion(VD)), X);
+        St = BindInternal(St, Loc::MakeVal(R), X);
       }
     }
   }

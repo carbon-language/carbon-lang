@@ -22,99 +22,23 @@ void SymbolRef::print(llvm::raw_ostream& os) const {
   os << getNumber();
 }
 
-SymbolRef SymbolManager::getSymbol(const MemRegion* R) {
-  switch (R->getKind()) {
-  default:
-    assert(0 && "unprocessed region");
-  case MemRegion::VarRegionKind:
-    return getSymbol(cast<VarRegion>(R)->getDecl());
-  
-  case MemRegion::ElementRegionKind: {
-    const ElementRegion* ER = cast<ElementRegion>(R);
-    const llvm::APSInt& Idx = 
-      cast<nonloc::ConcreteInt>(ER->getIndex()).getValue();
-    return getElementSymbol(ER->getSuperRegion(), &Idx);
-  }
-
-  case MemRegion::FieldRegionKind: {
-    const FieldRegion* FR = cast<FieldRegion>(R);
-    return getFieldSymbol(FR->getSuperRegion(), FR->getDecl());
-  }
-  }
-}
-
-SymbolRef SymbolManager::getSymbol(const VarDecl* D) {
-
-  assert (isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D) || 
-          D->hasGlobalStorage());
-  
+SymbolRef SymbolManager::getRegionRValueSymbol(const MemRegion* R) {  
   llvm::FoldingSetNodeID profile;
-  
-  const ParmVarDecl* PD = dyn_cast<ParmVarDecl>(D);
-  
-  if (PD)
-    SymbolDataParmVar::Profile(profile, PD);
-  else
-    SymbolDataGlobalVar::Profile(profile, D);
-  
-  void* InsertPos;
-  
-  SymbolData* SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
 
-  if (SD)
-    return SD->getSymbol();
+  SymbolRegionRValue::Profile(profile, R);
+  void* InsertPos;  
+  SymbolData* SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);    
+  if (SD) return SD->getSymbol();
   
-  if (PD) {
-    SD = (SymbolData*) BPAlloc.Allocate<SymbolDataParmVar>();
-    new (SD) SymbolDataParmVar(SymbolCounter, PD);
-  }
-  else {
-    SD = (SymbolData*) BPAlloc.Allocate<SymbolDataGlobalVar>();
-    new (SD) SymbolDataGlobalVar(SymbolCounter, D);
-  }
-  
+  SD = (SymbolData*) BPAlloc.Allocate<SymbolRegionRValue>();
+  new (SD) SymbolRegionRValue(SymbolCounter, R);  
   DataSet.InsertNode(SD, InsertPos);
-  
-  DataMap[SymbolCounter] = SD;
+  DataMap[SymbolCounter] = SD;  
   return SymbolCounter++;
-}  
 
-SymbolRef SymbolManager::getElementSymbol(const MemRegion* R, 
-                                         const llvm::APSInt* Idx){
-  llvm::FoldingSetNodeID ID;
-  SymbolDataElement::Profile(ID, R, Idx);
-  void* InsertPos;
-  SymbolData* SD = DataSet.FindNodeOrInsertPos(ID, InsertPos);
-
-  if (SD)
-    return SD->getSymbol();
-
-  SD = (SymbolData*) BPAlloc.Allocate<SymbolDataElement>();
-  new (SD) SymbolDataElement(SymbolCounter, R, Idx);
-
-  DataSet.InsertNode(SD, InsertPos);
-  DataMap[SymbolCounter] = SD;
-  return SymbolCounter++;
 }
 
-SymbolRef SymbolManager::getFieldSymbol(const MemRegion* R, const FieldDecl* D) {
-  llvm::FoldingSetNodeID ID;
-  SymbolDataField::Profile(ID, R, D);
-  void* InsertPos;
-  SymbolData* SD = DataSet.FindNodeOrInsertPos(ID, InsertPos);
-
-  if (SD)
-    return SD->getSymbol();
-
-  SD = (SymbolData*) BPAlloc.Allocate<SymbolDataField>();
-  new (SD) SymbolDataField(SymbolCounter, R, D);
-
-  DataSet.InsertNode(SD, InsertPos);
-  DataMap[SymbolCounter] = SD;
-  return SymbolCounter++;
-}
-
-SymbolRef SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count) {
+SymbolRef SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count){
   
   llvm::FoldingSetNodeID profile;
   SymbolConjured::Profile(profile, E, T, Count);
@@ -141,20 +65,15 @@ const SymbolData& SymbolManager::getSymbolData(SymbolRef Sym) const {
 }
 
 
-QualType SymbolData::getType(const SymbolManager& SymMgr) const {
-  switch (getKind()) {
-    default:
-      assert (false && "getType() not implemented for this symbol.");
-      
-    case ParmKind:
-      return cast<SymbolDataParmVar>(this)->getDecl()->getType();
+QualType SymbolConjured::getType(ASTContext&) const {
+  return T;
+}
 
-    case GlobalKind:
-      return cast<SymbolDataGlobalVar>(this)->getDecl()->getType();
-
-    case ConjuredKind:
-      return cast<SymbolConjured>(this)->getType();
-  }
+QualType SymbolRegionRValue::getType(ASTContext& C) const {
+  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
+    return TR->getRValueType(C);
+  
+  return QualType();
 }
 
 SymbolManager::~SymbolManager() {}
@@ -172,7 +91,7 @@ bool SymbolReaper::maybeDead(SymbolRef sym) {
   return true;
 }
 
-bool SymbolReaper::isLive(SymbolRef sym) {  
+bool SymbolReaper::isLive(SymbolRef sym) {
   return TheLiving.contains(sym);
 }
   

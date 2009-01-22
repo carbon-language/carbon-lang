@@ -286,38 +286,14 @@ NonLoc NonLoc::MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
   return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
 }
 
-SVal SVal::MakeSymbolValue(SymbolManager& SymMgr, const MemRegion* R, 
-                           QualType T) {
-  if (Loc::IsLocType(T))
-    return Loc::MakeVal(SymMgr.getSymbol(R));
-  else
-    return NonLoc::MakeVal(SymMgr.getSymbol(R));
-}
-
-SVal SVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
-
-  QualType T = D->getType();
+SVal SVal::GetRValueSymbolVal(SymbolManager& SymMgr, const MemRegion* R) {
+  SymbolRef sym = SymMgr.getRegionRValueSymbol(R);
+                                
+  if (const TypedRegion* TR = cast<TypedRegion>(R))
+    if (Loc::IsLocType(TR->getRValueType(SymMgr.getContext())))
+      return Loc::MakeVal(sym);
   
-  if (Loc::IsLocType(T))
-    return loc::SymbolVal(SymMgr.getSymbol(D));
-  
-  return nonloc::SymbolVal(SymMgr.getSymbol(D));
-}
-
-SVal SVal::getSymbolValue(SymbolManager& SymMgr, const MemRegion* R,
-                          const llvm::APSInt* Idx, QualType T) {
-  if (Loc::IsLocType(T))
-    return loc::SymbolVal(SymMgr.getElementSymbol(R, Idx));
-  else
-    return nonloc::SymbolVal(SymMgr.getElementSymbol(R, Idx));
-}
-
-SVal SVal::getSymbolValue(SymbolManager& SymMgr, const MemRegion* R,
-                          const FieldDecl* FD, QualType T) {
-  if (Loc::IsLocType(T))
-    return loc::SymbolVal(SymMgr.getFieldSymbol(R, FD));
-  else
-    return nonloc::SymbolVal(SymMgr.getFieldSymbol(R, FD));
+  return NonLoc::MakeVal(sym);
 }
 
 nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
