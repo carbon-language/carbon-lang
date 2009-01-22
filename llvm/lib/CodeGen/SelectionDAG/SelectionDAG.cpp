@@ -4380,7 +4380,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
   assert(From != To.getNode() && "Cannot replace uses of with self");
 
   // Iterate over all the existing uses of From. This specifically avoids
-  // visiting any new uses of From that arrise while the replacement is
+  // visiting any new uses of From that arise while the replacement is
   // happening, because any such uses would be the result of CSE: If an
   // existing node looks like From after one of its operands is replaced
   // by To, we don't want to replace of all its users with To too.
