@@ -180,6 +180,10 @@ public:
     return getInstruction() < CS.getInstruction();
   }
 
+  bool isCallee(Value::use_iterator UI) const {
+    return getInstruction()->op_begin() == &UI.getUse();
+  }
+
 private:
   /// Returns the operand number of the first argument
   unsigned getArgumentOffset() const {

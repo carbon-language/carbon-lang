@@ -135,7 +135,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
 
     // Ensure that this call site is CALLING the function, not passing it as
     // an argument.
-    if (UI.getOperandNo() != 0)
+    if (!CS.isCallee(UI))
       return false;
   }
 

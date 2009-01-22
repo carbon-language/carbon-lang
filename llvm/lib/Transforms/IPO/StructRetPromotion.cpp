@@ -149,14 +149,11 @@ bool SRETPromotion::isSafeToUpdateAllCallers(Function *F) {
        FnUseI != FnUseE; ++FnUseI) {
     // The function is passed in as an argument to (possibly) another function,
     // we can't change it!
-    if (FnUseI.getOperandNo() != 0)
-      return false;
-
     CallSite CS = CallSite::get(*FnUseI);
     Instruction *Call = CS.getInstruction();
     // The function is used by something else than a call or invoke instruction,
     // we can't change it!
-    if (!Call)
+    if (!Call || !CS.isCallee(FnUseI))
       return false;
     CallSite::arg_iterator AI = CS.arg_begin();
     Value *FirstArg = *AI;

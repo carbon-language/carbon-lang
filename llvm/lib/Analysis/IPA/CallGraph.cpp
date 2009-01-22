@@ -126,7 +126,8 @@ private:
 
     // Loop over all of the users of the function, looking for non-call uses.
     for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; ++I)
-      if ((!isa<CallInst>(*I) && !isa<InvokeInst>(*I)) || I.getOperandNo()) {
+      if ((!isa<CallInst>(I) && !isa<InvokeInst>(I))
+          || !CallSite(cast<Instruction>(I)).isCallee(I)) {
         // Not a call, or being used as a parameter rather than as the callee.
         ExternalCallingNode->addCalledFunction(CallSite(), Node);
         break;

@@ -88,11 +88,12 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
   for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E; ++UI) {
     // Used by a non-instruction, or not the callee of a function, do not
     // transform.
-    if (UI.getOperandNo() != 0 ||
-        (!isa<CallInst>(*UI) && !isa<InvokeInst>(*UI)))
+    if (!isa<CallInst>(*UI) && !isa<InvokeInst>(*UI))
       return false;
     
     CallSite CS = CallSite::get(cast<Instruction>(*UI));
+    if (!CS.isCallee(UI))
+      return false;
 
     // Check out all of the potentially constant arguments.  Note that we don't
     // inspect varargs here.
@@ -219,7 +220,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
 
     // Not a call instruction or a call instruction that's not calling F
     // directly?
-    if (!Call || UI.getOperandNo() != 0)
+    if (!Call || !CS.isCallee(UI))
       continue;
     
     // Call result not used?
