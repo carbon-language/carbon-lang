@@ -833,7 +833,7 @@ static std::string CreateTargetTriple() {
       Triple.resize(DarwinDashIdx + strlen("-darwin"));
 
       // Only add the major part of the os version.
-      std::string Version = llvm::sys::osVersion();
+      std::string Version = llvm::sys::getOSVersion();
       Triple += Version.substr(0, Version.find('.'));
     }
   }
