@@ -17,11 +17,11 @@
 
 using namespace llvm;
 
-std::string sys::osName() {
+std::string sys::getOSName() {
   return "Windows";
 }
 
-std::string sys::osVersion() {
+std::string sys::getOSVersion() {
   OSVERSIONINFO osvi;
 
   memset(&osvi, 0, sizeof(osvi));

@@ -19,7 +19,7 @@
 namespace llvm {
 namespace sys {
 
-  inline bool littleEndianHost() {
+  inline bool isLittleEndianHost() {
     union {
       int i;
       char c;
@@ -28,17 +28,17 @@ namespace sys {
     return c;
   }
 
-  inline bool bigEndianHost() {
-    return !littleEndianHost();
+  inline bool isBigEndianHost() {
+    return !isLittleEndianHost();
   }
 
-  /// osName() - Return the name of the host operating system or "" if
+  /// getOSName() - Return the name of the host operating system or "" if
   /// unknown.
-  std::string osName();
+  std::string getOSName();
 
-  /// osVersion() - Return the operating system version as a string or
+  /// getOSVersion() - Return the operating system version as a string or
   /// "" if unknown.
-  std::string osVersion();
+  std::string getOSVersion();
 }
 }
 

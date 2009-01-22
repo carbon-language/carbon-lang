@@ -692,7 +692,7 @@ static void StoreIntToMemory(const APInt &IntVal, uint8_t *Dst,
   assert((IntVal.getBitWidth()+7)/8 >= StoreBytes && "Integer too small!");
   uint8_t *Src = (uint8_t *)IntVal.getRawData();
 
-  if (sys::littleEndianHost())
+  if (sys::isLittleEndianHost())
     // Little-endian host - the source is ordered from LSB to MSB.  Order the
     // destination from LSB to MSB: Do a straight copy.
     memcpy(Dst, Src, StoreBytes);
@@ -751,7 +751,7 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
     cerr << "Cannot store value of type " << *Ty << "!\n";
   }
 
-  if (sys::littleEndianHost() != getTargetData()->isLittleEndian())
+  if (sys::isLittleEndianHost() != getTargetData()->isLittleEndian())
     // Host and target are different endian - reverse the stored bytes.
     std::reverse((uint8_t*)Ptr, StoreBytes + (uint8_t*)Ptr);
 }
@@ -762,7 +762,7 @@ static void LoadIntFromMemory(APInt &IntVal, uint8_t *Src, unsigned LoadBytes) {
   assert((IntVal.getBitWidth()+7)/8 >= LoadBytes && "Integer too small!");
   uint8_t *Dst = (uint8_t *)IntVal.getRawData();
 
-  if (sys::littleEndianHost())
+  if (sys::isLittleEndianHost())
     // Little-endian host - the destination must be ordered from LSB to MSB.
     // The source is ordered from LSB to MSB: Do a straight copy.
     memcpy(Dst, Src, LoadBytes);
@@ -789,7 +789,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
                                           const Type *Ty) {
   const unsigned LoadBytes = getTargetData()->getTypeStoreSize(Ty);
 
-  if (sys::littleEndianHost() != getTargetData()->isLittleEndian()) {
+  if (sys::isLittleEndianHost() != getTargetData()->isLittleEndian()) {
     // Host and target are different endian - reverse copy the stored
     // bytes into a buffer, and load from that.
     uint8_t *Src = (uint8_t*)Ptr;

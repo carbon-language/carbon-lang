@@ -23,7 +23,7 @@
 
 using namespace llvm;
 
-std::string llvm::sys::osName() {
+std::string llvm::sys::getOSName() {
   struct utsname info;
 
   if (uname(&info))
@@ -32,7 +32,7 @@ std::string llvm::sys::osName() {
   return info.sysname;
 }
 
-std::string llvm::sys::osVersion() {
+std::string llvm::sys::getOSVersion() {
   struct utsname info;
 
   if (uname(&info))
