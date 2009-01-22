@@ -58,7 +58,9 @@ template<> struct DenseMapInfo<unsigned> {
 template<> struct DenseMapInfo<unsigned long> {
   static inline unsigned long getEmptyKey() { return ~0L; }
   static inline unsigned long getTombstoneKey() { return ~0L - 1L; }
-  static unsigned getHashValue(const unsigned long& Val) { return Val * 37L; }
+  static unsigned getHashValue(const unsigned long& Val) {
+    return (unsigned)(Val * 37L);
+  }
   static bool isPod() { return true; }
   static bool isEqual(const unsigned long& LHS, const unsigned long& RHS) {
   return LHS == RHS;
