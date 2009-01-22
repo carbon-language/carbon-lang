@@ -344,10 +344,6 @@
 				Name="IPO"
 				>
 				<File
-					RelativePath="..\..\lib\Transforms\IPO\FunctionAttrs.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Ipo\ArgumentPromotion.cpp"
 					>
 				</File>
@@ -365,6 +361,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\IPO\ExtractGV.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\IPO\FunctionAttrs.cpp"
 					>
 				</File>
 				<File
@@ -607,10 +607,6 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Utils\CodeExtractor.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Utils\DbgInfoUtils.cpp"
 					>
 				</File>
 				<File

@@ -477,6 +477,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\ScheduleDAG.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\ScheduleDAGEmit.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\ShadowStackGC.cpp"
 				>
 			</File>
@@ -549,14 +557,6 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeVectorTypes.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAG.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGEmit.cpp"
 					>
 				</File>
 				<File
