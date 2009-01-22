@@ -20,8 +20,8 @@
 namespace llvm {
   class Record;
   class RecordVal;
-  class RecTy;
-  class Init;
+  struct RecTy;
+  struct Init;
   struct MultiClass;
   struct SubClassReference;
   
