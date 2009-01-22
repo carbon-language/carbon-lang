@@ -32,7 +32,10 @@ PROJ_headers := $(DESTDIR)$(PROJ_prefix)/Headers
 
 INSTHEADERS := $(addprefix $(PROJ_headers)/, $(HEADERS))
 
-$(INSTHEADERS): $(PROJ_headers)/%.h: $(HeaderDir)/%.h $(PROJ_headers)/.dir
+$(PROJ_headers):
+	$(Verb) $(MKDIR) $@
+
+$(INSTHEADERS): $(PROJ_headers)/%.h: $(HeaderDir)/%.h | $(PROJ_headers)
 	$(Verb) $(DataInstall) $< $(PROJ_headers)
 
 install-local:: $(INSTHEADERS)
