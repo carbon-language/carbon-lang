@@ -1,3 +1,5 @@
+include(FindPerl)
+
 macro(llvm_config executable)
   # extra args is the list of link components.
   if( MSVC )
@@ -10,16 +12,21 @@ endmacro(llvm_config)
 
 function(msvc_llvm_config executable)
   set( link_components ${ARGN} )
+  if( CMAKE_CL_64 )
+    set(include_lflag "/INCLUDE:")
+  else( CMAKE_CL_64 )
+    set(include_lflag "/INCLUDE:_")
+  endif()
   foreach(c ${link_components})
     if( c STREQUAL "jit" )
-      set(lfgs "${lfgs} /INCLUDE:_X86TargetMachineModule")
+      set(lfgs "${lfgs} ${include_lflag}X86TargetMachineModule")
     endif( c STREQUAL "jit" )
     list(FIND LLVM_TARGETS_TO_BUILD ${c} idx)
     if( NOT idx LESS 0 )
-      set(lfgs "${lfgs} /INCLUDE:_${c}TargetMachineModule")
+      set(lfgs "${lfgs} ${include_lflag}${c}TargetMachineModule")
       list(FIND LLVM_ASMPRINTERS_FORCE_LINK ${c} idx)
       if( NOT idx LESS 0 )
-	set(lfgs "${lfgs} /INCLUDE:_${c}AsmPrinterForceLink")
+	set(lfgs "${lfgs} ${include_lflag}${c}AsmPrinterForceLink")
       endif()
     endif()
   endforeach(c)
@@ -108,9 +115,9 @@ macro(nix_llvm_config executable)
       "`${LLVM_TOOLS_BINARY_DIR}/llvm-config --libs ${lc}`")
   else( NOT HAVE_LLVM_CONFIG )
     # tbi: Error handling.
-    if( NOT PERL_FOUND )
+    if( NOT PERL_EXECUTABLE )
       message(FATAL_ERROR "Perl required but not found!")
-    endif( NOT PERL_FOUND )
+    endif( NOT PERL_EXECUTABLE )
     execute_process(
       COMMAND sh -c "${PERL_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/llvm-config --libs ${lc}"
       RESULT_VARIABLE rv
