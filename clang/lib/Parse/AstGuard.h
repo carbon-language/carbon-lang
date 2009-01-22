@@ -26,6 +26,7 @@ namespace clang
   template <ASTDestroyer Destroyer, unsigned N>
   class ASTVector : public llvm::SmallVector<void*, N> {
   private:
+#if !defined(DISABLE_SMART_POINTERS)
     Action &Actions;
     bool Owns;
 
@@ -40,18 +41,27 @@ namespace clang
 
     ASTVector(const ASTVector&); // DO NOT IMPLEMENT
     // Reference member prevents copy assignment.
+#endif
 
   public:
+#if !defined(DISABLE_SMART_POINTERS)
     ASTVector(Action &actions) : Actions(actions), Owns(true) {}
 
     ~ASTVector() { destroy(); }
+#else
+    ASTVector(Action &) {}
+#endif
 
     void **take() {
+#if !defined(DISABLE_SMART_POINTERS)
       Owns = false;
+#endif
       return &(*this)[0];
     }
 
+#if !defined(DISABLE_SMART_POINTERS)
     Action &getActions() const { return Actions; }
+#endif
   };
 
   /// A SmallVector of statements, with stack size 32 (as that is the only one
@@ -62,7 +72,11 @@ namespace clang
 
   template <ASTDestroyer Destroyer, unsigned N> inline
   ASTMultiPtr<Destroyer> move_arg(ASTVector<Destroyer, N> &vec) {
+#if !defined(DISABLE_SMART_POINTERS)
     return ASTMultiPtr<Destroyer>(vec.getActions(), vec.take(), vec.size());
+#else
+    return ASTMultiPtr<Destroyer>(vec.take(), vec.size());
+#endif
   }
 }
 

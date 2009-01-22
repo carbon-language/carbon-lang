@@ -102,6 +102,9 @@
 // move_* functions, which help the compiler out with some explicit
 // conversions.
 
+// Flip this switch to measure performance impact of the smart pointers.
+//#define DISABLE_SMART_POINTERS
+
 namespace clang
 {
   // Basic
@@ -178,6 +181,7 @@ namespace clang
   /// the individual pointers, not the array holding them.
   template <ASTDestroyer Destroyer> class ASTMultiPtr;
 
+#if !defined(DISABLE_SMART_POINTERS)
   namespace moving {
     /// Move emulation helper for ASTOwningResult. NEVER EVER use this class
     /// directly if you don't know what you're doing.
@@ -221,13 +225,17 @@ namespace clang
       void release();
     };
   }
+#endif
 
   template <ASTDestroyer Destroyer>
   class ASTOwningPtr
   {
+#if !defined(DISABLE_SMART_POINTERS)
     ActionBase *Actions;
+#endif
     void *Node;
 
+#if !defined(DISABLE_SMART_POINTERS)
     friend class moving::ASTPtrMover<Destroyer>;
 
     ASTOwningPtr(ASTOwningPtr&); // DO NOT IMPLEMENT
@@ -239,8 +247,10 @@ namespace clang
         (Actions->*Destroyer)(Node);
       }
     }
+#endif
 
   public:
+#if !defined(DISABLE_SMART_POINTERS)
     explicit ASTOwningPtr(ActionBase &actions)
       : Actions(&actions), Node(0) {}
     ASTOwningPtr(ActionBase &actions, void *node)
@@ -257,21 +267,35 @@ namespace clang
     }
 
     /// Assignment from a raw pointer. Takes ownership - beware!
-    ASTOwningPtr & operator =(void *raw)
-    {
+    ASTOwningPtr & operator =(void *raw) {
       assert((Actions || !raw) && "Cannot assign non-null raw without Action");
       Node = raw;
       return *this;
     }
+#else // Different set if smart pointers are disabled
+    explicit ASTOwningPtr(ActionBase &) : Node(0) {}
+    ASTOwningPtr(ActionBase &, void *node) : Node(node) {}
+    // Normal copying operators are defined implicitly.
+    explicit ASTOwningPtr(void *ptr) : Node(ptr) {}
+
+    ASTOwningPtr & operator =(void *raw) {
+      Node = raw;
+      return *this;
+    }
+#endif
 
     /// Access to the raw pointer.
     void * get() const { return Node; }
 
     /// Release the raw pointer.
     void * take() {
+#if !defined(DISABLE_SMART_POINTERS)
       void *tmp = Node;
       Node = 0;
       return tmp;
+#else
+      return Node;
+#endif
     }
 
     /// Alias for interface familiarity with unique_ptr.
@@ -279,13 +303,12 @@ namespace clang
       return take();
     }
 
-    /// Get the Action associated with the node.
-    ActionBase* getActions() const { return Actions; }
-
+#if !defined(DISABLE_SMART_POINTERS)
     /// Move hook
     operator moving::ASTPtrMover<Destroyer>() {
       return moving::ASTPtrMover<Destroyer>(*this);
     }
+#endif
   };
 
   template <ASTDestroyer Destroyer>
@@ -294,10 +317,12 @@ namespace clang
     ASTOwningPtr<Destroyer> Ptr;
     bool Invalid;
 
+#if !defined(DISABLE_SMART_POINTERS)
     friend class moving::ASTResultMover<Destroyer>;
 
     ASTOwningResult(ASTOwningResult&); // DO NOT IMPLEMENT
     ASTOwningResult& operator =(ASTOwningResult&); // DO NOT IMPLEMENT
+#endif
 
   public:
     typedef ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID> DumbResult;
@@ -308,6 +333,7 @@ namespace clang
       : Ptr(actions, node), Invalid(false) {}
     ASTOwningResult(ActionBase &actions, const DumbResult &res)
       : Ptr(actions, res.Val), Invalid(res.isInvalid) {}
+#if !defined(DISABLE_SMART_POINTERS)
     /// Move from another owning result
     ASTOwningResult(moving::ASTResultMover<Destroyer> mover)
       : Ptr(moving::ASTPtrMover<Destroyer>(mover->Ptr)),
@@ -315,7 +341,13 @@ namespace clang
     /// Move from an owning pointer
     ASTOwningResult(moving::ASTPtrMover<Destroyer> mover)
       : Ptr(mover), Invalid(false) {}
+#else
+    // Normal copying semantics are defined implicitly.
+    // The fake movers need this:
+    explicit ASTOwningResult(void *ptr) : Ptr(ptr), Invalid(false) {}
+#endif
 
+#if !defined(DISABLE_SMART_POINTERS)
     /// Move assignment from another owning result
     ASTOwningResult & operator =(moving::ASTResultMover<Destroyer> mover) {
       Ptr = move(mover->Ptr);
@@ -329,6 +361,7 @@ namespace clang
       Invalid = false;
       return *this;
     }
+#endif
 
     /// Assignment from a raw pointer. Takes ownership - beware!
     ASTOwningResult & operator =(void *raw)
@@ -371,9 +404,7 @@ namespace clang
       return Ptr.take();
     }
 
-    /// Get the Action associated with the node.
-    ActionBase* getActions() const { return Ptr.getActions(); }
-
+#if !defined(DISABLE_SMART_POINTERS)
     /// Move hook
     operator moving::ASTResultMover<Destroyer>() {
       return moving::ASTResultMover<Destroyer>(*this);
@@ -383,15 +414,19 @@ namespace clang
     moving::ASTPtrMover<Destroyer> ptr_move() {
       return moving::ASTPtrMover<Destroyer>(Ptr);
     }
+#endif
   };
 
   template <ASTDestroyer Destroyer>
   class ASTMultiPtr
   {
+#if !defined(DISABLE_SMART_POINTERS)
     ActionBase &Actions;
+#endif
     void **Nodes;
     unsigned Count;
 
+#if !defined(DISABLE_SMART_POINTERS)
     friend class moving::ASTMultiMover<Destroyer>;
 
     ASTMultiPtr(ASTMultiPtr&); // DO NOT IMPLEMENT
@@ -404,8 +439,10 @@ namespace clang
           (Actions.*Destroyer)(Nodes[i]);
       }
     }
+#endif
 
   public:
+#if !defined(DISABLE_SMART_POINTERS)
     explicit ASTMultiPtr(ActionBase &actions)
       : Actions(actions), Nodes(0), Count(0) {}
     ASTMultiPtr(ActionBase &actions, void **nodes, unsigned count)
@@ -415,7 +452,16 @@ namespace clang
       : Actions(mover->Actions), Nodes(mover->Nodes), Count(mover->Count) {
       mover.release();
     }
+#else
+    // Normal copying implicitly defined
+    explicit ASTMultiPtr(ActionBase &) : Nodes(0), Count(0) {}
+    ASTMultiPtr(ActionBase &, void **nodes, unsigned count)
+      : Nodes(nodes), Count(count) {}
+    // Fake mover in Parse/AstGuard.h needs this:
+    ASTMultiPtr(void **nodes, unsigned count) : Nodes(nodes), Count(count) {}
+#endif
 
+#if !defined(DISABLE_SMART_POINTERS)
     /// Move assignment
     ASTMultiPtr & operator =(moving::ASTMultiMover<Destroyer> mover) {
       destroy();
@@ -424,6 +470,7 @@ namespace clang
       mover.release();
       return *this;
     }
+#endif
 
     /// Access to the raw pointers.
     void ** get() const { return Nodes; }
@@ -432,17 +479,25 @@ namespace clang
     unsigned size() const { return Count; }
 
     void ** release() {
+#if !defined(DISABLE_SMART_POINTERS)
       void **tmp = Nodes;
       Nodes = 0;
       Count = 0;
       return tmp;
+#else
+      return Nodes;
+#endif
     }
 
+#if !defined(DISABLE_SMART_POINTERS)
     /// Move hook
     operator moving::ASTMultiMover<Destroyer>() {
       return moving::ASTMultiMover<Destroyer>(*this);
     }
+#endif
   };
+
+#if !defined(DISABLE_SMART_POINTERS)
 
   // Out-of-line implementations due to definition dependencies
 
@@ -480,6 +535,36 @@ namespace clang
   ASTOwningResult<Destroyer> move_res(ASTOwningPtr<Destroyer> &ptr) {
     return ASTOwningResult<Destroyer>(moving::ASTPtrMover<Destroyer>(ptr));
   }
+
+#else
+
+  // These versions are hopefully no-ops.
+  template <ASTDestroyer Destroyer> inline
+  ASTOwningResult<Destroyer>& move(ASTOwningResult<Destroyer> &ptr) {
+    return ptr;
+  }
+
+  template <ASTDestroyer Destroyer> inline
+  ASTOwningPtr<Destroyer>& move(ASTOwningPtr<Destroyer> &ptr) {
+    return ptr;
+  }
+
+  template <ASTDestroyer Destroyer> inline
+  ASTMultiPtr<Destroyer>& move(ASTMultiPtr<Destroyer> &ptr) {
+    return ptr;
+  }
+
+  template <ASTDestroyer Destroyer> inline
+  ASTOwningPtr<Destroyer> move_arg(ASTOwningResult<Destroyer> &ptr) {
+    return ASTOwningPtr<Destroyer>(ptr.take());
+  }
+
+  template <ASTDestroyer Destroyer> inline
+  ASTOwningResult<Destroyer> move_res(ASTOwningPtr<Destroyer> &ptr) {
+    return ASTOwningResult<Destroyer>(ptr.get());
+  }
+
+#endif
 
 }
 
