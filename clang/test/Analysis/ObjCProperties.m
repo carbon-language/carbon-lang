@@ -1,4 +1,6 @@
-// RUN: clang -analyze -checker-simple %s -verify
+// RUN: clang -analyze -checker-simple %s -verify &&
+// RUN: clang -analyze -checker-cfref -analyzer-store-basic %s -verify &&
+// RUN: clang -analyze -checker-cfref -analyzer-store-region %s -verify
 
 // The point of this test cases is to exercise properties in the static
 // analyzer

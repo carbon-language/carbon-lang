@@ -110,13 +110,19 @@ class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   RegionViews::Factory RVFactory;
 
   GRStateManager& StateMgr;
+  const MemRegion* SelfRegion;
+  const ImplicitParamDecl *SelfDecl;
 
 public:
   RegionStoreManager(GRStateManager& mgr) 
     : StoreManager(mgr.getAllocator()),
       RBFactory(mgr.getAllocator()),
       RVFactory(mgr.getAllocator()),
-      StateMgr(mgr) {}
+      StateMgr(mgr), SelfRegion(0), SelfDecl(0) {
+    if (const ObjCMethodDecl* MD =
+          dyn_cast<ObjCMethodDecl>(&StateMgr.getCodeDecl()))
+      SelfDecl = MD->getSelfDecl();
+  }
 
   virtual ~RegionStoreManager() {}
 
@@ -187,8 +193,16 @@ public:
   ///  'this' object (C++).  When used when analyzing a normal function this
   ///  method returns NULL.
   const MemRegion* getSelfRegion(Store) {
-    assert (false && "Not implemented.");
-    return 0;
+    if (!SelfDecl)
+      return 0;
+    
+    if (!SelfRegion) {
+      const ObjCMethodDecl *MD = cast<ObjCMethodDecl>(&StateMgr.getCodeDecl());
+      SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
+                                             MRMgr.getHeapRegion());
+    }
+    
+    return SelfRegion;
   }
   
   /// RemoveDeadBindings - Scans the RegionStore of 'state' for dead values.
@@ -563,9 +577,14 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   // function/method.  These are either symbolic values or 'undefined'.
 
   // We treat function parameters as symbolic values.
-  if (const VarRegion* VR = dyn_cast<VarRegion>(R))
-    if (isa<ParmVarDecl>(VR->getDecl()))
+  if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
+    const VarDecl *VD = VR->getDecl();
+    
+    if (isa<ParmVarDecl>(VD))
       return SVal::GetRValueSymbolVal(getSymbolManager(), VR);
+    else if (VD == SelfDecl)
+      return loc::MemRegionVal(getSelfRegion(0));
+  }
   
   if (MRMgr.onStack(R) || MRMgr.onHeap(R)) {
     // All stack variables are considered to have undefined values
