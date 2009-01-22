@@ -108,6 +108,7 @@ public:
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
 public:
+  const LangOptions &LangOpts;
   Preprocessor &PP;
   ASTContext &Context;
   ASTConsumer &Consumer;
@@ -236,7 +237,7 @@ public:
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer);
   
-  const LangOptions &getLangOptions() const;
+  const LangOptions &getLangOptions() const { return LangOpts; }
   Diagnostic &getDiagnostics() const { return Diags; }
   SourceManager &getSourceManager() const { return SourceMgr; }
 

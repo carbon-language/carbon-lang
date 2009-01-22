@@ -114,7 +114,8 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
-  : PP(pp), Context(ctxt), Consumer(consumer), Diags(PP.getDiagnostics()),
+  : LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
+    Diags(PP.getDiagnostics()),
     SourceMgr(PP.getSourceManager()), CurContext(0), PreDeclaratorDC(0),
     CurBlock(0), PackContext(0), IdResolver(pp.getLangOptions()),
     GlobalNewDeleteDeclared(false) {
@@ -196,10 +197,6 @@ void Sema::ActOnEndOfTranslationUnit() {
 //===----------------------------------------------------------------------===//
 // Helper functions.
 //===----------------------------------------------------------------------===//
-
-const LangOptions &Sema::getLangOptions() const {
-  return PP.getLangOptions();
-}
 
 /// getCurFunctionDecl - If inside of a function body, this returns a pointer
 /// to the function decl for the function being parsed.  If we're currently
