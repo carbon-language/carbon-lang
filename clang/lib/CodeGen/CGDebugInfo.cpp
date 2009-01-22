@@ -47,21 +47,24 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new
 /// one if necessary. This returns null for invalid source locations.
 llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
-  if (Loc.isInvalid())
-    return llvm::DICompileUnit();
+  // FIXME: Until we do a complete job of emitting debug information,
+  // we need to support making dummy compile units so that we generate
+  // "well formed" debug info.
+  const FileEntry *FE = 0;
 
-  SourceManager &SM = M->getContext().getSourceManager();
-  Loc = SM.getInstantiationLoc(Loc);
-  const FileEntry *FE = SM.getFileEntryForID(SM.getFileID(Loc));
-  if (FE == 0) return llvm::DICompileUnit();
-    
+  if (Loc.isValid()) {
+    SourceManager &SM = M->getContext().getSourceManager();
+    Loc = SM.getInstantiationLoc(Loc);
+    FE = SM.getFileEntryForID(SM.getFileID(Loc));
+  }
+   
   // See if this compile unit has been used before.
   llvm::DICompileUnit &Unit = CompileUnitCache[FE];
   if (!Unit.isNull()) return Unit;
   
   // Get source file information.
-  const char *FileName = FE->getName();
-  const char *DirName = FE->getDir()->getName();
+  const char *FileName = FE ? FE->getName() : "<unknown>";
+  const char *DirName = FE ? FE->getDir()->getName() : "";
   
   // Create new compile unit.
   // FIXME: Handle other language IDs as well.
