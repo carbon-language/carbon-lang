@@ -1,5 +1,6 @@
 // RUN: clang -analyze -std=gnu99 -checker-simple -verify %s &&
-// RUN: clang -analyze -std=gnu99 -checker-simple -analyzer-store-region -analyzer-purge-dead=false -verify %s
+// RUN: clang -analyze -std=gnu99 -checker-simple -analyzer-store-region -analyzer-purge-dead=false -verify %s &&
+// RUN: clang -analyze -std=gnu99 -checker-cfref -analyzer-store-region -verify %s
 
 #include<stdint.h>
 #include <assert.h>
