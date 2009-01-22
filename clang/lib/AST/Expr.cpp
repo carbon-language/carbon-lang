@@ -1349,6 +1349,106 @@ void SizeOfAlignOfExpr::Destroy(ASTContext& C) {
 }
 
 //===----------------------------------------------------------------------===//
+//  DesignatedInitExpr
+//===----------------------------------------------------------------------===//
+
+IdentifierInfo *DesignatedInitExpr::Designator::getFieldName() {
+  assert(Kind == FieldDesignator && "Only valid on a field designator");
+  if (Field.NameOrField & 0x01)
+    return reinterpret_cast<IdentifierInfo *>(Field.NameOrField&~0x01);
+  else
+    return getField()->getIdentifier();
+}
+
+DesignatedInitExpr *
+DesignatedInitExpr::Create(ASTContext &C, Designator *Designators, 
+                           unsigned NumDesignators,
+                           Expr **IndexExprs, unsigned NumIndexExprs,
+                           SourceLocation ColonOrEqualLoc,
+                           bool UsesColonSyntax, Expr *Init) {
+  void *Mem = C.getAllocator().Allocate(sizeof(DesignatedInitExpr) +
+                                        sizeof(Designator) * NumDesignators +
+                                        sizeof(Stmt *) * (NumIndexExprs + 1),
+                                        8);
+  DesignatedInitExpr *DIE 
+    = new (Mem) DesignatedInitExpr(C.VoidTy, NumDesignators,
+                                   ColonOrEqualLoc, UsesColonSyntax,
+                                   NumIndexExprs + 1);
+
+  // Fill in the designators
+  unsigned ExpectedNumSubExprs = 0;
+  designators_iterator Desig = DIE->designators_begin();
+  for (unsigned Idx = 0; Idx < NumDesignators; ++Idx, ++Desig) {
+    new (static_cast<void*>(Desig)) Designator(Designators[Idx]);
+    if (Designators[Idx].isArrayDesignator())
+      ++ExpectedNumSubExprs;
+    else if (Designators[Idx].isArrayRangeDesignator())
+      ExpectedNumSubExprs += 2;
+  }
+  assert(ExpectedNumSubExprs == NumIndexExprs && "Wrong number of indices!");
+
+  // Fill in the subexpressions, including the initializer expression.
+  child_iterator Child = DIE->child_begin();
+  *Child++ = Init;
+  for (unsigned Idx = 0; Idx < NumIndexExprs; ++Idx, ++Child)
+    *Child = IndexExprs[Idx];
+
+  return DIE;
+}
+
+SourceRange DesignatedInitExpr::getSourceRange() const {
+  SourceLocation StartLoc;
+  Designator &First = *const_cast<DesignatedInitExpr*>(this)->designators_begin();
+  if (First.isFieldDesignator()) {
+    if (UsesColonSyntax)
+      StartLoc = SourceLocation::getFromRawEncoding(First.Field.FieldLoc);
+    else
+      StartLoc = SourceLocation::getFromRawEncoding(First.Field.DotLoc);
+  } else
+    StartLoc = SourceLocation::getFromRawEncoding(First.ArrayOrRange.LBracketLoc);
+  return SourceRange(StartLoc, getInit()->getSourceRange().getEnd());
+}
+
+DesignatedInitExpr::designators_iterator DesignatedInitExpr::designators_begin() {
+  char* Ptr = static_cast<char*>(static_cast<void *>(this));
+  Ptr += sizeof(DesignatedInitExpr);
+  return static_cast<Designator*>(static_cast<void*>(Ptr));
+}
+
+DesignatedInitExpr::designators_iterator DesignatedInitExpr::designators_end() {
+  return designators_begin() + NumDesignators;
+}
+
+Expr *DesignatedInitExpr::getArrayIndex(const Designator& D) {
+  assert(D.Kind == Designator::ArrayDesignator && "Requires array designator");
+  char* Ptr = static_cast<char*>(static_cast<void *>(this));
+  Ptr += sizeof(DesignatedInitExpr);
+  Ptr += sizeof(Designator) * NumDesignators;
+  Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+  return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 1));
+}
+
+Expr *DesignatedInitExpr::getArrayRangeStart(const Designator& D) {
+  assert(D.Kind == Designator::ArrayRangeDesignator && 
+         "Requires array range designator");
+  char* Ptr = static_cast<char*>(static_cast<void *>(this));
+  Ptr += sizeof(DesignatedInitExpr);
+  Ptr += sizeof(Designator) * NumDesignators;
+  Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+  return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 1));
+}
+
+Expr *DesignatedInitExpr::getArrayRangeEnd(const Designator& D) {
+  assert(D.Kind == Designator::ArrayRangeDesignator && 
+         "Requires array range designator");
+  char* Ptr = static_cast<char*>(static_cast<void *>(this));
+  Ptr += sizeof(DesignatedInitExpr);
+  Ptr += sizeof(Designator) * NumDesignators;
+  Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+  return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 2));
+}
+
+//===----------------------------------------------------------------------===//
 //  ExprIterator.
 //===----------------------------------------------------------------------===//
 
@@ -1531,6 +1631,17 @@ Stmt::child_iterator InitListExpr::child_begin() {
 }
 Stmt::child_iterator InitListExpr::child_end() {
   return InitExprs.size() ? &InitExprs[0] + InitExprs.size() : 0;
+}
+
+/// DesignatedInitExpr
+Stmt::child_iterator DesignatedInitExpr::child_begin() {
+  char* Ptr = static_cast<char*>(static_cast<void *>(this));
+  Ptr += sizeof(DesignatedInitExpr);
+  Ptr += sizeof(Designator) * NumDesignators;
+  return reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+}
+Stmt::child_iterator DesignatedInitExpr::child_end() {
+  return child_iterator(&*child_begin() + NumSubExprs);
 }
 
 // ObjCStringLiteral

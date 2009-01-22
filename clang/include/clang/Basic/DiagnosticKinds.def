@@ -698,6 +698,28 @@ DIAG(err_hex_escape_no_digits, ERROR,
 DIAG(ext_predef_outside_function, WARNING,
      "predefined identifier is only valid inside function")
 
+// C99 Designated Initializers
+DIAG(err_array_designator_nonconstant, ERROR,
+     "array designator value must be a constant expression")
+DIAG(err_array_designator_negative, ERROR,
+     "array designator value '%0' is negative")
+DIAG(err_array_designator_empty_range, ERROR,
+     "array designator range [%0, %1] is empty")
+DIAG(err_array_designator_non_array, ERROR,
+     "array designator cannot initialize non-array type %0")
+DIAG(err_array_designator_too_large, ERROR,
+     "array designator index (%0) exceeds array bounds (%1)")
+DIAG(err_field_designator_non_aggr, ERROR,
+     "field designator cannot initialize a %select{non-struct, non-union|non-class}0 type %1")
+DIAG(err_field_designator_unknown, ERROR,
+     "field designator %0 does not refer to any field in type %1")
+DIAG(err_field_designator_nonfield, ERROR,
+     "field designator %0 does not refer to a non-static data member")
+DIAG(note_field_designator_found, NOTE,
+     "field designator refers here")
+DIAG(err_designator_for_scalar_init, ERROR,
+     "designator in initializer for scalar type %0")
+
 // Declarations.
 DIAG(err_typename_requires_specqual, ERROR,
      "type name requires a specifier or qualifier")

@@ -37,12 +37,18 @@ private:
   
   struct FieldDesignatorInfo {
     const IdentifierInfo *II;
+    unsigned DotLoc;
+    unsigned NameLoc;
   };
   struct ArrayDesignatorInfo {
     Action::ExprTy *Index;
+    unsigned LBracketLoc;
+    mutable unsigned  RBracketLoc;
   };
   struct ArrayRangeDesignatorInfo {
     Action::ExprTy *Start, *End;
+    unsigned LBracketLoc, EllipsisLoc;
+    mutable unsigned RBracketLoc;
   };
   
   union {
@@ -62,6 +68,16 @@ public:
     assert(isFieldDesignator() && "Invalid accessor");
     return FieldInfo.II;
   }
+
+  SourceLocation getDotLoc() const {
+    assert(isFieldDesignator() && "Invalid accessor");
+    return SourceLocation::getFromRawEncoding(FieldInfo.DotLoc);
+  }
+
+  SourceLocation getFieldLoc() const {
+    assert(isFieldDesignator() && "Invalid accessor");
+    return SourceLocation::getFromRawEncoding(FieldInfo.NameLoc);
+  }
   
   Action::ExprTy *getArrayIndex() const {
     assert(isArrayDesignator() && "Invalid accessor");
@@ -77,27 +93,68 @@ public:
     return ArrayRangeInfo.End;
   }
   
-  
-  static Designator getField(const IdentifierInfo *II) {
+  SourceLocation getLBracketLoc() const {
+    assert((isArrayDesignator() || isArrayRangeDesignator()) && 
+           "Invalid accessor");
+    if (isArrayDesignator())
+      return SourceLocation::getFromRawEncoding(ArrayInfo.LBracketLoc);
+    else 
+      return SourceLocation::getFromRawEncoding(ArrayRangeInfo.LBracketLoc);
+  }
+
+  SourceLocation getRBracketLoc() const {
+    assert((isArrayDesignator() || isArrayRangeDesignator()) && 
+           "Invalid accessor");
+    if (isArrayDesignator())
+      return SourceLocation::getFromRawEncoding(ArrayInfo.RBracketLoc);
+    else 
+      return SourceLocation::getFromRawEncoding(ArrayRangeInfo.RBracketLoc);
+  }
+
+  SourceLocation getEllipsisLoc() const {
+    assert(isArrayRangeDesignator() && "Invalid accessor");
+    return SourceLocation::getFromRawEncoding(ArrayRangeInfo.EllipsisLoc);
+  }
+
+  static Designator getField(const IdentifierInfo *II, SourceLocation DotLoc,
+                             SourceLocation NameLoc) {
     Designator D;
     D.Kind = FieldDesignator;
     D.FieldInfo.II = II;
+    D.FieldInfo.DotLoc = DotLoc.getRawEncoding();
+    D.FieldInfo.NameLoc = NameLoc.getRawEncoding();
     return D;
   }
 
-  static Designator getArray(Action::ExprTy *Index) {
+  static Designator getArray(Action::ExprTy *Index, SourceLocation LBracketLoc) {
     Designator D;
     D.Kind = ArrayDesignator;
     D.ArrayInfo.Index = Index;
+    D.ArrayInfo.LBracketLoc = LBracketLoc.getRawEncoding();
+    D.ArrayInfo.RBracketLoc = 0;
     return D;
   }
   
-  static Designator getArrayRange(Action::ExprTy *Start, Action::ExprTy *End) {
+  static Designator getArrayRange(Action::ExprTy *Start, Action::ExprTy *End,
+                                  SourceLocation LBracketLoc, 
+                                  SourceLocation EllipsisLoc) {
     Designator D;
     D.Kind = ArrayRangeDesignator;
     D.ArrayRangeInfo.Start = Start;
     D.ArrayRangeInfo.End = End;
+    D.ArrayRangeInfo.LBracketLoc = LBracketLoc.getRawEncoding();
+    D.ArrayRangeInfo.EllipsisLoc = EllipsisLoc.getRawEncoding();
+    D.ArrayRangeInfo.RBracketLoc = 0;
     return D;
+  }
+
+  void setRBracketLoc(SourceLocation RBracketLoc) const {
+    assert((isArrayDesignator() || isArrayRangeDesignator()) && 
+           "Invalid accessor");
+    if (isArrayDesignator())
+      ArrayInfo.RBracketLoc = RBracketLoc.getRawEncoding();
+    else
+      ArrayRangeInfo.RBracketLoc = RBracketLoc.getRawEncoding();
   }
   
   /// ClearExprs - Null out any expression references, which prevents them from

@@ -43,6 +43,7 @@ namespace clang {
   class Stmt;
   class Expr;
   class InitListExpr;
+  class DesignatedInitExpr;
   class CallExpr;
   class DeclRefExpr;
   class VarDecl;
@@ -1043,6 +1044,11 @@ public:
                                          InitListDesignations &Designators,
                                          SourceLocation RParenLoc);
 
+  virtual OwningExprResult ActOnDesignatedInitializer(Designation &Desig,
+                                                      SourceLocation Loc,
+                                                      bool UsedColonSyntax,
+                                                      OwningExprResult Init);
+
   virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                       tok::TokenKind Kind,
                                       ExprArg LHS, ExprArg RHS);
@@ -1833,15 +1839,17 @@ class InitListChecker {
   void CheckListElementTypes(InitListExpr *IList, QualType &DeclType, 
                              unsigned &Index);
   void CheckSubElementType(InitListExpr *IList, QualType ElemType, 
-                           unsigned &Index);
+                           Expr *expr, unsigned &Index);
   // FIXME: Does DeclType need to be a reference type?
   void CheckScalarType(InitListExpr *IList, QualType &DeclType, 
-                       unsigned &Index);
+                       Expr *expr, unsigned &Index);
   void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index);
   void CheckStructUnionTypes(InitListExpr *IList, QualType DeclType, 
                              unsigned &Index);
   void CheckArrayType(InitListExpr *IList, QualType &DeclType, unsigned &Index);
-  
+  bool CheckDesignatedInitializer(InitListExpr *IList, DesignatedInitExpr *DIE, 
+                                  QualType DeclType, FieldDecl *&DesignatedField, 
+                                  llvm::APSInt &DesignatedIndex, unsigned &Index);
   int numArrayElements(QualType DeclType);
   int numStructUnionElements(QualType DeclType);
 public:

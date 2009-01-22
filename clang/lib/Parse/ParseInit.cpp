@@ -68,13 +68,16 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
   if (Tok.is(tok::identifier)) {
     Diag(Tok, diag::ext_gnu_old_style_field_designator);
     
-    Designation &D = Designations.CreateDesignation(InitNum);
-    D.AddDesignator(Designator::getField(Tok.getIdentifierInfo()));
-    ConsumeToken(); // Eat the identifier.
+    const IdentifierInfo *FieldName = Tok.getIdentifierInfo();
+    SourceLocation NameLoc = ConsumeToken(); // Eat the identifier.
     
     assert(Tok.is(tok::colon) && "MayBeDesignationStart not working properly!");
-    ConsumeToken();
-    return ParseInitializer();
+    SourceLocation ColonLoc = ConsumeToken();
+
+    Designation &D = Designations.CreateDesignation(InitNum);
+    D.AddDesignator(Designator::getField(FieldName, SourceLocation(), NameLoc));
+    return Actions.ActOnDesignatedInitializer(D, ColonLoc, true, 
+                                              ParseInitializer());
   }
   
   // Desig - This is initialized when we see our first designator.  We may have
@@ -86,7 +89,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
   while (Tok.is(tok::period) || Tok.is(tok::l_square)) {
     if (Tok.is(tok::period)) {
       // designator: '.' identifier
-      ConsumeToken();
+      SourceLocation DotLoc = ConsumeToken();
       
       // Create designation if we haven't already.
       if (Desig == 0)
@@ -97,7 +100,8 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
         return ExprError();
       }
       
-      Desig->AddDesignator(Designator::getField(Tok.getIdentifierInfo()));
+      Desig->AddDesignator(Designator::getField(Tok.getIdentifierInfo(), DotLoc,
+                                                Tok.getLocation()));
       ConsumeToken(); // Eat the identifier.
       continue;
     }
@@ -179,11 +183,12 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     
     // If this is a normal array designator, remember it.
     if (Tok.isNot(tok::ellipsis)) {
-      Desig->AddDesignator(Designator::getArray(Idx.release()));
+      Desig->AddDesignator(Designator::getArray(Idx.release(),
+                                                StartLoc));
     } else {
       // Handle the gnu array range extension.
       Diag(Tok, diag::ext_gnu_array_range);
-      ConsumeToken();
+      SourceLocation EllipsisLoc = ConsumeToken();
 
       OwningExprResult RHS(ParseConstantExpression());
       if (RHS.isInvalid()) {
@@ -191,10 +196,12 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
         return move(RHS);
       }
       Desig->AddDesignator(Designator::getArrayRange(Idx.release(),
-                                                     RHS.release()));
+                                                     RHS.release(),
+                                                     StartLoc, EllipsisLoc));
     }
 
-    MatchRHSPunctuation(tok::r_square, StartLoc);
+    SourceLocation EndLoc = MatchRHSPunctuation(tok::r_square, StartLoc);
+    Desig->getDesignator(Desig->getNumDesignators() - 1).setRBracketLoc(EndLoc);
   }
 
   // Okay, we're done with the designator sequence.  We know that there must be
@@ -205,8 +212,9 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
 
   // Handle a normal designator sequence end, which is an equal.
   if (Tok.is(tok::equal)) {
-    ConsumeToken();
-    return ParseInitializer();
+    SourceLocation EqualLoc = ConsumeToken();
+    return Actions.ActOnDesignatedInitializer(*Desig, EqualLoc, false,
+                                              ParseInitializer());
   }
 
   // We read some number of designators and found something that isn't an = or
@@ -274,7 +282,7 @@ Parser::OwningExprResult Parser::ParseBraceInitializer() {
       // If we had an erroneous initializer, and we had a potentially valid
       // designator, make sure to remove the designator from
       // InitExprDesignations, otherwise we'll end up with a designator with no
-      // making initializer.
+      // matching initializer.
       if (SubElt.isInvalid())
         InitExprDesignations.EraseDesignation(InitExprs.size());
     }

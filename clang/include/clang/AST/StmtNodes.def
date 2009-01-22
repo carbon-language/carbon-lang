@@ -85,6 +85,7 @@ STMT(CStyleCastExpr        , ExplicitCastExpr)
 STMT(CompoundLiteralExpr   , Expr)
 STMT(ExtVectorElementExpr  , Expr)
 STMT(InitListExpr          , Expr)
+STMT(DesignatedInitExpr    , Expr)
 STMT(VAArgExpr             , Expr)
 
 // GNU Extensions.

@@ -179,10 +179,10 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty, bool isLvalue) {
 }
 
 void Sema::DeleteExpr(ExprTy *E) {
-  static_cast<Expr*>(E)->Destroy(Context);
+  if (E) static_cast<Expr*>(E)->Destroy(Context);
 }
 void Sema::DeleteStmt(StmtTy *S) {
-  static_cast<Stmt*>(S)->Destroy(Context);
+  if (S) static_cast<Stmt*>(S)->Destroy(Context);
 }
 
 /// ActOnEndOfTranslationUnit - This is called at the very end of the

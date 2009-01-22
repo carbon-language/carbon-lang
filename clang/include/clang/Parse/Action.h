@@ -32,6 +32,7 @@ namespace clang {
   class Scope;
   class Action;
   class Selector;
+  class Designation;
   class InitListDesignations;
   // Lex.
   class Preprocessor;
@@ -641,6 +642,26 @@ public:
                                          SourceLocation RParenLoc) {
     return ExprEmpty();
   }
+  /// @brief Parsed a C99 designated initializer. 
+  /// 
+  /// @param Desig Contains the designation with one or more designators.
+  ///
+  /// @param Loc The location of the '=' or ':' prior to the
+  /// initialization expression.
+  ///
+  /// @param UsedColonSyntax If true, then this designated initializer
+  /// used the deprecated GNU syntax @c fieldname:foo rather than the
+  /// C99 syntax @c .fieldname=foo.
+  ///
+  /// @param Init The value that the entity (or entities) described by
+  /// the designation will be initialized with.
+  virtual OwningExprResult ActOnDesignatedInitializer(Designation &Desig,
+                                                      SourceLocation Loc,
+                                                      bool UsedColonSyntax,
+                                                      OwningExprResult Init) {
+    return ExprEmpty();
+  }
+
   virtual OwningExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                          SourceLocation RParenLoc, ExprArg Op) {
     return ExprEmpty();

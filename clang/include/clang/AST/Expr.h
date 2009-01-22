@@ -1706,6 +1706,224 @@ private:
   InitListExpr() : Expr(InitListExprClass, QualType()) {}
 };
 
+/// @brief Represents a C99 designated initializer expression.
+///
+/// A designated initializer expression (C99 6.7.8) contains one or
+/// more designators (which can be field designators, array
+/// designators, or GNU array-range designators) followed by an
+/// expression that initializes the field or element(s) that the
+/// designators refer to. For example, given:
+/// 
+/// @code
+/// struct point {
+///   double x;
+///   double y;
+/// };
+/// struct point ptarray[10] = { [2].y = 1.0, [2].x = 2.0, [0].x = 1.0 };
+/// @endcode
+///
+/// The InitListExpr contains three DesignatedInitExprs, the first of
+/// which covers @c [2].y=1.0. This DesignatedInitExpr will have two
+/// designators, one array designator for @c [2] followed by one field
+/// designator for @c .y. The initalization expression will be 1.0.
+class DesignatedInitExpr : public Expr {
+  /// The location of the '=' or ':' prior to the actual initializer
+  /// expression.
+  SourceLocation EqualOrColonLoc;
+
+  /// Whether this designated initializer used the GNU deprecated ':'
+  /// syntax rather than the C99 '=' syntax.
+  bool UsesColonSyntax : 1;
+
+  /// The number of designators in this initializer expression.
+  unsigned NumDesignators : 15;
+
+  /// The number of subexpressions of this initializer expression,
+  /// which contains both the initializer and any additional
+  /// expressions used by array and array-range designators.
+  unsigned NumSubExprs : 16;
+
+  DesignatedInitExpr(QualType Ty, unsigned NumDesignators, 
+                     SourceLocation EqualOrColonLoc, bool UsesColonSyntax,
+                     unsigned NumSubExprs)
+    : Expr(DesignatedInitExprClass, Ty), 
+      EqualOrColonLoc(EqualOrColonLoc), UsesColonSyntax(UsesColonSyntax), 
+      NumDesignators(NumDesignators), NumSubExprs(NumSubExprs) { }
+
+public:
+  /// A field designator, e.g., ".x".
+  struct FieldDesignator {
+    /// Refers to the field that is being initialized. The low bit
+    /// of this field determines whether this is actually a pointer
+    /// to an IdentifierInfo (if 1) or a FieldDecl (if 0). When
+    /// initially constructed, a field designator will store an
+    /// IdentifierInfo*. After semantic analysis has resolved that
+    /// name, the field designator will instead store a FieldDecl*.
+    uintptr_t NameOrField;
+    
+    /// The location of the '.' in the designated initializer.
+    unsigned DotLoc;
+    
+    /// The location of the field name in the designated initializer.
+    unsigned FieldLoc;
+  };
+
+  /// An array or GNU array-range designator, e.g., "[9]" or "[10..15]".
+  struct ArrayOrRangeDesignator {
+    /// Location of the first index expression within the designated
+    /// initializer expression's list of subexpressions.
+    unsigned Index;
+    /// The location of the '[' starting the array range designator.
+    unsigned LBracketLoc;
+    /// The location of the ellipsis separating the start and end
+    /// indices. Only valid for GNU array-range designators.
+    unsigned EllipsisLoc;
+    /// The location of the ']' terminating the array range designator.
+    unsigned RBracketLoc;    
+  };
+
+  /// @brief Represents a single C99 designator.
+  ///
+  /// @todo This class is infuriatingly similar to clang::Designator,
+  /// but minor differences (storing indices vs. storing pointers)
+  /// keep us from reusing it. Try harder, later, to rectify these
+  /// differences.
+  class Designator {
+    /// @brief The kind of designator this describes.
+    enum {
+      FieldDesignator,
+      ArrayDesignator,
+      ArrayRangeDesignator
+    } Kind;
+
+    union {
+      /// A field designator, e.g., ".x".
+      struct FieldDesignator Field;
+      /// An array or GNU array-range designator, e.g., "[9]" or "[10..15]".
+      struct ArrayOrRangeDesignator ArrayOrRange;
+    };
+    friend class DesignatedInitExpr;
+
+  public:
+    /// @brief Initializes a field designator.
+    Designator(const IdentifierInfo *FieldName, SourceLocation DotLoc, 
+               SourceLocation FieldLoc) 
+      : Kind(FieldDesignator) {
+      Field.NameOrField = reinterpret_cast<uintptr_t>(FieldName) | 0x01;
+      Field.DotLoc = DotLoc.getRawEncoding();
+      Field.FieldLoc = FieldLoc.getRawEncoding();
+    }
+
+    /// @brief Initializes an array designator.
+    Designator(unsigned Index, SourceLocation LBracketLoc, 
+               SourceLocation RBracketLoc)
+      : Kind(ArrayDesignator) {
+      ArrayOrRange.Index = Index;
+      ArrayOrRange.LBracketLoc = LBracketLoc.getRawEncoding();
+      ArrayOrRange.EllipsisLoc = SourceLocation().getRawEncoding();
+      ArrayOrRange.RBracketLoc = RBracketLoc.getRawEncoding();
+    }
+
+    /// @brief Initializes a GNU array-range designator.
+    Designator(unsigned Index, SourceLocation LBracketLoc, 
+               SourceLocation EllipsisLoc, SourceLocation RBracketLoc)
+      : Kind(ArrayRangeDesignator) {
+      ArrayOrRange.Index = Index;
+      ArrayOrRange.LBracketLoc = LBracketLoc.getRawEncoding();
+      ArrayOrRange.EllipsisLoc = EllipsisLoc.getRawEncoding();
+      ArrayOrRange.RBracketLoc = RBracketLoc.getRawEncoding();
+    }
+
+    bool isFieldDesignator() const { return Kind == FieldDesignator; }
+    bool isArrayDesignator() const { return Kind == ArrayDesignator; }
+    bool isArrayRangeDesignator() const { return Kind == ArrayRangeDesignator; }
+
+    IdentifierInfo * getFieldName();
+
+    FieldDecl *getField() {
+      assert(Kind == FieldDesignator && "Only valid on a field designator");
+      if (Field.NameOrField & 0x01)
+        return 0;
+      else
+        return reinterpret_cast<FieldDecl *>(Field.NameOrField);
+    }
+
+    void setField(FieldDecl *FD) {
+      assert(Kind == FieldDesignator && "Only valid on a field designator");
+      Field.NameOrField = reinterpret_cast<uintptr_t>(FD);
+    }
+
+    SourceLocation getFieldLoc() const {
+      assert(Kind == FieldDesignator && "Only valid on a field designator");
+      return SourceLocation::getFromRawEncoding(Field.FieldLoc);
+    }
+
+    SourceLocation getLBracketLoc() const {
+      assert((Kind == ArrayDesignator || Kind == ArrayRangeDesignator) &&
+             "Only valid on an array or array-range designator");
+      return SourceLocation::getFromRawEncoding(ArrayOrRange.LBracketLoc);
+    }
+
+    SourceLocation getRBracketLoc() const {
+      assert((Kind == ArrayDesignator || Kind == ArrayRangeDesignator) &&
+             "Only valid on an array or array-range designator");
+      return SourceLocation::getFromRawEncoding(ArrayOrRange.RBracketLoc);
+    }
+
+    SourceLocation getEllipsisLoc() const {
+      assert(Kind == ArrayRangeDesignator &&
+             "Only valid on an array-range designator");
+      return SourceLocation::getFromRawEncoding(ArrayOrRange.EllipsisLoc);
+    }
+  };
+
+  static DesignatedInitExpr *Create(ASTContext &C, Designator *Designators, 
+                                    unsigned NumDesignators,
+                                    Expr **IndexExprs, unsigned NumIndexExprs,
+                                    SourceLocation EqualOrColonLoc,
+                                    bool UsesColonSyntax, Expr *Init);
+
+  /// @brief Returns the number of designators in this initializer.
+  unsigned size() const { return NumDesignators; }
+
+  // Iterator access to the designators.
+  typedef Designator* designators_iterator;
+  designators_iterator designators_begin();
+  designators_iterator designators_end();
+
+  Expr *getArrayIndex(const Designator& D);
+  Expr *getArrayRangeStart(const Designator& D);
+  Expr *getArrayRangeEnd(const Designator& D);
+
+  /// @brief Retrieve the location of the '=' that precedes the
+  /// initializer value itself, if present.
+  SourceLocation getEqualOrColonLoc() const { return EqualOrColonLoc; }
+
+  /// @brief Determines whether this designated initializer used the
+  /// GNU 'fieldname:' syntax or the C99 '=' syntax.
+  bool usesColonSyntax() const { return UsesColonSyntax; }
+
+  /// @brief Retrieve the initializer value.
+  Expr *getInit() const { 
+    return cast<Expr>(*const_cast<DesignatedInitExpr*>(this)->child_begin());
+  }
+
+  void setInit(Expr *init) {
+    *child_begin() = init;
+  }
+
+  virtual SourceRange getSourceRange() const;
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == DesignatedInitExprClass; 
+  }
+  static bool classof(const DesignatedInitExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end(); 
+};
+
 //===----------------------------------------------------------------------===//
 // Clang Extensions
 //===----------------------------------------------------------------------===//

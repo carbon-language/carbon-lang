@@ -877,6 +877,10 @@ void StmtPrinter::VisitInitListExpr(InitListExpr* Node) {
   OS << " }";
 }
 
+void StmtPrinter::VisitDesignatedInitExpr(DesignatedInitExpr *Node) {
+  // FIXME!
+}
+
 void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
   OS << "va_arg(";
   PrintExpr(Node->getSubExpr());
