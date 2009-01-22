@@ -4071,6 +4071,10 @@ Otherwise, the result is an <tt>i1</tt>.
   &lt;result&gt; = icmp ule i16 -4, 5        <i>; yields: result=false</i>
   &lt;result&gt; = icmp sge i16  4, 5        <i>; yields: result=false</i>
 </pre>
+
+<p>Note that the code generator does not yet support vector types with
+   the <tt>icmp</tt> instruction.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -4163,6 +4167,10 @@ always yields an <a href="#t_primitive">i1</a> result, as follows:</p>
   &lt;result&gt; = fcmp olt float 4.0, 5.0    <i>; yields: result=true</i>
   &lt;result&gt; = fcmp ueq double 1.0, 2.0   <i>; yields: result=false</i>
 </pre>
+
+<p>Note that the code generator does not yet support vector types with
+   the <tt>fcmp</tt> instruction.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -4360,6 +4368,10 @@ by element.
 <pre>
   %X = select i1 true, i8 17, i8 42          <i>; yields i8:17</i>
 </pre>
+
+<p>Note that the code generator does not yet support conditions
+   with vector type.</p>
+
 </div>
 
 
