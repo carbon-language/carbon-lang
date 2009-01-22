@@ -2746,8 +2746,11 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
   // fold select C, 1, X -> C | X
   if (VT == MVT::i1 && N1C && N1C->getAPIntValue() == 1)
     return DAG.getNode(ISD::OR, VT, N0, N2);
-  // fold select C, 0, 1 -> ~C
-  if (VT.isInteger() && VT0.isInteger() &&
+  // fold select C, 0, 1 -> C ^ 1
+  if (VT.isInteger() &&
+      (VT0 == MVT::i1 ||
+       (VT0.isInteger() &&
+        TLI.getBooleanContents() == TargetLowering::ZeroOrOneBooleanContent)) &&
       N1C && N2C && N1C->isNullValue() && N2C->getAPIntValue() == 1) {
     SDValue XORNode = DAG.getNode(ISD::XOR, VT0, N0, DAG.getConstant(1, VT0));
     if (VT == VT0)
@@ -2770,7 +2773,6 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
     return DAG.getNode(ISD::OR, VT, NOTNode, N1);
   }
   // fold select C, X, 0 -> C & X
-  // FIXME: this should check for C type == X type, not i1?
   if (VT == MVT::i1 && N2C && N2C->isNullValue())
     return DAG.getNode(ISD::AND, VT, N0, N1);
   // fold  X ? X : Y --> X ? 1 : Y --> X | Y
