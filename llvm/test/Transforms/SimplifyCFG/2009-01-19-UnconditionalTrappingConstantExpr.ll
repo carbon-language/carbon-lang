@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep {br i1 } | count 4
-; XFAIL: *
 ; PR3354
 ; Do not merge bb1 into the entry block, it might trap.
 
@@ -23,7 +22,7 @@ define i32 @test2(i32 %tmp21, i32 %tmp24, i1 %tmp34) {
 	br i1 %tmp34, label %bb5, label %bb6
 
 bb5:		; preds = %bb4
-	br i1 icmp sgt (i32 sdiv (i32 32767, i32 0), i32 0), label %bb6, label %bb7
+	br i1 icmp sgt (i32 sdiv (i32 32767, i32 ptrtoint (i32* @G to i32)), i32 0), label %bb6, label %bb7
 bb6:
 	ret i32 42
 bb7:
