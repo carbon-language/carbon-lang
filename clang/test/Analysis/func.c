@@ -1,4 +1,6 @@
-// RUN: clang -analyze -checker-simple -verify %s
+// RUN: clang -analyze -checker-simple -verify %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store-basic -verify %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store-region -verify %s
 
 void f(void) {
   void (*p)(void);
