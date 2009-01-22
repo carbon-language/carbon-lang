@@ -19,10 +19,12 @@
 #include "clang/Lex/PTHManager.h"
 #include "clang/Lex/Token.h"
 #include "clang/Lex/Preprocessor.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/System/Host.h"
 using namespace clang;
 
 #define DISK_TOKEN_SIZE (1+1+2+4+4)
@@ -39,16 +41,11 @@ static inline uint16_t ReadUnalignedLE16(const unsigned char *&Data) {
 }
 
 static inline uint32_t ReadLE32(const unsigned char *&Data) {
-// Targets that directly support unaligned little-endian 32-bit loads can just
-// use them.
-#if defined(__i386__) || defined(__x86_64__)
+  // Hosts that directly support unaligned little-endian 32-bit loads can just
+  // use them.
   uint32_t V = *((uint32_t*)Data);
-#else
-  uint32_t V = ((uint32_t)Data[0] <<  0) |
-               ((uint32_t)Data[1] <<  8) |
-               ((uint32_t)Data[2] << 16) |
-               ((uint32_t)Data[3] << 24);
-#endif
+  if (llvm::sys::isBigEndianHost())
+    V = llvm::ByteSwap_32(V);
   Data += 4;
   return V;
 }
