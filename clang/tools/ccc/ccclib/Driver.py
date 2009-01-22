@@ -672,8 +672,8 @@ class Driver(object):
                     inputList = phase.inputs[0].inputs
 
             # Only try to use pipes when exactly one input.
-            canAcceptPipe = len(inputList) == 1 and tool.acceptsPipedInput()
-            inputs = [createJobs(tc, p, canAcceptPipe, False, 
+            attemptToPipeInput = len(inputList) == 1 and tool.acceptsPipedInput()
+            inputs = [createJobs(tc, p, attemptToPipeInput, False, 
                                  arch, tcArgs, linkingOutput)
                       for p in inputList]
 
@@ -694,7 +694,7 @@ class Driver(object):
 
             # Figure out where to put the job (pipes).
             jobList = jobs
-            if canAcceptPipe and isinstance(inputs[0].source, Jobs.PipedJob):
+            if isinstance(inputs[0].source, Jobs.PipedJob):
                 jobList = inputs[0].source
                 
             baseInput = inputs[0].baseInput
