@@ -1516,6 +1516,10 @@ void AsmPrinter::printDataDirective(const Type *type) {
       assert(TAI->getData64bitsDirective() &&
              "Target cannot handle 64-bit pointer exprs!");
       O << TAI->getData64bitsDirective();
+    } else if (TD->getPointerSize() == 2) {
+      O << TAI->getData16bitsDirective();
+    } else if (TD->getPointerSize() == 1) {
+      O << TAI->getData8bitsDirective();
     } else {
       O << TAI->getData32bitsDirective();
     }
