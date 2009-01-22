@@ -104,10 +104,10 @@ namespace llvm {
     /// is depended on.  Otherwise, return null.
     Instruction *getInst() const { return Value.getPointer(); }
     
-    bool operator==(const MemDepResult &M) const { return M.Value == Value; }
-    bool operator!=(const MemDepResult &M) const { return M.Value != Value; }
-    bool operator<(const MemDepResult &M) const { return M.Value < Value; }
-    bool operator>(const MemDepResult &M) const { return M.Value > Value; }
+    bool operator==(const MemDepResult &M) const { return Value == M.Value; }
+    bool operator!=(const MemDepResult &M) const { return Value != M.Value; }
+    bool operator<(const MemDepResult &M) const { return Value < M.Value; }
+    bool operator>(const MemDepResult &M) const { return Value > M.Value; }
   private:
     friend class MemoryDependenceAnalysis;
     /// Dirty - Entries with this marker occur in a LocalDeps map or
