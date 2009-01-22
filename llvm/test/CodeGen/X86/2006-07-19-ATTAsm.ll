@@ -10,7 +10,7 @@ target triple = "i386-unknown-freebsd6.1"
 	%llvm.dbg.global_variable.type = type { i32, {  }*, {  }*, i8*, i8 *, i8*, {  }*, i32, {  }*, i1, i1, {  }* }
 @x = global i32 0		; <i32*> [#uses=1]
 @llvm.dbg.global_variable = internal constant %llvm.dbg.global_variable.type {
-    i32 458804,
+    i32 327732,
     {  }* bitcast (%llvm.dbg.anchor.type* @llvm.dbg.global_variables to {  }*), 
     {  }* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit to {  }*), 
     i8* getelementptr ([2 x i8]* @str, i64 0, i64 0), 
