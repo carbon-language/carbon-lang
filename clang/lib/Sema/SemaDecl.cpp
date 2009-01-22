@@ -736,11 +736,12 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
       return Tag;
   }
 
-  // Permit typedefs without declarators as a Microsoft extension.
   if (!DS.isMissingDeclaratorOk()) {
+    // Warn about typedefs of enums without names, since this is an
+    // extension in both Microsoft an GNU.
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef &&
         Tag && isa<EnumDecl>(Tag)) {
-      Diag(DS.getSourceRange().getBegin(), diag::warn_no_declarators)
+      Diag(DS.getSourceRange().getBegin(), diag::ext_typedef_without_a_name)
         << DS.getSourceRange();
       return Tag;
     }

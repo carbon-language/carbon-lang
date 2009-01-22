@@ -606,7 +606,7 @@ DIAG(err_expected_unqualified_id, ERROR,
      "expected unqualified-id")
 DIAG(err_no_declarators, ERROR,
      "declaration does not declare anything")
-DIAG(warn_no_declarators, WARNING,
+DIAG(ext_typedef_without_a_name, EXTWARN,
      "typedef requires a name")
 DIAG(err_func_def_no_params, ERROR,
      "function definition does not declare parameters")
