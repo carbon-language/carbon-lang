@@ -38,7 +38,7 @@ struct LangOptions {
     
   unsigned ObjC1             : 1;  // Objective-C 1 support enabled.
   unsigned ObjC2             : 1;  // Objective-C 2 support enabled.
-  unsigned ObjCModernABI     : 1;  // Objective-C modern abi enabled
+  unsigned ObjCNonFragileABI : 1;  // Objective-C modern abi enabled
     
   unsigned PascalStrings     : 1;  // Allow Pascal strings
   unsigned Boolean           : 1;  // Allow bool/true/false
@@ -63,7 +63,7 @@ public:
     Trigraphs = BCPLComment = DollarIdents = AsmPreprocessor = 0;
     ImplicitInt = Digraphs = 0;
     HexFloats = 0;
-    GC = ObjC1 = ObjC2 = ObjCModernABI = 0;
+    GC = ObjC1 = ObjC2 = ObjCNonFragileABI = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
     CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
     LaxVectorConversions = Exceptions = NeXTRuntime = 0;

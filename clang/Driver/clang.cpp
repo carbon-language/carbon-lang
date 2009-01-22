@@ -484,7 +484,7 @@ static llvm::cl::opt<bool>
 EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"));
 
 static llvm::cl::opt<bool>
-ObjCModernABI("fobjc-modern-abi", llvm::cl::desc("enable objective-c's modern abi"));
+ObjCNonFragileABI("fobjc-nonfragile-abi", llvm::cl::desc("enable objective-c's nonfragile abi"));
 
 
 // FIXME: This (and all GCC -f options) really come in -f... and
@@ -618,8 +618,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   else if (GNURuntime)
     Options.NeXTRuntime = 0;
 
-  if (ObjCModernABI)
-    Options.ObjCModernABI = 1;
+  if (ObjCNonFragileABI)
+    Options.ObjCNonFragileABI = 1;
 }
 
 static llvm::cl::opt<bool>

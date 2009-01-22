@@ -65,6 +65,19 @@ public:
   /// SuperPtrTy - LLVM type for struct objc_super *.
   const llvm::Type *SuperPtrTy;
   
+  /// PropertyTy - LLVM type for struct objc_property (struct _prop_t
+  /// in GCC parlance).
+  const llvm::StructType *PropertyTy;
+  
+  /// PropertyListTy - LLVM type for struct objc_property_list
+  /// (_prop_list_t in GCC parlance).
+  const llvm::StructType *PropertyListTy;
+  /// PropertyListPtrTy - LLVM type for struct objc_property_list*.
+  const llvm::Type *PropertyListPtrTy;
+  
+  // MethodTy - LLVM type for struct objc_method.
+  const llvm::StructType *MethodTy;
+  
   llvm::Function *GetPropertyFn, *SetPropertyFn;
   
   llvm::Function *EnumerationMutationFn;
@@ -124,14 +137,6 @@ public:
   /// MethodDescriptionListPtrTy - LLVM type for struct
   /// objc_method_description_list *.
   const llvm::Type *MethodDescriptionListPtrTy;
-  /// PropertyTy - LLVM type for struct objc_property (struct _prop_t
-  /// in GCC parlance).
-  const llvm::StructType *PropertyTy;
-  /// PropertyListTy - LLVM type for struct objc_property_list
-  /// (_prop_list_t in GCC parlance).
-  const llvm::StructType *PropertyListTy;
-  /// PropertyListPtrTy - LLVM type for struct objc_property_list*.
-  const llvm::Type *PropertyListPtrTy;
   /// ProtocolListTy - LLVM type for struct objc_property_list.
   const llvm::Type *ProtocolListTy;
   /// ProtocolListPtrTy - LLVM type for struct objc_property_list*.
@@ -156,8 +161,6 @@ public:
   const llvm::Type *IvarListTy;
   /// IvarListPtrTy - LLVM type for struct objc_ivar_list *.
   const llvm::Type *IvarListPtrTy;
-  // MethodTy - LLVM type for struct objc_method.
-  const llvm::StructType *MethodTy;
   /// MethodListTy - LLVM type for struct objc_method_list.
   const llvm::Type *MethodListTy;
   /// MethodListPtrTy - LLVM type for struct objc_method_list *.
@@ -208,12 +211,12 @@ public:
   }
 };
 
-/// ObjCModernTypesHelper - will have all types needed by objective-c's
+/// ObjCNonFragileABITypesHelper - will have all types needed by objective-c's
 /// modern abi
-class ObjCModernTypesHelper : public ObjCCommonTypesHelper {
+class ObjCNonFragileABITypesHelper : public ObjCCommonTypesHelper {
 public:
-  ObjCModernTypesHelper(CodeGen::CodeGenModule &cgm);
-  ~ObjCModernTypesHelper(){}
+  ObjCNonFragileABITypesHelper(CodeGen::CodeGenModule &cgm);
+  ~ObjCNonFragileABITypesHelper(){}
 };
   
 class CGObjCCommonMac : public CodeGen::CGObjCRuntime {
@@ -492,11 +495,11 @@ public:
                                         llvm::Value *src, llvm::Value *dest);
 };
   
-class CGObjCModernMac : public CGObjCCommonMac {
+class CGObjCNonFragileABIMac : public CGObjCCommonMac {
 private:
-  ObjCModernTypesHelper ObjCTypes;
+  ObjCNonFragileABITypesHelper ObjCTypes;
 public:
-  CGObjCModernMac(CodeGen::CodeGenModule &cgm);
+  CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
 };
   
 } // end anonymous namespace
@@ -2256,7 +2259,7 @@ void CGObjCMac::FinishModule() {
   CGM.getModule().appendModuleInlineAsm(s.str());
 }
 
-CGObjCModernMac::CGObjCModernMac(CodeGen::CodeGenModule &cgm) 
+CGObjCNonFragileABIMac::CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm) 
   : CGObjCCommonMac(cgm),
   ObjCTypes(cgm)
 {
@@ -2312,6 +2315,41 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   SuperTy = cast<llvm::StructType>(Types.ConvertType(SuperCTy));
   SuperPtrTy = llvm::PointerType::getUnqual(SuperTy); 
   
+  // struct _prop_t {
+  //   char *name;
+  //   char *attributes; 
+  // }
+  PropertyTy = llvm::StructType::get(Int8PtrTy,
+                                     Int8PtrTy,
+                                     NULL);
+  CGM.getModule().addTypeName("struct._prop_t", 
+                              PropertyTy);
+  
+  // struct _prop_list_t {
+  //   uint32_t entsize;      // sizeof(struct _objc_property)
+  //   uint32_t count_of_properties;
+  //   struct _objc_property prop_list[count_of_properties];
+  // }
+  PropertyListTy = llvm::StructType::get(IntTy,
+                                         IntTy,
+                                         llvm::ArrayType::get(PropertyTy, 0),
+                                         NULL);
+  CGM.getModule().addTypeName("struct._prop_list_t", 
+                              PropertyListTy);
+  // struct _prop_list_t *
+  PropertyListPtrTy = llvm::PointerType::getUnqual(PropertyListTy);
+  
+  // struct _objc_method {
+  //   SEL _cmd;
+  //   char *method_type;
+  //   char *_imp;
+  // }
+  MethodTy = llvm::StructType::get(SelectorPtrTy,
+                                   Int8PtrTy,
+                                   Int8PtrTy,
+                                   NULL);
+  CGM.getModule().addTypeName("struct._objc_method", MethodTy);
+    
   // Property manipulation functions.
   
   // id objc_getProperty (id, SEL, ptrdiff_t, bool)
@@ -2413,30 +2451,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   MethodDescriptionListPtrTy = 
     llvm::PointerType::getUnqual(MethodDescriptionListTy);
 
-  // struct _objc_property {
-  //   char *name;
-  //   char *attributes; 
-  // }
-  PropertyTy = llvm::StructType::get(Int8PtrTy,
-                                     Int8PtrTy,
-                                     NULL);
-  CGM.getModule().addTypeName("struct._objc_property", 
-                              PropertyTy);
-
-  // struct _objc_property_list {
-  //   uint32_t entsize;      // sizeof(struct _objc_property)
-  //   uint32_t count_of_properties;
-  //   struct _objc_property prop_list[count_of_properties];
-  // }
-  PropertyListTy = llvm::StructType::get(IntTy,
-                                         IntTy,
-                                         llvm::ArrayType::get(PropertyTy, 0),
-                                         NULL);
-  CGM.getModule().addTypeName("struct._objc_property_list", 
-                              PropertyListTy);
-  // struct _objc_property_list *
-  PropertyListPtrTy = llvm::PointerType::getUnqual(PropertyListTy);
-
   // Protocol description structures
 
   // struct _objc_protocol_extension {
@@ -2512,17 +2526,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_ivar_list", IvarListTy);
   IvarListPtrTy = llvm::PointerType::getUnqual(IvarListTy);
 
-  // struct _objc_method {
-  //   SEL _cmd;
-  //   char *method_type;
-  //   char *_imp;
-  // }
-  MethodTy = llvm::StructType::get(SelectorPtrTy,
-                                   Int8PtrTy,
-                                   Int8PtrTy,
-                                   NULL);
-  CGM.getModule().addTypeName("struct._objc_method", MethodTy);
-  
   // struct _objc_method_list *
   MethodListTy = llvm::OpaqueType::get();
   CGM.getModule().addTypeName("struct._objc_method_list", MethodListTy);
@@ -2763,9 +2766,68 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   
 }
 
-ObjCModernTypesHelper::ObjCModernTypesHelper(CodeGen::CodeGenModule &cgm) 
+ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModule &cgm) 
 : ObjCCommonTypesHelper(cgm)
 {
+  // struct _method_list_t {
+  //   uint32_t entsize;  // sizeof(struct _objc_method)
+  //   uint32_t method_count;
+  //   struct _objc_method method_list[method_count];
+  // }
+  
+  // struct _protocol_t {
+  //   id isa;  // NULL
+  //   const char * const protocol_name;
+  //   const struct  * _protocol_t const protocol_list;
+  //   const struct method_list_t * const instance_methods;
+  //   const struct method_list_t * const class_methods;
+  //   const struct method_list_t *optionalInstanceMethods;
+  //   const struct method_list_t *optionalClassMethods;
+  //   const struct _prop_list_t * const properties;
+  //   const uint32_t size;  // sizeof(struct _protocol_t)
+  //   const uint32_t flags;  // = 0
+  // }
+  
+  // struct _objc_protocol_list {
+  //   long protocol_count;
+  //   struct _protocol_t[protocol_count];
+  // }
+    
+  // struct _class_t {
+  //   struct _class_t *isa;
+  //   struct _class_t * const superclass;
+  //   void *cache;
+  //   IMP *vtable;
+  //   struct class_ro_t *ro;
+  // }
+  
+  // struct _ivar_t {
+  //   unsigned long int *offset;  // pointer to ivar offset location
+  //   char *name;
+  //   char *type;
+  //   uint32_t alignment;
+  //   uint32_t size;
+  // }
+  
+  // struct _ivar_list_t {
+  //   uint32 entsize;  // sizeof(struct _ivar_t)
+  //   uint32 count;
+  //   struct _iver_t list[count];
+  // }
+  
+  // struct class_ro_t {
+  //   uint32_t const flags;
+  //   uint32_t const instanceStart;
+  //   uint32_t const instanceSize;
+  //   uint32_t const reserved;  // only when building for 64bit targets
+  //   const uint8_t * const ivarLayout;
+  //   const char *const name;
+  //   const struct _method_list_t * const baseMethods;
+  //   const struct _objc_protocol_list *const baseProtocols;
+  //   const struct _ivar_list_t *const ivars;
+  //   const uint8_t * const weakIvarLayout;
+  //   const struct _prop_list_t * const properties;
+  // }
 }
 
 /* *** */
@@ -2776,7 +2838,7 @@ CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
 }
 
 CodeGen::CGObjCRuntime *
-CodeGen::CreateMacModernObjCRuntime(CodeGen::CodeGenModule &CGM) {
+CodeGen::CreateMacNonFragileABIObjCRuntime(CodeGen::CodeGenModule &CGM) {
   return 0;
- // return new CGObjCModernMac(CGM);
+ // return new CGObjCNonFragileABIMac(CGM);
 }
