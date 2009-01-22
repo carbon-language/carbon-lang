@@ -420,6 +420,12 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
   }
 
   if (const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R)) {
+#if 0
+    // FIXME: This logic doesn't really work, as we can have all sorts of
+    // weird cases.  For example, this crashes on test case 'rdar-6442306-1.m'.
+    // The weird cases come in when arbitrary casting comes into play, violating
+    // any type-safe programming.
+    
     GRStateRef state(St, StateMgr);
 
     // Get the size of the super region in bytes.
@@ -450,6 +456,10 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
       (SSize * getBasicVals().getValue(8, SSize.getBitWidth(), false)) / ESize;
 
     return NonLoc::MakeVal(getBasicVals(), S);
+#else
+    ATR = ATR;
+    return UnknownVal();
+#endif
   }
 
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R)) {
