@@ -681,7 +681,7 @@ static void printStringChar(raw_ostream &O, char C) {
     O << "\\\"";
   } else if (C == '\\') {
     O << "\\\\";
-  } else if (isprint(C)) {
+  } else if (isprint((unsigned char)C)) {
     O << C;
   } else {
     switch(C) {
