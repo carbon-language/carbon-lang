@@ -327,49 +327,62 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   if (Base.isUnknownOrUndef() || isa<loc::SymbolVal>(Base))
     return Base;
 
-  loc::MemRegionVal& BaseL = cast<loc::MemRegionVal>(Base);
-
-  // Pointer of any type can be cast and used as array base. We do not support
-  // that case yet.
-  if (!isa<ElementRegion>(BaseL.getRegion())) {
-    // Record what we have seen in real code.
-    assert(isa<FieldRegion>(BaseL.getRegion()));
+  // Only handle integer offsets... for now.
+  if (!isa<nonloc::ConcreteInt>(Offset))
     return UnknownVal();
+
+  const TypedRegion *BaseRegion =
+    cast<TypedRegion>(cast<loc::MemRegionVal>(Base).getRegion());
+
+  // Pointer of any type can be cast and used as array base.
+  const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);
+  
+  if (!ElemR) {
+    //
+    // If the base region is not an ElementRegion, create one.
+    // This can happen in the following example:
+    //
+    //   char *p = __builtin_alloc(10);
+    //   p[1] = 8;
+    //
+    //  Observe that 'p' binds to an AnonTypedRegion<AllocaRegion>.
+    //
+    return loc::MemRegionVal(MRMgr.getElementRegion(Offset, BaseRegion));
   }
+  
+  SVal BaseIdx = ElemR->getIndex();
+  
+  if (!isa<nonloc::ConcreteInt>(BaseIdx))
+    return UnknownVal();
+  
+  const llvm::APSInt& BaseIdxI = cast<nonloc::ConcreteInt>(BaseIdx).getValue();
+  const llvm::APSInt& OffI = cast<nonloc::ConcreteInt>(Offset).getValue();
+  assert(BaseIdxI.isSigned());
+  
+  // FIXME: This appears to be the assumption of this code.  We should review
+  // whether or not BaseIdxI.getBitWidth() < OffI.getBitWidth().  If it
+  // can't we need to put a comment here.  If it can, we should handle it.
+  assert(BaseIdxI.getBitWidth() >= OffI.getBitWidth());
 
-  // We expect BaseR is an ElementRegion, not a base VarRegion.
-
-  const ElementRegion* ElemR = cast<ElementRegion>(BaseL.getRegion());
-
-  SVal Idx = ElemR->getIndex();
-
-  nonloc::ConcreteInt *CI1, *CI2;
-
-  // Only handle integer indices for now.
-  if ((CI1 = dyn_cast<nonloc::ConcreteInt>(&Idx)) &&
-      (CI2 = dyn_cast<nonloc::ConcreteInt>(&Offset))) {
-
-    // Temporary SVal to hold a potential signed and extended APSInt.
-    SVal SignedInt;
-
-    // Index might be unsigned. We have to convert it to signed. It might also
-    // be less wide than the size. We have to extend it.
-    if (CI2->getValue().isUnsigned() ||
-        CI2->getValue().getBitWidth() < CI1->getValue().getBitWidth()) {
-      llvm::APSInt SI = CI2->getValue();
-      if (CI2->getValue().getBitWidth() < CI1->getValue().getBitWidth())
-        SI.extend(CI1->getValue().getBitWidth());
-      SI.setIsSigned(true);
-      SignedInt = nonloc::ConcreteInt(getBasicVals().getValue(SI));
-      CI2 = cast<nonloc::ConcreteInt>(&SignedInt);
-    }
-
-    SVal NewIdx = CI1->EvalBinOp(getBasicVals(), BinaryOperator::Add, *CI2);
-    return loc::MemRegionVal(MRMgr.getElementRegion(NewIdx, 
-                                                    ElemR->getArrayRegion()));
+  const TypedRegion *ArrayR = ElemR->getArrayRegion();
+  SVal NewIdx;
+  
+  if (OffI.isUnsigned() || OffI.getBitWidth() < BaseIdxI.getBitWidth()) {
+    // 'Offset' might be unsigned.  We have to convert it to signed and
+    // possibly extend it.
+    llvm::APSInt Tmp = OffI;
+    
+    if (OffI.getBitWidth() < BaseIdxI.getBitWidth())
+        Tmp.extend(BaseIdxI.getBitWidth());
+    
+    Tmp.setIsSigned(true);
+    Tmp += BaseIdxI; // Compute the new offset.    
+    NewIdx = nonloc::ConcreteInt(getBasicVals().getValue(Tmp));    
   }
+  else
+    NewIdx = nonloc::ConcreteInt(getBasicVals().getValue(BaseIdxI + OffI));
 
-  return UnknownVal();
+  return loc::MemRegionVal(MRMgr.getElementRegion(NewIdx, ArrayR));
 }
 
 SVal RegionStoreManager::getSizeInElements(const GRState* St,

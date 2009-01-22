@@ -2,5 +2,5 @@
 
 char f1() {
   char* s = "abcd";
-  return s[5]; // expected-warning{{Load or store into an out-of-bound memory position.}}
+  return s[6]; // expected-warning{{Load or store into an out-of-bound memory position.}}
 }
