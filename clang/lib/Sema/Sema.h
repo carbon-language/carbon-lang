@@ -19,6 +19,7 @@
 #include "CXXFieldCollector.h"
 #include "SemaOverload.h"
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/Expr.h"
 #include "clang/Parse/Action.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1838,6 +1839,7 @@ class InitListChecker {
                              unsigned &Index);
 
   void CheckListElementTypes(InitListExpr *IList, QualType &DeclType, 
+                             bool SubobjectIsDesignatorContext, 
                              unsigned &Index);
   void CheckSubElementType(InitListExpr *IList, QualType ElemType, 
                            Expr *expr, unsigned &Index);
@@ -1846,11 +1848,17 @@ class InitListChecker {
                        Expr *expr, unsigned &Index);
   void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index);
   void CheckStructUnionTypes(InitListExpr *IList, QualType DeclType, 
-                             unsigned &Index);
-  void CheckArrayType(InitListExpr *IList, QualType &DeclType, unsigned &Index);
+                             RecordDecl::field_iterator Field, 
+                             bool SubobjectIsDesignatorContext, unsigned &Index);
+  void CheckArrayType(InitListExpr *IList, QualType &DeclType, 
+                      llvm::APSInt elementIndex, 
+                      bool SubobjectIsDesignatorContext, unsigned &Index);
   bool CheckDesignatedInitializer(InitListExpr *IList, DesignatedInitExpr *DIE, 
-                                  QualType DeclType, FieldDecl *&DesignatedField, 
-                                  llvm::APSInt &DesignatedIndex, unsigned &Index);
+                                  DesignatedInitExpr::designators_iterator D,
+                                  QualType &CurrentObjectType, 
+                                  RecordDecl::field_iterator *NextField,
+                                  llvm::APSInt *NextElementIndex,
+                                  unsigned &Index);
   int numArrayElements(QualType DeclType);
   int numStructUnionElements(QualType DeclType);
 public:

@@ -1853,6 +1853,11 @@ public:
       Field.NameOrField = reinterpret_cast<uintptr_t>(FD);
     }
 
+    SourceLocation getDotLoc() const {
+      assert(Kind == FieldDesignator && "Only valid on a field designator");
+      return SourceLocation::getFromRawEncoding(Field.DotLoc);
+    }
+
     SourceLocation getFieldLoc() const {
       assert(Kind == FieldDesignator && "Only valid on a field designator");
       return SourceLocation::getFromRawEncoding(Field.FieldLoc);

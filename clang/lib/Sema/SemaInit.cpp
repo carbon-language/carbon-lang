@@ -74,7 +74,7 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
   // Check the element types *before* we create the implicit init list;
   // otherwise, we might end up taking the wrong number of elements
   unsigned NewIndex = Index;
-  CheckListElementTypes(ParentIList, T, NewIndex);
+  CheckListElementTypes(ParentIList, T, false, NewIndex);
 
   for (int i = 0; i < maxElements; ++i) {
     // Don't attempt to go past the end of the init list
@@ -101,7 +101,7 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
                                             unsigned &Index) {
   assert(IList->isExplicit() && "Illegal Implicit InitListExpr");
 
-  CheckListElementTypes(IList, T, Index);
+  CheckListElementTypes(IList, T, true, Index);
   IList->setType(T);
   if (hadError)
     return;
@@ -130,16 +130,22 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
 
 void InitListChecker::CheckListElementTypes(InitListExpr *IList,
                                             QualType &DeclType, 
+                                            bool SubobjectIsDesignatorContext,
                                             unsigned &Index) {
   if (DeclType->isScalarType()) {
     CheckScalarType(IList, DeclType, 0, Index);
   } else if (DeclType->isVectorType()) {
     CheckVectorType(IList, DeclType, Index);
   } else if (DeclType->isAggregateType() || DeclType->isUnionType()) {
-    if (DeclType->isStructureType() || DeclType->isUnionType())
-      CheckStructUnionTypes(IList, DeclType, Index);
-    else if (DeclType->isArrayType()) 
-      CheckArrayType(IList, DeclType, Index);
+    if (DeclType->isStructureType() || DeclType->isUnionType()) {
+      RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
+      CheckStructUnionTypes(IList, DeclType, RD->field_begin(), 
+                            SubobjectIsDesignatorContext, Index);
+    } else if (DeclType->isArrayType()) {
+      // FIXME: Is 32 always large enough for array indices?
+      llvm::APSInt Zero(32, false);
+      CheckArrayType(IList, DeclType, Zero, SubobjectIsDesignatorContext, Index);
+    }
     else
       assert(0 && "Aggregate that isn't a function or array?!");
   } else if (DeclType->isVoidType() || DeclType->isFunctionType()) {
@@ -239,6 +245,8 @@ void InitListChecker::CheckVectorType(InitListExpr *IList, QualType DeclType,
 }
 
 void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType, 
+                                     llvm::APSInt elementIndex,
+                                     bool SubobjectIsDesignatorContext, 
                                      unsigned &Index) {
   // Check for the special-case of initializing an array with a string.
   if (Index < IList->getNumInits()) {
@@ -263,7 +271,6 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
 
   // FIXME: Will 32 bits always be enough? I hope so.
   const unsigned ArraySizeBits = 32;
-  llvm::APSInt elementIndex(ArraySizeBits, 0);
 
   // We might know the maximum number of elements in advance.
   llvm::APSInt maxElements(ArraySizeBits, 0);
@@ -279,16 +286,25 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
   while (Index < IList->getNumInits()) {
     Expr *Init = IList->getInit(Index);
     if (DesignatedInitExpr *DIE = dyn_cast<DesignatedInitExpr>(Init)) {
-      // C99 6.7.8p17:
-      //   [...] In contrast, a designation causes the following
-      //   initializer to begin initialization of the subobject
-      //   described by the designator. 
-      FieldDecl *DesignatedField = 0;
-      if (CheckDesignatedInitializer(IList, DIE, DeclType, DesignatedField, 
-                                     elementIndex, Index))
-        hadError = true;
+      // If we're not the subobject that matches up with the '{' for
+      // the designator, we shouldn't be handling the
+      // designator. Return immediately.
+      if (!SubobjectIsDesignatorContext)
+        return;
 
-      ++elementIndex;
+      // Handle this designated initializer. elementIndex will be
+      // updated to be the next array element we'll initialize.
+      if (CheckDesignatedInitializer(IList, DIE, DIE->designators_begin(), 
+                                     DeclType, 0, &elementIndex, Index)) {
+        hadError = true;
+        continue;
+      }
+
+      // If the array is of incomplete type, keep track of the number of
+      // elements in the initializer.
+      if (!maxElementsKnown && elementIndex > maxElements)
+        maxElements = elementIndex;
+
       continue;
     }
 
@@ -324,6 +340,8 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
 
 void InitListChecker::CheckStructUnionTypes(InitListExpr *IList, 
                                             QualType DeclType, 
+                                            RecordDecl::field_iterator Field,
+                                            bool SubobjectIsDesignatorContext, 
                                             unsigned &Index) {
   RecordDecl* structDecl = DeclType->getAsRecordType()->getDecl();
     
@@ -338,30 +356,23 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
   // because an error should get printed out elsewhere. It might be
   // worthwhile to skip over the rest of the initializer, though.
   RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
-  RecordDecl::field_iterator Field = RD->field_begin(), 
-                          FieldEnd = RD->field_end();
+  RecordDecl::field_iterator FieldEnd = RD->field_end();
   while (Index < IList->getNumInits()) {
     Expr *Init = IList->getInit(Index);
 
     if (DesignatedInitExpr *DIE = dyn_cast<DesignatedInitExpr>(Init)) {
-      // C99 6.7.8p17:
-      //   [...] In contrast, a designation causes the following
-      //   initializer to begin initialization of the subobject
-      //   described by the designator. Initialization then continues
-      //   forward in order, beginning with the next subobject after
-      //   that described by the designator. 
-      FieldDecl *DesignatedField = 0;
-      llvm::APSInt LastElement;
-      if (CheckDesignatedInitializer(IList, DIE, DeclType, DesignatedField, 
-                                     LastElement, Index)) {
-        hadError = true;
-        continue;
-      }
+      // If we're not the subobject that matches up with the '{' for
+      // the designator, we shouldn't be handling the
+      // designator. Return immediately.
+      if (!SubobjectIsDesignatorContext)
+        return;
 
-      Field = RecordDecl::field_iterator(
-                           DeclContext::decl_iterator(DesignatedField),
-                           DeclType->getAsRecordType()->getDecl()->decls_end());
-      ++Field;
+      // Handle this designated initializer. Field will be updated to
+      // the next field that we'll be initializing.
+      if (CheckDesignatedInitializer(IList, DIE, DIE->designators_begin(), 
+                                     DeclType, &Field, 0, Index))
+        hadError = true;
+
       continue;
     }
 
@@ -411,136 +422,177 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
 /// @param DeclType  The type of the "current object" (C99 6.7.8p17),
 /// into which the designation in @p DIE should refer.
 ///
-/// @param DesignatedField  If the first designator in @p DIE is a field,
-/// this will be set to the field declaration corresponding to the
-/// field named by the designator.
+/// @param NextField  If non-NULL and the first designator in @p DIE is
+/// a field, this will be set to the field declaration corresponding
+/// to the field named by the designator.
 ///
-/// @param DesignatedIndex  If the first designator in @p DIE is an
-/// array designator or GNU array-range designator, this will be set
-/// to the last index initialized by this designator.
+/// @param NextElementIndex  If non-NULL and the first designator in @p
+/// DIE is an array designator or GNU array-range designator, this
+/// will be set to the last index initialized by this designator.
 ///
 /// @param Index  Index into @p IList where the designated initializer
 /// @p DIE occurs.
 ///
 /// @returns true if there was an error, false otherwise.
-bool InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
-                                                 DesignatedInitExpr *DIE, 
-                                                 QualType DeclType,
-                                                 FieldDecl *&DesignatedField, 
-                                                 llvm::APSInt &DesignatedIndex,
-                                                 unsigned &Index) {
-  // DeclType is always the type of the "current object" (C99 6.7.8p17).
+bool 
+InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
+                                      DesignatedInitExpr *DIE, 
+                                      DesignatedInitExpr::designators_iterator D,
+                                      QualType &CurrentObjectType,
+                                      RecordDecl::field_iterator *NextField,
+                                      llvm::APSInt *NextElementIndex,
+                                      unsigned &Index) {
+  bool IsFirstDesignator = (D == DIE->designators_begin());
 
-  for (DesignatedInitExpr::designators_iterator D = DIE->designators_begin(),
-                                             DEnd = DIE->designators_end();
-       D != DEnd; ++D) {
-    if (D->isFieldDesignator()) {
-      // C99 6.7.8p7:
-      //
-      //   If a designator has the form
-      //
-      //      . identifier
-      //
-      //   then the current object (defined below) shall have
-      //   structure or union type and the identifier shall be the
-      //   name of a member of that type. 
-      const RecordType *RT = DeclType->getAsRecordType();
-      if (!RT) {
-        SemaRef->Diag(DIE->getSourceRange().getBegin(), 
-                      diag::err_field_designator_non_aggr)
-          << SemaRef->getLangOptions().CPlusPlus << DeclType;
-        ++Index;
-        return true;
-      }
-
-      IdentifierInfo *FieldName = D->getFieldName();
-      DeclContext::lookup_result Lookup = RT->getDecl()->lookup(FieldName);
-      FieldDecl *ThisField = 0;
-      if (Lookup.first == Lookup.second) {
-        // Lookup did not find anything with this name.
-        SemaRef->Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
-          << FieldName << DeclType;
-      } else if (isa<FieldDecl>(*Lookup.first)) {
-        // Name lookup found a field.
-        ThisField = cast<FieldDecl>(*Lookup.first);
-        // FIXME: Make sure this isn't a field in an anonymous
-        // struct/union.
-      } else {
-        // Name lookup found something, but it wasn't a field.
-        SemaRef->Diag(D->getFieldLoc(), diag::err_field_designator_nonfield)
-          << FieldName;
-        SemaRef->Diag((*Lookup.first)->getLocation(), 
-                      diag::note_field_designator_found);
-      }
-
-      if (!ThisField) {
-        ++Index;
-        return true;
-      }
-        
-      // Update the designator with the field declaration.
-      D->setField(ThisField);
-      
-      if (D == DIE->designators_begin())
-        DesignatedField = ThisField;
-
-      // The current object is now the type of this field.
-      DeclType = ThisField->getType();
-    } else {
-      // C99 6.7.8p6:
-      //
-      //   If a designator has the form
-      //
-      //      [ constant-expression ]
-      //
-      //   then the current object (defined below) shall have array
-      //   type and the expression shall be an integer constant
-      //   expression. If the array is of unknown size, any
-      //   nonnegative value is valid.
-      const ArrayType *AT = SemaRef->Context.getAsArrayType(DeclType);
-      if (!AT) {
-        SemaRef->Diag(D->getLBracketLoc(), diag::err_array_designator_non_array)
-          << DeclType;
-        ++Index;
-        return true;
-      }
-
-      Expr *IndexExpr = 0;
-      llvm::APSInt ThisIndex;
-      if (D->isArrayDesignator())
-        IndexExpr = DIE->getArrayIndex(*D);
-      else {
-        assert(D->isArrayRangeDesignator() && "Need array-range designator");
-        IndexExpr = DIE->getArrayRangeEnd(*D);
-      }
-
-      bool ConstExpr 
-        = IndexExpr->isIntegerConstantExpr(ThisIndex, SemaRef->Context);
-      assert(ConstExpr && "Expression must be constant"); (void)ConstExpr;
-        
-      if (isa<ConstantArrayType>(AT)) {
-        llvm::APSInt MaxElements(cast<ConstantArrayType>(AT)->getSize(), false);
-        if (ThisIndex >= MaxElements) {
-          SemaRef->Diag(IndexExpr->getSourceRange().getBegin(),
-                        diag::err_array_designator_too_large)
-            << ThisIndex.toString(10) << MaxElements.toString(10);
-          ++Index;
-          return true;
-        }
-      }
-
-      if (D == DIE->designators_begin())
-        DesignatedIndex = ThisIndex;
-
-      // The current object is now the element type of this array.
-      DeclType = AT->getElementType();
-    }
+  if (D == DIE->designators_end()) {
+    // Check the actual initialization for the designated object type.
+    bool prevHadError = hadError;
+    CheckSubElementType(IList, CurrentObjectType, DIE->getInit(), Index);
+    return hadError && !prevHadError;
   }
 
-  // Check the actual initialization for the designated object type.
+  if (D->isFieldDesignator()) {
+    // C99 6.7.8p7:
+    //
+    //   If a designator has the form
+    //
+    //      . identifier
+    //
+    //   then the current object (defined below) shall have
+    //   structure or union type and the identifier shall be the
+    //   name of a member of that type. 
+    const RecordType *RT = CurrentObjectType->getAsRecordType();
+    if (!RT) {
+      SourceLocation Loc = D->getDotLoc();
+      if (Loc.isInvalid())
+        Loc = D->getFieldLoc();
+      SemaRef->Diag(Loc, diag::err_field_designator_non_aggr)
+        << SemaRef->getLangOptions().CPlusPlus << CurrentObjectType;
+      ++Index;
+      return true;
+    }
+
+    IdentifierInfo *FieldName = D->getFieldName();
+    DeclContext::lookup_result Lookup = RT->getDecl()->lookup(FieldName);
+    FieldDecl *DesignatedField = 0;
+    if (Lookup.first == Lookup.second) {
+      // Lookup did not find anything with this name.
+      SemaRef->Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
+        << FieldName << CurrentObjectType;
+    } else if (isa<FieldDecl>(*Lookup.first)) {
+      // Name lookup found a field.
+      DesignatedField = cast<FieldDecl>(*Lookup.first);
+      // FIXME: Make sure this isn't a field in an anonymous
+      // struct/union.
+    } else {
+      // Name lookup found something, but it wasn't a field.
+      SemaRef->Diag(D->getFieldLoc(), diag::err_field_designator_nonfield)
+        << FieldName;
+      SemaRef->Diag((*Lookup.first)->getLocation(), 
+                    diag::note_field_designator_found);
+    }
+
+    if (!DesignatedField) {
+      ++Index;
+      return true;
+    }
+        
+    // Update the designator with the field declaration.
+    D->setField(DesignatedField);
+      
+    // Recurse to check later designated subobjects.
+    QualType FieldType = DesignatedField->getType();
+    if (CheckDesignatedInitializer(IList, DIE, ++D, FieldType, 0, 0, Index))
+      return true;
+
+    // Find the position of the next field to be initialized in this
+    // subobject.
+    RecordDecl::field_iterator Field(DeclContext::decl_iterator(DesignatedField),
+                                     RT->getDecl()->decls_end());
+    ++Field;
+
+    // If this the first designator, our caller will continue checking
+    // the rest of this struct/class/union subobject.
+    if (IsFirstDesignator) {
+      if (NextField)
+        *NextField = Field;
+      return false;
+    }
+
+    // Check the remaining fields within this class/struct/union subobject.
+    bool prevHadError = hadError;
+    CheckStructUnionTypes(IList, CurrentObjectType, Field, false, Index);
+    return hadError && !prevHadError;
+  }
+
+  // C99 6.7.8p6:
+  //
+  //   If a designator has the form
+  //
+  //      [ constant-expression ]
+  //
+  //   then the current object (defined below) shall have array
+  //   type and the expression shall be an integer constant
+  //   expression. If the array is of unknown size, any
+  //   nonnegative value is valid.
+  //
+  // Additionally, cope with the GNU extension that permits
+  // designators of the form
+  //
+  //      [ constant-expression ... constant-expression ]
+  const ArrayType *AT = SemaRef->Context.getAsArrayType(CurrentObjectType);
+  if (!AT) {
+    SemaRef->Diag(D->getLBracketLoc(), diag::err_array_designator_non_array)
+      << CurrentObjectType;
+    ++Index;
+    return true;
+  }
+
+  Expr *IndexExpr = 0;
+  llvm::APSInt DesignatedIndex;
+  if (D->isArrayDesignator())
+    IndexExpr = DIE->getArrayIndex(*D);
+  else {
+    assert(D->isArrayRangeDesignator() && "Need array-range designator");
+    IndexExpr = DIE->getArrayRangeEnd(*D);
+  }
+
+  bool ConstExpr 
+    = IndexExpr->isIntegerConstantExpr(DesignatedIndex, SemaRef->Context);
+  assert(ConstExpr && "Expression must be constant"); (void)ConstExpr;
+  
+  if (isa<ConstantArrayType>(AT)) {
+    llvm::APSInt MaxElements(cast<ConstantArrayType>(AT)->getSize(), false);
+    if (DesignatedIndex >= MaxElements) {
+      SemaRef->Diag(IndexExpr->getSourceRange().getBegin(),
+                    diag::err_array_designator_too_large)
+        << DesignatedIndex.toString(10) << MaxElements.toString(10)
+        << IndexExpr->getSourceRange();
+      ++Index;
+      return true;
+    }
+  }
+  
+  // Recurse to check later designated subobjects.
+  QualType ElementType = AT->getElementType();
+  if (CheckDesignatedInitializer(IList, DIE, ++D, ElementType, 0, 0, Index))
+    return true;
+
+  // Move to the next index in the array that we'll be initializing.
+  ++DesignatedIndex;
+
+  // If this the first designator, our caller will continue checking
+  // the rest of this array subobject.
+  if (IsFirstDesignator) {
+    if (NextElementIndex)
+      *NextElementIndex = DesignatedIndex;
+    return false;
+  }
+    
+  // Check the remaining elements within this array subobject.
   bool prevHadError = hadError;
-  CheckSubElementType(IList, DeclType, DIE->getInit(), Index);
-  return hadError && !prevHadError;
+  CheckArrayType(IList, CurrentObjectType, DesignatedIndex, true, Index);
+  return hadError && !prevHadError;  
 }
 
 /// Check that the given Index expression is a valid array designator
