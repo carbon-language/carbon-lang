@@ -521,7 +521,7 @@ class OptionParser:
         self.saveTempsOption = self.addOption(FlagOption('-save-temps'))
 
         # FIXME: Error out if this is used.
-        self.addOption(JoinedOption('-specs='))
+        self.specsOption = self.addOption(JoinedOption('-specs='))
         # FIXME: Implement.
         self.addOption(FlagOption('-time'))
         # FIXME: Implement.
@@ -704,7 +704,7 @@ class OptionParser:
 
         self.IGroup = OptionGroup('-I')
         self.I_Option = self.addOption(FlagOption('-I-', self.IGroup))
-        self.addOption(JoinedOrSeparateOption('-I', self.IGroup))
+        self.IOption = self.addOption(JoinedOrSeparateOption('-I', self.IGroup))
 
         self.LOption = self.addOption(JoinedOrSeparateOption('-L'))
         self.TOption = self.addOption(JoinedOrSeparateOption('-T'))
@@ -762,13 +762,17 @@ class OptionParser:
         self.fastcpOption = self.addOption(FlagOption('-fastcp', self.fGroup))
 
         self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext', self.fGroup))
+        self.f_bootclasspathOption = self.addOption(JoinedOption('-fbootclasspath=', self.fGroup))        
         self.f_classpathOption = self.addOption(JoinedOption('-fclasspath=', self.fGroup))        
+        self.f_compileResourceOption = self.addOption(JoinedOption('-fcompile-resource=', self.fGroup))
         self.f_constantCfstringsOption = self.addOption(FlagOption('-fconstant-cfstrings', self.fGroup))
         self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile', self.fGroup))
         self.f_debugPassArgumentsOption = self.addOption(FlagOption('-fdebug-pass-arguments', self.fGroup))
         self.f_debugPassStructureOption = self.addOption(FlagOption('-fdebug-pass-structure', self.fGroup))
         self.f_eliminateUnusedDebugSymbolsOption = self.addOption(FlagOption('-feliminate-unused-debug-symbols', self.fGroup))
+        self.f_encodingOption = self.addOption(JoinedOption('-fencoding=', self.fGroup))
         self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions', self.fGroup))
+        self.f_extdirsOption = self.addOption(JoinedOption('-fextdirs=', self.fGroup))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.fGroup))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.fGroup))
         self.f_indirectVirtualCallsOption = self.addOption(FlagOption('-findirect-virtual-calls', self.fGroup))
@@ -790,6 +794,7 @@ class OptionParser:
         self.f_objcOption = self.addOption(FlagOption('-fobjc', self.fGroup))
         self.f_omitFramePointerOption = self.addOption(FlagOption('-fomit-frame-pointer', self.fGroup))
         self.f_openmpOption = self.addOption(FlagOption('-fopenmp', self.fGroup))
+        self.f_outputClassDirOption = self.addOption(JoinedOption('-foutput-class-dir=', self.fGroup))
         self.f_pascalStringsOption = self.addOption(FlagOption('-fpascal-strings', self.fGroup))
         self.f_pieOption = self.addOption(FlagOption('-fpie', self.fGroup))
         self.f_PIEOption = self.addOption(FlagOption('-fPIE', self.fGroup))
@@ -882,12 +887,6 @@ class OptionParser:
         self.addOption(FlagOption('--all-warnings', alias=self.WallOption))
         self.addOption(FlagOption('--ansi', alias=self.ansiOption))
         self.addOption(FlagOption('--assemble', alias=self.SOption))
-        self.addOption(SeparateOption('--assert', alias=self.AOption))
-        self.addOption(JoinedOption('--assert=', alias=self.AOption, 
-                                    forceSeparateRender=True))
-        self.addOption(JoinedOption('--classpath=', alias=self.f_classpathOption))
-        self.addOption(SeparateOption('--classpath', alias=self.f_classpathOption,
-                                      forceJoinedRender=True))
         self.addOption(FlagOption('--combine', alias=self.combineOption))
         self.addOption(FlagOption('--comments', alias=self.COption))
         self.addOption(FlagOption('--comments-in-macros', alias=self.CCOption))
@@ -940,6 +939,54 @@ class OptionParser:
         self.addOption(FlagOption('--save-temps', alias=self.saveTempsOption))
         self.addOption(FlagOption('--write-dependencies', alias=self.MDOption))
         self.addOption(FlagOption('--write-user-dependencies', alias=self.MMDOption))
+
+        # Long options with joined & separate forms.
+
+        self.addOption(SeparateOption('--assert', alias=self.AOption))
+        self.addOption(JoinedOption('--assert=', alias=self.AOption, 
+                                    forceSeparateRender=True))
+        self.addOption(JoinedOption('--bootclasspath=', alias=self.f_bootclasspathOption))
+        self.addOption(SeparateOption('--bootclasspath', alias=self.f_bootclasspathOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--CLASSPATH=', alias=self.f_classpathOption))
+        self.addOption(SeparateOption('--CLASSPATH', alias=self.f_classpathOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--classpath=', alias=self.f_classpathOption))
+        self.addOption(SeparateOption('--classpath', alias=self.f_classpathOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--define-macro=', alias=self.DOption))
+        self.addOption(SeparateOption('--define-macro', alias=self.DOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--encoding=', alias=self.f_encodingOption))
+        self.addOption(SeparateOption('--encoding', alias=self.f_encodingOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--extdirs=', alias=self.f_extdirsOption))
+        self.addOption(SeparateOption('--extdirs', alias=self.f_extdirsOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--include-directory=', alias=self.IOption))
+        self.addOption(SeparateOption('--include-directory', alias=self.IOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--machine=', alias=self.mOption))
+        self.addOption(SeparateOption('--machine', alias=self.mOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--output-class-directory=', alias=self.f_outputClassDirOption))
+        self.addOption(SeparateOption('--output-class-directory', alias=self.f_outputClassDirOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--resource=', alias=self.f_compileResourceOption))
+        self.addOption(SeparateOption('--resource', alias=self.f_compileResourceOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--specs=', alias=self.specsOption))
+        self.addOption(SeparateOption('--specs', alias=self.specsOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--std=', alias=self.stdOption))
+        self.addOption(SeparateOption('--std', alias=self.stdOption,
+                                      forceJoinedRender=True))
+        self.sysrootOption = self.addOption(JoinedOption('--sysroot='))
+        self.addOption(SeparateOption('--sysroot', alias=self.sysrootOption,
+                                      forceJoinedRender=True))
+        self.addOption(JoinedOption('--undefine-macro=', alias=self.UOption))
+        self.addOption(SeparateOption('--undefine-macro', alias=self.UOption,
+                                    forceJoinedRender=True))
 
     def addOption(self, opt):
         self.options.append(opt)
