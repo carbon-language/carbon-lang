@@ -143,9 +143,15 @@ public:
 
 
   /// removeModuleProvider - Remove a ModuleProvider from the list of modules.
-  /// Release module from ModuleProvider.
+  /// Relases the Module from the ModuleProvider, materializing it in the
+  /// process, and returns the materialized Module.
   virtual Module* removeModuleProvider(ModuleProvider *P,
                                        std::string *ErrInfo = 0);
+
+  /// deleteModuleProvider - Remove a ModuleProvider from the list of modules,
+  /// and deletes the ModuleProvider and owned Module.  Avoids materializing 
+  /// the underlying module.
+  virtual void deleteModuleProvider(ModuleProvider *P,std::string *ErrInfo = 0);
 
   /// FindFunctionNamed - Search all of the active modules to find the one that
   /// defines FnName.  This is very slow operation and shouldn't be used for

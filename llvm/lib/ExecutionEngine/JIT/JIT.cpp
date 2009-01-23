@@ -297,6 +297,19 @@ Module *JIT::removeModuleProvider(ModuleProvider *MP, std::string *E) {
   return result;
 }
 
+/// deleteModuleProvider - Remove a ModuleProvider from the list of modules,
+/// and deletes the ModuleProvider and owned Module.  Avoids materializing 
+/// the underlying module.
+void JIT::deleteModuleProvider(ModuleProvider *MP, std::string *E) {
+  ExecutionEngine::deleteModuleProvider(MP, E);
+  
+  MutexGuard locked(lock);
+  if (Modules.empty()) {
+    delete jitstate;
+    jitstate = 0;
+  }
+}
+
 /// run - Start execution with the specified function and arguments.
 ///
 GenericValue JIT::runFunction(Function *F,

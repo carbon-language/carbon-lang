@@ -77,8 +77,17 @@ public:
   }
 
   virtual void addModuleProvider(ModuleProvider *MP);
+  
+  /// removeModuleProvider - Remove a ModuleProvider from the list of modules.
+  /// Relases the Module from the ModuleProvider, materializing it in the
+  /// process, and returns the materialized Module.
   virtual Module *removeModuleProvider(ModuleProvider *MP,
                                        std::string *ErrInfo = 0);
+
+  /// deleteModuleProvider - Remove a ModuleProvider from the list of modules,
+  /// and deletes the ModuleProvider and owned Module.  Avoids materializing 
+  /// the underlying module.
+  virtual void deleteModuleProvider(ModuleProvider *P,std::string *ErrInfo = 0);
 
   /// runFunction - Start execution with the specified function and arguments.
   ///

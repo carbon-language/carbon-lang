@@ -59,7 +59,8 @@ char* ExecutionEngine::getMemoryForGV(const GlobalVariable* GV) {
 }
 
 /// removeModuleProvider - Remove a ModuleProvider from the list of modules.
-/// Release module from ModuleProvider.
+/// Relases the Module from the ModuleProvider, materializing it in the
+/// process, and returns the materialized Module.
 Module* ExecutionEngine::removeModuleProvider(ModuleProvider *P, 
                                               std::string *ErrInfo) {
   for(SmallVector<ModuleProvider *, 1>::iterator I = Modules.begin(), 
@@ -72,6 +73,23 @@ Module* ExecutionEngine::removeModuleProvider(ModuleProvider *P,
     }
   }
   return NULL;
+}
+
+/// deleteModuleProvider - Remove a ModuleProvider from the list of modules,
+/// and deletes the ModuleProvider and owned Module.  Avoids materializing 
+/// the underlying module.
+void ExecutionEngine::deleteModuleProvider(ModuleProvider *P, 
+                                           std::string *ErrInfo) {
+  for(SmallVector<ModuleProvider *, 1>::iterator I = Modules.begin(), 
+      E = Modules.end(); I != E; ++I) {
+    ModuleProvider *MP = *I;
+    if (MP == P) {
+      Modules.erase(I);
+      clearGlobalMappingsFromModule(MP->getModule());
+      delete MP;
+      return;
+    }
+  }
 }
 
 /// FindFunctionNamed - Search all of the active modules to find the one that
