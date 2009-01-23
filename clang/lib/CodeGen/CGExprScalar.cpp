@@ -872,11 +872,14 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   // FIXME: What about a pointer to a VLA?
   Value *Ptr, *Idx;
   Expr *IdxExp;
-  if (isa<llvm::PointerType>(Ops.LHS->getType())) {  // pointer + int
+  const PointerType *PT;
+  if ((PT = Ops.E->getLHS()->getType()->getAsPointerType())) {
     Ptr = Ops.LHS;
     Idx = Ops.RHS;
     IdxExp = Ops.E->getRHS();
   } else {                                           // int + pointer
+    PT = Ops.E->getRHS()->getType()->getAsPointerType();
+    assert(PT && "Invalid add expr");
     Ptr = Ops.RHS;
     Idx = Ops.LHS;
     IdxExp = Ops.E->getLHS();
@@ -892,6 +895,17 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     else
       Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
   }
+
+  // Explicitly handle GNU void* and function pointer arithmetic
+  // extensions. The GNU void* casts amount to no-ops since our void*
+  // type is i8*, but this is future proof.
+  const QualType ElementType = PT->getPointeeType();
+  if (ElementType->isVoidType() || ElementType->isFunctionType()) {
+    const llvm::Type *i8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
+    Value *Res = Builder.CreateGEP(Casted, Idx, "sub.ptr");
+    return Builder.CreateBitCast(Res, Ptr->getType());
+  } 
   
   return Builder.CreateGEP(Ptr, Idx, "add.ptr");
 }
@@ -900,6 +914,8 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   if (!isa<llvm::PointerType>(Ops.LHS->getType()))
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
 
+  const QualType LHSType = Ops.E->getLHS()->getType();
+  const QualType LHSElementType = LHSType->getAsPointerType()->getPointeeType();
   if (!isa<llvm::PointerType>(Ops.RHS->getType())) {
     // pointer - int
     Value *Idx = Ops.RHS;
@@ -916,16 +932,23 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     Idx = Builder.CreateNeg(Idx, "sub.ptr.neg");
     
     // FIXME: The pointer could point to a VLA.
-    // The GNU void* - int case is automatically handled here because
-    // our LLVM type for void* is i8*.
+
+    // Explicitly handle GNU void* and function pointer arithmetic
+    // extensions. The GNU void* casts amount to no-ops since our
+    // void* type is i8*, but this is future proof.
+    if (LHSElementType->isVoidType() || LHSElementType->isFunctionType()) {
+      const llvm::Type *i8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+      Value *LHSCasted = Builder.CreateBitCast(Ops.LHS, i8Ty);
+      Value *Res = Builder.CreateGEP(LHSCasted, Idx, "sub.ptr");
+      return Builder.CreateBitCast(Res, Ops.LHS->getType());
+    } 
+      
     return Builder.CreateGEP(Ops.LHS, Idx, "sub.ptr");
   } else {
     // pointer - pointer
     Value *LHS = Ops.LHS;
     Value *RHS = Ops.RHS;
   
-    const QualType LHSType = Ops.E->getLHS()->getType();
-    const QualType LHSElementType = LHSType->getAsPointerType()->getPointeeType();
     uint64_t ElementSize;
 
     // Handle GCC extension for pointer arithmetic on void* types.
