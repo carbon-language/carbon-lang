@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -join-subclass-copies -stats |& grep {Number of subclass joins performed}
+; RUN: llvm-as < %s | llc -march=x86 -join-cross-class-copies -stats |& grep {Number of cross class joins performed}
 
 @mem.6 = external global i64		; <i64*> [#uses=1]
 
