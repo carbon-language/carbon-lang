@@ -278,8 +278,7 @@ bool Instruction::isUsedOutsideOfBlock(const BasicBlock *BB) const {
       continue;
     }
     
-    unsigned UseOperand = UI.getOperandNo();
-    if (PN->getIncomingBlock(UseOperand/2) != BB)
+    if (PN->getIncomingBlock(UI) != BB)
       return true;
   }
   return false;    

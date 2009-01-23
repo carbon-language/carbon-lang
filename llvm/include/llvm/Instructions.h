@@ -1943,6 +1943,14 @@ public:
     return i*2;
   }
 
+  /// getIncomingBlock - Return incoming basic block corresponding
+  /// to value use iterator
+  ///
+  template <typename U>
+  BasicBlock *getIncomingBlock(value_use_iterator<U> I) const {
+    assert(this == *I && "Iterator doesn't point to PHI's Uses?");
+    return static_cast<BasicBlock*>((&I.getUse() + 1)->get());
+  }
   /// getIncomingBlock - Return incoming basic block number x
   ///
   BasicBlock *getIncomingBlock(unsigned i) const {

@@ -482,8 +482,7 @@ public:
              ++UI) {
           BlockT *UserBB = cast<Instruction>(*UI)->getParent();
           if (PHINode *P = dyn_cast<PHINode>(*UI)) {
-            unsigned OperandNo = UI.getOperandNo();
-            UserBB = P->getIncomingBlock(OperandNo/2);
+            UserBB = P->getIncomingBlock(UI);
           }
 
           // Check the current block, as a fast-path.  Most values are used in

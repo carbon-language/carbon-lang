@@ -459,8 +459,7 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
     // appropriate predecessor block.
     BasicBlock *UserBB = User->getParent();
     if (PHINode *PN = dyn_cast<PHINode>(User)) {
-      unsigned OpVal = UI.getOperandNo()/2;
-      UserBB = PN->getIncomingBlock(OpVal);
+      UserBB = PN->getIncomingBlock(UI);
     }
 
     // Preincrement use iterator so we don't invalidate it.

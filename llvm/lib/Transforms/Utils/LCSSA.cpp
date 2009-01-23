@@ -175,8 +175,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
        UI != E;) {
     BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
     if (PHINode *P = dyn_cast<PHINode>(*UI)) {
-      unsigned OperandNo = UI.getOperandNo();
-      UserBB = P->getIncomingBlock(OperandNo/2);
+      UserBB = P->getIncomingBlock(UI);
     }
     
     // If the user is in the loop, don't rewrite it!
@@ -212,8 +211,7 @@ void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
         if (PHINode* p = dyn_cast<PHINode>(*UI)) {
-          unsigned OperandNo = UI.getOperandNo();
-          UserBB = p->getIncomingBlock(OperandNo/2);
+          UserBB = p->getIncomingBlock(UI);
         }
         
         if (*BB != UserBB && !inLoop(UserBB)) {

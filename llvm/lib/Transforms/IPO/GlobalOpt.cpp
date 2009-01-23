@@ -988,8 +988,7 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
     } else if (PHINode *PN = dyn_cast<PHINode>(U)) {
       // Insert the load in the corresponding predecessor, not right before the
       // PHI.
-      unsigned PredNo = Alloc->use_begin().getOperandNo()/2;
-      InsertPt = PN->getIncomingBlock(PredNo)->getTerminator();
+      InsertPt = PN->getIncomingBlock(Alloc->use_begin())->getTerminator();
     } else if (isa<BitCastInst>(U)) {
       // Must be bitcast between the malloc and store to initialize the global.
       ReplaceUsesOfMallocWithGlobal(U, GV);
