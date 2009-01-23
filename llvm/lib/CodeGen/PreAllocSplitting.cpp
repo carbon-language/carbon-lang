@@ -42,6 +42,7 @@ STATISTIC(NumSplits, "Number of intervals split");
 STATISTIC(NumRemats, "Number of intervals split by rematerialization");
 STATISTIC(NumFolds, "Number of intervals split with spill folding");
 STATISTIC(NumRenumbers, "Number of intervals renumbered into new registers");
+STATISTIC(NumDeadSpills, "Number of dead spills removed");
 
 namespace {
   class VISIBILITY_HIDDEN PreAllocSplitting : public MachineFunctionPass {
@@ -152,7 +153,8 @@ namespace {
 
     bool SplitRegLiveInterval(LiveInterval*);
 
-    bool SplitRegLiveIntervals(const TargetRegisterClass **);
+    bool SplitRegLiveIntervals(const TargetRegisterClass **,
+                               SmallPtrSet<LiveInterval*, 8>&);
     
     void RepairLiveInterval(LiveInterval* CurrLI, VNInfo* ValNo,
                             MachineInstr* DefMI, unsigned RestoreIdx);
@@ -172,6 +174,7 @@ namespace {
                             SmallPtrSet<MachineInstr*, 4>& RefsInMBB);
     void RenumberValno(VNInfo* VN);
     void ReconstructLiveInterval(LiveInterval* LI);
+    bool removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split);
     VNInfo* PerformPHIConstruction(MachineBasicBlock::iterator use,
                                    MachineBasicBlock* MBB,
                                    LiveInterval* LI,
@@ -1340,7 +1343,8 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
 /// SplitRegLiveIntervals - Split all register live intervals that cross the
 /// barrier that's being processed.
 bool
-PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs) {
+PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs,
+                                         SmallPtrSet<LiveInterval*, 8>& Split) {
   // First find all the virtual registers whose live intervals are intercepted
   // by the current barrier.
   SmallVector<LiveInterval*, 8> Intervals;
@@ -1369,10 +1373,54 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs) {
       Change |= Change;
     LiveInterval *LI = Intervals.back();
     Intervals.pop_back();
-    Change |= SplitRegLiveInterval(LI);
+    bool result = SplitRegLiveInterval(LI);
+    if (result) Split.insert(LI);
+    Change |= result;
   }
 
   return Change;
+}
+
+/// removeDeadSpills - After doing splitting, filter through all intervals we've
+/// split, and see if any of the spills are unnecessary.  If so, remove them.
+bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
+  bool changed = false;
+  
+  for (SmallPtrSet<LiveInterval*, 8>::iterator LI = split.begin(),
+       LE = split.end(); LI != LE; ++LI) {
+    DenseMap<VNInfo*, unsigned > VNUseCount;
+    
+    for (MachineRegisterInfo::use_iterator UI = MRI->use_begin((*LI)->reg),
+         UE = MRI->use_end(); UI != UE; ++UI) {
+      unsigned index = LIs->getInstructionIndex(&*UI);
+      index = LiveIntervals::getUseIndex(index);
+      
+      const LiveRange* LR = (*LI)->getLiveRangeContaining(index);
+      VNUseCount[LR->valno]++;
+    }
+    
+    for (LiveInterval::vni_iterator VI = (*LI)->vni_begin(),
+         VE = (*LI)->vni_end(); VI != VE; ++VI) {
+      VNInfo* CurrVN = *VI;
+      if (CurrVN->hasPHIKill) continue;
+      if (VNUseCount[CurrVN] > 0) continue;
+      
+      unsigned DefIdx = CurrVN->def;
+      if (DefIdx == ~0U || DefIdx == ~1U) continue;
+      
+      MachineInstr* DefMI = LIs->getInstructionFromIndex(DefIdx);
+      int FrameIndex;
+      if (!TII->isLoadFromStackSlot(DefMI, FrameIndex)) continue;
+      
+      LIs->RemoveMachineInstrFromMaps(DefMI);
+      (*LI)->removeValNo(CurrVN);
+      DefMI->eraseFromParent();
+      NumDeadSpills++;
+      changed = true;
+    }
+  }
+  
+  return changed;
 }
 
 bool PreAllocSplitting::createsNewJoin(LiveRange* LR,
@@ -1457,6 +1505,8 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   MachineBasicBlock *Entry = MF.begin();
   SmallPtrSet<MachineBasicBlock*,16> Visited;
 
+  SmallPtrSet<LiveInterval*, 8> Split;
+
   for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*,16> >
          DFI = df_ext_begin(Entry, Visited), E = df_ext_end(Entry, Visited);
        DFI != E; ++DFI) {
@@ -1469,9 +1519,11 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
       if (!BarrierRCs)
         continue;
       BarrierIdx = LIs->getInstructionIndex(Barrier);
-      MadeChange |= SplitRegLiveIntervals(BarrierRCs);
+      MadeChange |= SplitRegLiveIntervals(BarrierRCs, Split);
     }
   }
+
+  MadeChange |= removeDeadSpills(Split);
 
   return MadeChange;
 }
