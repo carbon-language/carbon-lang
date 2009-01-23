@@ -2960,7 +2960,17 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   const struct _method_list_t * const class_methods;
   //   const struct _protocol_list_t * const protocols;
   //   const struct _prop_list_t * const properties;
-  // } 
+  // }
+  CategorynfABITy = llvm::StructType::get(Int8PtrTy,
+                                          llvm::PointerType::getUnqual(
+                                                               ClassnfABITy),
+                                          MethodListnfABIPtrTy,
+                                          MethodListnfABIPtrTy,
+                                          ProtocolListnfABIPtrTy,
+                                          PropertyListPtrTy,
+                                          NULL);
+  CGM.getModule().addTypeName("struct._category_t", CategorynfABITy);
+                                          
 }
 
 /* *** */
@@ -2972,6 +2982,5 @@ CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
 
 CodeGen::CGObjCRuntime *
 CodeGen::CreateMacNonFragileABIObjCRuntime(CodeGen::CodeGenModule &CGM) {
-  return 0;
- // return new CGObjCNonFragileABIMac(CGM);
+  return new CGObjCNonFragileABIMac(CGM);
 }
