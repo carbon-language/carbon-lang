@@ -41,8 +41,8 @@ static inline uint16_t ReadUnalignedLE16(const unsigned char *&Data) {
 }
 
 static inline uint32_t ReadLE32(const unsigned char *&Data) {
-  // Hosts that directly support unaligned little-endian 32-bit loads can just
-  // use them.
+  // Hosts that directly support little-endian 32-bit loads can just
+  // use them.  Big-endian hosts need a bswap.
   uint32_t V = *((uint32_t*)Data);
   if (llvm::sys::isBigEndianHost())
     V = llvm::ByteSwap_32(V);
