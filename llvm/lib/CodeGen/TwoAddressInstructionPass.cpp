@@ -69,6 +69,11 @@ namespace {
                              MachineInstr *MI, MachineInstr *DefMI,
                              MachineBasicBlock *MBB, unsigned Loc,
                              DenseMap<MachineInstr*, unsigned> &DistanceMap);
+
+    bool CommuteInstruction(MachineBasicBlock::iterator &mi,
+                            MachineFunction::iterator &mbbi,
+                            unsigned RegC, unsigned Dist,
+                            DenseMap<MachineInstr*, unsigned> &DistanceMap);
   public:
     static char ID; // Pass identification, replacement for typeid
     TwoAddressInstructionPass() : MachineFunctionPass(&ID) {}
@@ -250,6 +255,38 @@ TwoAddressInstructionPass::isProfitableToReMat(unsigned Reg,
   return MBB == DefMI->getParent();
 }
 
+/// CommuteInstruction - Commute a two-address instruction and update the basic
+/// block, distance map, and live variables if needed. Return true if it is
+/// successful.
+bool
+TwoAddressInstructionPass::CommuteInstruction(MachineBasicBlock::iterator &mi,
+                                              MachineFunction::iterator &mbbi,
+                                              unsigned RegC, unsigned Dist,
+                               DenseMap<MachineInstr*, unsigned> &DistanceMap) {
+  MachineInstr *MI = mi;
+  DOUT << "2addr: COMMUTING  : " << *MI;
+  MachineInstr *NewMI = TII->commuteInstruction(MI);
+
+  if (NewMI == 0) {
+    DOUT << "2addr: COMMUTING FAILED!\n";
+    return false;
+  }
+
+  DOUT << "2addr: COMMUTED TO: " << *NewMI;
+  // If the instruction changed to commute it, update livevar.
+  if (NewMI != MI) {
+    if (LV)
+      // Update live variables
+      LV->replaceKillInstruction(RegC, MI, NewMI);
+
+    mbbi->insert(mi, NewMI);           // Insert the new inst
+    mbbi->erase(mi);                   // Nuke the old inst.
+    mi = NewMI;
+    DistanceMap.insert(std::make_pair(NewMI, Dist));
+  }
+  return true;
+}
+
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
@@ -337,27 +374,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               assert(mi->getOperand(3-si).isReg() &&
                      "Not a proper commutative instruction!");
               unsigned regC = mi->getOperand(3-si).getReg();
-
               if (mi->killsRegister(regC)) {
-                DOUT << "2addr: COMMUTING  : " << *mi;
-                MachineInstr *NewMI = TII->commuteInstruction(mi);
-
-                if (NewMI == 0) {
-                  DOUT << "2addr: COMMUTING FAILED!\n";
-                } else {
-                  DOUT << "2addr: COMMUTED TO: " << *NewMI;
-                  // If the instruction changed to commute it, update livevar.
-                  if (NewMI != mi) {
-                    if (LV)
-                      // Update live variables
-                      LV->replaceKillInstruction(regC, mi, NewMI);
-                    
-                    mbbi->insert(mi, NewMI);           // Insert the new inst
-                    mbbi->erase(mi);                   // Nuke the old inst.
-                    mi = NewMI;
-                    DistanceMap.insert(std::make_pair(NewMI, Dist));
-                  }
-
+                if (CommuteInstruction(mi, mbbi, regC, Dist, DistanceMap)) {
                   ++NumCommuted;
                   regB = regC;
                   goto InstructionRearranged;
