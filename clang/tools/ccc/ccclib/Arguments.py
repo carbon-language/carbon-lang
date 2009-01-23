@@ -553,7 +553,9 @@ class OptionParser:
         self.XpreprocessorOption = self.addOption(SeparateOption('-Xpreprocessor'))
 
         self.addOption(CommaJoinedOption('-Wl,', isLinkerInput=True))
-        self.addOption(SeparateOption('-Xlinker', isLinkerInput=True, noOptAsInput=True))
+        self.XlinkerOption = self.addOption(SeparateOption('-Xlinker', 
+                                                           isLinkerInput=True, 
+                                                           noOptAsInput=True))
 
         ####
         # Bring on the random garbage.
@@ -587,7 +589,11 @@ class OptionParser:
         self.dylinkerOption = self.addOption(FlagOption('-dylinker'))
 
         self.iGroup = OptionGroup('-i')
-        self.addOption(JoinedOrSeparateOption('-idirafter', self.iGroup))
+        self.idirafterOption = self.addOption(JoinedOrSeparateOption('-idirafter', self.iGroup))
+        self.imacrosOption = self.addOption(JoinedOrSeparateOption('-imacros', self.iGroup))
+        self.iprefixOption = self.addOption(JoinedOrSeparateOption('-iprefix', self.iGroup))
+        self.iwithprefixOption = self.addOption(JoinedOrSeparateOption('-iwithprefix', self.iGroup))
+        self.iwithprefixbeforeOption = self.addOption(JoinedOrSeparateOption('-iwithprefixbefore', self.iGroup))
         self.addOption(JoinedOrSeparateOption('-iquote', self.iGroup))
         self.isysrootOption = self.addOption(JoinedOrSeparateOption('-isysroot', self.iGroup))
         self.includeOption = self.addOption(JoinedOrSeparateOption('-include', self.iGroup))
@@ -870,8 +876,9 @@ class OptionParser:
         self.pthreadOption = self.addOption(FlagOption('-pthread'))
         self.addOption(FlagOption('-pthreads'))
 
-        # Version control
-        self.addOption(JoinedOrSeparateOption('-B'))
+        # Version control.
+        # FIXME: Figure out what to do about these.
+        self.BOption = self.addOption(JoinedOrSeparateOption('-B'))
         self.addOption(JoinedOrSeparateOption('-V'))
         self.addOption(JoinedOrSeparateOption('-b'))
 
@@ -940,7 +947,8 @@ class OptionParser:
         self.addOption(FlagOption('--write-dependencies', alias=self.MDOption))
         self.addOption(FlagOption('--write-user-dependencies', alias=self.MMDOption))
 
-        # Long options with joined & separate forms.
+        # Long options with joined & separate forms (coercing to
+        # joined form).
 
         self.addOption(SeparateOption('--assert', alias=self.AOption))
         self.addOption(JoinedOption('--assert=', alias=self.AOption, 
@@ -987,6 +995,62 @@ class OptionParser:
         self.addOption(JoinedOption('--undefine-macro=', alias=self.UOption))
         self.addOption(SeparateOption('--undefine-macro', alias=self.UOption,
                                     forceJoinedRender=True))
+
+        # Long options with joined & separate forms (coercing to
+        # separate form).
+
+#        self.addOption(JoinedOption('--dump=', alias=self.dOption,
+#                                    forceSeparateRender=True))
+#        self.addOption(SeparateOption('--dump', alias=self.dOption))
+#        self.addOption(JoinedOption('--dumpbase=', alias=self.dumpbaseOption,
+#                                    forceSeparateRender=True))
+#        self.addOption(SeparateOption('--dumpbase', alias=self.dumpbaseOption))
+#        self.addOption(JoinedOption('--for-assembler=', alias=self.WaOption,
+#                                    forceSeparateRender=True))
+#        self.addOption(SeparateOption('--for-assembler', alias=self.WaOption))
+        self.addOption(JoinedOption('--for-linker=', alias=self.XlinkerOption,
+                                    forceSeparateRender=True,
+                                    isLinkerInput=True, 
+                                    noOptAsInput=True))
+        self.addOption(SeparateOption('--for-linker', alias=self.XlinkerOption,
+                                    isLinkerInput=True, 
+                                    noOptAsInput=True))
+        self.addOption(JoinedOption('--force-link=', alias=self.uOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--force-link', alias=self.uOption))
+        self.addOption(JoinedOption('--imacros=', alias=self.imacrosOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--imacros', alias=self.imacrosOption))
+        self.addOption(JoinedOption('--include=', alias=self.includeOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--include', alias=self.includeOption))
+        self.addOption(JoinedOption('--include-directory-after=', alias=self.idirafterOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--include-directory-after', alias=self.idirafterOption))
+        self.addOption(JoinedOption('--include-prefix=', alias=self.iprefixOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--include-prefix', alias=self.iprefixOption))
+        self.addOption(JoinedOption('--include-with-prefix=', alias=self.iwithprefixOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--include-with-prefix', alias=self.iwithprefixOption))
+        self.addOption(JoinedOption('--include-with-prefix-before=', alias=self.iwithprefixbeforeOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--include-with-prefix-before', alias=self.iwithprefixbeforeOption))
+        self.addOption(JoinedOption('--include-with-prefix-after=', alias=self.iwithprefixOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--include-with-prefix-after', alias=self.iwithprefixOption))
+        self.addOption(JoinedOption('--language=', alias=self.xOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--language', alias=self.xOption))
+        self.addOption(JoinedOption('--library-directory=', alias=self.LOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--library-directory', alias=self.LOption))
+        self.addOption(JoinedOption('--output=', alias=self.oOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--output', alias=self.oOption))
+        self.addOption(JoinedOption('--prefix=', alias=self.BOption,
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--prefix', alias=self.BOption))
 
     def addOption(self, opt):
         self.options.append(opt)
