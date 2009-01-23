@@ -576,6 +576,15 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   if (state.contains<RegionKills>(R))
     return UnknownVal();
 
+  // If the region is an element of field, it may have a default value.
+  if (isa<ElementRegion>(R) || isa<FieldRegion>(R)) {
+    const MemRegion* SuperR = cast<SubRegion>(R)->getSuperRegion();
+    GRStateTrait<RegionDefaultValue>::lookup_type D = 
+      state.get<RegionDefaultValue>(SuperR);
+    if (D)
+      return *D;
+  }
+
   // The location does not have a bound value.  This means that it has
   // the value it had upon its creation and/or entry to the analyzed
   // function/method.  These are either symbolic values or 'undefined'.

@@ -87,3 +87,11 @@ void f10() {
   char a1[4] = "abc";
   char a3[6] = "abc";
 }
+
+// Retrieve the default value of element/field region.
+void f11() {
+  struct s a;
+  g(&a);
+  if (a.data == 0) // no-warning
+    a.data = 1;
+}
