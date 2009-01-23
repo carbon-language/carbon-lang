@@ -78,6 +78,11 @@ public:
   // MethodTy - LLVM type for struct objc_method.
   const llvm::StructType *MethodTy;
   
+  /// CacheTy - LLVM type for struct objc_cache.
+  const llvm::Type *CacheTy;
+  /// CachePtrTy - LLVM type for struct objc_cache *.
+  const llvm::Type *CachePtrTy;
+  
   llvm::Function *GetPropertyFn, *SetPropertyFn;
   
   llvm::Function *EnumerationMutationFn;
@@ -151,10 +156,6 @@ public:
   const llvm::StructType *ClassExtensionTy;
   /// ClassExtensionPtrTy - LLVM type for struct objc_class_ext *.
   const llvm::Type *ClassExtensionPtrTy;
-  /// CacheTy - LLVM type for struct objc_cache.
-  const llvm::Type *CacheTy;
-  /// CachePtrTy - LLVM type for struct objc_cache *.
-  const llvm::Type *CachePtrTy;
   // IvarTy - LLVM type for struct objc_ivar.
   const llvm::StructType *IvarTy;
   /// IvarListTy - LLVM type for struct objc_ivar_list.
@@ -215,6 +216,42 @@ public:
 /// modern abi
 class ObjCNonFragileABITypesHelper : public ObjCCommonTypesHelper {
 public:
+  // MethodListnfABITy - LLVM for struct _method_list_t
+  const llvm::StructType *MethodListnfABITy;
+  
+  // MethodListnfABIPtrTy - LLVM for struct _method_list_t*
+  const llvm::Type *MethodListnfABIPtrTy;
+  
+  // ProtocolnfABITy = LLVM for struct _protocol_t
+  const llvm::StructType *ProtocolnfABITy;
+  
+  // ProtocolListnfABITy - LLVM for struct _objc_protocol_list
+  const llvm::StructType *ProtocolListnfABITy;
+  
+  // ProtocolListnfABIPtrTy - LLVM for struct _objc_protocol_list*
+  const llvm::Type *ProtocolListnfABIPtrTy;
+  
+  // ClassnfABITy - LLVM for struct _class_t
+  const llvm::StructType *ClassnfABITy;
+  
+  // IvarnfABITy - LLVM for struct _ivar_t
+  const llvm::StructType *IvarnfABITy;
+  
+  // IvarListnfABITy - LLVM for struct _ivar_list_t
+  const llvm::StructType *IvarListnfABITy;
+  
+  // IvarListnfABIPtrTy = LLVM for struct _ivar_list_t*
+  const llvm::Type *IvarListnfABIPtrTy;
+  
+  // ClassRonfABITy - LLVM for struct _class_ro_t
+  const llvm::StructType *ClassRonfABITy;
+  
+  // ImpnfABITy - LLVM for id (*)(id, SEL, ...)
+  const llvm::Type *ImpnfABITy;
+  
+  // CategorynfABITy - LLVM for struct _category_t
+  const llvm::StructType *CategorynfABITy;
+  
   ObjCNonFragileABITypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCNonFragileABITypesHelper(){}
 };
@@ -2326,9 +2363,9 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
                               PropertyTy);
   
   // struct _prop_list_t {
-  //   uint32_t entsize;      // sizeof(struct _objc_property)
+  //   uint32_t entsize;      // sizeof(struct _prop_t)
   //   uint32_t count_of_properties;
-  //   struct _objc_property prop_list[count_of_properties];
+  //   struct _prop_t prop_list[count_of_properties];
   // }
   PropertyListTy = llvm::StructType::get(IntTy,
                                          IntTy,
@@ -2349,6 +2386,11 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
                                    Int8PtrTy,
                                    NULL);
   CGM.getModule().addTypeName("struct._objc_method", MethodTy);
+  
+  // struct _objc_cache *
+  CacheTy = llvm::OpaqueType::get();
+  CGM.getModule().addTypeName("struct._objc_cache", CacheTy);
+  CachePtrTy = llvm::PointerType::getUnqual(CacheTy);
     
   // Property manipulation functions.
   
@@ -2530,11 +2572,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   MethodListTy = llvm::OpaqueType::get();
   CGM.getModule().addTypeName("struct._objc_method_list", MethodListTy);
   MethodListPtrTy = llvm::PointerType::getUnqual(MethodListTy);
-
-  // struct _objc_cache *
-  CacheTy = llvm::OpaqueType::get();
-  CGM.getModule().addTypeName("struct._objc_cache", CacheTy);
-  CachePtrTy = llvm::PointerType::getUnqual(CacheTy);
 
   // struct _objc_class_extension *
   ClassExtensionTy = 
@@ -2774,32 +2811,63 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   uint32_t method_count;
   //   struct _objc_method method_list[method_count];
   // }
+  MethodListnfABITy = llvm::StructType::get(IntTy,
+                                            IntTy,
+                                            llvm::ArrayType::get(MethodTy, 0),
+                                            NULL);
+  CGM.getModule().addTypeName("struct.__method_list_t",
+                              MethodListnfABITy);
+  // struct method_list_t *
+  MethodListnfABIPtrTy = llvm::PointerType::getUnqual(MethodListnfABITy);
   
   // struct _protocol_t {
   //   id isa;  // NULL
   //   const char * const protocol_name;
-  //   const struct  * _protocol_t const protocol_list;
+  //   const struct _protocol_list_t * protocol_list; // super protocols
   //   const struct method_list_t * const instance_methods;
   //   const struct method_list_t * const class_methods;
   //   const struct method_list_t *optionalInstanceMethods;
   //   const struct method_list_t *optionalClassMethods;
-  //   const struct _prop_list_t * const properties;
+  //   const struct _prop_list_t * properties;
   //   const uint32_t size;  // sizeof(struct _protocol_t)
   //   const uint32_t flags;  // = 0
   // }
   
+  // Holder for struct _protocol_list_t *
+  llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get();
+  
+  ProtocolnfABITy = llvm::StructType::get(ObjectPtrTy,
+                                          Int8PtrTy,
+                                          llvm::PointerType::getUnqual(
+                                            ProtocolListTyHolder),
+                                          MethodListnfABIPtrTy,
+                                          MethodListnfABIPtrTy,
+                                          MethodListnfABIPtrTy,
+                                          MethodListnfABIPtrTy,
+                                          PropertyListPtrTy,
+                                          IntTy,
+                                          IntTy,
+                                          NULL);
+  CGM.getModule().addTypeName("struct._protocol_t",
+                              ProtocolnfABITy);
+  
   // struct _objc_protocol_list {
-  //   long protocol_count;
+  //   long protocol_count;   // Note, this is 32/64 bit
   //   struct _protocol_t[protocol_count];
   // }
-    
-  // struct _class_t {
-  //   struct _class_t *isa;
-  //   struct _class_t * const superclass;
-  //   void *cache;
-  //   IMP *vtable;
-  //   struct class_ro_t *ro;
-  // }
+  ProtocolListnfABITy = llvm::StructType::get(LongTy,
+                                              llvm::ArrayType::get(
+                                                ProtocolnfABITy, 0),
+                                              NULL);
+  CGM.getModule().addTypeName("struct._objc_protocol_list",
+                              ProtocolListnfABITy);
+  
+  // FIXME! Is this doing the right thing?
+  cast<llvm::OpaqueType>(ProtocolListTyHolder.get())->refineAbstractTypeTo(
+                                                        ProtocolListnfABITy);
+  
+  // struct _objc_protocol_list*
+  ProtocolListnfABIPtrTy = llvm::PointerType::getUnqual(ProtocolListnfABITy);
   
   // struct _ivar_t {
   //   unsigned long int *offset;  // pointer to ivar offset location
@@ -2808,14 +2876,27 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   uint32_t alignment;
   //   uint32_t size;
   // }
-  
+  IvarnfABITy = llvm::StructType::get(llvm::PointerType::getUnqual(LongTy),
+                                      Int8PtrTy,
+                                      Int8PtrTy,
+                                      IntTy,
+                                      IntTy,
+                                      NULL);
+  CGM.getModule().addTypeName("struct._ivar_t", IvarnfABITy);
+                                      
   // struct _ivar_list_t {
   //   uint32 entsize;  // sizeof(struct _ivar_t)
   //   uint32 count;
   //   struct _iver_t list[count];
   // }
+  IvarListnfABIPtrTy = llvm::StructType::get(IntTy,
+                                             IntTy,
+                                             llvm::ArrayType::get(
+                                                              IvarnfABITy, 0),
+                                             NULL);
+  CGM.getModule().addTypeName("struct._ivar_list_t", IvarListnfABIPtrTy);
   
-  // struct class_ro_t {
+  // struct _class_ro_t {
   //   uint32_t const flags;
   //   uint32_t const instanceStart;
   //   uint32_t const instanceSize;
@@ -2828,6 +2909,58 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   const uint8_t * const weakIvarLayout;
   //   const struct _prop_list_t * const properties;
   // }
+  
+  // FIXME. Add 'reserved' field in 64bit abi mode!
+  ClassRonfABITy = llvm::StructType::get(IntTy,
+                                         IntTy,
+                                         IntTy,
+                                         Int8PtrTy,
+                                         Int8PtrTy,
+                                         MethodListnfABIPtrTy,
+                                         ProtocolListnfABIPtrTy,
+                                         IvarListnfABIPtrTy,
+                                         Int8PtrTy,
+                                         PropertyListPtrTy,
+                                         NULL);
+  CGM.getModule().addTypeName("struct._class_ro_t",
+                              ClassRonfABITy);
+  
+  // ImpnfABITy - LLVM for id (*)(id, SEL, ...)
+  std::vector<const llvm::Type*> Params;
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(SelectorPtrTy);
+  ImpnfABITy = llvm::PointerType::getUnqual(
+                          llvm::FunctionType::get(ObjectPtrTy, Params, false));
+  
+  // struct _class_t {
+  //   struct _class_t *isa;
+  //   struct _class_t * const superclass;
+  //   void *cache;
+  //   IMP *vtable;
+  //   struct class_ro_t *ro;
+  // }
+  
+  llvm::PATypeHolder ClassTyHolder = llvm::OpaqueType::get();
+  ClassnfABITy = llvm::StructType::get(llvm::PointerType::getUnqual(ClassTyHolder),
+                                       llvm::PointerType::getUnqual(ClassTyHolder),
+                                       CachePtrTy,
+                                       llvm::PointerType::getUnqual(ImpnfABITy),
+                                       llvm::PointerType::getUnqual(
+                                                                ClassRonfABITy),
+                                       NULL);
+  CGM.getModule().addTypeName("struct._class_t", ClassnfABITy);
+
+  cast<llvm::OpaqueType>(ClassTyHolder.get())->refineAbstractTypeTo(
+                                                                ClassnfABITy);
+  
+  // struct _category_t {
+  //   const char * const name;
+  //   struct _class_t *const cls;
+  //   const struct _method_list_t * const instance_methods;
+  //   const struct _method_list_t * const class_methods;
+  //   const struct _protocol_list_t * const protocols;
+  //   const struct _prop_list_t * const properties;
+  // } 
 }
 
 /* *** */
