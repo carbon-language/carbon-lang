@@ -14,18 +14,37 @@ class MissingArgumentError(ValueError):
 class Option(object):
     """Option - Root option class."""
 
-    def __init__(self, name, group=None, isLinkerInput=False, noOptAsInput=False):
+    def __init__(self, name, group=None, alias=None,
+                 isLinkerInput=False, noOptAsInput=False):
         assert group is None or isinstance(group, OptionGroup)
+        # Multi-level aliases are not supported, and alias options
+        # cannot have groups. This just simplifies option tracking, it
+        # is not an inherent limitation.
+        assert alias is None or (alias.alias is None and
+                                 group is None)
+        
         self.name = name
         self.group = group
+        self.alias = alias
         self.isLinkerInput = isLinkerInput
         self.noOptAsInput = noOptAsInput
+
+    def getUnaliasedOption(self):
+        if self.alias:
+            return self.alias.getUnaliasedOption()
+        return self
+
+    def getRenderName(self):
+        return self.getUnaliasedOption().name
 
     def matches(self, opt):
         """matches(opt) -> bool
         
         Predicate for whether this option is part of the given option
         (which may be a group)."""
+
+        if self.alias:
+            return self.alias.matches(opt)
         if self is opt:
             return True
         elif self.group:
@@ -183,8 +202,7 @@ class Arg(object):
 
         Map the argument into a list of actual program arguments,
         given the source argument array."""
-        assert self.opt
-        return [self.opt.name]
+        return [self.opt.getRenderName()]
 
     def renderAsInput(self, args):
         return self.render(args)
@@ -215,7 +233,7 @@ class JoinedValueArg(ValueArg):
         return args.getInputString(self.index)[len(self.opt.name):]
 
     def render(self, args):
-        return [self.opt.name + self.getValue(args)]
+        return [self.opt.getRenderName() + self.getValue(args)]
 
     def renderAsInput(self, args):
         if self.opt.noOptAsInput:
@@ -230,7 +248,7 @@ class SeparateValueArg(ValueArg):
         return args.getInputString(self.index, offset=1)
 
     def render(self, args):
-        return [self.opt.name, self.getValue(args)]
+        return [self.opt.getRenderName(), self.getValue(args)]
 
     def renderAsInput(self, args):
         if self.opt.noOptAsInput:
@@ -248,7 +266,7 @@ class MultipleValuesArg(Arg):
                 for i in range(self.opt.numArgs)]
 
     def render(self, args):
-        return [self.opt.name] + self.getValues(args)
+        return [self.opt.getRenderName()] + self.getValues(args)
 
 class CommaJoinedValuesArg(Arg):
     """CommaJoinedValuesArg - An argument with multiple values joined
@@ -262,7 +280,7 @@ class CommaJoinedValuesArg(Arg):
         return args.getInputString(self.index)[len(self.opt.name):].split(',')
 
     def render(self, args):
-        return [self.opt.name + ','.join(self.getValues(args))]
+        return [self.opt.getRenderName() + ','.join(self.getValues(args))]
     
     def renderAsInput(self, args):
         return self.getValues(args)
@@ -280,7 +298,7 @@ class JoinedAndSeparateValuesArg(Arg):
         return args.getInputString(self.index, offset=1)
 
     def render(self, args):
-        return ([self.opt.name + self.getJoinedValue(args)] + 
+        return ([self.opt.getRenderName() + self.getJoinedValue(args)] + 
                 [self.getSeparateValue(args)])
 
 ###
@@ -420,9 +438,13 @@ class ArgList(object):
 
     def append(self, arg):
         self.args.append(arg)
-        self.lastArgs[arg.opt] = arg
-        if arg.opt.group is not None:
-            self.lastArgs[arg.opt.group] = arg
+        
+        opt = arg.opt
+        if opt.alias:
+            opt = opt.alias
+        self.lastArgs[opt] = arg
+        if opt.group is not None:
+            self.lastArgs[opt.group] = arg
 
     # Forwarding methods.
     #
@@ -822,6 +844,9 @@ class OptionParser:
 
         self.WGroup = OptionGroup('-W')
         self.ClangWGroup = OptionGroup('-W', self.WGroup)
+
+        self.WallOption = self.addOption(FlagOption('-Wall', self.WGroup))
+        self.addOption(FlagOption('--all-warnings', alias=self.WallOption))
 
         self.addOption(FlagOption('-Wunused-macros', self.ClangWGroup))
         self.addOption(FlagOption('-Wfloat-equal', self.ClangWGroup))
