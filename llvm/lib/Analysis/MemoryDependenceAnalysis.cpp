@@ -788,10 +788,15 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
     //     cerr << "OP:\t\t\t\t" << *PtrInst->getOperand(0);
   PredTranslationFailure:
     
-    // Refresh the CacheInfo/Cache pointer so that it isn't invalidated.
-    CacheInfo = &NonLocalPointerDeps[CacheKey];
-    Cache = &CacheInfo->second;
-    NumSortedEntries = Cache->size();
+    if (Cache == 0) {
+      // Refresh the CacheInfo/Cache pointer if it got invalidated.
+      CacheInfo = &NonLocalPointerDeps[CacheKey];
+      Cache = &CacheInfo->second;
+      NumSortedEntries = Cache->size();
+    } else if (NumSortedEntries != Cache->size()) {
+      std::sort(Cache->begin(), Cache->end());
+      NumSortedEntries = Cache->size();
+    }
 
     // Since we did phi translation, the "Cache" set won't contain all of the
     // results for the query.  This is ok (we can still use it to accelerate
@@ -821,7 +826,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       break;
     }
   }
-  
+
   // Okay, we're done now.  If we added new values to the cache, re-sort it.
   switch (Cache->size()-NumSortedEntries) {
   case 0:
@@ -1045,6 +1050,10 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
         if (Instruction *NewDirtyInst = NewDirtyVal.getInst())
           ReversePtrDepsToAdd.push_back(std::make_pair(NewDirtyInst, P));
       }
+      
+      // Re-sort the NonLocalDepInfo.  Changing the dirty entry to its
+      // subsequent value may invalidate the sortedness.
+      std::sort(NLPDI.begin(), NLPDI.end());
     }
     
     ReverseNonLocalPtrDeps.erase(ReversePtrDepIt);
