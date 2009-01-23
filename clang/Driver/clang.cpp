@@ -218,6 +218,10 @@ AnalyzeAll("analyzer-opt-analyze-headers",
     llvm::cl::desc("Force the static analyzer to analyze "
                    "functions defined in header files"));
 
+static llvm::cl::opt<bool>
+AnalyzerDisplayProgress("analyzer-display-progress",
+          llvm::cl::desc("Emit verbose output about the analyzer's progress."));
+
 static llvm::cl::list<Analyses>
 AnalysisList(llvm::cl::desc("SCA Checks/Analyses:"),
 llvm::cl::values(
@@ -1313,7 +1317,8 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
                                     Diag, PP, PPF, LangOpts,
                                     AnalyzeSpecificFunction,
                                     OutputFile, VisualizeEGDot, VisualizeEGUbi,
-                                    TrimGraph, AnalyzeAll);
+                                    TrimGraph, AnalyzeAll,
+                                    AnalyzerDisplayProgress);
   }
 }
 

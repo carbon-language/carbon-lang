@@ -86,6 +86,7 @@ namespace {
     bool AnalyzeAll;  
     AnalysisStores SM;
     AnalysisDiagClients DC;
+    const bool DisplayProgress;
 
     AnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
                      PreprocessorFactory* ppf,
@@ -93,13 +94,15 @@ namespace {
                      const std::string& fname,
                      const std::string& htmldir,
                      AnalysisStores sm, AnalysisDiagClients dc,
-                     bool visgraphviz, bool visubi, bool trim, bool analyzeAll)
+                     bool visgraphviz, bool visubi, bool trim, bool analyzeAll,
+                     bool displayProgress)
       : VisGraphviz(visgraphviz), VisUbigraph(visubi), TrimGraph(trim),
         LOpts(lopts), Diags(diags),
         Ctx(0), PP(pp), PPF(ppf),
         HTMLDir(htmldir),
         FName(fname),
-        AnalyzeAll(analyzeAll), SM(sm), DC(dc) {}
+        AnalyzeAll(analyzeAll), SM(sm), DC(dc),
+        DisplayProgress(displayProgress) {}
     
     void addCodeAction(CodeAction action) {
       FunctionActions.push_back(action);
@@ -143,13 +146,16 @@ namespace {
     ConstraintManagerCreator CreateConstraintMgr;
 
   public:
-    AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b) 
-      : D(d), Body(b), TU(0), AScope(ScopeDecl), C(c), DisplayedFunction(false){
+    AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b, bool displayProgress) 
+      : D(d), Body(b), TU(0), AScope(ScopeDecl), C(c), 
+        DisplayedFunction(!displayProgress) {
       setManagerCreators();
     }
     
-    AnalysisManager(AnalysisConsumer& c, TranslationUnit* tu) 
-      : D(0), Body(0), TU(tu), AScope(ScopeTU), C(c), DisplayedFunction(false) {
+    AnalysisManager(AnalysisConsumer& c, TranslationUnit* tu,
+                    bool displayProgress) 
+      : D(0), Body(0), TU(tu), AScope(ScopeTU), C(c),
+        DisplayedFunction(!displayProgress) {
       setManagerCreators();
     }
     
@@ -347,7 +353,7 @@ void AnalysisConsumer::HandleTopLevelDecl(Decl *D) {
 void AnalysisConsumer::HandleTranslationUnit(TranslationUnit& TU) {
 
   if(!TranslationUnitActions.empty()) {
-    AnalysisManager mgr(*this, &TU);
+    AnalysisManager mgr(*this, &TU, DisplayProgress);
     for (Actions::iterator I = TranslationUnitActions.begin(), 
          E = TranslationUnitActions.end(); I != E; ++I)
       (*I)(mgr);  
@@ -382,7 +388,7 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
 
   // Create an AnalysisManager that will manage the state for analyzing
   // this method/function.
-  AnalysisManager mgr(*this, D, Body);
+  AnalysisManager mgr(*this, D, Body, DisplayProgress);
   
   // Dispatch on the actions.  
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
@@ -544,11 +550,13 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
                                            const std::string& htmldir,
                                            bool VisGraphviz, bool VisUbi,
                                            bool trim,
-                                           bool analyzeAll) {
+                                           bool analyzeAll,
+                                           bool displayProgress) {
   
   llvm::OwningPtr<AnalysisConsumer>
   C(new AnalysisConsumer(diags, pp, ppf, lopts, fname, htmldir, SM, DC,
-                         VisGraphviz, VisUbi, trim, analyzeAll));
+                         VisGraphviz, VisUbi, trim, analyzeAll,
+                         displayProgress));
   
   for ( ; Beg != End ; ++Beg)
     switch (*Beg) {

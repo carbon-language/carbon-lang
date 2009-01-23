@@ -44,7 +44,8 @@ ASTConsumer* CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
                                     bool VisualizeGraphViz,
                                     bool VisualizeUbi,
                                     bool VizTrimGraph,                                    
-                                    bool AnalyzeAll);
+                                    bool AnalyzeAll,
+                                    bool DisplayProgress);
 } // end clang namespace
 
 #endif
