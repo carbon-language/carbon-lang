@@ -113,6 +113,7 @@ struct disklabel_ops disklabel64_ops = {
   .labelsize = sizeof(struct disklabel_ops)
 };
 
-// PR clang/3377
+// PR clang/3378
 int bitwidth[] = { [(long long int)1] = 5, [(short int)2] = 2 };
 int a[]= { [sizeof(int)] = 0 };
+int a2[]= { [0 ... sizeof(int)] = 0 };

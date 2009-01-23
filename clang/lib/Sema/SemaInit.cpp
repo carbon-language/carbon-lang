@@ -626,6 +626,7 @@ CheckArrayDesignatorExpr(Sema &Self, Expr *Index, llvm::APSInt &Value) {
     return Self.Diag(Loc, diag::err_array_designator_negative)
       << Value.toString(10) << Index->getSourceRange();
 
+  Value.setIsUnsigned(true);
   return false;
 }
 
