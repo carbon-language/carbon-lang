@@ -44,6 +44,7 @@ void f3() {
 void f4() {
   int a[] = { 1, 2, 3};
   int b[3] = { 1, 2 };
+  struct s c[] = {{1,{1}}};
 }
 
 // Struct variable in lvalue context.
