@@ -1684,7 +1684,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   // assignment, to the types of the corresponding parameter, ...
   unsigned NumArgsInProto = Proto->getNumArgs();
   unsigned NumArgsToCheck = NumArgs;
-  
+  bool Invalid = false;
+
   // If too few arguments are available (and we don't have default
   // arguments for the remaining parameters), don't make the call.
   if (NumArgs < NumArgsInProto) {
@@ -1707,6 +1708,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                        Args[NumArgs-1]->getLocEnd());
       // This deletes the extra arguments.
       Call->setNumArgs(NumArgsInProto);
+      Invalid = true;
     }
     NumArgsToCheck = NumArgsInProto;
   }
@@ -1746,7 +1748,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     }
   }
 
-  return false;
+  return Invalid;
 }
 
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.

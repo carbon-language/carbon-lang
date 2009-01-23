@@ -257,19 +257,24 @@ public:
       if (DeclKind >= FunctionFirst && DeclKind <= FunctionLast)
         return IDNS_Ordinary;
       assert(0 && "Unknown decl kind!");
-    case ImplicitParam:
+    case OverloadedFunction:
     case Typedef:
+    case TemplateTypeParm:
+    case EnumConstant:
     case Var:
+    case CXXClassVar:
+    case ImplicitParam:
     case ParmVar:
     case OriginalParmVar:
-    case EnumConstant:
     case NonTypeTemplateParm:
+    case ObjCMethod:
+    case ObjCContainer:
+    case ObjCCategory:
+    case ObjCProtocol:
     case ObjCInterface:
+    case ObjCCategoryImpl:
+    case ObjCProperty:
     case ObjCCompatibleAlias:
-    case OverloadedFunction:
-    case CXXMethod:
-    case CXXConversion:
-    case CXXClassVar:
       return IDNS_Ordinary;
 
     case Field:
@@ -279,9 +284,9 @@ public:
 
     case Record:
     case CXXRecord:
-    case TemplateTypeParm:
     case Enum:
       return IDNS_Tag;
+
     case Namespace:
       return IdentifierNamespace(IDNS_Tag | IDNS_Ordinary);
     }
