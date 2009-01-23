@@ -142,8 +142,9 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
       CheckStructUnionTypes(IList, DeclType, RD->field_begin(), 
                             SubobjectIsDesignatorContext, Index);
     } else if (DeclType->isArrayType()) {
-      // FIXME: Is 32 always large enough for array indices?
-      llvm::APSInt Zero(32, false);
+      llvm::APSInt Zero(
+                      SemaRef->Context.getTypeSize(SemaRef->Context.getSizeType()),
+                      false);
       CheckArrayType(IList, DeclType, Zero, SubobjectIsDesignatorContext, Index);
     }
     else
@@ -269,15 +270,13 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
     return;
   }
 
-  // FIXME: Will 32 bits always be enough? I hope so.
-  const unsigned ArraySizeBits = 32;
-
   // We might know the maximum number of elements in advance.
-  llvm::APSInt maxElements(ArraySizeBits, 0);
+  llvm::APSInt maxElements(elementIndex.getBitWidth(), 0);
   bool maxElementsKnown = false;
   if (const ConstantArrayType *CAT =
         SemaRef->Context.getAsConstantArrayType(DeclType)) {
     maxElements = CAT->getSize();
+    elementIndex.extOrTrunc(maxElements.getBitWidth());
     maxElementsKnown = true;
   }
 
@@ -299,6 +298,11 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
         hadError = true;
         continue;
       }
+
+      if (elementIndex.getBitWidth() > maxElements.getBitWidth())
+        maxElements.extend(elementIndex.getBitWidth());
+      else if (elementIndex.getBitWidth() < maxElements.getBitWidth())
+        elementIndex.extend(maxElements.getBitWidth());
 
       // If the array is of incomplete type, keep track of the number of
       // elements in the initializer.
@@ -325,7 +329,7 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
   if (DeclType->isIncompleteArrayType()) {
     // If this is an incomplete array type, the actual type needs to
     // be calculated here.
-    llvm::APInt Zero(ArraySizeBits, 0);
+    llvm::APInt Zero(maxElements.getBitWidth(), 0);
     if (maxElements == Zero) {
       // Sizing an array implicitly to zero is not allowed by ISO C,
       // but is supported by GNU.
@@ -563,6 +567,7 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
   
   if (isa<ConstantArrayType>(AT)) {
     llvm::APSInt MaxElements(cast<ConstantArrayType>(AT)->getSize(), false);
+    DesignatedIndex.extOrTrunc(MaxElements.getBitWidth());
     if (DesignatedIndex >= MaxElements) {
       SemaRef->Diag(IndexExpr->getSourceRange().getBegin(),
                     diag::err_array_designator_too_large)
