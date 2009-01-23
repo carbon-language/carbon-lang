@@ -108,8 +108,8 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 }
 
 QualType ElementRegion::getRValueType(ASTContext& C) const {
-  QualType T = getArrayRegion()->getLValueType(C);
-  // FIXME: Should ArrayType be considered an LValue or RValue type?
+  QualType T = getArrayRegion()->getRValueType(C);
+
   if (isa<ArrayType>(T.getTypePtr())) {
     ArrayType* AT = cast<ArrayType>(T.getTypePtr());
     return AT->getElementType();
