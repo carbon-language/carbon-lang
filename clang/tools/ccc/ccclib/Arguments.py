@@ -15,7 +15,9 @@ class Option(object):
     """Option - Root option class."""
 
     def __init__(self, name, group=None, alias=None,
-                 isLinkerInput=False, noOptAsInput=False):
+                 isLinkerInput=False, noOptAsInput=False,
+                 forceSeparateRender=False,
+                 forceJoinedRender=False):
         assert group is None or isinstance(group, OptionGroup)
         # Multi-level aliases are not supported, and alias options
         # cannot have groups. This just simplifies option tracking, it
@@ -28,6 +30,8 @@ class Option(object):
         self.alias = alias
         self.isLinkerInput = isLinkerInput
         self.noOptAsInput = noOptAsInput
+        self.forceSeparateRender = forceSeparateRender
+        self.forceJoinedRender = forceJoinedRender
 
     def getUnaliasedOption(self):
         if self.alias:
@@ -233,6 +237,9 @@ class JoinedValueArg(ValueArg):
         return args.getInputString(self.index)[len(self.opt.name):]
 
     def render(self, args):
+        if self.opt.forceSeparateRender:
+            return [self.opt.getRenderName(),
+                    self.getValue(args)]
         return [self.opt.getRenderName() + self.getValue(args)]
 
     def renderAsInput(self, args):
@@ -248,6 +255,8 @@ class SeparateValueArg(ValueArg):
         return args.getInputString(self.index, offset=1)
 
     def render(self, args):
+        if self.opt.forceJoinedRender:
+            return [self.opt.getRenderName() + self.getValue(args)]
         return [self.opt.getRenderName(), self.getValue(args)]
 
     def renderAsInput(self, args):
@@ -520,7 +529,10 @@ class OptionParser:
         # Pipeline control
         self.hashHashHashOption = self.addOption(FlagOption('-###'))
         self.EOption = self.addOption(FlagOption('-E'))
+
         self.SOption = self.addOption(FlagOption('-S'))
+        self.addOption(FlagOption('--assemble', alias=self.SOption))
+
         self.cOption = self.addOption(FlagOption('-c'))
         self.combineOption = self.addOption(FlagOption('-combine'))
         self.noIntegratedCPPOption = self.addOption(FlagOption('-no-integrated-cpp'))
@@ -567,6 +579,8 @@ class OptionParser:
 
         ####
         # Bring on the random garbage.
+
+        self.sOption = self.addOption(FlagOption('-s'))
 
         self.MGroup = OptionGroup('-M')
         self.MOption = self.addOption(FlagOption('-M', self.MGroup))
@@ -707,6 +721,10 @@ class OptionParser:
         # stuff to cc1, but the way the ld spec is constructed it
         # wants to see -A options but only as a separate arg.
         self.AOption = self.addOption(JoinedOrSeparateOption('-A'))
+        self.addOption(JoinedOption('--assert=', alias=self.AOption, 
+                                    forceSeparateRender=True))
+        self.addOption(SeparateOption('--assert', alias=self.AOption))
+
         self.DOption = self.addOption(JoinedOrSeparateOption('-D'))
         self.FOption = self.addOption(JoinedOrSeparateOption('-F'))
         self.IOption = self.addOption(JoinedOrSeparateOption('-I'))
@@ -737,7 +755,7 @@ class OptionParser:
         # FIXME: Naming convention.
         self.dGroup = OptionGroup('-d')
         self.dAOption = self.addOption(FlagOption('-dA', self.dGroup))
-        self.addOption(FlagOption('-d', self.dGroup))
+        self.dOption = self.addOption(FlagOption('-d', self.dGroup))
 
         # Use a group for this in anticipation of adding more -d
         # options explicitly. Note that we don't put many -d things in
@@ -766,6 +784,12 @@ class OptionParser:
         self.fastcpOption = self.addOption(FlagOption('-fastcp', self.fGroup))
 
         self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext', self.fGroup))
+        
+        self.f_classpathOption = self.addOption(JoinedOption('-fclasspath=', self.fGroup))
+        self.addOption(JoinedOption('--classpath=', alias=self.f_classpathOption))
+        self.addOption(SeparateOption('--classpath', alias=self.f_classpathOption,
+                                      forceJoinedRender=True))
+        
         self.f_constantCfstringsOption = self.addOption(FlagOption('-fconstant-cfstrings', self.fGroup))
         self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile', self.fGroup))
         self.f_debugPassArgumentsOption = self.addOption(FlagOption('-fdebug-pass-arguments', self.fGroup))
@@ -835,6 +859,8 @@ class OptionParser:
         # FIXME: Why does Darwin send -a* to cc1?
         self.aGroup = OptionGroup('-a')
         self.ansiOption = self.addOption(FlagOption('-ansi', self.aGroup))
+        self.addOption(FlagOption('--ansi', alias=self.ansiOption))
+
         self.aOption = self.addOption(JoinedOption('-a', self.aGroup))
 
         self.pedanticGroup = OptionGroup('-pedantic')
