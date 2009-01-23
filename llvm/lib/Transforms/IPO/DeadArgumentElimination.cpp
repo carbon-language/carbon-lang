@@ -182,7 +182,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     if (!TheCall) return false;   // Not a direct call site?
 
     // The addr of this function is passed to the call.
-    if (I.getOperandNo() != 0) return false;
+    if (!CS.isCallee(I)) return false;
   }
 
   // Okay, we know we can transform this function if safe.  Scan its body
@@ -438,13 +438,13 @@ void DAE::SurveyFunction(Function &F) {
   for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
     // If the function is PASSED IN as an argument, its address has been
     // taken.
-    if (I.getOperandNo() != 0) {
+    CallSite CS = CallSite::get(*I);
+    if (!CS.getInstruction() || !CS.isCallee(I)) {
       MarkLive(F);
       return;
     }
 
     // If this use is anything other than a call site, the function is alive.
-    CallSite CS = CallSite::get(*I);
     Instruction *TheCall = CS.getInstruction();
     if (!TheCall) {   // Not a direct call site?
       MarkLive(F);
