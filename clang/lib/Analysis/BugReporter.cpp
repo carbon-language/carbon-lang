@@ -738,19 +738,20 @@ void BugReporter::EmitWarning(BugReport& R) {
   PathDiagnosticClient* PD = getPathDiagnosticClient();
   
   if (PD && !D->empty()) { 
-    PD->HandlePathDiagnostic(D.take());
-    return;    
+    PD->HandlePathDiagnostic(D.take());    
+    // Output a diagnostic summarizing the report.
+    Diagnostic& Diag = getDiagnostic();
+    Diag.Report(R.getLocation(getSourceManager()),
+                Diag.getCustomDiagID(Diagnostic::Warning,R.getDescription()));
+    return;
   }
   
-  // We don't have a PathDiagnosticClient, but we can still emit a single
+  // This isn't a bug with a path, but we can still emit a single
   // line diagnostic.  Determine the location.
-  
   FullSourceLoc L = D->empty() ? R.getLocation(getSourceManager())
                                : D->back()->getLocation();
   
-  
-  // Determine the range.
-  
+  // Determine the range.  
   const SourceRange *Beg, *End;
 
   if (!D->empty()) {
@@ -768,6 +769,10 @@ void BugReporter::EmitWarning(BugReport& R) {
 
     D->push_back(piece);
     PD->HandlePathDiagnostic(D.take());
+    
+    // Output a diagnostic summarizing the report.
+    Diagnostic& Diag = getDiagnostic();
+    Diag.Report(L,Diag.getCustomDiagID(Diagnostic::Warning,R.getDescription()));
     return;
   }
   else {
