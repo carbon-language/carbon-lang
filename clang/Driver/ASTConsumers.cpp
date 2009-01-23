@@ -480,9 +480,6 @@ namespace {
         }
       } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
         PrintTypeDefDecl(TD);
-      } else if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-        Out << "Read top-level variable decl: '" << ND->getNameAsString()
-            << "'\n";
       } else if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
         Out << "Read objc interface '" << OID->getNameAsString() << "'\n";
       } else if (ObjCProtocolDecl *OPD = dyn_cast<ObjCProtocolDecl>(D)) {
@@ -509,6 +506,9 @@ namespace {
         Out << "Read objc category implementation decl\n";
       } else if (isa<LinkageSpecDecl>(D)) {
         Out << "Read linkage spec decl\n";
+      } else if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+        Out << "Read top-level variable decl: '" << ND->getNameAsString()
+            << "'\n";
       } else {
         assert(0 && "Unknown decl type!");
       }
