@@ -2982,5 +2982,6 @@ CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
 
 CodeGen::CGObjCRuntime *
 CodeGen::CreateMacNonFragileABIObjCRuntime(CodeGen::CodeGenModule &CGM) {
-  return new CGObjCNonFragileABIMac(CGM);
+  return 0;
+  // return new CGObjCNonFragileABIMac(CGM);
 }
