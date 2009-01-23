@@ -1388,7 +1388,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
   
   for (SmallPtrSet<LiveInterval*, 8>::iterator LI = split.begin(),
        LE = split.end(); LI != LE; ++LI) {
-    DenseMap<VNInfo*, unsigned > VNUseCount;
+    DenseMap<VNInfo*, SmallPtrSet<MachineInstr*, 4> > VNUseCount;
     
     for (MachineRegisterInfo::use_iterator UI = MRI->use_begin((*LI)->reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
@@ -1396,27 +1396,55 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
       index = LiveIntervals::getUseIndex(index);
       
       const LiveRange* LR = (*LI)->getLiveRangeContaining(index);
-      VNUseCount[LR->valno]++;
+      VNUseCount[LR->valno].insert(&*UI);
     }
     
     for (LiveInterval::vni_iterator VI = (*LI)->vni_begin(),
          VE = (*LI)->vni_end(); VI != VE; ++VI) {
       VNInfo* CurrVN = *VI;
       if (CurrVN->hasPHIKill) continue;
-      if (VNUseCount[CurrVN] > 0) continue;
       
       unsigned DefIdx = CurrVN->def;
       if (DefIdx == ~0U || DefIdx == ~1U) continue;
-      
+    
       MachineInstr* DefMI = LIs->getInstructionFromIndex(DefIdx);
       int FrameIndex;
       if (!TII->isLoadFromStackSlot(DefMI, FrameIndex)) continue;
       
-      LIs->RemoveMachineInstrFromMaps(DefMI);
-      (*LI)->removeValNo(CurrVN);
-      DefMI->eraseFromParent();
-      NumDeadSpills++;
-      changed = true;
+      if (VNUseCount[CurrVN].size() == 0) {
+        LIs->RemoveMachineInstrFromMaps(DefMI);
+        (*LI)->removeValNo(CurrVN);
+        DefMI->eraseFromParent();
+        NumDeadSpills++;
+        changed = true;
+      } else {
+        bool NonRestore = false;
+        for (SmallPtrSet<MachineInstr*, 4>::iterator UI = 
+             VNUseCount[CurrVN].begin(), UE = VNUseCount[CurrVN].end();
+             UI != UI; ++UI) {
+          int StoreFrameIndex;
+          unsigned StoreVReg = TII->isStoreToStackSlot(*UI, StoreFrameIndex);
+          if (StoreVReg != (*LI)->reg || StoreFrameIndex != FrameIndex) {
+            NonRestore = false;
+            break;
+          }
+        }
+        
+        if (NonRestore) continue;
+        
+        for (SmallPtrSet<MachineInstr*, 4>::iterator UI = 
+             VNUseCount[CurrVN].begin(), UE = VNUseCount[CurrVN].end();
+             UI != UI; ++UI) {
+          LIs->RemoveMachineInstrFromMaps(*UI);
+          (*UI)->eraseFromParent();
+        }
+        
+        LIs->RemoveMachineInstrFromMaps(DefMI);
+        (*LI)->removeValNo(CurrVN);
+        DefMI->eraseFromParent();
+        NumDeadSpills++;
+        changed = true;
+      }
     }
   }
   
