@@ -109,6 +109,8 @@ namespace llvm {
     std::string getFilename() const  { return getStringField(3); }
     std::string getDirectory() const { return getStringField(4); }
     std::string getProducer() const  { return getStringField(5); }
+    bool isOptimized() const         { return getUnsignedField(6); }
+    std::string getFlags() const     { return getStringField(7); }
 
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
@@ -372,7 +374,9 @@ namespace llvm {
     DICompileUnit CreateCompileUnit(unsigned LangID,
                                     const std::string &Filename,
                                     const std::string &Directory,
-                                    const std::string &Producer);
+                                    const std::string &Producer,
+                                    bool isOptimized = false,
+                                    const char *Flags = "");
 
     /// CreateEnumerator - Create a single enumerator value.
     DIEnumerator CreateEnumerator(const std::string &Name, uint64_t Val);

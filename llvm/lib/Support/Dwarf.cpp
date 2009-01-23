@@ -198,6 +198,8 @@ const char *AttributeString(unsigned Attribute) {
     case DW_AT_GNU_vector:                 return "DW_AT_GNU_vector";
     case DW_AT_lo_user:                    return "DW_AT_lo_user";
     case DW_AT_hi_user:                    return "DW_AT_hi_user";
+    case DW_AT_APPLE_optimized:            return "DW_AT_APPLE_optimized";
+    case DW_AT_APPLE_flags:                return "DW_AT_APPLE_flags";
   }
   assert(0 && "Unknown Dwarf Attribute");
   return "";

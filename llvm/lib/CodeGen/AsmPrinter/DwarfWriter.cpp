@@ -2781,6 +2781,11 @@ private:
       AddString(Die, DW_AT_name, DW_FORM_string, DIUnit.getFilename());
       if (!DIUnit.getDirectory().empty())
         AddString(Die, DW_AT_comp_dir, DW_FORM_string, DIUnit.getDirectory());
+      if (DIUnit.isOptimized())
+        AddUInt(Die, DW_AT_APPLE_optimized, DW_FORM_flag, 1);
+      const std::string &Flags = DIUnit.getFlags();
+      if (!Flags.empty())
+        AddString(Die, DW_AT_APPLE_flags, DW_FORM_string, Flags);
 
       CompileUnit *Unit = new CompileUnit(ID, Die);
       DW_CUs[DIUnit.getGV()] = Unit;

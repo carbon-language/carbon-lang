@@ -221,7 +221,11 @@ enum dwarf_constants {
   DW_AT_GNU_vector = 0x2107,
   DW_AT_lo_user = 0x2000,
   DW_AT_hi_user = 0x3fff,
- 
+
+  // Apple extensions.
+  DW_AT_APPLE_optimized = 0x3fe1,
+  DW_AT_APPLE_flags = 0x3fe2,
+
   // Attribute form encodings
   DW_FORM_addr = 0x01,
   DW_FORM_block2 = 0x03,

@@ -440,14 +440,18 @@ DISubrange DIFactory::GetOrCreateSubrange(int64_t Lo, int64_t Hi) {
 DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
                                            const std::string &Filename,
                                            const std::string &Directory,
-                                           const std::string &Producer) {
+                                           const std::string &Producer,
+                                           bool isOptimized,
+                                           const char *Flags) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_compile_unit),
     getCastToEmpty(GetOrCreateCompileUnitAnchor()),
     ConstantInt::get(Type::Int32Ty, LangID),
     GetStringConstant(Filename),
     GetStringConstant(Directory),
-    GetStringConstant(Producer)
+    GetStringConstant(Producer),
+    ConstantInt::get(Type::Int1Ty, isOptimized),
+    GetStringConstant(Flags)
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
