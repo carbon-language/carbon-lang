@@ -709,6 +709,9 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
     case 'q': // Print SImode register
       // These only apply to registers, ignore on mem.
       break;
+    case 'P': // Don't print @PLT, but do print as memory.
+      printOperand(MI, OpNo, "mem");
+      return false;
     }
   }
   printMemReference(MI, OpNo);
