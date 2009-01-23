@@ -351,7 +351,7 @@ class Darwin_X86_CC1Tool(Tool):
             return 'cc1',False,False
         elif type is Types.ObjCType or type is Types.ObjCHeaderType:
             return 'cc1obj',True,False
-        elif type is Types.ObjCTypeNoPP or type is Types.ObjCHeaderNoPPTypeP:
+        elif type is Types.ObjCTypeNoPP or type is Types.ObjCHeaderNoPPType:
             return 'cc1obj',True,False
         elif type is Types.CXXType or type is Types.CXXHeaderType:
             return 'cc1plus',True,True
