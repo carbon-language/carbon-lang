@@ -1290,8 +1290,13 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       }
     }
 
+    // If we are joining two virtual registers and the resulting register
+    // class is more restrictive (fewer register, smaller size). Check if it's
+    // worth doing the merge.
     if (!SrcIsPhys && !DstIsPhys &&
-        !isWinToJoinCrossClass(LargeReg, SmallReg, Limit)) {
+        (isExtSubReg || DstRC->isASubClass()) &&
+        !isWinToJoinCrossClass(LargeReg, SmallReg,
+                               allocatableRCRegs_[NewRC].count())) {
       DOUT << "\tSrc/Dest are different register classes.\n";
       // Allow the coalescer to try again in case either side gets coalesced to
       // a physical register that's compatible with the other side. e.g.
