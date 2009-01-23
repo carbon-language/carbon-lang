@@ -234,6 +234,9 @@ public:
   // ClassnfABITy - LLVM for struct _class_t
   const llvm::StructType *ClassnfABITy;
   
+  // ClassnfABIPtrTy - LLVM for struct _class_t*
+  const llvm::Type *ClassnfABIPtrTy;
+  
   // IvarnfABITy - LLVM for struct _ivar_t
   const llvm::StructType *IvarnfABITy;
   
@@ -344,6 +347,8 @@ protected:
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
   { }
+  
+  virtual llvm::Constant *GenerateConstantString(const std::string &String);
 };
   
 class CGObjCMac : public CGObjCCommonMac {
@@ -476,8 +481,9 @@ private:
 
 public:
   CGObjCMac(CodeGen::CodeGenModule &cgm);
-  virtual llvm::Constant *GenerateConstantString(const std::string &String);
 
+  virtual llvm::Function *ModuleInitFunction();
+  
   virtual CodeGen::RValue GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                               QualType ResultType,
                                               Selector Sel,
@@ -511,7 +517,6 @@ public:
 
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
 
-  virtual llvm::Function *ModuleInitFunction();
   virtual llvm::Function *GetPropertyGetFunction();
   virtual llvm::Function *GetPropertySetFunction();
   virtual llvm::Function *EnumerationMutationFunction();
@@ -535,8 +540,83 @@ public:
 class CGObjCNonFragileABIMac : public CGObjCCommonMac {
 private:
   ObjCNonFragileABITypesHelper ObjCTypes;
+  llvm::GlobalVariable* ObjCEmptyCacheVar;
+  llvm::GlobalVariable* ObjCEmptyVtableVar;
+  
+  /// FinishNonFragileABIModule - Write out global data structures at the end of
+  /// processing a translation unit.
+  void FinishNonFragileABIModule();
+  
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
+  // FIXME. All stubs for now!
+  virtual llvm::Function *ModuleInitFunction();
+  
+  virtual CodeGen::RValue GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                                              QualType ResultType,
+                                              Selector Sel,
+                                              llvm::Value *Receiver,
+                                              bool IsClassMessage,
+                                              const CallArgList &CallArgs)
+    {return RValue::get(0);}
+  
+  virtual CodeGen::RValue 
+  GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                           QualType ResultType,
+                           Selector Sel,
+                           const ObjCInterfaceDecl *Class,
+                           llvm::Value *Receiver,
+                           bool IsClassMessage,
+                           const CallArgList &CallArgs){ return RValue::get(0);}
+  
+  virtual llvm::Value *GetClass(CGBuilderTy &Builder,
+                                const ObjCInterfaceDecl *ID){ return 0; }
+  
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel)
+    { return 0; }
+  
+  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
+                                         const ObjCContainerDecl *CD=0)
+    { return 0; }
+  
+  virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD)
+  { return; }
+  
+  virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
+  
+  virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
+                                           const ObjCProtocolDecl *PD)
+    { return 0; }
+  
+  virtual void GenerateProtocol(const ObjCProtocolDecl *PD){ return; }
+  
+  virtual llvm::Function *GetPropertyGetFunction(){ return 0; }
+  virtual llvm::Function *GetPropertySetFunction()
+    { return 0; }
+  virtual llvm::Function *EnumerationMutationFunction()
+    { return 0; }
+  
+  virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                         const Stmt &S)
+    { return; }
+  virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
+                             const ObjCAtThrowStmt &S)
+    { return; }
+  virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
+                                         llvm::Value *AddrWeakObj)
+    { return 0; }
+  virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
+                                  llvm::Value *src, llvm::Value *dst)
+    { return; } 
+  virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
+                                    llvm::Value *src, llvm::Value *dest)
+    { return; }
+  virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
+                                  llvm::Value *src, llvm::Value *dest)
+  { return; }
+  virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
+                                        llvm::Value *src, llvm::Value *dest)
+    { return; }
 };
   
 } // end anonymous namespace
@@ -585,7 +665,8 @@ llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, Selector Sel) {
    };
 */
 
-llvm::Constant *CGObjCMac::GenerateConstantString(const std::string &String) {
+llvm::Constant *CGObjCCommonMac::GenerateConstantString(
+                                                  const std::string &String) {
   return CGM.GetAddrOfConstantCFString(String);
 }
 
@@ -2300,6 +2381,7 @@ CGObjCNonFragileABIMac::CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm)
   : CGObjCCommonMac(cgm),
   ObjCTypes(cgm)
 {
+  ObjCEmptyCacheVar = ObjCEmptyVtableVar = NULL;
   ObjCABI = 2;
 }
 
@@ -2862,12 +2944,12 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   CGM.getModule().addTypeName("struct._objc_protocol_list",
                               ProtocolListnfABITy);
   
-  // FIXME! Is this doing the right thing?
-  cast<llvm::OpaqueType>(ProtocolListTyHolder.get())->refineAbstractTypeTo(
-                                                        ProtocolListnfABITy);
-  
   // struct _objc_protocol_list*
   ProtocolListnfABIPtrTy = llvm::PointerType::getUnqual(ProtocolListnfABITy);
+  
+  // FIXME! Is this doing the right thing?
+  cast<llvm::OpaqueType>(ProtocolListTyHolder.get())->refineAbstractTypeTo(
+                                                      ProtocolListnfABIPtrTy);
   
   // struct _ivar_t {
   //   unsigned long int *offset;  // pointer to ivar offset location
@@ -2953,6 +3035,9 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   cast<llvm::OpaqueType>(ClassTyHolder.get())->refineAbstractTypeTo(
                                                                 ClassnfABITy);
   
+  // LLVM for struct _class_t *
+  ClassnfABIPtrTy = llvm::PointerType::getUnqual(ClassnfABITy);
+  
   // struct _category_t {
   //   const char * const name;
   //   struct _class_t *const cls;
@@ -2962,8 +3047,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   const struct _prop_list_t * const properties;
   // }
   CategorynfABITy = llvm::StructType::get(Int8PtrTy,
-                                          llvm::PointerType::getUnqual(
-                                                               ClassnfABITy),
+                                          ClassnfABIPtrTy,
                                           MethodListnfABIPtrTy,
                                           MethodListnfABIPtrTy,
                                           ProtocolListnfABIPtrTy,
@@ -2971,6 +3055,120 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                                           NULL);
   CGM.getModule().addTypeName("struct._category_t", CategorynfABITy);
                                           
+}
+
+llvm::Function *CGObjCNonFragileABIMac::ModuleInitFunction() { 
+  FinishNonFragileABIModule();
+  
+  return NULL;
+}
+
+void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
+  // nonfragile abi has no module definition.
+  std::vector<llvm::Constant*> Used;
+  for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(), 
+       e = UsedGlobals.end(); i != e; ++i) {
+    Used.push_back(llvm::ConstantExpr::getBitCast(*i, ObjCTypes.Int8PtrTy));
+  }
+  
+  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.Int8PtrTy, Used.size());
+  llvm::GlobalValue *GV = 
+  new llvm::GlobalVariable(AT, false,
+                           llvm::GlobalValue::AppendingLinkage,
+                           llvm::ConstantArray::get(AT, Used),
+                           "llvm.used", 
+                           &CGM.getModule());
+  
+  GV->setSection("llvm.metadata");
+  
+}
+
+void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
+  std::string ClassName = ID->getNameAsString();
+  if (!ObjCEmptyCacheVar) {
+    ObjCEmptyCacheVar = new llvm::GlobalVariable(
+                                            ObjCTypes.CachePtrTy,
+                                            false,
+                                            llvm::GlobalValue::ExternalLinkage,
+                                            0,
+                                            "\01_objc_empty_cache",
+                                            &CGM.getModule());
+    UsedGlobals.push_back(ObjCEmptyCacheVar);
+    
+    ObjCEmptyVtableVar = new llvm::GlobalVariable(
+                            llvm::PointerType::getUnqual(
+                                                  ObjCTypes.ImpnfABITy),
+                            false,
+                            llvm::GlobalValue::ExternalLinkage,
+                            0,
+                            "\01_objc_empty_vtable",
+                            &CGM.getModule());
+    UsedGlobals.push_back(ObjCEmptyVtableVar);
+  }
+  
+  std::vector<llvm::Constant*> Values(11); // 11 for 64bit targets!
+  // Generate following meta-data:
+  // struct _class_ro_t {
+  //   uint32_t const flags;
+  //   uint32_t const instanceStart;
+  //   uint32_t const instanceSize;
+  //   uint32_t const reserved;  // only when building for 64bit targets
+  //   const uint8_t * const ivarLayout;
+  //   const char *const name;
+  //   const struct _method_list_t * const baseMethods;
+  //   const struct _objc_protocol_list *const baseProtocols;
+  //   const struct _ivar_list_t *const ivars;
+  //   const uint8_t * const weakIvarLayout;
+  //   const struct _prop_list_t * const properties;
+  // }
+  Values[ 0] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
+  Values[ 1] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
+  Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
+  Values[ 3] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
+  // FIXME. For 64bit targets add 0 here.
+  Values[ 4] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+  Values[ 5] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+  Values[ 6] = llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
+  Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
+  Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
+  Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+  Values[10] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
+                                                   Values);
+  llvm::GlobalVariable *CLASS_RO_GV =
+    new llvm::GlobalVariable(ObjCTypes.ClassRonfABITy, false,
+                           llvm::GlobalValue::InternalLinkage,
+                           Init,
+                           std::string("\01l_OBJC_CLASS_RO_$_")+ClassName,
+                           &CGM.getModule());
+  CLASS_RO_GV->setSection(".section __DATA,__data,regular,no_dead_strip");
+  UsedGlobals.push_back(CLASS_RO_GV);
+  
+  // Generate following meta-data:
+  // struct _class_t {
+  //   struct _class_t *isa;
+  //   struct _class_t * const superclass;
+  //   void *cache;
+  //   IMP *vtable;
+  //   struct class_ro_t *ro;
+  // }
+  Values.resize(5);
+  Values[0] = llvm::Constant::getNullValue(ObjCTypes.ClassnfABIPtrTy);
+  Values[1] = llvm::Constant::getNullValue(ObjCTypes.ClassnfABIPtrTy);
+  Values[2] = ObjCEmptyCacheVar;  // &ObjCEmptyCacheVar
+  Values[3] = ObjCEmptyVtableVar; // &ObjCEmptyVtableVar
+  Values[4] = CLASS_RO_GV;                 // &CLASS_RO_GV
+  Init = llvm::ConstantStruct::get(ObjCTypes.ClassnfABITy, Values);
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                           llvm::GlobalValue::ExternalLinkage,
+                           Init,
+                           std::string("\01_OBJC_CLASS_$_")+ClassName,
+                           &CGM.getModule());
+  GV->setSection(".section __DATA,__data,regular,no_dead_strip");
+  UsedGlobals.push_back(GV);
+  // FIXME! why?
+  GV->setAlignment(32);
 }
 
 /* *** */
@@ -2982,6 +3180,5 @@ CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
 
 CodeGen::CGObjCRuntime *
 CodeGen::CreateMacNonFragileABIObjCRuntime(CodeGen::CodeGenModule &CGM) {
-  return 0;
-  // return new CGObjCNonFragileABIMac(CGM);
+  return new CGObjCNonFragileABIMac(CGM);
 }
