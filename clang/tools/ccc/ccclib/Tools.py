@@ -989,14 +989,15 @@ class Darwin_X86_LinkTool(Tool):
 
         # FIXME: gcc has %{x} in here. How could this ever happen?
         # Cruft?
-        arglist.addLastArg(cmd_args, arglist.parser.dGroup)
-        arglist.addLastArg(cmd_args, arglist.parser.tOption)
-        arglist.addLastArg(cmd_args, arglist.parser.ZOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.dOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.sOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.tOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.ZOption)
         arglist.addAllArgs(cmd_args, arglist.parser.uGroup)
-        arglist.addLastArg(cmd_args, arglist.parser.AOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.AOption)
         arglist.addLastArg(cmd_args, arglist.parser.eOption)
-        arglist.addLastArg(cmd_args, arglist.parser.mOption)
-        arglist.addLastArg(cmd_args, arglist.parser.rOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.mOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.rOption)
 
         cmd_args.extend(arglist.render(output))
 
