@@ -56,11 +56,11 @@ ANALYSIS_STORE(BasicStore, "basic", "Use basic analyzer store")
 ANALYSIS_STORE(RegionStore, "region", "Use region-based analyzer store")
 
 #ifndef ANALYSIS_DIAGNOSTICS
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN)
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)
 #endif
 
-ANALYSIS_DIAGNOSTICS(HTML,  "html",  "Output analysis results using HTML",   CreateHTMLDiagnosticClient)
-ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", CreatePlistDiagnosticClient)
+ANALYSIS_DIAGNOSTICS(HTML,  "html",  "Output analysis results using HTML",   CreateHTMLDiagnosticClient, false)
+ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", CreatePlistDiagnosticClient, true)
 
 #undef ANALYSIS
 #undef ANALYSIS_STORE

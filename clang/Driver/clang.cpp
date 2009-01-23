@@ -239,7 +239,7 @@ static llvm::cl::opt<AnalysisDiagClients>
 AnalysisDiagOpt(llvm::cl::desc("SCA Output Options:"),
                 llvm::cl::init(PD_HTML),
                 llvm::cl::values(
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN)\
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREATE)\
 clEnumValN(PD_##NAME, "analyzer-output-" CMDFLAG, DESC),
 #include "Analyses.def"
 clEnumValEnd));                                

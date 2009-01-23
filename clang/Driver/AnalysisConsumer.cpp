@@ -207,7 +207,7 @@ namespace {
       if (C.PD.get() == 0 && !C.HTMLDir.empty()) {
         switch (C.DC) {
           default:
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN)\
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)\
 case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
 #include "Analyses.def"
         }
@@ -288,6 +288,15 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
         CreateConstraintMgr = ManagerRegistry::ConstraintMgrCreator;
       else
         CreateConstraintMgr = CreateBasicConstraintManager;
+      
+      // Some DiagnosticClients should be created all the time instead of
+      // lazily.  Create those now.
+      switch (C.DC) {
+        default: break;
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)\
+case PD_##NAME: if (AUTOCREATE) getPathDiagnosticClient(); break;
+#include "Analyses.def"
+      }      
     }
 
   };

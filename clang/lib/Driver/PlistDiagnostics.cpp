@@ -50,17 +50,17 @@ clang::CreatePlistDiagnosticClient(const std::string& s,
 }
 
 static void AddFID(FIDMap &FIDs, llvm::SmallVectorImpl<FileID> &V,
-                   SourceManager& SM, SourceLocation L) {
+                   SourceManager* SM, SourceLocation L) {
 
-  FileID FID = SM.getFileID(SM.getInstantiationLoc(L));
+  FileID FID = SM->getFileID(SM->getInstantiationLoc(L));
   FIDMap::iterator I = FIDs.find(FID);
   if (I != FIDs.end()) return;
   FIDs[FID] = V.size();
   V.push_back(FID);
 }
 
-static unsigned GetFID(const FIDMap& FIDs, SourceManager& SM, SourceLocation L){
-  FileID FID = SM.getFileID(SM.getInstantiationLoc(L));
+static unsigned GetFID(const FIDMap& FIDs, SourceManager* SM, SourceLocation L){
+  FileID FID = SM->getFileID(SM->getInstantiationLoc(L));
   FIDMap::const_iterator I = FIDs.find(FID);
   assert(I != FIDs.end());
   return I->second;
@@ -72,21 +72,21 @@ static llvm::raw_ostream& Indent(llvm::raw_ostream& o, const unsigned indent) {
   return o;
 }
 
-static void EmitLocation(llvm::raw_ostream& o, SourceManager& SM,
+static void EmitLocation(llvm::raw_ostream& o, SourceManager* SM,
                          SourceLocation L, const FIDMap& FM,
                          const unsigned indent) {
 
   Indent(o, indent) << "<dict>\n";
   Indent(o, indent) << " <key>line</key><integer>"
-                    << SM.getInstantiationLineNumber(L) << "</integer>\n";
+                    << SM->getInstantiationLineNumber(L) << "</integer>\n";
   Indent(o, indent) << " <key>col</key><integer>"
-                    << SM.getInstantiationColumnNumber(L) << "</integer>\n";
+                    << SM->getInstantiationColumnNumber(L) << "</integer>\n";
   Indent(o, indent) << " <key>file</key><integer>"
                     << GetFID(FM, SM, L) << "</integer>\n";
   Indent(o, indent) << "</dict>\n";
 }
 
-static void EmitRange(llvm::raw_ostream& o, SourceManager& SM, SourceRange R,
+static void EmitRange(llvm::raw_ostream& o, SourceManager* SM, SourceRange R,
                       const FIDMap& FM, const unsigned indent) {
  
   Indent(o, indent) << "<array>\n";
@@ -96,7 +96,7 @@ static void EmitRange(llvm::raw_ostream& o, SourceManager& SM, SourceRange R,
 }
 
 static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P, 
-                       const FIDMap& FM, SourceManager& SM) {
+                       const FIDMap& FM, SourceManager* SM) {
   
   unsigned indent = 2;
   Indent(o, indent) << "<dict>\n";
@@ -154,7 +154,10 @@ PlistDiagnostics::~PlistDiagnostics() {
   // ranges of the diagnostics.
   FIDMap FM;
   llvm::SmallVector<FileID, 10> Fids;
-  SourceManager& SM = (*BatchedDiags.begin())->begin()->getLocation().getManager();
+  SourceManager* SM = 0;
+  
+  if (!BatchedDiags.empty())  
+    SM = &(*BatchedDiags.begin())->begin()->getLocation().getManager();
 
   for (std::vector<const PathDiagnostic*>::iterator DI = BatchedDiags.begin(),
        DE = BatchedDiags.end(); DI != DE; ++DI) {
@@ -195,7 +198,7 @@ PlistDiagnostics::~PlistDiagnostics() {
   
   for (llvm::SmallVectorImpl<FileID>::iterator I=Fids.begin(), E=Fids.end();
        I!=E; ++I)
-    o << "  <string>" << SM.getFileEntryForID(*I)->getName() << "</string>\n";    
+    o << "  <string>" << SM->getFileEntryForID(*I)->getName() << "</string>\n";    
   
   o << " </array>\n"
        " <key>diagnostics</key>\n"
