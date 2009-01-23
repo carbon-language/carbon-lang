@@ -311,6 +311,7 @@ public:
   void ActOnUninitializedDecl(DeclTy *dcl);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
+  virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D);
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, DeclTy *D);
   virtual void ObjCActOnStartOfMethodDef(Scope *S, DeclTy *D);

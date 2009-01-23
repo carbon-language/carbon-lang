@@ -223,6 +223,13 @@ public:
     return Group;
   }
 
+  /// @brief Indicates that all K&R-style parameter declarations have
+  /// been parsed prior to a function definition.
+  /// @param S  The function prototype scope.
+  /// @param D  The function declarator.
+  virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D) {
+  }
+
   /// ActOnStartOfFunctionDef - This is called at the start of a function
   /// definition, instead of calling ActOnDeclarator.  The Declarator includes
   /// information about formal arguments that are part of this function.

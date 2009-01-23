@@ -39,3 +39,7 @@ void t13() {
 int t14() {
   return; // expected-warning {{non-void function 't14' should return a value}}
 }
+
+// <rdar://problem/6097326>
+y(y) { return y; } // expected-warning{{parameter 'y' was not declared, defaulting to type 'int'}} \
+                   // expected-warning{{type specifier missing, defaults to 'int'}}

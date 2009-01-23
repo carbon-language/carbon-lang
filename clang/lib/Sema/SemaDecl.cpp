@@ -2633,8 +2633,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 
 }
 
-Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
-  assert(getCurFunctionDecl() == 0 && "Function parsing confused");
+void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D) {
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
@@ -2654,10 +2653,19 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
                            PrevSpec);
         Declarator ParamD(DS, Declarator::KNRTypeListContext);
         ParamD.SetIdentifier(FTI.ArgInfo[i].Ident, FTI.ArgInfo[i].IdentLoc);
-        FTI.ArgInfo[i].Param = ActOnParamDeclarator(FnBodyScope, ParamD);
+        FTI.ArgInfo[i].Param = ActOnParamDeclarator(S, ParamD);
       }
     }
-  } else {
+  } 
+}
+
+Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
+  assert(getCurFunctionDecl() == 0 && "Function parsing confused");
+  assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
+         "Not a function declarator!");
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+
+  if (FTI.hasPrototype) {
     // FIXME: Diagnose arguments without names in C. 
   }
   
