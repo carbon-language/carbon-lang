@@ -2746,6 +2746,17 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
           if (!lpointee->isVoidType())
             Diag(Loc, diag::ext_gnu_void_ptr)
               << lex->getSourceRange() << rex->getSourceRange();
+        } else if (rpointee->isFunctionType()) {
+          if (getLangOptions().CPlusPlus) {
+            Diag(Loc, diag::err_typecheck_pointer_arith_function_type)
+              << rex->getType() << rex->getSourceRange();
+            return QualType();
+          }
+          
+          // GNU extension: arithmetic on pointer to function
+          if (!lpointee->isFunctionType())
+            Diag(Loc, diag::ext_gnu_ptr_func_arith)
+              << lex->getType() << lex->getSourceRange();
         } else {
           Diag(Loc, diag::err_typecheck_sub_ptr_object)
             << rex->getType() << rex->getSourceRange();
