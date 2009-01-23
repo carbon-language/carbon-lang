@@ -255,7 +255,7 @@ void Diagnostic::ProcessDiag() {
 
   // Finally, report it.
   Client->HandleDiagnostic(DiagLevel, Info);
-  ++NumDiagnostics;
+  if (Client->IncludeInDiagnosticCounts()) ++NumDiagnostics;
 }
 
 
@@ -551,3 +551,9 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     }
   }
 }
+
+/// IncludeInDiagnosticCounts - This method (whose default implementation
+///  returns true) indicates whether the diagnostics handled by this
+///  DiagnosticClient should be included in the number of diagnostics
+///  reported by Diagnostic.
+bool DiagnosticClient::IncludeInDiagnosticCounts() const { return true; }

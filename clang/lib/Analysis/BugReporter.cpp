@@ -823,4 +823,46 @@ void BugReporter::EmitBasicReport(const char* name, const char* category,
   for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
     EmitWarning(*I);
 }
+
+void DiagCollector::HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                     const DiagnosticInfo &Info) {
+  
+  // FIXME: Use a map from diag::kind to BugType, instead of having just
+  //  one BugType.
+  const char *Desc = Info.getDiags()->getDescription(Info.getID());
+  Reports.push_back(DiagBugReport(Desc, D, Info.getLocation()));
+  DiagBugReport& R = Reports.back();
+  
+  for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
+    R.addRange(Info.getRange(i));
+  
+  // FIXME: This is losing/ignoring formatting.
+  for (unsigned i = 0, e = Info.getNumArgs(); i != e; ++i) {
+    switch (Info.getArgKind(i)) {
+      case Diagnostic::ak_std_string:   
+        R.addString(Info.getArgStdStr(i));
+        break;
+      case Diagnostic::ak_c_string:   
+        R.addString(Info.getArgCStr(i));
+        break;
+      case Diagnostic::ak_sint:
+        R.addString(llvm::itostr(Info.getArgSInt(i)));
+        break;
+      case Diagnostic::ak_uint:
+        R.addString(llvm::utostr_32(Info.getArgUInt(i)));
+        break;
+      case Diagnostic::ak_identifierinfo:
+        R.addString(Info.getArgIdentifier(i)->getName());
+        break;
+      case Diagnostic::ak_qualtype:
+      case Diagnostic::ak_declarationname: {
+        llvm::SmallString<64> Str;
+        Info.getDiags()->ConvertArgToString(Info.getArgKind(i),
+                                            Info.getRawArg(i), 0, 0, 0, 0, Str);
+        R.addString(std::string(Str.begin(), Str.end()));
+        break;
+      }
+    }
+  }
+}
                                   

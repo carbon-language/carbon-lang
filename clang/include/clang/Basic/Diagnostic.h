@@ -484,6 +484,12 @@ public:
 class DiagnosticClient {
 public:
   virtual ~DiagnosticClient();
+  
+  /// IncludeInDiagnosticCounts - This method (whose default implementation
+  ///  returns true) indicates whether the diagnostics handled by this
+  ///  DiagnosticClient should be included in the number of diagnostics
+  ///  reported by Diagnostic.
+  virtual bool IncludeInDiagnosticCounts() const;
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
