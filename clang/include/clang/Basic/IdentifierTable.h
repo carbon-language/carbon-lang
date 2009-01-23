@@ -122,14 +122,7 @@ public:
   /// can be used to cause the lexer to map identifiers to source-language
   /// tokens.
   tok::TokenKind getTokenID() const { return (tok::TokenKind)TokenID; }
-  void setTokenID(tok::TokenKind ID) {
-    TokenID = ID;
-  
-    if (ID != tok::identifier)
-      NeedsHandleIdentifier = 1;
-    else
-      RecomputeNeedsHandleIdentifier();
-  }
+  void setTokenID(tok::TokenKind ID) { TokenID = ID; }
   
   /// getPPKeywordID - Return the preprocessor keyword ID for this identifier.
   /// For example, "define" will return tok::pp_define.
@@ -225,7 +218,7 @@ private:
   void RecomputeNeedsHandleIdentifier() {
     NeedsHandleIdentifier =
       (isPoisoned() | hasMacroDefinition() | isCPlusPlusOperatorKeyword() |
-       isExtensionToken()) || getTokenID() != tok::identifier;
+       isExtensionToken());
   }
 };
 

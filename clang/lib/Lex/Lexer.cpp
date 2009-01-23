@@ -558,6 +558,10 @@ FinishIdentifier:
     // identifier table.
     IdentifierInfo *II = PP->LookUpIdentifierInfo(Result, IdStart);
     
+    // Change the kind of this identifier to the appropriate token kind, e.g.
+    // turning "for" into a keyword.
+    Result.setKind(II->getTokenID());
+    
     // Finally, now that we know we have an identifier, pass this off to the
     // preprocessor, which may macro expand it or something.
     if (II->isHandleIdentifierCase())

@@ -759,10 +759,6 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   if (II.isCPlusPlusOperatorKeyword())
     Identifier.setIdentifierInfo(0);
 
-  // Change the kind of this identifier to the appropriate token kind, e.g.
-  // turning "for" into a keyword.
-  Identifier.setKind(II.getTokenID());
-    
   // If this is an extension token, diagnose its use.
   // We avoid diagnosing tokens that originate from macro definitions.
   if (II.isExtensionToken() && Features.C99 && !DisableMacroExpansion)

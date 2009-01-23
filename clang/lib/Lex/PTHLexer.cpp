@@ -101,7 +101,13 @@ LexNextToken:
   if (IdentifierID) {
     MIOpt.ReadToken();
     IdentifierInfo *II = PTHMgr.GetIdentifierInfo(IdentifierID-1);
+    
     Tok.setIdentifierInfo(II);
+    
+    // Change the kind of this identifier to the appropriate token kind, e.g.
+    // turning "for" into a keyword.
+    Tok.setKind(II->getTokenID());
+    
     if (II->isHandleIdentifierCase())
       PP->HandleIdentifier(Tok);
     return;
