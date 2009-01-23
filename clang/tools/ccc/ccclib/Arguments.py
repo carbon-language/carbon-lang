@@ -499,48 +499,26 @@ class OptionParser:
 
         # Misc driver options
         self.addOption(FlagOption('-pass-exit-codes'))
-        self.addOption(FlagOption('--help'))
-        self.addOption(FlagOption('--target-help'))
-
         self.dumpspecsOption = self.addOption(FlagOption('-dumpspecs'))
         self.dumpversionOption = self.addOption(FlagOption('-dumpversion'))
         self.dumpmachineOption = self.addOption(FlagOption('-dumpmachine'))
         self.printSearchDirsOption = self.addOption(FlagOption('-print-search-dirs'))
-
-        self.printLibgccFileNameOption = OptionGroup('-print-libgcc-file-name')
-        self.addOption(FlagOption('-print-libgcc-file-name', self.printLibgccFileNameOption))
-        self.addOption(FlagOption('--print-libgcc-file-name', self.printLibgccFileNameOption))
-
-        self.printFileNameOption = OptionGroup('-print-file-name=')
-        self.addOption(JoinedOption('-print-file-name=', self.printFileNameOption))
-        self.addOption(JoinedOption('--print-file-name=', self.printFileNameOption))
-
-        self.printProgNameOption = OptionGroup('-print-prog-name=')
-        self.addOption(JoinedOption('-print-prog-name=', self.printProgNameOption))
-        self.addOption(JoinedOption('--print-prog-name=', self.printProgNameOption))
-
+        self.printLibgccFileNameOption = self.addOption(FlagOption('-print-libgcc-file-name'))
+        self.printFileNameOption = self.addOption(JoinedOption('-print-file-name='))
+        self.printProgNameOption = self.addOption(JoinedOption('-print-prog-name='))
         self.printMultiDirectoryOption = self.addOption(FlagOption('-print-multi-directory'))
         self.printMultiLibOption = self.addOption(FlagOption('-print-multi-lib'))
         self.addOption(FlagOption('-print-multi-os-directory'))
 
-        # Hmmm, who really takes this?
-        self.addOption(FlagOption('--version'))
-
         # Pipeline control
         self.hashHashHashOption = self.addOption(FlagOption('-###'))
         self.EOption = self.addOption(FlagOption('-E'))
-
         self.SOption = self.addOption(FlagOption('-S'))
-        self.addOption(FlagOption('--assemble', alias=self.SOption))
-
         self.cOption = self.addOption(FlagOption('-c'))
         self.combineOption = self.addOption(FlagOption('-combine'))
         self.noIntegratedCPPOption = self.addOption(FlagOption('-no-integrated-cpp'))
         self.pipeOption = self.addOption(FlagOption('-pipe'))
-
-        self.saveTempsOption = OptionGroup('-save-temps')
-        self.addOption(FlagOption('-save-temps', self.saveTempsOption))
-        self.addOption(FlagOption('--save-temps', self.saveTempsOption))
+        self.saveTempsOption = self.addOption(FlagOption('-save-temps'))
 
         # FIXME: Error out if this is used.
         self.addOption(JoinedOption('-specs='))
@@ -721,10 +699,6 @@ class OptionParser:
         # stuff to cc1, but the way the ld spec is constructed it
         # wants to see -A options but only as a separate arg.
         self.AOption = self.addOption(JoinedOrSeparateOption('-A'))
-        self.addOption(JoinedOption('--assert=', alias=self.AOption, 
-                                    forceSeparateRender=True))
-        self.addOption(SeparateOption('--assert', alias=self.AOption))
-
         self.DOption = self.addOption(JoinedOrSeparateOption('-D'))
         self.FOption = self.addOption(JoinedOrSeparateOption('-F'))
         self.IOption = self.addOption(JoinedOrSeparateOption('-I'))
@@ -784,12 +758,7 @@ class OptionParser:
         self.fastcpOption = self.addOption(FlagOption('-fastcp', self.fGroup))
 
         self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext', self.fGroup))
-        
-        self.f_classpathOption = self.addOption(JoinedOption('-fclasspath=', self.fGroup))
-        self.addOption(JoinedOption('--classpath=', alias=self.f_classpathOption))
-        self.addOption(SeparateOption('--classpath', alias=self.f_classpathOption,
-                                      forceJoinedRender=True))
-        
+        self.f_classpathOption = self.addOption(JoinedOption('-fclasspath=', self.fGroup))        
         self.f_constantCfstringsOption = self.addOption(FlagOption('-fconstant-cfstrings', self.fGroup))
         self.f_createProfileOption = self.addOption(FlagOption('-fcreate-profile', self.fGroup))
         self.f_debugPassArgumentsOption = self.addOption(FlagOption('-fdebug-pass-arguments', self.fGroup))
@@ -833,7 +802,6 @@ class OptionParser:
         self.addOption(JoinedOption('-f', self.fGroup))
 
         self.coverageOption = self.addOption(FlagOption('-coverage'))
-        self.coverageOption2 = self.addOption(FlagOption('--coverage'))
 
         self.mGroup = OptionGroup('-m')
         self.m_32Option = self.addOption(FlagOption('-m32', self.mGroup))
@@ -859,7 +827,6 @@ class OptionParser:
         # FIXME: Why does Darwin send -a* to cc1?
         self.aGroup = OptionGroup('-a')
         self.ansiOption = self.addOption(FlagOption('-ansi', self.aGroup))
-        self.addOption(FlagOption('--ansi', alias=self.ansiOption))
 
         self.aOption = self.addOption(JoinedOption('-a', self.aGroup))
 
@@ -872,8 +839,6 @@ class OptionParser:
         self.ClangWGroup = OptionGroup('-W', self.WGroup)
 
         self.WallOption = self.addOption(FlagOption('-Wall', self.WGroup))
-        self.addOption(FlagOption('--all-warnings', alias=self.WallOption))
-
         self.addOption(FlagOption('-Wunused-macros', self.ClangWGroup))
         self.addOption(FlagOption('-Wfloat-equal', self.ClangWGroup))
         self.addOption(FlagOption('-Wreadonly-setter-attrs', self.ClangWGroup))
@@ -903,6 +868,31 @@ class OptionParser:
 
         # Clang static analyzer options (also see -WA,).
         self.analyzeOption = self.addOption(FlagOption('--analyze'))
+
+        # Long option handling (aliases).
+        self.addOption(FlagOption('--help'))
+        self.addOption(FlagOption('--target-help'))
+
+        self.addOption(FlagOption('--all-warnings', alias=self.WallOption))
+        self.addOption(FlagOption('--ansi', alias=self.ansiOption))
+        self.addOption(FlagOption('--assemble', alias=self.SOption))
+        self.addOption(SeparateOption('--assert', alias=self.AOption))
+        self.addOption(JoinedOption('--assert=', alias=self.AOption, 
+                                    forceSeparateRender=True))
+        self.addOption(JoinedOption('--classpath=', alias=self.f_classpathOption))
+        self.addOption(SeparateOption('--classpath', alias=self.f_classpathOption,
+                                      forceJoinedRender=True))
+        self.addOption(FlagOption('--coverage', alias=self.coverageOption))
+        self.addOption(JoinedOption('--param=', alias=self._paramOption,
+                                    forceSeparateRender=True))
+        self.addOption(FlagOption('--print-libgcc-file-name', 
+                                  alias=self.printLibgccFileNameOption))
+        self.addOption(JoinedOption('--print-file-name=', alias=self.printFileNameOption))
+        self.addOption(SeparateOption('--print-file-name', alias=self.printFileNameOption))
+        self.addOption(JoinedOption('--print-prog-name=', alias=self.printProgNameOption))
+        self.addOption(SeparateOption('--print-prog-name', alias=self.printProgNameOption))
+        self.addOption(FlagOption('--version', alias=self.vOption))
+        self.addOption(FlagOption('--save-temps', alias=self.saveTempsOption))
 
     def addOption(self, opt):
         self.options.append(opt)
