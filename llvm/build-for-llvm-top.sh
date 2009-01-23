@@ -9,9 +9,16 @@
 # variables. 
 process_arguments "$@"
 
+# First, see if the build directory is there. If not, create it.
+build_dir="$LLVM_TOP/build.llvm"
+if test ! -d "$build_dir" ; then
+  mkdir -p "$build_dir"
+fi
+
 # See if we have previously been configured by sensing the presence
 # of the config.status scripts
-if test ! -x "config.status" ; then
+config_status="$build_dir/config.status"
+if test ! -f "$config_status" -o "$config_status" -ot "$0" ; then
   # We must configure so build a list of configure options
   config_options="--prefix=$PREFIX --with-llvmgccdir=$PREFIX"
   if test "$OPTIMIZED" -eq 1 ; then
@@ -45,12 +52,15 @@ if test ! -x "config.status" ; then
     config_options="$config_options --disable-threads"
   fi
   config_options="$config_options $OPTIONS_DASH $OPTIONS_DASH_DASH"
+  src_dir=`pwd`
+  cd "$build_dir"
   msg 0 Configuring $module with:
-  msg 0 "  ./configure" $config_options
-  $LLVM_TOP/llvm/configure $config_options || \
-    die $? "Configuring llvm module failed"
+  msg 0 "  $src_dir/configure" $config_options
+  $src_dir/configure $config_options || \
+    die $? "Configuring $module module failed"
 else
   msg 0 Module $module already configured, ignoring configure options.
+  cd "$build_dir"
 fi
 
 msg 0 Building $module with:
