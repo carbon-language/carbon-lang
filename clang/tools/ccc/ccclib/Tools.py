@@ -996,7 +996,7 @@ class Darwin_X86_LinkTool(Tool):
         arglist.addAllArgs(cmd_args, arglist.parser.uGroup)
         arglist.addAllArgs(cmd_args, arglist.parser.AOption)
         arglist.addLastArg(cmd_args, arglist.parser.eOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.mOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.mSeparate)
         arglist.addAllArgs(cmd_args, arglist.parser.rOption)
 
         cmd_args.extend(arglist.render(output))

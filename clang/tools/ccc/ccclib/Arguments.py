@@ -17,7 +17,8 @@ class Option(object):
     def __init__(self, name, group=None, alias=None,
                  isLinkerInput=False, noOptAsInput=False,
                  forceSeparateRender=False,
-                 forceJoinedRender=False):
+                 forceJoinedRender=False,
+                 unsupported=False):
         assert group is None or isinstance(group, OptionGroup)
         # Multi-level aliases are not supported, and alias options
         # cannot have groups. This just simplifies option tracking, it
@@ -32,6 +33,7 @@ class Option(object):
         self.noOptAsInput = noOptAsInput
         self.forceSeparateRender = forceSeparateRender
         self.forceJoinedRender = forceJoinedRender
+        self.unsupported = unsupported
 
     def getUnaliasedOption(self):
         if self.alias:
@@ -446,6 +448,9 @@ class ArgList(object):
         return iter(self.args)
 
     def append(self, arg):
+        if arg.opt.unsupported:
+            raise InvalidArgumentsError('option %r is unsupported' % arg.opt.name)
+
         self.args.append(arg)
         
         opt = arg.opt
@@ -814,7 +819,7 @@ class OptionParser:
         self.f_unwindTablesOption = self.addOption(FlagOption('-funwind-tables', self.fGroup))
         self.f_writableStringsOption = self.addOption(FlagOption('-fwritable-strings', self.fGroup))
         self.f_zeroInitializedInBssOption = self.addOption(FlagOption('-fzero-initialized-in-bss', self.fGroup))
-        self.addOption(JoinedOption('-f', self.fGroup))
+        self.fOption = self.addOption(JoinedOption('-f', self.fGroup))
 
         self.coverageOption = self.addOption(FlagOption('-coverage'))
 
@@ -835,9 +840,9 @@ class OptionParser:
 
         # Ugh. Need to disambiguate our naming convetion. -m x goes to
         # the linker sometimes, wheres -mxxxx is used for a variety of
-        # other things.
-        self.mOption = self.addOption(SeparateOption('-m'))
-        self.addOption(JoinedOption('-m', self.mGroup))
+        # other things.        
+        self.mSeparate = self.addOption(SeparateOption('-m', self.mGroup))
+        self.mJoined = self.addOption(JoinedOption('-m', self.mGroup))
 
         # FIXME: Why does Darwin send -a* to cc1?
         self.aGroup = OptionGroup('-a')
@@ -974,8 +979,8 @@ class OptionParser:
         self.addOption(JoinedOption('--include-directory=', alias=self.IOption))
         self.addOption(SeparateOption('--include-directory', alias=self.IOption,
                                       forceJoinedRender=True))
-        self.addOption(JoinedOption('--machine=', alias=self.mOption))
-        self.addOption(SeparateOption('--machine', alias=self.mOption,
+        self.addOption(JoinedOption('--machine=', alias=self.mJoined))
+        self.addOption(SeparateOption('--machine', alias=self.mJoined,
                                       forceJoinedRender=True))
         self.addOption(JoinedOption('--output-class-directory=', alias=self.f_outputClassDirOption))
         self.addOption(SeparateOption('--output-class-directory', alias=self.f_outputClassDirOption,
@@ -1051,6 +1056,35 @@ class OptionParser:
         self.addOption(JoinedOption('--prefix=', alias=self.BOption,
                                     forceSeparateRender=True))
         self.addOption(SeparateOption('--prefix', alias=self.BOption))
+
+        # Long options with joined forms. gcc's handling of '=' for
+        # long forms makes these a bit odd.
+        #
+        # FIXME: We do not currently support these options. The
+        # problem is that they need to be reparsed in their translated
+        # form; they need to map to the correct option and we have to
+        # find a way to do so without replicating all the declared
+        # names.
+        self.addOption(JoinedOption('--debug=', alias=self.gOption,
+                                    unsupported=True))
+        self.addOption(FlagOption('--debug', alias=self.gOption,
+                                    unsupported=True))
+        self.addOption(JoinedOption('--machine-=', alias=self.mJoined,
+                                    unsupported=True))
+        self.addOption(JoinedOption('--machine-', alias=self.mJoined, 
+                                    unsupported=True))
+        self.addOption(JoinedOption('--optimize=', alias=self.OOption,
+                                    unsupported=True))
+        self.addOption(FlagOption('--optimize', alias=self.OOption,
+                                    unsupported=True))
+        self.addOption(JoinedOption('--warn-=', alias=self.WOption,
+                                    unsupported=True))
+        self.addOption(JoinedOption('--warn-', alias=self.WOption,
+                                    unsupported=True))
+
+        # Ugh.
+        self.addOption(JoinedOption('--', alias=self.fOption,
+                                    unsupported=True))
 
     def addOption(self, opt):
         self.options.append(opt)
