@@ -164,6 +164,12 @@ public:
     while (*I != NULL) ++I;
     return I;
   }
+
+  /// isASubClass - return true if this TargetRegisterClass is a sub-class of at
+  /// least one other TargetRegisterClass.
+  bool isASubClass() const {
+    return SuperClasses[0] != 0;
+  }
   
   /// allocation_order_begin/end - These methods define a range of registers
   /// which specify the registers in this class that are valid to register

@@ -36,7 +36,7 @@
 using namespace llvm;
 
 STATISTIC(numJoins    , "Number of interval joins performed");
-STATISTIC(numSubJoins , "Number of subclass joins performed");
+STATISTIC(numCrossRCs , "Number of cross class joins performed");
 STATISTIC(numCommutes , "Number of instruction commuting performed");
 STATISTIC(numExtends  , "Number of copies extended");
 STATISTIC(NumReMats   , "Number of instructions re-materialized");
@@ -55,8 +55,8 @@ NewHeuristic("new-coalescer-heuristic",
              cl::init(false), cl::Hidden);
 
 static cl::opt<bool>
-CrossClassJoin("join-subclass-copies",
-               cl::desc("Coalesce copies to sub- register class"),
+CrossClassJoin("join-cross-class-copies",
+               cl::desc("Coalesce cross register class copies"),
                cl::init(false), cl::Hidden);
 
 static RegisterPass<SimpleRegisterCoalescing> 
@@ -953,38 +953,24 @@ static unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
   return 0;
 }
 
-/// isProfitableToCoalesceToSubRC - Given that register class of DstReg is
-/// a subset of the register class of SrcReg, return true if it's profitable
-/// to coalesce the two registers.
+/// isWinToJoinCrossClass - Return true if it's profitable to coalesce
+/// two virtual registers from different register classes.
 bool
-SimpleRegisterCoalescing::isProfitableToCoalesceToSubRC(unsigned SrcReg,
-                                                        unsigned DstReg,
-                                                        MachineBasicBlock *MBB){
-  if (!CrossClassJoin)
-    return false;
-
-  // First let's make sure all uses are in the same MBB.
-  for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(SrcReg),
-         RE = mri_->reg_end(); RI != RE; ++RI) {
-    MachineInstr &MI = *RI;
-    if (MI.getParent() != MBB)
-      return false;
-  }
-  for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(DstReg),
-         RE = mri_->reg_end(); RI != RE; ++RI) {
-    MachineInstr &MI = *RI;
-    if (MI.getParent() != MBB)
-      return false;
-  }
-
+SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned LargeReg,
+                                                unsigned SmallReg,
+                                                unsigned Threshold) {
   // Then make sure the intervals are *short*.
-  LiveInterval &SrcInt = li_->getInterval(SrcReg);
-  LiveInterval &DstInt = li_->getInterval(DstReg);
-  unsigned SrcSize = li_->getApproximateInstructionCount(SrcInt);
-  unsigned DstSize = li_->getApproximateInstructionCount(DstInt);
-  const TargetRegisterClass *RC = mri_->getRegClass(DstReg);
-  unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
-  return (SrcSize + DstSize) <= Threshold;
+  LiveInterval &LargeInt = li_->getInterval(LargeReg);
+  LiveInterval &SmallInt = li_->getInterval(SmallReg);
+  unsigned LargeSize = li_->getApproximateInstructionCount(LargeInt);
+  unsigned SmallSize = li_->getApproximateInstructionCount(SmallInt);
+  if (SmallSize > Threshold || LargeSize > Threshold)
+    if ((float)std::distance(mri_->use_begin(SmallReg),
+                             mri_->use_end()) / SmallSize <
+        (float)std::distance(mri_->use_begin(LargeReg),
+                             mri_->use_end()) / LargeSize)
+      return false;
+  return true;
 }
 
 /// HasIncompatibleSubRegDefUse - If we are trying to coalesce a virtual
@@ -1047,15 +1033,9 @@ SimpleRegisterCoalescing::HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
 /// an extract_subreg where dst is a physical register, e.g.
 /// cl = EXTRACT_SUBREG reg1024, 1
 bool
-SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(MachineInstr *CopyMI,
-                                        unsigned DstReg, unsigned SrcReg,
-                                        unsigned SubIdx, unsigned &RealDstReg) {
-  if (CopyMI->getOperand(1).getSubReg()) {
-    DOUT << "\tSrc of extract_subreg already coalesced with reg"
-         << " of a super-class.\n";
-    return false; // Not coalescable.
-  }
-
+SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(unsigned DstReg,
+                                               unsigned SrcReg, unsigned SubIdx,
+                                               unsigned &RealDstReg) {
   const TargetRegisterClass *RC = mri_->getRegClass(SrcReg);
   RealDstReg = getMatchingSuperReg(DstReg, SubIdx, RC, tri_);
   assert(RealDstReg && "Invalid extract_subreg instruction!");
@@ -1083,14 +1063,9 @@ SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(MachineInstr *CopyMI,
 /// an insert_subreg where src is a physical register, e.g.
 /// reg1024 = INSERT_SUBREG reg1024, c1, 0
 bool
-SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(MachineInstr *CopyMI,
-                                        unsigned DstReg, unsigned SrcReg,
-                                        unsigned SubIdx, unsigned &RealSrcReg) {
-  if (CopyMI->getOperand(1).getSubReg()) {
-    DOUT << "\tSrc of insert_subreg already coalesced with reg"
-         << " of a super-class.\n";
-    return false; // Not coalescable.
-  }
+SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(unsigned DstReg,
+                                               unsigned SrcReg, unsigned SubIdx,
+                                               unsigned &RealSrcReg) {
   const TargetRegisterClass *RC = mri_->getRegClass(DstReg);
   RealSrcReg = getMatchingSuperReg(SrcReg, SubIdx, RC, tri_);
   assert(RealSrcReg && "Invalid extract_subreg instruction!");
@@ -1110,7 +1085,6 @@ SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(MachineInstr *CopyMI,
     }
   return true;
 }
-
 
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
@@ -1172,7 +1146,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   }
 
   // Should be non-null only when coalescing to a sub-register class.
-  const TargetRegisterClass *SubRC = NULL;
+  bool CrossRC = false;
+  const TargetRegisterClass *NewRC = NULL;
   MachineBasicBlock *CopyMBB = CopyMI->getParent();
   unsigned RealDstReg = 0;
   unsigned RealSrcReg = 0;
@@ -1206,13 +1181,17 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         DstReg = tri_->getSubReg(DstReg, SubIdx);
       SubIdx = 0;
     } else if ((DstIsPhys && isExtSubReg) || (SrcIsPhys && isInsSubReg)) {
+      if (CopyMI->getOperand(1).getSubReg()) {
+        DOUT << "\tSrc of extract_subreg already coalesced with reg"
+             << " of a super-class.\n";
+        return false; // Not coalescable.
+      }
+
       if (isExtSubReg) {
-        if (!CanJoinExtractSubRegToPhysReg(CopyMI, DstReg, SrcReg, SubIdx,
-                                           RealDstReg))
+        if (!CanJoinExtractSubRegToPhysReg(DstReg, SrcReg, SubIdx, RealDstReg))
           return false; // Not coalescable
       } else {
-        if (!CanJoinInsertSubRegToPhysReg(CopyMI, DstReg, SrcReg, SubIdx,
-                                          RealSrcReg))
+        if (!CanJoinInsertSubRegToPhysReg(DstReg, SrcReg, SubIdx, RealSrcReg))
           return false; // Not coalescable
       }
       SubIdx = 0;
@@ -1220,8 +1199,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       unsigned OldSubIdx = isExtSubReg ? CopyMI->getOperand(0).getSubReg()
         : CopyMI->getOperand(2).getSubReg();
       if (OldSubIdx) {
-        if (OldSubIdx == SubIdx &&
-            !differingRegisterClasses(SrcReg, DstReg, SubRC))
+        if (OldSubIdx == SubIdx && !differingRegisterClasses(SrcReg, DstReg))
           // r1024<2> = EXTRACT_SUBREG r1025, 2. Then r1024 has already been
           // coalesced to a larger register so the subreg indices cancel out.
           // Also check if the other larger register is of the same register
@@ -1235,41 +1213,90 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       if (SubIdx) {
         unsigned LargeReg = isExtSubReg ? SrcReg : DstReg;
         unsigned SmallReg = isExtSubReg ? DstReg : SrcReg;
-        unsigned LargeRegSize = 
-          li_->getApproximateInstructionCount(li_->getInterval(LargeReg));
-        unsigned SmallRegSize = 
-          li_->getApproximateInstructionCount(li_->getInterval(SmallReg));
-        const TargetRegisterClass *RC = mri_->getRegClass(SmallReg);
-        unsigned Threshold = allocatableRCRegs_[RC].count();
-        // Be conservative. If both sides are virtual registers, do not coalesce
-        // if this will cause a high use density interval to target a smaller
-        // set of registers.
-        if (SmallRegSize > Threshold || LargeRegSize > Threshold) {
-          if ((float)std::distance(mri_->use_begin(SmallReg),
-                                   mri_->use_end()) / SmallRegSize <
-              (float)std::distance(mri_->use_begin(LargeReg),
-                                   mri_->use_end()) / LargeRegSize) {
-            Again = true;  // May be possible to coalesce later.
-            return false;
-          }
+        unsigned Limit= allocatableRCRegs_[mri_->getRegClass(SmallReg)].count();
+        if (!isWinToJoinCrossClass(LargeReg, SmallReg, Limit)) {
+          Again = true;  // May be possible to coalesce later.
+          return false;
         }
       }
     }
-  } else if (differingRegisterClasses(SrcReg, DstReg, SubRC)) {
-    // FIXME: What if the resul of a EXTRACT_SUBREG is then coalesced
+  } else if (differingRegisterClasses(SrcReg, DstReg)) {
+    if (!CrossClassJoin)
+      return false;
+    CrossRC = true;
+
+    // FIXME: What if the result of a EXTRACT_SUBREG is then coalesced
     // with another? If it's the resulting destination register, then
     // the subidx must be propagated to uses (but only those defined
     // by the EXTRACT_SUBREG). If it's being coalesced into another
     // register, it should be safe because register is assumed to have
     // the register class of the super-register.
 
-    if (!SubRC || !isProfitableToCoalesceToSubRC(SrcReg, DstReg, CopyMBB)) {
-      // If they are not of the same register class, we cannot join them.
+    // Process moves where one of the registers have a sub-register index.
+    MachineOperand *DstMO = CopyMI->findRegisterDefOperand(DstReg);
+    if (DstMO->getSubReg())
+      // FIXME: Can we handle this?
+      return false;
+    MachineOperand *SrcMO = CopyMI->findRegisterUseOperand(SrcReg);
+    SubIdx = SrcMO->getSubReg();
+    if (SubIdx) {
+      // This is not a extract_subreg but it looks like one.
+      // e.g. %cl = MOV16rr %reg1024:2
+      isExtSubReg = true;
+      if (DstIsPhys) {
+        if (!CanJoinExtractSubRegToPhysReg(DstReg, SrcReg, SubIdx,RealDstReg))
+          return false; // Not coalescable
+        SubIdx = 0;
+      }
+    }
+
+    const TargetRegisterClass *SrcRC= SrcIsPhys ? 0 : mri_->getRegClass(SrcReg);
+    const TargetRegisterClass *DstRC= DstIsPhys ? 0 : mri_->getRegClass(DstReg);
+    unsigned LargeReg = SrcReg;
+    unsigned SmallReg = DstReg;
+    unsigned Limit = 0;
+
+    // Now determine the register class of the joined register.
+    if (isExtSubReg) {
+      if (SubIdx && DstRC && DstRC->isASubClass()) {
+        // This is a move to a sub-register class. However, the source is a
+        // sub-register of a larger register class. We don't know what should
+        // the register class be. FIXME.
+        Again = true;
+        return false;
+      }
+      Limit = allocatableRCRegs_[DstRC].count();
+    } else if (!SrcIsPhys && !SrcIsPhys) {
+      unsigned SrcSize = SrcRC->getSize();
+      unsigned DstSize = DstRC->getSize();
+      if (SrcSize < DstSize)
+        // For example X86::MOVSD2PDrr copies from FR64 to VR128.
+        NewRC = DstRC;
+      else if (DstSize > SrcSize) {
+        NewRC = SrcRC;
+        std::swap(LargeReg, SmallReg);
+      } else {
+        unsigned SrcNumRegs = SrcRC->getNumRegs();
+        unsigned DstNumRegs = DstRC->getNumRegs();
+        if (DstNumRegs < SrcNumRegs)
+          // Sub-register class?
+          NewRC = DstRC;
+        else if (SrcNumRegs < DstNumRegs) {
+          NewRC = SrcRC;
+          std::swap(LargeReg, SmallReg);
+        } else
+          // No idea what's the right register class to use.
+          return false;
+      }
+    }
+
+    if (!SrcIsPhys && !DstIsPhys &&
+        !isWinToJoinCrossClass(LargeReg, SmallReg, Limit)) {
       DOUT << "\tSrc/Dest are different register classes.\n";
       // Allow the coalescer to try again in case either side gets coalesced to
       // a physical register that's compatible with the other side. e.g.
       // r1024 = MOV32to32_ r1025
-      // but later r1024 is assigned EAX then r1025 may be coalesced with EAX.
+      // But later r1024 is assigned EAX then r1025 may be coalesced with EAX.
       Again = true;  // May be possible to coalesce later.
       return false;
     }
@@ -1417,9 +1444,10 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   // Coalescing to a virtual register that is of a sub-register class of the
   // other. Make sure the resulting register is set to the right register class.
-  if (SubRC) {
-    mri_->setRegClass(DstReg, SubRC);
-    ++numSubJoins;
+  if (CrossRC) {
+      ++numCrossRCs;
+    if (NewRC)
+      mri_->setRegClass(DstReg, NewRC);
   }
 
   if (NewHeuristic) {
@@ -2208,14 +2236,10 @@ void SimpleRegisterCoalescing::joinIntervals() {
 }
 
 /// Return true if the two specified registers belong to different register
-/// classes.  The registers may be either phys or virt regs. In the
-/// case where both registers are virtual registers, it would also returns
-/// true by reference the RegB register class in SubRC if it is a subset of
-/// RegA's register class.
+/// classes.  The registers may be either phys or virt regs.
 bool
-SimpleRegisterCoalescing::differingRegisterClasses(unsigned RegA, unsigned RegB,
-                                      const TargetRegisterClass *&SubRC) const {
-
+SimpleRegisterCoalescing::differingRegisterClasses(unsigned RegA,
+                                                   unsigned RegB) const {
   // Get the register classes for the first reg.
   if (TargetRegisterInfo::isPhysicalRegister(RegA)) {
     assert(TargetRegisterInfo::isVirtualRegister(RegB) &&
@@ -2227,10 +2251,7 @@ SimpleRegisterCoalescing::differingRegisterClasses(unsigned RegA, unsigned RegB,
   const TargetRegisterClass *RegClassA = mri_->getRegClass(RegA);
   if (TargetRegisterInfo::isVirtualRegister(RegB)) {
     const TargetRegisterClass *RegClassB = mri_->getRegClass(RegB);
-    if (RegClassA == RegClassB)
-      return false;
-    SubRC = (RegClassA->hasSubClass(RegClassB)) ? RegClassB : NULL;
-    return true;
+    return RegClassA != RegClassB;
   }
   return !RegClassA->contains(RegB);
 }

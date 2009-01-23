@@ -173,12 +173,8 @@ namespace llvm {
     bool SimpleJoin(LiveInterval &LHS, LiveInterval &RHS);
     
     /// Return true if the two specified registers belong to different register
-    /// classes.  The registers may be either phys or virt regs. In the
-    /// case where both registers are virtual registers, it would also returns
-    /// true by reference the RegB register class in SubRC if it is a subset of
-    /// RegA's register class.
-    bool differingRegisterClasses(unsigned RegA, unsigned RegB,
-                                  const TargetRegisterClass *&SubRC) const;
+    /// classes.  The registers may be either phys or virt regs.
+    bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
 
 
     /// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
@@ -219,11 +215,10 @@ namespace llvm {
     /// identity copies so they will be removed.
     void RemoveCopiesFromValNo(LiveInterval &li, VNInfo *VNI);
 
-    /// isProfitableToCoalesceToSubRC - Given that register class of DstReg is
-    /// a subset of the register class of SrcReg, return true if it's profitable
-    /// to coalesce the two registers.
-    bool isProfitableToCoalesceToSubRC(unsigned SrcReg, unsigned DstReg,
-                                       MachineBasicBlock *MBB);
+    /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
+    /// two virtual registers from different register classes.
+    bool isWinToJoinCrossClass(unsigned LargeReg, unsigned SmallReg,
+                               unsigned Threshold);
 
     /// HasIncompatibleSubRegDefUse - If we are trying to coalesce a virtual
     /// register with a physical register, check if any of the virtual register
@@ -235,15 +230,13 @@ namespace llvm {
     /// CanJoinExtractSubRegToPhysReg - Return true if it's possible to coalesce
     /// an extract_subreg where dst is a physical register, e.g.
     /// cl = EXTRACT_SUBREG reg1024, 1
-    bool CanJoinExtractSubRegToPhysReg(MachineInstr *CopyMI,
-                                       unsigned DstReg, unsigned SrcReg,
+    bool CanJoinExtractSubRegToPhysReg(unsigned DstReg, unsigned SrcReg,
                                        unsigned SubIdx, unsigned &RealDstReg);
 
     /// CanJoinInsertSubRegToPhysReg - Return true if it's possible to coalesce
     /// an insert_subreg where src is a physical register, e.g.
     /// reg1024 = INSERT_SUBREG reg1024, c1, 0
-    bool CanJoinInsertSubRegToPhysReg(MachineInstr *CopyMI,
-                                      unsigned DstReg, unsigned SrcReg,
+    bool CanJoinInsertSubRegToPhysReg(unsigned DstReg, unsigned SrcReg,
                                       unsigned SubIdx, unsigned &RealDstReg);
 
     /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
