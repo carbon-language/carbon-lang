@@ -313,6 +313,7 @@ class Driver(object):
 
         arg = (args.getLastArg(self.parser.dumpspecsOption) or
                args.getLastArg(self.parser.printMultiDirectoryOption) or
+               args.getLastArg(self.parser.printMultiOsDirectoryOption) or
                args.getLastArg(self.parser.printMultiLibOption))
         if arg:
             raise Arguments.InvalidArgumentsError('%s unsupported by this driver' % arg.opt.name)

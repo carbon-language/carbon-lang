@@ -274,7 +274,7 @@ class Clang_CompileTool(Tool):
 
         arglist.addAllArgs(cmd_args, arglist.parser.vOption)
         arglist.addAllArgs2(cmd_args, arglist.parser.DOption, arglist.parser.UOption)
-        arglist.addAllArgs2(cmd_args, arglist.parser.IOption, arglist.parser.FOption)
+        arglist.addAllArgs2(cmd_args, arglist.parser.IGroup, arglist.parser.FOption)
         arglist.addAllArgs(cmd_args, arglist.parser.m_macosxVersionMinOption)
 
         # Special case debug options to only pass -g to clang. This is
@@ -545,7 +545,7 @@ class Darwin_X86_CC1Tool(Tool):
             cmd_args.append('-quiet')
         arglist.addAllArgs(cmd_args, arglist.parser.nostdincOption)
         arglist.addLastArg(cmd_args, arglist.parser.vOption)
-        arglist.addAllArgs2(cmd_args, arglist.parser.IOption, arglist.parser.FOption)
+        arglist.addAllArgs2(cmd_args, arglist.parser.IGroup, arglist.parser.FOption)
         arglist.addLastArg(cmd_args, arglist.parser.POption)
 
         # FIXME: Handle %I properly.
