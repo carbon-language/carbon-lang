@@ -2656,12 +2656,25 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
       // Check for arithmetic on pointers to incomplete types
       if (!PTy->getPointeeType()->isObjectType()) {
         if (PTy->getPointeeType()->isVoidType()) {
+          if (getLangOptions().CPlusPlus) {
+            Diag(Loc, diag::err_typecheck_pointer_arith_void_type)
+              << lex->getSourceRange() << rex->getSourceRange();
+            return QualType();
+          }
+
+          // GNU extension: arithmetic on pointer to void
           Diag(Loc, diag::ext_gnu_void_ptr)
             << lex->getSourceRange() << rex->getSourceRange();
         } else if (PTy->getPointeeType()->isFunctionType()) {
-          Diag(Loc, diag::err_typecheck_pointer_arith_function_type)
+          if (getLangOptions().CPlusPlus) {
+            Diag(Loc, diag::err_typecheck_pointer_arith_function_type)
+              << lex->getType() << lex->getSourceRange();
+            return QualType();
+          }
+
+          // GNU extension: arithmetic on pointer to function
+          Diag(Loc, diag::ext_gnu_ptr_func_arith)
             << lex->getType() << lex->getSourceRange();
-          return QualType();
         } else {
           DiagnoseIncompleteType(Loc, PTy->getPointeeType(), 
                                  diag::err_typecheck_arithmetic_incomplete_type,
@@ -2701,6 +2714,16 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
       if (lpointee->isVoidType()) {
         Diag(Loc, diag::ext_gnu_void_ptr)
           << lex->getSourceRange() << rex->getSourceRange();
+      } else if (lpointee->isFunctionType()) {
+        if (getLangOptions().CPlusPlus) {
+          Diag(Loc, diag::err_typecheck_pointer_arith_function_type)
+            << lex->getType() << lex->getSourceRange();
+          return QualType();
+        }
+
+        // GNU extension: arithmetic on pointer to function
+        Diag(Loc, diag::ext_gnu_ptr_func_arith)
+          << lex->getType() << lex->getSourceRange();
       } else {
         Diag(Loc, diag::err_typecheck_sub_ptr_object)
           << lex->getType() << lex->getSourceRange();
@@ -3174,10 +3197,22 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
     if (PT->getPointeeType()->isObjectType()) {
       // Pointer to object is ok!
     } else if (PT->getPointeeType()->isVoidType()) {
-      // Pointer to void is extension.
+      if (getLangOptions().CPlusPlus) {
+        Diag(OpLoc, diag::err_typecheck_pointer_arith_void_type)
+          << Op->getSourceRange();
+        return QualType();
+      }
+
+      // Pointer to void is a GNU extension in C.
       Diag(OpLoc, diag::ext_gnu_void_ptr) << Op->getSourceRange();
     } else if (PT->getPointeeType()->isFunctionType()) {
-      Diag(OpLoc, diag::err_typecheck_pointer_arith_function_type)
+      if (getLangOptions().CPlusPlus) {
+        Diag(OpLoc, diag::err_typecheck_pointer_arith_function_type)
+          << Op->getType() << Op->getSourceRange();
+        return QualType();
+      }
+
+      Diag(OpLoc, diag::ext_gnu_ptr_func_arith)
         << ResType << Op->getSourceRange();
       return QualType();
     } else {

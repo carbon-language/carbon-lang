@@ -345,7 +345,9 @@ DIAG(ext_gnu_old_style_field_designator, EXTENSION,
      "use of GNU old-style field designator extension")
 DIAG(ext_gnu_case_range, EXTENSION,
      "use of GNU case range extension")
-   
+DIAG(ext_gnu_ptr_func_arith, EXTENSION,
+     "arithmetic on pointer to function type %0 is a GNU extension")
+
 // Generic errors.
 DIAG(err_parse_error, ERROR,
      "parse error")
@@ -1262,6 +1264,8 @@ DIAG(err_typecheck_arithmetic_incomplete_type, ERROR,
      "arithmetic on pointer to incomplete type %0")
 DIAG(err_typecheck_pointer_arith_function_type, ERROR,
      "arithmetic on pointer to function type %0")
+DIAG(err_typecheck_pointer_arith_void_type, ERROR,
+     "arithmetic on pointer to void type")
 DIAG(err_typecheck_decl_incomplete_type, ERROR,
      "variable has incomplete type %0")
 // FIXME: Use %select
