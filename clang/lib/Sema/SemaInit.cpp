@@ -271,12 +271,13 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
   }
 
   // We might know the maximum number of elements in advance.
-  llvm::APSInt maxElements(elementIndex.getBitWidth(), 0);
+  llvm::APSInt maxElements(elementIndex.getBitWidth(), elementIndex.isUnsigned());
   bool maxElementsKnown = false;
   if (const ConstantArrayType *CAT =
         SemaRef->Context.getAsConstantArrayType(DeclType)) {
     maxElements = CAT->getSize();
     elementIndex.extOrTrunc(maxElements.getBitWidth());
+    elementIndex.setIsUnsigned(maxElements.isUnsigned());
     maxElementsKnown = true;
   }
 
@@ -303,6 +304,7 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
         maxElements.extend(elementIndex.getBitWidth());
       else if (elementIndex.getBitWidth() < maxElements.getBitWidth())
         elementIndex.extend(maxElements.getBitWidth());
+      elementIndex.setIsUnsigned(maxElements.isUnsigned());
 
       // If the array is of incomplete type, keep track of the number of
       // elements in the initializer.
@@ -329,7 +331,7 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
   if (DeclType->isIncompleteArrayType()) {
     // If this is an incomplete array type, the actual type needs to
     // be calculated here.
-    llvm::APInt Zero(maxElements.getBitWidth(), 0);
+    llvm::APSInt Zero(maxElements.getBitWidth(), maxElements.isUnsigned());
     if (maxElements == Zero) {
       // Sizing an array implicitly to zero is not allowed by ISO C,
       // but is supported by GNU.
@@ -568,6 +570,7 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
   if (isa<ConstantArrayType>(AT)) {
     llvm::APSInt MaxElements(cast<ConstantArrayType>(AT)->getSize(), false);
     DesignatedIndex.extOrTrunc(MaxElements.getBitWidth());
+    DesignatedIndex.setIsUnsigned(MaxElements.isUnsigned());
     if (DesignatedIndex >= MaxElements) {
       SemaRef->Diag(IndexExpr->getSourceRange().getBegin(),
                     diag::err_array_designator_too_large)
@@ -617,7 +620,8 @@ CheckArrayDesignatorExpr(Sema &Self, Expr *Index, llvm::APSInt &Value) {
       << Index->getSourceRange();
 
   // Make sure this constant expression is non-negative.
-  llvm::APSInt Zero(llvm::APSInt::getNullValue(Value.getBitWidth()), false);
+  llvm::APSInt Zero(llvm::APSInt::getNullValue(Value.getBitWidth()), 
+                    Value.isUnsigned());
   if (Value < Zero)
     return Self.Diag(Loc, diag::err_array_designator_negative)
       << Value.toString(10) << Index->getSourceRange();
