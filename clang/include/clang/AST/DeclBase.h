@@ -259,7 +259,6 @@ public:
       assert(0 && "Unknown decl kind!");
     case OverloadedFunction:
     case Typedef:
-    case TemplateTypeParm:
     case EnumConstant:
     case Var:
     case CXXClassVar:
@@ -285,6 +284,7 @@ public:
     case Record:
     case CXXRecord:
     case Enum:
+    case TemplateTypeParm:
       return IDNS_Tag;
 
     case Namespace:
