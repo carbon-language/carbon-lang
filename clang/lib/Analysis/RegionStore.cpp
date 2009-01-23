@@ -572,12 +572,6 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
 
   GRStateRef state(St, StateMgr);
   
-  // FIXME: Do we even need a killset?  If 'Unknown' is explicitly
-  //  bound to to a region won't this be enough?  (that's basically
-  //  what a killset is).  RemoveDeadBindings should only remove
-  //  bindings that are no longer accessible, which means that won't
-  //  ever be read.
-
   // Check if the region is in killset.
   if (state.contains<RegionKills>(R))
     return UnknownVal();
