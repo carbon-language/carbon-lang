@@ -671,18 +671,26 @@ Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
       if (CheckArrayDesignatorExpr(*this, StartIndex, StartValue) ||
           CheckArrayDesignatorExpr(*this, EndIndex, EndValue))
         Invalid = true;
-      else if (EndValue < StartValue) {
-        Diag(D.getEllipsisLoc(), diag::err_array_designator_empty_range)
-          << StartValue.toString(10) << EndValue.toString(10) 
-          << StartIndex->getSourceRange() << EndIndex->getSourceRange();
-        Invalid = true;
-      } else {
-        Designators.push_back(ASTDesignator(InitExpressions.size(),
-                                            D.getLBracketLoc(), 
-                                            D.getEllipsisLoc(),
-                                            D.getRBracketLoc()));
-        InitExpressions.push_back(StartIndex);
-        InitExpressions.push_back(EndIndex);
+      else {
+        // Make sure we're comparing values with the same bit width.
+        if (StartValue.getBitWidth() > EndValue.getBitWidth())
+          EndValue.extend(StartValue.getBitWidth());
+        else if (StartValue.getBitWidth() < EndValue.getBitWidth())
+          StartValue.extend(EndValue.getBitWidth());
+
+        if (EndValue < StartValue) {
+          Diag(D.getEllipsisLoc(), diag::err_array_designator_empty_range)
+            << StartValue.toString(10) << EndValue.toString(10) 
+            << StartIndex->getSourceRange() << EndIndex->getSourceRange();
+          Invalid = true;
+        } else {
+          Designators.push_back(ASTDesignator(InitExpressions.size(),
+                                              D.getLBracketLoc(), 
+                                              D.getEllipsisLoc(),
+                                              D.getRBracketLoc()));
+          InitExpressions.push_back(StartIndex);
+          InitExpressions.push_back(EndIndex);
+        }
       }
       break;
     }
