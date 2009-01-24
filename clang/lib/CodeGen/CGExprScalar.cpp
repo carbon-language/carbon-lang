@@ -15,6 +15,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Constants.h"
@@ -711,13 +712,47 @@ Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
 
 Value *ScalarExprEmitter::VisitUnaryOffsetOf(const UnaryOperator *E)
 {
-  int64_t Val = E->evaluateOffsetOf(CGF.getContext());
-  
-  assert(E->getType()->isIntegerType() && "Result type must be an integer!");
-  
-  uint32_t ResultWidth =
-    static_cast<uint32_t>(CGF.getContext().getTypeSize(E->getType()));
-  return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
+  const Expr* SubExpr = E->getSubExpr();
+  const llvm::Type* ResultType = ConvertType(E->getType());
+  llvm::Value* Result = llvm::Constant::getNullValue(ResultType);
+  while (!isa<CompoundLiteralExpr>(SubExpr)) {
+    if (const MemberExpr *ME = dyn_cast<MemberExpr>(SubExpr)) {
+      SubExpr = ME->getBase();
+      QualType Ty = SubExpr->getType();
+
+      RecordDecl *RD = Ty->getAsRecordType()->getDecl();
+      const ASTRecordLayout &RL = CGF.getContext().getASTRecordLayout(RD);
+      FieldDecl *FD = cast<FieldDecl>(ME->getMemberDecl());
+
+      // FIXME: This is linear time. And the fact that we're indexing
+      // into the layout by position in the record means that we're
+      // either stuck numbering the fields in the AST or we have to keep
+      // the linear search (yuck and yuck).
+      unsigned i = 0;
+      for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                   FieldEnd = RD->field_end();
+           Field != FieldEnd; (void)++Field, ++i) {
+        if (*Field == FD)
+          break;
+      }
+
+      llvm::Value* Offset =
+          llvm::ConstantInt::get(ResultType, RL.getFieldOffset(i) / 8);
+      Result = Builder.CreateAdd(Result, Offset);
+    } else if (const ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(SubExpr)) {
+      SubExpr = ASE->getBase();
+      int64_t size = CGF.getContext().getTypeSize(ASE->getType()) / 8;
+      llvm::Value* ElemSize = llvm::ConstantInt::get(ResultType, size);
+      llvm::Value* ElemIndex = CGF.EmitScalarExpr(ASE->getIdx());
+      bool IndexSigned = ASE->getIdx()->getType()->isSignedIntegerType();
+      ElemIndex = Builder.CreateIntCast(ElemIndex, ResultType, IndexSigned);
+      llvm::Value* Offset = Builder.CreateMul(ElemSize, ElemIndex);
+      Result = Builder.CreateAdd(Result, Offset);
+    } else {
+      assert(0 && "This should be impossible!");
+    }
+  }
+  return Result;
 }
 
 //===----------------------------------------------------------------------===//
