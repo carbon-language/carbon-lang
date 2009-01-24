@@ -517,21 +517,6 @@ public:
     else
       return llvm::ConstantExpr::getFPExtend(Src, DstTy);
   }
-  
-  llvm::Constant *EmitSizeAlignOf(QualType TypeToSize, 
-                                  QualType RetType, bool isSizeOf) {
-    std::pair<uint64_t, unsigned> Info =
-      CGM.getContext().getTypeInfo(TypeToSize);
-    
-    uint64_t Val = isSizeOf ? Info.first : Info.second;
-    Val /= 8;  // Return size in bytes, not bits.
-    
-    assert(RetType->isIntegerType() && "Result type must be an integer!");
-    
-    uint32_t ResultWidth = 
-      static_cast<uint32_t>(CGM.getContext().getTypeSize(RetType));
-    return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
-  }
 
 public:
   llvm::Constant *EmitLValue(Expr *E) {
