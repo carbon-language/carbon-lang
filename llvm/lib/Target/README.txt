@@ -1683,3 +1683,9 @@ Always foldable for odd constants, what is the rule for even?
 
 //===---------------------------------------------------------------------===//
 
+PR 3381: GEP to field of size 0 inside a struct could be turned into GEP
+for next field in struct (which is at same address).
+
+For example: store of float into { {{}}, float } could be turned into a store to
+the float directly.
+
