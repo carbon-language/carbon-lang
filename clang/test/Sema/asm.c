@@ -54,3 +54,9 @@ void test5()
 {
   asm("nop" : : "X" (8)); 
 }
+
+// PR3385
+void test6(long i)
+{
+  asm("nop" : : "er"(i));
+}

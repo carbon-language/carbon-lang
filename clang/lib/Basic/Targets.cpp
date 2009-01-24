@@ -505,8 +505,10 @@ X86TargetInfo::validateAsmConstraint(char c,
   case 'y': // Any MMX register.
   case 'x': // Any SSE register.
   case 'Q': // Any register accessible as [r]h: a, b, c, and d.
-  case 'Z': // 32-bit integer constant for use with zero-extending x86_64
-            // instructions.
+  case 'e': // 32-bit signed integer constant for use with zero-extending 
+            // x86_64 instructions.
+  case 'Z': // 32-bit unsigned integer constant for use with zero-extending 
+            // x86_64 instructions.
   case 'N': // unsigned 8-bit integer constant for use with in and out
             // instructions.
     info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
