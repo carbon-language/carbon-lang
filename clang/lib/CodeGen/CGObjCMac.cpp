@@ -344,6 +344,10 @@ protected:
   llvm::Constant *GetPropertyTypeString(const ObjCPropertyDecl *PD,
                                         const Decl *Container);
   
+  /// GetClassName - Return a unique constant for the given selector's
+  /// name. The return value has type char *.
+  llvm::Constant *GetClassName(IdentifierInfo *Ident);
+  
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
   { }
@@ -475,10 +479,6 @@ private:
   /// defined. The return value has type ProtocolPtrTy.
   llvm::Constant *GetProtocolRef(const ObjCProtocolDecl *PD);
 
-  /// GetClassName - Return a unique constant for the given selector's
-  /// name. The return value has type char *.
-  llvm::Constant *GetClassName(IdentifierInfo *Ident);
-
 public:
   CGObjCMac(CodeGen::CodeGenModule &cgm);
 
@@ -546,6 +546,16 @@ private:
   /// FinishNonFragileABIModule - Write out global data structures at the end of
   /// processing a translation unit.
   void FinishNonFragileABIModule();
+  
+  llvm::GlobalVariable * BuildClassRoTInitializer(unsigned flags, 
+                                unsigned InstanceStart,
+                                unsigned InstanceSize,
+                                const ObjCImplementationDecl *ID);
+  void BuildClassMetaData(std::string &ClassName,
+                          llvm::Constant *IsAGV, llvm::Constant *SuperClassGV,
+                          llvm::Constant *ClassRoGV);
+                                
+                                
   
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
@@ -2207,7 +2217,7 @@ llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
   return Builder.CreateLoad(Entry, false, "tmp");
 }
 
-llvm::Constant *CGObjCMac::GetClassName(IdentifierInfo *Ident) {
+llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
   llvm::GlobalVariable *&Entry = ClassNames[Ident];
 
   if (!Entry) {
@@ -2971,12 +2981,14 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   uint32 count;
   //   struct _iver_t list[count];
   // }
-  IvarListnfABIPtrTy = llvm::StructType::get(IntTy,
-                                             IntTy,
-                                             llvm::ArrayType::get(
-                                                              IvarnfABITy, 0),
-                                             NULL);
-  CGM.getModule().addTypeName("struct._ivar_list_t", IvarListnfABIPtrTy);
+  IvarListnfABITy = llvm::StructType::get(IntTy,
+                                          IntTy,
+                                          llvm::ArrayType::get(
+                                                               IvarnfABITy, 0),
+                                          NULL);
+  CGM.getModule().addTypeName("struct._ivar_list_t", IvarListnfABITy);
+  
+  IvarListnfABIPtrTy = llvm::PointerType::getUnqual(IvarListnfABITy);
   
   // struct _class_ro_t {
   //   uint32_t const flags;
@@ -3083,6 +3095,101 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   
 }
 
+// Metadata flags
+enum MetaDataDlags {
+  CLS = 0x0,
+  CLS_META = 0x1,
+  CLS_ROOT = 0x2,
+  CLS_HIDDEN = 0x10,
+  CLS_EXCEPTION = 0x20
+};
+/// BuildClassRoTInitializer - generate meta-data for:
+/// struct _class_ro_t {
+///   uint32_t const flags;
+///   uint32_t const instanceStart;
+///   uint32_t const instanceSize;
+///   uint32_t const reserved;  // only when building for 64bit targets
+///   const uint8_t * const ivarLayout;
+///   const char *const name;
+///   const struct _method_list_t * const baseMethods;
+///   const struct _objc_protocol_list *const baseProtocols;
+///   const struct _ivar_list_t *const ivars;
+///   const uint8_t * const weakIvarLayout;
+///   const struct _prop_list_t * const properties;
+/// }
+///
+llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
+                                                unsigned flags, 
+                                                unsigned InstanceStart,
+                                                unsigned InstanceSize,
+                                                const ObjCImplementationDecl *ID) {
+  std::string ClassName = ID->getNameAsString();
+  std::vector<llvm::Constant*> Values(10); // 11 for 64bit targets!
+  Values[ 0] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
+  Values[ 1] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceStart);
+  Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
+  // FIXME. For 64bit targets add 0 here.
+  Values[ 3] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+  Values[ 4] = GetClassName(ID->getIdentifier());
+  Values[ 5] = llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
+  Values[ 6] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
+  Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
+  Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+  Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
+                                                   Values);
+  llvm::GlobalVariable *CLASS_RO_GV =
+  new llvm::GlobalVariable(ObjCTypes.ClassRonfABITy, false,
+                           llvm::GlobalValue::InternalLinkage,
+                           Init,
+                           (flags & CLS_META) ?
+                           std::string("\01l_OBJC_METACLASS_RO_$_")+ClassName :
+                           std::string("\01l_OBJC_CLASS_RO_$_")+ClassName,
+                           &CGM.getModule());
+  CLASS_RO_GV->setSection(".section __DATA,__data,regular,no_dead_strip");
+  UsedGlobals.push_back(CLASS_RO_GV);
+  return CLASS_RO_GV;
+}
+
+/// BuildClassMetaData - This routine defines that to-level meta-data
+/// for the given ClassName for:
+/// struct _class_t {
+///   struct _class_t *isa;
+///   struct _class_t * const superclass;
+///   void *cache;
+///   IMP *vtable;
+///   struct class_ro_t *ro;
+/// }
+///
+void CGObjCNonFragileABIMac::BuildClassMetaData(std::string &ClassName,
+                                                llvm::Constant *IsAGV, 
+                                                llvm::Constant *SuperClassGV,
+                                                llvm::Constant *ClassRoGV) {
+  std::vector<llvm::Constant*> Values(5);
+  Values[0] = IsAGV;
+  Values[1] = SuperClassGV;
+  Values[2] = ObjCEmptyCacheVar;  // &ObjCEmptyCacheVar
+  Values[3] = ObjCEmptyVtableVar; // &ObjCEmptyVtableVar
+  Values[4] = ClassRoGV;                 // &CLASS_RO_GV
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassnfABITy, 
+                                                   Values);
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(ClassName);
+  if (GV)
+    GV->setInitializer(Init);
+  else
+    GV =
+    new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                             llvm::GlobalValue::ExternalLinkage,
+                             Init,
+                             ClassName,
+                             &CGM.getModule());
+  GV->setSection(".section __DATA,__data,regular,no_dead_strip");
+  UsedGlobals.push_back(GV);
+  // FIXME! why?
+  GV->setAlignment(32);
+  
+}
+
 void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   std::string ClassName = ID->getNameAsString();
   if (!ObjCEmptyCacheVar) {
@@ -3105,70 +3212,59 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                             &CGM.getModule());
     UsedGlobals.push_back(ObjCEmptyVtableVar);
   }
+  uint32_t InstanceStart = 
+    CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassnfABITy);
+  uint32_t InstanceSize = InstanceStart;
+  uint32_t flags = CLS_META;
+  std::string ObjCMetaClassName("\01_OBJC_METACLASS_$_");
+  std::string ObjCClassName("\01_OBJC_CLASS_$_");
   
-  std::vector<llvm::Constant*> Values(11); // 11 for 64bit targets!
-  // Generate following meta-data:
-  // struct _class_ro_t {
-  //   uint32_t const flags;
-  //   uint32_t const instanceStart;
-  //   uint32_t const instanceSize;
-  //   uint32_t const reserved;  // only when building for 64bit targets
-  //   const uint8_t * const ivarLayout;
-  //   const char *const name;
-  //   const struct _method_list_t * const baseMethods;
-  //   const struct _objc_protocol_list *const baseProtocols;
-  //   const struct _ivar_list_t *const ivars;
-  //   const uint8_t * const weakIvarLayout;
-  //   const struct _prop_list_t * const properties;
-  // }
-  Values[ 0] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
-  Values[ 1] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
-  Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
-  Values[ 3] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
-  // FIXME. For 64bit targets add 0 here.
-  Values[ 4] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
-  Values[ 5] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
-  Values[ 6] = llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
-  Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
-  Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
-  Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
-  Values[10] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
-  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
-                                                   Values);
-  llvm::GlobalVariable *CLASS_RO_GV =
-    new llvm::GlobalVariable(ObjCTypes.ClassRonfABITy, false,
-                           llvm::GlobalValue::InternalLinkage,
-                           Init,
-                           std::string("\01l_OBJC_CLASS_RO_$_")+ClassName,
-                           &CGM.getModule());
-  CLASS_RO_GV->setSection(".section __DATA,__data,regular,no_dead_strip");
-  UsedGlobals.push_back(CLASS_RO_GV);
+  llvm::GlobalVariable *SuperClassGV, *IsAGV;
   
-  // Generate following meta-data:
-  // struct _class_t {
-  //   struct _class_t *isa;
-  //   struct _class_t * const superclass;
-  //   void *cache;
-  //   IMP *vtable;
-  //   struct class_ro_t *ro;
-  // }
-  Values.resize(5);
-  Values[0] = llvm::Constant::getNullValue(ObjCTypes.ClassnfABIPtrTy);
-  Values[1] = llvm::Constant::getNullValue(ObjCTypes.ClassnfABIPtrTy);
-  Values[2] = ObjCEmptyCacheVar;  // &ObjCEmptyCacheVar
-  Values[3] = ObjCEmptyVtableVar; // &ObjCEmptyVtableVar
-  Values[4] = CLASS_RO_GV;                 // &CLASS_RO_GV
-  Init = llvm::ConstantStruct::get(ObjCTypes.ClassnfABITy, Values);
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                           llvm::GlobalValue::ExternalLinkage,
-                           Init,
-                           std::string("\01_OBJC_CLASS_$_")+ClassName,
-                           &CGM.getModule());
-  GV->setSection(".section __DATA,__data,regular,no_dead_strip");
-  UsedGlobals.push_back(GV);
-  // FIXME! why?
-  GV->setAlignment(32);
+  if (ID->getClassInterface() && !ID->getClassInterface()->getSuperClass()) {
+    // class is root
+    flags |= CLS_ROOT;
+    std::string SuperClassName = ObjCClassName + ClassName;
+    SuperClassGV = CGM.getModule().getGlobalVariable(SuperClassName);
+    if (!SuperClassGV)
+      SuperClassGV = 
+        new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                                llvm::GlobalValue::ExternalLinkage,
+                                 0,
+                                 SuperClassName,
+                                 &CGM.getModule());
+    UsedGlobals.push_back(SuperClassGV);
+    std::string IsAClassName = ObjCMetaClassName + ClassName;
+    IsAGV = CGM.getModule().getGlobalVariable(IsAClassName);
+    if (!IsAGV)
+      IsAGV = 
+        new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                                 llvm::GlobalValue::ExternalLinkage,
+                                 0,
+                                 IsAClassName,
+                                 &CGM.getModule());
+    UsedGlobals.push_back(IsAGV);
+  } else {
+    // Not a root.
+    std::string RootClassName = 
+      ID->getClassInterface()->getSuperClass()->getNameAsString();
+    std::string SuperClassName = ObjCMetaClassName + RootClassName;
+    SuperClassGV = CGM.getModule().getGlobalVariable(SuperClassName);
+    if (!SuperClassGV)
+      SuperClassGV = 
+        new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                                 llvm::GlobalValue::ExternalLinkage,
+                                 0,
+                                 SuperClassName,
+                                 &CGM.getModule());
+    UsedGlobals.push_back(SuperClassGV);
+    IsAGV = SuperClassGV;
+  }
+  llvm::GlobalVariable *CLASS_RO_GV = BuildClassRoTInitializer(flags,
+                                                               InstanceStart,
+                                                               InstanceSize,ID);
+  std::string MetaClassName = ObjCMetaClassName + ClassName;
+  BuildClassMetaData(MetaClassName, IsAGV, SuperClassGV, CLASS_RO_GV);
 }
 
 /* *** */
