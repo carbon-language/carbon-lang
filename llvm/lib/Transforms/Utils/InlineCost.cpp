@@ -121,9 +121,12 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
           }
         
         // Calls often compile into many machine instructions.  Bump up their
-        // cost to reflect this.
-        if (!isa<IntrinsicInst>(II))
-          NumInsts += 5;
+        // cost to reflect this.  Allow an extra instruction per parameter.
+        if (!isa<IntrinsicInst>(II)) {
+          for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
+               I != E; ++I)
+            NumInsts ++;
+        }
       }
       
       if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
