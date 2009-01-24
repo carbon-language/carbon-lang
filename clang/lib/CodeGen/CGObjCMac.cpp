@@ -551,9 +551,10 @@ private:
                                 unsigned InstanceStart,
                                 unsigned InstanceSize,
                                 const ObjCImplementationDecl *ID);
-  void BuildClassMetaData(std::string &ClassName,
-                          llvm::Constant *IsAGV, llvm::Constant *SuperClassGV,
-                          llvm::Constant *ClassRoGV);
+  llvm::GlobalVariable * BuildClassMetaData(std::string &ClassName,
+                                            llvm::Constant *IsAGV, 
+                                            llvm::Constant *SuperClassGV,
+                                            llvm::Constant *ClassRoGV);
                                 
                                 
   
@@ -3161,13 +3162,16 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
 ///   struct class_ro_t *ro;
 /// }
 ///
-void CGObjCNonFragileABIMac::BuildClassMetaData(std::string &ClassName,
+llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
+                                                std::string &ClassName,
                                                 llvm::Constant *IsAGV, 
                                                 llvm::Constant *SuperClassGV,
                                                 llvm::Constant *ClassRoGV) {
   std::vector<llvm::Constant*> Values(5);
   Values[0] = IsAGV;
-  Values[1] = SuperClassGV;
+  Values[1] = SuperClassGV 
+                ? SuperClassGV
+                : llvm::Constant::getNullValue(ObjCTypes.ClassnfABIPtrTy);
   Values[2] = ObjCEmptyCacheVar;  // &ObjCEmptyCacheVar
   Values[3] = ObjCEmptyVtableVar; // &ObjCEmptyVtableVar
   Values[4] = ClassRoGV;                 // &CLASS_RO_GV
@@ -3187,7 +3191,7 @@ void CGObjCNonFragileABIMac::BuildClassMetaData(std::string &ClassName,
   UsedGlobals.push_back(GV);
   // FIXME! why?
   GV->setAlignment(32);
-  
+  return GV;
 }
 
 void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
@@ -3245,7 +3249,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                                  &CGM.getModule());
     UsedGlobals.push_back(IsAGV);
   } else {
-    // Not a root.
+    // Has a root. Current class is not a root.
     std::string RootClassName = 
       ID->getClassInterface()->getSuperClass()->getNameAsString();
     std::string SuperClassName = ObjCMetaClassName + RootClassName;
@@ -3263,8 +3267,39 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   llvm::GlobalVariable *CLASS_RO_GV = BuildClassRoTInitializer(flags,
                                                                InstanceStart,
                                                                InstanceSize,ID);
-  std::string MetaClassName = ObjCMetaClassName + ClassName;
-  BuildClassMetaData(MetaClassName, IsAGV, SuperClassGV, CLASS_RO_GV);
+  std::string TClassName = ObjCMetaClassName + ClassName;
+  llvm::GlobalVariable *MetaTClass = 
+    BuildClassMetaData(TClassName, IsAGV, SuperClassGV, CLASS_RO_GV);
+  
+  // Metadata for the class
+  flags = CLS;
+  if (ID->getClassInterface() && !ID->getClassInterface()->getSuperClass()) {
+    flags |= CLS_ROOT;
+    SuperClassGV = 0;
+  }
+  else {
+    // Has a root. Current class is not a root.
+    std::string RootClassName = 
+      ID->getClassInterface()->getSuperClass()->getNameAsString();
+    std::string SuperClassName = ObjCClassName + RootClassName;
+    SuperClassGV = CGM.getModule().getGlobalVariable(SuperClassName);
+    if (!SuperClassGV)
+      SuperClassGV = 
+      new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                               llvm::GlobalValue::ExternalLinkage,
+                               0,
+                               SuperClassName,
+                               &CGM.getModule());
+    UsedGlobals.push_back(SuperClassGV);
+    
+  }
+  
+  CLASS_RO_GV = BuildClassRoTInitializer(flags,
+                                         0,
+                                         0,ID);
+  
+  TClassName = ObjCClassName + ClassName;
+  BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV);
 }
 
 /* *** */
