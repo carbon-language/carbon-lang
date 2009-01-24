@@ -658,15 +658,15 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
 
   MergeAttributes(New, Old);
 
-  // Verify the types match.
-  QualType OldCType = Context.getCanonicalType(Old->getType());
-  QualType NewCType = Context.getCanonicalType(New->getType());
-  if (OldCType != NewCType && !Context.typesAreCompatible(OldCType, NewCType)) {
+  // Merge the types
+  QualType MergedT = Context.mergeTypes(New->getType(), Old->getType());
+  if (MergedT.isNull()) {
     Diag(New->getLocation(), diag::err_redefinition_different_type) 
       << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New;
   }
+  New->setType(MergedT);
   // C99 6.2.2p4: Check if we have a static decl followed by a non-static.
   if (New->getStorageClass() == VarDecl::Static &&
       (Old->getStorageClass() == VarDecl::None ||
