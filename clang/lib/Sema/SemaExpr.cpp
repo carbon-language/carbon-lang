@@ -1049,17 +1049,22 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
   if (isType) {
     ArgTy = QualType::getFromOpaquePtr(TyOrEx);
     Range = ArgRange;
+    
+    // Verify that the operand is valid.
+    if (CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, isSizeof))
+      return ExprError();
   } else {
     // Get the end location.
     Expr *ArgEx = (Expr *)TyOrEx;
     Range = ArgEx->getSourceRange();
     ArgTy = ArgEx->getType();
+    
+    // Verify that the operand is valid.
+    if (CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, isSizeof)) {
+      DeleteExpr(ArgEx);
+      return ExprError();
+    }
   }
-
-  // Verify that the operand is valid.
-  // FIXME: This might leak the expression.
-  if (CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, isSizeof))
-    return ExprError();
 
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
   return Owned(new (Context) SizeOfAlignOfExpr(isSizeof, isType, TyOrEx,
