@@ -3294,9 +3294,48 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     
   }
   
+  InstanceStart = InstanceSize = 0;
+  if (ObjCInterfaceDecl *OID = 
+      const_cast<ObjCInterfaceDecl*>(ID->getClassInterface())) {
+    // FIXME. Share this with the one in EmitIvarList.
+    int countSuperClassIvars = countInheritedIvars(OID->getSuperClass());
+    const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
+    RecordDecl::field_iterator firstField = RD->field_begin();
+    RecordDecl::field_iterator lastField = RD->field_end();
+    
+    while (countSuperClassIvars-- > 0) {
+      lastField = firstField;
+      ++firstField;
+    }
+    
+    for (RecordDecl::field_iterator e = RD->field_end(),
+         ifield = firstField; ifield != e; ++ifield)
+      lastField = ifield;
+    
+    const llvm::Type *InterfaceTy = 
+      CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(OID));
+    const llvm::StructLayout *Layout =
+     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
+     
+    if (lastField != RD->field_end()) {
+      FieldDecl *Field = *lastField;
+      const llvm::Type *FieldTy =
+        CGM.getTypes().ConvertTypeForMem(Field->getType());
+      unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
+      InstanceSize = Layout->getElementOffset(
+                                  CGM.getTypes().getLLVMFieldNo(Field)) + 
+                                  Size;
+      if (firstField == RD->field_end())
+        InstanceStart = InstanceSize;
+      else
+        InstanceStart =  Layout->getElementOffset(CGM.getTypes().
+                                                  getLLVMFieldNo(*firstField));
+    }
+  }
   CLASS_RO_GV = BuildClassRoTInitializer(flags,
-                                         0,
-                                         0,ID);
+                                         InstanceStart,
+                                         InstanceSize, 
+                                         ID);
   
   TClassName = ObjCClassName + ClassName;
   BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV);
