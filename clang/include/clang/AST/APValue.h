@@ -188,11 +188,15 @@ public:
       ((Vec*)(void*)Data)->Elts[i] = E[i];
   }
   void setComplexInt(const APSInt &R, const APSInt &I) {
+    assert(R.getBitWidth() == I.getBitWidth() && 
+           "Invalid complex int (type mismatch).");
     assert(isComplexInt() && "Invalid accessor");
     ((ComplexAPSInt*)(void*)Data)->Real = R;
     ((ComplexAPSInt*)(void*)Data)->Imag = I;
   }
   void setComplexFloat(const APFloat &R, const APFloat &I) {
+    assert(&R.getSemantics() == &I.getSemantics() && 
+           "Invalid complex float (type mismatch).");
     assert(isComplexFloat() && "Invalid accessor");
     ((ComplexAPFloat*)(void*)Data)->Real = R;
     ((ComplexAPFloat*)(void*)Data)->Imag = I;

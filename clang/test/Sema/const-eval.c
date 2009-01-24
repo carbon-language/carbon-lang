@@ -26,3 +26,6 @@ void f()
   int a;
   EVAL_EXPR(15, (_Bool)&a); // expected-error {{fields must have a constant size}}
 }
+
+// FIXME: Turn into EVAL_EXPR test once we have more folding.
+_Complex float g16 = (1.0f + 1.0fi);

@@ -1194,7 +1194,8 @@ public:
     if (!EvaluateFloat(E->getSubExpr(), Result, Info))
       return APValue();
     
-    return APValue(APFloat(0.0), Result);
+    return APValue(APFloat(Result.getSemantics(), APFloat::fcZero), 
+                   Result);
   }
 
   APValue VisitCastExpr(CastExpr *E) {
@@ -1206,7 +1207,8 @@ public:
       if (!EvaluateFloat(SubExpr, Result, Info))
         return APValue();
       
-      return APValue(Result, APFloat(0.0));
+      return APValue(Result, 
+                     APFloat(Result.getSemantics(), APFloat::fcZero));
     }
 
     // FIXME: Handle more casts.
@@ -1221,6 +1223,10 @@ public:
 static bool EvaluateComplexFloat(const Expr *E, APValue &Result, EvalInfo &Info)
 {
   Result = ComplexFloatExprEvaluator(Info).Visit(const_cast<Expr*>(E));
+  if (Result.isComplexFloat())
+    assert(&Result.getComplexFloatReal().getSemantics() == 
+           &Result.getComplexFloatImag().getSemantics() && 
+           "Invalid complex evaluation.");
   return Result.isComplexFloat();
 }
 
