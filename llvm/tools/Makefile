@@ -8,6 +8,10 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ..
+
+# Build clang if present.
+OPTIONAL_PARALLEL_DIRS := clang
+
 # NOTE: The tools are organized into five groups of four consisting of one
 # large and three small executables. This is done to minimize memory load
 # in parallel builds.  Please retain this ordering.

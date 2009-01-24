@@ -613,6 +613,13 @@ $(RecursiveTargets)::
 endif
 
 #-----------------------------------------------------------
+# Handle the OPTIONAL_PARALLEL_DIRS options for optional parallel construction
+#-----------------------------------------------------------
+ifdef OPTIONAL_PARALLEL_DIRS
+  PARALLEL_DIRS += $(foreach T,$(OPTIONAL_PARALLEL_DIRS),$(shell test -d $(PROJ_SRC_DIR)/$(T) && echo "$(T)"))
+endif
+
+#-----------------------------------------------------------
 # Handle the PARALLEL_DIRS options for parallel construction
 #-----------------------------------------------------------
 ifdef PARALLEL_DIRS
