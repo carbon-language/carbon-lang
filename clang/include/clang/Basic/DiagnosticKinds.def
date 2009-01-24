@@ -1192,8 +1192,8 @@ DIAG(err_sizeof_incomplete_type, ERROR,
      "invalid application of 'sizeof' to an incomplete type %0")
 DIAG(err_alignof_incomplete_type, ERROR,
      "invalid application of '__alignof' to an incomplete type %0")
-DIAG(err_alignof_bitfield, ERROR,
-     "invalid application of '__alignof' to bitfield")
+DIAG(err_sizeof_alignof_bitfield, ERROR,
+     "invalid application of '%select{sizeof|__alignof}0' to bitfield")
 DIAG(err_offsetof_record_type, ERROR,
      "offsetof requires struct, union, or class type, %0 invalid")
 DIAG(err_offsetof_array_type, ERROR,

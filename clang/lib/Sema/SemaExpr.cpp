@@ -1046,7 +1046,7 @@ bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
   if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
     if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
       if (FD->isBitField()) {
-        Diag(OpLoc, diag::err_alignof_bitfield) << ExprRange;
+        Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 1 << ExprRange;
         return true;
       }
       // Other fields are ok.
@@ -1082,10 +1082,14 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
     
     // Verify that the operand is valid.
     bool isInvalid;
-    if (isSizeof)
-      isInvalid = CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, true);
-    else
+    if (!isSizeof) {
       isInvalid = CheckAlignOfExpr(ArgEx, OpLoc, Range);
+    } else if (ArgEx->isBitField()) {  // C99 6.5.3.4p1.
+      Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 0;
+      isInvalid = true;
+    } else {
+      isInvalid = CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, true);
+    }
     
     if (isInvalid) {
       DeleteExpr(ArgEx);

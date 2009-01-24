@@ -50,7 +50,10 @@ int test8(void) {
 // PR3386
 struct f { int x : 4;  float y[]; };
 int test9(struct f *P) {
-  return __alignof(P->x) +  // expected-error {{invalid application of '__alignof' to bitfield}} expected-warning {{extension used}}
-         __alignof(P->y);   // ok. expected-warning {{extension used}}
+  int R;
+  R = __alignof(P->x);  // expected-error {{invalid application of '__alignof' to bitfield}} expected-warning {{extension used}}
+  R = __alignof(P->y);   // ok. expected-warning {{extension used}}
+  R = sizeof(P->x); // expected-error {{invalid application of 'sizeof' to bitfield}}
+  return R;
 }
 
