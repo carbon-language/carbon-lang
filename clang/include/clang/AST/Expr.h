@@ -647,10 +647,14 @@ public:
     assert(isArgumentType() && "calling getArgumentType() when arg is expr");
     return QualType::getFromOpaquePtr(Argument.Ty);
   }
-  Expr* getArgumentExpr() const {
+  Expr *getArgumentExpr() {
     assert(!isArgumentType() && "calling getArgumentExpr() when arg is type");
     return static_cast<Expr*>(Argument.Ex);
   }
+  const Expr *getArgumentExpr() const {
+    return const_cast<SizeOfAlignOfExpr*>(this)->getArgumentExpr();
+  }
+  
   /// Gets the argument type, or the type of the argument expression, whichever
   /// is appropriate.
   QualType getTypeOfArgument() const {
