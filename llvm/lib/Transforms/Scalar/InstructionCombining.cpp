@@ -7700,12 +7700,12 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
 
 /// FindElementAtOffset - Given a type and a constant offset, determine whether
 /// or not there is a sequence of GEP indices into the type that will land us at
-/// the specified offset.  If so, fill them into NewIndices and return true,
-/// otherwise return false.
-static bool FindElementAtOffset(const Type *Ty, int64_t Offset, 
-                                SmallVectorImpl<Value*> &NewIndices,
-                                const TargetData *TD) {
-  if (!Ty->isSized()) return false;
+/// the specified offset.  If so, fill them into NewIndices and return the
+/// resultant element type, otherwise return null.
+static const Type *FindElementAtOffset(const Type *Ty, int64_t Offset, 
+                                       SmallVectorImpl<Value*> &NewIndices,
+                                       const TargetData *TD) {
+  if (!Ty->isSized()) return 0;
   
   // Start with the index over the outer type.  Note that the type size
   // might be zero (even if the offset isn't zero) if the indexed type
@@ -7731,7 +7731,7 @@ static bool FindElementAtOffset(const Type *Ty, int64_t Offset,
   while (Offset) {
     // Indexing into tail padding between struct/array elements.
     if (uint64_t(Offset*8) >= TD->getTypeSizeInBits(Ty))
-      return false;
+      return 0;
     
     if (const StructType *STy = dyn_cast<StructType>(Ty)) {
       const StructLayout *SL = TD->getStructLayout(STy);
@@ -7751,11 +7751,11 @@ static bool FindElementAtOffset(const Type *Ty, int64_t Offset,
       Ty = AT->getElementType();
     } else {
       // Otherwise, we can't index into the middle of this atomic type, bail.
-      return false;
+      return 0;
     }
   }
   
-  return true;
+  return Ty;
 }
 
 /// @brief Implement the transforms for cast of pointer (bitcast/ptrtoint)
@@ -11139,7 +11139,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 }
 
 /// InstCombineStoreToCast - Fold store V, (cast P) -> store (cast V), P
-/// when possible.
+/// when possible.  This makes it generally easy to do alias analysis and/or
+/// SROA/mem2reg of the memory object.
 static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   User *CI = cast<User>(SI.getOperand(1));
   Value *CastOp = CI->getOperand(0);
@@ -11153,18 +11154,34 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   if (!DestPTy->isInteger() && !isa<PointerType>(DestPTy))
     return 0;
   
+  /// NewGEPIndices - If SrcPTy is an aggregate type, we can emit a "noop gep"
+  /// to its first element.  This allows us to handle things like:
+  ///   store i32 xxx, (bitcast {foo*, float}* %P to i32*)
+  /// on 32-bit hosts.
+  SmallVector<Value*, 4> NewGEPIndices;
+  
   // If the source is an array, the code below will not succeed.  Check to
   // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
   // constants.
-  if (const ArrayType *ASrcTy = dyn_cast<ArrayType>(SrcPTy))
-    if (Constant *CSrc = dyn_cast<Constant>(CastOp))
-      if (ASrcTy->getNumElements() != 0) {
-        Value* Idxs[2];
-        Idxs[0] = Idxs[1] = Constant::getNullValue(Type::Int32Ty);
-        CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs, 2);
-        SrcTy = cast<PointerType>(CastOp->getType());
-        SrcPTy = SrcTy->getElementType();
+  if (isa<ArrayType>(SrcPTy) || isa<StructType>(SrcPTy)) {
+    // Index through pointer.
+    Constant *Zero = Constant::getNullValue(Type::Int32Ty);
+    NewGEPIndices.push_back(Zero);
+    
+    while (1) {
+      if (const StructType *STy = dyn_cast<StructType>(SrcPTy)) {
+        NewGEPIndices.push_back(Zero);
+        SrcPTy = STy->getElementType(0);
+      } else if (const ArrayType *ATy = dyn_cast<ArrayType>(SrcPTy)) {
+        NewGEPIndices.push_back(Zero);
+        SrcPTy = ATy->getElementType();
+      } else {
+        break;
       }
+    }
+    
+    SrcTy = PointerType::get(SrcPTy, SrcTy->getAddressSpace());
+  }
 
   if (!SrcPTy->isInteger() && !isa<PointerType>(SrcPTy))
     return 0;
@@ -11192,6 +11209,19 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
     if (isa<PointerType>(SIOp0->getType()))
       opcode = Instruction::PtrToInt;
   }
+  
+  // SIOp0 is a pointer to aggregate and this is a store to the first field,
+  // emit a GEP to index into its first field.
+  if (!NewGEPIndices.empty()) {
+    if (Constant *C = dyn_cast<Constant>(CastOp))
+      CastOp = ConstantExpr::getGetElementPtr(C, &NewGEPIndices[0], 
+                                              NewGEPIndices.size());
+    else
+      CastOp = IC.InsertNewInstBefore(
+              GetElementPtrInst::Create(CastOp, NewGEPIndices.begin(),
+                                        NewGEPIndices.end()), SI);
+  }
+  
   if (Constant *C = dyn_cast<Constant>(SIOp0))
     NewCast = ConstantExpr::getCast(opcode, C, CastDstTy);
   else
