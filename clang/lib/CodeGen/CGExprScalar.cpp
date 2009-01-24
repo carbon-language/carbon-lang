@@ -673,45 +673,23 @@ Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
 /// argument of the sizeof expression as an integer.
 Value *
 ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
-  // Handle alignof with the constant folding logic.  alignof always produces a
-  // constant.
-  if (!E->isSizeOf()) {
-    Expr::EvalResult Result;
-    E->Evaluate(Result, CGF.getContext());
-    return llvm::ConstantInt::get(Result.Val.getInt());
-  }
-  
-  QualType RetType = E->getType();
-  assert(RetType->isIntegerType() && "Result type must be an integer!");
-  uint32_t ResultWidth = 
-    static_cast<uint32_t>(CGF.getContext().getTypeSize(RetType));
-  
-  // sizeof(void) and sizeof(function) = 1 as a strange gcc extension.
   QualType TypeToSize = E->getTypeOfArgument();
-  if (TypeToSize->isVoidType() || TypeToSize->isFunctionType())
-    return llvm::ConstantInt::get(llvm::APInt(ResultWidth, 1));
-  
-  if (const VariableArrayType *VAT = 
-        CGF.getContext().getAsVariableArrayType(TypeToSize)) {
-    if (E->isArgumentType()) {
-      // sizeof(type) - make sure to emit the VLA size.
-      CGF.EmitVLASize(TypeToSize);
+  if (E->isSizeOf()) {
+    if (const VariableArrayType *VAT = 
+          CGF.getContext().getAsVariableArrayType(TypeToSize)) {
+      if (E->isArgumentType()) {
+        // sizeof(type) - make sure to emit the VLA size.
+        CGF.EmitVLASize(TypeToSize);
+      }
+      return CGF.GetVLASize(VAT);
     }
-    return CGF.GetVLASize(VAT);
   }
-  
-  if (TypeToSize->isObjCInterfaceType()) {
-    ObjCInterfaceDecl *OI = TypeToSize->getAsObjCInterfaceType()->getDecl();
-    RecordDecl *RD = const_cast<RecordDecl*>(
-                                        CGF.getContext().addRecordToClass(OI));
-    TypeToSize =  CGF.getContext().getTagDeclType(static_cast<TagDecl*>(RD));
-  }  
-  
-  uint64_t Val = CGF.getContext().getTypeSize(TypeToSize);
-  // Return size in bytes, not bits.
-  Val /= CGF.getContext().Target.getCharWidth();
-  
-  return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
+
+  // If this isn't sizeof(vla), the result must be constant; use the
+  // constant folding logic so we don't have to duplicate it here.
+  Expr::EvalResult Result;
+  E->Evaluate(Result, CGF.getContext());
+  return llvm::ConstantInt::get(Result.Val.getInt());
 }
 
 Value *ScalarExprEmitter::VisitUnaryReal(const UnaryOperator *E) {

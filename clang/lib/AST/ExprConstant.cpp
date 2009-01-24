@@ -916,17 +916,22 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
   if (!SrcTy->isConstantSizeType())
     return false;
-
-  // sizeof (objc class) ?
-  if (SrcTy->isObjCInterfaceType())
-    return false;
   
   // GCC extension: sizeof(function) = 1.
   if (SrcTy->isFunctionType()) {
     Result = 1;
     return true;
   }
-  
+
+  if (SrcTy->isObjCInterfaceType()) {
+    // Slightly unusual case: the size of an ObjC interface type is the
+    // size of the class.  This code intentionally falls through to the normal
+    // case.
+    ObjCInterfaceDecl *OI = SrcTy->getAsObjCInterfaceType()->getDecl();
+    RecordDecl *RD = const_cast<RecordDecl*>(Info.Ctx.addRecordToClass(OI));
+    SrcTy = Info.Ctx.getTagDeclType(static_cast<TagDecl*>(RD));
+  }
+
   // Get information about the size.
   unsigned CharSize = Info.Ctx.Target.getCharWidth();
   Result = Info.Ctx.getTypeSize(SrcTy) / CharSize;
