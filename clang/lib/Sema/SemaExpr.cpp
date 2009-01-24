@@ -3940,6 +3940,11 @@ Sema::ExprResult Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
   assert(SubStmt && isa<CompoundStmt>(SubStmt) && "Invalid action invocation!");
   CompoundStmt *Compound = cast<CompoundStmt>(SubStmt);
 
+  bool isFileScope = getCurFunctionOrMethodDecl() == 0;
+  if (isFileScope) {
+    return Diag(LPLoc, diag::err_stmtexpr_file_scope);
+  }
+
   // FIXME: there are a variety of strange constraints to enforce here, for
   // example, it is not possible to goto into a stmt expression apparently.
   // More semantic analysis is needed.

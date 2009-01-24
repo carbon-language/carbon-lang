@@ -1301,6 +1301,8 @@ DIAG(ext_typecheck_comparison_of_distinct_pointers, WARNING,
      "comparison of distinct pointer types (%0 and %1)")
 DIAG(err_typecheck_assign_const, ERROR,
      "read-only variable is not assignable")
+DIAG(err_stmtexpr_file_scope, ERROR,
+     "statement expression not allowed at file scope")
 
 DIAG(err_invalid_this_use, ERROR,
      "invalid use of 'this' outside of a nonstatic member function")

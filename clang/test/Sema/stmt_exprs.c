@@ -20,3 +20,5 @@ int test5() { return ({L1: L2: L3: 5;}); }
 int test6() { return ({5;}); }
 void test7() { ({5;}); }                   // expected-warning {{expression result unused}}
 
+// PR3062
+int x[({10;})]; // expected-error {{illegal statement expression}}
