@@ -175,6 +175,8 @@ namespace {
     void RenumberValno(VNInfo* VN);
     void ReconstructLiveInterval(LiveInterval* LI);
     bool removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split);
+    unsigned getNumberOfSpills(SmallPtrSet<MachineInstr*, 4>& MIs,
+                               unsigned Reg, int FrameIndex);
     VNInfo* PerformPHIConstruction(MachineBasicBlock::iterator use,
                                    MachineBasicBlock* MBB,
                                    LiveInterval* LI,
@@ -1381,6 +1383,21 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs,
   return Change;
 }
 
+unsigned PreAllocSplitting::getNumberOfSpills(
+                                  SmallPtrSet<MachineInstr*, 4>& MIs,
+                                  unsigned Reg, int FrameIndex) {
+  unsigned Spills = 0;
+  for (SmallPtrSet<MachineInstr*, 4>::iterator UI = MIs.begin(), UE = MIs.end();
+       UI != UI; ++UI) {
+    int StoreFrameIndex;
+    unsigned StoreVReg = TII->isStoreToStackSlot(*UI, StoreFrameIndex);
+    if (StoreVReg == Reg && StoreFrameIndex == FrameIndex)
+      Spills++;
+  }
+  
+  return Spills;
+}
+
 /// removeDeadSpills - After doing splitting, filter through all intervals we've
 /// split, and see if any of the spills are unnecessary.  If so, remove them.
 bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
@@ -1417,34 +1434,25 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         DefMI->eraseFromParent();
         NumDeadSpills++;
         changed = true;
-      } else {
-        bool NonRestore = false;
-        for (SmallPtrSet<MachineInstr*, 4>::iterator UI = 
-             VNUseCount[CurrVN].begin(), UE = VNUseCount[CurrVN].end();
-             UI != UI; ++UI) {
-          int StoreFrameIndex;
-          unsigned StoreVReg = TII->isStoreToStackSlot(*UI, StoreFrameIndex);
-          if (StoreVReg != (*LI)->reg || StoreFrameIndex != FrameIndex) {
-            NonRestore = false;
-            break;
-          }
-        }
-        
-        if (NonRestore) continue;
-        
-        for (SmallPtrSet<MachineInstr*, 4>::iterator UI = 
-             VNUseCount[CurrVN].begin(), UE = VNUseCount[CurrVN].end();
-             UI != UI; ++UI) {
-          LIs->RemoveMachineInstrFromMaps(*UI);
-          (*UI)->eraseFromParent();
-        }
-        
-        LIs->RemoveMachineInstrFromMaps(DefMI);
-        (*LI)->removeValNo(CurrVN);
-        DefMI->eraseFromParent();
-        NumDeadSpills++;
-        changed = true;
+        continue;
       }
+      
+      unsigned SpillCount = getNumberOfSpills(VNUseCount[CurrVN],
+                                              (*LI)->reg, FrameIndex);
+      if (SpillCount != VNUseCount[CurrVN].size()) continue;
+        
+      for (SmallPtrSet<MachineInstr*, 4>::iterator UI = 
+           VNUseCount[CurrVN].begin(), UE = VNUseCount[CurrVN].end();
+           UI != UI; ++UI) {
+        LIs->RemoveMachineInstrFromMaps(*UI);
+        (*UI)->eraseFromParent();
+      }
+        
+      LIs->RemoveMachineInstrFromMaps(DefMI);
+      (*LI)->removeValNo(CurrVN);
+      DefMI->eraseFromParent();
+      NumDeadSpills++;
+      changed = true;
     }
   }
   
