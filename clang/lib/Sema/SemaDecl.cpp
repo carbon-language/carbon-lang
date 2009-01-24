@@ -1031,7 +1031,7 @@ bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
 StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
   const ArrayType *AT = Context.getAsArrayType(DeclType);
   if (AT && AT->getElementType()->isCharType()) {
-    return dyn_cast<StringLiteral>(Init);
+    return dyn_cast<StringLiteral>(Init->IgnoreParens());
   }
   return 0;
 }

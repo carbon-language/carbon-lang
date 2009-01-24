@@ -78,3 +78,5 @@ struct s1 s2 = {
     .b = bogus // expected-error {{use of undeclared identifier 'bogus'}}
 }
 
+// PR3382
+char t[] = ("Hello");
