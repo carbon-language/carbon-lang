@@ -149,8 +149,8 @@ CFDateRef f6(int x) {
 
 CFDateRef f7() {
   CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
-  CFRetain(date); //expected-warning{{leak}}
-  date = CFDateCreate(0, CFAbsoluteTimeGetCurrent()); 
+  CFRetain(date);
+  date = CFDateCreate(0, CFAbsoluteTimeGetCurrent()); //expected-warning{{leak}}
   return date;
 }
 

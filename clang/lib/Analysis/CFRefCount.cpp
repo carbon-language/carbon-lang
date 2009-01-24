@@ -2215,11 +2215,7 @@ namespace {
         return "[naming convention] leak of returned object";        
       }
     }
-    
-    virtual const char* getDescription() const {
-      return "Object leaked";
-    }
-    
+
     virtual void EmitWarnings(BugReporter& BR);
     virtual void GetErrorNodes(std::vector<ExplodedNode<GRState>*>& Nodes);
     virtual bool isLeak() const { return true; }
@@ -2256,15 +2252,15 @@ namespace {
     
     SymbolRef getSymbol() const { return Sym; }
     
-    virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
-                                            ExplodedNode<GRState>* N);
+    PathDiagnosticPiece* getEndPath(BugReporter& BR,
+                                    const ExplodedNode<GRState>* N);
     
-    virtual std::pair<const char**,const char**> getExtraDescriptiveText();
+    std::pair<const char**,const char**> getExtraDescriptiveText();
     
-    virtual PathDiagnosticPiece* VisitNode(ExplodedNode<GRState>* N,
-                                           ExplodedNode<GRState>* PrevN,
-                                           ExplodedGraph<GRState>& G,
-                                           BugReporter& BR);
+    PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
+                                   const ExplodedNode<GRState>* PrevN,
+                                   const ExplodedGraph<GRState>& G,
+                                   BugReporter& BR);
   };
   
   
@@ -2313,9 +2309,9 @@ std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
   }
 }
 
-PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
-                                            ExplodedNode<GRState>* PrevN,
-                                            ExplodedGraph<GRState>& G,
+PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
+                                            const ExplodedNode<GRState>* PrevN,
+                                            const ExplodedGraph<GRState>& G,
                                             BugReporter& BR) {
 
   // Check if the type state has changed.
@@ -2486,14 +2482,14 @@ class VISIBILITY_HIDDEN FindUniqueBinding :
 };  
 }
 
-static std::pair<ExplodedNode<GRState>*,MemRegion*>
-GetAllocationSite(GRStateManager* StateMgr, ExplodedNode<GRState>* N,
+static std::pair<const ExplodedNode<GRState>*,const MemRegion*>
+GetAllocationSite(GRStateManager* StateMgr, const ExplodedNode<GRState>* N,
                   SymbolRef Sym) {
 
   // Find both first node that referred to the tracked symbol and the
   // memory location that value was store to.
-  ExplodedNode<GRState>* Last = N;
-  MemRegion* FirstBinding = 0;  
+  const ExplodedNode<GRState>* Last = N;
+  const MemRegion* FirstBinding = 0;  
   
   while (N) {
     const GRState* St = N->getState();
@@ -2515,8 +2511,8 @@ GetAllocationSite(GRStateManager* StateMgr, ExplodedNode<GRState>* N,
   return std::make_pair(Last, FirstBinding);
 }
 
-PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
-                                             ExplodedNode<GRState>* EndN) {
+PathDiagnosticPiece*
+CFRefReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN) {
 
   GRBugReporter& BR = cast<GRBugReporter>(br);
   
@@ -2530,8 +2526,8 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   // We are a leak.  Walk up the graph to get to the first node where the
   // symbol appeared, and also get the first VarDecl that tracked object
   // is stored to.
-  ExplodedNode<GRState>* AllocNode = 0;
-  MemRegion* FirstBinding = 0;
+  const ExplodedNode<GRState>* AllocNode = 0;
+  const MemRegion* FirstBinding = 0;
 
   llvm::tie(AllocNode, FirstBinding) =
     GetAllocationSite(&BR.getStateManager(), EndN, Sym);
@@ -2566,7 +2562,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   PathDiagnosticPiece::DisplayHint Hint = PathDiagnosticPiece::Above;
   
   assert (!EndN->pred_empty()); // Not possible to have 0 predecessors.
-  ExplodedNode<GRState> *Pred = *(EndN->pred_begin());
+  const ExplodedNode<GRState> *Pred = *(EndN->pred_begin());
   ProgramPoint PredPos = Pred->getLocation();
   
   if (PostStmt* PredPS = dyn_cast<PostStmt>(&PredPos)) {
@@ -2664,8 +2660,8 @@ bool Leak::isCached(BugReport& R) {
   
   SymbolRef Sym = static_cast<CFRefReport&>(R).getSymbol();
 
-  ExplodedNode<GRState>* AllocNode =
-    GetAllocationSite(0, R.getEndNode(), Sym).first;
+  const ExplodedNode<GRState>* AllocNode =
+      GetAllocationSite(0, R.getEndNode(), Sym).first;
   
   if (!AllocNode)
     return false;

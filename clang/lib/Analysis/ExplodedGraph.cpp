@@ -120,36 +120,35 @@ ExplodedNodeImpl::NodeGroup::~NodeGroup() {
   if (getKind() == SizeOther) delete &getVector(getPtr());
 }
 
-ExplodedGraphImpl* ExplodedGraphImpl::Trim(ExplodedNodeImpl** BeginSources,
-                                           ExplodedNodeImpl** EndSources) const{
+ExplodedGraphImpl*
+ExplodedGraphImpl::Trim(const ExplodedNodeImpl* const* BeginSources,
+                        const ExplodedNodeImpl* const* EndSources) const{
   
-  typedef llvm::DenseMap<ExplodedNodeImpl*, ExplodedNodeImpl*> Pass1Ty;
-  typedef llvm::DenseMap<ExplodedNodeImpl*, ExplodedNodeImpl*> Pass2Ty;
+  typedef llvm::DenseMap<const ExplodedNodeImpl*, const ExplodedNodeImpl*> Pass1Ty;
+  typedef llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*> Pass2Ty;
   
   Pass1Ty Pass1;
   Pass2Ty Pass2;
   
-  llvm::SmallVector<ExplodedNodeImpl*, 10> WL2;
+  llvm::SmallVector<const ExplodedNodeImpl*, 10> WL2;
 
   { // ===- Pass 1 (reverse BFS) -===
     
     // Enqueue the source nodes to the first worklist. 
     
-    std::list<std::pair<ExplodedNodeImpl*, ExplodedNodeImpl*> > WL1;
-    std::list<std::pair<ExplodedNodeImpl*, ExplodedNodeImpl*> > WL1_Loops;
+    std::list<std::pair<const ExplodedNodeImpl*,
+                        const ExplodedNodeImpl*> > WL1, WL1_Loops;
   
-    for (ExplodedNodeImpl** I = BeginSources; I != EndSources; ++I)
+    for (const ExplodedNodeImpl* const* I = BeginSources; I != EndSources; ++I)
       WL1.push_back(std::make_pair(*I, *I));
     
     // Process the worklist.
 
     while (! (WL1.empty() && WL1_Loops.empty())) {
-      
-      ExplodedNodeImpl *N, *Src;
-
       // Only dequeue from the "loops" worklist if WL1 has no items.
       // Thus we prioritize for paths that don't span loop boundaries.
-      
+      const ExplodedNodeImpl *N, *Src;
+
       if (WL1.empty()) {
         N = WL1_Loops.back().first;
         Src = WL1_Loops.back().second;
@@ -227,7 +226,7 @@ ExplodedGraphImpl* ExplodedGraphImpl::Trim(ExplodedNodeImpl** BeginSources,
   
   while (!WL2.empty()) {
     
-    ExplodedNodeImpl* N = WL2.back();
+    const ExplodedNodeImpl* N = WL2.back();
     WL2.pop_back();
     
     // Skip this node if we have already processed it.

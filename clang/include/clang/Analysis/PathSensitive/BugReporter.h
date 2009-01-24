@@ -70,16 +70,16 @@ public:
   
 class BugReport {
   BugType& Desc;
-  ExplodedNode<GRState> *EndNode;
+  const ExplodedNode<GRState> *EndNode;
   SourceRange R;  
 public:
-  BugReport(BugType& D, ExplodedNode<GRState> *n) : Desc(D), EndNode(n) {}
+  BugReport(BugType& D, const ExplodedNode<GRState> *n) : Desc(D), EndNode(n) {}
   virtual ~BugReport();
   
   const BugType& getBugType() const { return Desc; }
   BugType& getBugType() { return Desc; }
   
-  ExplodedNode<GRState>* getEndNode() const { return EndNode; }
+  const ExplodedNode<GRState>* getEndNode() const { return EndNode; }
   
   Stmt* getStmt(BugReporter& BR) const;
     
@@ -98,16 +98,16 @@ public:
   }
   
   virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
-                                          ExplodedNode<GRState>* N);
+                                          const ExplodedNode<GRState>* N);
   
   virtual FullSourceLoc getLocation(SourceManager& Mgr);
   
   virtual void getRanges(BugReporter& BR,const SourceRange*& beg,
                          const SourceRange*& end);
   
-  virtual PathDiagnosticPiece* VisitNode(ExplodedNode<GRState>* N,
-                                         ExplodedNode<GRState>* PrevN,
-                                         ExplodedGraph<GRState>& G,
+  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
+                                         const ExplodedNode<GRState>* PrevN,
+                                         const ExplodedGraph<GRState>& G,
                                          BugReporter& BR);
 };
   

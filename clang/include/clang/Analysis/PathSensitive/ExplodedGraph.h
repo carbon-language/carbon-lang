@@ -179,9 +179,9 @@ public:
   
   // Iterators over successor and predecessor vertices.
   typedef ExplodedNode**       succ_iterator;
-  typedef const ExplodedNode** const_succ_iterator;
+  typedef const ExplodedNode* const * const_succ_iterator;
   typedef ExplodedNode**       pred_iterator;
-  typedef const ExplodedNode** const_pred_iterator;
+  typedef const ExplodedNode* const * const_pred_iterator;
 
   pred_iterator pred_begin() { return (ExplodedNode**) Preds.begin(); }
   pred_iterator pred_end() { return (ExplodedNode**) Preds.end(); }
@@ -289,8 +289,8 @@ public:
     return llvm::dyn_cast<FunctionDecl>(&CodeDecl);
   }
   
-  ExplodedGraphImpl* Trim(ExplodedNodeImpl** NBeg,
-                          ExplodedNodeImpl** NEnd) const;
+  ExplodedGraphImpl* Trim(const ExplodedNodeImpl* const * NBeg,
+                          const ExplodedNodeImpl* const * NEnd) const;
   
 };
   
@@ -411,15 +411,18 @@ public:
   
   // Utility.
   
-  ExplodedGraph* Trim(NodeTy** NBeg, NodeTy** NEnd) const {
+  ExplodedGraph*
+  Trim(const NodeTy* const* NBeg, const NodeTy* const* NEnd) const {
     
     if (NBeg == NEnd)
       return NULL;
     
     assert (NBeg < NEnd);
     
-    ExplodedNodeImpl** NBegImpl = (ExplodedNodeImpl**) NBeg;
-    ExplodedNodeImpl** NEndImpl = (ExplodedNodeImpl**) NEnd;
+    const ExplodedNodeImpl* const* NBegImpl =
+      (const ExplodedNodeImpl* const*) NBeg;
+    const ExplodedNodeImpl* const* NEndImpl =
+      (const ExplodedNodeImpl* const*) NEnd;
     
     return static_cast<ExplodedGraph*>(ExplodedGraphImpl::Trim(NBegImpl,
                                                                NEndImpl));

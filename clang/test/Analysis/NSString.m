@@ -194,7 +194,7 @@ void f12() {
 }
 
 - (id)notShared {
-  return [[SharedClass alloc] _init]; // expected-warning{{This violates the naming convention rules}}
+  return [[SharedClass alloc] _init]; // expected-warning{{[naming convention] leak of returned object}}
 }
 
 + (id)sharedInstance {

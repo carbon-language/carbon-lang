@@ -64,27 +64,30 @@ static inline Stmt* GetStmt(const CFGBlock* B) {
     return (*B)[0];
 }
 
-static inline ExplodedNode<GRState>*
-GetNextNode(ExplodedNode<GRState>* N) {
+static inline const ExplodedNode<GRState>*
+GetNextNode(const ExplodedNode<GRState>* N) {
   return N->pred_empty() ? NULL : *(N->pred_begin());
 }
 
-static Stmt* GetLastStmt(ExplodedNode<GRState>* N) {
+static Stmt* GetLastStmt(const ExplodedNode<GRState>* N) {
   assert (isa<BlockEntrance>(N->getLocation()));
   
   for (N = GetNextNode(N); N; N = GetNextNode(N)) {
-    
     ProgramPoint P = N->getLocation();
-    
-    if (PostStmt* PS = dyn_cast<PostStmt>(&P))
-      return PS->getStmt();
+    if (PostStmt* PS = dyn_cast<PostStmt>(&P)) return PS->getStmt();
   }
   
   return NULL;
 }
 
+static inline Stmt* GetStmt(const ExplodedNode<GRState>* N) {  
+  ProgramPoint ProgP = N->getLocation();  
+  return isa<BlockEntrance>(ProgP) ? GetLastStmt(N) : GetStmt(ProgP);
+}
+
+
 static void ExecutionContinues(std::ostringstream& os, SourceManager& SMgr,
-                               Stmt* S) {
+                               const Stmt* S) {
   
   if (!S)
     return;
@@ -100,7 +103,7 @@ static void ExecutionContinues(std::ostringstream& os, SourceManager& SMgr,
 
 static inline void ExecutionContinues(std::ostringstream& os,
                                       SourceManager& SMgr,
-                                      ExplodedNode<GRState>* N) {
+                                      const ExplodedNode<GRState>* N) {
 
   ExecutionContinues(os, SMgr, GetStmt(N->getLocation()));
 }
@@ -129,7 +132,7 @@ Stmt* BugReport::getStmt(BugReporter& BR) const {
 
 PathDiagnosticPiece*
 BugReport::getEndPath(BugReporter& BR,
-                      ExplodedNode<GRState>* EndPathNode) {
+                      const ExplodedNode<GRState>* EndPathNode) {
   
   Stmt* S = getStmt(BR);
   
@@ -165,7 +168,7 @@ FullSourceLoc BugReport::getLocation(SourceManager& Mgr) {
   if (!EndNode)
     return FullSourceLoc();
   
-  Stmt* S = GetStmt(EndNode->getLocation());
+  Stmt* S = GetStmt(EndNode);
   
   if (!S)
     return FullSourceLoc();
@@ -173,21 +176,22 @@ FullSourceLoc BugReport::getLocation(SourceManager& Mgr) {
   return FullSourceLoc(S->getLocStart(), Mgr);
 }
 
-PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<GRState>* N,
-                                          ExplodedNode<GRState>* PrevN,
-                                          ExplodedGraph<GRState>& G,
+PathDiagnosticPiece* BugReport::VisitNode(const ExplodedNode<GRState>* N,
+                                          const ExplodedNode<GRState>* PrevN,
+                                          const ExplodedGraph<GRState>& G,
                                           BugReporter& BR) {
   return NULL;
 }
 
 static std::pair<ExplodedGraph<GRState>*, ExplodedNode<GRState>*>
-MakeReportGraph(ExplodedGraph<GRState>* G, ExplodedNode<GRState>* N) {
+MakeReportGraph(const ExplodedGraph<GRState>* G,
+                const ExplodedNode<GRState>* N) {
   
-  llvm::OwningPtr<ExplodedGraph<GRState> > GTrim(G->Trim(&N, &N+1));    
+  llvm::OwningPtr< ExplodedGraph<GRState> > GTrim(G->Trim(&N, &N+1));    
     
   // Find the error node in the trimmed graph.  
   
-  ExplodedNode<GRState>* NOld = N;
+  const ExplodedNode<GRState>* NOld = N;
   N = 0;
   
   for (ExplodedGraph<GRState>::node_iterator
@@ -203,21 +207,21 @@ MakeReportGraph(ExplodedGraph<GRState>* G, ExplodedNode<GRState>* N) {
   assert(N);
     
   // Create a new graph with a single path.
-
-  G = new ExplodedGraph<GRState>(GTrim->getCFG(), GTrim->getCodeDecl(),
-                                     GTrim->getContext());
+  ExplodedGraph<GRState> *GNew =
+    new ExplodedGraph<GRState>(GTrim->getCFG(), GTrim->getCodeDecl(),
+                               GTrim->getContext());
                                      
   // Sometimes TrimGraph can contain a cycle.  Perform a reverse DFS
   // to the root node, and then construct a new graph that contains only
   // a single path.
-  llvm::DenseMap<void*,unsigned> Visited;
-  llvm::SmallVector<ExplodedNode<GRState>*, 10> WS;
+  llvm::DenseMap<const void*,unsigned> Visited;
+  llvm::SmallVector<const ExplodedNode<GRState>*, 10> WS;
   WS.push_back(N);
   unsigned cnt = 0;
-  ExplodedNode<GRState>* Root = 0;
+  const ExplodedNode<GRState>* Root = 0;
   
   while (!WS.empty()) {
-    ExplodedNode<GRState>* Node = WS.back();
+    const ExplodedNode<GRState>* Node = WS.back();
     WS.pop_back();
     
     if (Visited.find(Node) != Visited.end())
@@ -230,7 +234,7 @@ MakeReportGraph(ExplodedGraph<GRState>* G, ExplodedNode<GRState>* N) {
       break;
     }
     
-    for (ExplodedNode<GRState>::pred_iterator I=Node->pred_begin(),
+    for (ExplodedNode<GRState>::const_pred_iterator I=Node->pred_begin(),
          E=Node->pred_end(); I!=E; ++I)
       WS.push_back(*I);
   }
@@ -242,15 +246,14 @@ MakeReportGraph(ExplodedGraph<GRState>* G, ExplodedNode<GRState>* N) {
   ExplodedNode<GRState> *Last = 0, *First = 0;  
     
   for ( N = Root ;;) {
-    
     // Lookup the number associated with the current node.
-    llvm::DenseMap<void*,unsigned>::iterator I=Visited.find(N);
+    llvm::DenseMap<const void*,unsigned>::iterator I = Visited.find(N);
     assert (I != Visited.end());
     
     // Create the equivalent node in the new graph with the same state
     // and location.
     ExplodedNode<GRState>* NewN =
-      G->getNode(N->getLocation(), N->getState());    
+      GNew->getNode(N->getLocation(), N->getState());    
 
     // Link up the new node with the previous node.
     if (Last)
@@ -266,8 +269,8 @@ MakeReportGraph(ExplodedGraph<GRState>* G, ExplodedNode<GRState>* N) {
 
     // Find the next successor node.  We choose the node that is marked
     // with the lowest DFS number.
-    ExplodedNode<GRState>::succ_iterator SI = N->succ_begin();
-    ExplodedNode<GRState>::succ_iterator SE = N->succ_end();
+    ExplodedNode<GRState>::const_succ_iterator SI = N->succ_begin();
+    ExplodedNode<GRState>::const_succ_iterator SE = N->succ_end();
     N = 0;
     
     for (unsigned MinVal = 0; SI != SE; ++SI) {
@@ -287,12 +290,12 @@ MakeReportGraph(ExplodedGraph<GRState>* G, ExplodedNode<GRState>* N) {
   }
 
   assert (First);
-  return std::make_pair(G, First);
+  return std::make_pair(GNew, First);
 }
 
-static VarDecl* GetMostRecentVarDeclBinding(ExplodedNode<GRState>* N,
-                                            GRStateManager& VMgr,
-                                            SVal X) {
+static const VarDecl*
+GetMostRecentVarDeclBinding(const ExplodedNode<GRState>* N,
+                            GRStateManager& VMgr, SVal X) {
   
   for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
     
@@ -328,16 +331,16 @@ class VISIBILITY_HIDDEN NotableSymbolHandler
     
   SymbolRef Sym;
   const GRState* PrevSt;
-  Stmt* S;
+  const Stmt* S;
   GRStateManager& VMgr;
-  ExplodedNode<GRState>* Pred;
+  const ExplodedNode<GRState>* Pred;
   PathDiagnostic& PD; 
   BugReporter& BR;
     
 public:
   
-  NotableSymbolHandler(SymbolRef sym, const GRState* prevst, Stmt* s,
-                       GRStateManager& vmgr, ExplodedNode<GRState>* pred,
+  NotableSymbolHandler(SymbolRef sym, const GRState* prevst, const Stmt* s,
+                       GRStateManager& vmgr, const ExplodedNode<GRState>* pred,
                        PathDiagnostic& pd, BugReporter& br)
     : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
                         
@@ -367,7 +370,7 @@ public:
     
     VarDecl *VD = 0;
     
-    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
+    if (const BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
       if (!B->isAssignmentOp())
         return true;
       
@@ -379,7 +382,7 @@ public:
       
       VD = dyn_cast<VarDecl>(DR->getDecl());
     }
-    else if (DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
+    else if (const DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
       // FIXME: Eventually CFGs won't have DeclStmts.  Right now we
       //  assume that each DeclStmt has a single Decl.  This invariant
       //  holds by contruction in the CFG.
@@ -390,7 +393,7 @@ public:
       return true;
     
     // What is the most recently referenced variable with this binding?
-    VarDecl* MostRecent = GetMostRecentVarDeclBinding(Pred, VMgr, V);
+    const VarDecl* MostRecent = GetMostRecentVarDeclBinding(Pred, VMgr, V);
     
     if (!MostRecent)
       return true;
@@ -411,11 +414,12 @@ public:
 };
 }
 
-static void HandleNotableSymbol(ExplodedNode<GRState>* N, Stmt* S,
+static void HandleNotableSymbol(const ExplodedNode<GRState>* N,
+                                const Stmt* S,
                                 SymbolRef Sym, BugReporter& BR,
                                 PathDiagnostic& PD) {
   
-  ExplodedNode<GRState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
+  const ExplodedNode<GRState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
   const GRState* PrevSt = Pred ? Pred->getState() : 0;
   
   if (!PrevSt)
@@ -433,13 +437,13 @@ class VISIBILITY_HIDDEN ScanNotableSymbols
   : public StoreManager::BindingsHandler {
     
   llvm::SmallSet<SymbolRef, 10> AlreadyProcessed;
-  ExplodedNode<GRState>* N;
+  const ExplodedNode<GRState>* N;
   Stmt* S;
   GRBugReporter& BR;
   PathDiagnostic& PD;
     
 public:
-  ScanNotableSymbols(ExplodedNode<GRState>* n, Stmt* s, GRBugReporter& br,
+  ScanNotableSymbols(const ExplodedNode<GRState>* n, Stmt* s, GRBugReporter& br,
                      PathDiagnostic& pd)
     : N(n), S(s), BR(br), PD(pd) {}
   
@@ -472,14 +476,14 @@ public:
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                                            BugReport& R) {
 
-  ExplodedNode<GRState>* N = R.getEndNode();
+  const ExplodedNode<GRState>* N = R.getEndNode();
 
   if (!N) return;
   
   // Construct a new graph that contains only a single path from the error
   // node to a root.
   
-  const std::pair<ExplodedGraph<GRState>*,ExplodedNode<GRState>*>
+  const std::pair<ExplodedGraph<GRState>*, ExplodedNode<GRState>*>
     GPair = MakeReportGraph(&getGraph(), N);
   
   llvm::OwningPtr<ExplodedGraph<GRState> > ReportGraph(GPair.first);
@@ -493,15 +497,15 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   else
     return;
   
-  ExplodedNode<GRState>* NextNode = N->pred_empty() 
-                                       ? NULL : *(N->pred_begin());
+  const ExplodedNode<GRState>* NextNode = N->pred_empty() 
+                                        ? NULL : *(N->pred_begin());
   
   ASTContext& Ctx = getContext();
   SourceManager& SMgr = Ctx.getSourceManager();
   
   while (NextNode) {
     
-    ExplodedNode<GRState>* LastNode = N;
+    const ExplodedNode<GRState>* LastNode = N;
     N = NextNode;    
     NextNode = GetNextNode(N);
     
@@ -697,7 +701,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
 
 bool BugTypeCacheLocation::isCached(BugReport& R) {
   
-  ExplodedNode<GRState>* N = R.getEndNode();
+  const ExplodedNode<GRState>* N = R.getEndNode();
   
   if (!N)
     return false;
@@ -727,73 +731,37 @@ void BugReporter::EmitWarning(BugReport& R) {
   GeneratePathDiagnostic(*D.get(), R);
   
   // Get the meta data.
-  
   std::pair<const char**, const char**> Meta = R.getExtraDescriptiveText();
-  
-  for (const char** s = Meta.first; s != Meta.second; ++s)
-    D->addMeta(*s);
+  for (const char** s = Meta.first; s != Meta.second; ++s) D->addMeta(*s);
 
-  // Emit a full diagnostic for the path if we have a PathDiagnosticClient.
-  
+  // Emit a summary diagnostic to the regular Diagnostics engine.
   PathDiagnosticClient* PD = getPathDiagnosticClient();
-  
-  if (PD && !D->empty()) { 
-    PD->HandlePathDiagnostic(D.take());    
-    // Output a diagnostic summarizing the report.
-    Diagnostic& Diag = getDiagnostic();
-    Diag.Report(R.getLocation(getSourceManager()),
-                Diag.getCustomDiagID(Diagnostic::Warning,R.getDescription()));
-    return;
-  }
-  
-  // This isn't a bug with a path, but we can still emit a single
-  // line diagnostic.  Determine the location.
-  FullSourceLoc L = D->empty() ? R.getLocation(getSourceManager())
-                               : D->back()->getLocation();
-  
-  // Determine the range.  
-  const SourceRange *Beg, *End;
+  const SourceRange *Beg = 0, *End = 0;
+  R.getRanges(*this, Beg, End);    
+  Diagnostic& Diag = getDiagnostic();
+  FullSourceLoc L = R.getLocation(getSourceManager());  
+  const char *msg = PD ? R.getBugType().getName() : R.getDescription();  
+  unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, msg);
 
-  if (!D->empty()) {
-    Beg = D->back()->ranges_begin();
-    End = D->back()->ranges_end();
-  }
-  else
-    R.getRanges(*this, Beg, End);
-
-  if (PD) {
-    PathDiagnosticPiece* piece = new PathDiagnosticPiece(L, R.getDescription());
-
-    for ( ; Beg != End; ++Beg)
-      piece->addRange(*Beg);
-
-    D->push_back(piece);
-    PD->HandlePathDiagnostic(D.take());
-    
-    // Output a diagnostic summarizing the report.
-    Diagnostic& Diag = getDiagnostic();
-    Diag.Report(L,Diag.getCustomDiagID(Diagnostic::Warning,R.getDescription()));
-    return;
-  }
-  else {
-    std::string str;
-
-    if (D->empty())
-      str = R.getDescription();
-    else
-      str = D->back()->getString();
-
-    Diagnostic& Diag = getDiagnostic();
-    unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, str.c_str());
-
-    switch (End-Beg) {
+  switch (End-Beg) {
     default: assert(0 && "Don't handle this many ranges yet!");
     case 0: Diag.Report(L, ErrorDiag); break;
     case 1: Diag.Report(L, ErrorDiag) << Beg[0]; break;
     case 2: Diag.Report(L, ErrorDiag) << Beg[0] << Beg[1]; break;
     case 3: Diag.Report(L, ErrorDiag) << Beg[0] << Beg[1] << Beg[2]; break;
-    }
   }
+
+  // Emit a full diagnostic for the path if we have a PathDiagnosticClient.
+  if (!PD)
+    return;
+  
+  if (D->empty()) { 
+    PathDiagnosticPiece* piece = new PathDiagnosticPiece(L, R.getDescription());
+    for ( ; Beg != End; ++Beg) piece->addRange(*Beg);
+    D->push_back(piece);
+  }
+  
+  PD->HandlePathDiagnostic(D.take());
 }
 
 void BugReporter::EmitBasicReport(const char* name, const char* str,
