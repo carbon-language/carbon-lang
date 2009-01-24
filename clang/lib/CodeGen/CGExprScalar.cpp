@@ -673,45 +673,43 @@ Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
 /// argument of the sizeof expression as an integer.
 Value *
 ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
+  // Handle alignof with the constant folding logic.  alignof always produces a
+  // constant.
+  if (!E->isSizeOf()) {
+    Expr::EvalResult Result;
+    E->Evaluate(Result, CGF.getContext());
+    return llvm::ConstantInt::get(Result.Val.getInt());
+  }
+  
   QualType RetType = E->getType();
   assert(RetType->isIntegerType() && "Result type must be an integer!");
   uint32_t ResultWidth = 
     static_cast<uint32_t>(CGF.getContext().getTypeSize(RetType));
-
+  
+  // sizeof(void) and sizeof(function) = 1 as a strange gcc extension.
   QualType TypeToSize = E->getTypeOfArgument();
-  // sizeof(void) and __alignof__(void) = 1 as a gcc extension. Also
-  // for function types.
-  // FIXME: what is alignof a function type in gcc?
   if (TypeToSize->isVoidType() || TypeToSize->isFunctionType())
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, 1));
   
   if (const VariableArrayType *VAT = 
         CGF.getContext().getAsVariableArrayType(TypeToSize)) {
-    if (E->isSizeOf()) {
-      if (E->isArgumentType()) {
-        // sizeof(type) - make sure to emit the VLA size.
-        CGF.EmitVLASize(TypeToSize);
-      }
-      return CGF.GetVLASize(VAT);
+    if (E->isArgumentType()) {
+      // sizeof(type) - make sure to emit the VLA size.
+      CGF.EmitVLASize(TypeToSize);
     }
-    
-    // alignof
-    QualType BaseType = CGF.getContext().getBaseElementType(VAT);
-    uint64_t Align = CGF.getContext().getTypeAlign(BaseType);
-
-    Align /= 8;  // Return alignment in bytes, not bits.
-    return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Align));
+    return CGF.GetVLASize(VAT);
   }
+  
   if (TypeToSize->isObjCInterfaceType()) {
     ObjCInterfaceDecl *OI = TypeToSize->getAsObjCInterfaceType()->getDecl();
     RecordDecl *RD = const_cast<RecordDecl*>(
                                         CGF.getContext().addRecordToClass(OI));
     TypeToSize =  CGF.getContext().getTagDeclType(static_cast<TagDecl*>(RD));
   }  
-  std::pair<uint64_t, unsigned> Info = CGF.getContext().getTypeInfo(TypeToSize);
   
-  uint64_t Val = E->isSizeOf() ? Info.first : Info.second;
-  Val /= 8;  // Return size in bytes, not bits.
+  uint64_t Val = CGF.getContext().getTypeSize(TypeToSize);
+  // Return size in bytes, not bits.
+  Val /= CGF.getContext().Target.getCharWidth();
   
   return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
 }
