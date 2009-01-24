@@ -508,8 +508,8 @@ public:
 
 private:
   bool HandleCast(CastExpr* E);
-  uint64_t GetAlignOfExpr(const Expr *E);
-  uint64_t GetAlignOfType(QualType T);
+  unsigned GetAlignOfExpr(const Expr *E);
+  unsigned GetAlignOfType(QualType T);
 };
 } // end anonymous namespace
 
@@ -844,7 +844,7 @@ bool IntExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
   return Visit(Cond ? E->getTrueExpr() : E->getFalseExpr());
 }
 
-uint64_t IntExprEvaluator::GetAlignOfType(QualType T) {
+unsigned IntExprEvaluator::GetAlignOfType(QualType T) {
   const Type *Ty = Info.Ctx.getCanonicalType(T).getTypePtr();
   
   // __alignof__(void) = 1 as a gcc extension.
@@ -873,8 +873,17 @@ uint64_t IntExprEvaluator::GetAlignOfType(QualType T) {
   return Info.Ctx.getTypeAlign(Ty) / CharSize;
 }
 
-uint64_t IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
-  
+unsigned IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
+  E = E->IgnoreParens();
+
+  // alignof decl is always accepted, even if it doesn't make sense: we default
+  // to 1 in those cases. 
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+    return Info.Ctx.getDeclAlign(DRE->getDecl());
+    
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E))
+    return Info.Ctx.getDeclAlign(ME->getMemberDecl());
+
   return GetAlignOfType(E->getType());
 }
 
