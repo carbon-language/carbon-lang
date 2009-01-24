@@ -6,6 +6,10 @@ from Enumeration import *
 
 #  - struct improvements (bitfields, flexible arrays, packed &
 #    unpacked, alignment)
+#  - objective-c qualified id
+#  - anonymous / transparent unions
+#  - VLAs
+#  - block types
 
 ###
 # Actual type types
