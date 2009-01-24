@@ -324,6 +324,8 @@ bool Type::isVariablyModifiedType() const {
   // correctly.
   if (const PointerLikeType *PT = getAsPointerLikeType())
     return PT->getPointeeType()->isVariablyModifiedType();
+  if (const MemberPointerType *PT = getAsMemberPointerType())
+    return PT->getPointeeType()->isVariablyModifiedType();
 
   // A function can return a variably modified type
   // This one isn't completely obvious, but it follows from the

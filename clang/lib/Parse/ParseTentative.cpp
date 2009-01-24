@@ -357,7 +357,7 @@ bool Parser::isCXXTypeIdInParens() {
 ///           '*' cv-qualifier-seq[opt]
 ///           '&'
 /// [C++0x]   '&&'                                                        [TODO]
-///           '::'[opt] nested-name-specifier '*' cv-qualifier-seq[opt]   [TODO]
+///           '::'[opt] nested-name-specifier '*' cv-qualifier-seq[opt]
 ///
 ///         cv-qualifier-seq:
 ///           cv-qualifier cv-qualifier-seq[opt]
@@ -387,8 +387,12 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
   //   ptr-operator declarator
 
   while (1) {
-    if (Tok.is(tok::star) || Tok.is(tok::amp) || 
-        (Tok.is(tok::caret) && getLang().Blocks)) {
+    if (Tok.is(tok::coloncolon) || Tok.is(tok::identifier))
+      TryAnnotateCXXScopeToken();
+
+    if (Tok.is(tok::star) || Tok.is(tok::amp) ||
+        (Tok.is(tok::caret) && getLang().Blocks) ||
+        (Tok.is(tok::annot_cxxscope) && NextToken().is(tok::star))) {
       // ptr-operator
       ConsumeToken();
       while (Tok.is(tok::kw_const)    ||

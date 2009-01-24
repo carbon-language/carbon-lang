@@ -400,10 +400,11 @@ ASTContext::getTypeInfo(const Type *T) {
     // pointer size.
     return getTypeInfo(cast<ReferenceType>(T)->getPointeeType());
   case Type::MemberPointer: {
-    // Note that this is not only platform- but also ABI-dependent. We follow
+    // FIXME: This is not only platform- but also ABI-dependent. We follow
     // the GCC ABI, where pointers to data are one pointer large, pointers to
     // functions two pointers. But if we want to support ABI compatibility with
-    // other compilers too, we need to delegate this completely to TargetInfo.
+    // other compilers too, we need to delegate this completely to TargetInfo
+    // or some ABI abstraction layer.
     QualType Pointee = cast<MemberPointerType>(T)->getPointeeType();
     unsigned AS = Pointee.getAddressSpace();
     Width = Target.getPointerWidth(AS);
