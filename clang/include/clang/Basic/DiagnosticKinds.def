@@ -1161,6 +1161,10 @@ DIAG(err_illegal_decl_array_of_references, ERROR,
      "'%0' declared as array of references")
 DIAG(err_illegal_decl_pointer_to_reference, ERROR,
      "'%0' declared as a pointer to a reference")
+DIAG(err_illegal_decl_mempointer_to_void, ERROR,
+     "'%0' declared as a member pointer to void")
+DIAG(err_illegal_decl_mempointer_in_nonclass, ERROR,
+     "'%0' does not point into a class")
 DIAG(err_illegal_decl_reference_to_reference, ERROR,
      "%0 declared as a reference to a reference")
 DIAG(err_invalid_reference_qualifier_application, ERROR,

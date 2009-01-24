@@ -50,6 +50,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
       return cast<DeclContext>(SD);
     }
 
+    // FIXME: Template parameters and dependent types.
     // FIXME: C++0x scoped enums
 
     // Fall through to produce an error: we found something that isn't

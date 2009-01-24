@@ -85,6 +85,7 @@ void ASTContext::PrintStats() const {
   unsigned NumBuiltin = 0, NumPointer = 0, NumArray = 0, NumFunctionP = 0;
   unsigned NumVector = 0, NumComplex = 0, NumBlockPointer = 0;
   unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0, NumReference = 0;
+  unsigned NumMemberPointer = 0;
   
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
   unsigned NumObjCInterfaces = 0, NumObjCQualifiedInterfaces = 0;
@@ -101,6 +102,8 @@ void ASTContext::PrintStats() const {
       ++NumBlockPointer;
     else if (isa<ReferenceType>(T))
       ++NumReference;
+    else if (isa<MemberPointerType>(T))
+      ++NumMemberPointer;
     else if (isa<ComplexType>(T))
       ++NumComplex;
     else if (isa<ArrayType>(T))
@@ -142,6 +145,7 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "    %d pointer types\n", NumPointer);
   fprintf(stderr, "    %d block pointer types\n", NumBlockPointer);
   fprintf(stderr, "    %d reference types\n", NumReference);
+  fprintf(stderr, "    %d member pointer types\n", NumMemberPointer);
   fprintf(stderr, "    %d complex types\n", NumComplex);
   fprintf(stderr, "    %d array types\n", NumArray);
   fprintf(stderr, "    %d vector types\n", NumVector);
@@ -164,6 +168,7 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
     NumComplex*sizeof(ComplexType)+NumVector*sizeof(VectorType)+
+    NumMemberPointer*sizeof(MemberPointerType)+
     NumFunctionP*sizeof(FunctionTypeProto)+
     NumFunctionNP*sizeof(FunctionTypeNoProto)+
     NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType)+
@@ -374,7 +379,19 @@ ASTContext::getTypeInfo(const Type *T) {
     // FIXME: This is wrong for struct layout: a reference in a struct has
     // pointer size.
     return getTypeInfo(cast<ReferenceType>(T)->getPointeeType());
-    
+  case Type::MemberPointer: {
+    // Note that this is not only platform- but also ABI-dependent. We follow
+    // the GCC ABI, where pointers to data are one pointer large, pointers to
+    // functions two pointers. But if we want to support ABI compatibility with
+    // other compilers too, we need to delegate this completely to TargetInfo.
+    QualType Pointee = cast<MemberPointerType>(T)->getPointeeType();
+    unsigned AS = Pointee.getAddressSpace();
+    Width = Target.getPointerWidth(AS);
+    if (Pointee->isFunctionType())
+      Width *= 2;
+    Align = Target.getPointerAlign(AS);
+    // GCC aligns at single pointer width.
+  }
   case Type::Complex: {
     // Complex types have the same alignment as their elements, but twice the
     // size.
@@ -805,6 +822,38 @@ QualType ASTContext::getReferenceType(QualType T) {
   ReferenceType *New = new (Mem) ReferenceType(T, Canonical);
   Types.push_back(New);
   ReferenceTypes.InsertNode(New, InsertPos);
+  return QualType(New, 0);
+}
+
+/// getMemberPointerType - Return the uniqued reference to the type for a
+/// member pointer to the specified type, in the specified class.
+QualType ASTContext::getMemberPointerType(QualType T, const Type *Cls)
+{
+  // Unique pointers, to guarantee there is only one pointer of a particular
+  // structure.
+  llvm::FoldingSetNodeID ID;
+  MemberPointerType::Profile(ID, T, Cls);
+
+  void *InsertPos = 0;
+  if (MemberPointerType *PT =
+      MemberPointerTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(PT, 0);
+
+  // If the pointee or class type isn't canonical, this won't be a canonical
+  // type either, so fill in the canonical type field.
+  QualType Canonical;
+  if (!T->isCanonical()) {
+    Canonical = getMemberPointerType(getCanonicalType(T),getCanonicalType(Cls));
+
+    // Get the new insert position for the node we care about.
+    MemberPointerType *NewIP =
+      MemberPointerTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+  }
+  void *Mem = Allocator.Allocate(sizeof(MemberPointerType), 8);
+  MemberPointerType *New = new (Mem) MemberPointerType(T, Cls, Canonical);
+  Types.push_back(New);
+  MemberPointerTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
 }
 

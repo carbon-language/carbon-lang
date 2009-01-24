@@ -60,6 +60,7 @@ class ASTContext {
   llvm::FoldingSet<PointerType> PointerTypes;
   llvm::FoldingSet<BlockPointerType> BlockPointerTypes;
   llvm::FoldingSet<ReferenceType> ReferenceTypes;
+  llvm::FoldingSet<MemberPointerType> MemberPointerTypes;
   llvm::FoldingSet<ConstantArrayType> ConstantArrayTypes;
   llvm::FoldingSet<IncompleteArrayType> IncompleteArrayTypes;
   std::vector<VariableArrayType*> VariableArrayTypes;
@@ -185,11 +186,16 @@ public:
   /// getBlockPointerType - Return the uniqued reference to the type for a block
   /// of the specified type.
   QualType getBlockPointerType(QualType T);
-  
+
   /// getReferenceType - Return the uniqued reference to the type for a
   /// reference to the specified type.
   QualType getReferenceType(QualType T);
-  
+
+  /// getMemberPointerType - Return the uniqued reference to the type for a
+  /// member pointer to the specified type in the specified class. The class
+  /// is a Type because it could be a dependent name.
+  QualType getMemberPointerType(QualType T, const Type *Cls);
+
   /// getVariableArrayType - Returns a non-unique reference to the type for a
   /// variable array of the specified element type.
   QualType getVariableArrayType(QualType EltTy, Expr *NumElts,

@@ -1550,10 +1550,10 @@ void Parser::ParseDeclarator(Declarator &D) {
 /// isn't parsed at all, making this function effectively parse the C++
 /// ptr-operator production.
 ///
-///       declarator: [C99 6.7.5]
-///         pointer[opt] direct-declarator
-/// [C++]   '&' declarator [C++ 8p4, dcl.decl]
-/// [GNU]   '&' restrict[opt] attributes[opt] declarator
+///       declarator: [C99 6.7.5] [C++ 8p4, dcl.decl]
+/// [C]     pointer[opt] direct-declarator
+/// [C++]   direct-declarator
+/// [C++]   ptr-operator declarator
 ///
 ///       pointer: [C99 6.7.5]
 ///         '*' type-qualifier-list[opt]
@@ -1563,11 +1563,41 @@ void Parser::ParseDeclarator(Declarator &D) {
 ///         '*' cv-qualifier-seq[opt]
 ///         '&'
 /// [GNU]   '&' restrict[opt] attributes[opt]
-///         '::'[opt] nested-name-specifier '*' cv-qualifier-seq[opt] [TODO]
+///         '::'[opt] nested-name-specifier '*' cv-qualifier-seq[opt]
 void Parser::ParseDeclaratorInternal(Declarator &D,
                                      DirectDeclParseFunction DirectDeclParser) {
-  tok::TokenKind Kind = Tok.getKind();
 
+  // C++ member pointers start with a '::' or a nested-name.
+  // Member pointers get special handling, since there's no place for the
+  // scope spec in the generic path below.
+  if ((Tok.is(tok::coloncolon) || Tok.is(tok::identifier) ||
+       Tok.is(tok::annot_cxxscope)) && getLang().CPlusPlus) {
+    CXXScopeSpec SS;
+    if (ParseOptionalCXXScopeSpecifier(SS)) {
+      if(Tok.isNot(tok::star)) {
+        // The scope spec really belongs to the direct-declarator.
+        D.getCXXScopeSpec() = SS;
+        if (DirectDeclParser)
+          (this->*DirectDeclParser)(D);
+        return;
+      }
+
+      SourceLocation Loc = ConsumeToken();
+      DeclSpec DS;
+      ParseTypeQualifierListOpt(DS);
+
+      // Recurse to parse whatever is left.
+      ParseDeclaratorInternal(D, DirectDeclParser);
+
+      // Sema will have to catch (syntactically invalid) pointers into global
+      // scope. It has to catch pointers into namespace scope anyway.
+      D.AddTypeInfo(DeclaratorChunk::getMemberPointer(SS,DS.getTypeQualifiers(),
+                                                      Loc,DS.TakeAttributes()));
+      return;
+    }
+  }
+
+  tok::TokenKind Kind = Tok.getKind();
   // Not a pointer, C++ reference, or block.
   if (Kind != tok::star && (Kind != tok::amp || !getLang().CPlusPlus) &&
       (Kind != tok::caret || !getLang().Blocks)) {
@@ -1575,16 +1605,16 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
       (this->*DirectDeclParser)(D);
     return;
   }
-  
+
   // Otherwise, '*' -> pointer, '^' -> block, '&' -> reference.
   SourceLocation Loc = ConsumeToken();  // Eat the * or &.
 
   if (Kind == tok::star || (Kind == tok::caret && getLang().Blocks)) {
     // Is a pointer.
     DeclSpec DS;
-    
+
     ParseTypeQualifierListOpt(DS);
-  
+
     // Recursively parse the declarator.
     ParseDeclaratorInternal(D, DirectDeclParser);
     if (Kind == tok::star)
@@ -1680,7 +1710,9 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
   if (getLang().CPlusPlus) {
     if (D.mayHaveIdentifier()) {
-      bool afterCXXScope = ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec());
+      // ParseDeclaratorInternal might already have parsed the scope.
+      bool afterCXXScope = D.getCXXScopeSpec().isSet() ||
+        ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec());
       if (afterCXXScope) {
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).

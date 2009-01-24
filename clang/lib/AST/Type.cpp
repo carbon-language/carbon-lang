@@ -288,6 +288,24 @@ const ReferenceType *Type::getAsReferenceType() const {
   return getDesugaredType()->getAsReferenceType();
 }
 
+const MemberPointerType *Type::getAsMemberPointerType() const {
+  // If this is directly a member pointer type, return it.
+  if (const MemberPointerType *MTy = dyn_cast<MemberPointerType>(this))
+    return MTy;
+
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<MemberPointerType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<MemberPointerType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsMemberPointerType();
+    return 0;
+  }
+
+  // If this is a typedef for a member pointer type, strip the typedef off
+  // without losing all typedef information.
+  return getDesugaredType()->getAsMemberPointerType();
+}
+
 /// isVariablyModifiedType (C99 6.7.5p3) - Return true for variable length
 /// array types and types that contain variable array types in their
 /// declarator
@@ -300,8 +318,11 @@ bool Type::isVariablyModifiedType() const {
   if (const Type *T = getArrayElementTypeNoTypeQual())
     return T->isVariablyModifiedType();
 
-  // A pointer can point to a variably modified type
-  if (const PointerType *PT = getAsPointerType())
+  // A pointer can point to a variably modified type.
+  // Also, C++ references and member pointers can point to a variably modified
+  // type, where VLAs appear as an extension to C++, and should be treated
+  // correctly.
+  if (const PointerLikeType *PT = getAsPointerLikeType())
     return PT->getPointeeType()->isVariablyModifiedType();
 
   // A function can return a variably modified type
@@ -633,6 +654,7 @@ bool Type::isScalarType() const {
     return ASQT->getBaseType()->isScalarType();
   return isa<PointerType>(CanonicalType) ||
          isa<BlockPointerType>(CanonicalType) ||
+         isa<MemberPointerType>(CanonicalType) ||
          isa<ComplexType>(CanonicalType) ||
          isa<ObjCQualifiedIdType>(CanonicalType);
 }
@@ -702,9 +724,9 @@ bool Type::isPODType() const {
   case Builtin:
   case Complex:
   case Pointer:
+  case MemberPointer:
   case Vector:
   case ExtVector:
-    // FIXME: pointer-to-member
     return true;
 
   case Tagged:
@@ -948,6 +970,20 @@ void ReferenceType::getAsStringInternal(std::string &S) const {
   if (isa<ArrayType>(getPointeeType()))
     S = '(' + S + ')';
   
+  getPointeeType().getAsStringInternal(S);
+}
+
+void MemberPointerType::getAsStringInternal(std::string &S) const {
+  std::string C;
+  Class->getAsStringInternal(C);
+  C += "::*";
+  S = C + S;
+
+  // Handle things like 'int (&A)[4];' correctly.
+  // FIXME: this should include vectors, but vectors use attributes I guess.
+  if (isa<ArrayType>(getPointeeType()))
+    S = '(' + S + ')';
+
   getPointeeType().getAsStringInternal(S);
 }
 

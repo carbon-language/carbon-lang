@@ -103,7 +103,7 @@
 // conversions.
 
 // Flip this switch to measure performance impact of the smart pointers.
-//#define DISABLE_SMART_POINTERS
+#define DISABLE_SMART_POINTERS
 
 namespace clang
 {

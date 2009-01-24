@@ -93,21 +93,29 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
     case Type::IncompleteArray:
       D.RegisterPtr(PtrID,IncompleteArrayType::CreateImpl(Context,D));
       break;
-      
+
+    case Type::MemberPointer:
+      D.RegisterPtr(PtrID, MemberPointerType::CreateImpl(Context, D));
+      break;
+
     case Type::Pointer:
-      D.RegisterPtr(PtrID,PointerType::CreateImpl(Context,D));
+      D.RegisterPtr(PtrID, PointerType::CreateImpl(Context, D));
       break;
 
     case Type::BlockPointer:
-      D.RegisterPtr(PtrID,BlockPointerType::CreateImpl(Context,D));
+      D.RegisterPtr(PtrID, BlockPointerType::CreateImpl(Context, D));
       break;
-      
+
+    case Type::Reference:
+      D.RegisterPtr(PtrID, ReferenceType::CreateImpl(Context, D));
+      break;
+
     case Type::Tagged:
-      D.RegisterPtr(PtrID,TagType::CreateImpl(Context,D));
+      D.RegisterPtr(PtrID, TagType::CreateImpl(Context, D));
       break;
-      
+
     case Type::TypeName:
-      D.RegisterPtr(PtrID,TypedefType::CreateImpl(Context,D));
+      D.RegisterPtr(PtrID, TypedefType::CreateImpl(Context, D));
       break;
 
     case Type::TypeOfExp:
@@ -123,7 +131,7 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       break;
 
     case Type::VariableArray:
-      D.RegisterPtr(PtrID,VariableArrayType::CreateImpl(Context,D));
+      D.RegisterPtr(PtrID, VariableArrayType::CreateImpl(Context, D));
       break;
   }
 }
@@ -240,6 +248,33 @@ void PointerType::EmitImpl(Serializer& S) const {
 
 Type* PointerType::CreateImpl(ASTContext& Context, Deserializer& D) {
   return Context.getPointerType(QualType::ReadVal(D)).getTypePtr();
+}
+
+//===----------------------------------------------------------------------===//
+// ReferenceType
+//===----------------------------------------------------------------------===//
+
+void ReferenceType::EmitImpl(Serializer& S) const {
+  S.Emit(getPointeeType());
+}
+
+Type* ReferenceType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  return Context.getReferenceType(QualType::ReadVal(D)).getTypePtr();
+}
+
+//===----------------------------------------------------------------------===//
+// MemberPointerType
+//===----------------------------------------------------------------------===//
+
+void MemberPointerType::EmitImpl(Serializer& S) const {
+  S.Emit(getPointeeType());
+  S.Emit(QualType(Class, 0));
+}
+
+Type* MemberPointerType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  QualType Pointee = QualType::ReadVal(D);
+  QualType Class = QualType::ReadVal(D);
+  return Context.getMemberPointerType(Pointee, Class.getTypePtr()).getTypePtr();
 }
 
 //===----------------------------------------------------------------------===//

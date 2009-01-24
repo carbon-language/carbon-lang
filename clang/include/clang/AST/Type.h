@@ -46,6 +46,7 @@ namespace clang {
   class PointerType;
   class BlockPointerType;
   class ReferenceType;
+  class MemberPointerType;
   class VectorType;
   class ArrayType;
   class ConstantArrayType;
@@ -66,7 +67,7 @@ namespace clang {
   class ObjCQualifiedIdType;
   class ObjCQualifiedInterfaceType;
   class StmtIteratorBase;
-  
+
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
 /// greatly reduces the number of nodes we need to allocate for types (for
@@ -237,7 +238,7 @@ namespace clang {
 class Type {
 public:
   enum TypeClass {
-    Builtin, Complex, Pointer, Reference, 
+    Builtin, Complex, Pointer, Reference, MemberPointer,
     ConstantArray, VariableArray, IncompleteArray, DependentSizedArray,
     Vector, ExtVector,
     FunctionNoProto, FunctionProto,
@@ -337,6 +338,8 @@ public:
   bool isBlockPointerType() const;
   bool isReferenceType() const;
   bool isFunctionPointerType() const;
+  bool isMemberPointerType() const;
+  bool isMemberFunctionPointerType() const;
   bool isArrayType() const;
   bool isConstantArrayType() const;
   bool isIncompleteArrayType() const;
@@ -363,13 +366,14 @@ public:
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
   // the best type we can.
-  const BuiltinType *getAsBuiltinType() const;   
-  const FunctionType *getAsFunctionType() const;   
-  const FunctionTypeProto *getAsFunctionTypeProto() const;   
+  const BuiltinType *getAsBuiltinType() const;
+  const FunctionType *getAsFunctionType() const;
+  const FunctionTypeProto *getAsFunctionTypeProto() const;
   const PointerLikeType *getAsPointerLikeType() const; // Pointer or Reference.
   const PointerType *getAsPointerType() const;
   const BlockPointerType *getAsBlockPointerType() const;
   const ReferenceType *getAsReferenceType() const;
+  const MemberPointerType *getAsMemberPointerType() const;
   const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;
   /// NOTE: getAs*ArrayType are methods on ASTContext.
@@ -665,6 +669,53 @@ public:
 
   static bool classof(const Type *T) { return T->getTypeClass() == Reference; }
   static bool classof(const ReferenceType *) { return true; }
+
+protected:
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  friend class Type;
+};
+
+/// MemberPointerType - C++ 8.3.3 - Pointers to members
+///
+class MemberPointerType : public Type, public llvm::FoldingSetNode {
+  QualType PointeeType;
+  /// The class of which the pointee is a member. Must ultimately be a
+  /// RecordType, but could be a typedef or a template parameter too.
+  const Type *Class;
+
+  MemberPointerType(QualType Pointee, const Type *Cls, QualType CanonicalPtr) :
+    Type(MemberPointer, CanonicalPtr,
+         Cls->isDependentType() || Pointee->isDependentType()),
+    PointeeType(Pointee), Class(Cls) {
+  }
+  friend class ASTContext; // ASTContext creates these.
+public:
+
+  QualType getPointeeType() const { return PointeeType; }
+
+  const Type *getClass() const { return Class; }
+
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getPointeeType(), getClass());
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee,
+                      const Type *Class) {
+    ID.AddPointer(Pointee.getAsOpaquePtr());
+    ID.AddPointer(Class);
+  }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == MemberPointer;
+  }
+  static bool classof(const MemberPointerType *) { return true; }
+
+protected:
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  friend class Type;
 };
 
 /// ArrayType - C99 6.7.5.2 - Array Declarators.
@@ -1572,6 +1623,15 @@ inline bool Type::isPointerLikeType() const {
 }
 inline bool Type::isFunctionPointerType() const {
   if (const PointerType* T = getAsPointerType())
+    return T->getPointeeType()->isFunctionType();
+  else
+    return false;
+}
+inline bool Type::isMemberPointerType() const {
+  return isa<MemberPointerType>(CanonicalType.getUnqualifiedType());
+}
+inline bool Type::isMemberFunctionPointerType() const {
+  if (const MemberPointerType* T = getAsMemberPointerType())
     return T->getPointeeType()->isFunctionType();
   else
     return false;

@@ -287,9 +287,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
           !T->isIncompleteOrObjectType()) {
         Diag(DeclType.Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
           << T;
-        DeclType.Ptr.TypeQuals &= QualType::Restrict;
-      }        
-        
+        DeclType.Ptr.TypeQuals &= ~QualType::Restrict;
+      }
+
       // Apply the pointer typequals to the pointer object.
       T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
       break;
@@ -424,7 +424,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
       }
       break;
     }
-    case DeclaratorChunk::Function:
+    case DeclaratorChunk::Function: {
       // If the function declarator has a prototype (i.e. it is not () and
       // does not have a K&R-style identifier list), then the arguments are part
       // of the type, otherwise the argument list is ().
@@ -518,7 +518,54 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
       }
       break;
     }
-    
+    case DeclaratorChunk::MemberPointer:
+      // The scope spec must refer to a class, or be dependent.
+      DeclContext *DC = static_cast<DeclContext*>(
+        DeclType.Mem.Scope().getScopeRep());
+      QualType ClsType;
+      // FIXME: Extend for dependent types when it's actually supported.
+      // See ActOnCXXNestedNameSpecifier.
+      if (CXXRecordDecl *RD = dyn_cast_or_null<CXXRecordDecl>(DC)) {
+        ClsType = Context.getTagDeclType(RD);
+      } else {
+        if (DC) {
+          Diag(DeclType.Mem.Scope().getBeginLoc(),
+               diag::err_illegal_decl_mempointer_in_nonclass)
+            << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name")
+            << DeclType.Mem.Scope().getRange();
+        }
+        D.setInvalidType(true);
+        ClsType = Context.IntTy;
+      }
+
+      // C++ 8.3.3p3: A pointer to member shall not pointer to ... a member
+      //   with reference type, or "cv void."
+      if (T->isReferenceType()) {
+        Diag(DeclType.Loc, diag::err_illegal_decl_pointer_to_reference)
+          << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+        D.setInvalidType(true);
+        T = Context.IntTy;
+      }
+      if (T->isVoidType()) {
+        Diag(DeclType.Loc, diag::err_illegal_decl_mempointer_to_void)
+          << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+        T = Context.IntTy;
+      }
+
+      // Enforce C99 6.7.3p2: "Types other than pointer types derived from
+      // object or incomplete types shall not be restrict-qualified."
+      if ((DeclType.Mem.TypeQuals & QualType::Restrict) &&
+          !T->isIncompleteOrObjectType()) {
+        Diag(DeclType.Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
+          << T;
+        DeclType.Mem.TypeQuals &= ~QualType::Restrict;
+      }
+
+      T = Context.getMemberPointerType(T, ClsType.getTypePtr());
+
+      break;
+    }
+
     // See if there are any attributes on this declarator chunk.
     if (const AttributeList *AL = DeclType.getAttrs())
       ProcessTypeAttributeList(T, AL);

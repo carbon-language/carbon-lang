@@ -429,9 +429,9 @@ typedef llvm::SmallVector<Token, 4> CachedTokens;
 /// This is intended to be a small value object.
 struct DeclaratorChunk {
   enum {
-    Pointer, Reference, Array, Function, BlockPointer
+    Pointer, Reference, Array, Function, BlockPointer, MemberPointer
   } Kind;
-  
+
   /// Loc - The place where this type was defined.
   SourceLocation Loc;
   
@@ -544,39 +544,64 @@ struct DeclaratorChunk {
     void destroy() {}
   };
 
-  union {
-    PointerTypeInfo      Ptr;
-    ReferenceTypeInfo    Ref;
-    ArrayTypeInfo        Arr;
-    FunctionTypeInfo     Fun;
-    BlockPointerTypeInfo Cls;
+  struct MemberPointerTypeInfo {
+    /// The type qualifiers: const/volatile/restrict.
+    unsigned TypeQuals : 3;
+    AttributeList *AttrList;
+    // CXXScopeSpec has a constructor, so it can't be a direct member.
+    // So we need some pointer-aligned storage and a bit of trickery.
+    union {
+      void *Aligner;
+      char Mem[sizeof(CXXScopeSpec)];
+    } ScopeMem;
+    CXXScopeSpec &Scope() {
+      return *reinterpret_cast<CXXScopeSpec*>(ScopeMem.Mem);
+    }
+    const CXXScopeSpec &Scope() const {
+      return *reinterpret_cast<const CXXScopeSpec*>(ScopeMem.Mem);
+    }
+    void destroy() {
+      delete AttrList;
+      Scope().~CXXScopeSpec();
+    }
   };
-  
+
+  union {
+    PointerTypeInfo       Ptr;
+    ReferenceTypeInfo     Ref;
+    ArrayTypeInfo         Arr;
+    FunctionTypeInfo      Fun;
+    BlockPointerTypeInfo  Cls;
+    MemberPointerTypeInfo Mem;
+  };
+
   void destroy() {
     switch (Kind) {
     default: assert(0 && "Unknown decl type!");
-    case DeclaratorChunk::Function:     return Fun.destroy();
-    case DeclaratorChunk::Pointer:      return Ptr.destroy();
-    case DeclaratorChunk::BlockPointer: return Cls.destroy();
-    case DeclaratorChunk::Reference:    return Ref.destroy();
-    case DeclaratorChunk::Array:        return Arr.destroy();
+    case DeclaratorChunk::Function:      return Fun.destroy();
+    case DeclaratorChunk::Pointer:       return Ptr.destroy();
+    case DeclaratorChunk::BlockPointer:  return Cls.destroy();
+    case DeclaratorChunk::Reference:     return Ref.destroy();
+    case DeclaratorChunk::Array:         return Arr.destroy();
+    case DeclaratorChunk::MemberPointer: return Mem.destroy();
     }
   }
-  
+
   /// getAttrs - If there are attributes applied to this declaratorchunk, return
   /// them.
   const AttributeList *getAttrs() const {
     switch (Kind) {
     default: assert(0 && "Unknown declarator kind!");
-    case Pointer:   return Ptr.AttrList;
-    case Reference: return Ref.AttrList;
-    case Array:    return 0;
-    case Function:  return 0;
-    case BlockPointer: return 0; // FIXME: Do blocks have attr list?
+    case Pointer:       return Ptr.AttrList;
+    case Reference:     return Ref.AttrList;
+    case MemberPointer: return Mem.AttrList;
+    case Array:         return 0;
+    case Function:      return 0;
+    case BlockPointer:  return 0; // FIXME: Do blocks have attr list?
     }
   }
-  
-  
+
+
   /// getPointer - Return a DeclaratorChunk for a pointer.
   ///
   static DeclaratorChunk getPointer(unsigned TypeQuals, SourceLocation Loc,
@@ -631,6 +656,19 @@ struct DeclaratorChunk {
     I.Kind          = BlockPointer;
     I.Loc           = Loc;
     I.Cls.TypeQuals = TypeQuals;
+    return I;
+  }
+
+  static DeclaratorChunk getMemberPointer(const CXXScopeSpec &SS,
+                                          unsigned TypeQuals,
+                                          SourceLocation Loc,
+                                          AttributeList *AL) {
+    DeclaratorChunk I;
+    I.Kind          = MemberPointer;
+    I.Loc           = Loc;
+    I.Mem.TypeQuals = TypeQuals;
+    I.Mem.AttrList  = AL;
+    new (I.Mem.ScopeMem.Mem) CXXScopeSpec(SS);
     return I;
   }
 };
