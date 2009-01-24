@@ -508,6 +508,8 @@ public:
 
 private:
   bool HandleCast(CastExpr* E);
+  uint64_t GetAlignOfExpr(const Expr *E);
+  uint64_t GetAlignOfType(QualType T);
 };
 } // end anonymous namespace
 
@@ -842,6 +844,41 @@ bool IntExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
   return Visit(Cond ? E->getTrueExpr() : E->getFalseExpr());
 }
 
+uint64_t IntExprEvaluator::GetAlignOfType(QualType T) {
+  const Type *Ty = Info.Ctx.getCanonicalType(T).getTypePtr();
+  
+  // __alignof__(void) = 1 as a gcc extension.
+  if (Ty->isVoidType())
+    return 1;
+  
+  // GCC extension: alignof(function) = 4.
+  // FIXME: AlignOf shouldn't be unconditionally 4!  It should listen to the
+  // attribute(align) directive.
+  if (Ty->isFunctionType())
+    return 4;
+  
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(Ty))
+    return GetAlignOfType(QualType(ASQT->getBaseType(), 0));
+
+  // alignof VLA/incomplete array.
+  if (const ArrayType *VAT = dyn_cast<ArrayType>(Ty))
+    return GetAlignOfType(VAT->getElementType());
+  
+  // sizeof (objc class)?
+  if (isa<ObjCInterfaceType>(Ty))
+    return 1;  // FIXME: This probably isn't right.
+
+  // Get information about the alignment.
+  unsigned CharSize = Info.Ctx.Target.getCharWidth();
+  return Info.Ctx.getTypeAlign(Ty) / CharSize;
+}
+
+uint64_t IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
+  
+  return GetAlignOfType(E->getType());
+}
+
+
 /// VisitSizeAlignOfExpr - Evaluate a sizeof or alignof with a result as the
 /// expression's type.
 bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
@@ -850,6 +887,15 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   Result.zextOrTrunc(getIntTypeSizeInBits(DstTy));
   Result.setIsUnsigned(DstTy->isUnsignedIntegerType());
 
+  // Handle alignof separately.
+  if (!E->isSizeOf()) {
+    if (E->isArgumentType())
+      Result = GetAlignOfType(E->getArgumentType());
+    else
+      Result = GetAlignOfExpr(E->getArgumentExpr());
+    return true;
+  }
+  
   QualType SrcTy = E->getTypeOfArgument();
 
   // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
@@ -859,31 +905,22 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   }
   
   // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
-  // FIXME: But alignof(vla) is!
-  if (!SrcTy->isConstantSizeType()) {
-    // FIXME: Should we attempt to evaluate this?
+  if (!SrcTy->isConstantSizeType())
     return false;
-  }
 
   // sizeof (objc class) ?
   if (SrcTy->isObjCInterfaceType())
     return false;
   
-  bool isSizeOf = E->isSizeOf();
-  
   // GCC extension: sizeof(function) = 1.
   if (SrcTy->isFunctionType()) {
-    // FIXME: AlignOf shouldn't be unconditionally 4!
-    Result = isSizeOf ? 1 : 4;
+    Result = 1;
     return true;
   }
   
-  // Get information about the size or align.
+  // Get information about the size.
   unsigned CharSize = Info.Ctx.Target.getCharWidth();
-  if (isSizeOf)
-    Result = Info.Ctx.getTypeSize(SrcTy) / CharSize;
-  else
-    Result = Info.Ctx.getTypeAlign(SrcTy) / CharSize;
+  Result = Info.Ctx.getTypeSize(SrcTy) / CharSize;
   return true;
 }
 
