@@ -1344,6 +1344,13 @@ value.</p>
   </tr>
   </tbody>
 </table>
+
+<p>Note that the code generator does not yet support large integer types
+to be used as function return types. The specific limit on how large a
+return type the code generator can currently handle is target-dependent;
+currently it's often 64 bits for 32-bit targets and 128 bits for 64-bit
+targets.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -1403,6 +1410,11 @@ LLVM (e.g. it is illegal to access the 5th element of a 3 element array).
 As a special case, however, zero length arrays are recognized to be variable
 length.  This allows implementation of 'pascal style arrays' with the  LLVM
 type "{ i32, [0 x float]}", for example.</p>
+
+<p>Note that the code generator does not yet support large aggregate types
+to be used as function return types. The specific limit on how large an
+aggregate return type the code generator can currently handle is
+target-dependent, and also dependent on the aggregate element types.</p>
 
 </div>
 
@@ -1489,6 +1501,12 @@ instruction.</p>
       an <tt>i32</tt>.</td>
   </tr>
 </table>
+
+<p>Note that the code generator does not yet support large aggregate types
+to be used as function return types. The specific limit on how large an
+aggregate return type the code generator can currently handle is
+target-dependent, and also dependent on the aggregate element types.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -1593,6 +1611,12 @@ be any integer or floating point type.</p>
     <td class="left">Vector of 2 64-bit integer values.</td>
   </tr>
 </table>
+
+<p>Note that the code generator does not yet support large vector types
+to be used as function return types. The specific limit on how large a
+vector return type codegen can currently handle is target-dependent;
+currently it's often a few times longer than a hardware vector register.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -2042,8 +2066,13 @@ return value.</p>
   ret { i32, i8 } { i32 4, i8 2 } <i>; Return an aggregate of values 4 and 2</i>
 </pre>
 
-<p>Note that the code generator does not yet fully support larger
-   aggregate return values.</p>
+<p>Note that the code generator does not yet fully support large
+   return values. The specific sizes that are currently supported are
+   dependent on the target. For integers, on 32-bit targets the limit
+   is often 64 bits, and on 64-bit targets the limit is often 128 bits.
+   For aggregate types, the current limits are dependent on the element
+   types; for example targets are often limited to 2 total integer
+   elements and 2 total floating-point elements.</p>
 
 </div>
 <!-- _______________________________________________________________________ -->
