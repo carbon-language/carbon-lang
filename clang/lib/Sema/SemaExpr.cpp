@@ -1016,19 +1016,23 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
                                      const SourceRange &ExprRange,
                                      bool isSizeof) {
   // C99 6.5.3.4p1:
-  if (isa<FunctionType>(exprType) && isSizeof)
+  if (isa<FunctionType>(exprType)) {
     // alignof(function) is allowed.
-    Diag(OpLoc, diag::ext_sizeof_function_type) << ExprRange;
-  else if (exprType->isVoidType())
+    if (isSizeof)
+      Diag(OpLoc, diag::ext_sizeof_function_type) << ExprRange;
+    return false;
+  }
+  
+  if (exprType->isVoidType()) {
     Diag(OpLoc, diag::ext_sizeof_void_type)
       << (isSizeof ? "sizeof" : "__alignof") << ExprRange;
-  else 
-    return DiagnoseIncompleteType(OpLoc, exprType,
-                                  isSizeof ? diag::err_sizeof_incomplete_type : 
-                                             diag::err_alignof_incomplete_type,
-                                  ExprRange);
+    return false;
+  }
 
-  return false;
+  return DiagnoseIncompleteType(OpLoc, exprType,
+                                isSizeof ? diag::err_sizeof_incomplete_type : 
+                                           diag::err_alignof_incomplete_type,
+                                ExprRange);
 }
 
 /// ActOnSizeOfAlignOfExpr - Handle @c sizeof(type) and @c sizeof @c expr and
@@ -1059,8 +1063,8 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
 
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
   return Owned(new (Context) SizeOfAlignOfExpr(isSizeof, isType, TyOrEx,
-                                     Context.getSizeType(), OpLoc,
-                                     Range.getEnd()));
+                                               Context.getSizeType(), OpLoc,
+                                               Range.getEnd()));
 }
 
 QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc) {
