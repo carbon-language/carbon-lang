@@ -3287,7 +3287,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       case ISD::MUL:
         if (VT == MVT::i32)
           LC = RTLIB::MUL_I32;
-	else if (VT == MVT::i64)
+        else if (VT == MVT::i64)
           LC = RTLIB::MUL_I64;
         break;
       case ISD::FPOW:
