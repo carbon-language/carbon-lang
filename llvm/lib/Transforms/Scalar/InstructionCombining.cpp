@@ -11170,6 +11170,8 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
     
     while (1) {
       if (const StructType *STy = dyn_cast<StructType>(SrcPTy)) {
+        if (!STy->getNumElements()) /* Void is represented as {} */
+          break;
         NewGEPIndices.push_back(Zero);
         SrcPTy = STy->getElementType(0);
       } else if (const ArrayType *ATy = dyn_cast<ArrayType>(SrcPTy)) {
