@@ -108,17 +108,14 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 }
 
 QualType ElementRegion::getRValueType(ASTContext& C) const {
-  QualType T = getArrayRegion()->getRValueType(C);
+  // Strip off typedefs from the ArrayRegion's RvalueType.
+  QualType T = getArrayRegion()->getRValueType(C)->getDesugaredType();
 
-  if (isa<ArrayType>(T.getTypePtr())) {
-    ArrayType* AT = cast<ArrayType>(T.getTypePtr());
+  if (ArrayType* AT = dyn_cast<ArrayType>(T.getTypePtr()))
     return AT->getElementType();
-  }
-  else {
-    PointerType* PtrT = cast<PointerType>(T.getTypePtr());
-    QualType PTy = PtrT->getPointeeType();
-    return C.getCanonicalType(PTy);
-  }
+
+  PointerType* PtrT = cast<PointerType>(T.getTypePtr());
+  return C.getCanonicalType(PtrT->getPointeeType());
 }
 
 //===----------------------------------------------------------------------===//
