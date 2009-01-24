@@ -1003,6 +1003,7 @@ public:
     ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
                            void *TyOrEx, const SourceRange &ArgRange);
 
+  bool CheckAlignOfExpr(Expr *E, SourceLocation OpLoc, const SourceRange &R);
   bool CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc,
                                  const SourceRange &R, bool isSizeof);
 

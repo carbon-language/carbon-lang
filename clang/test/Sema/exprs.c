@@ -45,3 +45,12 @@ int test8(void) {
   __builtin_choose_expr (0, 42, i) = 10;  // expected-warning {{extension used}}
   return i;
 }
+
+
+// PR3386
+struct f { int x : 4;  float y[]; };
+int test9(struct f *P) {
+  return __alignof(P->x) +  // expected-error {{invalid application of '__alignof' to bitfield}} expected-warning {{extension used}}
+         __alignof(P->y);   // ok. expected-warning {{extension used}}
+}
+

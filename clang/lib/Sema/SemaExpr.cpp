@@ -1035,6 +1035,27 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
                                 ExprRange);
 }
 
+bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
+                            const SourceRange &ExprRange) {
+  E = E->IgnoreParens();
+  
+  // alignof decl is always ok. 
+  if (isa<DeclRefExpr>(E))
+    return false;
+  
+  if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+    if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
+      if (FD->isBitField()) {
+        Diag(OpLoc, diag::err_alignof_bitfield) << ExprRange;
+        return true;
+      }
+      // Other fields are ok.
+      return false;
+    }
+  }
+  return CheckSizeOfAlignOfOperand(E->getType(), OpLoc, ExprRange, false);
+}
+
 /// ActOnSizeOfAlignOfExpr - Handle @c sizeof(type) and @c sizeof @c expr and
 /// the same for @c alignof and @c __alignof
 /// Note that the ArgRange is invalid if isType is false.
@@ -1060,7 +1081,13 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
     ArgTy = ArgEx->getType();
     
     // Verify that the operand is valid.
-    if (CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, isSizeof)) {
+    bool isInvalid;
+    if (isSizeof)
+      isInvalid = CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, true);
+    else
+      isInvalid = CheckAlignOfExpr(ArgEx, OpLoc, Range);
+    
+    if (isInvalid) {
       DeleteExpr(ArgEx);
       return ExprError();
     }
