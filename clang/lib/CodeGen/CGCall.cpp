@@ -21,8 +21,14 @@
 #include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Attributes.h"
+#include "llvm/Support/CommandLine.h"
 using namespace clang;
 using namespace CodeGen;
+
+static llvm::cl::opt<bool>
+UseX86_64ABI("use-x86_64-abi",
+           llvm::cl::desc("Enable use of experimental x86_64 ABI."),
+           llvm::cl::init(false));
 
 /***/
 
@@ -303,17 +309,6 @@ public:
   virtual ABIArgInfo classifyArgumentType(QualType RetTy,
                                           ASTContext &Context) const;
 };
-
-
-/// X86_32ABIInfo - The X86_64 ABI information.
-class X86_64ABIInfo : public ABIInfo {
-public:
-  virtual ABIArgInfo classifyReturnType(QualType RetTy, 
-                                        ASTContext &Context) const;
-
-  virtual ABIArgInfo classifyArgumentType(QualType RetTy,
-                                          ASTContext &Context) const;
-};
 }
 
 ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
@@ -389,9 +384,159 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
   }
 }
 
+namespace {
+/// X86_32ABIInfo - The X86_64 ABI information.
+class X86_64ABIInfo : public ABIInfo {
+  enum Class {
+    Integer = 0,
+    SSE,
+    SSEUp,
+    X87,
+    X87Up,
+    ComplexX87,
+    NoClass,
+    Memory
+  };
+
+  /// classify - Determine the x86_64 register classes in which the
+  /// given type T should be passed.
+  ///
+  /// \param Lo - The classification for the low word of the type.
+  /// \param Hi - The classification for the high word of the type.
+  ///
+  /// If a word is unused its result will be NoClass; if a type should
+  /// be passed in Memory then at least the classification of \arg Lo
+  /// will be Memory.
+  ///
+  /// The \arg Lo class will be NoClass iff the argument is ignored.
+  ///
+  /// If the \arg Lo class is ComplexX87, then the \arg Hi class will
+  /// be NoClass.
+  void classify(QualType T, ASTContext &Context,
+                Class &Lo, Class &Hi) const;
+
+public:
+  virtual ABIArgInfo classifyReturnType(QualType RetTy, 
+                                        ASTContext &Context) const;
+
+  virtual ABIArgInfo classifyArgumentType(QualType RetTy,
+                                          ASTContext &Context) const;
+};
+}
+
+void X86_64ABIInfo::classify(QualType Ty,
+                             ASTContext &Context,
+                             Class &Lo, Class &Hi) const {
+  Lo = Memory;
+  Hi = NoClass;
+  if (const BuiltinType *BT = Ty->getAsBuiltinType()) {
+    BuiltinType::Kind k = BT->getKind();
+
+    if (k >= BuiltinType::Bool && k <= BuiltinType::LongLong) {
+      Lo = Integer;
+    } else if (k == BuiltinType::Float || k == BuiltinType::Double) {
+      Lo = SSE;
+    } else if (k == BuiltinType::LongDouble) {
+      Lo = X87;
+      Hi = X87Up;
+    }
+    // FIXME: _Decimal32, _Decimal64, and __m64 are SSE.
+    // FIXME: _float128, _Decimal128, and __m128 are (SSE, SSEUp).
+    // FIXME: __int128 is (Integer, Integer).
+  } else if (Ty->isPointerLikeType() || Ty->isBlockPointerType() ||
+             Ty->isObjCQualifiedInterfaceType()) {
+    Lo = Integer;
+  } else if (const ComplexType *CT = Ty->getAsComplexType()) {
+    QualType ET = CT->getElementType();
+    
+    if (ET == Context.FloatTy) 
+      Lo = SSE;
+    else if (ET == Context.DoubleTy)
+      Lo = Hi = SSE;
+    else if (ET == Context.LongDoubleTy)
+      Lo = ComplexX87;
+  }
+}
+
 ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context) const {
-  return ABIArgInfo::getDefault();
+  // AMD64-ABI 3.2.3p4: Rule 1. Classify the return type with the
+  // classification algorithm.
+  X86_64ABIInfo::Class Lo, Hi;
+  classify(RetTy, Context, Lo, Hi);
+
+  const llvm::Type *ResType = 0;
+  switch (Lo) {
+  case NoClass:
+    assert(0 && "FIXME: Handle ignored return values.");
+
+  case SSEUp:
+  case X87Up:
+    assert(0 && "Invalid classification for lo word.");
+
+  // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
+  // hidden argument, i.e. structret.
+  case Memory:
+    return ABIArgInfo::getStructRet();
+
+    // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
+    // available register of the sequence %rax, %rdx is used.
+  case Integer:
+    ResType = llvm::Type::Int64Ty; break;
+
+    // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
+    // available SSE register of the sequence %xmm0, %xmm1 is used.
+  case SSE:
+    ResType = llvm::Type::DoubleTy; break;
+
+    // AMD64-ABI 3.2.3p4: Rule 6. If the class is X87, the value is
+    // returned on the X87 stack in %st0 as 80-bit x87 number.
+  case X87:
+    ResType = llvm::Type::X86_FP80Ty; break;
+
+  // AMD64-ABI 3.2.3p4: Rule 8. If the class is COMPLEX_X87, the real
+  // part of the value is returned in %st0 and the imaginary part in
+  // %st1.
+  case ComplexX87:
+    assert(Hi == NoClass && "Unexpected ComplexX87 classification.");
+    ResType = llvm::VectorType::get(llvm::Type::X86_FP80Ty, 2);
+    break;    
+  }
+
+  switch (Hi) {
+    // Memory was handled previously, and ComplexX87 and X87 should
+    // never occur as hi classes.
+  case Memory:
+  case X87:
+  case ComplexX87:
+    assert(0 && "Invalid classification for hi word.");
+
+  case NoClass: break;
+  case Integer:
+    assert(0 && "FIXME: Implement MRV"); break;
+  case SSE:    
+    assert(0 && "FIXME: Implement MRV"); break;
+
+    // AMD64-ABI 3.2.3p4: Rule 5. If the class is SSEUP, the eightbyte
+    // is passed in the upper half of the last used SSE register.
+    //
+    // SSEUP should always be preceeded by SSE, just widen.
+  case SSEUp:
+    assert(Lo == SSE && "Unexpected SSEUp classification.");
+    ResType = llvm::VectorType::get(llvm::Type::DoubleTy, 2);
+    break;
+
+    // AMD64-ABI 3.2.3p4: Rule 7. If the class is X87UP, the value is
+    // returned together with the previos X87 value in %st0.
+    //
+    // X87UP should always be preceeded by X87, so we don't need to do
+    // anything here.
+  case X87Up:
+    assert(Lo == X87 && "Unexpected X87Up classification.");
+    break;
+  }
+
+  return ABIArgInfo::getCoerce(ResType);
 }
 
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
@@ -421,7 +566,8 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     case 32:
       return *(TheABIInfo = new X86_32ABIInfo());
     case 64:
-      return *(TheABIInfo = new X86_64ABIInfo());
+      if (UseX86_64ABI)
+        return *(TheABIInfo = new X86_64ABIInfo());
     }
   }
 
