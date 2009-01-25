@@ -399,9 +399,9 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
   MVT RetVT = TheCall->getRetValType(0);
   SDValue Chain    = TheCall->getChain();
-  unsigned CallConv  = TheCall->getCallingConv();
-  assert((CallConv == CallingConv::C ||
-          CallConv == CallingConv::Fast) && "unknown calling convention");
+  assert((TheCall->getCallingConv() == CallingConv::C ||
+          TheCall->getCallingConv() == CallingConv::Fast) &&
+         "unknown calling convention");
   SDValue Callee   = TheCall->getCallee();
   unsigned NumOps    = TheCall->getNumArgs();
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
