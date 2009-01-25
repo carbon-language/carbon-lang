@@ -952,7 +952,7 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
   ID.AddInteger(Offset);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-   return SDValue(E, 0);
+    return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<GlobalAddressSDNode>();
   new (N) GlobalAddressSDNode(isTargetGA, GV, VT, Offset);
   CSEMap.InsertNode(N, IP);
@@ -4397,7 +4397,6 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
   }
   return NULL;
 }
-
 
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
