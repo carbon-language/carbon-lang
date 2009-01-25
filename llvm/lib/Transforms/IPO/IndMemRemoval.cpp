@@ -44,11 +44,11 @@ static RegisterPass<IndMemRemPass>
 X("indmemrem","Indirect Malloc and Free Removal");
 
 bool IndMemRemPass::runOnModule(Module &M) {
-  //in Theory, all direct calls of malloc and free should be promoted
-  //to intrinsics.  Therefor, this goes through and finds where the
-  //address of free or malloc are taken and replaces those with bounce
-  //functions, ensuring that all malloc and free that might happen
-  //happen through intrinsics.
+  // In theory, all direct calls of malloc and free should be promoted
+  // to intrinsics.  Therefore, this goes through and finds where the
+  // address of free or malloc are taken and replaces those with bounce
+  // functions, ensuring that all malloc and free that might happen
+  // happen through intrinsics.
   bool changed = false;
   if (Function* F = M.getFunction("free")) {
     if (F->isDeclaration() && F->arg_size() == 1 && !F->use_empty()) {
@@ -69,6 +69,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
       Function* FN = Function::Create(F->getFunctionType(), 
                                       GlobalValue::LinkOnceLinkage, 
                                       "malloc_llvm_bounce", &M);
+      FN->setDoesNotAlias(0);
       BasicBlock* bb = BasicBlock::Create("entry",FN);
       Instruction* c = CastInst::CreateIntegerCast(
           FN->arg_begin(), Type::Int32Ty, false, "c", bb);
