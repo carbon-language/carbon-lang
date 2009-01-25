@@ -693,12 +693,14 @@ bool Expr::hasAnyValueDependentArguments(Expr** Exprs, unsigned NumExprs) {
 }
 
 bool Expr::isConstantInitializer(ASTContext &Ctx) const {
+  // This function is attempting whether an expression is an initializer
+  // which can be evaluated at compile-time.  isEvaluatable handles most
+  // of the cases, but it can't deal with some initializer-specific
+  // expressions, and it can't deal with aggregates; we deal with those here,
+  // and fall back to isEvaluatable for the other cases.
+
   switch (getStmtClass()) {
-  default:
-    if (!isEvaluatable(Ctx)) {
-      return false;
-    }
-    break;
+  default: break;
   case StringLiteralClass:
     return true;
   case CompoundLiteralExprClass: {
@@ -712,10 +714,27 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
       if (!Exp->getInit(i)->isConstantInitializer(Ctx)) 
         return false;
     }
+    return true;
   }
+  case ParenExprClass: {
+    return cast<ParenExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
+  }
+  case UnaryOperatorClass: {
+    const UnaryOperator* Exp = cast<UnaryOperator>(this);
+    if (Exp->getOpcode() == UnaryOperator::Extension)
+      return Exp->getSubExpr()->isConstantInitializer(Ctx);
+    break;
+  }
+  case CStyleCastExprClass:
+    // Handle casts with a destination that's a struct or union; this
+    // deals with both the gcc no-op struct cast extension and the
+    // cast-to-union extension.
+    if (getType()->isRecordType())
+      return cast<CastExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
+    break;
   }
 
-  return true;
+  return isEvaluatable(Ctx);
 }
 
 /// isIntegerConstantExpr - this recursive routine will test if an expression is
