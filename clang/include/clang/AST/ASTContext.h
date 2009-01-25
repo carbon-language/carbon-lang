@@ -403,9 +403,9 @@ public:
     return getTypeInfo(T).second;
   }
   
-  /// getDeclAlign - Return a conservative estimate of the alignment of the
-  /// specified decl.  Note that bitfields do not have a valid alignment, so
-  /// this method will assert on them.
+  /// getDeclAlign - Return the alignment of the specified decl that should be
+  /// returned by __alignof().  Note that bitfields do not have a valid
+  /// alignment, so this method will assert on them.
   unsigned getDeclAlign(const Decl *D);
   
   /// getASTRecordLayout - Get or compute information about the layout of the
