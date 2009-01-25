@@ -48,13 +48,6 @@ public:
   llvm::Constant *VisitParenExpr(ParenExpr *PE) { 
     return Visit(PE->getSubExpr()); 
   }
-  
-  llvm::Constant *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
-    std::string S(E->getString()->getStrData(), 
-                  E->getString()->getByteLength());
-    llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(S);
-    return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
-  }
     
   llvm::Constant *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return Visit(E->getInitializer());
@@ -371,53 +364,8 @@ public:
     return llvm::ConstantArray::get(CGM.GetStringForStringLiteral(E), false);
   }
 
-  llvm::Constant *VisitAddrLabelExpr(const AddrLabelExpr *E) {
-    assert(CGF && "Invalid address of label expression outside function.");
-    llvm::Constant *C = 
-      llvm::ConstantInt::get(llvm::Type::Int32Ty,
-                             CGF->GetIDForAddrOfLabel(E->getLabel()));
-    return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
-  }
-
-  llvm::Constant *VisitUnaryAddrOf(const UnaryOperator *E) {
-    return EmitLValue(E->getSubExpr());
-  }
-  llvm::Constant *VisitUnaryOffsetOf(const UnaryOperator *E) {
-    int64_t Val = E->evaluateOffsetOf(CGM.getContext());
-    
-    assert(E->getType()->isIntegerType() && "Result type must be an integer!");
-    
-    uint32_t ResultWidth =
-      static_cast<uint32_t>(CGM.getContext().getTypeSize(E->getType()));
-    return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));    
-  }
-
   llvm::Constant *VisitUnaryExtension(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
-  }
-  
-  // Binary operators
-
-  llvm::Constant *VisitCallExpr(const CallExpr *E) {
-    Expr::EvalResult Result;
-    if (E->Evaluate(Result, CGM.getContext())) {
-      if (Result.Val.isInt())
-        return llvm::ConstantInt::get(Result.Val.getInt());
-      if (Result.Val.isFloat())
-        return llvm::ConstantFP::get(Result.Val.getFloat());
-    }
-
-    // Handle __builtin___CFStringMakeConstantString.
-    if (E->isBuiltinCall() ==Builtin::BI__builtin___CFStringMakeConstantString){
-      const Expr *Arg = E->getArg(0)->IgnoreParenCasts();
-      
-      const StringLiteral *Literal = cast<StringLiteral>(Arg);
-      std::string S(Literal->getStrData(), Literal->getByteLength());
-      return CGM.GetAddrOfConstantCFString(S);
-    }
-    
-    CGM.ErrorUnsupported(E, "constant call expression");
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
     
   // Utility methods
