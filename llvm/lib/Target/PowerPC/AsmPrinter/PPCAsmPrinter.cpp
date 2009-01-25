@@ -776,6 +776,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
+  case Function::PrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
@@ -959,6 +960,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     O << "\t.globl " << name << '\n';
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
+   case GlobalValue::PrivateLinkage:
     break;
    default:
     cerr << "Unknown linkage type!";
