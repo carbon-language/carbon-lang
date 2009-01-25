@@ -568,8 +568,6 @@ void SelectionDAG::RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener){
 }
 
 void SelectionDAG::DeleteNode(SDNode *N) {
-  assert(N->use_empty() && "Cannot delete a node that is not dead!");
-
   // First take this out of the appropriate CSE map.
   RemoveNodeFromCSEMaps(N);
 
@@ -579,7 +577,8 @@ void SelectionDAG::DeleteNode(SDNode *N) {
 }
 
 void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
-  assert(N != AllNodes.begin());
+  assert(N != AllNodes.begin() && "Cannot delete the entry node!");
+  assert(N->use_empty() && "Cannot delete a node that is not dead!");
 
   // Drop all of the operands and decrement used node's use counts.
   for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
