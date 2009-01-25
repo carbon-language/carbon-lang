@@ -8,4 +8,6 @@ void f() {
 // rdar://6248329
 void *G = CFSTR("yo joe");
 
-
+void h() {
+  static void* h = CFSTR("Goodbye, World!");
+}

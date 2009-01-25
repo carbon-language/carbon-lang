@@ -42,8 +42,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   if (E->Evaluate(Result, CGM.getContext())) {
     if (Result.Val.isInt())
       return RValue::get(llvm::ConstantInt::get(Result.Val.getInt()));
-    assert(Result.Val.isFloat() && "Unsupported constant type");
-    return RValue::get(llvm::ConstantFP::get(Result.Val.getFloat()));
+    else if (Result.Val.isFloat())
+      return RValue::get(llvm::ConstantFP::get(Result.Val.getFloat()));
   }
       
   switch (BuiltinID) {

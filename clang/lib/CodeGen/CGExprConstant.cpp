@@ -625,6 +625,15 @@ public:
       llvm::Constant *C = llvm::ConstantInt::get(llvm::Type::Int32Ty, id);
       return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
     }
+    case Expr::CallExprClass: {
+      CallExpr* CE = cast<CallExpr>(E);
+      if (CE->isBuiltinCall() != Builtin::BI__builtin___CFStringMakeConstantString)
+        break;
+      const Expr *Arg = CE->getArg(0)->IgnoreParenCasts();
+      const StringLiteral *Literal = cast<StringLiteral>(Arg);
+      std::string S(Literal->getStrData(), Literal->getByteLength());
+      return CGM.GetAddrOfConstantCFString(S);
+    }
     }
     CGM.ErrorUnsupported(E, "constant l-value expression");
     llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));

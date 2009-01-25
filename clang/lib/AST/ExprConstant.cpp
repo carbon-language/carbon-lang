@@ -217,6 +217,7 @@ public:
       { return APValue(E, 0); }
   APValue VisitAddrLabelExpr(AddrLabelExpr *E)
       { return APValue(E, 0); }
+  APValue VisitCallExpr(CallExpr *E);
   APValue VisitConditionalOperator(ConditionalOperator *E);
 };
 } // end anonymous namespace
@@ -305,6 +306,12 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
   //assert(0 && "Unhandled cast");
   return APValue();
 }  
+
+APValue PointerExprEvaluator::VisitCallExpr(CallExpr *E) {
+  if (E->isBuiltinCall() == Builtin::BI__builtin___CFStringMakeConstantString)
+    return APValue(E, 0);
+  return APValue();
+}
 
 APValue PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
   bool BoolResult;
