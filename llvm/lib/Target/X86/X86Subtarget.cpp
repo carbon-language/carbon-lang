@@ -331,8 +331,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   // are enabled.  These are available on all x86-64 CPUs.
   if (Is64Bit) {
     HasX86_64 = true;
-    if (X86SSELevel < SSE2)
-      X86SSELevel = SSE2;
   }
   DOUT << "Subtarget features: SSELevel " << X86SSELevel
        << ", 3DNowLevel " << X863DNowLevel
