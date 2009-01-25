@@ -564,9 +564,8 @@ code that you desire.
 Note that the generated C code will be very low level (all loops are lowered
 to gotos, etc) and not very pretty (comments are stripped, original source
 formatting is totally lost, variables are renamed, expressions are regrouped), 
-so this may not be what you're looking for.  However, this is a good way to add
-C++ support for a processor that does not otherwise have a C++ compiler.
-</p>
+so this may not be what you're looking for. Also, there are several
+limitations noted below.<p>
 
 <p>Use commands like this:</p>
 
@@ -603,19 +602,30 @@ C++ support for a processor that does not otherwise have a C++ compiler.
 
 </ol>
 
-<p>Note that, by default, the C backend does not support exception handling.  If
-you want/need it for a certain program, you can enable it by passing
-"-enable-correct-eh-support" to the llc program.  The resultant code will use
-setjmp/longjmp to implement exception support that is correct but relatively
-slow.</p>
+<p>Using LLVM does not eliminate the need for C++ library support.
+If you use the llvm-g++ front-end, the generated code will depend on
+g++'s C++ support libraries in the same way that code generated from
+g++ would.  If you use another C++ front-end, the generated code will
+depend on whatever library that front-end would normally require.</p>
 
-<p>Also note: this specific sequence of commands won't work if you use a
-function defined in the C++ runtime library (or any other C++ library).  To
-access an external C++ library, you must manually compile libstdc++ to LLVM
+<p>If you are working on a platform that does not provide any C++
+libraries, you may be able to manually compile libstdc++ to LLVM
 bitcode, statically link it into your program, then use the commands above to
-convert the whole result into C code.  Alternatively, you can compile the
+convert the whole result into C code.  Alternatively, you might compile the
 libraries and your application into two different chunks of C code and link
 them.</p>
+
+<p>Note that, by default, the C back end does not support exception handling.  If
+you want/need it for a certain program, you can enable it by passing
+"-enable-correct-eh-support" to the llc program.  The resultant code will use
+setjmp/longjmp to implement exception support that is relatively slow, and
+not C++-ABI-conforming on most platforms, but otherwise correct.</p>
+
+<p>Also, there are a number of other limitations of the C backend that
+cause it to produce code that does not fully conform to the C++ ABI on
+most platforms. Some of the C++ programs in LLVM's test suite are known
+to fail when compiled with the C back end because of ABI incompatiblities
+with standard C++ libraries.</p>
 
 </div>
 
