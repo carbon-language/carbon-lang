@@ -312,6 +312,13 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return llvm::PointerType::get(ConvertTypeRecursive(FTy), 
                                   FTy.getAddressSpace());
   }
+
+  case Type::MemberPointer:
+    // FIXME: Implement C++ pointer-to-member. The GCC representation is
+    // documented here:
+    // http://gcc.gnu.org/onlinedocs/gccint/Type-Layout.html#Type-Layout
+    assert(0 && "FIXME: We can't handle member pointers yet.");
+    return llvm::OpaqueType::get();
   }
   
   // FIXME: implement.
