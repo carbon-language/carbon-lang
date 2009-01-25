@@ -651,20 +651,36 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   return Erased;
 }
 
-/// AddNonLeafNodeToCSEMaps - Add the specified node back to the CSE maps.  It
-/// has been taken out and modified in some way.  If the specified node already
-/// exists in the CSE maps, do not modify the maps, but return the existing node
-/// instead.  If it doesn't exist, add it and return null.
+/// AddModifiedNodeToCSEMaps - The specified node has been removed from the CSE
+/// maps and modified in place. Add it back to the CSE maps, unless an identical
+/// node already exists, in which case transfer all its users to the existing
+/// node. This transfer can potentially trigger recursive merging.
 ///
-SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
-  assert(N->getNumOperands() && "This is a leaf node!");
+void
+SelectionDAG::AddModifiedNodeToCSEMaps(SDNode *N,
+                                       DAGUpdateListener *UpdateListener) {
+  // For node types that aren't CSE'd, just act as if no identical node
+  // already exists.
+  if (!doNotCSE(N)) {
+    SDNode *Existing = CSEMap.GetOrInsertNode(N);
+    if (Existing != N) {
+      // If there was already an existing matching node, use ReplaceAllUsesWith
+      // to replace the dead one with the existing one.  This can cause
+      // recursive merging of other unrelated nodes down the line.
+      ReplaceAllUsesWith(N, Existing, UpdateListener);
 
-  if (doNotCSE(N))
-    return 0;
+      // N is now dead.  Inform the listener if it exists and delete it.
+      if (UpdateListener) 
+        UpdateListener->NodeDeleted(N, Existing);
+      DeleteNodeNotInCSEMaps(N);
+      return;
+    }
+  }
 
-  SDNode *New = CSEMap.GetOrInsertNode(N);
-  if (New != N) return New;  // Node already existed.
-  return 0;
+  // If the node doesn't already exist, we updated it.  Inform a listener if
+  // it exists.
+  if (UpdateListener) 
+    UpdateListener->NodeUpdated(N);
 }
 
 /// FindModifiedNodeSlot - Find a slot for the specified node if its operands
@@ -3900,8 +3916,7 @@ SDValue SelectionDAG::UpdateNodeOperands(SDValue InN, SDValue Op) {
   
   // Now we update the operands.
   N->OperandList[0].getVal()->removeUser(0, N);
-  N->OperandList[0] = Op;
-  N->OperandList[0].setUser(N);
+  N->OperandList[0].getSDValue() = Op;
   Op.getNode()->addUser(0, N);
   
   // If this gets put into a CSE map, add it.
@@ -3931,14 +3946,12 @@ UpdateNodeOperands(SDValue InN, SDValue Op1, SDValue Op2) {
   // Now we update the operands.
   if (N->OperandList[0] != Op1) {
     N->OperandList[0].getVal()->removeUser(0, N);
-    N->OperandList[0] = Op1;
-    N->OperandList[0].setUser(N);
+    N->OperandList[0].getSDValue() = Op1;
     Op1.getNode()->addUser(0, N);
   }
   if (N->OperandList[1] != Op2) {
     N->OperandList[1].getVal()->removeUser(1, N);
-    N->OperandList[1] = Op2;
-    N->OperandList[1].setUser(N);
+    N->OperandList[1].getSDValue() = Op2;
     Op2.getNode()->addUser(1, N);
   }
   
@@ -3999,8 +4012,7 @@ UpdateNodeOperands(SDValue InN, const SDValue *Ops, unsigned NumOps) {
   for (unsigned i = 0; i != NumOps; ++i) {
     if (N->OperandList[i] != Ops[i]) {
       N->OperandList[i].getVal()->removeUser(i, N);
-      N->OperandList[i] = Ops[i];
-      N->OperandList[i].setUser(N);
+      N->OperandList[i].getSDValue() = Ops[i];
       Ops[i].getNode()->addUser(i, N);
     }
   }
@@ -4272,7 +4284,7 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
   // Assign the new operands.
   N->NumOperands = NumOps;
   for (unsigned i = 0, e = NumOps; i != e; ++i) {
-    N->OperandList[i] = Ops[i];
+    N->OperandList[i].getSDValue() = Ops[i];
     N->OperandList[i].setUser(N);
     SDNode *ToUse = N->OperandList[i].getVal();
     ToUse->addUser(i, N);
@@ -4410,43 +4422,35 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
          "Cannot replace with this method!");
   assert(From != To.getNode() && "Cannot replace uses of with self");
 
-  // Iterate over all the existing uses of From. This specifically avoids
-  // visiting any new uses of From that arise while the replacement is
-  // happening, because any such uses would be the result of CSE: If an
-  // existing node looks like From after one of its operands is replaced
-  // by To, we don't want to replace of all its users with To too.
-  // See PR3018 for more info.
+  // Iterate over all the existing uses of From. New uses will be added
+  // to the beginning of the use list, which we avoid visiting.
+  // This specifically avoids visiting uses of From that arise while the
+  // replacement is happening, because any such uses would be the result
+  // of CSE: If an existing node looks like From after one of its operands
+  // is replaced by To, we don't want to replace of all its users with To
+  // too. See PR3018 for more info.
   SDNode::use_iterator UI = From->use_begin(), UE = From->use_end();
   while (UI != UE) {
-    SDNode *U = *UI;
-    do ++UI; while (UI != UE && *UI == U);
+    SDNode *User = *UI;
 
     // This node is about to morph, remove its old self from the CSE maps.
-    RemoveNodeFromCSEMaps(U);
-    int operandNum = 0;
-    for (SDNode::op_iterator I = U->op_begin(), E = U->op_end();
-         I != E; ++I, ++operandNum)
-      if (I->getVal() == From) {
-        From->removeUser(operandNum, U);
-        *I = To;
-        I->setUser(U);
-        To.getNode()->addUser(operandNum, U);
-      }    
+    RemoveNodeFromCSEMaps(User);
 
-    // Now that we have modified U, add it back to the CSE maps.  If it already
-    // exists there, recursively merge the results together.
-    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
-      ReplaceAllUsesWith(U, Existing, UpdateListener);
-      // U is now dead.  Inform the listener if it exists and delete it.
-      if (UpdateListener) 
-        UpdateListener->NodeDeleted(U, Existing);
-      DeleteNodeNotInCSEMaps(U);
-    } else {
-      // If the node doesn't already exist, we updated it.  Inform a listener if
-      // it exists.
-      if (UpdateListener) 
-        UpdateListener->NodeUpdated(U);
-    }
+    // A user can appear in a use list multiple times, and when this
+    // happens the uses are usually next to each other in the list.
+    // To help reduce the number of CSE recomputations, process all
+    // the uses of this user that we can find this way.
+    do {
+      unsigned operandNum = UI.getOperandNo();
+      ++UI;
+      From->removeUser(operandNum, User);
+      User->OperandList[operandNum].getSDValue() = To;
+      To.getNode()->addUser(operandNum, User);
+    } while (UI != UE && *UI == User);
+
+    // Now that we have modified User, add it back to the CSE maps.  If it
+    // already exists there, recursively merge the results together.
+    AddModifiedNodeToCSEMaps(User, UpdateListener);
   }
 }
 
@@ -4470,34 +4474,26 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
   // the ReplaceAllUsesWith above.
   SDNode::use_iterator UI = From->use_begin(), UE = From->use_end();
   while (UI != UE) {
-    SDNode *U = *UI;
-    do ++UI; while (UI != UE && *UI == U);
+    SDNode *User = *UI;
 
     // This node is about to morph, remove its old self from the CSE maps.
-    RemoveNodeFromCSEMaps(U);
-    int operandNum = 0;
-    for (SDNode::op_iterator I = U->op_begin(), E = U->op_end();
-         I != E; ++I, ++operandNum)
-      if (I->getVal() == From) {
-        From->removeUser(operandNum, U);
-        I->getSDValue().setNode(To);
-        To->addUser(operandNum, U);
-      }
+    RemoveNodeFromCSEMaps(User);
 
-    // Now that we have modified U, add it back to the CSE maps.  If it already
-    // exists there, recursively merge the results together.
-    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
-      ReplaceAllUsesWith(U, Existing, UpdateListener);
-      // U is now dead.  Inform the listener if it exists and delete it.
-      if (UpdateListener) 
-        UpdateListener->NodeDeleted(U, Existing);
-      DeleteNodeNotInCSEMaps(U);
-    } else {
-      // If the node doesn't already exist, we updated it.  Inform a listener if
-      // it exists.
-      if (UpdateListener) 
-        UpdateListener->NodeUpdated(U);
-    }
+    // A user can appear in a use list multiple times, and when this
+    // happens the uses are usually next to each other in the list.
+    // To help reduce the number of CSE recomputations, process all
+    // the uses of this user that we can find this way.
+    do {
+      unsigned operandNum = UI.getOperandNo();
+      ++UI;
+      From->removeUser(operandNum, User);
+      User->OperandList[operandNum].getSDValue().setNode(To);
+      To->addUser(operandNum, User);
+    } while (UI != UE && *UI == User);
+
+    // Now that we have modified User, add it back to the CSE maps.  If it
+    // already exists there, recursively merge the results together.
+    AddModifiedNodeToCSEMaps(User, UpdateListener);
   }
 }
 
@@ -4516,36 +4512,28 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
   // the ReplaceAllUsesWith above.
   SDNode::use_iterator UI = From->use_begin(), UE = From->use_end();
   while (UI != UE) {
-    SDNode *U = *UI;
-    do ++UI; while (UI != UE && *UI == U);
+    SDNode *User = *UI;
 
     // This node is about to morph, remove its old self from the CSE maps.
-    RemoveNodeFromCSEMaps(U);
-    int operandNum = 0;
-    for (SDNode::op_iterator I = U->op_begin(), E = U->op_end();
-         I != E; ++I, ++operandNum)
-      if (I->getVal() == From) {
-        const SDValue &ToOp = To[I->getSDValue().getResNo()];
-        From->removeUser(operandNum, U);
-        *I = ToOp;
-        I->setUser(U);
-        ToOp.getNode()->addUser(operandNum, U);
-      }
+    RemoveNodeFromCSEMaps(User);
 
-    // Now that we have modified U, add it back to the CSE maps.  If it already
-    // exists there, recursively merge the results together.
-    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
-      ReplaceAllUsesWith(U, Existing, UpdateListener);
-      // U is now dead.  Inform the listener if it exists and delete it.
-      if (UpdateListener) 
-        UpdateListener->NodeDeleted(U, Existing);
-      DeleteNodeNotInCSEMaps(U);
-    } else {
-      // If the node doesn't already exist, we updated it.  Inform a listener if
-      // it exists.
-      if (UpdateListener) 
-        UpdateListener->NodeUpdated(U);
-    }
+    // A user can appear in a use list multiple times, and when this
+    // happens the uses are usually next to each other in the list.
+    // To help reduce the number of CSE recomputations, process all
+    // the uses of this user that we can find this way.
+    do {
+      unsigned operandNum = UI.getOperandNo();
+      const SDValue &ToOp =
+        To[User->OperandList[operandNum].getSDValue().getResNo()];
+      ++UI;
+      From->removeUser(operandNum, User);
+      User->OperandList[operandNum].getSDValue() = ToOp;
+      ToOp.getNode()->addUser(operandNum, User);
+    } while (UI != UE && *UI == User);
+
+    // Now that we have modified User, add it back to the CSE maps.  If it
+    // already exists there, recursively merge the results together.
+    AddModifiedNodeToCSEMaps(User, UpdateListener);
   }
 }
 
@@ -4563,55 +4551,60 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
     return;
   }
 
-  // Get all of the users of From.getNode().  We want these in a nice,
-  // deterministically ordered and uniqued set, so we use a SmallSetVector.
-  SmallSetVector<SDNode*, 16> Users(From.getNode()->use_begin(), From.getNode()->use_end());
+  // Iterate over just the existing users of From. See the comments in
+  // the ReplaceAllUsesWith above.
+  SDNode::use_iterator UI = From.getNode()->use_begin(),
+                       UE = From.getNode()->use_end();
+  while (UI != UE) {
+    SDNode *User = *UI;
+    bool UserRemovedFromCSEMaps = false;
 
-  while (!Users.empty()) {
-    // We know that this user uses some value of From.  If it is the right
-    // value, update it.
-    SDNode *User = Users.back();
-    Users.pop_back();
-    
-    // Scan for an operand that matches From.
-    SDNode::op_iterator Op = User->op_begin(), E = User->op_end();
-    for (; Op != E; ++Op)
-      if (*Op == From) break;
-    
-    // If there are no matches, the user must use some other result of From.
-    if (Op == E) continue;
-      
-    // Okay, we know this user needs to be updated.  Remove its old self
-    // from the CSE maps.
-    RemoveNodeFromCSEMaps(User);
-    
-    // Update all operands that match "From" in case there are multiple uses.
-    for (; Op != E; ++Op) {
-      if (*Op == From) {
-        From.getNode()->removeUser(Op-User->op_begin(), User);
-        *Op = To;
-        Op->setUser(User);
-        To.getNode()->addUser(Op-User->op_begin(), User);
+    // A user can appear in a use list multiple times, and when this
+    // happens the uses are usually next to each other in the list.
+    // To help reduce the number of CSE recomputations, process all
+    // the uses of this user that we can find this way.
+    do {
+      unsigned operandNum = UI.getOperandNo();
+
+      // Skip uses of different values from the same node.
+      if (User->OperandList[operandNum].getSDValue().getResNo() !=
+            From.getResNo()) {
+        ++UI;
+        continue;
       }
-    }
-               
+
+      // If this node hasn't been modified yet, it's still in the CSE maps,
+      // so remove its old self from the CSE maps.
+      if (!UserRemovedFromCSEMaps) {
+        RemoveNodeFromCSEMaps(User);
+        UserRemovedFromCSEMaps = true;
+      }
+
+      ++UI;
+      From.getNode()->removeUser(operandNum, User);
+      User->OperandList[operandNum].getSDValue() = To;
+      To.getNode()->addUser(operandNum, User);
+    } while (UI != UE && *UI == User);
+
+    // We are iterating over all uses of the From node, so if a use
+    // doesn't use the specific value, no changes are made.
+    if (!UserRemovedFromCSEMaps)
+      continue;
+
     // Now that we have modified User, add it back to the CSE maps.  If it
     // already exists there, recursively merge the results together.
-    SDNode *Existing = AddNonLeafNodeToCSEMaps(User);
-    if (!Existing) {
-      if (UpdateListener) UpdateListener->NodeUpdated(User);
-      continue;  // Continue on to next user.
-    }
-    
-    // If there was already an existing matching node, use ReplaceAllUsesWith
-    // to replace the dead one with the existing one.  This can cause
-    // recursive merging of other unrelated nodes down the line.
-    ReplaceAllUsesWith(User, Existing, UpdateListener);
-    
-    // User is now dead.  Notify a listener if present.
-    if (UpdateListener) UpdateListener->NodeDeleted(User, Existing);
-    DeleteNodeNotInCSEMaps(User);
+    AddModifiedNodeToCSEMaps(User, UpdateListener);
   }
+}
+
+namespace {
+  /// UseMemo - This class is used by SelectionDAG::ReplaceAllUsesOfValuesWith
+  /// to record information about a use.
+  struct UseMemo {
+    SDNode *User;
+    unsigned Index;
+    unsigned operandNum;
+  };
 }
 
 /// ReplaceAllUsesOfValuesWith - Replace any uses of From with To, leaving
@@ -4626,57 +4619,47 @@ void SelectionDAG::ReplaceAllUsesOfValuesWith(const SDValue *From,
   if (Num == 1)
     return ReplaceAllUsesOfValueWith(*From, *To, UpdateListener);
 
-  SmallVector<std::pair<SDNode *, unsigned>, 16> Users;
-  for (unsigned i = 0; i != Num; ++i)
-    for (SDNode::use_iterator UI = From[i].getNode()->use_begin(), 
-         E = From[i].getNode()->use_end(); UI != E; ++UI)
-      Users.push_back(std::make_pair(*UI, i));
+  // Read up all the uses and make records of them. This helps
+  // processing new uses that are introduced during the
+  // replacement process.
+  SmallVector<UseMemo, 4> Uses;
+  for (unsigned i = 0; i != Num; ++i) {
+    unsigned FromResNo = From[i].getResNo();
+    SDNode *FromNode = From[i].getNode();
+    for (SDNode::use_iterator UI = FromNode->use_begin(), 
+         E = FromNode->use_end(); UI != E; ++UI)
+      if (UI.getUse().getSDValue().getResNo() == FromResNo) {
+        UseMemo Memo = { *UI, i, UI.getOperandNo() };
+        Uses.push_back(Memo);
+      }
+  }
 
-  while (!Users.empty()) {
+  for (unsigned UseIndex = 0, UseIndexEnd = Uses.size();
+       UseIndex != UseIndexEnd; ) {
     // We know that this user uses some value of From.  If it is the right
     // value, update it.
-    SDNode *User = Users.back().first;
-    unsigned i = Users.back().second;
-    Users.pop_back();
-    
-    // Scan for an operand that matches From.
-    SDNode::op_iterator Op = User->op_begin(), E = User->op_end();
-    for (; Op != E; ++Op)
-      if (*Op == From[i]) break;
-    
-    // If there are no matches, the user must use some other result of From.
-    if (Op == E) continue;
-      
-    // Okay, we know this user needs to be updated.  Remove its old self
-    // from the CSE maps.
+    SDNode *User = Uses[UseIndex].User;
+
+    // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(User);
-    
-    // Update all operands that match "From" in case there are multiple uses.
-    for (; Op != E; ++Op) {
-      if (*Op == From[i]) {
-        From[i].getNode()->removeUser(Op-User->op_begin(), User);
-        *Op = To[i];
-        Op->setUser(User);
-        To[i].getNode()->addUser(Op-User->op_begin(), User);
-      }
-    }
-               
+
+    // A user can appear in a use list multiple times, and when this
+    // happens the uses are usually next to each other in the list.
+    // To help reduce the number of CSE recomputations, process all
+    // the uses of this user that we can find this way.
+    do {
+      unsigned i = Uses[UseIndex].Index;
+      unsigned operandNum = Uses[UseIndex].operandNum;
+      ++UseIndex;
+
+      From[i].getNode()->removeUser(operandNum, User);
+      User->OperandList[operandNum].getSDValue() = To[i];
+      To[i].getNode()->addUser(operandNum, User);
+    } while (UseIndex != UseIndexEnd && Uses[UseIndex].User == User);
+
     // Now that we have modified User, add it back to the CSE maps.  If it
     // already exists there, recursively merge the results together.
-    SDNode *Existing = AddNonLeafNodeToCSEMaps(User);
-    if (!Existing) {
-      if (UpdateListener) UpdateListener->NodeUpdated(User);
-      continue;  // Continue on to next user.
-    }
-    
-    // If there was already an existing matching node, use ReplaceAllUsesWith
-    // to replace the dead one with the existing one.  This can cause
-    // recursive merging of other unrelated nodes down the line.
-    ReplaceAllUsesWith(User, Existing, UpdateListener);
-    
-    // User is now dead.  Notify a listener if present.
-    if (UpdateListener) UpdateListener->NodeDeleted(User, Existing);
-    DeleteNodeNotInCSEMaps(User);
+    AddModifiedNodeToCSEMaps(User, UpdateListener);
   }
 }
 

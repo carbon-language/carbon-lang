@@ -800,7 +800,7 @@ public:
   
 private:
   bool RemoveNodeFromCSEMaps(SDNode *N);
-  SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
+  void AddModifiedNodeToCSEMaps(SDNode *N, DAGUpdateListener *UpdateListener);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op, void *&InsertPos);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op1, SDValue Op2,
                                void *&InsertPos);
