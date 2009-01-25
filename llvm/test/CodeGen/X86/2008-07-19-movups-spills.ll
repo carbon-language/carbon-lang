@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux -realign-stack=1 -mattr=sse2 | grep movaps | count 76
+; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux -realign-stack=1 -mattr=sse2 | grep movaps | count 75
 ; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux -realign-stack=0 -mattr=sse2 | grep movaps | count 1
 ; PR2539
 

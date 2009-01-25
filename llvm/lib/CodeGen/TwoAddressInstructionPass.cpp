@@ -49,6 +49,7 @@ using namespace llvm;
 
 STATISTIC(NumTwoAddressInstrs, "Number of two-address instructions");
 STATISTIC(NumCommuted        , "Number of instructions commuted to coalesce");
+STATISTIC(NumAggrCommuted    , "Number of instructions aggressively commuted");
 STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
 STATISTIC(NumReMats,           "Number of instructions re-materialized");
@@ -69,6 +70,15 @@ namespace {
                              MachineInstr *MI, MachineInstr *DefMI,
                              MachineBasicBlock *MBB, unsigned Loc,
                              DenseMap<MachineInstr*, unsigned> &DistanceMap);
+
+    bool NoUseAfterLastDef(unsigned Reg, MachineBasicBlock *MBB, unsigned Dist,
+                           DenseMap<MachineInstr*, unsigned> &DistanceMap,
+                           unsigned &LastDef);
+
+    bool isProfitableToCommute(unsigned regB, unsigned regC,
+                               MachineInstr *MI, MachineBasicBlock *MBB,
+                               unsigned Dist,
+                               DenseMap<MachineInstr*, unsigned> &DistanceMap);
 
     bool CommuteInstruction(MachineBasicBlock::iterator &mi,
                             MachineFunction::iterator &mbbi,
@@ -230,8 +240,6 @@ TwoAddressInstructionPass::isProfitableToReMat(unsigned Reg,
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
     MachineOperand &UseMO = UI.getOperand();
-    if (!UseMO.isUse())
-      continue;
     MachineInstr *UseMI = UseMO.getParent();
     MachineBasicBlock *UseMBB = UseMI->getParent();
     if (UseMBB == MBB) {
@@ -253,6 +261,82 @@ TwoAddressInstructionPass::isProfitableToReMat(unsigned Reg,
   // No other uses in the same block, remat if it's defined in the same
   // block so it does not unnecessarily extend the live range.
   return MBB == DefMI->getParent();
+}
+
+/// NoUseAfterLastDef - Return true if there are no intervening uses between the
+/// last instruction in the MBB that defines the specified register and the
+/// two-address instruction which is being processed. It also returns the last
+/// def location by reference
+bool TwoAddressInstructionPass::NoUseAfterLastDef(unsigned Reg,
+                                 MachineBasicBlock *MBB, unsigned Dist,
+                                 DenseMap<MachineInstr*, unsigned> &DistanceMap,
+                                 unsigned &LastDef) {
+  LastDef = 0;
+  unsigned LastUse = Dist;
+  for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(Reg),
+         E = MRI->reg_end(); I != E; ++I) {
+    MachineOperand &MO = I.getOperand();
+    MachineInstr *MI = MO.getParent();
+    if (MI->getParent() != MBB)
+      continue;
+    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
+    if (DI == DistanceMap.end())
+      continue;
+    if (MO.isUse() && DI->second < LastUse)
+      LastUse = DI->second;
+    if (MO.isDef() && DI->second > LastDef)
+      LastDef = DI->second;
+  }
+
+  return !(LastUse > LastDef && LastUse < Dist);
+}
+
+/// isProfitableToReMat - Return true if it's potentially profitable to commute
+/// the two-address instruction that's being processed.
+bool
+TwoAddressInstructionPass::isProfitableToCommute(unsigned regB, unsigned regC,
+                MachineInstr *MI, MachineBasicBlock *MBB,
+                unsigned Dist, DenseMap<MachineInstr*, unsigned> &DistanceMap) {
+  // Determine if it's profitable to commute this two address instruction. In
+  // general, we want no uses between this instruction and the definition of
+  // the two-address register.
+  // e.g.
+  // %reg1028<def> = EXTRACT_SUBREG %reg1027<kill>, 1
+  // %reg1029<def> = MOV8rr %reg1028
+  // %reg1029<def> = SHR8ri %reg1029, 7, %EFLAGS<imp-def,dead>
+  // insert => %reg1030<def> = MOV8rr %reg1028
+  // %reg1030<def> = ADD8rr %reg1028<kill>, %reg1029<kill>, %EFLAGS<imp-def,dead>
+  // In this case, it might not be possible to coalesce the second MOV8rr
+  // instruction if the first one is coalesced. So it would be profitable to
+  // commute it:
+  // %reg1028<def> = EXTRACT_SUBREG %reg1027<kill>, 1
+  // %reg1029<def> = MOV8rr %reg1028
+  // %reg1029<def> = SHR8ri %reg1029, 7, %EFLAGS<imp-def,dead>
+  // insert => %reg1030<def> = MOV8rr %reg1029
+  // %reg1030<def> = ADD8rr %reg1029<kill>, %reg1028<kill>, %EFLAGS<imp-def,dead>  
+
+  if (!MI->killsRegister(regC))
+    return false;
+
+  // Ok, we have something like:
+  // %reg1030<def> = ADD8rr %reg1028<kill>, %reg1029<kill>, %EFLAGS<imp-def,dead>
+  // let's see if it's worth commuting it.
+
+  // If there is a use of regC between its last def (could be livein) and this
+  // instruction, then bail.
+  unsigned LastDefC = 0;
+  if (!NoUseAfterLastDef(regC, MBB, Dist, DistanceMap, LastDefC))
+    return false;
+
+  // If there is a use of regB between its last def (could be livein) and this
+  // instruction, then go ahead and make this transformation.
+  unsigned LastDefB = 0;
+  if (!NoUseAfterLastDef(regB, MBB, Dist, DistanceMap, LastDefB))
+    return true;
+
+  // Since there are no intervening uses for both registers, then commute
+  // if the def of regC is closer. Its live interval is shorter.
+  return LastDefB && LastDefC && LastDefC > LastDefB;
 }
 
 /// CommuteInstruction - Commute a two-address instruction and update the basic
@@ -419,6 +503,17 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             }
           }
 
+          // If it's profitable to commute the instruction, do so.
+          if (TID.isCommutable() && mi->getNumOperands() >= 3) {
+            unsigned regC = mi->getOperand(3-si).getReg();
+            if (isProfitableToCommute(regB, regC, mi, mbbi, Dist, DistanceMap))
+              if (CommuteInstruction(mi, mbbi, regC, Dist, DistanceMap)) {
+                ++NumAggrCommuted;
+                ++NumCommuted;
+                regB = regC;
+              }
+          }
+
         InstructionRearranged:
           const TargetRegisterClass* rc = MRI->getRegClass(regA);
           MachineInstr *DefMI = MRI->getVRegDef(regB);
@@ -436,7 +531,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
           }
 
-          MachineBasicBlock::iterator prevMi = prior(mi);
+          MachineBasicBlock::iterator prevMI = prior(mi);
+          // Update DistanceMap.
+          DistanceMap.insert(std::make_pair(prevMI, Dist));
+          DistanceMap[mi] = ++Dist;
 
           // Update live variables for regB.
           if (LV) {
@@ -446,13 +544,13 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             varInfoB.UsedBlocks[mbbi->getNumber()] = true;
 
             if (LV->removeVirtualRegisterKilled(regB,  mi))
-              LV->addVirtualRegisterKilled(regB, prevMi);
+              LV->addVirtualRegisterKilled(regB, prevMI);
 
             if (LV->removeVirtualRegisterDead(regB, mi))
-              LV->addVirtualRegisterDead(regB, prevMi);
+              LV->addVirtualRegisterDead(regB, prevMI);
           }
 
-          DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));
+          DOUT << "\t\tprepend:\t"; DEBUG(prevMI->print(*cerr.stream(), &TM));
           
           // Replace all occurences of regB with regA.
           for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {

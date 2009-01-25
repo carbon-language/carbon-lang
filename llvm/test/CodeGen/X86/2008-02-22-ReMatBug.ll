@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of re-materialization} | grep 3
+; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of re-materialization} | grep 4
 ; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of dead spill slots removed}
 ; rdar://5761454
 
