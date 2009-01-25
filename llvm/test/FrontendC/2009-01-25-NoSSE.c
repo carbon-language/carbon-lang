@@ -2,6 +2,8 @@
 // PR3402
 // This is a test for x86/x86-64, add your target below if it FAILs.
 // XFAIL: alpha|ia64|arm|powerpc|sparc 
+// reverted
+// XFAIL: *
 typedef unsigned long __kernel_size_t;
 typedef __kernel_size_t size_t;
 void *memset(void *s, int c, size_t n);
