@@ -394,7 +394,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // FIXME: Should we really be doing this? Should we try to avoid
   // cases where we emit a global with a lot of zeros?  Should
   // we try to avoid short globals? 
-  if (E->isConstantExpr(CGF.getContext(), 0)) {
+  if (E->isConstantInitializer(CGF.getContext(), 0)) {
     llvm::Constant* C = CGF.CGM.EmitConstantExpr(E, &CGF);
     llvm::GlobalVariable* GV =
     new llvm::GlobalVariable(C->getType(), true,

@@ -181,8 +181,9 @@ public:
     llvm::APSInt X;
     return isIntegerConstantExpr(X, Ctx, Loc);
   }
-  /// isConstantExpr - Return true if this expression is a valid constant expr.
-  bool isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const;
+  /// isConstantInitializer - Returns true if this expression is a constant
+  /// initializer, which can be emitted at compile-time.
+  bool isConstantInitializer(ASTContext &Ctx) const;
   
   /// EvalResult is a struct with detailed info about an evaluated expression.
   struct EvalResult {

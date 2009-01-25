@@ -195,7 +195,7 @@ public:
               // If x is EVER assigned a new value later, don't issue
               // a warning.  This is because such initialization can be
               // due to defensive programming.
-              if (!E->isConstantExpr(Ctx,NULL))
+              if (!E->isConstantInitializer(Ctx))
                 Report(V, DeadInit, V->getLocation(), E->getSourceRange());
             }
           }

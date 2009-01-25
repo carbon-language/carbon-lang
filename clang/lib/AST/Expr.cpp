@@ -692,11 +692,10 @@ bool Expr::hasAnyValueDependentArguments(Expr** Exprs, unsigned NumExprs) {
   return false;
 }
 
-bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
+bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   switch (getStmtClass()) {
   default:
     if (!isEvaluatable(Ctx)) {
-      if (Loc) *Loc = getLocStart();
       return false;
     }
     break;
@@ -704,13 +703,13 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     return true;
   case CompoundLiteralExprClass: {
     const Expr *Exp = cast<CompoundLiteralExpr>(this)->getInitializer();
-    return Exp->isConstantExpr(Ctx, Loc);
+    return Exp->isConstantInitializer(Ctx);
   }
   case InitListExprClass: {
     const InitListExpr *Exp = cast<InitListExpr>(this);
     unsigned numInits = Exp->getNumInits();
     for (unsigned i = 0; i < numInits; i++) {
-      if (!Exp->getInit(i)->isConstantExpr(Ctx, Loc)) 
+      if (!Exp->getInit(i)->isConstantInitializer(Ctx)) 
         return false;
     }
   }

@@ -86,7 +86,7 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
   if ((D.getInit() == 0) || NoInit) {
     Init = llvm::Constant::getNullValue(LTy);
   } else {
-    if (D.getInit()->isConstantExpr(getContext(), 0))
+    if (D.getInit()->isConstantInitializer(getContext()))
       Init = CGM.EmitConstantExpr(D.getInit(), this);
     else {
       assert(getContext().getLangOptions().CPlusPlus && 
