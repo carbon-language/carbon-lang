@@ -619,6 +619,12 @@ public:
       
       return CGM.GetAddrOfConstantCString(Str, ".tmp");
     }
+    case Expr::AddrLabelExprClass: {
+      assert(CGF && "Invalid address of label expression outside function.");
+      unsigned id = CGF->GetIDForAddrOfLabel(cast<AddrLabelExpr>(E)->getLabel());
+      llvm::Constant *C = llvm::ConstantInt::get(llvm::Type::Int32Ty, id);
+      return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
+    }
     }
     CGM.ErrorUnsupported(E, "constant l-value expression");
     llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));

@@ -215,6 +215,8 @@ public:
   APValue VisitUnaryOperator(const UnaryOperator *E);
   APValue VisitObjCStringLiteral(ObjCStringLiteral *E)
       { return APValue(E, 0); }
+  APValue VisitAddrLabelExpr(AddrLabelExpr *E)
+      { return APValue(E, 0); }
   APValue VisitConditionalOperator(ConditionalOperator *E);
 };
 } // end anonymous namespace
