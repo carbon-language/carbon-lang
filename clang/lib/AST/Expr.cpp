@@ -733,7 +733,8 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
       return cast<CastExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
     break;
   case DesignatedInitExprClass:
-    return cast<DesignatedInitExpr>(Init)->getInit()->isConstantInitializer(Ctx);
+    return cast<DesignatedInitExpr>(this)->
+            getInit()->isConstantInitializer(Ctx);
   }
 
   return isEvaluatable(Ctx);
