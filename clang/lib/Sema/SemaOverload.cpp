@@ -544,14 +544,17 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     SCS.Second = ICK_Pointer_Conversion;
     SCS.IncompatibleObjC = IncompatibleObjC;
   }
-  // FIXME: Pointer to member conversions (4.11).
+  // Pointer to member conversions (4.11).
+  else if (IsMemberPointerConversion(From, FromType, ToType, FromType)) {
+    SCS.Second = ICK_Pointer_Member;
+  }
   // Boolean conversions (C++ 4.12).
-  // FIXME: pointer-to-member type
   else if (ToType->isBooleanType() &&
            (FromType->isArithmeticType() ||
             FromType->isEnumeralType() ||
             FromType->isPointerType() ||
-            FromType->isBlockPointerType())) {
+            FromType->isBlockPointerType() ||
+            FromType->isMemberPointerType())) {
     SCS.Second = ICK_Boolean_Conversion;
     FromType = Context.BoolTy;
   } else {
@@ -999,7 +1002,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     }
   }
 
-  return false;  
+  return false;
 }
 
 /// CheckPointerConversion - Check the pointer conversion from the
@@ -1013,8 +1016,6 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
 
   if (const PointerType *FromPtrType = FromType->getAsPointerType())
     if (const PointerType *ToPtrType = ToType->getAsPointerType()) {
-      BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
-                      /*DetectVirtual=*/false);
       QualType FromPointeeType = FromPtrType->getPointeeType(),
                ToPointeeType   = ToPtrType->getPointeeType();
 
@@ -1037,6 +1038,100 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
       }
     }
 
+  return false;
+}
+
+/// IsMemberPointerConversion - Determines whether the conversion of the
+/// expression From, which has the (possibly adjusted) type FromType, can be
+/// converted to the type ToType via a member pointer conversion (C++ 4.11).
+/// If so, returns true and places the converted type (that might differ from
+/// ToType in its cv-qualifiers at some level) into ConvertedType.
+bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
+                                     QualType ToType, QualType &ConvertedType)
+{
+  const MemberPointerType *ToTypePtr = ToType->getAsMemberPointerType();
+  if (!ToTypePtr)
+    return false;
+
+  // A null pointer constant can be converted to a member pointer (C++ 4.11p1)
+  if (From->isNullPointerConstant(Context)) {
+    ConvertedType = ToType;
+    return true;
+  }
+
+  // Otherwise, both types have to be member pointers.
+  const MemberPointerType *FromTypePtr = FromType->getAsMemberPointerType();
+  if (!FromTypePtr)
+    return false;
+
+  // A pointer to member of B can be converted to a pointer to member of D,
+  // where D is derived from B (C++ 4.11p2).
+  QualType FromClass(FromTypePtr->getClass(), 0);
+  QualType ToClass(ToTypePtr->getClass(), 0);
+  // FIXME: What happens when these are dependent? Is this function even called?
+
+  if (IsDerivedFrom(ToClass, FromClass)) {
+    ConvertedType = Context.getMemberPointerType(FromTypePtr->getPointeeType(),
+                                                 ToClass.getTypePtr());
+    return true;
+  }
+
+  return false;
+}
+
+/// CheckMemberPointerConversion - Check the member pointer conversion from the
+/// expression From to the type ToType. This routine checks for ambiguous or
+/// virtual (FIXME: or inaccessible) base-to-derived member pointer conversions
+/// for which IsMemberPointerConversion has already returned true. It returns
+/// true and produces a diagnostic if there was an error, or returns false
+/// otherwise.
+bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType) {
+  QualType FromType = From->getType();
+
+  if (const MemberPointerType *FromPtrType =
+        FromType->getAsMemberPointerType()) {
+    if (const MemberPointerType *ToPtrType =
+          ToType->getAsMemberPointerType()) {
+      QualType FromClass = QualType(FromPtrType->getClass(), 0);
+      QualType ToClass   = QualType(ToPtrType->getClass(), 0);
+
+      // FIXME: What about dependent types?
+      assert(FromClass->isRecordType() && "Pointer into non-class.");
+      assert(ToClass->isRecordType() && "Pointer into non-class.");
+
+      BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                      /*DetectVirtual=*/true);
+      bool DerivationOkay = IsDerivedFrom(ToClass, FromClass, Paths);
+      assert(DerivationOkay &&
+             "Should not have been called if derivation isn't OK.");
+      if (!DerivationOkay)
+        return true;
+
+      if (Paths.isAmbiguous(Context.getCanonicalType(FromClass).
+                                      getUnqualifiedType())) {
+        // Derivation is ambiguous. Redo the check to find the exact paths.
+        Paths.clear();
+        Paths.setRecordingPaths(true);
+        bool StillOkay = IsDerivedFrom(ToClass, FromClass, Paths);
+        assert(StillOkay && "Derivation changed due to quantum fluctuation.");
+        if (!StillOkay)
+          return true;
+
+        std::string PathDisplayStr = getAmbiguousPathsDisplayString(Paths);
+        Diag(From->getExprLoc(),
+             diag::err_ambiguous_base_to_derived_memptr_conv)
+          << FromClass << ToClass << PathDisplayStr << From->getSourceRange();
+        return true;
+      }
+
+      if (const CXXRecordType *VBase = Paths.getDetectedVirtual()) {
+        Diag(From->getExprLoc(), diag::err_memptr_conv_via_virtual)
+          << FromClass << ToClass << QualType(VBase, 0)
+          << From->getSourceRange();
+        return true;
+      }
+    }
+  }
   return false;
 }
 

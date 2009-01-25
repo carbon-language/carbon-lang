@@ -3,6 +3,7 @@
 struct A {};
 enum B { Dummy };
 namespace C {}
+struct D : A {};
 
 int A::*pdi1;
 int (::A::*pdi2);
@@ -16,4 +17,16 @@ int& A::*pdr; // expected-error {{'pdr' declared as a pointer to a reference}}
 void f() {
   // This requires tentative parsing.
   int (A::*pf)(int, int);
+
+  // Implicit conversion to bool.
+  bool b = pdi1;
+  b = pfi;
+
+  // Conversion from null pointer constant.
+  pf = 0;
+  pf = __null;
+
+  // Conversion to member of derived.
+  int D::*pdid = pdi1;
+  pdid = pdi2;
 }

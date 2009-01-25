@@ -1590,6 +1590,12 @@ DIAG(err_duplicate_base_class, ERROR,
 // FIXME: better way to display derivation?  Pass entire thing into diagclient?
 DIAG(err_ambiguous_derived_to_base_conv, ERROR,
      "ambiguous conversion from derived class %0 to base class %1:%2")
+DIAG(err_ambiguous_base_to_derived_memptr_conv, ERROR,
+     "ambiguous conversion from pointer to member of base class %0 "
+     "to pointer to member of derived class %1:%2")
+DIAG(err_memptr_conv_via_virtual, ERROR,
+     "conversion from pointer to member of class %0 to pointer to member "
+     "of class %1 via virtual base %2 is not allowed")
 
 // C++ member name lookup
 DIAG(err_ambiguous_member_multiple_subobjects, ERROR,

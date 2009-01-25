@@ -561,7 +561,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         DeclType.Mem.TypeQuals &= ~QualType::Restrict;
       }
 
-      T = Context.getMemberPointerType(T, ClsType.getTypePtr());
+      T = Context.getMemberPointerType(T, ClsType.getTypePtr()).
+                    getQualifiedType(DeclType.Mem.TypeQuals);
 
       break;
     }
@@ -660,7 +661,13 @@ bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2)
     return true;
   }
 
-  // FIXME: pointer-to-member types
+  const MemberPointerType *T1MPType = T1->getAsMemberPointerType(),
+                          *T2MPType = T2->getAsMemberPointerType();
+  if (T1MPType && T2MPType) {
+    T1 = T1MPType->getPointeeType();
+    T2 = T2MPType->getPointeeType();
+    return true;
+  }
   return false;
 }
 

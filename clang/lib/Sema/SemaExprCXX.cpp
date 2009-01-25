@@ -832,8 +832,9 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Pointer_Member:
-    // FIXME: Implement pointer-to-member conversions.
-    assert(false && "Pointer-to-member conversions are unsupported");
+    if (CheckMemberPointerConversion(From, ToType))
+      return true;
+    ImpCastExprToType(From, ToType);
     break;
 
   case ICK_Boolean_Conversion:
