@@ -340,13 +340,6 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
           if (!MI->isEnabled())
             Tok.setFlag(Token::DisableExpand);
       }
-      
-      // If this token has instantiation location, resolve it down to its
-      // spelling location.  This is not strictly needed, but avoids extra
-      // resolutions for macros that are expanded frequently.
-      if (!Tok.getLocation().isFileID())
-        Tok.setLocation(SourceMgr.getSpellingLoc(Tok.getLocation()));
-  
       ArgTokens.push_back(Tok);
     }
 
@@ -359,7 +352,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     Token EOFTok;
     EOFTok.startToken();
     EOFTok.setKind(tok::eof);
-    EOFTok.setLocation(SourceMgr.getSpellingLoc(Tok.getLocation()));
+    EOFTok.setLocation(Tok.getLocation());
     EOFTok.setLength(0);
     ArgTokens.push_back(EOFTok);
     ++NumActuals;

@@ -120,12 +120,6 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
     Result.push_back(Token());
     Token &Tok = Result.back();
     PP.Lex(Tok);
-    
-    // Eagerly resolve instantiation ID's to their spelling location.  This
-    // makes it so we only have to get the spelling loc once per macro argument
-    // preexpansion instead of once per each time the token is expanded.
-    if (!Tok.getLocation().isFileID())
-      Tok.setLocation(PP.getSourceManager().getSpellingLoc(Tok.getLocation()));
   } while (Result.back().isNot(tok::eof));
   
   // Pop the token stream off the top of the stack.  We know that the internal
