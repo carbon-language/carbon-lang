@@ -451,16 +451,26 @@ public:
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer) const;
   
-  /// getSpelledCharacterAt - Return a pointer to the start of the specified
-  /// location in the appropriate MemoryBuffer.
-  char getSpelledCharacterAt(SourceLocation SL) const {
+  /// getSpellingOfSingleCharacterNumericConstant - Tok is a numeric constant
+  /// with length 1, return the character.
+  char getSpellingOfSingleCharacterNumericConstant(const Token &Tok) const {
+    assert(Tok.is(tok::numeric_constant) &&
+           Tok.getLength() == 1 && "Called on unsupported token");
+    assert(!Tok.needsCleaning() && "Token can't need cleaning with length 1");
+
+    // If the token is carrying a literal data pointer, just use it.
+    if (const char *D = Tok.getLiteralData())
+      return *D;
+    
     if (PTH) {
       const char *Data;
-      if (PTH->getSpelling(SL, Data))
+      if (PTH->getSpelling(Tok.getLocation(), Data))
         return *Data;
     }
 
-    return *SourceMgr.getCharacterData(SL);
+    // Otherwise, fall back on getCharacterData, which is slower, but always
+    // works.
+    return *SourceMgr.getCharacterData(Tok.getLocation());
   }
   
   /// CreateString - Plop the specified string into a scratch buffer and set the

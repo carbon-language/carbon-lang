@@ -869,7 +869,7 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   // Fast path for a single digit (which is quite common).  A single digit
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
-    const char Val = PP.getSpelledCharacterAt(Tok.getLocation());
+    const char Val = PP.getSpellingOfSingleCharacterNumericConstant(Tok);
     unsigned IntSize = Context.Target.getIntWidth();
     return Owned(new (Context) IntegerLiteral(llvm::APInt(IntSize, Val-'0'),
                     Context.IntTy, Tok.getLocation()));
