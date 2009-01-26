@@ -1718,7 +1718,7 @@ processors, and includes support for ISA extensions such as MMX and SSE.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="x86_tt">X86 Target Triples Supported</a>
+  <a name="x86_tt">X86 Target Triples supported</a>
 </div>
 
 <div class="doc_text">
@@ -1786,6 +1786,27 @@ OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm
 
 <p>Stores, and all other instructions, treat the four memory operands in the 
 same way and in the same order.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="x86_memory">X86 address spaces supported</a>
+</div>
+
+<div class="doc_text">
+
+<p>x86 has the ability to perform loads and stores to different address spaces 
+via the x86 segment registers.  A segment override prefix byte on an instruction
+causes the instruction's memory access to go to the specified segment.  LLVM
+address space 0 is the default address space, which includes the stack, and
+any unqualified memory accesses in a program.  Address spaces 1-255 are
+currently reserved for user-defined code.  The GS-segment is represented by
+address space 256.  Other x86 segments have yet to be allocated address space
+numbers.
+
+<p>Some operating systems use the GS-segment to implement TLS, so care should be
+taken when reading and writing to address space 256 on these platforms.
 
 </div>
 
