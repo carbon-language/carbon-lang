@@ -563,12 +563,12 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
     ret = PerformPHIConstruction(walker, MBB, LI, Visited, Defs, Uses,
                                  NewVNs, LiveOut, Phis, false, true);
     
-    LI->addRange(LiveRange(UseIndex, EndIndex+1, ret));
-    
     // FIXME: Need to set kills properly for inter-block stuff.
     if (LI->isKill(ret, UseIndex)) LI->removeKill(ret, UseIndex);
     if (intrablock)
       LI->addKill(ret, EndIndex);
+    
+    LI->addRange(LiveRange(UseIndex, EndIndex+1, ret));
   } else if (ContainsDefs && ContainsUses){
     SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[MBB];
     SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[MBB];
@@ -620,13 +620,13 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
       ret = PerformPHIConstruction(walker, MBB, LI, Visited, Defs, Uses,
                                    NewVNs, LiveOut, Phis, false, true);
 
-    LI->addRange(LiveRange(StartIndex, EndIndex+1, ret));
-    
     if (foundUse && LI->isKill(ret, StartIndex))
       LI->removeKill(ret, StartIndex);
     if (intrablock) {
       LI->addKill(ret, EndIndex);
     }
+
+    LI->addRange(LiveRange(StartIndex, EndIndex+1, ret));
   }
   
   // Memoize results so we don't have to recompute them.
@@ -810,10 +810,18 @@ bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
   TII->reMaterialize(MBB, RestorePt, vreg, DefMI);
   LIs->InsertMachineInstrInMaps(prior(RestorePt), RestoreIdx);
   
-  ReconstructLiveInterval(CurrLI);
-  unsigned RematIdx = LIs->getInstructionIndex(prior(RestorePt));
-  RematIdx = LiveIntervals::getDefIndex(RematIdx);
-  RenumberValno(CurrLI->findDefinedVNInfo(RematIdx));
+  if (KillPt->getParent() == BarrierMBB) {
+    VNInfo* After = UpdateRegisterInterval(ValNo, LIs->getUseIndex(KillIdx)+1,
+                           LIs->getDefIndex(RestoreIdx));
+    
+    RenumberValno(After);
+
+    ++NumSplits;
+    ++NumRemats;
+    return true;
+  }
+
+  RepairLiveInterval(CurrLI, ValNo, DefMI, RestoreIdx);
   
   ++NumSplits;
   ++NumRemats;
@@ -986,14 +994,28 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   MachineInstr *LoadMI = prior(RestorePt);
   LIs->InsertMachineInstrInMaps(LoadMI, RestoreIndex);
 
+  // If live interval is spilled in the same block as the barrier, just
+  // create a hole in the interval.
+  if (!DefMBB ||
+      (SpillMI && SpillMI->getParent() == BarrierMBB)) {
+    // Update spill stack slot live interval.
+    UpdateSpillSlotInterval(ValNo, LIs->getUseIndex(SpillIndex)+1,
+                            LIs->getDefIndex(RestoreIndex));
+
+    VNInfo* After = UpdateRegisterInterval(ValNo,
+                           LIs->getUseIndex(SpillIndex)+1,
+                           LIs->getDefIndex(RestoreIndex));
+    RenumberValno(After);
+   
+    ++NumSplits;
+    return true;
+  }
+
   // Update spill stack slot live interval.
   UpdateSpillSlotInterval(ValNo, LIs->getUseIndex(SpillIndex)+1,
                           LIs->getDefIndex(RestoreIndex));
 
-  ReconstructLiveInterval(CurrLI);
-  unsigned RestoreIdx = LIs->getInstructionIndex(prior(RestorePt));
-  RestoreIdx = LiveIntervals::getDefIndex(RestoreIdx);
-  RenumberValno(CurrLI->findDefinedVNInfo(RestoreIdx));
+  RepairLiveInterval(CurrLI, ValNo, DefMI, RestoreIndex);
   
   ++NumSplits;
   return true;
