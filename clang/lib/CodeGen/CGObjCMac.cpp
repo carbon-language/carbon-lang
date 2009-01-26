@@ -3171,6 +3171,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   CLASS_RO_GV->setSection(".section __DATA,__data,regular,no_dead_strip");
   UsedGlobals.push_back(CLASS_RO_GV);
   return CLASS_RO_GV;
+
 }
 
 /// BuildClassMetaData - This routine defines that to-level meta-data
@@ -3381,7 +3382,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
 void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) 
 {
   const ObjCInterfaceDecl *Interface = OCD->getClassInterface();
-  std::string ExtCatName("\01l_OBJC_$_CATEGORY_" + Interface->getNameAsString()+ 
+  const char *Prefix = "\01l_OBJC_$_CATEGORY_";
+  std::string ExtCatName(Prefix + Interface->getNameAsString()+ 
                       "_$_" + OCD->getNameAsString());
   std::string ExtClassName("\01_OBJC_CLASS_$_" + Interface->getNameAsString());
   
@@ -3399,8 +3401,34 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
                              &CGM.getModule());
   UsedGlobals.push_back(ClassGV);
   Values[1] = ClassGV;
-  Values[2] = llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
-  Values[3] = llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
+  std::vector<llvm::Constant*> Methods;
+  std::string MethodListName(Prefix);
+  MethodListName += "INSTANCE_METHODS_" + Interface->getNameAsString() + 
+    "_$_" + OCD->getNameAsString();
+   
+  for (ObjCCategoryImplDecl::instmeth_iterator i = OCD->instmeth_begin(),
+       e = OCD->instmeth_end(); i != e; ++i) {
+    // Instance methods should always be defined.
+    Methods.push_back(GetMethodConstant(*i));
+  }
+  
+  Values[2] = EmitMethodList(MethodListName, 
+                             ".section __DATA,__data,regular,no_dead_strip", 
+                             Methods);
+
+  MethodListName = Prefix;
+  MethodListName += "CLASS_METHODS_" + Interface->getNameAsString() + "_$_" +
+    OCD->getNameAsString();
+  Methods.clear();
+  for (ObjCCategoryImplDecl::classmeth_iterator i = OCD->classmeth_begin(),
+       e = OCD->classmeth_end(); i != e; ++i) {
+    // Class methods should always be defined.
+    Methods.push_back(GetMethodConstant(*i));
+  }
+  
+  Values[3] = EmitMethodList(MethodListName, 
+                             ".section __DATA,__data,regular,no_dead_strip", 
+                             Methods);
   Values[4] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
   Values[5] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
   
