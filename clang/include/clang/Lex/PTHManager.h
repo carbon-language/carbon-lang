@@ -117,7 +117,10 @@ class PTHManager : public IdentifierInfoLookup {
   }
   IdentifierInfo* LazilyCreateIdentifierInfo(unsigned PersistentID);
   
-public:  
+public:
+  // The current PTH version.
+  enum { Version = 0 };
+
   ~PTHManager();
   
   /// get - Return the identifier token info for the specified named identifier.
