@@ -21,11 +21,29 @@
 
 using namespace clang;
 
-namespace {
+
+namespace { class VISIBILITY_HIDDEN ConstNotEq {}; }
+namespace { class VISIBILITY_HIDDEN ConstEq {}; }
 
 typedef llvm::ImmutableMap<SymbolRef,GRState::IntSetTy> ConstNotEqTy;
 typedef llvm::ImmutableMap<SymbolRef,const llvm::APSInt*> ConstEqTy;
+  
+static int ConstEqIndex = 0;
+static int ConstNotEqIndex = 0;
 
+namespace clang {
+template<>
+struct GRStateTrait<ConstNotEq> : public GRStatePartialTrait<ConstNotEqTy> {
+  static inline void* GDMIndex() { return &ConstNotEqIndex; }  
+};
+
+template<>
+struct GRStateTrait<ConstEq> : public GRStatePartialTrait<ConstEqTy> {
+  static inline void* GDMIndex() { return &ConstEqIndex; }  
+};
+}  
+  
+namespace {
 // BasicConstraintManager only tracks equality and inequality constraints of
 // constants and integer variables.
 class VISIBILITY_HIDDEN BasicConstraintManager : public ConstraintManager {
@@ -437,26 +455,12 @@ BasicConstraintManager::AssumeInBound(const GRState* St, SVal Idx,
   return St;
 }
 
-static int ConstEqTyIndex = 0;
-static int ConstNotEqTyIndex = 0;
-
-namespace clang {
-  template<>
-  struct GRStateTrait<ConstNotEqTy> : public GRStatePartialTrait<ConstNotEqTy> {
-    static inline void* GDMIndex() { return &ConstNotEqTyIndex; }  
-  };
-  
-  template<>
-  struct GRStateTrait<ConstEqTy> : public GRStatePartialTrait<ConstEqTy> {
-    static inline void* GDMIndex() { return &ConstEqTyIndex; }  
-  };
-}
 
 const GRState* BasicConstraintManager::AddEQ(const GRState* St, SymbolRef sym,
                                              const llvm::APSInt& V) {
   // Create a new state with the old binding replaced.
   GRStateRef state(St, StateMgr);
-  return state.set<ConstEqTy>(sym, &V);
+  return state.set<ConstEq>(sym, &V);
 }
 
 const GRState* BasicConstraintManager::AddNE(const GRState* St, SymbolRef sym,
@@ -465,7 +469,7 @@ const GRState* BasicConstraintManager::AddNE(const GRState* St, SymbolRef sym,
   GRStateRef state(St, StateMgr);
 
   // First, retrieve the NE-set associated with the given symbol.
-  ConstNotEqTy::data_type* T = state.get<ConstNotEqTy>(sym);
+  ConstNotEqTy::data_type* T = state.get<ConstNotEq>(sym);
   GRState::IntSetTy S = T ? *T : ISetFactory.GetEmptySet();
 
   
@@ -473,12 +477,12 @@ const GRState* BasicConstraintManager::AddNE(const GRState* St, SymbolRef sym,
   S = ISetFactory.Add(S, &V);
   
   // Create a new state with the old binding replaced.
-  return state.set<ConstNotEqTy>(sym, S);
+  return state.set<ConstNotEq>(sym, S);
 }
 
 const llvm::APSInt* BasicConstraintManager::getSymVal(const GRState* St,
                                                       SymbolRef sym) {
-  const ConstEqTy::data_type* T = St->get<ConstEqTy>(sym);
+  const ConstEqTy::data_type* T = St->get<ConstEq>(sym);
   return T ? *T : NULL;  
 }
 
@@ -486,7 +490,7 @@ bool BasicConstraintManager::isNotEqual(const GRState* St, SymbolRef sym,
                                         const llvm::APSInt& V) const {
 
   // Retrieve the NE-set associated with the given symbol.
-  const ConstNotEqTy::data_type* T = St->get<ConstNotEqTy>(sym);
+  const ConstNotEqTy::data_type* T = St->get<ConstNotEq>(sym);
 
   // See if V is present in the NE-set.
   return T ? T->contains(&V) : false;
@@ -495,7 +499,7 @@ bool BasicConstraintManager::isNotEqual(const GRState* St, SymbolRef sym,
 bool BasicConstraintManager::isEqual(const GRState* St, SymbolRef sym,
                                      const llvm::APSInt& V) const {
   // Retrieve the EQ-set associated with the given symbol.
-  const ConstEqTy::data_type* T = St->get<ConstEqTy>(sym);
+  const ConstEqTy::data_type* T = St->get<ConstEq>(sym);
   // See if V is present in the EQ-set.
   return T ? **T == V : false;
 }
@@ -507,31 +511,31 @@ BasicConstraintManager::RemoveDeadBindings(const GRState* St,
                                            SymbolReaper& SymReaper) {
 
   GRStateRef state(St, StateMgr);
-  ConstEqTy CE = state.get<ConstEqTy>();
-  ConstEqTy::Factory& CEFactory = state.get_context<ConstEqTy>();
+  ConstEqTy CE = state.get<ConstEq>();
+  ConstEqTy::Factory& CEFactory = state.get_context<ConstEq>();
 
   for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I) {
     SymbolRef sym = I.getKey();
     if (SymReaper.maybeDead(sym)) CE = CEFactory.Remove(CE, sym);
   }
-  state = state.set<ConstEqTy>(CE);
+  state = state.set<ConstEq>(CE);
 
-  ConstNotEqTy CNE = state.get<ConstNotEqTy>();
-  ConstNotEqTy::Factory& CNEFactory = state.get_context<ConstNotEqTy>();
+  ConstNotEqTy CNE = state.get<ConstNotEq>();
+  ConstNotEqTy::Factory& CNEFactory = state.get_context<ConstNotEq>();
 
   for (ConstNotEqTy::iterator I = CNE.begin(), E = CNE.end(); I != E; ++I) {
     SymbolRef sym = I.getKey();    
     if (SymReaper.maybeDead(sym)) CNE = CNEFactory.Remove(CNE, sym);
   }
   
-  return state.set<ConstNotEqTy>(CNE);
+  return state.set<ConstNotEq>(CNE);
 }
 
 void BasicConstraintManager::print(const GRState* St, std::ostream& Out, 
                                    const char* nl, const char *sep) {
   // Print equality constraints.
 
-  ConstEqTy CE = St->get<ConstEqTy>();
+  ConstEqTy CE = St->get<ConstEq>();
 
   if (!CE.isEmpty()) {
     Out << nl << sep << "'==' constraints:";
@@ -545,7 +549,7 @@ void BasicConstraintManager::print(const GRState* St, std::ostream& Out,
 
   // Print != constraints.
   
-  ConstNotEqTy CNE = St->get<ConstNotEqTy>();
+  ConstNotEqTy CNE = St->get<ConstNotEq>();
   
   if (!CNE.isEmpty()) {
     Out << nl << sep << "'!=' constraints:";
