@@ -888,7 +888,8 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
 
   llvm::APSInt Size(CAT->getSize(), false);
-  llvm::APSInt i = getBasicVals().getZeroWithPtrWidth(false);
+  llvm::APSInt i = getBasicVals().getValue(0, Size.getBitWidth(),
+                                           Size.isUnsigned());
 
   // Check if the init expr is a StringLiteral.
   if (isa<loc::MemRegionVal>(Init)) {
