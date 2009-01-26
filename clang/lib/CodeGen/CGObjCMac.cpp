@@ -590,8 +590,7 @@ public:
                                          const ObjCContainerDecl *CD=0)
     { return 0; }
   
-  virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD)
-  { return; }
+  virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
   
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
   
@@ -3341,6 +3340,56 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV);
 }
 
+/// GenerateCategory - Build metadata for a category implementation.
+/// struct _category_t {
+///   const char * const name;
+///   struct _class_t *const cls;
+///   const struct _method_list_t * const instance_methods;
+///   const struct _method_list_t * const class_methods;
+///   const struct _protocol_list_t * const protocols;
+///   const struct _prop_list_t * const properties;
+/// }
+///
+void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) 
+{
+  const ObjCInterfaceDecl *Interface = OCD->getClassInterface();
+  std::string ExtCatName("\01l_OBJC_$_CATEGORY_" + Interface->getNameAsString()+ 
+                      "_$_" + OCD->getNameAsString());
+  std::string ExtClassName("\01_OBJC_CLASS_$_" + Interface->getNameAsString());
+  
+  std::vector<llvm::Constant*> Values(6);
+  Values[0] = GetClassName(OCD->getIdentifier());
+  // meta-class entry symbol
+  llvm::GlobalVariable *ClassGV = 
+    CGM.getModule().getGlobalVariable(ExtClassName);
+  if (!ClassGV)
+    ClassGV =
+    new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                             llvm::GlobalValue::ExternalLinkage,
+                             0,
+                             ExtClassName,
+                             &CGM.getModule());
+  UsedGlobals.push_back(ClassGV);
+  Values[1] = ClassGV;
+  Values[2] = llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
+  Values[3] = llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
+  Values[4] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
+  Values[5] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
+  
+  llvm::Constant *Init = 
+    llvm::ConstantStruct::get(ObjCTypes.CategorynfABITy, 
+                              Values);
+  llvm::GlobalVariable *GCATV
+    = new llvm::GlobalVariable(ObjCTypes.CategorynfABITy, 
+                               false,
+                               llvm::GlobalValue::InternalLinkage,
+                               Init,
+                               ExtCatName,
+                               &CGM.getModule());
+  GCATV->setSection(".section __DATA,__data,regular,no_dead_strip");
+  UsedGlobals.push_back(GCATV);
+  DefinedCategories.push_back(GCATV);
+}
 /* *** */
 
 CodeGen::CGObjCRuntime *
