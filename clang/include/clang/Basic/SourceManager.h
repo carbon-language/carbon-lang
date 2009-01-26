@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Bitcode/SerializationFwd.h"
+#include "llvm/Support/DataTypes.h"
 #include <vector>
 #include <set>
 #include <list>
