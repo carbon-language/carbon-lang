@@ -624,25 +624,25 @@ defm A : AddInstruction;
 
 class AIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI10Form<0b00111000, OOL, IOL,
-	     "ai\t$rT, $rA, $val", IntegerOp,
-	     pattern>;
+             "ai\t$rT, $rA, $val", IntegerOp,
+             pattern>;
 
 class AIVecInst<ValueType vectype, PatLeaf immpred>:
     AIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
-	    [(set (vectype VECREG:$rT), (add (vectype VECREG:$rA), immpred:$val))]>;
+            [(set (vectype VECREG:$rT), (add (vectype VECREG:$rA), immpred:$val))]>;
 
 class AIFPVecInst<ValueType vectype, PatLeaf immpred>:
     AIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
-	    [/* no pattern */]>;
+            [/* no pattern */]>;
 
 class AIRegInst<RegisterClass rclass, PatLeaf immpred>:
     AIInst<(outs rclass:$rT), (ins rclass:$rA, s10imm_i32:$val),
-	   [(set rclass:$rT, (add rclass:$rA, immpred:$val))]>;
+           [(set rclass:$rT, (add rclass:$rA, immpred:$val))]>;
 
 // This is used to add epsilons to floating point numbers in the f32 fdiv code:
 class AIFPInst<RegisterClass rclass, PatLeaf immpred>:
     AIInst<(outs rclass:$rT), (ins rclass:$rA, s10imm_i32:$val),
-	   [/* no pattern */]>;
+           [/* no pattern */]>;
 
 multiclass AddImmediate {
   def v4i32: AIVecInst<v4i32, v4i32SExt10Imm>;
@@ -1969,11 +1969,11 @@ multiclass SelectBits
   def v2i64_vcond: SELBVecCondInst<v2i64>;
 
   def v4f32_cond:
-	SELBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
-		 [(set (v4f32 VECREG:$rT),
-		       (select (v4i32 VECREG:$rC),
-			       (v4f32 VECREG:$rB),
-			       (v4f32 VECREG:$rA)))]>;
+        SELBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
+                 [(set (v4f32 VECREG:$rT),
+                       (select (v4i32 VECREG:$rC),
+                               (v4f32 VECREG:$rB),
+                               (v4f32 VECREG:$rA)))]>;
 
   // SELBr64_cond is defined in SPU64InstrInfo.td
   def r32_cond:   SELBRegCondInst<R32C, R32C>;
@@ -3260,7 +3260,7 @@ multiclass CmpGtrWordImm
                                     (v4i32 v4i32SExt16Imm:$val)))]>;
 
   def f32:   CGTIInst<(outs R32C:$rT), (ins R32FP:$rA, s10imm_i32:$val),
-  		      [/* no pattern */]>;
+                      [/* no pattern */]>;
 }
 
 class CLGTBInst<dag OOL, dag IOL, list<dag> pattern> :

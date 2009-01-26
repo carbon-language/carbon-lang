@@ -608,7 +608,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // specified by the operand:
     MVT vecVT = MVT::getVectorVT(InVT, (128 / InVT.getSizeInBits()));
     result = DAG.getNode(SPUISD::VEC2PREFSLOT, InVT,
-	                 DAG.getNode(ISD::BIT_CONVERT, vecVT, result));
+                         DAG.getNode(ISD::BIT_CONVERT, vecVT, result));
 
     // Handle extending loads by extending the scalar result:
     if (ExtType == ISD::SEXTLOAD) {
@@ -619,7 +619,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       unsigned NewOpc = ISD::ANY_EXTEND;
 
       if (OutVT.isFloatingPoint())
-	NewOpc = ISD::FP_EXTEND;
+        NewOpc = ISD::FP_EXTEND;
 
       result = DAG.getNode(NewOpc, OutVT, result);
     }
@@ -775,8 +775,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
             DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, theValue);
 
     result = DAG.getNode(SPUISD::SHUFB, vecVT,
-			 vectorizeOp, alignLoadVec,
-			 DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, insertEltOp));
+                         vectorizeOp, alignLoadVec,
+                         DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, insertEltOp));
 
     result = DAG.getStore(the_chain, result, basePtr,
                           LN->getSrcValue(), LN->getSrcValueOffset(),
@@ -2094,7 +2094,7 @@ static SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     DAG.getNode(SPUISD::SHUFB, VT,
                 DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, ValOp),
                 VecOp,
-		DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, ShufMask));
+                DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, ShufMask));
 
   return result;
 }

@@ -28,8 +28,8 @@ namespace {
     unsigned opc = I->getOpcode();
 
     return (opc == SPU::BR
-	    || opc == SPU::BRA
-	    || opc == SPU::BI);
+            || opc == SPU::BRA
+            || opc == SPU::BI);
   }
 
   //! Predicate for a conditional branch instruction
@@ -38,12 +38,12 @@ namespace {
 
     return (opc == SPU::BRNZr32
             || opc == SPU::BRNZv4i32
-	    || opc == SPU::BRZr32
-	    || opc == SPU::BRZv4i32
-	    || opc == SPU::BRHNZr16
-	    || opc == SPU::BRHNZv8i16
-	    || opc == SPU::BRHZr16
-	    || opc == SPU::BRHZv8i16);
+            || opc == SPU::BRZr32
+            || opc == SPU::BRZv4i32
+            || opc == SPU::BRHNZr16
+            || opc == SPU::BRHNZv8i16
+            || opc == SPU::BRHZr16
+            || opc == SPU::BRHZv8i16);
   }
 }
 
@@ -531,8 +531,8 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
  */
 bool
 SPUInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
-			    MachineBasicBlock *&FBB,
-			    SmallVectorImpl<MachineOperand> &Cond) const {
+                            MachineBasicBlock *&FBB,
+                            SmallVectorImpl<MachineOperand> &Cond) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
@@ -621,8 +621,8 @@ SPUInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
 unsigned
 SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-			   MachineBasicBlock *FBB,
-			   const SmallVectorImpl<MachineOperand> &Cond) const {
+                           MachineBasicBlock *FBB,
+                           const SmallVectorImpl<MachineOperand> &Cond) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&

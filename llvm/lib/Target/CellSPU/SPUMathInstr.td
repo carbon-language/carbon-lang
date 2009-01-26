@@ -66,15 +66,15 @@ def Interpf32: CodeFrag<(FIf32 R32FP:$rB, (FRESTf32 R32FP:$rB))>;
 def DivEstf32: CodeFrag<(FMf32 R32FP:$rA, Interpf32.Fragment)>;
 // Newton-Raphson iteration
 def NRaphf32: CodeFrag<(FMAf32 (FNMSf32 DivEstf32.Fragment, R32FP:$rB, R32FP:$rA),
-		  	       Interpf32.Fragment,
-	  	  	       DivEstf32.Fragment)>;
+                               Interpf32.Fragment,
+                               DivEstf32.Fragment)>;
 // Epsilon addition
 def Epsilonf32: CodeFrag<(AIf32 NRaphf32.Fragment, 1)>;
 
 def : Pat<(fdiv R32FP:$rA, R32FP:$rB),
-	  (SELBf32_cond NRaphf32.Fragment,
-			Epsilonf32.Fragment,
-			(CGTIf32 (FNMSf32 R32FP:$rB, Epsilonf32.Fragment, R32FP:$rA), -1))>;
+          (SELBf32_cond NRaphf32.Fragment,
+                        Epsilonf32.Fragment,
+                        (CGTIf32 (FNMSf32 R32FP:$rB, Epsilonf32.Fragment, R32FP:$rA), -1))>;
 
 // Reciprocal estimate and interpolation
 def Interpv4f32: CodeFrag<(FIv4f32 (v4f32 VECREG:$rB), (FRESTv4f32 (v4f32 VECREG:$rB)))>;
@@ -82,16 +82,16 @@ def Interpv4f32: CodeFrag<(FIv4f32 (v4f32 VECREG:$rB), (FRESTv4f32 (v4f32 VECREG
 def DivEstv4f32: CodeFrag<(FMv4f32 (v4f32 VECREG:$rA), Interpv4f32.Fragment)>;
 // Newton-Raphson iteration
 def NRaphv4f32: CodeFrag<(FMAv4f32 (FNMSv4f32 DivEstv4f32.Fragment,
-					      (v4f32 VECREG:$rB),
-					      (v4f32 VECREG:$rA)),
-		  	           Interpv4f32.Fragment,
-	  	  	           DivEstv4f32.Fragment)>;
+                                              (v4f32 VECREG:$rB),
+                                              (v4f32 VECREG:$rA)),
+                                   Interpv4f32.Fragment,
+                                   DivEstv4f32.Fragment)>;
 // Epsilon addition
 def Epsilonv4f32: CodeFrag<(AIv4f32 NRaphv4f32.Fragment, 1)>;
 
 def : Pat<(fdiv (v4f32 VECREG:$rA), (v4f32 VECREG:$rB)),
-	  (SELBv4f32_cond NRaphv4f32.Fragment,
-			Epsilonv4f32.Fragment,
-			(CGTIv4f32 (FNMSv4f32 (v4f32 VECREG:$rB),
-					      Epsilonv4f32.Fragment,
-					      (v4f32 VECREG:$rA)), -1))>;
+          (SELBv4f32_cond NRaphv4f32.Fragment,
+                        Epsilonv4f32.Fragment,
+                        (CGTIv4f32 (FNMSv4f32 (v4f32 VECREG:$rB),
+                                              Epsilonv4f32.Fragment,
+                                              (v4f32 VECREG:$rA)), -1))>;

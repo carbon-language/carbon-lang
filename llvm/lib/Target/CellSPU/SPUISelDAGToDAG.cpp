@@ -633,9 +633,9 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
     } else {
       /* If otherwise unadorned, default to D-form address with 0 offset: */
       if (Opc == ISD::CopyFromReg) {
-	Index = N.getOperand(1);
+        Index = N.getOperand(1);
       } else {
-	Index = N;
+        Index = N;
       }
 
       Base = CurDAG->getTargetConstant(0, Index.getValueType());
