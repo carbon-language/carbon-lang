@@ -436,6 +436,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Analysis\CaptureTracking.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Analysis\Ipa\FindUsedTypes.cpp"
 					>
 				</File>

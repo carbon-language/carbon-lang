@@ -341,6 +341,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\LatencyPriorityQueue.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\LiveInterval.cpp"
 				>
 			</File>
@@ -485,6 +489,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\ScheduleDAGInstrs.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\ScheduleDAGPrinter.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\ShadowStackGC.cpp"
 				>
 			</File>
@@ -569,6 +581,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGRRList.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGSDNodes.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGSDNodesEmit.cpp"
 					>
 				</File>
 				<File
