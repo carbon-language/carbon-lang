@@ -520,17 +520,18 @@ PTHManager* PTHManager::Create(const std::string& file) {
   // words at the end of the file.
   const unsigned char* BufBeg = (unsigned char*)File->getBufferStart();
   const unsigned char* BufEnd = (unsigned char*)File->getBufferEnd();
-  
-  if(!(BufEnd > BufBeg + sizeof(uint32_t)*3)) {
-    assert(false && "Invalid PTH file.");
-    return 0; // FIXME: Proper error diagnostic?
-  }
+
+  // Check the prologue of the file.
+  if ((BufEnd - BufBeg) < (unsigned) (sizeof("cfe-pth") + 3) ||
+      memcmp(BufBeg, "cfe-pth", sizeof("cfe-pth") - 1) != 0)
+    return 0;
   
   // Compute the address of the index table at the end of the PTH file.
-  // This table contains the offset of the file lookup table, the
-  // persistent ID -> identifer data table.
-  // FIXME: We should just embed this offset in the PTH file.
-  const unsigned char* EndTable = BufEnd - sizeof(uint32_t)*4;
+  const unsigned char *p = BufBeg + (sizeof("cfe-pth") - 1);
+  const unsigned char *EndTable = BufBeg + ReadLE32(p);
+  
+  if (EndTable >= BufEnd)
+    return 0;
   
   // Construct the file lookup table.  This will be used for mapping from
   // FileEntry*'s to cached tokens.
