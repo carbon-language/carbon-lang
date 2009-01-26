@@ -478,9 +478,8 @@ TryAgain:
     LexUnexpandedToken(Result);
     goto TryAgain;
 
-  case tok::numeric_constant:
-    // FIXME: implement # 7 line numbers!
-    return DiscardUntilEndOfDirective();
+  case tok::numeric_constant:  // # 7  GNU line marker directive.
+    return HandleDigitDirective(Result);
   default:
     IdentifierInfo *II = Result.getIdentifierInfo();
     if (II == 0) break;  // Not an identifier.
@@ -556,6 +555,51 @@ TryAgain:
   // Okay, we're done parsing the directive.
 }
 
+/// GetLineValue - Convert a numeric token into an unsigned value, emitting
+/// Diagnostic DiagID if it is invalid, and returning the value in Val.
+static bool GetLineValue(Token &DigitTok, unsigned &Val,
+                         unsigned DiagID, Preprocessor &PP) {
+  if (DigitTok.isNot(tok::numeric_constant)) {
+    PP.Diag(DigitTok, DiagID);
+    
+    if (DigitTok.isNot(tok::eom))
+      PP.DiscardUntilEndOfDirective();
+    return true;
+  }
+  
+  llvm::SmallString<64> IntegerBuffer;
+  IntegerBuffer.resize(DigitTok.getLength());
+  const char *DigitTokBegin = &IntegerBuffer[0];
+  unsigned ActualLength = PP.getSpelling(DigitTok, DigitTokBegin);
+  NumericLiteralParser Literal(DigitTokBegin, DigitTokBegin+ActualLength, 
+                               DigitTok.getLocation(), PP);
+  if (Literal.hadError)
+    return true;   // Error already emitted.
+  
+  if (Literal.isFloatingLiteral() || Literal.isImaginary) {
+    PP.Diag(DigitTok, DiagID);
+    return true;
+  }
+  
+  // Parse the integer literal into Result.
+  llvm::APInt APVal(32, 0);
+  if (Literal.GetIntegerValue(APVal)) {
+    // Overflow parsing integer literal.
+    PP.Diag(DigitTok, DiagID);
+    return true;
+  }
+  Val = APVal.getZExtValue();
+  
+  // Reject 0, this is needed both by #line numbers and flags. 
+  if (Val == 0) {
+    PP.Diag(DigitTok, DiagID);
+    PP.DiscardUntilEndOfDirective();
+    return true;
+  }
+  
+  return false;
+}
+
 /// HandleLineDirective - Handle #line directive: C99 6.10.4.  The two 
 /// acceptable forms are:
 ///   # line digit-sequence
@@ -566,46 +610,13 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
   Token DigitTok;
   Lex(DigitTok);
 
-  // Verify that we get a number.
-  if (DigitTok.isNot(tok::numeric_constant)) {
-    Diag(DigitTok, diag::err_pp_line_requires_integer);
-    if (DigitTok.isNot(tok::eom))
-      DiscardUntilEndOfDirective();
-    return;
-  }
-  
   // Validate the number and convert it to an unsigned.
-  llvm::SmallString<64> IntegerBuffer;
-  IntegerBuffer.resize(DigitTok.getLength());
-  const char *DigitTokBegin = &IntegerBuffer[0];
-  unsigned ActualLength = getSpelling(DigitTok, DigitTokBegin);
-  NumericLiteralParser Literal(DigitTokBegin, DigitTokBegin+ActualLength, 
-                               DigitTok.getLocation(), *this);
-  if (Literal.hadError)
-    return DiscardUntilEndOfDirective();  // a diagnostic was already reported.
-  
-  if (Literal.isFloatingLiteral() || Literal.isImaginary) {
-    Diag(DigitTok, diag::err_pp_line_requires_integer);
+  unsigned LineNo;
+  if (GetLineValue(DigitTok, LineNo, diag::err_pp_line_requires_integer, *this))
     return;
-  }
-  
-  // Parse the integer literal into Result.
-  llvm::APInt Val(32, 0);
-  if (Literal.GetIntegerValue(Val)) {
-    // Overflow parsing integer literal.
-    Diag(DigitTok, diag::err_pp_line_requires_integer);
-    return DiscardUntilEndOfDirective();
-  }
 
-  // Enforce C99 6.10.4p3: The digit sequence shall not specify zero, nor a
-  // number greater than 2147483647. 
-  unsigned LineNo = Val.getZExtValue();
-  if (LineNo == 0) {
-    Diag(DigitTok, diag::err_pp_line_requires_integer);
-    return DiscardUntilEndOfDirective();
-  }
-  
-  // C90 requires that the line # be less than 32767, and C99 ups the limit.
+  // Enforce C99 6.10.4p3: "The digit sequence shall not specify ... a
+  // number greater than 2147483647".  C90 requires that the line # be <= 32767.
   unsigned LineLimit = Features.C99 ? 2147483648U : 32768U;
   if (LineNo >= LineLimit)
     Diag(DigitTok, diag::ext_pp_line_too_big) << LineLimit;
@@ -628,6 +639,108 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
   
   // FIXME: do something with the #line info.
 }
+
+/// ReadLineMarkerFlags - Parse and validate any flags at the end of a GNU line
+/// marker directive.
+static bool ReadLineMarkerFlags(bool &IsFileEntry, bool &IsFileExit,
+                                bool &IsSystemHeader, bool &IsExternCHeader,
+                                Preprocessor &PP) {
+  unsigned FlagVal;
+  Token FlagTok;
+  PP.Lex(FlagTok);
+  if (FlagTok.is(tok::eom)) return false;
+  if (GetLineValue(FlagTok, FlagVal, diag::err_pp_linemarker_invalid_flag, PP))
+    return true;
+
+  if (FlagVal == 1) {
+    IsFileEntry = true;
+    
+    PP.Lex(FlagTok);
+    if (FlagTok.is(tok::eom)) return false;
+    if (GetLineValue(FlagTok, FlagVal, diag::err_pp_linemarker_invalid_flag,PP))
+      return true;
+  } else if (FlagVal == 2) {
+    IsFileExit = true;
+    
+    PP.Lex(FlagTok);
+    if (FlagTok.is(tok::eom)) return false;
+    if (GetLineValue(FlagTok, FlagVal, diag::err_pp_linemarker_invalid_flag,PP))
+      return true;
+  }
+
+  // We must have 3 if there are still flags.
+  if (FlagVal != 3) {
+    PP.Diag(FlagTok, diag::err_pp_linemarker_invalid_flag);
+    return true;
+  }
+  
+  IsSystemHeader = true;
+  
+  PP.Lex(FlagTok);
+  if (FlagTok.is(tok::eom)) return false;
+  if (GetLineValue(FlagTok, FlagVal, diag::err_pp_linemarker_invalid_flag,PP))
+    return true;
+
+  // We must have 4 if there is yet another flag.
+  if (FlagVal != 4) {
+    PP.Diag(FlagTok, diag::err_pp_linemarker_invalid_flag);
+    return true;
+  }
+  
+  IsExternCHeader = true;
+  
+  PP.Lex(FlagTok);
+  if (FlagTok.is(tok::eom)) return false;
+
+  // There are no more valid flags here.
+  PP.Diag(FlagTok, diag::err_pp_linemarker_invalid_flag);
+  return true;
+}
+
+/// HandleDigitDirective - Handle a GNU line marker directive, whose syntax is
+/// one of the following forms:
+///
+///     # 42
+///     # 42 "file" ('1' | '2')? 
+///     # 42 "file" ('1' | '2')? '3' '4'?
+///
+void Preprocessor::HandleDigitDirective(Token &DigitTok) {
+  // Validate the number and convert it to an unsigned.  GNU does not have a
+  // line # limit other than it fit in 32-bits.
+  unsigned LineNo;
+  if (GetLineValue(DigitTok, LineNo, diag::err_pp_linemarker_requires_integer,
+                   *this))
+    return;
+  
+  Token StrTok;
+  Lex(StrTok);
+  
+  bool IsFileEntry = false, IsFileExit = false;
+  bool IsSystemHeader = false, IsExternCHeader = false;
+  
+  // If the StrTok is "eom", then it wasn't present.  Otherwise, it must be a
+  // string followed by eom.
+  if (StrTok.is(tok::eom)) 
+    ; // ok
+  else if (StrTok.isNot(tok::string_literal)) {
+    Diag(StrTok, diag::err_pp_linemarker_invalid_filename);
+    DiscardUntilEndOfDirective();
+    return;
+  } else {
+    // If a filename was present, read any flags that are present.
+    if (ReadLineMarkerFlags(IsFileEntry, IsFileExit, 
+                            IsSystemHeader, IsExternCHeader, *this)) {
+      DiscardUntilEndOfDirective();
+      return;
+    }
+  }
+  
+  // FIXME: do something with the #line info.
+  
+  
+  
+}
+
 
 /// HandleUserDiagnosticDirective - Handle a #warning or #error directive.
 ///

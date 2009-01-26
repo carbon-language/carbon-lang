@@ -12,3 +12,16 @@
 #define A 42 "foo"
 #line A
 
+# 42
+# 42 "foo"
+# 42 "foo" 1 3
+# 42 "foo" 2 3
+# 42 "foo" 2 3 4
+# 42 "foo" 3 4
+
+# 'a'            // expected-error {{invalid preprocessing directive}}
+# 42 'f'         // expected-error {{invalid filename for line marker directive}}
+# 42 1 3         // expected-error {{invalid filename for line marker directive}}
+# 42 "foo" 3 1   // expected-error {{invalid flag line marker directive}}
+# 42 "foo" 42    // expected-error {{invalid flag line marker directive}}
+# 42 "foo" 1 2   // expected-error {{invalid flag line marker directive}}

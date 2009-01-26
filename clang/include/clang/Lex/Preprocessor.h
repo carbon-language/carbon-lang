@@ -532,6 +532,11 @@ public:
   /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
   /// not, emit a diagnostic and consume up until the eom.
   void CheckEndOfDirective(const char *Directive);
+  
+  /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
+  /// current line until the tok::eom token is found.
+  void DiscardUntilEndOfDirective();
+  
 private:
   
   void PushIncludeMacroStack() {
@@ -565,10 +570,6 @@ private:
   /// isInPrimaryFile - Return true if we're in the top-level file, not in a
   /// #include.
   bool isInPrimaryFile() const;
-
-  /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
-  /// current line until the tok::eom token is found.
-  void DiscardUntilEndOfDirective();
 
   /// ReadMacroName - Lex and validate a macro name, which occurs after a
   /// #define or #undef.  This emits a diagnostic, sets the token kind to eom,
@@ -690,8 +691,8 @@ private:
   /// Handle*Directive - implement the various preprocessor directives.  These
   /// should side-effect the current preprocessor object so that the next call
   /// to Lex() will return the appropriate token next.
-  
   void HandleLineDirective(Token &Tok);
+  void HandleDigitDirective(Token &Tok);
   void HandleUserDiagnosticDirective(Token &Tok, bool isWarning);
   void HandleIdentSCCSDirective(Token &Tok);
   

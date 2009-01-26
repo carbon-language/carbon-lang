@@ -204,6 +204,12 @@ DIAG(err_pp_line_requires_integer, ERROR,
      "#line directive requires a positive integer argument")
 DIAG(err_pp_line_invalid_filename, ERROR,
      "invalid filename for #line directive")
+DIAG(err_pp_linemarker_requires_integer, ERROR,
+     "line marker directive requires a positive integer argument")
+DIAG(err_pp_linemarker_invalid_filename, ERROR,
+     "invalid filename for line marker directive")
+DIAG(err_pp_linemarker_invalid_flag, ERROR,
+     "invalid flag line marker directive")
 DIAG(ext_pp_line_too_big, EXTENSION,
      "C requires #line number to be less than %0, allowed as extension")
      
