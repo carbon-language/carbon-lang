@@ -133,7 +133,10 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     SrcType = SrcExpr->getType();
   }
 
-  if (!DestType->isPointerType()) {
+  // C++ 5.2.11p5: For a const_cast involving pointers to data members [...]
+  //   the rules for const_cast are the same as those used for pointers.
+
+  if (!DestType->isPointerType() && !DestType->isMemberPointerType()) {
     // Cannot cast to non-pointer, non-reference type. Note that, if DestType
     // was a reference type, we converted it to a pointer above.
     // C++ 5.2.11p3: For two pointer types [...]
@@ -141,7 +144,8 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
       << OrigDestType << DestRange;
     return;
   }
-  if (DestType->isFunctionPointerType()) {
+  if (DestType->isFunctionPointerType() ||
+      DestType->isMemberFunctionPointerType()) {
     // Cannot cast direct function pointers.
     // C++ 5.2.11p2: [...] where T is any object type or the void type [...]
     // T is the ultimate pointee of source and target type.

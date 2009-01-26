@@ -1,5 +1,7 @@
 // RUN: clang -fsyntax-only -verify %s
 
+struct A {};
+
 // See if aliasing can confuse this baby.
 typedef char c;
 typedef c *cp;
@@ -33,6 +35,9 @@ char ***good_const_cast_test(ccvpcvpp var)
   f fp = 0;
   // Don't misidentify fn** as a function pointer.
   f *fpp = const_cast<f*>(&fp);
+  int const A::* const A::*icapcap = 0;
+  int A::* A::* iapap = const_cast<int A::* A::*>(icapcap);
+
   return var4;
 }
 
@@ -52,5 +57,7 @@ short *bad_const_cast_test(char const *volatile *const volatile *var)
   f fp1 = 0;
   // Function pointers.
   f fp2 = const_cast<f>(fp1); // expected-error {{const_cast to 'f', which is not a reference, pointer-to-object, or pointer-to-data-member}}
+  void (A::*mfn)() = 0;
+  (void)const_cast<void (A::*)()>(mfn); // expected-error {{const_cast to 'void (struct A::*)(void)', which is not a reference, pointer-to-object, or pointer-to-data-member}}
   return **var3;
 }
