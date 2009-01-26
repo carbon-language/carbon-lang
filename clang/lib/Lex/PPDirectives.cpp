@@ -991,6 +991,12 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   if (MI->isObjectLike()) {
     // Object-like macros are very simple, just read their body.
     while (Tok.isNot(tok::eom)) {
+      // If this token has a virtual location, resolve it down to its spelling
+      // location.  This is not strictly needed, but avoids extra resolutions
+      // for macros that are expanded frequently.
+      if (!Tok.getLocation().isFileID())
+        Tok.setLocation(SourceMgr.getSpellingLoc(Tok.getLocation()));
+      
       MI->AddTokenToBody(Tok);
       // Get the next token of the macro.
       LexUnexpandedToken(Tok);
@@ -1000,6 +1006,12 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     // Otherwise, read the body of a function-like macro.  This has to validate
     // the # (stringize) operator.
     while (Tok.isNot(tok::eom)) {
+      // If this token has a virtual location, resolve it down to its spelling
+      // location.  This is not strictly needed, but avoids extra resolutions
+      // for macros that are expanded frequently.
+      if (!Tok.getLocation().isFileID())
+        Tok.setLocation(SourceMgr.getSpellingLoc(Tok.getLocation()));
+      
       MI->AddTokenToBody(Tok);
 
       // Check C99 6.10.3.2p1: ensure that # operators are followed by macro
