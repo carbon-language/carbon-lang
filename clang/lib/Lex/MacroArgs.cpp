@@ -23,7 +23,7 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
                              unsigned NumToks, bool VarargsElided) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
-
+  
   // Allocate memory for the MacroArgs object with the lexer tokens at the end.
   MacroArgs *Result = (MacroArgs*)malloc(sizeof(MacroArgs) +
                                          NumToks*sizeof(Token));
@@ -118,7 +118,14 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
   // Lex all of the macro-expanded tokens into Result.
   do {
     Result.push_back(Token());
-    PP.Lex(Result.back());
+    Token &Tok = Result.back();
+    PP.Lex(Tok);
+    
+    // Eagerly resolve instantiation ID's to their spelling location.  This
+    // makes it so we only have to get the spelling loc once per macro argument
+    // preexpansion instead of once per each time the token is expanded.
+    if (!Tok.getLocation().isFileID())
+      Tok.setLocation(PP.getSourceManager().getSpellingLoc(Tok.getLocation()));
   } while (Result.back().isNot(tok::eof));
   
   // Pop the token stream off the top of the stack.  We know that the internal

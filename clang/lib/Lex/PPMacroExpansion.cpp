@@ -359,7 +359,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     Token EOFTok;
     EOFTok.startToken();
     EOFTok.setKind(tok::eof);
-    EOFTok.setLocation(Tok.getLocation());
+    EOFTok.setLocation(SourceMgr.getSpellingLoc(Tok.getLocation()));
     EOFTok.setLength(0);
     ArgTokens.push_back(EOFTok);
     ++NumActuals;
