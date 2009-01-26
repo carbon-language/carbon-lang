@@ -341,7 +341,7 @@ SourceManager::getDecomposedInstantiationLocSlowCase(const SrcMgr::SLocEntry *E,
     FID = getFileID(Loc);
     E = &getSLocEntry(FID);
     Offset += Loc.getOffset()-E->getOffset();
-  } while (Loc.isFileID());
+  } while (!Loc.isFileID());
   
   return std::make_pair(FID, Offset);
 }
@@ -349,12 +349,18 @@ SourceManager::getDecomposedInstantiationLocSlowCase(const SrcMgr::SLocEntry *E,
 std::pair<FileID, unsigned>
 SourceManager::getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
                                                 unsigned Offset) const {
-  // If this is an instantiation record, get and return the spelling.
-  SourceLocation Loc = E->getInstantiation().getSpellingLoc();
-  FileID FID = getFileID(Loc);
-  E = &getSLocEntry(FID);
-  Offset += Loc.getOffset()-E->getOffset();
-  assert(Loc.isFileID() && "Should only have one spelling link");
+  // If this is an instantiation record, walk through all the instantiation
+  // points.
+  FileID FID;
+  SourceLocation Loc;
+  do {
+    Loc = E->getInstantiation().getSpellingLoc();
+    
+    FID = getFileID(Loc);
+    E = &getSLocEntry(FID);
+    Offset += Loc.getOffset()-E->getOffset();
+  } while (!Loc.isFileID());
+  
   return std::make_pair(FID, Offset);
 }
 
