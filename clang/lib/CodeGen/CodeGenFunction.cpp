@@ -77,9 +77,13 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
 
-  // Emit function epilog (to return). This has the nice side effect
-  // of also automatically handling code that falls off the end.
-  EmitBlock(ReturnBlock);
+  // Emit function epilog (to return). For cleanliness, skip emission
+  // if we know it is safe (when it is unused and the current block is
+  // unterminated).
+  if (!ReturnBlock->use_empty() ||
+      !Builder.GetInsertBlock() ||
+      Builder.GetInsertBlock()->getTerminator())
+    EmitBlock(ReturnBlock);
 
   // Emit debug descriptor for function end.
   if (CGDebugInfo *DI = CGM.getDebugInfo()) {
