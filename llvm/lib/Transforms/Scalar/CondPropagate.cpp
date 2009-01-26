@@ -126,6 +126,14 @@ void CondProp::SimplifyPredecessors(BranchInst *BI) {
   // one use (the branch), and is the only instruction besides the branch in the
   // block.
   PHINode *PN = cast<PHINode>(BI->getCondition());
+
+  if (PN->getNumIncomingValues() == 1) {
+    // Eliminate single-entry PHI nodes.
+    FoldSingleEntryPHINodes(PN->getParent());
+    return;
+  }
+  
+  
   if (!PN->hasOneUse()) return;
 
   BasicBlock *BB = BI->getParent();
