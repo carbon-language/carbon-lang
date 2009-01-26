@@ -222,7 +222,8 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
 
   // If this comes from a macro expansion, we really do want the macro name, not
   // the token this macro expanded to.
-  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedInstantiationLoc(Loc);
+  Loc = SM.getInstantiationLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   std::pair<const char *,const char *> Buffer = SM.getBufferData(LocInfo.first);
   const char *StrData = Buffer.first+LocInfo.second;
 
