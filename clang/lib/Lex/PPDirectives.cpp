@@ -12,10 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/APInt.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -478,8 +480,7 @@ TryAgain:
 
   case tok::numeric_constant:
     // FIXME: implement # 7 line numbers!
-    DiscardUntilEndOfDirective();
-    return;
+    return DiscardUntilEndOfDirective();
   default:
     IdentifierInfo *II = Result.getIdentifierInfo();
     if (II == 0) break;  // Not an identifier.
@@ -513,9 +514,7 @@ TryAgain:
 
     // C99 6.10.4 - Line Control.
     case tok::pp_line:
-      // FIXME: implement #line
-      DiscardUntilEndOfDirective();
-      return;
+      return HandleLineDirective(Result);
       
     // C99 6.10.5 - Error Directive.
     case tok::pp_error:
@@ -557,22 +556,95 @@ TryAgain:
   // Okay, we're done parsing the directive.
 }
 
+/// HandleLineDirective - Handle #line directive: C99 6.10.4.  The two 
+/// acceptable forms are:
+///   # line digit-sequence
+///   # line digit-sequence "s-char-sequence"
+void Preprocessor::HandleLineDirective(Token &Tok) {
+  // Read the line # and string argument.  Per C99 6.10.4p5, these tokens are
+  // expanded.
+  Token DigitTok;
+  Lex(DigitTok);
+
+  // Verify that we get a number.
+  if (DigitTok.isNot(tok::numeric_constant)) {
+    Diag(DigitTok, diag::err_pp_line_requires_integer);
+    if (DigitTok.isNot(tok::eom))
+      DiscardUntilEndOfDirective();
+    return;
+  }
+  
+  // Validate the number and convert it to an unsigned.
+  llvm::SmallString<64> IntegerBuffer;
+  IntegerBuffer.resize(DigitTok.getLength());
+  const char *DigitTokBegin = &IntegerBuffer[0];
+  unsigned ActualLength = getSpelling(DigitTok, DigitTokBegin);
+  NumericLiteralParser Literal(DigitTokBegin, DigitTokBegin+ActualLength, 
+                               DigitTok.getLocation(), *this);
+  if (Literal.hadError)
+    return DiscardUntilEndOfDirective();  // a diagnostic was already reported.
+  
+  if (Literal.isFloatingLiteral() || Literal.isImaginary) {
+    Diag(DigitTok, diag::err_pp_line_requires_integer);
+    return;
+  }
+  
+  // Parse the integer literal into Result.
+  llvm::APInt Val(32, 0);
+  if (Literal.GetIntegerValue(Val)) {
+    // Overflow parsing integer literal.
+    Diag(DigitTok, diag::err_pp_line_requires_integer);
+    return DiscardUntilEndOfDirective();
+  }
+
+  // Enforce C99 6.10.4p3: The digit sequence shall not specify zero, nor a
+  // number greater than 2147483647. 
+  unsigned LineNo = Val.getZExtValue();
+  if (LineNo == 0) {
+    Diag(DigitTok, diag::err_pp_line_requires_integer);
+    return DiscardUntilEndOfDirective();
+  }
+  
+  // C90 requires that the line # be less than 32767, and C99 ups the limit.
+  unsigned LineLimit = Features.C99 ? 2147483648U : 32768U;
+  if (LineNo >= LineLimit)
+    Diag(DigitTok, diag::ext_pp_line_too_big) << LineLimit;
+  
+  Token StrTok;
+  Lex(StrTok);
+
+  // If the StrTok is "eom", then it wasn't present.  Otherwise, it must be a
+  // string followed by eom.
+  if (StrTok.is(tok::eom)) 
+    ; // ok
+  else if (StrTok.isNot(tok::string_literal)) {
+    Diag(StrTok, diag::err_pp_line_invalid_filename);
+    DiscardUntilEndOfDirective();
+    return;
+  } else {
+    // Verify that there is nothing after the string, other than EOM.
+    CheckEndOfDirective("#line");
+  }
+  
+  // FIXME: do something with the #line info.
+}
+
+
 void Preprocessor::HandleUserDiagnosticDirective(Token &Tok, 
                                                  bool isWarning) {
+  if (!CurLexer)
+    return CurPTHLexer->DiscardToEndOfLine();
+
   // Read the rest of the line raw.  We do this because we don't want macros
   // to be expanded and we don't require that the tokens be valid preprocessing
   // tokens.  For example, this is allowed: "#warning `   'foo".  GCC does
   // collapse multiple consequtive white space between tokens, but this isn't
   // specified by the standard.
-  
-  if (CurLexer) {
-    std::string Message = CurLexer->ReadToEndOfLine();
-    unsigned DiagID = isWarning ? diag::pp_hash_warning : diag::err_pp_hash_error;
-    Diag(Tok, DiagID) << Message;
-  }
-  else {
-    CurPTHLexer->DiscardToEndOfLine();
-  }    
+  std::string Message = CurLexer->ReadToEndOfLine();
+  if (isWarning)
+    Diag(Tok, diag::pp_hash_warning) << Message;
+  else
+    Diag(Tok, diag::err_pp_hash_error) << Message;
 }
 
 /// HandleIdentSCCSDirective - Handle a #ident/#sccs directive.

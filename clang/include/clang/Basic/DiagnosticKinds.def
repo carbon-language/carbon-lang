@@ -200,6 +200,13 @@ DIAG(err_pp_duplicate_name_in_arg_list, ERROR,
      "duplicate macro parameter name %0")
 DIAG(err_pp_stringize_not_parameter, ERROR,
      "'#' is not followed by a macro parameter")
+DIAG(err_pp_line_requires_integer, ERROR,
+     "#line directive requires a positive integer argument")
+DIAG(err_pp_line_invalid_filename, ERROR,
+     "invalid filename for #line directive")
+DIAG(ext_pp_line_too_big, EXTENSION,
+     "C requires #line number to be less than %0, allowed as extension")
+     
 DIAG(err_pp_malformed_ident, ERROR,
      "invalid #ident directive")
 DIAG(err_pp_unterminated_conditional, ERROR,
