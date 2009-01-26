@@ -629,10 +629,12 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
   // FIXME: do something with the #line info.
 }
 
-
+/// HandleUserDiagnosticDirective - Handle a #warning or #error directive.
+///
 void Preprocessor::HandleUserDiagnosticDirective(Token &Tok, 
                                                  bool isWarning) {
-  if (!CurLexer)
+  // PTH doesn't emit #warning or #error directives.
+  if (CurPTHLexer)
     return CurPTHLexer->DiscardToEndOfLine();
 
   // Read the rest of the line raw.  We do this because we don't want macros
@@ -661,6 +663,8 @@ void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
   if (StrTok.isNot(tok::string_literal) &&
       StrTok.isNot(tok::wide_string_literal)) {
     Diag(StrTok, diag::err_pp_malformed_ident);
+    if (StrTok.isNot(tok::eom))
+      DiscardUntilEndOfDirective();
     return;
   }
   
