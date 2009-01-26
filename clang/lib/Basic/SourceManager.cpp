@@ -59,8 +59,84 @@ const llvm::MemoryBuffer *ContentCache::getBuffer() const {
 }
 
 //===--------------------------------------------------------------------===//
+// Line Table Implementation
+//===--------------------------------------------------------------------===//
+
+namespace clang {
+/// LineTableInfo - This class is used to hold and unique data used to
+/// represent #line information.
+class LineTableInfo {
+  /// FilenameIDs - This map is used to assign unique IDs to filenames in
+  /// #line directives.  This allows us to unique the filenames that
+  /// frequently reoccur and reference them with indices.  FilenameIDs holds
+  /// the mapping from string -> ID, and FilenamesByID holds the mapping of ID
+  /// to string.
+  llvm::StringMap<unsigned, llvm::BumpPtrAllocator> FilenameIDs;
+  std::vector<llvm::StringMapEntry<unsigned>*> FilenamesByID;
+public:
+  LineTableInfo() {
+  }
+  
+  void clear() {
+    FilenameIDs.clear();
+    FilenamesByID.clear();
+  }
+  
+  ~LineTableInfo() {}
+  
+  unsigned getLineTableFilenameID(const char *Ptr, unsigned Len);
+
+};
+} // namespace clang
+
+
+
+
+unsigned LineTableInfo::getLineTableFilenameID(const char *Ptr, unsigned Len) {
+  // Look up the filename in the string table, returning the pre-existing value
+  // if it exists.
+  llvm::StringMapEntry<unsigned> &Entry = 
+    FilenameIDs.GetOrCreateValue(Ptr, Ptr+Len, ~0U);
+  if (Entry.getValue() != ~0U)
+    return Entry.getValue();
+  
+  // Otherwise, assign this the next available ID.
+  Entry.setValue(FilenamesByID.size());
+  FilenamesByID.push_back(&Entry);
+  return FilenamesByID.size()-1;
+}
+
+/// getLineTableFilenameID - Return the uniqued ID for the specified filename.
+/// 
+unsigned SourceManager::getLineTableFilenameID(const char *Ptr, unsigned Len) {
+  if (LineTable == 0)
+    LineTable = new LineTableInfo();
+  return LineTable->getLineTableFilenameID(Ptr, Len);
+}
+
+
+//===--------------------------------------------------------------------===//
 // Private 'Create' methods.
 //===--------------------------------------------------------------------===//
+
+SourceManager::~SourceManager() {
+  delete LineTable;
+}
+
+void SourceManager::clearIDTables() {
+  MainFileID = FileID();
+  SLocEntryTable.clear();
+  LastLineNoFileIDQuery = FileID();
+  LastLineNoContentCache = 0;
+  LastFileIDLookup = FileID();
+  
+  if (LineTable)
+    LineTable->clear();
+  
+  // Use up FileID #0 as an invalid instantiation.
+  NextOffset = 0;
+  createInstantiationLoc(SourceLocation(), SourceLocation(), 1);
+}
 
 /// getOrCreateContentCache - Create or return a cached ContentCache for the
 /// specified file.

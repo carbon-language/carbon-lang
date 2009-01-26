@@ -621,6 +621,7 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
   if (LineNo >= LineLimit)
     Diag(DigitTok, diag::ext_pp_line_too_big) << LineLimit;
   
+  int FilenameID = -1;
   Token StrTok;
   Lex(StrTok);
 
@@ -633,6 +634,18 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
     DiscardUntilEndOfDirective();
     return;
   } else {
+    // Parse and validate the string, converting it into a unique ID.
+    StringLiteralParser Literal(&StrTok, 1, *this);
+    assert(!Literal.AnyWide && "Didn't allow wide strings in");
+    if (Literal.hadError)
+      return DiscardUntilEndOfDirective();
+    if (Literal.Pascal) {
+      Diag(StrTok, diag::err_pp_linemarker_invalid_filename);
+      return DiscardUntilEndOfDirective();
+    }
+    FilenameID = SourceMgr.getLineTableFilenameID(Literal.GetString(),
+                                                  Literal.GetStringLength());
+    
     // Verify that there is nothing after the string, other than EOM.
     CheckEndOfDirective("#line");
   }
@@ -671,6 +684,7 @@ static bool ReadLineMarkerFlags(bool &IsFileEntry, bool &IsFileExit,
   // We must have 3 if there are still flags.
   if (FlagVal != 3) {
     PP.Diag(FlagTok, diag::err_pp_linemarker_invalid_flag);
+    PP.DiscardUntilEndOfDirective();
     return true;
   }
   
@@ -684,6 +698,7 @@ static bool ReadLineMarkerFlags(bool &IsFileEntry, bool &IsFileExit,
   // We must have 4 if there is yet another flag.
   if (FlagVal != 4) {
     PP.Diag(FlagTok, diag::err_pp_linemarker_invalid_flag);
+    PP.DiscardUntilEndOfDirective();
     return true;
   }
   
@@ -694,6 +709,7 @@ static bool ReadLineMarkerFlags(bool &IsFileEntry, bool &IsFileExit,
 
   // There are no more valid flags here.
   PP.Diag(FlagTok, diag::err_pp_linemarker_invalid_flag);
+  PP.DiscardUntilEndOfDirective();
   return true;
 }
 
@@ -717,22 +733,32 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
   
   bool IsFileEntry = false, IsFileExit = false;
   bool IsSystemHeader = false, IsExternCHeader = false;
-  
+  int FilenameID = -1;
+
   // If the StrTok is "eom", then it wasn't present.  Otherwise, it must be a
   // string followed by eom.
   if (StrTok.is(tok::eom)) 
     ; // ok
   else if (StrTok.isNot(tok::string_literal)) {
     Diag(StrTok, diag::err_pp_linemarker_invalid_filename);
-    DiscardUntilEndOfDirective();
-    return;
+    return DiscardUntilEndOfDirective();
   } else {
+    // Parse and validate the string, converting it into a unique ID.
+    StringLiteralParser Literal(&StrTok, 1, *this);
+    assert(!Literal.AnyWide && "Didn't allow wide strings in");
+    if (Literal.hadError)
+      return DiscardUntilEndOfDirective();
+    if (Literal.Pascal) {
+      Diag(StrTok, diag::err_pp_linemarker_invalid_filename);
+      return DiscardUntilEndOfDirective();
+    }
+    FilenameID = SourceMgr.getLineTableFilenameID(Literal.GetString(),
+                                                  Literal.GetStringLength());
+    
     // If a filename was present, read any flags that are present.
     if (ReadLineMarkerFlags(IsFileEntry, IsFileExit, 
-                            IsSystemHeader, IsExternCHeader, *this)) {
-      DiscardUntilEndOfDirective();
+                            IsSystemHeader, IsExternCHeader, *this))
       return;
-    }
   }
   
   // FIXME: do something with the #line info.

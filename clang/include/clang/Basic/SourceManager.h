@@ -31,6 +31,7 @@ class SourceManager;
 class FileManager;
 class FileEntry;
 class IdentifierTokenInfo;
+class LineTableInfo;
 
 /// SrcMgr - Public enums and private classes that are part of the
 /// SourceManager implementation.
@@ -224,7 +225,6 @@ namespace SrcMgr {
       return E;
     }
   };
-  
 }  // end SrcMgr namespace.
 } // end clang namespace
 
@@ -275,6 +275,10 @@ class SourceManager {
   /// is very common to look up many tokens from the same file.
   mutable FileID LastFileIDLookup;
   
+  /// LineTable - This holds information for #line directives.  It is referenced
+  /// by indices from SLocEntryTable.
+  LineTableInfo *LineTable;
+  
   /// LastLineNo - These ivars serve as a cache used in the getLineNumber
   /// method which is used to speedup getLineNumber calls to nearby locations.
   mutable FileID LastLineNoFileIDQuery;
@@ -292,23 +296,13 @@ class SourceManager {
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);  
 public:
-  SourceManager() : NumLinearScans(0), NumBinaryProbes(0) {
+  SourceManager() : LineTable(0), NumLinearScans(0), NumBinaryProbes(0) {
     clearIDTables();
   }
-  ~SourceManager() {}
+  ~SourceManager();
   
-  void clearIDTables() {
-    MainFileID = FileID();
-    SLocEntryTable.clear();
-    LastLineNoFileIDQuery = FileID();
-    LastLineNoContentCache = 0;
-    LastFileIDLookup = FileID();
-    
-    // Use up FileID #0 as an invalid instantiation.
-    NextOffset = 0;
-    createInstantiationLoc(SourceLocation(), SourceLocation(), 1);
-  }
-
+  void clearIDTables();
+  
   //===--------------------------------------------------------------------===//
   // MainFileID creation and querying methods.
   //===--------------------------------------------------------------------===//
@@ -551,6 +545,15 @@ public:
   bool isInSystemHeader(SourceLocation Loc) const {
     return getFileCharacteristic(Loc) != SrcMgr::C_User;
   }
+  
+  //===--------------------------------------------------------------------===//
+  // Line Table Manipulation Routines
+  //===--------------------------------------------------------------------===//
+  
+  /// getLineTableFilenameID - Return the uniqued ID for the specified filename.
+  /// 
+  unsigned getLineTableFilenameID(const char *Ptr, unsigned Len);
+  
   
   //===--------------------------------------------------------------------===//
   // Other miscellaneous methods.
