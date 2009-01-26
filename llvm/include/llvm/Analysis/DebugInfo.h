@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_DEBUGINFO_H
-#define LLVM_SUPPORT_DEBUGINFO_H
+#ifndef LLVM_ANALYSIS_DEBUGINFO_H
+#define LLVM_ANALYSIS_DEBUGINFO_H
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/DenseMap.h"
