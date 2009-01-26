@@ -206,6 +206,10 @@ public:
                      const FunctionArgList &Args,
                      SourceLocation StartLoc);
 
+  /// EmitReturnBlock - Emit the unified return block, trying to avoid
+  /// its emission when possible.
+  void EmitReturnBlock();
+
   /// FinishFunction - Complete IR generation of the current
   /// function. It is legal to call this function even if there is no
   /// current insertion point.

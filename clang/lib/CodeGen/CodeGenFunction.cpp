@@ -70,6 +70,45 @@ bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
     !T->isBlockPointerType();
 }
 
+void CodeGenFunction::EmitReturnBlock() {
+  // For cleanliness, we try to avoid emitting the return block for
+  // simple cases.
+  llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
+
+  if (CurBB) {
+    assert(!CurBB->getTerminator() && "Unexpected terminated block.");
+
+    // We have a valid insert point, reuse it if there are no explicit
+    // jumps to the return block.
+    if (ReturnBlock->use_empty())
+      delete ReturnBlock;
+    else
+      EmitBlock(ReturnBlock);
+    return;
+  }
+
+  // Otherwise, if the return block is the target of a single direct
+  // branch then we can just put the code in that block instead. This
+  // cleans up functions which started with a unified return block.
+  if (ReturnBlock->hasOneUse()) {
+    llvm::BranchInst *BI = 
+      dyn_cast<llvm::BranchInst>(*ReturnBlock->use_begin());
+    if (BI && BI->isUnconditional() && BI->getSuccessor(0) == ReturnBlock) {
+      // Reset insertion point and delete the branch.
+      Builder.SetInsertPoint(BI->getParent());
+      BI->eraseFromParent();
+      delete ReturnBlock;
+      return;
+    }
+  }
+
+  // FIXME: We are at an unreachable point, there is no reason to emit
+  // the block unless it has uses. However, we still need a place to
+  // put the debug region.end for now.
+
+  EmitBlock(ReturnBlock);
+}
+
 void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // Finish emission of indirect switches.
   EmitIndirectSwitches();
@@ -77,13 +116,8 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
 
-  // Emit function epilog (to return). For cleanliness, skip emission
-  // if we know it is safe (when it is unused and the current block is
-  // unterminated).
-  if (!ReturnBlock->use_empty() ||
-      !Builder.GetInsertBlock() ||
-      Builder.GetInsertBlock()->getTerminator())
-    EmitBlock(ReturnBlock);
+  // Emit function epilog (to return). 
+  EmitReturnBlock();
 
   // Emit debug descriptor for function end.
   if (CGDebugInfo *DI = CGM.getDebugInfo()) {
