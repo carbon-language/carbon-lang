@@ -522,7 +522,7 @@ PTHManager* PTHManager::Create(const std::string& file) {
   const unsigned char* BufEnd = (unsigned char*)File->getBufferEnd();
 
   // Check the prologue of the file.
-  if ((BufEnd - BufBeg) < (unsigned) (sizeof("cfe-pth") + 3 + 4) ||
+  if ((BufEnd - BufBeg) < (signed) (sizeof("cfe-pth") + 3 + 4) ||
       memcmp(BufBeg, "cfe-pth", sizeof("cfe-pth") - 1) != 0)
     return 0;
   
