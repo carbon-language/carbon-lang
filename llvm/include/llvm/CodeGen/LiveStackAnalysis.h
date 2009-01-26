@@ -64,8 +64,8 @@ namespace llvm {
       return I->second;
     }
 
-    bool hasInterval(unsigned reg) const {
-      return s2iMap.count(reg);
+    bool hasInterval(unsigned Slot) const {
+      return s2iMap.count(Slot);
     }
 
     BumpPtrAllocator& getVNInfoAllocator() { return VNInfoAllocator; }
