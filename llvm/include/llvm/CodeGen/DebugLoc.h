@@ -69,9 +69,6 @@ namespace llvm {
   /// DebugLocTracker - This class tracks debug location information.
   ///
   struct DebugLocTracker {
-    // NumDebugLocations - Size of the DebugLocations vector.
-    unsigned NumDebugLocations;
-
     // DebugLocations - A vector of unique DebugLocTuple's.
     //
     std::vector<DebugLocTuple> DebugLocations;
@@ -80,7 +77,7 @@ namespace llvm {
     // DebugLocations vector.
     DebugIdMapType DebugIdMap;
 
-    DebugLocTracker() : NumDebugLocations(0) {}
+    DebugLocTracker() {}
 
     ~DebugLocTracker() {
       DebugLocations.clear();

@@ -388,9 +388,10 @@ unsigned MachineFunction::lookUpDebugLocId(unsigned Src, unsigned Line,
   if (II != DebugLocInfo.DebugIdMap.end())
     return II->second;
   // Add a new tuple.
+  unsigned Id = DebugLocInfo.DebugLocations.size();
   DebugLocInfo.DebugLocations.push_back(Tuple);
-  DebugLocInfo.DebugIdMap[Tuple] = DebugLocInfo.NumDebugLocations;
-  return DebugLocInfo.NumDebugLocations++;
+  DebugLocInfo.DebugIdMap[Tuple] = Id;
+  return Id;
 }
 
 //===----------------------------------------------------------------------===//
