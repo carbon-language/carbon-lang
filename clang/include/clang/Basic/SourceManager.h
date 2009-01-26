@@ -415,24 +415,20 @@ public:
   /// Given a SourceLocation object, return the instantiation location
   /// referenced by the ID.
   SourceLocation getInstantiationLoc(SourceLocation Loc) const {
-    // File locations work!
+    // Handle the non-mapped case inline, defer to out of line code to handle
+    // instantiations.
     if (Loc.isFileID()) return Loc;
-    
-    std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
-    Loc = getSLocEntry(LocInfo.first).getInstantiation().getInstantiationLoc();
-    return Loc.getFileLocWithOffset(LocInfo.second);
+    return getInstantiationLocSlowCase(Loc);
   }
   
   /// getSpellingLoc - Given a SourceLocation object, return the spelling
   /// location referenced by the ID.  This is the place where the characters
   /// that make up the lexed token can be found.
   SourceLocation getSpellingLoc(SourceLocation Loc) const {
-    // File locations work!
+    // Handle the non-mapped case inline, defer to out of line code to handle
+    // instantiations.
     if (Loc.isFileID()) return Loc;
-    
-    std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
-    Loc = getSLocEntry(LocInfo.first).getInstantiation().getSpellingLoc();
-    return Loc.getFileLocWithOffset(LocInfo.second);
+    return getSpellingLocSlowCase(Loc);
   }
 
   /// getDecomposedLoc - Decompose the specified location into a raw FileID +
@@ -613,6 +609,9 @@ private:
   }
   
   FileID getFileIDSlow(unsigned SLocOffset) const;
+
+  SourceLocation getInstantiationLocSlowCase(SourceLocation Loc) const;
+  SourceLocation getSpellingLocSlowCase(SourceLocation Loc) const;
 
   std::pair<FileID, unsigned>
   getDecomposedInstantiationLocSlowCase(const SrcMgr::SLocEntry *E,

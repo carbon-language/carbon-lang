@@ -328,6 +328,27 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
   }
 }
 
+SourceLocation SourceManager::
+getInstantiationLocSlowCase(SourceLocation Loc) const {
+  do {
+    std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
+    Loc =getSLocEntry(LocInfo.first).getInstantiation().getInstantiationLoc();
+    Loc = Loc.getFileLocWithOffset(LocInfo.second);
+  } while (!Loc.isFileID());
+
+  return Loc;
+}
+
+SourceLocation SourceManager::getSpellingLocSlowCase(SourceLocation Loc) const {
+  do {
+    std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
+    Loc = getSLocEntry(LocInfo.first).getInstantiation().getSpellingLoc();
+    Loc = Loc.getFileLocWithOffset(LocInfo.second);
+  } while (!Loc.isFileID());
+  return Loc;
+}
+
+
 std::pair<FileID, unsigned>
 SourceManager::getDecomposedInstantiationLocSlowCase(const SrcMgr::SLocEntry *E,
                                                      unsigned Offset) const {
