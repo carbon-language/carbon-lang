@@ -3987,9 +3987,13 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   
   // Otherwise, create a compound literal expression as the base, and
   // iteratively process the offsetof designators.
-  Expr *Res = new (Context) CompoundLiteralExpr(SourceLocation(), ArgTy, 0, 
-                                                false);
-  
+  InitListExpr *IList =
+      new (Context) InitListExpr(SourceLocation(), 0, 0,
+                                 SourceLocation(), false);
+  IList->setType(ArgTy);
+  Expr *Res =
+      new (Context) CompoundLiteralExpr(SourceLocation(), ArgTy, IList, false);
+
   // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
   // GCC extension, diagnose them.
   if (NumComponents != 1)
