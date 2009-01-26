@@ -7665,81 +7665,84 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   // all elements are shifted by the same amount.  We can't do this in legalize
   // because the a constant vector is typically transformed to a constant pool
   // so we have no knowledge of the shift amount.
+  if (!Subtarget->hasSSE2())
+    return SDValue();
+    
   MVT VT = N->getValueType(0);
-  if (Subtarget->hasSSE2() &&
-      (VT == MVT::v2i64 || VT == MVT::v4i32 || VT == MVT::v8i16)) {
-    SDValue  ValOp = N->getOperand(0);
-    SDValue  ShAmtOp = N->getOperand(1);
-    unsigned NumElts = VT.getVectorNumElements();
+  if (VT != MVT::v2i64 && VT != MVT::v4i32 && VT != MVT::v8i16)
+    return SDValue();
+    
+  SDValue  ShAmtOp = N->getOperand(1);
+  if (ShAmtOp.getOpcode() != ISD::BUILD_VECTOR)
+    return SDValue();
 
-    if (ShAmtOp.getOpcode() == ISD::BUILD_VECTOR) {
-      unsigned i = 0;
-      SDValue BaseShAmt;
-      for (; i != NumElts; ++i) {
-        SDValue Arg = ShAmtOp.getOperand(i);
-        if (Arg.getOpcode() == ISD::UNDEF) continue;
-        BaseShAmt = Arg;
-        break;
-      }
-      for (; i != NumElts; ++i) {
-        SDValue Arg = ShAmtOp.getOperand(i);
-        if (Arg.getOpcode() == ISD::UNDEF) continue;
-        if (Arg != BaseShAmt) {
-          return SDValue();
-        }
-      }
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned i = 0;
+  SDValue BaseShAmt;
+  for (; i != NumElts; ++i) {
+    SDValue Arg = ShAmtOp.getOperand(i);
+    if (Arg.getOpcode() == ISD::UNDEF) continue;
+    BaseShAmt = Arg;
+    break;
+  }
+  for (; i != NumElts; ++i) {
+    SDValue Arg = ShAmtOp.getOperand(i);
+    if (Arg.getOpcode() == ISD::UNDEF) continue;
+    if (Arg != BaseShAmt) {
+      return SDValue();
+    }
+  }
 
-      MVT EltVT = VT.getVectorElementType();
-      if (EltVT.bitsGT(MVT::i32))
-        BaseShAmt = DAG.getNode(ISD::TRUNCATE, MVT::i32, BaseShAmt);
-      else if (EltVT.bitsLT(MVT::i32))
-        BaseShAmt = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, BaseShAmt);
+  MVT EltVT = VT.getVectorElementType();
+  if (EltVT.bitsGT(MVT::i32))
+    BaseShAmt = DAG.getNode(ISD::TRUNCATE, MVT::i32, BaseShAmt);
+  else if (EltVT.bitsLT(MVT::i32))
+    BaseShAmt = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, BaseShAmt);
 
-      // The shift amount is identical so we can do a vector shift.
-      switch (N->getOpcode()) {
-      default:
-        assert(0 && "Unknown shift opcode!");
-        break;
-      case ISD::SHL:
-        if (VT == MVT::v2i64)
-          return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+  // The shift amount is identical so we can do a vector shift.
+  SDValue  ValOp = N->getOperand(0);
+  switch (N->getOpcode()) {
+  default:
+    assert(0 && "Unknown shift opcode!");
+    break;
+  case ISD::SHL:
+    if (VT == MVT::v2i64)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
                          ValOp, BaseShAmt);
-        else if (VT == MVT::v4i32)
-            return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+    if (VT == MVT::v4i32)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_pslli_d, MVT::i32),
                          ValOp, BaseShAmt);
-        else if (VT == MVT::v8i16)
-          return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+    if (VT == MVT::v8i16)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
                          ValOp, BaseShAmt);
-        break;
-      case ISD::SRA:
-        if (VT == MVT::v4i32)
-          return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+    break;
+  case ISD::SRA:
+    if (VT == MVT::v4i32)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrai_d, MVT::i32),
                          ValOp, BaseShAmt);
-        else if (VT == MVT::v8i16)
-          return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+    if (VT == MVT::v8i16)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrai_w, MVT::i32),
                          ValOp, BaseShAmt);
-        break;
-      case ISD::SRL:
-        if (VT == MVT::v2i64)
-          return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+    break;
+  case ISD::SRL:
+    if (VT == MVT::v2i64)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
                          ValOp, BaseShAmt);
-        else if (VT == MVT::v4i32)
-          return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+    if (VT == MVT::v4i32)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrli_d, MVT::i32),
                          ValOp, BaseShAmt);
-        else if (VT ==  MVT::v8i16)
-          return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+    if (VT ==  MVT::v8i16)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrli_w, MVT::i32),
                          ValOp, BaseShAmt);
-        break;
-      }
-    }
+    break;
   }
   return SDValue();
 }
