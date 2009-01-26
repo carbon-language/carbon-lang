@@ -379,23 +379,11 @@ MachineFunction& MachineFunction::get(const Function *F)
 }
 
 /// lookUpDebugLocId - Look up the DebugLocTuple index with the given
-/// filename, line, and column. It may add a new filename and / or
+/// source file, line, and column. It may add a new filename and / or
 /// a new DebugLocTuple.
-unsigned MachineFunction::lookUpDebugLocId(const char *Filename, unsigned Line,
+unsigned MachineFunction::lookUpDebugLocId(unsigned Src, unsigned Line,
                                            unsigned Col) {
-  unsigned FileId;
-  StringMap<unsigned>::iterator I =
-    DebugLocInfo.DebugFilenamesMap.find(Filename);
-  if (I != DebugLocInfo.DebugFilenamesMap.end())
-    FileId = I->second;
-  else {
-    // Add a new filename.
-    FileId = DebugLocInfo.NumFilenames++;
-    DebugLocInfo.DebugFilenames.push_back(Filename);
-    DebugLocInfo.DebugFilenamesMap[Filename] = FileId;
-  }
-
-  struct DebugLocTuple Tuple(FileId, Line, Col);
+  struct DebugLocTuple Tuple(Src, Line, Col);
   DebugIdMapType::iterator II = DebugLocInfo.DebugIdMap.find(Tuple);
   if (II != DebugLocInfo.DebugIdMap.end())
     return II->second;

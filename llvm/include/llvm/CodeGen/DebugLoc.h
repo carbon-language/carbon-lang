@@ -14,7 +14,6 @@
 #define LLVM_CODEGEN_DEBUGLOC_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringMap.h"
 #include <vector>
 
 namespace llvm {
@@ -22,10 +21,10 @@ namespace llvm {
   /// DebugLocTuple - Debug location tuple of filename id, line and column.
   ///
   struct DebugLocTuple {
-    unsigned FileId, Line, Col;
+    unsigned Src, Line, Col;
 
-    DebugLocTuple(unsigned fi, unsigned l, unsigned c)
-      : FileId(fi), Line(l), Col(c) {};
+    DebugLocTuple(unsigned s, unsigned l, unsigned c)
+      : Src(s), Line(l), Col(c) {};
   };
 
   /// DebugLoc - Debug location id. This is carried by SDNode and
@@ -51,14 +50,14 @@ namespace llvm {
       return DebugLocTuple(~1U, ~1U, ~1U);
     }
     static unsigned getHashValue(const DebugLocTuple &Val) {
-      return DenseMapInfo<unsigned>::getHashValue(Val.FileId) ^
+      return DenseMapInfo<unsigned>::getHashValue(Val.Src) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Line) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Col);
     }
     static bool isEqual(const DebugLocTuple &LHS, const DebugLocTuple &RHS) {
-      return LHS.FileId == RHS.FileId &&
+      return LHS.Src  == RHS.Src &&
              LHS.Line == RHS.Line &&
-             LHS.Col == RHS.Col;
+             LHS.Col  == RHS.Col;
     }
 
     static bool isPod() { return true; }
@@ -70,18 +69,6 @@ namespace llvm {
   /// DebugLocTracker - This class tracks debug location information.
   ///
   struct DebugLocTracker {
-    // NumFilenames - Size of the DebugFilenames vector.
-    //
-    unsigned NumFilenames;
-    
-    // DebugFilenames - A vector of unique file names.
-    //
-    std::vector<std::string> DebugFilenames;
-
-    // DebugFilenamesMap - File name to DebugFilenames index map.
-    //
-    StringMap<unsigned> DebugFilenamesMap;
-
     // NumDebugLocations - Size of the DebugLocations vector.
     unsigned NumDebugLocations;
 
@@ -93,12 +80,9 @@ namespace llvm {
     // DebugLocations vector.
     DebugIdMapType DebugIdMap;
 
-    DebugLocTracker() : NumFilenames(0), NumDebugLocations(0) {}
+    DebugLocTracker() : NumDebugLocations(0) {}
 
     ~DebugLocTracker() {
-      NumFilenames = 0;
-      DebugFilenames.clear();
-      DebugFilenamesMap.clear();
       DebugLocations.clear();
       DebugIdMap.clear();
     }

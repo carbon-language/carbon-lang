@@ -312,9 +312,9 @@ public:
   //
 
   /// lookUpDebugLocId - Look up the DebugLocTuple index with the given
-  /// filename, line, and column. It may add a new filename and / or
+  /// source file, line, and column. It may add a new filename and / or
   /// a new DebugLocTuple.
-  unsigned lookUpDebugLocId(const char *Filename, unsigned Line, unsigned Col);
+  unsigned lookUpDebugLocId(unsigned Src, unsigned Line, unsigned Col);
 };
 
 //===--------------------------------------------------------------------===//
