@@ -190,7 +190,7 @@ public:
 
   /// getSourceLocation - Return a source location identifier for the specified
   /// offset in the current file.
-  SourceLocation getSourceLocation(const char *Loc) const;
+  SourceLocation getSourceLocation(const char *Loc, unsigned TokLen = 1) const;
     
   /// getSourceLocation - Return a source location for the next character in
   /// the current file.
@@ -228,8 +228,9 @@ private:
   /// TokEnd.
   void FormTokenWithChars(Token &Result, const char *TokEnd, 
                           tok::TokenKind Kind) {
-    Result.setLocation(getSourceLocation(BufferPtr));
-    Result.setLength(TokEnd-BufferPtr);
+    unsigned TokLen = TokEnd-BufferPtr;
+    Result.setLength(TokLen);
+    Result.setLocation(getSourceLocation(BufferPtr, TokLen));
     Result.setKind(Kind);
     BufferPtr = TokEnd;
   }

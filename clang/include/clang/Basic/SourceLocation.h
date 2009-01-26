@@ -45,12 +45,12 @@ public:
   bool operator>(const FileID &RHS) const { return RHS < *this; }
   bool operator>=(const FileID &RHS) const { return RHS <= *this; }
   
-  static FileID getSentinel() { return Create(~0U); }
+  static FileID getSentinel() { return get(~0U); }
   unsigned getHashValue() const { return ID; }
   
 private:
   friend class SourceManager;
-  static FileID Create(unsigned V) {
+  static FileID get(unsigned V) {
     FileID F;
     F.ID = V;
     return F;
@@ -66,33 +66,14 @@ class SourceLocation {
   unsigned ID;
   friend class SourceManager;
   enum {
-    // FileID Layout:
-    // bit 31: 0 -> FileID, 1 -> MacroID (invalid for FileID)
-    //     30...17 -> ChunkID of location, index into SourceManager table.
-    ChunkIDBits  = 14,
-    //      0...16 -> Index into the chunk of the specified ChunkID.
-    FilePosBits = 32-1-ChunkIDBits,
-    
-    // MacroID Layout:
-    // bit 31: 1 -> MacroID, 0 -> FileID (invalid for MacroID)
-
-    // bit 29,30: unused.
-    
-    // bits 28...9 -> MacroID number.
-    MacroIDBits       = 20,
-    // bits 8...0  -> Macro spelling offset
-    MacroSpellingOffsBits = 9,
-    
-    
-    // Useful constants.
-    ChunkSize = (1 << FilePosBits)
+    MacroIDBit = 1U << 31
   };
 public:
 
   SourceLocation() : ID(0) {}  // 0 is an invalid FileID.
   
-  bool isFileID() const { return (ID >> 31) == 0; }
-  bool isMacroID() const { return (ID >> 31) != 0; }
+  bool isFileID() const  { return (ID & MacroIDBit) == 0; }
+  bool isMacroID() const { return (ID & MacroIDBit) != 0; }
   
   /// isValid - Return true if this is a valid SourceLocation object.  Invalid
   /// SourceLocations are often used when events have no corresponding location
@@ -102,86 +83,34 @@ public:
   bool isInvalid() const { return ID == 0; }
   
 private:
-  /// getChunkID - Return the chunk identifier for this SourceLocation.  This
-  /// ChunkID can be used with the SourceManager object to obtain an entire
-  /// include stack for a file position reference.
-  unsigned getChunkID() const {
-    assert(isFileID() && "can't get the file id of a non-file sloc!");
-    return ID >> FilePosBits;
+  /// getOffset - Return the index for SourceManager's SLocEntryTable table,
+  /// note that this is not an index *into* it though.
+  unsigned getOffset() const {
+    return ID & ~MacroIDBit;
   }
 
-  unsigned getMacroID() const {
-    assert(isMacroID() && "Is not a macro id!");
-    return (ID >> MacroSpellingOffsBits) & ((1 << MacroIDBits)-1);
-  }
-  
-  static SourceLocation getFileLoc(unsigned ChunkID, unsigned FilePos) {
+  static SourceLocation getFileLoc(unsigned ID) {
+    assert((ID & MacroIDBit) == 0 && "Ran out of source locations!");
     SourceLocation L;
-    // If a FilePos is larger than (1<<FilePosBits), the SourceManager makes
-    // enough consequtive ChunkIDs that we have one for each chunk.
-    if (FilePos >= ChunkSize) {
-      ChunkID += FilePos >> FilePosBits;
-      FilePos &= ChunkSize-1;
-    }
-    
-    // FIXME: Find a way to handle out of ChunkID bits!  Maybe MaxFileID is an
-    // escape of some sort?
-    assert(ChunkID < (1 << ChunkIDBits) && "Out of ChunkID's");
-    
-    L.ID = (ChunkID << FilePosBits) | FilePos;
+    L.ID = ID;
     return L;
   }
   
-  static bool isValidMacroSpellingOffs(int Val) {
-    if (Val >= 0)
-      return Val < (1 << (MacroSpellingOffsBits-1));
-    return -Val <= (1 << (MacroSpellingOffsBits-1));
-  }
-  
-  static SourceLocation getMacroLoc(unsigned MacroID, int SpellingOffs) {
-    assert(MacroID < (1 << MacroIDBits) && "Too many macros!");
-    assert(isValidMacroSpellingOffs(SpellingOffs) &&"spelling offs too large!");
-    
-    // Mask off sign bits.
-    SpellingOffs &= (1 << MacroSpellingOffsBits)-1;
-    
+  static SourceLocation getMacroLoc(unsigned ID) {
+    assert((ID & MacroIDBit) == 0 && "Ran out of source locations!");
     SourceLocation L;
-    L.ID = (1 << 31) |
-           (MacroID << MacroSpellingOffsBits) |
-           SpellingOffs;
+    L.ID = MacroIDBit | ID;
     return L;
-  }
-
-  /// getRawFilePos - Return the byte offset from the start of the file-chunk
-  /// referred to by ChunkID.  This method should not be used to get the offset
-  /// from the start of the file, instead you should use
-  /// SourceManager::getDecomposedFileLoc.  This method will be 
-  //  incorrect for large files.
-  unsigned getRawFilePos() const { 
-    assert(isFileID() && "can't get the file id of a non-file sloc!");
-    return ID & (ChunkSize-1);
-  }
-
-  int getMacroSpellingOffs() const {
-    assert(isMacroID() && "Is not a macro id!");
-    int Val = ID & ((1 << MacroSpellingOffsBits)-1);
-    // Sign extend it properly.
-    unsigned ShAmt = sizeof(int)*8 - MacroSpellingOffsBits;
-    return (Val << ShAmt) >> ShAmt;
   }
 public:
   
   /// getFileLocWithOffset - Return a source location with the specified offset
   /// from this file SourceLocation.
   SourceLocation getFileLocWithOffset(int Offset) const {
-    unsigned ChunkID = getChunkID();
-    Offset += getRawFilePos();
-    // Handle negative offsets correctly.
-    while (Offset < 0) {
-      --ChunkID;
-      Offset += ChunkSize;
-    }
-    return getFileLoc(ChunkID, Offset);
+    assert(((getOffset()+Offset) & MacroIDBit) == 0 && "invalid location");
+    SourceLocation L;
+    L.ID = ID+Offset;
+    return L;
   }
   
   /// getRawEncoding - When a SourceLocation itself cannot be used, this returns

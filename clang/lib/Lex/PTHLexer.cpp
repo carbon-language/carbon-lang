@@ -321,7 +321,7 @@ unsigned PTHManager::getSpelling(FileID FID, unsigned FPos,
 unsigned PTHManager::getSpelling(SourceLocation Loc, const char *&Buffer) {
   SourceManager &SM = PP->getSourceManager();
   Loc = SM.getSpellingLoc(Loc);
-  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedFileLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   return getSpelling(LocInfo.first, LocInfo.second, Buffer);
 }
 
@@ -407,8 +407,7 @@ unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned FPos,
 
 unsigned PTHLexer::getSpelling(SourceLocation Loc, const char *&Buffer) {
   SourceManager &SM = PP->getSourceManager();
-  Loc = SM.getSpellingLoc(Loc);
-  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedFileLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedSpellingLoc(Loc);
 
   FileID FID = LocInfo.first;
   unsigned FPos = LocInfo.second;

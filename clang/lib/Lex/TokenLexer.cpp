@@ -314,8 +314,9 @@ void TokenLexer::Lex(Token &Tok) {
   // that captures all of this.
   if (InstantiateLoc.isValid()) {   // Don't do this for token streams.
     SourceManager &SrcMgr = PP.getSourceManager();
-    Tok.setLocation(SrcMgr.getInstantiationLoc(Tok.getLocation(), 
-                                               InstantiateLoc));
+    Tok.setLocation(SrcMgr.createInstantiationLoc(Tok.getLocation(), 
+                                                  InstantiateLoc,
+                                                  Tok.getLength()));
   }
   
   // If this is the first token, set the lexical properties of the token to
@@ -398,7 +399,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
              "Should be a raw location into scratch buffer");
       SourceManager &SourceMgr = PP.getSourceManager();
       std::pair<FileID, unsigned> LocInfo =
-        SourceMgr.getDecomposedFileLoc(ResultTokLoc);
+        SourceMgr.getDecomposedLoc(ResultTokLoc);
       
       const char *ScratchBufStart =SourceMgr.getBufferData(LocInfo.first).first;
       

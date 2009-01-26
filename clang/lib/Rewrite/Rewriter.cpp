@@ -151,7 +151,7 @@ std::string Rewriter::getRewritenText(SourceRange Range) const {
 unsigned Rewriter::getLocationOffsetAndFileID(SourceLocation Loc,
                                               FileID &FID) const {
   assert(Loc.isValid() && "Invalid location");
-  std::pair<FileID,unsigned> V = SourceMgr->getDecomposedFileLoc(Loc);
+  std::pair<FileID,unsigned> V = SourceMgr->getDecomposedLoc(Loc);
   FID = V.first;
   return V.second;
 }

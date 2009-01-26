@@ -50,7 +50,7 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len) {
 SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
                                        SourceLocation SourceLoc) {
   // Map the physloc to the specified sourceloc.
-  return SourceMgr.getInstantiationLoc(getToken(Buf, Len), SourceLoc);
+  return SourceMgr.createInstantiationLoc(getToken(Buf, Len), SourceLoc, Len);
 }
 
 void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {

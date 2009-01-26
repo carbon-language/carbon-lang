@@ -441,8 +441,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     
     // Ignore tokens whose instantiation location was not the main file.
     SourceLocation LLoc = SourceMgr.getInstantiationLoc(Tok.getLocation());
-    std::pair<FileID, unsigned> LLocInfo = 
-      SourceMgr.getDecomposedFileLoc(LLoc);
+    std::pair<FileID, unsigned> LLocInfo = SourceMgr.getDecomposedLoc(LLoc);
     
     if (LLocInfo.first != FID) {
       PP.Lex(Tok);

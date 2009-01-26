@@ -24,6 +24,10 @@ using namespace clang;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
 
+//===--------------------------------------------------------------------===//
+// SourceManager Helper Classes
+//===--------------------------------------------------------------------===//
+
 // This (temporary) directive toggles between lazy and eager creation of
 // MemBuffers.  This directive is not permanent, and is here to test a few
 // potential optimizations in PTH.  Once it is clear whether eager or lazy
@@ -62,12 +66,16 @@ const llvm::MemoryBuffer* ContentCache::getBuffer() const {
   return Buffer;
 }
 
+//===--------------------------------------------------------------------===//
+// Private 'Create' methods.
+//===--------------------------------------------------------------------===//
 
-/// getFileInfo - Create or return a cached FileInfo for the specified file.
-///
-const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
-
+/// getOrCreateContentCache - Create or return a cached ContentCache for the
+/// specified file.
+const ContentCache *
+SourceManager::getOrCreateContentCache(const FileEntry *FileEnt) {
   assert(FileEnt && "Didn't specify a file entry to use?");
+  
   // Do we already have information about this file?
   std::set<ContentCache>::iterator I = 
     FileInfos.lower_bound(ContentCache(FileEnt));
@@ -107,47 +115,34 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
   return &Entry;
 }
 
+//===----------------------------------------------------------------------===//
+// Methods to create new FileID's and instantiations.
+//===----------------------------------------------------------------------===//
 
 /// createFileID - Create a new fileID for the specified ContentCache and
 /// include position.  This works regardless of whether the ContentCache
 /// corresponds to a file or some other input source.
 FileID SourceManager::createFileID(const ContentCache *File,
-                                     SourceLocation IncludePos,
-                                     SrcMgr::CharacteristicKind FileCharacter) {
-  // If FileEnt is really large (e.g. it's a large .i file), we may not be able
-  // to fit an arbitrary position in the file in the FilePos field.  To handle
-  // this, we create one FileID for each chunk of the file that fits in a
-  // FilePos field.
+                                   SourceLocation IncludePos,
+                                   SrcMgr::CharacteristicKind FileCharacter) {
+  SLocEntryTable.push_back(SLocEntry::get(NextOffset, 
+                                          FileInfo::get(IncludePos, File,
+                                                        FileCharacter)));
   unsigned FileSize = File->getSize();
-  if (FileSize+1 < (1 << SourceLocation::FilePosBits)) {
-    FileIDs.push_back(FileIDInfo::get(IncludePos, 0, File, FileCharacter));
-    assert(FileIDs.size() < (1 << SourceLocation::ChunkIDBits) &&
-           "Ran out of file ID's!");
-    return FileID::Create(FileIDs.size());
-  }
+  assert(NextOffset+FileSize+1 > NextOffset && "Ran out of source locations!");
+  NextOffset += FileSize+1;
   
-  // Create one FileID for each chunk of the file.
-  unsigned Result = FileIDs.size()+1;
-
-  unsigned ChunkNo = 0;
-  while (1) {
-    FileIDs.push_back(FileIDInfo::get(IncludePos, ChunkNo++, File,
-                                      FileCharacter));
-
-    if (FileSize+1 < (1 << SourceLocation::FilePosBits)) break;
-    FileSize -= (1 << SourceLocation::FilePosBits);
-  }
-
-  assert(FileIDs.size() < (1 << SourceLocation::ChunkIDBits) &&
-         "Ran out of file ID's!");
-  return FileID::Create(Result);
+  // Set LastFileIDLookup to the newly created file.  The next getFileID call is
+  // almost guaranteed to be from that file.
+  return LastFileIDLookup = FileID::get(SLocEntryTable.size()-1);
 }
 
-/// getInstantiationLoc - Return a new SourceLocation that encodes the fact
+/// createInstantiationLoc - Return a new SourceLocation that encodes the fact
 /// that a token from SpellingLoc should actually be referenced from
 /// InstantiationLoc.
-SourceLocation SourceManager::getInstantiationLoc(SourceLocation SpellingLoc,
-                                                  SourceLocation InstantLoc) {
+SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
+                                                     SourceLocation InstantLoc,
+                                                     unsigned TokLength) {
   // The specified source location may be a mapped location, due to a macro
   // instantiation or #line directive.  Strip off this information to find out
   // where the characters are actually located.
@@ -155,29 +150,13 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation SpellingLoc,
   
   // Resolve InstantLoc down to a real instantiation location.
   InstantLoc = getInstantiationLoc(InstantLoc);
-  
-  
-  // If the last macro id is close to the currently requested location, try to
-  // reuse it.  This implements a small cache.
-  for (int i = MacroIDs.size()-1, e = MacroIDs.size()-6; i >= 0 && i != e; --i){
-    MacroIDInfo &LastOne = MacroIDs[i];
-    
-    // The instanitation point and source SpellingLoc have to exactly match to
-    // reuse (for now).  We could allow "nearby" instantiations in the future.
-    if (LastOne.getInstantiationLoc() != InstantLoc ||
-        LastOne.getSpellingLoc().getChunkID() != SpellingLoc.getChunkID())
-      continue;
-  
-    // Check to see if the spellloc of the token came from near enough to reuse.
-    int SpellDelta = SpellingLoc.getRawFilePos() -
-                     LastOne.getSpellingLoc().getRawFilePos();
-    if (SourceLocation::isValidMacroSpellingOffs(SpellDelta))
-      return SourceLocation::getMacroLoc(i, SpellDelta);
-  }
-  
- 
-  MacroIDs.push_back(MacroIDInfo::get(InstantLoc, SpellingLoc));
-  return SourceLocation::getMacroLoc(MacroIDs.size()-1, 0);
+
+  SLocEntryTable.push_back(SLocEntry::get(NextOffset, 
+                                          InstantiationInfo::get(InstantLoc,
+                                                                 SpellingLoc)));
+  assert(NextOffset+TokLength+1 > NextOffset && "Ran out of source locations!");
+  NextOffset += TokLength+1;
+  return SourceLocation::getMacroLoc(NextOffset-(TokLength+1));
 }
 
 /// getBufferData - Return a pointer to the start and end of the source buffer
@@ -189,19 +168,153 @@ SourceManager::getBufferData(FileID FID) const {
 }
 
 
+//===--------------------------------------------------------------------===//
+// SourceLocation manipulation methods.
+//===--------------------------------------------------------------------===//
+
+/// getFileIDSlow - Return the FileID for a SourceLocation.  This is a very hot
+/// method that is used for all SourceManager queries that start with a
+/// SourceLocation object.  It is responsible for finding the entry in
+/// SLocEntryTable which contains the specified location.
+///
+FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
+  assert(SLocOffset && "Invalid FileID");
+  
+  // After the first and second level caches, I see two common sorts of
+  // behavior: 1) a lot of searched FileID's are "near" the cached file location
+  // or are "near" the cached instantiation location.  2) others are just
+  // completely random and may be a very long way away.
+  //
+  // To handle this, we do a linear search for up to 8 steps to catch #1 quickly
+  // then we fall back to a less cache efficient, but more scalable, binary
+  // search to find the location.
+  
+  // See if this is near the file point - worst case we start scanning from the
+  // most newly created FileID.
+  std::vector<SrcMgr::SLocEntry>::const_iterator I;
+  
+  if (SLocEntryTable[LastFileIDLookup.ID].getOffset() < SLocOffset) {
+    // Neither loc prunes our search.
+    I = SLocEntryTable.end();
+  } else {
+    // Perhaps it is near the file point.
+    I = SLocEntryTable.begin()+LastFileIDLookup.ID;
+  }
+
+  // Find the FileID that contains this.  "I" is an iterator that points to a
+  // FileID whose offset is known to be larger than SLocOffset.
+  unsigned NumProbes = 0;
+  while (1) {
+    --I;
+    if (I->getOffset() <= SLocOffset) {
+#if 0
+      printf("lin %d -> %d [%s] %d %d\n", SLocOffset,
+             I-SLocEntryTable.begin(),
+             I->isInstantiation() ? "inst" : "file",
+             LastFileIDLookup.ID,  int(SLocEntryTable.end()-I));
+#endif
+      FileID Res = FileID::get(I-SLocEntryTable.begin());
+      
+      // If this isn't an instantiation, remember it.  We have good locality
+      // across FileID lookups.
+      if (!I->isInstantiation())
+        LastFileIDLookup = Res;
+      NumLinearScans += NumProbes+1;
+      return Res;
+    }
+    if (++NumProbes == 8)
+      break;
+  }
+  
+  // Convert "I" back into an index.  We know that it is an entry whose index is
+  // larger than the offset we are looking for.
+  unsigned GreaterIndex = I-SLocEntryTable.begin();
+  // LessIndex - This is the lower bound of the range that we're searching.
+  // We know that the offset corresponding to the FileID is is less than
+  // SLocOffset.
+  unsigned LessIndex = 0;
+  NumProbes = 0;
+  while (1) {
+    unsigned MiddleIndex = (GreaterIndex-LessIndex)/2+LessIndex;
+    unsigned MidOffset = SLocEntryTable[MiddleIndex].getOffset();
+    
+    ++NumProbes;
+    
+    // If the offset of the midpoint is too large, chop the high side of the
+    // range to the midpoint.
+    if (MidOffset > SLocOffset) {
+      GreaterIndex = MiddleIndex;
+      continue;
+    }
+    
+    // If the middle index contains the value, succeed and return.
+    if (isOffsetInFileID(FileID::get(MiddleIndex), SLocOffset)) {
+#if 0
+      printf("bin %d -> %d [%s] %d %d\n", SLocOffset,
+             I-SLocEntryTable.begin(),
+             I->isInstantiation() ? "inst" : "file",
+             LastFileIDLookup.ID, int(SLocEntryTable.end()-I));
+#endif
+      FileID Res = FileID::get(MiddleIndex);
+
+      // If this isn't an instantiation, remember it.  We have good locality
+      // across FileID lookups.
+      if (!I->isInstantiation())
+        LastFileIDLookup = Res;
+      NumBinaryProbes += NumProbes;
+      return Res;
+    }
+    
+    // Otherwise, move the low-side up to the middle index.
+    LessIndex = MiddleIndex;
+  }
+}
+
+std::pair<FileID, unsigned>
+SourceManager::getDecomposedInstantiationLocSlowCase(const SrcMgr::SLocEntry *E,
+                                                     unsigned Offset) const {
+  // If this is an instantiation record, walk through all the instantiation
+  // points.
+  FileID FID;
+  SourceLocation Loc;
+  do {
+    Loc = E->getInstantiation().getInstantiationLoc();
+    
+    FID = getFileID(Loc);
+    E = &getSLocEntry(FID);
+    Offset += Loc.getOffset()-E->getOffset();
+  } while (Loc.isFileID());
+  
+  return std::make_pair(FID, Offset);
+}
+
+std::pair<FileID, unsigned>
+SourceManager::getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
+                                                unsigned Offset) const {
+  // If this is an instantiation record, get and return the spelling.
+  SourceLocation Loc = E->getInstantiation().getSpellingLoc();
+  FileID FID = getFileID(Loc);
+  E = &getSLocEntry(FID);
+  Offset += Loc.getOffset()-E->getOffset();
+  assert(Loc.isFileID() && "Should only have one spelling link");
+  return std::make_pair(FID, Offset);
+}
+
+
+//===----------------------------------------------------------------------===//
+// Queries about the code at a SourceLocation.
+//===----------------------------------------------------------------------===//
 
 /// getCharacterData - Return a pointer to the start of the specified location
 /// in the appropriate MemoryBuffer.
 const char *SourceManager::getCharacterData(SourceLocation SL) const {
   // Note that this is a hot function in the getSpelling() path, which is
   // heavily used by -E mode.
-  SL = getSpellingLoc(SL);
-  
-  std::pair<FileID, unsigned> LocInfo = getDecomposedFileLoc(SL);
+  std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(SL);
   
   // Note that calling 'getBuffer()' may lazily page in a source file.
-  return getContentCache(LocInfo.first)->getBuffer()->getBufferStart() + 
-         LocInfo.second;
+  return getSLocEntry(LocInfo.first).getFile().getContentCache()
+              ->getBuffer()->getBufferStart() + LocInfo.second;
 }
 
 
@@ -209,9 +322,10 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
 /// this is significantly cheaper to compute than the line number.  This returns
 /// zero if the column number isn't known.
 unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
-  if (Loc.getChunkID() == 0) return 0;
+  if (Loc.isInvalid()) return 0;
+  assert(Loc.isFileID() && "Don't know what part of instantiation loc to get");
   
-  std::pair<FileID, unsigned> LocInfo = getDecomposedFileLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
   unsigned FilePos = LocInfo.second;
   
   const char *Buf = getBuffer(LocInfo.first)->getBufferStart();
@@ -220,21 +334,6 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
   while (LineStart && Buf[LineStart-1] != '\n' && Buf[LineStart-1] != '\r')
     --LineStart;
   return FilePos-LineStart+1;
-}
-
-/// getSourceName - This method returns the name of the file or buffer that
-/// the SourceLocation specifies.  This can be modified with #line directives,
-/// etc.
-const char *SourceManager::getSourceName(SourceLocation Loc) const {
-  if (Loc.getChunkID() == 0) return "";
-  
-  Loc = getSpellingLoc(Loc);
-  unsigned ChunkID = Loc.getChunkID();
-  const SrcMgr::ContentCache *C = getFIDInfo(ChunkID)->getContentCache();
-  
-  // To get the source name, first consult the FileEntry (if one exists) before
-  // the MemBuffer as this will avoid unnecessarily paging in the MemBuffer.
-  return C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
 }
 
 static void ComputeLineNumbers(ContentCache* FI) DISABLE_INLINE;
@@ -287,16 +386,17 @@ static void ComputeLineNumbers(ContentCache* FI) {
 /// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
 unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
-  if (Loc.getChunkID() == 0) return 0;
+  if (Loc.isInvalid()) return 0;
+  assert(Loc.isFileID() && "Don't know what part of instantiation loc to get");
 
+  std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
+  
   ContentCache *Content;
-  
-  std::pair<FileID, unsigned> LocInfo = getDecomposedFileLoc(Loc);
-  
   if (LastLineNoFileIDQuery == LocInfo.first)
     Content = LastLineNoContentCache;
   else
-    Content = const_cast<ContentCache*>(getContentCache(LocInfo.first));
+    Content = const_cast<ContentCache*>(getSLocEntry(LocInfo.first)
+                                        .getFile().getContentCache());
   
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
@@ -375,15 +475,32 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
   return LineNo;
 }
 
+/// getSourceName - This method returns the name of the file or buffer that
+/// the SourceLocation specifies.  This can be modified with #line directives,
+/// etc.
+const char *SourceManager::getSourceName(SourceLocation Loc) const {
+  if (Loc.isInvalid()) return "";
+  
+  const SrcMgr::ContentCache *C =
+  getSLocEntry(getFileID(getSpellingLoc(Loc))).getFile().getContentCache();
+  
+  // To get the source name, first consult the FileEntry (if one exists) before
+  // the MemBuffer as this will avoid unnecessarily paging in the MemBuffer.
+  return C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
+}
+
+//===----------------------------------------------------------------------===//
+// Other miscellaneous methods.
+//===----------------------------------------------------------------------===//
+
+
 /// PrintStats - Print statistics to stderr.
 ///
 void SourceManager::PrintStats() const {
   llvm::cerr << "\n*** Source Manager Stats:\n";
   llvm::cerr << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
-             << " mem buffers mapped, " << FileIDs.size() 
-             << " file ID's allocated.\n";
-  llvm::cerr << "  " << FileIDs.size() << " normal buffer FileID's, "
-             << MacroIDs.size() << " macro expansion FileID's.\n";
+             << " mem buffers mapped, " << SLocEntryTable.size() 
+             << " SLocEntry's allocated.\n";
     
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;
@@ -395,6 +512,8 @@ void SourceManager::PrintStats() const {
   
   llvm::cerr << NumFileBytesMapped << " bytes of files mapped, "
              << NumLineNumsComputed << " files with line #'s computed.\n";
+  llvm::cerr << "FileID scans: " << NumLinearScans << " linear, "
+             << NumBinaryProbes << " binary.\n";
 }
 
 //===----------------------------------------------------------------------===//
@@ -450,49 +569,23 @@ void ContentCache::ReadToSourceManager(llvm::Deserializer& D,
       D.RegisterPtr(PtrID,NULL);
     else
       // Get the ContextCache object and register it with the deserializer.
-      D.RegisterPtr(PtrID,SMgr.getContentCache(E));
+      D.RegisterPtr(PtrID, SMgr.getOrCreateContentCache(E));
+    return;
   }
-  else {
-    // Register the ContextCache object with the deserializer.
-    SMgr.MemBufferInfos.push_back(ContentCache());
-    ContentCache& Entry = const_cast<ContentCache&>(SMgr.MemBufferInfos.back());
-    D.RegisterPtr(&Entry);
-    
-    // Create the buffer.
-    unsigned Size = D.ReadInt();
-    Entry.Buffer = MemoryBuffer::getNewUninitMemBuffer(Size);
-    
-    // Read the contents of the buffer.
-    char* p = const_cast<char*>(Entry.Buffer->getBufferStart());
-    for (unsigned i = 0; i < Size ; ++i)
-      p[i] = D.ReadInt();    
-  }    
-}
-
-void FileIDInfo::Emit(llvm::Serializer& S) const {
-  S.Emit(IncludeLoc);
-  S.EmitInt(ChunkNo);
-  S.EmitPtr(Content);  
-}
-
-FileIDInfo FileIDInfo::ReadVal(llvm::Deserializer& D) {
-  FileIDInfo I;
-  I.IncludeLoc = SourceLocation::ReadVal(D);
-  I.ChunkNo = D.ReadInt();
-  D.ReadPtr(I.Content,false);
-  return I;
-}
-
-void MacroIDInfo::Emit(llvm::Serializer& S) const {
-  S.Emit(InstantiationLoc);
-  S.Emit(SpellingLoc);
-}
-
-MacroIDInfo MacroIDInfo::ReadVal(llvm::Deserializer& D) {
-  MacroIDInfo I;
-  I.InstantiationLoc = SourceLocation::ReadVal(D);
-  I.SpellingLoc = SourceLocation::ReadVal(D);
-  return I;
+  
+  // Register the ContextCache object with the deserializer.
+  SMgr.MemBufferInfos.push_back(ContentCache());
+  ContentCache& Entry = const_cast<ContentCache&>(SMgr.MemBufferInfos.back());
+  D.RegisterPtr(&Entry);
+  
+  // Create the buffer.
+  unsigned Size = D.ReadInt();
+  Entry.Buffer = MemoryBuffer::getNewUninitMemBuffer(Size);
+  
+  // Read the contents of the buffer.
+  char* p = const_cast<char*>(Entry.Buffer->getBufferStart());
+  for (unsigned i = 0; i < Size ; ++i)
+    p[i] = D.ReadInt();    
 }
 
 void SourceManager::Emit(llvm::Serializer& S) const {
@@ -516,13 +609,7 @@ void SourceManager::Emit(llvm::Serializer& S) const {
   
   S.ExitBlock();
   
-  // Emit: FileIDs
-  S.EmitInt(FileIDs.size());  
-  std::for_each(FileIDs.begin(), FileIDs.end(), S.MakeEmitter<FileIDInfo>());
-  
-  // Emit: MacroIDs
-  S.EmitInt(MacroIDs.size());  
-  std::for_each(MacroIDs.begin(), MacroIDs.end(), S.MakeEmitter<MacroIDInfo>());
+  // FIXME: Emit SLocEntryTable.
   
   S.ExitBlock();
 }
@@ -533,7 +620,7 @@ SourceManager::CreateAndRegister(llvm::Deserializer& D, FileManager& FMgr){
   D.RegisterPtr(M);
   
   // Read: the FileID of the main source file of the translation unit.
-  M->MainFileID = FileID::Create(D.ReadInt());
+  M->MainFileID = FileID::get(D.ReadInt());
   
   std::vector<char> Buf;
     
@@ -549,17 +636,7 @@ SourceManager::CreateAndRegister(llvm::Deserializer& D, FileManager& FMgr){
     ContentCache::ReadToSourceManager(D,*M,NULL,Buf);
   }
   
-  // Read: FileIDs.
-  unsigned Size = D.ReadInt();
-  M->FileIDs.reserve(Size);
-  for (; Size > 0 ; --Size)
-    M->FileIDs.push_back(FileIDInfo::ReadVal(D));
-  
-  // Read: MacroIDs.
-  Size = D.ReadInt();
-  M->MacroIDs.reserve(Size);
-  for (; Size > 0 ; --Size)
-    M->MacroIDs.push_back(MacroIDInfo::ReadVal(D));
+  // FIXME: Read SLocEntryTable.
   
   return M;
 }

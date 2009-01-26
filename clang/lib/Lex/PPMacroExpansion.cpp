@@ -221,7 +221,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     
   } else if (MI->getNumTokens() == 1 &&
              isTrivialSingleTokenExpansion(MI, Identifier.getIdentifierInfo(),
-                                           *this)){
+                                           *this)) {
     // Otherwise, if this macro expands into a single trivially-expanded
     // token: expand it now.  This handles common cases like 
     // "#define VAL 42".
@@ -247,7 +247,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // Update the tokens location to include both its instantiation and physical
     // locations.
     SourceLocation Loc =
-      SourceMgr.getInstantiationLoc(Identifier.getLocation(), InstantiateLoc);
+      SourceMgr.createInstantiationLoc(Identifier.getLocation(), InstantiateLoc,
+                                       Identifier.getLength());
     Identifier.setLocation(Loc);
     
     // If this is #define X X, we must mark the result as unexpandible.
@@ -480,13 +481,15 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
     Tok.setKind(tok::string_literal);
     Tok.setLength(strlen("\"Mmm dd yyyy\""));
-    Tok.setLocation(SourceMgr.getInstantiationLoc(DATELoc, Tok.getLocation()));
+    Tok.setLocation(SourceMgr.createInstantiationLoc(DATELoc, Tok.getLocation(),
+                                                     Tok.getLength()));
   } else if (II == Ident__TIME__) {
     if (!TIMELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
     Tok.setKind(tok::string_literal);
     Tok.setLength(strlen("\"hh:mm:ss\""));
-    Tok.setLocation(SourceMgr.getInstantiationLoc(TIMELoc, Tok.getLocation()));
+    Tok.setLocation(SourceMgr.createInstantiationLoc(TIMELoc, Tok.getLocation(),
+                                                     Tok.getLength()));
   } else if (II == Ident__INCLUDE_LEVEL__) {
     Diag(Tok, diag::ext_pp_include_level);
 

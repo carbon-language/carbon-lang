@@ -169,8 +169,8 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
 
   // Set the SourceLocation with the remapping information.  This ensures that
   // GetMappedTokenLoc will remap the tokens as they are lexed.
-  L->FileLoc = SM.getInstantiationLoc(SM.getLocForStartOfFile(SpellingFID),
-                                      InstantiationLoc);
+  L->FileLoc = SM.createInstantiationLoc(SM.getLocForStartOfFile(SpellingFID),
+                                         InstantiationLoc, TokLen);
   
   // Ensure that the lexer thinks it is inside a directive, so that end \n will
   // return an EOM token.
@@ -214,16 +214,15 @@ void Lexer::Stringify(llvm::SmallVectorImpl<char> &Str) {
 /// that are part of that.
 unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
                                    const SourceManager &SM) {
-  // If this comes from a macro expansion, we really do want the macro name, not
-  // the token this macro expanded to.
-  Loc = SM.getInstantiationLoc(Loc);
-  
   // TODO: this could be special cased for common tokens like identifiers, ')',
   // etc to make this faster, if it mattered.  Just look at StrData[0] to handle
   // all obviously single-char tokens.  This could use 
   // Lexer::isObviouslySimpleCharacter for example to handle identifiers or
   // something.
-  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedFileLoc(Loc);
+
+  // If this comes from a macro expansion, we really do want the macro name, not
+  // the token this macro expanded to.
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedInstantiationLoc(Loc);
   std::pair<const char *,const char *> Buffer = SM.getBufferData(LocInfo.first);
   const char *StrData = Buffer.first+LocInfo.second;
 
@@ -310,10 +309,11 @@ static inline bool isNumberBody(unsigned char c) {
 /// path of the hot getSourceLocation method.  Do not allow it to be inlined.
 static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
                                         SourceLocation FileLoc,
-                                        unsigned CharNo) DISABLE_INLINE;
+                                        unsigned CharNo,
+                                        unsigned TokLen) DISABLE_INLINE;
 static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
                                         SourceLocation FileLoc,
-                                        unsigned CharNo) {
+                                        unsigned CharNo, unsigned TokLen) {
   // Otherwise, we're lexing "mapped tokens".  This is used for things like
   // _Pragma handling.  Combine the instantiation location of FileLoc with the
   // spelling location.
@@ -324,12 +324,13 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
   SourceLocation InstLoc = SourceMgr.getInstantiationLoc(FileLoc);
   SourceLocation SpellingLoc = SourceMgr.getSpellingLoc(FileLoc);
   SpellingLoc = SpellingLoc.getFileLocWithOffset(CharNo);
-  return SourceMgr.getInstantiationLoc(SpellingLoc, InstLoc);
+  return SourceMgr.createInstantiationLoc(SpellingLoc, InstLoc, TokLen);
 }
 
 /// getSourceLocation - Return a source location identifier for the specified
 /// offset in the current file.
-SourceLocation Lexer::getSourceLocation(const char *Loc) const {
+SourceLocation Lexer::getSourceLocation(const char *Loc,
+                                        unsigned TokLen) const {
   assert(Loc >= BufferStart && Loc <= BufferEnd &&
          "Location out of range for this buffer!");
 
@@ -342,7 +343,7 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
   // Otherwise, this is the _Pragma lexer case, which pretends that all of the
   // tokens are lexed from where the _Pragma was defined.
   assert(PP && "This doesn't work on raw lexers");
-  return GetMappedTokenLoc(*PP, FileLoc, CharNo);
+  return GetMappedTokenLoc(*PP, FileLoc, CharNo, TokLen);
 }
 
 /// Diag - Forwarding function for diagnostics.  This translate a source

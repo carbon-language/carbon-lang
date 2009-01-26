@@ -116,99 +116,113 @@ namespace SrcMgr {
     ContentCache &operator=(const ContentCache& RHS);    
   };  
 
-  /// FileIDInfo - Information about a FileID, basically just the logical file
-  /// that it represents and include stack information.  A File SourceLocation
-  /// is a byte offset from the start of this.
+  /// FileInfo - Information about a FileID, basically just the logical file
+  /// that it represents and include stack information.
   ///
-  /// FileID's are used to compute the location of a character in memory as well
-  /// as the instantiation source location, which can be differ from the
-  /// spelling location.  It is different when #line's are active or when macros
-  /// have been expanded.
+  /// Each FileInfo has include stack information, indicating where it came
+  /// from.  This information encodes the #include chain that a token was
+  /// instantiated from.  The main include file has an invalid IncludeLoc.
   ///
-  /// Each FileID has include stack information, indicating where it came from.
-  /// For the primary translation unit, it comes from SourceLocation() aka 0.
-  /// This information encodes the #include chain that a token was instantiated
-  /// from.
+  /// FileInfos contain a "ContentCache *", with the contents of the file.
   ///
-  /// FileIDInfos contain a "ContentCache *", describing the source file, 
-  /// and a Chunk number, which allows a SourceLocation to index into very
-  /// large files (those which there are not enough FilePosBits to address).
-  ///
-  struct FileIDInfo {
-  private:
+  class FileInfo {
     /// IncludeLoc - The location of the #include that brought in this file.
-    /// This SourceLocation object has an invalid SLOC for the main file.
-    SourceLocation IncludeLoc;
-    
-    /// ChunkNo - Really large buffers are broken up into chunks that are
-    /// each (1 << SourceLocation::FilePosBits) in size.  This specifies the
-    /// chunk number of this FileID.
-    unsigned ChunkNo : 30;
-    
-    /// FileCharacteristic - This is an instance of CharacteristicKind,
-    /// indicating whether this is a system header dir or not.
-    unsigned FileCharacteristic : 2;
+    /// This is an invalid SLOC for the main file (top of the #include chain).
+    unsigned IncludeLoc;  // Really a SourceLocation
     
     /// Content - Information about the source buffer itself.
     const ContentCache *Content;
 
+    /// FileCharacteristic - This is an instance of CharacteristicKind,
+    /// indicating whether this is a system header dir or not.
+    unsigned FileCharacteristic : 2;
   public:
-    /// get - Return a FileIDInfo object.
-    static FileIDInfo get(SourceLocation IL, unsigned CN, 
-                          const ContentCache *Con,
-                          CharacteristicKind FileCharacter) {
-      FileIDInfo X;
-      X.IncludeLoc = IL;
-      X.ChunkNo = CN;
+    /// get - Return a FileInfo object.
+    static FileInfo get(SourceLocation IL, const ContentCache *Con,
+                        CharacteristicKind FileCharacter) {
+      FileInfo X;
+      X.IncludeLoc = IL.getRawEncoding();
       X.Content = Con;
       X.FileCharacteristic = FileCharacter;
       return X;
     }
     
-    SourceLocation getIncludeLoc() const { return IncludeLoc; }
-    unsigned getChunkNo() const { return ChunkNo; }
+    SourceLocation getIncludeLoc() const {
+      return SourceLocation::getFromRawEncoding(IncludeLoc);
+    }
     const ContentCache* getContentCache() const { return Content; }
-
+    
     /// getCharacteristic - Return whether this is a system header or not.
     CharacteristicKind getFileCharacteristic() const { 
       return (CharacteristicKind)FileCharacteristic;
     }
-    
-    /// Emit - Emit this FileIDInfo to Bitcode.
-    void Emit(llvm::Serializer& S) const;
-    
-    /// ReadVal - Reconstitute a FileIDInfo from Bitcode.
-    static FileIDInfo ReadVal(llvm::Deserializer& S);
   };
   
-  /// MacroIDInfo - Macro SourceLocations refer to these records by their ID.
-  /// Each MacroIDInfo encodes the Instantiation location - where the macro was
-  /// instantiated, and the SpellingLoc - where the actual character data for
-  /// the token came from.  An actual macro SourceLocation stores deltas from
-  /// these positions.
-  class MacroIDInfo {
-    SourceLocation InstantiationLoc, SpellingLoc;
+  /// InstantiationInfo - Each InstantiationInfo encodes the Instantiation
+  /// location - where the token was ultimately instantiated, and the
+  /// SpellingLoc - where the actual character data for the token came from.
+  class InstantiationInfo {
+    unsigned InstantiationLoc, SpellingLoc; // Really these are SourceLocations.
   public:
-    SourceLocation getInstantiationLoc() const { return InstantiationLoc; }
-    SourceLocation getSpellingLoc() const { return SpellingLoc; }
+    SourceLocation getInstantiationLoc() const {
+      return SourceLocation::getFromRawEncoding(InstantiationLoc);
+    }
+    SourceLocation getSpellingLoc() const {
+      return SourceLocation::getFromRawEncoding(SpellingLoc);
+    }
     
-    /// get - Return a MacroID for a macro expansion.  VL specifies
+    /// get - Return a InstantiationInfo for an expansion.  VL specifies
     /// the instantiation location (where the macro is expanded), and SL
     /// specifies the spelling location (where the characters from the token
     /// come from).  Both VL and PL refer to normal File SLocs.
-    static MacroIDInfo get(SourceLocation VL, SourceLocation SL) {
-      MacroIDInfo X;
-      X.InstantiationLoc = VL;
-      X.SpellingLoc = SL;
+    static InstantiationInfo get(SourceLocation IL, SourceLocation SL) {
+      InstantiationInfo X;
+      X.InstantiationLoc = IL.getRawEncoding();
+      X.SpellingLoc = SL.getRawEncoding();
       return X;
     }
-    
-    /// Emit - Emit this MacroIDInfo to Bitcode.
-    void Emit(llvm::Serializer& S) const;
-    
-    /// ReadVal - Reconstitute a MacroIDInfo from Bitcode.
-    static MacroIDInfo ReadVal(llvm::Deserializer& S);
   };
+  
+  /// SLocEntry - This is a discriminated union of FileInfo and
+  /// InstantiationInfo.  SourceManager keeps an array of these objects, and
+  /// they are uniquely identified by the FileID datatype.
+  class SLocEntry {
+    unsigned Offset;   // low bit is set for instantiation info.
+    union {
+      FileInfo File;
+      InstantiationInfo Instantiation;
+    };
+  public:
+    unsigned getOffset() const { return Offset >> 1; }
+    
+    bool isInstantiation() const { return Offset & 1; }
+    bool isFile() const { return !isInstantiation(); }
+    
+    const FileInfo &getFile() const {
+      assert(isFile() && "Not a file SLocEntry!");
+      return File;
+    }
+
+    const InstantiationInfo &getInstantiation() const {
+      assert(isInstantiation() && "Not an instantiation SLocEntry!");
+      return Instantiation;
+    }
+    
+    static SLocEntry get(unsigned Offset, const FileInfo &FI) {
+      SLocEntry E;
+      E.Offset = Offset << 1;
+      E.File = FI;
+      return E;
+    }
+
+    static SLocEntry get(unsigned Offset, const InstantiationInfo &II) {
+      SLocEntry E;
+      E.Offset = (Offset << 1) | 1;
+      E.Instantiation = II;
+      return E;
+    }
+  };
+  
 }  // end SrcMgr namespace.
 } // end clang namespace
 
@@ -247,12 +261,17 @@ class SourceManager {
   /// stored ContentCache objects are NULL, as they do not refer to a file.
   std::list<SrcMgr::ContentCache> MemBufferInfos;
   
-  /// FileIDs - Information about each FileID.  FileID #0 is not valid, so all
-  /// entries are off by one.
-  std::vector<SrcMgr::FileIDInfo> FileIDs;
+  /// SLocEntryTable - This is an array of SLocEntry's that we have created.
+  /// FileID is an index into this vector.  This array is sorted by the offset.
+  std::vector<SrcMgr::SLocEntry> SLocEntryTable;
+  /// NextOffset - This is the next available offset that a new SLocEntry can
+  /// start at.  It is SLocEntryTable.back().getOffset()+size of back() entry.
+  unsigned NextOffset;
   
-  /// MacroIDs - Information about each MacroID.
-  std::vector<SrcMgr::MacroIDInfo> MacroIDs;
+  /// LastFileIDLookup - This is a one-entry cache to speed up getFileID.
+  /// LastFileIDLookup records the last FileID looked up or created, because it
+  /// is very common to look up many tokens from the same file.
+  mutable FileID LastFileIDLookup;
   
   /// LastLineNo - These ivars serve as a cache used in the getLineNumber
   /// method which is used to speedup getLineNumber calls to nearby locations.
@@ -264,19 +283,28 @@ class SourceManager {
   /// MainFileID - The file ID for the main source file of the translation unit.
   FileID MainFileID;
 
+  // Statistics for -print-stats.
+  mutable unsigned NumLinearScans, NumBinaryProbes;
+  
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);  
 public:
-  SourceManager() {}
+  SourceManager() : NumLinearScans(0), NumBinaryProbes(0) {
+    clearIDTables();
+  }
   ~SourceManager() {}
   
   void clearIDTables() {
     MainFileID = FileID();
-    FileIDs.clear();
-    MacroIDs.clear();
+    SLocEntryTable.clear();
     LastLineNoFileIDQuery = FileID();
     LastLineNoContentCache = 0;
+    LastFileIDLookup = FileID();
+    
+    // Use up FileID #0 as an invalid instantiation.
+    NextOffset = 0;
+    createInstantiationLoc(SourceLocation(), SourceLocation(), 1);
   }
 
   //===--------------------------------------------------------------------===//
@@ -295,7 +323,7 @@ public:
   }
   
   //===--------------------------------------------------------------------===//
-  // Methods to create new FileID's.
+  // Methods to create new FileID's and instantiations.
   //===--------------------------------------------------------------------===//
   
   /// createFileID - Create a new FileID that represents the specified file
@@ -303,7 +331,7 @@ public:
   /// error and translates NULL into standard input.
   FileID createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
                       SrcMgr::CharacteristicKind FileCharacter) {
-    const SrcMgr::ContentCache *IR = getContentCache(SourceFile);
+    const SrcMgr::ContentCache *IR = getOrCreateContentCache(SourceFile);
     if (IR == 0) return FileID();    // Error opening file?
     return createFileID(IR, IncludePos, FileCharacter);
   }
@@ -325,6 +353,13 @@ public:
     return MainFileID;
   }
 
+  /// createInstantiationLoc - Return a new SourceLocation that encodes the fact
+  /// that a token at Loc should actually be referenced from InstantiationLoc.
+  /// TokLength is the length of the token being instantiated.
+  SourceLocation createInstantiationLoc(SourceLocation Loc,
+                                        SourceLocation InstantiationLoc,
+                                        unsigned TokLength);
+  
   //===--------------------------------------------------------------------===//
   // FileID manipulation methods.
   //===--------------------------------------------------------------------===//
@@ -332,12 +367,12 @@ public:
   /// getBuffer - Return the buffer for the specified FileID.
   ///
   const llvm::MemoryBuffer *getBuffer(FileID FID) const {
-    return getContentCache(FID)->getBuffer();
+    return getSLocEntry(FID).getFile().getContentCache()->getBuffer();
   }
   
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
   const FileEntry *getFileEntryForID(FileID FID) const {
-    return getContentCache(FID)->Entry;
+    return getSLocEntry(FID).getFile().getContentCache()->Entry;
   }
   
   /// getBufferData - Return a pointer to the start and end of the source buffer
@@ -349,26 +384,112 @@ public:
   // SourceLocation manipulation methods.
   //===--------------------------------------------------------------------===//
   
+  /// getFileIDSlow - Return the FileID for a SourceLocation.  This is a very
+  /// hot method that is used for all SourceManager queries that start with a
+  /// SourceLocation object.  It is responsible for finding the entry in
+  /// SLocEntryTable which contains the specified location.
+  ///
+  FileID getFileID(SourceLocation SpellingLoc) const {
+    unsigned SLocOffset = SpellingLoc.getOffset();
+    
+    // If our one-entry cache covers this offset, just return it.
+    if (isOffsetInFileID(LastFileIDLookup, SLocOffset))
+      return LastFileIDLookup;
+
+    return getFileIDSlow(SLocOffset);
+  }
+  
   /// getLocForStartOfFile - Return the source location corresponding to the
   /// first byte of the specified file.
   SourceLocation getLocForStartOfFile(FileID FID) const {
-    return SourceLocation::getFileLoc(FID.ID, 0);
+    assert(FID.ID < SLocEntryTable.size() && SLocEntryTable[FID.ID].isFile());
+    unsigned FileOffset = SLocEntryTable[FID.ID].getOffset();
+    return SourceLocation::getFileLoc(FileOffset);
   }
   
-  /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
-  /// that a token at Loc should actually be referenced from InstantiationLoc.
-  SourceLocation getInstantiationLoc(SourceLocation Loc,
-                                     SourceLocation InstantiationLoc);
-  
-   /// getIncludeLoc - Return the location of the #include for the specified
+  /// getIncludeLoc - Return the location of the #include for the specified
   /// SourceLocation.  If this is a macro expansion, this transparently figures
   /// out which file includes the file being expanded into.
   SourceLocation getIncludeLoc(SourceLocation ID) const {
-    return getFIDInfo(getInstantiationLoc(ID).getChunkID())->getIncludeLoc();
+    return getSLocEntry(getFileID(getInstantiationLoc(ID)))
+                    .getFile().getIncludeLoc();
   }
   
+  /// Given a SourceLocation object, return the instantiation location
+  /// referenced by the ID.
+  SourceLocation getInstantiationLoc(SourceLocation Loc) const {
+    // File locations work!
+    if (Loc.isFileID()) return Loc;
+    
+    std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
+    Loc = getSLocEntry(LocInfo.first).getInstantiation().getInstantiationLoc();
+    return Loc.getFileLocWithOffset(LocInfo.second);
+  }
+  
+  /// getSpellingLoc - Given a SourceLocation object, return the spelling
+  /// location referenced by the ID.  This is the place where the characters
+  /// that make up the lexed token can be found.
+  SourceLocation getSpellingLoc(SourceLocation Loc) const {
+    // File locations work!
+    if (Loc.isFileID()) return Loc;
+    
+    std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
+    Loc = getSLocEntry(LocInfo.first).getInstantiation().getSpellingLoc();
+    return Loc.getFileLocWithOffset(LocInfo.second);
+  }
+
+  /// getDecomposedLoc - Decompose the specified location into a raw FileID +
+  /// Offset pair.  The first element is the FileID, the second is the
+  /// offset from the start of the buffer of the location.
+  std::pair<FileID, unsigned> getDecomposedLoc(SourceLocation Loc) const {
+    FileID FID = getFileID(Loc);
+    return std::make_pair(FID, Loc.getOffset()-getSLocEntry(FID).getOffset());
+  }
+  
+  /// getDecomposedInstantiationLoc - Decompose the specified location into a
+  /// raw FileID + Offset pair.  If the location is an instantiation record,
+  /// walk through it until we find the final location instantiated.
+  std::pair<FileID, unsigned>
+  getDecomposedInstantiationLoc(SourceLocation Loc) const {
+    FileID FID = getFileID(Loc);
+    const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
+    
+    unsigned Offset = Loc.getOffset()-E->getOffset();
+    if (Loc.isFileID())
+      return std::make_pair(FID, Offset);
+    
+    return getDecomposedInstantiationLocSlowCase(E, Offset);
+  }
+
+  /// getDecomposedSpellingLoc - Decompose the specified location into a raw
+  /// FileID + Offset pair.  If the location is an instantiation record, walk
+  /// through it until we find its spelling record.
+  std::pair<FileID, unsigned>
+  getDecomposedSpellingLoc(SourceLocation Loc) const {
+    FileID FID = getFileID(Loc);
+    const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
+    
+    unsigned Offset = Loc.getOffset()-E->getOffset();
+    if (Loc.isFileID())
+      return std::make_pair(FID, Offset);
+    return getDecomposedSpellingLocSlowCase(E, Offset);
+  }    
+  
+  /// getFullFilePos - This (efficient) method returns the offset from the start
+  /// of the file that the specified spelling SourceLocation represents.  This
+  /// returns the location of the actual character data, not the instantiation
+  /// position.
+  unsigned getFullFilePos(SourceLocation SpellingLoc) const {
+    return getDecomposedLoc(SpellingLoc).second;
+  }
+  
+  
+  //===--------------------------------------------------------------------===//
+  // Queries about the code at a SourceLocation.
+  //===--------------------------------------------------------------------===//
+  
   /// getCharacterData - Return a pointer to the start of the specified location
-  /// in the appropriate MemoryBuffer.
+  /// in the appropriate spelling MemoryBuffer.
   const char *getCharacterData(SourceLocation SL) const;
   
   /// getColumnNumber - Return the column # for the specified file position.
@@ -391,7 +512,7 @@ public:
   /// line offsets for the MemoryBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
   unsigned getLineNumber(SourceLocation Loc) const;
-
+  
   unsigned getInstantiationLineNumber(SourceLocation Loc) const {
     return getLineNumber(getInstantiationLoc(Loc));
   }
@@ -399,65 +520,18 @@ public:
     return getLineNumber(getSpellingLoc(Loc));
   }
   
+  // FIXME: This should handle #line.
+  SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const {
+    FileID FID = getFileID(getSpellingLoc(Loc));
+    return getSLocEntry(FID).getFile().getFileCharacteristic();
+  }
+  
   /// getSourceName - This method returns the name of the file or buffer that
   /// the SourceLocation specifies.  This can be modified with #line directives,
   /// etc.
   const char *getSourceName(SourceLocation Loc) const;
-
-  /// Given a SourceLocation object, return the instantiation location
-  /// referenced by the ID.
-  SourceLocation getInstantiationLoc(SourceLocation Loc) const {
-    // File locations work.
-    if (Loc.isFileID()) return Loc;
-    
-    return MacroIDs[Loc.getMacroID()].getInstantiationLoc();
-  }
   
-  /// getSpellingLoc - Given a SourceLocation object, return the spelling
-  /// location referenced by the ID.  This is the place where the characters
-  /// that make up the lexed token can be found.
-  SourceLocation getSpellingLoc(SourceLocation Loc) const {
-    // File locations work!
-    if (Loc.isFileID()) return Loc;
-    
-    // Look up the macro token's spelling location.
-    SourceLocation PLoc = MacroIDs[Loc.getMacroID()].getSpellingLoc();
-    return PLoc.getFileLocWithOffset(Loc.getMacroSpellingOffs());
-  }
-
-  /// getDecomposedFileLoc - Decompose the specified file location into a raw
-  /// FileID + Offset pair.  The first element is the FileID, the second is the
-  /// offset from the start of the buffer of the location.
-  std::pair<FileID, unsigned> getDecomposedFileLoc(SourceLocation Loc) const {
-    assert(Loc.isFileID() && "Isn't a File SourceLocation");
-    
-    // TODO: Add a flag "is first chunk" to SLOC.
-    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getChunkID());
-      
-    // If this file has been split up into chunks, factor in the chunk number
-    // that the FileID references.
-    unsigned ChunkNo = FIDInfo->getChunkNo();
-    unsigned Offset = Loc.getRawFilePos();
-    Offset += (ChunkNo << SourceLocation::FilePosBits);
-
-    assert(Loc.getChunkID() >= ChunkNo && "Unexpected offset");
-    
-    return std::make_pair(FileID::Create(Loc.getChunkID()-ChunkNo), Offset);
-  }
   
-  /// getFileID - Return the FileID for a SourceLocation.
-  ///
-  FileID getFileID(SourceLocation SpellingLoc) const {
-    return getDecomposedFileLoc(SpellingLoc).first;
-  }    
-  
-  /// getFullFilePos - This (efficient) method returns the offset from the start
-  /// of the file that the specified spelling SourceLocation represents.  This
-  /// returns the location of the actual character data, not the instantiation
-  /// position.
-  unsigned getFullFilePos(SourceLocation SpellingLoc) const {
-    return getDecomposedFileLoc(SpellingLoc).second;
-  }
   
   /// isFromSameFile - Returns true if both SourceLocations correspond to
   ///  the same file.
@@ -470,14 +544,10 @@ public:
   bool isFromMainFile(SourceLocation Loc) const {
     return getFileID(Loc) == getMainFileID();
   } 
-
+  
   /// isInSystemHeader - Returns if a SourceLocation is in a system header.
   bool isInSystemHeader(SourceLocation Loc) const {
     return getFileCharacteristic(Loc) != SrcMgr::C_User;
-  }
-  SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const {
-    return getFIDInfo(getSpellingLoc(Loc).getChunkID())
-                  ->getFileCharacteristic();
   }
   
   //===--------------------------------------------------------------------===//
@@ -503,6 +573,19 @@ public:
 private:
   friend struct SrcMgr::ContentCache; // Used for deserialization.
   
+  /// isOffsetInFileID - Return true if the specified FileID contains the
+  /// specified SourceLocation offset.  This is a very hot method.
+  inline bool isOffsetInFileID(FileID FID, unsigned SLocOffset) const {
+    const SrcMgr::SLocEntry &Entry = getSLocEntry(FID);
+    // If the entry is after the offset, it can't contain it.
+    if (SLocOffset < Entry.getOffset()) return false;
+    
+    // If this is the last entry than it does.  Otherwise, the entry after it
+    // has to not include it.
+    if (FID.ID+1 == SLocEntryTable.size()) return true;
+    return SLocOffset < SLocEntryTable[FID.ID+1].getOffset();
+  }
+  
   /// createFileID - Create a new fileID for the specified ContentCache and
   ///  include position.  This works regardless of whether the ContentCache
   ///  corresponds to a file or some other input source.
@@ -510,33 +593,27 @@ private:
                       SourceLocation IncludePos,
                       SrcMgr::CharacteristicKind DirCharacter);
     
-  /// getContentCache - Create or return a cached ContentCache for the specified
-  ///  file.  This returns null on failure.
-  const SrcMgr::ContentCache* getContentCache(const FileEntry *SourceFile);
+  const SrcMgr::ContentCache *
+    getOrCreateContentCache(const FileEntry *SourceFile);
 
   /// createMemBufferContentCache - Create a new ContentCache for the specified
   ///  memory buffer.
   const SrcMgr::ContentCache* 
   createMemBufferContentCache(const llvm::MemoryBuffer *Buf);
 
-  const SrcMgr::FileIDInfo *getFIDInfo(unsigned FID) const {
-    assert(FID-1 < FileIDs.size() && "Invalid FileID!");
-    return &FileIDs[FID-1];
-  }
-  const SrcMgr::FileIDInfo *getFIDInfo(FileID FID) const {
-    return getFIDInfo(FID.ID);
+  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {
+    assert(FID.ID < SLocEntryTable.size() && "Invalid id");
+    return SLocEntryTable[FID.ID];
   }
   
-  const SrcMgr::ContentCache *getContentCache(FileID FID) const {
-    return getContentCache(getFIDInfo(FID.ID));
-  }
-  
-  /// Return the ContentCache structure for the specified FileID.  
-  ///  This is always the physical reference for the ID.
-  const SrcMgr::ContentCache*
-  getContentCache(const SrcMgr::FileIDInfo* FIDInfo) const {
-    return FIDInfo->getContentCache();
-  }  
+  FileID getFileIDSlow(unsigned SLocOffset) const;
+
+  std::pair<FileID, unsigned>
+  getDecomposedInstantiationLocSlowCase(const SrcMgr::SLocEntry *E,
+                                        unsigned Offset) const;  
+  std::pair<FileID, unsigned>
+  getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
+                                   unsigned Offset) const;
 };
 
 
