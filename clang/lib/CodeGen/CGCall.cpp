@@ -113,6 +113,9 @@ public:
                /// allocated location passed as an implicit first
                /// argument to the function.
 
+    Ignore,    /// Ignore the argument (treat as void). Useful for
+               /// void and empty structs.
+
     Coerce,    /// Only valid for aggregate return types, the argument
                /// should be accessed by coercion to a provided type.
 
@@ -147,6 +150,9 @@ public:
   static ABIArgInfo getStructRet() { 
     return ABIArgInfo(StructRet); 
   }
+  static ABIArgInfo getIgnore() {
+    return ABIArgInfo(Ignore);
+  }
   static ABIArgInfo getCoerce(const llvm::Type *T) { 
     assert(T->isSingleValueType() && "Can only coerce to simple types");
     return ABIArgInfo(Coerce, T);
@@ -161,6 +167,7 @@ public:
   Kind getKind() const { return TheKind; }
   bool isDefault() const { return TheKind == Default; }
   bool isStructRet() const { return TheKind == StructRet; }
+  bool isIgnore() const { return TheKind == Ignore; }
   bool isCoerce() const { return TheKind == Coerce; }
   bool isByVal() const { return TheKind == ByVal; }
   bool isExpand() const { return TheKind == Expand; }
@@ -432,7 +439,9 @@ void X86_64ABIInfo::classify(QualType Ty,
   if (const BuiltinType *BT = Ty->getAsBuiltinType()) {
     BuiltinType::Kind k = BT->getKind();
 
-    if (k >= BuiltinType::Bool && k <= BuiltinType::LongLong) {
+    if (k == BuiltinType::Void) {
+      Lo = NoClass; 
+    } else if (k >= BuiltinType::Bool && k <= BuiltinType::LongLong) {
       Lo = Integer;
     } else if (k == BuiltinType::Float || k == BuiltinType::Double) {
       Lo = SSE;
@@ -468,7 +477,7 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
   const llvm::Type *ResType = 0;
   switch (Lo) {
   case NoClass:
-    assert(0 && "FIXME: Handle ignored return values.");
+    return ABIArgInfo::getIgnore();
 
   case SSEUp:
   case X87Up:
@@ -719,6 +728,10 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
     break;
   }
 
+  case ABIArgInfo::Ignore:
+    ResultType = llvm::Type::VoidTy;
+    break;
+
   case ABIArgInfo::Coerce:
     ResultType = RetAI.getCoerceToType();
     break;
@@ -729,6 +742,9 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
     const llvm::Type *Ty = ConvertType(*begin);
     
     switch (AI.getKind()) {
+    case ABIArgInfo::Ignore:
+      break;
+
     case ABIArgInfo::Coerce:
     case ABIArgInfo::StructRet:
       assert(0 && "Invalid ABI kind for non-return argument");
@@ -795,6 +811,7 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
     ++Index;
     break;
 
+  case ABIArgInfo::Ignore:
   case ABIArgInfo::Coerce:
     break;
 
@@ -830,6 +847,10 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
       }
       break;
      
+    case ABIArgInfo::Ignore:
+      // Skip increment, no matching LLVM parameter.
+      continue; 
+
     case ABIArgInfo::Expand: {
       std::vector<const llvm::Type*> Tys;  
       // FIXME: This is rather inefficient. Do we ever actually need
@@ -900,7 +921,10 @@ void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
         AI->setName(Name + "." + llvm::utostr(Index));
       continue;
     }
-      
+
+    case ABIArgInfo::Ignore:
+      break;
+
     case ABIArgInfo::Coerce:
     case ABIArgInfo::StructRet:
       assert(0 && "Invalid ABI kind for non-return argument");        
@@ -937,6 +961,9 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
       RV = Builder.CreateLoad(ReturnValue);
       break;
 
+    case ABIArgInfo::Ignore:
+      break;
+      
     case ABIArgInfo::Coerce: {
       const llvm::Type *CoerceToPTy = 
         llvm::PointerType::getUnqual(RetAI.getCoerceToType());
@@ -972,6 +999,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
     break;
     
   case ABIArgInfo::Default:
+  case ABIArgInfo::Ignore:
   case ABIArgInfo::Coerce:
     break;
 
@@ -999,6 +1027,9 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
       }
       break;
      
+    case ABIArgInfo::Ignore:
+      break;
+
     case ABIArgInfo::StructRet:
     case ABIArgInfo::Coerce:
       assert(0 && "Invalid ABI kind for non-return argument");
@@ -1038,6 +1069,9 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   case ABIArgInfo::Default:
     return RValue::get(RetTy->isVoidType() ? 0 : CI);
 
+  case ABIArgInfo::Ignore:
+    return RValue::get(0);
+
   case ABIArgInfo::Coerce: {
     const llvm::Type *CoerceToPTy = 
       llvm::PointerType::getUnqual(RetAI.getCoerceToType());
@@ -1045,8 +1079,10 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
     Builder.CreateStore(CI, Builder.CreateBitCast(V, CoerceToPTy));
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(V, false));
-    else
+    else if (CodeGenFunction::hasAggregateLLVMType(RetTy))
       return RValue::getAggregate(V);
+    else
+      return RValue::get(Builder.CreateLoad(V));
   }
 
   case ABIArgInfo::ByVal:
