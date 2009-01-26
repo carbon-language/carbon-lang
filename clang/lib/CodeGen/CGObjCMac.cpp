@@ -353,6 +353,9 @@ public:
   { }
   
   virtual llvm::Constant *GenerateConstantString(const std::string &String);
+  
+  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
+                                         const ObjCContainerDecl *CD=0);
 };
   
 class CGObjCMac : public CGObjCCommonMac {
@@ -412,9 +415,9 @@ private:
                                 llvm::Constant *Protocols,
                                 const llvm::Type *InterfaceTy,
                                 const ConstantVector &Methods);
-
+  
   llvm::Constant *GetMethodConstant(const ObjCMethodDecl *MD);
-
+  
   llvm::Constant *GetMethodDescriptionConstant(const ObjCMethodDecl *MD);
 
   /// EmitMethodList - Emit the method list for the given
@@ -473,7 +476,7 @@ private:
   /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
   /// for the given selector.
   llvm::Value *EmitSelector(CGBuilderTy &Builder, Selector Sel);
-
+  
   /// GetProtocolRef - Return a reference to the internal protocol
   /// description, creating an empty one if it has not been
   /// defined. The return value has type ProtocolPtrTy.
@@ -505,9 +508,6 @@ public:
 
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
   
-  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
-                                         const ObjCContainerDecl *CD=0);
-
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
 
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
@@ -555,8 +555,14 @@ private:
                                             llvm::Constant *IsAGV, 
                                             llvm::Constant *SuperClassGV,
                                             llvm::Constant *ClassRoGV);
-                                
-                                
+  
+  llvm::Constant *GetMethodConstant(const ObjCMethodDecl *MD);
+  
+  /// EmitMethodList - Emit the method list for the given
+  /// implementation. The return value has type MethodListnfABITy.
+  llvm::Constant *EmitMethodList(const std::string &Name,
+                                 const char *Section,
+                                 const ConstantVector &Methods);                             
   
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
@@ -584,10 +590,6 @@ public:
                                 const ObjCInterfaceDecl *ID){ return 0; }
   
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel)
-    { return 0; }
-  
-  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
-                                         const ObjCContainerDecl *CD=0)
     { return 0; }
   
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
@@ -1607,7 +1609,7 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
                                         ObjCTypes.MethodListPtrTy);
 }
 
-llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD,
+llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
                                           const ObjCContainerDecl *CD) { 
   std::string Name;
   GetNameForMethod(OMD, CD, Name);
@@ -3100,7 +3102,7 @@ enum MetaDataDlags {
   CLS = 0x0,
   CLS_META = 0x1,
   CLS_ROOT = 0x2,
-  CLS_HIDDEN = 0x10,
+  OBJC2_CLS_HIDDEN = 0x10,
   CLS_EXCEPTION = 0x20
 };
 /// BuildClassRoTInitializer - generate meta-data for:
@@ -3131,7 +3133,27 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   // FIXME. For 64bit targets add 0 here.
   Values[ 3] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
   Values[ 4] = GetClassName(ID->getIdentifier());
-  Values[ 5] = llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
+  // const struct _method_list_t * const baseMethods;
+  std::vector<llvm::Constant*> Methods;
+  std::string MethodListName("\01l_OBJC_$_");
+  if (flags & CLS_META) {
+    MethodListName += "CLASS_METHODS_" + ID->getNameAsString();
+    for (ObjCImplementationDecl::classmeth_iterator i = ID->classmeth_begin(),
+         e = ID->classmeth_end(); i != e; ++i) {
+      // Class methods should always be defined.
+      Methods.push_back(GetMethodConstant(*i));
+    }
+  } else {
+    MethodListName += "INSTANCE_METHODS_" + ID->getNameAsString();
+    for (ObjCImplementationDecl::instmeth_iterator i = ID->instmeth_begin(),
+         e = ID->instmeth_end(); i != e; ++i) {
+      // Instance methods should always be defined.
+      Methods.push_back(GetMethodConstant(*i));
+    }
+  }
+  // FIXME. Section may always be .data
+  Values[ 5] = EmitMethodList(MethodListName, 
+               ".section __DATA,__data,regular,no_dead_strip", Methods);
   Values[ 6] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
   Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
@@ -3215,6 +3237,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                             &CGM.getModule());
     UsedGlobals.push_back(ObjCEmptyVtableVar);
   }
+  assert(ID->getClassInterface() && 
+         "CGObjCNonFragileABIMac::GenerateClass - class is 0");
   uint32_t InstanceStart = 
     CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassnfABITy);
   uint32_t InstanceSize = InstanceStart;
@@ -3224,7 +3248,9 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   
   llvm::GlobalVariable *SuperClassGV, *IsAGV;
   
-  if (ID->getClassInterface() && !ID->getClassInterface()->getSuperClass()) {
+  if (IsClassHidden(ID->getClassInterface()))
+    flags |= OBJC2_CLS_HIDDEN;
+  if (!ID->getClassInterface()->getSuperClass()) {
     // class is root
     flags |= CLS_ROOT;
     std::string SuperClassName = ObjCClassName + ClassName;
@@ -3272,7 +3298,9 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   
   // Metadata for the class
   flags = CLS;
-  if (ID->getClassInterface() && !ID->getClassInterface()->getSuperClass()) {
+  if (IsClassHidden(ID->getClassInterface()))
+    flags |= OBJC2_CLS_HIDDEN;
+  if (!ID->getClassInterface()->getSuperClass()) {
     flags |= CLS_ROOT;
     SuperClassGV = 0;
   }
@@ -3389,6 +3417,63 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
   GCATV->setSection(".section __DATA,__data,regular,no_dead_strip");
   UsedGlobals.push_back(GCATV);
   DefinedCategories.push_back(GCATV);
+}
+
+/// GetMethodConstant - Return a struct objc_method constant for the
+/// given method if it has been defined. The result is null if the
+/// method has not been defined. The return value has type MethodPtrTy.
+llvm::Constant *CGObjCNonFragileABIMac::GetMethodConstant(
+                                                    const ObjCMethodDecl *MD) {
+  // FIXME: Use DenseMap::lookup
+  llvm::Function *Fn = MethodDefinitions[MD];
+  if (!Fn)
+    return 0;
+  
+  std::vector<llvm::Constant*> Method(3);
+  Method[0] = 
+  llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
+                                 ObjCTypes.SelectorPtrTy);
+  Method[1] = GetMethodVarType(MD);
+  Method[2] = llvm::ConstantExpr::getBitCast(Fn, ObjCTypes.Int8PtrTy);
+  return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Method);
+}
+
+/// EmitMethodList - Build meta-data for method declarations
+/// struct _method_list_t {
+///   uint32_t entsize;  // sizeof(struct _objc_method)
+///   uint32_t method_count;
+///   struct _objc_method method_list[method_count];
+/// }
+///
+llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
+                                              const std::string &Name,
+                                              const char *Section,
+                                              const ConstantVector &Methods) {
+  // Return null for empty list.
+  if (Methods.empty())
+    return llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
+  
+  std::vector<llvm::Constant*> Values(3);
+  // sizeof(struct _objc_method)
+  unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.MethodTy);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
+  // method_count
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Methods.size());
+  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.MethodTy,
+                                             Methods.size());
+  Values[2] = llvm::ConstantArray::get(AT, Methods);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(Init->getType(), false,
+                             llvm::GlobalValue::InternalLinkage,
+                             Init,
+                             Name,
+                             &CGM.getModule());
+  GV->setSection(Section);
+  UsedGlobals.push_back(GV);
+  return llvm::ConstantExpr::getBitCast(GV,
+                                        ObjCTypes.MethodListnfABIPtrTy);
 }
 /* *** */
 
