@@ -79,8 +79,9 @@ public:
   /// ValidDebugInfo - Return true if V represents valid debug info value.
   bool ValidDebugInfo(Value *V);
 
-  /// label. Returns a unique label ID used to generate a label and provide
-  /// correspondence to the source line list.
+  /// RecordSourceLine - Register a source line with debug info. Returns a
+  /// unique label ID used to generate a label and provide correspondence to
+  /// the source line list.
   unsigned RecordSourceLine(unsigned Line, unsigned Col, unsigned Src);
 
   /// RecordSource - Register a source file with debug info. Returns an source
