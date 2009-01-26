@@ -1238,7 +1238,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   }
 
   // Find a point to restore the value after the barrier.
-  unsigned RestoreIndex;
+  unsigned RestoreIndex = 0;
   MachineBasicBlock::iterator RestorePt =
     findRestorePoint(BarrierMBB, Barrier, LR->end, RefsInMBB, RestoreIndex);
   if (RestorePt == BarrierMBB->end())
