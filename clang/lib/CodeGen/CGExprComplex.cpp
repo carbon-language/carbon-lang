@@ -270,7 +270,7 @@ ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
   DestType = DestType->getAsComplexType()->getElementType();
 
   // C99 6.3.1.6: When a value of complextype is converted to another
-  // complex type, both the real and imaginary parts followthe conversion
+  // complex type, both the real and imaginary parts follow the conversion
   // rules for the corresponding real types.
   Val.first = CGF.EmitScalarConversion(Val.first, SrcType, DestType);
   Val.second = CGF.EmitScalarConversion(Val.second, SrcType, DestType);
