@@ -341,6 +341,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\DbgInfoPrinter.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\DebugInfo.cpp"
 				>
 			</File>
