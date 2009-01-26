@@ -689,7 +689,7 @@ class OptionParser:
 
         self.addOption(JoinedOption('-i', self.iGroup))
 
-        # Where are these coming from? I can't find them...
+        self.emitLLVMOption = self.addOption(FlagOption('-emit-llvm'))
         self.eOption = self.addOption(JoinedOrSeparateOption('-e'))
         self.rOption = self.addOption(JoinedOrSeparateOption('-r'))
 

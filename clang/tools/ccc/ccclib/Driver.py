@@ -336,6 +336,7 @@ class Driver(object):
     def buildNormalPipeline(self, args):
         hasAnalyze = args.getLastArg(self.parser.analyzeOption)
         hasCombine = args.getLastArg(self.parser.combineOption)
+        hasEmitLLVM = args.getLastArg(self.parser.emitLLVMOption)
         hasSyntaxOnly = args.getLastArg(self.parser.syntaxOnlyOption)
         hasDashC = args.getLastArg(self.parser.cOption)
         hasDashE = args.getLastArg(self.parser.EOption)
@@ -368,7 +369,7 @@ class Driver(object):
                 # worth doing, since the tool presumably does this
                 # anyway, and this just adds an extra stat to the
                 # equation, but this is gcc compatible.
-                if not os.path.exists(inputValue):
+                if inputValue != '-' and not os.path.exists(inputValue):
                     self.warning("%s: No such file or directory" % inputValue)
                 else:
                     inputs.append((klass, a))
@@ -408,15 +409,11 @@ class Driver(object):
         if hasDashE or hasDashM or hasDashMM:
             finalPhase = Phases.Phase.eOrderPreprocess
             finalPhaseOpt = hasDashE
-        elif hasAnalyze:
+        elif (hasAnalyze or hasSyntaxOnly or 
+              hasEmitLLVM or hasDashS):
             finalPhase = Phases.Phase.eOrderCompile
-            finalPhaseOpt = hasAnalyze
-        elif hasSyntaxOnly:
-            finalPhase = Phases.Phase.eOrderCompile
-            finalPhaseOpt = hasSyntaxOnly
-        elif hasDashS:
-            finalPhase = Phases.Phase.eOrderCompile
-            finalPhaseOpt = hasDashS
+            finalPhaseOpt = (hasAnalyze or hasSyntaxOnly or 
+                             hasEmitLLVM or hasDashS)
         elif hasDashC:
             finalPhase = Phases.Phase.eOrderAssemble
             finalPhaseOpt = hasDashC    
@@ -464,6 +461,8 @@ class Driver(object):
                 sequence.append(Phases.AnalyzePhase())
             elif hasSyntaxOnly:
                 sequence.append(Phases.SyntaxOnlyPhase())
+            elif hasEmitLLVM:
+                sequence.append(Phases.EmitLLVMPhase())
             else:
                 sequence.extend([Phases.CompilePhase(),
                                  Phases.AssemblePhase(),
@@ -503,6 +502,14 @@ class Driver(object):
                                                        output)
                         elif isinstance(transition, Phases.SyntaxOnlyPhase):
                             output = Types.NothingType
+                            current = Phases.JobAction(transition,
+                                                       [current],
+                                                       output)
+                        elif isinstance(transition, Phases.EmitLLVMPhase):
+                            if hasDashS:
+                                output = Types.LLVMAsmType
+                            else:
+                                output = Types.LLVMBCType
                             current = Phases.JobAction(transition,
                                                        [current],
                                                        output)

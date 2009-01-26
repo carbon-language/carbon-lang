@@ -179,9 +179,15 @@ class Clang_CompileTool(Tool):
         patchOutputNameForPTH = False
 
         if isinstance(phase.phase, Phases.AnalyzePhase):
+            assert outputType is Types.PlistType
             cmd_args.append('-analyze')
         elif isinstance(phase.phase, Phases.SyntaxOnlyPhase):
+            assert outputType is Types.NothingType
             cmd_args.append('-fsyntax-only')
+        elif outputType is Types.LLVMAsmType:
+            cmd_args.append('-emit-llvm')
+        elif outputType is Types.LLVMBCType:
+            cmd_args.append('-emit-llvm-bc')
         elif outputType is Types.AsmTypeNoPP:
             cmd_args.append('-S')
         elif outputType is Types.PCHType:
@@ -686,6 +692,15 @@ class Darwin_X86_CompileTool(Darwin_X86_CC1Tool):
         if (arglist.getLastArg(arglist.parser.traditionalOption) or
             arglist.getLastArg(arglist.parser.f_traditionalOption)):
             raise Arguments.InvalidArgumentsError("-traditional is not supported without -E")
+
+        if outputType is Types.PCHType:
+            pass
+        elif outputType is Types.AsmTypeNoPP:
+            pass
+        elif outputType is Types.LLVMAsmType:
+            cmd_args.append('-emit-llvm')
+        elif outputType is Types.LLVMBCType:
+            cmd_args.append('-emit-llvm-bc')
 
         if outputType is Types.PCHType:
             output_args = []

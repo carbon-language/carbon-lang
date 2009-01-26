@@ -76,6 +76,10 @@ class SyntaxOnlyPhase(Phase):
     def __init__(self):
         super(SyntaxOnlyPhase, self).__init__("syntax-only", Phase.eOrderCompile)
 
+class EmitLLVMPhase(Phase):
+    def __init__(self):
+        super(EmitLLVMPhase, self).__init__("emit-llvm", Phase.eOrderCompile)
+
 class CompilePhase(Phase):
     def __init__(self):
         super(CompilePhase, self).__init__("compiler", Phase.eOrderCompile)

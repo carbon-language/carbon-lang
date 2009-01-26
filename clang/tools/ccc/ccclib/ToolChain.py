@@ -64,12 +64,14 @@ class Darwin_X86_ToolChain(ToolChain):
         self.archName = archName
 
         self.clangTool = Tools.Clang_CompileTool(self)
+        cc = Tools.Darwin_X86_CompileTool(self)
         self.toolMap = {
             Phases.PreprocessPhase : Tools.Darwin_X86_PreprocessTool(self),
             Phases.AnalyzePhase : self.clangTool,
-            Phases.SyntaxOnlyPhase : Tools.Darwin_X86_CompileTool(self),
-            Phases.CompilePhase : Tools.Darwin_X86_CompileTool(self),
-            Phases.PrecompilePhase : Tools.Darwin_X86_CompileTool(self),
+            Phases.SyntaxOnlyPhase : cc,
+            Phases.EmitLLVMPhase : cc,
+            Phases.CompilePhase : cc,
+            Phases.PrecompilePhase : cc,
             Phases.AssemblePhase : Tools.Darwin_AssembleTool(self),
             Phases.LinkPhase : Tools.Darwin_X86_LinkTool(self),
             Phases.LipoPhase : Tools.LipoTool(),
@@ -110,7 +112,9 @@ class Darwin_X86_ToolChain(ToolChain):
         if self.driver.cccClang and self.archName == 'i386':
             if (action.inputs[0].type in (Types.CType, Types.CTypeNoPP,
                                           Types.ObjCType, Types.ObjCTypeNoPP) and
-                isinstance(action.phase, Phases.CompilePhase)):
+                (isinstance(action.phase, Phases.CompilePhase) or
+                 isinstance(action.phase, Phases.SyntaxOnlyPhase) or
+                 isinstance(action.phase, Phases.EmitLLVMPhase))):
                 return self.clangTool
             elif (action.inputs[0].type in (Types.CHeaderType, Types.CHeaderNoPPType,
                                             Types.ObjCHeaderType, Types.ObjCHeaderNoPPType) and
@@ -200,11 +204,13 @@ class Generic_GCC_ToolChain(ToolChain):
 
     def __init__(self, driver):
         super(Generic_GCC_ToolChain, self).__init__(driver)
+        cc = Tools.GCC_CompileTool()
         self.toolMap = {
             Phases.PreprocessPhase : Tools.GCC_PreprocessTool(),
             Phases.AnalyzePhase : Tools.Clang_CompileTool(self),
-            Phases.SyntaxOnlyPhase : Tools.GCC_CompileTool(),
-            Phases.CompilePhase : Tools.GCC_CompileTool(),
+            Phases.SyntaxOnlyPhase : cc,
+            Phases.EmitLLVMPhase : cc,
+            Phases.CompilePhase : cc,
             Phases.PrecompilePhase : Tools.GCC_PrecompileTool(),
             Phases.AssemblePhase : Tools.GCC_AssembleTool(),
             Phases.LinkPhase : Tools.GCC_LinkTool(),

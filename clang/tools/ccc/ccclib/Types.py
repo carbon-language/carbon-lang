@@ -69,6 +69,8 @@ FortranType = InputType('f95-cpp-input', FortranTypeNoPP, canBeUserSpecified=Tru
 JavaType = InputType('java', canBeUserSpecified=True)
 
 # Misc.
+LLVMAsmType = InputType('llvm-asm', tempSuffix='ll')
+LLVMBCType = InputType('llvm-bc', tempSuffix='bc')
 PlistType = InputType('plist', tempSuffix='plist')
 PCHType = InputType('precompiled-header', tempSuffix='gch')
 ObjectType = InputType('object', tempSuffix='o')
