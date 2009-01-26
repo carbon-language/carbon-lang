@@ -1416,14 +1416,8 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
   else
     ShiftOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), SUB);
 
-  // Make desired shift
-  SDValue SwitchVal = DAG.getNode(ISD::SHL, TLI.getPointerTy(),
-                                  DAG.getConstant(1, TLI.getPointerTy()),
-                                  ShiftOp);
-
-  unsigned SwitchReg = FuncInfo.MakeReg(TLI.getPointerTy());
-  SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), SwitchReg, SwitchVal);
-  B.Reg = SwitchReg;
+  B.Reg = FuncInfo.MakeReg(TLI.getShiftAmountTy());
+  SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), B.Reg, ShiftOp);
 
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
@@ -1453,10 +1447,14 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
 void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
                                             unsigned Reg,
                                             BitTestCase &B) {
-  // Emit bit tests and jumps
-  SDValue SwitchVal = DAG.getCopyFromReg(getControlRoot(), Reg,
-                                           TLI.getPointerTy());
+  // Make desired shift
+  SDValue ShiftOp = DAG.getCopyFromReg(getControlRoot(), Reg,
+                                       TLI.getShiftAmountTy());
+  SDValue SwitchVal = DAG.getNode(ISD::SHL, TLI.getPointerTy(),
+                                  DAG.getConstant(1, TLI.getPointerTy()),
+                                  ShiftOp);
 
+  // Emit bit tests and jumps
   SDValue AndOp = DAG.getNode(ISD::AND, TLI.getPointerTy(), SwitchVal,
                               DAG.getConstant(B.Mask, TLI.getPointerTy()));
   SDValue AndCmp = DAG.getSetCC(TLI.getSetCCResultType(AndOp.getValueType()),
