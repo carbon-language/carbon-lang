@@ -110,6 +110,14 @@ namespace clang
   // Basic
   class DiagnosticBuilder;
 
+  // Determines whether the low bit of the result pointer for the
+  // given UID is always zero. If so, ActionResult will use that bit
+  // for it's "invalid" flag.
+  template<unsigned UID>
+  struct IsResultPtrLowBitFree {
+    static const bool value = false;
+  };
+
   /// ActionBase - A small part split from Action because of the horrible
   /// definition order dependencies between Action and the smart pointers.
   class ActionBase {
@@ -127,19 +135,65 @@ namespace clang
     /// ActionResult - This structure is used while parsing/acting on
     /// expressions, stmts, etc.  It encapsulates both the object returned by
     /// the action, plus a sense of whether or not it is valid.
-    template<unsigned UID>
-    struct ActionResult {
+    /// When CompressInvalid is true, the "invalid" flag will be
+    /// stored in the low bit of the Val pointer. 
+    template<unsigned UID, 
+             bool CompressInvalid = IsResultPtrLowBitFree<UID>::value>
+    class ActionResult {
       void *Val;
-      bool isInvalid;
+      bool Invalid;
 
-      ActionResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
+    public:
+      ActionResult(bool Invalid = false) : Val(0), Invalid(Invalid) {}
       template<typename ActualExprTy>
-      ActionResult(ActualExprTy *val) : Val(val), isInvalid(false) {}
-      ActionResult(const DiagnosticBuilder &) : Val(0), isInvalid(true) {}
+      ActionResult(ActualExprTy *val) : Val(val), Invalid(false) {}
+      ActionResult(const DiagnosticBuilder &) : Val(0), Invalid(true) {}
+
+      void *get() const { return Val; }
+      void set(void *V) { Val = V; }
+      bool isInvalid() const { return Invalid; }
 
       const ActionResult &operator=(void *RHS) {
         Val = RHS;
-        isInvalid = false;
+        Invalid = false;
+        return *this;
+      }
+    };
+
+    // This ActionResult partial specialization places the "invalid"
+    // flag into the low bit of the pointer.
+    template<unsigned UID>
+    class ActionResult<UID, true> {
+      // A pointer whose low bit is 1 if this result is invalid, 0
+      // otherwise.
+      uintptr_t PtrWithInvalid;
+
+    public:
+      ActionResult(bool Invalid = false) 
+        : PtrWithInvalid(static_cast<uintptr_t>(Invalid)) { }
+
+      template<typename ActualExprTy>
+      ActionResult(ActualExprTy *val) 
+        : PtrWithInvalid(reinterpret_cast<uintptr_t>(val)) {
+        assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
+      }
+
+      ActionResult(const DiagnosticBuilder &) : PtrWithInvalid(0x01) { }
+
+      void *get() const { 
+        return reinterpret_cast<void *>(PtrWithInvalid & ~0x01); 
+      }
+
+      void set(void *V) { 
+        PtrWithInvalid = reinterpret_cast<uintptr_t>(V);
+        assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
+      }
+
+      bool isInvalid() const { return PtrWithInvalid & 0x01; }
+
+      const ActionResult &operator=(void *RHS) {
+        PtrWithInvalid = reinterpret_cast<uintptr_t>(RHS);
+        assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
         return *this;
       }
     };
@@ -167,7 +221,7 @@ namespace clang
     static const unsigned UID = 1;
   };
   template <> struct DestroyerToUID<&ActionBase::DeleteTemplateArg> {
-    static const unsigned UID = 1;
+    static const unsigned UID = 5; // FIXME
   };
 
   /// ASTOwningResult - A moveable smart pointer for AST nodes that also
@@ -311,18 +365,22 @@ namespace clang
 #endif
   };
 
+  // Important: There are two different implementations of
+  // ASTOwningResult below, depending on whether
+  // DISABLE_SMART_POINTERS is defined. If you make changes that
+  // affect the interface, be sure to compile and test both ways!
+
+#if !defined(DISABLE_SMART_POINTERS)
   template <ASTDestroyer Destroyer>
   class ASTOwningResult
   {
     ASTOwningPtr<Destroyer> Ptr;
     bool Invalid;
 
-#if !defined(DISABLE_SMART_POINTERS)
     friend class moving::ASTResultMover<Destroyer>;
 
     ASTOwningResult(ASTOwningResult&); // DO NOT IMPLEMENT
     ASTOwningResult& operator =(ASTOwningResult&); // DO NOT IMPLEMENT
-#endif
 
   public:
     typedef ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID> DumbResult;
@@ -332,8 +390,7 @@ namespace clang
     ASTOwningResult(ActionBase &actions, void *node)
       : Ptr(actions, node), Invalid(false) {}
     ASTOwningResult(ActionBase &actions, const DumbResult &res)
-      : Ptr(actions, res.Val), Invalid(res.isInvalid) {}
-#if !defined(DISABLE_SMART_POINTERS)
+      : Ptr(actions, res.get()), Invalid(res.isInvalid()) {}
     /// Move from another owning result
     ASTOwningResult(moving::ASTResultMover<Destroyer> mover)
       : Ptr(moving::ASTPtrMover<Destroyer>(mover->Ptr)),
@@ -341,13 +398,7 @@ namespace clang
     /// Move from an owning pointer
     ASTOwningResult(moving::ASTPtrMover<Destroyer> mover)
       : Ptr(mover), Invalid(false) {}
-#else
-    // Normal copying semantics are defined implicitly.
-    // The fake movers need this:
-    explicit ASTOwningResult(void *ptr) : Ptr(ptr), Invalid(false) {}
-#endif
 
-#if !defined(DISABLE_SMART_POINTERS)
     /// Move assignment from another owning result
     ASTOwningResult & operator =(moving::ASTResultMover<Destroyer> mover) {
       Ptr = move(mover->Ptr);
@@ -361,7 +412,6 @@ namespace clang
       Invalid = false;
       return *this;
     }
-#endif
 
     /// Assignment from a raw pointer. Takes ownership - beware!
     ASTOwningResult & operator =(void *raw)
@@ -373,8 +423,8 @@ namespace clang
 
     /// Assignment from an ActionResult. Takes ownership - beware!
     ASTOwningResult & operator =(const DumbResult &res) {
-      Ptr = res.Val;
-      Invalid = res.isInvalid;
+      Ptr = res.get();
+      Invalid = res.isInvalid();
       return *this;
     }
 
@@ -404,7 +454,6 @@ namespace clang
       return Ptr.take();
     }
 
-#if !defined(DISABLE_SMART_POINTERS)
     /// Move hook
     operator moving::ASTResultMover<Destroyer>() {
       return moving::ASTResultMover<Destroyer>(*this);
@@ -414,8 +463,60 @@ namespace clang
     moving::ASTPtrMover<Destroyer> ptr_move() {
       return moving::ASTPtrMover<Destroyer>(Ptr);
     }
-#endif
   };
+#else
+  template <ASTDestroyer Destroyer>
+  class ASTOwningResult
+  {
+  public:
+    typedef ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID> DumbResult;
+
+  private:
+    DumbResult Result;
+
+  public:
+    explicit ASTOwningResult(ActionBase &actions, bool invalid = false)
+      : Result(invalid) { }
+    ASTOwningResult(ActionBase &actions, void *node) : Result(node) { }
+    ASTOwningResult(ActionBase &actions, const DumbResult &res) : Result(res) { }
+    // Normal copying semantics are defined implicitly.
+    // The fake movers need this:
+    explicit ASTOwningResult(void *ptr) : Result(ptr) { }
+
+    /// Assignment from a raw pointer. Takes ownership - beware!
+    ASTOwningResult & operator =(void *raw)
+    {
+      Result = raw;
+      return *this;
+    }
+
+    /// Assignment from an ActionResult. Takes ownership - beware!
+    ASTOwningResult & operator =(const DumbResult &res) {
+      Result = res;
+      return *this;
+    }
+
+    /// Access to the raw pointer.
+    void * get() const { return Result.get(); }
+
+    bool isInvalid() const { return Result.isInvalid(); }
+
+    /// Does this point to a usable AST node? To be usable, the node must be
+    /// valid and non-null.
+    bool isUsable() const { return !Result.isInvalid() && get(); }
+
+    /// Take outside ownership of the raw pointer.
+    void * take() {
+      return Result.get();
+    }
+
+    /// Alias for interface familiarity with unique_ptr.
+    void * release() { return take(); }
+
+    /// Pass ownership to a classical ActionResult.
+    DumbResult result() { return Result; }
+  };
+#endif
 
   template <ASTDestroyer Destroyer>
   class ASTMultiPtr

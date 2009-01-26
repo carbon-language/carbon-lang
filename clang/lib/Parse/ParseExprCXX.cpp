@@ -333,7 +333,7 @@ Parser::OwningExprResult Parser::ParseCXXThis() {
 Parser::OwningExprResult
 Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
-  TypeTy *TypeRep = Actions.ActOnTypeName(CurScope, DeclaratorInfo).Val;
+  TypeTy *TypeRep = Actions.ActOnTypeName(CurScope, DeclaratorInfo).get();
 
   assert(Tok.is(tok::l_paren) && "Expected '('!");
   SourceLocation LParenLoc = ConsumeParen();
@@ -629,10 +629,10 @@ Parser::TypeTy *Parser::ParseConversionFunctionId() {
 
   // Finish up the type.
   Action::TypeResult Result = Actions.ActOnTypeName(CurScope, D);
-  if (Result.isInvalid)
+  if (Result.isInvalid())
     return 0;
   else
-    return Result.Val;
+    return Result.get();
 }
 
 /// ParseCXXNewExpression - Parse a C++ new-expression. New is used to allocate

@@ -393,13 +393,13 @@ void Parser::ParseBaseClause(DeclTy *ClassDecl)
   while (true) {
     // Parse a base-specifier.
     BaseResult Result = ParseBaseSpecifier(ClassDecl);
-    if (Result.isInvalid) {
+    if (Result.isInvalid()) {
       // Skip the rest of this base specifier, up until the comma or
       // opening brace.
       SkipUntil(tok::comma, tok::l_brace, true, true);
     } else {
       // Add this to our array of base specifiers.
-      BaseInfo.push_back(Result.Val);
+      BaseInfo.push_back(Result.get());
     }
 
     // If the next token is a comma, consume it and keep reading
@@ -835,8 +835,8 @@ void Parser::ParseConstructorInitializer(DeclTy *ConstructorDecl) {
   
   do {
     MemInitResult MemInit = ParseMemInitializer(ConstructorDecl);
-    if (!MemInit.isInvalid)
-      MemInitializers.push_back(MemInit.Val);
+    if (!MemInit.isInvalid())
+      MemInitializers.push_back(MemInit.get());
 
     if (Tok.is(tok::comma))
       ConsumeToken();

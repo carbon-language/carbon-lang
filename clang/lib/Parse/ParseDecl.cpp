@@ -37,7 +37,7 @@ Parser::TypeTy *Parser::ParseTypeName() {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
   
-  return Actions.ActOnTypeName(CurScope, DeclaratorInfo).Val;
+  return Actions.ActOnTypeName(CurScope, DeclaratorInfo).get();
 }
 
 /// ParseAttributes - Parse a non-empty attributes list.

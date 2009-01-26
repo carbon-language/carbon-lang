@@ -38,6 +38,14 @@ namespace clang {
   class Preprocessor;
   class Token;
 
+  // We can re-use the low bit of expression, statement, base, and
+  // member-initializer pointers for the "invalid" flag of
+  // ActionResult.
+  template<> struct IsResultPtrLowBitFree<0> { static const bool value = true; };
+  template<> struct IsResultPtrLowBitFree<1> { static const bool value = true; };
+  template<> struct IsResultPtrLowBitFree<3> { static const bool value = true; };
+  template<> struct IsResultPtrLowBitFree<4> { static const bool value = true; };
+
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
 /// into something useful: e.g. a parse tree.

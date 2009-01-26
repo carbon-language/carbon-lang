@@ -202,7 +202,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
         superTy = Context.getPointerType(superTy);
         ExprResult ReceiverExpr = new ObjCSuperExpr(SourceLocation(), superTy);
         // We are really in an instance method, redirect.
-        return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
+        return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac, rbrac,
                                     Args, NumArgs);
       }
       // We are sending a message to 'super' within a class method. Do nothing,
@@ -216,7 +216,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
         ExprResult ReceiverExpr = new DeclRefExpr(VD, VD->getType(), 
                                                   receiverLoc);
         // We are really in an instance method, redirect.
-        return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
+        return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac, rbrac,
                                     Args, NumArgs);
       }
       return Diag(receiverLoc, diag::err_undeclared_var_use) << receiverName;
