@@ -2160,7 +2160,8 @@ bool X86::isPSHUFLWMask(SDNode *N) {
 
 /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to SHUFP*.
-static bool isSHUFPMask(SDOperandPtr Elems, unsigned NumElems) {
+template<class SDOperand>
+static bool isSHUFPMask(SDOperand *Elems, unsigned NumElems) {
   if (NumElems != 2 && NumElems != 4) return false;
 
   unsigned Half = NumElems / 2;
@@ -2183,7 +2184,8 @@ bool X86::isSHUFPMask(SDNode *N) {
 /// the reverse of what x86 shuffles want. x86 shuffles requires the lower
 /// half elements to come from vector 1 (which would equal the dest.) and
 /// the upper half to come from vector 2.
-static bool isCommutedSHUFP(SDOperandPtr Ops, unsigned NumOps) {
+template<class SDOperand>
+static bool isCommutedSHUFP(SDOperand *Ops, unsigned NumOps) {
   if (NumOps != 2 && NumOps != 4) return false;
 
   unsigned Half = NumOps / 2;
@@ -2277,7 +2279,8 @@ bool X86::isMOVHPMask(SDNode *N) {
 
 /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKL.
-bool static isUNPCKLMask(SDOperandPtr Elts, unsigned NumElts,
+template<class SDOperand>
+bool static isUNPCKLMask(SDOperand *Elts, unsigned NumElts,
                          bool V2IsSplat = false) {
   if (NumElts != 2 && NumElts != 4 && NumElts != 8 && NumElts != 16)
     return false;
@@ -2306,7 +2309,8 @@ bool X86::isUNPCKLMask(SDNode *N, bool V2IsSplat) {
 
 /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKH.
-bool static isUNPCKHMask(SDOperandPtr Elts, unsigned NumElts,
+template<class SDOperand>
+bool static isUNPCKHMask(SDOperand *Elts, unsigned NumElts,
                          bool V2IsSplat = false) {
   if (NumElts != 2 && NumElts != 4 && NumElts != 8 && NumElts != 16)
     return false;
@@ -2382,7 +2386,8 @@ bool X86::isUNPCKH_v_undef_Mask(SDNode *N) {
 /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVSS,
 /// MOVSD, and MOVD, i.e. setting the lowest element.
-static bool isMOVLMask(SDOperandPtr Elts, unsigned NumElts) {
+template<class SDOperand>
+static bool isMOVLMask(SDOperand *Elts, unsigned NumElts) {
   if (NumElts != 2 && NumElts != 4)
     return false;
 
@@ -2405,7 +2410,8 @@ bool X86::isMOVLMask(SDNode *N) {
 /// isCommutedMOVL - Returns true if the shuffle mask is except the reverse
 /// of what x86 movss want. X86 movs requires the lowest  element to be lowest
 /// element of vector 2 and the other elements to come from vector 1 in order.
-static bool isCommutedMOVL(SDOperandPtr Ops, unsigned NumOps,
+template<class SDOperand>
+static bool isCommutedMOVL(SDOperand *Ops, unsigned NumOps,
                            bool V2IsSplat = false,
                            bool V2IsUndef = false) {
   if (NumOps != 2 && NumOps != 4 && NumOps != 8 && NumOps != 16)

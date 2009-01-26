@@ -4138,7 +4138,7 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
   
   // If this is fp_round(fpextend), don't fold it, allow ourselves to be folded.
   if (N->hasOneUse() && 
-      N->use_begin().getUse().getSDValue().getOpcode() == ISD::FP_ROUND)
+      N->use_begin()->getOpcode() == ISD::FP_ROUND)
     return SDValue();
 
   // fold (fp_extend c1fp) -> c1fp
