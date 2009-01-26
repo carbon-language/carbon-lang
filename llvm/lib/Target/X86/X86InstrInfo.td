@@ -308,6 +308,16 @@ def nvloadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
   return false;
 }]>;
 
+def gsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  const Value *Src = LD->getSrcValue();
+  if (!Src)
+    return false;
+  if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+    return PT->getAddressSpace() == 256;
+  return false;
+}]>;
+
 def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
 def loadi64 : PatFrag<(ops node:$ptr), (i64 (load node:$ptr))>;
 
@@ -2851,6 +2861,11 @@ def TLS_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
 def TLS_tp : I<0x8B, Pseudo, (outs GR32:$dst), (ins),
                "movl\t%gs:0, $dst",
                [(set GR32:$dst, X86TLStp)]>, SegGS;
+
+let AddedComplexity = 5 in
+def GS_MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
+                   "movl\t%gs:$src, $dst",
+                   [(set GR32:$dst, (gsload addr:$src))]>, SegGS;
 
 //===----------------------------------------------------------------------===//
 // DWARF Pseudo Instructions

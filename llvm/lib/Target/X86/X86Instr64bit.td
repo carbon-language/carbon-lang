@@ -1242,6 +1242,11 @@ def TLS_addr64 : I<0, Pseudo, (outs GR64:$dst), (ins i64imm:$sym),
               ".byte\t0x66; leaq\t${sym:mem}(%rip), $dst; .word\t0x6666; rex64",
                   [(set GR64:$dst, (X86tlsaddr tglobaltlsaddr:$sym))]>;
 
+let AddedComplexity = 5 in
+def MOV64GSrm : RI<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+                 "movq\t%gs:$src, $dst",
+                 [(set GR64:$dst, (gsload addr:$src))]>, SegGS;
+
 //===----------------------------------------------------------------------===//
 // Atomic Instructions
 //===----------------------------------------------------------------------===//
