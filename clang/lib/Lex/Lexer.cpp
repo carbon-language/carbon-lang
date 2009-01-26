@@ -321,10 +321,9 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
   
   // Create a new SLoc which is expanded from Instantiation(FileLoc) but whose
   // characters come from spelling(FileLoc)+Offset.
-  SourceLocation InstLoc = SourceMgr.getInstantiationLoc(FileLoc);
   SourceLocation SpellingLoc = SourceMgr.getSpellingLoc(FileLoc);
   SpellingLoc = SpellingLoc.getFileLocWithOffset(CharNo);
-  return SourceMgr.createInstantiationLoc(SpellingLoc, InstLoc, TokLen);
+  return SourceMgr.createInstantiationLoc(SpellingLoc, FileLoc, TokLen);
 }
 
 /// getSourceLocation - Return a source location identifier for the specified
