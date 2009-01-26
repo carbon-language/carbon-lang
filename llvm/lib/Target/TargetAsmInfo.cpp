@@ -99,6 +99,7 @@ void TargetAsmInfo::fillDefaultValues() {
   SupportsDebugInformation = false;
   SupportsExceptionHandling = false;
   DwarfRequiresFrameSection = true;
+  SupportsMacInfoSection = true;
   NonLocalEHFrameLabel = false;
   GlobalEHDirective = 0;
   SupportsWeakOmittedEHFrame = true;

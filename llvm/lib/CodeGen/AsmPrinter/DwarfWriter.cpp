@@ -2167,8 +2167,10 @@ private:
     EmitLabel("section_abbrev", 0);
     Asm->SwitchToDataSection(TAI->getDwarfARangesSection());
     EmitLabel("section_aranges", 0);
-    Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
-    EmitLabel("section_macinfo", 0);
+    if (TAI->doesSupportMacInfoSection()) {
+      Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
+      EmitLabel("section_macinfo", 0);
+    }
     Asm->SwitchToDataSection(TAI->getDwarfLineSection());
     EmitLabel("section_line", 0);
     Asm->SwitchToDataSection(TAI->getDwarfLocSection());
@@ -2755,10 +2757,12 @@ private:
   /// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
   ///
   void EmitDebugMacInfo() {
-    // Start the dwarf macinfo section.
-    Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
+    if (TAI->doesSupportMacInfoSection()) {
+      // Start the dwarf macinfo section.
+      Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
 
-    Asm->EOL();
+      Asm->EOL();
+    }
   }
 
   /// ConstructCompileUnits - Create a compile unit DIEs.

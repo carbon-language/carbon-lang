@@ -429,27 +429,31 @@ namespace llvm {
     /// HasLEB128 - True if target asm supports leb128 directives.
     ///
     bool HasLEB128; // Defaults to false.
-    
+
     /// hasDotLocAndDotFile - True if target asm supports .loc and .file
     /// directives for emitting debugging information.
     ///
     bool HasDotLocAndDotFile; // Defaults to false.
-    
+
     /// SupportsDebugInformation - True if target supports emission of debugging
     /// information.
     bool SupportsDebugInformation;
-        
+
     /// SupportsExceptionHandling - True if target supports
     /// exception handling.
     ///
     bool SupportsExceptionHandling; // Defaults to false.
-    
+
     /// RequiresFrameSection - true if the Dwarf2 output needs a frame section
     ///
     bool DwarfRequiresFrameSection; // Defaults to true.
 
+    /// SupportsMacInfo - true if the Dwarf output supports macro information
+    ///
+    bool SupportsMacInfoSection;            // Defaults to true
+
     /// NonLocalEHFrameLabel - If set, the EH_frame label needs to be non-local.
-    /// 
+    ///
     bool NonLocalEHFrameLabel;              // Defaults to false.
 
     /// GlobalEHDirective - This is the directive used to make exception frame
@@ -817,6 +821,9 @@ namespace llvm {
     }
     bool doesDwarfRequireFrameSection() const {
       return DwarfRequiresFrameSection;
+    }
+    bool doesSupportMacInfoSection() const {
+      return SupportsMacInfoSection;
     }
     bool doesRequireNonLocalEHFrameLabel() const {
       return NonLocalEHFrameLabel;
