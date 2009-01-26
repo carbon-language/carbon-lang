@@ -155,13 +155,13 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORr8_r32:
   case SPU::ORr32_r16:
   case SPU::ORr32_r8:
-  case SPU::ORr32_r64:
   case SPU::ORr16_r64:
   case SPU::ORr8_r64:
-  case SPU::ORr64_r32:
   case SPU::ORr64_r16:
   case SPU::ORr64_r8:
 */
+  case SPU::ORr64_r32:
+  case SPU::ORr32_r64:
   case SPU::ORf32_r32:
   case SPU::ORr32_f32:
   case SPU::ORf64_r64:

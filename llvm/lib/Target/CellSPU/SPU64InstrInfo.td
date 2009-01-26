@@ -30,8 +30,8 @@
 // selb instruction definition for i64. Note that the selection mask is
 // a vector, produced by various forms of FSM:
 def SELBr64_cond:
-   SELBInst<(outs R64C:$rT), (ins R64C:$rA, R64C:$rB, VECREG:$rC),
-            [/* no pattern */]>;
+  SELBInst<(outs R64C:$rT), (ins R64C:$rA, R64C:$rB, VECREG:$rC),
+           [/* no pattern */]>;
 
 // The generic i64 select pattern, which assumes that the comparison result
 // is in a 32-bit register that contains a select mask pattern (i.e., gather

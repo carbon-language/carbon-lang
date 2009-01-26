@@ -1259,6 +1259,9 @@ multiclass BitwiseAnd
   def fabs32: ANDInst<(outs R32FP:$rT), (ins R32FP:$rA, R32C:$rB),
                       [/* Intentionally does not match a pattern */]>;
 
+  def fabs64: ANDInst<(outs R64FP:$rT), (ins R64FP:$rA, VECREG:$rB),
+                      [/* Intentionally does not match a pattern */]>;
+
   // Could use v4i32, but won't for clarity
   def fabsvec: ANDInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
                        [/* Intentionally does not match a pattern */]>;
@@ -1525,17 +1528,17 @@ multiclass BitwiseOr
   // Conversion from R32C to register
   def r32_r16:   ORCvtFormR32Reg<R16C>;
   def r32_r8:    ORCvtFormR32Reg<R8C>;
-  
-  // Conversion from register to R64C:
-  def r32_r64:   ORCvtFormR64Reg<R32C>;
-  def r16_r64:   ORCvtFormR64Reg<R16C>;
-  def r8_r64:    ORCvtFormR64Reg<R8C>;
-  
-  // Conversion from R64C to register
-  def r64_r32:   ORCvtFormRegR64<R32C>;
-  def r64_r16:   ORCvtFormRegR64<R16C>;
-  def r64_r8:    ORCvtFormRegR64<R8C>;
 */
+  
+  // Conversion to register from R64C:
+  def r32_r64:   ORCvtFormR64Reg<R32C>;
+  // def r16_r64:   ORCvtFormR64Reg<R16C>;
+  // def r8_r64:    ORCvtFormR64Reg<R8C>;
+  
+  // Conversion to R64C from register
+  def r64_r32:   ORCvtFormRegR64<R32C>;
+  // def r64_r16:   ORCvtFormRegR64<R16C>;
+  // def r64_r8:    ORCvtFormRegR64<R8C>;
 
   // bitconvert patterns:
   def r32_f32:   ORCvtFormR32Reg<R32FP,
@@ -1910,11 +1913,11 @@ class SELBInst<dag OOL, dag IOL, list<dag> pattern>:
     RRRForm<0b1000, OOL, IOL, "selb\t$rT, $rA, $rB, $rC",
             IntegerOp, pattern>;
 
-class SELBVecInst<ValueType vectype>:
+class SELBVecInst<ValueType vectype, PatFrag vnot_frag = vnot>:
   SELBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
            [(set (vectype VECREG:$rT),
                  (or (and (vectype VECREG:$rC), (vectype VECREG:$rB)),
-                     (and (vnot (vectype VECREG:$rC)),
+                     (and (vnot_frag (vectype VECREG:$rC)),
                           (vectype VECREG:$rA))))]>;
 
 class SELBVecVCondInst<ValueType vectype>:
@@ -1947,7 +1950,7 @@ multiclass SelectBits
   def v16i8: SELBVecInst<v16i8>;
   def v8i16: SELBVecInst<v8i16>;
   def v4i32: SELBVecInst<v4i32>;
-  def v2i64: SELBVecInst<v2i64>;
+  def v2i64: SELBVecInst<v2i64, vnot_conv>;
 
   def r128:  SELBRegInst<GPRC>;
   def r64:   SELBRegInst<R64C>;
@@ -4320,6 +4323,13 @@ def : Pat<(fabs R32FP:$rA),
 def : Pat<(fabs (v4f32 VECREG:$rA)),
           (ANDfabsvec (v4f32 VECREG:$rA),
                       (v4f32 (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f)))>;
+
+def : Pat<(fabs R64FP:$rA),
+          (ANDfabs64 R64FP:$rA, (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f))>;
+
+def : Pat<(fabs (v2f64 VECREG:$rA)),
+          (ANDfabsvec (v2f64 VECREG:$rA),
+                      (v2f64 (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f)))>;
 
 //===----------------------------------------------------------------------===//
 // Hint for branch instructions:

@@ -17,6 +17,7 @@
 #include "SPUFrameInfo.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/CallingConv.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -79,6 +80,43 @@ namespace {
     return retval;
   }
 
+  //! Expand a library call into an actual call DAG node
+  /*!
+   \note
+   This code is taken from SelectionDAGLegalize, since it is not exposed as
+   part of the LLVM SelectionDAG API.
+   */
+
+  SDValue
+  ExpandLibCall(RTLIB::Libcall LC, SDValue Op, SelectionDAG &DAG,
+                bool isSigned, SDValue &Hi, SPUTargetLowering &TLI) {
+    // The input chain to this libcall is the entry node of the function.
+    // Legalizing the call will automatically add the previous call to the
+    // dependence.
+    SDValue InChain = DAG.getEntryNode();
+
+    TargetLowering::ArgListTy Args;
+    TargetLowering::ArgListEntry Entry;
+    for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
+      MVT ArgVT = Op.getOperand(i).getValueType();
+      const Type *ArgTy = ArgVT.getTypeForMVT();
+      Entry.Node = Op.getOperand(i);
+      Entry.Ty = ArgTy;
+      Entry.isSExt = isSigned;
+      Entry.isZExt = !isSigned;
+      Args.push_back(Entry);
+    }
+    SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
+                                           TLI.getPointerTy());
+
+    // Splice the libcall in wherever FindInputOutputChains tells us to.
+    const Type *RetTy = Op.getNode()->getValueType(0).getTypeForMVT();
+    std::pair<SDValue, SDValue> CallInfo =
+            TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
+                            CallingConv::C, false, Callee, Args, DAG);
+
+    return CallInfo.first;
+  }
 }
 
 SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
@@ -113,7 +151,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setLoadExtAction(ISD::EXTLOAD,  MVT::f64, Expand);
 
   // SPU constant load actions are custom lowered:
-  setOperationAction(ISD::Constant,   MVT::i64, Custom);
   setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
   setOperationAction(ISD::ConstantFP, MVT::f64, Custom);
 
@@ -127,10 +164,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setLoadExtAction(ISD::EXTLOAD,  VT, Custom);
     setLoadExtAction(ISD::ZEXTLOAD, VT, Custom);
     setLoadExtAction(ISD::SEXTLOAD, VT, Custom);
-
-    // SMUL_LOHI, UMUL_LOHI are not legal for Cell:
-    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
-    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
 
     for (unsigned stype = sctype - 1; stype >= (unsigned) MVT::i8; --stype) {
       MVT StoreVT = (MVT::SimpleValueType) stype;
@@ -179,15 +212,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::FCOS , MVT::f32, Expand);
   setOperationAction(ISD::FREM , MVT::f32, Expand);
 
-  // If we're enabling GP optimizations, use hardware square root
+  // Expand fsqrt to the appropriate libcall (NOTE: should use h/w fsqrt
+  // for f32!)
   setOperationAction(ISD::FSQRT, MVT::f64, Expand);
   setOperationAction(ISD::FSQRT, MVT::f32, Expand);
 
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
-
-  // Make sure that DAGCombine doesn't insert illegal 64-bit constants
-  setOperationAction(ISD::FABS,  MVT::f64, Custom);
 
   // SPU can do rotate right and left, so legalize it... but customize for i8
   // because instructions don't exist.
@@ -254,22 +285,21 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Custom lower i128 -> i64 truncates
   setOperationAction(ISD::TRUNCATE, MVT::i64, Custom);
 
-  // SPU has a legal FP -> signed INT instruction
-  setOperationAction(ISD::FP_TO_SINT, MVT::i32, Legal);
-  setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
-  setOperationAction(ISD::FP_TO_UINT, MVT::i32, Legal);
-  setOperationAction(ISD::FP_TO_UINT, MVT::i64, Custom);
+  // SPU has a legal FP -> signed INT instruction for f32, but for f64, need
+  // to expand to a libcall, hence the custom lowering:
+  setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
 
   // FDIV on SPU requires custom lowering
-  setOperationAction(ISD::FDIV, MVT::f64, Expand);      // libcall
+  setOperationAction(ISD::FDIV, MVT::f64, Expand);      // to libcall
 
   // SPU has [U|S]INT_TO_FP
-  setOperationAction(ISD::SINT_TO_FP, MVT::i32, Legal);
+  setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
   setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
-  setOperationAction(ISD::SINT_TO_FP, MVT::i8, Promote);
-  setOperationAction(ISD::UINT_TO_FP, MVT::i32, Legal);
+  setOperationAction(ISD::SINT_TO_FP, MVT::i8,  Promote);
+  setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
   setOperationAction(ISD::UINT_TO_FP, MVT::i16, Promote);
-  setOperationAction(ISD::UINT_TO_FP, MVT::i8, Promote);
+  setOperationAction(ISD::UINT_TO_FP, MVT::i8,  Promote);
   setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
   setOperationAction(ISD::UINT_TO_FP, MVT::i64, Custom);
 
@@ -338,24 +368,23 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     MVT VT = (MVT::SimpleValueType)i;
 
     // add/sub are legal for all supported vector VT's.
-    setOperationAction(ISD::ADD , VT, Legal);
-    setOperationAction(ISD::SUB , VT, Legal);
+    setOperationAction(ISD::ADD,     VT, Legal);
+    setOperationAction(ISD::SUB,     VT, Legal);
     // mul has to be custom lowered.
-    // TODO: v2i64 vector multiply
-    setOperationAction(ISD::MUL , VT, Legal);
+    setOperationAction(ISD::MUL,     VT, Legal);
 
-    setOperationAction(ISD::AND   , VT, Legal);
-    setOperationAction(ISD::OR    , VT, Legal);
-    setOperationAction(ISD::XOR   , VT, Legal);
-    setOperationAction(ISD::LOAD  , VT, Legal);
-    setOperationAction(ISD::SELECT, VT, Legal);
-    setOperationAction(ISD::STORE,  VT, Legal);
+    setOperationAction(ISD::AND,     VT, Legal);
+    setOperationAction(ISD::OR,      VT, Legal);
+    setOperationAction(ISD::XOR,     VT, Legal);
+    setOperationAction(ISD::LOAD,    VT, Legal);
+    setOperationAction(ISD::SELECT,  VT, Legal);
+    setOperationAction(ISD::STORE,   VT, Legal);
 
     // These operations need to be expanded:
-    setOperationAction(ISD::SDIV, VT, Expand);
-    setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::UDIV, VT, Expand);
-    setOperationAction(ISD::UREM, VT, Expand);
+    setOperationAction(ISD::SDIV,    VT, Expand);
+    setOperationAction(ISD::SREM,    VT, Expand);
+    setOperationAction(ISD::UDIV,    VT, Expand);
+    setOperationAction(ISD::UREM,    VT, Expand);
 
     // Custom lower build_vector, constant pool spills, insert and
     // extract vector elements:
@@ -859,31 +888,6 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   } else {
     cerr << "LowerGlobalAddress: Relocation model other than static not "
          << "supported.\n";
-    abort();
-    /*NOTREACHED*/
-  }
-
-  return SDValue();
-}
-
-//! Custom lower i64 integer constants
-/*!
- This code inserts all of the necessary juggling that needs to occur to load
- a 64-bit constant into a register.
- */
-static SDValue
-LowerConstant(SDValue Op, SelectionDAG &DAG) {
-  MVT VT = Op.getValueType();
-
-  if (VT == MVT::i64) {
-    ConstantSDNode *CN = cast<ConstantSDNode>(Op.getNode());
-    SDValue T = DAG.getConstant(CN->getZExtValue(), VT);
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
-                       DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, T, T));
-  } else {
-    cerr << "LowerConstant: unhandled constant type "
-         << VT.getMVTString()
-         << "\n";
     abort();
     /*NOTREACHED*/
   }
@@ -1564,7 +1568,7 @@ static bool isConstantSplat(const uint64_t Bits128[2],
 
 //! Lower a BUILD_VECTOR instruction creatively:
 SDValue
-SPU::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
+LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
   // If this is a vector of constants or undefs, get the bits.  A bit in
   // UndefBits is set if the corresponding element of the vector is an
@@ -1588,7 +1592,7 @@ SPU::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     abort();
     /*NOTREACHED*/
   case MVT::v4f32: {
-    uint32_t Value32 = SplatBits;
+    uint32_t Value32 = uint32_t(SplatBits);
     assert(SplatSize == 4
            && "LowerBUILD_VECTOR: Unexpected floating point vector element.");
     // NOTE: pretend the constant is an integer. LLVM won't load FP constants
@@ -1598,7 +1602,7 @@ SPU::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     break;
   }
   case MVT::v2f64: {
-    uint64_t f64val = SplatBits;
+    uint64_t f64val = uint64_t(SplatBits);
     assert(SplatSize == 8
            && "LowerBUILD_VECTOR: 64-bit float vector size > 8 bytes.");
     // NOTE: pretend the constant is an integer. LLVM won't load FP constants
@@ -1638,93 +1642,99 @@ SPU::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::BUILD_VECTOR, VT, T, T);
   }
   case MVT::v2i64: {
-    uint64_t val = SplatBits;
-    uint32_t upper = uint32_t(val >> 32);
-    uint32_t lower = uint32_t(val);
-
-    if (upper == lower) {
-      // Magic constant that can be matched by IL, ILA, et. al.
-      SDValue Val = DAG.getTargetConstant(val, MVT::i64);
-      return DAG.getNode(ISD::BUILD_VECTOR, VT, Val, Val);
-    } else {
-      SDValue LO32;
-      SDValue HI32;
-      SmallVector<SDValue, 16> ShufBytes;
-      SDValue Result;
-      bool upper_special, lower_special;
-
-      // NOTE: This code creates common-case shuffle masks that can be easily
-      // detected as common expressions. It is not attempting to create highly
-      // specialized masks to replace any and all 0's, 0xff's and 0x80's.
-
-      // Detect if the upper or lower half is a special shuffle mask pattern:
-      upper_special = (upper == 0||upper == 0xffffffff||upper == 0x80000000);
-      lower_special = (lower == 0||lower == 0xffffffff||lower == 0x80000000);
-
-      // Create lower vector if not a special pattern
-      if (!lower_special) {
-        SDValue LO32C = DAG.getConstant(lower, MVT::i32);
-        LO32 = DAG.getNode(ISD::BIT_CONVERT, VT,
-                           DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                                       LO32C, LO32C, LO32C, LO32C));
-      }
-
-      // Create upper vector if not a special pattern
-      if (!upper_special) {
-        SDValue HI32C = DAG.getConstant(upper, MVT::i32);
-        HI32 = DAG.getNode(ISD::BIT_CONVERT, VT,
-                           DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                                       HI32C, HI32C, HI32C, HI32C));
-      }
-
-      // If either upper or lower are special, then the two input operands are
-      // the same (basically, one of them is a "don't care")
-      if (lower_special)
-        LO32 = HI32;
-      if (upper_special)
-        HI32 = LO32;
-      if (lower_special && upper_special) {
-        // Unhappy situation... both upper and lower are special, so punt with
-        // a target constant:
-        SDValue Zero = DAG.getConstant(0, MVT::i32);
-        HI32 = LO32 = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Zero, Zero,
-                                  Zero, Zero);
-      }
-
-      for (int i = 0; i < 4; ++i) {
-        uint64_t val = 0;
-        for (int j = 0; j < 4; ++j) {
-          SDValue V;
-          bool process_upper, process_lower;
-          val <<= 8;
-          process_upper = (upper_special && (i & 1) == 0);
-          process_lower = (lower_special && (i & 1) == 1);
-
-          if (process_upper || process_lower) {
-            if ((process_upper && upper == 0)
-                || (process_lower && lower == 0))
-              val |= 0x80;
-            else if ((process_upper && upper == 0xffffffff)
-                     || (process_lower && lower == 0xffffffff))
-              val |= 0xc0;
-            else if ((process_upper && upper == 0x80000000)
-                     || (process_lower && lower == 0x80000000))
-              val |= (j == 0 ? 0xe0 : 0x80);
-          } else
-            val |= i * 4 + j + ((i & 1) * 16);
-        }
-
-        ShufBytes.push_back(DAG.getConstant(val, MVT::i32));
-      }
-
-      return DAG.getNode(SPUISD::SHUFB, VT, HI32, LO32,
-                         DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                                     &ShufBytes[0], ShufBytes.size()));
-    }
+    return SPU::LowerSplat_v2i64(VT, DAG, SplatBits);
   }
   }
 
   return SDValue();
+}
+
+SDValue
+SPU::LowerSplat_v2i64(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal) {
+  uint32_t upper = uint32_t(SplatVal >> 32);
+  uint32_t lower = uint32_t(SplatVal);
+
+  if (upper == lower) {
+    // Magic constant that can be matched by IL, ILA, et. al.
+    SDValue Val = DAG.getTargetConstant(upper, MVT::i32);
+    return DAG.getNode(ISD::BIT_CONVERT, OpVT,
+                       DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                                   Val, Val, Val, Val));
+  } else {
+    SDValue LO32;
+    SDValue HI32;
+    SmallVector<SDValue, 16> ShufBytes;
+    SDValue Result;
+    bool upper_special, lower_special;
+
+    // NOTE: This code creates common-case shuffle masks that can be easily
+    // detected as common expressions. It is not attempting to create highly
+    // specialized masks to replace any and all 0's, 0xff's and 0x80's.
+
+    // Detect if the upper or lower half is a special shuffle mask pattern:
+    upper_special = (upper == 0 || upper == 0xffffffff || upper == 0x80000000);
+    lower_special = (lower == 0 || lower == 0xffffffff || lower == 0x80000000);
+
+    // Create lower vector if not a special pattern
+    if (!lower_special) {
+      SDValue LO32C = DAG.getConstant(lower, MVT::i32);
+      LO32 = DAG.getNode(ISD::BIT_CONVERT, OpVT,
+                         DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                                     LO32C, LO32C, LO32C, LO32C));
+    }
+
+    // Create upper vector if not a special pattern
+    if (!upper_special) {
+      SDValue HI32C = DAG.getConstant(upper, MVT::i32);
+      HI32 = DAG.getNode(ISD::BIT_CONVERT, OpVT,
+                         DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                                     HI32C, HI32C, HI32C, HI32C));
+    }
+
+    // If either upper or lower are special, then the two input operands are
+    // the same (basically, one of them is a "don't care")
+    if (lower_special)
+      LO32 = HI32;
+    if (upper_special)
+      HI32 = LO32;
+    if (lower_special && upper_special) {
+      // Unhappy situation... both upper and lower are special, so punt with
+      // a target constant:
+      SDValue Zero = DAG.getConstant(0, MVT::i32);
+      HI32 = LO32 = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Zero, Zero,
+                                Zero, Zero);
+    }
+
+    for (int i = 0; i < 4; ++i) {
+      uint64_t val = 0;
+      for (int j = 0; j < 4; ++j) {
+        SDValue V;
+        bool process_upper, process_lower;
+        val <<= 8;
+        process_upper = (upper_special && (i & 1) == 0);
+        process_lower = (lower_special && (i & 1) == 1);
+
+        if (process_upper || process_lower) {
+          if ((process_upper && upper == 0)
+                  || (process_lower && lower == 0))
+            val |= 0x80;
+          else if ((process_upper && upper == 0xffffffff)
+                  || (process_lower && lower == 0xffffffff))
+            val |= 0xc0;
+          else if ((process_upper && upper == 0x80000000)
+                  || (process_lower && lower == 0x80000000))
+            val |= (j == 0 ? 0xe0 : 0x80);
+        } else
+          val |= i * 4 + j + ((i & 1) * 16);
+      }
+
+      ShufBytes.push_back(DAG.getConstant(val, MVT::i32));
+    }
+
+    return DAG.getNode(SPUISD::SHUFB, OpVT, HI32, LO32,
+                       DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                                   &ShufBytes[0], ShufBytes.size()));
+  }
 }
 
 /// LowerVECTOR_SHUFFLE - Lower a vector shuffle (V1, V2, V3) to something on
@@ -2384,81 +2394,180 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
-//! Lower ISD::FABS
+//! Lower ISD::FP_TO_SINT, ISD::FP_TO_UINT for i32
 /*!
- DAGCombine does the same basic reduction: convert the double to i64 and mask
- off the sign bit. Unfortunately, DAGCombine inserts the i64 constant, which
- CellSPU has to legalize. Hence, the custom lowering.
+ f32->i32 passes through unchanged, whereas f64->i32 expands to a libcall.
+ All conversions to i64 are expanded to a libcall.
  */
-
-static SDValue LowerFABS(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
+                              SPUTargetLowering &TLI) {
   MVT OpVT = Op.getValueType();
-  MVT IntVT(MVT::i64);
   SDValue Op0 = Op.getOperand(0);
+  MVT Op0VT = Op0.getValueType();
 
-  assert(OpVT == MVT::f64 && "LowerFABS: expecting MVT::f64!\n");
+  if ((OpVT == MVT::i32 && Op0VT == MVT::f64)
+      || OpVT == MVT::i64) {
+    // Convert f32 / f64 to i32 / i64 via libcall.
+    RTLIB::Libcall LC =
+            (Op.getOpcode() == ISD::FP_TO_SINT)
+             ? RTLIB::getFPTOSINT(Op0VT, OpVT)
+             : RTLIB::getFPTOUINT(Op0VT, OpVT);
+    assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpectd fp-to-int conversion!");
+    SDValue Dummy;
+    return ExpandLibCall(LC, Op, DAG, false, Dummy, TLI);
+  }
 
-  SDValue iABS =
-          DAG.getNode(ISD::AND, IntVT,
-                      DAG.getNode(ISD::BIT_CONVERT, IntVT, Op0),
-                      DAG.getConstant(~IntVT.getIntegerVTSignBit(), IntVT));
+  return SDValue();
+}
 
-  return DAG.getNode(ISD::BIT_CONVERT, MVT::f64, iABS);
+//! Lower ISD::SINT_TO_FP, ISD::UINT_TO_FP for i32
+/*!
+ i32->f32 passes through unchanged, whereas i32->f64 is expanded to a libcall.
+ All conversions from i64 are expanded to a libcall.
+ */
+static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG,
+                              SPUTargetLowering &TLI) {
+  MVT OpVT = Op.getValueType();
+  SDValue Op0 = Op.getOperand(0);
+  MVT Op0VT = Op0.getValueType();
+
+  if ((OpVT == MVT::f64 && Op0VT == MVT::i32)
+      || Op0VT == MVT::i64) {
+    // Convert i32, i64 to f64 via libcall:
+    RTLIB::Libcall LC =
+            (Op.getOpcode() == ISD::SINT_TO_FP)
+             ? RTLIB::getSINTTOFP(Op0VT, OpVT)
+             : RTLIB::getUINTTOFP(Op0VT, OpVT);
+    assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpectd int-to-fp conversion!");
+    SDValue Dummy;
+    return ExpandLibCall(LC, Op, DAG, false, Dummy, TLI);
+  }
+
+  return SDValue();
 }
 
 //! Lower ISD::SETCC
 /*!
  This handles MVT::f64 (double floating point) condition lowering
  */
-
 static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
                           const TargetLowering &TLI) {
+  CondCodeSDNode *CC = dyn_cast<CondCodeSDNode>(Op.getOperand(2));
+  assert(CC != 0 && "LowerSETCC: CondCodeSDNode should not be null here!\n");
+
   SDValue lhs = Op.getOperand(0);
   SDValue rhs = Op.getOperand(1);
-  CondCodeSDNode *CC = dyn_cast<CondCodeSDNode > (Op.getOperand(2));
   MVT lhsVT = lhs.getValueType();
-  SDValue posNaN = DAG.getConstant(0x7ff0000000000001ULL, MVT::i64);
-
-  assert(CC != 0 && "LowerSETCC: CondCodeSDNode should not be null here!\n");
   assert(lhsVT == MVT::f64 && "LowerSETCC: type other than MVT::64\n");
+
+  MVT ccResultVT = TLI.getSetCCResultType(lhs.getValueType());
+  APInt ccResultOnes = APInt::getAllOnesValue(ccResultVT.getSizeInBits());
+  MVT IntVT(MVT::i64);
+
+  // Take advantage of the fact that (truncate (sra arg, 32)) is efficiently
+  // selected to a NOP:
+  SDValue i64lhs = DAG.getNode(ISD::BIT_CONVERT, IntVT, lhs);
+  SDValue lhsHi32 =
+          DAG.getNode(ISD::TRUNCATE, MVT::i32,
+                      DAG.getNode(ISD::SRL, IntVT,
+                                  i64lhs, DAG.getConstant(32, MVT::i32)));
+  SDValue lhsHi32abs =
+          DAG.getNode(ISD::AND, MVT::i32,
+                      lhsHi32, DAG.getConstant(0x7fffffff, MVT::i32));
+  SDValue lhsLo32 =
+          DAG.getNode(ISD::TRUNCATE, MVT::i32, i64lhs);
+
+  // SETO and SETUO only use the lhs operand:
+  if (CC->get() == ISD::SETO) {
+    // Evaluates to true if Op0 is not [SQ]NaN - lowers to the inverse of
+    // SETUO
+    APInt ccResultAllOnes = APInt::getAllOnesValue(ccResultVT.getSizeInBits());
+    return DAG.getNode(ISD::XOR, ccResultVT,
+                       DAG.getSetCC(ccResultVT,
+                                    lhs, DAG.getConstantFP(0.0, lhsVT),
+                                    ISD::SETUO),
+                       DAG.getConstant(ccResultAllOnes, ccResultVT));
+  } else if (CC->get() == ISD::SETUO) {
+    // Evaluates to true if Op0 is [SQ]NaN
+    return DAG.getNode(ISD::AND, ccResultVT,
+                       DAG.getSetCC(ccResultVT,
+                                    lhsHi32abs,
+                                    DAG.getConstant(0x7ff00000, MVT::i32),
+                                    ISD::SETGE),
+                       DAG.getSetCC(ccResultVT,
+                                    lhsLo32,
+                                    DAG.getConstant(0, MVT::i32),
+                                    ISD::SETGT));
+  }
+
+  SDValue i64rhs = DAG.getNode(ISD::BIT_CONVERT, IntVT, rhs);
+  SDValue rhsHi32 =
+          DAG.getNode(ISD::TRUNCATE, MVT::i32,
+                      DAG.getNode(ISD::SRL, IntVT,
+                                  i64rhs, DAG.getConstant(32, MVT::i32)));
+
+  // If a value is negative, subtract from the sign magnitude constant:
+  SDValue signMag2TC = DAG.getConstant(0x8000000000000000ULL, IntVT);
+
+  // Convert the sign-magnitude representation into 2's complement:
+  SDValue lhsSelectMask = DAG.getNode(ISD::SRA, ccResultVT,
+                                      lhsHi32, DAG.getConstant(31, MVT::i32));
+  SDValue lhsSignMag2TC = DAG.getNode(ISD::SUB, IntVT, signMag2TC, i64lhs);
+  SDValue lhsSelect =
+          DAG.getNode(ISD::SELECT, IntVT,
+                      lhsSelectMask, lhsSignMag2TC, i64lhs);
+
+  SDValue rhsSelectMask = DAG.getNode(ISD::SRA, ccResultVT,
+                                      rhsHi32, DAG.getConstant(31, MVT::i32));
+  SDValue rhsSignMag2TC = DAG.getNode(ISD::SUB, IntVT, signMag2TC, i64rhs);
+  SDValue rhsSelect =
+          DAG.getNode(ISD::SELECT, IntVT,
+                      rhsSelectMask, rhsSignMag2TC, i64rhs);
+
+  unsigned compareOp;
 
   switch (CC->get()) {
   case ISD::SETOEQ:
-  case ISD::SETOGT:
-  case ISD::SETOGE:
-  case ISD::SETOLT:
-  case ISD::SETOLE:
-  case ISD::SETONE:
-    cerr << "CellSPU ISel Select: unimplemented f64 condition\n";
-    abort();
-    break;
-  case ISD::SETO: {
-    SDValue lhsfabs = DAG.getNode(ISD::FABS, MVT::f64, lhs);
-    SDValue i64lhs =
-            DAG.getNode(ISD::BIT_CONVERT, MVT::i64, lhsfabs);
-
-    return DAG.getSetCC(MVT::i32, i64lhs, posNaN, ISD::SETLT);
-  }
-  case ISD::SETUO: {
-    SDValue lhsfabs = DAG.getNode(ISD::FABS, MVT::f64, lhs);
-    SDValue i64lhs =
-            DAG.getNode(ISD::BIT_CONVERT, MVT::i64, lhsfabs);
-
-    return DAG.getSetCC(MVT::i32, i64lhs, posNaN, ISD::SETGE);
-  }
   case ISD::SETUEQ:
+    compareOp = ISD::SETEQ; break;
+  case ISD::SETOGT:
   case ISD::SETUGT:
+    compareOp = ISD::SETGT; break;
+  case ISD::SETOGE:
   case ISD::SETUGE:
+    compareOp = ISD::SETGE; break;
+  case ISD::SETOLT:
   case ISD::SETULT:
+    compareOp = ISD::SETLT; break;
+  case ISD::SETOLE:
   case ISD::SETULE:
+    compareOp = ISD::SETLE; break;
   case ISD::SETUNE:
+  case ISD::SETONE:
+    compareOp = ISD::SETNE; break;
   default:
     cerr << "CellSPU ISel Select: unimplemented f64 condition\n";
     abort();
     break;
   }
 
-  return SDValue();
+  SDValue result =
+          DAG.getSetCC(ccResultVT, lhsSelect, rhsSelect, (ISD::CondCode) compareOp);
+
+  if ((CC->get() & 0x8) == 0) {
+    // Ordered comparison:
+    SDValue lhsNaN = DAG.getSetCC(ccResultVT,
+                                  lhs, DAG.getConstantFP(0.0, MVT::f64),
+                                  ISD::SETO);
+    SDValue rhsNaN = DAG.getSetCC(ccResultVT,
+                                  rhs, DAG.getConstantFP(0.0, MVT::f64),
+                                  ISD::SETO);
+    SDValue ordered = DAG.getNode(ISD::AND, ccResultVT, lhsNaN, rhsNaN);
+
+    result = DAG.getNode(ISD::AND, ccResultVT, ordered, result);
+  }
+
+  return result;
 }
 
 //! Lower ISD::SELECT_CC
@@ -2566,8 +2675,6 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     return LowerGlobalAddress(Op, DAG, SPUTM.getSubtargetImpl());
   case ISD::JumpTable:
     return LowerJumpTable(Op, DAG, SPUTM.getSubtargetImpl());
-  case ISD::Constant:
-    return LowerConstant(Op, DAG);
   case ISD::ConstantFP:
     return LowerConstantFP(Op, DAG);
   case ISD::FORMAL_ARGUMENTS:
@@ -2590,12 +2697,17 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     break;
   }
 
-  case ISD::FABS:
-    return LowerFABS(Op, DAG);
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT:
+    return LowerFP_TO_INT(Op, DAG, *this);
+
+  case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:
+    return LowerINT_TO_FP(Op, DAG, *this);
 
   // Vector-related lowering.
   case ISD::BUILD_VECTOR:
-    return SPU::LowerBUILD_VECTOR(Op, DAG);
+    return LowerBUILD_VECTOR(Op, DAG);
   case ISD::SCALAR_TO_VECTOR:
     return LowerSCALAR_TO_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:

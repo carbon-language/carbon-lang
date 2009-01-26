@@ -275,3 +275,9 @@ define i64 @ashr_i64_3(i64 %arg1, i32 %shift) {
 	%2 = ashr i64 %arg1, %1
 	ret i64 %2
 }
+
+define i32 @hi32_i64(i64 %arg) {
+	%1 = lshr i64 %arg, 32
+	%2 = trunc i64 %1 to i32
+	ret i32 %2
+}

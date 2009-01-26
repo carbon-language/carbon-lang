@@ -61,7 +61,7 @@ namespace llvm {
     };
   }
 
-  //! Utility functions specific to CellSPU-only:
+  //! Utility functions specific to CellSPU:
   namespace SPU {
     SDValue get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
                              MVT ValueType);
@@ -78,7 +78,7 @@ namespace llvm {
 
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG,
                               const SPUTargetMachine &TM);
-    SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSplat_v2i64(MVT OpVT, SelectionDAG &DAG, uint64_t splat);
 
     SDValue getBorrowGenerateShufMask(SelectionDAG &DAG);
     SDValue getCarryGenerateShufMask(SelectionDAG &DAG);

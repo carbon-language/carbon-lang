@@ -1,9 +1,10 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep fsmbi   %t1.s | count 2
+; RUN: grep fsmbi   %t1.s | count 3
 ; RUN: grep 32768   %t1.s | count 2
 ; RUN: grep xor     %t1.s | count 4
-; RUN: grep and     %t1.s | count 4
-; RUN: grep andbi   %t1.s | count 2
+; RUN: grep and     %t1.s | count 5
+; RUN: grep andbi   %t1.s | count 3
+
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
 
@@ -33,11 +34,11 @@ declare double @fabs(double)
 declare float @fabsf(float)
 
 define double @fabs_dp(double %X) {
-        %Y = call double @fabs( double %X )             ; <double> [#uses=1]
+        %Y = call double @fabs( double %X )
         ret double %Y
 }
 
 define float @fabs_sp(float %X) {
-        %Y = call float @fabsf( float %X )              ; <float> [#uses=1]
+        %Y = call float @fabsf( float %X )
         ret float %Y
 }
