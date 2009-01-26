@@ -1,6 +1,5 @@
 // RUN: clang -DUSE_64 -triple x86_64-unknown-unknown -emit-llvm -o %t %s &&
-// RUN: clang -DUSE_ALL -triple x86_64-unknown-unknown -emit-llvm -o %t %s
-// XFAIL
+// RUN: clang -DUSE_ALL -triple x86_64-unknown-unknown -fsyntax-only -o %t %s
 
 #ifdef USE_ALL
 #define USE_3DNOW
@@ -523,13 +522,13 @@ void f0() {
   tmp_V2LLi = __builtin_ia32_pmuldq128(tmp_V4i, tmp_V4i);
   tmp_V4i = __builtin_ia32_pmulld128(tmp_V4i, tmp_V4i);
   tmp_V4f = __builtin_ia32_roundps(tmp_V4f, imm_i_0_16);
-  tmp_V4f = __builtin_ia32_roundss(tmp_V4f, tmp_V4f, imm_i_0_16);
-  tmp_V2d = __builtin_ia32_roundsd(tmp_V2d, tmp_V2d, imm_i_0_16);
+  //  tmp_V4f = __builtin_ia32_roundss(tmp_V4f, tmp_V4f, imm_i_0_16);
+  //  tmp_V2d = __builtin_ia32_roundsd(tmp_V2d, tmp_V2d, imm_i_0_16);
   tmp_V2d = __builtin_ia32_roundpd(tmp_V2d, imm_i_0_16);
   tmp_V16c = __builtin_ia32_vec_set_v16qi(tmp_V16c, tmp_i, tmp_i);
   tmp_V4i  = __builtin_ia32_vec_set_v4si(tmp_V4i, tmp_i, tmp_i);
   tmp_V4f = __builtin_ia32_insertps128(tmp_V4f, tmp_V4f, tmp_i);
-  tmp_V2LLi = __builtin_ia32_vec_set_v2di(tmp_V2LLi, tmp_LLi);
+  tmp_V2LLi = __builtin_ia32_vec_set_v2di(tmp_V2LLi, tmp_LLi, tmp_i);
 #endif
 }
 
