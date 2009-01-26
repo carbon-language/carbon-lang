@@ -290,6 +290,9 @@ class RR_Int_v4i32<bits<11> opcode, string opc, InstrItinClass itin,
 
 class Pseudo<dag OOL, dag IOL, string asmstr, list<dag> pattern>
     : SPUInstr<OOL, IOL, asmstr, NoItinerary> {
+  let OutOperandList = OOL;
+  let InOperandList = IOL;
+  let AsmString   = asmstr;
   let Pattern = pattern;
   let Inst{31-0} = 0;
 }

@@ -34,10 +34,9 @@ let hasCtrlDep = 1, Defs = [R1], Uses = [R1] in {
 // DWARF debugging Pseudo Instructions
 //===----------------------------------------------------------------------===//
 
-def DWARF_LOC        : Pseudo<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$file),
-                              "${:comment} .loc $file, $line, $col",
-                      [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
-                                  (i32 imm:$file))]>;
+def DWARF_LOC : Pseudo<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$file),
+           ".loc $file, $line, $col",
+           [(dwarf_loc (i32 imm:$line), (i32 imm:$col), (i32 imm:$file))]>;
 
 //===----------------------------------------------------------------------===//
 // Loads:

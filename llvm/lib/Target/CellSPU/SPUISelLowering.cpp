@@ -293,7 +293,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // FDIV on SPU requires custom lowering
   setOperationAction(ISD::FDIV, MVT::f64, Expand);      // to libcall
 
-  // SPU has [U|S]INT_TO_FP
+  // SPU has [U|S]INT_TO_FP for f32->i32, but not for f64->i32, f64->i64:
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
   setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
   setOperationAction(ISD::SINT_TO_FP, MVT::i8,  Promote);
@@ -2281,6 +2281,7 @@ LowerByteImmed(SDValue Op, SelectionDAG &DAG) {
                          DAG.getNode(ISD::BUILD_VECTOR, VT, tcVec, tcVecSize));
     }
   }
+
   // These operations (AND, OR, XOR) are legal, they just couldn't be custom
   // lowered.  Return the operation, rather than a null SDValue.
   return Op;
@@ -2417,7 +2418,7 @@ static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
     return ExpandLibCall(LC, Op, DAG, false, Dummy, TLI);
   }
 
-  return SDValue();
+  return Op;                    // return unmolested, legalized op
 }
 
 //! Lower ISD::SINT_TO_FP, ISD::UINT_TO_FP for i32
@@ -2443,7 +2444,7 @@ static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG,
     return ExpandLibCall(LC, Op, DAG, false, Dummy, TLI);
   }
 
-  return SDValue();
+  return Op;                    // return unmolested, legalized
 }
 
 //! Lower ISD::SETCC

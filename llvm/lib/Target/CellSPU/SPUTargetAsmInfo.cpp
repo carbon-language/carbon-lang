@@ -15,8 +15,10 @@
 #include "SPUTargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Dwarf.h"
 
 using namespace llvm;
+using namespace llvm::dwarf;
 
 SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
     SPUTargetAsmInfo<ELFTargetAsmInfo>(TM) {
@@ -27,12 +29,34 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
   // This corresponds to what the gcc SPU compiler emits, for consistency.
   CStringSection = ".rodata.str";
 
+  // Has leb128, .loc and .file
+  HasLEB128 = true;
+  HasDotLocAndDotFile = true;
+
   // BSS section needs to be emitted as ".section"
   BSSSection = "\t.section\t.bss";
   BSSSection_ = getUnnamedSection("\t.section\t.bss",
                                   SectionFlags::Writeable | SectionFlags::BSS,
                                   true);
 
+  SupportsDebugInformation = true;
+  NeedsSet = true;
+  SupportsMacInfoSection = false;
+  DwarfAbbrevSection =  "\t.section        .debug_abbrev,\"\",@progbits";
+  DwarfInfoSection =    "\t.section        .debug_info,\"\",@progbits";
+  DwarfLineSection =    "\t.section        .debug_line,\"\",@progbits";
+  DwarfFrameSection =   "\t.section        .debug_frame,\"\",@progbits";
+  DwarfPubNamesSection = "\t.section        .debug_pubnames,\"\",@progbits";
+  DwarfPubTypesSection = "\t.section        .debug_pubtypes,\"\",progbits";
+  DwarfStrSection =     "\t.section        .debug_str,\"MS\",@progbits,1";
+  DwarfLocSection =     "\t.section        .debug_loc,\"\",@progbits";
+  DwarfARangesSection = "\t.section        .debug_aranges,\"\",@progbits";
+  DwarfRangesSection =  "\t.section        .debug_ranges,\"\",@progbits";
+  DwarfMacInfoSection = "\t.section        .debug_macinfo,\"\",progbits";
+
+  // Exception handling is not supported on CellSPU (think about it: you only
+  // have 256K for code+data. Would you support exception handling?)
+  SupportsExceptionHandling = false;
 }
 
 /// PreferredEHDataFormat - This hook allows the target to select data

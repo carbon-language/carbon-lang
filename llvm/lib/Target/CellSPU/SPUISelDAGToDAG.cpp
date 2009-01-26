@@ -51,16 +51,6 @@ namespace {
     return isS10Constant(CN->getSExtValue());
   }
 
-#if 0
-  //! SDNode predicate for sign-extended, 10-bit immediate values
-  bool
-  isI32IntS10Immediate(SDNode *N)
-  {
-    return (N->getOpcode() == ISD::Constant
-            && isI32IntS10Immediate(cast<ConstantSDNode>(N)));
-  }
-#endif
-
   //! ConstantSDNode predicate for i32 unsigned 10-bit immediate values
   bool
   isI32IntU10Immediate(ConstantSDNode *CN)
@@ -79,8 +69,8 @@ namespace {
   bool
   isI16IntS10Immediate(SDNode *N)
   {
-    return (N->getOpcode() == ISD::Constant
-            && isI16IntS10Immediate(cast<ConstantSDNode>(N)));
+    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N);
+    return (CN != 0 && isI16IntS10Immediate(CN));
   }
 
   //! ConstantSDNode predicate for i16 unsigned 10-bit immediate values
@@ -230,7 +220,7 @@ public:
     SelectionDAGISel(tm),
     TM(tm),
     SPUtli(*tm.getTargetLowering())
-  {}
+  { }
 
   virtual bool runOnFunction(Function &Fn) {
     // Make sure we re-emit a set of the global base reg if necessary
@@ -259,32 +249,21 @@ public:
   SDNode *emitBuildVector(SDValue build_vec) {
     MVT vecVT = build_vec.getValueType();
     SDNode *bvNode = build_vec.getNode();
-    bool canBeSelected = false;
 
     // Check to see if this vector can be represented as a CellSPU immediate
-    // constant.
-    if (vecVT == MVT::v8i16) {
-      if (SPU::get_vec_i16imm(bvNode, *CurDAG, MVT::i16).getNode() != 0) {
-        canBeSelected = true;
-      }
-    } else if (vecVT == MVT::v4i32) {
-      if ((SPU::get_vec_i16imm(bvNode, *CurDAG, MVT::i32).getNode() != 0)
-          || (SPU::get_ILHUvec_imm(bvNode, *CurDAG, MVT::i32).getNode() != 0)
-          || (SPU::get_vec_u18imm(bvNode, *CurDAG, MVT::i32).getNode() != 0)
-          || (SPU::get_v4i32_imm(bvNode, *CurDAG).getNode() != 0)) {
-        canBeSelected = true;
-      }
-    } else if (vecVT == MVT::v2i64) {
-      if ((SPU::get_vec_i16imm(bvNode, *CurDAG, MVT::i64).getNode() != 0)
-          || (SPU::get_ILHUvec_imm(bvNode, *CurDAG, MVT::i64).getNode() != 0)
-          || (SPU::get_vec_u18imm(bvNode, *CurDAG, MVT::i64).getNode() != 0)) {
-        canBeSelected = true;
-      }
-    }
-
-    if (canBeSelected) {
+    // constant by invoking all of the instruction selection predicates:
+    if (((vecVT == MVT::v8i16) &&
+         (SPU::get_vec_i16imm(bvNode, *CurDAG, MVT::i16).getNode() != 0)) ||
+        ((vecVT == MVT::v4i32) &&
+         ((SPU::get_vec_i16imm(bvNode, *CurDAG, MVT::i32).getNode() != 0) ||
+          (SPU::get_ILHUvec_imm(bvNode, *CurDAG, MVT::i32).getNode() != 0) ||
+          (SPU::get_vec_u18imm(bvNode, *CurDAG, MVT::i32).getNode() != 0) ||
+          (SPU::get_v4i32_imm(bvNode, *CurDAG).getNode() != 0))) ||
+        ((vecVT == MVT::v2i64) &&
+         ((SPU::get_vec_i16imm(bvNode, *CurDAG, MVT::i64).getNode() != 0) ||
+          (SPU::get_ILHUvec_imm(bvNode, *CurDAG, MVT::i64).getNode() != 0) ||
+          (SPU::get_vec_u18imm(bvNode, *CurDAG, MVT::i64).getNode() != 0))))
       return Select(build_vec);
-    }
 
     // No, need to emit a constant pool spill:
     std::vector<Constant*> CV;
@@ -411,7 +390,7 @@ SPUDAGToDAGISel::InstructionSelect()
 }
 
 /*!
- \arg Op The ISD instructio operand
+ \arg Op The ISD instruction operand
  \arg N The address to be tested
  \arg Base The base address
  \arg Index The base address index
@@ -790,9 +769,10 @@ SPUDAGToDAGISel::Select(SDValue Op) {
     if ((Op0.getOpcode() == ISD::SRA || Op0.getOpcode() == ISD::SRL)
         && OpVT == MVT::i32
         && Op0.getValueType() == MVT::i64) {
-      // Catch the (truncate:i32 ([sra|srl]:i64 arg, c), where c >= 32 to
-      // take advantage of the fact that the upper 32 bits are in the
-      // i32 preferred slot and avoid all kinds of other shuffle gymnastics:
+      // Catch (truncate:i32 ([sra|srl]:i64 arg, c), where c >= 32
+      //
+      // Take advantage of the fact that the upper 32 bits are in the
+      // i32 preferred slot and avoid shuffle gymnastics:
       ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op0.getOperand(1));
       if (CN != 0) {
         unsigned shift_amt = unsigned(CN->getZExtValue());
@@ -806,7 +786,7 @@ SPUDAGToDAGISel::Select(SDValue Op) {
             // Take care of the additional shift, if present:
             SDValue shift = CurDAG->getTargetConstant(shift_amt, MVT::i32);
             unsigned Opc = SPU::ROTMAIr32_i32;
-          
+
             if (Op0.getOpcode() == ISD::SRL)
               Opc = SPU::ROTMr32;
 
@@ -1113,8 +1093,8 @@ SDNode *SPUDAGToDAGISel::SelectI64Constant(SDValue& Op, MVT OpVT) {
     // The degenerate case where the upper and lower bits in the splat are
     // identical:
     SDValue Op0 = i64vec.getOperand(0);
-    ReplaceUses(i64vec, Op0);
 
+    ReplaceUses(i64vec, Op0);
     return CurDAG->getTargetNode(SPU::ORi64_v2i64, OpVT,
                                  SDValue(emitBuildVector(Op0), 0));
   } else if (i64vec.getOpcode() == SPUISD::SHUFB) {
@@ -1139,7 +1119,7 @@ SDNode *SPUDAGToDAGISel::SelectI64Constant(SDValue& Op, MVT OpVT) {
     SDNode *rhsNode = (rhs.getNode()->isMachineOpcode()
                        ? rhs.getNode()
                        : emitBuildVector(rhs));
-    
+
     if (shufmask.getOpcode() == ISD::BIT_CONVERT) {
       ReplaceUses(shufmask, shufmask.getOperand(0));
       shufmask = shufmask.getOperand(0);

@@ -90,13 +90,13 @@ namespace {
         printOp(MO);
       }
     }
-    
+
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode);
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode);
-   
-   
+
+
     void
     printS7ImmOperand(const MachineInstr *MI, unsigned OpNo)
     {
@@ -115,7 +115,7 @@ namespace {
       assert(value < (1 << 8) && "Invalid u7 argument");
       O << value;
     }
- 
+
     void
     printShufAddr(const MachineInstr *MI, unsigned OpNo)
     {
@@ -143,7 +143,7 @@ namespace {
     {
       O << (unsigned)MI->getOperand(OpNo).getImm();
     }
-    
+
     void
     printMemRegReg(const MachineInstr *MI, unsigned OpNo) {
       // When used as the base register, r0 reads constant zero rather than
@@ -286,7 +286,7 @@ namespace {
 
   /// LinuxAsmPrinter - SPU assembly printer, customized for Linux
   struct VISIBILITY_HIDDEN LinuxAsmPrinter : public SPUAsmPrinter {
-  
+
     DwarfWriter *DW;
     MachineModuleInfo *MMI;
 
@@ -300,12 +300,12 @@ namespace {
     virtual const char *getPassName() const {
       return "STI CBEA SPU Assembly Printer";
     }
-    
+
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     //! Dump globals, perform cleanup after function emission
     bool doFinalization(Module &M);
-    
+
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
@@ -365,7 +365,7 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
       }
     }
     O << Name;
-    
+
     if (GV->hasExternalWeakLinkage())
       ExtWeakSymbols.insert(GV);
     return;
@@ -380,15 +380,15 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
 bool SPUAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                    unsigned AsmVariant, 
+                                    unsigned AsmVariant,
                                     const char *ExtraCode) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
-    
+
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
-    case 'L': // Write second word of DImode reference.  
+    case 'L': // Write second word of DImode reference.
       // Verify that this operand has two consecutive registers.
       if (!MI->getOperand(OpNo).isReg() ||
           OpNo+1 == MI->getNumOperands() ||
@@ -398,14 +398,14 @@ bool SPUAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       break;
     }
   }
-  
+
   printOperand(MI, OpNo);
   return false;
 }
 
 bool SPUAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                           unsigned OpNo,
-                                          unsigned AsmVariant, 
+                                          unsigned AsmVariant,
                                           const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
@@ -429,7 +429,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 {
   SetupMachineFunction(MF);
   O << "\n\n";
-  
+
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
@@ -478,10 +478,10 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
-  
+
   // Emit post-function debug information.
   DW->EndFunction(&MF);
-  
+
   // We didn't modify anything.
   return false;
 }
@@ -509,7 +509,7 @@ static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
 
 /*!
   Emit a global variable according to its section, alignment, etc.
-  
+
   \note This code was shamelessly copied from the PowerPC's assembly printer,
   which sort of screams for some kind of refactorization of common code.
  */
@@ -601,8 +601,6 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     printModuleLevelGV(I);
-
-  // TODO
 
   // Emit initial debug information.
   DW->EndModule();
