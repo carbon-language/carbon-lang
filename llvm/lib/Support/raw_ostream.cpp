@@ -255,6 +255,12 @@ void raw_fd_ostream::close() {
   FD = -1;
 }
 
+uint64_t raw_fd_ostream::seek(uint64_t off) {
+  flush();
+  pos = lseek(FD, off, SEEK_SET);
+  return pos;  
+}
+
 //===----------------------------------------------------------------------===//
 //  raw_stdout/err_ostream
 //===----------------------------------------------------------------------===//

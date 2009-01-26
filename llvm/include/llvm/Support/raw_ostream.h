@@ -181,7 +181,11 @@ public:
   /// tell - Return the current offset with the file.
   uint64_t tell() {
     return pos + (OutBufCur - OutBufStart);
-  }  
+  }
+  
+  /// seek - Flushes the stream and repositions the underlying file descriptor
+  ///  positition to the offset specified from the beginning of the file.
+  uint64_t seek(uint64_t off);
 };
   
 /// raw_stdout_ostream - This is a stream that always prints to stdout.
