@@ -573,9 +573,8 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
 //                  CALL Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-/// LowerCCCCallTo - functions arguments are copied from virtual
-/// regs to (physical regs)/(stack frame), CALLSEQ_START and
-/// CALLSEQ_END are emitted.
+/// LowerCALL - functions arguments are copied from virtual regs to 
+/// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
 /// TODO: isVarArg, isTailCall.
 SDValue MipsTargetLowering::
 LowerCALL(SDValue Op, SelectionDAG &DAG)
