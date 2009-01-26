@@ -139,8 +139,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   if (L->getBlocks().size() == 1)
     return false;
 
-  assert (OrigHeader && OrigLatch && OrigPreHeader &&
-          "Loop is not in canonical form");
+  assert(OrigHeader && OrigLatch && OrigPreHeader &&
+         "Loop is not in canonical form");
 
   // If loop header is not one of the loop exit block then
   // either this loop is already rotated or it is not 
@@ -151,7 +151,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   BranchInst *BI = dyn_cast<BranchInst>(OrigHeader->getTerminator());
   if (!BI)
     return false;
-  assert (BI->isConditional() && "Branch Instruction is not conditional");
+  assert(BI->isConditional() && "Branch Instruction is not conditional");
 
   // Updating PHInodes in loops with multiple exits adds complexity. 
   // Keep it simple, and restrict loop rotation to loops with one exit only.
@@ -176,7 +176,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   NewHeader = BI->getSuccessor(1);
   if (L->contains(Exit))
     std::swap(Exit, NewHeader);
-  assert (NewHeader && "Unable to determine new loop header");
+  assert(NewHeader && "Unable to determine new loop header");
   assert(L->contains(NewHeader) && !L->contains(Exit) && 
          "Unable to determine loop header and exit blocks");
 
@@ -221,7 +221,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   for (; I != E; ++I) {
     Instruction *In = I;
 
-    assert (!isa<PHINode>(In) && "PHINode is not expected here");
+    assert(!isa<PHINode>(In) && "PHINode is not expected here");
     // This is not a PHI instruction. Insert its clone into original pre-header.
     // If this instruction is using a value from same basic block then
     // update it to use value from cloned instruction.
@@ -325,7 +325,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
       
       // Used inside Exit Block. Since we are in LCSSA form, U must be PHINode.
       if (U->getParent() == Exit) {
-        assert (isa<PHINode>(U) && "Use in Exit Block that is not PHINode");
+        assert(isa<PHINode>(U) && "Use in Exit Block that is not PHINode");
         
         PHINode *UPhi = cast<PHINode>(U);
         // UPhi already has one incoming argument from original header. 
@@ -457,8 +457,8 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
   if (OrigPH_BI->getSuccessor(0) == NewHeader)
     OrigPH_BI->setSuccessor(0, NewPreHeader);
   else {
-    assert (OrigPH_BI->getSuccessor(1) == NewHeader &&
-            "Unexpected original pre-header terminator");
+    assert(OrigPH_BI->getSuccessor(1) == NewHeader &&
+           "Unexpected original pre-header terminator");
     OrigPH_BI->setSuccessor(1, NewPreHeader);
   }
   
@@ -470,10 +470,10 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
       break;
 
     int index = PN->getBasicBlockIndex(OrigPreHeader);
-    assert (index != -1 && "Expected incoming value from Original PreHeader");
+    assert(index != -1 && "Expected incoming value from Original PreHeader");
     PN->setIncomingBlock(index, NewPreHeader);
-    assert (PN->getBasicBlockIndex(OrigPreHeader) == -1 && 
-            "Expected only one incoming value from Original PreHeader");
+    assert(PN->getBasicBlockIndex(OrigPreHeader) == -1 && 
+           "Expected only one incoming value from Original PreHeader");
   }
 
   if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
@@ -571,11 +571,10 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
       }
   }
 
-  assert (NewHeader && L->getHeader() == NewHeader 
-          && "Invalid loop header after loop rotation");
-  assert (NewPreHeader && L->getLoopPreheader() == NewPreHeader
-          && "Invalid loop preheader after loop rotation");
-  assert (L->getLoopLatch() 
-          && "Invalid loop latch after loop rotation");
-
+  assert(NewHeader && L->getHeader() == NewHeader &&
+         "Invalid loop header after loop rotation");
+  assert(NewPreHeader && L->getLoopPreheader() == NewPreHeader &&
+         "Invalid loop preheader after loop rotation");
+  assert(L->getLoopLatch() &&
+         "Invalid loop latch after loop rotation");
 }
