@@ -12179,9 +12179,11 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
       // If the result mask is equal to the src shuffle or this shuffle mask, do
       // the replacement.
       if (NewMask == LHSMask || NewMask == Mask) {
+        unsigned LHSInNElts =
+          cast<VectorType>(LHSSVI->getOperand(0)->getType())->getNumElements();
         std::vector<Constant*> Elts;
         for (unsigned i = 0, e = NewMask.size(); i != e; ++i) {
-          if (NewMask[i] >= e*2) {
+          if (NewMask[i] >= LHSInNElts*2) {
             Elts.push_back(UndefValue::get(Type::Int32Ty));
           } else {
             Elts.push_back(ConstantInt::get(Type::Int32Ty, NewMask[i]));
