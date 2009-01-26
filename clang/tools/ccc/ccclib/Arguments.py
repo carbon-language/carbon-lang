@@ -82,7 +82,7 @@ class Option(object):
 
         return self.name not in  ('-E', '-S', '-c',
                                   '-arch', '-fsyntax-only', '-combine', '-x',
-                                  '-###')
+                                  '-###', '-o')
 
 class OptionGroup(Option):
     """OptionGroup - A fake option class used to group options so that
