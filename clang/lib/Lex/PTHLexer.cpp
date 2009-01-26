@@ -522,12 +522,18 @@ PTHManager* PTHManager::Create(const std::string& file) {
   const unsigned char* BufEnd = (unsigned char*)File->getBufferEnd();
 
   // Check the prologue of the file.
-  if ((BufEnd - BufBeg) < (unsigned) (sizeof("cfe-pth") + 3) ||
+  if ((BufEnd - BufBeg) < (unsigned) (sizeof("cfe-pth") + 3 + 4) ||
       memcmp(BufBeg, "cfe-pth", sizeof("cfe-pth") - 1) != 0)
     return 0;
   
-  // Compute the address of the index table at the end of the PTH file.
+  // Read the PTH version.
   const unsigned char *p = BufBeg + (sizeof("cfe-pth") - 1);
+  unsigned Version = ReadLE32(p);
+  
+  if (Version != PTHManager::Version)
+    return 0;
+
+  // Compute the address of the index table at the end of the PTH file.  
   const unsigned char *EndTable = BufBeg + ReadLE32(p);
   
   if (EndTable >= BufEnd)

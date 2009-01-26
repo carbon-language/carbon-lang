@@ -456,6 +456,7 @@ void PTHWriter::EmitCachedSpellings() {
 void PTHWriter::GeneratePTH() {
   // Generate the prologue.
   Out << "cfe-pth";
+  Emit32(PTHManager::Version);
   Offset JumpOffset = Out.tell();
   Emit32(0);
   
