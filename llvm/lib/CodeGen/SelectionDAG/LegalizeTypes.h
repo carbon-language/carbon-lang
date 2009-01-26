@@ -199,6 +199,7 @@ private:
                       const SDValue *Ops, unsigned NumOps, bool isSigned);
   SDValue PromoteTargetBoolean(SDValue Bool, MVT VT);
   void ReplaceValueWith(SDValue From, SDValue To);
+  void ReplaceValueWithHelper(SDValue From, SDValue To);
   void SetIgnoredNodeResult(SDNode* N);
   void SplitInteger(SDValue Op, SDValue &Lo, SDValue &Hi);
   void SplitInteger(SDValue Op, MVT LoVT, MVT HiVT,
