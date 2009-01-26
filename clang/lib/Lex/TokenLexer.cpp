@@ -31,7 +31,14 @@ void TokenLexer::Init(Token &Tok, MacroArgs *Actuals) {
   Macro = PP.getMacroInfo(Tok.getIdentifierInfo());
   ActualArgs = Actuals;
   CurToken = 0;
+  
   InstantiateLoc = Tok.getLocation();
+
+  // If the instantiation loc is not already a FileID, resolve it here.  If we
+  // don't do this, we end up doing it once per token lexed.
+  if (!InstantiateLoc.isFileID())
+    InstantiateLoc = PP.getSourceManager().getInstantiationLoc(InstantiateLoc);
+  
   AtStartOfLine = Tok.isAtStartOfLine();
   HasLeadingSpace = Tok.hasLeadingSpace();
   Tokens = &*Macro->tokens_begin();
