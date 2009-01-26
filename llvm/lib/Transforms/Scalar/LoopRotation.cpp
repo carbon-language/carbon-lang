@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-rotate"
-
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -26,7 +25,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallVector.h"
-
 using namespace llvm;
 
 #define MAX_HEADER_SIZE 16
@@ -178,6 +176,12 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   assert(NewHeader && "Unable to determine new loop header");
   assert(L->contains(NewHeader) && !L->contains(Exit) && 
          "Unable to determine loop header and exit blocks");
+  
+  // This code assumes that new header has exactly one predecessor.  Remove any
+  // single entry PHI nodes in it.
+  assert(NewHeader->getSinglePredecessor() &&
+         "New header doesn't have one pred!");
+  FoldSingleEntryPHINodes(NewHeader);
 
   // Copy PHI nodes and other instructions from original header
   // into original pre-header. Unlike original header, original pre-header is
