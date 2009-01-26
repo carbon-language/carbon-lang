@@ -430,10 +430,13 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
     // Avoid spelling identifiers, the most common form of token.
     FirstChar = II->getName()[0];
   } else if (!Tok.needsCleaning()) {
-    // FIXME: SPEED UP LITERALS!
-    SourceManager &SrcMgr = PP.getSourceManager();
-    FirstChar =
-      *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()));
+    if (Tok.isLiteral() && Tok.getLiteralData()) {
+      FirstChar = *Tok.getLiteralData();
+    } else {
+      SourceManager &SrcMgr = PP.getSourceManager();
+      FirstChar =
+        *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()));
+    }
   } else if (Tok.getLength() < 256) {
     const char *TokPtr = Buffer;
     PP.getSpelling(Tok, TokPtr);
@@ -554,10 +557,10 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
     }
     
     if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
-      const char *Str = II->getName();
-      unsigned Len = Tok.needsCleaning() ? strlen(Str) : Tok.getLength();
-      OS.write(Str, Len);
-      // FIXME: ACCELERATE LITERALS
+      OS.write(II->getName(), II->getLength());
+    } else if (Tok.isLiteral() && !Tok.needsCleaning() &&
+               Tok.getLiteralData()) {
+      OS.write(Tok.getLiteralData(), Tok.getLength());
     } else if (Tok.getLength() < 256) {
       const char *TokPtr = Buffer;
       unsigned Len = PP.getSpelling(Tok, TokPtr);
