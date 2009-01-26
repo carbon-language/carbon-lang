@@ -429,10 +429,15 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
   char TmpBuffer[100];
   sprintf(TmpBuffer, "\"%s %2d %4d\"", Months[TM->tm_mon], TM->tm_mday, 
           TM->tm_year+1900);
-  DATELoc = PP.CreateString(TmpBuffer, strlen(TmpBuffer));
+  
+  Token TmpTok;
+  TmpTok.startToken();
+  PP.CreateString(TmpBuffer, strlen(TmpBuffer), TmpTok);
+  DATELoc = TmpTok.getLocation();
 
   sprintf(TmpBuffer, "\"%02d:%02d:%02d\"", TM->tm_hour, TM->tm_min, TM->tm_sec);
-  TIMELoc = PP.CreateString(TmpBuffer, strlen(TmpBuffer));
+  PP.CreateString(TmpBuffer, strlen(TmpBuffer), TmpTok);
+  TIMELoc = TmpTok.getLocation();
 }
 
 /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
@@ -463,8 +468,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
             SourceMgr.getInstantiationLineNumber(Tok.getLocation()));
     unsigned Length = strlen(TmpBuffer)-1;
     Tok.setKind(tok::numeric_constant);
-    Tok.setLength(Length);
-    Tok.setLocation(CreateString(TmpBuffer, Length+1, Tok.getLocation()));
+    CreateString(TmpBuffer, Length+1, Tok, Tok.getLocation());
+    Tok.setLength(Length);  // Trim off space.
   } else if (II == Ident__FILE__ || II == Ident__BASE_FILE__) {
     SourceLocation Loc = Tok.getLocation();
     if (II == Ident__BASE_FILE__) {
@@ -480,8 +485,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     std::string FN =SourceMgr.getSourceName(SourceMgr.getInstantiationLoc(Loc));
     FN = '"' + Lexer::Stringify(FN) + '"';
     Tok.setKind(tok::string_literal);
-    Tok.setLength(FN.size());
-    Tok.setLocation(CreateString(&FN[0], FN.size(), Tok.getLocation()));
+    CreateString(&FN[0], FN.size(), Tok, Tok.getLocation());
   } else if (II == Ident__DATE__) {
     if (!DATELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
@@ -511,8 +515,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     sprintf(TmpBuffer, "%u ", Depth);
     unsigned Length = strlen(TmpBuffer)-1;
     Tok.setKind(tok::numeric_constant);
-    Tok.setLength(Length);
-    Tok.setLocation(CreateString(TmpBuffer, Length, Tok.getLocation()));
+    CreateString(TmpBuffer, Length, Tok, Tok.getLocation());
+    Tok.setLength(Length);  // Trim off space.
   } else if (II == Ident__TIMESTAMP__) {
     // MSVC, ICC, GCC, VisualAge C++ extension.  The generated string should be
     // of the form "Ddd Mmm dd hh::mm::ss yyyy", which is returned by asctime.
@@ -540,8 +544,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     unsigned Len = strlen(TmpBuffer);
     TmpBuffer[Len-1] = '"';  // Replace the newline with a quote.
     Tok.setKind(tok::string_literal);
-    Tok.setLength(Len);
-    Tok.setLocation(CreateString(TmpBuffer, Len+1, Tok.getLocation()));
+    CreateString(TmpBuffer, Len+1, Tok, Tok.getLocation());
+    Tok.setLength(Len);  // Trim off space.
   } else {
     assert(0 && "Unknown identifier!");
   }

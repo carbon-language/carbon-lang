@@ -415,7 +415,7 @@ public:
   /// cached tokens doesn't get re-parsed and re-resolved after a backtrack is
   /// invoked.
   void AnnotateCachedTokens(const Token &Tok) {
-    assert(Tok.isAnnotationToken() && "Expected annotation token");
+    assert(Tok.isAnnotation() && "Expected annotation token");
     if (CachedLexPos != 0 && isBacktrackEnabled())
       AnnotatePreviousCachedTokens(Tok);
   }
@@ -463,11 +463,11 @@ public:
     return *SourceMgr.getCharacterData(SL);
   }
   
-  /// CreateString - Plop the specified string into a scratch buffer and return
-  /// a location for it.  If specified, the source location provides a source
-  /// location for the token.
-  SourceLocation CreateString(const char *Buf, unsigned Len,
-                              SourceLocation SourceLoc = SourceLocation());
+  /// CreateString - Plop the specified string into a scratch buffer and set the
+  /// specified token's location and length to it.  If specified, the source
+  /// location provides a location of the instantiation point of the token.
+  void CreateString(const char *Buf, unsigned Len,
+                    Token &Tok, SourceLocation SourceLoc = SourceLocation());
   
   /// DumpToken - Print the token to stderr, used for debugging.
   ///

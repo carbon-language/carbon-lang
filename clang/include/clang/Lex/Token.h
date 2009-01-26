@@ -34,21 +34,28 @@ class Token {
   /// The location of the token.
   SourceLocation Loc;
 
-  // Conceptually these next two fields could be in a union with
-  // access depending on isAnnotationToken(). However, this causes gcc
-  // 4.2 to pessimize LexTokenInternal, a very performance critical
-  // routine. Keeping as separate members with casts until a more
-  // beautiful fix presents itself.
+  // Conceptually these next two fields could be in a union.  However, this
+  // causes gcc 4.2 to pessimize LexTokenInternal, a very performance critical
+  // routine. Keeping as separate members with casts until a more beautiful fix
+  // presents itself.
 
   /// UintData - This holds either the length of the token text, when
   /// a normal token, or the end of the SourceRange when an annotation
   /// token.
   unsigned UintData;
 
-  /// PtrData - For normal tokens, this points to the uniqued
-  /// information for the identifier (if an identifier token) or
-  /// null. For annotation tokens, this points to information specific
-  /// to the annotation token.
+  /// PtrData - This is a union of four different pointer types, which depends
+  /// on what type of token this is:
+  ///  Identifiers, keywords, etc:
+  ///    This is an IdentifierInfo*, which contains the uniqued identifier
+  ///    spelling.
+  ///  Literals:  isLiteral() returns true.
+  ///    This is a pointer to the start of the token in a text buffer, which
+  ///    may be dirty (have trigraphs / escaped newlines).
+  ///  Annotations (resolved type names, C++ scopes, etc): isAnnotation().
+  ///    This is a pointer to sema-specific data for the annotation token.
+  ///  Other:
+  ///    This is null.
   void *PtrData;
 
   /// Kind - The actual flavor of token this is.
@@ -77,32 +84,40 @@ public:
   bool is(tok::TokenKind K) const { return Kind == (unsigned) K; }
   bool isNot(tok::TokenKind K) const { return Kind != (unsigned) K; }
 
-  bool isAnnotationToken() const { 
+  /// isLiteral - Return true if this is a "literal", like a numeric
+  /// constant, string, etc.
+  bool isLiteral() const {
+    return is(tok::numeric_constant) || is(tok::char_constant) ||
+           is(tok::string_literal) || is(tok::wide_string_literal) ||
+           is(tok::angle_string_literal);
+  }
+
+  bool isAnnotation() const { 
     return is(tok::annot_typename) || 
            is(tok::annot_cxxscope) ||
            is(tok::annot_template_id);
   }
-
+  
   /// getLocation - Return a source location identifier for the specified
   /// offset in the current file.
   SourceLocation getLocation() const { return Loc; }
   unsigned getLength() const {
-    assert(!isAnnotationToken() && "Annotation tokens have no length field");
+    assert(!isAnnotation() && "Annotation tokens have no length field");
     return UintData;
   }
 
   void setLocation(SourceLocation L) { Loc = L; }
   void setLength(unsigned Len) {
-    assert(!isAnnotationToken() && "Annotation tokens have no length field");
+    assert(!isAnnotation() && "Annotation tokens have no length field");
     UintData = Len;
   }
 
   SourceLocation getAnnotationEndLoc() const {
-    assert(isAnnotationToken() && "Used AnnotEndLocID on non-annotation token");
+    assert(isAnnotation() && "Used AnnotEndLocID on non-annotation token");
     return SourceLocation::getFromRawEncoding(UintData);
   }
   void setAnnotationEndLoc(SourceLocation L) {
-    assert(isAnnotationToken() && "Used AnnotEndLocID on non-annotation token");
+    assert(isAnnotation() && "Used AnnotEndLocID on non-annotation token");
     UintData = L.getRawEncoding();
   }
 
@@ -130,19 +145,32 @@ public:
   }
   
   IdentifierInfo *getIdentifierInfo() const {
-    assert(!isAnnotationToken() && "Used IdentInfo on annotation token");
+    assert(!isAnnotation() && "Used IdentInfo on annotation token!");
+    if (isLiteral()) return 0;
     return (IdentifierInfo*) PtrData;
   }
   void setIdentifierInfo(IdentifierInfo *II) {
     PtrData = (void*) II;
   }
-
+  
+  /// getLiteralData - For a literal token (numeric constant, string, etc), this
+  /// returns a pointer to the start of it in the text buffer if known, null
+  /// otherwise.
+  const char *getLiteralData() const {
+    assert(isLiteral() && "Cannot get literal data of non-literal");
+    return reinterpret_cast<const char*>(PtrData);
+  }
+  void setLiteralData(const char *Ptr) {
+    assert(isLiteral() && "Cannot set literal data of non-literal");
+    PtrData = (void*)Ptr;
+  }
+  
   void *getAnnotationValue() const {
-    assert(isAnnotationToken() && "Used AnnotVal on non-annotation token");
+    assert(isAnnotation() && "Used AnnotVal on non-annotation token");
     return PtrData;
   }
   void setAnnotationValue(void *val) {
-    assert(isAnnotationToken() && "Used AnnotVal on non-annotation token");
+    assert(isAnnotation() && "Used AnnotVal on non-annotation token");
     PtrData = val;
   }
   

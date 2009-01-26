@@ -430,6 +430,7 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
     // Avoid spelling identifiers, the most common form of token.
     FirstChar = II->getName()[0];
   } else if (!Tok.needsCleaning()) {
+    // FIXME: SPEED UP LITERALS!
     SourceManager &SrcMgr = PP.getSourceManager();
     FirstChar =
       *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()));
@@ -556,6 +557,7 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
       const char *Str = II->getName();
       unsigned Len = Tok.needsCleaning() ? strlen(Str) : Tok.getLength();
       OS.write(Str, Len);
+      // FIXME: ACCELERATE LITERALS
     } else if (Tok.getLength() < 256) {
       const char *TokPtr = Buffer;
       unsigned Len = PP.getSpelling(Tok, TokPtr);

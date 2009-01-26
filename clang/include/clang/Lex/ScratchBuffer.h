@@ -31,16 +31,10 @@ public:
   ScratchBuffer(SourceManager &SM);
   
   /// getToken - Splat the specified text into a temporary MemoryBuffer and
-  /// return a SourceLocation that refers to the token.  The SourceLoc value
-  /// gives a virtual location that the token will appear to be from.
-  SourceLocation getToken(const char *Buf, unsigned Len,
-                          SourceLocation SourceLoc);
-  
-  /// getToken - Splat the specified text into a temporary MemoryBuffer and
   /// return a SourceLocation that refers to the token.  This is just like the
   /// previous method, but returns a location that indicates the physloc of the
   /// token.
-  SourceLocation getToken(const char *Buf, unsigned Len);
+  SourceLocation getToken(const char *Buf, unsigned Len, const char *&DestPtr);
                           
 private:
   void AllocScratchBuffer(unsigned RequestLen);

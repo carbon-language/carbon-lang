@@ -266,13 +266,20 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
   }
 
   // Otherwise, compute the start of the token in the input lexer buffer.
-  const char *TokStart = SourceMgr.getCharacterData(Tok.getLocation());
+  const char *TokStart = 0;
+  
+  if (Tok.isLiteral())
+    TokStart = Tok.getLiteralData();
+  
+  if (TokStart == 0)
+    TokStart = SourceMgr.getCharacterData(Tok.getLocation());
 
   // If this token contains nothing interesting, return it directly.
   if (!Tok.needsCleaning()) {
     Buffer = TokStart;
     return Tok.getLength();
   }
+  
   // Otherwise, hard case, relex the characters into the string.
   char *OutBuf = const_cast<char*>(Buffer);
   for (const char *Ptr = TokStart, *End = TokStart+Tok.getLength();
@@ -291,11 +298,20 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
 /// CreateString - Plop the specified string into a scratch buffer and return a
 /// location for it.  If specified, the source location provides a source
 /// location for the token.
-SourceLocation Preprocessor::
-CreateString(const char *Buf, unsigned Len, SourceLocation SLoc) {
-  if (SLoc.isValid())
-    return ScratchBuf->getToken(Buf, Len, SLoc);
-  return ScratchBuf->getToken(Buf, Len);
+void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
+                                SourceLocation InstantiationLoc) {
+  Tok.setLength(Len);
+  
+  const char *DestPtr;
+  SourceLocation Loc = ScratchBuf->getToken(Buf, Len, DestPtr);
+  
+  if (InstantiationLoc.isValid())
+    Loc = SourceMgr.createInstantiationLoc(Loc, InstantiationLoc, Len);
+  Tok.setLocation(Loc);
+  
+  // If this is a literal token, set the pointer data.
+  if (Tok.isLiteral())
+    Tok.setLiteralData(DestPtr);
 }
 
 

@@ -140,32 +140,19 @@ void PTHWriter::EmitToken(const Token& T) {
   Emit32(ResolveID(T.getIdentifierInfo()));
   Emit32(fpos);
   
-  // For specific tokens we cache their spelling.
-  if (T.getIdentifierInfo())
-    return;
+  // Literals (strings, numbers, characters) get cached spellings.
+  if (T.isLiteral()) {
+    // FIXME: This uses the slow getSpelling().  Perhaps we do better
+    // in the future?  This only slows down PTH generation.
+    const std::string &spelling = PP.getSpelling(T);
+    const char* s = spelling.c_str();
+    
+    // Get the string entry.
+    llvm::StringMapEntry<Offset> *E =
+      &CachedStrs.GetOrCreateValue(s, s+spelling.size());
 
-  switch (T.getKind()) {
-    default:
-      break;
-    case tok::string_literal:     
-    case tok::wide_string_literal:
-    case tok::angle_string_literal:
-    case tok::numeric_constant:
-    case tok::char_constant: {
-      // FIXME: This uses the slow getSpelling().  Perhaps we do better
-      // in the future?  This only slows down PTH generation.
-      const std::string& spelling = PP.getSpelling(T);
-      const char* s = spelling.c_str();
-      
-      // Get the string entry.
-      llvm::StringMapEntry<Offset> *E =
-        &CachedStrs.GetOrCreateValue(s, s+spelling.size());
-
-      // Store the address of the string entry in our spelling map.
-      (*CurSpellMap).push_back(std::make_pair(fpos, E));
-
-      break;
-    }
+    // Store the address of the string entry in our spelling map.
+    CurSpellMap->push_back(std::make_pair(fpos, E));
   }
 }
 

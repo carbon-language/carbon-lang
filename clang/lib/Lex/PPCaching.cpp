@@ -89,7 +89,7 @@ const Token &Preprocessor::PeekAhead(unsigned N) {
 }
 
 void Preprocessor::AnnotatePreviousCachedTokens(const Token &Tok) {
-  assert(Tok.isAnnotationToken() && "Expected annotation token");
+  assert(Tok.isAnnotation() && "Expected annotation token");
   assert(CachedLexPos != 0 && "Expected to have some cached tokens");
   assert(CachedTokens[CachedLexPos-1].getLocation() == Tok.getAnnotationEndLoc()
          && "The annotation should be until the most recent cached token");

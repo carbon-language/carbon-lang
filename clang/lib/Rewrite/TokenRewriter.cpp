@@ -78,14 +78,15 @@ TokenRewriter::AddToken(const Token &T, TokenRefTy Where) {
   
 
 TokenRewriter::token_iterator
-TokenRewriter::AddTokenBefore(token_iterator I, const char *Val){
+TokenRewriter::AddTokenBefore(token_iterator I, const char *Val) {
   unsigned Len = strlen(Val);
   
   // Plop the string into the scratch buffer, then create a token for this
   // string.
   Token Tok;
   Tok.startToken();
-  Tok.setLocation(ScratchBuf->getToken(Val, Len));
+  const char *Spelling;
+  Tok.setLocation(ScratchBuf->getToken(Val, Len, Spelling));
   Tok.setLength(Len);
   
   // TODO: Form a whole lexer around this and relex the token!  For now, just

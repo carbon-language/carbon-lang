@@ -624,7 +624,9 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
     return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
   
   // Update the location of token as well as BufferPtr.
+  const char *TokStart = BufferPtr;
   FormTokenWithChars(Result, CurPtr, tok::numeric_constant);
+  Result.setLiteralData(TokStart);
 }
 
 /// LexStringLiteral - Lex the remainder of a string literal, after having lexed
@@ -655,8 +657,10 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
     Diag(NulCharacter, diag::null_in_string);
 
   // Update the location of the token as well as the BufferPtr instance var.
+  const char *TokStart = BufferPtr;
   FormTokenWithChars(Result, CurPtr,
                      Wide ? tok::wide_string_literal : tok::string_literal);
+  Result.setLiteralData(TokStart);
 }
 
 /// LexAngledStringLiteral - Lex the remainder of an angled string literal,
@@ -687,7 +691,9 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
     Diag(NulCharacter, diag::null_in_string);
   
   // Update the location of token as well as BufferPtr.
+  const char *TokStart = BufferPtr;
   FormTokenWithChars(Result, CurPtr, tok::angle_string_literal);
+  Result.setLiteralData(TokStart);
 }
 
 
@@ -735,7 +741,9 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
     Diag(NulCharacter, diag::null_in_char);
 
   // Update the location of token as well as BufferPtr.
+  const char *TokStart = BufferPtr;
   FormTokenWithChars(Result, CurPtr, tok::char_constant);
+  Result.setLiteralData(TokStart);
 }
 
 /// SkipWhitespace - Efficiently skip over a series of whitespace characters.
@@ -901,9 +909,8 @@ bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
   Spelling += "*/";    // add suffix.
   
   Result.setKind(tok::comment);
-  Result.setLocation(PP->CreateString(&Spelling[0], Spelling.size(),
-                                      Result.getLocation()));
-  Result.setLength(Spelling.size());
+  PP->CreateString(&Spelling[0], Spelling.size(), Result,
+                   Result.getLocation());
   return true;
 }
 

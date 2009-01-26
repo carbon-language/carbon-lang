@@ -156,7 +156,10 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   
   // Plop the string (including the newline and trailing null) into a buffer
   // where we can lex it.
-  SourceLocation TokLoc = CreateString(&StrVal[0], StrVal.size());
+  Token TmpTok;
+  TmpTok.startToken();
+  CreateString(&StrVal[0], StrVal.size(), TmpTok);
+  SourceLocation TokLoc = TmpTok.getLocation();
 
   // Make and enter a lexer object so that we lex and expand the tokens just
   // like any others.

@@ -690,10 +690,11 @@ private:
     if (!Tok.is(tok::identifier))
       return false;
     
-    if (Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope))
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+    if (Actions.isTypeName(*II, CurScope))
       return true;
     
-    return Tok.getIdentifierInfo() == Ident_super;
+    return II == Ident_super;
   }
 
   OwningExprResult ParseObjCAtExpression(SourceLocation AtLocation);

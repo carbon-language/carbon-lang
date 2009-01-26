@@ -352,6 +352,7 @@ void TokenLexer::Lex(Token &Tok) {
 /// If this returns true, the caller should immediately return the token.
 bool TokenLexer::PasteTokens(Token &Tok) {
   llvm::SmallVector<char, 128> Buffer;
+  const char *ResultTokStrPtr = 0;
   do {
     // Consume the ## operator.
     SourceLocation PasteOpLoc = Tokens[CurToken].getLocation();
@@ -386,8 +387,16 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     
     // Plop the pasted result (including the trailing newline and null) into a
     // scratch buffer where we can lex it.
-    SourceLocation ResultTokLoc = PP.CreateString(&Buffer[0], Buffer.size());
+    Token ResultTokTmp;
+    ResultTokTmp.startToken();
     
+    // Claim that the tmp token is a string_literal so that we can get the
+    // character pointer back from CreateString.
+    ResultTokTmp.setKind(tok::string_literal);
+    PP.CreateString(&Buffer[0], Buffer.size(), ResultTokTmp);
+    SourceLocation ResultTokLoc = ResultTokTmp.getLocation();
+    ResultTokStrPtr = ResultTokTmp.getLiteralData();
+
     // Lex the resultant pasted token into Result.
     Token Result;
     
@@ -405,20 +414,16 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       assert(ResultTokLoc.isFileID() &&
              "Should be a raw location into scratch buffer");
       SourceManager &SourceMgr = PP.getSourceManager();
-      std::pair<FileID, unsigned> LocInfo =
-        SourceMgr.getDecomposedLoc(ResultTokLoc);
+      FileID LocFileID = SourceMgr.getFileID(ResultTokLoc);
       
-      const char *ScratchBufStart =SourceMgr.getBufferData(LocInfo.first).first;
+      const char *ScratchBufStart = SourceMgr.getBufferData(LocFileID).first;
       
       // Make a lexer to lex this string from.  Lex just this one token.
-      const char *ResultStrData = ScratchBufStart+LocInfo.second;
-      
       // Make a lexer object so that we lex and expand the paste result.
-      Lexer TL(SourceMgr.getLocForStartOfFile(LocInfo.first),
-               PP.getLangOptions(), 
-               ScratchBufStart,
-               ResultStrData, 
-               ResultStrData+LHSLen+RHSLen /*don't include null*/);
+      Lexer TL(SourceMgr.getLocForStartOfFile(LocFileID),
+               PP.getLangOptions(), ScratchBufStart,
+               ResultTokStrPtr, 
+               ResultTokStrPtr+LHSLen+RHSLen /*don't include null*/);
       
       // Lex a token in raw mode.  This way it won't look up identifiers
       // automatically, lexing off the end will return an eof token, and
@@ -442,12 +447,12 @@ bool TokenLexer::PasteTokens(Token &Tok) {
           RHS.is(tok::slash)) {
         HandleMicrosoftCommentPaste(Tok);
         return true;
-      } else {
-        // TODO: If not in assembler language mode.
-        PP.Diag(PasteOpLoc, diag::err_pp_bad_paste)
-          << std::string(Buffer.begin(), Buffer.end()-1);
-        return false;
       }
+      
+      // TODO: If not in assembler language mode.
+      PP.Diag(PasteOpLoc, diag::err_pp_bad_paste)
+        << std::string(Buffer.begin(), Buffer.end()-1);
+      return false;
     }
     
     // Turn ## into 'unknown' to avoid # ## # from looking like a paste
@@ -471,7 +476,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
   if (Tok.is(tok::identifier)) {
     // Look up the identifier info for the token.  We disabled identifier lookup
     // by saying we're skipping contents, so we need to do this manually.
-    Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+    Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok, ResultTokStrPtr));
   }
   return false;
 }

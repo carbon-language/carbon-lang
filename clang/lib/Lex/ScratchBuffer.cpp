@@ -30,9 +30,13 @@ ScratchBuffer::ScratchBuffer(SourceManager &SM) : SourceMgr(SM), CurBuffer(0) {
 /// return a SourceLocation that refers to the token.  This is just like the
 /// method below, but returns a location that indicates the physloc of the
 /// token.
-SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len) {
+SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
+                                       const char *&DestPtr) {
   if (BytesUsed+Len > ScratchBufSize)
     AllocScratchBuffer(Len);
+  
+  // Return a pointer to the character data.
+  DestPtr = CurBuffer+BytesUsed;
   
   // Copy the token data into the buffer.
   memcpy(CurBuffer+BytesUsed, Buf, Len);
@@ -41,16 +45,6 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len) {
   BytesUsed += Len;
 
   return BufferStartLoc.getFileLocWithOffset(BytesUsed-Len);
-}
-
-
-/// getToken - Splat the specified text into a temporary MemoryBuffer and
-/// return a SourceLocation that refers to the token.  The SourceLoc value
-/// gives a virtual location that the token will appear to be from.
-SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
-                                       SourceLocation SourceLoc) {
-  // Map the physloc to the specified sourceloc.
-  return SourceMgr.createInstantiationLoc(getToken(Buf, Len), SourceLoc, Len);
 }
 
 void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
