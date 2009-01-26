@@ -8,3 +8,7 @@
 #line 42 "foo/bar/baz.h"  // ok
 
 
+// #line directives expand macros.
+#define A 42 "foo"
+#line A
+
