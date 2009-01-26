@@ -201,14 +201,6 @@ FileID SourceManager::createFileID(const ContentCache *File,
 SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
                                                      SourceLocation InstantLoc,
                                                      unsigned TokLength) {
-  // The specified source location may be a mapped location, due to a macro
-  // instantiation or #line directive.  Strip off this information to find out
-  // where the characters are actually located.
-  SpellingLoc = getSpellingLoc(SpellingLoc);
-  
-  // Resolve InstantLoc down to a real instantiation location.
-  InstantLoc = getInstantiationLoc(InstantLoc);
-
   SLocEntryTable.push_back(SLocEntry::get(NextOffset, 
                                           InstantiationInfo::get(InstantLoc,
                                                                  SpellingLoc)));
