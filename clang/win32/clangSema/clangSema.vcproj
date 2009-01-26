@@ -211,6 +211,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Sema\SemaLookup.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Sema\SemaNamedCast.cpp"
 				>
 			</File>
@@ -220,6 +224,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Sema\SemaStmt.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Sema\SemaTemplate.cpp"
 				>
 			</File>
 			<File

@@ -211,6 +211,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Lex\PTHLexer.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Lex\ScratchBuffer.cpp"
 				>
 			</File>

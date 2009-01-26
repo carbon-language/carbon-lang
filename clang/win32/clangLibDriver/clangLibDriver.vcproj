@@ -157,6 +157,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Driver\ManagerRegistry.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Driver\PlistDiagnostics.cpp"
 				>
 			</File>

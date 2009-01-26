@@ -208,6 +208,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Parse\ParseTemplate.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Parse\ParseTentative.cpp"
 				>
 			</File>

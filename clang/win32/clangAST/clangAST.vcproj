@@ -155,6 +155,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\lib\AST\APValue.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\AST\ASTConsumer.cpp"
 				>
 			</File>
@@ -172,6 +176,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\AST\Decl.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\AST\DeclarationName.cpp"
 				>
 			</File>
 			<File
