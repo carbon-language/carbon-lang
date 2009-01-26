@@ -130,31 +130,33 @@ namespace SrcMgr {
     /// This is an invalid SLOC for the main file (top of the #include chain).
     unsigned IncludeLoc;  // Really a SourceLocation
     
-    /// Content - Information about the source buffer itself.
-    const ContentCache *Content;
-
-    /// FileCharacteristic - This is an instance of CharacteristicKind,
-    /// indicating whether this is a system header dir or not.
-    unsigned FileCharacteristic : 2;
+    /// Data - This contains the ContentCache* and the bits indicating the
+    /// characteristic of the file and whether it has #line info, all bitmangled
+    /// together.
+    uintptr_t Data;
   public:
     /// get - Return a FileInfo object.
     static FileInfo get(SourceLocation IL, const ContentCache *Con,
                         CharacteristicKind FileCharacter) {
       FileInfo X;
       X.IncludeLoc = IL.getRawEncoding();
-      X.Content = Con;
-      X.FileCharacteristic = FileCharacter;
+      X.Data = (uintptr_t)Con;
+      assert((X.Data & 7) == 0 &&"ContentCache pointer insufficiently aligned");
+      assert((unsigned)FileCharacter < 4 && "invalid file character");
+      X.Data |= (unsigned)FileCharacter;
       return X;
     }
     
     SourceLocation getIncludeLoc() const {
       return SourceLocation::getFromRawEncoding(IncludeLoc);
     }
-    const ContentCache* getContentCache() const { return Content; }
+    const ContentCache* getContentCache() const {
+      return reinterpret_cast<const ContentCache*>(Data & ~7UL);
+    }
     
     /// getCharacteristic - Return whether this is a system header or not.
     CharacteristicKind getFileCharacteristic() const { 
-      return (CharacteristicKind)FileCharacteristic;
+      return (CharacteristicKind)(Data & 3);
     }
   };
   
