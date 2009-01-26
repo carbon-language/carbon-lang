@@ -286,7 +286,7 @@ public:
   }
 
   // Intersection, union, disjoint union.
-  BitVector operator&=(const BitVector &RHS) {
+  BitVector &operator&=(const BitVector &RHS) {
     unsigned ThisWords = NumBitWords(size());
     unsigned RHSWords  = NumBitWords(RHS.size());
     unsigned i;
@@ -302,14 +302,14 @@ public:
     return *this;
   }
 
-  BitVector operator|=(const BitVector &RHS) {
+  BitVector &operator|=(const BitVector &RHS) {
     assert(Size == RHS.Size && "Illegal operation!");
     for (unsigned i = 0; i < NumBitWords(size()); ++i)
       Bits[i] |= RHS.Bits[i];
     return *this;
   }
 
-  BitVector operator^=(const BitVector &RHS) {
+  BitVector &operator^=(const BitVector &RHS) {
     assert(Size == RHS.Size && "Illegal operation!");
     for (unsigned i = 0; i < NumBitWords(size()); ++i)
       Bits[i] ^= RHS.Bits[i];
