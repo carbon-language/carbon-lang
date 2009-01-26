@@ -15,8 +15,12 @@ from Enumeration import *
 # Actual type types
 
 class BuiltinType:
-    def __init__(self, name):
+    def __init__(self, name, size):
         self.name = name
+        self.size = size
+
+    def sizeof(self):
+        return self.size
 
     def __str__(self):
         return self.name
@@ -49,6 +53,12 @@ class ArrayType:
         self.isVector = isVector
         self.elementType = elementType
         self.size = size
+        if isVector:
+            eltSize = self.elementType.sizeof()
+            assert not (self.size % eltSize)
+            self.numElements = self.size // eltSize
+        else:
+            self.numElements = self.size
 
     def __str__(self):
         if self.isVector:
@@ -305,7 +315,8 @@ class AnyTypeGenerator(TypeGenerator):
 
 def test():
     atg = AnyTypeGenerator()
-    btg = FixedTypeGenerator(map(BuiltinType,['int','float']))
+    btg = FixedTypeGenerator([BuiltinType('int',4),
+                              BuiltinType('float',4)])
     atg.addGenerator( btg )
     atg.addGenerator( ComplexTypeGenerator(btg) )
     atg.addGenerator( RecordTypeGenerator(atg, True, 2) )

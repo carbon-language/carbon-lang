@@ -181,14 +181,14 @@ class TypePrinter:
                     yield '{ %s }'%(', '.join(elements))
         elif isinstance(t, ComplexType):
             for t in self.getTestValues(t.elementType):
-                yield '%s + %si'%(t,t)
-        elif isinstance(t, ArrayType) and not t.isVector:
+                yield '%s + %s * 1i'%(t,t)
+        elif isinstance(t, ArrayType):
             values = list(self.getTestValues(t.elementType))
             if not values:
                 yield '{ }'
-            for i in range(t.size):
+            for i in range(t.numElements):
                 for v in values:
-                    elements = [random.choice(values) for i in range(t.size)]
+                    elements = [random.choice(values) for i in range(t.numElements)]
                     elements[i] = v
                     yield '{ %s }'%(', '.join(elements))
         else:
@@ -220,9 +220,11 @@ class TypePrinter:
         elif isinstance(t, ComplexType):
             self.printValueOfType(prefix, '(__real %s)'%name, t.elementType, output=output,indent=indent)
             self.printValueOfType(prefix, '(__imag %s)'%name, t.elementType, output=output,indent=indent)
-        elif isinstance(t, ArrayType) and not t.isVector:
-            for i in range(t.size):
-                self.printValueOfType(prefix, '(%s)[%d]'%(name,i), t.elementType, output=output,indent=indent)                
+        elif isinstance(t, ArrayType):
+            for i in range(t.numElements):
+                # Access in this fashion as a hackish way to portably
+                # access vectors.
+                self.printValueOfType(prefix, '((%s*) &%s)[%d]'%(t.elementType,name,i), t.elementType, output=output,indent=indent)                            
         else:
             raise NotImplementedError,'Cannot print value of type: "%s"'%(t,)
 
@@ -346,24 +348,28 @@ def main():
     # Contruct type generator
     builtins = []
     ints = []
-    if opts.useChar: ints.append('char')
-    if opts.useShort: ints.append('short')
-    if opts.useInt: ints.append('int')
-    if opts.useLong: ints.append('long')
-    if opts.useLongLong: ints.append('long long')
+    if opts.useChar: ints.append(('char',1))
+    if opts.useShort: ints.append(('short',2))
+    if opts.useInt: ints.append(('int',4))
+    # FIXME: Wrong size.
+    if opts.useLong: ints.append(('long',4))
+    if opts.useLongLong: ints.append(('long long',8))
     if opts.useUnsigned: 
-        ints = (['unsigned %s'%i for i in ints] + 
-                ['signed %s'%i for i in ints])
+        ints = ([('unsigned %s'%i,s) for i,s in ints] + 
+                [('signed %s'%i,s) for i,s in ints])
     builtins.extend(ints)
 
-    if opts.useBool: builtins.append('_Bool')
-    if opts.useFloat: builtins.append('float')
-    if opts.useDouble: builtins.append('double')
-    if opts.useLongDouble: builtins.append('long double')
-    if opts.useVoidPointer:  builtins.append('void*')
+    if opts.useBool: builtins.append(('_Bool',1))
+    if opts.useFloat: builtins.append(('float',4))
+    if opts.useDouble: builtins.append(('double',8))
+    if opts.useLongDouble: builtins.append(('long double',16))
+    # FIXME: Wrong size.
+    if opts.useVoidPointer:  builtins.append(('void*',4))
 
-    btg = FixedTypeGenerator(map(BuiltinType,builtins))
-    sbtg = FixedTypeGenerator(map(BuiltinType,['char','int','float']))
+    btg = FixedTypeGenerator([BuiltinType(n,s) for n,s in builtins])
+    sbtg = FixedTypeGenerator([BuiltinType('char',1),
+                               BuiltinType('int',4),
+                               BuiltinType('float',4)])
 
     atg = AnyTypeGenerator()
     artg = AnyTypeGenerator()
