@@ -25,16 +25,14 @@ TemplateTypeParmDecl *
 TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id,
                              bool Typename) {
-  void *Mem = C.getAllocator().Allocate<TemplateTypeParmDecl>();
-  return new (Mem) TemplateTypeParmDecl(DC, L, Id, Typename);
+  return new (C) TemplateTypeParmDecl(DC, L, Id, Typename);
 }
 
 NonTypeTemplateParmDecl *
 NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC, 
                                 SourceLocation L, IdentifierInfo *Id,
                                 QualType T, SourceLocation TypeSpecStartLoc) {
-  void *Mem = C.getAllocator().Allocate<NonTypeTemplateParmDecl>();
-  return new (Mem) NonTypeTemplateParmDecl(DC, L, Id, T, TypeSpecStartLoc);
+  return new (C) NonTypeTemplateParmDecl(DC, L, Id, T, TypeSpecStartLoc);
 }
 
 TemplateParameterList::TemplateParameterList(Decl **Params, unsigned NumParams)
@@ -46,6 +44,7 @@ TemplateParameterList::TemplateParameterList(Decl **Params, unsigned NumParams)
 TemplateParameterList *
 TemplateParameterList::Create(ASTContext &C, Decl **Params, 
                               unsigned NumParams) {
+  // FIXME: how do I pass in Size to ASTContext::new?
   unsigned Size = sizeof(TemplateParameterList) + sizeof(Decl *) * NumParams;
   unsigned Align = llvm::AlignOf<TemplateParameterList>::Alignment;
   void *Mem = C.getAllocator().Allocate(Size, Align);
@@ -63,8 +62,7 @@ CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
                                      CXXRecordDecl* PrevDecl) {
-  void *Mem = C.getAllocator().Allocate<CXXRecordDecl>();
-  CXXRecordDecl* R = new (Mem) CXXRecordDecl(TK, DC, L, Id);
+  CXXRecordDecl* R = new (C) CXXRecordDecl(TK, DC, L, Id);
   C.getTypeDeclType(R, PrevDecl);  
   return R;
 }
@@ -211,8 +209,7 @@ CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation L, DeclarationName N,
                       QualType T, bool isStatic, bool isInline) {
-  void *Mem = C.getAllocator().Allocate<CXXMethodDecl>();
-  return new (Mem) CXXMethodDecl(CXXMethod, RD, L, N, T, isStatic, isInline);
+  return new (C) CXXMethodDecl(CXXMethod, RD, L, N, T, isStatic, isInline);
 }
 
 QualType CXXMethodDecl::getThisType(ASTContext &C) const {
@@ -268,8 +265,7 @@ CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                            bool isInline, bool isImplicitlyDeclared) {
   assert(N.getNameKind() == DeclarationName::CXXConstructorName &&
          "Name must refer to a constructor");
-  void *Mem = C.getAllocator().Allocate<CXXConstructorDecl>();
-  return new (Mem) CXXConstructorDecl(RD, L, N, T, isExplicit, isInline,
+  return new (C) CXXConstructorDecl(RD, L, N, T, isExplicit, isInline,
                                       isImplicitlyDeclared);
 }
 
@@ -336,9 +332,8 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           bool isImplicitlyDeclared) {
   assert(N.getNameKind() == DeclarationName::CXXDestructorName &&
          "Name must refer to a destructor");
-  void *Mem = C.getAllocator().Allocate<CXXDestructorDecl>();
-  return new (Mem) CXXDestructorDecl(RD, L, N, T, isInline, 
-                                     isImplicitlyDeclared);
+  return new (C) CXXDestructorDecl(RD, L, N, T, isInline, 
+                                   isImplicitlyDeclared);
 }
 
 CXXConversionDecl *
@@ -347,28 +342,24 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           QualType T, bool isInline, bool isExplicit) {
   assert(N.getNameKind() == DeclarationName::CXXConversionFunctionName &&
          "Name must refer to a conversion function");
-  void *Mem = C.getAllocator().Allocate<CXXConversionDecl>();
-  return new (Mem) CXXConversionDecl(RD, L, N, T, isInline, isExplicit);
+  return new (C) CXXConversionDecl(RD, L, N, T, isInline, isExplicit);
 }
 
 CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, IdentifierInfo *Id,
                                    QualType T) {
-  void *Mem = C.getAllocator().Allocate<CXXClassVarDecl>();
-  return new (Mem) CXXClassVarDecl(RD, L, Id, T);
+  return new (C) CXXClassVarDecl(RD, L, Id, T);
 }
 
 OverloadedFunctionDecl *
 OverloadedFunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                DeclarationName N) {
-  void *Mem = C.getAllocator().Allocate<OverloadedFunctionDecl>();
-  return new (Mem) OverloadedFunctionDecl(DC, N);
+  return new (C) OverloadedFunctionDecl(DC, N);
 }
 
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          DeclContext *DC, 
                                          SourceLocation L,
                                          LanguageIDs Lang, bool Braces) {
-  void *Mem = C.getAllocator().Allocate<LinkageSpecDecl>();
-  return new (Mem) LinkageSpecDecl(DC, L, Lang, Braces);
+  return new (C) LinkageSpecDecl(DC, L, Lang, Braces);
 }

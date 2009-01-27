@@ -129,6 +129,8 @@ public:
 
   SourceManager& getSourceManager() { return SourceMgr; }
   llvm::MallocAllocator &getAllocator() { return Allocator; }  
+  void Deallocate(void *Ptr) { Allocator.Deallocate(Ptr); }
+  
   const LangOptions& getLangOptions() const { return LangOpts; }
   
   FullSourceLoc getFullLoc(SourceLocation Loc) const { 
@@ -567,7 +569,7 @@ private:
                                   FieldDecl *Field,
                                   bool OutermostType = false,
                                   bool EncodingProperty = false) const;
-
+                                  
 };
 
 }  // end namespace clang

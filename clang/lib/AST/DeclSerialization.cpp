@@ -303,10 +303,7 @@ void TranslationUnitDecl::EmitImpl(llvm::Serializer& S) const
 
 TranslationUnitDecl* TranslationUnitDecl::CreateImpl(Deserializer& D,
                                                      ASTContext& C) {  
-  void *Mem = C.getAllocator().Allocate<TranslationUnitDecl>();
-  TranslationUnitDecl* decl = new (Mem) TranslationUnitDecl();
- 
-  return decl;
+  return new (C) TranslationUnitDecl();
 }
 
 //===----------------------------------------------------------------------===//
@@ -321,8 +318,7 @@ void NamespaceDecl::EmitImpl(llvm::Serializer& S) const
 }
 
 NamespaceDecl* NamespaceDecl::CreateImpl(Deserializer& D, ASTContext& C) {  
-  void *Mem = C.getAllocator().Allocate<NamespaceDecl>();
-  NamespaceDecl* decl = new (Mem) NamespaceDecl(0, SourceLocation(), 0);
+  NamespaceDecl* decl = new (C) NamespaceDecl(0, SourceLocation(), 0);
  
   decl->NamedDecl::ReadInRec(D, C);
   decl->LBracLoc = SourceLocation::ReadVal(D);
@@ -336,9 +332,8 @@ NamespaceDecl* NamespaceDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 VarDecl* VarDecl::CreateImpl(Deserializer& D, ASTContext& C) {  
-  void *Mem = C.getAllocator().Allocate<VarDecl>();
   VarDecl* decl =
-    new (Mem) VarDecl(Var, 0, SourceLocation(), NULL, QualType(), None);
+    new (C) VarDecl(Var, 0, SourceLocation(), NULL, QualType(), None);
  
   decl->VarDecl::ReadImpl(D, C);
   return decl;
@@ -355,8 +350,7 @@ void ParmVarDecl::EmitImpl(llvm::Serializer& S) const {
 }
 
 ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
-  void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
-  ParmVarDecl* decl = new (Mem)
+  ParmVarDecl* decl = new (C)
     ParmVarDecl(ParmVar,
                 0, SourceLocation(), NULL, QualType(), None, NULL);
   
@@ -377,8 +371,7 @@ void ParmVarWithOriginalTypeDecl::EmitImpl(llvm::Serializer& S) const {
 
 ParmVarWithOriginalTypeDecl* ParmVarWithOriginalTypeDecl::CreateImpl(
                                               Deserializer& D, ASTContext& C) {
-  void *Mem = C.getAllocator().Allocate<ParmVarWithOriginalTypeDecl>();
-  ParmVarWithOriginalTypeDecl* decl = new (Mem)
+  ParmVarWithOriginalTypeDecl* decl = new (C)
     ParmVarWithOriginalTypeDecl(0, SourceLocation(), NULL, QualType(), 
                                 QualType(), None, NULL);
   
@@ -397,8 +390,7 @@ void EnumDecl::EmitImpl(Serializer& S) const {
 }
 
 EnumDecl* EnumDecl::CreateImpl(Deserializer& D, ASTContext& C) {
-  void *Mem = C.getAllocator().Allocate<EnumDecl>();
-  EnumDecl* decl = new (Mem) EnumDecl(0, SourceLocation(), NULL);
+  EnumDecl* decl = new (C) EnumDecl(0, SourceLocation(), NULL);
   
   decl->NamedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
@@ -421,8 +413,7 @@ EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   llvm::APSInt val(1);
   D.Read(val);
   
-  void *Mem = C.getAllocator().Allocate<EnumConstantDecl>();
-  EnumConstantDecl* decl = new (Mem)
+  EnumConstantDecl* decl = new (C)
     EnumConstantDecl(0, SourceLocation(), NULL, QualType(), NULL, val);
   
   decl->ValueDecl::ReadInRec(D, C);
@@ -442,8 +433,7 @@ void FieldDecl::EmitImpl(Serializer& S) const {
 }
 
 FieldDecl* FieldDecl::CreateImpl(Deserializer& D, ASTContext& C) {
-  void *Mem = C.getAllocator().Allocate<FieldDecl>();
-  FieldDecl* decl = new (Mem) FieldDecl(Field, 0, SourceLocation(), NULL, 
+  FieldDecl* decl = new (C) FieldDecl(Field, 0, SourceLocation(), NULL, 
                                         QualType(), 0, false);
   decl->Mutable = D.ReadBool();
   decl->DeclType.ReadBackpatch(D);  
@@ -480,8 +470,7 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   StorageClass SClass = static_cast<StorageClass>(D.ReadInt());
   bool IsInline = D.ReadBool();
   
-  void *Mem = C.getAllocator().Allocate<FunctionDecl>();
-  FunctionDecl* decl = new (Mem)
+  FunctionDecl* decl = new (C)
     FunctionDecl(Function, 0, SourceLocation(), DeclarationName(),
                  QualType(), SClass, IsInline);
   
@@ -537,8 +526,7 @@ void OverloadedFunctionDecl::EmitImpl(Serializer& S) const {
 
 OverloadedFunctionDecl * 
 OverloadedFunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
-  void *Mem = C.getAllocator().Allocate<OverloadedFunctionDecl>();
-  OverloadedFunctionDecl* decl = new (Mem)
+  OverloadedFunctionDecl* decl = new (C)
     OverloadedFunctionDecl(0, DeclarationName());
   
   decl->NamedDecl::ReadInRec(D, C);
@@ -567,8 +555,7 @@ void RecordDecl::EmitImpl(Serializer& S) const {
 RecordDecl* RecordDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   TagKind TK = TagKind(D.ReadInt());
 
-  void *Mem = C.getAllocator().Allocate<RecordDecl>();
-  RecordDecl* decl = new (Mem) RecordDecl(Record, TK, 0, SourceLocation(), NULL);
+  RecordDecl* decl = new (C) RecordDecl(Record, TK, 0, SourceLocation(), NULL);
     
   decl->NamedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
@@ -590,8 +577,7 @@ void TypedefDecl::EmitImpl(Serializer& S) const {
 TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType T = QualType::ReadVal(D);
   
-  void *Mem = C.getAllocator().Allocate<TypedefDecl>();
-  TypedefDecl* decl = new (Mem) TypedefDecl(0, SourceLocation(), NULL, T);
+  TypedefDecl* decl = new (C) TypedefDecl(0, SourceLocation(), NULL, T);
   
   decl->NamedDecl::ReadInRec(D, C);
 
@@ -610,9 +596,8 @@ void TemplateTypeParmDecl::EmitImpl(Serializer& S) const {
 TemplateTypeParmDecl *
 TemplateTypeParmDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   bool Typename = D.ReadBool();
-  void *Mem = C.getAllocator().Allocate<TemplateTypeParmDecl>();
   TemplateTypeParmDecl *decl
-    = new (Mem) TemplateTypeParmDecl(0, SourceLocation(), NULL, Typename);
+    = new (C) TemplateTypeParmDecl(0, SourceLocation(), NULL, Typename);
   decl->NamedDecl::ReadInRec(D, C);
   return decl;
 }
@@ -641,8 +626,7 @@ void FileScopeAsmDecl::EmitImpl(llvm::Serializer& S) const
 }
 
 FileScopeAsmDecl* FileScopeAsmDecl::CreateImpl(Deserializer& D, ASTContext& C) { 
-  void *Mem = C.getAllocator().Allocate<FileScopeAsmDecl>();
-  FileScopeAsmDecl* decl = new (Mem) FileScopeAsmDecl(0, SourceLocation(), 0);
+  FileScopeAsmDecl* decl = new (C) FileScopeAsmDecl(0, SourceLocation(), 0);
 
   decl->AsmString = cast<StringLiteral>(D.ReadOwnedPtr<Expr>(C));
 //  D.ReadOwnedPtr(D.ReadOwnedPtr<StringLiteral>())<#T * * Ptr#>, <#bool AutoRegister#>)(decl->AsmString);

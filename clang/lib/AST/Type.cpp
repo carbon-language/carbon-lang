@@ -32,19 +32,19 @@ bool QualType::isConstant(ASTContext &Ctx) const {
 
 void Type::Destroy(ASTContext& C) {
   this->~Type();
-  C.getAllocator().Deallocate(this);
+  C.Deallocate(this);
 }
 
 void VariableArrayType::Destroy(ASTContext& C) {
   SizeExpr->Destroy(C);
   this->~VariableArrayType();
-  C.getAllocator().Deallocate(this);
+  C.Deallocate(this);
 }
 
 void DependentSizedArrayType::Destroy(ASTContext& C) {
   SizeExpr->Destroy(C);
   this->~DependentSizedArrayType();
-  C.getAllocator().Deallocate(this);
+  C.Deallocate(this);
 }
 
 /// getArrayElementTypeNoTypeQual - If this is an array type, return the

@@ -60,7 +60,7 @@ void DeclGroup::Destroy(ASTContext& C) {
     Decls[i]->Destroy(C);
   
   this->~DeclGroup();
-  C.getAllocator().Deallocate((void*) this);
+  C.Deallocate((void*) this);
 }
 
 DeclGroupOwningRef::~DeclGroupOwningRef() {

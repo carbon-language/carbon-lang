@@ -405,7 +405,7 @@ void Decl::Destroy(ASTContext& C) {
   }  
 
   this->~Decl();
-  C.getAllocator().Deallocate((void *)this);
+  C.Deallocate((void *)this);
 #endif
 }
 

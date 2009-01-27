@@ -24,14 +24,12 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
  
 TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
-  void *Mem = C.getAllocator().Allocate<TranslationUnitDecl>();
-  return new (Mem) TranslationUnitDecl();
+  return new (C) TranslationUnitDecl();
 }
 
 NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id) {
-  void *Mem = C.getAllocator().Allocate<NamespaceDecl>();
-  return new (Mem) NamespaceDecl(DC, L, Id);
+  return new (C) NamespaceDecl(DC, L, Id);
 }
 
 void NamespaceDecl::Destroy(ASTContext& C) {
@@ -39,22 +37,20 @@ void NamespaceDecl::Destroy(ASTContext& C) {
   // together. They are all top-level Decls.
   
   this->~NamespaceDecl();
-  C.getAllocator().Deallocate((void *)this);
+  C.Deallocate((void *)this);
 }
 
 
 ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
     SourceLocation L, IdentifierInfo *Id, QualType T) {
-  void *Mem = C.getAllocator().Allocate<ImplicitParamDecl>();
-  return new (Mem) ImplicitParamDecl(ImplicitParam, DC, L, Id, T);
+  return new (C) ImplicitParamDecl(ImplicitParam, DC, L, Id, T);
 }
 
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, StorageClass S,
                                  Expr *DefArg) {
-  void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
-  return new (Mem) ParmVarDecl(ParmVar, DC, L, Id, T, S, DefArg);
+  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, S, DefArg);
 }
 
 QualType ParmVarDecl::getOriginalType() const {
@@ -69,8 +65,7 @@ ParmVarWithOriginalTypeDecl *ParmVarWithOriginalTypeDecl::Create(
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, QualType OT, StorageClass S,
                                  Expr *DefArg) {
-  void *Mem = C.getAllocator().Allocate<ParmVarWithOriginalTypeDecl>();
-  return new (Mem) ParmVarWithOriginalTypeDecl(DC, L, Id, T, OT, S, DefArg);
+  return new (C) ParmVarWithOriginalTypeDecl(DC, L, Id, T, OT, S, DefArg);
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
@@ -78,21 +73,18 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    DeclarationName N, QualType T, 
                                    StorageClass S, bool isInline, 
                                    SourceLocation TypeSpecStartLoc) {
-  void *Mem = C.getAllocator().Allocate<FunctionDecl>();
-  return new (Mem) FunctionDecl(Function, DC, L, N, T, S, isInline,
+  return new (C) FunctionDecl(Function, DC, L, N, T, S, isInline,
                                 TypeSpecStartLoc);
 }
 
 BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
-  void *Mem = C.getAllocator().Allocate<BlockDecl>();
-  return new (Mem) BlockDecl(DC, L);
+  return new (C) BlockDecl(DC, L);
 }
 
 FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                              IdentifierInfo *Id, QualType T, Expr *BW,
                              bool Mutable) {
-  void *Mem = C.getAllocator().Allocate<FieldDecl>();
-  return new (Mem) FieldDecl(Decl::Field, DC, L, Id, T, BW, Mutable);
+  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, BW, Mutable);
 }
 
 bool FieldDecl::isAnonymousStructOrUnion() const {
@@ -109,8 +101,7 @@ EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
                                            SourceLocation L,
                                            IdentifierInfo *Id, QualType T,
                                            Expr *E, const llvm::APSInt &V) {
-  void *Mem = C.getAllocator().Allocate<EnumConstantDecl>();
-  return new (Mem) EnumConstantDecl(CD, L, Id, T, E, V);
+  return new (C) EnumConstantDecl(CD, L, Id, T, E, V);
 }
 
 void EnumConstantDecl::Destroy(ASTContext& C) {
@@ -121,8 +112,7 @@ void EnumConstantDecl::Destroy(ASTContext& C) {
 TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L,
                                  IdentifierInfo *Id, QualType T) {
-  void *Mem = C.getAllocator().Allocate<TypedefDecl>();
-  return new (Mem) TypedefDecl(DC, L, Id, T);
+  return new (C) TypedefDecl(DC, L, Id, T);
 }
 
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
@@ -147,8 +137,7 @@ void EnumDecl::completeDefinition(ASTContext &C, QualType NewType) {
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L,
                                            StringLiteral *Str) {
-  void *Mem = C.getAllocator().Allocate<FileScopeAsmDecl>();
-  return new (Mem) FileScopeAsmDecl(DC, L, Str);
+  return new (C) FileScopeAsmDecl(DC, L, Str);
 }
 
 //===----------------------------------------------------------------------===//
@@ -176,13 +165,12 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                          IdentifierInfo *Id, QualType T, StorageClass S, 
                          SourceLocation TypeSpecStartLoc) {
-  void *Mem = C.getAllocator().Allocate<VarDecl>();
-  return new (Mem) VarDecl(Var, DC, L, Id, T, S, TypeSpecStartLoc);
+  return new (C) VarDecl(Var, DC, L, Id, T, S, TypeSpecStartLoc);
 }
 
 void VarDecl::Destroy(ASTContext& C) {
   this->~VarDecl();
-  C.getAllocator().Deallocate((void *)this);
+  C.Deallocate((void *)this);
 }
 
 VarDecl::~VarDecl() {
@@ -200,7 +188,7 @@ void FunctionDecl::Destroy(ASTContext& C) {
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     (*I)->Destroy(C);
 
-  C.getAllocator().Deallocate(ParamInfo);
+  C.Deallocate(ParamInfo);
 
   Decl::Destroy(C);
 }
@@ -309,8 +297,7 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                RecordDecl* PrevDecl) {
   
-  void *Mem = C.getAllocator().Allocate<RecordDecl>();
-  RecordDecl* R = new (Mem) RecordDecl(Record, TK, DC, L, Id);
+  RecordDecl* R = new (C) RecordDecl(Record, TK, DC, L, Id);
   C.getTypeDeclType(R, PrevDecl);
   return R;
 }
