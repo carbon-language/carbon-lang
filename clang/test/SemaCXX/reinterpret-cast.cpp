@@ -70,3 +70,21 @@ void refs()
   // Bad: from rvalue
   (void)reinterpret_cast<int&>(&c); // expected-error {{reinterpret_cast from rvalue to reference type 'int &'}}
 }
+
+void memptrs()
+{
+  const int structure::*psi = 0;
+  (void)reinterpret_cast<const float structure::*>(psi);
+  (void)reinterpret_cast<int structure::*>(psi); // expected-error {{reinterpret_cast from 'int const struct structure::*' to 'int struct structure::*' casts away constness}}
+
+  void (structure::*psf)() = 0;
+  (void)reinterpret_cast<int (structure::*)()>(psf);
+
+  (void)reinterpret_cast<void (structure::*)()>(psi); // expected-error {{reinterpret_cast from 'int const struct structure::*' to 'void (struct structure::*)(void)' is not allowed}}
+  (void)reinterpret_cast<int structure::*>(psf); // expected-error {{reinterpret_cast from 'void (struct structure::*)(void)' to 'int struct structure::*' is not allowed}}
+
+  // Cannot cast from integers to member pointers, not even the null pointer
+  // literal.
+  (void)reinterpret_cast<void (structure::*)()>(0); // expected-error {{reinterpret_cast from 'int' to 'void (struct structure::*)(void)' is not allowed}}
+  (void)reinterpret_cast<int structure::*>(0); // expected-error {{reinterpret_cast from 'int' to 'int struct structure::*' is not allowed}}
+}

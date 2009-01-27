@@ -237,6 +237,32 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // Canonicalize source for comparison.
   SrcType = Self.Context.getCanonicalType(SrcType);
 
+  const MemberPointerType *DestMemPtr = DestType->getAsMemberPointerType(),
+                          *SrcMemPtr = SrcType->getAsMemberPointerType();
+  if (DestMemPtr && SrcMemPtr) {
+    // C++ 5.2.10p9: An rvalue of type "pointer to member of X of type T1"
+    //   can be explicitly converted to an rvalue of type "pointer to member
+    //   of Y of type T2" if T1 and T2 are both function types or both object
+    //   types.
+    if (DestMemPtr->getPointeeType()->isFunctionType() !=
+        SrcMemPtr->getPointeeType()->isFunctionType()) {
+      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic)
+        << "reinterpret_cast" << OrigDestType << OrigSrcType << OpRange;
+      return;
+    }
+
+    // C++ 5.2.10p2: The reinterpret_cast operator shall not cast away
+    //   constness.
+    if (CastsAwayConstness(Self, SrcType, DestType)) {
+      Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away)
+        << "reinterpret_cast" << OrigDestType << OrigSrcType << OpRange;
+      return;
+    }
+
+    // A valid member pointer cast.
+    return;
+  }
+
   bool destIsPtr = DestType->isPointerType();
   bool srcIsPtr = SrcType->isPointerType();
   if (!destIsPtr && !srcIsPtr) {
@@ -253,8 +279,8 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     // restrictions, a cast to the same type is allowed. The intent is not
     // entirely clear here, since all other paragraphs explicitly forbid casts
     // to the same type. However, the behavior of compilers is pretty consistent
-    // on this point: allow same-type conversion if the involved are pointers,
-    // disallow otherwise.
+    // on this point: allow same-type conversion if the involved types are
+    // pointers, disallow otherwise.
     return;
   }
 
@@ -304,8 +330,6 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
       return;
     }
 
-    // FIXME: Handle member pointers.
-
     // C++0x 5.2.10p8: Converting a pointer to a function into a pointer to
     //   an object type or vice versa is conditionally-supported.
     // Compilers support it in C++03 too, though, because it's necessary for
@@ -318,8 +342,6 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     }
     return;
   }
-
-  // FIXME: Handle member pointers.
 
   if (DestType->isFunctionPointerType()) {
     // See above.
@@ -337,18 +359,21 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // object pointers.
 }
 
-/// CastsAwayConstness - Check if the pointer conversion from SrcType
-/// to DestType casts away constness as defined in C++
-/// 5.2.11p8ff. This is used by the cast checkers.  Both arguments
-/// must denote pointer types.
+/// CastsAwayConstness - Check if the pointer conversion from SrcType to
+/// DestType casts away constness as defined in C++ 5.2.11p8ff. This is used by
+/// the cast checkers.  Both arguments must denote pointer (possibly to member)
+/// types.
 bool
 CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType)
 {
- // Casting away constness is defined in C++ 5.2.11p8 with reference to
-  // C++ 4.4.
-  // We piggyback on Sema::IsQualificationConversion for this, since the rules
-  // are non-trivial. So first we construct Tcv *...cv* as described in
-  // C++ 5.2.11p8.
+  // Casting away constness is defined in C++ 5.2.11p8 with reference to
+  // C++ 4.4. We piggyback on Sema::IsQualificationConversion for this, since
+  // the rules are non-trivial. So first we construct Tcv *...cv* as described
+  // in C++ 5.2.11p8.
+  assert((SrcType->isPointerType() || SrcType->isMemberPointerType()) &&
+         "Source type is not pointer or pointer to member.");
+  assert((DestType->isPointerType() || DestType->isMemberPointerType()) &&
+         "Destination type is not pointer or pointer to member.");
 
   QualType UnwrappedSrcType = SrcType, UnwrappedDestType = DestType;
   llvm::SmallVector<unsigned, 8> cv1, cv2;
