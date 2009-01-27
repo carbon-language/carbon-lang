@@ -1154,7 +1154,8 @@ public:
   /// getDebugLoc - Return the source location info.
   const DebugLoc getDebugLoc() const { return debugLoc; }
 
-  /// setDebugLoc - Set source location info.
+  /// setDebugLoc - Set source location info.  Try to avoid this, putting
+  /// it in the constructor is preferable.
   void setDebugLoc(const DebugLoc dl) { debugLoc = dl; }
 
   /// use_iterator - This class provides iterator support for SDUse

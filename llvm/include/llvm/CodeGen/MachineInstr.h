@@ -313,6 +313,7 @@ public:
   void setDesc(const TargetInstrDesc &tid) { TID = &tid; }
 
   /// setDebugLoc - Replace current source information with new such.
+  /// Avoid using this, the constructor argument is preferable.
   ///
   void setDebugLoc(const DebugLoc dl) { debugLoc = dl; }
 
