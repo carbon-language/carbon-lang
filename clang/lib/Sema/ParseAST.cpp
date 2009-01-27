@@ -39,7 +39,8 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
   ASTContext *Context = 
     new ASTContext(PP.getLangOptions(), PP.getSourceManager(),
                    PP.getTargetInfo(),
-                   PP.getIdentifierTable(), PP.getSelectorTable());
+                   PP.getIdentifierTable(), PP.getSelectorTable(),
+                   FreeMemory);
   TranslationUnit *TU = new TranslationUnit(*Context);
   Sema S(PP, *Context, *Consumer);
   Parser P(PP, S);

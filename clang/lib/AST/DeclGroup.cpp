@@ -24,7 +24,7 @@ DeclGroup* DeclGroup::Create(ASTContext& C, unsigned numdecls, Decl** decls) {
   assert (numdecls > 0);
   unsigned size = sizeof(DeclGroup) + sizeof(Decl*) * numdecls;
   unsigned alignment = llvm::AlignOf<DeclGroup>::Alignment;  
-  void* mem = C.getAllocator().Allocate(size, alignment);
+  void* mem = C.Allocate(size, alignment);
   new (mem) DeclGroup(numdecls, decls);
   return static_cast<DeclGroup*>(mem);
 }
@@ -40,7 +40,7 @@ DeclGroup* DeclGroup::Create(llvm::Deserializer& D, ASTContext& C) {
   unsigned NumDecls = (unsigned) D.ReadInt();
   unsigned size = sizeof(DeclGroup) + sizeof(Decl*) * NumDecls;
   unsigned alignment = llvm::AlignOf<DeclGroup>::Alignment;  
-  DeclGroup* DG = (DeclGroup*) C.getAllocator().Allocate(size, alignment);
+  DeclGroup* DG = (DeclGroup*) C.Allocate(size, alignment);
   new (DG) DeclGroup();
   DG->NumDecls = NumDecls;
   D.BatchReadOwnedPtrs(NumDecls, &(*DG)[0], C);

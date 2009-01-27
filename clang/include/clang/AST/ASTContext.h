@@ -118,9 +118,10 @@ class ASTContext {
   ///  this ASTContext object.
   LangOptions LangOpts;
 
-  /// Allocator - The allocator object used to create AST objects.
-  llvm::MallocAllocator Allocator;
-
+  /// MallocAlloc/BumpAlloc - The allocator objects used to create AST objects.
+  bool FreeMemory;
+  llvm::MallocAllocator MallocAlloc;
+  llvm::BumpPtrAllocator BumpAlloc;
 public:
   TargetInfo &Target;
   IdentifierTable &Idents;
@@ -128,9 +129,14 @@ public:
   DeclarationNameTable DeclarationNames;
 
   SourceManager& getSourceManager() { return SourceMgr; }
-  llvm::MallocAllocator &getAllocator() { return Allocator; }  
-  void Deallocate(void *Ptr) { Allocator.Deallocate(Ptr); }
-  
+  void *Allocate(unsigned Size, unsigned Align = 8) {
+    return FreeMemory ? MallocAlloc.Allocate(Size, Align) :
+                        BumpAlloc.Allocate(Size, Align);
+  }
+  void Deallocate(void *Ptr) { 
+    if (FreeMemory)
+      MallocAlloc.Deallocate(Ptr); 
+  }
   const LangOptions& getLangOptions() const { return LangOpts; }
   
   FullSourceLoc getFullLoc(SourceLocation Loc) const { 
@@ -159,8 +165,8 @@ public:
   QualType DependentTy;
 
   ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
-             IdentifierTable &idents, SelectorTable &sels,
-             unsigned size_reserve=0);
+             IdentifierTable &idents, SelectorTable &sels, 
+             bool FreeMemory = true, unsigned size_reserve=0);
 
   ~ASTContext();
   
@@ -600,7 +606,7 @@ private:
 /// @return The allocated memory. Could be NULL.
 inline void *operator new(size_t Bytes, clang::ASTContext &C,
                           size_t Alignment = 16) throw () {
-  return C.getAllocator().Allocate(Bytes, Alignment);
+  return C.Allocate(Bytes, Alignment);
 }
 /// @brief Placement delete companion to the new above.
 ///
@@ -610,7 +616,7 @@ inline void *operator new(size_t Bytes, clang::ASTContext &C,
 /// the ASTContext throws in the object constructor.
 inline void operator delete(void *Ptr, clang::ASTContext &C)
               throw () {
-  C.getAllocator().Deallocate(Ptr);
+  C.Deallocate(Ptr);
 }
 
 #endif

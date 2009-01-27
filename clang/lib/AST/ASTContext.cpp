@@ -31,9 +31,9 @@ enum FloatingRank {
 ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
-                       unsigned size_reserve) : 
+                       bool FreeMem, unsigned size_reserve) : 
   CFConstantStringTypeDecl(0), ObjCFastEnumerationStateTypeDecl(0),
-  SourceMgr(SM), LangOpts(LOpts), Target(t), 
+  SourceMgr(SM), LangOpts(LOpts), FreeMemory(FreeMem), Target(t), 
   Idents(idents), Selectors(sels)
 {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
@@ -1126,8 +1126,8 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
   // FunctionTypeProto objects are allocated with extra bytes after them
   // for a variable size array (for parameter types) at the end of them.
   FunctionTypeProto *FTP = 
-    (FunctionTypeProto*)Allocator.Allocate(sizeof(FunctionTypeProto) + 
-                                           NumArgs*sizeof(QualType), 8);
+    (FunctionTypeProto*)Allocate(sizeof(FunctionTypeProto) + 
+                                 NumArgs*sizeof(QualType), 8);
   new (FTP) FunctionTypeProto(ResultTy, ArgArray, NumArgs, isVariadic,
                               TypeQuals, Canonical);
   Types.push_back(FTP);

@@ -118,8 +118,7 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                            IdentifierInfo *Id,
                            EnumDecl *PrevDecl) {
-  void *Mem = C.getAllocator().Allocate<EnumDecl>();
-  EnumDecl *Enum = new (Mem) EnumDecl(DC, L, Id);
+  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id);
   C.getTypeDeclType(Enum, PrevDecl);
   return Enum;
 }
@@ -229,7 +228,7 @@ void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
   
   // Zero params -> null pointer.
   if (NumParams) {
-    void *Mem = C.getAllocator().Allocate<ParmVarDecl*>(NumParams);
+    void *Mem = C.Allocate(sizeof(ParmVarDecl*)*NumParams);
     ParamInfo = new (Mem) ParmVarDecl*[NumParams];
     memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
   }

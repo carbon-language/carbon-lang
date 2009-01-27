@@ -1387,10 +1387,9 @@ DesignatedInitExpr::Create(ASTContext &C, Designator *Designators,
                            Expr **IndexExprs, unsigned NumIndexExprs,
                            SourceLocation ColonOrEqualLoc,
                            bool UsesColonSyntax, Expr *Init) {
-  void *Mem = C.getAllocator().Allocate(sizeof(DesignatedInitExpr) +
-                                        sizeof(Designator) * NumDesignators +
-                                        sizeof(Stmt *) * (NumIndexExprs + 1),
-                                        8);
+  void *Mem = C.Allocate(sizeof(DesignatedInitExpr) +
+                         sizeof(Designator) * NumDesignators +
+                         sizeof(Stmt *) * (NumIndexExprs + 1), 8);
   DesignatedInitExpr *DIE 
     = new (Mem) DesignatedInitExpr(C.VoidTy, NumDesignators,
                                    ColonOrEqualLoc, UsesColonSyntax,

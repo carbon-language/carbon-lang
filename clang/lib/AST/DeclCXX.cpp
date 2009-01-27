@@ -47,7 +47,7 @@ TemplateParameterList::Create(ASTContext &C, Decl **Params,
   // FIXME: how do I pass in Size to ASTContext::new?
   unsigned Size = sizeof(TemplateParameterList) + sizeof(Decl *) * NumParams;
   unsigned Align = llvm::AlignOf<TemplateParameterList>::Alignment;
-  void *Mem = C.getAllocator().Allocate(Size, Align);
+  void *Mem = C.Allocate(Size, Align);
   return new (Mem) TemplateParameterList(Params, NumParams);
 }
 
