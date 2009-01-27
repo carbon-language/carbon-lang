@@ -130,13 +130,13 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
         const IdentifierInfo *II = RawTokens[CurRawTok].getIdentifierInfo();
         if (!strcmp(II->getName(), "warning")) {
           // Comment out #warning.
-          RB.InsertTextAfter(SM.getFullFilePos(RawTok.getLocation()), "//", 2);
+          RB.InsertTextAfter(SM.getFileOffset(RawTok.getLocation()), "//", 2);
         } else if (!strcmp(II->getName(), "pragma") &&
                    RawTokens[CurRawTok+1].is(tok::identifier) &&
                   !strcmp(RawTokens[CurRawTok+1].getIdentifierInfo()->getName(),
                           "mark")){
           // Comment out #pragma mark.
-          RB.InsertTextAfter(SM.getFullFilePos(RawTok.getLocation()), "//", 2);
+          RB.InsertTextAfter(SM.getFileOffset(RawTok.getLocation()), "//", 2);
         }
       }
       
@@ -150,8 +150,8 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
     
     // Okay, both tokens are from the same file.  Get their offsets from the
     // start of the file.
-    unsigned PPOffs = SM.getFullFilePos(PPLoc);
-    unsigned RawOffs = SM.getFullFilePos(RawTok.getLocation());
+    unsigned PPOffs = SM.getFileOffset(PPLoc);
+    unsigned RawOffs = SM.getFileOffset(RawTok.getLocation());
 
     // If the offsets are the same and the token kind is the same, ignore them.
     if (PPOffs == RawOffs && isSameToken(RawTok, PPTok)) {
@@ -173,7 +173,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
         EndPos = RawOffs+RawTok.getLength();
 
         RawTok = GetNextRawTok(RawTokens, CurRawTok, true);
-        RawOffs = SM.getFullFilePos(RawTok.getLocation());
+        RawOffs = SM.getFileOffset(RawTok.getLocation());
         
         if (RawTok.is(tok::comment)) {
           // Skip past the comment.
@@ -197,7 +197,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
       Expansion += ' ' + PP.getSpelling(PPTok);
       PP.Lex(PPTok);
       PPLoc = SM.getInstantiationLoc(PPTok.getLocation());
-      PPOffs = SM.getFullFilePos(PPLoc);
+      PPOffs = SM.getFileOffset(PPLoc);
     }
     Expansion += ' ';
     RB.InsertTextBefore(InsertPos, &Expansion[0], Expansion.size());

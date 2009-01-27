@@ -36,8 +36,8 @@ void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
   FileID FID = SM.getFileID(B);
   assert(SM.getFileID(E) == FID && "B/E not in the same file!");
 
-  unsigned BOffset = SM.getFullFilePos(B);
-  unsigned EOffset = SM.getFullFilePos(E);
+  unsigned BOffset = SM.getFileOffset(B);
+  unsigned EOffset = SM.getFileOffset(E);
   
   // Include the whole end token in the range.
   EOffset += Lexer::MeasureTokenLength(E, R.getSourceMgr());
@@ -359,7 +359,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
   while (Tok.isNot(tok::eof)) {
     // Since we are lexing unexpanded tokens, all tokens are from the main
     // FileID.
-    unsigned TokOffs = SourceMgr.getFullFilePos(Tok.getLocation());
+    unsigned TokOffs = SourceMgr.getFileOffset(Tok.getLocation());
     unsigned TokLen = Tok.getLength();
     switch (Tok.getKind()) {
     default: break;
@@ -397,7 +397,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
       unsigned TokEnd = TokOffs+TokLen;
       L.LexFromRawLexer(Tok);
       while (!Tok.isAtStartOfLine() && Tok.isNot(tok::eof)) {
-        TokEnd = SourceMgr.getFullFilePos(Tok.getLocation())+Tok.getLength();
+        TokEnd = SourceMgr.getFileOffset(Tok.getLocation())+Tok.getLength();
         L.LexFromRawLexer(Tok);
       }
       

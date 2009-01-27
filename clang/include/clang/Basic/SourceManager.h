@@ -468,11 +468,10 @@ public:
     return getDecomposedSpellingLocSlowCase(E, Offset);
   }    
   
-  /// getFullFilePos - This (efficient) method returns the offset from the start
-  /// of the file that the specified spelling SourceLocation represents.  This
-  /// returns the location of the actual character data, not the instantiation
-  /// position.
-  unsigned getFullFilePos(SourceLocation SpellingLoc) const {
+  /// getFileOffset - This method returns the offset from the start
+  /// of the file that the specified SourceLocation represents. This is not very
+  /// meaningful for a macro ID.
+  unsigned getFileOffset(SourceLocation SpellingLoc) const {
     return getDecomposedLoc(SpellingLoc).second;
   }
   

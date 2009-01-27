@@ -159,7 +159,7 @@ void PTHWriter::EmitToken(const Token& T) {
   else
     Emit32(ResolveID(T.getIdentifierInfo()));
     
-  Emit32(PP.getSourceManager().getFullFilePos(T.getLocation()));
+  Emit32(PP.getSourceManager().getFileOffset(T.getLocation()));
 }
 
 namespace {
