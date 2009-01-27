@@ -1687,9 +1687,23 @@ private:
       ConstructTypeDIE(DW_Unit, Buffer, DICompositeType(Ty.getGV()));
     }
     
-    // Add debug information entry to entity and unit.
-    DIE *Die = DW_Unit->AddDie(Buffer);
-    SetDIEntry(Slot, Die);
+    // Add debug information entry to entity and appropriate context.
+    DIE *Die = NULL;
+    DIDescriptor Context = Ty.getContext();
+    if (!Context.isNull())
+      Die = DW_Unit->getDieMapSlotFor(Context.getGV());
+
+    if (Die) {
+      DIE *Child = new DIE(Buffer);
+      Die->AddChild(Child);
+      Buffer.Detach();
+      SetDIEntry(Slot, Child);
+    }
+    else {
+      Die = DW_Unit->AddDie(Buffer);
+      SetDIEntry(Slot, Die);
+    }
+
     Entity->AddValue(DW_AT_type, DW_FORM_ref4, Slot);
   }
 
