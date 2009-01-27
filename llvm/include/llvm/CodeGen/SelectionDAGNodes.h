@@ -902,7 +902,7 @@ public:
   inline bool isTargetOpcode() const;
   inline bool isMachineOpcode() const;
   inline unsigned getMachineOpcode() const;
-  inline DebugLoc getDebugLoc() const;
+  inline const DebugLoc getDebugLoc() const;
 
   
   /// reachesChainWithoutSideEffects - Return true if this operand (which must
@@ -1152,10 +1152,10 @@ public:
   void setNodeId(int Id) { NodeId = Id; }
 
   /// getDebugLoc - Return the source location info.
-  DebugLoc getDebugLoc() const { return debugLoc; }
+  const DebugLoc getDebugLoc() const { return debugLoc; }
 
   /// setDebugLoc - Set source location info.
-  void setDebugLoc(DebugLoc sl) { debugLoc = sl; }
+  void setDebugLoc(const DebugLoc dl) { debugLoc = dl; }
 
   /// use_iterator - This class provides iterator support for SDUse
   /// operands that use a specific SDNode. 
@@ -1363,10 +1363,10 @@ protected:
   /// The next two constructors specify DebugLoc explicitly; the intent
   /// is that they will replace the above two over time, and eventually
   /// the ones above can be removed.
-  SDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops, unsigned NumOps,
-         DebugLoc sl)
+  SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs, const SDValue *Ops, 
+         unsigned NumOps)
     : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
-      NodeId(-1), debugLoc(sl),
+      NodeId(-1), debugLoc(dl),
       OperandList(NumOps ? new SDUse[NumOps] : 0),
       ValueList(VTs.VTs),
       NumOperands(NumOps), NumValues(VTs.NumVTs),
@@ -1379,9 +1379,9 @@ protected:
 
   /// This constructor adds no operands itself; operands can be
   /// set later with InitOperands.
-  SDNode(unsigned Opc, SDVTList VTs, DebugLoc sl)
+  SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs)
     : NodeType(Opc), OperandsNeedDelete(false), SubclassData(0),
-      NodeId(-1), debugLoc(sl), OperandList(0),
+      NodeId(-1), debugLoc(dl), OperandList(0),
       ValueList(VTs.VTs), NumOperands(0), NumValues(VTs.NumVTs),
       UseList(NULL) {}
   
@@ -1479,7 +1479,7 @@ inline bool SDValue::use_empty() const {
 inline bool SDValue::hasOneUse() const {
   return Node->hasNUsesOfValue(1, ResNo);
 }
-inline DebugLoc SDValue::getDebugLoc() const {
+inline const DebugLoc SDValue::getDebugLoc() const {
   return Node->getDebugLoc();
 }
 
