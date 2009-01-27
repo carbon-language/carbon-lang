@@ -169,7 +169,7 @@ static cl::opt<bool, true>
 DisableRedZoneOption("disable-red-zone",
            cl::desc("Do not emit code that uses the red zone."),
            cl::location(DisableRedZone),
-           cl::init(true));
+           cl::init(false));
 
 //---------------------------------------------------------------------------
 // TargetMachine Class
