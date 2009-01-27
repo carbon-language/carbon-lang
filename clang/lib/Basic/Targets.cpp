@@ -800,6 +800,8 @@ public:
 
 namespace {
 class SparcV8TargetInfo : public TargetInfo {
+  static const TargetInfo::GCCRegAlias GCCRegAliases[];
+  static const char * const GCCRegNames[];
 public:
   SparcV8TargetInfo(const std::string& triple) : TargetInfo(triple) {
     // FIXME: Support Sparc quad-precision long double?
@@ -824,17 +826,9 @@ public:
     return "sparc";
   }
   virtual void getGCCRegNames(const char * const *&Names, 
-                              unsigned &NumNames) const {
-    // FIXME: Implement!
-    Names = 0;
-    NumNames = 0;
-  }
+                              unsigned &NumNames) const;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
-                                unsigned &NumAliases) const {
-    // FIXME: Implement!
-    Aliases = 0;
-    NumAliases = 0;
-  }
+                                unsigned &NumAliases) const;
   virtual bool validateAsmConstraint(char c,
                                      TargetInfo::ConstraintInfo &info) const {
     // FIXME: Implement!
@@ -846,6 +840,59 @@ public:
   }
 };
 
+const char * const SparcV8TargetInfo::GCCRegNames[] = {
+  "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+  "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+  "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
+};
+
+void SparcV8TargetInfo::getGCCRegNames(const char * const *&Names, 
+                                       unsigned &NumNames) const {
+  Names = GCCRegNames;
+  NumNames = llvm::array_lengthof(GCCRegNames);
+}
+
+const TargetInfo::GCCRegAlias SparcV8TargetInfo::GCCRegAliases[] = {
+  { { "g0" }, "r0" }, 
+  { { "g1" }, "r1" }, 
+  { { "g2" }, "r2" }, 
+  { { "g3" }, "r3" }, 
+  { { "g4" }, "r4" }, 
+  { { "g5" }, "r5" }, 
+  { { "g6" }, "r6" }, 
+  { { "g7" }, "r7" }, 
+  { { "o0" }, "r8" }, 
+  { { "o1" }, "r9" }, 
+  { { "o2" }, "r10" }, 
+  { { "o3" }, "r11" }, 
+  { { "o4" }, "r12" }, 
+  { { "o5" }, "r13" }, 
+  { { "o6", "sp" }, "r14" }, 
+  { { "o7" }, "r15" }, 
+  { { "l0" }, "r16" }, 
+  { { "l1" }, "r17" }, 
+  { { "l2" }, "r18" }, 
+  { { "l3" }, "r19" }, 
+  { { "l4" }, "r20" }, 
+  { { "l5" }, "r21" }, 
+  { { "l6" }, "r22" }, 
+  { { "l7" }, "r23" }, 
+  { { "i0" }, "r24" }, 
+  { { "i1" }, "r25" }, 
+  { { "i2" }, "r26" }, 
+  { { "i3" }, "r27" }, 
+  { { "i4" }, "r28" }, 
+  { { "i5" }, "r29" }, 
+  { { "i6", "fp" }, "r30" }, 
+  { { "i7" }, "r31" }, 
+};
+
+void SparcV8TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                         unsigned &NumAliases) const {
+  Aliases = GCCRegAliases;
+  NumAliases = llvm::array_lengthof(GCCRegAliases);
+}
 } // end anonymous namespace.
 
 namespace {
