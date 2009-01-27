@@ -3562,6 +3562,11 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
                        Field->getType().getTypePtr()) >> 3;
     Align = llvm::Log2_32(Align);
     Ivar[3] = llvm::ConstantInt::get(ObjCTypes.IntTy, Align);
+    // NOTE. Size of a bitfield does not match gcc's, because of the way
+    // bitfields are treated special in each. But I am told that 'size'
+    // for bitfield ivars is ignored by the runtime so it does not matter.
+    // (even if it matters, some day, there is enough info. to get the bitfield
+    // right!
     Ivar[4] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarnfABITy, Ivar));
   }
