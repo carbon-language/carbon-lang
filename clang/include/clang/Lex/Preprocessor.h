@@ -461,12 +461,6 @@ public:
     // If the token is carrying a literal data pointer, just use it.
     if (const char *D = Tok.getLiteralData())
       return *D;
-    
-    if (PTH) {
-      const char *Data;
-      if (PTH->getSpelling(Tok.getLocation(), Data))
-        return *Data;
-    }
 
     // Otherwise, fall back on getCharacterData, which is slower, but always
     // works.

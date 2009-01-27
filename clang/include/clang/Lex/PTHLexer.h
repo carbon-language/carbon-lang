@@ -45,10 +45,6 @@ class PTHLexer : public PreprocessorLexer {
   ///  to process when doing quick skipping of preprocessor blocks.
   const unsigned char* CurPPCondPtr;
 
-  /// MySpellingMgr - Reference to the spelling manager used to get spellings
-  ///  for the source file indicated by \c FileID.
-  PTHSpellingSearch& MySpellingSrch;  
-
   PTHLexer(const PTHLexer&);  // DO NOT IMPLEMENT
   void operator=(const PTHLexer&); // DO NOT IMPLEMENT
   
@@ -65,8 +61,7 @@ protected:
 
   /// Create a PTHLexer for the specified token stream.
   PTHLexer(Preprocessor& pp, FileID FID, const unsigned char *D,
-           const unsigned char* ppcond,
-           PTHSpellingSearch& mySpellingSrch, PTHManager &PM);
+           const unsigned char* ppcond, PTHManager &PM);
 public:  
 
   ~PTHLexer() {}
@@ -95,16 +90,6 @@ public:
   /// IndirectLex - An indirect call to 'Lex' that can be invoked via
   ///  the PreprocessorLexer interface.
   void IndirectLex(Token &Result) { Lex(Result); }
-
-  /// Returns the cached spelling of a token.
-  /// \param[in] sloc The SourceLocation of the token.
-  /// \param[out] Buffer If a token's spelling is found in the PTH file then
-  ///   upon exit from this method \c Buffer will be set to the address of
-  ///   the character array representing that spelling.  No characters
-  ///   are copied.
-  /// \returns The number of characters for the spelling of the token.  This
-  ///   value is 0 if the spelling could not be found in the PTH file.
-  unsigned getSpelling(SourceLocation sloc, const char *&Buffer);
   
   /// getSourceLocation - Return a source location for the token in
   /// the current file.

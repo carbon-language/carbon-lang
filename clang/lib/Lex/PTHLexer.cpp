@@ -56,11 +56,9 @@ static inline uint32_t ReadLE32(const unsigned char *&Data) {
 //===----------------------------------------------------------------------===//
 
 PTHLexer::PTHLexer(Preprocessor &PP, FileID FID, const unsigned char *D,
-                   const unsigned char *ppcond,
-                   PTHSpellingSearch &mySpellingSrch, PTHManager &PM)
+                   const unsigned char *ppcond, PTHManager &PM)
   : PreprocessorLexer(&PP, FID), TokBuf(D), CurPtr(D), LastHashTokPtr(0),
-    PPCond(ppcond), CurPPCondPtr(ppcond), MySpellingSrch(mySpellingSrch),
-    PTHMgr(PM) {
+    PPCond(ppcond), CurPPCondPtr(ppcond), PTHMgr(PM) {
       
   FileStartLoc = PP.getSourceManager().getLocForStartOfFile(FID);
 }
@@ -98,7 +96,10 @@ LexNextToken:
   Tok.setLength(Len);
 
   // Handle identifiers.
-  if (IdentifierID) {
+  if (Tok.isLiteral()) {
+    Tok.setLiteralData((const char*) (PTHMgr.SpellingBase + IdentifierID));
+  }
+  else if (IdentifierID) {
     MIOpt.ReadToken();
     IdentifierInfo *II = PTHMgr.GetIdentifierInfo(IdentifierID-1);
     
@@ -305,119 +306,6 @@ SourceLocation PTHLexer::getSourceLocation() {
 }
 
 //===----------------------------------------------------------------------===//
-// getSpelling() - Use cached data in PTH files for getSpelling().
-//===----------------------------------------------------------------------===//
-
-unsigned PTHManager::getSpelling(FileID FID, unsigned FPos,
-                                 const char *&Buffer) {
-  llvm::DenseMap<FileID, PTHSpellingSearch*>::iterator I =SpellingMap.find(FID);
-
-  if (I == SpellingMap.end())
-    return 0;
-
-  return I->second->getSpellingBinarySearch(FPos, Buffer);
-}
-
-unsigned PTHManager::getSpelling(SourceLocation Loc, const char *&Buffer) {
-  SourceManager &SM = PP->getSourceManager();
-  Loc = SM.getSpellingLoc(Loc);
-  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
-  return getSpelling(LocInfo.first, LocInfo.second, Buffer);
-}
-
-unsigned PTHManager::getSpellingAtPTHOffset(unsigned PTHOffset,
-                                            const char *&Buffer) {
-  assert(PTHOffset < Buf->getBufferSize());
-  const unsigned char* Ptr =
-    (const unsigned char*)Buf->getBufferStart() + PTHOffset;
-  
-  // The string is prefixed by 16 bits for its length, followed by the string
-  // itself.
-  unsigned Len = ReadUnalignedLE16(Ptr);
-  Buffer = (const char *)Ptr;
-  return Len;
-}
-
-unsigned PTHSpellingSearch::getSpellingLinearSearch(unsigned FPos,
-                                                    const char *&Buffer) {
-  const unsigned char *Ptr = LinearItr;
-  unsigned Len = 0;
-  
-  if (Ptr == TableEnd)
-    return getSpellingBinarySearch(FPos, Buffer);
-  
-  do {
-    uint32_t TokOffset = ReadLE32(Ptr);
-    
-    if (TokOffset > FPos)
-      return getSpellingBinarySearch(FPos, Buffer);
-    
-    // Did we find a matching token offset for this spelling?
-    if (TokOffset == FPos) {
-      uint32_t SpellingPTHOffset = ReadLE32(Ptr);
-      Len = PTHMgr.getSpellingAtPTHOffset(SpellingPTHOffset, Buffer);
-      break;
-    }
-  } while (Ptr != TableEnd);
-
-  LinearItr = Ptr;
-  return Len;
-}
-
-
-unsigned PTHSpellingSearch::getSpellingBinarySearch(unsigned FPos,
-                                                    const char *&Buffer) {
-  
-  assert((TableEnd - TableBeg) % SpellingEntrySize == 0);
-  assert(TableEnd >= TableBeg);
-  
-  if (TableEnd == TableBeg)
-    return 0;
-  
-  unsigned min = 0;
-  const unsigned char *tb = TableBeg;
-  unsigned max = NumSpellings;
-
-  do {
-    unsigned i = (max - min) / 2 + min;
-    const unsigned char *Ptr = tb + (i * SpellingEntrySize);
-    
-    uint32_t TokOffset = ReadLE32(Ptr);
-    if (TokOffset > FPos) {
-      max = i;
-      assert(!(max == min) || (min == i));
-      continue;
-    }
-    
-    if (TokOffset < FPos) {
-      if (i == min)
-        break;
-      
-      min = i;
-      continue;
-    }
-    
-    uint32_t SpellingPTHOffset = ReadLE32(Ptr);
-    return PTHMgr.getSpellingAtPTHOffset(SpellingPTHOffset, Buffer);
-  }
-  while (min != max);
-  
-  return 0;
-}
-
-unsigned PTHLexer::getSpelling(SourceLocation Loc, const char *&Buffer) {
-  SourceManager &SM = PP->getSourceManager();
-  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedSpellingLoc(Loc);
-
-  FileID FID = LocInfo.first;
-  unsigned FPos = LocInfo.second;
-  
-  if (FID == getFileID())
-    return MySpellingSrch.getSpellingLinearSearch(FPos, Buffer);
-  return PTHMgr.getSpelling(FID, FPos, Buffer);  
-}
-
-//===----------------------------------------------------------------------===//
 // Internal Data Structures for PTH file lookup and resolving identifiers.
 //===----------------------------------------------------------------------===//
 
@@ -431,11 +319,10 @@ public:
   class Val {
     uint32_t TokenOff;
     uint32_t PPCondOff;
-    uint32_t SpellingOff;
   public:
     Val() : TokenOff(~0) {}
-    Val(uint32_t toff, uint32_t poff, uint32_t soff)
-      : TokenOff(toff), PPCondOff(poff), SpellingOff(soff) {}
+    Val(uint32_t toff, uint32_t poff)
+      : TokenOff(toff), PPCondOff(poff) {}
     
     bool isValid() const { return TokenOff != ~((uint32_t)0); }
 
@@ -447,12 +334,7 @@ public:
     uint32_t getPPCondOffset() const {
       assert(isValid() && "PTHFileLookup entry initialized.");
       return PPCondOff;
-    }
-    
-    uint32_t getSpellingOffset() const {
-      assert(isValid() && "PTHFileLookup entry initialized.");
-      return SpellingOff;
-    }
+    }    
   };
   
 private:
@@ -481,10 +363,9 @@ public:
 
       uint32_t TokenOff = ReadLE32(D);
       uint32_t PPCondOff = ReadLE32(D);
-      uint32_t SpellingOff = ReadLE32(D);
 
       FileMap.GetOrCreateValue(s, s+Len).getValue() =
-        Val(TokenOff, PPCondOff, SpellingOff);      
+        Val(TokenOff, PPCondOff);
     }
   }
 };
@@ -497,10 +378,11 @@ public:
 PTHManager::PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
                        const unsigned char* idDataTable,
                        IdentifierInfo** perIDCache, 
-                       const unsigned char* sortedIdTable, unsigned numIds)
+                       const unsigned char* sortedIdTable, unsigned numIds,
+                       const unsigned char* spellingBase)
 : Buf(buf), PerIDCache(perIDCache), FileLookup(fileLookup),
   IdDataTable(idDataTable), SortedIdTable(sortedIdTable),
-  NumIds(numIds), PP(0) {}
+  NumIds(numIds), PP(0), SpellingBase(spellingBase) {}
 
 PTHManager::~PTHManager() {
   delete Buf;
@@ -573,6 +455,14 @@ PTHManager* PTHManager::Create(const std::string& file) {
     return 0; // FIXME: Proper error diagnostic?
   }
   
+  // Get the location of the spelling cache.
+  const unsigned char* spellingBaseOffset = EndTable + sizeof(uint32_t)*4;
+  const unsigned char* spellingBase = BufBeg + ReadLE32(spellingBaseOffset);
+  if (!(spellingBase >= BufBeg && spellingBase < BufEnd)) {
+    assert(false && "Invalid PTH file.");
+    return 0;
+  }
+  
   // Get the number of IdentifierInfos and pre-allocate the identifier cache.
   uint32_t NumIds = ReadLE32(IData);
   
@@ -591,7 +481,7 @@ PTHManager* PTHManager::Create(const std::string& file) {
 
   // Create the new PTHManager.
   return new PTHManager(File.take(), FL.take(), IData, PerIDCache,
-                        SortedIdTable, NumIds);
+                        SortedIdTable, NumIds, spellingBase);
 }
 IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
   // Look in the PTH file for the string data for the IdentifierInfo object.
@@ -678,18 +568,6 @@ PTHLexer *PTHManager::CreateLexer(FileID FID) {
   uint32_t Len = ReadLE32(ppcond);
   if (Len == 0) ppcond = 0;
   
-  // Get the location of the spelling table.
-  const unsigned char* spellingTable = BufStart + FileData.getSpellingOffset();
-  
-  Len = ReadLE32(spellingTable);
-  if (Len == 0) spellingTable = 0;
-
-  assert(data < (const unsigned char*)Buf->getBufferEnd());
-  
-  // Create the SpellingSearch object for this FileID.
-  PTHSpellingSearch* ss = new PTHSpellingSearch(*this, Len, spellingTable);
-  SpellingMap[FID] = ss;
-  
   assert(PP && "No preprocessor set yet!");
-  return new PTHLexer(*PP, FID, data, ppcond, *ss, *this); 
+  return new PTHLexer(*PP, FID, data, ppcond, *this); 
 }

@@ -29,42 +29,13 @@ namespace clang {
 
 class FileEntry;
 class PTHLexer;
-class PTHManager;
-
-class PTHSpellingSearch {
-  PTHManager& PTHMgr;
-  
-  const unsigned char* const TableBeg;
-  const unsigned char* const TableEnd;
-  
-  const unsigned NumSpellings;
-  const unsigned char* LinearItr;
-  
-public:
-  enum { SpellingEntrySize = 4*2 };
-  
-  unsigned getSpellingBinarySearch(unsigned fpos, const char *&Buffer);
-  unsigned getSpellingLinearSearch(unsigned fpos, const char *&Buffer);
-  
-  PTHSpellingSearch(PTHManager& pm, unsigned numSpellings,
-                    const unsigned char* tableBeg)
-    : PTHMgr(pm),
-      TableBeg(tableBeg),
-      TableEnd(tableBeg + numSpellings*SpellingEntrySize),
-      NumSpellings(numSpellings),
-      LinearItr(tableBeg) {}
-};  
   
 class PTHManager : public IdentifierInfoLookup {
   friend class PTHLexer;
-  friend class PTHSpellingSearch;
   
   /// The memory mapped PTH file.
   const llvm::MemoryBuffer* Buf;
-  
-  /// A map from FileIDs to SpellingSearch objects.
-  llvm::DenseMap<FileID, PTHSpellingSearch*> SpellingMap;
-  
+
   /// Alloc - Allocator used for IdentifierInfo objects.
   llvm::BumpPtrAllocator Alloc;
   
@@ -84,7 +55,7 @@ class PTHManager : public IdentifierInfoLookup {
   /// SortedIdTable - Array ordering persistent identifier IDs by the lexical
   ///  order of their corresponding strings.  This is used by get().
   const unsigned char* const SortedIdTable;
-  
+
   /// NumIds - The number of identifiers in the PTH file.
   const unsigned NumIds;
 
@@ -92,11 +63,16 @@ class PTHManager : public IdentifierInfoLookup {
   ///  PTHLexer objects.
   Preprocessor* PP;
   
+  /// SpellingBase - The base offset within the PTH memory buffer that 
+  ///  contains the cached spellings for literals.
+  const unsigned char* const SpellingBase;
+  
   /// This constructor is intended to only be called by the static 'Create'
   /// method.
   PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
              const unsigned char* idDataTable, IdentifierInfo** perIDCache,
-             const unsigned char* sortedIdTable, unsigned numIds);
+             const unsigned char* sortedIdTable, unsigned numIds,
+             const unsigned char* spellingBase);
 
   // Do not implement.
   PTHManager();
@@ -119,7 +95,7 @@ class PTHManager : public IdentifierInfoLookup {
   
 public:
   // The current PTH version.
-  enum { Version = 0 };
+  enum { Version = 1 };
 
   ~PTHManager();
   
@@ -138,11 +114,7 @@ public:
   /// CreateLexer - Return a PTHLexer that "lexes" the cached tokens for the
   ///  specified file.  This method returns NULL if no cached tokens exist.
   ///  It is the responsibility of the caller to 'delete' the returned object.
-  PTHLexer *CreateLexer(FileID FID);
-  
-  unsigned getSpelling(SourceLocation Loc, const char *&Buffer);  
-private:
-  unsigned getSpelling(FileID FID, unsigned fpos, const char *& Buffer);  
+  PTHLexer *CreateLexer(FileID FID);  
 };
   
 }  // end namespace clang

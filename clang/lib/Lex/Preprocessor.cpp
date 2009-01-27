@@ -198,17 +198,9 @@ void Preprocessor::PrintStats() {
 /// UCNs, etc.
 std::string Preprocessor::getSpelling(const Token &Tok) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
-  const char* TokStart;
-  
-  if (PTH) {
-    if (unsigned Len = PTH->getSpelling(Tok.getLocation(), TokStart)) {
-      assert(!Tok.needsCleaning());
-      return std::string(TokStart, TokStart+Len);
-    }
-  }
-  
+
   // If this token contains nothing interesting, return it directly.
-  TokStart = SourceMgr.getCharacterData(Tok.getLocation());
+  const char* TokStart = SourceMgr.getCharacterData(Tok.getLocation());
   if (!Tok.needsCleaning())
     return std::string(TokStart, TokStart+Tok.getLength());
   
@@ -246,23 +238,6 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
   if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
     Buffer = II->getName();
     return II->getLength();
-  }
-
-  // If using PTH, try and get the spelling from the PTH file.
-  if (PTH) {
-    unsigned Len;
-    
-    if (CurPTHLexer) {
-      Len = CurPTHLexer.get()->getSpelling(Tok.getLocation(), Buffer);      
-    } else {
-      Len = PTH->getSpelling(Tok.getLocation(), Buffer);      
-    }
-
-    // Did we find a spelling?  If so return its length.  Otherwise fall
-    // back to the default behavior for getting the spelling by looking at
-    // at the source code.    
-    if (Len)
-      return Len;
   }
 
   // Otherwise, compute the start of the token in the input lexer buffer.
