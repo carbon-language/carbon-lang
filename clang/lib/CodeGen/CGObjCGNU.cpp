@@ -26,6 +26,8 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetData.h"
 #include <map>
+
+
 using namespace clang;
 using namespace CodeGen;
 using llvm::dyn_cast;
@@ -40,15 +42,14 @@ class CGObjCGNU : public CodeGen::CGObjCRuntime {
 private:
   CodeGen::CodeGenModule &CGM;
   llvm::Module &TheModule;
-  const llvm::StructType *SelStructTy;
-  const llvm::Type *SelectorTy;
-  const llvm::Type *PtrToInt8Ty;
+  const llvm::PointerType *SelectorTy;
+  const llvm::PointerType *PtrToInt8Ty;
   const llvm::Type *IMPTy;
-  const llvm::Type *IdTy;
-  const llvm::Type *IntTy;
-  const llvm::Type *PtrTy;
-  const llvm::Type *LongTy;
-  const llvm::Type *PtrToIntTy;
+  const llvm::PointerType *IdTy;
+  const llvm::IntegerType *IntTy;
+  const llvm::PointerType *PtrTy;
+  const llvm::IntegerType *LongTy;
+  const llvm::PointerType *PtrToIntTy;
   std::vector<llvm::Constant*> Classes;
   std::vector<llvm::Constant*> Categories;
   std::vector<llvm::Constant*> ConstantStrings;
@@ -157,8 +158,10 @@ static std::string SymbolNameForMethod(const std::string &ClassName, const
 
 CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   : CGM(cgm), TheModule(CGM.getModule()) {
-  IntTy = CGM.getTypes().ConvertType(CGM.getContext().IntTy);
-  LongTy = CGM.getTypes().ConvertType(CGM.getContext().LongTy);
+  IntTy = cast<llvm::IntegerType>(
+      CGM.getTypes().ConvertType(CGM.getContext().IntTy));
+  LongTy = cast<llvm::IntegerType>(
+      CGM.getTypes().ConvertType(CGM.getContext().LongTy));
     
   Zeros[0] = llvm::ConstantInt::get(LongTy, 0);
   Zeros[1] = Zeros[0];
@@ -168,21 +171,20 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   PtrToInt8Ty = 
     llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // Get the selector Type.
-  SelStructTy = llvm::StructType::get(
-      PtrToInt8Ty,
-      PtrToInt8Ty,
-      NULL);
-  SelectorTy = llvm::PointerType::getUnqual(SelStructTy);
+  SelectorTy = cast<llvm::PointerType>(
+    CGM.getTypes().ConvertType(CGM.getContext().getObjCSelType()));
+
   PtrToIntTy = llvm::PointerType::getUnqual(IntTy);
   PtrTy = PtrToInt8Ty;
  
   // Object type
   llvm::PATypeHolder OpaqueObjTy = llvm::OpaqueType::get();
   llvm::Type *OpaqueIdTy = llvm::PointerType::getUnqual(OpaqueObjTy);
-  IdTy = llvm::StructType::get(OpaqueIdTy, NULL);
-  llvm::cast<llvm::OpaqueType>(OpaqueObjTy.get())->refineAbstractTypeTo(IdTy);
-  IdTy = llvm::cast<llvm::StructType>(OpaqueObjTy.get());
-  IdTy = llvm::PointerType::getUnqual(IdTy);
+  llvm::Type *ObjectTy = llvm::StructType::get(OpaqueIdTy, NULL);
+  llvm::cast<llvm::OpaqueType>(OpaqueObjTy.get())->refineAbstractTypeTo(
+      ObjectTy);
+  ObjectTy = llvm::cast<llvm::StructType>(OpaqueObjTy.get());
+  IdTy = llvm::PointerType::getUnqual(ObjectTy);
  
   // IMP type
   std::vector<const llvm::Type*> IMPArgs;
@@ -445,8 +447,7 @@ llvm::Constant *CGObjCGNU::GenerateIvarList(
 
   
   Elements.clear();
-  Elements.push_back(llvm::ConstantInt::get(
-        llvm::cast<llvm::IntegerType>(IntTy), (int)IvarNames.size()));
+  Elements.push_back(llvm::ConstantInt::get(IntTy, (int)IvarNames.size()));
   Elements.push_back(llvm::ConstantArray::get(ObjCIvarArrayTy, Ivars));
   // Structure containing array and array count
   llvm::StructType *ObjCIvarListTy = llvm::StructType::get(IntTy,
@@ -489,7 +490,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
       NULL);
   llvm::Constant *Zero = llvm::ConstantInt::get(LongTy, 0);
   llvm::Constant *NullP =
-    llvm::ConstantPointerNull::get(llvm::cast<llvm::PointerType>(PtrTy));
+    llvm::ConstantPointerNull::get(PtrTy);
   // Fill in the structure
   std::vector<llvm::Constant*> Elements;
   Elements.push_back(llvm::ConstantExpr::getBitCast(MetaClass, PtrToInt8Ty));
@@ -558,8 +559,7 @@ llvm::Constant *CGObjCGNU::GenerateProtocolList(
       Elements);
   Elements.clear();
   Elements.push_back(NULLPtr);
-  Elements.push_back(llvm::ConstantInt::get(
-        llvm::cast<llvm::IntegerType>(LongTy), Protocols.size()));
+  Elements.push_back(llvm::ConstantInt::get(LongTy, Protocols.size()));
   Elements.push_back(ProtocolArray);
   return MakeGlobal(ProtocolListTy, Elements, ".objc_protocol_list");
 }
@@ -763,8 +763,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   if (!SuperClassName.empty()) {
     SuperClass = MakeConstantString(SuperClassName, ".super_class_name");
   } else {
-    SuperClass = llvm::ConstantPointerNull::get(
-        llvm::cast<llvm::PointerType>(PtrToInt8Ty));
+    SuperClass = llvm::ConstantPointerNull::get(PtrToInt8Ty);
   }
   // Empty vector used to construct empty method lists
   llvm::SmallVector<llvm::Constant*, 1>  empty;
@@ -797,8 +796,18 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       UntypedSelectors.empty())
     return NULL;
 
+  const llvm::StructType *SelStructTy = dyn_cast<llvm::StructType>(
+          SelectorTy->getElementType());
+  const llvm::Type *SelStructPtrTy = SelectorTy;
+  bool isSelOpaque = false;
+  if (SelStructTy == 0) {
+    SelStructTy = llvm::StructType::get(PtrToInt8Ty, PtrToInt8Ty, NULL);
+    SelStructPtrTy = llvm::PointerType::getUnqual(SelStructTy);
+    isSelOpaque = true;
+  }
+
   // Name the ObjC types to make the IR a bit easier to read
-  TheModule.addTypeName(".objc_selector", SelectorTy);
+  TheModule.addTypeName(".objc_selector", SelStructPtrTy);
   TheModule.addTypeName(".objc_id", IdTy);
   TheModule.addTypeName(".objc_imp", IMPTy);
 
@@ -825,7 +834,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   // Array of classes, categories, and constant objects
   llvm::ArrayType *ClassListTy = llvm::ArrayType::get(PtrToInt8Ty,
       Classes.size() + Categories.size()  + 2);
-  llvm::StructType *SymTabTy = llvm::StructType::get(LongTy, SelectorTy,
+  llvm::StructType *SymTabTy = llvm::StructType::get(LongTy, SelStructPtrTy,
                                                      llvm::Type::Int16Ty,
                                                      llvm::Type::Int16Ty,
                                                      ClassListTy, NULL);
@@ -860,7 +869,8 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   llvm::Constant *SelectorList = MakeGlobal(
           llvm::ArrayType::get(SelStructTy, Selectors.size()), Selectors,
           ".objc_selector_list");
-  Elements.push_back(llvm::ConstantExpr::getBitCast(SelectorList, SelectorTy));
+  Elements.push_back(llvm::ConstantExpr::getBitCast(SelectorList, 
+    SelStructPtrTy));
 
   // Now that all of the static selectors exist, create pointers to them.
   int index = 0;
@@ -869,10 +879,16 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
      iter != iterEnd; ++iter) {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::Int32Ty, index++), Zeros[0]};
-    llvm::GlobalVariable *SelPtr = new llvm::GlobalVariable(SelectorTy, true,
-        llvm::GlobalValue::InternalLinkage,
+    llvm::Constant *SelPtr = new llvm::GlobalVariable(SelStructPtrTy,
+        true, llvm::GlobalValue::InternalLinkage,
         llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
         ".objc_sel_ptr", &TheModule);
+    // If selectors are defined as an opaque type, cast the pointer to this
+    // type.
+    if (isSelOpaque) {
+      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
+        llvm::PointerType::getUnqual(SelectorTy));
+    }
     (*iter).second->setAliasee(SelPtr);
   }
   for (llvm::StringMap<llvm::GlobalAlias*>::iterator
@@ -880,10 +896,16 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       iter != iterEnd; iter++) {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::Int32Ty, index++), Zeros[0]};
-    llvm::GlobalVariable *SelPtr = new llvm::GlobalVariable(SelectorTy, true,
+    llvm::Constant *SelPtr = new llvm::GlobalVariable(SelStructPtrTy, true,
         llvm::GlobalValue::InternalLinkage,
         llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
         ".objc_sel_ptr", &TheModule);
+    // If selectors are defined as an opaque type, cast the pointer to this
+    // type.
+    if (isSelOpaque) {
+      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
+        llvm::PointerType::getUnqual(SelectorTy));
+    }
     (*iter).second->setAliasee(SelPtr);
   }
   // Number of classes defined.
