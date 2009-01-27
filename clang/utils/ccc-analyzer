@@ -49,7 +49,7 @@ sub ProcessClangFailure {
   mkpath $Dir;
   
   my $prefix = "clang_crash";
-  if ($ErrorType == $ParserRejects) { $prefix = "clang_parser_rejects"; }
+  if ($ErrorType eq $ParserRejects) { $prefix = "clang_parser_rejects"; }
 
   # Generate the preprocessed file with cc (i.e., gcc).
   my ($PPH, $PPFile) = tempfile( $prefix . "_XXXXXX",
