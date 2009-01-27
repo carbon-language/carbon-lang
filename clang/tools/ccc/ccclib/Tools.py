@@ -227,7 +227,7 @@ class Clang_CompileTool(Tool):
                 cmd_args.extend(arglist.renderAsInput(arg))
         else:
             # Perform argument translation for LLVM backend. This
-            # performs some care in reconciling with llvm-gcc. The
+            # takes some care in reconciling with llvm-gcc. The
             # issue is that llvm-gcc translates these options based on
             # the values in cc1, whereas we are processing based on
             # the driver arguments.
@@ -251,7 +251,7 @@ class Clang_CompileTool(Tool):
             if (archName == 'x86_64' or 
                 picEnabled):
                 cmd_args.append('--relocation-model=pic')
-            else:
+            elif not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption):
                 cmd_args.append('--relocation-model=static')
 
             if arglist.getLastArg(arglist.parser.f_timeReportOption):
