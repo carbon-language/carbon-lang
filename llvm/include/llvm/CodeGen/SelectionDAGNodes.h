@@ -1341,7 +1341,7 @@ protected:
   /// for new code.
   SDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops, unsigned NumOps)
     : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
-      NodeId(-1), debugLoc(DebugLoc::getNoDebugLoc()),
+      NodeId(-1), debugLoc(DebugLoc::getUnknownLoc()),
       OperandList(NumOps ? new SDUse[NumOps] : 0),
       ValueList(VTs.VTs),
       NumOperands(NumOps), NumValues(VTs.NumVTs),
@@ -1356,7 +1356,7 @@ protected:
   /// set later with InitOperands.
   SDNode(unsigned Opc, SDVTList VTs)
     : NodeType(Opc), OperandsNeedDelete(false), SubclassData(0),
-      NodeId(-1), debugLoc(DebugLoc::getNoDebugLoc()), OperandList(0), 
+      NodeId(-1), debugLoc(DebugLoc::getUnknownLoc()), OperandList(0), 
       ValueList(VTs.VTs), NumOperands(0), NumValues(VTs.NumVTs),
       UseList(NULL) {}
 
