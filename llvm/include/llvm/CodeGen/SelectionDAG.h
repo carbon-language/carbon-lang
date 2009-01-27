@@ -533,11 +533,11 @@ public:
   SDValue getIndexedStore(SDValue OrigStoe, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);
 
-  // getSrcValue - Construct a node to track a Value* through the backend.
+  /// getSrcValue - Construct a node to track a Value* through the backend.
   SDValue getSrcValue(const Value *v);
 
-  // getMemOperand - Construct a node to track a memory reference
-  // through the backend.
+  /// getMemOperand - Construct a node to track a memory reference
+  /// through the backend.
   SDValue getMemOperand(const MachineMemOperand &MO);
 
   /// UpdateNodeOperands - *Mutate* the specified node in-place to have the
@@ -814,10 +814,10 @@ private:
 
   void allnodes_clear();
   
-  // List of non-single value types.
+  /// VTList - List of non-single value types.
   std::vector<SDVTList> VTList;
   
-  // Maps to auto-CSE operations.
+  /// CondCodeNodes - Maps to auto-CSE operations.
   std::vector<CondCodeSDNode*> CondCodeNodes;
 
   std::vector<SDNode*> ValueTypeNodes;
