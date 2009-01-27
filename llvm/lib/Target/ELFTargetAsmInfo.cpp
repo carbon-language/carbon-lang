@@ -126,8 +126,7 @@ const Section*
 ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
   const TargetData *TD = TM.getTargetData();
   Constant *C = cast<GlobalVariable>(GV)->getInitializer();
-  const ConstantArray *CVA = cast<ConstantArray>(C);
-  const Type *Ty = CVA->getType()->getElementType();
+  const Type *Ty = cast<ArrayType>(C->getType())->getElementType();
 
   unsigned Size = TD->getTypePaddedSize(Ty);
   if (Size <= 16) {

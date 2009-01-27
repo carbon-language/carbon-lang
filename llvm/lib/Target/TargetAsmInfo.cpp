@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -170,6 +171,25 @@ static bool isSuitableForBSS(const GlobalVariable *GV) {
   return (C->isNullValue() && !GV->isConstant() && !NoZerosInBSS);
 }
 
+static bool isConstantString(const Constant *C) {
+  // First check: is we have constant array of i8 terminated with zero
+  const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+  // Check, if initializer is a null-terminated string
+  if (CVA && CVA->isCString())
+    return true;
+
+  // Another possibility: [1 x i8] zeroinitializer
+  if (isa<ConstantAggregateZero>(C)) {
+    if (const ArrayType *Ty = dyn_cast<ArrayType>(C->getType())) {
+      return (Ty->getElementType() == Type::Int8Ty &&
+              Ty->getNumElements() == 1);
+    }
+  }
+
+  return false;
+}
+
+
 SectionKind::Kind
 TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   // Early exit - functions should be always in text sections.
@@ -191,9 +211,8 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     if (C->ContainsRelocations())
       return SectionKind::ROData;
     else {
-      const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
       // Check, if initializer is a null-terminated string
-      if (CVA && CVA->isCString())
+      if (isConstantString(C))
         return SectionKind::RODataMergeStr;
       else
         return SectionKind::RODataMergeConst;

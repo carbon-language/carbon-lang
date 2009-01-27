@@ -115,9 +115,9 @@ const Section*
 DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
   const TargetData *TD = TM.getTargetData();
   Constant *C = cast<GlobalVariable>(GV)->getInitializer();
-  const Type *Type = cast<ConstantArray>(C)->getType()->getElementType();
+  const Type *Ty = cast<ArrayType>(C->getType())->getElementType();
 
-  unsigned Size = TD->getTypePaddedSize(Type);
+  unsigned Size = TD->getTypePaddedSize(Ty);
   if (Size) {
     unsigned Align = TD->getPreferredAlignment(GV);
     if (Align <= 32)
