@@ -576,8 +576,9 @@ const char *SourceManager::getSourceName(SourceLocation Loc) const {
 void SourceManager::PrintStats() const {
   llvm::cerr << "\n*** Source Manager Stats:\n";
   llvm::cerr << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
-             << " mem buffers mapped, " << SLocEntryTable.size() 
-             << " SLocEntry's allocated.\n";
+             << " mem buffers mapped.\n";
+  llvm::cerr << SLocEntryTable.size() << " SLocEntry's allocated, "
+             << NextOffset << "B of Sloc address space used.\n";
     
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;
