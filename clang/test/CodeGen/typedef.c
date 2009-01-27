@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s -o %t
+// RUN: clang -emit-llvm %s -o -
 
 typedef struct { int i; } Value;
 typedef Value *PValue;

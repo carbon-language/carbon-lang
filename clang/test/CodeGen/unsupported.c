@@ -1,4 +1,4 @@
-// RUN: clang -verify -emit-llvm -o %t %s 
+// RUN: clang -verify -emit-llvm -o - %s 
 
 int f0(int x) {
   int vla[x];

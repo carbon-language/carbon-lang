@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm -o %t
+// RUN: clang %s -emit-llvm -o -
 
 int bar();
 int foo() {

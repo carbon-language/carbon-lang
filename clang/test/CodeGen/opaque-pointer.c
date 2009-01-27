@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm -o %t
+// RUN: clang %s -emit-llvm -o -
 struct test;
 
 typedef void (*my_func) (struct test *);
