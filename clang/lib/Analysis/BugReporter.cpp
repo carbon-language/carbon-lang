@@ -727,6 +727,7 @@ void BugReporter::EmitWarning(BugReport& R) {
     return;
 
   llvm::OwningPtr<PathDiagnostic> D(new PathDiagnostic(R.getName(),
+                                                       R.getDescription(),
                                                        R.getCategory()));
   GeneratePathDiagnostic(*D.get(), R);
   

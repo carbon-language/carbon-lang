@@ -78,20 +78,23 @@ class PathDiagnostic {
   unsigned Size;
   std::string Desc;
   std::string Category;
+  std::string BugType;
   std::vector<std::string> OtherDesc;
 
 public:  
   PathDiagnostic() : Size(0) {}
 
-  PathDiagnostic(const char* desc, const char* category)
-    : Size(0), Desc(desc), Category(category) {}
+  PathDiagnostic(const char* bugtype, const char* desc, const char* category)
+    : Size(0), Desc(desc), Category(category), BugType(bugtype) {}
   
-  PathDiagnostic(const std::string& desc, const std::string& category)
-    : Size(0), Desc(desc), Category(category) {}
+  PathDiagnostic(const std::string& bugtype, const std::string& desc, 
+                 const std::string& category)
+    : Size(0), Desc(desc), Category(category), BugType(bugtype) {}
   
   ~PathDiagnostic();
 
   const std::string& getDescription() const { return Desc; }
+  const std::string& getBugType() const { return BugType; }
   const std::string& getCategory() const { return Category; }
   
   typedef std::vector<std::string>::const_iterator meta_iterator;

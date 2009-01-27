@@ -246,6 +246,14 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
+  const std::string& BugType = D.getBugType();
+  if (!BugType.empty()) {
+    std::string s;
+    llvm::raw_string_ostream os(s);
+    os << "\n<!-- BUGTYPE " << BugType << " -->\n";
+    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
+  }
+  
   const std::string& BugCategory = D.getCategory();
   
   if (!BugCategory.empty()) {

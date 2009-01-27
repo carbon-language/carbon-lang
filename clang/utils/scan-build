@@ -350,7 +350,7 @@ sub ScanFile {
   # Scan the report file for tags.
   open(IN, "$Dir/$FName") or DieDiag("Cannot open '$Dir/$FName'\n");
 
-  my $BugDesc = "";
+  my $BugType = "";
   my $BugFile = "";
   my $BugCategory;
   my $BugPathLength = 1;
@@ -361,8 +361,8 @@ sub ScanFile {
 
     last if ($found == 5);
 
-    if (/<!-- BUGDESC (.*) -->$/) {
-      $BugDesc = $1;
+    if (/<!-- BUGTYPE (.*) -->$/) {
+      $BugType = $1;
       ++$found;
     }
     elsif (/<!-- BUGFILE (.*) -->$/) {
@@ -390,7 +390,7 @@ sub ScanFile {
     $BugCategory = "Other";
   }
     
-  push @$Index,[ $FName, $BugCategory, $BugDesc, $BugFile, $BugLine,
+  push @$Index,[ $FName, $BugCategory, $BugType, $BugFile, $BugLine,
                  $BugPathLength ];
 }
 
