@@ -222,6 +222,7 @@ bool TargetInfo::resolveSymbolicName(const char *&Name,
 bool TargetInfo::validateInputConstraint(const char *Name,
                                          const std::string *OutputNamesBegin,
                                          const std::string *OutputNamesEnd,
+                                         ConstraintInfo* OutputConstraints,
                                          ConstraintInfo &info) const {
   info = CI_None;
 
@@ -236,6 +237,10 @@ bool TargetInfo::validateInputConstraint(const char *Name,
         // Check if matching constraint is out of bounds.
         if (i >= NumOutputs)
           return false;
+        
+        // The constraint should have the same info as the respective 
+        // output constraint.
+        info = (ConstraintInfo)(info|OutputConstraints[i]);
       } else if (!validateAsmConstraint(*Name, info)) {
         // FIXME: This error return is in place temporarily so we can
         // add more constraints as we hit it.  Eventually, an unknown

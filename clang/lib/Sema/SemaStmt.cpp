@@ -849,6 +849,8 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   StringLiteral *AsmString = cast<StringLiteral>((Expr *)asmString.get());
   StringLiteral **Clobbers = reinterpret_cast<StringLiteral**>(clobbers.get());
 
+  llvm::SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
+  
   // The parser verifies that there is a string literal here.
   if (AsmString->isWide())
     return StmtError(Diag(AsmString->getLocStart(),diag::err_asm_wide_character)
@@ -877,6 +879,8 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                   diag::err_asm_invalid_lvalue_in_output)
         << OutputExpr->getSubExpr()->getSourceRange());
     }
+    
+    OutputConstraintInfos.push_back(info);
   }
 
   for (unsigned i = NumOutputs, e = NumOutputs + NumInputs; i != e; i++) {
@@ -891,7 +895,9 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     TargetInfo::ConstraintInfo info;
     if (!Context.Target.validateInputConstraint(InputConstraint.c_str(),
                                                 &Names[0],
-                                                &Names[0] + NumOutputs, info)) {
+                                                &Names[0] + NumOutputs, 
+                                                &OutputConstraintInfos[0],
+                                                info)) {
       return StmtError(Diag(Literal->getLocStart(),
                   diag::err_asm_invalid_input_constraint) << InputConstraint);
     }

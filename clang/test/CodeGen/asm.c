@@ -22,7 +22,8 @@ void t4()
 	__asm__ volatile ("":: "m"(a), "m"(b));
 }
 
-
-
-
-
+// PR3417
+void t5(int i)
+{
+  asm("nop" : "=r"(i) : "0"(t5));
+}

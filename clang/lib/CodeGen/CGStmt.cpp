@@ -932,7 +932,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   std::string InOutConstraints;
   std::vector<llvm::Value*> InOutArgs;
   std::vector<const llvm::Type*> InOutArgTypes;
-  
+
+  llvm::SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
+
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {    
     std::string OutputConstraint(S.getOutputConstraint(i)->getStrData(),
                                  S.getOutputConstraint(i)->getByteLength());
@@ -942,6 +944,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
                                                   Info);
     assert(result && "Failed to parse output constraint"); result=result;
     
+    OutputConstraintInfos.push_back(Info);
+
     // Simplify the output constraint.
     OutputConstraint = SimplifyConstraint(OutputConstraint.c_str() + 1, Target);
     
@@ -993,6 +997,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     bool result = Target.validateInputConstraint(InputConstraint.c_str(),
                                                  S.begin_output_names(),
                                                  S.end_output_names(),
+                                                 &OutputConstraintInfos[0],
                                                  Info); result=result;
     assert(result && "Failed to parse input constraint");
     

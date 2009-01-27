@@ -201,6 +201,7 @@ public:
   bool validateInputConstraint(const char *Name, 
                                const std::string *OutputNamesBegin,
                                const std::string *OutputNamesEnd,
+                               ConstraintInfo* OutputConstraints,
                                ConstraintInfo &info) const;
   bool resolveSymbolicName(const char *&Name,
                            const std::string *OutputNamesBegin,
