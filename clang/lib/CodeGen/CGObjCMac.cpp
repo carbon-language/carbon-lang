@@ -562,7 +562,13 @@ private:
   /// implementation. The return value has type MethodListnfABITy.
   llvm::Constant *EmitMethodList(const std::string &Name,
                                  const char *Section,
-                                 const ConstantVector &Methods);                             
+                                 const ConstantVector &Methods);
+  /// EmitIvarList - Emit the ivar list for the given
+  /// implementation. If ForClass is true the list of class ivars
+  /// (i.e. metaclass ivars) is emitted, otherwise the list of
+  /// interface ivars will be emitted. The return value has type
+  /// IvarListnfABIPtrTy.
+  llvm::Constant *EmitIvarList(const ObjCImplementationDecl *ID);
   
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
@@ -3157,7 +3163,10 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   Values[ 5] = EmitMethodList(MethodListName, 
                ".section __DATA,__data,regular,no_dead_strip", Methods);
   Values[ 6] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
-  Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
+  if (flags & CLS_META)
+    Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
+  else
+    Values[ 7] = EmitIvarList(ID);
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
   Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
@@ -3505,6 +3514,82 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
   return llvm::ConstantExpr::getBitCast(GV,
                                         ObjCTypes.MethodListnfABIPtrTy);
 }
+
+/// EmitIvarList - Emit the ivar list for the given
+/// implementation. If ForClass is true the list of class ivars
+/// (i.e. metaclass ivars) is emitted, otherwise the list of
+/// interface ivars will be emitted. The return value has type
+/// IvarListnfABIPtrTy.
+///  struct _ivar_t {
+///   unsigned long int *offset;  // pointer to ivar offset location
+///   char *name;
+///   char *type;
+///   uint32_t alignment;
+///   uint32_t size;
+/// }
+/// struct _ivar_list_t {
+///   uint32 entsize;  // sizeof(struct _ivar_t)
+///   uint32 count;
+///   struct _iver_t list[count];
+/// }
+///
+llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
+                                            const ObjCImplementationDecl *ID) {
+  
+  std::vector<llvm::Constant*> Ivars, Ivar(5);
+  
+  const ObjCInterfaceDecl *OID = ID->getClassInterface();
+  assert(OID && "CGObjCNonFragileABIMac::EmitIvarList - null interface");
+  
+  for(ObjCInterfaceDecl::ivar_iterator i = OID->ivar_begin(),
+      e = OID->ivar_end(); i != e; ++i) {
+    FieldDecl *Field = *i;
+    // FIXME. Put the offset symbol address after code gen. 
+    // for non-fragile ivar access is in.
+    Ivar[0] = llvm::Constant::getNullValue(
+                llvm::PointerType::getUnqual(ObjCTypes.LongTy));
+    if (Field->getIdentifier())
+      Ivar[1] = GetMethodVarName(Field->getIdentifier());
+    else
+      Ivar[1] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+    std::string TypeStr;
+    CGM.getContext().getObjCEncodingForType(Field->getType(), TypeStr, Field);
+    Ivar[2] = GetMethodVarType(TypeStr);
+    const llvm::Type *FieldTy =
+      CGM.getTypes().ConvertTypeForMem(Field->getType());
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
+    unsigned Align = CGM.getContext().getPreferredTypeAlign(
+                       Field->getType().getTypePtr()) >> 3;
+    Align = llvm::Log2_32(Align);
+    Ivar[3] = llvm::ConstantInt::get(ObjCTypes.IntTy, Align);
+    Ivar[4] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
+    Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarnfABITy, Ivar));
+  }
+  // Return null for empty list.
+  if (Ivars.empty())
+    return llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
+  std::vector<llvm::Constant*> Values(3);
+  unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.IvarnfABITy);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Ivars.size());
+  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.IvarnfABITy,
+                                             Ivars.size());
+  Values[2] = llvm::ConstantArray::get(AT, Ivars);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  const char *Prefix = "\01l_OBJC_$_INSTANCE_VARIABLES_";
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(Init->getType(), false,
+                             llvm::GlobalValue::InternalLinkage,
+                             Init,
+                             Prefix + OID->getNameAsString(),
+                             &CGM.getModule());
+  
+  GV->setSection(".section __DATA,__data,regular,no_dead_strip");
+                 
+  UsedGlobals.push_back(GV);
+  return llvm::ConstantExpr::getBitCast(GV,
+                                        ObjCTypes.IvarListnfABIPtrTy);
+}  
 /* *** */
 
 CodeGen::CGObjCRuntime *

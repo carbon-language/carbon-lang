@@ -927,9 +927,11 @@ public:
 /// ObjCImplementationDecl - Represents a class definition - this is where
 /// method definitions are specified. For example:
 ///
+/// @code
 /// @implementation MyClass
 /// - (void)myMethod { /* do something */ }
 /// @end
+/// @endcode
 ///
 /// Typically, instance variables are specified in the class interface, 
 /// *not* in the implementation. Nevertheless (for legacy reasons), we
