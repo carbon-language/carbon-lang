@@ -219,6 +219,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       }
       memcpy(Directive, &DirectiveStr[0], IdLen);
       Directive[IdLen] = 0;
+      FirstChar = Directive[0];
     }
     
     if (FirstChar == 'i' && Directive[1] == 'f') {
