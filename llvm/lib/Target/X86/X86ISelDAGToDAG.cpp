@@ -242,12 +242,9 @@ namespace {
 static SDNode *findFlagUse(SDNode *N) {
   unsigned FlagResNo = N->getNumValues()-1;
   for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
-    SDNode *User = *I;
-    for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
-      SDValue Op = User->getOperand(i);
-      if (Op.getNode() == N && Op.getResNo() == FlagResNo)
-        return User;
-    }
+    SDUse &Use = I.getUse();
+    if (Use.getResNo() == FlagResNo)
+      return Use.getUser();
   }
   return NULL;
 }
