@@ -13,7 +13,7 @@
 
 #include "clang/Lex/PreprocessorLexer.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticLex.h"
 #include "clang/Basic/SourceManager.h"
 using namespace clang;
 

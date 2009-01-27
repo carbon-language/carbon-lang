@@ -36,29 +36,99 @@ enum {
   class_mask = 0x07
 };
 
+namespace clang {
+  namespace diag {
+    enum _kind{
+#define DIAG(ENUM,FLAGS,DESC) ENUM,
+#define LEXSTART
+#define PARSESTART
+#define ASTSTART
+#define SEMASTART
+#define ANALYSISSTART
+#include "clang/Basic/DiagnosticKinds.def"
+      NUM_BUILTIN_DIAGNOSTICS = DIAG_UPPER_LIMIT
+    };
+  }
+}
+
 /// DiagnosticFlags - A set of flags, or'd together, that describe the
 /// diagnostic.
-static unsigned char DiagnosticFlags[] = {
 #define DIAG(ENUM,FLAGS,DESC) FLAGS,
-#include "clang/Basic/DiagnosticKinds.def"
+static unsigned char DiagnosticFlagsCommon[] = {
+#include "clang/Basic/DiagnosticCommonKinds.def"
   0
 };
+static unsigned char DiagnosticFlagsLex[] = {
+#include "clang/Basic/DiagnosticLexKinds.def"
+  0
+};
+static unsigned char DiagnosticFlagsParse[] = {
+#include "clang/Basic/DiagnosticParseKinds.def"
+  0
+};
+static unsigned char DiagnosticFlagsAST[] = {
+#include "clang/Basic/DiagnosticASTKinds.def"
+  0
+};
+static unsigned char DiagnosticFlagsSema[] = {
+#include "clang/Basic/DiagnosticSemaKinds.def"
+  0
+};
+static unsigned char DiagnosticFlagsAnalysis[] = {
+#include "clang/Basic/DiagnosticAnalysisKinds.def"
+  0
+};
+#undef DIAG
 
 /// getDiagClass - Return the class field of the diagnostic.
 ///
 static unsigned getBuiltinDiagClass(unsigned DiagID) {
   assert(DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
          "Diagnostic ID out of range!");
-  return DiagnosticFlags[DiagID] & class_mask;
+  unsigned res;
+  if (DiagID < DIAG_START_LEX)
+    res = DiagnosticFlagsCommon[DiagID];
+  else if (DiagID < DIAG_START_PARSE)
+    res = DiagnosticFlagsLex[DiagID - DIAG_START_LEX - 1];
+  else if (DiagID < DIAG_START_AST)
+    res = DiagnosticFlagsParse[DiagID - DIAG_START_PARSE - 1];
+  else if (DiagID < DIAG_START_SEMA)
+    res = DiagnosticFlagsAST[DiagID - DIAG_START_AST - 1];
+  else if (DiagID < DIAG_START_ANALYSIS)
+    res = DiagnosticFlagsSema[DiagID - DIAG_START_SEMA - 1];
+  else
+    res = DiagnosticFlagsAnalysis[DiagID - DIAG_START_ANALYSIS - 1];
+  return res & class_mask;
 }
 
 /// DiagnosticText - An english message to print for the diagnostic.  These
 /// should be localized.
-static const char * const DiagnosticText[] = {
 #define DIAG(ENUM,FLAGS,DESC) DESC,
-#include "clang/Basic/DiagnosticKinds.def"
+static const char * const DiagnosticTextCommon[] = {
+#include "clang/Basic/DiagnosticCommonKinds.def"
   0
 };
+static const char * const DiagnosticTextLex[] = {
+#include "clang/Basic/DiagnosticLexKinds.def"
+  0
+};
+static const char * const DiagnosticTextParse[] = {
+#include "clang/Basic/DiagnosticParseKinds.def"
+  0
+};
+static const char * const DiagnosticTextAST[] = {
+#include "clang/Basic/DiagnosticASTKinds.def"
+  0
+};
+static const char * const DiagnosticTextSema[] = {
+#include "clang/Basic/DiagnosticSemaKinds.def"
+  0
+};
+static const char * const DiagnosticTextAnalysis[] = {
+#include "clang/Basic/DiagnosticAnalysisKinds.def"
+  0
+};
+#undef DIAG
 
 //===----------------------------------------------------------------------===//
 // Custom Diagnostic information
@@ -170,9 +240,22 @@ bool Diagnostic::isBuiltinNoteWarningOrExtension(unsigned DiagID) {
 /// issue.
 const char *Diagnostic::getDescription(unsigned DiagID) const {
   if (DiagID < diag::NUM_BUILTIN_DIAGNOSTICS)
-    return DiagnosticText[DiagID];
-  else 
-    return CustomDiagInfo->getDescription(DiagID);
+  {
+    if (DiagID < DIAG_START_LEX)
+      return DiagnosticTextCommon[DiagID];
+    else if (DiagID < DIAG_START_PARSE)
+      return DiagnosticTextLex[DiagID - DIAG_START_LEX - 1];
+    else if (DiagID < DIAG_START_AST)
+      return DiagnosticTextParse[DiagID - DIAG_START_PARSE - 1];
+    else if (DiagID < DIAG_START_SEMA)
+      return DiagnosticTextAST[DiagID - DIAG_START_AST - 1];
+    else if (DiagID < DIAG_START_ANALYSIS)
+      return DiagnosticTextSema[DiagID - DIAG_START_SEMA - 1];
+    else if (DiagID < DIAG_UPPER_LIMIT)
+      return DiagnosticTextAnalysis[DiagID - DIAG_START_ANALYSIS - 1];
+  }
+   
+  return CustomDiagInfo->getDescription(DiagID);
 }
 
 /// getDiagnosticLevel - Based on the way the client configured the Diagnostic

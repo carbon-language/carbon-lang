@@ -14,7 +14,7 @@
 #include "MacroArgs.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticLex.h"
 using namespace clang;
 
 /// MacroArgs ctor function - This destroys the vector passed in.

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/DeclSpec.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;

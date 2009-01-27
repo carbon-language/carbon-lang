@@ -17,7 +17,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticSema.h"
 using namespace clang;
 
 /// ConvertQualTypeToStringFn - This function is used to pretty print the 

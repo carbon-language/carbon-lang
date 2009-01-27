@@ -17,7 +17,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticLex.h"
 #include <ctime>
 using namespace clang;
 

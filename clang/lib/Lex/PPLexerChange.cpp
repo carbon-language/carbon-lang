@@ -15,7 +15,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticLex.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 

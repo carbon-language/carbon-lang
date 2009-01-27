@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticParse.h"
 using namespace clang;
 
 /// isCXXDeclarationStatement - C++-specialized function that disambiguates

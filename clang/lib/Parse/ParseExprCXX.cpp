@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticParse.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "AstGuard.h"

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ParsePragma.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticParse.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Action.h"
 using namespace clang;

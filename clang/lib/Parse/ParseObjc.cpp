@@ -15,7 +15,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "AstGuard.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticParse.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
 

@@ -16,7 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticSema.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;

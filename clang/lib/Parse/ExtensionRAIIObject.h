@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_PARSE_EXTENSION_RAII_OBJECT_H
 #define LLVM_CLANG_PARSE_EXTENSION_RAII_OBJECT_H
 
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticParse.h"
 
 namespace clang {
 

@@ -30,7 +30,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Pragma.h"
 #include "clang/Lex/ScratchBuffer.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticLex.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/APFloat.h"

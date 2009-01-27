@@ -15,7 +15,7 @@
 #include "clang/Parse/Designator.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticSema.h"
 #include <algorithm> // for std::count_if
 #include <functional> // for std::mem_fun
 

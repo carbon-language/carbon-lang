@@ -15,7 +15,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticAST.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Compiler.h"
 using namespace clang;

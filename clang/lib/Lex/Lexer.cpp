@@ -26,7 +26,7 @@
 
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticLex.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"

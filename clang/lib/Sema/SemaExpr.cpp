@@ -18,7 +18,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LiteralSupport.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticSema.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Parse/DeclSpec.h"

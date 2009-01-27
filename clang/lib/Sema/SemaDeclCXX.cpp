@@ -18,7 +18,7 @@
 #include "clang/AST/TypeOrdering.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticSema.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
