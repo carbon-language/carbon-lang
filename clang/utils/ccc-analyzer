@@ -41,15 +41,20 @@ sub GetPPExt {
   return ".i";
 }
 
+my $ParserRejects = "Parser Rejects";
+
 sub ProcessClangFailure {
   my ($Clang, $Lang, $file, $Args, $HtmlDir, $ErrorType, $ofile) = @_;
   my $Dir = "$HtmlDir/crashes";
   mkpath $Dir;
+  
+  my $prefix = "clang_crash";
+  if ($ErrorType == $ParserRejects) { $prefix = "clang_parser_rejects"; }
 
   # Generate the preprocessed file with cc (i.e., gcc).
-  my ($PPH, $PPFile) = tempfile("clang_crash_XXXXXX",
-                                  SUFFIX => GetPPExt($Lang),
-                                  DIR => $Dir);
+  my ($PPH, $PPFile) = tempfile( $prefix . "_XXXXXX",
+                                 SUFFIX => GetPPExt($Lang),
+                                 DIR => $Dir);
 
   system $CC, @$Args, "-E", "-o", $PPFile;
   close ($PPH);
@@ -171,7 +176,7 @@ sub Analyze {
   }
   elsif ($Result) {
     ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
-                        "Parser Rejects", $ofile);
+                        $ParserRejects, $ofile);
   }
   
   `rm -f $ofile`;
