@@ -450,12 +450,24 @@ void X86_64ABIInfo::classify(QualType Ty,
       Lo = X87;
       Hi = X87Up;
     }
-    // FIXME: _Decimal32, _Decimal64, and __m64 are SSE.
-    // FIXME: _float128, _Decimal128, and __m128 are (SSE, SSEUp).
+    
+    // FIXME: _Decimal32 and _Decimal64 are SSE.
+    // FIXME: _float128 and _Decimal128 are (SSE, SSEUp).
     // FIXME: __int128 is (Integer, Integer).
   } else if (Ty->isPointerLikeType() || Ty->isBlockPointerType() ||
              Ty->isObjCQualifiedInterfaceType()) {
     Lo = Integer;
+  } else if (const VectorType *VT = Ty->getAsVectorType()) {
+    unsigned Size = Context.getTypeSize(VT);
+    if (Size == 64) {
+      // FIXME: For some reason, gcc appears to be treating <1 x
+      // double> as INTEGER; this seems wrong, but we will match for
+      // now (icc rejects <1 x double>, so...).
+      Lo = (VT->getElementType() == Context.DoubleTy) ? Integer : SSE;
+    } else if (Size == 128) {
+      Lo = SSE;
+      Hi = SSEUp;
+    }
   } else if (const ComplexType *CT = Ty->getAsComplexType()) {
     QualType ET = CT->getElementType();
     
