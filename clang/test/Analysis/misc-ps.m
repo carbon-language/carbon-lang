@@ -100,3 +100,11 @@ void handle_sizeof_void(unsigned flag) {
   *p = 1; // no-warning
 }
 
+// PR 3422
+void pr3422_helper(char *p);
+void pr3422() {
+  char buf[100];
+  char *q = &buf[10];
+  pr3422_helper(&q[1]);
+}
+

@@ -203,7 +203,6 @@ SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
 SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
                                          SVal Offset) {
 
-  
   if (Base.isUnknownOrUndef())
     return Base;
   
@@ -233,6 +232,17 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
       
     case loc::MemRegionKind: {
       const MemRegion *R = cast<loc::MemRegionVal>(BaseL).getRegion();
+      
+      if (isa<ElementRegion>(R)) {
+        // Basic example:
+        //   char buf[100];
+        //   char *q = &buf[1];  // p points to ElementRegion(buf,Unknown)
+        //   &q[10]
+        assert(cast<ElementRegion>(R)->getIndex().isUnknown());
+        return Base;
+      }
+      
+      
       if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
         BaseR = TR;
         break;
@@ -244,7 +254,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
       
       break;
     }
-      
+
     case loc::ConcreteIntKind:
       // While these seem funny, this can happen through casts.
       // FIXME: What we should return is the field offset.  For example,
