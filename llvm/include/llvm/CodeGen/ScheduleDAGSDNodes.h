@@ -61,7 +61,7 @@ namespace llvm {
     SUnit *NewSUnit(SDNode *N) {
 #ifndef NDEBUG
       const SUnit *Addr = 0;
-      if (SUnits.size() > 0)
+      if (!SUnits.empty())
         Addr = &SUnits[0];
 #endif
       SUnits.push_back(SUnit(N, (unsigned)SUnits.size()));
