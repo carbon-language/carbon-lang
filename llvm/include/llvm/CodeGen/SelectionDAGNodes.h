@@ -30,6 +30,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/CodeGen/DebugLoc.h"
 #include <cassert>
 
 namespace llvm {
@@ -901,6 +902,7 @@ public:
   inline bool isTargetOpcode() const;
   inline bool isMachineOpcode() const;
   inline unsigned getMachineOpcode() const;
+  inline DebugLoc getDebugLoc() const;
 
   
   /// reachesChainWithoutSideEffects - Return true if this operand (which must
@@ -1077,6 +1079,9 @@ private:
   /// NodeId - Unique id per SDNode in the DAG.
   int NodeId;
 
+  /// debugLoc - source line information.
+  DebugLoc debugLoc;
+
   /// OperandList - The values that are used by this operation.
   ///
   SDUse *OperandList;
@@ -1145,6 +1150,12 @@ public:
 
   /// setNodeId - Set unique node id.
   void setNodeId(int Id) { NodeId = Id; }
+
+  /// getDebugLoc - Return the source location info.
+  DebugLoc getDebugLoc() const { return debugLoc; }
+
+  /// setDebugLoc - Set source location info.
+  void setDebugLoc(DebugLoc sl) { debugLoc = sl; }
 
   /// use_iterator - This class provides iterator support for SDUse
   /// operands that use a specific SDNode. 
@@ -1326,9 +1337,11 @@ protected:
     return Ret;
   }
 
+  /// The constructors that supply DebugLoc explicitly should be preferred
+  /// for new code.
   SDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops, unsigned NumOps)
     : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
-      NodeId(-1),
+      NodeId(-1), debugLoc(DebugLoc::getNoDebugLoc()),
       OperandList(NumOps ? new SDUse[NumOps] : 0),
       ValueList(VTs.VTs),
       NumOperands(NumOps), NumValues(VTs.NumVTs),
@@ -1343,8 +1356,33 @@ protected:
   /// set later with InitOperands.
   SDNode(unsigned Opc, SDVTList VTs)
     : NodeType(Opc), OperandsNeedDelete(false), SubclassData(0),
-      NodeId(-1), OperandList(0), ValueList(VTs.VTs),
-      NumOperands(0), NumValues(VTs.NumVTs),
+      NodeId(-1), debugLoc(DebugLoc::getNoDebugLoc()), OperandList(0), 
+      ValueList(VTs.VTs), NumOperands(0), NumValues(VTs.NumVTs),
+      UseList(NULL) {}
+
+  /// The next two constructors specify DebugLoc explicitly; the intent
+  /// is that they will replace the above two over time, and eventually
+  /// the ones above can be removed.
+  SDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops, unsigned NumOps,
+         DebugLoc sl)
+    : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
+      NodeId(-1), debugLoc(sl),
+      OperandList(NumOps ? new SDUse[NumOps] : 0),
+      ValueList(VTs.VTs),
+      NumOperands(NumOps), NumValues(VTs.NumVTs),
+      UseList(NULL) {
+    for (unsigned i = 0; i != NumOps; ++i) {
+      OperandList[i].setUser(this);
+      OperandList[i].setInitial(Ops[i]);
+    }
+  }
+
+  /// This constructor adds no operands itself; operands can be
+  /// set later with InitOperands.
+  SDNode(unsigned Opc, SDVTList VTs, DebugLoc sl)
+    : NodeType(Opc), OperandsNeedDelete(false), SubclassData(0),
+      NodeId(-1), debugLoc(sl), OperandList(0),
+      ValueList(VTs.VTs), NumOperands(0), NumValues(VTs.NumVTs),
       UseList(NULL) {}
   
   /// InitOperands - Initialize the operands list of this with 1 operand.
@@ -1440,6 +1478,9 @@ inline bool SDValue::use_empty() const {
 }
 inline bool SDValue::hasOneUse() const {
   return Node->hasNUsesOfValue(1, ResNo);
+}
+inline DebugLoc SDValue::getDebugLoc() const {
+  return Node->getDebugLoc();
 }
 
 // Define inline functions from the SDUse class.
