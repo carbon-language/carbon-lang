@@ -6293,7 +6293,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op) {
     unsigned len = VT.getSizeInBits();
     for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
       //x = (x & mask[i][len/8]) + (x >> (1 << i) & mask[i][len/8])
-      SDValue Tmp2 = DAG.getConstant(mask[i], VT);
+      SDValue Tmp2 = DAG.getConstant(VT.getIntegerVTBitMask() & mask[i], VT);
       SDValue Tmp3 = DAG.getConstant(1ULL << i, ShVT);
       Op = DAG.getNode(ISD::ADD, VT, DAG.getNode(ISD::AND, VT, Op, Tmp2),
                        DAG.getNode(ISD::AND, VT,

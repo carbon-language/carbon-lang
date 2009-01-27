@@ -2434,11 +2434,12 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     if (ConstantSDNode *N101C = dyn_cast<ConstantSDNode>(N101)) {
       MVT TruncVT = N1.getValueType();
       SDValue N100 = N1.getOperand(0).getOperand(0);
+      uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
+                        N101C->getZExtValue();
       return DAG.getNode(ISD::SHL, VT, N0,
                          DAG.getNode(ISD::AND, TruncVT,
                                      DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
-                                     DAG.getConstant(N101C->getZExtValue(),
-                                                     TruncVT)));
+                                     DAG.getConstant(TruncC, TruncVT)));
     }
   }
 
@@ -2561,11 +2562,12 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
     if (ConstantSDNode *N101C = dyn_cast<ConstantSDNode>(N101)) {
       MVT TruncVT = N1.getValueType();
       SDValue N100 = N1.getOperand(0).getOperand(0);
+      uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
+                        N101C->getZExtValue();
       return DAG.getNode(ISD::SRA, VT, N0,
                          DAG.getNode(ISD::AND, TruncVT,
                                      DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
-                                     DAG.getConstant(N101C->getZExtValue(),
-                                                     TruncVT)));
+                                     DAG.getConstant(TruncC, TruncVT)));
     }
   }
 
@@ -2678,11 +2680,12 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     if (ConstantSDNode *N101C = dyn_cast<ConstantSDNode>(N101)) {
       MVT TruncVT = N1.getValueType();
       SDValue N100 = N1.getOperand(0).getOperand(0);
+      uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
+                        N101C->getZExtValue();
       return DAG.getNode(ISD::SRL, VT, N0,
                          DAG.getNode(ISD::AND, TruncVT,
                                      DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
-                                     DAG.getConstant(N101C->getZExtValue(),
-                                                     TruncVT)));
+                                     DAG.getConstant(TruncC, TruncVT)));
     }
   }
   

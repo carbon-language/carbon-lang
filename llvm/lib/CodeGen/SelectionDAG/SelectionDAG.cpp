@@ -848,6 +848,9 @@ SDValue SelectionDAG::getNOT(SDValue Val, MVT VT) {
 
 SDValue SelectionDAG::getConstant(uint64_t Val, MVT VT, bool isT) {
   MVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
+  assert((EltVT.getSizeInBits() >= 64 ||
+         (uint64_t)((int64_t)Val >> EltVT.getSizeInBits()) + 1 < 2) &&
+         "getConstant with a uint64_t value that doesn't fit in the type!");
   return getConstant(APInt(EltVT.getSizeInBits(), Val), VT, isT);
 }
 
