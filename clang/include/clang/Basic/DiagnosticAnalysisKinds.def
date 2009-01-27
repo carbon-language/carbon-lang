@@ -1,0 +1,8 @@
+
+#ifdef ANALYSISSTART  
+__ANALYSISSTART = DIAG_START_ANALYSIS,
+#undef ANALYSISSTART
+#endif
+
+// CHECK: use of uninitialized values
+DIAG(warn_uninit_val, WARNING, "use of uninitialized variable")

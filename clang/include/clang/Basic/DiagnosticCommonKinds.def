@@ -1,0 +1,74 @@
+//===----------------------------------------------------------------------===//
+// Common Helpers
+//===----------------------------------------------------------------------===//
+
+
+DIAG(note_previous_definition, NOTE,
+     "previous definition is here")
+DIAG(note_previous_declaration, NOTE,
+     "previous declaration is here")
+DIAG(note_previous_implicit_declaration, NOTE,
+     "previous implicit declaration is here")
+DIAG(note_previous_use, NOTE,
+     "previous use is here")
+DIAG(note_duplicate_case_prev, NOTE,
+     "previous case defined here")
+DIAG(note_forward_declaration, NOTE,
+     "forward declaration of %0")
+DIAG(note_type_being_defined, NOTE,
+     "definition of %0 is not complete until the closing '}'")
+/// note_matching - this is used as a continuation of a previous diagnostic,
+/// e.g. to specify the '(' when we expected a ')'.
+DIAG(note_matching, NOTE,
+     "to match this '%0'")
+
+DIAG(note_using_decl, NOTE,
+     "using")
+DIAG(note_also_found_decl, NOTE,
+     "also found")
+
+// Parse && Lex
+DIAG(err_expected_colon, ERROR,
+     "expected ':'")
+
+// Parse && Sema
+DIAG(err_no_declarators, ERROR,
+     "declaration does not declare anything")
+DIAG(err_param_redefinition, ERROR,
+     "redefinition of parameter %0")
+DIAG(err_invalid_storage_class_in_func_decl, ERROR,
+     "invalid storage class specifier in function declarator")
+DIAG(err_expected_namespace_name, ERROR,
+     "expected namespace name")
+
+// Sema && Lex
+DIAG(ext_longlong, EXTENSION,
+     "'long long' is an extension when C99 mode is not enabled")
+DIAG(warn_integer_too_large, WARNING,
+     "integer constant is too large for its type")
+DIAG(warn_integer_too_large_for_signed, WARNING,
+     "integer constant is so large that it is unsigned")
+
+// Sema && AST
+DIAG(note_invalid_subexpr_in_ice, NOTE,
+     "subexpression not valid in an integer constant expression")
+
+// Driver
+DIAG(pp_macro_not_used, WARNING,    // -Wunused-macros
+     "macro is not used")
+DIAG(warn_floatingpoint_eq, WARNING,
+  "comparing floating point with == or != is unsafe")
+DIAG(warn_objc_property_attr_mutually_exclusive, WARNING,
+     "property attributes '%0' and '%1' are mutually exclusive")
+DIAG(warn_printf_not_string_constant, WARNING,
+     "format string is not a string literal (potentially insecure)")
+DIAG(warn_implicit_function_decl, WARNING,
+     "implicit declaration of function %0")
+DIAG(err_pp_I_dash_not_supported, ERROR,
+     "-I- not supported, please use -iquote instead")
+DIAG(warn_octal_escape_too_large, WARNING,
+     "octal escape sequence out of range")
+DIAG(warn_hex_escape_too_large, WARNING,
+     "hex escape sequence out of range")
+DIAG(warn_pp_undef_identifier, WARNING,
+     "%0 is not defined, evaluates to 0")
