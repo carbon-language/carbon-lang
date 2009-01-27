@@ -58,6 +58,7 @@ public:
     CGF.ErrorUnsupported(S, "aggregate expression");
   }
   void VisitParenExpr(ParenExpr *PE) { Visit(PE->getSubExpr()); }
+  void VisitUnaryExtension(UnaryOperator *E) { Visit(E->getSubExpr()); }
 
   // l-values.
   void VisitDeclRefExpr(DeclRefExpr *DRE) { EmitAggLoadOfLValue(DRE); }
