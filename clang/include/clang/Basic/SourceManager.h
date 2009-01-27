@@ -404,14 +404,6 @@ public:
     return SourceLocation::getFileLoc(FileOffset);
   }
   
-  /// getIncludeLoc - Return the location of the #include for the specified
-  /// SourceLocation.  If this is a macro expansion, this transparently figures
-  /// out which file includes the file being expanded into.
-  SourceLocation getIncludeLoc(SourceLocation ID) const {
-    return getSLocEntry(getFileID(getInstantiationLoc(ID)))
-                    .getFile().getIncludeLoc();
-  }
-  
   /// Given a SourceLocation object, return the instantiation location
   /// referenced by the ID.
   SourceLocation getInstantiationLoc(SourceLocation Loc) const {
@@ -518,10 +510,14 @@ public:
     return getSLocEntry(FID).getFile().getFileCharacteristic();
   }
   
-  /// getSourceName - This method returns the name of the file or buffer that
-  /// the SourceLocation specifies.  This can be modified with #line directives,
-  /// etc.
-  const char *getSourceName(SourceLocation Loc) const;
+  /// getPresumedLoc - This method returns the "presumed" location of a
+  /// SourceLocation specifies.  A "presumed location" can be modified by #line
+  /// or GNU line marker directives.  This provides a view on the data that a
+  /// user should see in diagnostics, for example.
+  ///
+  /// Note that a presumed location is always given as the instantiation point
+  /// of an instantiation location, not at the spelling location.
+  PresumedLoc getPresumedLoc(SourceLocation Loc) const;
   
   
   

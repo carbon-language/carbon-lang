@@ -142,17 +142,7 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
 }
 
 void Preprocessor::DumpLocation(SourceLocation Loc) const {
-  SourceLocation LogLoc = SourceMgr.getInstantiationLoc(Loc);
-  llvm::cerr << SourceMgr.getSourceName(LogLoc) << ':'
-             << SourceMgr.getLineNumber(LogLoc) << ':'
-             << SourceMgr.getColumnNumber(LogLoc);
-  
-  SourceLocation SpellingLoc = SourceMgr.getSpellingLoc(Loc);
-  if (SpellingLoc != LogLoc) {
-    llvm::cerr << " <SpellingLoc=";
-    DumpLocation(SpellingLoc);
-    llvm::cerr << ">";
-  }
+  Loc.dump(SourceMgr);
 }
 
 void Preprocessor::DumpMacro(const MacroInfo &MI) const {

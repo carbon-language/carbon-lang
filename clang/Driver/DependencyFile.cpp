@@ -13,6 +13,7 @@
 
 #include "clang.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/DirectoryLookup.h"
@@ -167,8 +168,14 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
                                          SrcMgr::CharacteristicKind FileType) {
   if (Reason != PPCallbacks::EnterFile)
     return;
-
-  const char *Filename = PP->getSourceManager().getSourceName(Loc);
+  
+  // Depedency generation really does want to go all the way to the file entry
+  // for a source location to find out what is depended on.  We do not want
+  // #line markers to affect dependency generation!
+  SourceManager &SM = PP->getSourceManager();
+  
+  FileID FID = SM.getFileID(SM.getInstantiationLoc(Loc));
+  const char *Filename = SM.getFileEntryForID(FID)->getName();
   if (!FileMatchesDepCriteria(Filename, FileType))
     return;
 

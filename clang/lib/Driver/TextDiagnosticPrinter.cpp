@@ -15,28 +15,26 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 void TextDiagnosticPrinter::
-PrintIncludeStack(FullSourceLoc Pos) {
-  if (Pos.isInvalid()) return;
+PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
+  if (Loc.isInvalid()) return;
 
-  Pos = Pos.getInstantiationLoc();
+  PresumedLoc PLoc = SM.getPresumedLoc(Loc);
 
   // Print out the other include frames first.
-  PrintIncludeStack(Pos.getIncludeLoc());
-  unsigned LineNo = Pos.getLineNumber();
+  PrintIncludeStack(PLoc.getIncludeLoc(), SM);
   
-  OS << "In file included from " << Pos.getSourceName()
-     << ':' << LineNo << ":\n";
+  OS << "In file included from " << PLoc.getFilename()
+     << ':' << PLoc.getLine() << ":\n";
 }
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
 /// any characters in LineNo that intersect the SourceRange.
 void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
-                                           const SourceManager &SourceMgr,
+                                           const SourceManager &SM,
                                            unsigned LineNo, FileID FID,
                                            std::string &CaretLine,
                                            const std::string &SourceLine) {
@@ -44,23 +42,21 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
          "Expect a correspondence between source and caret line!");
   if (!R.isValid()) return;
 
-  SourceLocation InstantiationStart =
-    SourceMgr.getInstantiationLoc(R.getBegin());
-  unsigned StartLineNo = SourceMgr.getLineNumber(InstantiationStart);
-  if (StartLineNo > LineNo ||
-      SourceMgr.getFileID(InstantiationStart) != FID)
+  SourceLocation Begin = SM.getInstantiationLoc(R.getBegin());
+  SourceLocation End = SM.getInstantiationLoc(R.getEnd());
+  
+  unsigned StartLineNo = SM.getLineNumber(Begin);
+  if (StartLineNo > LineNo || SM.getFileID(Begin) != FID)
     return;  // No intersection.
   
-  SourceLocation InstantiationEnd = SourceMgr.getInstantiationLoc(R.getEnd());
-  unsigned EndLineNo = SourceMgr.getLineNumber(InstantiationEnd);
-  if (EndLineNo < LineNo ||
-      SourceMgr.getFileID(InstantiationEnd) != FID)
+  unsigned EndLineNo = SM.getLineNumber(End);
+  if (EndLineNo < LineNo || SM.getFileID(End) != FID)
     return;  // No intersection.
   
   // Compute the column number of the start.
   unsigned StartColNo = 0;
   if (StartLineNo == LineNo) {
-    StartColNo = SourceMgr.getInstantiationColumnNumber(R.getBegin());
+    StartColNo = SM.getColumnNumber(Begin);
     if (StartColNo) --StartColNo;  // Zero base the col #.
   }
 
@@ -72,12 +68,12 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   // Compute the column number of the end.
   unsigned EndColNo = CaretLine.size();
   if (EndLineNo == LineNo) {
-    EndColNo = SourceMgr.getInstantiationColumnNumber(R.getEnd());
+    EndColNo = SM.getColumnNumber(End);
     if (EndColNo) {
       --EndColNo;  // Zero base the col #.
       
       // Add in the length of the token, so that we cover multi-char tokens.
-      EndColNo += Lexer::MeasureTokenLength(R.getEnd(), SourceMgr);
+      EndColNo += Lexer::MeasureTokenLength(End, SM);
     } else {
       EndColNo = CaretLine.size();
     }
@@ -99,39 +95,25 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
                                              const DiagnosticInfo &Info) {
-  unsigned LineNo = 0, ColNo = 0;
-  FileID FID;
-  const char *LineStart = 0, *LineEnd = 0;
-  const FullSourceLoc &Pos = Info.getLocation();
+  const SourceManager &SM = Info.getLocation().getManager();
+  unsigned ColNo = 0;
   
-  if (Pos.isValid()) {
-    FullSourceLoc LPos = Pos.getInstantiationLoc();
-    FID = LPos.getFileID();
-    LineNo = LPos.getLineNumber();
+  // If the location is specified, print out a file/line/col and include trace
+  // if enabled.
+  if (Info.getLocation().isValid()) {
+    PresumedLoc PLoc = SM.getPresumedLoc(Info.getLocation());
+    unsigned LineNo = PLoc.getLine();
     
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
-    if (LastWarningLoc != LPos.getIncludeLoc()) {
-      LastWarningLoc = LPos.getIncludeLoc();
-      PrintIncludeStack(LastWarningLoc);
+    if (LastWarningLoc != PLoc.getIncludeLoc()) {
+      LastWarningLoc = PLoc.getIncludeLoc();
+      PrintIncludeStack(LastWarningLoc, SM);
     }
   
-    // Compute the column number.  Rewind from the current position to the start
-    // of the line.
-    ColNo = LPos.getColumnNumber();
-    const char *TokInstantiationPtr = LPos.getCharacterData();
-    LineStart = TokInstantiationPtr-ColNo+1;  // Column # is 1-based
-
-    // Compute the line end.  Scan forward from the error position to the end of
-    // the line.
-    const llvm::MemoryBuffer *Buffer = LPos.getBuffer();
-    const char *BufEnd = Buffer->getBufferEnd();
-    LineEnd = TokInstantiationPtr;
-    while (LineEnd != BufEnd && 
-           *LineEnd != '\n' && *LineEnd != '\r')
-      ++LineEnd;
-  
-    OS << Buffer->getBufferIdentifier() << ':' << LineNo << ':';
+    // Compute the column number.
+    ColNo = PLoc.getColumn();
+    OS << PLoc.getFilename() << ':' << LineNo << ':';
     if (ColNo && ShowColumn) 
       OS << ColNo << ':';
     OS << ' ';
@@ -149,21 +131,49 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   OS.write(OutStr.begin(), OutStr.size());
   OS << '\n';
   
-  if (CaretDiagnostics && Pos.isValid() &&
-      ((LastLoc != Pos) || Info.getNumRanges())) {
+  // If caret diagnostics are enabled and we have location, we want to emit the
+  // caret.  However, we only do this if the location moved from the last
+  // diagnostic, or if the diagnostic has ranges.  We don't want to emit the
+  // same caret multiple times if one loc has multiple diagnostics.
+  if (CaretDiagnostics && Info.getLocation().isValid() &&
+      ((LastLoc != Info.getLocation()) || Info.getNumRanges())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
-    LastLoc = Pos;
+    LastLoc = Info.getLocation();
+
+    // Inspect the actual instantiation point of the diagnostic, we don't care
+    // about presumed locations anymore.
+    SourceLocation ILoc = SM.getInstantiationLoc(Info.getLocation());
     
-    // Get the line of the source file.
+    // Get the file and line that we want to highlight.  We only draw ranges
+    // that intersect this.
+    FileID ILocFID = SM.getFileID(ILoc);
+    unsigned LineNo = SM.getLineNumber(ILoc);
+    
+    // Get the line of the source file.  Scan from the location backward and
+    // forward to find the start/end of the line.
+    
+    // Rewind from the current position to the start of the line.
+    const char *TokInstantiationPtr = SM.getCharacterData(ILoc);
+    const char *LineStart = TokInstantiationPtr-ColNo+1; // Column # is 1-based.
+    
+    // Compute the line end.  Scan forward from the error position to the end of
+    // the line.
+    const char *BufEnd = SM.getBufferData(ILocFID).second;
+    const char *LineEnd = TokInstantiationPtr;
+    while (LineEnd != BufEnd && 
+           *LineEnd != '\n' && *LineEnd != '\r')
+      ++LineEnd;
+    
+    // Copy the line of code into an std::string for ease of manipulation.
     std::string SourceLine(LineStart, LineEnd);
     
     // Create a line for the caret that is filled with spaces that is the same
     // length as the line of source code.
     std::string CaretLine(LineEnd-LineStart, ' ');
-    
+
     // Highlight all of the characters covered by Ranges with ~ characters.
     for (unsigned i = 0; i != Info.getNumRanges(); ++i)
-      HighlightRange(Info.getRange(i), Pos.getManager(), LineNo, FID,
+      HighlightRange(Info.getRange(i), SM, LineNo, ILocFID,
                      CaretLine, SourceLine);
     
     // Next, insert the caret itself.

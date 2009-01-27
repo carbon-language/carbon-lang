@@ -26,6 +26,29 @@ SourceLocation SourceLocation::ReadVal(llvm::Deserializer& D) {
   return SourceLocation::getFromRawEncoding(D.ReadInt());   
 }
 
+void SourceLocation::dump(const SourceManager &SM) const {
+  if (!isValid()) {
+    fprintf(stderr, "<invalid loc>");
+    return;
+  }
+  
+  if (isFileID()) {
+    PresumedLoc PLoc = SM.getPresumedLoc(*this);
+    
+    // The instantiation and spelling pos is identical for file locs.
+    fprintf(stderr, "%s:%d:%d",
+            PLoc.getFilename(), PLoc.getLine(), PLoc.getColumn());
+    return;
+  }
+  
+  SM.getInstantiationLoc(*this).dump(SM);
+  
+  fprintf(stderr, " <Spelling=");
+  SM.getSpellingLoc(*this).dump(SM);
+  fprintf(stderr, ">");
+}
+
+
 void SourceRange::Emit(llvm::Serializer& S) const {
   B.Emit(S);
   E.Emit(S);
@@ -51,11 +74,6 @@ FullSourceLoc FullSourceLoc::getInstantiationLoc() const {
 FullSourceLoc FullSourceLoc::getSpellingLoc() const {
   assert(isValid());
   return FullSourceLoc(SrcMgr->getSpellingLoc(*this), *SrcMgr);
-}
-
-FullSourceLoc FullSourceLoc::getIncludeLoc() const {
-  assert(isValid());
-  return FullSourceLoc(SrcMgr->getIncludeLoc(*this), *SrcMgr);
 }
 
 unsigned FullSourceLoc::getLineNumber() const {
@@ -89,11 +107,6 @@ unsigned FullSourceLoc::getSpellingColumnNumber() const {
   return SrcMgr->getSpellingColumnNumber(*this);
 }
 
-const char* FullSourceLoc::getSourceName() const {
-  assert(isValid());
-  return SrcMgr->getSourceName(*this);
-}
-
 bool FullSourceLoc::isInSystemHeader() const {
   assert(isValid());
   return SrcMgr->isInSystemHeader(*this);
@@ -109,22 +122,3 @@ const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
   return SrcMgr->getBuffer(SrcMgr->getFileID(*this));
 }
 
-void FullSourceLoc::dump() const {
-  if (!isValid()) {
-    fprintf(stderr, "Invalid Loc\n");
-    return;
-  }
-  
-  if (isFileID()) {
-    // The instantiation and spelling pos is identical for file locs.
-    fprintf(stderr, "File Loc from '%s': %d: %d\n",
-            getSourceName(), getInstantiationLineNumber(),
-            getInstantiationColumnNumber());
-  } else {
-    fprintf(stderr, "Macro Loc (\n  Spelling: ");
-    getSpellingLoc().dump();
-    fprintf(stderr, "  Instantiation: ");
-    getInstantiationLoc().dump();
-    fprintf(stderr, ")\n");
-  }
-}

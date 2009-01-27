@@ -454,28 +454,37 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
   Tok.clearFlag(Token::NeedsCleaning);
   
   if (II == Ident__LINE__) {
+    // C99 6.10.8: "__LINE__: The presumed line number (within the current
+    // source file) of the current source line (an integer constant)".  This can
+    // be affected by #line.
+    PresumedLoc PLoc = SourceMgr.getPresumedLoc(Tok.getLocation());
+    
     // __LINE__ expands to a simple numeric value.  Add a space after it so that
     // it will tokenize as a number (and not run into stuff after it in the temp
     // buffer).
-    sprintf(TmpBuffer, "%u ",
-            SourceMgr.getInstantiationLineNumber(Tok.getLocation()));
+    sprintf(TmpBuffer, "%u ", PLoc.getLine());
     unsigned Length = strlen(TmpBuffer)-1;
     Tok.setKind(tok::numeric_constant);
     CreateString(TmpBuffer, Length+1, Tok, Tok.getLocation());
     Tok.setLength(Length);  // Trim off space.
   } else if (II == Ident__FILE__ || II == Ident__BASE_FILE__) {
-    SourceLocation Loc = Tok.getLocation();
+    // C99 6.10.8: "__FILE__: The presumed name of the current source file (a
+    // character string literal)". This can be affected by #line.
+    PresumedLoc PLoc = SourceMgr.getPresumedLoc(Tok.getLocation());
+
+    // __BASE_FILE__ is a GNU extension that returns the top of the presumed
+    // #include stack instead of the current file.
     if (II == Ident__BASE_FILE__) {
       Diag(Tok, diag::ext_pp_base_file);
-      SourceLocation NextLoc = SourceMgr.getIncludeLoc(Loc);
+      SourceLocation NextLoc = PLoc.getIncludeLoc();
       while (NextLoc.isValid()) {
-        Loc = NextLoc;
-        NextLoc = SourceMgr.getIncludeLoc(Loc);
+        PLoc = SourceMgr.getPresumedLoc(NextLoc);
+        NextLoc = PLoc.getIncludeLoc();
       }
     }
     
     // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
-    std::string FN =SourceMgr.getSourceName(SourceMgr.getInstantiationLoc(Loc));
+    std::string FN = PLoc.getFilename();
     FN = '"' + Lexer::Stringify(FN) + '"';
     Tok.setKind(tok::string_literal);
     CreateString(&FN[0], FN.size(), Tok, Tok.getLocation());
@@ -496,11 +505,14 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
   } else if (II == Ident__INCLUDE_LEVEL__) {
     Diag(Tok, diag::ext_pp_include_level);
 
-    // Compute the include depth of this token.
+    // Compute the presumed include depth of this token.  This can be affected
+    // by GNU line markers.
     unsigned Depth = 0;
-    SourceLocation Loc = SourceMgr.getIncludeLoc(Tok.getLocation());
-    for (; Loc.isValid(); ++Depth)
-      Loc = SourceMgr.getIncludeLoc(Loc);
+    
+    PresumedLoc PLoc = SourceMgr.getPresumedLoc(Tok.getLocation());
+    PLoc = SourceMgr.getPresumedLoc(PLoc.getIncludeLoc());
+    for (; PLoc.isValid(); ++Depth)
+      PLoc = SourceMgr.getPresumedLoc(PLoc.getIncludeLoc());
     
     // __INCLUDE_LEVEL__ expands to a simple numeric value.  Add a space after
     // it so that it will tokenize as a number (and not run into stuff after it

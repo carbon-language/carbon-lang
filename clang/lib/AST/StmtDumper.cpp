@@ -153,21 +153,26 @@ namespace  {
 
 void StmtDumper::DumpLocation(SourceLocation Loc) {
   SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
+  
+  if (SpellingLoc.isInvalid()) {
+    fprintf(stderr, "<invalid sloc>");
+    return;
+  }
 
   // The general format we print out is filename:line:col, but we drop pieces
   // that haven't changed since the last loc printed.
-  const char *Filename = SM->getSourceName(SpellingLoc);
-  unsigned LineNo = SM->getLineNumber(SpellingLoc);
-  unsigned ColNo = SM->getColumnNumber(SpellingLoc);
-  if (strcmp(Filename, LastLocFilename) != 0) {
-    fprintf(stderr, "%s:%u:%u", Filename, LineNo, ColNo);
-    LastLocFilename = Filename;
-    LastLocLine = LineNo;
-  } else if (LineNo != LastLocLine) {
-    fprintf(stderr, "line:%u:%u", LineNo, ColNo);
-    LastLocLine = LineNo;
+  PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
+
+  if (strcmp(PLoc.getFilename(), LastLocFilename) != 0) {
+    fprintf(stderr, "%s:%u:%u", PLoc.getFilename(), PLoc.getLine(),
+            PLoc.getColumn());
+    LastLocFilename = PLoc.getFilename();
+    LastLocLine = PLoc.getLine();
+  } else if (PLoc.getLine() != LastLocLine) {
+    fprintf(stderr, "line:%u:%u", PLoc.getLine(), PLoc.getColumn());
+    LastLocLine = PLoc.getLine();
   } else {
-    fprintf(stderr, "col:%u", ColNo);
+    fprintf(stderr, "col:%u", PLoc.getColumn());
   }
 }
 

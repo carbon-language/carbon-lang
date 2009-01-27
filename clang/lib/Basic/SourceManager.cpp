@@ -552,18 +552,31 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
   return LineNo;
 }
 
-/// getSourceName - This method returns the name of the file or buffer that
-/// the SourceLocation specifies.  This can be modified with #line directives,
-/// etc.
-const char *SourceManager::getSourceName(SourceLocation Loc) const {
-  if (Loc.isInvalid()) return "";
+/// getPresumedLoc - This method returns the "presumed" location of a
+/// SourceLocation specifies.  A "presumed location" can be modified by #line
+/// or GNU line marker directives.  This provides a view on the data that a
+/// user should see in diagnostics, for example.
+///
+/// Note that a presumed location is always given as the instantiation point
+/// of an instantiation location, not at the spelling location.
+PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
+  if (Loc.isInvalid()) return PresumedLoc();
   
-  const SrcMgr::ContentCache *C =
-  getSLocEntry(getFileID(getSpellingLoc(Loc))).getFile().getContentCache();
+  // Presumed locations are always for instantiation points.
+  Loc = getInstantiationLoc(Loc);
   
+  // FIXME: Could just decompose Loc once!
+  
+  const SrcMgr::FileInfo &FI = getSLocEntry(getFileID(Loc)).getFile();
+  const SrcMgr::ContentCache *C = FI.getContentCache();
+
   // To get the source name, first consult the FileEntry (if one exists) before
   // the MemBuffer as this will avoid unnecessarily paging in the MemBuffer.
-  return C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
+  const char *Filename = 
+    C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
+  
+  return PresumedLoc(Filename, getLineNumber(Loc), getColumnNumber(Loc),
+                     FI.getIncludeLoc());
 }
 
 //===----------------------------------------------------------------------===//

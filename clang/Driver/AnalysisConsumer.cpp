@@ -257,18 +257,14 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
       
       DisplayedFunction = true;
       
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(getCodeDecl())) {
+      // FIXME: Is getCodeDecl() always a named decl?
+      if (isa<FunctionDecl>(getCodeDecl()) ||
+          isa<ObjCMethodDecl>(getCodeDecl())) {
+        NamedDecl *ND = cast<NamedDecl>(getCodeDecl());
+        SourceManager &SM = getContext().getSourceManager();
         llvm::cerr << "ANALYZE: "
-        << getContext().getSourceManager().getSourceName(FD->getLocation())
-        << ' '
-        << FD->getIdentifier()->getName()
-        << '\n';
-      }
-      else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(getCodeDecl())) {
-        llvm::cerr << "ANALYZE (ObjC Method): "
-        << getContext().getSourceManager().getSourceName(MD->getLocation())
-        << " '"
-        << MD->getSelector().getAsString() << "'\n";
+          << SM.getPresumedLoc(ND->getLocation()).getFilename()
+          << ' ' << ND->getNameAsString() << '\n';
       }
     }
 

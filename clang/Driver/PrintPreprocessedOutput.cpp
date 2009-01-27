@@ -150,7 +150,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   // #include directive was at.
   SourceManager &SourceMgr = PP.getSourceManager();
   if (Reason == PPCallbacks::EnterFile) {
-    MoveToLine(SourceMgr.getIncludeLoc(Loc));
+    MoveToLine(SourceMgr.getPresumedLoc(Loc).getIncludeLoc());
   } else if (Reason == PPCallbacks::SystemHeaderPragma) {
     MoveToLine(Loc);
     
@@ -165,7 +165,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   if (DisableLineMarkers) return;
 
   CurFilename.clear();
-  CurFilename += SourceMgr.getSourceName(Loc);
+  CurFilename += SourceMgr.getPresumedLoc(Loc).getFilename();
   Lexer::Stringify(CurFilename);
   FileType = NewFileType;
 
@@ -540,7 +540,8 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
   const SourceManager &SourceMgr = PP.getSourceManager();
   do PP.Lex(Tok);
   while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
-         !strcmp(SourceMgr.getSourceName(Tok.getLocation()), "<predefines>"));
+         !strcmp(SourceMgr.getPresumedLoc(Tok.getLocation()).getFilename(),
+                 "<predefines>"));
 
   while (1) {
     

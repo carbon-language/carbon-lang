@@ -26,7 +26,7 @@ namespace clang {
 class SourceManager;
 
 class TextDiagnosticPrinter : public DiagnosticClient {
-  FullSourceLoc LastWarningLoc;
+  SourceLocation LastWarningLoc;
   FullSourceLoc LastLoc;
   llvm::raw_ostream &OS;
   bool ShowColumn;
@@ -36,7 +36,7 @@ public:
                         bool caretDiagnistics = true)
     : OS(os), ShowColumn(showColumn), CaretDiagnostics(caretDiagnistics) {}
 
-  void PrintIncludeStack(FullSourceLoc Pos);
+  void PrintIncludeStack(SourceLocation Loc, const SourceManager &SM);
 
   void HighlightRange(const SourceRange &R,
                       const SourceManager& SrcMgr,

@@ -133,6 +133,8 @@ public:
   
   /// ReadVal - Read a SourceLocation object from Bitcode.
   static SourceLocation ReadVal(llvm::Deserializer& D);
+  
+  void dump(const SourceManager &SM) const;
 };
 
 inline bool operator==(const SourceLocation &LHS, const SourceLocation &RHS) {
@@ -182,13 +184,13 @@ public:
   explicit FullSourceLoc(SourceLocation Loc, SourceManager &SM) 
     : SourceLocation(Loc), SrcMgr(&SM) {}
     
-  SourceManager& getManager() {
-    assert (SrcMgr && "SourceManager is NULL.");
+  SourceManager &getManager() {
+    assert(SrcMgr && "SourceManager is NULL.");
     return *SrcMgr;
   }
   
-  const SourceManager& getManager() const {
-    assert (SrcMgr && "SourceManager is NULL.");
+  const SourceManager &getManager() const {
+    assert(SrcMgr && "SourceManager is NULL.");
     return *SrcMgr;
   }
   
@@ -196,7 +198,6 @@ public:
   
   FullSourceLoc getInstantiationLoc() const;
   FullSourceLoc getSpellingLoc() const;
-  FullSourceLoc getIncludeLoc() const;
 
   unsigned getLineNumber() const;
   unsigned getColumnNumber() const;
@@ -211,13 +212,11 @@ public:
   
   const llvm::MemoryBuffer* getBuffer() const;
   
-  const char* getSourceName() const;
-
   bool isInSystemHeader() const;
   
   /// Prints information about this FullSourceLoc to stderr. Useful for
   ///  debugging.
-  void dump() const;
+  void dump() const { SourceLocation::dump(*SrcMgr); }
 
   friend inline bool 
   operator==(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {
@@ -231,7 +230,47 @@ public:
   }
 
 };
- 
+  
+/// PresumedLoc - This class represents an unpacked "presumed" location which
+/// can be presented to the user.  A 'presumed' location can be modified by
+/// #line and GNU line marker directives and is always the instantiation point
+/// of a normal location.
+///
+/// You can get a PresumedLoc from a SourceLocation with SourceManager.
+class PresumedLoc {
+  const char *Filename;
+  unsigned Line, Col;
+  SourceLocation IncludeLoc;
+public:
+  PresumedLoc() : Filename(0) {}
+  PresumedLoc(const char *FN, unsigned Ln, unsigned Co, SourceLocation IL)
+    : Filename(FN), Line(Ln), Col(Co), IncludeLoc(IL) {
+  }
+  
+  /// isInvalid - Return true if this object is invalid or uninitialized. This
+  /// occurs when created with invalid source locations or when walking off
+  /// the top of a #include stack.
+  bool isInvalid() const { return Filename == 0; }
+  bool isValid() const { return Filename != 0; }
+  
+  /// getFilename - Return the presumed filename of this location.  This can be
+  /// affected by #line etc.
+  const char *getFilename() const { return Filename; }
+
+  /// getLine - Return the presumed line number of this location.  This can be
+  /// affected by #line etc.
+  unsigned getLine() const { return Line; }
+  
+  /// getColumn - Return the presumed column number of this location.  This can
+  /// not be affected by #line, but is packaged here for convenience.
+  unsigned getColumn() const { return Col; }
+
+  /// getIncludeLoc - Return the presumed include location of this location.
+  /// This can be affected by GNU linemarker directives.
+  SourceLocation getIncludeLoc() const { return IncludeLoc; }
+};
+
+  
 }  // end namespace clang
 
 namespace llvm {
