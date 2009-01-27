@@ -33,16 +33,21 @@ namespace llvm {
     unsigned Idx;
 
   public:
-    DebugLoc() : Idx(~0U) {}
+    DebugLoc() : Idx(~0U) {}  // Defaults to invalid.
 
-    static DebugLoc getNoDebugLoc()   { DebugLoc L; L.Idx = 0;   return L; }
+    static DebugLoc getUnknownLoc()   { DebugLoc L; L.Idx = 0;   return L; }
     static DebugLoc get(unsigned idx) { DebugLoc L; L.Idx = idx; return L; }
 
-    bool isInvalid() { return Idx == ~0U; }
-    bool isUnknown() { return Idx == 0; }
+    // isInvalid - Return true if the DebugLoc is invalid.
+    bool isInvalid() const { return Idx == ~0U; }
+
+    // isUnknown - Return true if there is no debug info for the SDNode /
+    // MachineInstr.
+    bool isUnknown() const { return Idx == 0; }
   };
 
-  struct DebugLocTupleDenseMapInfo {
+  // Partially specialize DenseMapInfo for DebugLocTyple.
+  template<>  struct DenseMapInfo<DebugLocTuple> {
     static inline DebugLocTuple getEmptyKey() {
       return DebugLocTuple(~0U, ~0U, ~0U);
     }
@@ -63,9 +68,6 @@ namespace llvm {
     static bool isPod() { return true; }
   };
 
-  typedef DenseMap<DebugLocTuple, unsigned, DebugLocTupleDenseMapInfo>
-    DebugIdMapType;
-    
   /// DebugLocTracker - This class tracks debug location information.
   ///
   struct DebugLocTracker {
@@ -75,7 +77,7 @@ namespace llvm {
 
     // DebugIdsMap - This maps DebugLocTuple's to indices into
     // DebugLocations vector.
-    DebugIdMapType DebugIdMap;
+    DenseMap<DebugLocTuple, unsigned> DebugIdMap;
 
     DebugLocTracker() {}
 

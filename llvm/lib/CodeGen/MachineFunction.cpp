@@ -378,13 +378,14 @@ MachineFunction& MachineFunction::get(const Function *F)
   return *mc;
 }
 
-/// lookUpDebugLocId - Look up the DebugLocTuple index with the given
-/// source file, line, and column. It may add a new filename and / or
-/// a new DebugLocTuple.
-unsigned MachineFunction::lookUpDebugLocId(unsigned Src, unsigned Line,
-                                           unsigned Col) {
+/// getOrCreateDebugLocID - Look up the DebugLocTuple index with the given
+/// source file, line, and column. If none currently exists, create add a new
+/// new DebugLocTuple and insert it into the DebugIdMap.
+unsigned MachineFunction::getOrCreateDebugLocID(unsigned Src, unsigned Line,
+                                                unsigned Col) {
   struct DebugLocTuple Tuple(Src, Line, Col);
-  DebugIdMapType::iterator II = DebugLocInfo.DebugIdMap.find(Tuple);
+  DenseMap<DebugLocTuple, unsigned>::iterator II
+    = DebugLocInfo.DebugIdMap.find(Tuple);
   if (II != DebugLocInfo.DebugIdMap.end())
     return II->second;
   // Add a new tuple.

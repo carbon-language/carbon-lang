@@ -311,10 +311,10 @@ public:
   // Debug location.
   //
 
-  /// lookUpDebugLocId - Look up the DebugLocTuple index with the given
-  /// source file, line, and column. It may add a new filename and / or
-  /// a new DebugLocTuple.
-  unsigned lookUpDebugLocId(unsigned Src, unsigned Line, unsigned Col);
+  /// getOrCreateDebugLocID - Look up the DebugLocTuple index with the given
+  /// source file, line, and column. If none currently exists, create add a new
+  /// new DebugLocTuple and insert it into the DebugIdMap.
+  unsigned getOrCreateDebugLocID(unsigned Src, unsigned Line, unsigned Col);
 };
 
 //===--------------------------------------------------------------------===//
