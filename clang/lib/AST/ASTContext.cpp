@@ -453,6 +453,22 @@ ASTContext::getTypeInfo(const Type *T) {
   return std::make_pair(Width, Align);
 }
 
+/// getPreferredTypeAlign - Return the "preferred" alignment of the specified
+/// type for the current target in bits.  This can be different than the ABI
+/// alignment in cases where it is beneficial for performance to overalign
+/// a data type.
+unsigned ASTContext::getPreferredTypeAlign(const Type *T) {
+  unsigned ABIAlign = getTypeAlign(T);
+  
+  // Doubles should be naturally aligned if possible.
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(getCanonicalType(T)))
+    if (BT->getKind() == BuiltinType::Double)
+      return std::max(ABIAlign, 8U);
+  
+  return ABIAlign;
+}
+
+
 /// LayoutField - Field layout.
 void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
                                   bool IsUnion, unsigned StructPacking,

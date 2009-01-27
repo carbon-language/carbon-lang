@@ -394,14 +394,20 @@ public:
     return getTypeInfo(T).first;
   }
   
-  /// getTypeAlign - Return the alignment of the specified type, in bits.  This
-  /// method does not work on incomplete types.
+  /// getTypeAlign - Return the ABI-specified alignment of a type, in bits.
+  /// This method does not work on incomplete types.
   unsigned getTypeAlign(QualType T) {
     return getTypeInfo(T).second;
   }
   unsigned getTypeAlign(const Type *T) {
     return getTypeInfo(T).second;
   }
+  
+  /// getPreferredTypeAlign - Return the "preferred" alignment of the specified
+  /// type for the current target in bits.  This can be different than the ABI
+  /// alignment in cases where it is beneficial for performance to overalign
+  /// a data type.
+  unsigned getPreferredTypeAlign(const Type *T);
   
   /// getDeclAlign - Return the alignment of the specified decl that should be
   /// returned by __alignof().  Note that bitfields do not have a valid
