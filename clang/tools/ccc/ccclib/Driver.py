@@ -52,6 +52,8 @@ class Driver(object):
         # Normalize names.
         if machine == 'Power Macintosh':
             return 'ppc'
+        if machine == 'x86_64':
+            return 'i386'
         return machine
 
     def getHostSystemName(self):
