@@ -249,30 +249,30 @@ static SDNode *findFlagUse(SDNode *N) {
   return NULL;
 }
 
-/// findNonImmUse - Return true by reference in "found" if "Use" is an
-/// non-immediate use of "Def". This function recursively traversing
-/// up the operand chain ignoring certain nodes.
-static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
-                          SDNode *Root, bool &found,
+/// findNonImmUse - Return true if "Use" is a non-immediate use of "Def".
+/// This function recursively traverses up the operand chain, ignoring
+/// certain nodes.
+static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
+                          SDNode *Root,
                           SmallPtrSet<SDNode*, 16> &Visited) {
-  if (found ||
-      Use->getNodeId() < Def->getNodeId() ||
+  if (Use->getNodeId() < Def->getNodeId() ||
       !Visited.insert(Use))
-    return;
-  
-  for (unsigned i = 0, e = Use->getNumOperands(); !found && i != e; ++i) {
+    return false;
+
+  for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
     SDNode *N = Use->getOperand(i).getNode();
     if (N == Def) {
       if (Use == ImmedUse || Use == Root)
         continue;  // We are not looking for immediate use.
       assert(N != Root);
-      found = true;
-      break;
+      return true;
     }
 
     // Traverse up the operand chain.
-    findNonImmUse(N, Def, ImmedUse, Root, found, Visited);
+    if (findNonImmUse(N, Def, ImmedUse, Root, Visited))
+      return true;
   }
+  return false;
 }
 
 /// isNonImmUse - Start searching from Root up the DAG to check is Def can
@@ -287,9 +287,7 @@ static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
 /// its chain operand.
 static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse) {
   SmallPtrSet<SDNode*, 16> Visited;
-  bool found = false;
-  findNonImmUse(Root, Def, ImmedUse, Root, found, Visited);
-  return found;
+  return findNonImmUse(Root, Def, ImmedUse, Root, Visited);
 }
 
 
