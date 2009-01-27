@@ -36,4 +36,8 @@ void test_sizeof(){
         sizeof(arr)[0];
 }
 
+// PR3418
+int test_leading_extension() {
+  __extension__ (*(char*)0) = 1;
+}
 

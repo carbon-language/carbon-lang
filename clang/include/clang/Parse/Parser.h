@@ -567,6 +567,8 @@ private:
 
   OwningExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
 
+  OwningExprResult ParseExpressionWithLeadingExtension(SourceLocation ExtLoc);
+
   OwningExprResult ParseRHSOfBinaryExpression(OwningExprResult LHS,
                                               unsigned MinPrec);
   OwningExprResult ParseCastExpression(bool isUnaryExpression);

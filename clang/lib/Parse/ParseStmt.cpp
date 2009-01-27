@@ -366,6 +366,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       // __extension__ can start declarations and it can also be a unary
       // operator for expressions.  Consume multiple __extension__ markers here
       // until we can determine which is which.
+      // FIXME: This loses extension expressions in the AST!
       SourceLocation ExtLoc = ConsumeToken();
       while (Tok.is(tok::kw___extension__))
         ConsumeToken();
@@ -381,20 +382,13 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         // FIXME: Pass in the right location for the end of the declstmt.
         R = Actions.ActOnDeclStmt(Res, DeclStart, DeclStart);
       } else {
-        // Otherwise this was a unary __extension__ marker.  Parse the
-        // subexpression and add the __extension__ unary op. 
-        OwningExprResult Res(ParseCastExpression(false));
+        // Otherwise this was a unary __extension__ marker.
+        OwningExprResult Res(ParseExpressionWithLeadingExtension(ExtLoc));
 
         if (Res.isInvalid()) {
           SkipUntil(tok::semi);
           continue;
         }
-
-        // Add the __extension__ node to the AST.
-        Res = Actions.ActOnUnaryOp(CurScope, ExtLoc, tok::kw___extension__,
-                                   move_arg(Res));
-        if (Res.isInvalid())
-          continue;
 
         // Eat the semicolon at the end of stmt and convert the expr into a
         // statement.

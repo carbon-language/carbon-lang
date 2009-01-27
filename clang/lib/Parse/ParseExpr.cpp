@@ -192,6 +192,25 @@ Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
 }
 
+/// This routine is called when a leading '__extension__' is seen and
+/// consumed.  This is necessary because the token gets consumed in the
+/// process of disambiguating between an expression and a declaration.
+Parser::OwningExprResult
+Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
+  // FIXME: The handling for throw is almost certainly wrong.
+  if (Tok.is(tok::kw_throw))
+    return ParseThrowExpression();
+
+  OwningExprResult LHS(ParseCastExpression(false));
+  if (LHS.isInvalid()) return move(LHS);
+
+  LHS = Actions.ActOnUnaryOp(CurScope, ExtLoc, tok::kw___extension__,
+                             move_arg(LHS));
+  if (LHS.isInvalid()) return move(LHS);
+
+  return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
+}
+
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
 ///
 Parser::OwningExprResult Parser::ParseAssignmentExpression() {
