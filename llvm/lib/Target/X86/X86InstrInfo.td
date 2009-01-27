@@ -3612,6 +3612,17 @@ def : Pat<(parallel (X86smul_ovf (load addr:$src1), i32immSExt8:$src2),
                     (implicit EFLAGS)),
           (IMUL32rmi8 addr:$src1, i32immSExt8:$src2)>;
 
+// Optimize multiple with overflow by 2.
+let AddedComplexity = 2 in {
+def : Pat<(parallel (X86smul_ovf GR16:$src1, 2),
+                    (implicit EFLAGS)),
+          (ADD16rr GR16:$src1, GR16:$src1)>;
+
+def : Pat<(parallel (X86smul_ovf GR32:$src1, 2),
+                    (implicit EFLAGS)),
+          (ADD32rr GR32:$src1, GR32:$src1)>;
+}
+
 //===----------------------------------------------------------------------===//
 // Floating Point Stack Support
 //===----------------------------------------------------------------------===//
