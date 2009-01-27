@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/Target/TargetInstrDesc.h"
+#include "llvm/CodeGen/DebugLoc.h"
 #include <list>
 #include <vector>
 
@@ -43,6 +44,7 @@ class MachineInstr : public ilist_node<MachineInstr> {
   std::vector<MachineOperand> Operands; // the operands
   std::list<MachineMemOperand> MemOperands; // information on memory references
   MachineBasicBlock *Parent;            // Pointer to the owning basic block.
+  DebugLoc debugLoc;                    // Source line information.
 
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
@@ -64,16 +66,33 @@ class MachineInstr : public ilist_node<MachineInstr> {
   /// TID NULL and no operands.
   MachineInstr();
 
+  // The next two constructors have DebugLoc and non-DebugLoc versions;
+  // over time, the non-DebugLoc versions should be phased out and eventually
+  // removed.
+
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
   /// implicit operands.  It reserves space for number of operands specified by
-  /// TargetInstrDesc.
+  /// TargetInstrDesc.  The version with a DebugLoc should be preferred.
   explicit MachineInstr(const TargetInstrDesc &TID, bool NoImp = false);
+
+  /// MachineInstr ctor - Work exactly the same as the ctor above, except that
+  /// the MachineInstr is created and added to the end of the specified basic
+  /// block.  The version with a DebugLoc should be preferred.
+  ///
+  MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &TID);
+
+  /// MachineInstr ctor - This constructor create a MachineInstr and add the
+  /// implicit operands.  It reserves space for number of operands specified by
+  /// TargetInstrDesc.  An explicit DebugLoc is supplied.
+  explicit MachineInstr(const TargetInstrDesc &TID, const DebugLoc dl, 
+                        bool NoImp = false);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.
   ///
-  MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &TID);
+  MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl, 
+               const TargetInstrDesc &TID);
 
   ~MachineInstr();
 
@@ -83,6 +102,10 @@ class MachineInstr : public ilist_node<MachineInstr> {
 public:
   const MachineBasicBlock* getParent() const { return Parent; }
   MachineBasicBlock* getParent() { return Parent; }
+
+  /// getDebugLoc - Returns the debug location id of this MachineInstr.
+  ///
+  const DebugLoc getDebugLoc() const { return debugLoc; }
   
   /// getDesc - Returns the target instruction descriptor of this
   /// MachineInstr.
@@ -288,6 +311,10 @@ public:
   /// the current instruction with a new one.
   ///
   void setDesc(const TargetInstrDesc &tid) { TID = &tid; }
+
+  /// setDebugLoc - Replace current source information with new such.
+  ///
+  void setDebugLoc(const DebugLoc dl) { debugLoc = dl; }
 
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.

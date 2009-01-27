@@ -283,7 +283,7 @@ void MachineMemOperand::Profile(FoldingSetNodeID &ID) const {
 /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
 /// TID NULL and no operands.
 MachineInstr::MachineInstr()
-  : TID(0), NumImplicitOps(0), Parent(0) {
+  : TID(0), NumImplicitOps(0), Parent(0), debugLoc(DebugLoc::getUnknownLoc()) {
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
@@ -302,7 +302,8 @@ void MachineInstr::addImplicitDefUseOperands() {
 /// TargetInstrDesc or the numOperands if it is not zero. (for
 /// instructions with variable number of operands).
 MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
-  : TID(&tid), NumImplicitOps(0), Parent(0) {
+  : TID(&tid), NumImplicitOps(0), Parent(0), 
+    debugLoc(DebugLoc::getUnknownLoc()) {
   if (!NoImp && TID->getImplicitDefs())
     for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
@@ -316,12 +317,49 @@ MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
   LeakDetector::addGarbageObject(this);
 }
 
-/// MachineInstr ctor - Work exactly the same as the ctor above, except that the
-/// MachineInstr is created and added to the end of the specified basic block.
+/// MachineInstr ctor - As above, but with a DebugLoc.
+MachineInstr::MachineInstr(const TargetInstrDesc &tid, const DebugLoc dl,
+                           bool NoImp)
+  : TID(&tid), NumImplicitOps(0), Parent(0), debugLoc(dl) {
+  if (!NoImp && TID->getImplicitDefs())
+    for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
+      NumImplicitOps++;
+  if (!NoImp && TID->getImplicitUses())
+    for (const unsigned *ImpUses = TID->getImplicitUses(); *ImpUses; ++ImpUses)
+      NumImplicitOps++;
+  Operands.reserve(NumImplicitOps + TID->getNumOperands());
+  if (!NoImp)
+    addImplicitDefUseOperands();
+  // Make sure that we get added to a machine basicblock
+  LeakDetector::addGarbageObject(this);
+}
+
+/// MachineInstr ctor - Work exactly the same as the ctor two above, except
+/// that the MachineInstr is created and added to the end of the specified 
+/// basic block.
 ///
-MachineInstr::MachineInstr(MachineBasicBlock *MBB,
+MachineInstr::MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &tid)
+  : TID(&tid), NumImplicitOps(0), Parent(0), 
+    debugLoc(DebugLoc::getUnknownLoc()) {
+  assert(MBB && "Cannot use inserting ctor with null basic block!");
+  if (TID->ImplicitDefs)
+    for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
+      NumImplicitOps++;
+  if (TID->ImplicitUses)
+    for (const unsigned *ImpUses = TID->getImplicitUses(); *ImpUses; ++ImpUses)
+      NumImplicitOps++;
+  Operands.reserve(NumImplicitOps + TID->getNumOperands());
+  addImplicitDefUseOperands();
+  // Make sure that we get added to a machine basicblock
+  LeakDetector::addGarbageObject(this);
+  MBB->push_back(this);  // Add instruction to end of basic block!
+}
+
+/// MachineInstr ctor - As above, but with a DebugLoc.
+///
+MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
                            const TargetInstrDesc &tid)
-  : TID(&tid), NumImplicitOps(0), Parent(0) {
+  : TID(&tid), NumImplicitOps(0), Parent(0), debugLoc(dl) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   if (TID->ImplicitDefs)
     for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
@@ -339,7 +377,8 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB,
 /// MachineInstr ctor - Copies MachineInstr arg exactly
 ///
 MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
-  : TID(&MI.getDesc()), NumImplicitOps(0), Parent(0) {
+  : TID(&MI.getDesc()), NumImplicitOps(0), Parent(0), 
+        debugLoc(MI.getDebugLoc()) {
   Operands.reserve(MI.getNumOperands());
 
   // Add operands
