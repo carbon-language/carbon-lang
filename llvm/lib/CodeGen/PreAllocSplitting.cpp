@@ -38,7 +38,7 @@ using namespace llvm;
 
 static cl::opt<int> PreSplitLimit("pre-split-limit", cl::init(-1), cl::Hidden);
 
-STATISTIC(NumSplits, "Number of intervals split");
+STATISTIC(NumTotalSplits, "Number of intervals split");
 STATISTIC(NumRemats, "Number of intervals split by rematerialization");
 STATISTIC(NumFolds, "Number of intervals split with spill folding");
 STATISTIC(NumRenumbers, "Number of intervals renumbered into new registers");
@@ -77,6 +77,8 @@ namespace {
 
     // Def2SpillMap - A map from a def instruction index to spill index.
     DenseMap<unsigned, unsigned> Def2SpillMap;
+    
+    unsigned NumSplits;
 
   public:
     static char ID;
@@ -1191,6 +1193,7 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   LSs    = &getAnalysis<LiveStacks>();
 
   bool MadeChange = false;
+  NumSplits = 0;
 
   // Make sure blocks are numbered in order.
   MF.RenumberBlocks();
@@ -1217,6 +1220,9 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   }
 
   MadeChange |= removeDeadSpills(Split);
+  
+  if (NumSplits)
+    NumTotalSplits += NumSplits;
 
   return MadeChange;
 }
