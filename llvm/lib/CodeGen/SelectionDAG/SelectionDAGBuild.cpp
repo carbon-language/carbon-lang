@@ -1341,7 +1341,6 @@ void SelectionDAGLowering::visitJumpTable(JumpTable &JT) {
   SDValue Table = DAG.getJumpTable(JT.JTI, PTy);
   DAG.setRoot(DAG.getNode(ISD::BR_JT, MVT::Other, Index.getValue(1),
                           Table, Index));
-  return;
 }
 
 /// visitJumpTableHeader - This function emits necessary code to produce index
@@ -1392,8 +1391,6 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
   else
     DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond,
                             DAG.getBasicBlock(JT.MBB)));
-
-  return;
 }
 
 /// visitBitTestHeader - This function emits necessary code to produce value
@@ -1439,8 +1436,6 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
   else
     DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, CopyTo,
                             DAG.getBasicBlock(MBB)));
-
-  return;
 }
 
 /// visitBitTestCase - this function produces one "bit test"
@@ -1479,8 +1474,6 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
   else
     DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrAnd,
                             DAG.getBasicBlock(NextMBB)));
-
-  return;
 }
 
 void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
