@@ -683,7 +683,13 @@ unsigned APInt::countLeadingOnes() const {
     return countLeadingOnes_64(VAL, APINT_BITS_PER_WORD - BitWidth);
 
   unsigned highWordBits = BitWidth % APINT_BITS_PER_WORD;
-  unsigned shift = (highWordBits == 0 ? 0 : APINT_BITS_PER_WORD - highWordBits);
+  unsigned shift;
+  if (!highWordBits) {
+    highWordBits = APINT_BITS_PER_WORD;
+    shift = 0;
+  } else {
+    shift = APINT_BITS_PER_WORD - highWordBits;
+  }
   int i = getNumWords() - 1;
   unsigned Count = countLeadingOnes_64(pVal[i], shift);
   if (Count == highWordBits) {
