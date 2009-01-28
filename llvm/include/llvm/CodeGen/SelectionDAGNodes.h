@@ -60,15 +60,19 @@ struct SDVTList {
 namespace ISD {
 
   //===--------------------------------------------------------------------===//
-  /// ISD::NodeType enum - This enum defines all of the operators valid in a
-  /// SelectionDAG.
+  /// ISD::NodeType enum - This enum defines the target-independent operators
+  /// for a SelectionDAG.
   ///
-  /// These are sometimes called the target-independent operators; targets
-  /// may also define target-dependent operators. For example, on x86, these
-  /// are the enum values in the X86ISD namespace. Targets should aim to use
-  /// target-independent operators to model their instruction sets as much
-  /// as possible, and only use target-dependent operators when they have
-  /// special requirements.
+  /// Targets may also define target-dependent operator codes for SDNodes. For
+  /// example, on x86, these are the enum values in the X86ISD namespace.
+  /// Targets should aim to use target-independent operators to model their
+  /// instruction sets as much as possible, and only use target-dependent
+  /// operators when they have special requirements.
+  ///
+  /// Finally, during and after selection proper, SNodes may use special
+  /// operator codes that correspond directly with MachineInstr opcodes. These
+  /// are used to represent selected instructions. See the isMachineOpcode()
+  /// and getMachineOpcode() member functions of SDNode.
   ///
   enum NodeType {
     // DELETED_NODE - This is an illegal flag value that is used to catch
