@@ -1588,8 +1588,8 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
 
 static inline bool areJTsAllowed(const TargetLowering &TLI) {
   return !DisableJumpTables &&
-          (TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
-           TLI.isOperationLegal(ISD::BRIND, MVT::Other));
+          (TLI.isOperationLegalOrCustom(ISD::BR_JT, MVT::Other) ||
+           TLI.isOperationLegalOrCustom(ISD::BRIND, MVT::Other));
 }
 
 static APInt ComputeRange(const APInt &First, const APInt &Last) {

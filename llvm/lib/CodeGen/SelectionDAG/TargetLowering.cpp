@@ -2365,10 +2365,10 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
   // Multiply the numerator (operand 0) by the magic value
   // FIXME: We should support doing a MUL in a wider type
   SDValue Q;
-  if (isOperationLegal(ISD::MULHS, VT))
+  if (isOperationLegalOrCustom(ISD::MULHS, VT))
     Q = DAG.getNode(ISD::MULHS, VT, N->getOperand(0),
                     DAG.getConstant(magics.m, VT));
-  else if (isOperationLegal(ISD::SMUL_LOHI, VT))
+  else if (isOperationLegalOrCustom(ISD::SMUL_LOHI, VT))
     Q = SDValue(DAG.getNode(ISD::SMUL_LOHI, DAG.getVTList(VT, VT),
                               N->getOperand(0),
                               DAG.getConstant(magics.m, VT)).getNode(), 1);
@@ -2423,10 +2423,10 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
   // Multiply the numerator (operand 0) by the magic value
   // FIXME: We should support doing a MUL in a wider type
   SDValue Q;
-  if (isOperationLegal(ISD::MULHU, VT))
+  if (isOperationLegalOrCustom(ISD::MULHU, VT))
     Q = DAG.getNode(ISD::MULHU, VT, N->getOperand(0),
                     DAG.getConstant(magics.m, VT));
-  else if (isOperationLegal(ISD::UMUL_LOHI, VT))
+  else if (isOperationLegalOrCustom(ISD::UMUL_LOHI, VT))
     Q = SDValue(DAG.getNode(ISD::UMUL_LOHI, DAG.getVTList(VT, VT),
                               N->getOperand(0),
                               DAG.getConstant(magics.m, VT)).getNode(), 1);

@@ -2054,8 +2054,8 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS) {
   if (!TLI.isTypeLegal(VT)) return 0;
 
   // The target must have at least one rotate flavor.
-  bool HasROTL = TLI.isOperationLegal(ISD::ROTL, VT);
-  bool HasROTR = TLI.isOperationLegal(ISD::ROTR, VT);
+  bool HasROTL = TLI.isOperationLegalOrCustom(ISD::ROTL, VT);
+  bool HasROTR = TLI.isOperationLegalOrCustom(ISD::ROTR, VT);
   if (!HasROTL && !HasROTR) return 0;
 
   // Match "(X shl/srl V1) & V2" where V2 may not be present.
@@ -2541,8 +2541,8 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
       // on that type, and the the truncate to that type is both legal and free,
       // perform the transform.
       if (ShiftAmt &&
-          TLI.isOperationLegal(ISD::SIGN_EXTEND, TruncVT) &&
-          TLI.isOperationLegal(ISD::TRUNCATE, VT) &&
+          TLI.isOperationLegalOrCustom(ISD::SIGN_EXTEND, TruncVT) &&
+          TLI.isOperationLegalOrCustom(ISD::TRUNCATE, VT) &&
           TLI.isTruncateFree(VT, TruncVT)) {
 
           SDValue Amt = DAG.getConstant(ShiftAmt, TLI.getShiftAmountTy());
@@ -2795,7 +2795,7 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
     // Check against MVT::Other for SELECT_CC, which is a workaround for targets
     // having to say they don't support SELECT_CC on every type the DAG knows
     // about, since there is no way to mark an opcode illegal at all value types
-    if (TLI.isOperationLegal(ISD::SELECT_CC, MVT::Other))
+    if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, MVT::Other))
       return DAG.getNode(ISD::SELECT_CC, VT, N0.getOperand(0), N0.getOperand(1),
                          N1, N2, N0.getOperand(2));
     else
@@ -4032,8 +4032,8 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   
   // If the input is a legal type, and SINT_TO_FP is not legal on this target,
   // but UINT_TO_FP is legal on this target, try to convert.
-  if (!TLI.isOperationLegal(ISD::SINT_TO_FP, OpVT) &&
-      TLI.isOperationLegal(ISD::UINT_TO_FP, OpVT)) {
+  if (!TLI.isOperationLegalOrCustom(ISD::SINT_TO_FP, OpVT) &&
+      TLI.isOperationLegalOrCustom(ISD::UINT_TO_FP, OpVT)) {
     // If the sign bit is known to be zero, we can change this to UINT_TO_FP. 
     if (DAG.SignBitIsZero(N0))
       return DAG.getNode(ISD::UINT_TO_FP, VT, N0);
@@ -4055,8 +4055,8 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
   
   // If the input is a legal type, and UINT_TO_FP is not legal on this target,
   // but SINT_TO_FP is legal on this target, try to convert.
-  if (!TLI.isOperationLegal(ISD::UINT_TO_FP, OpVT) &&
-      TLI.isOperationLegal(ISD::SINT_TO_FP, OpVT)) {
+  if (!TLI.isOperationLegalOrCustom(ISD::UINT_TO_FP, OpVT) &&
+      TLI.isOperationLegalOrCustom(ISD::SINT_TO_FP, OpVT)) {
     // If the sign bit is known to be zero, we can change this to SINT_TO_FP. 
     if (DAG.SignBitIsZero(N0))
       return DAG.getNode(ISD::SINT_TO_FP, VT, N0);
@@ -4252,7 +4252,7 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
   // fold a brcond with a setcc condition into a BR_CC node if BR_CC is legal
   // on the target.
   if (N1.getOpcode() == ISD::SETCC && 
-      TLI.isOperationLegal(ISD::BR_CC, MVT::Other)) {
+      TLI.isOperationLegalOrCustom(ISD::BR_CC, MVT::Other)) {
     return DAG.getNode(ISD::BR_CC, MVT::Other, Chain, N1.getOperand(2),
                        N1.getOperand(0), N1.getOperand(1), N2);
   }
@@ -4726,7 +4726,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       getABITypeAlignment(SVT.getTypeForMVT());
     if (Align <= OrigAlign &&
         ((!LegalOperations && !ST->isVolatile()) ||
-         TLI.isOperationLegal(ISD::STORE, SVT)))
+         TLI.isOperationLegalOrCustom(ISD::STORE, SVT)))
       return DAG.getStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
                           ST->getSrcValueOffset(), ST->isVolatile(), OrigAlign);
   }
@@ -4747,7 +4747,8 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
         break;
       case MVT::f32:
         if (((TLI.isTypeLegal(MVT::i32) || !LegalTypes) && !LegalOperations &&
-             !ST->isVolatile()) || TLI.isOperationLegal(ISD::STORE, MVT::i32)) {
+             !ST->isVolatile()) ||
+            TLI.isOperationLegalOrCustom(ISD::STORE, MVT::i32)) {
           Tmp = DAG.getConstant((uint32_t)CFP->getValueAPF().
                               bitcastToAPInt().getZExtValue(), MVT::i32);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
@@ -4757,14 +4758,15 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
         break;
       case MVT::f64:
         if (((TLI.isTypeLegal(MVT::i64) || !LegalTypes) && !LegalOperations &&
-             !ST->isVolatile()) || TLI.isOperationLegal(ISD::STORE, MVT::i64)) {
+             !ST->isVolatile()) ||
+            TLI.isOperationLegalOrCustom(ISD::STORE, MVT::i64)) {
           Tmp = DAG.getConstant(CFP->getValueAPF().bitcastToAPInt().
                                   getZExtValue(), MVT::i64);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
                               ST->getSrcValueOffset(), ST->isVolatile(),
                               ST->getAlignment());
         } else if (!ST->isVolatile() &&
-                   TLI.isOperationLegal(ISD::STORE, MVT::i32)) {
+                   TLI.isOperationLegalOrCustom(ISD::STORE, MVT::i32)) {
           // Many FP stores are not made apparent until after legalize, e.g. for
           // argument passing.  Since this is so common, custom legalize the
           // 64-bit integer store into two 32-bit stores.
@@ -4967,7 +4969,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       // original load.
       unsigned NewAlign = TLI.getTargetData()->
         getABITypeAlignment(LVT.getTypeForMVT());
-      if (NewAlign > Align || !TLI.isOperationLegal(ISD::LOAD, LVT))
+      if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, LVT))
         return SDValue();
       Align = NewAlign;
     }

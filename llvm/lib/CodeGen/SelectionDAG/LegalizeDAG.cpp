@@ -1263,8 +1263,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
       DwarfWriter *DW = DAG.getDwarfWriter();
-      bool useDEBUG_LOC = TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other);
-      bool useLABEL = TLI.isOperationLegal(ISD::DBG_LABEL, MVT::Other);
+      bool useDEBUG_LOC = TLI.isOperationLegalOrCustom(ISD::DEBUG_LOC,
+                                                       MVT::Other);
+      bool useLABEL = TLI.isOperationLegalOrCustom(ISD::DBG_LABEL, MVT::Other);
       
       const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(Node);
       GlobalVariable *CU_GV = cast<GlobalVariable>(DSP->getCompileUnit());
@@ -3065,7 +3066,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                "Fell off of the edge of the floating point world");
           
         // If the target supports SETCC of this type, use it.
-        if (TLI.isOperationLegal(ISD::SETCC, NewInTy))
+        if (TLI.isOperationLegalOrCustom(ISD::SETCC, NewInTy))
           break;
       }
       if (NewInTy.isInteger())
@@ -3228,10 +3229,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // and unsigned forms. If the target supports both SMUL_LOHI and
         // UMUL_LOHI, form a preference by checking which forms of plain
         // MULH it supports.
-        bool HasSMUL_LOHI = TLI.isOperationLegal(ISD::SMUL_LOHI, VT);
-        bool HasUMUL_LOHI = TLI.isOperationLegal(ISD::UMUL_LOHI, VT);
-        bool HasMULHS = TLI.isOperationLegal(ISD::MULHS, VT);
-        bool HasMULHU = TLI.isOperationLegal(ISD::MULHU, VT);
+        bool HasSMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::SMUL_LOHI, VT);
+        bool HasUMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, VT);
+        bool HasMULHS = TLI.isOperationLegalOrCustom(ISD::MULHS, VT);
+        bool HasMULHU = TLI.isOperationLegalOrCustom(ISD::MULHU, VT);
         unsigned OpToUse = 0;
         if (HasSMUL_LOHI && !HasMULHS) {
           OpToUse = ISD::SMUL_LOHI;
@@ -3248,25 +3249,25 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         }
       }
       if (Node->getOpcode() == ISD::MULHS &&
-          TLI.isOperationLegal(ISD::SMUL_LOHI, VT)) {
+          TLI.isOperationLegalOrCustom(ISD::SMUL_LOHI, VT)) {
         Result = SDValue(DAG.getNode(ISD::SMUL_LOHI, VTs, Tmp1, Tmp2).getNode(),
                          1);
         break;
       }
       if (Node->getOpcode() == ISD::MULHU && 
-          TLI.isOperationLegal(ISD::UMUL_LOHI, VT)) {
+          TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, VT)) {
         Result = SDValue(DAG.getNode(ISD::UMUL_LOHI, VTs, Tmp1, Tmp2).getNode(),
                          1);
         break;
       }
       if (Node->getOpcode() == ISD::SDIV &&
-          TLI.isOperationLegal(ISD::SDIVREM, VT)) {
+          TLI.isOperationLegalOrCustom(ISD::SDIVREM, VT)) {
         Result = SDValue(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).getNode(),
                          0);
         break;
       }
       if (Node->getOpcode() == ISD::UDIV &&
-          TLI.isOperationLegal(ISD::UDIVREM, VT)) {
+          TLI.isOperationLegalOrCustom(ISD::UDIVREM, VT)) {
         Result = SDValue(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).getNode(),
                          0);
         break;
@@ -3510,12 +3511,12 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // See if remainder can be lowered using two-result operations.
       SDVTList VTs = DAG.getVTList(VT, VT);
       if (Node->getOpcode() == ISD::SREM &&
-          TLI.isOperationLegal(ISD::SDIVREM, VT)) {
+          TLI.isOperationLegalOrCustom(ISD::SDIVREM, VT)) {
         Result = SDValue(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).getNode(), 1);
         break;
       }
       if (Node->getOpcode() == ISD::UREM &&
-          TLI.isOperationLegal(ISD::UDIVREM, VT)) {
+          TLI.isOperationLegalOrCustom(ISD::UDIVREM, VT)) {
         Result = SDValue(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).getNode(), 1);
         break;
       }
@@ -4639,8 +4640,8 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
     // FP_TO_UINT for small destination sizes on targets where FP_TO_UINT is not
     // legal, such as PowerPC.
     if (Node->getOpcode() == ISD::FP_TO_UINT && 
-        !TLI.isOperationLegal(ISD::FP_TO_UINT, NVT) &&
-        (TLI.isOperationLegal(ISD::FP_TO_SINT, NVT) ||
+        !TLI.isOperationLegalOrCustom(ISD::FP_TO_UINT, NVT) &&
+        (TLI.isOperationLegalOrCustom(ISD::FP_TO_SINT, NVT) ||
          TLI.getOperationAction(ISD::FP_TO_SINT, NVT)==TargetLowering::Custom)){
       Result = DAG.getNode(ISD::FP_TO_SINT, NVT, Tmp1);
     } else {
@@ -5549,7 +5550,8 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
                                         &MaskVec[0], MaskVec.size());
 
     // If the target supports SCALAR_TO_VECTOR and this shuffle mask, use it.
-    if (TLI.isOperationLegal(ISD::SCALAR_TO_VECTOR, Node->getValueType(0)) &&
+    if (TLI.isOperationLegalOrCustom(ISD::SCALAR_TO_VECTOR,
+                                     Node->getValueType(0)) &&
         isShuffleLegal(Node->getValueType(0), ShuffleMask)) {
       Val1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0), Val1);
       Val2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0), Val2);
@@ -6330,8 +6332,8 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op) {
     SDValue Tmp3 = DAG.getNode(ISD::AND, VT, DAG.getNOT(Op, VT),
                        DAG.getNode(ISD::SUB, VT, Op, DAG.getConstant(1, VT)));
     // If ISD::CTLZ is legal and CTPOP isn't, then do that instead.
-    if (!TLI.isOperationLegal(ISD::CTPOP, VT) &&
-        TLI.isOperationLegal(ISD::CTLZ, VT))
+    if (!TLI.isOperationLegalOrCustom(ISD::CTPOP, VT) &&
+        TLI.isOperationLegalOrCustom(ISD::CTLZ, VT))
       return DAG.getNode(ISD::SUB, VT,
                          DAG.getConstant(VT.getSizeInBits(), VT),
                          DAG.getNode(ISD::CTLZ, VT, Tmp3));
@@ -6821,8 +6823,9 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     // If ADDC/ADDE are supported and if the shift amount is a constant 1, emit 
     // this X << 1 as X+X.
     if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(ShiftAmt)) {
-      if (ShAmt->getAPIntValue() == 1 && TLI.isOperationLegal(ISD::ADDC, NVT) && 
-          TLI.isOperationLegal(ISD::ADDE, NVT)) {
+      if (ShAmt->getAPIntValue() == 1 &&
+          TLI.isOperationLegalOrCustom(ISD::ADDC, NVT) && 
+          TLI.isOperationLegalOrCustom(ISD::ADDE, NVT)) {
         SDValue LoOps[2], HiOps[3];
         ExpandOp(Node->getOperand(0), LoOps[0], HiOps[0]);
         SDVTList VTList = DAG.getVTList(LoOps[0].getValueType(), MVT::Flag);
@@ -6944,7 +6947,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     bool hasCarry = false;
     for (unsigned BitSize = NVT.getSizeInBits(); BitSize != 0; BitSize /= 2) {
       MVT AVT = MVT::getIntegerVT(BitSize);
-      if (TLI.isOperationLegal(OpV, AVT)) {
+      if (TLI.isOperationLegalOrCustom(OpV, AVT)) {
         hasCarry = true;
         break;
       }
@@ -7041,10 +7044,10 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
       }
     }
     
-    bool HasMULHS = TLI.isOperationLegal(ISD::MULHS, NVT);
-    bool HasMULHU = TLI.isOperationLegal(ISD::MULHU, NVT);
-    bool HasSMUL_LOHI = TLI.isOperationLegal(ISD::SMUL_LOHI, NVT);
-    bool HasUMUL_LOHI = TLI.isOperationLegal(ISD::UMUL_LOHI, NVT);
+    bool HasMULHS = TLI.isOperationLegalOrCustom(ISD::MULHS, NVT);
+    bool HasMULHU = TLI.isOperationLegalOrCustom(ISD::MULHU, NVT);
+    bool HasSMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::SMUL_LOHI, NVT);
+    bool HasUMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, NVT);
     if (HasMULHU || HasMULHS || HasUMUL_LOHI || HasSMUL_LOHI) {
       SDValue LL, LH, RL, RH;
       ExpandOp(Node->getOperand(0), LL, LH);

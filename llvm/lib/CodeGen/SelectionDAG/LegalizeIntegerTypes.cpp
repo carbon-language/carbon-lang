@@ -345,8 +345,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_FP_TO_XINT(SDNode *N) {
   // FP_TO_UINT for small destination sizes on targets where FP_TO_UINT is not
   // legal, such as PowerPC.
   if (N->getOpcode() == ISD::FP_TO_UINT &&
-      !TLI.isOperationLegal(ISD::FP_TO_UINT, NVT) &&
-      TLI.isOperationLegal(ISD::FP_TO_SINT, NVT))
+      !TLI.isOperationLegalOrCustom(ISD::FP_TO_UINT, NVT) &&
+      TLI.isOperationLegalOrCustom(ISD::FP_TO_SINT, NVT))
     NewOpc = ISD::FP_TO_SINT;
 
   SDValue Res = DAG.getNode(NewOpc, NVT, N->getOperand(0));
@@ -1008,7 +1008,8 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
       Lo = DAG.getConstant(0, NVT);
       Hi = InL;
     } else if (Amt == 1 &&
-               TLI.isOperationLegal(ISD::ADDC, TLI.getTypeToExpandTo(NVT))) {
+               TLI.isOperationLegalOrCustom(ISD::ADDC,
+                                            TLI.getTypeToExpandTo(NVT))) {
       // Emit this X << 1 as X+X.
       SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
       SDValue LoOps[2] = { InL, InL };
@@ -1166,8 +1167,9 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
   // a carry of type MVT::Flag, but there doesn't seem to be any way to
   // generate a value of this type in the expanded code sequence.
   bool hasCarry =
-    TLI.isOperationLegal(N->getOpcode() == ISD::ADD ? ISD::ADDC : ISD::SUBC,
-                         TLI.getTypeToExpandTo(NVT));
+    TLI.isOperationLegalOrCustom(N->getOpcode() == ISD::ADD ?
+                                   ISD::ADDC : ISD::SUBC,
+                                 TLI.getTypeToExpandTo(NVT));
 
   if (hasCarry) {
     SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
@@ -1513,10 +1515,10 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
   MVT VT = N->getValueType(0);
   MVT NVT = TLI.getTypeToTransformTo(VT);
 
-  bool HasMULHS = TLI.isOperationLegal(ISD::MULHS, NVT);
-  bool HasMULHU = TLI.isOperationLegal(ISD::MULHU, NVT);
-  bool HasSMUL_LOHI = TLI.isOperationLegal(ISD::SMUL_LOHI, NVT);
-  bool HasUMUL_LOHI = TLI.isOperationLegal(ISD::UMUL_LOHI, NVT);
+  bool HasMULHS = TLI.isOperationLegalOrCustom(ISD::MULHS, NVT);
+  bool HasMULHU = TLI.isOperationLegalOrCustom(ISD::MULHU, NVT);
+  bool HasSMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::SMUL_LOHI, NVT);
+  bool HasUMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, NVT);
   if (HasMULHU || HasMULHS || HasUMUL_LOHI || HasSMUL_LOHI) {
     SDValue LL, LH, RL, RH;
     GetExpandedInteger(N->getOperand(0), LL, LH);

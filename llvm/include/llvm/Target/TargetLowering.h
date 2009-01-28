@@ -340,12 +340,20 @@ public:
     return (LegalizeAction)((OpActions[Op] >> (2*VT.getSimpleVT())) & 3);
   }
 
+  /// isOperationLegalOrCustom - Return true if the specified operation is
+  /// legal on this target or can be made legal with custom lowering. This
+  /// is used to help guide high-level lowering decisions.
+  bool isOperationLegalOrCustom(unsigned Op, MVT VT) const {
+    return (VT == MVT::Other || isTypeLegal(VT)) &&
+      (getOperationAction(Op, VT) == Legal ||
+       getOperationAction(Op, VT) == Custom);
+  }
+
   /// isOperationLegal - Return true if the specified operation is legal on this
   /// target.
   bool isOperationLegal(unsigned Op, MVT VT) const {
     return (VT == MVT::Other || isTypeLegal(VT)) &&
-      (getOperationAction(Op, VT) == Legal ||
-       getOperationAction(Op, VT) == Custom);
+           getOperationAction(Op, VT) == Legal;
   }
 
   /// getLoadExtAction - Return how this load with extension should be treated:
