@@ -784,7 +784,6 @@ public:
                                 DeclarationName Name, LookupCriteria Criteria);
   LookupResult LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                           const DeclContext *LookupCtx = 0,
-                          bool enableLazyBuiltinCreation = true,
                           bool LookInParent = true,
                           bool NamespaceNameOnly = false);
 

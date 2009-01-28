@@ -39,7 +39,7 @@ Sema::TypeTy *Sema::isTypeName(IdentifierInfo &II, Scope *S,
       return 0;
     DC = static_cast<DeclContext*>(SS->getScopeRep());
   }
-  LookupResult Result = LookupDecl(&II, Decl::IDNS_Ordinary, S, DC, false);
+  LookupResult Result = LookupDecl(&II, Decl::IDNS_Ordinary, S, DC);
 
   Decl *IIDecl = 0;
   switch (Result.getKind()) {
@@ -263,7 +263,6 @@ Scope *Sema::getNonFieldDeclScope(Scope *S) {
 Sema::LookupResult
 Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                  const DeclContext *LookupCtx,
-                 bool enableLazyBuiltinCreation,
                  bool LookInParent,
                  bool NamespaceNameOnly) {
   LookupCriteria::NameKind Kind;
@@ -344,8 +343,7 @@ NamespaceDecl *Sema::GetStdNamespace() {
   if (!StdNamespace) {
     IdentifierInfo *StdIdent = &PP.getIdentifierTable().get("std");
     DeclContext *Global = Context.getTranslationUnitDecl();
-    Decl *Std = LookupDecl(StdIdent, Decl::IDNS_Ordinary,
-                           0, Global, /*enableLazyBuiltinCreation=*/false);
+    Decl *Std = LookupDecl(StdIdent, Decl::IDNS_Ordinary, 0, Global);
     StdNamespace = dyn_cast_or_null<NamespaceDecl>(Std);
   }
   return StdNamespace;
@@ -782,7 +780,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
       Decl *PrevDecl = LookupDecl((*F)->getDeclName(), Decl::IDNS_Ordinary,
-                                  S, Owner, false, false, false);
+                                  S, Owner, false, false);
       if (PrevDecl && !isa<TagDecl>(PrevDecl)) {
         // C++ [class.union]p2:
         //   The names of the members of an anonymous union shall be
@@ -3237,7 +3235,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
 
   if (II) {
     Decl *PrevDecl 
-      = LookupDecl(II, Decl::IDNS_Member, S, 0, false, false, false);
+      = LookupDecl(II, Decl::IDNS_Member, S, 0, false, false);
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;
@@ -3330,7 +3328,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   
   if (II) {
     Decl *PrevDecl 
-      = LookupDecl(II, Decl::IDNS_Member, S, 0, false, false, false);
+      = LookupDecl(II, Decl::IDNS_Member, S, 0, false, false);
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;

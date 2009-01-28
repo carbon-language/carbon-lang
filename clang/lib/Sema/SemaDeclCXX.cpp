@@ -1378,7 +1378,6 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
     Decl *PrevDecl =
       LookupDecl(II, Decl::IDNS_Ordinary, DeclRegionScope, 0,
-                /*enableLazyBuiltinCreation=*/false, 
                 /*LookupInParent=*/false);
     
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
