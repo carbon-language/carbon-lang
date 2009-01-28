@@ -883,9 +883,9 @@ class OptionParser:
 
         # Version control.
         # FIXME: Figure out what to do about these.
-        self.BOption = self.addOption(JoinedOrSeparateOption('-B'))
-        self.addOption(JoinedOrSeparateOption('-V'))
-        self.addOption(JoinedOrSeparateOption('-b'))
+        self.BOption = self.addOption(JoinedOrSeparateOption('-B', unsupported=True))
+        self.addOption(JoinedOrSeparateOption('-V', unsupported=True))
+        self.addOption(JoinedOrSeparateOption('-b', unsupported=True))
 
         # Clang static analyzer options (also see -WA,).
         self.analyzeOption = self.addOption(FlagOption('--analyze'))

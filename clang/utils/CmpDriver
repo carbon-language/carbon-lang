@@ -106,7 +106,8 @@ class CompileInfo:
                 ln.startswith('Target: ') or
                 ln.startswith('Configured with: ') or
                 ln.startswith('Thread model: ') or
-                ln.startswith('gcc version')):
+                ln.startswith('gcc version') or
+                ln.startswith('ccc version')):
                 pass
             elif ln.strip().startswith('"'):
                 self.commands.append(list(splitArgs(ln)))

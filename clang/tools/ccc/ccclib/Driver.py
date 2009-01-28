@@ -32,6 +32,9 @@ class Driver(object):
         self.cccEcho = False
         self.cccFallback = False
 
+        # Certain options suppress the 'no input files' warning.
+        self.suppressMissingInputWarning = False
+
     # Host queries which can be forcibly over-riden by the user for
     # testing purposes.
     #
@@ -208,10 +211,11 @@ class Driver(object):
                     raise ValueError,'Encountered unknown job.'
             sys.exit(0)
 
+        vArg = args.getLastArg(self.parser.vOption)
         for j in jobs.iterjobs():
             if isinstance(j, Jobs.Command):
-                if self.cccEcho:
-                    print >>sys.stderr, ' '.join(map(repr,j.getArgv()))
+                if vArg or self.cccEcho:
+                    print >>sys.stderr, ' '.join(map(str,j.getArgv()))
                     sys.stderr.flush()
                 res = os.spawnvp(os.P_WAIT, j.executable, j.getArgv())
                 if res:
@@ -220,8 +224,8 @@ class Driver(object):
                 import subprocess
                 procs = []
                 for sj in j.commands:
-                    if self.cccEcho:
-                        print >> sys.stderr, ' '.join(map(repr,sj.getArgv()))
+                    if vArg or self.cccEcho:
+                        print >> sys.stderr, ' '.join(map(str,sj.getArgv()))
                         sys.stdout.flush()
 
                     if not procs:
@@ -290,6 +294,10 @@ class Driver(object):
         steps = {}
         for phase in phases:
             printPhase(phase, sys.stdout, steps)
+        
+    def printVersion(self):
+        # FIXME: Print default target triple.
+        print >>sys.stderr,'ccc version 1.0'
 
     def handleImmediateOptions(self, args):
         # FIXME: Some driver Arguments are consumed right off the bat,
@@ -307,6 +315,11 @@ class Driver(object):
         # FIXME: Do we want to report "argument unused" type errors in the
         # presence of things like -dumpmachine and -print-search-dirs?
         # Probably not.
+        if (args.getLastArg(self.parser.vOption) or
+            args.getLastArg(self.parser.hashHashHashOption)):
+            self.printVersion()
+            self.suppressMissingInputWarning = True
+
         arg = (args.getLastArg(self.parser.dumpmachineOption) or
                args.getLastArg(self.parser.dumpversionOption) or
                args.getLastArg(self.parser.printSearchDirsOption))
@@ -432,8 +445,7 @@ class Driver(object):
         if arg:
             raise Arguments.InvalidArgumentsError("%s: unsupported use of internal gcc option" % ' '.join(args.render(arg)))
 
-        if (not inputs and 
-            not args.getLastArg(self.parser.hashHashHashOption)):
+        if not inputs and not self.suppressMissingInputWarning:
             raise Arguments.InvalidArgumentsError("no input files")
 
         actions = []
