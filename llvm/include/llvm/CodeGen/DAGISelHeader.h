@@ -31,9 +31,9 @@ SelectionDAG::allnodes_iterator ISelPosition;
 static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
   if (Chain->getOpcode() == ISD::EntryToken)
     return true;
-  else if (Chain->getOpcode() == ISD::TokenFactor)
+  if (Chain->getOpcode() == ISD::TokenFactor)
     return false;
-  else if (Chain->getNumOperands() > 0) {
+  if (Chain->getNumOperands() > 0) {
     SDValue C0 = Chain->getOperand(0);
     if (C0.getValueType() == MVT::Other)
       return C0.getNode() != Op && IsChainCompatible(C0.getNode(), Op);
