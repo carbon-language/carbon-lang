@@ -518,6 +518,7 @@ void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
        Field != FieldEnd; ++Field) {
     // The offset should usually be zero, but bitfields could be strange
     uint64_t offset = RL.getFieldOffset(curField);
+    CGT.ConvertTypeRecursive(Field->getType());
 
     if (Field->isBitField()) {
       Expr *BitWidth = Field->getBitWidth();

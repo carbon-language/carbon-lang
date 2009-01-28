@@ -454,10 +454,17 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     if (Field->getType()->isIncompleteArrayType())
       break;
 
-    if (Field->getIdentifier() == 0) {
-      // Initializers can't initialize unnamed fields, e.g. "int : 20;"
+    if (Field->isUnnamedBitfield())
       continue;
-    }
+
+    // When we're coping with C99 designated initializers into a
+    // union, find the field that has the same type as the expression
+    // we're initializing the union with.
+    if (isUnion && CurInitVal < NumInitElements && 
+        (CGF.getContext().getCanonicalType(Field->getType()) != 
+           CGF.getContext().getCanonicalType(E->getInit(CurInitVal)->getType())))
+      continue;
+
     // FIXME: volatility
     LValue FieldLoc = CGF.EmitLValueForField(DestPtr, *Field, isUnion,0);
     if (CurInitVal < NumInitElements) {
@@ -471,8 +478,6 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     }
 
     // Unions only initialize one field.
-    // (FIXME: things can get weird with designators, but they aren't
-    // supported yet.)
     if (isUnion)
       break;
   }

@@ -60,10 +60,8 @@ DIAG(warn_initializer_overrides, WARNING,
      "initializer overrides prior initialization of this subobject")
 DIAG(note_previous_initializer, NOTE,
      "previous initialization %select{|with side effects }0is here%select{| (side effects may not occur at run time)}0")
-DIAG(warn_gnu_array_range_designator_unsupported, WARNING,
-     "GNU array-range designator extension is unsupported")
-DIAG(warn_designator_into_union_broken_init, WARNING,
-     "designated initialization of union member is broken")
+DIAG(warn_gnu_array_range_designator_side_effects, WARNING,
+     "side effects due to the GNU array-range designator extension may occur multiple times")
 
 // Declarations.
 DIAG(ext_vla, EXTENSION,

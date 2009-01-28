@@ -1879,7 +1879,8 @@ class InitListChecker {
                                   llvm::APSInt *NextElementIndex,
                                   unsigned &Index,
                                   InitListExpr *StructuredList,
-                                  unsigned &StructuredIndex);
+                                  unsigned &StructuredIndex,
+                                  bool FinishSubobjectInit = true);
   InitListExpr *getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
                                            QualType CurrentObjectType,
                                            InitListExpr *StructuredList,

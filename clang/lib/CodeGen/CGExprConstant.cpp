@@ -246,12 +246,22 @@ public:
     // first field
     int FieldNo = 0; // Field no in RecordDecl
     FieldDecl* curField = 0;
+    bool sawAnyFields = false;
     for (RecordDecl::field_iterator Field = RD->field_begin(),
                                  FieldEnd = RD->field_end();
          Field != FieldEnd; ++Field) {
       curField = *Field;
       FieldNo++;
-      if (curField->getIdentifier())
+
+      if (curField->isUnnamedBitfield())
+        continue;
+
+      // If we have an initializer, find the field whose type is the
+      // same as that initializer. This 
+      sawAnyFields = true;
+      if (ILE->getNumInits() > 0 &&
+          CGM.getContext().getCanonicalType(curField->getType()) ==
+            CGM.getContext().getCanonicalType(ILE->getInit(0)->getType()))
         break;
     }
 

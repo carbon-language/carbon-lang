@@ -500,7 +500,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
 
     CheckSubElementType(IList, Field->getType(), IList->getInit(Index), Index,
                         StructuredList, StructuredIndex);
-    if (DeclType->isUnionType()) // FIXME: designated initializers?
+    if (DeclType->isUnionType())
       break;
 
     ++Field;
@@ -554,7 +554,8 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
                                       llvm::APSInt *NextElementIndex,
                                       unsigned &Index,
                                       InitListExpr *StructuredList,
-                                      unsigned &StructuredIndex) {
+                                      unsigned &StructuredIndex,
+                                      bool FinishSubobjectInit) {
   if (D == DIE->designators_end()) {
     // Check the actual initialization for the designated object type.
     bool prevHadError = hadError;
@@ -645,13 +646,8 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
 
     // All of the fields of a union are located at the same place in
     // the initializer list.
-    // FIXME: Need to tell CodeGen which type to initialize to. ImplicitCastExpr?
-    if (RT->getDecl()->isUnion() && FieldIndex != 0) {
-      SemaRef->Diag(D->getStartLocation(), 
-                    diag::warn_designator_into_union_broken_init)
-        << SourceRange(D->getStartLocation(), DIE->getSourceRange().getEnd());
+    if (RT->getDecl()->isUnion())
       FieldIndex = 0;
-    }
 
     // Update the designator with the field declaration.
     D->setField(*Field);
@@ -681,6 +677,9 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
       StructuredIndex = FieldIndex;
       return false;
     }
+
+    if (!FinishSubobjectInit)
+      return false;
 
     // Check the remaining fields within this class/struct/union subobject.
     bool prevHadError = hadError;
@@ -713,63 +712,102 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
   }
 
   Expr *IndexExpr = 0;
-  llvm::APSInt DesignatedIndex;
-  if (D->isArrayDesignator())
+  llvm::APSInt DesignatedStartIndex, DesignatedEndIndex;
+  if (D->isArrayDesignator()) {
     IndexExpr = DIE->getArrayIndex(*D);
-  else {
+    
+    bool ConstExpr 
+      = IndexExpr->isIntegerConstantExpr(DesignatedStartIndex, SemaRef->Context);
+    assert(ConstExpr && "Expression must be constant"); (void)ConstExpr;
+    
+    DesignatedEndIndex = DesignatedStartIndex;
+  } else {
     assert(D->isArrayRangeDesignator() && "Need array-range designator");
+    
+    bool StartConstExpr
+      = DIE->getArrayRangeStart(*D)->isIntegerConstantExpr(DesignatedStartIndex,
+                                                           SemaRef->Context);
+    assert(StartConstExpr && "Expression must be constant"); (void)StartConstExpr;
+
+    bool EndConstExpr
+      = DIE->getArrayRangeEnd(*D)->isIntegerConstantExpr(DesignatedEndIndex,
+                                                         SemaRef->Context);
+    assert(EndConstExpr && "Expression must be constant"); (void)EndConstExpr;
+    
     IndexExpr = DIE->getArrayRangeEnd(*D);
-    SemaRef->Diag(D->getEllipsisLoc(), 
-                  diag::warn_gnu_array_range_designator_unsupported)
-      << SourceRange(D->getLBracketLoc(), D->getRBracketLoc());
+
+    if (DesignatedStartIndex.getZExtValue() != DesignatedEndIndex.getZExtValue())
+      SemaRef->Diag(D->getEllipsisLoc(), 
+                    diag::warn_gnu_array_range_designator_side_effects)
+        << SourceRange(D->getLBracketLoc(), D->getRBracketLoc());
   }
 
-  bool ConstExpr 
-    = IndexExpr->isIntegerConstantExpr(DesignatedIndex, SemaRef->Context);
-  assert(ConstExpr && "Expression must be constant"); (void)ConstExpr;
-  
   if (isa<ConstantArrayType>(AT)) {
     llvm::APSInt MaxElements(cast<ConstantArrayType>(AT)->getSize(), false);
-    DesignatedIndex.extOrTrunc(MaxElements.getBitWidth());
-    DesignatedIndex.setIsUnsigned(MaxElements.isUnsigned());
-    if (DesignatedIndex >= MaxElements) {
+    DesignatedStartIndex.extOrTrunc(MaxElements.getBitWidth());
+    DesignatedStartIndex.setIsUnsigned(MaxElements.isUnsigned());
+    DesignatedEndIndex.extOrTrunc(MaxElements.getBitWidth());
+    DesignatedEndIndex.setIsUnsigned(MaxElements.isUnsigned());
+    if (DesignatedEndIndex >= MaxElements) {
       SemaRef->Diag(IndexExpr->getSourceRange().getBegin(),
                     diag::err_array_designator_too_large)
-        << DesignatedIndex.toString(10) << MaxElements.toString(10)
+        << DesignatedEndIndex.toString(10) << MaxElements.toString(10)
         << IndexExpr->getSourceRange();
       ++Index;
       return true;
     }
+  } else {
+    // Make sure the bit-widths and signedness match.
+    if (DesignatedStartIndex.getBitWidth() > DesignatedEndIndex.getBitWidth())
+      DesignatedEndIndex.extend(DesignatedStartIndex.getBitWidth());
+    else if (DesignatedStartIndex.getBitWidth() < DesignatedEndIndex.getBitWidth())
+      DesignatedStartIndex.extend(DesignatedEndIndex.getBitWidth());
+    DesignatedStartIndex.setIsUnsigned(true);
+    DesignatedEndIndex.setIsUnsigned(true);
   }
   
   // Make sure that our non-designated initializer list has space
   // for a subobject corresponding to this array element.
-  unsigned ElementIndex = DesignatedIndex.getZExtValue();
-  if (ElementIndex >= StructuredList->getNumInits())
-    StructuredList->resizeInits(SemaRef->Context, ElementIndex + 1);
+  if (DesignatedEndIndex.getZExtValue() >= StructuredList->getNumInits())
+    StructuredList->resizeInits(SemaRef->Context, 
+                                DesignatedEndIndex.getZExtValue() + 1);
 
-  // Recurse to check later designated subobjects.
-  QualType ElementType = AT->getElementType();
-  if (CheckDesignatedInitializer(IList, DIE, ++D, ElementType, 0, 0, Index,
-                                 StructuredList, ElementIndex))
-    return true;
+  // Repeatedly perform subobject initializations in the range
+  // [DesignatedStartIndex, DesignatedEndIndex].
 
-  // Move to the next index in the array that we'll be initializing.
-  ++DesignatedIndex;
-  ElementIndex = DesignatedIndex.getZExtValue();
+  // Move to the next designator
+  unsigned ElementIndex = DesignatedStartIndex.getZExtValue();
+  unsigned OldIndex = Index;
+  ++D;
+  while (DesignatedStartIndex <= DesignatedEndIndex) {
+    // Recurse to check later designated subobjects.
+    QualType ElementType = AT->getElementType();
+    Index = OldIndex;
+    if (CheckDesignatedInitializer(IList, DIE, D, ElementType, 0, 0, Index,
+                                   StructuredList, ElementIndex,
+                                   (DesignatedStartIndex == DesignatedEndIndex)))
+      return true;
+
+    // Move to the next index in the array that we'll be initializing.
+    ++DesignatedStartIndex;
+    ElementIndex = DesignatedStartIndex.getZExtValue();
+  }
 
   // If this the first designator, our caller will continue checking
   // the rest of this array subobject.
   if (IsFirstDesignator) {
     if (NextElementIndex)
-      *NextElementIndex = DesignatedIndex;
+      *NextElementIndex = DesignatedStartIndex;
     StructuredIndex = ElementIndex;
     return false;
   }
-    
+  
+  if (!FinishSubobjectInit)
+    return false;
+
   // Check the remaining elements within this array subobject.
   bool prevHadError = hadError;
-  CheckArrayType(IList, CurrentObjectType, DesignatedIndex, true, Index,
+  CheckArrayType(IList, CurrentObjectType, DesignatedStartIndex, true, Index,
                  StructuredList, ElementIndex);
   return hadError && !prevHadError;  
 }
