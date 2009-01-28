@@ -253,7 +253,7 @@ bool OptionDescription::isAlias() const {
 }
 
 bool OptionDescription::isMultiVal() const {
-  return MultiVal == 1;
+  return MultiVal > 1;
 }
 
 bool OptionDescription::isExtern() const {
