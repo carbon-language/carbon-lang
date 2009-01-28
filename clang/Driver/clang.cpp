@@ -1418,9 +1418,20 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ClearSourceMgr = true;
     break;
   }
-  
-  if (Consumer)
-    ParseAST(PP, Consumer.get(), Stats, !DisableFree);
+
+  if (Consumer) {
+    TranslationUnit *TU = 0;
+    if (DisableFree) {
+      ASTContext *Context = new ASTContext(PP.getLangOptions(),
+                                           PP.getSourceManager(),
+                                           PP.getTargetInfo(),
+                                           PP.getIdentifierTable(),
+                                           PP.getSelectorTable(),
+                                           /* FreeMemory = */ false);
+      TU = new TranslationUnit(*Context);
+    }
+    ParseAST(PP, Consumer.get(), TU, Stats);
+  }
 
   if (VerifyDiagnostics)
     if (CheckDiagnostics(PP))

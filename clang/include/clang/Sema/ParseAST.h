@@ -17,14 +17,17 @@
 namespace clang {
   class Preprocessor;
   class ASTConsumer;
-  
+  class TranslationUnit;
+
   /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
   /// the file is parsed.
   ///
-  /// \param FreeMemory If false, the memory used for AST elements is
-  /// not released.
+  /// \param TU If 0, then memory used for AST elements will be allocated only
+  /// for the duration of the ParseAST() call. In this case, the client should
+  /// not access any AST elements after ParseAST() returns.
   void ParseAST(Preprocessor &pp, ASTConsumer *C, 
-                bool PrintStats = false, bool FreeMemory = true);
+                TranslationUnit *TU = 0,
+                bool PrintStats = false);
 
 }  // end namespace clang
 

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <llvm/ADT/OwningPtr.h>
 #include "clang/Sema/ParseAST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Stmt.h"
@@ -26,23 +27,31 @@ using namespace clang;
 /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
 /// the file is parsed.
 ///
-/// \param FreeMemory If false, the memory used for AST elements is
-/// not released.
-void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, 
-                     bool PrintStats, bool FreeMemory) {
+/// \param TU If 0, then memory used for AST elements will be allocated only
+/// for the duration of the ParseAST() call. In this case, the client should
+/// not access any AST elements after ParseAST() returns.
+void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
+                     TranslationUnit *TU, bool PrintStats) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::CollectingStats(true);
     Stmt::CollectingStats(true);
   }
-  
-  ASTContext *Context = 
-    new ASTContext(PP.getLangOptions(), PP.getSourceManager(),
-                   PP.getTargetInfo(),
-                   PP.getIdentifierTable(), PP.getSelectorTable(),
-                   FreeMemory);
-  TranslationUnit *TU = new TranslationUnit(*Context);
-  Sema S(PP, *Context, *Consumer);
+
+  llvm::OwningPtr<ASTContext> ContextOwner;
+  llvm::OwningPtr<TranslationUnit> TranslationUnitOwner;
+  if (TU == 0) {
+    ASTContext *Context = new ASTContext(PP.getLangOptions(),
+                                         PP.getSourceManager(),
+                                         PP.getTargetInfo(),
+                                         PP.getIdentifierTable(),
+                                         PP.getSelectorTable());
+    ContextOwner.reset(Context);
+    TU = new TranslationUnit(*Context);
+    TranslationUnitOwner.reset(TU);
+  }
+
+  Sema S(PP, TU->getContext(), *Consumer);
   Parser P(PP, S);
   PP.EnterMainSourceFile();
     
@@ -68,17 +77,12 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
     P.getActions().PrintStats();
-    Context->PrintStats();
+    TU->getContext().PrintStats();
     Decl::PrintStats();
     Stmt::PrintStats();
     Consumer->PrintStats();
     
     Decl::CollectingStats(false);
     Stmt::CollectingStats(false);
-  }
-
-  if (FreeMemory) {
-    delete TU;
-    delete Context;      
   }
 }
