@@ -394,35 +394,68 @@ public:
   /// getNode - Gets or creates the specified node.
   ///
   SDValue getNode(unsigned Opcode, MVT VT);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT);
   SDValue getNode(unsigned Opcode, MVT VT, SDValue N);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT, SDValue N);
   SDValue getNode(unsigned Opcode, MVT VT, SDValue N1, SDValue N2);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT, SDValue N1, SDValue N2);
   SDValue getNode(unsigned Opcode, MVT VT,
-                    SDValue N1, SDValue N2, SDValue N3);
+                  SDValue N1, SDValue N2, SDValue N3);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
+                  SDValue N1, SDValue N2, SDValue N3);
   SDValue getNode(unsigned Opcode, MVT VT,
-                    SDValue N1, SDValue N2, SDValue N3, SDValue N4);
+                  SDValue N1, SDValue N2, SDValue N3, SDValue N4);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
+                  SDValue N1, SDValue N2, SDValue N3, SDValue N4);
   SDValue getNode(unsigned Opcode, MVT VT,
-                    SDValue N1, SDValue N2, SDValue N3, SDValue N4,
-                    SDValue N5);
+                  SDValue N1, SDValue N2, SDValue N3, SDValue N4,
+                  SDValue N5);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
+                  SDValue N1, SDValue N2, SDValue N3, SDValue N4,
+                  SDValue N5);
   SDValue getNode(unsigned Opcode, MVT VT,
-                    const SDValue *Ops, unsigned NumOps);
+                  const SDUse *Ops, unsigned NumOps);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
+                  const SDUse *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, MVT VT,
-                    const SDUse *Ops, unsigned NumOps);
+                  const SDValue *Ops, unsigned NumOps);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
+                  const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, const std::vector<MVT> &ResultTys,
-                    const SDValue *Ops, unsigned NumOps);
+                  const SDValue *Ops, unsigned NumOps);
+  SDValue getNode(unsigned Opcode, DebugLoc DL,
+                  const std::vector<MVT> &ResultTys,
+                  const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, const MVT *VTs, unsigned NumVTs,
-                    const SDValue *Ops, unsigned NumOps);
+                  const SDValue *Ops, unsigned NumOps);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, const MVT *VTs, unsigned NumVTs,
+                  const SDValue *Ops, unsigned NumOps);
+  SDValue getNode(unsigned Opcode, SDVTList VTs,
+                  const SDValue *Ops, unsigned NumOps);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
+                  const SDValue *Ops, unsigned NumOps);
+
   SDValue getNode(unsigned Opcode, SDVTList VTs);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs);
   SDValue getNode(unsigned Opcode, SDVTList VTs, SDValue N);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs, SDValue N);
   SDValue getNode(unsigned Opcode, SDVTList VTs, SDValue N1, SDValue N2);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
+                  SDValue N1, SDValue N2);
   SDValue getNode(unsigned Opcode, SDVTList VTs,
                   SDValue N1, SDValue N2, SDValue N3);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
+                  SDValue N1, SDValue N2, SDValue N3);
   SDValue getNode(unsigned Opcode, SDVTList VTs,
+                  SDValue N1, SDValue N2, SDValue N3, SDValue N4);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
                   SDValue N1, SDValue N2, SDValue N3, SDValue N4);
   SDValue getNode(unsigned Opcode, SDVTList VTs,
                   SDValue N1, SDValue N2, SDValue N3, SDValue N4,
                   SDValue N5);
-  SDValue getNode(unsigned Opcode, SDVTList VTs,
-                  const SDValue *Ops, unsigned NumOps);
+  SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
+                  SDValue N1, SDValue N2, SDValue N3, SDValue N4,
+                  SDValue N5);
 
   SDValue getMemcpy(SDValue Chain, SDValue Dst, SDValue Src,
                     SDValue Size, unsigned Align, bool AlwaysInline,
