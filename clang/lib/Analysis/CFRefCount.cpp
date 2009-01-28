@@ -2323,39 +2323,41 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   if (!CurrT)
     return NULL;  
   
-  const char* Msg = NULL;  
   const RefVal& CurrV = *CurrB.lookup(Sym);
 
   if (!PrevT) {
+    std::string sbuf;
+    llvm::raw_string_ostream os(sbuf);
     
     Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
 
     if (CurrV.isOwned()) {
 
-      if (isa<CallExpr>(S))
-        Msg = "Function call returns an object with a +1 retain count"
-              " (owning reference).";
+      if (isa<CallExpr>(S)) {
+        os <<  "Function call returns an object with a +1 retain count"
+                " (owning reference).";
+      }
       else {
         assert (isa<ObjCMessageExpr>(S));
-        Msg = "Method returns an object with a +1 retain count"
-              " (owning reference).";
+        os << "Method returns an object with a +1 retain count"
+                " (owning reference).";
       }
     }
     else {
       assert (CurrV.isNotOwned());
       
       if (isa<CallExpr>(S))
-        Msg = "Function call returns an object with a +0 retain count"
+        os << "Function call returns an object with a +0 retain count"
               " (non-owning reference).";
       else {
         assert (isa<ObjCMessageExpr>(S));
-        Msg = "Method returns an object with a +0 retain count"
+        os << "Method returns an object with a +0 retain count"
               " (non-owning reference).";
       }      
     }
     
     FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
-    PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, Msg);
+    PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, os.str());
     
     if (Expr* Exp = dyn_cast<Expr>(S))
       P->addRange(Exp->getSourceRange());
@@ -2370,9 +2372,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     return NULL;
   
   // The typestate has changed.
-  
-  std::ostringstream os;
-  std::string s;
+  std::string sbuf;
+  llvm::raw_string_ostream os(sbuf);
   
   switch (CurrV.getKind()) {
     case RefVal::Owned:
@@ -2387,7 +2388,6 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
         os << "Reference count incremented.";
       
       if (unsigned Count = CurrV.getCount()) {
-
         os << " Object has +" << Count;
         
         if (Count > 1)
@@ -2396,22 +2396,19 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
           os << " retain count.";
       }
       
-      s = os.str();
-      Msg = s.c_str();
-      
       break;
       
     case RefVal::Released:
-      Msg = "Object released.";
+      os << "Object released.";
       break;
       
     case RefVal::ReturnedOwned:
-      Msg = "Object returned to caller as an owning reference (single retain "
+      os << "Object returned to caller as an owning reference (single retain "
             "count transferred to caller).";
       break;
       
     case RefVal::ReturnedNotOwned:
-      Msg = "Object returned to caller with a +0 (non-owning) retain count.";
+      os << "Object returned to caller with a +0 (non-owning) retain count.";
       break;
 
     default:
@@ -2420,7 +2417,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   
   Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
   FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
-  PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, Msg);
+  PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, os.str());
   
   // Add the range by scanning the children of the statement for any bindings
   // to Sym.
