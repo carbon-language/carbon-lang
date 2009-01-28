@@ -158,18 +158,25 @@ class VISIBILITY_HIDDEN RetEffect {
 public:
   enum Kind { NoRet, Alias, OwnedSymbol, OwnedAllocatedSymbol,
               NotOwnedSymbol, ReceiverAlias };
-  
+    
+  enum ObjKind { CF, ObjC, AnyObj };  
+
 private:
-  unsigned Data;
-  RetEffect(Kind k, unsigned D = 0) { Data = (D << 3) | (unsigned) k; }
+  Kind K;
+  ObjKind O;
+  unsigned index;
+
+  RetEffect(Kind k, unsigned idx = 0) : K(k), O(AnyObj), index(idx) {}
+  RetEffect(Kind k, ObjKind o) : K(k), O(o), index(0) {}
   
 public:
-  
-  Kind getKind() const { return (Kind) (Data & 0x7); }
+  Kind getKind() const { return K; }
+
+  ObjKind getObjKind() const { return O; }
   
   unsigned getIndex() const { 
     assert(getKind() == Alias);
-    return Data >> 3;
+    return index;
   }
   
   static RetEffect MakeAlias(unsigned Idx) {
@@ -178,22 +185,20 @@ public:
   static RetEffect MakeReceiverAlias() {
     return RetEffect(ReceiverAlias);
   }  
-  static RetEffect MakeOwned(bool isAllocated = false) {
-    return RetEffect(isAllocated ? OwnedAllocatedSymbol : OwnedSymbol);
+  static RetEffect MakeOwned(ObjKind o, bool isAllocated = false) {
+    return RetEffect(isAllocated ? OwnedAllocatedSymbol : OwnedSymbol, o);
   }  
-  static RetEffect MakeNotOwned() {
-    return RetEffect(NotOwnedSymbol);
+  static RetEffect MakeNotOwned(ObjKind o) {
+    return RetEffect(NotOwnedSymbol, o);
   }  
   static RetEffect MakeNoRet() {
     return RetEffect(NoRet);
   }
   
-  operator Kind() const {
-    return getKind();
-  }  
-  
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddInteger(Data);
+    ID.AddInteger((unsigned)K);
+    ID.AddInteger((unsigned)O);
+    ID.AddInteger(index);
   }
 };
   
@@ -879,12 +884,13 @@ RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
     ScratchArgs.push_back(std::make_pair(2, DoNothingByRef));
   }
   
-  return getPersistentSummary(RetEffect::MakeOwned(true));
+  return getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true));
 }
 
 RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
   assert (ScratchArgs.empty());  
-  return getPersistentSummary(RetEffect::MakeNotOwned(), DoNothing, DoNothing);
+  return getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::CF),
+                              DoNothing, DoNothing);
 }
 
 //===----------------------------------------------------------------------===//
@@ -928,7 +934,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
 
   if (followsFundamentalRule(s)) {    
     RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
-                                : RetEffect::MakeOwned(true);
+                                : RetEffect::MakeOwned(RetEffect::ObjC, true);
     RetainSummary* Summ = getPersistentSummary(E);
     ObjCMethodSummaries[ME] = Summ;
     return Summ;
@@ -959,7 +965,7 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   assert (ScratchArgs.empty());
   
   RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
-                              : RetEffect::MakeOwned(true);  
+                              : RetEffect::MakeOwned(RetEffect::ObjC, true);  
   
   RetainSummary* Summ = getPersistentSummary(E);
   
@@ -971,8 +977,8 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   
   // Create the [NSAssertionHandler currentHander] summary.  
   addClsMethSummary(&Ctx.Idents.get("NSAssertionHandler"),
-                    GetNullarySelector("currentHandler", Ctx),
-                    getPersistentSummary(RetEffect::MakeNotOwned()));
+                GetNullarySelector("currentHandler", Ctx),
+                getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::ObjC)));
   
   // Create the [NSAutoreleasePool addObject:] summary.
   if (!isGCEnabled()) {    
@@ -995,7 +1001,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   
   // The next methods are allocators.
   RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
-                              : RetEffect::MakeOwned(true);
+                              : RetEffect::MakeOwned(RetEffect::ObjC, true);
   
   RetainSummary* Summ = getPersistentSummary(E);  
   
@@ -1056,7 +1062,6 @@ namespace {
   
 class VISIBILITY_HIDDEN RefVal {
 public:  
-  
   enum Kind {
     Owned = 0, // Owning reference.    
     NotOwned,  // Reference is not owned by still valid (not freed).    
@@ -1069,19 +1074,23 @@ public:
     ErrorLeakReturned // A memory leak due to the returning method not having
                       // the correct naming conventions.            
   };
-  
-private:
-  
+
+private:  
   Kind kind;
+  RetEffect::ObjKind okind;
   unsigned Cnt;
   QualType T;
 
-  RefVal(Kind k, unsigned cnt, QualType t) : kind(k), Cnt(cnt), T(t) {}
-  RefVal(Kind k, unsigned cnt = 0) : kind(k), Cnt(cnt) {}
+  RefVal(Kind k, RetEffect::ObjKind o, unsigned cnt, QualType t)
+    : kind(k), okind(o), Cnt(cnt), T(t) {}
 
-public:  
-  
+  RefVal(Kind k, unsigned cnt = 0)
+    : kind(k), okind(RetEffect::AnyObj), Cnt(cnt) {}
+
+public:    
   Kind getKind() const { return kind; }
+  
+  RetEffect::ObjKind getObjKind() const { return okind; }
 
   unsigned getCount() const { return Cnt; }  
   QualType getType() const { return T; }
@@ -1115,12 +1124,14 @@ public:
   
   // State creation: normal state.
   
-  static RefVal makeOwned(QualType t, unsigned Count = 1) {
-    return RefVal(Owned, Count, t);
+  static RefVal makeOwned(RetEffect::ObjKind o, QualType t,
+                          unsigned Count = 1) {
+    return RefVal(Owned, o, Count, t);
   }
   
-  static RefVal makeNotOwned(QualType t, unsigned Count = 0) {
-    return RefVal(NotOwned, Count, t);
+  static RefVal makeNotOwned(RetEffect::ObjKind o, QualType t,
+                             unsigned Count = 0) {
+    return RefVal(NotOwned, o, Count, t);
   }
 
   static RefVal makeReturnedOwned(unsigned Count) {
@@ -1138,17 +1149,16 @@ public:
   }
   
   RefVal operator-(size_t i) const {
-    return RefVal(getKind(), getCount() - i, getType());
+    return RefVal(getKind(), getObjKind(), getCount() - i, getType());
   }
   
   RefVal operator+(size_t i) const {
-    return RefVal(getKind(), getCount() + i, getType());
+    return RefVal(getKind(), getObjKind(), getCount() + i, getType());
   }
   
   RefVal operator^(Kind k) const {
-    return RefVal(k, getCount(), getType());
+    return RefVal(k, getObjKind(), getCount(), getType());
   }
-    
   
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) kind);
@@ -1661,9 +1671,9 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
     case RetEffect::OwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
       SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
-      QualType RetT = GetReturnType(Ex, Eng.getContext());
-      
-      state = state.set<RefBindings>(Sym, RefVal::makeOwned(RetT));
+      QualType RetT = GetReturnType(Ex, Eng.getContext());      
+      state =
+        state.set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(), RetT));      
       state = state.BindExpr(Ex, loc::SymbolVal(Sym), false);
 
 #if 0
@@ -1683,7 +1693,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
-      state = state.set<RefBindings>(Sym, RefVal::makeNotOwned(RetT));
+      state =
+        state.set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),RetT));
       state = state.BindExpr(Ex, loc::SymbolVal(Sym), false);
       break;
     }
