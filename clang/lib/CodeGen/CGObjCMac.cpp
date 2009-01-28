@@ -571,7 +571,7 @@ private:
   llvm::Constant *EmitIvarList(const ObjCImplementationDecl *ID);
   
   llvm::Constant *EmitIvarOffsetVar(const ObjCImplementationDecl *ID,
-                                    const FieldDecl *Field,
+                                    const ObjCIvarDecl *Ivar,
                                     unsigned long int offset);
   
 public:
@@ -3521,11 +3521,11 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
 
 llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
                                               const ObjCImplementationDecl *ID,
-                                              const FieldDecl *Field,
+                                              const ObjCIvarDecl *Ivar,
                                               unsigned long int Offset) {
   
   std::string ExternalName("\01_OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
-                           + Field->getNameAsString());
+                           + Ivar->getNameAsString());
   llvm::Constant *Init = llvm::ConstantInt::get(ObjCTypes.IntTy, Offset);
   
   llvm::GlobalVariable *IvarOffsetGV = 
@@ -3533,6 +3533,7 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
   if (IvarOffsetGV) {
     // ivar offset symbol already built due to user code referencing it.
     IvarOffsetGV->setInitializer(Init);
+    UsedGlobals.push_back(IvarOffsetGV);
     return IvarOffsetGV;
   }
   
@@ -3543,6 +3544,11 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
                              Init,
                              ExternalName,
                              &CGM.getModule());
+  // @private and @package have hidden visibility.
+  bool globalVisibility = (Ivar->getAccessControl() == ObjCIvarDecl::Public ||
+                           Ivar->getAccessControl() == ObjCIvarDecl::Protected);
+  if (!globalVisibility)
+    IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   IvarOffsetGV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(IvarOffsetGV);
   
@@ -3589,11 +3595,14 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   RecordDecl::field_iterator i = RD->field_begin();
   while (countSuperClassIvars-- > 0)
     ++i;
+  ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin();
+  
   for (RecordDecl::field_iterator e = RD->field_end(); i != e; ++i) {
     FieldDecl *Field = *i;
     unsigned long offset = Layout->getElementOffset(CGM.getTypes().
                                                     getLLVMFieldNo(Field));
-    Ivar[0] = EmitIvarOffsetVar(ID, Field, offset);
+    const ObjCIvarDecl *ivarDecl = *I++;
+    Ivar[0] = EmitIvarOffsetVar(ID, ivarDecl, offset);
     if (Field->getIdentifier())
       Ivar[1] = GetMethodVarName(Field->getIdentifier());
     else
