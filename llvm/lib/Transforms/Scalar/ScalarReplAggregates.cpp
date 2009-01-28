@@ -123,7 +123,7 @@ namespace {
     void RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocationInst *AI,
                                        SmallVector<AllocaInst*, 32> &NewElts);
     void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
-                                       SmallVector<AllocaInst*, 32> &NewElts);
+                                      SmallVector<AllocaInst*, 32> &NewElts);
     
     const Type *CanConvertToScalar(Value *V, bool &IsNotTrivial);
     void ConvertToScalar(AllocationInst *AI, const Type *Ty);
@@ -224,16 +224,6 @@ bool SROA::performScalarRepl(Function &F) {
       continue;
     }
     
-    // If we can turn this aggregate value (potentially with casts) into a
-    // simple scalar value that can be mem2reg'd into a register value.
-    bool IsNotTrivial = false;
-    if (const Type *ActualType = CanConvertToScalar(AI, IsNotTrivial))
-      if (IsNotTrivial && ActualType != Type::VoidTy) {
-        ConvertToScalar(AI, ActualType);
-        Changed = true;
-        continue;
-      }
-
     // Check to see if we can perform the core SROA transformation.  We cannot
     // transform the allocation instruction if it is an array allocation
     // (allocations OF arrays are ok though), and an allocation of a scalar
@@ -278,7 +268,17 @@ bool SROA::performScalarRepl(Function &F) {
       Changed = true;
       continue;
     }
-        
+
+    // If we can turn this aggregate value (potentially with casts) into a
+    // simple scalar value that can be mem2reg'd into a register value.
+    bool IsNotTrivial = false;
+    if (const Type *ActualType = CanConvertToScalar(AI, IsNotTrivial))
+      if (IsNotTrivial && ActualType != Type::VoidTy) {
+        ConvertToScalar(AI, ActualType);
+        Changed = true;
+        continue;
+      }
+    
     // Otherwise, couldn't process this.
   }
 
@@ -476,11 +476,13 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
   if (BitCastInst *C = dyn_cast<BitCastInst>(User))
     return isSafeUseOfBitCastedAllocation(C, AI, Info);
 
-  if (isa<LoadInst>(User))
-    return; // Loads (returning a first class aggregrate) are always rewritable
+  if (LoadInst *LI = dyn_cast<LoadInst>(User))
+    if (!LI->isVolatile())
+      return;// Loads (returning a first class aggregrate) are always rewritable
 
-  if (isa<StoreInst>(User) && User->getOperand(0) != AI)
-    return; // Store is ok if storing INTO the pointer, not storing the pointer
+  if (StoreInst *SI = dyn_cast<StoreInst>(User))
+    if (!SI->isVolatile() && SI->getOperand(0) != AI)
+      return;// Store is ok if storing INTO the pointer, not storing the pointer
  
   GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User);
   if (GEPI == 0)
@@ -590,6 +592,9 @@ void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
     } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
       isSafeMemIntrinsicOnAllocation(MI, AI, UI.getOperandNo(), Info);
     } else if (StoreInst *SI = dyn_cast<StoreInst>(UI)) {
+      if (SI->isVolatile())
+        return MarkUnsafe(Info);
+      
       // If storing the entire alloca in one chunk through a bitcasted pointer
       // to integer, we can transform it.  This happens (for example) when you
       // cast a {i32,i32}* to i64* and store through it.  This is similar to the
@@ -602,6 +607,9 @@ void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
       }
       return MarkUnsafe(Info);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(UI)) {
+      if (LI->isVolatile())
+        return MarkUnsafe(Info);
+
       // If loading the entire alloca in one chunk through a bitcasted pointer
       // to integer, we can transform it.  This happens (for example) when you
       // cast a {i32,i32}* to i64* and load through it.  This is similar to the
@@ -1234,6 +1242,9 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
     Instruction *User = cast<Instruction>(*UI);
     
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      if (LI->isVolatile())
+        return 0;
+
       // FIXME: Loads of a first class aggregrate value could be converted to a
       // series of loads and insertvalues
       if (!LI->getType()->isSingleValueType())
@@ -1246,7 +1257,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
     
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Storing the pointer, not into the value?
-      if (SI->getOperand(0) == V) return 0;
+      if (SI->getOperand(0) == V || SI->isVolatile()) return 0;
 
       // FIXME: Stores of a first class aggregrate value could be converted to a
       // series of extractvalues and stores
@@ -1653,10 +1664,11 @@ static bool PointsToConstantGlobal(Value *V) {
 static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
                                            bool isOffset) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
-    if (isa<LoadInst>(*UI)) {
-      // Ignore loads, they are always ok.
-      continue;
-    }
+    if (LoadInst *LI = dyn_cast<LoadInst>(*UI))
+      // Ignore non-volatile loads, they are always ok.
+      if (!LI->isVolatile())
+        continue;
+    
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI)) {
       // If uses of the bitcast are ok, we are ok.
       if (!isOnlyCopiedFromConstantGlobal(BCI, TheCopy, isOffset))
