@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include "llvm/Bitcode/SerializationFwd.h"
+#include <utility>
 
 namespace llvm {
   class MemoryBuffer;
@@ -178,7 +179,7 @@ public:
 class FullSourceLoc : public SourceLocation {
   SourceManager* SrcMgr;
 public:
-  // Creates a FullSourceLoc where isValid() returns false.
+  /// Creates a FullSourceLoc where isValid() returns false.
   explicit FullSourceLoc() : SrcMgr((SourceManager*) 0) {}
 
   explicit FullSourceLoc(SourceLocation Loc, SourceManager &SM) 
@@ -211,6 +212,10 @@ public:
   const char *getCharacterData() const;
   
   const llvm::MemoryBuffer* getBuffer() const;
+  
+  /// getBufferData - Return a pointer to the start and end of the source buffer
+  /// data for the specified FileID.
+  std::pair<const char*, const char*> getBufferData() const;
   
   bool isInSystemHeader() const;
   

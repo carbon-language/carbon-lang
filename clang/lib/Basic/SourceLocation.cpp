@@ -16,6 +16,8 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
+#include "llvm/Support/MemoryBuffer.h"
+
 using namespace clang;
 
 void SourceLocation::Emit(llvm::Serializer& S) const {
@@ -122,3 +124,7 @@ const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
   return SrcMgr->getBuffer(SrcMgr->getFileID(*this));
 }
 
+std::pair<const char*, const char*> FullSourceLoc::getBufferData() const {
+  const llvm::MemoryBuffer *Buf = getBuffer();
+  return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
+}
