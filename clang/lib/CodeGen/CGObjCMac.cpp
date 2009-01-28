@@ -348,6 +348,9 @@ protected:
   /// name. The return value has type char *.
   llvm::Constant *GetClassName(IdentifierInfo *Ident);
   
+  const RecordDecl *GetFirstIvarInRecord(const ObjCInterfaceDecl *OID,
+                                         RecordDecl::field_iterator &FIV,
+                                         RecordDecl::field_iterator &PIV);  
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
   { }
@@ -401,9 +404,8 @@ private:
   /// interface ivars will be emitted. The return value has type
   /// IvarListPtrTy.
   llvm::Constant *EmitIvarList(const ObjCImplementationDecl *ID,
-                               bool ForClass,
-                               const llvm::Type *InterfaceTy);
-
+                               bool ForClass);
+                               
   /// EmitMetaClass - Emit a forward reference to the class structure
   /// for the metaclass of the given interface. The return value has
   /// type ClassPtrTy.
@@ -1303,7 +1305,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   Values[ 3] = llvm::ConstantInt::get(ObjCTypes.LongTy, 0);
   Values[ 4] = llvm::ConstantInt::get(ObjCTypes.LongTy, Flags);
   Values[ 5] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
-  Values[ 6] = EmitIvarList(ID, false, InterfaceTy);
+  Values[ 6] = EmitIvarList(ID, false);
   Values[ 7] = 
     EmitMethodList("\01L_OBJC_INSTANCE_METHODS_" + ID->getNameAsString(),
                    "__OBJC,__inst_meth,regular,no_dead_strip",
@@ -1363,7 +1365,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   Values[ 3] = llvm::ConstantInt::get(ObjCTypes.LongTy, 0);
   Values[ 4] = llvm::ConstantInt::get(ObjCTypes.LongTy, Flags);
   Values[ 5] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
-  Values[ 6] = EmitIvarList(ID, true, InterfaceTy);
+  Values[ 6] = EmitIvarList(ID, true);
   Values[ 7] = 
     EmitMethodList("\01L_OBJC_CLASS_METHODS_" + ID->getNameAsString(),
                    "__OBJC,__inst_meth,regular,no_dead_strip",
@@ -1493,8 +1495,7 @@ static int countInheritedIvars(const ObjCInterfaceDecl *OI) {
   };
  */
 llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
-                                        bool ForClass,
-                                        const llvm::Type *InterfaceTy) {
+                                        bool ForClass) {
   std::vector<llvm::Constant*> Ivars, Ivar(3);
 
   // When emitting the root class GCC emits ivar entries for the
@@ -1504,16 +1505,16 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   // for the class.
   if (ForClass)
     return llvm::Constant::getNullValue(ObjCTypes.IvarListPtrTy);
-
+  
+  ObjCInterfaceDecl *OID = 
+    const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
+  const llvm::Type *InterfaceTy = 
+    CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(OID));
   const llvm::StructLayout *Layout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
-  ObjCInterfaceDecl *OID = 
-    const_cast<ObjCInterfaceDecl *>(ID->getClassInterface());
-  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass());
-  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
-  RecordDecl::field_iterator ifield = RD->field_begin();
-  while (countSuperClassIvars-- > 0)
-    ++ifield;
+  
+  RecordDecl::field_iterator ifield, pfield;
+  const RecordDecl *RD = GetFirstIvarInRecord(OID, ifield, pfield);
   for (RecordDecl::field_iterator e = RD->field_end(); ifield != e; ++ifield) {
     FieldDecl *Field = *ifield;
     unsigned Offset = Layout->getElementOffset(CGM.getTypes().
@@ -2339,6 +2340,28 @@ void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
   NameOut += ' ';
   NameOut += D->getSelector().getAsString();
   NameOut += ']';
+}
+
+/// GetFirstIvarInRecord - This routine returns the record for the 
+/// implementation of the fiven class OID. It also returns field
+/// corresponding to the first ivar in the class in FIV. It also
+/// returns the one before the first ivar. 
+///
+const RecordDecl *CGObjCCommonMac::GetFirstIvarInRecord(
+                                          const ObjCInterfaceDecl *OID,
+                                          RecordDecl::field_iterator &FIV,
+                                          RecordDecl::field_iterator &PIV) {
+  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass());
+  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
+  RecordDecl::field_iterator ifield = RD->field_begin();
+  RecordDecl::field_iterator pfield = RD->field_end();
+  while (countSuperClassIvars-- > 0) {
+    pfield = ifield;
+    ++ifield;
+  }
+  FIV = ifield;
+  PIV = pfield;
+  return RD;
 }
 
 void CGObjCMac::FinishModule() {
@@ -3341,25 +3364,18 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   if (ObjCInterfaceDecl *OID = 
       const_cast<ObjCInterfaceDecl*>(ID->getClassInterface())) {
     // FIXME. Share this with the one in EmitIvarList.
-    int countSuperClassIvars = countInheritedIvars(OID->getSuperClass());
-    const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
-    RecordDecl::field_iterator firstField = RD->field_begin();
-    RecordDecl::field_iterator lastField = RD->field_end();
+    const llvm::Type *InterfaceTy = 
+    CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(OID));
+    const llvm::StructLayout *Layout =
+    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
     
-    while (countSuperClassIvars-- > 0) {
-      lastField = firstField;
-      ++firstField;
-    }
+    RecordDecl::field_iterator firstField, lastField;
+    const RecordDecl *RD = GetFirstIvarInRecord(OID, firstField, lastField);
     
     for (RecordDecl::field_iterator e = RD->field_end(),
          ifield = firstField; ifield != e; ++ifield)
       lastField = ifield;
     
-    const llvm::Type *InterfaceTy = 
-      CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(OID));
-    const llvm::StructLayout *Layout =
-     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
-     
     if (lastField != RD->field_end()) {
       FieldDecl *Field = *lastField;
       const llvm::Type *FieldTy =
@@ -3587,14 +3603,11 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   const llvm::Type *InterfaceTy =
     CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(
                                         const_cast<ObjCInterfaceDecl*>(OID)));
-  
   const llvm::StructLayout *Layout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
-  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass());
-  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
-  RecordDecl::field_iterator i = RD->field_begin();
-  while (countSuperClassIvars-- > 0)
-    ++i;
+  
+  RecordDecl::field_iterator i,p;
+  const RecordDecl *RD = GetFirstIvarInRecord(OID, i,p);
   ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin();
   
   for (RecordDecl::field_iterator e = RD->field_end(); i != e; ++i) {
