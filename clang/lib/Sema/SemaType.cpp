@@ -662,7 +662,9 @@ bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2)
 
   const MemberPointerType *T1MPType = T1->getAsMemberPointerType(),
                           *T2MPType = T2->getAsMemberPointerType();
-  if (T1MPType && T2MPType) {
+  if (T1MPType && T2MPType &&
+      Context.getCanonicalType(T1MPType->getClass()) ==
+      Context.getCanonicalType(T2MPType->getClass())) {
     T1 = T1MPType->getPointeeType();
     T2 = T2MPType->getPointeeType();
     return true;

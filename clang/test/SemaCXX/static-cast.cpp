@@ -42,6 +42,8 @@ void t_529_2()
   (void)static_cast<B&>(*((C1*)0));
   (void)static_cast<A*>((D*)0);
   (void)static_cast<const A&>(*((D*)0));
+  (void)static_cast<int B::*>((int A::*)0);
+  (void)static_cast<void (B::*)()>((void (A::*)())0);
 
   // TODO: User-defined conversions
 
@@ -116,4 +118,12 @@ void t_529_10()
   (void)static_cast<void (*)()>((void*)0); // expected-error {{static_cast from 'void *' to 'void (*)(void)' is not allowed}}
 }
 
-// TODO: Test member pointers.
+// Member pointer upcast.
+void t_529_9()
+{
+  (void)static_cast<int A::*>((int B::*)0);
+
+  // Bad code below
+  (void)static_cast<int A::*>((int H::*)0); // expected-error {{ambiguous conversion from pointer to member of derived class 'struct H'}}
+  (void)static_cast<int A::*>((int F::*)0); // expected-error {{conversion from pointer to member of class 'struct F'}}
+}

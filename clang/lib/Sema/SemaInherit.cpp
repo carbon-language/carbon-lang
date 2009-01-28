@@ -218,9 +218,9 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
                   /*DetectVirtual=*/false);
   bool DerivationOkay = IsDerivedFrom(Derived, Base, Paths);
-  assert(DerivationOkay && "Can only be used with a derived-to-base conversion");
-  if (!DerivationOkay)
-    return true;
+  assert(DerivationOkay &&
+         "Can only be used with a derived-to-base conversion");
+  (void)DerivationOkay;
 
   if (!Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType()))
     return false;
@@ -235,8 +235,7 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   Paths.setRecordingPaths(true);
   bool StillOkay = IsDerivedFrom(Derived, Base, Paths);
   assert(StillOkay && "Can only be used with a derived-to-base conversion");
-  if (!StillOkay)
-    return true;
+  (void)StillOkay;
   
   // Build up a textual representation of the ambiguous paths, e.g.,
   // D -> B -> A, that will be used to illustrate the ambiguous

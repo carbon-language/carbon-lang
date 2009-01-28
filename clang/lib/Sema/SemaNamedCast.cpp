@@ -44,6 +44,8 @@ static TryStaticCastResult TryStaticReferenceDowncast(
   Sema &Self, Expr *SrcExpr, QualType DestType, const SourceRange &OpRange);
 static TryStaticCastResult TryStaticPointerDowncast(
   Sema &Self, QualType SrcType, QualType DestType, const SourceRange &OpRange);
+static TryStaticCastResult TryStaticMemberPointerUpcast(
+  Sema &Self, QualType SrcType, QualType DestType, const SourceRange &OpRange);
 static TryStaticCastResult TryStaticDowncast(Sema &Self, QualType SrcType,
                                              QualType DestType,
                                              const SourceRange &OpRange,
@@ -479,10 +481,13 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return;
   }
 
-  // Reverse member pointer conversion. C++ 5.11 specifies member pointer
+  // Reverse member pointer conversion. C++ 4.11 specifies member pointer
   // conversion. C++ 5.2.9p9 has additional information.
   // DR54's access restrictions apply here also.
-  // FIXME: Don't have member pointers yet.
+  if (TryStaticMemberPointerUpcast(Self, SrcType, DestType, OpRange)
+      > TSC_NotApplicable) {
+    return;
+  }
 
   // Reverse pointer conversion to void*. C++ 4.10.p2 specifies conversion to
   // void*. C++ 5.2.9p10 specifies additional restrictions, which really is
@@ -647,6 +652,64 @@ TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
     QualType VirtualBase(Paths.getDetectedVirtual(), 0);
     Self.Diag(OpRange.getBegin(), diag::err_static_downcast_via_virtual)
       << OrigSrcType << OrigDestType << VirtualBase << OpRange;
+    return TSC_Failed;
+  }
+
+  // FIXME: Test accessibility.
+
+  return TSC_Success;
+}
+
+/// TryStaticMemberPointerUpcast - Tests whether a conversion according to
+/// C++ 5.2.9p9 is valid:
+///
+///   An rvalue of type "pointer to member of D of type cv1 T" can be
+///   converted to an rvalue of type "pointer to member of B of type cv2 T",
+///   where B is a base class of D [...].
+///
+TryStaticCastResult
+TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
+                             const SourceRange &OpRange)
+{
+  const MemberPointerType *SrcMemPtr = SrcType->getAsMemberPointerType();
+  if (!SrcMemPtr)
+    return TSC_NotApplicable;
+  const MemberPointerType *DestMemPtr = DestType->getAsMemberPointerType();
+  if (!DestMemPtr)
+    return TSC_NotApplicable;
+
+  // T == T, modulo cv
+  if (Self.Context.getCanonicalType(
+        SrcMemPtr->getPointeeType().getUnqualifiedType()) !=
+      Self.Context.getCanonicalType(DestMemPtr->getPointeeType().
+                                    getUnqualifiedType()))
+    return TSC_NotApplicable;
+
+  // B base of D
+  QualType SrcClass(SrcMemPtr->getClass(), 0);
+  QualType DestClass(DestMemPtr->getClass(), 0);
+  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                  /*DetectVirtual=*/true);
+  if (!Self.IsDerivedFrom(SrcClass, DestClass, Paths)) {
+    return TSC_NotApplicable;
+  }
+
+  // B is a base of D. But is it an allowed base? If not, it's a hard error.
+  if (Paths.isAmbiguous(DestClass)) {
+    Paths.clear();
+    Paths.setRecordingPaths(true);
+    bool StillOkay = Self.IsDerivedFrom(SrcClass, DestClass, Paths);
+    assert(StillOkay);
+    StillOkay = StillOkay;
+    std::string PathDisplayStr = Self.getAmbiguousPathsDisplayString(Paths);
+    Self.Diag(OpRange.getBegin(), diag::err_ambiguous_memptr_conv)
+      << 1 << SrcClass << DestClass << PathDisplayStr << OpRange;
+    return TSC_Failed;
+  }
+
+  if (const CXXRecordType *VBase = Paths.getDetectedVirtual()) {
+    Self.Diag(OpRange.getBegin(), diag::err_memptr_conv_via_virtual)
+      << SrcClass << DestClass << QualType(VBase, 0) << OpRange;
     return TSC_Failed;
   }
 

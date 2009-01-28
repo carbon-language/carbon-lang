@@ -1087,51 +1087,50 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
 /// otherwise.
 bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType) {
   QualType FromType = From->getType();
+  const MemberPointerType *FromPtrType = FromType->getAsMemberPointerType();
+  if (!FromPtrType)
+    return false;
 
-  if (const MemberPointerType *FromPtrType =
-        FromType->getAsMemberPointerType()) {
-    if (const MemberPointerType *ToPtrType =
-          ToType->getAsMemberPointerType()) {
-      QualType FromClass = QualType(FromPtrType->getClass(), 0);
-      QualType ToClass   = QualType(ToPtrType->getClass(), 0);
+  const MemberPointerType *ToPtrType = ToType->getAsMemberPointerType();
+  assert(ToPtrType && "No member pointer cast has a target type "
+                      "that is not a member pointer.");
 
-      // FIXME: What about dependent types?
-      assert(FromClass->isRecordType() && "Pointer into non-class.");
-      assert(ToClass->isRecordType() && "Pointer into non-class.");
+  QualType FromClass = QualType(FromPtrType->getClass(), 0);
+  QualType ToClass   = QualType(ToPtrType->getClass(), 0);
 
-      BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
-                      /*DetectVirtual=*/true);
-      bool DerivationOkay = IsDerivedFrom(ToClass, FromClass, Paths);
-      assert(DerivationOkay &&
-             "Should not have been called if derivation isn't OK.");
-      if (!DerivationOkay)
-        return true;
+  // FIXME: What about dependent types?
+  assert(FromClass->isRecordType() && "Pointer into non-class.");
+  assert(ToClass->isRecordType() && "Pointer into non-class.");
 
-      if (Paths.isAmbiguous(Context.getCanonicalType(FromClass).
-                                      getUnqualifiedType())) {
-        // Derivation is ambiguous. Redo the check to find the exact paths.
-        Paths.clear();
-        Paths.setRecordingPaths(true);
-        bool StillOkay = IsDerivedFrom(ToClass, FromClass, Paths);
-        assert(StillOkay && "Derivation changed due to quantum fluctuation.");
-        if (!StillOkay)
-          return true;
+  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                  /*DetectVirtual=*/true);
+  bool DerivationOkay = IsDerivedFrom(ToClass, FromClass, Paths);
+  assert(DerivationOkay &&
+         "Should not have been called if derivation isn't OK.");
+  (void)DerivationOkay;
 
-        std::string PathDisplayStr = getAmbiguousPathsDisplayString(Paths);
-        Diag(From->getExprLoc(),
-             diag::err_ambiguous_base_to_derived_memptr_conv)
-          << FromClass << ToClass << PathDisplayStr << From->getSourceRange();
-        return true;
-      }
+  if (Paths.isAmbiguous(Context.getCanonicalType(FromClass).
+                                  getUnqualifiedType())) {
+    // Derivation is ambiguous. Redo the check to find the exact paths.
+    Paths.clear();
+    Paths.setRecordingPaths(true);
+    bool StillOkay = IsDerivedFrom(ToClass, FromClass, Paths);
+    assert(StillOkay && "Derivation changed due to quantum fluctuation.");
+    (void)StillOkay;
 
-      if (const CXXRecordType *VBase = Paths.getDetectedVirtual()) {
-        Diag(From->getExprLoc(), diag::err_memptr_conv_via_virtual)
-          << FromClass << ToClass << QualType(VBase, 0)
-          << From->getSourceRange();
-        return true;
-      }
-    }
+    std::string PathDisplayStr = getAmbiguousPathsDisplayString(Paths);
+    Diag(From->getExprLoc(), diag::err_ambiguous_memptr_conv)
+      << 0 << FromClass << ToClass << PathDisplayStr << From->getSourceRange();
+    return true;
   }
+
+  if (const CXXRecordType *VBase = Paths.getDetectedVirtual()) {
+    Diag(From->getExprLoc(), diag::err_memptr_conv_via_virtual)
+      << FromClass << ToClass << QualType(VBase, 0)
+      << From->getSourceRange();
+    return true;
+  }
+
   return false;
 }
 
@@ -1148,7 +1147,7 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType)
   // qualification conversion.
   if (FromType == ToType)
     return false;
-    
+
   // (C++ 4.4p4):
   //   A conversion can add cv-qualifiers at levels other than the first
   //   in multi-level pointers, subject to the following rules: [...]
