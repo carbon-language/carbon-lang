@@ -22,6 +22,7 @@
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Config/config.h"
 using namespace clang;
 
@@ -35,6 +36,10 @@ using namespace clang;
 /// NON_EXISTENT_DIR - A special value distinct from null that is used to
 /// represent a dir name that doesn't exist on the disk.
 #define NON_EXISTENT_DIR reinterpret_cast<DirectoryEntry*>((intptr_t)-1)
+
+//===----------------------------------------------------------------------===//
+// Windows.
+//===----------------------------------------------------------------------===//
 
 #ifdef LLVM_ON_WIN32
 
@@ -87,6 +92,10 @@ public:
   size_t size() { return UniqueFiles.size(); }
 };
 
+//===----------------------------------------------------------------------===//
+// Unix-like Systems.
+//===----------------------------------------------------------------------===//
+
 #else
 
 #define IS_DIR_SEPARATOR_CHAR(x) ((x) == '/')
@@ -122,6 +131,9 @@ public:
 
 #endif
 
+//===----------------------------------------------------------------------===//
+// Common logic.
+//===----------------------------------------------------------------------===//
 
 FileManager::FileManager() : UniqueDirs(*new UniqueDirContainer),
                              UniqueFiles(*new UniqueFileContainer),
