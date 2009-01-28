@@ -1672,11 +1672,6 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         state.set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(), RetT));      
       state = state.BindExpr(Ex, loc::SymbolVal(Sym), false);
 
-#if 0
-      RefBindings B = GetRefBindings(StImpl);
-      SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeOwned(RetT)));
-#endif 
-
       // FIXME: Add a flag to the checker where allocations are allowed to fail.      
       if (RE.getKind() == RetEffect::OwnedAllocatedSymbol) {
         bool isFeasible;
