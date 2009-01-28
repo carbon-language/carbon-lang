@@ -47,6 +47,7 @@ typedef struct _NSZone NSZone;
 @protocol NSObject  - (BOOL)isEqual:(id)object;
 - (id)retain;
 - (oneway void)release;
+- (id)autorelease;
 @end  @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
 @end    @interface NSObject <NSObject> {
@@ -230,3 +231,9 @@ CREATEFUN MyCreateFun;
 void f12() {
   CFTypeRef o = MyCreateFun(); // expected-warning {{leak}}
 }
+
+void f13_autorelease() {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+  [(id) A autorelease]; // no-warning
+}
+  
