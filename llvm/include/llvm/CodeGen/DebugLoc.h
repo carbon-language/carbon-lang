@@ -9,6 +9,8 @@
 //
 // This file defines a number of light weight data structures used by the code
 // generator to describe and track debug location information.
+// 
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_DEBUGLOC_H
 #define LLVM_CODEGEN_DEBUGLOC_H
@@ -27,8 +29,8 @@ namespace llvm {
       : Src(s), Line(l), Col(c) {};
   };
 
-  /// DebugLoc - Debug location id. This is carried by SDNode and
-  /// MachineInstr to index into a vector of unique debug location tuples. 
+  /// DebugLoc - Debug location id. This is carried by SDNode and MachineInstr
+  /// to index into a vector of unique debug location tuples.
   class DebugLoc {
     unsigned Idx;
 
@@ -38,11 +40,11 @@ namespace llvm {
     static DebugLoc getUnknownLoc()   { DebugLoc L; L.Idx = 0;   return L; }
     static DebugLoc get(unsigned idx) { DebugLoc L; L.Idx = idx; return L; }
 
-    // isInvalid - Return true if the DebugLoc is invalid.
+    /// isInvalid - Return true if the DebugLoc is invalid.
     bool isInvalid() const { return Idx == ~0U; }
 
-    // isUnknown - Return true if there is no debug info for the SDNode /
-    // MachineInstr.
+    /// isUnknown - Return true if there is no debug info for the SDNode /
+    /// MachineInstr.
     bool isUnknown() const { return Idx == 0; }
   };
 
@@ -71,12 +73,12 @@ namespace llvm {
   /// DebugLocTracker - This class tracks debug location information.
   ///
   struct DebugLocTracker {
-    // DebugLocations - A vector of unique DebugLocTuple's.
-    //
+    /// DebugLocations - A vector of unique DebugLocTuple's.
+    ///
     std::vector<DebugLocTuple> DebugLocations;
 
-    // DebugIdsMap - This maps DebugLocTuple's to indices into
-    // DebugLocations vector.
+    /// DebugIdsMap - This maps DebugLocTuple's to indices into DebugLocations
+    /// vector.
     DenseMap<DebugLocTuple, unsigned> DebugIdMap;
 
     DebugLocTracker() {}
