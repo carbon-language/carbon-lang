@@ -2615,6 +2615,9 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   case Type::Builtin:
     // Only exactly equal builtin types are compatible, which is tested above.
     return QualType();
+  case Type::Complex:
+    // Distinct complex types are incompatible.
+    return QualType();
   case Type::Vector:
     if (areCompatVectorTypes(LHS->getAsVectorType(), RHS->getAsVectorType()))
       return LHS;
