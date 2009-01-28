@@ -22,7 +22,6 @@
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/Support/Allocator.h"
 #include "llvm/Config/config.h"
 using namespace clang;
 

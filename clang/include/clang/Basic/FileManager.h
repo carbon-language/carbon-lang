@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Bitcode/SerializationFwd.h"
+#include "llvm/Support/Allocator.h"
 #include <map>
 #include <set>
 #include <string>
@@ -86,8 +87,8 @@ class FileManager {
   /// DirEntries/FileEntries - This is a cache of directory/file entries we have
   /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
   ///
-  llvm::StringMap<DirectoryEntry*> DirEntries;
-  llvm::StringMap<FileEntry*> FileEntries;
+  llvm::StringMap<DirectoryEntry*, llvm::BumpPtrAllocator> DirEntries;
+  llvm::StringMap<FileEntry*, llvm::BumpPtrAllocator> FileEntries;
   
   /// NextFileUID - Each FileEntry we create is assigned a unique ID #.
   ///
