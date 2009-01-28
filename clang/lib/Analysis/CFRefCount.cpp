@@ -2309,21 +2309,16 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
                                             const ExplodedGraph<GRState>& G,
                                             BugReporter& BR) {
 
-  // Check if the type state has changed.
-  
-  const GRState* PrevSt = PrevN->getState();
-  GRStateRef CurrSt(N->getState(), cast<GRBugReporter>(BR).getStateManager());
+  // Check if the type state has changed.  
+  GRStateManager &StMgr = cast<GRBugReporter>(BR).getStateManager();
+  GRStateRef PrevSt(PrevN->getState(), StMgr);
+  GRStateRef CurrSt(N->getState(), StMgr);
 
-  RefBindings PrevB = PrevSt->get<RefBindings>();
-  RefBindings CurrB = CurrSt.get<RefBindings>();
-  
-  const RefVal* PrevT = PrevB.lookup(Sym);
-  const RefVal* CurrT = CurrB.lookup(Sym);
-  
-  if (!CurrT)
-    return NULL;  
-  
-  const RefVal& CurrV = *CurrB.lookup(Sym);
+  const RefVal* CurrT = CurrSt.get<RefBindings>(Sym);  
+  if (!CurrT) return NULL;
+
+  const RefVal& CurrV = *CurrT;
+  const RefVal* PrevT = PrevSt.get<RefBindings>(Sym);
 
   if (!PrevT) {
     std::string sbuf;
@@ -2363,7 +2358,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   }
   
   // Determine if the typestate has changed.  
-  RefVal PrevV = *PrevB.lookup(Sym);
+  RefVal PrevV = *PrevT;
   
   if (PrevV == CurrV)
     return NULL;
