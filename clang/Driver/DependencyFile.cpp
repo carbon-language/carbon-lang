@@ -174,8 +174,11 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
   // #line markers to affect dependency generation!
   SourceManager &SM = PP->getSourceManager();
   
-  FileID FID = SM.getFileID(SM.getInstantiationLoc(Loc));
-  const char *Filename = SM.getFileEntryForID(FID)->getName();
+  const FileEntry *FE =
+    SM.getFileEntryForID(SM.getFileID(SM.getInstantiationLoc(Loc)));
+  if (FE == 0) return;
+  
+  const char *Filename = FE->getName();
   if (!FileMatchesDepCriteria(Filename, FileType))
     return;
 
