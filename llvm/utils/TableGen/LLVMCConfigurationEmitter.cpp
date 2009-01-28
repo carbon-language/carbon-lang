@@ -127,13 +127,19 @@ bool oneOf(const char* lst, char c) {
   return false;
 }
 
+template <class I, class S>
+void checkedIncrement(I& P, I E, S ErrorString) {
+  ++P;
+  if (P == E)
+    throw ErrorString;
+}
+
 //===----------------------------------------------------------------------===//
 /// Back-end specific code
 
 
 /// OptionType - One of six different option types. See the
 /// documentation for detailed description of differences.
-/// Extern* options are those that are defined in some other plugin.
 namespace OptionType {
   enum OptionType { Alias, Switch, Parameter, ParameterList,
                     Prefix, PrefixList};
@@ -171,7 +177,8 @@ OptionType::OptionType stringToOptionType(const std::string& T) {
 
 namespace OptionDescriptionFlags {
   enum OptionDescriptionFlags { Required = 0x1, Hidden = 0x2,
-                                ReallyHidden = 0x4, Extern = 0x8 };
+                                ReallyHidden = 0x4, Extern = 0x8,
+                                OneOrMore = 0x10, ZeroOrOne = 0x20 };
 }
 
 /// OptionDescription - Represents data contained in a single
@@ -181,11 +188,12 @@ struct OptionDescription {
   std::string Name;
   unsigned Flags;
   std::string Help;
+  unsigned MultiVal;
 
   OptionDescription(OptionType::OptionType t = OptionType::Switch,
                     const std::string& n = "",
                     const std::string& h = DefaultHelpString)
-    : Type(t), Name(n), Flags(0x0), Help(h)
+    : Type(t), Name(n), Flags(0x0), Help(h), MultiVal(1)
   {}
 
   /// GenTypeDeclaration - Returns the C++ variable type of this
@@ -203,17 +211,26 @@ struct OptionDescription {
 
   bool isAlias() const;
 
+  bool isMultiVal() const;
+
   bool isExtern() const;
   void setExtern();
 
   bool isRequired() const;
   void setRequired();
 
+  bool isOneOrMore() const;
+  void setOneOrMore();
+
+  bool isZeroOrOne() const;
+  void setZeroOrOne();
+
   bool isHidden() const;
   void setHidden();
 
   bool isReallyHidden() const;
   void setReallyHidden();
+
 };
 
 void OptionDescription::Merge (const OptionDescription& other)
@@ -235,6 +252,10 @@ bool OptionDescription::isAlias() const {
   return Type == OptionType::Alias;
 }
 
+bool OptionDescription::isMultiVal() const {
+  return MultiVal == 1;
+}
+
 bool OptionDescription::isExtern() const {
   return Flags & OptionDescriptionFlags::Extern;
 }
@@ -247,6 +268,20 @@ bool OptionDescription::isRequired() const {
 }
 void OptionDescription::setRequired() {
   Flags |= OptionDescriptionFlags::Required;
+}
+
+bool OptionDescription::isOneOrMore() const {
+  return Flags & OptionDescriptionFlags::OneOrMore;
+}
+void OptionDescription::setOneOrMore() {
+  Flags |= OptionDescriptionFlags::OneOrMore;
+}
+
+bool OptionDescription::isZeroOrOne() const {
+  return Flags & OptionDescriptionFlags::ZeroOrOne;
+}
+void OptionDescription::setZeroOrOne() {
+  Flags |= OptionDescriptionFlags::ZeroOrOne;
 }
 
 bool OptionDescription::isHidden() const {
@@ -405,8 +440,11 @@ public:
       AddHandler("extern", &CollectOptionProperties::onExtern);
       AddHandler("help", &CollectOptionProperties::onHelp);
       AddHandler("hidden", &CollectOptionProperties::onHidden);
+      AddHandler("multi_val", &CollectOptionProperties::onMultiVal);
+      AddHandler("one_or_more", &CollectOptionProperties::onOneOrMore);
       AddHandler("really_hidden", &CollectOptionProperties::onReallyHidden);
       AddHandler("required", &CollectOptionProperties::onRequired);
+      AddHandler("zero_or_one", &CollectOptionProperties::onZeroOrOne);
 
       staticMembersInitialized_ = true;
     }
@@ -439,7 +477,44 @@ private:
 
   void onRequired (const DagInit* d) {
     checkNumberOfArguments(d, 0);
+    if (optDesc_.isOneOrMore())
+      throw std::string("An option can't have both (required) "
+                        "and (one_or_more) properties!");
     optDesc_.setRequired();
+  }
+
+  void onOneOrMore (const DagInit* d) {
+    checkNumberOfArguments(d, 0);
+    if (optDesc_.isRequired() || optDesc_.isZeroOrOne())
+      throw std::string("Only one of (required), (zero_or_one) or "
+                        "(one_or_more) properties is allowed!");
+    if (!OptionType::IsList(optDesc_.Type))
+      llvm::cerr << "Warning: specifying the 'one_or_more' property "
+        "on a non-list option will have no effect.\n";
+    optDesc_.setOneOrMore();
+  }
+
+  void onZeroOrOne (const DagInit* d) {
+    checkNumberOfArguments(d, 0);
+    if (optDesc_.isRequired() || optDesc_.isOneOrMore())
+      throw std::string("Only one of (required), (zero_or_one) or "
+                        "(one_or_more) properties is allowed!");
+    if (!OptionType::IsList(optDesc_.Type))
+      llvm::cerr << "Warning: specifying the 'zero_or_one' property"
+        "on a non-list option will have no effect.\n";
+    optDesc_.setZeroOrOne();
+  }
+
+  void onMultiVal (const DagInit* d) {
+    checkNumberOfArguments(d, 1);
+    int val = InitPtrToInt(d->getArg(0));
+    if (val < 2)
+      throw std::string("Error in the 'multi_val' property: "
+                        "the value must be greater than 1!");
+    if (!OptionType::IsList(optDesc_.Type))
+      throw std::string("The multi_val property is valid only "
+                        "on list options!");
+    optDesc_.MultiVal = val;
   }
 
 };
@@ -638,7 +713,6 @@ private:
   }
 
 };
-
 
 /// CollectToolDescriptions - Gather information about tool properties
 /// from the parsed TableGen data (basically a wrapper for the
@@ -1131,13 +1205,6 @@ void TokenizeCmdline(const std::string& CmdLine, StrVector& Out) {
   }
 }
 
-template <class I, class S>
-void checkedIncrement(I& P, I E, S ErrorString) {
-  ++P;
-  if (P == E)
-    throw ErrorString;
-}
-
 /// SubstituteSpecialCommands - Perform string substitution for $CALL
 /// and $ENV. Helper function used by EmitCmdLineVecFill().
 StrVector::const_iterator SubstituteSpecialCommands
@@ -1308,18 +1375,31 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
   case OptionType::PrefixList:
     O << Indent << "for (" << D.GenTypeDeclaration()
       << "::iterator B = " << D.GenVariableName() << ".begin(),\n"
-      << Indent << "E = " << D.GenVariableName() << ".end(); B != E; ++B)\n"
+      << Indent << "E = " << D.GenVariableName() << ".end(); B != E;) {\n"
       << Indent << Indent1 << "vec.push_back(\"" << Name << "\" + "
-      << "*B);\n";
+      << "*B);\n"
+      << Indent << Indent1 << "++B;\n";
+
+    for (int i = 1, j = D.MultiVal; i < j; ++i) {
+      O << Indent << Indent1 << "vec.push_back(*B);\n"
+        << Indent << Indent1 << "++B;\n";
+    }
+
+    O << Indent << "}\n";
     break;
   case OptionType::ParameterList:
     O << Indent << "for (" << D.GenTypeDeclaration()
       << "::iterator B = " << D.GenVariableName() << ".begin(),\n"
       << Indent << "E = " << D.GenVariableName()
-      << ".end() ; B != E; ++B) {\n"
-      << Indent << Indent1 << "vec.push_back(\"" << Name << "\");\n"
-      << Indent << Indent1 << "vec.push_back(*B);\n"
-      << Indent << "}\n";
+      << ".end() ; B != E;) {\n"
+      << Indent << Indent1 << "vec.push_back(\"" << Name << "\");\n";
+
+    for (int i = 0, j = D.MultiVal; i < j; ++i) {
+      O << Indent << Indent1 << "vec.push_back(*B);\n"
+        << Indent << Indent1 << "++B;\n";
+    }
+
+    O << Indent << "}\n";
     break;
   case OptionType::Alias:
   default:
@@ -1375,6 +1455,9 @@ class EmitActionHandler {
       checkNumberOfArguments(&Dag, 1);
       const std::string& Name = InitPtrToString(Dag.getArg(0));
       const OptionDescription& D = OptDescs.FindOption(Name);
+
+      if (D.isMultiVal())
+        throw std::string("Can't use unpack_values with multi-valued options!");
 
       if (OptionType::IsList(D.Type)) {
         O << IndentLevel << "for (" << D.GenTypeDeclaration()
@@ -1599,26 +1682,27 @@ void EmitOptionDefintions (const OptionDescriptions& descs,
       O << ", cl::Prefix";
 
     if (val.isRequired()) {
-      switch (val.Type) {
-      case OptionType::PrefixList:
-      case OptionType::ParameterList:
+      if (OptionType::IsList(val.Type) && !val.isMultiVal())
         O << ", cl::OneOrMore";
-        break;
-      default:
+      else
         O << ", cl::Required";
-      }
+    }
+    else if (val.isOneOrMore() && OptionType::IsList(val.Type)) {
+        O << ", cl::OneOrMore";
+    }
+    else if (val.isZeroOrOne() && OptionType::IsList(val.Type)) {
+        O << ", cl::ZeroOrOne";
     }
 
-    if (val.isReallyHidden() || val.isHidden()) {
-      if (val.isRequired())
-        O << " |";
-      else
-        O << ",";
-      if (val.isReallyHidden())
-        O << " cl::ReallyHidden";
-      else
-        O << " cl::Hidden";
+    if (val.isReallyHidden()) {
+      O << ", cl::ReallyHidden";
     }
+    else if (val.isHidden()) {
+      O << ", cl::Hidden";
+    }
+
+    if (val.MultiVal > 1)
+      O << ", cl::multi_val(" << val.MultiVal << ")";
 
     if (!val.Help.empty())
       O << ", cl::desc(\"" << val.Help << "\")";

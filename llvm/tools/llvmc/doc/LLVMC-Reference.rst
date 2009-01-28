@@ -262,37 +262,47 @@ separate option groups syntactically.
 
 * Possible option types:
 
-   - ``switch_option`` - a simple boolean switch without arguments,
-     for example ``-O2`` or ``-time``.
+   - ``switch_option`` - a simple boolean switch without arguments, for example
+     ``-O2`` or ``-time``. At most one occurrence is allowed.
 
-   - ``parameter_option`` - option that takes one argument, for
-     example ``-std=c99``. It is also allowed to use spaces instead of
-     the equality sign: ``-std c99``.
+   - ``parameter_option`` - option that takes one argument, for example
+     ``-std=c99``. It is also allowed to use spaces instead of the equality
+     sign: ``-std c99``. At most one occurrence is allowed.
 
-   - ``parameter_list_option`` - same as the above, but more than one
-     option occurence is allowed.
+   - ``parameter_list_option`` - same as the above, but more than one option
+     occurence is allowed.
 
-   - ``prefix_option`` - same as the parameter_option, but the option
-     name and argument do not have to be separated. Example:
-     ``-ofile``. This can be also specified as ``-o file``; however,
-     ``-o=file`` will be parsed incorrectly (``=file`` will be
-     interpreted as option value).
+   - ``prefix_option`` - same as the parameter_option, but the option name and
+     argument do not have to be separated. Example: ``-ofile``. This can be also
+     specified as ``-o file``; however, ``-o=file`` will be parsed incorrectly
+     (``=file`` will be interpreted as option value). At most one occurrence is
+     allowed.
 
-   - ``prefix_list_option`` - same as the above, but more than one
-     occurence of the option is allowed; example: ``-lm -lpthread``.
+   - ``prefix_list_option`` - same as the above, but more than one occurence of
+     the option is allowed; example: ``-lm -lpthread``.
 
-   - ``alias_option`` - a special option type for creating
-     aliases. Unlike other option types, aliases are not allowed to
-     have any properties besides the aliased option name. Usage
-     example: ``(alias_option "preprocess", "E")``
+   - ``alias_option`` - a special option type for creating aliases. Unlike other
+     option types, aliases are not allowed to have any properties besides the
+     aliased option name. Usage example: ``(alias_option "preprocess", "E")``
 
 
 * Possible option properties:
 
-   - ``help`` - help string associated with this option. Used for
-     ``--help`` output.
+   - ``help`` - help string associated with this option. Used for ``--help``
+     output.
 
-   - ``required`` - this option is obligatory.
+   - ``required`` - this option must be specified exactly once (or, in case of
+     the list options without the ``multi_val`` property, at least
+     once). Incompatible with ``zero_or_one`` and ``one_or_more``.
+
+   - ``one_or_more`` - the option must be specified at least one time. Useful
+     only for list options in conjunction with ``multi_val``; for ordinary lists
+     it is synonymous with ``required``. Incompatible with ``required`` and
+     ``zero_or_one``.
+
+   - ``zero_or_one`` - the option can be specified zero or one times. Useful
+     only for list options in conjunction with ``multi_val``. Incompatible with
+     ``required`` and ``one_or_more``.
 
    - ``hidden`` - the description of this option will not appear in
      the ``--help`` output (but will appear in the ``--help-hidden``
@@ -300,6 +310,11 @@ separate option groups syntactically.
 
    - ``really_hidden`` - the option will not be mentioned in any help
      output.
+
+   - ``multi_val n`` - this option takes *n* arguments (can be useful in some
+     special cases). Usage example: ``(parameter_list_option "foo", (multi_val
+     3))``. Only list options can have this attribute; you can, however, use
+     the ``one_or_more`` and ``zero_or_one`` properties.
 
    - ``extern`` - this option is defined in some other plugin, see below.
 

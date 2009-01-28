@@ -36,11 +36,14 @@ def prefix_list_option;
 
 // Possible option properties.
 
+def extern;
 def help;
 def hidden;
+def multi_val;
+def one_or_more;
 def really_hidden;
 def required;
-def extern;
+def zero_or_one;
 
 // Empty DAG marker.
 def empty;
