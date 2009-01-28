@@ -701,6 +701,7 @@ bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, unsigned UserOffset,
   return OffsetIsInRange(UserOffset, CPEOffset, MaxDisp, !isThumb);
 }
 
+#ifndef NDEBUG
 /// BBIsJumpedOver - Return true of the specified basic block's only predecessor
 /// unconditionally branches to its only successor.
 static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
@@ -714,6 +715,7 @@ static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
     return PredMI->getOperand(0).getMBB() == Succ;
   return false;
 }
+#endif // NDEBUG
 
 void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB, 
                                               int delta) {
