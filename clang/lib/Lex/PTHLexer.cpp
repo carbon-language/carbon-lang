@@ -390,6 +390,13 @@ PTHManager::~PTHManager() {
   free(PerIDCache);
 }
 
+static void InvalidPTH(Diagnostic *Diags, const char* Msg = 0) {
+  if (!Diags) return;  
+  if (!Msg) Msg = "Invalid or corrupted PTH file";
+  unsigned DiagID = Diags->getCustomDiagID(Diagnostic::Note, Msg);
+  Diags->Report(FullSourceLoc(), DiagID);
+}
+
 PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   // Memory map the PTH file.
   llvm::OwningPtr<llvm::MemoryBuffer>
@@ -412,21 +419,30 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
 
   // Check the prologue of the file.
   if ((BufEnd - BufBeg) < (signed) (sizeof("cfe-pth") + 3 + 4) ||
-      memcmp(BufBeg, "cfe-pth", sizeof("cfe-pth") - 1) != 0)
+      memcmp(BufBeg, "cfe-pth", sizeof("cfe-pth") - 1) != 0) {
+    InvalidPTH(Diags);
     return 0;
+  }
   
   // Read the PTH version.
   const unsigned char *p = BufBeg + (sizeof("cfe-pth") - 1);
   unsigned Version = ReadLE32(p);
   
-  if (Version != PTHManager::Version)
+  if (Version != PTHManager::Version) {
+    InvalidPTH(Diags,
+        Version < PTHManager::Version 
+        ? "PTH file uses an older PTH format that is no longer supported"
+        : "PTH file uses a newer PTH format that cannot be read");
     return 0;
+  }
 
   // Compute the address of the index table at the end of the PTH file.  
   const unsigned char *EndTable = BufBeg + ReadLE32(p);
   
-  if (EndTable >= BufEnd)
+  if (EndTable >= BufEnd) {
+    InvalidPTH(Diags);
     return 0;
+  }
   
   // Construct the file lookup table.  This will be used for mapping from
   // FileEntry*'s to cached tokens.
@@ -434,15 +450,17 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   const unsigned char* FileTable = BufBeg + ReadLE32(FileTableOffset);
   
   if (!(FileTable > BufBeg && FileTable < BufEnd)) {
-    assert(false && "Invalid PTH file.");
+    InvalidPTH(Diags);
     return 0; // FIXME: Proper error diagnostic?
   }
   
   llvm::OwningPtr<PTHFileLookup> FL(new PTHFileLookup());
   FL->ReadTable(FileTable);
 
-  if (FL->isEmpty())
+  if (FL->isEmpty()) {
+    InvalidPTH(Diags, "PTH file contains no cached source data");
     return 0;
+  }
   
   // Get the location of the table mapping from persistent ids to the
   // data needed to reconstruct identifiers.
@@ -450,23 +468,23 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   const unsigned char* IData = BufBeg + ReadLE32(IDTableOffset);
   
   if (!(IData >= BufBeg && IData < BufEnd)) {
-    assert(false && "Invalid PTH file.");
-    return 0; // FIXME: Proper error diagnostic?
+    InvalidPTH(Diags);
+    return 0;
   }
   
   // Get the location of the lexigraphically-sorted table of persistent IDs.
   const unsigned char* SortedIdTableOffset = EndTable + sizeof(uint32_t)*2;
   const unsigned char* SortedIdTable = BufBeg + ReadLE32(SortedIdTableOffset);
   if (!(SortedIdTable >= BufBeg && SortedIdTable < BufEnd)) {
-    assert(false && "Invalid PTH file.");
-    return 0; // FIXME: Proper error diagnostic?
+    InvalidPTH(Diags);
+    return 0;
   }
   
   // Get the location of the spelling cache.
   const unsigned char* spellingBaseOffset = EndTable + sizeof(uint32_t)*4;
   const unsigned char* spellingBase = BufBeg + ReadLE32(spellingBaseOffset);
   if (!(spellingBase >= BufBeg && spellingBase < BufEnd)) {
-    assert(false && "Invalid PTH file.");
+    InvalidPTH(Diags);
     return 0;
   }
   
@@ -481,7 +499,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   if (NumIds) {
     PerIDCache = (IdentifierInfo**)calloc(NumIds, sizeof(*PerIDCache));  
     if (!PerIDCache) {
-      assert(false && "Could not allocate Persistent ID cache.");
+      InvalidPTH(Diags, "Could not allocate memory for processing PTH file");
       return 0;
     }
   }
