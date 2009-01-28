@@ -3189,6 +3189,21 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
       // Instance methods should always be defined.
       Methods.push_back(GetMethodConstant(*i));
     }
+    for (ObjCImplementationDecl::propimpl_iterator i = ID->propimpl_begin(),
+         e = ID->propimpl_end(); i != e; ++i) {
+      ObjCPropertyImplDecl *PID = *i;
+      
+      if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize){
+        ObjCPropertyDecl *PD = PID->getPropertyDecl();
+        
+        if (ObjCMethodDecl *MD = PD->getGetterMethodDecl())
+          if (llvm::Constant *C = GetMethodConstant(MD))
+            Methods.push_back(C);
+        if (ObjCMethodDecl *MD = PD->getSetterMethodDecl())
+          if (llvm::Constant *C = GetMethodConstant(MD))
+            Methods.push_back(C);
+      }
+    }
   }
   // FIXME. Section may always be .data
   Values[ 5] = EmitMethodList(MethodListName, 
