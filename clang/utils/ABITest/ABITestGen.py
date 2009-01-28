@@ -21,6 +21,7 @@ class TypePrinter:
         self.types = {}
         self.testValues = {}
         self.testReturnValues = {}
+        self.layoutTests = []
 
         if info:
             for f in (self.output,self.outputHeader,self.outputTests,self.outputDriver):
@@ -41,9 +42,16 @@ class TypePrinter:
             print >>self.outputDriver, 'int main(int argc, char **argv) {'
             
     def finish(self):
+        if self.layoutTests:
+            print >>self.output, 'int main(int argc, char **argv) {'
+            for f in self.layoutTests:
+                print >>self.output, '  %s();' % f
+            print >>self.output, '  return 0;'
+            print >>self.output, '}' 
+
         if self.outputDriver:
             print >>self.outputDriver, '  return 0;'
-            print >>self.outputDriver, '}'
+            print >>self.outputDriver, '}'        
 
     def getTypeName(self, T):
         if isinstance(T,BuiltinType):
@@ -62,6 +70,20 @@ class TypePrinter:
             self.types[T] = name
         return name
     
+    def writeLayoutTest(self, i, ty):
+        tyName = self.getTypeName(ty)
+        tyNameClean = tyName.replace(' ','_').replace('*','star')
+        fnName = 'test_%s' % tyNameClean
+            
+        print >>self.output,'void %s(void) {' % fnName
+        self.printSizeOfType('    %s'%fnName, tyName, ty, self.output)
+        self.printAlignOfType('    %s'%fnName, tyName, ty, self.output)
+        self.printOffsetsOfType('    %s'%fnName, tyName, ty, self.output)
+        print >>self.output,'}'
+        print >>self.output
+        
+        self.layoutTests.append(fnName)
+        
     def writeFunction(self, i, FT):
         args = ', '.join(['%s arg%d'%(self.getTypeName(t),i) for i,t in enumerate(FT.argTypes)])
         if not args:
@@ -194,6 +216,16 @@ class TypePrinter:
         else:
             raise NotImplementedError,'Cannot make tests values of type: "%s"'%(t,)
 
+    def printSizeOfType(self, prefix, name, t, output=None, indent=2):
+        print >>output, '%*sprintf("%s: sizeof(%s) = %%ld\\n", sizeof(%s));'%(indent, '', prefix, name, name) 
+    def printAlignOfType(self, prefix, name, t, output=None, indent=2):
+        print >>output, '%*sprintf("%s: __alignof__(%s) = %%ld\\n", __alignof__(%s));'%(indent, '', prefix, name, name) 
+    def printOffsetsOfType(self, prefix, name, t, output=None, indent=2):
+        if isinstance(t, RecordType):
+            for i,f in enumerate(t.fields):
+                fname = 'field%d' % i
+                print >>output, '%*sprintf("%s: __builtin_offsetof(%s, %s) = %%ld\\n", __builtin_offsetof(%s, %s));'%(indent, '', prefix, name, fname, name, fname) 
+                
     def printValueOfType(self, prefix, name, t, output=None, indent=2):
         if output is None:
             output = self.output
@@ -263,6 +295,9 @@ def main():
     parser.add_option("-D", "--output-driver", dest="outputDriver", metavar="FILE",
                       help="write test driver to FILE  [default %default]",
                       type=str, default=None)
+    parser.add_option("", "--test-layout", dest="testLayout", metavar="FILE",
+                      help="test structure layout",
+                      action='store_true', default=False)
 
     group = OptionGroup(parser, "Type Enumeration Options")
     # Builtins - Ints
@@ -325,7 +360,7 @@ def main():
                      action="store_false", default=True)
     group.add_option("", "--vector-sizes", dest="vectorSizes",
                      help="comma separated list of sizes for vectors [default %default]",
-                     action="store", type=str, default='4,8', metavar="N")
+                     action="store", type=str, default='8,16', metavar="N")
 
     group.add_option("", "--max-args", dest="functionMaxArgs",
                      help="maximum number of arguments per function [default %default]",
@@ -369,7 +404,8 @@ def main():
     btg = FixedTypeGenerator([BuiltinType(n,s) for n,s in builtins])
     sbtg = FixedTypeGenerator([BuiltinType('char',1),
                                BuiltinType('int',4),
-                               BuiltinType('float',4)])
+                               BuiltinType('float',4),
+                               BuiltinType('double',8)])
 
     atg = AnyTypeGenerator()
     artg = AnyTypeGenerator()
@@ -408,7 +444,10 @@ def main():
         atg = AnyTypeGenerator()
         makeGenerator(atg, base, True, False)
 
-    ftg = FunctionTypeGenerator(atg, opts.functionUseReturn, opts.functionMaxArgs)
+    if opts.testLayout:
+        ftg = atg
+    else:
+        ftg = FunctionTypeGenerator(atg, opts.functionUseReturn, opts.functionMaxArgs)
 
     # Override max,min,count if finite
     if opts.maxIndex is None:
@@ -447,23 +486,29 @@ def main():
     info += '// Generated: %s\n'%(time.strftime('%Y-%m-%d %H:%M'),)
     info += '// Cardinality of function generator: %s\n'%(ftg.cardinality,)
     info += '// Cardinality of type generator: %s\n'%(atg.cardinality,)
+
+    if opts.testLayout:
+        info += '\n#include <stdio.h>'
     
     P = TypePrinter(output, 
                     outputHeader=outputHeader,
                     outputTests=outputTests,
                     outputDriver=outputDriver,
-                    headerName=opts.outputHeader,
+                    headerName=opts.outputHeader,                    
                     info=info)
 
     def write(N):
-        try:            
+        try:
             FT = ftg.get(N)
         except RuntimeError,e:
             if e.args[0]=='maximum recursion depth exceeded':
                 print >>sys.stderr,'WARNING: Skipped %d, recursion limit exceeded (bad arguments?)'%(N,)
                 return
             raise
-        P.writeFunction(N, FT)
+        if opts.testLayout:
+            P.writeLayoutTest(N, FT)
+        else:
+            P.writeFunction(N, FT)
 
     if args:
         [write(int(a)) for a in args]
