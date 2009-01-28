@@ -55,8 +55,7 @@ static bool EvaluateLValue(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
 static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
-static bool EvaluateComplexFloat(const Expr *E, APValue &Result, 
-                                 EvalInfo &Info);
+static bool EvaluateComplex(const Expr *E, APValue &Result, EvalInfo &Info);
 
 //===----------------------------------------------------------------------===//
 // Misc utilities
@@ -1228,16 +1227,16 @@ bool FloatExprEvaluator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
 }
 
 //===----------------------------------------------------------------------===//
-// Complex Float Evaluation
+// Complex Evaluation (for float and integer)
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN ComplexFloatExprEvaluator
-  : public StmtVisitor<ComplexFloatExprEvaluator, APValue> {
+class VISIBILITY_HIDDEN ComplexExprEvaluator
+  : public StmtVisitor<ComplexExprEvaluator, APValue> {
   EvalInfo &Info;
   
 public:
-  ComplexFloatExprEvaluator(EvalInfo &info) : Info(info) {}
+  ComplexExprEvaluator(EvalInfo &info) : Info(info) {}
   
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -1250,12 +1249,28 @@ public:
   APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
 
   APValue VisitImaginaryLiteral(ImaginaryLiteral *E) {
-    APFloat Result(0.0);
-    if (!EvaluateFloat(E->getSubExpr(), Result, Info))
-      return APValue();
+    Expr* SubExpr = E->getSubExpr();
+
+    if (SubExpr->getType()->isRealFloatingType()) {
+      APFloat Result(0.0);
+
+      if (!EvaluateFloat(SubExpr, Result, Info))
+        return APValue();
     
-    return APValue(APFloat(Result.getSemantics(), APFloat::fcZero), 
-                   Result);
+      return APValue(APFloat(Result.getSemantics(), APFloat::fcZero), 
+                     Result);
+    } else {
+      assert(SubExpr->getType()->isIntegerType() && 
+             "Unexpected imaginary literal.");
+
+      llvm::APSInt Result;
+      if (!EvaluateInteger(SubExpr, Result, Info))
+        return APValue();
+      
+      llvm::APSInt Zero(Result.getBitWidth(), !Result.isSigned());
+      Zero = 0;
+      return APValue(Zero, Result);
+    }
   }
 
   APValue VisitCastExpr(CastExpr *E) {
@@ -1269,6 +1284,15 @@ public:
       
       return APValue(Result, 
                      APFloat(Result.getSemantics(), APFloat::fcZero));
+    } else if (SubExpr->getType()->isIntegerType()) {
+      APSInt Result;
+                     
+      if (!EvaluateInteger(SubExpr, Result, Info))
+        return APValue();
+      
+      llvm::APSInt Zero(Result.getBitWidth(), !Result.isSigned());
+      Zero = 0;
+      return APValue(Result, Zero);
     }
 
     // FIXME: Handle more casts.
@@ -1280,38 +1304,48 @@ public:
 };
 } // end anonymous namespace
 
-static bool EvaluateComplexFloat(const Expr *E, APValue &Result, EvalInfo &Info)
+static bool EvaluateComplex(const Expr *E, APValue &Result, EvalInfo &Info)
 {
-  Result = ComplexFloatExprEvaluator(Info).Visit(const_cast<Expr*>(E));
-  if (Result.isComplexFloat())
-    assert(&Result.getComplexFloatReal().getSemantics() == 
-           &Result.getComplexFloatImag().getSemantics() && 
-           "Invalid complex evaluation.");
-  return Result.isComplexFloat();
+  Result = ComplexExprEvaluator(Info).Visit(const_cast<Expr*>(E));
+  assert((!Result.isComplexFloat() ||
+          (&Result.getComplexFloatReal().getSemantics() == 
+           &Result.getComplexFloatImag().getSemantics())) && 
+         "Invalid complex evaluation.");
+  return Result.isComplexFloat() || Result.isComplexInt();
 }
 
-APValue ComplexFloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
+APValue ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
 {
   APValue Result, RHS;
   
-  if (!EvaluateComplexFloat(E->getLHS(), Result, Info))
+  if (!EvaluateComplex(E->getLHS(), Result, Info))
     return APValue();
   
-  if (!EvaluateComplexFloat(E->getRHS(), RHS, Info))
+  if (!EvaluateComplex(E->getRHS(), RHS, Info))
     return APValue();
-  
+
   switch (E->getOpcode()) {
   default: return APValue();
   case BinaryOperator::Add:
-    Result.getComplexFloatReal().add(RHS.getComplexFloatReal(),
-                                     APFloat::rmNearestTiesToEven);
-    Result.getComplexFloatImag().add(RHS.getComplexFloatImag(),
-                                     APFloat::rmNearestTiesToEven);
+    if (Result.isComplexFloat()) {
+      Result.getComplexFloatReal().add(RHS.getComplexFloatReal(),
+                                       APFloat::rmNearestTiesToEven);
+      Result.getComplexFloatImag().add(RHS.getComplexFloatImag(),
+                                       APFloat::rmNearestTiesToEven);
+    } else {
+      Result.getComplexIntReal() += RHS.getComplexIntReal();
+      Result.getComplexIntImag() += RHS.getComplexIntImag();
+    }
   case BinaryOperator::Sub:
-    Result.getComplexFloatReal().subtract(RHS.getComplexFloatReal(),
-                                          APFloat::rmNearestTiesToEven);
-    Result.getComplexFloatImag().subtract(RHS.getComplexFloatImag(),
-                                          APFloat::rmNearestTiesToEven);
+    if (Result.isComplexFloat()) {
+      Result.getComplexFloatReal().subtract(RHS.getComplexFloatReal(),
+                                            APFloat::rmNearestTiesToEven);
+      Result.getComplexFloatImag().subtract(RHS.getComplexFloatImag(),
+                                            APFloat::rmNearestTiesToEven);
+    } else {
+      Result.getComplexIntReal() -= RHS.getComplexIntReal();
+      Result.getComplexIntImag() -= RHS.getComplexIntImag();
+    }
   }
 
   return Result;
@@ -1346,10 +1380,10 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
       return false;
     
     Result.Val = APValue(f);
-  } else if (getType()->isComplexType()) {
-    if (!EvaluateComplexFloat(this, Result.Val, Info))
+  } else if (getType()->isAnyComplexType()) {
+    if (!EvaluateComplex(this, Result.Val, Info))
       return false;
-  }  else
+  } else
     return false;
 
   return true;

@@ -21,3 +21,6 @@ union s2 {
 };
 
 int g0 = (int)(&(((union s2 *) 0)->f0.f0) - 0);
+
+_Complex int g1 = 1 + 10i;
+_Complex double g2 = 1.0 + 10.0i;

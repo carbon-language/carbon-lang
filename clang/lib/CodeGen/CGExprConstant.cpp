@@ -597,7 +597,9 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     assert(!Result.HasSideEffects && 
            "Constant expr should not have any side effects!");
     switch (Result.Val.getKind()) {
-    default: assert(0 && "unhandled value kind!");
+    case APValue::Uninitialized:
+      assert(0 && "Constant expressions should be uninitialized.");
+      return llvm::UndefValue::get(getTypes().ConvertType(type));
     case APValue::LValue: {
       llvm::Constant *Offset = 
         llvm::ConstantInt::get(llvm::Type::Int64Ty, 
@@ -630,6 +632,14 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
         C = llvm::ConstantExpr::getZExt(C, BoolTy);
       }
       return C;
+    }
+    case APValue::ComplexInt: {
+      llvm::Constant *Complex[2];
+      
+      Complex[0] = llvm::ConstantInt::get(Result.Val.getComplexIntReal());
+      Complex[1] = llvm::ConstantInt::get(Result.Val.getComplexIntImag());
+      
+      return llvm::ConstantStruct::get(Complex, 2);
     }
     case APValue::Float:
       return llvm::ConstantFP::get(Result.Val.getFloat());
