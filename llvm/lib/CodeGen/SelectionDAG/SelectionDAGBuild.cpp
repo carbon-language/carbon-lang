@@ -374,12 +374,9 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
 /// larger then ValueVT then AssertOp can be used to specify whether the extra
 /// bits are known to be zero (ISD::AssertZext) or sign extended from ValueVT
 /// (ISD::AssertSext).
-static SDValue getCopyFromParts(SelectionDAG &DAG,
-                                  const SDValue *Parts,
-                                  unsigned NumParts,
-                                  MVT PartVT,
-                                  MVT ValueVT,
-                                  ISD::NodeType AssertOp = ISD::DELETED_NODE) {
+static SDValue getCopyFromParts(SelectionDAG &DAG, const SDValue *Parts,
+                                unsigned NumParts, MVT PartVT, MVT ValueVT,
+                                ISD::NodeType AssertOp = ISD::DELETED_NODE) {
   assert(NumParts > 0 && "No parts to assemble!");
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDValue Val = Parts[0];
@@ -587,8 +584,8 @@ static void getCopyToParts(SelectionDAG &DAG, SDValue Val,
       unsigned RoundBits = RoundParts * PartBits;
       unsigned OddParts = NumParts - RoundParts;
       SDValue OddVal = DAG.getNode(ISD::SRL, ValueVT, Val,
-                                     DAG.getConstant(RoundBits,
-                                                     TLI.getShiftAmountTy()));
+                                   DAG.getConstant(RoundBits,
+                                                   TLI.getShiftAmountTy()));
       getCopyToParts(DAG, OddVal, Parts + RoundParts, OddParts, PartVT);
       if (TLI.isBigEndian())
         // The odd parts were reversed by getCopyToParts - unreverse them.
