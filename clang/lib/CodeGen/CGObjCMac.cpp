@@ -351,6 +351,13 @@ protected:
   const RecordDecl *GetFirstIvarInRecord(const ObjCInterfaceDecl *OID,
                                          RecordDecl::field_iterator &FIV,
                                          RecordDecl::field_iterator &PIV);  
+  /// EmitPropertyList - Emit the given property list. The return
+  /// value has type PropertyListPtrTy.
+  llvm::Constant *EmitPropertyList(const std::string &Name,
+                                   const Decl *Container, 
+                                   const ObjCContainerDecl *OCD,
+                                   const ObjCCommonTypesHelper &ObjCTypes);
+  
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
   { }
@@ -442,12 +449,6 @@ private:
   llvm::Constant *EmitMethodDescList(const std::string &Name,
                                      const char *Section,
                                      const ConstantVector &Methods);
-
-  /// EmitPropertyList - Emit the given property list. The return
-  /// value has type PropertyListPtrTy.
-  llvm::Constant *EmitPropertyList(const std::string &Name,
-                                   const Decl *Container, 
-                                   const ObjCContainerDecl *OCD);
 
   /// GetOrEmitProtocol - Get the protocol object for the given
   /// declaration, emitting it if necessary. The return value has type
@@ -954,7 +955,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
                        OptClassMethods);
   Values[3] = EmitPropertyList("\01L_OBJC_$_PROP_PROTO_LIST_" + 
                                    PD->getNameAsString(),
-                               0, PD);
+                               0, PD, ObjCTypes);
 
   // Return null if no extension bits are used.
   if (Values[1]->isNullValue() && Values[2]->isNullValue() && 
@@ -1030,9 +1031,10 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
     struct _objc_property[prop_count];
   };
 */
-llvm::Constant *CGObjCMac::EmitPropertyList(const std::string &Name,
-                                            const Decl *Container,
-                                            const ObjCContainerDecl *OCD) {
+llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
+                                      const Decl *Container,
+                                      const ObjCContainerDecl *OCD,
+                                      const ObjCCommonTypesHelper &ObjCTypes) {
   std::vector<llvm::Constant*> Properties, Prop(2);
   for (ObjCContainerDecl::prop_iterator I = OCD->prop_begin(), 
        E = OCD->prop_end(); I != E; ++I) {
@@ -1063,6 +1065,8 @@ llvm::Constant *CGObjCMac::EmitPropertyList(const std::string &Name,
                              Init,
                              Name,
                              &CGM.getModule());
+  if (ObjCABI == 2)
+    GV->setSection("__DATA, __objc_const");
   // No special section on property lists?
   UsedGlobals.push_back(GV);
   return llvm::ConstantExpr::getBitCast(GV, 
@@ -1172,7 +1176,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   // If there is no category @interface then there can be no properties.
   if (Category) {
     Values[6] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_LIST_") + ExtName,
-                                 OCD, Category);
+                                 OCD, Category, ObjCTypes);
   } else {
     Values[6] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
   }
@@ -1447,7 +1451,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   // FIXME: Output weak_ivar_layout string.
   Values[1] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
   Values[2] = EmitPropertyList("\01L_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
-                               ID, ID->getClassInterface());
+                               ID, ID->getClassInterface(), ObjCTypes);
 
   // Return null if no extension bits are used.
   if (Values[1]->isNullValue() && Values[2]->isNullValue())
@@ -3195,7 +3199,13 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   else
     Values[ 7] = EmitIvarList(ID);
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
-  Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
+  if (flags & CLS_META)
+    Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
+  else
+    Values[ 9] = 
+      EmitPropertyList(
+                       "\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
+                       ID, ID->getClassInterface(), ObjCTypes);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
                                                    Values);
   llvm::GlobalVariable *CLASS_RO_GV =
@@ -3461,8 +3471,13 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
                              "__DATA, __objc_const", 
                              Methods);
   Values[4] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
-  Values[5] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
-  
+  const ObjCCategoryDecl *Category = 
+    Interface->FindCategoryDeclaration(OCD->getIdentifier());
+  std::string ExtName(Interface->getNameAsString() + "_$_" +
+                      OCD->getNameAsString());
+  Values[5] =
+    EmitPropertyList(std::string("\01l_OBJC_$_PROP_LIST_") + ExtName,
+                                OCD, Category, ObjCTypes);
   llvm::Constant *Init = 
     llvm::ConstantStruct::get(ObjCTypes.CategorynfABITy, 
                               Values);
