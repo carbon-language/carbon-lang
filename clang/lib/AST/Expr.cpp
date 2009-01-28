@@ -758,12 +758,6 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   return isEvaluatable(Ctx);
 }
 
-bool Expr::hasSideEffects(ASTContext &Ctx) const {
-  EvalResult Result;
-  Evaluate(Result, Ctx);
-  return Result.HasSideEffects;
-}
-
 /// isIntegerConstantExpr - this recursive routine will test if an expression is
 /// an integer constant expression. Note: With the introduction of VLA's in
 /// C99 the result of the sizeof operator is no longer always a constant

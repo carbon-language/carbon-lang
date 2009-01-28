@@ -185,10 +185,6 @@ public:
   /// initializer, which can be emitted at compile-time.
   bool isConstantInitializer(ASTContext &Ctx) const;
   
-  /// @brief Determines whether this expression (or any of its
-  /// subexpressions) has side effects.
-  bool hasSideEffects(ASTContext &Ctx) const;
-
   /// EvalResult is a struct with detailed info about an evaluated expression.
   struct EvalResult {
     /// Val - This is the scalar value the expression can be folded to.

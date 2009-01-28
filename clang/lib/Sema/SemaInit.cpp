@@ -845,7 +845,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
       << InitRange;
     SemaRef->Diag(ExistingInit->getSourceRange().getBegin(), 
                   diag::note_previous_initializer)
-      << ExistingInit->hasSideEffects(SemaRef->Context)
+      << /*FIXME:has side effects=*/0
       << ExistingInit->getSourceRange();
   }
 
@@ -882,7 +882,7 @@ void InitListChecker::UpdateStructuredListElement(InitListExpr *StructuredList,
       << expr->getSourceRange();
     SemaRef->Diag(PrevInit->getSourceRange().getBegin(), 
                   diag::note_previous_initializer)
-      << (int)PrevInit->hasSideEffects(SemaRef->Context)
+      << /*FIXME:has side effects=*/0
       << PrevInit->getSourceRange();
   }
   
