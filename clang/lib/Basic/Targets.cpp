@@ -662,6 +662,7 @@ class X86_64TargetInfo : public X86TargetInfo {
 public:
   X86_64TargetInfo(const std::string& triple) : X86TargetInfo(triple) {
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
+    DoubleAlign = LongLongAlign = 64;
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
     DescriptionString = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
