@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep 0x49 | count 7
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin | grep 0x49 | count 7
 ; Count number of DW_AT_Type attributes.
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, { }*, i8*, { }*, i32, i64, i64, i64, i32, i32, i8*, i8* }
