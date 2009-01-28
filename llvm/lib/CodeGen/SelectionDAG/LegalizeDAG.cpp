@@ -974,7 +974,7 @@ SDValue SelectionDAGLegalize::LegalizeShiftAmount(SDValue ShiftAmt) {
     return DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), ShiftAmt);
 
   if (TLI.getShiftAmountTy().bitsGT(ShiftAmt.getValueType()))
-    return DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), ShiftAmt);
+    return DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), ShiftAmt);
 
   return ShiftAmt;
 }
