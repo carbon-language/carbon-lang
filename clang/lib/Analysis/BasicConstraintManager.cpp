@@ -72,7 +72,7 @@ public:
                               const SymIntConstraint& C, bool& isFeasible);
 
   const GRState* AssumeSymNE(const GRState* St, SymbolRef sym,
-                                const llvm::APSInt& V, bool& isFeasible);
+                             const llvm::APSInt& V, bool& isFeasible);
 
   const GRState* AssumeSymEQ(const GRState* St, SymbolRef sym,
                                 const llvm::APSInt& V, bool& isFeasible);

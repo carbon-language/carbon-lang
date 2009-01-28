@@ -38,8 +38,6 @@ public:
                                        SVal UpperBound, bool Assumption,
                                        bool& isFeasible) = 0;
 
-  virtual const GRState* AddNE(const GRState* St, SymbolRef sym, 
-                               const llvm::APSInt& V) = 0;
   virtual const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) = 0;
 
   virtual bool isEqual(const GRState* St, SymbolRef sym, 

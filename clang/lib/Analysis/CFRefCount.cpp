@@ -1678,8 +1678,11 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
 #endif 
 
       // FIXME: Add a flag to the checker where allocations are allowed to fail.      
-      if (RE.getKind() == RetEffect::OwnedAllocatedSymbol)
-        state = state.AddNE(Sym, Eng.getBasicVals().getZeroWithPtrWidth());
+      if (RE.getKind() == RetEffect::OwnedAllocatedSymbol) {
+        bool isFeasible;
+        state = state.Assume(loc::SymbolVal(Sym), true, isFeasible);
+        assert(isFeasible && "Cannot assume fresh symbol is non-null.");        
+      }
       
       break;
     }

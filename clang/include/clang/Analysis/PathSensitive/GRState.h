@@ -603,10 +603,6 @@ public:
                                         isFeasible);
   }
 
-  const GRState* AddNE(const GRState* St, SymbolRef sym, const llvm::APSInt& V) {
-    return ConstraintMgr->AddNE(St, sym, V);
-  }
-
   const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) {
     return ConstraintMgr->getSymVal(St, sym);
   }
@@ -671,10 +667,6 @@ public:
     return GRStateRef(Mgr->Unbind(St, LV), *Mgr);
   }
   
-  GRStateRef AddNE(SymbolRef sym, const llvm::APSInt& V) {
-    return GRStateRef(Mgr->AddNE(St, sym, V), *Mgr);
-  }
-  
   // Trait based GDM dispatch.
   template<typename T>
   typename GRStateTrait<T>::data_type get() const {
@@ -734,6 +726,10 @@ public:
   // Lvalue methods.
   SVal GetLValue(const VarDecl* VD) {
     return Mgr->GetLValue(St, VD);
+  }
+    
+  GRStateRef Assume(SVal Cond, bool Assumption, bool& isFeasible) {
+    return GRStateRef(Mgr->Assume(St, Cond, Assumption, isFeasible), *Mgr);  
   }
   
   // Pretty-printing.
