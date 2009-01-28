@@ -1524,10 +1524,6 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         }
     }  
     else if (isa<Loc>(V)) {
-#if 0
-      // Nuke all arguments passed by reference.
-      StateMgr.Unbind(StVals, cast<Loc>(V));
-#else
       if (loc::MemRegionVal* MR = dyn_cast<loc::MemRegionVal>(&V)) {
 
         if (GetArgE(Summ, idx) == DoNothingByRef)
@@ -1588,7 +1584,6 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         // Nuke all other arguments passed by reference.
         state = state.Unbind(cast<Loc>(V));
       }
-#endif
     }
     else if (isa<nonloc::LocAsInteger>(V))
       state = state.Unbind(cast<nonloc::LocAsInteger>(V).getLoc());
