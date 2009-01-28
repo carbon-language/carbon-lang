@@ -1349,9 +1349,9 @@ ISD::STORE opcode.</p>
 </div>
 
 <div class="doc_code">
-<pre>SDNode *SelectCode(SDOperand N) {
+<pre>SDNode *SelectCode(SDValue N) {
   ... 
-  MVT::ValueType NVT = N.Val-&gt;getValueType(0);
+  MVT::ValueType NVT = N.getNode()-&gt;getValueType(0);
   switch (N.getOpcode()) {
   case ISD::STORE: {
     switch (NVT) {
@@ -1372,21 +1372,21 @@ instruction. </p>
 </div>
 
 <div class="doc_code">
-<pre>SDNode *Select_ISD_STORE(const SDOperand &amp;N) {
-  SDOperand Chain = N.getOperand(0);
-  if (Predicate_store(N.Val)) {
-    SDOperand N1 = N.getOperand(1);
-    SDOperand N2 = N.getOperand(2);
-    SDOperand CPTmp0;
-    SDOperand CPTmp1;
+<pre>SDNode *Select_ISD_STORE(const SDValue &amp;N) {
+  SDValue Chain = N.getOperand(0);
+  if (Predicate_store(N.getNode())) {
+    SDValue N1 = N.getOperand(1);
+    SDValue N2 = N.getOperand(2);
+    SDValue CPTmp0;
+    SDValue CPTmp1;
 &nbsp;
     // Pattern: (st:void IntRegs:i32:$src, 
     //           ADDRrr:i32:$addr)&lt;&lt;P:Predicate_store&gt;&gt;
     // Emits: (STrr:void ADDRrr:i32:$addr, IntRegs:i32:$src)
     // Pattern complexity = 13  cost = 1  size = 0
     if (SelectADDRrr(N, N2, CPTmp0, CPTmp1) &amp;&amp;
-        N1.Val-&gt;getValueType(0) == MVT::i32 &amp;&amp;
-        N2.Val-&gt;getValueType(0) == MVT::i32) {
+        N1.getNode()-&gt;getValueType(0) == MVT::i32 &amp;&amp;
+        N2.getNode()-&gt;getValueType(0) == MVT::i32) {
       return Emit_22(N, SP::STrr, CPTmp0, CPTmp1);
     }
 ...
@@ -1520,8 +1520,8 @@ code, an FP_TO_SINT opcode will call the <tt>LowerFP_TO_SINT</tt> method:</p>
 </div>
 
 <div class="doc_code">
-<pre>SDOperand SparcTargetLowering::LowerOperation(
-                               SDOperand Op, SelectionDAG &amp;DAG) {
+<pre>SDValue SparcTargetLowering::LowerOperation(
+                               SDValue Op, SelectionDAG &amp;DAG) {
   switch (Op.getOpcode()) {
   case ISD::FP_TO_SINT: return LowerFP_TO_SINT(Op, DAG);
   ...
@@ -1535,7 +1535,7 @@ register to convert the floating-point value to an integer.</p>
 </div>
 
 <div class="doc_code">
-<pre>static SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &amp;DAG) {
+<pre>static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &amp;DAG) {
 assert(Op.getValueType() == MVT::i32);
   Op = DAG.getNode(SPISD::FTOI, MVT::f32, Op.getOperand(0));
   return DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
