@@ -77,7 +77,7 @@ public:
 class FileManager::UniqueFileContainer {
   /// UniqueFiles - Cache from full path to existing directories/files.
   ///
-  llvm::StringMap<FileEntry> UniqueFiles;
+  llvm::StringMap<FileEntry, llvm::BumpPtrAllocator> UniqueFiles;
 
 public:
   FileEntry &getFile(const char *Name, struct stat &StatBuf) {
