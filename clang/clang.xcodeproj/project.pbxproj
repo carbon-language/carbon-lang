@@ -533,6 +533,18 @@
 		DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenModule.cpp; path = lib/CodeGen/CodeGenModule.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE928B800C0A615B00231DA4 /* CodeGenFunction.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenFunction.h; path = lib/CodeGen/CodeGenFunction.h; sourceTree = "<group>"; tabWidth = 2; usesTabs = 0; };
 		DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenFunction.cpp; path = lib/CodeGen/CodeGenFunction.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEA099FD0F302C65000C2258 /* DiagnosticAnalysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DiagnosticAnalysis.h; sourceTree = "<group>"; };
+		DEA099FE0F302C65000C2258 /* DiagnosticAnalysisKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticAnalysisKinds.def; sourceTree = "<group>"; };
+		DEA099FF0F302C65000C2258 /* DiagnosticAST.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DiagnosticAST.h; sourceTree = "<group>"; };
+		DEA09A000F302C65000C2258 /* DiagnosticASTKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticASTKinds.def; sourceTree = "<group>"; };
+		DEA09A010F302C65000C2258 /* DiagnosticCommonKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticCommonKinds.def; sourceTree = "<group>"; };
+		DEA09A020F302C65000C2258 /* DiagnosticDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DiagnosticDriver.h; sourceTree = "<group>"; };
+		DEA09A030F302C65000C2258 /* DiagnosticLex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DiagnosticLex.h; sourceTree = "<group>"; };
+		DEA09A040F302C65000C2258 /* DiagnosticLexKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticLexKinds.def; sourceTree = "<group>"; };
+		DEA09A050F302C65000C2258 /* DiagnosticParse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DiagnosticParse.h; sourceTree = "<group>"; };
+		DEA09A060F302C65000C2258 /* DiagnosticParseKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticParseKinds.def; sourceTree = "<group>"; };
+		DEA09A070F302C65000C2258 /* DiagnosticSema.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DiagnosticSema.h; sourceTree = "<group>"; };
+		DEA09A080F302C65000C2258 /* DiagnosticSemaKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticSemaKinds.def; sourceTree = "<group>"; };
 		DEA0EBD90DD2D3C8007A02A9 /* RewriteMacros.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteMacros.cpp; path = Driver/RewriteMacros.cpp; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
 		DEAEED4A0A5AF89A0045101B /* NOTES.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NOTES.txt; sourceTree = "<group>"; };
@@ -1057,6 +1069,18 @@
 			children = (
 				DED7D7310A524295003AD0FB /* Diagnostic.h */,
 				DED7D7320A524295003AD0FB /* DiagnosticKinds.def */,
+				DEA099FD0F302C65000C2258 /* DiagnosticAnalysis.h */,
+				DEA099FE0F302C65000C2258 /* DiagnosticAnalysisKinds.def */,
+				DEA099FF0F302C65000C2258 /* DiagnosticAST.h */,
+				DEA09A000F302C65000C2258 /* DiagnosticASTKinds.def */,
+				DEA09A010F302C65000C2258 /* DiagnosticCommonKinds.def */,
+				DEA09A020F302C65000C2258 /* DiagnosticDriver.h */,
+				DEA09A030F302C65000C2258 /* DiagnosticLex.h */,
+				DEA09A040F302C65000C2258 /* DiagnosticLexKinds.def */,
+				DEA09A050F302C65000C2258 /* DiagnosticParse.h */,
+				DEA09A060F302C65000C2258 /* DiagnosticParseKinds.def */,
+				DEA09A070F302C65000C2258 /* DiagnosticSema.h */,
+				DEA09A080F302C65000C2258 /* DiagnosticSemaKinds.def */,
 				DED7D7330A524295003AD0FB /* FileManager.h */,
 				DE3986EF0CB8D4B300223765 /* IdentifierTable.h */,
 				DE06B73D0A8307640050E87E /* LangOptions.h */,
