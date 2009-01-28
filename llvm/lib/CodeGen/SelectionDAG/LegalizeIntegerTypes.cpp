@@ -292,6 +292,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CTTZ(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N) {
   MVT OldVT = N->getValueType(0);
   SDValue OldVec = N->getOperand(0);
+  if (getTypeAction(OldVec.getValueType()) == WidenVector)
+    OldVec = GetWidenedVector(N->getOperand(0));
   unsigned OldElts = OldVec.getValueType().getVectorNumElements();
 
   if (OldElts == 1) {
