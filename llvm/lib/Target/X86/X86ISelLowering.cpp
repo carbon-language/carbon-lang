@@ -7678,28 +7678,32 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   if (VT != MVT::v2i64 && VT != MVT::v4i32 && VT != MVT::v8i16)
     return SDValue();
     
-  SDValue  ShAmtOp = N->getOperand(1);
-  if (ShAmtOp.getOpcode() != ISD::BUILD_VECTOR)
+  SDValue ShAmtOp = N->getOperand(1);
+  MVT EltVT = VT.getVectorElementType();
+  SDValue BaseShAmt;
+  if (ShAmtOp.getOpcode() == ISD::BUILD_VECTOR) {
+    unsigned NumElts = VT.getVectorNumElements();
+    unsigned i = 0;
+    for (; i != NumElts; ++i) {
+      SDValue Arg = ShAmtOp.getOperand(i);
+      if (Arg.getOpcode() == ISD::UNDEF) continue;
+      BaseShAmt = Arg;
+      break;
+    }
+    for (; i != NumElts; ++i) {
+      SDValue Arg = ShAmtOp.getOperand(i);
+      if (Arg.getOpcode() == ISD::UNDEF) continue;
+      if (Arg != BaseShAmt) {
+        return SDValue();
+      }
+    }
+  } else if (ShAmtOp.getOpcode() == ISD::VECTOR_SHUFFLE &&
+             isSplatMask(ShAmtOp.getOperand(2).getNode())) {
+      BaseShAmt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, ShAmtOp,
+                              DAG.getIntPtrConstant(0));
+  } else
     return SDValue();
 
-  unsigned NumElts = VT.getVectorNumElements();
-  unsigned i = 0;
-  SDValue BaseShAmt;
-  for (; i != NumElts; ++i) {
-    SDValue Arg = ShAmtOp.getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    BaseShAmt = Arg;
-    break;
-  }
-  for (; i != NumElts; ++i) {
-    SDValue Arg = ShAmtOp.getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    if (Arg != BaseShAmt) {
-      return SDValue();
-    }
-  }
-
-  MVT EltVT = VT.getVectorElementType();
   if (EltVT.bitsGT(MVT::i32))
     BaseShAmt = DAG.getNode(ISD::TRUNCATE, MVT::i32, BaseShAmt);
   else if (EltVT.bitsLT(MVT::i32))
