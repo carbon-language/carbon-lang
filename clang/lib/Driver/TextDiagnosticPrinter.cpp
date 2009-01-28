@@ -95,12 +95,12 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
                                              const DiagnosticInfo &Info) {
-  const SourceManager &SM = Info.getLocation().getManager();
   unsigned ColNo = 0;
   
   // If the location is specified, print out a file/line/col and include trace
   // if enabled.
   if (Info.getLocation().isValid()) {
+    const SourceManager &SM = Info.getLocation().getManager();
     PresumedLoc PLoc = SM.getPresumedLoc(Info.getLocation());
     unsigned LineNo = PLoc.getLine();
     
@@ -142,23 +142,15 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
     // Inspect the actual instantiation point of the diagnostic, we don't care
     // about presumed locations anymore.
-    SourceLocation ILoc = SM.getInstantiationLoc(Info.getLocation());
-    
-    // Get the file and line that we want to highlight.  We only draw ranges
-    // that intersect this.
-    FileID ILocFID = SM.getFileID(ILoc);
-    unsigned LineNo = SM.getLineNumber(ILoc);
-    
-    // Get the line of the source file.  Scan from the location backward and
-    // forward to find the start/end of the line.
-    
+    FullSourceLoc ILoc = Info.getLocation().getInstantiationLoc();
+
     // Rewind from the current position to the start of the line.
-    const char *TokInstantiationPtr = SM.getCharacterData(ILoc);
+    const char *TokInstantiationPtr = ILoc.getCharacterData();
     const char *LineStart = TokInstantiationPtr-ColNo+1; // Column # is 1-based.
     
     // Compute the line end.  Scan forward from the error position to the end of
     // the line.
-    const char *BufEnd = SM.getBufferData(ILocFID).second;
+    const char *BufEnd = ILoc.getBufferData().second;
     const char *LineEnd = TokInstantiationPtr;
     while (LineEnd != BufEnd && 
            *LineEnd != '\n' && *LineEnd != '\r')
@@ -173,8 +165,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
     // Highlight all of the characters covered by Ranges with ~ characters.
     for (unsigned i = 0; i != Info.getNumRanges(); ++i)
-      HighlightRange(Info.getRange(i), SM, LineNo, ILocFID,
-                     CaretLine, SourceLine);
+      HighlightRange(Info.getRange(i), ILoc.getManager(), ILoc.getLineNumber(),
+                     ILoc.getFileID(), CaretLine, SourceLine);
     
     // Next, insert the caret itself.
     if (ColNo-1 < CaretLine.size())
