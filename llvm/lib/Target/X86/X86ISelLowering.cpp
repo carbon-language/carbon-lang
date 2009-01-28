@@ -3677,7 +3677,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       ++V2InOrder;
     } else if (EltIdx < 8) {
       V1Elts.push_back(Elt);
-      V2Elts.push_back(DAG.getConstant(i+8, MaskEVT));
+      V2Elts.push_back(DAG.getConstant(EltIdx+8, MaskEVT));
       ++V1FromV1;
     } else {
       V1Elts.push_back(Elt);
