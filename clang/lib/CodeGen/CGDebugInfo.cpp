@@ -337,11 +337,14 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
   uint64_t Align;
   
   
+  // FIXME: make getTypeAlign() aware of VLAs and incomplete array types
   if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(Ty)) {
-
     Size = 0;
     Align =
-      M->getContext().getTypeSize(M->getContext().getBaseElementType(VAT));
+      M->getContext().getTypeAlign(M->getContext().getBaseElementType(VAT));
+  } else if (Ty->isIncompleteArrayType()) {
+    Size = 0;
+    Align = M->getContext().getTypeAlign(Ty->getElementType());
   } else {
     // Size and align of the whole array, not the element type.
     Size = M->getContext().getTypeSize(Ty);

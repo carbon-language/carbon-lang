@@ -18,7 +18,13 @@ struct s0 { struct s0 *p; } g0;
 struct s0 *f0(struct s0 *a0) {
   return a0->p;
 }
-  
+
 // PR3134
 char xpto[];
 
+// PR3427
+struct foo {
+	int a;
+	void *ptrs[];
+};
+struct foo bar;
