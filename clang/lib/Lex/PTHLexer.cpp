@@ -390,13 +390,20 @@ PTHManager::~PTHManager() {
   free(PerIDCache);
 }
 
-PTHManager* PTHManager::Create(const std::string& file) {
+PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   // Memory map the PTH file.
   llvm::OwningPtr<llvm::MemoryBuffer>
   File(llvm::MemoryBuffer::getFile(file.c_str()));
   
-  if (!File)
+  if (!File) {
+    if (Diags) {
+      unsigned DiagID = Diags->getCustomDiagID(Diagnostic::Note,
+                                               "PTH file %0 could not be read");
+      Diags->Report(FullSourceLoc(), DiagID) << file;
+    }
+    
     return 0;
+  }
   
   // Get the buffer ranges and check if there are at least three 32-bit
   // words at the end of the file.

@@ -1154,7 +1154,7 @@ public:
 
     // Use PTH?
     if (!TokenCache.empty())
-      PTHMgr.reset(PTHManager::Create(TokenCache));
+      PTHMgr.reset(PTHManager::Create(TokenCache, &Diags));
     
     // Create the Preprocessor.
     llvm::OwningPtr<Preprocessor> PP(new Preprocessor(Diags, LangInfo, Target,
