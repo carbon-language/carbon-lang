@@ -396,7 +396,12 @@ static void ExpandResponseFiles(int argc, char** argv,
 
         // If we could open the file, parse its contents, otherwise
         // pass the @file option verbatim.
-        // TODO: support recursion.
+
+        // TODO: we should also support recursive loading of response files,
+        // since this is how gcc behaves. (From their man page: "The file may
+        // itself contain additional @file options; any such options will be
+        // processed recursively.")
+
         if (respFilePtr != 0) {
           ParseCStringVector(newArgv, respFilePtr->getBufferStart());
           continue;
