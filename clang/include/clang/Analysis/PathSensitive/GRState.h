@@ -492,6 +492,25 @@ public:
   bool isEqual(const GRState* state, Expr* Ex, const llvm::APSInt& V);
   bool isEqual(const GRState* state, Expr* Ex, uint64_t);
   
+  
+  //==---------------------------------------------------------------------==//
+  // Generic Data Map methods.
+  //==---------------------------------------------------------------------==//
+  //
+  // GRStateManager and GRState support a "generic data map" that allows
+  // different clients of GRState objects to embed arbitrary data within a
+  // GRState object.  The generic data map is essentially an immutable map
+  // from a "tag" (that acts as the "key" for a client) and opaque values.
+  // Tags/keys and values are simply void* values.  The typical way that clients
+  // generate unique tags are by taking the address of a static variable.
+  // Clients are responsible for ensuring that data values referred to by a
+  // the data pointer are immutable (and thus are essentially purely functional
+  // data).
+  //
+  // The templated methods below use the GRStateTrait<T> class
+  // to resolve keys into the GDM and to return data values to clients.
+  //
+  
   // Trait based GDM dispatch.  
   template <typename T>
   const GRState* set(const GRState* st, typename GRStateTrait<T>::data_type D) {
@@ -539,6 +558,39 @@ public:
     
     return GRStateTrait<T>::MakeContext(p);
   }
+  
+  //==---------------------------------------------------------------------==//
+  // Constraints on values.
+  //==---------------------------------------------------------------------==//
+  //
+  // Each GRState records constraints on symbolic values.  These constraints
+  // are managed using the ConstraintManager associated with a GRStateManager.
+  // As constraints gradually accrue on symbolic values, added constraints
+  // may conflict and indicate that a state is infeasible (as no real values
+  // could satisfy all the constraints).  This is the principal mechanism
+  // for modeling path-sensitivity in GRExprEngine/GRState.
+  //
+  // Various "Assume" methods form the interface for adding constraints to
+  // symbolic values.  A call to "Assume" indicates an assumption being placed
+  // on one or symbolic values.  Assume methods take the following inputs:
+  //
+  //  (1) A GRState object representing the current state.
+  //
+  //  (2) The assumed constraint (which is specific to a given "Assume" method).
+  //
+  //  (3) A binary value "Assumption" that indicates whether the constraint is
+  //      assumed to be true or false.
+  //
+  // The output of "Assume" are two values:
+  //
+  //  (a) "isFeasible" is set to true or false to indicate whether or not
+  //      the assumption is feasible.
+  //
+  //  (b) A new GRState object with the added constraints.
+  //
+  // FIXME: (a) should probably disappear since it is redundant with (b).
+  //  (i.e., (b) could just be set to NULL).
+  //
 
   const GRState* Assume(const GRState* St, SVal Cond, bool Assumption,
                            bool& isFeasible) {
