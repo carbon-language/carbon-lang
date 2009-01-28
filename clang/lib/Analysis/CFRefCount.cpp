@@ -606,8 +606,6 @@ public:
   
 } // end anonymous namespace
 
-
-
 //===----------------------------------------------------------------------===//
 // Implementation of checker data structures.
 //===----------------------------------------------------------------------===//
@@ -2343,14 +2341,14 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
       if (loc::FuncVal* FV = dyn_cast<loc::FuncVal>(&X))
         os << "Call to function '" << FV->getDecl()->getNameAsString() <<'\'';
       else
-        os << "function call";
-      
-      os << " returns an object with a ";
+        os << "function call";      
     }          
     else {
       assert (isa<ObjCMessageExpr>(S));
-      os << "Method returns an object with a ";
+      os << "Method";
     }
+    
+    os << " returns an object with a ";
     
     if (CurrV.isOwned())
         os << "+1 retain count (owning reference).";
