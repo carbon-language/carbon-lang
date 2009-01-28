@@ -2312,10 +2312,10 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   // Check if the type state has changed.
   
   const GRState* PrevSt = PrevN->getState();
-  const GRState* CurrSt = N->getState();
-  
+  GRStateRef CurrSt(N->getState(), cast<GRBugReporter>(BR).getStateManager());
+
   RefBindings PrevB = PrevSt->get<RefBindings>();
-  RefBindings CurrB = CurrSt->get<RefBindings>();
+  RefBindings CurrB = CurrSt.get<RefBindings>();
   
   const RefVal* PrevT = PrevB.lookup(Sym);
   const RefVal* CurrT = CurrB.lookup(Sym);
@@ -2332,10 +2332,17 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
 
     if (CurrV.isOwned()) {
+      if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+        // Get the name of the callee (if it is available).
+        SVal X = CurrSt.GetSVal(CE->getCallee());
 
-      if (isa<CallExpr>(S)) {
-        os <<  "Function call returns an object with a +1 retain count"
-                " (owning reference).";
+        if (loc::FuncVal* FV = dyn_cast<loc::FuncVal>(&X))
+          os << "Call to function '" << FV->getDecl()->getNameAsString() <<'\'';
+        else
+          os << "Function call";
+        
+        os << " returns an object with a +1 retain count"
+              " (owning reference).";
       }
       else {
         assert (isa<ObjCMessageExpr>(S));
@@ -2421,17 +2428,11 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   
   // Add the range by scanning the children of the statement for any bindings
   // to Sym.
-  
-  GRStateManager& VSM = cast<GRBugReporter>(BR).getStateManager();
-  
   for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
     if (Expr* Exp = dyn_cast_or_null<Expr>(*I)) {
-      SVal X = VSM.GetSVal(CurrSt, Exp);
-      
+      SVal X = CurrSt.GetSVal(Exp);      
       if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&X))
-        if (SV->getSymbol() == Sym) {
-          P->addRange(Exp->getSourceRange()); break;
-        }
+        if (SV->getSymbol() == Sym) P->addRange(Exp->getSourceRange()); break;
     }
   
   return P;
