@@ -979,13 +979,11 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
                 getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::ObjC)));
   
   // Create the [NSAutoreleasePool addObject:] summary.
-  if (!isGCEnabled()) {    
-    ScratchArgs.push_back(std::make_pair(0, Autorelease));
-    addClsMethSummary(&Ctx.Idents.get("NSAutoreleasePool"),
-                      GetUnarySelector("addObject", Ctx),
-                      getPersistentSummary(RetEffect::MakeNoRet(),
-                                           DoNothing, DoNothing));
-  }
+  ScratchArgs.push_back(std::make_pair(0, Autorelease));
+  addClsMethSummary(&Ctx.Idents.get("NSAutoreleasePool"),
+                    GetUnarySelector("addObject", Ctx),
+                    getPersistentSummary(RetEffect::MakeNoRet(),
+                                         DoNothing, DoNothing));
 }
 
 void RetainSummaryManager::InitializeMethodSummaries() {
@@ -1023,7 +1021,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addNSObjectMethSummary(GetNullarySelector("drain", Ctx), Summ);
 
   // Create the "autorelease" selector.
-  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : Autorelease);
+  Summ = getPersistentSummary(E, Autorelease);
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
   
   // For NSWindow, allocated objects are (initially) self-owned.  
@@ -2076,7 +2074,9 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
       }      
       return B;
 
-    case Autorelease:          
+    case Autorelease:
+      if (isGCEnabled()) return B;      
+      // Fall-through.      
     case StopTracking:
       return RefBFactory.Remove(B, sym);
 
