@@ -1,3 +1,11 @@
+//==--- DiagnosticASTKinds.def - libast diagnostics -------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
 
 #ifdef ASTSTART       
 __ASTSTART      = DIAG_START_AST,

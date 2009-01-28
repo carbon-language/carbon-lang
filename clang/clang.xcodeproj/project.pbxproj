@@ -1068,13 +1068,13 @@
 			isa = PBXGroup;
 			children = (
 				DED7D7310A524295003AD0FB /* Diagnostic.h */,
-				DED7D7320A524295003AD0FB /* DiagnosticKinds.def */,
 				DEA099FD0F302C65000C2258 /* DiagnosticAnalysis.h */,
 				DEA099FE0F302C65000C2258 /* DiagnosticAnalysisKinds.def */,
 				DEA099FF0F302C65000C2258 /* DiagnosticAST.h */,
 				DEA09A000F302C65000C2258 /* DiagnosticASTKinds.def */,
 				DEA09A010F302C65000C2258 /* DiagnosticCommonKinds.def */,
 				DEA09A020F302C65000C2258 /* DiagnosticDriver.h */,
+				DED7D7320A524295003AD0FB /* DiagnosticKinds.def */,
 				DEA09A030F302C65000C2258 /* DiagnosticLex.h */,
 				DEA09A040F302C65000C2258 /* DiagnosticLexKinds.def */,
 				DEA09A050F302C65000C2258 /* DiagnosticParse.h */,
