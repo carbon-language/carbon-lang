@@ -30,7 +30,7 @@ public:
   func btm : 1; // expected-error {{error: bit-field 'btm' with non-integral type}}
   NestedC bc : 1; // expected-error {{error: bit-field 'bc' with non-integral type}}
 
-  enum E { en1, en2 };
+  enum E1 { en1, en2 };
 
   int i = 0; // expected-error {{error: 'i' can only be initialized if it is a static const integral data member}}
   static int si = 0; // expected-error {{error: 'si' can only be initialized if it is a static const integral data member}}

@@ -384,23 +384,31 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
     }
     // Fall through - the typedef name was not a builtin type.
   }
-  // Verify the old decl was also a typedef.
-  TypedefDecl *Old = dyn_cast<TypedefDecl>(OldD);
+  // Verify the old decl was also a type.
+  TypeDecl *Old = dyn_cast<TypeDecl>(OldD);
   if (!Old) {
-    Diag(New->getLocation(), diag::err_redefinition_different_kind)
+    Diag(New->getLocation(), diag::err_redefinition_different_kind) 
       << New->getDeclName();
     if (!objc_types)
       Diag(OldD->getLocation(), diag::note_previous_definition);
     return New;
   }
-  
+
+  // Determine the "old" type we'll use for checking and diagnostics.  
+  QualType OldType;
+  if (TypedefDecl *OldTypedef = dyn_cast<TypedefDecl>(Old))
+    OldType = OldTypedef->getUnderlyingType();
+  else
+    OldType = Context.getTypeDeclType(Old);
+
   // If the typedef types are not identical, reject them in all languages and
   // with any extensions enabled.
-  if (Old->getUnderlyingType() != New->getUnderlyingType() && 
-      Context.getCanonicalType(Old->getUnderlyingType()) != 
+
+  if (OldType != New->getUnderlyingType() && 
+      Context.getCanonicalType(OldType) != 
       Context.getCanonicalType(New->getUnderlyingType())) {
     Diag(New->getLocation(), diag::err_redefinition_different_typedef)
-      << New->getUnderlyingType() << Old->getUnderlyingType();
+      << New->getUnderlyingType() << OldType;
     if (!objc_types)
       Diag(Old->getLocation(), diag::note_previous_definition);
     return New;
@@ -1276,8 +1284,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
 
   // In C++, the previous declaration we find might be a tag type
   // (class or enum). In this case, the new declaration will hide the
-  // tag type. 
-  if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
+  // tag type. Note that this does does not apply if we're declaring a
+  // typedef (C++ [dcl.typedef]p4).
+  if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag &&
+      D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef)
     PrevDecl = 0;
 
   QualType R = GetTypeForDeclarator(D, S);
@@ -2887,8 +2897,6 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   }
 
   if (PrevDecl) {    
-    assert((isa<TagDecl>(PrevDecl) || isa<NamespaceDecl>(PrevDecl)) &&
-            "unexpected Decl type");
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
@@ -2955,7 +2963,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
       // is non-NULL, it's a definition of the tag declared by
       // PrevDecl. If it's NULL, we have a new definition.
     } else {
-      // PrevDecl is a namespace.
+      // PrevDecl is a namespace, template, or anything else
+      // that lives in the IDNS_Tag identifier namespace.
       if (isDeclInScope(PrevDecl, SearchDC, S)) {
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
@@ -3052,6 +3061,30 @@ CreateNewDecl:
     // parsing of the struct).
     if (unsigned Alignment = PackContext.getAlignment())
       New->addAttr(new PackedAttr(Alignment * 8));
+  }
+
+  if (getLangOptions().CPlusPlus && SS.isEmpty() && Name && !Invalid) {
+    // C++ [dcl.typedef]p3:
+    //   [...] Similarly, in a given scope, a class or enumeration
+    //   shall not be declared with the same name as a typedef-name
+    //   that is declared in that scope and refers to a type other
+    //   than the class or enumeration itself.
+    LookupResult Lookup = LookupName(S, Name, 
+                                     LookupCriteria(LookupCriteria::Ordinary, 
+                                                    true, true));
+    TypedefDecl *PrevTypedef = 0;
+    if (Lookup.getKind() == LookupResult::Found)
+      PrevTypedef = dyn_cast<TypedefDecl>(Lookup.getAsDecl());
+
+    if (PrevTypedef && isDeclInScope(PrevTypedef, SearchDC, S) &&
+        Context.getCanonicalType(Context.getTypeDeclType(PrevTypedef)) !=
+          Context.getCanonicalType(Context.getTypeDeclType(New))) {
+      Diag(Loc, diag::err_tag_definition_of_typedef)
+        << Context.getTypeDeclType(New)
+        << PrevTypedef->getUnderlyingType();
+      Diag(PrevTypedef->getLocation(), diag::note_previous_definition);
+      Invalid = true;
+    }
   }
 
   if (Invalid)
