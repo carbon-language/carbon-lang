@@ -263,38 +263,50 @@ separate option groups syntactically.</p>
 <li><p class="first">Possible option types:</p>
 <blockquote>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">switch_option</span></tt> - a simple boolean switch without arguments,
-for example <tt class="docutils literal"><span class="pre">-O2</span></tt> or <tt class="docutils literal"><span class="pre">-time</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">parameter_option</span></tt> - option that takes one argument, for
-example <tt class="docutils literal"><span class="pre">-std=c99</span></tt>. It is also allowed to use spaces instead of
-the equality sign: <tt class="docutils literal"><span class="pre">-std</span> <span class="pre">c99</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">parameter_list_option</span></tt> - same as the above, but more than one
-option occurence is allowed.</li>
-<li><tt class="docutils literal"><span class="pre">prefix_option</span></tt> - same as the parameter_option, but the option
-name and argument do not have to be separated. Example:
-<tt class="docutils literal"><span class="pre">-ofile</span></tt>. This can be also specified as <tt class="docutils literal"><span class="pre">-o</span> <span class="pre">file</span></tt>; however,
-<tt class="docutils literal"><span class="pre">-o=file</span></tt> will be parsed incorrectly (<tt class="docutils literal"><span class="pre">=file</span></tt> will be
-interpreted as option value).</li>
-<li><tt class="docutils literal"><span class="pre">prefix_list_option</span></tt> - same as the above, but more than one
-occurence of the option is allowed; example: <tt class="docutils literal"><span class="pre">-lm</span> <span class="pre">-lpthread</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">alias_option</span></tt> - a special option type for creating
-aliases. Unlike other option types, aliases are not allowed to
-have any properties besides the aliased option name. Usage
-example: <tt class="docutils literal"><span class="pre">(alias_option</span> <span class="pre">&quot;preprocess&quot;,</span> <span class="pre">&quot;E&quot;)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">switch_option</span></tt> - a simple boolean switch without arguments, for example
+<tt class="docutils literal"><span class="pre">-O2</span></tt> or <tt class="docutils literal"><span class="pre">-time</span></tt>. At most one occurrence is allowed.</li>
+<li><tt class="docutils literal"><span class="pre">parameter_option</span></tt> - option that takes one argument, for example
+<tt class="docutils literal"><span class="pre">-std=c99</span></tt>. It is also allowed to use spaces instead of the equality
+sign: <tt class="docutils literal"><span class="pre">-std</span> <span class="pre">c99</span></tt>. At most one occurrence is allowed.</li>
+<li><tt class="docutils literal"><span class="pre">parameter_list_option</span></tt> - same as the above, but more than one option
+occurence is allowed.</li>
+<li><tt class="docutils literal"><span class="pre">prefix_option</span></tt> - same as the parameter_option, but the option name and
+argument do not have to be separated. Example: <tt class="docutils literal"><span class="pre">-ofile</span></tt>. This can be also
+specified as <tt class="docutils literal"><span class="pre">-o</span> <span class="pre">file</span></tt>; however, <tt class="docutils literal"><span class="pre">-o=file</span></tt> will be parsed incorrectly
+(<tt class="docutils literal"><span class="pre">=file</span></tt> will be interpreted as option value). At most one occurrence is
+allowed.</li>
+<li><tt class="docutils literal"><span class="pre">prefix_list_option</span></tt> - same as the above, but more than one occurence of
+the option is allowed; example: <tt class="docutils literal"><span class="pre">-lm</span> <span class="pre">-lpthread</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">alias_option</span></tt> - a special option type for creating aliases. Unlike other
+option types, aliases are not allowed to have any properties besides the
+aliased option name. Usage example: <tt class="docutils literal"><span class="pre">(alias_option</span> <span class="pre">&quot;preprocess&quot;,</span> <span class="pre">&quot;E&quot;)</span></tt></li>
 </ul>
 </blockquote>
 </li>
 <li><p class="first">Possible option properties:</p>
 <blockquote>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">help</span></tt> - help string associated with this option. Used for
-<tt class="docutils literal"><span class="pre">--help</span></tt> output.</li>
-<li><tt class="docutils literal"><span class="pre">required</span></tt> - this option is obligatory.</li>
+<li><tt class="docutils literal"><span class="pre">help</span></tt> - help string associated with this option. Used for <tt class="docutils literal"><span class="pre">--help</span></tt>
+output.</li>
+<li><tt class="docutils literal"><span class="pre">required</span></tt> - this option must be specified exactly once (or, in case of
+the list options without the <tt class="docutils literal"><span class="pre">multi_val</span></tt> property, at least
+once). Incompatible with <tt class="docutils literal"><span class="pre">zero_or_one</span></tt> and <tt class="docutils literal"><span class="pre">one_or_more</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">one_or_more</span></tt> - the option must be specified at least one time. Useful
+only for list options in conjunction with <tt class="docutils literal"><span class="pre">multi_val</span></tt>; for ordinary lists
+it is synonymous with <tt class="docutils literal"><span class="pre">required</span></tt>. Incompatible with <tt class="docutils literal"><span class="pre">required</span></tt> and
+<tt class="docutils literal"><span class="pre">zero_or_one</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">zero_or_one</span></tt> - the option can be specified zero or one times. Useful
+only for list options in conjunction with <tt class="docutils literal"><span class="pre">multi_val</span></tt>. Incompatible with
+<tt class="docutils literal"><span class="pre">required</span></tt> and <tt class="docutils literal"><span class="pre">one_or_more</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">hidden</span></tt> - the description of this option will not appear in
 the <tt class="docutils literal"><span class="pre">--help</span></tt> output (but will appear in the <tt class="docutils literal"><span class="pre">--help-hidden</span></tt>
 output).</li>
 <li><tt class="docutils literal"><span class="pre">really_hidden</span></tt> - the option will not be mentioned in any help
 output.</li>
+<li><tt class="docutils literal"><span class="pre">multi_val</span> <span class="pre">n</span></tt> - this option takes <em>n</em> arguments (can be useful in some
+special cases). Usage example: <tt class="docutils literal"><span class="pre">(parameter_list_option</span> <span class="pre">&quot;foo&quot;,</span> <span class="pre">(multi_val</span>
+<span class="pre">3))</span></tt>. Only list options can have this attribute; you can, however, use
+the <tt class="docutils literal"><span class="pre">one_or_more</span></tt> and <tt class="docutils literal"><span class="pre">zero_or_one</span></tt> properties.</li>
 <li><tt class="docutils literal"><span class="pre">extern</span></tt> - this option is defined in some other plugin, see below.</li>
 </ul>
 </blockquote>
@@ -526,15 +538,20 @@ output languages should match. This is enforced at compile-time.</p>
 <div class="section">
 <h2><a class="toc-backref" href="#id16" id="hooks-and-environment-variables" name="hooks-and-environment-variables"><span id="hooks"></span>Hooks and environment variables</a></h2>
 <p>Normally, LLVMC executes programs from the system <tt class="docutils literal"><span class="pre">PATH</span></tt>. Sometimes,
-this is not sufficient: for example, we may want to specify tool names
-in the configuration file. This can be achieved via the mechanism of
-hooks - to write your own hooks, just add their definitions to the
-<tt class="docutils literal"><span class="pre">PluginMain.cpp</span></tt> or drop a <tt class="docutils literal"><span class="pre">.cpp</span></tt> file into the
-<tt class="docutils literal"><span class="pre">$LLVMC_DIR/driver</span></tt> directory. Hooks should live in the <tt class="docutils literal"><span class="pre">hooks</span></tt>
-namespace and have the signature <tt class="docutils literal"><span class="pre">std::string</span> <span class="pre">hooks::MyHookName</span>
-<span class="pre">(void)</span></tt>. They can be used from the <tt class="docutils literal"><span class="pre">cmd_line</span></tt> tool property:</p>
+this is not sufficient: for example, we may want to specify tool paths
+or names in the configuration file. This can be easily achieved via
+the hooks mechanism. To write your own hooks, just add their
+definitions to the <tt class="docutils literal"><span class="pre">PluginMain.cpp</span></tt> or drop a <tt class="docutils literal"><span class="pre">.cpp</span></tt> file into the
+your plugin directory. Hooks should live in the <tt class="docutils literal"><span class="pre">hooks</span></tt> namespace
+and have the signature <tt class="docutils literal"><span class="pre">std::string</span> <span class="pre">hooks::MyHookName</span> <span class="pre">([const</span> <span class="pre">char*</span>
+<span class="pre">Arg0</span> <span class="pre">[</span> <span class="pre">const</span> <span class="pre">char*</span> <span class="pre">Arg2</span> <span class="pre">[,</span> <span class="pre">...]]])</span></tt>. They can be used from the
+<tt class="docutils literal"><span class="pre">cmd_line</span></tt> tool property:</p>
 <pre class="literal-block">
 (cmd_line &quot;$CALL(MyHook)/path/to/file -o $CALL(AnotherHook)&quot;)
+</pre>
+<p>To pass arguments to hooks, use the following syntax:</p>
+<pre class="literal-block">
+(cmd_line &quot;$CALL(MyHook, 'Arg1', 'Arg2', 'Arg # 3')/path/to/file -o1 -o2&quot;)
 </pre>
 <p>It is also possible to use environment variables in the same manner:</p>
 <pre class="literal-block">
