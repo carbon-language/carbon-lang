@@ -210,7 +210,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
     } else {
       // 'super' has been used outside a method context. If a variable named
       // 'super' has been declared, redirect. If not, produce a diagnostic.
-      Decl *SuperDecl = LookupDecl(receiverName, Decl::IDNS_Ordinary, S, false);
+      Decl *SuperDecl = LookupDecl(receiverName, Decl::IDNS_Ordinary, S);
       ValueDecl *VD = dyn_cast_or_null<ValueDecl>(SuperDecl);
       if (VD) {
         ExprResult ReceiverExpr = new DeclRefExpr(VD, VD->getType(), 
@@ -235,7 +235,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   //
   // If necessary, the following lookup could move to getObjCInterfaceDecl().
   if (!ClassDecl) {
-    Decl *IDecl = LookupDecl(receiverName, Decl::IDNS_Ordinary, 0, false);
+    Decl *IDecl = LookupDecl(receiverName, Decl::IDNS_Ordinary, 0);
     if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl)) {
       const ObjCInterfaceType *OCIT;
       OCIT = OCTD->getUnderlyingType()->getAsObjCInterfaceType();

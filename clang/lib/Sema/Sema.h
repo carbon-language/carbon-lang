@@ -784,8 +784,7 @@ public:
                                 DeclarationName Name, LookupCriteria Criteria);
   LookupResult LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                           const DeclContext *LookupCtx = 0,
-                          bool LookInParent = true,
-                          bool NamespaceNameOnly = false);
+                          bool LookInParent = true);
 
   bool DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
                                SourceLocation NameLoc, 

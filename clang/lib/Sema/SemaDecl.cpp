@@ -215,7 +215,7 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
   // The third "scope" argument is 0 since we aren't enabling lazy built-in
   // creation from this context.
-  Decl *IDecl = LookupDecl(Id, Decl::IDNS_Ordinary, 0, false);
+  Decl *IDecl = LookupDecl(Id, Decl::IDNS_Ordinary, 0);
   
   return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
 }
@@ -263,14 +263,10 @@ Scope *Sema::getNonFieldDeclScope(Scope *S) {
 Sema::LookupResult
 Sema::LookupDecl(DeclarationName Name, unsigned NSI, Scope *S,
                  const DeclContext *LookupCtx,
-                 bool LookInParent,
-                 bool NamespaceNameOnly) {
+                 bool LookInParent) {
   LookupCriteria::NameKind Kind;
   if (NSI == Decl::IDNS_Ordinary) {
-    if (NamespaceNameOnly)
-      Kind = LookupCriteria::Namespace;
-    else
-      Kind = LookupCriteria::Ordinary;
+    Kind = LookupCriteria::Ordinary;
   } else if (NSI == Decl::IDNS_Tag) 
     Kind = LookupCriteria::Tag;
   else {
@@ -780,7 +776,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
       Decl *PrevDecl = LookupDecl((*F)->getDeclName(), Decl::IDNS_Ordinary,
-                                  S, Owner, false, false);
+                                  S, Owner, false);
       if (PrevDecl && !isa<TagDecl>(PrevDecl)) {
         // C++ [class.union]p2:
         //   The names of the members of an anonymous union shall be
@@ -3235,7 +3231,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
 
   if (II) {
     Decl *PrevDecl 
-      = LookupDecl(II, Decl::IDNS_Member, S, 0, false, false);
+      = LookupDecl(II, Decl::IDNS_Member, S, 0, false);
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;
@@ -3328,7 +3324,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   
   if (II) {
     Decl *PrevDecl 
-      = LookupDecl(II, Decl::IDNS_Member, S, 0, false, false);
+      = LookupDecl(II, Decl::IDNS_Member, S, 0, false);
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;
