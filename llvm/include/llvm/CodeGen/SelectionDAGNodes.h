@@ -63,6 +63,13 @@ namespace ISD {
   /// ISD::NodeType enum - This enum defines all of the operators valid in a
   /// SelectionDAG.
   ///
+  /// These are sometimes called the target-independent operators; targets
+  /// may also define target-dependent operators. For example, on x86, these
+  /// are the enum values in the X86ISD namespace. Targets should aim to use
+  /// target-independent operators to model their instruction sets as much
+  /// as possible, and only use target-dependent operators when they have
+  /// special requirements.
+  ///
   enum NodeType {
     // DELETED_NODE - This is an illegal flag value that is used to catch
     // errors.  This opcode is not a legal opcode for any node.
