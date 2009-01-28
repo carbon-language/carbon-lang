@@ -1,6 +1,5 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
-; RUN:   not grep alloca
-; END.
+; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | not grep alloca
+; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep {load <4 x float>}
 
 define void @test(<4 x float>* %F, float %f) {
 entry:
