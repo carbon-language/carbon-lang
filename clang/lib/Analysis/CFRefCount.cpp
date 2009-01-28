@@ -2356,8 +2356,15 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
       os << " returns an Objective-C object with a ";
     }
     
-    if (CurrV.isOwned())
-        os << "+1 retain count (owning reference).";
+    if (CurrV.isOwned()) {
+      os << "+1 retain count (owning reference).";
+      
+      if (static_cast<CFRefBug&>(getBugType()).getTF().isGCEnabled()) {
+        assert(CurrV.getObjKind() == RetEffect::CF);
+        os << "  "
+          "Core Foundation objects are not automatically garbage collected.";
+      }
+    }
     else {
       assert (CurrV.isNotOwned());
       os << "+0 retain count (non-owning reference).";

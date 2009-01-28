@@ -26,6 +26,7 @@ typedef signed char BOOL;
 static __inline__ __attribute__((always_inline)) id NSMakeCollectable(CFTypeRef cf) {}
 @protocol NSObject  - (BOOL)isEqual:(id)object;
 - (oneway void)release;
+- (id)retain;
 @end
 @class NSArray;
 
@@ -46,7 +47,7 @@ CFAbsoluteTime f1_use_after_release() {
 
 // The following two test cases verifies that CFMakeCollectable is a no-op
 // in non-GC mode and a "release" in GC mode.
-CFAbsoluteTime f2_leak() {
+CFAbsoluteTime f2_use_after_release() {
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
   CFDateRef date = CFDateCreate(0, t);
   CFRetain(date);
@@ -66,6 +67,11 @@ CFAbsoluteTime f2_noleak() {
   t = CFDateGetAbsoluteTime(date);  // no-warning
   CFRelease(date); // no-warning
   return t;
+}
+
+void f3_leak_with_gc() {
+  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+  [[(id) date retain] release]; // expected-warning{{leak}}
 }
 
 // The following test case verifies that we "stop tracking" a retained object
