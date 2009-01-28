@@ -2338,6 +2338,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
         os << "Call to function '" << FV->getDecl()->getNameAsString() <<'\'';
       else
         os << "function call";
+      
+      os << " returns an object with a ";
     }          
     else {
       assert (isa<ObjCMessageExpr>(S));
