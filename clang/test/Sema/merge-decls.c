@@ -17,3 +17,6 @@ int funcdef();
 int funcdef2() { return 0; } // expected-note {{previous definition is here}}
 int funcdef2() { return 0; } // expected-error {{redefinition of 'funcdef2'}}
 
+// PR2502
+void (*f)(void);
+void (*f)() = 0;
