@@ -2348,7 +2348,13 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
       os << "Method";
     }
     
-    os << " returns an object with a ";
+    if (CurrV.getObjKind() == RetEffect::CF) {
+      os << " returns a Core Foundation object with a ";
+    }
+    else {
+      assert (CurrV.getObjKind() == RetEffect::ObjC);
+      os << " returns an Objective-C object with a ";
+    }
     
     if (CurrV.isOwned())
         os << "+1 retain count (owning reference).";
