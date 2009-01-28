@@ -11,7 +11,6 @@ add_llvm_library(LLVMAnalysis
   ConstantFolding.cpp
   DbgInfoPrinter.cpp
   DebugInfo.cpp
-  EscapeAnalysis.cpp
   InstCount.cpp
   Interval.cpp
   IntervalPartition.cpp

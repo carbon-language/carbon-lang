@@ -349,10 +349,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\EscapeAnalysis.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\lib\Analysis\InstCount.cpp"
 				>
 			</File>

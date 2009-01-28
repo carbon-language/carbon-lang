@@ -16,7 +16,6 @@
 #define LLVM_LINKALLPASSES_H
 
 #include "llvm/Analysis/AliasSetTracker.h"
-#include "llvm/Analysis/EscapeAnalysis.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/LoopVR.h"
@@ -132,7 +131,6 @@ namespace {
       (void)new llvm::FindUsedTypes();
       (void)new llvm::ScalarEvolution();
       (void)new llvm::LoopVR();
-      (void)new llvm::EscapeAnalysis();
       ((llvm::Function*)0)->viewCFGOnly();
       llvm::AliasSetTracker X(*(llvm::AliasAnalysis*)0);
       X.add((llvm::Value*)0, 0);  // for -print-alias-sets
