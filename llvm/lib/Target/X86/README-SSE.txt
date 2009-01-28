@@ -907,3 +907,8 @@ We should be able to use:
   cvtsi2ss 8($esp), %xmm0
 since we know the stack slot is already zext'd.
 
+//===---------------------------------------------------------------------===//
+
+Consider using movlps instead of movsd to implement (scalar_to_vector (loadf64))
+when code size is critical. movlps is slower than movsd on core2 but it's one
+byte shorter.
