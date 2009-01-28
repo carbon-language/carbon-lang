@@ -71,7 +71,7 @@ public:
   void VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
     EmitAggLoadOfLValue(E);
   }
-
+  
   // Operators.
   //  case Expr::UnaryOperatorClass:
   //  case Expr::CastExprClass: 
@@ -303,11 +303,6 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 }
 
 void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
-  if (E->hadDesignators()) {
-    CGF.ErrorUnsupported(E, "initializer list with designators");
-    return;
-  }
-  
   const llvm::PointerType *APType =
     cast<llvm::PointerType>(DestPtr->getType());
   const llvm::Type *DestType = APType->getElementType();
@@ -346,6 +341,8 @@ void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
   // FIXME: Are initializers affected by volatile?
   if (E->getType()->isComplexType()) {
     CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
+  } else if (isa<CXXZeroInitValueExpr>(E)) {
+    EmitNullInitializationToLValue(LV, E->getType());
   } else if (CGF.hasAggregateLLVMType(E->getType())) {
     CGF.EmitAnyExpr(E, LV.getAddress(), false);
   } else {
@@ -380,11 +377,6 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
 }
 
 void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
-  if (E->hadDesignators()) {
-    CGF.ErrorUnsupported(E, "initializer list with designators");
-    return;
-  }
-
 #if 0
   // FIXME: Disabled while we figure out what to do about 
   // test/CodeGen/bitfield.c
@@ -426,7 +418,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
     uint64_t NumArrayElements = AType->getNumElements();
     QualType ElementType = CGF.getContext().getCanonicalType(E->getType());
-    ElementType =CGF.getContext().getAsArrayType(ElementType)->getElementType();
+    ElementType = CGF.getContext().getAsArrayType(ElementType)->getElementType();
     
     unsigned CVRqualifier = ElementType.getCVRQualifiers();
 
@@ -479,7 +471,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     }
 
     // Unions only initialize one field.
-    // (things can get weird with designators, but they aren't
+    // (FIXME: things can get weird with designators, but they aren't
     // supported yet.)
     if (isUnion)
       break;

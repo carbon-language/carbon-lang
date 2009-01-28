@@ -2310,7 +2310,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         // (struct objc_super) { <exprs from above> }
         InitListExpr *ILE = new InitListExpr(SourceLocation(), 
                                              &InitExprs[0], InitExprs.size(), 
-                                             SourceLocation(), false);
+                                             SourceLocation());
         SuperRep = new CompoundLiteralExpr(SourceLocation(), superType, ILE,
                                            false);
         // struct objc_super *
@@ -2391,7 +2391,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         // (struct objc_super) { <exprs from above> }
         InitListExpr *ILE = new InitListExpr(SourceLocation(), 
                                              &InitExprs[0], InitExprs.size(), 
-                                             SourceLocation(), false);
+                                             SourceLocation());
         SuperRep = new CompoundLiteralExpr(SourceLocation(), superType, ILE, false);
       }
       MsgExprs.push_back(SuperRep);

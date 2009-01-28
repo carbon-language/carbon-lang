@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -pedantic %s
+// RUN: clang -fsyntax-only -pedantic -verify %s
 
 extern int foof() = 1; // expected-error{{illegal initializer (only variables can be initialized)}}
 
@@ -101,6 +101,7 @@ void legal() {
     { 2, 3 },
     { 4, 5, 6 }
   };
+  int q_sizecheck[(sizeof(q) / sizeof(short [3][2])) == 3? 1 : -1];
 }
 
 unsigned char asso_values[] = { 34 };
@@ -134,15 +135,19 @@ typedef int AryT[];
 void testTypedef()
 {
   AryT a = { 1, 2 }, b = { 3, 4, 5 };
+  int a_sizecheck[(sizeof(a) / sizeof(int)) == 2? 1 : -1];
+  int b_sizecheck[(sizeof(b) / sizeof(int)) == 3? 1 : -1];
 }
 
 static char const xx[] = "test";
+int xx_sizecheck[(sizeof(xx) / sizeof(char)) == 5? 1 : -1];
 static char const yy[5] = "test";
 static char const zz[3] = "test"; // expected-warning{{initializer-string for char array is too long}}
 
 void charArrays()
 {
 	static char const test[] = "test";
+        int test_sizecheck[(sizeof(test) / sizeof(char)) == 5? 1 : -1];
 	static char const test2[] = { "weird stuff" };
 	static char const test3[] = { "test", "excess stuff" }; // expected-error{{excess elements in char array initializer}}
 
@@ -171,6 +176,7 @@ void variableArrayInit() {
 float r1[10] = {{7}}; //expected-warning{{braces around scalar initializer}}
 float r2[] = {{8}}; //expected-warning{{braces around scalar initializer}}
 char r3[][5] = {1,2,3,4,5,6};
+int r3_sizecheck[(sizeof(r3) / sizeof(char[5])) == 2? 1 : -1];
 char r3_2[sizeof r3 == 10 ? 1 : -1];
 float r4[1][2] = {1,{2},3,4}; //expected-warning{{braces around scalar initializer}} expected-warning{{excess elements in array initializer}}
 char r5[][5] = {"aa", "bbb", "ccccc"};
@@ -195,7 +201,7 @@ int bar (void) {
   return z.z; 
 } 
 struct s3 {void (*a)(void);} t5 = {autoStructTest};
-// GCC extension; flexible array init. Once this is implemented, the warning should be removed.
+// FIXME: GCC extension; flexible array init. Once this is implemented, the warning should be removed.
 // Note that clang objc implementation depends on this extension.
 struct {int a; int b[];} t6 = {1, {1, 2, 3}}; //expected-warning{{excess elements in array initializer}}
 union {char a; int b;} t7[] = {1, 2, 3};
@@ -238,3 +244,21 @@ struct soft_segment_descriptor gdt_segs[] = {
 
 static void sppp_ipv6cp_up();
 const struct {} ipcp = { sppp_ipv6cp_up }; //expected-warning{{empty struct extension}} expected-warning{{excess elements in array initializer}}
+
+struct _Matrix { union { float m[4][4]; }; }; //expected-warning{{anonymous unions are a GNU extension in C}}
+typedef struct _Matrix Matrix;
+void test_matrix() {
+  const Matrix mat1 = {
+    { { 1.0f, 2.0f, 3.0f, 4.0f,
+        5.0f, 6.0f, 7.0f, 8.0f,
+        9.0f, 10.0f, 11.0f, 12.0f,
+        13.0f, 14.0f, 15.0f, 16.0f } }
+  };
+
+  const Matrix mat2 = {
+    1.0f, 2.0f, 3.0f, 4.0f,
+    5.0f, 6.0f, 7.0f, 8.0f,
+    9.0f, 10.0f, 11.0f, 12.0f,
+    13.0f, 14.0f, 15.0f, 16.0f 
+  };
+}

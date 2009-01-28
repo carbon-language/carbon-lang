@@ -28,6 +28,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include <string>
 #include <vector>
+#include <map>
 
 namespace llvm {
   class APSInt;
@@ -1835,38 +1836,67 @@ private:
 class InitListChecker {
   Sema *SemaRef;
   bool hadError;
+  std::map<InitListExpr *, InitListExpr *> SyntacticToSemantic;
+  InitListExpr *FullyStructuredList;
   
   void CheckImplicitInitList(InitListExpr *ParentIList, QualType T, 
-                             unsigned &Index);
+                             unsigned &Index, InitListExpr *StructuredInitList,
+                             unsigned &StructuredInitIndex);
   void CheckExplicitInitList(InitListExpr *IList, QualType &T,
-                             unsigned &Index);
-
+                             unsigned &Index, InitListExpr *StructuredInitList,
+                             unsigned &StructuredInitIndex);
   void CheckListElementTypes(InitListExpr *IList, QualType &DeclType, 
                              bool SubobjectIsDesignatorContext, 
-                             unsigned &Index);
+                             unsigned &Index,
+                             InitListExpr *StructuredInitList,
+                             unsigned &StructuredInitIndex);
   void CheckSubElementType(InitListExpr *IList, QualType ElemType, 
-                           Expr *expr, unsigned &Index);
+                           Expr *expr, unsigned &Index,
+                           InitListExpr *StructuredInitList,
+                           unsigned &StructuredInitIndex);
   // FIXME: Does DeclType need to be a reference type?
   void CheckScalarType(InitListExpr *IList, QualType &DeclType, 
-                       Expr *expr, unsigned &Index);
-  void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index);
+                       Expr *expr, unsigned &Index,
+                       InitListExpr *StructuredInitList,
+                       unsigned &StructuredInitIndex);
+  void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index,
+                       InitListExpr *StructuredInitList,
+                       unsigned &StructuredInitIndex);
   void CheckStructUnionTypes(InitListExpr *IList, QualType DeclType, 
                              RecordDecl::field_iterator Field, 
-                             bool SubobjectIsDesignatorContext, unsigned &Index);
+                             bool SubobjectIsDesignatorContext, unsigned &Index,
+                             InitListExpr *StructuredInitList,
+                             unsigned &StructuredInitIndex);
   void CheckArrayType(InitListExpr *IList, QualType &DeclType, 
                       llvm::APSInt elementIndex, 
-                      bool SubobjectIsDesignatorContext, unsigned &Index);
+                      bool SubobjectIsDesignatorContext, unsigned &Index,
+                      InitListExpr *StructuredInitList,
+                      unsigned &StructuredInitIndex);
   bool CheckDesignatedInitializer(InitListExpr *IList, DesignatedInitExpr *DIE, 
                                   DesignatedInitExpr::designators_iterator D,
                                   QualType &CurrentObjectType, 
                                   RecordDecl::field_iterator *NextField,
                                   llvm::APSInt *NextElementIndex,
-                                  unsigned &Index);
+                                  unsigned &Index,
+                                  InitListExpr *StructuredList,
+                                  unsigned &StructuredIndex);
+  InitListExpr *getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
+                                           QualType CurrentObjectType,
+                                           InitListExpr *StructuredList,
+                                           unsigned StructuredIndex,
+                                           SourceRange InitRange);
+  void UpdateStructuredListElement(InitListExpr *StructuredInitList,
+                                   unsigned &StructuredInitIndex,
+                                   Expr *expr);
   int numArrayElements(QualType DeclType);
   int numStructUnionElements(QualType DeclType);
 public:
   InitListChecker(Sema *S, InitListExpr *IL, QualType &T);
   bool HadError() { return hadError; }
+
+  // @brief Retrieves the fully-structured initializer list used for
+  // semantic analysis and code generation.
+  InitListExpr *getFullyStructuredList() const { return FullyStructuredList; }
 };
 
 /// BlockSemaInfo - When a block is being parsed, this contains information

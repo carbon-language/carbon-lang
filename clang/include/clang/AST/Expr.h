@@ -185,6 +185,10 @@ public:
   /// initializer, which can be emitted at compile-time.
   bool isConstantInitializer(ASTContext &Ctx) const;
   
+  /// @brief Determines whether this expression (or any of its
+  /// subexpressions) has side effects.
+  bool hasSideEffects(ASTContext &Ctx) const;
+
   /// EvalResult is a struct with detailed info about an evaluated expression.
   struct EvalResult {
     /// Val - This is the scalar value the expression can be folded to.
@@ -1619,48 +1623,65 @@ public:
   static VAArgExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
-/// InitListExpr - used for struct and array initializers, such as:
-///    struct foo x = { 1, { 2, 3 } };
+/// @brief Describes an C or C++ initializer list.
 ///
-/// Because C is somewhat loose with braces, the AST does not necessarily
-/// directly model the C source.  Instead, the semantic analyzer aims to make
-/// the InitListExprs match up with the type of the decl being initialized.  We
-/// have the following exceptions:
+/// InitListExpr describes an initializer list, which can be used to
+/// initialize objects of different types, including
+/// struct/class/union types, arrays, and vectors. For example:
 ///
-///  1. Elements at the end of the list may be dropped from the initializer.  
-///     These elements are defined to be initialized to zero.  For example:
-///         int x[20] = { 1 };
-///  2. Initializers may have excess initializers which are to be ignored by the
-///     compiler.  For example:
-///         int x[1] = { 1, 2 };
-///  3. Redundant InitListExprs may be present around scalar elements.  These
-///     always have a single element whose type is the same as the InitListExpr.
-///     this can only happen for Type::isScalarType() types.
-///         int x = { 1 };  int y[2] = { {1}, {2} };
+/// @code
+/// struct foo x = { 1, { 2, 3 } };
+/// @endcode
 ///
+/// Prior to semantic analysis, an initializer list will represent the
+/// initializer list as written by the user, but will have the
+/// placeholder type "void". This initializer list is called the
+/// syntactic form of the initializer, and may contain C99 designated
+/// initializers (represented as DesignatedInitExprs), initializations
+/// of subobject members without explicit braces, and so on. Clients
+/// interested in the original syntax of the initializer list should
+/// use the syntactic form of the initializer list.
+///
+/// After semantic analysis, the initializer list will represent the
+/// semantic form of the initializer, where the initializations of all
+/// subobjects are made explicit with nested InitListExpr nodes and
+/// C99 designators have been eliminated by placing the designated
+/// initializations into the subobject they initialize. Additionally,
+/// any "holes" in the initialization, where no initializer has been
+/// specified for a particular subobject, will be replaced with
+/// implicitly-generated CXXZeroInitValueExpr expressions that
+/// value-initialize the subobjects. Note, however, that the
+/// initializer lists may still have fewer initializers than there are
+/// elements to initialize within the object.
+///
+/// Given the semantic form of the initializer list, one can retrieve
+/// the original syntactic form of that initializer list (if it
+/// exists) using getSyntacticForm(). Since many initializer lists
+/// have the same syntactic and semantic forms, getSyntacticForm() may
+/// return NULL, indicating that the current initializer list also
+/// serves as its syntactic form.
 class InitListExpr : public Expr {
   std::vector<Stmt *> InitExprs;
   SourceLocation LBraceLoc, RBraceLoc;
   
-  /// HadDesignators - Return true if there were any designators in this
-  /// init list expr.  FIXME: this should be replaced by storing the designators
-  /// somehow and updating codegen.
-  bool HadDesignators;
+  /// Contains the initializer list that describes the syntactic form
+  /// written in the source code.
+  InitListExpr *SyntacticForm;
+
 public:
   InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
-               SourceLocation rbraceloc, bool HadDesignators);
+               SourceLocation rbraceloc);
   
   unsigned getNumInits() const { return InitExprs.size(); }
-  bool hadDesignators() const { return HadDesignators; }
   
   const Expr* getInit(unsigned Init) const { 
     assert(Init < getNumInits() && "Initializer access out of range!");
-    return cast<Expr>(InitExprs[Init]);
+    return cast_or_null<Expr>(InitExprs[Init]);
   }
   
   Expr* getInit(unsigned Init) { 
     assert(Init < getNumInits() && "Initializer access out of range!");
-    return cast<Expr>(InitExprs[Init]);
+    return cast_or_null<Expr>(InitExprs[Init]);
   }
   
   void setInit(unsigned Init, Expr *expr) { 
@@ -1668,13 +1689,22 @@ public:
     InitExprs[Init] = expr;
   }
 
-  // Dynamic removal/addition (for constructing implicit InitExpr's).
-  void removeInit(unsigned Init) {
-    InitExprs.erase(InitExprs.begin()+Init);
-  }
-  void addInit(unsigned Init, Expr *expr) {
-    InitExprs.insert(InitExprs.begin()+Init, expr);
-  }
+  /// @brief Specify the number of initializers
+  ///
+  /// If there are more than @p NumInits initializers, the remaining
+  /// initializers will be destroyed. If there are fewer than @p
+  /// NumInits initializers, NULL expressions will be added for the
+  /// unknown initializers.
+  void resizeInits(ASTContext &Context, unsigned NumInits);
+
+  /// @brief Updates the initializer at index @p Init with the new
+  /// expression @p expr, and returns the old expression at that
+  /// location.
+  ///
+  /// When @p Init is out of range for this initializer list, the
+  /// initializer list will be extended with NULL expressions to
+  /// accomodate the new entry.
+  Expr *updateInit(unsigned Init, Expr *expr);
 
   // Explicit InitListExpr's originate from source code (and have valid source
   // locations). Implicit InitListExpr's are created by the semantic analyzer.
@@ -1682,6 +1712,13 @@ public:
     return LBraceLoc.isValid() && RBraceLoc.isValid();
   }
   
+  /// @brief Retrieve the initializer list that describes the
+  /// syntactic form of the initializer.
+  ///
+  /// 
+  InitListExpr *getSyntacticForm() const { return SyntacticForm; }
+  void setSyntacticForm(InitListExpr *Init) { SyntacticForm = Init; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(LBraceLoc, RBraceLoc);
   } 
@@ -1884,6 +1921,13 @@ public:
       assert(Kind == ArrayRangeDesignator &&
              "Only valid on an array-range designator");
       return SourceLocation::getFromRawEncoding(ArrayOrRange.EllipsisLoc);
+    }
+
+    SourceLocation getStartLocation() const {
+      if (Kind == FieldDesignator)
+        return getDotLoc().isInvalid()? getFieldLoc() : getDotLoc();
+      else
+        return getLBracketLoc();
     }
   };
 

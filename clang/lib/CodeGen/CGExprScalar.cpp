@@ -176,11 +176,6 @@ public:
     if (!VType) 
       return Visit(E->getInit(0));
     
-    if (E->hadDesignators()) {
-      CGF.ErrorUnsupported(E, "initializer list with designators");
-      return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
-    }
-    
     unsigned NumVectorElements = VType->getNumElements();
     const llvm::Type *ElementType = VType->getElementType();
 

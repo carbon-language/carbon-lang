@@ -1985,7 +1985,7 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
   // CheckInitializer() - it requires knowledge of the object being intialized. 
 
   InitListExpr *E = new (Context) InitListExpr(LBraceLoc, InitList, NumInit, 
-                                    RBraceLoc, Designators.hasAnyDesignators());
+                                               RBraceLoc);
   E->setType(Context.VoidTy); // FIXME: just a place holder for now.
   return Owned(E);
 }
@@ -3988,8 +3988,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   // Otherwise, create a compound literal expression as the base, and
   // iteratively process the offsetof designators.
   InitListExpr *IList =
-      new (Context) InitListExpr(SourceLocation(), 0, 0,
-                                 SourceLocation(), false);
+      new (Context) InitListExpr(SourceLocation(), 0, 0, SourceLocation());
   IList->setType(ArgTy);
   Expr *Res =
       new (Context) CompoundLiteralExpr(SourceLocation(), ArgTy, IList, false);

@@ -477,6 +477,12 @@ public:
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
+  /// @brief Whether this initialization expression was
+  /// implicitly-generated.
+  bool isImplicit() const { 
+    return TyBeginLoc.isInvalid() && RParenLoc.isInvalid(); 
+  }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(TyBeginLoc, RParenLoc);
   }

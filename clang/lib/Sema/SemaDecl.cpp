@@ -1136,6 +1136,9 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   }
 
   InitListChecker CheckInitList(this, InitList, DeclType);
+  if (!CheckInitList.HadError())
+    Init = CheckInitList.getFullyStructuredList();
+
   return CheckInitList.HadError();
 }
 
@@ -2209,6 +2212,12 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
     for (unsigned i = 0; i < numInits; i++) {
       // FIXME: Need to get the type of the declaration for C++,
       // because it could be a reference?
+
+      // Implicitly-generated value initializations are okay.
+      if (isa<CXXZeroInitValueExpr>(Exp->getInit(i)) &&
+          cast<CXXZeroInitValueExpr>(Exp->getInit(i))->isImplicit()) 
+        continue;
+
       if (CheckForConstantInitializer(Exp->getInit(i),
                                       Exp->getInit(i)->getType()))
         return true;

@@ -872,13 +872,38 @@ void StmtPrinter::VisitInitListExpr(InitListExpr* Node) {
   OS << "{ ";
   for (unsigned i = 0, e = Node->getNumInits(); i != e; ++i) {
     if (i) OS << ", ";
-    PrintExpr(Node->getInit(i));
+    if (Node->getInit(i))
+      PrintExpr(Node->getInit(i));
+    else
+      OS << "0";
   }
   OS << " }";
 }
 
 void StmtPrinter::VisitDesignatedInitExpr(DesignatedInitExpr *Node) {
-  // FIXME!
+  for (DesignatedInitExpr::designators_iterator D = Node->designators_begin(),
+                      DEnd = Node->designators_end();
+       D != DEnd; ++D) {
+    if (D->isFieldDesignator()) {
+      if (D->getDotLoc().isInvalid())
+        OS << D->getFieldName()->getName() << ":";
+      else
+        OS << "." << D->getFieldName()->getName();
+    } else {
+      OS << "[";
+      if (D->isArrayDesignator()) {
+        PrintExpr(Node->getArrayIndex(*D));
+      } else {
+        PrintExpr(Node->getArrayRangeStart(*D));
+        OS << " ... ";
+        PrintExpr(Node->getArrayRangeEnd(*D));        
+      }
+      OS << "]";
+    }
+  }
+
+  OS << " = ";
+  PrintExpr(Node->getInit());
 }
 
 void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
@@ -1187,7 +1212,9 @@ void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dumpPretty() const {
-  printPretty(llvm::errs());
+  llvm::raw_ostream &OS = llvm::errs();
+  printPretty(OS);
+  OS.flush();
 }
 
 void Stmt::printPretty(llvm::raw_ostream &OS, PrinterHelper* Helper) const {

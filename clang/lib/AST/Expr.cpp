@@ -221,11 +221,29 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
 
 InitListExpr::InitListExpr(SourceLocation lbraceloc, 
                            Expr **initExprs, unsigned numInits,
-                           SourceLocation rbraceloc, bool hadDesignators)
+                           SourceLocation rbraceloc)
   : Expr(InitListExprClass, QualType()),
-    LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), HadDesignators(hadDesignators) {
+    LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), SyntacticForm(0) {
 
   InitExprs.insert(InitExprs.end(), initExprs, initExprs+numInits);
+}
+
+void InitListExpr::resizeInits(ASTContext &Context, unsigned NumInits) {
+  for (unsigned Idx = NumInits, LastIdx = InitExprs.size(); Idx < LastIdx; ++Idx)
+    delete InitExprs[Idx];
+  InitExprs.resize(NumInits, 0);
+}
+
+Expr *InitListExpr::updateInit(unsigned Init, Expr *expr) {
+  if (Init >= InitExprs.size()) {
+    InitExprs.insert(InitExprs.end(), Init - InitExprs.size() + 1, 0);
+    InitExprs.back() = expr;
+    return 0;
+  }
+  
+  Expr *Result = cast_or_null<Expr>(InitExprs[Init]);
+  InitExprs[Init] = expr;
+  return Result;
 }
 
 /// getFunctionType - Return the underlying function type for this block.
@@ -738,6 +756,12 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   }
 
   return isEvaluatable(Ctx);
+}
+
+bool Expr::hasSideEffects(ASTContext &Ctx) const {
+  EvalResult Result;
+  Evaluate(Result, Ctx);
+  return Result.HasSideEffects;
 }
 
 /// isIntegerConstantExpr - this recursive routine will test if an expression is

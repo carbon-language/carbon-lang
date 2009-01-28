@@ -50,8 +50,20 @@ DIAG(err_field_designator_nonfield, ERROR,
      "field designator %0 does not refer to a non-static data member")
 DIAG(note_field_designator_found, NOTE,
      "field designator refers here")
+DIAG(err_field_designator_anon_class, ERROR,
+     "field designator %0 refers to a member of an anonymous %select{struct|class|union}1")
 DIAG(err_designator_for_scalar_init, ERROR,
      "designator in initializer for scalar type %0")
+DIAG(warn_subobject_initializer_overrides, WARNING,
+     "subobject initialization overrides initialization of other fields within its enclosing subobject")
+DIAG(warn_initializer_overrides, WARNING,
+     "initializer overrides prior initialization of this subobject")
+DIAG(note_previous_initializer, NOTE,
+     "previous initialization %select{|with side effects }0is here%select{| (side effects may not occur at run time)}0")
+DIAG(warn_gnu_array_range_designator_unsupported, WARNING,
+     "GNU array-range designator extension is unsupported")
+DIAG(warn_designator_into_union_broken_init, WARNING,
+     "designated initialization of union member is broken")
 
 // Declarations.
 DIAG(ext_vla, EXTENSION,

@@ -242,6 +242,8 @@ public:
     const llvm::Type *Ty = ConvertType(ILE->getType());
 
     // Find the field decl we're initializing, if any
+    // FIXME: C99 designated initializers won't always initialize the 
+    // first field
     int FieldNo = 0; // Field no in RecordDecl
     FieldDecl* curField = 0;
     for (RecordDecl::field_iterator Field = RD->field_begin(),
@@ -304,12 +306,6 @@ public:
       return llvm::Constant::getNullValue(RetTy);
     }
     
-    // FIXME: We don't codegen or sema designators yet.
-    if (ILE->hadDesignators()) {
-      CGM.ErrorUnsupported(ILE, "initializer list with designators");
-      return llvm::UndefValue::get(ConvertType(ILE->getType()));
-    }
-
     if (ILE->getType()->isArrayType())
       return EmitArrayInitialization(ILE);
 
