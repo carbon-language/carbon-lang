@@ -1992,18 +1992,30 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   
   // Alternatively, this parameter list may be an identifier list form for a
   // K&R-style function:  void foo(a,b,c)
-  if (!getLang().CPlusPlus && Tok.is(tok::identifier) &&
+  if (!getLang().CPlusPlus && Tok.is(tok::identifier)) {
+
+    TypeTy *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+    if (TypeRep) {
+      // This is a typename. Replace the current token in-place with an
+      // annotation type token.
+      Tok.setKind(tok::annot_typename);
+      Tok.setAnnotationValue(TypeRep);
+      Tok.setAnnotationEndLoc(Tok.getLocation());
+      // In case the tokens were cached, have Preprocessor replace
+      // them with the annotation token.
+      PP.AnnotateCachedTokens(Tok);
+    } else {
       // K&R identifier lists can't have typedefs as identifiers, per
       // C99 6.7.5.3p11.
-      !Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
-    if (RequiresArg) {
-      Diag(Tok, diag::err_argument_required_after_attribute);
-      delete AttrList;
+      if (RequiresArg) {
+        Diag(Tok, diag::err_argument_required_after_attribute);
+        delete AttrList;
+      }
+      
+      // Identifier list.  Note that '(' identifier-list ')' is only allowed for
+      // normal declarators, not for abstract-declarators.
+      return ParseFunctionDeclaratorIdentifierList(LParenLoc, D);
     }
-    
-    // Identifier list.  Note that '(' identifier-list ')' is only allowed for
-    // normal declarators, not for abstract-declarators.
-    return ParseFunctionDeclaratorIdentifierList(LParenLoc, D);
   }
   
   // Finally, a normal, non-empty parameter type list.
