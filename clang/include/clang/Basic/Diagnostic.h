@@ -205,9 +205,11 @@ public:
   Level getDiagnosticLevel(unsigned DiagID) const;
   
   
-  /// Report - Issue the message to the client.  DiagID is a member of the
-  /// diag::kind enum.  This actually returns aninstance of DiagnosticBuilder
-  /// which emits the diagnostics (through ProcessDiag) when it is destroyed.
+  /// Report - Issue the message to the client.  @c DiagID is a member of the
+  /// @c diag::kind enum.  This actually returns aninstance of DiagnosticBuilder
+  /// which emits the diagnostics (through @c ProcessDiag) when it is destroyed.
+  /// @c Pos represents the source location associated with the diagnostic,
+  /// which can be an invalid location if no position information is available.
   inline DiagnosticBuilder Report(FullSourceLoc Pos, unsigned DiagID);
   
 private:
