@@ -692,7 +692,7 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   }
 
   // It didn't name a member, so see if it names a class.
-  TypeTy *BaseTy = isTypeName(*MemberOrBase, S, 0/*SS*/);
+  TypeTy *BaseTy = getTypeName(*MemberOrBase, S, 0/*SS*/);
   if (!BaseTy)
     return Diag(IdLoc, diag::err_mem_init_not_member_or_class)
       << MemberOrBase << SourceRange(IdLoc, RParenLoc);

@@ -737,7 +737,7 @@ Parser::OwningExprResult Parser::ParseSimpleAsm() {
 /// inside expressions to be treated as typenames so it will not be called
 /// for expressions in C.
 /// The benefit for C/ObjC is that a typename will be annotated and
-/// Actions.isTypeName will not be needed to be called again (e.g. isTypeName
+/// Actions.getTypeName will not be needed to be called again (e.g. getTypeName
 /// will not be called twice, once to check whether we have a declaration
 /// specifier, and another one to get the actual type inside
 /// ParseDeclarationSpecifiers).
@@ -757,8 +757,8 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
 
   if (Tok.is(tok::identifier)) {
     // Determine whether the identifier is a type name.
-    if (TypeTy *Ty = Actions.isTypeName(*Tok.getIdentifierInfo(), 
-                                        CurScope, &SS)) {
+    if (TypeTy *Ty = Actions.getTypeName(*Tok.getIdentifierInfo(), 
+                                         CurScope, &SS)) {
       // This is a typename. Replace the current token in-place with an
       // annotation type token.
       Tok.setKind(tok::annot_typename);

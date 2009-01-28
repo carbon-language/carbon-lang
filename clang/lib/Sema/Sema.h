@@ -282,8 +282,8 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
-  virtual TypeTy *isTypeName(IdentifierInfo &II, Scope *S,
-                             const CXXScopeSpec *SS);
+  virtual TypeTy *getTypeName(IdentifierInfo &II, Scope *S,
+                              const CXXScopeSpec *SS);
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
     return ActOnDeclarator(S, D, LastInGroup, false);
   }

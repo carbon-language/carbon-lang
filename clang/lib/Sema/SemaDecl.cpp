@@ -31,8 +31,8 @@
 
 using namespace clang;
 
-Sema::TypeTy *Sema::isTypeName(IdentifierInfo &II, Scope *S,
-                               const CXXScopeSpec *SS) {
+Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, Scope *S,
+                                const CXXScopeSpec *SS) {
   DeclContext *DC = 0;
   if (SS) {
     if (SS->isInvalid())

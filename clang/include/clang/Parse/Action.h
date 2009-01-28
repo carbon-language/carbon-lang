@@ -54,7 +54,7 @@ namespace clang {
 /// the parser has just done or is about to do when the method is called.  They
 /// are not requests that the actions module do the specified action.
 ///
-/// All of the methods here are optional except isTypeName() and
+/// All of the methods here are optional except getTypeName() and
 /// isCurrentClassName(), which must be specified in order for the
 /// parse to complete accurately.  The MinimalAction class does this
 /// bare-minimum of tracking to implement this functionality.
@@ -130,12 +130,12 @@ public:
   // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//
   
-  /// isTypeName - Return non-null if the specified identifier is a type name
+  /// getTypeName - Return non-null if the specified identifier is a type name
   /// in the current scope.
   /// An optional CXXScopeSpec can be passed to indicate the C++ scope (class or
   /// namespace) that the identifier must be a member of.
   /// i.e. for "foo::bar", 'II' will be "bar" and 'SS' will be "foo::".
-  virtual TypeTy *isTypeName(IdentifierInfo &II, Scope *S,
+  virtual TypeTy *getTypeName(IdentifierInfo &II, Scope *S,
                              const CXXScopeSpec *SS = 0) = 0;
 
   /// isCurrentClassName - Return true if the specified name is the
@@ -1326,10 +1326,10 @@ public:
   MinimalAction(Preprocessor &pp);
   ~MinimalAction();
 
-  /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
+  /// getTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
-  virtual TypeTy *isTypeName(IdentifierInfo &II, Scope *S,
-                             const CXXScopeSpec *SS);
+  virtual TypeTy *getTypeName(IdentifierInfo &II, Scope *S,
+                              const CXXScopeSpec *SS);
 
   /// isCurrentClassName - Always returns false, because MinimalAction
   /// does not support C++ classes with constructors.

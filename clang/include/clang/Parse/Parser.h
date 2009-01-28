@@ -693,7 +693,7 @@ private:
       return false;
     
     IdentifierInfo *II = Tok.getIdentifierInfo();
-    if (Actions.isTypeName(*II, CurScope))
+    if (Actions.getTypeName(*II, CurScope))
       return true;
     
     return II == Ident_super;

@@ -232,7 +232,7 @@ Parser::TypeTy *Parser::ParseClassName(const CXXScopeSpec *SS) {
   }
 
   // We have an identifier; check whether it is actually a type.
-  TypeTy *Type = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope, SS);
+  TypeTy *Type = Actions.getTypeName(*Tok.getIdentifierInfo(), CurScope, SS);
   if (!Type) {
     Diag(Tok, diag::err_expected_class_name);
     return 0;

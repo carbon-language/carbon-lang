@@ -600,7 +600,7 @@ is.  See below for the different valid kinds.</li>
 <ol>
 <li><b>tok::annot_typename</b>: This annotation token represents a
 resolved typename token that is potentially qualified.  The AnnotationValue
-field contains a pointer returned by Action::isTypeName().  In the case of the
+field contains a pointer returned by Action::getTypeName().  In the case of the
 Sema actions module, this is a <tt>Decl*</tt> for the type.</li>
 
 <li><b>tok::annot_cxxscope</b>: This annotation token represents a C++ scope
