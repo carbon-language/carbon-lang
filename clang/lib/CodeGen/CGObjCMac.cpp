@@ -570,6 +570,10 @@ private:
   /// IvarListnfABIPtrTy.
   llvm::Constant *EmitIvarList(const ObjCImplementationDecl *ID);
   
+  llvm::Constant *EmitIvarOffsetVar(const ObjCImplementationDecl *ID,
+                                    const FieldDecl *Field,
+                                    unsigned long int offset);
+  
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
   // FIXME. All stubs for now!
@@ -3161,7 +3165,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   }
   // FIXME. Section may always be .data
   Values[ 5] = EmitMethodList(MethodListName, 
-               ".section __DATA,__data,regular,no_dead_strip", Methods);
+               "__DATA, __objc_const", Methods);
   Values[ 6] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
   if (flags & CLS_META)
     Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
@@ -3179,7 +3183,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
                            std::string("\01l_OBJC_METACLASS_RO_$_")+ClassName :
                            std::string("\01l_OBJC_CLASS_RO_$_")+ClassName,
                            &CGM.getModule());
-  CLASS_RO_GV->setSection(".section __DATA,__data,regular,no_dead_strip");
+  CLASS_RO_GV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(CLASS_RO_GV);
   return CLASS_RO_GV;
 
@@ -3220,7 +3224,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
                              Init,
                              ClassName,
                              &CGM.getModule());
-  GV->setSection(".section __DATA,__data,regular,no_dead_strip");
+  GV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(GV);
   // FIXME! why?
   GV->setAlignment(32);
@@ -3424,7 +3428,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
   }
   
   Values[2] = EmitMethodList(MethodListName, 
-                             ".section __DATA,__data,regular,no_dead_strip", 
+                             "__DATA, __objc_const", 
                              Methods);
 
   MethodListName = Prefix;
@@ -3438,7 +3442,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
   }
   
   Values[3] = EmitMethodList(MethodListName, 
-                             ".section __DATA,__data,regular,no_dead_strip", 
+                             "__DATA, __objc_const", 
                              Methods);
   Values[4] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
   Values[5] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
@@ -3453,7 +3457,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
                                Init,
                                ExtCatName,
                                &CGM.getModule());
-  GCATV->setSection(".section __DATA,__data,regular,no_dead_strip");
+  GCATV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(GCATV);
   DefinedCategories.push_back(GCATV);
 }
@@ -3515,6 +3519,38 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
                                         ObjCTypes.MethodListnfABIPtrTy);
 }
 
+llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
+                                              const ObjCImplementationDecl *ID,
+                                              const FieldDecl *Field,
+                                              unsigned long int Offset) {
+  
+  std::string ExternalName("\01_OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
+                           + Field->getNameAsString());
+  llvm::Constant *Init = llvm::ConstantInt::get(ObjCTypes.IntTy, Offset);
+  
+  llvm::GlobalVariable *IvarOffsetGV = 
+    CGM.getModule().getGlobalVariable(ExternalName);
+  if (IvarOffsetGV) {
+    // ivar offset symbol already built due to user code referencing it.
+    IvarOffsetGV->setInitializer(Init);
+    return IvarOffsetGV;
+  }
+  
+  IvarOffsetGV = 
+    new llvm::GlobalVariable(Init->getType(),
+                             false,
+                             llvm::GlobalValue::ExternalLinkage,
+                             Init,
+                             ExternalName,
+                             &CGM.getModule());
+  IvarOffsetGV->setSection("__DATA, __objc_const");
+  UsedGlobals.push_back(IvarOffsetGV);
+  
+  return llvm::ConstantExpr::getBitCast(
+                IvarOffsetGV,
+                llvm::PointerType::getUnqual(ObjCTypes.LongTy));
+}
+
 /// EmitIvarList - Emit the ivar list for the given
 /// implementation. If ForClass is true the list of class ivars
 /// (i.e. metaclass ivars) is emitted, otherwise the list of
@@ -3541,13 +3577,23 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   const ObjCInterfaceDecl *OID = ID->getClassInterface();
   assert(OID && "CGObjCNonFragileABIMac::EmitIvarList - null interface");
   
-  for(ObjCInterfaceDecl::ivar_iterator i = OID->ivar_begin(),
-      e = OID->ivar_end(); i != e; ++i) {
+  // FIXME. Consolidate this with similar code in GenerateClass.
+  const llvm::Type *InterfaceTy =
+    CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(
+                                        const_cast<ObjCInterfaceDecl*>(OID)));
+  
+  const llvm::StructLayout *Layout =
+    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
+  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass());
+  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
+  RecordDecl::field_iterator i = RD->field_begin();
+  while (countSuperClassIvars-- > 0)
+    ++i;
+  for (RecordDecl::field_iterator e = RD->field_end(); i != e; ++i) {
     FieldDecl *Field = *i;
-    // FIXME. Put the offset symbol address after code gen. 
-    // for non-fragile ivar access is in.
-    Ivar[0] = llvm::Constant::getNullValue(
-                llvm::PointerType::getUnqual(ObjCTypes.LongTy));
+    unsigned long offset = Layout->getElementOffset(CGM.getTypes().
+                                                    getLLVMFieldNo(Field));
+    Ivar[0] = EmitIvarOffsetVar(ID, Field, offset);
     if (Field->getIdentifier())
       Ivar[1] = GetMethodVarName(Field->getIdentifier());
     else
@@ -3589,7 +3635,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
                              Prefix + OID->getNameAsString(),
                              &CGM.getModule());
   
-  GV->setSection(".section __DATA,__data,regular,no_dead_strip");
+  GV->setSection("__DATA, __objc_const");
                  
   UsedGlobals.push_back(GV);
   return llvm::ConstantExpr::getBitCast(GV,
