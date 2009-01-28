@@ -507,7 +507,7 @@
 #cmakedefine PACKAGE_NAME "${PACKAGE_NAME}"
 
 /* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
+#cmakedefine PACKAGE_STRING "${PACKAGE_STRING}"
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME

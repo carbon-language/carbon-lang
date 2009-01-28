@@ -2,7 +2,8 @@ project(LLVM)
 cmake_minimum_required(VERSION 2.6.1)
 
 set(PACKAGE_NAME llvm)
-set(PACKAGE_VERSION svn)
+set(PACKAGE_VERSION 2.6svn)
+set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
