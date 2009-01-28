@@ -2331,36 +2331,24 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     
     Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
 
-    if (CurrV.isOwned()) {
-      if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
-        // Get the name of the callee (if it is available).
-        SVal X = CurrSt.GetSVal(CE->getCallee());
-
-        if (loc::FuncVal* FV = dyn_cast<loc::FuncVal>(&X))
-          os << "Call to function '" << FV->getDecl()->getNameAsString() <<'\'';
-        else
-          os << "Function call";
-        
-        os << " returns an object with a +1 retain count"
-              " (owning reference).";
-      }
-      else {
-        assert (isa<ObjCMessageExpr>(S));
-        os << "Method returns an object with a +1 retain count"
-                " (owning reference).";
-      }
+    if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+      // Get the name of the callee (if it is available).
+      SVal X = CurrSt.GetSVal(CE->getCallee());        
+      if (loc::FuncVal* FV = dyn_cast<loc::FuncVal>(&X))
+        os << "Call to function '" << FV->getDecl()->getNameAsString() <<'\'';
+      else
+        os << "function call";
+    }          
+    else {
+      assert (isa<ObjCMessageExpr>(S));
+      os << "Method returns an object with a ";
     }
+    
+    if (CurrV.isOwned())
+        os << "+1 retain count (owning reference).";
     else {
       assert (CurrV.isNotOwned());
-      
-      if (isa<CallExpr>(S))
-        os << "Function call returns an object with a +0 retain count"
-              " (non-owning reference).";
-      else {
-        assert (isa<ObjCMessageExpr>(S));
-        os << "Method returns an object with a +0 retain count"
-              " (non-owning reference).";
-      }      
+      os << "+0 retain count (non-owning reference).";
     }
     
     FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
