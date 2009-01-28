@@ -1869,6 +1869,8 @@ private:
     if (CTy->getTag() == DW_TAG_vector_type)
       AddUInt(&Buffer, DW_AT_GNU_vector, DW_FORM_flag, 1);
     
+    // Emit derived type.
+    AddType(DW_Unit, &Buffer, CTy->getTypeDerivedFrom());    
     DIArray Elements = CTy->getTypeArray();
 
     // Construct an anonymous type for index type.
