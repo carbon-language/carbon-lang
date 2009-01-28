@@ -188,8 +188,8 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
 bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   LI = &getAnalysis<LoopInfo>();
   LPM = &LPM_Ref;
-  DF = getAnalysisToUpdate<DominanceFrontier>();
-  DT = getAnalysisToUpdate<DominatorTree>();
+  DF = getAnalysisIfAvailable<DominanceFrontier>();
+  DT = getAnalysisIfAvailable<DominatorTree>();
   currentLoop = L;
   Function *F = currentLoop->getHeader()->getParent();
   bool Changed = false;

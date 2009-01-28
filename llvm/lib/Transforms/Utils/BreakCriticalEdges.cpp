@@ -187,7 +187,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
   bool NewBBDominatesDestBB = true;
   
   // Should we update DominatorTree information?
-  if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) {
+  if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>()) {
     DomTreeNode *TINode = DT->getNode(TIBB);
 
     // The new block is not the immediate dominator for any other nodes, but
@@ -218,7 +218,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
   }
 
   // Should we update DominanceFrontier information?
-  if (DominanceFrontier *DF = P->getAnalysisToUpdate<DominanceFrontier>()) {
+  if (DominanceFrontier *DF = P->getAnalysisIfAvailable<DominanceFrontier>()) {
     // If NewBBDominatesDestBB hasn't been computed yet, do so with DF.
     if (!OtherPreds.empty()) {
       // FIXME: IMPLEMENT THIS!
@@ -252,7 +252,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
   }
   
   // Update LoopInfo if it is around.
-  if (LoopInfo *LI = P->getAnalysisToUpdate<LoopInfo>()) {
+  if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>()) {
     // If one or the other blocks were not in a loop, the new block is not
     // either, and thus LI doesn't need to be updated.
     if (Loop *TIL = LI->getLoopFor(TIBB))

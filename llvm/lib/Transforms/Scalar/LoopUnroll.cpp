@@ -170,10 +170,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
 
   // FIXME: Reconstruct dom info, because it is not preserved properly.
-  DominatorTree *DT = getAnalysisToUpdate<DominatorTree>();
+  DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
   if (DT) {
     DT->runOnFunction(*F);
-    DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>();
+    DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>();
     if (DF)
       DF->runOnFunction(*F);
   }

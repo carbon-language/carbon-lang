@@ -174,7 +174,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   }
 
   // Update live variable information if there is any.
-  LiveVariables *LV = getAnalysisToUpdate<LiveVariables>();
+  LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>();
   if (LV) {
     MachineInstr *PHICopy = prior(AfterPHIsIt);
 

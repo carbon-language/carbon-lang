@@ -78,7 +78,8 @@
      <li><a href="#AU::addRequired">The <tt>AnalysisUsage::addRequired&lt;&gt;</tt> and <tt>AnalysisUsage::addRequiredTransitive&lt;&gt;</tt> methods</a></li>
      <li><a href="#AU::addPreserved">The <tt>AnalysisUsage::addPreserved&lt;&gt;</tt> method</a></li>
      <li><a href="#AU::examples">Example implementations of <tt>getAnalysisUsage</tt></a></li>
-     <li><a href="#getAnalysis">The <tt>getAnalysis&lt;&gt;</tt> and <tt>getAnalysisToUpdate&lt;&gt;</tt> methods</a></li>
+     <li><a href="#getAnalysis">The <tt>getAnalysis&lt;&gt;</tt> and
+<tt>getAnalysisIfAvailable&lt;&gt;</tt> methods</a></li>
      </ul></li>
   <li><a href="#analysisgroup">Implementing Analysis Groups</a>
      <ul>
@@ -1131,7 +1132,8 @@ the fact that it hacks on the CFG.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="getAnalysis">The <tt>getAnalysis&lt;&gt;</tt> and <tt>getAnalysisToUpdate&lt;&gt;</tt> methods</a>
+  <a name="getAnalysis">The <tt>getAnalysis&lt;&gt;</tt> and
+<tt>getAnalysisIfAvailable&lt;&gt;</tt> methods</a>
 </div>
 
 <div class="doc_text">
@@ -1173,12 +1175,12 @@ before returning a reference to the desired pass.</p>
 <p>
 If your pass is capable of updating analyses if they exist (e.g.,
 <tt>BreakCriticalEdges</tt>, as described above), you can use the
-<tt>getAnalysisToUpdate</tt> method, which returns a pointer to the analysis if
-it is active.  For example:</p>
+<tt>getAnalysisIfAvailable</tt> method, which returns a pointer to the analysis
+if it is active.  For example:</p>
 
 <div class="doc_code"><pre>
   ...
-  if (DominatorSet *DS = getAnalysisToUpdate&lt;DominatorSet&gt;()) {
+  if (DominatorSet *DS = getAnalysisIfAvailable&lt;DominatorSet&gt;()) {
     <i>// A DominatorSet is active.  This code will update it.</i>
   }
   ...

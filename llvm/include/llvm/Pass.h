@@ -169,22 +169,22 @@ public:
   // or null if it is not known.
   static const PassInfo *lookupPassInfo(intptr_t TI);
 
-  /// getAnalysisToUpdate<AnalysisType>() - This function is used by subclasses
-  /// to get to the analysis information that might be around that needs to be
-  /// updated.  This is different than getAnalysis in that it can fail (ie the
-  /// analysis results haven't been computed), so should only be used if you
-  /// provide the capability to update an analysis that exists.  This method is
-  /// often used by transformation APIs to update analysis results for a pass
-  /// automatically as the transform is performed.
+  /// getAnalysisIfAvailable<AnalysisType>() - Subclasses use this function to
+  /// get analysis information that might be around, for example to update it.
+  /// This is different than getAnalysis in that it can fail (if the analysis
+  /// results haven't been computed), so should only be used if you can handle
+  /// the case when the analysis is not available.  This method is often used by
+  /// transformation APIs to update analysis results for a pass automatically as
+  /// the transform is performed.
   ///
-  template<typename AnalysisType>
-  AnalysisType *getAnalysisToUpdate() const; // Defined in PassAnalysisSupport.h
+  template<typename AnalysisType> AnalysisType *
+    getAnalysisIfAvailable() const; // Defined in PassAnalysisSupport.h
 
   /// mustPreserveAnalysisID - This method serves the same function as
-  /// getAnalysisToUpdate, but works if you just have an AnalysisID.  This
+  /// getAnalysisIfAvailable, but works if you just have an AnalysisID.  This
   /// obviously cannot give you a properly typed instance of the class if you
-  /// don't have the class name available (use getAnalysisToUpdate if you do),
-  /// but it can tell you if you need to preserve the pass at least.
+  /// don't have the class name available (use getAnalysisIfAvailable if you
+  /// do), but it can tell you if you need to preserve the pass at least.
   ///
   bool mustPreserveAnalysisID(const PassInfo *AnalysisID) const;
 

@@ -441,9 +441,9 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
   }
 
   // Emit initial debug information.
-  DW = getAnalysisToUpdate<DwarfWriter>();
+  DW = getAnalysisIfAvailable<DwarfWriter>();
   assert(DW && "Dwarf Writer is not available");
-  DW->BeginModule(&M, getAnalysisToUpdate<MachineModuleInfo>(), 
+  DW->BeginModule(&M, getAnalysisIfAvailable<MachineModuleInfo>(),
                   O, this, TAI);
   return Result;
 }

@@ -457,7 +457,7 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
            "Expected only one incoming value from Original PreHeader");
   }
 
-  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
+  if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
     DT->addNewBlock(NewPreHeader, OrigPreHeader);
     DT->changeImmediateDominator(L->getHeader(), NewPreHeader);
     DT->changeImmediateDominator(Exit, OrigPreHeader);
@@ -473,7 +473,7 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
     DT->changeImmediateDominator(OrigHeader, OrigLatch);
   }
 
-  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>()) {
+  if (DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>()) {
     // New Preheader's dominance frontier is Exit block.
     DominanceFrontier::DomSetType NewPHSet;
     NewPHSet.insert(Exit);
@@ -509,7 +509,7 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
     // If a loop block dominates new loop latch then its frontier is
     // new header and Exit.
     BasicBlock *NewLatch = L->getLoopLatch();
-    DominatorTree *DT = getAnalysisToUpdate<DominatorTree>();
+    DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
     for (Loop::block_iterator BI = L->block_begin(), BE = L->block_end();
          BI != BE; ++BI) {
       BasicBlock *B = *BI;

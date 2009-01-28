@@ -112,7 +112,7 @@ FunctionPass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 bool LoopSimplify::runOnFunction(Function &F) {
   bool Changed = false;
   LI = &getAnalysis<LoopInfo>();
-  AA = getAnalysisToUpdate<AliasAnalysis>();
+  AA = getAnalysisIfAvailable<AliasAnalysis>();
   DT = &getAnalysis<DominatorTree>();
 
   // Check to see that no blocks (other than the header) in loops have
@@ -595,6 +595,6 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
 
   // Update dominator information
   DT->splitBlock(BEBlock);
-  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
+  if (DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>())
     DF->splitBlock(BEBlock);
 }

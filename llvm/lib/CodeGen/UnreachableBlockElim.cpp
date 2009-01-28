@@ -105,7 +105,7 @@ const PassInfo *const llvm::UnreachableMachineBlockElimID = &Y;
 bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
   SmallPtrSet<MachineBasicBlock*, 8> Reachable;
 
-  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
 
   // Mark all reachable blocks.
   for (df_ext_iterator<MachineFunction*, SmallPtrSet<MachineBasicBlock*, 8> >

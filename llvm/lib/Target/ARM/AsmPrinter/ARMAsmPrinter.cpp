@@ -782,9 +782,9 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
 
   // Emit initial debug information.
-  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   assert(MMI);
-  DW = getAnalysisToUpdate<DwarfWriter>();
+  DW = getAnalysisIfAvailable<DwarfWriter>();
   assert(DW && "Dwarf Writer is not available");
   DW->BeginModule(&M, MMI, O, this, TAI);
 

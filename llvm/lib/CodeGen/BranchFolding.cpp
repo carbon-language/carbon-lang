@@ -198,7 +198,7 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
 
   RS = RegInfo->requiresRegisterScavenging(MF) ? new RegScavenger() : NULL;
 
-  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
 
   bool MadeChangeThisIteration = true;
   while (MadeChangeThisIteration) {

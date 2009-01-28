@@ -136,7 +136,7 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
   
   // Finally, erase the old block and update dominator info.
   if (P) {
-    if (DominatorTree* DT = P->getAnalysisToUpdate<DominatorTree>()) {
+    if (DominatorTree* DT = P->getAnalysisIfAvailable<DominatorTree>()) {
       DomTreeNode* DTN = DT->getNode(BB);
       DomTreeNode* PredDTN = DT->getNode(PredBB);
   
@@ -299,11 +299,11 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
   BasicBlock *New = Old->splitBasicBlock(SplitIt, Old->getName()+".split");
 
   // The new block lives in whichever loop the old one did.
-  if (LoopInfo* LI = P->getAnalysisToUpdate<LoopInfo>())
+  if (LoopInfo* LI = P->getAnalysisIfAvailable<LoopInfo>())
     if (Loop *L = LI->getLoopFor(Old))
       L->addBasicBlockToLoop(New, LI->getBase());
 
-  if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) 
+  if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>())
     {
       // Old dominates New. New node domiantes all other nodes dominated by Old.
       DomTreeNode *OldNode = DT->getNode(Old);
@@ -319,7 +319,7 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
         DT->changeImmediateDominator(*I, NewNode);
     }
 
-  if (DominanceFrontier *DF = P->getAnalysisToUpdate<DominanceFrontier>())
+  if (DominanceFrontier *DF = P->getAnalysisIfAvailable<DominanceFrontier>())
     DF->splitBlock(Old);
     
   return New;
@@ -350,12 +350,12 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
     Preds[i]->getTerminator()->replaceUsesOfWith(BB, NewBB);
   
   // Update dominator tree and dominator frontier if available.
-  DominatorTree *DT = P ? P->getAnalysisToUpdate<DominatorTree>() : 0;
+  DominatorTree *DT = P ? P->getAnalysisIfAvailable<DominatorTree>() : 0;
   if (DT)
     DT->splitBlock(NewBB);
-  if (DominanceFrontier *DF = P ? P->getAnalysisToUpdate<DominanceFrontier>():0)
+  if (DominanceFrontier *DF = P ? P->getAnalysisIfAvailable<DominanceFrontier>():0)
     DF->splitBlock(NewBB);
-  AliasAnalysis *AA = P ? P->getAnalysisToUpdate<AliasAnalysis>() : 0;
+  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : 0;
   
   
   // Insert a new PHI node into NewBB for every PHI node in BB and that new PHI

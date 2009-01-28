@@ -56,7 +56,7 @@ namespace {
 
       // Get MachineModuleInfo so that we can track the construction of the
       // frame.
-      if (MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>())
+      if (MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>())
         Fn.getFrameInfo()->setMachineModuleInfo(MMI);
 
       // Allow the target machine to make some adjustments to the function

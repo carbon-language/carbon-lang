@@ -641,9 +641,9 @@ bool PPCLinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
 
   // Emit initial debug information.
-  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   assert(MMI);
-  DW = getAnalysisToUpdate<DwarfWriter>();
+  DW = getAnalysisIfAvailable<DwarfWriter>();
   assert(DW && "DwarfWriter is not available");
   DW->BeginModule(&M, MMI, O, this, TAI);
 
@@ -859,9 +859,9 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   // Emit initial debug information.
   // We need this for Personality functions.
   // AsmPrinter::doInitialization should have done this analysis.
-  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   assert(MMI);
-  DW = getAnalysisToUpdate<DwarfWriter>();
+  DW = getAnalysisIfAvailable<DwarfWriter>();
   assert(DW && "DwarfWriter is not available");
   DW->BeginModule(&M, MMI, O, this, TAI);
 

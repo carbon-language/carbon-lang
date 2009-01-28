@@ -99,7 +99,7 @@ void InternalizePass::LoadFile(const char *Filename) {
 }
 
 bool InternalizePass::runOnModule(Module &M) {
-  CallGraph *CG = getAnalysisToUpdate<CallGraph>();
+  CallGraph *CG = getAnalysisIfAvailable<CallGraph>();
   CallGraphNode *ExternalNode = CG ? CG->getExternalCallingNode() : 0;
 
   if (ExternalNames.empty()) {

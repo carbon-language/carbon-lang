@@ -37,7 +37,7 @@ Pass::~Pass() {
 ModulePass::~ModulePass() { }
 
 bool Pass::mustPreserveAnalysisID(const PassInfo *AnalysisID) const {
-  return Resolver->getAnalysisToUpdate(AnalysisID, true) != 0;
+  return Resolver->getAnalysisIfAvailable(AnalysisID, true) != 0;
 }
 
 // dumpPassStructure - Implement the -debug-passes=Structure option

@@ -141,7 +141,7 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
 bool AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, TAI->getGlobalPrefix(), TAI->getPrivateGlobalPrefix());
   
-  GCModuleInfo *MI = getAnalysisToUpdate<GCModuleInfo>();
+  GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
 
   if (TAI->hasSingleParameterDotFile()) {
@@ -163,9 +163,9 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   SwitchToDataSection("");   // Reset back to no section.
   
-  MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   if (MMI) MMI->AnalyzeModule(M);
-  DW = getAnalysisToUpdate<DwarfWriter>();
+  DW = getAnalysisIfAvailable<DwarfWriter>();
   return false;
 }
 
@@ -218,7 +218,7 @@ bool AsmPrinter::doFinalization(Module &M) {
     }
   }
 
-  GCModuleInfo *MI = getAnalysisToUpdate<GCModuleInfo>();
+  GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
   for (GCModuleInfo::iterator I = MI->end(), E = MI->begin(); I != E; )
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*--I))

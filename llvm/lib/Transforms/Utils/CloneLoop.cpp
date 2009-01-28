@@ -79,8 +79,8 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
   DominatorTree *DT = NULL;
   DominanceFrontier *DF = NULL;
   if (P) {
-    DT = P->getAnalysisToUpdate<DominatorTree>();
-    DF = P->getAnalysisToUpdate<DominanceFrontier>();
+    DT = P->getAnalysisIfAvailable<DominatorTree>();
+    DF = P->getAnalysisIfAvailable<DominanceFrontier>();
   }
 
   SmallVector<BasicBlock *, 16> NewBlocks;

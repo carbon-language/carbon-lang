@@ -491,9 +491,9 @@ bool LinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
   SwitchToTextSection("\t.text");
   // Emit initial debug information.
-  DW = getAnalysisToUpdate<DwarfWriter>();
+  DW = getAnalysisIfAvailable<DwarfWriter>();
   assert(DW && "Dwarf Writer is not available");
-  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   DW->BeginModule(&M, MMI, O, this, TAI);
   return Result;
 }

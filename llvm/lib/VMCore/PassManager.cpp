@@ -679,7 +679,7 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
   if (!VerifyDomInfo || !P.getResolver())
     return;
 
-  DominatorTree *DT = P.getAnalysisToUpdate<DominatorTree>();
+  DominatorTree *DT = P.getAnalysisIfAvailable<DominatorTree>();
   if (!DT)
     return;
 
@@ -695,7 +695,7 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
     assert (0 && "Invalid dominator info");
   }
 
-  DominanceFrontier *DF = P.getAnalysisToUpdate<DominanceFrontier>();
+  DominanceFrontier *DF = P.getAnalysisIfAvailable<DominanceFrontier>();
   if (!DF) 
     return;
 
@@ -1088,8 +1088,8 @@ PMDataManager::~PMDataManager() {
 
 //===----------------------------------------------------------------------===//
 // NOTE: Is this the right place to define this method ?
-// getAnalysisToUpdate - Return an analysis result or null if it doesn't exist
-Pass *AnalysisResolver::getAnalysisToUpdate(AnalysisID ID, bool dir) const {
+// getAnalysisIfAvailable - Return analysis result or null if it doesn't exist.
+Pass *AnalysisResolver::getAnalysisIfAvailable(AnalysisID ID, bool dir) const {
   return PM.findAnalysisPass(ID, dir);
 }
 

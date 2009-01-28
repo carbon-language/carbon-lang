@@ -205,7 +205,7 @@ bool Deleter::runOnFunction(Function &MF) {
 }
 
 bool Deleter::doFinalization(Module &M) {
-  GCModuleInfo *GMI = getAnalysisToUpdate<GCModuleInfo>();
+  GCModuleInfo *GMI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(GMI && "Deleter didn't require GCModuleInfo?!");
   GMI->clear();
   return false;

@@ -144,7 +144,7 @@ bool LowerIntrinsics::doInitialization(Module &M) {
   //        work against the entire module. But this cannot be done at
   //        runFunction time (initializeCustomLowering likely needs to change
   //        the module).
-  GCModuleInfo *MI = getAnalysisToUpdate<GCModuleInfo>();
+  GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "LowerIntrinsics didn't require GCModuleInfo!?");
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isDeclaration() && I->hasGC())

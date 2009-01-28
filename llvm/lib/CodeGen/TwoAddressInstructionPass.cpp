@@ -379,7 +379,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   TII = TM.getInstrInfo();
   TRI = TM.getRegisterInfo();
-  LV = getAnalysisToUpdate<LiveVariables>();
+  LV = getAnalysisIfAvailable<LiveVariables>();
 
   bool MadeChange = false;
 

@@ -320,7 +320,7 @@ char DebugLabelFolder::ID = 0;
 
 bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
   // Get machine module info.
-  MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   if (!MMI) return false;
   
   // Track if change is made.
