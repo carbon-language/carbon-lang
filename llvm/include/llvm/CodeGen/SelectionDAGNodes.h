@@ -1519,6 +1519,10 @@ public:
     : SDNode(Opc, VTs) {
     InitOperands(&Op, X);
   }
+  UnarySDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, SDValue X)
+    : SDNode(Opc, dl, VTs) {
+    InitOperands(&Op, X);
+  }
 };
 
 /// BinarySDNode - This class is used for two-operand SDNodes.  This is solely
@@ -1528,6 +1532,10 @@ class BinarySDNode : public SDNode {
 public:
   BinarySDNode(unsigned Opc, SDVTList VTs, SDValue X, SDValue Y)
     : SDNode(Opc, VTs) {
+    InitOperands(Ops, X, Y);
+  }
+  BinarySDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, SDValue X, SDValue Y)
+    : SDNode(Opc, dl, VTs) {
     InitOperands(Ops, X, Y);
   }
 };
@@ -1540,6 +1548,11 @@ public:
   TernarySDNode(unsigned Opc, SDVTList VTs, SDValue X, SDValue Y,
                 SDValue Z)
     : SDNode(Opc, VTs) {
+    InitOperands(Ops, X, Y, Z);
+  }
+  TernarySDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, SDValue X, SDValue Y,
+                SDValue Z)
+    : SDNode(Opc, dl, VTs) {
     InitOperands(Ops, X, Y, Z);
   }
 };
@@ -1589,6 +1602,14 @@ public:
 
   MemSDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops, unsigned NumOps,
             MVT MemoryVT, const Value *srcValue, int SVOff,
+            unsigned alignment, bool isvolatile);
+
+  MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, MVT MemoryVT,
+            const Value *srcValue, int SVOff,
+            unsigned alignment, bool isvolatile);
+
+  MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, const SDValue *Ops, 
+            unsigned NumOps, MVT MemoryVT, const Value *srcValue, int SVOff,
             unsigned alignment, bool isvolatile);
 
   /// Returns alignment and volatility of the memory access
@@ -1669,6 +1690,21 @@ public:
                 Align, /*isVolatile=*/true) {
     InitOperands(Ops, Chain, Ptr, Val);
   }
+  AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, MVT MemVT,
+               SDValue Chain, SDValue Ptr,
+               SDValue Cmp, SDValue Swp, const Value* SrcVal,
+               unsigned Align=0)
+    : MemSDNode(Opc, dl, VTL, MemVT, SrcVal, /*SVOffset=*/0,
+                Align, /*isVolatile=*/true) {
+    InitOperands(Ops, Chain, Ptr, Cmp, Swp);
+  }
+  AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, MVT MemVT,
+               SDValue Chain, SDValue Ptr, 
+               SDValue Val, const Value* SrcVal, unsigned Align=0)
+    : MemSDNode(Opc, dl, VTL, MemVT, SrcVal, /*SVOffset=*/0,
+                Align, /*isVolatile=*/true) {
+    InitOperands(Ops, Chain, Ptr, Val);
+  }
   
   const SDValue &getBasePtr() const { return getOperand(1); }
   const SDValue &getVal() const { return getOperand(2); }
@@ -1708,6 +1744,13 @@ public:
                      MVT MemoryVT, const Value *srcValue, int SVO,
                      unsigned Align, bool Vol, bool ReadMem, bool WriteMem)
     : MemSDNode(Opc, VTs, Ops, NumOps, MemoryVT, srcValue, SVO, Align, Vol),
+      ReadMem(ReadMem), WriteMem(WriteMem) {
+  }
+  MemIntrinsicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs,
+                     const SDValue *Ops, unsigned NumOps,
+                     MVT MemoryVT, const Value *srcValue, int SVO,
+                     unsigned Align, bool Vol, bool ReadMem, bool WriteMem)
+    : MemSDNode(Opc, dl, VTs, Ops, NumOps, MemoryVT, srcValue, SVO, Align, Vol),
       ReadMem(ReadMem), WriteMem(WriteMem) {
   }
 
@@ -1928,6 +1971,9 @@ protected:
   explicit BasicBlockSDNode(MachineBasicBlock *mbb)
     : SDNode(ISD::BasicBlock, getSDVTList(MVT::Other)), MBB(mbb) {
   }
+  explicit BasicBlockSDNode(MachineBasicBlock *mbb, DebugLoc dl)
+    : SDNode(ISD::BasicBlock, dl, getSDVTList(MVT::Other)), MBB(mbb) {
+  }
 public:
 
   MachineBasicBlock *getBasicBlock() const { return MBB; }
@@ -2037,6 +2083,10 @@ protected:
     : SDNode(NodeTy, getSDVTList(MVT::Other)), LabelID(id) {
     InitOperands(&Chain, ch);
   }
+  LabelSDNode(unsigned NodeTy, DebugLoc dl, SDValue ch, unsigned id)
+    : SDNode(NodeTy, dl, getSDVTList(MVT::Other)), LabelID(id) {
+    InitOperands(&Chain, ch);
+  }
 public:
   unsigned getLabelID() const { return LabelID; }
 
@@ -2053,6 +2103,10 @@ protected:
   friend class SelectionDAG;
   ExternalSymbolSDNode(bool isTarget, const char *Sym, MVT VT)
     : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol,
+             getSDVTList(VT)), Symbol(Sym) {
+  }
+  ExternalSymbolSDNode(bool isTarget, DebugLoc dl, const char *Sym, MVT VT)
+    : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol, dl,
              getSDVTList(VT)), Symbol(Sym) {
   }
 public:
@@ -2221,6 +2275,12 @@ protected:
     : SDNode(ISD::CALL, VTs, Operands, numOperands),
       CallingConv(cc), IsVarArg(isvararg), IsTailCall(istailcall),
       Inreg(isinreg) {}
+  CallSDNode(unsigned cc, DebugLoc dl, bool isvararg, bool istailcall, 
+             bool isinreg, SDVTList VTs, const SDValue *Operands, 
+             unsigned numOperands)
+    : SDNode(ISD::CALL, dl, VTs, Operands, numOperands),
+      CallingConv(cc), IsVarArg(isvararg), IsTailCall(istailcall),
+      Inreg(isinreg) {}
 public:
   unsigned getCallingConv() const { return CallingConv; }
   unsigned isVarArg() const { return IsVarArg; }
@@ -2295,6 +2355,16 @@ public:
     assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
            "Only indexed loads and stores have a non-undef offset operand");
   }
+  LSBaseSDNode(ISD::NodeType NodeTy, DebugLoc dl, SDValue *Operands, 
+               unsigned numOperands, SDVTList VTs, ISD::MemIndexedMode AM, 
+               MVT VT, const Value *SV, int SVO, unsigned Align, bool Vol)
+    : MemSDNode(NodeTy, dl, VTs, VT, SV, SVO, Align, Vol) {
+    SubclassData = AM;
+    InitOperands(Ops, Operands, numOperands);
+    assert(Align != 0 && "Loads and stores should have non-zero aligment");
+    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
+           "Only indexed loads and stores have a non-undef offset operand");
+  }
 
   const SDValue &getOffset() const {
     return getOperand(getOpcode() == ISD::LOAD ? 2 : 3);
@@ -2331,6 +2401,13 @@ protected:
                    VTs, AM, LVT, SV, O, Align, Vol) {
     SubclassData |= (unsigned short)ETy << 3;
   }
+  LoadSDNode(SDValue *ChainPtrOff, DebugLoc dl, SDVTList VTs,
+             ISD::MemIndexedMode AM, ISD::LoadExtType ETy, MVT LVT,
+             const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
+    : LSBaseSDNode(ISD::LOAD, dl, ChainPtrOff, 3,
+                   VTs, AM, LVT, SV, O, Align, Vol) {
+    SubclassData |= (unsigned short)ETy << 3;
+  }
 public:
 
   /// getExtensionType - Return whether this is a plain node,
@@ -2357,6 +2434,13 @@ protected:
               ISD::MemIndexedMode AM, bool isTrunc, MVT SVT,
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::STORE, ChainValuePtrOff, 4,
+                   VTs, AM, SVT, SV, O, Align, Vol) {
+    SubclassData |= (unsigned short)isTrunc << 3;
+  }
+  StoreSDNode(SDValue *ChainValuePtrOff, DebugLoc dl, SDVTList VTs,
+              ISD::MemIndexedMode AM, bool isTrunc, MVT SVT,
+              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
+    : LSBaseSDNode(ISD::STORE, dl, ChainValuePtrOff, 4,
                    VTs, AM, SVT, SV, O, Align, Vol) {
     SubclassData |= (unsigned short)isTrunc << 3;
   }

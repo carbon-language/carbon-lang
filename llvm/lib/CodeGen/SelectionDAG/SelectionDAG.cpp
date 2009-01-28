@@ -4766,6 +4766,29 @@ MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops,
   assert(isVolatile() == vol && "Volatile representation error!");
 }
 
+MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, MVT memvt,
+                     const Value *srcValue, int SVO,
+                     unsigned alignment, bool vol)
+ : SDNode(Opc, dl, VTs), MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO),
+   Flags(encodeMemSDNodeFlags(vol, alignment)) {
+
+  assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
+  assert(getAlignment() == alignment && "Alignment representation error!");
+  assert(isVolatile() == vol && "Volatile representation error!");
+}
+
+MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, 
+                     const SDValue *Ops,
+                     unsigned NumOps, MVT memvt, const Value *srcValue,
+                     int SVO, unsigned alignment, bool vol)
+   : SDNode(Opc, dl, VTs, Ops, NumOps),
+     MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO),
+     Flags(vol | ((Log2_32(alignment) + 1) << 1)) {
+  assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
+  assert(getAlignment() == alignment && "Alignment representation error!");
+  assert(isVolatile() == vol && "Volatile representation error!");
+}
+
 /// getMemOperand - Return a MachineMemOperand object describing the memory
 /// reference performed by this memory reference.
 MachineMemOperand MemSDNode::getMemOperand() const {
