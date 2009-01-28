@@ -8515,7 +8515,7 @@ SDValue SelectionDAGLegalize::StoreWidenVectorOp(StoreSDNode *ST,
   // It must be true that we the widen vector type is bigger than where
   // we need to store.
   assert(StVT.isVector() && VVT.isVector());
-  assert(StVT.getSizeInBits() < VVT.getSizeInBits());
+  assert(StVT.bitsLT(VVT));
   assert(StVT.getVectorElementType() == VVT.getVectorElementType());
 
   // Store value

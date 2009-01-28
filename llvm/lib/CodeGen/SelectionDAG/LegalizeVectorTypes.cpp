@@ -1865,7 +1865,7 @@ SDValue DAGTypeLegalizer::WidenVecOp_STORE(SDNode *N) {
   // It must be true that we the widen vector type is bigger than where
   // we need to store.
   assert(StVT.isVector() && ValOp.getValueType().isVector());
-  assert(StVT.getSizeInBits() < ValOp.getValueType().getSizeInBits());
+  assert(StVT.bitsLT(ValOp.getValueType()));
 
   SmallVector<SDValue, 16> StChain;
   if (ST->isTruncatingStore()) {
