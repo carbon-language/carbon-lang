@@ -1664,6 +1664,10 @@ class InitListExpr : public Expr {
   /// written in the source code.
   InitListExpr *SyntacticForm;
 
+  /// If this initializer list initializes a union, specifies which
+  /// field within the union will be initialized.
+  FieldDecl *UnionFieldInit;
+
 public:
   InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
                SourceLocation rbraceloc);
@@ -1701,6 +1705,15 @@ public:
   /// initializer list will be extended with NULL expressions to
   /// accomodate the new entry.
   Expr *updateInit(unsigned Init, Expr *expr);
+
+  /// \brief If this initializes a union, specifies which field in the
+  /// union to initialize.
+  ///
+  /// Typically, this field is the first named field within the
+  /// union. However, a designated initializer can specify the
+  /// initialization of a different field within the union.
+  FieldDecl *getInitializedFieldInUnion() { return UnionFieldInit; }
+  void setInitializedFieldInUnion(FieldDecl *FD) { UnionFieldInit = FD; }
 
   // Explicit InitListExpr's originate from source code (and have valid source
   // locations). Implicit InitListExpr's are created by the semantic analyzer.

@@ -241,32 +241,29 @@ public:
     RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
     const llvm::Type *Ty = ConvertType(ILE->getType());
 
-    // Find the field decl we're initializing, if any
-    // FIXME: C99 designated initializers won't always initialize the 
-    // first field
-    int FieldNo = 0; // Field no in RecordDecl
-    FieldDecl* curField = 0;
-    bool sawAnyFields = false;
-    for (RecordDecl::field_iterator Field = RD->field_begin(),
-                                 FieldEnd = RD->field_end();
-         Field != FieldEnd; ++Field) {
-      curField = *Field;
-      FieldNo++;
+    // If this is an empty initializer list, we value-initialize the
+    // union.
+    if (ILE->getNumInits() == 0)
+      return llvm::Constant::getNullValue(Ty);
 
-      if (curField->isUnnamedBitfield())
-        continue;
-
-      // If we have an initializer, find the field whose type is the
-      // same as that initializer. This 
-      sawAnyFields = true;
-      if (ILE->getNumInits() > 0 &&
-          CGM.getContext().getCanonicalType(curField->getType()) ==
-            CGM.getContext().getCanonicalType(ILE->getInit(0)->getType()))
-        break;
+    FieldDecl* curField = ILE->getInitializedFieldInUnion();
+    if (!curField) {
+#ifndef NDEBUG
+#endif
     }
 
-    if (!curField || !curField->getIdentifier() || ILE->getNumInits() == 0)
+    if (!curField) {
+      // There's no field to initialize, so value-initialize the union.
+#ifndef NDEBUG
+      // Make sure that it's really an empty and not a failure of
+      // semantic analysis.
+      for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                   FieldEnd = RD->field_end();
+           Field != FieldEnd; ++Field)
+        assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
+#endif
       return llvm::Constant::getNullValue(Ty);
+    }
 
     if (curField->isBitField()) {
       // Create a dummy struct for bit-field insertion

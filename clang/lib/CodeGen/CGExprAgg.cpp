@@ -443,7 +443,38 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   unsigned NumInitElements = E->getNumInits();
   RecordDecl *SD = E->getType()->getAsRecordType()->getDecl();
   unsigned CurInitVal = 0;
-  bool isUnion = E->getType()->isUnionType();
+
+  if (E->getType()->isUnionType()) {
+    // Only initialize one field of a union. The field itself is
+    // specified by the initializer list.
+    if (!E->getInitializedFieldInUnion()) {
+      // Empty union; we have nothing to do.
+      
+#ifndef NDEBUG
+      // Make sure that it's really an empty and not a failure of
+      // semantic analysis.
+      for (RecordDecl::field_iterator Field = SD->field_begin(),
+                                   FieldEnd = SD->field_end();
+           Field != FieldEnd; ++Field)
+        assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
+#endif
+      return;
+    }
+
+    // FIXME: volatility
+    FieldDecl *Field = E->getInitializedFieldInUnion();
+    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, Field, true, 0);
+
+    if (NumInitElements) {
+      // Store the initializer into the field
+      EmitInitializationToLValue(E->getInit(0), FieldLoc);
+    } else {
+      // Default-initialize to null
+      EmitNullInitializationToLValue(FieldLoc, Field->getType());
+    }
+
+    return;
+  }
   
   // Here we iterate over the fields; this makes it simpler to both
   // default-initialize fields and skip over unnamed fields.
@@ -457,29 +488,15 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     if (Field->isUnnamedBitfield())
       continue;
 
-    // When we're coping with C99 designated initializers into a
-    // union, find the field that has the same type as the expression
-    // we're initializing the union with.
-    if (isUnion && CurInitVal < NumInitElements && 
-        (CGF.getContext().getCanonicalType(Field->getType()) != 
-           CGF.getContext().getCanonicalType(E->getInit(CurInitVal)->getType())))
-      continue;
-
     // FIXME: volatility
-    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, *Field, isUnion,0);
+    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, *Field, false, 0);
     if (CurInitVal < NumInitElements) {
       // Store the initializer into the field
-      // This will probably have to get a bit smarter when we support
-      // designators in initializers
       EmitInitializationToLValue(E->getInit(CurInitVal++), FieldLoc);
     } else {
       // We're out of initalizers; default-initialize to null
       EmitNullInitializationToLValue(FieldLoc, Field->getType());
     }
-
-    // Unions only initialize one field.
-    if (isUnion)
-      break;
   }
 }
 

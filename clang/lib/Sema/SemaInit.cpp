@@ -573,6 +573,11 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
                                      StructuredList, StructuredIndex))
         hadError = true;
 
+      // Abort early for unions: the designator handled the
+      // initialization of the appropriate field.
+      if (DeclType->isUnionType())
+        break;
+
       continue;
     }
 
@@ -585,7 +590,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
     if (Field->getType()->isIncompleteArrayType())
       break;
 
-    if (!Field->getIdentifier() && Field->isBitField()) {
+    if (Field->isUnnamedBitfield()) {
       // Don't initialize unnamed bitfields, e.g. "int : 20;"
       ++Field;
       continue;
@@ -593,8 +598,12 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
 
     CheckSubElementType(IList, Field->getType(), Index,
                         StructuredList, StructuredIndex);
-    if (DeclType->isUnionType())
+
+    if (DeclType->isUnionType()) {
+      // Initialize the first field within the union.
+      StructuredList->setInitializedFieldInUnion(*Field);
       break;
+    }
 
     ++Field;
   }
@@ -753,8 +762,10 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
 
     // All of the fields of a union are located at the same place in
     // the initializer list.
-    if (RT->getDecl()->isUnion())
+    if (RT->getDecl()->isUnion()) {
       FieldIndex = 0;
+      StructuredList->setInitializedFieldInUnion(*Field);
+    }
 
     // Update the designator with the field declaration.
     D->setField(*Field);
