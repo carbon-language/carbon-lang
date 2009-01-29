@@ -809,12 +809,27 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       if (isRelease(FD, FName+2))
         S = getUnarySummary(FT, cfrelease);
       else {
-        // For CoreFoundation and CoreGraphics functions we assume they
-        // follow the ownership idiom strictly and thus do not cause
-        // ownership to "escape".
-        assert (ScratchArgs.empty());  
-        S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, 
-                                 DoNothing);
+        assert (ScratchArgs.empty());
+        // Remaining CoreFoundation and CoreGraphics functions.
+        // We use to assume that they all strictly followed the ownership idiom
+        // and that ownership cannot be transferred.  While this is technically
+        // correct, many methods allow a tracked object to escape.  For example:
+        //
+        //   CFMutableDictionaryRef x = CFDictionaryCreateMutable(...);        
+        //   CFDictionaryAddValue(y, key, x);
+        //   CFRelease(x); 
+        //   ... it is okay to use 'x' since 'y' has a reference to it
+        //
+        // We handle this and similar cases with the follow heuristic.  If the
+        // function name contains "InsertValue", "SetValue" or "AddValue" then
+        // we assume that arguments may "escape."
+        //
+        ArgEffect E = (CStrInCStrNoCase(FName, "InsertValue") ||
+                       CStrInCStrNoCase(FName, "AddValue") ||
+                       CStrInCStrNoCase(FName, "SetValue"))
+                      ? MayEscape : DoNothing;
+        
+        S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, E);
       }
     }
   }
