@@ -49,6 +49,7 @@ using namespace clang;
 /// point. CheckDesignatedInitializer() recursively steps into the
 /// designated subobject and manages backing out the recursion to
 /// initialize the subobjects after the one designated.
+namespace clang {
 class InitListChecker {
   Sema *SemaRef;
   bool hadError;
@@ -115,6 +116,8 @@ public:
   // semantic analysis and code generation.
   InitListExpr *getFullyStructuredList() const { return FullyStructuredList; }
 };
+}
+
 
 /// Recursively replaces NULL values within the given initializer list
 /// with expressions that perform value-initialization of the
@@ -161,10 +164,11 @@ static void fillInValueInitializations(ASTContext &Context, InitListExpr *ILE) {
       ILE->setInit(Init, new (Context) CXXZeroInitValueExpr(ElementType, 
                                                             SourceLocation(),
                                                             SourceLocation()));
-    else if (InitListExpr *InnerILE = dyn_cast<InitListExpr>(ILE->getInit(Init)))
+    else if (InitListExpr *InnerILE =dyn_cast<InitListExpr>(ILE->getInit(Init)))
       fillInValueInitializations(Context, InnerILE);
   }
 }
+
 
 InitListChecker::InitListChecker(Sema *S, InitListExpr *IL, QualType &T) {
   hadError = false;
