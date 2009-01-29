@@ -377,6 +377,10 @@ namespace llvm {
               const int *RHSValNoAssignments,
               SmallVector<VNInfo*, 16> &NewVNInfo);
 
+    /// isInOneLiveRange - Return true if the range specified is entirely in the
+    /// a single LiveRange of the live interval.
+    bool isInOneLiveRange(unsigned Start, unsigned End);
+
     /// removeRange - Remove the specified range from this interval.  Note that
     /// the range must be a single LiveRange in its entirety.
     void removeRange(unsigned Start, unsigned End, bool RemoveDeadValNo = false);

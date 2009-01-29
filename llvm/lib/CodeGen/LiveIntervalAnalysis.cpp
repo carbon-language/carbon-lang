@@ -2228,7 +2228,19 @@ void LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
     unsigned Index = getInstructionIndex(MI);
     if (pli.liveAt(Index)) {
       vrm.addEmergencySpill(SpillReg, MI);
-      pli.removeRange(getLoadIndex(Index), getStoreIndex(Index)+1);
+      unsigned StartIdx = getLoadIndex(Index);
+      unsigned EndIdx = getStoreIndex(Index)+1;
+      if (pli.isInOneLiveRange(StartIdx, EndIdx))
+        pli.removeRange(StartIdx, EndIdx);
+      else {
+        cerr << "Ran out of registers during register allocation!\n";
+        if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
+          cerr << "Please check your inline asm statement for invalid "
+               << "constraints:\n";
+          MI->print(cerr.stream(), tm_);
+        }
+        exit(1);
+      }
       for (const unsigned* AS = tri_->getSubRegisters(SpillReg); *AS; ++AS) {
         if (!hasInterval(*AS))
           continue;

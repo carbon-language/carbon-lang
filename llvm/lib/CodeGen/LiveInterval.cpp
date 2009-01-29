@@ -244,6 +244,16 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
   return ranges.insert(it, LR);
 }
 
+/// isInOneLiveRange - Return true if the range specified is entirely in the
+/// a single LiveRange of the live interval.
+bool LiveInterval::isInOneLiveRange(unsigned Start, unsigned End) {
+  Ranges::iterator I = std::upper_bound(ranges.begin(), ranges.end(), Start);
+  if (I == ranges.begin())
+    return false;
+  --I;
+  return I->contains(Start) && I->contains(End-1);
+}
+
 
 /// removeRange - Remove the specified range from this interval.  Note that
 /// the range must be in a single LiveRange in its entirety.

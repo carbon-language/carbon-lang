@@ -27,6 +27,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -237,7 +238,7 @@ namespace {
     /// value.  This method returns the modified instruction.
     ///
     MachineInstr *reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
-                                unsigned OpNum);
+                                unsigned OpNum, SmallSet<unsigned, 4> &RRegs);
 
     /// ComputeLocalLiveness - Computes liveness of registers within a basic
     /// block, setting the killed/dead flags as appropriate.
@@ -475,7 +476,8 @@ unsigned RALocal::getReg(MachineBasicBlock &MBB, MachineInstr *I,
 /// modified instruction.
 ///
 MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
-                                     unsigned OpNum) {
+                                     unsigned OpNum,
+                                     SmallSet<unsigned, 4> &ReloadedRegs) {
   unsigned VirtReg = MI->getOperand(OpNum).getReg();
 
   // If the virtual register is already available, just update the instruction
@@ -513,6 +515,29 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   MF->getRegInfo().setPhysRegUsed(PhysReg);
   MI->getOperand(OpNum).setReg(PhysReg);  // Assign the input register
   getVirtRegLastUse(VirtReg) = std::make_pair(MI, OpNum);
+
+  if (!ReloadedRegs.insert(PhysReg)) {
+    cerr << "Ran out of registers during register allocation!\n";
+    if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
+      cerr << "Please check your inline asm statement for invalid "
+           << "constraints:\n";
+      MI->print(cerr.stream(), TM);
+    }
+    exit(1);
+  }
+  for (const unsigned *SubRegs = TRI->getSubRegisters(PhysReg);
+       *SubRegs; ++SubRegs) {
+    if (!ReloadedRegs.insert(*SubRegs)) {
+      cerr << "Ran out of registers during register allocation!\n";
+      if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
+        cerr << "Please check your inline asm statement for invalid "
+             << "constraints:\n";
+        MI->print(cerr.stream(), TM);
+      }
+      exit(1);
+    }
+  }
+
   return MI;
 }
 
@@ -581,17 +606,16 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
         
         if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) continue;
         
-        const unsigned* subregs = TRI->getAliasSet(MO.getReg());
-        if (subregs) {
-          while (*subregs) {
+        const unsigned* Aliases = TRI->getAliasSet(MO.getReg());
+        if (Aliases) {
+          while (*Aliases) {
             DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
-              alias = LastUseDef.find(*subregs);
+              alias = LastUseDef.find(*Aliases);
             
-            if (alias != LastUseDef.end() &&
-                alias->second.first != I)
-              LastUseDef[*subregs] = std::make_pair(I, i);
+            if (alias != LastUseDef.end() && alias->second.first != I)
+              LastUseDef[*Aliases] = std::make_pair(I, i);
             
-            ++subregs;
+            ++Aliases;
           }
         }
       }
@@ -695,12 +719,12 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       MF->getRegInfo().setPhysRegUsed(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
       AddToPhysRegsUseOrder(Reg); 
-      for (const unsigned *AliasSet = TRI->getSubRegisters(Reg);
-           *AliasSet; ++AliasSet) {
-        if (PhysRegsUsed[*AliasSet] != -2) {
-          AddToPhysRegsUseOrder(*AliasSet); 
-          PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-          MF->getRegInfo().setPhysRegUsed(*AliasSet);
+      for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+           *SubRegs; ++SubRegs) {
+        if (PhysRegsUsed[*SubRegs] != -2) {
+          AddToPhysRegsUseOrder(*SubRegs); 
+          PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
+          MF->getRegInfo().setPhysRegUsed(*SubRegs);
         }
       }
     }    
@@ -778,12 +802,12 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
             PhysRegsUsed[Reg] = 0;            // It is free and reserved now
             AddToPhysRegsUseOrder(Reg); 
 
-            for (const unsigned *AliasSet = TRI->getSubRegisters(Reg);
-                 *AliasSet; ++AliasSet) {
-              if (PhysRegsUsed[*AliasSet] != -2) {
-                MF->getRegInfo().setPhysRegUsed(*AliasSet);
-                PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-                AddToPhysRegsUseOrder(*AliasSet); 
+            for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+                 *SubRegs; ++SubRegs) {
+              if (PhysRegsUsed[*SubRegs] != -2) {
+                MF->getRegInfo().setPhysRegUsed(*SubRegs);
+                PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
+                AddToPhysRegsUseOrder(*SubRegs); 
               }
             }
           }
@@ -797,12 +821,13 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // physical register is referenced by the instruction, that it is guaranteed
     // to be live-in, or the input is badly hosed.
     //
+    SmallSet<unsigned, 4> ReloadedRegs;
     for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
       MachineOperand& MO = MI->getOperand(i);
       // here we are looking for only used operands (never def&use)
       if (MO.isReg() && !MO.isDef() && MO.getReg() && !MO.isImplicit() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg()))
-        MI = reloadVirtReg(MBB, MI, i);
+        MI = reloadVirtReg(MBB, MI, i, ReloadedRegs);
     }
 
     // If this instruction is the last user of this register, kill the
@@ -830,13 +855,13 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         DOUT << "  Last use of " << TRI->getName(PhysReg)
              << "[%reg" << VirtReg <<"], removing it from live set\n";
         removePhysReg(PhysReg);
-        for (const unsigned *AliasSet = TRI->getSubRegisters(PhysReg);
-             *AliasSet; ++AliasSet) {
-          if (PhysRegsUsed[*AliasSet] != -2) {
+        for (const unsigned *SubRegs = TRI->getSubRegisters(PhysReg);
+             *SubRegs; ++SubRegs) {
+          if (PhysRegsUsed[*SubRegs] != -2) {
             DOUT  << "  Last use of "
-                  << TRI->getName(*AliasSet)
+                  << TRI->getName(*SubRegs)
                   << "[%reg" << VirtReg <<"], removing it from live set\n";
-            removePhysReg(*AliasSet);
+            removePhysReg(*SubRegs);
           }
         }
       }
@@ -861,12 +886,12 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         AddToPhysRegsUseOrder(Reg); 
 
-        for (const unsigned *AliasSet = TRI->getSubRegisters(Reg);
-             *AliasSet; ++AliasSet) {
-          if (PhysRegsUsed[*AliasSet] != -2) {
-            MF->getRegInfo().setPhysRegUsed(*AliasSet);
-            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-            AddToPhysRegsUseOrder(*AliasSet); 
+        for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+             *SubRegs; ++SubRegs) {
+          if (PhysRegsUsed[*SubRegs] != -2) {
+            MF->getRegInfo().setPhysRegUsed(*SubRegs);
+            PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
+            AddToPhysRegsUseOrder(*SubRegs); 
           }
         }
       }
@@ -883,12 +908,12 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
           PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         }
         MF->getRegInfo().setPhysRegUsed(Reg);
-        for (const unsigned *AliasSet = TRI->getSubRegisters(Reg);
-             *AliasSet; ++AliasSet) {
-          if (PhysRegsUsed[*AliasSet] != -2) {
-            AddToPhysRegsUseOrder(*AliasSet); 
-            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-            MF->getRegInfo().setPhysRegUsed(*AliasSet);
+        for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+             *SubRegs; ++SubRegs) {
+          if (PhysRegsUsed[*SubRegs] != -2) {
+            AddToPhysRegsUseOrder(*SubRegs); 
+            PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
+            MF->getRegInfo().setPhysRegUsed(*SubRegs);
           }
         }
       }
