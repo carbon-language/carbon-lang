@@ -12,8 +12,8 @@ CFLAGS := -std=gnu99
 
 X_COMPILER := llvm-gcc
 X_LL_CFLAGS := -emit-llvm -S
-Y_COMPILER := clang
-Y_LL_CFLAGS := -emit-llvm
+Y_COMPILER := xcc -ccc-clang
+Y_LL_CFLAGS := -emit-llvm -S
 CC := gcc
 
 X_CFLAGS := -m32
@@ -81,15 +81,14 @@ test.%.x.o: test.%.c
 	$(X_COMPILER) -c $(CFLAGS) $(X_CFLAGS) -o $@ $<
 .PRECIOUS: test.%.y.o
 test.%.y.o: test.%.c
-	$(Y_COMPILER) -S $(CFLAGS) $(Y_CFLAGS) -o $@.s $<
-	as $(Y_CFLAGS) -o $@ $@.s
+	$(Y_COMPILER) -c $(CFLAGS) $(Y_CFLAGS) -o $@ $<
 
 .PRECIOUS: test.%.x.defs
 test.%.x.defs: test.%.a.x.ll
-	grep '^define ' $< > $@
+	-grep '^define ' $< > $@
 .PRECIOUS: test.%.y.defs
 test.%.y.defs: test.%.a.y.ll
-	grep '^define ' $< > $@
+	-grep '^define ' $< > $@
 
 .PRECIOUS: test.%.a.x.ll
 test.%.a.x.ll: test.%.a.c
