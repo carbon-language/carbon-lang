@@ -246,7 +246,7 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
 
 
 /// removeRange - Remove the specified range from this interval.  Note that
-/// the range must already be in this interval in its entirety.
+/// the range must be in a single LiveRange in its entirety.
 void LiveInterval::removeRange(unsigned Start, unsigned End,
                                bool RemoveDeadValNo) {
   // Find the LiveRange containing this span.
