@@ -54,6 +54,28 @@ class ToolChain(object):
         else:
             return args
 
+    def shouldUseClangCompiler(self, action):
+        # If user requested no clang, or this isn't a "compile" phase,
+        # or this isn't a C family option, then don't use clang.
+        if (self.driver.cccNoClang or 
+            not isinstance(action.phase, (Phases.PreprocessPhase,
+                                          Phases.CompilePhase,
+                                          Phases.SyntaxOnlyPhase,
+                                          Phases.EmitLLVMPhase,
+                                          Phases.PrecompilePhase)) or
+            action.inputs[0].type not in Types.cTypesSet):
+            return False
+
+        if self.driver.cccNoClangPreprocessor:
+            if isinstance(action.phase, Phases.PreprocessPhase):
+                return False
+
+        if self.driver.cccNoClangCXX:
+            if action.inputs[0].type in Types.cxxTypesSet:
+                return False
+
+        return True
+        
 class Darwin_X86_ToolChain(ToolChain):
     def __init__(self, driver, darwinVersion, gccVersion, archName):
         super(Darwin_X86_ToolChain, self).__init__(driver)
@@ -106,20 +128,23 @@ class Darwin_X86_ToolChain(ToolChain):
         major,minor,minorminor = self.darwinVersion
         return '%d.%d.%d' % (10, major-4, minor)
 
+    def shouldUseClangCompiler(self, action):
+        if not super(Darwin_X86_ToolChain, self).shouldUseClangCompiler(action):
+            return False
+        
+        # Only use clang if user didn't override archs, or this is one
+        # of the ones they provided.
+        if (not self.driver.cccClangArchs or 
+            self.archName in self.driver.cccClangArchs):
+            return True
+        
+        return False
+
     def selectTool(self, action):
         assert isinstance(action, Phases.JobAction)
         
-        if self.driver.cccClang and self.archName == 'i386':
-            if (action.inputs[0].type in (Types.CType, Types.CTypeNoPP,
-                                          Types.ObjCType, Types.ObjCTypeNoPP) and
-                (isinstance(action.phase, Phases.CompilePhase) or
-                 isinstance(action.phase, Phases.SyntaxOnlyPhase) or
-                 isinstance(action.phase, Phases.EmitLLVMPhase))):
-                return self.clangTool
-            elif (action.inputs[0].type in (Types.CHeaderType, Types.CHeaderNoPPType,
-                                            Types.ObjCHeaderType, Types.ObjCHeaderNoPPType) and
-                  isinstance(action.phase, Phases.PrecompilePhase)):
-                return self.clangTool
+        if self.shouldUseClangCompiler(action):
+            return self.clangTool
 
         return self.toolMap[action.phase.__class__]
 
@@ -220,17 +245,7 @@ class Generic_GCC_ToolChain(ToolChain):
     def selectTool(self, action):
         assert isinstance(action, Phases.JobAction)
 
-        if self.driver.cccClang:
-            if (action.inputs[0].type in (Types.CType, Types.CTypeNoPP,
-                                          Types.ObjCType, Types.ObjCTypeNoPP) and
-                (isinstance(action.phase, Phases.PreprocessPhase) or
-                 isinstance(action.phase, Phases.CompilePhase) or
-                 isinstance(action.phase, Phases.SyntaxOnlyPhase) or
-                 isinstance(action.phase, Phases.EmitLLVMPhase))):
-                return self.clangTool
-            elif (action.inputs[0].type in (Types.CHeaderType, Types.CHeaderNoPPType,
-                                            Types.ObjCHeaderType, Types.ObjCHeaderNoPPType) and
-                  isinstance(action.phase, Phases.PrecompilePhase)):
-                return self.clangTool
+        if self.shouldUseClangCompiler(action):
+            return self.clangTool
 
         return self.toolMap[action.phase.__class__]

@@ -190,6 +190,9 @@ class Clang_CompileTool(Tool):
             cmd_args.append('-emit-llvm-bc')
         elif outputType is Types.AsmTypeNoPP:
             cmd_args.append('-S')
+        elif (inputs[0].type.preprocess and 
+              outputType is inputs[0].type.preprocess):
+            cmd_args.append('-E')
         elif outputType is Types.PCHType:
             # No special option needed, driven by -x. However, we
             # patch the output name to try and not conflict with gcc.

@@ -28,9 +28,10 @@ class Driver(object):
         self.cccHostBits = self.cccHostMachine = None
         self.cccHostSystem = self.cccHostRelease = None
         self.cccCXX = False
-        self.cccClang = False
         self.cccEcho = False
         self.cccFallback = False
+        self.cccNoClang = self.cccNoClangCXX = self.cccNoClangPreprocessor = False
+        self.cccClangArchs = None
 
         # Certain options suppress the 'no input files' warning.
         self.suppressMissingInputWarning = False
@@ -115,12 +116,10 @@ class Driver(object):
 
         # FIXME: How to handle override of host? ccc specific options?
         # Abuse -b?
-        if self.getenvBool('CCC_CLANG'):
-            self.cccClang = True
-        if self.getenvBool('CCC_ECHO'):
-            self.cccEcho = True
-        if self.getenvBool('CCC_FALLBACK'):
-            self.cccFallback = True
+        arg = os.getenv('CCC_ADD_ARGS')
+        if arg:
+            args = filter(None, map(str.strip, arg.split(',')))
+            argv = args + argv
 
         while argv and argv[0].startswith('-ccc-'):
             fullOpt,argv = argv[0],argv[1:]
@@ -132,12 +131,20 @@ class Driver(object):
                 cccPrintPhases = True
             elif opt == 'cxx':
                 self.cccCXX = True
-            elif opt == 'clang':
-                self.cccClang = True
             elif opt == 'echo':
                 self.cccEcho = True
             elif opt == 'fallback':
                 self.cccFallback = True
+
+            elif opt == 'no-clang':
+                self.cccNoClang = True
+            elif opt == 'no-clang-cxx':
+                self.cccNoClangCXX = True
+            elif opt == 'no-clang-cpp':
+                self.cccNoClangPreprocessor = True
+            elif opt == 'clang-archs':
+                self.cccClangArchs,argv = argv[0].split(','),argv[1:]
+
             elif opt == 'host-bits':
                 self.cccHostBits,argv = argv[0],argv[1:]
             elif opt == 'host-machine':

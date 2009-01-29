@@ -146,6 +146,22 @@ kTypeSpecifierMap = {
     'treelang' : TreelangType,
 }
 
+# Set of C family types.
+cTypesSet = set([CType, CTypeNoPP, 
+                 ObjCType, ObjCTypeNoPP,
+                 CXXType, CXXTypeNoPP,
+                 ObjCXXType, ObjCXXTypeNoPP,
+                 CHeaderType, CHeaderNoPPType,
+                 ObjCHeaderType, ObjCHeaderNoPPType,
+                 CXXHeaderType, CXXHeaderNoPPType,
+                 ObjCXXHeaderType, ObjCXXHeaderNoPPType])
+
+# Set of C++ family types.
+cxxTypesSet = set([CXXType, CXXTypeNoPP,
+                   ObjCXXType, ObjCXXTypeNoPP,
+                   CXXHeaderType, CXXHeaderNoPPType,
+                   ObjCXXHeaderType, ObjCXXHeaderNoPPType])
+
 # Check that the type specifier map at least matches what the types
 # believe to be true.
 assert not [name for name,type in kTypeSpecifierMap.items()

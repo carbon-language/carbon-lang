@@ -1,11 +1,11 @@
 // Check that object files compiled with -mdynamic-no-pic can be
 // linked.
 // 
-// RUN: xcc -ccc-clang -m32 -mdynamic-no-pic %s -c -o %t.o &&
-// RUN: xcc -ccc-clang -m32 %t.o -o %t &&
+// RUN: xcc -m32 -mdynamic-no-pic %s -c -o %t.o &&
+// RUN: xcc -m32 %t.o -o %t &&
 // RUN: %t | grep "Hello, World" &&
-// RUN: xcc -ccc-clang -m64 -mdynamic-no-pic %s -c -o %t.o &&
-// RUN: xcc -ccc-clang -m64 %t.o -o %t &&
+// RUN: xcc -m64 -mdynamic-no-pic %s -c -o %t.o &&
+// RUN: xcc -m64 %t.o -o %t &&
 // RUN: %t | grep "Hello, World" &&
 // RUN: true
 
