@@ -2597,9 +2597,13 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
     // EXTRACT_VECTOR_ELT of INSERT_VECTOR_ELT is often formed when vector
     // operations are lowered to scalars.
     if (N1.getOpcode() == ISD::INSERT_VECTOR_ELT) {
+      // If the indices are the same, return the inserted element.
       if (N1.getOperand(2) == N2)
         return N1.getOperand(1);
-      else
+      // If the indices are known different, extract the element from
+      // the original vector.
+      else if (isa<ConstantSDNode>(N1.getOperand(2)) &&
+               isa<ConstantSDNode>(N2))
         return getNode(ISD::EXTRACT_VECTOR_ELT, VT, N1.getOperand(0), N2);
     }
     break;
