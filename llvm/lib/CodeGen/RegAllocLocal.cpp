@@ -220,10 +220,10 @@ namespace {
     /// getReg - Find a physical register to hold the specified virtual
     /// register.  If all compatible physical registers are used, this method
     /// spills the last used virtual register to the stack, and uses that
-    /// register.
-    ///
+    /// register. If NoFree is true, that means the caller knows there isn't
+    /// a free register, do not call getFreeReg().
     unsigned getReg(MachineBasicBlock &MBB, MachineInstr *MI,
-                    unsigned VirtReg);
+                    unsigned VirtReg, bool NoFree = false);
 
     /// reloadVirtReg - This method transforms the specified specified virtual
     /// register use to refer to a physical register.  This method may do this
@@ -398,11 +398,11 @@ unsigned RALocal::getFreeReg(const TargetRegisterClass *RC) {
 /// the last used virtual register to the stack, and uses that register.
 ///
 unsigned RALocal::getReg(MachineBasicBlock &MBB, MachineInstr *I,
-                         unsigned VirtReg) {
+                         unsigned VirtReg, bool NoFree) {
   const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
 
   // First check to see if we have a free register of the requested type...
-  unsigned PhysReg = getFreeReg(RC);
+  unsigned PhysReg = NoFree ? 0 : getFreeReg(RC);
 
   // If we didn't find an unused register, scavenge one now!
   if (PhysReg == 0) {
@@ -498,7 +498,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   } else {         // No registers available.
     // Force some poor hapless value out of the register file to
     // make room for the new register, and reload it.
-    PhysReg = getReg(MBB, MI, VirtReg);
+    PhysReg = getReg(MBB, MI, VirtReg, true);
   }
 
   markVirtRegModified(VirtReg, false);   // Note that this reg was just reloaded
