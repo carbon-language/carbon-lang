@@ -155,7 +155,6 @@ public:
     return ABIArgInfo(Ignore);
   }
   static ABIArgInfo getCoerce(const llvm::Type *T) { 
-    assert(T->isSingleValueType() && "Can only coerce to simple types");
     return ABIArgInfo(Coerce, T);
   }
   static ABIArgInfo getByVal(unsigned Alignment) {
@@ -541,9 +540,11 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
 
   case NoClass: break;
   case Integer:
-    assert(0 && "FIXME: Implement MRV"); break;
+    ResType = llvm::StructType::get(ResType, llvm::Type::Int64Ty, NULL);
+    break;
   case SSE:    
-    assert(0 && "FIXME: Implement MRV"); break;
+    ResType = llvm::StructType::get(ResType, llvm::Type::DoubleTy, NULL);
+    break;
 
     // AMD64-ABI 3.2.3p4: Rule 5. If the class is SSEUP, the eightbyte
     // is passed in the upper half of the last used SSE register.
@@ -555,7 +556,7 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 7. If the class is X87UP, the value is
-    // returned together with the previos X87 value in %st0.
+    // returned together with the previous X87 value in %st0.
     //
     // X87UP should always be preceeded by X87, so we don't need to do
     // anything here.
