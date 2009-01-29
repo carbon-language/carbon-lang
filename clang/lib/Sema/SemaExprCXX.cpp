@@ -61,7 +61,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
     return Diag(OpLoc, diag::err_need_header_before_typeid);
   
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
-  Decl *TypeInfoDecl = LookupDecl(TypeInfoII, Decl::IDNS_Tag, 0, StdNs);
+  Decl *TypeInfoDecl = LookupDeclInContext(TypeInfoII, Decl::IDNS_Tag, StdNs);
   RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
   if (!TypeInfoRecordDecl)
     return Diag(OpLoc, diag::err_need_header_before_typeid);

@@ -561,9 +561,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
     if (DC == 0)
       return ExprError();
-    Lookup = LookupDecl(Name, Decl::IDNS_Ordinary, S, DC);
+    Lookup = LookupDeclInContext(Name, Decl::IDNS_Ordinary, DC);
   } else
-    Lookup = LookupDecl(Name, Decl::IDNS_Ordinary, S);
+    Lookup = LookupDeclInScope(Name, Decl::IDNS_Ordinary, S);
 
   if (Lookup.isAmbiguous()) {
     DiagnoseAmbiguousLookup(Lookup, Name, Loc,
@@ -4031,9 +4031,9 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
     // Get the decl corresponding to this.
     RecordDecl *RD = RC->getDecl();
     FieldDecl *MemberDecl 
-      = dyn_cast_or_null<FieldDecl>(LookupDecl(OC.U.IdentInfo, 
+      = dyn_cast_or_null<FieldDecl>(LookupDeclInContext(OC.U.IdentInfo, 
                                                Decl::IDNS_Ordinary,
-                                               S, RD, false).getAsDecl());
+                                               RD, false).getAsDecl());
     if (!MemberDecl)
       return Diag(BuiltinLoc, diag::err_typecheck_no_member)
        << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd);

@@ -1376,9 +1376,8 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // original-namespace-definition is the name of the namespace. Subsequently
     // in that declarative region, it is treated as an original-namespace-name.
 
-    Decl *PrevDecl =
-      LookupDecl(II, Decl::IDNS_Ordinary, DeclRegionScope, 0,
-                /*LookupInParent=*/false);
+    Decl *PrevDecl = LookupDeclInScope(II, Decl::IDNS_Ordinary, DeclRegionScope, 
+                                       /*LookupInParent=*/false);
     
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
       // This is an extended namespace definition.
@@ -2181,7 +2180,7 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
   // FIXME: Need to check for abstract classes.
 
   IdentifierInfo *II = D.getIdentifier();
-  if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
+  if (Decl *PrevDecl = LookupDeclInScope(II, Decl::IDNS_Ordinary, S)) {
     // The scope should be freshly made just for us. There is just no way
     // it contains any previous declaration.
     assert(!S->isDeclScope(PrevDecl));
