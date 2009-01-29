@@ -1668,6 +1668,10 @@ class InitListExpr : public Expr {
   /// field within the union will be initialized.
   FieldDecl *UnionFieldInit;
 
+  /// Whether this initializer list originally had a GNU array-range
+  /// designator in it. This is a temporary marker used by CodeGen.
+  bool HadArrayRangeDesignator;
+
 public:
   InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
                SourceLocation rbraceloc);
@@ -1727,6 +1731,11 @@ public:
   /// 
   InitListExpr *getSyntacticForm() const { return SyntacticForm; }
   void setSyntacticForm(InitListExpr *Init) { SyntacticForm = Init; }
+
+  bool hadArrayRangeDesignator() const { return HadArrayRangeDesignator; }
+  void sawArrayRangeDesignator() { 
+    HadArrayRangeDesignator = true;
+  }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(LBraceLoc, RBraceLoc);

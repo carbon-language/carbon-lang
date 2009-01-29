@@ -224,7 +224,7 @@ InitListExpr::InitListExpr(SourceLocation lbraceloc,
                            SourceLocation rbraceloc)
   : Expr(InitListExprClass, QualType()),
     LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), SyntacticForm(0), 
-    UnionFieldInit(0) {
+    UnionFieldInit(0), HadArrayRangeDesignator(false) {
 
   InitExprs.insert(InitExprs.end(), initExprs, initExprs+numInits);
 }

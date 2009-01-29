@@ -18,8 +18,7 @@ int iarray2[10] = {
 };
 
 int iarray3[10] = {
-  [5 ... 12] = 2 // expected-error{{array designator index (12) exceeds array bounds (10)}}\
-                // expected-warning{{side effects due to the GNU array-range designator extension may occur multiple times}}
+  [5 ... 12] = 2 // expected-error{{array designator index (12) exceeds array bounds (10)}}
 };
 
 struct point {
@@ -45,8 +44,8 @@ struct point array[10] = {
 
 struct point array2[10] = {
   [10].x = 2.0, // expected-error{{array designator index (10) exceeds array bounds (10)}}
-  [4 ... 5].y = 2.0, // expected-warning{{side effects due to the GNU array-range designator extension may occur multiple times}}
-  [4 ... 6] = { .x = 3, .y = 4.0 } // expected-warning{{side effects due to the GNU array-range designator extension may occur multiple times}}
+  [4 ... 5].y = 2.0,
+  [4 ... 6] = { .x = 3, .y = 4.0 }
 };
 
 struct point array3[10] = {
@@ -117,7 +116,7 @@ struct disklabel_ops disklabel64_ops = {
 // PR clang/3378
 int bitwidth[] = { [(long long int)1] = 5, [(short int)2] = 2 };
 int a[]= { [sizeof(int)] = 0 };
-int a2[]= { [0 ... sizeof(int)] = 0 }; // expected-warning{{side effects due to the GNU array-range designator extension may occur multiple times}}
+int a2[]= { [0 ... sizeof(int)] = 0 };
 
 // Test warnings about initializers overriding previous initializers
 struct X {

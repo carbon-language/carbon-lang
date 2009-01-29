@@ -867,9 +867,7 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
     IndexExpr = DIE->getArrayRangeEnd(*D);
 
     if (DesignatedStartIndex.getZExtValue() != DesignatedEndIndex.getZExtValue())
-      SemaRef->Diag(D->getEllipsisLoc(), 
-                    diag::warn_gnu_array_range_designator_side_effects)
-        << SourceRange(D->getLBracketLoc(), D->getRBracketLoc());
+      FullyStructuredList->sawArrayRangeDesignator();
   }
 
   if (isa<ConstantArrayType>(AT)) {

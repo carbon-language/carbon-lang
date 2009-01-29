@@ -169,6 +169,10 @@ public:
   Value *VisitInitListExpr(InitListExpr *E) {
     unsigned NumInitElements = E->getNumInits();
     
+    if (E->hadArrayRangeDesignator()) {
+      CGF.ErrorUnsupported(E, "GNU array range designator extension");
+    }
+
     const llvm::VectorType *VType = 
       dyn_cast<llvm::VectorType>(ConvertType(E->getType()));
     

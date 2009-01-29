@@ -307,6 +307,10 @@ void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
     cast<llvm::PointerType>(DestPtr->getType());
   const llvm::Type *DestType = APType->getElementType();
 
+  if (E->hadArrayRangeDesignator()) {
+    CGF.ErrorUnsupported(E, "GNU array range designator extension");
+  }
+
   if (const llvm::ArrayType *AType = dyn_cast<llvm::ArrayType>(DestType)) {
     unsigned NumInitElements = E->getNumInits();
 
@@ -397,6 +401,10 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     return;
   }
 #endif
+  if (E->hadArrayRangeDesignator()) {
+    CGF.ErrorUnsupported(E, "GNU array range designator extension");
+  }
+
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
     const llvm::PointerType *APType =
