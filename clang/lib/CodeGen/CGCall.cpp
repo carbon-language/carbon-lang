@@ -548,13 +548,13 @@ void X86_64ABIInfo::classify(QualType Ty,
       //
       // (f) Otherwise class SSE is used.
       if (Target == FieldLo || FieldLo == NoClass) ;
-      else if (Target == NoClass)
-        Target = FieldLo;
       else if (FieldLo == Memory) {
         // Memory is never over-ridden, just bail.
         Lo = Memory;
         return;
       } 
+      else if (Target == NoClass)
+        Target = FieldLo;
       else if (Target == Integer || FieldLo == Integer) 
         Target = Integer;
       else if (FieldLo == X87 || FieldLo == X87Up || FieldLo == ComplexX87) {
