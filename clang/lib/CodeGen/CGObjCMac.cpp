@@ -3843,12 +3843,12 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   
   if (Entry) {
     // Already created, fix the linkage and update the initializer.
-    Entry->setLinkage(llvm::GlobalValue::InternalLinkage);
+    Entry->setLinkage(llvm::GlobalValue::WeakLinkage);
     Entry->setInitializer(Init);
   } else {
     Entry = 
     new llvm::GlobalVariable(ObjCTypes.ProtocolnfABITy, false,
-                             llvm::GlobalValue::InternalLinkage,
+                             llvm::GlobalValue::WeakLinkage,
                              Init, 
                              std::string("\01l_OBJC_PROTOCOL_$_")+ProtocolName,
                              &CGM.getModule());
@@ -3856,6 +3856,21 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
     // FIXME: Is this necessary? Why only for protocol?
     Entry->setAlignment(4);
   }
+  Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  
+  // Use this protocol meta-data to build protocol list table in section
+  // __DATA, __objc_protolist
+  llvm::Type *ptype = llvm::PointerType::getUnqual(ObjCTypes.ProtocolnfABITy);
+  llvm::GlobalVariable *PTGV = new llvm::GlobalVariable(
+                                      ptype, false,
+                                      llvm::GlobalValue::WeakLinkage,
+                                      Entry, 
+                                      std::string("\01l_OBJC_LABEL_PROTOCOL_$_")
+                                                  +ProtocolName,
+                                      &CGM.getModule());
+  PTGV->setSection("__DATA, __objc_protolist");
+  PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  UsedGlobals.push_back(PTGV);
   return Entry;
 }
 
