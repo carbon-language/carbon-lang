@@ -1815,7 +1815,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
       }
     }
 
-    // Simpify x&y == y to x&y == 0 if y has exactly one bit set.
+    // Simplify x&y == y to x&y != 0 if y has exactly one bit set.
     if (N0.getOpcode() == ISD::AND)
       if (N0.getOperand(0) == N1 || N0.getOperand(1) == N1) {
         if (ValueHasAtMostOneBitSet(N1, DAG)) {
