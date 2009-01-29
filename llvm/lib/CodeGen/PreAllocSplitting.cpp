@@ -50,6 +50,7 @@ namespace {
     MachineFunction       *CurrMF;
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;
+    const TargetRegisterInfo* TRI;
     MachineFrameInfo      *MFI;
     MachineRegisterInfo   *MRI;
     LiveIntervals         *LIs;
@@ -223,12 +224,21 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
         Pt = MII;
         SpillIndex = Gap;
         break;
-      }
+      
+      // We can't insert the spill between the barrier (a call), and its
+      // corresponding call frame setup.
+      } else if (prior(MII)->getOpcode() == TRI->getCallFrameSetupOpcode() &&
+                 MII == MachineBasicBlock::iterator(MI))
+        break;
     } while (MII != EndPt);
   } else {
     MachineBasicBlock::iterator MII = MI;
     MachineBasicBlock::iterator EndPt = DefMI
       ? MachineBasicBlock::iterator(DefMI) : MBB->begin();
+    
+    // We can't insert the spill between the barrier (a call), and its
+    // corresponding call frame setup.
+    if (prior(MII)->getOpcode() == TRI->getCallFrameSetupOpcode()) --MII;
     while (MII != EndPt && !RefsInMBB.count(MII)) {
       unsigned Index = LIs->getInstructionIndex(MII);
       if (LIs->hasGapBeforeInstr(Index)) {
@@ -269,12 +279,22 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
         Pt = MII;
         RestoreIndex = Gap;
         break;
-      }
+      
+      // We can't insert a restore between the barrier (a call) and its 
+      // corresponding call frame teardown.
+      } else if (MII->getOpcode() == TRI->getCallFrameDestroyOpcode() &&
+                 prior(MII) == MachineBasicBlock::iterator(MI))
+        break;
       --MII;
     } while (MII != EndPt);
   } else {
     MachineBasicBlock::iterator MII = MI;
     MII = ++MII;
+    // We can't insert a restore between the barrier (a call) and its 
+    // corresponding call frame teardown.
+    if (MII->getOpcode() == TRI->getCallFrameDestroyOpcode())
+      ++MII;
+    
     // FIXME: Limit the number of instructions to examine to reduce
     // compile time?
     while (MII != MBB->getFirstTerminator()) {
@@ -1291,6 +1311,7 @@ bool PreAllocSplitting::createsNewJoin(LiveRange* LR,
 bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   CurrMF = &MF;
   TM     = &MF.getTarget();
+  TRI    = TM->getRegisterInfo();
   TII    = TM->getInstrInfo();
   MFI    = MF.getFrameInfo();
   MRI    = &MF.getRegInfo();
