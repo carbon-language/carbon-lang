@@ -729,6 +729,50 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
   QualType LHSTy = E->getLHS()->getType();
   QualType RHSTy = E->getRHS()->getType();
+
+  if (LHSTy->isAnyComplexType()) {
+    assert(RHSTy->isAnyComplexType() && "Invalid comparison");
+    APValue LHS, RHS;
+
+    if (!EvaluateComplex(E->getLHS(), LHS, Info))
+      return false;
+
+    if (!EvaluateComplex(E->getRHS(), RHS, Info))
+      return false;
+
+    if (LHS.isComplexFloat()) {
+      APFloat::cmpResult CR_r = 
+        LHS.getComplexFloatReal().compare(RHS.getComplexFloatReal());
+      APFloat::cmpResult CR_i = 
+        LHS.getComplexFloatImag().compare(RHS.getComplexFloatImag());
+
+      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+      if (E->getOpcode() == BinaryOperator::EQ)
+        Result = (CR_r == APFloat::cmpEqual &&
+                  CR_i == APFloat::cmpEqual);
+      else if (E->getOpcode() == BinaryOperator::NE)
+        Result = ((CR_r == APFloat::cmpGreaterThan || 
+                   CR_r == APFloat::cmpLessThan) &&
+                  (CR_i == APFloat::cmpGreaterThan || 
+                   CR_i == APFloat::cmpLessThan));
+      else
+        assert(0 && "Invalid complex compartison.");
+      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+      return true;
+    } else {
+      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+      if (E->getOpcode() == BinaryOperator::EQ)
+        Result = (LHS.getComplexIntReal() == RHS.getComplexIntReal() &&
+                  LHS.getComplexIntImag() == RHS.getComplexIntImag());
+      else if (E->getOpcode() == BinaryOperator::NE)
+        Result = (LHS.getComplexIntReal() != RHS.getComplexIntReal() ||
+                  LHS.getComplexIntImag() != RHS.getComplexIntImag());
+      else
+        assert(0 && "Invalid complex compartison.");
+      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+      return true;
+    }
+  }
   
   if (LHSTy->isRealFloatingType() &&
       RHSTy->isRealFloatingType()) {
