@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements semantic analysis for initializers.
+//  This file implements semantic analysis for initializers. The entry
+//  point is Sema::CheckInitList(), but all of the work is performed
+//  within the InitListChecker class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,6 +22,33 @@
 #include <map>
 using namespace clang;
 
+/// @brief Semantic checking for initializer lists.
+///
+/// The InitListChecker class contains a set of routines that each
+/// handle the initialization of a certain kind of entity, e.g.,
+/// arrays, vectors, struct/union types, scalars, etc. The
+/// InitListChecker itself performs a recursive walk of the subobject
+/// structure of the type to be initialized, while stepping through
+/// the initializer list one element at a time. The IList and Index
+/// parameters to each of the Check* routines contain the active
+/// (syntactic) initializer list and the index into that initializer
+/// list that represents the current initializer. Each routine is
+/// responsible for moving that Index forward as it consumes elements.
+///
+/// Each Check* routine also has a StructuredList/StructuredIndex
+/// arguments, which contains the current the "structured" (semantic)
+/// initializer list and the index into that initializer list where we
+/// are copying initializers as we map them over to the semantic
+/// list. Once we have completed our recursive walk of the subobject
+/// structure, we will have constructed a full semantic initializer
+/// list.
+///
+/// C99 designators cause changes in the initializer list traversal,
+/// because they make the initialization "jump" into a specific
+/// subobject and then continue the initialization from that
+/// point. CheckDesignatedInitializer() recursively steps into the
+/// designated subobject and manages backing out the recursion to
+/// initialize the subobjects after the one designated.
 class InitListChecker {
   Sema *SemaRef;
   bool hadError;
@@ -27,38 +56,38 @@ class InitListChecker {
   InitListExpr *FullyStructuredList;
   
   void CheckImplicitInitList(InitListExpr *ParentIList, QualType T, 
-                             unsigned &Index, InitListExpr *StructuredInitList,
-                             unsigned &StructuredInitIndex);
+                             unsigned &Index, InitListExpr *StructuredList,
+                             unsigned &StructuredIndex);
   void CheckExplicitInitList(InitListExpr *IList, QualType &T,
-                             unsigned &Index, InitListExpr *StructuredInitList,
-                             unsigned &StructuredInitIndex);
+                             unsigned &Index, InitListExpr *StructuredList,
+                             unsigned &StructuredIndex);
   void CheckListElementTypes(InitListExpr *IList, QualType &DeclType, 
                              bool SubobjectIsDesignatorContext, 
                              unsigned &Index,
-                             InitListExpr *StructuredInitList,
-                             unsigned &StructuredInitIndex);
+                             InitListExpr *StructuredList,
+                             unsigned &StructuredIndex);
   void CheckSubElementType(InitListExpr *IList, QualType ElemType, 
                            unsigned &Index,
-                           InitListExpr *StructuredInitList,
-                           unsigned &StructuredInitIndex);
+                           InitListExpr *StructuredList,
+                           unsigned &StructuredIndex);
   // FIXME: Does DeclType need to be a reference type?
   void CheckScalarType(InitListExpr *IList, QualType &DeclType, 
                        unsigned &Index,
-                       InitListExpr *StructuredInitList,
-                       unsigned &StructuredInitIndex);
+                       InitListExpr *StructuredList,
+                       unsigned &StructuredIndex);
   void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index,
-                       InitListExpr *StructuredInitList,
-                       unsigned &StructuredInitIndex);
+                       InitListExpr *StructuredList,
+                       unsigned &StructuredIndex);
   void CheckStructUnionTypes(InitListExpr *IList, QualType DeclType, 
                              RecordDecl::field_iterator Field, 
                              bool SubobjectIsDesignatorContext, unsigned &Index,
-                             InitListExpr *StructuredInitList,
-                             unsigned &StructuredInitIndex);
+                             InitListExpr *StructuredList,
+                             unsigned &StructuredIndex);
   void CheckArrayType(InitListExpr *IList, QualType &DeclType, 
                       llvm::APSInt elementIndex, 
                       bool SubobjectIsDesignatorContext, unsigned &Index,
-                      InitListExpr *StructuredInitList,
-                      unsigned &StructuredInitIndex);
+                      InitListExpr *StructuredList,
+                      unsigned &StructuredIndex);
   bool CheckDesignatedInitializer(InitListExpr *IList, DesignatedInitExpr *DIE, 
                                   DesignatedInitExpr::designators_iterator D,
                                   QualType &CurrentObjectType, 
@@ -73,8 +102,8 @@ class InitListChecker {
                                            InitListExpr *StructuredList,
                                            unsigned StructuredIndex,
                                            SourceRange InitRange);
-  void UpdateStructuredListElement(InitListExpr *StructuredInitList,
-                                   unsigned &StructuredInitIndex,
+  void UpdateStructuredListElement(InitListExpr *StructuredList,
+                                   unsigned &StructuredIndex,
                                    Expr *expr);
   int numArrayElements(QualType DeclType);
   int numStructUnionElements(QualType DeclType);
