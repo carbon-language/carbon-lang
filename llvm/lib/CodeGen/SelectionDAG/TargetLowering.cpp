@@ -724,7 +724,7 @@ TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 bool TargetLowering::TargetLoweringOpt::ShrinkDemandedConstant(SDValue Op, 
                                                         const APInt &Demanded) {
   // FIXME: ISD::SELECT, ISD::SELECT_CC
-  switch(Op.getOpcode()) {
+  switch (Op.getOpcode()) {
   default: break;
   case ISD::AND:
   case ISD::OR:
@@ -1054,6 +1054,14 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     }
     break;
   case ISD::SRA:
+    // If this is an arithmetic shift right and only the low-bit is set, we can
+    // always convert this into a logical shr, even if the shift amount is
+    // variable.  The low bit of the shift cannot be an input sign bit unless
+    // the shift amount is >= the size of the datatype, which is undefined.
+    if (DemandedMask == 1)
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, Op.getValueType(),
+                                               Op.getOperand(0), Op.getOperand(1)));
+
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       MVT VT = Op.getValueType();
       unsigned ShAmt = SA->getZExtValue();
@@ -1332,6 +1340,21 @@ unsigned TargetLowering::ComputeNumSignBitsForTargetNode(SDValue Op,
   return 1;
 }
 
+static bool ValueHasAtMostOneBitSet(SDValue Val, const SelectionDAG &DAG) {
+  // Logical shift right or left won't ever introduce new set bits.
+  // We check for this case because we don't care which bits are
+  // set, but ComputeMaskedBits won't know anything unless it can
+  // determine which specific bits may be set.
+  if (Val.getOpcode() == ISD::SHL || Val.getOpcode() == ISD::SRL)
+    return ValueHasAtMostOneBitSet(Val.getOperand(0), DAG);
+
+  MVT OpVT = Val.getValueType();
+  unsigned BitWidth = OpVT.getSizeInBits();
+  APInt Mask = APInt::getAllOnesValue(BitWidth);
+  APInt KnownZero, KnownOne;
+  DAG.ComputeMaskedBits(Val, Mask, KnownZero, KnownOne);
+  return KnownZero.countPopulation() == BitWidth - 1;
+}
 
 /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
 /// and cc. If it is unable to simplify it, return a null SDValue.
@@ -1791,6 +1814,24 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
         }
       }
     }
+
+    // Simpify x&y == y to x&y == 0 if y has exactly one bit set.
+    if (N0.getOpcode() == ISD::AND)
+      if (N0.getOperand(0) == N1 || N0.getOperand(1) == N1) {
+        if (ValueHasAtMostOneBitSet(N1, DAG)) {
+          Cond = ISD::getSetCCInverse(Cond, /*isInteger=*/true);
+          SDValue Zero = DAG.getConstant(0, N1.getValueType());
+          return DAG.getSetCC(VT, N0, Zero, Cond);
+        }
+      }
+    if (N1.getOpcode() == ISD::AND)
+      if (N1.getOperand(0) == N0 || N1.getOperand(1) == N0) {
+        if (ValueHasAtMostOneBitSet(N0, DAG)) {
+          Cond = ISD::getSetCCInverse(Cond, /*isInteger=*/true);
+          SDValue Zero = DAG.getConstant(0, N0.getValueType());
+          return DAG.getSetCC(VT, N1, Zero, Cond);
+        }
+      }
   }
 
   // Fold away ALL boolean setcc's.

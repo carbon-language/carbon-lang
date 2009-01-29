@@ -102,6 +102,8 @@ namespace {
       SDValue To[] = { Res0, Res1 };
       return CombineTo(N, To, 2, AddTo);
     }
+
+    void CommitTargetLoweringOpt(const TargetLowering::TargetLoweringOpt &TLO);
     
   private:    
     
@@ -298,6 +300,10 @@ CombineTo(SDNode *N, SDValue Res0, SDValue Res1) {
   return ((DAGCombiner*)DC)->CombineTo(N, Res0, Res1);
 }
 
+void TargetLowering::DAGCombinerInfo::
+CommitTargetLoweringOpt(const TargetLowering::TargetLoweringOpt &TLO) {
+  return ((DAGCombiner*)DC)->CommitTargetLoweringOpt(TLO);
+}
 
 //===----------------------------------------------------------------------===//
 // Helper Functions
@@ -539,29 +545,14 @@ SDValue DAGCombiner::CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
   return SDValue(N, 0);
 }
 
-/// SimplifyDemandedBits - Check the specified integer node value to see if
-/// it can be simplified or if things it uses can be simplified by bit
-/// propagation.  If so, return true.
-bool DAGCombiner::SimplifyDemandedBits(SDValue Op, const APInt &Demanded) {
-  TargetLowering::TargetLoweringOpt TLO(DAG);
-  APInt KnownZero, KnownOne;
-  if (!TLI.SimplifyDemandedBits(Op, Demanded, KnownZero, KnownOne, TLO))
-    return false;
-  
-  // Revisit the node.
-  AddToWorkList(Op.getNode());
-  
-  // Replace the old value with the new one.
-  ++NodesCombined;
-  DOUT << "\nReplacing.2 "; DEBUG(TLO.Old.getNode()->dump(&DAG));
-  DOUT << "\nWith: "; DEBUG(TLO.New.getNode()->dump(&DAG));
-  DOUT << '\n';
-  
+void
+DAGCombiner::CommitTargetLoweringOpt(const TargetLowering::TargetLoweringOpt &
+                                                                          TLO) {
   // Replace all uses.  If any nodes become isomorphic to other nodes and 
   // are deleted, make sure to remove them from our worklist.
   WorkListRemover DeadNodes(*this);
   DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, &DeadNodes);
-  
+
   // Push the new node and any (possibly new) users onto the worklist.
   AddToWorkList(TLO.New.getNode());
   AddUsersToWorkList(TLO.New.getNode());
@@ -580,6 +571,27 @@ bool DAGCombiner::SimplifyDemandedBits(SDValue Op, const APInt &Demanded) {
     
     DAG.DeleteNode(TLO.Old.getNode());
   }
+}
+
+/// SimplifyDemandedBits - Check the specified integer node value to see if
+/// it can be simplified or if things it uses can be simplified by bit
+/// propagation.  If so, return true.
+bool DAGCombiner::SimplifyDemandedBits(SDValue Op, const APInt &Demanded) {
+  TargetLowering::TargetLoweringOpt TLO(DAG);
+  APInt KnownZero, KnownOne;
+  if (!TLI.SimplifyDemandedBits(Op, Demanded, KnownZero, KnownOne, TLO))
+    return false;
+  
+  // Revisit the node.
+  AddToWorkList(Op.getNode());
+  
+  // Replace the old value with the new one.
+  ++NodesCombined;
+  DOUT << "\nReplacing.2 "; DEBUG(TLO.Old.getNode()->dump(&DAG));
+  DOUT << "\nWith: "; DEBUG(TLO.New.getNode()->dump(&DAG));
+  DOUT << '\n';
+  
+  CommitTargetLoweringOpt(TLO);
   return true;
 }
 

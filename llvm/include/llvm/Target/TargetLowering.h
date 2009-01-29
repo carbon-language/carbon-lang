@@ -780,6 +780,8 @@ public:
     SDValue CombineTo(SDNode *N, const std::vector<SDValue> &To);
     SDValue CombineTo(SDNode *N, SDValue Res);
     SDValue CombineTo(SDNode *N, SDValue Res0, SDValue Res1);
+
+    void CommitTargetLoweringOpt(const TargetLoweringOpt &TLO);
   };
 
   /// SimplifySetCC - Try to simplify a setcc built with the specified operands 

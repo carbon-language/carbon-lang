@@ -5114,22 +5114,39 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   SDValue Op1 = Op.getOperand(1);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
   
-  // Lower (X & (1 << N)) == 0 to BT.
-  // Lower ((X >>u N) & 1) != 0 to BT.
-  // Lower ((X >>s N) & 1) != 0 to BT.
+  // Lower (X & (1 << N)) == 0 to BT(X, N).
+  // Lower ((X >>u N) & 1) != 0 to BT(X, N).
+  // Lower ((X >>s N) & 1) != 0 to BT(X, N).
   if (Op0.getOpcode() == ISD::AND &&
       Op0.hasOneUse() &&
       Op1.getOpcode() == ISD::Constant &&
-      Op0.getOperand(1).getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(Op1)->getZExtValue() == 0 &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
-    ConstantSDNode *AndRHS = cast<ConstantSDNode>(Op0.getOperand(1));
-    ConstantSDNode *CmpRHS = cast<ConstantSDNode>(Op1);
-    SDValue AndLHS = Op0.getOperand(0);
-    if (CmpRHS->getZExtValue() == 0 && AndRHS->getZExtValue() == 1 &&
-        AndLHS.getOpcode() == ISD::SRL) {
-      SDValue LHS = AndLHS.getOperand(0);
-      SDValue RHS = AndLHS.getOperand(1);
+    SDValue LHS, RHS;
+    if (Op0.getOperand(1).getOpcode() == ISD::SHL) {
+      if (ConstantSDNode *Op010C =
+            dyn_cast<ConstantSDNode>(Op0.getOperand(1).getOperand(0)))
+        if (Op010C->getZExtValue() == 1) {
+          LHS = Op0.getOperand(0);
+          RHS = Op0.getOperand(1).getOperand(1);
+        }
+    } else if (Op0.getOperand(0).getOpcode() == ISD::SHL) {
+      if (ConstantSDNode *Op000C =
+            dyn_cast<ConstantSDNode>(Op0.getOperand(0).getOperand(0)))
+        if (Op000C->getZExtValue() == 1) {
+          LHS = Op0.getOperand(1);
+          RHS = Op0.getOperand(0).getOperand(1);
+        }
+    } else if (Op0.getOperand(1).getOpcode() == ISD::Constant) {
+      ConstantSDNode *AndRHS = cast<ConstantSDNode>(Op0.getOperand(1));
+      SDValue AndLHS = Op0.getOperand(0);
+      if (AndRHS->getZExtValue() == 1 && AndLHS.getOpcode() == ISD::SRL) {
+        LHS = AndLHS.getOperand(0);
+        RHS = AndLHS.getOperand(1);
+      }
+    }
 
+    if (LHS.getNode()) {
       // If LHS is i8, promote it to i16 with any_extend.  There is no i8 BT
       // instruction.  Since the shift amount is in-range-or-undefined, we know
       // that doing a bittest on the i16 value is ok.  We extend to i32 because
@@ -5141,10 +5158,10 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
       // BT ignores high bits (like shifts) we can use anyextend.
       if (LHS.getValueType() != RHS.getValueType())
         RHS = DAG.getNode(ISD::ANY_EXTEND, LHS.getValueType(), RHS);
-      
+
       SDValue BT = DAG.getNode(X86ISD::BT, MVT::i32, LHS, RHS);
       unsigned Cond = CC == ISD::SETEQ ? X86::COND_AE : X86::COND_B;
-      return DAG.getNode(X86ISD::SETCC, MVT::i8, 
+      return DAG.getNode(X86ISD::SETCC, MVT::i8,
                          DAG.getConstant(Cond, MVT::i8), BT);
     }
   }
@@ -5295,7 +5312,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
         !isScalarFPTypeInSSEReg(VT))  // FPStack?
       IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSExtValue());
     
-    if (isX86LogicalCmp(Opc) && !IllegalFPCMov) {
+    if ((isX86LogicalCmp(Opc) && !IllegalFPCMov) || Opc == X86ISD::BT) { // FIXME
       Cond = Cmp;
       addTest = false;
     }
@@ -7547,6 +7564,7 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
 
 /// PerformBuildVectorCombine - build_vector 0,(load i64 / f64) -> movq / movsd.
 static SDValue PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
+                                         TargetLowering::DAGCombinerInfo &DCI,
                                          const X86Subtarget *Subtarget,
                                          const TargetLowering &TLI) {
   unsigned NumOps = N->getNumOperands();
@@ -7587,7 +7605,9 @@ static SDValue PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
   SDVTList Tys = DAG.getVTList(VT, MVT::Other);
   SDValue Ops[] = { LD->getChain(), LD->getBasePtr() };
   SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, Tys, Ops, 2);
-  DAG.ReplaceAllUsesOfValueWith(SDValue(Base, 1), ResNode.getValue(1));
+  TargetLowering::TargetLoweringOpt TLO(DAG);
+  TLO.CombineTo(SDValue(Base, 1), ResNode.getValue(1));
+  DCI.CommitTargetLoweringOpt(TLO);
   return ResNode;
 }                                           
 
@@ -7875,6 +7895,23 @@ static SDValue PerformFANDCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+static SDValue PerformBTCombine(SDNode *N,
+                                SelectionDAG &DAG,
+                                TargetLowering::DAGCombinerInfo &DCI) {
+  // BT ignores high bits in the bit index operand.
+  SDValue Op1 = N->getOperand(1);
+  if (Op1.hasOneUse()) {
+    unsigned BitWidth = Op1.getValueSizeInBits();
+    APInt DemandedMask = APInt::getLowBitsSet(BitWidth, Log2_32(BitWidth));
+    APInt KnownZero, KnownOne;
+    TargetLowering::TargetLoweringOpt TLO(DAG);
+    TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    if (TLO.ShrinkDemandedConstant(Op1, DemandedMask) ||
+        TLI.SimplifyDemandedBits(Op1, DemandedMask, KnownZero, KnownOne, TLO))
+      DCI.CommitTargetLoweringOpt(TLO);
+  }
+  return SDValue();
+}
 
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
@@ -7883,7 +7920,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, *this);
   case ISD::BUILD_VECTOR:
-    return PerformBuildVectorCombine(N, DAG, Subtarget, *this);
+    return PerformBuildVectorCombine(N, DAG, DCI, Subtarget, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case ISD::SHL:
   case ISD::SRA:
@@ -7892,6 +7929,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FXOR:
   case X86ISD::FOR:         return PerformFORCombine(N, DAG);
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
+  case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   }
 
   return SDValue();
