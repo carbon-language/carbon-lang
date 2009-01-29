@@ -1060,6 +1060,7 @@ public:
       std::string Code = "Opc" + utostr(OpcNo);
 
       if (!isRoot || (InputHasChain && !NodeHasChain))
+        // For call to "getTargetNode()".
         Code += ", N.getDebugLoc()";
 
       emitOpcode(II.Namespace + "::" + II.TheDef->getName());
