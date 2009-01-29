@@ -1059,6 +1059,9 @@ public:
 
       std::string Code = "Opc" + utostr(OpcNo);
 
+      if (!isRoot || (InputHasChain && !NodeHasChain))
+        Code += ", N.getDebugLoc()";
+
       emitOpcode(II.Namespace + "::" + II.TheDef->getName());
 
       // Output order: results, chain, flags
