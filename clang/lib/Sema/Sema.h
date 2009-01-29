@@ -782,7 +782,7 @@ public:
   LookupResult LookupParsedName(Scope *S, const CXXScopeSpec &SS, 
                                 DeclarationName Name, LookupCriteria Criteria);
   LookupResult LookupDeclInScope(DeclarationName Name, unsigned NSI, Scope *S,
-                                 bool LookInParent = true);
+                          bool LookInParent = true);
   LookupResult LookupDeclInContext(DeclarationName Name, unsigned NSI,
                           const DeclContext *LookupCtx,
                           bool LookInParent = true);

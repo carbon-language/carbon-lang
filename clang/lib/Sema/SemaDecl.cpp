@@ -39,31 +39,32 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, Scope *S,
       return 0;
     DC = static_cast<DeclContext*>(SS->getScopeRep());
   }
-  LookupResult Result = DC ? 
-                 LookupDeclInContext(&II, Decl::IDNS_Ordinary, DC) :
-                 LookupDeclInScope(&II, Decl::IDNS_Ordinary, S);
-                   
   Decl *IIDecl = 0;
+  
+  LookupResult Result =  DC ? LookupDeclInContext(&II, Decl::IDNS_Ordinary, DC) :
+                              LookupDeclInScope(&II, Decl::IDNS_Ordinary, S);
+                 
   switch (Result.getKind()) {
-  case LookupResult::NotFound:
-  case LookupResult::FoundOverloaded:
-  case LookupResult::AmbiguousBaseSubobjectTypes:
-  case LookupResult::AmbiguousBaseSubobjects:
-    // FIXME: In the event of an ambiguous lookup, we could visit all of
-    // the entities found to determine whether they are all types. This
-    // might provide better diagnostics.
-    return 0;
-
-  case LookupResult::Found:
-    IIDecl = Result.getAsDecl();
-    break;
+    case LookupResult::NotFound:
+    case LookupResult::FoundOverloaded:
+    case LookupResult::AmbiguousBaseSubobjectTypes:
+    case LookupResult::AmbiguousBaseSubobjects:
+      // FIXME: In the event of an ambiguous lookup, we could visit all of
+      // the entities found to determine whether they are all types. This
+      // might provide better diagnostics.
+      return 0;
+    case LookupResult::Found:
+      IIDecl = Result.getAsDecl();
+      break;
   }
 
-  if (isa<TypedefDecl>(IIDecl) || 
-      isa<ObjCInterfaceDecl>(IIDecl) ||
-      isa<TagDecl>(IIDecl) ||
-      isa<TemplateTypeParmDecl>(IIDecl))
-    return IIDecl;
+  if (IIDecl) {
+    if (isa<TypedefDecl>(IIDecl) || 
+        isa<ObjCInterfaceDecl>(IIDecl) ||
+        isa<TagDecl>(IIDecl) ||
+        isa<TemplateTypeParmDecl>(IIDecl))
+      return IIDecl;
+  }
   return 0;
 }
 
@@ -265,19 +266,85 @@ Scope *Sema::getNonFieldDeclScope(Scope *S) {
 Sema::LookupResult
 Sema::LookupDeclInScope(DeclarationName Name, unsigned NSI, Scope *S,
                         bool LookInParent) {
-  LookupCriteria::NameKind Kind;
-  if (NSI == Decl::IDNS_Ordinary) {
-    Kind = LookupCriteria::Ordinary;
-  } else if (NSI == Decl::IDNS_Tag) 
-    Kind = LookupCriteria::Tag;
-  else {
-    assert(NSI == Decl::IDNS_Member &&"Unable to grok LookupDecl NSI argument");
-    Kind = LookupCriteria::Member;
+  if (getLangOptions().CPlusPlus) {
+    LookupCriteria::NameKind Kind;
+    if (NSI == Decl::IDNS_Ordinary) {
+      Kind = LookupCriteria::Ordinary;
+    } else if (NSI == Decl::IDNS_Tag) 
+      Kind = LookupCriteria::Tag;
+    else {
+      assert(NSI == Decl::IDNS_Member &&"Unable to grok LookupDecl NSI argument");
+      Kind = LookupCriteria::Member;
+    }
+    // Unqualified lookup
+    return LookupName(S, Name, 
+                      LookupCriteria(Kind, !LookInParent,
+                                     getLangOptions().CPlusPlus));
   }
-  // Unqualified lookup
-  return LookupName(S, Name, 
-                    LookupCriteria(Kind, !LookInParent,
-                                   getLangOptions().CPlusPlus));
+  // Fast path for C/ObjC.
+  
+  // Unqualified name lookup in C/Objective-C is purely lexical, so
+  // search in the declarations attached to the name.
+
+  // For the purposes of unqualified name lookup, structs and unions
+  // don't have scopes at all. For example:
+  //
+  //   struct X {
+  //     struct T { int i; } x;
+  //   };
+  //
+  //   void f() {
+  //     struct T t; // okay: T is defined lexically within X, but
+  //                 // semantically at global scope
+  //   };
+  //
+  // FIXME: Is there a better way to deal with this?
+  DeclContext *SearchCtx = CurContext;
+  while (isa<RecordDecl>(SearchCtx) || isa<EnumDecl>(SearchCtx))
+    SearchCtx = SearchCtx->getParent();
+  IdentifierResolver::iterator I
+    = IdResolver.begin(Name, SearchCtx, LookInParent);
+  
+  // Scan up the scope chain looking for a decl that matches this
+  // identifier that is in the appropriate namespace.  This search
+  // should not take long, as shadowing of names is uncommon, and
+  // deep shadowing is extremely uncommon.
+  for (; I != IdResolver.end(); ++I) {
+    switch (NSI) {
+      case Decl::IDNS_Ordinary:
+      case Decl::IDNS_Tag:
+      case Decl::IDNS_Member:
+        if ((*I)->isInIdentifierNamespace(NSI))
+          return LookupResult::CreateLookupResult(Context, *I);
+        break;
+      default:
+        assert(0 && "Unable to grok LookupDecl NSI argument");
+    }
+  }
+  if (NSI == Decl::IDNS_Ordinary) {
+    IdentifierInfo *II = Name.getAsIdentifierInfo();
+    if (II) {
+      // If this is a builtin on this (or all) targets, create the decl.
+      if (unsigned BuiltinID = II->getBuiltinID())
+        return LookupResult::CreateLookupResult(Context,
+                            LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
+                                                S));
+    }
+    if (getLangOptions().ObjC1 && II) {
+      // @interface and @compatibility_alias introduce typedef-like names.
+      // Unlike typedef's, they can only be introduced at file-scope (and are 
+      // therefore not scoped decls). They can, however, be shadowed by
+      // other names in IDNS_Ordinary.
+      ObjCInterfaceDeclsTy::iterator IDI = ObjCInterfaceDecls.find(II);
+      if (IDI != ObjCInterfaceDecls.end())
+        return LookupResult::CreateLookupResult(Context, IDI->second);
+      ObjCAliasTy::iterator I = ObjCAliasDecls.find(II);
+      if (I != ObjCAliasDecls.end())
+        return LookupResult::CreateLookupResult(Context, 
+                                                I->second->getClassInterface());
+    }
+  }
+  return LookupResult::CreateLookupResult(Context, 0);
 }
 
 Sema::LookupResult
@@ -2898,9 +2965,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   } else if (Name) {
     // If this is a named struct, check to see if there was a previous forward
     // declaration or definition.
-    PrevDecl = dyn_cast_or_null<NamedDecl>(LookupDeclInScope(Name, 
-                                                             Decl::IDNS_Tag,S)
-                                           .getAsDecl());
+    Decl *D = LookupDeclInScope(Name, Decl::IDNS_Tag, S);
+    PrevDecl = dyn_cast_or_null<NamedDecl>(D);
 
     if (!getLangOptions().CPlusPlus && TK != TK_Reference) {
       // FIXME: This makes sure that we ignore the contexts associated
