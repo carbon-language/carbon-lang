@@ -247,12 +247,14 @@ class Clang_CompileTool(Tool):
                           not arglist.getLastArg(arglist.parser.staticOption) and
                           not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption)))
 
-            archName = arglist.getValue(arch)
-            if (archName == 'x86_64' or 
-                picEnabled):
-                cmd_args.append('--relocation-model=pic')
-            elif not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption):
-                cmd_args.append('--relocation-model=static')
+            # FIXME: This needs to tie into a platform hook.
+            if arch:
+                archName = arglist.getValue(arch)
+                if (archName == 'x86_64' or 
+                    picEnabled):
+                    cmd_args.append('--relocation-model=pic')
+                elif not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption):
+                    cmd_args.append('--relocation-model=static')
 
             if arglist.getLastArg(arglist.parser.f_timeReportOption):
                 cmd_args.append('--time-passes')

@@ -205,9 +205,10 @@ class Generic_GCC_ToolChain(ToolChain):
     def __init__(self, driver):
         super(Generic_GCC_ToolChain, self).__init__(driver)
         cc = Tools.GCC_CompileTool()
+        self.clangTool = Tools.Clang_CompileTool(self)
         self.toolMap = {
             Phases.PreprocessPhase : Tools.GCC_PreprocessTool(),
-            Phases.AnalyzePhase : Tools.Clang_CompileTool(self),
+            Phases.AnalyzePhase : self.clangTool,
             Phases.SyntaxOnlyPhase : cc,
             Phases.EmitLLVMPhase : cc,
             Phases.CompilePhase : cc,
@@ -218,4 +219,18 @@ class Generic_GCC_ToolChain(ToolChain):
 
     def selectTool(self, action):
         assert isinstance(action, Phases.JobAction)
+
+        if self.driver.cccClang:
+            if (action.inputs[0].type in (Types.CType, Types.CTypeNoPP,
+                                          Types.ObjCType, Types.ObjCTypeNoPP) and
+                (isinstance(action.phase, Phases.PreprocessPhase) or
+                 isinstance(action.phase, Phases.CompilePhase) or
+                 isinstance(action.phase, Phases.SyntaxOnlyPhase) or
+                 isinstance(action.phase, Phases.EmitLLVMPhase))):
+                return self.clangTool
+            elif (action.inputs[0].type in (Types.CHeaderType, Types.CHeaderNoPPType,
+                                            Types.ObjCHeaderType, Types.ObjCHeaderNoPPType) and
+                  isinstance(action.phase, Phases.PrecompilePhase)):
+                return self.clangTool
+
         return self.toolMap[action.phase.__class__]
