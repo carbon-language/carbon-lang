@@ -17,7 +17,75 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/DiagnosticSema.h"
+#include <map>
 using namespace clang;
+
+class InitListChecker {
+  Sema *SemaRef;
+  bool hadError;
+  std::map<InitListExpr *, InitListExpr *> SyntacticToSemantic;
+  InitListExpr *FullyStructuredList;
+  
+  void CheckImplicitInitList(InitListExpr *ParentIList, QualType T, 
+                             unsigned &Index, InitListExpr *StructuredInitList,
+                             unsigned &StructuredInitIndex);
+  void CheckExplicitInitList(InitListExpr *IList, QualType &T,
+                             unsigned &Index, InitListExpr *StructuredInitList,
+                             unsigned &StructuredInitIndex);
+  void CheckListElementTypes(InitListExpr *IList, QualType &DeclType, 
+                             bool SubobjectIsDesignatorContext, 
+                             unsigned &Index,
+                             InitListExpr *StructuredInitList,
+                             unsigned &StructuredInitIndex);
+  void CheckSubElementType(InitListExpr *IList, QualType ElemType, 
+                           unsigned &Index,
+                           InitListExpr *StructuredInitList,
+                           unsigned &StructuredInitIndex);
+  // FIXME: Does DeclType need to be a reference type?
+  void CheckScalarType(InitListExpr *IList, QualType &DeclType, 
+                       unsigned &Index,
+                       InitListExpr *StructuredInitList,
+                       unsigned &StructuredInitIndex);
+  void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index,
+                       InitListExpr *StructuredInitList,
+                       unsigned &StructuredInitIndex);
+  void CheckStructUnionTypes(InitListExpr *IList, QualType DeclType, 
+                             RecordDecl::field_iterator Field, 
+                             bool SubobjectIsDesignatorContext, unsigned &Index,
+                             InitListExpr *StructuredInitList,
+                             unsigned &StructuredInitIndex);
+  void CheckArrayType(InitListExpr *IList, QualType &DeclType, 
+                      llvm::APSInt elementIndex, 
+                      bool SubobjectIsDesignatorContext, unsigned &Index,
+                      InitListExpr *StructuredInitList,
+                      unsigned &StructuredInitIndex);
+  bool CheckDesignatedInitializer(InitListExpr *IList, DesignatedInitExpr *DIE, 
+                                  DesignatedInitExpr::designators_iterator D,
+                                  QualType &CurrentObjectType, 
+                                  RecordDecl::field_iterator *NextField,
+                                  llvm::APSInt *NextElementIndex,
+                                  unsigned &Index,
+                                  InitListExpr *StructuredList,
+                                  unsigned &StructuredIndex,
+                                  bool FinishSubobjectInit = true);
+  InitListExpr *getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
+                                           QualType CurrentObjectType,
+                                           InitListExpr *StructuredList,
+                                           unsigned StructuredIndex,
+                                           SourceRange InitRange);
+  void UpdateStructuredListElement(InitListExpr *StructuredInitList,
+                                   unsigned &StructuredInitIndex,
+                                   Expr *expr);
+  int numArrayElements(QualType DeclType);
+  int numStructUnionElements(QualType DeclType);
+public:
+  InitListChecker(Sema *S, InitListExpr *IL, QualType &T);
+  bool HadError() { return hadError; }
+
+  // @brief Retrieves the fully-structured initializer list used for
+  // semantic analysis and code generation.
+  InitListExpr *getFullyStructuredList() const { return FullyStructuredList; }
+};
 
 /// Recursively replaces NULL values within the given initializer list
 /// with expressions that perform value-initialization of the
@@ -1002,4 +1070,12 @@ Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
                                  Loc, UsedColonSyntax, 
                                  static_cast<Expr *>(Init.release()));
   return Owned(DIE);
+}
+
+bool Sema::CheckInitList(InitListExpr *&InitList, QualType &DeclType) {
+  InitListChecker CheckInitList(this, InitList, DeclType);
+  if (!CheckInitList.HadError())
+    InitList = CheckInitList.getFullyStructuredList();
+
+  return CheckInitList.HadError();
 }

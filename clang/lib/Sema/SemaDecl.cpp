@@ -1150,11 +1150,9 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
     }
   }
 
-  InitListChecker CheckInitList(this, InitList, DeclType);
-  if (!CheckInitList.HadError())
-    Init = CheckInitList.getFullyStructuredList();
-
-  return CheckInitList.HadError();
+  bool hadError = CheckInitList(InitList, DeclType);
+  Init = InitList;
+  return hadError;
 }
 
 /// GetNameForDeclarator - Determine the full declaration name for the
