@@ -1070,10 +1070,14 @@ unsigned PreAllocSplitting::getNumberOfNonSpills(
 bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
   bool changed = false;
   
+  // Walk over all of the live intervals that were touched by the splitter,
+  // and see if we can do any DCE and/or folding.
   for (SmallPtrSet<LiveInterval*, 8>::iterator LI = split.begin(),
        LE = split.end(); LI != LE; ++LI) {
     DenseMap<VNInfo*, SmallPtrSet<MachineInstr*, 4> > VNUseCount;
     
+    // First, collect all the uses of the vreg, and sort them by their
+    // reaching definition (VNInfo).
     for (MachineRegisterInfo::use_iterator UI = MRI->use_begin((*LI)->reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
       unsigned index = LIs->getInstructionIndex(&*UI);
@@ -1083,6 +1087,8 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
       VNUseCount[LR->valno].insert(&*UI);
     }
     
+    // Now, take the definitions (VNInfo's) one at a time and try to DCE 
+    // and/or fold them away.
     for (LiveInterval::vni_iterator VI = (*LI)->vni_begin(),
          VE = (*LI)->vni_end(); VI != VE; ++VI) {
       
@@ -1090,15 +1096,24 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         return changed;
       
       VNInfo* CurrVN = *VI;
+      
+      // We don't currently try to handle definitions with PHI kills, because
+      // it would involve processing more than one VNInfo at once.
       if (CurrVN->hasPHIKill) continue;
       
+      // We also don't try to handle the results of PHI joins, since there's
+      // no defining instruction to analyze.
       unsigned DefIdx = CurrVN->def;
       if (DefIdx == ~0U || DefIdx == ~1U) continue;
     
+      // We're only interested in eliminating cruft introduced by the splitter,
+      // is of the form load-use or load-use-store.  First, check that the
+      // definition is a load, and remember what stack slot we loaded it from.
       MachineInstr* DefMI = LIs->getInstructionFromIndex(DefIdx);
       int FrameIndex;
       if (!TII->isLoadFromStackSlot(DefMI, FrameIndex)) continue;
       
+      // If the definition has no uses at all, just DCE it.
       if (VNUseCount[CurrVN].size() == 0) {
         LIs->RemoveMachineInstrFromMaps(DefMI);
         (*LI)->removeValNo(CurrVN);
@@ -1108,12 +1123,17 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         continue;
       }
       
+      // Second, get the number of non-store uses of the definition, as well as
+      // a flag indicating whether it feeds into a later two-address definition.
       bool FeedsTwoAddr = false;
       unsigned NonSpillCount = getNumberOfNonSpills(VNUseCount[CurrVN],
                                                     (*LI)->reg, FrameIndex,
                                                     FeedsTwoAddr);
       
+      // If there's one non-store use and it doesn't feed a two-addr, then
+      // this is a load-use-store case that we can try to fold.
       if (NonSpillCount == 1 && !FeedsTwoAddr) {
+        // Start by finding the non-store use MachineInstr.
         SmallPtrSet<MachineInstr*, 4>::iterator UI = VNUseCount[CurrVN].begin();
         int StoreFrameIndex;
         unsigned StoreVReg = TII->isStoreToStackSlot(*UI, StoreFrameIndex);
@@ -1123,17 +1143,15 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
           if (UI != VNUseCount[CurrVN].end())
             StoreVReg = TII->isStoreToStackSlot(*UI, StoreFrameIndex);
         }
-        
         if (UI == VNUseCount[CurrVN].end()) continue;
         
         MachineInstr* use = *UI;
         
+        // Attempt to fold it away!
         int OpIdx = use->findRegisterUseOperandIdx((*LI)->reg, false);
         if (OpIdx == -1) continue;
-
         SmallVector<unsigned, 1> Ops;
         Ops.push_back(OpIdx);
-
         if (!TII->canFoldMemoryOperand(use, Ops)) continue;
 
         MachineInstr* NewMI =
@@ -1142,6 +1160,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
 
         if (!NewMI) continue;
 
+        // Update relevant analyses.
         LIs->RemoveMachineInstrFromMaps(DefMI);
         LIs->ReplaceMachineInstrInMaps(use, NewMI);
         (*LI)->removeValNo(CurrVN);
@@ -1151,9 +1170,14 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         NewMI = MBB->insert(MBB->erase(use), NewMI);
         VNUseCount[CurrVN].erase(use);
         
+        // Remove deleted instructions.  Note that we need to remove them from 
+        // the VNInfo->use map as well, just to be safe.
         for (SmallPtrSet<MachineInstr*, 4>::iterator II = 
              VNUseCount[CurrVN].begin(), IE = VNUseCount[CurrVN].end();
              II != IE; ++II) {
+          for (DenseMap<VNInfo*, SmallPtrSet<MachineInstr*, 4> >::iterator
+               VI = VNUseCount.begin(), VE = VNUseCount.end(); VI != VE; ++VI)
+            VI->second.erase(*II);
           LIs->RemoveMachineInstrFromMaps(*II);
           (*II)->eraseFromParent();
         }
@@ -1168,8 +1192,11 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         continue;
       }
       
+      // If there's more than one non-store instruction, we can't profitably
+      // fold it, so bail.
       if (NonSpillCount) continue;
         
+      // Otherwise, this is a load-store case, so DCE them.
       for (SmallPtrSet<MachineInstr*, 4>::iterator UI = 
            VNUseCount[CurrVN].begin(), UE = VNUseCount[CurrVN].end();
            UI != UI; ++UI) {
