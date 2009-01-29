@@ -145,5 +145,10 @@ extern float global_float;
 struct XX { int a, *b; };
 struct XY { int before; struct XX xx, *xp; float* after; } xy[] = {
   0, 0, &xy[0].xx.a, &xy[0].xx, &global_float,
-  [1].xx = 0, &xy[1].xx.a, &xy[1].xx, &global_float
+  [1].xx = 0, &xy[1].xx.a, &xy[1].xx, &global_float,
+  0, // expected-note{{previous initialization is here}}
+  0, // expected-note{{previous initialization is here}}
+  [2].before = 0, // expected-warning{{initializer overrides prior initialization of this subobject}}
+  0, // expected-warning{{initializer overrides prior initialization of this subobject}}
+  &xy[2].xx.a, &xy[2].xx, &global_float
 };
