@@ -137,5 +137,13 @@ void test() {
   };
 }
 
-// FIXME: we need to 
+// FIXME: How do we test that this initializes the long properly?
 union { char c; long l; } u1 = { .l = 0xFFFF };
+
+extern float global_float;
+
+struct XX { int a, *b; };
+struct XY { int before; struct XX xx, *xp; float* after; } xy[] = {
+  0, 0, &xy[0].xx.a, &xy[0].xx, &global_float,
+  [1].xx = 0, &xy[1].xx.a, &xy[1].xx, &global_float
+};

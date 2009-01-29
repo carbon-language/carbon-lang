@@ -1853,12 +1853,12 @@ class InitListChecker {
                              InitListExpr *StructuredInitList,
                              unsigned &StructuredInitIndex);
   void CheckSubElementType(InitListExpr *IList, QualType ElemType, 
-                           Expr *expr, unsigned &Index,
+                           unsigned &Index,
                            InitListExpr *StructuredInitList,
                            unsigned &StructuredInitIndex);
   // FIXME: Does DeclType need to be a reference type?
   void CheckScalarType(InitListExpr *IList, QualType &DeclType, 
-                       Expr *expr, unsigned &Index,
+                       unsigned &Index,
                        InitListExpr *StructuredInitList,
                        unsigned &StructuredInitIndex);
   void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index,

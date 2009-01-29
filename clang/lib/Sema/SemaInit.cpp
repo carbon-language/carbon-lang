@@ -188,7 +188,7 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
                                             InitListExpr *StructuredList,
                                             unsigned &StructuredIndex) {
   if (DeclType->isScalarType()) {
-    CheckScalarType(IList, DeclType, 0, Index, StructuredList, StructuredIndex);
+    CheckScalarType(IList, DeclType, Index, StructuredList, StructuredIndex);
   } else if (DeclType->isVectorType()) {
     CheckVectorType(IList, DeclType, Index, StructuredList, StructuredIndex);
   } else if (DeclType->isAggregateType() || DeclType->isUnionType()) {
@@ -221,10 +221,10 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
 
 void InitListChecker::CheckSubElementType(InitListExpr *IList,
                                           QualType ElemType, 
-                                          Expr *expr,
                                           unsigned &Index,
                                           InitListExpr *StructuredList,
                                           unsigned &StructuredIndex) {
+  Expr *expr = IList->getInit(Index);
   if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
     unsigned newIndex = 0;
     unsigned newStructuredIndex = 0;
@@ -242,8 +242,7 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
     UpdateStructuredListElement(StructuredList, StructuredIndex, lit);
     ++Index;
   } else if (ElemType->isScalarType()) {
-    CheckScalarType(IList, ElemType, expr, Index, StructuredList, 
-                    StructuredIndex);
+    CheckScalarType(IList, ElemType, Index, StructuredList, StructuredIndex);
   } else if (expr->getType()->getAsRecordType() &&
              SemaRef->Context.typesAreCompatible(
                expr->getType().getUnqualifiedType(),
@@ -259,12 +258,11 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
 }
 
 void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType,
-                                      Expr *expr, unsigned &Index,
+                                      unsigned &Index,
                                       InitListExpr *StructuredList,
                                       unsigned &StructuredIndex) {
   if (Index < IList->getNumInits()) {
-    if (!expr)
-      expr = IList->getInit(Index);
+    Expr *expr = IList->getInit(Index);
     if (isa<InitListExpr>(expr)) {
       SemaRef->Diag(IList->getLocStart(),
                     diag::err_many_braces_around_scalar_init)
@@ -288,12 +286,7 @@ void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType,
       hadError = true; // types weren't compatible.
     else if (savExpr != expr) {
       // The type was promoted, update initializer list.
-      if (DesignatedInitExpr *DIE 
-            = dyn_cast<DesignatedInitExpr>(IList->getInit(Index)))
-        DIE->setInit(expr);
-      else
-        IList->setInit(Index, expr);
-
+      IList->setInit(Index, expr);
     }
     if (hadError)
       ++StructuredIndex;
@@ -323,7 +316,7 @@ void InitListChecker::CheckVectorType(InitListExpr *IList, QualType DeclType,
       // Don't attempt to go past the end of the init list
       if (Index >= IList->getNumInits())
         break;
-      CheckSubElementType(IList, elementType, IList->getInit(Index), Index,
+      CheckSubElementType(IList, elementType, Index,
                           StructuredList, StructuredIndex);
     }
   }
@@ -417,7 +410,7 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
       break;
 
     // Check this element.
-    CheckSubElementType(IList, elementType, IList->getInit(Index), Index,
+    CheckSubElementType(IList, elementType, Index,
                         StructuredList, StructuredIndex);
     ++elementIndex;
 
@@ -498,7 +491,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
       continue;
     }
 
-    CheckSubElementType(IList, Field->getType(), IList->getInit(Index), Index,
+    CheckSubElementType(IList, Field->getType(), Index,
                         StructuredList, StructuredIndex);
     if (DeclType->isUnionType())
       break;
@@ -559,8 +552,22 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
   if (D == DIE->designators_end()) {
     // Check the actual initialization for the designated object type.
     bool prevHadError = hadError;
-    CheckSubElementType(IList, CurrentObjectType, DIE->getInit(), Index,
+
+    // Temporarily remove the designator expression from the
+    // initializer list that the child calls see, so that we don't try
+    // to re-process the designator.
+    unsigned OldIndex = Index;
+    IList->setInit(OldIndex, DIE->getInit());
+
+    CheckSubElementType(IList, CurrentObjectType, Index,
                         StructuredList, StructuredIndex);
+
+    // Restore the designated initializer expression in the syntactic
+    // form of the initializer list.
+    if (IList->getInit(OldIndex) != DIE->getInit())
+      DIE->setInit(IList->getInit(OldIndex));
+    IList->setInit(OldIndex, DIE);
+
     return hadError && !prevHadError;
   }
 
