@@ -18,11 +18,14 @@
 #include <map>
 
 // Collection of symbol name/value pairs to be searched prior to any libraries.
-static std::map<std::string, void *> g_symbols;
+std::map<std::string, void *> &g_symbols() {
+  static std::map<std::string, void *> symbols;
+  return symbols;
+}
 
 void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName,
                                           void *symbolValue) {
-  g_symbols[symbolName] = symbolValue;
+  g_symbols()[symbolName] = symbolValue;
 }
 
 // It is not possible to use ltdl.c on VC++ builds as the terms of its LGPL
@@ -76,8 +79,8 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   //  check_ltdl_initialization();
 
   // First check symbols added via AddSymbol().
-  std::map<std::string, void *>::iterator I = g_symbols.find(symbolName);
-  if (I != g_symbols.end())
+  std::map<std::string, void *>::iterator I = g_symbols().find(symbolName);
+  if (I != g_symbols().end())
     return I->second;
 
   // Now search the libraries.
