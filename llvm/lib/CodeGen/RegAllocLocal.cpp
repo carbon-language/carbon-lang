@@ -710,24 +710,21 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
   DEBUG(const BasicBlock *LBB = MBB.getBasicBlock();
         if (LBB) DOUT << "\nStarting RegAlloc of BB: " << LBB->getName());
 
-  // If this is the first basic block in the machine function, add live-in
-  // registers as active.
-  if (&MBB == &*MF->begin() || MBB.isLandingPad()) {
-    for (MachineBasicBlock::livein_iterator I = MBB.livein_begin(),
+  // Add live-in registers as active.
+  for (MachineBasicBlock::livein_iterator I = MBB.livein_begin(),
          E = MBB.livein_end(); I != E; ++I) {
-      unsigned Reg = *I;
-      MF->getRegInfo().setPhysRegUsed(Reg);
-      PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-      AddToPhysRegsUseOrder(Reg); 
-      for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
-           *SubRegs; ++SubRegs) {
-        if (PhysRegsUsed[*SubRegs] != -2) {
-          AddToPhysRegsUseOrder(*SubRegs); 
-          PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
-          MF->getRegInfo().setPhysRegUsed(*SubRegs);
-        }
+    unsigned Reg = *I;
+    MF->getRegInfo().setPhysRegUsed(Reg);
+    PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+    AddToPhysRegsUseOrder(Reg); 
+    for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+         *SubRegs; ++SubRegs) {
+      if (PhysRegsUsed[*SubRegs] != -2) {
+        AddToPhysRegsUseOrder(*SubRegs); 
+        PhysRegsUsed[*SubRegs] = 0;  // It is free and reserved now
+        MF->getRegInfo().setPhysRegUsed(*SubRegs);
       }
-    }    
+    }
   }
   
   ComputeLocalLiveness(MBB);
