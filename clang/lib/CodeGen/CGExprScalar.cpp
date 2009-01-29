@@ -200,6 +200,9 @@ public:
     return V;
   }
   
+  Value *VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
+    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+  }
   Value *VisitImplicitCastExpr(const ImplicitCastExpr *E);
   Value *VisitCastExpr(const CastExpr *E) { 
     return EmitCastExpr(E->getSubExpr(), E->getType());

@@ -735,6 +735,8 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
     }
     return true;
   }
+  case ImplicitValueInitExprClass:
+    return true;
   case ParenExprClass: {
     return cast<ParenExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
   }
@@ -1672,7 +1674,7 @@ Stmt::child_iterator InitListExpr::child_end() {
   return InitExprs.size() ? &InitExprs[0] + InitExprs.size() : 0;
 }
 
-/// DesignatedInitExpr
+// DesignatedInitExpr
 Stmt::child_iterator DesignatedInitExpr::child_begin() {
   char* Ptr = static_cast<char*>(static_cast<void *>(this));
   Ptr += sizeof(DesignatedInitExpr);
@@ -1681,6 +1683,15 @@ Stmt::child_iterator DesignatedInitExpr::child_begin() {
 }
 Stmt::child_iterator DesignatedInitExpr::child_end() {
   return child_iterator(&*child_begin() + NumSubExprs);
+}
+
+// ImplicitValueInitExpr
+Stmt::child_iterator ImplicitValueInitExpr::child_begin() { 
+  return child_iterator(); 
+}
+
+Stmt::child_iterator ImplicitValueInitExpr::child_end() { 
+  return child_iterator(); 
 }
 
 // ObjCStringLiteral

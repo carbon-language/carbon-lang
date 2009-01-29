@@ -248,11 +248,6 @@ public:
 
     FieldDecl* curField = ILE->getInitializedFieldInUnion();
     if (!curField) {
-#ifndef NDEBUG
-#endif
-    }
-
-    if (!curField) {
       // There's no field to initialize, so value-initialize the union.
 #ifndef NDEBUG
       // Make sure that it's really an empty and not a failure of

@@ -1645,7 +1645,7 @@ public:
 /// initializations into the subobject they initialize. Additionally,
 /// any "holes" in the initialization, where no initializer has been
 /// specified for a particular subobject, will be replaced with
-/// implicitly-generated CXXZeroInitValueExpr expressions that
+/// implicitly-generated ImplicitValueInitExpr expressions that
 /// value-initialize the subobjects. Note, however, that the
 /// initializer lists may still have fewer initializers than there are
 /// elements to initialize within the object.
@@ -1981,6 +1981,31 @@ public:
     return T->getStmtClass() == DesignatedInitExprClass; 
   }
   static bool classof(const DesignatedInitExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end(); 
+};
+
+/// \brief Represents an implicitly-generated value initialization of
+/// an object of a given type.
+///
+/// Implicit value initializations occur within semantic initialize
+/// list expressions (\see InitListExpr) as placeholders for subobject
+/// initializations not explicitly specified by the user.
+class ImplicitValueInitExpr : public Expr { 
+public:
+  explicit ImplicitValueInitExpr(QualType ty) 
+    : Expr(ImplicitValueInitExprClass, ty) { }
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ImplicitValueInitExprClass;
+  }
+  static bool classof(const ImplicitValueInitExpr *) { return true; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange();
+  }
 
   // Iterators
   virtual child_iterator child_begin();

@@ -17,7 +17,6 @@
 #include "clang/Parse/Designator.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/ExprCXX.h"
 #include <map>
 using namespace clang;
 
@@ -137,10 +136,9 @@ static void fillInValueInitializations(ASTContext &Context, InitListExpr *ILE) {
       // FIXME: Check for fields with reference type in C++?
       if (!ILE->getInit(Init))
         ILE->setInit(Init, 
-                     new (Context) CXXZeroInitValueExpr(Field->getType(), 
-                                                        SourceLocation(),
-                                                        SourceLocation()));
-      else if (InitListExpr *InnerILE = dyn_cast<InitListExpr>(ILE->getInit(Init)))
+                     new (Context) ImplicitValueInitExpr(Field->getType()));
+      else if (InitListExpr *InnerILE 
+                 = dyn_cast<InitListExpr>(ILE->getInit(Init)))
         fillInValueInitializations(Context, InnerILE);
       ++Init;
     }
@@ -160,9 +158,7 @@ static void fillInValueInitializations(ASTContext &Context, InitListExpr *ILE) {
   for (unsigned Init = 0, NumInits = ILE->getNumInits(); Init != NumInits; 
        ++Init) {
     if (!ILE->getInit(Init))
-      ILE->setInit(Init, new (Context) CXXZeroInitValueExpr(ElementType, 
-                                                            SourceLocation(),
-                                                            SourceLocation()));
+      ILE->setInit(Init, new (Context) ImplicitValueInitExpr(ElementType));
     else if (InitListExpr *InnerILE =dyn_cast<InitListExpr>(ILE->getInit(Init)))
       fillInValueInitializations(Context, InnerILE);
   }
@@ -550,6 +546,22 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
     hadError = true;
     return;
   }    
+
+  if (DeclType->isUnionType() && IList->getNumInits() == 0) {
+    // Value-initialize the first named member of the union.
+    RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
+    for (RecordDecl::field_iterator FieldEnd = RD->field_end();
+         Field != FieldEnd; ++Field) {
+      if (Field->getDeclName()) {
+        StructuredList->setInitializedFieldInUnion(*Field);
+        break;
+      }
+    }
+    return;
+  }
+
+
+
   // If structDecl is a forward declaration, this loop won't do
   // anything except look at designated initializers; That's okay,
   // because an error should get printed out elsewhere. It might be

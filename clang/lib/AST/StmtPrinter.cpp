@@ -906,6 +906,10 @@ void StmtPrinter::VisitDesignatedInitExpr(DesignatedInitExpr *Node) {
   PrintExpr(Node->getInit());
 }
 
+void StmtPrinter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *Node) {
+  OS << "/*implicit*/" << Node->getType().getAsString() << "()";
+}
+
 void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
   OS << "va_arg(";
   PrintExpr(Node->getSubExpr());

@@ -2220,16 +2220,16 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   if (CompoundLiteralExpr *e = dyn_cast<CompoundLiteralExpr>(Init))
     return CheckForConstantInitializer(e->getInitializer(), DclT);
 
+  if (isa<ImplicitValueInitExpr>(Init)) {
+    // FIXME: In C++, check for non-POD types.
+    return false;
+  }
+
   if (InitListExpr *Exp = dyn_cast<InitListExpr>(Init)) {
     unsigned numInits = Exp->getNumInits();
     for (unsigned i = 0; i < numInits; i++) {
       // FIXME: Need to get the type of the declaration for C++,
       // because it could be a reference?
-
-      // Implicitly-generated value initializations are okay.
-      if (isa<CXXZeroInitValueExpr>(Exp->getInit(i)) &&
-          cast<CXXZeroInitValueExpr>(Exp->getInit(i))->isImplicit()) 
-        continue;
 
       if (CheckForConstantInitializer(Exp->getInit(i),
                                       Exp->getInit(i)->getType()))

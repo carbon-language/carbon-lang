@@ -339,10 +339,10 @@ void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
   // FIXME: Are initializers affected by volatile?
-  if (E->getType()->isComplexType()) {
-    CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
-  } else if (isa<CXXZeroInitValueExpr>(E)) {
+  if (isa<ImplicitValueInitExpr>(E)) {
     EmitNullInitializationToLValue(LV, E->getType());
+  } else if (E->getType()->isComplexType()) {
+    CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
   } else if (CGF.hasAggregateLLVMType(E->getType())) {
     CGF.EmitAnyExpr(E, LV.getAddress(), false);
   } else {

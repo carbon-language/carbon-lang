@@ -130,6 +130,12 @@ public:
     llvm::Constant *Null = llvm::Constant::getNullValue(CGF.ConvertType(Elem));
     return ComplexPairTy(Null, Null);
   }
+  ComplexPairTy VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
+    assert(E->getType()->isAnyComplexType() && "Expected complex type!");
+    QualType Elem = E->getType()->getAsComplexType()->getElementType();
+    llvm::Constant *Null = llvm::Constant::getNullValue(CGF.ConvertType(Elem));
+    return ComplexPairTy(Null, Null);
+  }
   
   struct BinOpInfo {
     ComplexPairTy LHS;
