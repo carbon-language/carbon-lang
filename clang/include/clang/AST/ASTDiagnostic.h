@@ -18,6 +18,7 @@ namespace clang {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
 #define ASTSTART
 #include "clang/Basic/DiagnosticASTKinds.def"
+#undef DIAG
       NUM_BUILTIN_AST_DIAGNOSTICS
     };
   }  // end namespace diag

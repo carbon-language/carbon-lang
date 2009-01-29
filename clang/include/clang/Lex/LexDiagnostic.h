@@ -18,6 +18,7 @@ namespace clang {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
 #define LEXSTART
 #include "clang/Basic/DiagnosticLexKinds.def"
+#undef DIAG
       NUM_BUILTIN_LEX_DIAGNOSTICS
     };
   }  // end namespace diag

@@ -18,13 +18,6 @@
 #include <string>
 #include <cassert>
 
-#define DIAG_START_LEX                              300
-#define DIAG_START_PARSE    (DIAG_START_LEX      +  300)
-#define DIAG_START_AST      (DIAG_START_PARSE    +  300)
-#define DIAG_START_SEMA     (DIAG_START_AST      +  100)
-#define DIAG_START_ANALYSIS (DIAG_START_SEMA     + 1000)
-#define DIAG_UPPER_LIMIT    (DIAG_START_ANALYSIS +  100)
-
 namespace llvm {
   template <typename T> class SmallVectorImpl;
 }
@@ -38,6 +31,16 @@ namespace clang {
   
   // Import the diagnostic enums themselves.
   namespace diag {
+    // Start position for diagnostics.
+    enum {
+      DIAG_START_LEX      =                        300,
+      DIAG_START_PARSE    = DIAG_START_LEX      +  300,
+      DIAG_START_AST      = DIAG_START_PARSE    +  300,
+      DIAG_START_SEMA     = DIAG_START_AST      +  100,
+      DIAG_START_ANALYSIS = DIAG_START_SEMA     + 1000,
+      DIAG_UPPER_LIMIT    = DIAG_START_ANALYSIS +  100
+    };
+
     class CustomDiagInfo;
     
     /// diag::kind - All of the diagnostics that can be emitted by the frontend.
@@ -93,7 +96,7 @@ private:
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into two bits per diagnostic.
-  unsigned char DiagMappings[DIAG_UPPER_LIMIT/4];
+  unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/4];
   
   /// ErrorOccurred - This is set to true when an error is emitted, and is
   /// sticky.
@@ -155,7 +158,7 @@ public:
   /// setDiagnosticMapping - This allows the client to specify that certain
   /// warnings are ignored.  Only NOTEs, WARNINGs, and EXTENSIONs can be mapped.
   void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
-    assert(Diag < DIAG_UPPER_LIMIT &&
+    assert(Diag < diag::DIAG_UPPER_LIMIT &&
            "Can only map builtin diagnostics");
     assert(isBuiltinNoteWarningOrExtension(Diag) && "Cannot map errors!");
     unsigned char &Slot = DiagMappings[Diag/4];

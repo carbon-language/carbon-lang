@@ -74,6 +74,8 @@ DIAG(err_parameter_name_omitted, ERROR,
      "parameter name omitted")
 DIAG(warn_decl_in_param_list, WARNING,
      "declaration of %0 will not be visible outside of this function")
+DIAG(warn_implicit_function_decl, WARNING,
+     "implicit declaration of function %0")
 
 DIAG(err_declarator_need_ident, ERROR,
      "declarator requires an identifier")
@@ -196,6 +198,8 @@ DIAG(error_duplicate_ivar_use, ERROR,
      "synthesized properties %0 and %1 both claim ivar %2")
 DIAG(error_property_implemented, ERROR,
      "property %0 is already implemented")
+DIAG(warn_objc_property_attr_mutually_exclusive, WARNING,
+     "property attributes '%0' and '%1' are mutually exclusive")
 
 // C++ class members
 DIAG(err_storageclass_invalid_for_member, ERROR,
@@ -624,6 +628,8 @@ DIAG(err_offsetof_array_type, ERROR,
      "offsetof requires array type, %0 invalid")
 DIAG(ext_offsetof_extended_field_designator, EXTENSION,
      "using extended field designator is an extension")
+DIAG(warn_floatingpoint_eq, WARNING,
+  "comparing floating point with == or != is unsafe")
      
 DIAG(err_typecheck_subscript_value, ERROR,
      "subscripted value is neither array nor pointer")
@@ -721,6 +727,8 @@ DIAG(err_builtin_direct_init_more_than_one_arg, ERROR,
      "initializer of a builtin type can only take one argument")
 DIAG(err_value_init_for_array_type, ERROR,
      "array types cannot be value-initialized")
+DIAG(warn_printf_not_string_constant, WARNING,
+     "format string is not a string literal (potentially insecure)")
 
 DIAG(err_unexpected_interface, ERROR,
      "unexpected interface name %0: expected expression")

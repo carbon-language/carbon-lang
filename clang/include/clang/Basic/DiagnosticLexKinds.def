@@ -98,6 +98,10 @@ DIAG(ext_binary_literal, EXTENSION,
      "binary integer literals are an extension")
 DIAG(err_pascal_string_too_long, ERROR,
     "Pascal string is too long")
+DIAG(warn_octal_escape_too_large, EXTWARN,
+     "octal escape sequence out of range")
+DIAG(warn_hex_escape_too_large, EXTWARN,
+     "hex escape sequence out of range")
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Diagnostics

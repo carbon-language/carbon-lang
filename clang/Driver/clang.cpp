@@ -29,7 +29,6 @@
 #include "clang/Driver/InitHeaderSearch.h"
 #include "clang/Driver/TextDiagnosticBuffer.h"
 #include "clang/Driver/TextDiagnosticPrinter.h"
-#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/TranslationUnit.h"

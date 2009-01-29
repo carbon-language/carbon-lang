@@ -65,19 +65,7 @@ DIAG(note_invalid_subexpr_in_ice, NOTE,
 // Driver
 DIAG(pp_macro_not_used, WARNING,    // -Wunused-macros
      "macro is not used")
-DIAG(warn_floatingpoint_eq, WARNING,
-  "comparing floating point with == or != is unsafe")
-DIAG(warn_objc_property_attr_mutually_exclusive, WARNING,
-     "property attributes '%0' and '%1' are mutually exclusive")
-DIAG(warn_printf_not_string_constant, WARNING,
-     "format string is not a string literal (potentially insecure)")
-DIAG(warn_implicit_function_decl, WARNING,
-     "implicit declaration of function %0")
 DIAG(err_pp_I_dash_not_supported, ERROR,
      "-I- not supported, please use -iquote instead")
-DIAG(warn_octal_escape_too_large, EXTWARN,
-     "octal escape sequence out of range")
-DIAG(warn_hex_escape_too_large, EXTWARN,
-     "hex escape sequence out of range")
 DIAG(warn_pp_undef_identifier, WARNING,
      "%0 is not defined, evaluates to 0")

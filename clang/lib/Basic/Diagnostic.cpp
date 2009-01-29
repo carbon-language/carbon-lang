@@ -68,21 +68,21 @@ static unsigned char DiagnosticFlagsAnalysis[] = {
 /// getDiagClass - Return the class field of the diagnostic.
 ///
 static unsigned getBuiltinDiagClass(unsigned DiagID) {
-  assert(DiagID < DIAG_UPPER_LIMIT &&
+  assert(DiagID < diag::DIAG_UPPER_LIMIT &&
          "Diagnostic ID out of range!");
   unsigned res;
-  if (DiagID < DIAG_START_LEX)
+  if (DiagID < diag::DIAG_START_LEX)
     res = DiagnosticFlagsCommon[DiagID];
-  else if (DiagID < DIAG_START_PARSE)
-    res = DiagnosticFlagsLex[DiagID - DIAG_START_LEX - 1];
-  else if (DiagID < DIAG_START_AST)
-    res = DiagnosticFlagsParse[DiagID - DIAG_START_PARSE - 1];
-  else if (DiagID < DIAG_START_SEMA)
-    res = DiagnosticFlagsAST[DiagID - DIAG_START_AST - 1];
-  else if (DiagID < DIAG_START_ANALYSIS)
-    res = DiagnosticFlagsSema[DiagID - DIAG_START_SEMA - 1];
+  else if (DiagID < diag::DIAG_START_PARSE)
+    res = DiagnosticFlagsLex[DiagID - diag::DIAG_START_LEX - 1];
+  else if (DiagID < diag::DIAG_START_AST)
+    res = DiagnosticFlagsParse[DiagID - diag::DIAG_START_PARSE - 1];
+  else if (DiagID < diag::DIAG_START_SEMA)
+    res = DiagnosticFlagsAST[DiagID - diag::DIAG_START_AST - 1];
+  else if (DiagID < diag::DIAG_START_ANALYSIS)
+    res = DiagnosticFlagsSema[DiagID - diag::DIAG_START_SEMA - 1];
   else
-    res = DiagnosticFlagsAnalysis[DiagID - DIAG_START_ANALYSIS - 1];
+    res = DiagnosticFlagsAnalysis[DiagID - diag::DIAG_START_ANALYSIS - 1];
   return res & class_mask;
 }
 
@@ -216,26 +216,26 @@ unsigned Diagnostic::getCustomDiagID(Level L, const char *Message) {
 /// level of the specified diagnostic ID is a Note, Warning, or Extension.
 /// Note that this only works on builtin diagnostics, not custom ones.
 bool Diagnostic::isBuiltinNoteWarningOrExtension(unsigned DiagID) {
-  return DiagID < DIAG_UPPER_LIMIT && getBuiltinDiagClass(DiagID) < ERROR;
+  return DiagID < diag::DIAG_UPPER_LIMIT && getBuiltinDiagClass(DiagID) < ERROR;
 }
 
 
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
 const char *Diagnostic::getDescription(unsigned DiagID) const {
-  if (DiagID < DIAG_UPPER_LIMIT) {
-    if (DiagID < DIAG_START_LEX)
+  if (DiagID < diag::DIAG_UPPER_LIMIT) {
+    if (DiagID < diag::DIAG_START_LEX)
       return DiagnosticTextCommon[DiagID];
-    else if (DiagID < DIAG_START_PARSE)
-      return DiagnosticTextLex[DiagID - DIAG_START_LEX - 1];
-    else if (DiagID < DIAG_START_AST)
-      return DiagnosticTextParse[DiagID - DIAG_START_PARSE - 1];
-    else if (DiagID < DIAG_START_SEMA)
-      return DiagnosticTextAST[DiagID - DIAG_START_AST - 1];
-    else if (DiagID < DIAG_START_ANALYSIS)
-      return DiagnosticTextSema[DiagID - DIAG_START_SEMA - 1];
-    else if (DiagID < DIAG_UPPER_LIMIT)
-      return DiagnosticTextAnalysis[DiagID - DIAG_START_ANALYSIS - 1];
+    else if (DiagID < diag::DIAG_START_PARSE)
+      return DiagnosticTextLex[DiagID - diag::DIAG_START_LEX - 1];
+    else if (DiagID < diag::DIAG_START_AST)
+      return DiagnosticTextParse[DiagID - diag::DIAG_START_PARSE - 1];
+    else if (DiagID < diag::DIAG_START_SEMA)
+      return DiagnosticTextAST[DiagID - diag::DIAG_START_AST - 1];
+    else if (DiagID < diag::DIAG_START_ANALYSIS)
+      return DiagnosticTextSema[DiagID - diag::DIAG_START_SEMA - 1];
+    else if (DiagID < diag::DIAG_UPPER_LIMIT)
+      return DiagnosticTextAnalysis[DiagID - diag::DIAG_START_ANALYSIS - 1];
   }
    
   return CustomDiagInfo->getDescription(DiagID);
@@ -246,7 +246,7 @@ const char *Diagnostic::getDescription(unsigned DiagID) const {
 /// the DiagnosticClient.
 Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
   // Handle custom diagnostics, which cannot be mapped.
-  if (DiagID >= DIAG_UPPER_LIMIT)
+  if (DiagID >= diag::DIAG_UPPER_LIMIT)
     return CustomDiagInfo->getLevel(DiagID);
   
   unsigned DiagClass = getBuiltinDiagClass(DiagID);
@@ -307,7 +307,7 @@ void Diagnostic::ProcessDiag() {
   // ignore extensions and warnings in -Werror and -pedantic-errors modes,
   // which *map* warnings/extensions to errors.
   if (SuppressSystemWarnings &&
-      Info.getID() < DIAG_UPPER_LIMIT &&
+      Info.getID() < diag::DIAG_UPPER_LIMIT &&
       getBuiltinDiagClass(Info.getID()) != ERROR &&
       Info.getLocation().isValid() &&
       Info.getLocation().getSpellingLoc().isInSystemHeader())
