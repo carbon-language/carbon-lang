@@ -19,6 +19,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/CommandLine.h"
@@ -482,6 +483,108 @@ void X86_64ABIInfo::classify(QualType Ty,
       Lo = Hi = SSE;
     else if (ET == Context.LongDoubleTy)
       Lo = ComplexX87;
+  } else if (const RecordType *RT = Ty->getAsRecordType()) {
+    unsigned Size = Context.getTypeSize(Ty);
+    
+    // AMD64-ABI 3.2.3p2: Rule 1. If the size of an object is larger
+    // than two eightbytes, ..., it has class MEMORY.
+    if (Size > 128)
+      return;
+
+    const RecordDecl *RD = RT->getDecl();
+
+    // Assume variable sized types are passed in memory.
+    if (RD->hasFlexibleArrayMember())
+      return;
+
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    
+    // Reset Lo class, this will be recomputed.
+    Lo = NoClass;
+    unsigned idx = 0;
+    for (RecordDecl::field_iterator i = RD->field_begin(), 
+           e = RD->field_end(); i != e; ++i, ++idx) {
+      unsigned Offset = Layout.getFieldOffset(idx);
+
+      //  AMD64-ABI 3.2.3p2: Rule 1. If ..., or it contains unaligned
+      //  fields, it has class MEMORY.
+      if (Offset % Context.getTypeAlign(i->getType())) {
+        Lo = Memory;
+        return;
+      }
+
+      // Determine which half of the structure we are classifying.
+      //
+      // AMD64-ABI 3.2.3p2: Rule 3. f the size of the aggregate
+      // exceeds a single eightbyte, each is classified
+      // separately. Each eightbyte gets initialized to class
+      // NO_CLASS.
+      Class &Target = Offset < 64 ? Lo : Hi;
+
+      // Classify this field.
+      Class FieldLo, FieldHi;
+      classify(i->getType(), Context, FieldLo, FieldHi);
+      
+      // Merge the lo field classifcation.
+      //
+      // AMD64-ABI 3.2.3p2: Rule 4. Each field of an object is
+      // classified recursively so that always two fields are
+      // considered. The resulting class is calculated according to
+      // the classes of the fields in the eightbyte:
+      //
+      // (a) If both classes are equal, this is the resulting class.
+      //
+      // (b) If one of the classes is NO_CLASS, the resulting class is
+      // the other class.
+      //
+      // (c) If one of the classes is MEMORY, the result is the MEMORY
+      // class.
+      //
+      // (d) If one of the classes is INTEGER, the result is the
+      // INTEGER.
+      //
+      // (e) If one of the classes is X87, X87UP, COMPLEX_X87 class,
+      // MEMORY is used as class.
+      //
+      // (f) Otherwise class SSE is used.
+      if (Target == FieldLo || FieldLo == NoClass) ;
+      else if (Target == NoClass)
+        Target = FieldLo;
+      else if (FieldLo == Memory) {
+        // Memory is never over-ridden, just bail.
+        Lo = Memory;
+        return;
+      } 
+      else if (Target == Integer || FieldLo == Integer) 
+        Target = Integer;
+      else if (FieldLo == X87 || FieldLo == X87Up || FieldLo == ComplexX87) {
+        // As before, just bail once we generate a memory class.
+        Lo = Memory;
+        return;
+      } else
+        Target = SSE;
+
+      // It isn't clear from the ABI spec what the role of the high
+      // classification is here, but since this should only happen
+      // when we have a struct with a two eightbyte member, we can
+      // just push the field high class into the overall high class.
+      if (FieldHi != NoClass)
+        Hi = FieldHi;
+    }
+
+    // AMD64-ABI 3.2.3p2: Rule 5. Then a post merger cleanup is done:
+    //
+    // (a) If one of the classes is MEMORY, the whole argument is
+    // passed in memory.
+    //
+    // (b) If SSEUP is not preceeded by SSE, it is converted to SSE.
+
+    // The first of these conditions is guaranteed by how we implement
+    // the merge (just bail). I don't believe the second is actually
+    // possible at all.
+    assert(Lo != Memory && "Unexpected memory classification.");
+    if (Hi == SSEUp && Lo != SSE)
+        Hi = SSE;
   }
 }
 
