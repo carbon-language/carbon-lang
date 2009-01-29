@@ -1257,7 +1257,7 @@ public:
       if (!EvaluateFloat(SubExpr, Result, Info))
         return APValue();
     
-      return APValue(APFloat(Result.getSemantics(), APFloat::fcZero), 
+      return APValue(APFloat(Result.getSemantics(), APFloat::fcZero, false), 
                      Result);
     } else {
       assert(SubExpr->getType()->isIntegerType() && 
@@ -1283,7 +1283,7 @@ public:
         return APValue();
       
       return APValue(Result, 
-                     APFloat(Result.getSemantics(), APFloat::fcZero));
+                     APFloat(Result.getSemantics(), APFloat::fcZero, false));
     } else if (SubExpr->getType()->isIntegerType()) {
       APSInt Result;
                      
@@ -1324,6 +1324,8 @@ APValue ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
   if (!EvaluateComplex(E->getRHS(), RHS, Info))
     return APValue();
 
+  assert(Result.isComplexFloat() == RHS.isComplexFloat() &&
+         "Invalid operands to binary operator.");
   switch (E->getOpcode()) {
   default: return APValue();
   case BinaryOperator::Add:
@@ -1336,6 +1338,7 @@ APValue ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
       Result.getComplexIntReal() += RHS.getComplexIntReal();
       Result.getComplexIntImag() += RHS.getComplexIntImag();
     }
+    break;
   case BinaryOperator::Sub:
     if (Result.isComplexFloat()) {
       Result.getComplexFloatReal().subtract(RHS.getComplexFloatReal(),
@@ -1346,6 +1349,38 @@ APValue ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
       Result.getComplexIntReal() -= RHS.getComplexIntReal();
       Result.getComplexIntImag() -= RHS.getComplexIntImag();
     }
+    break;
+  case BinaryOperator::Mul:
+    if (Result.isComplexFloat()) {
+      APValue LHS = Result;
+      APFloat &LHS_r = LHS.getComplexFloatReal();
+      APFloat &LHS_i = LHS.getComplexFloatImag();
+      APFloat &RHS_r = RHS.getComplexFloatReal();
+      APFloat &RHS_i = RHS.getComplexFloatImag();
+      
+      APFloat Tmp = LHS_r;
+      Tmp.multiply(RHS_r, APFloat::rmNearestTiesToEven);
+      Result.getComplexFloatReal() = Tmp;
+      Tmp = LHS_i;
+      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
+      Result.getComplexFloatReal().subtract(Tmp, APFloat::rmNearestTiesToEven);
+
+      Tmp = LHS_r;
+      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
+      Result.getComplexFloatImag() = Tmp;
+      Tmp = LHS_i;
+      Tmp.multiply(RHS_r, APFloat::rmNearestTiesToEven);
+      Result.getComplexFloatImag().add(Tmp, APFloat::rmNearestTiesToEven);
+    } else {
+      APValue LHS = Result;
+      Result.getComplexIntReal() = 
+        (LHS.getComplexIntReal() * RHS.getComplexIntReal() -
+         LHS.getComplexIntImag() * RHS.getComplexIntImag());
+      Result.getComplexIntImag() = 
+        (LHS.getComplexIntReal() * RHS.getComplexIntImag() +
+         LHS.getComplexIntImag() * RHS.getComplexIntReal());
+    }
+    break;
   }
 
   return Result;
