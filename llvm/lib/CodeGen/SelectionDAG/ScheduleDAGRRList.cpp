@@ -91,7 +91,7 @@ public:
     return Topo.IsReachable(SU, TargetSU);
   }
 
-  /// willCreateCycle - Returns true if adding an edge from SU to TargetSU will
+  /// WillCreateCycle - Returns true if adding an edge from SU to TargetSU will
   /// create a cycle.
   bool WillCreateCycle(SUnit *SU, SUnit *TargetSU) {
     return Topo.WillCreateCycle(SU, TargetSU);
@@ -114,8 +114,8 @@ public:
   }
 
 private:
-  void ReleasePred(SUnit *SU, SDep *PredEdge);
-  void ReleaseSucc(SUnit *SU, SDep *SuccEdge);
+  void ReleasePred(SUnit *SU, const SDep *PredEdge);
+  void ReleaseSucc(SUnit *SU, const SDep *SuccEdge);
   void CapturePred(SDep *PredEdge);
   void ScheduleNodeBottomUp(SUnit*, unsigned);
   void ScheduleNodeTopDown(SUnit*, unsigned);
@@ -192,7 +192,7 @@ void ScheduleDAGRRList::Schedule() {
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the AvailableQueue if the count reaches zero. Also update its cycle bound.
-void ScheduleDAGRRList::ReleasePred(SUnit *SU, SDep *PredEdge) {
+void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
   SUnit *PredSU = PredEdge->getSUnit();
   --PredSU->NumSuccsLeft;
   
@@ -312,8 +312,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
 }
 
 /// BacktrackBottomUp - Backtrack scheduling to a previous cycle specified in
-/// BTCycle in order to schedule a specific node. Returns the last unscheduled
-/// SUnit. Also returns if a successor is unscheduled in the process.
+/// BTCycle in order to schedule a specific node.
 void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, unsigned BtCycle,
                                           unsigned &CurCycle) {
   SUnit *OldSU = NULL;
@@ -327,11 +326,7 @@ void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, unsigned BtCycle,
     --CurCycle;
   }
 
-      
-  if (SU->isSucc(OldSU)) {
-    assert(false && "Something is wrong!");
-    abort();
-  }
+  assert(!SU->isSucc(OldSU) && "Something is wrong!");
 
   ++NumBacktracks;
 }
@@ -751,10 +746,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
         CurSU = NewDef;
       }
 
-      if (!CurSU) {
-        assert(false && "Unable to resolve live physical register dependencies!");
-        abort();
-      }
+      assert(CurSU && "Unable to resolve live physical register dependencies!");
     }
 
     // Add the nodes that aren't ready back onto the available list.
@@ -785,7 +777,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
 /// the AvailableQueue if the count reaches zero. Also update its cycle bound.
-void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
+void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, const SDep *SuccEdge) {
   SUnit *SuccSU = SuccEdge->getSUnit();
   --SuccSU->NumPredsLeft;
   
