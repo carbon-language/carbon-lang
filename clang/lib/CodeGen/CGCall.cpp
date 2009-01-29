@@ -471,7 +471,13 @@ void X86_64ABIInfo::classify(QualType Ty,
   } else if (const ComplexType *CT = Ty->getAsComplexType()) {
     QualType ET = CT->getElementType();
     
-    if (ET == Context.FloatTy) 
+    if (ET->isIntegerType()) {
+      unsigned Size = Context.getTypeSize(Ty);
+      if (Size <= 64)
+        Lo = Integer;
+      else if (Size <= 128)
+        Lo = Hi = Integer;
+    } else if (ET == Context.FloatTy) 
       Lo = SSE;
     else if (ET == Context.DoubleTy)
       Lo = Hi = SSE;
