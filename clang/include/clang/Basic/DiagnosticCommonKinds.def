@@ -75,9 +75,9 @@ DIAG(warn_implicit_function_decl, WARNING,
      "implicit declaration of function %0")
 DIAG(err_pp_I_dash_not_supported, ERROR,
      "-I- not supported, please use -iquote instead")
-DIAG(warn_octal_escape_too_large, WARNING,
+DIAG(warn_octal_escape_too_large, EXTWARN,
      "octal escape sequence out of range")
-DIAG(warn_hex_escape_too_large, WARNING,
+DIAG(warn_hex_escape_too_large, EXTWARN,
      "hex escape sequence out of range")
 DIAG(warn_pp_undef_identifier, WARNING,
      "%0 is not defined, evaluates to 0")

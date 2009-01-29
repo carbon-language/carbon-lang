@@ -730,15 +730,6 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   if (!WarnImplicitFunctionDeclaration)
     Diags.setDiagnosticMapping(diag::warn_implicit_function_decl,
                                diag::MAP_IGNORE);
-  
-  // If -pedantic-errors is set, turn extensions that warn by default into
-  // errors. 
-  if (ErrorOnExtensions) {
-    Diags.setDiagnosticMapping(diag::warn_hex_escape_too_large,
-                               diag::MAP_ERROR);
-    Diags.setDiagnosticMapping(diag::warn_octal_escape_too_large,
-                               diag::MAP_ERROR);
-  }
 }
 
 //===----------------------------------------------------------------------===//
