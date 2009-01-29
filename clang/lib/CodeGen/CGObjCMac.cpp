@@ -3519,13 +3519,14 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
   Values[3] = EmitMethodList(MethodListName, 
                              "__DATA, __objc_const", 
                              Methods);
-  Values[4] = EmitProtocolList("\01l_OBJC_CATEGORY_PROTOCOLS_$_" 
-                               + Interface->getNameAsString(),
-                                Interface->protocol_begin(),
-                                Interface->protocol_end());
-  
   const ObjCCategoryDecl *Category = 
     Interface->FindCategoryDeclaration(OCD->getIdentifier());
+  Values[4] = EmitProtocolList("\01l_OBJC_CATEGORY_PROTOCOLS_$_"
+                               + Interface->getNameAsString() + "_$_"
+                               + Category->getNameAsString(),
+                                Category->protocol_begin(),
+                                Category->protocol_end());
+  
   std::string ExtName(Interface->getNameAsString() + "_$_" +
                       OCD->getNameAsString());
   Values[5] =
