@@ -277,7 +277,7 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
     MII = ++MII;
     // FIXME: Limit the number of instructions to examine to reduce
     // compile time?
-    while (MII != MBB->end()) {
+    while (MII != MBB->getFirstTerminator()) {
       unsigned Index = LIs->getInstructionIndex(MII);
       if (Index > LastIdx)
         break;
@@ -486,7 +486,8 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
            IncomingVNs.begin(), E = IncomingVNs.end(); I != E; ++I) {
         I->second->hasPHIKill = true;
         unsigned KillIndex = LIs->getMBBEndIdx(I->first);
-        LI->addKill(I->second, KillIndex);
+        if (!LiveInterval::isKill(I->second, KillIndex))
+          LI->addKill(I->second, KillIndex);
       }
       
       unsigned EndIndex = 0;
@@ -1118,6 +1119,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         LIs->RemoveMachineInstrFromMaps(DefMI);
         (*LI)->removeValNo(CurrVN);
         DefMI->eraseFromParent();
+        VNUseCount.erase(CurrVN);
         NumDeadSpills++;
         changed = true;
         continue;
@@ -1176,11 +1178,15 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
              VNUseCount[CurrVN].begin(), IE = VNUseCount[CurrVN].end();
              II != IE; ++II) {
           for (DenseMap<VNInfo*, SmallPtrSet<MachineInstr*, 4> >::iterator
-               VI = VNUseCount.begin(), VE = VNUseCount.end(); VI != VE; ++VI)
-            VI->second.erase(*II);
+               VNI = VNUseCount.begin(), VNE = VNUseCount.end(); VNI != VNE; 
+               ++VNI)
+            if (VNI->first != CurrVN)
+              VNI->second.erase(*II);
           LIs->RemoveMachineInstrFromMaps(*II);
           (*II)->eraseFromParent();
         }
+        
+        VNUseCount.erase(CurrVN);
 
         for (DenseMap<VNInfo*, SmallPtrSet<MachineInstr*, 4> >::iterator
              VI = VNUseCount.begin(), VE = VNUseCount.end(); VI != VE; ++VI)
@@ -1203,6 +1209,8 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         LIs->RemoveMachineInstrFromMaps(*UI);
         (*UI)->eraseFromParent();
       }
+        
+      VNUseCount.erase(CurrVN);
         
       LIs->RemoveMachineInstrFromMaps(DefMI);
       (*LI)->removeValNo(CurrVN);
