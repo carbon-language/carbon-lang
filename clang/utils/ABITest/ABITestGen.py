@@ -193,9 +193,16 @@ class TypePrinter:
                 yield '(%s) -1'%(t.name,)
                 yield '(%s) 1'%(t.name,)
         elif isinstance(t, RecordType):
-            fieldValues = [list(self.getTestValues(f)) for f in t.fields]
             if not t.fields:
                 yield '{ }'
+                return
+            # FIXME: Use designated initializers to access non-first
+            # fields of unions.
+            if t.isUnion:
+                for v in self.getTestValues(t.fields[0]):
+                    yield '{ %s }' % v
+                return
+            fieldValues = [list(self.getTestValues(f)) for f in t.fields]
             for i,values in enumerate(fieldValues):
                 for v in values:
                     elements = map(random.choice,fieldValues)
