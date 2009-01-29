@@ -5375,7 +5375,8 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
   
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
   int SPFI = StackPtrFI->getIndex();
-  
+  const Value *SV = PseudoSourceValue::getFixedStack(SPFI);
+
   unsigned SrcSize = SrcOp.getValueType().getSizeInBits();
   unsigned SlotSize = SlotVT.getSizeInBits();
   unsigned DestSize = DestVT.getSizeInBits();
@@ -5388,21 +5389,19 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
   
   if (SrcSize > SlotSize)
     Store = DAG.getTruncStore(DAG.getEntryNode(), SrcOp, FIPtr,
-                              PseudoSourceValue::getFixedStack(SPFI), 0,
-                              SlotVT, false, SrcAlign);
+                              SV, 0, SlotVT, false, SrcAlign);
   else {
     assert(SrcSize == SlotSize && "Invalid store");
     Store = DAG.getStore(DAG.getEntryNode(), SrcOp, FIPtr,
-                         PseudoSourceValue::getFixedStack(SPFI), 0,
-                         false, SrcAlign);
+                         SV, 0, false, SrcAlign);
   }
   
   // Result is a load from the stack slot.
   if (SlotSize == DestSize)
-    return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0, false, DestAlign);
+    return DAG.getLoad(DestVT, Store, FIPtr, SV, 0, false, DestAlign);
   
   assert(SlotSize < DestSize && "Unknown extension!");
-  return DAG.getExtLoad(ISD::EXTLOAD, DestVT, Store, FIPtr, NULL, 0, SlotVT,
+  return DAG.getExtLoad(ISD::EXTLOAD, DestVT, Store, FIPtr, SV, 0, SlotVT,
                         false, DestAlign);
 }
 
@@ -5568,7 +5567,9 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   MVT VT = Node->getValueType(0);
   // Create the stack frame object.
   SDValue FIPtr = DAG.CreateStackTemporary(VT);
-  
+  int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
+  const Value *SV = PseudoSourceValue::getFixedStack(FI);
+
   // Emit a store of each element to the stack slot.
   SmallVector<SDValue, 8> Stores;
   unsigned TypeByteSize = Node->getOperand(0).getValueType().getSizeInBits()/8;
@@ -5583,7 +5584,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     Idx = DAG.getNode(ISD::ADD, FIPtr.getValueType(), FIPtr, Idx);
     
     Stores.push_back(DAG.getStore(DAG.getEntryNode(), Node->getOperand(i), Idx, 
-                                  NULL, 0));
+                                  SV, Offset));
   }
   
   SDValue StoreChain;
@@ -5594,7 +5595,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     StoreChain = DAG.getEntryNode();
   
   // Result is a load from the stack slot.
-  return DAG.getLoad(VT, StoreChain, FIPtr, NULL, 0);
+  return DAG.getLoad(VT, StoreChain, FIPtr, SV, 0);
 }
 
 void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
