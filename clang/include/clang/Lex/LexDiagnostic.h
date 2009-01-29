@@ -16,7 +16,6 @@ namespace clang {
   namespace diag { 
     enum {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
-#include "clang/Basic/DiagnosticCommonKinds.def"
 #define LEXSTART
 #include "clang/Basic/DiagnosticLexKinds.def"
       NUM_BUILTIN_LEX_DIAGNOSTICS

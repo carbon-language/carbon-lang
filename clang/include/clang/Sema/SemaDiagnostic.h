@@ -16,9 +16,9 @@ namespace clang {
   namespace diag { 
     enum {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
-#include "clang/Basic/DiagnosticCommonKinds.def"
 #define SEMASTART
 #include "clang/Basic/DiagnosticSemaKinds.def"
+#undef DIAG
       NUM_BUILTIN_SEMA_DIAGNOSTICS
     };
   }  // end namespace diag

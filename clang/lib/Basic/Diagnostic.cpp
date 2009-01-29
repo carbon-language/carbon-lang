@@ -36,21 +36,6 @@ enum {
   class_mask = 0x07
 };
 
-namespace clang {
-  namespace diag {
-    enum _kind{
-#define DIAG(ENUM,FLAGS,DESC) ENUM,
-#define LEXSTART
-#define PARSESTART
-#define ASTSTART
-#define SEMASTART
-#define ANALYSISSTART
-#include "clang/Basic/DiagnosticKinds.def"
-      NUM_BUILTIN_DIAGNOSTICS = DIAG_UPPER_LIMIT
-    };
-  }
-}
-
 /// DiagnosticFlags - A set of flags, or'd together, that describe the
 /// diagnostic.
 #define DIAG(ENUM,FLAGS,DESC) FLAGS,
@@ -83,7 +68,7 @@ static unsigned char DiagnosticFlagsAnalysis[] = {
 /// getDiagClass - Return the class field of the diagnostic.
 ///
 static unsigned getBuiltinDiagClass(unsigned DiagID) {
-  assert(DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
+  assert(DiagID < DIAG_UPPER_LIMIT &&
          "Diagnostic ID out of range!");
   unsigned res;
   if (DiagID < DIAG_START_LEX)
@@ -145,16 +130,16 @@ namespace clang {
       /// getDescription - Return the description of the specified custom
       /// diagnostic.
       const char *getDescription(unsigned DiagID) const {
-        assert(this && DiagID-diag::NUM_BUILTIN_DIAGNOSTICS < DiagInfo.size() &&
+        assert(this && DiagID-DIAG_UPPER_LIMIT < DiagInfo.size() &&
                "Invalid diagnosic ID");
-        return DiagInfo[DiagID-diag::NUM_BUILTIN_DIAGNOSTICS].second.c_str();
+        return DiagInfo[DiagID-DIAG_UPPER_LIMIT].second.c_str();
       }
       
       /// getLevel - Return the level of the specified custom diagnostic.
       Diagnostic::Level getLevel(unsigned DiagID) const {
-        assert(this && DiagID-diag::NUM_BUILTIN_DIAGNOSTICS < DiagInfo.size() &&
+        assert(this && DiagID-DIAG_UPPER_LIMIT < DiagInfo.size() &&
                "Invalid diagnosic ID");
-        return DiagInfo[DiagID-diag::NUM_BUILTIN_DIAGNOSTICS].first;
+        return DiagInfo[DiagID-DIAG_UPPER_LIMIT].first;
       }
       
       unsigned getOrCreateDiagID(Diagnostic::Level L, const char *Message,
@@ -166,7 +151,7 @@ namespace clang {
           return I->second;
         
         // If not, assign a new ID.
-        unsigned ID = DiagInfo.size()+diag::NUM_BUILTIN_DIAGNOSTICS;
+        unsigned ID = DiagInfo.size()+DIAG_UPPER_LIMIT;
         DiagIDs.insert(std::make_pair(D, ID));
         DiagInfo.push_back(D);
 
@@ -231,16 +216,14 @@ unsigned Diagnostic::getCustomDiagID(Level L, const char *Message) {
 /// level of the specified diagnostic ID is a Note, Warning, or Extension.
 /// Note that this only works on builtin diagnostics, not custom ones.
 bool Diagnostic::isBuiltinNoteWarningOrExtension(unsigned DiagID) {
-  return DiagID < diag::NUM_BUILTIN_DIAGNOSTICS && 
-         getBuiltinDiagClass(DiagID) < ERROR;
+  return DiagID < DIAG_UPPER_LIMIT && getBuiltinDiagClass(DiagID) < ERROR;
 }
 
 
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
 const char *Diagnostic::getDescription(unsigned DiagID) const {
-  if (DiagID < diag::NUM_BUILTIN_DIAGNOSTICS)
-  {
+  if (DiagID < DIAG_UPPER_LIMIT) {
     if (DiagID < DIAG_START_LEX)
       return DiagnosticTextCommon[DiagID];
     else if (DiagID < DIAG_START_PARSE)
@@ -263,7 +246,7 @@ const char *Diagnostic::getDescription(unsigned DiagID) const {
 /// the DiagnosticClient.
 Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
   // Handle custom diagnostics, which cannot be mapped.
-  if (DiagID >= diag::NUM_BUILTIN_DIAGNOSTICS)
+  if (DiagID >= DIAG_UPPER_LIMIT)
     return CustomDiagInfo->getLevel(DiagID);
   
   unsigned DiagClass = getBuiltinDiagClass(DiagID);
@@ -324,7 +307,7 @@ void Diagnostic::ProcessDiag() {
   // ignore extensions and warnings in -Werror and -pedantic-errors modes,
   // which *map* warnings/extensions to errors.
   if (SuppressSystemWarnings &&
-      Info.getID() < diag::NUM_BUILTIN_DIAGNOSTICS &&
+      Info.getID() < DIAG_UPPER_LIMIT &&
       getBuiltinDiagClass(Info.getID()) != ERROR &&
       Info.getLocation().isValid() &&
       Info.getLocation().getSpellingLoc().isInSystemHeader())

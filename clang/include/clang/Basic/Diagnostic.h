@@ -43,6 +43,14 @@ namespace clang {
     /// diag::kind - All of the diagnostics that can be emitted by the frontend.
     typedef unsigned kind;
 
+    // Get typedefs for common diagnostics.
+    enum {
+#define DIAG(ENUM,FLAGS,DESC) ENUM,
+#include "clang/Basic/DiagnosticCommonKinds.def"
+      NUM_BUILTIN_COMMON_DIAGNOSTICS
+#undef DIAG
+    };
+      
     /// Enum values that allow the client to map NOTEs, WARNINGs, and EXTENSIONs
     /// to either MAP_IGNORE (nothing), MAP_WARNING (emit a warning), MAP_ERROR
     /// (emit as an error), or MAP_DEFAULT (handle the default way).

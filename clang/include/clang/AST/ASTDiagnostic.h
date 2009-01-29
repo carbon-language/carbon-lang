@@ -16,7 +16,6 @@ namespace clang {
   namespace diag { 
     enum {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
-#include "clang/Basic/DiagnosticCommonKinds.def"
 #define ASTSTART
 #include "clang/Basic/DiagnosticASTKinds.def"
       NUM_BUILTIN_AST_DIAGNOSTICS

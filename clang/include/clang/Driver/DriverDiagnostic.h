@@ -15,8 +15,7 @@
 namespace clang {
   namespace diag { 
     enum {
-#define DIAG(ENUM,FLAGS,DESC) ENUM,
-#include "clang/Basic/DiagnosticCommonKinds.def"
+// FIXME: REMOVE??
       NUM_BUILTIN_DRIVER_DIAGNOSTICS
     };
   }  // end namespace diag

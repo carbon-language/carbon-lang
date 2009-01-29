@@ -35,6 +35,7 @@
 #include "clang/AST/TranslationUnit.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Sema/ParseAST.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/HeaderSearch.h"
@@ -727,7 +728,10 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   if (!WarnUndefMacros)
     Diags.setDiagnosticMapping(diag::warn_pp_undef_identifier,diag::MAP_IGNORE);
     
-  if (!WarnImplicitFunctionDeclaration)
+  if (WarnImplicitFunctionDeclaration)
+    Diags.setDiagnosticMapping(diag::ext_implicit_function_decl,
+                               diag::MAP_WARNING);
+  else
     Diags.setDiagnosticMapping(diag::warn_implicit_function_decl,
                                diag::MAP_IGNORE);
 }
