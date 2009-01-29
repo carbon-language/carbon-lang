@@ -20,7 +20,7 @@
 #include "SemaOverload.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/Parse/Action.h"
-#include "clang/Basic/DiagnosticSema.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"

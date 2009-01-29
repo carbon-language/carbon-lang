@@ -17,7 +17,6 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Basic/DiagnosticSema.h"
 using namespace clang;
 
 Sema::OwningStmtResult Sema::ActOnExprStmt(ExprArg expr) {

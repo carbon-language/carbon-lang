@@ -18,7 +18,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
-#include "clang/Basic/DiagnosticSema.h"
 #include <map>
 using namespace clang;
 

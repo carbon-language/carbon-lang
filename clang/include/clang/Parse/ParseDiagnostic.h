@@ -1,4 +1,4 @@
-//===--- DiagnosticAST.h - Diagnostics for the AST library ------*- C++ -*-===//
+//===--- DiagnosticParse.h - Diagnostics for libparse -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,19 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DIAGNOSTICAST_H
-#define LLVM_CLANG_DIAGNOSTICAST_H
+#ifndef LLVM_CLANG_DIAGNOSTICPARSE_H
+#define LLVM_CLANG_DIAGNOSTICPARSE_H
 
-#include "clang/Basic/DiagnosticAST.h"
+#include "clang/Basic/Diagnostic.h"
 
 namespace clang {
   namespace diag { 
     enum {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
-#include "DiagnosticCommonKinds.def"
-#define ASTSTART
-#include "DiagnosticASTKinds.def"
-      NUM_BUILTIN_AST_DIAGNOSTICS
+#include "clang/Basic/DiagnosticCommonKinds.def"
+#define PARSESTART
+#include "clang/Basic/DiagnosticParseKinds.def"
+      NUM_BUILTIN_PARSE_DIAGNOSTICS
     };
   }  // end namespace diag
 }  // end namespace clang

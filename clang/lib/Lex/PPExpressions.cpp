@@ -20,7 +20,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Basic/DiagnosticLex.h"
+#include "clang/Lex/LexDiagnostic.h"
 #include "llvm/ADT/APSInt.h"
 using namespace clang;
 

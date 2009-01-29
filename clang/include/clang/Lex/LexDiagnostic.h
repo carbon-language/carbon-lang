@@ -1,4 +1,4 @@
-//===--- DiagnosticParse.h - Diagnostics for libparse -----------*- C++ -*-===//
+//===--- DiagnosticLex.h - Diagnostics for liblex ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DIAGNOSTICPARSE_H
-#define LLVM_CLANG_DIAGNOSTICPARSE_H
+#ifndef LLVM_CLANG_DIAGNOSTICLEX_H
+#define LLVM_CLANG_DIAGNOSTICLEX_H
 
 #include "clang/Basic/Diagnostic.h"
 
@@ -16,10 +16,10 @@ namespace clang {
   namespace diag { 
     enum {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
-#include "DiagnosticCommonKinds.def"
-#define PARSESTART
-#include "DiagnosticParseKinds.def"
-      NUM_BUILTIN_PARSE_DIAGNOSTICS
+#include "clang/Basic/DiagnosticCommonKinds.def"
+#define LEXSTART
+#include "clang/Basic/DiagnosticLexKinds.def"
+      NUM_BUILTIN_LEX_DIAGNOSTICS
     };
   }  // end namespace diag
 }  // end namespace clang

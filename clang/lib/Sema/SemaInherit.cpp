@@ -19,7 +19,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
-#include "clang/Basic/DiagnosticSema.h"
 #include <algorithm>
 #include <memory>
 #include <set>

@@ -15,7 +15,6 @@
 #include "SemaInherit.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/Basic/DiagnosticSema.h"
 #include "llvm/ADT/SmallVector.h"
 #include <set>
 using namespace clang;

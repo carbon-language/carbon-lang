@@ -18,7 +18,6 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Parse/DeclSpec.h"
-#include "clang/Basic/DiagnosticSema.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/SourceManager.h"
 // FIXME: layering (ideally, Sema shouldn't be dependent on Lex API's)

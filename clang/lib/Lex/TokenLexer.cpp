@@ -16,7 +16,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Basic/DiagnosticLex.h"
+#include "clang/Lex/LexDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
 

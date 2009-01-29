@@ -1,4 +1,4 @@
-//===--- DiagnosticLex.h - Diagnostics for liblex ---------------*- C++ -*-===//
+//===--- DiagnosticDriver.h - Diagnostics for the driver --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DIAGNOSTICLEX_H
-#define LLVM_CLANG_DIAGNOSTICLEX_H
+#ifndef LLVM_CLANG_DIAGNOSTICDRIVER_H
+#define LLVM_CLANG_DIAGNOSTICDRIVER_H
 
 #include "clang/Basic/Diagnostic.h"
 
@@ -16,12 +16,11 @@ namespace clang {
   namespace diag { 
     enum {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
-#include "DiagnosticCommonKinds.def"
-#define LEXSTART
-#include "DiagnosticLexKinds.def"
-      NUM_BUILTIN_LEX_DIAGNOSTICS
+#include "clang/Basic/DiagnosticCommonKinds.def"
+      NUM_BUILTIN_DRIVER_DIAGNOSTICS
     };
   }  // end namespace diag
 }  // end namespace clang
 
 #endif
+

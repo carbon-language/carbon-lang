@@ -18,7 +18,6 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/DiagnosticSema.h"
 #include "SemaUtil.h"
 using namespace clang;
 
