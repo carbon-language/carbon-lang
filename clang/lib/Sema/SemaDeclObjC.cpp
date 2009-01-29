@@ -1432,8 +1432,8 @@ void Sema::CheckObjCPropertyAttributes(QualType PropertyTy,
                           "copy" : "retain";
                          
     Diag(Loc, (Attributes & (ObjCDeclSpec::DQ_PR_readwrite)) ? 
-                 (unsigned)diag::err_objc_property_attr_mutually_exclusive :
-                 (unsigned)diag::warn_objc_property_attr_mutually_exclusive)
+                 diag::err_objc_property_attr_mutually_exclusive :
+                 diag::warn_objc_property_attr_mutually_exclusive)
       << "readonly" << which;
   }
 
