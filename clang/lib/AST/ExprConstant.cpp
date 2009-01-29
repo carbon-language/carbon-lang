@@ -87,6 +87,49 @@ static bool HandleConversionToBool(Expr* E, bool& Result, EvalInfo &Info) {
   return false;
 }
 
+static APSInt HandleFloatToIntCast(QualType DestType, QualType SrcType, 
+                                   APFloat &Value, ASTContext &Ctx) {
+  unsigned DestWidth = Ctx.getIntWidth(DestType);
+  // Determine whether we are converting to unsigned or signed.
+  bool DestSigned = DestType->isSignedIntegerType();
+  
+  // FIXME: Warning for overflow.
+  uint64_t Space[4];
+  bool ignored;
+  (void)Value.convertToInteger(Space, DestWidth, DestSigned,
+                               llvm::APFloat::rmTowardZero, &ignored);
+  return APSInt(llvm::APInt(DestWidth, 4, Space), !DestSigned);
+}
+
+static APFloat HandleFloatToFloatCast(QualType DestType, QualType SrcType, 
+                                      APFloat &Value, ASTContext &Ctx) {
+  bool ignored;
+  APFloat Result = Value;
+  Result.convert(Ctx.getFloatTypeSemantics(DestType), 
+                 APFloat::rmNearestTiesToEven, &ignored);
+  return Result;
+}
+
+static APSInt HandleIntToIntCast(QualType DestType, QualType SrcType, 
+                                 APSInt &Value, ASTContext &Ctx) {
+  unsigned DestWidth = Ctx.getIntWidth(DestType);
+  APSInt Result = Value;
+  // Figure out if this is a truncate, extend or noop cast.
+  // If the input is signed, do a sign extend, noop, or truncate.
+  Result.extOrTrunc(DestWidth);
+  Result.setIsUnsigned(DestType->isUnsignedIntegerType());
+  return Result;
+}
+
+static APFloat HandleIntToFloatCast(QualType DestType, QualType SrcType, 
+                                    APSInt &Value, ASTContext &Ctx) {
+
+  APFloat Result(Ctx.getFloatTypeSemantics(DestType), 1);
+  Result.convertFromAPInt(Value, Value.isSigned(),
+                          APFloat::rmNearestTiesToEven);
+  return Result;
+}
+
 //===----------------------------------------------------------------------===//
 // LValue Evaluation
 //===----------------------------------------------------------------------===//
@@ -484,9 +527,7 @@ public:
   bool VisitUnaryOperator(const UnaryOperator *E);
   bool VisitConditionalOperator(const ConditionalOperator *E);
 
-  bool VisitCastExpr(CastExpr* E) {
-    return HandleCast(E);
-  }
+  bool VisitCastExpr(CastExpr* E);
   bool VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
 
   bool VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
@@ -515,7 +556,6 @@ public:
   }
 
 private:
-  bool HandleCast(CastExpr* E);
   unsigned GetAlignOfExpr(const Expr *E);
   unsigned GetAlignOfType(QualType T);
 };
@@ -996,7 +1036,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   
 /// HandleCast - This is used to evaluate implicit or explicit casts where the
 /// result type is integer.
-bool IntExprEvaluator::HandleCast(CastExpr *E) {
+bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   Expr *SubExpr = E->getSubExpr();
   QualType DestType = E->getType();
 
@@ -1016,11 +1056,8 @@ bool IntExprEvaluator::HandleCast(CastExpr *E) {
   if (SubExpr->getType()->isIntegralType()) {
     if (!Visit(SubExpr))
       return false;
-    
-    // Figure out if this is a truncate, extend or noop cast.
-    // If the input is signed, do a sign extend, noop, or truncate.
-    Result.extOrTrunc(DestWidth);
-    Result.setIsUnsigned(DestType->isUnsignedIntegerType());
+
+    Result = HandleIntToIntCast(DestType, SubExpr->getType(), Result, Info.Ctx);
     return true;
   }
   
@@ -1046,16 +1083,7 @@ bool IntExprEvaluator::HandleCast(CastExpr *E) {
   if (!EvaluateFloat(SubExpr, F, Info))
     return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
   
-  // Determine whether we are converting to unsigned or signed.
-  bool DestSigned = DestType->isSignedIntegerType();
-  
-  // FIXME: Warning for overflow.
-  uint64_t Space[4];
-  bool ignored;
-  (void)F.convertToInteger(Space, DestWidth, DestSigned,
-                           llvm::APFloat::rmTowardZero, &ignored);
-  Result = llvm::APInt(DestWidth, 4, Space);
-  Result.setIsUnsigned(!DestSigned);
+  Result = HandleFloatToIntCast(DestType, SubExpr->getType(), F, Info.Ctx);
   return true;
 }
 
@@ -1199,22 +1227,19 @@ bool FloatExprEvaluator::VisitFloatingLiteral(const FloatingLiteral *E) {
 bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
   Expr* SubExpr = E->getSubExpr();
   
-  const llvm::fltSemantics& destSemantics =
-      Info.Ctx.getFloatTypeSemantics(E->getType());
   if (SubExpr->getType()->isIntegralType()) {
     APSInt IntResult;
     if (!EvaluateInteger(E, IntResult, Info))
       return false;
-    Result = APFloat(destSemantics, 1);
-    Result.convertFromAPInt(IntResult, IntResult.isSigned(),
-                            APFloat::rmNearestTiesToEven);
+    Result = HandleIntToFloatCast(E->getType(), SubExpr->getType(), 
+                                  IntResult, Info.Ctx);
     return true;
   }
   if (SubExpr->getType()->isRealFloatingType()) {
     if (!Visit(SubExpr))
       return false;
-    bool ignored;
-    Result.convert(destSemantics, APFloat::rmNearestTiesToEven, &ignored);
+    Result = HandleFloatToFloatCast(E->getType(), SubExpr->getType(),
+                                    Result, Info.Ctx);
     return true;
   }
 
@@ -1275,24 +1300,72 @@ public:
 
   APValue VisitCastExpr(CastExpr *E) {
     Expr* SubExpr = E->getSubExpr();
+    QualType EltType = E->getType()->getAsComplexType()->getElementType();
+    QualType SubType = SubExpr->getType();
 
-    if (SubExpr->getType()->isRealFloatingType()) {
+    if (SubType->isRealFloatingType()) {
       APFloat Result(0.0);
                      
       if (!EvaluateFloat(SubExpr, Result, Info))
         return APValue();
       
+      // Apply float conversion if necessary.
+      Result = HandleFloatToFloatCast(EltType, SubType, Result, Info.Ctx);
       return APValue(Result, 
                      APFloat(Result.getSemantics(), APFloat::fcZero, false));
-    } else if (SubExpr->getType()->isIntegerType()) {
+    } else if (SubType->isIntegerType()) {
       APSInt Result;
                      
       if (!EvaluateInteger(SubExpr, Result, Info))
         return APValue();
-      
+
+      // Apply integer conversion if necessary.
+      Result = HandleIntToIntCast(EltType, SubType, Result, Info.Ctx);
       llvm::APSInt Zero(Result.getBitWidth(), !Result.isSigned());
       Zero = 0;
       return APValue(Result, Zero);
+    } else if (const ComplexType *CT = SubType->getAsComplexType()) {
+      APValue Src;
+                     
+      if (!EvaluateComplex(SubExpr, Src, Info))
+        return APValue();
+
+      QualType SrcType = CT->getElementType();
+
+      if (Src.isComplexFloat()) {
+        if (EltType->isRealFloatingType()) {
+          return APValue(HandleFloatToFloatCast(EltType, SrcType, 
+                                                Src.getComplexFloatReal(),
+                                                Info.Ctx),
+                         HandleFloatToFloatCast(EltType, SrcType, 
+                                                Src.getComplexFloatImag(),
+                                                Info.Ctx));
+        } else {
+          return APValue(HandleFloatToIntCast(EltType, SrcType,
+                                              Src.getComplexFloatReal(),
+                                              Info.Ctx),
+                         HandleFloatToIntCast(EltType, SrcType, 
+                                              Src.getComplexFloatImag(),
+                                              Info.Ctx)); 
+        }
+      } else {
+        assert(Src.isComplexInt() && "Invalid evaluate result.");
+        if (EltType->isRealFloatingType()) {
+          return APValue(HandleIntToFloatCast(EltType, SrcType, 
+                                              Src.getComplexIntReal(),
+                                              Info.Ctx),
+                         HandleIntToFloatCast(EltType, SrcType, 
+                                              Src.getComplexIntImag(),
+                                              Info.Ctx));
+        } else {
+          return APValue(HandleIntToIntCast(EltType, SrcType,
+                                            Src.getComplexIntReal(),
+                                            Info.Ctx),
+                         HandleIntToIntCast(EltType, SrcType, 
+                                            Src.getComplexIntImag(),
+                                            Info.Ctx)); 
+        }
+      }
     }
 
     // FIXME: Handle more casts.
