@@ -37,8 +37,9 @@
 using namespace llvm;
 
 static cl::opt<int> PreSplitLimit("pre-split-limit", cl::init(-1), cl::Hidden);
+static cl::opt<int> DeadSplitLimit("dead-split-limit", cl::init(-1), cl::Hidden);
 
-STATISTIC(NumTotalSplits, "Number of intervals split");
+STATISTIC(NumSplits, "Number of intervals split");
 STATISTIC(NumRemats, "Number of intervals split by rematerialization");
 STATISTIC(NumFolds, "Number of intervals split with spill folding");
 STATISTIC(NumRenumbers, "Number of intervals renumbered into new registers");
@@ -77,8 +78,6 @@ namespace {
 
     // Def2SpillMap - A map from a def instruction index to spill index.
     DenseMap<unsigned, unsigned> Def2SpillMap;
-    
-    unsigned NumSplits;
 
   public:
     static char ID;
@@ -162,8 +161,8 @@ namespace {
     void RenumberValno(VNInfo* VN);
     void ReconstructLiveInterval(LiveInterval* LI);
     bool removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split);
-    unsigned getNumberOfSpills(SmallPtrSet<MachineInstr*, 4>& MIs,
-                               unsigned Reg, int FrameIndex);
+    unsigned getNumberOfNonSpills(SmallPtrSet<MachineInstr*, 4>& MIs,
+                               unsigned Reg, int FrameIndex, bool& TwoAddr);
     VNInfo* PerformPHIConstruction(MachineBasicBlock::iterator use,
                                    MachineBasicBlock* MBB,
                                    LiveInterval* LI,
@@ -789,6 +788,10 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
     MO.setReg(NewVReg);
   }
   
+  // The renumbered vreg shares a stack slot with the old register.
+  if (IntervalSSMap.count(CurrLI->reg))
+    IntervalSSMap[NewVReg] = IntervalSSMap[CurrLI->reg];
+  
   NumRenumbers++;
 }
 
@@ -1042,19 +1045,24 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs,
   return Change;
 }
 
-unsigned PreAllocSplitting::getNumberOfSpills(
+unsigned PreAllocSplitting::getNumberOfNonSpills(
                                   SmallPtrSet<MachineInstr*, 4>& MIs,
-                                  unsigned Reg, int FrameIndex) {
-  unsigned Spills = 0;
+                                  unsigned Reg, int FrameIndex,
+                                  bool& FeedsTwoAddr) {
+  unsigned NonSpills = 0;
   for (SmallPtrSet<MachineInstr*, 4>::iterator UI = MIs.begin(), UE = MIs.end();
-       UI != UI; ++UI) {
+       UI != UE; ++UI) {
     int StoreFrameIndex;
     unsigned StoreVReg = TII->isStoreToStackSlot(*UI, StoreFrameIndex);
-    if (StoreVReg == Reg && StoreFrameIndex == FrameIndex)
-      Spills++;
+    if (StoreVReg != Reg || StoreFrameIndex != FrameIndex)
+      NonSpills++;
+    
+    int DefIdx = (*UI)->findRegisterDefOperandIdx(Reg);
+    if (DefIdx != -1 && (*UI)->isRegReDefinedByTwoAddr(DefIdx))
+      FeedsTwoAddr = true;
   }
   
-  return Spills;
+  return NonSpills;
 }
 
 /// removeDeadSpills - After doing splitting, filter through all intervals we've
@@ -1077,6 +1085,10 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
     
     for (LiveInterval::vni_iterator VI = (*LI)->vni_begin(),
          VE = (*LI)->vni_end(); VI != VE; ++VI) {
+      
+      if (DeadSplitLimit != -1 && (int)NumDeadSpills == DeadSplitLimit) 
+        return changed;
+      
       VNInfo* CurrVN = *VI;
       if (CurrVN->hasPHIKill) continue;
       
@@ -1096,9 +1108,67 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         continue;
       }
       
-      unsigned SpillCount = getNumberOfSpills(VNUseCount[CurrVN],
-                                              (*LI)->reg, FrameIndex);
-      if (SpillCount != VNUseCount[CurrVN].size()) continue;
+      bool FeedsTwoAddr = false;
+      unsigned NonSpillCount = getNumberOfNonSpills(VNUseCount[CurrVN],
+                                                    (*LI)->reg, FrameIndex,
+                                                    FeedsTwoAddr);
+      
+      if (NonSpillCount == 1 && !FeedsTwoAddr) {
+        SmallPtrSet<MachineInstr*, 4>::iterator UI = VNUseCount[CurrVN].begin();
+        int StoreFrameIndex;
+        unsigned StoreVReg = TII->isStoreToStackSlot(*UI, StoreFrameIndex);
+        while (UI != VNUseCount[CurrVN].end() &&
+               (StoreVReg == (*LI)->reg && StoreFrameIndex == FrameIndex)) {
+          ++UI;
+          if (UI != VNUseCount[CurrVN].end())
+            StoreVReg = TII->isStoreToStackSlot(*UI, StoreFrameIndex);
+        }
+        
+        if (UI == VNUseCount[CurrVN].end()) continue;
+        
+        MachineInstr* use = *UI;
+        
+        int OpIdx = use->findRegisterUseOperandIdx((*LI)->reg, false);
+        if (OpIdx == -1) continue;
+
+        SmallVector<unsigned, 1> Ops;
+        Ops.push_back(OpIdx);
+
+        if (!TII->canFoldMemoryOperand(use, Ops)) continue;
+
+        MachineInstr* NewMI =
+                          TII->foldMemoryOperand(*use->getParent()->getParent(),  
+                                                 use, Ops, FrameIndex);
+
+        if (!NewMI) continue;
+
+        LIs->RemoveMachineInstrFromMaps(DefMI);
+        LIs->ReplaceMachineInstrInMaps(use, NewMI);
+        (*LI)->removeValNo(CurrVN);
+
+        DefMI->eraseFromParent();
+        MachineBasicBlock* MBB = use->getParent();
+        NewMI = MBB->insert(MBB->erase(use), NewMI);
+        VNUseCount[CurrVN].erase(use);
+        
+        for (SmallPtrSet<MachineInstr*, 4>::iterator II = 
+             VNUseCount[CurrVN].begin(), IE = VNUseCount[CurrVN].end();
+             II != IE; ++II) {
+          LIs->RemoveMachineInstrFromMaps(*II);
+          (*II)->eraseFromParent();
+        }
+
+        for (DenseMap<VNInfo*, SmallPtrSet<MachineInstr*, 4> >::iterator
+             VI = VNUseCount.begin(), VE = VNUseCount.end(); VI != VE; ++VI)
+          if (VI->second.erase(use))
+            VI->second.insert(NewMI);
+
+        NumDeadSpills++;
+        changed = true;
+        continue;
+      }
+      
+      if (NonSpillCount) continue;
         
       for (SmallPtrSet<MachineInstr*, 4>::iterator UI = 
            VNUseCount[CurrVN].begin(), UE = VNUseCount[CurrVN].end();
@@ -1193,7 +1263,6 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   LSs    = &getAnalysis<LiveStacks>();
 
   bool MadeChange = false;
-  NumSplits = 0;
 
   // Make sure blocks are numbered in order.
   MF.RenumberBlocks();
@@ -1220,9 +1289,6 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   }
 
   MadeChange |= removeDeadSpills(Split);
-  
-  if (NumSplits)
-    NumTotalSplits += NumSplits;
 
   return MadeChange;
 }
