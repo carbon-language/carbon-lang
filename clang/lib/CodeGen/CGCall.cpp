@@ -411,6 +411,9 @@ class X86_64ABIInfo : public ABIInfo {
   ///
   /// \param Lo - The classification for the low word of the type.
   /// \param Hi - The classification for the high word of the type.
+  /// \param OffsetBase - The byte position of the type in the root
+  /// structure. Some parameters are classified different depending on
+  /// whether they straddle an eightbyte boundary.
   ///
   /// If a word is unused its result will be NoClass; if a type should
   /// be passed in Memory then at least the classification of \arg Lo
@@ -420,7 +423,7 @@ class X86_64ABIInfo : public ABIInfo {
   ///
   /// If the \arg Lo class is ComplexX87, then the \arg Hi class will
   /// be NoClass.
-  void classify(QualType T, ASTContext &Context,
+  void classify(QualType T, ASTContext &Context, unsigned OffsetBase,
                 Class &Lo, Class &Hi) const;
 
 public:
@@ -434,6 +437,7 @@ public:
 
 void X86_64ABIInfo::classify(QualType Ty,
                              ASTContext &Context,
+                             unsigned OffsetBase,
                              Class &Lo, Class &Hi) const {
   Lo = Memory;
   Hi = NoClass;
@@ -483,6 +487,13 @@ void X86_64ABIInfo::classify(QualType Ty,
       Lo = Hi = SSE;
     else if (ET == Context.LongDoubleTy)
       Lo = ComplexX87;
+
+    // If this complex type crosses an eightbyte boundary then it
+    // should be split.
+    unsigned EB_Real = (OffsetBase) >> 3;
+    unsigned EB_Imag = (OffsetBase + Context.getTypeSize(ET)) >> 3;
+    if (Hi == NoClass && EB_Real != EB_Imag)
+      Hi = Lo;
   } else if (const RecordType *RT = Ty->getAsRecordType()) {
     unsigned Size = Context.getTypeSize(Ty);
     
@@ -504,7 +515,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     unsigned idx = 0;
     for (RecordDecl::field_iterator i = RD->field_begin(), 
            e = RD->field_end(); i != e; ++i, ++idx) {
-      unsigned Offset = Layout.getFieldOffset(idx);
+      unsigned Offset = OffsetBase + Layout.getFieldOffset(idx);
 
       //  AMD64-ABI 3.2.3p2: Rule 1. If ..., or it contains unaligned
       //  fields, it has class MEMORY.
@@ -523,7 +534,7 @@ void X86_64ABIInfo::classify(QualType Ty,
 
       // Classify this field.
       Class FieldLo, FieldHi;
-      classify(i->getType(), Context, FieldLo, FieldHi);
+      classify(i->getType(), Context, Offset, FieldLo, FieldHi);
       
       // Merge the lo field classifcation.
       //
@@ -593,7 +604,7 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
   // AMD64-ABI 3.2.3p4: Rule 1. Classify the return type with the
   // classification algorithm.
   X86_64ABIInfo::Class Lo, Hi;
-  classify(RetTy, Context, Lo, Hi);
+  classify(RetTy, Context, 0, Lo, Hi);
 
   const llvm::Type *ResType = 0;
   switch (Lo) {
