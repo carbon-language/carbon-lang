@@ -1256,7 +1256,14 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
     return RValue::get(RetTy->isVoidType() ? 0 : CI);
 
   case ABIArgInfo::Ignore:
-    return RValue::get(0);
+    if (RetTy->isVoidType())
+      return RValue::get(0);
+    if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+      llvm::Value *Res =
+        llvm::UndefValue::get(llvm::PointerType::getUnqual(ConvertType(RetTy)));
+      return RValue::getAggregate(Res);
+    }
+    return RValue::get(llvm::UndefValue::get(ConvertType(RetTy)));
 
   case ABIArgInfo::Coerce: {
     llvm::Value *V = CreateTempAlloca(ConvertType(RetTy), "coerce");
