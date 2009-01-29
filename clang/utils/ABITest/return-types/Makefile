@@ -5,8 +5,9 @@
 # to 'make clean' after changing either of these parameters.
 
 ABITESTGEN := ../ABITestGen.py
-TESTARGS := --max-args 0 --no-vector --no-complex --no-union
-COUNT := 100
+TESTARGS := --max-args 0
+COUNT := 1
+TIMEOUT := 5
 
 CFLAGS := -std=gnu99
 
@@ -16,15 +17,42 @@ Y_COMPILER := xcc -ccc-clang
 Y_LL_CFLAGS := -emit-llvm -S
 CC := gcc
 
+ifeq (0, 1)
 X_CFLAGS := -m32
-Y_CFLAGS := -arch i386
+Y_CFLAGS := -m32
 CC_CFLAGS := -m32
+else
+X_CFLAGS := -m64
+Y_CFLAGS := -m64
+CC_CFLAGS := -m64
+endif
+
+ifndef VERBOSE
+  Verb := @
+endif
 
 .PHONY: test.%.report
 test.%.report: test.%.xx.diff test.%.xy.diff test.%.yx.diff test.%.yy.diff
+	@ok=1;\
+	for t in $^; do \
+		if [ -s $$t ]; then \
+			echo "TEST $*: $$t failed"; \
+			ok=0;\
+		fi; \
+	done; \
+	if [ $$ok == 1 ]; then \
+		echo "TEST $*: OK"; \
+	else \
+		false; \
+	fi
+
+
+.PHONY: test.%.defs-report
+test.%.defs-report: test.%.defs.diff
 	@for t in $^; do \
 		if [ -s $$t ]; then \
 			echo "TEST $*: $$t failed"; \
+			cat $$t; \
 		fi; \
 	done
 
@@ -36,72 +64,72 @@ test.%.build: test.%.ref test.%.xx test.%.xy test.%.yx test.%.yy test.%.x.defs t
 
 .PRECIOUS: test.%.xx.diff
 test.%.xx.diff: test.%.ref.out test.%.xx.out
-	-diff $^ > $@
+	$(Verb) diff $^ > $@ || true
 .PRECIOUS: test.%.xy.diff
 test.%.xy.diff: test.%.ref.out test.%.xy.out
-	-diff $^ > $@
+	$(Verb) diff $^ > $@ || true
 .PRECIOUS: test.%.yx.diff
 test.%.yx.diff: test.%.ref.out test.%.yx.out
-	-diff $^ > $@
+	$(Verb) diff $^ > $@ || true
 .PRECIOUS: test.%.yy.diff
 test.%.yy.diff: test.%.ref.out test.%.yy.out
-	-diff $^ > $@
+	$(Verb) diff $^ > $@ || true
 .PRECIOUS: test.%.defs.diff
 test.%.defs.diff: test.%.x.defs test.%.y.defs
-	zipdifflines \
+	$(Verb) zipdifflines \
 	  --replace "%struct.T[0-9]+" "%struct.s" \
 	  --replace "byval align [0-9]+" "byval" \
 	  $^ > $@
 
 .PRECIOUS: test.%.out
 test.%.out: test.%
-	-./$< > $@
+	$(Verb) -RunSafely.sh $(TIMEOUT) 1 /dev/null $@ ./$<
 
 .PRECIOUS: test.%.ref
 test.%.ref: test.%.driver.ref.o test.%.a.ref.o test.%.b.ref.o
-	$(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
+	$(Verb) $(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
 .PRECIOUS: test.%.xx
 test.%.xx: test.%.driver.ref.o test.%.a.x.o test.%.b.x.o
-	$(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
+	$(Verb) $(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
 .PRECIOUS: test.%.xy
 test.%.xy: test.%.driver.ref.o test.%.a.x.o test.%.b.y.o
-	$(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
+	$(Verb) $(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
 .PRECIOUS: test.%.yx
 test.%.yx: test.%.driver.ref.o test.%.a.y.o test.%.b.x.o
-	$(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
+	$(Verb) $(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
 .PRECIOUS: test.%.yy
 test.%.yy: test.%.driver.ref.o test.%.a.y.o test.%.b.y.o
-	$(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
+	$(Verb) $(CC) $(CFLAGS) $(CC_CFLAGS) -o $@ $^
 
 .PRECIOUS: test.%.ref.o
 test.%.ref.o: test.%.c
-	$(CC) -c $(CFLAGS) $(CC_CFLAGS) -o $@ $<
+	$(Verb) $(CC) -c $(CFLAGS) $(CC_CFLAGS) -o $@ $<
 .PRECIOUS: test.%.x.o
 test.%.x.o: test.%.c
-	$(X_COMPILER) -c $(CFLAGS) $(X_CFLAGS) -o $@ $<
+	$(Verb) $(X_COMPILER) -c $(CFLAGS) $(X_CFLAGS) -o $@ $<
 .PRECIOUS: test.%.y.o
 test.%.y.o: test.%.c
-	$(Y_COMPILER) -c $(CFLAGS) $(Y_CFLAGS) -o $@ $<
+	$(Verb) $(Y_COMPILER) -c $(CFLAGS) $(Y_CFLAGS) -o $@ $<
 
 .PRECIOUS: test.%.x.defs
 test.%.x.defs: test.%.a.x.ll
-	-grep '^define ' $< > $@
+	-$(Verb) -grep '^define ' $< > $@
 .PRECIOUS: test.%.y.defs
 test.%.y.defs: test.%.a.y.ll
-	-grep '^define ' $< > $@
+	-$(Verb) -grep '^define ' $< > $@
 
 .PRECIOUS: test.%.a.x.ll
 test.%.a.x.ll: test.%.a.c
-	$(X_COMPILER) $(CFLAGS) $(X_LL_CFLAGS) $(X_CFLAGS) -o $@ $<
+	$(Verb) $(X_COMPILER) $(CFLAGS) $(X_LL_CFLAGS) $(X_CFLAGS) -o $@ $<
 .PRECIOUS: test.%.b.x.ll
 test.%.b.x.ll: test.%.b.c
-	$(X_COMPILER) $(CFLAGS) $(X_LL_CFLAGS) $(X_CFLAGS) -o $@ $<
+	$(Verb) $(X_COMPILER) $(CFLAGS) $(X_LL_CFLAGS) $(X_CFLAGS) -o $@ $<
 .PRECIOUS: test.%.a.y.ll
 test.%.a.y.ll: test.%.a.c
-	$(Y_COMPILER) $(CFLAGS) $(Y_LL_CFLAGS) $(Y_CFLAGS) -o $@ $<
+	$(Verb) $(Y_COMPILER) $(CFLAGS) $(Y_LL_CFLAGS) $(Y_CFLAGS) -o $@ $<
 .PRECIOUS: test.%.b.y.ll
 test.%.b.y.ll: test.%.b.c
-	$(Y_COMPILER) $(CFLAGS) $(Y_LL_CFLAGS) $(Y_CFLAGS) -o $@ $<
+	$(Verb) $(Y_COMPILER) $(CFLAGS) $(Y_LL_CFLAGS) $(Y_CFLAGS) -o $@ $<
 
 .PHONY: test.%.top
 test.%.top: test.%.a.c test.%.b.c test.%.driver.c

@@ -5,7 +5,7 @@
 # to 'make clean' after changing either of these parameters.
 
 ABITESTGEN := ../ABITestGen.py
-TESTARGS := --max-args 0 --no-complex --no-vector --no-union --test-layout
+TESTARGS := --max-args 0 --test-layout
 COUNT := 1000
 TIMEOUT := 5
 
