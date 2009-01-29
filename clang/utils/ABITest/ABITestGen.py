@@ -263,7 +263,10 @@ class TypePrinter:
             for i in range(t.numElements):
                 # Access in this fashion as a hackish way to portably
                 # access vectors.
-                self.printValueOfType(prefix, '((%s*) &%s)[%d]'%(t.elementType,name,i), t.elementType, output=output,indent=indent)                            
+                if t.isVector:
+                    self.printValueOfType(prefix, '((%s*) &%s)[%d]'%(t.elementType,name,i), t.elementType, output=output,indent=indent)
+                else:
+                    self.printValueOfType(prefix, '%s[%d]'%(name,i), t.elementType, output=output,indent=indent)                    
         else:
             raise NotImplementedError,'Cannot print value of type: "%s"'%(t,)
 
