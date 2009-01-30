@@ -188,6 +188,11 @@ NoShowColumn("fno-show-column",
              llvm::cl::desc("Do not include column number on diagnostics"));
 
 static llvm::cl::opt<bool>
+NoShowLocation("fno-show-source-location",
+               llvm::cl::desc("Do not include source location information with"
+                              " diagnostics"));
+
+static llvm::cl::opt<bool>
 NoCaretDiagnostics("fno-caret-diagnostics",
                    llvm::cl::desc("Do not include source line and caret with"
                                   " diagnostics"));
@@ -1530,7 +1535,8 @@ int main(int argc, char **argv) {
     // Print diagnostics to stderr by default.
     TextDiagClient = new TextDiagnosticPrinter(llvm::errs(),
                                                !NoShowColumn,
-                                               !NoCaretDiagnostics);
+                                               !NoCaretDiagnostics,
+                                               !NoShowLocation);
   } else {
     // When checking diagnostics, just buffer them up.
     TextDiagClient = new TextDiagnosticBuffer();
