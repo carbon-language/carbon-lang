@@ -34,7 +34,7 @@ struct StaticMemberTest {
 } smt = { 1, &smt.i };
 
 // C++ [dcl.init.aggr]p6
-char cv[4] = { 'a', 's', 'd', 'f', 0 }; // expected-warning{{excess elements in array initializer}}
+char cv[4] = { 'a', 's', 'd', 'f', 0 }; // expected-error{{excess elements in array initializer}}
 
 // C++ [dcl.init.aggr]p7
 struct TooFew { int a; char* b; int c; }; 
@@ -103,5 +103,5 @@ union u { int a; char* b; };
 u u1 = { 1 }; 
 u u2 = u1; 
 u u3 = 1; // expected-error{{cannot initialize 'u3' with an rvalue of type 'int'}}
-u u4 = { 0, "asdf" };  // expected-warning{{excess elements in array initializer}}
+u u4 = { 0, "asdf" };  // expected-error{{excess elements in array initializer}}
 u u5 = { "asdf" }; // expected-error{{incompatible type initializing 'char const [5]', expected 'int'}}

@@ -34,7 +34,6 @@ void booltest2() {
 
 // Scalars in braces.
 static int a = { 1 };
-static int b = { 1, 2 };
 
 // References to enums.
 enum {

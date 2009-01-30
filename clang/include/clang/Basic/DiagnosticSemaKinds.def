@@ -540,7 +540,7 @@ DIAG(err_variable_object_no_init, ERROR,
      "variable-sized object may not be initialized")
 DIAG(err_array_init_list_required, ERROR,
      "initialization with '{...}' expected for array")
-DIAG(warn_excess_initializers, WARNING,
+DIAG(err_excess_initializers, ERROR,
      "excess elements in array initializer")
 DIAG(err_excess_initializers_in_char_array_initializer, ERROR,
     "excess elements in char array initializer")

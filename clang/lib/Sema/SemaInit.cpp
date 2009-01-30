@@ -283,9 +283,10 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
         << IList->getInit(Index)->getSourceRange();
       hadError = true; 
     } else if (!T->isIncompleteType()) {
-      // Don't warn for incomplete types, since we'll get an error elsewhere
+      // Don't complain for incomplete types, since we'll get an error
+      // elsewhere
       SemaRef->Diag(IList->getInit(Index)->getLocStart(), 
-                    diag::warn_excess_initializers)
+                    diag::err_excess_initializers)
         << IList->getInit(Index)->getSourceRange();
     }
   }
