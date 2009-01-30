@@ -114,6 +114,9 @@ namespace llvm {
 
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
+
+    /// dump - print compile unit.
+    void dump() const;
   };
 
   /// DIEnumerator - A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
@@ -189,6 +192,9 @@ namespace llvm {
       assert (0 && "Invalid DIDescriptor");
       return "";
     }
+
+    /// dump - print type.
+    void dump() const;
   };
 
   /// DIBasicType - A basic type, like 'int' or 'float'.
@@ -199,6 +205,9 @@ namespace llvm {
     unsigned getEncoding() const { return getUnsignedField(9); }
     std::string getFilename() const { return getStringField(10); }
     std::string getDirectory() const { return getStringField(11); }
+
+    /// dump - print basic type.
+    void dump() const;
   };
 
   /// DIDerivedType - A simple derived type, like a const qualified type,
@@ -213,6 +222,9 @@ namespace llvm {
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
     std::string getFilename() const { return getStringField(10); }
     std::string getDirectory() const { return getStringField(11); }
+
+    /// dump - print derived type.
+    void dump() const;
   };
 
   /// DICompositeType - This descriptor holds a type that can refer to multiple
@@ -228,6 +240,9 @@ namespace llvm {
 
     /// Verify - Verify that a composite type descriptor is well formed.
     bool Verify() const;
+
+    /// dump - print composite type.
+    void dump() const;
   };
 
   /// DIGlobal - This is a common class for global variables and subprograms.
@@ -273,6 +288,9 @@ namespace llvm {
       assert (0 && "Invalid DIDescriptor");
       return "";
     }
+    
+    /// dump - print global.
+    void dump() const;
   };
 
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
@@ -285,6 +303,9 @@ namespace llvm {
 
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
+
+    /// dump - print subprogram.
+    void dump() const;
   };
 
   /// DIGlobalVariable - This is a wrapper for a global variable.
@@ -298,6 +319,9 @@ namespace llvm {
 
     /// Verify - Verify that a global variable descriptor is well formed.
     bool Verify() const;
+
+    /// dump - print global variable.
+    void dump() const;
   };
 
   /// DIVariable - This is a wrapper for a variable (e.g. parameter, local,
@@ -319,6 +343,9 @@ namespace llvm {
 
     /// Verify - Verify that a variable descriptor is well formed.
     bool Verify() const;
+
+    /// dump - print variable.
+    void dump() const;
   };
 
   /// DIBlock - This is a wrapper for a block (e.g. a function, scope, etc).

@@ -20,6 +20,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -870,3 +871,103 @@ namespace llvm {
   }
 }
 
+/// dump - print compile unit.
+void DICompileUnit::dump() const {
+  cerr << " [" << dwarf::LanguageString(getLanguage()) << "] ";
+  cerr << " [" << getDirectory() << "/" << getFilename() << " ]";
+}
+
+/// dump - print type.
+void DIType::dump() const {
+  if (isNull()) return;
+  if (!getName().empty())
+    cerr << " [" << getName() << "] ";
+  unsigned Tag = getTag();
+  cerr << " [" << dwarf::TagString(Tag) << "] ";
+  // TODO : Print context
+  getCompileUnit().dump();
+  cerr << " [" 
+       << getLineNumber() << ", " 
+       << getSizeInBits() << ", "
+       << getAlignInBits() << ", "
+       << getOffsetInBits() 
+       << "] ";
+  if (isPrivate()) 
+    cerr << " [private] ";
+  else if (isProtected())
+    cerr << " [protected] ";
+  if (isForwardDecl())
+    cerr << " [fwd] ";
+
+  if (isBasicType(Tag))
+    DIBasicType(GV).dump();
+  else if (isDerivedType(Tag))
+    DIDerivedType(GV).dump();
+  else if (isCompositeType(Tag))
+    DICompositeType(GV).dump();
+  else {
+    cerr << "Invalid DIType\n";
+    return;
+  }
+  cerr << "\n";
+}
+
+/// dump - print basic type.
+void DIBasicType::dump() const {
+  cerr << " [" << dwarf::AttributeEncodingString(getEncoding()) << "] ";
+
+}
+
+/// dump - print derived type.
+void DIDerivedType::dump() const {
+  cerr << "\n\t Derived From: "; getTypeDerivedFrom().dump();
+}
+
+/// dump - print composite type.
+void DICompositeType::dump() const {
+  DIArray A = getTypeArray();
+  if (A.isNull())
+    return;
+  cerr << " [" << A.getNumElements() << " elements]";
+}
+
+/// dump - print global.
+void DIGlobal::dump() const {
+
+  if (!getName().empty())
+    cerr << " [" << getName() << "] ";
+  unsigned Tag = getTag();
+  cerr << " [" << dwarf::TagString(Tag) << "] ";
+  // TODO : Print context
+  getCompileUnit().dump();
+  cerr << " [" << getLineNumber() << "] ";
+  if (isLocalToUnit())
+    cerr << " [local] ";
+  if (isDefinition())
+    cerr << " [def] ";
+
+  if (isGlobalVariable(Tag))
+    DIGlobalVariable(GV).dump();
+
+  cerr << "\n";
+}
+
+/// dump - print subprogram.
+void DISubprogram::dump() const {
+  DIGlobal::dump();
+}
+
+/// dump - print global variable.
+void DIGlobalVariable::dump() const {
+  cerr << " ["; getGlobal()->dump(); cerr << "] ";
+}
+
+/// dump - print variable.
+void DIVariable::dump() const {
+  if (!getName().empty())
+    cerr << " [" << getName() << "] ";
+  getCompileUnit().dump();
+  cerr << " [" << getLineNumber() << "] ";
+  getType().dump();
+  cerr << "\n";
+}
