@@ -1379,12 +1379,14 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
     return N0;
   // fold (sdiv X, -1) -> 0-X
   if (N1C && N1C->isAllOnesValue())
-    return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT), N0);
+    return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
+                       DAG.getConstant(0, VT), N0);
   // If we know the sign bits of both operands are zero, strength reduce to a
   // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
   if (!VT.isVector()) {
     if (DAG.SignBitIsZero(N1) && DAG.SignBitIsZero(N0))
-      return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
+      return DAG.getNode(ISD::UDIV, N->getDebugLoc(), N1.getValueType(),
+                         N0, N1);
   }
   // fold (sdiv X, pow2) -> simple ops after legalize
   if (N1C && !N1C->isNullValue() && !TLI.isIntDivCheap() &&
@@ -1394,30 +1396,37 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
     // fold.
     if (TLI.isPow2DivCheap())
       return SDValue();
+
     int64_t pow2 = N1C->getSExtValue();
     int64_t abs2 = pow2 > 0 ? pow2 : -pow2;
     unsigned lg2 = Log2_64(abs2);
+
     // Splat the sign bit into the register
-    SDValue SGN = DAG.getNode(ISD::SRA, VT, N0,
-                                DAG.getConstant(VT.getSizeInBits()-1,
-                                                TLI.getShiftAmountTy()));
+    SDValue SGN = DAG.getNode(ISD::SRA, N->getDebugLoc(), VT, N0,
+                              DAG.getConstant(VT.getSizeInBits()-1,
+                                              TLI.getShiftAmountTy()));
     AddToWorkList(SGN.getNode());
+
     // Add (N0 < 0) ? abs2 - 1 : 0;
-    SDValue SRL = DAG.getNode(ISD::SRL, VT, SGN,
-                                DAG.getConstant(VT.getSizeInBits()-lg2,
-                                                TLI.getShiftAmountTy()));
-    SDValue ADD = DAG.getNode(ISD::ADD, VT, N0, SRL);
+    SDValue SRL = DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, SGN,
+                              DAG.getConstant(VT.getSizeInBits() - lg2,
+                                              TLI.getShiftAmountTy()));
+    SDValue ADD = DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N0, SRL);
     AddToWorkList(SRL.getNode());
     AddToWorkList(ADD.getNode());    // Divide by pow2
-    SDValue SRA = DAG.getNode(ISD::SRA, VT, ADD,
-                                DAG.getConstant(lg2, TLI.getShiftAmountTy()));
+    SDValue SRA = DAG.getNode(ISD::SRA, N->getDebugLoc(), VT, ADD,
+                              DAG.getConstant(lg2, TLI.getShiftAmountTy()));
+
     // If we're dividing by a positive value, we're done.  Otherwise, we must
     // negate the result.
     if (pow2 > 0)
       return SRA;
+
     AddToWorkList(SRA.getNode());
-    return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT), SRA);
+    return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
+                       DAG.getConstant(0, VT), SRA);
   }
+
   // if integer divide is expensive and we satisfy the requirements, emit an
   // alternate sequence.
   if (N1C && (N1C->getSExtValue() < -1 || N1C->getSExtValue() > 1) && 
