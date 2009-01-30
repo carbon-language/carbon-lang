@@ -527,7 +527,7 @@ void X86_64ABIInfo::classify(QualType Ty,
         return;
       }
 
-      Lo = Integer;
+      Lo = SSE;
 
       // If this type crosses an eightbyte boundary, it should be
       // split.
