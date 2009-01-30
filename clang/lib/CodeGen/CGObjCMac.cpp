@@ -572,6 +572,8 @@ private:
   
   llvm::Constant *GetMethodConstant(const ObjCMethodDecl *MD);
   
+  llvm::Constant *GetMethodDescriptionConstant(const ObjCMethodDecl *MD);
+  
   /// EmitMethodList - Emit the method list for the given
   /// implementation. The return value has type MethodListnfABITy.
   llvm::Constant *EmitMethodList(const std::string &Name,
@@ -3789,7 +3791,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   for (ObjCProtocolDecl::instmeth_iterator i = PD->instmeth_begin(),
        e = PD->instmeth_end(); i != e; ++i) {
     ObjCMethodDecl *MD = *i;
-    llvm::Constant *C = GetMethodConstant(MD);
+    llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
       OptInstanceMethods.push_back(C);
     } else {
@@ -3800,7 +3802,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   for (ObjCProtocolDecl::classmeth_iterator i = PD->classmeth_begin(),
        e = PD->classmeth_end(); i != e; ++i) {
     ObjCMethodDecl *MD = *i;
-    llvm::Constant *C = GetMethodConstant(MD);
+    llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
       OptClassMethods.push_back(C);
     } else {
@@ -3817,19 +3819,19 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                           PD->protocol_begin(),
                           PD->protocol_end());
   
-  Values[3] = EmitMethodList("\01l_OBJC_$_INSTANCE_METHODS_"
+  Values[3] = EmitMethodList("\01l_OBJC_$_PROTOCOL_INSTANCE_METHODS_"
                              + PD->getNameAsString(),
                              "__DATA, __objc_const",
                              InstanceMethods);
-  Values[4] = EmitMethodList("\01l_OBJC_$_CLASS_METHODS_" 
+  Values[4] = EmitMethodList("\01l_OBJC_$_PROTOCOL_CLASS_METHODS_" 
                              + PD->getNameAsString(),
                              "__DATA, __objc_const",
                              ClassMethods);
-  Values[5] = EmitMethodList("\01l_OBJC_$_INSTANCE_METHODS_OPT_"
+  Values[5] = EmitMethodList("\01l_OBJC_$_PROTOCOL_INSTANCE_METHODS_OPT_"
                              + PD->getNameAsString(),
                              "__DATA, __objc_const",
                              OptInstanceMethods);
-  Values[6] = EmitMethodList("\01l_OBJC_$_CLASS_METHODS_OPT_" 
+  Values[6] = EmitMethodList("\01l_OBJC_$_PROTOCOL_CLASS_METHODS_OPT_" 
                              + PD->getNameAsString(),
                              "__DATA, __objc_const",
                              OptClassMethods);
@@ -3921,6 +3923,23 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListnfABIPtrTy);
 }
 
+/// GetMethodDescriptionConstant - This routine build following meta-data:
+/// struct _objc_method {
+///   SEL _cmd;
+///   char *method_type;
+///   char *_imp;
+/// }
+
+llvm::Constant *
+CGObjCNonFragileABIMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
+  std::vector<llvm::Constant*> Desc(3);
+  Desc[0] = llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
+                                           ObjCTypes.SelectorPtrTy);
+  Desc[1] = GetMethodVarType(MD);
+  // FIXME. This is really always NULL?
+  Desc[2] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+  return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Desc);
+}
 /* *** */
 
 CodeGen::CGObjCRuntime *
