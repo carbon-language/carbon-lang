@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file describes the ARM instructions in TableGen format.
+// This file describes the PIC16 instructions in TableGen format.
 //
 //===----------------------------------------------------------------------===//
 
