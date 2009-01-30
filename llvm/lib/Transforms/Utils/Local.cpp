@@ -38,8 +38,8 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
   // Branch - See if we are conditional jumping on constant
   if (BranchInst *BI = dyn_cast<BranchInst>(T)) {
     if (BI->isUnconditional()) return false;  // Can't optimize uncond branch
-    BasicBlock *Dest1 = cast<BasicBlock>(BI->getOperand(0));
-    BasicBlock *Dest2 = cast<BasicBlock>(BI->getOperand(1));
+    BasicBlock *Dest1 = BI->getSuccessor(0);
+    BasicBlock *Dest2 = BI->getSuccessor(1);
 
     if (ConstantInt *Cond = dyn_cast<ConstantInt>(BI->getCondition())) {
       // Are we branching on constant?
