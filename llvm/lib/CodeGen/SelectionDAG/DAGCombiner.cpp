@@ -1135,22 +1135,25 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
   
   // If the flag result is dead, turn this into an ADD.
   if (N->hasNUsesOfValue(0, 1))
-    return CombineTo(N, DAG.getNode(ISD::ADD, VT, N1, N0),
-                     DAG.getNode(ISD::CARRY_FALSE, MVT::Flag));
+    return CombineTo(N, DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N1, N0),
+                     DAG.getNode(ISD::CARRY_FALSE,
+                                 N->getDebugLoc(), MVT::Flag));
   
   // canonicalize constant to RHS.
   if (N0C && !N1C)
-    return DAG.getNode(ISD::ADDC, N->getVTList(), N1, N0);
+    return DAG.getNode(ISD::ADDC, N->getDebugLoc(), N->getVTList(), N1, N0);
   
   // fold (addc x, 0) -> x + no carry out
   if (N1C && N1C->isNullValue())
-    return CombineTo(N, N0, DAG.getNode(ISD::CARRY_FALSE, MVT::Flag));
+    return CombineTo(N, N0, DAG.getNode(ISD::CARRY_FALSE,
+                                        N->getDebugLoc(), MVT::Flag));
   
   // fold (addc a, b) -> (or a, b), CARRY_FALSE iff a and b share no bits.
   APInt LHSZero, LHSOne;
   APInt RHSZero, RHSOne;
   APInt Mask = APInt::getAllOnesValue(VT.getSizeInBits());
   DAG.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
+
   if (LHSZero.getBoolValue()) {
     DAG.ComputeMaskedBits(N1, Mask, RHSZero, RHSOne);
     
@@ -1158,8 +1161,9 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
     // If all possibly-set bits on the RHS are clear on the LHS, return an OR.
     if ((RHSZero & (~LHSZero & Mask)) == (~LHSZero & Mask) ||
         (LHSZero & (~RHSZero & Mask)) == (~RHSZero & Mask))
-      return CombineTo(N, DAG.getNode(ISD::OR, VT, N0, N1),
-                       DAG.getNode(ISD::CARRY_FALSE, MVT::Flag));
+      return CombineTo(N, DAG.getNode(ISD::OR, N->getDebugLoc(), VT, N0, N1),
+                       DAG.getNode(ISD::CARRY_FALSE,
+                                   N->getDebugLoc(), MVT::Flag));
   }
   
   return SDValue();
@@ -1171,20 +1175,18 @@ SDValue DAGCombiner::visitADDE(SDNode *N) {
   SDValue CarryIn = N->getOperand(2);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
-  //MVT VT = N0.getValueType();
   
   // canonicalize constant to RHS
   if (N0C && !N1C)
-    return DAG.getNode(ISD::ADDE, N->getVTList(), N1, N0, CarryIn);
+    return DAG.getNode(ISD::ADDE, N->getDebugLoc(), N->getVTList(),
+                       N1, N0, CarryIn);
   
   // fold (adde x, y, false) -> (addc x, y)
   if (CarryIn.getOpcode() == ISD::CARRY_FALSE)
-    return DAG.getNode(ISD::ADDC, N->getVTList(), N1, N0);
+    return DAG.getNode(ISD::ADDC, N->getDebugLoc(), N->getVTList(), N1, N0);
   
   return SDValue();
 }
-
-
 
 SDValue DAGCombiner::visitSUB(SDNode *N) {
   SDValue N0 = N->getOperand(0);
