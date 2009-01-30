@@ -443,10 +443,6 @@ class Driver(object):
         if finalPhaseOpt:
             self.claim(finalPhaseOpt)
 
-        # FIXME: Support -combine.
-        if hasCombine:
-            raise NotImplementedError,"-combine is not yet supported"
-        
         # Reject -Z* at the top level for now.
         arg = args.getLastArg(self.parser.ZOption)
         if arg:

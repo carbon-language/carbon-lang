@@ -520,7 +520,7 @@ class OptionParser:
         self.EOption = self.addOption(FlagOption('-E'))
         self.SOption = self.addOption(FlagOption('-S'))
         self.cOption = self.addOption(FlagOption('-c'))
-        self.combineOption = self.addOption(FlagOption('-combine'))
+        self.combineOption = self.addOption(FlagOption('-combine', unsupported=True))
         self.noIntegratedCPPOption = self.addOption(FlagOption('-no-integrated-cpp'))
         self.pipeOption = self.addOption(FlagOption('-pipe'))
         self.saveTempsOption = self.addOption(FlagOption('-save-temps'))
