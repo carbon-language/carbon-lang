@@ -3288,7 +3288,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::ANY_EXTEND  ||
       N0.getOpcode() == ISD::ZERO_EXTEND ||
       N0.getOpcode() == ISD::SIGN_EXTEND)
-    return DAG.getNode(N0.getOpcode(), VT, N0.getOperand(0));
+    return DAG.getNode(N0.getOpcode(), N->getDebugLoc(), VT, N0.getOperand(0));
   
   // fold (aext (truncate (load x))) -> (aext (smaller load x))
   // fold (aext (truncate (srl (load x), c))) -> (aext (small load (x+c/n)))
@@ -3297,7 +3297,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
     if (NarrowLoad.getNode()) {
       if (NarrowLoad.getNode() != N0.getNode())
         CombineTo(N0.getNode(), NarrowLoad);
-      return DAG.getNode(ISD::ANY_EXTEND, VT, NarrowLoad);
+      return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, NarrowLoad);
     }
   }
 
@@ -3307,8 +3307,8 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
     if (TruncOp.getValueType() == VT)
       return TruncOp; // x iff x size == zext size.
     if (TruncOp.getValueType().bitsGT(VT))
-      return DAG.getNode(ISD::TRUNCATE, VT, TruncOp);
-    return DAG.getNode(ISD::ANY_EXTEND, VT, TruncOp);
+      return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, TruncOp);
+    return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, TruncOp);
   }
   
   // fold (aext (and (trunc x), cst)) -> (and x, cst).
@@ -3317,13 +3317,14 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     SDValue X = N0.getOperand(0).getOperand(0);
     if (X.getValueType().bitsLT(VT)) {
-      X = DAG.getNode(ISD::ANY_EXTEND, VT, X);
+      X = DAG.getNode(ISD::ANY_EXTEND, DebugLoc::getUnknownLoc(), VT, X);
     } else if (X.getValueType().bitsGT(VT)) {
-      X = DAG.getNode(ISD::TRUNCATE, VT, X);
+      X = DAG.getNode(ISD::TRUNCATE, DebugLoc::getUnknownLoc(), VT, X);
     }
     APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
     Mask.zext(VT.getSizeInBits());
-    return DAG.getNode(ISD::AND, VT, X, DAG.getConstant(Mask, VT));
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
+                       X, DAG.getConstant(Mask, VT));
   }
   
   // fold (aext (load x)) -> (aext (truncate (extload x)))
@@ -3331,7 +3332,8 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType()))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, LN0->getChain(),
+    SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, N->getDebugLoc(), VT,
+                                     LN0->getChain(),
                                      LN0->getBasePtr(), LN0->getSrcValue(),
                                      LN0->getSrcValueOffset(),
                                      N0.getValueType(),
@@ -3342,7 +3344,8 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
                                   SDValue(ExtLoad.getNode(), 1));
     // If any node needs the original loaded value, recompute it.
     if (!LN0->use_empty())
-      CombineTo(LN0, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+      CombineTo(LN0, DAG.getNode(ISD::TRUNCATE, N0.getDebugLoc(),
+                                 N0.getValueType(), ExtLoad),
                 ExtLoad.getValue(1));
     return SDValue(N, 0);   // Return N so it doesn't get rechecked!
   }
@@ -3355,14 +3358,15 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
       N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT EVT = LN0->getMemoryVT();
-    SDValue ExtLoad = DAG.getExtLoad(LN0->getExtensionType(), VT,
-                                     LN0->getChain(), LN0->getBasePtr(),
+    SDValue ExtLoad = DAG.getExtLoad(LN0->getExtensionType(), N->getDebugLoc(),
+                                     VT, LN0->getChain(), LN0->getBasePtr(),
                                      LN0->getSrcValue(),
                                      LN0->getSrcValueOffset(), EVT,
                                      LN0->isVolatile(), LN0->getAlignment());
     CombineTo(N, ExtLoad);
     CombineTo(N0.getNode(),
-              DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+              DAG.getNode(ISD::TRUNCATE, N0.getDebugLoc(),
+                          N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
     return SDValue(N, 0);   // Return N so it doesn't get rechecked!
   }
