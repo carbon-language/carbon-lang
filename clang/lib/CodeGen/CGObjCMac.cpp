@@ -3144,6 +3144,59 @@ llvm::Function *CGObjCNonFragileABIMac::ModuleInitFunction() {
 
 void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   // nonfragile abi has no module definition.
+  
+  // Build list of all implemented classe addresses in array
+  // L_OBJC_LABEL_CLASS_$.
+  // FIXME. Also generate in L_OBJC_LABEL_NONLAZY_CLASS_$
+  // list of 'nonlazy' implementations (defined as those with a +load{}
+  // method!!).
+  unsigned NumClasses = DefinedClasses.size();
+  if (NumClasses) {
+    std::vector<llvm::Constant*> Symbols(NumClasses);
+    for (unsigned i=0; i<NumClasses; i++)
+      Symbols[i] = llvm::ConstantExpr::getBitCast(DefinedClasses[i],
+                                                  ObjCTypes.Int8PtrTy);
+    llvm::Constant* Init = 
+      llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.Int8PtrTy,
+                                                    NumClasses),
+                               Symbols);
+  
+    llvm::GlobalVariable *GV =
+      new llvm::GlobalVariable(Init->getType(), false,
+                               llvm::GlobalValue::InternalLinkage,
+                               Init,
+                               "\01L_OBJC_LABEL_CLASS_$",
+                               &CGM.getModule());
+    GV->setSection("__DATA, __objc_classlist, regular, no_dead_strip");
+    UsedGlobals.push_back(GV);
+  }
+  
+  // Build list of all implemented category addresses in array
+  // L_OBJC_LABEL_CATEGORY_$.
+  // FIXME. Also generate in L_OBJC_LABEL_NONLAZY_CATEGORY_$
+  // list of 'nonlazy' category implementations (defined as those with a +load{}
+  // method!!).
+  unsigned NumCategory = DefinedCategories.size();
+  if (NumCategory) {
+    std::vector<llvm::Constant*> Symbols(NumCategory);
+    for (unsigned i=0; i<NumCategory; i++)
+      Symbols[i] = llvm::ConstantExpr::getBitCast(DefinedCategories[i],
+                                                  ObjCTypes.Int8PtrTy);
+    llvm::Constant* Init = 
+      llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.Int8PtrTy,
+                                                    NumCategory),
+                               Symbols);
+    
+    llvm::GlobalVariable *GV =
+      new llvm::GlobalVariable(Init->getType(), false,
+                               llvm::GlobalValue::InternalLinkage,
+                               Init,
+                               "\01L_OBJC_LABEL_CATEGORY_$",
+                               &CGM.getModule());
+    GV->setSection("__DATA, __objc_catlist, regular, no_dead_strip");
+    UsedGlobals.push_back(GV);
+  }
+  
   std::vector<llvm::Constant*> Used;
   for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(), 
        e = UsedGlobals.end(); i != e; ++i) {
@@ -3456,7 +3509,9 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                                          ID);
   
   TClassName = ObjCClassName + ClassName;
-  BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV);
+  llvm::GlobalVariable *ClassMD = 
+    BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV);
+  DefinedClasses.push_back(ClassMD);
 }
 
 /// GenerateProtocolRef - This routine is called to generate code for
