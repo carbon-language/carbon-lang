@@ -26,7 +26,7 @@ public:
   Stmt* getParent(Stmt*) const;  
 
   bool hasParent(Stmt* S) const {
-    return !getParent(S);
+    return getParent(S) != 0;
   }
 };
   
