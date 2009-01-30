@@ -114,8 +114,9 @@ QualType ElementRegion::getRValueType(ASTContext& C) const {
   if (ArrayType* AT = dyn_cast<ArrayType>(T.getTypePtr()))
     return AT->getElementType();
 
-  PointerType* PtrT = cast<PointerType>(T.getTypePtr());
-  return C.getCanonicalType(PtrT->getPointeeType());
+  // If the RValueType of the array region isn't an ArrayType, then essentially
+  // the element's  
+  return T;
 }
 
 //===----------------------------------------------------------------------===//

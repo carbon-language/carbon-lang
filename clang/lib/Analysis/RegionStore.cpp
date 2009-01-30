@@ -403,20 +403,27 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
                                            const MemRegion* R) {
   if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
     // Get the type of the variable.
-    QualType T = VR->getRValueType(getContext());
+    QualType T = VR->getDesugaredRValueType(getContext());
 
-    // It must be of array type. 
-    const ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
-
-    // return the size as signed integer.
-    return NonLoc::MakeVal(getBasicVals(), CAT->getSize(), false);
+    // FIXME: Handle variable-length arrays.
+    if (isa<VariableArrayType>(T))
+      return UnknownVal();
+    
+    if (const ConstantArrayType* CAT = dyn_cast<ConstantArrayType>(T)) {
+      // return the size as signed integer.
+      return NonLoc::MakeVal(getBasicVals(), CAT->getSize(), false);
+    }
+    
+    // Clients can use ordinary variables as if they were arrays.  These
+    // essentially are arrays of size 1.
+    return NonLoc::MakeIntVal(getBasicVals(), 1, false);
   }
 
   if (const StringRegion* SR = dyn_cast<StringRegion>(R)) {
     const StringLiteral* Str = SR->getStringLiteral();
     // We intentionally made the size value signed because it participates in 
     // operations with signed indices.
-    return NonLoc::MakeVal(getBasicVals(), Str->getByteLength() + 1, false);
+    return NonLoc::MakeIntVal(getBasicVals(), Str->getByteLength()+1, false);
   }
 
   if (const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R)) {
@@ -880,8 +887,8 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
 
   // When we are binding the whole array, it always has default value 0.
   GRStateRef state(St, StateMgr);
-  St = state.set<RegionDefaultValue>(R, NonLoc::MakeVal(getBasicVals(), 0, 
-                                                        false));
+  St = state.set<RegionDefaultValue>(R, NonLoc::MakeIntVal(getBasicVals(), 0, 
+                                                           false));
 
   Store store = St->getStore();
 
@@ -961,8 +968,8 @@ RegionStoreManager::BindStruct(const GRState* St, const TypedRegion* R, SVal V){
     // struct decl. In this case, mark the region as having default value.
     if (VI == VE) {
       GRStateRef state(St, StateMgr);
-      St = state.set<RegionDefaultValue>(R, NonLoc::MakeVal(getBasicVals(), 0, 
-                                                            false));
+      const NonLoc& Idx = NonLoc::MakeIntVal(getBasicVals(), 0, false);
+      St = state.set<RegionDefaultValue>(R, Idx);
       break;
     }
 

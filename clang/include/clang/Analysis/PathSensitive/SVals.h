@@ -171,8 +171,8 @@ public:
 
   static NonLoc MakeVal(SymbolRef sym);
 
-  static NonLoc MakeVal(BasicValueFactory& BasicVals, unsigned X, 
-                        bool isUnsigned);
+  static NonLoc MakeIntVal(BasicValueFactory& BasicVals, uint64_t X, 
+                           bool isUnsigned);
 
   static NonLoc MakeVal(BasicValueFactory& BasicVals, uint64_t X, 
                         unsigned BitWidth, bool isUnsigned);

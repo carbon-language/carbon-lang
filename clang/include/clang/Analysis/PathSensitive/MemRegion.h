@@ -173,6 +173,14 @@ public:
     // FIXME: We can possibly optimize this later to cache this value.
     return C.getPointerType(getRValueType(C));
   }
+  
+  QualType getDesugaredRValueType(ASTContext& C) const {
+    return getRValueType(C)->getDesugaredType();
+  }
+  
+  QualType getDesugaredLValueType(ASTContext& C) const {
+    return getLValueType(C)->getDesugaredType();
+  }
 
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();

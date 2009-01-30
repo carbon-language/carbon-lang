@@ -247,10 +247,9 @@ NonLoc NonLoc::MakeVal(SymbolRef sym) {
   return nonloc::SymbolVal(sym);
 }
 
-NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, unsigned X, 
-                       bool isUnsigned) {
-  return nonloc::ConcreteInt(BasicVals.getValue(X, sizeof(unsigned)*8, 
-                                                isUnsigned));
+NonLoc NonLoc::MakeIntVal(BasicValueFactory& BasicVals, uint64_t X, 
+                          bool isUnsigned) {
+  return nonloc::ConcreteInt(BasicVals.getIntValue(X, isUnsigned));
 }
 
 NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, uint64_t X, 

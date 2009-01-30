@@ -76,6 +76,11 @@ public:
   const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
   const llvm::APSInt& getValue(uint64_t X, QualType T);
 
+  const llvm::APSInt& getIntValue(uint64_t X, bool isUnsigned) {
+    QualType T = isUnsigned ? Ctx.UnsignedIntTy : Ctx.IntTy;
+    return getValue(X, T);
+  }
+
   inline const llvm::APSInt& getZeroWithPtrWidth(bool isUnsigned = true) {
     return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy), isUnsigned);
   }
