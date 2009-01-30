@@ -1643,8 +1643,8 @@ SDValue DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp,
   if (!HiExists &&
       (!LegalOperations ||
        TLI.isOperationLegal(LoOp, N->getValueType(0)))) {
-    SDValue Res = DAG.getNode(LoOp, N->getValueType(0), N->op_begin(),
-                              N->getNumOperands());
+    SDValue Res = DAG.getNode(LoOp, N->getDebugLoc(), N->getValueType(0),
+                              N->op_begin(), N->getNumOperands());
     return CombineTo(N, Res, Res);
   }
 
@@ -1653,8 +1653,8 @@ SDValue DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp,
   if (!LoExists &&
       (!LegalOperations ||
        TLI.isOperationLegal(HiOp, N->getValueType(1)))) {
-    SDValue Res = DAG.getNode(HiOp, N->getValueType(1), N->op_begin(),
-                              N->getNumOperands());
+    SDValue Res = DAG.getNode(HiOp, N->getDebugLoc(), N->getValueType(1),
+                              N->op_begin(), N->getNumOperands());
     return CombineTo(N, Res, Res);
   }
 
@@ -1664,8 +1664,8 @@ SDValue DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp,
 
   // If the two computed results can be simplified separately, separate them.
   if (LoExists) {
-    SDValue Lo = DAG.getNode(LoOp, N->getValueType(0),
-                               N->op_begin(), N->getNumOperands());
+    SDValue Lo = DAG.getNode(LoOp, N->getDebugLoc(), N->getValueType(0),
+                             N->op_begin(), N->getNumOperands());
     AddToWorkList(Lo.getNode());
     SDValue LoOpt = combine(Lo.getNode());
     if (LoOpt.getNode() && LoOpt.getNode() != Lo.getNode() &&
@@ -1675,7 +1675,7 @@ SDValue DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp,
   }
 
   if (HiExists) {
-    SDValue Hi = DAG.getNode(HiOp, N->getValueType(1),
+    SDValue Hi = DAG.getNode(HiOp, N->getDebugLoc(), N->getValueType(1),
                              N->op_begin(), N->getNumOperands());
     AddToWorkList(Hi.getNode());
     SDValue HiOpt = combine(Hi.getNode());
@@ -1684,6 +1684,7 @@ SDValue DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp,
          TLI.isOperationLegal(HiOpt.getOpcode(), HiOpt.getValueType())))
       return CombineTo(N, HiOpt, HiOpt);
   }
+
   return SDValue();
 }
 
