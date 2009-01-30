@@ -4883,7 +4883,8 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
   if (!Fast && ST->isUnindexed()) {
     if (unsigned Align = InferAlignment(Ptr, DAG)) {
       if (Align > ST->getAlignment())
-        return DAG.getTruncStore(Chain, Value, Ptr, ST->getSrcValue(),
+        return DAG.getTruncStore(Chain, N->getDebugLoc(), Value,
+                                 Ptr, ST->getSrcValue(),
                                  ST->getSrcValueOffset(), ST->getMemoryVT(),
                                  ST->isVolatile(), Align);
     }
@@ -4900,7 +4901,8 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     if (Align <= OrigAlign &&
         ((!LegalOperations && !ST->isVolatile()) ||
          TLI.isOperationLegalOrCustom(ISD::STORE, SVT)))
-      return DAG.getStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
+      return DAG.getStore(Chain, N->getDebugLoc(), Value.getOperand(0),
+                          Ptr, ST->getSrcValue(),
                           ST->getSrcValueOffset(), ST->isVolatile(), OrigAlign);
   }
 
@@ -4924,7 +4926,8 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
             TLI.isOperationLegalOrCustom(ISD::STORE, MVT::i32)) {
           Tmp = DAG.getConstant((uint32_t)CFP->getValueAPF().
                               bitcastToAPInt().getZExtValue(), MVT::i32);
-          return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
+          return DAG.getStore(Chain, N->getDebugLoc(), Tmp,
+                              Ptr, ST->getSrcValue(),
                               ST->getSrcValueOffset(), ST->isVolatile(),
                               ST->getAlignment());
         }
@@ -4934,8 +4937,9 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
              !ST->isVolatile()) ||
             TLI.isOperationLegalOrCustom(ISD::STORE, MVT::i64)) {
           Tmp = DAG.getConstant(CFP->getValueAPF().bitcastToAPInt().
-                                  getZExtValue(), MVT::i64);
-          return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
+                                getZExtValue(), MVT::i64);
+          return DAG.getStore(Chain, N->getDebugLoc(), Tmp,
+                              Ptr, ST->getSrcValue(),
                               ST->getSrcValueOffset(), ST->isVolatile(),
                               ST->getAlignment());
         } else if (!ST->isVolatile() &&
@@ -4952,17 +4956,21 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           unsigned Alignment = ST->getAlignment();
           bool isVolatile = ST->isVolatile();
 
-          SDValue St0 = DAG.getStore(Chain, Lo, Ptr, ST->getSrcValue(),
-                                       ST->getSrcValueOffset(),
-                                       isVolatile, ST->getAlignment());
-          Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+          SDValue St0 = DAG.getStore(Chain, ST->getDebugLoc(), Lo,
+                                     Ptr, ST->getSrcValue(),
+                                     ST->getSrcValueOffset(),
+                                     isVolatile, ST->getAlignment());
+          Ptr = DAG.getNode(ISD::ADD, N->getDebugLoc(), Ptr.getValueType(), Ptr,
                             DAG.getConstant(4, Ptr.getValueType()));
           SVOffset += 4;
           Alignment = MinAlign(Alignment, 4U);
-          SDValue St1 = DAG.getStore(Chain, Hi, Ptr, ST->getSrcValue(),
-                                       SVOffset, isVolatile, Alignment);
-          return DAG.getNode(ISD::TokenFactor, MVT::Other, St0, St1);
+          SDValue St1 = DAG.getStore(Chain, ST->getDebugLoc(), Hi,
+                                     Ptr, ST->getSrcValue(),
+                                     SVOffset, isVolatile, Alignment);
+          return DAG.getNode(ISD::TokenFactor, N->getDebugLoc(), MVT::Other,
+                             St0, St1);
         }
+
         break;
       }
     }
@@ -4977,20 +4985,20 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       // Replace the chain to avoid dependency.
       SDValue ReplStore;
       if (ST->isTruncatingStore()) {
-        ReplStore = DAG.getTruncStore(BetterChain, Value, Ptr,
+        ReplStore = DAG.getTruncStore(BetterChain, N->getDebugLoc(), Value, Ptr,
                                       ST->getSrcValue(),ST->getSrcValueOffset(),
                                       ST->getMemoryVT(),
                                       ST->isVolatile(), ST->getAlignment());
       } else {
-        ReplStore = DAG.getStore(BetterChain, Value, Ptr,
+        ReplStore = DAG.getStore(BetterChain, N->getDebugLoc(), Value, Ptr,
                                  ST->getSrcValue(), ST->getSrcValueOffset(),
                                  ST->isVolatile(), ST->getAlignment());
       }
       
       // Create token to keep both nodes around.
-      SDValue Token =
-        DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplStore);
-        
+      SDValue Token = DAG.getNode(ISD::TokenFactor, N->getDebugLoc(),
+                                  MVT::Other, Chain, ReplStore);
+
       // Don't add users to work list.
       return CombineTo(N, Token, false);
     }
@@ -5008,11 +5016,12 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     // "truncstore (or (shl x, 8), y), i8"  -> "truncstore y, i8"
     SDValue Shorter = 
       GetDemandedBits(Value,
-                 APInt::getLowBitsSet(Value.getValueSizeInBits(),
-                                      ST->getMemoryVT().getSizeInBits()));
+                      APInt::getLowBitsSet(Value.getValueSizeInBits(),
+                                           ST->getMemoryVT().getSizeInBits()));
     AddToWorkList(Value.getNode());
     if (Shorter.getNode())
-      return DAG.getTruncStore(Chain, Shorter, Ptr, ST->getSrcValue(),
+      return DAG.getTruncStore(Chain, N->getDebugLoc(), Shorter,
+                               Ptr, ST->getSrcValue(),
                                ST->getSrcValueOffset(), ST->getMemoryVT(),
                                ST->isVolatile(), ST->getAlignment());
     
@@ -5044,7 +5053,8 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       && Value.getNode()->hasOneUse() && ST->isUnindexed() &&
       TLI.isTruncStoreLegal(Value.getOperand(0).getValueType(),
                             ST->getMemoryVT())) {
-    return DAG.getTruncStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
+    return DAG.getTruncStore(Chain, N->getDebugLoc(), Value.getOperand(0),
+                             Ptr, ST->getSrcValue(),
                              ST->getSrcValueOffset(), ST->getMemoryVT(),
                              ST->isVolatile(), ST->getAlignment());
   }
@@ -5065,8 +5075,8 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
                                 InVec.getNode()->op_end());
     if (Elt < Ops.size())
       Ops[Elt] = InVal;
-    return DAG.getNode(ISD::BUILD_VECTOR, InVec.getValueType(),
-                       &Ops[0], Ops.size());
+    return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                       InVec.getValueType(), &Ops[0], Ops.size());
   }
   
   return SDValue();
@@ -5095,6 +5105,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     MVT VT = InVec.getValueType();
     MVT EVT = VT.getVectorElementType();
     MVT LVT = EVT;
+
     if (InVec.getOpcode() == ISD::BIT_CONVERT) {
       MVT BCVT = InVec.getOperand(0).getValueType();
       if (!BCVT.isVector() || EVT.bitsGT(BCVT.getVectorElementType()))
@@ -5107,11 +5118,11 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     }
 
     LoadSDNode *LN0 = NULL;
-    if (ISD::isNormalLoad(InVec.getNode()))
+    if (ISD::isNormalLoad(InVec.getNode())) {
       LN0 = cast<LoadSDNode>(InVec);
-    else if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR &&
-             InVec.getOperand(0).getValueType() == EVT &&
-             ISD::isNormalLoad(InVec.getOperand(0).getNode())) {
+    } else if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+               InVec.getOperand(0).getValueType() == EVT &&
+               ISD::isNormalLoad(InVec.getOperand(0).getNode())) {
       LN0 = cast<LoadSDNode>(InVec.getOperand(0));
     } else if (InVec.getOpcode() == ISD::VECTOR_SHUFFLE) {
       // (vextract (vector_shuffle (load $addr), v2, <1, u, u, u>), 1)
@@ -5133,6 +5144,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
         Elt = (Idx < NumElems) ? Idx : Idx - NumElems;
       }
     }
+
     if (!LN0 || !LN0->hasOneUse() || LN0->isVolatile())
       return SDValue();
 
@@ -5140,10 +5152,12 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     if (NewLoad) {
       // Check the resultant load doesn't need a higher alignment than the
       // original load.
-      unsigned NewAlign = TLI.getTargetData()->
-        getABITypeAlignment(LVT.getTypeForMVT());
+      unsigned NewAlign =
+        TLI.getTargetData()->getABITypeAlignment(LVT.getTypeForMVT());
+
       if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, LVT))
         return SDValue();
+
       Align = NewAlign;
     }
 
@@ -5153,16 +5167,17 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       MVT PtrType = NewPtr.getValueType();
       if (TLI.isBigEndian())
         PtrOff = VT.getSizeInBits() / 8 - PtrOff;
-      NewPtr = DAG.getNode(ISD::ADD, PtrType, NewPtr,
+      NewPtr = DAG.getNode(ISD::ADD, N->getDebugLoc(), PtrType, NewPtr,
                            DAG.getConstant(PtrOff, PtrType));
     }
-    return DAG.getLoad(LVT, LN0->getChain(), NewPtr,
+
+    return DAG.getLoad(LVT, N->getDebugLoc(), LN0->getChain(), NewPtr,
                        LN0->getSrcValue(), LN0->getSrcValueOffset(),
                        LN0->isVolatile(), Align);
   }
+
   return SDValue();
 }
-  
 
 SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   unsigned NumInScalars = N->getNumOperands();
@@ -5214,7 +5229,9 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     SmallVector<SDValue, 8> BuildVecIndices;
     for (unsigned i = 0; i != NumInScalars; ++i) {
       if (N->getOperand(i).getOpcode() == ISD::UNDEF) {
-        BuildVecIndices.push_back(DAG.getNode(ISD::UNDEF, TLI.getPointerTy()));
+        BuildVecIndices.push_back(DAG.getNode(ISD::UNDEF,
+                                              DebugLoc::getUnknownLoc(),
+                                              TLI.getPointerTy()));
         continue;
       }
       
@@ -5245,15 +5262,15 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     } else {
       // Use an undef build_vector as input for the second operand.
       std::vector<SDValue> UnOps(NumInScalars,
-                                   DAG.getNode(ISD::UNDEF, 
-                                               EltType));
-      Ops[1] = DAG.getNode(ISD::BUILD_VECTOR, VT,
+                                 DAG.getNode(ISD::UNDEF, EltType));
+      Ops[1] = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
                            &UnOps[0], UnOps.size());
       AddToWorkList(Ops[1].getNode());
     }
-    Ops[2] = DAG.getNode(ISD::BUILD_VECTOR, BuildVecVT,
+
+    Ops[2] = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), BuildVecVT,
                          &BuildVecIndices[0], BuildVecIndices.size());
-    return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, Ops, 3);
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(), VT, Ops, 3);
   }
   
   return SDValue();
@@ -5266,9 +5283,8 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
   // node.
 
   // If we only have one input vector, we don't need to do any concatenation.
-  if (N->getNumOperands() == 1) {
+  if (N->getNumOperands() == 1)
     return N->getOperand(0);
-  }
 
   return SDValue();
 }
@@ -5381,6 +5397,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
     // first operand.
     SmallVector<SDValue, 8> MappedOps;
+
     for (unsigned i = 0; i != NumElts; ++i) {
       if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF ||
           cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue() <
@@ -5394,11 +5411,13 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
                                         ShufMask.getOperand(i).getValueType()));
       }
     }
-    ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMask.getValueType(),
+
+    ShufMask = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                           ShufMask.getValueType(),
                            &MappedOps[0], MappedOps.size());
     AddToWorkList(ShufMask.getNode());
-    return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getValueType(0),
-                       N0,
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(),
+                       N->getValueType(0), N0,
                        DAG.getNode(ISD::UNDEF, N->getValueType(0)),
                        ShufMask);
   }
