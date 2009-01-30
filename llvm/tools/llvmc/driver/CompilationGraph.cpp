@@ -390,6 +390,8 @@ int CompilationGraph::CheckMultipleDefaultEdges() const {
   int ret = 0;
   InputLanguagesSet Dummy;
 
+  // For all nodes, just iterate over the outgoing edges and check if there is
+  // more than one edge with maximum weight.
   for (const_nodes_iterator B = this->NodesMap.begin(),
          E = this->NodesMap.end(); B != E; ++B) {
     const Node& N = B->second;
@@ -423,6 +425,9 @@ int CompilationGraph::CheckCycles() {
   std::queue<Node*> Q;
   Q.push(&getNode("root"));
 
+  // Try to delete all nodes that have no ingoing edges, starting from the
+  // root. If there are any nodes left after this operation, then we have a
+  // cycle. This relies on '--check-graph' not performing the topological sort.
   while (!Q.empty()) {
     Node* A = Q.front();
     Q.pop();
@@ -446,7 +451,6 @@ int CompilationGraph::CheckCycles() {
 
   return 0;
 }
-
 
 int CompilationGraph::Check () {
   // We try to catch as many errors as we can in one go.
