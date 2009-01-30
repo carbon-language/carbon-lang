@@ -486,7 +486,7 @@ WritableStrings("fwritable-strings",
               llvm::cl::desc("Store string literals as writable data"));
 
 static llvm::cl::opt<bool>
-NoLaxVectorConversions("fnolax-vector-conversions",
+NoLaxVectorConversions("fno-lax-vector-conversions",
                        llvm::cl::desc("Disallow implicit conversions between "
                                       "vectors with a different number of "
                                       "elements or different element types"));

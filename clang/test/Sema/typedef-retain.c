@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s -fnolax-vector-conversions
+// RUN: clang -fsyntax-only -verify %s -fno-lax-vector-conversions
 
 typedef float float4 __attribute__((vector_size(16)));
 typedef int int4 __attribute__((vector_size(16)));
