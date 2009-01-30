@@ -1074,23 +1074,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
         << Init->getSourceRange();
 
     return CheckSingleInitializer(Init, DeclType, DirectInit);
-  } else if (getLangOptions().CPlusPlus) {
-    // C++ [dcl.init]p14:
-    //   [...] If the class is an aggregate (8.5.1), and the initializer
-    //   is a brace-enclosed list, see 8.5.1.
-    //
-    // Note: 8.5.1 is handled below; here, we diagnose the case where
-    // we have an initializer list and a destination type that is not
-    // an aggregate.
-    // FIXME: In C++0x, this is yet another form of initialization.
-    // FIXME: Move this checking into CheckInitList!
-    if (const RecordType *ClassRec = DeclType->getAsRecordType()) {
-      const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ClassRec->getDecl());
-      if (!ClassDecl->isAggregate())
-        return Diag(InitLoc, diag::err_init_non_aggr_init_list)
-           << DeclType << Init->getSourceRange();
-    }
-  }
+  } 
 
   bool hadError = CheckInitList(InitList, DeclType);
   Init = InitList;

@@ -69,11 +69,14 @@ class InitListChecker {
                            unsigned &Index,
                            InitListExpr *StructuredList,
                            unsigned &StructuredIndex);
-  // FIXME: Does DeclType need to be a reference type?
-  void CheckScalarType(InitListExpr *IList, QualType &DeclType, 
+  void CheckScalarType(InitListExpr *IList, QualType DeclType, 
                        unsigned &Index,
                        InitListExpr *StructuredList,
                        unsigned &StructuredIndex);
+  void CheckReferenceType(InitListExpr *IList, QualType DeclType, 
+                          unsigned &Index,
+                          InitListExpr *StructuredList,
+                          unsigned &StructuredIndex);
   void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index,
                        InitListExpr *StructuredList,
                        unsigned &StructuredIndex);
@@ -106,6 +109,8 @@ class InitListChecker {
                                    Expr *expr);
   int numArrayElements(QualType DeclType);
   int numStructUnionElements(QualType DeclType);
+
+  void FillInValueInitializations(InitListExpr *ILE);
 public:
   InitListChecker(Sema *S, InitListExpr *IL, QualType &T);
   bool HadError() { return hadError; }
@@ -116,12 +121,12 @@ public:
 };
 }
 
-
 /// Recursively replaces NULL values within the given initializer list
 /// with expressions that perform value-initialization of the
 /// appropriate type.
-static void fillInValueInitializations(ASTContext &Context, InitListExpr *ILE) {
-  assert((ILE->getType() != Context.VoidTy) && "Should not have void type");
+void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
+  assert((ILE->getType() != SemaRef->Context.VoidTy) && 
+         "Should not have void type");
   if (const RecordType *RType = ILE->getType()->getAsRecordType()) {
     unsigned Init = 0, NumInits = ILE->getNumInits();
     for (RecordDecl::field_iterator Field = RType->getDecl()->field_begin(),
@@ -130,17 +135,31 @@ static void fillInValueInitializations(ASTContext &Context, InitListExpr *ILE) {
       if (Field->isUnnamedBitfield())
         continue;
 
-      if (Init >= NumInits)
-        break;
-
-      // FIXME: Check for fields with reference type in C++?
-      if (!ILE->getInit(Init))
+      if (Init >= NumInits) {
+        if (Field->getType()->isReferenceType()) {
+          // C++ [dcl.init.aggr]p9:
+          //   If an incomplete or empty initializer-list leaves a
+          //   member of reference type uninitialized, the program is
+          //   ill-formed. 
+          SemaRef->Diag(ILE->getSyntacticForm()->getLocStart(), 
+                        diag::err_init_reference_member_uninitialized)
+            << Field->getType()
+            << ILE->getSyntacticForm()->getSourceRange();
+          SemaRef->Diag(Field->getLocation(), 
+                        diag::note_uninit_reference_member);
+          hadError = true;
+        }
+      } else if (!ILE->getInit(Init))
         ILE->setInit(Init, 
-                     new (Context) ImplicitValueInitExpr(Field->getType()));
+                new (SemaRef->Context) ImplicitValueInitExpr(Field->getType()));
       else if (InitListExpr *InnerILE 
                  = dyn_cast<InitListExpr>(ILE->getInit(Init)))
-        fillInValueInitializations(Context, InnerILE);
+        FillInValueInitializations(InnerILE);
       ++Init;
+
+      // Only look at the first initialization of a union.
+      if (RType->getDecl()->isUnion())
+        break;
     }
 
     return;
@@ -148,7 +167,7 @@ static void fillInValueInitializations(ASTContext &Context, InitListExpr *ILE) {
 
   QualType ElementType;
   
-  if (const ArrayType *AType = Context.getAsArrayType(ILE->getType()))
+  if (const ArrayType *AType = SemaRef->Context.getAsArrayType(ILE->getType()))
     ElementType = AType->getElementType();
   else if (const VectorType *VType = ILE->getType()->getAsVectorType())
     ElementType = VType->getElementType();
@@ -158,9 +177,10 @@ static void fillInValueInitializations(ASTContext &Context, InitListExpr *ILE) {
   for (unsigned Init = 0, NumInits = ILE->getNumInits(); Init != NumInits; 
        ++Init) {
     if (!ILE->getInit(Init))
-      ILE->setInit(Init, new (Context) ImplicitValueInitExpr(ElementType));
+      ILE->setInit(Init, 
+                   new (SemaRef->Context) ImplicitValueInitExpr(ElementType));
     else if (InitListExpr *InnerILE =dyn_cast<InitListExpr>(ILE->getInit(Init)))
-      fillInValueInitializations(Context, InnerILE);
+      FillInValueInitializations(InnerILE);
   }
 }
 
@@ -175,9 +195,8 @@ InitListChecker::InitListChecker(Sema *S, InitListExpr *IL, QualType &T) {
     = getStructuredSubobjectInit(IL, newIndex, T, 0, 0, SourceRange());
   CheckExplicitInitList(IL, T, newIndex, FullyStructuredList, newStructuredIndex);
 
-  if (!hadError) {
-    fillInValueInitializations(SemaRef->Context, FullyStructuredList);
-  }
+  if (!hadError)
+    FillInValueInitializations(FullyStructuredList);
 }
 
 int InitListChecker::numArrayElements(QualType DeclType) {
@@ -219,7 +238,6 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
   else
     assert(0 && "CheckImplicitInitList(): Illegal type");
 
-  // FIXME: Perhaps we should move this warning elsewhere?
   if (maxElements == 0) {
     SemaRef->Diag(ParentIList->getInit(Index)->getLocStart(),
                   diag::err_implicit_empty_initializer);
@@ -308,6 +326,20 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
     SemaRef->Diag(IList->getLocStart(), diag::err_illegal_initializer_type)
       << DeclType;
     hadError = true;
+  } else if (DeclType->isRecordType()) {
+    // C++ [dcl.init]p14:
+    //   [...] If the class is an aggregate (8.5.1), and the initializer
+    //   is a brace-enclosed list, see 8.5.1.
+    //
+    // Note: 8.5.1 is handled below; here, we diagnose the case where
+    // we have an initializer list and a destination type that is not
+    // an aggregate.
+    // FIXME: In C++0x, this is yet another form of initialization.
+    SemaRef->Diag(IList->getLocStart(), diag::err_init_non_aggr_init_list)
+      << DeclType << IList->getSourceRange();
+    hadError = true;
+  } else if (DeclType->isReferenceType()) {
+    CheckReferenceType(IList, DeclType, Index, StructuredList, StructuredIndex);
   } else {
     // In C, all types are either scalars or aggregates, but
     // additional handling is needed here for C++ (and possibly others?). 
@@ -339,21 +371,70 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
     ++Index;
   } else if (ElemType->isScalarType()) {
     CheckScalarType(IList, ElemType, Index, StructuredList, StructuredIndex);
-  } else if (expr->getType()->getAsRecordType() &&
-             SemaRef->Context.typesAreCompatible(
-               expr->getType().getUnqualifiedType(),
-               ElemType.getUnqualifiedType())) {
-    UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
-    ++Index;
-    // FIXME: Add checking
+  } else if (ElemType->isReferenceType()) {
+    CheckReferenceType(IList, ElemType, Index, StructuredList, StructuredIndex);
   } else {
-    CheckImplicitInitList(IList, ElemType, Index, StructuredList, 
-                          StructuredIndex);
-    ++StructuredIndex;
- }
+    if (SemaRef->getLangOptions().CPlusPlus) {
+      // C++ [dcl.init.aggr]p12:
+      //   All implicit type conversions (clause 4) are considered when
+      //   initializing the aggregate member with an ini- tializer from
+      //   an initializer-list. If the initializer can initialize a
+      //   member, the member is initialized. [...]
+      ImplicitConversionSequence ICS 
+        = SemaRef->TryCopyInitialization(expr, ElemType);
+      if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion) {
+        if (SemaRef->PerformImplicitConversion(expr, ElemType, ICS, 
+                                               "initializing"))
+          hadError = true;
+        UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
+        ++Index;
+        return;
+      }
+
+      // Fall through for subaggregate initialization
+    } else {
+      // C99 6.7.8p13: 
+      //
+      //   The initializer for a structure or union object that has
+      //   automatic storage duration shall be either an initializer
+      //   list as described below, or a single expression that has
+      //   compatible structure or union type. In the latter case, the
+      //   initial value of the object, including unnamed members, is
+      //   that of the expression.
+      QualType ExprType = SemaRef->Context.getCanonicalType(expr->getType());
+      QualType ElemTypeCanon = SemaRef->Context.getCanonicalType(ElemType);
+      if (SemaRef->Context.typesAreCompatible(ExprType.getUnqualifiedType(),
+                                          ElemTypeCanon.getUnqualifiedType())) {
+        UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
+        ++Index;
+        return;
+      }
+
+      // Fall through for subaggregate initialization
+    }
+
+    // C++ [dcl.init.aggr]p12:
+    // 
+    //   [...] Otherwise, if the member is itself a non-empty
+    //   subaggregate, brace elision is assumed and the initializer is
+    //   considered for the initialization of the first member of
+    //   the subaggregate.
+    if (ElemType->isAggregateType() || ElemType->isVectorType()) {
+      CheckImplicitInitList(IList, ElemType, Index, StructuredList, 
+                            StructuredIndex);
+      ++StructuredIndex;
+    } else {
+      // We cannot initialize this element, so let
+      // PerformCopyInitialization produce the appropriate diagnostic.
+      SemaRef->PerformCopyInitialization(expr, ElemType, "initializing");
+      hadError = true;
+      ++Index;
+      ++StructuredIndex;
+    }
+  }
 }
 
-void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType,
+void InitListChecker::CheckScalarType(InitListExpr *IList, QualType DeclType,
                                       unsigned &Index,
                                       InitListExpr *StructuredList,
                                       unsigned &StructuredIndex) {
@@ -391,6 +472,49 @@ void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType,
     ++Index;
   } else {
     SemaRef->Diag(IList->getLocStart(), diag::err_empty_scalar_initializer)
+      << IList->getSourceRange();
+    hadError = true;
+    ++Index;
+    ++StructuredIndex;
+    return;
+  }
+}
+
+void InitListChecker::CheckReferenceType(InitListExpr *IList, QualType DeclType,
+                                         unsigned &Index,
+                                         InitListExpr *StructuredList,
+                                         unsigned &StructuredIndex) {
+  if (Index < IList->getNumInits()) {
+    Expr *expr = IList->getInit(Index);
+    if (isa<InitListExpr>(expr)) {
+      SemaRef->Diag(IList->getLocStart(), diag::err_init_non_aggr_init_list)
+        << DeclType << IList->getSourceRange();
+      hadError = true;
+      ++Index;
+      ++StructuredIndex;
+      return;
+    } 
+
+    Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
+    if (SemaRef->CheckReferenceInit(expr, DeclType))
+      hadError = true;
+    else if (savExpr != expr) {
+      // The type was promoted, update initializer list.
+      IList->setInit(Index, expr);
+    }
+    if (hadError)
+      ++StructuredIndex;
+    else
+      UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
+    ++Index;
+  } else {
+    // FIXME: It would be wonderful if we could point at the actual
+    // member. In general, it would be useful to pass location
+    // information down the stack, so that we know the location (or
+    // decl) of the "current object" being initialized.
+    SemaRef->Diag(IList->getLocStart(), 
+                  diag::err_init_reference_member_uninitialized)
+      << DeclType
       << IList->getSourceRange();
     hadError = true;
     ++Index;

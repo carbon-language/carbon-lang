@@ -256,10 +256,10 @@ Parser::OwningExprResult Parser::ParseBraceInitializer() {
   /// was specified for it, if any.
   InitListDesignations InitExprDesignations(Actions);
 
-  // We support empty initializers, but tell the user that they aren't using
-  // C99-clean code.
   if (Tok.is(tok::r_brace)) {
-    Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
+    // Empty initializers are a C++ feature and a GNU extension to C.
+    if (!getLang().CPlusPlus)
+      Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
     // Match the '}'.
     return Actions.ActOnInitList(LBraceLoc, Action::MultiExprArg(Actions),
                                  InitExprDesignations, ConsumeBrace());

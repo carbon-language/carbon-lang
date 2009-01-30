@@ -18,8 +18,11 @@
 #include "clang/Parse/DeclSpec.h"
 using namespace clang;
 
-/// ConvertDeclSpecToType - Convert the specified declspec to the appropriate
-/// type object.  This returns null on error.
+/// \brief Convert the specified declspec to the appropriate type
+/// object.
+/// \param DS  the declaration specifiers
+/// \returns The type described by the declaration specifiers, or NULL
+/// if there was an error.
 QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
@@ -81,6 +84,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
       // "At least one type specifier shall be given in the declaration
       // specifiers in each declaration, and in the specifier-qualifier list in
       // each struct declaration and type name."
+      // FIXME: this should be a hard error in C++
       if (!DS.hasTypeSpecifier())
         Diag(DS.getSourceRange().getBegin(), diag::ext_missing_type_specifier);
     }
@@ -254,8 +258,26 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
   if (!getLangOptions().C99 && !getLangOptions().CPlusPlus0x &&
       D.getDeclSpec().getTypeSpecWidth() == DeclSpec::TSW_longlong)
     Diag(D.getDeclSpec().getTypeSpecWidthLoc(), diag::ext_longlong);
-  
-  QualType T = ConvertDeclSpecToType(D.getDeclSpec());
+
+  // Determine the type of the declarator. Not all forms of declarator
+  // have a type.
+  QualType T;
+  switch (D.getKind()) {
+  case Declarator::DK_Abstract:
+  case Declarator::DK_Normal:
+  case Declarator::DK_Operator:
+    T = ConvertDeclSpecToType(D.getDeclSpec());
+    break;
+
+  case Declarator::DK_Constructor:
+  case Declarator::DK_Destructor:
+  case Declarator::DK_Conversion:
+    // Constructors and destructors don't have return types. Use
+    // "void" instead. Conversion operators will check their return
+    // types separately.
+    T = Context.VoidTy;
+    break;
+  }
 
   // Walk the DeclTypeInfo, building the recursive type as we go.  DeclTypeInfos
   // are ordered from the identifier out, which is opposite of what we want :).
