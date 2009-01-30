@@ -4033,28 +4033,28 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
   
   // fold (fmul c1, c2) -> c1*c2
   if (N0CFP && N1CFP && VT != MVT::ppcf128)
-    return DAG.getNode(ISD::FMUL, VT, N0, N1);
+    return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT, N0, N1);
   // canonicalize constant to RHS
   if (N0CFP && !N1CFP)
-    return DAG.getNode(ISD::FMUL, VT, N1, N0);
-  // fold (A * 0) -> 0
+    return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT, N1, N0);
+  // fold (fmul A, 0) -> 0
   if (UnsafeFPMath && N1CFP && N1CFP->getValueAPF().isZero())
     return N1;
   // fold (fmul X, 2.0) -> (fadd X, X)
   if (N1CFP && N1CFP->isExactlyValue(+2.0))
-    return DAG.getNode(ISD::FADD, VT, N0, N0);
-  // fold (fmul X, -1.0) -> (fneg X)
+    return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0, N0);
+  // fold (fmul X, (fneg 1.0)) -> (fneg X)
   if (N1CFP && N1CFP->isExactlyValue(-1.0))
     if (!LegalOperations || TLI.isOperationLegal(ISD::FNEG, VT))
-      return DAG.getNode(ISD::FNEG, VT, N0);
+      return DAG.getNode(ISD::FNEG, N->getDebugLoc(), VT, N0);
   
-  // -X * -Y -> X*Y
+  // fold (fmul (fneg X), (fneg Y)) -> (fmul X, Y)
   if (char LHSNeg = isNegatibleForFree(N0, LegalOperations)) {
     if (char RHSNeg = isNegatibleForFree(N1, LegalOperations)) {
       // Both can be negated for free, check to see if at least one is cheaper
       // negated.
       if (LHSNeg == 2 || RHSNeg == 2)
-        return DAG.getNode(ISD::FMUL, VT, 
+        return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT,
                            GetNegatedExpression(N0, DAG, LegalOperations),
                            GetNegatedExpression(N1, DAG, LegalOperations));
     }
@@ -4063,7 +4063,7 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
   // If allowed, fold (fmul (fmul x, c1), c2) -> (fmul x, (fmul c1, c2))
   if (UnsafeFPMath && N1CFP && N0.getOpcode() == ISD::FMUL &&
       N0.getNode()->hasOneUse() && isa<ConstantFPSDNode>(N0.getOperand(1)))
-    return DAG.getNode(ISD::FMUL, VT, N0.getOperand(0),
+    return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getNode(ISD::FMUL, VT, N0.getOperand(1), N1));
   
   return SDValue();
@@ -4084,16 +4084,16 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
   
   // fold (fdiv c1, c2) -> c1/c2
   if (N0CFP && N1CFP && VT != MVT::ppcf128)
-    return DAG.getNode(ISD::FDIV, VT, N0, N1);
+    return DAG.getNode(ISD::FDIV, N->getDebugLoc(), VT, N0, N1);
   
   
-  // -X / -Y -> X*Y
+  // (fdiv (fneg X), (fneg Y)) -> (fdiv X, Y)
   if (char LHSNeg = isNegatibleForFree(N0, LegalOperations)) {
     if (char RHSNeg = isNegatibleForFree(N1, LegalOperations)) {
       // Both can be negated for free, check to see if at least one is cheaper
       // negated.
       if (LHSNeg == 2 || RHSNeg == 2)
-        return DAG.getNode(ISD::FDIV, VT, 
+        return DAG.getNode(ISD::FDIV, N->getDebugLoc(), VT, 
                            GetNegatedExpression(N0, DAG, LegalOperations),
                            GetNegatedExpression(N1, DAG, LegalOperations));
     }
@@ -4111,7 +4111,7 @@ SDValue DAGCombiner::visitFREM(SDNode *N) {
 
   // fold (frem c1, c2) -> fmod(c1,c2)
   if (N0CFP && N1CFP && VT != MVT::ppcf128)
-    return DAG.getNode(ISD::FREM, VT, N0, N1);
+    return DAG.getNode(ISD::FREM, N->getDebugLoc(), VT, N0, N1);
 
   return SDValue();
 }
