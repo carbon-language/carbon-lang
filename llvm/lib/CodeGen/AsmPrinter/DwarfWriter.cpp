@@ -1650,16 +1650,6 @@ private:
     AddDIEntry(Entity, DW_AT_type, DW_FORM_ref4, BasicTypeDie);
   }
 
-  /// AddPointerType - Add a new pointer type attribute to the specified entity.
-  ///
-  void AddPointerType(DIE *Entity, CompileUnit *Unit, const std::string &Name) {
-    DIE Buffer(DW_TAG_pointer_type);
-    AddUInt(&Buffer, DW_AT_byte_size, 0, TD->getPointerSize());
-    if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
-    DIE *PointerTypeDie =  Unit->AddDie(Buffer);
-    AddDIEntry(Entity, DW_AT_type, DW_FORM_ref4, PointerTypeDie);
-  }
-
   /// AddType - Add a new type attribute to the specified entity.
   void AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
     if (Ty.isNull())
