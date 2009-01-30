@@ -2691,6 +2691,36 @@ void GRExprEngine::EvalBinOp(GRStateSet& OStates, const GRState* St,
   if (R.isValid()) getTF().EvalBinOpNN(OStates, *this, St, Ex, Op, L, R);
 }
 
+SVal GRExprEngine::EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R) {
+  
+  if (L.isUndef() || R.isUndef())
+    return UndefinedVal();
+  
+  if (L.isUnknown() || R.isUnknown())
+    return UnknownVal();
+  
+  if (isa<Loc>(L)) {
+    if (isa<Loc>(R))
+      return getTF().EvalBinOp(*this, Op, cast<Loc>(L), cast<Loc>(R));
+    else
+      return getTF().EvalBinOp(*this, Op, cast<Loc>(L), cast<NonLoc>(R));
+  }
+  
+  if (isa<Loc>(R)) {
+    // Support pointer arithmetic where the increment/decrement operand
+    // is on the left and the pointer on the right.
+    
+    assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
+    
+    // Commute the operands.
+    return getTF().EvalBinOp(*this, Op, cast<Loc>(R),
+                             cast<NonLoc>(L));
+  }
+  else
+    return getTF().DetermEvalBinOpNN(*this, Op, cast<NonLoc>(L),
+                                     cast<NonLoc>(R));
+}
+
 //===----------------------------------------------------------------------===//
 // Visualization.
 //===----------------------------------------------------------------------===//
