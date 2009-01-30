@@ -770,7 +770,6 @@ SDValue DAGCombiner::visit(SDNode *N) {
 }
 
 SDValue DAGCombiner::combine(SDNode *N) {
-
   SDValue RV = visit(N);
 
   // If nothing happened, try a target-specific DAG combine.
@@ -796,6 +795,7 @@ SDValue DAGCombiner::combine(SDNode *N) {
       N->getNumValues() == 1) {
     SDValue N0 = N->getOperand(0);
     SDValue N1 = N->getOperand(1);
+
     // Constant operands are canonicalized to RHS.
     if (isa<ConstantSDNode>(N0) || !isa<ConstantSDNode>(N1)) {
       SDValue Ops[] = { N1, N0 };
@@ -821,7 +821,7 @@ static SDValue getInputChainForNode(SDNode *N) {
       if (N->getOperand(i).getValueType() == MVT::Other)
         return N->getOperand(i);
   }
-  return SDValue(0, 0);
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
@@ -890,9 +890,10 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
       Result = DAG.getEntryNode();
     } else {
       // New and improved token factor.
-      Result = DAG.getNode(ISD::TokenFactor, MVT::Other, &Ops[0], Ops.size());
+      Result = DAG.getNode(ISD::TokenFactor, N->getDebugLoc(),
+                           MVT::Other, &Ops[0], Ops.size());
     }
-    
+
     // Don't add users to work list.
     return CombineTo(N, Result, false);
   }
@@ -910,7 +911,6 @@ SDValue DAGCombiner::visitMERGE_VALUES(SDNode *N) {
   DAG.DeleteNode(N);
   return SDValue(N, 0);   // Return N so it doesn't get rechecked!
 }
-
 
 static
 SDValue combineShlAddConstant(SDValue N0, SDValue N1, SelectionDAG &DAG) {
