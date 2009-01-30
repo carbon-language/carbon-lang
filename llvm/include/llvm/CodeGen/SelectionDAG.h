@@ -487,7 +487,12 @@ public:
   ///
   SDValue getSetCC(MVT VT, SDValue LHS, SDValue RHS,
                    ISD::CondCode Cond) {
-    return getNode(ISD::SETCC, VT, LHS, RHS, getCondCode(Cond));
+    return getNode(ISD::SETCC, DebugLoc::getUnknownLoc(), VT,
+                   LHS, RHS, getCondCode(Cond));
+  }
+  SDValue getSetCC(DebugLoc DL, MVT VT, SDValue LHS, SDValue RHS,
+                   ISD::CondCode Cond) {
+    return getNode(ISD::SETCC, DL, VT, LHS, RHS, getCondCode(Cond));
   }
 
   /// getVSetCC - Helper function to make it easier to build VSetCC's nodes
@@ -495,7 +500,12 @@ public:
   ///
   SDValue getVSetCC(MVT VT, SDValue LHS, SDValue RHS,
                     ISD::CondCode Cond) {
-    return getNode(ISD::VSETCC, VT, LHS, RHS, getCondCode(Cond));
+    return getNode(ISD::VSETCC, DebugLoc::getUnknownLoc(), VT,
+                   LHS, RHS, getCondCode(Cond));
+  }
+  SDValue getVSetCC(DebugLoc DL, MVT VT, SDValue LHS, SDValue RHS,
+                    ISD::CondCode Cond) {
+    return getNode(ISD::VSETCC, DL, VT, LHS, RHS, getCondCode(Cond));
   }
 
   /// getSelectCC - Helper function to make it easier to build SelectCC's if you
@@ -503,8 +513,13 @@ public:
   ///
   SDValue getSelectCC(SDValue LHS, SDValue RHS,
                       SDValue True, SDValue False, ISD::CondCode Cond) {
-    return getNode(ISD::SELECT_CC, True.getValueType(), LHS, RHS, True, False,
-                   getCondCode(Cond));
+    return getNode(ISD::SELECT_CC, DebugLoc::getUnknownLoc(), True.getValueType(),
+                   LHS, RHS, True, False, getCondCode(Cond));
+  }
+  SDValue getSelectCC(DebugLoc DL, SDValue LHS, SDValue RHS,
+                      SDValue True, SDValue False, ISD::CondCode Cond) {
+    return getNode(ISD::SELECT_CC, DL, True.getValueType(),
+                   LHS, RHS, True, False, getCondCode(Cond));
   }
   
   /// getVAArg - VAArg produces a result and token chain, and takes a pointer

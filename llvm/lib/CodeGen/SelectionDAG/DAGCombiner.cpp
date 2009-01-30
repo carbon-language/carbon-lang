@@ -485,10 +485,10 @@ SDValue DAGCombiner::ReassociateOps(unsigned Opc, DebugLoc DL,
   if (N0.getOpcode() == Opc && isa<ConstantSDNode>(N0.getOperand(1))) {
     if (isa<ConstantSDNode>(N1)) {
       // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
-      SDValue OpNode = DAG.getNode(Opc, N0.getDebugLoc(), VT,
+      SDValue OpNode = DAG.getNode(Opc, N1.getDebugLoc(), VT,
                                    N0.getOperand(1), N1);
       AddToWorkList(OpNode.getNode());
-      return DAG.getNode(Opc, DL, VT, OpNode, N0.getOperand(0));
+      return DAG.getNode(Opc, DL, VT, N0.getOperand(0), OpNode);
     } else if (N0.hasOneUse()) {
       // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one use
       SDValue OpNode = DAG.getNode(Opc, N0.getDebugLoc(), VT,
@@ -504,10 +504,10 @@ SDValue DAGCombiner::ReassociateOps(unsigned Opc, DebugLoc DL,
       SDValue OpNode = DAG.getNode(Opc, N1.getDebugLoc(), VT,
                                    N1.getOperand(1), N0);
       AddToWorkList(OpNode.getNode());
-      return DAG.getNode(Opc, DL, VT, OpNode, N1.getOperand(0));
+      return DAG.getNode(Opc, DL, VT, N1.getOperand(0), OpNode);
     } else if (N1.hasOneUse()) {
       // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one use
-      SDValue OpNode = DAG.getNode(Opc, N1.getDebugLoc(), VT,
+      SDValue OpNode = DAG.getNode(Opc, N0.getDebugLoc(), VT,
                                    N1.getOperand(0), N0);
       AddToWorkList(OpNode.getNode());
       return DAG.getNode(Opc, DL, VT, OpNode, N1.getOperand(1));
@@ -913,18 +913,24 @@ SDValue DAGCombiner::visitMERGE_VALUES(SDNode *N) {
 }
 
 static
-SDValue combineShlAddConstant(SDValue N0, SDValue N1, SelectionDAG &DAG) {
+SDValue combineShlAddConstant(DebugLoc DL, SDValue N0, SDValue N1,
+                              SelectionDAG &DAG) {
   MVT VT = N0.getValueType();
   SDValue N00 = N0.getOperand(0);
   SDValue N01 = N0.getOperand(1);
   ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N01);
+
   if (N01C && N00.getOpcode() == ISD::ADD && N00.getNode()->hasOneUse() &&
       isa<ConstantSDNode>(N00.getOperand(1))) {
-    N0 = DAG.getNode(ISD::ADD, VT,
-                     DAG.getNode(ISD::SHL, VT, N00.getOperand(0), N01),
-                     DAG.getNode(ISD::SHL, VT, N00.getOperand(1), N01));
-    return DAG.getNode(ISD::ADD, VT, N0, N1);
+    // fold (add (shl (add x, c1), c2), ) -> (add (add (shl x, c2), c1<<c2), )
+    N0 = DAG.getNode(ISD::ADD, N0.getDebugLoc(), VT,
+                     DAG.getNode(ISD::SHL, N00.getDebugLoc(), VT,
+                                 N00.getOperand(0), N01),
+                     DAG.getNode(ISD::SHL, N01.getDebugLoc(), VT,
+                                 N00.getOperand(1), N01));
+    return DAG.getNode(ISD::ADD, DL, VT, N0, N1);
   }
+
   return SDValue();
 }
 
@@ -973,15 +979,16 @@ SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
   }
 
   if (DoXform) {
-    SDValue Result = DAG.getNode(Opc, VT, OtherOp, RHS);
+    SDValue Result = DAG.getNode(Opc, RHS.getDebugLoc(), VT, OtherOp, RHS);
     if (isSlctCC)
-      return DAG.getSelectCC(OtherOp, Result,
+      return DAG.getSelectCC(N->getDebugLoc(), OtherOp, Result,
                              Slct.getOperand(0), Slct.getOperand(1), CC);
     SDValue CCOp = Slct.getOperand(0);
     if (InvCC)
-      CCOp = DAG.getSetCC(CCOp.getValueType(), CCOp.getOperand(0),
-                          CCOp.getOperand(1), CC);
-    return DAG.getNode(ISD::SELECT, VT, CCOp, OtherOp, Result);
+      CCOp = DAG.getSetCC(Slct.getDebugLoc(), CCOp.getValueType(),
+                          CCOp.getOperand(0), CCOp.getOperand(1), CC);
+    return DAG.getNode(ISD::SELECT, N->getDebugLoc(), VT,
+                       CCOp, OtherOp, Result);
   }
   return SDValue();
 }
@@ -1100,11 +1107,11 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
 
   // fold (add (shl (add x, c1), c2), ) -> (add (add (shl x, c2), c1<<c2), )
   if (N0.getOpcode() == ISD::SHL && N0.getNode()->hasOneUse()) {
-    SDValue Result = combineShlAddConstant(N0, N1, DAG);
+    SDValue Result = combineShlAddConstant(N->getDebugLoc(), N0, N1, DAG);
     if (Result.getNode()) return Result;
   }
   if (N1.getOpcode() == ISD::SHL && N1.getNode()->hasOneUse()) {
-    SDValue Result = combineShlAddConstant(N1, N0, DAG);
+    SDValue Result = combineShlAddConstant(N->getDebugLoc(), N1, N0, DAG);
     if (Result.getNode()) return Result;
   }
 
