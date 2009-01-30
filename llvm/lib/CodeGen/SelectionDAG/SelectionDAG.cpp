@@ -831,6 +831,14 @@ SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, MVT VT) {
                  getConstant(Imm, Op.getValueType()));
 }
 
+SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, DebugLoc DL, MVT VT) {
+  if (Op.getValueType() == VT) return Op;
+  APInt Imm = APInt::getLowBitsSet(Op.getValueSizeInBits(),
+                                   VT.getSizeInBits());
+  return getNode(ISD::AND, DL, Op.getValueType(), Op,
+                 getConstant(Imm, Op.getValueType()));
+}
+
 /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
 ///
 SDValue SelectionDAG::getNOT(SDValue Val, MVT VT) {

@@ -376,6 +376,7 @@ public:
   /// getZeroExtendInReg - Return the expression required to zero extend the Op
   /// value assuming it was the smaller SrcTy value.
   SDValue getZeroExtendInReg(SDValue Op, MVT SrcTy);
+  SDValue getZeroExtendInReg(SDValue Op, DebugLoc DL, MVT SrcTy);
   
   /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
   SDValue getNOT(SDValue Val, MVT VT);
