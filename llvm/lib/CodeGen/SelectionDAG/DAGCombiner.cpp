@@ -2780,7 +2780,7 @@ SDValue DAGCombiner::visitCTLZ(SDNode *N) {
 
   // fold (ctlz c1) -> c2
   if (isa<ConstantSDNode>(N0))
-    return DAG.getNode(ISD::CTLZ, VT, N0);
+    return DAG.getNode(ISD::CTLZ, N->getDebugLoc(), VT, N0);
   return SDValue();
 }
 
@@ -2790,7 +2790,7 @@ SDValue DAGCombiner::visitCTTZ(SDNode *N) {
   
   // fold (cttz c1) -> c2
   if (isa<ConstantSDNode>(N0))
-    return DAG.getNode(ISD::CTTZ, VT, N0);
+    return DAG.getNode(ISD::CTTZ, N->getDebugLoc(), VT, N0);
   return SDValue();
 }
 
@@ -2800,7 +2800,7 @@ SDValue DAGCombiner::visitCTPOP(SDNode *N) {
   
   // fold (ctpop c1) -> c2
   if (isa<ConstantSDNode>(N0))
-    return DAG.getNode(ISD::CTPOP, VT, N0);
+    return DAG.getNode(ISD::CTPOP, N->getDebugLoc(), VT, N0);
   return SDValue();
 }
 
@@ -2814,53 +2814,58 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
   MVT VT = N->getValueType(0);
   MVT VT0 = N0.getValueType();
 
-  // fold select C, X, X -> X
+  // fold (select C, X, X) -> X
   if (N1 == N2)
     return N1;
-  // fold select true, X, Y -> X
+  // fold (select true, X, Y) -> X
   if (N0C && !N0C->isNullValue())
     return N1;
-  // fold select false, X, Y -> Y
+  // fold (select false, X, Y) -> Y
   if (N0C && N0C->isNullValue())
     return N2;
-  // fold select C, 1, X -> C | X
+  // fold (select C, 1, X) -> (or C, X)
   if (VT == MVT::i1 && N1C && N1C->getAPIntValue() == 1)
-    return DAG.getNode(ISD::OR, VT, N0, N2);
-  // fold select C, 0, 1 -> C ^ 1
+    return DAG.getNode(ISD::OR, N->getDebugLoc(), VT, N0, N2);
+  // fold (select C, 0, 1) -> (xor C, 1)
   if (VT.isInteger() &&
       (VT0 == MVT::i1 ||
        (VT0.isInteger() &&
         TLI.getBooleanContents() == TargetLowering::ZeroOrOneBooleanContent)) &&
       N1C && N2C && N1C->isNullValue() && N2C->getAPIntValue() == 1) {
-    SDValue XORNode = DAG.getNode(ISD::XOR, VT0, N0, DAG.getConstant(1, VT0));
+    SDValue XORNode;
     if (VT == VT0)
-      return XORNode;
+      return DAG.getNode(ISD::XOR, N->getDebugLoc(), VT0,
+                         N0, DAG.getConstant(1, VT0));
+    XORNode = DAG.getNode(ISD::XOR, N0.getDebugLoc(), VT0,
+                          N0, DAG.getConstant(1, VT0));
     AddToWorkList(XORNode.getNode());
     if (VT.bitsGT(VT0))
-      return DAG.getNode(ISD::ZERO_EXTEND, VT, XORNode);
-    return DAG.getNode(ISD::TRUNCATE, VT, XORNode);
+      return DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(), VT, XORNode);
+    return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, XORNode);
   }
-  // fold select C, 0, X -> ~C & X
+  // fold (select C, 0, X) -> (and (not C), X)
   if (VT == VT0 && VT == MVT::i1 && N1C && N1C->isNullValue()) {
     SDValue NOTNode = DAG.getNOT(N0, VT);
     AddToWorkList(NOTNode.getNode());
     return DAG.getNode(ISD::AND, VT, NOTNode, N2);
   }
-  // fold select C, X, 1 -> ~C | X
+  // fold (select C, X, 1) -> (or (not C), X)
   if (VT == VT0 && VT == MVT::i1 && N2C && N2C->getAPIntValue() == 1) {
-    SDValue NOTNode = DAG.getNOT(N0, VT);
+    SDValue NOTNode = DAG.getNOT(N0.getDebugLoc(), N0, VT);
     AddToWorkList(NOTNode.getNode());
     return DAG.getNode(ISD::OR, VT, NOTNode, N1);
   }
-  // fold select C, X, 0 -> C & X
+  // fold (select C, X, 0) -> (and C, X)
   if (VT == MVT::i1 && N2C && N2C->isNullValue())
-    return DAG.getNode(ISD::AND, VT, N0, N1);
-  // fold  X ? X : Y --> X ? 1 : Y --> X | Y
-  if (VT == MVT::i1 && N0 == N1)
-    return DAG.getNode(ISD::OR, VT, N0, N2);
-  // fold X ? Y : X --> X ? Y : 0 --> X & Y
-  if (VT == MVT::i1 && N0 == N2)
-    return DAG.getNode(ISD::AND, VT, N0, N1);
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, N0, N1);
+  // fold (select X, X, Y) -> (or X, Y)
+  // fold (select X, 1, Y) -> (or X, Y)
+  if (VT == MVT::i1 && (N0 == N1 || (N1C && N1C->getAPIntValue() == 1)))
+    return DAG.getNode(ISD::OR, N->getDebugLoc(), VT, N0, N2);
+  // fold (select X, Y, X) -> (and X, Y)
+  // fold (select X, Y, 0) -> (and X, Y)
+  if (VT == MVT::i1 && (N0 == N2 || (N2C && N2C->getAPIntValue() == 0)))
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, N0, N1);
   
   // If we can fold this based on the true/false value, do so.
   if (SimplifySelectOps(N, N1, N2))
@@ -2873,11 +2878,13 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
     // having to say they don't support SELECT_CC on every type the DAG knows
     // about, since there is no way to mark an opcode illegal at all value types
     if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, MVT::Other))
-      return DAG.getNode(ISD::SELECT_CC, VT, N0.getOperand(0), N0.getOperand(1),
+      return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT,
+                         N0.getOperand(0), N0.getOperand(1),
                          N1, N2, N0.getOperand(2));
     else
       return SimplifySelect(N0, N1, N2);
   }
+
   return SDValue();
 }
 
