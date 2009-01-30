@@ -533,8 +533,9 @@ static Instruction *LowerPartSet(CallInst *CI) {
       Lo = new ZExtInst(Lo_pn, ValTy, "", entry);
     } else if (ValBits < 32) {
       Lo = new TruncInst(Lo_pn, ValTy, "", entry);
-    } else
+    } else {
       Lo = Lo_pn;
+    }
     // Determine if the replacement bits are larger than the number of bits we
     // are replacing and deal with it.
     ICmpInst* is_large = 
