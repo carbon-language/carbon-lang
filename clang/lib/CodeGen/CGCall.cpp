@@ -416,9 +416,9 @@ class X86_64ABIInfo : public ABIInfo {
   ///
   /// \param Lo - The classification for the low word of the type.
   /// \param Hi - The classification for the high word of the type.
-  /// \param OffsetBase - The byte position of the type in the root
-  /// structure. Some parameters are classified different depending on
-  /// whether they straddle an eightbyte boundary.
+  /// \param OffsetBase - The bit offset of the field in the
+  /// containing object.  Some parameters are classified different
+  /// depending on whether they straddle an eightbyte boundary.
   ///
   /// If a word is unused its result will be NoClass; if a type should
   /// be passed in Memory then at least the classification of \arg Lo
@@ -531,7 +531,7 @@ void X86_64ABIInfo::classify(QualType Ty,
 
       // If this type crosses an eightbyte boundary, it should be
       // split.
-      if (OffsetBase && OffsetBase != 8)
+      if (OffsetBase && OffsetBase != 64)
         Hi = Lo;
     } else if (Size == 128) {
       Lo = SSE;
@@ -555,8 +555,8 @@ void X86_64ABIInfo::classify(QualType Ty,
 
     // If this complex type crosses an eightbyte boundary then it
     // should be split.
-    uint64_t EB_Real = (OffsetBase) >> 3;
-    uint64_t EB_Imag = (OffsetBase + Size) >> 3;
+    uint64_t EB_Real = (OffsetBase) / 64;
+    uint64_t EB_Imag = (OffsetBase + Context.getTypeSize(ET)) / 64;
     if (Hi == NoClass && EB_Real != EB_Imag)
       Hi = Lo;
   } else if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
