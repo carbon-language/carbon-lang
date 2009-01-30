@@ -337,23 +337,23 @@ static char isNegatibleForFree(SDValue Op, bool LegalOperations,
     // FIXME: determine better conditions for this xform.
     if (!UnsafeFPMath) return 0;
     
-    // -(A+B) -> -A - B
+    // fold (fsub (fadd A, B)) -> (fsub (fneg A), B)
     if (char V = isNegatibleForFree(Op.getOperand(0), LegalOperations, Depth+1))
       return V;
-    // -(A+B) -> -B - A
+    // fold (fneg (fadd A, B)) -> (fsub (fneg B), A)
     return isNegatibleForFree(Op.getOperand(1), LegalOperations, Depth+1);
   case ISD::FSUB:
     // We can't turn -(A-B) into B-A when we honor signed zeros. 
     if (!UnsafeFPMath) return 0;
     
-    // -(A-B) -> B-A
+    // fold (fneg (fsub A, B)) -> (fsub B, A)
     return 1;
     
   case ISD::FMUL:
   case ISD::FDIV:
     if (HonorSignDependentRoundingFPMath()) return 0;
     
-    // -(X*Y) -> (-X * Y) or (X*-Y)
+    // fold (fneg (fmul X, Y)) -> (fmul (fneg X), Y) or (fmul X, (fneg Y))
     if (char V = isNegatibleForFree(Op.getOperand(0), LegalOperations, Depth+1))
       return V;
       
@@ -388,13 +388,13 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
     // FIXME: determine better conditions for this xform.
     assert(UnsafeFPMath);
     
-    // -(A+B) -> -A - B
+    // fold (fneg (fadd A, B)) -> (fsub (fneg A), B)
     if (isNegatibleForFree(Op.getOperand(0), LegalOperations, Depth+1))
       return DAG.getNode(ISD::FSUB, Op.getDebugLoc(), Op.getValueType(),
                          GetNegatedExpression(Op.getOperand(0), DAG, 
                                               LegalOperations, Depth+1),
                          Op.getOperand(1));
-    // -(A+B) -> -B - A
+    // fold (fneg (fadd A, B)) -> (fsub (fneg B), A)
     return DAG.getNode(ISD::FSUB, Op.getDebugLoc(), Op.getValueType(),
                        GetNegatedExpression(Op.getOperand(1), DAG, 
                                             LegalOperations, Depth+1),
@@ -403,12 +403,12 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
     // We can't turn -(A-B) into B-A when we honor signed zeros. 
     assert(UnsafeFPMath);
 
-    // -(0-B) -> B
+    // fold (fneg (fsub 0, B)) -> B
     if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(Op.getOperand(0)))
       if (N0CFP->getValueAPF().isZero())
         return Op.getOperand(1);
     
-    // -(A-B) -> B-A
+    // fold (fneg (fsub A, B)) -> (fsub B, A)
     return DAG.getNode(ISD::FSUB, Op.getDebugLoc(), Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(0));
     
@@ -416,14 +416,14 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
   case ISD::FDIV:
     assert(!HonorSignDependentRoundingFPMath());
     
-    // -(X*Y) -> -X * Y
+    // fold (fneg (fmul X, Y)) -> (fmul (fneg X), Y)
     if (isNegatibleForFree(Op.getOperand(0), LegalOperations, Depth+1))
       return DAG.getNode(Op.getOpcode(), Op.getDebugLoc(), Op.getValueType(),
                          GetNegatedExpression(Op.getOperand(0), DAG, 
                                               LegalOperations, Depth+1),
                          Op.getOperand(1));
       
-    // -(X*Y) -> X * -Y
+    // fold (fneg (fmul X, Y)) -> (fmul X, (fneg Y))
     return DAG.getNode(Op.getOpcode(), Op.getDebugLoc(), Op.getValueType(),
                        Op.getOperand(0),
                        GetNegatedExpression(Op.getOperand(1), DAG,
