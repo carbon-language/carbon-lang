@@ -1287,34 +1287,36 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
     return DAG.FoldConstantArithmetic(ISD::MUL, VT, N0C, N1C);
   // canonicalize constant to RHS
   if (N0C && !N1C)
-    return DAG.getNode(ISD::MUL, VT, N1, N0);
+    return DAG.getNode(ISD::MUL, N->getDebugLoc(), VT, N1, N0);
   // fold (mul x, 0) -> 0
   if (N1C && N1C->isNullValue())
     return N1;
   // fold (mul x, -1) -> 0-x
   if (N1C && N1C->isAllOnesValue())
-    return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT), N0);
+    return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
+                       DAG.getConstant(0, VT), N0);
   // fold (mul x, (1 << c)) -> x << c
   if (N1C && N1C->getAPIntValue().isPowerOf2())
-    return DAG.getNode(ISD::SHL, VT, N0,
+    return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0,
                        DAG.getConstant(N1C->getAPIntValue().logBase2(),
                                        TLI.getShiftAmountTy()));
   // fold (mul x, -(1 << c)) -> -(x << c) or (-x) << c
-  if (N1C && isPowerOf2_64(-N1C->getSExtValue())) {
+  if (N1C && isPowerOf2_64(-N1C->getSExtValue()))
     // FIXME: If the input is something that is easily negated (e.g. a 
     // single-use add), we should put the negate there.
-    return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT),
+    return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
+                       DAG.getConstant(0, VT),
                        DAG.getNode(ISD::SHL, VT, N0,
                             DAG.getConstant(Log2_64(-N1C->getSExtValue()),
                                             TLI.getShiftAmountTy())));
-  }
-
   // (mul (shl X, c1), c2) -> (mul X, c2 << c1)
   if (N1C && N0.getOpcode() == ISD::SHL && 
       isa<ConstantSDNode>(N0.getOperand(1))) {
-    SDValue C3 = DAG.getNode(ISD::SHL, VT, N1, N0.getOperand(1));
+    SDValue C3 = DAG.getNode(ISD::SHL, N->getDebugLoc(), VT,
+                             N1, N0.getOperand(1));
     AddToWorkList(C3.getNode());
-    return DAG.getNode(ISD::MUL, VT, N0.getOperand(0), C3);
+    return DAG.getNode(ISD::MUL, N->getDebugLoc(), VT,
+                       N0.getOperand(0), C3);
   }
   
   // Change (mul (shl X, C), Y) -> (shl (mul X, Y), C) when the shift has one
@@ -1331,17 +1333,20 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
       Sh = N1; Y = N0;
     }
     if (Sh.getNode()) {
-      SDValue Mul = DAG.getNode(ISD::MUL, VT, Sh.getOperand(0), Y);
-      return DAG.getNode(ISD::SHL, VT, Mul, Sh.getOperand(1));
+      SDValue Mul = DAG.getNode(ISD::MUL, N->getDebugLoc(), VT,
+                                Sh.getOperand(0), Y);
+      return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT,
+                         Mul, Sh.getOperand(1));
     }
   }
   // fold (mul (add x, c1), c2) -> (add (mul x, c2), c1*c2)
   if (N1C && N0.getOpcode() == ISD::ADD && N0.getNode()->hasOneUse() && 
-      isa<ConstantSDNode>(N0.getOperand(1))) {
-    return DAG.getNode(ISD::ADD, VT, 
-                       DAG.getNode(ISD::MUL, VT, N0.getOperand(0), N1),
-                       DAG.getNode(ISD::MUL, VT, N0.getOperand(1), N1));
-  }
+      isa<ConstantSDNode>(N0.getOperand(1)))
+    return DAG.getNode(ISD::ADD, N->getDebugLoc(), VT,
+                       DAG.getNode(ISD::MUL, N0.getDebugLoc(), VT,
+                                   N0.getOperand(0), N1),
+                       DAG.getNode(ISD::MUL, N1.getDebugLoc(), VT,
+                                   N0.getOperand(1), N1));
   
   // reassociate mul
   SDValue RMUL = ReassociateOps(ISD::MUL, N->getDebugLoc(), N0, N1);
