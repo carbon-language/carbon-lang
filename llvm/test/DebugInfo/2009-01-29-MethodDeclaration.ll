@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc | grep 0x3C | count 1
 ; Check DW_AT_declaration attribute for class method foo.
-; target triple = "i386-apple-darwin*"
+target triple = "i386-apple-darwin*"
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, { }*, i8*, { }*, i32, i64, i64, i64, i32, i32, i8*, i8* }
 	%llvm.dbg.compile_unit.type = type { i32, { }*, i32, i8*, i8*, i8*, i1, i8* }
