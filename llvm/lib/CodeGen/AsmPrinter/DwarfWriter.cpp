@@ -1965,9 +1965,12 @@ private:
         AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
         SPDie->AddChild(Arg);
       }
-    
+
+    if (!SP.isDefinition())
+      AddUInt(SPDie, DW_AT_declaration, DW_FORM_flag, 1);
+
     if (!SP.isLocalToUnit())
-      AddUInt(SPDie, DW_AT_external, DW_FORM_flag, 1);                     
+      AddUInt(SPDie, DW_AT_external, DW_FORM_flag, 1);
     return SPDie;
   }
 
