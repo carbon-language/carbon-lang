@@ -345,7 +345,7 @@ BasicConstraintManager::AssumeSymLT(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
   
   // Is 'V' the smallest possible value?
-  if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isSigned())) {
+  if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isUnsigned())) {
     // sym cannot be any value less than 'V'.  This path is infeasible.
     isFeasible = false;
     return St;
@@ -360,7 +360,7 @@ BasicConstraintManager::AssumeSymGT(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
 
   // Is 'V' the largest possible value?
-  if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isSigned())) {
+  if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isUnsigned())) {
     // sym cannot be any value greater than 'V'.  This path is infeasible.
     isFeasible = false;
     return St;
@@ -382,7 +382,7 @@ BasicConstraintManager::AssumeSymGE(const GRState* St, SymbolRef sym,
   
   // Sym is not a constant, but it is worth looking to see if V is the
   // maximum integer value.
-  if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isSigned())) {
+  if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isUnsigned())) {
     // If we know that sym != V, then this condition is infeasible since
     // there is no other value greater than V.    
     isFeasible = !isNotEqual(St, sym, V);
@@ -411,7 +411,7 @@ BasicConstraintManager::AssumeSymLE(const GRState* St, SymbolRef sym,
   
   // Sym is not a constant, but it is worth looking to see if V is the
   // minimum integer value.
-  if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isSigned())) {
+  if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isUnsigned())) {
     // If we know that sym != V, then this condition is infeasible since
     // there is no other value less than V.    
     isFeasible = !isNotEqual(St, sym, V);
