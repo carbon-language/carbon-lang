@@ -186,7 +186,6 @@
 		DED676FA0B6C797B00AAD4A3 /* Builtins.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676F90B6C797B00AAD4A3 /* Builtins.h */; };
 		DED677C90B6C854100AAD4A3 /* Builtins.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED677C80B6C854100AAD4A3 /* Builtins.cpp */; };
 		DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7310A524295003AD0FB /* Diagnostic.h */; };
-		DED7D7420A524295003AD0FB /* DiagnosticKinds.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7320A524295003AD0FB /* DiagnosticKinds.def */; };
 		DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7330A524295003AD0FB /* FileManager.h */; };
 		DED7D7450A524295003AD0FB /* SourceLocation.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7350A524295003AD0FB /* SourceLocation.h */; };
 		DED7D7460A524295003AD0FB /* SourceManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7360A524295003AD0FB /* SourceManager.h */; };
@@ -228,7 +227,6 @@
 			dstSubfolderSpec = 0;
 			files = (
 				DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */,
-				DED7D7420A524295003AD0FB /* DiagnosticKinds.def in CopyFiles */,
 				DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */,
 				DED7D7450A524295003AD0FB /* SourceLocation.h in CopyFiles */,
 				DED7D7460A524295003AD0FB /* SourceManager.h in CopyFiles */,
@@ -561,7 +559,6 @@
 		DED676F90B6C797B00AAD4A3 /* Builtins.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Builtins.h; path = clang/AST/Builtins.h; sourceTree = "<group>"; tabWidth = 2; };
 		DED677C80B6C854100AAD4A3 /* Builtins.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Builtins.cpp; path = lib/AST/Builtins.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DED7D7310A524295003AD0FB /* Diagnostic.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = Diagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
-		DED7D7320A524295003AD0FB /* DiagnosticKinds.def */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = text; path = DiagnosticKinds.def; sourceTree = "<group>"; tabWidth = 2; };
 		DED7D7330A524295003AD0FB /* FileManager.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = FileManager.h; sourceTree = "<group>"; tabWidth = 2; };
 		DED7D7350A524295003AD0FB /* SourceLocation.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = SourceLocation.h; sourceTree = "<group>"; tabWidth = 2; };
 		DED7D7360A524295003AD0FB /* SourceManager.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = SourceManager.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1078,7 +1075,6 @@
 				DEA099FE0F302C65000C2258 /* DiagnosticAnalysisKinds.def */,
 				DEA09A000F302C65000C2258 /* DiagnosticASTKinds.def */,
 				DEA09A010F302C65000C2258 /* DiagnosticCommonKinds.def */,
-				DED7D7320A524295003AD0FB /* DiagnosticKinds.def */,
 				DEA09A040F302C65000C2258 /* DiagnosticLexKinds.def */,
 				DEA09A060F302C65000C2258 /* DiagnosticParseKinds.def */,
 				DEA09A080F302C65000C2258 /* DiagnosticSemaKinds.def */,
