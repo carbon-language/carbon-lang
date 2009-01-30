@@ -521,10 +521,13 @@ void X86_64ABIInfo::classify(QualType Ty,
   } else if (const VectorType *VT = Ty->getAsVectorType()) {
     uint64_t Size = Context.getTypeSize(VT);
     if (Size == 64) {
-      // FIXME: For some reason, gcc appears to be treating <1 x
-      // double> as INTEGER; this seems wrong, but we will match for
-      // now (icc rejects <1 x double>, so...).
-      Lo = (VT->getElementType() == Context.DoubleTy) ? Integer : SSE;
+      // gcc passes <1 x double> in memory.
+      if (VT->getElementType() == Context.DoubleTy) {
+        Lo = Memory;
+        return;
+      }
+
+      Lo = Integer;
 
       // If this type crosses an eightbyte boundary, it should be
       // split.
