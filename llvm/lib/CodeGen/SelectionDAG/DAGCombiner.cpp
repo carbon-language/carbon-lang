@@ -1989,7 +1989,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     return DAG.FoldConstantArithmetic(ISD::OR, VT, N0C, N1C);
   // canonicalize constant to RHS
   if (N0C && !N1C)
-    return DAG.getNode(ISD::OR, VT, N1, N0);
+    return DAG.getNode(ISD::OR, N->getDebugLoc(), VT, N1, N0);
   // fold (or x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -2007,10 +2007,10 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
              isa<ConstantSDNode>(N0.getOperand(1))) {
     ConstantSDNode *C1 = cast<ConstantSDNode>(N0.getOperand(1));
-    return DAG.getNode(ISD::AND, VT, DAG.getNode(ISD::OR, VT, N0.getOperand(0),
-                                                 N1),
-                       DAG.getConstant(N1C->getAPIntValue() |
-                                       C1->getAPIntValue(), VT));
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
+                       DAG.getNode(ISD::OR, N0.getDebugLoc(), VT,
+                                   N0.getOperand(0), N1),
+                       DAG.FoldConstantArithmetic(ISD::OR, VT, N1C, C1));
   }
   // fold (or (setcc x), (setcc y)) -> (setcc (or x, y))
   if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){
@@ -2019,21 +2019,23 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     
     if (LR == RR && isa<ConstantSDNode>(LR) && Op0 == Op1 &&
         LL.getValueType().isInteger()) {
-      // fold (X != 0) | (Y != 0) -> (X|Y != 0)
-      // fold (X <  0) | (Y <  0) -> (X|Y < 0)
+      // fold (or (setne X, 0), (setne Y, 0)) -> (setne (or X, Y), 0)
+      // fold (or (setlt X, 0), (setlt Y, 0)) -> (setne (or X, Y), 0)
       if (cast<ConstantSDNode>(LR)->isNullValue() && 
           (Op1 == ISD::SETNE || Op1 == ISD::SETLT)) {
-        SDValue ORNode = DAG.getNode(ISD::OR, LR.getValueType(), LL, RL);
+        SDValue ORNode = DAG.getNode(ISD::OR, LR.getDebugLoc(),
+                                     LR.getValueType(), LL, RL);
         AddToWorkList(ORNode.getNode());
-        return DAG.getSetCC(VT, ORNode, LR, Op1);
+        return DAG.getSetCC(N->getDebugLoc(), VT, ORNode, LR, Op1);
       }
-      // fold (X != -1) | (Y != -1) -> (X&Y != -1)
-      // fold (X >  -1) | (Y >  -1) -> (X&Y >  -1)
+      // fold (or (setne X, -1), (setne Y, -1)) -> (setne (and X, Y), -1)
+      // fold (or (setgt X, -1), (setgt Y  -1)) -> (setgt (and X, Y), -1)
       if (cast<ConstantSDNode>(LR)->isAllOnesValue() && 
           (Op1 == ISD::SETNE || Op1 == ISD::SETGT)) {
-        SDValue ANDNode = DAG.getNode(ISD::AND, LR.getValueType(), LL, RL);
+        SDValue ANDNode = DAG.getNode(ISD::AND, LR.getDebugLoc(),
+                                      LR.getValueType(), LL, RL);
         AddToWorkList(ANDNode.getNode());
-        return DAG.getSetCC(VT, ANDNode, LR, Op1);
+        return DAG.getSetCC(N->getDebugLoc(), VT, ANDNode, LR, Op1);
       }
     }
     // canonicalize equivalent to ll == rl
@@ -2046,17 +2048,18 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
       ISD::CondCode Result = ISD::getSetCCOrOperation(Op0, Op1, isInteger);
       if (Result != ISD::SETCC_INVALID &&
           (!LegalOperations || TLI.isCondCodeLegal(Result, LL.getValueType())))
-        return DAG.getSetCC(N0.getValueType(), LL, LR, Result);
+        return DAG.getSetCC(N->getDebugLoc(), N0.getValueType(),
+                            LL, LR, Result);
     }
   }
   
-  // Simplify: or (op x...), (op y...)  -> (op (or x, y))
+  // Simplify: (or (op x...), (op y...))  -> (op (or x, y))
   if (N0.getOpcode() == N1.getOpcode()) {
     SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N);
     if (Tmp.getNode()) return Tmp;
   }
   
-  // (X & C1) | (Y & C2)  -> (X|Y) & C3  if possible.
+  // (or (and X, C1), (and Y, C2))  -> (and (or X, Y), C3) if possible.
   if (N0.getOpcode() == ISD::AND &&
       N1.getOpcode() == ISD::AND &&
       N0.getOperand(1).getOpcode() == ISD::Constant &&
@@ -2072,11 +2075,12 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     
     if (DAG.MaskedValueIsZero(N0.getOperand(0), RHSMask&~LHSMask) &&
         DAG.MaskedValueIsZero(N1.getOperand(0), LHSMask&~RHSMask)) {
-      SDValue X =DAG.getNode(ISD::OR, VT, N0.getOperand(0), N1.getOperand(0));
-      return DAG.getNode(ISD::AND, VT, X, DAG.getConstant(LHSMask|RHSMask, VT));
+      SDValue X = DAG.getNode(ISD::OR, N0.getDebugLoc(), VT,
+                              N0.getOperand(0), N1.getOperand(0));
+      return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, X,
+                         DAG.getConstant(LHSMask | RHSMask, VT));
     }
   }
-  
   
   // See if this is some rotate idiom.
   if (SDNode *Rot = MatchRotate(N0, N1))
@@ -2084,7 +2088,6 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
 
   return SDValue();
 }
-
 
 /// MatchRotateHalf - Match "(X shl/srl V1) & V2" where V2 may not be present.
 static bool MatchRotateHalf(SDValue Op, SDValue &Shift, SDValue &Mask) {
@@ -2101,9 +2104,9 @@ static bool MatchRotateHalf(SDValue Op, SDValue &Shift, SDValue &Mask) {
     Shift = Op;
     return true;
   }
+
   return false;  
 }
-
 
 // MatchRotate - Handle an 'or' of two operands.  If this is one of the many
 // idioms for rotate, and if the target supports rotation instructions, generate
