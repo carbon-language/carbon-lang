@@ -216,8 +216,7 @@ struct StmtDeclBitVector_Types {
     }
     
   public:
-    
-    
+
     void resetBlkExprValues(AnalysisDataTy& AD) {
       BlkExprBV.resize(AD.getNumBlkExprs());
       BlkExprBV.reset();
@@ -231,6 +230,11 @@ struct StmtDeclBitVector_Types {
     void resetValues(AnalysisDataTy& AD) {
       resetDeclValues(AD);
       resetBlkExprValues(AD);
+    }
+    
+    void setValues(AnalysisDataTy& AD) {
+      setDeclValues(AD);
+      setBlkExprValues(AD);
     }
     
     bool operator==(const ValTy& RHS) const { 

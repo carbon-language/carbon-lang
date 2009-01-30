@@ -200,28 +200,9 @@ private:
     }
   }  
   
-  void ResetValues(CFG& cfg, ValTy& V, const CFGBlock* B,
-                   dataflow::forward_analysis_tag){
-    
-    if (B == &cfg.getEntry())
-      TF.SetTopValue(V);
-    else
-      V.resetValues(D.getAnalysisData());
-  }
-  
-  void ResetValues(CFG& cfg, ValTy& V, const CFGBlock* B,
-                   dataflow::backward_analysis_tag){
-    
-    if (B == &cfg.getExit())
-      TF.SetTopValue(V);
-    else
-      V.resetValues(D.getAnalysisData());
-  }
-
   void ProcessMerge(CFG& cfg, const CFGBlock* B) {
-
-    ValTy& V = TF.getVal();    
-    ResetValues(cfg, V, B, AnalysisDirTag());
+    ValTy& V = TF.getVal();  
+    TF.SetTopValue(V);
 
     // Merge dataflow values from all predecessors of this block.
     MergeOperatorTy Merge;
@@ -287,7 +268,6 @@ private:
     
   /// UpdateEdgeValue - Update the value associated with a given edge.
   void UpdateEdgeValue(BlockEdge E, ValTy& V, const CFGBlock* TargetBlock) {
-  
     EdgeDataMapTy& M = D.getEdgeDataMap();
     typename EdgeDataMapTy::iterator I = M.find(E);
       

@@ -130,7 +130,7 @@ public:
   void VisitTerminator(CFGBlock* B); 
   
   void SetTopValue(LiveVariables::ValTy& V) {
-    V = AD.AlwaysLive;    
+    V = AD.AlwaysLive;
   }
   
 };
@@ -300,7 +300,7 @@ struct Merge {
     
   void operator()(ValTy& Dst, const ValTy& Src) {
     Dst.OrDeclBits(Src);
-    Dst.AndBlkExprBits(Src);
+    Dst.OrBlkExprBits(Src);
   }
 };
   
