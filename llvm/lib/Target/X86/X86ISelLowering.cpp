@@ -5280,7 +5280,7 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
 
   // If the logical-not of the result is required, perform that now.
   if (Invert)
-    Result = DAG.getNOT(Result, VT);
+    Result = DAG.getNOT(Op.getDebugLoc(), Result, VT);
 
   return Result;
 }

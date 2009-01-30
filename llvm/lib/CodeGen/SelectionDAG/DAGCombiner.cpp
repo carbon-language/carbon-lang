@@ -2845,15 +2845,15 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
   }
   // fold (select C, 0, X) -> (and (not C), X)
   if (VT == VT0 && VT == MVT::i1 && N1C && N1C->isNullValue()) {
-    SDValue NOTNode = DAG.getNOT(N0, VT);
+    SDValue NOTNode = DAG.getNOT(N0.getDebugLoc(), N0, VT);
     AddToWorkList(NOTNode.getNode());
-    return DAG.getNode(ISD::AND, VT, NOTNode, N2);
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, NOTNode, N2);
   }
   // fold (select C, X, 1) -> (or (not C), X)
   if (VT == VT0 && VT == MVT::i1 && N2C && N2C->getAPIntValue() == 1) {
     SDValue NOTNode = DAG.getNOT(N0.getDebugLoc(), N0, VT);
     AddToWorkList(NOTNode.getNode());
-    return DAG.getNode(ISD::OR, VT, NOTNode, N1);
+    return DAG.getNode(ISD::OR, N->getDebugLoc(), VT, NOTNode, N1);
   }
   // fold (select C, X, 0) -> (and C, X)
   if (VT == MVT::i1 && N2C && N2C->isNullValue())
@@ -5739,7 +5739,7 @@ SDValue DAGCombiner::SimplifySelectCC(SDValue N0, SDValue N1,
     if (N1C && N1C->isNullValue() && CC == ISD::SETGT) { 
       SDValue NegN0 = DAG.getNode(ISD::SUB, XType, DAG.getConstant(0, XType),
                                     N0);
-      SDValue NotN0 = DAG.getNOT(N0, XType);
+      SDValue NotN0 = DAG.getNOT(N0.getDebugLoc(), N0, XType);
       return DAG.getNode(ISD::SRL, XType, 
                          DAG.getNode(ISD::AND, XType, NegN0, NotN0),
                          DAG.getConstant(XType.getSizeInBits()-1,

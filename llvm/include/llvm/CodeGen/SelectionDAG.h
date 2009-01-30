@@ -379,7 +379,6 @@ public:
   SDValue getZeroExtendInReg(SDValue Op, DebugLoc DL, MVT SrcTy);
   
   /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
-  SDValue getNOT(SDValue Val, MVT VT);
   SDValue getNOT(DebugLoc DL, SDValue Val, MVT VT);
 
   /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have

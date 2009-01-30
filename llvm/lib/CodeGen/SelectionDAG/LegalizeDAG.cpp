@@ -6321,7 +6321,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op) {
       SDValue Tmp3 = DAG.getConstant(1ULL << i, ShVT);
       Op = DAG.getNode(ISD::OR, VT, Op, DAG.getNode(ISD::SRL, VT, Op, Tmp3));
     }
-    Op = DAG.getNOT(Op, VT);
+    Op = DAG.getNOT(DebugLoc::getUnknownLoc(), Op, VT);
     return DAG.getNode(ISD::CTPOP, VT, Op);
   }
   case ISD::CTTZ: {
@@ -6330,8 +6330,10 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op) {
     // { return 32 - nlz(~x & (x-1)); }
     // see also http://www.hackersdelight.org/HDcode/ntz.cc
     MVT VT = Op.getValueType();
-    SDValue Tmp3 = DAG.getNode(ISD::AND, VT, DAG.getNOT(Op, VT),
-                       DAG.getNode(ISD::SUB, VT, Op, DAG.getConstant(1, VT)));
+    SDValue Tmp3 = DAG.getNode(ISD::AND, VT,
+                               DAG.getNOT(DebugLoc::getUnknownLoc(), Op, VT),
+                               DAG.getNode(ISD::SUB, VT, Op,
+                                           DAG.getConstant(1, VT)));
     // If ISD::CTLZ is legal and CTPOP isn't, then do that instead.
     if (!TLI.isOperationLegalOrCustom(ISD::CTPOP, VT) &&
         TLI.isOperationLegalOrCustom(ISD::CTLZ, VT))
