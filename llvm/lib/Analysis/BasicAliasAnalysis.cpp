@@ -80,7 +80,7 @@ static bool isNoAliasCall(const Value *V) {
 ///    ByVal and NoAlias Arguments
 ///    NoAlias returns
 ///
-static bool isIdentifiedObject(const Value *V) {
+bool llvm::isIdentifiedObject(const Value *V) {
   if (isa<GlobalValue>(V) || isa<AllocationInst>(V) || isNoAliasCall(V))
     return true;
   if (const Argument *A = dyn_cast<Argument>(V))

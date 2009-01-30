@@ -345,6 +345,11 @@ public:
   }
 };
 
+/// isIdentifiedObject - Return true if this pointer refers to a distinct and
+/// identifiable object.
+///
+bool isIdentifiedObject(const Value *V);
+
 } // End llvm namespace
 
 // Because of the way .a files work, we must force the BasicAA implementation to

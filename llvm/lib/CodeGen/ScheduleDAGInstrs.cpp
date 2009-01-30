@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched-instrs"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -94,6 +95,82 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineLoopInfo &mli,
                                      const MachineDominatorTree &mdt)
   : ScheduleDAG(mf), MLI(mli), MDT(mdt) {}
+
+/// getOpcode - If this is an Instruction or a ConstantExpr, return the
+/// opcode value. Otherwise return UserOp1.
+static unsigned getOpcode(const Value *V) {
+  if (const Instruction *I = dyn_cast<Instruction>(V))
+    return I->getOpcode();
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+    return CE->getOpcode();
+  // Use UserOp1 to mean there's no opcode.
+  return Instruction::UserOp1;
+}
+
+/// getUnderlyingObjectFromInt - This is the function that does the work of
+/// looking through basic ptrtoint+arithmetic+inttoptr sequences.
+static const Value *getUnderlyingObjectFromInt(const Value *V) {
+  do {
+    if (const User *U = dyn_cast<User>(V)) {
+      // If we find a ptrtoint, we can transfer control back to the
+      // regular getUnderlyingObjectFromInt.
+      if (getOpcode(U) == Instruction::PtrToInt)
+        return U->getOperand(0);
+      // If we find an add of a constant or a multiplied value, it's
+      // likely that the other operand will lead us to the base
+      // object. We don't have to worry about the case where the
+      // object address is somehow being computed bt the multiply,
+      // because our callers only care when the result is an
+      // identifibale object.
+      if (getOpcode(U) != Instruction::Add ||
+          (!isa<ConstantInt>(U->getOperand(1)) &&
+           getOpcode(U->getOperand(1)) != Instruction::Mul))
+        return V;
+      V = U->getOperand(0);
+    } else {
+      return V;
+    }
+    assert(isa<IntegerType>(V->getType()) && "Unexpected operand type!");
+  } while (1);
+}
+
+/// getUnderlyingObject - This is a wrapper around Value::getUnderlyingObject
+/// and adds support for basic ptrtoint+arithmetic+inttoptr sequences.
+static const Value *getUnderlyingObject(const Value *V) {
+  // First just call Value::getUnderlyingObject to let it do what it does.
+  do {
+    V = V->getUnderlyingObject();
+    // If it found an inttoptr, use special code to continue climing.
+    if (getOpcode(V) != Instruction::IntToPtr)
+      break;
+    const Value *O = getUnderlyingObjectFromInt(cast<User>(V)->getOperand(0));
+    // If that succeeded in finding a pointer, continue the search.
+    if (!isa<PointerType>(O->getType()))
+      break;
+    V = O;
+  } while (1);
+  return V;
+}
+
+/// getUnderlyingObjectForInstr - If this machine instr has memory reference
+/// information and it can be tracked to a normal reference to a known
+/// object, return the Value for that object. Otherwise return null.
+static const Value *getUnderlyingObjectForInstr(const MachineInstr *MI) {
+  if (!MI->hasOneMemOperand() ||
+      !MI->memoperands_begin()->getValue() ||
+      MI->memoperands_begin()->isVolatile())
+    return 0;
+
+  const Value *V = MI->memoperands_begin()->getValue();
+  if (!V)
+    return 0;
+
+  V = getUnderlyingObject(V);
+  if (!isa<PseudoSourceValue>(V) && !isIdentifiedObject(V))
+    return 0;
+
+  return V;
+}
 
 void ScheduleDAGInstrs::BuildSchedGraph() {
   SUnits.reserve(BB->size());
@@ -313,12 +390,8 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
         // Unknown memory accesses. Assume the worst.
         ChainMMO = 0;
     } else if (TID.mayStore()) {
-      if (MI->hasOneMemOperand() &&
-          MI->memoperands_begin()->getValue() &&
-          !MI->memoperands_begin()->isVolatile() &&
-          isa<PseudoSourceValue>(MI->memoperands_begin()->getValue())) {
+      if (const Value *V = getUnderlyingObjectForInstr(MI)) {
         // A store to a specific PseudoSourceValue. Add precise dependencies.
-        const Value *V = MI->memoperands_begin()->getValue();
         // Handle the def in MemDefs, if there is one.
         std::map<const Value *, SUnit *>::iterator I = MemDefs.find(V);
         if (I != MemDefs.end()) {
@@ -337,6 +410,10 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
                                        /*isNormalMemory=*/true));
           J->second.clear();
         }
+        // Add dependencies from all the PendingLoads, since without
+        // memoperands we must assume they alias anything.
+        for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
+          PendingLoads[k]->addPred(SDep(SU, SDep::Order, SU->Latency));
         // Add a general dependence too, if needed.
         if (Chain)
           Chain->addPred(SDep(SU, SDep::Order, SU->Latency));
@@ -346,12 +423,8 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
     } else if (TID.mayLoad()) {
       if (TII->isInvariantLoad(MI)) {
         // Invariant load, no chain dependencies needed!
-      } else if (MI->hasOneMemOperand() &&
-                 MI->memoperands_begin()->getValue() &&
-                 !MI->memoperands_begin()->isVolatile() &&
-                 isa<PseudoSourceValue>(MI->memoperands_begin()->getValue())) {
+      } else if (const Value *V = getUnderlyingObjectForInstr(MI)) {
         // A load from a specific PseudoSourceValue. Add precise dependencies.
-        const Value *V = MI->memoperands_begin()->getValue();
         std::map<const Value *, SUnit *>::iterator I = MemDefs.find(V);
         if (I != MemDefs.end())
           I->second->addPred(SDep(SU, SDep::Order, SU->Latency, /*Reg=*/0,
@@ -367,9 +440,15 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
         // cases where memoperand information is unavailable.
         goto new_chain;
       } else {
-        // A normal load. Just depend on the general chain.
+        // A normal load. Depend on the general chain, as well as on
+        // all stores. In the absense of MachineMemOperand information,
+        // we can't even assume that the load doesn't alias well-behaved
+        // memory locations.
         if (Chain)
           Chain->addPred(SDep(SU, SDep::Order, SU->Latency));
+        for (std::map<const Value *, SUnit *>::iterator I = MemDefs.begin(),
+             E = MemDefs.end(); I != E; ++I)
+          I->second->addPred(SDep(SU, SDep::Order, SU->Latency));
         PendingLoads.push_back(SU);
       }
     }
