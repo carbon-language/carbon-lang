@@ -684,7 +684,10 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
         // sizeof(type) - make sure to emit the VLA size.
         CGF.EmitVLASize(TypeToSize);
       }
-      return CGF.GetVLASize(VAT);
+      
+      llvm::Value *VLASize = CGF.GetVLASize(VAT);
+      return Builder.CreateIntCast(VLASize, ConvertType(E->getType()), 
+                                   false, "conv");
     }
   }
 
