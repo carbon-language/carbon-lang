@@ -3607,19 +3607,20 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
     return N0;
   // fold (truncate c1) -> c1
   if (isa<ConstantSDNode>(N0))
-    return DAG.getNode(ISD::TRUNCATE, VT, N0);
+    return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, N0);
   // fold (truncate (truncate x)) -> (truncate x)
   if (N0.getOpcode() == ISD::TRUNCATE)
-    return DAG.getNode(ISD::TRUNCATE, VT, N0.getOperand(0));
+    return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, N0.getOperand(0));
   // fold (truncate (ext x)) -> (ext x) or (truncate x) or x
   if (N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::SIGN_EXTEND||
       N0.getOpcode() == ISD::ANY_EXTEND) {
     if (N0.getOperand(0).getValueType().bitsLT(VT))
       // if the source is smaller than the dest, we still need an extend
-      return DAG.getNode(N0.getOpcode(), VT, N0.getOperand(0));
+      return DAG.getNode(N0.getOpcode(), N->getDebugLoc(), VT,
+                         N0.getOperand(0));
     else if (N0.getOperand(0).getValueType().bitsGT(VT))
       // if the source is larger than the dest, than we just need the truncate
-      return DAG.getNode(ISD::TRUNCATE, VT, N0.getOperand(0));
+      return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, N0.getOperand(0));
     else
       // if the source and dest are the same type, we can drop both the extend
       // and the truncate
@@ -3633,7 +3634,7 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
     GetDemandedBits(N0, APInt::getLowBitsSet(N0.getValueSizeInBits(),
                                              VT.getSizeInBits()));
   if (Shorter.getNode())
-    return DAG.getNode(ISD::TRUNCATE, VT, Shorter);
+    return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, Shorter);
 
   // fold (truncate (load x)) -> (smaller load x)
   // fold (truncate (srl (load x), c)) -> (smaller load (x+c/evtbits))
@@ -3658,6 +3659,7 @@ SDValue DAGCombiner::CombineConsecutiveLoads(SDNode *N, MVT VT) {
   MVT LD1VT = LD1->getValueType(0);
   SDNode *LD2 = getBuildPairElt(N, 1);
   const MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+
   if (ISD::isNON_EXTLoad(LD2) &&
       LD2->hasOneUse() &&
       // If both are volatile this would reduce the number of volatile loads.
@@ -3669,12 +3671,14 @@ SDValue DAGCombiner::CombineConsecutiveLoads(SDNode *N, MVT VT) {
     unsigned Align = LD->getAlignment();
     unsigned NewAlign = TLI.getTargetData()->
       getABITypeAlignment(VT.getTypeForMVT());
+
     if (NewAlign <= Align &&
         (!LegalOperations || TLI.isOperationLegal(ISD::LOAD, VT)))
-      return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(),
+      return DAG.getLoad(VT, N->getDebugLoc(), LD->getChain(), LD->getBasePtr(),
                          LD->getSrcValue(), LD->getSrcValueOffset(),
                          false, Align);
   }
+
   return SDValue();
 }
 
@@ -3701,19 +3705,20 @@ SDValue DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     MVT DestEltVT = N->getValueType(0).getVectorElementType();
     assert(!DestEltVT.isVector() &&
            "Element type of vector ValueType must not be vector!");
-    if (isSimple) {
+    if (isSimple)
       return ConstantFoldBIT_CONVERTofBUILD_VECTOR(N0.getNode(), DestEltVT);
-    }
   }
   
   // If the input is a constant, let getNode fold it.
   if (isa<ConstantSDNode>(N0) || isa<ConstantFPSDNode>(N0)) {
-    SDValue Res = DAG.getNode(ISD::BIT_CONVERT, VT, N0);
+    SDValue Res = DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(), VT, N0);
     if (Res.getNode() != N) return Res;
   }
   
-  if (N0.getOpcode() == ISD::BIT_CONVERT)  // conv(conv(x,t1),t2) -> conv(x,t2)
-    return DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
+  // (conv (conv x, t1), t2) -> (conv x, t2)
+  if (N0.getOpcode() == ISD::BIT_CONVERT)
+    return DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(), VT,
+                       N0.getOperand(0));
 
   // fold (conv (load x)) -> (load (conv*)x)
   // If the resultant load doesn't need a higher alignment than the original!
@@ -3725,69 +3730,81 @@ SDValue DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     unsigned Align = TLI.getTargetData()->
       getABITypeAlignment(VT.getTypeForMVT());
     unsigned OrigAlign = LN0->getAlignment();
+
     if (Align <= OrigAlign) {
-      SDValue Load = DAG.getLoad(VT, LN0->getChain(), LN0->getBasePtr(),
+      SDValue Load = DAG.getLoad(VT, N->getDebugLoc(), LN0->getChain(),
+                                 LN0->getBasePtr(),
                                  LN0->getSrcValue(), LN0->getSrcValueOffset(),
                                  LN0->isVolatile(), OrigAlign);
       AddToWorkList(N);
       CombineTo(N0.getNode(),
-                DAG.getNode(ISD::BIT_CONVERT, N0.getValueType(), Load),
+                DAG.getNode(ISD::BIT_CONVERT, N0.getDebugLoc(),
+                            N0.getValueType(), Load),
                 Load.getValue(1));
       return Load;
     }
   }
 
-  // Fold bitconvert(fneg(x)) -> xor(bitconvert(x), signbit)
-  // Fold bitconvert(fabs(x)) -> and(bitconvert(x), ~signbit)
+  // fold (bitconvert (fneg x)) -> (xor (bitconvert x), signbit)
+  // fold (bitconvert (fabs x)) -> (and (bitconvert x), (not signbit))
   // This often reduces constant pool loads.
   if ((N0.getOpcode() == ISD::FNEG || N0.getOpcode() == ISD::FABS) &&
       N0.getNode()->hasOneUse() && VT.isInteger() && !VT.isVector()) {
-    SDValue NewConv = DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
+    SDValue NewConv = DAG.getNode(ISD::BIT_CONVERT, N0.getDebugLoc(), VT,
+                                  N0.getOperand(0));
     AddToWorkList(NewConv.getNode());
     
     APInt SignBit = APInt::getSignBit(VT.getSizeInBits());
     if (N0.getOpcode() == ISD::FNEG)
-      return DAG.getNode(ISD::XOR, VT, NewConv, DAG.getConstant(SignBit, VT));
+      return DAG.getNode(ISD::XOR, N->getDebugLoc(), VT,
+                         NewConv, DAG.getConstant(SignBit, VT));
     assert(N0.getOpcode() == ISD::FABS);
-    return DAG.getNode(ISD::AND, VT, NewConv, DAG.getConstant(~SignBit, VT));
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
+                       NewConv, DAG.getConstant(~SignBit, VT));
   }
   
-  // Fold bitconvert(fcopysign(cst, x)) -> bitconvert(x)&sign | cst&~sign'
-  // Note that we don't handle copysign(x,cst) because this can always be folded
-  // to an fneg or fabs.
+  // fold (bitconvert (fcopysign cst, x)) ->
+  //         (or (and (bitconvert x), sign), (and cst, (not sign)))
+  // Note that we don't handle (copysign x, cst) because this can always be
+  // folded to an fneg or fabs.
   if (N0.getOpcode() == ISD::FCOPYSIGN && N0.getNode()->hasOneUse() &&
       isa<ConstantFPSDNode>(N0.getOperand(0)) &&
       VT.isInteger() && !VT.isVector()) {
     unsigned OrigXWidth = N0.getOperand(1).getValueType().getSizeInBits();
     MVT IntXVT = MVT::getIntegerVT(OrigXWidth);
     if (TLI.isTypeLegal(IntXVT) || !LegalTypes) {
-      SDValue X = DAG.getNode(ISD::BIT_CONVERT, IntXVT, N0.getOperand(1));
+      SDValue X = DAG.getNode(ISD::BIT_CONVERT, DebugLoc::getUnknownLoc(),
+                              IntXVT, N0.getOperand(1));
       AddToWorkList(X.getNode());
 
       // If X has a different width than the result/lhs, sext it or truncate it.
       unsigned VTWidth = VT.getSizeInBits();
       if (OrigXWidth < VTWidth) {
-        X = DAG.getNode(ISD::SIGN_EXTEND, VT, X);
+        X = DAG.getNode(ISD::SIGN_EXTEND, DebugLoc::getUnknownLoc(), VT, X);
         AddToWorkList(X.getNode());
       } else if (OrigXWidth > VTWidth) {
         // To get the sign bit in the right place, we have to shift it right
         // before truncating.
-        X = DAG.getNode(ISD::SRL, X.getValueType(), X,
+        X = DAG.getNode(ISD::SRL, DebugLoc::getUnknownLoc(),
+                        X.getValueType(), X,
                         DAG.getConstant(OrigXWidth-VTWidth, X.getValueType()));
         AddToWorkList(X.getNode());
-        X = DAG.getNode(ISD::TRUNCATE, VT, X);
+        X = DAG.getNode(ISD::TRUNCATE, DebugLoc::getUnknownLoc(), VT, X);
         AddToWorkList(X.getNode());
       }
     
       APInt SignBit = APInt::getSignBit(VT.getSizeInBits());
-      X = DAG.getNode(ISD::AND, VT, X, DAG.getConstant(SignBit, VT));
+      X = DAG.getNode(ISD::AND, DebugLoc::getUnknownLoc(), VT,
+                      X, DAG.getConstant(SignBit, VT));
       AddToWorkList(X.getNode());
 
-      SDValue Cst = DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
-      Cst = DAG.getNode(ISD::AND, VT, Cst, DAG.getConstant(~SignBit, VT));
+      SDValue Cst = DAG.getNode(ISD::BIT_CONVERT, DebugLoc::getUnknownLoc(),
+                                VT, N0.getOperand(0));
+      Cst = DAG.getNode(ISD::AND, DebugLoc::getUnknownLoc(), VT,
+                        Cst, DAG.getConstant(~SignBit, VT));
       AddToWorkList(Cst.getNode());
 
-      return DAG.getNode(ISD::OR, VT, X, Cst);
+      return DAG.getNode(ISD::OR, N->getDebugLoc(), VT, X, Cst);
     }
   }
 
