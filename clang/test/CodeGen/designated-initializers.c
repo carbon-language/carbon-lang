@@ -1,5 +1,5 @@
-// RUN: clang %s -emit-llvm -o -
-// XFAIL
+// RUN: clang %s -emit-llvm -o - | grep "<{ i8\* null, i32 1024 }>"
+
 struct foo {
     void *a;
     int b;
@@ -14,4 +14,3 @@ int main(int argc, char **argv)
         .b = 1024,
     };
 }
-
