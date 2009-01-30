@@ -196,7 +196,7 @@ namespace {
     SDValue visitVECTOR_SHUFFLE(SDNode *N);
 
     SDValue XformToShuffleWithZero(SDNode *N);
-    SDValue ReassociateOps(unsigned Opc, SDValue LHS, SDValue RHS);
+    SDValue ReassociateOps(unsigned Opc, DebugLoc DL, SDValue LHS, SDValue RHS);
     
     SDValue visitShiftByConstant(SDNode *N, unsigned Amt);
 
@@ -390,12 +390,12 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
     
     // -(A+B) -> -A - B
     if (isNegatibleForFree(Op.getOperand(0), LegalOperations, Depth+1))
-      return DAG.getNode(ISD::FSUB, Op.getValueType(),
+      return DAG.getNode(ISD::FSUB, Op.getDebugLoc(), Op.getValueType(),
                          GetNegatedExpression(Op.getOperand(0), DAG, 
                                               LegalOperations, Depth+1),
                          Op.getOperand(1));
     // -(A+B) -> -B - A
-    return DAG.getNode(ISD::FSUB, Op.getValueType(),
+    return DAG.getNode(ISD::FSUB, Op.getDebugLoc(), Op.getValueType(),
                        GetNegatedExpression(Op.getOperand(1), DAG, 
                                             LegalOperations, Depth+1),
                        Op.getOperand(0));
@@ -409,8 +409,8 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
         return Op.getOperand(1);
     
     // -(A-B) -> B-A
-    return DAG.getNode(ISD::FSUB, Op.getValueType(), Op.getOperand(1),
-                       Op.getOperand(0));
+    return DAG.getNode(ISD::FSUB, Op.getDebugLoc(), Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(0));
     
   case ISD::FMUL:
   case ISD::FDIV:
@@ -418,24 +418,24 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
     
     // -(X*Y) -> -X * Y
     if (isNegatibleForFree(Op.getOperand(0), LegalOperations, Depth+1))
-      return DAG.getNode(Op.getOpcode(), Op.getValueType(),
+      return DAG.getNode(Op.getOpcode(), Op.getDebugLoc(), Op.getValueType(),
                          GetNegatedExpression(Op.getOperand(0), DAG, 
                                               LegalOperations, Depth+1),
                          Op.getOperand(1));
       
     // -(X*Y) -> X * -Y
-    return DAG.getNode(Op.getOpcode(), Op.getValueType(),
+    return DAG.getNode(Op.getOpcode(), Op.getDebugLoc(), Op.getValueType(),
                        Op.getOperand(0),
                        GetNegatedExpression(Op.getOperand(1), DAG,
                                             LegalOperations, Depth+1));
     
   case ISD::FP_EXTEND:
   case ISD::FSIN:
-    return DAG.getNode(Op.getOpcode(), Op.getValueType(),
+    return DAG.getNode(Op.getOpcode(), Op.getDebugLoc(), Op.getValueType(),
                        GetNegatedExpression(Op.getOperand(0), DAG, 
                                             LegalOperations, Depth+1));
   case ISD::FP_ROUND:
-      return DAG.getNode(ISD::FP_ROUND, Op.getValueType(),
+      return DAG.getNode(ISD::FP_ROUND, Op.getDebugLoc(), Op.getValueType(),
                          GetNegatedExpression(Op.getOperand(0), DAG, 
                                               LegalOperations, Depth+1),
                          Op.getOperand(1));
@@ -479,34 +479,41 @@ static bool isOneUseSetCC(SDValue N) {
   return false;
 }
 
-SDValue DAGCombiner::ReassociateOps(unsigned Opc, SDValue N0, SDValue N1){
+SDValue DAGCombiner::ReassociateOps(unsigned Opc, DebugLoc DL,
+                                    SDValue N0, SDValue N1) {
   MVT VT = N0.getValueType();
-  // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one use
-  // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
   if (N0.getOpcode() == Opc && isa<ConstantSDNode>(N0.getOperand(1))) {
     if (isa<ConstantSDNode>(N1)) {
-      SDValue OpNode = DAG.getNode(Opc, VT, N0.getOperand(1), N1);
+      // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
+      SDValue OpNode = DAG.getNode(Opc, N0.getDebugLoc(), VT,
+                                   N0.getOperand(1), N1);
       AddToWorkList(OpNode.getNode());
-      return DAG.getNode(Opc, VT, OpNode, N0.getOperand(0));
+      return DAG.getNode(Opc, DL, VT, OpNode, N0.getOperand(0));
     } else if (N0.hasOneUse()) {
-      SDValue OpNode = DAG.getNode(Opc, VT, N0.getOperand(0), N1);
+      // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one use
+      SDValue OpNode = DAG.getNode(Opc, N0.getDebugLoc(), VT,
+                                   N0.getOperand(0), N1);
       AddToWorkList(OpNode.getNode());
-      return DAG.getNode(Opc, VT, OpNode, N0.getOperand(1));
+      return DAG.getNode(Opc, DL, VT, OpNode, N0.getOperand(1));
     }
   }
-  // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one use
-  // reassoc. (op c2, (op x, c1)) -> (op x, (op c1, c2))
+
   if (N1.getOpcode() == Opc && isa<ConstantSDNode>(N1.getOperand(1))) {
     if (isa<ConstantSDNode>(N0)) {
-      SDValue OpNode = DAG.getNode(Opc, VT, N1.getOperand(1), N0);
+      // reassoc. (op c2, (op x, c1)) -> (op x, (op c1, c2))
+      SDValue OpNode = DAG.getNode(Opc, N1.getDebugLoc(), VT,
+                                   N1.getOperand(1), N0);
       AddToWorkList(OpNode.getNode());
-      return DAG.getNode(Opc, VT, OpNode, N1.getOperand(0));
+      return DAG.getNode(Opc, DL, VT, OpNode, N1.getOperand(0));
     } else if (N1.hasOneUse()) {
-      SDValue OpNode = DAG.getNode(Opc, VT, N1.getOperand(0), N0);
+      // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one use
+      SDValue OpNode = DAG.getNode(Opc, N1.getDebugLoc(), VT,
+                                   N1.getOperand(0), N0);
       AddToWorkList(OpNode.getNode());
-      return DAG.getNode(Opc, VT, OpNode, N1.getOperand(1));
+      return DAG.getNode(Opc, DL, VT, OpNode, N1.getOperand(1));
     }
   }
+
   return SDValue();
 }
 
@@ -1021,7 +1028,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
                                          N0C->getAPIntValue(), VT),
                          N0.getOperand(1));
   // reassociate add
-  SDValue RADD = ReassociateOps(ISD::ADD, N0, N1);
+  SDValue RADD = ReassociateOps(ISD::ADD, N->getDebugLoc(), N0, N1);
   if (RADD.getNode() != 0)
     return RADD;
   // fold ((0-A) + B) -> B-A
@@ -1329,7 +1336,7 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
   }
   
   // reassociate mul
-  SDValue RMUL = ReassociateOps(ISD::MUL, N0, N1);
+  SDValue RMUL = ReassociateOps(ISD::MUL, N->getDebugLoc(), N0, N1);
   if (RMUL.getNode() != 0)
     return RMUL;
 
@@ -1752,7 +1759,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
                                    APInt::getAllOnesValue(BitWidth)))
     return DAG.getConstant(0, VT);
   // reassociate and
-  SDValue RAND = ReassociateOps(ISD::AND, N0, N1);
+  SDValue RAND = ReassociateOps(ISD::AND, N->getDebugLoc(), N0, N1);
   if (RAND.getNode() != 0)
     return RAND;
   // fold (and (or x, 0xFFFF), 0xFF) -> 0xFF
@@ -1952,7 +1959,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (N1C && DAG.MaskedValueIsZero(N0, ~N1C->getAPIntValue()))
     return N1;
   // reassociate or
-  SDValue ROR = ReassociateOps(ISD::OR, N0, N1);
+  SDValue ROR = ReassociateOps(ISD::OR, N->getDebugLoc(), N0, N1);
   if (ROR.getNode() != 0)
     return ROR;
   // Canonicalize (or (and X, c1), c2) -> (and (or X, c2), c1|c2)
@@ -2244,7 +2251,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   if (N1C && N1C->isNullValue())
     return N0;
   // reassociate xor
-  SDValue RXOR = ReassociateOps(ISD::XOR, N0, N1);
+  SDValue RXOR = ReassociateOps(ISD::XOR, N->getDebugLoc(), N0, N1);
   if (RXOR.getNode() != 0)
     return RXOR;
 
