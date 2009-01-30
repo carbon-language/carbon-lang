@@ -638,10 +638,8 @@ public:
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
   
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
-  
   virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
-                                           const ObjCProtocolDecl *PD)
-    { return 0; }
+                                           const ObjCProtocolDecl *PD);
   
   virtual llvm::Function *GetPropertyGetFunction(){ return 0; }
   virtual llvm::Function *GetPropertySetFunction()
@@ -3461,6 +3459,38 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV);
 }
 
+/// GenerateProtocolRef - This routine is called to generate code for
+/// a protocol reference expression; as in:
+/// @code
+///   @protocol(Proto1);
+/// @endcode
+/// It generates a weak reference to l_OBJC_PROTOCOL_REFERENCE_$_Proto1
+/// which will hold address of the protocol meta-data.
+///
+llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
+                                            const ObjCProtocolDecl *PD) {
+  
+  llvm::Constant *Init =  llvm::ConstantExpr::getBitCast(GetProtocolRef(PD),
+                                        ObjCTypes.ExternalProtocolPtrTy);
+  
+  std::string ProtocolName("\01l_OBJC_PROTOCOL_REFERENCE_$_");
+  ProtocolName += PD->getNameAsCString();
+                            
+  llvm::GlobalVariable *PTGV = CGM.getModule().getGlobalVariable(ProtocolName);
+  if (PTGV)
+    return Builder.CreateLoad(PTGV, false, "tmp");
+  PTGV = new llvm::GlobalVariable(
+                                Init->getType(), false,
+                                llvm::GlobalValue::WeakLinkage,
+                                Init,
+                                ProtocolName,
+                                &CGM.getModule());
+  PTGV->setSection("__DATA, __objc_protorefs, coalesced, no_dead_strip");
+  PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  UsedGlobals.push_back(PTGV);
+  return Builder.CreateLoad(PTGV, false, "tmp");
+}
+
 /// GenerateCategory - Build metadata for a category implementation.
 /// struct _category_t {
 ///   const char * const name;
@@ -3936,7 +3966,7 @@ CGObjCNonFragileABIMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
   Desc[0] = llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
                                            ObjCTypes.SelectorPtrTy);
   Desc[1] = GetMethodVarType(MD);
-  // FIXME. This is really always NULL?
+  // Protocol methods have no implementation. So, this entry is always NULL.
   Desc[2] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
   return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Desc);
 }
