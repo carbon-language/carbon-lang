@@ -378,6 +378,7 @@ deleted.</p>
     sbyte*, ;; Source file name
     sbyte*, ;; Source file directory (includes trailing slash)
     sbyte*  ;; Producer (ex. "4.0.1 LLVM (LLVM research group)")
+    bool    ;; True if this is a main compile unit. 
   }
 </pre>
 
@@ -392,6 +393,14 @@ specific source file.  Global variables and top level functions would be defined
 using this context.  Compile unit descriptors also provide context for source
 line correspondence.</p>  
 
+<p> Each input file is encoded as a separate compile unit in LLVM debugging
+information output. However, many target specific tool chains prefer to encode
+only one compile unit in an object file. In this situation, the LLVM code
+generator will include  debugging information entities in the compile unit 
+that is marked as main compile unit. The code generator accepts maximum one main
+compile unit per module. If a module does not contain any main compile unit 
+then the code generator will emit multiple compile units in the output object 
+file.
 </div>
 
 <!-- ======================================================================= -->
