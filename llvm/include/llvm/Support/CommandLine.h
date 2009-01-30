@@ -302,6 +302,12 @@ struct LocationClass {
 template<class Ty>
 LocationClass<Ty> location(Ty &L) { return LocationClass<Ty>(L); }
 
+// opposite_of - Allow the user to specify which other option this
+// option is the opposite of.
+//
+template<class Ty>
+LocationClass<bool> opposite_of(Ty &O) { return location(O.getValue()); }
+
 
 //===----------------------------------------------------------------------===//
 // Enum valued command line option
@@ -575,6 +581,30 @@ public:
 };
 
 EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>);
+
+//--------------------------------------------------
+// parser<boolInverse>
+class boolInverse { };
+template<>
+class parser<boolInverse> : public basic_parser<bool> {
+public:
+  typedef bool parser_data_type;
+  // parse - Return true on error.
+  bool parse(Option &O, const char *ArgName, const std::string &Arg,
+             bool &Val);
+
+  enum ValueExpected getValueExpectedFlagDefault() const {
+    return ValueOptional;
+  }
+
+  // getValueName - Do not print =<value> at all.
+  virtual const char *getValueName() const { return 0; }
+
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
+};
+
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 
 //--------------------------------------------------
 // parser<int>
@@ -916,6 +946,9 @@ EXTERN_TEMPLATE_INSTANTIATION(class opt<unsigned>);
 EXTERN_TEMPLATE_INSTANTIATION(class opt<int>);
 EXTERN_TEMPLATE_INSTANTIATION(class opt<std::string>);
 EXTERN_TEMPLATE_INSTANTIATION(class opt<bool>);
+
+class boolInverse;
+typedef opt<bool, true, parser<boolInverse> > inverse_opt;
 
 //===----------------------------------------------------------------------===//
 // list_storage class

@@ -40,6 +40,7 @@ using namespace cl;
 //
 TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>);
+TEMPLATE_INSTANTIATION(class basic_parser<boolInverse>);
 TEMPLATE_INSTANTIATION(class basic_parser<int>);
 TEMPLATE_INSTANTIATION(class basic_parser<unsigned>);
 TEMPLATE_INSTANTIATION(class basic_parser<double>);
@@ -55,6 +56,7 @@ void Option::anchor() {}
 void basic_parser_impl::anchor() {}
 void parser<bool>::anchor() {}
 void parser<boolOrDefault>::anchor() {}
+void parser<boolInverse>::anchor() {}
 void parser<int>::anchor() {}
 void parser<unsigned>::anchor() {}
 void parser<double>::anchor() {}
@@ -882,8 +884,26 @@ bool parser<boolOrDefault>::parse(Option &O, const char *ArgName,
   if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" ||
       Arg == "1") {
     Value = BOU_TRUE;
-  } else if (Arg == "false" || Arg == "FALSE" || Arg == "False" || Arg == "0") {
+  } else if (Arg == "false" || Arg == "FALSE"
+             || Arg == "False" || Arg == "0") {
     Value = BOU_FALSE;
+  } else {
+    return O.error(": '" + Arg +
+                   "' is invalid value for boolean argument! Try 0 or 1");
+  }
+  return false;
+}
+
+// parser<boolInverse> implementation
+//
+bool parser<boolInverse>::parse(Option &O, const char *ArgName,
+                                const std::string &Arg, bool &Value) {
+  if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" ||
+      Arg == "1") {
+    Value = false;
+  } else if (Arg == "false" || Arg == "FALSE"
+             || Arg == "False" || Arg == "0") {
+    Value = true;
   } else {
     return O.error(": '" + Arg +
                    "' is invalid value for boolean argument! Try 0 or 1");
