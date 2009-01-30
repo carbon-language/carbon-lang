@@ -1603,8 +1603,8 @@ SDValue DAGCombiner::visitMULHS(SDNode *N) {
     return N1;
   // fold (mulhs x, 1) -> (sra x, size(x)-1)
   if (N1C && N1C->getAPIntValue() == 1)
-    return DAG.getNode(ISD::SRA, N0.getValueType(), N0, 
-                       DAG.getConstant(N0.getValueType().getSizeInBits()-1,
+    return DAG.getNode(ISD::SRA, N->getDebugLoc(), N0.getValueType(), N0,
+                       DAG.getConstant(N0.getValueType().getSizeInBits() - 1,
                                        TLI.getShiftAmountTy()));
   // fold (mulhs x, undef) -> 0
   if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
