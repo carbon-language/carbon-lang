@@ -1731,11 +1731,11 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   if ((N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND||
        N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::TRUNCATE) &&
       N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
-    SDValue ORNode = DAG.getNode(N->getOpcode(), 
-                                   N0.getOperand(0).getValueType(),
-                                   N0.getOperand(0), N1.getOperand(0));
+    SDValue ORNode = DAG.getNode(N->getOpcode(), N0.getDebugLoc(),
+                                 N0.getOperand(0).getValueType(),
+                                 N0.getOperand(0), N1.getOperand(0));
     AddToWorkList(ORNode.getNode());
-    return DAG.getNode(N0.getOpcode(), VT, ORNode);
+    return DAG.getNode(N0.getOpcode(), N->getDebugLoc(), VT, ORNode);
   }
   
   // For each of OP in SHL/SRL/SRA/AND...
@@ -1745,11 +1745,12 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   if ((N0.getOpcode() == ISD::SHL || N0.getOpcode() == ISD::SRL ||
        N0.getOpcode() == ISD::SRA || N0.getOpcode() == ISD::AND) &&
       N0.getOperand(1) == N1.getOperand(1)) {
-    SDValue ORNode = DAG.getNode(N->getOpcode(),
-                                   N0.getOperand(0).getValueType(),
-                                   N0.getOperand(0), N1.getOperand(0));
+    SDValue ORNode = DAG.getNode(N->getOpcode(), N0.getDebugLoc(),
+                                 N0.getOperand(0).getValueType(),
+                                 N0.getOperand(0), N1.getOperand(0));
     AddToWorkList(ORNode.getNode());
-    return DAG.getNode(N0.getOpcode(), VT, ORNode, N0.getOperand(1));
+    return DAG.getNode(N0.getOpcode(), N->getDebugLoc(), VT,
+                       ORNode, N0.getOperand(1));
   }
   
   return SDValue();
