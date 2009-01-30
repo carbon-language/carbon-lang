@@ -846,6 +846,23 @@ SDValue SelectionDAG::getNOT(SDValue Val, MVT VT) {
   return getNode(ISD::XOR, VT, Val, NegOne);
 }
 
+/// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
+///
+SDValue SelectionDAG::getNOT(DebugLoc DL, SDValue Val, MVT VT) {
+  SDValue NegOne;
+  if (VT.isVector()) {
+    MVT EltVT = VT.getVectorElementType();
+    SDValue NegOneElt = getConstant(EltVT.getIntegerVTBitMask(), EltVT);
+    std::vector<SDValue> NegOnes(VT.getVectorNumElements(), NegOneElt);
+    NegOne = getNode(ISD::BUILD_VECTOR, DebugLoc::getUnknownLoc(), VT,
+                     &NegOnes[0], NegOnes.size());
+  } else {
+    NegOne = getConstant(VT.getIntegerVTBitMask(), VT);
+  }
+
+  return getNode(ISD::XOR, DL, VT, Val, NegOne);
+}
+
 SDValue SelectionDAG::getConstant(uint64_t Val, MVT VT, bool isT) {
   MVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
   assert((EltVT.getSizeInBits() >= 64 ||

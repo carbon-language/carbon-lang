@@ -379,6 +379,7 @@ public:
   
   /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
   SDValue getNOT(SDValue Val, MVT VT);
+  SDValue getNOT(DebugLoc DL, SDValue Val, MVT VT);
 
   /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have
   /// a flag result (to ensure it's not CSE'd).
