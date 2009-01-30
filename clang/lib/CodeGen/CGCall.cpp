@@ -530,6 +530,11 @@ void X86_64ABIInfo::classify(QualType Ty,
       // double> as INTEGER; this seems wrong, but we will match for
       // now (icc rejects <1 x double>, so...).
       Lo = (VT->getElementType() == Context.DoubleTy) ? Integer : SSE;
+
+      // If this type crosses an eightbyte boundary, it should be
+      // split.
+      if (OffsetBase && OffsetBase != 8)
+        Hi = Lo;
     } else if (Size == 128) {
       Lo = SSE;
       Hi = SSEUp;
@@ -537,8 +542,8 @@ void X86_64ABIInfo::classify(QualType Ty,
   } else if (const ComplexType *CT = Ty->getAsComplexType()) {
     QualType ET = CT->getElementType();
     
+    uint64_t Size = Context.getTypeSize(Ty);
     if (ET->isIntegerType()) {
-      uint64_t Size = Context.getTypeSize(Ty);
       if (Size <= 64)
         Lo = Integer;
       else if (Size <= 128)
@@ -553,7 +558,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     // If this complex type crosses an eightbyte boundary then it
     // should be split.
     uint64_t EB_Real = (OffsetBase) >> 3;
-    uint64_t EB_Imag = (OffsetBase + Context.getTypeSize(ET)) >> 3;
+    uint64_t EB_Imag = (OffsetBase + Size) >> 3;
     if (Hi == NoClass && EB_Real != EB_Imag)
       Hi = Lo;
   } else if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
