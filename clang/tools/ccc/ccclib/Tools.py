@@ -225,9 +225,9 @@ class Clang_CompileTool(Tool):
             
             cmd_args.append('-analyzer-output-plist')
 
-            # Add -WA, arguments when running as analyzer.
-            for arg in arglist.getArgs(arglist.parser.WAOption):
-                cmd_args.extend(arglist.renderAsInput(arg))
+            # Add -Xanalyzer arguments when running as analyzer.
+            for arg in arglist.getArgs(arglist.parser.XanalyzerOption):
+                cmd_args.extend(arglist.getValues(arg))
         else:
             # Perform argument translation for LLVM backend. This
             # takes some care in reconciling with llvm-gcc. The
@@ -324,6 +324,9 @@ class Clang_CompileTool(Tool):
         arglist.addLastArg(cmd_args, arglist.parser.f_noShowColumnOption)
         arglist.addLastArg(cmd_args, arglist.parser.f_pascalStringsOption)
         arglist.addLastArg(cmd_args, arglist.parser.f_writableStringsOption)
+
+        for arg in arglist.getArgs(arglist.parser.XclangOption):
+            cmd_args.extend(arglist.getValues(arg))
 
         if arch is not None:
             cmd_args.extend(arglist.render(arch))

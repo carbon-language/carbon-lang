@@ -549,7 +549,8 @@ class OptionParser:
 
         # Blanket pass-through options.
 
-        self.WAOption = self.addOption(CommaJoinedOption('-WA,'))        
+        self.XanalyzerOption = self.addOption(SeparateOption('-Xanalyzer'))
+        self.XclangOption = self.addOption(SeparateOption('-Xclang'))
 
         self.WaOption = self.addOption(CommaJoinedOption('-Wa,'))
         self.XassemblerOption = self.addOption(SeparateOption('-Xassembler'))
