@@ -136,18 +136,11 @@ public:
     }
     /// A IdDeclInfo::DeclsTy::iterator that walks or not the parent declaration
     /// contexts depending on 'LookInParentCtx'.
-    iterator(BaseIter I, bool LookInParentCtx) {
+    iterator(BaseIter I) {
       Ptr = reinterpret_cast<uintptr_t>(I) | 0x1;
-      assert((Ptr & 0x2) == 0 && "Invalid Ptr!");
-      if (LookInParentCtx) Ptr |= 0x2;
     }
 
     bool isIterator() const { return (Ptr & 0x1); }
-
-    bool LookInParentCtx() const {
-      assert(isIterator() && "Ptr not an iterator!");
-      return (Ptr & 0x2) != 0;
-    }
 
     BaseIter getIterator() const {
       assert(isIterator() && "Ptr not an iterator!");
@@ -176,29 +169,32 @@ public:
     iterator& operator++() {
       if (!isIterator()) // common case.
         Ptr = 0;
-      else
-        PreIncIter();
+      else {
+        NamedDecl *D = **this;
+        void *InfoPtr = D->getDeclName().getFETokenInfo<void>();
+        assert(!isDeclPtr(InfoPtr) && "Decl with wrong id ?");
+        IdDeclInfo *Info = toIdDeclInfo(InfoPtr);
+        
+        BaseIter I = getIterator();
+        if (I != Info->decls_begin())
+          *this = iterator(I-1);
+        else // No more decls.
+          *this = iterator();
+      }
       return *this;
     }
 
     uintptr_t getAsOpaqueValue() const { return Ptr; }
     
     static iterator getFromOpaqueValue(uintptr_t P) {
-      iterator Result(0);
+      iterator Result;
       Result.Ptr = P;
       return Result;
     }
-    
-  private:
-    void PreIncIter();
   };
 
-  /// begin - Returns an iterator for decls with the name 'Name', starting at
-  /// declaration context 'Ctx'. If 'LookInParentCtx' is true, it will walk the
-  /// decls of parent declaration contexts too.
-  /// Default for 'LookInParentCtx is true.
-  static iterator begin(DeclarationName Name, const DeclContext *Ctx,
-                        bool LookInParentCtx = true);
+  /// begin - Returns an iterator for decls with the name 'Name'.
+  static iterator begin(DeclarationName Name);
 
   /// end - Returns an iterator that has 'finished'.
   static iterator end() {

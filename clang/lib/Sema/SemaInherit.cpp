@@ -153,7 +153,8 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
     } else {
       Paths.ScratchPath.Decls = BaseRecord->lookup(Criteria.Name);
       while (Paths.ScratchPath.Decls.first != Paths.ScratchPath.Decls.second) {
-        if (Criteria.Criteria.isLookupResult(*Paths.ScratchPath.Decls.first)) {
+        if (isAcceptableLookupResult(*Paths.ScratchPath.Decls.first,
+                                     Criteria.NameKind, Criteria.IDNS)) {
           FoundPathToThisBase = true;
           break;
         }

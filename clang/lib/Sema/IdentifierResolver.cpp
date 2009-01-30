@@ -225,14 +225,9 @@ void IdentifierResolver::RemoveDecl(NamedDecl *D) {
   return toIdDeclInfo(Ptr)->RemoveDecl(D);
 }
 
-/// begin - Returns an iterator for decls with name 'Name', starting at
-/// declaration context 'Ctx'. If 'LookInParentCtx' is true, it will walk the
-/// decls of parent declaration contexts too.
+/// begin - Returns an iterator for decls with name 'Name'.
 IdentifierResolver::iterator
-IdentifierResolver::begin(DeclarationName Name, const DeclContext *Ctx,
-                          bool LookInParentCtx) {
-  assert(Ctx && "null param passed");
-
+IdentifierResolver::begin(DeclarationName Name) {
   void *Ptr = Name.getFETokenInfo<void>();
   if (!Ptr) return end();
 
@@ -245,25 +240,10 @@ IdentifierResolver::begin(DeclarationName Name, const DeclContext *Ctx,
 
   IdDeclInfo::DeclsTy::iterator I = IDI->decls_end();
   if (I != IDI->decls_begin())
-    return iterator(I-1, LookInParentCtx);
+    return iterator(I-1);
   else // No decls found.
     return end();
 }
-
-/// PreIncIter - Do a preincrement when 'Ptr' is a BaseIter.
-void IdentifierResolver::iterator::PreIncIter() {
-  NamedDecl *D = **this;
-  void *InfoPtr = D->getDeclName().getFETokenInfo<void>();
-  assert(!isDeclPtr(InfoPtr) && "Decl with wrong id ?");
-  IdDeclInfo *Info = toIdDeclInfo(InfoPtr);
-
-  BaseIter I = getIterator();
-  if (I != Info->decls_begin())
-    *this = iterator(I-1, LookInParentCtx());
-  else // No more decls.
-    *this = end();
-}
-
 
 //===----------------------------------------------------------------------===//
 // IdDeclInfoMap Implementation

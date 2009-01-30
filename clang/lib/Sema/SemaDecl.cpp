@@ -32,18 +32,8 @@ using namespace clang;
 
 Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, Scope *S,
                                 const CXXScopeSpec *SS) {
-  DeclContext *DC = 0;
-  
-  if (SS) {
-    if (SS->isInvalid())
-      return 0;
-    DC = static_cast<DeclContext*>(SS->getScopeRep());
-  }
   Decl *IIDecl = 0;
-  
-  LookupResult Result =  DC ? LookupDeclInContext(&II, Decl::IDNS_Ordinary, DC) :
-                              LookupDeclInScope(&II, Decl::IDNS_Ordinary, S);
-                 
+  LookupResult Result = LookupParsedName(S, SS, &II, LookupOrdinaryName, false);
   switch (Result.getKind()) {
     case LookupResult::NotFound:
     case LookupResult::FoundOverloaded:
@@ -139,8 +129,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
       // We're pushing the tag into the current context, which might
       // require some reshuffling in the identifier resolver.
       IdentifierResolver::iterator
-        I = IdResolver.begin(TD->getDeclName(), CurContext, 
-                             false/*LookInParentCtx*/),
+        I = IdResolver.begin(TD->getDeclName()),
         IEnd = IdResolver.end();
       if (I != IEnd && isDeclInScope(*I, CurContext, S)) {
         NamedDecl *PrevDecl = *I;
@@ -175,10 +164,8 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
     // We are pushing the name of a function, which might be an
     // overloaded name.
     FunctionDecl *FD = cast<FunctionDecl>(D);
-    DeclContext *DC = FD->getDeclContext()->getLookupContext();
     IdentifierResolver::iterator Redecl
-      = std::find_if(IdResolver.begin(FD->getDeclName(), DC, 
-                                      false/*LookInParentCtx*/),
+      = std::find_if(IdResolver.begin(FD->getDeclName()),
                      IdResolver.end(),
                      std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
                                   FD));
@@ -218,7 +205,7 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
   // The third "scope" argument is 0 since we aren't enabling lazy built-in
   // creation from this context.
-  Decl *IDecl = LookupDeclInScope(Id, Decl::IDNS_Ordinary, 0);
+  Decl *IDecl = LookupName(TUScope, Id, LookupOrdinaryName);
   
   return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
 }
@@ -255,123 +242,12 @@ Scope *Sema::getNonFieldDeclScope(Scope *S) {
   return S;
 }
 
-/// LookupDeclInScope - Look up the inner-most declaration in the specified
-/// namespace. NamespaceNameOnly - during lookup only namespace names
-/// are considered as required in C++ [basic.lookup.udir] 3.4.6.p1
-/// 'When looking up a namespace-name in a using-directive or
-/// namespace-alias-definition, only namespace names are considered.'
-///
-/// Note: The use of this routine is deprecated. Please use
-/// LookupName, LookupQualifiedName, or LookupParsedName instead.
-Sema::LookupResult
-Sema::LookupDeclInScope(DeclarationName Name, unsigned NSI, Scope *S,
-                        bool LookInParent) {
-  if (getLangOptions().CPlusPlus) {
-    LookupCriteria::NameKind Kind;
-    if (NSI == Decl::IDNS_Ordinary) {
-      Kind = LookupCriteria::Ordinary;
-    } else if (NSI == Decl::IDNS_Tag) 
-      Kind = LookupCriteria::Tag;
-    else {
-      assert(NSI == Decl::IDNS_Member &&"Unable to grok LookupDecl NSI argument");
-      Kind = LookupCriteria::Member;
-    }
-    // Unqualified lookup
-    return LookupName(S, Name, 
-                      LookupCriteria(Kind, !LookInParent,
-                                     getLangOptions().CPlusPlus));
-  }
-  // Fast path for C/ObjC.
-  
-  // Unqualified name lookup in C/Objective-C is purely lexical, so
-  // search in the declarations attached to the name.
-
-  // For the purposes of unqualified name lookup, structs and unions
-  // don't have scopes at all. For example:
-  //
-  //   struct X {
-  //     struct T { int i; } x;
-  //   };
-  //
-  //   void f() {
-  //     struct T t; // okay: T is defined lexically within X, but
-  //                 // semantically at global scope
-  //   };
-  //
-  // FIXME: Is there a better way to deal with this?
-  DeclContext *SearchCtx = CurContext;
-  while (isa<RecordDecl>(SearchCtx) || isa<EnumDecl>(SearchCtx))
-    SearchCtx = SearchCtx->getParent();
-  IdentifierResolver::iterator I
-    = IdResolver.begin(Name, SearchCtx, LookInParent);
-  
-  // Scan up the scope chain looking for a decl that matches this
-  // identifier that is in the appropriate namespace.  This search
-  // should not take long, as shadowing of names is uncommon, and
-  // deep shadowing is extremely uncommon.
-  for (; I != IdResolver.end(); ++I) {
-    switch (NSI) {
-      case Decl::IDNS_Ordinary:
-      case Decl::IDNS_Tag:
-      case Decl::IDNS_Member:
-        if ((*I)->isInIdentifierNamespace(NSI))
-          return LookupResult::CreateLookupResult(Context, *I);
-        break;
-      default:
-        assert(0 && "Unable to grok LookupDecl NSI argument");
-    }
-  }
-  if (NSI == Decl::IDNS_Ordinary) {
-    IdentifierInfo *II = Name.getAsIdentifierInfo();
-    if (II) {
-      // If this is a builtin on this (or all) targets, create the decl.
-      if (unsigned BuiltinID = II->getBuiltinID())
-        return LookupResult::CreateLookupResult(Context,
-                            LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
-                                                S));
-    }
-    if (getLangOptions().ObjC1 && II) {
-      // @interface and @compatibility_alias introduce typedef-like names.
-      // Unlike typedef's, they can only be introduced at file-scope (and are 
-      // therefore not scoped decls). They can, however, be shadowed by
-      // other names in IDNS_Ordinary.
-      ObjCInterfaceDeclsTy::iterator IDI = ObjCInterfaceDecls.find(II);
-      if (IDI != ObjCInterfaceDecls.end())
-        return LookupResult::CreateLookupResult(Context, IDI->second);
-      ObjCAliasTy::iterator I = ObjCAliasDecls.find(II);
-      if (I != ObjCAliasDecls.end())
-        return LookupResult::CreateLookupResult(Context, 
-                                                I->second->getClassInterface());
-    }
-  }
-  return LookupResult::CreateLookupResult(Context, 0);
-}
-
-Sema::LookupResult
-Sema::LookupDeclInContext(DeclarationName Name, unsigned NSI,
-                          const DeclContext *LookupCtx,
-                          bool LookInParent) {
-  assert(LookupCtx && "LookupDeclInContext(): Missing DeclContext");
-  LookupCriteria::NameKind Kind;
-  if (NSI == Decl::IDNS_Ordinary) {
-    Kind = LookupCriteria::Ordinary;
-  } else if (NSI == Decl::IDNS_Tag) 
-    Kind = LookupCriteria::Tag;
-  else {
-    assert(NSI == Decl::IDNS_Member &&"Unable to grok LookupDecl NSI argument");
-    Kind = LookupCriteria::Member;
-  }
-  return LookupQualifiedName(const_cast<DeclContext *>(LookupCtx), Name, 
-                             LookupCriteria(Kind, !LookInParent,
-                                            getLangOptions().CPlusPlus));
-}
-
 void Sema::InitBuiltinVaListType() {
   if (!Context.getBuiltinVaListType().isNull())
     return;
   
   IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
-  Decl *VaDecl = LookupDeclInScope(VaIdent, Decl::IDNS_Ordinary, TUScope);
+  Decl *VaDecl = LookupName(TUScope, VaIdent, LookupOrdinaryName);
   TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
   Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
 }
@@ -420,7 +296,7 @@ NamespaceDecl *Sema::GetStdNamespace() {
   if (!StdNamespace) {
     IdentifierInfo *StdIdent = &PP.getIdentifierTable().get("std");
     DeclContext *Global = Context.getTranslationUnitDecl();
-    Decl *Std = LookupDeclInContext(StdIdent, Decl::IDNS_Ordinary, Global);
+    Decl *Std = LookupQualifiedName(Global, StdIdent, LookupNamespaceName);
     StdNamespace = dyn_cast_or_null<NamespaceDecl>(Std);
   }
   return StdNamespace;
@@ -689,10 +565,9 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
   
   // FIXME: I don't think this will actually see all of the
   // redefinitions. Can't we check this property on-the-fly?
-  for (IdentifierResolver::iterator
-       I = IdResolver.begin(VD->getIdentifier(), 
-                            VD->getDeclContext(), false/*LookInParentCtx*/), 
-       E = IdResolver.end(); I != E; ++I) {
+  for (IdentifierResolver::iterator I = IdResolver.begin(VD->getIdentifier()), 
+                                    E = IdResolver.end(); 
+       I != E; ++I) {
     if (*I != VD && isDeclInScope(*I, VD->getDeclContext(), S)) {
       VarDecl *OldDecl = dyn_cast<VarDecl>(*I);
       
@@ -864,8 +739,8 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
                                FEnd = AnonRecord->field_end();
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
-      Decl *PrevDecl = LookupDeclInContext((*F)->getDeclName(), 
-                         Decl::IDNS_Ordinary, Owner, false);
+      Decl *PrevDecl = LookupQualifiedName(Owner, (*F)->getDeclName(),
+                                           LookupOrdinaryName, true);
       if (PrevDecl && !isa<TagDecl>(PrevDecl)) {
         // C++ [class.union]p2:
         //   The names of the members of an anonymous union shall be
@@ -1312,13 +1187,12 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   bool InvalidDecl = false;
  
   // See if this is a redefinition of a variable in the same scope.
-  if (!D.getCXXScopeSpec().isSet()) {
+  if (!D.getCXXScopeSpec().isSet() && !D.getCXXScopeSpec().isInvalid()) {
     DC = CurContext;
-    PrevDecl = LookupDeclInScope(Name, Decl::IDNS_Ordinary, S);
+    PrevDecl = LookupName(S, Name, LookupOrdinaryName);
   } else { // Something like "int foo::x;"
     DC = static_cast<DeclContext*>(D.getCXXScopeSpec().getScopeRep());
-    PrevDecl = DC ? LookupDeclInContext(Name, Decl::IDNS_Ordinary, DC)
-                  : LookupDeclInScope(Name, Decl::IDNS_Ordinary, S);
+    PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName);
 
     // C++ 7.3.1.2p2:
     // Members (including explicit specializations of templates) of a named
@@ -1807,7 +1681,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         << D.getCXXScopeSpec().getRange();
       InvalidDecl = true;
         
-      PrevDecl = LookupDeclInContext(Name, Decl::IDNS_Ordinary, DC);
+      PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName);
       if (!PrevDecl) {
         // Nothing to suggest.
       } else if (OverloadedFunctionDecl *Ovl 
@@ -2662,7 +2536,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // among each other.  Here they can only shadow globals, which is ok.
   IdentifierInfo *II = D.getIdentifier();
   if (II) {
-    if (Decl *PrevDecl = LookupDeclInScope(II, Decl::IDNS_Ordinary, S)) {
+    if (Decl *PrevDecl = LookupName(S, II, LookupOrdinaryName)) {
       if (PrevDecl->isTemplateParameter()) {
         // Maybe we will complain about the shadowed template parameter.
         DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
@@ -2954,7 +2828,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     DC = static_cast<DeclContext*>(SS.getScopeRep());
     // Look-up name inside 'foo::'.
     PrevDecl = dyn_cast_or_null<TagDecl>(
-                 LookupDeclInContext(Name, Decl::IDNS_Tag, DC).getAsDecl());
+                     LookupQualifiedName(DC, Name, LookupTagName).getAsDecl());
 
     // A tag 'foo::bar' must already exist.
     if (PrevDecl == 0) {
@@ -2965,14 +2839,14 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   } else if (Name) {
     // If this is a named struct, check to see if there was a previous forward
     // declaration or definition.
-    Decl *D = LookupDeclInScope(Name, Decl::IDNS_Tag, S);
+    Decl *D = LookupName(S, Name, LookupTagName);
     PrevDecl = dyn_cast_or_null<NamedDecl>(D);
 
     if (!getLangOptions().CPlusPlus && TK != TK_Reference) {
       // FIXME: This makes sure that we ignore the contexts associated
       // with C structs, unions, and enums when looking for a matching
       // tag declaration or definition. See the similar lookup tweak
-      // in Sema::LookupDecl; is there a better way to deal with this?
+      // in Sema::LookupName; is there a better way to deal with this?
       while (isa<RecordDecl>(SearchDC) || isa<EnumDecl>(SearchDC))
         SearchDC = SearchDC->getParent();
     }
@@ -3158,9 +3032,7 @@ CreateNewDecl:
     //   shall not be declared with the same name as a typedef-name
     //   that is declared in that scope and refers to a type other
     //   than the class or enumeration itself.
-    LookupResult Lookup = LookupName(S, Name, 
-                                     LookupCriteria(LookupCriteria::Ordinary, 
-                                                    true, true));
+    LookupResult Lookup = LookupName(S, Name, LookupOrdinaryName, true);
     TypedefDecl *PrevTypedef = 0;
     if (Lookup.getKind() == LookupResult::Found)
       PrevTypedef = dyn_cast<TypedefDecl>(Lookup.getAsDecl());
@@ -3352,8 +3224,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
                               DeclSpec::SCS_mutable);
 
   if (II) {
-    Decl *PrevDecl 
-      = LookupDeclInScope(II, Decl::IDNS_Member, S, false);
+    Decl *PrevDecl = LookupName(S, II, LookupMemberName, true);
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;
@@ -3445,7 +3316,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
                                              (Expr *)BitfieldWidth);
   
   if (II) {
-    Decl *PrevDecl = LookupDeclInScope(II, Decl::IDNS_Member, S, false);
+    Decl *PrevDecl = LookupName(S, II, LookupMemberName, true);
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;
@@ -3621,7 +3492,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   
   // Verify that there isn't already something declared with this name in this
   // scope.
-  Decl *PrevDecl = LookupDeclInScope(Id, Decl::IDNS_Ordinary, S);
+  Decl *PrevDecl = LookupName(S, Id, LookupOrdinaryName);
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
     DiagnoseTemplateParameterShadow(IdLoc, PrevDecl);

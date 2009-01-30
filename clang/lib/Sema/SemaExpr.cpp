@@ -555,14 +555,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
 
   // Could be enum-constant, value decl, instance variable, etc.
   Decl *D = 0;
-  LookupResult Lookup;
-  if (SS && !SS->isEmpty()) {
-    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
-    if (DC == 0)
-      return ExprError();
-    Lookup = LookupDeclInContext(Name, Decl::IDNS_Ordinary, DC);
-  } else
-    Lookup = LookupDeclInScope(Name, Decl::IDNS_Ordinary, S);
+  if (SS && SS->isInvalid())
+    return ExprError();
+  LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName);
 
   if (Lookup.isAmbiguous()) {
     DiagnoseAmbiguousLookup(Lookup, Name, Loc,
@@ -1519,9 +1514,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     // than this.
     LookupResult Result
       = LookupQualifiedName(RDecl, DeclarationName(&Member), 
-                            LookupCriteria(LookupCriteria::Member,
-                                           /*RedeclarationOnly=*/false, 
-                                           getLangOptions().CPlusPlus));
+                            LookupMemberName, false);
 
     Decl *MemberDecl = 0;
     if (!Result)
@@ -4030,9 +4023,9 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
     // Get the decl corresponding to this.
     RecordDecl *RD = RC->getDecl();
     FieldDecl *MemberDecl 
-      = dyn_cast_or_null<FieldDecl>(LookupDeclInContext(OC.U.IdentInfo, 
-                                               Decl::IDNS_Ordinary,
-                                               RD, false).getAsDecl());
+      = dyn_cast_or_null<FieldDecl>(LookupQualifiedName(RD, OC.U.IdentInfo, 
+                                                        LookupMemberName)
+                                      .getAsDecl());
     if (!MemberDecl)
       return Diag(BuiltinLoc, diag::err_typecheck_no_member)
        << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd);

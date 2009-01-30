@@ -36,10 +36,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II) {
-  Decl *SD = LookupParsedName(S, SS, &II,
-                              LookupCriteria(LookupCriteria::NestedNameSpecifier, 
-                                             /*RedeclarationOnly=*/false, 
-                                             /*CPlusPlus=*/true));
+  Decl *SD = LookupParsedName(S, &SS, &II, LookupNestedNameSpecifierName);
 
   if (SD) {
     if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
@@ -60,10 +57,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   // ordinary name lookup, which can help us produce better error
   // messages.
   if (!SD)
-    SD = LookupParsedName(S, SS, &II,
-                          LookupCriteria(LookupCriteria::Ordinary,
-                                         /*RedeclarationOnly=*/false, 
-                                         /*CPlusPlus=*/true));
+    SD = LookupParsedName(S, &SS, &II, LookupOrdinaryName);
   unsigned DiagID;
   if (SD)
     DiagID = diag::err_expected_class_or_namespace;

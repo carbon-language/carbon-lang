@@ -32,9 +32,7 @@ Sema::DeclTy *Sema::isTemplateName(IdentifierInfo &II, Scope *S,
       return 0;
     DC = static_cast<DeclContext*>(SS->getScopeRep());
   }
-  Decl *IIDecl = DC ? 
-                 LookupDeclInContext(&II, Decl::IDNS_Ordinary, DC, false) :
-                 LookupDeclInScope(&II, Decl::IDNS_Ordinary, S, false);
+  Decl *IIDecl = LookupParsedName(S, SS, &II, LookupOrdinaryName);
 
   if (IIDecl) {
     // FIXME: We need to represent templates via some kind of
@@ -96,7 +94,7 @@ Sema::DeclTy *Sema::ActOnTypeParameter(Scope *S, bool Typename,
   bool Invalid = false;
 
   if (ParamName) {
-    Decl *PrevDecl = LookupDeclInScope(ParamName, Decl::IDNS_Tag, S);
+    Decl *PrevDecl = LookupName(S, ParamName, LookupTagName);
     if (PrevDecl && PrevDecl->isTemplateParameter())
       Invalid = Invalid || DiagnoseTemplateParameterShadow(ParamNameLoc,
 							   PrevDecl);
@@ -132,7 +130,7 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
 
   IdentifierInfo *ParamName = D.getIdentifier();
   if (ParamName) {
-    Decl *PrevDecl = LookupDeclInScope(ParamName, Decl::IDNS_Tag, S);
+    Decl *PrevDecl = LookupName(S, ParamName, LookupTagName);
     if (PrevDecl && PrevDecl->isTemplateParameter())
       Invalid = Invalid || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(),
 							   PrevDecl);

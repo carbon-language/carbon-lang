@@ -2279,9 +2279,8 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   //        of type T2 or “reference to (possibly cv-qualified) T2”,
   //        when T2 is an enumeration type, are candidate functions.
   {
-    IdentifierResolver::iterator
-      I = IdResolver.begin(OpName, CurContext, true/*LookInParentCtx*/),
-      IEnd = IdResolver.end();
+    IdentifierResolver::iterator I = IdResolver.begin(OpName),
+                              IEnd = IdResolver.end();
     for (; I != IEnd; ++I) {
       // We don't need to check the identifier namespace, because
       // operator names can only be ordinary identifiers.

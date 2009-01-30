@@ -31,8 +31,8 @@ using namespace clang;
 /// OverloadeFunctionDecl that represents the overloaded functions in
 /// [I, IEnd). 
 ///
-/// The existance of this routine is temporary; LookupDecl should
-/// probably be able to return multiple results, to deal with cases of
+/// The existance of this routine is temporary; users of LookupResult
+/// should be able to handle multiple results, to deal with cases of
 /// ambiguity and overloaded functions without needing to create a
 /// Decl node.
 template<typename DeclIterator>
@@ -67,64 +67,6 @@ MaybeConstructOverloadSet(ASTContext &Context,
   }
   
   return *I;
-}
-
-/// @brief Constructs name lookup criteria.
-///
-/// @param K The kind of name that we're searching for.
-///
-/// @param RedeclarationOnly If true, then name lookup will only look
-/// into the current scope for names, not in parent scopes. This
-/// option should be set when we're looking to introduce a new
-/// declaration into scope.
-///
-/// @param CPlusPlus Whether we are performing C++ name lookup or not.
-Sema::LookupCriteria::LookupCriteria(NameKind K, bool RedeclarationOnly,
-                                     bool CPlusPlus)  
-  : Kind(K), AllowLazyBuiltinCreation(K == Ordinary), 
-    RedeclarationOnly(RedeclarationOnly) { 
-  switch (Kind) {
-  case Ordinary:
-    IDNS = Decl::IDNS_Ordinary;
-    if (CPlusPlus)
-      IDNS |= Decl::IDNS_Tag | Decl::IDNS_Member;
-    break;
-
-  case Tag:
-    IDNS = Decl::IDNS_Tag;
-    break;
-
-  case Member:
-    IDNS = Decl::IDNS_Member;
-    if (CPlusPlus)
-      IDNS |= Decl::IDNS_Tag | Decl::IDNS_Ordinary;    
-    break;
-
-  case NestedNameSpecifier:
-  case Namespace:
-    IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Member;
-    break;
-  }
-}
-
-/// isLookupResult - Determines whether D is a suitable lookup result
-/// according to the lookup criteria.
-bool Sema::LookupCriteria::isLookupResult(Decl *D) const {
-  switch (Kind) {
-  case Ordinary:
-  case Tag:
-  case Member:
-    return D->isInIdentifierNamespace(IDNS);
-
-  case NestedNameSpecifier:
-    return isa<TypedefDecl>(D) || D->isInIdentifierNamespace(Decl::IDNS_Tag);
-
-  case Namespace:
-    return isa<NamespaceDecl>(D);
-  }
-
-  assert(false && "isLookupResult always returns before this point");
-  return false;
 }
 
 /// @brief Moves the name-lookup results from Other to this LookupResult.
@@ -239,6 +181,37 @@ BasePaths *Sema::LookupResult::getBasePaths() const {
   return reinterpret_cast<BasePaths *>(First);
 }
 
+// Retrieve the set of identifier namespaces that correspond to a
+// specific kind of name lookup.
+inline unsigned 
+getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind, 
+                                          bool CPlusPlus) {
+  unsigned IDNS = 0;
+  switch (NameKind) {
+  case Sema::LookupOrdinaryName:
+    IDNS = Decl::IDNS_Ordinary;
+    if (CPlusPlus)
+      IDNS |= Decl::IDNS_Tag | Decl::IDNS_Member;
+    break;
+
+  case Sema::LookupTagName:
+    IDNS = Decl::IDNS_Tag;
+    break;
+
+  case Sema::LookupMemberName:
+    IDNS = Decl::IDNS_Member;
+    if (CPlusPlus)
+      IDNS |= Decl::IDNS_Tag | Decl::IDNS_Ordinary;    
+    break;
+
+  case Sema::LookupNestedNameSpecifierName:
+  case Sema::LookupNamespaceName:
+    IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Member;
+    break;
+  }
+  return IDNS;
+}
+
 /// @brief Perform unqualified name lookup starting from a given
 /// scope.
 ///
@@ -276,52 +249,58 @@ BasePaths *Sema::LookupResult::getBasePaths() const {
 /// declarations and possibly additional information used to diagnose
 /// ambiguities.
 Sema::LookupResult 
-Sema::LookupName(Scope *S, DeclarationName Name, LookupCriteria Criteria) {
+Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
+                 bool RedeclarationOnly) {
   if (!Name) return LookupResult::CreateLookupResult(Context, 0);
 
   if (!getLangOptions().CPlusPlus) {
     // Unqualified name lookup in C/Objective-C is purely lexical, so
     // search in the declarations attached to the name.
+    unsigned IDNS = 0;
+    switch (NameKind) {
+    case Sema::LookupOrdinaryName:
+      IDNS = Decl::IDNS_Ordinary;
+      break;
 
-    // For the purposes of unqualified name lookup, structs and unions
-    // don't have scopes at all. For example:
-    //
-    //   struct X {
-    //     struct T { int i; } x;
-    //   };
-    //
-    //   void f() {
-    //     struct T t; // okay: T is defined lexically within X, but
-    //                 // semantically at global scope
-    //   };
-    //
-    // FIXME: Is there a better way to deal with this?
-    DeclContext *SearchCtx = CurContext;
-    while (isa<RecordDecl>(SearchCtx) || isa<EnumDecl>(SearchCtx))
-      SearchCtx = SearchCtx->getParent();
-    IdentifierResolver::iterator I
-      = IdResolver.begin(Name, SearchCtx, !Criteria.RedeclarationOnly);
-    
+    case Sema::LookupTagName:
+      IDNS = Decl::IDNS_Tag;
+      break;
+
+    case Sema::LookupMemberName:
+      IDNS = Decl::IDNS_Member;
+      break;
+
+    case Sema::LookupNestedNameSpecifierName:
+    case Sema::LookupNamespaceName:
+      assert(false && "C does not perform these kinds of name lookup");
+      break;
+    }
+
     // Scan up the scope chain looking for a decl that matches this
     // identifier that is in the appropriate namespace.  This search
     // should not take long, as shadowing of names is uncommon, and
     // deep shadowing is extremely uncommon.
-    for (; I != IdResolver.end(); ++I)
-      if (Criteria.isLookupResult(*I))
+    for (IdentifierResolver::iterator I = IdResolver.begin(Name),
+                                   IEnd = IdResolver.end(); 
+         I != IEnd; ++I)
+      if ((*I)->isInIdentifierNamespace(IDNS))
         return LookupResult::CreateLookupResult(Context, *I);
   } else {
+    unsigned IDNS 
+      = getIdentifierNamespacesFromLookupNameKind(NameKind, 
+                                                  getLangOptions().CPlusPlus);
+
     // Unqualified name lookup in C++ requires looking into scopes
     // that aren't strictly lexical, and therefore we walk through the
     // context as well as walking through the scopes.
 
     // FIXME: does "true" for LookInParentCtx actually make sense?
-    IdentifierResolver::iterator 
-      I = IdResolver.begin(Name, CurContext, true/*LookInParentCtx*/),
-      IEnd = IdResolver.end();
+    IdentifierResolver::iterator I = IdResolver.begin(Name),
+                              IEnd = IdResolver.end();
     for (; S; S = S->getParent()) {
       // Check whether the IdResolver has anything in this scope.
       for (; I != IEnd && S->isDeclScope(*I); ++I) {
-        if (Criteria.isLookupResult(*I)) {
+        if (isAcceptableLookupResult(*I, NameKind, IDNS)) {
           // We found something.  Look for anything else in our scope
           // with this same name and in an acceptable identifier
           // namespace, so that we can construct an overload set if we
@@ -356,10 +335,11 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupCriteria Criteria) {
         Ctx = Ctx->getParent();
       while (Ctx && (Ctx->isNamespace() || Ctx->isRecord())) {
         // Look for declarations of this name in this scope.
-        if (LookupResult Result = LookupQualifiedName(Ctx, Name, Criteria))
+        if (LookupResult Result = LookupQualifiedName(Ctx, Name, NameKind, 
+                                                      RedeclarationOnly))
           return Result;
         
-        if (Criteria.RedeclarationOnly && !Ctx->isTransparentContext())
+        if (RedeclarationOnly && !Ctx->isTransparentContext())
           return LookupResult::CreateLookupResult(Context, 0);
 
         Ctx = Ctx->getParent();
@@ -370,9 +350,9 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupCriteria Criteria) {
   // If we didn't find a use of this identifier, and if the identifier
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
-  if (Criteria.Kind == LookupCriteria::Ordinary) {
+  if (NameKind == LookupOrdinaryName) {
     IdentifierInfo *II = Name.getAsIdentifierInfo();
-    if (Criteria.AllowLazyBuiltinCreation && II) {
+    if (II) {
       // If this is a builtin on this (or all) targets, create the decl.
       if (unsigned BuiltinID = II->getBuiltinID())
         return LookupResult::CreateLookupResult(Context,
@@ -428,25 +408,28 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupCriteria Criteria) {
 /// ambiguities.
 Sema::LookupResult
 Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
-                          LookupCriteria Criteria) {
+                          LookupNameKind NameKind, bool RedeclarationOnly) {
   assert(LookupCtx && "Sema::LookupQualifiedName requires a lookup context");
   
   if (!Name) return LookupResult::CreateLookupResult(Context, 0);
 
   // If we're performing qualified name lookup (e.g., lookup into a
   // struct), find fields as part of ordinary name lookup.
-  if (Criteria.Kind == LookupCriteria::Ordinary)
-    Criteria.IDNS |= Decl::IDNS_Member;
+  unsigned IDNS
+    = getIdentifierNamespacesFromLookupNameKind(NameKind, 
+                                                getLangOptions().CPlusPlus);
+  if (NameKind == LookupOrdinaryName)
+    IDNS |= Decl::IDNS_Member;
 
   // Perform qualified name lookup into the LookupCtx.
   DeclContext::lookup_iterator I, E;
   for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I)
-    if (Criteria.isLookupResult(*I))
+    if (isAcceptableLookupResult(*I, NameKind, IDNS))
       return LookupResult::CreateLookupResult(Context, I, E);
 
   // If this isn't a C++ class or we aren't allowed to look into base
   // classes, we're done.
-  if (Criteria.RedeclarationOnly || !isa<CXXRecordDecl>(LookupCtx))
+  if (RedeclarationOnly || !isa<CXXRecordDecl>(LookupCtx))
     return LookupResult::CreateLookupResult(Context, 0);
 
   // Perform lookup into our base classes.
@@ -455,7 +438,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 
   // Look for this member in our base classes
   if (!LookupInBases(cast<CXXRecordDecl>(LookupCtx), 
-                     MemberLookupCriteria(Name, Criteria), Paths))
+                     MemberLookupCriteria(Name, NameKind, IDNS), Paths))
     return LookupResult::CreateLookupResult(Context, 0);
 
   // C++ [class.member.lookup]p2:
@@ -552,18 +535,21 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 /// @param Name     The name of the entity that name lookup will
 /// search for.
 ///
-/// @param Criteria The criteria that will determine which entities
-/// are visible to name lookup.
-///
 /// @returns The result of qualified or unqualified name lookup.
 Sema::LookupResult
-Sema::LookupParsedName(Scope *S, const CXXScopeSpec &SS, 
-                       DeclarationName Name, LookupCriteria Criteria) {
-  if (SS.isSet())
-    return LookupQualifiedName(static_cast<DeclContext *>(SS.getScopeRep()),
-                               Name, Criteria);
+Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS, 
+                       DeclarationName Name, LookupNameKind NameKind,
+                       bool RedeclarationOnly) {
+  if (SS) {
+    if (SS->isInvalid())
+      return LookupResult::CreateLookupResult(Context, 0);
 
-  return LookupName(S, Name, Criteria);
+    if (SS->isSet())
+      return LookupQualifiedName(static_cast<DeclContext *>(SS->getScopeRep()),
+                                 Name, NameKind, RedeclarationOnly);
+  }
+
+  return LookupName(S, Name, NameKind, RedeclarationOnly);
 }
 
 /// @brief Produce a diagnostic describing the ambiguity that resulted

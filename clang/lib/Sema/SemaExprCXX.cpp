@@ -55,12 +55,12 @@ Sema::ActOnCXXOperatorFunctionIdExpr(Scope *S, SourceLocation OperatorLoc,
 Action::ExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
                      bool isType, void *TyOrExpr, SourceLocation RParenLoc) {
-  const NamespaceDecl *StdNs = GetStdNamespace();
+  NamespaceDecl *StdNs = GetStdNamespace();
   if (!StdNs)
     return Diag(OpLoc, diag::err_need_header_before_typeid);
   
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
-  Decl *TypeInfoDecl = LookupDeclInContext(TypeInfoII, Decl::IDNS_Tag, StdNs);
+  Decl *TypeInfoDecl = LookupQualifiedName(StdNs, TypeInfoII, LookupTagName);
   RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
   if (!TypeInfoRecordDecl)
     return Diag(OpLoc, diag::err_need_header_before_typeid);

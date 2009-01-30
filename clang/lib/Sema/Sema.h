@@ -559,7 +559,7 @@ public:
   /// for capturing language semantics (certain lookups will ignore
   /// certain names, for example) and for performance, since name
   /// lookup is often a bottleneck in the compilation of C++. Name
-  /// lookup criteria is specified via the LookupCriteria class.
+  /// lookup criteria is specified via the LookupCriteria enumeration.
   ///
   /// The results of name lookup can vary based on the kind of name
   /// lookup performed, the current language, and the translation
@@ -571,65 +571,26 @@ public:
   /// the ability to distinguish among them.
   //@{
 
-  /// @brief Describes the criteria by which name lookup will
-  /// determine whether a given name will be found.
-  ///
-  /// The LookupCriteria class captures the information required to
-  /// direct name lookup to find the appropriate kind of name. It
-  /// includes information about which kinds of names to consider
-  /// (ordinary names, tag names, class/struct/union member names,
-  /// namespace names, etc.) and where to look for those
-  /// names. LookupCriteria is used throughout semantic analysis to
-  /// specify how to search for a name, e.g., with the LookupName and
-  /// LookupQualifiedName functions.
-  struct LookupCriteria {
-    /// NameKind - The kinds of names that we are looking for. 
-    enum NameKind {
-      /// Ordinary - Ordinary name lookup, which finds ordinary names
-      /// (functions, variables, typedefs, etc.) in C and most kinds
-      /// of names (functions, variables, members, types, etc.) in
-      /// C++.
-      Ordinary,
-      /// Tag - Tag name lookup, which finds the names of enums,
-      /// classes, structs, and unions.
-      Tag,
-      /// Member - Member name lookup, which finds the names of
-      /// class/struct/union members.
-      Member,
-      /// NestedNameSpecifier - Look up of a name that precedes the
-      /// '::' scope resolution operator in C++. This lookup
-      /// completely ignores operator, function, and enumerator names
-      /// (C++ [basic.lookup.qual]p1).
-      NestedNameSpecifier,
-      /// Namespace - Look up a namespace name within a C++
-      /// using directive or namespace alias definition, ignoring
-      /// non-namespace names (C++ [basic.lookup.udir]p1).
-      Namespace
-    } Kind;
-
-    /// AllowLazyBuiltinCreation - If true, permits name lookup to
-    /// lazily build declarations for built-in names, e.g.,
-    /// __builtin_expect.
-    bool AllowLazyBuiltinCreation;
-
-    /// RedeclarationOnly - If true, the lookup will only
-    /// consider entities within the scope where the lookup
-    /// began. Entities that might otherwise meet the lookup criteria
-    /// but are not within the original lookup scope will be ignored.
-    bool RedeclarationOnly;
-
-    /// IDNS - Bitwise OR of the appropriate Decl::IDNS_* flags that
-    /// describe the namespaces where we should look for names. This
-    /// field is determined by the kind of name we're searching for.
-    unsigned IDNS;
-
-    LookupCriteria() 
-      : Kind(Ordinary), AllowLazyBuiltinCreation(true), 
-        RedeclarationOnly(false), IDNS(Decl::IDNS_Ordinary) { }
-
-    LookupCriteria(NameKind K, bool RedeclarationOnly, bool CPlusPlus);
-    
-    bool isLookupResult(Decl *D) const;
+  /// @brief Describes the kind of name lookup to perform.
+  enum LookupNameKind {
+    /// Ordinary name lookup, which finds ordinary names (functions,
+    /// variables, typedefs, etc.) in C and most kinds of names
+    /// (functions, variables, members, types, etc.) in C++.
+    LookupOrdinaryName = 0,
+    /// Tag name lookup, which finds the names of enums, classes,
+    /// structs, and unions.
+    LookupTagName,
+    /// Member name lookup, which finds the names of
+    /// class/struct/union members.
+    LookupMemberName,
+    /// Look up of a name that precedes the '::' scope resolution
+    /// operator in C++. This lookup completely ignores operator,
+    /// function, and enumerator names (C++ [basic.lookup.qual]p1).
+    LookupNestedNameSpecifierName,
+    /// Look up a namespace name within a C++ using directive or
+    /// namespace alias definition, ignoring non-namespace names (C++
+    /// [basic.lookup.udir]p1).
+    LookupNamespaceName
   };
 
   /// @brief Represents the results of name lookup.
@@ -775,18 +736,38 @@ public:
     BasePaths *getBasePaths() const;
   };
 
-  LookupResult LookupName(Scope *S, DeclarationName Name, 
-                          LookupCriteria Criteria);
-  LookupResult LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
-                                   LookupCriteria Criteria);
-  LookupResult LookupParsedName(Scope *S, const CXXScopeSpec &SS, 
-                                DeclarationName Name, LookupCriteria Criteria);
-  LookupResult LookupDeclInScope(DeclarationName Name, unsigned NSI, Scope *S,
-                          bool LookInParent = true);
-  LookupResult LookupDeclInContext(DeclarationName Name, unsigned NSI,
-                          const DeclContext *LookupCtx,
-                          bool LookInParent = true);
+  /// Determines whether D is a suitable lookup result according to the
+  /// lookup criteria.
+  bool isAcceptableLookupResult(Decl *D, LookupNameKind NameKind,
+                                unsigned IDNS) const {
+    switch (NameKind) {
+    case Sema::LookupOrdinaryName:
+    case Sema::LookupTagName:
+    case Sema::LookupMemberName:
+      return D->isInIdentifierNamespace(IDNS);
+      
+    case Sema::LookupNestedNameSpecifierName:
+      return isa<TypedefDecl>(D) || D->isInIdentifierNamespace(Decl::IDNS_Tag);
+      
+    case Sema::LookupNamespaceName:
+      return isa<NamespaceDecl>(D);
+    }
+    
+    assert(false && 
+           "isNameAcceptableLookupResult always returns before this point");
+    return false;
+  }
 
+  LookupResult LookupName(Scope *S, DeclarationName Name, 
+                          LookupNameKind NameKind, 
+                          bool RedeclarationOnly = false);
+  LookupResult LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
+                                   LookupNameKind NameKind, 
+                                   bool RedeclarationOnly = false);
+  LookupResult LookupParsedName(Scope *S, const CXXScopeSpec *SS, 
+                                DeclarationName Name,
+                                LookupNameKind NameKind, 
+                                bool RedeclarationOnly = false);
   bool DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
                                SourceLocation NameLoc, 
                                SourceRange LookupRange = SourceRange());

@@ -193,8 +193,9 @@ namespace clang {
     /// MemberLookupCriteria - Constructs member lookup criteria to
     /// search for a class member with the given Name.
     explicit MemberLookupCriteria(DeclarationName Name, 
-                                  Sema::LookupCriteria Criteria) 
-      : LookupBase(false), Name(Name), Criteria(Criteria) { }
+                                  Sema::LookupNameKind NameKind,
+                                  unsigned IDNS) 
+      : LookupBase(false), Name(Name), NameKind(NameKind), IDNS(IDNS) { }
 
     /// LookupBase - True if we are looking for a base class (whose
     /// type is Base). If false, we are looking for a named member of
@@ -209,9 +210,8 @@ namespace clang {
     /// LookupBase is false.
     DeclarationName Name;
 
-    /// Criteria - The criteria by which we evaluate a named member,
-    /// if LookupBase is false.
-    Sema::LookupCriteria Criteria;
+    Sema::LookupNameKind NameKind;
+    unsigned IDNS;
   };
 }
 
