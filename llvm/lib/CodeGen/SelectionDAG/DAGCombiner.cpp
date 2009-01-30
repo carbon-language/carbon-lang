@@ -3846,7 +3846,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
     }
     MVT VT = MVT::getVectorVT(DstEltVT,
                               BV->getValueType(0).getVectorNumElements());
-    return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
+    return DAG.getNode(ISD::BUILD_VECTOR, BV->getDebugLoc(), VT,
+                       &Ops[0], Ops.size());
   }
   
   // Otherwise, we're growing or shrinking the elements.  To avoid having to
@@ -3896,13 +3897,15 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
       }
       
       if (EltIsUndef)
-        Ops.push_back(DAG.getNode(ISD::UNDEF, DstEltVT));
+        Ops.push_back(DAG.getNode(ISD::UNDEF, DebugLoc::getUnknownLoc(),
+                                  DstEltVT));
       else
         Ops.push_back(DAG.getConstant(NewBits, DstEltVT));
     }
 
     MVT VT = MVT::getVectorVT(DstEltVT, Ops.size());
-    return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
+    return DAG.getNode(ISD::BUILD_VECTOR, BV->getDebugLoc(), VT,
+                       &Ops[0], Ops.size());
   }
   
   // Finally, this must be the case where we are shrinking elements: each input
@@ -3911,19 +3914,24 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
   unsigned NumOutputsPerInput = SrcBitSize/DstBitSize;
   MVT VT = MVT::getVectorVT(DstEltVT, NumOutputsPerInput*BV->getNumOperands());
   SmallVector<SDValue, 8> Ops;
+
   for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
     if (BV->getOperand(i).getOpcode() == ISD::UNDEF) {
       for (unsigned j = 0; j != NumOutputsPerInput; ++j)
-        Ops.push_back(DAG.getNode(ISD::UNDEF, DstEltVT));
+        Ops.push_back(DAG.getNode(ISD::UNDEF, DebugLoc::getUnknownLoc(),
+                                  DstEltVT));
       continue;
     }
+
     APInt OpVal = cast<ConstantSDNode>(BV->getOperand(i))->getAPIntValue();
+
     for (unsigned j = 0; j != NumOutputsPerInput; ++j) {
       APInt ThisVal = APInt(OpVal).trunc(DstBitSize);
       Ops.push_back(DAG.getConstant(ThisVal, DstEltVT));
       if (isS2V && i == 0 && j == 0 && APInt(ThisVal).zext(SrcBitSize) == OpVal)
         // Simply turn this into a SCALAR_TO_VECTOR of the new type.
-        return DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Ops[0]);
+        return DAG.getNode(ISD::SCALAR_TO_VECTOR, BV->getDebugLoc(), VT,
+                           Ops[0]);
       OpVal = OpVal.lshr(DstBitSize);
     }
 
@@ -3931,10 +3939,10 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
     if (TLI.isBigEndian())
       std::reverse(Ops.end()-NumOutputsPerInput, Ops.end());
   }
-  return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
+
+  return DAG.getNode(ISD::BUILD_VECTOR, BV->getDebugLoc(), VT,
+                     &Ops[0], Ops.size());
 }
-
-
 
 SDValue DAGCombiner::visitFADD(SDNode *N) {
   SDValue N0 = N->getOperand(0);
@@ -3949,28 +3957,28 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     if (FoldedVOp.getNode()) return FoldedVOp;
   }
   
-  // fold (fadd c1, c2) -> c1+c2
+  // fold (fadd c1, c2) -> (fadd c1, c2)
   if (N0CFP && N1CFP && VT != MVT::ppcf128)
-    return DAG.getNode(ISD::FADD, VT, N0, N1);
+    return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0, N1);
   // canonicalize constant to RHS
   if (N0CFP && !N1CFP)
-    return DAG.getNode(ISD::FADD, VT, N1, N0);
-  // fold (A + 0) -> A
+    return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N1, N0);
+  // fold (fadd A, 0) -> A
   if (UnsafeFPMath && N1CFP && N1CFP->getValueAPF().isZero())
     return N0;
-  // fold (A + (-B)) -> A-B
+  // fold (fadd A, (fneg B)) -> (fsub A, B)
   if (isNegatibleForFree(N1, LegalOperations) == 2)
-    return DAG.getNode(ISD::FSUB, VT, N0, 
+    return DAG.getNode(ISD::FSUB, N->getDebugLoc(), VT, N0,
                        GetNegatedExpression(N1, DAG, LegalOperations));
-  // fold ((-A) + B) -> B-A
+  // fold (fadd (fneg A), B) -> (fsub B, A)
   if (isNegatibleForFree(N0, LegalOperations) == 2)
-    return DAG.getNode(ISD::FSUB, VT, N1, 
+    return DAG.getNode(ISD::FSUB, N->getDebugLoc(), VT, N1,
                        GetNegatedExpression(N0, DAG, LegalOperations));
   
   // If allowed, fold (fadd (fadd x, c1), c2) -> (fadd x, (fadd c1, c2))
   if (UnsafeFPMath && N1CFP && N0.getOpcode() == ISD::FADD &&
       N0.getNode()->hasOneUse() && isa<ConstantFPSDNode>(N0.getOperand(1)))
-    return DAG.getNode(ISD::FADD, VT, N0.getOperand(0),
+    return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getNode(ISD::FADD, VT, N0.getOperand(1), N1));
   
   return SDValue();
@@ -3992,19 +4000,19 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   // fold (fsub c1, c2) -> c1-c2
   if (N0CFP && N1CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FSUB, VT, N0, N1);
-  // fold (A-0) -> A
+  // fold (fsub A, 0) -> A
   if (UnsafeFPMath && N1CFP && N1CFP->getValueAPF().isZero())
     return N0;
-  // fold (0-B) -> -B
+  // fold (fsub 0, B) -> -B
   if (UnsafeFPMath && N0CFP && N0CFP->getValueAPF().isZero()) {
     if (isNegatibleForFree(N1, LegalOperations))
       return GetNegatedExpression(N1, DAG, LegalOperations);
     if (!LegalOperations || TLI.isOperationLegal(ISD::FNEG, VT))
-      return DAG.getNode(ISD::FNEG, VT, N1);
+      return DAG.getNode(ISD::FNEG, N->getDebugLoc(), VT, N1);
   }
-  // fold (A-(-B)) -> A+B
+  // fold (fsub A, (fneg B)) -> (fadd A, B)
   if (isNegatibleForFree(N1, LegalOperations))
-    return DAG.getNode(ISD::FADD, VT, N0,
+    return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0,
                        GetNegatedExpression(N1, DAG, LegalOperations));
   
   return SDValue();
