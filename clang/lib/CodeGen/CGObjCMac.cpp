@@ -3836,7 +3836,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
                              Init,
                              Prefix + OID->getNameAsString(),
                              &CGM.getModule());
-  
+  GV->setAlignment(GetPointerAlign()); 
   GV->setSection("__DATA, __objc_const");
                  
   UsedGlobals.push_back(GV);
