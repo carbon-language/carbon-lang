@@ -150,7 +150,9 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   // #include directive was at.
   SourceManager &SourceMgr = PP.getSourceManager();
   if (Reason == PPCallbacks::EnterFile) {
-    MoveToLine(SourceMgr.getPresumedLoc(Loc).getIncludeLoc());
+    SourceLocation IncludeLoc = SourceMgr.getPresumedLoc(Loc).getIncludeLoc();
+    if (IncludeLoc.isValid())
+      MoveToLine(IncludeLoc);
   } else if (Reason == PPCallbacks::SystemHeaderPragma) {
     MoveToLine(Loc);
     
