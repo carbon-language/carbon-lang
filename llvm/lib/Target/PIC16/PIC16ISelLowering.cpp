@@ -1288,23 +1288,25 @@ SDValue PIC16TargetLowering::getPIC16Cmp(SDValue LHS, SDValue RHS,
   }
 
   PIC16CC = DAG.getConstant(CondCode, MVT::i8);
-  SDVTList VTs = DAG.getVTList (MVT::i8, MVT::Flag);
 
   // These are signed comparisons. 
   SDValue Mask = DAG.getConstant(128, MVT::i8);
   if (isSignedComparison(CondCode)) {
-    LHS = DAG.getNode (ISD::XOR, MVT::i8, LHS, Mask); 
+    LHS = DAG.getNode (ISD::XOR, MVT::i8, LHS, Mask);
     RHS = DAG.getNode (ISD::XOR, MVT::i8, RHS, Mask); 
   }
+
+  SDVTList VTs = DAG.getVTList (MVT::i8, MVT::Flag);
   // We can use a subtract operation to set the condition codes. But
   // we need to put one operand in memory if required.
-  // Nothing to do if the first operand is already a direct load and it has
-  // only one use.
-  if (! (isDirectLoad(LHS) && LHS.hasOneUse()))
-    // Put first operand on stack.
-    LHS = ConvertToMemOperand (LHS, DAG);
+  // Nothing to do if the first operand is already a valid type (direct load 
+  // for subwf and literal for sublw) and it is used by this operation only. 
+  if ((LHS.getOpcode() == ISD::Constant || isDirectLoad(LHS)) 
+      && LHS.hasOneUse())
+    return DAG.getNode(PIC16ISD::SUBCC, VTs, LHS, RHS);
 
-  SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Flag);
+  // else convert the first operand to mem.
+  LHS = ConvertToMemOperand (LHS, DAG);
   return DAG.getNode(PIC16ISD::SUBCC, VTs, LHS, RHS);
 }
 
