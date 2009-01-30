@@ -2448,7 +2448,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (getLangOptions().LaxVectorConversions &&
         lhsType->isVectorType() && rhsType->isVectorType()) {
       if (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType))
-        return Compatible;
+        return IncompatibleVectors;
     }
     return Incompatible;
   }      
@@ -2599,13 +2599,17 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
 
   // Handle the case of a vector & extvector type of the same size and element
   // type.  It would be nice if we only had one vector type someday.
-  if (getLangOptions().LaxVectorConversions)
-    if (const VectorType *LV = lhsType->getAsVectorType())
+  if (getLangOptions().LaxVectorConversions) {
+    // FIXME: Should we warn here?
+    if (const VectorType *LV = lhsType->getAsVectorType()) {
       if (const VectorType *RV = rhsType->getAsVectorType())
         if (LV->getElementType() == RV->getElementType() &&
-            LV->getNumElements() == RV->getNumElements())
+            LV->getNumElements() == RV->getNumElements()) {
           return lhsType->isExtVectorType() ? lhsType : rhsType;
-
+        }
+    }
+  }
+  
   // If the lhs is an extended vector and the rhs is a scalar of the same type
   // or a literal, promote the rhs to the vector type.
   if (const ExtVectorType *V = lhsType->getAsExtVectorType()) {
@@ -4358,6 +4362,9 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     // FIXME: Diagnose the problem in ObjCQualifiedIdTypesAreCompatible, since 
     // it can give a more specific diagnostic.
     DiagKind = diag::warn_incompatible_qualified_id;
+    break;
+  case IncompatibleVectors:
+    DiagKind = diag::warn_incompatible_vectors;
     break;
   case Incompatible:
     DiagKind = diag::err_typecheck_convert_incompatible;

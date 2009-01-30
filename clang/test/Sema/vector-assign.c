@@ -1,4 +1,4 @@
-// RUN: clang %s -verify -fsyntax-only -flax-vector-conversions
+// RUN: clang %s -verify -fsyntax-only
 typedef unsigned int v2u __attribute__ ((vector_size (8)));
 typedef signed int v2s __attribute__ ((vector_size (8)));
 typedef signed int v1s __attribute__ ((vector_size (4)));
@@ -12,30 +12,30 @@ void f() {
   v2f v4;
   v4ss v5;
   
-  v1 = v2; 
+  v1 = v2; // expected-warning {{incompatible vector types assigning 'v2u', expected 'v2s'}}
   v1 = v3; // expected-error {{incompatible type assigning 'v1s', expected 'v2s'}}
-  v1 = v4; 
-  v1 = v5;
+  v1 = v4; // expected-warning {{incompatible vector types assigning 'v2f', expected 'v2s'}}
+  v1 = v5; // expected-warning {{incompatible vector types assigning 'v4ss', expected 'v2s'}}
   
-  v2 = v1;
+  v2 = v1; // expected-warning {{incompatible vector types assigning 'v2s', expected 'v2u'}}
   v2 = v3; // expected-error {{incompatible type assigning 'v1s', expected 'v2u'}}
-  v2 = v4; 
-  v2 = v5;
+  v2 = v4; // expected-warning {{incompatible vector types assigning 'v2f', expected 'v2u'}}
+  v2 = v5; // expected-warning {{incompatible vector types assigning 'v4ss', expected 'v2u'}}
   
   v3 = v1; // expected-error {{incompatible type assigning 'v2s', expected 'v1s'}}
   v3 = v2; // expected-error {{incompatible type assigning 'v2u', expected 'v1s'}}
   v3 = v4; // expected-error {{incompatible type assigning 'v2f', expected 'v1s'}}
   v3 = v5; // expected-error {{incompatible type assigning 'v4ss', expected 'v1s'}}
   
-  v4 = v1; 
-  v4 = v2; 
+  v4 = v1; // expected-warning {{incompatible vector types assigning 'v2s', expected 'v2f'}}
+  v4 = v2; // expected-warning {{incompatible vector types assigning 'v2u', expected 'v2f'}}
   v4 = v3; // expected-error {{incompatible type assigning 'v1s', expected 'v2f'}}
-  v4 = v5;
+  v4 = v5; // expected-warning {{incompatible vector types assigning 'v4ss', expected 'v2f'}}
   
-  v5 = v1;
-  v5 = v2;
+  v5 = v1; // expected-warning {{incompatible vector types assigning 'v2s', expected 'v4ss'}}
+  v5 = v2; // expected-warning {{incompatible vector types assigning 'v2u', expected 'v4ss'}}
   v5 = v3; // expected-error {{incompatible type assigning 'v1s', expected 'v4ss'}}
-  v5 = v4;
+  v5 = v4; // expected-warning {{incompatible vector types assigning 'v2f', expected 'v4ss'}}
 }
 
 // PR2263

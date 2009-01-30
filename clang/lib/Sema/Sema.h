@@ -1584,6 +1584,10 @@ public:
     /// c/v/r qualifiers, which we accept as an extension.
     CompatiblePointerDiscardsQualifiers,
 
+    /// IncompatibleVectors - The assignment is between two vector types that
+    /// have the same size, which we accept as an extension.
+    IncompatibleVectors,
+    
     /// IntToBlockPointer - The assignment converts an int to a block 
     /// pointer. We disallow this.
     IntToBlockPointer,

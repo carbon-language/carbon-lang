@@ -66,7 +66,8 @@ public:
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
     CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
-    LaxVectorConversions = Exceptions = NeXTRuntime = 0;
+    Exceptions = NeXTRuntime = 0;
+    LaxVectorConversions = 1;
     
     // FIXME: The default should be 1.
     ThreadsafeStatics = 0;

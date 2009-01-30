@@ -486,10 +486,10 @@ WritableStrings("fwritable-strings",
               llvm::cl::desc("Store string literals as writable data"));
 
 static llvm::cl::opt<bool>
-LaxVectorConversions("flax-vector-conversions",
-                     llvm::cl::desc("Allow implicit conversions between vectors"
-                                    " with a different number of elements or "
-                                    "different element types"));
+NoLaxVectorConversions("fnolax-vector-conversions",
+                       llvm::cl::desc("Disallow implicit conversions between "
+                                      "vectors with a different number of "
+                                      "elements or different element types"));
 static llvm::cl::opt<bool>
 EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"), llvm::cl::ValueDisallowed);
 
@@ -620,7 +620,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     Options.PascalStrings = PascalStrings;
   Options.Microsoft = MSExtensions;
   Options.WritableStrings = WritableStrings;
-  Options.LaxVectorConversions = LaxVectorConversions;
+  if (NoLaxVectorConversions.getPosition())
+      Options.LaxVectorConversions = 0;
   Options.Exceptions = Exceptions;
   if (EnableBlocks.getPosition() || DisableBlocks.getPosition())
     Options.Blocks = EnableBlocks;

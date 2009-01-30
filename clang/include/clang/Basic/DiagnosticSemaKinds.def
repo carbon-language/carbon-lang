@@ -878,6 +878,8 @@ DIAG(ext_typecheck_convert_incompatible_pointer, EXTWARN,
      "incompatible pointer types %2 %1, expected %0")
 DIAG(ext_typecheck_convert_discards_qualifiers, EXTWARN,
      "%2 %1 discards qualifiers, expected %0")
+DIAG(warn_incompatible_vectors, WARNING,
+     "incompatible vector types %2 %1, expected %0")
 DIAG(err_int_to_block_pointer, ERROR,
      "invalid conversion %2 integer %1, expected block pointer %0")
 DIAG(err_typecheck_comparison_of_distinct_blocks, ERROR,
