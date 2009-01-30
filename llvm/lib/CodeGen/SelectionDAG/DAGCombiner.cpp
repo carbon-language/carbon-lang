@@ -1016,7 +1016,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     return DAG.FoldConstantArithmetic(ISD::ADD, VT, N0C, N1C);
   // canonicalize constant to RHS
   if (N0C && !N1C)
-    return DAG.getNode(ISD::ADD, VT, N1, N0);
+    return DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N1, N0);
   // fold (add x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -1030,7 +1030,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   // fold ((c1-A)+c2) -> (c1+c2)-A
   if (N1C && N0.getOpcode() == ISD::SUB)
     if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.getOperand(0)))
-      return DAG.getNode(ISD::SUB, VT,
+      return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
                          DAG.getConstant(N1C->getAPIntValue()+
                                          N0C->getAPIntValue(), VT),
                          N0.getOperand(1));
@@ -1041,11 +1041,11 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   // fold ((0-A) + B) -> B-A
   if (N0.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N0.getOperand(0)) &&
       cast<ConstantSDNode>(N0.getOperand(0))->isNullValue())
-    return DAG.getNode(ISD::SUB, VT, N1, N0.getOperand(1));
+    return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N1, N0.getOperand(1));
   // fold (A + (0-B)) -> A-B
   if (N1.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N1.getOperand(0)) &&
       cast<ConstantSDNode>(N1.getOperand(0))->isNullValue())
-    return DAG.getNode(ISD::SUB, VT, N0, N1.getOperand(1));
+    return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N0, N1.getOperand(1));
   // fold (A+(B-A)) -> B
   if (N1.getOpcode() == ISD::SUB && N0 == N1.getOperand(1))
     return N1.getOperand(0);
@@ -1054,23 +1054,20 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     return N0.getOperand(0);
   // fold (A+(B-(A+C))) to (B-C)
   if (N1.getOpcode() == ISD::SUB && N1.getOperand(1).getOpcode() == ISD::ADD &&
-      N0 == N1.getOperand(1).getOperand(0)) {
-    return DAG.getNode(ISD::SUB, VT, N1.getOperand(0),
+      N0 == N1.getOperand(1).getOperand(0))
+    return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N1.getOperand(0),
                        N1.getOperand(1).getOperand(1));
-  }
   // fold (A+(B-(C+A))) to (B-C)
   if (N1.getOpcode() == ISD::SUB && N1.getOperand(1).getOpcode() == ISD::ADD &&
-      N0 == N1.getOperand(1).getOperand(1)) {
-    return DAG.getNode(ISD::SUB, VT, N1.getOperand(0),
+      N0 == N1.getOperand(1).getOperand(1))
+    return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N1.getOperand(0),
                        N1.getOperand(1).getOperand(0));
-  }
   // fold (A+((B-A)+or-C)) to (B+or-C)
   if ((N1.getOpcode() == ISD::SUB || N1.getOpcode() == ISD::ADD) &&
       N1.getOperand(0).getOpcode() == ISD::SUB &&
-      N0 == N1.getOperand(0).getOperand(1)) {
-    return DAG.getNode(N1.getOpcode(), VT, N1.getOperand(0).getOperand(0),
-                       N1.getOperand(1));
-  }
+      N0 == N1.getOperand(0).getOperand(1))
+    return DAG.getNode(N1.getOpcode(), N->getDebugLoc(), VT,
+                       N1.getOperand(0).getOperand(0), N1.getOperand(1));
 
   // fold (A-B)+(C-D) to (A+C)-(B+D) when A or C is constant
   if (N0.getOpcode() == ISD::SUB && N1.getOpcode() == ISD::SUB) {
@@ -1078,11 +1075,11 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     SDValue N01 = N0.getOperand(1);
     SDValue N10 = N1.getOperand(0);
     SDValue N11 = N1.getOperand(1);
-    if (isa<ConstantSDNode>(N00) || isa<ConstantSDNode>(N10)) {
-      return DAG.getNode(ISD::SUB, VT,
-                 DAG.getNode(ISD::ADD, VT, N00, N10),
-                 DAG.getNode(ISD::ADD, VT, N01, N11));
-    }
+
+    if (isa<ConstantSDNode>(N00) || isa<ConstantSDNode>(N10))
+      return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
+                         DAG.getNode(ISD::ADD, N0.getDebugLoc(), VT, N00, N10),
+                         DAG.getNode(ISD::ADD, N1.getDebugLoc(), VT, N01, N11));
   }
 
   if (!VT.isVector() && SimplifyDemandedBits(SDValue(N, 0)))
@@ -1094,6 +1091,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     APInt RHSZero, RHSOne;
     APInt Mask = APInt::getAllOnesValue(VT.getSizeInBits());
     DAG.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
+
     if (LHSZero.getBoolValue()) {
       DAG.ComputeMaskedBits(N1, Mask, RHSZero, RHSOne);
       
@@ -1101,7 +1099,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
       // If all possibly-set bits on the RHS are clear on the LHS, return an OR.
       if ((RHSZero & (~LHSZero & Mask)) == (~LHSZero & Mask) ||
           (LHSZero & (~RHSZero & Mask)) == (~RHSZero & Mask))
-        return DAG.getNode(ISD::OR, VT, N0, N1);
+        return DAG.getNode(ISD::OR, N->getDebugLoc(), VT, N0, N1);
     }
   }
 
