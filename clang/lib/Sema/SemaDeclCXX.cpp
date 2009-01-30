@@ -1867,7 +1867,6 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   //             the temporary or to a sub-object within the
   //             temporary.
   //
-  //
   //          The constructor that would be used to make the copy
   //          shall be callable whether or not the copy is actually
   //          done.
@@ -1912,6 +1911,20 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
            diag::err_reference_init_drops_quals)
         << T1 << (InitLvalue != Expr::LV_Valid? "temporary" : "value")
         << T2 << Init->getSourceRange();
+    return true;
+  }
+
+  // If at least one of the types is a class type, the types are not
+  // related, and we aren't allowed any user conversions, the
+  // reference binding fails. This case is important for breaking
+  // recursion, since TryImplicitConversion below will attempt to
+  // create a temporary through the use of a copy constructor.
+  if (SuppressUserConversions && RefRelationship == Ref_Incompatible &&
+      (T1->isRecordType() || T2->isRecordType())) {
+    if (!ICS)
+      Diag(Init->getSourceRange().getBegin(),
+           diag::err_typecheck_convert_incompatible)
+        << DeclType << Init->getType() << "initializing" << Init->getSourceRange();
     return true;
   }
 

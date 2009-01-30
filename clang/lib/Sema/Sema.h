@@ -433,7 +433,8 @@ public:
   bool IsQualificationConversion(QualType FromType, QualType ToType);
   bool IsUserDefinedConversion(Expr *From, QualType ToType, 
                                UserDefinedConversionSequence& User,
-                               bool AllowExplicit = false);
+                               bool AllowConversionFunctions,
+                               bool AllowExplicit);
 
   ImplicitConversionSequence::CompareKind 
   CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,

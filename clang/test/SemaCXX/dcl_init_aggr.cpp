@@ -96,7 +96,7 @@ C2 c2;
 D2 d2;
 B2 b2 = { 4, a2, a2 };
 B2 b2_2 = { 4, d2, 0 };
-// FIXME: B2 b2_3 = { c2, a2, a2 };
+B2 b2_3 = { c2, a2, a2 };
 
 // C++ [dcl.init.aggr]p15:
 union u { int a; char* b; };

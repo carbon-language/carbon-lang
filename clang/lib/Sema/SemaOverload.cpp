@@ -366,13 +366,13 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
 ImplicitConversionSequence
 Sema::TryImplicitConversion(Expr* From, QualType ToType,
                             bool SuppressUserConversions,
-                            bool AllowExplict)
+                            bool AllowExplicit)
 {
   ImplicitConversionSequence ICS;
   if (IsStandardConversion(From, ToType, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
-  else if (!SuppressUserConversions &&
-           IsUserDefinedConversion(From, ToType, ICS.UserDefined, AllowExplict)) {
+  else if (IsUserDefinedConversion(From, ToType, ICS.UserDefined, 
+                                   !SuppressUserConversions, AllowExplicit)) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
     // C++ [over.ics.user]p4:
     //   A conversion of an expression of class type to the same class
@@ -396,6 +396,17 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
           ICS.Standard.Second = ICK_Derived_To_Base;
       }
     }
+
+    // C++ [over.best.ics]p4:
+    //   However, when considering the argument of a user-defined
+    //   conversion function that is a candidate by 13.3.1.3 when
+    //   invoked for the copying of the temporary in the second step
+    //   of a class copy-initialization, or by 13.3.1.4, 13.3.1.5, or
+    //   13.3.1.6 in all cases, only standard conversion sequences and
+    //   ellipsis conversion sequences are allowed.
+    if (SuppressUserConversions &&
+        ICS.ConversionKind == ImplicitConversionSequence::UserDefinedConversion)
+      ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
   } else
     ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
 
@@ -1188,17 +1199,23 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType)
     FromType.getUnqualifiedType() == ToType.getUnqualifiedType();
 }
 
-/// IsUserDefinedConversion - Determines whether there is a
-/// user-defined conversion sequence (C++ [over.ics.user]) that
-/// converts expression From to the type ToType. If such a conversion
-/// exists, User will contain the user-defined conversion sequence
-/// that performs such a conversion and this routine will return
-/// true. Otherwise, this routine returns false and User is
-/// unspecified. AllowExplicit is true if the conversion should
-/// consider C++0x "explicit" conversion functions as well as
-/// non-explicit conversion functions (C++0x [class.conv.fct]p2).
+/// Determines whether there is a user-defined conversion sequence
+/// (C++ [over.ics.user]) that converts expression From to the type
+/// ToType. If such a conversion exists, User will contain the
+/// user-defined conversion sequence that performs such a conversion
+/// and this routine will return true. Otherwise, this routine returns
+/// false and User is unspecified.
+///
+/// \param AllowConversionFunctions true if the conversion should
+/// consider conversion functions at all. If false, only constructors
+/// will be considered.
+///
+/// \param AllowExplicit  true if the conversion should consider C++0x
+/// "explicit" conversion functions as well as non-explicit conversion
+/// functions (C++0x [class.conv.fct]p2).
 bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType, 
                                    UserDefinedConversionSequence& User,
+                                   bool AllowConversionFunctions,
                                    bool AllowExplicit)
 {
   OverloadCandidateSet CandidateSet;
@@ -1226,8 +1243,11 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
     }
   }
 
-  if (const CXXRecordType *FromRecordType
-        = dyn_cast_or_null<CXXRecordType>(From->getType()->getAsRecordType())) {
+  if (!AllowConversionFunctions) {
+    // Don't allow any conversion functions to enter the overload set.
+  } else if (const CXXRecordType *FromRecordType
+               = dyn_cast_or_null<CXXRecordType>(
+                                        From->getType()->getAsRecordType())) {
     // Add all of the conversion functions as candidates.
     // FIXME: Look for conversions in base classes!
     CXXRecordDecl *FromRecordDecl = FromRecordType->getDecl();

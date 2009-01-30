@@ -35,3 +35,35 @@ void h(volatile A&);
 void h_test(C c) {
   h(c);
 }
+
+// Test conversion followed by copy-construction
+struct FunkyDerived;
+
+struct Base { 
+  Base(const FunkyDerived&);
+};
+
+struct Derived : Base { };
+
+struct FunkyDerived : Base { };
+
+struct ConvertibleToBase {
+  operator Base();
+};
+
+struct ConvertibleToDerived {
+  operator Derived();
+};
+
+struct ConvertibleToFunkyDerived {
+  operator FunkyDerived();
+};
+
+void test_conversion(ConvertibleToBase ctb, ConvertibleToDerived ctd,
+                     ConvertibleToFunkyDerived ctfd) {
+  Base b1 = ctb;
+  Base b2(ctb);
+  Base b3 = ctd;
+  Base b4(ctd);
+  Base b5 = ctfd; // expected-error{{cannot initialize 'b5' with an lvalue of type 'struct ConvertibleToFunkyDerived'}}
+}
