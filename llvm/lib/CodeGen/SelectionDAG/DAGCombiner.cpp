@@ -1511,18 +1511,19 @@ SDValue DAGCombiner::visitSREM(SDNode *N) {
   // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
   if (!VT.isVector()) {
     if (DAG.SignBitIsZero(N1) && DAG.SignBitIsZero(N0))
-      return DAG.getNode(ISD::UREM, VT, N0, N1);
+      return DAG.getNode(ISD::UREM, N->getDebugLoc(), VT, N0, N1);
   }
   
   // If X/C can be simplified by the division-by-constant logic, lower
   // X%C to the equivalent of X-X/C*C.
   if (N1C && !N1C->isNullValue()) {
-    SDValue Div = DAG.getNode(ISD::SDIV, VT, N0, N1);
+    SDValue Div = DAG.getNode(ISD::SDIV, N->getDebugLoc(), VT, N0, N1);
     AddToWorkList(Div.getNode());
     SDValue OptimizedDiv = combine(Div.getNode());
     if (OptimizedDiv.getNode() && OptimizedDiv.getNode() != Div.getNode()) {
-      SDValue Mul = DAG.getNode(ISD::MUL, VT, OptimizedDiv, N1);
-      SDValue Sub = DAG.getNode(ISD::SUB, VT, N0, Mul);
+      SDValue Mul = DAG.getNode(ISD::MUL, N->getDebugLoc(), VT,
+                                OptimizedDiv, N1);
+      SDValue Sub = DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N0, Mul);
       AddToWorkList(Mul.getNode());
       return Sub;
     }
@@ -1550,18 +1551,18 @@ SDValue DAGCombiner::visitUREM(SDNode *N) {
     return DAG.FoldConstantArithmetic(ISD::UREM, VT, N0C, N1C);
   // fold (urem x, pow2) -> (and x, pow2-1)
   if (N1C && !N1C->isNullValue() && N1C->getAPIntValue().isPowerOf2())
-    return DAG.getNode(ISD::AND, VT, N0,
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, N0,
                        DAG.getConstant(N1C->getAPIntValue()-1,VT));
   // fold (urem x, (shl pow2, y)) -> (and x, (add (shl pow2, y), -1))
   if (N1.getOpcode() == ISD::SHL) {
     if (ConstantSDNode *SHC = dyn_cast<ConstantSDNode>(N1.getOperand(0))) {
       if (SHC->getAPIntValue().isPowerOf2()) {
         SDValue Add =
-          DAG.getNode(ISD::ADD, VT, N1,
+          DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N1,
                  DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()),
                                  VT));
         AddToWorkList(Add.getNode());
-        return DAG.getNode(ISD::AND, VT, N0, Add);
+        return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, N0, Add);
       }
     }
   }
@@ -1569,12 +1570,13 @@ SDValue DAGCombiner::visitUREM(SDNode *N) {
   // If X/C can be simplified by the division-by-constant logic, lower
   // X%C to the equivalent of X-X/C*C.
   if (N1C && !N1C->isNullValue()) {
-    SDValue Div = DAG.getNode(ISD::UDIV, VT, N0, N1);
+    SDValue Div = DAG.getNode(ISD::UDIV, N->getDebugLoc(), VT, N0, N1);
     AddToWorkList(Div.getNode());
     SDValue OptimizedDiv = combine(Div.getNode());
     if (OptimizedDiv.getNode() && OptimizedDiv.getNode() != Div.getNode()) {
-      SDValue Mul = DAG.getNode(ISD::MUL, VT, OptimizedDiv, N1);
-      SDValue Sub = DAG.getNode(ISD::SUB, VT, N0, Mul);
+      SDValue Mul = DAG.getNode(ISD::MUL, N->getDebugLoc(), VT,
+                                OptimizedDiv, N1);
+      SDValue Sub = DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N0, Mul);
       AddToWorkList(Mul.getNode());
       return Sub;
     }
