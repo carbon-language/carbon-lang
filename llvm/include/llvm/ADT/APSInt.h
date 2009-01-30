@@ -236,16 +236,16 @@ public:
 
   /// getMaxValue - Return the APSInt representing the maximum integer value
   ///  with the given bit width and signedness.
-  static APSInt getMaxValue(uint32_t numBits, bool Signed) {
-    return APSInt(Signed ? APInt::getSignedMaxValue(numBits)
-                         : APInt::getMaxValue(numBits), Signed);
+  static APSInt getMaxValue(uint32_t numBits, bool Unsigned) {
+    return APSInt(Unsigned ? APInt::getMaxValue(numBits)
+                           : APInt::getSignedMaxValue(numBits), Unsigned);
   }
 
   /// getMinValue - Return the APSInt representing the minimum integer value
   ///  with the given bit width and signedness.
-  static APSInt getMinValue(uint32_t numBits, bool Signed) {
-    return APSInt(Signed ? APInt::getSignedMinValue(numBits)
-                         : APInt::getMinValue(numBits), Signed);
+  static APSInt getMinValue(uint32_t numBits, bool Unsigned) {
+    return APSInt(Unsigned ? APInt::getMinValue(numBits)
+                           : APInt::getSignedMinValue(numBits), Unsigned);
   }
 
   /// Profile - Used to insert APSInt objects, or objects that contain APSInt
