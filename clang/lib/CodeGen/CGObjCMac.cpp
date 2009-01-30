@@ -363,6 +363,11 @@ protected:
   /// defined. The return value has type ProtocolPtrTy.
   llvm::Constant *GetProtocolRef(const ObjCProtocolDecl *PD);
   
+  /// GetPointerAlign - get alignment of a pointer.
+  uint32_t GetPointerAlign(void) {
+    return CGM.getContext().getTypeAlign(CGM.getContext().VoidPtrTy) >> 3;
+  }
+  
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
   { }
@@ -3335,6 +3340,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
                            std::string("\01l_OBJC_METACLASS_RO_$_")+ClassName :
                            std::string("\01l_OBJC_CLASS_RO_$_")+ClassName,
                            &CGM.getModule());
+  CLASS_RO_GV->setAlignment(GetPointerAlign());
   CLASS_RO_GV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(CLASS_RO_GV);
   return CLASS_RO_GV;
@@ -3377,6 +3383,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
                              ClassName,
                              &CGM.getModule());
   GV->setSection("__DATA, __objc_const");
+  GV->setAlignment(GetPointerAlign());
   UsedGlobals.push_back(GV);
   return GV;
 }
@@ -3644,6 +3651,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
                                Init,
                                ExtCatName,
                                &CGM.getModule());
+  GCATV->setAlignment(GetPointerAlign());
   GCATV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(GCATV);
   DefinedCategories.push_back(GCATV);
@@ -3700,6 +3708,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
                              Init,
                              Name,
                              &CGM.getModule());
+  GV->setAlignment(GetPointerAlign());
   GV->setSection(Section);
   UsedGlobals.push_back(GV);
   return llvm::ConstantExpr::getBitCast(GV,
@@ -3953,6 +3962,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                              Init, 
                              std::string("\01l_OBJC_PROTOCOL_$_")+ProtocolName,
                              &CGM.getModule());
+    Entry->setAlignment(GetPointerAlign());
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
   }
   Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
@@ -3967,6 +3977,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                                       std::string("\01l_OBJC_LABEL_PROTOCOL_$_")
                                                   +ProtocolName,
                                       &CGM.getModule());
+  PTGV->setAlignment(GetPointerAlign());
   PTGV->setSection("__DATA, __objc_protolist");
   PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   UsedGlobals.push_back(PTGV);
@@ -4015,6 +4026,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
                                 Name,
                                 &CGM.getModule());
   GV->setSection("__DATA, __objc_const");
+  GV->setAlignment(GetPointerAlign());
   UsedGlobals.push_back(GV);
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListnfABIPtrTy);
 }
