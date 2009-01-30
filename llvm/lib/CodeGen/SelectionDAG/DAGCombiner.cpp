@@ -3405,14 +3405,14 @@ SDValue DAGCombiner::GetDemandedBits(SDValue V, const APInt &Mask) {
     if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(V.getOperand(1))) {
       // See if we can recursively simplify the LHS.
       unsigned Amt = RHSC->getZExtValue();
+
       // Watch out for shift count overflow though.
       if (Amt >= Mask.getBitWidth()) break;
       APInt NewMask = Mask << Amt;
       SDValue SimplifyLHS = GetDemandedBits(V.getOperand(0), NewMask);
-      if (SimplifyLHS.getNode()) {
-        return DAG.getNode(ISD::SRL, V.getValueType(), 
+      if (SimplifyLHS.getNode())
+        return DAG.getNode(ISD::SRL, V.getDebugLoc(), V.getValueType(), 
                            SimplifyLHS, V.getOperand(1));
-      }
     }
   }
   return SDValue();
@@ -3465,6 +3465,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       !cast<LoadSDNode>(N0)->isVolatile()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT PtrType = N0.getOperand(1).getValueType();
+
     // For big endian targets, we need to adjust the offset to the pointer to
     // load the correct bytes.
     if (TLI.isBigEndian()) {
@@ -3472,29 +3473,33 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       unsigned EVTStoreBits = EVT.getStoreSizeInBits();
       ShAmt = LVTStoreBits - EVTStoreBits - ShAmt;
     }
+
     uint64_t PtrOff =  ShAmt / 8;
     unsigned NewAlign = MinAlign(LN0->getAlignment(), PtrOff);
-    SDValue NewPtr = DAG.getNode(ISD::ADD, PtrType, LN0->getBasePtr(),
+    SDValue NewPtr = DAG.getNode(ISD::ADD, DebugLoc::getUnknownLoc(),
+                                 PtrType, LN0->getBasePtr(),
                                  DAG.getConstant(PtrOff, PtrType));
     AddToWorkList(NewPtr.getNode());
+
     SDValue Load = (ExtType == ISD::NON_EXTLOAD)
-      ? DAG.getLoad(VT, LN0->getChain(), NewPtr,
+      ? DAG.getLoad(VT, N0.getDebugLoc(), LN0->getChain(), NewPtr,
                     LN0->getSrcValue(), LN0->getSrcValueOffset() + PtrOff,
                     LN0->isVolatile(), NewAlign)
-      : DAG.getExtLoad(ExtType, VT, LN0->getChain(), NewPtr,
+      : DAG.getExtLoad(ExtType, N0.getDebugLoc(), VT, LN0->getChain(), NewPtr,
                        LN0->getSrcValue(), LN0->getSrcValueOffset() + PtrOff,
                        EVT, LN0->isVolatile(), NewAlign);
+
     // Replace the old load's chain with the new load's chain.
     WorkListRemover DeadNodes(*this);
     DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1),
                                   &DeadNodes);
+
     // Return the new loaded value.
     return Load;
   }
 
   return SDValue();
 }
-
 
 SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   SDValue N0 = N->getOperand(0);
@@ -3506,7 +3511,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   
   // fold (sext_in_reg c1) -> c1
   if (isa<ConstantSDNode>(N0) || N0.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0, N1);
+    return DAG.getNode(ISD::SIGN_EXTEND_INREG, N->getDebugLoc(), VT, N0, N1);
   
   // If the input is already sign extended, just drop the extension.
   if (DAG.ComputeNumSignBits(N0) >= VT.getSizeInBits()-EVTBits+1)
@@ -3515,7 +3520,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   // fold (sext_in_reg (sext_in_reg x, VT2), VT1) -> (sext_in_reg x, minVT) pt2
   if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
       EVT.bitsLT(cast<VTSDNode>(N0.getOperand(1))->getVT())) {
-    return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0), N1);
+    return DAG.getNode(ISD::SIGN_EXTEND_INREG, N->getDebugLoc(), VT,
+                       N0.getOperand(0), N1);
   }
 
   // fold (sext_in_reg (sext x)) -> (sext x)
@@ -3524,7 +3530,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND) {
     SDValue N00 = N0.getOperand(0);
     if (N00.getValueType().getSizeInBits() < EVTBits)
-      return DAG.getNode(ISD::SIGN_EXTEND, VT, N00, N1);
+      return DAG.getNode(ISD::SIGN_EXTEND, N->getDebugLoc(), VT, N00, N1);
   }
 
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is known zero.
@@ -3542,8 +3548,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   if (NarrowLoad.getNode())
     return NarrowLoad;
 
-  // fold (sext_in_reg (srl X, 24), i8) -> sra X, 24
-  // fold (sext_in_reg (srl X, 23), i8) -> sra X, 23 iff possible.
+  // fold (sext_in_reg (srl X, 24), i8) -> (sra X, 24)
+  // fold (sext_in_reg (srl X, 23), i8) -> (sra X, 23) iff possible.
   // We already fold "(sext_in_reg (srl X, 25), i8) -> srl X, 25" above.
   if (N0.getOpcode() == ISD::SRL) {
     if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
@@ -3552,7 +3558,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
         // extended enough.
         unsigned InSignBits = DAG.ComputeNumSignBits(N0.getOperand(0));
         if (VT.getSizeInBits()-(ShAmt->getZExtValue()+EVTBits) < InSignBits)
-          return DAG.getNode(ISD::SRA, VT, N0.getOperand(0), N0.getOperand(1));
+          return DAG.getNode(ISD::SRA, N->getDebugLoc(), VT,
+                             N0.getOperand(0), N0.getOperand(1));
       }
   }
 
@@ -3563,7 +3570,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
+    SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, N->getDebugLoc(), VT,
+                                     LN0->getChain(),
                                      LN0->getBasePtr(), LN0->getSrcValue(),
                                      LN0->getSrcValueOffset(), EVT,
                                      LN0->isVolatile(), LN0->getAlignment());
@@ -3578,7 +3586,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
+    SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, N->getDebugLoc(), VT,
+                                     LN0->getChain(),
                                      LN0->getBasePtr(), LN0->getSrcValue(),
                                      LN0->getSrcValueOffset(), EVT,
                                      LN0->isVolatile(), LN0->getAlignment());
