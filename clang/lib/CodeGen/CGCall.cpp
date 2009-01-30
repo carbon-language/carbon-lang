@@ -423,7 +423,7 @@ class X86_64ABIInfo : public ABIInfo {
   ///
   /// If the \arg Lo class is ComplexX87, then the \arg Hi class will
   /// be NoClass.
-  void classify(QualType T, ASTContext &Context, unsigned OffsetBase,
+  void classify(QualType T, ASTContext &Context, uint64_t OffsetBase,
                 Class &Lo, Class &Hi) const;
 
 public:
@@ -437,7 +437,7 @@ public:
 
 void X86_64ABIInfo::classify(QualType Ty,
                              ASTContext &Context,
-                             unsigned OffsetBase,
+                             uint64_t OffsetBase,
                              Class &Lo, Class &Hi) const {
   Lo = Memory;
   Hi = NoClass;
@@ -462,7 +462,7 @@ void X86_64ABIInfo::classify(QualType Ty,
              Ty->isObjCQualifiedInterfaceType()) {
     Lo = Integer;
   } else if (const VectorType *VT = Ty->getAsVectorType()) {
-    unsigned Size = Context.getTypeSize(VT);
+    uint64_t Size = Context.getTypeSize(VT);
     if (Size == 64) {
       // FIXME: For some reason, gcc appears to be treating <1 x
       // double> as INTEGER; this seems wrong, but we will match for
@@ -476,7 +476,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     QualType ET = CT->getElementType();
     
     if (ET->isIntegerType()) {
-      unsigned Size = Context.getTypeSize(Ty);
+      uint64_t Size = Context.getTypeSize(Ty);
       if (Size <= 64)
         Lo = Integer;
       else if (Size <= 128)
@@ -490,12 +490,12 @@ void X86_64ABIInfo::classify(QualType Ty,
 
     // If this complex type crosses an eightbyte boundary then it
     // should be split.
-    unsigned EB_Real = (OffsetBase) >> 3;
-    unsigned EB_Imag = (OffsetBase + Context.getTypeSize(ET)) >> 3;
+    uint64_t EB_Real = (OffsetBase) >> 3;
+    uint64_t EB_Imag = (OffsetBase + Context.getTypeSize(ET)) >> 3;
     if (Hi == NoClass && EB_Real != EB_Imag)
       Hi = Lo;
   } else if (const RecordType *RT = Ty->getAsRecordType()) {
-    unsigned Size = Context.getTypeSize(Ty);
+    uint64_t Size = Context.getTypeSize(Ty);
     
     // AMD64-ABI 3.2.3p2: Rule 1. If the size of an object is larger
     // than two eightbytes, ..., it has class MEMORY.
@@ -1080,8 +1080,8 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
                                       CodeGenFunction &CGF) {
   const llvm::Type *SrcTy = 
     cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
-  unsigned SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
-  unsigned DstSize = CGF.CGM.getTargetData().getTypePaddedSize(Ty);
+  uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
+  uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(Ty);
 
   // If load is legal, just bitcase the src pointer.
   if (SrcSize == DstSize) {
@@ -1113,8 +1113,8 @@ static void CreateCoercedStore(llvm::Value *Src,
   const llvm::Type *DstTy = 
     cast<llvm::PointerType>(DstPtr->getType())->getElementType();
 
-  unsigned SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
-  unsigned DstSize = CGF.CGM.getTargetData().getTypePaddedSize(DstTy);
+  uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
+  uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(DstTy);
 
   // If store is legal, just bitcase the src pointer.
   if (SrcSize == DstSize) {
