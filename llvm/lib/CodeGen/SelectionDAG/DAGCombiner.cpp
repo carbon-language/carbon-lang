@@ -1306,11 +1306,11 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
     // single-use add), we should put the negate there.
     return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
                        DAG.getConstant(0, VT),
-                       DAG.getNode(ISD::SHL, VT, N0,
+                       DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0,
                             DAG.getConstant(Log2_64(-N1C->getSExtValue()),
                                             TLI.getShiftAmountTy())));
   // (mul (shl X, c1), c2) -> (mul X, c2 << c1)
-  if (N1C && N0.getOpcode() == ISD::SHL && 
+  if (N1C && N0.getOpcode() == ISD::SHL &&
       isa<ConstantSDNode>(N0.getOperand(1))) {
     SDValue C3 = DAG.getNode(ISD::SHL, N->getDebugLoc(), VT,
                              N1, N0.getOperand(1));
@@ -1332,6 +1332,7 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
                N1.getNode()->hasOneUse()) {
       Sh = N1; Y = N0;
     }
+
     if (Sh.getNode()) {
       SDValue Mul = DAG.getNode(ISD::MUL, N->getDebugLoc(), VT,
                                 Sh.getOperand(0), Y);
@@ -1339,6 +1340,7 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
                          Mul, Sh.getOperand(1));
     }
   }
+
   // fold (mul (add x, c1), c2) -> (add (mul x, c2), c1*c2)
   if (N1C && N0.getOpcode() == ISD::ADD && N0.getNode()->hasOneUse() && 
       isa<ConstantSDNode>(N0.getOperand(1)))
