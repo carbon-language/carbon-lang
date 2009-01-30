@@ -1802,8 +1802,8 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     APInt Mask = ~N1C->getAPIntValue();
     Mask.trunc(N0Op0.getValueSizeInBits());
     if (DAG.MaskedValueIsZero(N0Op0, Mask)) {
-      SDValue Zext = DAG.getNode(ISD::ZERO_EXTEND, N0.getValueType(),
-                                   N0Op0);
+      SDValue Zext = DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(),
+                                 N0.getValueType(), N0Op0);
       
       // Replace uses of the AND with uses of the Zero extend node.
       CombineTo(N, Zext);
@@ -1822,23 +1822,26 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     
     if (LR == RR && isa<ConstantSDNode>(LR) && Op0 == Op1 &&
         LL.getValueType().isInteger()) {
-      // fold (X == 0) & (Y == 0) -> (X|Y == 0)
+      // fold (and (seteq X, 0), (seteq Y, 0)) -> (seteq (or X, Y), 0)
       if (cast<ConstantSDNode>(LR)->isNullValue() && Op1 == ISD::SETEQ) {
-        SDValue ORNode = DAG.getNode(ISD::OR, LR.getValueType(), LL, RL);
+        SDValue ORNode = DAG.getNode(ISD::OR, N0.getDebugLoc(),
+                                     LR.getValueType(), LL, RL);
         AddToWorkList(ORNode.getNode());
-        return DAG.getSetCC(VT, ORNode, LR, Op1);
+        return DAG.getSetCC(N->getDebugLoc(), VT, ORNode, LR, Op1);
       }
-      // fold (X == -1) & (Y == -1) -> (X&Y == -1)
+      // fold (and (seteq X, -1), (seteq Y, -1)) -> (seteq (and X, Y), -1)
       if (cast<ConstantSDNode>(LR)->isAllOnesValue() && Op1 == ISD::SETEQ) {
-        SDValue ANDNode = DAG.getNode(ISD::AND, LR.getValueType(), LL, RL);
+        SDValue ANDNode = DAG.getNode(ISD::AND, N0.getDebugLoc(),
+                                      LR.getValueType(), LL, RL);
         AddToWorkList(ANDNode.getNode());
-        return DAG.getSetCC(VT, ANDNode, LR, Op1);
+        return DAG.getSetCC(N->getDebugLoc(), VT, ANDNode, LR, Op1);
       }
-      // fold (X >  -1) & (Y >  -1) -> (X|Y > -1)
+      // fold (and (setgt X,  -1), (setgt Y,  -1)) -> (setgt (or X, Y), -1)
       if (cast<ConstantSDNode>(LR)->isAllOnesValue() && Op1 == ISD::SETGT) {
-        SDValue ORNode = DAG.getNode(ISD::OR, LR.getValueType(), LL, RL);
+        SDValue ORNode = DAG.getNode(ISD::OR, N0.getDebugLoc(),
+                                     LR.getValueType(), LL, RL);
         AddToWorkList(ORNode.getNode());
-        return DAG.getSetCC(VT, ORNode, LR, Op1);
+        return DAG.getSetCC(N->getDebugLoc(), VT, ORNode, LR, Op1);
       }
     }
     // canonicalize equivalent to ll == rl
@@ -1851,11 +1854,12 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
       ISD::CondCode Result = ISD::getSetCCAndOperation(Op0, Op1, isInteger);
       if (Result != ISD::SETCC_INVALID &&
           (!LegalOperations || TLI.isCondCodeLegal(Result, LL.getValueType())))
-        return DAG.getSetCC(N0.getValueType(), LL, LR, Result);
+        return DAG.getSetCC(N->getDebugLoc(), N0.getValueType(),
+                            LL, LR, Result);
     }
   }
 
-  // Simplify: and (op x...), (op y...)  -> (op (and x, y))
+  // Simplify: (and (op x...), (op y...))  -> (op (and x, y))
   if (N0.getOpcode() == N1.getOpcode()) {
     SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N);
     if (Tmp.getNode()) return Tmp;
@@ -1877,8 +1881,9 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
                                      BitWidth - EVT.getSizeInBits())) &&
         ((!LegalOperations && !LN0->isVolatile()) ||
          TLI.isLoadExtLegal(ISD::ZEXTLOAD, EVT))) {
-      SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getSrcValue(),
+      SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, N0.getDebugLoc(), VT,
+                                       LN0->getChain(), LN0->getBasePtr(),
+                                       LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(), EVT,
                                        LN0->isVolatile(), LN0->getAlignment());
       AddToWorkList(N);
@@ -1898,7 +1903,8 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
                                      BitWidth - EVT.getSizeInBits())) &&
         ((!LegalOperations && !LN0->isVolatile()) ||
          TLI.isLoadExtLegal(ISD::ZEXTLOAD, EVT))) {
-      SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
+      SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, N0.getDebugLoc(), VT,
+                                       LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(), EVT,
                                        LN0->isVolatile(), LN0->getAlignment());
@@ -1922,11 +1928,13 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
         EVT = MVT::getIntegerVT(ActiveBits);
 
       MVT LoadedVT = LN0->getMemoryVT();
+
       // Do not generate loads of non-round integer types since these can
       // be expensive (and would be wrong if the type is not byte sized).
       if (EVT != MVT::Other && LoadedVT.bitsGT(EVT) && EVT.isRound() &&
           (!LegalOperations || TLI.isLoadExtLegal(ISD::ZEXTLOAD, EVT))) {
         MVT PtrType = N0.getOperand(1).getValueType();
+
         // For big endian targets, we need to add an offset to the pointer to
         // load the correct bytes.  For little endian systems, we merely need to
         // read fewer bytes from the same pointer.
@@ -1935,16 +1943,18 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
         unsigned PtrOff = LVTStoreBytes - EVTStoreBytes;
         unsigned Alignment = LN0->getAlignment();
         SDValue NewPtr = LN0->getBasePtr();
+
         if (TLI.isBigEndian()) {
-          NewPtr = DAG.getNode(ISD::ADD, PtrType, NewPtr,
-                               DAG.getConstant(PtrOff, PtrType));
+          NewPtr = DAG.getNode(ISD::ADD, DebugLoc::getUnknownLoc(), PtrType,
+                               NewPtr, DAG.getConstant(PtrOff, PtrType));
           Alignment = MinAlign(Alignment, PtrOff);
         }
+
         AddToWorkList(NewPtr.getNode());
         SDValue Load =
-          DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(), NewPtr,
-                         LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT,
-                         LN0->isVolatile(), Alignment);
+          DAG.getExtLoad(ISD::ZEXTLOAD, LN0->getDebugLoc(), VT, LN0->getChain(),
+                         NewPtr, LN0->getSrcValue(), LN0->getSrcValueOffset(),
+                         EVT, LN0->isVolatile(), Alignment);
         AddToWorkList(N);
         CombineTo(N0.getNode(), Load, Load.getValue(1));
         return SDValue(N, 0);   // Return N so it doesn't get rechecked!
