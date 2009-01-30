@@ -309,7 +309,7 @@ namespace llvm {
   protected:
     /// EmitZeros - Emit a block of zeros.
     ///
-    void EmitZeros(uint64_t NumZeros) const;
+    void EmitZeros(uint64_t NumZeros, unsigned AddrSpace = 0) const;
 
     /// EmitString - Emit a zero-byte-terminated string constant.
     ///
@@ -320,7 +320,7 @@ namespace llvm {
     void EmitConstantValueOnly(const Constant *CV);
 
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-    void EmitGlobalConstant(const Constant* CV);
+    void EmitGlobalConstant(const Constant* CV, unsigned AddrSpace = 0);
 
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
     
@@ -351,7 +351,7 @@ namespace llvm {
     
     /// printDataDirective - This method prints the asm directive for the
     /// specified type.
-    void printDataDirective(const Type *type);
+    void printDataDirective(const Type *type, unsigned AddrSpace = 0);
 
     /// printSuffixedName - This prints a name with preceding 
     /// getPrivateGlobalPrefix and the specified suffix, handling quoted names
@@ -371,11 +371,12 @@ namespace llvm {
     const GlobalValue *findGlobalValue(const Constant* CV);
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
-    void EmitGlobalConstantStruct(const ConstantStruct* CVS);
+    void EmitGlobalConstantStruct(const ConstantStruct* CVS,
+                                  unsigned AddrSpace);
     void EmitGlobalConstantArray(const ConstantArray* CVA);
     void EmitGlobalConstantVector(const ConstantVector* CP);
-    void EmitGlobalConstantFP(const ConstantFP* CFP);
-    void EmitGlobalConstantLargeInt(const ConstantInt* CI);
+    void EmitGlobalConstantFP(const ConstantFP* CFP, unsigned AddrSpace);
+    void EmitGlobalConstantLargeInt(const ConstantInt* CI, unsigned AddrSpace);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }

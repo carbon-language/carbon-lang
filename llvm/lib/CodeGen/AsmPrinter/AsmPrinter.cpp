@@ -770,7 +770,7 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
     
 /// EmitZeros - Emit a block of zeros.
 ///
-void AsmPrinter::EmitZeros(uint64_t NumZeros) const {
+void AsmPrinter::EmitZeros(uint64_t NumZeros, unsigned AddrSpace) const {
   if (NumZeros) {
     if (TAI->getZeroDirective()) {
       O << TAI->getZeroDirective() << NumZeros;
@@ -779,7 +779,7 @@ void AsmPrinter::EmitZeros(uint64_t NumZeros) const {
       O << '\n';
     } else {
       for (; NumZeros; --NumZeros)
-        O << TAI->getData8bitsDirective() << "0\n";
+        O << TAI->getData8bitsDirective(AddrSpace) << "0\n";
     }
   }
 }
@@ -956,7 +956,8 @@ void AsmPrinter::EmitGlobalConstantVector(const ConstantVector *CP) {
     EmitGlobalConstant(CP->getOperand(I));
 }
 
-void AsmPrinter::EmitGlobalConstantStruct(const ConstantStruct *CVS) {
+void AsmPrinter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
+                                          unsigned AddrSpace) {
   // Print the fields in successive locations. Pad to align if needed!
   const TargetData *TD = TM.getTargetData();
   unsigned Size = TD->getTypePaddedSize(CVS->getType());
@@ -972,46 +973,47 @@ void AsmPrinter::EmitGlobalConstantStruct(const ConstantStruct *CVS) {
     sizeSoFar += fieldSize + padSize;
 
     // Now print the actual field value.
-    EmitGlobalConstant(field);
+    EmitGlobalConstant(field, AddrSpace);
 
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
     // as padding to ensure that the next field starts at the right offset.
-    EmitZeros(padSize);
+    EmitZeros(padSize, AddrSpace);
   }
   assert(sizeSoFar == cvsLayout->getSizeInBytes() &&
          "Layout of constant struct may be incorrect!");
 }
 
-void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP) {
+void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP, 
+                                      unsigned AddrSpace) {
   // FP Constants are printed as integer constants to avoid losing
   // precision...
   const TargetData *TD = TM.getTargetData();
   if (CFP->getType() == Type::DoubleTy) {
     double Val = CFP->getValueAPF().convertToDouble();  // for comment only
     uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
-    if (TAI->getData64bitsDirective())
-      O << TAI->getData64bitsDirective() << i << '\t'
+    if (TAI->getData64bitsDirective(AddrSpace))
+      O << TAI->getData64bitsDirective(AddrSpace) << i << '\t'
         << TAI->getCommentString() << " double value: " << Val << '\n';
     else if (TD->isBigEndian()) {
-      O << TAI->getData32bitsDirective() << unsigned(i >> 32)
+      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32)
         << '\t' << TAI->getCommentString()
         << " double most significant word " << Val << '\n';
-      O << TAI->getData32bitsDirective() << unsigned(i)
+      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i)
         << '\t' << TAI->getCommentString()
         << " double least significant word " << Val << '\n';
     } else {
-      O << TAI->getData32bitsDirective() << unsigned(i)
+      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i)
         << '\t' << TAI->getCommentString()
         << " double least significant word " << Val << '\n';
-      O << TAI->getData32bitsDirective() << unsigned(i >> 32)
+      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32)
         << '\t' << TAI->getCommentString()
         << " double most significant word " << Val << '\n';
     }
     return;
   } else if (CFP->getType() == Type::FloatTy) {
     float Val = CFP->getValueAPF().convertToFloat();  // for comment only
-    O << TAI->getData32bitsDirective()
+    O << TAI->getData32bitsDirective(AddrSpace)
       << CFP->getValueAPF().bitcastToAPInt().getZExtValue()
       << '\t' << TAI->getCommentString() << " float " << Val << '\n';
     return;
@@ -1026,42 +1028,42 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP) {
     DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
                       &ignored);
     if (TD->isBigEndian()) {
-      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48)
         << '\t' << TAI->getCommentString()
         << " long double most significant halfword of ~"
         << DoubleVal.convertToDouble() << '\n';
-      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 32)
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32)
         << '\t' << TAI->getCommentString()
         << " long double next halfword\n";
-      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 16)
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16)
         << '\t' << TAI->getCommentString()
         << " long double next halfword\n";
-      O << TAI->getData16bitsDirective() << uint16_t(p[0])
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0])
         << '\t' << TAI->getCommentString()
         << " long double next halfword\n";
-      O << TAI->getData16bitsDirective() << uint16_t(p[1])
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1])
         << '\t' << TAI->getCommentString()
         << " long double least significant halfword\n";
      } else {
-      O << TAI->getData16bitsDirective() << uint16_t(p[1])
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1])
         << '\t' << TAI->getCommentString()
         << " long double least significant halfword of ~"
         << DoubleVal.convertToDouble() << '\n';
-      O << TAI->getData16bitsDirective() << uint16_t(p[0])
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0])
         << '\t' << TAI->getCommentString()
         << " long double next halfword\n";
-      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 16)
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16)
         << '\t' << TAI->getCommentString()
         << " long double next halfword\n";
-      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 32)
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32)
         << '\t' << TAI->getCommentString()
         << " long double next halfword\n";
-      O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48)
         << '\t' << TAI->getCommentString()
         << " long double most significant halfword\n";
     }
     EmitZeros(TD->getTypePaddedSize(Type::X86_FP80Ty) -
-              TD->getTypeStoreSize(Type::X86_FP80Ty));
+              TD->getTypeStoreSize(Type::X86_FP80Ty), AddrSpace);
     return;
   } else if (CFP->getType() == Type::PPC_FP128Ty) {
     // all long double variants are printed as hex
@@ -1069,29 +1071,29 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP) {
     APInt api = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t *p = api.getRawData();
     if (TD->isBigEndian()) {
-      O << TAI->getData32bitsDirective() << uint32_t(p[0] >> 32)
+      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32)
         << '\t' << TAI->getCommentString()
         << " long double most significant word\n";
-      O << TAI->getData32bitsDirective() << uint32_t(p[0])
+      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0])
         << '\t' << TAI->getCommentString()
         << " long double next word\n";
-      O << TAI->getData32bitsDirective() << uint32_t(p[1] >> 32)
+      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32)
         << '\t' << TAI->getCommentString()
         << " long double next word\n";
-      O << TAI->getData32bitsDirective() << uint32_t(p[1])
+      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1])
         << '\t' << TAI->getCommentString()
         << " long double least significant word\n";
      } else {
-      O << TAI->getData32bitsDirective() << uint32_t(p[1])
+      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1])
         << '\t' << TAI->getCommentString()
         << " long double least significant word\n";
-      O << TAI->getData32bitsDirective() << uint32_t(p[1] >> 32)
+      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32)
         << '\t' << TAI->getCommentString()
         << " long double next word\n";
-      O << TAI->getData32bitsDirective() << uint32_t(p[0])
+      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0])
         << '\t' << TAI->getCommentString()
         << " long double next word\n";
-      O << TAI->getData32bitsDirective() << uint32_t(p[0] >> 32)
+      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32)
         << '\t' << TAI->getCommentString()
         << " long double most significant word\n";
     }
@@ -1099,7 +1101,8 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP) {
   } else assert(0 && "Floating point constant type not handled");
 }
 
-void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI) {
+void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
+                                            unsigned AddrSpace) {
   const TargetData *TD = TM.getTargetData();
   unsigned BitWidth = CI->getBitWidth();
   assert(isPowerOf2_32(BitWidth) &&
@@ -1116,20 +1119,20 @@ void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI) {
     else
       Val = RawData[i];
 
-    if (TAI->getData64bitsDirective())
-      O << TAI->getData64bitsDirective() << Val << '\n';
+    if (TAI->getData64bitsDirective(AddrSpace))
+      O << TAI->getData64bitsDirective(AddrSpace) << Val << '\n';
     else if (TD->isBigEndian()) {
-      O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
+      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32)
         << '\t' << TAI->getCommentString()
         << " Double-word most significant word " << Val << '\n';
-      O << TAI->getData32bitsDirective() << unsigned(Val)
+      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val)
         << '\t' << TAI->getCommentString()
         << " Double-word least significant word " << Val << '\n';
     } else {
-      O << TAI->getData32bitsDirective() << unsigned(Val)
+      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val)
         << '\t' << TAI->getCommentString()
         << " Double-word least significant word " << Val << '\n';
-      O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
+      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32)
         << '\t' << TAI->getCommentString()
         << " Double-word most significant word " << Val << '\n';
     }
@@ -1137,27 +1140,27 @@ void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI) {
 }
 
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
+void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   const TargetData *TD = TM.getTargetData();
   const Type *type = CV->getType();
   unsigned Size = TD->getTypePaddedSize(type);
 
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
-    EmitZeros(Size);
+    EmitZeros(Size, AddrSpace);
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     EmitGlobalConstantArray(CVA);
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
-    EmitGlobalConstantStruct(CVS);
+    EmitGlobalConstantStruct(CVS, AddrSpace);
     return;
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-    EmitGlobalConstantFP(CFP);
+    EmitGlobalConstantFP(CFP, AddrSpace);
     return;
   } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     // Small integers are handled below; large integers are handled here.
     if (Size > 4) {
-      EmitGlobalConstantLargeInt(CI);
+      EmitGlobalConstantLargeInt(CI, AddrSpace);
       return;
     }
   } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
@@ -1165,7 +1168,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     return;
   }
 
-  printDataDirective(type);
+  printDataDirective(type, AddrSpace);
   EmitConstantValueOnly(CV);
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     SmallString<40> S;
@@ -1491,21 +1494,21 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
 
 /// printDataDirective - This method prints the asm directive for the
 /// specified type.
-void AsmPrinter::printDataDirective(const Type *type) {
+void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
   const TargetData *TD = TM.getTargetData();
   switch (type->getTypeID()) {
   case Type::IntegerTyID: {
     unsigned BitWidth = cast<IntegerType>(type)->getBitWidth();
     if (BitWidth <= 8)
-      O << TAI->getData8bitsDirective();
+      O << TAI->getData8bitsDirective(AddrSpace);
     else if (BitWidth <= 16)
-      O << TAI->getData16bitsDirective();
+      O << TAI->getData16bitsDirective(AddrSpace);
     else if (BitWidth <= 32)
-      O << TAI->getData32bitsDirective();
+      O << TAI->getData32bitsDirective(AddrSpace);
     else if (BitWidth <= 64) {
-      assert(TAI->getData64bitsDirective() &&
+      assert(TAI->getData64bitsDirective(AddrSpace) &&
              "Target cannot handle 64-bit constant exprs!");
-      O << TAI->getData64bitsDirective();
+      O << TAI->getData64bitsDirective(AddrSpace);
     } else {
       assert(0 && "Target cannot handle given data directive width!");
     }
@@ -1513,15 +1516,15 @@ void AsmPrinter::printDataDirective(const Type *type) {
   }
   case Type::PointerTyID:
     if (TD->getPointerSize() == 8) {
-      assert(TAI->getData64bitsDirective() &&
+      assert(TAI->getData64bitsDirective(AddrSpace) &&
              "Target cannot handle 64-bit pointer exprs!");
-      O << TAI->getData64bitsDirective();
+      O << TAI->getData64bitsDirective(AddrSpace);
     } else if (TD->getPointerSize() == 2) {
-      O << TAI->getData16bitsDirective();
+      O << TAI->getData16bitsDirective(AddrSpace);
     } else if (TD->getPointerSize() == 1) {
-      O << TAI->getData8bitsDirective();
+      O << TAI->getData8bitsDirective(AddrSpace);
     } else {
-      O << TAI->getData32bitsDirective();
+      O << TAI->getData32bitsDirective(AddrSpace);
     }
     break;
   case Type::FloatTyID: case Type::DoubleTyID:

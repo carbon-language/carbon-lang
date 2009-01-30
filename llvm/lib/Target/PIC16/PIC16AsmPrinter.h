@@ -43,7 +43,6 @@ namespace llvm {
     void EmitInitData (Module &M);
     void EmitUnInitData (Module &M);
     void EmitRomData (Module &M);
-    virtual void EmitConstantValueOnly(const Constant *CV);
     void emitFunctionData(MachineFunction &MF);
     void emitFunctionTempData(MachineFunction &MF, unsigned &FrameSize);
 

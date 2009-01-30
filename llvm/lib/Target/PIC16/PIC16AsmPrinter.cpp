@@ -242,46 +242,9 @@ void PIC16AsmPrinter::EmitInitData (Module &M) {
         continue;
 
       O << name;
-      EmitGlobalConstant(C);
+      EmitGlobalConstant(C, AddrSpace);
     }
   }
-}
-
-void PIC16AsmPrinter::EmitConstantValueOnly(const Constant* CV) {
-  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    unsigned BitWidth = CI->getBitWidth();
-    int Val = CI->getZExtValue();
-    if (BitWidth == 8) {
-      // Expecting db directive here. In case of romdata we need to pad the
-      // word with zeros.
-      if (IsRomData)
-        O << 0 <<", ";
-      O << Val; 
-    }
-    else if (BitWidth == 16) {
-      unsigned Element1, Element2;
-      Element1 = 0x00ff & Val;
-      Element2 = 0x00ff & (Val >> 8);
-      if (IsRomData)
-        O << 0 <<", "<<Element1 <<", "<< 0 <<", "<< Element2;
-      else
-        O << Element1 <<", "<< Element2;  
-    }
-    else if (BitWidth == 32) {
-      unsigned Element1, Element2, Element3, Element4;
-      Element1 = 0x00ff & Val;
-      Element2 = 0x00ff & (Val >> 8);
-      Element3 = 0x00ff & (Val >> 16);
-      Element4 = 0x00ff & (Val >> 24);
-      if (IsRomData)
-        O << 0 <<", "<< Element1 <<", "<< 0 <<", "<< Element2 <<", "<< 0 
-          <<", "<< Element3 <<", "<< 0 <<", "<< Element4;
-      else 
-        O << Element1 <<", "<< Element2 <<", "<< Element3 <<", "<< Element4;    
-    }
-    return;
-  }
-  AsmPrinter::EmitConstantValueOnly(CV);
 }
 
 void PIC16AsmPrinter::EmitRomData (Module &M)
@@ -308,7 +271,7 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
         continue;
 
       O << name;
-      EmitGlobalConstant(C);
+      EmitGlobalConstant(C, AddrSpace);
       O << "\n";
     }
   }

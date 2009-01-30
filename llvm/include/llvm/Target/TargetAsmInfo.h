@@ -598,6 +598,21 @@ namespace llvm {
 
     static unsigned getULEB128Size(unsigned Value);
 
+    // Data directive accessors
+    //
+    virtual const char *getData8bitsDirective(unsigned AddrSpace = 0) const {
+      return Data8bitsDirective;
+    }
+    virtual const char *getData16bitsDirective(unsigned AddrSpace = 0) const {
+      return Data16bitsDirective;
+    }
+    virtual const char *getData32bitsDirective(unsigned AddrSpace = 0) const {
+      return Data32bitsDirective;
+    }
+    virtual const char *getData64bitsDirective(unsigned AddrSpace = 0) const {
+      return Data64bitsDirective;
+    }
+
     // Accessors.
     //
     const Section *getTextSection() const {
@@ -710,18 +725,6 @@ namespace llvm {
     }
     const char *getAscizDirective() const {
       return AscizDirective;
-    }
-    const char *getData8bitsDirective() const {
-      return Data8bitsDirective;
-    }
-    const char *getData16bitsDirective() const {
-      return Data16bitsDirective;
-    }
-    const char *getData32bitsDirective() const {
-      return Data32bitsDirective;
-    }
-    const char *getData64bitsDirective() const {
-      return Data64bitsDirective;
     }
     const char *getJumpTableDirective() const {
       return JumpTableDirective;
