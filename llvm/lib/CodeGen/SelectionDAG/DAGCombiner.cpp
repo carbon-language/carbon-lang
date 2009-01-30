@@ -4132,10 +4132,12 @@ SDValue DAGCombiner::visitFCOPYSIGN(SDNode *N) {
     // copysign(x, c1) -> fneg(fabs(x)) iff isneg(c1)
     if (!V.isNegative()) {
       if (!LegalOperations || TLI.isOperationLegal(ISD::FABS, VT))
-        return DAG.getNode(ISD::FABS, VT, N0);
+        return DAG.getNode(ISD::FABS, N->getDebugLoc(), VT, N0);
     } else {
       if (!LegalOperations || TLI.isOperationLegal(ISD::FNEG, VT))
-        return DAG.getNode(ISD::FNEG, VT, DAG.getNode(ISD::FABS, VT, N0));
+        return DAG.getNode(ISD::FNEG, N->getDebugLoc(), VT,
+                           DAG.getNode(ISD::FABS, DebugLoc::getUnknownLoc(),
+                                       VT, N0));
     }
   }
   
@@ -4144,20 +4146,23 @@ SDValue DAGCombiner::visitFCOPYSIGN(SDNode *N) {
   // copysign(copysign(x,z), y) -> copysign(x, y)
   if (N0.getOpcode() == ISD::FABS || N0.getOpcode() == ISD::FNEG ||
       N0.getOpcode() == ISD::FCOPYSIGN)
-    return DAG.getNode(ISD::FCOPYSIGN, VT, N0.getOperand(0), N1);
+    return DAG.getNode(ISD::FCOPYSIGN, N->getDebugLoc(), VT,
+                       N0.getOperand(0), N1);
 
   // copysign(x, abs(y)) -> abs(x)
   if (N1.getOpcode() == ISD::FABS)
-    return DAG.getNode(ISD::FABS, VT, N0);
+    return DAG.getNode(ISD::FABS, N->getDebugLoc(), VT, N0);
   
   // copysign(x, copysign(y,z)) -> copysign(x, z)
   if (N1.getOpcode() == ISD::FCOPYSIGN)
-    return DAG.getNode(ISD::FCOPYSIGN, VT, N0, N1.getOperand(1));
+    return DAG.getNode(ISD::FCOPYSIGN, N->getDebugLoc(), VT,
+                       N0, N1.getOperand(1));
   
   // copysign(x, fp_extend(y)) -> copysign(x, y)
   // copysign(x, fp_round(y)) -> copysign(x, y)
   if (N1.getOpcode() == ISD::FP_EXTEND || N1.getOpcode() == ISD::FP_ROUND)
-    return DAG.getNode(ISD::FCOPYSIGN, VT, N0, N1.getOperand(0));
+    return DAG.getNode(ISD::FCOPYSIGN, N->getDebugLoc(), VT,
+                       N0, N1.getOperand(0));
   
   return SDValue();
 }
@@ -4172,7 +4177,7 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
 
   // fold (sint_to_fp c1) -> c1fp
   if (N0C && OpVT != MVT::ppcf128)
-    return DAG.getNode(ISD::SINT_TO_FP, VT, N0);
+    return DAG.getNode(ISD::SINT_TO_FP, N->getDebugLoc(), VT, N0);
   
   // If the input is a legal type, and SINT_TO_FP is not legal on this target,
   // but UINT_TO_FP is legal on this target, try to convert.
@@ -4180,10 +4185,9 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
       TLI.isOperationLegalOrCustom(ISD::UINT_TO_FP, OpVT)) {
     // If the sign bit is known to be zero, we can change this to UINT_TO_FP. 
     if (DAG.SignBitIsZero(N0))
-      return DAG.getNode(ISD::UINT_TO_FP, VT, N0);
+      return DAG.getNode(ISD::UINT_TO_FP, N->getDebugLoc(), VT, N0);
   }
-  
-  
+
   return SDValue();
 }
 
@@ -4195,7 +4199,7 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
 
   // fold (uint_to_fp c1) -> c1fp
   if (N0C && OpVT != MVT::ppcf128)
-    return DAG.getNode(ISD::UINT_TO_FP, VT, N0);
+    return DAG.getNode(ISD::UINT_TO_FP, N->getDebugLoc(), VT, N0);
   
   // If the input is a legal type, and UINT_TO_FP is not legal on this target,
   // but SINT_TO_FP is legal on this target, try to convert.
@@ -4203,7 +4207,7 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
       TLI.isOperationLegalOrCustom(ISD::SINT_TO_FP, OpVT)) {
     // If the sign bit is known to be zero, we can change this to SINT_TO_FP. 
     if (DAG.SignBitIsZero(N0))
-      return DAG.getNode(ISD::SINT_TO_FP, VT, N0);
+      return DAG.getNode(ISD::SINT_TO_FP, N->getDebugLoc(), VT, N0);
   }
   
   return SDValue();
@@ -4216,7 +4220,8 @@ SDValue DAGCombiner::visitFP_TO_SINT(SDNode *N) {
   
   // fold (fp_to_sint c1fp) -> c1
   if (N0CFP)
-    return DAG.getNode(ISD::FP_TO_SINT, VT, N0);
+    return DAG.getNode(ISD::FP_TO_SINT, N->getDebugLoc(), VT, N0);
+
   return SDValue();
 }
 
@@ -4227,7 +4232,8 @@ SDValue DAGCombiner::visitFP_TO_UINT(SDNode *N) {
   
   // fold (fp_to_uint c1fp) -> c1
   if (N0CFP && VT != MVT::ppcf128)
-    return DAG.getNode(ISD::FP_TO_UINT, VT, N0);
+    return DAG.getNode(ISD::FP_TO_UINT, N->getDebugLoc(), VT, N0);
+
   return SDValue();
 }
 
@@ -4239,7 +4245,7 @@ SDValue DAGCombiner::visitFP_ROUND(SDNode *N) {
   
   // fold (fp_round c1fp) -> c1fp
   if (N0CFP && N0.getValueType() != MVT::ppcf128)
-    return DAG.getNode(ISD::FP_ROUND, VT, N0, N1);
+    return DAG.getNode(ISD::FP_ROUND, N->getDebugLoc(), VT, N0, N1);
   
   // fold (fp_round (fp_extend x)) -> x
   if (N0.getOpcode() == ISD::FP_EXTEND && VT == N0.getOperand(0).getValueType())
@@ -4250,15 +4256,17 @@ SDValue DAGCombiner::visitFP_ROUND(SDNode *N) {
     // This is a value preserving truncation if both round's are.
     bool IsTrunc = N->getConstantOperandVal(1) == 1 &&
                    N0.getNode()->getConstantOperandVal(1) == 1;
-    return DAG.getNode(ISD::FP_ROUND, VT, N0.getOperand(0),
+    return DAG.getNode(ISD::FP_ROUND, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getIntPtrConstant(IsTrunc));
   }
   
   // fold (fp_round (copysign X, Y)) -> (copysign (fp_round X), Y)
   if (N0.getOpcode() == ISD::FCOPYSIGN && N0.getNode()->hasOneUse()) {
-    SDValue Tmp = DAG.getNode(ISD::FP_ROUND, VT, N0.getOperand(0), N1);
+    SDValue Tmp = DAG.getNode(ISD::FP_ROUND, N0.getDebugLoc(), VT,
+                              N0.getOperand(0), N1);
     AddToWorkList(Tmp.getNode());
-    return DAG.getNode(ISD::FCOPYSIGN, VT, Tmp, N0.getOperand(1));
+    return DAG.getNode(ISD::FCOPYSIGN, N->getDebugLoc(), VT,
+                       Tmp, N0.getOperand(1));
   }
   
   return SDValue();
@@ -4273,8 +4281,9 @@ SDValue DAGCombiner::visitFP_ROUND_INREG(SDNode *N) {
   // fold (fp_round_inreg c1fp) -> c1fp
   if (N0CFP && (TLI.isTypeLegal(EVT) || !LegalTypes)) {
     SDValue Round = DAG.getConstantFP(*N0CFP->getConstantFPValue(), EVT);
-    return DAG.getNode(ISD::FP_EXTEND, VT, Round);
+    return DAG.getNode(ISD::FP_EXTEND, N->getDebugLoc(), VT, Round);
   }
+
   return SDValue();
 }
 
@@ -4290,7 +4299,7 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
 
   // fold (fp_extend c1fp) -> c1fp
   if (N0CFP && VT != MVT::ppcf128)
-    return DAG.getNode(ISD::FP_EXTEND, VT, N0);
+    return DAG.getNode(ISD::FP_EXTEND, N->getDebugLoc(), VT, N0);
 
   // Turn fp_extend(fp_round(X, 1)) -> x since the fp_round doesn't affect the
   // value of X.
@@ -4299,8 +4308,9 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
     SDValue In = N0.getOperand(0);
     if (In.getValueType() == VT) return In;
     if (VT.bitsLT(In.getValueType()))
-      return DAG.getNode(ISD::FP_ROUND, VT, In, N0.getOperand(1));
-    return DAG.getNode(ISD::FP_EXTEND, VT, In);
+      return DAG.getNode(ISD::FP_ROUND, N->getDebugLoc(), VT,
+                         In, N0.getOperand(1));
+    return DAG.getNode(ISD::FP_EXTEND, N->getDebugLoc(), VT, In);
   }
       
   // fold (fpext (load x)) -> (fpext (fptrunc (extload x)))
@@ -4308,14 +4318,16 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType()))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, LN0->getChain(),
+    SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, N->getDebugLoc(), VT,
+                                     LN0->getChain(),
                                      LN0->getBasePtr(), LN0->getSrcValue(),
                                      LN0->getSrcValueOffset(),
                                      N0.getValueType(),
                                      LN0->isVolatile(), LN0->getAlignment());
     CombineTo(N, ExtLoad);
-    CombineTo(N0.getNode(), DAG.getNode(ISD::FP_ROUND, N0.getValueType(),
-                                        ExtLoad, DAG.getIntPtrConstant(1)),
+    CombineTo(N0.getNode(),
+              DAG.getNode(ISD::FP_ROUND, N0.getDebugLoc(),
+                          N0.getValueType(), ExtLoad, DAG.getIntPtrConstant(1)),
               ExtLoad.getValue(1));
     return SDValue(N, 0);   // Return N so it doesn't get rechecked!
   }
@@ -4337,10 +4349,11 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
     SDValue Int = N0.getOperand(0);
     MVT IntVT = Int.getValueType();
     if (IntVT.isInteger() && !IntVT.isVector()) {
-      Int = DAG.getNode(ISD::XOR, IntVT, Int, 
+      Int = DAG.getNode(ISD::XOR, DebugLoc::getUnknownLoc(), IntVT, Int, 
                         DAG.getConstant(IntVT.getIntegerVTSignBit(), IntVT));
       AddToWorkList(Int.getNode());
-      return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0), Int);
+      return DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(),
+                         N->getValueType(0), Int);
     }
   }
   
