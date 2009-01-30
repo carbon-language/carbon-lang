@@ -29,7 +29,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Codegen/DebugLoc.h"
+#include "llvm/CodeGen/DebugLoc.h"
 #include <climits>
 #include <map>
 #include <vector>
