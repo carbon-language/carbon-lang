@@ -297,7 +297,12 @@ public:
 
     return llvm::ConstantVector::get(VType, Elts);    
   }
-                                          
+  
+  llvm::Constant *VisitImplicitValueInitExpr(ImplicitValueInitExpr* E) {
+    const llvm::Type* RetTy = CGM.getTypes().ConvertType(E->getType());
+    return llvm::Constant::getNullValue(RetTy);
+  }
+    
   llvm::Constant *VisitInitListExpr(InitListExpr *ILE) {
     if (ILE->getType()->isScalarType()) {
       // We have a scalar in braces. Just use the first element.
