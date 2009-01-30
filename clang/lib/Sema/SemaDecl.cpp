@@ -1083,6 +1083,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
     // we have an initializer list and a destination type that is not
     // an aggregate.
     // FIXME: In C++0x, this is yet another form of initialization.
+    // FIXME: Move this checking into CheckInitList!
     if (const RecordType *ClassRec = DeclType->getAsRecordType()) {
       const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ClassRec->getDecl());
       if (!ClassDecl->isAggregate())

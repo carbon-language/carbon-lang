@@ -328,7 +328,7 @@ public:
   bool isVoidType() const;         // C99 6.2.5p19
   bool isDerivedType() const;      // C99 6.2.5p20
   bool isScalarType() const;       // C99 6.2.5p21 (arithmetic + pointers)
-  bool isAggregateType() const;    // C99 6.2.5p21 (arrays, structures)
+  bool isAggregateType() const;
   
   // Type Predicates: Check to see if this type is structurally the specified
   // type, ignoring typedefs and qualifiers.

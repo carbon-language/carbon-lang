@@ -287,8 +287,8 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
     CheckScalarType(IList, DeclType, Index, StructuredList, StructuredIndex);
   } else if (DeclType->isVectorType()) {
     CheckVectorType(IList, DeclType, Index, StructuredList, StructuredIndex);
-  } else if (DeclType->isAggregateType() || DeclType->isUnionType()) {
-    if (DeclType->isStructureType() || DeclType->isUnionType()) {
+  } else if (DeclType->isAggregateType()) {
+    if (DeclType->isRecordType()) {
       RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
       CheckStructUnionTypes(IList, DeclType, RD->field_begin(), 
                             SubobjectIsDesignatorContext, Index,

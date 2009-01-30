@@ -661,12 +661,20 @@ bool Type::isScalarType() const {
          isa<ObjCQualifiedIdType>(CanonicalType);
 }
 
+/// \brief Determines whether the type is a C++ aggregate type or C
+/// aggregate or union type.
+///
+/// An aggregate type is an array or a class type (struct, union, or
+/// class) that has no user-declared constructors, no private or
+/// protected non-static data members, no base classes, and no virtual
+/// functions (C++ [dcl.init.aggr]p1). The notion of an aggregate type
+/// subsumes the notion of C aggregates (C99 6.2.5p21) because it also
+/// includes union types.
 bool Type::isAggregateType() const {
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
-    if (TT->getDecl()->isStruct())
-      return true;
-    return false;
-  }
+  if (const CXXRecordType *CXXClassType = dyn_cast<CXXRecordType>(CanonicalType))
+    return CXXClassType->getDecl()->isAggregate();
+  if (isa<RecordType>(CanonicalType))
+    return true;
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isAggregateType();
   return isa<ArrayType>(CanonicalType);
