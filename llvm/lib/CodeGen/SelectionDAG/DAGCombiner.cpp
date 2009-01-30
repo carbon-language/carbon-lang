@@ -1209,7 +1209,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return DAG.FoldConstantArithmetic(ISD::SUB, VT, N0C, N1C);
   // fold (sub x, c) -> (add x, -c)
   if (N1C)
-    return DAG.getNode(ISD::ADD, VT, N0,
+    return DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N0,
                        DAG.getConstant(-N1C->getAPIntValue(), VT));
   // fold (A+B)-A -> B
   if (N0.getOpcode() == ISD::ADD && N0.getOperand(0) == N1)
@@ -1222,25 +1222,26 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
       (N0.getOperand(1).getOpcode() == ISD::SUB ||
        N0.getOperand(1).getOpcode() == ISD::ADD) &&
       N0.getOperand(1).getOperand(0) == N1)
-    return DAG.getNode(N0.getOperand(1).getOpcode(), VT, N0.getOperand(0), 
-                                     N0.getOperand(1).getOperand(1));
+    return DAG.getNode(N0.getOperand(1).getOpcode(), N->getDebugLoc(), VT,
+                       N0.getOperand(0), N0.getOperand(1).getOperand(1));
   // fold ((A+(C+B))-B) -> A+C
   if (N0.getOpcode() == ISD::ADD &&
       N0.getOperand(1).getOpcode() == ISD::ADD &&
       N0.getOperand(1).getOperand(1) == N1)
-    return DAG.getNode(ISD::ADD, VT, N0.getOperand(0), 
-                                     N0.getOperand(1).getOperand(0));
+    return DAG.getNode(ISD::ADD, N->getDebugLoc(), VT,
+                       N0.getOperand(0), N0.getOperand(1).getOperand(0));
   // fold ((A-(B-C))-C) -> A-B
   if (N0.getOpcode() == ISD::SUB &&
       N0.getOperand(1).getOpcode() == ISD::SUB &&
       N0.getOperand(1).getOperand(1) == N1)
-    return DAG.getNode(ISD::SUB, VT, N0.getOperand(0), 
-                                     N0.getOperand(1).getOperand(0));
+    return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
+                       N0.getOperand(0), N0.getOperand(1).getOperand(0));
   // fold (sub x, (select cc, 0, c)) -> (select cc, x, (sub, x, c))
   if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N1, N0, DAG, TLI, LegalOperations);
     if (Result.getNode()) return Result;
   }
+
   // If either operand of a sub is undef, the result is undef
   if (N0.getOpcode() == ISD::UNDEF)
     return N0;
