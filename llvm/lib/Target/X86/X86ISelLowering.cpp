@@ -7601,7 +7601,11 @@ static SDValue PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
   // Load must not be an extload.
   if (LD->getExtensionType() != ISD::NON_EXTLOAD)
     return SDValue();
-  
+
+  // Load type should legal type so we don't have to legalize it.
+  if (!TLI.isTypeLegal(VT))
+    return SDValue();
+
   SDVTList Tys = DAG.getVTList(VT, MVT::Other);
   SDValue Ops[] = { LD->getChain(), LD->getBasePtr() };
   SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, Tys, Ops, 2);
