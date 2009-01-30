@@ -803,6 +803,7 @@ class OptionParser:
         self.f_noWorkingDirectoryOption = self.addOption(FlagOption('-fno-working-directory', self.fGroup))
         self.f_objcGcOnlyOption = self.addOption(FlagOption('-fobjc-gc-only', self.fGroup))
         self.f_objcGcOption = self.addOption(FlagOption('-fobjc-gc', self.fGroup))
+        self.f_objcNonfragileAbiOption = self.addOption(FlagOption('-fobjc-nonfragile-abi', self.fGroup))
         self.f_objcOption = self.addOption(FlagOption('-fobjc', self.fGroup))
         self.f_omitFramePointerOption = self.addOption(FlagOption('-fomit-frame-pointer', self.fGroup))
         self.f_openmpOption = self.addOption(FlagOption('-fopenmp', self.fGroup))

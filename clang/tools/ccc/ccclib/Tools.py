@@ -315,6 +315,7 @@ class Clang_CompileTool(Tool):
 
         arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOption)
         arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOnlyOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.f_objcNonfragileAbiOption)
         arglist.addAllArgs(cmd_args, arglist.parser.f_nextRuntimeOption)
         arglist.addAllArgs(cmd_args, arglist.parser.f_gnuRuntimeOption)
         arglist.addLastArg(cmd_args, arglist.parser.f_exceptionsOption)
