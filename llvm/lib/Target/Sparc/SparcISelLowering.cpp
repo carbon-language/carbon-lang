@@ -77,7 +77,8 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
 /// in FP registers for fastcc functions.
 void
 SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
-                                    SmallVectorImpl<SDValue> &ArgValues) {
+                                    SmallVectorImpl<SDValue> &ArgValues,
+                                    DebugLoc dl) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
 

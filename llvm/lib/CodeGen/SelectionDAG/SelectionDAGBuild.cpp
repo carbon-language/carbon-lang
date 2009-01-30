@@ -4344,7 +4344,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
                     CS.paramHasAttr(0, Attribute::InReg),
                     CS.getCallingConv(),
                     IsTailCall && PerformTailCallOpt,
-                    Callee, Args, DAG);
+                    Callee, Args, DAG, DAG.getCurDebugLoc());
   if (CS.getType() != Type::VoidTy)
     setValue(CS.getInstruction(), Result.first);
   DAG.setRoot(Result.second);
@@ -5357,7 +5357,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
     TLI.LowerCallTo(getRoot(), I.getType(), false, false, false, false,
                     CallingConv::C, PerformTailCallOpt,
                     DAG.getExternalSymbol("malloc", IntPtr),
-                    Args, DAG);
+                    Args, DAG, DAG.getCurDebugLoc());
   setValue(&I, Result.first);  // Pointers always fit in registers
   DAG.setRoot(Result.second);
 }
@@ -5372,7 +5372,8 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false, false,
                     CallingConv::C, PerformTailCallOpt,
-                    DAG.getExternalSymbol("free", IntPtr), Args, DAG);
+                    DAG.getExternalSymbol("free", IntPtr), Args, DAG,
+                    DAG.getCurDebugLoc());
   DAG.setRoot(Result.second);
 }
 
@@ -5412,7 +5413,8 @@ void SelectionDAGLowering::visitVACopy(CallInst &I) {
 /// targets are migrated to using FORMAL_ARGUMENTS, this hook should be
 /// integrated into SDISel.
 void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
-                                    SmallVectorImpl<SDValue> &ArgValues) {
+                                    SmallVectorImpl<SDValue> &ArgValues,
+                                    DebugLoc dl) {
   // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
   SmallVector<SDValue, 3+16> Ops;
   Ops.push_back(DAG.getRoot());
@@ -5477,7 +5479,7 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
   RetVals.push_back(MVT::Other);
 
   // Create the node.
-  SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS, DAG.getCurDebugLoc(),
+  SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS, dl,
                                DAG.getVTList(&RetVals[0], RetVals.size()),
                                &Ops[0], Ops.size()).getNode();
 
@@ -5545,7 +5547,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             bool isInreg,
                             unsigned CallingConv, bool isTailCall,
                             SDValue Callee,
-                            ArgListTy &Args, SelectionDAG &DAG) {
+                            ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl) {
   assert((!isTailCall || PerformTailCallOpt) &&
          "isTailCall set when tail-call optimizations are disabled!");
 
@@ -5636,7 +5638,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   LoweredRetTys.push_back(MVT::Other);  // Always has a chain.
 
   // Create the CALL node.
-  SDValue Res = DAG.getCall(CallingConv, DAG.getCurDebugLoc(), 
+  SDValue Res = DAG.getCall(CallingConv, dl,
                             isVarArg, isTailCall, isInreg,
                             DAG.getVTList(&LoweredRetTys[0],
                                           LoweredRetTys.size()),
@@ -5668,7 +5670,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                          AssertOp);
       ReturnValues.push_back(ReturnValue);
     }
-    Res = DAG.getNode(ISD::MERGE_VALUES, DAG.getCurDebugLoc(),
+    Res = DAG.getNode(ISD::MERGE_VALUES, dl,
                       DAG.getVTList(&RetTys[0], RetTys.size()),
                       &ReturnValues[0], ReturnValues.size());
   }
@@ -5712,7 +5714,7 @@ LowerArguments(BasicBlock *LLVMBB) {
   Function &F = *LLVMBB->getParent();
   SDValue OldRoot = SDL->DAG.getRoot();
   SmallVector<SDValue, 16> Args;
-  TLI.LowerArguments(F, SDL->DAG, Args);
+  TLI.LowerArguments(F, SDL->DAG, Args, SDL->DAG.getCurDebugLoc());
 
   unsigned a = 0;
   for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();

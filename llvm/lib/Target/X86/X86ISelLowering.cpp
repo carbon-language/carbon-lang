@@ -5532,10 +5532,12 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
       Args.push_back(Entry);
       Entry.Node = Size;
       Args.push_back(Entry);
+      // FIXME provide DebugLoc info
       std::pair<SDValue,SDValue> CallResult =
         LowerCallTo(Chain, Type::VoidTy, false, false, false, false, 
                     CallingConv::C, false, 
-                    DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG);
+                    DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG,
+                    DebugLoc::getUnknownLoc());
       return CallResult.second;
     }
 

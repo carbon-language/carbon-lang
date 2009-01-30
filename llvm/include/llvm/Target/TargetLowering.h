@@ -29,6 +29,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Codegen/DebugLoc.h"
 #include <climits>
 #include <map>
 #include <vector>
@@ -1059,7 +1060,7 @@ public:
   /// lower the arguments for the specified function, into the specified DAG.
   virtual void
   LowerArguments(Function &F, SelectionDAG &DAG,
-                 SmallVectorImpl<SDValue>& ArgValues);
+                 SmallVectorImpl<SDValue>& ArgValues, DebugLoc dl);
 
   /// LowerCallTo - This hook lowers an abstract call to a function into an
   /// actual call.  This returns a pair of operands.  The first element is the
@@ -1084,7 +1085,7 @@ public:
   LowerCallTo(SDValue Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
               bool isVarArg, bool isInreg, unsigned CallingConv, 
               bool isTailCall, SDValue Callee, ArgListTy &Args, 
-              SelectionDAG &DAG);
+              SelectionDAG &DAG, DebugLoc dl);
 
   /// EmitTargetCodeForMemcpy - Emit target-specific code that performs a
   /// memcpy. This can be used by targets to provide code sequences for cases

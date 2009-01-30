@@ -987,9 +987,11 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
                                          TLI.getPointerTy());
 
   const Type *RetTy = RetVT.getTypeForMVT();
+  // FIXME pass in debug loc
   std::pair<SDValue,SDValue> CallInfo =
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
-                    false, CallingConv::C, false, Callee, Args, DAG);
+                    false, CallingConv::C, false, Callee, Args, DAG,
+                    DebugLoc::getUnknownLoc());
   return CallInfo.first;
 }
 

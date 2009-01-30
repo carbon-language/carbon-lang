@@ -3285,11 +3285,12 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDValue Dst,
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
+  // FIXME: pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, false, CallingConv::C, false,
                     getExternalSymbol("memcpy", TLI.getPointerTy()),
-                    Args, *this);
+                    Args, *this, DebugLoc::getUnknownLoc());
   return CallResult.second;
 }
 
@@ -3330,11 +3331,12 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDValue Dst,
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
+  // FIXME:  pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, false, CallingConv::C, false,
                     getExternalSymbol("memmove", TLI.getPointerTy()),
-                    Args, *this);
+                    Args, *this, DebugLoc::getUnknownLoc());
   return CallResult.second;
 }
 
@@ -3381,11 +3383,12 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDValue Dst,
   Args.push_back(Entry);
   Entry.Node = Size; Entry.Ty = IntPtrTy; Entry.isSExt = false;
   Args.push_back(Entry);
+  // FIXME: pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, false, CallingConv::C, false,
                     getExternalSymbol("memset", TLI.getPointerTy()),
-                    Args, *this);
+                    Args, *this, DebugLoc::getUnknownLoc());
   return CallResult.second;
 }
 

@@ -168,7 +168,7 @@ namespace llvm {
     // Make PIC16 Libcall
     SDValue MakePIC16Libcall(PIC16ISD::PIC16Libcall Call, MVT RetVT, 
                              const SDValue *Ops, unsigned NumOps, bool isSigned,
-                             SelectionDAG &DAG);
+                             SelectionDAG &DAG, DebugLoc dl);
 
     // Check if operation has a direct load operand.
     inline bool isDirectLoad(const SDValue Op);

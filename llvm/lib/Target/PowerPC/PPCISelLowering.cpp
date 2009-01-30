@@ -1229,6 +1229,7 @@ SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
   SDValue Trmp = Op.getOperand(1); // trampoline
   SDValue FPtr = Op.getOperand(2); // nested function
   SDValue Nest = Op.getOperand(3); // 'nest' parameter value
+  DebugLoc dl = Op.getNode()->getDebugLoc();
 
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = (PtrVT == MVT::i64);
@@ -1254,7 +1255,7 @@ SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
     LowerCallTo(Chain, Op.getValueType().getTypeForMVT(), false, false,
                 false, false, CallingConv::C, false,
                 DAG.getExternalSymbol("__trampoline_setup", PtrVT),
-                Args, DAG);
+                Args, DAG, dl);
 
   SDValue Ops[] =
     { CallResult.first, CallResult.second };

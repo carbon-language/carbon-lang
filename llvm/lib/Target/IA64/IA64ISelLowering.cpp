@@ -145,7 +145,8 @@ MVT IA64TargetLowering::getSetCCResultType(MVT VT) const {
 }
 
 void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
-                                        SmallVectorImpl<SDValue> &ArgValues) {
+                                        SmallVectorImpl<SDValue> &ArgValues,
+                                        DebugLoc dl) {
   //
   // add beautiful description of IA64 stack frame format
   // here (from intel 24535803.pdf most likely)
@@ -199,7 +200,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
             argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), argVreg[count],
                                                 MVT::f64);
             if (I->getType() == Type::FloatTy)
-              argt = DAG.getNode(ISD::FP_ROUND, MVT::f32, argt,
+              argt = DAG.getNode(ISD::FP_ROUND, dl, MVT::f32, argt,
                                  DAG.getIntPtrConstant(0));
             break;
           case MVT::i1: // NOTE: as far as C abi stuff goes,
@@ -218,7 +219,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
             argt = newroot =
               DAG.getCopyFromReg(DAG.getRoot(), argVreg[count], MVT::i64);
             if ( getValueType(I->getType()) != MVT::i64)
-              argt = DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()),
+              argt = DAG.getNode(ISD::TRUNCATE, dl, getValueType(I->getType()),
                   newroot);
             break;
         }
@@ -230,7 +231,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
         // Create the SelectionDAG nodes corresponding to a load
         //from this parameter
         SDValue FIN = DAG.getFrameIndex(FI, MVT::i64);
-        argt = newroot = DAG.getLoad(getValueType(I->getType()),
+        argt = newroot = DAG.getLoad(getValueType(I->getType()), dl,
                                      DAG.getEntryNode(), FIN, NULL, 0);
       }
       ++count;
@@ -307,7 +308,8 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                                 bool RetSExt, bool RetZExt, bool isVarArg,
                                 bool isInreg, unsigned CallingConv, 
                                 bool isTailCall, SDValue Callee, 
-                                ArgListTy &Args, SelectionDAG &DAG) {
+                                ArgListTy &Args, SelectionDAG &DAG,
+                                DebugLoc dl) {
 
   MachineFunction &MF = DAG.getMachineFunction();
 
@@ -360,7 +362,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
           ExtendKind = ISD::SIGN_EXTEND;
         else if (Args[i].isZExt)
           ExtendKind = ISD::ZERO_EXTEND;
-        Val = DAG.getNode(ExtendKind, MVT::i64, Val);
+        Val = DAG.getNode(ExtendKind, dl, MVT::i64, Val);
         // XXX: fall through
       }
       case MVT::i64:
@@ -373,7 +375,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
         break;
       case MVT::f32:
         //promote to 64-bits
-        Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
+        Val = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Val);
         // XXX: fall through
       case MVT::f64:
         if(RegValuesToPass.size() >= 8) {
@@ -392,19 +394,21 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
           StackPtr = DAG.getRegister(IA64::r12, MVT::i64);
         }
         SDValue PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-        PtrOff = DAG.getNode(ISD::ADD, MVT::i64, StackPtr, PtrOff);
-        Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NULL, 0));
+        PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i64, StackPtr, PtrOff);
+        Stores.push_back(DAG.getStore(Chain, dl, ValToStore, PtrOff, NULL, 0));
         ArgOffset += ObjSize;
       }
 
       if(ValToConvert.getNode()) {
-        Converts.push_back(DAG.getNode(IA64ISD::GETFD, MVT::i64, ValToConvert));
+        Converts.push_back(DAG.getNode(IA64ISD::GETFD, dl,
+                                       MVT::i64, ValToConvert));
       }
     }
 
   // Emit all stores, make sure they occur before any copies into physregs.
   if (!Stores.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0],Stores.size());
+    Chain = DAG.getNode(ISD::TokenFactor, dl,
+                        MVT::Other, &Stores[0],Stores.size());
 
   static const unsigned IntArgRegs[] = {
     IA64::out0, IA64::out1, IA64::out2, IA64::out3, 
@@ -477,7 +481,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
     assert(0 && "this should never happen!\n");
 
   // to make way for a hack:
-  Chain = DAG.getNode(IA64ISD::BRCALL, NodeTys,
+  Chain = DAG.getNode(IA64ISD::BRCALL, dl, NodeTys,
                       &CallOperands[0], CallOperands.size());
   InFlag = Chain.getValue(1);
 
@@ -508,7 +512,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       InFlag = zeroReg.getValue(2);
       Chain = zeroReg.getValue(1);
       
-      RetVal = DAG.getSetCC(MVT::i1, boolInR8, zeroReg, ISD::SETNE);
+      RetVal = DAG.getSetCC(dl, MVT::i1, boolInR8, zeroReg, ISD::SETNE);
       break;
     }
     case MVT::i8:
@@ -520,9 +524,9 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       // keep track of whether it is sign or zero extended (todo: bools?)
 /* XXX
       RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext :ISD::AssertZext,
-                           MVT::i64, RetVal, DAG.getValueType(RetTyVT));
+                           dl, MVT::i64, RetVal, DAG.getValueType(RetTyVT));
 */
-      RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
+      RetVal = DAG.getNode(ISD::TRUNCATE, dl, RetTyVT, RetVal);
       break;
     case MVT::i64:
       RetVal = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
@@ -532,7 +536,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
     case MVT::f32:
       RetVal = DAG.getCopyFromReg(Chain, IA64::F8, MVT::f64, InFlag);
       Chain = RetVal.getValue(1);
-      RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal,
+      RetVal = DAG.getNode(ISD::FP_ROUND, dl, MVT::f32, RetVal,
                            DAG.getIntPtrConstant(0));
       break;
     case MVT::f64:

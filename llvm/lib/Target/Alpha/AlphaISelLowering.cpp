@@ -356,7 +356,8 @@ AlphaTargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                                  bool RetSExt, bool RetZExt, bool isVarArg,
                                  bool isInreg, unsigned CallingConv, 
                                  bool isTailCall, SDValue Callee, 
-                                 ArgListTy &Args, SelectionDAG &DAG) {
+                                 ArgListTy &Args, SelectionDAG &DAG,
+                                 DebugLoc dl) {
   int NumBytes = 0;
   if (Args.size() > 6)
     NumBytes = (Args.size() - 6) * 8;
@@ -374,11 +375,13 @@ AlphaTargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       // Promote the integer to 64 bits.  If the input type is signed use a
       // sign extend, otherwise use a zero extend.
       if (Args[i].isSExt)
-        Args[i].Node = DAG.getNode(ISD::SIGN_EXTEND, MVT::i64, Args[i].Node);
+        Args[i].Node = DAG.getNode(ISD::SIGN_EXTEND, dl, 
+                                   MVT::i64, Args[i].Node);
       else if (Args[i].isZExt)
-        Args[i].Node = DAG.getNode(ISD::ZERO_EXTEND, MVT::i64, Args[i].Node);
+        Args[i].Node = DAG.getNode(ISD::ZERO_EXTEND, dl,
+                                   MVT::i64, Args[i].Node);
       else
-        Args[i].Node = DAG.getNode(ISD::ANY_EXTEND, MVT::i64, Args[i].Node);
+        Args[i].Node = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i64, Args[i].Node);
       break;
     case MVT::i64:
     case MVT::f64:
@@ -402,7 +405,8 @@ AlphaTargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   Ops.push_back(Chain);
   Ops.push_back(Callee);
   Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
-  SDValue TheCall = DAG.getNode(AlphaISD::CALL, RetVals, &Ops[0], Ops.size());
+  SDValue TheCall = DAG.getNode(AlphaISD::CALL, dl, 
+                                RetVals, &Ops[0], Ops.size());
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
                              DAG.getIntPtrConstant(0, true), SDValue());
@@ -416,10 +420,10 @@ AlphaTargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       AssertKind = ISD::AssertZext;
 
     if (AssertKind != ISD::DELETED_NODE)
-      RetVal = DAG.getNode(AssertKind, MVT::i64, RetVal,
+      RetVal = DAG.getNode(AssertKind, dl, MVT::i64, RetVal,
                            DAG.getValueType(RetTyVT));
 
-    RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
+    RetVal = DAG.getNode(ISD::TRUNCATE, dl, RetTyVT, RetVal);
   }
 
   return std::make_pair(RetVal, Chain);

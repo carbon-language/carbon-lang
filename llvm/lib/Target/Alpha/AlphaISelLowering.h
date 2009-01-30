@@ -87,7 +87,8 @@ namespace llvm {
     virtual std::pair<SDValue, SDValue>
     LowerCallTo(SDValue Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
                 bool isVarArg, bool isInreg, unsigned CC, bool isTailCall, 
-                SDValue Callee, ArgListTy &Args, SelectionDAG &DAG);
+                SDValue Callee, ArgListTy &Args, SelectionDAG &DAG, 
+                DebugLoc dl);
 
     ConstraintType getConstraintType(const std::string &Constraint) const;
 

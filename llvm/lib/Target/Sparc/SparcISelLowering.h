@@ -58,7 +58,8 @@ namespace llvm {
                                                 unsigned Depth = 0) const;
 
     virtual void LowerArguments(Function &F, SelectionDAG &DAG,
-                                SmallVectorImpl<SDValue> &ArgValues);
+                                SmallVectorImpl<SDValue> &ArgValues,
+                                DebugLoc dl);
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                         MachineBasicBlock *MBB);
 

@@ -991,6 +991,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   assert(isTypeLegal(Op.getValueType()) &&
          "Caller should expand or promote operands that are not legal!");
   SDNode *Node = Op.getNode();
+  DebugLoc dl = Node->getDebugLoc();
 
   // If this operation defines any values that cannot be represented in a
   // register on this target, make sure to expand or promote them.
@@ -4323,7 +4324,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         TLI.LowerCallTo(Tmp1, Type::VoidTy,
                         false, false, false, false, CallingConv::C, false,
                         DAG.getExternalSymbol("abort", TLI.getPointerTy()),
-                        Args, DAG);
+                        Args, DAG, dl);
       Result = CallResult.second;
       break;
     }
@@ -5791,7 +5792,8 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   const Type *RetTy = Node->getValueType(0).getTypeForMVT();
   std::pair<SDValue,SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
-                    CallingConv::C, false, Callee, Args, DAG);
+                    CallingConv::C, false, Callee, Args, DAG,
+                    Node->getDebugLoc());
 
   // Legalize the call sequence, starting with the chain.  This will advance
   // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that

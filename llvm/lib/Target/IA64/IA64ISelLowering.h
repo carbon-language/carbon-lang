@@ -54,7 +54,8 @@ namespace llvm {
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
     virtual void LowerArguments(Function &F, SelectionDAG &DAG,
-                                SmallVectorImpl<SDValue> &ArgValues);
+                                SmallVectorImpl<SDValue> &ArgValues,
+                                DebugLoc dl);
     
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
@@ -62,7 +63,8 @@ namespace llvm {
       LowerCallTo(SDValue Chain, const Type *RetTy,
                   bool RetSExt, bool RetZExt, bool isVarArg, bool isInreg,
                   unsigned CC, bool isTailCall, 
-                  SDValue Callee, ArgListTy &Args, SelectionDAG &DAG);
+                  SDValue Callee, ArgListTy &Args, SelectionDAG &DAG,
+                  DebugLoc dl);
 
     /// LowerOperation - for custom lowering specific ops
     /// (currently, only "ret void")

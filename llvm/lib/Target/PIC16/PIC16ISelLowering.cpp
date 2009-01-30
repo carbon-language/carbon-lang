@@ -172,7 +172,7 @@ SDValue
 PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
                                       MVT RetVT, const SDValue *Ops,
                                       unsigned NumOps, bool isSigned,
-                                      SelectionDAG &DAG) {
+                                      SelectionDAG &DAG, DebugLoc dl) {
 
  TargetLowering::ArgListTy Args;
  Args.reserve(NumOps);
@@ -190,7 +190,7 @@ PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
   const Type *RetTy = RetVT.getTypeForMVT();
   std::pair<SDValue,SDValue> CallInfo = 
      LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
-                     false, CallingConv::C, false, Callee, Args, DAG);
+                     false, CallingConv::C, false, Callee, Args, DAG, dl);
 
   return CallInfo.first;
 }
@@ -758,7 +758,8 @@ SDValue PIC16TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) {
   SmallVector<SDValue, 2> Ops(2);
   Ops[0] = Value;
   Ops[1] = Amt;
-  SDValue Call = MakePIC16Libcall(CallCode, N->getValueType(0), &Ops[0], 2, true, DAG);
+  SDValue Call = MakePIC16Libcall(CallCode, N->getValueType(0), &Ops[0], 2, 
+                                  true, DAG, N->getDebugLoc());
   return Call;
 }
 
