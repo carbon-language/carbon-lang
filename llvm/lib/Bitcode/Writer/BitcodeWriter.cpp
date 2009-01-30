@@ -811,11 +811,14 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     }
     break;
   case Instruction::Br:
-    Code = bitc::FUNC_CODE_INST_BR;
-    Vals.push_back(VE.getValueID(I.getOperand(0)));
-    if (cast<BranchInst>(I).isConditional()) {
-      Vals.push_back(VE.getValueID(I.getOperand(1)));
-      Vals.push_back(VE.getValueID(I.getOperand(2)));
+    {
+      Code = bitc::FUNC_CODE_INST_BR;
+      BranchInst &II(cast<BranchInst>(I));
+      Vals.push_back(VE.getValueID(II.getSuccessor(0)));
+      if (II.isConditional()) {
+        Vals.push_back(VE.getValueID(II.getSuccessor(1)));
+        Vals.push_back(VE.getValueID(II.getCondition()));
+      }
     }
     break;
   case Instruction::Switch:
