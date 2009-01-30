@@ -2430,13 +2430,12 @@ SDValue DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
   // We require the RHS of the binop to be a constant as well.
   ConstantSDNode *BinOpCst = dyn_cast<ConstantSDNode>(LHS->getOperand(1));
   if (!BinOpCst) return SDValue();
-  
-  
-  // FIXME: disable this for unless the input to the binop is a shift by a
-  // constant.  If it is not a shift, it pessimizes some common cases like:
+
+  // FIXME: disable this unless the input to the binop is a shift by a constant.
+  // If it is not a shift, it pessimizes some common cases like:
   //
-  //void foo(int *X, int i) { X[i & 1235] = 1; }
-  //int bar(int *X, int i) { return X[i & 255]; }
+  //    void foo(int *X, int i) { X[i & 1235] = 1; }
+  //    int bar(int *X, int i) { return X[i & 255]; }
   SDNode *BinOpLHSVal = LHS->getOperand(0).getNode();
   if ((BinOpLHSVal->getOpcode() != ISD::SHL && 
        BinOpLHSVal->getOpcode() != ISD::SRA &&
@@ -2446,11 +2445,10 @@ SDValue DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
   
   MVT VT = N->getValueType(0);
   
-  // If this is a signed shift right, and the high bit is modified
-  // by the logical operation, do not perform the transformation.
-  // The highBitSet boolean indicates the value of the high bit of
-  // the constant which would cause it to be modified for this
-  // operation.
+  // If this is a signed shift right, and the high bit is modified by the
+  // logical operation, do not perform the transformation. The highBitSet
+  // boolean indicates the value of the high bit of the constant which would
+  // cause it to be modified for this operation.
   if (N->getOpcode() == ISD::SRA) {
     bool BinOpRHSSignSet = BinOpCst->getAPIntValue().isNegative();
     if (BinOpRHSSignSet != HighBitSet)
@@ -2458,17 +2456,17 @@ SDValue DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
   }
   
   // Fold the constants, shifting the binop RHS by the shift amount.
-  SDValue NewRHS = DAG.getNode(N->getOpcode(), N->getValueType(0),
-                                 LHS->getOperand(1), N->getOperand(1));
+  SDValue NewRHS = DAG.getNode(N->getOpcode(), LHS->getOperand(1).getDebugLoc(),
+                               N->getValueType(0),
+                               LHS->getOperand(1), N->getOperand(1));
 
   // Create the new shift.
-  SDValue NewShift = DAG.getNode(N->getOpcode(), VT, LHS->getOperand(0),
-                                   N->getOperand(1));
+  SDValue NewShift = DAG.getNode(N->getOpcode(), LHS->getOperand(0).getDebugLoc(),
+                                 VT, LHS->getOperand(0), N->getOperand(1));
 
   // Create the new binop.
-  return DAG.getNode(LHS->getOpcode(), VT, NewShift, NewRHS);
+  return DAG.getNode(LHS->getOpcode(), N->getDebugLoc(), VT, NewShift, NewRHS);
 }
-
 
 SDValue DAGCombiner::visitSHL(SDNode *N) {
   SDValue N0 = N->getOperand(0);
@@ -2486,7 +2484,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     return N0;
   // fold (shl x, c >= size(x)) -> undef
   if (N1C && N1C->getZExtValue() >= OpSizeInBits)
-    return DAG.getNode(ISD::UNDEF, VT);
+    return DAG.getNode(ISD::UNDEF, N->getDebugLoc(), VT);
   // fold (shl x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -2505,7 +2503,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       SDValue N100 = N1.getOperand(0).getOperand(0);
       uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
                         N101C->getZExtValue();
-      return DAG.getNode(ISD::SHL, VT, N0,
+      return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0,
                          DAG.getNode(ISD::AND, TruncVT,
                                      DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
                                      DAG.getConstant(TruncC, TruncVT)));
@@ -2514,34 +2512,35 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
 
   if (N1C && SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
-  // fold (shl (shl x, c1), c2) -> 0 or (shl x, c1+c2)
+
+  // fold (shl (shl x, c1), c2) -> 0 or (shl x, (add c1, c2))
   if (N1C && N0.getOpcode() == ISD::SHL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
     uint64_t c2 = N1C->getZExtValue();
     if (c1 + c2 > OpSizeInBits)
       return DAG.getConstant(0, VT);
-    return DAG.getNode(ISD::SHL, VT, N0.getOperand(0), 
+    return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getConstant(c1 + c2, N1.getValueType()));
   }
-  // fold (shl (srl x, c1), c2) -> (shl (and x, -1 << c1), c2-c1) or
-  //                               (srl (and x, -1 << c1), c1-c2)
+  // fold (shl (srl x, c1), c2) -> (shl (and x, (shl -1, c1)), (sub c2, c1)) or
+  //                               (srl (and x, (shl -1, c1)), (sub c1, c2))
   if (N1C && N0.getOpcode() == ISD::SRL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
     uint64_t c2 = N1C->getZExtValue();
-    SDValue Mask = DAG.getNode(ISD::AND, VT, N0.getOperand(0),
-                                 DAG.getConstant(~0ULL << c1, VT));
+    SDValue Mask = DAG.getNode(ISD::AND, N0.getDebugLoc(), VT, N0.getOperand(0),
+                               DAG.getConstant(~0ULL << c1, VT));
     if (c2 > c1)
-      return DAG.getNode(ISD::SHL, VT, Mask, 
+      return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, Mask,
                          DAG.getConstant(c2-c1, N1.getValueType()));
     else
-      return DAG.getNode(ISD::SRL, VT, Mask, 
+      return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, Mask,
                          DAG.getConstant(c1-c2, N1.getValueType()));
   }
-  // fold (shl (sra x, c1), c1) -> (and x, -1 << c1)
+  // fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
   if (N1C && N0.getOpcode() == ISD::SRA && N1 == N0.getOperand(1))
-    return DAG.getNode(ISD::AND, VT, N0.getOperand(0),
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getConstant(~0ULL << N1C->getZExtValue(), VT));
   
   return N1C ? visitShiftByConstant(N, N1C->getZExtValue()) : SDValue();
@@ -2554,7 +2553,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT VT = N0.getValueType();
   
-  // fold (sra c1, c2) -> c1>>c2
+  // fold (sra c1, c2) -> (sra c1, c2)
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::SRA, VT, N0C, N1C);
   // fold (sra 0, x) -> 0
@@ -2563,9 +2562,9 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   // fold (sra -1, x) -> -1
   if (N0C && N0C->isAllOnesValue())
     return N0;
-  // fold (sra x, c >= size(x)) -> undef
+  // fold (sra x, (setge c, size(x))) -> undef
   if (N1C && N1C->getZExtValue() >= VT.getSizeInBits())
-    return DAG.getNode(ISD::UNDEF, VT);
+    return DAG.getNode(ISD::UNDEF, N->getDebugLoc(), VT);
   // fold (sra x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -2575,22 +2574,22 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
     unsigned LowBits = VT.getSizeInBits() - (unsigned)N1C->getZExtValue();
     MVT EVT = MVT::getIntegerVT(LowBits);
     if ((!LegalOperations || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT)))
-      return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0),
-                         DAG.getValueType(EVT));
+      return DAG.getNode(ISD::SIGN_EXTEND_INREG, N->getDebugLoc(), VT,
+                         N0.getOperand(0), DAG.getValueType(EVT));
   }
 
-  // fold (sra (sra x, c1), c2) -> (sra x, c1+c2)
+  // fold (sra (sra x, c1), c2) -> (sra x, (add c1, c2))
   if (N1C && N0.getOpcode() == ISD::SRA) {
     if (ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
       unsigned Sum = N1C->getZExtValue() + C1->getZExtValue();
       if (Sum >= VT.getSizeInBits()) Sum = VT.getSizeInBits()-1;
-      return DAG.getNode(ISD::SRA, VT, N0.getOperand(0),
+      return DAG.getNode(ISD::SRA, N->getDebugLoc(), VT, N0.getOperand(0),
                          DAG.getConstant(Sum, N1C->getValueType(0)));
     }
   }
 
-  // fold sra (shl X, m), result_size - n
-  // -> (sign_extend (trunc (shl X, result_size - n - m))) for
+  // fold (sra (shl X, m), (sub result_size, n))
+  // -> (sign_extend (trunc (shl X, (sub (sub result_size, n), m)))) for
   // result_size - n != m. 
   // If truncate is free for the target sext(shl) is likely to result in better 
   // code.
@@ -2615,9 +2614,12 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
           TLI.isTruncateFree(VT, TruncVT)) {
 
           SDValue Amt = DAG.getConstant(ShiftAmt, TLI.getShiftAmountTy());
-          SDValue Shift = DAG.getNode(ISD::SRL, VT, N0.getOperand(0), Amt);
-          SDValue Trunc = DAG.getNode(ISD::TRUNCATE, TruncVT, Shift);
-          return DAG.getNode(ISD::SIGN_EXTEND, N->getValueType(0), Trunc);
+          SDValue Shift = DAG.getNode(ISD::SRL, N0.getDebugLoc(), VT,
+                                      N0.getOperand(0), Amt);
+          SDValue Trunc = DAG.getNode(ISD::TRUNCATE, N0.getDebugLoc(), TruncVT,
+                                      Shift);
+          return DAG.getNode(ISD::SIGN_EXTEND, N->getDebugLoc(),
+                             N->getValueType(0), Trunc);
       }
     }
   }
@@ -2633,8 +2635,9 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
       SDValue N100 = N1.getOperand(0).getOperand(0);
       uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
                         N101C->getZExtValue();
-      return DAG.getNode(ISD::SRA, VT, N0,
-                         DAG.getNode(ISD::AND, TruncVT,
+      return DAG.getNode(ISD::SRA, N->getDebugLoc(), VT, N0,
+                         DAG.getNode(ISD::AND, DebugLoc::getUnknownLoc(),
+                                     TruncVT,
                                      DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
                                      DAG.getConstant(TruncC, TruncVT)));
     }
@@ -2647,7 +2650,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   
   // If the sign bit is known to be zero, switch this to a SRL.
   if (DAG.SignBitIsZero(N0))
-    return DAG.getNode(ISD::SRL, VT, N0, N1);
+    return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0, N1);
 
   return N1C ? visitShiftByConstant(N, N1C->getZExtValue()) : SDValue();
 }
@@ -2668,7 +2671,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     return N0;
   // fold (srl x, c >= size(x)) -> undef
   if (N1C && N1C->getZExtValue() >= OpSizeInBits)
-    return DAG.getNode(ISD::UNDEF, VT);
+    return DAG.getNode(ISD::UNDEF, N->getDebugLoc(), VT);
   // fold (srl x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -2677,14 +2680,14 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
                                    APInt::getAllOnesValue(OpSizeInBits)))
     return DAG.getConstant(0, VT);
   
-  // fold (srl (srl x, c1), c2) -> 0 or (srl x, c1+c2)
+  // fold (srl (srl x, c1), c2) -> 0 or (srl x, (add c1, c2))
   if (N1C && N0.getOpcode() == ISD::SRL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
     uint64_t c2 = N1C->getZExtValue();
     if (c1 + c2 > OpSizeInBits)
       return DAG.getConstant(0, VT);
-    return DAG.getNode(ISD::SRL, VT, N0.getOperand(0), 
+    return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getConstant(c1 + c2, N1.getValueType()));
   }
   
@@ -2693,18 +2696,19 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     // Shifting in all undef bits?
     MVT SmallVT = N0.getOperand(0).getValueType();
     if (N1C->getZExtValue() >= SmallVT.getSizeInBits())
-      return DAG.getNode(ISD::UNDEF, VT);
+      return DAG.getNode(ISD::UNDEF, N->getDebugLoc(), VT);
 
-    SDValue SmallShift = DAG.getNode(ISD::SRL, SmallVT, N0.getOperand(0), N1);
+    SDValue SmallShift = DAG.getNode(ISD::SRL, N0.getDebugLoc(), SmallVT,
+                                     N0.getOperand(0), N1);
     AddToWorkList(SmallShift.getNode());
-    return DAG.getNode(ISD::ANY_EXTEND, VT, SmallShift);
+    return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, SmallShift);
   }
   
   // fold (srl (sra X, Y), 31) -> (srl X, 31).  This srl only looks at the sign
   // bit, which is unmodified by sra.
-  if (N1C && N1C->getZExtValue()+1 == VT.getSizeInBits()) {
+  if (N1C && N1C->getZExtValue() + 1 == VT.getSizeInBits()) {
     if (N0.getOpcode() == ISD::SRA)
-      return DAG.getNode(ISD::SRL, VT, N0.getOperand(0), N1);
+      return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0.getOperand(0), N1);
   }
   
   // fold (srl (ctlz x), "5") -> x  iff x has one bit set (the low bit).
@@ -2724,19 +2728,22 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     if (UnknownBits == 0) return DAG.getConstant(1, VT);
     
     // Otherwise, check to see if there is exactly one bit input to the ctlz.
-    if ((UnknownBits & (UnknownBits-1)) == 0) {
+    if ((UnknownBits & (UnknownBits - 1)) == 0) {
       // Okay, we know that only that the single bit specified by UnknownBits
-      // could be set on input to the CTLZ node.  If this bit is set, the SRL
-      // will return 0, if it is clear, it returns 1.  Change the CTLZ/SRL pair
-      // to an SRL,XOR pair, which is likely to simplify more.
+      // could be set on input to the CTLZ node. If this bit is set, the SRL
+      // will return 0, if it is clear, it returns 1. Change the CTLZ/SRL pair
+      // to an SRL/XOR pair, which is likely to simplify more.
       unsigned ShAmt = UnknownBits.countTrailingZeros();
       SDValue Op = N0.getOperand(0);
+
       if (ShAmt) {
-        Op = DAG.getNode(ISD::SRL, VT, Op,
+        Op = DAG.getNode(ISD::SRL, N0.getDebugLoc(), VT, Op,
                          DAG.getConstant(ShAmt, TLI.getShiftAmountTy()));
         AddToWorkList(Op.getNode());
       }
-      return DAG.getNode(ISD::XOR, VT, Op, DAG.getConstant(1, VT));
+
+      return DAG.getNode(ISD::XOR, N->getDebugLoc(), VT,
+                         Op, DAG.getConstant(1, VT));
     }
   }
 
@@ -2751,8 +2758,9 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
       SDValue N100 = N1.getOperand(0).getOperand(0);
       uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
                         N101C->getZExtValue();
-      return DAG.getNode(ISD::SRL, VT, N0,
-                         DAG.getNode(ISD::AND, TruncVT,
+      return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0,
+                         DAG.getNode(ISD::AND, DebugLoc::getUnknownLoc(),
+                                     TruncVT,
                                      DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
                                      DAG.getConstant(TruncC, TruncVT)));
     }
