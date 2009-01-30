@@ -27,11 +27,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-static llvm::cl::opt<bool>
-UseX86_64ABI("use-x86_64-abi",
-           llvm::cl::desc("Enable use of experimental x86_64 ABI."),
-           llvm::cl::init(false));
-
 /***/
 
 // FIXME: Use iterator and sidestep silly type array creation.
@@ -760,8 +755,7 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     case 32:
       return *(TheABIInfo = new X86_32ABIInfo());
     case 64:
-      if (UseX86_64ABI)
-        return *(TheABIInfo = new X86_64ABIInfo());
+      return *(TheABIInfo = new X86_64ABIInfo());
     }
   }
 
