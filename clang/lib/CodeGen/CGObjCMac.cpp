@@ -3197,6 +3197,23 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
     UsedGlobals.push_back(GV);
   }
   
+  //  static int L_OBJC_IMAGE_INFO[2] = { 0, flags };
+  // FIXME. flags can be 0 | 1 | 2 | 6. For now just use 0
+  std::vector<llvm::Constant*> Values(2);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
+  llvm::Constant* Init = llvm::ConstantArray::get(
+                                      llvm::ArrayType::get(ObjCTypes.IntTy, 2),
+                                      Values);   
+  llvm::GlobalVariable *IMGV =
+    new llvm::GlobalVariable(Init->getType(), false,
+                             llvm::GlobalValue::InternalLinkage,
+                             Init,
+                             "\01L_OBJC_IMAGE_INFO",
+                             &CGM.getModule());
+  IMGV->setSection("__DATA, __objc_imageinfo, regular, no_dead_strip");
+  UsedGlobals.push_back(IMGV);
+  
   std::vector<llvm::Constant*> Used;
   for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(), 
        e = UsedGlobals.end(); i != e; ++i) {
@@ -3361,8 +3378,6 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
                              &CGM.getModule());
   GV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(GV);
-  // FIXME! why?
-  GV->setAlignment(32);
   return GV;
 }
 
@@ -3836,8 +3851,6 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
                              &CGM.getModule());
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
     UsedGlobals.push_back(Entry);
-    // FIXME: Is this necessary? Why only for protocol?
-    Entry->setAlignment(4);
   }
   
   return Entry;
@@ -3941,8 +3954,6 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                              std::string("\01l_OBJC_PROTOCOL_$_")+ProtocolName,
                              &CGM.getModule());
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
-    // FIXME: Is this necessary? Why only for protocol?
-    Entry->setAlignment(4);
   }
   Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
   
