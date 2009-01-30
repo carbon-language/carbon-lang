@@ -406,6 +406,16 @@ class X86_64ABIInfo : public ABIInfo {
     Memory
   };
 
+  /// merge - Implement the X86_64 ABI merging algorithm.
+  ///
+  /// \param Offset - The offset of the current field.
+  /// \param FieldLo - The low classification of the current field.
+  /// \param FieldHi - The high classification of the current field.
+  /// \param Lo [in] [out] - The accumulated low classification.
+  /// \param Lo [in] [out] - The accumulated high classification.  
+  void merge(uint64_t Offset, Class FieldLo, Class FieldHi,
+             Class &Lo, Class &Hi) const;
+
   /// classify - Determine the x86_64 register classes in which the
   /// given type T should be passed.
   ///
@@ -433,6 +443,58 @@ public:
   virtual ABIArgInfo classifyArgumentType(QualType RetTy,
                                           ASTContext &Context) const;
 };
+}
+
+void X86_64ABIInfo::merge(uint64_t Offset, Class FieldLo, Class FieldHi,
+                          Class &Lo, Class &Hi) const {
+  // Determine which half of the structure we are classifying.
+  //
+  // AMD64-ABI 3.2.3p2: Rule 3. f the size of the aggregate
+  // exceeds a single eightbyte, each is classified
+  // separately. Each eightbyte gets initialized to class
+  // NO_CLASS.
+  Class &Target = Offset < 64 ? Lo : Hi;
+
+  // Merge the lo field classifcation.
+  //
+  // AMD64-ABI 3.2.3p2: Rule 4. Each field of an object is
+  // classified recursively so that always two fields are
+  // considered. The resulting class is calculated according to
+  // the classes of the fields in the eightbyte:
+  //
+  // (a) If both classes are equal, this is the resulting class.
+  //
+  // (b) If one of the classes is NO_CLASS, the resulting class is
+  // the other class.
+  //
+  // (c) If one of the classes is MEMORY, the result is the MEMORY
+  // class.
+  //
+  // (d) If one of the classes is INTEGER, the result is the
+  // INTEGER.
+  //
+  // (e) If one of the classes is X87, X87UP, COMPLEX_X87 class,
+  // MEMORY is used as class.
+  //
+  // (f) Otherwise class SSE is used.
+  if (Target == FieldLo || FieldLo == NoClass) ;
+  else if (FieldLo == Memory)
+    Lo = Memory;
+  else if (Target == NoClass)
+    Target = FieldLo;
+  else if (Target == Integer || FieldLo == Integer) 
+    Target = Integer;
+  else if (FieldLo == X87 || FieldLo == X87Up || FieldLo == ComplexX87)
+    Lo = Memory;
+  else
+    Target = SSE;
+
+  // It isn't clear from the ABI spec what the role of the high
+  // classification is here, but since this should only happen
+  // when we have a struct with a two eightbyte member, we can
+  // just push the field high class into the overall high class.
+  if (FieldHi != NoClass)
+    Hi = FieldHi;
 }
 
 void X86_64ABIInfo::classify(QualType Ty,
@@ -494,6 +556,39 @@ void X86_64ABIInfo::classify(QualType Ty,
     uint64_t EB_Imag = (OffsetBase + Context.getTypeSize(ET)) >> 3;
     if (Hi == NoClass && EB_Real != EB_Imag)
       Hi = Lo;
+  } else if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
+    // Arrays are treated like structures.
+
+    uint64_t Size = Context.getTypeSize(Ty);
+    
+    // AMD64-ABI 3.2.3p2: Rule 1. If the size of an object is larger
+    // than two eightbytes, ..., it has class MEMORY.
+    if (Size > 128)
+      return;
+    
+    // AMD64-ABI 3.2.3p2: Rule 1. If ..., or it contains unaligned
+    // fields, it has class MEMORY.
+    //
+    // Only need to check alignment of array base.
+    if (OffsetBase % Context.getTypeAlign(AT->getElementType())) {
+      Lo = Memory;
+      return;
+    }
+
+    // Otherwise implement simplified merge. We could be smarter about
+    // this, but it isn't worth it and would be harder to verify.
+    Lo = NoClass;
+    uint64_t EltSize = Context.getTypeSize(AT->getElementType());
+    uint64_t ArraySize = AT->getSize().getZExtValue();
+    for (uint64_t i=0, Offset=OffsetBase; i<ArraySize; ++i, Offset += EltSize) {
+      Class FieldLo, FieldHi;
+      classify(AT->getElementType(), Context, Offset, FieldLo, FieldHi);
+    
+      merge(Offset, FieldLo, FieldHi, Lo, Hi);
+      // Memory is never over-ridden, exit early if we see it.
+      if (Lo == Memory)
+        return;
+    }
   } else if (const RecordType *RT = Ty->getAsRecordType()) {
     uint64_t Size = Context.getTypeSize(Ty);
     
@@ -515,72 +610,23 @@ void X86_64ABIInfo::classify(QualType Ty,
     unsigned idx = 0;
     for (RecordDecl::field_iterator i = RD->field_begin(), 
            e = RD->field_end(); i != e; ++i, ++idx) {
-      unsigned Offset = OffsetBase + Layout.getFieldOffset(idx);
+      uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
 
-      //  AMD64-ABI 3.2.3p2: Rule 1. If ..., or it contains unaligned
-      //  fields, it has class MEMORY.
+      // AMD64-ABI 3.2.3p2: Rule 1. If ..., or it contains unaligned
+      // fields, it has class MEMORY.
       if (Offset % Context.getTypeAlign(i->getType())) {
         Lo = Memory;
         return;
       }
 
-      // Determine which half of the structure we are classifying.
-      //
-      // AMD64-ABI 3.2.3p2: Rule 3. f the size of the aggregate
-      // exceeds a single eightbyte, each is classified
-      // separately. Each eightbyte gets initialized to class
-      // NO_CLASS.
-      Class &Target = Offset < 64 ? Lo : Hi;
-
       // Classify this field.
       Class FieldLo, FieldHi;
       classify(i->getType(), Context, Offset, FieldLo, FieldHi);
       
-      // Merge the lo field classifcation.
-      //
-      // AMD64-ABI 3.2.3p2: Rule 4. Each field of an object is
-      // classified recursively so that always two fields are
-      // considered. The resulting class is calculated according to
-      // the classes of the fields in the eightbyte:
-      //
-      // (a) If both classes are equal, this is the resulting class.
-      //
-      // (b) If one of the classes is NO_CLASS, the resulting class is
-      // the other class.
-      //
-      // (c) If one of the classes is MEMORY, the result is the MEMORY
-      // class.
-      //
-      // (d) If one of the classes is INTEGER, the result is the
-      // INTEGER.
-      //
-      // (e) If one of the classes is X87, X87UP, COMPLEX_X87 class,
-      // MEMORY is used as class.
-      //
-      // (f) Otherwise class SSE is used.
-      if (Target == FieldLo || FieldLo == NoClass) ;
-      else if (FieldLo == Memory) {
-        // Memory is never over-ridden, just bail.
-        Lo = Memory;
+      merge(Offset, FieldLo, FieldHi, Lo, Hi);
+      // Memory is never over-ridden, exit early if we see it.
+      if (Lo == Memory)
         return;
-      } 
-      else if (Target == NoClass)
-        Target = FieldLo;
-      else if (Target == Integer || FieldLo == Integer) 
-        Target = Integer;
-      else if (FieldLo == X87 || FieldLo == X87Up || FieldLo == ComplexX87) {
-        // As before, just bail once we generate a memory class.
-        Lo = Memory;
-        return;
-      } else
-        Target = SSE;
-
-      // It isn't clear from the ABI spec what the role of the high
-      // classification is here, but since this should only happen
-      // when we have a struct with a two eightbyte member, we can
-      // just push the field high class into the overall high class.
-      if (FieldHi != NoClass)
-        Hi = FieldHi;
     }
 
     // AMD64-ABI 3.2.3p2: Rule 5. Then a post merger cleanup is done:
