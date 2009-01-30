@@ -31,10 +31,12 @@ class TextDiagnosticPrinter : public DiagnosticClient {
   llvm::raw_ostream &OS;
   bool ShowColumn;
   bool CaretDiagnostics;
+  bool ShowLocation;
 public:
   TextDiagnosticPrinter(llvm::raw_ostream &os, bool showColumn = true,
-                        bool caretDiagnistics = true)
-    : OS(os), ShowColumn(showColumn), CaretDiagnostics(caretDiagnistics) {}
+                        bool caretDiagnistics = true, bool showLocation = true)
+    : OS(os), ShowColumn(showColumn), CaretDiagnostics(caretDiagnistics),
+      ShowLocation(showLocation) {}
 
   void PrintIncludeStack(SourceLocation Loc, const SourceManager &SM);
 

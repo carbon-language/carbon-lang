@@ -113,10 +113,12 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   
     // Compute the column number.
     ColNo = PLoc.getColumn();
-    OS << PLoc.getFilename() << ':' << LineNo << ':';
-    if (ColNo && ShowColumn) 
-      OS << ColNo << ':';
-    OS << ' ';
+    if (ShowLocation) {
+      OS << PLoc.getFilename() << ':' << LineNo << ':';
+      if (ColNo && ShowColumn) 
+        OS << ColNo << ':';
+      OS << ' ';
+    }
   }
   
   switch (Level) {
