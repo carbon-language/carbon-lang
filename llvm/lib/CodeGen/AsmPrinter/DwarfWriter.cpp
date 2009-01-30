@@ -1636,20 +1636,6 @@ private:
     AddBlock(Die, Attribute, 0, Block);
   }
 
-  /// AddBasicType - Add a new basic type attribute to the specified entity.
-  ///
-  void AddBasicType(DIE *Entity, CompileUnit *Unit,
-                    const std::string &Name,
-                    unsigned Encoding, unsigned Size) {
-
-    DIE Buffer(DW_TAG_base_type);
-    AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
-    AddUInt(&Buffer, DW_AT_encoding, DW_FORM_data1, Encoding);
-    if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
-    DIE *BasicTypeDie = Unit->AddDie(Buffer);
-    AddDIEntry(Entity, DW_AT_type, DW_FORM_ref4, BasicTypeDie);
-  }
-
   /// AddType - Add a new type attribute to the specified entity.
   void AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
     if (Ty.isNull())
