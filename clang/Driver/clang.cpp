@@ -486,7 +486,10 @@ LaxVectorConversions("flax-vector-conversions",
                                     " with a different number of elements or "
                                     "different element types"));
 static llvm::cl::opt<bool>
-EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"));
+EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"), llvm::cl::ValueDisallowed);
+
+static llvm::cl::inverse_opt
+DisableBlocks("fno-blocks", llvm::cl::opposite_of(EnableBlocks), llvm::cl::ValueDisallowed);
 
 static llvm::cl::opt<bool>
 ObjCNonFragileABI("fobjc-nonfragile-abi", llvm::cl::desc("enable objective-c's nonfragile abi"));
@@ -614,7 +617,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   Options.WritableStrings = WritableStrings;
   Options.LaxVectorConversions = LaxVectorConversions;
   Options.Exceptions = Exceptions;
-  if (EnableBlocks.getPosition())
+  if (EnableBlocks.getPosition() || DisableBlocks.getPosition())
     Options.Blocks = EnableBlocks;
 
   // Override the default runtime if the user requested it.

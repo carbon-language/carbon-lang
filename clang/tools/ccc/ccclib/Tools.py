@@ -305,8 +305,7 @@ class Clang_CompileTool(Tool):
                 cmd_args.append('-token-cache')
                 cmd_args.append(pthPath)
 
-        # FIXME: Dehardcode this.
-        cmd_args.append('-fblocks')
+        arglist.addAllArgs(cmd_args, arglist.parser.fblocksGroup)
 
         arglist.addAllArgs(cmd_args, arglist.parser.OOption)
         arglist.addAllArgs2(cmd_args, arglist.parser.ClangWGroup, arglist.parser.pedanticGroup)
@@ -466,6 +465,7 @@ class Darwin_X86_CC1Tool(Tool):
         # ccc treats -fsyntax-only specially.
         arglist.addAllArgs2(cmd_args, arglist.parser.fGroup, 
                             arglist.parser.syntaxOnlyOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.fblocksGroup)
 
         arglist.addAllArgs(cmd_args, arglist.parser.undefOption)
         if arglist.getLastArg(arglist.parser.QnOption):
@@ -538,6 +538,7 @@ class Darwin_X86_CC1Tool(Tool):
         # ccc treats -fsyntax-only specially.
         arglist.addAllArgs2(cmd_args, arglist.parser.fGroup, 
                             arglist.parser.syntaxOnlyOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.fblocksGroup)
 
         if (arglist.getLastArg(arglist.parser.gGroup) and
             not arglist.getLastArg(arglist.parser.g0Option) and

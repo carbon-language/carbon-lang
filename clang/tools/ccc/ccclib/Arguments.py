@@ -768,6 +768,11 @@ class OptionParser:
         # want to avoid passing them to gcc/cc1 (which will generally
         # not eat them), or should we let the user sort it out.
 
+        self.fblocksGroup = OptionGroup('-fblocks')
+        self.f_blocks = self.addOption(FlagOption('-fblocks', self.fblocksGroup))
+        self.f_noblocks = self.addOption(FlagOption('-fno-blocks', self.fblocksGroup))
+        # self.fblocksOption = self.addOption(JoinedOption('-fblocks', self.fblocksGroup))
+        
         self.fGroup = OptionGroup('-f')
         self.fastOption = self.addOption(FlagOption('-fast', self.fGroup))
         self.fastfOption = self.addOption(FlagOption('-fastf', self.fGroup))
