@@ -1463,7 +1463,7 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
     return DAG.FoldConstantArithmetic(ISD::UDIV, VT, N0C, N1C);
   // fold (udiv x, (1 << c)) -> x >>u c
   if (N1C && N1C->getAPIntValue().isPowerOf2())
-    return DAG.getNode(ISD::SRL, VT, N0, 
+    return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0, 
                        DAG.getConstant(N1C->getAPIntValue().logBase2(),
                                        TLI.getShiftAmountTy()));
   // fold (udiv x, (shl c, y)) -> x >>u (log2(c)+y) iff c is power of 2
@@ -1471,12 +1471,13 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
     if (ConstantSDNode *SHC = dyn_cast<ConstantSDNode>(N1.getOperand(0))) {
       if (SHC->getAPIntValue().isPowerOf2()) {
         MVT ADDVT = N1.getOperand(1).getValueType();
-        SDValue Add = DAG.getNode(ISD::ADD, ADDVT, N1.getOperand(1),
-                                    DAG.getConstant(SHC->getAPIntValue()
-                                                                    .logBase2(),
-                                                    ADDVT));
+        SDValue Add = DAG.getNode(ISD::ADD, N->getDebugLoc(), ADDVT,
+                                  N1.getOperand(1),
+                                  DAG.getConstant(SHC->getAPIntValue()
+                                                                  .logBase2(),
+                                                  ADDVT));
         AddToWorkList(Add.getNode());
-        return DAG.getNode(ISD::SRL, VT, N0, Add);
+        return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0, Add);
       }
     }
   }
