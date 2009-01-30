@@ -80,3 +80,19 @@ struct s1 s2 = {
 
 // PR3382
 char t[] = ("Hello");
+
+// <rdar://problem/6094855>
+typedef struct { } empty;
+
+typedef struct {
+  empty e;
+  int i2;
+} st;
+
+st st1 = { .i2 = 1 };
+
+// <rdar://problem/6096826>
+struct {
+  int a;
+  int z[2];
+} y = { .z = {} };
