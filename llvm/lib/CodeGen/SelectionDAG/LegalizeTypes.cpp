@@ -852,18 +852,20 @@ void DAGTypeLegalizer::SetIgnoredNodeResult(SDNode* N) {
 /// BitConvertToInteger - Convert to an integer of the same size.
 SDValue DAGTypeLegalizer::BitConvertToInteger(SDValue Op) {
   unsigned BitWidth = Op.getValueType().getSizeInBits();
-  return DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerVT(BitWidth), Op);
+  return DAG.getNode(ISD::BIT_CONVERT, Op.getNode()->getDebugLoc(),
+                     MVT::getIntegerVT(BitWidth), Op);
 }
 
 SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
                                                MVT DestVT) {
+  DebugLoc dl = Op.getNode()->getDebugLoc();
   // Create the stack frame object.  Make sure it is aligned for both
   // the source and destination types.
   SDValue StackPtr = DAG.CreateStackTemporary(Op.getValueType(), DestVT);
   // Emit a store to the stack slot.
-  SDValue Store = DAG.getStore(DAG.getEntryNode(), Op, StackPtr, NULL, 0);
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Op, StackPtr, NULL, 0);
   // Result is a load from the stack slot.
-  return DAG.getLoad(DestVT, Store, StackPtr, NULL, 0);
+  return DAG.getLoad(DestVT, dl, Store, StackPtr, NULL, 0);
 }
 
 /// CustomLowerResults - Replace the node's results with custom code provided
@@ -920,31 +922,35 @@ void DAGTypeLegalizer::GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT) {
 
 SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, MVT EltVT,
                                                   SDValue Index) {
+  DebugLoc dl = Index.getNode()->getDebugLoc();
   // Make sure the index type is big enough to compute in.
   if (Index.getValueType().bitsGT(TLI.getPointerTy()))
-    Index = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), Index);
+    Index = DAG.getNode(ISD::TRUNCATE, dl, TLI.getPointerTy(), Index);
   else
-    Index = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Index);
+    Index = DAG.getNode(ISD::ZERO_EXTEND, dl, TLI.getPointerTy(), Index);
 
   // Calculate the element offset and add it to the pointer.
   unsigned EltSize = EltVT.getSizeInBits() / 8; // FIXME: should be ABI size.
 
-  Index = DAG.getNode(ISD::MUL, Index.getValueType(), Index,
+  Index = DAG.getNode(ISD::MUL, dl, Index.getValueType(), Index,
                       DAG.getConstant(EltSize, Index.getValueType()));
-  return DAG.getNode(ISD::ADD, Index.getValueType(), Index, VecPtr);
+  return DAG.getNode(ISD::ADD, dl, Index.getValueType(), Index, VecPtr);
 }
 
 /// JoinIntegers - Build an integer with low bits Lo and high bits Hi.
 SDValue DAGTypeLegalizer::JoinIntegers(SDValue Lo, SDValue Hi) {
+  // Arbitrarily use dlHi for result DebugLoc
+  DebugLoc dlHi = Hi.getNode()->getDebugLoc();
+  DebugLoc dlLo = Lo.getNode()->getDebugLoc();
   MVT LVT = Lo.getValueType();
   MVT HVT = Hi.getValueType();
   MVT NVT = MVT::getIntegerVT(LVT.getSizeInBits() + HVT.getSizeInBits());
 
-  Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, Lo);
-  Hi = DAG.getNode(ISD::ANY_EXTEND, NVT, Hi);
-  Hi = DAG.getNode(ISD::SHL, NVT, Hi,
+  Lo = DAG.getNode(ISD::ZERO_EXTEND, dlLo, NVT, Lo);
+  Hi = DAG.getNode(ISD::ANY_EXTEND, dlHi, NVT, Hi);
+  Hi = DAG.getNode(ISD::SHL, dlHi, NVT, Hi,
                    DAG.getConstant(LVT.getSizeInBits(), TLI.getPointerTy()));
-  return DAG.getNode(ISD::OR, NVT, Lo, Hi);
+  return DAG.getNode(ISD::OR, dlHi, NVT, Lo, Hi);
 }
 
 /// LibCallify - Convert the node into a libcall with the same prototype.
@@ -998,6 +1004,7 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
 /// of the given type.  A target boolean is an integer value, not necessarily of
 /// type i1, the bits of which conform to getBooleanContents.
 SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, MVT VT) {
+  DebugLoc dl = Bool.getNode()->getDebugLoc();
   ISD::NodeType ExtendCode;
   switch (TLI.getBooleanContents()) {
   default:
@@ -1016,7 +1023,7 @@ SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, MVT VT) {
     break;
   }
   }
-  return DAG.getNode(ExtendCode, VT, Bool);
+  return DAG.getNode(ExtendCode, dl, VT, Bool);
 }
 
 /// SplitInteger - Return the lower LoVT bits of Op in Lo and the upper HiVT
@@ -1024,12 +1031,13 @@ SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, MVT VT) {
 void DAGTypeLegalizer::SplitInteger(SDValue Op,
                                     MVT LoVT, MVT HiVT,
                                     SDValue &Lo, SDValue &Hi) {
+  DebugLoc dl = Op.getNode()->getDebugLoc();
   assert(LoVT.getSizeInBits() + HiVT.getSizeInBits() ==
          Op.getValueType().getSizeInBits() && "Invalid integer splitting!");
-  Lo = DAG.getNode(ISD::TRUNCATE, LoVT, Op);
-  Hi = DAG.getNode(ISD::SRL, Op.getValueType(), Op,
+  Lo = DAG.getNode(ISD::TRUNCATE, dl, LoVT, Op);
+  Hi = DAG.getNode(ISD::SRL, dl, Op.getValueType(), Op,
                    DAG.getConstant(LoVT.getSizeInBits(), TLI.getPointerTy()));
-  Hi = DAG.getNode(ISD::TRUNCATE, HiVT, Hi);
+  Hi = DAG.getNode(ISD::TRUNCATE, dl, HiVT, Hi);
 }
 
 /// SplitInteger - Return the lower and upper halves of Op's bits in a value
