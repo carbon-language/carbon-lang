@@ -817,22 +817,30 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     if (isa<UndefValue>(V))
       return 0;
     return UndefValue::get(VTy);
-  } else if (!V->hasOneUse()) {    // Other users may use these bits.
-    if (Depth != 0) {       // Not at the root.
-      // Just compute the KnownZero/KnownOne bits to simplify things downstream.
-      ComputeMaskedBits(V, DemandedMask, KnownZero, KnownOne, Depth);
-      return 0;
-    }
-    // If this is the root being simplified, allow it to have multiple uses,
-    // just set the DemandedMask to all bits.
-    DemandedMask = APInt::getAllOnesValue(BitWidth);
-  } else if (Depth == 6) {        // Limit search depth.
-    return 0;
   }
+  
+  if (Depth == 6)        // Limit search depth.
+    return 0;
   
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return 0;        // Only analyze instructions.
-
+  
+  // If there are multiple uses of this value and we aren't at the root, then
+  // we can't do any simplifications of the operands, because DemandedMask
+  // only reflects the bits demanded by *one* of the users.
+  if (Depth != 0 && !I->hasOneUse()) {
+    // Compute the KnownZero/KnownOne bits to simplify things downstream.
+    ComputeMaskedBits(I, DemandedMask, KnownZero, KnownOne, Depth);
+    return 0;
+  }
+  
+  // If this is the root being simplified, allow it to have multiple uses,
+  // just set the DemandedMask to all bits so that we can try to simplify the
+  // operands.  This allows visitTruncInst (for example) to simplify the
+  // operand of a trunc without duplicating all the logic below.
+  if (Depth == 0 && !V->hasOneUse())
+    DemandedMask = APInt::getAllOnesValue(BitWidth);
+  
   APInt LHSKnownZero(BitWidth, 0), LHSKnownOne(BitWidth, 0);
   APInt &RHSKnownZero = KnownZero, &RHSKnownOne = KnownOne;
   switch (I->getOpcode()) {
@@ -6960,7 +6968,7 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
 
 Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                                BinaryOperator &I) {
-  bool isLeftShift    = I.getOpcode() == Instruction::Shl;
+  bool isLeftShift = I.getOpcode() == Instruction::Shl;
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
