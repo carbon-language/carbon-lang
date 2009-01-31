@@ -12356,6 +12356,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
           if (!I->use_empty())
             I->replaceAllUsesWith(UndefValue::get(I->getType()));
           I->eraseFromParent();
+          Changed = true;
         }
       }
   }
@@ -12375,6 +12376,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
       I->eraseFromParent();
       RemoveFromWorkList(I);
+      Changed = true;
       continue;
     }
 
@@ -12389,17 +12391,19 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       ++NumConstProp;
       I->eraseFromParent();
       RemoveFromWorkList(I);
+      Changed = true;
       continue;
     }
 
     if (TD && I->getType()->getTypeID() == Type::VoidTyID) {
       // See if we can constant fold its operands.
-      for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i) {
-        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(i)) {
+      for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
+        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(i))
           if (Constant *NewC = ConstantFoldConstantExpression(CE, TD))
-            i->set(NewC);
-        }
-      }
+            if (NewC != CE) {
+              i->set(NewC);
+              Changed = true;
+            }
     }
 
     // See if we can trivially sink this instruction to a successor basic block.
