@@ -631,11 +631,12 @@ private:
   ///   isVolatile: volatile load.
   ///   LdWidth:    width of memory that we want to load.
   ///   ResType:    the wider result result type for the resulting vector.
+  ///   dl:         DebugLoc to be applied to new nodes
   SDValue GenWidenVectorLoads(SmallVector<SDValue, 16>& LdChain, SDValue Chain,
                               SDValue BasePtr, const Value *SV,
                               int SVOffset, unsigned Alignment,
                               bool isVolatile, unsigned LdWidth,
-                              MVT ResType);
+                              MVT ResType, DebugLoc dl);
 
   /// Helper genWidenVectorStores - Helper function to generate a set of
   /// stores to store a widen vector into non widen memory
@@ -649,11 +650,12 @@ private:
   ///   isVolatile: volatile lod
   ///   ValOp:   value to store
   ///   StWidth: width of memory that we want to store
+  ///   dl:         DebugLoc to be applied to new nodes
   void GenWidenVectorStores(SmallVector<SDValue, 16>& StChain, SDValue Chain,
                             SDValue BasePtr, const Value *SV,
                             int SVOffset, unsigned Alignment,
                             bool isVolatile, SDValue ValOp,
-                            unsigned StWidth);
+                            unsigned StWidth, DebugLoc dl);
 
   /// Modifies a vector input (widen or narrows) to a vector of NVT.  The
   /// input vector must have the same element type as NVT.
