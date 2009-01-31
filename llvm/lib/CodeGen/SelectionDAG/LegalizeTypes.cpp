@@ -951,27 +951,28 @@ SDValue DAGTypeLegalizer::JoinIntegers(SDValue Lo, SDValue Hi) {
 SDValue DAGTypeLegalizer::LibCallify(RTLIB::Libcall LC, SDNode *N,
                                      bool isSigned) {
   unsigned NumOps = N->getNumOperands();
+  DebugLoc dl = N->getDebugLoc();
   if (NumOps == 0) {
-    return MakeLibCall(LC, N->getValueType(0), 0, 0, isSigned);
+    return MakeLibCall(LC, N->getValueType(0), 0, 0, isSigned, dl);
   } else if (NumOps == 1) {
     SDValue Op = N->getOperand(0);
-    return MakeLibCall(LC, N->getValueType(0), &Op, 1, isSigned);
+    return MakeLibCall(LC, N->getValueType(0), &Op, 1, isSigned, dl);
   } else if (NumOps == 2) {
     SDValue Ops[2] = { N->getOperand(0), N->getOperand(1) };
-    return MakeLibCall(LC, N->getValueType(0), Ops, 2, isSigned);
+    return MakeLibCall(LC, N->getValueType(0), Ops, 2, isSigned, dl);
   }
   SmallVector<SDValue, 8> Ops(NumOps);
   for (unsigned i = 0; i < NumOps; ++i)
     Ops[i] = N->getOperand(i);
 
-  return MakeLibCall(LC, N->getValueType(0), &Ops[0], NumOps, isSigned);
+  return MakeLibCall(LC, N->getValueType(0), &Ops[0], NumOps, isSigned, dl);
 }
 
 /// MakeLibCall - Generate a libcall taking the given operands as arguments and
 /// returning a result of type RetVT.
 SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
                                       const SDValue *Ops, unsigned NumOps,
-                                      bool isSigned) {
+                                      bool isSigned, DebugLoc dl) {
   TargetLowering::ArgListTy Args;
   Args.reserve(NumOps);
 
@@ -987,11 +988,9 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
                                          TLI.getPointerTy());
 
   const Type *RetTy = RetVT.getTypeForMVT();
-  // FIXME pass in debug loc
   std::pair<SDValue,SDValue> CallInfo =
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
-                    false, CallingConv::C, false, Callee, Args, DAG,
-                    DebugLoc::getUnknownLoc());
+                    false, CallingConv::C, false, Callee, Args, DAG, dl);
   return CallInfo.first;
 }
 

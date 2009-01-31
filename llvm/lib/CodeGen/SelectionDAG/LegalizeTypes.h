@@ -196,7 +196,8 @@ private:
   SDValue JoinIntegers(SDValue Lo, SDValue Hi);
   SDValue LibCallify(RTLIB::Libcall LC, SDNode *N, bool isSigned);
   SDValue MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
-                      const SDValue *Ops, unsigned NumOps, bool isSigned);
+                      const SDValue *Ops, unsigned NumOps, bool isSigned,
+                      DebugLoc dl);
   SDValue PromoteTargetBoolean(SDValue Bool, MVT VT);
   void ReplaceValueWith(SDValue From, SDValue To);
   void ReplaceValueWithHelper(SDValue From, SDValue To);
@@ -361,7 +362,7 @@ private:
   SDValue ExpandIntOp_UINT_TO_FP(SDNode *N);
 
   void IntegerExpandSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
-                                  ISD::CondCode &CCCode);
+                                  ISD::CondCode &CCCode, DebugLoc dl);
 
   //===--------------------------------------------------------------------===//
   // Float to Integer Conversion Support: LegalizeFloatTypes.cpp
@@ -426,7 +427,7 @@ private:
   SDValue SoftenFloatOp_STORE(SDNode *N, unsigned OpNo);
 
   void SoftenSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
-                           ISD::CondCode &CCCode);
+                           ISD::CondCode &CCCode, DebugLoc dl);
 
   //===--------------------------------------------------------------------===//
   // Float Expansion Support: LegalizeFloatTypes.cpp
