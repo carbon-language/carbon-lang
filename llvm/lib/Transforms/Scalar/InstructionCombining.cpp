@@ -7892,15 +7892,15 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       break;
     case Instruction::ZExt: {
       DoXForm = NumCastsRemoved >= 1;
-      if (!DoXForm) {
+      if (!DoXForm && 0) {
         // If it's unnecessary to issue an AND to clear the high bits, it's
         // always profitable to do this xform.
-        Value *TryRes = EvaluateInDifferentType(SrcI, DestTy, 
-                                           CI.getOpcode() == Instruction::SExt);
+        Value *TryRes = EvaluateInDifferentType(SrcI, DestTy, false);
         APInt Mask(APInt::getBitsSet(DestBitSize, SrcBitSize, DestBitSize));
         if (MaskedValueIsZero(TryRes, Mask))
           return ReplaceInstUsesWith(CI, TryRes);
-        else if (Instruction *TryI = dyn_cast<Instruction>(TryRes))
+        
+        if (Instruction *TryI = dyn_cast<Instruction>(TryRes))
           if (TryI->use_empty())
             EraseInstFromFunction(*TryI);
       }
@@ -7908,7 +7908,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     }
     case Instruction::SExt: {
       DoXForm = NumCastsRemoved >= 2;
-      if (!DoXForm && !isa<TruncInst>(SrcI)) {
+      if (!DoXForm && !isa<TruncInst>(SrcI) && 0) {
         // If we do not have to emit the truncate + sext pair, then it's always
         // profitable to do this xform.
         //
@@ -7918,12 +7918,12 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         // t3 = sext i16 t2 to i32
         // !=
         // i32 t1
-        Value *TryRes = EvaluateInDifferentType(SrcI, DestTy, 
-                                           CI.getOpcode() == Instruction::SExt);
+        Value *TryRes = EvaluateInDifferentType(SrcI, DestTy, true);
         unsigned NumSignBits = ComputeNumSignBits(TryRes);
         if (NumSignBits > (DestBitSize - SrcBitSize))
           return ReplaceInstUsesWith(CI, TryRes);
-        else if (Instruction *TryI = dyn_cast<Instruction>(TryRes))
+        
+        if (Instruction *TryI = dyn_cast<Instruction>(TryRes))
           if (TryI->use_empty())
             EraseInstFromFunction(*TryI);
       }
@@ -7932,11 +7932,13 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     }
     
     if (DoXForm) {
+      DOUT << "ICE: EvaluateInDifferentType converting expression type to avoid"
+           << " cast: " << CI;
       Value *Res = EvaluateInDifferentType(SrcI, DestTy, 
                                            CI.getOpcode() == Instruction::SExt);
       if (JustReplace)
-          // Just replace this cast with the result.
-          return ReplaceInstUsesWith(CI, Res);
+        // Just replace this cast with the result.
+        return ReplaceInstUsesWith(CI, Res);
 
       assert(Res->getType() == DestTy);
       switch (CI.getOpcode()) {
