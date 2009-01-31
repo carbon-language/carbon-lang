@@ -874,17 +874,11 @@ CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
 
 const llvm::FunctionType *
 CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
-  return GetFunctionType(FI.argtypes_begin(), FI.argtypes_end(), 
-                         FI.isVariadic());
-}
-
-const llvm::FunctionType *
-CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
-                              bool IsVariadic) {
   std::vector<const llvm::Type*> ArgTys;
 
   const llvm::Type *ResultType = 0;
 
+  ArgTypeIterator begin = FI.argtypes_begin(), end = FI.argtypes_end();  
   QualType RetTy = *begin;
   ABIArgInfo RetAI = getABIReturnInfo(RetTy, *this);
   switch (RetAI.getKind()) {
@@ -944,7 +938,7 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
     }
   }
 
-  return llvm::FunctionType::get(ResultType, ArgTys, IsVariadic);
+  return llvm::FunctionType::get(ResultType, ArgTys, FI.isVariadic());
 }
 
 bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {

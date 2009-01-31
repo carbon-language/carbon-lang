@@ -143,15 +143,8 @@ public:
   /// memory representation is usually i8 or i32, depending on the target.
   const llvm::Type *ConvertTypeForMem(QualType T);
 
-  /// GetFunctionType - Get the LLVM function type from Info.
+  /// GetFunctionType - Get the LLVM function type for \arg Info.
   const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info);
-
-  /// GetFunctionType - Get the LLVM function type for the given types
-  /// and variadicness.
-  // FIXME: Do we even need IsVariadic here?
-  const llvm::FunctionType *GetFunctionType(ArgTypeIterator begin,
-                                            ArgTypeIterator end,
-                                            bool IsVariadic);
   
   const CGRecordLayout *getCGRecordLayout(const TagDecl*) const;
   /// Returns a StructType representing an Objective-C object
