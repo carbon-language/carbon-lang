@@ -2357,7 +2357,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
       return Operand.getOperand(0);
     break;
   case ISD::FNEG:
-    if (OpOpcode == ISD::FSUB)   // -(X-Y) -> (Y-X)
+    // -(X-Y) -> (Y-X) is unsafe because when X==Y, -0.0 != +0.0
+    if (UnsafeFPMath && OpOpcode == ISD::FSUB)
       return getNode(ISD::FSUB, VT, Operand.getNode()->getOperand(1),
                      Operand.getNode()->getOperand(0));
     if (OpOpcode == ISD::FNEG)  // --X -> X
