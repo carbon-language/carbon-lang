@@ -79,9 +79,6 @@ class SelectionDAG {
   MachineModuleInfo *MMI;
   DwarfWriter *DW;
 
-  /// CurDebugLoc - current file + line number.  Changes as we build the DAG.
-  DebugLoc CurDebugLoc;
-
   /// EntryNode - The starting token.
   SDNode EntryNode;
 
@@ -140,7 +137,6 @@ public:
   FunctionLoweringInfo &getFunctionLoweringInfo() const { return FLI; }
   MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
   DwarfWriter *getDwarfWriter() const { return DW; }
-  DebugLoc getCurDebugLoc() const { return CurDebugLoc; }
 
   /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.
   ///
@@ -198,8 +194,6 @@ public:
            "DAG root value is not a chain!");
     return Root = N;
   }
-
-  void setCurDebugLoc(DebugLoc dl) { CurDebugLoc = dl; }
 
   /// Combine - This iterates over the nodes in the SelectionDAG, folding
   /// certain types of nodes together, or eliminating superfluous nodes.  The

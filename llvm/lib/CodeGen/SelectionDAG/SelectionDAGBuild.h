@@ -164,6 +164,9 @@ public:
 class SelectionDAGLowering {
   MachineBasicBlock *CurMBB;
 
+  /// CurDebugLoc - current file + line number.  Changes as we build the DAG.
+  DebugLoc CurDebugLoc;
+
   DenseMap<const Value*, SDValue> NodeMap;
 
   /// PendingLoads - Loads are not emitted to the program immediately.  We bunch
@@ -356,7 +359,8 @@ public:
 
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
                        FunctionLoweringInfo &funcinfo)
-    : TLI(tli), DAG(dag), FuncInfo(funcinfo) {
+    : CurDebugLoc(DebugLoc::getUnknownLoc()), 
+      TLI(tli), DAG(dag), FuncInfo(funcinfo) {
   }
 
   void init(GCFunctionInfo *gfi, AliasAnalysis &aa);
@@ -381,6 +385,8 @@ public:
   /// to do this before emitting a terminator instruction.
   ///
   SDValue getControlRoot();
+
+  DebugLoc getCurDebugLoc() const { return CurDebugLoc; }
 
   void CopyValueToVirtualRegister(Value *V, unsigned Reg);
 
@@ -531,6 +537,8 @@ private:
   
   const char *implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op);
   const char *implVisitAluOverflow(CallInst &I, ISD::NodeType Op);
+
+  void setCurDebugLoc(DebugLoc dl) { CurDebugLoc = dl; }
 };
 
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector
