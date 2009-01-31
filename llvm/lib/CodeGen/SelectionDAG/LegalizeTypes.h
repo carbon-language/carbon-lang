@@ -481,7 +481,7 @@ private:
   SDValue ExpandFloatOp_STORE(SDNode *N, unsigned OpNo);
 
   void FloatExpandSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
-                                ISD::CondCode &CCCode);
+                                ISD::CondCode &CCCode, DebugLoc dl);
 
   //===--------------------------------------------------------------------===//
   // Scalarization Support: LegalizeVectorTypes.cpp
