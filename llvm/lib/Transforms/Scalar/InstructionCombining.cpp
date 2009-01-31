@@ -825,10 +825,68 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return 0;        // Only analyze instructions.
   
+  APInt LHSKnownZero(BitWidth, 0), LHSKnownOne(BitWidth, 0);
+  APInt &RHSKnownZero = KnownZero, &RHSKnownOne = KnownOne;
+
   // If there are multiple uses of this value and we aren't at the root, then
   // we can't do any simplifications of the operands, because DemandedMask
   // only reflects the bits demanded by *one* of the users.
   if (Depth != 0 && !I->hasOneUse()) {
+    // Despite the fact that we can't simplify this instruction in all User's
+    // context, we can at least compute the knownzero/knownone bits, and we can
+    // do simplifications that apply to *just* the one user if we know that
+    // this instruction has a simpler value in that context.
+    if (I->getOpcode() == Instruction::And) {
+      // If either the LHS or the RHS are Zero, the result is zero.
+      ComputeMaskedBits(I->getOperand(1), DemandedMask,
+                        RHSKnownZero, RHSKnownOne, Depth+1);
+      ComputeMaskedBits(I->getOperand(0), DemandedMask & ~RHSKnownZero,
+                        LHSKnownZero, LHSKnownOne, Depth+1);
+      
+      // If all of the demanded bits are known 1 on one side, return the other.
+      // These bits cannot contribute to the result of the 'and' in this
+      // context.
+      if ((DemandedMask & ~LHSKnownZero & RHSKnownOne) == 
+          (DemandedMask & ~LHSKnownZero))
+        return I->getOperand(0);
+      if ((DemandedMask & ~RHSKnownZero & LHSKnownOne) == 
+          (DemandedMask & ~RHSKnownZero))
+        return I->getOperand(1);
+      
+      // If all of the demanded bits in the inputs are known zeros, return zero.
+      if ((DemandedMask & (RHSKnownZero|LHSKnownZero)) == DemandedMask)
+        return Constant::getNullValue(VTy);
+      
+    } else if (I->getOpcode() == Instruction::Or) {
+      // We can simplify (X|Y) -> X or Y in the user's context if we know that
+      // only bits from X or Y are demanded.
+      
+      // If either the LHS or the RHS are One, the result is One.
+      ComputeMaskedBits(I->getOperand(1), DemandedMask, 
+                        RHSKnownZero, RHSKnownOne, Depth+1);
+      ComputeMaskedBits(I->getOperand(0), DemandedMask & ~RHSKnownOne, 
+                        LHSKnownZero, LHSKnownOne, Depth+1);
+      
+      // If all of the demanded bits are known zero on one side, return the
+      // other.  These bits cannot contribute to the result of the 'or' in this
+      // context.
+      if ((DemandedMask & ~LHSKnownOne & RHSKnownZero) == 
+          (DemandedMask & ~LHSKnownOne))
+        return I->getOperand(0);
+      if ((DemandedMask & ~RHSKnownOne & LHSKnownZero) == 
+          (DemandedMask & ~RHSKnownOne))
+        return I->getOperand(1);
+      
+      // If all of the potentially set bits on one side are known to be set on
+      // the other side, just use the 'other' side.
+      if ((DemandedMask & (~RHSKnownZero) & LHSKnownOne) == 
+          (DemandedMask & (~RHSKnownZero)))
+        return I->getOperand(0);
+      if ((DemandedMask & (~LHSKnownZero) & RHSKnownOne) == 
+          (DemandedMask & (~LHSKnownZero)))
+        return I->getOperand(1);
+    }
+    
     // Compute the KnownZero/KnownOne bits to simplify things downstream.
     ComputeMaskedBits(I, DemandedMask, KnownZero, KnownOne, Depth);
     return 0;
@@ -841,8 +899,6 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
   if (Depth == 0 && !V->hasOneUse())
     DemandedMask = APInt::getAllOnesValue(BitWidth);
   
-  APInt LHSKnownZero(BitWidth, 0), LHSKnownOne(BitWidth, 0);
-  APInt &RHSKnownZero = KnownZero, &RHSKnownOne = KnownOne;
   switch (I->getOpcode()) {
   default:
     ComputeMaskedBits(I, DemandedMask, RHSKnownZero, RHSKnownOne, Depth);
