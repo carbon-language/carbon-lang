@@ -1287,6 +1287,17 @@ SDValue SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
   return SDValue(N, 0);
 }
 
+/// getShiftAmountOperand - Return the specified value casted to
+/// the target's desired shift amount type.
+SDValue SelectionDAG::getShiftAmountOperand(SDValue Op) {
+  MVT OpTy = Op.getValueType();
+  MVT ShTy = TLI.getShiftAmountTy();
+  if (OpTy == ShTy || OpTy.isVector()) return Op;
+
+  ISD::NodeType Opcode = OpTy.bitsGT(ShTy) ?  ISD::TRUNCATE : ISD::ZERO_EXTEND;
+  return getNode(Opcode, ShTy, Op);
+}
+
 /// CreateStackTemporary - Create a stack temporary, suitable for holding the
 /// specified value type.
 SDValue SelectionDAG::CreateStackTemporary(MVT VT, unsigned minAlign) {
@@ -2529,9 +2540,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
            "Shift operators return type must be the same as their first arg");
     assert(VT.isInteger() && N2.getValueType().isInteger() &&
            "Shifts only work on integers");
-    assert((N2.getValueType() == TLI.getShiftAmountTy() ||
-            (N2.getValueType().isVector() && N2.getValueType().isInteger())) &&
-           "Wrong type for shift amount");
 
     // Always fold shifts of i1 values so the code generator doesn't need to
     // handle them.  Since we know the size of the shift has to be less than the

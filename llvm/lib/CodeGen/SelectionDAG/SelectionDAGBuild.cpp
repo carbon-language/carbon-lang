@@ -427,7 +427,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
         Hi = DAG.getNode(ISD::ANY_EXTEND, dl, TotalVT, Hi);
         Hi = DAG.getNode(ISD::SHL, dl, TotalVT, Hi,
                          DAG.getConstant(Lo.getValueType().getSizeInBits(),
-                                         TLI.getShiftAmountTy()));
+                                         TLI.getPointerTy()));
         Lo = DAG.getNode(ISD::ZERO_EXTEND, dl, TotalVT, Lo);
         Val = DAG.getNode(ISD::OR, dl, TotalVT, Lo, Hi);
       }
@@ -587,7 +587,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
       unsigned OddParts = NumParts - RoundParts;
       SDValue OddVal = DAG.getNode(ISD::SRL, dl, ValueVT, Val,
                                    DAG.getConstant(RoundBits,
-                                                   TLI.getShiftAmountTy()));
+                                                   TLI.getPointerTy()));
       getCopyToParts(DAG, dl, OddVal, Parts + RoundParts, OddParts, PartVT);
       if (TLI.isBigEndian())
         // The odd parts were reversed by getCopyToParts - unreverse them.
@@ -1424,14 +1424,14 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
                                   ISD::SETUGT);
 
   SDValue ShiftOp;
-  if (VT.bitsGT(TLI.getShiftAmountTy()))
+  if (VT.bitsGT(TLI.getPointerTy()))
     ShiftOp = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(), 
-                          TLI.getShiftAmountTy(), SUB);
+                          TLI.getPointerTy(), SUB);
   else
     ShiftOp = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(), 
-                          TLI.getShiftAmountTy(), SUB);
+                          TLI.getPointerTy(), SUB);
 
-  B.Reg = FuncInfo.MakeReg(TLI.getShiftAmountTy());
+  B.Reg = FuncInfo.MakeReg(TLI.getPointerTy());
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), B.Reg, ShiftOp);
 
   // Set NextBlock to be the MBB immediately after the current one, if any.
@@ -1463,7 +1463,7 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
                                             BitTestCase &B) {
   // Make desired shift
   SDValue ShiftOp = DAG.getCopyFromReg(getControlRoot(), Reg,
-                                       TLI.getShiftAmountTy());
+                                       TLI.getPointerTy());
   SDValue SwitchVal = DAG.getNode(ISD::SHL, getCurDebugLoc(), 
                                   TLI.getPointerTy(),
                                   DAG.getConstant(1, TLI.getPointerTy()),
@@ -2121,12 +2121,12 @@ void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
   if (!isa<VectorType>(I.getType())) {
-    if (TLI.getShiftAmountTy().bitsLT(Op2.getValueType()))
+    if (TLI.getPointerTy().bitsLT(Op2.getValueType()))
       Op2 = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(), 
-                        TLI.getShiftAmountTy(), Op2);
-    else if (TLI.getShiftAmountTy().bitsGT(Op2.getValueType()))
+                        TLI.getPointerTy(), Op2);
+    else if (TLI.getPointerTy().bitsGT(Op2.getValueType()))
       Op2 = DAG.getNode(ISD::ANY_EXTEND, getCurDebugLoc(), 
-                        TLI.getShiftAmountTy(), Op2);
+                        TLI.getPointerTy(), Op2);
   }
 
   setValue(&I, DAG.getNode(Opcode, getCurDebugLoc(), 
@@ -2673,7 +2673,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
           unsigned Amt = Log2_64(ElementSize);
           IdxN = DAG.getNode(ISD::SHL, getCurDebugLoc(), 
                              N.getValueType(), IdxN,
-                             DAG.getConstant(Amt, TLI.getShiftAmountTy()));
+                             DAG.getConstant(Amt, TLI.getPointerTy()));
         } else {
           SDValue Scale = DAG.getIntPtrConstant(ElementSize);
           IdxN = DAG.getNode(ISD::MUL, getCurDebugLoc(), 
@@ -3023,7 +3023,7 @@ GetExponent(SelectionDAG &DAG, SDValue Op, const TargetLowering &TLI,
   SDValue t0 = DAG.getNode(ISD::AND, dl, MVT::i32, Op,
                            DAG.getConstant(0x7f800000, MVT::i32));
   SDValue t1 = DAG.getNode(ISD::SRL, dl, MVT::i32, t0,
-                           DAG.getConstant(23, TLI.getShiftAmountTy()));
+                           DAG.getConstant(23, TLI.getPointerTy()));
   SDValue t2 = DAG.getNode(ISD::SUB, dl, MVT::i32, t1,
                            DAG.getConstant(127, MVT::i32));
   return DAG.getNode(ISD::SINT_TO_FP, dl, MVT::f32, t2);
@@ -3095,7 +3095,7 @@ SelectionDAGLowering::visitExp(CallInst &I) {
 
     //   IntegerPartOfX <<= 23;
     IntegerPartOfX = DAG.getNode(ISD::SHL, dl, MVT::i32, IntegerPartOfX,
-                                 DAG.getConstant(23, TLI.getShiftAmountTy()));
+                                 DAG.getConstant(23, TLI.getPointerTy()));
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3535,7 +3535,7 @@ SelectionDAGLowering::visitExp2(CallInst &I) {
 
     //   IntegerPartOfX <<= 23;
     IntegerPartOfX = DAG.getNode(ISD::SHL, dl, MVT::i32, IntegerPartOfX,
-                                 DAG.getConstant(23, TLI.getShiftAmountTy()));
+                                 DAG.getConstant(23, TLI.getPointerTy()));
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3668,7 +3668,7 @@ SelectionDAGLowering::visitPow(CallInst &I) {
 
     //   IntegerPartOfX <<= 23;
     IntegerPartOfX = DAG.getNode(ISD::SHL, dl, MVT::i32, IntegerPartOfX,
-                                 DAG.getConstant(23, TLI.getShiftAmountTy()));
+                                 DAG.getConstant(23, TLI.getPointerTy()));
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:

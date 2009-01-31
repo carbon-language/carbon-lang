@@ -1651,19 +1651,21 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
           VT == N0.getValueType() && N0.getOpcode() == ISD::AND)
         if (ConstantSDNode *AndRHS =
                     dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+          MVT ShiftTy = DCI.isBeforeLegalize() ?
+            getPointerTy() : getShiftAmountTy();
           if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
             // Perform the xform if the AND RHS is a single bit.
             if (isPowerOf2_64(AndRHS->getZExtValue())) {
               return DAG.getNode(ISD::SRL, VT, N0,
-                             DAG.getConstant(Log2_64(AndRHS->getZExtValue()),
-                                             getShiftAmountTy()));
+                                 DAG.getConstant(Log2_64(AndRHS->getZExtValue()),
+                                                 ShiftTy));
             }
           } else if (Cond == ISD::SETEQ && C1 == AndRHS->getZExtValue()) {
             // (X & 8) == 8  -->  (X & 8) >> 3
             // Perform the xform if C1 is a single bit.
             if (C1.isPowerOf2()) {
               return DAG.getNode(ISD::SRL, VT, N0,
-                          DAG.getConstant(C1.logBase2(), getShiftAmountTy()));
+                                 DAG.getConstant(C1.logBase2(), ShiftTy));
             }
           }
         }

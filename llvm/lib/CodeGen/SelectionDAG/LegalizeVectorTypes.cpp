@@ -111,11 +111,6 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BinOp(SDNode *N) {
 SDValue DAGTypeLegalizer::ScalarizeVecRes_ShiftOp(SDNode *N) {
   SDValue LHS = GetScalarizedVector(N->getOperand(0));
   SDValue ShiftAmt = GetScalarizedVector(N->getOperand(1));
-  if (TLI.getShiftAmountTy().bitsLT(ShiftAmt.getValueType()))
-    ShiftAmt = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), ShiftAmt);
-  else if (TLI.getShiftAmountTy().bitsGT(ShiftAmt.getValueType()))
-    ShiftAmt = DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), ShiftAmt);
-
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, ShiftAmt);
 }
 

@@ -301,9 +301,6 @@ private:
 
   SDValue ExpandEXTRACT_SUBVECTOR(SDValue Op);
   SDValue ExpandEXTRACT_VECTOR_ELT(SDValue Op);
-
-  // Returns the legalized (truncated or extended) shift amount.
-  SDValue LegalizeShiftAmount(SDValue ShiftAmt);
 };
 }
 
@@ -903,8 +900,10 @@ SDValue SelectionDAGLegalize::UnrollVectorOp(SDValue Op) {
     case ISD::SHL:
     case ISD::SRA:
     case ISD::SRL:
+    case ISD::ROTL:
+    case ISD::ROTR:
       Scalars.push_back(DAG.getNode(Op.getOpcode(), EltVT, Operands[0],
-                                    LegalizeShiftAmount(Operands[1])));
+                                    DAG.getShiftAmountOperand(Operands[1])));
       break;
     }
   }
@@ -967,16 +966,6 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx) {
   // Load the updated vector.
   return DAG.getLoad(VT, Ch, StackPtr,
                      PseudoSourceValue::getFixedStack(SPFI), 0);
-}
-
-SDValue SelectionDAGLegalize::LegalizeShiftAmount(SDValue ShiftAmt) {
-  if (TLI.getShiftAmountTy().bitsLT(ShiftAmt.getValueType()))
-    return DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), ShiftAmt);
-
-  if (TLI.getShiftAmountTy().bitsGT(ShiftAmt.getValueType()))
-    return DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), ShiftAmt);
-
-  return ShiftAmt;
 }
 
 
@@ -3137,10 +3126,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::SRL_PARTS: {
     SmallVector<SDValue, 8> Ops;
     bool Changed = false;
-    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+    unsigned N = Node->getNumOperands();
+    for (unsigned i = 0; i + 1 < N; ++i) {
       Ops.push_back(LegalizeOp(Node->getOperand(i)));
       Changed |= Ops.back() != Node->getOperand(i);
     }
+    Ops.push_back(LegalizeOp(DAG.getShiftAmountOperand(Node->getOperand(N-1))));
+    Changed |= Ops.back() != Node->getOperand(N-1);
     if (Changed)
       Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
 
@@ -3191,21 +3183,22 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::FDIV:
   case ISD::FPOW:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-    switch (getTypeAction(Node->getOperand(1).getValueType())) {
-    case Expand: assert(0 && "Not possible");
-    case Legal:
-      Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the RHS.
-      break;
-    case Promote:
-      Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the RHS.
-      break;
-    }
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
 
     if ((Node->getOpcode() == ISD::SHL ||
          Node->getOpcode() == ISD::SRL ||
          Node->getOpcode() == ISD::SRA) &&
-        !Node->getValueType(0).isVector()) {
-      Tmp2 = LegalizeShiftAmount(Tmp2);
+        !Node->getValueType(0).isVector())
+      Tmp2 = DAG.getShiftAmountOperand(Tmp2);
+
+    switch (getTypeAction(Tmp2.getValueType())) {
+    case Expand: assert(0 && "Not possible");
+    case Legal:
+      Tmp2 = LegalizeOp(Tmp2); // Legalize the RHS.
+      break;
+    case Promote:
+      Tmp2 = PromoteOp(Tmp2);  // Promote the RHS.
+      break;
     }
 
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
@@ -3673,7 +3666,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::ROTL:
   case ISD::ROTR:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+    Tmp2 = LegalizeOp(DAG.getShiftAmountOperand(Node->getOperand(1)));   // RHS
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     default:

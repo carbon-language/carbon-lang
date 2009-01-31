@@ -942,8 +942,8 @@ SDValue DAGTypeLegalizer::JoinIntegers(SDValue Lo, SDValue Hi) {
 
   Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, Lo);
   Hi = DAG.getNode(ISD::ANY_EXTEND, NVT, Hi);
-  Hi = DAG.getNode(ISD::SHL, NVT, Hi, DAG.getConstant(LVT.getSizeInBits(),
-                                                      TLI.getShiftAmountTy()));
+  Hi = DAG.getNode(ISD::SHL, NVT, Hi,
+                   DAG.getConstant(LVT.getSizeInBits(), TLI.getPointerTy()));
   return DAG.getNode(ISD::OR, NVT, Lo, Hi);
 }
 
@@ -1028,8 +1028,7 @@ void DAGTypeLegalizer::SplitInteger(SDValue Op,
          Op.getValueType().getSizeInBits() && "Invalid integer splitting!");
   Lo = DAG.getNode(ISD::TRUNCATE, LoVT, Op);
   Hi = DAG.getNode(ISD::SRL, Op.getValueType(), Op,
-                   DAG.getConstant(LoVT.getSizeInBits(),
-                                   TLI.getShiftAmountTy()));
+                   DAG.getConstant(LoVT.getSizeInBits(), TLI.getPointerTy()));
   Hi = DAG.getNode(ISD::TRUNCATE, HiVT, Hi);
 }
 

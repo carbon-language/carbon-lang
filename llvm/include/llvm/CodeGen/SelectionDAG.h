@@ -636,6 +636,10 @@ public:
   /// through the backend.
   SDValue getMemOperand(const MachineMemOperand &MO);
 
+  /// getShiftAmountOperand - Return the specified value casted to
+  /// the target's desired shift amount type.
+  SDValue getShiftAmountOperand(SDValue Op);
+
   /// UpdateNodeOperands - *Mutate* the specified node in-place to have the
   /// specified operands.  If the resultant node already exists in the DAG,
   /// this does not modify the specified node, instead it returns the node that
