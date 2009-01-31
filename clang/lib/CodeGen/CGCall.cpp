@@ -388,7 +388,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
 }
 
 namespace {
-/// X86_32ABIInfo - The X86_64 ABI information.
+/// X86_64ABIInfo - The X86_64 ABI information.
 class X86_64ABIInfo : public ABIInfo {
   enum Class {
     Integer = 0,
@@ -403,20 +403,25 @@ class X86_64ABIInfo : public ABIInfo {
 
   /// merge - Implement the X86_64 ABI merging algorithm.
   ///
-  /// \param Offset - The offset of the current field.
-  /// \param FieldLo - The low classification of the current field.
-  /// \param FieldHi - The high classification of the current field.
-  /// \param Lo [in] [out] - The accumulated low classification.
-  /// \param Lo [in] [out] - The accumulated high classification.  
-  void merge(uint64_t Offset, Class FieldLo, Class FieldHi,
-             Class &Lo, Class &Hi) const;
+  /// Merge an accumulating classification \arg Accum with a field
+  /// classification \arg Field.
+  ///
+  /// \param Accum - The accumulating classification. This should
+  /// always be either NoClass or the result of a previous merge
+  /// call. In addition, this should never be Memory (the caller
+  /// should just return Memory for the aggregate).
+  Class merge(Class Accum, Class Field) const;
 
   /// classify - Determine the x86_64 register classes in which the
   /// given type T should be passed.
   ///
-  /// \param Lo - The classification for the low word of the type.
-  /// \param Hi - The classification for the high word of the type.
-  /// \param OffsetBase - The bit offset of the field in the
+  /// \param Lo - The classification for the parts of the type
+  /// residing in the low word of the containing object.
+  ///
+  /// \param Hi - The classification for the parts of the type
+  /// residing in the high word of the containing object.
+  ///
+  /// \param OffsetBase - The bit offset of this type in the
   /// containing object.  Some parameters are classified different
   /// depending on whether they straddle an eightbyte boundary.
   ///
@@ -430,7 +435,7 @@ class X86_64ABIInfo : public ABIInfo {
   /// be NoClass.
   void classify(QualType T, ASTContext &Context, uint64_t OffsetBase,
                 Class &Lo, Class &Hi) const;
-
+  
 public:
   virtual ABIArgInfo classifyReturnType(QualType RetTy, 
                                         ASTContext &Context) const;
@@ -440,18 +445,8 @@ public:
 };
 }
 
-void X86_64ABIInfo::merge(uint64_t Offset, Class FieldLo, Class FieldHi,
-                          Class &Lo, Class &Hi) const {
-  // Determine which half of the structure we are classifying.
-  //
-  // AMD64-ABI 3.2.3p2: Rule 3. f the size of the aggregate
-  // exceeds a single eightbyte, each is classified
-  // separately. Each eightbyte gets initialized to class
-  // NO_CLASS.
-  Class &Target = Offset < 64 ? Lo : Hi;
-
-  // Merge the lo field classifcation.
-  //
+X86_64ABIInfo::Class X86_64ABIInfo::merge(Class Accum, 
+                                          Class Field) const {
   // AMD64-ABI 3.2.3p2: Rule 4. Each field of an object is
   // classified recursively so that always two fields are
   // considered. The resulting class is calculated according to
@@ -472,62 +467,59 @@ void X86_64ABIInfo::merge(uint64_t Offset, Class FieldLo, Class FieldHi,
   // MEMORY is used as class.
   //
   // (f) Otherwise class SSE is used.
-  if (Target == FieldLo || FieldLo == NoClass) ;
-  else if (FieldLo == Memory)
-    Lo = Memory;
-  else if (Target == NoClass)
-    Target = FieldLo;
-  else if (Target == Integer || FieldLo == Integer) 
-    Target = Integer;
-  else if (FieldLo == X87 || FieldLo == X87Up || FieldLo == ComplexX87)
-    Lo = Memory;
+  assert((Accum == NoClass || Accum == Integer || 
+          Accum == SSE || Accum == SSEUp) &&
+         "Invalid accumulated classification during merge.");
+  if (Accum == Field || Field == NoClass)
+    return Accum;
+  else if (Field == Memory)
+    return Memory;
+  else if (Accum == NoClass)
+    return Field;
+  else if (Accum == Integer || Field == Integer) 
+    return Integer;
+  else if (Field == X87 || Field == X87Up || Field == ComplexX87)
+    return Memory;
   else
-    Target = SSE;
-
-  // It isn't clear from the ABI spec what the role of the high
-  // classification is here, but since this should only happen
-  // when we have a struct with a two eightbyte member, we can
-  // just push the field high class into the overall high class.
-  if (FieldHi != NoClass)
-    Hi = FieldHi;
+    return SSE;
 }
 
 void X86_64ABIInfo::classify(QualType Ty,
                              ASTContext &Context,
                              uint64_t OffsetBase,
                              Class &Lo, Class &Hi) const {
-  Lo = Memory;
-  Hi = NoClass;
+  Lo = Hi = NoClass;
+
+  Class &Current = OffsetBase < 64 ? Lo : Hi;
+  Current = Memory;
+
   if (const BuiltinType *BT = Ty->getAsBuiltinType()) {
     BuiltinType::Kind k = BT->getKind();
 
     if (k == BuiltinType::Void) {
-      Lo = NoClass; 
+      Current = NoClass; 
     } else if (k >= BuiltinType::Bool && k <= BuiltinType::LongLong) {
-      Lo = Integer;
+      Current = Integer;
     } else if (k == BuiltinType::Float || k == BuiltinType::Double) {
-      Lo = SSE;
+      Current = SSE;
     } else if (k == BuiltinType::LongDouble) {
       Lo = X87;
       Hi = X87Up;
     }
-    
     // FIXME: _Decimal32 and _Decimal64 are SSE.
     // FIXME: _float128 and _Decimal128 are (SSE, SSEUp).
     // FIXME: __int128 is (Integer, Integer).
   } else if (Ty->isPointerLikeType() || Ty->isBlockPointerType() ||
              Ty->isObjCQualifiedInterfaceType()) {
-    Lo = Integer;
+    Current = Integer;
   } else if (const VectorType *VT = Ty->getAsVectorType()) {
     uint64_t Size = Context.getTypeSize(VT);
     if (Size == 64) {
       // gcc passes <1 x double> in memory.
-      if (VT->getElementType() == Context.DoubleTy) {
-        Lo = Memory;
+      if (VT->getElementType() == Context.DoubleTy)
         return;
-      }
 
-      Lo = SSE;
+      Current = SSE;
 
       // If this type crosses an eightbyte boundary, it should be
       // split.
@@ -543,15 +535,15 @@ void X86_64ABIInfo::classify(QualType Ty,
     uint64_t Size = Context.getTypeSize(Ty);
     if (ET->isIntegerType()) {
       if (Size <= 64)
-        Lo = Integer;
+        Current = Integer;
       else if (Size <= 128)
         Lo = Hi = Integer;
     } else if (ET == Context.FloatTy) 
-      Lo = SSE;
+      Current = SSE;
     else if (ET == Context.DoubleTy)
       Lo = Hi = SSE;
     else if (ET == Context.LongDoubleTy)
-      Lo = ComplexX87;
+      Current = ComplexX87;
 
     // If this complex type crosses an eightbyte boundary then it
     // should be split.
@@ -573,25 +565,27 @@ void X86_64ABIInfo::classify(QualType Ty,
     // fields, it has class MEMORY.
     //
     // Only need to check alignment of array base.
-    if (OffsetBase % Context.getTypeAlign(AT->getElementType())) {
-      Lo = Memory;
+    if (OffsetBase % Context.getTypeAlign(AT->getElementType()))
       return;
-    }
 
     // Otherwise implement simplified merge. We could be smarter about
     // this, but it isn't worth it and would be harder to verify.
-    Lo = NoClass;
+    Current = NoClass;
     uint64_t EltSize = Context.getTypeSize(AT->getElementType());
     uint64_t ArraySize = AT->getSize().getZExtValue();
     for (uint64_t i=0, Offset=OffsetBase; i<ArraySize; ++i, Offset += EltSize) {
       Class FieldLo, FieldHi;
       classify(AT->getElementType(), Context, Offset, FieldLo, FieldHi);
-    
-      merge(Offset, FieldLo, FieldHi, Lo, Hi);
-      // Memory is never over-ridden, exit early if we see it.
-      if (Lo == Memory)
-        return;
+      Lo = merge(Lo, FieldLo);
+      Hi = merge(Hi, FieldHi);
+      if (Lo == Memory || Hi == Memory)
+        break;
     }
+    
+    // Do post merger cleanup (see below). Only case we worry about is Memory.
+    if (Hi == Memory)
+      Lo = Memory;
+    assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp array classification.");
   } else if (const RecordType *RT = Ty->getAsRecordType()) {
     uint64_t Size = Context.getTypeSize(Ty);
     
@@ -609,7 +603,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
     
     // Reset Lo class, this will be recomputed.
-    Lo = NoClass;
+    Current = NoClass;
     unsigned idx = 0;
     for (RecordDecl::field_iterator i = RD->field_begin(), 
            e = RD->field_end(); i != e; ++i, ++idx) {
@@ -623,13 +617,17 @@ void X86_64ABIInfo::classify(QualType Ty,
       }
 
       // Classify this field.
+      //
+      // AMD64-ABI 3.2.3p2: Rule 3. If the size of the aggregate
+      // exceeds a single eightbyte, each is classified
+      // separately. Each eightbyte gets initialized to class
+      // NO_CLASS.
       Class FieldLo, FieldHi;
       classify(i->getType(), Context, Offset, FieldLo, FieldHi);
-      
-      merge(Offset, FieldLo, FieldHi, Lo, Hi);
-      // Memory is never over-ridden, exit early if we see it.
-      if (Lo == Memory)
-        return;
+      Lo = merge(Lo, FieldLo);
+      Hi = merge(Hi, FieldHi);
+      if (Lo == Memory || Hi == Memory)
+        break;
     }
 
     // AMD64-ABI 3.2.3p2: Rule 5. Then a post merger cleanup is done:
@@ -640,13 +638,17 @@ void X86_64ABIInfo::classify(QualType Ty,
     // (b) If SSEUP is not preceeded by SSE, it is converted to SSE.
 
     // The first of these conditions is guaranteed by how we implement
-    // the merge (just bail). I don't believe the second is actually
-    // possible at all.
-    assert(Lo != Memory && "Unexpected memory classification.");
+    // the merge (just bail). 
+    //
+    // The second condition occurs in the case of unions; for example
+    // union { _Complex double; unsigned; }.
+    if (Hi == Memory)
+      Lo = Memory;
     if (Hi == SSEUp && Lo != SSE)
-        Hi = SSE;
+      Hi = SSE;
   }
 }
+
 
 ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context) const {
@@ -654,6 +656,11 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
   // classification algorithm.
   X86_64ABIInfo::Class Lo, Hi;
   classify(RetTy, Context, 0, Lo, Hi);
+
+  // Check some invariants.
+  assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
+  assert((Lo != NoClass || Hi == NoClass) && "Invalid null classification.");
+  assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
 
   const llvm::Type *ResType = 0;
   switch (Lo) {
@@ -664,8 +671,8 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
   case X87Up:
     assert(0 && "Invalid classification for lo word.");
 
-  // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
-  // hidden argument, i.e. structret.
+    // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
+    // hidden argument, i.e. structret.
   case Memory:
     return ABIArgInfo::getStructRet();
 
@@ -684,9 +691,9 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
   case X87:
     ResType = llvm::Type::X86_FP80Ty; break;
 
-  // AMD64-ABI 3.2.3p4: Rule 8. If the class is COMPLEX_X87, the real
-  // part of the value is returned in %st0 and the imaginary part in
-  // %st1.
+    // AMD64-ABI 3.2.3p4: Rule 8. If the class is COMPLEX_X87, the real
+    // part of the value is returned in %st0 and the imaginary part in
+    // %st1.
   case ComplexX87:
     assert(Hi == NoClass && "Unexpected ComplexX87 classification.");
     ResType = llvm::VectorType::get(llvm::Type::X86_FP80Ty, 2);
