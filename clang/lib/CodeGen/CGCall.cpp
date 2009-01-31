@@ -73,27 +73,21 @@ CGFunctionInfo::CGFunctionInfo(const ObjCMethodDecl *MD,
     ArgTypes.push_back((*i)->getType());
 }
 
+CGFunctionInfo::CGFunctionInfo(QualType ResTy, const CallArgList &Args, 
+                               bool _IsVariadic)
+  : IsVariadic(_IsVariadic)
+{
+  ArgTypes.push_back(ResTy);
+  for (CallArgList::const_iterator i = Args.begin(), e = Args.end(); 
+       i != e; ++i)
+    ArgTypes.push_back(i->second);
+}
+
 ArgTypeIterator CGFunctionInfo::argtypes_begin() const {
   return ArgTypes.begin();
 }
 
 ArgTypeIterator CGFunctionInfo::argtypes_end() const {
-  return ArgTypes.end();
-}
-
-/***/
-
-CGCallInfo::CGCallInfo(QualType _ResultType, const CallArgList &_Args) {
-  ArgTypes.push_back(_ResultType);
-  for (CallArgList::const_iterator i = _Args.begin(), e = _Args.end(); i!=e; ++i)
-    ArgTypes.push_back(i->second);
-}
-
-ArgTypeIterator CGCallInfo::argtypes_begin() const {
-  return ArgTypes.begin();
-}
-
-ArgTypeIterator CGCallInfo::argtypes_end() const {
   return ArgTypes.end();
 }
 
@@ -879,13 +873,9 @@ CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
 /***/
 
 const llvm::FunctionType *
-CodeGenTypes::GetFunctionType(const CGCallInfo &CI, bool IsVariadic) {
-  return GetFunctionType(CI.argtypes_begin(), CI.argtypes_end(), IsVariadic);
-}
-
-const llvm::FunctionType *
 CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
-  return GetFunctionType(FI.argtypes_begin(), FI.argtypes_end(), FI.isVariadic());
+  return GetFunctionType(FI.argtypes_begin(), FI.argtypes_end(), 
+                         FI.isVariadic());
 }
 
 const llvm::FunctionType *
@@ -962,8 +952,7 @@ bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
 }
 
 void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
-                                           ArgTypeIterator begin,
-                                           ArgTypeIterator end,
+                                           const CGFunctionInfo &Info,
                                            AttributeListType &PAL) {
   unsigned FuncAttrs = 0;
   unsigned RetAttrs = 0;
@@ -979,6 +968,7 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
       FuncAttrs |= llvm::Attribute::ReadNone;
   }
 
+  ArgTypeIterator begin = Info.argtypes_begin(), end = Info.argtypes_end();
   QualType RetTy = *begin;
   unsigned Index = 1;
   ABIArgInfo RetAI = getABIReturnInfo(RetTy, getTypes());
@@ -995,8 +985,8 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
 
   case ABIArgInfo::StructRet:
     PAL.push_back(llvm::AttributeWithIndex::get(Index, 
-                                                  llvm::Attribute::StructRet|
-                                                  llvm::Attribute::NoAlias));
+                                                llvm::Attribute::StructRet |
+                                                llvm::Attribute::NoAlias));
     ++Index;
     break;
 
@@ -1294,16 +1284,15 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   }
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
-  CGCallInfo CallInfo(RetTy, CallArgs);
+  bool isVariadic = cast<llvm::FunctionType>(Callee->getType())->isVarArg();
+  CGFunctionInfo CallInfo(RetTy, CallArgs, isVariadic);
 
   // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
   CodeGen::AttributeListType AttributeList;
-  CGM.ConstructAttributeList(0, 
-                             CallInfo.argtypes_begin(), CallInfo.argtypes_end(),
-                             AttributeList);
+  CGM.ConstructAttributeList(0, CallInfo, AttributeList);
   CI->setAttributes(llvm::AttrListPtr::get(AttributeList.begin(), 
-                                         AttributeList.size()));  
-
+                                           AttributeList.size()));  
+  
   if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
     CI->setCallingConv(F->getCallingConv());
   if (CI->getType() != llvm::Type::VoidTy)

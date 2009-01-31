@@ -265,8 +265,7 @@ void CodeGenModule::SetFunctionAttributes(const Decl *D,
                                           const CGFunctionInfo &Info, 
                                           llvm::Function *F) {
   AttributeListType AttributeList;
-  ConstructAttributeList(D, Info.argtypes_begin(), Info.argtypes_end(),
-                         AttributeList);
+  ConstructAttributeList(D, Info, AttributeList);
 
   F->setAttributes(llvm::AttrListPtr::get(AttributeList.begin(),
                                         AttributeList.size()));

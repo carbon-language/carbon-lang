@@ -145,10 +145,6 @@ public:
 
   /// GetFunctionType - Get the LLVM function type from Info.
   const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info);
-  /// GetFunctionType - Get the LLVM function type from Info. 
-  /// \param IsVariadic Should the resulting type be variadic?
-  const llvm::FunctionType *GetFunctionType(const CGCallInfo &Info,
-                                            bool IsVariadic);
 
   /// GetFunctionType - Get the LLVM function type for the given types
   /// and variadicness.

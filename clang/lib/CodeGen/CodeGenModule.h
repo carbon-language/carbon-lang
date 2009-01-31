@@ -247,8 +247,7 @@ public:
   bool ReturnTypeUsesSret(QualType RetTy);
 
   void ConstructAttributeList(const Decl *TargetDecl,
-                              const ArgTypeIterator begin,
-                              const ArgTypeIterator end,
+                              const CGFunctionInfo &Info,
                               AttributeListType &PAL);
 
 private:

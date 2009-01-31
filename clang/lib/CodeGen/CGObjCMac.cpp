@@ -799,8 +799,8 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
   const llvm::FunctionType *FTy = 
-    CGM.getTypes().GetFunctionType(CGCallInfo(ResultType, ActualArgs),
-                                   false);
+    CGM.getTypes().GetFunctionType(CGFunctionInfo(ResultType, ActualArgs,
+                                                  false));
 
   llvm::Constant *Fn;
   if (CGM.ReturnTypeUsesSret(ResultType)) {

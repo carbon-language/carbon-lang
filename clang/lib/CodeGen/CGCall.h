@@ -64,20 +64,10 @@ namespace CodeGen {
     CGFunctionInfo(const FunctionDecl *FD);
     CGFunctionInfo(const ObjCMethodDecl *MD,
                    const ASTContext &Context);
+    CGFunctionInfo(QualType ResTy, const CallArgList &Args, 
+                   bool _IsVariadic);
 
     bool isVariadic() const { return IsVariadic; }
-
-    ArgTypeIterator argtypes_begin() const;
-    ArgTypeIterator argtypes_end() const;
-  };
-
-  /// CGCallInfo - Class to encapsulate the arguments and clang types
-  /// used in a call.
-  class CGCallInfo {
-    llvm::SmallVector<QualType, 16> ArgTypes;
-
-  public:
-    CGCallInfo(QualType _ResultType, const CallArgList &Args);
 
     ArgTypeIterator argtypes_begin() const;
     ArgTypeIterator argtypes_end() const;
