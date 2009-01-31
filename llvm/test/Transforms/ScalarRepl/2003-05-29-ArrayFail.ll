@@ -1,9 +1,8 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
-; RUN:   grep alloca | grep {4 x}
+; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep {ret i32 undef}
 
-; Test that an array is not incorrectly deconstructed...
+; Test that an array is not incorrectly deconstructed.
 
-define i32 @test() {
+define i32 @test() nounwind {
 	%X = alloca [4 x i32]		; <[4 x i32]*> [#uses=1]
 	%Y = getelementptr [4 x i32]* %X, i64 0, i64 0		; <i32*> [#uses=1]
         ; Must preserve arrayness!

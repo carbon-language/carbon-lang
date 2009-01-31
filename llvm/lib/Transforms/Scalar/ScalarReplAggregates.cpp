@@ -125,13 +125,14 @@ namespace {
     void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
     
-    const Type *CanConvertToScalar(Value *V, bool &IsNotTrivial);
+    bool CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&ResTy,
+                            uint64_t Offset);
     void ConvertToScalar(AllocationInst *AI, const Type *Ty);
-    void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset);
+    void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
     Value *ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
-                                     unsigned Offset);
+                                     uint64_t Offset);
     Value *ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI, 
-                                      unsigned Offset);
+                                      uint64_t Offset);
     static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
   };
 }
@@ -271,9 +272,15 @@ bool SROA::performScalarRepl(Function &F) {
 
     // If we can turn this aggregate value (potentially with casts) into a
     // simple scalar value that can be mem2reg'd into a register value.
+    // IsNotTrivial tracks whether this is something that mem2reg could have
+    // promoted itself.  If so, we don't want to transform it needlessly.  Note
+    // that we can't just check based on the type: the alloca may be of an i32
+    // but that has pointer arithmetic to set byte 3 of it or something.
     bool IsNotTrivial = false;
-    if (const Type *ActualType = CanConvertToScalar(AI, IsNotTrivial))
-      if (IsNotTrivial && ActualType != Type::VoidTy) {
+    const Type *ActualType = 0;
+    if (CanConvertToScalar(AI, IsNotTrivial, ActualType, 0))
+      if (IsNotTrivial && ActualType &&
+          TD->getTypeSizeInBits(ActualType) < SRThreshold*8) {
         ConvertToScalar(AI, ActualType);
         Changed = true;
         continue;
@@ -1145,229 +1152,124 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
   }
 }
 
-/// MergeInType - Add the 'In' type to the accumulated type so far.  If the
-/// types are incompatible, return true, otherwise update Accum and return
-/// false.
+/// MergeInType - Add the 'In' type to the accumulated type (Accum) so far at
+/// the offset specified by Offset (which is specified in bytes).
 ///
-/// There are three cases we handle here:
-///   1) An effectively-integer union, where the pieces are stored into as
-///      smaller integers (common with byte swap and other idioms).
-///   2) A union of vector types of the same size and potentially its elements.
+/// There are two cases we handle here:
+///   1) A union of vector types of the same size and potentially its elements.
 ///      Here we turn element accesses into insert/extract element operations.
-///   3) A union of scalar types, such as int/float or int/pointer.  Here we
-///      merge together into integers, allowing the xform to work with #1 as
-///      well.
-static bool MergeInType(const Type *In, const Type *&Accum,
+///      This promotes a <4 x float> with a store of float to the third element
+///      into a <4 x float> that uses insert element.
+///   2) A fully general blob of memory, which we turn into some (potentially
+///      large) integer type with extract and insert operations where the loads
+///      and stores would mutate the memory.
+static void MergeInType(const Type *In, uint64_t Offset, const Type *&Accum,
                         const TargetData &TD) {
   // If this is our first type, just use it.
-  const VectorType *PTy;
-  if (Accum == Type::VoidTy || In == Accum) {
+  if (Accum == 0 || In == Type::VoidTy ||
+      // Or if this is a same type, keep it.
+      (In == Accum && Offset == 0)) {
     Accum = In;
-  } else if (In == Type::VoidTy) {
-    // Noop.
-  } else if (In->isInteger() && Accum->isInteger()) {   // integer union.
-    // Otherwise pick whichever type is larger.
-    if (cast<IntegerType>(In)->getBitWidth() > 
-        cast<IntegerType>(Accum)->getBitWidth())
-      Accum = In;
-  } else if (isa<PointerType>(In) && isa<PointerType>(Accum)) {
-    // Pointer unions just stay as one of the pointers.
-  } else if (isa<VectorType>(In) || isa<VectorType>(Accum)) {
-    if ((PTy = dyn_cast<VectorType>(Accum)) && 
-        PTy->getElementType() == In) {
-      // Accum is a vector, and we are accessing an element: ok.
-    } else if ((PTy = dyn_cast<VectorType>(In)) && 
-               PTy->getElementType() == Accum) {
-      // In is a vector, and accum is an element: ok, remember In.
-      Accum = In;
-    } else if ((PTy = dyn_cast<VectorType>(In)) && isa<VectorType>(Accum) &&
-               PTy->getBitWidth() == cast<VectorType>(Accum)->getBitWidth()) {
-      // Two vectors of the same size: keep Accum.
-    } else {
-      // Cannot insert an short into a <4 x int> or handle
-      // <2 x int> -> <4 x int>
-      return true;
-    }
-  } else {
-    // Pointer/FP/Integer unions merge together as integers.
-    switch (Accum->getTypeID()) {
-    case Type::PointerTyID: Accum = TD.getIntPtrType(); break;
-    case Type::FloatTyID:   Accum = Type::Int32Ty; break;
-    case Type::DoubleTyID:  Accum = Type::Int64Ty; break;
-    case Type::X86_FP80TyID:  return true;
-    case Type::FP128TyID: return true;
-    case Type::PPC_FP128TyID: return true;
-    default:
-      assert(Accum->isInteger() && "Unknown FP type!");
-      break;
-    }
-    
-    switch (In->getTypeID()) {
-    case Type::PointerTyID: In = TD.getIntPtrType(); break;
-    case Type::FloatTyID:   In = Type::Int32Ty; break;
-    case Type::DoubleTyID:  In = Type::Int64Ty; break;
-    case Type::X86_FP80TyID:  return true;
-    case Type::FP128TyID: return true;
-    case Type::PPC_FP128TyID: return true;
-    default:
-      assert(In->isInteger() && "Unknown FP type!");
-      break;
-    }
-    return MergeInType(In, Accum, TD);
+    return;
   }
-  return false;
+  
+  if (const VectorType *VATy = dyn_cast<VectorType>(Accum)) {
+    if (VATy->getElementType() == In &&
+        Offset % TD.getTypePaddedSize(In) == 0 &&
+        Offset < TD.getTypePaddedSize(VATy))
+      return;  // Accum is a vector, and we are accessing an element: ok.
+    if (const VectorType *VInTy = dyn_cast<VectorType>(In))
+      if (VInTy->getBitWidth() == VATy->getBitWidth() && Offset == 0)
+        return; // Two vectors of the same size: keep either one of them.
+  }
+
+  if (const VectorType *VInTy = dyn_cast<VectorType>(In)) {
+    // In is a vector, and we are accessing an element: keep V.
+    if (VInTy->getElementType() == Accum &&
+        Offset % TD.getTypePaddedSize(Accum) == 0 &&
+        Offset < TD.getTypePaddedSize(VInTy)) {
+      Accum = VInTy;
+      return;
+    }
+  }
+  
+  // Otherwise, we have a case that we can't handle with an optimized form.
+  // Convert the alloca to an integer that is as large as the largest store size
+  // of the value values.
+  uint64_t InSize = TD.getTypeStoreSizeInBits(In)+8*Offset;
+  uint64_t ASize  = TD.getTypeStoreSizeInBits(Accum);
+  if (InSize > ASize) ASize = InSize;
+  Accum = IntegerType::get(ASize);
 }
 
-/// getIntAtLeastAsBigAs - Return an integer type that is at least as big as the
-/// specified type.  If there is no suitable type, this returns null.
-const Type *getIntAtLeastAsBigAs(unsigned NumBits) {
-  if (NumBits > 64) return 0;
-  if (NumBits > 32) return Type::Int64Ty;
-  if (NumBits > 16) return Type::Int32Ty;
-  if (NumBits > 8) return Type::Int16Ty;
-  return Type::Int8Ty;    
-}
-
-/// CanConvertToScalar - V is a pointer.  If we can convert the pointee to a
-/// single scalar integer type, return that type.  Further, if the use is not
-/// a completely trivial use that mem2reg could promote, set IsNotTrivial.  If
-/// there are no uses of this pointer, return Type::VoidTy to differentiate from
-/// failure.
+/// CanConvertToScalar - V is a pointer.  If we can convert the pointee and all
+/// its accesses to use a to single scalar type, return true, and set ResTy to
+/// the new type.  Further, if the use is not a completely trivial use that
+/// mem2reg could promote, set IsNotTrivial.  Offset is the current offset from
+/// the base of the alloca being analyzed.
 ///
-const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
-  const Type *UsedType = Type::VoidTy; // No uses, no forced type.
-  const PointerType *PTy = cast<PointerType>(V->getType());
-
+bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial,
+                              const Type *&ResTy, uint64_t Offset) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
     
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      // Don't break volatile loads.
       if (LI->isVolatile())
-        return 0;
-
-      // FIXME: Loads of a first class aggregrate value could be converted to a
-      // series of loads and insertvalues
-      if (!LI->getType()->isSingleValueType())
-        return 0;
-
-      if (MergeInType(LI->getType(), UsedType, *TD))
-        return 0;
+        return false;
+      MergeInType(LI->getType(), Offset, ResTy, *TD);
       continue;
     }
     
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Storing the pointer, not into the value?
       if (SI->getOperand(0) == V || SI->isVolatile()) return 0;
-
-      // FIXME: Stores of a first class aggregrate value could be converted to a
-      // series of extractvalues and stores
-      if (!SI->getOperand(0)->getType()->isSingleValueType())
-        return 0;
-      
-      // NOTE: We could handle storing of FP imms into integers here!
-      
-      if (MergeInType(SI->getOperand(0)->getType(), UsedType, *TD))
-        return 0;
+      MergeInType(SI->getOperand(0)->getType(), Offset, ResTy, *TD);
       continue;
     }
-    if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
+    
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(User)) {
+      if (!CanConvertToScalar(BCI, IsNotTrivial, ResTy, Offset))
+        return false;
       IsNotTrivial = true;
-      const Type *SubTy = CanConvertToScalar(CI, IsNotTrivial);
-      if (!SubTy || MergeInType(SubTy, UsedType, *TD)) return 0;
       continue;
     }
 
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
-      // Check to see if this is stepping over an element: GEP Ptr, int C
-      if (GEP->getNumOperands() == 2 && isa<ConstantInt>(GEP->getOperand(1))) {
-        unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getZExtValue();
-        unsigned ElSize = TD->getTypePaddedSize(PTy->getElementType());
-        unsigned BitOffset = Idx*ElSize*8;
-        if (BitOffset > 64 || !isPowerOf2_32(ElSize)) return 0;
-        
-        IsNotTrivial = true;
-        const Type *SubElt = CanConvertToScalar(GEP, IsNotTrivial);
-        if (SubElt == 0) return 0;
-        if (SubElt != Type::VoidTy && SubElt->isInteger()) {
-          const Type *NewTy = 
-            getIntAtLeastAsBigAs(TD->getTypePaddedSizeInBits(SubElt)+BitOffset);
-          if (NewTy == 0 || MergeInType(NewTy, UsedType, *TD)) return 0;
-          continue;
-        }
-        // Cannot handle this!
-        return 0;
-      }
+      // If this is a GEP with a variable indices, we can't handle it.
+      if (!GEP->hasAllConstantIndices())
+        return false;
       
-      if (GEP->getNumOperands() == 3 && 
-          isa<ConstantInt>(GEP->getOperand(1)) &&
-          isa<ConstantInt>(GEP->getOperand(2)) &&
-          cast<ConstantInt>(GEP->getOperand(1))->isZero()) {
-        // We are stepping into an element, e.g. a structure or an array:
-        // GEP Ptr, i32 0, i32 Cst
-        const Type *AggTy = PTy->getElementType();
-        unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
-        
-        if (const ArrayType *ATy = dyn_cast<ArrayType>(AggTy)) {
-          if (Idx >= ATy->getNumElements()) return 0;  // Out of range.
-        } else if (const VectorType *VectorTy = dyn_cast<VectorType>(AggTy)) {
-          // Getting an element of the vector.
-          if (Idx >= VectorTy->getNumElements()) return 0;  // Out of range.
-
-          // Merge in the vector type.
-          if (MergeInType(VectorTy, UsedType, *TD)) return 0;
-          
-          const Type *SubTy = CanConvertToScalar(GEP, IsNotTrivial);
-          if (SubTy == 0) return 0;
-          
-          if (SubTy != Type::VoidTy && MergeInType(SubTy, UsedType, *TD))
-            return 0;
-
-          // We'll need to change this to an insert/extract element operation.
-          IsNotTrivial = true;
-          continue;    // Everything looks ok
-          
-        } else if (isa<StructType>(AggTy)) {
-          // Structs are always ok.
-        } else {
-          return 0;
-        }
-        const Type *NTy =
-          getIntAtLeastAsBigAs(TD->getTypePaddedSizeInBits(AggTy));
-        if (NTy == 0 || MergeInType(NTy, UsedType, *TD)) return 0;
-        const Type *SubTy = CanConvertToScalar(GEP, IsNotTrivial);
-        if (SubTy == 0) return 0;
-        if (SubTy != Type::VoidTy && MergeInType(SubTy, UsedType, *TD))
-          return 0;
-        continue;    // Everything looks ok
-      }
-      return 0;
+      // Compute the offset that this GEP adds to the pointer.
+      SmallVector<Value*, 8> Indices(GEP->op_begin()+1, GEP->op_end());
+      uint64_t GEPOffset = TD->getIndexedOffset(GEP->getOperand(0)->getType(),
+                                                &Indices[0], Indices.size());
+      // See if all uses can be converted.
+      if (!CanConvertToScalar(GEP, IsNotTrivial, ResTy, Offset+GEPOffset))
+        return false;
+      IsNotTrivial = true;
+      continue;
     }
     
-    // Cannot handle this!
-    return 0;
+    // Otherwise, we cannot handle this!
+    return false;
   }
   
-  return UsedType;
+  return true;
 }
 
 /// ConvertToScalar - The specified alloca passes the CanConvertToScalar
 /// predicate and is non-trivial.  Convert it to something that can be trivially
 /// promoted into a register by mem2reg.
 void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
-  DOUT << "CONVERT TO SCALAR: " << *AI << "  TYPE = "
-       << *ActualTy << "\n";
+  DOUT << "CONVERT TO SCALAR: " << *AI << "  TYPE = " << *ActualTy << "\n";
   ++NumConverted;
-  
-  BasicBlock *EntryBlock = AI->getParent();
-  assert(EntryBlock == &EntryBlock->getParent()->getEntryBlock() &&
-         "Not in the entry block!");
-  EntryBlock->getInstList().remove(AI);  // Take the alloca out of the program.
   
   // Create and insert the alloca.
   AllocaInst *NewAI = new AllocaInst(ActualTy, 0, AI->getName(),
-                                     EntryBlock->begin());
+                                     AI->getParent()->begin());
   ConvertUsesToScalar(AI, NewAI, 0);
-  delete AI;
+  AI->eraseFromParent();
 }
 
 
@@ -1378,22 +1280,19 @@ void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
 ///
 /// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
-void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
+void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
   while (!Ptr->use_empty()) {
     Instruction *User = cast<Instruction>(Ptr->use_back());
     
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      Value *NV = ConvertUsesOfLoadToScalar(LI, NewAI, Offset);
-      LI->replaceAllUsesWith(NV);
+      LI->replaceAllUsesWith(ConvertUsesOfLoadToScalar(LI, NewAI, Offset));
       LI->eraseFromParent();
       continue;
     }
     
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
-
-      Value *SV = ConvertUsesOfStoreToScalar(SI, NewAI, Offset);
-      new StoreInst(SV, NewAI, SI);
+      new StoreInst(ConvertUsesOfStoreToScalar(SI, NewAI, Offset), NewAI, SI);
       SI->eraseFromParent();
       continue;
     }
@@ -1405,45 +1304,14 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
     }
     
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
-      const PointerType *AggPtrTy = 
-        cast<PointerType>(GEP->getOperand(0)->getType());
-      unsigned AggSizeInBits =
-        TD->getTypePaddedSizeInBits(AggPtrTy->getElementType());
-
-      // Check to see if this is stepping over an element: GEP Ptr, int C
-      unsigned NewOffset = Offset;
-      if (GEP->getNumOperands() == 2) {
-        unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getZExtValue();
-        unsigned BitOffset = Idx*AggSizeInBits;
-        
-        NewOffset += BitOffset;
-        ConvertUsesToScalar(GEP, NewAI, NewOffset);
-        GEP->eraseFromParent();
-        continue;
-      }
-      
-      assert(GEP->getNumOperands() == 3 && "Unsupported operation");
-      
-      // We know that operand #2 is zero.
-      unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
-      const Type *AggTy = AggPtrTy->getElementType();
-      if (const SequentialType *SeqTy = dyn_cast<SequentialType>(AggTy)) {
-        unsigned ElSizeBits =
-          TD->getTypePaddedSizeInBits(SeqTy->getElementType());
-
-        NewOffset += ElSizeBits*Idx;
-      } else {
-        const StructType *STy = cast<StructType>(AggTy);
-        unsigned EltBitOffset =
-          TD->getStructLayout(STy)->getElementOffsetInBits(Idx);
-        
-        NewOffset += EltBitOffset;
-      }
-      ConvertUsesToScalar(GEP, NewAI, NewOffset);
+      // Compute the offset that this GEP adds to the pointer.
+      SmallVector<Value*, 8> Indices(GEP->op_begin()+1, GEP->op_end());
+      uint64_t GEPOffset = TD->getIndexedOffset(GEP->getOperand(0)->getType(),
+                                                &Indices[0], Indices.size());
+      ConvertUsesToScalar(GEP, NewAI, Offset+GEPOffset*8);
       GEP->eraseFromParent();
       continue;
     }
-    
     assert(0 && "Unsupported operation!");
     abort();
   }
@@ -1455,28 +1323,20 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
 /// single integer scalar, or when we are converting a "vector union" to a
 /// vector with insert/extractelement instructions.
 ///
-/// Offset is an offset from the original alloca, in bits that need to be
+/// Offset is an offset from the original alloca, in bytes that need to be
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
 Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
-                                       unsigned Offset) {
+                                       uint64_t Offset) {
   // The load is a bit extract from NewAI shifted right by Offset bits.
   Value *NV = new LoadInst(NewAI, LI->getName(), LI);
   
-  if (NV->getType() == LI->getType() && Offset == 0) {
-    // We win, no conversion needed.
+  // If the load is of the whole new alloca, no conversion is needed.
+  if (NV->getType() == LI->getType() && Offset == 0)
     return NV;
-  } 
 
-  // If the result type of the 'union' is a pointer, then this must be ptr->ptr
-  // cast.  Anything else would result in NV being an integer.
-  if (isa<PointerType>(NV->getType())) {
-    assert(isa<PointerType>(LI->getType()));
-    return new BitCastInst(NV, LI->getType(), LI->getName(), LI);
-  }
-  
+  // If the result alloca is a vector type, this is either an element
+  // access or a bitcast to another vector type of the same size.
   if (const VectorType *VTy = dyn_cast<VectorType>(NV->getType())) {
-    // If the result alloca is a vector type, this is either an element
-    // access or a bitcast to another vector type.
     if (isa<VectorType>(LI->getType()))
       return new BitCastInst(NV, LI->getType(), LI->getName(), LI);
 
@@ -1485,16 +1345,14 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
     if (Offset) {
       unsigned EltSize = TD->getTypePaddedSizeInBits(VTy->getElementType());
       Elt = Offset/EltSize;
-      Offset -= EltSize*Elt;
+      assert(EltSize*Elt == Offset && "Invalid modulus in validity checking");
     }
-    NV = new ExtractElementInst(NV, ConstantInt::get(Type::Int32Ty, Elt),
-                                "tmp", LI);
-    
-    // If we're done, return this element.
-    if (NV->getType() == LI->getType() && Offset == 0)
-      return NV;
+    // Return the element extracted out of it.
+    return new ExtractElementInst(NV, ConstantInt::get(Type::Int32Ty, Elt),
+                                  "tmp", LI);
   }
   
+  // Otherwise, this must be a union that was converted to an integer value.
   const IntegerType *NTy = cast<IntegerType>(NV->getType());
   
   // If this is a big-endian system and the load is narrower than the
@@ -1514,12 +1372,12 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
   // We do this to support (f.e.) loads off the end of a structure where
   // only some bits are used.
   if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
-    NV = BinaryOperator::CreateLShr(NV, 
-                                    ConstantInt::get(NV->getType(),ShAmt),
+    NV = BinaryOperator::CreateLShr(NV,
+                                    ConstantInt::get(NV->getType(), ShAmt),
                                     LI->getName(), LI);
   else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
-    NV = BinaryOperator::CreateShl(NV, 
-                                   ConstantInt::get(NV->getType(),-ShAmt),
+    NV = BinaryOperator::CreateShl(NV,
+                                   ConstantInt::get(NV->getType(), -ShAmt),
                                    LI->getName(), LI);
   
   // Finally, unconditionally truncate the integer to the right width.
@@ -1531,7 +1389,8 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
   // If the result is an integer, this is a trunc or bitcast.
   if (isa<IntegerType>(LI->getType())) {
     // Should be done.
-  } else if (LI->getType()->isFloatingPoint()) {
+  } else if (LI->getType()->isFloatingPoint() ||
+             isa<VectorType>(LI->getType())) {
     // Just do a bitcast, we know the sizes match up.
     NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
   } else {
@@ -1552,15 +1411,17 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
 /// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
 Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI, 
-                                        unsigned Offset) {
+                                        uint64_t Offset) {
   
   // Convert the stored type to the actual type, shift it left to insert
   // then 'or' into place.
   Value *SV = SI->getOperand(0);
   const Type *AllocaType = NewAI->getType()->getElementType();
   if (SV->getType() == AllocaType && Offset == 0) {
-    // All is well.
-  } else if (const VectorType *PTy = dyn_cast<VectorType>(AllocaType)) {
+    return SV;
+  }
+  
+  if (const VectorType *VTy = dyn_cast<VectorType>(AllocaType)) {
     Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
     
     // If the result alloca is a vector type, this is either an element
@@ -1569,72 +1430,68 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
       SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
     } else {
       // Must be an element insertion.
-      unsigned Elt = Offset/TD->getTypePaddedSizeInBits(PTy->getElementType());
+      unsigned Elt = Offset/TD->getTypePaddedSizeInBits(VTy->getElementType());
       SV = InsertElementInst::Create(Old, SV,
                                      ConstantInt::get(Type::Int32Ty, Elt),
                                      "tmp", SI);
     }
-  } else if (isa<PointerType>(AllocaType)) {
-    // If the alloca type is a pointer, then all the elements must be
-    // pointers.
-    if (SV->getType() != AllocaType)
-      SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
+    return SV;
+  }
+  
+  
+  Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
+  
+  // If SV is a float, convert it to the appropriate integer type.
+  // If it is a pointer, do the same, and also handle ptr->ptr casts
+  // here.
+  unsigned SrcWidth = TD->getTypeSizeInBits(SV->getType());
+  unsigned DestWidth = TD->getTypeSizeInBits(AllocaType);
+  unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
+  unsigned DestStoreWidth = TD->getTypeStoreSizeInBits(AllocaType);
+  if (SV->getType()->isFloatingPoint() || isa<VectorType>(SV->getType()))
+    SV = new BitCastInst(SV, IntegerType::get(SrcWidth), SV->getName(), SI);
+  else if (isa<PointerType>(SV->getType()))
+    SV = new PtrToIntInst(SV, TD->getIntPtrType(), SV->getName(), SI);
+  
+  // Always zero extend the value if needed.
+  if (SV->getType() != AllocaType)
+    SV = new ZExtInst(SV, AllocaType, SV->getName(), SI);
+  
+  // If this is a big-endian system and the store is narrower than the
+  // full alloca type, we need to do a shift to get the right bits.
+  int ShAmt = 0;
+  if (TD->isBigEndian()) {
+    // On big-endian machines, the lowest bit is stored at the bit offset
+    // from the pointer given by getTypeStoreSizeInBits.  This matters for
+    // integers with a bitwidth that is not a multiple of 8.
+    ShAmt = DestStoreWidth - SrcStoreWidth - Offset;
   } else {
-    Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
-    
-    // If SV is a float, convert it to the appropriate integer type.
-    // If it is a pointer, do the same, and also handle ptr->ptr casts
-    // here.
-    unsigned SrcWidth = TD->getTypeSizeInBits(SV->getType());
-    unsigned DestWidth = TD->getTypeSizeInBits(AllocaType);
-    unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
-    unsigned DestStoreWidth = TD->getTypeStoreSizeInBits(AllocaType);
-    if (SV->getType()->isFloatingPoint())
-      SV = new BitCastInst(SV, IntegerType::get(SrcWidth),
-                           SV->getName(), SI);
-    else if (isa<PointerType>(SV->getType()))
-      SV = new PtrToIntInst(SV, TD->getIntPtrType(), SV->getName(), SI);
-    
-    // Always zero extend the value if needed.
-    if (SV->getType() != AllocaType)
-      SV = new ZExtInst(SV, AllocaType, SV->getName(), SI);
-    
-    // If this is a big-endian system and the store is narrower than the
-    // full alloca type, we need to do a shift to get the right bits.
-    int ShAmt = 0;
-    if (TD->isBigEndian()) {
-      // On big-endian machines, the lowest bit is stored at the bit offset
-      // from the pointer given by getTypeStoreSizeInBits.  This matters for
-      // integers with a bitwidth that is not a multiple of 8.
-      ShAmt = DestStoreWidth - SrcStoreWidth - Offset;
-    } else {
-      ShAmt = Offset;
-    }
-    
-    // Note: we support negative bitwidths (with shr) which are not defined.
-    // We do this to support (f.e.) stores off the end of a structure where
-    // only some bits in the structure are set.
-    APInt Mask(APInt::getLowBitsSet(DestWidth, SrcWidth));
-    if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
-      SV = BinaryOperator::CreateShl(SV, 
-                                     ConstantInt::get(SV->getType(), ShAmt),
-                                     SV->getName(), SI);
-      Mask <<= ShAmt;
-    } else if (ShAmt < 0 && (unsigned)-ShAmt < DestWidth) {
-      SV = BinaryOperator::CreateLShr(SV,
-                                      ConstantInt::get(SV->getType(),-ShAmt),
-                                      SV->getName(), SI);
-      Mask = Mask.lshr(ShAmt);
-    }
-    
-    // Mask out the bits we are about to insert from the old value, and or
-    // in the new bits.
-    if (SrcWidth != DestWidth) {
-      assert(DestWidth > SrcWidth);
-      Old = BinaryOperator::CreateAnd(Old, ConstantInt::get(~Mask),
-                                      Old->getName()+".mask", SI);
-      SV = BinaryOperator::CreateOr(Old, SV, SV->getName()+".ins", SI);
-    }
+    ShAmt = Offset;
+  }
+  
+  // Note: we support negative bitwidths (with shr) which are not defined.
+  // We do this to support (f.e.) stores off the end of a structure where
+  // only some bits in the structure are set.
+  APInt Mask(APInt::getLowBitsSet(DestWidth, SrcWidth));
+  if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
+    SV = BinaryOperator::CreateShl(SV, 
+                                   ConstantInt::get(SV->getType(), ShAmt),
+                                   SV->getName(), SI);
+    Mask <<= ShAmt;
+  } else if (ShAmt < 0 && (unsigned)-ShAmt < DestWidth) {
+    SV = BinaryOperator::CreateLShr(SV,
+                                    ConstantInt::get(SV->getType(),-ShAmt),
+                                    SV->getName(), SI);
+    Mask = Mask.lshr(ShAmt);
+  }
+  
+  // Mask out the bits we are about to insert from the old value, and or
+  // in the new bits.
+  if (SrcWidth != DestWidth) {
+    assert(DestWidth > SrcWidth);
+    Old = BinaryOperator::CreateAnd(Old, ConstantInt::get(~Mask),
+                                    Old->getName()+".mask", SI);
+    SV = BinaryOperator::CreateOr(Old, SV, SV->getName()+".ins", SI);
   }
   return SV;
 }
