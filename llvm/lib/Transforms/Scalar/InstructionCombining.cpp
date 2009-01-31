@@ -6095,18 +6095,40 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
     if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
       if (Op0I->getOpcode() == Op1I->getOpcode() && Op0I->hasOneUse() &&
-          Op1I->hasOneUse() && Op0I->getOperand(1) == Op1I->getOperand(1) &&
-          I.isEquality()) {
+          Op1I->hasOneUse() && Op0I->getOperand(1) == Op1I->getOperand(1)) {
         switch (Op0I->getOpcode()) {
         default: break;
         case Instruction::Add:
         case Instruction::Sub:
         case Instruction::Xor:
-          // a+x icmp eq/ne b+x --> a icmp b
-          return new ICmpInst(I.getPredicate(), Op0I->getOperand(0),
-                              Op1I->getOperand(0));
+          if (I.isEquality()) {
+            // a+x icmp eq/ne b+x --> a icmp b
+            return new ICmpInst(I.getPredicate(), Op0I->getOperand(0),
+                                Op1I->getOperand(0));
+          } else {
+            // icmp u/s (a ^ signbit), (b ^ signbit) --> icmp s/u a, b
+            if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
+              if (CI->getValue().isSignBit()) {
+                ICmpInst::Predicate Pred = I.isSignedPredicate()
+                                               ? I.getUnsignedPredicate()
+                                               : I.getSignedPredicate();
+                return new ICmpInst(Pred, Op0I->getOperand(0),
+                                    Op1I->getOperand(0));
+              } else if ((~CI->getValue()).isSignBit()) {
+                ICmpInst::Predicate Pred = I.isSignedPredicate()
+                                               ? I.getUnsignedPredicate()
+                                               : I.getSignedPredicate();
+                Pred = I.getSwappedPredicate(Pred);
+                return new ICmpInst(Pred, Op0I->getOperand(0),
+                                    Op1I->getOperand(0));
+              }
+            }
+          }
           break;
         case Instruction::Mul:
+          if (!I.isEquality())
+            break;
+
           if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
             // a * Cst icmp eq/ne b * Cst --> a & Mask icmp b & Mask
             // Mask = -1 >> count-trailing-zeros(Cst).
@@ -6424,6 +6446,29 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           return new ICmpInst(ICmpInst::ICMP_SGT, CompareVal, SubOne(RHS));
         else
           return new ICmpInst(ICmpInst::ICMP_SLT, CompareVal, AddOne(RHS));
+      }
+
+      if (LHSI->hasOneUse()) {
+        // (icmp u/s (xor A SignBit), C) -> (icmp s/u A, (xor C SignBit))
+        if (!ICI.isEquality() && XorCST->getValue().isSignBit()) {
+          const APInt &SignBit = XorCST->getValue();
+          ICmpInst::Predicate Pred = ICI.isSignedPredicate()
+                                         ? ICI.getUnsignedPredicate()
+                                         : ICI.getSignedPredicate();
+          return new ICmpInst(Pred, LHSI->getOperand(0),
+                              ConstantInt::get(RHSV ^ SignBit));
+        }
+
+        // (icmp u/s (xor A ~SignBit), C) -> (icmp s/u (xor C ~SignBit), A)
+        if (!ICI.isEquality() && (~XorCST->getValue()).isSignBit()) {
+          const APInt &NotSignBit = XorCST->getValue();
+          ICmpInst::Predicate Pred = ICI.isSignedPredicate()
+                                         ? ICI.getUnsignedPredicate()
+                                         : ICI.getSignedPredicate();
+          Pred = ICI.getSwappedPredicate(Pred);
+          return new ICmpInst(Pred, LHSI->getOperand(0),
+                              ConstantInt::get(RHSV ^ NotSignBit));
+        }
       }
     }
     break;

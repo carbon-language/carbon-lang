@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep xor
-; XFAIL: *
 
 define i1 @test1(i8 %x, i8 %y) {
   %X = xor i8 %x, 128
