@@ -100,6 +100,15 @@ public:
            "Cannot mutate a constant with setOperand!");
     OperandList[i] = Val;
   }
+  const Use &getOperandUse(unsigned i) const {
+    assert(i < NumOperands && "getOperand() out of range!");
+    return OperandList[i];
+  }
+  Use &getOperandUse(unsigned i) {
+    assert(i < NumOperands && "getOperand() out of range!");
+    return OperandList[i];
+  }
+  
   unsigned getNumOperands() const { return NumOperands; }
 
   // ---------------------------------------------------------------------------
