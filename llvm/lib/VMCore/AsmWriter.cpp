@@ -1505,14 +1505,13 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   const Value *Operand = I.getNumOperands() ? I.getOperand(0) : 0;
 
   // Special case conditional branches to swizzle the condition out to the front
-  if (isa<BranchInst>(I) && cast<BranchInst>(I).isConditional()) {
-    BranchInst &BI(cast<BranchInst>(I));
+  if (isa<BranchInst>(I) && I.getNumOperands() > 1) {
     Out << ' ';
-    writeOperand(BI.getCondition(), true);
+    writeOperand(I.getOperand(2), true);
     Out << ", ";
-    writeOperand(BI.getSuccessor(0), true);
+    writeOperand(Operand, true);
     Out << ", ";
-    writeOperand(BI.getSuccessor(1), true);
+    writeOperand(I.getOperand(1), true);
 
   } else if (isa<SwitchInst>(I)) {
     // Special case switch statement to get formatting nice and correct...
