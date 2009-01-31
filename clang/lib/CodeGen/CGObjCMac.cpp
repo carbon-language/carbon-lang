@@ -573,7 +573,8 @@ private:
   llvm::GlobalVariable * BuildClassMetaData(std::string &ClassName,
                                             llvm::Constant *IsAGV, 
                                             llvm::Constant *SuperClassGV,
-                                            llvm::Constant *ClassRoGV);
+                                            llvm::Constant *ClassRoGV,
+                                            bool HiddenVisibility);
   
   llvm::Constant *GetMethodConstant(const ObjCMethodDecl *MD);
   
@@ -3361,7 +3362,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
                                                 std::string &ClassName,
                                                 llvm::Constant *IsAGV, 
                                                 llvm::Constant *SuperClassGV,
-                                                llvm::Constant *ClassRoGV) {
+                                                llvm::Constant *ClassRoGV,
+                                                bool HiddenVisibility) {
   std::vector<llvm::Constant*> Values(5);
   Values[0] = IsAGV;
   Values[1] = SuperClassGV 
@@ -3384,6 +3386,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
                              &CGM.getModule());
   GV->setSection("__DATA, __objc_const");
   GV->setAlignment(GetPointerAlign());
+  if (HiddenVisibility)
+    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   UsedGlobals.push_back(GV);
   return GV;
 }
@@ -3421,7 +3425,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   
   llvm::GlobalVariable *SuperClassGV, *IsAGV;
   
-  if (IsClassHidden(ID->getClassInterface()))
+  bool classIsHidden = IsClassHidden(ID->getClassInterface());
+  if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
   if (!ID->getClassInterface()->getSuperClass()) {
     // class is root
@@ -3467,11 +3472,12 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                                                                InstanceSize,ID);
   std::string TClassName = ObjCMetaClassName + ClassName;
   llvm::GlobalVariable *MetaTClass = 
-    BuildClassMetaData(TClassName, IsAGV, SuperClassGV, CLASS_RO_GV);
+    BuildClassMetaData(TClassName, IsAGV, SuperClassGV, CLASS_RO_GV,
+                       classIsHidden);
   
   // Metadata for the class
   flags = CLS;
-  if (IsClassHidden(ID->getClassInterface()))
+  if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
   if (!ID->getClassInterface()->getSuperClass()) {
     flags |= CLS_ROOT;
@@ -3532,7 +3538,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   
   TClassName = ObjCClassName + ClassName;
   llvm::GlobalVariable *ClassMD = 
-    BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV);
+    BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV,
+                       classIsHidden);
   DefinedClasses.push_back(ClassMD);
 }
 
@@ -3745,6 +3752,11 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
                            Ivar->getAccessControl() == ObjCIvarDecl::Protected);
   if (!globalVisibility)
     IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  else 
+    if (const ObjCInterfaceDecl *OID = ID->getClassInterface()) 
+      if (IsClassHidden(OID))
+       IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+
   IvarOffsetGV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(IvarOffsetGV);
   
