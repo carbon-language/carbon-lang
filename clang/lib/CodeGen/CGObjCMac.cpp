@@ -3384,7 +3384,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
                              Init,
                              ClassName,
                              &CGM.getModule());
-  GV->setSection("__DATA, __objc_const");
+  GV->setSection("__DATA, __objc_data");
   GV->setAlignment(GetPointerAlign());
   if (HiddenVisibility)
     GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
