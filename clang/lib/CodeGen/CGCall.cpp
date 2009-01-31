@@ -1284,8 +1284,10 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   }
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
-  bool isVariadic = false; // cast<llvm::FunctionType>(Callee->getType())->isVarArg();
-  CGFunctionInfo CallInfo(RetTy, CallArgs, isVariadic);
+  const llvm::Type *FnType = 
+    cast<llvm::PointerType>(Callee->getType())->getElementType();
+  CGFunctionInfo CallInfo(RetTy, CallArgs, 
+                          cast<llvm::FunctionType>(FnType)->isVarArg());
 
   // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
   CodeGen::AttributeListType AttributeList;
