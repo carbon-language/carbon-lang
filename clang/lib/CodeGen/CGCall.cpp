@@ -1284,7 +1284,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   }
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
-  bool isVariadic = cast<llvm::FunctionType>(Callee->getType())->isVarArg();
+  bool isVariadic = false; // cast<llvm::FunctionType>(Callee->getType())->isVarArg();
   CGFunctionInfo CallInfo(RetTy, CallArgs, isVariadic);
 
   // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
