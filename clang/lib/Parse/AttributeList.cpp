@@ -73,6 +73,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "nonnull", 7)) return AT_nonnull;
     if (!memcmp(Str, "objc_gc", 7)) return AT_objc_gc;
     if (!memcmp(Str, "stdcall", 7)) return AT_stdcall;
+    if (!memcmp(Str, "cleanup", 7)) return AT_cleanup;
     break;
   case 8:
     if (!memcmp(Str, "annotate", 8)) return AT_annotate;

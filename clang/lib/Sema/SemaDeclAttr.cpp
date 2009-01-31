@@ -846,6 +846,51 @@ static void HandlePureAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new PureAttr());
 }
 
+static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (!Attr.getParameterName()) {    
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+  
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+  
+  VarDecl *VD = dyn_cast<VarDecl>(d);
+  
+  if (!VD || !VD->hasLocalStorage()) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "cleanup";
+    return;
+  }
+  
+  // Look up the function
+  Decl *CleanupDecl = S.LookupName(S.TUScope, Attr.getParameterName(), 
+                                   Sema::LookupOrdinaryName);
+  if (!CleanupDecl) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_found) << 
+      Attr.getParameterName();
+    return;
+  }
+  
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(CleanupDecl);
+  if (!FD) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_function) << 
+      Attr.getParameterName();
+    return;
+  }
+
+  // FIXME: This needs to work with C++ overloading.
+  // FIXME: This should verify that the function type is compatible
+  if (FD->getNumParams() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_must_take_one_arg)<<
+      Attr.getParameterName();
+    return;
+  }
+  
+  d->addAttr(new CleanupAttr(FD));
+}
+
 /// Handle __attribute__((format(type,idx,firstarg))) attributes
 /// based on http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1248,6 +1293,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_sentinel:    HandleSentinelAttr  (D, Attr, S); break;
   case AttributeList::AT_const:       HandleConstAttr     (D, Attr, S); break;
   case AttributeList::AT_pure:        HandlePureAttr      (D, Attr, S); break;
+  case AttributeList::AT_cleanup:     HandleCleanupAttr   (D, Attr, S); break;
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.

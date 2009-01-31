@@ -77,6 +77,7 @@ public:
     AT_sentinel,
     AT_const,
     AT_nsobject,
+    AT_cleanup,
     UnknownAttribute
   };
   

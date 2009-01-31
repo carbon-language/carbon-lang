@@ -52,7 +52,8 @@ public:
     Weak,
     Blocks,
     Const,
-    Pure
+    Pure,
+    Cleanup
   };
     
 private:
@@ -444,6 +445,22 @@ public:
 
   static bool classof(const Attr *A) { return A->getKind() == Blocks; }
   static bool classof(const BlocksAttr *A) { return true; }
+};
+
+class FunctionDecl;
+  
+class CleanupAttr : public Attr {
+  FunctionDecl *FD;
+  
+public:
+  CleanupAttr(FunctionDecl *fd) : Attr(Cleanup), FD(fd) {}
+
+  const FunctionDecl *getFunctionDecl() const { return FD; }
+  
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Cleanup; }
+  static bool classof(const CleanupAttr *A) { return true; }
 };
 
 }  // end namespace clang
