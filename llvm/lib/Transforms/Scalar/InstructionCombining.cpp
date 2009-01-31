@@ -766,7 +766,7 @@ static void ComputeUnsignedMinMaxValuesFromKnownBits(const Type *Ty,
 /// in DemandedMask. Note also that the bitwidth of V, DemandedMask, KnownZero
 /// and KnownOne must all be the same.
 bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
-                                        APInt& KnownZero, APInt& KnownOne,
+                                        APInt &KnownZero, APInt &KnownOne,
                                         unsigned Depth) {
   assert(V != 0 && "Null pointer of Value???");
   assert(Depth <= 6 && "Limit Search Depth");
@@ -784,7 +784,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     return false;
   }
   
-  KnownZero.clear(); 
+  KnownZero.clear();
   KnownOne.clear();
   if (!V->hasOneUse()) {    // Other users may use these bits.
     if (Depth != 0) {       // Not at the root.
@@ -796,7 +796,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     // just set the DemandedMask to all bits.
     DemandedMask = APInt::getAllOnesValue(BitWidth);
   } else if (DemandedMask == 0) {   // Not demanding any bits from V.
-    if (V != UndefValue::get(VTy))
+    if (!isa<UndefValue>(V))
       return UpdateValueUsesWith(V, UndefValue::get(VTy));
     return false;
   } else if (Depth == 6) {        // Limit search depth.
