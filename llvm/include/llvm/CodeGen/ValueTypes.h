@@ -439,24 +439,6 @@ namespace llvm {
       else {
         return *this;
       }
-   }
-
-    /// getIntegerVTBitMask - Return an integer with 1's every place there are
-    /// bits in the specified integer value type. FIXME: Should return an apint.
-    uint64_t getIntegerVTBitMask() const {
-      assert(isInteger() && "Only applies to integers!");
-      MVT EltVT = isVector() ? getVectorElementType() : *this;
-      assert(EltVT.getSizeInBits() <= 64 &&
-             "getIntegerVTBitMask doesn't use APInt!");
-      return ~uint64_t(0UL) >> (64-EltVT.getSizeInBits());
-    }
-
-    /// getIntegerVTSignBit - Return an integer with a 1 in the position of the
-    /// sign bit for the specified integer value type. FIXME: Should return an
-    /// apint.
-    uint64_t getIntegerVTSignBit() const {
-      assert(isInteger() && !isVector() && "Only applies to int scalars!");
-      return uint64_t(1UL) << (getSizeInBits()-1);
     }
 
     /// getMVTString - This function returns value type as a string,

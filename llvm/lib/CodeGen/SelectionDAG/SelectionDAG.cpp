@@ -845,12 +845,13 @@ SDValue SelectionDAG::getNOT(DebugLoc DL, SDValue Val, MVT VT) {
   SDValue NegOne;
   if (VT.isVector()) {
     MVT EltVT = VT.getVectorElementType();
-    SDValue NegOneElt = getConstant(EltVT.getIntegerVTBitMask(), EltVT);
+    SDValue NegOneElt =
+      getConstant(APInt::getAllOnesValue(EltVT.getSizeInBits()), EltVT);
     std::vector<SDValue> NegOnes(VT.getVectorNumElements(), NegOneElt);
     NegOne = getNode(ISD::BUILD_VECTOR, DebugLoc::getUnknownLoc(), VT,
                      &NegOnes[0], NegOnes.size());
   } else {
-    NegOne = getConstant(VT.getIntegerVTBitMask(), VT);
+    NegOne = getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT);
   }
 
   return getNode(ISD::XOR, DL, VT, Val, NegOne);
@@ -2772,7 +2773,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
       return N1;
     case ISD::OR:
       if (!VT.isVector())
-        return getConstant(VT.getIntegerVTBitMask(), VT);
+        return getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT);
       // For vectors, we can't easily build an all one vector, just return
       // the LHS.
       return N1;

@@ -842,7 +842,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
               // If sign-extended doesn't fit, does it fit as unsigned?
               unsigned ValueMask;
               unsigned UnsignedVal;
-              ValueMask = unsigned(MVT(VT).getIntegerVTBitMask());
+              ValueMask = unsigned(~uint32_t(0UL) >> (32-Size));
               UnsignedVal = unsigned(II->getValue());
 
               if ((ValueMask & UnsignedVal) != UnsignedVal) {

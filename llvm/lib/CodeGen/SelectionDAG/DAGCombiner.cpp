@@ -2498,8 +2498,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   if (DAG.MaskedValueIsZero(SDValue(N, 0),
                             APInt::getAllOnesValue(VT.getSizeInBits())))
     return DAG.getConstant(0, VT);
-  // fold (shl x, (trunc (and y, c))) -> (shl x, (and (trunc y), c))
-  // iff (trunc c) == c
+  // fold (shl x, (trunc (and y, c))) -> (shl x, (and (trunc y), (trunc c))).
   if (N1.getOpcode() == ISD::TRUNCATE &&
       N1.getOperand(0).getOpcode() == ISD::AND &&
       N1.hasOneUse() && N1.getOperand(0).hasOneUse()) {
@@ -2507,8 +2506,8 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     if (ConstantSDNode *N101C = dyn_cast<ConstantSDNode>(N101)) {
       MVT TruncVT = N1.getValueType();
       SDValue N100 = N1.getOperand(0).getOperand(0);
-      uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
-                        N101C->getZExtValue();
+      APInt TruncC = N101C->getAPIntValue();
+      TruncC.trunc(TruncVT.getSizeInBits());
       return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0,
                          DAG.getNode(ISD::AND, N->getDebugLoc(), TruncVT,
                                      DAG.getNode(ISD::TRUNCATE,
@@ -2632,8 +2631,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
     }
   }
   
-  // fold (sra x, (trunc (and y, c))) -> (sra x, (and (trunc y), c))
-  // iff (trunc c) == c
+  // fold (sra x, (trunc (and y, c))) -> (sra x, (and (trunc y), (trunc c))).
   if (N1.getOpcode() == ISD::TRUNCATE &&
       N1.getOperand(0).getOpcode() == ISD::AND &&
       N1.hasOneUse() && N1.getOperand(0).hasOneUse()) {
@@ -2641,8 +2639,8 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
     if (ConstantSDNode *N101C = dyn_cast<ConstantSDNode>(N101)) {
       MVT TruncVT = N1.getValueType();
       SDValue N100 = N1.getOperand(0).getOperand(0);
-      uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
-                        N101C->getZExtValue();
+      APInt TruncC = N101C->getAPIntValue();
+      TruncC.trunc(TruncVT.getSizeInBits());
       return DAG.getNode(ISD::SRA, N->getDebugLoc(), VT, N0,
                          DAG.getNode(ISD::AND, N->getDebugLoc(),
                                      TruncVT,
@@ -2757,8 +2755,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     }
   }
 
-  // fold (srl x, (trunc (and y, c))) -> (srl x, (and (trunc y), c))
-  // iff (trunc c) == c
+  // fold (srl x, (trunc (and y, c))) -> (srl x, (and (trunc y), (trunc c))).
   if (N1.getOpcode() == ISD::TRUNCATE &&
       N1.getOperand(0).getOpcode() == ISD::AND &&
       N1.hasOneUse() && N1.getOperand(0).hasOneUse()) {
@@ -2766,8 +2763,8 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     if (ConstantSDNode *N101C = dyn_cast<ConstantSDNode>(N101)) {
       MVT TruncVT = N1.getValueType();
       SDValue N100 = N1.getOperand(0).getOperand(0);
-      uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
-                        N101C->getZExtValue();
+      APInt TruncC = N101C->getAPIntValue();
+      TruncC.trunc(TruncVT.getSizeInBits());
       return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0,
                          DAG.getNode(ISD::AND, N->getDebugLoc(),
                                      TruncVT,
@@ -4359,8 +4356,8 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
     SDValue Int = N0.getOperand(0);
     MVT IntVT = Int.getValueType();
     if (IntVT.isInteger() && !IntVT.isVector()) {
-      Int = DAG.getNode(ISD::XOR, N0.getDebugLoc(), IntVT, Int, 
-                        DAG.getConstant(IntVT.getIntegerVTSignBit(), IntVT));
+      Int = DAG.getNode(ISD::XOR, N0.getDebugLoc(), IntVT, Int,
+              DAG.getConstant(APInt::getSignBit(IntVT.getSizeInBits()), IntVT));
       AddToWorkList(Int.getNode());
       return DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(),
                          N->getValueType(0), Int);
@@ -4395,7 +4392,7 @@ SDValue DAGCombiner::visitFABS(SDNode *N) {
     MVT IntVT = Int.getValueType();
     if (IntVT.isInteger() && !IntVT.isVector()) {
       Int = DAG.getNode(ISD::AND, N0.getDebugLoc(), IntVT, Int, 
-                        DAG.getConstant(~IntVT.getIntegerVTSignBit(), IntVT));
+             DAG.getConstant(~APInt::getSignBit(IntVT.getSizeInBits()), IntVT));
       AddToWorkList(Int.getNode());
       return DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(),
                          N->getValueType(0), Int);

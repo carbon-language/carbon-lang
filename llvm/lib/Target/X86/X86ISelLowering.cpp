@@ -5268,7 +5268,8 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
   // bits of the inputs before performing those operations.
   if (FlipSigns) {
     MVT EltVT = VT.getVectorElementType();
-    SDValue SignBit = DAG.getConstant(EltVT.getIntegerVTSignBit(), EltVT);
+    SDValue SignBit = DAG.getConstant(APInt::getSignBit(EltVT.getSizeInBits()),
+                                      EltVT);
     std::vector<SDValue> SignBits(VT.getVectorNumElements(), SignBit);
     SDValue SignVec = DAG.getNode(ISD::BUILD_VECTOR, VT, &SignBits[0],
                                     SignBits.size());
