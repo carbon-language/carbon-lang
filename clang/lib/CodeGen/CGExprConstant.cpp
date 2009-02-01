@@ -124,7 +124,7 @@ public:
     // Calculate information about the relevant field
     const llvm::Type* Ty = CI->getType();
     const llvm::TargetData &TD = CGM.getTypes().getTargetData();
-    unsigned size = TD.getTypeStoreSizeInBits(Ty);
+    unsigned size = TD.getTypePaddedSizeInBits(Ty);
     unsigned fieldOffset = CGM.getTypes().getLLVMFieldNo(Field) * size;
     CodeGenTypes::BitFieldInfo bitFieldInfo =
         CGM.getTypes().getBitFieldInfo(Field);
@@ -135,11 +135,11 @@ public:
     // FIXME: This won't work if the struct isn't completely packed!
     unsigned offset = 0, i = 0;
     while (offset < (fieldOffset & -8))
-      offset += TD.getTypeStoreSizeInBits(Elts[i++]->getType());
+      offset += TD.getTypePaddedSizeInBits(Elts[i++]->getType());
 
     // Advance over 0 sized elements (must terminate in bounds since
     // the bitfield must have a size).
-    while (TD.getTypeStoreSizeInBits(Elts[i]->getType()) == 0)
+    while (TD.getTypePaddedSizeInBits(Elts[i]->getType()) == 0)
       ++i;
 
     // Promote the size of V if necessary
@@ -223,8 +223,8 @@ public:
     std::vector<const llvm::Type*> Types;
     Elts.push_back(C);
     Types.push_back(C->getType());
-    unsigned CurSize = CGM.getTargetData().getTypeStoreSize(C->getType());
-    unsigned TotalSize = CGM.getTargetData().getTypeStoreSize(Ty);
+    unsigned CurSize = CGM.getTargetData().getTypePaddedSize(C->getType());
+    unsigned TotalSize = CGM.getTargetData().getTypePaddedSize(Ty);
     while (CurSize < TotalSize) {
       Elts.push_back(llvm::Constant::getNullValue(llvm::Type::Int8Ty));
       Types.push_back(llvm::Type::Int8Ty);
