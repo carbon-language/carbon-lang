@@ -1787,7 +1787,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     return DAG.FoldConstantArithmetic(ISD::AND, VT, N0C, N1C);
   // canonicalize constant to RHS
   if (N0C && !N1C)
-    return DAG.getNode(ISD::AND, VT, N1, N0);
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, N1, N0);
   // fold (and x, -1) -> x
   if (N1C && N1C->isAllOnesValue())
     return N0;
@@ -2510,8 +2510,10 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       uint64_t TruncC = TruncVT.getIntegerVTBitMask() &
                         N101C->getZExtValue();
       return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0,
-                         DAG.getNode(ISD::AND, TruncVT,
-                                     DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
+                         DAG.getNode(ISD::AND, N->getDebugLoc(), TruncVT,
+                                     DAG.getNode(ISD::TRUNCATE,
+                                                 N->getDebugLoc(),
+                                                 TruncVT, N100),
                                      DAG.getConstant(TruncC, TruncVT)));
     }
   }
@@ -3292,7 +3294,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   
   // fold (aext c1) -> c1
   if (isa<ConstantSDNode>(N0))
-    return DAG.getNode(ISD::ANY_EXTEND, VT, N0);
+    return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, N0);
   // fold (aext (aext x)) -> (aext x)
   // fold (aext (zext x)) -> (zext x)
   // fold (aext (sext x)) -> (sext x)
@@ -3546,7 +3548,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
 
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is known zero.
   if (DAG.MaskedValueIsZero(N0, APInt::getBitsSet(VTBits, EVTBits-1, EVTBits)))
-    return DAG.getZeroExtendInReg(N0, EVT);
+    return DAG.getZeroExtendInReg(N0, N->getDebugLoc(), EVT);
   
   // fold operands of sext_in_reg based on knowledge that the top bits are not
   // demanded.
@@ -3852,7 +3854,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
   if (SrcBitSize == DstBitSize) {
     SmallVector<SDValue, 8> Ops;
     for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
-      Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, DstEltVT, BV->getOperand(i)));
+      Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, BV->getDebugLoc(),
+                                DstEltVT, BV->getOperand(i)));
       AddToWorkList(Ops.back().getNode());
     }
     MVT VT = MVT::getVectorVT(DstEltVT,
@@ -3988,7 +3991,8 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
   if (UnsafeFPMath && N1CFP && N0.getOpcode() == ISD::FADD &&
       N0.getNode()->hasOneUse() && isa<ConstantFPSDNode>(N0.getOperand(1)))
     return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0.getOperand(0),
-                       DAG.getNode(ISD::FADD, VT, N0.getOperand(1), N1));
+                       DAG.getNode(ISD::FADD, N->getDebugLoc(), VT,
+                                   N0.getOperand(1), N1));
   
   return SDValue();
 }
@@ -4008,7 +4012,7 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   
   // fold (fsub c1, c2) -> c1-c2
   if (N0CFP && N1CFP && VT != MVT::ppcf128)
-    return DAG.getNode(ISD::FSUB, VT, N0, N1);
+    return DAG.getNode(ISD::FSUB, N->getDebugLoc(), VT, N0, N1);
   // fold (fsub A, 0) -> A
   if (UnsafeFPMath && N1CFP && N1CFP->getValueAPF().isZero())
     return N0;
@@ -4133,7 +4137,7 @@ SDValue DAGCombiner::visitFCOPYSIGN(SDNode *N) {
   MVT VT = N->getValueType(0);
 
   if (N0CFP && N1CFP && VT != MVT::ppcf128)  // Constant fold
-    return DAG.getNode(ISD::FCOPYSIGN, VT, N0, N1);
+    return DAG.getNode(ISD::FCOPYSIGN, N->getDebugLoc(), VT, N0, N1);
   
   if (N1CFP) {
     const APFloat& V = N1CFP->getValueAPF();
@@ -4174,8 +4178,6 @@ SDValue DAGCombiner::visitFCOPYSIGN(SDNode *N) {
   
   return SDValue();
 }
-
-
 
 SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   SDValue N0 = N->getOperand(0);
@@ -4808,7 +4810,8 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
       // Indexed loads.
       assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
       if (N->hasNUsesOfValue(0, 0) && N->hasNUsesOfValue(0, 1)) {
-        SDValue Undef = DAG.getNode(ISD::UNDEF, N->getValueType(0));
+        SDValue Undef = DAG.getNode(ISD::UNDEF, N->getDebugLoc(),
+                                    N->getValueType(0));
         DOUT << "\nReplacing.6 "; DEBUG(N->dump(&DAG));
         DOUT << "\nWith: "; DEBUG(Undef.getNode()->dump(&DAG));
         DOUT << " and 2 other values\n";
@@ -5270,7 +5273,8 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     } else {
       // Use an undef build_vector as input for the second operand.
       std::vector<SDValue> UnOps(NumInScalars,
-                                 DAG.getNode(ISD::UNDEF, EltType));
+                                 DAG.getNode(ISD::UNDEF, N->getDebugLoc(),
+                                             EltType));
       Ops[1] = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
                            &UnOps[0], UnOps.size());
       AddToWorkList(Ops[1].getNode());
@@ -5426,7 +5430,8 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     AddToWorkList(ShufMask.getNode());
     return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(),
                        N->getValueType(0), N0,
-                       DAG.getNode(ISD::UNDEF, N->getValueType(0)),
+                       DAG.getNode(ISD::UNDEF, N->getDebugLoc(),
+                                   N->getValueType(0)),
                        ShufMask);
   }
  
@@ -5824,7 +5829,7 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
                                   XType, DAG.getConstant(0, XType), N0);
       SDValue NotN0 = DAG.getNOT(N0.getDebugLoc(), N0, XType);
       return DAG.getNode(ISD::SRL, DL, XType,
-                         DAG.getNode(ISD::AND, XType, NegN0, NotN0),
+                         DAG.getNode(ISD::AND, DL, XType, NegN0, NotN0),
                          DAG.getConstant(XType.getSizeInBits()-1,
                                          getShiftAmountTy()));
     }
@@ -6086,8 +6091,8 @@ SDValue DAGCombiner::FindBetterChain(SDNode *N, SDValue OldChain) {
   }
 
   // Construct a custom tailored token factor.
-  SDValue NewChain = DAG.getNode(ISD::TokenFactor, MVT::Other,
-                                   &Aliases[0], Aliases.size());
+  SDValue NewChain = DAG.getNode(ISD::TokenFactor, N->getDebugLoc(), MVT::Other,
+                                 &Aliases[0], Aliases.size());
 
   // Make sure the old chain gets cleaned up.
   if (NewChain != OldChain) AddToWorkList(OldChain.getNode());
