@@ -1031,6 +1031,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   bool isVarArg = TheCall->isVarArg();
+  bool Is64Bit = Subtarget->is64Bit();
   CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs);
   CCInfo.AnalyzeCallResult(TheCall, RetCC_X86);
 
@@ -1039,7 +1040,14 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     MVT CopyVT = RVLocs[i].getValVT();
-    
+  
+    // If this is x86-64, and we disabled SSE, we can't return FP values
+    if ((CopyVT == MVT::f32 || CopyVT == MVT::f64) && 
+        ((Is64Bit || TheCall->isInreg()) && !Subtarget->hasSSE1())) {
+      cerr << "SSE register return with SSE disabled\n";
+      exit(1);
+    }
+
     // If this is a call to a function that returns an fp value on the floating
     // point stack, but where we prefer to use the value in xmm registers, copy
     // it out as F80 and use a truncate to move it from fp stack reg to xmm reg.
@@ -1382,6 +1390,13 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs,
                                                        TotalNumXMMRegs);
 
+      assert((Subtarget->hasSSE1() || !NumXMMRegs) &&
+             "SSE register cannot be used when SSE is disabled!");
+      if (!Subtarget->hasSSE1()) {
+        // Kernel mode asks for SSE to be disabled, so don't push them
+        // on the stack.
+        TotalNumXMMRegs = 0;
+      }
       // For X86-64, if there are vararg parameters that are passed via
       // registers, then we must store them to their spots on the stack so they
       // may be loaded by deferencing the result of va_next.
@@ -1675,6 +1690,8 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };
     unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
+    assert((Subtarget->hasSSE1() || !NumXMMRegs) 
+           && "SSE registers cannot be used when SSE is disabled");
     
     Chain = DAG.getCopyToReg(Chain, X86::AL,
                              DAG.getConstant(NumXMMRegs, MVT::i8), InFlag);

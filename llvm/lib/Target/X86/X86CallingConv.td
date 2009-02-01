@@ -49,7 +49,7 @@ def RetCC_X86_32_C : CallingConv<[
   // weirdly; this is really the sse-regparm calling convention) in which
   // case they use XMM0, otherwise it is the same as the common X86 calling
   // conv.
-  CCIfInReg<CCIfSubtarget<"hasSSE2()", 
+  CCIfInReg<CCIfSubtarget<"hasSSE2()",
     CCIfType<[f32, f64], CCAssignToReg<[XMM0,XMM1,XMM2]>>>>,
   CCIfType<[f32,f64], CCAssignToReg<[ST0, ST1]>>,
   CCDelegateTo<RetCC_X86Common>
@@ -134,7 +134,8 @@ def CC_X86_64_C : CallingConv<[
   
   // The first 8 FP/Vector arguments are passed in XMM registers.
   CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>,
+            CCIfSubtarget<"hasSSE1()",
+            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>,
 
   // The first 8 MMX (except for v1i64) vector arguments are passed in XMM
   // registers on Darwin.
@@ -223,7 +224,8 @@ def CC_X86_64_TailCall : CallingConv<[
   
   // The first 8 FP/Vector arguments are passed in XMM registers.
   CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>,
+            CCIfSubtarget<"hasSSE1()",
+            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>,
 
   // The first 8 MMX (except for v1i64) vector arguments are passed in XMM
   // registers on Darwin.
