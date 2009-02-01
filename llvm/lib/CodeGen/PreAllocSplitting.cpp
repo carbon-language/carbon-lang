@@ -467,39 +467,26 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
     
     unsigned StartIndex = LIs->getMBBStartIdx(MBB);
     
-    if (MBB->pred_size() == 1) {
-      Phis[MBB] = ret = PerformPHIConstruction((*MBB->pred_begin())->end(),
-                                          *(MBB->pred_begin()), LI, Visited,
-                                          Defs, Uses, NewVNs, LiveOut, Phis,
-                                          false, false);
-      unsigned EndIndex = 0;
-      if (intrablock) {
-        EndIndex = LIs->getInstructionIndex(use);
-        EndIndex = LiveIntervals::getUseIndex(EndIndex);
-      } else
-        EndIndex = LIs->getMBBEndIdx(MBB);
-      
-      LI->addRange(LiveRange(StartIndex, EndIndex+1, ret));
-      if (intrablock)
-        LI->addKill(ret, EndIndex);
-    } else {
-      Phis[MBB] = ret = LI->getNextValue(~0U, /*FIXME*/ 0,
+    Phis[MBB] = ret = LI->getNextValue(~0U, /*FIXME*/ 0,
                                           LIs->getVNInfoAllocator());
-      if (!intrablock) LiveOut[MBB] = ret;
+    if (!intrablock) LiveOut[MBB] = ret;
     
-      // If there are no uses or defs between our starting point and the
-      // beginning of the block, then recursive perform phi construction
-      // on our predecessors.
-      DenseMap<MachineBasicBlock*, VNInfo*> IncomingVNs;
-      for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-           PE = MBB->pred_end(); PI != PE; ++PI) {
-        VNInfo* Incoming = PerformPHIConstruction((*PI)->end(), *PI, LI, 
-                                            Visited, Defs, Uses, NewVNs,
-                                            LiveOut, Phis, false, false);
-        if (Incoming != 0)
-          IncomingVNs[*PI] = Incoming;
-      }
+    // If there are no uses or defs between our starting point and the
+    // beginning of the block, then recursive perform phi construction
+    // on our predecessors.
+    DenseMap<MachineBasicBlock*, VNInfo*> IncomingVNs;
+    for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         PE = MBB->pred_end(); PI != PE; ++PI) {
+      VNInfo* Incoming = PerformPHIConstruction((*PI)->end(), *PI, LI, 
+                                          Visited, Defs, Uses, NewVNs,
+                                          LiveOut, Phis, false, false);
+      if (Incoming != 0)
+        IncomingVNs[*PI] = Incoming;
+    }
     
+    if (MBB->pred_size() == 1 && !ret->hasPHIKill) {
+      LI->MergeValueNumberInto(ret, IncomingVNs.begin()->second);
+    } else {
       // Otherwise, merge the incoming VNInfos with a phi join.  Create a new
       // VNInfo to represent the joined value.
       for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator I =
@@ -509,17 +496,17 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
         if (!LiveInterval::isKill(I->second, KillIndex))
           LI->addKill(I->second, KillIndex);
       }
-      
-      unsigned EndIndex = 0;
-      if (intrablock) {
-        EndIndex = LIs->getInstructionIndex(use);
-        EndIndex = LiveIntervals::getUseIndex(EndIndex);
-      } else
-        EndIndex = LIs->getMBBEndIdx(MBB);
-      LI->addRange(LiveRange(StartIndex, EndIndex+1, ret));
-      if (intrablock)
-        LI->addKill(ret, EndIndex);
     }
+      
+    unsigned EndIndex = 0;
+    if (intrablock) {
+      EndIndex = LIs->getInstructionIndex(use);
+      EndIndex = LiveIntervals::getUseIndex(EndIndex);
+    } else
+      EndIndex = LIs->getMBBEndIdx(MBB);
+    LI->addRange(LiveRange(StartIndex, EndIndex+1, ret));
+    if (intrablock)
+      LI->addKill(ret, EndIndex);
   } else if (ContainsDefs && !ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[MBB];
 
