@@ -486,6 +486,7 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
     
     if (MBB->pred_size() == 1 && !ret->hasPHIKill) {
       LI->MergeValueNumberInto(ret, IncomingVNs.begin()->second);
+      Phis[MBB] = ret = IncomingVNs.begin()->second;
     } else {
       // Otherwise, merge the incoming VNInfos with a phi join.  Create a new
       // VNInfo to represent the joined value.
