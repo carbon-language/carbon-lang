@@ -279,20 +279,24 @@ public:
     return method_iterator(decls_end());
   }
 
-  typedef method_iterator instmeth_iterator;
+  typedef filtered_decl_iterator<ObjCMethodDecl, 
+                                 &ObjCMethodDecl::isInstanceMethod> 
+    instmeth_iterator;
   instmeth_iterator instmeth_begin() const {
-    return instmeth_iterator(decls_begin(), &ObjCMethodDecl::isInstanceMethod);
+    return instmeth_iterator(decls_begin());
   }
   instmeth_iterator instmeth_end() const {
-    return instmeth_iterator(decls_end(), &ObjCMethodDecl::isInstanceMethod);
+    return instmeth_iterator(decls_end());
   }
 
-  typedef method_iterator classmeth_iterator;
+  typedef filtered_decl_iterator<ObjCMethodDecl, 
+                                 &ObjCMethodDecl::isClassMethod> 
+    classmeth_iterator;
   classmeth_iterator classmeth_begin() const {
-    return classmeth_iterator(decls_begin(), &ObjCMethodDecl::isClassMethod);
+    return classmeth_iterator(decls_begin());
   }
   classmeth_iterator classmeth_end() const {
-    return classmeth_iterator(decls_end(), &ObjCMethodDecl::isClassMethod);
+    return classmeth_iterator(decls_end());
   }
 
   // Get the local instance/class method declared in this interface.

@@ -630,13 +630,9 @@ public:
 
   /// specific_decl_iterator - Iterates over a subrange of
   /// declarations stored in a DeclContext, providing only those that
-  /// are of type SpecificDecl (or a class derived from it) and,
-  /// optionally, that meet some additional run-time criteria. This
+  /// are of type SpecificDecl (or a class derived from it). This
   /// iterator is used, for example, to provide iteration over just
-  /// the fields within a RecordDecl (with SpecificDecl = FieldDecl)
-  /// or the instance methods within an Objective-C interface (with
-  /// SpecificDecl = ObjCMethodDecl and using
-  /// ObjCMethodDecl::isInstanceMethod as the run-time criteria). 
+  /// the fields within a RecordDecl (with SpecificDecl = FieldDecl).
   template<typename SpecificDecl>
   class specific_decl_iterator {
     /// Current - The current, underlying declaration iterator, which
@@ -644,18 +640,11 @@ public:
     /// type SpecificDecl.
     DeclContext::decl_iterator Current;
     
-    /// Acceptable - If non-NULL, points to a member function that
-    /// will determine if a particular declaration of type
-    /// SpecificDecl should be visited by the iteration.
-    bool (SpecificDecl::*Acceptable)() const;
-
     /// SkipToNextDecl - Advances the current position up to the next
     /// declaration of type SpecificDecl that also meets the criteria
     /// required by Acceptable.
     void SkipToNextDecl() {
-      while (*Current &&
-             (!isa<SpecificDecl>(*Current) ||
-              (Acceptable && !(cast<SpecificDecl>(*Current)->*Acceptable)())))
+      while (*Current && !isa<SpecificDecl>(*Current))
         ++Current;
     }
 
@@ -667,7 +656,7 @@ public:
       difference_type;
     typedef std::forward_iterator_tag iterator_category;
 
-    specific_decl_iterator() : Current(), Acceptable(0) { }
+    specific_decl_iterator() : Current() { }
 
     /// specific_decl_iterator - Construct a new iterator over a
     /// subset of the declarations the range [C,
@@ -677,9 +666,7 @@ public:
     /// of iterators. For example, if you want Objective-C instance
     /// methods, SpecificDecl will be ObjCMethodDecl and A will be
     /// &ObjCMethodDecl::isInstanceMethod.
-    specific_decl_iterator(DeclContext::decl_iterator C, 
-                           bool (SpecificDecl::*A)() const = 0)
-      : Current(C), Acceptable(A) {
+    explicit specific_decl_iterator(DeclContext::decl_iterator C) : Current(C) {
       SkipToNextDecl();
     }
 
@@ -705,6 +692,80 @@ public:
   
     friend bool 
     operator!=(const specific_decl_iterator& x, const specific_decl_iterator& y) {
+      return x.Current != y.Current;
+    }
+  };
+
+  /// \brief Iterates over a filtered subrange of declarations stored
+  /// in a DeclContext.
+  ///
+  /// This iterator visits only those declarations that are of type
+  /// SpecificDecl (or a class derived from it) and that meet some
+  /// additional run-time criteria. This iterator is used, for
+  /// example, to provide access to the instance methods within an
+  /// Objective-C interface (with SpecificDecl = ObjCMethodDecl and
+  /// Acceptable = ObjCMethodDecl::isInstanceMethod).
+  template<typename SpecificDecl, bool (SpecificDecl::*Acceptable)() const>
+  class filtered_decl_iterator {
+    /// Current - The current, underlying declaration iterator, which
+    /// will either be NULL or will point to a declaration of
+    /// type SpecificDecl.
+    DeclContext::decl_iterator Current;
+    
+    /// SkipToNextDecl - Advances the current position up to the next
+    /// declaration of type SpecificDecl that also meets the criteria
+    /// required by Acceptable.
+    void SkipToNextDecl() {
+      while (*Current &&
+             (!isa<SpecificDecl>(*Current) ||
+              (Acceptable && !(cast<SpecificDecl>(*Current)->*Acceptable)())))
+        ++Current;
+    }
+
+  public:
+    typedef SpecificDecl* value_type;
+    typedef SpecificDecl* reference;
+    typedef SpecificDecl* pointer;
+    typedef std::iterator_traits<DeclContext::decl_iterator>::difference_type
+      difference_type;
+    typedef std::forward_iterator_tag iterator_category;
+
+    filtered_decl_iterator() : Current() { }
+
+    /// specific_decl_iterator - Construct a new iterator over a
+    /// subset of the declarations the range [C,
+    /// end-of-declarations). If A is non-NULL, it is a pointer to a
+    /// member function of SpecificDecl that should return true for
+    /// all of the SpecificDecl instances that will be in the subset
+    /// of iterators. For example, if you want Objective-C instance
+    /// methods, SpecificDecl will be ObjCMethodDecl and A will be
+    /// &ObjCMethodDecl::isInstanceMethod.
+    explicit filtered_decl_iterator(DeclContext::decl_iterator C) : Current(C) {
+      SkipToNextDecl();
+    }
+
+    reference operator*() const { return cast<SpecificDecl>(*Current); }
+    pointer operator->() const { return cast<SpecificDecl>(*Current); }
+
+    filtered_decl_iterator& operator++() {
+      ++Current;
+      SkipToNextDecl();
+      return *this;
+    }
+
+    filtered_decl_iterator operator++(int) {
+      filtered_decl_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+  
+    friend bool
+    operator==(const filtered_decl_iterator& x, const filtered_decl_iterator& y) {
+      return x.Current == y.Current;
+    }
+  
+    friend bool 
+    operator!=(const filtered_decl_iterator& x, const filtered_decl_iterator& y) {
       return x.Current != y.Current;
     }
   };
