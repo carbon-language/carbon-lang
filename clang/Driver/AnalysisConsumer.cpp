@@ -124,7 +124,7 @@ namespace {
     virtual void HandleTopLevelDecl(Decl *D);
     virtual void HandleTranslationUnit(TranslationUnit &TU);
     
-    void HandleCode(Decl* D, Stmt* Body, Actions actions);
+    void HandleCode(Decl* D, Stmt* Body, Actions& actions);
   };
     
   
@@ -365,21 +365,15 @@ void AnalysisConsumer::HandleTranslationUnit(TranslationUnit& TU) {
   }
 }
 
-void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
+void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
   
   // Don't run the actions if an error has occured with parsing the file.
   if (Diags.hasErrorOccurred())
     return;
-  
-  SourceLocation Loc = D->getLocation();
-  
-  // Only run actions on declarations defined in actual source.
-  if (!Loc.isFileID())
-    return;
-  
+
   // Don't run the actions on declarations in header files unless
   // otherwise specified.
-  if (!AnalyzeAll && !Ctx->getSourceManager().isFromMainFile(Loc))
+  if (!AnalyzeAll && !Ctx->getSourceManager().isFromMainFile(D->getLocation()))
     return;  
 
   // Create an AnalysisManager that will manage the state for analyzing
