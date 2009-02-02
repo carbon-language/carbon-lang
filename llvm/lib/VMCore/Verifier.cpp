@@ -715,6 +715,8 @@ void Verifier::visitTruncInst(TruncInst &I) {
 
   Assert1(SrcTy->isIntOrIntVector(), "Trunc only operates on integer", &I);
   Assert1(DestTy->isIntOrIntVector(), "Trunc only produces integer", &I);
+  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+          "trunc source and destination must both be a vector or neither", &I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for Trunc", &I);
 
   visitInstruction(I);
@@ -728,6 +730,8 @@ void Verifier::visitZExtInst(ZExtInst &I) {
   // Get the size of the types in bits, we'll need this later
   Assert1(SrcTy->isIntOrIntVector(), "ZExt only operates on integer", &I);
   Assert1(DestTy->isIntOrIntVector(), "ZExt only produces an integer", &I);
+  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+          "zext source and destination must both be a vector or neither", &I);
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
@@ -747,6 +751,8 @@ void Verifier::visitSExtInst(SExtInst &I) {
 
   Assert1(SrcTy->isIntOrIntVector(), "SExt only operates on integer", &I);
   Assert1(DestTy->isIntOrIntVector(), "SExt only produces an integer", &I);
+  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+          "sext source and destination must both be a vector or neither", &I);
   Assert1(SrcBitSize < DestBitSize,"Type too small for SExt", &I);
 
   visitInstruction(I);
@@ -762,6 +768,8 @@ void Verifier::visitFPTruncInst(FPTruncInst &I) {
 
   Assert1(SrcTy->isFPOrFPVector(),"FPTrunc only operates on FP", &I);
   Assert1(DestTy->isFPOrFPVector(),"FPTrunc only produces an FP", &I);
+  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+          "fptrunc source and destination must both be a vector or neither",&I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for FPTrunc", &I);
 
   visitInstruction(I);
@@ -778,6 +786,8 @@ void Verifier::visitFPExtInst(FPExtInst &I) {
 
   Assert1(SrcTy->isFPOrFPVector(),"FPExt only operates on FP", &I);
   Assert1(DestTy->isFPOrFPVector(),"FPExt only produces an FP", &I);
+  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+          "fpext source and destination must both be a vector or neither", &I);
   Assert1(SrcBitSize < DestBitSize,"DestTy too small for FPExt", &I);
 
   visitInstruction(I);
