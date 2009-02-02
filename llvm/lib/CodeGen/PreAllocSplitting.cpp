@@ -654,8 +654,24 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
   }
     
   if (MBB->pred_size() == 1 && !RetVNI->hasPHIKill) {
-    LI->MergeValueNumberInto(RetVNI, IncomingVNs.begin()->second);
-    Phis[MBB] = RetVNI = IncomingVNs.begin()->second;
+    VNInfo* OldVN = RetVNI;
+    VNInfo* NewVN = IncomingVNs.begin()->second;
+    VNInfo* MergedVN = LI->MergeValueNumberInto(OldVN, NewVN);
+    if (MergedVN == OldVN) std::swap(OldVN, NewVN);
+    
+    for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator LOI = LiveOut.begin(),
+         LOE = LiveOut.end(); LOI != LOE; ++LOI)
+      if (LOI->second == OldVN)
+        LOI->second = MergedVN;
+    for (DenseMap<MachineInstr*, VNInfo*>::iterator NVI = NewVNs.begin(),
+         NVE = NewVNs.end(); NVI != NVE; ++NVI)
+      if (NVI->second == OldVN)
+        NVI->second = MergedVN;
+    for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator PI = Phis.begin(),
+         PE = Phis.end(); PI != PE; ++PI)
+      if (PI->second == OldVN)
+        PI->second = MergedVN;
+    RetVNI = MergedVN;
   } else {
     // Otherwise, merge the incoming VNInfos with a phi join.  Create a new
     // VNInfo to represent the joined value.
