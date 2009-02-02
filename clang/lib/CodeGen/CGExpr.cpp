@@ -1034,7 +1034,8 @@ LValue CodeGenFunction::EmitLValueForIvar(llvm::Value *BaseValue,
     return EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field), 
                                  CVRQualifiers, Index);
   }
-  llvm::Value *V = Builder.CreateStructGEP(BaseValue, Index, "tmp");
+  llvm::Value *V = CGM.getObjCRuntime().EmitObjCValueForIvar(*this,
+                                       BaseValue, Ivar, Field, CVRQualifiers);
   LValue LV = LValue::MakeAddr(V, Ivar->getType().getCVRQualifiers()|CVRQualifiers);
   SetVarDeclObjCAttribute(getContext(), Ivar, Ivar->getType(), LV);
   LValue::SetObjCIvar(LV, true);

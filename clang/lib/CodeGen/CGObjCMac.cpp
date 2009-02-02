@@ -549,6 +549,12 @@ private:
                                   llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
+  
+  virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                            llvm::Value *BaseValue,
+                                            const ObjCIvarDecl *Ivar,
+                                            const FieldDecl *Field,
+                                            unsigned CVRQualifiers);
 };
   
 class CGObjCNonFragileABIMac : public CGObjCCommonMac {
@@ -669,6 +675,13 @@ public:
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest)
     { return; }
+  virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                            llvm::Value *BaseValue,
+                                            const ObjCIvarDecl *Ivar,
+                                            const FieldDecl *Field,
+                                            unsigned CVRQualifiers)
+  { return 0; }
+  
 };
   
 } // end anonymous namespace
@@ -2095,6 +2108,19 @@ void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignStrongCastFn,
                           src, dst, "weakassign");
   return;
+}
+
+/// EmitObjCValueForIvar - Code Gen for ivar reference.
+///
+llvm::Value *CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                             llvm::Value *BaseValue,
+                                             const ObjCIvarDecl *Ivar,
+                                             const FieldDecl *Field,
+                                             unsigned CVRQualifiers) {
+  // TODO:  Add a special case for isa (index 0)
+  unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
+  llvm::Value *V = CGF.Builder.CreateStructGEP(BaseValue, Index, "tmp");
+  return V;
 }
 
 /* *** Private Interface *** */

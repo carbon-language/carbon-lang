@@ -140,6 +140,11 @@ public:
                                     llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
+  virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                            llvm::Value *BaseValue,
+                                            const ObjCIvarDecl *Ivar,
+                                            const FieldDecl *Field,
+                                            unsigned CVRQualifiers);
 };
 } // end anonymous namespace
 
@@ -1026,6 +1031,17 @@ void CGObjCGNU::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *src, llvm::Value *dst)
 {
   return;
+}
+
+llvm::Value *CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                             llvm::Value *BaseValue,
+                                             const ObjCIvarDecl *Ivar,
+                                             const FieldDecl *Field,
+                                             unsigned CVRQualifiers) {
+  // TODO:  Add a special case for isa (index 0)
+  unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
+  llvm::Value *V = CGF.Builder.CreateStructGEP(BaseValue, Index, "tmp");
+  return V;
 }
 
 CodeGen::CGObjCRuntime *CodeGen::CreateGNUObjCRuntime(CodeGen::CodeGenModule &CGM){

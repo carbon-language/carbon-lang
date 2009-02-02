@@ -47,6 +47,7 @@ namespace CodeGen {
   class ObjCMethodDecl;
   class ObjCProtocolDecl;
   class Selector;
+  class ObjCIvarDecl;
 
 namespace CodeGen {
   class CodeGenModule;
@@ -155,6 +156,12 @@ public:
                                   llvm::Value *src, llvm::Value *dest) = 0;
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest) = 0;
+  
+  virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                            llvm::Value *BaseValue,
+                                            const ObjCIvarDecl *Ivar,
+                                            const FieldDecl *Field,
+                                            unsigned CVRQualifiers) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.  
