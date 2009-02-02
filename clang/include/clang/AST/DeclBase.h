@@ -30,6 +30,7 @@ class FunctionDecl;
 class CXXRecordDecl;
 class EnumDecl;
 class ObjCMethodDecl;
+class ObjCContainerDecl;
 class ObjCInterfaceDecl;
 class ObjCCategoryDecl;
 class ObjCProtocolDecl;
@@ -44,67 +45,14 @@ class DeclarationName;
 ///
 class Decl {
 public:
+  /// \brief Lists the kind of concrete classes of Decl.
   enum Kind {
-    // This lists the concrete classes of Decl in order of the inheritance
-    // hierarchy.  This allows us to do efficient classof tests based on the
-    // enums below.   The commented out names are abstract class names.
-    // [DeclContext] indicates that the class also inherits from DeclContext.
-    
-    // Decl
-         TranslationUnit,  // [DeclContext]
-    //   NamedDecl
-           OverloadedFunction,
-           Field,
-             ObjCIvar,
-             ObjCAtDefsField,
-           Namespace,  // [DeclContext]
-    //     TypeDecl
-             Typedef,
-    //       TagDecl // [DeclContext]
-               Enum,  
-               Record,
-                 CXXRecord,  
- 	     TemplateTypeParm,
-    //     ValueDecl
-             EnumConstant,
-             Function,  // [DeclContext]
-               CXXMethod,
-                 CXXConstructor,
-                 CXXDestructor,
-                 CXXConversion,
-             Var,
-               ImplicitParam,
-               CXXClassVar,
-               ParmVar,
-                 OriginalParmVar,
-  	       NonTypeTemplateParm,
-           ObjCMethod,  // [DeclContext]
-           ObjCContainer, // [DeclContext]
-             ObjCCategory,
-             ObjCProtocol,
-             ObjCInterface,
-             ObjCCategoryImpl,  // [DeclContext]
-             ObjCProperty,
-             ObjCCompatibleAlias,
-         LinkageSpec, // [DeclContext]
-         ObjCPropertyImpl,
-         ObjCImplementation, // [DeclContext]
-         ObjCForwardProtocol,
-         ObjCClass,
-         FileScopeAsm,
-         Block, // [DeclContext]
-  
-    // For each non-leaf class, we now define a mapping to the first/last member
-    // of the class, to allow efficient classof.
-    NamedFirst    = OverloadedFunction, NamedLast   = ObjCCompatibleAlias,
-    ObjCContainerFirst = ObjCContainer, ObjCContainerLast = ObjCInterface,
-    FieldFirst         = Field        , FieldLast     = ObjCAtDefsField,
-    TypeFirst          = Typedef      , TypeLast      = TemplateTypeParm,
-    TagFirst           = Enum         , TagLast       = CXXRecord,
-    RecordFirst        = Record       , RecordLast    = CXXRecord,
-    ValueFirst         = EnumConstant , ValueLast     = NonTypeTemplateParm,
-    FunctionFirst      = Function     , FunctionLast  = CXXConversion,
-    VarFirst           = Var          , VarLast       = NonTypeTemplateParm
+#define DECL(Derived, Base) Derived,
+#define DECL_RANGE(CommonBase, Start, End) \
+    CommonBase##First = Start, CommonBase##Last = End, 
+#define LAST_DECL_RANGE(CommonBase, Start, End) \
+    CommonBase##First = Start, CommonBase##Last = End
+#include "clang/AST/DeclNodes.def"
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
@@ -822,19 +770,8 @@ public:
 
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
-      case Decl::TranslationUnit:
-      case Decl::Namespace:
-      case Decl::Enum:
-      case Decl::Record:
-      case Decl::CXXRecord:
-      case Decl::ObjCMethod:
-      case Decl::ObjCInterface:
-      case Decl::ObjCCategory:
-      case Decl::ObjCProtocol:
-      case Decl::ObjCImplementation:
-      case Decl::ObjCCategoryImpl:
-      case Decl::LinkageSpec:
-      case Decl::Block:
+#define DECL_CONTEXT(Name) case Decl::Name:
+#include "clang/AST/DeclNodes.def"
         return true;
       default:
         if (D->getKind() >= Decl::FunctionFirst &&
@@ -844,20 +781,9 @@ public:
     }
   }
   static bool classof(const DeclContext *D) { return true; }
-  static bool classof(const TranslationUnitDecl *D) { return true; }
-  static bool classof(const NamespaceDecl *D) { return true; }
-  static bool classof(const FunctionDecl *D) { return true; }
-  static bool classof(const RecordDecl *D) { return true; }
-  static bool classof(const CXXRecordDecl *D) { return true; }
-  static bool classof(const EnumDecl *D) { return true; }
-  static bool classof(const ObjCMethodDecl *D) { return true; }
-  static bool classof(const ObjCInterfaceDecl *D) { return true; }
-  static bool classof(const ObjCCategoryDecl *D) { return true; }
-  static bool classof(const ObjCProtocolDecl *D) { return true; }
-  static bool classof(const ObjCImplementationDecl *D) { return true; }
-  static bool classof(const ObjCCategoryImplDecl *D) { return true; }
-  static bool classof(const LinkageSpecDecl *D) { return true; }
-  static bool classof(const BlockDecl *D) { return true; }
+#define DECL_CONTEXT(Name) \
+  static bool classof(const Name##Decl *D) { return true; }
+#include "clang/AST/DeclNodes.def"
 
 private:
   void buildLookup(DeclContext *DCtx);

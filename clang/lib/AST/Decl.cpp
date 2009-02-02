@@ -54,18 +54,18 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 QualType ParmVarDecl::getOriginalType() const {
-  if (const ParmVarWithOriginalTypeDecl *PVD = 
-      dyn_cast<ParmVarWithOriginalTypeDecl>(this))
+  if (const OriginalParmVarDecl *PVD = 
+      dyn_cast<OriginalParmVarDecl>(this))
     return PVD->OriginalType;
   return getType();
 }
 
-ParmVarWithOriginalTypeDecl *ParmVarWithOriginalTypeDecl::Create(
+OriginalParmVarDecl *OriginalParmVarDecl::Create(
                                  ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, QualType OT, StorageClass S,
                                  Expr *DefArg) {
-  return new (C) ParmVarWithOriginalTypeDecl(DC, L, Id, T, OT, S, DefArg);
+  return new (C) OriginalParmVarDecl(DC, L, Id, T, OT, S, DefArg);
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,

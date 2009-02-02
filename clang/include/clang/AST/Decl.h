@@ -443,38 +443,38 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// ParmVarWithOriginalTypeDecl - Represent a parameter to a function, when
+/// OriginalParmVarDecl - Represent a parameter to a function, when
 /// the type of the parameter has been promoted. This node represents the
 /// parameter to the function with its original type.
 ///
-class ParmVarWithOriginalTypeDecl : public ParmVarDecl {
+class OriginalParmVarDecl : public ParmVarDecl {
   friend class ParmVarDecl;
 protected:
   QualType OriginalType;
 private:
-  ParmVarWithOriginalTypeDecl(DeclContext *DC, SourceLocation L,
+  OriginalParmVarDecl(DeclContext *DC, SourceLocation L,
                               IdentifierInfo *Id, QualType T, 
                               QualType OT, StorageClass S,
                               Expr *DefArg)
   : ParmVarDecl(OriginalParmVar, DC, L, Id, T, S, DefArg), OriginalType(OT) {}
 public:
-    static ParmVarWithOriginalTypeDecl *Create(ASTContext &C, DeclContext *DC,
+    static OriginalParmVarDecl *Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L,IdentifierInfo *Id,
                                QualType T, QualType OT,
                                StorageClass S, Expr *DefArg);
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == OriginalParmVar; }
-  static bool classof(const ParmVarWithOriginalTypeDecl *D) { return true; }
+  static bool classof(const OriginalParmVarDecl *D) { return true; }
     
 protected:
-  /// EmitImpl - Serialize this ParmVarWithOriginalTypeDecl. 
+  /// EmitImpl - Serialize this OriginalParmVarDecl. 
   /// Called by Decl::Emit.
   virtual void EmitImpl(llvm::Serializer& S) const;
     
-  /// CreateImpl - Deserialize a ParmVarWithOriginalTypeDecl.  
+  /// CreateImpl - Deserialize a OriginalParmVarDecl.  
   /// Called by Decl::Create.
-  static ParmVarWithOriginalTypeDecl* CreateImpl(llvm::Deserializer& D, 
+  static OriginalParmVarDecl* CreateImpl(llvm::Deserializer& D, 
                                                  ASTContext& C);
     
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);

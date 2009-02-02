@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
@@ -26,35 +27,8 @@ using namespace clang;
 //  Statistics
 //===----------------------------------------------------------------------===//
 
-// temporary statistics gathering
-static unsigned nFuncs = 0;
-static unsigned nVars = 0;
-static unsigned nParmVars = 0;
-static unsigned nOriginalParmVars = 0;
-static unsigned nSUC = 0;
-static unsigned nCXXSUC = 0;
-static unsigned nEnumConst = 0;
-static unsigned nEnumDecls = 0;
-static unsigned nNamespaces = 0;
-static unsigned nOverFuncs = 0;
-static unsigned nTypedef = 0;
-static unsigned nFieldDecls = 0;
-static unsigned nInterfaceDecls = 0;
-static unsigned nClassDecls = 0;
-static unsigned nMethodDecls = 0;
-static unsigned nProtocolDecls = 0;
-static unsigned nForwardProtocolDecls = 0;
-static unsigned nCategoryDecls = 0;
-static unsigned nIvarDecls = 0;
-static unsigned nAtDefsFieldDecls = 0;
-static unsigned nObjCImplementationDecls = 0;
-static unsigned nObjCCategoryImpl = 0;
-static unsigned nObjCCompatibleAlias = 0;
-static unsigned nObjCPropertyDecl = 0;
-static unsigned nObjCPropertyImplDecl = 0;
-static unsigned nLinkageSpecDecl = 0;
-static unsigned nFileScopeAsmDecl = 0;
-static unsigned nBlockDecls = 0;
+#define DECL(Derived, Base) static int n##Derived##s = 0;
+#include "clang/AST/DeclNodes.def"
 
 static bool StatSwitch = false;
 
@@ -66,58 +40,17 @@ static DeclAttrMapTy *DeclAttrs = 0;
 
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
-  default: assert(0 && "Unknown decl kind!");
-  case Namespace:           return "Namespace";
-  case OverloadedFunction:  return "OverloadedFunction";
-  case Typedef:             return "Typedef";
-  case Function:            return "Function";
-  case Var:                 return "Var";
-  case ParmVar:             return "ParmVar";
-  case OriginalParmVar:     return "OriginalParmVar";
-  case EnumConstant:        return "EnumConstant";
-  case ObjCIvar:            return "ObjCIvar";
-  case ObjCInterface:       return "ObjCInterface";
-  case ObjCImplementation:  return "ObjCImplementation";
-  case ObjCClass:           return "ObjCClass";
-  case ObjCMethod:          return "ObjCMethod";
-  case ObjCProtocol:        return "ObjCProtocol";
-  case ObjCProperty:        return "ObjCProperty";
-  case ObjCPropertyImpl:    return "ObjCPropertyImpl";
-  case ObjCForwardProtocol: return "ObjCForwardProtocol"; 
-  case Record:              return "Record";
-  case CXXRecord:           return "CXXRecord";
-  case Enum:                return "Enum";
-  case Block:               return "Block";
-  case Field:               return "Field";
+  default: assert(0 && "Declaration not in DeclNodes.def!");
+#define DECL(Derived, Base) case Derived: return #Derived;
+#include "clang/AST/DeclNodes.def"
   }
 }
 
 const char *DeclContext::getDeclKindName() const {
   switch (DeclKind) {
-  default: assert(0 && "Unknown decl kind!");
-  case Decl::TranslationUnit:     return "TranslationUnit";
-  case Decl::Namespace:           return "Namespace";
-  case Decl::OverloadedFunction:  return "OverloadedFunction";
-  case Decl::Typedef:             return "Typedef";
-  case Decl::Function:            return "Function";
-  case Decl::Var:                 return "Var";
-  case Decl::ParmVar:             return "ParmVar";
-  case Decl::OriginalParmVar:     return "OriginalParmVar";
-  case Decl::EnumConstant:        return "EnumConstant";
-  case Decl::ObjCIvar:            return "ObjCIvar";
-  case Decl::ObjCInterface:       return "ObjCInterface";
-  case Decl::ObjCImplementation:  return "ObjCImplementation";
-  case Decl::ObjCClass:           return "ObjCClass";
-  case Decl::ObjCMethod:          return "ObjCMethod";
-  case Decl::ObjCProtocol:        return "ObjCProtocol";
-  case Decl::ObjCProperty:        return "ObjCProperty";
-  case Decl::ObjCPropertyImpl:    return "ObjCPropertyImpl";
-  case Decl::ObjCForwardProtocol: return "ObjCForwardProtocol"; 
-  case Decl::Record:              return "Record";
-  case Decl::CXXRecord:           return "CXXRecord";
-  case Decl::Enum:                return "Enum";
-  case Decl::Block:               return "Block";
-  case Decl::Field:               return "Field";
+  default: assert(0 && "Declaration context not in DeclNodes.def!");
+#define DECL_CONTEXT(Node) case Decl::Node: return #Node;
+#include "clang/AST/DeclNodes.def"
   }
 }
 
@@ -129,161 +62,30 @@ bool Decl::CollectingStats(bool Enable) {
 
 void Decl::PrintStats() {
   fprintf(stderr, "*** Decl Stats:\n");
-  fprintf(stderr, "  %d decls total.\n", 
-          int(nFuncs+nVars+nParmVars+nOriginalParmVars+nFieldDecls+nSUC+nCXXSUC+
-              nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
-              nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls+
-              nAtDefsFieldDecls+nNamespaces+nOverFuncs));
-  fprintf(stderr, "    %d namespace decls, %d each (%d bytes)\n", 
-          nNamespaces, (int)sizeof(NamespaceDecl), 
-          int(nNamespaces*sizeof(NamespaceDecl)));
-  fprintf(stderr, "    %d overloaded function decls, %d each (%d bytes)\n", 
-          nOverFuncs, (int)sizeof(OverloadedFunctionDecl), 
-          int(nOverFuncs*sizeof(OverloadedFunctionDecl)));
-  fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
-          nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
-  fprintf(stderr, "    %d variable decls, %d each (%d bytes)\n", 
-          nVars, (int)sizeof(VarDecl), 
-          int(nVars*sizeof(VarDecl)));
-  fprintf(stderr, "    %d parameter variable decls, %d each (%d bytes)\n", 
-          nParmVars, (int)sizeof(ParmVarDecl),
-          int(nParmVars*sizeof(ParmVarDecl)));
-  fprintf(stderr, "    %d original parameter variable decls, %d each (%d bytes)\n", 
-          nOriginalParmVars, (int)sizeof(ParmVarWithOriginalTypeDecl),
-          int(nOriginalParmVars*sizeof(ParmVarWithOriginalTypeDecl)));
-  fprintf(stderr, "    %d field decls, %d each (%d bytes)\n", 
-          nFieldDecls, (int)sizeof(FieldDecl),
-          int(nFieldDecls*sizeof(FieldDecl)));
-  fprintf(stderr, "    %d @defs generated field decls, %d each (%d bytes)\n",
-          nAtDefsFieldDecls, (int)sizeof(ObjCAtDefsFieldDecl),
-          int(nAtDefsFieldDecls*sizeof(ObjCAtDefsFieldDecl)));
-  fprintf(stderr, "    %d struct/union/class decls, %d each (%d bytes)\n", 
-          nSUC, (int)sizeof(RecordDecl),
-          int(nSUC*sizeof(RecordDecl)));
-  fprintf(stderr, "    %d C++ struct/union/class decls, %d each (%d bytes)\n", 
-          nCXXSUC, (int)sizeof(CXXRecordDecl),
-          int(nCXXSUC*sizeof(CXXRecordDecl)));
-  fprintf(stderr, "    %d enum decls, %d each (%d bytes)\n", 
-          nEnumDecls, (int)sizeof(EnumDecl), 
-          int(nEnumDecls*sizeof(EnumDecl)));
-  fprintf(stderr, "    %d enum constant decls, %d each (%d bytes)\n", 
-          nEnumConst, (int)sizeof(EnumConstantDecl),
-          int(nEnumConst*sizeof(EnumConstantDecl)));
-  fprintf(stderr, "    %d typedef decls, %d each (%d bytes)\n", 
-          nTypedef, (int)sizeof(TypedefDecl),int(nTypedef*sizeof(TypedefDecl)));
-  // Objective-C decls...
-  fprintf(stderr, "    %d interface decls, %d each (%d bytes)\n", 
-          nInterfaceDecls, (int)sizeof(ObjCInterfaceDecl),
-          int(nInterfaceDecls*sizeof(ObjCInterfaceDecl)));
-  fprintf(stderr, "    %d instance variable decls, %d each (%d bytes)\n", 
-          nIvarDecls, (int)sizeof(ObjCIvarDecl),
-          int(nIvarDecls*sizeof(ObjCIvarDecl)));
-  fprintf(stderr, "    %d class decls, %d each (%d bytes)\n", 
-          nClassDecls, (int)sizeof(ObjCClassDecl),
-          int(nClassDecls*sizeof(ObjCClassDecl)));
-  fprintf(stderr, "    %d method decls, %d each (%d bytes)\n", 
-          nMethodDecls, (int)sizeof(ObjCMethodDecl),
-          int(nMethodDecls*sizeof(ObjCMethodDecl)));
-  fprintf(stderr, "    %d protocol decls, %d each (%d bytes)\n", 
-          nProtocolDecls, (int)sizeof(ObjCProtocolDecl),
-          int(nProtocolDecls*sizeof(ObjCProtocolDecl)));
-  fprintf(stderr, "    %d forward protocol decls, %d each (%d bytes)\n", 
-          nForwardProtocolDecls, (int)sizeof(ObjCForwardProtocolDecl),
-          int(nForwardProtocolDecls*sizeof(ObjCForwardProtocolDecl)));
-  fprintf(stderr, "    %d category decls, %d each (%d bytes)\n", 
-          nCategoryDecls, (int)sizeof(ObjCCategoryDecl),
-          int(nCategoryDecls*sizeof(ObjCCategoryDecl)));
-
-  fprintf(stderr, "    %d class implementation decls, %d each (%d bytes)\n", 
-          nObjCImplementationDecls, (int)sizeof(ObjCImplementationDecl),
-          int(nObjCImplementationDecls*sizeof(ObjCImplementationDecl)));
-
-  fprintf(stderr, "    %d class implementation decls, %d each (%d bytes)\n", 
-          nObjCCategoryImpl, (int)sizeof(ObjCCategoryImplDecl),
-          int(nObjCCategoryImpl*sizeof(ObjCCategoryImplDecl)));
-
-  fprintf(stderr, "    %d compatibility alias decls, %d each (%d bytes)\n", 
-          nObjCCompatibleAlias, (int)sizeof(ObjCCompatibleAliasDecl),
-          int(nObjCCompatibleAlias*sizeof(ObjCCompatibleAliasDecl)));
   
-  fprintf(stderr, "    %d property decls, %d each (%d bytes)\n", 
-          nObjCPropertyDecl, (int)sizeof(ObjCPropertyDecl),
-          int(nObjCPropertyDecl*sizeof(ObjCPropertyDecl)));
+  int totalDecls = 0;
+#define DECL(Derived, Base) totalDecls += n##Derived##s;
+#include "clang/AST/DeclNodes.def"
+  fprintf(stderr, "  %d decls total.\n", totalDecls);
+ 
+  int totalBytes = 0;
+#define DECL(Derived, Base)                                             \
+  if (n##Derived##s > 0) {                                              \
+    totalBytes += (int)(n##Derived##s * sizeof(Derived##Decl));         \
+    fprintf(stderr, "    %d " #Derived " decls, %d each (%d bytes)\n",  \
+            n##Derived##s, (int)sizeof(Derived##Decl),                  \
+            (int)(n##Derived##s * sizeof(Derived##Decl)));              \
+  }
+#include "clang/AST/DeclNodes.def"
   
-  fprintf(stderr, "    %d property implementation decls, %d each (%d bytes)\n", 
-          nObjCPropertyImplDecl, (int)sizeof(ObjCPropertyImplDecl),
-          int(nObjCPropertyImplDecl*sizeof(ObjCPropertyImplDecl)));
-  
-  fprintf(stderr, "Total bytes = %d\n", 
-          int(nFuncs*sizeof(FunctionDecl)+
-              nVars*sizeof(VarDecl)+nParmVars*sizeof(ParmVarDecl)+
-              nOriginalParmVars*sizeof(ParmVarWithOriginalTypeDecl)+
-              nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
-              nCXXSUC*sizeof(CXXRecordDecl)+
-              nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
-              nTypedef*sizeof(TypedefDecl)+
-              nInterfaceDecls*sizeof(ObjCInterfaceDecl)+
-              nIvarDecls*sizeof(ObjCIvarDecl)+
-              nClassDecls*sizeof(ObjCClassDecl)+
-              nMethodDecls*sizeof(ObjCMethodDecl)+
-              nProtocolDecls*sizeof(ObjCProtocolDecl)+
-              nForwardProtocolDecls*sizeof(ObjCForwardProtocolDecl)+
-              nCategoryDecls*sizeof(ObjCCategoryDecl)+
-              nObjCImplementationDecls*sizeof(ObjCImplementationDecl)+
-              nObjCCategoryImpl*sizeof(ObjCCategoryImplDecl)+
-              nObjCCompatibleAlias*sizeof(ObjCCompatibleAliasDecl)+
-              nObjCPropertyDecl*sizeof(ObjCPropertyDecl)+
-              nObjCPropertyImplDecl*sizeof(ObjCPropertyImplDecl)+
-              nLinkageSpecDecl*sizeof(LinkageSpecDecl)+
-              nFileScopeAsmDecl*sizeof(FileScopeAsmDecl)+
-              nNamespaces*sizeof(NamespaceDecl)+
-              nOverFuncs*sizeof(OverloadedFunctionDecl)));
-    
+  fprintf(stderr, "Total bytes = %d\n", totalBytes);
 }
 
 void Decl::addDeclKind(Kind k) {
   switch (k) {
-  case Namespace:           nNamespaces++; break;
-  case OverloadedFunction:  nOverFuncs++; break;
-  case Typedef:             nTypedef++; break;
-  case Function:            nFuncs++; break;
-  case Var:                 nVars++; break;
-  case ParmVar:             nParmVars++; break;
-  case OriginalParmVar:     nOriginalParmVars++; break;
-  case EnumConstant:        nEnumConst++; break;
-  case Field:               nFieldDecls++; break;
-  case Record:              nSUC++; break;
-  case Enum:                nEnumDecls++; break;
-  case ObjCContainer:       break; // is abstract...no need to account for.
-  case ObjCInterface:       nInterfaceDecls++; break;
-  case ObjCClass:           nClassDecls++; break;
-  case ObjCMethod:          nMethodDecls++; break;
-  case ObjCProtocol:        nProtocolDecls++; break;
-  case ObjCForwardProtocol: nForwardProtocolDecls++; break;
-  case ObjCCategory:        nCategoryDecls++; break;
-  case ObjCIvar:            nIvarDecls++; break;
-  case ObjCAtDefsField:     nAtDefsFieldDecls++; break;
-  case ObjCImplementation:  nObjCImplementationDecls++; break;
-  case ObjCCategoryImpl:    nObjCCategoryImpl++; break;
-  case ObjCCompatibleAlias: nObjCCompatibleAlias++; break;
-  case ObjCProperty:        nObjCPropertyDecl++; break;
-  case ObjCPropertyImpl:    nObjCPropertyImplDecl++; break;
-  case LinkageSpec:         nLinkageSpecDecl++; break;
-  case FileScopeAsm:        nFileScopeAsmDecl++; break;
-  case Block:               nBlockDecls++; break;
-  case ImplicitParam:
-  case TranslationUnit:     break;
-
-  case CXXRecord:           nCXXSUC++; break;
-  // FIXME: Statistics for C++ decls.
-  case TemplateTypeParm:
-  case NonTypeTemplateParm:
-  case CXXMethod:
-  case CXXConstructor:
-  case CXXDestructor:
-  case CXXConversion:
-  case CXXClassVar:
-    break;
+  default: assert(0 && "Declaration not in DeclNodes.def!");
+#define DECL(Derived, Base) case Derived: ++n##Derived##s; break;
+#include "clang/AST/DeclNodes.def"
   }
 }
 

@@ -90,7 +90,7 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
       break;
       
     case OriginalParmVar:
-      Dcl = ParmVarWithOriginalTypeDecl::CreateImpl(D, C);
+      Dcl = OriginalParmVarDecl::CreateImpl(D, C);
       break;
       
     case Function:
@@ -361,18 +361,18 @@ ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 }
 
 //===----------------------------------------------------------------------===//
-//      ParmVarWithOriginalTypeDecl Serialization.
+//      OriginalParmVarDecl Serialization.
 //===----------------------------------------------------------------------===//
 
-void ParmVarWithOriginalTypeDecl::EmitImpl(llvm::Serializer& S) const {
+void OriginalParmVarDecl::EmitImpl(llvm::Serializer& S) const {
   ParmVarDecl::EmitImpl(S);
   S.Emit(OriginalType);
 }
 
-ParmVarWithOriginalTypeDecl* ParmVarWithOriginalTypeDecl::CreateImpl(
+OriginalParmVarDecl* OriginalParmVarDecl::CreateImpl(
                                               Deserializer& D, ASTContext& C) {
-  ParmVarWithOriginalTypeDecl* decl = new (C)
-    ParmVarWithOriginalTypeDecl(0, SourceLocation(), NULL, QualType(), 
+  OriginalParmVarDecl* decl = new (C)
+    OriginalParmVarDecl(0, SourceLocation(), NULL, QualType(), 
                                 QualType(), None, NULL);
   
   decl->ParmVarDecl::ReadImpl(D, C);
