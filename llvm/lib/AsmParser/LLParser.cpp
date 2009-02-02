@@ -471,8 +471,9 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   GlobalVariable *GV = 0;
 
   // See if the global was forward referenced, if so, use the global.
-  if (!Name.empty() && (GV = M->getGlobalVariable(Name, true))) {
-    if (!ForwardRefVals.erase(Name))
+  if (!Name.empty()) {
+    if ((GV = M->getGlobalVariable(Name, true)) &&
+        !ForwardRefVals.erase(Name))
       return Error(NameLoc, "redefinition of global '@" + Name + "'");
   } else {
     std::map<unsigned, std::pair<GlobalValue*, LocTy> >::iterator
