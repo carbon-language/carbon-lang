@@ -256,11 +256,11 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
                                  VT.getNumElements());
   }
   case Type::FunctionNoProto:
-    return GetFunctionType(CGFunctionInfo(cast<FunctionTypeNoProto>(&Ty)), 
+    return GetFunctionType(getFunctionInfo(cast<FunctionTypeNoProto>(&Ty)), 
                            true);
   case Type::FunctionProto: {
     const FunctionTypeProto *FTP = cast<FunctionTypeProto>(&Ty);
-    return GetFunctionType(CGFunctionInfo(FTP), FTP->isVariadic());
+    return GetFunctionType(getFunctionInfo(FTP), FTP->isVariadic());
   }
   
   case Type::ASQual:

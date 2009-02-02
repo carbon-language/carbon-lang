@@ -299,14 +299,14 @@ void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
 
 void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
                                         llvm::Function *F) {
-  SetFunctionAttributes(MD, CGFunctionInfo(MD, Context), F);
+  SetFunctionAttributes(MD, getTypes().getFunctionInfo(MD), F);
   
   SetFunctionAttributesForDefinition(MD, F);
 }
 
 void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
                                           llvm::Function *F) {
-  SetFunctionAttributes(FD, CGFunctionInfo(FD), F);
+  SetFunctionAttributes(FD, getTypes().getFunctionInfo(FD), F);
   
   SetGlobalValueAttributes(FD, FD->getStorageClass() == FunctionDecl::Static,
                            FD->isInline(), F, false);

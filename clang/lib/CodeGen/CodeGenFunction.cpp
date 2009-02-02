@@ -172,7 +172,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   }
 
   // FIXME: Leaked.
-  CurFnInfo = new CGFunctionInfo(FnRetTy, Args);
+  CurFnInfo = &CGM.getTypes().getFunctionInfo(FnRetTy, Args);
   EmitFunctionProlog(*CurFnInfo, CurFn, Args);
   
   // If any of the arguments have a variably modified type, make sure to

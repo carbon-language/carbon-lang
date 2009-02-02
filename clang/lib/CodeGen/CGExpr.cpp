@@ -1102,5 +1102,6 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType CalleeType,
     Args.push_back(std::make_pair(EmitAnyExprToTemp(*I), 
                                   I->getType()));
 
-  return EmitCall(CGFunctionInfo(ResultType, Args), Callee, Args);
+  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), 
+                  Callee, Args);
 }

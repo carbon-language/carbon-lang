@@ -806,8 +806,9 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
-  CGFunctionInfo FnInfo(ResultType, ActualArgs);
-  const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FnInfo, false);
+  CodeGenTypes &Types = CGM.getTypes();
+  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
+  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo, false);
 
   llvm::Constant *Fn;
   if (CGM.ReturnTypeUsesSret(FnInfo)) {
@@ -1668,9 +1669,9 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
   std::string Name;
   GetNameForMethod(OMD, CD, Name);
 
+  CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *MethodTy =
-    CGM.getTypes().GetFunctionType(CGFunctionInfo(OMD, CGM.getContext()), 
-                                   OMD->isVariadic());
+    Types.GetFunctionType(Types.getFunctionInfo(OMD), OMD->isVariadic());
   llvm::Function *Method = 
     llvm::Function::Create(MethodTy,
                            llvm::GlobalValue::InternalLinkage,

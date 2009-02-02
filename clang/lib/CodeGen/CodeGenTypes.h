@@ -158,6 +158,20 @@ public:
   /// UpdateCompletedType - When we find the full definition for a TagDecl,
   /// replace the 'opaque' type we previously made for it if applicable.
   void UpdateCompletedType(const TagDecl *TD);
+
+  /// getFunctionInfo - Get the CGFunctionInfo for this function signature.
+  const CGFunctionInfo &getFunctionInfo(QualType RetTy, 
+                                        const llvm::SmallVector<QualType,16> 
+                                        &ArgTys);
+
+  const CGFunctionInfo &getFunctionInfo(const FunctionTypeNoProto *FTNP);
+  const CGFunctionInfo &getFunctionInfo(const FunctionTypeProto *FTP);
+  const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
+  const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);
+  const CGFunctionInfo &getFunctionInfo(QualType ResTy, 
+                                        const CallArgList &Args);
+  const CGFunctionInfo &getFunctionInfo(QualType ResTy, 
+                                        const FunctionArgList &Args);
   
 public:  // These are internal details of CGT that shouldn't be used externally.
   /// addFieldInfo - Assign field number to field FD.

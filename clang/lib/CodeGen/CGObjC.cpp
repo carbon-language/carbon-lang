@@ -183,7 +183,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     Args.push_back(std::make_pair(RValue::get(CmdVal), Cmd->getType()));
     Args.push_back(std::make_pair(RValue::get(Offset), getContext().LongTy));
     Args.push_back(std::make_pair(RValue::get(True), getContext().BoolTy));
-    RValue RV = EmitCall(CGFunctionInfo(PD->getType(), Args), 
+    RValue RV = EmitCall(Types.getFunctionInfo(PD->getType(), Args), 
                          GetPropertyFn, Args);
     // We need to fix the type here. Ivars with copy & retain are
     // always objects so we don't need to worry about complex or
@@ -268,7 +268,8 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                   getContext().BoolTy));
     Args.push_back(std::make_pair(RValue::get(IsCopy ? True : False), 
                                   getContext().BoolTy));
-    EmitCall(CGFunctionInfo(PD->getType(), Args), SetPropertyFn, Args);
+    EmitCall(Types.getFunctionInfo(PD->getType(), Args), 
+             SetPropertyFn, Args);
   } else {
     SourceLocation Loc = PD->getLocation();
     ValueDecl *Self = OMD->getSelfDecl();

@@ -57,12 +57,8 @@ namespace CodeGen {
     llvm::SmallVector<QualType, 16> ArgTypes;
 
   public:
-    CGFunctionInfo(const FunctionTypeNoProto *FTNP);
-    CGFunctionInfo(const FunctionTypeProto *FTP);
-    CGFunctionInfo(const FunctionDecl *FD);
-    CGFunctionInfo(const ObjCMethodDecl *MD, const ASTContext &Context);
-    CGFunctionInfo(QualType ResTy, const CallArgList &Args);
-    CGFunctionInfo(QualType ResTy, const FunctionArgList &Args);
+    CGFunctionInfo(QualType ResTy, 
+                   const llvm::SmallVector<QualType, 16> &ArgTys);
 
     ArgTypeIterator argtypes_begin() const;
     ArgTypeIterator argtypes_end() const;

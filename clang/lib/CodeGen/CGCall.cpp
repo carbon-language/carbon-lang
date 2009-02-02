@@ -31,50 +31,70 @@ using namespace CodeGen;
 
 // FIXME: Use iterator and sidestep silly type array creation.
 
-CGFunctionInfo::CGFunctionInfo(const FunctionTypeNoProto *FTNP) {
-  ArgTypes.push_back(FTNP->getResultType());
+const 
+CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionTypeNoProto *FTNP) {
+  return getFunctionInfo(FTNP->getResultType(), 
+                         llvm::SmallVector<QualType, 16>());
 }
 
-CGFunctionInfo::CGFunctionInfo(const FunctionTypeProto *FTP) {
-  ArgTypes.push_back(FTP->getResultType());
+const 
+CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionTypeProto *FTP) {
+  llvm::SmallVector<QualType, 16> ArgTys;
+  // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-    ArgTypes.push_back(FTP->getArgType(i));
+    ArgTys.push_back(FTP->getArgType(i));
+  return getFunctionInfo(FTP->getResultType(), ArgTys);
 }
 
-// FIXME: Is there really any reason to have this still?
-CGFunctionInfo::CGFunctionInfo(const FunctionDecl *FD) {
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
   const FunctionType *FTy = FD->getType()->getAsFunctionType();
-  const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FTy);
-
-  ArgTypes.push_back(FTy->getResultType());
-  if (FTP) {
-    for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-      ArgTypes.push_back(FTP->getArgType(i));
-  }
+  if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FTy))
+    return getFunctionInfo(FTP);
+  return getFunctionInfo(cast<FunctionTypeNoProto>(FTy));
 }
 
-CGFunctionInfo::CGFunctionInfo(const ObjCMethodDecl *MD,
-                               const ASTContext &Context) {
-  ArgTypes.push_back(MD->getResultType());
-  ArgTypes.push_back(MD->getSelfDecl()->getType());
-  ArgTypes.push_back(Context.getObjCSelType());
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
+  llvm::SmallVector<QualType, 16> ArgTys;
+  ArgTys.push_back(MD->getSelfDecl()->getType());
+  ArgTys.push_back(Context.getObjCSelType());
+  // FIXME: Kill copy?
   for (ObjCMethodDecl::param_const_iterator i = MD->param_begin(),
          e = MD->param_end(); i != e; ++i)
-    ArgTypes.push_back((*i)->getType());
+    ArgTys.push_back((*i)->getType());
+  return getFunctionInfo(MD->getResultType(), ArgTys);
 }
 
-CGFunctionInfo::CGFunctionInfo(QualType ResTy, const CallArgList &Args) {
-  ArgTypes.push_back(ResTy);
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy, 
+                                                    const CallArgList &Args) {
+  // FIXME: Kill copy.
+  llvm::SmallVector<QualType, 16> ArgTys;
   for (CallArgList::const_iterator i = Args.begin(), e = Args.end(); 
        i != e; ++i)
-    ArgTypes.push_back(i->second);
+    ArgTys.push_back(i->second);
+  return getFunctionInfo(ResTy, ArgTys);
 }
 
-CGFunctionInfo::CGFunctionInfo(QualType ResTy, const FunctionArgList &Args) {
-  ArgTypes.push_back(ResTy);
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy, 
+                                                  const FunctionArgList &Args) {
+  // FIXME: Kill copy.
+  llvm::SmallVector<QualType, 16> ArgTys;
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end(); 
        i != e; ++i)
-    ArgTypes.push_back(i->second);
+    ArgTys.push_back(i->second);
+  return getFunctionInfo(ResTy, ArgTys);
+}
+
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
+                               const llvm::SmallVector<QualType, 16> &ArgTys) {
+  return *new CGFunctionInfo(ResTy, ArgTys);
+}
+
+/***/
+
+CGFunctionInfo::CGFunctionInfo(QualType ResTy, 
+                               const llvm::SmallVector<QualType, 16> &ArgTys) {
+  ArgTypes.push_back(ResTy);
+  ArgTypes.insert(ArgTypes.end(), ArgTys.begin(), ArgTys.end());
 }
 
 ArgTypeIterator CGFunctionInfo::argtypes_begin() const {
