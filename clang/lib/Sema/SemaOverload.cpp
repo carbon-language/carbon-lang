@@ -383,7 +383,10 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
     //   called for those cases.
     if (CXXConstructorDecl *Constructor 
           = dyn_cast<CXXConstructorDecl>(ICS.UserDefined.ConversionFunction)) {
-      if (Constructor->isCopyConstructor(Context)) {
+      QualType FromCanon 
+        = Context.getCanonicalType(From->getType().getUnqualifiedType());
+      QualType ToCanon = Context.getCanonicalType(ToType).getUnqualifiedType();
+      if (FromCanon == ToCanon || IsDerivedFrom(FromCanon, ToCanon)) {
         // Turn this into a "standard" conversion sequence, so that it
         // gets ranked with standard conversion sequences.
         ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
@@ -391,8 +394,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
         ICS.Standard.FromTypePtr = From->getType().getAsOpaquePtr();
         ICS.Standard.ToTypePtr = ToType.getAsOpaquePtr();
         ICS.Standard.CopyConstructor = Constructor;
-        if (IsDerivedFrom(From->getType().getUnqualifiedType(),
-                          ToType.getUnqualifiedType()))
+        if (ToCanon != FromCanon)
           ICS.Standard.Second = ICK_Derived_To_Base;
       }
     }

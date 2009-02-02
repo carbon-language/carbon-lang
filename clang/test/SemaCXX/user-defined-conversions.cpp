@@ -65,5 +65,5 @@ void test_conversion(ConvertibleToBase ctb, ConvertibleToDerived ctd,
   Base b2(ctb);
   Base b3 = ctd;
   Base b4(ctd);
-  Base b5 = ctfd; // expected-error{{cannot initialize 'b5' with an lvalue of type 'struct ConvertibleToFunkyDerived'}}
+  Base b5 = ctfd;
 }
