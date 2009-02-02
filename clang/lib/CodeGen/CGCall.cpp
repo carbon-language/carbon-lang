@@ -482,6 +482,10 @@ void X86_64ABIInfo::classify(QualType Ty,
                              ASTContext &Context,
                              uint64_t OffsetBase,
                              Class &Lo, Class &Hi) const {
+  // FIXME: This code can be simplified by introducing a simple value
+  // class for Class pairs with appropriate constructor methods for
+  // the various situations.
+
   Lo = Hi = NoClass;
 
   Class &Current = OffsetBase < 64 ? Lo : Hi;
