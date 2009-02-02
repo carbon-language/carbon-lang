@@ -3114,9 +3114,10 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
     
   assert(EvalResult.Val.isInt() && "Size expressions must be integers!");
   llvm::APSInt &Res = EvalResult.Val.getInt();
-
-  return Context.getConstantArrayType(VLATy->getElementType(),
-                                      Res, ArrayType::Normal, 0);
+  if (Res >= llvm::APSInt(Res.getBitWidth(), Res.isUnsigned()))
+    return Context.getConstantArrayType(VLATy->getElementType(),
+                                        Res, ArrayType::Normal, 0);
+  return QualType();
 }
 
 bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
