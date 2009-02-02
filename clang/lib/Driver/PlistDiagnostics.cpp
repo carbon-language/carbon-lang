@@ -98,7 +98,7 @@ static void EmitRange(llvm::raw_ostream& o, SourceManager* SM, SourceRange R,
 static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P, 
                        const FIDMap& FM, SourceManager* SM) {
   
-  unsigned indent = 2;
+  unsigned indent = 4;
   Indent(o, indent) << "<dict>\n";
   ++indent;
   
@@ -115,7 +115,9 @@ static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   if (RI != RE) {
     Indent(o, indent) << "<key>ranges</key>\n";
     Indent(o, indent) << "<array>\n";
+    ++indent;
     for ( ; RI != RE; ++RI ) EmitRange(o, SM, *RI, FM, indent+1);
+    --indent;
     Indent(o, indent) << "</array>\n";
   }
   
@@ -223,7 +225,7 @@ PlistDiagnostics::~PlistDiagnostics() {
     o << "   </array>\n";
     
     // Output the bug type and bug category.  
-    o << "   <key>description</key>\n <string>" << D->getDescription()
+    o << "   <key>description</key>\n   <string>" << D->getDescription()
       << "</string>\n"
       << "   <key>category</key>\n   <string>" << D->getCategory()
       << "</string>\n"
