@@ -1283,26 +1283,26 @@ void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
 void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
   while (!Ptr->use_empty()) {
     Instruction *User = cast<Instruction>(Ptr->use_back());
-    
+
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       LI->replaceAllUsesWith(ConvertUsesOfLoadToScalar(LI, NewAI, Offset));
       LI->eraseFromParent();
       continue;
     }
-    
+
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
       new StoreInst(ConvertUsesOfStoreToScalar(SI, NewAI, Offset), NewAI, SI);
       SI->eraseFromParent();
       continue;
     }
-    
+
     if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
       ConvertUsesToScalar(CI, NewAI, Offset);
       CI->eraseFromParent();
       continue;
     }
-    
+
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
       // Compute the offset that this GEP adds to the pointer.
       SmallVector<Value*, 8> Indices(GEP->op_begin()+1, GEP->op_end());
@@ -1317,19 +1317,19 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
   }
 }
 
-/// ConvertUsesOfLoadToScalar - Convert all of the users the specified load to
-/// use the new alloca directly, returning the value that should replace the
-/// load.  This happens when we are converting an "integer union" to a
-/// single integer scalar, or when we are converting a "vector union" to a
-/// vector with insert/extractelement instructions.
+/// ConvertUsesOfLoadToScalar - Convert all of the users of the specified load
+/// to use the new alloca directly, returning the value that should replace the
+/// load.  This happens when we are converting an "integer union" to a single
+/// integer scalar, or when we are converting a "vector union" to a vector with
+/// insert/extractelement instructions.
 ///
-/// Offset is an offset from the original alloca, in bytes that need to be
+/// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
-Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
+Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
                                        uint64_t Offset) {
   // The load is a bit extract from NewAI shifted right by Offset bits.
   Value *NV = new LoadInst(NewAI, LI->getName(), LI);
-  
+
   // If the load is of the whole new alloca, no conversion is needed.
   if (NV->getType() == LI->getType() && Offset == 0)
     return NV;
@@ -1351,10 +1351,10 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
     return new ExtractElementInst(NV, ConstantInt::get(Type::Int32Ty, Elt),
                                   "tmp", LI);
   }
-  
+
   // Otherwise, this must be a union that was converted to an integer value.
   const IntegerType *NTy = cast<IntegerType>(NV->getType());
-  
+
   // If this is a big-endian system and the load is narrower than the
   // full alloca type, we need to do a shift to get the right bits.
   int ShAmt = 0;
@@ -1367,7 +1367,7 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
   } else {
     ShAmt = Offset;
   }
-  
+
   // Note: we support negative bitwidths (with shl) which are not defined.
   // We do this to support (f.e.) loads off the end of a structure where
   // only some bits are used.
@@ -1379,13 +1379,13 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
     NV = BinaryOperator::CreateShl(NV,
                                    ConstantInt::get(NV->getType(), -ShAmt),
                                    LI->getName(), LI);
-  
+
   // Finally, unconditionally truncate the integer to the right width.
   unsigned LIBitWidth = TD->getTypeSizeInBits(LI->getType());
   if (LIBitWidth < NTy->getBitWidth())
     NV = new TruncInst(NV, IntegerType::get(LIBitWidth),
                        LI->getName(), LI);
-  
+
   // If the result is an integer, this is a trunc or bitcast.
   if (isa<IntegerType>(LI->getType())) {
     // Should be done.
@@ -1410,9 +1410,9 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
 ///
 /// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
-Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI, 
+Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
                                         uint64_t Offset) {
-  
+
   // Convert the stored type to the actual type, shift it left to insert
   // then 'or' into place.
   Value *SV = SI->getOperand(0);
@@ -1420,10 +1420,10 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
   if (SV->getType() == AllocaType && Offset == 0) {
     return SV;
   }
-  
+
   if (const VectorType *VTy = dyn_cast<VectorType>(AllocaType)) {
     Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
-    
+
     // If the result alloca is a vector type, this is either an element
     // access or a bitcast to another vector type.
     if (isa<VectorType>(SV->getType())) {
@@ -1437,10 +1437,10 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
     }
     return SV;
   }
-  
-  
+
+
   Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
-  
+
   // If SV is a float, convert it to the appropriate integer type.
   // If it is a pointer, do the same, and also handle ptr->ptr casts
   // here.
@@ -1452,11 +1452,11 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
     SV = new BitCastInst(SV, IntegerType::get(SrcWidth), SV->getName(), SI);
   else if (isa<PointerType>(SV->getType()))
     SV = new PtrToIntInst(SV, TD->getIntPtrType(), SV->getName(), SI);
-  
+
   // Always zero extend the value if needed.
   if (SV->getType() != AllocaType)
     SV = new ZExtInst(SV, AllocaType, SV->getName(), SI);
-  
+
   // If this is a big-endian system and the store is narrower than the
   // full alloca type, we need to do a shift to get the right bits.
   int ShAmt = 0;
@@ -1468,13 +1468,13 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
   } else {
     ShAmt = Offset;
   }
-  
+
   // Note: we support negative bitwidths (with shr) which are not defined.
   // We do this to support (f.e.) stores off the end of a structure where
   // only some bits in the structure are set.
   APInt Mask(APInt::getLowBitsSet(DestWidth, SrcWidth));
   if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
-    SV = BinaryOperator::CreateShl(SV, 
+    SV = BinaryOperator::CreateShl(SV,
                                    ConstantInt::get(SV->getType(), ShAmt),
                                    SV->getName(), SI);
     Mask <<= ShAmt;
@@ -1484,7 +1484,7 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
                                     SV->getName(), SI);
     Mask = Mask.lshr(-ShAmt);
   }
-  
+
   // Mask out the bits we are about to insert from the old value, and or
   // in the new bits.
   if (SrcWidth != DestWidth) {
