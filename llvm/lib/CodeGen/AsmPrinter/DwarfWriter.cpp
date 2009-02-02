@@ -1914,18 +1914,20 @@ private:
     // Add Return Type.
     if (!IsConstructor) 
       AddType(DW_Unit, SPDie, DIType(Args.getElement(0).getGV()));
-    
-    // Add arguments.
-    if (!Args.isNull())
-      for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
-        DIE *Arg = new DIE(DW_TAG_formal_parameter);
-        AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
-        AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
-        SPDie->AddChild(Arg);
-      }
 
-    if (!SP.isDefinition())
-      AddUInt(SPDie, DW_AT_declaration, DW_FORM_flag, 1);
+    if (!SP.isDefinition()) {
+      AddUInt(SPDie, DW_AT_declaration, DW_FORM_flag, 1);    
+      // Add arguments.
+      // Do not add arguments for subprogram definition. They will be
+      // handled through RecordVariable.
+      if (!Args.isNull())
+        for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
+          DIE *Arg = new DIE(DW_TAG_formal_parameter);
+          AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
+          AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
+          SPDie->AddChild(Arg);
+        }
+    }
 
     if (!SP.isLocalToUnit())
       AddUInt(SPDie, DW_AT_external, DW_FORM_flag, 1);
@@ -2855,6 +2857,11 @@ private:
       // Check for pre-existence.
       DIE *&Slot = Unit->getDieMapSlotFor(SP.getGV());
       if (Slot) continue;
+
+      if (!SP.isDefinition())
+        // This is a method declaration which will be handled while
+        // constructing class type.
+        continue;
 
       DIE *SubprogramDie = CreateSubprogramDIE(Unit, SP);
 
