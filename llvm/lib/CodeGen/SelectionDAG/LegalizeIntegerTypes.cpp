@@ -684,6 +684,12 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::TRUNCATE:     Res = PromoteIntOp_TRUNCATE(N); break;
   case ISD::UINT_TO_FP:   Res = PromoteIntOp_UINT_TO_FP(N); break;
   case ISD::ZERO_EXTEND:  Res = PromoteIntOp_ZERO_EXTEND(N); break;
+
+  case ISD::SHL:
+  case ISD::SRA:
+  case ISD::SRL:
+  case ISD::ROTL:
+  case ISD::ROTR: Res = PromoteIntOp_Shift(N); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.
@@ -888,6 +894,11 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SETCC(SDNode *N, unsigned OpNo) {
 
   // The CC (#2) is always legal.
   return DAG.UpdateNodeOperands(SDValue(N, 0), LHS, RHS, N->getOperand(2));
+}
+
+SDValue DAGTypeLegalizer::PromoteIntOp_Shift(SDNode *N) {
+  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0),
+                                ZExtPromotedInteger(N->getOperand(1)));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SIGN_EXTEND(SDNode *N) {
@@ -1935,6 +1946,12 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::STORE:   Res = ExpandIntOp_STORE(cast<StoreSDNode>(N), OpNo); break;
   case ISD::TRUNCATE:          Res = ExpandIntOp_TRUNCATE(N); break;
   case ISD::UINT_TO_FP:        Res = ExpandIntOp_UINT_TO_FP(N); break;
+
+  case ISD::SHL:
+  case ISD::SRA:
+  case ISD::SRL:
+  case ISD::ROTL:
+  case ISD::ROTR: Res = ExpandIntOp_Shift(N); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.
@@ -2106,6 +2123,15 @@ SDValue DAGTypeLegalizer::ExpandIntOp_SETCC(SDNode *N) {
   // Otherwise, update N to have the operands specified.
   return DAG.UpdateNodeOperands(SDValue(N, 0), NewLHS, NewRHS,
                                 DAG.getCondCode(CCCode));
+}
+
+SDValue DAGTypeLegalizer::ExpandIntOp_Shift(SDNode *N) {
+  // The value being shifted is legal, but the shift amount is too big.
+  // It follows that either the result of the shift is undefined, or the
+  // upper half of the shift amount is zero.  Just use the lower half.
+  SDValue Lo, Hi;
+  GetExpandedInteger(N->getOperand(1), Lo, Hi);
+  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0), Lo);
 }
 
 SDValue DAGTypeLegalizer::ExpandIntOp_SINT_TO_FP(SDNode *N) {
