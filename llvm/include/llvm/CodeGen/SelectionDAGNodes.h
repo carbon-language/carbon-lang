@@ -1090,9 +1090,6 @@ private:
   /// NodeId - Unique id per SDNode in the DAG.
   int NodeId;
 
-  /// debugLoc - source line information.
-  DebugLoc debugLoc;
-
   /// OperandList - The values that are used by this operation.
   ///
   SDUse *OperandList;
@@ -1101,11 +1098,14 @@ private:
   /// define multiple values simultaneously.
   const MVT *ValueList;
 
-  /// NumOperands/NumValues - The number of entries in the Operand/Value list.
-  unsigned short NumOperands, NumValues;
-  
   /// UseList - List of uses for this SDNode.
   SDUse *UseList;
+
+  /// NumOperands/NumValues - The number of entries in the Operand/Value list.
+  unsigned short NumOperands, NumValues;
+
+  /// debugLoc - source line information.
+  DebugLoc debugLoc;
 
   /// getValueTypeList - Return a pointer to the specified value type.
   static const MVT *getValueTypeList(MVT VT);
@@ -1353,11 +1353,12 @@ protected:
   /// for new code.
   SDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops, unsigned NumOps)
     : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
-      NodeId(-1), debugLoc(DebugLoc::getUnknownLoc()),
+      NodeId(-1),
       OperandList(NumOps ? new SDUse[NumOps] : 0),
       ValueList(VTs.VTs),
+      UseList(NULL),
       NumOperands(NumOps), NumValues(VTs.NumVTs),
-      UseList(NULL) {
+      debugLoc(DebugLoc::getUnknownLoc()) {
     for (unsigned i = 0; i != NumOps; ++i) {
       OperandList[i].setUser(this);
       OperandList[i].setInitial(Ops[i]);
@@ -1368,9 +1369,9 @@ protected:
   /// set later with InitOperands.
   SDNode(unsigned Opc, SDVTList VTs)
     : NodeType(Opc), OperandsNeedDelete(false), SubclassData(0),
-      NodeId(-1), debugLoc(DebugLoc::getUnknownLoc()), OperandList(0), 
-      ValueList(VTs.VTs), NumOperands(0), NumValues(VTs.NumVTs),
-      UseList(NULL) {}
+      NodeId(-1), OperandList(0), ValueList(VTs.VTs), UseList(NULL),
+      NumOperands(0), NumValues(VTs.NumVTs),
+      debugLoc(DebugLoc::getUnknownLoc()) {}
 
   /// The next two constructors specify DebugLoc explicitly; the intent
   /// is that they will replace the above two over time, and eventually
@@ -1378,11 +1379,11 @@ protected:
   SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs, const SDValue *Ops, 
          unsigned NumOps)
     : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
-      NodeId(-1), debugLoc(dl),
+      NodeId(-1),
       OperandList(NumOps ? new SDUse[NumOps] : 0),
-      ValueList(VTs.VTs),
+      ValueList(VTs.VTs), UseList(NULL),
       NumOperands(NumOps), NumValues(VTs.NumVTs),
-      UseList(NULL) {
+      debugLoc(dl) {
     for (unsigned i = 0; i != NumOps; ++i) {
       OperandList[i].setUser(this);
       OperandList[i].setInitial(Ops[i]);
@@ -1393,9 +1394,9 @@ protected:
   /// set later with InitOperands.
   SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs)
     : NodeType(Opc), OperandsNeedDelete(false), SubclassData(0),
-      NodeId(-1), debugLoc(dl), OperandList(0),
-      ValueList(VTs.VTs), NumOperands(0), NumValues(VTs.NumVTs),
-      UseList(NULL) {}
+      NodeId(-1), OperandList(0), ValueList(VTs.VTs), UseList(NULL),
+      NumOperands(0), NumValues(VTs.NumVTs),
+      debugLoc(dl) {}
   
   /// InitOperands - Initialize the operands list of this with 1 operand.
   void InitOperands(SDUse *Ops, const SDValue &Op0) {
