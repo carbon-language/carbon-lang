@@ -127,7 +127,6 @@ namespace {
     
     bool CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&ResTy,
                             uint64_t Offset);
-    void ConvertToScalar(AllocationInst *AI, const Type *Ty);
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
     Value *ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
                                      uint64_t Offset);
@@ -269,6 +268,8 @@ bool SROA::performScalarRepl(Function &F) {
       Changed = true;
       continue;
     }
+    
+    
 
     // If we can turn this aggregate value (potentially with casts) into a
     // simple scalar value that can be mem2reg'd into a register value.
@@ -277,11 +278,18 @@ bool SROA::performScalarRepl(Function &F) {
     // that we can't just check based on the type: the alloca may be of an i32
     // but that has pointer arithmetic to set byte 3 of it or something.
     bool IsNotTrivial = false;
-    const Type *ActualType = 0;
-    if (CanConvertToScalar(AI, IsNotTrivial, ActualType, 0))
-      if (IsNotTrivial && ActualType &&
-          TD->getTypeSizeInBits(ActualType) < SRThreshold*8) {
-        ConvertToScalar(AI, ActualType);
+    const Type *ActualTy = 0;
+    if (CanConvertToScalar(AI, IsNotTrivial, ActualTy, 0))
+      if (IsNotTrivial && ActualTy &&
+          TD->getTypeSizeInBits(ActualTy) < SRThreshold*8) {
+        DOUT << "CONVERT TO SCALAR: " << *AI << "  TYPE = " << *ActualTy <<"\n";
+        ++NumConverted;
+        
+        // Create and insert the alloca.
+        AllocaInst *NewAI = new AllocaInst(ActualTy, 0, AI->getName(),
+                                           AI->getParent()->begin());
+        ConvertUsesToScalar(AI, NewAI, 0);
+        AI->eraseFromParent();
         Changed = true;
         continue;
       }
@@ -1261,20 +1269,6 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial,
   }
   
   return true;
-}
-
-/// ConvertToScalar - The specified alloca passes the CanConvertToScalar
-/// predicate and is non-trivial.  Convert it to something that can be trivially
-/// promoted into a register by mem2reg.
-void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
-  DOUT << "CONVERT TO SCALAR: " << *AI << "  TYPE = " << *ActualTy << "\n";
-  ++NumConverted;
-  
-  // Create and insert the alloca.
-  AllocaInst *NewAI = new AllocaInst(ActualTy, 0, AI->getName(),
-                                     AI->getParent()->begin());
-  ConvertUsesToScalar(AI, NewAI, 0);
-  AI->eraseFromParent();
 }
 
 
