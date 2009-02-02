@@ -322,16 +322,23 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     // If feature string is not empty, parse features string.
     std::string CPU = GetCurrentX86CPU();
     ParseSubtargetFeatures(FS, CPU);
+    // All X86-64 CPUs also have SSE2, however user might request no SSE via 
+    // -mattr, so don't force SSELevel here.
   } else {
     // Otherwise, use CPUID to auto-detect feature set.
     AutoDetectSubtargetFeatures();
+    if (Is64Bit && X86SSELevel < SSE2) {
+      // Make sure SSE2  is enabled, it is available on all X86-64 CPUs.
+      X86SSELevel = SSE2;
+    }
   }
     
-  // If requesting codegen for X86-64, make sure that 64-bit and SSE2 features
-  // are enabled.  These are available on all x86-64 CPUs.
+  // If requesting codegen for X86-64, make sure that 64-bit features
+  // are enabled.  
   if (Is64Bit) {
-    HasX86_64 = true;
+      HasX86_64 = true;
   }
+  assert(!Is64Bit || HasX86_64);
   DOUT << "Subtarget features: SSELevel " << X86SSELevel
        << ", 3DNowLevel " << X863DNowLevel
        << ", 64bit " << HasX86_64 << "\n";
