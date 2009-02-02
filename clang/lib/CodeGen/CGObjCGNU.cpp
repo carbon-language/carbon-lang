@@ -311,7 +311,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  return CGF.EmitCall(imp, ResultType, ActualArgs);
+  return CGF.EmitCall(imp, CGFunctionInfo(ResultType, ActualArgs), ActualArgs);
 }
 
 /// Generate code for a message send expression.  
@@ -358,7 +358,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  return CGF.EmitCall(imp, ResultType, ActualArgs);
+  return CGF.EmitCall(imp, CGFunctionInfo(ResultType, ActualArgs), ActualArgs);
 }
 
 /// Generates a MethodList.  Used in construction of a objc_class and 
@@ -970,7 +970,8 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD,
   bool isClassMethod = !OMD->isInstanceMethod();
 
   const llvm::FunctionType *MethodTy = 
-    CGM.getTypes().GetFunctionType(CGFunctionInfo(OMD, CGM.getContext()));
+    CGM.getTypes().GetFunctionType(CGFunctionInfo(OMD, CGM.getContext()), 
+                                   OMD->isVariadic());
   std::string FunctionName = SymbolNameForMethod(ClassName, CategoryName,
       MethodName, isClassMethod);
 

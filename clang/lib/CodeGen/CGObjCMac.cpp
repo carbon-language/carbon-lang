@@ -806,9 +806,8 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
-  const llvm::FunctionType *FTy = 
-    CGM.getTypes().GetFunctionType(CGFunctionInfo(ResultType, ActualArgs,
-                                                  false));
+  CGFunctionInfo FnInfo(ResultType, ActualArgs);
+  const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FnInfo, false);
 
   llvm::Constant *Fn;
   if (CGM.ReturnTypeUsesSret(ResultType)) {
@@ -821,7 +820,7 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
     Fn = ObjCTypes.getSendFn(IsSuper);
   }
   Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
-  return CGF.EmitCall(Fn, ResultType, ActualArgs);
+  return CGF.EmitCall(Fn, FnInfo, ActualArgs);
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder, 
@@ -1665,12 +1664,13 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
 }
 
 llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
-                                          const ObjCContainerDecl *CD) { 
+                                                const ObjCContainerDecl *CD) { 
   std::string Name;
   GetNameForMethod(OMD, CD, Name);
 
   const llvm::FunctionType *MethodTy =
-    CGM.getTypes().GetFunctionType(CGFunctionInfo(OMD, CGM.getContext()));
+    CGM.getTypes().GetFunctionType(CGFunctionInfo(OMD, CGM.getContext()), 
+                                   OMD->isVariadic());
   llvm::Function *Method = 
     llvm::Function::Create(MethodTy,
                            llvm::GlobalValue::InternalLinkage,

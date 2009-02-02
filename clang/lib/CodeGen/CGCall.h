@@ -54,23 +54,20 @@ namespace CodeGen {
   /// CGFunctionInfo - Class to encapsulate the information about a
   /// function definition.
   class CGFunctionInfo {
-    bool IsVariadic;
-
     llvm::SmallVector<QualType, 16> ArgTypes;
 
   public:
     CGFunctionInfo(const FunctionTypeNoProto *FTNP);
     CGFunctionInfo(const FunctionTypeProto *FTP);
     CGFunctionInfo(const FunctionDecl *FD);
-    CGFunctionInfo(const ObjCMethodDecl *MD,
-                   const ASTContext &Context);
-    CGFunctionInfo(QualType ResTy, const CallArgList &Args, 
-                   bool _IsVariadic);
-
-    bool isVariadic() const { return IsVariadic; }
+    CGFunctionInfo(const ObjCMethodDecl *MD, const ASTContext &Context);
+    CGFunctionInfo(QualType ResTy, const CallArgList &Args);
+    CGFunctionInfo(QualType ResTy, const FunctionArgList &Args);
 
     ArgTypeIterator argtypes_begin() const;
     ArgTypeIterator argtypes_end() const;
+
+    QualType getReturnType() const { return ArgTypes[0]; }
   };
 }  // end namespace CodeGen
 }  // end namespace clang

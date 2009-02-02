@@ -31,40 +31,30 @@ using namespace CodeGen;
 
 // FIXME: Use iterator and sidestep silly type array creation.
 
-CGFunctionInfo::CGFunctionInfo(const FunctionTypeNoProto *FTNP)
-  : IsVariadic(true)
-{
+CGFunctionInfo::CGFunctionInfo(const FunctionTypeNoProto *FTNP) {
   ArgTypes.push_back(FTNP->getResultType());
 }
 
-CGFunctionInfo::CGFunctionInfo(const FunctionTypeProto *FTP)
-  : IsVariadic(FTP->isVariadic())
-{
+CGFunctionInfo::CGFunctionInfo(const FunctionTypeProto *FTP) {
   ArgTypes.push_back(FTP->getResultType());
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTypes.push_back(FTP->getArgType(i));
 }
 
 // FIXME: Is there really any reason to have this still?
-CGFunctionInfo::CGFunctionInfo(const FunctionDecl *FD)
-{
+CGFunctionInfo::CGFunctionInfo(const FunctionDecl *FD) {
   const FunctionType *FTy = FD->getType()->getAsFunctionType();
   const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FTy);
 
   ArgTypes.push_back(FTy->getResultType());
   if (FTP) {
-    IsVariadic = FTP->isVariadic();
     for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
       ArgTypes.push_back(FTP->getArgType(i));
-  } else {
-    IsVariadic = true;
   }
 }
 
 CGFunctionInfo::CGFunctionInfo(const ObjCMethodDecl *MD,
-                               const ASTContext &Context)
-  : IsVariadic(MD->isVariadic())
-{
+                               const ASTContext &Context) {
   ArgTypes.push_back(MD->getResultType());
   ArgTypes.push_back(MD->getSelfDecl()->getType());
   ArgTypes.push_back(Context.getObjCSelType());
@@ -73,12 +63,16 @@ CGFunctionInfo::CGFunctionInfo(const ObjCMethodDecl *MD,
     ArgTypes.push_back((*i)->getType());
 }
 
-CGFunctionInfo::CGFunctionInfo(QualType ResTy, const CallArgList &Args, 
-                               bool _IsVariadic)
-  : IsVariadic(_IsVariadic)
-{
+CGFunctionInfo::CGFunctionInfo(QualType ResTy, const CallArgList &Args) {
   ArgTypes.push_back(ResTy);
   for (CallArgList::const_iterator i = Args.begin(), e = Args.end(); 
+       i != e; ++i)
+    ArgTypes.push_back(i->second);
+}
+
+CGFunctionInfo::CGFunctionInfo(QualType ResTy, const FunctionArgList &Args) {
+  ArgTypes.push_back(ResTy);
+  for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end(); 
        i != e; ++i)
     ArgTypes.push_back(i->second);
 }
@@ -941,8 +935,12 @@ static void CreateCoercedStore(llvm::Value *Src,
 
 /***/
 
+bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
+  return getABIReturnInfo(RetTy, getTypes()).isStructRet();
+}
+
 const llvm::FunctionType *
-CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
+CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   std::vector<const llvm::Type*> ArgTys;
 
   const llvm::Type *ResultType = 0;
@@ -1007,11 +1005,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
     }
   }
 
-  return llvm::FunctionType::get(ResultType, ArgTys, FI.isVariadic());
-}
-
-bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
-  return getABIReturnInfo(RetTy, getTypes()).isStructRet();
+  return llvm::FunctionType::get(ResultType, ArgTys, IsVariadic);
 }
 
 void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
@@ -1116,6 +1110,8 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
 void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
                                          QualType RetTy, 
                                          const FunctionArgList &Args) {
+  CGFunctionInfo FnInfo(RetTy, Args);
+
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = Fn->arg_begin();
   
@@ -1225,12 +1221,13 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
 }
 
 RValue CodeGenFunction::EmitCall(llvm::Value *Callee, 
-                                 QualType RetTy, 
+                                 const CGFunctionInfo &CallInfo,
                                  const CallArgList &CallArgs) {
   llvm::SmallVector<llvm::Value*, 16> Args;
 
   // Handle struct-return functions by passing a pointer to the
   // location that we would like to return into.
+  QualType RetTy = CallInfo.getReturnType();
   ABIArgInfo RetAI = getABIReturnInfo(RetTy, CGM.getTypes());
   switch (RetAI.getKind()) {
   case ABIArgInfo::StructRet:
@@ -1282,10 +1279,6 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   }
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
-  const llvm::Type *FnType = 
-    cast<llvm::PointerType>(Callee->getType())->getElementType();
-  CGFunctionInfo CallInfo(RetTy, CallArgs, 
-                          cast<llvm::FunctionType>(FnType)->isVarArg());
 
   // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
   CodeGen::AttributeListType AttributeList;

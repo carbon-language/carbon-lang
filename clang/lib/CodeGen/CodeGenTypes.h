@@ -144,7 +144,8 @@ public:
   const llvm::Type *ConvertTypeForMem(QualType T);
 
   /// GetFunctionType - Get the LLVM function type for \arg Info.
-  const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info);
+  const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info,
+                                            bool IsVariadic);
   
   const CGRecordLayout *getCGRecordLayout(const TagDecl*) const;
   /// Returns a StructType representing an Objective-C object

@@ -55,6 +55,7 @@ namespace clang {
 namespace CodeGen {
   class CodeGenModule;
   class CodeGenTypes;
+  class CGFunctionInfo;
   class CGRecordLayout;  
   
 /// CodeGenFunction - This class organizes the per-function state that is used
@@ -543,7 +544,7 @@ public:
   /// specifies both the LLVM arguments and the types they were
   /// derived from.
   RValue EmitCall(llvm::Value *Callee,
-                  QualType ResultType,
+                  const CGFunctionInfo &FnInfo,
                   const CallArgList &Args);
 
   RValue EmitCallExpr(const CallExpr *E);
