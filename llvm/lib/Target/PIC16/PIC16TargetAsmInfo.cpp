@@ -26,7 +26,7 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   Data32bitsDirective = " dl ";
   RomData8bitsDirective = " dw ";
   RomData16bitsDirective = " rom_di ";
-  RomData8bitsDirective = " rom_dl ";
+  RomData32bitsDirective = " rom_dl ";
   ZeroDirective = NULL;
   AsciiDirective = " dt ";
   AscizDirective = NULL;
@@ -37,27 +37,24 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   SwitchToSectionDirective = "";
 }
 
-const char *PIC16TargetAsmInfo::getData8bitsDirective(unsigned AddrSpace)
-                                                       const {
-      if (AddrSpace == PIC16ISD::ROM_SPACE)
-        return RomData8bitsDirective;
-      else 
-        return Data8bitsDirective; 
-  }
+const char *PIC16TargetAsmInfo::getRomDirective(unsigned size) const
+{
+  if (size == 8)
+    return RomData8bitsDirective;
+  else if (size == 16)
+    return RomData16bitsDirective;
+  else if (size == 32)
+    return RomData32bitsDirective;
+  else
+    return NULL;
+}
 
-const char *PIC16TargetAsmInfo::getData16bitsDirective(unsigned AddrSpace)
-                                                       const {
-      if (AddrSpace == PIC16ISD::ROM_SPACE)
-        return RomData16bitsDirective;
-      else
-        return Data16bitsDirective;
-  }
 
-const char *PIC16TargetAsmInfo::getData32bitsDirective(unsigned AddrSpace)
-                                                       const {
-      if (AddrSpace == PIC16ISD::ROM_SPACE)
-        return RomData32bitsDirective;
-      else
-        return Data32bitsDirective;
-  }
+const char *PIC16TargetAsmInfo::getASDirective(unsigned size, 
+                                               unsigned AS) const {
+  if (AS == PIC16ISD::ROM_SPACE)
+    return getRomDirective(size);
+  else
+    return NULL;
+}
 

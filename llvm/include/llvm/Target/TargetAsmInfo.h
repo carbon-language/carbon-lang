@@ -298,6 +298,15 @@ namespace llvm {
     const char *Data32bitsDirective;      // Defaults to "\t.long\t"
     const char *Data64bitsDirective;      // Defaults to "\t.quad\t"
 
+    /// getASDirective - Targets can override it to provide different data
+    /// directives for various sizes and non-default address spaces.
+    virtual const char *getASDirective(unsigned size, 
+                                       unsigned AS) const {
+      assert (AS > 0 
+              && "Dont know the directives for default addr space");
+      return NULL;
+    }
+
     //===--- Alignment Information ----------------------------------------===//
 
     /// AlignDirective - The directive used to emit round up to an alignment
@@ -600,18 +609,19 @@ namespace llvm {
 
     // Data directive accessors
     //
-    virtual const char *getData8bitsDirective(unsigned AddrSpace = 0) const {
-      return Data8bitsDirective;
+    const char *getData8bitsDirective(unsigned AS = 0) const {
+      return AS == 0 ? Data8bitsDirective : getASDirective(8, AS);
     }
-    virtual const char *getData16bitsDirective(unsigned AddrSpace = 0) const {
-      return Data16bitsDirective;
+    const char *getData16bitsDirective(unsigned AS = 0) const {
+      return AS == 0 ? Data16bitsDirective : getASDirective(16, AS);
     }
-    virtual const char *getData32bitsDirective(unsigned AddrSpace = 0) const {
-      return Data32bitsDirective;
+    const char *getData32bitsDirective(unsigned AS = 0) const {
+      return AS == 0 ? Data32bitsDirective : getASDirective(32, AS);
     }
-    virtual const char *getData64bitsDirective(unsigned AddrSpace = 0) const {
-      return Data64bitsDirective;
+    const char *getData64bitsDirective(unsigned AS = 0) const {
+      return AS == 0 ? Data64bitsDirective : getASDirective(64, AS);
     }
+
 
     // Accessors.
     //
