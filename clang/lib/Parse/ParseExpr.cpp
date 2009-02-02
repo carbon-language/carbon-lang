@@ -1256,8 +1256,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     } else {
       Actions.ActOnBlockError(CaretLoc, CurScope);
     }
-  }
-  else {
+  } else {
     // Saw something like: ^expr
     Diag(Tok, diag::err_expected_expression);
     return ExprError();
