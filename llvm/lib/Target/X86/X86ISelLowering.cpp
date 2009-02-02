@@ -5366,6 +5366,17 @@ static bool isAndOrOfSetCCs(SDValue Op, unsigned &Opc) {
           Op.getOperand(1).hasOneUse());
 }
 
+static bool isXor1OfSetCC(SDValue Op) {
+  if (Op.getOpcode() != ISD::XOR)
+    return false;
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
+  if (N1C && N1C->getAPIntValue() == 1) {
+    return Op.getOperand(0).getOpcode() == X86ISD::SETCC &&
+      Op.getOperand(0).hasOneUse();
+  }
+  return false;
+}
+
 SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
   bool addTest = true;
   SDValue Chain = Op.getOperand(0);
@@ -5460,6 +5471,16 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
           }
         }
       }
+    } else if (Cond.hasOneUse() && isXor1OfSetCC(Cond)) {
+      // Recognize for xorb (setcc), 1 patterns. The xor inverts the condition.
+      // It should be transformed during dag combiner except when the condition
+      // is set by a arithmetics with overflow node.
+      X86::CondCode CCode =
+        (X86::CondCode)Cond.getOperand(0).getConstantOperandVal(0);
+      CCode = X86::GetOppositeBranchCondition(CCode);
+      CC = DAG.getConstant(CCode, MVT::i8);
+      Cond = Cond.getOperand(0).getOperand(1);
+      addTest = false;
     }
   }
 
