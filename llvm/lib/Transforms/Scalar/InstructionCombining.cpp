@@ -6101,27 +6101,26 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         case Instruction::Add:
         case Instruction::Sub:
         case Instruction::Xor:
-          if (I.isEquality()) {
-            // a+x icmp eq/ne b+x --> a icmp b
+          if (I.isEquality())    // a+x icmp eq/ne b+x --> a icmp b
             return new ICmpInst(I.getPredicate(), Op0I->getOperand(0),
                                 Op1I->getOperand(0));
-          } else {
-            // icmp u/s (a ^ signbit), (b ^ signbit) --> icmp s/u a, b
-            if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
-              if (CI->getValue().isSignBit()) {
-                ICmpInst::Predicate Pred = I.isSignedPredicate()
-                                               ? I.getUnsignedPredicate()
-                                               : I.getSignedPredicate();
-                return new ICmpInst(Pred, Op0I->getOperand(0),
-                                    Op1I->getOperand(0));
-              } else if ((~CI->getValue()).isSignBit()) {
-                ICmpInst::Predicate Pred = I.isSignedPredicate()
-                                               ? I.getUnsignedPredicate()
-                                               : I.getSignedPredicate();
-                Pred = I.getSwappedPredicate(Pred);
-                return new ICmpInst(Pred, Op0I->getOperand(0),
-                                    Op1I->getOperand(0));
-              }
+          // icmp u/s (a ^ signbit), (b ^ signbit) --> icmp s/u a, b
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
+            if (CI->getValue().isSignBit()) {
+              ICmpInst::Predicate Pred = I.isSignedPredicate()
+                                             ? I.getUnsignedPredicate()
+                                             : I.getSignedPredicate();
+              return new ICmpInst(Pred, Op0I->getOperand(0),
+                                  Op1I->getOperand(0));
+            }
+            
+            if (CI->getValue().isMaxSignedValue()) {
+              ICmpInst::Predicate Pred = I.isSignedPredicate()
+                                             ? I.getUnsignedPredicate()
+                                             : I.getSignedPredicate();
+              Pred = I.getSwappedPredicate(Pred);
+              return new ICmpInst(Pred, Op0I->getOperand(0),
+                                  Op1I->getOperand(0));
             }
           }
           break;
@@ -6460,7 +6459,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         }
 
         // (icmp u/s (xor A ~SignBit), C) -> (icmp s/u (xor C ~SignBit), A)
-        if (!ICI.isEquality() && (~XorCST->getValue()).isSignBit()) {
+        if (!ICI.isEquality() && XorCST->getValue().isMaxSignedValue()) {
           const APInt &NotSignBit = XorCST->getValue();
           ICmpInst::Predicate Pred = ICI.isSignedPredicate()
                                          ? ICI.getUnsignedPredicate()
