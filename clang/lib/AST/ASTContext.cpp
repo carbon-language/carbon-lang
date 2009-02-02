@@ -2100,7 +2100,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     else
       S += 'i';
   } else if (T->isBlockPointerType()) {
-    S += '^'; // This type string is the same as general pointers.
+    S += "@?"; // Unlike a pointer-to-function, which is "^?".
   } else if (T->isObjCInterfaceType()) {
     // @encode(class_name)
     ObjCInterfaceDecl *OI = T->getAsObjCInterfaceType()->getDecl();
