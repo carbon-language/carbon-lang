@@ -3458,7 +3458,9 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
   BlockDecl *BD = CE->getBlockDecl();
   
   if (isa<FunctionTypeNoProto>(AFT)) {
-    S += "()";
+    // No user-supplied arguments. Still need to pass in a pointer to the 
+    // block (to reference imported block decl refs).
+    S += "(" + StructRef + " *__cself)";
   } else if (BD->param_empty()) {
     S += "(" + StructRef + " *__cself)";
   } else {
@@ -3842,7 +3844,12 @@ void RewriteObjC::RewriteBlockCall(CallExpr *Exp) {
 
 void RewriteObjC::RewriteBlockDeclRefExpr(BlockDeclRefExpr *BDRE) {
   // FIXME: Add more elaborate code generation required by the ABI.
-  InsertText(BDRE->getLocStart(), "*", 1);
+  Expr *DerefExpr = new UnaryOperator(BDRE, UnaryOperator::Deref,
+                             Context->getPointerType(BDRE->getType()),
+                             SourceLocation());
+  // Need parens to enforce precedence.
+  ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), DerefExpr);
+  ReplaceStmt(BDRE, PE);
 }
 
 void RewriteObjC::RewriteCastExpr(CStyleCastExpr *CE) {
