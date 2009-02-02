@@ -164,16 +164,24 @@ namespace {
     bool removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split);
     unsigned getNumberOfNonSpills(SmallPtrSet<MachineInstr*, 4>& MIs,
                                unsigned Reg, int FrameIndex, bool& TwoAddr);
-    VNInfo* PerformPHIConstruction(MachineBasicBlock::iterator use,
-                                   MachineBasicBlock* MBB,
-                                   LiveInterval* LI,
+    VNInfo* PerformPHIConstruction(MachineBasicBlock::iterator Use,
+                                   MachineBasicBlock* MBB, LiveInterval* LI,
                                    SmallPtrSet<MachineInstr*, 4>& Visited,
             DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Defs,
             DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Uses,
                                       DenseMap<MachineInstr*, VNInfo*>& NewVNs,
                                 DenseMap<MachineBasicBlock*, VNInfo*>& LiveOut,
                                 DenseMap<MachineBasicBlock*, VNInfo*>& Phis,
-                                        bool toplevel, bool intrablock);
+                                        bool IsTopLevel, bool IsIntraBlock);
+    VNInfo* PerformPHIConstructionFallBack(MachineBasicBlock::iterator Use,
+                                   MachineBasicBlock* MBB, LiveInterval* LI,
+                                   SmallPtrSet<MachineInstr*, 4>& Visited,
+            DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Defs,
+            DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Uses,
+                                      DenseMap<MachineInstr*, VNInfo*>& NewVNs,
+                                DenseMap<MachineBasicBlock*, VNInfo*>& LiveOut,
+                                DenseMap<MachineBasicBlock*, VNInfo*>& Phis,
+                                        bool IsTopLevel, bool IsIntraBlock);
 };
 } // end anonymous namespace
 
@@ -431,83 +439,35 @@ PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, unsigned SpillIndex,
 
 /// PerformPHIConstruction - From properly set up use and def lists, use a PHI
 /// construction algorithm to compute the ranges and valnos for an interval.
-VNInfo* PreAllocSplitting::PerformPHIConstruction(
-                                                MachineBasicBlock::iterator use,
-                                                         MachineBasicBlock* MBB,
-                                                               LiveInterval* LI,
+VNInfo*
+PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
+                                       MachineBasicBlock* MBB, LiveInterval* LI,
                                        SmallPtrSet<MachineInstr*, 4>& Visited,
              DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Defs,
              DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Uses,
                                        DenseMap<MachineInstr*, VNInfo*>& NewVNs,
                                  DenseMap<MachineBasicBlock*, VNInfo*>& LiveOut,
                                  DenseMap<MachineBasicBlock*, VNInfo*>& Phis,
-                                              bool toplevel, bool intrablock) {
+                                           bool IsTopLevel, bool IsIntraBlock) {
   // Return memoized result if it's available.
-  if (toplevel && Visited.count(use) && NewVNs.count(use))
-    return NewVNs[use];
-  else if (!toplevel && intrablock && NewVNs.count(use))
-    return NewVNs[use];
-  else if (!intrablock && LiveOut.count(MBB))
+  if (IsTopLevel && Visited.count(UseI) && NewVNs.count(UseI))
+    return NewVNs[UseI];
+  else if (!IsTopLevel && IsIntraBlock && NewVNs.count(UseI))
+    return NewVNs[UseI];
+  else if (!IsIntraBlock && LiveOut.count(MBB))
     return LiveOut[MBB];
-  
-  typedef DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> > RegMap;
   
   // Check if our block contains any uses or defs.
   bool ContainsDefs = Defs.count(MBB);
   bool ContainsUses = Uses.count(MBB);
   
-  VNInfo* ret = 0;
+  VNInfo* RetVNI = 0;
   
   // Enumerate the cases of use/def contaning blocks.
   if (!ContainsDefs && !ContainsUses) {
-  Fallback:
-    // NOTE: Because this is the fallback case from other cases, we do NOT
-    // assume that we are not intrablock here.
-    if (Phis.count(MBB)) return Phis[MBB];
-    
-    unsigned StartIndex = LIs->getMBBStartIdx(MBB);
-    
-    Phis[MBB] = ret = LI->getNextValue(~0U, /*FIXME*/ 0,
-                                          LIs->getVNInfoAllocator());
-    if (!intrablock) LiveOut[MBB] = ret;
-    
-    // If there are no uses or defs between our starting point and the
-    // beginning of the block, then recursive perform phi construction
-    // on our predecessors.
-    DenseMap<MachineBasicBlock*, VNInfo*> IncomingVNs;
-    for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-         PE = MBB->pred_end(); PI != PE; ++PI) {
-      VNInfo* Incoming = PerformPHIConstruction((*PI)->end(), *PI, LI, 
-                                          Visited, Defs, Uses, NewVNs,
-                                          LiveOut, Phis, false, false);
-      if (Incoming != 0)
-        IncomingVNs[*PI] = Incoming;
-    }
-    
-    if (MBB->pred_size() == 1 && !ret->hasPHIKill) {
-      LI->MergeValueNumberInto(ret, IncomingVNs.begin()->second);
-      Phis[MBB] = ret = IncomingVNs.begin()->second;
-    } else {
-      // Otherwise, merge the incoming VNInfos with a phi join.  Create a new
-      // VNInfo to represent the joined value.
-      for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator I =
-           IncomingVNs.begin(), E = IncomingVNs.end(); I != E; ++I) {
-        I->second->hasPHIKill = true;
-        unsigned KillIndex = LIs->getMBBEndIdx(I->first);
-        if (!LiveInterval::isKill(I->second, KillIndex))
-          LI->addKill(I->second, KillIndex);
-      }
-    }
-      
-    unsigned EndIndex = 0;
-    if (intrablock) {
-      EndIndex = LIs->getInstructionIndex(use);
-      EndIndex = LiveIntervals::getUseIndex(EndIndex);
-    } else
-      EndIndex = LIs->getMBBEndIdx(MBB);
-    LI->addRange(LiveRange(StartIndex, EndIndex+1, ret));
-    if (intrablock)
-      LI->addKill(ret, EndIndex);
+    return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs, Uses,
+                                          NewVNs, LiveOut, Phis,
+                                          IsTopLevel, IsIntraBlock);
   } else if (ContainsDefs && !ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[MBB];
 
@@ -515,71 +475,75 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
     // instruction we care about, go to the fallback case.  Note that that
     // should never happen: this cannot be intrablock, so use should
     // always be an end() iterator.
-    assert(use == MBB->end() && "No use marked in intrablock");
+    assert(UseI == MBB->end() && "No use marked in intrablock");
     
-    MachineBasicBlock::iterator walker = use;
-    --walker;
-    while (walker != MBB->begin())
-      if (BlockDefs.count(walker)) {
+    MachineBasicBlock::iterator Walker = UseI;
+    --Walker;
+    while (Walker != MBB->begin()) {
+      if (BlockDefs.count(Walker))
         break;
-      } else
-        --walker;
+      --Walker;
+    }
     
     // Once we've found it, extend its VNInfo to our instruction.
-    unsigned DefIndex = LIs->getInstructionIndex(walker);
+    unsigned DefIndex = LIs->getInstructionIndex(Walker);
     DefIndex = LiveIntervals::getDefIndex(DefIndex);
     unsigned EndIndex = LIs->getMBBEndIdx(MBB);
     
-    ret = NewVNs[walker];
-    LI->addRange(LiveRange(DefIndex, EndIndex+1, ret));
+    RetVNI = NewVNs[Walker];
+    LI->addRange(LiveRange(DefIndex, EndIndex+1, RetVNI));
   } else if (!ContainsDefs && ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[MBB];
     
     // Search for the use in this block that precedes the instruction we care 
-    // about, going to the fallback case if we don't find it.
+    // about, going to the fallback case if we don't find it.    
+    if (UseI == MBB->begin())
+      return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs,
+                                            Uses, NewVNs, LiveOut, Phis,
+                                            IsTopLevel, IsIntraBlock);
     
-    if (use == MBB->begin())
-      goto Fallback;
-    
-    MachineBasicBlock::iterator walker = use;
-    --walker;
+    MachineBasicBlock::iterator Walker = UseI;
+    --Walker;
     bool found = false;
-    while (walker != MBB->begin())
-      if (BlockUses.count(walker)) {
+    while (Walker != MBB->begin()) {
+      if (BlockUses.count(Walker)) {
         found = true;
         break;
-      } else
-        --walker;
+      }
+      --Walker;
+    }
         
     // Must check begin() too.
     if (!found) {
-      if (BlockUses.count(walker))
+      if (BlockUses.count(Walker))
         found = true;
       else
-        goto Fallback;
+        return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs,
+                                              Uses, NewVNs, LiveOut, Phis,
+                                              IsTopLevel, IsIntraBlock);
     }
 
-    unsigned UseIndex = LIs->getInstructionIndex(walker);
+    unsigned UseIndex = LIs->getInstructionIndex(Walker);
     UseIndex = LiveIntervals::getUseIndex(UseIndex);
     unsigned EndIndex = 0;
-    if (intrablock) {
-      EndIndex = LIs->getInstructionIndex(use);
+    if (IsIntraBlock) {
+      EndIndex = LIs->getInstructionIndex(UseI);
       EndIndex = LiveIntervals::getUseIndex(EndIndex);
     } else
       EndIndex = LIs->getMBBEndIdx(MBB);
 
     // Now, recursively phi construct the VNInfo for the use we found,
     // and then extend it to include the instruction we care about
-    ret = PerformPHIConstruction(walker, MBB, LI, Visited, Defs, Uses,
-                                 NewVNs, LiveOut, Phis, false, true);
+    RetVNI = PerformPHIConstruction(Walker, MBB, LI, Visited, Defs, Uses,
+                                    NewVNs, LiveOut, Phis, false, true);
     
-    LI->addRange(LiveRange(UseIndex, EndIndex+1, ret));
+    LI->addRange(LiveRange(UseIndex, EndIndex+1, RetVNI));
     
     // FIXME: Need to set kills properly for inter-block stuff.
-    if (LI->isKill(ret, UseIndex)) LI->removeKill(ret, UseIndex);
-    if (intrablock)
-      LI->addKill(ret, EndIndex);
-  } else if (ContainsDefs && ContainsUses){
+    if (LI->isKill(RetVNI, UseIndex)) LI->removeKill(RetVNI, UseIndex);
+    if (IsIntraBlock)
+      LI->addKill(RetVNI, EndIndex);
+  } else if (ContainsDefs && ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[MBB];
     SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[MBB];
     
@@ -587,67 +551,143 @@ VNInfo* PreAllocSplitting::PerformPHIConstruction(
     // special note that checking for defs must take precedence over checking
     // for uses, because of two-address instructions.
     
-    if (use == MBB->begin())
-      goto Fallback;
+    if (UseI == MBB->begin())
+      return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs, Uses,
+                                            NewVNs, LiveOut, Phis,
+                                            IsTopLevel, IsIntraBlock);
     
-    MachineBasicBlock::iterator walker = use;
-    --walker;
+    MachineBasicBlock::iterator Walker = UseI;
+    --Walker;
     bool foundDef = false;
     bool foundUse = false;
-    while (walker != MBB->begin())
-      if (BlockDefs.count(walker)) {
+    while (Walker != MBB->begin()) {
+      if (BlockDefs.count(Walker)) {
         foundDef = true;
         break;
-      } else if (BlockUses.count(walker)) {
+      } else if (BlockUses.count(Walker)) {
         foundUse = true;
         break;
-      } else
-        --walker;
+      }
+      --Walker;
+    }
         
     // Must check begin() too.
     if (!foundDef && !foundUse) {
-      if (BlockDefs.count(walker))
+      if (BlockDefs.count(Walker))
         foundDef = true;
-      else if (BlockUses.count(walker))
+      else if (BlockUses.count(Walker))
         foundUse = true;
       else
-        goto Fallback;
+        return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs,
+                                              Uses, NewVNs, LiveOut, Phis,
+                                              IsTopLevel, IsIntraBlock);
     }
 
-    unsigned StartIndex = LIs->getInstructionIndex(walker);
+    unsigned StartIndex = LIs->getInstructionIndex(Walker);
     StartIndex = foundDef ? LiveIntervals::getDefIndex(StartIndex) :
                             LiveIntervals::getUseIndex(StartIndex);
     unsigned EndIndex = 0;
-    if (intrablock) {
-      EndIndex = LIs->getInstructionIndex(use);
+    if (IsIntraBlock) {
+      EndIndex = LIs->getInstructionIndex(UseI);
       EndIndex = LiveIntervals::getUseIndex(EndIndex);
     } else
       EndIndex = LIs->getMBBEndIdx(MBB);
 
     if (foundDef)
-      ret = NewVNs[walker];
+      RetVNI = NewVNs[Walker];
     else
-      ret = PerformPHIConstruction(walker, MBB, LI, Visited, Defs, Uses,
-                                   NewVNs, LiveOut, Phis, false, true);
+      RetVNI = PerformPHIConstruction(Walker, MBB, LI, Visited, Defs, Uses,
+                                      NewVNs, LiveOut, Phis, false, true);
 
-    LI->addRange(LiveRange(StartIndex, EndIndex+1, ret));
+    LI->addRange(LiveRange(StartIndex, EndIndex+1, RetVNI));
     
-    if (foundUse && LI->isKill(ret, StartIndex))
-      LI->removeKill(ret, StartIndex);
-    if (intrablock) {
-      LI->addKill(ret, EndIndex);
+    if (foundUse && LI->isKill(RetVNI, StartIndex))
+      LI->removeKill(RetVNI, StartIndex);
+    if (IsIntraBlock) {
+      LI->addKill(RetVNI, EndIndex);
     }
   }
   
   // Memoize results so we don't have to recompute them.
-  if (!intrablock) LiveOut[MBB] = ret;
+  if (!IsIntraBlock) LiveOut[MBB] = RetVNI;
   else {
-    if (!NewVNs.count(use))
-      NewVNs[use] = ret;
-    Visited.insert(use);
+    if (!NewVNs.count(UseI))
+      NewVNs[UseI] = RetVNI;
+    Visited.insert(UseI);
   }
 
-  return ret;
+  return RetVNI;
+}
+
+/// PerformPHIConstructionFallBack - PerformPHIConstruction fall back path.
+///
+VNInfo*
+PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator UseI,
+                                       MachineBasicBlock* MBB, LiveInterval* LI,
+                                       SmallPtrSet<MachineInstr*, 4>& Visited,
+             DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Defs,
+             DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 2> >& Uses,
+                                       DenseMap<MachineInstr*, VNInfo*>& NewVNs,
+                                 DenseMap<MachineBasicBlock*, VNInfo*>& LiveOut,
+                                 DenseMap<MachineBasicBlock*, VNInfo*>& Phis,
+                                           bool IsTopLevel, bool IsIntraBlock) {
+  // NOTE: Because this is the fallback case from other cases, we do NOT
+  // assume that we are not intrablock here.
+  if (Phis.count(MBB)) return Phis[MBB]; 
+
+  unsigned StartIndex = LIs->getMBBStartIdx(MBB);
+  VNInfo *RetVNI = Phis[MBB] = LI->getNextValue(~0U, /*FIXME*/ 0,
+                                                LIs->getVNInfoAllocator());
+  if (!IsIntraBlock) LiveOut[MBB] = RetVNI;
+    
+  // If there are no uses or defs between our starting point and the
+  // beginning of the block, then recursive perform phi construction
+  // on our predecessors.
+  DenseMap<MachineBasicBlock*, VNInfo*> IncomingVNs;
+  for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         PE = MBB->pred_end(); PI != PE; ++PI) {
+    VNInfo* Incoming = PerformPHIConstruction((*PI)->end(), *PI, LI, 
+                                              Visited, Defs, Uses, NewVNs,
+                                              LiveOut, Phis, false, false);
+    if (Incoming != 0)
+      IncomingVNs[*PI] = Incoming;
+  }
+    
+  if (MBB->pred_size() == 1 && !RetVNI->hasPHIKill) {
+    LI->MergeValueNumberInto(RetVNI, IncomingVNs.begin()->second);
+    Phis[MBB] = RetVNI = IncomingVNs.begin()->second;
+  } else {
+    // Otherwise, merge the incoming VNInfos with a phi join.  Create a new
+    // VNInfo to represent the joined value.
+    for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator I =
+           IncomingVNs.begin(), E = IncomingVNs.end(); I != E; ++I) {
+      I->second->hasPHIKill = true;
+      unsigned KillIndex = LIs->getMBBEndIdx(I->first);
+      if (!LiveInterval::isKill(I->second, KillIndex))
+        LI->addKill(I->second, KillIndex);
+    }
+  }
+      
+  unsigned EndIndex = 0;
+  if (IsIntraBlock) {
+    EndIndex = LIs->getInstructionIndex(UseI);
+    EndIndex = LiveIntervals::getUseIndex(EndIndex);
+  } else
+    EndIndex = LIs->getMBBEndIdx(MBB);
+  LI->addRange(LiveRange(StartIndex, EndIndex+1, RetVNI));
+  if (IsIntraBlock)
+    LI->addKill(RetVNI, EndIndex);
+
+  // Memoize results so we don't have to recompute them.
+  if (!IsIntraBlock)
+    LiveOut[MBB] = RetVNI;
+  else {
+    if (!NewVNs.count(UseI))
+      NewVNs[UseI] = RetVNI;
+    Visited.insert(UseI);
+  }
+
+  return RetVNI;
 }
 
 /// ReconstructLiveInterval - Recompute a live interval from scratch.
