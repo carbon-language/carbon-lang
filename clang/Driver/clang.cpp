@@ -490,14 +490,15 @@ NoLaxVectorConversions("fno-lax-vector-conversions",
                        llvm::cl::desc("Disallow implicit conversions between "
                                       "vectors with a different number of "
                                       "elements or different element types"));
-static llvm::cl::opt<bool>
-EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"), llvm::cl::ValueDisallowed);
-
-static llvm::cl::inverse_opt
-DisableBlocks("fno-blocks", llvm::cl::opposite_of(EnableBlocks), llvm::cl::ValueDisallowed);
 
 static llvm::cl::opt<bool>
-ObjCNonFragileABI("fobjc-nonfragile-abi", llvm::cl::desc("enable objective-c's nonfragile abi"));
+EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"),
+             llvm::cl::ValueDisallowed, llvm::cl::AllowInverse,
+             llvm::cl::ZeroOrMore);
+
+static llvm::cl::opt<bool>
+ObjCNonFragileABI("fobjc-nonfragile-abi",
+                  llvm::cl::desc("enable objective-c's nonfragile abi"));
 
 
 // FIXME: This (and all GCC -f options) really come in -f... and
@@ -623,7 +624,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (NoLaxVectorConversions.getPosition())
       Options.LaxVectorConversions = 0;
   Options.Exceptions = Exceptions;
-  if (EnableBlocks.getPosition() || DisableBlocks.getPosition())
+  if (EnableBlocks.getPosition())
     Options.Blocks = EnableBlocks;
 
   // Override the default runtime if the user requested it.
