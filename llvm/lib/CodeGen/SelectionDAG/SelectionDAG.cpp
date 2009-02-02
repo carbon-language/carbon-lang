@@ -3547,6 +3547,20 @@ SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps) {
   return getNode(ISD::MERGE_VALUES, getVTList(&VTs[0], NumOps), Ops, NumOps);
 }
 
+/// DebugLoc-aware version.
+SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
+                                     DebugLoc dl) {
+  if (NumOps == 1)
+    return Ops[0];
+
+  SmallVector<MVT, 4> VTs;
+  VTs.reserve(NumOps);
+  for (unsigned i = 0; i < NumOps; ++i)
+    VTs.push_back(Ops[i].getValueType());
+  return getNode(ISD::MERGE_VALUES, dl, getVTList(&VTs[0], NumOps), 
+                 Ops, NumOps);
+}
+
 SDValue
 SelectionDAG::getMemIntrinsicNode(unsigned Opcode,
                                   const MVT *VTs, unsigned NumVTs,

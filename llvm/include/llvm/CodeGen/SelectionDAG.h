@@ -568,6 +568,7 @@ public:
 
   /// getMergeValues - Create a MERGE_VALUES node from the given operands.
   SDValue getMergeValues(const SDValue *Ops, unsigned NumOps);
+  SDValue getMergeValues(const SDValue *Ops, unsigned NumOps, DebugLoc dl);
 
   /// getCall - Create a CALL node from the given information.
   ///
