@@ -1447,6 +1447,16 @@ unrecognized option strings to it as values instead of signaling an
 error. As with <b><tt>cl::CommaSeparated</tt></b></a>, this modifier
 only makes sense with a <a href="#cl::list">cl::list</a> option.</li>
 
+<li><a name="cl::AllowInverse">The <b><tt>cl::AllowInverse</tt></b></a>
+modifier can be used on options that have the form <tt>-fopt</tt> to
+automatically create a corresponding
+<tt>-fno-opt</tt> option.  The <tt>f</tt> can be any single
+character, and the <tt>opt</tt> can be any one or more characters.
+The value of the created option is the logical complement of the value
+that would have been used if the base form of the option was used.
+This modifier only makes sense with an option that uses
+a <a href="#boolparser">bool parser</a>.</li>
+
 
 </ul>
 
@@ -1745,7 +1755,11 @@ for any data type.</li>
 <li><a name="boolparser">The <b><tt>parser&lt;bool&gt;</tt> specialization</b></a>
 is used to convert boolean strings to a boolean value.  Currently accepted
 strings are "<tt>true</tt>", "<tt>TRUE</tt>", "<tt>True</tt>", "<tt>1</tt>",
-"<tt>false</tt>", "<tt>FALSE</tt>", "<tt>False</tt>", and "<tt>0</tt>".</li>
+"<tt>false</tt>", "<tt>FALSE</tt>", "<tt>False</tt>", and "<tt>0</tt>".  The
+<b><tt>cl::AllowInverse</tt></b> modifier can be used on an option of the form
+<tt>-fopt</tt> that uses the <tt>parser&lt;bool&gt;</tt> specialization
+to create a corresponding option with the form <tt>-fno-opt</tt>.  See
+<a href="#cl::AllowInverse"><tt>cl::AllowInverse</tt></a> for details.</li>
 
 <li><a name="boolOrDefaultparser">The <b><tt>parser&lt;boolOrDefault&gt;</tt>
  specialization</b></a> is used for cases where the value is boolean,

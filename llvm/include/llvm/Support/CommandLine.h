@@ -126,7 +126,8 @@ enum MiscFlags {               // Miscellaneous flags to adjust argument
   CommaSeparated     = 0x200,  // Should this cl::list split between commas?
   PositionalEatsArgs = 0x400,  // Should this positional cl::list eat -args?
   Sink               = 0x800,  // Should this cl::list eat all unknown options?
-  MiscMask           = 0xE00   // Union of the above flags.
+  AllowInverse	     = 0x1000, // Can this option take a -Xno- form?
+  MiscMask           = 0x1E00  // Union of the above flags.
 };
 
 
@@ -301,12 +302,6 @@ struct LocationClass {
 
 template<class Ty>
 LocationClass<Ty> location(Ty &L) { return LocationClass<Ty>(L); }
-
-// opposite_of - Allow the user to specify which other option this
-// option is the opposite of.
-//
-template<class Ty>
-LocationClass<bool> opposite_of(Ty &O) { return location(O.getValue()); }
 
 
 //===----------------------------------------------------------------------===//
@@ -542,9 +537,32 @@ struct basic_parser : public basic_parser_impl {
 //
 template<>
 class parser<bool> : public basic_parser<bool> {
+  bool IsInvertable;	// Should we synthezise a -xno- style option?
+  const char *ArgStr;
 public:
+  void getExtraOptionNames(std::vector<const char*> &OptionNames) {
+    if (IsInvertable) {
+      char *s = new char [strlen(ArgStr) + 3 + 1];
+      s[0] = ArgStr[0];
+      s[1] = 'n';
+      s[2] = 'o';
+      s[3] = '-';
+      strcpy(&s[4], ArgStr+1);
+      OptionNames.push_back(s);
+    }
+  }
+
   // parse - Return true on error.
   bool parse(Option &O, const char *ArgName, const std::string &Arg, bool &Val);
+
+  template <class Opt>
+  void initialize(Opt &O) {
+    if (O.getMiscFlags() & llvm::cl::AllowInverse)
+      IsInvertable = true;
+    else
+      IsInvertable = false;
+    ArgStr = O.ArgStr;
+  }
 
   enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueOptional;
@@ -581,30 +599,6 @@ public:
 };
 
 EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>);
-
-//--------------------------------------------------
-// parser<boolInverse>
-class boolInverse { };
-template<>
-class parser<boolInverse> : public basic_parser<bool> {
-public:
-  typedef bool parser_data_type;
-  // parse - Return true on error.
-  bool parse(Option &O, const char *ArgName, const std::string &Arg,
-             bool &Val);
-
-  enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueOptional;
-  }
-
-  // getValueName - Do not print =<value> at all.
-  virtual const char *getValueName() const { return 0; }
-
-  // An out-of-line virtual method to provide a 'home' for this class.
-  virtual void anchor();
-};
-
-EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 
 //--------------------------------------------------
 // parser<int>
@@ -946,9 +940,6 @@ EXTERN_TEMPLATE_INSTANTIATION(class opt<unsigned>);
 EXTERN_TEMPLATE_INSTANTIATION(class opt<int>);
 EXTERN_TEMPLATE_INSTANTIATION(class opt<std::string>);
 EXTERN_TEMPLATE_INSTANTIATION(class opt<bool>);
-
-class boolInverse;
-typedef opt<bool, true, parser<boolInverse> > inverse_opt;
 
 //===----------------------------------------------------------------------===//
 // list_storage class
