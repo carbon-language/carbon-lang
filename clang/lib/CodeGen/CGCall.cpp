@@ -874,6 +874,71 @@ CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
   }
 }
 
+/// CreateCoercedLoad - Create a load from \arg SrcPtr interpreted as
+/// a pointer to an object of type \arg Ty.
+///
+/// This safely handles the case when the src type is smaller than the
+/// destination type; in this situation the values of bits which not
+/// present in the src are undefined.
+static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
+                                      const llvm::Type *Ty,
+                                      CodeGenFunction &CGF) {
+  const llvm::Type *SrcTy = 
+    cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
+  uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
+  uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(Ty);
+
+  // If load is legal, just bitcase the src pointer.
+  if (SrcSize == DstSize) {
+    llvm::Value *Casted =
+      CGF.Builder.CreateBitCast(SrcPtr, llvm::PointerType::getUnqual(Ty));
+    return CGF.Builder.CreateLoad(Casted);
+  } else {
+    assert(SrcSize < DstSize && "Coercion is losing source bits!");
+
+    // Otherwise do coercion through memory. This is stupid, but
+    // simple.
+    llvm::Value *Tmp = CGF.CreateTempAlloca(Ty);
+    llvm::Value *Casted = 
+      CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(SrcTy));
+    CGF.Builder.CreateStore(CGF.Builder.CreateLoad(SrcPtr), Casted);
+    return CGF.Builder.CreateLoad(Tmp);
+  }
+}
+
+/// CreateCoercedStore - Create a store to \arg DstPtr from \arg Src,
+/// where the source and destination may have different types.
+///
+/// This safely handles the case when the src type is larger than the
+/// destination type; the upper bits of the src will be lost.
+static void CreateCoercedStore(llvm::Value *Src,
+                               llvm::Value *DstPtr,
+                               CodeGenFunction &CGF) {
+  const llvm::Type *SrcTy = Src->getType();
+  const llvm::Type *DstTy = 
+    cast<llvm::PointerType>(DstPtr->getType())->getElementType();
+
+  uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
+  uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(DstTy);
+
+  // If store is legal, just bitcase the src pointer.
+  if (SrcSize == DstSize) {
+    llvm::Value *Casted =
+      CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
+    CGF.Builder.CreateStore(Src, Casted);
+  } else {
+    assert(SrcSize > DstSize && "Coercion is missing bits!");
+    
+    // Otherwise do coercion through memory. This is stupid, but
+    // simple.
+    llvm::Value *Tmp = CGF.CreateTempAlloca(SrcTy);
+    CGF.Builder.CreateStore(Src, Tmp);
+    llvm::Value *Casted = 
+      CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(DstTy));
+    CGF.Builder.CreateStore(CGF.Builder.CreateLoad(Casted), DstPtr);
+  }
+}
+
 /***/
 
 const llvm::FunctionType *
@@ -1110,71 +1175,6 @@ void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
     ++AI;
   }
   assert(AI == Fn->arg_end() && "Argument mismatch!");
-}
-
-/// CreateCoercedLoad - Create a load from \arg SrcPtr interpreted as
-/// a pointer to an object of type \arg Ty.
-///
-/// This safely handles the case when the src type is smaller than the
-/// destination type; in this situation the values of bits which not
-/// present in the src are undefined.
-static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
-                                      const llvm::Type *Ty,
-                                      CodeGenFunction &CGF) {
-  const llvm::Type *SrcTy = 
-    cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
-  uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
-  uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(Ty);
-
-  // If load is legal, just bitcase the src pointer.
-  if (SrcSize == DstSize) {
-    llvm::Value *Casted =
-      CGF.Builder.CreateBitCast(SrcPtr, llvm::PointerType::getUnqual(Ty));
-    return CGF.Builder.CreateLoad(Casted);
-  } else {
-    assert(SrcSize < DstSize && "Coercion is losing source bits!");
-
-    // Otherwise do coercion through memory. This is stupid, but
-    // simple.
-    llvm::Value *Tmp = CGF.CreateTempAlloca(Ty);
-    llvm::Value *Casted = 
-      CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(SrcTy));
-    CGF.Builder.CreateStore(CGF.Builder.CreateLoad(SrcPtr), Casted);
-    return CGF.Builder.CreateLoad(Tmp);
-  }
-}
-
-/// CreateCoercedStore - Create a store to \arg DstPtr from \arg Src,
-/// where the source and destination may have different types.
-///
-/// This safely handles the case when the src type is larger than the
-/// destination type; the upper bits of the src will be lost.
-static void CreateCoercedStore(llvm::Value *Src,
-                               llvm::Value *DstPtr,
-                               CodeGenFunction &CGF) {
-  const llvm::Type *SrcTy = Src->getType();
-  const llvm::Type *DstTy = 
-    cast<llvm::PointerType>(DstPtr->getType())->getElementType();
-
-  uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
-  uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(DstTy);
-
-  // If store is legal, just bitcase the src pointer.
-  if (SrcSize == DstSize) {
-    llvm::Value *Casted =
-      CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
-    CGF.Builder.CreateStore(Src, Casted);
-  } else {
-    assert(SrcSize > DstSize && "Coercion is missing bits!");
-    
-    // Otherwise do coercion through memory. This is stupid, but
-    // simple.
-    llvm::Value *Tmp = CGF.CreateTempAlloca(SrcTy);
-    CGF.Builder.CreateStore(Src, Tmp);
-    llvm::Value *Casted = 
-      CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(DstTy));
-    CGF.Builder.CreateStore(CGF.Builder.CreateLoad(Casted), DstPtr);
-  }
 }
 
 void CodeGenFunction::EmitFunctionEpilog(QualType RetTy, 
