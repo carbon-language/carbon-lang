@@ -187,7 +187,7 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDValue &Lo,
   unsigned IncrementSize = NVT.getSizeInBits() / 8;
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                     DAG.getIntPtrConstant(IncrementSize));
-  Hi = DAG.getLoad(NVT, dl, Chain, Ptr, LD->getSrcValue(), 
+  Hi = DAG.getLoad(NVT, dl, Chain, Ptr, LD->getSrcValue(),
                    SVOffset+IncrementSize,
                    isVolatile, MinAlign(Alignment, IncrementSize));
 
@@ -306,7 +306,7 @@ SDValue DAGTypeLegalizer::ExpandOp_INSERT_VECTOR_ELT(SDNode *N) {
   // Bitconvert to a vector of twice the length with elements of the expanded
   // type, insert the expanded vector elements, and then convert back.
   MVT NewVecVT = MVT::getVectorVT(NewEVT, NumElts*2);
-  SDValue NewVec = DAG.getNode(ISD::BIT_CONVERT, dl, 
+  SDValue NewVec = DAG.getNode(ISD::BIT_CONVERT, dl,
                                NewVecVT, N->getOperand(0));
 
   SDValue Lo, Hi;
@@ -365,7 +365,7 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                     DAG.getIntPtrConstant(IncrementSize));
   assert(isTypeLegal(Ptr.getValueType()) && "Pointers must be legal!");
-  Hi = DAG.getStore(Chain, dl, Hi, Ptr, St->getSrcValue(), 
+  Hi = DAG.getStore(Chain, dl, Hi, Ptr, St->getSrcValue(),
                     SVOffset + IncrementSize,
                     isVolatile, MinAlign(Alignment, IncrementSize));
 

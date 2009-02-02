@@ -851,7 +851,7 @@ void DAGTypeLegalizer::ExpandFloatRes_FDIV(SDNode *N, SDValue &Lo,
                                           RTLIB::DIV_F64,
                                           RTLIB::DIV_F80,
                                           RTLIB::DIV_PPCF128),
-                             N->getValueType(0), Ops, 2, false, 
+                             N->getValueType(0), Ops, 2, false,
                              N->getDebugLoc());
   assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR &&
          "Call lowered wrongly!");
@@ -932,7 +932,7 @@ void DAGTypeLegalizer::ExpandFloatRes_FMUL(SDNode *N, SDValue &Lo,
                                           RTLIB::MUL_F64,
                                           RTLIB::MUL_F80,
                                           RTLIB::MUL_PPCF128),
-                             N->getValueType(0), Ops, 2, false, 
+                             N->getValueType(0), Ops, 2, false,
                              N->getDebugLoc());
   assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR &&
          "Call lowered wrongly!");
@@ -1148,7 +1148,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
   Lo = DAG.getNode(ISD::FADD, dl, VT, Hi,
                    DAG.getConstantFP(APFloat(APInt(128, 2, Parts)),
                                      MVT::ppcf128));
-  Lo = DAG.getNode(ISD::SELECT_CC, dl, VT, Src, DAG.getConstant(0, SrcVT), 
+  Lo = DAG.getNode(ISD::SELECT_CC, dl, VT, Src, DAG.getConstant(0, SrcVT),
                    Lo, Hi, DAG.getCondCode(ISD::SETLT));
   Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Lo, DAG.getIntPtrConstant(1));
   Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Lo, DAG.getIntPtrConstant(0));
@@ -1275,7 +1275,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_ROUND(SDNode *N) {
 SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_SINT(SDNode *N) {
   MVT RVT = N->getValueType(0);
   DebugLoc dl = N->getDebugLoc();
-  
+
   // Expand ppcf128 to i32 by hand for the benefit of llvm-gcc bootstrap on
   // PPC (the libcall is not available).  FIXME: Do this in a less hacky way.
   if (RVT == MVT::i32) {
@@ -1283,7 +1283,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_SINT(SDNode *N) {
            "Logic only correct for ppcf128!");
     SDValue Res = DAG.getNode(ISD::FP_ROUND_INREG, dl, MVT::ppcf128,
                               N->getOperand(0), DAG.getValueType(MVT::f64));
-    Res = DAG.getNode(ISD::FP_ROUND, dl, MVT::f64, Res, 
+    Res = DAG.getNode(ISD::FP_ROUND, dl, MVT::f64, Res,
                       DAG.getIntPtrConstant(1));
     return DAG.getNode(ISD::FP_TO_SINT, dl, MVT::i32, Res);
   }

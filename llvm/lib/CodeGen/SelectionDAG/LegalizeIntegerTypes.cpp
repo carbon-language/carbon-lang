@@ -137,7 +137,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_AssertZext(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntRes_Atomic1(AtomicSDNode *N) {
   SDValue Op2 = GetPromotedInteger(N->getOperand(2));
-  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getDebugLoc(), 
+  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getDebugLoc(),
                               N->getMemoryVT(),
                               N->getChain(), N->getBasePtr(),
                               Op2, N->getSrcValue(), N->getAlignment());
@@ -176,7 +176,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
   case PromoteInteger:
     if (NOutVT.bitsEq(NInVT))
       // The input promotes to the same size.  Convert the promoted value.
-      return DAG.getNode(ISD::BIT_CONVERT, dl, 
+      return DAG.getNode(ISD::BIT_CONVERT, dl,
                          NOutVT, GetPromotedInteger(InOp));
     break;
   case SoftenFloat:
@@ -1047,7 +1047,7 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
       Lo = Hi = DAG.getConstant(0, NVT);
     } else if (Amt > NVTBits) {
       Lo = DAG.getConstant(0, NVT);
-      Hi = DAG.getNode(ISD::SHL, dl, 
+      Hi = DAG.getNode(ISD::SHL, dl,
                        NVT, InL, DAG.getConstant(Amt-NVTBits,ShTy));
     } else if (Amt == NVTBits) {
       Lo = DAG.getConstant(0, NVT);
@@ -1077,7 +1077,7 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
       Lo = DAG.getConstant(0, NVT);
       Hi = DAG.getConstant(0, NVT);
     } else if (Amt > NVTBits) {
-      Lo = DAG.getNode(ISD::SRL, dl, 
+      Lo = DAG.getNode(ISD::SRL, dl,
                        NVT, InH, DAG.getConstant(Amt-NVTBits,ShTy));
       Hi = DAG.getConstant(0, NVT);
     } else if (Amt == NVTBits) {
@@ -1550,7 +1550,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
                                    DAG.getConstant(ExcessBits,
                                                    TLI.getPointerTy())));
       // Move high bits to the right position in Hi.
-      Hi = DAG.getNode(ExtType == ISD::SEXTLOAD ? ISD::SRA : ISD::SRL, dl, 
+      Hi = DAG.getNode(ExtType == ISD::SEXTLOAD ? ISD::SRA : ISD::SRL, dl,
                        NVT, Hi,
                        DAG.getConstant(NVT.getSizeInBits() - ExcessBits,
                                        TLI.getPointerTy()));
@@ -1986,7 +1986,7 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
       if (ConstantSDNode *RHSCST = dyn_cast<ConstantSDNode>(RHSLo)) {
         if (RHSCST->isAllOnesValue()) {
           // Equality comparison to -1.
-          NewLHS = DAG.getNode(ISD::AND, dl, 
+          NewLHS = DAG.getNode(ISD::AND, dl,
                                LHSLo.getValueType(), LHSLo, LHSHi);
           NewRHS = RHSLo;
           return;
@@ -2262,7 +2262,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     // Check whether the sign bit is set.
     SDValue Lo, Hi;
     GetExpandedInteger(Op, Lo, Hi);
-    SDValue SignSet = DAG.getSetCC(dl, 
+    SDValue SignSet = DAG.getSetCC(dl,
                                    TLI.getSetCCResultType(Hi.getValueType()),
                                    Hi, DAG.getConstant(0, Hi.getValueType()),
                                    ISD::SETLT);
