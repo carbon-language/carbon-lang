@@ -2055,14 +2055,23 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
   }
   case Expr::ImplicitCastExprClass:
   case Expr::CStyleCastExprClass: {
-    const Expr *SubExpr = cast<CastExpr>(Init)->getSubExpr();
+    const CastExpr *CE = cast<CastExpr>(Init);
+    const Expr *SubExpr = CE->getSubExpr();
+
     if (SubExpr->getType()->isArithmeticType())
       return CheckArithmeticConstantExpression(SubExpr);
 
     if (SubExpr->getType()->isPointerType()) {
       const Expr* Base = FindExpressionBaseAddress(SubExpr);
-      // If the pointer has a null base, this is an offsetof-like construct
-      return Base ? false : CheckAddressConstantExpression(SubExpr);
+      if (Base) {
+        // the cast is only valid if done to a wide enough type
+        if (Context.getTypeSize(CE->getType()) >=
+            Context.getTypeSize(SubExpr->getType()))
+          return false;
+      } else {
+        // If the pointer has a null base, this is an offsetof-like construct
+        return CheckAddressConstantExpression(SubExpr);
+      }
     }
 
     InitializerElementNotConstant(Init);
