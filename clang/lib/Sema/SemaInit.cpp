@@ -127,6 +127,10 @@ public:
 void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
   assert((ILE->getType() != SemaRef->Context.VoidTy) && 
          "Should not have void type");
+  SourceLocation Loc = ILE->getSourceRange().getBegin();
+  if (ILE->getSyntacticForm())
+    Loc = ILE->getSyntacticForm()->getSourceRange().getBegin();
+  
   if (const RecordType *RType = ILE->getType()->getAsRecordType()) {
     unsigned Init = 0, NumInits = ILE->getNumInits();
     for (RecordDecl::field_iterator Field = RType->getDecl()->field_begin(),
@@ -135,24 +139,32 @@ void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
       if (Field->isUnnamedBitfield())
         continue;
 
-      if (Init >= NumInits) {
+      if (Init >= NumInits || !ILE->getInit(Init)) {
         if (Field->getType()->isReferenceType()) {
           // C++ [dcl.init.aggr]p9:
           //   If an incomplete or empty initializer-list leaves a
           //   member of reference type uninitialized, the program is
           //   ill-formed. 
-          SemaRef->Diag(ILE->getSyntacticForm()->getLocStart(), 
-                        diag::err_init_reference_member_uninitialized)
+          SemaRef->Diag(Loc, diag::err_init_reference_member_uninitialized)
             << Field->getType()
             << ILE->getSyntacticForm()->getSourceRange();
           SemaRef->Diag(Field->getLocation(), 
                         diag::note_uninit_reference_member);
           hadError = true;
+          return;
+        } else if (SemaRef->CheckValueInitialization(Field->getType(), Loc)) {
+          hadError = true;
+          return;
         }
-      } else if (!ILE->getInit(Init))
-        ILE->setInit(Init, 
-                new (SemaRef->Context) ImplicitValueInitExpr(Field->getType()));
-      else if (InitListExpr *InnerILE 
+
+        // FIXME: If value-initialization involves calling a
+        // constructor, should we make that call explicit in the
+        // representation (even when it means extending the
+        // initializer list)?
+        if (Init < NumInits && !hadError)
+          ILE->setInit(Init, 
+              new (SemaRef->Context) ImplicitValueInitExpr(Field->getType()));
+      } else if (InitListExpr *InnerILE 
                  = dyn_cast<InitListExpr>(ILE->getInit(Init)))
         FillInValueInitializations(InnerILE);
       ++Init;
@@ -167,18 +179,33 @@ void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
 
   QualType ElementType;
   
-  if (const ArrayType *AType = SemaRef->Context.getAsArrayType(ILE->getType()))
+  unsigned NumInits = ILE->getNumInits();
+  unsigned NumElements = NumInits;
+  if (const ArrayType *AType = SemaRef->Context.getAsArrayType(ILE->getType())) {
     ElementType = AType->getElementType();
-  else if (const VectorType *VType = ILE->getType()->getAsVectorType())
+    if (const ConstantArrayType *CAType = dyn_cast<ConstantArrayType>(AType))
+      NumElements = CAType->getSize().getZExtValue();
+  } else if (const VectorType *VType = ILE->getType()->getAsVectorType()) {
     ElementType = VType->getElementType();
-  else 
+    NumElements = VType->getNumElements();
+  } else 
     ElementType = ILE->getType();
   
-  for (unsigned Init = 0, NumInits = ILE->getNumInits(); Init != NumInits; 
-       ++Init) {
-    if (!ILE->getInit(Init))
-      ILE->setInit(Init, 
-                   new (SemaRef->Context) ImplicitValueInitExpr(ElementType));
+  for (unsigned Init = 0; Init != NumElements; ++Init) {
+    if (Init >= NumInits || !ILE->getInit(Init)) {
+      if (SemaRef->CheckValueInitialization(ElementType, Loc)) {
+        hadError = true;
+        return;
+      }
+
+      // FIXME: If value-initialization involves calling a
+      // constructor, should we make that call explicit in the
+      // representation (even when it means extending the
+      // initializer list)?
+      if (Init < NumInits && !hadError)
+        ILE->setInit(Init, 
+                     new (SemaRef->Context) ImplicitValueInitExpr(ElementType));
+    }
     else if (InitListExpr *InnerILE =dyn_cast<InitListExpr>(ILE->getInit(Init)))
       FillInValueInitializations(InnerILE);
   }
@@ -254,9 +281,19 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
   unsigned StructuredSubobjectInitIndex = 0;
 
   // Check the element types and build the structural subobject.
+  unsigned StartIndex = Index;
   CheckListElementTypes(ParentIList, T, false, Index,
                         StructuredSubobjectInitList, 
                         StructuredSubobjectInitIndex);
+  unsigned EndIndex = (Index == StartIndex? StartIndex : Index - 1);
+  
+  // Update the structured sub-object initialize so that it's ending
+  // range corresponds with the end of the last initializer it used.
+  if (EndIndex < ParentIList->getNumInits()) {
+    SourceLocation EndLoc 
+      = ParentIList->getInit(EndIndex)->getSourceRange().getEnd();
+    StructuredSubobjectInitList->setRBraceLoc(EndLoc);
+  }
 }
 
 void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
@@ -1102,9 +1139,12 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
       << ExistingInit->getSourceRange();
   }
 
+  SourceLocation StartLoc;
+  if (Index < IList->getNumInits())
+    StartLoc = IList->getInit(Index)->getSourceRange().getBegin();
   InitListExpr *Result 
-    = new (SemaRef->Context) InitListExpr(SourceLocation(), 0, 0, 
-                                          SourceLocation());
+    = new (SemaRef->Context) InitListExpr(StartLoc, 0, 0, 
+                                          IList->getSourceRange().getEnd());
   Result->setType(CurrentObjectType);
 
   // Link this new initializer list into the structured initializer
@@ -1256,4 +1296,53 @@ bool Sema::CheckInitList(InitListExpr *&InitList, QualType &DeclType) {
     InitList = CheckInitList.getFullyStructuredList();
 
   return CheckInitList.HadError();
+}
+
+/// \brief Diagnose any semantic errors with value-initialization of
+/// the given type.
+///
+/// Value-initialization effectively zero-initializes any types
+/// without user-declared constructors, and calls the default
+/// constructor for a for any type that has a user-declared
+/// constructor (C++ [dcl.init]p5). Value-initialization can fail when
+/// a type with a user-declared constructor does not have an
+/// accessible, non-deleted default constructor. In C, everything can
+/// be value-initialized, which corresponds to C's notion of
+/// initializing objects with static storage duration when no
+/// initializer is provided for that object. 
+///
+/// \returns true if there was an error, false otherwise.
+bool Sema::CheckValueInitialization(QualType Type, SourceLocation Loc) {
+  // C++ [dcl.init]p5:
+  //
+  //   To value-initialize an object of type T means:
+
+  //     -- if T is an array type, then each element is value-initialized;
+  if (const ArrayType *AT = Context.getAsArrayType(Type))
+    return CheckValueInitialization(AT->getElementType(), Loc);
+
+  if (const RecordType *RT = Type->getAsRecordType()) {
+    if (const CXXRecordType *CXXRec = dyn_cast<CXXRecordType>(RT)) {
+      // -- if T is a class type (clause 9) with a user-declared
+      //    constructor (12.1), then the default constructor for T is
+      //    called (and the initialization is ill-formed if T has no
+      //    accessible default constructor);
+      if (CXXRec->getDecl()->hasUserDeclaredConstructor())
+        // FIXME: Eventually, we'll need to put the constructor decl
+        // into the AST.
+        return PerformInitializationByConstructor(Type, 0, 0, Loc,
+                                                  SourceRange(Loc), 
+                                                  DeclarationName(),
+                                                  IK_Direct);
+    }
+  }
+
+  if (Type->isReferenceType()) {
+    // C++ [dcl.init]p5:
+    //   [...] A program that calls for default-initialization or
+    //   value-initialization of an entity of reference type is
+    //   ill-formed. [...]
+  }
+
+  return false;
 }

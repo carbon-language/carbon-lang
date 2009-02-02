@@ -1715,6 +1715,7 @@ public:
   
   StringLiteral *IsStringLiteralInit(Expr *Init, QualType DeclType);
   bool CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT);
+  bool CheckValueInitialization(QualType Type, SourceLocation Loc);
 
   // type checking C++ declaration initializers (C++ [dcl.init]).
 

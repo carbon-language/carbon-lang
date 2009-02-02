@@ -1725,6 +1725,8 @@ public:
     return LBraceLoc.isValid() && RBraceLoc.isValid();
   }
   
+  void setRBraceLoc(SourceLocation Loc) { RBraceLoc = Loc; }
+
   /// @brief Retrieve the initializer list that describes the
   /// syntactic form of the initializer.
   ///
