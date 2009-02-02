@@ -282,15 +282,19 @@ private:
     
   SDValue ExpandLibCall(RTLIB::Libcall LC, SDNode *Node, bool isSigned,
                           SDValue &Hi);
-  SDValue ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source);
+  SDValue ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source, DebugLoc dl);
 
   SDValue EmitStackConvert(SDValue SrcOp, MVT SlotVT, MVT DestVT);
   SDValue ExpandBUILD_VECTOR(SDNode *Node);
   SDValue ExpandSCALAR_TO_VECTOR(SDNode *Node);
-  SDValue LegalizeINT_TO_FP(SDValue Result, bool isSigned, MVT DestTy, SDValue Op);
-  SDValue ExpandLegalINT_TO_FP(bool isSigned, SDValue LegalOp, MVT DestVT);
-  SDValue PromoteLegalINT_TO_FP(SDValue LegalOp, MVT DestVT, bool isSigned);
-  SDValue PromoteLegalFP_TO_INT(SDValue LegalOp, MVT DestVT, bool isSigned);
+  SDValue LegalizeINT_TO_FP(SDValue Result, bool isSigned, MVT DestTy, 
+                            SDValue Op, DebugLoc dl);
+  SDValue ExpandLegalINT_TO_FP(bool isSigned, SDValue LegalOp, MVT DestVT,
+                               DebugLoc dl);
+  SDValue PromoteLegalINT_TO_FP(SDValue LegalOp, MVT DestVT, bool isSigned,
+                                DebugLoc dl);
+  SDValue PromoteLegalFP_TO_INT(SDValue LegalOp, MVT DestVT, bool isSigned,
+                                DebugLoc dl);
 
   SDValue ExpandBSWAP(SDValue Op);
   SDValue ExpandBitCount(unsigned Opc, SDValue Op);
@@ -4004,7 +4008,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::UINT_TO_FP: {
     bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
     Result = LegalizeINT_TO_FP(Result, isSigned,
-                               Node->getValueType(0), Node->getOperand(0));
+                               Node->getValueType(0), Node->getOperand(0), dl);
     break;
   }
   case ISD::TRUNCATE:
@@ -4063,7 +4067,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         break;
       case TargetLowering::Promote:
         Result = PromoteLegalFP_TO_INT(Tmp1, Node->getValueType(0),
-                                       Node->getOpcode() == ISD::FP_TO_SINT);
+                                       Node->getOpcode() == ISD::FP_TO_SINT, 
+                                       dl);
         break;
       case TargetLowering::Expand:
         if (Node->getOpcode() == ISD::FP_TO_UINT) {
@@ -4075,15 +4080,16 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           APInt x = APInt::getSignBit(NVT.getSizeInBits());
           (void)apf.convertFromAPInt(x, false, APFloat::rmNearestTiesToEven);
           Tmp2 = DAG.getConstantFP(apf, VT);
-          Tmp3 = DAG.getSetCC(TLI.getSetCCResultType(VT), Node->getOperand(0),
+          Tmp3 = DAG.getSetCC(dl, TLI.getSetCCResultType(VT), 
+                              Node->getOperand(0),
                               Tmp2, ISD::SETLT);
-          True = DAG.getNode(ISD::FP_TO_SINT, NVT, Node->getOperand(0));
-          False = DAG.getNode(ISD::FP_TO_SINT, NVT,
-                              DAG.getNode(ISD::FSUB, VT, Node->getOperand(0),
-                                          Tmp2));
-          False = DAG.getNode(ISD::XOR, NVT, False, 
+          True = DAG.getNode(ISD::FP_TO_SINT, dl, NVT, Node->getOperand(0));
+          False = DAG.getNode(ISD::FP_TO_SINT, dl, NVT,
+                              DAG.getNode(ISD::FSUB, dl, VT, 
+                                          Node->getOperand(0), Tmp2));
+          False = DAG.getNode(ISD::XOR, dl, NVT, False,
                               DAG.getConstant(x, NVT));
-          Result = DAG.getNode(ISD::SELECT, NVT, Tmp3, True, False);
+          Result = DAG.getNode(ISD::SELECT, dl, NVT, Tmp3, True, False);
           break;
         } else {
           assert(0 && "Do not know how to expand FP_TO_SINT yet!");
@@ -4097,24 +4103,25 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // Convert ppcf128 to i32
       if (OVT == MVT::ppcf128 && VT == MVT::i32) {
         if (Node->getOpcode() == ISD::FP_TO_SINT) {
-          Result = DAG.getNode(ISD::FP_ROUND_INREG, MVT::ppcf128, 
+          Result = DAG.getNode(ISD::FP_ROUND_INREG, dl, MVT::ppcf128, 
                                Node->getOperand(0), DAG.getValueType(MVT::f64));
-          Result = DAG.getNode(ISD::FP_ROUND, MVT::f64, Result, 
+          Result = DAG.getNode(ISD::FP_ROUND, dl, MVT::f64, Result, 
                                DAG.getIntPtrConstant(1));
-          Result = DAG.getNode(ISD::FP_TO_SINT, VT, Result);
+          Result = DAG.getNode(ISD::FP_TO_SINT, dl, VT, Result);
         } else {
           const uint64_t TwoE31[] = {0x41e0000000000000LL, 0};
           APFloat apf = APFloat(APInt(128, 2, TwoE31));
           Tmp2 = DAG.getConstantFP(apf, OVT);
           //  X>=2^31 ? (int)(X-2^31)+0x80000000 : (int)X
           // FIXME: generated code sucks.
-          Result = DAG.getNode(ISD::SELECT_CC, VT, Node->getOperand(0), Tmp2,
-                               DAG.getNode(ISD::ADD, MVT::i32,
-                                 DAG.getNode(ISD::FP_TO_SINT, VT,
-                                   DAG.getNode(ISD::FSUB, OVT,
+          Result = DAG.getNode(ISD::SELECT_CC, dl, VT, Node->getOperand(0), 
+                               Tmp2,
+                               DAG.getNode(ISD::ADD, dl, MVT::i32,
+                                 DAG.getNode(ISD::FP_TO_SINT, dl, VT,
+                                   DAG.getNode(ISD::FSUB, dl, OVT,
                                                  Node->getOperand(0), Tmp2)),
                                  DAG.getConstant(0x80000000, MVT::i32)),
-                               DAG.getNode(ISD::FP_TO_SINT, VT, 
+                               DAG.getNode(ISD::FP_TO_SINT, dl, VT, 
                                            Node->getOperand(0)),
                                DAG.getCondCode(ISD::SETGE));
         }
@@ -4601,7 +4608,7 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
       break;
     case Expand:
       Result = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, NVT,
-                             Node->getOperand(0));
+                             Node->getOperand(0), Node->getDebugLoc());
       // Round if we cannot tolerate excess precision.
       if (NoExcessFPPrecision)
         Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
@@ -5808,7 +5815,8 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
 /// LegalizeINT_TO_FP - Legalize a [US]INT_TO_FP operation.
 ///
 SDValue SelectionDAGLegalize::
-LegalizeINT_TO_FP(SDValue Result, bool isSigned, MVT DestTy, SDValue Op) {
+LegalizeINT_TO_FP(SDValue Result, bool isSigned, MVT DestTy, SDValue Op,
+                  DebugLoc dl) {
   bool isCustom = false;
   SDValue Tmp1;
   switch (getTypeAction(Op.getValueType())) {
@@ -5824,7 +5832,7 @@ LegalizeINT_TO_FP(SDValue Result, bool isSigned, MVT DestTy, SDValue Op) {
       if (Result.getNode())
         Result = DAG.UpdateNodeOperands(Result, Tmp1);
       else
-        Result = DAG.getNode(isSigned ? ISD::SINT_TO_FP : ISD::UINT_TO_FP,
+        Result = DAG.getNode(isSigned ? ISD::SINT_TO_FP : ISD::UINT_TO_FP, dl,
                              DestTy, Tmp1);
       if (isCustom) {
         Tmp1 = TLI.LowerOperation(Result, DAG);
@@ -5832,29 +5840,29 @@ LegalizeINT_TO_FP(SDValue Result, bool isSigned, MVT DestTy, SDValue Op) {
       }
       break;
     case TargetLowering::Expand:
-      Result = ExpandLegalINT_TO_FP(isSigned, LegalizeOp(Op), DestTy);
+      Result = ExpandLegalINT_TO_FP(isSigned, LegalizeOp(Op), DestTy, dl);
       break;
     case TargetLowering::Promote:
-      Result = PromoteLegalINT_TO_FP(LegalizeOp(Op), DestTy, isSigned);
+      Result = PromoteLegalINT_TO_FP(LegalizeOp(Op), DestTy, isSigned, dl);
       break;
     }
     break;
   case Expand:
-    Result = ExpandIntToFP(isSigned, DestTy, Op);
+    Result = ExpandIntToFP(isSigned, DestTy, Op, dl) ;
     break;
   case Promote:
     Tmp1 = PromoteOp(Op);
     if (isSigned) {
-      Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, Tmp1.getValueType(),
+      Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, Tmp1.getValueType(),
                Tmp1, DAG.getValueType(Op.getValueType()));
     } else {
-      Tmp1 = DAG.getZeroExtendInReg(Tmp1,
+      Tmp1 = DAG.getZeroExtendInReg(Tmp1, dl, 
                                     Op.getValueType());
     }
     if (Result.getNode())
       Result = DAG.UpdateNodeOperands(Result, Tmp1);
     else
-      Result = DAG.getNode(isSigned ? ISD::SINT_TO_FP : ISD::UINT_TO_FP,
+      Result = DAG.getNode(isSigned ? ISD::SINT_TO_FP : ISD::UINT_TO_FP, dl,
                            DestTy, Tmp1);
     Result = LegalizeOp(Result);  // The 'op' is not necessarily legal!
     break;
@@ -5865,7 +5873,7 @@ LegalizeINT_TO_FP(SDValue Result, bool isSigned, MVT DestTy, SDValue Op) {
 /// ExpandIntToFP - Expand a [US]INT_TO_FP operation.
 ///
 SDValue SelectionDAGLegalize::
-ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
+ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source, DebugLoc dl) {
   MVT SourceVT = Source.getValueType();
   bool ExpandSource = getTypeAction(SourceVT) == Expand;
 
@@ -5877,16 +5885,18 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
     if (DestTy.getVectorNumElements() == 1) {
       SDValue Scalar = ScalarizeVectorOp(Source);
       SDValue Result = LegalizeINT_TO_FP(SDValue(), isSigned,
-                                         DestEltTy, Scalar);
-      return DAG.getNode(ISD::BUILD_VECTOR, DestTy, Result);
+                                         DestEltTy, Scalar, dl);
+      return DAG.getNode(ISD::BUILD_VECTOR, dl, DestTy, Result);
     }
     SDValue Lo, Hi;
     SplitVectorOp(Source, Lo, Hi);
     MVT SplitDestTy = MVT::getVectorVT(DestEltTy,
                                        DestTy.getVectorNumElements() / 2);
-    SDValue LoResult = LegalizeINT_TO_FP(SDValue(), isSigned, SplitDestTy, Lo);
-    SDValue HiResult = LegalizeINT_TO_FP(SDValue(), isSigned, SplitDestTy, Hi);
-    return LegalizeOp(DAG.getNode(ISD::CONCAT_VECTORS, DestTy, LoResult,
+    SDValue LoResult = LegalizeINT_TO_FP(SDValue(), isSigned, SplitDestTy, 
+                                         Lo, dl);
+    SDValue HiResult = LegalizeINT_TO_FP(SDValue(), isSigned, SplitDestTy, 
+                                         Hi, dl);
+    return LegalizeOp(DAG.getNode(ISD::CONCAT_VECTORS, dl, DestTy, LoResult,
                                   HiResult));
   }
 
@@ -5899,7 +5909,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
     if (ExpandSource) {
       SDValue Lo;
       ExpandOp(Source, Lo, Hi);
-      Source = DAG.getNode(ISD::BUILD_PAIR, SourceVT, Lo, Hi);
+      Source = DAG.getNode(ISD::BUILD_PAIR, dl, SourceVT, Lo, Hi);
     } else {
       // The comparison for the sign bit will use the entire operand.
       Hi = Source;
@@ -5923,13 +5933,14 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
 
     // If this is unsigned, and not supported, first perform the conversion to
     // signed, then adjust the result if the sign bit is set.
-    SDValue SignedConv = ExpandIntToFP(true, DestTy, Source);
+    SDValue SignedConv = ExpandIntToFP(true, DestTy, Source, dl);
 
-    SDValue SignSet = DAG.getSetCC(TLI.getSetCCResultType(Hi.getValueType()),
+    SDValue SignSet = DAG.getSetCC(dl, 
+                                   TLI.getSetCCResultType(Hi.getValueType()),
                                    Hi, DAG.getConstant(0, Hi.getValueType()),
                                    ISD::SETLT);
     SDValue Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
-    SDValue CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
+    SDValue CstOffset = DAG.getNode(ISD::SELECT, dl, Zero.getValueType(),
                                       SignSet, Four, Zero);
     uint64_t FF = 0x5f800000ULL;
     if (TLI.isLittleEndian()) FF <<= 32;
@@ -5937,16 +5948,16 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
 
     SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
     unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
-    CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
+    CPIdx = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), CPIdx, CstOffset);
     Alignment = std::min(Alignment, 4u);
     SDValue FudgeInReg;
     if (DestTy == MVT::f32)
-      FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
+      FudgeInReg = DAG.getLoad(MVT::f32, dl, DAG.getEntryNode(), CPIdx,
                                PseudoSourceValue::getConstantPool(), 0,
                                false, Alignment);
     else if (DestTy.bitsGT(MVT::f32))
       // FIXME: Avoid the extend by construction the right constantpool?
-      FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestTy, DAG.getEntryNode(),
+      FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, dl, DestTy, DAG.getEntryNode(),
                                   CPIdx,
                                   PseudoSourceValue::getConstantPool(), 0,
                                   MVT::f32, false, Alignment);
@@ -5959,12 +5970,12 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
       // constructing will be expanded into a libcall.
       if (SCVT.getSizeInBits() != DestTy.getSizeInBits()) {
         assert(SCVT.getSizeInBits() * 2 == DestTy.getSizeInBits());
-        SignedConv = DAG.getNode(ISD::BUILD_PAIR, DestTy,
+        SignedConv = DAG.getNode(ISD::BUILD_PAIR, dl, DestTy,
                                  SignedConv, SignedConv.getValue(1));
       }
-      SignedConv = DAG.getNode(ISD::BIT_CONVERT, DestTy, SignedConv);
+      SignedConv = DAG.getNode(ISD::BIT_CONVERT, dl, DestTy, SignedConv);
     }
-    return DAG.getNode(ISD::FADD, DestTy, SignedConv, FudgeInReg);
+    return DAG.getNode(ISD::FADD, dl, DestTy, SignedConv, FudgeInReg);
   }
 
   // Check to see if the target has a custom way to lower this.  If so, use it.
@@ -5974,7 +5985,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
   case TargetLowering::Expand:
     break;   // This case is handled below.
   case TargetLowering::Custom: {
-    SDValue NV = TLI.LowerOperation(DAG.getNode(ISD::SINT_TO_FP, DestTy,
+    SDValue NV = TLI.LowerOperation(DAG.getNode(ISD::SINT_TO_FP, dl, DestTy,
                                                   Source), DAG);
     if (NV.getNode())
       return LegalizeOp(NV);
@@ -5987,7 +5998,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
   if (ExpandSource) {
     SDValue SrcLo, SrcHi;
     ExpandOp(Source, SrcLo, SrcHi);
-    Source = DAG.getNode(ISD::BUILD_PAIR, SourceVT, SrcLo, SrcHi);
+    Source = DAG.getNode(ISD::BUILD_PAIR, dl, SourceVT, SrcLo, SrcHi);
   }
 
   RTLIB::Libcall LC = isSigned ?
@@ -5995,11 +6006,11 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
     RTLIB::getUINTTOFP(SourceVT, DestTy);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unknown int value type");
 
-  Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
+  Source = DAG.getNode(ISD::SINT_TO_FP, dl, DestTy, Source);
   SDValue HiPart;
   SDValue Result = ExpandLibCall(LC, Source.getNode(), isSigned, HiPart);
   if (Result.getValueType() != DestTy && HiPart.getNode())
-    Result = DAG.getNode(ISD::BUILD_PAIR, DestTy, Result, HiPart);
+    Result = DAG.getNode(ISD::BUILD_PAIR, dl, DestTy, Result, HiPart);
   return Result;
 }
 
@@ -6009,7 +6020,8 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
 /// legal for the target.
 SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
                                                    SDValue Op0,
-                                                   MVT DestVT) {
+                                                   MVT DestVT,
+                                                   DebugLoc dl) {
   if (Op0.getValueType() == MVT::i32) {
     // simple 32-bit [signed|unsigned] integer to float/double expansion
     
@@ -6020,7 +6032,8 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     SDValue WordOff = DAG.getConstant(sizeof(int), TLI.getPointerTy());
     // set up Hi and Lo (into buffer) address based on endian
     SDValue Hi = StackSlot;
-    SDValue Lo = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot,WordOff);
+    SDValue Lo = DAG.getNode(ISD::ADD, dl, 
+                             TLI.getPointerTy(), StackSlot,WordOff);
     if (TLI.isLittleEndian())
       std::swap(Hi, Lo);
     
@@ -6029,26 +6042,26 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     if (isSigned) {
       // constant used to invert sign bit (signed to unsigned mapping)
       SDValue SignBit = DAG.getConstant(0x80000000u, MVT::i32);
-      Op0Mapped = DAG.getNode(ISD::XOR, MVT::i32, Op0, SignBit);
+      Op0Mapped = DAG.getNode(ISD::XOR, dl, MVT::i32, Op0, SignBit);
     } else {
       Op0Mapped = Op0;
     }
     // store the lo of the constructed double - based on integer input
-    SDValue Store1 = DAG.getStore(DAG.getEntryNode(),
+    SDValue Store1 = DAG.getStore(DAG.getEntryNode(), dl,
                                     Op0Mapped, Lo, NULL, 0);
     // initial hi portion of constructed double
     SDValue InitialHi = DAG.getConstant(0x43300000u, MVT::i32);
     // store the hi of the constructed double - biased exponent
-    SDValue Store2=DAG.getStore(Store1, InitialHi, Hi, NULL, 0);
+    SDValue Store2=DAG.getStore(Store1, dl, InitialHi, Hi, NULL, 0);
     // load the constructed double
-    SDValue Load = DAG.getLoad(MVT::f64, Store2, StackSlot, NULL, 0);
+    SDValue Load = DAG.getLoad(MVT::f64, dl, Store2, StackSlot, NULL, 0);
     // FP constant to bias correct the final result
     SDValue Bias = DAG.getConstantFP(isSigned ?
                                             BitsToDouble(0x4330000080000000ULL)
                                           : BitsToDouble(0x4330000000000000ULL),
                                      MVT::f64);
     // subtract the bias
-    SDValue Sub = DAG.getNode(ISD::FSUB, MVT::f64, Load, Bias);
+    SDValue Sub = DAG.getNode(ISD::FSUB, dl, MVT::f64, Load, Bias);
     // final result
     SDValue Result;
     // handle final rounding
@@ -6056,21 +6069,21 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
       // do nothing
       Result = Sub;
     } else if (DestVT.bitsLT(MVT::f64)) {
-      Result = DAG.getNode(ISD::FP_ROUND, DestVT, Sub,
+      Result = DAG.getNode(ISD::FP_ROUND, dl, DestVT, Sub,
                            DAG.getIntPtrConstant(0));
     } else if (DestVT.bitsGT(MVT::f64)) {
-      Result = DAG.getNode(ISD::FP_EXTEND, DestVT, Sub);
+      Result = DAG.getNode(ISD::FP_EXTEND, dl, DestVT, Sub);
     }
     return Result;
   }
   assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
-  SDValue Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
+  SDValue Tmp1 = DAG.getNode(ISD::SINT_TO_FP, dl, DestVT, Op0);
 
-  SDValue SignSet = DAG.getSetCC(TLI.getSetCCResultType(Op0.getValueType()),
+  SDValue SignSet = DAG.getSetCC(dl, TLI.getSetCCResultType(Op0.getValueType()),
                                  Op0, DAG.getConstant(0, Op0.getValueType()),
                                  ISD::SETLT);
   SDValue Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
-  SDValue CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
+  SDValue CstOffset = DAG.getNode(ISD::SELECT, dl, Zero.getValueType(),
                                     SignSet, Four, Zero);
 
   // If the sign bit of the integer is set, the large number will be treated
@@ -6089,22 +6102,22 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
 
   SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
   unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
-  CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
+  CPIdx = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), CPIdx, CstOffset);
   Alignment = std::min(Alignment, 4u);
   SDValue FudgeInReg;
   if (DestVT == MVT::f32)
-    FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
+    FudgeInReg = DAG.getLoad(MVT::f32, dl, DAG.getEntryNode(), CPIdx,
                              PseudoSourceValue::getConstantPool(), 0,
                              false, Alignment);
   else {
     FudgeInReg =
-      LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, DestVT,
+      LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, dl, DestVT,
                                 DAG.getEntryNode(), CPIdx,
                                 PseudoSourceValue::getConstantPool(), 0,
                                 MVT::f32, false, Alignment));
   }
 
-  return DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg);
+  return DAG.getNode(ISD::FADD, dl, DestVT, Tmp1, FudgeInReg);
 }
 
 /// PromoteLegalINT_TO_FP - This function is responsible for legalizing a
@@ -6114,7 +6127,8 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
 /// operation that takes a larger input.
 SDValue SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDValue LegalOp,
                                                     MVT DestVT,
-                                                    bool isSigned) {
+                                                    bool isSigned,
+                                                    DebugLoc dl) {
   // First step, figure out the appropriate *INT_TO_FP operation to use.
   MVT NewInTy = LegalOp.getValueType();
 
@@ -6157,9 +6171,9 @@ SDValue SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDValue LegalOp,
 
   // Okay, we found the operation and type to use.  Zero extend our input to the
   // desired type then run the operation on it.
-  return DAG.getNode(OpToUse, DestVT,
+  return DAG.getNode(OpToUse, dl, DestVT,
                      DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
-                                 NewInTy, LegalOp));
+                                 dl, NewInTy, LegalOp));
 }
 
 /// PromoteLegalFP_TO_INT - This function is responsible for legalizing a
@@ -6169,7 +6183,8 @@ SDValue SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDValue LegalOp,
 /// operation that returns a larger result.
 SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
                                                     MVT DestVT,
-                                                    bool isSigned) {
+                                                    bool isSigned,
+                                                    DebugLoc dl) {
   // First step, figure out the appropriate FP_TO*INT operation to use.
   MVT NewOutTy = DestVT;
 
@@ -6211,7 +6226,7 @@ SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
 
   
   // Okay, we found the operation and type to use.
-  SDValue Operation = DAG.getNode(OpToUse, NewOutTy, LegalOp);
+  SDValue Operation = DAG.getNode(OpToUse, dl, NewOutTy, LegalOp);
 
   // If the operation produces an invalid type, it must be custom lowered.  Use
   // the target lowering hooks to expand it.  Just keep the low part of the
@@ -6225,7 +6240,7 @@ SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
 
   // Truncate the result of the extended FP_TO_*INT operation to the desired
   // size.
-  return DAG.getNode(ISD::TRUNCATE, DestVT, Operation);
+  return DAG.getNode(ISD::TRUNCATE, dl, DestVT, Operation);
 }
 
 /// ExpandBSWAP - Open code the operations for BSWAP of the specified operation.
@@ -7368,7 +7383,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     }
 
     Lo = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, VT,
-                       Node->getOperand(0));
+                       Node->getOperand(0), Node->getDebugLoc());
     if (getTypeAction(Lo.getValueType()) == Expand)
       // float to i32 etc. can be 'expanded' to a single node.
       ExpandOp(Lo, Lo, Hi);
