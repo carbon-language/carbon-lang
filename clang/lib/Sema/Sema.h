@@ -735,6 +735,55 @@ public:
     Decl* getAsDecl() const;
 
     BasePaths *getBasePaths() const;
+
+    /// \brief Iterate over the results of name lookup.
+    ///
+    /// The @c iterator class provides iteration over the results of a
+    /// non-ambiguous name lookup.
+    class iterator {
+      /// The LookupResult structure we're iterating through.
+      LookupResult *Result;
+
+      /// The current position of this iterator within the sequence of
+      /// results. This value will have the same representation as the
+      /// @c First field in the LookupResult structure.
+      mutable uintptr_t Current;
+
+    public:
+      typedef Decl *                     value_type;
+      typedef Decl *                     reference;
+      typedef Decl *                     pointer;
+      typedef std::ptrdiff_t             difference_type;
+      typedef std::forward_iterator_tag  iterator_category;
+
+      iterator() : Result(0), Current(0) { }
+
+      iterator(LookupResult *Res, uintptr_t Cur) : Result(Res), Current(Cur) { }
+
+      reference operator*() const;
+
+      pointer operator->() const { return **this; }
+
+      iterator &operator++();
+
+      iterator operator++(int) {
+        iterator tmp(*this);
+        ++(*this);
+        return tmp;
+      }
+
+      friend inline bool operator==(iterator const& x, iterator const& y) {
+        return x.Current == y.Current;
+      }
+
+      friend inline bool operator!=(iterator const& x, iterator const& y) {
+        return x.Current != y.Current;
+      }
+    };
+    friend class iterator;
+
+    iterator begin();
+    iterator end();
   };
 
   /// Determines whether D is a suitable lookup result according to the

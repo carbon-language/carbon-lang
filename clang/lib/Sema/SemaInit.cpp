@@ -1342,6 +1342,8 @@ bool Sema::CheckValueInitialization(QualType Type, SourceLocation Loc) {
     //   [...] A program that calls for default-initialization or
     //   value-initialization of an entity of reference type is
     //   ill-formed. [...]
+    // FIXME: Once we have code that goes through this path, add an
+    // actual diagnostic :)
   }
 
   return false;

@@ -181,6 +181,66 @@ BasePaths *Sema::LookupResult::getBasePaths() const {
   return reinterpret_cast<BasePaths *>(First);
 }
 
+Sema::LookupResult::iterator::reference 
+Sema::LookupResult::iterator::operator*() const {
+  switch (Result->StoredKind) {
+  case SingleDecl:
+    return reinterpret_cast<Decl*>(Current);
+
+  case OverloadedDeclFromIdResolver:
+    return *IdentifierResolver::iterator::getFromOpaqueValue(Current);
+
+  case OverloadedDeclFromDeclContext:
+    return *reinterpret_cast<DeclContext::lookup_iterator>(Current);
+
+  case AmbiguousLookup:
+    assert(false && "Cannot look into ambiguous lookup results");
+    break;
+  }
+
+  return 0;
+}
+
+Sema::LookupResult::iterator& Sema::LookupResult::iterator::operator++() {
+  switch (Result->StoredKind) {
+  case SingleDecl:
+    Current = reinterpret_cast<uintptr_t>((Decl*)0);
+    break;
+
+  case OverloadedDeclFromIdResolver: {
+    IdentifierResolver::iterator I 
+      = IdentifierResolver::iterator::getFromOpaqueValue(Current);
+    ++I;
+    Current = I.getAsOpaqueValue();
+    break;
+  }
+
+  case OverloadedDeclFromDeclContext: {
+    DeclContext::lookup_iterator I 
+      = reinterpret_cast<DeclContext::lookup_iterator>(Current);
+    ++I;
+    Current = reinterpret_cast<uintptr_t>(I);
+    break;
+  }
+
+  case AmbiguousLookup:
+    assert(false && "Cannot look into ambiguous lookup results");
+    break;
+  }
+
+  return *this;
+}
+
+Sema::LookupResult::iterator Sema::LookupResult::begin() {
+  assert(StoredKind != AmbiguousLookup && "Lookup into an ambiguous result");
+  return iterator(this, First);
+}
+
+Sema::LookupResult::iterator Sema::LookupResult::end() {
+  assert(StoredKind != AmbiguousLookup && "Lookup into an ambiguous result");
+  return iterator(this, Last);
+}
+
 // Retrieve the set of identifier namespaces that correspond to a
 // specific kind of name lookup.
 inline unsigned 

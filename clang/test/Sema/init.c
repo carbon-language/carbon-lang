@@ -96,3 +96,13 @@ struct {
   int a;
   int z[2];
 } y = { .z = {} };
+
+int bbb[10];
+
+struct foo2 {
+   unsigned a;
+};
+
+struct foo2 bar2[] = {
+   { (int)bbb }
+};

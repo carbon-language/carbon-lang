@@ -1666,35 +1666,22 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         << D.getCXXScopeSpec().getRange();
       InvalidDecl = true;
         
-      PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName);
-      if (!PrevDecl) {
-        // Nothing to suggest.
-      } else if (OverloadedFunctionDecl *Ovl 
-                 = dyn_cast<OverloadedFunctionDecl>(PrevDecl)) {
-        for (OverloadedFunctionDecl::function_iterator 
-               Func = Ovl->function_begin(),
-               FuncEnd = Ovl->function_end();
-             Func != FuncEnd; ++Func) {
-          if (isNearlyMatchingMemberFunction(Context, *Func, NewFD))
-            Diag((*Func)->getLocation(), diag::note_member_def_close_match);
-            
-        }
-      } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(PrevDecl)) {
-        // Suggest this no matter how mismatched it is; it's the only
-        // thing we have.
-        unsigned diag;
-        if (isNearlyMatchingMemberFunction(Context, Method, NewFD))
-          diag = diag::note_member_def_close_match;
-        else if (Method->getBody())
-          diag = diag::note_previous_definition;
-        else
-          diag = diag::note_previous_declaration;
-        Diag(Method->getLocation(), diag);
+      LookupResult Prev = LookupQualifiedName(DC, Name, LookupOrdinaryName, 
+                                              true);
+      assert(!Prev.isAmbiguous() && 
+             "Cannot have an ambiguity in previous-declaration lookup");
+      for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
+           Func != FuncEnd; ++Func) {
+        if (isa<CXXMethodDecl>(*Func) &&
+            isNearlyMatchingMemberFunction(Context, cast<FunctionDecl>(*Func),
+                                           NewFD))
+          Diag((*Func)->getLocation(), diag::note_member_def_close_match);
       }
-        
+ 
       PrevDecl = 0;
     }
   }
+
   // Handle attributes. We need to have merged decls when handling attributes
   // (for example to check for conflicts, etc).
   ProcessDeclAttributes(NewFD, D);
