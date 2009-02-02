@@ -5366,6 +5366,8 @@ static bool isAndOrOfSetCCs(SDValue Op, unsigned &Opc) {
           Op.getOperand(1).hasOneUse());
 }
 
+// isXor1OfSetCC - Return true if node is an ISD::XOR of a X86ISD::SETCC and
+// 1 and that the SETCC node has a single use.
 static bool isXor1OfSetCC(SDValue Op) {
   if (Op.getOpcode() != ISD::XOR)
     return false;
