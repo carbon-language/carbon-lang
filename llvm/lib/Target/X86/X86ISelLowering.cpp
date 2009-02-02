@@ -7515,6 +7515,14 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);   // Don't know anything.
   switch (Opc) {
   default: break;
+  case X86ISD::ADD:
+  case X86ISD::SUB:
+  case X86ISD::SMUL:
+  case X86ISD::UMUL:
+    // These nodes' second result is a boolean.
+    if (Op.getResNo() == 0)
+      break;
+    // Fallthrough
   case X86ISD::SETCC:
     KnownZero |= APInt::getHighBitsSet(Mask.getBitWidth(),
                                        Mask.getBitWidth() - 1);
