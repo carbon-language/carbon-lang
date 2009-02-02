@@ -244,10 +244,10 @@ public:
 
   /// ReturnTypeUsesSret - Return true iff the given type uses 'sret'
   /// when used as a return type.
-  bool ReturnTypeUsesSret(QualType RetTy);
+  bool ReturnTypeUsesSret(const CGFunctionInfo &FI);
 
-  void ConstructAttributeList(const Decl *TargetDecl,
-                              const CGFunctionInfo &Info,
+  void ConstructAttributeList(const CGFunctionInfo &Info,
+                              const Decl *TargetDecl,
                               AttributeListType &PAL);
 
 private:

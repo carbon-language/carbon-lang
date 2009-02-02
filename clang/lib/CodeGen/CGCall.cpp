@@ -935,8 +935,8 @@ static void CreateCoercedStore(llvm::Value *Src,
 
 /***/
 
-bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
-  return getABIReturnInfo(RetTy, getTypes()).isStructRet();
+bool CodeGenModule::ReturnTypeUsesSret(const CGFunctionInfo &FI) {
+  return getABIReturnInfo(FI.getReturnType(), getTypes()).isStructRet();
 }
 
 const llvm::FunctionType *
@@ -1008,8 +1008,8 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   return llvm::FunctionType::get(ResultType, ArgTys, IsVariadic);
 }
 
-void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
-                                           const CGFunctionInfo &Info,
+void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &Info,
+                                           const Decl *TargetDecl,
                                            AttributeListType &PAL) {
   unsigned FuncAttrs = 0;
   unsigned RetAttrs = 0;
@@ -1107,16 +1107,14 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
 
 }
 
-void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
-                                         QualType RetTy, 
+void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
+                                         llvm::Function *Fn,
                                          const FunctionArgList &Args) {
-  CGFunctionInfo FnInfo(RetTy, Args);
-
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = Fn->arg_begin();
   
   // Name the struct return argument.
-  if (CGM.ReturnTypeUsesSret(RetTy)) {
+  if (CGM.ReturnTypeUsesSret(FI)) {
     AI->setName("agg.result");
     ++AI;
   }
@@ -1173,12 +1171,13 @@ void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
   assert(AI == Fn->arg_end() && "Argument mismatch!");
 }
 
-void CodeGenFunction::EmitFunctionEpilog(QualType RetTy, 
+void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
                                          llvm::Value *ReturnValue) {
   llvm::Value *RV = 0;
 
   // Functions with no result always return void.
   if (ReturnValue) { 
+    QualType RetTy = FI.getReturnType();
     ABIArgInfo RetAI = getABIReturnInfo(RetTy, CGM.getTypes());
     
     switch (RetAI.getKind()) {
@@ -1220,8 +1219,8 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
   }
 }
 
-RValue CodeGenFunction::EmitCall(llvm::Value *Callee, 
-                                 const CGFunctionInfo &CallInfo,
+RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
+                                 llvm::Value *Callee, 
                                  const CallArgList &CallArgs) {
   llvm::SmallVector<llvm::Value*, 16> Args;
 
@@ -1282,7 +1281,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
 
   // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
   CodeGen::AttributeListType AttributeList;
-  CGM.ConstructAttributeList(0, CallInfo, AttributeList);
+  CGM.ConstructAttributeList(CallInfo, 0, AttributeList);
   CI->setAttributes(llvm::AttrListPtr::get(AttributeList.begin(), 
                                            AttributeList.size()));  
   

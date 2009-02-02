@@ -311,7 +311,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  return CGF.EmitCall(imp, CGFunctionInfo(ResultType, ActualArgs), ActualArgs);
+  return CGF.EmitCall(CGFunctionInfo(ResultType, ActualArgs), imp, ActualArgs);
 }
 
 /// Generate code for a message send expression.  
@@ -358,7 +358,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  return CGF.EmitCall(imp, CGFunctionInfo(ResultType, ActualArgs), ActualArgs);
+  return CGF.EmitCall(CGFunctionInfo(ResultType, ActualArgs), imp, ActualArgs);
 }
 
 /// Generates a MethodList.  Used in construction of a objc_class and 

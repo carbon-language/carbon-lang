@@ -810,7 +810,7 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
   const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FnInfo, false);
 
   llvm::Constant *Fn;
-  if (CGM.ReturnTypeUsesSret(ResultType)) {
+  if (CGM.ReturnTypeUsesSret(FnInfo)) {
     Fn = ObjCTypes.getSendStretFn(IsSuper);
   } else if (ResultType->isFloatingType()) {
     // FIXME: Sadly, this is wrong. This actually depends on the
@@ -820,7 +820,7 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
     Fn = ObjCTypes.getSendFn(IsSuper);
   }
   Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
-  return CGF.EmitCall(Fn, FnInfo, ActualArgs);
+  return CGF.EmitCall(FnInfo, Fn, ActualArgs);
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder, 

@@ -70,6 +70,7 @@ public:
   
   // Holds the Decl for the current function or method
   const Decl *CurFuncDecl;
+  const CGFunctionInfo *CurFnInfo;
   QualType FnRetTy;
   llvm::Function *CurFn;
 
@@ -219,13 +220,13 @@ public:
   /// EmitFunctionProlog - Emit the target specific LLVM code to load
   /// the arguments for the given function. This is also responsible
   /// for naming the LLVM function arguments.
-  void EmitFunctionProlog(llvm::Function *Fn, QualType RetTy, 
+  void EmitFunctionProlog(const CGFunctionInfo &FI,
+                          llvm::Function *Fn,
                           const FunctionArgList &Args);
 
   /// EmitFunctionEpilog - Emit the target specific LLVM code to
   /// return the given temporary.
-  void EmitFunctionEpilog(QualType RetTy, 
-                          llvm::Value *ReturnValue);
+  void EmitFunctionEpilog(const CGFunctionInfo &FI, llvm::Value *ReturnValue);
 
   const llvm::Type *ConvertType(QualType T);
 
@@ -543,8 +544,8 @@ public:
   /// given result type, and using the given argument list which
   /// specifies both the LLVM arguments and the types they were
   /// derived from.
-  RValue EmitCall(llvm::Value *Callee,
-                  const CGFunctionInfo &FnInfo,
+  RValue EmitCall(const CGFunctionInfo &FnInfo,
+                  llvm::Value *Callee,
                   const CallArgList &Args);
 
   RValue EmitCallExpr(const CallExpr *E);

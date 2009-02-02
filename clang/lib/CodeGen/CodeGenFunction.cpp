@@ -125,7 +125,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     DI->EmitRegionEnd(CurFn, Builder);
   }
 
-  EmitFunctionEpilog(FnRetTy, ReturnValue);
+  EmitFunctionEpilog(*CurFnInfo, ReturnValue);
 
   // Remove the AllocaInsertPt instruction, which is just a convenience for us.
   AllocaInsertPt->eraseFromParent();
@@ -171,7 +171,9 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
     }
   }
 
-  EmitFunctionProlog(CurFn, FnRetTy, Args);
+  // FIXME: Leaked.
+  CurFnInfo = new CGFunctionInfo(FnRetTy, Args);
+  EmitFunctionProlog(*CurFnInfo, CurFn, Args);
   
   // If any of the arguments have a variably modified type, make sure to
   // emit the type size.
