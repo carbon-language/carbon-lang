@@ -6,6 +6,6 @@
 // RUN: grep subq %t | count 1
 // RUN: grep addq %t | count 1
 // This is a test for x86-64, add your target below if it FAILs.
-// XFAIL: alpha|ia64|arm|powerpc|sparc|x86
+// XFAIL: alpha|ia64|arm|powerpc|sparc|i.86
 
 long double f0(float f) { return f; }
