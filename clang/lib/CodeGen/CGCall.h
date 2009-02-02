@@ -47,21 +47,19 @@ namespace CodeGen {
   typedef llvm::SmallVector<std::pair<const VarDecl*, QualType>, 
                             16> FunctionArgList;
   
-  // FIXME: This should be a better iterator type so that we can avoid
-  // construction of the ArgTypes smallvectors.
-  typedef llvm::SmallVector<QualType, 16>::const_iterator ArgTypeIterator;
-
   /// CGFunctionInfo - Class to encapsulate the information about a
   /// function definition.
   class CGFunctionInfo {
     llvm::SmallVector<QualType, 16> ArgTypes;
 
   public:
+    typedef llvm::SmallVector<QualType, 16>::const_iterator arg_iterator;
+
     CGFunctionInfo(QualType ResTy, 
                    const llvm::SmallVector<QualType, 16> &ArgTys);
 
-    ArgTypeIterator argtypes_begin() const;
-    ArgTypeIterator argtypes_end() const;
+    arg_iterator arg_begin() const;
+    arg_iterator arg_end() const;
 
     QualType getReturnType() const { return ArgTypes[0]; }
   };

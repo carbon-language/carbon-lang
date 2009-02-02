@@ -97,11 +97,11 @@ CGFunctionInfo::CGFunctionInfo(QualType ResTy,
   ArgTypes.insert(ArgTypes.end(), ArgTys.begin(), ArgTys.end());
 }
 
-ArgTypeIterator CGFunctionInfo::argtypes_begin() const {
-  return ArgTypes.begin();
+CGFunctionInfo::arg_iterator CGFunctionInfo::arg_begin() const {
+  return ArgTypes.begin()+1;
 }
 
-ArgTypeIterator CGFunctionInfo::argtypes_end() const {
+CGFunctionInfo::arg_iterator CGFunctionInfo::arg_end() const {
   return ArgTypes.end();
 }
 
@@ -965,8 +965,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
 
   const llvm::Type *ResultType = 0;
 
-  ArgTypeIterator begin = FI.argtypes_begin(), end = FI.argtypes_end();  
-  QualType RetTy = *begin;
+  QualType RetTy = FI.getReturnType();
   ABIArgInfo RetAI = getABIReturnInfo(RetTy, *this);
   switch (RetAI.getKind()) {
   case ABIArgInfo::ByVal:
@@ -997,9 +996,10 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
     break;
   }
   
-  for (++begin; begin != end; ++begin) {
-    ABIArgInfo AI = getABIArgumentInfo(*begin, *this);
-    const llvm::Type *Ty = ConvertType(*begin);
+  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end(); 
+       it != ie; ++it) {
+    ABIArgInfo AI = getABIArgumentInfo(*it, *this);
+    const llvm::Type *Ty = ConvertType(*it);
     
     switch (AI.getKind()) {
     case ABIArgInfo::Ignore:
@@ -1020,7 +1020,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
       break;
      
     case ABIArgInfo::Expand:
-      GetExpandedTypes(*begin, ArgTys);
+      GetExpandedTypes(*it, ArgTys);
       break;
     }
   }
@@ -1028,7 +1028,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   return llvm::FunctionType::get(ResultType, ArgTys, IsVariadic);
 }
 
-void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &Info,
+void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
                                            const Decl *TargetDecl,
                                            AttributeListType &PAL) {
   unsigned FuncAttrs = 0;
@@ -1045,8 +1045,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &Info,
       FuncAttrs |= llvm::Attribute::ReadNone;
   }
 
-  ArgTypeIterator begin = Info.argtypes_begin(), end = Info.argtypes_end();
-  QualType RetTy = *begin;
+  QualType RetTy = FI.getReturnType();
   unsigned Index = 1;
   ABIArgInfo RetAI = getABIReturnInfo(RetTy, getTypes());
   switch (RetAI.getKind()) {
@@ -1078,8 +1077,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &Info,
 
   if (RetAttrs)
     PAL.push_back(llvm::AttributeWithIndex::get(0, RetAttrs));
-  for (++begin; begin != end; ++begin) {
-    QualType ParamType = *begin;
+  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end(); 
+       it != ie; ++it) {
+    QualType ParamType = *it;
     unsigned Attributes = 0;
     ABIArgInfo AI = getABIArgumentInfo(ParamType, getTypes());
     
