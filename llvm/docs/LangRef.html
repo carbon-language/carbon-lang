@@ -55,6 +55,7 @@
           <li><a href="#t_opaque">Opaque Type</a></li>
         </ol>
       </li>
+      <li><a href="#t_uprefs">Type Up-references</a></li>
     </ol>
   </li>
   <li><a href="#constants">Constants</a>
@@ -721,7 +722,6 @@ unexpected type.  This is an important design point and isn't going to
 change.</p>
 
 </div>
-
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
@@ -1644,6 +1644,58 @@ structure type).</p>
     <td class="left">An opaque type.</td>
   </tr>
 </table>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="t_uprefs">Type Up-references</a>
+</div>
+
+<div class="doc_text">
+<h5>Overview:</h5>
+<p>
+An "up reference" allows you to refer to a lexically enclosing type without
+requiring it to have a name. For instance, a structure declaration may contain a
+pointer to any of the types it is lexically a member of.  Example of up
+references (with their equivalent as named type declarations) include:</p>
+
+<pre>
+   { \2 * }                %x = type { %t* }
+   { \2 }*                 %y = type { %y }*
+   \1*                     %z = type %z*
+</pre>
+
+<p>
+An up reference is needed by the asmprinter for printing out cyclic types when
+there is no declared name for a type in the cycle.  Because the asmprinter does
+not want to print out an infinite type string, it needs a syntax to handle
+recursive types that have no names (all names are optional in llvm IR).
+</p>
+
+<h5>Syntax:</h5>
+<pre>
+   \&lt;level&gt;
+</pre>
+
+<p>
+The level is the count of the lexical type that is being referred to.
+</p>
+
+<h5>Examples:</h5>
+
+<table class="layout">
+  <tr class="layout">
+    <td class="left"><tt>\1*</tt></td>
+    <td class="left">Self-referential pointer.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>{ { \3*, i8 }, i32 }</tt></td>
+    <td class="left">Recursive structure where the upref refers to the out-most
+                     structure.</td>
+  </tr>
+</table>
+</div>
+
 </div>
 
 
