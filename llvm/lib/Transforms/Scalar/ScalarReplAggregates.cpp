@@ -1166,12 +1166,17 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
 static void MergeInType(const Type *In, uint64_t Offset, const Type *&Accum,
                         const TargetData &TD) {
   // If this is our first type, just use it.
-  if (Accum == 0 || In == Type::VoidTy ||
+  if ((Accum == 0 && Offset == 0) || In == Type::VoidTy ||
       // Or if this is a same type, keep it.
       (In == Accum && Offset == 0)) {
     Accum = In;
     return;
   }
+
+  // Merging something like i32 into offset 8 means that a "field" is merged in
+  // before the basic type is.  Make sure to consider the offset below.
+  if (Accum == 0)
+    Accum = Type::Int8Ty;
   
   if (const VectorType *VATy = dyn_cast<VectorType>(Accum)) {
     if (VATy->getElementType() == In &&
