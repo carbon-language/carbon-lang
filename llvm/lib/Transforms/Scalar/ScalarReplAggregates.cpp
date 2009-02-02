@@ -1482,7 +1482,7 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
     SV = BinaryOperator::CreateLShr(SV,
                                     ConstantInt::get(SV->getType(),-ShAmt),
                                     SV->getName(), SI);
-    Mask = Mask.lshr(ShAmt);
+    Mask = Mask.lshr(-ShAmt);
   }
   
   // Mask out the bits we are about to insert from the old value, and or
