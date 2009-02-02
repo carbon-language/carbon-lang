@@ -264,39 +264,35 @@ public:
   // Iterator access to properties.
   typedef specific_decl_iterator<ObjCPropertyDecl> prop_iterator;
   prop_iterator prop_begin() const { 
-    return prop_iterator(decls_begin(), decls_end());
+    return prop_iterator(decls_begin());
   }
   prop_iterator prop_end() const { 
-    return prop_iterator(decls_end(), decls_end());
+    return prop_iterator(decls_end());
   }
   
   // Iterator access to instance/class methods.
   typedef specific_decl_iterator<ObjCMethodDecl> method_iterator;
   method_iterator meth_begin() const { 
-    return method_iterator(decls_begin(), decls_end());
+    return method_iterator(decls_begin());
   }
   method_iterator meth_end() const { 
-    return method_iterator(decls_end(), decls_end());
+    return method_iterator(decls_end());
   }
 
   typedef method_iterator instmeth_iterator;
   instmeth_iterator instmeth_begin() const {
-    return instmeth_iterator(decls_begin(), decls_end(), 
-                             &ObjCMethodDecl::isInstanceMethod);
+    return instmeth_iterator(decls_begin(), &ObjCMethodDecl::isInstanceMethod);
   }
   instmeth_iterator instmeth_end() const {
-    return instmeth_iterator(decls_end(), decls_end(),
-                             &ObjCMethodDecl::isInstanceMethod);
+    return instmeth_iterator(decls_end(), &ObjCMethodDecl::isInstanceMethod);
   }
 
   typedef method_iterator classmeth_iterator;
   classmeth_iterator classmeth_begin() const {
-    return classmeth_iterator(decls_begin(), decls_end(),
-                              &ObjCMethodDecl::isClassMethod);
+    return classmeth_iterator(decls_begin(), &ObjCMethodDecl::isClassMethod);
   }
   classmeth_iterator classmeth_end() const {
-    return classmeth_iterator(decls_end(), decls_end(),
-                              &ObjCMethodDecl::isClassMethod);
+    return classmeth_iterator(decls_end(), &ObjCMethodDecl::isClassMethod);
   }
 
   // Get the local instance/class method declared in this interface.

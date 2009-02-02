@@ -927,11 +927,11 @@ public:
   typedef specific_decl_iterator<EnumConstantDecl> enumerator_iterator;
 
   enumerator_iterator enumerator_begin() const { 
-    return enumerator_iterator(this->decls_begin(), this->decls_end());
+    return enumerator_iterator(this->decls_begin());
   }
 
   enumerator_iterator enumerator_end() const { 
-    return enumerator_iterator(this->decls_end(), this->decls_end());
+    return enumerator_iterator(this->decls_end());
   }
 
   /// getIntegerType - Return the integer type this enum decl corresponds to.
@@ -1022,10 +1022,10 @@ public:
   typedef specific_decl_iterator<FieldDecl> field_iterator;
 
   field_iterator field_begin() const {
-    return field_iterator(decls_begin(), decls_end());
+    return field_iterator(decls_begin());
   }
   field_iterator field_end() const {
-    return field_iterator(decls_end(), decls_end());
+    return field_iterator(decls_end());
   }
 
   // field_empty - Whether there are any fields (non-static data

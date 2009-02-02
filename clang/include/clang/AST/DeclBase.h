@@ -640,13 +640,10 @@ public:
   template<typename SpecificDecl>
   class specific_decl_iterator {
     /// Current - The current, underlying declaration iterator, which
-    /// will either be the same as End or will point to a declaration of
+    /// will either be NULL or will point to a declaration of
     /// type SpecificDecl.
     DeclContext::decl_iterator Current;
     
-    /// End - One past the last declaration within the DeclContext.
-    DeclContext::decl_iterator End;
-
     /// Acceptable - If non-NULL, points to a member function that
     /// will determine if a particular declaration of type
     /// SpecificDecl should be visited by the iteration.
@@ -656,7 +653,7 @@ public:
     /// declaration of type SpecificDecl that also meets the criteria
     /// required by Acceptable.
     void SkipToNextDecl() {
-      while (Current != End && 
+      while (*Current &&
              (!isa<SpecificDecl>(*Current) ||
               (Acceptable && !(cast<SpecificDecl>(*Current)->*Acceptable)())))
         ++Current;
@@ -670,19 +667,19 @@ public:
       difference_type;
     typedef std::forward_iterator_tag iterator_category;
 
-    specific_decl_iterator() : Current(), End(), Acceptable(0) { }
+    specific_decl_iterator() : Current(), Acceptable(0) { }
 
     /// specific_decl_iterator - Construct a new iterator over a
-    /// subset of the declarations in [C, E). If A is non-NULL, it is
-    /// a pointer to a member function of SpecificDecl that should
-    /// return true for all of the SpecificDecl instances that will be
-    /// in the subset of iterators. For example, if you want
-    /// Objective-C instance methods, SpecificDecl will be
-    /// ObjCMethodDecl and A will be &ObjCMethodDecl::isInstanceMethod.
+    /// subset of the declarations the range [C,
+    /// end-of-declarations). If A is non-NULL, it is a pointer to a
+    /// member function of SpecificDecl that should return true for
+    /// all of the SpecificDecl instances that will be in the subset
+    /// of iterators. For example, if you want Objective-C instance
+    /// methods, SpecificDecl will be ObjCMethodDecl and A will be
+    /// &ObjCMethodDecl::isInstanceMethod.
     specific_decl_iterator(DeclContext::decl_iterator C, 
-                           DeclContext::decl_iterator E,
                            bool (SpecificDecl::*A)() const = 0)
-      : Current(C), End(E), Acceptable(A) {
+      : Current(C), Acceptable(A) {
       SkipToNextDecl();
     }
 
