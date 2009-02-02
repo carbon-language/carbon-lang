@@ -19,6 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LegalizeTypes.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -214,12 +215,14 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
   // Create the stack frame object.  Make sure it is aligned for both
   // the source and destination types.
   SDValue FIPtr = DAG.CreateStackTemporary(InVT, OutVT);
+  int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
+  const Value *SV = PseudoSourceValue::getFixedStack(FI);
 
   // Emit a store to the stack slot.
-  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, InOp, FIPtr, NULL, 0);
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, InOp, FIPtr, SV, 0);
 
   // Result is an extending load from the stack slot.
-  return DAG.getExtLoad(ISD::EXTLOAD, dl, NOutVT, Store, FIPtr, NULL, 0, OutVT);
+  return DAG.getExtLoad(ISD::EXTLOAD, dl, NOutVT, Store, FIPtr, SV, 0, OutVT);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_BSWAP(SDNode *N) {
