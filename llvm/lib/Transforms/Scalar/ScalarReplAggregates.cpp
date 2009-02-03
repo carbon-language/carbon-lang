@@ -130,8 +130,8 @@ namespace {
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
     Value *ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
                                      uint64_t Offset);
-    Value *ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI, 
-                                      uint64_t Offset);
+    Value *ConvertUsesOfStoreToScalar(Value *StoredVal, AllocaInst *NewAI, 
+                                      uint64_t Offset, Instruction *InsertPt);
     static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
   };
 }
@@ -1274,6 +1274,18 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial,
       continue;
     }
     
+    // If this is a constant sized memset of a constant value (e.g. 0) we can
+    // handle it.
+    if (isa<MemSetInst>(User) &&
+        // Store of constant value.
+        isa<ConstantInt>(User->getOperand(2)) &&
+        // Store with constant size.
+        isa<ConstantInt>(User->getOperand(3))) {
+      VecTy = Type::VoidTy;
+      IsNotTrivial = true;
+      continue;
+    }
+    
     // Otherwise, we cannot handle this!
     return false;
   }
@@ -1301,7 +1313,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
 
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
-      new StoreInst(ConvertUsesOfStoreToScalar(SI, NewAI, Offset), NewAI, SI);
+      new StoreInst(ConvertUsesOfStoreToScalar(SI->getOperand(0), NewAI,
+                                               Offset, SI), NewAI, SI);
       SI->eraseFromParent();
       continue;
     }
@@ -1321,6 +1334,29 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
       GEP->eraseFromParent();
       continue;
     }
+    
+    // If this is a constant sized memset of a constant value (e.g. 0) we can
+    // transform it into a store of the expanded constant value.
+    if (MemSetInst *MSI = dyn_cast<MemSetInst>(User)) {
+      assert(MSI->getRawDest() == Ptr && "Consistency error!");
+      unsigned NumBytes = cast<ConstantInt>(MSI->getLength())->getZExtValue();
+      unsigned Val = cast<ConstantInt>(MSI->getValue())->getZExtValue();
+      
+      // Compute the value replicated the right number of times.
+      APInt APVal(NumBytes*8, Val);
+
+      // Splat the value if non-zero.
+      if (Val)
+        for (unsigned i = 1; i != NumBytes; ++i)
+          APVal |= APVal << 8;
+      
+      new StoreInst(ConvertUsesOfStoreToScalar(ConstantInt::get(APVal), NewAI,
+                                               Offset, MSI), NewAI, MSI);
+      MSI->eraseFromParent();
+      continue;
+    }
+        
+    
     assert(0 && "Unsupported operation!");
     abort();
   }
@@ -1422,40 +1458,38 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
 ///
 /// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
-Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
-                                        uint64_t Offset) {
+Value *SROA::ConvertUsesOfStoreToScalar(Value *SV, AllocaInst *NewAI,
+                                        uint64_t Offset, Instruction *IP) {
 
   // Convert the stored type to the actual type, shift it left to insert
   // then 'or' into place.
-  Value *SV = SI->getOperand(0);
   const Type *AllocaType = NewAI->getType()->getElementType();
-  if (SV->getType() == AllocaType && Offset == 0) {
+  if (SV->getType() == AllocaType && Offset == 0)
     return SV;
-  }
 
   if (const VectorType *VTy = dyn_cast<VectorType>(AllocaType)) {
-    Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
+    Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", IP);
 
     // If the result alloca is a vector type, this is either an element
     // access or a bitcast to another vector type.
     if (isa<VectorType>(SV->getType())) {
-      SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
+      SV = new BitCastInst(SV, AllocaType, SV->getName(), IP);
     } else {
       // Must be an element insertion.
       unsigned Elt = Offset/TD->getTypePaddedSizeInBits(VTy->getElementType());
       
       if (SV->getType() != VTy->getElementType())
-        SV = new BitCastInst(SV, VTy->getElementType(), "tmp", SI);
+        SV = new BitCastInst(SV, VTy->getElementType(), "tmp", IP);
       
       SV = InsertElementInst::Create(Old, SV,
                                      ConstantInt::get(Type::Int32Ty, Elt),
-                                     "tmp", SI);
+                                     "tmp", IP);
     }
     return SV;
   }
 
 
-  Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
+  Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", IP);
 
   // If SV is a float, convert it to the appropriate integer type.
   // If it is a pointer, do the same, and also handle ptr->ptr casts
@@ -1465,19 +1499,19 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
   unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
   unsigned DestStoreWidth = TD->getTypeStoreSizeInBits(AllocaType);
   if (SV->getType()->isFloatingPoint() || isa<VectorType>(SV->getType()))
-    SV = new BitCastInst(SV, IntegerType::get(SrcWidth), SV->getName(), SI);
+    SV = new BitCastInst(SV, IntegerType::get(SrcWidth), SV->getName(), IP);
   else if (isa<PointerType>(SV->getType()))
-    SV = new PtrToIntInst(SV, TD->getIntPtrType(), SV->getName(), SI);
+    SV = new PtrToIntInst(SV, TD->getIntPtrType(), SV->getName(), IP);
 
   // Zero extend or truncate the value if needed.
   if (SV->getType() != AllocaType) {
     if (SV->getType()->getPrimitiveSizeInBits() <
              AllocaType->getPrimitiveSizeInBits())
-      SV = new ZExtInst(SV, AllocaType, SV->getName(), SI);
+      SV = new ZExtInst(SV, AllocaType, SV->getName(), IP);
     else {
       // Truncation may be needed if storing more than the alloca can hold
       // (undefined behavior).
-      SV = new TruncInst(SV, AllocaType, SV->getName(), SI);
+      SV = new TruncInst(SV, AllocaType, SV->getName(), IP);
       SrcWidth = DestWidth;
       SrcStoreWidth = DestStoreWidth;
     }
@@ -1502,12 +1536,12 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
   if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
     SV = BinaryOperator::CreateShl(SV,
                                    ConstantInt::get(SV->getType(), ShAmt),
-                                   SV->getName(), SI);
+                                   SV->getName(), IP);
     Mask <<= ShAmt;
   } else if (ShAmt < 0 && (unsigned)-ShAmt < DestWidth) {
     SV = BinaryOperator::CreateLShr(SV,
                                     ConstantInt::get(SV->getType(), -ShAmt),
-                                    SV->getName(), SI);
+                                    SV->getName(), IP);
     Mask = Mask.lshr(-ShAmt);
   }
 
@@ -1516,8 +1550,8 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
   if (SrcWidth != DestWidth) {
     assert(DestWidth > SrcWidth);
     Old = BinaryOperator::CreateAnd(Old, ConstantInt::get(~Mask),
-                                    Old->getName()+".mask", SI);
-    SV = BinaryOperator::CreateOr(Old, SV, SV->getName()+".ins", SI);
+                                    Old->getName()+".mask", IP);
+    SV = BinaryOperator::CreateOr(Old, SV, SV->getName()+".ins", IP);
   }
   return SV;
 }
