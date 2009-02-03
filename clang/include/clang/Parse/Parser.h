@@ -18,6 +18,7 @@
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
 #include <stack>
+#include <list>
 
 namespace clang {
   class AttributeList;
