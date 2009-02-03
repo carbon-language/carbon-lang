@@ -380,11 +380,11 @@ MachineFunction& MachineFunction::get(const Function *F)
 }
 
 /// getOrCreateDebugLocID - Look up the DebugLocTuple index with the given
-/// source file, line, and column. If none currently exists, create add a new
-/// new DebugLocTuple and insert it into the DebugIdMap.
+/// source file, line, and column. If none currently exists, create a new
+/// DebugLocTuple, and insert it into the DebugIdMap.
 unsigned MachineFunction::getOrCreateDebugLocID(unsigned Src, unsigned Line,
                                                 unsigned Col) {
-  struct DebugLocTuple Tuple(Src, Line, Col);
+  DebugLocTuple Tuple(Src, Line, Col);
   DenseMap<DebugLocTuple, unsigned>::iterator II
     = DebugLocInfo.DebugIdMap.find(Tuple);
   if (II != DebugLocInfo.DebugIdMap.end())
@@ -394,6 +394,14 @@ unsigned MachineFunction::getOrCreateDebugLocID(unsigned Src, unsigned Line,
   DebugLocInfo.DebugLocations.push_back(Tuple);
   DebugLocInfo.DebugIdMap[Tuple] = Id;
   return Id;
+}
+
+/// getDebugLocTuple - Get the DebugLocTuple for a given DebugLoc object.
+const DebugLocTuple &MachineFunction::getDebugLocTuple(DebugLoc DL) {
+  unsigned Idx;
+  assert(Idx < DebugLocInfo.DebugLocations.size() &&
+         "Invalid index into debug locations!");
+  return DebugLocInfo.DebugLocations[Idx];
 }
 
 //===----------------------------------------------------------------------===//
