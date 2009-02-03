@@ -839,6 +839,11 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
         }
       } else if ((*Mem)->isImplicit()) {
         // Any implicit members are fine.
+      } else if (isa<TagDecl>(*Mem) && (*Mem)->getDeclContext() != Record) {
+        // This is a type that showed up in an
+        // elaborated-type-specifier inside the anonymous struct or
+        // union, but which actually declares a type outside of the
+        // anonymous struct or union. It's okay.
       } else if (RecordDecl *MemRecord = dyn_cast<RecordDecl>(*Mem)) {
         if (!MemRecord->isAnonymousStructOrUnion() &&
             MemRecord->getDeclName()) {
@@ -2791,7 +2796,6 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   
   DeclContext *SearchDC = CurContext;
   DeclContext *DC = CurContext;
-  DeclContext *LexicalContext = CurContext;
   Decl *PrevDecl = 0;
 
   bool Invalid = false;
@@ -2806,6 +2810,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     }
 
     DC = static_cast<DeclContext*>(SS.getScopeRep());
+    SearchDC = DC;
     // Look-up name inside 'foo::'.
     PrevDecl = dyn_cast_or_null<TagDecl>(
                      LookupQualifiedName(DC, Name, LookupTagName).getAsDecl());
@@ -2944,9 +2949,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     // Find the context where we'll be declaring the tag.
     // FIXME: We would like to maintain the current DeclContext as the
     // lexical context, 
-    while (DC->isRecord())
-      DC = DC->getParent();
-    LexicalContext = DC;
+    while (SearchDC->isRecord())
+      SearchDC = SearchDC->getParent();
 
     // Find the scope where we'll be declaring the tag.
     while (S->isClassScope() || 
@@ -2972,7 +2976,7 @@ CreateNewDecl:
   if (Kind == TagDecl::TK_enum) {
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
-    New = EnumDecl::Create(Context, DC, Loc, Name, 
+    New = EnumDecl::Create(Context, SearchDC, Loc, Name, 
                            cast_or_null<EnumDecl>(PrevDecl));
     // If this is an undefined enum, warn.
     if (TK != TK_Definition) Diag(Loc, diag::ext_forward_ref_enum);
@@ -2983,10 +2987,10 @@ CreateNewDecl:
     // struct X { int A; } D;    D should chain to X.
     if (getLangOptions().CPlusPlus)
       // FIXME: Look for a way to use RecordDecl for simple structs.
-      New = CXXRecordDecl::Create(Context, Kind, DC, Loc, Name,
+      New = CXXRecordDecl::Create(Context, Kind, SearchDC, Loc, Name,
                                   cast_or_null<CXXRecordDecl>(PrevDecl));
     else
-      New = RecordDecl::Create(Context, Kind, DC, Loc, Name,
+      New = RecordDecl::Create(Context, Kind, SearchDC, Loc, Name,
                                cast_or_null<RecordDecl>(PrevDecl));
   }
 
@@ -3041,7 +3045,7 @@ CreateNewDecl:
 
   // Set the lexical context. If the tag has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
-  New->setLexicalDeclContext(LexicalContext);
+  New->setLexicalDeclContext(CurContext);
 
   if (TK == TK_Definition)
     New->startDefinition();
@@ -3049,18 +3053,9 @@ CreateNewDecl:
   // If this has an identifier, add it to the scope stack.
   if (Name) {
     S = getNonFieldDeclScope(S);
-    
-    // Add it to the decl chain.
-    if (LexicalContext != CurContext) {
-      // FIXME: PushOnScopeChains should not rely on CurContext!
-      DeclContext *OldContext = CurContext;
-      CurContext = LexicalContext;
-      PushOnScopeChains(New, S);
-      CurContext = OldContext;
-    } else 
-      PushOnScopeChains(New, S);
+    PushOnScopeChains(New, S);
   } else {
-    LexicalContext->addDecl(New);
+    CurContext->addDecl(New);
   }
 
   return New;
