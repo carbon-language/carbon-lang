@@ -318,6 +318,8 @@ def main(args):
             i += 1
         if arg == '-x':
             language = args[i+1]
+            compile_opts.append(arg)
+            compile_opts.append(args[i+1])
             i += 1
         if arg[0] != '-':
             files.append(arg)
