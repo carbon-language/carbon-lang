@@ -1,5 +1,5 @@
 // XFAIL
-// RUN: true
+// RUN: false
 // clang %s --test-pickling 2>&1 | grep -q 'SUCCESS'
 
 int main(void)
