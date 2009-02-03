@@ -1596,10 +1596,6 @@ private:
   //! SVOffset - Memory location offset. Note that base is defined in MemSDNode
   int SVOffset;
 
-  /// Flags - the low bit indicates whether this is a volatile reference;
-  /// the remainder is a log2 encoding of the alignment in bytes.
-  unsigned Flags;
-
 public:
   MemSDNode(unsigned Opc, SDVTList VTs, MVT MemoryVT,
             const Value *srcValue, int SVOff,
@@ -1618,9 +1614,17 @@ public:
             unsigned alignment, bool isvolatile);
 
   /// Returns alignment and volatility of the memory access
-  unsigned getAlignment() const { return (1u << (Flags >> 1)) >> 1; }
-  bool isVolatile() const { return Flags & 1; }
+  unsigned getAlignment() const { return (1u << (SubclassData >> 6)) >> 1; }
+  bool isVolatile() const { return (SubclassData >> 5) & 1; }
   
+  /// getRawSubclassData - Return the SubclassData value, which contains an
+  /// encoding of the alignment and volatile information, as well as bits
+  /// used by subclasses. This function should only be used to compute a
+  /// FoldingSetNodeID value.
+  unsigned getRawSubclassData() const {
+    return SubclassData;
+  }
+
   /// Returns the SrcValue and offset that describes the location of the access
   const Value *getSrcValue() const { return SrcValue; }
   int getSrcValueOffset() const { return SVOffset; }
@@ -1636,10 +1640,6 @@ public:
   const SDValue &getBasePtr() const {
     return getOperand(getOpcode() == ISD::STORE ? 2 : 1);
   }
-
-  /// getRawFlags - Represent the flags as a bunch of bits.
-  ///
-  unsigned getRawFlags() const { return Flags; }
 
   // Methods to support isa and dyn_cast
   static bool classof(const MemSDNode *) { return true; }
@@ -2354,9 +2354,10 @@ public:
                SDVTList VTs, ISD::MemIndexedMode AM, MVT VT,
                const Value *SV, int SVO, unsigned Align, bool Vol)
     : MemSDNode(NodeTy, VTs, VT, SV, SVO, Align, Vol) {
-    SubclassData = AM;
-    InitOperands(Ops, Operands, numOperands);
     assert(Align != 0 && "Loads and stores should have non-zero aligment");
+    SubclassData |= AM << 2;
+    assert(getAddressingMode() == AM && "MemIndexedMode encoding error!");
+    InitOperands(Ops, Operands, numOperands);
     assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
            "Only indexed loads and stores have a non-undef offset operand");
   }
@@ -2364,9 +2365,10 @@ public:
                unsigned numOperands, SDVTList VTs, ISD::MemIndexedMode AM, 
                MVT VT, const Value *SV, int SVO, unsigned Align, bool Vol)
     : MemSDNode(NodeTy, dl, VTs, VT, SV, SVO, Align, Vol) {
-    SubclassData = AM;
-    InitOperands(Ops, Operands, numOperands);
     assert(Align != 0 && "Loads and stores should have non-zero aligment");
+    SubclassData |= AM << 2;
+    assert(getAddressingMode() == AM && "MemIndexedMode encoding error!");
+    InitOperands(Ops, Operands, numOperands);
     assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
            "Only indexed loads and stores have a non-undef offset operand");
   }
@@ -2378,7 +2380,7 @@ public:
   /// getAddressingMode - Return the addressing mode for this load or store:
   /// unindexed, pre-inc, pre-dec, post-inc, or post-dec.
   ISD::MemIndexedMode getAddressingMode() const {
-    return ISD::MemIndexedMode(SubclassData & 7);
+    return ISD::MemIndexedMode((SubclassData >> 2) & 7);
   }
 
   /// isIndexed - Return true if this is a pre/post inc/dec load/store.
@@ -2404,21 +2406,23 @@ protected:
              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::LOAD, ChainPtrOff, 3,
                    VTs, AM, LVT, SV, O, Align, Vol) {
-    SubclassData |= (unsigned short)ETy << 3;
+    SubclassData |= (unsigned short)ETy;
+    assert(getExtensionType() == ETy && "LoadExtType encoding error!");
   }
   LoadSDNode(SDValue *ChainPtrOff, DebugLoc dl, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, MVT LVT,
              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::LOAD, dl, ChainPtrOff, 3,
                    VTs, AM, LVT, SV, O, Align, Vol) {
-    SubclassData |= (unsigned short)ETy << 3;
+    SubclassData |= (unsigned short)ETy;
+    assert(getExtensionType() == ETy && "LoadExtType encoding error!");
   }
 public:
 
   /// getExtensionType - Return whether this is a plain node,
   /// or one of the varieties of value-extending loads.
   ISD::LoadExtType getExtensionType() const {
-    return ISD::LoadExtType((SubclassData >> 3) & 3);
+    return ISD::LoadExtType(SubclassData & 3);
   }
 
   const SDValue &getBasePtr() const { return getOperand(1); }
@@ -2440,21 +2444,23 @@ protected:
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::STORE, ChainValuePtrOff, 4,
                    VTs, AM, SVT, SV, O, Align, Vol) {
-    SubclassData |= (unsigned short)isTrunc << 3;
+    SubclassData |= (unsigned short)isTrunc;
+    assert(isTruncatingStore() == isTrunc && "isTrunc encoding error!");
   }
   StoreSDNode(SDValue *ChainValuePtrOff, DebugLoc dl, SDVTList VTs,
               ISD::MemIndexedMode AM, bool isTrunc, MVT SVT,
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::STORE, dl, ChainValuePtrOff, 4,
                    VTs, AM, SVT, SV, O, Align, Vol) {
-    SubclassData |= (unsigned short)isTrunc << 3;
+    SubclassData |= (unsigned short)isTrunc;
+    assert(isTruncatingStore() == isTrunc && "isTrunc encoding error!");
   }
 public:
 
   /// isTruncatingStore - Return true if the op does a truncation before store.
   /// For integers this is the same as doing a TRUNCATE and storing the result.
   /// For floats, it is the same as doing an FP_ROUND and storing the result.
-  bool isTruncatingStore() const { return (SubclassData >> 3) & 1; }
+  bool isTruncatingStore() const { return SubclassData & 1; }
 
   const SDValue &getValue() const { return getOperand(1); }
   const SDValue &getBasePtr() const { return getOperand(2); }
