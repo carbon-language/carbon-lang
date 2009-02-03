@@ -2783,7 +2783,7 @@ private:
 
       CompileUnit *Unit = new CompileUnit(ID, Die);
       if (DIUnit.isMain()) {
-        assert (!MainCU && "Multiple main compile units are found!");
+        assert(!MainCU && "Multiple main compile units are found!");
         MainCU = Unit;
       }
       DW_CUs[DIUnit.getGV()] = Unit;
@@ -2889,41 +2889,40 @@ public:
   /// SetDebugInfo - Create global DIEs and emit initial debug info sections.
   /// This is inovked by the target AsmPrinter.
   void SetDebugInfo(MachineModuleInfo *mmi) {
-
-      // Create all the compile unit DIEs.
-      ConstructCompileUnits();
+    // Create all the compile unit DIEs.
+    ConstructCompileUnits();
       
-      if (DW_CUs.empty())
-        return;
+    if (DW_CUs.empty())
+      return;
 
-      MMI = mmi;
-      shouldEmit = true;
-      MMI->setDebugInfoAvailability(true);
+    MMI = mmi;
+    shouldEmit = true;
+    MMI->setDebugInfoAvailability(true);
 
-      // Create DIEs for each of the externally visible global variables.
-      ConstructGlobalVariableDIEs();
+    // Create DIEs for each of the externally visible global variables.
+    ConstructGlobalVariableDIEs();
 
-      // Create DIEs for each of the externally visible subprograms.
-      ConstructSubprograms();
+    // Create DIEs for each of the externally visible subprograms.
+    ConstructSubprograms();
 
-      // Prime section data.
-      SectionMap.insert(TAI->getTextSection());
+    // Prime section data.
+    SectionMap.insert(TAI->getTextSection());
 
-      // Print out .file directives to specify files for .loc directives. These
-      // are printed out early so that they precede any .loc directives.
-      if (TAI->hasDotLocAndDotFile()) {
-        for (unsigned i = 1, e = SrcFiles.size(); i <= e; ++i) {
-          sys::Path FullPath(Directories[SrcFiles[i].getDirectoryID()]);
-          bool AppendOk = FullPath.appendComponent(SrcFiles[i].getName());
-          assert(AppendOk && "Could not append filename to directory!");
-          AppendOk = false;
-          Asm->EmitFile(i, FullPath.toString());
-          Asm->EOL();
-        }
+    // Print out .file directives to specify files for .loc directives. These
+    // are printed out early so that they precede any .loc directives.
+    if (TAI->hasDotLocAndDotFile()) {
+      for (unsigned i = 1, e = SrcFiles.size(); i <= e; ++i) {
+        sys::Path FullPath(Directories[SrcFiles[i].getDirectoryID()]);
+        bool AppendOk = FullPath.appendComponent(SrcFiles[i].getName());
+        assert(AppendOk && "Could not append filename to directory!");
+        AppendOk = false;
+        Asm->EmitFile(i, FullPath.toString());
+        Asm->EOL();
       }
+    }
 
-      // Emit initial sections
-      EmitInitial();
+    // Emit initial sections
+    EmitInitial();
   }
 
   /// BeginModule - Emit all Dwarf sections that should come prior to the
@@ -3082,13 +3081,13 @@ public:
     unsigned Tag = DI.getTag();
     switch (Tag) {
     case DW_TAG_variable:
-      assert (DIVariable(GV).Verify() && "Invalid DebugInfo value");
+      assert(DIVariable(GV).Verify() && "Invalid DebugInfo value");
       break;
     case DW_TAG_compile_unit:
-      assert (DICompileUnit(GV).Verify() && "Invalid DebugInfo value");
+      assert(DICompileUnit(GV).Verify() && "Invalid DebugInfo value");
       break;
     case DW_TAG_subprogram:
-      assert (DISubprogram(GV).Verify() && "Invalid DebugInfo value");
+      assert(DISubprogram(GV).Verify() && "Invalid DebugInfo value");
       break;
     default:
       break;
@@ -3102,7 +3101,7 @@ public:
   /// correspondence to the source line list.
   unsigned RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
     CompileUnit *Unit = DW_CUs[V];
-    assert (Unit && "Unable to find CompileUnit");
+    assert(Unit && "Unable to find CompileUnit");
     unsigned ID = MMI->NextLabelID();
     Lines.push_back(SrcLineInfo(Line, Col, Unit->getID(), ID));
     return ID;
@@ -3161,7 +3160,7 @@ public:
       DIVariable DV(GV);
       Scope = getOrCreateScope(DV.getContext().getGV());
     }
-    assert (Scope && "Unable to find variable' scope");
+    assert(Scope && "Unable to find variable' scope");
     DbgVariable *DV = new DbgVariable(DIVariable(GV), FrameIndex);
     Scope->AddVariable(DV);
   }
