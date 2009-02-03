@@ -189,15 +189,17 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
        MBB != MBBe; ++MBB) {
     // Schedule each sequence of instructions not interrupted by a label
     // or anything else that effectively needs to shut down scheduling.
-    MachineBasicBlock::iterator Current = MBB->begin(), End = MBB->end();
-    for (MachineBasicBlock::iterator MI = Current; MI != End; ++MI)
+    MachineBasicBlock::iterator Current = MBB->end(), Top = MBB->begin();
+    for (MachineBasicBlock::iterator I = Current; I != Top; ) {
+      MachineInstr *MI = --I;
       if (MI->getDesc().isTerminator() || MI->isLabel()) {
-        Scheduler.Run(0, MBB, Current, MI);
+        Scheduler.Run(0, MBB, next(I), Current);
         Scheduler.EmitSchedule();
-        Current = next(MI);
+        Current = I;
       }
+    }
 
-    Scheduler.Run(0, MBB, Current, End);
+    Scheduler.Run(0, MBB, Top, Current);
     Scheduler.EmitSchedule();
   }
 
@@ -415,10 +417,10 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // instructions from the bottom up, tracking information about liveness
   // as we go to help determine which registers are available.
   bool Changed = false;
-  unsigned Count = BB->size() - 1;
-  for (MachineBasicBlock::reverse_iterator I = BB->rbegin(), E = BB->rend();
-       I != E; ++I, --Count) {
-    MachineInstr *MI = &*I;
+  unsigned Count = SUnits.size() - 1;
+  for (MachineBasicBlock::iterator I = End, E = Begin;
+       I != E; --Count) {
+    MachineInstr *MI = --I;
 
     // After regalloc, IMPLICIT_DEF instructions aren't safe to treat as
     // dependence-breaking. In the case of an INSERT_SUBREG, the IMPLICIT_DEF
