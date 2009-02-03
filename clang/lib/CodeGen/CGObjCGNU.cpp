@@ -141,6 +141,7 @@ public:
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
   virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                            QualType ObjectTy,
                                             llvm::Value *BaseValue,
                                             const ObjCIvarDecl *Ivar,
                                             const FieldDecl *Field,
@@ -1037,6 +1038,7 @@ void CGObjCGNU::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
 }
 
 llvm::Value *CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                             QualType ObjectTy,
                                              llvm::Value *BaseValue,
                                              const ObjCIvarDecl *Ivar,
                                              const FieldDecl *Field,

@@ -194,7 +194,8 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
   } else {
     FieldDecl *Field = 
       IMP->getClassInterface()->lookupFieldDeclForIvar(getContext(), Ivar);
-    LValue LV = EmitLValueForIvar(LoadObjCSelf(), Ivar, Field, 0);
+    LValue LV = EmitLValueForIvar(TypeOfSelfObject(),
+                                  LoadObjCSelf(), Ivar, Field, 0);
     if (hasAggregateLLVMType(Ivar->getType())) {
       EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
     }
@@ -292,6 +293,14 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
 llvm::Value *CodeGenFunction::LoadObjCSelf() {
   const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
   return Builder.CreateLoad(LocalDeclMap[OMD->getSelfDecl()], "self");
+}
+
+QualType CodeGenFunction::TypeOfSelfObject() {
+  const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
+  ImplicitParamDecl *selfDecl = OMD->getSelfDecl();
+  const PointerType *PTy = 
+    cast<PointerType>(getContext().getCanonicalType(selfDecl->getType()));
+  return PTy->getPointeeType();
 }
 
 RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {

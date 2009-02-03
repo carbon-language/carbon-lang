@@ -1020,7 +1020,8 @@ llvm::Value *CodeGenFunction::EmitIvarOffset(ObjCInterfaceDecl *Interface,
                                 Offset);                                                             
 }
 
-LValue CodeGenFunction::EmitLValueForIvar(llvm::Value *BaseValue,
+LValue CodeGenFunction::EmitLValueForIvar(QualType ObjectTy,
+                                          llvm::Value *BaseValue,
                                           const ObjCIvarDecl *Ivar,
                                           const FieldDecl *Field,
                                           unsigned CVRQualifiers) {
@@ -1035,6 +1036,7 @@ LValue CodeGenFunction::EmitLValueForIvar(llvm::Value *BaseValue,
                                  CVRQualifiers, Index);
   }
   llvm::Value *V = CGM.getObjCRuntime().EmitObjCValueForIvar(*this,
+                                                             ObjectTy,
                                        BaseValue, Ivar, Field, CVRQualifiers);
   LValue LV = LValue::MakeAddr(V, Ivar->getType().getCVRQualifiers()|CVRQualifiers);
   SetVarDeclObjCAttribute(getContext(), Ivar, Ivar->getType(), LV);
@@ -1047,19 +1049,22 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
   llvm::Value *BaseValue = 0;
   const Expr *BaseExpr = E->getBase();
   unsigned CVRQualifiers = 0;
+  QualType ObjectTy;
   if (E->isArrow()) {
     BaseValue = EmitScalarExpr(BaseExpr);
     const PointerType *PTy = 
       cast<PointerType>(getContext().getCanonicalType(BaseExpr->getType()));
-    CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
+    ObjectTy = PTy->getPointeeType();
+    CVRQualifiers = ObjectTy.getCVRQualifiers();
   } else {
     LValue BaseLV = EmitLValue(BaseExpr);
     // FIXME: this isn't right for bitfields.
     BaseValue = BaseLV.getAddress();
-    CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
+    ObjectTy = BaseExpr->getType();
+    CVRQualifiers = ObjectTy.getCVRQualifiers();
   }
 
-  return EmitLValueForIvar(BaseValue, E->getDecl(), 
+  return EmitLValueForIvar(ObjectTy, BaseValue, E->getDecl(), 
                            getContext().getFieldDecl(E), CVRQualifiers);
 }
 

@@ -233,6 +233,10 @@ public:
   /// LoadObjCSelf - Load the value of self. This function is only
   /// valid while generating code for an Objective-C method.
   llvm::Value *LoadObjCSelf();
+  
+  /// TypeOfSelfObject
+  /// Return type of object that this self represents.
+  QualType TypeOfSelfObject();
 
   /// isObjCPointerType - Return true if the specificed AST type will map onto
   /// some Objective-C pointer type.
@@ -521,7 +525,8 @@ public:
                               const ObjCIvarDecl *Ivar);
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
                             bool isUnion, unsigned CVRQualifiers);
-  LValue EmitLValueForIvar(llvm::Value* Base, const ObjCIvarDecl *Ivar,
+  LValue EmitLValueForIvar(QualType ObjectTy,
+                           llvm::Value* Base, const ObjCIvarDecl *Ivar,
                            const FieldDecl *Field,
                            unsigned CVRQualifiers);
 

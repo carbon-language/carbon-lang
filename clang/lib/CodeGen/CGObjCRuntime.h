@@ -158,6 +158,7 @@ public:
                                         llvm::Value *src, llvm::Value *dest) = 0;
   
   virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                            QualType ObjectTy,
                                             llvm::Value *BaseValue,
                                             const ObjCIvarDecl *Ivar,
                                             const FieldDecl *Field,

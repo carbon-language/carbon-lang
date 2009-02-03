@@ -551,6 +551,7 @@ private:
                                         llvm::Value *src, llvm::Value *dest);
   
   virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                            QualType ObjectTy,
                                             llvm::Value *BaseValue,
                                             const ObjCIvarDecl *Ivar,
                                             const FieldDecl *Field,
@@ -676,12 +677,11 @@ public:
                                         llvm::Value *src, llvm::Value *dest)
     { return; }
   virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                            QualType ObjectTy,
                                             llvm::Value *BaseValue,
                                             const ObjCIvarDecl *Ivar,
                                             const FieldDecl *Field,
-                                            unsigned CVRQualifiers)
-  { return 0; }
-  
+                                            unsigned CVRQualifiers);
 };
   
 } // end anonymous namespace
@@ -2114,6 +2114,7 @@ void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
 /// EmitObjCValueForIvar - Code Gen for ivar reference.
 ///
 llvm::Value *CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                             QualType ObjectTy,
                                              llvm::Value *BaseValue,
                                              const ObjCIvarDecl *Ivar,
                                              const FieldDecl *Field,
@@ -3755,15 +3756,16 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
   
   std::string ExternalName("\01_OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
                            + Ivar->getNameAsString());
-  llvm::Constant *Init = llvm::ConstantInt::get(ObjCTypes.IntTy, Offset);
+  llvm::Constant *Init = llvm::ConstantInt::get(ObjCTypes.LongTy, Offset);
   
   llvm::GlobalVariable *IvarOffsetGV = 
     CGM.getModule().getGlobalVariable(ExternalName);
   if (IvarOffsetGV) {
     // ivar offset symbol already built due to user code referencing it.
     IvarOffsetGV->setAlignment(
-      CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.Int8PtrTy));
+      CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
     IvarOffsetGV->setInitializer(Init);
+    IvarOffsetGV->setSection("__DATA, __objc_const");
     UsedGlobals.push_back(IvarOffsetGV);
     return IvarOffsetGV;
   }
@@ -3776,7 +3778,7 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
                              ExternalName,
                              &CGM.getModule());
   IvarOffsetGV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.Int8PtrTy));
+    CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
   // @private and @package have hidden visibility.
   bool globalVisibility = (Ivar->getAccessControl() == ObjCIvarDecl::Public ||
                            Ivar->getAccessControl() == ObjCIvarDecl::Protected);
@@ -3789,10 +3791,7 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
 
   IvarOffsetGV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(IvarOffsetGV);
-  
-  return llvm::ConstantExpr::getBitCast(
-                IvarOffsetGV,
-                llvm::PointerType::getUnqual(ObjCTypes.LongTy));
+  return IvarOffsetGV;
 }
 
 /// EmitIvarList - Emit the ivar list for the given
@@ -4094,6 +4093,52 @@ CGObjCNonFragileABIMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
   Desc[2] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
   return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Desc);
 }
+
+/// EmitObjCValueForIvar - Code Gen for nonfragile ivar reference.
+/// This code gen. amounts to generating code for:
+/// @code
+/// (type *)((char *)base + _OBJC_IVAR_$_.ivar;
+/// @encode
+/// 
+llvm::Value *CGObjCNonFragileABIMac::EmitObjCValueForIvar(
+                                             CodeGen::CodeGenFunction &CGF,
+                                             QualType ObjectTy,
+                                             llvm::Value *BaseValue,
+                                             const ObjCIvarDecl *Ivar,
+                                             const FieldDecl *Field,
+                                             unsigned CVRQualifiers) {
+  assert(ObjectTy->isObjCInterfaceType() && 
+         "CGObjCNonFragileABIMac::EmitObjCValueForIvar");
+  NamedDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
+  // NOTE. This name must match one in EmitIvarOffsetVar.
+  // FIXME. Consolidate into one naming routine.
+  std::string ExternalName("\01_OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
+                           + Ivar->getNameAsString());
+  
+  llvm::GlobalVariable *IvarOffsetGV = 
+    CGM.getModule().getGlobalVariable(ExternalName);
+  if (!IvarOffsetGV)
+    IvarOffsetGV = 
+      new llvm::GlobalVariable(ObjCTypes.LongTy,
+                               false,
+                               llvm::GlobalValue::ExternalLinkage,
+                               0,
+                               ExternalName,
+                               &CGM.getModule());
+  // (char *) BaseValue
+  llvm::Value *V =  CGF.Builder.CreateBitCast(BaseValue,
+                                              ObjCTypes.Int8PtrTy);
+  llvm::Value *Offset = CGF.Builder.CreateLoad(IvarOffsetGV);
+  // (char*)BaseValue + Offset_symbol
+  V = CGF.Builder.CreateGEP(V, Offset, "add.ptr");
+  // (type *)((char*)BaseValue + Offset_symbol)
+  const llvm::Type *IvarTy = 
+    CGM.getTypes().ConvertType(Ivar->getType());
+  llvm::Type *ptrIvarTy = llvm::PointerType::getUnqual(IvarTy);
+  V = CGF.Builder.CreateBitCast(V, ptrIvarTy);
+  return V;
+}
+
 /* *** */
 
 CodeGen::CGObjCRuntime *
