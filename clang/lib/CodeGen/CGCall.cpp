@@ -86,7 +86,18 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
                                const llvm::SmallVector<QualType, 16> &ArgTys) {
-  return *new CGFunctionInfo(ResTy, ArgTys);
+  // Lookup or create unique function info.
+  llvm::FoldingSetNodeID ID;
+  CGFunctionInfo::Profile(ID, ResTy, ArgTys.begin(), ArgTys.end());
+
+  void *InsertPos = 0;
+  CGFunctionInfo *FI = FunctionInfos.FindNodeOrInsertPos(ID, InsertPos);
+  if (FI)
+    return *FI;
+
+  FI = new CGFunctionInfo(ResTy, ArgTys);
+  FunctionInfos.InsertNode(FI, InsertPos);
+  return *FI;
 }
 
 /***/

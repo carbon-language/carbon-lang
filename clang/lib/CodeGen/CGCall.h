@@ -15,6 +15,7 @@
 #ifndef CLANG_CODEGEN_CGCALL_H
 #define CLANG_CODEGEN_CGCALL_H
 
+#include <llvm/ADT/FoldingSet.h>
 #include "clang/AST/Type.h"
 
 #include "CGValue.h"
@@ -49,7 +50,7 @@ namespace CodeGen {
   
   /// CGFunctionInfo - Class to encapsulate the information about a
   /// function definition.
-  class CGFunctionInfo {
+  class CGFunctionInfo : public llvm::FoldingSetNode {
     llvm::SmallVector<QualType, 16> ArgTypes;
 
   public:
@@ -62,6 +63,19 @@ namespace CodeGen {
     arg_iterator arg_end() const;
 
     QualType getReturnType() const { return ArgTypes[0]; }
+
+    void Profile(llvm::FoldingSetNodeID &ID) {
+      Profile(ID, getReturnType(), arg_begin(), arg_end());
+    }
+    template<class Iterator>
+    static void Profile(llvm::FoldingSetNodeID &ID, 
+                        QualType ResTy,
+                        Iterator begin,
+                        Iterator end) {
+      ResTy.Profile(ID);
+      for (; begin != end; ++begin)
+        begin->Profile(ID);
+    }
   };
 }  // end namespace CodeGen
 }  // end namespace clang

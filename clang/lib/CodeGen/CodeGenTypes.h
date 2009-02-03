@@ -100,6 +100,9 @@ class CodeGenTypes {
   /// field no. This info is populated by record organizer.
   llvm::DenseMap<const FieldDecl *, unsigned> FieldInfo;
 
+  /// FunctionInfos - Hold memoized CGFunctionInfo results.
+  llvm::FoldingSet<CGFunctionInfo> FunctionInfos;
+
 public:
   class BitFieldInfo {
   public:
