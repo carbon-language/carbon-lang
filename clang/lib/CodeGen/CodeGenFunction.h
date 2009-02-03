@@ -627,9 +627,11 @@ public:
 
   /// GenerateStaticBlockVarDecl - return the the static
   /// declaration of local variable. 
-  llvm::GlobalValue *GenerateStaticBlockVarDecl(const VarDecl &D,
-                                                bool NoInit,
-                                                const char *Separator);
+  llvm::GlobalValue * GenerateStaticBlockVarDecl(const VarDecl &D,
+                                                 bool NoInit,
+                                                 const char *Separator,
+                                                 llvm::GlobalValue
+                                                 ::LinkageTypes Linkage);
 
   // GenerateStaticCXXBlockVarDecl - return the static declaration of
   // a local variable. Performs initialization of the variable if necessary.

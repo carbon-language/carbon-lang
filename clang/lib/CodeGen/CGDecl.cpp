@@ -77,7 +77,9 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
 llvm::GlobalValue *
 CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
                                             bool NoInit,
-                                            const char *Separator) {
+                                            const char *Separator,
+                                            llvm::GlobalValue
+					    	::LinkageTypes Linkage) {
   QualType Ty = D.getType();
   assert(Ty->isConstantSizeType() && "VLAs can't be static");
   
@@ -108,7 +110,7 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
 
   llvm::GlobalValue *GV =
     new llvm::GlobalVariable(Init->getType(), false,
-                             llvm::GlobalValue::InternalLinkage,
+                             Linkage,
                              Init, ContextName + Separator +D.getNameAsString(),
                              &CGM.getModule(), 0, Ty.getAddressSpace());
 
@@ -120,7 +122,9 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
   
-  llvm::GlobalValue *GV = GenerateStaticBlockVarDecl(D, false, ".");
+  llvm::GlobalValue *GV;
+  GV = GenerateStaticBlockVarDecl(D, false, ".",
+                                  llvm::GlobalValue::InternalLinkage);
 
   if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
     SourceManager &SM = CGM.getContext().getSourceManager();
@@ -166,7 +170,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       // Targets that don't support recursion emit locals as globals.
       const char *Class =
         D.getStorageClass() == VarDecl::Register ? ".reg." : ".auto.";
-      DeclPtr = GenerateStaticBlockVarDecl(D, true, Class);
+      DeclPtr = GenerateStaticBlockVarDecl(D, true, Class, 
+                                           llvm::GlobalValue
+                                           ::InternalLinkage);
     }
     
     if (Ty->isVariablyModifiedType())
@@ -232,7 +238,11 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
     // Variable sized values always are passed by-reference.
     DeclPtr = Arg;
   } else if (Target.useGlobalsForAutomaticVariables()) {
-    DeclPtr = GenerateStaticBlockVarDecl(D, true, ".arg.");
+    // Targets that don't have stack use global address space for parameters.
+    // Specify external linkage for such globals so that llvm optimizer do
+    // not assume there values initialized as zero.
+    DeclPtr = GenerateStaticBlockVarDecl(D, true, ".arg.",
+                                         llvm::GlobalValue::ExternalLinkage);
   } else {
     // A fixed sized single-value variable becomes an alloca in the entry block.
     const llvm::Type *LTy = ConvertType(Ty);
