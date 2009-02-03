@@ -130,7 +130,7 @@ namespace {
                             bool &SawVec, uint64_t Offset, unsigned AllocaSize);
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
     Value *ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
-                                     uint64_t Offset);
+                                     uint64_t Offset, IRBuilder<> &Builder);
     Value *ConvertScalar_InsertValue(Value *StoredVal, Value *ExistingVal,
                                      uint64_t Offset, IRBuilder<> &Builder);
     static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
@@ -1319,24 +1319,6 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
   while (!Ptr->use_empty()) {
     Instruction *User = cast<Instruction>(Ptr->use_back());
 
-    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      LI->replaceAllUsesWith(ConvertUsesOfLoadToScalar(LI, NewAI, Offset));
-      LI->eraseFromParent();
-      continue;
-    }
-
-    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
-      assert(SI->getOperand(0) != Ptr && "Consistency error!");
-      
-      IRBuilder<> Builder(SI->getParent(), SI);
-      Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
-      Value *New = ConvertScalar_InsertValue(SI->getOperand(0), Old, Offset,
-                                             Builder);
-      Builder.CreateStore(New, NewAI);
-      SI->eraseFromParent();
-      continue;
-    }
-
     if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
       ConvertUsesToScalar(CI, NewAI, Offset);
       CI->eraseFromParent();
@@ -1350,6 +1332,25 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
                                                 &Indices[0], Indices.size());
       ConvertUsesToScalar(GEP, NewAI, Offset+GEPOffset*8);
       GEP->eraseFromParent();
+      continue;
+    }
+    
+    IRBuilder<> Builder(User->getParent(), User);
+    
+    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      Value *LoadVal = ConvertUsesOfLoadToScalar(LI, NewAI, Offset, Builder);
+      LI->replaceAllUsesWith(LoadVal);
+      LI->eraseFromParent();
+      continue;
+    }
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      assert(SI->getOperand(0) != Ptr && "Consistency error!");
+      Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
+      Value *New = ConvertScalar_InsertValue(SI->getOperand(0), Old, Offset,
+                                             Builder);
+      Builder.CreateStore(New, NewAI);
+      SI->eraseFromParent();
       continue;
     }
     
@@ -1367,8 +1368,6 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
       if (Val)
         for (unsigned i = 1; i != NumBytes; ++i)
           APVal |= APVal << 8;
-      
-      IRBuilder<> Builder(MSI->getParent(), MSI);
       
       Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
       Value *New = ConvertScalar_InsertValue(ConstantInt::get(APVal), Old,
@@ -1393,9 +1392,9 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
 /// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
 Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
-                                       uint64_t Offset) {
+                                       uint64_t Offset, IRBuilder<> &Builder) {
   // The load is a bit extract from NewAI shifted right by Offset bits.
-  Value *NV = new LoadInst(NewAI, LI->getName(), LI);
+  Value *NV = Builder.CreateLoad(NewAI, "tmp");
 
   // If the load is of the whole new alloca, no conversion is needed.
   if (NV->getType() == LI->getType() && Offset == 0)
@@ -1405,7 +1404,7 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
   // access or a bitcast to another vector type of the same size.
   if (const VectorType *VTy = dyn_cast<VectorType>(NV->getType())) {
     if (isa<VectorType>(LI->getType()))
-      return new BitCastInst(NV, LI->getType(), LI->getName(), LI);
+      return Builder.CreateBitCast(NV, LI->getType(), "tmp");
 
     // Otherwise it must be an element access.
     unsigned Elt = 0;
@@ -1415,10 +1414,11 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
       assert(EltSize*Elt == Offset && "Invalid modulus in validity checking");
     }
     // Return the element extracted out of it.
-    Value *V = new ExtractElementInst(NV, ConstantInt::get(Type::Int32Ty, Elt),
-                                      "tmp", LI);
+    Value *V = Builder.CreateExtractElement(NV,
+                                            ConstantInt::get(Type::Int32Ty,Elt),
+                                            "tmp");
     if (V->getType() != LI->getType())
-      V = new BitCastInst(V, LI->getType(), "tmp", LI);
+      V = Builder.CreateBitCast(V, LI->getType(), "tmp");
     return V;
   }
 
@@ -1442,20 +1442,16 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
   // We do this to support (f.e.) loads off the end of a structure where
   // only some bits are used.
   if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
-    NV = BinaryOperator::CreateLShr(NV,
-                                    ConstantInt::get(NV->getType(), ShAmt),
-                                    LI->getName(), LI);
+    NV = Builder.CreateLShr(NV, ConstantInt::get(NV->getType(), ShAmt), "tmp");
   else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
-    NV = BinaryOperator::CreateShl(NV,
-                                   ConstantInt::get(NV->getType(), -ShAmt),
-                                   LI->getName(), LI);
+    NV = Builder.CreateShl(NV, ConstantInt::get(NV->getType(), -ShAmt), "tmp");
 
   // Finally, unconditionally truncate the integer to the right width.
   unsigned LIBitWidth = TD->getTypeSizeInBits(LI->getType());
   if (LIBitWidth < NTy->getBitWidth())
-    NV = new TruncInst(NV, IntegerType::get(LIBitWidth), LI->getName(), LI);
+    NV = Builder.CreateTrunc(NV, IntegerType::get(LIBitWidth), "tmp");
   else if (LIBitWidth > NTy->getBitWidth())
-    NV = new ZExtInst(NV, IntegerType::get(LIBitWidth), LI->getName(), LI);
+    NV = Builder.CreateZExt(NV, IntegerType::get(LIBitWidth), "tmp");
 
   // If the result is an integer, this is a trunc or bitcast.
   if (isa<IntegerType>(LI->getType())) {
@@ -1463,10 +1459,10 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
   } else if (LI->getType()->isFloatingPoint() ||
              isa<VectorType>(LI->getType())) {
     // Just do a bitcast, we know the sizes match up.
-    NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
+    NV = Builder.CreateBitCast(NV, LI->getType(), "tmp");
   } else {
     // Otherwise must be a pointer.
-    NV = new IntToPtrInst(NV, LI->getType(), LI->getName(), LI);
+    NV = Builder.CreateIntToPtr(NV, LI->getType(), "tmp");
   }
   assert(NV->getType() == LI->getType() && "Didn't convert right?");
   return NV;
