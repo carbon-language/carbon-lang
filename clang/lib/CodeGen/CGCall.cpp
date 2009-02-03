@@ -1047,6 +1047,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                                          llvm::Function *Fn,
                                          const FunctionArgList &Args) {
+  // FIXME: We no longer need the types from FunctionArgList; lift up
+  // and simplify.
+
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = Fn->arg_begin();
   
@@ -1160,6 +1163,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
 RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  llvm::Value *Callee, 
                                  const CallArgList &CallArgs) {
+  // FIXME: We no longer need the types from CallArgs; lift up and
+  // simplify.
   llvm::SmallVector<llvm::Value*, 16> Args;
 
   // Handle struct-return functions by passing a pointer to the
