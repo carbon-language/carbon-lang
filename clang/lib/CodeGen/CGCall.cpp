@@ -360,19 +360,16 @@ class X86_64ABIInfo : public ABIInfo {
   void classify(QualType T, ASTContext &Context, uint64_t OffsetBase,
                 Class &Lo, Class &Hi) const;
   
-public:
   ABIArgInfo classifyReturnType(QualType RetTy, 
-                                ASTContext &Context) const;
-  
-  ABIArgInfo classifyArgumentType(QualType RetTy,
-                                  ASTContext &Context) const;
-  
-  virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
-    FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context);
-    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
-         it != ie; ++it)
-      it->info = classifyArgumentType(it->type, Context);
-  }
+                                ASTContext &Context) const;  
+
+  ABIArgInfo classifyArgumentType(QualType Ty,
+                                  ASTContext &Context,
+                                  unsigned &freeIntRegs,
+                                  unsigned &freeSSERegs) const;
+
+public:
+  virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context) const;
 };
 }
 
@@ -673,13 +670,116 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
   return ABIArgInfo::getCoerce(ResType);
 }
 
-ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
-                                              ASTContext &Context) const {
-  if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
-    return ABIArgInfo::getByVal(0);
-  } else {
-    return ABIArgInfo::getDirect();
+ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
+                                               unsigned &freeIntRegs,
+                                               unsigned &freeSSERegs) const {
+  X86_64ABIInfo::Class Lo, Hi;
+  classify(Ty, Context, 0, Lo, Hi);
+  
+  // Check some invariants.
+  // FIXME: Enforce these by construction.
+  assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
+  assert((Lo != NoClass || Hi == NoClass) && "Invalid null classification.");
+  assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
+
+  unsigned neededInt = 0, neededSSE = 0;
+  const llvm::Type *ResType = 0;
+  switch (Lo) {
+  case NoClass:
+    return ABIArgInfo::getIgnore();
+
+    // AMD64-ABI 3.2.3p3: Rule 1. If the class is MEMORY, pass the argument
+    // on the stack.
+  case Memory:
+    
+    // AMD64-ABI 3.2.3p3: Rule 5. If the class is X87, X87UP or
+    // COMPLEX_X87, it is passed in memory.
+  case X87:
+  case ComplexX87:
+    // Choose appropriate in memory type.
+    if (CodeGenFunction::hasAggregateLLVMType(Ty))
+      return ABIArgInfo::getByVal(0);
+    else
+      return ABIArgInfo::getDirect();
+
+  case SSEUp:
+  case X87Up:
+    assert(0 && "Invalid classification for lo word.");
+
+    // AMD64-ABI 3.2.3p3: Rule 2. If the class is INTEGER, the next
+    // available register of the sequence %rdi, %rsi, %rdx, %rcx, %r8
+    // and %r9 is used.
+  case Integer:
+    ++neededInt; 
+    ResType = llvm::Type::Int64Ty;
+    break;
+
+    // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
+    // available SSE register is used, the registers are taken in the
+    // order from %xmm0 to %xmm7.
+  case SSE:
+    ++neededSSE; 
+    ResType = llvm::Type::DoubleTy;
+    break;
   }
+
+  switch (Hi) {
+    // Memory was handled previously, ComplexX87 and X87 should
+    // never occur as hi classes, and X87Up must be preceed by X87,
+    // which is passed in memory.
+  case Memory:
+  case X87:
+  case X87Up:
+  case ComplexX87:
+    assert(0 && "Invalid classification for hi word.");
+
+  case NoClass: break;
+  case Integer:
+    ResType = llvm::StructType::get(ResType, llvm::Type::Int64Ty, NULL);
+    ++neededInt;
+    break;
+  case SSE:    
+    ResType = llvm::StructType::get(ResType, llvm::Type::DoubleTy, NULL);
+    ++neededSSE;
+    break;
+
+    // AMD64-ABI 3.2.3p3: Rule 4. If the class is SSEUP, the
+    // eightbyte is passed in the upper half of the last used SSE
+    // register.
+  case SSEUp:
+    assert(Lo == SSE && "Unexpected SSEUp classification.");
+    ResType = llvm::VectorType::get(llvm::Type::DoubleTy, 2);
+    break;
+  }
+
+  // AMD64-ABI 3.2.3p3: If there are no registers available for any
+  // eightbyte of an argument, the whole argument is passed on the
+  // stack. If registers have already been assigned for some
+  // eightbytes of such an argument, the assignments get reverted.
+  if (freeIntRegs >= neededInt && freeSSERegs >= neededSSE) {
+    freeIntRegs -= neededInt;
+    freeSSERegs -= neededSSE;
+    return ABIArgInfo::getCoerce(ResType);
+  } else {
+    // Choose appropriate in memory type.
+    if (CodeGenFunction::hasAggregateLLVMType(Ty))
+      return ABIArgInfo::getByVal(0);
+    else
+      return ABIArgInfo::getDirect();
+  }
+}
+
+void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
+  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context);
+
+  // Keep track of the number of assigned registers.
+  unsigned freeIntRegs = 6, freeSSERegs = 8;
+
+  // AMD64-ABI 3.2.3p3: Once arguments are classified, the registers
+  // get assigned (in left-to-right order) for passing as follows...
+  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+       it != ie; ++it)
+    it->info = classifyArgumentType(it->type, Context, freeIntRegs, freeSSERegs);
 }
 
 ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
@@ -1108,7 +1208,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     }
 
     case ABIArgInfo::Ignore:
-      break;
+      // Skip increment, no matching LLVM parameter.
+      continue; 
 
     case ABIArgInfo::Coerce: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
