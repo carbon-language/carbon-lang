@@ -126,7 +126,7 @@ namespace {
                                       SmallVector<AllocaInst*, 32> &NewElts);
     
     bool CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
-                            uint64_t Offset, unsigned AllocaSize);
+                            bool &SawVec, uint64_t Offset, unsigned AllocaSize);
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
     Value *ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
                                      uint64_t Offset);
@@ -281,10 +281,17 @@ bool SROA::performScalarRepl(Function &F) {
     // but that has pointer arithmetic to set byte 3 of it or something.
     bool IsNotTrivial = false;
     const Type *VectorTy = 0;
-    if (CanConvertToScalar(AI, IsNotTrivial, VectorTy,
+    bool HadAVector = false;
+    if (CanConvertToScalar(AI, IsNotTrivial, VectorTy, HadAVector, 
                            0, unsigned(AllocaSize)) && IsNotTrivial) {
       AllocaInst *NewAI;
-      if (VectorTy && isa<VectorType>(VectorTy)) {
+      // If we were able to find a vector type that can handle this with
+      // insert/extract elements, and if there was at least one use that had
+      // a vector type, promote this to a vector.  We don't want to promote
+      // random stuff that doesn't use vectors (e.g. <9 x double>) because then
+      // we just get a lot of insert/extracts.  If at least one vector is
+      // involved, then we probably really do have a union of vector/array.
+      if (VectorTy && isa<VectorType>(VectorTy) && HadAVector) {
         DOUT << "CONVERT TO VECTOR: " << *AI << "  TYPE = " << *VectorTy <<"\n";
         
         // Create and insert the vector alloca.
@@ -1229,8 +1236,11 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
 /// completely trivial use that mem2reg could promote, set IsNotTrivial.  Offset
 /// is the current offset from the base of the alloca being analyzed.
 ///
-bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial,
-                              const Type *&VecTy, uint64_t Offset,
+/// If we see at least one access to the value that is as a vector type, set the
+/// SawVec flag.
+///
+bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
+                              bool &SawVec, uint64_t Offset,
                               unsigned AllocaSize) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
@@ -1240,6 +1250,7 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial,
       if (LI->isVolatile())
         return false;
       MergeInType(LI->getType(), Offset, VecTy, AllocaSize, *TD);
+      SawVec |= isa<VectorType>(LI->getType());
       continue;
     }
     
@@ -1247,11 +1258,13 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial,
       // Storing the pointer, not into the value?
       if (SI->getOperand(0) == V || SI->isVolatile()) return 0;
       MergeInType(SI->getOperand(0)->getType(), Offset, VecTy, AllocaSize, *TD);
+      SawVec |= isa<VectorType>(SI->getOperand(0)->getType());
       continue;
     }
     
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(User)) {
-      if (!CanConvertToScalar(BCI, IsNotTrivial, VecTy, Offset, AllocaSize))
+      if (!CanConvertToScalar(BCI, IsNotTrivial, VecTy, SawVec, Offset,
+                              AllocaSize))
         return false;
       IsNotTrivial = true;
       continue;
@@ -1267,7 +1280,7 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial,
       uint64_t GEPOffset = TD->getIndexedOffset(GEP->getOperand(0)->getType(),
                                                 &Indices[0], Indices.size());
       // See if all uses can be converted.
-      if (!CanConvertToScalar(GEP, IsNotTrivial, VecTy, Offset+GEPOffset,
+      if (!CanConvertToScalar(GEP, IsNotTrivial, VecTy, SawVec,Offset+GEPOffset,
                               AllocaSize))
         return false;
       IsNotTrivial = true;
