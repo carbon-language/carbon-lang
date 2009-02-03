@@ -854,8 +854,7 @@ SDValue SelectionDAG::getNOT(DebugLoc DL, SDValue Val, MVT VT) {
     SDValue NegOneElt =
       getConstant(APInt::getAllOnesValue(EltVT.getSizeInBits()), EltVT);
     std::vector<SDValue> NegOnes(VT.getVectorNumElements(), NegOneElt);
-    NegOne = getNode(ISD::BUILD_VECTOR, DebugLoc::getUnknownLoc(), VT,
-                     &NegOnes[0], NegOnes.size());
+    NegOne = getNode(ISD::BUILD_VECTOR, DL, VT, &NegOnes[0], NegOnes.size());
   } else {
     NegOne = getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT);
   }
@@ -2150,10 +2149,11 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
 /// element of the result of the vector shuffle.
 SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
   MVT VT = N->getValueType(0);
+  DebugLoc dl = N->getDebugLoc();
   SDValue PermMask = N->getOperand(2);
   SDValue Idx = PermMask.getOperand(i);
   if (Idx.getOpcode() == ISD::UNDEF)
-    return getNode(ISD::UNDEF, VT.getVectorElementType());
+    return getNode(ISD::UNDEF, dl, VT.getVectorElementType());
   unsigned Index = cast<ConstantSDNode>(Idx)->getZExtValue();
   unsigned NumElems = PermMask.getNumOperands();
   SDValue V = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
@@ -2167,7 +2167,7 @@ SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
   }
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
     return (Index == 0) ? V.getOperand(0)
-                      : getNode(ISD::UNDEF, VT.getVectorElementType());
+                      : getNode(ISD::UNDEF, dl, VT.getVectorElementType());
   if (V.getOpcode() == ISD::BUILD_VECTOR)
     return V.getOperand(Index);
   if (V.getOpcode() == ISD::VECTOR_SHUFFLE)
@@ -2301,7 +2301,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
            Operand.getValueType().isFloatingPoint() && "Invalid FP cast!");
     if (Operand.getValueType() == VT) return Operand;  // noop conversion.
     if (Operand.getOpcode() == ISD::UNDEF)
-      return getNode(ISD::UNDEF, VT);
+      return getNode(ISD::UNDEF, DL, VT);
     break;
   case ISD::SIGN_EXTEND:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
@@ -2310,7 +2310,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     assert(Operand.getValueType().bitsLT(VT)
            && "Invalid sext node, dst < src!");
     if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
-      return getNode(OpOpcode, VT, Operand.getNode()->getOperand(0));
+      return getNode(OpOpcode, DL, VT, Operand.getNode()->getOperand(0));
     break;
   case ISD::ZERO_EXTEND:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
@@ -2319,7 +2319,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     assert(Operand.getValueType().bitsLT(VT)
            && "Invalid zext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND)   // (zext (zext x)) -> (zext x)
-      return getNode(ISD::ZERO_EXTEND, VT, Operand.getNode()->getOperand(0));
+      return getNode(ISD::ZERO_EXTEND, DL, VT, 
+                     Operand.getNode()->getOperand(0));
     break;
   case ISD::ANY_EXTEND:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
@@ -2329,7 +2330,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
            && "Invalid anyext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND)
       // (ext (zext x)) -> (zext x)  and  (ext (sext x)) -> (sext x)
-      return getNode(OpOpcode, VT, Operand.getNode()->getOperand(0));
+      return getNode(OpOpcode, DL, VT, Operand.getNode()->getOperand(0));
     break;
   case ISD::TRUNCATE:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
@@ -2338,14 +2339,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     assert(Operand.getValueType().bitsGT(VT)
            && "Invalid truncate node, src < dst!");
     if (OpOpcode == ISD::TRUNCATE)
-      return getNode(ISD::TRUNCATE, VT, Operand.getNode()->getOperand(0));
+      return getNode(ISD::TRUNCATE, DL, VT, Operand.getNode()->getOperand(0));
     else if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
              OpOpcode == ISD::ANY_EXTEND) {
       // If the source is smaller than the dest, we still need an extend.
       if (Operand.getNode()->getOperand(0).getValueType().bitsLT(VT))
-        return getNode(OpOpcode, VT, Operand.getNode()->getOperand(0));
+        return getNode(OpOpcode, DL, VT, Operand.getNode()->getOperand(0));
       else if (Operand.getNode()->getOperand(0).getValueType().bitsGT(VT))
-        return getNode(ISD::TRUNCATE, VT, Operand.getNode()->getOperand(0));
+        return getNode(ISD::TRUNCATE, DL, VT, Operand.getNode()->getOperand(0));
       else
         return Operand.getNode()->getOperand(0);
     }
@@ -2356,16 +2357,16 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
            && "Cannot BIT_CONVERT between types of different sizes!");
     if (VT == Operand.getValueType()) return Operand;  // noop conversion.
     if (OpOpcode == ISD::BIT_CONVERT)  // bitconv(bitconv(x)) -> bitconv(x)
-      return getNode(ISD::BIT_CONVERT, VT, Operand.getOperand(0));
+      return getNode(ISD::BIT_CONVERT, DL, VT, Operand.getOperand(0));
     if (OpOpcode == ISD::UNDEF)
-      return getNode(ISD::UNDEF, VT);
+      return getNode(ISD::UNDEF, DL, VT);
     break;
   case ISD::SCALAR_TO_VECTOR:
     assert(VT.isVector() && !Operand.getValueType().isVector() &&
            VT.getVectorElementType() == Operand.getValueType() &&
            "Illegal SCALAR_TO_VECTOR node!");
     if (OpOpcode == ISD::UNDEF)
-      return getNode(ISD::UNDEF, VT);
+      return getNode(ISD::UNDEF, DL, VT);
     // scalar_to_vector(extract_vector_elt V, 0) -> V, top bits are undefined.
     if (OpOpcode == ISD::EXTRACT_VECTOR_ELT &&
         isa<ConstantSDNode>(Operand.getOperand(1)) &&
@@ -2376,14 +2377,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
   case ISD::FNEG:
     // -(X-Y) -> (Y-X) is unsafe because when X==Y, -0.0 != +0.0
     if (UnsafeFPMath && OpOpcode == ISD::FSUB)
-      return getNode(ISD::FSUB, VT, Operand.getNode()->getOperand(1),
+      return getNode(ISD::FSUB, DL, VT, Operand.getNode()->getOperand(1),
                      Operand.getNode()->getOperand(0));
     if (OpOpcode == ISD::FNEG)  // --X -> X
       return Operand.getNode()->getOperand(0);
     break;
   case ISD::FABS:
     if (OpOpcode == ISD::FNEG)  // abs(-X) -> abs(X)
-      return getNode(ISD::FABS, VT, Operand.getNode()->getOperand(0));
+      return getNode(ISD::FABS, DL, VT, Operand.getNode()->getOperand(0));
     break;
   }
 
@@ -2473,7 +2474,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
         N2.getOpcode() == ISD::BUILD_VECTOR) {
       SmallVector<SDValue, 16> Elts(N1.getNode()->op_begin(), N1.getNode()->op_end());
       Elts.insert(Elts.end(), N2.getNode()->op_begin(), N2.getNode()->op_end());
-      return getNode(ISD::BUILD_VECTOR, VT, &Elts[0], Elts.size());
+      return getNode(ISD::BUILD_VECTOR, DL, VT, &Elts[0], Elts.size());
     }
     break;
   case ISD::AND:
@@ -2599,7 +2600,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
   case ISD::EXTRACT_VECTOR_ELT:
     // EXTRACT_VECTOR_ELT of an UNDEF is an UNDEF.
     if (N1.getOpcode() == ISD::UNDEF)
-      return getNode(ISD::UNDEF, VT);
+      return getNode(ISD::UNDEF, DL, VT);
       
     // EXTRACT_VECTOR_ELT of CONCAT_VECTORS is often formed while lowering is
     // expanding copies of large vectors from registers.
@@ -2608,7 +2609,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
         N1.getNumOperands() > 0) {
       unsigned Factor =
         N1.getOperand(0).getValueType().getVectorNumElements();
-      return getNode(ISD::EXTRACT_VECTOR_ELT, VT,
+      return getNode(ISD::EXTRACT_VECTOR_ELT, DL, VT,
                      N1.getOperand(N2C->getZExtValue() / Factor),
                      getConstant(N2C->getZExtValue() % Factor,
                                  N2.getValueType()));
@@ -2629,7 +2630,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
       // the original vector.
       else if (isa<ConstantSDNode>(N1.getOperand(2)) &&
                isa<ConstantSDNode>(N2))
-        return getNode(ISD::EXTRACT_VECTOR_ELT, VT, N1.getOperand(0), N2);
+        return getNode(ISD::EXTRACT_VECTOR_ELT, DL, VT, N1.getOperand(0), N2);
     }
     break;
   case ISD::EXTRACT_ELEMENT:
@@ -2990,7 +2991,8 @@ static SDValue getMemsetStringVal(MVT VT, SelectionDAG &DAG,
 static SDValue getMemBasePlusOffset(SDValue Base, unsigned Offset,
                                       SelectionDAG &DAG) {
   MVT VT = Base.getValueType();
-  return DAG.getNode(ISD::ADD, VT, Base, DAG.getConstant(Offset, VT));
+  return DAG.getNode(ISD::ADD, Base.getNode()->getDebugLoc(),
+                     VT, Base, DAG.getConstant(Offset, VT));
 }
 
 /// isMemSrcFromString - Returns true if memcpy source is a string constant.
@@ -4932,7 +4934,7 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     MVT VT1, MVT VT2, MVT VT3,
                                     const SDValue *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  return getNode(~Opcode, VTs, 3, Ops, NumOps).getNode();
+  return getNode(~Opcode, dl, VTs, 3, Ops, NumOps).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
