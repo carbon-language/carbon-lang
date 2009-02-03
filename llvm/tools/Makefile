@@ -27,6 +27,10 @@ include $(LEVEL)/Makefile.config
 
 ifeq ($(ENABLE_PIC),1)
 PARALLEL_DIRS += lto
+
+ifdef BINUTILS_INCDIR
+PARALLEL_DIRS += gold
+endif
 endif
 
 include $(LEVEL)/Makefile.common
