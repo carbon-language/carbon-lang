@@ -55,25 +55,6 @@ class PointerType;
 class StructType;
 
 //===----------------------------------------------------------------------===//
-/// SourceLineInfo - This class is used to record source line correspondence.
-///
-class SourceLineInfo {
-  unsigned Line;                        // Source line number.
-  unsigned Column;                      // Source column.
-  unsigned SourceID;                    // Source ID number.
-  unsigned LabelID;                     // Label in code ID number.
-public:
-  SourceLineInfo(unsigned L, unsigned C, unsigned S, unsigned I)
-  : Line(L), Column(C), SourceID(S), LabelID(I) {}
-  
-  // Accessors
-  unsigned getLine()     const { return Line; }
-  unsigned getColumn()   const { return Column; }
-  unsigned getSourceID() const { return SourceID; }
-  unsigned getLabelID()  const { return LabelID; }
-};
-
-//===----------------------------------------------------------------------===//
 /// LandingPadInfo - This structure is used to retain landing pad info for
 /// the current function.
 ///
@@ -99,9 +80,6 @@ struct LandingPadInfo {
 ///
 class MachineModuleInfo : public ImmutablePass {
 private:
-  // Lines - List of of source line correspondence.
-  std::vector<SourceLineInfo> Lines;
-  
   // LabelIDList - One entry per assigned label.  Normally the entry is equal to
   // the list index(+1).  If the entry is zero then the label has been deleted.
   // Any other value indicates the label has been deleted by is mapped to
@@ -217,12 +195,6 @@ public:
     return LabelID ? LabelIDList[LabelID - 1] : 0;
   }
 
-  /// getSourceLines - Return a vector of source lines.
-  ///
-  const std::vector<SourceLineInfo> &getSourceLines() const {
-    return Lines;
-  }
-  
   /// getFrameMoves - Returns a reference to a list of moves done in the current
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.
