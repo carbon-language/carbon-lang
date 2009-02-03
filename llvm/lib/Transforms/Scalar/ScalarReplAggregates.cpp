@@ -33,6 +33,7 @@
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallVector.h"
@@ -131,7 +132,7 @@ namespace {
     Value *ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
                                      uint64_t Offset);
     Value *ConvertScalar_InsertValue(Value *StoredVal, Value *ExistingVal,
-                                     uint64_t Offset, Instruction *InsertPt);
+                                     uint64_t Offset, IRBuilder<> &Builder);
     static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
   };
 }
@@ -1326,9 +1327,12 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
 
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
-      Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
-      Value *New = ConvertScalar_InsertValue(SI->getOperand(0), Old, Offset,SI);
-      new StoreInst(New, NewAI, SI);
+      
+      IRBuilder<> Builder(SI->getParent(), SI);
+      Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
+      Value *New = ConvertScalar_InsertValue(SI->getOperand(0), Old, Offset,
+                                             Builder);
+      Builder.CreateStore(New, NewAI);
       SI->eraseFromParent();
       continue;
     }
@@ -1364,10 +1368,12 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
         for (unsigned i = 1; i != NumBytes; ++i)
           APVal |= APVal << 8;
       
-      Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", MSI);
+      IRBuilder<> Builder(MSI->getParent(), MSI);
+      
+      Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
       Value *New = ConvertScalar_InsertValue(ConstantInt::get(APVal), Old,
-                                             Offset, MSI);
-      new StoreInst(New, NewAI, MSI);
+                                             Offset, Builder);
+      Builder.CreateStore(New, NewAI);
       MSI->eraseFromParent();
       continue;
     }
@@ -1477,7 +1483,7 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
 /// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.
 Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
-                                       uint64_t Offset, Instruction *IP) {
+                                       uint64_t Offset, IRBuilder<> &Builder) {
 
   // Convert the stored type to the actual type, shift it left to insert
   // then 'or' into place.
@@ -1487,17 +1493,17 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
     // If the result alloca is a vector type, this is either an element
     // access or a bitcast to another vector type.
     if (isa<VectorType>(SV->getType())) {
-      SV = new BitCastInst(SV, AllocaType, SV->getName(), IP);
+      SV = Builder.CreateBitCast(SV, AllocaType, "tmp");
     } else {
       // Must be an element insertion.
       unsigned Elt = Offset/TD->getTypePaddedSizeInBits(VTy->getElementType());
       
       if (SV->getType() != VTy->getElementType())
-        SV = new BitCastInst(SV, VTy->getElementType(), "tmp", IP);
+        SV = Builder.CreateBitCast(SV, VTy->getElementType(), "tmp");
       
-      SV = InsertElementInst::Create(Old, SV,
-                                     ConstantInt::get(Type::Int32Ty, Elt),
-                                     "tmp", IP);
+      SV = Builder.CreateInsertElement(Old, SV, 
+                                       ConstantInt::get(Type::Int32Ty, Elt), 
+                                       "tmp");
     }
     return SV;
   }
@@ -1506,9 +1512,10 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   if (const StructType *ST = dyn_cast<StructType>(SV->getType())) {
     const StructLayout &Layout = *TD->getStructLayout(ST);
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
-      Value *Elt = ExtractValueInst::Create(SV, i, "tmp", IP);
+      Value *Elt = Builder.CreateExtractValue(SV, i, "tmp");
       Old = ConvertScalar_InsertValue(Elt, Old, 
-                                      Offset+Layout.getElementOffset(i), IP);
+                                      Offset+Layout.getElementOffset(i),
+                                      Builder);
     }
     return Old;
   }
@@ -1516,8 +1523,8 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   if (const ArrayType *AT = dyn_cast<ArrayType>(SV->getType())) {
     uint64_t EltSize = TD->getTypePaddedSizeInBits(AT->getElementType());
     for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
-      Value *Elt = ExtractValueInst::Create(SV, i, "tmp", IP);
-      Old = ConvertScalar_InsertValue(Elt, Old, Offset+i*EltSize, IP);
+      Value *Elt = Builder.CreateExtractValue(SV, i, "tmp");
+      Old = ConvertScalar_InsertValue(Elt, Old, Offset+i*EltSize, Builder);
     }
     return Old;
   }
@@ -1529,19 +1536,19 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
   unsigned DestStoreWidth = TD->getTypeStoreSizeInBits(AllocaType);
   if (SV->getType()->isFloatingPoint() || isa<VectorType>(SV->getType()))
-    SV = new BitCastInst(SV, IntegerType::get(SrcWidth), SV->getName(), IP);
+    SV = Builder.CreateBitCast(SV, IntegerType::get(SrcWidth), "tmp");
   else if (isa<PointerType>(SV->getType()))
-    SV = new PtrToIntInst(SV, TD->getIntPtrType(), SV->getName(), IP);
+    SV = Builder.CreatePtrToInt(SV, TD->getIntPtrType(), "tmp");
 
   // Zero extend or truncate the value if needed.
   if (SV->getType() != AllocaType) {
     if (SV->getType()->getPrimitiveSizeInBits() <
              AllocaType->getPrimitiveSizeInBits())
-      SV = new ZExtInst(SV, AllocaType, SV->getName(), IP);
+      SV = Builder.CreateZExt(SV, AllocaType, "tmp");
     else {
       // Truncation may be needed if storing more than the alloca can hold
       // (undefined behavior).
-      SV = new TruncInst(SV, AllocaType, SV->getName(), IP);
+      SV = Builder.CreateTrunc(SV, AllocaType, "tmp");
       SrcWidth = DestWidth;
       SrcStoreWidth = DestStoreWidth;
     }
@@ -1564,14 +1571,10 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   // only some bits in the structure are set.
   APInt Mask(APInt::getLowBitsSet(DestWidth, SrcWidth));
   if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
-    SV = BinaryOperator::CreateShl(SV,
-                                   ConstantInt::get(SV->getType(), ShAmt),
-                                   SV->getName(), IP);
+    SV = Builder.CreateShl(SV, ConstantInt::get(SV->getType(), ShAmt), "tmp");
     Mask <<= ShAmt;
   } else if (ShAmt < 0 && (unsigned)-ShAmt < DestWidth) {
-    SV = BinaryOperator::CreateLShr(SV,
-                                    ConstantInt::get(SV->getType(), -ShAmt),
-                                    SV->getName(), IP);
+    SV = Builder.CreateLShr(SV, ConstantInt::get(SV->getType(), -ShAmt), "tmp");
     Mask = Mask.lshr(-ShAmt);
   }
 
@@ -1579,9 +1582,8 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   // in the new bits.
   if (SrcWidth != DestWidth) {
     assert(DestWidth > SrcWidth);
-    Old = BinaryOperator::CreateAnd(Old, ConstantInt::get(~Mask),
-                                    Old->getName()+".mask", IP);
-    SV = BinaryOperator::CreateOr(Old, SV, SV->getName()+".ins", IP);
+    Old = Builder.CreateAnd(Old, ConstantInt::get(~Mask), "mask");
+    SV = Builder.CreateOr(Old, SV, "ins");
   }
   return SV;
 }
