@@ -52,6 +52,10 @@ llvm::Value *CodeGenFunction::GetAddrOfLocalVar(const VarDecl *VD)
   return LocalDeclMap[VD];
 }
 
+const llvm::Type *CodeGenFunction::ConvertTypeForMem(QualType T) {
+  return CGM.getTypes().ConvertTypeForMem(T);
+}
+
 const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
   return CGM.getTypes().ConvertType(T);
 }

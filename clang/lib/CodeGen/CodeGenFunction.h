@@ -228,6 +228,7 @@ public:
   /// return the given temporary.
   void EmitFunctionEpilog(const CGFunctionInfo &FI, llvm::Value *ReturnValue);
 
+  const llvm::Type *ConvertTypeForMem(QualType T);
   const llvm::Type *ConvertType(QualType T);
 
   /// LoadObjCSelf - Load the value of self. This function is only
