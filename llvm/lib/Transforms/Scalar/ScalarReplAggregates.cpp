@@ -1431,8 +1431,9 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
   // Finally, unconditionally truncate the integer to the right width.
   unsigned LIBitWidth = TD->getTypeSizeInBits(LI->getType());
   if (LIBitWidth < NTy->getBitWidth())
-    NV = new TruncInst(NV, IntegerType::get(LIBitWidth),
-                       LI->getName(), LI);
+    NV = new TruncInst(NV, IntegerType::get(LIBitWidth), LI->getName(), LI);
+  else if (LIBitWidth > NTy->getBitWidth())
+    NV = new ZExtInst(NV, IntegerType::get(LIBitWidth), LI->getName(), LI);
 
   // If the result is an integer, this is a trunc or bitcast.
   if (isa<IntegerType>(LI->getType())) {
