@@ -64,30 +64,6 @@ static const Value *GetGEPOperands(const Value *V,
   return V;
 }
 
-/// isNoAliasCall - Return true if this pointer is returned by a noalias
-/// function.
-static bool isNoAliasCall(const Value *V) {
-  if (isa<CallInst>(V) || isa<InvokeInst>(V))
-    return CallSite(const_cast<Instruction*>(cast<Instruction>(V)))
-      .paramHasAttr(0, Attribute::NoAlias);
-  return false;
-}
-
-/// isIdentifiedObject - Return true if this pointer refers to a distinct and
-/// identifiable object.  This returns true for:
-///    Global Variables and Functions
-///    Allocas and Mallocs
-///    ByVal and NoAlias Arguments
-///    NoAlias returns
-///
-bool llvm::isIdentifiedObject(const Value *V) {
-  if (isa<GlobalValue>(V) || isa<AllocationInst>(V) || isNoAliasCall(V))
-    return true;
-  if (const Argument *A = dyn_cast<Argument>(V))
-    return A->hasNoAliasAttr() || A->hasByValAttr();
-  return false;
-}
-
 /// isKnownNonNull - Return true if we know that the specified value is never
 /// null.
 static bool isKnownNonNull(const Value *V) {

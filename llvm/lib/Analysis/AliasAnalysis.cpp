@@ -207,6 +207,30 @@ bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
   return false;
 }
 
+/// isNoAliasCall - Return true if this pointer is returned by a noalias
+/// function.
+bool llvm::isNoAliasCall(const Value *V) {
+  if (isa<CallInst>(V) || isa<InvokeInst>(V))
+    return CallSite(const_cast<Instruction*>(cast<Instruction>(V)))
+      .paramHasAttr(0, Attribute::NoAlias);
+  return false;
+}
+
+/// isIdentifiedObject - Return true if this pointer refers to a distinct and
+/// identifiable object.  This returns true for:
+///    Global Variables and Functions
+///    Allocas and Mallocs
+///    ByVal and NoAlias Arguments
+///    NoAlias returns
+///
+bool llvm::isIdentifiedObject(const Value *V) {
+  if (isa<GlobalValue>(V) || isa<AllocationInst>(V) || isNoAliasCall(V))
+    return true;
+  if (const Argument *A = dyn_cast<Argument>(V))
+    return A->hasNoAliasAttr() || A->hasByValAttr();
+  return false;
+}
+
 // Because of the way .a files work, we must force the BasicAA implementation to
 // be pulled in if the AliasAnalysis classes are pulled in.  Otherwise we run
 // the risk of AliasAnalysis being used, but the default implementation not
