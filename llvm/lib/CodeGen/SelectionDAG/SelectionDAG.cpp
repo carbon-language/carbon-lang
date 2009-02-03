@@ -1334,7 +1334,7 @@ SDValue SelectionDAG::CreateStackTemporary(MVT VT1, MVT VT2) {
 }
 
 SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
-                                SDValue N2, ISD::CondCode Cond) {
+                                SDValue N2, ISD::CondCode Cond, DebugLoc dl) {
   // These setcc operations always fold.
   switch (Cond) {
   default: break;
@@ -1387,29 +1387,29 @@ SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
       switch (Cond) {
       default: break;
       case ISD::SETEQ:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, VT);
+                          return getNode(ISD::UNDEF, dl, VT);
                         // fall through
       case ISD::SETOEQ: return getConstant(R==APFloat::cmpEqual, VT);
       case ISD::SETNE:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, VT);
+                          return getNode(ISD::UNDEF, dl, VT);
                         // fall through
       case ISD::SETONE: return getConstant(R==APFloat::cmpGreaterThan ||
                                            R==APFloat::cmpLessThan, VT);
       case ISD::SETLT:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, VT);
+                          return getNode(ISD::UNDEF, dl, VT);
                         // fall through
       case ISD::SETOLT: return getConstant(R==APFloat::cmpLessThan, VT);
       case ISD::SETGT:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, VT);
+                          return getNode(ISD::UNDEF, dl, VT);
                         // fall through
       case ISD::SETOGT: return getConstant(R==APFloat::cmpGreaterThan, VT);
       case ISD::SETLE:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, VT);
+                          return getNode(ISD::UNDEF, dl, VT);
                         // fall through
       case ISD::SETOLE: return getConstant(R==APFloat::cmpLessThan ||
                                            R==APFloat::cmpEqual, VT);
       case ISD::SETGE:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, VT);
+                          return getNode(ISD::UNDEF, dl, VT);
                         // fall through
       case ISD::SETOGE: return getConstant(R==APFloat::cmpGreaterThan ||
                                            R==APFloat::cmpEqual, VT);
@@ -1427,7 +1427,7 @@ SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
       }
     } else {
       // Ensure that the constant occurs on the RHS.
-      return getSetCC(VT, N2, N1, ISD::getSetCCSwappedOperands(Cond));
+      return getSetCC(dl, VT, N2, N1, ISD::getSetCCSwappedOperands(Cond));
     }
   }
 
@@ -2832,12 +2832,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
       SmallVector<SDValue, 16> Elts(N1.getNode()->op_begin(), N1.getNode()->op_end());
       Elts.insert(Elts.end(), N2.getNode()->op_begin(), N2.getNode()->op_end());
       Elts.insert(Elts.end(), N3.getNode()->op_begin(), N3.getNode()->op_end());
-      return getNode(ISD::BUILD_VECTOR, VT, &Elts[0], Elts.size());
+      return getNode(ISD::BUILD_VECTOR, DL, VT, &Elts[0], Elts.size());
     }
     break;
   case ISD::SETCC: {
     // Use FoldSetCC to simplify SETCC's.
-    SDValue Simp = FoldSetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get());
+    SDValue Simp = FoldSetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get(), DL);
     if (Simp.getNode()) return Simp;
     break;
   }
@@ -2854,7 +2854,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
   case ISD::BRCOND:
     if (N2C) {
       if (N2C->getZExtValue()) // Unconditional branch
-        return getNode(ISD::BR, MVT::Other, N1, N3);
+        return getNode(ISD::BR, DL, MVT::Other, N1, N3);
       else
         return N1;         // Never-taken branch
     }

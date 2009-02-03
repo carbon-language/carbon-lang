@@ -789,7 +789,7 @@ public:
   /// and cc. If it is unable to simplify it, return a null SDValue.
   SDValue SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
                           ISD::CondCode Cond, bool foldBooleans,
-                          DAGCombinerInfo &DCI) const;
+                          DAGCombinerInfo &DCI, DebugLoc dl) const;
 
   /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
   /// node is a GlobalAddress + offset.

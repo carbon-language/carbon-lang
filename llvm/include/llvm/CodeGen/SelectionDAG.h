@@ -904,7 +904,7 @@ public:
 
   /// FoldSetCC - Constant fold a setcc to true or false.
   SDValue FoldSetCC(MVT VT, SDValue N1,
-                    SDValue N2, ISD::CondCode Cond);
+                    SDValue N2, ISD::CondCode Cond, DebugLoc dl);
   
   /// SignBitIsZero - Return true if the sign bit of Op is known to be zero.  We
   /// use this predicate to simplify operations downstream.

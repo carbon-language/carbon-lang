@@ -2034,12 +2034,12 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
   TargetLowering::DAGCombinerInfo DagCombineInfo(DAG, false, true, NULL);
   SDValue Tmp1, Tmp2;
   Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSLo.getValueType()),
-                           LHSLo, RHSLo, LowCC, false, DagCombineInfo);
+                           LHSLo, RHSLo, LowCC, false, DagCombineInfo, dl);
   if (!Tmp1.getNode())
     Tmp1 = DAG.getSetCC(dl, TLI.getSetCCResultType(LHSLo.getValueType()),
                         LHSLo, RHSLo, LowCC);
   Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi.getValueType()),
-                           LHSHi, RHSHi, CCCode, false, DagCombineInfo);
+                           LHSHi, RHSHi, CCCode, false, DagCombineInfo, dl);
   if (!Tmp2.getNode())
     Tmp2 = DAG.getNode(ISD::SETCC, dl,
                        TLI.getSetCCResultType(LHSHi.getValueType()),
@@ -2063,7 +2063,8 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
   }
 
   NewLHS = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi.getValueType()),
-                             LHSHi, RHSHi, ISD::SETEQ, false, DagCombineInfo);
+                             LHSHi, RHSHi, ISD::SETEQ, false, 
+                             DagCombineInfo, dl);
   if (!NewLHS.getNode())
     NewLHS = DAG.getSetCC(dl, TLI.getSetCCResultType(LHSHi.getValueType()),
                           LHSHi, RHSHi, ISD::SETEQ);

@@ -207,7 +207,7 @@ namespace {
                              SDValue N3, ISD::CondCode CC, 
                              bool NotExtCompare = false);
     SDValue SimplifySetCC(MVT VT, SDValue N0, SDValue N1, ISD::CondCode Cond,
-                          bool foldBooleans = true);
+                          DebugLoc DL, bool foldBooleans = true);
     SDValue SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp, 
                                          unsigned HiOp);
     SDValue CombineConsecutiveLoads(SDNode *N, MVT VT);
@@ -2911,7 +2911,7 @@ SDValue DAGCombiner::visitSELECT_CC(SDNode *N) {
   
   // Determine if the condition we're dealing with is constant
   SDValue SCC = SimplifySetCC(TLI.getSetCCResultType(N0.getValueType()),
-                              N0, N1, CC, false);
+                              N0, N1, CC, N->getDebugLoc(), false);
   if (SCC.getNode()) AddToWorkList(SCC.getNode());
 
   if (ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.getNode())) {
@@ -2937,7 +2937,8 @@ SDValue DAGCombiner::visitSELECT_CC(SDNode *N) {
 
 SDValue DAGCombiner::visitSETCC(SDNode *N) {
   return SimplifySetCC(N->getValueType(0), N->getOperand(0), N->getOperand(1),
-                       cast<CondCodeSDNode>(N->getOperand(2))->get());
+                       cast<CondCodeSDNode>(N->getOperand(2))->get(),
+                       N->getDebugLoc());
 }
 
 // ExtendUsesToFormExtLoad - Trying to extend uses of a load to enable this:
@@ -4434,7 +4435,8 @@ SDValue DAGCombiner::visitBR_CC(SDNode *N) {
   
   // Use SimplifySetCC to simplify SETCC's.
   SDValue Simp = SimplifySetCC(TLI.getSetCCResultType(CondLHS.getValueType()),
-                               CondLHS, CondRHS, CC->get(), false);
+                               CondLHS, CondRHS, CC->get(), N->getDebugLoc(),
+                               false);
   if (Simp.getNode()) AddToWorkList(Simp.getNode());
 
   ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(Simp.getNode());
@@ -5686,7 +5688,7 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
 
   // Determine if the condition we're dealing with is constant
   SDValue SCC = SimplifySetCC(TLI.getSetCCResultType(N0.getValueType()),
-                              N0, N1, CC, false);
+                              N0, N1, CC, DL, false);
   if (SCC.getNode()) AddToWorkList(SCC.getNode());
   ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.getNode());
 
@@ -5880,10 +5882,10 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
 /// SimplifySetCC - This is a stub for TargetLowering::SimplifySetCC.
 SDValue DAGCombiner::SimplifySetCC(MVT VT, SDValue N0,
                                    SDValue N1, ISD::CondCode Cond,
-                                   bool foldBooleans) {
+                                   DebugLoc DL, bool foldBooleans) {
   TargetLowering::DAGCombinerInfo 
     DagCombineInfo(DAG, Level == Unrestricted, false, this);
-  return TLI.SimplifySetCC(VT, N0, N1, Cond, foldBooleans, DagCombineInfo);
+  return TLI.SimplifySetCC(VT, N0, N1, Cond, foldBooleans, DagCombineInfo, DL);
 }
 
 /// BuildSDIVSequence - Given an ISD::SDIV node expressing a divide by constant,
