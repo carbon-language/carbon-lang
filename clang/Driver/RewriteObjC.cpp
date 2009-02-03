@@ -456,11 +456,10 @@ void RewriteObjC::Initialize(ASTContext &context) {
      
   Rewrite.setSourceMgr(Context->getSourceManager());
   
-  Preamble = "#line 2\n";
   // declaring objc_selector outside the parameter list removes a silly
   // scope related warning...
   if (IsHeader)
-    Preamble += "#pragma once\n";
+    Preamble = "#pragma once\n";
   Preamble += "struct objc_selector; struct objc_class;\n";
   Preamble += "struct __rw_objc_super { struct objc_object *object; ";
   Preamble += "struct objc_object *superClass; ";
@@ -4494,7 +4493,10 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
     OutFile = &llvm::outs();
   } else if (!OutFileName.empty()) {
     std::string Err;
-    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), false, Err);
+    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), 
+                                       // set binary mode (critical for Windoze)
+                                       true, 
+                                       Err);
     OwnedStream.reset(OutFile);
   } else if (InFileName == "-") {
     OutFile = &llvm::outs();
@@ -4503,7 +4505,10 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
     Path.eraseSuffix();
     Path.appendSuffix("cpp");
     std::string Err;
-    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), false, Err);
+    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), 
+                                       // set binary mode (critical for Windoze)
+                                       true, 
+                                       Err);
     OwnedStream.reset(OutFile);
   }
   
