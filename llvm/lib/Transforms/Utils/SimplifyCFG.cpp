@@ -15,6 +15,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/CFG.h"
@@ -1262,7 +1263,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
     DomBlock = *pred_begin(Pred);
     for (BasicBlock::iterator I = Pred->begin();
          !isa<TerminatorInst>(I); ++I)
-      if (!AggressiveInsts.count(I)) {
+      if (!AggressiveInsts.count(I) && !isa<DbgInfoIntrinsic>(I)) {
         // This is not an aggressive instruction that we can promote.
         // Because of this, we won't be able to get rid of the control
         // flow, so the xform is not worth it.
@@ -1276,7 +1277,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
     DomBlock = *pred_begin(Pred);
     for (BasicBlock::iterator I = Pred->begin();
          !isa<TerminatorInst>(I); ++I)
-      if (!AggressiveInsts.count(I)) {
+      if (!AggressiveInsts.count(I) && !isa<DbgInfoIntrinsic>(I)) {
         // This is not an aggressive instruction that we can promote.
         // Because of this, we won't be able to get rid of the control
         // flow, so the xform is not worth it.
