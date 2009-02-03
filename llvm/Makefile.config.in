@@ -283,3 +283,6 @@ ifneq (,$(findstring -mno-cygwin, $(CXX)))
 else
   SYSPATH = $(1)
 endif
+
+# Location of the plugin header file for gold.
+BINUTILS_INCDIR := @BINUTILS_INCDIR@

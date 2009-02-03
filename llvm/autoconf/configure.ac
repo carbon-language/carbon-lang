@@ -514,6 +514,24 @@ case "$withval" in
   *) AC_MSG_ERROR([Invalid path for --with-ocaml-libdir. Provide full path]) ;;
 esac
 
+dnl Allow linking of LLVM with GPLv3 binutils code.
+AC_ARG_WITH(binutils-include,
+  AS_HELP_STRING([--with-binutils-include],
+    [Specify path to binutils/include/ containing plugin-api.h file for gold plugin.]),,
+  withval=default)
+case "$withval" in
+  default) WITH_BINUTILS_INCDIR=default ;;
+  /* | [[A-Za-z]]:[[\\/]]*)      WITH_BINUTILS_INCDIR=$withval ;;
+  *) AC_MSG_ERROR([Invalid path for --with-binutils-include. Provide full path]) ;;
+esac
+if test "x$WITH_BINUTILS_INCDIR" != xdefault ; then
+  AC_SUBST(BINUTILS_INCDIR,$WITH_BINUTILS_INCDIR)
+  if test ! -f "$WITH_BINUTILS_INCDIR/plugin-api.h"; then
+     echo "$WITH_BINUTILS_INCDIR/plugin-api.h"
+     AC_MSG_ERROR([Invalid path to directory containing plugin-api.h.]);
+  fi
+fi
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
