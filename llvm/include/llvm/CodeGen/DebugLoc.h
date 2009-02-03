@@ -40,6 +40,8 @@ namespace llvm {
     static DebugLoc getUnknownLoc()   { DebugLoc L; L.Idx = 0;   return L; }
     static DebugLoc get(unsigned idx) { DebugLoc L; L.Idx = idx; return L; }
 
+    unsigned getIndex() const { return Idx; }
+
     /// isInvalid - Return true if the DebugLoc is invalid.
     bool isInvalid() const { return Idx == ~0U; }
 
