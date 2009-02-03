@@ -219,7 +219,7 @@ unsigned ScheduleDAGSDNodes::getVR(SDValue Op,
       const TargetRegisterClass *RC = TLI->getRegClassFor(Op.getValueType());
       VReg = MRI.createVirtualRegister(RC);
     }
-    BuildMI(BB, TII->get(TargetInstrInfo::IMPLICIT_DEF), VReg);
+    BuildMI(BB, Op.getDebugLoc(), TII->get(TargetInstrInfo::IMPLICIT_DEF),VReg);
     return VReg;
   }
 
@@ -359,7 +359,8 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
 
     // Create the extract_subreg machine instruction.
-    MachineInstr *MI = BuildMI(MF, TII->get(TargetInstrInfo::EXTRACT_SUBREG));
+    MachineInstr *MI = BuildMI(MF, Node->getDebugLoc(),
+                               TII->get(TargetInstrInfo::EXTRACT_SUBREG));
 
     // Figure out the register class to create for the destreg.
     const TargetRegisterClass *SRC = TLI->getRegClassFor(Node->getValueType(0));
@@ -401,7 +402,7 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     }
     
     // Create the insert_subreg or subreg_to_reg machine instruction.
-    MachineInstr *MI = BuildMI(MF, TII->get(Opc));
+    MachineInstr *MI = BuildMI(MF, Node->getDebugLoc(), TII->get(Opc));
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     
     // If creating a subreg_to_reg, then the first input operand
@@ -458,7 +459,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
 #endif
 
     // Create the new machine instruction.
-    MachineInstr *MI = BuildMI(MF, II);
+    MachineInstr *MI = BuildMI(MF, Node->getDebugLoc(), II);
     
     // Add result register values for things that are defined by this
     // instruction.
@@ -479,8 +480,9 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
       // specific inserter which may returns a new basic block.
       BB = TLI->EmitInstrWithCustomInserter(MI, BB);
       Begin = End = BB->end();
-    } else
+    } else {
       BB->insert(End, MI);
+    }
 
     // Additional results must be an physical register def.
     if (HasPhysRegOuts) {
@@ -543,7 +545,8 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
       --NumOps;  // Ignore the flag operand.
       
     // Create the inline asm machine instruction.
-    MachineInstr *MI = BuildMI(MF, TII->get(TargetInstrInfo::INLINEASM));
+    MachineInstr *MI = BuildMI(MF, Node->getDebugLoc(),
+                               TII->get(TargetInstrInfo::INLINEASM));
 
     // Add the asm string as an external symbol operand.
     const char *AsmStr =
