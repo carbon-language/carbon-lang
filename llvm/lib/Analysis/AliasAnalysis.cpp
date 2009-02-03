@@ -28,6 +28,7 @@
 #include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
@@ -114,6 +115,27 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(CallSite CS,
                                  std::vector<PointerAccessInfo> *Info) {
+  if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
+    switch (II->getIntrinsicID()) {
+      case Intrinsic::atomic_cmp_swap:
+      case Intrinsic::atomic_load_add:
+      case Intrinsic::atomic_load_and:
+      case Intrinsic::atomic_load_max:
+      case Intrinsic::atomic_load_min:
+      case Intrinsic::atomic_load_nand:
+      case Intrinsic::atomic_load_or:
+      case Intrinsic::atomic_load_sub:
+      case Intrinsic::atomic_load_umax:
+      case Intrinsic::atomic_load_umin:
+      case Intrinsic::atomic_load_xor:
+      case Intrinsic::atomic_swap:
+        // CAS and related intrinsics only access their arguments.
+        return AliasAnalysis::AccessesArguments;
+      default:
+        break;
+    }
+  }
+  
   if (CS.doesNotAccessMemory())
     // Can't do better than this.
     return DoesNotAccessMemory;
