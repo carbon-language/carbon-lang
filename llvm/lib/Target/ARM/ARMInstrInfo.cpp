@@ -649,7 +649,7 @@ bool ARMInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     return false;
 
   bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
-  MachineInstr *PopMI = MF.CreateMachineInstr(get(ARM::tPOP));
+  MachineInstr *PopMI = MF.CreateMachineInstr(get(ARM::tPOP),MI->getDebugLoc());
   MBB.insert(MI, PopMI);
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();

@@ -114,7 +114,7 @@ unsigned FastISel::getRegForValue(Value *V) {
     Reg = LocalValueMap[CE];
   } else if (isa<UndefValue>(V)) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
-    BuildMI(MBB, TII.get(TargetInstrInfo::IMPLICIT_DEF), Reg);
+    BuildMI(MBB, DL, TII.get(TargetInstrInfo::IMPLICIT_DEF), Reg);
   }
   
   // If target-independent code couldn't handle the value, give target-specific
@@ -324,8 +324,10 @@ bool FastISel::SelectCall(User *I) {
       unsigned Line = SPI->getLine();
       unsigned Col = SPI->getColumn();
       unsigned ID = DW->RecordSourceLine(Line, Col, SrcFile);
+      unsigned Idx = MF.getOrCreateDebugLocID(SrcFile, Line, Col);
+      setCurDebugLoc(DebugLoc::get(Idx));
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-      BuildMI(MBB, II).addImm(ID);
+      BuildMI(MBB, DL, II).addImm(ID);
     }
     return true;
   }
@@ -335,7 +337,7 @@ bool FastISel::SelectCall(User *I) {
       unsigned ID = 
         DW->RecordRegionStart(cast<GlobalVariable>(RSI->getContext()));
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-      BuildMI(MBB, II).addImm(ID);
+      BuildMI(MBB, DL, II).addImm(ID);
     }
     return true;
   }
@@ -345,7 +347,7 @@ bool FastISel::SelectCall(User *I) {
       unsigned ID = 
         DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-      BuildMI(MBB, II).addImm(ID);
+      BuildMI(MBB, DL, II).addImm(ID);
     }
     return true;
   }
@@ -353,23 +355,28 @@ bool FastISel::SelectCall(User *I) {
     if (!DW) return true;
     DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
     Value *SP = FSI->getSubprogram();
+
     if (DW->ValidDebugInfo(SP)) {
-      // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
-      // what (most?) gdb expects.
+      // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is what
+      // (most?) gdb expects.
       DISubprogram Subprogram(cast<GlobalVariable>(SP));
       DICompileUnit CompileUnit = Subprogram.getCompileUnit();
       unsigned SrcFile = DW->RecordSource(CompileUnit.getDirectory(),
                                           CompileUnit.getFilename());
+
       // Record the source line but does not create a label for the normal
       // function start. It will be emitted at asm emission time. However,
       // create a label if this is a beginning of inlined function.
-      unsigned LabelID = 
-        DW->RecordSourceLine(Subprogram.getLineNumber(), 0, SrcFile);
+      unsigned Line = Subprogram.getLineNumber();
+      unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
+      setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
+
       if (DW->getRecordSourceLineCount() != 1) {
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-        BuildMI(MBB, II).addImm(LabelID);
+        BuildMI(MBB, DL, II).addImm(LabelID);
       }
     }
+
     return true;
   }
   case Intrinsic::dbg_declare: {
@@ -393,7 +400,7 @@ bool FastISel::SelectCall(User *I) {
 
       // Build the DECLARE instruction.
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DECLARE);
-      BuildMI(MBB, II).addFrameIndex(FI).addGlobalAddress(GV);
+      BuildMI(MBB, DL, II).addFrameIndex(FI).addGlobalAddress(GV);
     }
     return true;
   }
@@ -830,7 +837,7 @@ unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  BuildMI(MBB, II, ResultReg);
+  BuildMI(MBB, DL, II, ResultReg);
   return ResultReg;
 }
 
@@ -841,9 +848,9 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, II, ResultReg).addReg(Op0);
+    BuildMI(MBB, DL, II, ResultReg).addReg(Op0);
   else {
-    BuildMI(MBB, II).addReg(Op0);
+    BuildMI(MBB, DL, II).addReg(Op0);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                          II.ImplicitDefs[0], RC, RC);
     if (!InsertedCopy)
@@ -860,9 +867,9 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1);
+    BuildMI(MBB, DL, II, ResultReg).addReg(Op0).addReg(Op1);
   else {
-    BuildMI(MBB, II).addReg(Op0).addReg(Op1);
+    BuildMI(MBB, DL, II).addReg(Op0).addReg(Op1);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                          II.ImplicitDefs[0], RC, RC);
     if (!InsertedCopy)
@@ -878,9 +885,9 @@ unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, II, ResultReg).addReg(Op0).addImm(Imm);
+    BuildMI(MBB, DL, II, ResultReg).addReg(Op0).addImm(Imm);
   else {
-    BuildMI(MBB, II).addReg(Op0).addImm(Imm);
+    BuildMI(MBB, DL, II).addReg(Op0).addImm(Imm);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                          II.ImplicitDefs[0], RC, RC);
     if (!InsertedCopy)
@@ -896,9 +903,9 @@ unsigned FastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, II, ResultReg).addReg(Op0).addFPImm(FPImm);
+    BuildMI(MBB, DL, II, ResultReg).addReg(Op0).addFPImm(FPImm);
   else {
-    BuildMI(MBB, II).addReg(Op0).addFPImm(FPImm);
+    BuildMI(MBB, DL, II).addReg(Op0).addFPImm(FPImm);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                          II.ImplicitDefs[0], RC, RC);
     if (!InsertedCopy)
@@ -914,9 +921,9 @@ unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1).addImm(Imm);
+    BuildMI(MBB, DL, II, ResultReg).addReg(Op0).addReg(Op1).addImm(Imm);
   else {
-    BuildMI(MBB, II).addReg(Op0).addReg(Op1).addImm(Imm);
+    BuildMI(MBB, DL, II).addReg(Op0).addReg(Op1).addImm(Imm);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                          II.ImplicitDefs[0], RC, RC);
     if (!InsertedCopy)
@@ -932,9 +939,9 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
   
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, II, ResultReg).addImm(Imm);
+    BuildMI(MBB, DL, II, ResultReg).addImm(Imm);
   else {
-    BuildMI(MBB, II).addImm(Imm);
+    BuildMI(MBB, DL, II).addImm(Imm);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                          II.ImplicitDefs[0], RC, RC);
     if (!InsertedCopy)
@@ -951,9 +958,9 @@ unsigned FastISel::FastEmitInst_extractsubreg(MVT::SimpleValueType RetVT,
   const TargetInstrDesc &II = TII.get(TargetInstrInfo::EXTRACT_SUBREG);
   
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, II, ResultReg).addReg(Op0).addImm(Idx);
+    BuildMI(MBB, DL, II, ResultReg).addReg(Op0).addImm(Idx);
   else {
-    BuildMI(MBB, II).addReg(Op0).addImm(Idx);
+    BuildMI(MBB, DL, II).addReg(Op0).addImm(Idx);
     bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
                                          II.ImplicitDefs[0], RC, RC);
     if (!InsertedCopy)

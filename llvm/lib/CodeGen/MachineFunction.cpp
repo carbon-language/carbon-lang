@@ -192,9 +192,10 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
 /// of `new MachineInstr'.
 ///
 MachineInstr *
-MachineFunction::CreateMachineInstr(const TargetInstrDesc &TID, bool NoImp) {
+MachineFunction::CreateMachineInstr(const TargetInstrDesc &TID,
+                                    DebugLoc DL, bool NoImp) {
   return new (InstructionRecycler.Allocate<MachineInstr>(Allocator))
-             MachineInstr(TID, NoImp);
+    MachineInstr(TID, DL, NoImp);
 }
 
 /// CloneMachineInstr - Create a new MachineInstr which is a copy of the

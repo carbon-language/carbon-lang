@@ -286,6 +286,7 @@ public:
   /// of `new MachineInstr'.
   ///
   MachineInstr *CreateMachineInstr(const TargetInstrDesc &TID,
+                                   DebugLoc DL,
                                    bool NoImp = false);
 
   /// CloneMachineInstr - Create a new MachineInstr which is a copy of the

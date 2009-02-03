@@ -1938,9 +1938,11 @@ bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
 static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
                                      const SmallVectorImpl<MachineOperand> &MOs,
-                                 MachineInstr *MI, const TargetInstrInfo &TII) {
+                                     MachineInstr *MI,
+                                     const TargetInstrInfo &TII) {
   // Create the base instruction with the memory operand as the first part.
-  MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode), true);
+  MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode),
+                                              MI->getDebugLoc(), true);
   MachineInstrBuilder MIB(NewMI);
   unsigned NumAddrOps = MOs.size();
   for (unsigned i = 0; i != NumAddrOps; ++i)
@@ -1965,7 +1967,8 @@ static MachineInstr *FuseInst(MachineFunction &MF,
                               unsigned Opcode, unsigned OpNo,
                               const SmallVectorImpl<MachineOperand> &MOs,
                               MachineInstr *MI, const TargetInstrInfo &TII) {
-  MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode), true);
+  MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode),
+                                              MI->getDebugLoc(), true);
   MachineInstrBuilder MIB(NewMI);
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -2298,7 +2301,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   }
 
   // Emit the data processing instruction.
-  MachineInstr *DataMI = MF.CreateMachineInstr(TID, true);
+  MachineInstr *DataMI = MF.CreateMachineInstr(TID, MI->getDebugLoc(), true);
   MachineInstrBuilder MIB(DataMI);
   
   if (FoldedStore)

@@ -3884,14 +3884,16 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       DICompileUnit CompileUnit = Subprogram.getCompileUnit();
       unsigned SrcFile = DW->RecordSource(CompileUnit.getDirectory(),
                                           CompileUnit.getFilename());
+
       // Record the source line but does not create a label for the normal
       // function start. It will be emitted at asm emission time. However,
       // create a label if this is a beginning of inlined function.
       unsigned Line = Subprogram.getLineNumber();
-      unsigned LabelID =
-        DW->RecordSourceLine(Line, 0, SrcFile);
+      unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
+
       if (DW->getRecordSourceLineCount() != 1)
         DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getRoot(), LabelID));
+
       setCurDebugLoc(DebugLoc::get(DAG.getMachineFunction().
                          getOrCreateDebugLocID(SrcFile, Line, 0)));
     }
