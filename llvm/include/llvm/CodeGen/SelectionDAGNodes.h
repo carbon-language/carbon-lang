@@ -2153,6 +2153,12 @@ protected:
     : SDNode(ISD::CONVERT_RNDSAT, getSDVTList(VT), Ops, NumOps), CvtCode(Code) {
     assert(NumOps == 5 && "wrong number of operations");
   }
+  explicit CvtRndSatSDNode(MVT VT, DebugLoc dl, const SDValue *Ops,
+                           unsigned NumOps, ISD::CvtCode Code)
+    : SDNode(ISD::CONVERT_RNDSAT, dl, getSDVTList(VT), Ops, NumOps), 
+      CvtCode(Code) {
+    assert(NumOps == 5 && "wrong number of operations");
+  }
 public:
   ISD::CvtCode getCvtCode() const { return CvtCode; }
 

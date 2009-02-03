@@ -1395,7 +1395,8 @@ void SelectionDAGLowering::visitJumpTable(JumpTable &JT) {
   // Emit the code for the jump table
   assert(JT.Reg != -1U && "Should lower JT Header first!");
   MVT PTy = TLI.getPointerTy();
-  SDValue Index = DAG.getCopyFromReg(getControlRoot(), JT.Reg, PTy);
+  SDValue Index = DAG.getCopyFromReg(getControlRoot(), getCurDebugLoc(),
+                                     JT.Reg, PTy);
   SDValue Table = DAG.getJumpTable(JT.JTI, PTy);
   DAG.setRoot(DAG.getNode(ISD::BR_JT, getCurDebugLoc(), 
                           MVT::Other, Index.getValue(1),
@@ -1427,7 +1428,8 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
                            TLI.getPointerTy(), SUB);
 
   unsigned JumpTableReg = FuncInfo.MakeReg(TLI.getPointerTy());
-  SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), JumpTableReg, SwitchOp);
+  SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), getCurDebugLoc(),
+                                    JumpTableReg, SwitchOp);
   JT.Reg = JumpTableReg;
 
   // Emit the range check for the jump table, and branch to the default block
@@ -1478,7 +1480,8 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
                           TLI.getPointerTy(), SUB);
 
   B.Reg = FuncInfo.MakeReg(TLI.getPointerTy());
-  SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), B.Reg, ShiftOp);
+  SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), getCurDebugLoc(),
+                                    B.Reg, ShiftOp);
 
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
@@ -1508,7 +1511,7 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
                                             unsigned Reg,
                                             BitTestCase &B) {
   // Make desired shift
-  SDValue ShiftOp = DAG.getCopyFromReg(getControlRoot(), Reg,
+  SDValue ShiftOp = DAG.getCopyFromReg(getControlRoot(), getCurDebugLoc(), Reg,
                                        TLI.getPointerTy());
   SDValue SwitchVal = DAG.getNode(ISD::SHL, getCurDebugLoc(), 
                                   TLI.getPointerTy(),
@@ -3843,7 +3846,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));
     unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
-    DAG.setRoot(DAG.getMemcpy(getRoot(), Op1, Op2, Op3, Align, false,
+    DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, false,
                               I.getOperand(1), 0, I.getOperand(2), 0));
     return 0;
   }
@@ -3852,7 +3855,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));
     unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
-    DAG.setRoot(DAG.getMemset(getRoot(), Op1, Op2, Op3, Align,
+    DAG.setRoot(DAG.getMemset(getRoot(), dl, Op1, Op2, Op3, Align,
                               I.getOperand(1), 0));
     return 0;
   }
@@ -3869,12 +3872,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       Size = C->getZExtValue();
     if (AA->alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
         AliasAnalysis::NoAlias) {
-      DAG.setRoot(DAG.getMemcpy(getRoot(), Op1, Op2, Op3, Align, false,
+      DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, false,
                                 I.getOperand(1), 0, I.getOperand(2), 0));
       return 0;
     }
 
-    DAG.setRoot(DAG.getMemmove(getRoot(), Op1, Op2, Op3, Align,
+    DAG.setRoot(DAG.getMemmove(getRoot(), dl, Op1, Op2, Op3, Align,
                                I.getOperand(1), 0, I.getOperand(2), 0));
     return 0;
   }
@@ -4094,7 +4097,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     }
     MVT DestVT = TLI.getValueType(I.getType());
     Value* Op1 = I.getOperand(1);
-    setValue(&I, DAG.getConvertRndSat(DestVT, getValue(Op1),
+    setValue(&I, DAG.getConvertRndSat(DestVT, getCurDebugLoc(), getValue(Op1),
                                 DAG.getValueType(DestVT),
                                 DAG.getValueType(getValue(Op1).getValueType()),
                                 getValue(I.getOperand(2)),
@@ -4512,9 +4515,9 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
     for (unsigned i = 0; i != NumRegs; ++i) {
       SDValue P;
       if (Flag == 0)
-        P = DAG.getCopyFromReg(Chain, Regs[Part+i], RegisterVT);
+        P = DAG.getCopyFromReg(Chain, dl, Regs[Part+i], RegisterVT);
       else {
-        P = DAG.getCopyFromReg(Chain, Regs[Part+i], RegisterVT, *Flag);
+        P = DAG.getCopyFromReg(Chain, dl, Regs[Part+i], RegisterVT, *Flag);
         *Flag = P.getValue(2);
       }
       Chain = P.getValue(1);
@@ -4599,9 +4602,9 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
   for (unsigned i = 0; i != NumRegs; ++i) {
     SDValue Part;
     if (Flag == 0)
-      Part = DAG.getCopyToReg(Chain, Regs[i], Parts[i]);
+      Part = DAG.getCopyToReg(Chain, dl, Regs[i], Parts[i]);
     else {
-      Part = DAG.getCopyToReg(Chain, Regs[i], Parts[i], *Flag);
+      Part = DAG.getCopyToReg(Chain, dl, Regs[i], Parts[i], *Flag);
       *Flag = Part.getValue(1);
     }
     Chains[i] = Part.getValue(0);
@@ -5436,9 +5439,9 @@ void SelectionDAGLowering::visitVAStart(CallInst &I) {
 }
 
 void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
-  SDValue V = DAG.getVAArg(TLI.getValueType(I.getType()), getRoot(),
-                             getValue(I.getOperand(0)),
-                             DAG.getSrcValue(I.getOperand(0)));
+  SDValue V = DAG.getVAArg(TLI.getValueType(I.getType()), getCurDebugLoc(),
+                           getRoot(), getValue(I.getOperand(0)),
+                           DAG.getSrcValue(I.getOperand(0)));
   setValue(&I, V);
   DAG.setRoot(V.getValue(1));
 }

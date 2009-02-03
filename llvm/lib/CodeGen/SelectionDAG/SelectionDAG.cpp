@@ -1175,7 +1175,8 @@ SDValue SelectionDAG::getCondCode(ISD::CondCode Cond) {
   return SDValue(CondCodeNodes[Cond], 0);
 }
 
-SDValue SelectionDAG::getConvertRndSat(MVT VT, SDValue Val, SDValue DTy,
+SDValue SelectionDAG::getConvertRndSat(MVT VT,
+                                       SDValue Val, SDValue DTy,
                                        SDValue STy, SDValue Rnd, SDValue Sat,
                                        ISD::CvtCode Code) {
   // If the src and dest types are the same, no conversion is necessary.
@@ -1189,6 +1190,26 @@ SDValue SelectionDAG::getConvertRndSat(MVT VT, SDValue Val, SDValue DTy,
   CvtRndSatSDNode *N = NodeAllocator.Allocate<CvtRndSatSDNode>();
   SDValue Ops[] = { Val, DTy, STy, Rnd, Sat };
   new (N) CvtRndSatSDNode(VT, Ops, 5, Code);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDValue(N, 0);
+}
+
+SDValue SelectionDAG::getConvertRndSat(MVT VT, DebugLoc dl,
+                                       SDValue Val, SDValue DTy,
+                                       SDValue STy, SDValue Rnd, SDValue Sat,
+                                       ISD::CvtCode Code) {
+  // If the src and dest types are the same, no conversion is necessary.
+  if (DTy == STy)
+    return Val;
+
+  FoldingSetNodeID ID;
+  void* IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDValue(E, 0);
+  CvtRndSatSDNode *N = NodeAllocator.Allocate<CvtRndSatSDNode>();
+  SDValue Ops[] = { Val, DTy, STy, Rnd, Sat };
+  new (N) CvtRndSatSDNode(VT, dl, Ops, 5, Code);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
