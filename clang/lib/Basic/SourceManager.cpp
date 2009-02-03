@@ -30,7 +30,6 @@ using llvm::MemoryBuffer;
 
 ContentCache::~ContentCache() {
   delete Buffer;
-  delete [] SourceLineCache;
 }
 
 /// getSizeBytesMapped - Returns the number of bytes actually mapped for
@@ -121,6 +120,19 @@ unsigned SourceManager::getLineTableFilenameID(const char *Ptr, unsigned Len) {
 
 SourceManager::~SourceManager() {
   delete LineTable;
+  
+  // Delete FileEntry objects corresponding to content caches.  Since the actual
+  // content cache objects are bump pointer allocated, we just have to run the
+  // dtors, but we call the deallocate method for completeness.
+  for (unsigned i = 0, e = MemBufferInfos.size(); i != e; ++i) {
+    MemBufferInfos[i]->~ContentCache();
+    ContentCacheAlloc.Deallocate(MemBufferInfos[i]);
+  }
+  for (llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*>::iterator
+       I = FileInfos.begin(), E = FileInfos.end(); I != E; ++I) {
+    I->second->~ContentCache();
+    ContentCacheAlloc.Deallocate(I->second);
+  }
 }
 
 void SourceManager::clearIDTables() {
@@ -145,17 +157,13 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt) {
   assert(FileEnt && "Didn't specify a file entry to use?");
   
   // Do we already have information about this file?
-  std::set<ContentCache>::iterator I = 
-    FileInfos.lower_bound(ContentCache(FileEnt));
-  
-  if (I != FileInfos.end() && I->Entry == FileEnt)
-    return &*I;
+  ContentCache *&Entry = FileInfos[FileEnt];
+  if (Entry) return Entry;
   
   // Nope, create a new Cache entry.
-  ContentCache& Entry = const_cast<ContentCache&>(*FileInfos.insert(I,FileEnt));
-  Entry.SourceLineCache = 0;
-  Entry.NumLines = 0;
-  return &Entry;
+  Entry = ContentCacheAlloc.Allocate<ContentCache>();
+  new (Entry) ContentCache(FileEnt);
+  return Entry;
 }
 
 
@@ -167,10 +175,11 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
   // must default construct the object first that the instance actually
   // stored within MemBufferInfos actually owns the Buffer, and not any
   // temporary we would use in the call to "push_back".
-  MemBufferInfos.push_back(ContentCache());
-  ContentCache& Entry = const_cast<ContentCache&>(MemBufferInfos.back());
-  Entry.setBuffer(Buffer);
-  return &Entry;
+  ContentCache *Entry = ContentCacheAlloc.Allocate<ContentCache>();
+  new (Entry) ContentCache();
+  MemBufferInfos.push_back(Entry);
+  Entry->setBuffer(Buffer);
+  return Entry;
 }
 
 //===----------------------------------------------------------------------===//
@@ -413,8 +422,9 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
   return FilePos-LineStart+1;
 }
 
-static void ComputeLineNumbers(ContentCache* FI) DISABLE_INLINE;
-static void ComputeLineNumbers(ContentCache* FI) {  
+static void ComputeLineNumbers(ContentCache* FI,
+                               llvm::BumpPtrAllocator &Alloc) DISABLE_INLINE;
+static void ComputeLineNumbers(ContentCache* FI, llvm::BumpPtrAllocator &Alloc){ 
   // Note that calling 'getBuffer()' may lazily page in the file.
   const MemoryBuffer *Buffer = FI->getBuffer();
   
@@ -454,7 +464,7 @@ static void ComputeLineNumbers(ContentCache* FI) {
   
   // Copy the offsets into the FileInfo structure.
   FI->NumLines = LineOffsets.size();
-  FI->SourceLineCache = new unsigned[LineOffsets.size()];
+  FI->SourceLineCache = Alloc.Allocate<unsigned>(LineOffsets.size());
   std::copy(LineOffsets.begin(), LineOffsets.end(), FI->SourceLineCache);
 }
 
@@ -478,7 +488,7 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
   if (Content->SourceLineCache == 0)
-    ComputeLineNumbers(Content);
+    ComputeLineNumbers(Content, ContentCacheAlloc);
 
   // Okay, we know we have a line number table.  Do a binary search to find the
   // line number that this character position lands on.
@@ -595,10 +605,9 @@ void SourceManager::PrintStats() const {
     
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;
-  for (std::set<ContentCache>::const_iterator I = 
-       FileInfos.begin(), E = FileInfos.end(); I != E; ++I) {
-    NumLineNumsComputed += I->SourceLineCache != 0;
-    NumFileBytesMapped  += I->getSizeBytesMapped();
+  for (fileinfo_iterator I = fileinfo_begin(), E = fileinfo_end(); I != E; ++I){
+    NumLineNumsComputed += I->second->SourceLineCache != 0;
+    NumFileBytesMapped  += I->second->getSizeBytesMapped();
   }
   
   llvm::cerr << NumFileBytesMapped << " bytes of files mapped, "
@@ -665,8 +674,10 @@ void ContentCache::ReadToSourceManager(llvm::Deserializer& D,
   }
   
   // Register the ContextCache object with the deserializer.
+  /* FIXME:
+  ContentCache *Entry
   SMgr.MemBufferInfos.push_back(ContentCache());
-  ContentCache& Entry = const_cast<ContentCache&>(SMgr.MemBufferInfos.back());
+   = const_cast<ContentCache&>(SMgr.MemBufferInfos.back());
   D.RegisterPtr(&Entry);
   
   // Create the buffer.
@@ -677,6 +688,7 @@ void ContentCache::ReadToSourceManager(llvm::Deserializer& D,
   char* p = const_cast<char*>(Entry.Buffer->getBufferStart());
   for (unsigned i = 0; i < Size ; ++i)
     p[i] = D.ReadInt();    
+   */
 }
 
 void SourceManager::Emit(llvm::Serializer& S) const {
@@ -687,16 +699,19 @@ void SourceManager::Emit(llvm::Serializer& S) const {
   // Emit: FileInfos.  Just emit the file name.
   S.EnterBlock();    
 
-  std::for_each(FileInfos.begin(),FileInfos.end(),
-                S.MakeEmitter<ContentCache>());
+  // FIXME: Emit FileInfos.
+  //std::for_each(FileInfos.begin(), FileInfos.end(),
+  //              S.MakeEmitter<ContentCache>());
   
   S.ExitBlock();
   
   // Emit: MemBufferInfos
   S.EnterBlock();
 
+  /* FIXME: EMIT.
   std::for_each(MemBufferInfos.begin(), MemBufferInfos.end(),
                 S.MakeEmitter<ContentCache>());
+   */
   
   S.ExitBlock();
   
@@ -715,11 +730,11 @@ SourceManager::CreateAndRegister(llvm::Deserializer& D, FileManager& FMgr){
   
   std::vector<char> Buf;
     
-  { // Read: FileInfos.
+  /*{ // FIXME Read: FileInfos.
     llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
     while (!D.FinishedBlock(BLoc))
     ContentCache::ReadToSourceManager(D,*M,&FMgr,Buf);
-  }
+  }*/
     
   { // Read: MemBufferInfos.
     llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();

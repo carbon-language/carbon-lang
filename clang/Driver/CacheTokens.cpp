@@ -433,7 +433,7 @@ void PTHWriter::GeneratePTH() {
   
   for (SourceManager::fileinfo_iterator I = SM.fileinfo_begin(),
        E = SM.fileinfo_end(); I != E; ++I) {
-    const SrcMgr::ContentCache &C = *I;
+    const SrcMgr::ContentCache &C = *I->second;
     const FileEntry *FE = C.Entry;
     
     // FIXME: Handle files with non-absolute paths.

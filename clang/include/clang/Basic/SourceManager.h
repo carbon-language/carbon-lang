@@ -16,10 +16,10 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Bitcode/SerializationFwd.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/ADT/DenseMap.h"
 #include <vector>
-#include <set>
-#include <list>
 #include <cassert>
 
 namespace llvm {
@@ -61,8 +61,9 @@ namespace SrcMgr {
     /// the ContentCache encapsulates an imaginary text buffer.
     const FileEntry *Entry;
     
-    /// SourceLineCache - A new[]'d array of offsets for each source line.  This
-    /// is lazily computed.  This is owned by the ContentCache object.
+    /// SourceLineCache - A bump pointer allocated array of offsets for each
+    /// source line.  This is lazily computed.  This is owned by the
+    /// SourceManager BumpPointerAllocator object.
     unsigned *SourceLineCache;
     
     /// NumLines - The number of lines in this ContentCache.  This is only valid
@@ -88,18 +89,18 @@ namespace SrcMgr {
       Buffer = B;
     }
         
-    ContentCache(const FileEntry *e = NULL)
-      : Buffer(NULL), Entry(e), SourceLineCache(NULL), NumLines(0) {}
+    ContentCache(const FileEntry *Ent = 0)
+      : Buffer(0), Entry(Ent), SourceLineCache(0), NumLines(0) {}
 
     ~ContentCache();
     
     /// The copy ctor does not allow copies where source object has either
     ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
     ///  is not transfered, so this is a logical error.
-    ContentCache(const ContentCache &RHS) : Buffer(NULL),SourceLineCache(NULL) {
+    ContentCache(const ContentCache &RHS) : Buffer(0), SourceLineCache(0) {
       Entry = RHS.Entry;
 
-      assert (RHS.Buffer == NULL && RHS.SourceLineCache == NULL
+      assert (RHS.Buffer == 0 && RHS.SourceLineCache == 0
               && "Passed ContentCache object cannot own a buffer.");
               
       NumLines = RHS.NumLines;      
@@ -227,18 +228,6 @@ namespace SrcMgr {
     }
   };
 }  // end SrcMgr namespace.
-} // end clang namespace
-
-namespace std {
-template <> struct less<clang::SrcMgr::ContentCache> {
-  inline bool operator()(const clang::SrcMgr::ContentCache& L,
-                         const clang::SrcMgr::ContentCache& R) const {
-    return L.Entry < R.Entry;
-  }
-};
-} // end std namespace
-
-namespace clang {
   
 /// SourceManager - This file handles loading and caching of source files into
 /// memory.  This object owns the MemoryBuffer objects for all of the loaded
@@ -252,17 +241,18 @@ namespace clang {
 /// location indicates where the expanded token came from and the instantiation
 /// location specifies where it was expanded.
 class SourceManager {
+  mutable llvm::BumpPtrAllocator ContentCacheAlloc;
+  
   /// FileInfos - Memoized information about all of the files tracked by this
   /// SourceManager.  This set allows us to merge ContentCache entries based
   /// on their FileEntry*.  All ContentCache objects will thus have unique,
   /// non-null, FileEntry pointers.  
-  std::set<SrcMgr::ContentCache> FileInfos;
+  llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*> FileInfos;
   
   /// MemBufferInfos - Information about various memory buffers that we have
-  /// read in.  This is a list, instead of a vector, because we need pointers to
-  /// the ContentCache objects to be stable.  All FileEntry* within the
-  /// stored ContentCache objects are NULL, as they do not refer to a file.
-  std::list<SrcMgr::ContentCache> MemBufferInfos;
+  /// read in.  All FileEntry* within the stored ContentCache objects are NULL,
+  /// as they do not refer to a file.
+  std::vector<SrcMgr::ContentCache*> MemBufferInfos;
   
   /// SLocEntryTable - This is an array of SLocEntry's that we have created.
   /// FileID is an index into this vector.  This array is sorted by the offset.
@@ -552,7 +542,8 @@ public:
   //===--------------------------------------------------------------------===//
   
   // Iterators over FileInfos.
-  typedef std::set<SrcMgr::ContentCache>::const_iterator fileinfo_iterator;
+  typedef llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*>
+      ::const_iterator fileinfo_iterator;
   fileinfo_iterator fileinfo_begin() const { return FileInfos.begin(); }
   fileinfo_iterator fileinfo_end() const { return FileInfos.end(); }
 
