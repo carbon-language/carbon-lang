@@ -166,7 +166,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   if (isSourceDefinedByImplicitDef(MPhi, MRI))
     // If all sources of a PHI node are implicit_def, just emit an
     // implicit_def instead of a copy.
-    BuildMI(MBB, AfterPHIsIt,
+    BuildMI(MBB, AfterPHIsIt, MPhi->getDebugLoc(),
             TII->get(TargetInstrInfo::IMPLICIT_DEF), DestReg);
   else {
     IncomingReg = MF.getRegInfo().createVirtualRegister(RC);

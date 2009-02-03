@@ -44,7 +44,7 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
     unsigned Reg0 = ChangeReg0 ? Reg2 : MI->getOperand(0).getReg();
     bool Reg0IsDead = MI->getOperand(0).isDead();
     MachineFunction &MF = *MI->getParent()->getParent();
-    return BuildMI(MF, MI->getDesc())
+    return BuildMI(MF, MI->getDebugLoc(), MI->getDesc())
       .addReg(Reg0, true, false, false, Reg0IsDead)
       .addReg(Reg2, false, false, Reg2IsKill)
       .addReg(Reg1, false, false, Reg1IsKill);

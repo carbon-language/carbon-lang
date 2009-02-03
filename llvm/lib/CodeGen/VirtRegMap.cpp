@@ -1360,7 +1360,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         unsigned RReg = SubIdx ? TRI->getSubReg(Phys, SubIdx) : Phys;
         MI.getOperand(i).setReg(RReg);
         if (VRM.isImplicitlyDefined(VirtReg))
-          BuildMI(MBB, &MI, TII->get(TargetInstrInfo::IMPLICIT_DEF), RReg);
+          BuildMI(MBB, &MI, MI.getDebugLoc(),
+                  TII->get(TargetInstrInfo::IMPLICIT_DEF), RReg);
         continue;
       }
       
