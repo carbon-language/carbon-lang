@@ -28,13 +28,14 @@ using namespace clang;
 Sema::OwningExprResult
 Sema::ActOnCXXConversionFunctionExpr(Scope *S, SourceLocation OperatorLoc,
                                      TypeTy *Ty, bool HasTrailingLParen,
-                                     const CXXScopeSpec &SS) {
+                                     const CXXScopeSpec &SS,
+                                     bool isAddressOfOperand) {
   QualType ConvType = QualType::getFromOpaquePtr(Ty);
   QualType ConvTypeCanon = Context.getCanonicalType(ConvType);
   DeclarationName ConvName 
     = Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
   return ActOnDeclarationNameExpr(S, OperatorLoc, ConvName, HasTrailingLParen,
-                                  &SS);
+                                  &SS, /*ForceRes*/false, isAddressOfOperand);
 }
 
 /// ActOnCXXOperatorFunctionIdExpr - Parse a C++ overloaded operator
@@ -46,9 +47,11 @@ Sema::OwningExprResult
 Sema::ActOnCXXOperatorFunctionIdExpr(Scope *S, SourceLocation OperatorLoc,
                                      OverloadedOperatorKind Op,
                                      bool HasTrailingLParen,
-                                     const CXXScopeSpec &SS) {
+                                     const CXXScopeSpec &SS,
+                                     bool isAddressOfOperand) {
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(Op);
-  return ActOnDeclarationNameExpr(S, OperatorLoc, Name, HasTrailingLParen, &SS);
+  return ActOnDeclarationNameExpr(S, OperatorLoc, Name, HasTrailingLParen, &SS,
+                                  /*ForceRes*/false, isAddressOfOperand);
 }
 
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ).

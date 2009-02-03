@@ -1030,17 +1030,20 @@ public:
   virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                                IdentifierInfo &II,
                                                bool HasTrailingLParen,
-                                               const CXXScopeSpec *SS = 0);
+                                               const CXXScopeSpec *SS = 0,
+                                               bool isAddressOfOperand = false);
   virtual OwningExprResult ActOnCXXOperatorFunctionIdExpr(Scope *S,
                                                     SourceLocation OperatorLoc,
                                                     OverloadedOperatorKind Op,
                                                     bool HasTrailingLParen,
-                                                    const CXXScopeSpec &SS);
+                                                    const CXXScopeSpec &SS,
+                                                    bool isAddressOfOperand);
   virtual OwningExprResult ActOnCXXConversionFunctionExpr(Scope *S,
                                                     SourceLocation OperatorLoc,
                                                     TypeTy *Ty,
                                                     bool HasTrailingLParen,
-                                                    const CXXScopeSpec &SS);
+                                                    const CXXScopeSpec &SS,
+                                                    bool isAddressOfOperand);
   DeclRefExpr *BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                                 bool TypeDependent, bool ValueDependent,
                                 const CXXScopeSpec *SS = 0);
@@ -1053,7 +1056,8 @@ public:
                                             DeclarationName Name,
                                             bool HasTrailingLParen,
                                             const CXXScopeSpec *SS,
-                                            bool ForceResolution = false);
+                                            bool ForceResolution = false,
+                                            bool isAddressOfOperand = false);
 
   virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                                tok::TokenKind Kind);

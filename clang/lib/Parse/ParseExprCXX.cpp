@@ -131,7 +131,12 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
 /// That way Sema can handle and report similar errors for namespaces and the
 /// global scope.
 ///
-Parser::OwningExprResult Parser::ParseCXXIdExpression() {
+/// The isAddressOfOperand parameter indicates that this id-expression is a
+/// direct operand of the address-of operator. This is, besides member contexts,
+/// the only place where a qualified-id naming a non-static class member may
+/// appear.
+///
+Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   // qualified-id:
   //   '::'[opt] nested-name-specifier 'template'[opt] unqualified-id
   //   '::' unqualified-id
@@ -154,18 +159,20 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression() {
     // Consume the identifier so that we can see if it is followed by a '('.
     IdentifierInfo &II = *Tok.getIdentifierInfo();
     SourceLocation L = ConsumeToken();
-    return Actions.ActOnIdentifierExpr(CurScope, L, II,
-                                       Tok.is(tok::l_paren), &SS);
+    return Actions.ActOnIdentifierExpr(CurScope, L, II, Tok.is(tok::l_paren),
+                                       &SS, isAddressOfOperand);
   }
 
   case tok::kw_operator: {
     SourceLocation OperatorLoc = Tok.getLocation();
     if (OverloadedOperatorKind Op = TryParseOperatorFunctionId())
       return Actions.ActOnCXXOperatorFunctionIdExpr(
-                   CurScope, OperatorLoc, Op, Tok.is(tok::l_paren), SS);
+                       CurScope, OperatorLoc, Op, Tok.is(tok::l_paren), SS,
+                       isAddressOfOperand);
     if (TypeTy *Type = ParseConversionFunctionId())
       return Actions.ActOnCXXConversionFunctionExpr(CurScope, OperatorLoc, Type,
-                                                    Tok.is(tok::l_paren), SS);
+                                                    Tok.is(tok::l_paren), SS,
+                                                    isAddressOfOperand);
 
     // We already complained about a bad conversion-function-id,
     // above.

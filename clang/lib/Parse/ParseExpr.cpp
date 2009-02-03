@@ -345,7 +345,9 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 }
 
 /// ParseCastExpression - Parse a cast-expression, or, if isUnaryExpression is
-/// true, parse a unary-expression.
+/// true, parse a unary-expression. isAddressOfOperand exists because an
+/// id-expression that is the operand of address-of gets special treatment
+/// due to member pointers.
 ///
 ///       cast-expression: [C99 6.5.4]
 ///         unary-expression
@@ -451,7 +453,8 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 /// [GNU] binary-type-trait:
 ///                   '__is_base_of'                          [TODO]
 ///
-Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
+Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
+                                                     bool isAddressOfOperand) {
   OwningExprResult Res(Actions);
   tok::TokenKind SavedKind = Tok.getKind();
   
@@ -522,7 +525,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     if (getLang().CPlusPlus) {
       // If TryAnnotateTypeOrScopeToken annotates the token, tail recurse.
       if (TryAnnotateTypeOrScopeToken())
-        return ParseCastExpression(isUnaryExpression);
+        return ParseCastExpression(isUnaryExpression, isAddressOfOperand);
     }
 
     // Consume the identifier so that we can see if it is followed by a '('.
@@ -570,7 +573,15 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move_arg(Res));
     return move(Res);
   }
-  case tok::amp:           // unary-expression: '&' cast-expression
+  case tok::amp: {         // unary-expression: '&' cast-expression
+    // Special treatment because of member pointers
+    SourceLocation SavedLoc = ConsumeToken();
+    Res = ParseCastExpression(false, true);
+    if (!Res.isInvalid())
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move_arg(Res));
+    return move(Res);
+  }
+
   case tok::star:          // unary-expression: '*' cast-expression
   case tok::plus:          // unary-expression: '+' cast-expression
   case tok::minus:         // unary-expression: '-' cast-expression
@@ -662,15 +673,15 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::annot_cxxscope: // [C++] id-expression: qualified-id
   case tok::kw_operator: // [C++] id-expression: operator/conversion-function-id
                          //                      template-id
-    Res = ParseCXXIdExpression();
+    Res = ParseCXXIdExpression(isAddressOfOperand);
     return ParsePostfixExpressionSuffix(move(Res));
 
   case tok::coloncolon: {
     // ::foo::bar -> global qualified name etc.   If TryAnnotateTypeOrScopeToken
     // annotates the token, tail recurse.
     if (TryAnnotateTypeOrScopeToken())
-      return ParseCastExpression(isUnaryExpression);
-    
+      return ParseCastExpression(isUnaryExpression, isAddressOfOperand);
+
     // ::new -> [C++] new-expression
     // ::delete -> [C++] delete-expression
     SourceLocation CCLoc = ConsumeToken();

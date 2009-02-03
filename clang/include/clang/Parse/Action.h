@@ -551,7 +551,8 @@ public:
   virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                                IdentifierInfo &II,
                                                bool HasTrailingLParen,
-                                               const CXXScopeSpec *SS = 0) {
+                                               const CXXScopeSpec *SS = 0,
+                                               bool isAddressOfOperand = false){
     return ExprEmpty();
   }
 
@@ -563,7 +564,8 @@ public:
   virtual OwningExprResult ActOnCXXOperatorFunctionIdExpr(
                              Scope *S, SourceLocation OperatorLoc,
                              OverloadedOperatorKind Op,
-                             bool HasTrailingLParen, const CXXScopeSpec &SS) {
+                             bool HasTrailingLParen, const CXXScopeSpec &SS,
+                             bool isAddressOfOperand = false) {
     return ExprEmpty();
   }
 
@@ -575,7 +577,8 @@ public:
   virtual OwningExprResult ActOnCXXConversionFunctionExpr(
                              Scope *S, SourceLocation OperatorLoc,
                              TypeTy *Type, bool HasTrailingLParen,
-                             const CXXScopeSpec &SS) {
+                             const CXXScopeSpec &SS,
+                             bool isAddressOfOperand = false) {
     return ExprEmpty();
   }
 

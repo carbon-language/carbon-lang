@@ -363,16 +363,19 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
 Sema::OwningExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                                  IdentifierInfo &II,
                                                  bool HasTrailingLParen,
-                                                 const CXXScopeSpec *SS) {
-  return ActOnDeclarationNameExpr(S, Loc, &II, HasTrailingLParen, SS);
+                                                 const CXXScopeSpec *SS,
+                                                 bool isAddressOfOperand) {
+  return ActOnDeclarationNameExpr(S, Loc, &II, HasTrailingLParen, SS,
+                                  /*ForceResolution*/false, isAddressOfOperand);
 }
 
 /// BuildDeclRefExpr - Build either a DeclRefExpr or a
 /// QualifiedDeclRefExpr based on whether or not SS is a
 /// nested-name-specifier.
-DeclRefExpr *Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
-                                    bool TypeDependent, bool ValueDependent,
-                                    const CXXScopeSpec *SS) {
+DeclRefExpr *
+Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
+                       bool TypeDependent, bool ValueDependent,
+                       const CXXScopeSpec *SS) {
   if (SS && !SS->isEmpty())
     return new (Context) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
                        ValueDependent, SS->getRange().getBegin());
@@ -535,10 +538,16 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
 /// If ForceResolution is true, then we will attempt to resolve the
 /// name even if it looks like a dependent name. This option is off by
 /// default.
+///
+/// isAddressOfOperand means that this expression is the direct operand
+/// of an address-of operator. This matters because this is the only
+/// situation where a qualified name referencing a non-static member may
+/// appear outside a member function of this class.
 Sema::OwningExprResult
 Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                DeclarationName Name, bool HasTrailingLParen,
-                               const CXXScopeSpec *SS, bool ForceResolution) {
+                               const CXXScopeSpec *SS, bool ForceResolution,
+                               bool isAddressOfOperand) {
   if (S->getTemplateParamParent() && Name.getAsIdentifierInfo() &&
       HasTrailingLParen && !SS && !ForceResolution) {
     // We've seen something of the form
@@ -554,11 +563,11 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   }
 
   // Could be enum-constant, value decl, instance variable, etc.
-  Decl *D = 0;
   if (SS && SS->isInvalid())
     return ExprError();
   LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName);
 
+  Decl *D = 0;
   if (Lookup.isAmbiguous()) {
     DiagnoseAmbiguousLookup(Lookup, Name, Loc,
                             SS && SS->isSet() ? SS->getRange()
@@ -615,6 +624,41 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           << Name.getAsString());
       else
         return ExprError(Diag(Loc, diag::err_undeclared_var_use) << Name);
+    }
+  }
+
+  // If this is an expression of the form &Class::member, don't build an
+  // implicit member ref, because we want a pointer to the member in general,
+  // not any specific instance's member.
+  if (isAddressOfOperand && SS && !SS->isEmpty() && !HasTrailingLParen) {
+    NamedDecl *ND = dyn_cast<NamedDecl>(D);
+    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
+    if (ND && isa<CXXRecordDecl>(DC)) {
+      QualType DType;
+      if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
+        DType = FD->getType().getNonReferenceType();
+      } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+        DType = Method->getType();
+      } else if (isa<OverloadedFunctionDecl>(D)) {
+        DType = Context.OverloadTy;
+      }
+      // Could be an inner type. That's diagnosed below, so ignore it here.
+      if (!DType.isNull()) {
+        // The pointer is type- and value-dependent if it points into something
+        // dependent.
+        bool Dependent = false;
+        for (; DC; DC = DC->getParent()) {
+          // FIXME: could stop early at namespace scope.
+          if (DC->isRecord()) {
+            CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
+            if (Context.getTypeDeclType(Record)->isDependentType()) {
+              Dependent = true;
+              break;
+            }
+          }
+        }
+        return Owned(BuildDeclRefExpr(ND, DType, Loc, Dependent, Dependent,SS));
+      }
     }
   }
 
@@ -3428,6 +3472,14 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
       return Context.OverloadTy;
     } else if (isa<FieldDecl>(dcl)) {
       // Okay: we can take the address of a field.
+      // Could be a pointer to member, though, if there is an explicit
+      // scope qualifier for the class.
+      if (isa<QualifiedDeclRefExpr>(op)) {
+        DeclContext *Ctx = dcl->getDeclContext();
+        if (Ctx && Ctx->isRecord())
+          return Context.getMemberPointerType(op->getType(),
+                Context.getTypeDeclType(cast<RecordDecl>(Ctx)).getTypePtr());
+      }
     } else if (isa<FunctionDecl>(dcl)) {
       // Okay: we can take the address of a function.
     }

@@ -572,7 +572,8 @@ private:
 
   OwningExprResult ParseRHSOfBinaryExpression(OwningExprResult LHS,
                                               unsigned MinPrec);
-  OwningExprResult ParseCastExpression(bool isUnaryExpression);
+  OwningExprResult ParseCastExpression(bool isUnaryExpression,
+                                       bool isAddressOfOperand = false);
   OwningExprResult ParsePostfixExpressionSuffix(OwningExprResult LHS);
   OwningExprResult ParseSizeofAlignofExpression();
   OwningExprResult ParseBuiltinPrimaryExpression();
@@ -609,7 +610,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ Expressions
-  OwningExprResult ParseCXXIdExpression();
+  OwningExprResult ParseCXXIdExpression(bool isAddressOfOperand = false);
 
   /// ParseOptionalCXXScopeSpecifier - Parse global scope or
   /// nested-name-specifier if present.  Returns true if a nested-name-specifier

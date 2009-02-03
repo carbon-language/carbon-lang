@@ -447,7 +447,8 @@ namespace {
     virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                                  IdentifierInfo &II,
                                                  bool HasTrailingLParen,
-                                                 const CXXScopeSpec *SS) {
+                                                 const CXXScopeSpec *SS,
+                                                 bool isAddressOfOperand) {
       llvm::cout << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
@@ -455,7 +456,8 @@ namespace {
     virtual OwningExprResult ActOnCXXOperatorFunctionIdExpr(
                                Scope *S, SourceLocation OperatorLoc,
                                OverloadedOperatorKind Op,
-                               bool HasTrailingLParen, const CXXScopeSpec &SS) {
+                               bool HasTrailingLParen, const CXXScopeSpec &SS,
+                               bool isAddressOfOperand) {
       llvm::cout << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
@@ -463,7 +465,7 @@ namespace {
     virtual OwningExprResult ActOnCXXConversionFunctionExpr(
                                Scope *S, SourceLocation OperatorLoc,
                                TypeTy *Type, bool HasTrailingLParen,
-                               const CXXScopeSpec &SS) {
+                               const CXXScopeSpec &SS,bool isAddressOfOperand) {
       llvm::cout << __FUNCTION__ << "\n";
       return ExprEmpty();
     }

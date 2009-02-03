@@ -40,3 +40,23 @@ void f() {
   // Conversion to member of base.
   pdi1 = pdid; // expected-error {{incompatible type assigning 'int struct D::*', expected 'int struct A::*'}}
 }
+
+struct HasMembers
+{
+  int i;
+  void f();
+};
+
+namespace Fake
+{
+  int i;
+  void f();
+}
+
+void g() {
+  int HasMembers::*pmi = &HasMembers::i;
+  int *pni = &Fake::i;
+
+  // FIXME: Test the member function, too.
+  void (*pnf)() = &Fake::f;
+}
