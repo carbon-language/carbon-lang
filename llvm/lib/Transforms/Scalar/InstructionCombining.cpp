@@ -352,8 +352,8 @@ namespace {
     /// properties that allow us to simplify its operands.
     bool SimplifyDemandedInstructionBits(Instruction &Inst);
         
-    Value *SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
-                                      uint64_t &UndefElts, unsigned Depth = 0);
+    Value *SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
+                                      APInt& UndefElts, unsigned Depth = 0);
       
     // FoldOpIntoPhi - Given a binary operator or cast instruction which has a
     // PHI node as operand #0, see if we can fold the instruction into the PHI
@@ -1396,19 +1396,18 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
 
 
 /// SimplifyDemandedVectorElts - The specified value produces a vector with
-/// 64 or fewer elements.  DemandedElts contains the set of elements that are
+/// any number of elements. DemandedElts contains the set of elements that are
 /// actually used by the caller.  This method analyzes which elements of the
 /// operand are undef and returns that information in UndefElts.
 ///
 /// If the information about demanded elements can be used to simplify the
 /// operation, the operation is simplified, then the resultant value is
 /// returned.  This returns null if no change was made.
-Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
-                                                uint64_t &UndefElts,
+Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
+                                                APInt& UndefElts,
                                                 unsigned Depth) {
   unsigned VWidth = cast<VectorType>(V->getType())->getNumElements();
-  assert(VWidth <= 64 && "Vector too wide to analyze!");
-  uint64_t EltMask = ~0ULL >> (64-VWidth);
+  APInt EltMask(APInt::getAllOnesValue(VWidth));
   assert((DemandedElts & ~EltMask) == 0 && "Invalid DemandedElts!");
 
   if (isa<UndefValue>(V)) {
@@ -1427,12 +1426,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
 
     std::vector<Constant*> Elts;
     for (unsigned i = 0; i != VWidth; ++i)
-      if (!(DemandedElts & (1ULL << i))) {   // If not demanded, set to undef.
+      if (!DemandedElts[i]) {   // If not demanded, set to undef.
         Elts.push_back(Undef);
-        UndefElts |= (1ULL << i);
+        UndefElts.set(i);
       } else if (isa<UndefValue>(CP->getOperand(i))) {   // Already undef.
         Elts.push_back(Undef);
-        UndefElts |= (1ULL << i);
+        UndefElts.set(i);
       } else {                               // Otherwise, defined.
         Elts.push_back(CP->getOperand(i));
       }
@@ -1453,8 +1452,10 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     Constant *Zero = Constant::getNullValue(EltTy);
     Constant *Undef = UndefValue::get(EltTy);
     std::vector<Constant*> Elts;
-    for (unsigned i = 0; i != VWidth; ++i)
-      Elts.push_back((DemandedElts & (1ULL << i)) ? Zero : Undef);
+    for (unsigned i = 0; i != VWidth; ++i) {
+      Constant *Elt = DemandedElts[i] ? Zero : Undef;
+      Elts.push_back(Elt);
+    }
     UndefElts = DemandedElts ^ EltMask;
     return ConstantVector::get(Elts);
   }
@@ -1482,7 +1483,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
   if (!I) return false;        // Only analyze instructions.
   
   bool MadeChange = false;
-  uint64_t UndefElts2;
+  APInt UndefElts2(VWidth, 0);
   Value *TmpV;
   switch (I->getOpcode()) {
   default: break;
@@ -1503,35 +1504,36 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     // If this is inserting an element that isn't demanded, remove this
     // insertelement.
     unsigned IdxNo = Idx->getZExtValue();
-    if (IdxNo >= VWidth || (DemandedElts & (1ULL << IdxNo)) == 0)
+    if (IdxNo >= VWidth || !DemandedElts[IdxNo])
       return AddSoonDeadInstToWorklist(*I, 0);
     
     // Otherwise, the element inserted overwrites whatever was there, so the
     // input demanded set is simpler than the output set.
-    TmpV = SimplifyDemandedVectorElts(I->getOperand(0),
-                                      DemandedElts & ~(1ULL << IdxNo),
+    APInt DemandedElts2 = DemandedElts;
+    DemandedElts2.clear(IdxNo);
+    TmpV = SimplifyDemandedVectorElts(I->getOperand(0), DemandedElts2,
                                       UndefElts, Depth+1);
     if (TmpV) { I->setOperand(0, TmpV); MadeChange = true; }
 
     // The inserted element is defined.
-    UndefElts &= ~(1ULL << IdxNo);
+    UndefElts.clear(IdxNo);
     break;
   }
   case Instruction::ShuffleVector: {
     ShuffleVectorInst *Shuffle = cast<ShuffleVectorInst>(I);
     uint64_t LHSVWidth =
       cast<VectorType>(Shuffle->getOperand(0)->getType())->getNumElements();
-    uint64_t LeftDemanded = 0, RightDemanded = 0;
+    APInt LeftDemanded(LHSVWidth, 0), RightDemanded(LHSVWidth, 0);
     for (unsigned i = 0; i < VWidth; i++) {
-      if (DemandedElts & (1ULL << i)) {
+      if (DemandedElts[i]) {
         unsigned MaskVal = Shuffle->getMaskValue(i);
         if (MaskVal != -1u) {
           assert(MaskVal < LHSVWidth * 2 &&
                  "shufflevector mask index out of range!");
           if (MaskVal < LHSVWidth)
-            LeftDemanded |= 1ULL << MaskVal;
+            LeftDemanded.set(MaskVal);
           else
-            RightDemanded |= 1ULL << (MaskVal - LHSVWidth);
+            RightDemanded.set(MaskVal - LHSVWidth);
         }
       }
     }
@@ -1540,7 +1542,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
                                       UndefElts2, Depth+1);
     if (TmpV) { I->setOperand(0, TmpV); MadeChange = true; }
 
-    uint64_t UndefElts3;
+    APInt UndefElts3(VWidth, 0);
     TmpV = SimplifyDemandedVectorElts(I->getOperand(1), RightDemanded,
                                       UndefElts3, Depth+1);
     if (TmpV) { I->setOperand(1, TmpV); MadeChange = true; }
@@ -1549,16 +1551,17 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     for (unsigned i = 0; i < VWidth; i++) {
       unsigned MaskVal = Shuffle->getMaskValue(i);
       if (MaskVal == -1u) {
-        uint64_t NewBit = 1ULL << i;
-        UndefElts |= NewBit;
+        UndefElts.set(i);
       } else if (MaskVal < LHSVWidth) {
-        uint64_t NewBit = ((UndefElts2 >> MaskVal) & 1) << i;
-        NewUndefElts |= NewBit;
-        UndefElts |= NewBit;
+        if (UndefElts2[MaskVal]) {
+          NewUndefElts = true;
+          UndefElts.set(i);
+        }
       } else {
-        uint64_t NewBit = ((UndefElts3 >> (MaskVal - LHSVWidth)) & 1) << i;
-        NewUndefElts |= NewBit;
-        UndefElts |= NewBit;
+        if (UndefElts3[MaskVal - LHSVWidth]) {
+          NewUndefElts = true;
+          UndefElts.set(i);
+        }
       }
     }
 
@@ -1566,7 +1569,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
       // Add additional discovered undefs.
       std::vector<Constant*> Elts;
       for (unsigned i = 0; i < VWidth; ++i) {
-        if (UndefElts & (1ULL << i))
+        if (UndefElts[i])
           Elts.push_back(UndefValue::get(Type::Int32Ty));
         else
           Elts.push_back(ConstantInt::get(Type::Int32Ty,
@@ -1582,7 +1585,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     const VectorType *VTy = dyn_cast<VectorType>(I->getOperand(0)->getType());
     if (!VTy) break;
     unsigned InVWidth = VTy->getNumElements();
-    uint64_t InputDemandedElts = 0;
+    APInt InputDemandedElts(InVWidth, 0);
     unsigned Ratio;
 
     if (VWidth == InVWidth) {
@@ -1599,8 +1602,8 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
       // elements are live.
       Ratio = VWidth/InVWidth;
       for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx) {
-        if (DemandedElts & (1ULL << OutIdx))
-          InputDemandedElts |= 1ULL << (OutIdx/Ratio);
+        if (DemandedElts[OutIdx])
+          InputDemandedElts.set(OutIdx/Ratio);
       }
     } else {
       // Untested so far.
@@ -1611,8 +1614,8 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
       // live.
       Ratio = InVWidth/VWidth;
       for (unsigned InIdx = 0; InIdx != InVWidth; ++InIdx)
-        if (DemandedElts & (1ULL << InIdx/Ratio))
-          InputDemandedElts |= 1ULL << InIdx;
+        if (DemandedElts[InIdx/Ratio])
+          InputDemandedElts.set(InIdx);
     }
     
     // div/rem demand all inputs, because they don't want divide by zero.
@@ -1630,8 +1633,8 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
       // then an output element is undef if the corresponding input element is
       // undef.
       for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx)
-        if (UndefElts2 & (1ULL << (OutIdx/Ratio)))
-          UndefElts |= 1ULL << OutIdx;
+        if (UndefElts2[OutIdx/Ratio])
+          UndefElts.set(OutIdx);
     } else if (VWidth < InVWidth) {
       assert(0 && "Unimp");
       // If there are more elements in the source than there are in the result,
@@ -1639,8 +1642,8 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
       // elements are undef.
       UndefElts = ~0ULL >> (64-VWidth);  // Start out all undef.
       for (unsigned InIdx = 0; InIdx != InVWidth; ++InIdx)
-        if ((UndefElts2 & (1ULL << InIdx)) == 0)    // Not undef?
-          UndefElts &= ~(1ULL << (InIdx/Ratio));    // Clear undef bit.
+        if (!UndefElts2[InIdx])            // Not undef?
+          UndefElts.clear(InIdx/Ratio);    // Clear undef bit.
     }
     break;
   }
@@ -9493,8 +9496,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_sse_cvttss2si: {
     // These intrinsics only demands the 0th element of its input vector.  If
     // we can simplify the input based on that, do so now.
-    uint64_t UndefElts;
-    if (Value *V = SimplifyDemandedVectorElts(II->getOperand(1), 1, 
+    unsigned VWidth =
+      cast<VectorType>(II->getOperand(1)->getType())->getNumElements();
+    APInt DemandedElts(VWidth, 1);
+    APInt UndefElts(VWidth, 0);
+    if (Value *V = SimplifyDemandedVectorElts(II->getOperand(1), DemandedElts,
                                               UndefElts)) {
       II->setOperand(1, V);
       return II;
@@ -11868,10 +11874,10 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     // If the input vector has a single use, simplify it based on this use
     // property.
     if (EI.getOperand(0)->hasOneUse() && VectorWidth != 1) {
-      uint64_t UndefElts;
+      APInt UndefElts(VectorWidth, 0);
+      APInt DemandedMask(VectorWidth, 1 << IndexVal);
       if (Value *V = SimplifyDemandedVectorElts(EI.getOperand(0),
-                                                1 << IndexVal,
-                                                UndefElts)) {
+                                                DemandedMask, UndefElts)) {
         EI.setOperand(0, V);
         return &EI;
       }
@@ -12170,15 +12176,14 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   if (isa<UndefValue>(SVI.getOperand(2)))
     return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
 
-  uint64_t UndefElts;
   unsigned VWidth = cast<VectorType>(SVI.getType())->getNumElements();
 
   if (VWidth != cast<VectorType>(LHS->getType())->getNumElements())
     return 0;
 
-  uint64_t AllOnesEltMask = ~0ULL >> (64-VWidth);
-  if (VWidth <= 64 &&
-      SimplifyDemandedVectorElts(&SVI, AllOnesEltMask, UndefElts)) {
+  APInt UndefElts(VWidth, 0);
+  APInt AllOnesEltMask(APInt::getAllOnesValue(VWidth));
+  if (SimplifyDemandedVectorElts(&SVI, AllOnesEltMask, UndefElts)) {
     LHS = SVI.getOperand(0);
     RHS = SVI.getOperand(1);
     MadeChange = true;
