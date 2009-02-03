@@ -1423,6 +1423,31 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
       V = Builder.CreateBitCast(V, ToType, "tmp");
     return V;
   }
+  
+  // If ToType is a first class aggregate, extract out each of the pieces and
+  // use insertvalue's to form the FCA.
+  if (const StructType *ST = dyn_cast<StructType>(ToType)) {
+    const StructLayout &Layout = *TD->getStructLayout(ST);
+    Value *Res = UndefValue::get(ST);
+    for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
+      Value *Elt = ConvertScalar_ExtractValue(FromVal, ST->getElementType(i),
+                                              Offset+Layout.getElementOffset(i),
+                                              Builder);
+      Res = Builder.CreateInsertValue(Res, Elt, i, "tmp");
+    }
+    return Res;
+  }
+  
+  if (const ArrayType *AT = dyn_cast<ArrayType>(ToType)) {
+    uint64_t EltSize = TD->getTypePaddedSizeInBits(AT->getElementType());
+    Value *Res = UndefValue::get(AT);
+    for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
+      Value *Elt = ConvertScalar_ExtractValue(FromVal, AT->getElementType(),
+                                              Offset+i*EltSize, Builder);
+      Res = Builder.CreateInsertValue(Res, Elt, i, "tmp");
+    }
+    return Res;
+  }
 
   // Otherwise, this must be a union that was converted to an integer value.
   const IntegerType *NTy = cast<IntegerType>(FromVal->getType());
@@ -1444,9 +1469,11 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // We do this to support (f.e.) loads off the end of a structure where
   // only some bits are used.
   if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
-    FromVal = Builder.CreateLShr(FromVal, ConstantInt::get(FromVal->getType(), ShAmt), "tmp");
+    FromVal = Builder.CreateLShr(FromVal, ConstantInt::get(FromVal->getType(),
+                                                           ShAmt), "tmp");
   else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
-    FromVal = Builder.CreateShl(FromVal, ConstantInt::get(FromVal->getType(), -ShAmt), "tmp");
+    FromVal = Builder.CreateShl(FromVal, ConstantInt::get(FromVal->getType(),
+                                                          -ShAmt), "tmp");
 
   // Finally, unconditionally truncate the integer to the right width.
   unsigned LIBitWidth = TD->getTypeSizeInBits(ToType);

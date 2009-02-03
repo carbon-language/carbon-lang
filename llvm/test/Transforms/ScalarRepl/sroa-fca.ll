@@ -10,3 +10,12 @@ define i64 @test({i32, i32} %A) {
 	ret i64 %Q
 }
 
+define {i32,i32} @test2(i64 %A) {
+	%X = alloca i64
+	%Y = bitcast i64* %X to {i32,i32}*
+	store i64 %A, i64* %X
+	
+	%Q = load {i32,i32}* %Y
+	ret {i32,i32} %Q
+}
+
