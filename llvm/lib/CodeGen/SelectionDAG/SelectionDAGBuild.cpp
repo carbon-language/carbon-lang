@@ -333,7 +333,8 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
         unsigned NumRegisters = TLI.getNumRegisters(VT);
         const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
         for (unsigned i = 0; i != NumRegisters; ++i)
-          BuildMI(MBB, TII->get(TargetInstrInfo::PHI), PHIReg+i);
+          BuildMI(MBB, DebugLoc::getUnknownLoc(),
+                  TII->get(TargetInstrInfo::PHI), PHIReg + i);
         PHIReg += NumRegisters;
       }
     }
