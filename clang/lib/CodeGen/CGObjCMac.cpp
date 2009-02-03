@@ -3425,7 +3425,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                                             false,
                                             llvm::GlobalValue::ExternalLinkage,
                                             0,
-                                            "\01_objc_empty_cache",
+                                            "\01__objc_empty_cache",
                                             &CGM.getModule());
     UsedGlobals.push_back(ObjCEmptyCacheVar);
     
@@ -3435,7 +3435,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                             false,
                             llvm::GlobalValue::ExternalLinkage,
                             0,
-                            "\01_objc_empty_vtable",
+                            "\01__objc_empty_vtable",
                             &CGM.getModule());
     UsedGlobals.push_back(ObjCEmptyVtableVar);
   }
