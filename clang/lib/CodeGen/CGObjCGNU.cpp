@@ -994,7 +994,9 @@ llvm::Function *CGObjCGNU::GetPropertySetFunction() {
 }
 
 llvm::Function *CGObjCGNU::EnumerationMutationFunction() {
-  return 0;
+return  
+  (llvm::Function*)TheModule.getOrInsertFunction(
+    "objc_enumerationMutation", llvm::Type::VoidTy, IdTy, NULL);
 }
 
 void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
