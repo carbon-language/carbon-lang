@@ -143,7 +143,7 @@ namespace SrcMgr {
       FileInfo X;
       X.IncludeLoc = IL.getRawEncoding();
       X.Data = (uintptr_t)Con;
-      assert((X.Data & 7) == 0 &&"ContentCache pointer insufficiently aligned");
+      assert((X.Data & 3) == 0 &&"ContentCache pointer insufficiently aligned");
       assert((unsigned)FileCharacter < 4 && "invalid file character");
       X.Data |= (unsigned)FileCharacter;
       return X;
@@ -153,7 +153,7 @@ namespace SrcMgr {
       return SourceLocation::getFromRawEncoding(IncludeLoc);
     }
     const ContentCache* getContentCache() const {
-      return reinterpret_cast<const ContentCache*>(Data & ~7UL);
+      return reinterpret_cast<const ContentCache*>(Data & ~3UL);
     }
     
     /// getCharacteristic - Return whether this is a system header or not.
