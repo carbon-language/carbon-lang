@@ -157,12 +157,12 @@ public:
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest) = 0;
   
-  virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
-                                            QualType ObjectTy,
-                                            llvm::Value *BaseValue,
-                                            const ObjCIvarDecl *Ivar,
-                                            const FieldDecl *Field,
-                                            unsigned CVRQualifiers) = 0;
+  virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                      QualType ObjectTy,
+                                      llvm::Value *BaseValue,
+                                      const ObjCIvarDecl *Ivar,
+                                      const FieldDecl *Field,
+                                      unsigned CVRQualifiers) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.  

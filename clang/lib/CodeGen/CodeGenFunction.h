@@ -531,7 +531,7 @@ public:
                            unsigned CVRQualifiers);
 
   LValue EmitLValueForBitfield(llvm::Value* Base, FieldDecl* Field,
-                                unsigned CVRQualifiers, unsigned idx);
+                                unsigned CVRQualifiers);
 
   LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
 

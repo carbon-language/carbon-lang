@@ -850,8 +850,8 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 
 LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
                                               FieldDecl* Field,
-                                              unsigned CVRQualifiers,
-                                              unsigned idx) {
+                                              unsigned CVRQualifiers) {
+   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);                                         
   // FIXME: CodeGenTypes should expose a method to get the appropriate
   // type for FieldTy (the appropriate type is ABI-dependent).
   const llvm::Type *FieldTy = CGM.getTypes().ConvertTypeForMem(Field->getType());
@@ -877,11 +877,10 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                                            bool isUnion,
                                            unsigned CVRQualifiers)
 {
-  unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
-
   if (Field->isBitField())
-    return EmitLValueForBitfield(BaseValue, Field, CVRQualifiers, idx);
+    return EmitLValueForBitfield(BaseValue, Field, CVRQualifiers);
   
+  unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
   llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
 
   // Match union field type.
@@ -1028,19 +1027,12 @@ LValue CodeGenFunction::EmitLValueForIvar(QualType ObjectTy,
   // See comment in EmitIvarOffset.
   if (CGM.getObjCRuntime().LateBoundIVars())
     assert(0 && "late-bound ivars are unsupported");
-  // TODO:  Add a special case for isa (index 0)
-  unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
   
-  if (Ivar->isBitField()) {
-    return EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field), 
-                                 CVRQualifiers, Index);
-  }
-  llvm::Value *V = CGM.getObjCRuntime().EmitObjCValueForIvar(*this,
-                                                             ObjectTy,
-                                       BaseValue, Ivar, Field, CVRQualifiers);
-  LValue LV = LValue::MakeAddr(V, Ivar->getType().getCVRQualifiers()|CVRQualifiers);
+  LValue LV =  CGM.getObjCRuntime().EmitObjCValueForIvar(*this,
+                                                         ObjectTy,
+                                                         BaseValue, Ivar, Field, 
+                                                         CVRQualifiers);
   SetVarDeclObjCAttribute(getContext(), Ivar, Ivar->getType(), LV);
-  LValue::SetObjCIvar(LV, true);
   return LV;
 }
 

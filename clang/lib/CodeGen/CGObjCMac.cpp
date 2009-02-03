@@ -550,12 +550,12 @@ private:
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
   
-  virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
-                                            QualType ObjectTy,
-                                            llvm::Value *BaseValue,
-                                            const ObjCIvarDecl *Ivar,
-                                            const FieldDecl *Field,
-                                            unsigned CVRQualifiers);
+  virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                      QualType ObjectTy,
+                                      llvm::Value *BaseValue,
+                                      const ObjCIvarDecl *Ivar,
+                                      const FieldDecl *Field,
+                                      unsigned CVRQualifiers);
 };
   
 class CGObjCNonFragileABIMac : public CGObjCCommonMac {
@@ -676,12 +676,12 @@ public:
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest)
     { return; }
-  virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
-                                            QualType ObjectTy,
-                                            llvm::Value *BaseValue,
-                                            const ObjCIvarDecl *Ivar,
-                                            const FieldDecl *Field,
-                                            unsigned CVRQualifiers);
+  virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                      QualType ObjectTy,
+                                      llvm::Value *BaseValue,
+                                      const ObjCIvarDecl *Ivar,
+                                      const FieldDecl *Field,
+                                      unsigned CVRQualifiers);
 };
   
 } // end anonymous namespace
@@ -2113,16 +2113,22 @@ void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
 
 /// EmitObjCValueForIvar - Code Gen for ivar reference.
 ///
-llvm::Value *CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
-                                             QualType ObjectTy,
-                                             llvm::Value *BaseValue,
-                                             const ObjCIvarDecl *Ivar,
-                                             const FieldDecl *Field,
-                                             unsigned CVRQualifiers) {
+LValue CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                       QualType ObjectTy,
+                                       llvm::Value *BaseValue,
+                                       const ObjCIvarDecl *Ivar,
+                                       const FieldDecl *Field,
+                                       unsigned CVRQualifiers) {
+  if (Ivar->isBitField())
+    return CGF.EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field),
+                                     CVRQualifiers);
   // TODO:  Add a special case for isa (index 0)
   unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
   llvm::Value *V = CGF.Builder.CreateStructGEP(BaseValue, Index, "tmp");
-  return V;
+  LValue LV = LValue::MakeAddr(V, 
+               Ivar->getType().getCVRQualifiers()|CVRQualifiers);
+  LValue::SetObjCIvar(LV, true);
+  return LV;
 }
 
 /* *** Private Interface *** */
@@ -4100,7 +4106,7 @@ CGObjCNonFragileABIMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
 /// (type *)((char *)base + _OBJC_IVAR_$_.ivar;
 /// @encode
 /// 
-llvm::Value *CGObjCNonFragileABIMac::EmitObjCValueForIvar(
+LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
                                              CodeGen::CodeGenFunction &CGF,
                                              QualType ObjectTy,
                                              llvm::Value *BaseValue,
@@ -4125,6 +4131,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitObjCValueForIvar(
                                0,
                                ExternalName,
                                &CGM.getModule());
+  
   // (char *) BaseValue
   llvm::Value *V =  CGF.Builder.CreateBitCast(BaseValue,
                                               ObjCTypes.Int8PtrTy);
@@ -4136,7 +4143,15 @@ llvm::Value *CGObjCNonFragileABIMac::EmitObjCValueForIvar(
     CGM.getTypes().ConvertType(Ivar->getType());
   llvm::Type *ptrIvarTy = llvm::PointerType::getUnqual(IvarTy);
   V = CGF.Builder.CreateBitCast(V, ptrIvarTy);
-  return V;
+  
+  if (Ivar->isBitField())
+    return CGF.EmitLValueForBitfield(V, const_cast<FieldDecl *>(Field), 
+                                     CVRQualifiers);
+  
+  LValue LV = LValue::MakeAddr(V, 
+              Ivar->getType().getCVRQualifiers()|CVRQualifiers);
+  LValue::SetObjCIvar(LV, true);
+  return LV;
 }
 
 /* *** */

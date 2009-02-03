@@ -140,12 +140,12 @@ public:
                                     llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
-  virtual llvm::Value *EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
-                                            QualType ObjectTy,
-                                            llvm::Value *BaseValue,
-                                            const ObjCIvarDecl *Ivar,
-                                            const FieldDecl *Field,
-                                            unsigned CVRQualifiers);
+  virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                      QualType ObjectTy,
+                                      llvm::Value *BaseValue,
+                                      const ObjCIvarDecl *Ivar,
+                                      const FieldDecl *Field,
+                                      unsigned CVRQualifiers);
 };
 } // end anonymous namespace
 
@@ -1037,16 +1037,22 @@ void CGObjCGNU::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
   return;
 }
 
-llvm::Value *CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
-                                             QualType ObjectTy,
-                                             llvm::Value *BaseValue,
-                                             const ObjCIvarDecl *Ivar,
-                                             const FieldDecl *Field,
-                                             unsigned CVRQualifiers) {
+LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
+                                       QualType ObjectTy,
+                                       llvm::Value *BaseValue,
+                                       const ObjCIvarDecl *Ivar,
+                                       const FieldDecl *Field,
+                                       unsigned CVRQualifiers) {
+  if (Ivar->isBitField()) 
+    return CGF.EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field), 
+                                 CVRQualifiers);
   // TODO:  Add a special case for isa (index 0)
   unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
   llvm::Value *V = CGF.Builder.CreateStructGEP(BaseValue, Index, "tmp");
-  return V;
+  LValue LV = LValue::MakeAddr(V, 
+                Ivar->getType().getCVRQualifiers()|CVRQualifiers);
+  LValue::SetObjCIvar(LV, true);
+  return LV;
 }
 
 CodeGen::CGObjCRuntime *CodeGen::CreateGNUObjCRuntime(CodeGen::CodeGenModule &CGM){
