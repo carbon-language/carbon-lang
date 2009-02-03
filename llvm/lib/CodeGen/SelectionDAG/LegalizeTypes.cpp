@@ -651,7 +651,7 @@ namespace {
       DTL.NoteDeletion(N, E);
 
       // In theory the deleted node could also have been scheduled for analysis.
-      // So add it to the set of nodes which will not be analyzed.
+      // So remove it from the set of nodes which will be analyzed.
       NodesToAnalyze.remove(N);
 
       // In general nothing needs to be done for E, since it didn't change but
@@ -669,6 +669,7 @@ namespace {
       assert(N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
              N->getNodeId() != DAGTypeLegalizer::Processed &&
              "Invalid node ID for RAUW deletion!");
+      N->setNodeId(DAGTypeLegalizer::NewNode);
       NodesToAnalyze.insert(N);
     }
   };
@@ -695,12 +696,13 @@ void DAGTypeLegalizer::ReplaceValueWithHelper(SDValue From, SDValue To) {
   while (!NodesToAnalyze.empty()) {
     SDNode *N = NodesToAnalyze.back();
     NodesToAnalyze.pop_back();
+    if (N->getNodeId() != DAGTypeLegalizer::NewNode)
+      // The node was analyzed while reanalyzing an earlier node - it is safe to
+      // skip.  Note that this is not a morphing node - otherwise it would still
+      // be marked NewNode.
+      continue;
 
     // Analyze the node's operands and recalculate the node ID.
-    assert(N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
-           N->getNodeId() != DAGTypeLegalizer::Processed &&
-           "Invalid node ID for RAUW analysis!");
-    N->setNodeId(NewNode);
     SDNode *M = AnalyzeNewNode(N);
     if (M != N) {
       // The node morphed into a different node.  Make everyone use the new node
