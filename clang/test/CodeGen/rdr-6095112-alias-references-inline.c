@@ -1,4 +1,4 @@
-// RUN: clang --emit-llvm -o %t %s &&
+// RUN: clang -triple i386-unknown-unknown --emit-llvm -o %t %s &&
 // RUN: grep -e "alias" %t
 // XFAIL
 

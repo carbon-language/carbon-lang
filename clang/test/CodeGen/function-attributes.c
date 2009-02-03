@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -o %t %s &&
+// RUN: clang -triple i386-unknown-unknown -emit-llvm -o %t %s &&
 // RUN: grep 'define signext i8 @f0(i32 %x) nounwind' %t &&
 // RUN: grep 'define zeroext i8 @f1(i32 %x) nounwind' %t &&
 // RUN: grep 'define void @f2(i8 signext %x) nounwind' %t &&

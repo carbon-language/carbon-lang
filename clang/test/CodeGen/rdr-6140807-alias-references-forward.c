@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -o %t %s &&
+// RUN: clang -triple i386-unknown-unknown -emit-llvm -o %t %s &&
 // RUN: grep -e "@f = alias" %t | count 1 &&
 // RUN: grep -e "bitcast (i32 (i32)\\* @f to i32 (float)\\*)" %t | count 1
 // <rdar://problem/6140807>

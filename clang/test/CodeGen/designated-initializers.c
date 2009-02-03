@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm -o - | grep "<{ i8\* null, i32 1024 }>"
+// RUN: clang -triple i386-unknown-unknown %s -emit-llvm -o - | grep "<{ i8\* null, i32 1024 }>"
 
 struct foo {
     void *a;
