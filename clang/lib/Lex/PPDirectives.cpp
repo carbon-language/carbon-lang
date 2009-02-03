@@ -651,7 +651,7 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
     CheckEndOfDirective("#line");
   }
   
-  // FIXME: do something with the #line info.
+  SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID);
 }
 
 /// ReadLineMarkerFlags - Parse and validate any flags at the end of a GNU line
@@ -762,10 +762,8 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
       return;
   }
   
-  // FIXME: do something with the #line info.
-  
-  
-  
+  // FIXME: do something with the #line flag info.
+  SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID);
 }
 
 

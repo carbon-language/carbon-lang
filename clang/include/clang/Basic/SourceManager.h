@@ -536,6 +536,10 @@ public:
   /// 
   unsigned getLineTableFilenameID(const char *Ptr, unsigned Len);
   
+  /// AddLineNote - Add a line note to the line table for the FileID and offset
+  /// specified by Loc.  If FilenameID is -1, it is considered to be
+  /// unspecified.
+  void AddLineNote(SourceLocation Loc, unsigned LineNo, int FilenameID);
   
   //===--------------------------------------------------------------------===//
   // Other miscellaneous methods.
