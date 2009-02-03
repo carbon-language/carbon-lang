@@ -549,7 +549,7 @@ namespace llvm {
     bool CallRequiresFnAddressInReg(bool Is64Bit, bool IsTailCall);
     SDValue EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDValue &OutRetAddr,
                                 SDValue Chain, bool IsTailCall, bool Is64Bit,
-                                int FPDiff);
+                                int FPDiff, DebugLoc dl);
 
     CCAssignFn *CCAssignFnForNode(unsigned CallingConv) const;
     NameDecorationStyle NameDecorationForFORMAL_ARGUMENTS(SDValue Op);
