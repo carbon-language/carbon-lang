@@ -130,8 +130,8 @@ namespace {
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
     Value *ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
                                      uint64_t Offset);
-    Value *ConvertUsesOfStoreToScalar(Value *StoredVal, AllocaInst *NewAI, 
-                                      uint64_t Offset, Instruction *InsertPt);
+    Value *ConvertScalar_InsertValue(Value *StoredVal, Value *ExistingVal,
+                                     uint64_t Offset, Instruction *InsertPt);
     static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
   };
 }
@@ -1326,8 +1326,9 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
 
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
-      new StoreInst(ConvertUsesOfStoreToScalar(SI->getOperand(0), NewAI,
-                                               Offset, SI), NewAI, SI);
+      Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
+      Value *New = ConvertScalar_InsertValue(SI->getOperand(0), Old, Offset,SI);
+      new StoreInst(New, NewAI, SI);
       SI->eraseFromParent();
       continue;
     }
@@ -1363,8 +1364,10 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
         for (unsigned i = 1; i != NumBytes; ++i)
           APVal |= APVal << 8;
       
-      new StoreInst(ConvertUsesOfStoreToScalar(ConstantInt::get(APVal), NewAI,
-                                               Offset, MSI), NewAI, MSI);
+      Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", MSI);
+      Value *New = ConvertScalar_InsertValue(ConstantInt::get(APVal), Old,
+                                             Offset, MSI);
+      new StoreInst(New, NewAI, MSI);
       MSI->eraseFromParent();
       continue;
     }
@@ -1464,26 +1467,23 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
 }
 
 
-/// ConvertUsesOfStoreToScalar - Convert the specified store to a load+store
-/// pair of the new alloca directly, returning the value that should be stored
-/// to the alloca.  This happens when we are converting an "integer union" to a
+/// ConvertScalar_InsertValue - Insert the value "SV" into the existing integer
+/// or vector value "Old" at the offset specified by Offset.
+///
+/// This happens when we are converting an "integer union" to a
 /// single integer scalar, or when we are converting a "vector union" to a
 /// vector with insert/extractelement instructions.
 ///
 /// Offset is an offset from the original alloca, in bits that need to be
-/// shifted to the right.  By the end of this, there should be no uses of Ptr.
-Value *SROA::ConvertUsesOfStoreToScalar(Value *SV, AllocaInst *NewAI,
-                                        uint64_t Offset, Instruction *IP) {
+/// shifted to the right.
+Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
+                                       uint64_t Offset, Instruction *IP) {
 
   // Convert the stored type to the actual type, shift it left to insert
   // then 'or' into place.
-  const Type *AllocaType = NewAI->getType()->getElementType();
-  if (SV->getType() == AllocaType && Offset == 0)
-    return SV;
+  const Type *AllocaType = Old->getType();
 
   if (const VectorType *VTy = dyn_cast<VectorType>(AllocaType)) {
-    Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", IP);
-
     // If the result alloca is a vector type, this is either an element
     // access or a bitcast to another vector type.
     if (isa<VectorType>(SV->getType())) {
@@ -1501,13 +1501,29 @@ Value *SROA::ConvertUsesOfStoreToScalar(Value *SV, AllocaInst *NewAI,
     }
     return SV;
   }
-
-
-  Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", IP);
+  
+  // If SV is a first-class aggregate value, insert each value recursively.
+  if (const StructType *ST = dyn_cast<StructType>(SV->getType())) {
+    const StructLayout &Layout = *TD->getStructLayout(ST);
+    for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
+      Value *Elt = ExtractValueInst::Create(SV, i, "tmp", IP);
+      Old = ConvertScalar_InsertValue(Elt, Old, 
+                                      Offset+Layout.getElementOffset(i), IP);
+    }
+    return Old;
+  }
+  
+  if (const ArrayType *AT = dyn_cast<ArrayType>(SV->getType())) {
+    uint64_t EltSize = TD->getTypePaddedSizeInBits(AT->getElementType());
+    for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
+      Value *Elt = ExtractValueInst::Create(SV, i, "tmp", IP);
+      Old = ConvertScalar_InsertValue(Elt, Old, Offset+i*EltSize, IP);
+    }
+    return Old;
+  }
 
   // If SV is a float, convert it to the appropriate integer type.
-  // If it is a pointer, do the same, and also handle ptr->ptr casts
-  // here.
+  // If it is a pointer, do the same.
   unsigned SrcWidth = TD->getTypeSizeInBits(SV->getType());
   unsigned DestWidth = TD->getTypeSizeInBits(AllocaType);
   unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
