@@ -258,7 +258,7 @@ MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
       FBegin = FoundOverloaded->function_begin(),
       FEnd = FoundOverloaded->function_end();
     // FIXME: This is O(n^2)!
-    for (DI ; DI < DEnd; ++DI) {
+    for (; DI < DEnd; ++DI) {
       FunctionDecl *Fun = dyn_cast<FunctionDecl>(*DI);
       if (Fun && (std::find(FBegin, FEnd, Fun) != FEnd)) { /* Skip.*/  }
       else DEnd = std::remove(DI, DEnd, *DI);
@@ -1129,7 +1129,7 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
     Decl **DI = reinterpret_cast<Decl **>(Result.First),
        **DEnd = reinterpret_cast<Decl **>(Result.Last);
 
-    for (DI; DI != DEnd; ++DI)
+    for (; DI != DEnd; ++DI)
       Diag((*DI)->getLocation(), diag::note_ambiguous_candidate)
         <<  getQualifiedName(*DI);
 
