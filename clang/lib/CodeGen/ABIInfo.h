@@ -26,8 +26,6 @@ namespace clang {
   class ABIArgInfo {
   public:
     enum Kind {
-      Default,
-      
       Direct,    /// Pass the argument directly using the normal
                  /// converted LLVM type.
 
@@ -54,7 +52,7 @@ namespace clang {
                  /// are all scalar types or are themselves expandable
                  /// types.
   
-      KindFirst=Default, KindLast=Expand
+      KindFirst=Direct, KindLast=Expand
     };
   
   private:
@@ -67,11 +65,8 @@ namespace clang {
                                 TypeData(TD),
                                 UIntData(0) {}
   public:
-    ABIArgInfo() : TheKind(Default), TypeData(0), UIntData(0) {}
+    ABIArgInfo() : TheKind(Direct), TypeData(0), UIntData(0) {}
 
-    static ABIArgInfo getDefault() { 
-      return ABIArgInfo(Default); 
-    }
     static ABIArgInfo getDirect() { 
       return ABIArgInfo(Direct); 
     }
@@ -92,7 +87,6 @@ namespace clang {
     }
   
     Kind getKind() const { return TheKind; }
-    bool isDefault() const { return TheKind == Default; }
     bool isDirect() const { return TheKind == Direct; }
     bool isStructRet() const { return TheKind == StructRet; }
     bool isIgnore() const { return TheKind == Ignore; }

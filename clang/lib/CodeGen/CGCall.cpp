@@ -230,7 +230,9 @@ public:
 
 ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context) const {
-  if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+  if (RetTy->isVoidType()) {
+    return ABIArgInfo::getIgnore();
+  } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
     // Classify "single element" structs as their element type.
     const FieldDecl *SeltFD = isSingleElementStruct(RetTy);
     if (SeltFD) {
@@ -269,7 +271,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
       return ABIArgInfo::getStructRet();
     }
   } else {
-    return ABIArgInfo::getDefault();
+    return ABIArgInfo::getDirect();
   }
 }
 
@@ -297,7 +299,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
 
     return ABIArgInfo::getByVal(0);
   } else {
-    return ABIArgInfo::getDefault();
+    return ABIArgInfo::getDirect();
   }
 }
 
@@ -658,17 +660,31 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
 
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
                                               ASTContext &Context) const {
-  return ABIArgInfo::getDefault();
+  if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
+    return ABIArgInfo::getByVal(0);
+  } else {
+    return ABIArgInfo::getDirect();
+  }
 }
 
 ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context) const {
-  return ABIArgInfo::getDefault();
+  if (RetTy->isVoidType()) {
+    return ABIArgInfo::getIgnore();
+  } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+    return ABIArgInfo::getStructRet();
+  } else {
+    return ABIArgInfo::getDirect();
+  }
 }
 
 ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
                                               ASTContext &Context) const {
-  return ABIArgInfo::getDefault();
+  if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
+    return ABIArgInfo::getByVal(0);
+  } else {
+    return ABIArgInfo::getDirect();
+  }
 }
 
 const ABIInfo &CodeGenTypes::getABIInfo() const {
@@ -696,9 +712,6 @@ static ABIArgInfo getABIReturnInfo(QualType Ty, CodeGenTypes &CGT) {
   assert(!Ty->isArrayType() && 
          "Array types cannot be passed directly.");
   ABIArgInfo Info = CGT.getABIInfo().classifyReturnType(Ty, CGT.getContext());
-  // Ensure default on aggregate types is StructRet.
-  if (Info.isDefault() && CodeGenFunction::hasAggregateLLVMType(Ty))
-    return ABIArgInfo::getStructRet();
   return Info;
 }
 
@@ -708,9 +721,6 @@ static ABIArgInfo getABIArgumentInfo(QualType Ty, CodeGenTypes &CGT) {
   assert(!Ty->isArrayType() && 
          "Array types cannot be passed directly.");
   ABIArgInfo Info = CGT.getABIInfo().classifyArgumentType(Ty, CGT.getContext());
-  // Ensure default on aggregate types is ByVal.
-  if (Info.isDefault() && CodeGenFunction::hasAggregateLLVMType(Ty))
-    return ABIArgInfo::getByVal(0);
   return Info;  
 }
 
@@ -889,14 +899,6 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   case ABIArgInfo::Expand:
     assert(0 && "Invalid ABI kind for return argument");
 
-  case ABIArgInfo::Default:
-    if (RetTy->isVoidType()) {
-      ResultType = llvm::Type::VoidTy;
-    } else {
-      ResultType = ConvertType(RetTy);
-    }
-    break;
-
   case ABIArgInfo::Direct:
     ResultType = ConvertType(RetTy);
     break;
@@ -936,7 +938,6 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
       assert(AI.getByValAlignment() == 0 && "FIXME: alignment unhandled");
       break;
       
-    case ABIArgInfo::Default:
     case ABIArgInfo::Direct:
       ArgTys.push_back(Ty);
       break;
@@ -971,7 +972,6 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   unsigned Index = 1;
   const ABIArgInfo &RetAI = FI.getReturnInfo();
   switch (RetAI.getKind()) {
-  case ABIArgInfo::Default:
   case ABIArgInfo::Direct:
     if (RetTy->isPromotableIntegerType()) {
       if (RetTy->isSignedIntegerType()) {
@@ -1016,7 +1016,6 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       assert(AI.getByValAlignment() == 0 && "FIXME: alignment unhandled");
       break;
       
-    case ABIArgInfo::Default:
     case ABIArgInfo::Direct:
       if (ParamType->isPromotableIntegerType()) {
         if (ParamType->isSignedIntegerType()) {
@@ -1075,7 +1074,6 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
     switch (ArgI.getKind()) {
     case ABIArgInfo::ByVal: 
-    case ABIArgInfo::Default:
     case ABIArgInfo::Direct: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
       llvm::Value* V = AI;
@@ -1143,7 +1141,6 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       }
       break;
 
-    case ABIArgInfo::Default:
     case ABIArgInfo::Direct:
       RV = Builder.CreateLoad(ReturnValue);
       break;
@@ -1186,7 +1183,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     Args.push_back(CreateTempAlloca(ConvertType(RetTy)));
     break;
     
-  case ABIArgInfo::Default:
   case ABIArgInfo::Direct:
   case ABIArgInfo::Ignore:
   case ABIArgInfo::Coerce:
@@ -1204,8 +1200,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     RValue RV = I->first;
 
     switch (ArgInfo.getKind()) {
-    case ABIArgInfo::ByVal: // Default is byval
-    case ABIArgInfo::Default:      
+    case ABIArgInfo::ByVal: // Direct is byval
     case ABIArgInfo::Direct:
       if (RV.isScalar()) {
         Args.push_back(RV.getScalarVal());
@@ -1254,18 +1249,18 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     else 
       return RValue::get(Builder.CreateLoad(Args[0]));
 
-  case ABIArgInfo::Default:
-    return RValue::get(RetTy->isVoidType() ? 0 : CI);
-    
   case ABIArgInfo::Direct:
     assert((!RetTy->isAnyComplexType() &&
-            CodeGenFunction::hasAggregateLLVMType(RetTy)) &&
-           "FIXME: Implemented return for non-scalar direct types.");
+            !CodeGenFunction::hasAggregateLLVMType(RetTy)) &&
+           "FIXME: Implement return for non-scalar direct types.");
     return RValue::get(CI);
 
   case ABIArgInfo::Ignore:
     if (RetTy->isVoidType())
       return RValue::get(0);
+    
+    // If we are ignoring an argument that had a result, make sure to
+    // construct the appropriate return value for our caller.
     if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
       llvm::Value *Res =
         llvm::UndefValue::get(llvm::PointerType::getUnqual(ConvertType(RetTy)));
