@@ -84,7 +84,8 @@ public:
   ~LineTableInfo() {}
   
   unsigned getLineTableFilenameID(const char *Ptr, unsigned Len);
-
+  void AddLineNote(FileID FID, unsigned Offset,
+                   unsigned LineNo, int FilenameID);
 };
 } // namespace clang
 
@@ -105,6 +106,16 @@ unsigned LineTableInfo::getLineTableFilenameID(const char *Ptr, unsigned Len) {
   return FilenamesByID.size()-1;
 }
 
+/// AddLineNote - Add a line note to the line table that indicates that there
+/// is a #line at the specified FID/Offset location which changes the presumed
+/// location to LineNo/FilenameID.
+void LineTableInfo::AddLineNote(FileID FID, unsigned Offset,
+                                unsigned LineNo, int FilenameID) {
+  
+}
+
+
+
 /// getLineTableFilenameID - Return the uniqued ID for the specified filename.
 /// 
 unsigned SourceManager::getLineTableFilenameID(const char *Ptr, unsigned Len) {
@@ -119,7 +130,16 @@ unsigned SourceManager::getLineTableFilenameID(const char *Ptr, unsigned Len) {
 /// unspecified.
 void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
                                 int FilenameID) {
+  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
   
+  const SrcMgr::FileInfo &FileInfo = getSLocEntry(LocInfo.first).getFile();
+
+  // Remember that this file has #line directives now if it doesn't already.
+  const_cast<SrcMgr::FileInfo&>(FileInfo).setHasLineDirectives();
+  
+  if (LineTable == 0)
+    LineTable = new LineTableInfo();
+  LineTable->AddLineNote(LocInfo.first, LocInfo.second, LineNo, FilenameID);
 }
 
 

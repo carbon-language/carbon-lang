@@ -161,6 +161,16 @@ namespace SrcMgr {
     CharacteristicKind getFileCharacteristic() const { 
       return (CharacteristicKind)(Data & 3);
     }
+
+    /// hasLineDirectives - Return true if this FileID has #line directives in
+    /// it.
+    bool hasLineDirectives() const { return (Data & 4) != 0; }
+    
+    /// setHasLineDirectives - Set the flag that indicates that this FileID has
+    /// line table entries associated with it.
+    void setHasLineDirectives() {
+      Data |= 4;
+    }
   };
   
   /// InstantiationInfo - Each InstantiationInfo encodes the Instantiation
