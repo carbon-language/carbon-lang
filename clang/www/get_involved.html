@@ -77,15 +77,16 @@ compile it.  If not, please let us know.  Again,
 <a href="get_started.html#ccc"><code>ccc</code></a> might help you.  Once it
 compiles it should run.  If not, that's a bug :)</li>
 
-<li><b>Work on code generation for Objective C</b>: -emit-llvm support for
-Objective C is basically nonexistent at the time of this writing, this is a
-nice open project that can be tackled incrementally (one language feature at a
-time).</li>
-
-<li><b>Debug Info Generation</b>: -emit-llvm doesn't currently support emission
+<li><b>Debug Info Generation</b>: -emit-llvm doesn't fully support emission
 of <a href="http://llvm.org/docs/SourceLevelDebugging.html">LLVM debug info</a>
-(which the code generator turns into DWARF).  Adding this should be
-straight-forward if you follow the example of what llvm-gcc generates.</li>
+(which the code generator turns into DWARF).  The missing pieces are pretty 
+minor at this point.</li>
+
+<li><b>Overflow detection</b>: an interesting project would be to add a 
+compilation mode that causes -emit-llvm to generate overflow tests for all
+signed integer arithmetic operators, and call abort if they overflow.  Overflow
+is undefined in C and hard for people to reason about.  LLVM IR also has
+intrinsics for generating arithmetic with overflow checks directly.</li>
 
 <li><b>Continue work on C++ support</b>: Implementing all of C++ is a very big
 job, but there are lots of little pieces that can be picked off and implemented.
