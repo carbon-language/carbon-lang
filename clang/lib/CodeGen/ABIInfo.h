@@ -10,6 +10,10 @@
 #ifndef CLANG_CODEGEN_ABIINFO_H
 #define CLANG_CODEGEN_ABIINFO_H
 
+namespace llvm {
+  class Type;
+}
+
 namespace clang {
   /* FIXME: All of this stuff should be part of the target interface
      somehow. It is currently here because it is not clear how to factor
@@ -59,6 +63,8 @@ namespace clang {
                                 TypeData(TD),
                                 UIntData(0) {}
   public:
+    ABIArgInfo() : TheKind(Default), TypeData(0), UIntData(0) {}
+
     static ABIArgInfo getDefault() { 
       return ABIArgInfo(Default); 
     }

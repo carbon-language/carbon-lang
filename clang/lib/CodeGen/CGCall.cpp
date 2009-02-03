@@ -87,6 +87,9 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   return getFunctionInfo(ResTy, ArgTys);
 }
 
+static ABIArgInfo getABIReturnInfo(QualType Ty, CodeGenTypes &CGT);
+static ABIArgInfo getABIArgumentInfo(QualType Ty, CodeGenTypes &CGT);
+
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
                                const llvm::SmallVector<QualType, 16> &ArgTys) {
   // Lookup or create unique function info.
@@ -98,25 +101,17 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   if (FI)
     return *FI;
 
+  // Construct the function info.
   FI = new CGFunctionInfo(ResTy, ArgTys);
   FunctionInfos.InsertNode(FI, InsertPos);
+
+  // Compute ABI information.
+  FI->getReturnInfo() = getABIReturnInfo(ResTy, *this);
+  for (CGFunctionInfo::arg_iterator it = FI->arg_begin(), ie = FI->arg_end();
+       it != ie; ++it)
+    it->info = getABIArgumentInfo(it->type, *this);
+
   return *FI;
-}
-
-/***/
-
-CGFunctionInfo::CGFunctionInfo(QualType ResTy, 
-                               const llvm::SmallVector<QualType, 16> &ArgTys) {
-  ArgTypes.push_back(ResTy);
-  ArgTypes.insert(ArgTypes.end(), ArgTys.begin(), ArgTys.end());
-}
-
-CGFunctionInfo::arg_iterator CGFunctionInfo::arg_begin() const {
-  return ArgTypes.begin()+1;
-}
-
-CGFunctionInfo::arg_iterator CGFunctionInfo::arg_end() const {
-  return ArgTypes.end();
 }
 
 /***/
@@ -721,6 +716,17 @@ static ABIArgInfo getABIArgumentInfo(QualType Ty, CodeGenTypes &CGT) {
 
 /***/
 
+CGFunctionInfo::CGFunctionInfo(QualType ResTy, 
+                               const llvm::SmallVector<QualType, 16> &ArgTys) {
+  NumArgs = ArgTys.size();
+  Args = new ArgInfo[1 + NumArgs];
+  Args[0].type = ResTy;
+  for (unsigned i = 0; i < NumArgs; ++i)
+    Args[1 + i].type = ArgTys[i];
+}
+
+/***/
+
 void CodeGenTypes::GetExpandedTypes(QualType Ty, 
                                     std::vector<const llvm::Type*> &ArgTys) {
   const RecordType *RT = Ty->getAsStructureType();
@@ -846,7 +852,7 @@ static void CreateCoercedStore(llvm::Value *Src,
   uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
   uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(DstTy);
 
-  // If store is legal, just bitcase the src pointer.
+  // If store is legal, just bitcast the src pointer.
   if (SrcSize == DstSize) {
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
@@ -907,10 +913,10 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
     break;
   }
   
-  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end(); 
-       it != ie; ++it) {
-    ABIArgInfo AI = getABIArgumentInfo(*it, *this);
-    const llvm::Type *Ty = ConvertType(*it);
+  for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(), 
+         ie = FI.arg_end(); it != ie; ++it) {
+    const ABIArgInfo &AI = it->info;
+    const llvm::Type *Ty = ConvertType(it->type);
     
     switch (AI.getKind()) {
     case ABIArgInfo::Ignore:
@@ -931,7 +937,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
       break;
      
     case ABIArgInfo::Expand:
-      GetExpandedTypes(*it, ArgTys);
+      GetExpandedTypes(it->type, ArgTys);
       break;
     }
   }
@@ -988,11 +994,11 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   if (RetAttrs)
     PAL.push_back(llvm::AttributeWithIndex::get(0, RetAttrs));
-  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end(); 
-       it != ie; ++it) {
-    QualType ParamType = *it;
+  for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(), 
+         ie = FI.arg_end(); it != ie; ++it) {
+    QualType ParamType = it->type;
+    const ABIArgInfo &AI = it->info;
     unsigned Attributes = 0;
-    ABIArgInfo AI = getABIArgumentInfo(ParamType, getTypes());
     
     switch (AI.getKind()) {
     case ABIArgInfo::StructRet:

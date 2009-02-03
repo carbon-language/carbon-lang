@@ -20,9 +20,13 @@
 
 #include "CGValue.h"
 
+// FIXME: Restructure so we don't have to expose so much stuff.
+#include "ABIInfo.h"
+
 namespace llvm {
-  class Function;
   struct AttributeWithIndex;
+  class Function;
+  class Type;
   class Value;
 
   template<typename T, unsigned> class SmallVector;
@@ -51,21 +55,35 @@ namespace CodeGen {
   /// CGFunctionInfo - Class to encapsulate the information about a
   /// function definition.
   class CGFunctionInfo : public llvm::FoldingSetNode {
-    llvm::SmallVector<QualType, 16> ArgTypes;
+    struct ArgInfo {
+      QualType type;
+      ABIArgInfo info;
+    };
+
+    unsigned NumArgs;
+    ArgInfo *Args;
 
   public:
-    typedef llvm::SmallVector<QualType, 16>::const_iterator arg_iterator;
+    typedef const ArgInfo *const_arg_iterator;
+    typedef ArgInfo *arg_iterator;
 
     CGFunctionInfo(QualType ResTy, 
                    const llvm::SmallVector<QualType, 16> &ArgTys);
+    ~CGFunctionInfo() { delete[] Args; }
 
-    arg_iterator arg_begin() const;
-    arg_iterator arg_end() const;
+    const_arg_iterator arg_begin() const { return Args + 1; }
+    const_arg_iterator arg_end() const { return Args + 1 + NumArgs; }
+    arg_iterator arg_begin() { return Args + 1; }
+    arg_iterator arg_end() { return Args + 1 + NumArgs; }
 
-    QualType getReturnType() const { return ArgTypes[0]; }
+    QualType getReturnType() const { return Args[0].type; }
+
+    ABIArgInfo &getReturnInfo() { return Args[0].info; }
+    const ABIArgInfo &getReturnInfo() const { return Args[0].info; }
 
     void Profile(llvm::FoldingSetNodeID &ID) {
-      Profile(ID, getReturnType(), arg_begin(), arg_end());
+      for (arg_iterator it = arg_begin(), ie = arg_end(); it != ie; ++it)
+        it->type.Profile(ID);
     }
     template<class Iterator>
     static void Profile(llvm::FoldingSetNodeID &ID, 
