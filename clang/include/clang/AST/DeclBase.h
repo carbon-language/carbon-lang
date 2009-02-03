@@ -25,6 +25,7 @@ namespace clang {
 class DeclContext;
 class TranslationUnitDecl;
 class NamespaceDecl;
+class UsingDirectiveDecl;
 class NamedDecl;
 class FunctionDecl;
 class CXXRecordDecl;
@@ -767,6 +768,22 @@ public:
   /// NamedDecl::declarationReplaces, the previous declaration will be
   /// replaced with D.
   void makeDeclVisibleInContext(NamedDecl *D);
+
+  /// udir_iterator - Iterates through the using-directives stored
+  /// within this context.
+  typedef UsingDirectiveDecl * const * udir_iterator;
+  
+  typedef std::pair<udir_iterator, udir_iterator> udir_iterator_range;
+
+  udir_iterator_range getUsingDirectives() const;
+
+  udir_iterator using_directives_begin() const {
+    return getUsingDirectives().first;
+  }
+
+  udir_iterator using_directives_end() const {
+    return getUsingDirectives().second;
+  }
 
   static bool classof(const Decl *D) {
     switch (D->getKind()) {

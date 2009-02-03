@@ -948,6 +948,82 @@ protected:
   void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// UsingDirectiveDecl - Represents C++ using-directive. For example:
+///
+///    using namespace std;
+///
+// NB: UsingDirectiveDecl should be Decl not NamedDecl, but we provide
+// artificial name, for all using-directives in order to store
+// them in DeclContext effectively.
+class UsingDirectiveDecl : public NamedDecl {
+
+  /// SourceLocation - Location of 'namespace' token.
+  SourceLocation NamespaceLoc;
+
+  /// IdentLoc - Location of nominated namespace-name identifier.
+  // FIXME: We don't store location of scope specifier.
+  SourceLocation IdentLoc;
+
+  /// NominatedNamespace - Namespace nominated by using-directive.
+  NamespaceDecl *NominatedNamespace;
+
+  /// Enclosing context containing both using-directive and nomintated
+  /// namespace.
+  DeclContext *CommonAncestor;
+
+  /// getUsingDirectiveName - Returns special DeclarationName used by
+  /// using-directives. This is only used by DeclContext for storing
+  /// UsingDirectiveDecls in its lookup structure.
+  static DeclarationName getName() {
+    return DeclarationName::getUsingDirectiveName();
+  }
+
+  UsingDirectiveDecl(DeclContext *DC, SourceLocation L,
+                     SourceLocation NamespcLoc,
+                     SourceLocation IdentLoc,
+                     NamespaceDecl *Nominated,
+                     DeclContext *CommonAncestor)
+    : NamedDecl(Decl::UsingDirective, DC, L, getName()),
+      NamespaceLoc(NamespcLoc), IdentLoc(IdentLoc),
+      NominatedNamespace(Nominated? Nominated->getOriginalNamespace() : 0),
+      CommonAncestor(CommonAncestor) {
+  }
+
+public:
+  /// getNominatedNamespace - Returns namespace nominated by using-directive.
+  NamespaceDecl *getNominatedNamespace() { return NominatedNamespace; }
+
+  const NamespaceDecl *getNominatedNamespace() const {
+    return const_cast<UsingDirectiveDecl*>(this)->getNominatedNamespace();
+  }
+
+  /// getCommonAncestor - returns common ancestor context of using-directive,
+  /// and nominated by it namespace.
+  DeclContext *getCommonAncestor() { return CommonAncestor; }
+  const DeclContext *getCommonAncestor() const { return CommonAncestor; }
+
+  /// getNamespaceKeyLocation - Returns location of namespace keyword.
+  SourceLocation getNamespaceKeyLocation() const { return NamespaceLoc; }
+
+  /// getIdentLocation - Returns location of identifier.
+  SourceLocation getIdentLocation() const { return IdentLoc; }
+
+  static UsingDirectiveDecl *Create(ASTContext &C, DeclContext *DC,
+                                    SourceLocation L,
+                                    SourceLocation NamespaceLoc,
+                                    SourceLocation IdentLoc,
+                                    NamespaceDecl *Nominated,
+                                    DeclContext *CommonAncestor);
+
+  static bool classof(const Decl *D) {
+    return D->getKind() == Decl::UsingDirective;
+  }
+  static bool classof(const UsingDirectiveDecl *D) { return true; }
+
+  // Friend for getUsingDirectiveName.
+  friend class DeclContext;
+};
+
 /// TemplateParameterList - Stores a list of template parameters. 
 class TemplateParameterList {
   /// NumParams - The number of template parameters in this template

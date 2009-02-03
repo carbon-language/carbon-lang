@@ -539,10 +539,6 @@ public:
   void CheckCXXDefaultArguments(FunctionDecl *FD);
   void CheckExtraCXXDefaultArguments(Declarator &D);
 
-  // FIXME: NamespaceNameOnly parameter is added temporarily
-  // we will need a better way to specify lookup criteria for things
-  // like template specializations, explicit template instantiations, etc.
-
   Scope *getNonFieldDeclScope(Scope *S);
 
   /// \name Name lookup
@@ -614,6 +610,9 @@ public:
       /// First is a single declaration (a Decl*), which may be NULL.
       SingleDecl,
 
+      /// First is a single declaration (an OverloadedFunctionDecl*).
+      OverloadedDeclSingleDecl,
+
       /// [First, Last) is an iterator range represented as opaque
       /// pointers used to reconstruct IdentifierResolver::iterators.
       OverloadedDeclFromIdResolver,
@@ -626,7 +625,13 @@ public:
       /// by the LookupResult. Last is non-zero to indicate that the
       /// ambiguity is caused by two names found in base class
       /// subobjects of different types.
-      AmbiguousLookup
+      AmbiguousLookupStoresBasePaths,
+
+      /// [First, Last) is an iterator range represented as opaque
+      /// pointers used to reconstruct new'ed Decl*[] array containing
+      /// found ambiguous decls. LookupResult is owner of this array.
+      AmbiguousLookupStoresDecls
+
     } StoredKind;
 
     /// The first lookup result, whose contents depend on the kind of
@@ -635,14 +640,14 @@ public:
     /// IdentifierResolver::iterator (if StoredKind ==
     /// OverloadedDeclFromIdResolver), a DeclContext::lookup_iterator
     /// (if StoredKind == OverloadedDeclFromDeclContext), or a
-    /// BasePaths pointer (if StoredKind == AmbiguousLookup).
+    /// BasePaths pointer (if StoredKind == AmbiguousLookupStoresBasePaths).
     mutable uintptr_t First;
 
     /// The last lookup result, whose contents depend on the kind of
     /// lookup result. This may be unused (if StoredKind ==
     /// SingleDecl), it may have the same type as First (for
     /// overloaded function declarations), or is may be used as a
-    /// Boolean value (if StoredKind == AmbiguousLookup).
+    /// Boolean value (if StoredKind == AmbiguousLookupStoresBasePaths).
     mutable uintptr_t Last;
 
     /// Context - The context in which we will build any
@@ -690,17 +695,25 @@ public:
       ///   return d.x; // error: 'x' is found in two A subobjects (of B and C)
       /// }
       /// @endcode
-      AmbiguousBaseSubobjects
+      AmbiguousBaseSubobjects,
+
+      /// Name lookup results in an ambiguity because multiple definitions
+      /// of entity that meet the lookup criteria were found in different
+      /// declaration contexts.
+      /// @code
+      /// namespace A {
+      ///   int i;
+      ///   namespace B { int i; }
+      ///   int test() {
+      ///     using namespace B;
+      ///     return i; // error 'i' is found in namespace A and A::B
+      ///    }
+      /// }
+      /// @endcode
+      AmbiguousReference
     };
 
-    static LookupResult CreateLookupResult(ASTContext &Context, Decl *D) {
-      LookupResult Result;
-      Result.StoredKind = SingleDecl;
-      Result.First = reinterpret_cast<uintptr_t>(D);
-      Result.Last = 0;
-      Result.Context = &Context;
-      return Result;
-    }
+    static LookupResult CreateLookupResult(ASTContext &Context, Decl *D);
 
     static LookupResult CreateLookupResult(ASTContext &Context, 
                                            IdentifierResolver::iterator F, 
@@ -713,9 +726,23 @@ public:
     static LookupResult CreateLookupResult(ASTContext &Context, BasePaths *Paths, 
                                            bool DifferentSubobjectTypes) {
       LookupResult Result;
-      Result.StoredKind = AmbiguousLookup;
+      Result.StoredKind = AmbiguousLookupStoresBasePaths;
       Result.First = reinterpret_cast<uintptr_t>(Paths);
       Result.Last = DifferentSubobjectTypes? 1 : 0;
+      Result.Context = &Context;
+      return Result;
+    }
+
+    template <typename Iterator>
+    static LookupResult CreateLookupResult(ASTContext &Context,
+                                           Iterator B, std::size_t Len) {
+      Decl ** Array = new Decl*[Len];
+      for (std::size_t Idx = 0; Idx < Len; ++Idx, ++B)
+        Array[Idx] = *B;
+      LookupResult Result;
+      Result.StoredKind = AmbiguousLookupStoresDecls;
+      Result.First = reinterpret_cast<uintptr_t>(Array);
+      Result.Last = reinterpret_cast<uintptr_t>(Array + Len);
       Result.Context = &Context;
       return Result;
     }
@@ -726,7 +753,10 @@ public:
     operator bool() const { return getKind() != NotFound; }
 
     /// @brief Determines whether the lookup resulted in an ambiguity.
-    bool isAmbiguous() const { return StoredKind == AmbiguousLookup; }
+    bool isAmbiguous() const {
+      return StoredKind == AmbiguousLookupStoresBasePaths ||
+             StoredKind == AmbiguousLookupStoresDecls;
+    }
 
     /// @brief Allows conversion of a lookup result into a
     /// declaration, with the same behavior as getAsDecl.
@@ -786,6 +816,14 @@ public:
     iterator end();
   };
 
+private:
+  typedef llvm::SmallVector<LookupResult, 3> LookupResultsVecTy;
+
+  std::pair<bool, LookupResult> CppLookupName(Scope *S, DeclarationName Name,
+                                              LookupNameKind NameKind,
+                                              bool RedeclarationOnly);
+
+public:
   /// Determines whether D is a suitable lookup result according to the
   /// lookup criteria.
   bool isAcceptableLookupResult(Decl *D, LookupNameKind NameKind,
@@ -1170,6 +1208,8 @@ public:
                                       SourceLocation IdentLoc,
                                       IdentifierInfo *NamespcName,
                                       AttributeList *AttrList);
+
+  void PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir);
 
   /// AddCXXDirectInitializerToDecl - This action is called immediately after 
   /// ActOnDeclarator, when a C++ direct initializer is present.

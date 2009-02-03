@@ -14,6 +14,7 @@
 
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include <cstdio>
@@ -247,6 +248,14 @@ void StmtDumper::DumpDeclarator(Decl *D) {
       tagname = "<anonymous>";
     fprintf(F, "\"%s %s;\"", TD->getKindName(), tagname);
     // FIXME: print tag bodies.
+  } else if (UsingDirectiveDecl *UD = dyn_cast<UsingDirectiveDecl>(D)) {
+    // print using-directive decl (e.g. "using namespace x;")
+    const char *ns;
+    if (const IdentifierInfo *II = UD->getNominatedNamespace()->getIdentifier())
+      ns = II->getName();
+    else
+      ns = "<anonymous>";
+    fprintf(F, "\"%s %s;\"",UD->getDeclKindName(), ns);
   } else {
     assert(0 && "Unexpected decl");
   }

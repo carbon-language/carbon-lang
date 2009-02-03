@@ -130,3 +130,17 @@ void G::test_virtual_lookup() {
   a; // expected-error{{non-static member 'a' found in multiple base-class subobjects of type 'struct A'}}
   static_f(0); // okay
 }
+
+
+struct HasMemberType1 {
+  struct type { };
+};
+
+struct HasMemberType2 {
+  struct type { };
+};
+
+struct HasAnotherMemberType : HasMemberType1, HasMemberType2 { 
+  // FIXME: this is well-formed, but we diagnose an ambiguity here
+  //  struct type { };
+};

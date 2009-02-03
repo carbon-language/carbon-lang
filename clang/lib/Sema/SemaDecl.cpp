@@ -42,6 +42,8 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, Scope *S,
       // FIXME: In the event of an ambiguous lookup, we could visit all of
       // the entities found to determine whether they are all types. This
       // might provide better diagnostics.
+    case LookupResult::AmbiguousReference:
+    // FIXME: We need source location of identifier to diagnose more correctly.
       return 0;
     case LookupResult::Found:
       IIDecl = Result.getAsDecl();
@@ -2813,7 +2815,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     SearchDC = DC;
     // Look-up name inside 'foo::'.
     PrevDecl = dyn_cast_or_null<TagDecl>(
-                     LookupQualifiedName(DC, Name, LookupTagName).getAsDecl());
+                 LookupQualifiedName(DC, Name, LookupTagName, true).getAsDecl());
 
     // A tag 'foo::bar' must already exist.
     if (PrevDecl == 0) {
@@ -2824,8 +2826,23 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   } else if (Name) {
     // If this is a named struct, check to see if there was a previous forward
     // declaration or definition.
-    Decl *D = LookupName(S, Name, LookupTagName);
-    PrevDecl = dyn_cast_or_null<NamedDecl>(D);
+    // FIXME: We're looking into outer scopes here, even when we
+    // shouldn't be. Doing so can result in ambiguities that we
+    // shouldn't be diagnosing.
+    LookupResult R = LookupName(S, Name, LookupTagName);
+    if (R.isAmbiguous()) {
+      DiagnoseAmbiguousLookup(R, Name, NameLoc);
+      // FIXME: This is not best way to recover from case like:
+      //
+      // struct S s;
+      //
+      // causes needless err_ovl_no_viable_function_in_init latter.
+      Name = 0;
+      PrevDecl = 0;
+      Invalid = true;
+    }
+    else
+      PrevDecl = dyn_cast_or_null<NamedDecl>(static_cast<Decl*>(R));
 
     if (!getLangOptions().CPlusPlus && TK != TK_Reference) {
       // FIXME: This makes sure that we ignore the contexts associated

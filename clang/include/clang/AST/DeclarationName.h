@@ -27,6 +27,7 @@ namespace clang {
   class DeclarationNameExtra;
   class IdentifierInfo;
   class MultiKeywordSelector;
+  class UsingDirectiveDecl;
 
 /// DeclarationName - The name of a declaration. In the common case,
 /// this just stores an IdentifierInfo pointer to a normal
@@ -45,7 +46,8 @@ public:
     CXXConstructorName,
     CXXDestructorName,
     CXXConversionFunctionName,
-    CXXOperatorName
+    CXXOperatorName,
+    CXXUsingDirective
   };
 
 private:
@@ -153,7 +155,12 @@ private:
   /// Construct a declaration name from a raw pointer.
   DeclarationName(uintptr_t Ptr) : Ptr(Ptr) { }
 
+  /// getUsingDirectiveName - Return name for all using-directives.
+  static DeclarationName getUsingDirectiveName();
+
   friend class DeclarationNameTable;
+  friend class UsingDirectiveDecl;
+  friend class NamedDecl;
 
   /// getFETokenInfoAsVoid - Retrieves the front end-specified pointer
   /// for this name as a void pointer.

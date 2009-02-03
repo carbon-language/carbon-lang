@@ -363,3 +363,14 @@ LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          LanguageIDs Lang, bool Braces) {
   return new (C) LinkageSpecDecl(DC, L, Lang, Braces);
 }
+
+UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
+                                               SourceLocation L,
+                                               SourceLocation NamespaceLoc,
+                                               SourceLocation IdentLoc,
+                                               NamespaceDecl *Used,
+                                               DeclContext *CommonAncestor) {
+  return new (C) UsingDirectiveDecl(DC, L, NamespaceLoc, IdentLoc,
+                                    Used, CommonAncestor);
+}
+

@@ -499,8 +499,9 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
 
       // [FirstMatch, LastMatch) contains the set of declarations that
       // have the same name as this declaration. Determine where the
-      // declaration D will be inserted into this range. 
-      if (D->getIdentifierNamespace() == Decl::IDNS_Tag)
+      // declaration D will be inserted into this range.
+      if (D->getKind() == Decl::UsingDirective ||
+          D->getIdentifierNamespace() == Decl::IDNS_Tag)
         InsertPos = LastMatch;
       else if (Array[LastMatch-1]->getIdentifierNamespace() == Decl::IDNS_Tag)
         InsertPos = LastMatch - 1;
@@ -549,7 +550,9 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
     }
 
     // Put this declaration into the appropriate slot.
-    if (D->getIdentifierNamespace() == Decl::IDNS_Tag || Pos->second.empty())
+    if (D->getKind() == Decl::UsingDirective ||
+        D->getIdentifierNamespace() == Decl::IDNS_Tag
+        || Pos->second.empty())
       Pos->second.push_back(D);
     else if (Pos->second.back()->getIdentifierNamespace() == Decl::IDNS_Tag) {
       NamedDecl *TagD = Pos->second.back();
@@ -561,3 +564,12 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
     (*Map)[D->getDeclName()].push_back(D);
   }
 }
+
+/// Returns iterator range [First, Last) of UsingDirectiveDecls stored within
+/// this context.
+DeclContext::udir_iterator_range DeclContext::getUsingDirectives() const {
+  lookup_const_result Result = lookup(UsingDirectiveDecl::getName());
+  return udir_iterator_range(reinterpret_cast<udir_iterator>(Result.first),
+                             reinterpret_cast<udir_iterator>(Result.second));
+}
+

@@ -452,7 +452,18 @@ public:
   const Type *getCanonicalType(const Type *T) {
     return T->getCanonicalTypeInternal().getTypePtr();
   }
-  
+
+  /// \brief Retrieves the "canonical" declaration of the given tag
+  /// declaration.
+  ///
+  /// The canonical declaration for the given tag declaration is
+  /// either the definition of the tag (if it is a complete type) or
+  /// the first declaration of that tag.
+  TagDecl *getCanonicalDecl(TagDecl *Tag) {
+    QualType T = getTagDeclType(Tag);
+    return cast<TagDecl>(cast<TagType>(T)->getDecl());
+  }
+
   /// Type Query functions.  If the type is an instance of the specified class,
   /// return the Type pointer for the underlying maximally pretty type.  This
   /// is a member of ASTContext because this may need to do some amount of

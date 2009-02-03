@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
@@ -146,6 +147,13 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
 bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
   assert(getDeclName() == OldD->getDeclName() && "Declaration name mismatch");
 
+  // UsingDirectiveDecl's are not really NamedDecl's, and all have same name.
+  // We want to keep it, unless it nominates same namespace.
+  if (getKind() == Decl::UsingDirective) {
+    return cast<UsingDirectiveDecl>(this)->getNominatedNamespace() ==
+           cast<UsingDirectiveDecl>(OldD)->getNominatedNamespace();
+  }
+           
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))
     // For function declarations, we keep track of redeclarations.
     return FD->getPreviousDeclaration() == OldD;

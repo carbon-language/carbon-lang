@@ -1041,6 +1041,10 @@ DIAG(err_ambiguous_member_multiple_subobject_types, ERROR,
      "member %0 found in multiple base classes of different types")
 DIAG(note_ambiguous_member_found, NOTE,
      "member found by ambiguous name lookup")
+DIAG(err_ambiguous_reference, ERROR,
+     "reference to %0 is ambiguous")
+DIAG(note_ambiguous_candidate, NOTE,
+     "candidate found by name lookup is '%0'")
 
 // C++ operator overloading
 DIAG(err_operator_overload_needs_class_or_enum, ERROR,

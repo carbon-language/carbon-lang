@@ -122,6 +122,9 @@ private:
   /// maintained by the Action implementation.
   void *Entity;
 
+  typedef llvm::SmallVector<Action::DeclTy*, 2> UsingDirectivesTy;
+  UsingDirectivesTy UsingDirectives;
+
 public:
   Scope(Scope *Parent, unsigned ScopeFlags) {
     Init(Parent, ScopeFlags);
@@ -234,6 +237,29 @@ public:
 
   void setWithinElse(bool WE) { WithinElse = WE; }
 
+  typedef UsingDirectivesTy::iterator udir_iterator;
+  typedef UsingDirectivesTy::const_iterator const_udir_iterator;
+
+  void PushUsingDirective(Action::DeclTy *UDir) {
+    UsingDirectives.push_back(UDir);
+  }
+
+  udir_iterator using_directives_begin() {
+    return UsingDirectives.begin();
+  }
+
+  udir_iterator using_directives_end() {
+    return UsingDirectives.end();
+  }
+
+  const_udir_iterator using_directives_begin() const {
+    return UsingDirectives.begin();
+  }
+
+  const_udir_iterator using_directives_end() const {
+    return UsingDirectives.end();
+  }
+
   /// Init - This is used by the parser to implement scope caching.
   ///
   void Init(Scope *Parent, unsigned ScopeFlags) {
@@ -265,6 +291,7 @@ public:
     if (Flags & BlockScope)         BlockParent = this;
     if (Flags & TemplateParamScope) TemplateParamParent = this;
     DeclsInScope.clear();
+    UsingDirectives.clear();
     Entity = 0;
   }
 };

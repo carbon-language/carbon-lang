@@ -203,6 +203,10 @@ void NamedDecl::EmitInRec(Serializer& S) const {
   case DeclarationName::CXXOperatorName:
     S.EmitInt(Name.getCXXOverloadedOperator());
     break;
+
+  case DeclarationName::CXXUsingDirective:
+    // No extra data to emit
+    break;
   }
 }
 
@@ -242,6 +246,10 @@ void NamedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
     Name = C.DeclarationNames.getCXXOperatorName(Op);
     break;
   }
+
+  case DeclarationName::CXXUsingDirective: 
+    Name = DeclarationName::getUsingDirectiveName();
+    break;
   }
 }
 

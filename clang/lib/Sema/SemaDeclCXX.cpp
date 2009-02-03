@@ -1433,21 +1433,59 @@ Sema::DeclTy *Sema::ActOnUsingDirective(Scope *S,
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
   assert(NamespcName && "Invalid NamespcName.");
   assert(IdentLoc.isValid() && "Invalid NamespceName location.");
+  assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
 
-  // FIXME: This still requires lot more checks, and AST support.
+  UsingDirectiveDecl *UDir = 0;
 
   // Lookup namespace name.
-  Decl *NS = LookupParsedName(S, &SS, NamespcName, LookupNamespaceName, false);
-
-  if (NS) {
+  LookupResult R = LookupParsedName(S, &SS, NamespcName,
+                                    LookupNamespaceName, false);
+  if (R.isAmbiguous()) {
+    DiagnoseAmbiguousLookup(R, NamespcName, IdentLoc);
+    return 0;
+  }
+  if (Decl *NS = R) {
     assert(isa<NamespaceDecl>(NS) && "expected namespace decl");
+    // C++ [namespace.udir]p1:
+    //   A using-directive specifies that the names in the nominated
+    //   namespace can be used in the scope in which the
+    //   using-directive appears after the using-directive. During
+    //   unqualified name lookup (3.4.1), the names appear as if they
+    //   were declared in the nearest enclosing namespace which
+    //   contains both the using-directive and the nominated
+    //   namespace. [Note: in this context, “contains” means “contains
+    //   directly or indirectly”. ]
+
+    // Find enclosing context containing both using-directive and
+    // nominated namespace.
+    DeclContext *CommonAncestor = cast<DeclContext>(NS);
+    while (CommonAncestor && !CommonAncestor->Encloses(CurContext))
+      CommonAncestor = CommonAncestor->getParent();
+
+    UDir = UsingDirectiveDecl::Create(Context, CurContext, UsingLoc,
+                                      NamespcLoc, IdentLoc,
+                                      cast<NamespaceDecl>(NS),
+                                      CommonAncestor);
+    PushUsingDirective(S, UDir);
   } else {
     Diag(IdentLoc, diag::err_expected_namespace_name) << SS.getRange();
   }
 
-  // FIXME: We ignore AttrList for now, and delete it to avoid leak.
+  // FIXME: We ignore attributes for now.
   delete AttrList;
-  return 0;
+  return UDir;
+}
+
+void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
+  // If scope has associated entity, then using directive is at namespace
+  // or translation unit scope. We add UsingDirectiveDecls, into
+  // it's lookup structure.
+  if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity()))
+    Ctx->addDecl(UDir);
+  else
+    // Otherwise it is block-sope. using-directives will affect lookup
+    // only to the end of scope.
+    S->PushUsingDirective(UDir);
 }
 
 /// AddCXXDirectInitializerToDecl - This action is called immediately after 

@@ -95,10 +95,13 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
     case DeclarationNameExtra::CXXConversionFunction: 
       return CXXConversionFunctionName;
 
+    case DeclarationNameExtra::CXXUsingDirective:
+      return CXXUsingDirective;
+
     default:
       // Check if we have one of the CXXOperator* enumeration values.
       if (getExtra()->ExtraKindOrNumArgs < 
-            DeclarationNameExtra::NUM_EXTRA_KINDS)
+            DeclarationNameExtra::CXXUsingDirective)
         return CXXOperatorName;
 
       return ObjCMultiArgSelector;
@@ -165,6 +168,8 @@ std::string DeclarationName::getAsString() const {
       Result += Type.getAsString();
     return Result;
   }
+  case CXXUsingDirective:
+    return "<using-directive>";
   }
 
   assert(false && "Unexpected declaration name kind");
@@ -244,6 +249,17 @@ void DeclarationName::setFETokenInfo(void *T) {
   default:
     assert(false && "Declaration name has no FETokenInfo");
   }
+}
+
+DeclarationName DeclarationName::getUsingDirectiveName() {
+  // Single instance of DeclarationNameExtra for using-directive
+  static DeclarationNameExtra UDirExtra =
+    { DeclarationNameExtra::CXXUsingDirective };
+
+  uintptr_t Ptr = reinterpret_cast<uintptr_t>(&UDirExtra);
+  Ptr |= StoredDeclarationNameExtra;
+
+  return DeclarationName(Ptr);
 }
 
 DeclarationNameTable::DeclarationNameTable() {
