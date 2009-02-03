@@ -472,7 +472,13 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
     Builder.CreateBitCast(Collection, 
                           ConvertType(getContext().getObjCIdType()),
                           "tmp");
-  Builder.CreateCall(EnumerationMutationFn, V);
+  CallArgList Args2;
+  Args2.push_back(std::make_pair(RValue::get(V), 
+                                getContext().getObjCIdType()));
+  // FIXME: We shouldn't need to get the function info here, the
+  // runtime already should have computed it to build the function.
+  EmitCall(CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args), 
+           EnumerationMutationFn, Args2);
   
   EmitBlock(WasNotMutated);
   
