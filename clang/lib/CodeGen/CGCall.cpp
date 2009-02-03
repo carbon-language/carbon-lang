@@ -1337,7 +1337,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       // FIXME: Avoid the conversion through memory if possible.
       llvm::Value *SrcPtr;
       if (RV.isScalar()) {
-        SrcPtr = CreateTempAlloca(ConvertType(I->second), "coerce");
+        SrcPtr = CreateTempAlloca(ConvertTypeForMem(I->second), "coerce");
         Builder.CreateStore(RV.getScalarVal(), SrcPtr);
       } else if (RV.isComplex()) {
         SrcPtr = CreateTempAlloca(ConvertType(I->second), "coerce");
