@@ -87,9 +87,6 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   return getFunctionInfo(ResTy, ArgTys);
 }
 
-static ABIArgInfo getABIReturnInfo(QualType Ty, CodeGenTypes &CGT);
-static ABIArgInfo getABIArgumentInfo(QualType Ty, CodeGenTypes &CGT);
-
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
                                const llvm::SmallVector<QualType, 16> &ArgTys) {
   // Lookup or create unique function info.
@@ -106,10 +103,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   FunctionInfos.InsertNode(FI, InsertPos);
 
   // Compute ABI information.
-  FI->getReturnInfo() = getABIReturnInfo(ResTy, *this);
-  for (CGFunctionInfo::arg_iterator it = FI->arg_begin(), ie = FI->arg_end();
-       it != ie; ++it)
-    it->info = getABIArgumentInfo(it->type, *this);
+  getABIInfo().computeInfo(*FI, getContext());
 
   return *FI;
 }
@@ -207,24 +201,38 @@ static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
 namespace {
 /// DefaultABIInfo - The default implementation for ABI specific
 /// details. This implementation provides information which results in
-/// sensible LLVM IR generation, but does not conform to any
-/// particular ABI.
+/// self-consistent and sensible LLVM IR generation, but does not
+/// conform to any particular ABI.
 class DefaultABIInfo : public ABIInfo {
-  virtual ABIArgInfo classifyReturnType(QualType RetTy, 
-                                        ASTContext &Context) const;
+  ABIArgInfo classifyReturnType(QualType RetTy, 
+                                ASTContext &Context) const;
+  
+  ABIArgInfo classifyArgumentType(QualType RetTy,
+                                  ASTContext &Context) const;
 
-  virtual ABIArgInfo classifyArgumentType(QualType RetTy,
-                                          ASTContext &Context) const;
+  virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
+    FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context);
+    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+         it != ie; ++it)
+      it->info = classifyArgumentType(it->type, Context);
+  }
 };
 
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
 public:
-  virtual ABIArgInfo classifyReturnType(QualType RetTy, 
-                                        ASTContext &Context) const;
+  ABIArgInfo classifyReturnType(QualType RetTy, 
+                                ASTContext &Context) const;
 
-  virtual ABIArgInfo classifyArgumentType(QualType RetTy,
-                                          ASTContext &Context) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy,
+                                  ASTContext &Context) const;
+
+  virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
+    FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context);
+    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+         it != ie; ++it)
+      it->info = classifyArgumentType(it->type, Context);
+  }
 };
 }
 
@@ -353,11 +361,18 @@ class X86_64ABIInfo : public ABIInfo {
                 Class &Lo, Class &Hi) const;
   
 public:
-  virtual ABIArgInfo classifyReturnType(QualType RetTy, 
-                                        ASTContext &Context) const;
-
-  virtual ABIArgInfo classifyArgumentType(QualType RetTy,
-                                          ASTContext &Context) const;
+  ABIArgInfo classifyReturnType(QualType RetTy, 
+                                ASTContext &Context) const;
+  
+  ABIArgInfo classifyArgumentType(QualType RetTy,
+                                  ASTContext &Context) const;
+  
+  virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
+    FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context);
+    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+         it != ie; ++it)
+      it->info = classifyArgumentType(it->type, Context);
+  }
 };
 }
 
@@ -704,24 +719,6 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
   }
 
   return *(TheABIInfo = new DefaultABIInfo);
-}
-
-// getABIReturnInfo - Wrap the ABIInfo getABIReturnInfo, altering
-// "default" types to StructRet when appropriate for simplicity.
-static ABIArgInfo getABIReturnInfo(QualType Ty, CodeGenTypes &CGT) {
-  assert(!Ty->isArrayType() && 
-         "Array types cannot be passed directly.");
-  ABIArgInfo Info = CGT.getABIInfo().classifyReturnType(Ty, CGT.getContext());
-  return Info;
-}
-
-// getABIArgumentInfo - Wrap the ABIInfo getABIReturnInfo, altering
-// "default" types to ByVal when appropriate for simplicity.
-static ABIArgInfo getABIArgumentInfo(QualType Ty, CodeGenTypes &CGT) {
-  assert(!Ty->isArrayType() && 
-         "Array types cannot be passed directly.");
-  ABIArgInfo Info = CGT.getABIInfo().classifyArgumentType(Ty, CGT.getContext());
-  return Info;  
 }
 
 /***/

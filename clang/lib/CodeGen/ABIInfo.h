@@ -15,6 +15,14 @@ namespace llvm {
 }
 
 namespace clang {
+  class ASTContext;
+
+  // FIXME: This is a layering issue if we want to move ABIInfo
+  // down. Fortunately CGFunctionInfo has no real tie to CodeGen.
+  namespace CodeGen {
+    class CGFunctionInfo;
+  }
+
   /* FIXME: All of this stuff should be part of the target interface
      somehow. It is currently here because it is not clear how to factor
      the targets to support this, since the Targets currently live in a
@@ -112,12 +120,9 @@ namespace clang {
   class ABIInfo {
   public:
     virtual ~ABIInfo();
-  
-    virtual ABIArgInfo classifyReturnType(QualType RetTy, 
-                                          ASTContext &Context) const = 0;
-  
-    virtual ABIArgInfo classifyArgumentType(QualType Ty,
-                                            ASTContext &Context) const = 0;
+
+    virtual void computeInfo(CodeGen::CGFunctionInfo &FI,
+                             ASTContext &Ctx) const = 0;
   };
 }  // end namespace clang
 
