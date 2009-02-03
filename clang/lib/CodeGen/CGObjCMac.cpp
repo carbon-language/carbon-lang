@@ -215,6 +215,12 @@ public:
 /// ObjCNonFragileABITypesHelper - will have all types needed by objective-c's
 /// modern abi
 class ObjCNonFragileABITypesHelper : public ObjCCommonTypesHelper {
+private:
+  llvm::Function *MessageSendFixupFn, *MessageSendFpretFixupFn,
+                 *MessageSendStretFixupFn, *MessageSendIdFixupFn,
+                 *MessageSendIdStretFixupFn, *MessageSendSuper2FixupFn,
+                 *MessageSendSuper2StretFixupFn;
+          
 public:
   // MethodListnfABITy - LLVM for struct _method_list_t
   const llvm::StructType *MethodListnfABITy;
@@ -254,6 +260,28 @@ public:
   
   // CategorynfABITy - LLVM for struct _category_t
   const llvm::StructType *CategorynfABITy;
+  
+  // New types for nonfragile abi messaging.
+  
+  // MessageRefTy - LLVM for:
+  // struct _message_ref_t {
+  //   IMP messenger;
+  //   SEL name;
+  // };
+  const llvm::StructType *MessageRefTy;
+  
+  // MessageRefPtrTy - LLVM for struct _message_ref_t*
+  const llvm::Type *MessageRefPtrTy;
+  
+  // SuperMessageRefTy - LLVM for:
+  // struct _super_message_ref_t {
+  //   SUPER_IMP messenger;
+  //   SEL name;
+  // };
+  const llvm::StructType *SuperMessageRefTy;
+  
+  // SuperMessageRefPtrTy - LLVM for struct _super_message_ref_t*
+  const llvm::Type *SuperMessageRefPtrTy;
   
   ObjCNonFragileABITypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCNonFragileABITypesHelper(){}
@@ -3168,6 +3196,93 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                                           PropertyListPtrTy,
                                           NULL);
   CGM.getModule().addTypeName("struct._category_t", CategorynfABITy);
+  
+  // New types for nonfragile abi messaging.
+  
+  // MessageRefTy - LLVM for:
+  // struct _message_ref_t {
+  //   IMP messenger;
+  //   SEL name;
+  // };
+  MessageRefTy = llvm::StructType::get(ImpnfABITy,
+                                       SelectorPtrTy,
+                                       NULL);
+  CGM.getModule().addTypeName("struct._message_ref_t", MessageRefTy);
+  
+  // MessageRefPtrTy - LLVM for struct _message_ref_t*
+  MessageRefPtrTy = llvm::PointerType::getUnqual(MessageRefTy);
+  
+  // SuperMessageRefTy - LLVM for:
+  // struct _super_message_ref_t {
+  //   SUPER_IMP messenger;
+  //   SEL name;
+  // };
+  SuperMessageRefTy = llvm::StructType::get(ImpnfABITy,
+                                            SelectorPtrTy,
+                                            NULL);
+  CGM.getModule().addTypeName("struct._super_message_ref_t", SuperMessageRefTy);
+  
+  // SuperMessageRefPtrTy - LLVM for struct _super_message_ref_t*
+  SuperMessageRefPtrTy = llvm::PointerType::getUnqual(SuperMessageRefTy);  
+  
+  // id objc_msgSend_fixup (id, struct message_ref_t*, ...)
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(MessageRefPtrTy);
+  MessageSendFixupFn = 
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSend_fixup");
+  
+  // id objc_msgSend_fpret_fixup (id, struct message_ref_t*, ...)
+  MessageSendFpretFixupFn = 
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      true),
+                                  "objc_msgSend_fpret_fixup");
+  
+  // id objc_msgSend_stret_fixup (id, struct message_ref_t*, ...)
+  MessageSendStretFixupFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSend_stret_fixup");
+  
+  // id objc_msgSendId_fixup (id, struct message_ref_t*, ...)
+  MessageSendIdFixupFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSendId_fixup");
+  
+  
+  // id objc_msgSendId_stret_fixup (id, struct message_ref_t*, ...)
+  MessageSendIdStretFixupFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      true),
+                              "MessageSendIdStretFixupFn");
+  
+  // id objc_msgSendSuper2_fixup (struct objc_super *, 
+  //                              struct _super_message_ref_t*, ...)
+  Params.clear();
+  Params.push_back(SuperPtrTy);
+  Params.push_back(SuperMessageRefPtrTy);
+  MessageSendSuper2FixupFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSendSuper2_fixup");
+  
+  
+  // id objc_msgSendSuper2_stret_fixup (struct objc_super *, 
+  //                                    struct _super_message_ref_t*, ...)
+  MessageSendSuper2StretFixupFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSendSuper2_stret_fixup");
                                           
 }
 
