@@ -926,6 +926,9 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
       break;
 
     case ABIArgInfo::Coerce:
+      ArgTys.push_back(AI.getCoerceToType());
+      break;
+
     case ABIArgInfo::StructRet:
       assert(0 && "Invalid ABI kind for non-return argument");
     
@@ -1005,9 +1008,11 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     
     switch (AI.getKind()) {
     case ABIArgInfo::StructRet:
-    case ABIArgInfo::Coerce:
       assert(0 && "Invalid ABI kind for non-return argument");
-    
+
+    case ABIArgInfo::Coerce:
+      break;
+
     case ABIArgInfo::ByVal:
       Attributes |= llvm::Attribute::ByVal;
       assert(AI.getByValAlignment() == 0 && "FIXME: alignment unhandled");
@@ -1105,7 +1110,21 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     case ABIArgInfo::Ignore:
       break;
 
-    case ABIArgInfo::Coerce:
+    case ABIArgInfo::Coerce: {
+      assert(AI != Fn->arg_end() && "Argument mismatch!");
+      // FIXME: This is very wasteful; EmitParmDecl is just going to
+      // drop the result in a new alloca anyway, so we could just
+      // store into that directly if we broke the abstraction down
+      // more.
+      llvm::Value *V = CreateTempAlloca(ConvertType(Ty), "coerce");
+      CreateCoercedStore(AI, V, *this);
+      // Match to what EmitParmDecl is expecting for this type.
+      if (!CodeGenFunction::hasAggregateLLVMType(Ty))
+        V = Builder.CreateLoad(V);
+      EmitParmDecl(*Arg, V);
+      break;
+    }
+
     case ABIArgInfo::StructRet:
       assert(0 && "Invalid ABI kind for non-return argument");        
     }
@@ -1213,8 +1232,23 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     case ABIArgInfo::Ignore:
       break;
 
+    case ABIArgInfo::Coerce: {
+      // FIXME: Avoid the conversion through memory if possible.
+      llvm::Value *SrcPtr;
+      if (RV.isScalar()) {
+        SrcPtr = CreateTempAlloca(ConvertType(I->second), "coerce");
+        Builder.CreateStore(RV.getScalarVal(), SrcPtr);
+      } else if (RV.isComplex()) {
+        SrcPtr = CreateTempAlloca(ConvertType(I->second), "coerce");
+        StoreComplexToAddr(RV.getComplexVal(), SrcPtr, false);
+      } else 
+        SrcPtr = RV.getAggregateAddr();
+      Args.push_back(CreateCoercedLoad(SrcPtr, ArgInfo.getCoerceToType(), 
+                                       *this));
+      break;
+    }
+
     case ABIArgInfo::StructRet:
-    case ABIArgInfo::Coerce:
       assert(0 && "Invalid ABI kind for non-return argument");
       break;
 
@@ -1266,6 +1300,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     return RValue::get(llvm::UndefValue::get(ConvertType(RetTy)));
 
   case ABIArgInfo::Coerce: {
+    // FIXME: Avoid the conversion through memory if possible.
     llvm::Value *V = CreateTempAlloca(ConvertType(RetTy), "coerce");
     CreateCoercedStore(CI, V, *this);
     if (RetTy->isAnyComplexType())
