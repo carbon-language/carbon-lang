@@ -1242,7 +1242,7 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue
-ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                            SDValue Chain,
                                            SDValue Dst, SDValue Src,
                                            SDValue Size, unsigned Align,
@@ -1279,24 +1279,24 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   while (EmittedNumMemOps < NumMemOps) {
     for (i = 0;
          i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
-      Loads[i] = DAG.getLoad(VT, Chain,
-                             DAG.getNode(ISD::ADD, MVT::i32, Src,
+      Loads[i] = DAG.getLoad(VT, dl, Chain,
+                             DAG.getNode(ISD::ADD, dl, MVT::i32, Src,
                                          DAG.getConstant(SrcOff, MVT::i32)),
                              SrcSV, SrcSVOff + SrcOff);
       TFOps[i] = Loads[i].getValue(1);
       SrcOff += VTSize;
     }
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &TFOps[0], i);
 
     for (i = 0;
          i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
-      TFOps[i] = DAG.getStore(Chain, Loads[i],
-                           DAG.getNode(ISD::ADD, MVT::i32, Dst, 
+      TFOps[i] = DAG.getStore(Chain, dl, Loads[i],
+                           DAG.getNode(ISD::ADD, dl, MVT::i32, Dst, 
                                        DAG.getConstant(DstOff, MVT::i32)),
                            DstSV, DstSVOff + DstOff);
       DstOff += VTSize;
     }
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &TFOps[0], i);
 
     EmittedNumMemOps += i;
   }
@@ -1316,8 +1316,8 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
       VTSize = 1;
     }
 
-    Loads[i] = DAG.getLoad(VT, Chain,
-                           DAG.getNode(ISD::ADD, MVT::i32, Src,
+    Loads[i] = DAG.getLoad(VT, dl, Chain,
+                           DAG.getNode(ISD::ADD, dl, MVT::i32, Src,
                                        DAG.getConstant(SrcOff, MVT::i32)),
                            SrcSV, SrcSVOff + SrcOff);
     TFOps[i] = Loads[i].getValue(1);
@@ -1325,7 +1325,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
     SrcOff += VTSize;
     BytesLeft -= VTSize;
   }
-  Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
+  Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &TFOps[0], i);
 
   i = 0;
   BytesLeft = BytesLeftSave;
@@ -1338,15 +1338,15 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
       VTSize = 1;
     }
 
-    TFOps[i] = DAG.getStore(Chain, Loads[i],
-                            DAG.getNode(ISD::ADD, MVT::i32, Dst, 
+    TFOps[i] = DAG.getStore(Chain, dl, Loads[i],
+                            DAG.getNode(ISD::ADD, dl, MVT::i32, Dst, 
                                         DAG.getConstant(DstOff, MVT::i32)),
                             DstSV, DstSVOff + DstOff);
     ++i;
     DstOff += VTSize;
     BytesLeft -= VTSize;
   }
-  return DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
+  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &TFOps[0], i);
 }
 
 static SDValue ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {

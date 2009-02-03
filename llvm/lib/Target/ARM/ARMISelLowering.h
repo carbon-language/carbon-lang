@@ -149,7 +149,7 @@ namespace llvm {
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG);
 
-    SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+    SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                       SDValue Chain,
                                       SDValue Dst, SDValue Src,
                                       SDValue Size, unsigned Align,

@@ -1101,7 +1101,7 @@ public:
   /// for another call). If the target chooses to decline an AlwaysInline
   /// request here, legalize will resort to using simple loads and stores.
   virtual SDValue
-  EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+  EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                           SDValue Chain,
                           SDValue Op1, SDValue Op2,
                           SDValue Op3, unsigned Align,
@@ -1118,7 +1118,7 @@ public:
   /// SDValue if the target declines to use custom code and a different
   /// lowering strategy should be used.
   virtual SDValue
-  EmitTargetCodeForMemmove(SelectionDAG &DAG,
+  EmitTargetCodeForMemmove(SelectionDAG &DAG, DebugLoc dl,
                            SDValue Chain,
                            SDValue Op1, SDValue Op2,
                            SDValue Op3, unsigned Align,
@@ -1134,7 +1134,7 @@ public:
   /// SDValue if the target declines to use custom code and a different
   /// lowering strategy should be used.
   virtual SDValue
-  EmitTargetCodeForMemset(SelectionDAG &DAG,
+  EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                           SDValue Chain,
                           SDValue Op1, SDValue Op2,
                           SDValue Op3, unsigned Align,

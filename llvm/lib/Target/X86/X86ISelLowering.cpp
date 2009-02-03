@@ -5610,7 +5610,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 }
 
 SDValue
-X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
+X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                                            SDValue Chain,
                                            SDValue Dst, SDValue Src,
                                            SDValue Size, unsigned Align,
@@ -5641,12 +5641,10 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
       Args.push_back(Entry);
       Entry.Node = Size;
       Args.push_back(Entry);
-      // FIXME provide DebugLoc info
       std::pair<SDValue,SDValue> CallResult =
         LowerCallTo(Chain, Type::VoidTy, false, false, false, false, 
                     CallingConv::C, false, 
-                    DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG,
-                    DebugLoc::getUnknownLoc());
+                    DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG, dl);
       return CallResult.second;
     }
 
@@ -5696,20 +5694,22 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
       BytesLeft = SizeVal % UBytes;
     }
 
-    Chain  = DAG.getCopyToReg(Chain, ValReg, DAG.getConstant(Val, AVT),
+    Chain  = DAG.getCopyToReg(Chain, dl, ValReg, DAG.getConstant(Val, AVT),
                               InFlag);
     InFlag = Chain.getValue(1);
   } else {
     AVT = MVT::i8;
     Count  = DAG.getIntPtrConstant(SizeVal);
-    Chain  = DAG.getCopyToReg(Chain, X86::AL, Src, InFlag);
+    Chain  = DAG.getCopyToReg(Chain, dl, X86::AL, Src, InFlag);
     InFlag = Chain.getValue(1);
   }
 
-  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RCX : X86::ECX,
+  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RCX : 
+                                                              X86::ECX,
                             Count, InFlag);
   InFlag = Chain.getValue(1);
-  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RDI : X86::EDI,
+  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RDI : 
+                                                              X86::EDI,
                             Dst, InFlag);
   InFlag = Chain.getValue(1);
 
@@ -5718,15 +5718,16 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
   Ops.push_back(InFlag);
-  Chain  = DAG.getNode(X86ISD::REP_STOS, Tys, &Ops[0], Ops.size());
+  Chain  = DAG.getNode(X86ISD::REP_STOS, dl, Tys, &Ops[0], Ops.size());
 
   if (TwoRepStos) {
     InFlag = Chain.getValue(1);
     Count  = Size;
     MVT CVT = Count.getValueType();
-    SDValue Left = DAG.getNode(ISD::AND, CVT, Count,
+    SDValue Left = DAG.getNode(ISD::AND, dl, CVT, Count,
                                DAG.getConstant((AVT == MVT::i64) ? 7 : 3, CVT));
-    Chain  = DAG.getCopyToReg(Chain, (CVT == MVT::i64) ? X86::RCX : X86::ECX,
+    Chain  = DAG.getCopyToReg(Chain, dl, (CVT == MVT::i64) ? X86::RCX : 
+                                                             X86::ECX,
                               Left, InFlag);
     InFlag = Chain.getValue(1);
     Tys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -5734,15 +5735,15 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
     Ops.push_back(Chain);
     Ops.push_back(DAG.getValueType(MVT::i8));
     Ops.push_back(InFlag);
-    Chain  = DAG.getNode(X86ISD::REP_STOS, Tys, &Ops[0], Ops.size());
+    Chain  = DAG.getNode(X86ISD::REP_STOS, dl, Tys, &Ops[0], Ops.size());
   } else if (BytesLeft) {
     // Handle the last 1 - 7 bytes.
     unsigned Offset = SizeVal - BytesLeft;
     MVT AddrVT = Dst.getValueType();
     MVT SizeVT = Size.getValueType();
 
-    Chain = DAG.getMemset(Chain,
-                          DAG.getNode(ISD::ADD, AddrVT, Dst,
+    Chain = DAG.getMemset(Chain, dl,
+                          DAG.getNode(ISD::ADD, dl, AddrVT, Dst,
                                       DAG.getConstant(Offset, AddrVT)),
                           Src,
                           DAG.getConstant(BytesLeft, SizeVT),
@@ -5754,7 +5755,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
 }
 
 SDValue
-X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                       SDValue Chain, SDValue Dst, SDValue Src,
                                       SDValue Size, unsigned Align,
                                       bool AlwaysInline,
@@ -5784,13 +5785,16 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   unsigned BytesLeft = SizeVal % UBytes;
 
   SDValue InFlag(0, 0);
-  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RCX : X86::ECX,
+  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RCX : 
+                                                              X86::ECX,
                             Count, InFlag);
   InFlag = Chain.getValue(1);
-  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RDI : X86::EDI,
+  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RDI : 
+                                                             X86::EDI,
                             Dst, InFlag);
   InFlag = Chain.getValue(1);
-  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RSI : X86::ESI,
+  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RSI : 
+                                                              X86::ESI,
                             Src, InFlag);
   InFlag = Chain.getValue(1);
 
@@ -5799,7 +5803,7 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
   Ops.push_back(InFlag);
-  SDValue RepMovs = DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size());
+  SDValue RepMovs = DAG.getNode(X86ISD::REP_MOVS, dl, Tys, &Ops[0], Ops.size());
 
   SmallVector<SDValue, 4> Results;
   Results.push_back(RepMovs);
@@ -5809,10 +5813,10 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
     MVT DstVT = Dst.getValueType();
     MVT SrcVT = Src.getValueType();
     MVT SizeVT = Size.getValueType();
-    Results.push_back(DAG.getMemcpy(Chain,
-                                    DAG.getNode(ISD::ADD, DstVT, Dst,
+    Results.push_back(DAG.getMemcpy(Chain, dl, 
+                                    DAG.getNode(ISD::ADD, dl, DstVT, Dst,
                                                 DAG.getConstant(Offset, DstVT)),
-                                    DAG.getNode(ISD::ADD, SrcVT, Src,
+                                    DAG.getNode(ISD::ADD, dl, SrcVT, Src,
                                                 DAG.getConstant(Offset, SrcVT)),
                                     DAG.getConstant(BytesLeft, SizeVT),
                                     Align, AlwaysInline,
@@ -5820,7 +5824,8 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
                                     SrcSV, SrcSVOff + Offset));
   }
 
-  return DAG.getNode(ISD::TokenFactor, MVT::Other, &Results[0], Results.size());
+  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
+                     &Results[0], Results.size());
 }
 
 SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) {
