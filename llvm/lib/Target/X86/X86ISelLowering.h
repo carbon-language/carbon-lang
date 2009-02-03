@@ -612,12 +612,12 @@ namespace llvm {
     void ReplaceATOMIC_BINARY_64(SDNode *N, SmallVectorImpl<SDValue> &Results,
                                  SelectionDAG &DAG, unsigned NewOp);
 
-    SDValue EmitTargetCodeForMemset(SelectionDAG &DAG,
+    SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                                     SDValue Chain,
                                     SDValue Dst, SDValue Src,
                                     SDValue Size, unsigned Align,
                                     const Value *DstSV, uint64_t DstSVOff);
-    SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+    SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                     SDValue Chain,
                                     SDValue Dst, SDValue Src,
                                     SDValue Size, unsigned Align,
