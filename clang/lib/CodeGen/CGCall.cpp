@@ -819,7 +819,7 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
   uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(Ty);
 
-  // If load is legal, just bitcase the src pointer.
+  // If load is legal, just bitcast the src pointer.
   if (SrcSize == DstSize) {
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(SrcPtr, llvm::PointerType::getUnqual(Ty));
@@ -873,7 +873,7 @@ static void CreateCoercedStore(llvm::Value *Src,
 /***/
 
 bool CodeGenModule::ReturnTypeUsesSret(const CGFunctionInfo &FI) {
-  return getABIReturnInfo(FI.getReturnType(), getTypes()).isStructRet();
+  return FI.getReturnInfo().isStructRet();
 }
 
 const llvm::FunctionType *
@@ -883,7 +883,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   const llvm::Type *ResultType = 0;
 
   QualType RetTy = FI.getReturnType();
-  ABIArgInfo RetAI = getABIReturnInfo(RetTy, *this);
+  const ABIArgInfo &RetAI = FI.getReturnInfo();
   switch (RetAI.getKind()) {
   case ABIArgInfo::ByVal:
   case ABIArgInfo::Expand:
@@ -964,7 +964,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   QualType RetTy = FI.getReturnType();
   unsigned Index = 1;
-  ABIArgInfo RetAI = getABIReturnInfo(RetTy, getTypes());
+  const ABIArgInfo &RetAI = FI.getReturnInfo();
   switch (RetAI.getKind()) {
   case ABIArgInfo::Default:
     if (RetTy->isPromotableIntegerType()) {
@@ -1055,12 +1055,13 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     AI->setName("agg.result");
     ++AI;
   }
-     
+    
+  CGFunctionInfo::const_arg_iterator info_it = FI.arg_begin();
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
-       i != e; ++i) {
+       i != e; ++i, ++info_it) {
     const VarDecl *Arg = i->first;
-    QualType Ty = i->second;
-    ABIArgInfo ArgI = getABIArgumentInfo(Ty, CGM.getTypes());
+    QualType Ty = info_it->type;
+    const ABIArgInfo &ArgI = info_it->info;
 
     switch (ArgI.getKind()) {
     case ABIArgInfo::ByVal: 
@@ -1077,7 +1078,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     }
       
     case ABIArgInfo::Expand: {
-      // If this was structure was expand into multiple arguments then
+      // If this structure was expanded into multiple arguments then
       // we need to create a temporary and reconstruct it from the
       // arguments.
       std::string Name = Arg->getNameAsString();
@@ -1115,7 +1116,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
   // Functions with no result always return void.
   if (ReturnValue) { 
     QualType RetTy = FI.getReturnType();
-    ABIArgInfo RetAI = getABIReturnInfo(RetTy, CGM.getTypes());
+    const ABIArgInfo &RetAI = FI.getReturnInfo();
     
     switch (RetAI.getKind()) {
     case ABIArgInfo::StructRet:
@@ -1164,7 +1165,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // Handle struct-return functions by passing a pointer to the
   // location that we would like to return into.
   QualType RetTy = CallInfo.getReturnType();
-  ABIArgInfo RetAI = getABIReturnInfo(RetTy, CGM.getTypes());
+  const ABIArgInfo &RetAI = CallInfo.getReturnInfo();
   switch (RetAI.getKind()) {
   case ABIArgInfo::StructRet:
     // Create a temporary alloca to hold the result of the call. :(
@@ -1178,12 +1179,13 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   case ABIArgInfo::ByVal:
   case ABIArgInfo::Expand:
-    assert(0 && "Invalid ABI kind for return argument");    
+    assert(0 && "Invalid ABI kind for return argument");
   }
   
+  CGFunctionInfo::const_arg_iterator info_it = CallInfo.arg_begin();
   for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
-       I != E; ++I) {
-    ABIArgInfo ArgInfo = getABIArgumentInfo(I->second, CGM.getTypes());
+       I != E; ++I, ++info_it) {
+    const ABIArgInfo &ArgInfo = info_it->info;
     RValue RV = I->first;
 
     switch (ArgInfo.getKind()) {
