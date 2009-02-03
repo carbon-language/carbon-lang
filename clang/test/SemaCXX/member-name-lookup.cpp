@@ -141,6 +141,5 @@ struct HasMemberType2 {
 };
 
 struct HasAnotherMemberType : HasMemberType1, HasMemberType2 { 
-  // FIXME: this is well-formed, but we diagnose an ambiguity here
-  //  struct type { };
+  struct type { };
 };

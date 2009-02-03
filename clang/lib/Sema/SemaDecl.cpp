@@ -2829,7 +2829,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     // FIXME: We're looking into outer scopes here, even when we
     // shouldn't be. Doing so can result in ambiguities that we
     // shouldn't be diagnosing.
-    LookupResult R = LookupName(S, Name, LookupTagName);
+    LookupResult R = LookupName(S, Name, LookupTagName,
+                                /*RedeclarationOnly=*/(TK != TK_Reference));
     if (R.isAmbiguous()) {
       DiagnoseAmbiguousLookup(R, Name, NameLoc);
       // FIXME: This is not best way to recover from case like:

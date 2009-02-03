@@ -69,6 +69,6 @@ class X {
 
 namespace N {
   // FIXME: both of these should work, but they currently cause an ambiguity.
-  // struct K2;
-  // struct K2 { };
+  struct K2;
+  struct K2 { };
 }
