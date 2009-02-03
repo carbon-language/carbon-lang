@@ -20,8 +20,8 @@
 #ifndef NDEBUG
 #include "llvm/ADT/SmallSet.h"
 #endif
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CallSite.h"
 #include <vector>
 #include <set>
