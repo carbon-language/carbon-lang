@@ -95,7 +95,8 @@ public:
   /// set - Initialize this FunctionLoweringInfo with the given Function
   /// and its associated MachineFunction.
   ///
-  void set(Function &Fn, MachineFunction &MF, bool EnableFastISel);
+  void set(Function &Fn, MachineFunction &MF, SelectionDAG &DAG,
+           bool EnableFastISel);
 
   /// MBBMap - A mapping from LLVM basic blocks to their machine code entry.
   DenseMap<const BasicBlock*, MachineBasicBlock *> MBBMap;

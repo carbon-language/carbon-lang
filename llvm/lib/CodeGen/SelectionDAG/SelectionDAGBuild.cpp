@@ -271,6 +271,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli)
 }
 
 void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
+                               SelectionDAG &DAG,
                                bool EnableFastISel) {
   Fn = &fn;
   MF = &mf;
@@ -320,8 +321,53 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
     // Create Machine PHI nodes for LLVM PHI nodes, lowering them as
     // appropriate.
     PHINode *PN;
-    for (BasicBlock::iterator I = BB->begin();(PN = dyn_cast<PHINode>(I)); ++I){
-      if (PN->use_empty()) continue;
+    DebugLoc DL;
+    for (BasicBlock::iterator
+           I = BB->begin(), E = BB->end(); I != E; ++I) {
+      if (CallInst *CI = dyn_cast<CallInst>(I)) {
+        if (Function *F = CI->getCalledFunction()) {
+          switch (F->getIntrinsicID()) {
+          default: break;
+          case Intrinsic::dbg_stoppoint: {
+            DwarfWriter *DW = DAG.getDwarfWriter();
+            DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
+
+            if (DW && DW->ValidDebugInfo(SPI->getContext())) {
+              DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
+              unsigned SrcFile = DW->RecordSource(CU.getDirectory(),
+                                                  CU.getFilename());
+              unsigned idx = MF->getOrCreateDebugLocID(SrcFile,
+                                                       SPI->getLine(), 
+                                                       SPI->getColumn());
+              DL = DebugLoc::get(idx);
+            }
+
+            break;
+          }
+          case Intrinsic::dbg_func_start: {
+            DwarfWriter *DW = DAG.getDwarfWriter();
+            if (DW) {
+              DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
+              Value *SP = FSI->getSubprogram();
+
+              if (DW->ValidDebugInfo(SP)) {
+                DISubprogram Subprogram(cast<GlobalVariable>(SP));
+                DICompileUnit CU(Subprogram.getCompileUnit());
+                unsigned SrcFile = DW->RecordSource(CU.getDirectory(),
+                                                    CU.getFilename());
+                unsigned Line = Subprogram.getLineNumber();
+                DL = DebugLoc::get(MF->getOrCreateDebugLocID(SrcFile, Line, 0));
+              }
+            }
+          
+            break;
+          }
+          }
+        }
+      }
+
+      PN = dyn_cast<PHINode>(I);
+      if (!PN || PN->use_empty()) continue;
 
       unsigned PHIReg = ValueMap[PN];
       assert(PHIReg && "PHI node does not have an assigned virtual register!");
@@ -333,8 +379,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
         unsigned NumRegisters = TLI.getNumRegisters(VT);
         const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
         for (unsigned i = 0; i != NumRegisters; ++i)
-          BuildMI(MBB, DebugLoc::getUnknownLoc(),
-                  TII->get(TargetInstrInfo::PHI), PHIReg + i);
+          BuildMI(MBB, DL, TII->get(TargetInstrInfo::PHI), PHIReg + i);
         PHIReg += NumRegisters;
       }
     }

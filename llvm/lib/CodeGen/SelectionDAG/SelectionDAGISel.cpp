@@ -313,7 +313,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   RegInfo = &MF->getRegInfo();
   DOUT << "\n\n\n=== " << Fn.getName() << "\n";
 
-  FuncInfo->set(Fn, *MF, EnableFastISel);
+  FuncInfo->set(Fn, *MF, *CurDAG, EnableFastISel);
   MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
   CurDAG->init(*MF, MMI, DW);
