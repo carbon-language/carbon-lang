@@ -27,6 +27,10 @@ namespace clang {
   public:
     enum Kind {
       Default,
+      
+      Direct,    /// Pass the argument directly using the normal
+                 /// converted LLVM type.
+
       StructRet, /// Only valid for return values. The return value
                  /// should be passed through a pointer to a caller
                  /// allocated location passed as an implicit first
@@ -68,6 +72,9 @@ namespace clang {
     static ABIArgInfo getDefault() { 
       return ABIArgInfo(Default); 
     }
+    static ABIArgInfo getDirect() { 
+      return ABIArgInfo(Direct); 
+    }
     static ABIArgInfo getStructRet() { 
       return ABIArgInfo(StructRet); 
     }
@@ -86,6 +93,7 @@ namespace clang {
   
     Kind getKind() const { return TheKind; }
     bool isDefault() const { return TheKind == Default; }
+    bool isDirect() const { return TheKind == Direct; }
     bool isStructRet() const { return TheKind == StructRet; }
     bool isIgnore() const { return TheKind == Ignore; }
     bool isCoerce() const { return TheKind == Coerce; }

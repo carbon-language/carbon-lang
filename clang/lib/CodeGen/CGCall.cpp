@@ -897,6 +897,10 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
     }
     break;
 
+  case ABIArgInfo::Direct:
+    ResultType = ConvertType(RetTy);
+    break;
+
   case ABIArgInfo::StructRet: {
     ResultType = llvm::Type::VoidTy;
     const llvm::Type *STy = ConvertType(RetTy);
@@ -933,6 +937,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
       break;
       
     case ABIArgInfo::Default:
+    case ABIArgInfo::Direct:
       ArgTys.push_back(Ty);
       break;
      
@@ -967,6 +972,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   const ABIArgInfo &RetAI = FI.getReturnInfo();
   switch (RetAI.getKind()) {
   case ABIArgInfo::Default:
+  case ABIArgInfo::Direct:
     if (RetTy->isPromotableIntegerType()) {
       if (RetTy->isSignedIntegerType()) {
         RetAttrs |= llvm::Attribute::SExt;
@@ -1011,6 +1017,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       break;
       
     case ABIArgInfo::Default:
+    case ABIArgInfo::Direct:
       if (ParamType->isPromotableIntegerType()) {
         if (ParamType->isSignedIntegerType()) {
           Attributes |= llvm::Attribute::SExt;
@@ -1068,7 +1075,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
     switch (ArgI.getKind()) {
     case ABIArgInfo::ByVal: 
-    case ABIArgInfo::Default: {
+    case ABIArgInfo::Default:
+    case ABIArgInfo::Direct: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
       llvm::Value* V = AI;
       if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
@@ -1136,6 +1144,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       break;
 
     case ABIArgInfo::Default:
+    case ABIArgInfo::Direct:
       RV = Builder.CreateLoad(ReturnValue);
       break;
 
@@ -1178,6 +1187,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     break;
     
   case ABIArgInfo::Default:
+  case ABIArgInfo::Direct:
   case ABIArgInfo::Ignore:
   case ABIArgInfo::Coerce:
     break;
@@ -1196,6 +1206,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     switch (ArgInfo.getKind()) {
     case ABIArgInfo::ByVal: // Default is byval
     case ABIArgInfo::Default:      
+    case ABIArgInfo::Direct:
       if (RV.isScalar()) {
         Args.push_back(RV.getScalarVal());
       } else if (RV.isComplex()) {
@@ -1245,6 +1256,12 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   case ABIArgInfo::Default:
     return RValue::get(RetTy->isVoidType() ? 0 : CI);
+    
+  case ABIArgInfo::Direct:
+    assert((!RetTy->isAnyComplexType() &&
+            CodeGenFunction::hasAggregateLLVMType(RetTy)) &&
+           "FIXME: Implemented return for non-scalar direct types.");
+    return RValue::get(CI);
 
   case ABIArgInfo::Ignore:
     if (RetTy->isVoidType())
