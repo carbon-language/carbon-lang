@@ -70,8 +70,8 @@ CFAbsoluteTime f2_noleak() {
 }
 
 void f3_leak_with_gc() {
-  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
-  [[(id) date retain] release]; // expected-warning{{leak}}
+  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent()); // expected-warning{{leak}}
+  [[(id) date retain] release];
 }
 
 // The following test case verifies that we "stop tracking" a retained object

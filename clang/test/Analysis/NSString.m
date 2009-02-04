@@ -109,12 +109,12 @@ NSArray *f6(NSString* s) {
 NSString* f7(NSString* s1, NSString* s2, NSString* s3) {
 
   NSString* s4 = (NSString*)
-    CFStringCreateWithFormat(kCFAllocatorDefault, 0,
+    CFStringCreateWithFormat(kCFAllocatorDefault, 0,  // expected-warning{{leak}}
                              (CFStringRef) __builtin___CFStringMakeConstantString("%@ %@ (%@)"), 
                              s1, s2, s3);
 
   CFRetain(s4);
-  return s4; // expected-warning{{leak}}
+  return s4;
 }
 
 NSMutableArray* f8() {

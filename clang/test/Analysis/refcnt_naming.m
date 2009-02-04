@@ -23,8 +23,8 @@ typedef signed char BOOL;
 
 - (NSURL *)myMethod:(NSString *)inString
 {
-  NSURL *url = (NSURL *)CFURLCreateWithString(0, (CFStringRef)inString, 0);
-  return url; // expected-warning{{leak}}
+  NSURL *url = (NSURL *)CFURLCreateWithString(0, (CFStringRef)inString, 0); // expected-warning{{leak}}
+  return url;
 }
 
 - (NSURL *)getMethod:(NSString *)inString

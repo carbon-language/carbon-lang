@@ -67,7 +67,7 @@ void f2() {
 }
 
 void f2b() {
-  NSWindow *window = [[NSWindow alloc]
+  NSWindow *window = [[NSWindow alloc] // expected-warning{{leak}}
                       initWithContentRect:NSMakeRect(0,0,100,100) 
                         styleMask:NSTitledWindowMask|NSClosableWindowMask
                         backing:NSBackingStoreBuffered
@@ -76,7 +76,7 @@ void f2b() {
 
   [window orderFrontRegardless];
   
-  [window retain]; // expected-warning{{leak}}
+  [window retain];
 }
 
 

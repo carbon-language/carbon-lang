@@ -80,9 +80,9 @@ extern NSString *NSWindowDidBecomeKeyNotification;
 }
 - (void)myMethod2
 {
-  NSPanel *panel = [[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 200, 200) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:(BOOL)1];
+  NSPanel *panel = [[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 200, 200) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:(BOOL)1]; // expected-warning{{leak}}
 
-  [panels addObject:panel]; // expected-warning{{leak}}  
+  [panels addObject:panel];  
 }
 @end
 

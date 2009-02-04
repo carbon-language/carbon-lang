@@ -1333,7 +1333,7 @@ public:
       delete I->second;
   }
   
-  virtual void RegisterChecks(GRExprEngine& Eng);
+  void RegisterChecks(BugReporter &BR);
  
   virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {
     Printers.push_back(new BindingsPrinter());
@@ -2154,90 +2154,72 @@ namespace {
   // Bug Descriptions. //
   //===-------------===//  
   
-  class VISIBILITY_HIDDEN CFRefBug : public BugTypeCacheLocation {
+  class VISIBILITY_HIDDEN CFRefBug : public BugType {
   protected:
     CFRefCount& TF;
-    
+
+    CFRefBug(CFRefCount* tf, const char* name) 
+      : BugType(name, "Memory (Core Foundation/Objective-C)"), TF(*tf) {}    
   public:
-    CFRefBug(CFRefCount& tf) : TF(tf) {}
     
     CFRefCount& getTF() { return TF; }
     const CFRefCount& getTF() const { return TF; }
 
+    // FIXME: Eventually remove.
+    virtual const char* getDescription() const = 0;
+    
     virtual bool isLeak() const { return false; }
-
-    const char* getCategory() const { 
-      return "Memory (Core Foundation/Objective-C)";
-    }
   };
   
   class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
   public:
-    UseAfterRelease(CFRefCount& tf) : CFRefBug(tf) {}
+    UseAfterRelease(CFRefCount* tf)
+      : CFRefBug(tf, "use-after-release") {}
     
-    virtual const char* getName() const {
-      return "use-after-release";
-    }
-    virtual const char* getDescription() const {
+    const char* getDescription() const {
       return "Reference-counted object is used after it is released.";
     }
     
-    virtual void EmitWarnings(BugReporter& BR);
+    virtual void FlushReports(BugReporter& BR);
   };
   
   class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
   public:
-    BadRelease(CFRefCount& tf) : CFRefBug(tf) {}
-    
-    virtual const char* getName() const {
-      return "bad release";
-    }
-    virtual const char* getDescription() const {
+    BadRelease(CFRefCount* tf) : CFRefBug(tf, "bad release") {}
+
+    const char* getDescription() const {
       return "Incorrect decrement of the reference count of a "
       "CoreFoundation object: "
       "The object is not owned at this point by the caller.";
     }
     
-    virtual void EmitWarnings(BugReporter& BR);
+    void FlushReports(BugReporter& BR);
   };
   
   class VISIBILITY_HIDDEN Leak : public CFRefBug {
-    bool isReturn;
+    const bool isReturn;
+  protected:
+    Leak(CFRefCount* tf, const char* name, bool isRet)
+      : CFRefBug(tf, name), isReturn(isRet) {}
   public:
-    Leak(CFRefCount& tf) : CFRefBug(tf) {}
     
-    void setIsReturn(bool x) { isReturn = x; }
-    
-    virtual const char* getName() const {
-      
-      if (!isReturn) {
-        if (getTF().isGCEnabled())
-          return "leak (GC)";
-        
-        if (getTF().getLangOptions().getGCMode() == LangOptions::HybridGC)
-          return "leak (hybrid MM, non-GC)";
-        
-        assert (getTF().getLangOptions().getGCMode() == LangOptions::NonGC);
-        return "leak";
-      }
-      else {
-        if (getTF().isGCEnabled())
-          return "[naming convention] leak of returned object (GC)";
-        
-        if (getTF().getLangOptions().getGCMode() == LangOptions::HybridGC)
-          return "[naming convention] leak of returned object (hybrid MM, "
-                 "non-GC)";
-        
-        assert (getTF().getLangOptions().getGCMode() == LangOptions::NonGC);
-        return "[naming convention] leak of returned object";        
-      }
-    }
+    // FIXME: Remove once reports have better descriptions.
+    const char* getDescription() const { return "leak"; }
 
-    virtual void EmitWarnings(BugReporter& BR);
-    virtual void GetErrorNodes(std::vector<ExplodedNode<GRState>*>& Nodes);
-    virtual bool isLeak() const { return true; }
-    virtual bool isCached(BugReport& R);
+    void FlushReports(BugReporter &BR);
   };
+    
+  class VISIBILITY_HIDDEN LeakAtReturn : public Leak {
+  public:
+    LeakAtReturn(CFRefCount* tf, const char* name)
+      : Leak(tf, name, true) {}
+  };
+  
+  class VISIBILITY_HIDDEN LeakWithinFunction : public Leak {
+  public:
+    LeakWithinFunction(CFRefCount* tf, const char* name)
+      : Leak(tf, name, false) {}
+  };  
   
   //===---------===//
   // Bug Reports.  //
@@ -2247,7 +2229,7 @@ namespace {
     SymbolRef Sym;
   public:
     CFRefReport(CFRefBug& D, ExplodedNode<GRState> *n, SymbolRef sym)
-      : RangedBugReport(D, n), Sym(sym) {}
+      : RangedBugReport(D, D.getDescription(), n), Sym(sym) {}
         
     virtual ~CFRefReport() {}
     
@@ -2278,17 +2260,49 @@ namespace {
                                    const ExplodedNode<GRState>* PrevN,
                                    const ExplodedGraph<GRState>& G,
                                    BugReporter& BR);
+    
   };
   
-  
+  class VISIBILITY_HIDDEN CFRefLeakReport : public CFRefReport {
+  public:
+    CFRefLeakReport(CFRefBug& D, ExplodedNode<GRState> *n, SymbolRef sym)
+      : CFRefReport(D, n, sym) {}
+    
+    SourceLocation getLocation() const;
+  };  
 } // end anonymous namespace
 
-void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
-  Eng.Register(new UseAfterRelease(*this));
-  Eng.Register(new BadRelease(*this));
-  Eng.Register(new Leak(*this));
-}
+void CFRefCount::RegisterChecks(BugReporter& BR) {
+  BR.Register(new UseAfterRelease(this));
+  BR.Register(new BadRelease(this));
+  
+  // First register "return" leaks.
+  const char* name = 0;
+  
+  if (isGCEnabled())
+    name = "[naming convention] leak of returned object (GC)";
+  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
+    name = "[naming convention] leak of returned object (hybrid MM, "
+           "non-GC)";
+  else {
+    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
+    name = "[naming convention] leak of returned object";
+  }
+  
+  BR.Register(new LeakAtReturn(this, name));
 
+  // Second, register leaks within a function/method.
+  if (isGCEnabled())
+    name = "leak (GC)";  
+  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
+    name = "leak (hybrid MM, non-GC)";
+  else {
+    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
+    name = "leak";
+  }
+  
+  BR.Register(new LeakWithinFunction(this, name));
+}
 
 static const char* Msgs[] = {
   "Code is compiled in garbage collection only mode"  // GC only
@@ -2621,30 +2635,25 @@ CFRefReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN) {
   return new PathDiagnosticPiece(L, os.str(), Hint);
 }
 
-void UseAfterRelease::EmitWarnings(BugReporter& BR) {
-
+void UseAfterRelease::FlushReports(BugReporter& BR) {
   for (CFRefCount::use_after_iterator I = TF.use_after_begin(),
-        E = TF.use_after_end(); I != E; ++I) {
-    
-    CFRefReport report(*this, I->first, I->second.second);
-    report.addRange(I->second.first->getSourceRange());    
-    BR.EmitWarning(report);    
+        E = TF.use_after_end(); I != E; ++I) {    
+    CFRefReport *report = new CFRefReport(*this, I->first, I->second.second);
+    report->addRange(I->second.first->getSourceRange());    
+    BR.EmitReport(report);    
   }
 }
 
-void BadRelease::EmitWarnings(BugReporter& BR) {
-  
+void BadRelease::FlushReports(BugReporter& BR) {  
   for (CFRefCount::bad_release_iterator I = TF.bad_release_begin(),
        E = TF.bad_release_end(); I != E; ++I) {
-    
-    CFRefReport report(*this, I->first, I->second.second);
-    report.addRange(I->second.first->getSourceRange());    
-    BR.EmitWarning(report);    
+    CFRefReport *report = new CFRefReport(*this, I->first, I->second.second);
+    report->addRange(I->second.first->getSourceRange());    
+    BR.EmitReport(report);    
   }  
 }
 
-void Leak::EmitWarnings(BugReporter& BR) {
-  
+void Leak::FlushReports(BugReporter& BR) {  
   for (CFRefCount::leaks_iterator I = TF.leaks_begin(),
        E = TF.leaks_end(); I != E; ++I) {
     
@@ -2652,34 +2661,20 @@ void Leak::EmitWarnings(BugReporter& BR) {
     unsigned n = SymV.size();
     
     for (unsigned i = 0; i < n; ++i) {
-      setIsReturn(SymV[i].second);
-      CFRefReport report(*this, I->first, SymV[i].first);
-      BR.EmitWarning(report);
+      if (isReturn != SymV[i].second) continue;
+      CFRefReport* report = new CFRefLeakReport(*this, I->first, SymV[i].first);
+      BR.EmitReport(report);
     }
   }  
 }
 
-void Leak::GetErrorNodes(std::vector<ExplodedNode<GRState>*>& Nodes) {
-  for (CFRefCount::leaks_iterator I=TF.leaks_begin(), E=TF.leaks_end();
-       I!=E; ++I)
-    Nodes.push_back(I->first);
-}
-
-bool Leak::isCached(BugReport& R) {
-  
+SourceLocation CFRefLeakReport::getLocation() const {
   // Most bug reports are cached at the location where they occured.
   // With leaks, we want to unique them by the location where they were
   // allocated, and only report a single path.
-  
-  SymbolRef Sym = static_cast<CFRefReport&>(R).getSymbol();
-
-  const ExplodedNode<GRState>* AllocNode =
-      GetAllocationSite(0, R.getEndNode(), Sym).first;
-  
-  if (!AllocNode)
-    return false;
-  
-  return BugTypeCacheLocation::isCached(AllocNode->getLocation());
+  ProgramPoint P = 
+    GetAllocationSite(0, getEndNode(), getSymbol()).first->getLocation();  
+  return cast<PostStmt>(P).getStmt()->getLocStart();
 }
 
 //===----------------------------------------------------------------------===//

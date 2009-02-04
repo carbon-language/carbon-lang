@@ -69,22 +69,7 @@ public:
     MapTy::iterator I = M.find(key);
     M[key] = F.Concat(A, I == M.end() ? F.GetEmptyList() : I->second);
   }
-  
-  virtual void EmitWarnings(BugReporter& BR) {
-    llvm::DenseSet<GRSimpleAPICheck*> AlreadyVisited;
-    
-    for (MapTy::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
-      for (Checks::iterator I=MI->second.begin(), E=MI->second.end(); I!=E;++I){
-        
-        GRSimpleAPICheck* check = *I;
-        
-        if (AlreadyVisited.count(check))
-          continue;
-        
-        check->EmitWarnings(BR);
-      }
-  }
-  
+
   virtual bool Audit(NodeTy* N, GRStateManager& VMgr) {
     Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
     void* key = reinterpret_cast<void*>((uintptr_t) S->getStmtClass());
@@ -115,7 +100,8 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 
 
 GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                           LiveVariables& L, bool purgeDead,
+                           LiveVariables& L, BugReporterData& BRD,
+                           bool purgeDead,
                            StoreManagerCreator SMC,
                            ConstraintManagerCreator CMC)
   : CoreEngine(cfg, CD, Ctx, *this), 
@@ -127,13 +113,11 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
     CurrentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", G.getContext())), 
-    PurgeDead(purgeDead){}
+    PurgeDead(purgeDead),
+    BR(BRD, *this)  {}
 
 GRExprEngine::~GRExprEngine() {    
-  for (BugTypeSet::iterator I = BugTypes.begin(), E = BugTypes.end(); I!=E; ++I)
-    delete *I;
-
-  
+  BR.FlushReports();
   delete [] NSExceptionInstanceRaiseSelectors;
 }
 
@@ -164,22 +148,9 @@ struct VISIBILITY_HIDDEN SaveOr {
   bool old_value;
 };
 
-
-void GRExprEngine::EmitWarnings(BugReporterData& BRData) {
-  for (bug_type_iterator I = bug_types_begin(), E = bug_types_end(); I!=E; ++I){
-    GRBugReporter BR(BRData, *this);
-    (*I)->EmitWarnings(BR);
-  }
-  
-  if (BatchAuditor) {
-    GRBugReporter BR(BRData, *this);
-    BatchAuditor->EmitWarnings(BR);
-  }
-}
-
 void GRExprEngine::setTransferFunctions(GRTransferFuncs* tf) {
   StateMgr.TF = tf;
-  tf->RegisterChecks(*this);
+  tf->RegisterChecks(getBugReporter());
   tf->RegisterPrinters(getStateManager().Printers);
 }
 
@@ -2918,7 +2889,7 @@ void GRExprEngine::ViewGraph(bool trim) {
   if (trim) {
     std::vector<NodeTy*> Src;
     
-    // Fixme: Migrate over to the new way of adding nodes.
+    // FIXME: Migrate over to the new way of adding nodes.
     AddSources(Src, null_derefs_begin(), null_derefs_end());
     AddSources(Src, undef_derefs_begin(), undef_derefs_end());
     AddSources(Src, explicit_bad_divides_begin(), explicit_bad_divides_end());
@@ -2927,10 +2898,8 @@ void GRExprEngine::ViewGraph(bool trim) {
     AddSources(Src, undef_arg_begin(), undef_arg_end());
     AddSources(Src, undef_branches_begin(), undef_branches_end());
     
-    // The new way.
-    for (BugTypeSet::iterator I=BugTypes.begin(), E=BugTypes.end(); I!=E; ++I)
-      (*I)->GetErrorNodes(Src);
-      
+    // FIXME: Enhance BugReporter to have a clean way to query if a node
+    // is involved in an error... and what kind.
     
     ViewGraph(&Src[0], &Src[0]+Src.size());
   }
@@ -2951,14 +2920,12 @@ void GRExprEngine::ViewGraph(NodeTy** Beg, NodeTy** End) {
   GraphPrintCheckerState = this;
   GraphPrintSourceManager = &getContext().getSourceManager();
     
-  GRExprEngine::GraphTy* TrimmedG = G.Trim(Beg, End);
+  std::auto_ptr<GRExprEngine::GraphTy> TrimmedG(G.Trim(Beg, End).first);
 
-  if (!TrimmedG)
+  if (!TrimmedG.get())
     llvm::cerr << "warning: Trimmed ExplodedGraph is empty.\n";
-  else {
+  else
     llvm::ViewGraph(*TrimmedG->roots_begin(), "TrimmedGRExprEngine");    
-    delete TrimmedG;
-  }  
   
   GraphPrintCheckerState = NULL;
   GraphPrintSourceManager = NULL;

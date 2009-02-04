@@ -122,13 +122,17 @@ ExplodedNodeImpl::NodeGroup::~NodeGroup() {
 
 ExplodedGraphImpl*
 ExplodedGraphImpl::Trim(const ExplodedNodeImpl* const* BeginSources,
-                        const ExplodedNodeImpl* const* EndSources) const{
+                        const ExplodedNodeImpl* const* EndSources,
+                        InterExplodedGraphMapImpl* M) const {
   
-  typedef llvm::DenseMap<const ExplodedNodeImpl*, const ExplodedNodeImpl*> Pass1Ty;
-  typedef llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*> Pass2Ty;
-  
+  typedef llvm::DenseMap<const ExplodedNodeImpl*,
+                         const ExplodedNodeImpl*> Pass1Ty;  
   Pass1Ty Pass1;
-  Pass2Ty Pass2;
+  
+  typedef llvm::DenseMap<const ExplodedNodeImpl*,
+                         ExplodedNodeImpl*> Pass2Ty;
+
+  Pass2Ty& Pass2 = M->M;
   
   llvm::SmallVector<const ExplodedNodeImpl*, 10> WL2;
 
@@ -139,23 +143,28 @@ ExplodedGraphImpl::Trim(const ExplodedNodeImpl* const* BeginSources,
     std::list<std::pair<const ExplodedNodeImpl*,
                         const ExplodedNodeImpl*> > WL1, WL1_Loops;
   
-    for (const ExplodedNodeImpl* const* I = BeginSources; I != EndSources; ++I)
+    for (const ExplodedNodeImpl* const* I = BeginSources; I != EndSources; ++I){
+      assert(*I);
       WL1.push_back(std::make_pair(*I, *I));
+    }
     
     // Process the worklist.
 
-    while (! (WL1.empty() && WL1_Loops.empty())) {
+    while (!WL1.empty() || !WL1_Loops.empty()) {
       // Only dequeue from the "loops" worklist if WL1 has no items.
       // Thus we prioritize for paths that don't span loop boundaries.
-      const ExplodedNodeImpl *N, *Src;
+      const ExplodedNodeImpl *N = 0, *Src = 0;
 
       if (WL1.empty()) {
+        assert(!WL1_Loops.empty());
         N = WL1_Loops.back().first;
+        assert(N);
         Src = WL1_Loops.back().second;
         WL1_Loops.pop_back();
       }
       else {
         N = WL1.back().first;
+        assert(N);
         Src = WL1.back().second;
         WL1.pop_back();
       }      
@@ -207,19 +216,21 @@ ExplodedGraphImpl::Trim(const ExplodedNodeImpl* const* BeginSources,
                 case Stmt::ForStmtClass:
                 case Stmt::WhileStmtClass:
                 case Stmt::DoStmtClass:
+                  assert(*I);
                   WL1_Loops.push_front(std::make_pair(*I, Src));
                   continue;
                   
               }
           
+          assert(*I);
           WL1.push_front(std::make_pair(*I, Src));
         }
     }
   }
   
   if (WL2.empty())
-    return NULL;
-    
+    return 0;
+
   ExplodedGraphImpl* G = MakeEmptyGraph();
   
   // ===- Pass 2 (forward DFS to construct the new graph) -===
@@ -285,3 +296,14 @@ ExplodedGraphImpl::Trim(const ExplodedNodeImpl* const* BeginSources,
     
   return G;
 }
+
+ExplodedNodeImpl*
+InterExplodedGraphMapImpl::getMappedImplNode(const ExplodedNodeImpl* N) const {
+  llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*>::iterator I =
+    M.find(N);
+
+  return I == M.end() ? 0 : I->second;
+}
+
+InterExplodedGraphMapImpl::InterExplodedGraphMapImpl() {}
+

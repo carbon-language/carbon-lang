@@ -20,18 +20,16 @@
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+#include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprObjC.h"
 
 namespace clang {  
   
-  class BugType;
   class PathDiagnosticClient;
   class Diagnostic;
-  class BugReporterData;
 
-class GRExprEngine {
-  
+class GRExprEngine {  
 public:
   typedef GRState                  StateTy;
   typedef ExplodedGraph<StateTy>      GraphTy;
@@ -44,7 +42,6 @@ public:
   typedef GRSwitchNodeBuilder<StateTy>        SwitchNodeBuilder;
   typedef GREndPathNodeBuilder<StateTy>       EndPathNodeBuilder;
   typedef ExplodedNodeSet<StateTy>            NodeSet;
-  
     
 protected:
   GRCoreEngine<GRExprEngine> CoreEngine;
@@ -62,11 +59,7 @@ protected:
   
   /// StateMgr - Object that manages the data for all created states.
   GRStateManager StateMgr;
-  
-  /// BugTypes - Objects used for reporting bugs.
-  typedef std::vector<BugType*> BugTypeSet;
-  BugTypeSet BugTypes;
-  
+
   /// SymMgr - Object that manages the symbol information.
   SymbolManager& SymMgr;
   
@@ -91,6 +84,11 @@ protected:
 
   /// PurgeDead - Remove dead bindings before processing a statement.
   bool PurgeDead;
+  
+  /// BR - The BugReporter associated with this engine.  It is important that
+  //   this object be placed at the very end of member variables so that its
+  //   destructor is called before the rest of the GRExprEngine is destroyed.
+  GRBugReporter BR;
   
 public:
   typedef llvm::SmallPtrSet<NodeTy*,2> ErrorNodes;  
@@ -177,10 +175,11 @@ public:
   
 public:
   GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L,
+               BugReporterData& BRD,
                bool purgeDead,
                StoreManagerCreator SMC = CreateBasicStoreManager,
                ConstraintManagerCreator CMC = CreateBasicConstraintManager);
-  
+
   ~GRExprEngine();
   
   void ExecuteWorkList(unsigned Steps = 150000) {
@@ -194,6 +193,8 @@ public:
   CFG& getCFG() { return G.getCFG(); }
   
   GRTransferFuncs& getTF() { return *StateMgr.TF; }
+  
+  BugReporter& getBugReporter() { return BR; }
   
   /// setTransferFunctions
   void setTransferFunctions(GRTransferFuncs* tf);
@@ -219,26 +220,8 @@ public:
   
   GraphTy& getGraph() { return G; }
   const GraphTy& getGraph() const { return G; }
-      
-  typedef BugTypeSet::iterator bug_type_iterator;
-  typedef BugTypeSet::const_iterator const_bug_type_iterator;
-  
-  bug_type_iterator bug_types_begin() { return BugTypes.begin(); }
-  bug_type_iterator bug_types_end() { return BugTypes.end(); }
 
-  const_bug_type_iterator bug_types_begin() const { return BugTypes.begin(); }
-  const_bug_type_iterator bug_types_end() const { return BugTypes.end(); }
-  
-  /// Register - Register a BugType with the analyzer engine.  A registered
-  ///  BugType object will have its 'EmitWarnings' method called when the
-  ///  the analyzer finishes analyzing a method or function.
-  void Register(BugType* B) {
-    BugTypes.push_back(B);
-  }
-  
   void RegisterInternalChecks();
-  
-  void EmitWarnings(BugReporterData& BRData);  
   
   bool isRetStackAddr(const NodeTy* N) const {
     return N->isSink() && RetsStackAddr.count(const_cast<NodeTy*>(N)) != 0;

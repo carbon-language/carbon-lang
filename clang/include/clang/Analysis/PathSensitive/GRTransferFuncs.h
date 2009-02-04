@@ -23,28 +23,24 @@
 namespace clang {
   
   class GRExprEngine;
+  class BugReporter;
   class ObjCMessageExpr;
   
 class GRTransferFuncs {
-  
-  friend class GRExprEngine;
-  
+  friend class GRExprEngine;  
 protected:
-  
-  
   virtual SVal DetermEvalBinOpNN(GRExprEngine& Eng,
                                  BinaryOperator::Opcode Op,
                                  NonLoc L, NonLoc R) {
     return UnknownVal();
   }
   
-  
 public:
   GRTransferFuncs() {}
   virtual ~GRTransferFuncs() {}
   
   virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {}
-  virtual void RegisterChecks(GRExprEngine& Eng);
+  virtual void RegisterChecks(BugReporter& BR) {}
   
   // Casts.
   

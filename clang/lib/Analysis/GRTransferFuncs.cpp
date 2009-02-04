@@ -17,8 +17,6 @@
 
 using namespace clang;
 
-void GRTransferFuncs::RegisterChecks(GRExprEngine& Eng) {}
-
 void GRTransferFuncs::EvalStore(ExplodedNodeSet<GRState>& Dst,
                                 GRExprEngine& Eng,
                                 GRStmtNodeBuilder<GRState>& Builder,

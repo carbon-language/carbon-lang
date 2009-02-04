@@ -23,14 +23,11 @@
 #include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
-
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/Support/Compiler.h"
-
-#include <sstream>
 
 using namespace clang;
 
@@ -60,64 +57,17 @@ static const char* GetReceiverNameType(ObjCMessageExpr* ME) {
 
 namespace {
 
-class VISIBILITY_HIDDEN APIMisuse : public BugTypeCacheLocation {
-public:  
-  const char* getCategory() const {
-    return "API Misuse (Apple)";
-  }
-};
-  
-class VISIBILITY_HIDDEN NilArg : public APIMisuse {
+class VISIBILITY_HIDDEN APIMisuse : public BugType {
 public:
-  virtual ~NilArg() {}
-  
-  virtual const char* getName() const {
-    return "nil argument";
-  }  
-  
-  class Report : public BugReport {
-    std::string Msg;
-    const char* s;
-    SourceRange R;
-  public:
-    
-    Report(NilArg& Desc, ExplodedNode<GRState>* N, 
-           ObjCMessageExpr* ME, unsigned Arg)
-      : BugReport(Desc, N) {
-      
-      Expr* E = ME->getArg(Arg);
-      R = E->getSourceRange();
-      
-      std::ostringstream os;
-      
-      os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
-      << ME->getSelector().getAsString() << "' cannot be nil.";
-      
-      Msg = os.str();
-      s = Msg.c_str();      
-    }
-    
-    virtual ~Report() {}
-    
-    virtual const char* getDescription() const { return s; }
-    
-    virtual void getRanges(BugReporter& BR,
-                           const SourceRange*& B, const SourceRange*& E) {
-      B = &R;
-      E = B+1;
-    }
-  };  
+  APIMisuse(const char* name) : BugType(name, "API Misuse (Apple)") {}
 };
-
   
 class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
-  NilArg Desc;
+  APIMisuse *BT;
+  BugReporter& BR;
   ASTContext &Ctx;
   GRStateManager* VMgr;
-  
-  typedef std::vector<BugReport*> ErrorsTy;
-  ErrorsTy Errors;
-      
+
   SVal GetSVal(const GRState* St, Expr* E) { return VMgr->GetSVal(St, E); }
       
   bool isNSString(ObjCInterfaceType* T, const char* suffix);
@@ -129,26 +79,26 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   bool CheckNilArg(NodeTy* N, unsigned Arg);
 
 public:
-  BasicObjCFoundationChecks(ASTContext& ctx, GRStateManager* vmgr) 
-    : Ctx(ctx), VMgr(vmgr) {}
-      
-  virtual ~BasicObjCFoundationChecks() {
-    for (ErrorsTy::iterator I = Errors.begin(), E = Errors.end(); I!=E; ++I)
-      delete *I;    
-  }
+  BasicObjCFoundationChecks(ASTContext& ctx, GRStateManager* vmgr,
+                            BugReporter& br) 
+    : BT(0), BR(br), Ctx(ctx), VMgr(vmgr) {}
+        
+  bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
   
-  virtual bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
-  
-  virtual void EmitWarnings(BugReporter& BR);
-  
-private:
-  
-  void AddError(BugReport* R) {
-    Errors.push_back(R);
-  }
-  
-  void WarnNilArg(NodeTy* N, ObjCMessageExpr* ME, unsigned Arg) {
-    AddError(new NilArg::Report(Desc, N, ME, Arg));
+private:  
+  void WarnNilArg(NodeTy* N, ObjCMessageExpr* ME, unsigned Arg) {    
+    std::string sbuf;
+    llvm::raw_string_ostream os(sbuf);
+    os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
+       << ME->getSelector().getAsString() << "' cannot be nil.";
+    
+    // Lazily create the BugType object for NilArg.  This will be owned
+    // by the BugReporter object 'BR' once we call BR.EmitWarning.
+    if (!BT) BT = new APIMisuse("nil argument");
+    
+    RangedBugReport *R = new RangedBugReport(*BT, os.str().c_str(), N);
+    R->addRange(ME->getArg(Arg)->getSourceRange());
+    BR.EmitReport(R);
   }
 };
   
@@ -157,9 +107,9 @@ private:
 
 GRSimpleAPICheck*
 clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx,
-                                       GRStateManager* VMgr) {
+                                       GRStateManager* VMgr, BugReporter& BR) {
   
-  return new BasicObjCFoundationChecks(Ctx, VMgr);  
+  return new BasicObjCFoundationChecks(Ctx, VMgr, BR);  
 }
 
 
@@ -200,13 +150,6 @@ static inline bool isNil(SVal X) {
 //===----------------------------------------------------------------------===//
 // Error reporting.
 //===----------------------------------------------------------------------===//
-
-
-void BasicObjCFoundationChecks::EmitWarnings(BugReporter& BR) {    
-                 
-  for (ErrorsTy::iterator I=Errors.begin(), E=Errors.end(); I!=E; ++I)    
-    BR.EmitWarning(**I);
-}
 
 bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {
   ObjCMessageExpr* ME =
@@ -307,41 +250,9 @@ bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N,
 //===----------------------------------------------------------------------===//
 
 namespace {
-  
-class VISIBILITY_HIDDEN BadCFNumberCreate : public APIMisuse{
-public:
-  typedef std::vector<BugReport*> AllErrorsTy;
-  AllErrorsTy AllErrors;
-  
-  virtual const char* getName() const {
-    return "Bad use of CFNumberCreate";
-  }
-    
-  virtual void EmitWarnings(BugReporter& BR) {
-    // FIXME: Refactor this method.
-    for (AllErrorsTy::iterator I=AllErrors.begin(), E=AllErrors.end(); I!=E;++I)
-      BR.EmitWarning(**I);
-  }
-};
 
-  // FIXME: This entire class should be refactored into the common
-  //  BugReporter classes.
-class VISIBILITY_HIDDEN StrBugReport : public RangedBugReport {
-  std::string str;
-  const char* cstr;
-public:
-  StrBugReport(BugType& D, ExplodedNode<GRState>* N, std::string s)
-    : RangedBugReport(D, N), str(s) {
-      cstr = str.c_str();
-    }
-  
-  virtual const char* getDescription() const { return cstr; }
-};
-
-  
 class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
-  // FIXME: Who should own this?
-  BadCFNumberCreate Desc;
+  APIMisuse* BT;
   
   // FIXME: Either this should be refactored into GRSimpleAPICheck, or
   //   it should always be passed with a call to Audit.  The latter
@@ -349,24 +260,19 @@ class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
   ASTContext& Ctx;
   IdentifierInfo* II;
   GRStateManager* VMgr;
+  BugReporter& BR;
     
   SVal GetSVal(const GRState* St, Expr* E) { return VMgr->GetSVal(St, E); }
   
 public:
-
-  AuditCFNumberCreate(ASTContext& ctx, GRStateManager* vmgr) 
-  : Ctx(ctx), II(&Ctx.Idents.get("CFNumberCreate")), VMgr(vmgr) {}
+  AuditCFNumberCreate(ASTContext& ctx, GRStateManager* vmgr, BugReporter& br) 
+  : BT(0), Ctx(ctx), II(&Ctx.Idents.get("CFNumberCreate")), VMgr(vmgr), BR(br){}
   
-  virtual ~AuditCFNumberCreate() {}
+  ~AuditCFNumberCreate() {}
   
-  virtual bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
-  
-  virtual void EmitWarnings(BugReporter& BR) {
-    Desc.EmitWarnings(BR);
-  }
+  bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
   
 private:
-  
   void AddError(const TypedRegion* R, Expr* Ex, ExplodedNode<GRState> *N,
                 uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);  
 };
@@ -537,8 +443,9 @@ void AuditCFNumberCreate::AddError(const TypedRegion* R, Expr* Ex,
                                    ExplodedNode<GRState> *N,
                                    uint64_t SourceSize, uint64_t TargetSize,
                                    uint64_t NumberKind) {
-
-  std::ostringstream os;
+  
+  std::string sbuf;
+  llvm::raw_string_ostream os(sbuf);
   
   os << (SourceSize == 8 ? "An " : "A ")
      << SourceSize << " bit integer is used to initialize a CFNumber "
@@ -553,16 +460,18 @@ void AuditCFNumberCreate::AddError(const TypedRegion* R, Expr* Ex,
     os << (SourceSize - TargetSize)
        << " bits of the input integer will be lost.";
          
-  StrBugReport* B = new StrBugReport(Desc, N, os.str());
-  B->addRange(Ex->getSourceRange());
-  Desc.AllErrors.push_back(B);
+  // Lazily create the BugType object.  This will be owned
+  // by the BugReporter object 'BR' once we call BR.EmitWarning.
+  if (!BT) BT = new APIMisuse("Bad use of CFNumberCreate");
+  RangedBugReport *report = new RangedBugReport(*BT, os.str().c_str(), N);
+  report->addRange(Ex->getSourceRange());
+  BR.EmitReport(report);
 }
 
 GRSimpleAPICheck*
 clang::CreateAuditCFNumberCreate(ASTContext& Ctx,
-                                 GRStateManager* VMgr) {
-  
-  return new AuditCFNumberCreate(Ctx, VMgr);  
+                                 GRStateManager* VMgr, BugReporter& BR) {  
+  return new AuditCFNumberCreate(Ctx, VMgr, BR);
 }
 
 //===----------------------------------------------------------------------===//
@@ -571,12 +480,13 @@ clang::CreateAuditCFNumberCreate(ASTContext& Ctx,
 void clang::RegisterAppleChecks(GRExprEngine& Eng) {
   ASTContext& Ctx = Eng.getContext();
   GRStateManager* VMgr = &Eng.getStateManager();
+  BugReporter &BR = Eng.getBugReporter();
 
-  Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, VMgr),
+  Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, VMgr, BR),
                Stmt::ObjCMessageExprClass);
 
-  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, VMgr),
+  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, VMgr, BR),
                Stmt::CallExprClass);
   
-  Eng.Register(CreateNSErrorCheck());
+  RegisterNSErrorChecks(BR, Eng);
 }

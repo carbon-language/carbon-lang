@@ -39,6 +39,12 @@ class GRIndirectGotoNodeBuilderImpl;
 class GRSwitchNodeBuilderImpl;
 class GREndPathNodebuilderImpl;  
 
+//===----------------------------------------------------------------------===//
+// ExplodedGraph "implementation" classes.  These classes are not typed to
+// contain a specific kind of state.  Typed-specialized versions are defined
+// on top of these classes.
+//===----------------------------------------------------------------------===//
+  
 class ExplodedNodeImpl : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraphImpl;
@@ -204,6 +210,7 @@ public:
   }
 };
 
+class InterExplodedGraphMapImpl;
 
 class ExplodedGraphImpl {
 protected:
@@ -289,9 +296,39 @@ public:
     return llvm::dyn_cast<FunctionDecl>(&CodeDecl);
   }
   
+  typedef llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*> NodeMap;
+
   ExplodedGraphImpl* Trim(const ExplodedNodeImpl* const * NBeg,
-                          const ExplodedNodeImpl* const * NEnd) const;
+                          const ExplodedNodeImpl* const * NEnd,
+                          InterExplodedGraphMapImpl *M) const;
+};
   
+class InterExplodedGraphMapImpl {
+  llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*> M;
+  friend class ExplodedGraphImpl;  
+  void add(const ExplodedNodeImpl* From, ExplodedNodeImpl* To);
+  
+protected:
+  ExplodedNodeImpl* getMappedImplNode(const ExplodedNodeImpl* N) const;
+  
+  InterExplodedGraphMapImpl();
+public:
+  virtual ~InterExplodedGraphMapImpl() {}
+};
+  
+//===----------------------------------------------------------------------===//
+// Type-specialized ExplodedGraph classes.
+//===----------------------------------------------------------------------===//
+  
+template <typename STATE>
+class InterExplodedGraphMap : public InterExplodedGraphMapImpl {
+public:
+  InterExplodedGraphMap() {};
+  ~InterExplodedGraphMap() {};
+
+  ExplodedNode<STATE>* getMappedNode(const ExplodedNode<STATE>* N) const {
+    return static_cast<ExplodedNode<STATE>*>(getMappedImplNode(N));
+  }
 };
   
 template <typename STATE>
@@ -409,13 +446,12 @@ public:
     return const_cast<ExplodedGraph>(this)->eop_end();
   }
   
-  // Utility.
-  
-  ExplodedGraph*
+  std::pair<ExplodedGraph*, InterExplodedGraphMap<STATE>*>
   Trim(const NodeTy* const* NBeg, const NodeTy* const* NEnd) const {
     
     if (NBeg == NEnd)
-      return NULL;
+      return std::make_pair((ExplodedGraph*) 0,
+                            (InterExplodedGraphMap<STATE>*) 0);
     
     assert (NBeg < NEnd);
     
@@ -424,12 +460,15 @@ public:
     const ExplodedNodeImpl* const* NEndImpl =
       (const ExplodedNodeImpl* const*) NEnd;
     
-    return static_cast<ExplodedGraph*>(ExplodedGraphImpl::Trim(NBegImpl,
-                                                               NEndImpl));
+    llvm::OwningPtr<InterExplodedGraphMap<STATE> > 
+      M(new InterExplodedGraphMap<STATE>());
+
+    ExplodedGraphImpl* G = ExplodedGraphImpl::Trim(NBegImpl, NEndImpl, M.get());
+
+    return std::make_pair(static_cast<ExplodedGraph*>(G), M.take());
   }
 };
-  
-  
+
 template <typename StateTy>
 class ExplodedNodeSet {
   

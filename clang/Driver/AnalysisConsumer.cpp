@@ -415,7 +415,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   LiveVariables* L = mgr.getLiveVariables();
   if (!L) return;
 
-  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L,
+  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L, mgr,
                    PurgeDead,
                    mgr.getStoreManagerCreator(), 
                    mgr.getConstraintManagerCreator());
@@ -442,7 +442,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   ExplodedNodeImpl::SetAuditor(0);
   
   // Display warnings.
-  Eng.EmitWarnings(mgr);
+  Eng.getBugReporter().FlushReports();
   
   // Visualize the exploded graph.
   if (mgr.shouldVisualizeGraphviz())

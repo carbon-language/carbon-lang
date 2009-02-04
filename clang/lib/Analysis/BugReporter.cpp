@@ -23,24 +23,14 @@
 #include "clang/Analysis/PathDiagnostic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include <sstream>
 
 using namespace clang;
 
-BugReporter::~BugReporter() {}
-GRBugReporter::~GRBugReporter() {}
-BugReporterData::~BugReporterData() {}
-BugType::~BugType() {}
-BugReport::~BugReport() {}
-RangedBugReport::~RangedBugReport() {}
-
-ExplodedGraph<GRState>& GRBugReporter::getGraph() {
-  return Eng.getGraph();
-}
-
-GRStateManager& GRBugReporter::getStateManager() { 
-  return Eng.getStateManager();
-}
+//===----------------------------------------------------------------------===//
+// static functions.
+//===----------------------------------------------------------------------===//
 
 static inline Stmt* GetStmt(const ProgramPoint& P) {
   if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
@@ -85,7 +75,6 @@ static inline Stmt* GetStmt(const ExplodedNode<GRState>* N) {
   return isa<BlockEntrance>(ProgP) ? GetLastStmt(N) : GetStmt(ProgP);
 }
 
-
 static void ExecutionContinues(std::ostringstream& os, SourceManager& SMgr,
                                const Stmt* S) {
   
@@ -97,36 +86,42 @@ static void ExecutionContinues(std::ostringstream& os, SourceManager& SMgr,
     os << ' ';
   
   os << "Execution continues on line "
-     << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
+  << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
 }
-
 
 static inline void ExecutionContinues(std::ostringstream& os,
                                       SourceManager& SMgr,
                                       const ExplodedNode<GRState>* N) {
-
   ExecutionContinues(os, SMgr, GetStmt(N->getLocation()));
 }
 
 static inline void ExecutionContinues(std::ostringstream& os,
                                       SourceManager& SMgr,
                                       const CFGBlock* B) {  
-  
   ExecutionContinues(os, SMgr, GetStmt(B));
 }
 
+//===----------------------------------------------------------------------===//
+// Methods for BugType and subclasses.
+//===----------------------------------------------------------------------===//
+BugType::~BugType() {}
+void BugType::FlushReports(BugReporter &BR) {}
 
-Stmt* BugReport::getStmt(BugReporter& BR) const {
-  
+//===----------------------------------------------------------------------===//
+// Methods for BugReport and subclasses.
+//===----------------------------------------------------------------------===//
+BugReport::~BugReport() {}
+RangedBugReport::~RangedBugReport() {}
+
+Stmt* BugReport::getStmt(BugReporter& BR) const {  
   ProgramPoint ProgP = EndNode->getLocation();  
   Stmt *S = NULL;
   
-  if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP))
-    if (BE->getBlock() == &BR.getCFG()->getExit())
-      S = GetLastStmt(EndNode);
-  if (!S)
-    S = GetStmt(ProgP);  
-
+  if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP)) {
+    if (BE->getBlock() == &BR.getCFG()->getExit()) S = GetLastStmt(EndNode);
+  }
+  if (!S) S = GetStmt(ProgP);  
+  
   return S;  
 }
 
@@ -144,7 +139,7 @@ BugReport::getEndPath(BugReporter& BR,
   
   const SourceRange *Beg, *End;
   getRanges(BR, Beg, End);  
-
+  
   for (; Beg != End; ++Beg)
     P->addRange(*Beg);
   
@@ -163,17 +158,12 @@ void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
     beg = end = 0;
 }
 
-FullSourceLoc BugReport::getLocation(SourceManager& Mgr) {
-  
-  if (!EndNode)
-    return FullSourceLoc();
-  
-  Stmt* S = GetStmt(EndNode);
-  
-  if (!S)
-    return FullSourceLoc();
-  
-  return FullSourceLoc(S->getLocStart(), Mgr);
+SourceLocation BugReport::getLocation() const {  
+  if (EndNode)
+    if (Stmt* S = GetStmt(EndNode))
+      return S->getLocStart();
+
+  return FullSourceLoc();
 }
 
 PathDiagnosticPiece* BugReport::VisitNode(const ExplodedNode<GRState>* N,
@@ -183,35 +173,101 @@ PathDiagnosticPiece* BugReport::VisitNode(const ExplodedNode<GRState>* N,
   return NULL;
 }
 
-static std::pair<ExplodedGraph<GRState>*, ExplodedNode<GRState>*>
-MakeReportGraph(const ExplodedGraph<GRState>* G,
-                const ExplodedNode<GRState>* N) {
-  
-  llvm::OwningPtr< ExplodedGraph<GRState> > GTrim(G->Trim(&N, &N+1));    
+//===----------------------------------------------------------------------===//
+// Methods for BugReporter and subclasses.
+//===----------------------------------------------------------------------===//
+
+BugReportEquivClass::~BugReportEquivClass() {
+  for (iterator I=begin(), E=end(); I!=E; ++I) delete *I;  
+}
+
+GRBugReporter::~GRBugReporter() { FlushReports(); }
+BugReporterData::~BugReporterData() {}
+
+ExplodedGraph<GRState>&
+GRBugReporter::getGraph() { return Eng.getGraph(); }
+
+GRStateManager&
+GRBugReporter::getStateManager() { return Eng.getStateManager(); }
+
+BugReporter::~BugReporter() { FlushReports(); }
+
+void BugReporter::FlushReports() {
+  if (BugTypes.isEmpty())
+    return;
+
+  // First flush the warnings for each BugType.  This may end up creating new
+  // warnings and new BugTypes.  Because ImmutableSet is a functional data
+  // structure, we do not need to worry about the iterators being invalidated.
+  for (BugTypesTy::iterator I=BugTypes.begin(), E=BugTypes.end(); I!=E; ++I)
+    const_cast<BugType*>(*I)->FlushReports(*this);
+
+  // Iterate through BugTypes a second time.  BugTypes may have been updated
+  // with new BugType objects and new warnings.
+  for (BugTypesTy::iterator I=BugTypes.begin(), E=BugTypes.end(); I!=E; ++I) {
+    BugType *BT = const_cast<BugType*>(*I);
+
+    typedef llvm::FoldingSet<BugReportEquivClass> SetTy;
+    SetTy& EQClasses = BT->EQClasses;
+
+    for (SetTy::iterator EI=EQClasses.begin(), EE=EQClasses.end(); EI!=EE;++EI){
+      BugReportEquivClass& EQ = *EI;
+      FlushReport(EQ);
+    }
     
-  // Find the error node in the trimmed graph.  
-  
-  const ExplodedNode<GRState>* NOld = N;
-  N = 0;
-  
-  for (ExplodedGraph<GRState>::node_iterator
-       I = GTrim->nodes_begin(), E = GTrim->nodes_end(); I != E; ++I) {
-    
-    if (I->getState() == NOld->getState() &&
-        I->getLocation() == NOld->getLocation()) {
-      N = &*I;
-      break;
-    }    
+    // Delete the BugType object.  This will also delete the equivalence
+    // classes.
+    delete BT;
   }
+
+  // Remove all references to the BugType objects.
+  BugTypes = F.GetEmptySet();
+}
+
+//===----------------------------------------------------------------------===//
+// PathDiagnostics generation.
+//===----------------------------------------------------------------------===//
+
+static std::pair<ExplodedGraph<GRState>*,
+                 std::pair<ExplodedNode<GRState>*, unsigned> >
+MakeReportGraph(const ExplodedGraph<GRState>* G,
+                const ExplodedNode<GRState>** NStart,
+                const ExplodedNode<GRState>** NEnd) {
   
-  assert(N);
-    
-  // Create a new graph with a single path.
+  // Create the trimmed graph.  It will contain the shortest paths from the
+  // error nodes to the root.  In the new graph we should only have one 
+  // error node unless there are two or more error nodes with the same minimum
+  // path length.
+  ExplodedGraph<GRState>* GTrim;
+  InterExplodedGraphMap<GRState>* NMap;
+  llvm::tie(GTrim, NMap) = G->Trim(NStart, NEnd);
+  
+  // Create owning pointers for GTrim and NMap just to ensure that they are
+  // released when this function exists.
+  llvm::OwningPtr<ExplodedGraph<GRState> > AutoReleaseGTrim(GTrim);
+  llvm::OwningPtr<InterExplodedGraphMap<GRState> > AutoReleaseNMap(NMap);
+  
+  // Find the (first) error node in the trimmed graph.  We just need to consult
+  // the node map (NMap) which maps from nodes in the original graph to nodes
+  // in the new graph.
+  const ExplodedNode<GRState>* N = 0;
+  unsigned NodeIndex = 0;
+
+  for (const ExplodedNode<GRState>** I = NStart; I != NEnd; ++I)
+    if ((N = NMap->getMappedNode(*I))) {
+      NodeIndex = (I - NStart) / sizeof(*I);
+      break;
+    }
+  
+  assert(N && "No error node found in the trimmed graph.");
+
+  // Create a new (third!) graph with a single path.  This is the graph
+  // that will be returned to the caller.
   ExplodedGraph<GRState> *GNew =
-    new ExplodedGraph<GRState>(GTrim->getCFG(), GTrim->getCodeDecl(),
-                               GTrim->getContext());
-                                     
-  // Sometimes TrimGraph can contain a cycle.  Perform a reverse DFS
+  new ExplodedGraph<GRState>(GTrim->getCFG(), GTrim->getCodeDecl(),
+                             GTrim->getContext());
+  
+  // Sometimes the trimmed graph can contain a cycle.  Perform a reverse DFS
   // to the root node, and then construct a new graph that contains only
   // a single path.
   llvm::DenseMap<const void*,unsigned> Visited;
@@ -238,13 +294,13 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
          E=Node->pred_end(); I!=E; ++I)
       WS.push_back(*I);
   }
-
+  
   assert (Root);
   
   // Now walk from the root down the DFS path, always taking the successor
   // with the lowest number.
   ExplodedNode<GRState> *Last = 0, *First = 0;  
-    
+  
   for ( N = Root ;;) {
     // Lookup the number associated with the current node.
     llvm::DenseMap<const void*,unsigned>::iterator I = Visited.find(N);
@@ -253,20 +309,20 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
     // Create the equivalent node in the new graph with the same state
     // and location.
     ExplodedNode<GRState>* NewN =
-      GNew->getNode(N->getLocation(), N->getState());    
-
+    GNew->getNode(N->getLocation(), N->getState());    
+    
     // Link up the new node with the previous node.
     if (Last)
       NewN->addPredecessor(Last);
     
     Last = NewN;
-
+    
     // Are we at the final node?
     if (I->second == 0) {
       First = NewN;
       break;
     }
-
+    
     // Find the next successor node.  We choose the node that is marked
     // with the lowest DFS number.
     ExplodedNode<GRState>::const_succ_iterator SI = N->succ_begin();
@@ -274,7 +330,7 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
     N = 0;
     
     for (unsigned MinVal = 0; SI != SE; ++SI) {
-
+      
       I = Visited.find(*SI);
       
       if (I == Visited.end())
@@ -285,12 +341,12 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
         MinVal = I->second;
       }
     }
-
+    
     assert (N);
   }
-
+  
   assert (First);
-  return std::make_pair(GNew, First);
+  return std::make_pair(GNew, std::make_pair(First, NodeIndex));
 }
 
 static const VarDecl*
@@ -300,12 +356,12 @@ GetMostRecentVarDeclBinding(const ExplodedNode<GRState>* N,
   for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
     
     ProgramPoint P = N->getLocation();
-
+    
     if (!isa<PostStmt>(P))
       continue;
     
     DeclRefExpr* DR = dyn_cast<DeclRefExpr>(cast<PostStmt>(P).getStmt());
-
+    
     if (!DR)
       continue;
     
@@ -474,25 +530,37 @@ public:
 } // end anonymous namespace
 
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                                           BugReport& R) {
+                                           BugReportEquivClass& EQ) {
+  
+  std::vector<const ExplodedNode<GRState>*> Nodes;
 
-  const ExplodedNode<GRState>* N = R.getEndNode();
-
-  if (!N) return;
+  for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I) {
+    const ExplodedNode<GRState>* N = I->getEndNode();
+    if (N) Nodes.push_back(N);
+  }
+  
+  if (Nodes.empty())
+    return;
   
   // Construct a new graph that contains only a single path from the error
-  // node to a root.
+  // node to a root.  
+  const std::pair<ExplodedGraph<GRState>*,
+                  std::pair<ExplodedNode<GRState>*, unsigned> >&
+    GPair = MakeReportGraph(&getGraph(), &Nodes[0], &Nodes[0] + Nodes.size());
   
-  const std::pair<ExplodedGraph<GRState>*, ExplodedNode<GRState>*>
-    GPair = MakeReportGraph(&getGraph(), N);
+  // Find the BugReport with the original location.
+  BugReport *R = 0;
+  unsigned i = 0;
+  for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I, ++i)
+    if (i == GPair.second.second) { R = *I; break; }
+  
+  assert(R && "No original report found for sliced graph.");
   
   llvm::OwningPtr<ExplodedGraph<GRState> > ReportGraph(GPair.first);
-  assert(GPair.second->getLocation() == N->getLocation());
-  N = GPair.second;
+  const ExplodedNode<GRState> *N = GPair.second.first;
 
-  // Start building the path diagnostic...
-  
-  if (PathDiagnosticPiece* Piece = R.getEndPath(*this, N))
+  // Start building the path diagnostic...  
+  if (PathDiagnosticPiece* Piece = R->getEndPath(*this, N))
     PD.push_back(Piece);
   else
     return;
@@ -686,7 +754,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
       }
     }
 
-    if (PathDiagnosticPiece* p = R.VisitNode(N, NextNode, *ReportGraph, *this))
+    if (PathDiagnosticPiece* p = R->VisitNode(N, NextNode, *ReportGraph, *this))
       PD.push_front(p);
     
     if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {      
@@ -699,37 +767,41 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
 }
 
 
-bool BugTypeCacheLocation::isCached(BugReport& R) {
-  
-  const ExplodedNode<GRState>* N = R.getEndNode();
-  
-  if (!N)
-    return false;
-
-  // Cache the location of the error.  Don't emit the same
-  // warning for the same error type that occurs at the same program
-  // location but along a different path.
-  
-  return isCached(N->getLocation());
+void BugReporter::Register(BugType *BT) {
+  BugTypes = F.Add(BugTypes, BT);
 }
 
-bool BugTypeCacheLocation::isCached(ProgramPoint P) {
-  if (CachedErrors.count(P))
-    return true;
+void BugReporter::EmitReport(BugReport* R) {  
+  // Compute the bug report's hash to determine its equivalence class.
+  llvm::FoldingSetNodeID ID;
+  R->Profile(ID);
   
-  CachedErrors.insert(P);  
-  return false;
+  // Lookup the equivance class.  If there isn't one, create it.  
+  BugType& BT = R->getBugType();
+  Register(&BT);
+  void *InsertPos;
+  BugReportEquivClass* EQ = BT.EQClasses.FindNodeOrInsertPos(ID, InsertPos);  
+  
+  if (!EQ) {
+    EQ = new BugReportEquivClass(R);
+    BT.EQClasses.InsertNode(EQ, InsertPos);
+  }
+  else
+    EQ->AddReport(R);
 }
 
-void BugReporter::EmitWarning(BugReport& R) {
-
-  if (R.getBugType().isCached(R))
-    return;
-
-  llvm::OwningPtr<PathDiagnostic> D(new PathDiagnostic(R.getName(),
-                                                       R.getDescription(),
-                                                       R.getCategory()));
-  GeneratePathDiagnostic(*D.get(), R);
+void BugReporter::FlushReport(BugReportEquivClass& EQ) {
+  assert(!EQ.Reports.empty());
+  BugReport &R = **EQ.begin();
+  
+  // FIXME: Make sure we use the 'R' for the path that was actually used.
+  // Probably doesn't make a difference in practice.  
+  BugType& BT = R.getBugType();
+  
+  llvm::OwningPtr<PathDiagnostic> D(new PathDiagnostic(R.getBugType().getName(),
+                                                R.getDescription(),
+                                                BT.getCategory()));
+  GeneratePathDiagnostic(*D.get(), EQ);
   
   // Get the meta data.
   std::pair<const char**, const char**> Meta = R.getExtraDescriptiveText();
@@ -740,9 +812,9 @@ void BugReporter::EmitWarning(BugReport& R) {
   const SourceRange *Beg = 0, *End = 0;
   R.getRanges(*this, Beg, End);    
   Diagnostic& Diag = getDiagnostic();
-  FullSourceLoc L = R.getLocation(getSourceManager());  
-  const char *msg = PD ? R.getBugType().getName() : R.getDescription();  
-  unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, msg);
+  FullSourceLoc L(R.getLocation(), getSourceManager());  
+  const std::string &msg = PD ? R.getBugType().getName() : R.getDescription();  
+  unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, msg.c_str());
 
   switch (End-Beg) {
     default: assert(0 && "Don't handle this many ranges yet!");
@@ -770,73 +842,15 @@ void BugReporter::EmitBasicReport(const char* name, const char* str,
                                   SourceRange* RBeg, unsigned NumRanges) {
   EmitBasicReport(name, "", str, Loc, RBeg, NumRanges);
 }
-  
+
 void BugReporter::EmitBasicReport(const char* name, const char* category,
                                   const char* str, SourceLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
   
-  SimpleBugType BT(name, category, 0);
-  DiagCollector C(BT);
-  Diagnostic& Diag = getDiagnostic();
-  
-  DiagnosticClient *OldClient = Diag.getClient();
-  Diag.setClient(&C);
+  // 'BT' will be owned by BugReporter as soon as we call 'EmitReport'.
+  BugType *BT = new BugType(name, category);
   FullSourceLoc L = getContext().getFullLoc(Loc);
-  unsigned DiagID = Diag.getCustomDiagID(Diagnostic::Warning, str);
-  
-  switch (NumRanges) {
-  default: assert(0 && "Don't handle this many ranges yet!");
-  case 0: Diag.Report(L, DiagID); break;
-  case 1: Diag.Report(L, DiagID) << RBeg[0]; break;
-  case 2: Diag.Report(L, DiagID) << RBeg[0] << RBeg[1]; break;
-  case 3: Diag.Report(L, DiagID) << RBeg[0] << RBeg[1] << RBeg[2]; break;
-  }
-  
-  Diag.setClient(OldClient);
-  
-  for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
-    EmitWarning(*I);
+  RangedBugReport *R = new DiagBugReport(*BT, str, L);
+  for ( ; NumRanges > 0 ; --NumRanges, ++RBeg) R->addRange(*RBeg);
+  EmitReport(R);
 }
-
-void DiagCollector::HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                     const DiagnosticInfo &Info) {
-  
-  // FIXME: Use a map from diag::kind to BugType, instead of having just
-  //  one BugType.
-  const char *Desc = Info.getDiags()->getDescription(Info.getID());
-  Reports.push_back(DiagBugReport(Desc, D, Info.getLocation()));
-  DiagBugReport& R = Reports.back();
-  
-  for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
-    R.addRange(Info.getRange(i));
-  
-  // FIXME: This is losing/ignoring formatting.
-  for (unsigned i = 0, e = Info.getNumArgs(); i != e; ++i) {
-    switch (Info.getArgKind(i)) {
-      case Diagnostic::ak_std_string:   
-        R.addString(Info.getArgStdStr(i));
-        break;
-      case Diagnostic::ak_c_string:   
-        R.addString(Info.getArgCStr(i));
-        break;
-      case Diagnostic::ak_sint:
-        R.addString(llvm::itostr(Info.getArgSInt(i)));
-        break;
-      case Diagnostic::ak_uint:
-        R.addString(llvm::utostr_32(Info.getArgUInt(i)));
-        break;
-      case Diagnostic::ak_identifierinfo:
-        R.addString(Info.getArgIdentifier(i)->getName());
-        break;
-      case Diagnostic::ak_qualtype:
-      case Diagnostic::ak_declarationname: {
-        llvm::SmallString<64> Str;
-        Info.getDiags()->ConvertArgToString(Info.getArgKind(i),
-                                            Info.getRawArg(i), 0, 0, 0, 0, Str);
-        R.addString(std::string(Str.begin(), Str.end()));
-        break;
-      }
-    }
-  }
-}
-                                  

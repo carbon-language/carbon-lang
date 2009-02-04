@@ -33,7 +33,6 @@ class GRSimpleAPICheck : public GRAuditor<GRState> {
 public:
   GRSimpleAPICheck() {}
   virtual ~GRSimpleAPICheck() {}
-  virtual void EmitWarnings(BugReporter& BR) = 0;
 };
 
 } // end namespace clang

@@ -23,6 +23,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/ImmutableSet.h"
 #include <list>
 
 namespace clang {
@@ -36,100 +37,143 @@ class BugReporter;
 class GRExprEngine;
 class GRState;
 class Stmt;
-class BugReport;
+class BugType;
 class ParentMap;
   
-class BugType {
-public:
-  BugType() {}
-  virtual ~BugType();
+//===----------------------------------------------------------------------===//
+// Interface for individual bug reports.
+//===----------------------------------------------------------------------===//
   
-  virtual const char* getName() const = 0;
-  virtual const char* getDescription() const { return getName(); }
-  virtual const char* getCategory() const { return ""; }
-  
-  virtual std::pair<const char**,const char**> getExtraDescriptiveText() {
-    return std::pair<const char**, const char**>(0, 0);
-  }
-      
-  virtual void EmitWarnings(BugReporter& BR) {}
-  virtual void GetErrorNodes(std::vector<ExplodedNode<GRState>*>& Nodes) {}
-  
-  virtual bool isCached(BugReport& R) = 0;
-};
-  
-class BugTypeCacheLocation : public BugType {
-  llvm::SmallSet<ProgramPoint,10> CachedErrors;
-public:
-  BugTypeCacheLocation() {}
-  virtual ~BugTypeCacheLocation() {}  
-  virtual bool isCached(BugReport& R);
-  bool isCached(ProgramPoint P);
-};
-  
-  
+// FIXME: Combine this with RangedBugReport and remove RangedBugReport.
 class BugReport {
-  BugType& Desc;
+  BugType& BT;
+  std::string Description;
   const ExplodedNode<GRState> *EndNode;
-  SourceRange R;  
+  SourceRange R;
+  
+protected:
+  friend class BugReporter;
+  friend class BugReportEquivClass;
+
+  virtual void Profile(llvm::FoldingSetNodeID& hash) const {
+    hash.AddInteger(getLocation().getRawEncoding());
+  }
+  
 public:
-  BugReport(BugType& D, const ExplodedNode<GRState> *n) : Desc(D), EndNode(n) {}
+  BugReport(BugType& bt, const char* desc, const ExplodedNode<GRState> *n)
+    : BT(bt), Description(desc), EndNode(n) {}
+
   virtual ~BugReport();
+
+  const BugType& getBugType() const { return BT; }
+  BugType& getBugType() { return BT; }
   
-  const BugType& getBugType() const { return Desc; }
-  BugType& getBugType() { return Desc; }
-  
+  // FIXME: Perhaps this should be moved into a subclass?
   const ExplodedNode<GRState>* getEndNode() const { return EndNode; }
   
+  // FIXME: Do we need this?  Maybe getLocation() should return a ProgramPoint
+  // object.
   Stmt* getStmt(BugReporter& BR) const;
-    
-  const char* getName() const { return getBugType().getName(); }
-
-  virtual const char* getDescription() const {
-    return getBugType().getDescription();
-  }
   
-  virtual const char* getCategory() const {
-    return getBugType().getCategory();
-  }
+  const std::string& getDescription() const { return Description; }
   
+  // FIXME: Is this needed?
   virtual std::pair<const char**,const char**> getExtraDescriptiveText() {
-    return getBugType().getExtraDescriptiveText();
+    return std::make_pair((const char**)0,(const char**)0);
   }
   
+  // FIXME: Perhaps move this into a subclass.
   virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
                                           const ExplodedNode<GRState>* N);
   
-  virtual FullSourceLoc getLocation(SourceManager& Mgr);
+  /// getLocation - Return the "definitive" location of the reported bug.
+  ///  While a bug can span an entire path, usually there is a specific
+  ///  location that can be used to identify where the key issue occured.
+  ///  This location is used by clients rendering diagnostics.
+  virtual SourceLocation getLocation() const;
   
+  /// getRanges - Returns the source ranges associated with this bug.
   virtual void getRanges(BugReporter& BR,const SourceRange*& beg,
                          const SourceRange*& end);
-  
+
+  // FIXME: Perhaps this should be moved into a subclass?
   virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
                                          const ExplodedNode<GRState>* PrevN,
                                          const ExplodedGraph<GRState>& G,
                                          BugReporter& BR);
 };
+
+//===----------------------------------------------------------------------===//
+// BugTypes (collections of related reports).
+//===----------------------------------------------------------------------===//
   
+class BugReportEquivClass : public llvm::FoldingSetNode {
+  // List of *owned* BugReport objects.
+  std::list<BugReport*> Reports;
+  
+  friend class BugReporter;
+  void AddReport(BugReport* R) { Reports.push_back(R); }
+public:
+  BugReportEquivClass(BugReport* R) { Reports.push_back(R); }
+  ~BugReportEquivClass();
+
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    assert(!Reports.empty());
+    (*Reports.begin())->Profile(ID);
+  }
+
+  class iterator {
+    std::list<BugReport*>::iterator impl;
+  public:
+    iterator(std::list<BugReport*>::iterator i) : impl(i) {}
+    iterator& operator++() { ++impl; return *this; }
+    bool operator==(const iterator& I) const { return I.impl == impl; }
+    bool operator!=(const iterator& I) const { return I.impl != impl; }
+    BugReport* operator*() const { return *impl; }
+    BugReport* operator->() const { return *impl; }
+  };
+    
+  iterator begin() { return iterator(Reports.begin()); }
+  iterator end() { return iterator(Reports.end()); }
+};
+  
+class BugType {
+private:
+  const std::string Name;
+  const std::string Category;
+  llvm::FoldingSet<BugReportEquivClass> EQClasses;
+  friend class BugReporter;
+public:
+  BugType(const char *name, const char* cat) : Name(name), Category(cat) {}
+  virtual ~BugType();
+  
+  // FIXME: Should these be made strings as well?
+  const std::string& getName() const { return Name; }
+  const std::string& getCategory() const { return Category; }
+
+  virtual void FlushReports(BugReporter& BR);  
+  void AddReport(BugReport* BR);  
+};
+  
+//===----------------------------------------------------------------------===//
+// Specialized subclasses of BugReport.
+//===----------------------------------------------------------------------===//
+  
+// FIXME: Collapse this with the default BugReport class.
 class RangedBugReport : public BugReport {
   std::vector<SourceRange> Ranges;
-  const char* desc;
 public:
-  RangedBugReport(BugType& D, ExplodedNode<GRState> *n,
-                  const char* description = 0)
-    : BugReport(D, n), desc(description) {}
+  RangedBugReport(BugType& D, const char* description, ExplodedNode<GRState> *n)
+    : BugReport(D, description, n) {}
   
-  virtual ~RangedBugReport();
+  ~RangedBugReport();
 
-  virtual const char* getDescription() const {
-    return desc ? desc : BugReport::getDescription();
-  }
-  
+  // FIXME: Move this out of line.
   void addRange(SourceRange R) { Ranges.push_back(R); }
   
-  
-  virtual void getRanges(BugReporter& BR,const SourceRange*& beg,           
-                         const SourceRange*& end) {
+  // FIXME: Move this out of line.
+  void getRanges(BugReporter& BR,const SourceRange*& beg,
+                 const SourceRange*& end) {
     
     if (Ranges.empty()) {
       beg = NULL;
@@ -142,6 +186,10 @@ public:
   }
 };
   
+//===----------------------------------------------------------------------===//
+// BugReporter and friends.
+//===----------------------------------------------------------------------===//
+
 class BugReporterData {
 public:
   virtual ~BugReporterData();
@@ -158,15 +206,24 @@ class BugReporter {
 public:
   enum Kind { BaseBRKind, GRBugReporterKind };
 
-protected:
-  Kind kind;  
+private:
+  typedef llvm::ImmutableSet<BugType*> BugTypesTy;
+  BugTypesTy::Factory F;
+  BugTypesTy BugTypes;
+
+  const Kind kind;  
   BugReporterData& D;
   
-  BugReporter(BugReporterData& d, Kind k) : kind(k), D(d) {}
-  
+  void FlushReport(BugReportEquivClass& EQ);
+
+protected:
+  BugReporter(BugReporterData& d, Kind k) : BugTypes(F.GetEmptySet()), kind(k), D(d) {}
+
 public:
-  BugReporter(BugReporterData& d) : kind(BaseBRKind), D(d) {}
+  BugReporter(BugReporterData& d) : BugTypes(F.GetEmptySet()), kind(BaseBRKind), D(d) {}
   virtual ~BugReporter();
+  
+  void FlushReports();
   
   Kind getKind() const { return kind; }
   
@@ -178,29 +235,22 @@ public:
     return D.getPathDiagnosticClient();
   }
   
-  ASTContext& getContext() {
-    return D.getContext();
-  }
+  ASTContext& getContext() { return D.getContext(); }
   
-  SourceManager& getSourceManager() {
-    return D.getSourceManager();
-  }
+  SourceManager& getSourceManager() { return D.getSourceManager(); }
   
-  CFG* getCFG() {
-    return D.getCFG();
-  }
+  CFG* getCFG() { return D.getCFG(); }
   
-  ParentMap& getParentMap() {
-    return D.getParentMap();  
-  }
+  ParentMap& getParentMap() { return D.getParentMap(); }
   
-  LiveVariables* getLiveVariables() {
-    return D.getLiveVariables();
-  }
+  LiveVariables* getLiveVariables() { return D.getLiveVariables(); }
   
-  virtual void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R) {}
+  virtual void GeneratePathDiagnostic(PathDiagnostic& PD,
+                                      BugReportEquivClass& EQ) {}
 
-  void EmitWarning(BugReport& R);
+  void Register(BugType *BT);
+  
+  void EmitReport(BugReport *R);
   
   void EmitBasicReport(const char* BugName, const char* BugStr,
                        SourceLocation Loc,
@@ -234,11 +284,11 @@ public:
   static bool classof(const BugReporter* R) { return true; }
 };
   
+// FIXME: Get rid of GRBugReporter.  It's the wrong abstraction.
 class GRBugReporter : public BugReporter {
   GRExprEngine& Eng;
   llvm::SmallSet<SymbolRef, 10> NotableSymbols;
-public:
-  
+public:  
   GRBugReporter(BugReporterData& d, GRExprEngine& eng)
     : BugReporter(d, GRBugReporterKind), Eng(eng) {}
   
@@ -246,9 +296,7 @@ public:
   
   /// getEngine - Return the analysis engine used to analyze a given
   ///  function or method.
-  GRExprEngine& getEngine() {
-    return Eng;
-  }
+  GRExprEngine& getEngine() { return Eng; }
 
   /// getGraph - Get the exploded graph created by the analysis engine
   ///  for the analyzed method or function.
@@ -258,7 +306,8 @@ public:
   ///  engine.
   GRStateManager& getStateManager();
   
-  virtual void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R);
+  virtual void GeneratePathDiagnostic(PathDiagnostic& PD,
+                                      BugReportEquivClass& R);
 
   void addNotableSymbol(SymbolRef Sym) {
     NotableSymbols.insert(Sym);
@@ -273,22 +322,18 @@ public:
     return R->getKind() == GRBugReporterKind;
   }
 };
-  
 
 class DiagBugReport : public RangedBugReport {
   std::list<std::string> Strs;
   FullSourceLoc L;
-  const char* description;
 public:
-  DiagBugReport(const char* desc, BugType& D, FullSourceLoc l) :
-  RangedBugReport(D, NULL), L(l), description(desc) {}
+  DiagBugReport(BugType& D, const char* desc, FullSourceLoc l) :
+  RangedBugReport(D, desc, 0), L(l) {}
   
   virtual ~DiagBugReport() {}
-  virtual FullSourceLoc getLocation(SourceManager&) { return L; }
   
-  virtual const char* getDescription() const {
-    return description;
-  }
+  // FIXME: Move out-of-line (virtual function).
+  SourceLocation getLocation() const { return L; }
   
   void addString(const std::string& s) { Strs.push_back(s); }  
   
@@ -297,39 +342,6 @@ public:
   str_iterator str_end() const { return Strs.end(); }
 };
 
-class DiagCollector : public DiagnosticClient {
-  std::list<DiagBugReport> Reports;
-  BugType& D;
-public:
-  DiagCollector(BugType& d) : D(d) {}
-  
-  virtual ~DiagCollector() {}
-  
-  bool IncludeInDiagnosticCounts() const { return false; }
-  
-  void HandleDiagnostic(Diagnostic::Level DiagLevel,
-                        const DiagnosticInfo &Info);
-  
-  // Iterators.
-  typedef std::list<DiagBugReport>::iterator iterator;
-  iterator begin() { return Reports.begin(); }
-  iterator end() { return Reports.end(); }
-};
-  
-class SimpleBugType : public BugTypeCacheLocation {
-  const char* name;
-  const char* category;
-  const char* desc;
-public:
-  SimpleBugType(const char* n) : name(n), category(""), desc(0) {}
-  SimpleBugType(const char* n, const char* c, const char* d)
-    : name(n), category(c), desc(d) {}
-  
-  virtual const char* getName() const { return name; }
-  virtual const char* getDescription() const { return desc ? desc : name; }
-  virtual const char* getCategory() const { return category; }
-};
-  
 } // end clang namespace
 
 #endif

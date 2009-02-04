@@ -130,28 +130,28 @@ CFAbsoluteTime f3() {
 
 CFAbsoluteTime f5(int x) {  
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
-  CFDateRef date = CFDateCreate(0, t);
+  CFDateRef date = CFDateCreate(0, t); // expected-warning{{leak}}
   
   if (x)
     CFRelease(date);
   
-  return t; // expected-warning{{leak}}
+  return t;
 }
 
 // Test a leak involving the return.
 
 CFDateRef f6(int x) {  
-  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());  // expected-warning{{leak}}
   CFRetain(date);
-  return date; // expected-warning{{leak}}
+  return date;
 }
 
 // Test a leak involving an overwrite.
 
 CFDateRef f7() {
-  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());  //expected-warning{{leak}}
   CFRetain(date);
-  date = CFDateCreate(0, CFAbsoluteTimeGetCurrent()); //expected-warning{{leak}}
+  date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
   return date;
 }
 
@@ -160,9 +160,9 @@ CFDateRef f7() {
 CFDateRef MyDateCreate();
 
 CFDateRef f8() {
-  CFDateRef date = MyDateCreate();
+  CFDateRef date = MyDateCreate(); // expected-warning{{leak}}
   CFRetain(date);  
-  return date; // expected-warning{{leak}}
+  return date;
 }
 
 CFDateRef f9() {
@@ -179,24 +179,24 @@ CFDateRef f9() {
 // http://developer.apple.com/DOCUMENTATION/DARWIN/Reference/DiscArbitrationFramework/
 //
 void f10(io_service_t media, DADiskRef d, CFStringRef s) {
-  DADiskRef disk = DADiskCreateFromBSDName(kCFAllocatorDefault, 0, "hello");
-  if (disk) NSLog(@"ok"); // expected-warning{{leak}}
+  DADiskRef disk = DADiskCreateFromBSDName(kCFAllocatorDefault, 0, "hello"); // expected-warning{{leak}}
+  if (disk) NSLog(@"ok");
   
-  disk = DADiskCreateFromIOMedia(kCFAllocatorDefault, 0, media);
-  if (disk) NSLog(@"ok"); // expected-warning{{leak}}
+  disk = DADiskCreateFromIOMedia(kCFAllocatorDefault, 0, media); // expected-warning{{leak}}
+  if (disk) NSLog(@"ok");
 
-  CFDictionaryRef dict = DADiskCopyDescription(d); 
-  if (dict) NSLog(@"ok"); // expected-warning{{leak}}
+  CFDictionaryRef dict = DADiskCopyDescription(d);  // expected-warning{{leak}}
+  if (dict) NSLog(@"ok"); 
   
-  disk = DADiskCopyWholeDisk(d);
-  if (disk) NSLog(@"ok"); // expected-warning{{leak}}
+  disk = DADiskCopyWholeDisk(d); // expected-warning{{leak}}
+  if (disk) NSLog(@"ok");
     
-  DADissenterRef dissenter = DADissenterCreate(kCFAllocatorDefault,
+  DADissenterRef dissenter = DADissenterCreate(kCFAllocatorDefault,   // expected-warning{{leak}}
                                                 kDAReturnSuccess, s);
-  if (dissenter) NSLog(@"ok"); // expected-warning{{leak}}
+  if (dissenter) NSLog(@"ok");
   
-  DASessionRef session = DASessionCreate(kCFAllocatorDefault);
-  if (session) NSLog(@"ok"); // expected-warning{{leak}}
+  DASessionRef session = DASessionCreate(kCFAllocatorDefault);  // expected-warning{{leak}}
+  if (session) NSLog(@"ok");
 }
 
 // Test retain/release checker with CFString and CFMutableArray.

@@ -7,8 +7,8 @@ extern CGColorSpaceRef CGColorSpaceRetain(CGColorSpaceRef space);
 extern void CGColorSpaceRelease(CGColorSpaceRef space);
 
 void f() {
-  CGColorSpaceRef X = CGColorSpaceCreateDeviceRGB();
-  CGColorSpaceRetain(X);  // expected-warning{{leak}}
+  CGColorSpaceRef X = CGColorSpaceCreateDeviceRGB(); // expected-warning{{leak}}
+  CGColorSpaceRetain(X);
 }
 
 void fb() {
