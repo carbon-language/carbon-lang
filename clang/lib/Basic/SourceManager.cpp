@@ -708,7 +708,7 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
       unsigned MarkerLineNo = getLineNumber(LocInfo.first, Entry->FileOffset);
       LineNo = Entry->LineNo + (LineNo-MarkerLineNo-1);
       
-
+      // Note that column numbers are not molested by line markers.
     }
   }
 
