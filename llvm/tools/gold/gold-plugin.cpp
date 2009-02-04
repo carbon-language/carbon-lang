@@ -158,7 +158,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                                  int *claimed) {
   void *buf = NULL;
-  printf("%s,%d,%d\n",file->name, file->offset, file->filesize);
   // If set, this means gold found IR in an ELF section. LLVM doesn't wrap its
   // IR in ELF, so we know it's not us. But it can also be an .a file containing
   // LLVM IR.
