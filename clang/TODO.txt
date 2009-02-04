@@ -50,6 +50,15 @@ overloaded-operator-decl.cpp:37:23: error: parameter of overloaded post-incremen
 X operator++(X&, const float& f); 
   ^              ~~~~~~~~~~~~~~
 
+//===---------------------------------------------------------------------===//
+
+For terminal output, we should consider limiting the amount of
+diagnostic text we print once the first error has been
+encountered. For example, once we have produced an error diagnostic,
+we should only continue producing diagnostics until we have produced a
+page full of results (say, 50 lines of text). Beyond that, (1) the
+remaining errors are likely to be less interesting, and (2) the poor
+user has to scroll his terminal to find out where things went wrong.
 
 
 
