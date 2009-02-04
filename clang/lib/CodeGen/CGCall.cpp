@@ -1220,8 +1220,14 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       llvm::Value *V = CreateTempAlloca(ConvertType(Ty), "coerce");
       CreateCoercedStore(AI, V, *this);
       // Match to what EmitParmDecl is expecting for this type.
-      if (!CodeGenFunction::hasAggregateLLVMType(Ty))
+      if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
         V = Builder.CreateLoad(V);
+        if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
+          // This must be a promotion, for something like
+          // "void a(x) short x; {..."
+          V = EmitScalarConversion(V, Ty, Arg->getType());
+        }
+      }
       EmitParmDecl(*Arg, V);
       break;
     }

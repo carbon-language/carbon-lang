@@ -144,3 +144,14 @@ void f6() {
   const char *s1 = __FUNCTION__;
   const char *s2 = __PRETTY_FUNCTION__;
 }
+
+// Arg mismatch with passed type.
+void f7(x) 
+     float x;
+{
+}
+
+void f8(x) 
+     short x;
+{
+}
