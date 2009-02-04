@@ -2449,6 +2449,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
           if (!MO.isReg())
             continue;
           unsigned Reg = MO.getReg();
+          if (!Reg)
+            continue;
           if (TargetRegisterInfo::isVirtualRegister(Reg))
             DeadDefs.push_back(Reg);
           if (MO.isDead())
