@@ -161,17 +161,12 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
     // Otherwise, can't fold this (vector?)
     return 0;
   }
-  
+
   // Handle ConstantFP input.
-  if (const ConstantFP *FP = dyn_cast<ConstantFP>(V)) {
+  if (const ConstantFP *FP = dyn_cast<ConstantFP>(V))
     // FP -> Integral.
-    if (DestTy == Type::Int32Ty) {
-      return ConstantInt::get(FP->getValueAPF().bitcastToAPInt());
-    } else {
-      assert(DestTy == Type::Int64Ty && "only support f32/f64 for now!");
-      return ConstantInt::get(FP->getValueAPF().bitcastToAPInt());
-    }
-  }
+    return ConstantInt::get(FP->getValueAPF().bitcastToAPInt());
+
   return 0;
 }
 
