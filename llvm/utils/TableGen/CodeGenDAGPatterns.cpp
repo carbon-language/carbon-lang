@@ -1303,7 +1303,8 @@ void TreePattern::dump() const { print(*cerr.stream()); }
 
 // FIXME: REMOVE OSTREAM ARGUMENT
 CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) : Records(R) {
-  Intrinsics = LoadIntrinsics(Records);
+  Intrinsics = LoadIntrinsics(Records, false);
+  TgtIntrinsics = LoadIntrinsics(Records, true);
   ParseNodeInfo();
   ParseNodeTransforms();
   ParseComplexPatterns();

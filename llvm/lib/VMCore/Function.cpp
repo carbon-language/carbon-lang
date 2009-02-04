@@ -175,7 +175,7 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
     ParentModule->getFunctionList().push_back(this);
 
   // Ensure intrinsics have the right parameter attributes.
-  if (unsigned IID = getIntrinsicID(true))
+  if (unsigned IID = getIntrinsicID())
     setAttributes(Intrinsic::getAttributes(Intrinsic::ID(IID)));
 
 }
@@ -304,7 +304,7 @@ void Function::copyAttributesFrom(const GlobalValue *Src) {
 /// particular intrinsic functions which correspond to this value are defined in
 /// llvm/Intrinsics.h.
 ///
-unsigned Function::getIntrinsicID(bool noAssert) const {
+unsigned Function::getIntrinsicID() const {
   const ValueName *ValName = this->getValueName();
   if (!ValName)
     return 0;
@@ -315,12 +315,9 @@ unsigned Function::getIntrinsicID(bool noAssert) const {
       || Name[2] != 'v' || Name[3] != 'm')
     return 0;  // All intrinsics start with 'llvm.'
 
-  assert((Len != 5 || noAssert) && "'llvm.' is an invalid intrinsic name!");
-
 #define GET_FUNCTION_RECOGNIZER
 #include "llvm/Intrinsics.gen"
 #undef GET_FUNCTION_RECOGNIZER
-  assert(noAssert && "Invalid LLVM intrinsic name");
   return 0;
 }
 
@@ -372,5 +369,10 @@ Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys,
     cast<Function>(M->getOrInsertFunction(getName(id, Tys, numTys),
                                           getType(id, Tys, numTys)));
 }
+
+// This defines the "Intrinsic::getIntrinsicForGCCBuiltin()" method.
+#define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
+#include "llvm/Intrinsics.gen"
+#undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 
 // vim: sw=2 ai

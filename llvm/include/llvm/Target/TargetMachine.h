@@ -23,6 +23,7 @@ class TargetAsmInfo;
 class TargetData;
 class TargetSubtarget;
 class TargetInstrInfo;
+class TargetIntrinsicInfo;
 class TargetJITInfo;
 class TargetLowering;
 class TargetFrameInfo;
@@ -118,7 +119,6 @@ public:
   virtual       TargetLowering    *getTargetLowering() const { return 0; }
   virtual const TargetData            *getTargetData() const { return 0; }
   
-  
   /// getTargetAsmInfo - Return target specific asm information.
   ///
   const TargetAsmInfo *getTargetAsmInfo() const {
@@ -141,6 +141,11 @@ public:
   /// details of graph coloring register allocation removed from it.
   ///
   virtual const TargetRegisterInfo *getRegisterInfo() const { return 0; }
+  
+  /// getIntrinsicInfo - If intrinsic information is available, return it.  If
+  /// not, return null.
+  ///
+  virtual const TargetIntrinsicInfo *getIntrinsicInfo() const { return 0; }
 
   /// getJITInfo - If this target supports a JIT, return information for it,
   /// otherwise return null.

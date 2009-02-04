@@ -20,9 +20,12 @@
 namespace llvm {
   class IntrinsicEmitter : public TableGenBackend {
     RecordKeeper &Records;
+    bool TargetOnly;
+    std::string TargetPrefix;
     
   public:
-    IntrinsicEmitter(RecordKeeper &R) : Records(R) {}
+    IntrinsicEmitter(RecordKeeper &R, bool T = false) 
+      : Records(R), TargetOnly(T) {}
 
     void run(std::ostream &OS);
     

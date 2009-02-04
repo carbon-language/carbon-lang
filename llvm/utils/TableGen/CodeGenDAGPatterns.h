@@ -465,6 +465,7 @@ class CodeGenDAGPatterns {
   RecordKeeper &Records;
   CodeGenTarget Target;
   std::vector<CodeGenIntrinsic> Intrinsics;
+  std::vector<CodeGenIntrinsic> TgtIntrinsics;
   
   std::map<Record*, SDNodeInfo> SDNodes;
   std::map<Record*, std::pair<Record*, std::string> > SDNodeXForms;
@@ -515,18 +516,25 @@ public:
   const CodeGenIntrinsic &getIntrinsic(Record *R) const {
     for (unsigned i = 0, e = Intrinsics.size(); i != e; ++i)
       if (Intrinsics[i].TheDef == R) return Intrinsics[i];
+    for (unsigned i = 0, e = TgtIntrinsics.size(); i != e; ++i)
+      if (TgtIntrinsics[i].TheDef == R) return TgtIntrinsics[i];
     assert(0 && "Unknown intrinsic!");
     abort();
   }
   
   const CodeGenIntrinsic &getIntrinsicInfo(unsigned IID) const {
-    assert(IID-1 < Intrinsics.size() && "Bad intrinsic ID!");
-    return Intrinsics[IID-1];
+    if (IID-1 < Intrinsics.size())
+      return Intrinsics[IID-1];
+    if (IID-Intrinsics.size()-1 < TgtIntrinsics.size())
+      return TgtIntrinsics[IID-Intrinsics.size()-1];
+    assert(0 && "Bad intrinsic ID!");
   }
   
   unsigned getIntrinsicID(Record *R) const {
     for (unsigned i = 0, e = Intrinsics.size(); i != e; ++i)
       if (Intrinsics[i].TheDef == R) return i;
+    for (unsigned i = 0, e = TgtIntrinsics.size(); i != e; ++i)
+      if (TgtIntrinsics[i].TheDef == R) return i + Intrinsics.size();
     assert(0 && "Unknown intrinsic!");
     abort();
   }
