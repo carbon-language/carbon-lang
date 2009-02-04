@@ -109,6 +109,12 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define to 1 if you have the <ffi/ffi.h> header file. */
+#undef HAVE_FFI_FFI_H
+
+/* Define to 1 if you have the <ffi.h> header file. */
+#undef HAVE_FFI_H
+
 /* Set to 1 if the finite function is found in <ieeefp.h> */
 #undef HAVE_FINITE_IN_IEEEFP_H
 
