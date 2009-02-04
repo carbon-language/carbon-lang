@@ -318,7 +318,7 @@ public:
   unsigned getOrCreateDebugLocID(unsigned Src, unsigned Line, unsigned Col);
 
   /// getDebugLocTuple - Get the DebugLocTuple for a given DebugLoc object.
-  const DebugLocTuple &getDebugLocTuple(DebugLoc DL);
+  DebugLocTuple getDebugLocTuple(DebugLoc DL) const;
 };
 
 //===--------------------------------------------------------------------===//

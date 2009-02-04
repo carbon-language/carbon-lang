@@ -397,7 +397,7 @@ unsigned MachineFunction::getOrCreateDebugLocID(unsigned Src, unsigned Line,
 }
 
 /// getDebugLocTuple - Get the DebugLocTuple for a given DebugLoc object.
-const DebugLocTuple &MachineFunction::getDebugLocTuple(DebugLoc DL) {
+DebugLocTuple MachineFunction::getDebugLocTuple(DebugLoc DL) const {
   unsigned Idx = DL.getIndex();
   assert(Idx < DebugLocInfo.DebugLocations.size() &&
          "Invalid index into debug locations!");
