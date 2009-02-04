@@ -82,6 +82,7 @@ struct LineEntry {
     E.FileOffset = Offs;
     E.LineNo = Line;
     E.FilenameID = Filename;
+    E.FileKind = FileKind;
     return E;
   }
 };
@@ -752,6 +753,37 @@ unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc) const {
   if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
+}
+
+/// getFileCharacteristic - return the file characteristic of the specified
+/// source location, indicating whether this is a normal file, a system 
+/// header, or an "implicit extern C" system header.
+///
+/// This state can be modified with flags on GNU linemarker directives like:
+///   # 4 "foo.h" 3
+/// which changes all source locations in the current file after that to be
+/// considered to be from a system header.
+SrcMgr::CharacteristicKind 
+SourceManager::getFileCharacteristic(SourceLocation Loc) const {
+  assert(!Loc.isInvalid() && "Can't get file characteristic of invalid loc!");
+  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  const SrcMgr::FileInfo &FI = getSLocEntry(LocInfo.first).getFile();
+
+  // If there are no #line directives in this file, just return the whole-file
+  // state.
+  if (!FI.hasLineDirectives())
+    return FI.getFileCharacteristic();
+  
+  assert(LineTable && "Can't have linetable entries without a LineTable!");
+  // See if there is a #line directive before the location.
+  const LineEntry *Entry =
+    LineTable->FindNearestLineEntry(LocInfo.first.ID, LocInfo.second);
+  
+  // If this is before the first line marker, use the file characteristic.
+  if (!Entry)
+    return FI.getFileCharacteristic();
+
+  return Entry->FileKind;
 }
 
 

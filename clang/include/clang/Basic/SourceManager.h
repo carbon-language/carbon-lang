@@ -495,11 +495,15 @@ public:
   unsigned getInstantiationLineNumber(SourceLocation Loc) const;
   unsigned getSpellingLineNumber(SourceLocation Loc) const;
   
-  // FIXME: This should handle #line.
-  SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const {
-    FileID FID = getFileID(getSpellingLoc(Loc));
-    return getSLocEntry(FID).getFile().getFileCharacteristic();
-  }
+  /// getFileCharacteristic - return the file characteristic of the specified
+  /// source location, indicating whether this is a normal file, a system 
+  /// header, or an "implicit extern C" system header.
+  ///
+  /// This state can be modified with flags on GNU linemarker directives like:
+  ///   # 4 "foo.h" 3
+  /// which changes all source locations in the current file after that to be
+  /// considered to be from a system header.
+  SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const;
   
   /// getPresumedLoc - This method returns the "presumed" location of a
   /// SourceLocation specifies.  A "presumed location" can be modified by #line

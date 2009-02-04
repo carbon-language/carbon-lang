@@ -34,3 +34,23 @@
 #error ABC  // expected-error {{#error ABC}}
 #error DEF  // expected-error {{#error DEF}}
 
+
+// Verify that linemarker diddling of the system header flag works.
+
+# 192 "glomp.h" // not a system header.
+typedef int x;  // expected-note {{previous definition is here}}
+typedef int x;  // expected-error {{redefinition of 'x'}}
+
+# 192 "glomp.h" 3 // System header.
+typedef int y;  // ok
+typedef int y;  // ok
+
+#line 42 "blonk.h"  // doesn't change system headerness.
+
+typedef int z;  // ok
+typedef int z;  // ok
+
+# 42 "blonk.h"  // DOES change system headerness.
+
+typedef int w;  // expected-note {{previous definition is here}}
+typedef int w;  // expected-error {{redefinition of 'w'}}
