@@ -150,8 +150,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Atomic1(AtomicSDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_Atomic2(AtomicSDNode *N) {
   SDValue Op2 = GetPromotedInteger(N->getOperand(2));
   SDValue Op3 = GetPromotedInteger(N->getOperand(3));
-  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getMemoryVT(),
-                              N->getChain(), N->getBasePtr(),
+  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getDebugLoc(), 
+                              N->getMemoryVT(), N->getChain(), N->getBasePtr(),
                               Op2, Op3, N->getSrcValue(), N->getAlignment());
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
@@ -1248,7 +1248,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
       Lo = DAG.getNode(ISD::SUB, dl, NVT, LoOps, 2);
       Hi = DAG.getNode(ISD::SUB, dl, NVT, HiOps, 2);
       SDValue Cmp =
-        DAG.getSetCC(TLI.getSetCCResultType(LoOps[0].getValueType()),
+        DAG.getSetCC(dl, TLI.getSetCCResultType(LoOps[0].getValueType()),
                      LoOps[0], LoOps[1], ISD::SETULT);
       SDValue Borrow = DAG.getNode(ISD::SELECT, dl, NVT, Cmp,
                                    DAG.getConstant(1, NVT),
