@@ -103,16 +103,16 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
     case MVT::i32:
       if (I->use_empty()) {                // Argument is dead.
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
+        ArgValues.push_back(DAG.getNode(ISD::UNDEF, dl, ObjectVT));
       } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
         unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
         MF.getRegInfo().addLiveIn(*CurArgReg++, VReg);
-        SDValue Arg = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+        SDValue Arg = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
         if (ObjectVT != MVT::i32) {
           unsigned AssertOp = ISD::AssertSext;
-          Arg = DAG.getNode(AssertOp, MVT::i32, Arg,
+          Arg = DAG.getNode(AssertOp, dl, MVT::i32, Arg,
                             DAG.getValueType(ObjectVT));
-          Arg = DAG.getNode(ISD::TRUNCATE, ObjectVT, Arg);
+          Arg = DAG.getNode(ISD::TRUNCATE, dl, ObjectVT, Arg);
         }
         ArgValues.push_back(Arg);
       } else {
@@ -120,17 +120,17 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
         SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
         SDValue Load;
         if (ObjectVT == MVT::i32) {
-          Load = DAG.getLoad(MVT::i32, Root, FIPtr, NULL, 0);
+          Load = DAG.getLoad(MVT::i32, dl, Root, FIPtr, NULL, 0);
         } else {
           ISD::LoadExtType LoadOp = ISD::SEXTLOAD;
 
           // Sparc is big endian, so add an offset based on the ObjectVT.
           unsigned Offset = 4-std::max(1U, ObjectVT.getSizeInBits()/8);
-          FIPtr = DAG.getNode(ISD::ADD, MVT::i32, FIPtr,
+          FIPtr = DAG.getNode(ISD::ADD, dl, MVT::i32, FIPtr,
                               DAG.getConstant(Offset, MVT::i32));
-          Load = DAG.getExtLoad(LoadOp, MVT::i32, Root, FIPtr,
+          Load = DAG.getExtLoad(LoadOp, dl, MVT::i32, Root, FIPtr,
                                 NULL, 0, ObjectVT);
-          Load = DAG.getNode(ISD::TRUNCATE, ObjectVT, Load);
+          Load = DAG.getNode(ISD::TRUNCATE, dl, ObjectVT, Load);
         }
         ArgValues.push_back(Load);
       }
@@ -140,19 +140,19 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
     case MVT::f32:
       if (I->use_empty()) {                // Argument is dead.
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
+        ArgValues.push_back(DAG.getNode(ISD::UNDEF, dl, ObjectVT));
       } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
         // FP value is passed in an integer register.
         unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
         MF.getRegInfo().addLiveIn(*CurArgReg++, VReg);
-        SDValue Arg = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+        SDValue Arg = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
 
-        Arg = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Arg);
+        Arg = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, Arg);
         ArgValues.push_back(Arg);
       } else {
         int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
         SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-        SDValue Load = DAG.getLoad(MVT::f32, Root, FIPtr, NULL, 0);
+        SDValue Load = DAG.getLoad(MVT::f32, dl, Root, FIPtr, NULL, 0);
         ArgValues.push_back(Load);
       }
       ArgOffset += 4;
@@ -163,37 +163,37 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
       if (I->use_empty()) {                // Argument is dead.
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
+        ArgValues.push_back(DAG.getNode(ISD::UNDEF, dl, ObjectVT));
       } else {
         SDValue HiVal;
         if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
           unsigned VRegHi = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
           MF.getRegInfo().addLiveIn(*CurArgReg++, VRegHi);
-          HiVal = DAG.getCopyFromReg(Root, VRegHi, MVT::i32);
+          HiVal = DAG.getCopyFromReg(Root, dl, VRegHi, MVT::i32);
         } else {
           int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
           SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-          HiVal = DAG.getLoad(MVT::i32, Root, FIPtr, NULL, 0);
+          HiVal = DAG.getLoad(MVT::i32, dl, Root, FIPtr, NULL, 0);
         }
 
         SDValue LoVal;
         if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
           unsigned VRegLo = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
           MF.getRegInfo().addLiveIn(*CurArgReg++, VRegLo);
-          LoVal = DAG.getCopyFromReg(Root, VRegLo, MVT::i32);
+          LoVal = DAG.getCopyFromReg(Root, dl, VRegLo, MVT::i32);
         } else {
           int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset+4);
           SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-          LoVal = DAG.getLoad(MVT::i32, Root, FIPtr, NULL, 0);
+          LoVal = DAG.getLoad(MVT::i32, dl, Root, FIPtr, NULL, 0);
         }
 
         // Compose the two halves together into an i64 unit.
         SDValue WholeValue =
-          DAG.getNode(ISD::BUILD_PAIR, MVT::i64, LoVal, HiVal);
+          DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, LoVal, HiVal);
 
         // If we want a double, do a bit convert.
         if (ObjectVT == MVT::f64)
-          WholeValue = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, WholeValue);
+          WholeValue = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, WholeValue);
 
         ArgValues.push_back(WholeValue);
       }
@@ -210,18 +210,18 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
     for (; CurArgReg != ArgRegEnd; ++CurArgReg) {
       unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
       MF.getRegInfo().addLiveIn(*CurArgReg, VReg);
-      SDValue Arg = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
+      SDValue Arg = DAG.getCopyFromReg(DAG.getRoot(), dl, VReg, MVT::i32);
 
       int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
       SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
 
-      OutChains.push_back(DAG.getStore(DAG.getRoot(), Arg, FIPtr, NULL, 0));
+      OutChains.push_back(DAG.getStore(DAG.getRoot(), dl, Arg, FIPtr, NULL, 0));
       ArgOffset += 4;
     }
   }
 
   if (!OutChains.empty())
-    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other,
+    DAG.setRoot(DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                             &OutChains[0], OutChains.size()));
 }
 

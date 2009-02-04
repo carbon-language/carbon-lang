@@ -585,7 +585,8 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   SDValue CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
   unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   if (Extend)
-    return DAG.getExtLoad(ISD::EXTLOAD, OrigVT, DAG.getEntryNode(),
+    return DAG.getExtLoad(ISD::EXTLOAD, CFP->getDebugLoc(),
+                          OrigVT, DAG.getEntryNode(),
                           CPIdx, PseudoSourceValue::getConstantPool(),
                           0, VT, false, Alignment);
   return DAG.getLoad(OrigVT, DAG.getEntryNode(), CPIdx,

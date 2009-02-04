@@ -1399,6 +1399,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   SmallVector<SDValue, 8> ArgValues;
   SDValue Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
+  DebugLoc dl = Op.getNode()->getDebugLoc();
   
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
@@ -1551,8 +1552,8 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
         if (GPR_idx != Num_GPR_Regs) {
           unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
           RegInfo.addLiveIn(GPR[GPR_idx], VReg);
-          SDValue Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
-          SDValue Store = DAG.getTruncStore(Val.getValue(1), Val, FIN, 
+          SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, PtrVT);
+          SDValue Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN, 
                                NULL, 0, ObjSize==1 ? MVT::i8 : MVT::i16 );
           MemOps.push_back(Store);
           ++GPR_idx;
@@ -1571,8 +1572,8 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
           RegInfo.addLiveIn(GPR[GPR_idx], VReg);
           int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset);
           SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
-          SDValue Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
-          SDValue Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
+          SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, PtrVT);
+          SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
           MemOps.push_back(Store);
           ++GPR_idx;
           if (isMachoABI) ArgOffset += PtrByteSize;
@@ -1594,7 +1595,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
         if (GPR_idx != Num_GPR_Regs) {
           unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
           RegInfo.addLiveIn(GPR[GPR_idx], VReg);
-          ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+          ArgVal = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
           ++GPR_idx;
         } else {
           needsLoad = true;
@@ -1612,19 +1613,19 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
       if (GPR_idx != Num_GPR_Regs) {
         unsigned VReg = RegInfo.createVirtualRegister(&PPC::G8RCRegClass);
         RegInfo.addLiveIn(GPR[GPR_idx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i64);
+        ArgVal = DAG.getCopyFromReg(Root, dl, VReg, MVT::i64);
 
         if (ObjectVT == MVT::i32) {
           // PPC64 passes i8, i16, and i32 values in i64 registers. Promote
           // value to MVT::i64 and then truncate to the correct register size.
           if (Flags.isSExt())
-            ArgVal = DAG.getNode(ISD::AssertSext, MVT::i64, ArgVal,
+            ArgVal = DAG.getNode(ISD::AssertSext, dl, MVT::i64, ArgVal,
                                  DAG.getValueType(ObjectVT));
           else if (Flags.isZExt())
-            ArgVal = DAG.getNode(ISD::AssertZext, MVT::i64, ArgVal,
+            ArgVal = DAG.getNode(ISD::AssertZext, dl, MVT::i64, ArgVal,
                                  DAG.getValueType(ObjectVT));
 
-          ArgVal = DAG.getNode(ISD::TRUNCATE, MVT::i32, ArgVal);
+          ArgVal = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, ArgVal);
         }
 
         ++GPR_idx;
@@ -1652,7 +1653,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
         else
           VReg = RegInfo.createVirtualRegister(&PPC::F8RCRegClass);
         RegInfo.addLiveIn(FPR[FPR_idx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
+        ArgVal = DAG.getCopyFromReg(Root, dl, VReg, ObjectVT);
         ++FPR_idx;
       } else {
         needsLoad = true;
@@ -1673,7 +1674,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
       if (VR_idx != Num_VR_Regs) {
         unsigned VReg = RegInfo.createVirtualRegister(&PPC::VRRCRegClass);
         RegInfo.addLiveIn(VR[VR_idx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
+        ArgVal = DAG.getCopyFromReg(Root, dl, VReg, ObjectVT);
         if (isVarArg) {
           while ((ArgOffset % 16) != 0) {
             ArgOffset += PtrByteSize;
@@ -1707,7 +1708,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
                                       CurArgOffset + (ArgSize - ObjSize),
                                       isImmutable);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
-      ArgVal = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
+      ArgVal = DAG.getLoad(ObjectVT, dl, Root, FIN, NULL, 0);
     }
     
     ArgValues.push_back(ArgVal);
@@ -1763,11 +1764,11 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
     if (isELF32_ABI) {
       for (GPR_idx = 0; GPR_idx != VarArgsNumGPR; ++GPR_idx) {
         SDValue Val = DAG.getRegister(GPR[GPR_idx], PtrVT);
-        SDValue Store = DAG.getStore(Root, Val, FIN, NULL, 0);
+        SDValue Store = DAG.getStore(Root, dl, Val, FIN, NULL, 0);
         MemOps.push_back(Store);
         // Increment the address by four for the next argument to store
         SDValue PtrOff = DAG.getConstant(PtrVT.getSizeInBits()/8, PtrVT);
-        FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
+        FIN = DAG.getNode(ISD::ADD, dl, PtrOff.getValueType(), FIN, PtrOff);
       }
     }
 
@@ -1782,12 +1783,12 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
         VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
 
       RegInfo.addLiveIn(GPR[GPR_idx], VReg);
-      SDValue Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
-      SDValue Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
+      SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, PtrVT);
+      SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
       MemOps.push_back(Store);
       // Increment the address by four for the next argument to store
       SDValue PtrOff = DAG.getConstant(PtrVT.getSizeInBits()/8, PtrVT);
-      FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
+      FIN = DAG.getNode(ISD::ADD, dl, PtrOff.getValueType(), FIN, PtrOff);
     }
 
     // In ELF 32 ABI, the double arguments are stored to the VarArgsFrameIndex
@@ -1795,12 +1796,12 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
     if (isELF32_ABI) {
       for (FPR_idx = 0; FPR_idx != VarArgsNumFPR; ++FPR_idx) {
         SDValue Val = DAG.getRegister(FPR[FPR_idx], MVT::f64);
-        SDValue Store = DAG.getStore(Root, Val, FIN, NULL, 0);
+        SDValue Store = DAG.getStore(Root, dl, Val, FIN, NULL, 0);
         MemOps.push_back(Store);
         // Increment the address by eight for the next argument to store
         SDValue PtrOff = DAG.getConstant(MVT(MVT::f64).getSizeInBits()/8,
                                            PtrVT);
-        FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
+        FIN = DAG.getNode(ISD::ADD, dl, PtrOff.getValueType(), FIN, PtrOff);
       }
 
       for (; FPR_idx != Num_FPR_Regs; ++FPR_idx) {
@@ -1808,24 +1809,25 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
         VReg = RegInfo.createVirtualRegister(&PPC::F8RCRegClass);
 
         RegInfo.addLiveIn(FPR[FPR_idx], VReg);
-        SDValue Val = DAG.getCopyFromReg(Root, VReg, MVT::f64);
-        SDValue Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
+        SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::f64);
+        SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
         MemOps.push_back(Store);
         // Increment the address by eight for the next argument to store
         SDValue PtrOff = DAG.getConstant(MVT(MVT::f64).getSizeInBits()/8,
                                            PtrVT);
-        FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
+        FIN = DAG.getNode(ISD::ADD, dl, PtrOff.getValueType(), FIN, PtrOff);
       }
     }
   }
   
   if (!MemOps.empty())
-    Root = DAG.getNode(ISD::TokenFactor, MVT::Other,&MemOps[0],MemOps.size());
+    Root = DAG.getNode(ISD::TokenFactor, dl, 
+                       MVT::Other, &MemOps[0], MemOps.size());
 
   ArgValues.push_back(Root);
  
   // Return the new list of results.
-  return DAG.getNode(ISD::MERGE_VALUES, Op.getNode()->getVTList(),
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(),
                      &ArgValues[0], ArgValues.size());
 }
 
@@ -2223,13 +2225,13 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     else
       PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
 
-    PtrOff = DAG.getNode(ISD::ADD, PtrVT, StackPtr, PtrOff);
+    PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, StackPtr, PtrOff);
 
     // On PPC64, promote integers to 64-bit values.
     if (isPPC64 && Arg.getValueType() == MVT::i32) {
       // FIXME: Should this use ANY_EXTEND if neither sext nor zext?
       unsigned ExtOp = Flags.isSExt() ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
-      Arg = DAG.getNode(ExtOp, MVT::i64, Arg);
+      Arg = DAG.getNode(ExtOp, dl, MVT::i64, Arg);
     }
 
     // FIXME Elf untested, what are alignment rules?
@@ -2242,7 +2244,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
         // Everything else is passed left-justified.
         MVT VT = (Size==1) ? MVT::i8 : MVT::i16;
         if (GPR_idx != NumGPRs) {
-          SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, PtrVT, Chain, Arg, 
+          SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, dl, PtrVT, Chain, Arg, 
                                           NULL, 0, VT);
           MemOpChains.push_back(Load.getValue(1));
           RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
@@ -2250,7 +2252,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
             ArgOffset += PtrByteSize;
         } else {
           SDValue Const = DAG.getConstant(4 - Size, PtrOff.getValueType());
-          SDValue AddPtr = DAG.getNode(ISD::ADD, PtrVT, PtrOff, Const);
+          SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
           SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, AddPtr,
                                 CallSeqStart.getNode()->getOperand(0), 
                                 Flags, DAG, Size, dl);
@@ -2278,9 +2280,9 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
       // And copy the pieces of it that fit into registers.
       for (unsigned j=0; j<Size; j+=PtrByteSize) {
         SDValue Const = DAG.getConstant(j, PtrOff.getValueType());
-        SDValue AddArg = DAG.getNode(ISD::ADD, PtrVT, Arg, Const);
+        SDValue AddArg = DAG.getNode(ISD::ADD, dl, PtrVT, Arg, Const);
         if (GPR_idx != NumGPRs) {
-          SDValue Load = DAG.getLoad(PtrVT, Chain, AddArg, NULL, 0);
+          SDValue Load = DAG.getLoad(PtrVT, dl, Chain, AddArg, NULL, 0);
           MemOpChains.push_back(Load.getValue(1));
           RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
           if (isMachoABI)
@@ -2321,20 +2323,20 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
         RegsToPass.push_back(std::make_pair(FPR[FPR_idx++], Arg));
 
         if (isVarArg) {
-          SDValue Store = DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
+          SDValue Store = DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0);
           MemOpChains.push_back(Store);
 
           // Float varargs are always shadowed in available integer registers
           if (GPR_idx != NumGPRs) {
-            SDValue Load = DAG.getLoad(PtrVT, Store, PtrOff, NULL, 0);
+            SDValue Load = DAG.getLoad(PtrVT, dl, Store, PtrOff, NULL, 0);
             MemOpChains.push_back(Load.getValue(1));
             if (isMachoABI) RegsToPass.push_back(std::make_pair(GPR[GPR_idx++],
                                                                 Load));
           }
           if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64 && !isPPC64){
             SDValue ConstFour = DAG.getConstant(4, PtrOff.getValueType());
-            PtrOff = DAG.getNode(ISD::ADD, PtrVT, PtrOff, ConstFour);
-            SDValue Load = DAG.getLoad(PtrVT, Store, PtrOff, NULL, 0);
+            PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, ConstFour);
+            SDValue Load = DAG.getLoad(PtrVT, dl, Store, PtrOff, NULL, 0);
             MemOpChains.push_back(Load.getValue(1));
             if (isMachoABI) RegsToPass.push_back(std::make_pair(GPR[GPR_idx++],
                                                                 Load));
@@ -2384,12 +2386,12 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
         }
         // We could elide this store in the case where the object fits
         // entirely in R registers.  Maybe later.
-        PtrOff = DAG.getNode(ISD::ADD, PtrVT, StackPtr, 
+        PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, StackPtr, 
                             DAG.getConstant(ArgOffset, PtrVT));
-        SDValue Store = DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
+        SDValue Store = DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0);
         MemOpChains.push_back(Store);
         if (VR_idx != NumVRs) {
-          SDValue Load = DAG.getLoad(MVT::v4f32, Store, PtrOff, NULL, 0);
+          SDValue Load = DAG.getLoad(MVT::v4f32, dl, Store, PtrOff, NULL, 0);
           MemOpChains.push_back(Load.getValue(1));
           RegsToPass.push_back(std::make_pair(VR[VR_idx++], Load));
         }
@@ -2397,9 +2399,9 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
         for (unsigned i=0; i<16; i+=PtrByteSize) {
           if (GPR_idx == NumGPRs)
             break;
-          SDValue Ix = DAG.getNode(ISD::ADD, PtrVT, PtrOff,
+          SDValue Ix = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff,
                                   DAG.getConstant(i, PtrVT));
-          SDValue Load = DAG.getLoad(PtrVT, Store, Ix, NULL, 0);
+          SDValue Load = DAG.getLoad(PtrVT, dl, Store, Ix, NULL, 0);
           MemOpChains.push_back(Load.getValue(1));
           RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
         }
@@ -2449,22 +2451,22 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   }
 
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
   
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into the appropriate regs.
   SDValue InFlag;
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
-                             InFlag);
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first, 
+                             RegsToPass[i].second, InFlag);
     InFlag = Chain.getValue(1);
   }
  
   // With the ELF 32 ABI, set CR6 to true if this is a vararg call.
   if (isVarArg && isELF32_ABI) {
-    SDValue SetCR(DAG.getTargetNode(PPC::CRSET, MVT::i32), 0);
-    Chain = DAG.getCopyToReg(Chain, PPC::CR1EQ, SetCR, InFlag);
+    SDValue SetCR(DAG.getTargetNode(PPC::CRSET, dl, MVT::i32), 0);
+    Chain = DAG.getCopyToReg(Chain, dl, PPC::CR1EQ, SetCR, InFlag);
     InFlag = Chain.getValue(1);
   }
 
@@ -2477,7 +2479,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     StoreTailCallArgumentsToStackSlot(DAG, Chain, TailCallArguments,
                                       MemOpChains2);
     if (!MemOpChains2.empty())
-      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+      Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                           &MemOpChains2[0], MemOpChains2.size());
 
     // Store the return address to the appropriate stack slot.
@@ -2520,14 +2522,14 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     // Otherwise, this is an indirect call.  We have to use a MTCTR/BCTRL pair
     // to do the call, we can't use PPCISD::CALL.
     SDValue MTCTROps[] = {Chain, Callee, InFlag};
-    Chain = DAG.getNode(PPCISD::MTCTR, NodeTys, MTCTROps,
+    Chain = DAG.getNode(PPCISD::MTCTR, dl, NodeTys, MTCTROps,
                         2 + (InFlag.getNode() != 0));
     InFlag = Chain.getValue(1);
     
     // Copy the callee address into R12/X12 on darwin.
     if (isMachoABI) {
       unsigned Reg = Callee.getValueType() == MVT::i32 ? PPC::R12 : PPC::X12;
-      Chain = DAG.getCopyToReg(Chain, Reg, Callee, InFlag);
+      Chain = DAG.getCopyToReg(Chain, dl, Reg, Callee, InFlag);
       InFlag = Chain.getValue(1);
     }
 
@@ -2570,12 +2572,12 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   if (isTailCall) {
     assert(InFlag.getNode() &&
            "Flag must be set. Depend on flag being set in LowerRET");
-    Chain = DAG.getNode(PPCISD::TAILCALL,
+    Chain = DAG.getNode(PPCISD::TAILCALL, dl,
                         TheCall->getVTList(), &Ops[0], Ops.size());
     return SDValue(Chain.getNode(), Op.getResNo());
   }
 
-  Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());
+  Chain = DAG.getNode(CallOpc, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
@@ -2595,7 +2597,8 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     CCValAssign &VA = RVLocs[i];
     MVT VT = VA.getValVT();
     assert(VA.isRegLoc() && "Can only return in registers!");
-    Chain = DAG.getCopyFromReg(Chain, VA.getLocReg(), VT, InFlag).getValue(1);
+    Chain = DAG.getCopyFromReg(Chain, dl, 
+                               VA.getLocReg(), VT, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
     InFlag = Chain.getValue(2);
   }
@@ -2606,7 +2609,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   
   // Otherwise, merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
-  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(),
+  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, dl, TheCall->getVTList(),
                             &ResultVals[0], ResultVals.size());
   return Res.getValue(Op.getResNo());
 }

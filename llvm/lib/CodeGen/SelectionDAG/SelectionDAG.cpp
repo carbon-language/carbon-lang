@@ -3669,16 +3669,6 @@ SDValue SelectionDAG::getLoad(MVT VT, DebugLoc dl,
                  SV, SVOffset, VT, isVolatile, Alignment);
 }
 
-SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT VT,
-                                 SDValue Chain, SDValue Ptr,
-                                 const Value *SV,
-                                 int SVOffset, MVT EVT,
-                                 bool isVolatile, unsigned Alignment) {
-  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  return getLoad(ISD::UNINDEXED, ExtType, VT, Chain, Ptr, Undef,
-                 SV, SVOffset, EVT, isVolatile, Alignment);
-}
-
 SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, MVT VT,
                                  SDValue Chain, SDValue Ptr,
                                  const Value *SV,
@@ -3687,18 +3677,6 @@ SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, MVT VT,
   SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, dl, ExtType, VT, Chain, Ptr, Undef,
                  SV, SVOffset, EVT, isVolatile, Alignment);
-}
-
-SDValue
-SelectionDAG::getIndexedLoad(SDValue OrigLoad, SDValue Base,
-                             SDValue Offset, ISD::MemIndexedMode AM) {
-  LoadSDNode *LD = cast<LoadSDNode>(OrigLoad);
-  assert(LD->getOffset().getOpcode() == ISD::UNDEF &&
-         "Load is already a indexed load!");
-  return getLoad(AM, LD->getExtensionType(), OrigLoad.getValueType(),
-                 LD->getChain(), Base, Offset, LD->getSrcValue(),
-                 LD->getSrcValueOffset(), LD->getMemoryVT(),
-                 LD->isVolatile(), LD->getAlignment());
 }
 
 SDValue
@@ -3767,41 +3745,6 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getTruncStore(SDValue Chain, SDValue Val,
-                                    SDValue Ptr, const Value *SV,
-                                    int SVOffset, MVT SVT,
-                                    bool isVolatile, unsigned Alignment) {
-  MVT VT = Val.getValueType();
-
-  if (VT == SVT)
-    return getStore(Chain, Val, Ptr, SV, SVOffset, isVolatile, Alignment);
-
-  assert(VT.bitsGT(SVT) && "Not a truncation?");
-  assert(VT.isInteger() == SVT.isInteger() &&
-         "Can't do FP-INT conversion!");
-
-  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
-    Alignment = getMVTAlignment(VT);
-
-  SDVTList VTs = getVTList(MVT::Other);
-  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  SDValue Ops[] = { Chain, Val, Ptr, Undef };
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
-  ID.AddInteger(SVT.getRawBits());
-  ID.AddInteger(encodeMemSDNodeFlags(true, ISD::UNINDEXED,
-                                     isVolatile, Alignment));
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-  SDNode *N = NodeAllocator.Allocate<StoreSDNode>();
-  new (N) StoreSDNode(Ops, VTs, ISD::UNINDEXED, true,
-                      SVT, SV, SVOffset, Alignment, isVolatile);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
 SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                     SDValue Ptr, const Value *SV,
                                     int SVOffset, MVT SVT,
@@ -3832,31 +3775,6 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
   SDNode *N = NodeAllocator.Allocate<StoreSDNode>();
   new (N) StoreSDNode(Ops, dl, VTs, ISD::UNINDEXED, true,
                       SVT, SV, SVOffset, Alignment, isVolatile);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
-SDValue
-SelectionDAG::getIndexedStore(SDValue OrigStore, SDValue Base,
-                              SDValue Offset, ISD::MemIndexedMode AM) {
-  StoreSDNode *ST = cast<StoreSDNode>(OrigStore);
-  assert(ST->getOffset().getOpcode() == ISD::UNDEF &&
-         "Store is already a indexed store!");
-  SDVTList VTs = getVTList(Base.getValueType(), MVT::Other);
-  SDValue Ops[] = { ST->getChain(), ST->getValue(), Base, Offset };
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
-  ID.AddInteger(ST->getMemoryVT().getRawBits());
-  ID.AddInteger(ST->getRawSubclassData());
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-  SDNode *N = NodeAllocator.Allocate<StoreSDNode>();
-  new (N) StoreSDNode(Ops, VTs, AM,
-                      ST->isTruncatingStore(), ST->getMemoryVT(),
-                      ST->getSrcValue(), ST->getSrcValueOffset(),
-                      ST->getAlignment(), ST->isVolatile());
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);

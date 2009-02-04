@@ -461,6 +461,7 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getNode()->getDebugLoc();
   switch (Op.getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!");
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG, 
@@ -573,10 +574,10 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 
     SDValue Result;
     if (Op.getValueType() == MVT::i32)
-      Result = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Chain, DataPtr,
+      Result = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Chain, DataPtr,
                               NULL, 0, MVT::i32);
     else
-      Result = DAG.getLoad(Op.getValueType(), Chain, DataPtr, NULL, 0);
+      Result = DAG.getLoad(Op.getValueType(), dl, Chain, DataPtr, NULL, 0);
     return Result;
   }
   case ISD::VACOPY: {
@@ -586,14 +587,15 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     const Value *DestS = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
     const Value *SrcS = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
     
-    SDValue Val = DAG.getLoad(getPointerTy(), Chain, SrcP, SrcS, 0);
-    SDValue Result = DAG.getStore(Val.getValue(1), Val, DestP, DestS, 0);
-    SDValue NP = DAG.getNode(ISD::ADD, MVT::i64, SrcP, 
+    SDValue Val = DAG.getLoad(getPointerTy(), dl, Chain, SrcP, SrcS, 0);
+    SDValue Result = DAG.getStore(Val.getValue(1), dl, Val, DestP, DestS, 0);
+    SDValue NP = DAG.getNode(ISD::ADD, dl, MVT::i64, SrcP, 
                                DAG.getConstant(8, MVT::i64));
-    Val = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Result, NP, NULL,0, MVT::i32);
-    SDValue NPD = DAG.getNode(ISD::ADD, MVT::i64, DestP,
+    Val = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Result, 
+                         NP, NULL,0, MVT::i32);
+    SDValue NPD = DAG.getNode(ISD::ADD, dl, MVT::i64, DestP,
                                 DAG.getConstant(8, MVT::i64));
-    return DAG.getTruncStore(Val.getValue(1), Val, NPD, NULL, 0, MVT::i32);
+    return DAG.getTruncStore(Val.getValue(1), dl, Val, NPD, NULL, 0, MVT::i32);
   }
   case ISD::VASTART: {
     SDValue Chain = Op.getOperand(0);
@@ -602,10 +604,10 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     
     // vastart stores the address of the VarArgsBase and VarArgsOffset
     SDValue FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);
-    SDValue S1  = DAG.getStore(Chain, FR, VAListP, VAListS, 0);
-    SDValue SA2 = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
+    SDValue S1  = DAG.getStore(Chain, dl, FR, VAListP, VAListS, 0);
+    SDValue SA2 = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
                                 DAG.getConstant(8, MVT::i64));
-    return DAG.getTruncStore(S1, DAG.getConstant(VarArgsOffset, MVT::i64),
+    return DAG.getTruncStore(S1, dl, DAG.getConstant(VarArgsOffset, MVT::i64),
                              SA2, NULL, 0, MVT::i32);
   }
   case ISD::RETURNADDR:        

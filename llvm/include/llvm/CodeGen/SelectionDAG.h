@@ -582,16 +582,10 @@ public:
   SDValue getLoad(MVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
                     const Value *SV, int SVOffset, bool isVolatile=false,
                     unsigned Alignment=0);
-  SDValue getExtLoad(ISD::LoadExtType ExtType, MVT VT,
-                       SDValue Chain, SDValue Ptr, const Value *SV,
-                       int SVOffset, MVT EVT, bool isVolatile=false,
-                       unsigned Alignment=0);
   SDValue getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, MVT VT,
                        SDValue Chain, SDValue Ptr, const Value *SV,
                        int SVOffset, MVT EVT, bool isVolatile=false,
                        unsigned Alignment=0);
-  SDValue getIndexedLoad(SDValue OrigLoad, SDValue Base,
-                           SDValue Offset, ISD::MemIndexedMode AM);
   SDValue getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);
   SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
@@ -613,14 +607,9 @@ public:
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                      const Value *SV, int SVOffset, bool isVolatile=false,
                      unsigned Alignment=0);
-  SDValue getTruncStore(SDValue Chain, SDValue Val, SDValue Ptr,
-                          const Value *SV, int SVOffset, MVT TVT,
-                          bool isVolatile=false, unsigned Alignment=0);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                           const Value *SV, int SVOffset, MVT TVT,
                           bool isVolatile=false, unsigned Alignment=0);
-  SDValue getIndexedStore(SDValue OrigStoe, SDValue Base,
-                           SDValue Offset, ISD::MemIndexedMode AM);
   SDValue getIndexedStore(SDValue OrigStoe, DebugLoc dl, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);
 
