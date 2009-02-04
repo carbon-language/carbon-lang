@@ -1,4 +1,6 @@
-// RUN: clang -fsyntax-only -verify -pedantic %s
+// RUN: clang -fsyntax-only -verify -pedantic %s &&
+// RUN: clang -E %s 2>&1 | grep 'blonk.c:92:2: error: #error ABC' &&
+// RUN: clang -E %s 2>&1 | grep 'blonk.c:93:2: error: #error DEF'
 
 #line 'a'            // expected-error {{#line directive requires a positive integer argument}}
 #line 0              // expected-error {{#line directive requires a positive integer argument}}
@@ -25,3 +27,10 @@
 # 42 "foo" 3 1   // expected-error {{invalid flag line marker directive}}
 # 42 "foo" 42    // expected-error {{invalid flag line marker directive}}
 # 42 "foo" 1 2   // expected-error {{invalid flag line marker directive}}
+
+
+// These are checked by the RUN line.
+#line 92 "blonk.c"
+#error ABC  // expected-error {{#error ABC}}
+#error DEF  // expected-error {{#error DEF}}
+
