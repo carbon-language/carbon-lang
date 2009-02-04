@@ -2622,75 +2622,59 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   CachePtrTy = llvm::PointerType::getUnqual(CacheTy);
     
   // Property manipulation functions.
+
+  QualType IdType = Ctx.getObjCIdType();
+  QualType SelType = Ctx.getObjCSelType();
+  llvm::SmallVector<QualType,16> Params;
+  const llvm::FunctionType *FTy;
   
   // id objc_getProperty (id, SEL, ptrdiff_t, bool)
-  std::vector<const llvm::Type*> Params;
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(SelectorPtrTy);
-  Params.push_back(LongTy);
-  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
-  GetPropertyFn =
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                    Params,
-                                                    false),
-                            "objc_getProperty");
+  Params.push_back(IdType);
+  Params.push_back(SelType);
+  Params.push_back(Ctx.LongTy);
+  Params.push_back(Ctx.BoolTy);
+  FTy = Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), 
+                              false);
+  GetPropertyFn = CGM.CreateRuntimeFunction(FTy, "objc_getProperty");
   
   // void objc_setProperty (id, SEL, ptrdiff_t, id, bool, bool)
   Params.clear();
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(SelectorPtrTy);
-  Params.push_back(LongTy);
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
-  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
-  SetPropertyFn =
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                    Params,
-                                                    false),
-                            "objc_setProperty");
+  Params.push_back(IdType);
+  Params.push_back(SelType);
+  Params.push_back(Ctx.LongTy);
+  Params.push_back(IdType);
+  Params.push_back(Ctx.BoolTy);
+  Params.push_back(Ctx.BoolTy);
+  FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
+  SetPropertyFn = CGM.CreateRuntimeFunction(FTy, "objc_setProperty");
+
   // Enumeration mutation.
-  
+
+  // void objc_enumerationMutation (id)
   Params.clear();
-  Params.push_back(ObjectPtrTy);
-  EnumerationMutationFn = 
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                    Params,
-                                                    false),
-                            "objc_enumerationMutation");
+  Params.push_back(IdType);
+  FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
+  EnumerationMutationFn = CGM.CreateRuntimeFunction(FTy,
+                                                    "objc_enumerationMutation");
   
   // gc's API
   // id objc_read_weak (id *)
   Params.clear();
-  Params.push_back(PtrObjectPtrTy);
-  GcReadWeakFn =
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                    Params,
-                                                    false),
-                            "objc_read_weak");
-  // id objc_assign_weak (id, id *)                                      
+  Params.push_back(Ctx.getPointerType(IdType));
+  FTy = Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), false);
+  GcReadWeakFn = CGM.CreateRuntimeFunction(FTy, "objc_read_weak");
+
+  // id objc_assign_weak (id, id *)
   Params.clear();
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(PtrObjectPtrTy);
-  GcAssignWeakFn = 
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                    Params,
-                                                    false),
-                            "objc_assign_weak");
-  GcAssignGlobalFn =
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                    Params,
-                                                    false),
-                            "objc_assign_global");
-  GcAssignIvarFn =
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                    Params,
-                                                    false),
-                            "objc_assign_ivar");
-  GcAssignStrongCastFn =
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                    Params,
-                                                    false),
-                            "objc_assign_strongCast");
+  Params.push_back(IdType);
+  Params.push_back(Ctx.getPointerType(IdType));
+  
+  FTy = Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), false);
+  GcAssignWeakFn = CGM.CreateRuntimeFunction(FTy, "objc_assign_weak");
+  GcAssignGlobalFn = CGM.CreateRuntimeFunction(FTy, "objc_assign_global");
+  GcAssignIvarFn = CGM.CreateRuntimeFunction(FTy, "objc_assign_ivar");
+  GcAssignStrongCastFn = 
+    CGM.CreateRuntimeFunction(FTy, "objc_assign_strongCast");
 }
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
