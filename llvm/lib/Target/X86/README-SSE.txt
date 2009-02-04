@@ -912,3 +912,43 @@ since we know the stack slot is already zext'd.
 Consider using movlps instead of movsd to implement (scalar_to_vector (loadf64))
 when code size is critical. movlps is slower than movsd on core2 but it's one
 byte shorter.
+
+//===---------------------------------------------------------------------===//
+
+We should use a dynamic programming based approach to tell when using FPStack
+operations is cheaper than SSE.  SciMark montecarlo contains code like this
+for example:
+
+double MonteCarlo_num_flops(int Num_samples) {
+    return ((double) Num_samples)* 4.0;
+}
+
+In fpstack mode, this compiles into:
+
+LCPI1_0:					
+	.long	1082130432	## float 4.000000e+00
+_MonteCarlo_num_flops:
+	subl	$4, %esp
+	movl	8(%esp), %eax
+	movl	%eax, (%esp)
+	fildl	(%esp)
+	fmuls	LCPI1_0
+	addl	$4, %esp
+	ret
+        
+in SSE mode, it compiles into significantly slower code:
+
+_MonteCarlo_num_flops:
+	subl	$12, %esp
+	cvtsi2sd	16(%esp), %xmm0
+	mulsd	LCPI1_0, %xmm0
+	movsd	%xmm0, (%esp)
+	fldl	(%esp)
+	addl	$12, %esp
+	ret
+
+There are also other cases in scimark where using fpstack is better, it is
+cheaper to do fld1 than load from a constant pool for example, so
+"load, add 1.0, store" is better done in the fp stack, etc.
+
+//===---------------------------------------------------------------------===//
