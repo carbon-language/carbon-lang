@@ -697,10 +697,18 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
     // See if there is a #line directive before this.  If so, get it.
     if (const LineEntry *Entry =
           LineTable->FindNearestLineEntry(LocInfo.first.ID, LocInfo.second)) {
-      LineNo = Entry->LineNo;
-      
+      // If the LineEntry indicates a filename, use it.
       if (Entry->FilenameID != -1)
         Filename = LineTable->getFilename(Entry->FilenameID);
+
+      // Use the line number specified by the LineEntry.  This line number may
+      // be multiple lines down from the line entry.  Add the difference in
+      // physical line numbers from the query point and the line marker to the
+      // total.
+      unsigned MarkerLineNo = getLineNumber(LocInfo.first, Entry->FileOffset);
+      LineNo = Entry->LineNo + (LineNo-MarkerLineNo-1);
+      
+
     }
   }
 
