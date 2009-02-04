@@ -30,21 +30,21 @@
 
 using namespace clang;
 
-Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, Scope *S,
-                                const CXXScopeSpec *SS) {
+Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
+                                Scope *S, const CXXScopeSpec *SS) {
   Decl *IIDecl = 0;
   LookupResult Result = LookupParsedName(S, SS, &II, LookupOrdinaryName, false);
   switch (Result.getKind()) {
     case LookupResult::NotFound:
     case LookupResult::FoundOverloaded:
+      return 0;
+
     case LookupResult::AmbiguousBaseSubobjectTypes:
     case LookupResult::AmbiguousBaseSubobjects:
-      // FIXME: In the event of an ambiguous lookup, we could visit all of
-      // the entities found to determine whether they are all types. This
-      // might provide better diagnostics.
     case LookupResult::AmbiguousReference:
-    // FIXME: We need source location of identifier to diagnose more correctly.
+      DiagnoseAmbiguousLookup(Result, DeclarationName(&II), NameLoc);
       return 0;
+
     case LookupResult::Found:
       IIDecl = Result.getAsDecl();
       break;

@@ -484,8 +484,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
           GetLookAheadToken(2).is(tok::l_paren))
         goto DoneWithDeclSpec;
 
-      TypeTy *TypeRep = Actions.getTypeName(*NextToken().getIdentifierInfo(),
-                                            CurScope, &SS);
+      Token Next = NextToken();
+      TypeTy *TypeRep = Actions.getTypeName(*Next.getIdentifierInfo(),
+                                            Next.getLocation(), CurScope, &SS);
       if (TypeRep == 0)
         goto DoneWithDeclSpec;
 
@@ -538,7 +539,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         goto DoneWithDeclSpec;
       
       // It has to be available as a typedef too!
-      TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(), CurScope);
+      TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(), 
+                                            Tok.getLocation(), CurScope);
       if (TypeRep == 0)
         goto DoneWithDeclSpec;
       
@@ -1737,7 +1739,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         // constructor name. 
         else if (Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope))
           D.setConstructor(Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                               CurScope),
+                                               Tok.getLocation(), CurScope),
                            Tok.getLocation());
         // This is a normal identifier.
         else
@@ -2191,7 +2193,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
     IdentifierInfo *ParmII = Tok.getIdentifierInfo();
 
     // Reject 'typedef int y; int test(x, y)', but continue parsing.
-    if (Actions.getTypeName(*ParmII, CurScope))
+    if (Actions.getTypeName(*ParmII, Tok.getLocation(), CurScope))
       Diag(Tok, diag::err_unexpected_typedef_ident) << ParmII;
     
     // Verify that the argument identifier has not already been mentioned.

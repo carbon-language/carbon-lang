@@ -133,13 +133,18 @@ void G::test_virtual_lookup() {
 
 
 struct HasMemberType1 {
-  struct type { };
+  struct type { }; // expected-note{{member found by ambiguous name lookup}}
 };
 
 struct HasMemberType2 {
-  struct type { };
+  struct type { }; // expected-note{{member found by ambiguous name lookup}}
 };
 
 struct HasAnotherMemberType : HasMemberType1, HasMemberType2 { 
   struct type { };
+};
+
+struct UsesAmbigMemberType : HasMemberType1, HasMemberType2 {
+  type t; // expected-error{{member 'type' found in multiple base classes of different types}} \
+          // expected-error{{expected ';' at end of declaration list}}
 };

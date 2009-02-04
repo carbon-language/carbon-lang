@@ -758,7 +758,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
   if (Tok.is(tok::identifier)) {
     // Determine whether the identifier is a type name.
     if (TypeTy *Ty = Actions.getTypeName(*Tok.getIdentifierInfo(), 
-                                         CurScope, &SS)) {
+                                         Tok.getLocation(), CurScope, &SS)) {
       // This is a typename. Replace the current token in-place with an
       // annotation type token.
       Tok.setKind(tok::annot_typename);
