@@ -24,9 +24,9 @@ using namespace clang;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // SourceManager Helper Classes
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 ContentCache::~ContentCache() {
   delete Buffer;
@@ -57,11 +57,30 @@ const llvm::MemoryBuffer *ContentCache::getBuffer() const {
   return Buffer;
 }
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Line Table Implementation
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 namespace clang {
+struct LineEntry {
+  /// FileOffset - The offset in this file that the line entry occurs at.
+  unsigned FileOffset;
+  /// LineNo - The presumed line number of this line entry: #line 4.
+  unsigned LineNo;
+  /// FilenameID - The ID of the filename identified by this line entry:
+  /// #line 4 "foo.c".  This is -1 if not specified.
+  int FilenameID;
+  
+  static LineEntry get(unsigned Offs, unsigned Line, int Filename) {
+    LineEntry E;
+    E.FileOffset = Offs;
+    E.LineNo = Line;
+    E.FilenameID = Filename;
+    return E;
+  }
+};
+  
+  
 /// LineTableInfo - This class is used to hold and unique data used to
 /// represent #line information.
 class LineTableInfo {
@@ -72,6 +91,10 @@ class LineTableInfo {
   /// to string.
   llvm::StringMap<unsigned, llvm::BumpPtrAllocator> FilenameIDs;
   std::vector<llvm::StringMapEntry<unsigned>*> FilenamesByID;
+  
+  /// LineEntries - This is a map from FileIDs to a list of line entries (sorted
+  /// by the offset they occur in the file.
+  std::map<unsigned, std::vector<LineEntry> > LineEntries;
 public:
   LineTableInfo() {
   }
@@ -84,7 +107,7 @@ public:
   ~LineTableInfo() {}
   
   unsigned getLineTableFilenameID(const char *Ptr, unsigned Len);
-  void AddLineNote(FileID FID, unsigned Offset,
+  void AddLineNote(unsigned FID, unsigned Offset,
                    unsigned LineNo, int FilenameID);
 };
 } // namespace clang
@@ -109,9 +132,13 @@ unsigned LineTableInfo::getLineTableFilenameID(const char *Ptr, unsigned Len) {
 /// AddLineNote - Add a line note to the line table that indicates that there
 /// is a #line at the specified FID/Offset location which changes the presumed
 /// location to LineNo/FilenameID.
-void LineTableInfo::AddLineNote(FileID FID, unsigned Offset,
+void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
                                 unsigned LineNo, int FilenameID) {
+  std::vector<LineEntry> &Entries = LineEntries[FID];
   
+  assert((Entries.empty() || Entries.back().FileOffset < Offset) &&
+         "Adding line entries out of order!");
+  Entries.push_back(LineEntry::get(Offset, LineNo, FilenameID));
 }
 
 
@@ -139,13 +166,13 @@ void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
   
   if (LineTable == 0)
     LineTable = new LineTableInfo();
-  LineTable->AddLineNote(LocInfo.first, LocInfo.second, LineNo, FilenameID);
+  LineTable->AddLineNote(LocInfo.first.ID, LocInfo.second, LineNo, FilenameID);
 }
 
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Private 'Create' methods.
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 SourceManager::~SourceManager() {
   delete LineTable;
@@ -261,9 +288,9 @@ SourceManager::getBufferData(FileID FID) const {
 }
 
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // SourceLocation manipulation methods.
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 /// getFileIDSlow - Return the FileID for a SourceLocation.  This is a very hot
 /// method that is used for all SourceManager queries that start with a
@@ -755,7 +782,7 @@ void SourceManager::Emit(llvm::Serializer& S) const {
 }
 
 SourceManager*
-SourceManager::CreateAndRegister(llvm::Deserializer& D, FileManager& FMgr){
+SourceManager::CreateAndRegister(llvm::Deserializer &D, FileManager &FMgr) {
   SourceManager *M = new SourceManager();
   D.RegisterPtr(M);
   
