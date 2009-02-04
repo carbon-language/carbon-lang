@@ -735,6 +735,10 @@ AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],
                [Define if dlopen() is available on this platform.]),
                AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
+dnl libffi is optional; used to call external functions from the interpreter
+AC_CHECK_LIB(ffi,ffi_call,[have_libffi=1],
+             AC_MSG_WARN([libffi not found - disabling external calls from interpreter]))
+
 dnl mallinfo is optional; the code can compile (minus features) without it
 AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],
                [Define if mallinfo() is available on this platform.]))
@@ -791,11 +795,16 @@ AC_CHECK_HEADERS([sys/mman.h sys/param.h sys/resource.h sys/time.h])
 AC_CHECK_HEADERS([sys/types.h malloc/malloc.h mach/mach.h])
 if test "$ENABLE_THREADS" -eq 1 ; then
   AC_CHECK_HEADERS(pthread.h,
-                  AC_SUBST(HAVE_PTHREAD, 1),
-		   AC_SUBST(HAVE_PTHREAD, 0))
+                   AC_SUBST(HAVE_PTHREAD, 1),
+                   AC_SUBST(HAVE_PTHREAD, 0))
 else
   AC_SUBST(HAVE_PTHREAD, 0)
 fi
+
+dnl Once we know we have libffi, try to find ffi.h.
+if test -n "$have_libffi" ; then
+  AC_CHECK_HEADERS([ffi.h ffi/ffi.h], [AC_SUBST(HAVE_FFI, 1)])
+fi  
 
 dnl===-----------------------------------------------------------------------===
 dnl===
@@ -954,7 +963,7 @@ AC_DEFINE_UNQUOTED(LLVM_MANDIR, "$LLVM_MANDIR",
 AC_DEFINE_UNQUOTED(LLVM_CONFIGTIME, "$LLVM_CONFIGTIME",
                    [Time at which LLVM was configured])
 AC_DEFINE_UNQUOTED(LLVM_HOSTTRIPLE, "$host",
-	 	   [Host triple we were built on])
+                   [Host triple we were built on])
 
 # Determine which bindings to build.
 if test "$BINDINGS_TO_BUILD" = auto ; then
