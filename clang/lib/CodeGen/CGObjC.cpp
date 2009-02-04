@@ -477,7 +477,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
                                 getContext().getObjCIdType()));
   // FIXME: We shouldn't need to get the function info here, the
   // runtime already should have computed it to build the function.
-  EmitCall(CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args), 
+  EmitCall(CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args2), 
            EnumerationMutationFn, Args2);
   
   EmitBlock(WasNotMutated);
