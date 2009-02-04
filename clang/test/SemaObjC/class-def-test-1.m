@@ -24,3 +24,10 @@ typedef int OBJECT; // expected-note {{previous definition is here}}  \
 
 @interface INTF3 : PROTO @end // expected-error {{cannot find interface declaration for 'PROTO', superclass of 'INTF3'}}
 
+// Make sure we allow the following (for GCC compatibility).
+@interface NSObject @end
+typedef NSObject TD_NSObject;
+@interface XCElementUnit : TD_NSObject {}
+@end
+
+

@@ -105,26 +105,41 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   }
   
   if (SuperName) {
-    ObjCInterfaceDecl* SuperClassEntry = 0;
     // Check if a different kind of symbol declared in this scope.
     PrevDecl = LookupName(TUScope, SuperName, LookupOrdinaryName);
-    if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
-      Diag(SuperLoc, diag::err_redefinition_different_kind) << SuperName;
-      Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-    }
-    else {
-      // Check that super class is previously defined
-      SuperClassEntry = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
 
-      if (!SuperClassEntry)
+    ObjCInterfaceDecl *SuperClassDecl = 
+                                  dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
+    if (PrevDecl && SuperClassDecl == 0) {
+      // The previous declaration was not a class decl. Check if we have a
+      // typedef. If we do, get the underlying class type.
+      if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(PrevDecl)) {
+        QualType T = TDecl->getUnderlyingType();
+        if (T->isObjCInterfaceType()) {
+          if (NamedDecl *IDecl = T->getAsObjCInterfaceType()->getDecl())
+            SuperClassDecl = dyn_cast<ObjCInterfaceDecl>(IDecl);
+        }
+      }
+      // This handles the following case:
+      //
+      // typedef int SuperClass;
+      // @interface MyClass : SuperClass {} @end
+      //
+      if (!SuperClassDecl) {
+        Diag(SuperLoc, diag::err_redefinition_different_kind) << SuperName;
+        Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+      }
+    }
+    if (!dyn_cast_or_null<TypedefDecl>(PrevDecl)) {
+      if (!SuperClassDecl)
         Diag(SuperLoc, diag::err_undef_superclass)
           << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
-      else if (SuperClassEntry->isForwardDecl())
+      else if (SuperClassDecl->isForwardDecl())
         Diag(SuperLoc, diag::err_undef_superclass)
-          << SuperClassEntry->getDeclName() << ClassName
+          << SuperClassDecl->getDeclName() << ClassName
           << SourceRange(AtInterfaceLoc, ClassLoc);
     }
-    IDecl->setSuperClass(SuperClassEntry);
+    IDecl->setSuperClass(SuperClassDecl);
     IDecl->setSuperClassLoc(SuperLoc);
     IDecl->setLocEnd(SuperLoc);
   } else { // we have a root class.
