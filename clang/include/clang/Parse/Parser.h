@@ -898,6 +898,7 @@ private:
 
 
   TypeTy *ParseTypeName();
+  void ParseBlockId();
   AttributeList *ParseAttributes();
   void FuzzyParseMicrosoftDeclSpec();
   void ParseTypeofSpecifier(DeclSpec &DS);

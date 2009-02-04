@@ -731,8 +731,8 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       CurBlock->ReturnType = RetValExp->getType().getTypePtr();
     } else
       CurBlock->ReturnType = Context.VoidTy.getTypePtr();
-    return Owned(new ReturnStmt(ReturnLoc, RetValExp));
   }
+  QualType FnRetType = QualType(CurBlock->ReturnType, 0);
 
   // Otherwise, verify that this result type matches the previous one.  We are
   // pickier with blocks than for normal functions because we don't have GCC
@@ -749,21 +749,22 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   if (!RetValExp)
     return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
 
-  // we have a non-void block with an expression, continue checking
-  QualType RetValType = RetValExp->getType();
+  if (!FnRetType->isDependentType() && !RetValExp->isTypeDependent()) {
+    // we have a non-void block with an expression, continue checking
+    QualType RetValType = RetValExp->getType();
 
-  // For now, restrict multiple return statements in a block to have 
-  // strict compatible types only.
-  QualType BlockQT = QualType(CurBlock->ReturnType, 0);
-  if (Context.getCanonicalType(BlockQT).getTypePtr() 
-      != Context.getCanonicalType(RetValType).getTypePtr()) {
-    // FIXME: non-localizable string in diagnostic
-    DiagnoseAssignmentResult(Incompatible, ReturnLoc, BlockQT,
-                             RetValType, RetValExp, "returning");
-    return StmtError();
+    // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
+    // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
+    // function return.
+
+    // In C++ the return statement is handled via a copy initialization.
+    // the C version of which boils down to CheckSingleAssignmentConstraints.
+    // FIXME: Leaks RetValExp.
+    if (PerformCopyInitialization(RetValExp, FnRetType, "returning"))
+      return StmtError();
+
+    if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
   }
-
-  if (RetValExp) CheckReturnStackAddr(RetValExp, BlockQT, ReturnLoc);
 
   return Owned(new ReturnStmt(ReturnLoc, RetValExp));
 }

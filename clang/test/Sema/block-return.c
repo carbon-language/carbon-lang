@@ -3,24 +3,23 @@
 typedef void (^CL)(void);
 
 CL foo() {
-
-	short y;
-
+  short y;
   short (^add1)(void) = ^{ return y+1; }; // expected-warning {{incompatible block pointer types initializing 'int (^)(void)', expected 'short (^)(void)'}}
 
-	CL X = ^{ 
-    if (2) 
-      return; 
+  CL X = ^{
+    if (2)
+      return;
     return 1;  // expected-error {{void block should not return a value}}
   };
-	int (^Y) (void)  = ^{ 
+
+  int (^Y) (void)  = ^{
     if (3)
       return 1;
     else
       return; // expected-error {{non-void block should return a value}}
   };
 
-	char *(^Z)(void) = ^{ 
+  char *(^Z)(void) = ^{
     if (3)
       return "";
     else
@@ -28,20 +27,20 @@ CL foo() {
   };
 
   double (^A)(void) = ^ { // expected-warning {{incompatible block pointer types initializing 'float (^)(void)', expected 'double (^)(void)'}}
-    if (1)	
-      return (float)1.0; 
+    if (1)
+      return (float)1.0;
     else
       if (2)
-       return (double)2.0; // expected-error {{incompatible type returning 'double', expected 'float'}}
-    return 1; // expected-error {{incompatible type returning 'int', expected 'float'}}
+	return (double)2.0;
+    return 1;
   };
-  
-  char *(^B)(void) = ^{ 
+  char *(^B)(void) = ^{
     if (3)
       return "";
     else
-      return 2; // expected-error {{incompatible type returning 'int', expected 'char *'}}
+      return 2; // expected-warning {{incompatible integer to pointer conversion returning 'int', expected 'char *'}}
   };
+
   return ^{ return 1; }; // expected-warning {{incompatible block pointer types returning 'int (^)(void)', expected 'CL'}} expected-error {{returning block that lives on the local stack}}
 }
 

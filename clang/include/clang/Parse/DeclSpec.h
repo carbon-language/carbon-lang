@@ -695,7 +695,8 @@ public:
     ForContext,          // Declaration within first part of a for loop.
     ConditionContext,    // Condition declaration in a C++ if/switch/while/for.
     TemplateParamContext,// Within a template parameter list.
-    CXXCatchContext      // C++ catch exception-declaration
+    CXXCatchContext,     // C++ catch exception-declaration
+    BlockLiteralContext  // Block literal declarator.
   };
 
   /// DeclaratorKind - The kind of declarator this represents.
@@ -813,14 +814,15 @@ public:
   /// parameter lists.
   bool mayOmitIdentifier() const {
     return Context == TypeNameContext || Context == PrototypeContext ||
-           Context == TemplateParamContext || Context == CXXCatchContext;
+           Context == TemplateParamContext || Context == CXXCatchContext ||
+           Context == BlockLiteralContext;
   }
 
   /// mayHaveIdentifier - Return true if the identifier is either optional or
   /// required.  This is true for normal declarators and prototypes, but not
   /// typenames.
   bool mayHaveIdentifier() const {
-    return Context != TypeNameContext;
+    return Context != TypeNameContext && Context != BlockLiteralContext;
   }
 
   /// mayBeFollowedByCXXDirectInit - Return true if the declarator can be

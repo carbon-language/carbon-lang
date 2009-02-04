@@ -1211,11 +1211,29 @@ bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs) {
   }
 }
 
+/// ParseBlockId - Parse a block-id, which roughly looks like int (int x).
+///
+/// [clang] block-id:
+/// [clang]   specifier-qualifier-list block-declarator
+///
+void Parser::ParseBlockId() {
+  // Parse the specifier-qualifier-list piece.
+  DeclSpec DS;
+  ParseSpecifierQualifierList(DS);
+
+  // Parse the block-declarator.
+  Declarator DeclaratorInfo(DS, Declarator::BlockLiteralContext);
+  ParseDeclarator(DeclaratorInfo);
+  // Inform sema that we are starting a block.
+  Actions.ActOnBlockArguments(DeclaratorInfo, CurScope);
+}
+
 /// ParseBlockLiteralExpression - Parse a block literal, which roughly looks
 /// like ^(int x){ return x+1; }
 ///
 ///         block-literal:
 /// [clang]   '^' block-args[opt] compound-statement
+/// [clang]   '^' block-id compound-statement
 /// [clang] block-args:
 /// [clang]   '(' parameter-list ')'
 ///
@@ -1235,7 +1253,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
 
   // Parse the return type if present.
   DeclSpec DS;
-  Declarator ParamInfo(DS, Declarator::PrototypeContext);
+  Declarator ParamInfo(DS, Declarator::BlockLiteralContext);
 
   // If this block has arguments, parse them.  There is no ambiguity here with
   // the expression case, because the expression case requires a parameter list.
@@ -1244,20 +1262,24 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     // Parse the pieces after the identifier as if we had "int(...)".
     ParamInfo.SetIdentifier(0, CaretLoc);
     if (ParamInfo.getInvalidType()) {
-      // If there was an error parsing the arguments, they may have tried to use
-      // ^(x+y) which requires an argument list.  Just skip the whole block
-      // literal.
+      // If there was an error parsing the arguments, they may have
+      // tried to use ^(x+y) which requires an argument list.  Just
+      // skip the whole block literal.
       return ExprError();
     }
+    // Inform sema that we are starting a block.
+    Actions.ActOnBlockArguments(ParamInfo, CurScope);
+  } else if (! Tok.is(tok::l_brace)) {
+    ParseBlockId();
   } else {
     // Otherwise, pretend we saw (void).
     ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false,
                                                        0, 0, 0, CaretLoc,
                                                        ParamInfo));
+    // Inform sema that we are starting a block.
+    Actions.ActOnBlockArguments(ParamInfo, CurScope);
   }
 
-  // Inform sema that we are starting a block.
-  Actions.ActOnBlockArguments(ParamInfo);
 
   OwningExprResult Result(Actions, true);
   if (Tok.is(tok::l_brace)) {

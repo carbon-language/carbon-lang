@@ -772,7 +772,7 @@ public:
 
   /// ActOnBlockArguments - This callback allows processing of block arguments.
   /// If there are no arguments, this is still invoked.
-  virtual void ActOnBlockArguments(Declarator &ParamInfo) {}
+  virtual void ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {}
   
   /// ActOnBlockError - If there is an error parsing a block, this callback
   /// is invoked to pop the information about the block from the action impl.

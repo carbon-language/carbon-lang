@@ -251,9 +251,20 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
   return Result;
 }
 
-/// GetTypeForDeclarator - Convert the type for the specified declarator to Type
-/// instances. Skip the outermost Skip type objects.
+/// GetTypeForDeclarator - Convert the type for the specified
+/// declarator to Type instances. Skip the outermost Skip type
+/// objects.
 QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
+  bool OmittedReturnType = false;
+
+  if (D.getContext() == Declarator::BlockLiteralContext
+      && Skip == 0
+      && !D.getDeclSpec().hasTypeSpecifier()
+      && (D.getNumTypeObjects() == 0
+          || (D.getNumTypeObjects() == 1
+              && D.getTypeObject(0).Kind == DeclaratorChunk::Function)))
+    OmittedReturnType = true;
+
   // long long is a C99 feature.
   if (!getLangOptions().C99 && !getLangOptions().CPlusPlus0x &&
       D.getDeclSpec().getTypeSpecWidth() == DeclSpec::TSW_longlong)
@@ -265,9 +276,16 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
   switch (D.getKind()) {
   case Declarator::DK_Abstract:
   case Declarator::DK_Normal:
-  case Declarator::DK_Operator:
-    T = ConvertDeclSpecToType(D.getDeclSpec());
+  case Declarator::DK_Operator: {
+    const DeclSpec& DS = D.getDeclSpec();
+    if (OmittedReturnType)
+      // We default to a dependent type initially.  Can be modified by
+      // the first return statement.
+      T = Context.DependentTy;
+    else
+      T = ConvertDeclSpecToType(DS);
     break;
+  }
 
   case Declarator::DK_Constructor:
   case Declarator::DK_Destructor:
@@ -279,8 +297,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
     break;
   }
 
-  // Walk the DeclTypeInfo, building the recursive type as we go.  DeclTypeInfos
-  // are ordered from the identifier out, which is opposite of what we want :).
+  // Walk the DeclTypeInfo, building the recursive type as we go.
+  // DeclTypeInfos are ordered from the identifier out, which is
+  // opposite of what we want :).
   for (unsigned i = Skip, e = D.getNumTypeObjects(); i != e; ++i) {
     DeclaratorChunk &DeclType = D.getTypeObject(e-i-1+Skip);
     switch (DeclType.Kind) {

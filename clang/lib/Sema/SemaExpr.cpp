@@ -4179,12 +4179,36 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   PushDeclContext(BlockScope, BSI->TheDecl);
 }
 
-void Sema::ActOnBlockArguments(Declarator &ParamInfo) {
+void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
+  assert(ParamInfo.getIdentifier() == 0 && "block-id should have no identifier!");
+
+  if (ParamInfo.getNumTypeObjects() == 0
+      || ParamInfo.getTypeObject(0).Kind != DeclaratorChunk::Function) {
+    QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
+
+    // The type is entirely optional as well, if none, use DependentTy.
+    if (T.isNull())
+      T = Context.DependentTy;
+
+    // The parameter list is optional, if there was none, assume ().
+    if (!T->isFunctionType())
+      T = Context.getFunctionType(T, NULL, 0, 0, 0);
+
+    CurBlock->hasPrototype = true;
+    CurBlock->isVariadic = false;
+    Type *RetTy = T.getTypePtr()->getAsFunctionType()->getResultType()
+      .getTypePtr();
+
+    if (!RetTy->isDependentType())
+      CurBlock->ReturnType = RetTy;
+    return;
+  }
+
   // Analyze arguments to block.
   assert(ParamInfo.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
   DeclaratorChunk::FunctionTypeInfo &FTI = ParamInfo.getTypeObject(0).Fun;
-  
+ 
   CurBlock->hasPrototype = FTI.hasPrototype;
   CurBlock->isVariadic = true;
   
@@ -4200,6 +4224,13 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo) {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
       CurBlock->Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
     CurBlock->isVariadic = FTI.isVariadic;
+    QualType T = GetTypeForDeclarator (ParamInfo, CurScope);
+
+    Type* RetTy = T.getTypePtr()->getAsFunctionType()->getResultType()
+      .getTypePtr();
+
+    if (!RetTy->isDependentType())
+      CurBlock->ReturnType = RetTy;
   }
   CurBlock->TheDecl->setArgs(&CurBlock->Params[0], CurBlock->Params.size());
   

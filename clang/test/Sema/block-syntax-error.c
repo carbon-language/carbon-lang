@@ -3,7 +3,5 @@
 void (^noop)(void);
 
 void somefunction() {
-  noop = ^int *{}; // expected-error {{expected expression}}
-
-  noop = ^noop;	// expected-error {{expected expression}}
+  noop = ^noop;	// expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}}
 }
