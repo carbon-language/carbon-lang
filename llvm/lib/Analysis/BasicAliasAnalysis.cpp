@@ -256,6 +256,22 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
 //
 AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  // If the function only accesses its arguments, it suffices to check that
+  // P does not alias any of those arguments.
+  if (AliasAnalysis::getModRefBehavior(CS, 0) ==
+      AliasAnalysis::AccessesArguments) {
+    bool doesAlias = false;
+    for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
+         AI != AE; ++AI)
+      if (alias(*AI, ~0U, P, Size) != NoAlias) {
+        doesAlias = true;
+        break;
+      }
+    
+    if (!doesAlias)
+      return NoModRef;
+  }
+  
   if (!isa<Constant>(P)) {
     const Value *Object = P->getUnderlyingObject();
     

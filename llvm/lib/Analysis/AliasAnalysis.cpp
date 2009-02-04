@@ -150,6 +150,27 @@ AliasAnalysis::getModRefBehavior(CallSite CS,
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(Function *F,
                                  std::vector<PointerAccessInfo> *Info) {
+  if (F->isIntrinsic()) {
+    switch (F->getIntrinsicID()) {
+      case Intrinsic::atomic_cmp_swap:
+      case Intrinsic::atomic_load_add:
+      case Intrinsic::atomic_load_and:
+      case Intrinsic::atomic_load_max:
+      case Intrinsic::atomic_load_min:
+      case Intrinsic::atomic_load_nand:
+      case Intrinsic::atomic_load_or:
+      case Intrinsic::atomic_load_sub:
+      case Intrinsic::atomic_load_umax:
+      case Intrinsic::atomic_load_umin:
+      case Intrinsic::atomic_load_xor:
+      case Intrinsic::atomic_swap:
+        // CAS and related intrinsics only access their arguments.
+        return AliasAnalysis::AccessesArguments;
+      default:
+        break;
+    }
+  }
+
   if (F->doesNotAccessMemory())
     // Can't do better than this.
     return DoesNotAccessMemory;
