@@ -171,25 +171,6 @@ Constant *Module::getOrInsertFunction(const std::string &Name,
   return F;  
 }
 
-Constant *Module::getOrInsertTargetIntrinsic(const std::string &Name,
-                                             const FunctionType *Ty,
-                                             AttrListPtr AttributeList) {
-  ValueSymbolTable &SymTab = getValueSymbolTable();
-
-  // See if we have a definition for the specified function already.
-  GlobalValue *F = dyn_cast_or_null<GlobalValue>(SymTab.lookup(Name));
-  if (F == 0) {
-    // Nope, add it
-    Function *New = Function::Create(Ty, GlobalVariable::ExternalLinkage, Name);
-    New->setAttributes(AttributeList);
-    FunctionList.push_back(New);
-    return New; // Return the new prototype.
-  }
-
-  // Otherwise, we just found the existing function or a prototype.
-  return F;  
-}
-
 Constant *Module::getOrInsertFunction(const std::string &Name,
                                       const FunctionType *Ty) {
   AttrListPtr AttributeList = AttrListPtr::get((AttributeWithIndex *)0, 0);

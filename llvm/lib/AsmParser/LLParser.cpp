@@ -2949,6 +2949,15 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   Value *Callee;
   if (ConvertValIDToValue(PFTy, CalleeID, Callee, PFS)) return true;
   
+  // Check for call to invalid intrinsic to avoid crashing later.
+  if (Function *F = dyn_cast<Function>(Callee)) {
+    if (F->hasName() && F->getNameLen() >= 5 &&
+        !strncmp(F->getValueName()->getKeyData(), "llvm.", 5) &&
+        !F->getIntrinsicID(true))
+      return Error(CallLoc, "Call to invalid LLVM intrinsic function '" +
+                   F->getNameStr() + "'");
+  }
+  
   // FIXME: In LLVM 3.0, stop accepting zext, sext and inreg as optional
   // function attributes.
   unsigned ObsoleteFuncAttrs = Attribute::ZExt|Attribute::SExt|Attribute::InReg;

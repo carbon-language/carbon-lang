@@ -129,7 +129,7 @@ public:
   /// The particular intrinsic functions which correspond to this value are
   /// defined in llvm/Intrinsics.h.
   ///
-  unsigned getIntrinsicID() const;
+  unsigned getIntrinsicID(bool noAssert = false) const;
   bool isIntrinsic() const { return getIntrinsicID() != 0; }
 
   /// getCallingConv()/setCallingConv(uint) - These method get and set the

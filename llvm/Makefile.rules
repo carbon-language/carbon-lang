@@ -1346,11 +1346,6 @@ $(ObjDir)/%GenCallingConv.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) calling convention information with tblgen"
 	$(Verb) $(TableGen) -gen-callingconv -o $(call SYSPATH, $@) $<
 
-$(TARGET:%=$(ObjDir)/%GenIntrinsics.inc.tmp): \
-$(ObjDir)/%GenIntrinsics.inc.tmp : Intrinsics%.td $(ObjDir)/.dir
-	$(Echo) "Building $(<F) calling convention information with tblgen"
-	$(Verb) $(TableGen) -gen-tgt-intrinsic -o $(call SYSPATH, $@) $<
-
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)
 

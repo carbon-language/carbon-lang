@@ -63,9 +63,6 @@ namespace Intrinsic {
   /// intrinsic.
   Function *getDeclaration(Module *M, ID id, const Type **Tys = 0, 
                            unsigned numTys = 0);
-                           
-  /// Map a GCC builtin name to an intrinsic ID.
-  ID getIntrinsicForGCCBuiltin(const char *Prefix, const char *BuiltinName);
   
 } // End Intrinsic namespace
 

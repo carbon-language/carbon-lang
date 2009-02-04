@@ -80,8 +80,7 @@ namespace llvm {
 
   /// LoadIntrinsics - Read all of the intrinsics defined in the specified
   /// .td file.
-  std::vector<CodeGenIntrinsic> LoadIntrinsics(const RecordKeeper &RC,
-                                               bool TargetOnly);
+  std::vector<CodeGenIntrinsic> LoadIntrinsics(const RecordKeeper &RC);
 }
 
 #endif
