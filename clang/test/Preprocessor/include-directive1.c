@@ -1,4 +1,3 @@
-
 // RUN: clang -E %s -fno-caret-diagnostics 2>&1 >/dev/null | grep 'file successfully included' | count 3
 
 // XX expands to nothing.
@@ -12,8 +11,4 @@
 
 // normal include
 #include "file_to_include.h"
-
-// Expand and paste angled strings.
-#  define HEADER <file_to_include.h>
-#  include HEADER
 
