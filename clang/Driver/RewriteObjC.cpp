@@ -766,7 +766,8 @@ void RewriteObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
   SourceLocation LocStart = Method->getLocStart();
   SourceLocation LocEnd = Method->getLocEnd();
     
-  if (SM->getLineNumber(LocEnd) > SM->getLineNumber(LocStart)) {
+  if (SM->getInstantiationLineNumber(LocEnd) >
+      SM->getInstantiationLineNumber(LocStart)) {
     InsertText(LocStart, "#if 0\n", 6);
     ReplaceText(LocEnd, 1, ";\n#endif\n", 9);
   } else {

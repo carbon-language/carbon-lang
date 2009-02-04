@@ -461,10 +461,10 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
   SourceManager& SM = R.getSourceMgr();
   
   SourceLocation InstantiationStart = SM.getInstantiationLoc(Range.getBegin());
-  unsigned StartLineNo = SM.getLineNumber(InstantiationStart);
+  unsigned StartLineNo = SM.getInstantiationLineNumber(InstantiationStart);
   
   SourceLocation InstantiationEnd = SM.getInstantiationLoc(Range.getEnd());
-  unsigned EndLineNo = SM.getLineNumber(InstantiationEnd);
+  unsigned EndLineNo = SM.getInstantiationLineNumber(InstantiationEnd);
   
   if (EndLineNo < StartLineNo)
     return;

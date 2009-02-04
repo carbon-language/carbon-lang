@@ -45,11 +45,11 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   SourceLocation Begin = SM.getInstantiationLoc(R.getBegin());
   SourceLocation End = SM.getInstantiationLoc(R.getEnd());
   
-  unsigned StartLineNo = SM.getLineNumber(Begin);
+  unsigned StartLineNo = SM.getInstantiationLineNumber(Begin);
   if (StartLineNo > LineNo || SM.getFileID(Begin) != FID)
     return;  // No intersection.
   
-  unsigned EndLineNo = SM.getLineNumber(End);
+  unsigned EndLineNo = SM.getInstantiationLineNumber(End);
   if (EndLineNo < LineNo || SM.getFileID(End) != FID)
     return;  // No intersection.
   
@@ -167,7 +167,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
     // Highlight all of the characters covered by Ranges with ~ characters.
     for (unsigned i = 0; i != Info.getNumRanges(); ++i)
-      HighlightRange(Info.getRange(i), ILoc.getManager(), ILoc.getLineNumber(),
+      HighlightRange(Info.getRange(i), ILoc.getManager(),
+                     ILoc.getInstantiationLineNumber(),
                      ILoc.getFileID(), CaretLine, SourceLine);
     
     // Next, insert the caret itself.

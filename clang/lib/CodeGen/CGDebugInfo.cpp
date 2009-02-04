@@ -455,7 +455,8 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
   // Don't bother if things are the same as last time.
   SourceManager &SM = M->getContext().getSourceManager();
   if (CurLoc == PrevLoc 
-       || (SM.getLineNumber(CurLoc) == SM.getLineNumber(PrevLoc)
+       || (SM.getInstantiationLineNumber(CurLoc) ==
+           SM.getInstantiationLineNumber(PrevLoc)
            && SM.isFromSameFile(CurLoc, PrevLoc)))
     return;
 

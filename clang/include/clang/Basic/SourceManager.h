@@ -490,14 +490,10 @@ public:
   /// for the position indicated.  This requires building and caching a table of
   /// line offsets for the MemoryBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
-  unsigned getLineNumber(SourceLocation Loc) const;
+  unsigned getLineNumber(FileID FID, unsigned FilePos) const;
   
-  unsigned getInstantiationLineNumber(SourceLocation Loc) const {
-    return getLineNumber(getInstantiationLoc(Loc));
-  }
-  unsigned getSpellingLineNumber(SourceLocation Loc) const {
-    return getLineNumber(getSpellingLoc(Loc));
-  }
+  unsigned getInstantiationLineNumber(SourceLocation Loc) const;
+  unsigned getSpellingLineNumber(SourceLocation Loc) const;
   
   // FIXME: This should handle #line.
   SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const {

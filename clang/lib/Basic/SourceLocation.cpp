@@ -78,11 +78,6 @@ FullSourceLoc FullSourceLoc::getSpellingLoc() const {
   return FullSourceLoc(SrcMgr->getSpellingLoc(*this), *SrcMgr);
 }
 
-unsigned FullSourceLoc::getLineNumber() const {
-  assert(isValid());
-  return SrcMgr->getLineNumber(*this);
-}
-
 unsigned FullSourceLoc::getInstantiationLineNumber() const {
   assert(isValid());
   return SrcMgr->getInstantiationLineNumber(*this);

@@ -162,7 +162,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   }
   
   Loc = SourceMgr.getInstantiationLoc(Loc);
-  CurLine = SourceMgr.getLineNumber(Loc);
+  CurLine = SourceMgr.getInstantiationLineNumber(Loc);
 
   if (DisableLineMarkers) return;
 

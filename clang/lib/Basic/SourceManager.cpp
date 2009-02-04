@@ -474,11 +474,13 @@ unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos) const {
 }
 
 unsigned SourceManager::getSpellingColumnNumber(SourceLocation Loc) const {
+  if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
   return getColumnNumber(LocInfo.first, LocInfo.second);
 }
 
 unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc) const {
+  if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
   return getColumnNumber(LocInfo.first, LocInfo.second);
 }
@@ -535,17 +537,12 @@ static void ComputeLineNumbers(ContentCache* FI, llvm::BumpPtrAllocator &Alloc){
 /// for the position indicated.  This requires building and caching a table of
 /// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
-unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
-  if (Loc.isInvalid()) return 0;
-  assert(Loc.isFileID() && "Don't know what part of instantiation loc to get");
-
-  std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
-  
+unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
   ContentCache *Content;
-  if (LastLineNoFileIDQuery == LocInfo.first)
+  if (LastLineNoFileIDQuery == FID)
     Content = LastLineNoContentCache;
   else
-    Content = const_cast<ContentCache*>(getSLocEntry(LocInfo.first)
+    Content = const_cast<ContentCache*>(getSLocEntry(FID)
                                         .getFile().getContentCache());
   
   // If this is the first use of line information for this buffer, compute the
@@ -559,12 +556,12 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
   unsigned *SourceLineCacheStart = SourceLineCache;
   unsigned *SourceLineCacheEnd = SourceLineCache + Content->NumLines;
   
-  unsigned QueriedFilePos = LocInfo.second+1;
+  unsigned QueriedFilePos = FilePos+1;
 
   // If the previous query was to the same file, we know both the file pos from
   // that query and the line number returned.  This allows us to narrow the
   // search space from the entire file to something near the match.
-  if (LastLineNoFileIDQuery == LocInfo.first) {
+  if (LastLineNoFileIDQuery == FID) {
     if (QueriedFilePos >= LastLineNoFilePos) {
       SourceLineCache = SourceLineCache+LastLineNoResult-1;
       
@@ -618,12 +615,24 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) const {
     = std::lower_bound(SourceLineCache, SourceLineCacheEnd, QueriedFilePos);
   unsigned LineNo = Pos-SourceLineCacheStart;
   
-  LastLineNoFileIDQuery = LocInfo.first;
+  LastLineNoFileIDQuery = FID;
   LastLineNoContentCache = Content;
   LastLineNoFilePos = QueriedFilePos;
   LastLineNoResult = LineNo;
   return LineNo;
 }
+
+unsigned SourceManager::getInstantiationLineNumber(SourceLocation Loc) const {
+  if (Loc.isInvalid()) return 0;
+  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  return getLineNumber(LocInfo.first, LocInfo.second);
+}
+unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc) const {
+  if (Loc.isInvalid()) return 0;
+  std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
+  return getLineNumber(LocInfo.first, LocInfo.second);
+}
+
 
 /// getPresumedLoc - This method returns the "presumed" location of a
 /// SourceLocation specifies.  A "presumed location" can be modified by #line
@@ -637,11 +646,8 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   
   // Presumed locations are always for instantiation points.
   std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
-  Loc = getInstantiationLoc(Loc);
-
-  // FIXME: Could just decompose Loc once!
   
-  const SrcMgr::FileInfo &FI = getSLocEntry(getFileID(Loc)).getFile();
+  const SrcMgr::FileInfo &FI = getSLocEntry(LocInfo.first).getFile();
   const SrcMgr::ContentCache *C = FI.getContentCache();
 
   // To get the source name, first consult the FileEntry (if one exists) before
@@ -649,7 +655,8 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   const char *Filename = 
     C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
   
-  return PresumedLoc(Filename, getLineNumber(Loc),
+  return PresumedLoc(Filename,
+                     getLineNumber(LocInfo.first, LocInfo.second),
                      getColumnNumber(LocInfo.first, LocInfo.second),
                      FI.getIncludeLoc());
 }
