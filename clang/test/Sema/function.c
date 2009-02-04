@@ -45,7 +45,7 @@ y(y) { return y; } // expected-warning{{parameter 'y' was not declared, defaulti
                    // expected-warning{{type specifier missing, defaults to 'int'}}
 
 
-// PR3137
+// PR3137, <rdar://problem/6127293>
 extern int g0_3137(void);
 void f0_3137() {
   int g0_3137(void);
