@@ -1430,14 +1430,24 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
   // Only allow this if the condition is a simple instruction that can be
   // executed unconditionally.  It must be in the same block as the branch, and
   // must be at the front of the block.
+  BasicBlock::iterator FrontIt = BB->front();
+  // Ignore dbg intrinsics.
+  while(isa<DbgInfoIntrinsic>(FrontIt))
+    ++FrontIt;
   if ((!isa<CmpInst>(Cond) && !isa<BinaryOperator>(Cond)) ||
-      Cond->getParent() != BB || &BB->front() != Cond || !Cond->hasOneUse())
+      Cond->getParent() != BB || &*FrontIt != Cond || !Cond->hasOneUse()) {
     return false;
+  }
   
   // Make sure the instruction after the condition is the cond branch.
   BasicBlock::iterator CondIt = Cond; ++CondIt;
-  if (&*CondIt != BI)
+  // Ingore dbg intrinsics.
+  while(isa<DbgInfoIntrinsic>(CondIt))
+    ++CondIt;
+  if (&*CondIt != BI) {
+    assert (!isa<DbgInfoIntrinsic>(CondIt) && "Hey do not forget debug info!");
     return false;
+  }
 
   // Cond is known to be a compare or binary operator.  Check to make sure that
   // neither operand is a potentially-trapping constant expression.
@@ -1867,6 +1877,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       BasicBlock::iterator BBI = BB->getFirstNonPHI();
 
       BasicBlock *Succ = BI->getSuccessor(0);
+      // Ignore dbg intrinsics.
+      while (isa<DbgInfoIntrinsic>(BBI))
+        ++BBI;
       if (BBI->isTerminator() &&  // Terminator is the only non-phi instruction!
           Succ != BB)             // Don't hurt infinite loops!
         if (TryToSimplifyUncondBranchFromEmptyBlock(BB, Succ))
@@ -1884,15 +1897,24 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         // This block must be empty, except for the setcond inst, if it exists.
         // Ignore dbg intrinsics.
         BasicBlock::iterator I = BB->begin();
+        // Ignore dbg intrinsics.
         while (isa<DbgInfoIntrinsic>(I))
-          I++;
-        if (&*I == BI ||
-            (&*I == cast<Instruction>(BI->getCondition()) &&
-             &*++I == BI))
+          ++I;
+        if (&*I == BI) {
           if (FoldValueComparisonIntoPredecessors(BI))
             return SimplifyCFG(BB) | true;
+        } else if (&*I == cast<Instruction>(BI->getCondition())){
+          ++I;
+          // Ignore dbg intrinsics.
+          while (isa<DbgInfoIntrinsic>(I))
+            ++I;
+          if(&*I == BI) {
+            if (FoldValueComparisonIntoPredecessors(BI))
+              return SimplifyCFG(BB) | true;
+          }
+        }
       }
-      
+
       // If this is a branch on a phi node in the current block, thread control
       // through this block if any PHI node entries are constants.
       if (PHINode *PN = dyn_cast<PHINode>(BI->getCondition()))
