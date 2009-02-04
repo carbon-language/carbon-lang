@@ -50,6 +50,11 @@ typedef int y;  // ok
 typedef int z;  // ok
 typedef int z;  // ok
 
+# 97     // doesn't change system headerness.
+
+typedef int z1;  // ok
+typedef int z1;  // ok
+
 # 42 "blonk.h"  // DOES change system headerness.
 
 typedef int w;  // expected-note {{previous definition is here}}
