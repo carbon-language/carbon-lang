@@ -1,4 +1,4 @@
 // RUN: clang -Eonly %s 
-#  define HEADER <stdlib.h>
+#  define HEADER <float.h>
 
 #  include HEADER
