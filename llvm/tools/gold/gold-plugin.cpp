@@ -23,6 +23,7 @@
 #include <cstring>
 #include <list>
 #include <vector>
+#include <cerrno>
 
 using namespace llvm;
 
@@ -44,6 +45,7 @@ namespace {
   struct claimed_file {
     lto_module_t M;
     void *handle;
+    void *buf;
     std::vector<ld_plugin_symbol> syms;
   };
 
@@ -155,19 +157,49 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 /// with add_symbol if possible.
 ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                                  int *claimed) {
+  void *buf = NULL;
+  printf("%s,%d,%d\n",file->name, file->offset, file->filesize);
   // If set, this means gold found IR in an ELF section. LLVM doesn't wrap its
-  // IR in ELF, so we know it's not us.
-  if (file->offset)
-    return LDPS_OK;
-
-  if (!lto_module_is_object_file(file->name))
+  // IR in ELF, so we know it's not us. But it can also be an .a file containing
+  // LLVM IR.
+  if (file->offset) {
+    if (lseek(file->fd, file->offset, SEEK_SET) == -1) {
+      (*message)(LDPL_ERROR, 
+                 "Failed to seek to archive member of %s at offset %d: %s\n", 
+                 file->name,
+                 file->offset, strerror(errno));
+      return LDPS_ERR;
+    }
+    buf = malloc(file->filesize);
+    if (!buf) {
+      (*message)(LDPL_ERROR, 
+                 "Failed to allocate buffer for archive member of size: %d\n", 
+                 file->filesize);
+      return LDPS_ERR;
+    }
+    if (read(file->fd, buf, file->filesize) != file->filesize) {
+      (*message)(LDPL_ERROR, 
+                 "Failed to read archive member of %s at offset %d: %s\n", 
+                 file->name,
+                 file->offset,           
+                 strerror(errno));
+      free(buf);
+      return LDPS_ERR;
+    }
+    if (!lto_module_is_object_file_in_memory(buf, file->filesize)) {
+      free(buf);
+      return LDPS_OK;
+    }
+  } else if (!lto_module_is_object_file(file->name))
     return LDPS_OK;
 
   *claimed = 1;
   Modules.resize(Modules.size() + 1);
   claimed_file &cf = Modules.back();
 
-  cf.M = lto_module_create(file->name);
+  cf.M = buf ?  lto_module_create_from_memory(buf, file->filesize) :
+                lto_module_create(file->name);
+  cf.buf = buf;
   if (!cf.M) {
     (*message)(LDPL_ERROR, "Failed to create LLVM module: %s",
                lto_get_error_message());
@@ -201,6 +233,7 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         break;
       default:
         (*message)(LDPL_ERROR, "Unknown scope attribute: %d", scope);
+        free(buf);
         return LDPS_ERR;
     }
 
@@ -220,6 +253,7 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         break;
       default:
         (*message)(LDPL_ERROR, "Unknown definition attribute: %d", definition);
+        free(buf);
         return LDPS_ERR;
     }
 
@@ -235,6 +269,7 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   if (!cf.syms.empty()) {
     if ((*add_symbols)(cf.handle, cf.syms.size(), &cf.syms[0]) != LDPS_OK) {
       (*message)(LDPL_ERROR, "Unable to add symbols!");
+      free(buf);
       return LDPS_ERR;
     }
   }
@@ -303,6 +338,10 @@ ld_plugin_status all_symbols_read_hook(void) {
   objFile->close();
 
   lto_codegen_dispose(cg);
+  for (std::list<claimed_file>::iterator I = Modules.begin(),
+       E = Modules.end(); I != E; ++I) {
+    free(I->buf);
+  }
 
   if ((*add_input_file)(const_cast<char*>(uniqueObjPath.c_str())) != LDPS_OK) {
     (*message)(LDPL_ERROR, "Unable to add .o file to the link.");
