@@ -44,7 +44,7 @@ private:
   llvm::Module &TheModule;
   const llvm::PointerType *SelectorTy;
   const llvm::PointerType *PtrToInt8Ty;
-  const llvm::Type *IMPTy;
+  const llvm::FunctionType *IMPTy;
   const llvm::PointerType *IdTy;
   const llvm::IntegerType *IntTy;
   const llvm::PointerType *PtrTy;
@@ -184,13 +184,8 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   PtrTy = PtrToInt8Ty;
  
   // Object type
-  llvm::PATypeHolder OpaqueObjTy = llvm::OpaqueType::get();
-  llvm::Type *OpaqueIdTy = llvm::PointerType::getUnqual(OpaqueObjTy);
-  llvm::Type *ObjectTy = llvm::StructType::get(OpaqueIdTy, NULL);
-  llvm::cast<llvm::OpaqueType>(OpaqueObjTy.get())->refineAbstractTypeTo(
-      ObjectTy);
-  ObjectTy = llvm::cast<llvm::StructType>(OpaqueObjTy.get());
-  IdTy = llvm::PointerType::getUnqual(ObjectTy);
+  IdTy = cast<llvm::PointerType>(
+		  CGM.getTypes().ConvertType(CGM.getContext().getObjCIdType()));
  
   // IMP type
   std::vector<const llvm::Type*> IMPArgs;
@@ -274,24 +269,32 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     llvm::Value *Receiver,
                                     bool IsClassMessage,
                                     const CallArgList &CallArgs) {
+  llvm::Value *cmd = GetSelector(CGF.Builder, Sel);
+
+  CallArgList ActualArgs;
+
+  ActualArgs.push_back(
+	  std::make_pair(RValue::get(CGF.Builder.CreateBitCast(Receiver, IdTy)), 
+	  CGF.getContext().getObjCIdType()));
+  ActualArgs.push_back(std::make_pair(RValue::get(cmd),
+                                      CGF.getContext().getObjCSelType()));
+  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
+
+  CodeGenTypes &Types = CGM.getTypes();
+  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
+  const llvm::FunctionType *impType = Types.GetFunctionType(FnInfo, false);
+
+
   const ObjCInterfaceDecl *SuperClass = Class->getSuperClass();
-  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(ResultType);
   // TODO: This should be cached, not looked up every time.
   llvm::Value *ReceiverClass = GetClass(CGF.Builder, SuperClass);
-  llvm::Value *cmd = GetSelector(CGF.Builder, Sel);
-  std::vector<const llvm::Type*> impArgTypes;
-  impArgTypes.push_back(Receiver->getType());
-  impArgTypes.push_back(SelectorTy);
-  
-  // Avoid an explicit cast on the IMP by getting a version that has the right
-  // return type.
-  llvm::FunctionType *impType = llvm::FunctionType::get(ReturnTy, impArgTypes,
-                                                        true);
+
+
   // Construct the structure used to look up the IMP
   llvm::StructType *ObjCSuperTy = llvm::StructType::get(Receiver->getType(),
       IdTy, NULL);
   llvm::Value *ObjCSuper = CGF.Builder.CreateAlloca(ObjCSuperTy);
-  // FIXME: volatility
+
   CGF.Builder.CreateStore(Receiver, CGF.Builder.CreateStructGEP(ObjCSuper, 0));
   CGF.Builder.CreateStore(ReceiverClass, CGF.Builder.CreateStructGEP(ObjCSuper, 1));
 
@@ -305,15 +308,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   llvm::Value *imp = CGF.Builder.CreateCall(lookupFunction, lookupArgs,
       lookupArgs+2);
 
-  // Call the method
-  CallArgList ActualArgs;
-  ActualArgs.push_back(std::make_pair(RValue::get(Receiver), 
-                                      CGF.getContext().getObjCIdType()));
-  ActualArgs.push_back(std::make_pair(RValue::get(cmd),
-                                      CGF.getContext().getObjCSelType()));
-  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  return CGF.EmitCall(CGM.getTypes().getFunctionInfo(ResultType, ActualArgs), 
-                      imp, ActualArgs);
+  return CGF.EmitCall(FnInfo, imp, ActualArgs);
 }
 
 /// Generate code for a message send expression.  
@@ -324,44 +319,27 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Receiver,
                                bool IsClassMessage,
                                const CallArgList &CallArgs) {
-  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(ResultType);
   llvm::Value *cmd = GetSelector(CGF.Builder, Sel);
+  CallArgList ActualArgs;
 
-  // Look up the method implementation.
-  std::vector<const llvm::Type*> impArgTypes;
-  const llvm::Type *RetTy;
-  //TODO: Revisit this when LLVM supports aggregate return types.
-  if (ReturnTy->isSingleValueType() && ReturnTy != llvm::Type::VoidTy) {
-    RetTy = ReturnTy;
-  } else {
-    // For struct returns allocate the space in the caller and pass it up to
-    // the sender.
-    RetTy = llvm::Type::VoidTy;
-    impArgTypes.push_back(llvm::PointerType::getUnqual(ReturnTy));
-  }
-  impArgTypes.push_back(Receiver->getType());
-  impArgTypes.push_back(SelectorTy);
-  
-  // Avoid an explicit cast on the IMP by getting a version that has the right
-  // return type.
-  llvm::FunctionType *impType = llvm::FunctionType::get(RetTy, impArgTypes,
-                                                        true);
-  
+  ActualArgs.push_back(
+	  std::make_pair(RValue::get(CGF.Builder.CreateBitCast(Receiver, IdTy)), 
+	  CGF.getContext().getObjCIdType()));
+  ActualArgs.push_back(std::make_pair(RValue::get(cmd),
+                                      CGF.getContext().getObjCSelType()));
+  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
+
+  CodeGenTypes &Types = CGM.getTypes();
+  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
+  const llvm::FunctionType *impType = Types.GetFunctionType(FnInfo, false);
+
   llvm::Constant *lookupFunction = 
      TheModule.getOrInsertFunction("objc_msg_lookup",
                                    llvm::PointerType::getUnqual(impType),
                                    Receiver->getType(), SelectorTy, NULL);
   llvm::Value *imp = CGF.Builder.CreateCall2(lookupFunction, Receiver, cmd);
 
-  // Call the method.
-  CallArgList ActualArgs;
-  ActualArgs.push_back(std::make_pair(RValue::get(Receiver), 
-                                      CGF.getContext().getObjCIdType()));
-  ActualArgs.push_back(std::make_pair(RValue::get(cmd),
-                                      CGF.getContext().getObjCSelType()));
-  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  return CGF.EmitCall(CGM.getTypes().getFunctionInfo(ResultType, ActualArgs), 
-                      imp, ActualArgs);
+  return CGF.EmitCall(FnInfo, imp, ActualArgs);
 }
 
 /// Generates a MethodList.  Used in construction of a objc_class and 
