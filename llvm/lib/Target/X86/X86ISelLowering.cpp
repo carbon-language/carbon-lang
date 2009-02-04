@@ -976,11 +976,11 @@ SDValue X86TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
     
     // Returns in ST0/ST1 are handled specially: these are pushed as operands to
     // the RET instruction and handled by the FP Stackifier.
-    if (RVLocs[i].getLocReg() == X86::ST0 ||
-        RVLocs[i].getLocReg() == X86::ST1) {
+    if (VA.getLocReg() == X86::ST0 ||
+        VA.getLocReg() == X86::ST1) {
       // If this is a copy from an xmm register to ST(0), use an FPExtend to
       // change the value to the FP stack register class.
-      if (isScalarFPTypeInSSEReg(RVLocs[i].getValVT()))
+      if (isScalarFPTypeInSSEReg(VA.getValVT()))
         ValToCopy = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f80, ValToCopy);
       RetOps.push_back(ValToCopy);
       // Don't emit a copytoreg.
@@ -1042,7 +1042,8 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
-    MVT CopyVT = RVLocs[i].getValVT();
+    CCValAssign &VA = RVLocs[i];
+    MVT CopyVT = VA.getValVT();
   
     // If this is x86-64, and we disabled SSE, we can't return FP values
     if ((CopyVT == MVT::f32 || CopyVT == MVT::f64) && 
@@ -1054,21 +1055,21 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
     // If this is a call to a function that returns an fp value on the floating
     // point stack, but where we prefer to use the value in xmm registers, copy
     // it out as F80 and use a truncate to move it from fp stack reg to xmm reg.
-    if ((RVLocs[i].getLocReg() == X86::ST0 ||
-         RVLocs[i].getLocReg() == X86::ST1) &&
-        isScalarFPTypeInSSEReg(RVLocs[i].getValVT())) {
+    if ((VA.getLocReg() == X86::ST0 ||
+         VA.getLocReg() == X86::ST1) &&
+        isScalarFPTypeInSSEReg(VA.getValVT())) {
       CopyVT = MVT::f80;
     }
     
-    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
+    Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
                                CopyVT, InFlag).getValue(1);
     SDValue Val = Chain.getValue(0);
     InFlag = Chain.getValue(2);
 
-    if (CopyVT != RVLocs[i].getValVT()) {
+    if (CopyVT != VA.getValVT()) {
       // Round the F80 the right size, which also moves to the appropriate xmm
       // register.
-      Val = DAG.getNode(ISD::FP_ROUND, dl, RVLocs[i].getValVT(), Val,
+      Val = DAG.getNode(ISD::FP_ROUND, dl, VA.getValVT(), Val,
                         // This truncation won't change the value.
                         DAG.getIntPtrConstant(1));
     }
