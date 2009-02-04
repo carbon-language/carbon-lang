@@ -1882,7 +1882,10 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             return SimplifyCFG(BB) || 1;
 
         // This block must be empty, except for the setcond inst, if it exists.
+        // Ignore dbg intrinsics.
         BasicBlock::iterator I = BB->begin();
+        while (isa<DbgInfoIntrinsic>(I))
+          I++;
         if (&*I == BI ||
             (&*I == cast<Instruction>(BI->getCondition()) &&
              &*++I == BI))
