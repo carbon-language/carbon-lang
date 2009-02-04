@@ -333,12 +333,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
                         E->arg_end());
   
   // See if we have a target specific intrinsic.
-  Intrinsic::ID IntrinsicID;
-  const char *TargetPrefix = Target.getTargetPrefix();
-  const char *BuiltinName = getContext().BuiltinInfo.GetName(BuiltinID);
-#define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
-#include "llvm/Intrinsics.gen"
-#undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
+  const char *Name = getContext().BuiltinInfo.GetName(BuiltinID);
+  Intrinsic::ID IntrinsicID = 
+    Intrinsic::getIntrinsicForGCCBuiltin(Target.getTargetPrefix(), Name);
   
   if (IntrinsicID != Intrinsic::not_intrinsic) {
     SmallVector<Value*, 16> Args;
