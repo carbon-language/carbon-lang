@@ -206,7 +206,6 @@ namespace M {
 
 namespace M {
   void test_X(N::X x) {
-    // FIXME: this should work! See comment in Sema::AddOperatorCandidates.
-    //    (void)(x + x);
+    (void)(x + x);
   }
 }

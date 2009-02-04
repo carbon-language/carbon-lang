@@ -488,9 +488,11 @@ public:
                              const FunctionTypeProto *Proto,
                              Expr *Object, Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet);
-  void AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
+  bool AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
+                             SourceLocation OpLoc,
                              Expr **Args, unsigned NumArgs,
-                             OverloadCandidateSet& CandidateSet);
+                             OverloadCandidateSet& CandidateSet,
+                             SourceRange OpRange = SourceRange());
   void AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys, 
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet& CandidateSet,
@@ -502,10 +504,6 @@ public:
   void AddArgumentDependentLookupCandidates(DeclarationName Name,
                                             Expr **Args, unsigned NumArgs,
                                             OverloadCandidateSet& CandidateSet);
-  void AddOverloadCandidates(const OverloadedFunctionDecl *Ovl, 
-                             Expr **Args, unsigned NumArgs,
-                             OverloadCandidateSet& CandidateSet,
-                             bool SuppressUserConversions = false);
   bool isBetterOverloadCandidate(const OverloadCandidate& Cand1,
                                  const OverloadCandidate& Cand2);
   OverloadingResult BestViableFunction(OverloadCandidateSet& CandidateSet,
@@ -585,6 +583,11 @@ public:
     /// Member name lookup, which finds the names of
     /// class/struct/union members.
     LookupMemberName,
+    // Look up of an operator name (e.g., operator+) for use with
+    // operator overloading. This lookup is similar to ordinary name
+    // lookup, but will ignore any declarations that are class
+    // members.
+    LookupOperatorName,
     /// Look up of a name that precedes the '::' scope resolution
     /// operator in C++. This lookup completely ignores operator,
     /// function, and enumerator names (C++ [basic.lookup.qual]p1).
@@ -839,6 +842,10 @@ public:
     case Sema::LookupMemberName:
       return D->isInIdentifierNamespace(IDNS);
       
+    case Sema::LookupOperatorName:
+      return D->isInIdentifierNamespace(IDNS) && 
+             !D->getDeclContext()->isRecord();
+
     case Sema::LookupNestedNameSpecifierName:
       return isa<TypedefDecl>(D) || D->isInIdentifierNamespace(Decl::IDNS_Tag);
       

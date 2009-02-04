@@ -2258,9 +2258,11 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
 /// name lookup of the operator), Args/NumArgs provides the operator
 /// arguments, and CandidateSet will store the added overload
 /// candidates. (C++ [over.match.oper]).
-void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
+bool Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
+                                 SourceLocation OpLoc,
                                  Expr **Args, unsigned NumArgs,
-                                 OverloadCandidateSet& CandidateSet) {
+                                 OverloadCandidateSet& CandidateSet,
+                                 SourceRange OpRange) {
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
 
   // C++ [over.match.oper]p3:
@@ -2300,45 +2302,29 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   //        type, or (if there is a right operand) a second parameter
   //        of type T2 or “reference to (possibly cv-qualified) T2”,
   //        when T2 is an enumeration type, are candidate functions.
-  {
-    // FIXME: Don't use the IdentifierResolver here! We need to
-    // perform proper, unqualified lookup starting with the first
-    // enclosing non-class scope.
-    IdentifierResolver::iterator I = IdResolver.begin(OpName),
-                              IEnd = IdResolver.end();
-    for (; I != IEnd; ++I) {
-      // We don't need to check the identifier namespace, because
-      // operator names can only be ordinary identifiers.
-
-      // Ignore member functions. 
-      if ((*I)->getDeclContext()->isRecord())
-        continue;
-
-      // We found something with this name. We're done.
-      break;
+  LookupResult Operators = LookupName(S, OpName, LookupOperatorName);
+  
+  if (Operators.isAmbiguous())
+    return DiagnoseAmbiguousLookup(Operators, OpName, OpLoc, OpRange);
+  else if (Operators) {
+    for (LookupResult::iterator Op = Operators.begin(), OpEnd = Operators.end();
+         Op != OpEnd; ++Op) {
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Op))
+        if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
+          AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
+                               /*SuppressUserConversions=*/false);
     }
-
-    if (I != IEnd) {
-      Decl *FirstDecl = *I;
-      for (; I != IEnd; ++I) {
-        if (FirstDecl->getDeclContext() != (*I)->getDeclContext())
-          break;
-
-        if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*I))
-          if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
-            AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
-                                 /*SuppressUserConversions=*/false);
-      }
-    }
-
-    // Since the set of non-member candidates corresponds to
-    // *unqualified* lookup of the operator name, we also perform
-    // argument-dependent lookup.
-    AddArgumentDependentLookupCandidates(OpName, Args, NumArgs, CandidateSet);
   }
+
+  // Since the set of non-member candidates corresponds to
+  // *unqualified* lookup of the operator name, we also perform
+  // argument-dependent lookup (C++ [basic.lookup.argdep]).
+  AddArgumentDependentLookupCandidates(OpName, Args, NumArgs, CandidateSet);
 
   // Add builtin overload candidates (C++ [over.built]).
   AddBuiltinOperatorCandidates(Op, Args, NumArgs, CandidateSet);
+
+  return false;
 }
 
 /// AddBuiltinCandidate - Add a candidate for a built-in
@@ -3228,21 +3214,6 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
         AddOverloadCandidate(Func, Args, NumArgs, CandidateSet);
     }
   }
-}
-
-/// AddOverloadCandidates - Add all of the function overloads in Ovl
-/// to the candidate set.
-void 
-Sema::AddOverloadCandidates(const OverloadedFunctionDecl *Ovl, 
-                            Expr **Args, unsigned NumArgs,
-                            OverloadCandidateSet& CandidateSet,
-                            bool SuppressUserConversions)
-{
-  for (OverloadedFunctionDecl::function_const_iterator Func 
-         = Ovl->function_begin();
-       Func != Ovl->function_end(); ++Func)
-    AddOverloadCandidate(*Func, Args, NumArgs, CandidateSet,
-                         SuppressUserConversions);
 }
 
 /// isBetterOverloadCandidate - Determines whether the first overload

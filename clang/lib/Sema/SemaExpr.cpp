@@ -1190,7 +1190,8 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
 
     // Build the candidate set for overloading
     OverloadCandidateSet CandidateSet;
-    AddOperatorCandidates(OverOp, S, Args, 2, CandidateSet);
+    if (AddOperatorCandidates(OverOp, S, OpLoc, Args, 2, CandidateSet))
+      return ExprError();
 
     // Perform overload resolution.
     OverloadCandidateSet::iterator Best;
@@ -1281,7 +1282,9 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
     // to the candidate set.
     OverloadCandidateSet CandidateSet;
     Expr *Args[2] = { LHSExp, RHSExp };
-    AddOperatorCandidates(OO_Subscript, S, Args, 2, CandidateSet);
+    if (AddOperatorCandidates(OO_Subscript, S, LLoc, Args, 2, CandidateSet,
+                              SourceRange(LLoc, RLoc)))
+      return ExprError();
 
     // Perform overload resolution.
     OverloadCandidateSet::iterator Best;
@@ -3738,7 +3741,8 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
     // to the candidate set.
     OverloadCandidateSet CandidateSet;
     Expr *Args[2] = { lhs, rhs };
-    AddOperatorCandidates(OverOp, S, Args, 2, CandidateSet);
+    if (AddOperatorCandidates(OverOp, S, TokLoc, Args, 2, CandidateSet))
+      return ExprError();
 
     // Perform overload resolution.
     OverloadCandidateSet::iterator Best;
@@ -3840,8 +3844,9 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
     // Add the appropriate overloaded operators (C++ [over.match.oper]) 
     // to the candidate set.
     OverloadCandidateSet CandidateSet;
-    if (OverOp != OO_None)
-      AddOperatorCandidates(OverOp, S, &Input, 1, CandidateSet);    
+    if (OverOp != OO_None &&
+        AddOperatorCandidates(OverOp, S, OpLoc, &Input, 1, CandidateSet))
+      return ExprError();
 
     // Perform overload resolution.
     OverloadCandidateSet::iterator Best;

@@ -313,6 +313,7 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
   unsigned IDNS = 0;
   switch (NameKind) {
   case Sema::LookupOrdinaryName:
+  case Sema::LookupOperatorName:
     IDNS = Decl::IDNS_Ordinary;
     if (CPlusPlus)
       IDNS |= Decl::IDNS_Tag | Decl::IDNS_Member;
@@ -531,6 +532,7 @@ Sema::LookupResult::iterator& Sema::LookupResult::iterator::operator++() {
     Decl ** I = reinterpret_cast<Decl**>(Current);
     ++I;
     Current = reinterpret_cast<uintptr_t>(I);
+    break;
   }
 
   case OverloadedDeclFromIdResolver: {
@@ -587,7 +589,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
                     LookupNameKind NameKind, bool RedeclarationOnly) {
   assert(getLangOptions().CPlusPlus &&
          "Can perform only C++ lookup");
-unsigned IDNS 
+  unsigned IDNS 
       = getIdentifierNamespacesFromLookupNameKind(NameKind, /*CPlusPlus*/ true);
   Scope *Initial = S;
   IdentifierResolver::iterator 
@@ -841,6 +843,7 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
       IDNS = Decl::IDNS_Member;
       break;
 
+    case Sema::LookupOperatorName:
     case Sema::LookupNestedNameSpecifierName:
     case Sema::LookupNamespaceName:
       assert(false && "C does not perform these kinds of name lookup");
