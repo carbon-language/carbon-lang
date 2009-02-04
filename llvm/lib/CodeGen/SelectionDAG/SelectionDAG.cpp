@@ -5753,7 +5753,8 @@ void SDNode::printr(raw_ostream &OS, const SelectionDAG *G) const {
 }
 
 typedef SmallPtrSet<const SDNode *, 128> VisitedSDNodeSet;
-static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent, const SelectionDAG *G, VisitedSDNodeSet &once) {
+static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
+		       const SelectionDAG *G, VisitedSDNodeSet &once) {
   if (!once.insert(N))	// If we've been here before, return now.
     return;
   // Dump the current SDNode, but don't end the line yet.
