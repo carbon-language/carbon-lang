@@ -100,7 +100,9 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
 
   // Construct the function info.
   FI = new CGFunctionInfo(ResTy, ArgTys);
-  FunctionInfos.InsertNode(FI, InsertPos);
+
+  // FIXME: This is leaking like a sieve; please fix me.
+  //  FunctionInfos.InsertNode(FI, InsertPos);
 
   // Compute ABI information.
   getABIInfo().computeInfo(*FI, getContext());
