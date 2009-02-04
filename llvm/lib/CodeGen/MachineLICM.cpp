@@ -186,17 +186,26 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   if (TID.mayStore() || TID.isCall() || TID.isTerminator() ||
       TID.hasUnmodeledSideEffects())
     return false;
-  
+
+  bool isInvLoad = false;
   if (TID.mayLoad()) {
     // Okay, this instruction does a load. As a refinement, we allow the target
     // to decide whether the loaded value is actually a constant. If so, we can
     // actually use it as a load.
-    if (!TII->isInvariantLoad(&I))
+    isInvLoad = TII->isInvariantLoad(&I);
+    if (!isInvLoad)
       // FIXME: we should be able to sink loads with no other side effects if
       // there is nothing that can change memory from here until the end of
       // block. This is a trivial form of alias analysis.
       return false;
   }
+
+  // FIXME: For now, only hoist re-materilizable instructions. LICM will
+  // increase register pressure. We want to make sure it doesn't increase
+  // spilling.
+  if (!isInvLoad && (!TID.isRematerializable() ||
+                     !TII->isTriviallyReMaterializable(&I)))
+    return false;
 
   DEBUG({
       DOUT << "--- Checking if we can hoist " << I;
