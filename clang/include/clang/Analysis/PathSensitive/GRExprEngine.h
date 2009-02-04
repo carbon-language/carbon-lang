@@ -660,7 +660,7 @@ protected:
   //  loads aren't fully implemented.  Eventually this option will go away.
   
   void EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
-                const GRState* St, SVal location, bool CheckOnly = false);
+                const GRState* St, SVal location);
   
   NodeTy* EvalLocation(Stmt* Ex, NodeTy* Pred,
                        const GRState* St, SVal location);

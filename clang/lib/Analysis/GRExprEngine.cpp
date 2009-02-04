@@ -978,8 +978,7 @@ void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
 }
 
 void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
-                            const GRState* St, SVal location,
-                            bool CheckOnly) {
+                            const GRState* St, SVal location) {
 
   // Evaluate the location (checks for bad dereferences).  
   Pred = EvalLocation(Ex, Pred, St, location);
@@ -994,15 +993,6 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
 
   // FIXME: Currently symbolic analysis "generates" new symbols
   //  for the contents of values.  We need a better approach.
-
-  // FIXME: The "CheckOnly" option exists only because Array and Field
-  //  loads aren't fully implemented.  Eventually this option will go away.
-  assert(!CheckOnly);
-
-  if (CheckOnly) {
-    Dst.Add(Pred);
-    return;
-  }
 
   if (location.isUnknown()) {
     // This is important.  We must nuke the old binding.
