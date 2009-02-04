@@ -336,20 +336,19 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     return;  
   
   SourceManager &SM = R.getSourceMgr();
-  FullSourceLoc LPos = Pos.getInstantiationLoc();
-  FileID FID = SM.getFileID(LPos);
-  assert(&LPos.getManager() == &SM && "SourceManagers are different!");
+  assert(&Pos.getManager() == &SM && "SourceManagers are different!");
+  std::pair<FileID, unsigned> LPosInfo = SM.getDecomposedInstantiationLoc(Pos);
   
-  if (SM.getFileID(LPos) != BugFileID)
+  if (LPosInfo.first != BugFileID)
     return;
   
-  const llvm::MemoryBuffer *Buf = SM.getBuffer(FID);
+  const llvm::MemoryBuffer *Buf = SM.getBuffer(LPosInfo.first);
   const char* FileStart = Buf->getBufferStart();  
   
   // Compute the column number.  Rewind from the current position to the start
   // of the line.
-  unsigned ColNo = LPos.getColumnNumber();
-  const char *TokInstantiationPtr = LPos.getCharacterData();
+  unsigned ColNo = SM.getColumnNumber(LPosInfo.first, LPosInfo.second);
+  const char *TokInstantiationPtr =Pos.getInstantiationLoc().getCharacterData();
   const char *LineStart = TokInstantiationPtr-ColNo;
 
   // Only compute LineEnd if we display below a line.
@@ -445,7 +444,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     }
     
     SourceLocation Loc = 
-      SM.getLocForStartOfFile(FID).getFileLocWithOffset(DisplayPos);
+      SM.getLocForStartOfFile(LPosInfo.first).getFileLocWithOffset(DisplayPos);
     R.InsertStrBefore(Loc, os.str());
   }
   
@@ -453,7 +452,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   
   for (const SourceRange *I = P.ranges_begin(), *E = P.ranges_end();
         I != E; ++I)
-    HighlightRange(R, FID, *I);
+    HighlightRange(R, LPosInfo.first, *I);
 }
 
 void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
@@ -475,7 +474,7 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
     return;
     
   // Compute the column number of the end.
-  unsigned EndColNo = SM.getColumnNumber(InstantiationEnd);
+  unsigned EndColNo = SM.getInstantiationColumnNumber(InstantiationEnd);
   unsigned OldEndColNo = EndColNo;
 
   if (EndColNo) {

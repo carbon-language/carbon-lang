@@ -83,12 +83,6 @@ unsigned FullSourceLoc::getLineNumber() const {
   return SrcMgr->getLineNumber(*this);
 }
 
-unsigned FullSourceLoc::getColumnNumber() const {
-  assert(isValid());
-  return SrcMgr->getColumnNumber(*this);
-}
-
-
 unsigned FullSourceLoc::getInstantiationLineNumber() const {
   assert(isValid());
   return SrcMgr->getInstantiationLineNumber(*this);

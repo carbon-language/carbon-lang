@@ -201,7 +201,6 @@ public:
   FullSourceLoc getSpellingLoc() const;
 
   unsigned getLineNumber() const;
-  unsigned getColumnNumber() const;
   
   unsigned getInstantiationLineNumber() const;
   unsigned getInstantiationColumnNumber() const;

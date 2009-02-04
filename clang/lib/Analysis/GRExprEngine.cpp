@@ -2783,8 +2783,10 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           
           if (SLoc.isFileID()) {        
             Out << "\\lline="
-              << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
-              << GraphPrintSourceManager->getColumnNumber(SLoc) << "\\l";
+              << GraphPrintSourceManager->getInstantiationLineNumber(SLoc)
+              << " col="
+              << GraphPrintSourceManager->getInstantiationColumnNumber(SLoc)
+              << "\\l";
           }
           
           if (GraphPrintCheckerState->isImplicitNullDeref(N))
@@ -2827,8 +2829,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           
           if (SLoc.isFileID()) {
             Out << "\\lline="
-              << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
-              << GraphPrintSourceManager->getColumnNumber(SLoc);
+              << GraphPrintSourceManager->getInstantiationLineNumber(SLoc)
+              << " col="
+              << GraphPrintSourceManager->getInstantiationColumnNumber(SLoc);
           }
             
           if (isa<SwitchStmt>(T)) {

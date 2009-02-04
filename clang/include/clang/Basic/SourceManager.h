@@ -481,14 +481,9 @@ public:
   /// returns zero if the column number isn't known.  This may only be called on
   /// a file sloc, so you must choose a spelling or instantiation location
   /// before calling this method.
-  unsigned getColumnNumber(SourceLocation Loc) const;
-  
-  unsigned getSpellingColumnNumber(SourceLocation Loc) const {
-    return getColumnNumber(getSpellingLoc(Loc));
-  }
-  unsigned getInstantiationColumnNumber(SourceLocation Loc) const {
-    return getColumnNumber(getInstantiationLoc(Loc));
-  }
+  unsigned getColumnNumber(FileID FID, unsigned FilePos) const;
+  unsigned getSpellingColumnNumber(SourceLocation Loc) const;
+  unsigned getInstantiationColumnNumber(SourceLocation Loc) const;
   
   
   /// getLineNumber - Given a SourceLocation, return the spelling line number

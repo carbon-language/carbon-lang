@@ -112,9 +112,6 @@ public:
 };
 } // namespace clang
 
-
-
-
 unsigned LineTableInfo::getLineTableFilenameID(const char *Ptr, unsigned Len) {
   // Look up the filename in the string table, returning the pre-existing value
   // if it exists.
@@ -466,22 +463,27 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
 
 
 /// getColumnNumber - Return the column # for the specified file position.
-/// this is significantly cheaper to compute than the line number.  This returns
-/// zero if the column number isn't known.
-unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
-  if (Loc.isInvalid()) return 0;
-  assert(Loc.isFileID() && "Don't know what part of instantiation loc to get");
+/// this is significantly cheaper to compute than the line number.
+unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos) const {
+  const char *Buf = getBuffer(FID)->getBufferStart();
   
-  std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
-  unsigned FilePos = LocInfo.second;
-  
-  const char *Buf = getBuffer(LocInfo.first)->getBufferStart();
-
   unsigned LineStart = FilePos;
   while (LineStart && Buf[LineStart-1] != '\n' && Buf[LineStart-1] != '\r')
     --LineStart;
   return FilePos-LineStart+1;
 }
+
+unsigned SourceManager::getSpellingColumnNumber(SourceLocation Loc) const {
+  std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
+  return getColumnNumber(LocInfo.first, LocInfo.second);
+}
+
+unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc) const {
+  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  return getColumnNumber(LocInfo.first, LocInfo.second);
+}
+
+
 
 static void ComputeLineNumbers(ContentCache* FI,
                                llvm::BumpPtrAllocator &Alloc) DISABLE_INLINE;
@@ -634,8 +636,9 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   if (Loc.isInvalid()) return PresumedLoc();
   
   // Presumed locations are always for instantiation points.
+  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
   Loc = getInstantiationLoc(Loc);
-  
+
   // FIXME: Could just decompose Loc once!
   
   const SrcMgr::FileInfo &FI = getSLocEntry(getFileID(Loc)).getFile();
@@ -646,7 +649,8 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   const char *Filename = 
     C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
   
-  return PresumedLoc(Filename, getLineNumber(Loc), getColumnNumber(Loc),
+  return PresumedLoc(Filename, getLineNumber(Loc),
+                     getColumnNumber(LocInfo.first, LocInfo.second),
                      FI.getIncludeLoc());
 }
 
