@@ -79,7 +79,14 @@ struct LineEntry {
     return E;
   }
 };
-  
+
+inline bool operator<(const LineEntry &E, unsigned Offset) {
+  return E.FileOffset < Offset;
+}
+
+inline bool operator<(unsigned Offset, const LineEntry &E) {
+  return Offset < E.FileOffset;
+}
   
 /// LineTableInfo - This class is used to hold and unique data used to
 /// represent #line information.
@@ -160,13 +167,16 @@ const LineEntry *LineTableInfo::FindNearestLineEntry(unsigned FID,
   const std::vector<LineEntry> &Entries = LineEntries[FID];
   assert(!Entries.empty() && "No #line entries for this FID after all!");
 
+  // It is very common for the query to be after the last #line, check this
+  // first.
+  if (Entries.back().FileOffset <= Offset)
+    return &Entries.back();
 
-  // FIXME: Dumb linear search.
-  // Find the maximal element that is still before Offset.
-  for (std::vector<LineEntry>::const_reverse_iterator I = Entries.rbegin(),
-       E = Entries.rend(); I != E; ++I)
-    if (I->FileOffset <= Offset) return &*I;
-  return 0;
+  // Do a binary search to find the maximal element that is still before Offset.
+  std::vector<LineEntry>::const_iterator I =
+    std::upper_bound(Entries.begin(), Entries.end(), Offset);
+  if (I == Entries.begin()) return 0;
+  return &*--I;
 }
 
 
