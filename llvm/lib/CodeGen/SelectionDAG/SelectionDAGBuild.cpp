@@ -1318,6 +1318,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
 void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
   SDValue Cond;
   SDValue CondLHS = getValue(CB.CmpLHS);
+  DebugLoc dl = getCurDebugLoc();
 
   // Build the setcc now.
   if (CB.CmpMHS == NULL) {
@@ -1327,10 +1328,9 @@ void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
       Cond = CondLHS;
     else if (CB.CmpRHS == ConstantInt::getFalse() && CB.CC == ISD::SETEQ) {
       SDValue True = DAG.getConstant(1, CondLHS.getValueType());
-      Cond = DAG.getNode(ISD::XOR, getCurDebugLoc(), 
-                         CondLHS.getValueType(), CondLHS, True);
+      Cond = DAG.getNode(ISD::XOR, dl, CondLHS.getValueType(), CondLHS, True);
     } else
-      Cond = DAG.getSetCC(MVT::i1, CondLHS, getValue(CB.CmpRHS), CB.CC);
+      Cond = DAG.getSetCC(dl, MVT::i1, CondLHS, getValue(CB.CmpRHS), CB.CC);
   } else {
     assert(CB.CC == ISD::SETLE && "Can handle only LE ranges now");
 
@@ -1341,11 +1341,12 @@ void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
     MVT VT = CmpOp.getValueType();
 
     if (cast<ConstantInt>(CB.CmpLHS)->isMinValue(true)) {
-      Cond = DAG.getSetCC(MVT::i1, CmpOp, DAG.getConstant(High, VT), ISD::SETLE);
+      Cond = DAG.getSetCC(dl, MVT::i1, CmpOp, DAG.getConstant(High, VT), 
+                          ISD::SETLE);
     } else {
-      SDValue SUB = DAG.getNode(ISD::SUB, getCurDebugLoc(), 
+      SDValue SUB = DAG.getNode(ISD::SUB, dl,
                                 VT, CmpOp, DAG.getConstant(Low, VT));
-      Cond = DAG.getSetCC(MVT::i1, SUB,
+      Cond = DAG.getSetCC(dl, MVT::i1, SUB,
                           DAG.getConstant(High-Low, VT), ISD::SETULE);
     }
   }
@@ -1366,10 +1367,9 @@ void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
   if (CB.TrueBB == NextBlock) {
     std::swap(CB.TrueBB, CB.FalseBB);
     SDValue True = DAG.getConstant(1, Cond.getValueType());
-    Cond = DAG.getNode(ISD::XOR, getCurDebugLoc(), 
-                       Cond.getValueType(), Cond, True);
+    Cond = DAG.getNode(ISD::XOR, dl, Cond.getValueType(), Cond, True);
   }
-  SDValue BrCond = DAG.getNode(ISD::BRCOND, getCurDebugLoc(),
+  SDValue BrCond = DAG.getNode(ISD::BRCOND, dl,
                                MVT::Other, getControlRoot(), Cond,
                                DAG.getBasicBlock(CB.TrueBB));
 
@@ -1385,7 +1385,7 @@ void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
     if (CB.FalseBB == NextBlock)
       DAG.setRoot(BrCond);
     else
-      DAG.setRoot(DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, BrCond,
+      DAG.setRoot(DAG.getNode(ISD::BR, dl, MVT::Other, BrCond,
                               DAG.getBasicBlock(CB.FalseBB)));
   }
 }
@@ -1435,7 +1435,8 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
   // Emit the range check for the jump table, and branch to the default block
   // for the switch statement if the value being switched on exceeds the largest
   // case in the switch.
-  SDValue CMP = DAG.getSetCC(TLI.getSetCCResultType(SUB.getValueType()), SUB,
+  SDValue CMP = DAG.getSetCC(getCurDebugLoc(),
+                             TLI.getSetCCResultType(SUB.getValueType()), SUB,
                              DAG.getConstant(JTH.Last-JTH.First,VT),
                              ISD::SETUGT);
 
@@ -1467,8 +1468,9 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
                             DAG.getConstant(B.First, VT));
 
   // Check range
-  SDValue RangeCmp = DAG.getSetCC(TLI.getSetCCResultType(SUB.getValueType()), SUB,
-                                  DAG.getConstant(B.Range, VT),
+  SDValue RangeCmp = DAG.getSetCC(getCurDebugLoc(),
+                                  TLI.getSetCCResultType(SUB.getValueType()),
+                                  SUB, DAG.getConstant(B.Range, VT),
                                   ISD::SETUGT);
 
   SDValue ShiftOp;
@@ -1522,7 +1524,8 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
   SDValue AndOp = DAG.getNode(ISD::AND, getCurDebugLoc(), 
                               TLI.getPointerTy(), SwitchVal,
                               DAG.getConstant(B.Mask, TLI.getPointerTy()));
-  SDValue AndCmp = DAG.getSetCC(TLI.getSetCCResultType(AndOp.getValueType()),
+  SDValue AndCmp = DAG.getSetCC(getCurDebugLoc(),
+                                TLI.getSetCCResultType(AndOp.getValueType()),
                                 AndOp, DAG.getConstant(0, TLI.getPointerTy()),
                                 ISD::SETNE);
 
@@ -2191,7 +2194,7 @@ void SelectionDAGLowering::visitICmp(User &I) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
   ISD::CondCode Opcode = getICmpCondCode(predicate);
-  setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Opcode));
+  setValue(&I, DAG.getSetCC(getCurDebugLoc(),MVT::i1, Op1, Op2, Opcode));
 }
 
 void SelectionDAGLowering::visitFCmp(User &I) {
@@ -2203,7 +2206,7 @@ void SelectionDAGLowering::visitFCmp(User &I) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
   ISD::CondCode Condition = getFCmpCondCode(predicate);
-  setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Condition));
+  setValue(&I, DAG.getSetCC(getCurDebugLoc(), MVT::i1, Op1, Op2, Condition));
 }
 
 void SelectionDAGLowering::visitVICmp(User &I) {
@@ -2215,7 +2218,8 @@ void SelectionDAGLowering::visitVICmp(User &I) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
   ISD::CondCode Opcode = getICmpCondCode(predicate);
-  setValue(&I, DAG.getVSetCC(Op1.getValueType(), Op1, Op2, Opcode));
+  setValue(&I, DAG.getVSetCC(getCurDebugLoc(), Op1.getValueType(), 
+                             Op1, Op2, Opcode));
 }
 
 void SelectionDAGLowering::visitVFCmp(User &I) {
@@ -2229,7 +2233,7 @@ void SelectionDAGLowering::visitVFCmp(User &I) {
   ISD::CondCode Condition = getFCmpCondCode(predicate);
   MVT DestVT = TLI.getValueType(I.getType());
 
-  setValue(&I, DAG.getVSetCC(DestVT, Op1, Op2, Condition));
+  setValue(&I, DAG.getVSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Condition));
 }
 
 void SelectionDAGLowering::visitSelect(User &I) {

@@ -1173,6 +1173,7 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
 
 SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  DebugLoc dl = Op.getNode()->getDebugLoc();
   
   // If we're comparing for equality to zero, expose the fact that this is
   // implented as a ctlz/srl pair on ppc, so that the dag combiner can
@@ -1183,13 +1184,13 @@ SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
       SDValue Zext = Op.getOperand(0);
       if (VT.bitsLT(MVT::i32)) {
         VT = MVT::i32;
-        Zext = DAG.getNode(ISD::ZERO_EXTEND, VT, Op.getOperand(0));
+        Zext = DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Op.getOperand(0));
       } 
       unsigned Log2b = Log2_32(VT.getSizeInBits());
-      SDValue Clz = DAG.getNode(ISD::CTLZ, VT, Zext);
-      SDValue Scc = DAG.getNode(ISD::SRL, VT, Clz,
+      SDValue Clz = DAG.getNode(ISD::CTLZ, dl, VT, Zext);
+      SDValue Scc = DAG.getNode(ISD::SRL, dl, VT, Clz,
                                 DAG.getConstant(Log2b, MVT::i32));
-      return DAG.getNode(ISD::TRUNCATE, MVT::i32, Scc);
+      return DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, Scc);
     }
     // Leave comparisons against 0 and -1 alone for now, since they're usually 
     // optimized.  FIXME: revisit this when we can custom lower all setcc
@@ -1206,9 +1207,9 @@ SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   MVT LHSVT = Op.getOperand(0).getValueType();
   if (LHSVT.isInteger() && (CC == ISD::SETEQ || CC == ISD::SETNE)) {
     MVT VT = Op.getValueType();
-    SDValue Sub = DAG.getNode(ISD::XOR, LHSVT, Op.getOperand(0), 
+    SDValue Sub = DAG.getNode(ISD::XOR, dl, LHSVT, Op.getOperand(0), 
                                 Op.getOperand(1));
-    return DAG.getSetCC(VT, Sub, DAG.getConstant(0, LHSVT), CC);
+    return DAG.getSetCC(dl, VT, Sub, DAG.getConstant(0, LHSVT), CC);
   }
   return SDValue();
 }
@@ -3035,6 +3036,7 @@ SDValue PPCTargetLowering::LowerSRL_PARTS(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue PPCTargetLowering::LowerSRA_PARTS(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getNode()->getDebugLoc();
   MVT VT = Op.getValueType();
   unsigned BitWidth = VT.getSizeInBits();
   assert(Op.getNumOperands() == 3 &&
@@ -3047,16 +3049,16 @@ SDValue PPCTargetLowering::LowerSRA_PARTS(SDValue Op, SelectionDAG &DAG) {
   SDValue Amt = Op.getOperand(2);
   MVT AmtVT = Amt.getValueType();
   
-  SDValue Tmp1 = DAG.getNode(ISD::SUB, AmtVT,
+  SDValue Tmp1 = DAG.getNode(ISD::SUB, dl, AmtVT,
                              DAG.getConstant(BitWidth, AmtVT), Amt);
-  SDValue Tmp2 = DAG.getNode(PPCISD::SRL, VT, Lo, Amt);
-  SDValue Tmp3 = DAG.getNode(PPCISD::SHL, VT, Hi, Tmp1);
-  SDValue Tmp4 = DAG.getNode(ISD::OR , VT, Tmp2, Tmp3);
-  SDValue Tmp5 = DAG.getNode(ISD::ADD, AmtVT, Amt,
+  SDValue Tmp2 = DAG.getNode(PPCISD::SRL, dl, VT, Lo, Amt);
+  SDValue Tmp3 = DAG.getNode(PPCISD::SHL, dl, VT, Hi, Tmp1);
+  SDValue Tmp4 = DAG.getNode(ISD::OR, dl, VT, Tmp2, Tmp3);
+  SDValue Tmp5 = DAG.getNode(ISD::ADD, dl, AmtVT, Amt,
                              DAG.getConstant(-BitWidth, AmtVT));
-  SDValue Tmp6 = DAG.getNode(PPCISD::SRA, VT, Hi, Tmp5);
-  SDValue OutHi = DAG.getNode(PPCISD::SRA, VT, Hi, Amt);
-  SDValue OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, AmtVT),
+  SDValue Tmp6 = DAG.getNode(PPCISD::SRA, dl, VT, Hi, Tmp5);
+  SDValue OutHi = DAG.getNode(PPCISD::SRA, dl, VT, Hi, Amt);
+  SDValue OutLo = DAG.getSelectCC(dl, Tmp5, DAG.getConstant(0, AmtVT),
                                   Tmp4, Tmp6, ISD::SETLE);
   SDValue OutOps[] = { OutLo, OutHi };
   return DAG.getMergeValues(OutOps, 2);

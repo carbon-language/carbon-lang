@@ -319,7 +319,6 @@ public:
   SDValue getRegister(unsigned Reg, MVT VT);
   SDValue getDbgStopPoint(SDValue Root, unsigned Line, unsigned Col,
                           Value *CU);
-//  SDValue getLabel(unsigned Opcode, SDValue Root, unsigned LabelID);
   SDValue getLabel(unsigned Opcode, DebugLoc dl, SDValue Root, 
                    unsigned LabelID);
 
@@ -393,8 +392,6 @@ public:
 
   /// Returns the ConvertRndSat Note: Avoid using this node because it may
   /// disappear in the future and most targets don't support it.
-//  SDValue getConvertRndSat(MVT VT, SDValue Val, SDValue DTy, SDValue STy,
-//                           SDValue Rnd, SDValue Sat, ISD::CvtCode Code);
   SDValue getConvertRndSat(MVT VT, DebugLoc dl, SDValue Val, SDValue DTy,
                            SDValue STy,
                            SDValue Rnd, SDValue Sat, ISD::CvtCode Code);
@@ -512,11 +509,6 @@ public:
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDValue.
   ///
-  SDValue getSetCC(MVT VT, SDValue LHS, SDValue RHS,
-                   ISD::CondCode Cond) {
-    return getNode(ISD::SETCC, DebugLoc::getUnknownLoc(), VT,
-                   LHS, RHS, getCondCode(Cond));
-  }
   SDValue getSetCC(DebugLoc DL, MVT VT, SDValue LHS, SDValue RHS,
                    ISD::CondCode Cond) {
     return getNode(ISD::SETCC, DL, VT, LHS, RHS, getCondCode(Cond));
@@ -525,11 +517,6 @@ public:
   /// getVSetCC - Helper function to make it easier to build VSetCC's nodes
   /// if you just have an ISD::CondCode instead of an SDValue.
   ///
-  SDValue getVSetCC(MVT VT, SDValue LHS, SDValue RHS,
-                    ISD::CondCode Cond) {
-    return getNode(ISD::VSETCC, DebugLoc::getUnknownLoc(), VT,
-                   LHS, RHS, getCondCode(Cond));
-  }
   SDValue getVSetCC(DebugLoc DL, MVT VT, SDValue LHS, SDValue RHS,
                     ISD::CondCode Cond) {
     return getNode(ISD::VSETCC, DL, VT, LHS, RHS, getCondCode(Cond));
@@ -538,11 +525,6 @@ public:
   /// getSelectCC - Helper function to make it easier to build SelectCC's if you
   /// just have an ISD::CondCode instead of an SDValue.
   ///
-  SDValue getSelectCC(SDValue LHS, SDValue RHS,
-                      SDValue True, SDValue False, ISD::CondCode Cond) {
-    return getNode(ISD::SELECT_CC, DebugLoc::getUnknownLoc(), True.getValueType(),
-                   LHS, RHS, True, False, getCondCode(Cond));
-  }
   SDValue getSelectCC(DebugLoc DL, SDValue LHS, SDValue RHS,
                       SDValue True, SDValue False, ISD::CondCode Cond) {
     return getNode(ISD::SELECT_CC, DL, True.getValueType(),
@@ -568,12 +550,6 @@ public:
 
   /// getMemIntrinsicNode - Creates a MemIntrinsicNode that may produce a
   /// result and takes a list of operands.
-  SDValue getMemIntrinsicNode(unsigned Opcode,
-                              const MVT *VTs, unsigned NumVTs,
-                              const SDValue *Ops, unsigned NumOps,
-                              MVT MemVT, const Value *srcValue, int SVOff,
-                              unsigned Align = 0, bool Vol = false,
-                              bool ReadMem = true, bool WriteMem = true);
   SDValue getMemIntrinsicNode(unsigned Opcode, DebugLoc dl,
                               const MVT *VTs, unsigned NumVTs,
                               const SDValue *Ops, unsigned NumOps,
@@ -581,11 +557,6 @@ public:
                               unsigned Align = 0, bool Vol = false,
                               bool ReadMem = true, bool WriteMem = true);
 
-  SDValue getMemIntrinsicNode(unsigned Opcode, SDVTList VTList,
-                              const SDValue *Ops, unsigned NumOps,
-                              MVT MemVT, const Value *srcValue, int SVOff,
-                              unsigned Align = 0, bool Vol = false,
-                              bool ReadMem = true, bool WriteMem = true);
   SDValue getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
                               const SDValue *Ops, unsigned NumOps,
                               MVT MemVT, const Value *srcValue, int SVOff,

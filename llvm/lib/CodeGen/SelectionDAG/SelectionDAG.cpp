@@ -3489,18 +3489,6 @@ SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
 }
 
 SDValue
-SelectionDAG::getMemIntrinsicNode(unsigned Opcode,
-                                  const MVT *VTs, unsigned NumVTs,
-                                  const SDValue *Ops, unsigned NumOps,
-                                  MVT MemVT, const Value *srcValue, int SVOff,
-                                  unsigned Align, bool Vol,
-                                  bool ReadMem, bool WriteMem) {
-  return getMemIntrinsicNode(Opcode, makeVTList(VTs, NumVTs), Ops, NumOps,
-                             MemVT, srcValue, SVOff, Align, Vol,
-                             ReadMem, WriteMem);
-}
-
-SDValue
 SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl,
                                   const MVT *VTs, unsigned NumVTs,
                                   const SDValue *Ops, unsigned NumOps,
@@ -3510,34 +3498,6 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl,
   return getMemIntrinsicNode(Opcode, dl, makeVTList(VTs, NumVTs), Ops, NumOps,
                              MemVT, srcValue, SVOff, Align, Vol,
                              ReadMem, WriteMem);
-}
-
-SDValue
-SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDVTList VTList,
-                                  const SDValue *Ops, unsigned NumOps,
-                                  MVT MemVT, const Value *srcValue, int SVOff,
-                                  unsigned Align, bool Vol,
-                                  bool ReadMem, bool WriteMem) {
-  // Memoize the node unless it returns a flag.
-  MemIntrinsicSDNode *N;
-  if (VTList.VTs[VTList.NumVTs-1] != MVT::Flag) {
-    FoldingSetNodeID ID;
-    AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
-    void *IP = 0;
-    if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-      return SDValue(E, 0);
-    
-    N = NodeAllocator.Allocate<MemIntrinsicSDNode>();
-    new (N) MemIntrinsicSDNode(Opcode, VTList, Ops, NumOps, MemVT,
-                               srcValue, SVOff, Align, Vol, ReadMem, WriteMem);
-    CSEMap.InsertNode(N, IP);
-  } else {
-    N = NodeAllocator.Allocate<MemIntrinsicSDNode>();
-    new (N) MemIntrinsicSDNode(Opcode, VTList, Ops, NumOps, MemVT,
-                               srcValue, SVOff, Align, Vol, ReadMem, WriteMem);
-  }
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
 }
 
 SDValue

@@ -2455,6 +2455,7 @@ static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG,
 static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
                           const TargetLowering &TLI) {
   CondCodeSDNode *CC = dyn_cast<CondCodeSDNode>(Op.getOperand(2));
+  DebugLoc dl = Op.getNode()->getDebugLoc();
   assert(CC != 0 && "LowerSETCC: CondCodeSDNode should not be null here!\n");
 
   SDValue lhs = Op.getOperand(0);
@@ -2468,35 +2469,35 @@ static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
 
   // Take advantage of the fact that (truncate (sra arg, 32)) is efficiently
   // selected to a NOP:
-  SDValue i64lhs = DAG.getNode(ISD::BIT_CONVERT, IntVT, lhs);
+  SDValue i64lhs = DAG.getNode(ISD::BIT_CONVERT, dl, IntVT, lhs);
   SDValue lhsHi32 =
-          DAG.getNode(ISD::TRUNCATE, MVT::i32,
-                      DAG.getNode(ISD::SRL, IntVT,
+          DAG.getNode(ISD::TRUNCATE, dl, MVT::i32,
+                      DAG.getNode(ISD::SRL, dl, IntVT,
                                   i64lhs, DAG.getConstant(32, MVT::i32)));
   SDValue lhsHi32abs =
-          DAG.getNode(ISD::AND, MVT::i32,
+          DAG.getNode(ISD::AND, dl, MVT::i32,
                       lhsHi32, DAG.getConstant(0x7fffffff, MVT::i32));
   SDValue lhsLo32 =
-          DAG.getNode(ISD::TRUNCATE, MVT::i32, i64lhs);
+          DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, i64lhs);
 
   // SETO and SETUO only use the lhs operand:
   if (CC->get() == ISD::SETO) {
     // Evaluates to true if Op0 is not [SQ]NaN - lowers to the inverse of
     // SETUO
     APInt ccResultAllOnes = APInt::getAllOnesValue(ccResultVT.getSizeInBits());
-    return DAG.getNode(ISD::XOR, ccResultVT,
-                       DAG.getSetCC(ccResultVT,
+    return DAG.getNode(ISD::XOR, dl, ccResultVT,
+                       DAG.getSetCC(dl, ccResultVT,
                                     lhs, DAG.getConstantFP(0.0, lhsVT),
                                     ISD::SETUO),
                        DAG.getConstant(ccResultAllOnes, ccResultVT));
   } else if (CC->get() == ISD::SETUO) {
     // Evaluates to true if Op0 is [SQ]NaN
-    return DAG.getNode(ISD::AND, ccResultVT,
-                       DAG.getSetCC(ccResultVT,
+    return DAG.getNode(ISD::AND, dl, ccResultVT,
+                       DAG.getSetCC(dl, ccResultVT,
                                     lhsHi32abs,
                                     DAG.getConstant(0x7ff00000, MVT::i32),
                                     ISD::SETGE),
-                       DAG.getSetCC(ccResultVT,
+                       DAG.getSetCC(dl, ccResultVT,
                                     lhsLo32,
                                     DAG.getConstant(0, MVT::i32),
                                     ISD::SETGT));
@@ -2504,26 +2505,26 @@ static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
 
   SDValue i64rhs = DAG.getNode(ISD::BIT_CONVERT, IntVT, rhs);
   SDValue rhsHi32 =
-          DAG.getNode(ISD::TRUNCATE, MVT::i32,
-                      DAG.getNode(ISD::SRL, IntVT,
+          DAG.getNode(ISD::TRUNCATE, dl, MVT::i32,
+                      DAG.getNode(ISD::SRL, dl, IntVT,
                                   i64rhs, DAG.getConstant(32, MVT::i32)));
 
   // If a value is negative, subtract from the sign magnitude constant:
   SDValue signMag2TC = DAG.getConstant(0x8000000000000000ULL, IntVT);
 
   // Convert the sign-magnitude representation into 2's complement:
-  SDValue lhsSelectMask = DAG.getNode(ISD::SRA, ccResultVT,
+  SDValue lhsSelectMask = DAG.getNode(ISD::SRA, dl, ccResultVT,
                                       lhsHi32, DAG.getConstant(31, MVT::i32));
-  SDValue lhsSignMag2TC = DAG.getNode(ISD::SUB, IntVT, signMag2TC, i64lhs);
+  SDValue lhsSignMag2TC = DAG.getNode(ISD::SUB, dl, IntVT, signMag2TC, i64lhs);
   SDValue lhsSelect =
-          DAG.getNode(ISD::SELECT, IntVT,
+          DAG.getNode(ISD::SELECT, dl, IntVT,
                       lhsSelectMask, lhsSignMag2TC, i64lhs);
 
-  SDValue rhsSelectMask = DAG.getNode(ISD::SRA, ccResultVT,
+  SDValue rhsSelectMask = DAG.getNode(ISD::SRA, dl, ccResultVT,
                                       rhsHi32, DAG.getConstant(31, MVT::i32));
-  SDValue rhsSignMag2TC = DAG.getNode(ISD::SUB, IntVT, signMag2TC, i64rhs);
+  SDValue rhsSignMag2TC = DAG.getNode(ISD::SUB, dl, IntVT, signMag2TC, i64rhs);
   SDValue rhsSelect =
-          DAG.getNode(ISD::SELECT, IntVT,
+          DAG.getNode(ISD::SELECT, dl, IntVT,
                       rhsSelectMask, rhsSignMag2TC, i64rhs);
 
   unsigned compareOp;
@@ -2554,19 +2555,20 @@ static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
   }
 
   SDValue result =
-          DAG.getSetCC(ccResultVT, lhsSelect, rhsSelect, (ISD::CondCode) compareOp);
+          DAG.getSetCC(dl, ccResultVT, lhsSelect, rhsSelect, 
+                       (ISD::CondCode) compareOp);
 
   if ((CC->get() & 0x8) == 0) {
     // Ordered comparison:
-    SDValue lhsNaN = DAG.getSetCC(ccResultVT,
+    SDValue lhsNaN = DAG.getSetCC(dl, ccResultVT,
                                   lhs, DAG.getConstantFP(0.0, MVT::f64),
                                   ISD::SETO);
-    SDValue rhsNaN = DAG.getSetCC(ccResultVT,
+    SDValue rhsNaN = DAG.getSetCC(dl, ccResultVT,
                                   rhs, DAG.getConstantFP(0.0, MVT::f64),
                                   ISD::SETO);
-    SDValue ordered = DAG.getNode(ISD::AND, ccResultVT, lhsNaN, rhsNaN);
+    SDValue ordered = DAG.getNode(ISD::AND, dl, ccResultVT, lhsNaN, rhsNaN);
 
-    result = DAG.getNode(ISD::AND, ccResultVT, ordered, result);
+    result = DAG.getNode(ISD::AND, dl, ccResultVT, ordered, result);
   }
 
   return result;

@@ -434,26 +434,27 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
   Chain = N->getOperand(0);
   SDValue VAListP = N->getOperand(1);
   const Value *VAListS = cast<SrcValueSDNode>(N->getOperand(2))->getValue();
+  DebugLoc dl = N->getDebugLoc();
 
-  SDValue Base = DAG.getLoad(MVT::i64, Chain, VAListP, VAListS, 0);
-  SDValue Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
+  SDValue Base = DAG.getLoad(MVT::i64, dl, Chain, VAListP, VAListS, 0);
+  SDValue Tmp = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
                               DAG.getConstant(8, MVT::i64));
-  SDValue Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Base.getValue(1),
+  SDValue Offset = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Base.getValue(1),
                                     Tmp, NULL, 0, MVT::i32);
-  DataPtr = DAG.getNode(ISD::ADD, MVT::i64, Base, Offset);
+  DataPtr = DAG.getNode(ISD::ADD, dl, MVT::i64, Base, Offset);
   if (N->getValueType(0).isFloatingPoint())
   {
     //if fp && Offset < 6*8, then subtract 6*8 from DataPtr
-    SDValue FPDataPtr = DAG.getNode(ISD::SUB, MVT::i64, DataPtr,
+    SDValue FPDataPtr = DAG.getNode(ISD::SUB, dl, MVT::i64, DataPtr,
                                       DAG.getConstant(8*6, MVT::i64));
-    SDValue CC = DAG.getSetCC(MVT::i64, Offset,
+    SDValue CC = DAG.getSetCC(dl, MVT::i64, Offset,
                                 DAG.getConstant(8*6, MVT::i64), ISD::SETLT);
-    DataPtr = DAG.getNode(ISD::SELECT, MVT::i64, CC, FPDataPtr, DataPtr);
+    DataPtr = DAG.getNode(ISD::SELECT, dl, MVT::i64, CC, FPDataPtr, DataPtr);
   }
 
-  SDValue NewOffset = DAG.getNode(ISD::ADD, MVT::i64, Offset,
+  SDValue NewOffset = DAG.getNode(ISD::ADD, dl, MVT::i64, Offset,
                                     DAG.getConstant(8, MVT::i64));
-  Chain = DAG.getTruncStore(Offset.getValue(1), NewOffset, Tmp, NULL, 0,
+  Chain = DAG.getTruncStore(Offset.getValue(1), dl, NewOffset, Tmp, NULL, 0,
                             MVT::i32);
 }
 
