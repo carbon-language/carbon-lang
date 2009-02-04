@@ -1329,8 +1329,12 @@ public:
   ///
   std::string getOperationName(const SelectionDAG *G = 0) const;
   static const char* getIndexedModeName(ISD::MemIndexedMode AM);
+  void print_types(raw_ostream &OS, const SelectionDAG *G) const;
+  void print_details(raw_ostream &OS, const SelectionDAG *G) const;
   void print(raw_ostream &OS, const SelectionDAG *G = 0) const;
+  void printr(raw_ostream &OS, const SelectionDAG *G = 0) const;
   void dump() const;
+  void dumpr() const;
   void dump(const SelectionDAG *G) const;
 
   static bool classof(const SDNode *) { return true; }

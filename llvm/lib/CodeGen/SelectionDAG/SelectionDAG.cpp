@@ -5638,7 +5638,7 @@ void SDNode::dump(const SelectionDAG *G) const {
   errs().flush();
 }
 
-void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
+void SDNode::print_types(raw_ostream &OS, const SelectionDAG *G) const {
   OS << (void*)this << ": ";
 
   for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
@@ -5649,15 +5649,9 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
       OS << getValueType(i).getMVTString();
   }
   OS << " = " << getOperationName(G);
+}
 
-  OS << " ";
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    if (i) OS << ", ";
-    OS << (void*)getOperand(i).getNode();
-    if (unsigned RN = getOperand(i).getResNo())
-      OS << ":" << RN;
-  }
-
+void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   if (!isTargetOpcode() && getOpcode() == ISD::VECTOR_SHUFFLE) {
     SDNode *Mask = getOperand(2).getNode();
     OS << "<";
@@ -5798,6 +5792,18 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
   }
 }
 
+void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
+  print_types(OS, G);
+  OS << " ";
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    if (i) OS << ", ";
+    OS << (void*)getOperand(i).getNode();
+    if (unsigned RN = getOperand(i).getResNo())
+      OS << ":" << RN;
+  }
+  print_details(OS, G);
+}
+
 static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     if (N->getOperand(i).getNode()->hasOneUse())
@@ -5824,6 +5830,47 @@ void SelectionDAG::dump() const {
   if (getRoot().getNode()) DumpNodes(getRoot().getNode(), 2, this);
 
   cerr << "\n\n";
+}
+
+void SDNode::printr(raw_ostream &OS, const SelectionDAG *G) const {
+  print_types(OS, G);
+  print_details(OS, G);
+}
+
+typedef SmallPtrSet<const SDNode *, 128> VisitedSDNodeSet;
+static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent, const SelectionDAG *G, VisitedSDNodeSet &once) {
+  if (!once.insert(N))	// If we've been here before, return now.
+    return;
+  // Dump the current SDNode, but don't end the line yet.
+  OS << std::string(indent, ' ');
+  N->printr(OS, G);
+  // Having printed this SDNode, walk the children:
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    const SDNode *child = N->getOperand(i).getNode();
+    if (i) OS << ",";
+    OS << " ";
+    if (child->getNumOperands() == 0) {
+      // This child has no grandchildren; print it inline right here.
+      child->printr(OS, G);
+      once.insert(child);
+    } else {	// Just the address.  FIXME: also print the child's opcode
+      OS << (void*)child;
+      if (unsigned RN = N->getOperand(i).getResNo())
+	OS << ":" << RN;
+    }
+  }
+  OS << "\n";
+  // Dump children that have grandchildren on their own line(s).
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    const SDNode *child = N->getOperand(i).getNode();
+    DumpNodesr(OS, child, indent+2, G, once);
+  }
+}
+
+void SDNode::dumpr() const {
+  VisitedSDNodeSet once;
+  DumpNodesr(errs(), this, 0, 0, once);
+  errs().flush();
 }
 
 const Type *ConstantPoolSDNode::getType() const {
