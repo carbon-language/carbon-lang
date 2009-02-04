@@ -347,7 +347,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
    }
    // FALLS THROUGH
   case 0:
-   if (FTy->getReturnType() != Type::Int32Ty &&
+   if (!isa<IntegerType>(FTy->getReturnType()) &&
        FTy->getReturnType() != Type::VoidTy) {
      cerr << "Invalid return type of main() supplied\n";
      abort();
