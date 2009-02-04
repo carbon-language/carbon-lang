@@ -20,7 +20,7 @@ void func() {
 
   int x3[x] = { 1, 2 }; // expected-error{{variable-sized object may not be initialized}}
 
-  int x4 = { 1, 2 }; // expected-warning{{braces around scalar initializer}} expected-error{{excess elements in array initializer}}
+  int x4 = { 1, 2 }; // expected-warning{{braces around scalar initializer}} expected-error{{excess elements in scalar initializer}}
 
   int y[4][3] = { 
     { 1, 3, 5 },
@@ -53,7 +53,7 @@ void func() {
 
 void test() {
   int y1[3] = { 
-    { 1, 2, 3 } // expected-warning{{braces around scalar initializer}} expected-error{{excess elements in array initializer}}
+    { 1, 2, 3 } // expected-warning{{braces around scalar initializer}} expected-error{{excess elements in scalar initializer}}
   };
   int y3[4][3] = {  
     { 1, 3, 5 },
@@ -201,14 +201,13 @@ int bar (void) {
   return z.z; 
 } 
 struct s3 {void (*a)(void);} t5 = {autoStructTest};
-// FIXME: GCC extension; flexible array init. Once this is implemented, the warning should be removed.
 // Note that clang objc implementation depends on this extension.
-struct {int a; int b[];} t6 = {1, {1, 2, 3}}; //expected-error{{excess elements in array initializer}}
+struct {int a; int b[];} t6 = {1, {1, 2, 3}};
 union {char a; int b;} t7[] = {1, 2, 3};
 int t8[sizeof t7 == (3*sizeof(int)) ? 1 : -1];
 
 struct bittest{int : 31, a, :21, :12, b;};
-struct bittest bittestvar = {1, 2, 3, 4}; //expected-error{{excess elements in array initializer}}
+struct bittest bittestvar = {1, 2, 3, 4}; //expected-error{{excess elements in struct initializer}}
 
 // Not completely sure what should happen here...
 int u1 = {}; //expected-warning{{use of GNU empty initializer extension}} expected-error{{scalar initializer cannot be empty}}
@@ -243,7 +242,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 };
 
 static void sppp_ipv6cp_up();
-const struct {} ipcp = { sppp_ipv6cp_up }; //expected-warning{{empty struct extension}} expected-error{{excess elements in array initializer}}
+const struct {} ipcp = { sppp_ipv6cp_up }; //expected-warning{{empty struct extension}} expected-error{{excess elements in struct initializer}}
 
 struct _Matrix { union { float m[4][4]; }; }; //expected-warning{{anonymous unions are a GNU extension in C}}
 typedef struct _Matrix Matrix;

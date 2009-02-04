@@ -118,5 +118,5 @@ union u { int a; char* b; };
 u u1 = { 1 }; 
 u u2 = u1; 
 u u3 = 1; // expected-error{{cannot initialize 'u3' with an rvalue of type 'int'}}
-u u4 = { 0, "asdf" };  // expected-error{{excess elements in array initializer}}
+u u4 = { 0, "asdf" };  // expected-error{{excess elements in union initializer}}
 u u5 = { "asdf" }; // expected-error{{incompatible type initializing 'char const [5]', expected 'int'}}

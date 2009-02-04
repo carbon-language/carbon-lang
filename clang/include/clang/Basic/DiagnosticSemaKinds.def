@@ -60,6 +60,10 @@ DIAG(warn_initializer_overrides, WARNING,
      "initializer overrides prior initialization of this subobject")
 DIAG(note_previous_initializer, NOTE,
      "previous initialization %select{|with side effects }0is here%select{| (side effects may not occur at run time)}0")
+DIAG(err_designator_into_flexible_array_member, ERROR,
+     "designator into flexible array member subobject")
+DIAG(note_flexible_array_member, NOTE,
+     "initialized flexible array member %0 is here")
 
 // Declarations.
 DIAG(ext_vla, EXTENSION,
@@ -547,7 +551,7 @@ DIAG(err_variable_object_no_init, ERROR,
 DIAG(err_array_init_list_required, ERROR,
      "initialization with '{...}' expected for array")
 DIAG(err_excess_initializers, ERROR,
-     "excess elements in array initializer")
+     "excess elements in %select{array|vector|scalar|union|struct}0 initializer")
 DIAG(err_excess_initializers_in_char_array_initializer, ERROR,
     "excess elements in char array initializer")
 DIAG(warn_initializer_string_for_char_array_too_long, WARNING,
@@ -593,6 +597,10 @@ DIAG(ext_flexible_array_in_struct, EXTENSION,
      "%0 may not be nested in a struct due to flexible array member")
 DIAG(err_flexible_array_in_array, ERROR,
      "%0 may not be used as an array element due to flexible array member")
+DIAG(err_flexible_array_init_nonempty, ERROR,
+     "non-empty initialization of flexible array member inside subobject")
+DIAG(err_flexible_array_init_needs_braces, ERROR,
+     "flexible array requires brace-enclosed initializer")
 DIAG(err_illegal_decl_array_of_functions, ERROR,
      "'%0' declared as array of functions")
 DIAG(err_illegal_decl_array_incomplete_type, ERROR,
