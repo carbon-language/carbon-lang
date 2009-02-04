@@ -641,7 +641,15 @@ private:
   /// protocols. The return value has type ProtocolListPtrTy.
   llvm::Constant *EmitProtocolList(const std::string &Name,
                                    ObjCProtocolDecl::protocol_iterator begin,
-                                   ObjCProtocolDecl::protocol_iterator end);  
+                                   ObjCProtocolDecl::protocol_iterator end);
+  
+  CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
+                                  QualType ResultType,
+                                  Selector Sel,
+                                  llvm::Value *Arg0,
+                                  QualType Arg0Ty,
+                                  bool IsSuper,
+                                  const CallArgList &CallArgs);
   
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
@@ -653,8 +661,7 @@ public:
                                               Selector Sel,
                                               llvm::Value *Receiver,
                                               bool IsClassMessage,
-                                              const CallArgList &CallArgs)
-    {return RValue::get(0);}
+                                              const CallArgList &CallArgs);
   
   virtual CodeGen::RValue 
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
@@ -4267,6 +4274,32 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
               Ivar->getType().getCVRQualifiers()|CVRQualifiers);
   LValue::SetObjCIvar(LV, true);
   return LV;
+}
+
+CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
+                                           CodeGen::CodeGenFunction &CGF,
+                                           QualType ResultType,
+                                           Selector Sel,
+                                           llvm::Value *Arg0,
+                                           QualType Arg0Ty,
+                                           bool IsSuper,
+                                           const CallArgList &CallArgs) {
+  return RValue::get(0);
+}
+
+/// Generate code for a message send expression in the nonfragile abi.
+CodeGen::RValue CGObjCNonFragileABIMac::GenerateMessageSend(
+                                               CodeGen::CodeGenFunction &CGF,
+                                               QualType ResultType,
+                                               Selector Sel,
+                                               llvm::Value *Receiver,
+                                               bool IsClassMessage,
+                                               const CallArgList &CallArgs) {
+  llvm::Value *Arg0 = 
+  CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
+  return EmitMessageSend(CGF, ResultType, Sel,
+                         Arg0, CGF.getContext().getObjCIdType(),
+                         false, CallArgs);
 }
 
 /* *** */
