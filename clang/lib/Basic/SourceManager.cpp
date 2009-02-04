@@ -107,8 +107,17 @@ public:
   ~LineTableInfo() {}
   
   unsigned getLineTableFilenameID(const char *Ptr, unsigned Len);
+  const char *getFilename(unsigned ID) const {
+    assert(ID < FilenamesByID.size() && "Invalid FilenameID");
+    return FilenamesByID[ID]->getKeyData();
+  }
+  
   void AddLineNote(unsigned FID, unsigned Offset,
                    unsigned LineNo, int FilenameID);
+  
+  /// FindNearestLineEntry - Find the line entry nearest to FID that is before
+  /// it.  If there is no line entry before Offset in FID, return null.
+  const LineEntry *FindNearestLineEntry(unsigned FID, unsigned Offset);
 };
 } // namespace clang
 
@@ -135,9 +144,31 @@ void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
   
   assert((Entries.empty() || Entries.back().FileOffset < Offset) &&
          "Adding line entries out of order!");
+  
+  // If this is a '#line 4' after '#line 42 "foo.h"', make sure to remember that
+  // we are still in "foo.h".
+  if (FilenameID == -1 && !Entries.empty())
+    FilenameID = Entries.back().FilenameID;
+  
   Entries.push_back(LineEntry::get(Offset, LineNo, FilenameID));
 }
 
+/// FindNearestLineEntry - Find the line entry nearest to FID that is before
+/// it.  If there is no line entry before Offset in FID, return null.
+const LineEntry *LineTableInfo::FindNearestLineEntry(unsigned FID, 
+                                                     unsigned Offset) {
+  const std::vector<LineEntry> &Entries = LineEntries[FID];
+  assert(!Entries.empty() && "No #line entries for this FID after all!");
+
+  if (Entries[0].FileOffset > Offset) return 0;
+
+  // FIXME: Dumb linear search.
+  // Find the maximal element that is still before Offset.
+  for (unsigned i = 1, e = Entries.size(); i != e; ++i)
+    if (Entries[i].FileOffset > Offset) return &Entries[i-1];
+  // Otherwise, all entries are before Offset.
+  return &Entries.back();
+}
 
 
 /// getLineTableFilenameID - Return the uniqued ID for the specified filename.
@@ -649,16 +680,31 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   
   const SrcMgr::FileInfo &FI = getSLocEntry(LocInfo.first).getFile();
   const SrcMgr::ContentCache *C = FI.getContentCache();
-
-  // To get the source name, first consult the FileEntry (if one exists) before
-  // the MemBuffer as this will avoid unnecessarily paging in the MemBuffer.
+  
+  // To get the source name, first consult the FileEntry (if one exists)
+  // before the MemBuffer as this will avoid unnecessarily paging in the
+  // MemBuffer.
   const char *Filename = 
     C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
+  unsigned LineNo = getLineNumber(LocInfo.first, LocInfo.second);
+  unsigned ColNo  = getColumnNumber(LocInfo.first, LocInfo.second);
+  SourceLocation IncludeLoc = FI.getIncludeLoc();
   
-  return PresumedLoc(Filename,
-                     getLineNumber(LocInfo.first, LocInfo.second),
-                     getColumnNumber(LocInfo.first, LocInfo.second),
-                     FI.getIncludeLoc());
+  // If we have #line directives in this file, update and overwrite the physical
+  // location info if appropriate.
+  if (FI.hasLineDirectives()) {
+    assert(LineTable && "Can't have linetable entries without a LineTable!");
+    // See if there is a #line directive before this.  If so, get it.
+    if (const LineEntry *Entry =
+          LineTable->FindNearestLineEntry(LocInfo.first.ID, LocInfo.second)) {
+      LineNo = Entry->LineNo;
+      
+      if (Entry->FilenameID != -1)
+        Filename = LineTable->getFilename(Entry->FilenameID);
+    }
+  }
+
+  return PresumedLoc(Filename, LineNo, ColNo, IncludeLoc);
 }
 
 //===----------------------------------------------------------------------===//
