@@ -6,7 +6,7 @@ namespace N {
   X operator+(X, X);
 
   void f(X);
-  void g(X);
+  void g(X); // expected-note{{candidate function}}
 
   void test_multiadd(X x) {
     (void)(x + x);
@@ -39,7 +39,22 @@ namespace N {
 
 
 void test_func_adl_only(N::X x) {
-  // FIXME: here, despite the fact that the name lookup for 'g' fails,
-  // this is well-formed code. The fix will go into Sema::ActOnCallExpr.
-  //  g(x);
+  g(x);
+}
+
+namespace M {
+  int g(N::X); // expected-note{{candidate function}}
+
+  void test(N::X x) {
+    g(x); // expected-error{{call to 'g' is ambiguous; candidates are:}}
+    int i = (g)(x);
+
+    int g(N::X);
+    g(x); // okay; calls locally-declared function, no ADL
+  }
+}
+
+
+void test_operator_name_adl(N::X x) {
+  (void)operator+(x, x);
 }

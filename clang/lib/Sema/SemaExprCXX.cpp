@@ -35,7 +35,7 @@ Sema::ActOnCXXConversionFunctionExpr(Scope *S, SourceLocation OperatorLoc,
   DeclarationName ConvName 
     = Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
   return ActOnDeclarationNameExpr(S, OperatorLoc, ConvName, HasTrailingLParen,
-                                  &SS, /*ForceRes*/false, isAddressOfOperand);
+                                  &SS, isAddressOfOperand);
 }
 
 /// ActOnCXXOperatorFunctionIdExpr - Parse a C++ overloaded operator
@@ -51,7 +51,7 @@ Sema::ActOnCXXOperatorFunctionIdExpr(Scope *S, SourceLocation OperatorLoc,
                                      bool isAddressOfOperand) {
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(Op);
   return ActOnDeclarationNameExpr(S, OperatorLoc, Name, HasTrailingLParen, &SS,
-                                  /*ForceRes*/false, isAddressOfOperand);
+                                  isAddressOfOperand);
 }
 
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ).

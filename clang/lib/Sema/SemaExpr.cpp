@@ -366,7 +366,7 @@ Sema::OwningExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                                  const CXXScopeSpec *SS,
                                                  bool isAddressOfOperand) {
   return ActOnDeclarationNameExpr(S, Loc, &II, HasTrailingLParen, SS,
-                                  /*ForceResolution*/false, isAddressOfOperand);
+                                  isAddressOfOperand);
 }
 
 /// BuildDeclRefExpr - Build either a DeclRefExpr or a
@@ -535,10 +535,6 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
 /// qualified-id (foo::bar) to indicate the class or namespace that
 /// the identifier must be a member of.
 ///
-/// If ForceResolution is true, then we will attempt to resolve the
-/// name even if it looks like a dependent name. This option is off by
-/// default.
-///
 /// isAddressOfOperand means that this expression is the direct operand
 /// of an address-of operator. This matters because this is the only
 /// situation where a qualified name referencing a non-static member may
@@ -546,26 +542,26 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
 Sema::OwningExprResult
 Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                DeclarationName Name, bool HasTrailingLParen,
-                               const CXXScopeSpec *SS, bool ForceResolution,
+                               const CXXScopeSpec *SS, 
                                bool isAddressOfOperand) {
-  if (S->getTemplateParamParent() && Name.getAsIdentifierInfo() &&
-      HasTrailingLParen && !SS && !ForceResolution) {
-    // We've seen something of the form
-    //   identifier(
-    // and we are in a template, so it is likely that 's' is a
-    // dependent name. However, we won't know until we've parsed all
-    // of the call arguments. So, build a CXXDependentNameExpr node
-    // to represent this name. Then, if it turns out that none of the
-    // arguments are type-dependent, we'll force the resolution of the
-    // dependent name at that point.
-    return Owned(new (Context) CXXDependentNameExpr(Name.getAsIdentifierInfo(),
-                                                    Context.DependentTy, Loc));
-  }
-
   // Could be enum-constant, value decl, instance variable, etc.
   if (SS && SS->isInvalid())
     return ExprError();
   LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName);
+
+  if (getLangOptions().CPlusPlus && (!SS || !SS->isSet()) && 
+      HasTrailingLParen && Lookup.getKind() == LookupResult::NotFound) {
+    // We've seen something of the form
+    //
+    //   identifier(
+    //
+    // and we did not find any entity by the name
+    // "identifier". However, this identifier is still subject to
+    // argument-dependent lookup, so keep track of the name.
+    return Owned(new (Context) UnresolvedFunctionNameExpr(Name,
+                                                          Context.OverloadTy,
+                                                          Loc));
+  }
 
   Decl *D = 0;
   if (Lookup.isAmbiguous()) {
@@ -1839,48 +1835,27 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   Expr **Args = reinterpret_cast<Expr**>(args.release());
   assert(Fn && "no function call expression");
   FunctionDecl *FDecl = NULL;
-
-  // Determine whether this is a dependent call inside a C++ template,
-  // in which case we won't do any semantic analysis now. 
-  bool Dependent = false;
-  if (Fn->isTypeDependent()) {
-    if (CXXDependentNameExpr *FnName = dyn_cast<CXXDependentNameExpr>(Fn)) {
-      if (Expr::hasAnyTypeDependentArguments(Args, NumArgs))
-        Dependent = true;
-      else {
-        // Resolve the CXXDependentNameExpr to an actual identifier;
-        // it wasn't really a dependent name after all.
-        // FIXME: in the presence of ADL, this resolves too early.
-        OwningExprResult Resolved
-          = ActOnDeclarationNameExpr(S, FnName->getLocation(),
-                                     FnName->getName(),
-                                     /*HasTrailingLParen=*/true,
-                                     /*SS=*/0,
-                                     /*ForceResolution=*/true);
-        if (Resolved.isInvalid())
-          return ExprError();
-        else {
-          delete Fn;
-          Fn = (Expr *)Resolved.release();
-        }                                         
-      }
-    } else
-      Dependent = true;
-  } else
-    Dependent = Expr::hasAnyTypeDependentArguments(Args, NumArgs);
-
-  // FIXME: Will need to cache the results of name lookup (including
-  // ADL) in Fn.
-  if (Dependent)
-    return Owned(new (Context) CallExpr(Fn, Args, NumArgs,
-                                        Context.DependentTy, RParenLoc));
-
-  // Determine whether this is a call to an object (C++ [over.call.object]).
-  if (getLangOptions().CPlusPlus && Fn->getType()->isRecordType())
-    return Owned(BuildCallToObjectOfClassType(S, Fn, LParenLoc, Args, NumArgs,
-                                              CommaLocs, RParenLoc));
+  DeclarationName UnqualifiedName;
 
   if (getLangOptions().CPlusPlus) {
+    // Determine whether this is a dependent call inside a C++ template,
+    // in which case we won't do any semantic analysis now. 
+    // FIXME: Will need to cache the results of name lookup (including ADL) in Fn.
+    bool Dependent = false;
+    if (Fn->isTypeDependent())
+      Dependent = true;
+    else if (Expr::hasAnyTypeDependentArguments(Args, NumArgs))
+      Dependent = true;
+
+    if (Dependent)
+      return Owned(new (Context) CallExpr(Fn, Args, NumArgs,
+                                          Context.DependentTy, RParenLoc));
+
+    // Determine whether this is a call to an object (C++ [over.call.object]).
+    if (Fn->getType()->isRecordType())
+      return Owned(BuildCallToObjectOfClassType(S, Fn, LParenLoc, Args, NumArgs,
+                                                CommaLocs, RParenLoc));
+
     // Determine whether this is a call to a member function.
     if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(Fn->IgnoreParens()))
       if (isa<OverloadedFunctionDecl>(MemExpr->getMemberDecl()) ||
@@ -1897,7 +1872,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(FnExpr))
       FnExpr = IcExpr->getSubExpr();
     else if (ParenExpr *PExpr = dyn_cast<ParenExpr>(FnExpr)) {
-      // FIXME: Where does the C++ standard say this?
+      // Parentheses around a function disable ADL 
+      // (C++0x [basic.lookup.argdep]p1).
       ADL = false;
       FnExpr = PExpr->getSubExpr();
     } else if (isa<UnaryOperator>(FnExpr) &&
@@ -1905,32 +1881,39 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
                  == UnaryOperator::AddrOf) {
       FnExpr = cast<UnaryOperator>(FnExpr)->getSubExpr();
     } else {
-      DRExpr = dyn_cast<DeclRefExpr>(FnExpr);
+      if (isa<DeclRefExpr>(FnExpr)) {
+        DRExpr = cast<DeclRefExpr>(FnExpr);
+
+        // Qualified names disable ADL (C++0x [basic.lookup.argdep]p1).
+        ADL = ADL && !isa<QualifiedDeclRefExpr>(DRExpr);
+      }
+      else if (UnresolvedFunctionNameExpr *DepName 
+                 = dyn_cast<UnresolvedFunctionNameExpr>(FnExpr))
+        UnqualifiedName = DepName->getName();
+      else {
+        // Any kind of name that does not refer to a declaration (or
+        // set of declarations) disables ADL (C++0x [basic.lookup.argdep]p3).
+        ADL = false;
+      }
       break;
     }
   }
   
-  if (DRExpr)
+  OverloadedFunctionDecl *Ovl = 0;
+  if (DRExpr) {
     FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
+    Ovl = dyn_cast<OverloadedFunctionDecl>(DRExpr->getDecl());
+  }
 
-  if (getLangOptions().CPlusPlus && DRExpr &&
-      (FDecl || isa<OverloadedFunctionDecl>(DRExpr->getDecl()))) {
-    // C++ [basic.lookup.argdep]p1:
-    //   When an unqualified name is used as the postfix-expression in
-    //   a function call (5.2.2), other namespaces not considered
-    //   during the usual unqualified lookup (3.4.1) may be searched,
-    //   and namespace-scope friend func- tion declarations (11.4) not
-    //   otherwise visible may be found.
-    if (DRExpr && isa<QualifiedDeclRefExpr>(DRExpr))
-      ADL = false;
-
+  if (getLangOptions().CPlusPlus && (FDecl || Ovl || UnqualifiedName)) {
     // We don't perform ADL for builtins.
     if (FDecl && FDecl->getIdentifier() && 
         FDecl->getIdentifier()->getBuiltinID())
       ADL = false;
 
-    if ((DRExpr && isa<OverloadedFunctionDecl>(DRExpr->getDecl())) || ADL) {
-      FDecl = ResolveOverloadedCallFn(Fn, DRExpr->getDecl(), LParenLoc, Args, 
+    if (Ovl || ADL) {
+      FDecl = ResolveOverloadedCallFn(Fn, DRExpr? DRExpr->getDecl() : 0, 
+                                      UnqualifiedName, LParenLoc, Args, 
                                       NumArgs, CommaLocs, RParenLoc, ADL);
       if (!FDecl)
         return ExprError();
@@ -1938,7 +1921,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       // Update Fn to refer to the actual function selected.
       Expr *NewFn = 0;
       if (QualifiedDeclRefExpr *QDRExpr 
-            = dyn_cast<QualifiedDeclRefExpr>(DRExpr))
+            = dyn_cast_or_null<QualifiedDeclRefExpr>(DRExpr))
         NewFn = new (Context) QualifiedDeclRefExpr(FDecl, FDecl->getType(), 
                                                    QDRExpr->getLocation(), 
                                                    false, false,

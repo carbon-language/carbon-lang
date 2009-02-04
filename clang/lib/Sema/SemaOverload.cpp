@@ -3503,20 +3503,56 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 /// resolution. Otherwise, emits diagnostics, deletes all of the
 /// arguments and Fn, and returns NULL.
 FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
+                                            DeclarationName UnqualifiedName,
                                             SourceLocation LParenLoc,
                                             Expr **Args, unsigned NumArgs,
                                             SourceLocation *CommaLocs, 
                                             SourceLocation RParenLoc,
-                                            bool ArgumentDependentLookup) {
+                                            bool &ArgumentDependentLookup) {
   OverloadCandidateSet CandidateSet;
+
+  // Add the functions denoted by Callee to the set of candidate
+  // functions. While we're doing so, track whether argument-dependent
+  // lookup still applies, per:
+  //
+  // C++0x [basic.lookup.argdep]p3:
+  //   Let X be the lookup set produced by unqualified lookup (3.4.1)
+  //   and let Y be the lookup set produced by argument dependent
+  //   lookup (defined as follows). If X contains
+  //
+  //     -- a declaration of a class member, or 
+  //
+  //     -- a block-scope function declaration that is not a
+  //        using-declaration, or 
+  // 
+  //     -- a declaration that is neither a function or a function
+  //        template
+  //
+  //   then Y is empty. 
   if (OverloadedFunctionDecl *Ovl 
-        = dyn_cast_or_null<OverloadedFunctionDecl>(Callee))
-    AddOverloadCandidates(Ovl, Args, NumArgs, CandidateSet);
-  else if (FunctionDecl *Func = dyn_cast_or_null<FunctionDecl>(Callee))
-    AddOverloadCandidate(cast<FunctionDecl>(Func), Args, NumArgs, CandidateSet);
-  
+        = dyn_cast_or_null<OverloadedFunctionDecl>(Callee)) {
+    for (OverloadedFunctionDecl::function_iterator Func = Ovl->function_begin(),
+                                                FuncEnd = Ovl->function_end();
+         Func != FuncEnd; ++Func) {
+      AddOverloadCandidate(*Func, Args, NumArgs, CandidateSet);
+
+      if ((*Func)->getDeclContext()->isRecord() ||
+          (*Func)->getDeclContext()->isFunctionOrMethod())
+        ArgumentDependentLookup = false;
+    }
+  } else if (FunctionDecl *Func = dyn_cast_or_null<FunctionDecl>(Callee)) {
+    AddOverloadCandidate(Func, Args, NumArgs, CandidateSet);
+
+    if (Func->getDeclContext()->isRecord() ||
+        Func->getDeclContext()->isFunctionOrMethod())
+      ArgumentDependentLookup = false;
+  } 
+
+  if (Callee)
+    UnqualifiedName = Callee->getDeclName();
+
   if (ArgumentDependentLookup)
-    AddArgumentDependentLookupCandidates(Callee->getDeclName(), Args, NumArgs,
+    AddArgumentDependentLookupCandidates(UnqualifiedName, Args, NumArgs,
                                          CandidateSet);
 
   OverloadCandidateSet::iterator Best;
@@ -3527,14 +3563,14 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
   case OR_No_Viable_Function:
     Diag(Fn->getSourceRange().getBegin(), 
          diag::err_ovl_no_viable_function_in_call)
-      << Callee->getDeclName() << (unsigned)CandidateSet.size()
+      << UnqualifiedName << (unsigned)CandidateSet.size()
       << Fn->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     break;
 
   case OR_Ambiguous:
     Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
-      << Callee->getDeclName() << Fn->getSourceRange();
+      << UnqualifiedName << Fn->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     break;
   }

@@ -727,28 +727,35 @@ public:
   static CXXDeleteExpr * CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// CXXDependentNameExpr - Represents a dependent name in C++ for
-/// which we could not locate any definition. These names can only
-/// occur as in the example below, with an unqualified call to a
-/// function name whose arguments are dependent.
+/// \brief Represents the name of a function that has not been
+/// resolved to any declaration.
+///
+/// Unresolved function names occur when a function name is
+/// encountered prior to an open parentheses ('(') in a C++ function
+/// call, and the function name itself did not resolve to a
+/// declaration. These function names can only be resolved when they
+/// form the postfix-expression of a function call, so that
+/// argument-dependent lookup finds declarations corresponding to
+/// these functions.
+
 /// @code
 /// template<typename T> void f(T x) {
-///   g(x); // g is a dependent name.
+///   g(x); // g is an unresolved function name (that is also a dependent name)
 /// }
 /// @endcode
-class CXXDependentNameExpr : public Expr {
-  /// Name - The name that was present in the source code.
-  IdentifierInfo *Name;
+class UnresolvedFunctionNameExpr : public Expr {
+  /// The name that was present in the source 
+  DeclarationName Name;
 
-  /// Loc - The location 
+  /// The location of this name in the source code
   SourceLocation Loc;
 
 public:
-  CXXDependentNameExpr(IdentifierInfo *N, QualType T, SourceLocation L)
-    : Expr(CXXDependentNameExprClass, T, true, true), Name(N), Loc(L) { }
+  UnresolvedFunctionNameExpr(DeclarationName N, QualType T, SourceLocation L)
+    : Expr(UnresolvedFunctionNameExprClass, T, false, false), Name(N), Loc(L) { }
 
-  /// getName - Retrieves the name that occurred in the source code.
-  IdentifierInfo *getName() const { return Name; }
+  /// \brief Retrieves the name that occurred in the source code.
+  DeclarationName getName() const { return Name; }
 
   /// getLocation - Retrieves the location in the source code where
   /// the name occurred.
@@ -757,16 +764,16 @@ public:
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == CXXDependentNameExprClass;
+    return T->getStmtClass() == UnresolvedFunctionNameExprClass;
   }
-  static bool classof(const CXXDependentNameExpr *) { return true; }
+  static bool classof(const UnresolvedFunctionNameExpr *) { return true; }
 
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXDependentNameExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
+  static UnresolvedFunctionNameExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// UnaryTypeTraitExpr - A GCC or MS unary type trait, as used in the

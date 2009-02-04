@@ -120,11 +120,11 @@ Stmt::child_iterator CXXNewExpr::child_end() {
 Stmt::child_iterator CXXDeleteExpr::child_begin() { return &Argument; }
 Stmt::child_iterator CXXDeleteExpr::child_end() { return &Argument+1; }
 
-// CXXDependentNameExpr
-Stmt::child_iterator CXXDependentNameExpr::child_begin() { 
+// UnresolvedFunctionNameExpr
+Stmt::child_iterator UnresolvedFunctionNameExpr::child_begin() { 
   return child_iterator(); 
 }
-Stmt::child_iterator CXXDependentNameExpr::child_end() {
+Stmt::child_iterator UnresolvedFunctionNameExpr::child_end() {
   return child_iterator();
 }
 

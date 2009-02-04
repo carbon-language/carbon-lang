@@ -115,7 +115,7 @@ STMT(CXXZeroInitValueExpr   , Expr)
 STMT(CXXConditionDeclExpr   , DeclRefExpr)
 STMT(CXXNewExpr             , Expr)
 STMT(CXXDeleteExpr          , Expr)
-STMT(CXXDependentNameExpr   , Expr)
+STMT(UnresolvedFunctionNameExpr , Expr)
 STMT(UnaryTypeTraitExpr     , Expr)
 STMT(QualifiedDeclRefExpr   , DeclRefExpr)
 

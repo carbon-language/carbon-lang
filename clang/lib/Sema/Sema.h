@@ -517,12 +517,13 @@ public:
                                                    bool Complain);
   void FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
 
-  FunctionDecl *ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Func,
+  FunctionDecl *ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
+                                        DeclarationName UnqualifiedName,
                                         SourceLocation LParenLoc,
                                         Expr **Args, unsigned NumArgs,
                                         SourceLocation *CommaLocs, 
                                         SourceLocation RParenLoc,
-                                        bool ArgumentDependentLookup);
+                                        bool &ArgumentDependentLookup);
   ExprResult
   BuildCallToMemberFunction(Scope *S, Expr *MemExpr,
                             SourceLocation LParenLoc, Expr **Args, 
@@ -1068,7 +1069,6 @@ public:
                                             DeclarationName Name,
                                             bool HasTrailingLParen,
                                             const CXXScopeSpec *SS,
-                                            bool ForceResolution = false,
                                             bool isAddressOfOperand = false);
 
   virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,

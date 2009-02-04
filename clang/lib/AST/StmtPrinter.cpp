@@ -1101,8 +1101,8 @@ void StmtPrinter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   PrintExpr(E->getArgument());
 }
 
-void StmtPrinter::VisitCXXDependentNameExpr(CXXDependentNameExpr *E) {
-  OS << E->getName()->getName();
+void StmtPrinter::VisitUnresolvedFunctionNameExpr(UnresolvedFunctionNameExpr *E) {
+  OS << E->getName().getAsString();
 }
 
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {

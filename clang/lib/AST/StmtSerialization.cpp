@@ -245,8 +245,8 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case CXXDeleteExprClass:
       return CXXDeleteExpr::CreateImpl(D, C);
 
-    case CXXDependentNameExprClass:
-      return CXXDependentNameExpr::CreateImpl(D, C);
+    case UnresolvedFunctionNameExprClass:
+      return UnresolvedFunctionNameExpr::CreateImpl(D, C);
 
     case CXXCatchStmtClass:
       return CXXCatchStmt::CreateImpl(D, C);
@@ -1528,18 +1528,18 @@ CXXDeleteExpr::CreateImpl(Deserializer& D, ASTContext& C) {
                            cast<Expr>(Argument), Loc);
 }
 
-void CXXDependentNameExpr::EmitImpl(llvm::Serializer& S) const {
+void UnresolvedFunctionNameExpr::EmitImpl(llvm::Serializer& S) const {
   S.Emit(getType());
-  S.EmitPtr(Name);
+  S.EmitPtr(Name.getAsIdentifierInfo()); // FIXME: WRONG!
   S.Emit(Loc);
 }
 
-CXXDependentNameExpr *
-CXXDependentNameExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+UnresolvedFunctionNameExpr *
+UnresolvedFunctionNameExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
   QualType Ty = QualType::ReadVal(D);
   IdentifierInfo *N = D.ReadPtr<IdentifierInfo>();
   SourceLocation L = SourceLocation::ReadVal(D);
-  return new CXXDependentNameExpr(N, Ty, L);
+  return new UnresolvedFunctionNameExpr(N, Ty, L);
 }
 
 void UnaryTypeTraitExpr::EmitImpl(llvm::Serializer& S) const {
