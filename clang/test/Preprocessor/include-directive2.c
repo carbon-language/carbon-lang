@@ -1,4 +1,4 @@
-// RUN: clang -Eonly %s -I.
-#  define HEADER <file_to_include.h>
+// RUN: clang -Eonly %s 
+#  define HEADER <stdlib.h>
 
 #  include HEADER
