@@ -219,6 +219,7 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   std::vector<SDValue> ArgValues;
   SDValue Root = Op.getOperand(0);
+  DebugLoc dl = Op.getDebugLoc();
 
   AddLiveIn(MF, Alpha::R29, &Alpha::GPRCRegClass); //GP
   AddLiveIn(MF, Alpha::R26, &Alpha::GPRCRegClass); //RA
@@ -240,17 +241,17 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
       case MVT::f64:
         args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
                                       &Alpha::F8RCRegClass);
-        ArgVal = DAG.getCopyFromReg(Root, args_float[ArgNo], ObjectVT);
+        ArgVal = DAG.getCopyFromReg(Root, dl, args_float[ArgNo], ObjectVT);
         break;
       case MVT::f32:
         args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
                                       &Alpha::F4RCRegClass);
-        ArgVal = DAG.getCopyFromReg(Root, args_float[ArgNo], ObjectVT);
+        ArgVal = DAG.getCopyFromReg(Root, dl, args_float[ArgNo], ObjectVT);
         break;
       case MVT::i64:
         args_int[ArgNo] = AddLiveIn(MF, args_int[ArgNo], 
                                     &Alpha::GPRCRegClass);
-        ArgVal = DAG.getCopyFromReg(Root, args_int[ArgNo], MVT::i64);
+        ArgVal = DAG.getCopyFromReg(Root, dl, args_int[ArgNo], MVT::i64);
         break;
       }
     } else { //more args
@@ -260,7 +261,7 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i64);
-      ArgVal = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
+      ArgVal = DAG.getLoad(ObjectVT, dl, Root, FIN, NULL, 0);
     }
     ArgValues.push_back(ArgVal);
   }
@@ -273,28 +274,28 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
     for (int i = 0; i < 6; ++i) {
       if (TargetRegisterInfo::isPhysicalRegister(args_int[i]))
         args_int[i] = AddLiveIn(MF, args_int[i], &Alpha::GPRCRegClass);
-      SDValue argt = DAG.getCopyFromReg(Root, args_int[i], MVT::i64);
+      SDValue argt = DAG.getCopyFromReg(Root, dl, args_int[i], MVT::i64);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
       if (i == 0) VarArgsBase = FI;
       SDValue SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getStore(Root, argt, SDFI, NULL, 0));
+      LS.push_back(DAG.getStore(Root, dl, argt, SDFI, NULL, 0));
 
       if (TargetRegisterInfo::isPhysicalRegister(args_float[i]))
         args_float[i] = AddLiveIn(MF, args_float[i], &Alpha::F8RCRegClass);
-      argt = DAG.getCopyFromReg(Root, args_float[i], MVT::f64);
+      argt = DAG.getCopyFromReg(Root, dl, args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getStore(Root, argt, SDFI, NULL, 0));
+      LS.push_back(DAG.getStore(Root, dl, argt, SDFI, NULL, 0));
     }
 
     //Set up a token factor with all the stack traffic
-    Root = DAG.getNode(ISD::TokenFactor, MVT::Other, &LS[0], LS.size());
+    Root = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &LS[0], LS.size());
   }
 
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getNode(ISD::MERGE_VALUES, Op.getNode()->getVTList(),
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(),
                      &ArgValues[0], ArgValues.size());
 }
 
@@ -622,13 +623,14 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 void AlphaTargetLowering::ReplaceNodeResults(SDNode *N,
                                              SmallVectorImpl<SDValue>&Results,
                                              SelectionDAG &DAG) {
+  DebugLoc dl = N->getDebugLoc();
   assert(N->getValueType(0) == MVT::i32 &&
          N->getOpcode() == ISD::VAARG &&
          "Unknown node to custom promote!");
 
   SDValue Chain, DataPtr;
   LowerVAARG(N, Chain, DataPtr, DAG);
-  SDValue Res = DAG.getLoad(N->getValueType(0), Chain, DataPtr, NULL, 0);
+  SDValue Res = DAG.getLoad(N->getValueType(0), dl, Chain, DataPtr, NULL, 0);
   Results.push_back(Res);
   Results.push_back(SDValue(Res.getNode(), 1));
 }

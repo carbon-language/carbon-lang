@@ -249,6 +249,7 @@ public:
   SDNode *emitBuildVector(SDValue build_vec) {
     MVT vecVT = build_vec.getValueType();
     SDNode *bvNode = build_vec.getNode();
+    DebugLoc dl = bvNode->getDebugLoc();
 
     // Check to see if this vector can be represented as a CellSPU immediate
     // constant by invoking all of the instruction selection predicates:
@@ -279,7 +280,7 @@ public:
     SDValue CGPoolOffset =
             SPU::LowerConstantPool(CPIdx, *CurDAG,
                                    SPUtli.getSPUTargetMachine());
-    return SelectCode(CurDAG->getLoad(build_vec.getValueType(),
+    return SelectCode(CurDAG->getLoad(build_vec.getValueType(), dl,
                                       CurDAG->getEntryNode(), CGPoolOffset,
                                       PseudoSourceValue::getConstantPool(), 0,
                                       false, Alignment));

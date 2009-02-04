@@ -468,6 +468,7 @@ LowerSELECT(SDValue Op, SelectionDAG &DAG)
 SDValue MipsTargetLowering::
 LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) 
 {
+  DebugLoc dl = Op.getDebugLoc();
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
 
@@ -478,21 +479,22 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
     if (!isa<Function>(GV) && IsGlobalInSmallSection(GV)) { 
       SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, VTs, 1, Ops, 1);
       SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
-      return DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
+      return DAG.getNode(ISD::ADD, dl, MVT::i32, GOT, GPRelNode); 
     }
     // %hi/%lo relocation
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
-    return DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
+    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, 1, Ops, 1);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GA);
+    return DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
 
   } else { // Abicall relocations, TODO: make this cleaner.
-    SDValue ResNode = DAG.getLoad(MVT::i32, DAG.getEntryNode(), GA, NULL, 0);
+    SDValue ResNode = DAG.getLoad(MVT::i32, dl, 
+                                  DAG.getEntryNode(), GA, NULL, 0);
     // On functions and global targets not internal linked only
     // a load from got/GP is necessary for PIC to work.
     if (!GV->hasLocalLinkage() || isa<Function>(GV))
       return ResNode;
-    SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
-    return DAG.getNode(ISD::ADD, MVT::i32, ResNode, Lo);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GA);
+    return DAG.getNode(ISD::ADD, dl, MVT::i32, ResNode, Lo);
   }
 
   assert(0 && "Dont know how to handle GlobalAddress");
@@ -511,6 +513,7 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG)
 {
   SDValue ResNode;
   SDValue HiPart; 
+  DebugLoc dl = Op.getDebugLoc();
 
   MVT PtrVT = Op.getValueType();
   JumpTableSDNode *JT  = cast<JumpTableSDNode>(Op);
@@ -519,12 +522,12 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG)
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
     SDValue Ops[] = { JTI };
-    HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
+    HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, 1, Ops, 1);
   } else // Emit Load from Global Pointer
-    HiPart = DAG.getLoad(MVT::i32, DAG.getEntryNode(), JTI, NULL, 0);
+    HiPart = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), JTI, NULL, 0);
 
-  SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, JTI);
-  ResNode = DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
+  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, JTI);
+  ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
 
   return ResNode;
 }
@@ -586,6 +589,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
   SDValue Callee = TheCall->getCallee();
   bool isVarArg = TheCall->isVarArg();
   unsigned CC = TheCall->getCallingConv();
+  DebugLoc dl = TheCall->getDebugLoc();
 
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
@@ -627,13 +631,13 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
     default: assert(0 && "Unknown loc info!");
     case CCValAssign::Full: break;
     case CCValAssign::SExt:
-      Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
+      Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
       break;
     case CCValAssign::ZExt:
-      Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
+      Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
       break;
     case CCValAssign::AExt:
-      Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
+      Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
       break;
     }
     
@@ -659,13 +663,13 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 
     // emit ISD::STORE whichs stores the 
     // parameter value to a stack Location
-    MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+    MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0));
   }
 
   // Transform all store nodes into one single node because all store
   // nodes are independent of each other.
   if (!MemOpChains.empty())     
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, 
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
                         &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token 
@@ -674,7 +678,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
   // stuck together.
   SDValue InFlag;
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, 
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first, 
                              RegsToPass[i].second, InFlag);
     InFlag = Chain.getValue(1);
   }
@@ -706,7 +710,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
   if (InFlag.getNode())
     Ops.push_back(InFlag);
 
-  Chain  = DAG.getNode(MipsISD::JmpLink, NodeTys, &Ops[0], Ops.size());
+  Chain  = DAG.getNode(MipsISD::JmpLink, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
@@ -736,9 +740,9 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
       // Reload GP value.
       FI = MipsFI->getGPFI();
       SDValue FIN = DAG.getFrameIndex(FI,getPointerTy());
-      SDValue GPLoad = DAG.getLoad(MVT::i32, Chain, FIN, NULL, 0);
+      SDValue GPLoad = DAG.getLoad(MVT::i32, dl, Chain, FIN, NULL, 0);
       Chain = GPLoad.getValue(1);
-      Chain = DAG.getCopyToReg(Chain, DAG.getRegister(Mips::GP, MVT::i32), 
+      Chain = DAG.getCopyToReg(Chain, dl, DAG.getRegister(Mips::GP, MVT::i32), 
                                GPLoad, SDValue(0,0));
       InFlag = Chain.getValue(1);
   }      
@@ -758,6 +762,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
         unsigned CallingConv, SelectionDAG &DAG) {
   
   bool isVarArg = TheCall->isVarArg();
+  DebugLoc dl = TheCall->getDebugLoc();
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
@@ -768,7 +773,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
 
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
-    Chain = DAG.getCopyFromReg(Chain, RVLocs[i].getLocReg(),
+    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
                                  RVLocs[i].getValVT(), InFlag).getValue(1);
     InFlag = Chain.getValue(2);
     ResultVals.push_back(Chain.getValue(0));
@@ -777,7 +782,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   ResultVals.push_back(Chain);
 
   // Merge everything together with a MERGE_VALUES node.
-  return DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(),
+  return DAG.getNode(ISD::MERGE_VALUES, dl, TheCall->getVTList(),
                      &ResultVals[0], ResultVals.size()).getNode();
 }
 
@@ -796,6 +801,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+  DebugLoc dl = Op.getDebugLoc();
 
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
@@ -840,20 +846,20 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
       // Transform the arguments stored on 
       // physical registers into virtual ones
       unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
-      SDValue ArgValue = DAG.getCopyFromReg(Root, Reg, RegVT);
+      SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
       
       // If this is an 8 or 16-bit value, it is really passed promoted 
       // to 32 bits.  Insert an assert[sz]ext to capture this, then 
       // truncate to the right size.
       if (VA.getLocInfo() == CCValAssign::SExt)
-        ArgValue = DAG.getNode(ISD::AssertSext, RegVT, ArgValue,
+        ArgValue = DAG.getNode(ISD::AssertSext, dl, RegVT, ArgValue,
                                DAG.getValueType(VA.getValVT()));
       else if (VA.getLocInfo() == CCValAssign::ZExt)
-        ArgValue = DAG.getNode(ISD::AssertZext, RegVT, ArgValue,
+        ArgValue = DAG.getNode(ISD::AssertZext, dl, RegVT, ArgValue,
                                DAG.getValueType(VA.getValVT()));
       
       if (VA.getLocInfo() != CCValAssign::Full)
-        ArgValue = DAG.getNode(ISD::TRUNCATE, VA.getValVT(), ArgValue);
+        ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
 
       ArgValues.push_back(ArgValue);
 
@@ -877,7 +883,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
       
         // emit ISD::STORE whichs stores the 
         // parameter value to a stack Location
-        ArgValues.push_back(DAG.getStore(Root, ArgValue, PtrOff, NULL, 0));
+        ArgValues.push_back(DAG.getStore(Root, dl, ArgValue, PtrOff, NULL, 0));
       }
 
     } else { // VA.isRegLoc()
@@ -900,7 +906,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
 
       // Create load nodes to retrieve arguments from the stack
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
+      ArgValues.push_back(DAG.getLoad(VA.getValVT(), dl, Root, FIN, NULL, 0));
     }
   }
 
@@ -913,14 +919,14 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
       Reg = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i32));
       MipsFI->setSRetReturnReg(Reg);
     }
-    SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), Reg, ArgValues[0]);
-    Root = DAG.getNode(ISD::TokenFactor, MVT::Other, Copy, Root);
+    SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), dl, Reg, ArgValues[0]);
+    Root = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Copy, Root);
   }
 
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getNode(ISD::MERGE_VALUES, Op.getNode()->getVTList(),
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(),
                      &ArgValues[0], ArgValues.size()).getValue(Op.getResNo());
 }
 

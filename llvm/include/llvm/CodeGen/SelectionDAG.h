@@ -576,9 +576,6 @@ public:
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///
-  SDValue getLoad(MVT VT, SDValue Chain, SDValue Ptr,
-                    const Value *SV, int SVOffset, bool isVolatile=false,
-                    unsigned Alignment=0);
   SDValue getLoad(MVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
                     const Value *SV, int SVOffset, bool isVolatile=false,
                     unsigned Alignment=0);
@@ -588,11 +585,6 @@ public:
                        unsigned Alignment=0);
   SDValue getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);
-  SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
-                    MVT VT, SDValue Chain,
-                    SDValue Ptr, SDValue Offset,
-                    const Value *SV, int SVOffset, MVT EVT,
-                    bool isVolatile=false, unsigned Alignment=0);
   SDValue getLoad(ISD::MemIndexedMode AM, DebugLoc dl, ISD::LoadExtType ExtType,
                     MVT VT, SDValue Chain,
                     SDValue Ptr, SDValue Offset,
@@ -601,9 +593,6 @@ public:
 
   /// getStore - Helper function to build ISD::STORE nodes.
   ///
-  SDValue getStore(SDValue Chain, SDValue Val, SDValue Ptr,
-                     const Value *SV, int SVOffset, bool isVolatile=false,
-                     unsigned Alignment=0);
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                      const Value *SV, int SVOffset, bool isVolatile=false,
                      unsigned Alignment=0);

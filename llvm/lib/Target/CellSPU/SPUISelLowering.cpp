@@ -507,6 +507,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   ISD::LoadExtType ExtType = LN->getExtensionType();
   unsigned alignment = LN->getAlignment();
   const valtype_map_s *vtm = getValueTypeMapEntry(InVT);
+  DebugLoc dl = Op.getDebugLoc();
 
   switch (LN->getAddressingMode()) {
   case ISD::UNINDEXED: {
@@ -553,7 +554,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
         int64_t rotamt = -vtm->prefslot_byte;
         if (rotamt < 0)
           rotamt += 16;
-        rotate = DAG.getNode(ISD::ADD, PtrVT,
+        rotate = DAG.getNode(ISD::ADD, dl, PtrVT,
                              basePtr,
                              DAG.getConstant(rotamt, PtrVT));
       }
@@ -573,8 +574,8 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
           // in a register. Note that this is done because we need to avoid
           // creating a 0(reg) d-form address due to the SPU's block loads.
           basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT, Op0, Op1);
-          the_chain = DAG.getCopyToReg(the_chain, VReg, basePtr, Flag);
-          basePtr = DAG.getCopyFromReg(the_chain, VReg, PtrVT);
+          the_chain = DAG.getCopyToReg(the_chain, dl, VReg, basePtr, Flag);
+          basePtr = DAG.getCopyFromReg(the_chain, dl, VReg, PtrVT);
         } else {
           // Convert the (add <arg1>, <arg2>) to an indirect address, which
           // will likely be lowered as a reg(reg) x-form address.
@@ -588,13 +589,13 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
       // Offset the rotate amount by the basePtr and the preferred slot
       // byte offset
-      rotate = DAG.getNode(ISD::ADD, PtrVT,
+      rotate = DAG.getNode(ISD::ADD, dl, PtrVT,
                            basePtr,
                            DAG.getConstant(-vtm->prefslot_byte, PtrVT));
     }
 
     // Re-emit as a v16i8 vector load
-    result = DAG.getLoad(MVT::v16i8, the_chain, basePtr,
+    result = DAG.getLoad(MVT::v16i8, dl, the_chain, basePtr,
                          LN->getSrcValue(), LN->getSrcValueOffset(),
                          LN->isVolatile(), 16);
 
@@ -602,27 +603,27 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     the_chain = result.getValue(1);
 
     // Rotate into the preferred slot:
-    result = DAG.getNode(SPUISD::ROTBYTES_LEFT, MVT::v16i8,
+    result = DAG.getNode(SPUISD::ROTBYTES_LEFT, dl, MVT::v16i8,
                          result.getValue(0), rotate);
 
     // Convert the loaded v16i8 vector to the appropriate vector type
     // specified by the operand:
     MVT vecVT = MVT::getVectorVT(InVT, (128 / InVT.getSizeInBits()));
-    result = DAG.getNode(SPUISD::VEC2PREFSLOT, InVT,
-                         DAG.getNode(ISD::BIT_CONVERT, vecVT, result));
+    result = DAG.getNode(SPUISD::VEC2PREFSLOT, dl, InVT,
+                         DAG.getNode(ISD::BIT_CONVERT, dl, vecVT, result));
 
     // Handle extending loads by extending the scalar result:
     if (ExtType == ISD::SEXTLOAD) {
-      result = DAG.getNode(ISD::SIGN_EXTEND, OutVT, result);
+      result = DAG.getNode(ISD::SIGN_EXTEND, dl, OutVT, result);
     } else if (ExtType == ISD::ZEXTLOAD) {
-      result = DAG.getNode(ISD::ZERO_EXTEND, OutVT, result);
+      result = DAG.getNode(ISD::ZERO_EXTEND, dl, OutVT, result);
     } else if (ExtType == ISD::EXTLOAD) {
       unsigned NewOpc = ISD::ANY_EXTEND;
 
       if (OutVT.isFloatingPoint())
         NewOpc = ISD::FP_EXTEND;
 
-      result = DAG.getNode(NewOpc, OutVT, result);
+      result = DAG.getNode(NewOpc, dl, OutVT, result);
     }
 
     SDVTList retvts = DAG.getVTList(OutVT, MVT::Other);
@@ -631,7 +632,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       the_chain
     };
 
-    result = DAG.getNode(SPUISD::LDRESULT, retvts,
+    result = DAG.getNode(SPUISD::LDRESULT, dl, retvts,
                          retops, sizeof(retops) / sizeof(retops[0]));
     return result;
   }
@@ -663,6 +664,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   MVT VT = Value.getValueType();
   MVT StVT = (!SN->isTruncatingStore() ? VT : SN->getMemoryVT());
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  DebugLoc dl = Op.getDebugLoc();
   unsigned alignment = SN->getAlignment();
 
   switch (SN->getAddressingMode()) {
@@ -719,8 +721,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
           // in a register. Note that this is done because we need to avoid
           // creating a 0(reg) d-form address due to the SPU's block loads.
           basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT, Op0, Op1);
-          the_chain = DAG.getCopyToReg(the_chain, VReg, basePtr, Flag);
-          basePtr = DAG.getCopyFromReg(the_chain, VReg, PtrVT);
+          the_chain = DAG.getCopyToReg(the_chain, dl, VReg, basePtr, Flag);
+          basePtr = DAG.getCopyFromReg(the_chain, dl, VReg, PtrVT);
         } else {
           // Convert the (add <arg1>, <arg2>) to an indirect address, which
           // will likely be lowered as a reg(reg) x-form address.
@@ -733,13 +735,13 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       }
 
       // Insertion point is solely determined by basePtr's contents
-      insertEltOffs = DAG.getNode(ISD::ADD, PtrVT,
+      insertEltOffs = DAG.getNode(ISD::ADD, dl, PtrVT,
                                   basePtr,
                                   DAG.getConstant(0, PtrVT));
     }
 
     // Re-emit as a v16i8 vector load
-    alignLoadVec = DAG.getLoad(MVT::v16i8, the_chain, basePtr,
+    alignLoadVec = DAG.getLoad(MVT::v16i8, dl, the_chain, basePtr,
                                SN->getSrcValue(), SN->getSrcValueOffset(),
                                SN->isVolatile(), 16);
 
@@ -771,15 +773,16 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 #endif
 
     SDValue insertEltOp =
-            DAG.getNode(SPUISD::SHUFFLE_MASK, vecVT, insertEltOffs);
+            DAG.getNode(SPUISD::SHUFFLE_MASK, dl, vecVT, insertEltOffs);
     SDValue vectorizeOp =
-            DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, theValue);
+            DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, vecVT, theValue);
 
-    result = DAG.getNode(SPUISD::SHUFB, vecVT,
+    result = DAG.getNode(SPUISD::SHUFB, dl, vecVT,
                          vectorizeOp, alignLoadVec,
-                         DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, insertEltOp));
+                         DAG.getNode(ISD::BIT_CONVERT, dl, 
+                                     MVT::v4i32, insertEltOp));
 
-    result = DAG.getStore(the_chain, result, basePtr,
+    result = DAG.getStore(the_chain, dl, result, basePtr,
                           LN->getSrcValue(), LN->getSrcValueOffset(),
                           LN->isVolatile(), LN->getAlignment());
 
@@ -926,6 +929,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
   SmallVector<SDValue, 48> ArgValues;
   SDValue Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
+  DebugLoc dl = Op.getDebugLoc();
 
   const unsigned *ArgRegs = SPURegisterInfo::getArgRegs();
   const unsigned NumArgRegs = SPURegisterInfo::getNumArgRegs();
@@ -986,7 +990,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
 
       unsigned VReg = RegInfo.createVirtualRegister(ArgRegClass);
       RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
-      ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
+      ArgVal = DAG.getCopyFromReg(Root, dl, VReg, ObjectVT);
       ++ArgRegIdx;
     } else {
       // We need to load the argument to a virtual register if we determined
@@ -994,7 +998,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       // or we're forced to do vararg
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
-      ArgVal = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
+      ArgVal = DAG.getLoad(ObjectVT, dl, Root, FIN, NULL, 0);
       ArgOffset += StackSlotSize;
     }
 
@@ -1015,7 +1019,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       VarArgsFrameIndex = MFI->CreateFixedObject(StackSlotSize, ArgOffset);
       SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
       SDValue ArgVal = DAG.getRegister(ArgRegs[ArgRegIdx], MVT::v16i8);
-      SDValue Store = DAG.getStore(Root, ArgVal, FIN, NULL, 0);
+      SDValue Store = DAG.getStore(Root, dl, ArgVal, FIN, NULL, 0);
       Root = Store.getOperand(0);
       MemOps.push_back(Store);
 
@@ -1023,13 +1027,14 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       ArgOffset += StackSlotSize;
     }
     if (!MemOps.empty())
-      Root = DAG.getNode(ISD::TokenFactor,MVT::Other,&MemOps[0],MemOps.size());
+      Root = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
+                         &MemOps[0], MemOps.size());
   }
 
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getNode(ISD::MERGE_VALUES, Op.getNode()->getVTList(),
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(),
                      &ArgValues[0], ArgValues.size());
 }
 
@@ -1056,6 +1061,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   unsigned StackSlotSize = SPUFrameInfo::stackSlotSize();
   const unsigned *ArgRegs = SPURegisterInfo::getArgRegs();
   const unsigned NumArgRegs = SPURegisterInfo::getNumArgRegs();
+  DebugLoc dl = TheCall->getDebugLoc();
 
   // Handy pointer type
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
@@ -1086,7 +1092,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // PtrOff will be used to store the current argument to the stack if a
     // register cannot be found for it.
     SDValue PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
-    PtrOff = DAG.getNode(ISD::ADD, PtrVT, StackPtr, PtrOff);
+    PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, StackPtr, PtrOff);
 
     switch (Arg.getValueType().getSimpleVT()) {
     default: assert(0 && "Unexpected ValueType for argument!");
@@ -1098,7 +1104,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       if (ArgRegIdx != NumArgRegs) {
         RegsToPass.push_back(std::make_pair(ArgRegs[ArgRegIdx++], Arg));
       } else {
-        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0));
         ArgOffset += StackSlotSize;
       }
       break;
@@ -1107,7 +1113,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       if (ArgRegIdx != NumArgRegs) {
         RegsToPass.push_back(std::make_pair(ArgRegs[ArgRegIdx++], Arg));
       } else {
-        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0));
         ArgOffset += StackSlotSize;
       }
       break;
@@ -1120,7 +1126,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       if (ArgRegIdx != NumArgRegs) {
         RegsToPass.push_back(std::make_pair(ArgRegs[ArgRegIdx++], Arg));
       } else {
-        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0));
         ArgOffset += StackSlotSize;
       }
       break;
@@ -1134,7 +1140,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
   if (!MemOpChains.empty()) {
     // Adjust the stack pointer for the stack arguments.
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
   }
 
@@ -1142,8 +1148,8 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // and flag operands which copy the outgoing args into the appropriate regs.
   SDValue InFlag;
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
-                             InFlag);
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first, 
+                             RegsToPass[i].second, InFlag);
     InFlag = Chain.getValue(1);
   }
 
@@ -1207,7 +1213,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   if (InFlag.getNode())
     Ops.push_back(InFlag);
   // Returns a chain and a flag for retval copy to use.
-  Chain = DAG.getNode(CallOpc, DAG.getVTList(MVT::Other, MVT::Flag),
+  Chain = DAG.getNode(CallOpc, dl, DAG.getVTList(MVT::Other, MVT::Flag),
                       &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
@@ -1225,31 +1231,35 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   case MVT::Other: break;
   case MVT::i32:
     if (TheCall->getValueType(1) == MVT::i32) {
-      Chain = DAG.getCopyFromReg(Chain, SPU::R4, MVT::i32, InFlag).getValue(1);
+      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R4, 
+                                 MVT::i32, InFlag).getValue(1);
       ResultVals[0] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, SPU::R3, MVT::i32,
+      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i32,
                                  Chain.getValue(2)).getValue(1);
       ResultVals[1] = Chain.getValue(0);
       NumResults = 2;
     } else {
-      Chain = DAG.getCopyFromReg(Chain, SPU::R3, MVT::i32, InFlag).getValue(1);
+      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i32, 
+                                 InFlag).getValue(1);
       ResultVals[0] = Chain.getValue(0);
       NumResults = 1;
     }
     break;
   case MVT::i64:
-    Chain = DAG.getCopyFromReg(Chain, SPU::R3, MVT::i64, InFlag).getValue(1);
+    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i64, 
+                               InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
     break;
   case MVT::i128:
-    Chain = DAG.getCopyFromReg(Chain, SPU::R3, MVT::i128, InFlag).getValue(1);
+    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i128, 
+                               InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
     break;
   case MVT::f32:
   case MVT::f64:
-    Chain = DAG.getCopyFromReg(Chain, SPU::R3, TheCall->getValueType(0),
+    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, TheCall->getValueType(0),
                                InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
@@ -1260,7 +1270,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   case MVT::v4i32:
   case MVT::v8i16:
   case MVT::v16i8:
-    Chain = DAG.getCopyFromReg(Chain, SPU::R3, TheCall->getValueType(0),
+    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, TheCall->getValueType(0),
                                    InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
@@ -1273,7 +1283,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
   // Otherwise, merge everything together with a MERGE_VALUES node.
   ResultVals[NumResults++] = Chain;
-  SDValue Res = DAG.getMergeValues(ResultVals, NumResults);
+  SDValue Res = DAG.getMergeValues(ResultVals, NumResults, dl);
   return Res.getValue(Op.getResNo());
 }
 

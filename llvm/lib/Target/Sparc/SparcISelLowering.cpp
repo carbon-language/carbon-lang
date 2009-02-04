@@ -231,6 +231,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
   SDValue Chain = TheCall->getChain();
   SDValue Callee = TheCall->getCallee();
   bool isVarArg = TheCall->isVarArg();
+  DebugLoc dl = TheCall->getDebugLoc();
 
 #if 0
   // Analyze operands of the call, assigning locations to each operand.
@@ -344,7 +345,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
         ValToStore = Val;
       } else {
         // Convert this to a FP value in an int reg.
-        Val = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Val);
+        Val = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Val);
         RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Val));
       }
       break;
@@ -358,14 +359,15 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
       // Break into top and bottom parts by storing to the stack and loading
       // out the parts as integers.  Top part goes in a reg.
       SDValue StackPtr = DAG.CreateStackTemporary(MVT::f64, MVT::i32);
-      SDValue Store = DAG.getStore(DAG.getEntryNode(), Val, StackPtr, NULL, 0);
+      SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, 
+                                   Val, StackPtr, NULL, 0);
       // Sparc is big-endian, so the high part comes first.
-      SDValue Hi = DAG.getLoad(MVT::i32, Store, StackPtr, NULL, 0, 0);
+      SDValue Hi = DAG.getLoad(MVT::i32, dl, Store, StackPtr, NULL, 0, 0);
       // Increment the pointer to the other half.
-      StackPtr = DAG.getNode(ISD::ADD, StackPtr.getValueType(), StackPtr,
+      StackPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(), StackPtr,
                              DAG.getIntPtrConstant(4));
       // Load the low part.
-      SDValue Lo = DAG.getLoad(MVT::i32, Store, StackPtr, NULL, 0, 0);
+      SDValue Lo = DAG.getLoad(MVT::i32, dl, Store, StackPtr, NULL, 0, 0);
 
       RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
 
@@ -386,9 +388,9 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
       }
 
       // Split the value into top and bottom part.  Top part goes in a reg.
-      SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Val,
+      SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Val,
                                  DAG.getConstant(1, MVT::i32));
-      SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Val,
+      SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Val,
                                  DAG.getConstant(0, MVT::i32));
       RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
 
@@ -406,8 +408,9 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
     if (ValToStore.getNode()) {
       SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
       SDValue PtrOff = DAG.getConstant(ArgOffset, MVT::i32);
-      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-      MemOpChains.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NULL, 0));
+      PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
+      MemOpChains.push_back(DAG.getStore(Chain, dl, ValToStore, 
+                                         PtrOff, NULL, 0));
     }
     ArgOffset += ObjSize;
   }
@@ -415,7 +418,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // Emit all stores, make sure the occur before any copies into physregs.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token
@@ -429,7 +432,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
     if (Reg >= SP::I0 && Reg <= SP::I7)
       Reg = Reg-SP::I0+SP::O0;
 
-    Chain = DAG.getCopyToReg(Chain, Reg, RegsToPass[i].second, InFlag);
+    Chain = DAG.getCopyToReg(Chain, dl, Reg, RegsToPass[i].second, InFlag);
     InFlag = Chain.getValue(1);
   }
 
@@ -445,7 +448,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
   SDValue Ops[] = { Chain, Callee, InFlag };
-  Chain = DAG.getNode(SPISD::CALL, NodeTys, Ops, InFlag.getNode() ? 3 : 2);
+  Chain = DAG.getNode(SPISD::CALL, dl, NodeTys, Ops, InFlag.getNode() ? 3 : 2);
   InFlag = Chain.getValue(1);
 
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(ArgsSize, true),
@@ -467,7 +470,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
     if (Reg >= SP::I0 && Reg <= SP::I7)
       Reg = Reg-SP::I0+SP::O0;
 
-    Chain = DAG.getCopyFromReg(Chain, Reg,
+    Chain = DAG.getCopyFromReg(Chain, dl, Reg,
                                RVLocs[i].getValVT(), InFlag).getValue(1);
     InFlag = Chain.getValue(2);
     ResultVals.push_back(Chain.getValue(0));
@@ -476,7 +479,8 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
   ResultVals.push_back(Chain);
 
   // Merge everything together with a MERGE_VALUES node.
-  return DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(), &ResultVals[0],
+  return DAG.getNode(ISD::MERGE_VALUES, dl, 
+                     TheCall->getVTList(), &ResultVals[0],
                      ResultVals.size());
 }
 
@@ -824,12 +828,13 @@ static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
                               SparcTargetLowering &TLI) {
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
-  SDValue Offset = DAG.getNode(ISD::ADD, MVT::i32,
+  DebugLoc dl = Op.getNode()->getDebugLoc();
+  SDValue Offset = DAG.getNode(ISD::ADD, dl, MVT::i32,
                                  DAG.getRegister(SP::I6, MVT::i32),
                                  DAG.getConstant(TLI.getVarArgsFrameOffset(),
                                                  MVT::i32));
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  return DAG.getStore(Op.getOperand(0), Offset, Op.getOperand(1), SV, 0);
+  return DAG.getStore(Op.getOperand(0), dl, Offset, Op.getOperand(1), SV, 0);
 }
 
 static SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG) {
@@ -838,28 +843,29 @@ static SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG) {
   SDValue InChain = Node->getOperand(0);
   SDValue VAListPtr = Node->getOperand(1);
   const Value *SV = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
-  SDValue VAList = DAG.getLoad(MVT::i32, InChain, VAListPtr, SV, 0);
+  DebugLoc dl = Node->getDebugLoc();
+  SDValue VAList = DAG.getLoad(MVT::i32, dl, InChain, VAListPtr, SV, 0);
   // Increment the pointer, VAList, to the next vaarg
-  SDValue NextPtr = DAG.getNode(ISD::ADD, MVT::i32, VAList,
+  SDValue NextPtr = DAG.getNode(ISD::ADD, dl, MVT::i32, VAList,
                                   DAG.getConstant(VT.getSizeInBits()/8,
                                                   MVT::i32));
   // Store the incremented VAList to the legalized pointer
-  InChain = DAG.getStore(VAList.getValue(1), NextPtr,
+  InChain = DAG.getStore(VAList.getValue(1), dl, NextPtr,
                          VAListPtr, SV, 0);
   // Load the actual argument out of the pointer VAList, unless this is an
   // f64 load.
   if (VT != MVT::f64)
-    return DAG.getLoad(VT, InChain, VAList, NULL, 0);
+    return DAG.getLoad(VT, dl, InChain, VAList, NULL, 0);
 
   // Otherwise, load it as i64, then do a bitconvert.
-  SDValue V = DAG.getLoad(MVT::i64, InChain, VAList, NULL, 0);
+  SDValue V = DAG.getLoad(MVT::i64, dl, InChain, VAList, NULL, 0);
 
   // Bit-Convert the value to f64.
   SDValue Ops[2] = {
-    DAG.getNode(ISD::BIT_CONVERT, MVT::f64, V),
+    DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, V),
     V.getValue(1)
   };
-  return DAG.getMergeValues(Ops, 2);
+  return DAG.getMergeValues(Ops, 2, dl);
 }
 
 static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) {

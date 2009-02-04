@@ -4527,7 +4527,7 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue
-X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV,
+X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
                                       int64_t Offset,
                                       SelectionDAG &DAG) const {
   bool IsPic = getTargetMachine().getRelocationModel() == Reloc::PIC_;
@@ -4546,8 +4546,8 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV,
 
   // With PIC, the address is actually $g + Offset.
   if (IsPic && !Subtarget->isPICStyleRIPRel()) {
-    Result = DAG.getNode(ISD::ADD, getPointerTy(),
-                         DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+    Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                         DAG.getNode(X86ISD::GlobalBaseReg, dl, getPointerTy()),
                          Result);
   }
   
@@ -4557,13 +4557,13 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV,
   // the GV offset field. Platform check is inside GVRequiresExtraLoad() call
   // The same applies for external symbols during PIC codegen
   if (ExtraLoadRequired)
-    Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), Result,
+    Result = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(), Result,
                          PseudoSourceValue::getGOT(), 0);
 
   // If there was a non-zero offset that we didn't fold, create an explicit
   // addition for it.
   if (Offset != 0)
-    Result = DAG.getNode(ISD::ADD, getPointerTy(), Result,
+    Result = DAG.getNode(ISD::ADD, dl, getPointerTy(), Result,
                          DAG.getConstant(Offset, getPointerTy()));
 
   return Result;
@@ -4573,7 +4573,7 @@ SDValue
 X86TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   int64_t Offset = cast<GlobalAddressSDNode>(Op)->getOffset();
-  return LowerGlobalAddress(GV, Offset, DAG);
+  return LowerGlobalAddress(GV, Op.getNode()->getDebugLoc(), Offset, DAG);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model, 32 bit
@@ -4653,6 +4653,7 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 // "local exec" model.
 static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                      const MVT PtrVT) {
+  DebugLoc dl = GA->getDebugLoc();
   // Get the Thread Pointer
   SDValue ThreadPointer = DAG.getNode(X86ISD::THREAD_POINTER, PtrVT);
   // emit "addl x@ntpoff,%eax" (local exec) or "addl x@indntpoff,%eax" (initial
@@ -4663,12 +4664,12 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   SDValue Offset = DAG.getNode(X86ISD::Wrapper, PtrVT, TGA);
 
   if (GA->getGlobal()->isDeclaration()) // initial exec TLS model
-    Offset = DAG.getLoad(PtrVT, DAG.getEntryNode(), Offset,
+    Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
                          PseudoSourceValue::getGOT(), 0);
 
   // The address of the thread local variable is the add of the thread
   // pointer with the offset of the variable.
-  return DAG.getNode(ISD::ADD, PtrVT, ThreadPointer, Offset);
+  return DAG.getNode(ISD::ADD, dl, PtrVT, ThreadPointer, Offset);
 }
 
 SDValue
@@ -8227,7 +8228,8 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     
     if (GA) {
       if (hasMemory) 
-        Op = LowerGlobalAddress(GA->getGlobal(), Offset, DAG);
+        Op = LowerGlobalAddress(GA->getGlobal(), Op.getNode()->getDebugLoc(),
+                                Offset, DAG);
       else
         Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
                                         Offset);

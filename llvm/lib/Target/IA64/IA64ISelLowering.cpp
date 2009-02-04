@@ -554,6 +554,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
 
 SDValue IA64TargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
   case ISD::GlobalTLSAddress:
@@ -566,21 +567,21 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
       assert(0 && "Do not know how to return this many arguments!");
       abort();
     case 1: 
-      AR_PFSVal = DAG.getCopyFromReg(Op.getOperand(0), VirtGPR, MVT::i64);
-      AR_PFSVal = DAG.getCopyToReg(AR_PFSVal.getValue(1), IA64::AR_PFS, 
+      AR_PFSVal = DAG.getCopyFromReg(Op.getOperand(0), dl, VirtGPR, MVT::i64);
+      AR_PFSVal = DAG.getCopyToReg(AR_PFSVal.getValue(1), dl, IA64::AR_PFS, 
                                    AR_PFSVal);
-      return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, AR_PFSVal);
+      return DAG.getNode(IA64ISD::RET_FLAG, dl, MVT::Other, AR_PFSVal);
     case 3: {
       // Copy the result into the output register & restore ar.pfs
       MVT ArgVT = Op.getOperand(1).getValueType();
       unsigned ArgReg = ArgVT.isInteger() ? IA64::r8 : IA64::F8;
 
-      AR_PFSVal = DAG.getCopyFromReg(Op.getOperand(0), VirtGPR, MVT::i64);
-      Copy = DAG.getCopyToReg(AR_PFSVal.getValue(1), ArgReg, Op.getOperand(1),
-                              SDValue());
-      AR_PFSVal = DAG.getCopyToReg(Copy.getValue(0), IA64::AR_PFS, AR_PFSVal,
-                                   Copy.getValue(1));
-      return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other,
+      AR_PFSVal = DAG.getCopyFromReg(Op.getOperand(0), dl, VirtGPR, MVT::i64);
+      Copy = DAG.getCopyToReg(AR_PFSVal.getValue(1), dl, ArgReg, 
+                              Op.getOperand(1), SDValue());
+      AR_PFSVal = DAG.getCopyToReg(Copy.getValue(0), dl, 
+                                   IA64::AR_PFS, AR_PFSVal, Copy.getValue(1));
+      return DAG.getNode(IA64ISD::RET_FLAG, dl, MVT::Other,
                          AR_PFSVal, AR_PFSVal.getValue(1));
     }
     }
@@ -589,24 +590,24 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::VAARG: {
     MVT VT = getPointerTy();
     const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-    SDValue VAList = DAG.getLoad(VT, Op.getOperand(0), Op.getOperand(1), 
+    SDValue VAList = DAG.getLoad(VT, dl, Op.getOperand(0), Op.getOperand(1), 
                                    SV, 0);
     // Increment the pointer, VAList, to the next vaarg
-    SDValue VAIncr = DAG.getNode(ISD::ADD, VT, VAList, 
+    SDValue VAIncr = DAG.getNode(ISD::ADD, dl, VT, VAList, 
                                    DAG.getConstant(VT.getSizeInBits()/8,
                                                    VT));
     // Store the incremented VAList to the legalized pointer
-    VAIncr = DAG.getStore(VAList.getValue(1), VAIncr,
+    VAIncr = DAG.getStore(VAList.getValue(1), dl, VAIncr,
                           Op.getOperand(1), SV, 0);
     // Load the actual argument out of the pointer VAList
-    return DAG.getLoad(Op.getValueType(), VAIncr, VAList, NULL, 0);
+    return DAG.getLoad(Op.getValueType(), dl, VAIncr, VAList, NULL, 0);
   }
   case ISD::VASTART: {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
     SDValue FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
     const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-    return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV, 0);
+    return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0);
   }
   // Frame & Return address.  Currently unimplemented
   case ISD::RETURNADDR:         break;

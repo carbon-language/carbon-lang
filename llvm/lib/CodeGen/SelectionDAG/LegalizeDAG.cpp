@@ -556,6 +556,7 @@ void SelectionDAGLegalize::HandleOp(SDValue Op) {
 static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
                                 SelectionDAG &DAG, const TargetLowering &TLI) {
   bool Extend = false;
+  DebugLoc dl = CFP->getDebugLoc();
 
   // If a FP immediate is precise when represented as a float and if the
   // target can do an extending load from float to double, we put it into
@@ -591,11 +592,11 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   SDValue CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
   unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   if (Extend)
-    return DAG.getExtLoad(ISD::EXTLOAD, CFP->getDebugLoc(),
+    return DAG.getExtLoad(ISD::EXTLOAD, dl,
                           OrigVT, DAG.getEntryNode(),
                           CPIdx, PseudoSourceValue::getConstantPool(),
                           0, VT, false, Alignment);
-  return DAG.getLoad(OrigVT, DAG.getEntryNode(), CPIdx,
+  return DAG.getLoad(OrigVT, dl, DAG.getEntryNode(), CPIdx,
                      PseudoSourceValue::getConstantPool(), 0, false, Alignment);
 }
 

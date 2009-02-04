@@ -340,10 +340,11 @@ namespace llvm {
     SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;
 
     SDValue EmitTailCallLoadFPAndRetAddr(SelectionDAG & DAG,
-                                           int SPDiff,
-                                           SDValue Chain,
-                                           SDValue &LROpOut,
-                                           SDValue &FPOpOut);
+                                         int SPDiff,
+                                         SDValue Chain,
+                                         SDValue &LROpOut,
+                                         SDValue &FPOpOut,
+                                         DebugLoc dl);
 
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG);

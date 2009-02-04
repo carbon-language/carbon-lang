@@ -340,30 +340,32 @@ LowerVAARG(SDValue Op, SelectionDAG &DAG)
   assert(0 && "unimplemented");
   // FIX Arguments passed by reference need a extra dereference.
   SDNode *Node = Op.getNode();
+  DebugLoc dl = Node->getDebugLoc();
   const Value *V = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
   MVT VT = Node->getValueType(0);
-  SDValue VAList = DAG.getLoad(getPointerTy(), Node->getOperand(0),
+  SDValue VAList = DAG.getLoad(getPointerTy(), dl, Node->getOperand(0),
                                Node->getOperand(1), V, 0);
   // Increment the pointer, VAList, to the next vararg
-  SDValue Tmp3 = DAG.getNode(ISD::ADD, getPointerTy(), VAList, 
+  SDValue Tmp3 = DAG.getNode(ISD::ADD, dl, getPointerTy(), VAList, 
                      DAG.getConstant(VT.getSizeInBits(), 
                                      getPointerTy()));
   // Store the incremented VAList to the legalized pointer
-  Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Node->getOperand(1), V, 0);
+  Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Node->getOperand(1), V, 0);
   // Load the actual argument out of the pointer VAList
-  return DAG.getLoad(VT, Tmp3, VAList, NULL, 0);
+  return DAG.getLoad(VT, dl, Tmp3, VAList, NULL, 0);
 }
 
 SDValue XCoreTargetLowering::
 LowerVASTART(SDValue Op, SelectionDAG &DAG)
 {
+  DebugLoc dl = Op.getDebugLoc();
   // vastart stores the address of the VarArgsFrameIndex slot into the
   // memory location argument
   MachineFunction &MF = DAG.getMachineFunction();
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   SDValue Addr = DAG.getFrameIndex(XFI->getVarArgsFrameIndex(), MVT::i32);
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  return DAG.getStore(Op.getOperand(0), Addr, Op.getOperand(1), SV, 0);
+  return DAG.getStore(Op.getOperand(0), dl, Addr, Op.getOperand(1), SV, 0);
 }
 
 SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
@@ -601,6 +603,7 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
   SDValue Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
   unsigned CC = MF.getFunction()->getCallingConv();
+  DebugLoc dl = Op.getDebugLoc();
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -631,7 +634,7 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
         unsigned VReg = RegInfo.createVirtualRegister(
                           XCore::GRRegsRegisterClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
-        ArgValues.push_back(DAG.getCopyFromReg(Root, VReg, RegVT));
+        ArgValues.push_back(DAG.getCopyFromReg(Root, dl, VReg, RegVT));
       }
     } else {
       // sanity check
@@ -650,7 +653,7 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
-      ArgValues.push_back(DAG.getLoad(VA.getLocVT(), Root, FIN, NULL, 0));
+      ArgValues.push_back(DAG.getLoad(VA.getLocVT(), dl, Root, FIN, NULL, 0));
     }
   }
   
@@ -679,13 +682,13 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
         unsigned VReg = RegInfo.createVirtualRegister(
                           XCore::GRRegsRegisterClass);
         RegInfo.addLiveIn(ArgRegs[i], VReg);
-        SDValue Val = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+        SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
         // Move argument from virt reg -> stack
-        SDValue Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
+        SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
         MemOps.push_back(Store);
       }
       if (!MemOps.empty())
-        Root = DAG.getNode(ISD::TokenFactor, MVT::Other,
+        Root = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                            &MemOps[0], MemOps.size());
     } else {
       // This will point to the next argument passed via stack.
@@ -699,7 +702,8 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
   // Return the new list of results.
   std::vector<MVT> RetVT(Op.getNode()->value_begin(),
                                     Op.getNode()->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
+  return DAG.getNode(ISD::MERGE_VALUES, dl, RetVT, 
+                     &ArgValues[0], ArgValues.size());
 }
 
 //===----------------------------------------------------------------------===//
