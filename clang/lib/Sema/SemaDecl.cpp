@@ -207,7 +207,7 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
   // The third "scope" argument is 0 since we aren't enabling lazy built-in
   // creation from this context.
-  Decl *IDecl = LookupName(TUScope, Id, LookupOrdinaryName);
+  NamedDecl *IDecl = LookupName(TUScope, Id, LookupOrdinaryName);
   
   return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
 }
@@ -249,7 +249,7 @@ void Sema::InitBuiltinVaListType() {
     return;
   
   IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
-  Decl *VaDecl = LookupName(TUScope, VaIdent, LookupOrdinaryName);
+  NamedDecl *VaDecl = LookupName(TUScope, VaIdent, LookupOrdinaryName);
   TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
   Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
 }
@@ -741,8 +741,8 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
                                FEnd = AnonRecord->field_end();
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
-      Decl *PrevDecl = LookupQualifiedName(Owner, (*F)->getDeclName(),
-                                           LookupOrdinaryName, true);
+      NamedDecl *PrevDecl = LookupQualifiedName(Owner, (*F)->getDeclName(),
+                                                LookupOrdinaryName, true);
       if (PrevDecl && !isa<TagDecl>(PrevDecl)) {
         // C++ [class.union]p2:
         //   The names of the members of an anonymous union shall be
@@ -1174,7 +1174,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     S = S->getParent();
   
   DeclContext *DC;
-  Decl *PrevDecl;
+  NamedDecl *PrevDecl;
   NamedDecl *New;
   bool InvalidDecl = false;
  
@@ -2523,7 +2523,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // among each other.  Here they can only shadow globals, which is ok.
   IdentifierInfo *II = D.getIdentifier();
   if (II) {
-    if (Decl *PrevDecl = LookupName(S, II, LookupOrdinaryName)) {
+    if (NamedDecl *PrevDecl = LookupName(S, II, LookupOrdinaryName)) {
       if (PrevDecl->isTemplateParameter()) {
         // Maybe we will complain about the shadowed template parameter.
         DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
@@ -2798,7 +2798,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   
   DeclContext *SearchDC = CurContext;
   DeclContext *DC = CurContext;
-  Decl *PrevDecl = 0;
+  NamedDecl *PrevDecl = 0;
 
   bool Invalid = false;
 
@@ -2843,7 +2843,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
       Invalid = true;
     }
     else
-      PrevDecl = dyn_cast_or_null<NamedDecl>(static_cast<Decl*>(R));
+      PrevDecl = R;
 
     if (!getLangOptions().CPlusPlus && TK != TK_Reference) {
       // FIXME: This makes sure that we ignore the contexts associated
@@ -3217,7 +3217,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
                               DeclSpec::SCS_mutable);
 
   if (II) {
-    Decl *PrevDecl = LookupName(S, II, LookupMemberName, true);
+    NamedDecl *PrevDecl = LookupName(S, II, LookupMemberName, true);
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;
@@ -3309,7 +3309,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
                                              (Expr *)BitfieldWidth);
   
   if (II) {
-    Decl *PrevDecl = LookupName(S, II, LookupMemberName, true);
+    NamedDecl *PrevDecl = LookupName(S, II, LookupMemberName, true);
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;
@@ -3485,7 +3485,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   
   // Verify that there isn't already something declared with this name in this
   // scope.
-  Decl *PrevDecl = LookupName(S, Id, LookupOrdinaryName);
+  NamedDecl *PrevDecl = LookupName(S, Id, LookupOrdinaryName);
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
     DiagnoseTemplateParameterShadow(IdLoc, PrevDecl);

@@ -321,6 +321,11 @@ Clang:</p>
     DeclarationName corresponds to an Objective-C instance method selector.  As
     such, it prints the selector with a leading '-'.</p></td></tr>
 
+<tr><td colspan="2"><b>"q" format</b></td></tr>
+<tr><td>Example:</td><td><tt>"candidate found by name lookup is %q0"</tt></td></tr>
+<tr><td>Class:</td><td>NamedDecl*</td></tr>
+<tr><td>Description</td><td><p>This formatter indicates that the fully-qualified name of the declaration should be printed, e.g., "std::vector" rather than "vector".</p></td></tr>
+    
 </table>
 
 <p>It is really easy to add format specifiers to the Clang diagnostics system,

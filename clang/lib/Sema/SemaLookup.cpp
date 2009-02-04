@@ -114,7 +114,7 @@ static void AddScopeUsingDirectives(Scope *S, UsingDirectivesTy &UDirs) {
 /// ambiguity and overloaded functions without needing to create a
 /// Decl node.
 template<typename DeclIterator>
-static Decl *
+static NamedDecl *
 MaybeConstructOverloadSet(ASTContext &Context, 
                           DeclIterator I, DeclIterator IEnd) {
   assert(I != IEnd && "Iterator range cannot be empty");
@@ -151,9 +151,9 @@ MaybeConstructOverloadSet(ASTContext &Context,
 static Sema::LookupResult
 MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
   typedef Sema::LookupResult LResult;
-  typedef llvm::SmallVector<NamedDecl*, 3> DeclsVecTy;
+  typedef llvm::SmallPtrSet<NamedDecl*, 4> DeclsSetTy;
 
-  DeclsVecTy FoundDecls;
+  DeclsSetTy FoundDecls;
   OverloadedFunctionDecl *FoundOverloaded = 0;
 
   LookupResultsTy::iterator I = Results.begin(), End = Results.end();
@@ -171,58 +171,27 @@ MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
       break;
 
     case LResult::Found:
-      FoundDecls.push_back(cast<NamedDecl>(I->getAsDecl()));
+      FoundDecls.insert(I->getAsDecl());
       break;
 
     case LResult::AmbiguousBaseSubobjectTypes:
     case LResult::AmbiguousBaseSubobjects: {
-      LResult Ambig = *I;
-      // Free rest of OverloadedFunctionDecl, and other BasePaths
-      // stored in LookupResults.
-#if 0
-     // FIXME:
-     // It should not happen, when we look start in each DeclContext only once.
-     // See FIXME in CppLookupName.
-     assert(Results.size() == 1 && "Multiple LookupResults should be not case "
-            "here, since using-directives can't occur at class scope.");
-#else
-      if (FoundOverloaded)
-        FoundOverloaded->Destroy(Context);
-
-      for (++I; I != End; ++I) {
-        if (I->getKind() == LResult::FoundOverloaded)
-          cast<OverloadedFunctionDecl>(I->getAsDecl())->Destroy(Context);
-        else if (BasePaths *Paths = I->getBasePaths())
-          delete Paths;
-        assert(I->getKind() != LResult::AmbiguousReference &&
-               "Shouldn't get ambiguous reference here.");
-      }
-#endif
-      return Ambig;
+      assert(Results.size() == 1 && "Multiple LookupResults should be not case "
+             "here, since using-directives can't occur at class scope.");
+      return *I;
     }
 
     case LResult::FoundOverloaded:
-      if (FoundOverloaded) {
+      if (FoundOverloaded)
         // We have one spare OverloadedFunctionDecl already, so we store
         // its function decls.
-#if 0
-        FIXME: As soon as, stop call MaybeConstructOverloadSet here,
-          which requires iterator::reference of type NamedDecl*, FoundDecls
-          can be SmallVector<Decl*, >
-        or when Lookup*Name() starts return NamedDecl's* instead of Decl's
-
-        this will work:
-        std::copy(I->begin(), I->end(), std::back_inserter(FoundDecls));
-#else
-        Sema::LookupResult::iterator OI = I->begin(), OEnd = I->end();
-        for (; OI != OEnd; ++OI)
-          FoundDecls.push_back(cast<NamedDecl>(*OI));
-#endif
-      } else {
+        for (LResult::iterator
+             FI = I->begin(), FEnd = I->end(); FI != FEnd; ++FI)
+          FoundDecls.insert(*FI);
+      else
         // First time we found OverloadedFunctionDecl, we want to conserve
         // it, and possibly add other found Decls later.
         FoundOverloaded = cast<OverloadedFunctionDecl>(I->getAsDecl());
-      }
       break;
     }
   }
@@ -246,35 +215,33 @@ MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
   //
   // FIXME: At this point happens too, because we are doing redundant lookups.
   //
-  DeclsVecTy::iterator DI = FoundDecls.begin(), DEnd = FoundDecls.end();
-  // FIXME: Using SmallPtrSet instead would be better, once OverloadedFunctionDecl
-  // dies.
-  std::sort(DI, DEnd);
-  DEnd = std::unique(DI, DEnd);
+  DeclsSetTy::iterator DI = FoundDecls.begin(), DEnd = FoundDecls.end();
 
   if (FoundOverloaded) {
     // We found overloaded functions result. We want to add any other
     // found decls, that are not already in FoundOverloaded, and are functions
     // or methods.
     OverloadedFunctionDecl::function_iterator 
-      FBegin = FoundOverloaded->function_begin(),
+      FI = FoundOverloaded->function_begin(),
       FEnd = FoundOverloaded->function_end();
-    // FIXME: This is O(n^2)!
-    for (; DI < DEnd; ++DI) {
-      FunctionDecl *Fun = dyn_cast<FunctionDecl>(*DI);
-      if (Fun && (std::find(FBegin, FEnd, Fun) != FEnd)) { /* Skip.*/  }
-      else DEnd = std::remove(DI, DEnd, *DI);
+
+    for (; FI < FEnd; ++FI) {
+      if (FoundDecls.count(*FI))
+        FoundDecls.erase(*FI);
     }
 
-    for (DI = FoundDecls.begin(); DI != DEnd; ++DI)
-      FoundOverloaded->addOverload(cast<FunctionDecl>(*DI));
+    DI = FoundDecls.begin(), DEnd = FoundDecls.end();
+
+    for (; DI != DEnd; ++DI)
+      if (FunctionDecl *Fun = dyn_cast<FunctionDecl>(*DI))
+        FoundOverloaded->addOverload(Fun);
 
     return LResult::CreateLookupResult(Context, FoundOverloaded);
-  } else if (std::size_t FoundLen = std::distance(FoundDecls.begin(), DEnd)) {
+  } else if (std::size_t FoundLen = FoundDecls.size()) {
     // We might found multiple TagDecls pointing at same definition.
     if (TagDecl *R = dyn_cast<TagDecl>(*FoundDecls.begin())) {
       TagDecl *Canonical = Context.getCanonicalDecl(R);
-      DeclsVecTy::iterator RI = FoundDecls.begin(), REnd = DEnd;
+      DeclsSetTy::iterator RI = FoundDecls.begin(), REnd = DEnd;
       for (;;) {
         ++RI;
         if (RI == REnd) {
@@ -288,12 +255,14 @@ MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
     }
 
     // We might find FunctionDecls in two (or more) distinct DeclContexts.
-    // 3.4.1.p1 ... Name lookup may associate more than one  declaration with
+    //
+    // C++ [basic.lookup].p1:
+    // ... Name lookup may associate more than one declaration with
     // a name if it finds the name to be a function name; the declarations
     // are said to form a set of overloaded functions (13.1).
     // Overload resolution (13.3) takes place after name lookup has succeeded.
-
-    Decl *D = MaybeConstructOverloadSet(Context, DI, DEnd);
+    //
+    NamedDecl *D = MaybeConstructOverloadSet(Context, DI, DEnd);
     if ((FoundLen == 1) || isa<OverloadedFunctionDecl>(D))
       return LResult::CreateLookupResult(Context, D);
 
@@ -337,38 +306,8 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
   return IDNS;
 }
 
-// Return qualified name for Decl D, like A::B::i, for i being member of
-// namespace A::B.
-std::string
-getQualifiedName(Decl *D) {
-  std::vector<std::string> Names;
-  std::string QualName;
-  DeclContext *Ctx = D->getDeclContext();
-
-  if (Ctx->isFunctionOrMethod())
-    return cast<NamedDecl>(D)->getNameAsString();
-
-  while (Ctx) {
-    if (Ctx->isFunctionOrMethod()) {
-      // FIXME: That probably is happend, because D was member of local
-      // scope class/struct/union. How do we handle this case?
-      break;
-    }
-    if (NamedDecl *ND = dyn_cast<NamedDecl>(Ctx)) {
-      Names.push_back(ND->getNameAsString());
-    } else {
-      break;
-    }
-    Ctx = Ctx->getParent();
-  }
-  for (std::vector<std::string>::reverse_iterator I= Names.rbegin(), End =Names.rend(); I!=End; ++I)
-    QualName += *I + "::";
-  QualName += cast<NamedDecl>(D)->getNameAsString();
-  return QualName;
-}
-
 Sema::LookupResult
-Sema::LookupResult::CreateLookupResult(ASTContext &Context, Decl *D) {
+Sema::LookupResult::CreateLookupResult(ASTContext &Context, NamedDecl *D) {
   LookupResult Result;
   Result.StoredKind = (D && isa<OverloadedFunctionDecl>(D))?
     OverloadedDeclSingleDecl : SingleDecl;
@@ -462,10 +401,10 @@ Sema::LookupResult::LookupKind Sema::LookupResult::getKind() const {
 /// solution, since it causes the OverloadedFunctionDecl to be
 /// leaked. FIXME: Eventually, there will be a better way to iterate
 /// over the set of overloaded functions returned by name lookup.
-Decl *Sema::LookupResult::getAsDecl() const {
+NamedDecl *Sema::LookupResult::getAsDecl() const {
   switch (StoredKind) {
   case SingleDecl:
-    return reinterpret_cast<Decl *>(First);
+    return reinterpret_cast<NamedDecl *>(First);
 
   case OverloadedDeclFromIdResolver:
     return MaybeConstructOverloadSet(*Context,
@@ -502,10 +441,10 @@ Sema::LookupResult::iterator::reference
 Sema::LookupResult::iterator::operator*() const {
   switch (Result->StoredKind) {
   case SingleDecl:
-    return reinterpret_cast<Decl*>(Current);
+    return reinterpret_cast<NamedDecl*>(Current);
 
   case OverloadedDeclSingleDecl:
-    return *reinterpret_cast<Decl**>(Current);
+    return *reinterpret_cast<NamedDecl**>(Current);
 
   case OverloadedDeclFromIdResolver:
     return *IdentifierResolver::iterator::getFromOpaqueValue(Current);
@@ -525,11 +464,11 @@ Sema::LookupResult::iterator::operator*() const {
 Sema::LookupResult::iterator& Sema::LookupResult::iterator::operator++() {
   switch (Result->StoredKind) {
   case SingleDecl:
-    Current = reinterpret_cast<uintptr_t>((Decl*)0);
+    Current = reinterpret_cast<uintptr_t>((NamedDecl*)0);
     break;
 
   case OverloadedDeclSingleDecl: {
-    Decl ** I = reinterpret_cast<Decl**>(Current);
+    NamedDecl ** I = reinterpret_cast<NamedDecl**>(Current);
     ++I;
     Current = reinterpret_cast<uintptr_t>(I);
     break;
@@ -590,7 +529,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   assert(getLangOptions().CPlusPlus &&
          "Can perform only C++ lookup");
   unsigned IDNS 
-      = getIdentifierNamespacesFromLookupNameKind(NameKind, /*CPlusPlus*/ true);
+    = getIdentifierNamespacesFromLookupNameKind(NameKind, /*CPlusPlus*/ true);
   Scope *Initial = S;
   IdentifierResolver::iterator 
     I = IdResolver.begin(Name),
@@ -613,7 +552,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   //     ++i; // finds local 'i', A::i appears at global scope
   //   }
   // }
-  // 
+  //
   for (; S && isFunctionLocalScope(S); S = S->getParent()) {
     // Check whether the IdResolver has anything in this scope.
     for (; I != IEnd && S->isDeclScope(*I); ++I) {
@@ -658,7 +597,8 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   // DeclContext, so we don't build it for each lookup!
   UsingDirectivesTy UDirs;
   for (Scope *SC = Initial; SC; SC = SC->getParent())
-     AddScopeUsingDirectives(SC, UDirs);
+    if (SC->getFlags() & Scope::DeclScope)
+      AddScopeUsingDirectives(SC, UDirs);
 
   // Sort heapified UsingDirectiveDecls.
   std::sort_heap(UDirs.begin(), UDirs.end());
@@ -1131,14 +1071,13 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
 
     Diag(NameLoc, diag::err_ambiguous_reference) << Name << LookupRange;
 
-    Decl **DI = reinterpret_cast<Decl **>(Result.First),
-       **DEnd = reinterpret_cast<Decl **>(Result.Last);
+    NamedDecl **DI = reinterpret_cast<NamedDecl **>(Result.First),
+       **DEnd = reinterpret_cast<NamedDecl **>(Result.Last);
 
     for (; DI != DEnd; ++DI)
-      Diag((*DI)->getLocation(), diag::note_ambiguous_candidate)
-        <<  getQualifiedName(*DI);
+      Diag((*DI)->getLocation(), diag::note_ambiguous_candidate) << *DI;
 
-    delete[] reinterpret_cast<Decl **>(Result.First);
+    delete[] reinterpret_cast<NamedDecl **>(Result.First);
 
     return true;
   }

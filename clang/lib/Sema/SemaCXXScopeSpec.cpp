@@ -36,7 +36,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II) {
-  Decl *SD = LookupParsedName(S, &SS, &II, LookupNestedNameSpecifierName);
+  NamedDecl *SD = LookupParsedName(S, &SS, &II, LookupNestedNameSpecifierName);
 
   if (SD) {
     if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {

@@ -77,13 +77,14 @@ public:
   };
   
   enum ArgumentKind {
-    ak_std_string,     // std::string
-    ak_c_string,       // const char *
-    ak_sint,           // int
-    ak_uint,           // unsigned
-    ak_identifierinfo, // IdentifierInfo
-    ak_qualtype,       // QualType
-    ak_declarationname // DeclarationName
+    ak_std_string,      // std::string
+    ak_c_string,        // const char *
+    ak_sint,            // int
+    ak_uint,            // unsigned
+    ak_identifierinfo,  // IdentifierInfo
+    ak_qualtype,        // QualType
+    ak_declarationname, // DeclarationName
+    ak_nameddecl        // NamedDecl *
   };
   
 private:  

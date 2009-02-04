@@ -36,8 +36,7 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
     assert(ModLen == 0 && ArgLen == 0 &&
            "Invalid modifier for QualType argument");
     
-  } else {
-    assert(Kind == Diagnostic::ak_declarationname);
+  } else if (Kind == Diagnostic::ak_declarationname) {
    
     DeclarationName N = DeclarationName::getFromOpaqueInteger(Val);
     S = N.getAsString();
@@ -49,6 +48,13 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
     else
       assert(ModLen == 0 && ArgLen == 0 &&
              "Invalid modifier for DeclarationName argument");
+  } else {
+    assert(Kind == Diagnostic::ak_nameddecl);
+    assert(ModLen == 1 && Modifier[0] == 'q' && ArgLen == 0 &&
+           "Invalid modifier for NamedDecl* argument");
+
+    S = reinterpret_cast<NamedDecl*>(Val)->getQualifiedNameAsString();
+
   }
   Output.append(S.begin(), S.end());
 }

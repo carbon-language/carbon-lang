@@ -1375,8 +1375,8 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // original-namespace-definition is the name of the namespace. Subsequently
     // in that declarative region, it is treated as an original-namespace-name.
 
-    Decl *PrevDecl = LookupName(DeclRegionScope, II, LookupOrdinaryName,
-                                true);
+    NamedDecl *PrevDecl = LookupName(DeclRegionScope, II, LookupOrdinaryName,
+                                     true);
     
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
       // This is an extended namespace definition.
@@ -1444,7 +1444,7 @@ Sema::DeclTy *Sema::ActOnUsingDirective(Scope *S,
     DiagnoseAmbiguousLookup(R, NamespcName, IdentLoc);
     return 0;
   }
-  if (Decl *NS = R) {
+  if (NamedDecl *NS = R) {
     assert(isa<NamespaceDecl>(NS) && "expected namespace decl");
     // C++ [namespace.udir]p1:
     //   A using-directive specifies that the names in the nominated
@@ -2230,7 +2230,7 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
   // FIXME: Need to check for abstract classes.
 
   IdentifierInfo *II = D.getIdentifier();
-  if (Decl *PrevDecl = LookupName(S, II, LookupOrdinaryName)) {
+  if (NamedDecl *PrevDecl = LookupName(S, II, LookupOrdinaryName)) {
     // The scope should be freshly made just for us. There is just no way
     // it contains any previous declaration.
     assert(!S->isDeclScope(PrevDecl));

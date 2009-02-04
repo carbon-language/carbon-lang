@@ -64,7 +64,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   assert(ClassName && "Missing class identifier");
   
   // Check for another declaration kind with the same name.
-  Decl *PrevDecl = LookupName(TUScope, ClassName, LookupOrdinaryName);
+  NamedDecl *PrevDecl = LookupName(TUScope, ClassName, LookupOrdinaryName);
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
     DiagnoseTemplateParameterShadow(ClassLoc, PrevDecl);
@@ -164,7 +164,7 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
                                            IdentifierInfo *ClassName,
                                            SourceLocation ClassLocation) {
   // Look for previous declaration of alias name
-  Decl *ADecl = LookupName(TUScope, AliasName, LookupOrdinaryName);
+  NamedDecl *ADecl = LookupName(TUScope, AliasName, LookupOrdinaryName);
   if (ADecl) {
     if (isa<ObjCCompatibleAliasDecl>(ADecl))
       Diag(AliasLocation, diag::warn_previous_alias_decl);
@@ -174,7 +174,7 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
     return 0;
   }
   // Check for class declaration
-  Decl *CDeclU = LookupName(TUScope, ClassName, LookupOrdinaryName);
+  NamedDecl *CDeclU = LookupName(TUScope, ClassName, LookupOrdinaryName);
   if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(CDeclU)) {
     QualType T = TDecl->getUnderlyingType();
     if (T->isObjCInterfaceType()) {
@@ -550,7 +550,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
                       SourceLocation SuperClassLoc) {
   ObjCInterfaceDecl* IDecl = 0;
   // Check for another declaration kind with the same name.
-  Decl *PrevDecl = LookupName(TUScope, ClassName, LookupOrdinaryName);
+  NamedDecl *PrevDecl = LookupName(TUScope, ClassName, LookupOrdinaryName);
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
@@ -924,7 +924,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
   
   for (unsigned i = 0; i != NumElts; ++i) {
     // Check for another declaration kind with the same name.
-    Decl *PrevDecl = LookupName(TUScope, IdentList[i], LookupOrdinaryName);
+    NamedDecl *PrevDecl = LookupName(TUScope, IdentList[i], LookupOrdinaryName);
     if (PrevDecl && PrevDecl->isTemplateParameter()) {
       // Maybe we will complain about the shadowed template parameter.
       DiagnoseTemplateParameterShadow(AtClassLoc, PrevDecl);

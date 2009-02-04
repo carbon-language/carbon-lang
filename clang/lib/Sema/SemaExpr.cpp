@@ -563,7 +563,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                                           Loc));
   }
 
-  Decl *D = 0;
+  NamedDecl *D = 0;
   if (Lookup.isAmbiguous()) {
     DiagnoseAmbiguousLookup(Lookup, Name, Loc,
                             SS && SS->isSet() ? SS->getRange()
@@ -627,9 +627,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // implicit member ref, because we want a pointer to the member in general,
   // not any specific instance's member.
   if (isAddressOfOperand && SS && !SS->isEmpty() && !HasTrailingLParen) {
-    NamedDecl *ND = dyn_cast<NamedDecl>(D);
     DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
-    if (ND && isa<CXXRecordDecl>(DC)) {
+    if (D && isa<CXXRecordDecl>(DC)) {
       QualType DType;
       if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
         DType = FD->getType().getNonReferenceType();
@@ -653,7 +652,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
             }
           }
         }
-        return Owned(BuildDeclRefExpr(ND, DType, Loc, Dependent, Dependent,SS));
+        return Owned(BuildDeclRefExpr(D, DType, Loc, Dependent, Dependent, SS));
       }
     }
   }
@@ -714,7 +713,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           // Build the implicit member access expression.
           Expr *This = new (Context) CXXThisExpr(SourceLocation(),
                                        MD->getThisType(Context));
-          return Owned(new (Context) MemberExpr(This, true, cast<NamedDecl>(D),
+          return Owned(new (Context) MemberExpr(This, true, D,
                                       SourceLocation(), MemberType));
         }
       }
@@ -1559,7 +1558,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       = LookupQualifiedName(RDecl, DeclarationName(&Member), 
                             LookupMemberName, false);
 
-    Decl *MemberDecl = 0;
+    NamedDecl *MemberDecl = 0;
     if (!Result)
       return ExprError(Diag(MemberLoc, diag::err_typecheck_no_member)
                << &Member << BaseExpr->getSourceRange());

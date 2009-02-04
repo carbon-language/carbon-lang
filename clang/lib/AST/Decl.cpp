@@ -17,6 +17,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
+#include <vector>
 
 using namespace clang;
 
@@ -143,6 +144,41 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
 //===----------------------------------------------------------------------===//
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
+
+std::string NamedDecl::getQualifiedNameAsString() const {
+  std::vector<std::string> Names;
+  std::string QualName;
+  const DeclContext *Ctx = getDeclContext();
+
+  if (Ctx->isFunctionOrMethod())
+    return getNameAsString();
+
+  while (Ctx) {
+    if (Ctx->isFunctionOrMethod())
+      // FIXME: That probably will happen, when D was member of local
+      // scope class/struct/union. How do we handle this case?
+      break;
+
+    if (const NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
+      Names.push_back(ND->getNameAsString());
+    else
+      break;
+
+    Ctx = Ctx->getParent();
+  }
+
+  std::vector<std::string>::reverse_iterator
+    I = Names.rbegin(),
+    End = Names.rend();
+
+  for (; I!=End; ++I)
+    QualName += *I + "::";
+
+  QualName += getNameAsString();
+
+  return QualName;
+}
+
 
 bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
   assert(getDeclName() == OldD->getDeclName() && "Declaration name mismatch");

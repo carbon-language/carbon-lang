@@ -607,7 +607,7 @@ public:
   /// results occurred for a given lookup. 
   ///
   /// Any non-ambiguous lookup can be converted into a single
-  /// (possibly NULL) @c Decl* via a conversion function or the
+  /// (possibly NULL) @c NamedDecl* via a conversion function or the
   /// getAsDecl() method. This conversion permits the common-case
   /// usage in C and Objective-C where name lookup will always return
   /// a single declaration.
@@ -615,7 +615,7 @@ public:
     /// The kind of entity that is actually stored within the
     /// LookupResult object.
     enum {
-      /// First is a single declaration (a Decl*), which may be NULL.
+      /// First is a single declaration (a NamedDecl*), which may be NULL.
       SingleDecl,
 
       /// First is a single declaration (an OverloadedFunctionDecl*).
@@ -643,8 +643,9 @@ public:
     } StoredKind;
 
     /// The first lookup result, whose contents depend on the kind of
-    /// lookup result. This may be a Decl* (if StoredKind ==
-    /// SingleDecl), the opaque pointer from an
+    /// lookup result. This may be a NamedDecl* (if StoredKind ==
+    /// SingleDecl), OverloadedFunctionDecl* (if StoredKind ==
+    /// OverloadedDeclSingleDecl), the opaque pointer from an
     /// IdentifierResolver::iterator (if StoredKind ==
     /// OverloadedDeclFromIdResolver), a DeclContext::lookup_iterator
     /// (if StoredKind == OverloadedDeclFromDeclContext), or a
@@ -721,7 +722,7 @@ public:
       AmbiguousReference
     };
 
-    static LookupResult CreateLookupResult(ASTContext &Context, Decl *D);
+    static LookupResult CreateLookupResult(ASTContext &Context, NamedDecl *D);
 
     static LookupResult CreateLookupResult(ASTContext &Context, 
                                            IdentifierResolver::iterator F, 
@@ -744,7 +745,7 @@ public:
     template <typename Iterator>
     static LookupResult CreateLookupResult(ASTContext &Context,
                                            Iterator B, std::size_t Len) {
-      Decl ** Array = new Decl*[Len];
+      NamedDecl ** Array = new NamedDecl*[Len];
       for (std::size_t Idx = 0; Idx < Len; ++Idx, ++B)
         Array[Idx] = *B;
       LookupResult Result;
@@ -768,9 +769,9 @@ public:
 
     /// @brief Allows conversion of a lookup result into a
     /// declaration, with the same behavior as getAsDecl.
-    operator Decl*() const { return getAsDecl(); }
+    operator NamedDecl*() const { return getAsDecl(); }
 
-    Decl* getAsDecl() const;
+    NamedDecl* getAsDecl() const;
 
     BasePaths *getBasePaths() const;
 
@@ -788,9 +789,9 @@ public:
       mutable uintptr_t Current;
 
     public:
-      typedef Decl *                     value_type;
-      typedef Decl *                     reference;
-      typedef Decl *                     pointer;
+      typedef NamedDecl *                value_type;
+      typedef NamedDecl *                reference;
+      typedef NamedDecl *                pointer;
       typedef std::ptrdiff_t             difference_type;
       typedef std::forward_iterator_tag  iterator_category;
 

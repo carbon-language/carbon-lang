@@ -608,6 +608,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     }
     case Diagnostic::ak_qualtype:
     case Diagnostic::ak_declarationname:
+    case Diagnostic::ak_nameddecl:
       OutStr.push_back('\'');
       getDiags()->ConvertArgToString(getArgKind(ArgNo), getRawArg(ArgNo),
                                      Modifier, ModifierLen,

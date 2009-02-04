@@ -99,6 +99,14 @@ public:
   /// For simple declarations, getNameAsCString() should suffice.
   std::string getNameAsString() const { return Name.getAsString(); }
   
+  /// getQualifiedNameAsString - Returns human-readable qualified name for
+  /// declaration, like A::B::i, for i being member of namespace A::B.
+  /// If declaration is not member of context which can be named (record,
+  /// namespace), it will return same result as getNameAsString().
+  /// Creating this name is expensive, so it should be called only when
+  /// performance doesn't matter.
+  std::string getQualifiedNameAsString() const;
+
   /// declarationReplaces - Determine whether this declaration, if
   /// known to be well-formed within its context, will replace the
   /// declaration OldD if introduced into scope. A declaration will
@@ -1133,6 +1141,14 @@ protected:
 
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
+
+/// Insertion operator for diagnostics.  This allows sending NamedDecl's
+/// into a diagnostic with <<.
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           NamedDecl* ND) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(ND), Diagnostic::ak_nameddecl);
+  return DB;
+}
 
 }  // end namespace clang
 

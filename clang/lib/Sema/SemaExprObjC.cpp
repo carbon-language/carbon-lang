@@ -52,7 +52,7 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
     // Initialize the constant string interface lazily. This assumes
     // the NSConstantString interface is seen in this translation unit.
     IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
-    Decl *IFace = LookupName(TUScope, NSIdent, LookupOrdinaryName);
+    NamedDecl *IFace = LookupName(TUScope, NSIdent, LookupOrdinaryName);
     ObjCInterfaceDecl *strIFace = dyn_cast_or_null<ObjCInterfaceDecl>(IFace);
     if (strIFace)
       Context.setObjCConstantStringInterface(strIFace);
@@ -209,7 +209,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
     } else {
       // 'super' has been used outside a method context. If a variable named
       // 'super' has been declared, redirect. If not, produce a diagnostic.
-      Decl *SuperDecl = LookupName(S, receiverName, LookupOrdinaryName);
+      NamedDecl *SuperDecl = LookupName(S, receiverName, LookupOrdinaryName);
       ValueDecl *VD = dyn_cast_or_null<ValueDecl>(SuperDecl);
       if (VD) {
         ExprResult ReceiverExpr = new DeclRefExpr(VD, VD->getType(), 
@@ -234,7 +234,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   //
   // If necessary, the following lookup could move to getObjCInterfaceDecl().
   if (!ClassDecl) {
-    Decl *IDecl = LookupName(TUScope, receiverName, LookupOrdinaryName);
+    NamedDecl *IDecl = LookupName(TUScope, receiverName, LookupOrdinaryName);
     if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl)) {
       const ObjCInterfaceType *OCIT;
       OCIT = OCTD->getUnderlyingType()->getAsObjCInterfaceType();
