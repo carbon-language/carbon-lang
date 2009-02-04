@@ -312,18 +312,7 @@ class Clang_CompileTool(Tool):
         arglist.addLastArg(cmd_args, arglist.parser.wOption)
         arglist.addAllArgs3(cmd_args, arglist.parser.stdOption, arglist.parser.ansiOption, arglist.parser.trigraphsOption)
 
-        arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.f_objcGcOnlyOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.f_objcNonfragileAbiOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.f_nextRuntimeOption)
-        arglist.addAllArgs(cmd_args, arglist.parser.f_gnuRuntimeOption)
-        arglist.addLastArg(cmd_args, arglist.parser.f_exceptionsOption)
-        arglist.addLastArg(cmd_args, arglist.parser.f_laxVectorConversionsOption)
-        arglist.addLastArg(cmd_args, arglist.parser.f_msExtensionsOption)
-        arglist.addLastArg(cmd_args, arglist.parser.f_noCaretDiagnosticsOption)
-        arglist.addLastArg(cmd_args, arglist.parser.f_noShowColumnOption)
-        arglist.addLastArg(cmd_args, arglist.parser.f_pascalStringsOption)
-        arglist.addLastArg(cmd_args, arglist.parser.f_writableStringsOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.Clang_fGroup)
 
         for arg in arglist.getArgs(arglist.parser.XclangOption):
             cmd_args.extend(arglist.getValues(arg))
