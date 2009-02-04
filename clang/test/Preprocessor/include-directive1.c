@@ -1,4 +1,5 @@
-// RUN: clang -E %s -fno-caret-diagnostics 2>&1 >/dev/null | grep 'file successfully included' | count 4
+
+// RUN: clang -E %s -fno-caret-diagnostics 2>&1 >/dev/null | grep 'file successfully included' | count 3
 
 // XX expands to nothing.
 #define XX
