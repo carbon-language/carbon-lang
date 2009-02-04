@@ -1019,16 +1019,16 @@ public:
   /// (otherwise, "class" was used), and KeyLoc is the location of the
   /// "class" or "typename" keyword. ParamName is the name of the
   /// parameter (NULL indicates an unnamed template parameter) and
-  /// ParamName is the location of the parameter name (if any). 
+  /// ParamNameLoc is the location of the parameter name (if any).
   /// If the type parameter has a default argument, it will be added
   /// later via ActOnTypeParameterDefault. Depth and Position provide
   /// the number of enclosing templates (see
   /// ActOnTemplateParameterList) and the number of previous
   /// parameters within this template parameter list.
-  virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename, 
-				     SourceLocation KeyLoc,
-				     IdentifierInfo *ParamName,
-				     SourceLocation ParamNameLoc,
+  virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename,
+                                     SourceLocation KeyLoc,
+                                     IdentifierInfo *ParamName,
+                                     SourceLocation ParamNameLoc,
                                      unsigned Depth, unsigned Position) {
     return 0;
   }
@@ -1041,13 +1041,29 @@ public:
   /// ActOnNonTypeTemplateParameter - Called when a C++ non-type
   /// template parameter (e.g., "int Size" in "template<int Size>
   /// class Array") has been parsed. S is the current scope and D is
-  /// the parsed declarator. Depth and Position provide           
-  /// the number of enclosing templates (see
+  /// the parsed declarator. Depth and Position provide the number of
+  /// enclosing templates (see
   /// ActOnTemplateParameterList) and the number of previous
   /// parameters within this template parameter list.
   virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                 unsigned Depth, 
                                                 unsigned Position) {
+    return 0;
+  }
+
+  /// ActOnTemplateTemplateParameter - Called when a C++ template template
+  /// parameter (e.g., "int T" in "template<template <typename> class T> class
+  /// Array") has been parsed. TmpLoc is the location of the "template" keyword,
+  /// TemplateParams is the sequence of parameters required by the template,
+  /// ParamName is the name of the parameter (null if unnamed), and ParamNameLoc
+  /// is the source location of the identifier (if given).
+  virtual DeclTy *ActOnTemplateTemplateParameter(Scope *S,
+                                                 SourceLocation TmpLoc,
+                                                 TemplateParamsTy *Params,
+                                                 IdentifierInfo *ParamName,
+                                                 SourceLocation ParamNameLoc,
+                                                 unsigned Depth,
+                                                 unsigned Position) {
     return 0;
   }
 
@@ -1090,6 +1106,7 @@ public:
     return 0;
   }
 
+  
   //===----------------------- Obj-C Declarations -------------------------===//
   
   // ActOnStartClassInterface - this action is called immediately after parsing

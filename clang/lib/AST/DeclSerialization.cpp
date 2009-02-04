@@ -14,6 +14,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
@@ -597,15 +598,60 @@ TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 void TemplateTypeParmDecl::EmitImpl(Serializer& S) const {
+  S.EmitInt(Depth);
+  S.EmitInt(Position);
   S.EmitBool(Typename);
   NamedDecl::EmitInRec(S);
 }
 
 TemplateTypeParmDecl *
 TemplateTypeParmDecl::CreateImpl(Deserializer& D, ASTContext& C) {
+  unsigned Depth = D.ReadInt();
+  unsigned Position = D.ReadInt();
   bool Typename = D.ReadBool();
   TemplateTypeParmDecl *decl
-    = new (C) TemplateTypeParmDecl(0, SourceLocation(), NULL, Typename);
+    = new (C) TemplateTypeParmDecl(0, SourceLocation(), Depth, Position,
+                                   0, Typename);
+  decl->NamedDecl::ReadInRec(D, C);
+  return decl;
+}
+
+//===----------------------------------------------------------------------===//
+//      NonTypeTemplateParmDecl Serialization.
+//===----------------------------------------------------------------------===//
+void NonTypeTemplateParmDecl::EmitImpl(Serializer& S) const {
+  S.EmitInt(Depth);
+  S.EmitInt(Position);
+  NamedDecl::Emit(S);
+}
+
+NonTypeTemplateParmDecl*
+NonTypeTemplateParmDecl::CreateImpl(Deserializer& D, ASTContext& C) {
+  unsigned Depth = D.ReadInt();
+  unsigned Position = D.ReadInt();
+  NonTypeTemplateParmDecl *decl
+    = new (C) NonTypeTemplateParmDecl(0, SourceLocation(), Depth, Position,
+                                      0, QualType(), SourceLocation());
+  decl->NamedDecl::ReadInRec(D, C);
+  return decl;
+}
+
+//===----------------------------------------------------------------------===//
+//      TemplateTemplateParmDecl Serialization.
+//===----------------------------------------------------------------------===//
+void TemplateTemplateParmDecl::EmitImpl(Serializer& S) const {
+  S.EmitInt(Depth);
+  S.EmitInt(Position);
+  NamedDecl::EmitInRec(S);
+}
+
+TemplateTemplateParmDecl*
+TemplateTemplateParmDecl::CreateImpl(Deserializer& D, ASTContext& C) {
+  unsigned Depth = D.ReadInt();
+  unsigned Position = D.ReadInt();
+  TemplateTemplateParmDecl *decl
+    = new (C) TemplateTemplateParmDecl(0, SourceLocation(), Depth, Position,
+                                       0, 0);
   decl->NamedDecl::ReadInRec(D, C);
   return decl;
 }

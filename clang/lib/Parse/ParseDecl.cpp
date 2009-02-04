@@ -1726,7 +1726,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
         // If this identifier is followed by a '<', we may have a template-id.
         DeclTy *Template;
-        if (NextToken().is(tok::less) &&
+        if (getLang().CPlusPlus && NextToken().is(tok::less) &&
             (Template = Actions.isTemplateName(*Tok.getIdentifierInfo(), 
                                                CurScope))) {
           IdentifierInfo *II = Tok.getIdentifierInfo();

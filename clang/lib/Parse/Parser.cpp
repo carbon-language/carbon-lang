@@ -379,7 +379,6 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
   case tok::kw_export:    // As in 'export template'
     // A function definition cannot start with a these keywords.
     return ParseDeclaration(Declarator::FileContext);
-       
   default:
     // We can't tell whether this is a function-definition or declaration yet.
     return ParseDeclarationOrFunctionDefinition();

@@ -16,6 +16,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Basic/SourceManager.h"

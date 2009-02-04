@@ -60,6 +60,7 @@ namespace clang {
   class SwitchStmt;
   class ExtVectorType;
   class TypedefDecl;
+  class TemplateDecl;
   class ObjCInterfaceDecl;
   class ObjCCompatibleAliasDecl;
   class ObjCProtocolDecl;
@@ -1479,14 +1480,23 @@ public:
   virtual DeclTy *isTemplateName(IdentifierInfo &II, Scope *S,
                                  const CXXScopeSpec *SS = 0);
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
-  virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename, 
-				     SourceLocation KeyLoc,
-				     IdentifierInfo *ParamName,
-				     SourceLocation ParamNameLoc,
+  TemplateDecl *AdjustDeclIfTemplate(DeclTy *&Decl);
+
+  virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename,
+                                     SourceLocation KeyLoc,
+                                     IdentifierInfo *ParamName,
+                                     SourceLocation ParamNameLoc,
                                      unsigned Depth, unsigned Position);
   virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
-                                                unsigned Depth, 
+                                                unsigned Depth,
                                                 unsigned Position);
+  virtual DeclTy *ActOnTemplateTemplateParameter(Scope *S,
+                                                 SourceLocation TmpLoc,
+                                                 TemplateParamsTy *Params,
+                                                 IdentifierInfo *ParamName,
+                                                 SourceLocation ParamNameLoc,
+                                                 unsigned Depth,
+                                                 unsigned Position);
   virtual TemplateParamsTy *
   ActOnTemplateParameterList(unsigned Depth,
                              SourceLocation ExportLoc,
@@ -1495,6 +1505,7 @@ public:
                              DeclTy **Params, unsigned NumParams,
                              SourceLocation RAngleLoc);
   
+
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                            IdentifierInfo *ClassName,

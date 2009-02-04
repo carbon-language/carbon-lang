@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
 
@@ -38,6 +39,9 @@ Sema::DeclTy *Sema::isTemplateName(IdentifierInfo &II, Scope *S,
     // FIXME: We need to represent templates via some kind of
     // TemplateDecl, because what follows is a hack that only works in
     // one specific case.
+    if (isa<TemplateDecl>(IIDecl))
+      return IIDecl;
+
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(IIDecl)) {
       if (FD->getType()->isDependentType())
         return FD;
@@ -50,7 +54,6 @@ Sema::DeclTy *Sema::isTemplateName(IdentifierInfo &II, Scope *S,
           return Ovl;
       }
     }
-    return 0;
   }
   return 0;
 }
@@ -73,6 +76,18 @@ bool Sema::DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl) {
     << cast<NamedDecl>(PrevDecl)->getDeclName();
   Diag(PrevDecl->getLocation(), diag::note_template_param_here);
   return true;
+}
+
+/// AdjustDeclForTemplates - If the given decl happens to be a template, reset
+/// the parameter D to reference the templated declaration and return a pointer
+/// to the template declaration. Otherwise, do nothing to D and return null.
+TemplateDecl *Sema::AdjustDeclIfTemplate(DeclTy *&D)
+{
+  if(TemplateDecl *Temp = dyn_cast<TemplateDecl>(static_cast<Decl*>(D))) {
+    D = Temp->getTemplatedDecl();
+    return Temp;
+  }
+  return 0;
 }
 
 /// ActOnTypeParameter - Called when a C++ template type parameter
@@ -101,8 +116,8 @@ Sema::DeclTy *Sema::ActOnTypeParameter(Scope *S, bool Typename,
   }
 
   TemplateTypeParmDecl *Param
-    = TemplateTypeParmDecl::Create(Context, CurContext, 
-				   ParamNameLoc, ParamName, Typename);
+    = TemplateTypeParmDecl::Create(Context, CurContext, ParamNameLoc, 
+                                   Depth, Position, ParamName, Typename);
   if (Invalid)
     Param->setInvalidDecl();
 
@@ -124,8 +139,8 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                   unsigned Position) {
   QualType T = GetTypeForDeclarator(D, S);
 
-  assert(S->isTemplateParamScope() && 
-	 "Template type parameter not in template parameter scope!");
+  assert(S->isTemplateParamScope() &&
+         "Non-type template parameter not in template parameter scope!");
   bool Invalid = false;
 
   IdentifierInfo *ParamName = D.getIdentifier();
@@ -133,12 +148,12 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
     NamedDecl *PrevDecl = LookupName(S, ParamName, LookupTagName);
     if (PrevDecl && PrevDecl->isTemplateParameter())
       Invalid = Invalid || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(),
-							   PrevDecl);
+                                                           PrevDecl);
   }
 
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-				      ParamName, T);
+                                      Depth, Position, ParamName, T);
   if (Invalid)
     Param->setInvalidDecl();
 
@@ -147,6 +162,46 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
     S->AddDecl(Param);
     IdResolver.AddDecl(Param);
   }
+  return Param;
+}
+
+
+/// ActOnTemplateTemplateParameter - Called when a C++ template template
+/// parameter (e.g. T in template <template <typename> class T> class array)
+/// has been parsed. S is the current scope.
+Sema::DeclTy *Sema::ActOnTemplateTemplateParameter(Scope* S,
+                                                   SourceLocation TmpLoc,
+                                                   TemplateParamsTy *Params,
+                                                   IdentifierInfo *Name,
+                                                   SourceLocation NameLoc,
+                                                   unsigned Depth,
+                                                   unsigned Position)
+{
+  assert(S->isTemplateParamScope() &&
+         "Template template parameter not in template parameter scope!");
+
+  // Construct the parameter object.
+  TemplateTemplateParmDecl *Param =
+    TemplateTemplateParmDecl::Create(Context, CurContext, TmpLoc, Depth,
+                                     Position, Name,
+                                     (TemplateParameterList*)Params);
+
+  // Make sure the parameter is valid.
+  // FIXME: Decl object is not currently invalidated anywhere so this doesn't
+  // do anything yet. However, if the template parameter list or (eventual)
+  // default value is ever invalidated, that will propagate here.
+  bool Invalid = false;
+  if (Invalid) {
+    Param->setInvalidDecl();
+  }
+
+  // If the tt-param has a name, then link the identifier into the scope
+  // and lookup mechanisms.
+  if (Name) {
+    S->AddDecl(Param);
+    IdResolver.AddDecl(Param);
+  }
+
   return Param;
 }
 
@@ -164,3 +219,4 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
 
   return TemplateParameterList::Create(Context, (Decl**)Params, NumParams);
 }
+

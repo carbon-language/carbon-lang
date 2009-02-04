@@ -13,6 +13,7 @@ add_clang_library(clangAST
   DeclGroup.cpp
   DeclObjC.cpp
   DeclSerialization.cpp
+  DeclTemplate.cpp
   ExprConstant.cpp
   Expr.cpp
   ExprCXX.cpp

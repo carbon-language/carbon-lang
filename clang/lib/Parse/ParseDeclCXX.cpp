@@ -345,8 +345,8 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
     return;
   }
 
-  // Parse the tag portion of this.
-  DeclTy *TagDecl 
+  // Create the tag portion of the class, possibly resulting in a template.
+  DeclTy *TagOrTempDecl
     = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
                        NameLoc, Attr,
                        Action::MultiTemplateParamsArg(
@@ -356,15 +356,15 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
 
   // Parse the optional base clause (C++ only).
   if (getLang().CPlusPlus && Tok.is(tok::colon)) {
-    ParseBaseClause(TagDecl);
+    ParseBaseClause(TagOrTempDecl);
   }
 
   // If there is a body, parse it and inform the actions module.
   if (Tok.is(tok::l_brace))
     if (getLang().CPlusPlus)
-      ParseCXXMemberSpecification(StartLoc, TagType, TagDecl);
+      ParseCXXMemberSpecification(StartLoc, TagType, TagOrTempDecl);
     else
-      ParseStructUnionBody(StartLoc, TagType, TagDecl);
+      ParseStructUnionBody(StartLoc, TagType, TagOrTempDecl);
   else if (TK == Action::TK_Definition) {
     // FIXME: Complain that we have a base-specifier list but no
     // definition.
@@ -372,7 +372,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
   }
 
   const char *PrevSpec = 0;
-  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagDecl))
+  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagOrTempDecl))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
 

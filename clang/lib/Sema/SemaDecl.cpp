@@ -16,6 +16,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/TargetInfo.h"
@@ -1170,7 +1171,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
   // we find one that is.
   while ((S->getFlags() & Scope::DeclScope) == 0 ||
-        (S->getFlags() & Scope::TemplateParamScope) != 0)
+         (S->getFlags() & Scope::TemplateParamScope) != 0)
     S = S->getParent();
   
   DeclContext *DC;
@@ -2778,6 +2779,9 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
 /// former case, Name will be non-null.  In the later case, Name will be null.
 /// TagSpec indicates what kind of tag this is. TK indicates whether this is a
 /// reference/declaration/definition of a tag.
+///
+/// This creates and returns template declarations if any template parameter
+/// lists are given.
 Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
@@ -2786,7 +2790,12 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TK == TK_Definition) &&
          "Nameless record must be a definition!");
-  
+  assert((TemplateParameterLists.size() == 0 || TK != TK_Reference) &&
+         "Can't have a reference to a template");
+  assert((TemplateParameterLists.size() == 0 || 
+          TagSpec != DeclSpec::TST_enum) &&
+         "No such thing as an enum template");
+
   TagDecl::TagKind Kind;
   switch (TagSpec) {
   default: assert(0 && "Unknown tag type!");
@@ -2799,6 +2808,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   DeclContext *SearchDC = CurContext;
   DeclContext *DC = CurContext;
   NamedDecl *PrevDecl = 0;
+  TemplateDecl *PrevTemplate = 0;
 
   bool Invalid = false;
 
@@ -2863,6 +2873,11 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   }
 
   if (PrevDecl) {    
+    // If we found a template, keep track of the template and its
+    // underlying declaration.
+    if ((PrevTemplate = dyn_cast_or_null<ClassTemplateDecl>(PrevDecl)))
+      PrevDecl = PrevTemplate->getTemplatedDecl();
+
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
@@ -2877,6 +2892,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
           Name = 0;
           PrevDecl = 0;
           Invalid = true;
+          // FIXME: Add template/non-template redecl check
         } else {
           // If this is a use, just return the declaration we found.
 
@@ -2886,7 +2902,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
           // need to be changed with DeclGroups.
           if (TK == TK_Reference)
             return PrevDecl;
-          
+
           // Diagnose attempts to redefine a tag.
           if (TK == TK_Definition) {
             if (TagDecl *Def = PrevTagDecl->getDefinition(Context)) {
@@ -2990,6 +3006,7 @@ CreateNewDecl:
   // declaration of the same entity, the two will be linked via
   // PrevDecl.
   TagDecl *New;
+  ClassTemplateDecl *NewTemplate = 0;
 
   if (Kind == TagDecl::TK_enum) {
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
@@ -3003,11 +3020,28 @@ CreateNewDecl:
 
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
-    if (getLangOptions().CPlusPlus)
+    if (getLangOptions().CPlusPlus) {
       // FIXME: Look for a way to use RecordDecl for simple structs.
       New = CXXRecordDecl::Create(Context, Kind, SearchDC, Loc, Name,
                                   cast_or_null<CXXRecordDecl>(PrevDecl));
-    else
+
+      // If there's are template parameters, then this must be a class
+      // template. Create the template decl node also.
+      // FIXME: Do we always create template decls? We may not for forward
+      // declarations.
+      // FIXME: What are we actually going to do with the template decl?
+      if (TemplateParameterLists.size() > 0) {
+        // FIXME: The allocation of the parameters is probably incorrect.
+        // FIXME: Does the TemplateDecl have the same name as the class?
+        TemplateParameterList *Params =
+          TemplateParameterList::Create(Context,
+                                        (Decl **)TemplateParameterLists.get(),
+                                        TemplateParameterLists.size());
+        NewTemplate = ClassTemplateDecl::Create(Context, DC, Loc,
+                                                DeclarationName(Name), Params,
+                                                New);
+      }
+    } else
       New = RecordDecl::Create(Context, Kind, SearchDC, Loc, Name,
                                cast_or_null<RecordDecl>(PrevDecl));
   }
@@ -3080,6 +3114,7 @@ CreateNewDecl:
 }
 
 void Sema::ActOnTagStartDefinition(Scope *S, DeclTy *TagD) {
+  AdjustDeclIfTemplate(TagD);
   TagDecl *Tag = cast<TagDecl>((Decl *)TagD);
 
   // Enter the tag context.
@@ -3105,6 +3140,7 @@ void Sema::ActOnTagStartDefinition(Scope *S, DeclTy *TagD) {
 }
 
 void Sema::ActOnTagFinishDefinition(Scope *S, DeclTy *TagD) {
+  AdjustDeclIfTemplate(TagD);
   TagDecl *Tag = cast<TagDecl>((Decl *)TagD);
 
   if (isa<CXXRecordDecl>(Tag))

@@ -21,36 +21,6 @@ using namespace clang;
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
 
-TemplateTypeParmDecl *
-TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
-                             SourceLocation L, IdentifierInfo *Id,
-                             bool Typename) {
-  return new (C) TemplateTypeParmDecl(DC, L, Id, Typename);
-}
-
-NonTypeTemplateParmDecl *
-NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC, 
-                                SourceLocation L, IdentifierInfo *Id,
-                                QualType T, SourceLocation TypeSpecStartLoc) {
-  return new (C) NonTypeTemplateParmDecl(DC, L, Id, T, TypeSpecStartLoc);
-}
-
-TemplateParameterList::TemplateParameterList(Decl **Params, unsigned NumParams)
-  : NumParams(NumParams) {
-  for (unsigned Idx = 0; Idx < NumParams; ++Idx)
-    begin()[Idx] = Params[Idx];
-}
-
-TemplateParameterList *
-TemplateParameterList::Create(ASTContext &C, Decl **Params, 
-                              unsigned NumParams) {
-  // FIXME: how do I pass in Size to ASTContext::new?
-  unsigned Size = sizeof(TemplateParameterList) + sizeof(Decl *) * NumParams;
-  unsigned Align = llvm::AlignOf<TemplateParameterList>::Alignment;
-  void *Mem = C.Allocate(Size, Align);
-  return new (Mem) TemplateParameterList(Params, NumParams);
-}
-
 CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id) 
   : RecordDecl(CXXRecord, TK, DC, L, Id),

@@ -31,6 +31,8 @@ namespace clang {
   class Type;
   class TypedefDecl;
   class TemplateTypeParmDecl;
+  class NonTypeTemplateParmDecl;
+  class TemplateTemplateParamDecl;
   class TagDecl;
   class RecordDecl;
   class CXXRecordDecl;

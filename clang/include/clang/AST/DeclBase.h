@@ -237,6 +237,10 @@ public:
       return IDNS_Tag;
 
     case Namespace:
+    case Template:
+    case FunctionTemplate:
+    case ClassTemplate:
+    case TemplateTemplateParm:
       return IdentifierNamespace(IDNS_Tag | IDNS_Ordinary);
     }
   }

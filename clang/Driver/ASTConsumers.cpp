@@ -52,6 +52,8 @@ namespace {
     void PrintObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *AID);
     void PrintObjCPropertyDecl(ObjCPropertyDecl *PD);
     void PrintObjCPropertyImplDecl(ObjCPropertyImplDecl *PID);
+
+    void PrintTemplateDecl(TemplateDecl *TD);
   };
 } // end anonymous namespace
 
@@ -116,6 +118,8 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     Out << "};\n";
   } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
     Out << "Read top-level tag decl: '" << TD->getNameAsString() << "'\n";
+  } else if (TemplateDecl *TempD = dyn_cast<TemplateDecl>(D)) {
+    PrintTemplateDecl(TempD);
   } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
     PrintLinkageSpec(LSD);
   } else if (FileScopeAsmDecl *AD = dyn_cast<FileScopeAsmDecl>(D)) {
@@ -437,6 +441,17 @@ void DeclPrinter::PrintObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
     Out << "=" << PID->getPropertyIvarDecl()->getNameAsString();
   Out << ";\n";
 }
+
+/// PrintTemplateParams - Print a template parameter list and recursively print
+/// it's underlying top-level definition.
+void DeclPrinter::PrintTemplateDecl(TemplateDecl *TD) {
+  // TODO: Write template parameters.
+  Out << "template <...> ";
+  PrintDecl(TD->getTemplatedDecl());
+}
+
+
+
 //===----------------------------------------------------------------------===//
 /// ASTPrinter - Pretty-printer of ASTs
 

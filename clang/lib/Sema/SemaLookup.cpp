@@ -536,7 +536,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
     IEnd = IdResolver.end();
 
   // First we lookup local scope.
-  // We don't consider using-dirctives, as per 7.3.4.p1 [namespace.udir]
+  // We don't consider using-directives, as per 7.3.4.p1 [namespace.udir]
   // ...During unqualified name lookup (3.4.1), the names appear as if
   // they were declared in the nearest enclosing namespace which contains
   // both the using-directive and the nominated namespace.

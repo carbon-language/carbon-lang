@@ -757,6 +757,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              DeclTy *TagDecl,
                                              SourceLocation LBrac,
                                              SourceLocation RBrac) {
+  AdjustDeclIfTemplate(TagDecl);
   ActOnFields(S, RLoc, TagDecl,
               (DeclTy**)FieldCollector->getCurFields(),
               FieldCollector->getCurNumFields(), LBrac, RBrac, 0);

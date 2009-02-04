@@ -15,6 +15,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "llvm/ADT/StringExtras.h"
 

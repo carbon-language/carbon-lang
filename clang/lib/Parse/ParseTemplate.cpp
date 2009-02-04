@@ -39,7 +39,7 @@ Parser::DeclTy *Parser::ParseTemplateDeclaration(unsigned Context) {
   //
   // We parse multiple levels non-recursively so that we can build a
   // single data structure containing all of the template parameter
-  // lists, and easily differentiate between the case above and:
+  // lists easily differentiate between the case above and:
   //
   //   template<typename T>
   //   class A {
@@ -82,19 +82,16 @@ Parser::DeclTy *Parser::ParseTemplateDeclaration(unsigned Context) {
   } while (Tok.is(tok::kw_export) || Tok.is(tok::kw_template));
 
   // Parse the actual template declaration.
-  DeclTy *TemplateDecl = ParseDeclarationOrFunctionDefinition(&ParamLists);
-
-  return TemplateDecl;
+  return ParseDeclarationOrFunctionDefinition(&ParamLists);
 }
 
 /// ParseTemplateParameters - Parses a template-parameter-list enclosed in
-/// angle brackets. Depth is the depth of this
-/// template-parameter-list, which is the number of template headers
-/// directly enclosing this template header. TemplateParams is the
-/// current list of template parameters we're building. The template
-/// parameter we parse will be added to this list. LAngleLoc and
-/// RAngleLoc will receive the positions of the '<' and '>',
-/// respectively, that enclose this template parameter list.
+/// angle brackets. Depth is the depth of this template-parameter-list, which
+/// is the number of template headers directly enclosing this template header.
+/// TemplateParams is the current list of template parameters we're building.
+/// The template parameter we parse will be added to this list. LAngleLoc and
+/// RAngleLoc will receive the positions of the '<' and '>', respectively, 
+/// that enclose this template parameter list.
 bool Parser::ParseTemplateParameters(unsigned Depth,
                                      TemplateParameterList &TemplateParams,
                                      SourceLocation &LAngleLoc,
@@ -223,8 +220,8 @@ Parser::DeclTy *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
     return 0;
   }
   
-  DeclTy *TypeParam = Actions.ActOnTypeParameter(CurScope, TypenameKeyword, 
-						 KeyLoc, ParamName, NameLoc,
+  DeclTy *TypeParam = Actions.ActOnTypeParameter(CurScope, TypenameKeyword,
+                                                 KeyLoc, ParamName, NameLoc,
                                                  Depth, Position);
 
   // Grab a default type id (if given).
@@ -251,7 +248,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   SourceLocation TemplateLoc = ConsumeToken();
   TemplateParameterList TemplateParams; 
   SourceLocation LParenLoc, RParenLoc;
-  if(!ParseTemplateParameters(Depth+1, TemplateParams, LParenLoc,
+  if(!ParseTemplateParameters(Depth + 1, TemplateParams, LParenLoc,
                               RParenLoc)) {
     return 0;
   }
@@ -266,10 +263,11 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   SourceLocation ClassLoc = ConsumeToken();
 
   // Get the identifier, if given.
-  IdentifierInfo* ident = 0;
+  SourceLocation NameLoc;
+  IdentifierInfo* ParamName = 0;
   if(Tok.is(tok::identifier)) {
-    ident = Tok.getIdentifierInfo();
-    ConsumeToken();
+    ParamName = Tok.getIdentifierInfo();
+    NameLoc = ConsumeToken();
   } else if(Tok.is(tok::equal) || Tok.is(tok::comma) || Tok.is(tok::greater)) {
     // Unnamed template parameter. Don't have to do anything here, just
     // don't consume this token.
@@ -279,6 +277,8 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   }
 
   // Get the a default value, if given.
+  // FIXME: I think that the results of this block need to be passed to the
+  // act-on call, so we can assemble the parameter correctly.
   OwningExprResult DefaultExpr(Actions);
   if(Tok.is(tok::equal)) {
     ConsumeToken();
@@ -288,8 +288,9 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     }
   }
 
-  // FIXME: Add an action for template template parameters.
-  return 0;
+  return Actions.ActOnTemplateTemplateParameter(CurScope, TemplateLoc,
+                                                &TemplateParams, ParamName,
+                                                NameLoc, Depth, Position);
 }
 
 /// ParseNonTypeTemplateParameter - Handle the parsing of non-type
