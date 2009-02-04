@@ -853,7 +853,14 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
   BasicBlock *BB1 = BI->getSuccessor(0);  // The true destination.
   BasicBlock *BB2 = BI->getSuccessor(1);  // The false destination
 
-  Instruction *I1 = BB1->begin(), *I2 = BB2->begin();
+  BasicBlock::iterator BB1_Itr = BB1->begin();
+  BasicBlock::iterator BB2_Itr = BB2->begin();
+
+  Instruction *I1 = BB1_Itr++, *I2 = BB2_Itr++;
+  while (isa<DbgInfoIntrinsic>(I1))
+    I1 = BB1_Itr++;
+  while (isa<DbgInfoIntrinsic>(I2))
+    I2 = BB2_Itr++;
   if (I1->getOpcode() != I2->getOpcode() || isa<PHINode>(I1) || 
       isa<InvokeInst>(I1) || !I1->isIdenticalTo(I2))
     return false;
@@ -875,8 +882,12 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
       I2->replaceAllUsesWith(I1);
     BB2->getInstList().erase(I2);
 
-    I1 = BB1->begin();
-    I2 = BB2->begin();
+    I1 = BB1_Itr++;
+    while (isa<DbgInfoIntrinsic>(I1))
+      I1 = BB1_Itr++;
+    I2 = BB2_Itr++;
+    while (isa<DbgInfoIntrinsic>(I2))
+      I2 = BB2_Itr++;
   } while (I1->getOpcode() == I2->getOpcode() && I1->isIdenticalTo(I2));
 
   return true;
