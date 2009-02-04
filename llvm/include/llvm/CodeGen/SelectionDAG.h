@@ -306,6 +306,8 @@ public:
                                   int Offset = 0) {
     return getConstantPool(C, VT, Align, Offset, true);
   }
+  // When generating a branch to a BB, we don't in general know enough
+  // to provide debug info for the BB at that time, so keep this one around.
   SDValue getBasicBlock(MachineBasicBlock *MBB);
   SDValue getBasicBlock(MachineBasicBlock *MBB, DebugLoc dl);
   SDValue getExternalSymbol(const char *Sym, MVT VT);
@@ -317,7 +319,7 @@ public:
   SDValue getRegister(unsigned Reg, MVT VT);
   SDValue getDbgStopPoint(SDValue Root, unsigned Line, unsigned Col,
                           Value *CU);
-  SDValue getLabel(unsigned Opcode, SDValue Root, unsigned LabelID);
+//  SDValue getLabel(unsigned Opcode, SDValue Root, unsigned LabelID);
   SDValue getLabel(unsigned Opcode, DebugLoc dl, SDValue Root, 
                    unsigned LabelID);
 
@@ -391,8 +393,8 @@ public:
 
   /// Returns the ConvertRndSat Note: Avoid using this node because it may
   /// disappear in the future and most targets don't support it.
-  SDValue getConvertRndSat(MVT VT, SDValue Val, SDValue DTy, SDValue STy,
-                           SDValue Rnd, SDValue Sat, ISD::CvtCode Code);
+//  SDValue getConvertRndSat(MVT VT, SDValue Val, SDValue DTy, SDValue STy,
+//                           SDValue Rnd, SDValue Sat, ISD::CvtCode Code);
   SDValue getConvertRndSat(MVT VT, DebugLoc dl, SDValue Val, SDValue DTy,
                            SDValue STy,
                            SDValue Rnd, SDValue Sat, ISD::CvtCode Code);
@@ -493,36 +495,16 @@ public:
                   SDValue N1, SDValue N2, SDValue N3, SDValue N4,
                   SDValue N5);
 
-  SDValue getMemcpy(SDValue Chain, SDValue Dst, SDValue Src,
-                    SDValue Size, unsigned Align, bool AlwaysInline,
-                    const Value *DstSV, uint64_t DstSVOff,
-                    const Value *SrcSV, uint64_t SrcSVOff) {
-    return getMemcpy(Chain, DebugLoc::getUnknownLoc(), Dst, Src, Size, Align,
-                   AlwaysInline, DstSV, DstSVOff, SrcSV, SrcSVOff);
-  }
   SDValue getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
                     SDValue Size, unsigned Align, bool AlwaysInline,
                     const Value *DstSV, uint64_t DstSVOff,
                     const Value *SrcSV, uint64_t SrcSVOff);
 
-  SDValue getMemmove(SDValue Chain, SDValue Dst, SDValue Src,
-                     SDValue Size, unsigned Align,
-                     const Value *DstSV, uint64_t DstOSVff,
-                     const Value *SrcSV, uint64_t SrcSVOff) {
-    return getMemmove(Chain, DebugLoc::getUnknownLoc(), Dst, Src, Size, Align,
-                      DstSV, DstOSVff, SrcSV, SrcSVOff);
-  }
   SDValue getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
                      SDValue Size, unsigned Align,
                      const Value *DstSV, uint64_t DstOSVff,
                      const Value *SrcSV, uint64_t SrcSVOff);
 
-  SDValue getMemset(SDValue Chain, SDValue Dst, SDValue Src,
-                    SDValue Size, unsigned Align,
-                    const Value *DstSV, uint64_t DstSVOff) {
-    return getMemset(Chain, DebugLoc::getUnknownLoc(), Dst, Src, Size, Align,
-                     DstSV, DstSVOff);
-  }
   SDValue getMemset(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
                     SDValue Size, unsigned Align,
                     const Value *DstSV, uint64_t DstSVOff);
@@ -569,25 +551,17 @@ public:
   
   /// getVAArg - VAArg produces a result and token chain, and takes a pointer
   /// and a source value as input.
-  SDValue getVAArg(MVT VT, SDValue Chain, SDValue Ptr,
-                   SDValue SV);
   SDValue getVAArg(MVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
                    SDValue SV);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and 
   /// takes 3 operands
-  SDValue getAtomic(unsigned Opcode, MVT MemVT, SDValue Chain, SDValue Ptr, 
-                    SDValue Cmp, SDValue Swp, const Value* PtrVal,
-                    unsigned Alignment=0);
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, MVT MemVT, SDValue Chain, 
                     SDValue Ptr, SDValue Cmp, SDValue Swp, const Value* PtrVal,
                     unsigned Alignment=0);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes 2 operands.
-  SDValue getAtomic(unsigned Opcode, MVT MemVT, SDValue Chain, SDValue Ptr, 
-                    SDValue Val, const Value* PtrVal,
-                    unsigned Alignment = 0);
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, MVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Val, const Value* PtrVal,
                     unsigned Alignment = 0);
@@ -624,9 +598,6 @@ public:
 
   /// getCall - Create a CALL node from the given information.
   ///
-  SDValue getCall(unsigned CallingConv, bool IsVarArgs, bool IsTailCall,
-                  bool isInreg, SDVTList VTs, const SDValue *Operands, 
-                  unsigned NumOperands);
   SDValue getCall(unsigned CallingConv, DebugLoc dl, bool IsVarArgs,
                   bool IsTailCall, bool isInreg, SDVTList VTs,
                   const SDValue *Operands, unsigned NumOperands);

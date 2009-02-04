@@ -1005,9 +1005,9 @@ SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
       SDVTList VTs = DAG.getVTList(&NodeTys[0], NodeTys.size());
       SDValue NewCall = 
-              DAG.getCall(TheCall->getCallingConv(), TheCall->isVarArg(), 
-                          TheCall->isTailCall(), TheCall->isInreg(), VTs, 
-                          &Ops[0], Ops.size());
+              DAG.getCall(TheCall->getCallingConv(), TheCall->getDebugLoc(),
+                          TheCall->isVarArg(), TheCall->isTailCall(), 
+                          TheCall->isInreg(), VTs, &Ops[0], Ops.size());
 
       return NewCall;
     }

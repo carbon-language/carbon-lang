@@ -2076,10 +2076,10 @@ SDValue PPCTargetLowering::EmitTailCallLoadFPAndRetAddr(SelectionDAG & DAG,
 static SDValue 
 CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
                           ISD::ArgFlagsTy Flags, SelectionDAG &DAG,
-                          unsigned Size) {
+                          unsigned Size, DebugLoc dl) {
   SDValue SizeNode = DAG.getConstant(Size, MVT::i32);
-  return DAG.getMemcpy(Chain, Dst, Src, SizeNode, Flags.getByValAlign(), false,
-                       NULL, 0, NULL, 0);
+  return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
+                       false, NULL, 0, NULL, 0);
 }
 
 /// LowerMemOpCallTo - Store the argument to the stack or remember it in case of
@@ -2118,6 +2118,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
                  && CC == CallingConv::Fast && PerformTailCallOpt;
   SDValue Callee = TheCall->getCallee();
   unsigned NumOps  = TheCall->getNumArgs();
+  DebugLoc dl = TheCall->getDebugLoc();
   
   bool isMachoABI = Subtarget.isMachoABI();
   bool isELF32_ABI  = Subtarget.isELF32_ABI();
@@ -2251,7 +2252,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
           SDValue AddPtr = DAG.getNode(ISD::ADD, PtrVT, PtrOff, Const);
           SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, AddPtr,
                                 CallSeqStart.getNode()->getOperand(0), 
-                                Flags, DAG, Size);
+                                Flags, DAG, Size, dl);
           // This must go outside the CALLSEQ_START..END.
           SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
                                CallSeqStart.getNode()->getOperand(1));
@@ -2267,7 +2268,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
       // registers.  (This is not what the doc says.)
       SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, PtrOff,
                             CallSeqStart.getNode()->getOperand(0), 
-                            Flags, DAG, Size);
+                            Flags, DAG, Size, dl);
       // This must go outside the CALLSEQ_START..END.
       SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
                            CallSeqStart.getNode()->getOperand(1));

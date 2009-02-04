@@ -3905,7 +3905,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (DW && DW->ValidDebugInfo(RSI.getContext())) {
       unsigned LabelID =
         DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
-      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getRoot(), LabelID));
+      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                               getRoot(), LabelID));
     }
 
     return 0;
@@ -3916,7 +3917,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (DW && DW->ValidDebugInfo(REI.getContext())) {
       unsigned LabelID =
         DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
-      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getRoot(), LabelID));
+      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                               getRoot(), LabelID));
     }
 
     return 0;
@@ -3941,7 +3943,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
 
       if (DW->getRecordSourceLineCount() != 1)
-        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getRoot(), LabelID));
+        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                                 getRoot(), LabelID));
 
       setCurDebugLoc(DebugLoc::get(DAG.getMachineFunction().
                          getOrCreateDebugLocID(SrcFile, Line, 0)));
@@ -4386,7 +4389,8 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
     // Both PendingLoads and PendingExports must be flushed here;
     // this call might not return.
     (void)getRoot();
-    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getControlRoot(), BeginLabel));
+    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
+                             getControlRoot(), BeginLabel));
   }
 
   std::pair<SDValue,SDValue> Result =
@@ -4405,7 +4409,8 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
     EndLabel = MMI->NextLabelID();
-    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getRoot(), EndLabel));
+    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
+                             getRoot(), EndLabel));
 
     // Inform MachineModuleInfo of range.
     MMI->addInvoke(LandingPad, BeginLabel, EndLabel);

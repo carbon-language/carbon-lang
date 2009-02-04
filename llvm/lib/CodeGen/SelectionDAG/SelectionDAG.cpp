@@ -1068,7 +1068,6 @@ SDValue SelectionDAG::getConstantPool(MachineConstantPoolValue *C, MVT VT,
   return SDValue(N, 0);
 }
 
-
 SDValue SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::BasicBlock, getVTList(MVT::Other), 0, 0);
@@ -1175,26 +1174,6 @@ SDValue SelectionDAG::getCondCode(ISD::CondCode Cond) {
   return SDValue(CondCodeNodes[Cond], 0);
 }
 
-SDValue SelectionDAG::getConvertRndSat(MVT VT,
-                                       SDValue Val, SDValue DTy,
-                                       SDValue STy, SDValue Rnd, SDValue Sat,
-                                       ISD::CvtCode Code) {
-  // If the src and dest types are the same, no conversion is necessary.
-  if (DTy == STy)
-    return Val;
-
-  FoldingSetNodeID ID;
-  void* IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-  CvtRndSatSDNode *N = NodeAllocator.Allocate<CvtRndSatSDNode>();
-  SDValue Ops[] = { Val, DTy, STy, Rnd, Sat };
-  new (N) CvtRndSatSDNode(VT, Ops, 5, Code);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
 SDValue SelectionDAG::getConvertRndSat(MVT VT, DebugLoc dl,
                                        SDValue Val, SDValue DTy,
                                        SDValue STy, SDValue Rnd, SDValue Sat,
@@ -1234,23 +1213,6 @@ SDValue SelectionDAG::getDbgStopPoint(SDValue Root,
                                       Value *CU) {
   SDNode *N = NodeAllocator.Allocate<DbgStopPointSDNode>();
   new (N) DbgStopPointSDNode(Root, Line, Col, CU);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
-SDValue SelectionDAG::getLabel(unsigned Opcode,
-                               SDValue Root,
-                               unsigned LabelID) {
-  FoldingSetNodeID ID;
-  SDValue Ops[] = { Root };
-  AddNodeIDNode(ID, Opcode, getVTList(MVT::Other), &Ops[0], 1);
-  ID.AddInteger(LabelID);
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-  SDNode *N = NodeAllocator.Allocate<LabelSDNode>();
-  new (N) LabelSDNode(Opcode, Root, LabelID);
-  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }
@@ -3431,35 +3393,6 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
   return CallResult.second;
 }
 
-SDValue SelectionDAG::getAtomic(unsigned Opcode, MVT MemVT,
-                                SDValue Chain,
-                                SDValue Ptr, SDValue Cmp, 
-                                SDValue Swp, const Value* PtrVal,
-                                unsigned Alignment) {
-  assert(Opcode == ISD::ATOMIC_CMP_SWAP && "Invalid Atomic Op");
-  assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
-
-  MVT VT = Cmp.getValueType();
-
-  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
-    Alignment = getMVTAlignment(MemVT);
-
-  SDVTList VTs = getVTList(VT, MVT::Other);
-  FoldingSetNodeID ID;
-  ID.AddInteger(MemVT.getRawBits());
-  SDValue Ops[] = {Chain, Ptr, Cmp, Swp};
-  AddNodeIDNode(ID, Opcode, VTs, Ops, 4);
-  void* IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-  SDNode* N = NodeAllocator.Allocate<AtomicSDNode>();
-  new (N) AtomicSDNode(Opcode, VTs, MemVT,
-                       Chain, Ptr, Cmp, Swp, PtrVal, Alignment);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
 SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, MVT MemVT,
                                 SDValue Chain,
                                 SDValue Ptr, SDValue Cmp, 
@@ -3484,45 +3417,6 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, MVT MemVT,
   SDNode* N = NodeAllocator.Allocate<AtomicSDNode>();
   new (N) AtomicSDNode(Opcode, dl, VTs, MemVT,
                        Chain, Ptr, Cmp, Swp, PtrVal, Alignment);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
-SDValue SelectionDAG::getAtomic(unsigned Opcode, MVT MemVT,
-                                SDValue Chain,
-                                SDValue Ptr, SDValue Val, 
-                                const Value* PtrVal,
-                                unsigned Alignment) {
-  assert((Opcode == ISD::ATOMIC_LOAD_ADD ||
-          Opcode == ISD::ATOMIC_LOAD_SUB ||
-          Opcode == ISD::ATOMIC_LOAD_AND ||
-          Opcode == ISD::ATOMIC_LOAD_OR ||
-          Opcode == ISD::ATOMIC_LOAD_XOR ||
-          Opcode == ISD::ATOMIC_LOAD_NAND ||
-          Opcode == ISD::ATOMIC_LOAD_MIN || 
-          Opcode == ISD::ATOMIC_LOAD_MAX ||
-          Opcode == ISD::ATOMIC_LOAD_UMIN || 
-          Opcode == ISD::ATOMIC_LOAD_UMAX ||
-          Opcode == ISD::ATOMIC_SWAP) &&
-         "Invalid Atomic Op");
-
-  MVT VT = Val.getValueType();
-
-  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
-    Alignment = getMVTAlignment(MemVT);
-
-  SDVTList VTs = getVTList(VT, MVT::Other);
-  FoldingSetNodeID ID;
-  ID.AddInteger(MemVT.getRawBits());
-  SDValue Ops[] = {Chain, Ptr, Val};
-  AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
-  void* IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-  SDNode* N = NodeAllocator.Allocate<AtomicSDNode>();
-  new (N) AtomicSDNode(Opcode, VTs, MemVT,
-                       Chain, Ptr, Val, PtrVal, Alignment);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -3670,31 +3564,6 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
     new (N) MemIntrinsicSDNode(Opcode, dl, VTList, Ops, NumOps, MemVT,
                                srcValue, SVOff, Align, Vol, ReadMem, WriteMem);
   }
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
-SDValue
-SelectionDAG::getCall(unsigned CallingConv, bool IsVarArgs, bool IsTailCall,
-                      bool IsInreg, SDVTList VTs,
-                      const SDValue *Operands, unsigned NumOperands) {
-  // Do not include isTailCall in the folding set profile.
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::CALL, VTs, Operands, NumOperands);
-  ID.AddInteger(CallingConv);
-  ID.AddInteger(IsVarArgs);
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
-    // Instead of including isTailCall in the folding set, we just
-    // set the flag of the existing node.
-    if (!IsTailCall)
-      cast<CallSDNode>(E)->setNotTailCall();
-    return SDValue(E, 0);
-  }
-  SDNode *N = NodeAllocator.Allocate<CallSDNode>();
-  new (N) CallSDNode(CallingConv, IsVarArgs, IsTailCall, IsInreg,
-                     VTs, Operands, NumOperands);
-  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }
@@ -4056,13 +3925,6 @@ SelectionDAG::getIndexedStore(SDValue OrigStore, DebugLoc dl, SDValue Base,
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
-}
-
-SDValue SelectionDAG::getVAArg(MVT VT,
-                               SDValue Chain, SDValue Ptr,
-                               SDValue SV) {
-  SDValue Ops[] = { Chain, Ptr, SV };
-  return getNode(ISD::VAARG, getVTList(VT, MVT::Other), Ops, 3);
 }
 
 SDValue SelectionDAG::getVAArg(MVT VT, DebugLoc dl,
