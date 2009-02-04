@@ -19,11 +19,11 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <list>
 #include <vector>
-#include <cerrno>
 
 using namespace llvm;
 
@@ -158,10 +158,9 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                                  int *claimed) {
   void *buf = NULL;
-  // If set, this means gold found IR in an ELF section. LLVM doesn't wrap its
-  // IR in ELF, so we know it's not us. But it can also be an .a file containing
-  // LLVM IR.
   if (file->offset) {
+    /* This is probably an archive member containing either an ELF object, or
+     * LLVM IR. Find out which one it is */
     if (lseek(file->fd, file->offset, SEEK_SET) == -1) {
       (*message)(LDPL_ERROR, 
                  "Failed to seek to archive member of %s at offset %d: %s\n", 
