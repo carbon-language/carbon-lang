@@ -693,7 +693,7 @@ static bool ReadLineMarkerFlags(bool &IsFileEntry, bool &IsFileExit,
   
   PP.Lex(FlagTok);
   if (FlagTok.is(tok::eom)) return false;
-  if (GetLineValue(FlagTok, FlagVal, diag::err_pp_linemarker_invalid_flag,PP))
+  if (GetLineValue(FlagTok, FlagVal, diag::err_pp_linemarker_invalid_flag, PP))
     return true;
 
   // We must have 4 if there is yet another flag.
@@ -761,9 +761,11 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
                             IsSystemHeader, IsExternCHeader, *this))
       return;
   }
-  
-  // FIXME: do something with the #line flag info.
-  SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID);
+
+  // Create a line note with this information.
+  SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID,
+                        IsFileEntry, IsFileExit, 
+                        IsSystemHeader, IsExternCHeader);
 }
 
 

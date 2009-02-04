@@ -65,13 +65,19 @@ namespace clang {
 struct LineEntry {
   /// FileOffset - The offset in this file that the line entry occurs at.
   unsigned FileOffset;
+  
   /// LineNo - The presumed line number of this line entry: #line 4.
   unsigned LineNo;
+  
   /// FilenameID - The ID of the filename identified by this line entry:
   /// #line 4 "foo.c".  This is -1 if not specified.
   int FilenameID;
   
-  static LineEntry get(unsigned Offs, unsigned Line, int Filename) {
+  /// Flags - Set the 0 if no flags, 1 if a system header, 
+  SrcMgr::CharacteristicKind FileKind;
+  
+  static LineEntry get(unsigned Offs, unsigned Line, int Filename,
+                       SrcMgr::CharacteristicKind FileKind) {
     LineEntry E;
     E.FileOffset = Offs;
     E.LineNo = Line;
@@ -121,6 +127,10 @@ public:
   
   void AddLineNote(unsigned FID, unsigned Offset,
                    unsigned LineNo, int FilenameID);
+  void AddLineNote(unsigned FID, unsigned Offset,
+                   unsigned LineNo, int FilenameID,
+                   unsigned EntryExit, SrcMgr::CharacteristicKind FileKind);
+
   
   /// FindNearestLineEntry - Find the line entry nearest to FID that is before
   /// it.  If there is no line entry before Offset in FID, return null.
@@ -152,13 +162,44 @@ void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
   assert((Entries.empty() || Entries.back().FileOffset < Offset) &&
          "Adding line entries out of order!");
   
-  // If this is a '#line 4' after '#line 42 "foo.h"', make sure to remember that
-  // we are still in "foo.h".
-  if (FilenameID == -1 && !Entries.empty())
-    FilenameID = Entries.back().FilenameID;
+  SrcMgr::CharacteristicKind Kind = SrcMgr::C_User;
   
-  Entries.push_back(LineEntry::get(Offset, LineNo, FilenameID));
+  if (!Entries.empty()) {
+    // If this is a '#line 4' after '#line 42 "foo.h"', make sure to remember
+    // that we are still in "foo.h".
+    if (FilenameID == -1)
+      FilenameID = Entries.back().FilenameID;
+    
+    // If we are after a line marker that switched us to system header mode,
+    // preserve it.
+    Kind = Entries.back().FileKind;
+  }
+  
+  Entries.push_back(LineEntry::get(Offset, LineNo, FilenameID, Kind));
 }
+
+/// AddLineNote This is the same as the previous version of AddLineNote, but is
+/// used for GNU line markers.  If EntryExit is 0, then this doesn't change the
+/// presumed #include stack.  If it is 1, this is a file entry, if it is 2 then
+/// this is a file exit.  FileKind specifies whether this is a system header or
+/// extern C system header.
+void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
+                                unsigned LineNo, int FilenameID,
+                                unsigned EntryExit,
+                                SrcMgr::CharacteristicKind FileKind) {
+  assert(FilenameID != -1 && "Unspecified filename should use other accessor");
+  
+  std::vector<LineEntry> &Entries = LineEntries[FID];
+  
+  assert((Entries.empty() || Entries.back().FileOffset < Offset) &&
+         "Adding line entries out of order!");
+
+  
+  // TODO: Handle EntryExit.
+  
+  Entries.push_back(LineEntry::get(Offset, LineNo, FilenameID, FileKind));
+}
+
 
 /// FindNearestLineEntry - Find the line entry nearest to FID that is before
 /// it.  If there is no line entry before Offset in FID, return null.
@@ -204,6 +245,46 @@ void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
   if (LineTable == 0)
     LineTable = new LineTableInfo();
   LineTable->AddLineNote(LocInfo.first.ID, LocInfo.second, LineNo, FilenameID);
+}
+
+/// AddLineNote - Add a GNU line marker to the line table.
+void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
+                                int FilenameID, bool IsFileEntry,
+                                bool IsFileExit, bool IsSystemHeader,
+                                bool IsExternCHeader) {
+  // If there is no filename and no flags, this is treated just like a #line,
+  // which does not change the flags of the previous line marker.
+  if (FilenameID == -1) {
+    assert(!IsFileEntry && !IsFileExit && !IsSystemHeader && !IsExternCHeader &&
+           "Can't set flags without setting the filename!");
+    return AddLineNote(Loc, LineNo, FilenameID);
+  }
+  
+  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  const SrcMgr::FileInfo &FileInfo = getSLocEntry(LocInfo.first).getFile();
+  
+  // Remember that this file has #line directives now if it doesn't already.
+  const_cast<SrcMgr::FileInfo&>(FileInfo).setHasLineDirectives();
+  
+  if (LineTable == 0)
+    LineTable = new LineTableInfo();
+  
+  SrcMgr::CharacteristicKind FileKind;
+  if (IsExternCHeader)
+    FileKind = SrcMgr::C_ExternCSystem;
+  else if (IsSystemHeader)
+    FileKind = SrcMgr::C_System;
+  else
+    FileKind = SrcMgr::C_User;
+  
+  unsigned EntryExit = 0;
+  if (IsFileEntry)
+    EntryExit = 1;
+  else if (IsFileExit)
+    EntryExit = 2;
+  
+  LineTable->AddLineNote(LocInfo.first.ID, LocInfo.second, LineNo, FilenameID,
+                         EntryExit, FileKind);
 }
 
 

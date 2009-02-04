@@ -541,6 +541,9 @@ public:
   /// specified by Loc.  If FilenameID is -1, it is considered to be
   /// unspecified.
   void AddLineNote(SourceLocation Loc, unsigned LineNo, int FilenameID);
+  void AddLineNote(SourceLocation Loc, unsigned LineNo, int FilenameID,
+                   bool IsFileEntry, bool IsFileExit, 
+                   bool IsSystemHeader, bool IsExternCHeader);
   
   //===--------------------------------------------------------------------===//
   // Other miscellaneous methods.
