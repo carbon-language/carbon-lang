@@ -170,7 +170,7 @@ static bool PrintProblem(SourceManager &SourceMgr,
   return true;
 }
 
-/// CompareDiagLists - Compare two diangnostic lists and return the difference
+/// CompareDiagLists - Compare two diagnostic lists and return the difference
 /// between them.
 /// 
 static bool CompareDiagLists(SourceManager &SourceMgr,
