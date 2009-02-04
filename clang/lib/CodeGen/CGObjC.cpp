@@ -177,7 +177,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
       Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
     llvm::Value *Offset = EmitIvarOffset(IMP->getClassInterface(), Ivar);
     llvm::Value *True =
-      llvm::ConstantInt::get(Types.ConvertTypeForMem(getContext().BoolTy), 1);
+      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
     CallArgList Args;
     Args.push_back(std::make_pair(RValue::get(SelfAsId), IdTy));
     Args.push_back(std::make_pair(RValue::get(CmdVal), Cmd->getType()));
@@ -259,9 +259,9 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
       Builder.CreateBitCast(Builder.CreateLoad(Arg, "arg"),
                             Types.ConvertType(IdTy));
     llvm::Value *True =
-      llvm::ConstantInt::get(Types.ConvertTypeForMem(getContext().BoolTy), 1);
+      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
     llvm::Value *False =
-      llvm::ConstantInt::get(Types.ConvertTypeForMem(getContext().BoolTy), 0);
+      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 0);
     CallArgList Args;
     Args.push_back(std::make_pair(RValue::get(SelfAsId), IdTy));
     Args.push_back(std::make_pair(RValue::get(CmdVal), Cmd->getType()));
