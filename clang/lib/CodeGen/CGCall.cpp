@@ -1167,6 +1167,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     ++AI;
   }
     
+  assert(FI.arg_size() == Args.size() &&
+         "Mismatch between function signature & arguments.");
   CGFunctionInfo::const_arg_iterator info_it = FI.arg_begin();
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i, ++info_it) {
@@ -1316,6 +1318,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     assert(0 && "Invalid ABI kind for return argument");
   }
   
+  assert(CallInfo.arg_size() == CallArgs.size() &&
+         "Mismatch between function signature & arguments.");
   CGFunctionInfo::const_arg_iterator info_it = CallInfo.arg_begin();
   for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
        I != E; ++I, ++info_it) {

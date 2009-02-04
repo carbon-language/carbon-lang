@@ -76,6 +76,8 @@ namespace CodeGen {
     arg_iterator arg_begin() { return Args + 1; }
     arg_iterator arg_end() { return Args + 1 + NumArgs; }
 
+    unsigned  arg_size() const { return NumArgs; }
+
     QualType getReturnType() const { return Args[0].type; }
 
     ABIArgInfo &getReturnInfo() { return Args[0].info; }
