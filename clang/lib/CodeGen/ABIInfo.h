@@ -113,6 +113,8 @@ namespace clang {
       assert(TheKind == ByVal && "Invalid kind!");
       return UIntData;
     }
+
+    void dump() const;
   };
 
   /// ABIInfo - Target specific hooks for defining how a type should be

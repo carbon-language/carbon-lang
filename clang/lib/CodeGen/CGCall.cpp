@@ -23,6 +23,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 
 #include "ABIInfo.h"
@@ -113,6 +114,36 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
 /***/
 
 ABIInfo::~ABIInfo() {}
+
+void ABIArgInfo::dump() const {
+  fprintf(stderr, "(ABIArgInfo Kind=");
+  switch (TheKind) {
+  case Direct: 
+    fprintf(stderr, "Direct");
+    break;
+  case StructRet: 
+    fprintf(stderr, "StructRet");
+    break;
+  case Ignore: 
+    fprintf(stderr, "Ignore");
+    break;
+  case Coerce: 
+    fprintf(stderr, "Coerce Type=");
+    getCoerceToType()->print(llvm::errs());
+    // FIXME: This is ridiculous.
+    llvm::errs().flush();
+    break;
+  case ByVal: 
+    fprintf(stderr, "ByVal Align=%d", getByValAlignment());
+    break;
+  case Expand: 
+    fprintf(stderr, "Expand");
+    break;
+  }
+  fprintf(stderr, ")\n");
+}
+
+/***/
 
 /// isEmptyStruct - Return true iff a structure has no non-empty
 /// members. Note that a structure with a flexible array member is not
