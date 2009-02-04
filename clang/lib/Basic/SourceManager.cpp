@@ -160,14 +160,13 @@ const LineEntry *LineTableInfo::FindNearestLineEntry(unsigned FID,
   const std::vector<LineEntry> &Entries = LineEntries[FID];
   assert(!Entries.empty() && "No #line entries for this FID after all!");
 
-  if (Entries[0].FileOffset > Offset) return 0;
 
   // FIXME: Dumb linear search.
   // Find the maximal element that is still before Offset.
-  for (unsigned i = 1, e = Entries.size(); i != e; ++i)
-    if (Entries[i].FileOffset > Offset) return &Entries[i-1];
-  // Otherwise, all entries are before Offset.
-  return &Entries.back();
+  for (std::vector<LineEntry>::const_reverse_iterator I = Entries.rbegin(),
+       E = Entries.rend(); I != E; ++I)
+    if (I->FileOffset <= Offset) return &*I;
+  return 0;
 }
 
 
