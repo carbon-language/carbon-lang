@@ -276,18 +276,11 @@ static bool HasOnlyPHIUses(unsigned Reg, MachineRegisterInfo *RegInfo) {
 bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
 
-  bool isInvLoad = false;
-  if (TID.mayLoad()) {
-    isInvLoad = TII->isInvariantLoad(&MI);
-    if (!isInvLoad)
-      return false;
-  }
-
   // FIXME: For now, only hoist re-materilizable instructions. LICM will
   // increase register pressure. We want to make sure it doesn't increase
   // spilling.
-  if (!isInvLoad && (!TID.isRematerializable() ||
-                     !TII->isTriviallyReMaterializable(&MI)))
+  if (!TID.mayLoad() && (!TID.isRematerializable() ||
+                         !TII->isTriviallyReMaterializable(&MI)))
     return false;
 
   if (!TID.isAsCheapAsAMove())
