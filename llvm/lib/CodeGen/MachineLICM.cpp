@@ -76,6 +76,10 @@ namespace {
     /// 
     bool IsLoopInvariantInst(MachineInstr &I);
 
+    /// IsProfitableToHoist - Return true if it is potentially profitable to
+    /// hoist the given loop invariant.
+    bool IsProfitableToHoist(MachineInstr &MI);
+
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
     /// loop) in depth first order w.r.t the DominatorTree. This allows us to
@@ -187,25 +191,16 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
       TID.hasUnmodeledSideEffects())
     return false;
 
-  bool isInvLoad = false;
   if (TID.mayLoad()) {
     // Okay, this instruction does a load. As a refinement, we allow the target
     // to decide whether the loaded value is actually a constant. If so, we can
     // actually use it as a load.
-    isInvLoad = TII->isInvariantLoad(&I);
-    if (!isInvLoad)
+    if (!TII->isInvariantLoad(&I))
       // FIXME: we should be able to sink loads with no other side effects if
       // there is nothing that can change memory from here until the end of
       // block. This is a trivial form of alias analysis.
       return false;
   }
-
-  // FIXME: For now, only hoist re-materilizable instructions. LICM will
-  // increase register pressure. We want to make sure it doesn't increase
-  // spilling.
-  if (!isInvLoad && (!TID.isRematerializable() ||
-                     !TII->isTriviallyReMaterializable(&I)))
-    return false;
 
   DEBUG({
       DOUT << "--- Checking if we can hoist " << I;
@@ -263,11 +258,61 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   return true;
 }
 
+/// HasOnlyPHIUses - Return true if the only uses of Reg are PHIs.
+static bool HasOnlyPHIUses(unsigned Reg, MachineRegisterInfo *RegInfo) {
+  bool OnlyPHIUse = false;
+  for (MachineRegisterInfo::use_iterator UI = RegInfo->use_begin(Reg),
+         UE = RegInfo->use_end(); UI != UE; ++UI) {
+    MachineInstr *UseMI = &*UI;
+    if (UseMI->getOpcode() != TargetInstrInfo::PHI)
+      return false;
+    OnlyPHIUse = true;
+  }
+  return OnlyPHIUse;
+}
+
+/// IsProfitableToHoist - Return true if it is potentially profitable to hoist
+/// the given loop invariant.
+bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
+
+  bool isInvLoad = false;
+  if (TID.mayLoad()) {
+    isInvLoad = TII->isInvariantLoad(&MI);
+    if (!isInvLoad)
+      return false;
+  }
+
+  // FIXME: For now, only hoist re-materilizable instructions. LICM will
+  // increase register pressure. We want to make sure it doesn't increase
+  // spilling.
+  if (!isInvLoad && (!TID.isRematerializable() ||
+                     !TII->isTriviallyReMaterializable(&MI)))
+    return false;
+
+  if (!TID.isAsCheapAsAMove())
+    return true;
+
+  // If the instruction is "cheap" and the only uses of the register(s) defined
+  // by this MI are PHIs, then don't hoist it. Otherwise we just end up with a
+  // cheap instruction (e.g. constant) with long live interval feeeding into
+  // copies that are not always coalesced away.
+  bool OnlyPHIUses = false;
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || !MO.isDef())
+      continue;
+    OnlyPHIUses |= HasOnlyPHIUses(MO.getReg(), RegInfo);
+  }
+  return !OnlyPHIUses;
+}
+
 /// Hoist - When an instruction is found to use only loop invariant operands
 /// that are safe to hoist, this instruction is called to do the dirty work.
 ///
 void MachineLICM::Hoist(MachineInstr &MI) {
   if (!IsLoopInvariantInst(MI)) return;
+  if (!IsProfitableToHoist(MI)) return;
 
   // Now move the instructions to the predecessor, inserting it before any
   // terminator instructions.
