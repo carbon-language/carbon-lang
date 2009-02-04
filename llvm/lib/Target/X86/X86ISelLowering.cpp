@@ -987,7 +987,7 @@ SDValue X86TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
       continue;
     }
 
-    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), ValToCopy, Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), ValToCopy, Flag);
     Flag = Chain.getValue(1);
   }
 
@@ -1004,9 +1004,9 @@ SDValue X86TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
       Reg = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
       FuncInfo->setSRetReturnReg(Reg);
     }
-    SDValue Val = DAG.getCopyFromReg(Chain, Reg, getPointerTy());
+    SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
 
-    Chain = DAG.getCopyToReg(Chain, X86::RAX, Val, Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, X86::RAX, Val, Flag);
     Flag = Chain.getValue(1);
   }
   
@@ -1060,7 +1060,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
       CopyVT = MVT::f80;
     }
     
-    Chain = DAG.getCopyFromReg(Chain, RVLocs[i].getLocReg(),
+    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
                                CopyVT, InFlag).getValue(1);
     SDValue Val = Chain.getValue(0);
     InFlag = Chain.getValue(2);
@@ -1199,9 +1199,10 @@ X86TargetLowering::CallRequiresFnAddressInReg(bool Is64Bit, bool IsTailCall) {
 /// function parameter.
 static SDValue 
 CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
-                          ISD::ArgFlagsTy Flags, SelectionDAG &DAG) {
+                          ISD::ArgFlagsTy Flags, SelectionDAG &DAG,
+                          DebugLoc dl) {
   SDValue SizeNode     = DAG.getConstant(Flags.getByValSize(), MVT::i32);
-  return DAG.getMemcpy(Chain, Dst, Src, SizeNode, Flags.getByValAlign(),
+  return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
                        /*AlwaysInline=*/true, NULL, 0, NULL, 0);
 }
 
@@ -1302,7 +1303,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       }
 
       unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
-      SDValue ArgValue = DAG.getCopyFromReg(Root, Reg, RegVT);
+      SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
       
       // If this is an 8 or 16-bit value, it is really passed promoted to 32
       // bits.  Insert an assert[sz]ext to capture this, then truncate to the
@@ -1346,7 +1347,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       Reg = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
       FuncInfo->setSRetReturnReg(Reg);
     }
-    SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), Reg, ArgValues[0]);
+    SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), dl, Reg, ArgValues[0]);
     Root = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Copy, Root);
   }
 
@@ -1417,7 +1418,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       for (; NumIntRegs != TotalNumIntRegs; ++NumIntRegs) {
         unsigned VReg = AddLiveIn(MF, GPR64ArgRegs[NumIntRegs],
                                   X86::GR64RegisterClass);
-        SDValue Val = DAG.getCopyFromReg(Root, VReg, MVT::i64);
+        SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::i64);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
                        PseudoSourceValue::getFixedStack(RegSaveFrameIndex), 0);
@@ -1432,7 +1433,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
         unsigned VReg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs],
                                   X86::VR128RegisterClass);
-        SDValue Val = DAG.getCopyFromReg(Root, VReg, MVT::v4f32);
+        SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::v4f32);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
                        PseudoSourceValue::getFixedStack(RegSaveFrameIndex), 0);
@@ -1484,7 +1485,7 @@ X86TargetLowering::LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
   SDValue PtrOff = DAG.getIntPtrConstant(LocMemOffset);
   PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, PtrOff);
   if (Flags.isByVal()) {
-    return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG);
+    return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG, dl);
   }
   return DAG.getStore(Chain, dl, Arg, PtrOff,
                       PseudoSourceValue::getStack(), LocMemOffset);
@@ -1633,7 +1634,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       if (!IsTailCall || (IsTailCall && isByVal)) {
         assert(VA.isMemLoc());
         if (StackPtr.getNode() == 0)
-          StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
+          StackPtr = DAG.getCopyFromReg(Chain, dl, X86StackPtr, getPointerTy());
         
         MemOpChains.push_back(LowerMemOpCallTo(TheCall, DAG, StackPtr, VA,
                                                Chain, Arg, Flags));
@@ -1652,15 +1653,15 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   // tail call optimization the copies to registers are lowered later.
   if (!IsTailCall)
     for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-      Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
-                               InFlag);
+      Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first, 
+                               RegsToPass[i].second, InFlag);
       InFlag = Chain.getValue(1);
     }
 
   // ELF / PIC requires GOT in the EBX register before function calls via PLT
   // GOT pointer.  
   if (CallRequiresGOTPtrInReg(Is64Bit, IsTailCall)) {
-    Chain = DAG.getCopyToReg(Chain, X86::EBX,
+    Chain = DAG.getCopyToReg(Chain, dl, X86::EBX,
                              DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                              InFlag);
     InFlag = Chain.getValue(1);
@@ -1700,7 +1701,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     assert((Subtarget->hasSSE1() || !NumXMMRegs) 
            && "SSE registers cannot be used when SSE is disabled");
     
-    Chain = DAG.getCopyToReg(Chain, X86::AL,
+    Chain = DAG.getCopyToReg(Chain, dl, X86::AL,
                              DAG.getConstant(NumXMMRegs, MVT::i8), InFlag);
     InFlag = Chain.getValue(1);
   }
@@ -1729,11 +1730,12 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
           // Copy relative to framepointer.
           SDValue Source = DAG.getIntPtrConstant(VA.getLocMemOffset());
           if (StackPtr.getNode() == 0)
-            StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
+            StackPtr = DAG.getCopyFromReg(Chain, dl, X86StackPtr, 
+                                          getPointerTy());
           Source = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, Source);
 
           MemOpChains2.push_back(CreateCopyOfByValArgument(Source, FIN, Chain,
-                                                           Flags, DAG));
+                                                           Flags, DAG, dl));
         } else {
           // Store relative to framepointer.
           MemOpChains2.push_back(
@@ -1749,8 +1751,8 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
     // Copy arguments to their registers.
     for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-      Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
-                               InFlag);
+      Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first, 
+                               RegsToPass[i].second, InFlag);
       InFlag = Chain.getValue(1);
     }
     InFlag =SDValue();
@@ -1774,7 +1776,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   } else if (IsTailCall) {
     unsigned Opc = Is64Bit ? X86::R9 : X86::EAX;
 
-    Chain = DAG.getCopyToReg(Chain, 
+    Chain = DAG.getCopyToReg(Chain,  dl,
                              DAG.getRegister(Opc, getPointerTy()), 
                              Callee,InFlag);
     Callee = DAG.getRegister(Opc, getPointerTy());
@@ -4577,7 +4579,8 @@ static SDValue
 LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                 const MVT PtrVT) {
   SDValue InFlag;
-  SDValue Chain = DAG.getCopyToReg(DAG.getEntryNode(), X86::EBX,
+  DebugLoc dl = GA->getDebugLoc();  // ? function entry point might be better
+  SDValue Chain = DAG.getCopyToReg(DAG.getEntryNode(), dl, X86::EBX,
                                      DAG.getNode(X86ISD::GlobalBaseReg,
                                                  PtrVT), InFlag);
   InFlag = Chain.getValue(1);
@@ -4594,7 +4597,7 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 
   // call ___tls_get_addr. This function receives its argument in
   // the register EAX.
-  Chain = DAG.getCopyToReg(Chain, X86::EAX, Result, InFlag);
+  Chain = DAG.getCopyToReg(Chain, dl, X86::EAX, Result, InFlag);
   InFlag = Chain.getValue(1);
 
   NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -4607,7 +4610,7 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops1, 5);
   InFlag = Chain.getValue(1);
 
-  return DAG.getCopyFromReg(Chain, X86::EAX, PtrVT, InFlag);
+  return DAG.getCopyFromReg(Chain, dl, X86::EAX, PtrVT, InFlag);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model, 64 bit
@@ -4615,6 +4618,7 @@ static SDValue
 LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                 const MVT PtrVT) {
   SDValue InFlag, Chain;
+  DebugLoc dl = GA->getDebugLoc();  // ? function entry point might be better
 
   // emit leaq symbol@TLSGD(%rip), %rdi
   SDVTList NodeTys = DAG.getVTList(PtrVT, MVT::Other, MVT::Flag);
@@ -4628,7 +4632,7 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 
   // call __tls_get_addr. This function receives its argument in
   // the register RDI.
-  Chain = DAG.getCopyToReg(Chain, X86::RDI, Result, InFlag);
+  Chain = DAG.getCopyToReg(Chain, dl, X86::RDI, Result, InFlag);
   InFlag = Chain.getValue(1);
 
   NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -4640,7 +4644,7 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops1, 4);
   InFlag = Chain.getValue(1);
 
-  return DAG.getCopyFromReg(Chain, X86::RAX, PtrVT, InFlag);
+  return DAG.getCopyFromReg(Chain, dl, X86::RAX, PtrVT, InFlag);
 }
 
 // Lower ISD::GlobalTLSAddress using the "initial exec" (for no-pic) or
@@ -5586,7 +5590,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
   Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0, true));
 
-  Chain = DAG.getCopyToReg(Chain, X86::EAX, Size, Flag);
+  Chain = DAG.getCopyToReg(Chain, dl, X86::EAX, Size, Flag);
   Flag = Chain.getValue(1);
 
   SDVTList  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -5603,7 +5607,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                              DAG.getIntPtrConstant(0, true),
                              Flag);
 
-  Chain = DAG.getCopyFromReg(Chain, X86StackPtr, SPTy).getValue(1);
+  Chain = DAG.getCopyFromReg(Chain, dl, X86StackPtr, SPTy).getValue(1);
 
   SDValue Ops1[2] = { Chain.getValue(0), Chain };
   return DAG.getMergeValues(Ops1, 2, dl);
@@ -5897,8 +5901,9 @@ SDValue X86TargetLowering::LowerVACOPY(SDValue Op, SelectionDAG &DAG) {
   SDValue SrcPtr = Op.getOperand(2);
   const Value *DstSV = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
   const Value *SrcSV = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
+  DebugLoc dl = Op.getNode()->getDebugLoc();
 
-  return DAG.getMemcpy(Chain, DstPtr, SrcPtr,
+  return DAG.getMemcpy(Chain, dl, DstPtr, SrcPtr,
                        DAG.getIntPtrConstant(24), 8, false,
                        DstSV, 0, SrcSV, 0);
 }
@@ -6125,11 +6130,12 @@ SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   MFI->setFrameAddressIsTaken(true);
   MVT VT = Op.getValueType();
+  DebugLoc dl = Op.getNode()->getDebugLoc();  // FIXME probably not meaningful
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   unsigned FrameReg = Subtarget->is64Bit() ? X86::RBP : X86::EBP;
-  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), FrameReg, VT);
+  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
   while (Depth--)
-    FrameAddr = DAG.getLoad(VT, DAG.getEntryNode(), FrameAddr, NULL, 0);
+    FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr, NULL, 0);
   return FrameAddr;
 }
 
@@ -6154,7 +6160,7 @@ SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG)
                                   DAG.getIntPtrConstant(-TD->getPointerSize()));
   StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), StoreAddr, Offset);
   Chain = DAG.getStore(Chain, dl, Handler, StoreAddr, NULL, 0);
-  Chain = DAG.getCopyToReg(Chain, StoreAddrReg, StoreAddr);
+  Chain = DAG.getCopyToReg(Chain, dl, StoreAddrReg, StoreAddr);
   MF.getRegInfo().addLiveOut(StoreAddrReg);
 
   return DAG.getNode(X86ISD::EH_RETURN, dl,
@@ -6539,7 +6545,7 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
     Reg = X86::RAX; size = 8;
     break;
   }
-  SDValue cpIn = DAG.getCopyToReg(Op.getOperand(0), Reg,
+  SDValue cpIn = DAG.getCopyToReg(Op.getOperand(0), dl, Reg,
                                     Op.getOperand(2), SDValue());
   SDValue Ops[] = { cpIn.getValue(0),
                     Op.getOperand(1),
@@ -6549,7 +6555,7 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Result = DAG.getNode(X86ISD::LCMPXCHG_DAG, dl, Tys, Ops, 5);
   SDValue cpOut = 
-    DAG.getCopyFromReg(Result.getValue(0), Reg, T, Result.getValue(1));
+    DAG.getCopyFromReg(Result.getValue(0), dl, Reg, T, Result.getValue(1));
   return cpOut;
 }
 
@@ -6560,8 +6566,8 @@ SDValue X86TargetLowering::LowerREADCYCLECOUNTER(SDValue Op,
   SDValue TheChain = Op.getOperand(0);
   DebugLoc dl = Op.getNode()->getDebugLoc();
   SDValue rd = DAG.getNode(X86ISD::RDTSC_DAG, dl, Tys, &TheChain, 1);
-  SDValue rax = DAG.getCopyFromReg(rd, X86::RAX, MVT::i64, rd.getValue(1));
-  SDValue rdx = DAG.getCopyFromReg(rax.getValue(1), X86::RDX, MVT::i64,
+  SDValue rax = DAG.getCopyFromReg(rd, dl, X86::RAX, MVT::i64, rd.getValue(1));
+  SDValue rdx = DAG.getCopyFromReg(rax.getValue(1), dl, X86::RDX, MVT::i64,
                                    rax.getValue(2));
   SDValue Tmp = DAG.getNode(ISD::SHL, dl, MVT::i64, rdx,
                             DAG.getConstant(32, MVT::i8));
@@ -6692,8 +6698,9 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
     SDValue TheChain = N->getOperand(0);
     SDValue rd = DAG.getNode(X86ISD::RDTSC_DAG, dl, Tys, &TheChain, 1);
-    SDValue eax = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
-    SDValue edx = DAG.getCopyFromReg(eax.getValue(1), X86::EDX, MVT::i32,
+    SDValue eax = DAG.getCopyFromReg(rd, dl, X86::EAX, MVT::i32, 
+                                     rd.getValue(1));
+    SDValue edx = DAG.getCopyFromReg(eax.getValue(1), dl, X86::EDX, MVT::i32,
                                      eax.getValue(2));
     // Use a buildpair to merge the two 32-bit values into a 64-bit one.
     SDValue Ops[] = { eax, edx };
@@ -6709,27 +6716,27 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                         DAG.getConstant(0, MVT::i32));
     cpInH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(2),
                         DAG.getConstant(1, MVT::i32));
-    cpInL = DAG.getCopyToReg(N->getOperand(0), X86::EAX, cpInL, SDValue());
-    cpInH = DAG.getCopyToReg(cpInL.getValue(0), X86::EDX, cpInH,
+    cpInL = DAG.getCopyToReg(N->getOperand(0), dl, X86::EAX, cpInL, SDValue());
+    cpInH = DAG.getCopyToReg(cpInL.getValue(0), dl, X86::EDX, cpInH,
                              cpInL.getValue(1));
     SDValue swapInL, swapInH;
     swapInL = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(3),
                           DAG.getConstant(0, MVT::i32));
     swapInH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(3),
                           DAG.getConstant(1, MVT::i32));
-    swapInL = DAG.getCopyToReg(cpInH.getValue(0), X86::EBX, swapInL,
+    swapInL = DAG.getCopyToReg(cpInH.getValue(0), dl, X86::EBX, swapInL,
                                cpInH.getValue(1));
-    swapInH = DAG.getCopyToReg(swapInL.getValue(0), X86::ECX, swapInH,
+    swapInH = DAG.getCopyToReg(swapInL.getValue(0), dl, X86::ECX, swapInH,
                                swapInL.getValue(1));
     SDValue Ops[] = { swapInH.getValue(0),
                       N->getOperand(1),
                       swapInH.getValue(1) };
     SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
     SDValue Result = DAG.getNode(X86ISD::LCMPXCHG8_DAG, dl, Tys, Ops, 3);
-    SDValue cpOutL = DAG.getCopyFromReg(Result.getValue(0), X86::EAX, MVT::i32,
-                                        Result.getValue(1));
-    SDValue cpOutH = DAG.getCopyFromReg(cpOutL.getValue(1), X86::EDX, MVT::i32,
-                                        cpOutL.getValue(2));
+    SDValue cpOutL = DAG.getCopyFromReg(Result.getValue(0), dl, X86::EAX,
+                                        MVT::i32, Result.getValue(1));
+    SDValue cpOutH = DAG.getCopyFromReg(cpOutL.getValue(1), dl, X86::EDX,
+                                        MVT::i32, cpOutL.getValue(2));
     SDValue OpsF[] = { cpOutL.getValue(0), cpOutH.getValue(0)};
     Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, OpsF, 2));
     Results.push_back(cpOutH.getValue(1));

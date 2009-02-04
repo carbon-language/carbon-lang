@@ -1288,7 +1288,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           std::swap(N0, N1);
       }
 
-      SDValue InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), LoReg,
+      SDValue InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, LoReg,
                                               N0, SDValue()).getValue(1);
 
       if (foldedLoad) {
@@ -1305,7 +1305,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 
       // Copy the low half of the result, if it is needed.
       if (!N.getValue(0).use_empty()) {
-        SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
+        SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                                   LoReg, NVT, InFlag);
         InFlag = Result.getValue(2);
         ReplaceUses(N.getValue(0), Result);
@@ -1321,7 +1321,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         if (HiReg == X86::AH && Subtarget->is64Bit()) {
           // Prevent use of AH in a REX instruction by referencing AX instead.
           // Shift it down 8 bits.
-          Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
+          Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                           X86::AX, MVT::i16, InFlag);
           InFlag = Result.getValue(2);
           Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, dl, MVT::i16,
@@ -1332,7 +1332,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG, dl,
                                                    MVT::i8, Result, SRIdx), 0);
         } else {
-          Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
+          Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                           HiReg, NVT, InFlag);
           InFlag = Result.getValue(2);
         }
@@ -1421,11 +1421,11 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
             SDValue(CurDAG->getTargetNode(X86::MOVZX16rr8, dl, MVT::i16, N0),0);
           Chain = CurDAG->getEntryNode();
         }
-        Chain  = CurDAG->getCopyToReg(Chain, X86::AX, Move, SDValue());
+        Chain  = CurDAG->getCopyToReg(Chain, dl, X86::AX, Move, SDValue());
         InFlag = Chain.getValue(1);
       } else {
         InFlag =
-          CurDAG->getCopyToReg(CurDAG->getEntryNode(),
+          CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl,
                                LoReg, N0, SDValue()).getValue(1);
         if (isSigned && !signBitIsZero) {
           // Sign extend the low part into the high part.
@@ -1435,7 +1435,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           // Zero out the high part, effectively zero extending the input.
           SDValue ClrNode = SDValue(CurDAG->getTargetNode(ClrOpcode, dl, NVT), 
                                     0);
-          InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), HiReg,
+          InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, HiReg,
                                         ClrNode, InFlag).getValue(1);
         }
       }
@@ -1454,7 +1454,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 
       // Copy the division (low) result, if it is needed.
       if (!N.getValue(0).use_empty()) {
-        SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
+        SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                                   LoReg, NVT, InFlag);
         InFlag = Result.getValue(2);
         ReplaceUses(N.getValue(0), Result);
@@ -1470,7 +1470,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         if (HiReg == X86::AH && Subtarget->is64Bit()) {
           // Prevent use of AH in a REX instruction by referencing AX instead.
           // Shift it down 8 bits.
-          Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
+          Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                           X86::AX, MVT::i16, InFlag);
           InFlag = Result.getValue(2);
           Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, dl, MVT::i16,
@@ -1482,7 +1482,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG, dl,
                                                    MVT::i8, Result, SRIdx), 0);
         } else {
-          Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
+          Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                           HiReg, NVT, InFlag);
           InFlag = Result.getValue(2);
         }
