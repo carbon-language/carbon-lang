@@ -41,10 +41,19 @@ void f() {
   pdi1 = pdid; // expected-error {{incompatible type assigning 'int struct D::*', expected 'int struct A::*'}}
 }
 
-struct HasMembers
+struct TheBase
+{
+  void d();
+};
+
+struct HasMembers : TheBase
 {
   int i;
   void f();
+
+  void g();
+  void g(int);
+  static void g(double);
 };
 
 namespace Fake
@@ -54,9 +63,19 @@ namespace Fake
 }
 
 void g() {
+  HasMembers hm;
+
   int HasMembers::*pmi = &HasMembers::i;
   int *pni = &Fake::i;
+  int *pmii = &hm.i;
 
-  // FIXME: Test the member function, too.
+  void (HasMembers::*pmf)() = &HasMembers::f;
   void (*pnf)() = &Fake::f;
+  &hm.f; // expected-error {{address expression must be an lvalue or a function designator}}
+
+  void (HasMembers::*pmgv)() = &HasMembers::g;
+  void (HasMembers::*pmgi)(int) = &HasMembers::g;
+  void (*pmgd)(double) = &HasMembers::g;
+
+  void (HasMembers::*pmd)() = &HasMembers::d;
 }

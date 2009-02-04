@@ -489,7 +489,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // type "pointer to T." The result is a pointer to the
     // function. (C++ 4.3p1).
     FromType = Context.getPointerType(FromType);
-  } 
+  }
   // Address of overloaded function (C++ [over.over]).
   else if (FunctionDecl *Fn 
              = ResolveAddressOfOverloadedFunction(From, ToType, false)) {
@@ -500,7 +500,17 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     FromType = Fn->getType();
     if (ToType->isReferenceType())
       FromType = Context.getReferenceType(FromType);
-    else
+    else if (ToType->isMemberPointerType()) {
+      // Resolve address only succeeds if both sides are member pointers,
+      // but it doesn't have to be the same class. See DR 247.
+      // Note that this means that the type of &Derived::fn can be
+      // Ret (Base::*)(Args) if the fn overload actually found is from the
+      // base class, even if it was brought into the derived class via a
+      // using declaration. The standard isn't clear on this issue at all.
+      CXXMethodDecl *M = cast<CXXMethodDecl>(Fn);
+      FromType = Context.getMemberPointerType(FromType,
+                    Context.getTypeDeclType(M->getParent()).getTypePtr());
+    } else
       FromType = Context.getPointerType(FromType);
   }
   // We don't require any conversions for the first step.
@@ -3409,11 +3419,17 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
 /// resolved, and NULL otherwise. When @p Complain is true, this
 /// routine will emit diagnostics if there is an error.
 FunctionDecl *
-Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType, 
+Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                          bool Complain) {
   QualType FunctionType = ToType;
+  bool IsMember = false;
   if (const PointerLikeType *ToTypePtr = ToType->getAsPointerLikeType())
     FunctionType = ToTypePtr->getPointeeType();
+  else if (const MemberPointerType *MemTypePtr =
+                    ToType->getAsMemberPointerType()) {
+    FunctionType = MemTypePtr->getPointeeType();
+    IsMember = true;
+  }
 
   // We only look at pointers or references to functions.
   if (!FunctionType->isFunctionType()) 
@@ -3454,10 +3470,16 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     // C++ [over.over]p3:
     //   Non-member functions and static member functions match
     //   targets of type “pointer-to-function”or
-    //   “reference-to-function.”
-    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Fun))
-      if (!Method->isStatic())
+    //   “reference-to-function.” Nonstatic member functions match targets of
+    //   type "pointer-to-member-function."
+    // Note that according to DR 247, the containing class does not matter.
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Fun)) {
+      // Skip non-static functions when converting to pointer, and static
+      // when converting to member pointer.
+      if (Method->isStatic() == IsMember)
         continue;
+    } else if (IsMember)
+      continue;
 
     if (FunctionType == Context.getCanonicalType((*Fun)->getType()))
       return *Fun;
