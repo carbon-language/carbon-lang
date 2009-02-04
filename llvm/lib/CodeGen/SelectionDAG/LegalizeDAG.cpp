@@ -68,6 +68,11 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   /// being legalized (which could lead to non-serialized call sequences).
   bool IsLegalizingCall;
   
+  /// IsLegalizingCallArguments - This member is used only for the purpose
+  /// of providing assert to check for LegalizeTypes because legalizing an
+  /// operation might introduce call nodes that might need type legalization.
+  bool IsLegalizingCallArgs;
+
   enum LegalizeAction {
     Legal,      // The target natively supports this operation.
     Promote,    // This operation should be executed in a larger type.
@@ -368,7 +373,8 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag, bool types)
 void SelectionDAGLegalize::LegalizeDAG() {
   LastCALLSEQ_END = DAG.getEntryNode();
   IsLegalizingCall = false;
-  
+  IsLegalizingCallArgs = false;
+
   // The legalize process is inherently a bottom-up recursive process (users
   // legalize their uses before themselves).  Given infinite stack space, we
   // could just start legalizing on the root and traverse the whole graph.  In
@@ -503,7 +509,7 @@ void SelectionDAGLegalize::HandleOp(SDValue Op) {
   // those) or for build vector used as a mask for a vector shuffle.
   // FIXME: We can removed the BUILD_VECTOR case when we fix PR2957.
   assert((TypesNeedLegalizing || getTypeAction(VT) == Legal ||
-          Op.getOpcode() == ISD::TargetConstant ||
+          IsLegalizingCallArgs || Op.getOpcode() == ISD::TargetConstant ||
           Op.getOpcode() == ISD::BUILD_VECTOR) &&
          "Illegal type introduced after type legalization?");
   switch (getTypeAction(VT)) {
@@ -1805,11 +1811,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // Recursively Legalize all of the inputs of the call end that do not lead
     // to this call start.  This ensures that any libcalls that need be inserted
     // are inserted *before* the CALLSEQ_START.
+    IsLegalizingCallArgs = true;
     {SmallPtrSet<SDNode*, 32> NodesLeadingTo;
     for (unsigned i = 0, e = CallEnd->getNumOperands(); i != e; ++i)
       LegalizeAllNodesNotLeadingTo(CallEnd->getOperand(i).getNode(), Node,
                                    NodesLeadingTo);
     }
+    IsLegalizingCallArgs = false;
 
     // Now that we legalized all of the inputs (which may have inserted
     // libcalls) create the new CALLSEQ_START node.
