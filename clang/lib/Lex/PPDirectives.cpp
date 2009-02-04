@@ -676,6 +676,23 @@ static bool ReadLineMarkerFlags(bool &IsFileEntry, bool &IsFileExit,
   } else if (FlagVal == 2) {
     IsFileExit = true;
     
+    SourceManager &SM = PP.getSourceManager();
+    // If we are leaving the current presumed file, check to make sure the
+    // presumed include stack isn't empty!
+    FileID CurFileID =
+      SM.getDecomposedInstantiationLoc(FlagTok.getLocation()).first;
+    PresumedLoc PLoc = SM.getPresumedLoc(FlagTok.getLocation());
+      
+    // If there is no include loc (main file) or if the include loc is in a
+    // different physical file, then we aren't in a "1" line marker flag region.
+    SourceLocation IncLoc = PLoc.getIncludeLoc();
+    if (IncLoc.isInvalid() ||
+        SM.getDecomposedInstantiationLoc(IncLoc).first != CurFileID) {
+      PP.Diag(FlagTok, diag::err_pp_linemarker_invalid_pop);
+      PP.DiscardUntilEndOfDirective();
+      return true;
+    }
+    
     PP.Lex(FlagTok);
     if (FlagTok.is(tok::eom)) return false;
     if (GetLineValue(FlagTok, FlagVal, diag::err_pp_linemarker_invalid_flag,PP))
@@ -761,7 +778,7 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
                             IsSystemHeader, IsExternCHeader, *this))
       return;
   }
-
+  
   // Create a line note with this information.
   SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID,
                         IsFileEntry, IsFileExit, 

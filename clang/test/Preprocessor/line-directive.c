@@ -6,7 +6,7 @@
 #line 0              // expected-error {{#line directive requires a positive integer argument}}
 #line 2147483648     // expected-warning {{C requires #line number to be less than 2147483648, allowed as extension}}
 #line 42             // ok
-#line 42 'a'         // expected-error {{nvalid filename for #line directive}}
+#line 42 'a'         // expected-error {{invalid filename for #line directive}}
 #line 42 "foo/bar/baz.h"  // ok
 
 
@@ -16,9 +16,10 @@
 
 # 42
 # 42 "foo"
-# 42 "foo" 1 3
-# 42 "foo" 2 3
-# 42 "foo" 2 3 4
+# 42 "foo" 2 // expected-error {{invalid line marker flag '2': cannot pop empty include stack}}
+# 42 "foo" 1 3  // enter
+# 42 "foo" 2 3  // exit
+# 42 "foo" 2 3 4 // expected-error {{invalid line marker flag '2': cannot pop empty include stack}}
 # 42 "foo" 3 4
 
 # 'a'            // expected-error {{invalid preprocessing directive}}

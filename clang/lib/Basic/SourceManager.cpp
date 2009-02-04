@@ -76,13 +76,20 @@ struct LineEntry {
   /// Flags - Set the 0 if no flags, 1 if a system header, 
   SrcMgr::CharacteristicKind FileKind;
   
+  /// IncludeOffset - This is the offset of the virtual include stack location,
+  /// which is manipulated by GNU linemarker directives.  If this is 0 then
+  /// there is no virtual #includer.
+  unsigned IncludeOffset;
+  
   static LineEntry get(unsigned Offs, unsigned Line, int Filename,
-                       SrcMgr::CharacteristicKind FileKind) {
+                       SrcMgr::CharacteristicKind FileKind,
+                       unsigned IncludeOffset) {
     LineEntry E;
     E.FileOffset = Offs;
     E.LineNo = Line;
     E.FilenameID = Filename;
     E.FileKind = FileKind;
+    E.IncludeOffset = IncludeOffset;
     return E;
   }
 };
@@ -164,6 +171,7 @@ void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
          "Adding line entries out of order!");
   
   SrcMgr::CharacteristicKind Kind = SrcMgr::C_User;
+  unsigned IncludeOffset = 0;
   
   if (!Entries.empty()) {
     // If this is a '#line 4' after '#line 42 "foo.h"', make sure to remember
@@ -171,12 +179,14 @@ void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
     if (FilenameID == -1)
       FilenameID = Entries.back().FilenameID;
     
-    // If we are after a line marker that switched us to system header mode,
-    // preserve it.
+    // If we are after a line marker that switched us to system header mode, or
+    // that set #include information, preserve it.
     Kind = Entries.back().FileKind;
+    IncludeOffset = Entries.back().IncludeOffset;
   }
   
-  Entries.push_back(LineEntry::get(Offset, LineNo, FilenameID, Kind));
+  Entries.push_back(LineEntry::get(Offset, LineNo, FilenameID, Kind,
+                                   IncludeOffset));
 }
 
 /// AddLineNote This is the same as the previous version of AddLineNote, but is
@@ -195,10 +205,24 @@ void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
   assert((Entries.empty() || Entries.back().FileOffset < Offset) &&
          "Adding line entries out of order!");
 
+  unsigned IncludeOffset = 0;
+  if (EntryExit == 0) {  // No #include stack change.
+    IncludeOffset = Entries.empty() ? 0 : Entries.back().IncludeOffset;
+  } else if (EntryExit == 1) {
+    IncludeOffset = Offset-1;
+  } else if (EntryExit == 2) {
+    assert(!Entries.empty() && Entries.back().IncludeOffset &&
+       "PPDirectives should have caught case when popping empty include stack");
+    
+    // Get the include loc of the last entries' include loc as our include loc.
+    IncludeOffset = 0;
+    if (const LineEntry *PrevEntry =
+          FindNearestLineEntry(FID, Entries.back().IncludeOffset))
+      IncludeOffset = PrevEntry->IncludeOffset;
+  }
   
-  // TODO: Handle EntryExit.
-  
-  Entries.push_back(LineEntry::get(Offset, LineNo, FilenameID, FileKind));
+  Entries.push_back(LineEntry::get(Offset, LineNo, FilenameID, FileKind,
+                                   IncludeOffset));
 }
 
 
@@ -831,6 +855,12 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
       LineNo = Entry->LineNo + (LineNo-MarkerLineNo-1);
       
       // Note that column numbers are not molested by line markers.
+      
+      // Handle virtual #include manipulation.
+      if (Entry->IncludeOffset) {
+        IncludeLoc = getLocForStartOfFile(LocInfo.first);
+        IncludeLoc = IncludeLoc.getFileLocWithOffset(Entry->IncludeOffset);
+      }
     }
   }
 
