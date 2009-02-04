@@ -440,9 +440,11 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
             MVT VT = Arg.getValueType();
             unsigned VReg = MF.getRegInfo().
               createVirtualRegister(TLI.getRegClassFor(VT));
-            Chain = DAG.getCopyToReg(Chain, VReg, Arg, InFlag);
+            Chain = DAG.getCopyToReg(Chain, Arg.getNode()->getDebugLoc(),
+                                     VReg, Arg, InFlag);
             InFlag = Chain.getValue(1);
-            Arg = DAG.getCopyFromReg(Chain, VReg, VT, InFlag);
+            Arg = DAG.getCopyFromReg(Chain, Arg.getNode()->getDebugLoc(),
+                                     VReg, VT, InFlag);
             Chain = Arg.getValue(1);
             InFlag = Arg.getValue(2);
           }

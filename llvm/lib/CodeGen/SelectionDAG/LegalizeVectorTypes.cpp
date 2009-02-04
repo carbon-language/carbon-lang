@@ -126,7 +126,8 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BIT_CONVERT(SDNode *N) {
 SDValue DAGTypeLegalizer::ScalarizeVecRes_CONVERT_RNDSAT(SDNode *N) {
   MVT NewVT = N->getValueType(0).getVectorElementType();
   SDValue Op0 = GetScalarizedVector(N->getOperand(0));
-  return DAG.getConvertRndSat(NewVT, Op0, DAG.getValueType(NewVT),
+  return DAG.getConvertRndSat(NewVT, N->getDebugLoc(), 
+                              Op0, DAG.getValueType(NewVT),
                               DAG.getValueType(Op0.getValueType()),
                               N->getOperand(3),
                               N->getOperand(4),
@@ -533,6 +534,7 @@ void DAGTypeLegalizer::SplitVecRes_CONCAT_VECTORS(SDNode *N, SDValue &Lo,
 void DAGTypeLegalizer::SplitVecRes_CONVERT_RNDSAT(SDNode *N, SDValue &Lo,
                                                   SDValue &Hi) {
   MVT LoVT, HiVT;
+  DebugLoc dl = N->getDebugLoc();
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
   SDValue VLo, VHi;
   GetSplitVector(N->getOperand(0), VLo, VHi);
@@ -545,8 +547,10 @@ void DAGTypeLegalizer::SplitVecRes_CONVERT_RNDSAT(SDNode *N, SDValue &Lo,
   SDValue SatOp = N->getOperand(4);
   ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(N)->getCvtCode();
 
-  Lo = DAG.getConvertRndSat(LoVT, VLo, DTyOpLo, STyOpLo, RndOp, SatOp, CvtCode);
-  Hi = DAG.getConvertRndSat(HiVT, VHi, DTyOpHi, STyOpHi, RndOp, SatOp, CvtCode);
+  Lo = DAG.getConvertRndSat(LoVT, dl, VLo, DTyOpLo, STyOpLo, RndOp, SatOp, 
+                            CvtCode);
+  Hi = DAG.getConvertRndSat(HiVT, dl, VHi, DTyOpHi, STyOpHi, RndOp, SatOp,
+                            CvtCode);
 }
 
 void DAGTypeLegalizer::SplitVecRes_EXTRACT_SUBVECTOR(SDNode *N, SDValue &Lo,
@@ -1454,6 +1458,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONCAT_VECTORS(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_CONVERT_RNDSAT(SDNode *N) {
+  DebugLoc dl = N->getDebugLoc();
   SDValue InOp  = N->getOperand(0);
   SDValue RndOp = N->getOperand(3);
   SDValue SatOp = N->getOperand(4);
@@ -1475,7 +1480,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONVERT_RNDSAT(SDNode *N) {
     InVT = InOp.getValueType();
     InVTNumElts = InVT.getVectorNumElements();
     if (InVTNumElts == WidenNumElts)
-      return DAG.getConvertRndSat(WidenVT, InOp, DTyOp, STyOp, RndOp,
+      return DAG.getConvertRndSat(WidenVT, dl, InOp, DTyOp, STyOp, RndOp,
                                   SatOp, CvtCode);
   }
 
@@ -1490,20 +1495,20 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONVERT_RNDSAT(SDNode *N) {
       unsigned NumConcat = WidenNumElts/InVTNumElts;
       SmallVector<SDValue, 16> Ops(NumConcat);
       Ops[0] = InOp;
-      SDValue UndefVal = DAG.getNode(ISD::UNDEF, InVT);
+      SDValue UndefVal = DAG.getNode(ISD::UNDEF, dl, InVT);
       for (unsigned i = 1; i != NumConcat; ++i) {
         Ops[i] = UndefVal;
       }
-      InOp = DAG.getNode(ISD::CONCAT_VECTORS, InWidenVT, &Ops[0], NumConcat);
-      return DAG.getConvertRndSat(WidenVT, InOp, DTyOp, STyOp, RndOp,
+      InOp = DAG.getNode(ISD::CONCAT_VECTORS, dl, InWidenVT, &Ops[0],NumConcat);
+      return DAG.getConvertRndSat(WidenVT, dl, InOp, DTyOp, STyOp, RndOp,
                                   SatOp, CvtCode);
     }
 
     if (InVTNumElts % WidenNumElts == 0) {
       // Extract the input and convert the shorten input vector.
-      InOp = DAG.getNode(ISD::EXTRACT_SUBVECTOR, InWidenVT, InOp,
+      InOp = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InWidenVT, InOp,
                          DAG.getIntPtrConstant(0));
-      return DAG.getConvertRndSat(WidenVT, InOp, DTyOp, STyOp, RndOp,
+      return DAG.getConvertRndSat(WidenVT, dl, InOp, DTyOp, STyOp, RndOp,
                                 SatOp, CvtCode);
     }
   }
@@ -1517,17 +1522,17 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONVERT_RNDSAT(SDNode *N) {
   unsigned MinElts = std::min(InVTNumElts, WidenNumElts);
   unsigned i;
   for (i=0; i < MinElts; ++i) {
-    SDValue ExtVal = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, InEltVT, InOp,
+    SDValue ExtVal = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, InEltVT, InOp,
                                  DAG.getIntPtrConstant(i));
-    Ops[i] = DAG.getConvertRndSat(WidenVT, ExtVal, DTyOp, STyOp, RndOp,
+    Ops[i] = DAG.getConvertRndSat(WidenVT, dl, ExtVal, DTyOp, STyOp, RndOp,
                                         SatOp, CvtCode);
   }
 
-  SDValue UndefVal = DAG.getNode(ISD::UNDEF, EltVT);
+  SDValue UndefVal = DAG.getNode(ISD::UNDEF, dl, EltVT);
   for (; i < WidenNumElts; ++i)
     Ops[i] = UndefVal;
 
-  return DAG.getNode(ISD::BUILD_VECTOR, WidenVT, &Ops[0], WidenNumElts);
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, WidenVT, &Ops[0], WidenNumElts);
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_EXTRACT_SUBVECTOR(SDNode *N) {

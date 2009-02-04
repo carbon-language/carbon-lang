@@ -1108,7 +1108,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
         unsigned Reg = TLI.getExceptionAddressRegister();
-        Result = DAG.getCopyFromReg(Tmp1, Reg, VT);
+        Result = DAG.getCopyFromReg(Tmp1, dl, Reg, VT);
       }
       break;
     case TargetLowering::Custom:
@@ -1142,7 +1142,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
         unsigned Reg = TLI.getExceptionSelectorRegister();
-        Result = DAG.getCopyFromReg(Tmp2, Reg, VT);
+        Result = DAG.getCopyFromReg(Tmp2, dl, Reg, VT);
       }
       break;
     case TargetLowering::Custom:
@@ -1911,7 +1911,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0, true));
 
       SDValue Size  = Tmp2.getOperand(1);
-      SDValue SP = DAG.getCopyFromReg(Chain, SPReg, VT);
+      SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, VT);
       Chain = SP.getValue(1);
       unsigned Align = cast<ConstantSDNode>(Tmp3)->getZExtValue();
       unsigned StackAlign =
@@ -1920,7 +1920,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         SP = DAG.getNode(ISD::AND, dl, VT, SP,
                          DAG.getConstant(-(uint64_t)Align, VT));
       Tmp1 = DAG.getNode(ISD::SUB, dl, VT, SP, Size);       // Value
-      Chain = DAG.getCopyToReg(Chain, SPReg, Tmp1);     // Output chain
+      Chain = DAG.getCopyToReg(Chain, dl, SPReg, Tmp1);     // Output chain
 
       Tmp2 = DAG.getCALLSEQ_END(Chain,  DAG.getIntPtrConstant(0, true),
                                 DAG.getIntPtrConstant(0, true), SDValue());
@@ -2882,7 +2882,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // Expand to CopyFromReg if the target set 
       // StackPointerRegisterToSaveRestore.
       if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
-        Tmp1 = DAG.getCopyFromReg(Result.getOperand(0), SP,
+        Tmp1 = DAG.getCopyFromReg(Result.getOperand(0), dl, SP,
                                   Node->getValueType(0));
         Tmp2 = Tmp1.getValue(1);
       } else {
@@ -2914,7 +2914,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // Expand to CopyToReg if the target set 
       // StackPointerRegisterToSaveRestore.
       if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
-        Result = DAG.getCopyToReg(Tmp1, SP, Tmp2);
+        Result = DAG.getCopyToReg(Tmp1, dl, SP, Tmp2);
       } else {
         Result = Tmp1;
       }
@@ -4029,7 +4029,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Result = PromoteOp(Node->getOperand(0));
         // For FP, make Op1 a i32
         
-        Result = DAG.getConvertRndSat(Op.getValueType(), Result,
+        Result = DAG.getConvertRndSat(Op.getValueType(), dl, Result,
                                       DTyOp, STyOp, RndOp, SatOp, CvtCode);
         break;
       }
@@ -4593,7 +4593,7 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
              CvtCode == ISD::CVT_US || CvtCode == ISD::CVT_UU ||
              CvtCode == ISD::CVT_SF || CvtCode == ISD::CVT_UF) &&
             "can only promote integers");
-    Result = DAG.getConvertRndSat(NVT, Node->getOperand(0),
+    Result = DAG.getConvertRndSat(NVT, dl, Node->getOperand(0),
                                   Node->getOperand(1), Node->getOperand(2),
                                   Node->getOperand(3), Node->getOperand(4),
                                   CvtCode);
@@ -4877,11 +4877,11 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
     Tmp1 = Node->getOperand(0);   // Get the chain.
     Tmp2 = Node->getOperand(1);   // Get the pointer.
     if (TLI.getOperationAction(ISD::VAARG, VT) == TargetLowering::Custom) {
-      Tmp3 = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
+      Tmp3 = DAG.getVAArg(VT, dl, Tmp1, Tmp2, Node->getOperand(2));
       Result = TLI.LowerOperation(Tmp3, DAG);
     } else {
       const Value *V = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
-      SDValue VAList = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp2, V, 0);
+      SDValue VAList = DAG.getLoad(TLI.getPointerTy(), dl, Tmp1, Tmp2, V, 0);
       // Increment the pointer, VAList, to the next vaarg
       Tmp3 = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList, 
                          DAG.getConstant(VT.getSizeInBits()/8,
@@ -6578,8 +6578,8 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
   case ISD::VAARG: {
     SDValue Ch = Node->getOperand(0);   // Legalize the chain.
     SDValue Ptr = Node->getOperand(1);  // Legalize the pointer.
-    Lo = DAG.getVAArg(NVT, Ch, Ptr, Node->getOperand(2));
-    Hi = DAG.getVAArg(NVT, Lo.getValue(1), Ptr, Node->getOperand(2));
+    Lo = DAG.getVAArg(NVT, dl, Ch, Ptr, Node->getOperand(2));
+    Hi = DAG.getVAArg(NVT, dl, Lo.getValue(1), Ptr, Node->getOperand(2));
 
     // Remember that we legalized the chain.
     Hi = LegalizeOp(Hi);
@@ -7744,9 +7744,9 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
     SDValue RndOp = Node->getOperand(3);
     SDValue SatOp = Node->getOperand(4);
 
-    Lo = DAG.getConvertRndSat(NewVT_Lo, L, DTyOpL, STyOpL,
+    Lo = DAG.getConvertRndSat(NewVT_Lo, dl, L, DTyOpL, STyOpL,
                               RndOp, SatOp, CvtCode);
-    Hi = DAG.getConvertRndSat(NewVT_Hi, H, DTyOpH, STyOpH,
+    Hi = DAG.getConvertRndSat(NewVT_Hi, dl, H, DTyOpH, STyOpH,
                               RndOp, SatOp, CvtCode);
     break;
   }
@@ -7892,7 +7892,7 @@ SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
     break;
   case ISD::CONVERT_RNDSAT: {
     SDValue Op0 = ScalarizeVectorOp(Node->getOperand(0));
-    Result = DAG.getConvertRndSat(NewVT, Op0,
+    Result = DAG.getConvertRndSat(NewVT, dl, Op0,
                                   DAG.getValueType(NewVT),
                                   DAG.getValueType(Op0.getValueType()),
                                   Node->getOperand(3),
@@ -8199,7 +8199,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
     SDValue STyOp = DAG.getValueType(SrcOp.getValueType());
     ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(Node)->getCvtCode();
 
-    Result = DAG.getConvertRndSat(WidenVT, SrcOp, DTyOp, STyOp,
+    Result = DAG.getConvertRndSat(WidenVT, dl, SrcOp, DTyOp, STyOp,
                                   RndOp, SatOp, CvtCode);
     break;
   }

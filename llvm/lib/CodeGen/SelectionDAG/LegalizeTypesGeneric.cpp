@@ -209,9 +209,10 @@ void DAGTypeLegalizer::ExpandRes_VAARG(SDNode *N, SDValue &Lo, SDValue &Hi) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDValue Chain = N->getOperand(0);
   SDValue Ptr = N->getOperand(1);
+  DebugLoc dl = N->getDebugLoc();
 
-  Lo = DAG.getVAArg(NVT, Chain, Ptr, N->getOperand(2));
-  Hi = DAG.getVAArg(NVT, Lo.getValue(1), Ptr, N->getOperand(2));
+  Lo = DAG.getVAArg(NVT, dl, Chain, Ptr, N->getOperand(2));
+  Hi = DAG.getVAArg(NVT, dl, Lo.getValue(1), Ptr, N->getOperand(2));
 
   // Handle endianness of the load.
   if (TLI.isBigEndian())

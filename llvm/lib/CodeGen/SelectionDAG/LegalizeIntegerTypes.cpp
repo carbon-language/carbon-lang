@@ -262,7 +262,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CONVERT_RNDSAT(SDNode *N) {
            CvtCode == ISD::CVT_SF || CvtCode == ISD::CVT_UF) &&
           "can only promote integers");
   MVT OutVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  return DAG.getConvertRndSat(OutVT, N->getOperand(0),
+  return DAG.getConvertRndSat(OutVT, N->getDebugLoc(), N->getOperand(0),
                               N->getOperand(1), N->getOperand(2),
                               N->getOperand(3), N->getOperand(4), CvtCode);
 }
@@ -608,7 +608,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
 
   SmallVector<SDValue, 8> Parts(NumRegs);
   for (unsigned i = 0; i < NumRegs; ++i) {
-    Parts[i] = DAG.getVAArg(RegVT, Chain, Ptr, N->getOperand(2));
+    Parts[i] = DAG.getVAArg(RegVT, dl, Chain, Ptr, N->getOperand(2));
     Chain = Parts[i].getValue(1);
   }
 
@@ -823,7 +823,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_CONVERT_RNDSAT(SDNode *N) {
            CvtCode == ISD::CVT_FS || CvtCode == ISD::CVT_FU) &&
            "can only promote integer arguments");
   SDValue InOp = GetPromotedInteger(N->getOperand(0));
-  return DAG.getConvertRndSat(N->getValueType(0), InOp,
+  return DAG.getConvertRndSat(N->getValueType(0), N->getDebugLoc(), InOp,
                               N->getOperand(1), N->getOperand(2),
                               N->getOperand(3), N->getOperand(4), CvtCode);
 }
