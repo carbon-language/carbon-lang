@@ -51,6 +51,8 @@ struct LangOptions {
   unsigned ThreadsafeStatics : 1; // Whether static initializers are protected
                                   // by locks.
   unsigned Blocks            : 1; // block extension to C
+  unsigned EmitAllDecls      : 1; // Emit all declarations, even if
+                                  // they are unused.
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -72,6 +74,7 @@ public:
     // FIXME: The default should be 1.
     ThreadsafeStatics = 0;
     Blocks = 0;
+    EmitAllDecls = 0;
   }
   
   GCMode getGCMode() const { return (GCMode) GC; }

@@ -468,7 +468,7 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
 
   // If the global is a static, defer code generation until later so
   // we can easily omit unused statics.
-  if (isStatic) {
+  if (isStatic && !Features.EmitAllDecls) {
     StaticDecls.push_back(Global);
     return;
   }

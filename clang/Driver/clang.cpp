@@ -500,6 +500,9 @@ static llvm::cl::opt<bool>
 ObjCNonFragileABI("fobjc-nonfragile-abi",
                   llvm::cl::desc("enable objective-c's nonfragile abi"));
 
+static llvm::cl::opt<bool>
+EmitAllDecls("femit-all-decls",
+              llvm::cl::desc("Emit all declarations, even if unused"));
 
 // FIXME: This (and all GCC -f options) really come in -f... and
 // -fno-... forms, and additionally support automagic behavior when
@@ -635,6 +638,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   if (ObjCNonFragileABI)
     Options.ObjCNonFragileABI = 1;
+
+  if (EmitAllDecls)
+    Options.EmitAllDecls = 1;
 }
 
 static llvm::cl::opt<bool>
