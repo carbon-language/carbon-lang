@@ -43,3 +43,13 @@ int t14() {
 // <rdar://problem/6097326>
 y(y) { return y; } // expected-warning{{parameter 'y' was not declared, defaulting to type 'int'}} \
                    // expected-warning{{type specifier missing, defaults to 'int'}}
+
+
+// PR3137
+extern int g0_3137(void);
+void f0_3137() {
+  int g0_3137(void);
+}
+void f1_3137() {
+  int (*fp)(void) = g0_3137;
+}
