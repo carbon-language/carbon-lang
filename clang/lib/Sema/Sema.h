@@ -499,6 +499,9 @@ public:
   void AddBuiltinOperatorCandidates(OverloadedOperatorKind Op, 
                                     Expr **Args, unsigned NumArgs, 
                                     OverloadCandidateSet& CandidateSet);
+  void AddArgumentDependentLookupCandidates(DeclarationName Name,
+                                            Expr **Args, unsigned NumArgs,
+                                            OverloadCandidateSet& CandidateSet);
   void AddOverloadCandidates(const OverloadedFunctionDecl *Ovl, 
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
@@ -514,11 +517,12 @@ public:
                                                    bool Complain);
   void FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
 
-  FunctionDecl *ResolveOverloadedCallFn(Expr *Fn, OverloadedFunctionDecl *Ovl,
+  FunctionDecl *ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Func,
                                         SourceLocation LParenLoc,
                                         Expr **Args, unsigned NumArgs,
                                         SourceLocation *CommaLocs, 
-                                        SourceLocation RParenLoc);
+                                        SourceLocation RParenLoc,
+                                        bool ArgumentDependentLookup);
   ExprResult
   BuildCallToMemberFunction(Scope *S, Expr *MemExpr,
                             SourceLocation LParenLoc, Expr **Args, 
@@ -856,6 +860,14 @@ public:
                                 DeclarationName Name,
                                 LookupNameKind NameKind, 
                                 bool RedeclarationOnly = false);
+  
+  typedef llvm::SmallPtrSet<NamespaceDecl *, 16> AssociatedNamespaceSet;
+  typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
+
+  void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
+                                   AssociatedNamespaceSet &AssociatedNamespaces,
+                                   AssociatedClassSet &AssociatedClasses);
+
   bool DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
                                SourceLocation NameLoc, 
                                SourceRange LookupRange = SourceRange());

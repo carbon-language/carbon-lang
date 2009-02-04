@@ -195,3 +195,18 @@ struct CopyCon : public CopyConBase {
     *this = *Base;
   }
 };
+
+namespace N {
+  struct X { };
+}
+
+namespace M {
+  N::X operator+(N::X, N::X);
+}
+
+namespace M {
+  void test_X(N::X x) {
+    // FIXME: this should work! See comment in Sema::AddOperatorCandidates.
+    //    (void)(x + x);
+  }
+}

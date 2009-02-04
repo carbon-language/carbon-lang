@@ -2301,6 +2301,9 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   //        of type T2 or “reference to (possibly cv-qualified) T2”,
   //        when T2 is an enumeration type, are candidate functions.
   {
+    // FIXME: Don't use the IdentifierResolver here! We need to
+    // perform proper, unqualified lookup starting with the first
+    // enclosing non-class scope.
     IdentifierResolver::iterator I = IdResolver.begin(OpName),
                               IEnd = IdResolver.end();
     for (; I != IEnd; ++I) {
@@ -2327,6 +2330,11 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
                                  /*SuppressUserConversions=*/false);
       }
     }
+
+    // Since the set of non-member candidates corresponds to
+    // *unqualified* lookup of the operator name, we also perform
+    // argument-dependent lookup.
+    AddArgumentDependentLookupCandidates(OpName, Args, NumArgs, CandidateSet);
   }
 
   // Add builtin overload candidates (C++ [over.built]).
@@ -3153,6 +3161,75 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   }
 }
 
+/// \brief Add function candidates found via argument-dependent lookup
+/// to the set of overloading candidates.
+///
+/// This routine performs argument-dependent name lookup based on the
+/// given function name (which may also be an operator name) and adds
+/// all of the overload candidates found by ADL to the overload
+/// candidate set (C++ [basic.lookup.argdep]).
+void 
+Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
+                                           Expr **Args, unsigned NumArgs,
+                                           OverloadCandidateSet& CandidateSet) {
+  // Find all of the associated namespaces and classes based on the
+  // arguments we have.
+  AssociatedNamespaceSet AssociatedNamespaces;
+  AssociatedClassSet AssociatedClasses;
+  FindAssociatedClassesAndNamespaces(Args, NumArgs, 
+                                     AssociatedNamespaces, AssociatedClasses);
+
+  // C++ [basic.lookup.argdep]p3:
+  //
+  //   Let X be the lookup set produced by unqualified lookup (3.4.1)
+  //   and let Y be the lookup set produced by argument dependent
+  //   lookup (defined as follows). If X contains [...] then Y is
+  //   empty. Otherwise Y is the set of declarations found in the
+  //   namespaces associated with the argument types as described
+  //   below. The set of declarations found by the lookup of the name
+  //   is the union of X and Y.
+  //
+  // Here, we compute Y and add its members to the overloaded
+  // candidate set.
+  llvm::SmallPtrSet<FunctionDecl *, 16> KnownCandidates;
+  for (AssociatedNamespaceSet::iterator NS = AssociatedNamespaces.begin(),
+                                     NSEnd = AssociatedNamespaces.end(); 
+       NS != NSEnd; ++NS) { 
+    //   When considering an associated namespace, the lookup is the
+    //   same as the lookup performed when the associated namespace is
+    //   used as a qualifier (3.4.3.2) except that:
+    //
+    //     -- Any using-directives in the associated namespace are
+    //        ignored.
+    //
+    //     -- FIXME: Any namespace-scope friend functions declared in
+    //        associated classes are visible within their respective
+    //        namespaces even if they are not visible during an ordinary
+    //        lookup (11.4).
+    DeclContext::lookup_iterator I, E;
+    for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I) {
+      FunctionDecl *Func = dyn_cast<FunctionDecl>(*I);
+      if (!Func)
+        break;
+
+      if (KnownCandidates.empty()) {
+        // Record all of the function candidates that we've already
+        // added to the overload set, so that we don't add those same
+        // candidates a second time.
+        for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
+                                         CandEnd = CandidateSet.end();
+             Cand != CandEnd; ++Cand)
+          KnownCandidates.insert(Cand->Function);
+      }
+
+      // If we haven't seen this function before, add it as a
+      // candidate.
+      if (KnownCandidates.insert(Func))
+        AddOverloadCandidate(Func, Args, NumArgs, CandidateSet);
+    }
+  }
+}
+
 /// AddOverloadCandidates - Add all of the function overloads in Ovl
 /// to the candidate set.
 void 
@@ -3419,19 +3496,29 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 }
 
 /// ResolveOverloadedCallFn - Given the call expression that calls Fn
-/// (which eventually refers to the set of overloaded functions in
-/// Ovl) and the call arguments Args/NumArgs, attempt to resolve the
-/// function call down to a specific function. If overload resolution
-/// succeeds, returns the function declaration produced by overload
+/// (which eventually refers to the declaration Func) and the call
+/// arguments Args/NumArgs, attempt to resolve the function call down
+/// to a specific function. If overload resolution succeeds, returns
+/// the function declaration produced by overload
 /// resolution. Otherwise, emits diagnostics, deletes all of the
 /// arguments and Fn, and returns NULL.
-FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, OverloadedFunctionDecl *Ovl,
+FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
                                             SourceLocation LParenLoc,
                                             Expr **Args, unsigned NumArgs,
                                             SourceLocation *CommaLocs, 
-                                            SourceLocation RParenLoc) {
+                                            SourceLocation RParenLoc,
+                                            bool ArgumentDependentLookup) {
   OverloadCandidateSet CandidateSet;
-  AddOverloadCandidates(Ovl, Args, NumArgs, CandidateSet);
+  if (OverloadedFunctionDecl *Ovl 
+        = dyn_cast_or_null<OverloadedFunctionDecl>(Callee))
+    AddOverloadCandidates(Ovl, Args, NumArgs, CandidateSet);
+  else if (FunctionDecl *Func = dyn_cast_or_null<FunctionDecl>(Callee))
+    AddOverloadCandidate(cast<FunctionDecl>(Func), Args, NumArgs, CandidateSet);
+  
+  if (ArgumentDependentLookup)
+    AddArgumentDependentLookupCandidates(Callee->getDeclName(), Args, NumArgs,
+                                         CandidateSet);
+
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Best)) {
   case OR_Success:
@@ -3440,14 +3527,14 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, OverloadedFunctionDecl *Ov
   case OR_No_Viable_Function:
     Diag(Fn->getSourceRange().getBegin(), 
          diag::err_ovl_no_viable_function_in_call)
-      << Ovl->getDeclName() << (unsigned)CandidateSet.size()
+      << Callee->getDeclName() << (unsigned)CandidateSet.size()
       << Fn->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     break;
 
   case OR_Ambiguous:
     Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
-      << Ovl->getDeclName() << Fn->getSourceRange();
+      << Callee->getDeclName() << Fn->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     break;
   }

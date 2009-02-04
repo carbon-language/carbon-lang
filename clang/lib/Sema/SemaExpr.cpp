@@ -1839,7 +1839,6 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   Expr **Args = reinterpret_cast<Expr**>(args.release());
   assert(Fn && "no function call expression");
   FunctionDecl *FDecl = NULL;
-  OverloadedFunctionDecl *Ovl = NULL;
 
   // Determine whether this is a dependent call inside a C++ template,
   // in which case we won't do any semantic analysis now. 
@@ -1851,6 +1850,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       else {
         // Resolve the CXXDependentNameExpr to an actual identifier;
         // it wasn't really a dependent name after all.
+        // FIXME: in the presence of ADL, this resolves too early.
         OwningExprResult Resolved
           = ActOnDeclarationNameExpr(S, FnName->getLocation(),
                                      FnName->getName(),
@@ -1880,8 +1880,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     return Owned(BuildCallToObjectOfClassType(S, Fn, LParenLoc, Args, NumArgs,
                                               CommaLocs, RParenLoc));
 
-  // Determine whether this is a call to a member function.
   if (getLangOptions().CPlusPlus) {
+    // Determine whether this is a call to a member function.
     if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(Fn->IgnoreParens()))
       if (isa<OverloadedFunctionDecl>(MemExpr->getMemberDecl()) ||
           isa<CXXMethodDecl>(MemExpr->getMemberDecl()))
@@ -1889,36 +1889,66 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
                                                CommaLocs, RParenLoc));
   }
 
-  // If we're directly calling a function or a set of overloaded
-  // functions, get the appropriate declaration.
+  // If we're directly calling a function, get the appropriate declaration.
   DeclRefExpr *DRExpr = NULL;
-  if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
-    DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr());
-  else 
-    DRExpr = dyn_cast<DeclRefExpr>(Fn);
-
-  if (DRExpr) {
-    FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
-    Ovl = dyn_cast<OverloadedFunctionDecl>(DRExpr->getDecl());
+  Expr *FnExpr = Fn;
+  bool ADL = true;
+  while (true) {
+    if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(FnExpr))
+      FnExpr = IcExpr->getSubExpr();
+    else if (ParenExpr *PExpr = dyn_cast<ParenExpr>(FnExpr)) {
+      // FIXME: Where does the C++ standard say this?
+      ADL = false;
+      FnExpr = PExpr->getSubExpr();
+    } else if (isa<UnaryOperator>(FnExpr) &&
+               cast<UnaryOperator>(FnExpr)->getOpcode() 
+                 == UnaryOperator::AddrOf) {
+      FnExpr = cast<UnaryOperator>(FnExpr)->getSubExpr();
+    } else {
+      DRExpr = dyn_cast<DeclRefExpr>(FnExpr);
+      break;
+    }
   }
+  
+  if (DRExpr)
+    FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
 
-  if (Ovl) {
-    FDecl = ResolveOverloadedCallFn(Fn, Ovl, LParenLoc, Args, NumArgs,
-                                    CommaLocs, RParenLoc);
-    if (!FDecl)
-      return ExprError();
+  if (getLangOptions().CPlusPlus && DRExpr &&
+      (FDecl || isa<OverloadedFunctionDecl>(DRExpr->getDecl()))) {
+    // C++ [basic.lookup.argdep]p1:
+    //   When an unqualified name is used as the postfix-expression in
+    //   a function call (5.2.2), other namespaces not considered
+    //   during the usual unqualified lookup (3.4.1) may be searched,
+    //   and namespace-scope friend func- tion declarations (11.4) not
+    //   otherwise visible may be found.
+    if (DRExpr && isa<QualifiedDeclRefExpr>(DRExpr))
+      ADL = false;
 
-    // Update Fn to refer to the actual function selected.
-    Expr *NewFn = 0;
-    if (QualifiedDeclRefExpr *QDRExpr = dyn_cast<QualifiedDeclRefExpr>(DRExpr))
-      NewFn = new (Context) QualifiedDeclRefExpr(FDecl, FDecl->getType(), 
-                                       QDRExpr->getLocation(), false, false,
-                                       QDRExpr->getSourceRange().getBegin());
-    else
-      NewFn = new (Context) DeclRefExpr(FDecl, FDecl->getType(), 
-                                        Fn->getSourceRange().getBegin());
-    Fn->Destroy(Context);
-    Fn = NewFn;
+    // We don't perform ADL for builtins.
+    if (FDecl && FDecl->getIdentifier() && 
+        FDecl->getIdentifier()->getBuiltinID())
+      ADL = false;
+
+    if ((DRExpr && isa<OverloadedFunctionDecl>(DRExpr->getDecl())) || ADL) {
+      FDecl = ResolveOverloadedCallFn(Fn, DRExpr->getDecl(), LParenLoc, Args, 
+                                      NumArgs, CommaLocs, RParenLoc, ADL);
+      if (!FDecl)
+        return ExprError();
+
+      // Update Fn to refer to the actual function selected.
+      Expr *NewFn = 0;
+      if (QualifiedDeclRefExpr *QDRExpr 
+            = dyn_cast<QualifiedDeclRefExpr>(DRExpr))
+        NewFn = new (Context) QualifiedDeclRefExpr(FDecl, FDecl->getType(), 
+                                                   QDRExpr->getLocation(), 
+                                                   false, false,
+                                          QDRExpr->getSourceRange().getBegin());
+      else
+        NewFn = new (Context) DeclRefExpr(FDecl, FDecl->getType(), 
+                                          Fn->getSourceRange().getBegin());
+      Fn->Destroy(Context);
+      Fn = NewFn;
+    }
   }
 
   // Promote the function operand.

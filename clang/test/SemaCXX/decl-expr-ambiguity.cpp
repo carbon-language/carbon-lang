@@ -33,11 +33,11 @@ void f() {
 }
 
 class C { };
-void fn(int(C)) { } // void fn(int(*fp)(C c)) { }
+void fn(int(C)) { } // void fn(int(*fp)(C c)) { } expected-note{{candidate function}}
                     // not: void fn(int C);
 int g(C);
 
 void foo() {
-  fn(1); // expected-error {{incompatible type passing 'int', expected 'int (*)(class C)'}}
+  fn(1); // expected-error {{no matching function}}
   fn(g); // OK
 }

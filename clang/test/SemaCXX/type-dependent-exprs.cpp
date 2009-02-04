@@ -4,7 +4,7 @@ public:
   virtual int f();
 };
 
-void g(int);
+void g(int); // expected-note{{candidate function}}
 
 template<typename T>
 T f(T x) {
@@ -18,7 +18,7 @@ T f(T x) {
   (void)const_cast<int>(x);
   return g(x);
   h(x); // h is a dependent name
-  g(1, 1); // expected-error{{too many arguments to function call}}
+  g(1, 1); // expected-error{{no matching function for call}}
   h(1); // expected-error{{use of undeclared identifier 'h'}}
   return 0;
 }

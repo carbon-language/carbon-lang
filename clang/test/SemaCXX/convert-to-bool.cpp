@@ -36,7 +36,7 @@ void test_conv_to_bool(ConvToBool ctb, ConvToInt cti, ExplicitConvToBool ecb) {
   bool b3 = ctb || ecb;
 }
 
-void accepts_bool(bool) { }
+void accepts_bool(bool) { } // expected-note{{candidate function}}
 
 struct ExplicitConvToRef {
   explicit operator int&(); // expected-warning{{explicit conversion functions are a C++0x extension}}
@@ -45,7 +45,7 @@ struct ExplicitConvToRef {
 void test_explicit_bool(ExplicitConvToBool ecb) {
   bool b1(ecb); // okay
   bool b2 = ecb; // expected-error{{incompatible type initializing 'struct ExplicitConvToBool', expected '_Bool'}}
-  accepts_bool(ecb); // expected-error{{incompatible type passing 'struct ExplicitConvToBool', expected '_Bool'}}
+  accepts_bool(ecb); // expected-error{{no matching function for call to}}
 }
 
 void test_explicit_conv_to_ref(ExplicitConvToRef ecr) {

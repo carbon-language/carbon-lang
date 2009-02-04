@@ -11,14 +11,14 @@ void foo2(id <NSObject>(*objectCreationBlock)(void)) {
     return bar2(objectCreationBlock); // expected-warning{{incompatible pointer types passing 'id (*)(void)', expected 'id<NSObject> (*)(void)'}}
 }
 
-void bar3(id(*)());
+void bar3(id(*)()); // expected-note{{candidate function}}
 void foo3(id (*objectCreationBlock)(int)) {
-    return bar3(objectCreationBlock); // expected-error{{incompatible type passing 'id (*)(int)', expected 'id (*)(void)'}}
+    return bar3(objectCreationBlock); // expected-error{{no matching}}
 }
 
-void bar4(id(^)());
+void bar4(id(^)()); // expected-note{{candidate function}}
 void foo4(id (^objectCreationBlock)(int)) {
-    return bar4(objectCreationBlock); // expected-error{{incompatible type passing 'id (^)(int)', expected 'id (^)(void)'}}
+    return bar4(objectCreationBlock); // expected-error{{no matching}}
 }
 
 void foo5(id (^x)(int)) {
