@@ -215,13 +215,12 @@ public:
 /// ObjCNonFragileABITypesHelper - will have all types needed by objective-c's
 /// modern abi
 class ObjCNonFragileABITypesHelper : public ObjCCommonTypesHelper {
-private:
+public:
   llvm::Function *MessageSendFixupFn, *MessageSendFpretFixupFn,
                  *MessageSendStretFixupFn, *MessageSendIdFixupFn,
                  *MessageSendIdStretFixupFn, *MessageSendSuper2FixupFn,
                  *MessageSendSuper2StretFixupFn;
           
-public:
   // MethodListnfABITy - LLVM for struct _method_list_t
   const llvm::StructType *MethodListnfABITy;
   
@@ -269,9 +268,13 @@ public:
   //   SEL name;
   // };
   const llvm::StructType *MessageRefTy;
+  // MessageRefCTy - clang type for struct _message_ref_t
+  QualType MessageRefCTy;
   
   // MessageRefPtrTy - LLVM for struct _message_ref_t*
   const llvm::Type *MessageRefPtrTy;
+  // MessageRefCPtrTy - clang type for struct _message_ref_t*
+  QualType MessageRefCPtrTy;
   
   // SuperMessageRefTy - LLVM for:
   // struct _super_message_ref_t {
@@ -646,7 +649,7 @@ private:
   CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                   QualType ResultType,
                                   Selector Sel,
-                                  llvm::Value *Arg0,
+                                  llvm::Value *Receiver,
                                   QualType Arg0Ty,
                                   bool IsSuper,
                                   const CallArgList &CallArgs);
@@ -3189,16 +3192,28 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   CGM.getModule().addTypeName("struct._category_t", CategorynfABITy);
   
   // New types for nonfragile abi messaging.
+  CodeGen::CodeGenTypes &Types = CGM.getTypes();
+  ASTContext &Ctx = CGM.getContext();
   
   // MessageRefTy - LLVM for:
   // struct _message_ref_t {
   //   IMP messenger;
   //   SEL name;
   // };
-  MessageRefTy = llvm::StructType::get(ImpnfABITy,
-                                       SelectorPtrTy,
-                                       NULL);
-  CGM.getModule().addTypeName("struct._message_ref_t", MessageRefTy);
+  
+  // First the clang type for struct _message_ref_t
+  RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
+                                      SourceLocation(),
+                                      &Ctx.Idents.get("_message_ref_t"));
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+                                Ctx.VoidPtrTy, 0, false));
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+                                Ctx.getObjCSelType(), 0, false));
+  RD->completeDefinition(Ctx);
+  
+  MessageRefCTy = Ctx.getTagDeclType(RD);
+  MessageRefCPtrTy = Ctx.getPointerType(MessageRefCTy);
+  MessageRefTy = cast<llvm::StructType>(Types.ConvertType(MessageRefCTy));
   
   // MessageRefPtrTy - LLVM for struct _message_ref_t*
   MessageRefPtrTy = llvm::PointerType::getUnqual(MessageRefTy);
@@ -3253,7 +3268,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
                                                       Params,
                                                       true),
-                              "MessageSendIdStretFixupFn");
+                              "objc_msgSendId_stret_fixup");
   
   // id objc_msgSendSuper2_fixup (struct objc_super *, 
   //                              struct _super_message_ref_t*, ...)
@@ -4264,10 +4279,78 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
                                            CodeGen::CodeGenFunction &CGF,
                                            QualType ResultType,
                                            Selector Sel,
-                                           llvm::Value *Arg0,
+                                           llvm::Value *Receiver,
                                            QualType Arg0Ty,
                                            bool IsSuper,
                                            const CallArgList &CallArgs) {
+  // FIXME. Even though IsSuper is passes. This function doese not
+  // handle calls to 'super' receivers.
+  CodeGenTypes &Types = CGM.getTypes();
+  llvm::Value *Arg0 = 
+  CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
+  
+  // Find the message function name.
+  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, 
+                                        llvm::SmallVector<QualType, 16>());
+  llvm::Constant *Fn;
+  std::string Name("\01l_");
+  if (CGM.ReturnTypeUsesSret(FnInfo)) {
+    if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
+      Fn = ObjCTypes.MessageSendIdStretFixupFn;
+      // FIXME. Is there a better way of getting these names.
+      // They are available in RuntimeFunctions vector pair.
+      Name += "objc_msgSendId_stret_fixup";
+    }
+    else {
+      Fn = ObjCTypes.MessageSendStretFixupFn;
+      Name += "objc_msgSend_stret_fixup";
+    }
+  }
+  else if (ResultType->isFloatingType()) {
+    Fn = ObjCTypes.MessageSendFpretFixupFn;
+    Name += "objc_msgSend_fpret_fixup";
+  }
+  else {
+    if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
+      Fn = ObjCTypes.MessageSendIdFixupFn;
+      Name += "objc_msgSendId_fixup";
+    }
+    else {
+      Fn = ObjCTypes.MessageSendFixupFn;
+      Name += "objc_msgSend_fixup";
+    }
+  }
+  Name += '_';
+  std::string SelName(Sel.getAsString());
+  // Replace all ':' in selector name with '_'  ouch!
+  for(unsigned i = 0; i < SelName.size(); i++)
+    if (SelName[i] == ':')
+      SelName[i] = '_';
+  Name += SelName;
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  if (!GV) {
+    // Build messafe ref table entry.
+    std::vector<llvm::Constant*> Values(2);
+    Values[0] = Fn;
+    Values[1] = GetMethodVarName(Sel);
+    llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+    GV =  new llvm::GlobalVariable(Init->getType(), false,
+                                   llvm::GlobalValue::WeakLinkage,
+                                   Init,
+                                   Name,
+                                   &CGM.getModule());
+    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    GV->setAlignment(
+            CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.MessageRefTy));
+    GV->setSection("__DATA, __objc_msgrefs, coalesced");
+    UsedGlobals.push_back(GV);
+  }
+  llvm::Value *Arg1 = CGF.Builder.CreateBitCast(GV, ObjCTypes.MessageRefPtrTy);
+  CallArgList ActualArgs;
+  ActualArgs.push_back(std::make_pair(RValue::get(Arg0), Arg0Ty));
+  ActualArgs.push_back(std::make_pair(RValue::get(Arg1), 
+                                      ObjCTypes.MessageRefCPtrTy));
+  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
   return RValue::get(0);
 }
 
@@ -4279,10 +4362,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::GenerateMessageSend(
                                                llvm::Value *Receiver,
                                                bool IsClassMessage,
                                                const CallArgList &CallArgs) {
-  llvm::Value *Arg0 = 
-  CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
   return EmitMessageSend(CGF, ResultType, Sel,
-                         Arg0, CGF.getContext().getObjCIdType(),
+                         Receiver, CGF.getContext().getObjCIdType(),
                          false, CallArgs);
 }
 
