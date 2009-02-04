@@ -2317,7 +2317,7 @@ bool static isUNPCKLMask(SDOperand *Elts, unsigned NumElts,
     if (!isUndefOrEqual(BitI, j))
       return false;
     if (V2IsSplat) {
-      if (isUndefOrEqual(BitI1, NumElts))
+      if (!isUndefOrEqual(BitI1, NumElts))
         return false;
     } else {
       if (!isUndefOrEqual(BitI1, j + NumElts))
@@ -2652,9 +2652,10 @@ unsigned X86::getShufflePSHUFHWImmediate(SDNode *N) {
   for (unsigned i = 7; i >= 4; --i) {
     unsigned Val = 0;
     SDValue Arg = N->getOperand(i);
-    if (Arg.getOpcode() != ISD::UNDEF)
+    if (Arg.getOpcode() != ISD::UNDEF) {
       Val = cast<ConstantSDNode>(Arg)->getZExtValue();
-    Mask |= (Val - 4);
+      Mask |= (Val - 4);
+    }
     if (i != 4)
       Mask <<= 2;
   }
@@ -4200,10 +4201,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     // new vector_shuffle with the corrected mask.
     SDValue NewMask = NormalizeMask(PermMask, DAG);
     if (NewMask.getNode() != PermMask.getNode()) {
-      if (X86::isUNPCKLMask(PermMask.getNode(), true)) {
+      if (X86::isUNPCKLMask(NewMask.getNode(), true)) {
         SDValue NewMask = getUnpacklMask(NumElems, DAG, dl);
         return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, V1, V2, NewMask);
-      } else if (X86::isUNPCKHMask(PermMask.getNode(), true)) {
+      } else if (X86::isUNPCKHMask(NewMask.getNode(), true)) {
         SDValue NewMask = getUnpackhMask(NumElems, DAG, dl);
         return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, V1, V2, NewMask);
       }
