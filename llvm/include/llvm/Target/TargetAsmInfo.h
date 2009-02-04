@@ -105,12 +105,14 @@ namespace llvm {
   class Section {
     friend class TargetAsmInfo;
     friend class StringMapEntry<Section>;
+    friend class StringMap<Section>;
 
     std::string Name;
     unsigned Flags;
-
     explicit Section(unsigned F = SectionFlags::Invalid):Flags(F) { }
+
   public:
+    
     bool isNamed() const { return Flags & SectionFlags::Named; }
     unsigned getEntitySize() const { return (Flags >> 24) & 0xFF; }
 
