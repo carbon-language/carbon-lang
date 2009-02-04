@@ -262,7 +262,7 @@ public:
   ///
   IdentifierInfo &get(const char *NameStart, const char *NameEnd) {
     llvm::StringMapEntry<IdentifierInfo*> &Entry =
-      HashTable.GetOrCreateValue(NameStart, NameEnd, 0);
+      HashTable.GetOrCreateValue(NameStart, NameEnd);
     
     IdentifierInfo *II = Entry.getValue();
     
