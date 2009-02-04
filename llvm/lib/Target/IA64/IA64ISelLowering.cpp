@@ -197,8 +197,8 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
             // FP args go into f8..f15 as needed: (hence the ++)
             argPreg[count] = args_FP[used_FPArgs++];
             argOpc[count] = IA64::FMOV;
-            argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), argVreg[count],
-                                                MVT::f64);
+            argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), dl,
+                                                argVreg[count], MVT::f64);
             if (I->getType() == Type::FloatTy)
               argt = DAG.getNode(ISD::FP_ROUND, dl, MVT::f32, argt,
                                  DAG.getIntPtrConstant(0));
@@ -217,7 +217,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
             argPreg[count] = args_int[count];
             argOpc[count] = IA64::MOV;
             argt = newroot =
-              DAG.getCopyFromReg(DAG.getRoot(), argVreg[count], MVT::i64);
+              DAG.getCopyFromReg(DAG.getRoot(), dl, argVreg[count], MVT::i64);
             if ( getValueType(I->getType()) != MVT::i64)
               argt = DAG.getNode(ISD::TRUNCATE, dl, getValueType(I->getType()),
                   newroot);
@@ -423,13 +423,16 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   SDValue InFlag;
   
   // save the current GP, SP and RP : FIXME: do we need to do all 3 always?
-  SDValue GPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r1, MVT::i64, InFlag);
+  SDValue GPBeforeCall = DAG.getCopyFromReg(Chain, dl, IA64::r1, 
+                                            MVT::i64, InFlag);
   Chain = GPBeforeCall.getValue(1);
   InFlag = Chain.getValue(2);
-  SDValue SPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r12, MVT::i64, InFlag);
+  SDValue SPBeforeCall = DAG.getCopyFromReg(Chain, dl, IA64::r12, 
+                                            MVT::i64, InFlag);
   Chain = SPBeforeCall.getValue(1);
   InFlag = Chain.getValue(2);
-  SDValue RPBeforeCall = DAG.getCopyFromReg(Chain, IA64::rp, MVT::i64, InFlag);
+  SDValue RPBeforeCall = DAG.getCopyFromReg(Chain, dl, IA64::rp, 
+                                            MVT::i64, InFlag);
   Chain = RPBeforeCall.getValue(1);
   InFlag = Chain.getValue(2);
 
@@ -444,8 +447,8 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   unsigned seenConverts = 0;
   for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
     if(RegValuesToPass[i].getValueType().isFloatingPoint()) {
-      Chain = DAG.getCopyToReg(Chain, IntArgRegs[i], Converts[seenConverts++], 
-                               InFlag);
+      Chain = DAG.getCopyToReg(Chain, dl, IntArgRegs[i], 
+                               Converts[seenConverts++], InFlag);
       InFlag = Chain.getValue(1);
     }
   }
@@ -453,7 +456,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   // next copy args into the usual places, these are flagged
   unsigned usedFPArgs = 0;
   for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain,
+    Chain = DAG.getCopyToReg(Chain, dl,
       RegValuesToPass[i].getValueType().isInteger() ?
         IntArgRegs[i] : FPArgRegs[usedFPArgs++], RegValuesToPass[i], InFlag);
     InFlag = Chain.getValue(1);
@@ -486,11 +489,11 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   InFlag = Chain.getValue(1);
 
   // restore the GP, SP and RP after the call  
-  Chain = DAG.getCopyToReg(Chain, IA64::r1, GPBeforeCall, InFlag);
+  Chain = DAG.getCopyToReg(Chain, dl, IA64::r1, GPBeforeCall, InFlag);
   InFlag = Chain.getValue(1);
-  Chain = DAG.getCopyToReg(Chain, IA64::r12, SPBeforeCall, InFlag);
+  Chain = DAG.getCopyToReg(Chain, dl, IA64::r12, SPBeforeCall, InFlag);
   InFlag = Chain.getValue(1);
-  Chain = DAG.getCopyToReg(Chain, IA64::rp, RPBeforeCall, InFlag);
+  Chain = DAG.getCopyToReg(Chain, dl, IA64::rp, RPBeforeCall, InFlag);
   InFlag = Chain.getValue(1);
  
   std::vector<MVT> RetVals;
@@ -505,10 +508,12 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
     case MVT::i1: { // bools are just like other integers (returned in r8)
       // we *could* fall through to the truncate below, but this saves a
       // few redundant predicate ops
-      SDValue boolInR8 = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64,InFlag);
+      SDValue boolInR8 = DAG.getCopyFromReg(Chain, dl, IA64::r8, 
+                                            MVT::i64,InFlag);
       InFlag = boolInR8.getValue(2);
       Chain = boolInR8.getValue(1);
-      SDValue zeroReg = DAG.getCopyFromReg(Chain, IA64::r0, MVT::i64, InFlag);
+      SDValue zeroReg = DAG.getCopyFromReg(Chain, dl, IA64::r0, 
+                                           MVT::i64, InFlag);
       InFlag = zeroReg.getValue(2);
       Chain = zeroReg.getValue(1);
       
@@ -518,7 +523,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
-      RetVal = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
+      RetVal = DAG.getCopyFromReg(Chain, dl, IA64::r8, MVT::i64, InFlag);
       Chain = RetVal.getValue(1);
       
       // keep track of whether it is sign or zero extended (todo: bools?)
@@ -529,18 +534,18 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       RetVal = DAG.getNode(ISD::TRUNCATE, dl, RetTyVT, RetVal);
       break;
     case MVT::i64:
-      RetVal = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
+      RetVal = DAG.getCopyFromReg(Chain, dl, IA64::r8, MVT::i64, InFlag);
       Chain = RetVal.getValue(1);
       InFlag = RetVal.getValue(2); // XXX dead
       break;
     case MVT::f32:
-      RetVal = DAG.getCopyFromReg(Chain, IA64::F8, MVT::f64, InFlag);
+      RetVal = DAG.getCopyFromReg(Chain, dl, IA64::F8, MVT::f64, InFlag);
       Chain = RetVal.getValue(1);
       RetVal = DAG.getNode(ISD::FP_ROUND, dl, MVT::f32, RetVal,
                            DAG.getIntPtrConstant(0));
       break;
     case MVT::f64:
-      RetVal = DAG.getCopyFromReg(Chain, IA64::F8, MVT::f64, InFlag);
+      RetVal = DAG.getCopyFromReg(Chain, dl, IA64::F8, MVT::f64, InFlag);
       Chain = RetVal.getValue(1);
       InFlag = RetVal.getValue(2); // XXX dead
       break;

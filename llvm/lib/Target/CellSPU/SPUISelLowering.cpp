@@ -1292,6 +1292,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG, TargetMachine &TM) {
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+  DebugLoc dl = Op.getDebugLoc();
   CCState CCInfo(CC, isVarArg, TM, RVLocs);
   CCInfo.AnalyzeReturn(Op.getNode(), RetCC_SPU);
 
@@ -1309,14 +1310,15 @@ LowerRET(SDValue Op, SelectionDAG &DAG, TargetMachine &TM) {
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
-    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), Op.getOperand(i*2+1), Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(),
+                             Op.getOperand(i*2+1), Flag);
     Flag = Chain.getValue(1);
   }
 
   if (Flag.getNode())
-    return DAG.getNode(SPUISD::RET_FLAG, MVT::Other, Chain, Flag);
+    return DAG.getNode(SPUISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
   else
-    return DAG.getNode(SPUISD::RET_FLAG, MVT::Other, Chain);
+    return DAG.getNode(SPUISD::RET_FLAG, dl, MVT::Other, Chain);
 }
 
 
@@ -1765,6 +1767,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
   SDValue PermMask = Op.getOperand(2);
+  DebugLoc dl = Op.getDebugLoc();
 
   if (V2.getOpcode() == ISD::UNDEF) V2 = V1;
 
@@ -1839,18 +1842,19 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
     // Initialize temporary register to 0
     SDValue InitTempReg =
-      DAG.getCopyToReg(DAG.getEntryNode(), VReg, DAG.getConstant(0, PtrVT));
+      DAG.getCopyToReg(DAG.getEntryNode(), dl, VReg, DAG.getConstant(0, PtrVT));
     // Copy register's contents as index in SHUFFLE_MASK:
     SDValue ShufMaskOp =
-      DAG.getNode(SPUISD::SHUFFLE_MASK, MVT::v4i32,
+      DAG.getNode(SPUISD::SHUFFLE_MASK, dl, MVT::v4i32,
                   DAG.getTargetConstant(V2Elt, MVT::i32),
-                  DAG.getCopyFromReg(InitTempReg, VReg, PtrVT));
+                  DAG.getCopyFromReg(InitTempReg, dl, VReg, PtrVT));
     // Use shuffle mask in SHUFB synthetic instruction:
-    return DAG.getNode(SPUISD::SHUFB, V1.getValueType(), V2, V1, ShufMaskOp);
+    return DAG.getNode(SPUISD::SHUFB, dl, V1.getValueType(), V2, V1, 
+                       ShufMaskOp);
   } else if (rotate) {
     int rotamt = (MaxElts - V0Elt) * EltVT.getSizeInBits()/8;
 
-    return DAG.getNode(SPUISD::ROTBYTES_LEFT, V1.getValueType(),
+    return DAG.getNode(SPUISD::ROTBYTES_LEFT, dl, V1.getValueType(),
                        V1, DAG.getConstant(rotamt, MVT::i16));
   } else {
    // Convert the SHUFFLE_VECTOR mask's input element units to the
@@ -1871,9 +1875,9 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       }
     }
 
-    SDValue VPermMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8,
+    SDValue VPermMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8,
                                     &ResultMask[0], ResultMask.size());
-    return DAG.getNode(SPUISD::SHUFB, V1.getValueType(), V1, V2, VPermMask);
+    return DAG.getNode(SPUISD::SHUFB, dl, V1.getValueType(), V1, V2, VPermMask);
   }
 }
 
@@ -2307,6 +2311,7 @@ LowerByteImmed(SDValue Op, SelectionDAG &DAG) {
 static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
   MVT vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
+  DebugLoc dl = Op.getDebugLoc();
 
   switch (VT.getSimpleVT()) {
   default:
@@ -2315,10 +2320,10 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
     SDValue N = Op.getOperand(0);
     SDValue Elt0 = DAG.getConstant(0, MVT::i32);
 
-    SDValue Promote = DAG.getNode(SPUISD::PREFSLOT2VEC, vecVT, N, N);
-    SDValue CNTB = DAG.getNode(SPUISD::CNTB, vecVT, Promote);
+    SDValue Promote = DAG.getNode(SPUISD::PREFSLOT2VEC, dl, vecVT, N, N);
+    SDValue CNTB = DAG.getNode(SPUISD::CNTB, dl, vecVT, Promote);
 
-    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i8, CNTB, Elt0);
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i8, CNTB, Elt0);
   }
 
   case MVT::i16: {
@@ -2332,22 +2337,22 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
     SDValue Mask0 = DAG.getConstant(0x0f, MVT::i16);
     SDValue Shift1 = DAG.getConstant(8, MVT::i32);
 
-    SDValue Promote = DAG.getNode(SPUISD::PREFSLOT2VEC, vecVT, N, N);
-    SDValue CNTB = DAG.getNode(SPUISD::CNTB, vecVT, Promote);
+    SDValue Promote = DAG.getNode(SPUISD::PREFSLOT2VEC, dl, vecVT, N, N);
+    SDValue CNTB = DAG.getNode(SPUISD::CNTB, dl, vecVT, Promote);
 
     // CNTB_result becomes the chain to which all of the virtual registers
     // CNTB_reg, SUM1_reg become associated:
     SDValue CNTB_result =
-      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i16, CNTB, Elt0);
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, CNTB, Elt0);
 
     SDValue CNTB_rescopy =
-      DAG.getCopyToReg(CNTB_result, CNTB_reg, CNTB_result);
+      DAG.getCopyToReg(CNTB_result, dl, CNTB_reg, CNTB_result);
 
-    SDValue Tmp1 = DAG.getCopyFromReg(CNTB_rescopy, CNTB_reg, MVT::i16);
+    SDValue Tmp1 = DAG.getCopyFromReg(CNTB_rescopy, dl, CNTB_reg, MVT::i16);
 
-    return DAG.getNode(ISD::AND, MVT::i16,
-                       DAG.getNode(ISD::ADD, MVT::i16,
-                                   DAG.getNode(ISD::SRL, MVT::i16,
+    return DAG.getNode(ISD::AND, dl, MVT::i16,
+                       DAG.getNode(ISD::ADD, dl, MVT::i16,
+                                   DAG.getNode(ISD::SRL, dl, MVT::i16,
                                                Tmp1, Shift1),
                                    Tmp1),
                        Mask0);
@@ -2366,37 +2371,38 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
     SDValue Shift1 = DAG.getConstant(16, MVT::i32);
     SDValue Shift2 = DAG.getConstant(8, MVT::i32);
 
-    SDValue Promote = DAG.getNode(SPUISD::PREFSLOT2VEC, vecVT, N, N);
-    SDValue CNTB = DAG.getNode(SPUISD::CNTB, vecVT, Promote);
+    SDValue Promote = DAG.getNode(SPUISD::PREFSLOT2VEC, dl, vecVT, N, N);
+    SDValue CNTB = DAG.getNode(SPUISD::CNTB, dl, vecVT, Promote);
 
     // CNTB_result becomes the chain to which all of the virtual registers
     // CNTB_reg, SUM1_reg become associated:
     SDValue CNTB_result =
-      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32, CNTB, Elt0);
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32, CNTB, Elt0);
 
     SDValue CNTB_rescopy =
-      DAG.getCopyToReg(CNTB_result, CNTB_reg, CNTB_result);
+      DAG.getCopyToReg(CNTB_result, dl, CNTB_reg, CNTB_result);
 
     SDValue Comp1 =
-      DAG.getNode(ISD::SRL, MVT::i32,
-                  DAG.getCopyFromReg(CNTB_rescopy, CNTB_reg, MVT::i32), Shift1);
+      DAG.getNode(ISD::SRL, dl, MVT::i32,
+                  DAG.getCopyFromReg(CNTB_rescopy, dl, CNTB_reg, MVT::i32), 
+                  Shift1);
 
     SDValue Sum1 =
-      DAG.getNode(ISD::ADD, MVT::i32,
-                  Comp1, DAG.getCopyFromReg(CNTB_rescopy, CNTB_reg, MVT::i32));
+      DAG.getNode(ISD::ADD, dl, MVT::i32, Comp1,
+                  DAG.getCopyFromReg(CNTB_rescopy, dl, CNTB_reg, MVT::i32));
 
     SDValue Sum1_rescopy =
-      DAG.getCopyToReg(CNTB_result, SUM1_reg, Sum1);
+      DAG.getCopyToReg(CNTB_result, dl, SUM1_reg, Sum1);
 
     SDValue Comp2 =
-      DAG.getNode(ISD::SRL, MVT::i32,
-                  DAG.getCopyFromReg(Sum1_rescopy, SUM1_reg, MVT::i32),
+      DAG.getNode(ISD::SRL, dl, MVT::i32,
+                  DAG.getCopyFromReg(Sum1_rescopy, dl, SUM1_reg, MVT::i32),
                   Shift2);
     SDValue Sum2 =
-      DAG.getNode(ISD::ADD, MVT::i32, Comp2,
-                  DAG.getCopyFromReg(Sum1_rescopy, SUM1_reg, MVT::i32));
+      DAG.getNode(ISD::ADD, dl, MVT::i32, Comp2,
+                  DAG.getCopyFromReg(Sum1_rescopy, dl, SUM1_reg, MVT::i32));
 
-    return DAG.getNode(ISD::AND, MVT::i32, Sum2, Mask0);
+    return DAG.getNode(ISD::AND, dl, MVT::i32, Sum2, Mask0);
   }
 
   case MVT::i64:

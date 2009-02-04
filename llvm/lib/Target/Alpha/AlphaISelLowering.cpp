@@ -300,7 +300,8 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
 }
 
 static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
-  SDValue Copy = DAG.getCopyToReg(Op.getOperand(0), Alpha::R26, 
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue Copy = DAG.getCopyToReg(Op.getOperand(0), dl, Alpha::R26, 
                                     DAG.getNode(AlphaISD::GlobalRetAddr, 
                                                 MVT::i64),
                                     SDValue());
@@ -320,7 +321,8 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
       assert(ArgVT.isFloatingPoint());
       ArgReg = Alpha::F0;
     }
-    Copy = DAG.getCopyToReg(Copy, ArgReg, Op.getOperand(1), Copy.getValue(1));
+    Copy = DAG.getCopyToReg(Copy, dl, ArgReg, 
+                            Op.getOperand(1), Copy.getValue(1));
     if (DAG.getMachineFunction().getRegInfo().liveout_empty())
       DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg);
     break;
@@ -336,12 +338,14 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
       ArgReg1 = Alpha::F0;
       ArgReg2 = Alpha::F1;
     }
-    Copy = DAG.getCopyToReg(Copy, ArgReg1, Op.getOperand(1), Copy.getValue(1));
+    Copy = DAG.getCopyToReg(Copy, dl, ArgReg1, 
+                            Op.getOperand(1), Copy.getValue(1));
     if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(), 
                   DAG.getMachineFunction().getRegInfo().liveout_end(), ArgReg1)
         == DAG.getMachineFunction().getRegInfo().liveout_end())
       DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg1);
-    Copy = DAG.getCopyToReg(Copy, ArgReg2, Op.getOperand(3), Copy.getValue(1));
+    Copy = DAG.getCopyToReg(Copy, dl, ArgReg2, 
+                            Op.getOperand(3), Copy.getValue(1));
     if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(), 
                    DAG.getMachineFunction().getRegInfo().liveout_end(), ArgReg2)
         == DAG.getMachineFunction().getRegInfo().liveout_end())
@@ -349,7 +353,8 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
     break;
   }
   }
-  return DAG.getNode(AlphaISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
+  return DAG.getNode(AlphaISD::RET_FLAG, dl, 
+                     MVT::Other, Copy, Copy.getValue(1));
 }
 
 std::pair<SDValue, SDValue>

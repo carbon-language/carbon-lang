@@ -300,6 +300,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.getNode();
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
+  DebugLoc dl = Op.getDebugLoc();
 
   switch (N->getOpcode()) {
   default: break;
@@ -334,22 +335,22 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     // load the branch target's entry point [mem] and 
     // GP value [mem+8]
     SDValue targetEntryPoint=
-      SDValue(CurDAG->getTargetNode(IA64::LD8, MVT::i64, MVT::Other,
+      SDValue(CurDAG->getTargetNode(IA64::LD8, dl, MVT::i64, MVT::Other,
                                       FnDescriptor, CurDAG->getEntryNode()), 0);
     Chain = targetEntryPoint.getValue(1);
     SDValue targetGPAddr=
-      SDValue(CurDAG->getTargetNode(IA64::ADDS, MVT::i64, 
+      SDValue(CurDAG->getTargetNode(IA64::ADDS, dl, MVT::i64, 
                                       FnDescriptor,
                                       CurDAG->getConstant(8, MVT::i64)), 0);
     Chain = targetGPAddr.getValue(1);
     SDValue targetGP =
-      SDValue(CurDAG->getTargetNode(IA64::LD8, MVT::i64,MVT::Other,
+      SDValue(CurDAG->getTargetNode(IA64::LD8, dl, MVT::i64,MVT::Other,
                                       targetGPAddr, CurDAG->getEntryNode()), 0);
     Chain = targetGP.getValue(1);
 
-    Chain = CurDAG->getCopyToReg(Chain, IA64::r1, targetGP, InFlag);
+    Chain = CurDAG->getCopyToReg(Chain, dl, IA64::r1, targetGP, InFlag);
     InFlag = Chain.getValue(1);
-    Chain = CurDAG->getCopyToReg(Chain, IA64::B6,
+    Chain = CurDAG->getCopyToReg(Chain, dl, IA64::B6,
                                  targetEntryPoint, InFlag); // FLAG these?
     InFlag = Chain.getValue(1);
     
@@ -359,11 +360,11 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
  
    // Finally, once everything is setup, emit the call itself
    if (InFlag.getNode())
-     Chain = SDValue(CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
-                                             CallOperand, InFlag), 0);
+     Chain = SDValue(CurDAG->getTargetNode(CallOpcode, dl, MVT::Other,
+                                           MVT::Flag, CallOperand, InFlag), 0);
    else // there might be no arguments
-     Chain = SDValue(CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
-                                             CallOperand, Chain), 0);
+     Chain = SDValue(CurDAG->getTargetNode(CallOpcode, dl, MVT::Other,
+                                           MVT::Flag, CallOperand, Chain), 0);
    InFlag = Chain.getValue(1);
 
    std::vector<SDValue> CallResults;
@@ -378,7 +379,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
   
   case IA64ISD::GETFD: {
     SDValue Input = N->getOperand(0);
-    return CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input);
+    return CurDAG->getTargetNode(IA64::GETFD, dl, MVT::i64, Input);
   } 
   
   case ISD::FDIV:
@@ -394,10 +395,10 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     SDValue V;
     ConstantFPSDNode* N2 = cast<ConstantFPSDNode>(N);
     if (N2->getValueAPF().isPosZero()) {
-      V = CurDAG->getCopyFromReg(Chain, IA64::F0, MVT::f64);
+      V = CurDAG->getCopyFromReg(Chain, dl, IA64::F0, MVT::f64);
     } else if (N2->isExactlyValue(N2->getValueType(0) == MVT::f32 ? 
                                   APFloat(+1.0f) : APFloat(+1.0))) {
-      V = CurDAG->getCopyFromReg(Chain, IA64::F1, MVT::f64);
+      V = CurDAG->getCopyFromReg(Chain, dl, IA64::F1, MVT::f64);
     } else
       assert(0 && "Unexpected FP constant!");
     
@@ -411,7 +412,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
       return CurDAG->SelectNodeTo(N, IA64::MOV, MVT::i64,
                                   CurDAG->getTargetFrameIndex(FI, MVT::i64));
     else
-      return CurDAG->getTargetNode(IA64::MOV, MVT::i64,
+      return CurDAG->getTargetNode(IA64::MOV, dl, MVT::i64,
                                    CurDAG->getTargetFrameIndex(FI, MVT::i64));
   }
 
@@ -421,7 +422,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     Constant *C = CP->getConstVal();
     SDValue CPI = CurDAG->getTargetConstantPool(C, MVT::i64,
                                                   CP->getAlignment());
-    return CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
+    return CurDAG->getTargetNode(IA64::ADDL_GA, dl, MVT::i64, // ?
                                  CurDAG->getRegister(IA64::r1, MVT::i64), CPI);
   }
 
@@ -429,10 +430,10 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     SDValue GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
     SDValue Tmp =
-      SDValue(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, 
+      SDValue(CurDAG->getTargetNode(IA64::ADDL_GA, dl, MVT::i64, 
                                       CurDAG->getRegister(IA64::r1,
                                                           MVT::i64), GA), 0);
-    return CurDAG->getTargetNode(IA64::LD8, MVT::i64, MVT::Other, Tmp,
+    return CurDAG->getTargetNode(IA64::LD8, dl, MVT::i64, MVT::Other, Tmp,
                                  CurDAG->getEntryNode());
   }
   
@@ -441,11 +442,11 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
      SDValue EA = CurDAG->getTargetExternalSymbol(
        cast<ExternalSymbolSDNode>(N)->getSymbol(),
        MVT::i64);
-     SDValue Tmp = CurDAG->getTargetNode(IA64::ADDL_EA, MVT::i64, 
+     SDValue Tmp = CurDAG->getTargetNode(IA64::ADDL_EA, dl, MVT::i64, 
                                            CurDAG->getRegister(IA64::r1,
                                                                MVT::i64),
                                            EA);
-     return CurDAG->getTargetNode(IA64::LD8, MVT::i64, Tmp);
+     return CurDAG->getTargetNode(IA64::LD8, dl, MVT::i64, Tmp);
    }
 */
 
@@ -465,9 +466,11 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     case MVT::i1: { // this is a bool
       Opc = IA64::LD1; // first we load a byte, then compare for != 0
       if(N->getValueType(0) == MVT::i1) { // XXX: early exit!
-        return CurDAG->SelectNodeTo(N, IA64::CMPNE, MVT::i1, MVT::Other, 
-                    SDValue(CurDAG->getTargetNode(Opc, MVT::i64, Address), 0),
-                                    CurDAG->getRegister(IA64::r0, MVT::i64), 
+        return CurDAG->SelectNodeTo(N, IA64::CMPNE, MVT::i1, MVT::Other,
+                                    SDValue(CurDAG->getTargetNode(Opc, dl,
+                                                                  MVT::i64,
+                                                                  Address), 0),
+                                    CurDAG->getRegister(IA64::r0, MVT::i64),
                                     Chain);
       }
       /* otherwise, we want to load a bool into something bigger: LD1
@@ -499,12 +502,12 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
       case MVT::i1: { // this is a bool
         Opc = IA64::ST1; // we store either 0 or 1 as a byte 
         // first load zero!
-        SDValue Initial = CurDAG->getCopyFromReg(Chain, IA64::r0, MVT::i64);
+        SDValue Initial = CurDAG->getCopyFromReg(Chain, dl, IA64::r0, MVT::i64);
         Chain = Initial.getValue(1);
         // then load 1 into the same reg iff the predicate to store is 1
         SDValue Tmp = ST->getValue();
         Tmp =
-          SDValue(CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
+          SDValue(CurDAG->getTargetNode(IA64::TPCADDS, dl, MVT::i64, Initial,
                                           CurDAG->getTargetConstant(1,
                                                                     MVT::i64),
                                           Tmp), 0);

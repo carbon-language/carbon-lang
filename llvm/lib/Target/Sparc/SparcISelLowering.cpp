@@ -36,6 +36,7 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+  DebugLoc dl = Op.getDebugLoc();
 
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CC, isVarArg, DAG.getTarget(), RVLocs);
@@ -61,15 +62,16 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
 
     // ISD::RET => ret chain, (regnum1,val1), ...
     // So i*2+1 index only the regnums.
-    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), Op.getOperand(i*2+1), Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), 
+                             Op.getOperand(i*2+1), Flag);
 
     // Guarantee that all emitted copies are stuck together with flags.
     Flag = Chain.getValue(1);
   }
 
   if (Flag.getNode())
-    return DAG.getNode(SPISD::RET_FLAG, MVT::Other, Chain, Flag);
-  return DAG.getNode(SPISD::RET_FLAG, MVT::Other, Chain);
+    return DAG.getNode(SPISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
+  return DAG.getNode(SPISD::RET_FLAG, dl, MVT::Other, Chain);
 }
 
 /// LowerArguments - V8 uses a very simple ABI, where all values are passed in
@@ -871,18 +873,19 @@ static SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG) {
 static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) {
   SDValue Chain = Op.getOperand(0);  // Legalize the chain.
   SDValue Size  = Op.getOperand(1);  // Legalize the size.
+  DebugLoc dl = Op.getDebugLoc();
 
   unsigned SPReg = SP::O6;
-  SDValue SP = DAG.getCopyFromReg(Chain, SPReg, MVT::i32);
-  SDValue NewSP = DAG.getNode(ISD::SUB, MVT::i32, SP, Size);    // Value
-  Chain = DAG.getCopyToReg(SP.getValue(1), SPReg, NewSP);      // Output chain
+  SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, MVT::i32);
+  SDValue NewSP = DAG.getNode(ISD::SUB, dl, MVT::i32, SP, Size); // Value
+  Chain = DAG.getCopyToReg(SP.getValue(1), dl, SPReg, NewSP);    // Output chain
 
   // The resultant pointer is actually 16 words from the bottom of the stack,
   // to provide a register spill area.
-  SDValue NewVal = DAG.getNode(ISD::ADD, MVT::i32, NewSP,
+  SDValue NewVal = DAG.getNode(ISD::ADD, dl, MVT::i32, NewSP,
                                  DAG.getConstant(96, MVT::i32));
   SDValue Ops[2] = { NewVal, Chain };
-  return DAG.getMergeValues(Ops, 2);
+  return DAG.getMergeValues(Ops, 2, dl);
 }
 
 

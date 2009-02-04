@@ -2625,6 +2625,7 @@ SDValue PPCTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG,
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+  DebugLoc dl = Op.getDebugLoc();
   CCState CCInfo(CC, isVarArg, TM, RVLocs);
   CCInfo.AnalyzeReturn(Op.getNode(), RetCC_PPC);
   
@@ -2662,7 +2663,7 @@ SDValue PPCTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG,
     for (unsigned i=3; i < TailCall.getNumOperands()-1; i++) {
       Operands.push_back(Chain.getOperand(i));
     }
-    return DAG.getNode(PPCISD::TC_RETURN, MVT::Other, &Operands[0],
+    return DAG.getNode(PPCISD::TC_RETURN, dl, MVT::Other, &Operands[0],
                        Operands.size());
   }
 
@@ -2672,14 +2673,15 @@ SDValue PPCTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG,
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
-    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), Op.getOperand(i*2+1), Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), 
+                             Op.getOperand(i*2+1), Flag);
     Flag = Chain.getValue(1);
   }
 
   if (Flag.getNode())
-    return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain, Flag);
+    return DAG.getNode(PPCISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
   else
-    return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain);
+    return DAG.getNode(PPCISD::RET_FLAG, dl, MVT::Other, Chain);
 }
 
 SDValue PPCTargetLowering::LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
@@ -4925,6 +4927,7 @@ SDValue PPCTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   // Depths > 0 not supported yet! 
   if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
     return SDValue();
@@ -4938,10 +4941,10 @@ SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
                   && MFI->getStackSize();
 
   if (isPPC64)
-    return DAG.getCopyFromReg(DAG.getEntryNode(), is31 ? PPC::X31 : PPC::X1,
+    return DAG.getCopyFromReg(DAG.getEntryNode(), dl, is31 ? PPC::X31 : PPC::X1,
       MVT::i64);
   else
-    return DAG.getCopyFromReg(DAG.getEntryNode(), is31 ? PPC::R31 : PPC::R1,
+    return DAG.getCopyFromReg(DAG.getEntryNode(), dl, is31 ? PPC::R31 : PPC::R1,
       MVT::i32);
 }
 

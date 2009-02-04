@@ -126,8 +126,9 @@ SDValue MipsDAGToDAGISel::getGlobalBaseReg() {
       break;
     }
   assert(GP && "GOT PTR not in liveins");
+  // FIXME is there a sensible place to get debug info for this?
   return CurDAG->getCopyFromReg(CurDAG->getEntryNode(), 
-                                GP, MVT::i32);
+                                DebugLoc::getUnknownLoc(), GP, MVT::i32);
 }
 
 /// ComplexPattern used on MipsInstrInfo
@@ -187,6 +188,7 @@ Select(SDValue N)
 {
   SDNode *Node = N.getNode();
   unsigned Opcode = Node->getOpcode();
+  DebugLoc dl = Node->getDebugLoc();
 
   // Dump information about the Node being selected
   #ifndef NDEBUG
@@ -238,8 +240,8 @@ Select(SDValue N)
       SDValue RHS = Node->getOperand(1);
 
       MVT VT = LHS.getValueType();
-      SDNode *Carry = CurDAG->getTargetNode(Mips::SLTu, VT, Ops, 2);
-      SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, VT, 
+      SDNode *Carry = CurDAG->getTargetNode(Mips::SLTu, dl, VT, Ops, 2);
+      SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, dl, VT, 
                                                SDValue(Carry,0), RHS);
 
       return CurDAG->SelectNodeTo(N.getNode(), MOp, VT, MVT::Flag, 
@@ -260,13 +262,13 @@ Select(SDValue N)
       else
         Op = (Opcode == ISD::UDIVREM ? Mips::DIVu : Mips::DIV);
 
-      SDNode *Node = CurDAG->getTargetNode(Op, MVT::Flag, Op1, Op2);
+      SDNode *Node = CurDAG->getTargetNode(Op, dl, MVT::Flag, Op1, Op2);
 
       SDValue InFlag = SDValue(Node, 0);
-      SDNode *Lo = CurDAG->getTargetNode(Mips::MFLO, MVT::i32, 
+      SDNode *Lo = CurDAG->getTargetNode(Mips::MFLO, dl, MVT::i32, 
                                          MVT::Flag, InFlag);
       InFlag = SDValue(Lo,1);
-      SDNode *Hi = CurDAG->getTargetNode(Mips::MFHI, MVT::i32, InFlag);
+      SDNode *Hi = CurDAG->getTargetNode(Mips::MFHI, dl, MVT::i32, InFlag);
 
       if (!N.getValue(0).use_empty()) 
         ReplaceUses(N.getValue(0), SDValue(Lo,0));
@@ -285,14 +287,15 @@ Select(SDValue N)
       SDValue MulOp2 = Node->getOperand(1);
 
       unsigned MulOp  = (Opcode == ISD::MULHU ? Mips::MULTu : Mips::MULT);
-      SDNode *MulNode = CurDAG->getTargetNode(MulOp, MVT::Flag, MulOp1, MulOp2);
+      SDNode *MulNode = CurDAG->getTargetNode(MulOp, dl, 
+                                              MVT::Flag, MulOp1, MulOp2);
 
       SDValue InFlag = SDValue(MulNode, 0);
 
       if (MulOp == ISD::MUL)
-        return CurDAG->getTargetNode(Mips::MFLO, MVT::i32, InFlag);
+        return CurDAG->getTargetNode(Mips::MFLO, dl, MVT::i32, InFlag);
       else
-        return CurDAG->getTargetNode(Mips::MFHI, MVT::i32, InFlag);
+        return CurDAG->getTargetNode(Mips::MFHI, dl, MVT::i32, InFlag);
     }
 
     /// Div/Rem operations
@@ -311,10 +314,10 @@ Select(SDValue N)
         Op  = (Opcode == ISD::SREM ? Mips::DIV : Mips::DIVu);
         MOp = Mips::MFHI;
       }
-      SDNode *Node = CurDAG->getTargetNode(Op, MVT::Flag, Op1, Op2);
+      SDNode *Node = CurDAG->getTargetNode(Op, dl, MVT::Flag, Op1, Op2);
 
       SDValue InFlag = SDValue(Node, 0);
-      return CurDAG->getTargetNode(MOp, MVT::i32, InFlag);
+      return CurDAG->getTargetNode(MOp, dl, MVT::i32, InFlag);
     }
 
     // Get target GOT address.
@@ -344,18 +347,18 @@ Select(SDValue N)
 
           // Use load to get GOT target
           SDValue Ops[] = { Callee, GPReg, Chain };
-          SDValue Load = SDValue(CurDAG->getTargetNode(Mips::LW, MVT::i32, 
+          SDValue Load = SDValue(CurDAG->getTargetNode(Mips::LW, dl, MVT::i32, 
                                      MVT::Other, Ops, 3), 0);
           Chain = Load.getValue(1);
 
           // Call target must be on T9
-          Chain = CurDAG->getCopyToReg(Chain, T9Reg, Load, InFlag);
+          Chain = CurDAG->getCopyToReg(Chain, dl, T9Reg, Load, InFlag);
         } else 
           /// Indirect call
-          Chain = CurDAG->getCopyToReg(Chain, T9Reg, Callee, InFlag);
+          Chain = CurDAG->getCopyToReg(Chain, dl, T9Reg, Callee, InFlag);
 
         // Emit Jump and Link Register
-        SDNode *ResNode = CurDAG->getTargetNode(Mips::JALR, MVT::Other,
+        SDNode *ResNode = CurDAG->getTargetNode(Mips::JALR, dl, MVT::Other,
                                   MVT::Flag, T9Reg, Chain);
         Chain  = SDValue(ResNode, 0);
         InFlag = SDValue(ResNode, 1);

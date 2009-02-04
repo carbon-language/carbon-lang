@@ -369,14 +369,15 @@ LowerVASTART(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   // Depths > 0 not supported yet! 
   if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
     return SDValue();
   
   MachineFunction &MF = DAG.getMachineFunction();
   const TargetRegisterInfo *RegInfo = getTargetMachine().getRegisterInfo();
-  return DAG.getCopyFromReg(DAG.getEntryNode(), RegInfo->getFrameRegister(MF),
-    MVT::i32);
+  return DAG.getCopyFromReg(DAG.getEntryNode(), dl, 
+                            RegInfo->getFrameRegister(MF), MVT::i32);
 }
 
 //===----------------------------------------------------------------------===//
@@ -424,6 +425,7 @@ LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC)
   SDValue Chain  = TheCall->getChain();
   SDValue Callee = TheCall->getCallee();
   bool isVarArg  = TheCall->isVarArg();
+  DebugLoc dl = Op.getDebugLoc();
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -456,13 +458,13 @@ LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC)
       default: assert(0 && "Unknown loc info!");
       case CCValAssign::Full: break;
       case CCValAssign::SExt:
-        Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
+        Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
         break;
       case CCValAssign::ZExt:
-        Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
+        Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
         break;
       case CCValAssign::AExt:
-        Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
+        Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
         break;
     }
     
@@ -475,7 +477,8 @@ LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC)
 
       int Offset = VA.getLocMemOffset();
 
-      MemOpChains.push_back(DAG.getNode(XCoreISD::STWSP, MVT::Other, Chain, Arg,
+      MemOpChains.push_back(DAG.getNode(XCoreISD::STWSP, dl, MVT::Other, 
+                                        Chain, Arg,
                                         DAG.getConstant(Offset/4, MVT::i32)));
     }
   }
@@ -483,7 +486,7 @@ LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC)
   // Transform all store nodes into one single node because
   // all store nodes are independent of each other.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, 
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
                         &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token 
@@ -492,7 +495,7 @@ LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC)
   // stuck together.
   SDValue InFlag;
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, 
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first, 
                              RegsToPass[i].second, InFlag);
     InFlag = Chain.getValue(1);
   }
@@ -523,7 +526,7 @@ LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC)
   if (InFlag.getNode())
     Ops.push_back(InFlag);
 
-  Chain  = DAG.getNode(XCoreISD::BL, NodeTys, &Ops[0], Ops.size());
+  Chain  = DAG.getNode(XCoreISD::BL, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
@@ -548,6 +551,7 @@ SDNode *XCoreTargetLowering::
 LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall, 
         unsigned CallingConv, SelectionDAG &DAG) {
   bool isVarArg = TheCall->isVarArg();
+  DebugLoc dl = TheCall->getDebugLoc();
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
@@ -558,7 +562,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
 
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
-    Chain = DAG.getCopyFromReg(Chain, RVLocs[i].getLocReg(),
+    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
                                  RVLocs[i].getValVT(), InFlag).getValue(1);
     InFlag = Chain.getValue(2);
     ResultVals.push_back(Chain.getValue(0));
@@ -567,7 +571,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   ResultVals.push_back(Chain);
 
   // Merge everything together with a MERGE_VALUES node.
-  return DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(),
+  return DAG.getNode(ISD::MERGE_VALUES, dl, TheCall->getVTList(),
                      &ResultVals[0], ResultVals.size()).getNode();
 }
 
@@ -718,6 +722,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+  DebugLoc dl = Op.getDebugLoc();
 
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
@@ -744,7 +749,8 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
 
     // ISD::RET => ret chain, (regnum1,val1), ...
     // So i*2+1 index only the regnums
-    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), Op.getOperand(i*2+1), Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), 
+                             Op.getOperand(i*2+1), Flag);
 
     // guarantee that all emitted copies are
     // stuck together, avoiding something bad
@@ -753,10 +759,10 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
 
   // Return on XCore is always a "retsp 0"
   if (Flag.getNode())
-    return DAG.getNode(XCoreISD::RETSP, MVT::Other,
+    return DAG.getNode(XCoreISD::RETSP, dl, MVT::Other,
                        Chain, DAG.getConstant(0, MVT::i32), Flag);
   else // Return Void
-    return DAG.getNode(XCoreISD::RETSP, MVT::Other,
+    return DAG.getNode(XCoreISD::RETSP, dl, MVT::Other,
                        Chain, DAG.getConstant(0, MVT::i32));
 }
 

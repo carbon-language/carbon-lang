@@ -322,10 +322,6 @@ public:
   SDValue getLabel(unsigned Opcode, DebugLoc dl, SDValue Root, 
                    unsigned LabelID);
 
-  SDValue getCopyToReg(SDValue Chain, unsigned Reg, SDValue N) {
-    return getNode(ISD::CopyToReg, MVT::Other, Chain,
-                   getRegister(Reg, N.getValueType()), N);
-  }
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, unsigned Reg, SDValue N) {
     return getNode(ISD::CopyToReg, dl, MVT::Other, Chain,
                    getRegister(Reg, N.getValueType()), N);
@@ -334,12 +330,6 @@ public:
   // This version of the getCopyToReg method takes an extra operand, which
   // indicates that there is potentially an incoming flag value (if Flag is not
   // null) and that there should be a flag result.
-  SDValue getCopyToReg(SDValue Chain, unsigned Reg, SDValue N,
-                         SDValue Flag) {
-    const MVT *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
-    SDValue Ops[] = { Chain, getRegister(Reg, N.getValueType()), N, Flag };
-    return getNode(ISD::CopyToReg, VTs, 2, Ops, Flag.getNode() ? 4 : 3);
-  }
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, unsigned Reg, SDValue N,
                          SDValue Flag) {
     const MVT *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
@@ -348,12 +338,6 @@ public:
   }
 
   // Similar to last getCopyToReg() except parameter Reg is a SDValue
-  SDValue getCopyToReg(SDValue Chain, SDValue Reg, SDValue N,
-                         SDValue Flag) {
-    const MVT *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
-    SDValue Ops[] = { Chain, Reg, N, Flag };
-    return getNode(ISD::CopyToReg, VTs, 2, Ops, Flag.getNode() ? 4 : 3);
-  }
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, SDValue Reg, SDValue N,
                          SDValue Flag) {
     const MVT *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
@@ -361,11 +345,6 @@ public:
     return getNode(ISD::CopyToReg, dl, VTs, 2, Ops, Flag.getNode() ? 4 : 3);
   }
   
-  SDValue getCopyFromReg(SDValue Chain, unsigned Reg, MVT VT) {
-    const MVT *VTs = getNodeValueTypes(VT, MVT::Other);
-    SDValue Ops[] = { Chain, getRegister(Reg, VT) };
-    return getNode(ISD::CopyFromReg, VTs, 2, Ops, 2);
-  }
   SDValue getCopyFromReg(SDValue Chain, DebugLoc dl, unsigned Reg, MVT VT) {
     const MVT *VTs = getNodeValueTypes(VT, MVT::Other);
     SDValue Ops[] = { Chain, getRegister(Reg, VT) };
@@ -375,12 +354,6 @@ public:
   // This version of the getCopyFromReg method takes an extra operand, which
   // indicates that there is potentially an incoming flag value (if Flag is not
   // null) and that there should be a flag result.
-  SDValue getCopyFromReg(SDValue Chain, unsigned Reg, MVT VT,
-                           SDValue Flag) {
-    const MVT *VTs = getNodeValueTypes(VT, MVT::Other, MVT::Flag);
-    SDValue Ops[] = { Chain, getRegister(Reg, VT), Flag };
-    return getNode(ISD::CopyFromReg, VTs, 3, Ops, Flag.getNode() ? 3 : 2);
-  }
   SDValue getCopyFromReg(SDValue Chain, DebugLoc dl, unsigned Reg, MVT VT,
                            SDValue Flag) {
     const MVT *VTs = getNodeValueTypes(VT, MVT::Other, MVT::Flag);

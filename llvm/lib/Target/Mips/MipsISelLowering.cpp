@@ -367,22 +367,23 @@ LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG)
 {
   SDValue Chain = Op.getOperand(0);
   SDValue Size = Op.getOperand(1);
+  DebugLoc dl = Op.getDebugLoc();
 
   // Get a reference from Mips stack pointer
-  SDValue StackPointer = DAG.getCopyFromReg(Chain, Mips::SP, MVT::i32);
+  SDValue StackPointer = DAG.getCopyFromReg(Chain, dl, Mips::SP, MVT::i32);
 
   // Subtract the dynamic size from the actual stack size to
   // obtain the new stack size.
-  SDValue Sub = DAG.getNode(ISD::SUB, MVT::i32, StackPointer, Size);
+  SDValue Sub = DAG.getNode(ISD::SUB, dl, MVT::i32, StackPointer, Size);
 
   // The Sub result contains the new stack start address, so it 
   // must be placed in the stack pointer register.
-  Chain = DAG.getCopyToReg(StackPointer.getValue(1), Mips::SP, Sub);
+  Chain = DAG.getCopyToReg(StackPointer.getValue(1), dl, Mips::SP, Sub);
   
   // This node always has two return values: a new stack pointer 
   // value and a chain
   SDValue Ops[2] = { Sub, Chain };
-  return DAG.getMergeValues(Ops, 2);
+  return DAG.getMergeValues(Ops, 2, dl);
 }
 
 SDValue MipsTargetLowering::
@@ -942,6 +943,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+  DebugLoc dl = Op.getDebugLoc();
 
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
@@ -968,7 +970,8 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
 
     // ISD::RET => ret chain, (regnum1,val1), ...
     // So i*2+1 index only the regnums
-    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), Op.getOperand(i*2+1), Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), 
+                             Op.getOperand(i*2+1), Flag);
 
     // guarantee that all emitted copies are
     // stuck together, avoiding something bad
@@ -986,18 +989,18 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
 
     if (!Reg) 
       assert(0 && "sret virtual register not created in the entry block");
-    SDValue Val = DAG.getCopyFromReg(Chain, Reg, getPointerTy());
+    SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
 
-    Chain = DAG.getCopyToReg(Chain, Mips::V0, Val, Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, Mips::V0, Val, Flag);
     Flag = Chain.getValue(1);
   }
 
   // Return on Mips is always a "jr $ra"
   if (Flag.getNode())
-    return DAG.getNode(MipsISD::Ret, MVT::Other, 
+    return DAG.getNode(MipsISD::Ret, dl, MVT::Other, 
                        Chain, DAG.getRegister(Mips::RA, MVT::i32), Flag);
   else // Return Void
-    return DAG.getNode(MipsISD::Ret, MVT::Other, 
+    return DAG.getNode(MipsISD::Ret, dl, MVT::Other, 
                        Chain, DAG.getRegister(Mips::RA, MVT::i32));
 }
 

@@ -1395,6 +1395,7 @@ private:
               }
               std::string Decl = (!ResNodeDecled) ? "SDNode *" : "";
               emitCode(Decl + "ResNode = CurDAG->getCopyToReg(" + ChainName +
+                       ", " + RootName + ".getDebugLoc()" +
                        ", " + getQualifiedName(RR) +
                        ", " +  RootName + utostr(OpNo) + ", InFlag).getNode();");
               ResNodeDecled = true;
