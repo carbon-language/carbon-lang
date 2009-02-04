@@ -135,7 +135,7 @@ public:
   /// An optional CXXScopeSpec can be passed to indicate the C++ scope (class or
   /// namespace) that the identifier must be a member of.
   /// i.e. for "foo::bar", 'II' will be "bar" and 'SS' will be "foo::".
-  virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
+  virtual DeclTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                               Scope *S, const CXXScopeSpec *SS = 0) = 0;
 
   /// isCurrentClassName - Return true if the specified name is the
@@ -1348,7 +1348,7 @@ public:
 
   /// getTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
-  virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
+  virtual DeclTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                               Scope *S, const CXXScopeSpec *SS);
 
   /// isCurrentClassName - Always returns false, because MinimalAction

@@ -31,7 +31,17 @@
 
 using namespace clang;
 
-Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
+/// \brief If the identifier refers to a type name within this scope,
+/// return the declaration of that type.
+///
+/// This routine performs ordinary name lookup of the identifier II
+/// within the given scope, with optional C++ scope specifier SS, to
+/// determine whether the name refers to a type. If so, returns the
+/// declaration corresponding to that type. Otherwise, returns NULL.
+///
+/// If name lookup results in an ambiguity, this routine will complain
+/// and then return NULL.
+Sema::DeclTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                                 Scope *S, const CXXScopeSpec *SS) {
   Decl *IIDecl = 0;
   LookupResult Result = LookupParsedName(S, SS, &II, LookupOrdinaryName, false);
