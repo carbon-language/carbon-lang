@@ -450,6 +450,97 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   return true;
 }
 
+/// isSameOrFallThroughBB - Return true if MBB == SuccMBB or MBB simply
+/// fallthoughs to SuccMBB.
+static bool isSameOrFallThroughBB(MachineBasicBlock *MBB,
+                                  MachineBasicBlock *SuccMBB,
+                                  const TargetInstrInfo *tii_) {
+  if (MBB == SuccMBB)
+    return true;
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  SmallVector<MachineOperand, 4> Cond;
+  return !tii_->AnalyzeBranch(*MBB, TBB, FBB, Cond) && !TBB && !FBB &&
+    MBB->isSuccessor(SuccMBB);
+}
+
+/// removeRange - Wrapper for LiveInterval::removeRange. This removes a range
+/// from a physical register live interval as well as from the live intervals
+/// of its sub-registers.
+static void removeRange(LiveInterval &li, unsigned Start, unsigned End,
+                        LiveIntervals *li_, const TargetRegisterInfo *tri_) {
+  li.removeRange(Start, End, true);
+  if (TargetRegisterInfo::isPhysicalRegister(li.reg)) {
+    for (const unsigned* SR = tri_->getSubRegisters(li.reg); *SR; ++SR) {
+      if (!li_->hasInterval(*SR))
+        continue;
+      LiveInterval &sli = li_->getInterval(*SR);
+      unsigned RemoveEnd = Start;
+      while (RemoveEnd != End) {
+        LiveInterval::iterator LR = sli.FindLiveRangeContaining(Start);
+        if (LR == sli.end())
+          break;
+        RemoveEnd = (LR->end < End) ? LR->end : End;
+        sli.removeRange(Start, RemoveEnd, true);
+        Start = RemoveEnd;
+      }
+    }
+  }
+}
+
+/// TrimLiveIntervalToLastUse - If there is a last use in the same basic block
+/// as the copy instruction, trim the ive interval to the last use and return
+/// true.
+bool
+SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(unsigned CopyIdx,
+                                                    MachineBasicBlock *CopyMBB,
+                                                    LiveInterval &li,
+                                                    const LiveRange *LR) {
+  unsigned MBBStart = li_->getMBBStartIdx(CopyMBB);
+  unsigned LastUseIdx;
+  MachineOperand *LastUse = lastRegisterUse(LR->start, CopyIdx-1, li.reg,
+                                            LastUseIdx);
+  if (LastUse) {
+    MachineInstr *LastUseMI = LastUse->getParent();
+    if (!isSameOrFallThroughBB(LastUseMI->getParent(), CopyMBB, tii_)) {
+      // r1024 = op
+      // ...
+      // BB1:
+      //       = r1024
+      //
+      // BB2:
+      // r1025<dead> = r1024<kill>
+      if (MBBStart < LR->end)
+        removeRange(li, MBBStart, LR->end, li_, tri_);
+      return true;
+    }
+
+    // There are uses before the copy, just shorten the live range to the end
+    // of last use.
+    LastUse->setIsKill();
+    removeRange(li, li_->getDefIndex(LastUseIdx), LR->end, li_, tri_);
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+        DstReg == li.reg) {
+      // Last use is itself an identity code.
+      int DeadIdx = LastUseMI->findRegisterDefOperandIdx(li.reg, false, tri_);
+      LastUseMI->getOperand(DeadIdx).setIsDead();
+    }
+    return true;
+  }
+
+  // Is it livein?
+  if (LR->start <= MBBStart && LR->end > MBBStart) {
+    if (LR->start == 0) {
+      assert(TargetRegisterInfo::isPhysicalRegister(li.reg));
+      // Live-in to the function but dead. Remove it from entry live-in set.
+      mf_->begin()->removeLiveIn(li.reg);
+    }
+    // FIXME: Shorten intervals in BBs that reaches this BB.
+  }
+
+  return false;
+}
+
 /// ReMaterializeTrivialDef - If the source of a copy is defined by a trivial
 /// computation, replace the copy by rematerialize the definition.
 bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
@@ -485,7 +576,12 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     }
   }
 
+  // If copy kills the source register, find the last use and propagate
+  // kill.
   MachineBasicBlock *MBB = CopyMI->getParent();
+  if (CopyMI->killsRegister(SrcInt.reg))
+    TrimLiveIntervalToLastUse(CopyIdx, MBB, SrcInt, SrcLR);
+
   MachineBasicBlock::iterator MII = next(MachineBasicBlock::iterator(CopyMI));
   CopyMI->removeFromParent();
   tii_->reMaterialize(*MBB, MII, DstReg, DefMI);
@@ -660,30 +756,6 @@ void SimpleRegisterCoalescing::RemoveUnnecessaryKills(unsigned Reg,
   }
 }
 
-/// removeRange - Wrapper for LiveInterval::removeRange. This removes a range
-/// from a physical register live interval as well as from the live intervals
-/// of its sub-registers.
-static void removeRange(LiveInterval &li, unsigned Start, unsigned End,
-                        LiveIntervals *li_, const TargetRegisterInfo *tri_) {
-  li.removeRange(Start, End, true);
-  if (TargetRegisterInfo::isPhysicalRegister(li.reg)) {
-    for (const unsigned* SR = tri_->getSubRegisters(li.reg); *SR; ++SR) {
-      if (!li_->hasInterval(*SR))
-        continue;
-      LiveInterval &sli = li_->getInterval(*SR);
-      unsigned RemoveEnd = Start;
-      while (RemoveEnd != End) {
-        LiveInterval::iterator LR = sli.FindLiveRangeContaining(Start);
-        if (LR == sli.end())
-          break;
-        RemoveEnd = (LR->end < End) ? LR->end : End;
-        sli.removeRange(Start, RemoveEnd, true);
-        Start = RemoveEnd;
-      }
-    }
-  }
-}
-
 /// removeIntervalIfEmpty - Check if the live interval of a physical register
 /// is empty, if so remove it and also remove the empty intervals of its
 /// sub-registers. Return true if live interval is removed.
@@ -752,19 +824,6 @@ static void PropagateDeadness(LiveInterval &li, MachineInstr *CopyMI,
   }
 }
 
-/// isSameOrFallThroughBB - Return true if MBB == SuccMBB or MBB simply
-/// fallthoughs to SuccMBB.
-static bool isSameOrFallThroughBB(MachineBasicBlock *MBB,
-                                  MachineBasicBlock *SuccMBB,
-                                  const TargetInstrInfo *tii_) {
-  if (MBB == SuccMBB)
-    return true;
-  MachineBasicBlock *TBB = 0, *FBB = 0;
-  SmallVector<MachineOperand, 4> Cond;
-  return !tii_->AnalyzeBranch(*MBB, TBB, FBB, Cond) && !TBB && !FBB &&
-    MBB->isSuccessor(SuccMBB);
-}
-
 /// ShortenDeadCopySrcLiveRange - Shorten a live range as it's artificially
 /// extended by a dead copy. Mark the last use (if any) of the val# as kill as
 /// ends the live range there. If there isn't another use, then this live range
@@ -796,49 +855,10 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
     // More uses past this copy? Nothing to do.
     return false;
 
-  MachineBasicBlock *CopyMBB = CopyMI->getParent();
-  unsigned MBBStart = li_->getMBBStartIdx(CopyMBB);
-  unsigned LastUseIdx;
-  MachineOperand *LastUse = lastRegisterUse(LR->start, CopyIdx-1, li.reg,
-                                            LastUseIdx);
-  if (LastUse) {
-    MachineInstr *LastUseMI = LastUse->getParent();
-    if (!isSameOrFallThroughBB(LastUseMI->getParent(), CopyMBB, tii_)) {
-      // r1024 = op
-      // ...
-      // BB1:
-      //       = r1024
-      //
-      // BB2:
-      // r1025<dead> = r1024<kill>
-      if (MBBStart < LR->end)
-        removeRange(li, MBBStart, LR->end, li_, tri_);
-      return false;
-    }
-
-    // There are uses before the copy, just shorten the live range to the end
-    // of last use.
-    LastUse->setIsKill();
-    removeRange(li, li_->getDefIndex(LastUseIdx), LR->end, li_, tri_);
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-        DstReg == li.reg) {
-      // Last use is itself an identity code.
-      int DeadIdx = LastUseMI->findRegisterDefOperandIdx(li.reg, false, tri_);
-      LastUseMI->getOperand(DeadIdx).setIsDead();
-    }
+  // If there is a last use in the same bb, we can't remove the live range.
+  // Shorten the live interval and return.
+  if (TrimLiveIntervalToLastUse(CopyIdx, CopyMI->getParent(), li, LR))
     return false;
-  }
-
-  // Is it livein?
-  if (LR->start <= MBBStart && LR->end > MBBStart) {
-    if (LR->start == 0) {
-      assert(TargetRegisterInfo::isPhysicalRegister(li.reg));
-      // Live-in to the function but dead. Remove it from entry live-in set.
-      mf_->begin()->removeLiveIn(li.reg);
-    }
-    // FIXME: Shorten intervals in BBs that reaches this BB.
-  }
 
   if (LR->valno->def == RemoveStart)
     // If the def MI defines the val#, propagate the dead marker.
