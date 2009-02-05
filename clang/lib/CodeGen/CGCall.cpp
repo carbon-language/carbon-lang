@@ -316,6 +316,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
                                               ASTContext &Context) const {
+  // FIXME: Set alignment on byval arguments.
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
     // Structures with flexible arrays are always byval.
     if (const RecordType *RT = Ty->getAsStructureType())
@@ -1066,7 +1067,6 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
     case ABIArgInfo::ByVal:
       // byval arguments are always on the stack, which is addr space #0.
       ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
-      assert(AI.getByValAlignment() == 0 && "FIXME: alignment unhandled");
       break;
       
     case ABIArgInfo::Direct:
@@ -1146,7 +1146,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     case ABIArgInfo::ByVal:
       Attributes |= llvm::Attribute::ByVal;
-      assert(AI.getByValAlignment() == 0 && "FIXME: alignment unhandled");
+      Attributes |= 
+        llvm::Attribute::constructAlignmentFromInt(AI.getByValAlignment());
       break;
       
     case ABIArgInfo::Direct:
