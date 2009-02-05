@@ -815,6 +815,12 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       SmallVector<Value*, 8> idxVec(CE->op_begin()+1, CE->op_end());
       if (int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), &idxVec[0],
                                                 idxVec.size())) {
+        // Truncate/sext the offset to the pointer size.
+        if (TD->getPointerSizeInBits() != 64) {
+          int SExtAmount = 64-TD->getPointerSizeInBits();
+          Offset = (Offset << SExtAmount) >> SExtAmount;
+        }
+        
         if (Offset)
           O << '(';
         EmitConstantValueOnly(ptrVal);
