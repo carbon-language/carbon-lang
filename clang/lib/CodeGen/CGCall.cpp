@@ -1430,17 +1430,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     return RValue::get(CI);
 
   case ABIArgInfo::Ignore:
-    if (RetTy->isVoidType())
-      return RValue::get(0);
-    
     // If we are ignoring an argument that had a result, make sure to
     // construct the appropriate return value for our caller.
-    if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
-      llvm::Value *Res =
-        llvm::UndefValue::get(llvm::PointerType::getUnqual(ConvertType(RetTy)));
-      return RValue::getAggregate(Res);
-    }
-    return RValue::get(llvm::UndefValue::get(ConvertType(RetTy)));
+    return GetUndefRValue(RetTy);
+    if (RetTy->isVoidType())
+      return RValue::get(0);
 
   case ABIArgInfo::Coerce: {
     // FIXME: Avoid the conversion through memory if possible.

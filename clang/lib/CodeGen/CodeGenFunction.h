@@ -450,6 +450,9 @@ public:
   //                         LValue Expression Emission
   //===--------------------------------------------------------------------===//
 
+  /// GetUndefRValue - Get an appropriate 'undef' rvalue for the given type.
+  RValue GetUndefRValue(QualType Ty);
+
   /// EmitUnsupportedRValue - Emit a dummy r-value using the type of E
   /// and issue an ErrorUnsupported style diagnostic (using the
   /// provided Name).

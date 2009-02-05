@@ -83,21 +83,25 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
 //                         LValue Expression Emission
 //===----------------------------------------------------------------------===//
 
-RValue CodeGenFunction::EmitUnsupportedRValue(const Expr *E,
-                                              const char *Name) {
-  ErrorUnsupported(E, Name);
-  if (const ComplexType *CTy = E->getType()->getAsComplexType()) {
+RValue CodeGenFunction::GetUndefRValue(QualType Ty) {
+  if (Ty->isVoidType()) {
+    return RValue::get(0);
+  } else if (const ComplexType *CTy = Ty->getAsComplexType()) {
     const llvm::Type *EltTy = ConvertType(CTy->getElementType());
     llvm::Value *U = llvm::UndefValue::get(EltTy);
     return RValue::getComplex(std::make_pair(U, U));
-  } else if (hasAggregateLLVMType(E->getType())) {
-    const llvm::Type *Ty = 
-      llvm::PointerType::getUnqual(ConvertType(E->getType()));
-    return RValue::getAggregate(llvm::UndefValue::get(Ty));
+  } else if (hasAggregateLLVMType(Ty)) {
+    const llvm::Type *LTy = llvm::PointerType::getUnqual(ConvertType(Ty));
+    return RValue::getAggregate(llvm::UndefValue::get(LTy));
   } else {
-    const llvm::Type *Ty = ConvertType(E->getType());
-    return RValue::get(llvm::UndefValue::get(Ty));
+    return RValue::get(llvm::UndefValue::get(ConvertType(Ty)));
   }
+}
+
+RValue CodeGenFunction::EmitUnsupportedRValue(const Expr *E,
+                                              const char *Name) {
+  ErrorUnsupported(E, Name);
+  return GetUndefRValue(E->getType());
 }
 
 LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
