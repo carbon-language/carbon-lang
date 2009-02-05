@@ -1275,16 +1275,6 @@ namespace {
   
 class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
 public:
-  // Type definitions.  
-  typedef llvm::DenseMap<GRExprEngine::NodeTy*,std::pair<Expr*, SymbolRef> >
-          ReleasesNotOwnedTy;
-
-  typedef ReleasesNotOwnedTy UseAfterReleasesTy;
-    
-  typedef llvm::DenseMap<GRExprEngine::NodeTy*,
-                         std::vector<std::pair<SymbolRef,bool> >*>
-          LeaksTy;
-
   class BindingsPrinter : public GRState::Printer {
   public:
     virtual void Print(std::ostream& Out, const GRState* state,
@@ -1295,9 +1285,9 @@ private:
   RetainSummaryManager Summaries;  
   const LangOptions&   LOpts;
 
-  UseAfterReleasesTy   UseAfterReleases;
-  ReleasesNotOwnedTy   ReleasesNotOwned;
-  LeaksTy              Leaks;
+  BugType *useAfterRelease, *releaseNotOwned;
+  BugType *leakWithinFunction, *leakAtReturn;
+  BugReporter *BR;
   
   RefBindings Update(RefBindings B, SymbolRef sym, RefVal V, ArgEffect E,
                      RefVal::Kind& hasErr, RefBindings::Factory& RefBFactory);
@@ -1326,12 +1316,10 @@ public:
   
   CFRefCount(ASTContext& Ctx, bool gcenabled, const LangOptions& lopts)
     : Summaries(Ctx, gcenabled),
-      LOpts(lopts) {}
+      LOpts(lopts), useAfterRelease(0), releaseNotOwned(0), 
+      leakWithinFunction(0), leakAtReturn(0), BR(0) {}
   
-  virtual ~CFRefCount() {
-    for (LeaksTy::iterator I = Leaks.begin(), E = Leaks.end(); I!=E; ++I)
-      delete I->second;
-  }
+  virtual ~CFRefCount() {}
   
   void RegisterChecks(BugReporter &BR);
  
@@ -1404,26 +1392,9 @@ public:
   virtual const GRState* EvalAssume(GRStateManager& VMgr,
                                        const GRState* St, SVal Cond,
                                        bool Assumption, bool& isFeasible);
-
-  // Error iterators.
-
-  typedef UseAfterReleasesTy::iterator use_after_iterator;  
-  typedef ReleasesNotOwnedTy::iterator bad_release_iterator;
-  typedef LeaksTy::iterator            leaks_iterator;
-  
-  use_after_iterator use_after_begin() { return UseAfterReleases.begin(); }
-  use_after_iterator use_after_end() { return UseAfterReleases.end(); }
-  
-  bad_release_iterator bad_release_begin() { return ReleasesNotOwned.begin(); }
-  bad_release_iterator bad_release_end() { return ReleasesNotOwned.end(); }
-  
-  leaks_iterator leaks_begin() { return Leaks.begin(); }
-  leaks_iterator leaks_end() { return Leaks.end(); }
 };
 
 } // end anonymous namespace
-
-
 
 
 void CFRefCount::BindingsPrinter::Print(std::ostream& Out, const GRState* state,
@@ -1457,28 +1428,6 @@ static inline bool IsEndPath(RetainSummary* Summ) {
   return Summ ? Summ->isEndPath() : false;
 }
 
-void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
-                                     GRStmtNodeBuilder<GRState>& Builder,
-                                     Expr* NodeExpr, Expr* ErrorExpr,                        
-                                     ExplodedNode<GRState>* Pred,
-                                     const GRState* St,
-                                     RefVal::Kind hasErr, SymbolRef Sym) {
-  Builder.BuildSinks = true;
-  GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
-
-  if (!N) return;
-    
-  switch (hasErr) {
-    default: assert(false);
-    case RefVal::ErrorUseAfterRelease:
-      UseAfterReleases[N] = std::make_pair(ErrorExpr, Sym);
-      break;
-      
-    case RefVal::ErrorReleaseNotOwned:
-      ReleasesNotOwned[N] = std::make_pair(ErrorExpr, Sym);
-      break;
-  }
-}
 
 /// GetReturnType - Used to get the return type of a message expression or
 ///  function call with the intention of affixing that type to a tracked symbol.
@@ -1885,91 +1834,11 @@ CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
                         false);
 }
 
-void CFRefCount::EvalEndPath(GRExprEngine& Eng,
-                             GREndPathNodeBuilder<GRState>& Builder) {
-  
-  const GRState* St = Builder.getState();
-  RefBindings B = St->get<RefBindings>();
-  
-  llvm::SmallVector<std::pair<SymbolRef, bool>, 10> Leaked;
-  const Decl* CodeDecl = &Eng.getGraph().getCodeDecl();
-  
-  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    bool hasLeak = false;
-    
-    std::pair<GRStateRef, bool> X =
-      HandleSymbolDeath(Eng.getStateManager(), St, CodeDecl,
-                        (*I).first, (*I).second, hasLeak);
-    
-    St = X.first;
-    if (hasLeak) Leaked.push_back(std::make_pair((*I).first, X.second));
-  }
 
-  if (Leaked.empty())
-    return;
-  
-  ExplodedNode<GRState>* N = Builder.MakeNode(St);  
-  
-  if (!N)
-    return;
-    
-  std::vector<std::pair<SymbolRef,bool> >*& LeaksAtNode = Leaks[N];
-  assert (!LeaksAtNode);
-  LeaksAtNode = new std::vector<std::pair<SymbolRef,bool> >();
-  
-  for (llvm::SmallVector<std::pair<SymbolRef,bool>, 10>::iterator
-       I = Leaked.begin(), E = Leaked.end(); I != E; ++I)
-    (*LeaksAtNode).push_back(*I);
-}
 
 // Dead symbols.
 
-void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
-                                 GRExprEngine& Eng,
-                                 GRStmtNodeBuilder<GRState>& Builder,
-                                 ExplodedNode<GRState>* Pred,
-                                 Stmt* S,
-                                 const GRState* St,
-                                 SymbolReaper& SymReaper) {
-    
-  // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.
-  
-  RefBindings B = St->get<RefBindings>();
-  llvm::SmallVector<std::pair<SymbolRef,bool>, 10> Leaked;
-  
-  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
-        E = SymReaper.dead_end(); I != E; ++I) {
-    
-    const RefVal* T = B.lookup(*I);
-    if (!T) continue;
-    
-    bool hasLeak = false;
-    
-    std::pair<GRStateRef, bool> X
-      = HandleSymbolDeath(Eng.getStateManager(), St, 0, *I, *T, hasLeak);
-    
-    St = X.first;
-    
-    if (hasLeak)
-      Leaked.push_back(std::make_pair(*I,X.second));    
-  }
-  
-  if (Leaked.empty())
-    return;    
-  
-  ExplodedNode<GRState>* N = Builder.MakeNode(Dst, S, Pred, St);  
-  
-  if (!N)
-    return;
-  
-  std::vector<std::pair<SymbolRef,bool> >*& LeaksAtNode = Leaks[N];
-  assert (!LeaksAtNode);
-  LeaksAtNode = new std::vector<std::pair<SymbolRef,bool> >();
-  
-  for (llvm::SmallVector<std::pair<SymbolRef,bool>, 10>::iterator
-       I = Leaked.begin(), E = Leaked.end(); I != E; ++I)
-    (*LeaksAtNode).push_back(*I);    
-}
+
 
  // Return statements.
 
@@ -2178,9 +2047,7 @@ namespace {
     
     const char* getDescription() const {
       return "Reference-counted object is used after it is released.";
-    }
-    
-    virtual void FlushReports(BugReporter& BR);
+    }    
   };
   
   class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
@@ -2192,8 +2059,6 @@ namespace {
       "CoreFoundation object: "
       "The object is not owned at this point by the caller.";
     }
-    
-    void FlushReports(BugReporter& BR);
   };
   
   class VISIBILITY_HIDDEN Leak : public CFRefBug {
@@ -2206,8 +2071,6 @@ namespace {
     // FIXME: Remove once reports have better descriptions.
     const char* getDescription() const { return "leak"; }
 
-    void FlushReports(BugReporter &BR);
-    
     bool isLeak() const { return true; }
   };
     
@@ -2275,8 +2138,11 @@ namespace {
 } // end anonymous namespace
 
 void CFRefCount::RegisterChecks(BugReporter& BR) {
-  BR.Register(new UseAfterRelease(this));
-  BR.Register(new BadRelease(this));
+  useAfterRelease = new UseAfterRelease(this);
+  BR.Register(useAfterRelease);
+  
+  releaseNotOwned = new BadRelease(this);
+  BR.Register(releaseNotOwned);
   
   // First register "return" leaks.
   const char* name = 0;
@@ -2291,7 +2157,8 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
     name = "[naming convention] leak of returned object";
   }
   
-  BR.Register(new LeakAtReturn(this, name));
+  leakAtReturn = new LeakAtReturn(this, name);
+  BR.Register(leakAtReturn);
 
   // Second, register leaks within a function/method.
   if (isGCEnabled())
@@ -2303,7 +2170,11 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
     name = "leak";
   }
   
-  BR.Register(new LeakWithinFunction(this, name));
+  leakWithinFunction = new LeakWithinFunction(this, name);
+  BR.Register(leakWithinFunction);
+  
+  // Save the reference to the BugReporter.
+  this->BR = &BR;
 }
 
 static const char* Msgs[] = {
@@ -2637,38 +2508,6 @@ CFRefReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN) {
   return new PathDiagnosticPiece(L, os.str(), Hint);
 }
 
-void UseAfterRelease::FlushReports(BugReporter& BR) {
-  for (CFRefCount::use_after_iterator I = TF.use_after_begin(),
-        E = TF.use_after_end(); I != E; ++I) {    
-    CFRefReport *report = new CFRefReport(*this, I->first, I->second.second);
-    report->addRange(I->second.first->getSourceRange());    
-    BR.EmitReport(report);    
-  }
-}
-
-void BadRelease::FlushReports(BugReporter& BR) {  
-  for (CFRefCount::bad_release_iterator I = TF.bad_release_begin(),
-       E = TF.bad_release_end(); I != E; ++I) {
-    CFRefReport *report = new CFRefReport(*this, I->first, I->second.second);
-    report->addRange(I->second.first->getSourceRange());    
-    BR.EmitReport(report);    
-  }  
-}
-
-void Leak::FlushReports(BugReporter& BR) {  
-  for (CFRefCount::leaks_iterator I = TF.leaks_begin(),
-       E = TF.leaks_end(); I != E; ++I) {
-    
-    std::vector<std::pair<SymbolRef, bool> >& SymV = *(I->second);
-    unsigned n = SymV.size();
-    
-    for (unsigned i = 0; i < n; ++i) {
-      if (isReturn != SymV[i].second) continue;
-      CFRefReport* report = new CFRefLeakReport(*this, I->first, SymV[i].first);
-      BR.EmitReport(report);
-    }
-  }  
-}
 
 SourceLocation CFRefLeakReport::getLocation() const {
   // Most bug reports are cached at the location where they occured.
@@ -2677,6 +2516,123 @@ SourceLocation CFRefLeakReport::getLocation() const {
   ProgramPoint P = 
     GetAllocationSite(0, getEndNode(), getSymbol()).first->getLocation();  
   return cast<PostStmt>(P).getStmt()->getLocStart();
+}
+
+//===----------------------------------------------------------------------===//
+// Handle dead symbols and end-of-path.
+//===----------------------------------------------------------------------===//
+
+void CFRefCount::EvalEndPath(GRExprEngine& Eng,
+                             GREndPathNodeBuilder<GRState>& Builder) {
+  
+  const GRState* St = Builder.getState();
+  RefBindings B = St->get<RefBindings>();
+  
+  llvm::SmallVector<std::pair<SymbolRef, bool>, 10> Leaked;
+  const Decl* CodeDecl = &Eng.getGraph().getCodeDecl();
+  
+  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    bool hasLeak = false;
+    
+    std::pair<GRStateRef, bool> X =
+    HandleSymbolDeath(Eng.getStateManager(), St, CodeDecl,
+                      (*I).first, (*I).second, hasLeak);
+    
+    St = X.first;
+    if (hasLeak) Leaked.push_back(std::make_pair((*I).first, X.second));
+  }
+  
+  if (Leaked.empty())
+    return;
+  
+  ExplodedNode<GRState>* N = Builder.MakeNode(St);  
+  
+  if (!N)
+    return;
+  
+  for (llvm::SmallVector<std::pair<SymbolRef,bool>, 10>::iterator
+       I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
+    
+    CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
+                                                    : leakWithinFunction);
+    assert(BT && "BugType not initialized.");
+    CFRefLeakReport* report = new CFRefLeakReport(*BT, N, I->first);
+    BR->EmitReport(report);
+  }
+}
+
+void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
+                                 GRExprEngine& Eng,
+                                 GRStmtNodeBuilder<GRState>& Builder,
+                                 ExplodedNode<GRState>* Pred,
+                                 Stmt* S,
+                                 const GRState* St,
+                                 SymbolReaper& SymReaper) {
+  
+  // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.
+  
+  RefBindings B = St->get<RefBindings>();
+  llvm::SmallVector<std::pair<SymbolRef,bool>, 10> Leaked;
+  
+  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
+       E = SymReaper.dead_end(); I != E; ++I) {
+    
+    const RefVal* T = B.lookup(*I);
+    if (!T) continue;
+    
+    bool hasLeak = false;
+    
+    std::pair<GRStateRef, bool> X
+    = HandleSymbolDeath(Eng.getStateManager(), St, 0, *I, *T, hasLeak);
+    
+    St = X.first;
+    
+    if (hasLeak)
+      Leaked.push_back(std::make_pair(*I,X.second));    
+  }
+  
+  if (Leaked.empty())
+    return;    
+  
+  ExplodedNode<GRState>* N = Builder.MakeNode(Dst, S, Pred, St);  
+  
+  if (!N)
+    return;
+  
+  for (llvm::SmallVector<std::pair<SymbolRef,bool>, 10>::iterator
+       I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
+    
+    CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
+                                          : leakWithinFunction);
+    assert(BT && "BugType not initialized.");
+    CFRefLeakReport* report = new CFRefLeakReport(*BT, N, I->first);
+    BR->EmitReport(report);
+  }
+}
+
+void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
+                                     GRStmtNodeBuilder<GRState>& Builder,
+                                     Expr* NodeExpr, Expr* ErrorExpr,                        
+                                     ExplodedNode<GRState>* Pred,
+                                     const GRState* St,
+                                     RefVal::Kind hasErr, SymbolRef Sym) {
+  Builder.BuildSinks = true;
+  GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
+  
+  if (!N) return;
+  
+  CFRefBug *BT = 0;
+  
+  if (hasErr == RefVal::ErrorUseAfterRelease)
+    BT = static_cast<CFRefBug*>(useAfterRelease);
+  else {
+    assert(hasErr == RefVal::ErrorReleaseNotOwned);
+    BT = static_cast<CFRefBug*>(releaseNotOwned);
+  }
+    
+  CFRefReport *report = new CFRefReport(*BT, N, Sym);
+  report->addRange(ErrorExpr->getSourceRange());
+  BR->EmitReport(report);
 }
 
 //===----------------------------------------------------------------------===//
