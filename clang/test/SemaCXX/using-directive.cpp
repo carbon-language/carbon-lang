@@ -62,7 +62,7 @@ struct K2 k2; // expected-error{{reference to 'K2' is ambiguous}} \
 //K2 k3;
 
 
-class X {
+class X { // expected-note{{candidate found by name lookup is 'X'}}
   // FIXME: produce a suitable error message for this
   using namespace A; // expected-error{{expected unqualified-id}}
 };
@@ -70,4 +70,39 @@ class X {
 namespace N {
   struct K2;
   struct K2 { };
+}
+
+namespace Ni {
+ int i(); // expected-note{{candidate found by name lookup is 'Ni::i'}}
+}
+
+namespace NiTest {
+ using namespace A;
+ using namespace Ni;
+
+ int test() {
+   return i; // expected-error{{reference to 'i' is ambiguous}}
+ }
+}
+
+namespace OneTag {
+  struct X; // expected-note{{candidate found by name lookup is 'OneTag::X'}}
+}
+
+namespace OneFunction {
+  void X(); // expected-note{{candidate found by name lookup is 'OneFunction::X'}}
+}
+
+namespace TwoTag {
+  struct X; // expected-note{{candidate found by name lookup is 'TwoTag::X'}}
+}
+
+namespace FuncHidesTagAmbiguity {
+  using namespace OneTag;
+  using namespace OneFunction;
+  using namespace TwoTag;
+
+  void test() {
+    (void)X(); // expected-error{{reference to 'X' is ambiguous}}
+  }
 }

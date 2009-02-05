@@ -836,8 +836,8 @@ private:
 public:
   /// Determines whether D is a suitable lookup result according to the
   /// lookup criteria.
-  bool isAcceptableLookupResult(Decl *D, LookupNameKind NameKind,
-                                unsigned IDNS) const {
+  static bool isAcceptableLookupResult(Decl *D, LookupNameKind NameKind,
+                                       unsigned IDNS) {
     switch (NameKind) {
     case Sema::LookupOrdinaryName:
     case Sema::LookupTagName:
@@ -856,7 +856,7 @@ public:
     }
     
     assert(false && 
-           "isNameAcceptableLookupResult always returns before this point");
+           "isAcceptableLookupResult always returns before this point");
     return false;
   }
 

@@ -64,7 +64,8 @@ public:
     IDNS_Label = 0x1,
     IDNS_Tag = 0x2,
     IDNS_Member = 0x4,
-    IDNS_Ordinary = 0x8
+    IDNS_Ordinary = 0x8,
+    IDNS_Protocol = 0x10
   };
   
   /// ObjCDeclQualifier - Qualifier used on types in method declarations
@@ -218,12 +219,14 @@ public:
     case ObjCMethod:
     case ObjCContainer:
     case ObjCCategory:
-    case ObjCProtocol:
     case ObjCInterface:
     case ObjCCategoryImpl:
     case ObjCProperty:
     case ObjCCompatibleAlias:
       return IDNS_Ordinary;
+
+    case ObjCProtocol:
+      return IDNS_Protocol;
 
     case Field:
     case ObjCAtDefsField:
