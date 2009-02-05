@@ -1170,8 +1170,10 @@ SDValue SelectionDAG::getConvertRndSat(MVT VT, DebugLoc dl,
                                        SDValue Val, SDValue DTy,
                                        SDValue STy, SDValue Rnd, SDValue Sat,
                                        ISD::CvtCode Code) {
-  // If the src and dest types are the same, no conversion is necessary.
-  if (DTy == STy)
+  // If the src and dest types are the same and the conversion is between
+  // integer types of the same sign or two floats, no conversion is necessary.
+  if (DTy == STy &&
+      (Code == ISD::CVT_UU || Code == ISD::CVT_SS || Code == ISD::CVT_FF))
     return Val;
 
   FoldingSetNodeID ID;
