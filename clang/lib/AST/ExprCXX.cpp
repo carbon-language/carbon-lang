@@ -17,7 +17,9 @@
 using namespace clang;
 
 void CXXConditionDeclExpr::Destroy(ASTContext& C) {
-  getVarDecl()->Destroy(C);
+  // FIXME: Cannot destroy the decl here, because it is linked into the
+  // DeclContext's chain.
+  //getVarDecl()->Destroy(C);
   delete this;
 }
 

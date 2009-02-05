@@ -212,12 +212,14 @@ VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
 }
 
 void VarDecl::Destroy(ASTContext& C) {
+  Expr *Init = getInit();
+  if (Init)
+    Init->Destroy(C);
   this->~VarDecl();
   C.Deallocate((void *)this);
 }
 
 VarDecl::~VarDecl() {
-  delete getInit();
 }
 
 //===----------------------------------------------------------------------===//
