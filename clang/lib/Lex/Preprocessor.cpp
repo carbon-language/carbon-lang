@@ -406,6 +406,8 @@ static void DefineFloatMacros(std::vector<char> &Buf, const char *Prefix,
   DefineBuiltinMacro(Buf, MacroBuf);
   sprintf(MacroBuf, "__%s_MIN__=%s", Prefix, Min);
   DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_HAS_DENORM__=1", Prefix);
+  DefineBuiltinMacro(Buf, MacroBuf);
 }
 
 
@@ -571,8 +573,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=long int");
   else if (TI.getPtrDiffType(0) == TargetInfo::UnsignedInt)
     DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=unsigned int");
-  else
+  else {
+    assert(TI.getPtrDiffType(0) == TargetInfo::SignedInt);
     DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=int");
+  }
   
   if (TI.getSizeType() == TargetInfo::UnsignedLongLong)
     DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned long long int");
@@ -586,8 +590,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned int");
   else if (TI.getSizeType() == TargetInfo::SignedInt)
     DefineBuiltinMacro(Buf, "__SIZE_TYPE__=int");
-  else
+  else {
+    assert(TI.getPtrDiffType(0) == TargetInfo::UnsignedShort);
     DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned short");
+  }
   
   DefineFloatMacros(Buf, "FLT", &TI.getFloatFormat());
   DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());
