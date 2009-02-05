@@ -102,15 +102,6 @@ namespace {
       return AliasAnalysis::pointsToConstantMemory(P);
     }
 
-    /// getModRefBehavior - Return the behavior of the specified function if
-    /// called from the specified call site.  The call site may be null in which
-    /// case the most generic behavior of this function should be returned.
-    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
-                                         std::vector<PointerAccessInfo> *Info) {
-      assert(Vals.find(F) != Vals.end() && "Never seen value in AA before");
-      return AliasAnalysis::getModRefBehavior(F, CS, Info);
-    }
-
     virtual void deleteValue(Value *V) {
       assert(Vals.find(V) != Vals.end() && "Never seen value in AA before");
       AliasAnalysis::deleteValue(V);

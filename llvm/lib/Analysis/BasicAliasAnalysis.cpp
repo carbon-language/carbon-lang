@@ -155,11 +155,6 @@ namespace {
       return MayAlias;
     }
 
-    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
-                                         std::vector<PointerAccessInfo> *Info) {
-      return UnknownModRefBehavior;
-    }
-
     virtual void getArgumentAccesses(Function *F, CallSite CS,
                                      std::vector<PointerAccessInfo> &Info) {
       assert(0 && "This method may not be called on this function!");
@@ -207,6 +202,12 @@ namespace {
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
     ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
     
+    virtual ModRefBehavior getModRefBehavior(CallSite CS,
+                                     std::vector<PointerAccessInfo> *Info = 0);
+
+    virtual ModRefBehavior getModRefBehavior(Function *F,
+                                     std::vector<PointerAccessInfo> *Info = 0);
+    
     /// hasNoModRefInfoForCalls - We can provide mod/ref information against
     /// non-escaping allocations.
     virtual bool hasNoModRefInfoForCalls() const { return false; }
@@ -249,6 +250,52 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
   return false;
 }
 
+
+static bool isAtomicRMW(Function* F) {
+  if (!F) return false;
+  if (F->isIntrinsic()) {
+    switch (F->getIntrinsicID()) {
+      case Intrinsic::atomic_cmp_swap:
+      case Intrinsic::atomic_load_add:
+      case Intrinsic::atomic_load_and:
+      case Intrinsic::atomic_load_max:
+      case Intrinsic::atomic_load_min:
+      case Intrinsic::atomic_load_nand:
+      case Intrinsic::atomic_load_or:
+      case Intrinsic::atomic_load_sub:
+      case Intrinsic::atomic_load_umax:
+      case Intrinsic::atomic_load_umin:
+      case Intrinsic::atomic_load_xor:
+      case Intrinsic::atomic_swap:
+        return true;
+      default:
+        return false;
+    }
+  }
+  
+  return false;
+}
+
+AliasAnalysis::ModRefBehavior
+BasicAliasAnalysis::getModRefBehavior(CallSite CS,
+                                 std::vector<PointerAccessInfo> *Info) {
+  if (isAtomicRMW(CS.getCalledFunction()))
+    // CAS and related intrinsics only access their arguments.
+    return AliasAnalysis::AccessesArguments;
+  
+  return AliasAnalysis::getModRefBehavior(CS, Info);
+}
+
+AliasAnalysis::ModRefBehavior
+BasicAliasAnalysis::getModRefBehavior(Function *F,
+                                 std::vector<PointerAccessInfo> *Info) {
+  if (isAtomicRMW(F))
+    // CAS and related intrinsics only access their arguments.
+    return AliasAnalysis::AccessesArguments;
+
+  return AliasAnalysis::getModRefBehavior(F, Info);
+}
+
 // getModRefInfo - Check to see if the specified callsite can clobber the
 // specified memory object.  Since we only look at local properties of this
 // function, we really can't say much about this query.  We do, however, use
@@ -256,22 +303,6 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
 //
 AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-  // If the function only accesses its arguments, it suffices to check that
-  // P does not alias any of those arguments.
-  if (AliasAnalysis::getModRefBehavior(CS, 0) ==
-      AliasAnalysis::AccessesArguments) {
-    bool doesAlias = false;
-    for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
-         AI != AE; ++AI)
-      if (alias(*AI, ~0U, P, Size) != NoAlias) {
-        doesAlias = true;
-        break;
-      }
-    
-    if (!doesAlias)
-      return NoModRef;
-  }
-  
   if (!isa<Constant>(P)) {
     const Value *Object = P->getUnderlyingObject();
     

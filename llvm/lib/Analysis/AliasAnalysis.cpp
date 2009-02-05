@@ -59,13 +59,6 @@ bool AliasAnalysis::pointsToConstantMemory(const Value *P) {
   return AA->pointsToConstantMemory(P);
 }
 
-AliasAnalysis::ModRefBehavior
-AliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
-                                 std::vector<PointerAccessInfo> *Info) {
-  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  return AA->getModRefBehavior(F, CS, Info);
-}
-
 bool AliasAnalysis::hasNoModRefInfoForCalls() const {
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
   return AA->hasNoModRefInfoForCalls();
@@ -115,33 +108,10 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(CallSite CS,
                                  std::vector<PointerAccessInfo> *Info) {
-  if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
-    switch (II->getIntrinsicID()) {
-      case Intrinsic::atomic_cmp_swap:
-      case Intrinsic::atomic_load_add:
-      case Intrinsic::atomic_load_and:
-      case Intrinsic::atomic_load_max:
-      case Intrinsic::atomic_load_min:
-      case Intrinsic::atomic_load_nand:
-      case Intrinsic::atomic_load_or:
-      case Intrinsic::atomic_load_sub:
-      case Intrinsic::atomic_load_umax:
-      case Intrinsic::atomic_load_umin:
-      case Intrinsic::atomic_load_xor:
-      case Intrinsic::atomic_swap:
-        // CAS and related intrinsics only access their arguments.
-        return AliasAnalysis::AccessesArguments;
-      default:
-        break;
-    }
-  }
-  
   if (CS.doesNotAccessMemory())
     // Can't do better than this.
     return DoesNotAccessMemory;
-  ModRefBehavior MRB = UnknownModRefBehavior;
-  if (Function *F = CS.getCalledFunction())
-    MRB = getModRefBehavior(F, CS, Info);
+  ModRefBehavior MRB = getModRefBehavior(CS.getCalledFunction(), Info);
   if (MRB != DoesNotAccessMemory && CS.onlyReadsMemory())
     return OnlyReadsMemory;
   return MRB;
@@ -150,34 +120,10 @@ AliasAnalysis::getModRefBehavior(CallSite CS,
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(Function *F,
                                  std::vector<PointerAccessInfo> *Info) {
-  if (F->isIntrinsic()) {
-    switch (F->getIntrinsicID()) {
-      case Intrinsic::atomic_cmp_swap:
-      case Intrinsic::atomic_load_add:
-      case Intrinsic::atomic_load_and:
-      case Intrinsic::atomic_load_max:
-      case Intrinsic::atomic_load_min:
-      case Intrinsic::atomic_load_nand:
-      case Intrinsic::atomic_load_or:
-      case Intrinsic::atomic_load_sub:
-      case Intrinsic::atomic_load_umax:
-      case Intrinsic::atomic_load_umin:
-      case Intrinsic::atomic_load_xor:
-      case Intrinsic::atomic_swap:
-        // CAS and related intrinsics only access their arguments.
-        return AliasAnalysis::AccessesArguments;
-      default:
-        break;
-    }
-  }
-
   if (F->doesNotAccessMemory())
     // Can't do better than this.
     return DoesNotAccessMemory;
-  ModRefBehavior MRB = getModRefBehavior(F, CallSite(), Info);
-  if (MRB != DoesNotAccessMemory && F->onlyReadsMemory())
-    return OnlyReadsMemory;
-  return MRB;
+  return UnknownModRefBehavior;
 }
 
 AliasAnalysis::ModRefResult
@@ -188,6 +134,18 @@ AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
     Mask = Ref;
   else if (MRB == DoesNotAccessMemory)
     return NoModRef;
+  else if (MRB == AliasAnalysis::AccessesArguments) {
+    bool doesAlias = false;
+    for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
+         AI != AE; ++AI)
+      if (alias(*AI, ~0U, P, Size) != NoAlias) {
+        doesAlias = true;
+        break;
+      }
+    
+    if (!doesAlias)
+      return NoModRef;
+  }
 
   if (!AA) return Mask;
 

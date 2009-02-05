@@ -187,12 +187,12 @@ public:
   };
 
   /// getModRefBehavior - Return the behavior when calling the given call site.
-  ModRefBehavior getModRefBehavior(CallSite CS,
+  virtual ModRefBehavior getModRefBehavior(CallSite CS,
                                    std::vector<PointerAccessInfo> *Info = 0);
 
   /// getModRefBehavior - Return the behavior when calling the given function.
   /// For use when the call site is not known.
-  ModRefBehavior getModRefBehavior(Function *F,
+  virtual ModRefBehavior getModRefBehavior(Function *F,
                                    std::vector<PointerAccessInfo> *Info = 0);
 
   /// doesNotAccessMemory - If the specified call is known to never read or
@@ -266,13 +266,6 @@ public:
   /// make sure that it doesn't have mod/ref info either.
   ///
   virtual bool hasNoModRefInfoForCalls() const;
-
-protected:
-  /// getModRefBehavior - Return the behavior of the specified function if
-  /// called from the specified call site.  The call site may be null in which
-  /// case the most generic behavior of this function should be returned.
-  virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
-                                     std::vector<PointerAccessInfo> *Info = 0);
 
 public:
   /// Convenience functions...

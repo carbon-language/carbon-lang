@@ -117,7 +117,7 @@ namespace {
     /// getModRefBehavior - Return the behavior of the specified function if
     /// called from the specified call site.  The call site may be null in which
     /// case the most generic behavior of this function should be returned.
-    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
+    ModRefBehavior getModRefBehavior(Function *F,
                                          std::vector<PointerAccessInfo> *Info) {
       if (FunctionRecord *FR = getFunctionInfo(F)) {
         if (FR->FunctionEffect == 0)
@@ -125,7 +125,23 @@ namespace {
         else if ((FR->FunctionEffect & Mod) == 0)
           return OnlyReadsMemory;
       }
-      return AliasAnalysis::getModRefBehavior(F, CS, Info);
+      return AliasAnalysis::getModRefBehavior(F, Info);
+    }
+    
+    /// getModRefBehavior - Return the behavior of the specified function if
+    /// called from the specified call site.  The call site may be null in which
+    /// case the most generic behavior of this function should be returned.
+    ModRefBehavior getModRefBehavior(CallSite CS,
+                                         std::vector<PointerAccessInfo> *Info) {
+      Function* F = CS.getCalledFunction();
+      if (!F) return AliasAnalysis::getModRefBehavior(CS, Info);
+      if (FunctionRecord *FR = getFunctionInfo(F)) {
+        if (FR->FunctionEffect == 0)
+          return DoesNotAccessMemory;
+        else if ((FR->FunctionEffect & Mod) == 0)
+          return OnlyReadsMemory;
+      }
+      return AliasAnalysis::getModRefBehavior(CS, Info);
     }
 
     virtual void deleteValue(Value *V);
