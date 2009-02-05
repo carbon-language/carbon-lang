@@ -1219,10 +1219,18 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     case ABIArgInfo::Direct: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
       llvm::Value* V = AI;
-      if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
-        // This must be a promotion, for something like
-        // "void a(x) short x; {..."
-        V = EmitScalarConversion(V, Ty, Arg->getType());
+      if (hasAggregateLLVMType(Ty)) {
+        // Create a temporary alloca to hold the argument; the rest of
+        // codegen expects to access aggregates & complex values by
+        // reference.
+        V = CreateTempAlloca(ConvertType(Ty));
+        Builder.CreateStore(AI, V);
+      } else {
+        if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
+          // This must be a promotion, for something like
+          // "void a(x) short x; {..."
+          V = EmitScalarConversion(V, Ty, Arg->getType());
+        }
       }
       EmitParmDecl(*Arg, V);
       break;
@@ -1288,10 +1296,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
     const ABIArgInfo &RetAI = FI.getReturnInfo();
     
     switch (RetAI.getKind()) {
-      // FIXME: Implement correct [in]direct semantics.
     case ABIArgInfo::Indirect:
       if (RetTy->isAnyComplexType()) {
-        // FIXME: Volatile
         ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
         StoreComplexToAddr(RT, CurFn->arg_begin(), false);
       } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
@@ -1303,6 +1309,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       break;
 
     case ABIArgInfo::Direct:
+      // The internal return value temp always will have
+      // pointer-to-return-type type.
       RV = Builder.CreateLoad(ReturnValue);
       break;
 
@@ -1368,11 +1376,12 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       if (RV.isScalar()) {
         Args.push_back(RV.getScalarVal());
       } else if (RV.isComplex()) {
-        // Make a temporary alloca to pass the argument.
-        Args.push_back(CreateTempAlloca(ConvertType(I->second)));
-        StoreComplexToAddr(RV.getComplexVal(), Args.back(), false); 
+        llvm::Value *Tmp = llvm::UndefValue::get(ConvertType(I->second));
+        Tmp = Builder.CreateInsertValue(Tmp, RV.getComplexVal().first, 0);
+        Tmp = Builder.CreateInsertValue(Tmp, RV.getComplexVal().second, 1);
+        Args.push_back(Tmp);
       } else {
-        Args.push_back(RV.getAggregateAddr());
+        Args.push_back(Builder.CreateLoad(RV.getAggregateAddr()));
       }
       break;
      
@@ -1415,7 +1424,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     CI->setName("call");
 
   switch (RetAI.getKind()) {
-    // FIXME: Implement correct [in]direct semantics.
   case ABIArgInfo::Indirect:
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
@@ -1425,17 +1433,21 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       return RValue::get(Builder.CreateLoad(Args[0]));
 
   case ABIArgInfo::Direct:
-    assert((!RetTy->isAnyComplexType() &&
-            !CodeGenFunction::hasAggregateLLVMType(RetTy)) &&
-           "FIXME: Implement return for non-scalar direct types.");
-    return RValue::get(CI);
+    if (RetTy->isAnyComplexType()) {
+      llvm::Value *Real = Builder.CreateExtractValue(CI, 0);
+      llvm::Value *Imag = Builder.CreateExtractValue(CI, 1);
+      return RValue::getComplex(std::make_pair(Real, Imag));
+    } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+      llvm::Value *V = CreateTempAlloca(ConvertType(RetTy), "agg.tmp");
+      Builder.CreateStore(CI, V);
+      return RValue::getAggregate(V);
+    } else
+      return RValue::get(CI);
 
   case ABIArgInfo::Ignore:
     // If we are ignoring an argument that had a result, make sure to
     // construct the appropriate return value for our caller.
     return GetUndefRValue(RetTy);
-    if (RetTy->isVoidType())
-      return RValue::get(0);
 
   case ABIArgInfo::Coerce: {
     // FIXME: Avoid the conversion through memory if possible.
