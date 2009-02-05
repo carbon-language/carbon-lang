@@ -631,6 +631,7 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
   LoadSDNode *LD = dyn_cast<LoadSDNode>(SDValue(N, 0));
   SDValue Chain = LD->getChain();
   SDValue Ptr = LD->getBasePtr();
+  DebugLoc dl = LD->getDebugLoc();
 
   SDValue Load, Offset;
   SDVTList Tys; 
@@ -653,7 +654,7 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
       // Add the pointer offset if any
       Offset = DAG.getConstant(iter + LoadOffset, MVT::i8);
       Tys = DAG.getVTList(MVT::i8, MVT::Other); 
-      Load = DAG.getNode(PIC16ISD::PIC16Load, Tys, Chain, PtrLo, PtrHi,
+      Load = DAG.getNode(PIC16ISD::PIC16Load, dl, Tys, Chain, PtrLo, PtrHi,
                          Offset); 
       PICLoads.push_back(Load);
     }
@@ -675,7 +676,7 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
     for (iter=0; iter<MemBytes; ++iter) {
       // Add the pointer offset if any
       Offset = DAG.getConstant(iter + LoadOffset, MVT::i8);
-      Load = DAG.getNode(PIC16ISD::PIC16Load, Tys, Chain, PtrLo, PtrHi,
+      Load = DAG.getNode(PIC16ISD::PIC16Load, dl, Tys, Chain, PtrLo, PtrHi,
                          Offset); 
       PICLoads.push_back(Load);
     }
@@ -684,7 +685,7 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
     if (ISD::isSEXTLoad(N)) {
       // For all ExtdBytes use the Right Shifted(Arithmetic) Value of the 
       // highest MemByte
-      SDValue SRA = DAG.getNode(ISD::SRA, MVT::i8, Load, 
+      SDValue SRA = DAG.getNode(ISD::SRA, dl, MVT::i8, Load, 
                                 DAG.getConstant(7, MVT::i8));
       for (iter=MemBytes; iter<ExtdBytes; ++iter) { 
         PICLoads.push_back(SRA);
@@ -704,33 +705,36 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
     return PICLoads[0];
   }
   else if (VT == MVT::i16) {
-    BP = DAG.getNode(ISD::BUILD_PAIR, VT, PICLoads[0], PICLoads[1]);
+    BP = DAG.getNode(ISD::BUILD_PAIR, dl, VT, PICLoads[0], PICLoads[1]);
     if (MemVT == MVT::i8)
       Chain = getChain(PICLoads[0]);
     else
-      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, getChain(PICLoads[0]),
-                          getChain(PICLoads[1]));
+      Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
+                          getChain(PICLoads[0]), getChain(PICLoads[1]));
   } else if (VT == MVT::i32) {
     SDValue BPs[2];
-    BPs[0] = DAG.getNode(ISD::BUILD_PAIR, MVT::i16, PICLoads[0], PICLoads[1]);
-    BPs[1] = DAG.getNode(ISD::BUILD_PAIR, MVT::i16, PICLoads[2], PICLoads[3]);
-    BP = DAG.getNode(ISD::BUILD_PAIR, VT, BPs[0], BPs[1]);
+    BPs[0] = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i16, 
+                         PICLoads[0], PICLoads[1]);
+    BPs[1] = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i16,
+                         PICLoads[2], PICLoads[3]);
+    BP = DAG.getNode(ISD::BUILD_PAIR, dl, VT, BPs[0], BPs[1]);
     if (MemVT == MVT::i8)
       Chain = getChain(PICLoads[0]);
     else if (MemVT == MVT::i16)
-      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, getChain(PICLoads[0]),
-                          getChain(PICLoads[1]));
+      Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
+                          getChain(PICLoads[0]), getChain(PICLoads[1]));
     else {
       SDValue Chains[2];
-      Chains[0] = DAG.getNode(ISD::TokenFactor, MVT::Other,
+      Chains[0] = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                               getChain(PICLoads[0]), getChain(PICLoads[1]));
-      Chains[1] = DAG.getNode(ISD::TokenFactor, MVT::Other,
+      Chains[1] = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                               getChain(PICLoads[2]), getChain(PICLoads[3]));
-      Chain =  DAG.getNode(ISD::TokenFactor, MVT::Other, Chains[0], Chains[1]);
+      Chain =  DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                           Chains[0], Chains[1]);
     }
   }
   Tys = DAG.getVTList(VT, MVT::Other); 
-  return DAG.getNode(ISD::MERGE_VALUES, Tys, BP, Chain);
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Tys, BP, Chain);
 }
 
 SDValue PIC16TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) {
@@ -831,8 +835,8 @@ SDValue PIC16TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
-                                                 SelectionDAG &DAG) {
-
+                                                 SelectionDAG &DAG,
+                                                 DebugLoc dl) {
   assert (Op.getValueType() == MVT::i8 
           && "illegal value type to store on stack.");
 
@@ -849,7 +853,7 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
 
   // Store the value to ES.
-  SDValue Store = DAG.getNode (PIC16ISD::PIC16Store, MVT::Other,
+  SDValue Store = DAG.getNode (PIC16ISD::PIC16Store, dl, MVT::Other,
                                DAG.getEntryNode(),
                                Op, ES, 
                                DAG.getConstant (1, MVT::i8), // Banksel.
@@ -857,7 +861,7 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
 
   // Load the value from ES.
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other);
-  SDValue Load = DAG.getNode(PIC16ISD::PIC16Load, Tys, Store,
+  SDValue Load = DAG.getNode(PIC16ISD::PIC16Load, dl, Tys, Store,
                              ES, DAG.getConstant (1, MVT::i8),
                              DAG.getConstant (FI, MVT::i8));
     
@@ -978,6 +982,7 @@ SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
     SDValue Chain = TheCall->getChain();
     SDValue Callee = TheCall->getCallee();
+    DebugLoc dl = TheCall->getDebugLoc();
     unsigned i =0;
     if (Callee.getValueType() == MVT::i16 &&
       Callee.getOpcode() == ISD::BUILD_PAIR) {
@@ -1006,7 +1011,7 @@ SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
       SDVTList VTs = DAG.getVTList(&NodeTys[0], NodeTys.size());
       SDValue NewCall = 
-              DAG.getCall(TheCall->getCallingConv(), TheCall->getDebugLoc(),
+              DAG.getCall(TheCall->getCallingConv(), dl,
                           TheCall->isVarArg(), TheCall->isTailCall(), 
                           TheCall->isInreg(), VTs, &Ops[0], Ops.size());
 
@@ -1061,7 +1066,7 @@ SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     OperFlag = getOutFlag(CallArgs);
 
     SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-    SDValue PICCall = DAG.getNode(PIC16ISD::CALL, Tys, Chain, Callee,
+    SDValue PICCall = DAG.getNode(PIC16ISD::CALL, dl, Tys, Chain, Callee,
                                   OperFlag);
     Chain = getChain(PICCall);
     OperFlag = getOutFlag(PICCall);
@@ -1108,14 +1113,15 @@ bool PIC16TargetLowering::NeedToConvertToMemOp(SDValue Op, unsigned &MemOp) {
 }  
 
 SDValue PIC16TargetLowering:: LowerBinOp(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   // We should have handled larger operands in type legalizer itself.
   assert (Op.getValueType() == MVT::i8 && "illegal Op to lower");
   unsigned MemOp = 1;
   if (NeedToConvertToMemOp(Op, MemOp)) {
     // Put one value on stack.
-    SDValue NewVal = ConvertToMemOperand (Op.getOperand(MemOp), DAG);
+    SDValue NewVal = ConvertToMemOperand (Op.getOperand(MemOp), DAG, dl);
 
-    return DAG.getNode(Op.getOpcode(), MVT::i8, Op.getOperand(MemOp ^ 1),
+    return DAG.getNode(Op.getOpcode(), dl, MVT::i8, Op.getOperand(MemOp ^ 1),
     NewVal);
   }
   else {
@@ -1126,18 +1132,20 @@ SDValue PIC16TargetLowering:: LowerBinOp(SDValue Op, SelectionDAG &DAG) {
 SDValue PIC16TargetLowering:: LowerADD(SDValue Op, SelectionDAG &DAG) {
   // We should have handled larger operands in type legalizer itself.
   assert (Op.getValueType() == MVT::i8 && "illegal add to lower");
+  DebugLoc dl = Op.getDebugLoc();
   unsigned MemOp = 1;
   if (NeedToConvertToMemOp(Op, MemOp)) {
     // Put one value on stack.
-    SDValue NewVal = ConvertToMemOperand (Op.getOperand(MemOp), DAG);
+    SDValue NewVal = ConvertToMemOperand (Op.getOperand(MemOp), DAG, dl);
     
     SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Flag);
 
     if (Op.getOpcode() == ISD::ADDE)
-      return DAG.getNode(Op.getOpcode(), Tys, Op.getOperand(MemOp ^ 1), NewVal, 
-                         Op.getOperand(2));
+      return DAG.getNode(Op.getOpcode(), dl, Tys, Op.getOperand(MemOp ^ 1),
+                         NewVal, Op.getOperand(2));
     else
-      return DAG.getNode(Op.getOpcode(), Tys, Op.getOperand(MemOp ^ 1), NewVal);
+      return DAG.getNode(Op.getOpcode(), dl, Tys, Op.getOperand(MemOp ^ 1),
+                         NewVal);
   }
   else if (Op.getOpcode() == ISD::ADD) {
     return Op;
@@ -1148,6 +1156,7 @@ SDValue PIC16TargetLowering:: LowerADD(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   // We should have handled larger operands in type legalizer itself.
   assert (Op.getValueType() == MVT::i8 && "illegal sub to lower");
 
@@ -1157,14 +1166,14 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
     return SDValue();
 
   // Put first operand on stack.
-  SDValue NewVal = ConvertToMemOperand (Op.getOperand(0), DAG);
+  SDValue NewVal = ConvertToMemOperand (Op.getOperand(0), DAG, dl);
 
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Flag);
   if (Op.getOpcode() == ISD::SUBE)
-    return DAG.getNode(Op.getOpcode(), Tys, NewVal, Op.getOperand(1),
+    return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1),
                        Op.getOperand(2));
   else
-    return DAG.getNode(Op.getOpcode(), Tys, NewVal, Op.getOperand(1));
+    return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1));
 }
 
 // LowerFORMAL_ARGUMENTS - In Lowering FORMAL ARGUMENTS - MERGE_VALUES nodes
@@ -1249,7 +1258,7 @@ static void LookThroughSetCC(SDValue &LHS, SDValue &RHS,
 // Returns appropriate CMP insn and corresponding condition code in PIC16CC
 SDValue PIC16TargetLowering::getPIC16Cmp(SDValue LHS, SDValue RHS, 
                                          unsigned CC, SDValue &PIC16CC, 
-                                         SelectionDAG &DAG) {
+                                         SelectionDAG &DAG, DebugLoc dl) {
   PIC16CC::CondCodes CondCode = (PIC16CC::CondCodes) CC;
 
   // PIC16 sub is literal - W. So Swap the operands and condition if needed.
@@ -1294,8 +1303,8 @@ SDValue PIC16TargetLowering::getPIC16Cmp(SDValue LHS, SDValue RHS,
   // These are signed comparisons. 
   SDValue Mask = DAG.getConstant(128, MVT::i8);
   if (isSignedComparison(CondCode)) {
-    LHS = DAG.getNode (ISD::XOR, MVT::i8, LHS, Mask);
-    RHS = DAG.getNode (ISD::XOR, MVT::i8, RHS, Mask); 
+    LHS = DAG.getNode (ISD::XOR, dl, MVT::i8, LHS, Mask);
+    RHS = DAG.getNode (ISD::XOR, dl, MVT::i8, RHS, Mask); 
   }
 
   SDVTList VTs = DAG.getVTList (MVT::i8, MVT::Flag);
@@ -1305,11 +1314,11 @@ SDValue PIC16TargetLowering::getPIC16Cmp(SDValue LHS, SDValue RHS,
   // for subwf and literal for sublw) and it is used by this operation only. 
   if ((LHS.getOpcode() == ISD::Constant || isDirectLoad(LHS)) 
       && LHS.hasOneUse())
-    return DAG.getNode(PIC16ISD::SUBCC, VTs, LHS, RHS);
+    return DAG.getNode(PIC16ISD::SUBCC, dl, VTs, LHS, RHS);
 
   // else convert the first operand to mem.
-  LHS = ConvertToMemOperand (LHS, DAG);
-  return DAG.getNode(PIC16ISD::SUBCC, VTs, LHS, RHS);
+  LHS = ConvertToMemOperand (LHS, DAG, dl);
+  return DAG.getNode(PIC16ISD::SUBCC, dl, VTs, LHS, RHS);
 }
 
 
@@ -1320,6 +1329,7 @@ SDValue PIC16TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   SDValue TrueVal = Op.getOperand(2);
   SDValue FalseVal = Op.getOperand(3);
   unsigned ORIGCC = ~0;
+  DebugLoc dl = Op.getDebugLoc();
 
   // If this is a select_cc of a "setcc", and if the setcc got lowered into
   // an CMP[IF]CC/SELECT_[IF]CC pair, find the original compared values.
@@ -1332,9 +1342,9 @@ SDValue PIC16TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   if (ORIGCC == ~0U) ORIGCC = IntCCToPIC16CC (CC);
 
   SDValue PIC16CC;
-  SDValue Cmp = getPIC16Cmp(LHS, RHS, ORIGCC, PIC16CC, DAG);
+  SDValue Cmp = getPIC16Cmp(LHS, RHS, ORIGCC, PIC16CC, DAG, dl);
 
-  return DAG.getNode (PIC16ISD::SELECT_ICC, TrueVal.getValueType(), TrueVal,
+  return DAG.getNode (PIC16ISD::SELECT_ICC, dl, TrueVal.getValueType(), TrueVal,
                       FalseVal, PIC16CC, Cmp.getValue(1)); 
 }
 
@@ -1400,6 +1410,7 @@ SDValue PIC16TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
   SDValue RHS = Op.getOperand(3);   // RHS of the condition.
   SDValue Dest = Op.getOperand(4);  // BB to jump to
   unsigned ORIGCC = ~0;
+  DebugLoc dl = Op.getDebugLoc();
 
   // If this is a br_cc of a "setcc", and if the setcc got lowered into
   // an CMP[IF]CC/SELECT_[IF]CC pair, find the original compared values.
@@ -1408,9 +1419,9 @@ SDValue PIC16TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
 
   // Get the Compare insn and condition code.
   SDValue PIC16CC;
-  SDValue Cmp = getPIC16Cmp(LHS, RHS, ORIGCC, PIC16CC, DAG);
+  SDValue Cmp = getPIC16Cmp(LHS, RHS, ORIGCC, PIC16CC, DAG, dl);
 
-  return DAG.getNode(PIC16ISD::BRCOND, MVT::Other, Chain, Dest, PIC16CC, 
+  return DAG.getNode(PIC16ISD::BRCOND, dl, MVT::Other, Chain, Dest, PIC16CC, 
                      Cmp.getValue(1));
 }
 

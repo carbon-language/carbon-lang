@@ -88,7 +88,7 @@ namespace llvm {
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     SDValue getPIC16Cmp(SDValue LHS, SDValue RHS, unsigned OrigCC, SDValue &CC,
-                        SelectionDAG &DAG);
+                        SelectionDAG &DAG, DebugLoc dl);
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                         MachineBasicBlock *MBB);
 
@@ -146,7 +146,7 @@ namespace llvm {
 
     // We can not have both operands of a binary operation in W.
     // This function is used to put one operand on stack and generate a load.
-    SDValue ConvertToMemOperand(SDValue Op, SelectionDAG &DAG); 
+    SDValue ConvertToMemOperand(SDValue Op, SelectionDAG &DAG, DebugLoc dl); 
 
     // This function checks if we need to put an operand of an operation on
     // stack and generate a load or not.

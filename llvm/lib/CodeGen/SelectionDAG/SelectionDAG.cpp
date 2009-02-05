@@ -3924,21 +3924,10 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
   return getNode(Opcode, DL, VTList, Ops, 2);
 }
 
-SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                              SDValue N1, SDValue N2, SDValue N3) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VTList, N1, N2, N3);
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
                               SDValue N1, SDValue N2, SDValue N3) {
   SDValue Ops[] = { N1, N2, N3 };
   return getNode(Opcode, DL, VTList, Ops, 3);
-}
-
-SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                              SDValue N1, SDValue N2, SDValue N3,
-                              SDValue N4) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VTList, N1, N2, N3, N4);
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
@@ -3946,12 +3935,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
                               SDValue N4) {
   SDValue Ops[] = { N1, N2, N3, N4 };
   return getNode(Opcode, DL, VTList, Ops, 4);
-}
-
-SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                              SDValue N1, SDValue N2, SDValue N3,
-                              SDValue N4, SDValue N5) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VTList, N1, N2, N3, N4, N5);
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
