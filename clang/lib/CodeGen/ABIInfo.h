@@ -71,7 +71,7 @@ namespace clang {
     ABIArgInfo(Kind K, const llvm::Type *TD=0,
                unsigned UI=0) : TheKind(K),
                                 TypeData(TD),
-                                UIntData(0) {}
+                                UIntData(UI) {}
   public:
     ABIArgInfo() : TheKind(Direct), TypeData(0), UIntData(0) {}
 
