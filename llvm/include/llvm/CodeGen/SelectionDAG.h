@@ -442,11 +442,8 @@ public:
   SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
                   const SDValue *Ops, unsigned NumOps);
 
-  SDValue getNode(unsigned Opcode, SDVTList VTs);
   SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs);
-  SDValue getNode(unsigned Opcode, SDVTList VTs, SDValue N);
   SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs, SDValue N);
-  SDValue getNode(unsigned Opcode, SDVTList VTs, SDValue N1, SDValue N2);
   SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
                   SDValue N1, SDValue N2);
   SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,

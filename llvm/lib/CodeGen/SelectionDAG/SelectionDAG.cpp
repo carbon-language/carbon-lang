@@ -3896,28 +3896,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VTList); 
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList) {
   return getNode(Opcode, DL, VTList, 0, 0);
-}
-
-SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                              SDValue N1) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VTList, N1);
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
                               SDValue N1) {
   SDValue Ops[] = { N1 };
   return getNode(Opcode, DL, VTList, Ops, 1);
-}
-
-SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                              SDValue N1, SDValue N2) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VTList, N1, N2);
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
