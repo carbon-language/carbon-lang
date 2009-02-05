@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -pre-alloc-split -stats |& \
-; RUN:   grep {pre-alloc-split} | count 3
+; RUN:   grep {pre-alloc-split} | count 2
 
-define i32 @t() {
+define i32 @t(i32 %arg) {
 entry:
 	br label %bb6
 
@@ -12,7 +12,7 @@ entry:
 	br label %bb6
 
 bb6:		; preds = %.noexc6, %entry
-	%1 = uitofp i32 0 to double		; <double> [#uses=1]
+	%1 = uitofp i32 %arg to double		; <double> [#uses=1]
 	%2 = sub i32 0, 0		; <i32> [#uses=1]
 	%3 = invoke i8* @_Znwm(i32 0)
 			to label %.noexc6 unwind label %lpad32		; <i8*> [#uses=1]

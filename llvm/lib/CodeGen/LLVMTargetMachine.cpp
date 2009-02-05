@@ -42,10 +42,6 @@ static cl::opt<bool> PrintGCInfo("print-gc", cl::Hidden,
 static cl::opt<bool>
 EnableSinking("enable-sinking", cl::init(false), cl::Hidden,
               cl::desc("Perform sinking on machine code"));
-static cl::opt<bool>
-EnableLICM("machine-licm",
-           cl::init(false), cl::Hidden,
-           cl::desc("Perform loop-invariant code motion on machine code"));
 
 // When this works it will be on by default.
 static cl::opt<bool>
@@ -187,7 +183,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  if (EnableLICM)
+  if (!Fast)
     PM.add(createMachineLICMPass());
 
   if (EnableSinking)
