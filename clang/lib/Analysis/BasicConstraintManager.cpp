@@ -165,17 +165,14 @@ const GRState* BasicConstraintManager::AssumeAux(const GRState* St, Loc Cond,
     // FIXME: Should this go into the storemanager?
     
     const MemRegion* R = cast<loc::MemRegionVal>(Cond).getRegion();
-    
-    while (R) {
-      if (const SubRegion* SubR = dyn_cast<SubRegion>(R)) {
-        R = SubR->getSuperRegion();
-        continue;
-      }
-      else if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
+    const SubRegion* SubR = dyn_cast<SubRegion>(R);
+
+    while (SubR) {
+      // FIXME: now we only find the first symbolic region.
+      if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(SubR))
         return AssumeAux(St, loc::SymbolVal(SymR->getSymbol()), Assumption,
                                             isFeasible);
-      
-      break;
+      SubR = dyn_cast<SubRegion>(SubR->getSuperRegion());
     }
     
     // FALL-THROUGH.

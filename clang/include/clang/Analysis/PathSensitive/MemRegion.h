@@ -38,10 +38,11 @@ class MemRegionManager;
 /// MemRegion - The root abstract class for all memory regions.
 class MemRegion : public llvm::FoldingSetNode {
 public:
-  enum Kind { MemSpaceRegionKind, SymbolicRegionKind,
+  enum Kind { MemSpaceRegionKind,
               AllocaRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
+               SymbolicRegionKind,
                CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
                AnonTypedRegionKind,
@@ -103,7 +104,7 @@ public:
   bool isSubRegionOf(const MemRegion* R) const;
 
   static bool classof(const MemRegion* R) {
-    return R->getKind() > SymbolicRegionKind;
+    return R->getKind() > MemSpaceRegionKind;
   }
 };
   
@@ -135,32 +136,6 @@ public:
   }
 };    
   
-/// SymbolicRegion - A special, "non-concrete" region. Unlike other region
-///  clases, SymbolicRegion represents a region that serves as an alias for
-///  either a real region, a NULL pointer, etc.  It essentially is used to
-///  map the concept of symbolic values into the domain of regions.  Symbolic
-///  regions do not need to be typed.
-class SymbolicRegion : public MemRegion {
-protected:
-  const SymbolRef sym;
-
-public:
-  SymbolicRegion(const SymbolRef s) : MemRegion(SymbolicRegionKind), sym(s) {}
-    
-  SymbolRef getSymbol() const {
-    return sym;
-  }
-    
-  void Profile(llvm::FoldingSetNodeID& ID) const;
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef sym);
-  
-  void print(llvm::raw_ostream& os) const;
-  
-  static bool classof(const MemRegion* R) {
-    return R->getKind() == SymbolicRegionKind;
-  }
-};  
-
 /// TypedRegion - An abstract class representing regions that are typed.
 class TypedRegion : public SubRegion {
 protected:
@@ -187,6 +162,37 @@ public:
     return k > BEG_TYPED_REGIONS && k < END_TYPED_REGIONS;
   }
 };
+
+/// SymbolicRegion - A special, "non-concrete" region. Unlike other region
+///  clases, SymbolicRegion represents a region that serves as an alias for
+///  either a real region, a NULL pointer, etc.  It essentially is used to
+///  map the concept of symbolic values into the domain of regions.  Symbolic
+///  regions do not need to be typed.
+class SymbolicRegion : public TypedRegion {
+protected:
+  const SymbolRef sym;
+  const SymbolManager& SymMgr;
+
+public:
+  SymbolicRegion(const SymbolRef s, const SymbolManager& mgr, MemRegion* sreg) 
+    : TypedRegion(sreg, SymbolicRegionKind), sym(s), SymMgr(mgr) {}
+    
+  SymbolRef getSymbol() const {
+    return sym;
+  }
+
+  QualType getRValueType(ASTContext& C) const;
+
+  void Profile(llvm::FoldingSetNodeID& ID) const;
+
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef sym);
+  
+  void print(llvm::raw_ostream& os) const;
+  
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == SymbolicRegionKind;
+  }
+};  
 
 /// StringRegion - Region associated with a StringLiteral.
 class StringRegion : public TypedRegion {
@@ -492,7 +498,7 @@ public:
   getCompoundLiteralRegion(const CompoundLiteralExpr* CL);  
   
   /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
-  SymbolicRegion* getSymbolicRegion(const SymbolRef sym);
+  SymbolicRegion* getSymbolicRegion(const SymbolRef sym, const SymbolManager&);
 
   StringRegion* getStringRegion(const StringLiteral* Str);
 

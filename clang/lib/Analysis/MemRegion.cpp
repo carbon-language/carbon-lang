@@ -107,6 +107,28 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ElementRegion::ProfileRegion(ID, Index, superRegion);
 }
 
+//===----------------------------------------------------------------------===//
+// getLValueType() and getRValueType()
+//===----------------------------------------------------------------------===//
+
+QualType SymbolicRegion::getRValueType(ASTContext& C) const {
+  const SymbolData& data = SymMgr.getSymbolData(sym);
+
+  // FIXME: We could use the SymbolManager::getType() directly. But that
+  // would hide the assumptions we made here. What is the type of a symbolic
+  // region is unclear for other cases.
+
+  // For now we assume the symbol is a typed region rvalue.
+  const TypedRegion* R 
+    = cast<TypedRegion>(cast<SymbolRegionRValue>(data).getRegion());
+
+  // Assume the region rvalue has a pointer type, only then we could have a
+  // symbolic region associated with it.
+  PointerType* PTy = cast<PointerType>(R->getRValueType(C).getTypePtr());
+
+  return PTy->getPointeeType();
+}
+
 QualType ElementRegion::getRValueType(ASTContext& C) const {
   // Strip off typedefs from the ArrayRegion's RvalueType.
   QualType T = getArrayRegion()->getRValueType(C)->getDesugaredType();
@@ -118,10 +140,6 @@ QualType ElementRegion::getRValueType(ASTContext& C) const {
   // the element's  
   return T;
 }
-
-//===----------------------------------------------------------------------===//
-// getLValueType() and getRValueType()
-//===----------------------------------------------------------------------===//
 
 QualType StringRegion::getRValueType(ASTContext& C) const {
   return Str->getType();
@@ -308,7 +326,8 @@ MemRegionManager::getElementRegion(SVal Idx, const TypedRegion* superRegion){
 }
 
 /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
-SymbolicRegion* MemRegionManager::getSymbolicRegion(const SymbolRef sym) {
+SymbolicRegion* MemRegionManager::getSymbolicRegion(const SymbolRef sym,
+                                                    const SymbolManager& mgr) {
   
   llvm::FoldingSetNodeID ID;
   SymbolicRegion::ProfileRegion(ID, sym);
@@ -319,7 +338,8 @@ SymbolicRegion* MemRegionManager::getSymbolicRegion(const SymbolRef sym) {
   
   if (!R) {
     R = (SymbolicRegion*) A.Allocate<SymbolicRegion>();
-    new (R) SymbolicRegion(sym);
+    // SymbolicRegion's storage class is usually unknown.
+    new (R) SymbolicRegion(sym, mgr, getUnknownRegion());
     Regions.InsertNode(R, InsertPos);
   }
   

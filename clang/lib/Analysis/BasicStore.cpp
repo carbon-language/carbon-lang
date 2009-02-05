@@ -173,7 +173,8 @@ SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
   
   switch(BaseL.getSubKind()) {
     case loc::SymbolValKind:
-      BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol());
+      BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol(),
+                                      StateMgr.getSymbolManager());
       break;
       
     case loc::GotoLabelKind:
@@ -218,7 +219,8 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
       // Create a region to represent this symbol.
       // FIXME: In the future we may just use symbolic regions instead of
       //  SymbolVals to reason about symbolic memory chunks.
-      const MemRegion* SymR = MRMgr.getSymbolicRegion(Sym);
+      const MemRegion* SymR = MRMgr.getSymbolicRegion(Sym, 
+                                                  StateMgr.getSymbolManager());
       // Layered a typed region on top of this.
       QualType T = StateMgr.getSymbolManager().getType(Sym);
       BaseR = MRMgr.getAnonTypedRegion(T, SymR);

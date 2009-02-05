@@ -312,7 +312,8 @@ SVal RegionStoreManager::getLValueField(const GRState* St, SVal Base,
     break;
 
   case loc::SymbolValKind:
-    BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol());
+    BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol(),
+                                    StateMgr.getSymbolManager());
     break;
   
   case loc::GotoLabelKind:
@@ -701,7 +702,8 @@ Store RegionStoreManager::Remove(Store store, Loc L) {
   if (isa<loc::MemRegionVal>(L))
     R = cast<loc::MemRegionVal>(L).getRegion();
   else if (isa<loc::SymbolVal>(L))
-    R = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(L).getSymbol());
+    R = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(L).getSymbol(),
+                                StateMgr.getSymbolManager());
   
   if (R) {
     RegionBindingsTy B = GetRegionBindings(store);  
