@@ -3469,8 +3469,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
        Fun != Ovl->function_end(); ++Fun) {
     // C++ [over.over]p3:
     //   Non-member functions and static member functions match
-    //   targets of type “pointer-to-function”or
-    //   “reference-to-function.” Nonstatic member functions match targets of
+    //   targets of type "pointer-to-function" or "reference-to-function."
+    //   Nonstatic member functions match targets of
     //   type "pointer-to-member-function."
     // Note that according to DR 247, the containing class does not matter.
     if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Fun)) {
