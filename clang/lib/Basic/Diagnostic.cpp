@@ -33,6 +33,7 @@ enum {
   EXTENSION  = 0x03,
   EXTWARN    = 0x04,
   ERROR      = 0x05,
+  FATAL      = 0x06,
   class_mask = 0x07
 };
 
@@ -259,7 +260,10 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
     case diag::MAP_IGNORE:  return Diagnostic::Ignored;
     case diag::MAP_WARNING: DiagClass = WARNING; break;
     case diag::MAP_ERROR:   DiagClass = ERROR; break;
+    case diag::MAP_FATAL:   DiagClass = FATAL; break;
     }
+  } else if (getDiagnosticMapping((diag::kind)DiagID) == diag::MAP_FATAL) {
+    DiagClass = FATAL;
   }
   
   // Map diagnostic classes based on command line argument settings.
@@ -287,6 +291,7 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
   case NOTE:        return Diagnostic::Note;
   case WARNING:     return Diagnostic::Warning;
   case ERROR:       return Diagnostic::Error;
+  case FATAL:       return Diagnostic::Fatal;
   }
 }
 

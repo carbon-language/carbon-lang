@@ -56,12 +56,15 @@ namespace clang {
       
     /// Enum values that allow the client to map NOTEs, WARNINGs, and EXTENSIONs
     /// to either MAP_IGNORE (nothing), MAP_WARNING (emit a warning), MAP_ERROR
-    /// (emit as an error), or MAP_DEFAULT (handle the default way).
+    /// (emit as an error), or MAP_DEFAULT (handle the default way).  It allows
+    /// clients to map errors to MAP_ERROR/MAP_DEFAULT or MAP_FATAL (stop
+    /// emitting diagnostics after this one).
     enum Mapping {
       MAP_DEFAULT = 0,     //< Do not map this diagnostic.
       MAP_IGNORE  = 1,     //< Map this diagnostic to nothing, ignore it.
       MAP_WARNING = 2,     //< Map this diagnostic to a warning.
-      MAP_ERROR   = 3      //< Map this diagnostic to an error.
+      MAP_ERROR   = 3,     //< Map this diagnostic to an error.
+      MAP_FATAL   = 4      //< Map this diagnostic to a fatal error.
     };
   }
   
@@ -73,7 +76,7 @@ class Diagnostic {
 public:
   /// Level - The level of the diagnostic, after it has been through mapping.
   enum Level {
-    Ignored, Note, Warning, Error
+    Ignored, Note, Warning, Error, Fatal
   };
   
   enum ArgumentKind {
@@ -96,8 +99,8 @@ private:
   DiagnosticClient *Client;
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
-  /// packed into two bits per diagnostic.
-  unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/4];
+  /// packed into four bits per diagnostic.
+  unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/2];
   
   /// ErrorOccurred - This is set to true when an error is emitted, and is
   /// sticky.
@@ -162,16 +165,16 @@ public:
     assert(Diag < diag::DIAG_UPPER_LIMIT &&
            "Can only map builtin diagnostics");
     assert(isBuiltinNoteWarningOrExtension(Diag) && "Cannot map errors!");
-    unsigned char &Slot = DiagMappings[Diag/4];
-    unsigned Bits = (Diag & 3)*2;
-    Slot &= ~(3 << Bits);
+    unsigned char &Slot = DiagMappings[Diag/2];
+    unsigned Bits = (Diag & 1)*4;
+    Slot &= ~(7 << Bits);
     Slot |= Map << Bits;
   }
 
   /// getDiagnosticMapping - Return the mapping currently set for the specified
   /// diagnostic.
   diag::Mapping getDiagnosticMapping(diag::kind Diag) const {
-    return (diag::Mapping)((DiagMappings[Diag/4] >> (Diag & 3)*2) & 3);
+    return (diag::Mapping)((DiagMappings[Diag/2] >> (Diag & 1)*4) & 7);
   }
   
   bool hasErrorOccurred() const { return ErrorOccurred; }
