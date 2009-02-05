@@ -1330,20 +1330,6 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
   return true;
 }
 
-/// isTerminatorFirstRelevantInsn - Return true if Term is very first 
-/// instruction ignoring Phi nodes and dbg intrinsics.
-static bool isTerminatorFirstRelevantInsn(BasicBlock *BB, Instruction *Term) {
-  BasicBlock::iterator BBI = Term;
-  while (BBI != BB->begin()) {
-    --BBI;
-    if (!isa<DbgInfoIntrinsic>(BBI))
-      break;
-  }
-  if (isa<PHINode>(BBI) || &*BBI == Term)
-    return true;
-  return false;
-}
-
 /// SimplifyCondBranchToTwoReturns - If we found a conditional branch that goes
 /// to two returning blocks, try to merge them together into one return,
 /// introducing a select if the return values disagree.

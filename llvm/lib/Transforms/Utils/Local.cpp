@@ -148,6 +148,23 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
   return false;
 }
 
+//===----------------------------------------------------------------------===//
+//  CFG Simplification
+//
+
+/// isTerminatorFirstRelevantInsn - Return true if Term is very first 
+/// instruction ignoring Phi nodes and dbg intrinsics.
+bool llvm::isTerminatorFirstRelevantInsn(BasicBlock *BB, Instruction *Term) {
+  BasicBlock::iterator BBI = Term;
+  while (BBI != BB->begin()) {
+    --BBI;
+    if (!isa<DbgInfoIntrinsic>(BBI))
+      break;
+  }
+  if (isa<PHINode>(BBI) || &*BBI == Term)
+    return true;
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 //  Local dead code elimination...
