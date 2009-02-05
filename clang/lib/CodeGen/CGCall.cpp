@@ -1337,19 +1337,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // location that we would like to return into.
   QualType RetTy = CallInfo.getReturnType();
   const ABIArgInfo &RetAI = CallInfo.getReturnInfo();
-  switch (RetAI.getKind()) {
-  case ABIArgInfo::Indirect:
+  if (CGM.ReturnTypeUsesSret(CallInfo)) {
     // Create a temporary alloca to hold the result of the call. :(
     Args.push_back(CreateTempAlloca(ConvertType(RetTy)));
-    break;
-    
-  case ABIArgInfo::Direct:
-  case ABIArgInfo::Ignore:
-  case ABIArgInfo::Coerce:
-    break;
-
-  case ABIArgInfo::Expand:
-    assert(0 && "Invalid ABI kind for return argument");
   }
   
   assert(CallInfo.arg_size() == CallArgs.size() &&
