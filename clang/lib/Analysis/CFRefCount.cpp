@@ -2207,6 +2207,8 @@ namespace {
     const char* getDescription() const { return "leak"; }
 
     void FlushReports(BugReporter &BR);
+    
+    bool isLeak() const { return true; }
   };
     
   class VISIBILITY_HIDDEN LeakAtReturn : public Leak {
