@@ -307,7 +307,14 @@ class Clang_CompileTool(Tool):
 
         arglist.addAllArgs(cmd_args, arglist.parser.fblocksGroup)
 
-        arglist.addAllArgs(cmd_args, arglist.parser.OOption)
+        # Manually translate -O to -O1; let clang reject others.
+        arg = arglist.getLastArg(arglist.parser.OOption)
+        if arg:
+            if arglist.getValue(arg) == '':
+                cmd_args.append('-O1')
+            else:
+                cmd_args.extend(arglist.render(arg))
+
         arglist.addAllArgs2(cmd_args, arglist.parser.ClangWGroup, arglist.parser.pedanticGroup)
         arglist.addLastArg(cmd_args, arglist.parser.wOption)
         arglist.addAllArgs3(cmd_args, arglist.parser.stdOption, arglist.parser.ansiOption, arglist.parser.trigraphsOption)
