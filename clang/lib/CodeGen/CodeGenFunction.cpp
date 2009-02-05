@@ -480,18 +480,19 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty)
       llvm::Value *ElemSize;
     
       QualType ElemTy = VAT->getElementType();
-    
+
+      const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+                                             
       if (ElemTy->isVariableArrayType())
         ElemSize = EmitVLASize(ElemTy);
       else {
-        // FIXME: We use Int32Ty here because the alloca instruction takes a
-        // 32-bit integer. What should we do about overflow?
-        ElemSize = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+        ElemSize = llvm::ConstantInt::get(SizeTy,
                                           getContext().getTypeSize(ElemTy) / 8);
       }
     
       llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
-    
+      NumElements = Builder.CreateIntCast(NumElements, SizeTy, false, "tmp");
+      
       SizeEntry = Builder.CreateMul(ElemSize, NumElements);
     }
     

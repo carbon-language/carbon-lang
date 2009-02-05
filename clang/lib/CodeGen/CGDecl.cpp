@@ -197,6 +197,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
     llvm::Value *VLASize = EmitVLASize(Ty);
 
+    // Downcast the VLA size expression
+    VLASize = Builder.CreateIntCast(VLASize, llvm::Type::Int32Ty, false, "tmp");
+    
     // Allocate memory for the array.
     llvm::Value *VLA = Builder.CreateAlloca(llvm::Type::Int8Ty, VLASize, "vla");
     DeclPtr = Builder.CreateBitCast(VLA, LElemPtrTy, "tmp");
