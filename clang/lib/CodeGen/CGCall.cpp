@@ -119,9 +119,6 @@ void ABIArgInfo::dump() const {
   case Direct: 
     fprintf(stderr, "Direct");
     break;
-  case StructRet: 
-    fprintf(stderr, "StructRet");
-    break;
   case Ignore: 
     fprintf(stderr, "Ignore");
     break;
@@ -131,8 +128,8 @@ void ABIArgInfo::dump() const {
     // FIXME: This is ridiculous.
     llvm::errs().flush();
     break;
-  case ByVal: 
-    fprintf(stderr, "ByVal Align=%d", getByValAlignment());
+  case Indirect: 
+    fprintf(stderr, "Indirect Align=%d", getIndirectAlign());
     break;
   case Expand: 
     fprintf(stderr, "Expand");
@@ -307,7 +304,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
     } else if (Size == 64) {
       return ABIArgInfo::getCoerce(llvm::Type::Int64Ty);
     } else {
-      return ABIArgInfo::getStructRet();
+      return ABIArgInfo::getIndirect(0);
     }
   } else {
     return ABIArgInfo::getDirect();
@@ -316,12 +313,12 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
                                               ASTContext &Context) const {
-  // FIXME: Set alignment on byval arguments.
+  // FIXME: Set alignment on indirect arguments.
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
-    // Structures with flexible arrays are always byval.
+    // Structures with flexible arrays are always indirect.
     if (const RecordType *RT = Ty->getAsStructureType())
       if (RT->getDecl()->hasFlexibleArrayMember())
-        return ABIArgInfo::getByVal(0);
+        return ABIArgInfo::getIndirect(0);
 
     // Ignore empty structs.
     uint64_t Size = Context.getTypeSize(Ty);
@@ -337,7 +334,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
         return ABIArgInfo::getExpand();
     }
 
-    return ABIArgInfo::getByVal(0);
+    return ABIArgInfo::getIndirect(0);
   } else {
     return ABIArgInfo::getDirect();
   }
@@ -636,9 +633,9 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     assert(0 && "Invalid classification for lo word.");
 
     // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
-    // hidden argument, i.e. structret.
+    // hidden argument.
   case Memory:
-    return ABIArgInfo::getStructRet();
+    return ABIArgInfo::getIndirect(0);
 
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
@@ -730,7 +727,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
   case ComplexX87:
     // Choose appropriate in memory type.
     if (CodeGenFunction::hasAggregateLLVMType(Ty))
-      return ABIArgInfo::getByVal(0);
+      return ABIArgInfo::getIndirect(0);
     else
       return ABIArgInfo::getDirect();
 
@@ -795,7 +792,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
   } else {
     // Choose appropriate in memory type.
     if (CodeGenFunction::hasAggregateLLVMType(Ty))
-      return ABIArgInfo::getByVal(0);
+      return ABIArgInfo::getIndirect(0);
     else
       return ABIArgInfo::getDirect();
   }
@@ -819,7 +816,7 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
   if (RetTy->isVoidType()) {
     return ABIArgInfo::getIgnore();
   } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
-    return ABIArgInfo::getStructRet();
+    return ABIArgInfo::getIndirect(0);
   } else {
     return ABIArgInfo::getDirect();
   }
@@ -828,7 +825,7 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
 ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
                                               ASTContext &Context) const {
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
-    return ABIArgInfo::getByVal(0);
+    return ABIArgInfo::getIndirect(0);
   } else {
     return ABIArgInfo::getDirect();
   }
@@ -1012,7 +1009,7 @@ static void CreateCoercedStore(llvm::Value *Src,
 /***/
 
 bool CodeGenModule::ReturnTypeUsesSret(const CGFunctionInfo &FI) {
-  return FI.getReturnInfo().isStructRet();
+  return FI.getReturnInfo().isIndirect();
 }
 
 const llvm::FunctionType *
@@ -1024,7 +1021,6 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   QualType RetTy = FI.getReturnType();
   const ABIArgInfo &RetAI = FI.getReturnInfo();
   switch (RetAI.getKind()) {
-  case ABIArgInfo::ByVal:
   case ABIArgInfo::Expand:
     assert(0 && "Invalid ABI kind for return argument");
 
@@ -1032,7 +1028,8 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
     ResultType = ConvertType(RetTy);
     break;
 
-  case ABIArgInfo::StructRet: {
+  case ABIArgInfo::Indirect: {
+    assert(!RetAI.getIndirectAlign() && "Align unused on indirect return.");
     ResultType = llvm::Type::VoidTy;
     const llvm::Type *STy = ConvertType(RetTy);
     ArgTys.push_back(llvm::PointerType::get(STy, RetTy.getAddressSpace()));
@@ -1061,11 +1058,8 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
       ArgTys.push_back(AI.getCoerceToType());
       break;
 
-    case ABIArgInfo::StructRet:
-      assert(0 && "Invalid ABI kind for non-return argument");
-    
-    case ABIArgInfo::ByVal:
-      // byval arguments are always on the stack, which is addr space #0.
+    case ABIArgInfo::Indirect:
+      // indirect arguments are always on the stack, which is addr space #0.
       ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
       break;
       
@@ -1113,7 +1107,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     }
     break;
 
-  case ABIArgInfo::StructRet:
+  case ABIArgInfo::Indirect:
     PAL.push_back(llvm::AttributeWithIndex::get(Index, 
                                                 llvm::Attribute::StructRet |
                                                 llvm::Attribute::NoAlias));
@@ -1124,7 +1118,6 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   case ABIArgInfo::Coerce:
     break;
 
-  case ABIArgInfo::ByVal:
   case ABIArgInfo::Expand:
     assert(0 && "Invalid ABI kind for return argument");    
   }
@@ -1138,16 +1131,13 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     unsigned Attributes = 0;
     
     switch (AI.getKind()) {
-    case ABIArgInfo::StructRet:
-      assert(0 && "Invalid ABI kind for non-return argument");
-
     case ABIArgInfo::Coerce:
       break;
 
-    case ABIArgInfo::ByVal:
+    case ABIArgInfo::Indirect:
       Attributes |= llvm::Attribute::ByVal;
       Attributes |= 
-        llvm::Attribute::constructAlignmentFromInt(AI.getByValAlignment());
+        llvm::Attribute::constructAlignmentFromInt(AI.getIndirectAlign());
       break;
       
     case ABIArgInfo::Direct:
@@ -1209,7 +1199,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     const ABIArgInfo &ArgI = info_it->info;
 
     switch (ArgI.getKind()) {
-    case ABIArgInfo::ByVal: 
+      // FIXME: Implement correct [in]direct semantics.
+    case ABIArgInfo::Indirect: 
     case ABIArgInfo::Direct: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
       llvm::Value* V = AI;
@@ -1265,9 +1256,6 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       EmitParmDecl(*Arg, V);
       break;
     }
-
-    case ABIArgInfo::StructRet:
-      assert(0 && "Invalid ABI kind for non-return argument");        
     }
 
     ++AI;
@@ -1285,7 +1273,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
     const ABIArgInfo &RetAI = FI.getReturnInfo();
     
     switch (RetAI.getKind()) {
-    case ABIArgInfo::StructRet:
+      // FIXME: Implement correct [in]direct semantics.
+    case ABIArgInfo::Indirect:
       if (RetTy->isAnyComplexType()) {
         // FIXME: Volatile
         ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
@@ -1310,7 +1299,6 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       break;
     }
 
-    case ABIArgInfo::ByVal:
     case ABIArgInfo::Expand:
       assert(0 && "Invalid ABI kind for return argument");    
     }
@@ -1335,7 +1323,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   QualType RetTy = CallInfo.getReturnType();
   const ABIArgInfo &RetAI = CallInfo.getReturnInfo();
   switch (RetAI.getKind()) {
-  case ABIArgInfo::StructRet:
+  case ABIArgInfo::Indirect:
     // Create a temporary alloca to hold the result of the call. :(
     Args.push_back(CreateTempAlloca(ConvertType(RetTy)));
     break;
@@ -1345,7 +1333,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   case ABIArgInfo::Coerce:
     break;
 
-  case ABIArgInfo::ByVal:
   case ABIArgInfo::Expand:
     assert(0 && "Invalid ABI kind for return argument");
   }
@@ -1359,7 +1346,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     RValue RV = I->first;
 
     switch (ArgInfo.getKind()) {
-    case ABIArgInfo::ByVal: // Direct is byval
+      // FIXME: Implement correct [in]direct semantics.
+    case ABIArgInfo::Indirect:
     case ABIArgInfo::Direct:
       if (RV.isScalar()) {
         Args.push_back(RV.getScalarVal());
@@ -1391,10 +1379,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       break;
     }
 
-    case ABIArgInfo::StructRet:
-      assert(0 && "Invalid ABI kind for non-return argument");
-      break;
-
     case ABIArgInfo::Expand:
       ExpandTypeToArgs(I->second, RV, Args);
       break;
@@ -1415,7 +1399,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     CI->setName("call");
 
   switch (RetAI.getKind()) {
-  case ABIArgInfo::StructRet:
+    // FIXME: Implement correct [in]direct semantics.
+  case ABIArgInfo::Indirect:
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
     else if (CodeGenFunction::hasAggregateLLVMType(RetTy))
@@ -1448,7 +1433,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       return RValue::get(Builder.CreateLoad(V));
   }
 
-  case ABIArgInfo::ByVal:
   case ABIArgInfo::Expand:
     assert(0 && "Invalid ABI kind for return argument");    
   }

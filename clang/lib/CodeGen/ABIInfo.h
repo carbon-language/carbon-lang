@@ -35,23 +35,18 @@ namespace clang {
   public:
     enum Kind {
       Direct,    /// Pass the argument directly using the normal
-                 /// converted LLVM type.
-
-      StructRet, /// Only valid for return values. The return value
-                 /// should be passed through a pointer to a caller
-                 /// allocated location passed as an implicit first
-                 /// argument to the function.
+                 /// converted LLVM type. Complex and structure types
+                 /// are passed using first class aggregates.
+  
+      Indirect,  /// Pass the argument indirectly via a hidden pointer
+                 /// with the specified alignment (0 indicates default
+                 /// alignment).
   
       Ignore,    /// Ignore the argument (treat as void). Useful for
                  /// void and empty structs.
   
       Coerce,    /// Only valid for aggregate return types, the argument
                  /// should be accessed by coercion to a provided type.
-  
-      ByVal,     /// Only valid for aggregate argument types. The
-                 /// structure should be passed "byval" with the
-                 /// specified alignment (0 indicates default
-                 /// alignment).
   
       Expand,    /// Only valid for aggregate argument types. The
                  /// structure should be expanded into consecutive
@@ -78,17 +73,14 @@ namespace clang {
     static ABIArgInfo getDirect() { 
       return ABIArgInfo(Direct); 
     }
-    static ABIArgInfo getStructRet() { 
-      return ABIArgInfo(StructRet); 
-    }
     static ABIArgInfo getIgnore() {
       return ABIArgInfo(Ignore);
     }
     static ABIArgInfo getCoerce(const llvm::Type *T) { 
       return ABIArgInfo(Coerce, T);
     }
-    static ABIArgInfo getByVal(unsigned Alignment) {
-      return ABIArgInfo(ByVal, 0, Alignment);
+    static ABIArgInfo getIndirect(unsigned Alignment) {
+      return ABIArgInfo(Indirect, 0, Alignment);
     }
     static ABIArgInfo getExpand() {
       return ABIArgInfo(Expand);
@@ -96,10 +88,9 @@ namespace clang {
   
     Kind getKind() const { return TheKind; }
     bool isDirect() const { return TheKind == Direct; }
-    bool isStructRet() const { return TheKind == StructRet; }
     bool isIgnore() const { return TheKind == Ignore; }
     bool isCoerce() const { return TheKind == Coerce; }
-    bool isByVal() const { return TheKind == ByVal; }
+    bool isIndirect() const { return TheKind == Indirect; }
     bool isExpand() const { return TheKind == Expand; }
   
     // Coerce accessors
@@ -109,8 +100,8 @@ namespace clang {
     }
   
     // ByVal accessors
-    unsigned getByValAlignment() const {
-      assert(TheKind == ByVal && "Invalid kind!");
+    unsigned getIndirectAlign() const {
+      assert(TheKind == Indirect && "Invalid kind!");
       return UIntData;
     }
 
