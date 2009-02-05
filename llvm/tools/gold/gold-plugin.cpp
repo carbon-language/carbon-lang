@@ -159,8 +159,8 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                                  int *claimed) {
   void *buf = NULL;
   if (file->offset) {
-    /* This is probably an archive member containing either an ELF object, or
-     * LLVM IR. Find out which one it is */
+    // Gold has found what might be IR part-way inside of a file, such as
+    // an .a archive.
     if (lseek(file->fd, file->offset, SEEK_SET) == -1) {
       (*message)(LDPL_ERROR, 
                  "Failed to seek to archive member of %s at offset %d: %s\n", 
@@ -195,8 +195,8 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   Modules.resize(Modules.size() + 1);
   claimed_file &cf = Modules.back();
 
-  cf.M = buf ?  lto_module_create_from_memory(buf, file->filesize) :
-                lto_module_create(file->name);
+  cf.M = buf ? lto_module_create_from_memory(buf, file->filesize) :
+               lto_module_create(file->name);
   cf.buf = buf;
   if (!cf.M) {
     (*message)(LDPL_ERROR, "Failed to create LLVM module: %s",
@@ -294,8 +294,6 @@ ld_plugin_status all_symbols_read_hook(void) {
          E = Modules.end(); I != E; ++I) {
       (*get_symbols)(I->handle, I->syms.size(), &I->syms[0]);
       for (unsigned i = 0, e = I->syms.size(); i != e; i++) {
-        (*message)(LDPL_WARNING, "def: %d visibility: %d resolution %d",
-                   I->syms[i].def, I->syms[i].visibility, I->syms[i].resolution);
         if (I->syms[i].resolution == LDPR_PREVAILING_DEF) {
           lto_codegen_add_must_preserve_symbol(cg, I->syms[i].name);
           anySymbolsPreserved = true;
