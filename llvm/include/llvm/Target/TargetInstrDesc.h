@@ -407,9 +407,10 @@ public:
 
   /// isAsCheapAsAMove - Returns true if this instruction has the same cost (or
   /// less) than a move instruction. This is useful during certain types of
-  /// rematerializations (e.g., during two-address conversion) where we would
-  /// like to remat the instruction, but not if it costs more than moving the
-  /// instruction into the appropriate register.
+  /// optimizations (e.g., remat during two-address conversion or machine licm)
+  /// where we would like to remat or hoist the instruction, but not if it costs
+  /// more than moving the instruction into the appropriate register. Note, we
+  /// are not marking copies from and to the same register class with this flag.
   bool isAsCheapAsAMove() const {
     return Flags & (1 << TID::CheapAsAMove);
   }
