@@ -3792,12 +3792,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getNode(unsigned Opcode,
-                              const std::vector<MVT> &ResultTys,
-                              const SDValue *Ops, unsigned NumOps) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), ResultTys, Ops, NumOps);
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
                               const std::vector<MVT> &ResultTys,
                               const SDValue *Ops, unsigned NumOps) {

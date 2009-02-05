@@ -1902,8 +1902,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  std::vector<MVT> VTs;\n"
      << "  VTs.push_back(MVT::Other);\n"
      << "  VTs.push_back(MVT::Flag);\n"
-     << "  SDValue New = CurDAG->getNode(ISD::INLINEASM, VTs, &Ops[0], "
-                 "Ops.size());\n"
+     << "  SDValue New = CurDAG->getNode(ISD::INLINEASM, N.getDebugLoc(), "
+                 "VTs, &Ops[0], Ops.size());\n"
      << "  return New.getNode();\n"
      << "}\n\n";
 

@@ -2856,10 +2856,10 @@ SDValue PPCTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 }
 
 // FIXME: Split this code up when LegalizeDAGTypes lands.
-SDValue PPCTargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
+SDValue PPCTargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG,
+                                           DebugLoc dl) {
   assert(Op.getOperand(0).getValueType().isFloatingPoint());
   SDValue Src = Op.getOperand(0);
-  DebugLoc dl = Op.getNode()->getDebugLoc();
   if (Src.getValueType() == MVT::f32)
     Src = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Src);
 
@@ -3664,6 +3664,7 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                      SelectionDAG &DAG) {
   // If this is a lowered altivec predicate compare, CompareOpc is set to the
   // opcode number of the comparison.
+  DebugLoc dl = Op.getDebugLoc();
   int CompareOpc;
   bool isDot;
   if (!getAltivecCompareInfo(Op, CompareOpc, isDot))
@@ -3671,10 +3672,10 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   
   // If this is a non-dot comparison, make the VCMP node and we are done.
   if (!isDot) {
-    SDValue Tmp = DAG.getNode(PPCISD::VCMP, Op.getOperand(2).getValueType(),
+    SDValue Tmp = DAG.getNode(PPCISD::VCMP, dl, Op.getOperand(2).getValueType(),
                                 Op.getOperand(1), Op.getOperand(2),
                                 DAG.getConstant(CompareOpc, MVT::i32));
-    return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Tmp);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Tmp);
   }
   
   // Create the PPCISD altivec 'dot' comparison node.
@@ -3686,11 +3687,11 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   std::vector<MVT> VTs;
   VTs.push_back(Op.getOperand(2).getValueType());
   VTs.push_back(MVT::Flag);
-  SDValue CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops, 3);
+  SDValue CompNode = DAG.getNode(PPCISD::VCMPo, dl, VTs, Ops, 3);
   
   // Now that we have the comparison, emit a copy from the CR to a GPR.
   // This is flagged to the above dot comparison.
-  SDValue Flags = DAG.getNode(PPCISD::MFCR, MVT::i32,
+  SDValue Flags = DAG.getNode(PPCISD::MFCR, dl, MVT::i32,
                                 DAG.getRegister(PPC::CR6, MVT::i32),
                                 CompNode.getValue(1)); 
   
@@ -3714,15 +3715,15 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   }
   
   // Shift the bit into the low position.
-  Flags = DAG.getNode(ISD::SRL, MVT::i32, Flags,
+  Flags = DAG.getNode(ISD::SRL, dl, MVT::i32, Flags,
                       DAG.getConstant(8-(3-BitNo), MVT::i32));
   // Isolate the bit.
-  Flags = DAG.getNode(ISD::AND, MVT::i32, Flags,
+  Flags = DAG.getNode(ISD::AND, dl, MVT::i32, Flags,
                       DAG.getConstant(1, MVT::i32));
   
   // If we are supposed to, toggle the bit.
   if (InvertBit)
-    Flags = DAG.getNode(ISD::XOR, MVT::i32, Flags,
+    Flags = DAG.getNode(ISD::XOR, dl, MVT::i32, Flags,
                         DAG.getConstant(1, MVT::i32));
   return Flags;
 }
@@ -3834,7 +3835,8 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     return LowerDYNAMIC_STACKALLOC(Op, DAG, PPCSubTarget);
 
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
-  case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
+  case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG,
+                                                       Op.getDebugLoc());
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
 
@@ -3860,6 +3862,7 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
                                            SmallVectorImpl<SDValue>&Results,
                                            SelectionDAG &DAG) {
+  DebugLoc dl = N->getDebugLoc();
   switch (N->getOpcode()) {
   default:
     assert(false && "Do not know how to custom type legalize this operation!");
@@ -3867,9 +3870,11 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::FP_ROUND_INREG: {
     assert(N->getValueType(0) == MVT::ppcf128);
     assert(N->getOperand(0).getValueType() == MVT::ppcf128);
-    SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::f64, N->getOperand(0),
+    SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, 
+                             MVT::f64, N->getOperand(0),
                              DAG.getIntPtrConstant(0));
-    SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::f64, N->getOperand(0),
+    SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl,
+                             MVT::f64, N->getOperand(0),
                              DAG.getIntPtrConstant(1));
 
     // This sequence changes FPSCR to do round-to-zero, adds the two halves
@@ -3880,7 +3885,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
 
     NodeTys.push_back(MVT::f64);   // Return register
     NodeTys.push_back(MVT::Flag);    // Returns a flag for later insns
-    Result = DAG.getNode(PPCISD::MFFS, NodeTys, &InFlag, 0);
+    Result = DAG.getNode(PPCISD::MFFS, dl, NodeTys, &InFlag, 0);
     MFFSreg = Result.getValue(0);
     InFlag = Result.getValue(1);
 
@@ -3888,14 +3893,14 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
     NodeTys.push_back(MVT::Flag);   // Returns a flag
     Ops[0] = DAG.getConstant(31, MVT::i32);
     Ops[1] = InFlag;
-    Result = DAG.getNode(PPCISD::MTFSB1, NodeTys, Ops, 2);
+    Result = DAG.getNode(PPCISD::MTFSB1, dl, NodeTys, Ops, 2);
     InFlag = Result.getValue(0);
 
     NodeTys.clear();
     NodeTys.push_back(MVT::Flag);   // Returns a flag
     Ops[0] = DAG.getConstant(30, MVT::i32);
     Ops[1] = InFlag;
-    Result = DAG.getNode(PPCISD::MTFSB0, NodeTys, Ops, 2);
+    Result = DAG.getNode(PPCISD::MTFSB0, dl, NodeTys, Ops, 2);
     InFlag = Result.getValue(0);
 
     NodeTys.clear();
@@ -3904,7 +3909,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
     Ops[0] = Lo;
     Ops[1] = Hi;
     Ops[2] = InFlag;
-    Result = DAG.getNode(PPCISD::FADDRTZ, NodeTys, Ops, 3);
+    Result = DAG.getNode(PPCISD::FADDRTZ, dl, NodeTys, Ops, 3);
     FPreg = Result.getValue(0);
     InFlag = Result.getValue(1);
 
@@ -3914,16 +3919,17 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
     Ops[1] = MFFSreg;
     Ops[2] = FPreg;
     Ops[3] = InFlag;
-    Result = DAG.getNode(PPCISD::MTFSF, NodeTys, Ops, 4);
+    Result = DAG.getNode(PPCISD::MTFSF, dl, NodeTys, Ops, 4);
     FPreg = Result.getValue(0);
 
     // We know the low half is about to be thrown away, so just use something
     // convenient.
-    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, MVT::ppcf128, FPreg, FPreg));
+    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::ppcf128, 
+                                FPreg, FPreg));
     return;
   }
   case ISD::FP_TO_SINT:
-    Results.push_back(LowerFP_TO_SINT(SDValue(N, 0), DAG));
+    Results.push_back(LowerFP_TO_SINT(SDValue(N, 0), DAG, dl));
     return;
   }
 }
@@ -4458,6 +4464,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   TargetMachine &TM = getTargetMachine();
   SelectionDAG &DAG = DCI.DAG;
+  DebugLoc dl = N->getDebugLoc();
   switch (N->getOpcode()) {
   default: break;
   case PPCISD::SHL:
@@ -4490,16 +4497,16 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
             N->getOperand(0).getOperand(0).getValueType() != MVT::ppcf128) {
           SDValue Val = N->getOperand(0).getOperand(0);
           if (Val.getValueType() == MVT::f32) {
-            Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
+            Val = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Val);
             DCI.AddToWorklist(Val.getNode());
           }
             
-          Val = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Val);
+          Val = DAG.getNode(PPCISD::FCTIDZ, dl, MVT::f64, Val);
           DCI.AddToWorklist(Val.getNode());
-          Val = DAG.getNode(PPCISD::FCFID, MVT::f64, Val);
+          Val = DAG.getNode(PPCISD::FCFID, dl, MVT::f64, Val);
           DCI.AddToWorklist(Val.getNode());
           if (N->getValueType(0) == MVT::f32) {
-            Val = DAG.getNode(ISD::FP_ROUND, MVT::f32, Val, 
+            Val = DAG.getNode(ISD::FP_ROUND, dl, MVT::f32, Val, 
                               DAG.getIntPtrConstant(0));
             DCI.AddToWorklist(Val.getNode());
           }
@@ -4520,13 +4527,13 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         N->getOperand(1).getOperand(0).getValueType() != MVT::ppcf128) {
       SDValue Val = N->getOperand(1).getOperand(0);
       if (Val.getValueType() == MVT::f32) {
-        Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
+        Val = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Val);
         DCI.AddToWorklist(Val.getNode());
       }
-      Val = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Val);
+      Val = DAG.getNode(PPCISD::FCTIWZ, dl, MVT::f64, Val);
       DCI.AddToWorklist(Val.getNode());
 
-      Val = DAG.getNode(PPCISD::STFIWX, MVT::Other, N->getOperand(0), Val,
+      Val = DAG.getNode(PPCISD::STFIWX, dl, MVT::Other, N->getOperand(0), Val,
                         N->getOperand(2), N->getOperand(3));
       DCI.AddToWorklist(Val.getNode());
       return Val;
@@ -4540,10 +4547,10 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       SDValue BSwapOp = N->getOperand(1).getOperand(0);
       // Do an any-extend to 32-bits if this is a half-word input.
       if (BSwapOp.getValueType() == MVT::i16)
-        BSwapOp = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, BSwapOp);
+        BSwapOp = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, BSwapOp);
 
-      return DAG.getNode(PPCISD::STBRX, MVT::Other, N->getOperand(0), BSwapOp,
-                         N->getOperand(2), N->getOperand(3),
+      return DAG.getNode(PPCISD::STBRX, dl, MVT::Other, N->getOperand(0),
+                         BSwapOp, N->getOperand(2), N->getOperand(3),
                          DAG.getValueType(N->getOperand(1).getValueType()));
     }
     break;
@@ -4565,12 +4572,12 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         MO,                // MemOperand
         DAG.getValueType(N->getValueType(0)) // VT
       };
-      SDValue BSLoad = DAG.getNode(PPCISD::LBRX, VTs, Ops, 4);
+      SDValue BSLoad = DAG.getNode(PPCISD::LBRX, dl, VTs, Ops, 4);
 
       // If this is an i16 load, insert the truncate.  
       SDValue ResVal = BSLoad;
       if (N->getValueType(0) == MVT::i16)
-        ResVal = DAG.getNode(ISD::TRUNCATE, MVT::i16, BSLoad);
+        ResVal = DAG.getNode(ISD::TRUNCATE, dl, MVT::i16, BSLoad);
       
       // First, combine the bswap away.  This makes the value produced by the
       // load dead.
@@ -4658,7 +4665,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         if (CC == ISD::SETEQ)      // Cond never true, remove branch.
           return N->getOperand(0);
         // Always !=, turn it into an unconditional branch.
-        return DAG.getNode(ISD::BR, MVT::Other, 
+        return DAG.getNode(ISD::BR, dl, MVT::Other,
                            N->getOperand(0), N->getOperand(4));
       }
     
@@ -4673,7 +4680,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       };
       VTs.push_back(LHS.getOperand(2).getValueType());
       VTs.push_back(MVT::Flag);
-      SDValue CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops, 3);
+      SDValue CompNode = DAG.getNode(PPCISD::VCMPo, dl, VTs, Ops, 3);
       
       // Unpack the result based on how the target uses it.
       PPC::Predicate CompOpc;
@@ -4693,7 +4700,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         break;
       }
 
-      return DAG.getNode(PPCISD::COND_BRANCH, MVT::Other, N->getOperand(0),
+      return DAG.getNode(PPCISD::COND_BRANCH, dl, MVT::Other, N->getOperand(0),
                          DAG.getConstant(CompOpc, MVT::i32),
                          DAG.getRegister(PPC::CR6, MVT::i32),
                          N->getOperand(4), CompNode.getValue(1));

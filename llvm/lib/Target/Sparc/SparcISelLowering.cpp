@@ -771,6 +771,7 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
   SDValue LHS = Op.getOperand(2);
   SDValue RHS = Op.getOperand(3);
   SDValue Dest = Op.getOperand(4);
+  DebugLoc dl = Op.getDebugLoc();
   unsigned Opc, SPCC = ~0U;
 
   // If this is a br_cc of a "setcc", and if the setcc got lowered into
@@ -784,15 +785,15 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
     VTs.push_back(MVT::i32);
     VTs.push_back(MVT::Flag);
     SDValue Ops[2] = { LHS, RHS };
-    CompareFlag = DAG.getNode(SPISD::CMPICC, VTs, Ops, 2).getValue(1);
+    CompareFlag = DAG.getNode(SPISD::CMPICC, dl, VTs, Ops, 2).getValue(1);
     if (SPCC == ~0U) SPCC = IntCondCCodeToICC(CC);
     Opc = SPISD::BRICC;
   } else {
-    CompareFlag = DAG.getNode(SPISD::CMPFCC, MVT::Flag, LHS, RHS);
+    CompareFlag = DAG.getNode(SPISD::CMPFCC, dl, MVT::Flag, LHS, RHS);
     if (SPCC == ~0U) SPCC = FPCondCCodeToFCC(CC);
     Opc = SPISD::BRFCC;
   }
-  return DAG.getNode(Opc, MVT::Other, Chain, Dest,
+  return DAG.getNode(Opc, dl, MVT::Other, Chain, Dest,
                      DAG.getConstant(SPCC, MVT::i32), CompareFlag);
 }
 
@@ -802,6 +803,7 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
   SDValue TrueVal = Op.getOperand(2);
   SDValue FalseVal = Op.getOperand(3);
+  DebugLoc dl = Op.getDebugLoc();
   unsigned Opc, SPCC = ~0U;
 
   // If this is a select_cc of a "setcc", and if the setcc got lowered into
@@ -814,15 +816,15 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
     VTs.push_back(LHS.getValueType());   // subcc returns a value
     VTs.push_back(MVT::Flag);
     SDValue Ops[2] = { LHS, RHS };
-    CompareFlag = DAG.getNode(SPISD::CMPICC, VTs, Ops, 2).getValue(1);
+    CompareFlag = DAG.getNode(SPISD::CMPICC, dl, VTs, Ops, 2).getValue(1);
     Opc = SPISD::SELECT_ICC;
     if (SPCC == ~0U) SPCC = IntCondCCodeToICC(CC);
   } else {
-    CompareFlag = DAG.getNode(SPISD::CMPFCC, MVT::Flag, LHS, RHS);
+    CompareFlag = DAG.getNode(SPISD::CMPFCC, dl, MVT::Flag, LHS, RHS);
     Opc = SPISD::SELECT_FCC;
     if (SPCC == ~0U) SPCC = FPCondCCodeToFCC(CC);
   }
-  return DAG.getNode(Opc, TrueVal.getValueType(), TrueVal, FalseVal,
+  return DAG.getNode(Opc, dl, TrueVal.getValueType(), TrueVal, FalseVal,
                      DAG.getConstant(SPCC, MVT::i32), CompareFlag);
 }
 

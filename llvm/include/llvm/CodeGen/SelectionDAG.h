@@ -428,8 +428,6 @@ public:
                   const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                   const SDValue *Ops, unsigned NumOps);
-  SDValue getNode(unsigned Opcode, const std::vector<MVT> &ResultTys,
-                  const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL,
                   const std::vector<MVT> &ResultTys,
                   const SDValue *Ops, unsigned NumOps);
