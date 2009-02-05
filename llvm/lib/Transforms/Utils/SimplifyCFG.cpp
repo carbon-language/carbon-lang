@@ -1330,6 +1330,20 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
   return true;
 }
 
+/// isTerminatorFirstRelevantInsn - Return true if Term is very first 
+/// instruction ignoring Phi nodes and dbg intrinsics.
+static bool isTerminatorFirstRelevantInsn(BasicBlock *BB, Instruction *Term) {
+  BasicBlock::iterator BBI = Term;
+  while (BBI != BB->begin()) {
+    --BBI;
+    if (!isa<DbgInfoIntrinsic>(BBI))
+      break;
+  }
+  if (isa<PHINode>(BBI) || &*BBI == Term)
+    return true;
+  return false;
+}
+
 /// SimplifyCondBranchToTwoReturns - If we found a conditional branch that goes
 /// to two returning blocks, try to merge them together into one return,
 /// introducing a select if the return values disagree.
@@ -1343,12 +1357,10 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
   // Check to ensure both blocks are empty (just a return) or optionally empty
   // with PHI nodes.  If there are other instructions, merging would cause extra
   // computation on one path or the other.
-  BasicBlock::iterator BBI = TrueRet;
-  if (BBI != TrueSucc->begin() && !isa<PHINode>(--BBI))
-    return false;  // Not empty with optional phi nodes.
-  BBI = FalseRet;
-  if (BBI != FalseSucc->begin() && !isa<PHINode>(--BBI))
-    return false;  // Not empty with optional phi nodes.
+  if (!isTerminatorFirstRelevantInsn(TrueSucc, TrueRet))
+    return false;
+  if (!isTerminatorFirstRelevantInsn(FalseSucc, FalseRet))
+    return false;
 
   // Okay, we found a branch that is going to two return nodes.  If
   // there is no return value for this function, just change the
@@ -1750,8 +1762,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // different return values, fold the replace the branch/return with a select
   // and return.
   if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-    BasicBlock::iterator BBI = BB->getTerminator();
-    if (BBI == BB->begin() || isa<PHINode>(--BBI)) {
+    if (isTerminatorFirstRelevantInsn(BB, BB->getTerminator())) {
       // Find predecessors that end with branches.
       SmallVector<BasicBlock*, 8> UncondBranchPreds;
       SmallVector<BranchInst*, 8> CondBranchPreds;
