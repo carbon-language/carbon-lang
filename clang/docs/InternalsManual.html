@@ -165,14 +165,16 @@ level is used to staple more information onto a previous diagnostics.</p>
 
 <p>These <em>severities</em> are mapped into a smaller set (the
 Diagnostic::Level enum, {<tt>Ignored</tt>, <tt>Note</tt>, <tt>Warning</tt>,
-<tt>Error</tt> }) of output <em>levels</em> by the diagnostics subsystem based
+<tt>Error</tt>, <tt>Fatal</tt> }) of output <em>levels</em> by the diagnostics
+subsystem based
 on various configuration options.  For example, if the user specifies
 <tt>-pedantic</tt>, <tt>EXTENSION</tt> maps to <tt>Warning</tt>, if they specify
 <tt>-pedantic-errors</tt>, it turns into <tt>Error</tt>.  Clang also internally
 supports a fully fine grained mapping mechanism that allows you to map any
 diagnostic that doesn't have <tt>ERRROR</tt> severity to any output level that
 you want.  This is used to implement options like <tt>-Wunused_macros</tt>,
-<tt>-Wundef</tt> etc.</p>
+<tt>-Wundef</tt> etc.  Fatal errors are considered so severe that diagnostics
+that occur after them are supressed as "almost certainly useless".</p>
 
 <!-- ================= -->
 <h4>The Format String</h4>
