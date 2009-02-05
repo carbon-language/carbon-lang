@@ -826,7 +826,8 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
         //
         ArgEffect E = (CStrInCStrNoCase(FName, "InsertValue") ||
                        CStrInCStrNoCase(FName, "AddValue") ||
-                       CStrInCStrNoCase(FName, "SetValue"))
+                       CStrInCStrNoCase(FName, "SetValue") ||
+                       CStrInCStrNoCase(FName, "AppendValue"))
                       ? MayEscape : DoNothing;
         
         S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, E);
