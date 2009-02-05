@@ -15,11 +15,7 @@ LIBRARYNAME = LLVMgold
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
 
-LINK_LIBS_IN_SHARED=1
-SHARED_LIBRARY = 1
-BUILD_ARCHIVE = 0
-DONT_BUILD_RELINKED = 1
-
+LOADABLE_MODULE = 1
 LINK_COMPONENTS :=
 
 include $(LEVEL)/Makefile.common
