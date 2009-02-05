@@ -922,7 +922,10 @@ declare signext i8 @returns_signed_char()
     belong to the caller not the callee (for example,
     <tt><a href="#readonly">readonly</a></tt> functions should not write to
     <tt>byval</tt> parameters). This is not a valid attribute for return
-    values. </dd>
+    values.  The byval attribute also supports specifying an alignment with the
+    align attribute.  This has a target-specific effect on the code generator
+    that usually indicates a desired alignment for the synthesized stack 
+    slot.</dd>
 
     <dt><tt>sret</tt></dt>
     <dd>This indicates that the pointer parameter specifies the address of a
