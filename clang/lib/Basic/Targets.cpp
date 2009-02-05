@@ -197,6 +197,7 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
     Define(Defs, "__amd64");
     Define(Defs, "__x86_64");
     Define(Defs, "__x86_64__");
+    Define(Defs, "__SSE3__");
   } else {
     Define(Defs, "__i386__");
     Define(Defs, "__i386");
@@ -669,6 +670,9 @@ public:
     DoubleAlign = LongLongAlign = 64;
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
+    IntMaxType = SignedLong;
+    UIntMaxType = UnsignedLong;
+
     DescriptionString = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
                         "a0:0:64-f80:128:128";
