@@ -276,6 +276,9 @@ public:
   // MessageRefCPtrTy - clang type for struct _message_ref_t*
   QualType MessageRefCPtrTy;
   
+  // MessengerTy - Type of the messenger (shown as IMP above)
+  const llvm::FunctionType *MessengerTy;
+  
   // SuperMessageRefTy - LLVM for:
   // struct _super_message_ref_t {
   //   SUPER_IMP messenger;
@@ -3235,10 +3238,11 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   Params.clear();
   Params.push_back(ObjectPtrTy);
   Params.push_back(MessageRefPtrTy);
+  MessengerTy = llvm::FunctionType::get(ObjectPtrTy,
+                                        Params,
+                                        true);
   MessageSendFixupFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      true),
+    CGM.CreateRuntimeFunction(MessengerTy,
                               "objc_msgSend_fixup");
   
   // id objc_msgSend_fpret_fixup (id, struct message_ref_t*, ...)
@@ -4290,6 +4294,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
   
   // Find the message function name.
+  // FIXME. This is too much work to get the ABI-specific result type
+  // needed to find the message name.
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, 
                                         llvm::SmallVector<QualType, 16>());
   llvm::Constant *Fn;
@@ -4346,12 +4352,23 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     UsedGlobals.push_back(GV);
   }
   llvm::Value *Arg1 = CGF.Builder.CreateBitCast(GV, ObjCTypes.MessageRefPtrTy);
+  
   CallArgList ActualArgs;
   ActualArgs.push_back(std::make_pair(RValue::get(Arg0), Arg0Ty));
   ActualArgs.push_back(std::make_pair(RValue::get(Arg1), 
                                       ObjCTypes.MessageRefCPtrTy));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  return RValue::get(0);
+  const CGFunctionInfo &FnInfo1 = Types.getFunctionInfo(ResultType, ActualArgs);
+  llvm::Value *Callee = CGF.Builder.CreateStructGEP(Arg1, 0);
+  Callee = CGF.Builder.CreateLoad(Callee);
+  const llvm::Type *T = llvm::PointerType::getUnqual(ObjCTypes.MessengerTy);
+  T = llvm::PointerType::getUnqual(T);
+  Callee = CGF.Builder.CreateBitCast(Callee, T);
+  Callee = CGF.Builder.CreateLoad(Callee);
+  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo1, false);
+  Callee = CGF.Builder.CreateBitCast(Callee,
+                                     llvm::PointerType::getUnqual(FTy));
+  return CGF.EmitCall(FnInfo1, Callee, ActualArgs);
 }
 
 /// Generate code for a message send expression in the nonfragile abi.
