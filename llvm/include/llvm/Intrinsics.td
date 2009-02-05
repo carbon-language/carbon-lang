@@ -144,6 +144,8 @@ class Intrinsic<list<LLVMType> ret_types,
   list<LLVMType> RetTypes = ret_types;
   list<LLVMType> ParamTypes = param_types;
   list<IntrinsicProperty> Properties = properties;
+
+  bit isTarget = 0;
 }
 
 /// GCCBuiltin - If this intrinsic exactly corresponds to a GCC builtin, this

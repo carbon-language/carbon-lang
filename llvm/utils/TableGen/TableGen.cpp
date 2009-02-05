@@ -49,6 +49,7 @@ enum ActionType {
   GenFastISel,
   GenSubtarget,
   GenIntrinsic,
+  GenTgtIntrinsic,
   GenLLVMCConf,
   PrintEnums
 };
@@ -82,6 +83,8 @@ namespace {
                                "Generate subtarget enumerations"),
                     clEnumValN(GenIntrinsic, "gen-intrinsic",
                                "Generate intrinsic information"),
+                    clEnumValN(GenTgtIntrinsic, "gen-tgt-intrinsic",
+                               "Generate target intrinsic information"),
                     clEnumValN(GenLLVMCConf, "gen-llvmc",
                                "Generate LLVMC configuration library"),
                     clEnumValN(PrintEnums, "print-enums",
@@ -189,6 +192,9 @@ int main(int argc, char **argv) {
       break;
     case GenIntrinsic:
       IntrinsicEmitter(Records).run(*Out);
+      break;
+    case GenTgtIntrinsic:
+      IntrinsicEmitter(Records, true).run(*Out);
       break;
     case GenLLVMCConf:
       LLVMCConfigurationEmitter(Records).run(*Out);

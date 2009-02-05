@@ -213,6 +213,10 @@ public:
   Constant *getOrInsertFunction(const std::string &Name, const Type *RetTy, ...)
     END_WITH_NULL;
 
+  Constant *getOrInsertTargetIntrinsic(const std::string &Name,
+                                       const FunctionType *Ty,
+                                       AttrListPtr AttributeList);
+  
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.
   Function *getFunction(const std::string &Name) const;

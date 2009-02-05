@@ -1004,10 +1004,9 @@ void Verifier::VerifyCallSite(CallSite CS) {
 void Verifier::visitCallInst(CallInst &CI) {
   VerifyCallSite(&CI);
 
-  if (Function *F = CI.getCalledFunction()) {
+  if (Function *F = CI.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
       visitIntrinsicFunctionCall(ID, CI);
-  }
 }
 
 void Verifier::visitInvokeInst(InvokeInst &II) {

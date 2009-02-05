@@ -43,6 +43,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -4427,6 +4428,14 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction()) {
     if (F->isDeclaration()) {
+      const TargetIntrinsicInfo *II = TLI.getTargetMachine().getIntrinsicInfo();
+      if (II) {
+        if (unsigned IID = II->getIntrinsicID(F)) {
+          RenameFn = visitIntrinsicCall(I, IID);
+          if (!RenameFn)
+            return;
+        }
+      }
       if (unsigned IID = F->getIntrinsicID()) {
         RenameFn = visitIntrinsicCall(I, IID);
         if (!RenameFn)
