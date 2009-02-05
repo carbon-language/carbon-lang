@@ -926,6 +926,7 @@ PIC16TargetLowering::LowerCallReturn(SDValue Op, SDValue Chain,
                                      SDValue InFlag,
                                      SelectionDAG &DAG) {
   CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
+  DebugLoc dl = TheCall->getDebugLoc();
   // Currently handling primitive types only. They will come in
   // i8 parts
   unsigned RetVals = TheCall->getNumRetVals();
@@ -948,7 +949,7 @@ PIC16TargetLowering::LowerCallReturn(SDValue Op, SDValue Chain,
  
   for(unsigned i=0, Offset=0;i<RetVals;i++) {
 
-    LoadRet = DAG.getNode(PIC16ISD::PIC16LdWF, Tys, Chain, LdLo, LdHi,
+    LoadRet = DAG.getNode(PIC16ISD::PIC16LdWF, dl, Tys, Chain, LdLo, LdHi,
                           DAG.getConstant(LdOffset + Offset, MVT::i8),
                           InFlag);
 
@@ -961,7 +962,7 @@ PIC16TargetLowering::LowerCallReturn(SDValue Op, SDValue Chain,
 
   // To return use MERGE_VALUES
   ResultVals.push_back(Chain);
-  SDValue Res = DAG.getMergeValues(&ResultVals[0], ResultVals.size());
+  SDValue Res = DAG.getMergeValues(&ResultVals[0], ResultVals.size(), dl);
   return Res;
 }
 

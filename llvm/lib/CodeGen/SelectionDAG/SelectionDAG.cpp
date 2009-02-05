@@ -829,14 +829,6 @@ void SelectionDAG::clear() {
   Root = getEntryNode();
 }
 
-SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, MVT VT) {
-  if (Op.getValueType() == VT) return Op;
-  APInt Imm = APInt::getLowBitsSet(Op.getValueSizeInBits(),
-                                   VT.getSizeInBits());
-  return getNode(ISD::AND, Op.getValueType(), Op,
-                 getConstant(Imm, Op.getValueType()));
-}
-
 SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, DebugLoc DL, MVT VT) {
   if (Op.getValueType() == VT) return Op;
   APInt Imm = APInt::getLowBitsSet(Op.getValueSizeInBits(),
@@ -3463,18 +3455,6 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, MVT MemVT,
 
 /// getMergeValues - Create a MERGE_VALUES node from the given operands.
 /// Allowed to return something different (and simpler) if Simplify is true.
-SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps) {
-  if (NumOps == 1)
-    return Ops[0];
-
-  SmallVector<MVT, 4> VTs;
-  VTs.reserve(NumOps);
-  for (unsigned i = 0; i < NumOps; ++i)
-    VTs.push_back(Ops[i].getValueType());
-  return getNode(ISD::MERGE_VALUES, getVTList(&VTs[0], NumOps), Ops, NumOps);
-}
-
-/// DebugLoc-aware version.
 SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
                                      DebugLoc dl) {
   if (NumOps == 1)

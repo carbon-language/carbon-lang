@@ -882,7 +882,8 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
         for (unsigned i = 0, e = Val->getNumValues(); i != e; ++i)
           Constants.push_back(SDValue(Val, i));
       }
-      return DAG.getMergeValues(&Constants[0], Constants.size());
+      return DAG.getMergeValues(&Constants[0], Constants.size(),
+                                getCurDebugLoc());
     }
 
     if (isa<StructType>(C->getType()) || isa<ArrayType>(C->getType())) {
@@ -904,7 +905,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
         else
           Constants[i] = DAG.getConstant(0, EltVT);
       }
-      return DAG.getMergeValues(&Constants[0], NumElts);
+      return DAG.getMergeValues(&Constants[0], NumElts, getCurDebugLoc());
     }
 
     const VectorType *VecTy = cast<VectorType>(V->getType());
@@ -5786,7 +5787,8 @@ LowerArguments(BasicBlock *LLVMBB) {
     ComputeValueVTs(TLI, AI->getType(), ValueVTs);
     unsigned NumValues = ValueVTs.size();
     if (!AI->use_empty()) {
-      SDL->setValue(AI, SDL->DAG.getMergeValues(&Args[a], NumValues));
+      SDL->setValue(AI, SDL->DAG.getMergeValues(&Args[a], NumValues, 
+                                                SDL->getCurDebugLoc()));
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
       DenseMap<const Value*, unsigned>::iterator VMI=FuncInfo->ValueMap.find(AI);

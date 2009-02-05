@@ -1262,7 +1262,7 @@ SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
   SDValue Ops[] =
     { CallResult.first, CallResult.second };
 
-  return DAG.getMergeValues(Ops, 2);
+  return DAG.getMergeValues(Ops, 2, dl);
 }
 
 SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
@@ -2999,6 +2999,7 @@ SDValue PPCTargetLowering::LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) {
 SDValue PPCTargetLowering::LowerSHL_PARTS(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
   unsigned BitWidth = VT.getSizeInBits();
+  DebugLoc dl = Op.getDebugLoc();
   assert(Op.getNumOperands() == 3 &&
          VT == Op.getOperand(1).getValueType() &&
          "Unexpected SHL!");
@@ -3010,22 +3011,23 @@ SDValue PPCTargetLowering::LowerSHL_PARTS(SDValue Op, SelectionDAG &DAG) {
   SDValue Amt = Op.getOperand(2);
   MVT AmtVT = Amt.getValueType();
   
-  SDValue Tmp1 = DAG.getNode(ISD::SUB, AmtVT,
+  SDValue Tmp1 = DAG.getNode(ISD::SUB, dl, AmtVT,
                              DAG.getConstant(BitWidth, AmtVT), Amt);
-  SDValue Tmp2 = DAG.getNode(PPCISD::SHL, VT, Hi, Amt);
-  SDValue Tmp3 = DAG.getNode(PPCISD::SRL, VT, Lo, Tmp1);
-  SDValue Tmp4 = DAG.getNode(ISD::OR , VT, Tmp2, Tmp3);
-  SDValue Tmp5 = DAG.getNode(ISD::ADD, AmtVT, Amt,
+  SDValue Tmp2 = DAG.getNode(PPCISD::SHL, dl, VT, Hi, Amt);
+  SDValue Tmp3 = DAG.getNode(PPCISD::SRL, dl, VT, Lo, Tmp1);
+  SDValue Tmp4 = DAG.getNode(ISD::OR , dl, VT, Tmp2, Tmp3);
+  SDValue Tmp5 = DAG.getNode(ISD::ADD, dl, AmtVT, Amt,
                              DAG.getConstant(-BitWidth, AmtVT));
-  SDValue Tmp6 = DAG.getNode(PPCISD::SHL, VT, Lo, Tmp5);
-  SDValue OutHi = DAG.getNode(ISD::OR, VT, Tmp4, Tmp6);
-  SDValue OutLo = DAG.getNode(PPCISD::SHL, VT, Lo, Amt);
+  SDValue Tmp6 = DAG.getNode(PPCISD::SHL, dl, VT, Lo, Tmp5);
+  SDValue OutHi = DAG.getNode(ISD::OR, dl, VT, Tmp4, Tmp6);
+  SDValue OutLo = DAG.getNode(PPCISD::SHL, dl, VT, Lo, Amt);
   SDValue OutOps[] = { OutLo, OutHi };
-  return DAG.getMergeValues(OutOps, 2);
+  return DAG.getMergeValues(OutOps, 2, dl);
 }
 
 SDValue PPCTargetLowering::LowerSRL_PARTS(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
   unsigned BitWidth = VT.getSizeInBits();
   assert(Op.getNumOperands() == 3 &&
          VT == Op.getOperand(1).getValueType() &&
@@ -3038,18 +3040,18 @@ SDValue PPCTargetLowering::LowerSRL_PARTS(SDValue Op, SelectionDAG &DAG) {
   SDValue Amt = Op.getOperand(2);
   MVT AmtVT = Amt.getValueType();
   
-  SDValue Tmp1 = DAG.getNode(ISD::SUB, AmtVT,
+  SDValue Tmp1 = DAG.getNode(ISD::SUB, dl, AmtVT,
                              DAG.getConstant(BitWidth, AmtVT), Amt);
-  SDValue Tmp2 = DAG.getNode(PPCISD::SRL, VT, Lo, Amt);
-  SDValue Tmp3 = DAG.getNode(PPCISD::SHL, VT, Hi, Tmp1);
-  SDValue Tmp4 = DAG.getNode(ISD::OR , VT, Tmp2, Tmp3);
-  SDValue Tmp5 = DAG.getNode(ISD::ADD, AmtVT, Amt,
+  SDValue Tmp2 = DAG.getNode(PPCISD::SRL, dl, VT, Lo, Amt);
+  SDValue Tmp3 = DAG.getNode(PPCISD::SHL, dl, VT, Hi, Tmp1);
+  SDValue Tmp4 = DAG.getNode(ISD::OR, dl, VT, Tmp2, Tmp3);
+  SDValue Tmp5 = DAG.getNode(ISD::ADD, dl, AmtVT, Amt,
                              DAG.getConstant(-BitWidth, AmtVT));
-  SDValue Tmp6 = DAG.getNode(PPCISD::SRL, VT, Hi, Tmp5);
-  SDValue OutLo = DAG.getNode(ISD::OR, VT, Tmp4, Tmp6);
-  SDValue OutHi = DAG.getNode(PPCISD::SRL, VT, Hi, Amt);
+  SDValue Tmp6 = DAG.getNode(PPCISD::SRL, dl, VT, Hi, Tmp5);
+  SDValue OutLo = DAG.getNode(ISD::OR, dl, VT, Tmp4, Tmp6);
+  SDValue OutHi = DAG.getNode(PPCISD::SRL, dl, VT, Hi, Amt);
   SDValue OutOps[] = { OutLo, OutHi };
-  return DAG.getMergeValues(OutOps, 2);
+  return DAG.getMergeValues(OutOps, 2, dl);
 }
 
 SDValue PPCTargetLowering::LowerSRA_PARTS(SDValue Op, SelectionDAG &DAG) {
@@ -3078,7 +3080,7 @@ SDValue PPCTargetLowering::LowerSRA_PARTS(SDValue Op, SelectionDAG &DAG) {
   SDValue OutLo = DAG.getSelectCC(dl, Tmp5, DAG.getConstant(0, AmtVT),
                                   Tmp4, Tmp6, ISD::SETLE);
   SDValue OutOps[] = { OutLo, OutHi };
-  return DAG.getMergeValues(OutOps, 2);
+  return DAG.getMergeValues(OutOps, 2, dl);
 }
 
 //===----------------------------------------------------------------------===//
