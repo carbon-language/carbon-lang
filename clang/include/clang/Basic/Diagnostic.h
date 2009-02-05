@@ -164,7 +164,8 @@ public:
   void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
     assert(Diag < diag::DIAG_UPPER_LIMIT &&
            "Can only map builtin diagnostics");
-    assert(isBuiltinNoteWarningOrExtension(Diag) && "Cannot map errors!");
+    assert((isBuiltinNoteWarningOrExtension(Diag) || Map == diag::MAP_FATAL) &&
+           "Cannot map errors!");
     unsigned char &Slot = DiagMappings[Diag/2];
     unsigned Bits = (Diag & 1)*4;
     Slot &= ~(7 << Bits);
