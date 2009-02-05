@@ -1613,14 +1613,14 @@ public:
             const Value *srcValue, int SVOff,
             unsigned alignment, bool isvolatile);
 
-  MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, const SDValue *Ops, 
+  MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, const SDValue *Ops,
             unsigned NumOps, MVT MemoryVT, const Value *srcValue, int SVOff,
             unsigned alignment, bool isvolatile);
 
   /// Returns alignment and volatility of the memory access
   unsigned getAlignment() const { return (1u << (SubclassData >> 6)) >> 1; }
   bool isVolatile() const { return (SubclassData >> 5) & 1; }
-  
+
   /// getRawSubclassData - Return the SubclassData value, which contains an
   /// encoding of the alignment and volatile information, as well as bits
   /// used by subclasses. This function should only be used to compute a
@@ -1632,10 +1632,10 @@ public:
   /// Returns the SrcValue and offset that describes the location of the access
   const Value *getSrcValue() const { return SrcValue; }
   int getSrcValueOffset() const { return SVOffset; }
-  
+
   /// getMemoryVT - Return the type of the in-memory value.
   MVT getMemoryVT() const { return MemoryVT; }
-    
+
   /// getMemOperand - Return a MachineMemOperand object describing the memory
   /// reference performed by operation.
   MachineMemOperand getMemOperand() const;
@@ -1667,14 +1667,14 @@ public:
            N->getOpcode() == ISD::INTRINSIC_W_CHAIN   ||
            N->getOpcode() == ISD::INTRINSIC_VOID      ||
            N->isTargetOpcode();
-  }  
+  }
 };
 
 /// AtomicSDNode - A SDNode reprenting atomic operations.
 ///
 class AtomicSDNode : public MemSDNode {
   SDUse Ops[4];
-  
+
 public:
   // Opc:   opcode for atomic
   // VTL:    value type list
@@ -1693,7 +1693,7 @@ public:
     InitOperands(Ops, Chain, Ptr, Cmp, Swp);
   }
   AtomicSDNode(unsigned Opc, SDVTList VTL, MVT MemVT,
-               SDValue Chain, SDValue Ptr, 
+               SDValue Chain, SDValue Ptr,
                SDValue Val, const Value* SrcVal, unsigned Align=0)
     : MemSDNode(Opc, VTL, MemVT, SrcVal, /*SVOffset=*/0,
                 Align, /*isVolatile=*/true) {
@@ -1708,18 +1708,18 @@ public:
     InitOperands(Ops, Chain, Ptr, Cmp, Swp);
   }
   AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, MVT MemVT,
-               SDValue Chain, SDValue Ptr, 
+               SDValue Chain, SDValue Ptr,
                SDValue Val, const Value* SrcVal, unsigned Align=0)
     : MemSDNode(Opc, dl, VTL, MemVT, SrcVal, /*SVOffset=*/0,
                 Align, /*isVolatile=*/true) {
     InitOperands(Ops, Chain, Ptr, Val);
   }
-  
+
   const SDValue &getBasePtr() const { return getOperand(1); }
   const SDValue &getVal() const { return getOperand(2); }
 
-  bool isCompareAndSwap() const { 
-    unsigned Op = getOpcode(); 
+  bool isCompareAndSwap() const {
+    unsigned Op = getOpcode();
     return Op == ISD::ATOMIC_CMP_SWAP;
   }
 
@@ -2371,8 +2371,8 @@ public:
     assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
            "Only indexed loads and stores have a non-undef offset operand");
   }
-  LSBaseSDNode(ISD::NodeType NodeTy, DebugLoc dl, SDValue *Operands, 
-               unsigned numOperands, SDVTList VTs, ISD::MemIndexedMode AM, 
+  LSBaseSDNode(ISD::NodeType NodeTy, DebugLoc dl, SDValue *Operands,
+               unsigned numOperands, SDVTList VTs, ISD::MemIndexedMode AM,
                MVT VT, const Value *SV, int SVO, unsigned Align, bool Vol)
     : MemSDNode(NodeTy, dl, VTs, VT, SV, SVO, Align, Vol) {
     assert(Align != 0 && "Loads and stores should have non-zero aligment");
@@ -2437,7 +2437,7 @@ public:
 
   const SDValue &getBasePtr() const { return getOperand(1); }
   const SDValue &getOffset() const { return getOperand(2); }
-  
+
   static bool classof(const LoadSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::LOAD;
@@ -2475,7 +2475,7 @@ public:
   const SDValue &getValue() const { return getOperand(1); }
   const SDValue &getBasePtr() const { return getOperand(2); }
   const SDValue &getOffset() const { return getOperand(3); }
-  
+
   static bool classof(const StoreSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::STORE;
