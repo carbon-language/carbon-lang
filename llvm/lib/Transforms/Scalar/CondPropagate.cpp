@@ -148,7 +148,7 @@ void CondProp::SimplifyPredecessors(BranchInst *BI) {
   if (!PN->hasOneUse()) return;
 
   BasicBlock *BB = BI->getParent();
-  if (!isTerminatorFirstRelevantInsn (BB, BI))
+  if (&*BB->begin() != PN || &*next(BB->begin()) != BI)
     return;
 
   // Ok, we have this really simple case, walk the PHI operands, looking for
@@ -182,7 +182,7 @@ void CondProp::SimplifyPredecessors(SwitchInst *SI) {
   if (!PN->hasOneUse()) return;
 
   BasicBlock *BB = SI->getParent();
-  if (!isTerminatorFirstRelevantInsn (BB, SI))
+  if (&*BB->begin() != PN || &*next(BB->begin()) != SI)
     return;
 
   bool RemovedPreds = false;

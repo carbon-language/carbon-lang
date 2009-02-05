@@ -40,14 +40,6 @@ template<typename T> class SmallVectorImpl;
 bool ConstantFoldTerminator(BasicBlock *BB);
 
 //===----------------------------------------------------------------------===//
-//  CFG Simplification
-//
-
-/// isTerminatorFirstRelevantInsn - Return true if Term is very first 
-/// instruction ignoring Phi nodes and dbg intrinsics.
-bool isTerminatorFirstRelevantInsn(BasicBlock *BB, Instruction *Term);
-
-//===----------------------------------------------------------------------===//
 //  Local dead code elimination.
 //
 
