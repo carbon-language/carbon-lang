@@ -4301,13 +4301,17 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   llvm::Constant *Fn;
   std::string Name("\01l_");
   if (CGM.ReturnTypeUsesSret(FnInfo)) {
+#if 0
+    // unlike what is documented. gcc never generates this API!!
     if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
       Fn = ObjCTypes.MessageSendIdStretFixupFn;
       // FIXME. Is there a better way of getting these names.
       // They are available in RuntimeFunctions vector pair.
       Name += "objc_msgSendId_stret_fixup";
     }
-    else {
+    else
+#endif
+    {
       Fn = ObjCTypes.MessageSendStretFixupFn;
       Name += "objc_msgSend_stret_fixup";
     }
@@ -4317,11 +4321,15 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     Name += "objc_msgSend_fpret_fixup";
   }
   else {
+#if 0
+// unlike what is documented. gcc never generates this API!!
     if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
       Fn = ObjCTypes.MessageSendIdFixupFn;
       Name += "objc_msgSendId_fixup";
     }
-    else {
+    else 
+#endif
+    {
       Fn = ObjCTypes.MessageSendFixupFn;
       Name += "objc_msgSend_fixup";
     }
