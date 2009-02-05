@@ -531,10 +531,22 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   else
     assert(0 && "Unknown long size");
   char MacroBuf[60];
-  sprintf(MacroBuf, "__INTMAX_MAX__=%lld",
-          (TI.getIntMaxType() == TargetInfo::UnsignedLongLong?
-           (1LL << (TI.getLongLongWidth() - 1)) : 
-           ((1LL << (TI.getLongLongWidth() - 2)) - 1)));
+  unsigned IntMaxWidth;
+  const char *IntMaxSuffix;
+  if (TI.getIntMaxType() == TargetInfo::SignedLongLong) {
+    IntMaxWidth = TI.getLongLongWidth();
+    IntMaxSuffix = "LL";
+  } else if (TI.getIntMaxType() == TargetInfo::SignedLong) {
+    IntMaxWidth = TI.getLongWidth();
+    IntMaxSuffix = "L";
+  } else {
+    assert(TI.getIntMaxType() == TargetInfo::SignedInt);
+    IntMaxWidth = TI.getIntWidth();
+    IntMaxSuffix = "";
+  }
+  
+  sprintf(MacroBuf, "__INTMAX_MAX__=%lld%s", (1LL << (IntMaxWidth - 1)) - 1,
+          IntMaxSuffix);
   DefineBuiltinMacro(Buf, MacroBuf);
   
   if (TI.getIntMaxType() == TargetInfo::UnsignedLongLong)
