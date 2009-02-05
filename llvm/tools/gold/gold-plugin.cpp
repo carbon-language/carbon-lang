@@ -45,7 +45,6 @@ namespace {
   struct claimed_file {
     lto_module_t M;
     void *handle;
-    void *buf;
     std::vector<ld_plugin_symbol> syms;
   };
 
@@ -197,7 +196,6 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
 
   cf.M = buf ? lto_module_create_from_memory(buf, file->filesize) :
                lto_module_create(file->name);
-  cf.buf = buf;
   if (!cf.M) {
     (*message)(LDPL_ERROR, "Failed to create LLVM module: %s",
                lto_get_error_message());
@@ -334,10 +332,6 @@ ld_plugin_status all_symbols_read_hook(void) {
   objFile->close();
 
   lto_codegen_dispose(cg);
-  for (std::list<claimed_file>::iterator I = Modules.begin(),
-       E = Modules.end(); I != E; ++I) {
-    free(I->buf);
-  }
 
   if ((*add_input_file)(const_cast<char*>(uniqueObjPath.c_str())) != LDPS_OK) {
     (*message)(LDPL_ERROR, "Unable to add .o file to the link.");
