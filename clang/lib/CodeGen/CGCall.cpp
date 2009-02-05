@@ -1048,7 +1048,6 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(), 
          ie = FI.arg_end(); it != ie; ++it) {
     const ABIArgInfo &AI = it->info;
-    const llvm::Type *Ty = ConvertType(it->type);
     
     switch (AI.getKind()) {
     case ABIArgInfo::Ignore:
@@ -1060,11 +1059,11 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
 
     case ABIArgInfo::Indirect:
       // indirect arguments are always on the stack, which is addr space #0.
-      ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
+      ArgTys.push_back(llvm::PointerType::getUnqual(ConvertType(it->type)));
       break;
       
     case ABIArgInfo::Direct:
-      ArgTys.push_back(Ty);
+      ArgTys.push_back(ConvertType(it->type));
       break;
      
     case ABIArgInfo::Expand:
@@ -1199,8 +1198,24 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     const ABIArgInfo &ArgI = info_it->info;
 
     switch (ArgI.getKind()) {
-      // FIXME: Implement correct [in]direct semantics.
-    case ABIArgInfo::Indirect: 
+    case ABIArgInfo::Indirect: {
+      llvm::Value* V = AI;
+      if (hasAggregateLLVMType(Ty)) {
+        // Do nothing, aggregates and complex variables are accessed by
+        // reference.
+      } else {
+        // Load scalar value from indirect argument.
+        V = Builder.CreateLoad(V);
+        if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
+          // This must be a promotion, for something like
+          // "void a(x) short x; {..."
+          V = EmitScalarConversion(V, Ty, Arg->getType());
+        }
+      }
+      EmitParmDecl(*Arg, V);      
+      break;
+    }
+      
     case ABIArgInfo::Direct: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
       llvm::Value* V = AI;
@@ -1346,8 +1361,19 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     RValue RV = I->first;
 
     switch (ArgInfo.getKind()) {
-      // FIXME: Implement correct [in]direct semantics.
     case ABIArgInfo::Indirect:
+      if (RV.isScalar() || RV.isComplex()) {
+        // Make a temporary alloca to pass the argument.
+        Args.push_back(CreateTempAlloca(ConvertType(I->second)));
+        if (RV.isScalar())
+          Builder.CreateStore(RV.getScalarVal(), Args.back());
+        else
+          StoreComplexToAddr(RV.getComplexVal(), Args.back(), false); 
+      } else {
+        Args.push_back(RV.getAggregateAddr());
+      }
+      break;
+
     case ABIArgInfo::Direct:
       if (RV.isScalar()) {
         Args.push_back(RV.getScalarVal());
