@@ -323,10 +323,10 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
       if (RT->getDecl()->hasFlexibleArrayMember())
         return ABIArgInfo::getByVal(0);
 
-    // Expand empty structs (i.e. ignore)
+    // Ignore empty structs.
     uint64_t Size = Context.getTypeSize(Ty);
     if (Ty->isStructureType() && Size == 0)
-      return ABIArgInfo::getExpand();
+      return ABIArgInfo::getIgnore();
 
     // Expand structs with size <= 128-bits which consist only of
     // basic types (int, long long, float, double, xxx*). This is
