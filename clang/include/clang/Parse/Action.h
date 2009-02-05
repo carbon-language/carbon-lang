@@ -94,9 +94,15 @@ public:
   // is complete.
 
   /// Single expressions or statements as arguments.
+#if !defined(DISABLE_SMART_POINTERS)
+  typedef ASTOwningResult<&ActionBase::DeleteExpr> ExprArg;
+  typedef ASTOwningResult<&ActionBase::DeleteStmt> StmtArg;
+  typedef ASTOwningResult<&ActionBase::DeleteTemplateArg> TemplateArgArg;
+#else
   typedef ASTOwningPtr<&ActionBase::DeleteExpr> ExprArg;
   typedef ASTOwningPtr<&ActionBase::DeleteStmt> StmtArg;
   typedef ASTOwningPtr<&ActionBase::DeleteTemplateArg> TemplateArgArg;
+#endif
 
   /// Multiple expressions or statements as arguments.
   typedef ASTMultiPtr<&ActionBase::DeleteExpr> MultiExprArg;
@@ -602,7 +608,7 @@ public:
 
   virtual OwningExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
                                           ExprArg Val) {
-    return move_res(Val);  // Default impl returns operand.
+    return move(Val);  // Default impl returns operand.
   }
 
   // Postfix Expressions.

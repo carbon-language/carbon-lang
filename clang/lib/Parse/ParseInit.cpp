@@ -174,7 +174,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
 
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                          SourceLocation(),
-                                                         0, move_arg(Idx));
+                                                         0, move(Idx));
     }
 
     // Create designation if we haven't already.

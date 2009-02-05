@@ -312,7 +312,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
         SkipUntil(tok::semi);
         return 0;
       }
-      Actions.AddInitializerToDecl(LastDeclInGroup, move_arg(Init));
+      Actions.AddInitializerToDecl(LastDeclInGroup, move(Init));
     } else if (Tok.is(tok::l_paren)) {
       // Parse C++ direct initializer: '(' expression-list ')'
       SourceLocation LParenLoc = ConsumeParen();

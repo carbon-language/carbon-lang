@@ -205,7 +205,7 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
   if (LHS.isInvalid()) return move(LHS);
 
   LHS = Actions.ActOnUnaryOp(CurScope, ExtLoc, tok::kw___extension__,
-                             move_arg(LHS));
+                             move(LHS));
   if (LHS.isInvalid()) return move(LHS);
 
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
@@ -334,12 +334,11 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
       // Combine the LHS and RHS into the LHS (e.g. build AST).
       if (TernaryMiddle.isInvalid())
         LHS = Actions.ActOnBinOp(CurScope, OpToken.getLocation(),
-                                 OpToken.getKind(), move_arg(LHS),
-                                 move_arg(RHS));
+                                 OpToken.getKind(), move(LHS), move(RHS));
       else
         LHS = Actions.ActOnConditionalOp(OpToken.getLocation(), ColonLoc,
-                                         move_arg(LHS), move_arg(TernaryMiddle),
-                                         move_arg(RHS));
+                                         move(LHS), move(TernaryMiddle),
+                                         move(RHS));
     }
   }
 }
@@ -493,8 +492,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       // TODO: For cast expression with CastTy.
       Res = ParseCastExpression(false);
       if (!Res.isInvalid())
-        Res = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc,
-                                    move_arg(Res));
+        Res = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc, move(Res));
       return move(Res);
     }
 
@@ -570,7 +568,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(true);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move_arg(Res));
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move(Res));
     return move(Res);
   }
   case tok::amp: {         // unary-expression: '&' cast-expression
@@ -578,7 +576,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false, true);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move_arg(Res));
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move(Res));
     return move(Res);
   }
 
@@ -592,7 +590,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move_arg(Res));
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move(Res));
     return move(Res);
   }
 
@@ -602,7 +600,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move_arg(Res));
+      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move(Res));
     return move(Res);
   }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
@@ -765,8 +763,8 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       SourceLocation RLoc = Tok.getLocation();
 
       if (!LHS.isInvalid() && !Idx.isInvalid() && Tok.is(tok::r_square)) {
-        LHS = Actions.ActOnArraySubscriptExpr(CurScope, move_arg(LHS), Loc,
-                                              move_arg(Idx), RLoc);
+        LHS = Actions.ActOnArraySubscriptExpr(CurScope, move(LHS), Loc,
+                                              move(Idx), RLoc);
       } else
         LHS = ExprError();
 
@@ -792,7 +790,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       if (!LHS.isInvalid() && Tok.is(tok::r_paren)) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
-        LHS = Actions.ActOnCallExpr(CurScope, move_arg(LHS), Loc,
+        LHS = Actions.ActOnCallExpr(CurScope, move(LHS), Loc,
                                     move_arg(ArgExprs), &CommaLocs[0],
                                     Tok.getLocation());
       }
@@ -811,7 +809,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       }
 
       if (!LHS.isInvalid()) {
-        LHS = Actions.ActOnMemberReferenceExpr(CurScope, move_arg(LHS), OpLoc,
+        LHS = Actions.ActOnMemberReferenceExpr(CurScope, move(LHS), OpLoc,
                                                OpKind, Tok.getLocation(),
                                                *Tok.getIdentifierInfo());
       }
@@ -822,7 +820,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
       if (!LHS.isInvalid()) {
         LHS = Actions.ActOnPostfixUnaryOp(CurScope, Tok.getLocation(), 
-                                          Tok.getKind(), move_arg(LHS));
+                                          Tok.getKind(), move(LHS));
       }
       ConsumeToken();
       break;
@@ -1128,7 +1126,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
       ExprType = CompoundLiteral;
       if (!Result.isInvalid())
         return Actions.ActOnCompoundLiteral(OpenLoc, Ty, RParenLoc,
-                                            move_arg(Result));
+                                            move(Result));
       return move(Result);
     }
 
@@ -1146,8 +1144,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
     Result = ParseExpression();
     ExprType = SimpleExpr;
     if (!Result.isInvalid() && Tok.is(tok::r_paren))
-      Result = Actions.ActOnParenExpr(OpenLoc, Tok.getLocation(),
-                                      move_arg(Result));
+      Result = Actions.ActOnParenExpr(OpenLoc, Tok.getLocation(), move(Result));
   }
 
   // Match the ')'.

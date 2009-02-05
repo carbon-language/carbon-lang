@@ -497,7 +497,7 @@ namespace {
     virtual OwningExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
                                             ExprArg Val) {
       llvm::cout << __FUNCTION__ << "\n";
-      return move_res(Val);  // Default impl returns operand.
+      return move(Val);  // Default impl returns operand.
     }
 
     // Postfix Expressions.
