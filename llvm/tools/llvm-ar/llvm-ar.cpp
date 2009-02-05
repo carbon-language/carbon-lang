@@ -638,7 +638,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
       const sys::FileStatus *si = PwS.getFileStatus(false, &Err);
       if (!si)
         return true;
-      if (si->isDir) {
+      if (!si->isDir) {
         if (OnlyUpdate) {
           // Replace the item only if it is newer.
           if (si->modTime > I->getModTime())
