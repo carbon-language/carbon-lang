@@ -201,29 +201,27 @@ public:
 /// @code
 /// template<typename T> class vector;
 /// @endcode
-class TemplateTypeParmDecl
-  : public TypeDecl, protected TemplateParmPosition {
-  /// Typename - Whether this template type parameter was declaration
-  /// with the 'typename' keyword. If false, it was declared with the
+class TemplateTypeParmDecl : public TypeDecl {
+  /// \brief Whether this template type parameter was declaration with
+  /// the 'typename' keyword. If false, it was declared with the
   /// 'class' keyword.
   bool Typename : 1;
 
-  TemplateTypeParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
-                       unsigned P, IdentifierInfo *Id, bool Typename)
-    : TypeDecl(TemplateTypeParm, DC, L, Id), TemplateParmPosition(D, P),
-      Typename(Typename) { }
+  TemplateTypeParmDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
+                       bool Typename, QualType Type)
+    : TypeDecl(TemplateTypeParm, DC, L, Id), Typename(Typename) { 
+    TypeForDecl = Type.getTypePtr();
+  }
+
 public:
   static TemplateTypeParmDecl *Create(ASTContext &C, DeclContext *DC,
                                       SourceLocation L, unsigned D, unsigned P,
                                       IdentifierInfo *Id, bool Typename);
 
-  /// wasDeclarationWithTypename - Whether this template type
-  /// parameter was declared with the 'typename' keyword. If not, it
-  /// was declared with the 'class' keyword.
+  /// \brief Whether this template type parameter was declared with
+  /// the 'typename' keyword. If not, it was declared with the 'class'
+  /// keyword.
   bool wasDeclaredWithTypename() const { return Typename; }
-
-  using TemplateParmPosition::getDepth;
-  using TemplateParmPosition::getPosition;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -232,10 +230,10 @@ public:
   static bool classof(const TemplateTypeParmDecl *D) { return true; }
 
 protected:
-  /// EmitImpl - Serialize this TemplateTypeParmDecl.  Called by Decl::Emit.
+  /// Serialize this TemplateTypeParmDecl.  Called by Decl::Emit.
   virtual void EmitImpl(llvm::Serializer& S) const;
 
-  /// CreateImpl - Deserialize a TemplateTypeParmDecl.  Called by Decl::Create.
+  /// Deserialize a TemplateTypeParmDecl.  Called by Decl::Create.
   static TemplateTypeParmDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);

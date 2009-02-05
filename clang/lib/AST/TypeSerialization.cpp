@@ -127,7 +127,7 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       break;
 
     case Type::TemplateTypeParm:
-      D.RegisterPtr(PtrID,TemplateTypeParmType::CreateImpl(Context, D));
+      D.RegisterPtr(PtrID, TemplateTypeParmType::CreateImpl(Context, D));
       break;
 
     case Type::VariableArray:
@@ -364,20 +364,18 @@ Type* TypeOfType::CreateImpl(ASTContext& Context, Deserializer& D) {
 //===----------------------------------------------------------------------===//
 
 void TemplateTypeParmType::EmitImpl(Serializer& S) const {
-  S.EmitPtr(getDecl());
+  S.EmitInt(Depth);
+  S.EmitInt(Index);
+  S.EmitPtr(Name);
 }
 
 Type* TemplateTypeParmType::CreateImpl(ASTContext& Context, Deserializer& D) {
-  std::vector<Type*>& Types = 
-    const_cast<std::vector<Type*>&>(Context.getTypes());
-  
-  TemplateTypeParmType* T = new TemplateTypeParmType(NULL);
-  Types.push_back(T);
-  
-  D.ReadPtr(T->Decl); // May be backpatched.
-  return T;
+  unsigned Depth = D.ReadInt();
+  unsigned Index = D.ReadInt();
+  IdentifierInfo *Name = D.ReadPtr<IdentifierInfo>();
+  return Context.getTemplateTypeParmType(Depth, Index, Name).getTypePtr();
 }
-  
+
 //===----------------------------------------------------------------------===//
 // VariableArrayType
 //===----------------------------------------------------------------------===//

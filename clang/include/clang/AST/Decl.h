@@ -762,13 +762,15 @@ protected:
 /// TypeDecl - Represents a declaration of a type.
 ///
 class TypeDecl : public NamedDecl {
-  /// TypeForDecl - This indicates the Type object that represents this
-  /// TypeDecl.  It is a cache maintained by ASTContext::getTypedefType,
-  /// ASTContext::getTagDeclType, and ASTContext::getTemplateTypeParmType.
+  /// TypeForDecl - This indicates the Type object that represents
+  /// this TypeDecl.  It is a cache maintained by
+  /// ASTContext::getTypedefType, ASTContext::getTagDeclType, and
+  /// ASTContext::getTemplateTypeParmType, and TemplateTypeParmDecl.
   Type *TypeForDecl;
   friend class ASTContext;
   friend class DeclContext;
   friend class TagDecl;
+  friend class TemplateTypeParmDecl;
 
 protected:
   TypeDecl(Kind DK, DeclContext *DC, SourceLocation L,

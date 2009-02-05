@@ -1188,7 +1188,7 @@ public:
   TypedefDecl *getDecl() const { return Decl; }
   
   /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
-  /// potentially looking through *all* consequtive typedefs.  This returns the
+  /// potentially looking through *all* consecutive typedefs.  This returns the
   /// sum of the type qualifiers, so if you have:
   ///   typedef const int A;
   ///   typedef volatile A B;
@@ -1350,19 +1350,39 @@ public:
   static bool classof(const EnumType *) { return true; }
 };
 
-class TemplateTypeParmType : public Type {
-  TemplateTypeParmDecl *Decl;
+class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
+  unsigned Depth : 16;
+  unsigned Index : 16;
+  IdentifierInfo *Name;
 
-protected:
-  TemplateTypeParmType(TemplateTypeParmDecl *D)
-    : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true), Decl(D) { }
+  TemplateTypeParmType(unsigned D, unsigned I, IdentifierInfo *N, 
+                       QualType Canon) 
+    : Type(TemplateTypeParm, Canon, /*Dependent=*/true),
+      Depth(D), Index(I), Name(N) { }
 
-  friend class ASTContext; // ASTContext creates these
+  TemplateTypeParmType(unsigned D, unsigned I) 
+    : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true),
+      Depth(D), Index(I), Name(0) { }
+
+  friend class ASTContext;  // ASTContext creates these
 
 public:
-  TemplateTypeParmDecl *getDecl() const { return Decl; }
-
+  unsigned getDepth() const { return Depth; }
+  unsigned getIndex() const { return Index; }
+  IdentifierInfo *getName() const { return Name; }
+  
   virtual void getAsStringInternal(std::string &InnerString) const;
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, Depth, Index, Name);
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID, unsigned Depth, 
+                      unsigned Index, IdentifierInfo *Name) {
+    ID.AddInteger(Depth);
+    ID.AddInteger(Index);
+    ID.AddPointer(Name);
+  }
 
   static bool classof(const Type *T) { 
     return T->getTypeClass() == TemplateTypeParm; 
@@ -1374,7 +1394,7 @@ protected:
   static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
   friend class Type;
 };
-  
+
 /// ObjCInterfaceType - Interfaces are the core concept in Objective-C for
 /// object oriented design.  They basically correspond to C++ classes.  There
 /// are two kinds of interface types, normal interfaces like "NSString" and

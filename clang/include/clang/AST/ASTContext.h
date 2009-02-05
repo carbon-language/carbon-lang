@@ -68,6 +68,7 @@ class ASTContext {
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
+  llvm::FoldingSet<TemplateTypeParmType> TemplateTypeParmTypes;
   llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
   llvm::FoldingSet<ObjCQualifiedIdType> ObjCQualifiedIdTypes;
   /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
@@ -256,9 +257,11 @@ public:
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);
-  QualType getTemplateTypeParmType(TemplateTypeParmDecl *Decl);
   QualType getObjCInterfaceType(ObjCInterfaceDecl *Decl);
-  
+
+  QualType getTemplateTypeParmType(unsigned Depth, unsigned Index, 
+                                   IdentifierInfo *Name = 0);
+
   /// getObjCQualifiedInterfaceType - Return a 
   /// ObjCQualifiedInterfaceType type for the given interface decl and
   /// the conforming protocol list.

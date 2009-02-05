@@ -78,7 +78,8 @@ TemplateTypeParmDecl *
 TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L, unsigned D, unsigned P,
                              IdentifierInfo *Id, bool Typename) {
-  return new (C) TemplateTypeParmDecl(DC, L, D, P, Id, Typename);
+  QualType Type = C.getTemplateTypeParmType(D, P, Id);
+  return new (C) TemplateTypeParmDecl(DC, L, Id, Typename, Type);
 }
 
 //===----------------------------------------------------------------------===//

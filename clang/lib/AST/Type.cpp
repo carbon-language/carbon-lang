@@ -1138,7 +1138,12 @@ void TypedefType::getAsStringInternal(std::string &InnerString) const {
 void TemplateTypeParmType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'parmname X'.
     InnerString = ' ' + InnerString;
-  InnerString = getDecl()->getIdentifier()->getName() + InnerString;
+
+  if (!Name)
+    InnerString = "type-parameter-" + llvm::utostr_32(Depth) + '-' + 
+      llvm::utostr_32(Index) + InnerString;
+  else
+    InnerString = Name->getName() + InnerString;
 }
 
 void ObjCInterfaceType::getAsStringInternal(std::string &InnerString) const {

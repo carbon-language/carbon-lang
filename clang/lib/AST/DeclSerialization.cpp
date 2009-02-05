@@ -598,21 +598,17 @@ TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 void TemplateTypeParmDecl::EmitImpl(Serializer& S) const {
-  S.EmitInt(Depth);
-  S.EmitInt(Position);
   S.EmitBool(Typename);
-  NamedDecl::EmitInRec(S);
+  TypeDecl::EmitInRec(S);
 }
 
 TemplateTypeParmDecl *
 TemplateTypeParmDecl::CreateImpl(Deserializer& D, ASTContext& C) {
-  unsigned Depth = D.ReadInt();
-  unsigned Position = D.ReadInt();
   bool Typename = D.ReadBool();
   TemplateTypeParmDecl *decl
-    = new (C) TemplateTypeParmDecl(0, SourceLocation(), Depth, Position,
-                                   0, Typename);
-  decl->NamedDecl::ReadInRec(D, C);
+    = new (C) TemplateTypeParmDecl(0, SourceLocation(), 0, Typename, 
+                                   QualType());
+  decl->TypeDecl::ReadInRec(D, C);
   return decl;
 }
 

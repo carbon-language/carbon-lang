@@ -1144,9 +1144,9 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
   
   if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(Decl))
     return getTypedefType(Typedef);
-  else if (TemplateTypeParmDecl *TP = dyn_cast<TemplateTypeParmDecl>(Decl))
-    return getTemplateTypeParmType(TP);
-  else if (ObjCInterfaceDecl *ObjCInterface = dyn_cast<ObjCInterfaceDecl>(Decl))
+  else if (isa<TemplateTypeParmDecl>(Decl)) {
+    assert(false && "Template type parameter types are always available.");
+  } else if (ObjCInterfaceDecl *ObjCInterface = dyn_cast<ObjCInterfaceDecl>(Decl))
     return getObjCInterfaceType(ObjCInterface);
 
   if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(Decl)) {
@@ -1185,16 +1185,6 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
-/// getTemplateTypeParmType - Return the unique reference to the type
-/// for the specified template type parameter declaration. 
-QualType ASTContext::getTemplateTypeParmType(TemplateTypeParmDecl *Decl) {
-  if (!Decl->TypeForDecl) {
-    Decl->TypeForDecl = new (*this,8) TemplateTypeParmType(Decl);
-    Types.push_back(Decl->TypeForDecl);
-  }
-  return QualType(Decl->TypeForDecl, 0);
-}
-
 /// getObjCInterfaceType - Return the unique reference to the type for the
 /// specified ObjC interface decl.
 QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
@@ -1203,6 +1193,31 @@ QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
   Decl->TypeForDecl = new(*this,8) ObjCInterfaceType(Type::ObjCInterface, Decl);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
+}
+
+/// \brief Retrieve the template type parameter type for a template
+/// parameter with the given depth, index, and (optionally) name.
+QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index, 
+                                             IdentifierInfo *Name) {
+  llvm::FoldingSetNodeID ID;
+  TemplateTypeParmType::Profile(ID, Depth, Index, Name);
+  void *InsertPos = 0;
+  TemplateTypeParmType *TypeParm 
+    = TemplateTypeParmTypes.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (TypeParm)
+    return QualType(TypeParm, 0);
+  
+  if (Name)
+    TypeParm = new (*this, 8) TemplateTypeParmType(Depth, Index, Name,
+                                         getTemplateTypeParmType(Depth, Index));
+  else
+    TypeParm = new (*this, 8) TemplateTypeParmType(Depth, Index);
+
+  Types.push_back(TypeParm);
+  TemplateTypeParmTypes.InsertNode(TypeParm, InsertPos);
+
+  return QualType(TypeParm, 0);
 }
 
 /// CmpProtocolNames - Comparison predicate for sorting protocols
