@@ -1229,7 +1229,7 @@ def MOV64r0  : I<0x31, MRMInitReg,  (outs GR64:$dst), (ins),
                 [(set GR64:$dst, 0)]>;
 
 // Materialize i64 constant where top 32-bits are zero.
-let AddedComplexity = 1, isReMaterializable = 1 in
+let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
                         "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
                         [(set GR64:$dst, i64immZExt32:$src)]>;

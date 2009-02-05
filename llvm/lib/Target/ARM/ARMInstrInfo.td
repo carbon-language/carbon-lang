@@ -773,7 +773,7 @@ def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
 def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
                  "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>, UnaryDP;
 
-let isReMaterializable = 1 in
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPFrm,
                  "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>, UnaryDP;
 
@@ -922,7 +922,7 @@ def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm,
 def  MVNs  : AsI1<0b1111, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
                   "mvn", " $dst, $src",
                   [(set GPR:$dst, (not so_reg:$src))]>, UnaryDP;
-let isReMaterializable = 1 in
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPFrm,
                   "mvn", " $dst, $imm",
                   [(set GPR:$dst, so_imm_not:$imm)]>,UnaryDP;

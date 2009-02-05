@@ -1004,6 +1004,7 @@ let Predicates = [HasSSE1] in {
 }
 
 // FR32 to 128-bit vector conversion.
+let isAsCheapAsAMove = 1 in
 def MOVSS2PSrr : SSI<0x10, MRMSrcReg, (outs VR128:$dst), (ins FR32:$src),
                       "movss\t{$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
@@ -1018,6 +1019,7 @@ def MOVSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
 // like this:
 // def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
 //           (f32 FR32:$src)>;
+let isAsCheapAsAMove = 1 in
 def MOVPS2SSrr : SSI<0x10, MRMSrcReg, (outs FR32:$dst), (ins VR128:$src),
                      "movss\t{$src, $dst|$dst, $src}",
                      [(set FR32:$dst, (vector_extract (v4f32 VR128:$src),
@@ -2269,6 +2271,7 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1 in
                          [(set VR128:$dst, (v4i32 immAllOnesV))]>;
 
 // FR64 to 128-bit vector conversion.
+let isAsCheapAsAMove = 1 in
 def MOVSD2PDrr : SDI<0x10, MRMSrcReg, (outs VR128:$dst), (ins FR64:$src),
                       "movsd\t{$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
@@ -2311,6 +2314,7 @@ def MOVPQI2QImr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
 // like this:
 // def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
 //           (f32 FR32:$src)>;
+let isAsCheapAsAMove = 1 in
 def MOVPD2SDrr : SDI<0x10, MRMSrcReg, (outs FR64:$dst), (ins VR128:$src),
                      "movsd\t{$src, $dst|$dst, $src}",
                      [(set FR64:$dst, (vector_extract (v2f64 VR128:$src),

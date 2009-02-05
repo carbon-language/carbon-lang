@@ -2812,7 +2812,7 @@ def MOV32r0  : I<0x31, MRMInitReg,  (outs GR32:$dst), (ins),
 
 // Basic operations on GR16 / GR32 subclasses GR16_ and GR32_ which contains only
 // those registers that have GR8 sub-registers (i.e. AX - DX, EAX - EDX).
-let neverHasSideEffects = 1 in {
+let neverHasSideEffects = 1, isAsCheapAsAMove = 1 in {
 def MOV16to16_ : I<0x89, MRMDestReg, (outs GR16_:$dst), (ins GR16:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32to32_ : I<0x89, MRMDestReg, (outs GR32_:$dst), (ins GR32:$src),
