@@ -4316,7 +4316,9 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
       Name += "objc_msgSend_stret_fixup";
     }
   }
-  else if (ResultType->isFloatingType()) {
+  else if (ResultType->isFloatingType() &&
+           // Selection of frret API only happens in 32bit nonfragile ABI.
+           CGM.getTargetData().getTypePaddedSize(ObjCTypes.LongTy) == 4) {
     Fn = ObjCTypes.MessageSendFpretFixupFn;
     Name += "objc_msgSend_fpret_fixup";
   }
