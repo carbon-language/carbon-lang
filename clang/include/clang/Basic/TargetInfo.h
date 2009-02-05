@@ -70,14 +70,17 @@ public:
     UnsignedLong,
     SignedLongLong,
     UnsignedLongLong
-  } SizeType, IntMaxType, UIntMaxType, PtrDiffType, WCharType;  
-  enum IntType getSizeType() const {return SizeType;}
-  enum IntType getIntMaxType() const {return IntMaxType;}
-  enum IntType getUIntMaxType() const {return UIntMaxType;}
-  enum IntType getPtrDiffType(unsigned AddrSpace) const {
+  };
+protected:
+  IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, WCharType;
+public:
+  IntType getSizeType() const { return SizeType; }
+  IntType getIntMaxType() const { return IntMaxType; }
+  IntType getUIntMaxType() const { return UIntMaxType; }
+  IntType getPtrDiffType(unsigned AddrSpace) const {
     return AddrSpace == 0 ? PtrDiffType : getPtrDiffTypeV(AddrSpace);
   }
-  enum IntType getWCharType() const {return WCharType;}
+  IntType getWCharType() const { return WCharType; }
 
   /// isCharSigned - Return true if 'char' is 'signed char' or false if it is
   /// treated as 'unsigned char'.  This is implementation defined according to
