@@ -223,6 +223,12 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
   AddPath("/usr/lib/gcc/x86_64-linux-gnu/4.2.3/include", System,
       false, false, false);
 
+  // Debian sid amd64
+  AddPath("/usr/lib/gcc/x86_64-linux-gnu/4.3/include", System,
+      false, false, false);
+  AddPath("/usr/lib/gcc/x86_64-linux-gnu/4.3/include-fixed",
+      System, false, false, false);
+
   // Arch Linux 2008-06-24
   AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.3.1/include", System,
       false, false, false);
