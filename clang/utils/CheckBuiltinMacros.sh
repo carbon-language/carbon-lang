@@ -2,7 +2,7 @@
 set -ex
 
 if [ -z "$CC" ]; then
-    CC="/Developer/usr/bin/gcc-4.2"
+    CC="gcc"
 fi
 
 SRCLANG=c
