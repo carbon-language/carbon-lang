@@ -374,27 +374,35 @@ class Driver(object):
                 inputValue = args.getValue(a)
                 if inputType is None:
                     base,ext = os.path.splitext(inputValue)
-                    if ext and ext in Types.kTypeSuffixMap:
+                    # stdin is handled specially.
+                    if inputValue == '-':
+                        if args.getLastArg(self.parser.EOption):
+                            # Treat as a C input needing preprocessing
+                            # (or Obj-C if over-ridden below).
+                            klass = Types.CType
+                        else:
+                            raise Arguments.InvalidArgumentsError("-E or -x required when input is from standard input")
+                    elif ext and ext in Types.kTypeSuffixMap:
                         klass = Types.kTypeSuffixMap[ext]
-
-                        # -ObjC and -ObjC++ over-ride the default
-                        # language, but only for "source files". We
-                        # just treat everything that isn't a linker
-                        # input as a source file.
-                        #
-                        # FIXME: Clean this up if we move the phase
-                        # sequence into the type.
-                        if klass is not Types.ObjectType:
-                            if args.getLastArg(self.parser.ObjCOption):
-                                klass = Types.ObjCType
-                            elif args.getLastArg(self.parser.ObjCXXOption):
-                                klass = Types.ObjCType
                     else:
                         # FIXME: Its not clear why we shouldn't just
                         # revert to unknown. I think this is more likely a
                         # bug / unintended behavior in gcc. Not very
                         # important though.
                         klass = Types.ObjectType
+
+                    # -ObjC and -ObjC++ over-ride the default
+                    # language, but only for "source files". We
+                    # just treat everything that isn't a linker
+                    # input as a source file.
+                    #
+                    # FIXME: Clean this up if we move the phase
+                    # sequence into the type.
+                    if klass is not Types.ObjectType:
+                        if args.getLastArg(self.parser.ObjCOption):
+                            klass = Types.ObjCType
+                        elif args.getLastArg(self.parser.ObjCXXOption):
+                            klass = Types.ObjCType
                 else:
                     assert inputTypeOpt is not None
                     self.claim(inputTypeOpt)
