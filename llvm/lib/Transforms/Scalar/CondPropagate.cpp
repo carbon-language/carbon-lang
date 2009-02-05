@@ -23,6 +23,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
@@ -44,6 +45,7 @@ namespace {
 
   private:
     bool MadeChange;
+    SmallVector<BasicBlock *, 4> DeadBlocks;
     void SimplifyBlock(BasicBlock *BB);
     void SimplifyPredecessors(BranchInst *BI);
     void SimplifyPredecessors(SwitchInst *SI);
@@ -60,14 +62,22 @@ FunctionPass *llvm::createCondPropagationPass() {
 
 bool CondProp::runOnFunction(Function &F) {
   bool EverMadeChange = false;
+  DeadBlocks.clear();
 
   // While we are simplifying blocks, keep iterating.
   do {
     MadeChange = false;
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      SimplifyBlock(BB);
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E;)
+      SimplifyBlock(BB++);
     EverMadeChange = EverMadeChange || MadeChange;
   } while (MadeChange);
+
+  if (EverMadeChange) {
+    while (!DeadBlocks.empty()) {
+      BasicBlock *BB = DeadBlocks.back(); DeadBlocks.pop_back();
+      DeleteDeadBlock(BB);
+    }
+  }
   return EverMadeChange;
 }
 
@@ -111,8 +121,9 @@ void CondProp::SimplifyBlock(BasicBlock *BB) {
 
       // Succ is now dead, but we cannot delete it without potentially
       // invalidating iterators elsewhere.  Just insert an unreachable
-      // instruction in it.
+      // instruction in it and delete this block later on.
       new UnreachableInst(Succ);
+      DeadBlocks.push_back(Succ);
       MadeChange = true;
     }
 }
