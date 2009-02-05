@@ -84,6 +84,7 @@ namespace CodeGen {
     const ABIArgInfo &getReturnInfo() const { return Args[0].info; }
 
     void Profile(llvm::FoldingSetNodeID &ID) {
+      getReturnType().Profile(ID);
       for (arg_iterator it = arg_begin(), ie = arg_end(); it != ie; ++it)
         it->type.Profile(ID);
     }
