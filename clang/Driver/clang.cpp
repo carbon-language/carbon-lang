@@ -38,6 +38,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -681,7 +682,7 @@ ErrorOnExtensions("pedantic-errors",
 
 static llvm::cl::opt<bool>
 SuppressSystemWarnings("suppress-system-warnings",
-                       llvm::cl::desc("Suppress warnings issued in system headers"),
+                  llvm::cl::desc("Suppress warnings issued in system headers"),
                        llvm::cl::init(true));
 
 static llvm::cl::opt<bool>
@@ -710,7 +711,8 @@ WarnImplicitFunctionDeclaration("Wimplicit-function-declaration",
 
 static llvm::cl::opt<bool>
 WarnNoStrictSelectorMatch("Wno-strict-selector-match",
-   llvm::cl::desc("Do not warn about duplicate methods that have the same size and alignment"),
+   llvm::cl::desc("Do not warn about duplicate methods that have the same size"
+                  " and alignment"),
    llvm::cl::init(true));
 
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
@@ -749,6 +751,9 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   else
     Diags.setDiagnosticMapping(diag::warn_implicit_function_decl,
                                diag::MAP_IGNORE);
+  
+  
+  Diags.setDiagnosticMapping(diag::err_pp_file_not_found, diag::MAP_FATAL);
 }
 
 //===----------------------------------------------------------------------===//
