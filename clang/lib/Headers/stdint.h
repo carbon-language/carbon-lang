@@ -35,7 +35,7 @@
  */
 
 typedef signed __INT8_TYPE__ int8_t;
-typedef unsigned __UINT8_TYPE__ uint8_t;
+typedef unsigned __INT8_TYPE__ uint8_t;
 typedef int8_t     int_least8_t;
 typedef uint8_t   uint_least8_t;
 typedef int8_t     int_fast8_t;
@@ -73,10 +73,10 @@ typedef uint64_t uint_fast64_t;
 #if __POINTER_WIDTH__ == 64
 typedef int64_t  intptr_t;
 typedef uint64_t uintptr_t;
-#else if __POINTER_WIDTH__ == 32
+#elif __POINTER_WIDTH__ == 32
 typedef int32_t  intptr_t;
 typedef uint32_t uintptr_t;
-#else if __POINTER_WIDTH__ == 16
+#elif __POINTER_WIDTH__ == 16
 typedef int16_t  intptr_t;
 typedef uint16_t uintptr_t;
 #else
@@ -152,7 +152,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define PTRDIFF_MAX  INT64_MAX
 #define SIZE_MAX    UINT64_MAX
 
-#else if __POINTER_WIDTH__ == 32
+#elif __POINTER_WIDTH__ == 32
 
 #define  INTPTR_MIN  INT32_MIN
 #define  INTPTR_MAX  INT32_MAX
@@ -161,7 +161,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define PTRDIFF_MAX  INT32_MAX
 #define SIZE_MAX    UINT32_MAX
 
-#else if __POINTER_WIDTH__ == 16
+#elif __POINTER_WIDTH__ == 16
 
 #define  INTPTR_MIN  INT16_MIN
 #define  INTPTR_MAX  INT16_MAX
