@@ -1110,7 +1110,6 @@ class OptionParser:
         args = ArgList(self, argv)
         for pos,a in it:
             i = InputIndex(0, pos)
-            # FIXME: Handle '@'
             if not a: 
                 # gcc's handling of empty arguments doesn't make
                 # sense, but this is not a common use case. :)
@@ -1118,6 +1117,9 @@ class OptionParser:
                 # We just ignore them here (note that other things may
                 # still take them as arguments).
                 pass
+            elif a[0] == '@':
+                # FIXME: Handle '@'
+                raise InvalidArgumentsError('@ style argument lists are unsupported')
             elif a[0] == '-' and a != '-':
                 args.append(self.lookupOptForArg(i, a, it))
             else:
