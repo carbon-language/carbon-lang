@@ -120,7 +120,7 @@ AliasAnalysis::getModRefBehavior(CallSite CS,
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(Function *F,
                                  std::vector<PointerAccessInfo> *Info) {
-  if (F->doesNotAccessMemory())
+  if (F && F->doesNotAccessMemory())
     // Can't do better than this.
     return DoesNotAccessMemory;
   return UnknownModRefBehavior;
