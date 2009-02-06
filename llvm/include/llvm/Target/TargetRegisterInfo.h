@@ -202,8 +202,8 @@ public:
   unsigned getAlignment() const { return Alignment; }
 
   /// getCopyCost - Return the cost of copying a value between two registers in
-  /// this class. -1 means the register class is very expensive to copy e.g.
-  /// status flag register classes.
+  /// this class. A negative number means the register class is very expensive
+  /// to copy e.g. status flag register classes.
   int getCopyCost() const { return CopyCost; }
 };
 
