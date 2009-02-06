@@ -683,33 +683,16 @@ public:
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                         MVT VT2, SDValue Op1, SDValue Op2, SDValue Op3);
 
-  SDNode *getTargetNode(unsigned Opcode, MVT VT1, MVT VT2,
-                        const SDValue *Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1, MVT VT2,
                         const SDValue *Ops, unsigned NumOps);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                        SDValue Op1, SDValue Op2);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1, MVT VT2, MVT VT3,
                         SDValue Op1, SDValue Op2);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                        SDValue Op1, SDValue Op2, SDValue Op3);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1, MVT VT2, MVT VT3,
                         SDValue Op1, SDValue Op2, SDValue Op3);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                        const SDValue *Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1, MVT VT2, MVT VT3,
-                        const SDValue *Ops, unsigned NumOps);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3, MVT VT4,
                         const SDValue *Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1, MVT VT2, MVT VT3,
                         MVT VT4, const SDValue *Ops, unsigned NumOps);
-
-  SDNode *getTargetNode(unsigned Opcode, const std::vector<MVT> &ResultTys,
-                        const SDValue *Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl,
                         const std::vector<MVT> &ResultTys, const SDValue *Ops,
                         unsigned NumOps);

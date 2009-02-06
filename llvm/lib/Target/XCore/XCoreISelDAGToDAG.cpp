@@ -158,6 +158,7 @@ InstructionSelect() {
 
 SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.getNode();
+  DebugLoc dl = N->getDebugLoc();
   MVT NVT = N->getValueType(0);
   if (NVT == MVT::i32) {
     switch (N->getOpcode()) {
@@ -165,26 +166,27 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
       case ISD::Constant: {
         if (Predicate_immMskBitp(N)) {
           SDValue MskSize = Transform_msksize_xform(N);
-          return CurDAG->getTargetNode(XCore::MKMSK_rus, MVT::i32, MskSize);
+          return CurDAG->getTargetNode(XCore::MKMSK_rus, dl, MVT::i32, MskSize);
         }
         else if (! Predicate_immU16(N)) {
           unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
           SDValue CPIdx =
             CurDAG->getTargetConstantPool(ConstantInt::get(Type::Int32Ty, Val),
                                           TLI.getPointerTy());
-          return CurDAG->getTargetNode(XCore::LDWCP_lru6, MVT::i32, MVT::Other,
-                                            CPIdx, CurDAG->getEntryNode());
+          return CurDAG->getTargetNode(XCore::LDWCP_lru6, dl, MVT::i32, 
+                                       MVT::Other, CPIdx, 
+                                       CurDAG->getEntryNode());
         }
         break;
       }
       case ISD::SMUL_LOHI: {
         // FIXME fold addition into the macc instruction
         if (!Subtarget.isXS1A()) {
-          SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, MVT::i32,
+          SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, dl, MVT::i32,
                                   CurDAG->getTargetConstant(0, MVT::i32)), 0);
           SDValue Ops[] = { Zero, Zero, Op.getOperand(0), Op.getOperand(1) };
-          SDNode *ResNode = CurDAG->getTargetNode(XCore::MACCS_l4r, MVT::i32,
-                                                  MVT::i32, Ops, 4);
+          SDNode *ResNode = CurDAG->getTargetNode(XCore::MACCS_l4r, dl,
+                                                  MVT::i32, MVT::i32, Ops, 4);
           ReplaceUses(SDValue(N, 0), SDValue(ResNode, 1));
           ReplaceUses(SDValue(N, 1), SDValue(ResNode, 0));
           return NULL;
@@ -193,11 +195,11 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
       }
       case ISD::UMUL_LOHI: {
         // FIXME fold addition into the macc / lmul instruction
-        SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, MVT::i32,
+        SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, dl, MVT::i32,
                                   CurDAG->getTargetConstant(0, MVT::i32)), 0);
         SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                             Zero, Zero };
-        SDNode *ResNode = CurDAG->getTargetNode(XCore::LMUL_l6r, MVT::i32,
+        SDNode *ResNode = CurDAG->getTargetNode(XCore::LMUL_l6r, dl, MVT::i32,
                                                 MVT::i32, Ops, 4);
         ReplaceUses(SDValue(N, 0), SDValue(ResNode, 1));
         ReplaceUses(SDValue(N, 1), SDValue(ResNode, 0));
@@ -207,7 +209,7 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
         if (!Subtarget.isXS1A()) {
           SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                               Op.getOperand(2) };
-          return CurDAG->getTargetNode(XCore::LADD_l5r, MVT::i32, MVT::i32,
+          return CurDAG->getTargetNode(XCore::LADD_l5r, dl, MVT::i32, MVT::i32,
                                        Ops, 3);
         }
         break;
@@ -216,7 +218,7 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
         if (!Subtarget.isXS1A()) {
           SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                               Op.getOperand(2) };
-          return CurDAG->getTargetNode(XCore::LSUB_l5r, MVT::i32, MVT::i32,
+          return CurDAG->getTargetNode(XCore::LSUB_l5r, dl, MVT::i32, MVT::i32,
                                        Ops, 3);
         }
         break;

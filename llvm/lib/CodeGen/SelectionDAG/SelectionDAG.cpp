@@ -4506,11 +4506,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
   return getNode(~Opcode, dl, VTs, 2, Ops, 3).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2,
-                                    const SDValue *Ops, unsigned NumOps) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  return getNode(~Opcode, VTs, 2, Ops, NumOps).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, 
                                     MVT VT1, MVT VT2,
                                     const SDValue *Ops, unsigned NumOps) {
@@ -4518,12 +4513,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
   return getNode(~Opcode, dl, VTs, 2, Ops, NumOps).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                                    SDValue Op1, SDValue Op2) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  SDValue Ops[] = { Op1, Op2 };
-  return getNode(~Opcode, VTs, 3, Ops, 2).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     MVT VT1, MVT VT2, MVT VT3,
                                     SDValue Op1, SDValue Op2) {
@@ -4532,13 +4521,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
   return getNode(~Opcode, dl, VTs, 3, Ops, 2).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                                    SDValue Op1, SDValue Op2,
-                                    SDValue Op3) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  SDValue Ops[] = { Op1, Op2, Op3 };
-  return getNode(~Opcode, VTs, 3, Ops, 3).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     MVT VT1, MVT VT2, MVT VT3,
                                     SDValue Op1, SDValue Op2,
@@ -4548,11 +4530,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
   return getNode(~Opcode, dl, VTs, 3, Ops, 3).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                                    const SDValue *Ops, unsigned NumOps) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  return getNode(~Opcode, VTs, 3, Ops, NumOps).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     MVT VT1, MVT VT2, MVT VT3,
                                     const SDValue *Ops, unsigned NumOps) {
@@ -4560,17 +4537,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
   return getNode(~Opcode, dl, VTs, 3, Ops, NumOps).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
-                                    MVT VT2, MVT VT3, MVT VT4,
-                                    const SDValue *Ops, unsigned NumOps) {
-  std::vector<MVT> VTList;
-  VTList.push_back(VT1);
-  VTList.push_back(VT2);
-  VTList.push_back(VT3);
-  VTList.push_back(VT4);
-  const MVT *VTs = getNodeValueTypes(VTList);
-  return getNode(~Opcode, VTs, 4, Ops, NumOps).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                                     MVT VT2, MVT VT3, MVT VT4,
                                     const SDValue *Ops, unsigned NumOps) {
@@ -4583,13 +4549,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
   return getNode(~Opcode, dl, VTs, 4, Ops, NumOps).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
-                                    const std::vector<MVT> &ResultTys,
-                                    const SDValue *Ops, unsigned NumOps) {
-  const MVT *VTs = getNodeValueTypes(ResultTys);
-  return getNode(~Opcode, VTs, ResultTys.size(),
-                 Ops, NumOps).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     const std::vector<MVT> &ResultTys,
                                     const SDValue *Ops, unsigned NumOps) {
