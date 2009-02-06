@@ -20,7 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- *===----------------------------------------------------------------------===*/
+\*===----------------------------------------------------------------------===*/
 
 #ifndef __LIMITS_H
 #define __LIMITS_H
