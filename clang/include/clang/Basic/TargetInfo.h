@@ -61,7 +61,7 @@ public:
 
   ///===---- Target Data Type Query Methods -------------------------------===//
   enum IntType {
-    NoInt = 0x0,
+    NoInt = 0,
     SignedShort,
     UnsignedShort,
     SignedInt,
@@ -164,6 +164,10 @@ public:
   const char *getUserLabelPrefix() const {
     return UserLabelPrefix;
   }
+  
+  /// getTypeName - Return the user string for the specified integer type enum.
+  /// For example, SignedShort -> "short".
+  static const char *getTypeName(IntType T);
   
   ///===---- Other target property query methods --------------------------===//
   

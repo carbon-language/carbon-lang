@@ -428,6 +428,14 @@ static void DefineTypeSize(const char *MacroName, unsigned TypeWidth,
   DefineBuiltinMacro(Buf, MacroBuf);
 }
 
+static void DefineType(const char *MacroName, TargetInfo::IntType Ty,
+                       std::vector<char> &Buf) {
+  char MacroBuf[60];
+  sprintf(MacroBuf, "%s=%s", MacroName, TargetInfo::getTypeName(Ty));
+  DefineBuiltinMacro(Buf, MacroBuf);
+}
+
+
 static void InitializePredefinedMacros(Preprocessor &PP, 
                                        std::vector<char> &Buf) {
   // Compiler version introspection macros.
@@ -520,8 +528,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__WCHAR_TYPE__=int");
   DefineBuiltinMacro(Buf, "__WINT_TYPE__=int");
   
-
-  
   unsigned IntMaxWidth;
   const char *IntMaxSuffix;
   if (TI.getIntMaxType() == TargetInfo::SignedLongLong) {
@@ -544,64 +550,11 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineTypeSize("__WCHAR_MAX__", TI.getWCharWidth(), "", true, Buf);
   DefineTypeSize("__INTMAX_MAX__", IntMaxWidth, IntMaxSuffix, true, Buf);
 
-  if (TI.getIntMaxType() == TargetInfo::UnsignedLongLong)
-    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=unsigned long long int");
-  else if (TI.getIntMaxType() == TargetInfo::SignedLongLong)
-    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long long int");
-  else if (TI.getIntMaxType() == TargetInfo::UnsignedLong)
-    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=unsigned long int");
-  else if (TI.getIntMaxType() == TargetInfo::SignedLong)
-    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long int");
-  else if (TI.getIntMaxType() == TargetInfo::UnsignedInt)
-    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=unsigned int");
-  else
-    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=int");
-  
-  if (TI.getUIntMaxType() == TargetInfo::UnsignedLongLong)
-    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=unsigned long long int");
-  else if (TI.getUIntMaxType() == TargetInfo::SignedLongLong)
-    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long long int");
-  else if (TI.getUIntMaxType() == TargetInfo::UnsignedLong)
-    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=unsigned long int");
-  else if (TI.getUIntMaxType() == TargetInfo::SignedLong)
-    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long int");
-  else if (TI.getUIntMaxType() == TargetInfo::UnsignedInt)
-    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=unsigned int");
-  else
-    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=int");
-  
-  if (TI.getPtrDiffType(0) == TargetInfo::UnsignedLongLong)
-    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=unsigned long long int");
-  else if (TI.getPtrDiffType(0) == TargetInfo::SignedLongLong)
-    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=long long int");
-  else if (TI.getPtrDiffType(0) == TargetInfo::UnsignedLong)
-    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=unsigned long int");
-  else if (TI.getPtrDiffType(0) == TargetInfo::SignedLong)
-    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=long int");
-  else if (TI.getPtrDiffType(0) == TargetInfo::UnsignedInt)
-    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=unsigned int");
-  else {
-    assert(TI.getPtrDiffType(0) == TargetInfo::SignedInt);
-    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=int");
-  }
-  
-  if (TI.getSizeType() == TargetInfo::UnsignedLongLong)
-    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned long long int");
-  else if (TI.getSizeType() == TargetInfo::SignedLongLong)
-    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=long long int");
-  else if (TI.getSizeType() == TargetInfo::UnsignedLong)
-    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned long int");
-  else if (TI.getSizeType() == TargetInfo::SignedLong)
-    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=long int");
-  else if (TI.getSizeType() == TargetInfo::UnsignedInt)
-    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned int");
-  else if (TI.getSizeType() == TargetInfo::SignedInt)
-    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=int");
-  else {
-    assert(TI.getPtrDiffType(0) == TargetInfo::UnsignedShort);
-    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned short");
-  }
-  
+  DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Buf);
+  DefineType("__UINTMAX_TYPE__", TI.getUIntMaxType(), Buf);
+  DefineType("__PTRDIFF_TYPE__", TI.getPtrDiffType(0), Buf);
+  DefineType("__SIZE_TYPE__", TI.getSizeType(), Buf);
+    
   DefineFloatMacros(Buf, "FLT", &TI.getFloatFormat());
   DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());
   DefineFloatMacros(Buf, "LDBL", &TI.getLongDoubleFormat());

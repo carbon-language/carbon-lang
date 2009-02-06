@@ -51,6 +51,22 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
 // Out of line virtual dtor for TargetInfo.
 TargetInfo::~TargetInfo() {}
 
+/// getTypeName - Return the user string for the specified integer type enum.
+/// For example, SignedShort -> "short".
+const char *TargetInfo::getTypeName(IntType T) {
+  switch (T) {
+  default: assert(0 && "not an integer!");
+  case SignedShort:      return "short";
+  case UnsignedShort:    return "unsigned short";
+  case SignedInt:        return "int";
+  case UnsignedInt:      return "unsigned int";
+  case SignedLong:       return "long int";
+  case UnsignedLong:     return "long unsigned int";
+  case SignedLongLong:   return "long long int";
+  case UnsignedLongLong: return "long long unsigned int";
+  }
+}
+
 //===----------------------------------------------------------------------===//
 
 
