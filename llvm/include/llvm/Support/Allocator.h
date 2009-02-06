@@ -36,7 +36,7 @@ public:
     return static_cast<T*>(malloc(sizeof(T)*Num));
   }
   
-  void Deallocate(void *Ptr) { free(Ptr); }
+  void Deallocate(const void *Ptr) { free(const_cast<void*>(Ptr)); }
 
   void PrintStats() const {}
 };
@@ -80,9 +80,8 @@ public:
     unsigned EltSize = (sizeof(T)+Alignment-1)&~Alignment;
     return static_cast<T*>(Allocate(Num * EltSize, Alignment));
   }
-  
-  
-  void Deallocate(void * /*Ptr*/) {}
+
+  void Deallocate(const void * /*Ptr*/) {}
 
   void PrintStats() const;
 };
