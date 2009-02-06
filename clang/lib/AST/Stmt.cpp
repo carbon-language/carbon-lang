@@ -15,6 +15,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/ASTContext.h"
 using namespace clang;
 
 static struct StmtClassNameTable {
@@ -52,13 +53,14 @@ void Stmt::Destroy(ASTContext& C) {
   DestroyChildren(C);
   // FIXME: Eventually all Stmts should be allocated with the allocator
   //  in ASTContext, just like with Decls.
-  // this->~Stmt();
-  delete this;
+  this->~Stmt();
+  C.Deallocate((void *)this);
 }
 
 void DeclStmt::Destroy(ASTContext& C) {
   DG.Destroy(C);
-  delete this;
+  this->~DeclStmt();
+  C.Deallocate((void *)this);
 }
 
 void Stmt::PrintStats() {
