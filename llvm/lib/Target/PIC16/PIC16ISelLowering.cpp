@@ -499,9 +499,9 @@ SDValue PIC16TargetLowering::getChain(SDValue &Op) {
 }
 
 void PIC16TargetLowering::GetExpandedParts(SDValue Op, SelectionDAG &DAG,
-
                                            SDValue &Lo, SDValue &Hi) {  
   SDNode *N = Op.getNode();
+  DebugLoc dl = N->getDebugLoc();
   MVT NewVT;
   std::vector<SDValue> Opers;
   NewVT = getTypeToTransformTo(N->getValueType(0));
@@ -509,12 +509,12 @@ void PIC16TargetLowering::GetExpandedParts(SDValue Op, SelectionDAG &DAG,
   // extract the lo component
   Opers.push_back(Op);
   Opers.push_back(DAG.getConstant(0,MVT::i8));
-  Lo = DAG.getNode(ISD::EXTRACT_ELEMENT,NewVT,&Opers[0],Opers.size());
+  Lo = DAG.getNode(ISD::EXTRACT_ELEMENT,dl,NewVT,&Opers[0],Opers.size());
   // extract the hi component
   Opers.clear();
   Opers.push_back(Op);
   Opers.push_back(DAG.getConstant(1,MVT::i8));
-  Hi = DAG.getNode(ISD::EXTRACT_ELEMENT,NewVT,&Opers[0],Opers.size());
+  Hi = DAG.getNode(ISD::EXTRACT_ELEMENT,dl,NewVT,&Opers[0],Opers.size());
 }
 
 // Legalize FrameIndex into ExternalSymbol and offset.

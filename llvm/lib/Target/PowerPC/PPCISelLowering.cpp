@@ -3184,7 +3184,7 @@ static bool isConstantSplat(const uint64_t Bits128[2],
 /// BuildSplatI - Build a canonical splati of Val with an element size of
 /// SplatSize.  Cast the result to VT.
 static SDValue BuildSplatI(int Val, unsigned SplatSize, MVT VT,
-                             SelectionDAG &DAG) {
+                             SelectionDAG &DAG, DebugLoc dl) {
   assert(Val >= -16 && Val <= 15 && "vsplti is out of range!");
 
   static const MVT VTys[] = { // canonical VT to use for each size.
@@ -3203,28 +3203,28 @@ static SDValue BuildSplatI(int Val, unsigned SplatSize, MVT VT,
   SDValue Elt = DAG.getConstant(Val, CanonicalVT.getVectorElementType());
   SmallVector<SDValue, 8> Ops;
   Ops.assign(CanonicalVT.getVectorNumElements(), Elt);
-  SDValue Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT,
+  SDValue Res = DAG.getNode(ISD::BUILD_VECTOR, dl, CanonicalVT,
                               &Ops[0], Ops.size());
-  return DAG.getNode(ISD::BIT_CONVERT, ReqVT, Res);
+  return DAG.getNode(ISD::BIT_CONVERT, dl, ReqVT, Res);
 }
 
 /// BuildIntrinsicOp - Return a binary operator intrinsic node with the
 /// specified intrinsic ID.
 static SDValue BuildIntrinsicOp(unsigned IID, SDValue LHS, SDValue RHS,
-                                  SelectionDAG &DAG, 
-                                  MVT DestVT = MVT::Other) {
+                                SelectionDAG &DAG, DebugLoc dl,
+                                MVT DestVT = MVT::Other) {
   if (DestVT == MVT::Other) DestVT = LHS.getValueType();
-  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DestVT,
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, DestVT,
                      DAG.getConstant(IID, MVT::i32), LHS, RHS);
 }
 
 /// BuildIntrinsicOp - Return a ternary operator intrinsic node with the
 /// specified intrinsic ID.
 static SDValue BuildIntrinsicOp(unsigned IID, SDValue Op0, SDValue Op1,
-                                  SDValue Op2, SelectionDAG &DAG, 
-                                  MVT DestVT = MVT::Other) {
+                                SDValue Op2, SelectionDAG &DAG,
+                                DebugLoc dl, MVT DestVT = MVT::Other) {
   if (DestVT == MVT::Other) DestVT = Op0.getValueType();
-  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DestVT,
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, DestVT,
                      DAG.getConstant(IID, MVT::i32), Op0, Op1, Op2);
 }
 
@@ -3232,17 +3232,17 @@ static SDValue BuildIntrinsicOp(unsigned IID, SDValue Op0, SDValue Op1,
 /// BuildVSLDOI - Return a VECTOR_SHUFFLE that is a vsldoi of the specified
 /// amount.  The result has the specified value type.
 static SDValue BuildVSLDOI(SDValue LHS, SDValue RHS, unsigned Amt,
-                             MVT VT, SelectionDAG &DAG) {
+                             MVT VT, SelectionDAG &DAG, DebugLoc dl) {
   // Force LHS/RHS to be the right type.
-  LHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, LHS);
-  RHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, RHS);
+  LHS = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, LHS);
+  RHS = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, RHS);
 
   SDValue Ops[16];
   for (unsigned i = 0; i != 16; ++i)
     Ops[i] = DAG.getConstant(i+Amt, MVT::i8);
-  SDValue T = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v16i8, LHS, RHS,
-                            DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops,16));
-  return DAG.getNode(ISD::BIT_CONVERT, VT, T);
+  SDValue T = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v16i8, LHS, RHS,
+                        DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8, Ops,16));
+  return DAG.getNode(ISD::BIT_CONVERT, dl, VT, T);
 }
 
 // If this is a case we can't handle, return null and let the default
@@ -3258,6 +3258,7 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
   // zero. 
   uint64_t VectorBits[2];
   uint64_t UndefBits[2];
+  DebugLoc dl = Op.getDebugLoc();
   if (GetConstantBuildVectorBits(Op.getNode(), VectorBits, UndefBits))
     return SDValue();   // Not a constant vector.
   
@@ -3276,8 +3277,8 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
       // Canonicalize all zero vectors to be v4i32.
       if (Op.getValueType() != MVT::v4i32 || HasAnyUndefs) {
         SDValue Z = DAG.getConstant(0, MVT::i32);
-        Z = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Z, Z, Z, Z);
-        Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Z);
+        Z = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Z, Z, Z, Z);
+        Op = DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Z);
       }
       return Op;
     }
@@ -3285,7 +3286,7 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
     // If the sign extended value is in the range [-16,15], use VSPLTI[bhw].
     int32_t SextVal= int32_t(SplatBits << (32-8*SplatSize)) >> (32-8*SplatSize);
     if (SextVal >= -16 && SextVal <= 15)
-      return BuildSplatI(SextVal, SplatSize, Op.getValueType(), DAG);
+      return BuildSplatI(SextVal, SplatSize, Op.getValueType(), DAG, dl);
     
     
     // Two instruction sequences.
@@ -3293,9 +3294,9 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
     // If this value is in the range [-32,30] and is even, use:
     //    tmp = VSPLTI[bhw], result = add tmp, tmp
     if (SextVal >= -32 && SextVal <= 30 && (SextVal & 1) == 0) {
-      SDValue Res = BuildSplatI(SextVal >> 1, SplatSize, MVT::Other, DAG);
-      Res = DAG.getNode(ISD::ADD, Res.getValueType(), Res, Res);
-      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+      SDValue Res = BuildSplatI(SextVal >> 1, SplatSize, MVT::Other, DAG, dl);
+      Res = DAG.getNode(ISD::ADD, dl, Res.getValueType(), Res, Res);
+      return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
     }
     
     // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
@@ -3303,15 +3304,15 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
     // for fneg/fabs.
     if (SplatSize == 4 && SplatBits == (0x7FFFFFFF&~SplatUndef)) {
       // Make -1 and vspltisw -1:
-      SDValue OnesV = BuildSplatI(-1, 4, MVT::v4i32, DAG);
+      SDValue OnesV = BuildSplatI(-1, 4, MVT::v4i32, DAG, dl);
       
       // Make the VSLW intrinsic, computing 0x8000_0000.
       SDValue Res = BuildIntrinsicOp(Intrinsic::ppc_altivec_vslw, OnesV, 
-                                       OnesV, DAG);
+                                       OnesV, DAG, dl);
       
       // xor by OnesV to invert it.
-      Res = DAG.getNode(ISD::XOR, MVT::v4i32, Res, OnesV);
-      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+      Res = DAG.getNode(ISD::XOR, dl, MVT::v4i32, Res, OnesV);
+      return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
     }
 
     // Check to see if this is a wide variety of vsplti*, binop self cases.
@@ -3332,63 +3333,63 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
       
       // vsplti + shl self.
       if (SextVal == (i << (int)TypeShiftAmt)) {
-        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG);
+        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
         static const unsigned IIDs[] = { // Intrinsic to use for each size.
           Intrinsic::ppc_altivec_vslb, Intrinsic::ppc_altivec_vslh, 0,
           Intrinsic::ppc_altivec_vslw
         };
-        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG);
-        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
+        return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
       }
       
       // vsplti + srl self.
       if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
-        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG);
+        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
         static const unsigned IIDs[] = { // Intrinsic to use for each size.
           Intrinsic::ppc_altivec_vsrb, Intrinsic::ppc_altivec_vsrh, 0,
           Intrinsic::ppc_altivec_vsrw
         };
-        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG);
-        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
+        return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
       }
       
       // vsplti + sra self.
       if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
-        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG);
+        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
         static const unsigned IIDs[] = { // Intrinsic to use for each size.
           Intrinsic::ppc_altivec_vsrab, Intrinsic::ppc_altivec_vsrah, 0,
           Intrinsic::ppc_altivec_vsraw
         };
-        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG);
-        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
+        return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
       }
       
       // vsplti + rol self.
       if (SextVal == (int)(((unsigned)i << TypeShiftAmt) |
                            ((unsigned)i >> (SplatBitSize-TypeShiftAmt)))) {
-        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG);
+        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
         static const unsigned IIDs[] = { // Intrinsic to use for each size.
           Intrinsic::ppc_altivec_vrlb, Intrinsic::ppc_altivec_vrlh, 0,
           Intrinsic::ppc_altivec_vrlw
         };
-        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG);
-        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
+        return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
       }
 
       // t = vsplti c, result = vsldoi t, t, 1
       if (SextVal == ((i << 8) | (i >> (TypeShiftAmt-8)))) {
-        SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG);
-        return BuildVSLDOI(T, T, 1, Op.getValueType(), DAG);
+        SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
+        return BuildVSLDOI(T, T, 1, Op.getValueType(), DAG, dl);
       }
       // t = vsplti c, result = vsldoi t, t, 2
       if (SextVal == ((i << 16) | (i >> (TypeShiftAmt-16)))) {
-        SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG);
-        return BuildVSLDOI(T, T, 2, Op.getValueType(), DAG);
+        SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
+        return BuildVSLDOI(T, T, 2, Op.getValueType(), DAG, dl);
       }
       // t = vsplti c, result = vsldoi t, t, 3
       if (SextVal == ((i << 24) | (i >> (TypeShiftAmt-24)))) {
-        SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG);
-        return BuildVSLDOI(T, T, 3, Op.getValueType(), DAG);
+        SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
+        return BuildVSLDOI(T, T, 3, Op.getValueType(), DAG, dl);
       }
     }
     
@@ -3396,17 +3397,17 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
     
     // Odd, in range [17,31]:  (vsplti C)-(vsplti -16).
     if (SextVal >= 0 && SextVal <= 31) {
-      SDValue LHS = BuildSplatI(SextVal-16, SplatSize, MVT::Other, DAG);
-      SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG);
-      LHS = DAG.getNode(ISD::SUB, LHS.getValueType(), LHS, RHS);
-      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), LHS);
+      SDValue LHS = BuildSplatI(SextVal-16, SplatSize, MVT::Other, DAG, dl);
+      SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
+      LHS = DAG.getNode(ISD::SUB, dl, LHS.getValueType(), LHS, RHS);
+      return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), LHS);
     }
     // Odd, in range [-31,-17]:  (vsplti C)+(vsplti -16).
     if (SextVal >= -31 && SextVal <= 0) {
-      SDValue LHS = BuildSplatI(SextVal+16, SplatSize, MVT::Other, DAG);
-      SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG);
-      LHS = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
-      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), LHS);
+      SDValue LHS = BuildSplatI(SextVal+16, SplatSize, MVT::Other, DAG, dl);
+      SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
+      LHS = DAG.getNode(ISD::ADD, dl, LHS.getValueType(), LHS, RHS);
+      return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), LHS);
     }
   }
     
@@ -3416,7 +3417,8 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
 /// GeneratePerfectShuffle - Given an entry in the perfect-shuffle table, emit
 /// the specified operations to build the shuffle.
 static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
-                                        SDValue RHS, SelectionDAG &DAG) {
+                                      SDValue RHS, SelectionDAG &DAG, 
+                                      DebugLoc dl) {
   unsigned OpNum = (PFEntry >> 26) & 0x0F;
   unsigned LHSID = (PFEntry >> 13) & ((1 << 13)-1);
   unsigned RHSID = (PFEntry >>  0) & ((1 << 13)-1);
@@ -3441,8 +3443,8 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
   }
   
   SDValue OpLHS, OpRHS;
-  OpLHS = GeneratePerfectShuffle(PerfectShuffleTable[LHSID], LHS, RHS, DAG);
-  OpRHS = GeneratePerfectShuffle(PerfectShuffleTable[RHSID], LHS, RHS, DAG);
+  OpLHS = GeneratePerfectShuffle(PerfectShuffleTable[LHSID], LHS, RHS, DAG, dl);
+  OpRHS = GeneratePerfectShuffle(PerfectShuffleTable[RHSID], LHS, RHS, DAG, dl);
   
   unsigned ShufIdxs[16];
   switch (OpNum) {
@@ -3476,18 +3478,19 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
       ShufIdxs[i] = (i&3)+12;
     break;
   case OP_VSLDOI4:
-    return BuildVSLDOI(OpLHS, OpRHS, 4, OpLHS.getValueType(), DAG);
+    return BuildVSLDOI(OpLHS, OpRHS, 4, OpLHS.getValueType(), DAG, dl);
   case OP_VSLDOI8:
-    return BuildVSLDOI(OpLHS, OpRHS, 8, OpLHS.getValueType(), DAG);
+    return BuildVSLDOI(OpLHS, OpRHS, 8, OpLHS.getValueType(), DAG, dl);
   case OP_VSLDOI12:
-    return BuildVSLDOI(OpLHS, OpRHS, 12, OpLHS.getValueType(), DAG);
+    return BuildVSLDOI(OpLHS, OpRHS, 12, OpLHS.getValueType(), DAG, dl);
   }
   SDValue Ops[16];
   for (unsigned i = 0; i != 16; ++i)
     Ops[i] = DAG.getConstant(ShufIdxs[i], MVT::i8);
   
-  return DAG.getNode(ISD::VECTOR_SHUFFLE, OpLHS.getValueType(), OpLHS, OpRHS,
-                     DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops, 16));
+  return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, OpLHS.getValueType(), 
+                     OpLHS, OpRHS,
+                     DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8, Ops, 16));
 }
 
 /// LowerVECTOR_SHUFFLE - Return the code we lower for VECTOR_SHUFFLE.  If this
@@ -3496,6 +3499,7 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
 /// lowered into a vperm.
 SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, 
                                                  SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
   SDValue PermMask = Op.getOperand(2);
@@ -3584,7 +3588,7 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
     // available, if this block is within a loop, we should avoid using vperm
     // for 3-operation perms and use a constant pool load instead.
     if (Cost < 3) 
-      return GeneratePerfectShuffle(PFEntry, V1, V2, DAG);
+      return GeneratePerfectShuffle(PFEntry, V1, V2, DAG, dl);
   }
   
   // Lower this to a VPERM(V1, V2, V3) expression, where V3 is a constant
@@ -3609,9 +3613,9 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
                                            MVT::i8));
   }
   
-  SDValue VPermMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8,
+  SDValue VPermMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8,
                                     &ResultMask[0], ResultMask.size());
-  return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
+  return DAG.getNode(PPCISD::VPERM, dl, V1.getValueType(), V1, V2, VPermMask);
 }
 
 /// getAltivecCompareInfo - Given an intrinsic, return false if it is not an
@@ -3745,49 +3749,51 @@ SDValue PPCTargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op,
 }
 
 SDValue PPCTargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   if (Op.getValueType() == MVT::v4i32) {
     SDValue LHS = Op.getOperand(0), RHS = Op.getOperand(1);
     
-    SDValue Zero  = BuildSplatI(  0, 1, MVT::v4i32, DAG);
-    SDValue Neg16 = BuildSplatI(-16, 4, MVT::v4i32, DAG); // +16 as shift amt.
+    SDValue Zero  = BuildSplatI(  0, 1, MVT::v4i32, DAG, dl);
+    SDValue Neg16 = BuildSplatI(-16, 4, MVT::v4i32, DAG, dl);//+16 as shift amt.
     
     SDValue RHSSwap =   // = vrlw RHS, 16
-      BuildIntrinsicOp(Intrinsic::ppc_altivec_vrlw, RHS, Neg16, DAG);
+      BuildIntrinsicOp(Intrinsic::ppc_altivec_vrlw, RHS, Neg16, DAG, dl);
     
     // Shrinkify inputs to v8i16.
-    LHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, LHS);
-    RHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, RHS);
-    RHSSwap = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, RHSSwap);
+    LHS = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v8i16, LHS);
+    RHS = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v8i16, RHS);
+    RHSSwap = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v8i16, RHSSwap);
     
     // Low parts multiplied together, generating 32-bit results (we ignore the
     // top parts).
     SDValue LoProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmulouh,
-                                        LHS, RHS, DAG, MVT::v4i32);
+                                        LHS, RHS, DAG, dl, MVT::v4i32);
     
     SDValue HiProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmsumuhm,
-                                        LHS, RHSSwap, Zero, DAG, MVT::v4i32);
+                                      LHS, RHSSwap, Zero, DAG, dl, MVT::v4i32);
     // Shift the high parts up 16 bits.
-    HiProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vslw, HiProd, Neg16, DAG);
-    return DAG.getNode(ISD::ADD, MVT::v4i32, LoProd, HiProd);
+    HiProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vslw, HiProd, 
+                              Neg16, DAG, dl);
+    return DAG.getNode(ISD::ADD, dl, MVT::v4i32, LoProd, HiProd);
   } else if (Op.getValueType() == MVT::v8i16) {
     SDValue LHS = Op.getOperand(0), RHS = Op.getOperand(1);
     
-    SDValue Zero = BuildSplatI(0, 1, MVT::v8i16, DAG);
+    SDValue Zero = BuildSplatI(0, 1, MVT::v8i16, DAG, dl);
 
     return BuildIntrinsicOp(Intrinsic::ppc_altivec_vmladduhm,
-                            LHS, RHS, Zero, DAG);
+                            LHS, RHS, Zero, DAG, dl);
   } else if (Op.getValueType() == MVT::v16i8) {
     SDValue LHS = Op.getOperand(0), RHS = Op.getOperand(1);
     
     // Multiply the even 8-bit parts, producing 16-bit sums.
     SDValue EvenParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmuleub,
-                                           LHS, RHS, DAG, MVT::v8i16);
-    EvenParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, EvenParts);
+                                           LHS, RHS, DAG, dl, MVT::v8i16);
+    EvenParts = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, EvenParts);
     
     // Multiply the odd 8-bit parts, producing 16-bit sums.
     SDValue OddParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmuloub,
-                                          LHS, RHS, DAG, MVT::v8i16);
-    OddParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, OddParts);
+                                          LHS, RHS, DAG, dl, MVT::v8i16);
+    OddParts = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, OddParts);
     
     // Merge the results together.
     SDValue Ops[16];
@@ -3795,8 +3801,8 @@ SDValue PPCTargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) {
       Ops[i*2  ] = DAG.getConstant(2*i+1, MVT::i8);
       Ops[i*2+1] = DAG.getConstant(2*i+1+16, MVT::i8);
     }
-    return DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v16i8, EvenParts, OddParts,
-                       DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops, 16));
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v16i8, EvenParts, OddParts,
+                       DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8, Ops, 16));
   } else {
     assert(0 && "Unknown mul to lower!");
     abort();

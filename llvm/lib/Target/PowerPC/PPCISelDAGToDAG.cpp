@@ -418,6 +418,7 @@ bool PPCDAGToDAGISel::isRotateAndMask(SDNode *N, unsigned Mask,
 SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   SDValue Op0 = N->getOperand(0);
   SDValue Op1 = N->getOperand(1);
+  DebugLoc dl = N->getDebugLoc();
   
   APInt LKZ, LKO, RKZ, RKO;
   CurDAG->ComputeMaskedBits(Op0, APInt::getAllOnesValue(32), LKZ, LKO);
@@ -479,7 +480,7 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
       SH &= 31;
       SDValue Ops[] = { Tmp3, Op1, getI32Imm(SH), getI32Imm(MB),
                           getI32Imm(ME) };
-      return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Ops, 5);
+      return CurDAG->getTargetNode(PPC::RLWIMI, dl, MVT::i32, Ops, 5);
     }
   }
   return 0;
@@ -773,6 +774,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDValue Op) {
 // target-specific node if it hasn't already been changed.
 SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.getNode();
+  DebugLoc dl = Op.getDebugLoc();
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
@@ -815,17 +817,17 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
       // Simple value.
       if (isInt16(Imm)) {
        // Just the Lo bits.
-        Result = CurDAG->getTargetNode(PPC::LI8, MVT::i64, getI32Imm(Lo));
+        Result = CurDAG->getTargetNode(PPC::LI8, dl, MVT::i64, getI32Imm(Lo));
       } else if (Lo) {
         // Handle the Hi bits.
         unsigned OpC = Hi ? PPC::LIS8 : PPC::LI8;
-        Result = CurDAG->getTargetNode(OpC, MVT::i64, getI32Imm(Hi));
+        Result = CurDAG->getTargetNode(OpC, dl, MVT::i64, getI32Imm(Hi));
         // And Lo bits.
-        Result = CurDAG->getTargetNode(PPC::ORI8, MVT::i64,
+        Result = CurDAG->getTargetNode(PPC::ORI8, dl, MVT::i64,
                                        SDValue(Result, 0), getI32Imm(Lo));
       } else {
        // Just the Hi bits.
-        Result = CurDAG->getTargetNode(PPC::LIS8, MVT::i64, getI32Imm(Hi));
+        Result = CurDAG->getTargetNode(PPC::LIS8, dl, MVT::i64, getI32Imm(Hi));
       }
       
       // If no shift, we're done.
@@ -833,18 +835,18 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
 
       // Shift for next step if the upper 32-bits were not zero.
       if (Imm) {
-        Result = CurDAG->getTargetNode(PPC::RLDICR, MVT::i64,
+        Result = CurDAG->getTargetNode(PPC::RLDICR, dl, MVT::i64,
                                        SDValue(Result, 0),
                                        getI32Imm(Shift), getI32Imm(63 - Shift));
       }
 
       // Add in the last bits as required.
       if ((Hi = (Remainder >> 16) & 0xFFFF)) {
-        Result = CurDAG->getTargetNode(PPC::ORIS8, MVT::i64,
+        Result = CurDAG->getTargetNode(PPC::ORIS8, dl, MVT::i64,
                                        SDValue(Result, 0), getI32Imm(Hi));
       } 
       if ((Lo = Remainder & 0xFFFF)) {
-        Result = CurDAG->getTargetNode(PPC::ORI8, MVT::i64,
+        Result = CurDAG->getTargetNode(PPC::ORI8, dl, MVT::i64,
                                        SDValue(Result, 0), getI32Imm(Lo));
       }
       
@@ -865,7 +867,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     if (N->hasOneUse())
       return CurDAG->SelectNodeTo(N, Opc, Op.getValueType(), TFI,
                                   getSmallIPtrImm(0));
-    return CurDAG->getTargetNode(Opc, Op.getValueType(), TFI,
+    return CurDAG->getTargetNode(Opc, dl, Op.getValueType(), TFI,
                                  getSmallIPtrImm(0));
   }
 
@@ -873,10 +875,10 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     SDValue InFlag = N->getOperand(1);
     // Use MFOCRF if supported.
     if (PPCSubTarget.isGigaProcessor())
-      return CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32,
+      return CurDAG->getTargetNode(PPC::MFOCRF, dl, MVT::i32,
                                    N->getOperand(0), InFlag);
     else
-      return CurDAG->getTargetNode(PPC::MFCR, MVT::i32, InFlag);
+      return CurDAG->getTargetNode(PPC::MFCR, dl, MVT::i32, InFlag);
   }
     
   case ISD::SDIV: {
@@ -890,16 +892,16 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
       SDValue N0 = N->getOperand(0);
       if ((signed)Imm > 0 && isPowerOf2_32(Imm)) {
         SDNode *Op =
-          CurDAG->getTargetNode(PPC::SRAWI, MVT::i32, MVT::Flag,
+          CurDAG->getTargetNode(PPC::SRAWI, dl, MVT::i32, MVT::Flag,
                                 N0, getI32Imm(Log2_32(Imm)));
         return CurDAG->SelectNodeTo(N, PPC::ADDZE, MVT::i32, 
                                     SDValue(Op, 0), SDValue(Op, 1));
       } else if ((signed)Imm < 0 && isPowerOf2_32(-Imm)) {
         SDNode *Op =
-          CurDAG->getTargetNode(PPC::SRAWI, MVT::i32, MVT::Flag,
+          CurDAG->getTargetNode(PPC::SRAWI, dl, MVT::i32, MVT::Flag,
                                 N0, getI32Imm(Log2_32(-Imm)));
         SDValue PT =
-          SDValue(CurDAG->getTargetNode(PPC::ADDZE, MVT::i32,
+          SDValue(CurDAG->getTargetNode(PPC::ADDZE, dl, MVT::i32,
                                           SDValue(Op, 0), SDValue(Op, 1)),
                     0);
         return CurDAG->SelectNodeTo(N, PPC::NEG, MVT::i32, PT);
@@ -954,7 +956,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
       SDValue Base = LD->getBasePtr();
       SDValue Ops[] = { Offset, Base, Chain };
       // FIXME: PPC64
-      return CurDAG->getTargetNode(Opcode, LD->getValueType(0),
+      return CurDAG->getTargetNode(Opcode, dl, LD->getValueType(0),
                                    PPCLowering.getPointerTy(),
                                    MVT::Other, Ops, 3);
     } else {
@@ -998,7 +1000,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
         SDValue Ops[] = { N->getOperand(0).getOperand(0),
                             N->getOperand(0).getOperand(1),
                             getI32Imm(0), getI32Imm(MB),getI32Imm(ME) };
-        return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Ops, 5);
+        return CurDAG->getTargetNode(PPC::RLWIMI, dl, MVT::i32, Ops, 5);
       }
     }
     
@@ -1048,7 +1050,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
               // FIXME: Implement this optzn for PPC64.
               N->getValueType(0) == MVT::i32) {
             SDNode *Tmp =
-              CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+              CurDAG->getTargetNode(PPC::ADDIC, dl, MVT::i32, MVT::Flag,
                                     N->getOperand(0), getI32Imm(~0U));
             return CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32,
                                         SDValue(Tmp, 0), N->getOperand(0),
@@ -1099,7 +1101,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     SDValue Chain = N->getOperand(0);
     SDValue Target = N->getOperand(1);
     unsigned Opc = Target.getValueType() == MVT::i32 ? PPC::MTCTR : PPC::MTCTR8;
-    Chain = SDValue(CurDAG->getTargetNode(Opc, MVT::Other, Target,
+    Chain = SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Other, Target,
                                             Chain), 0);
     return CurDAG->SelectNodeTo(N, PPC::BCTR, MVT::Other, Chain);
   }

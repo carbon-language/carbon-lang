@@ -2373,6 +2373,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   std::vector<SDValue> AddrOps;
   std::vector<SDValue> BeforeOps;
   std::vector<SDValue> AfterOps;
+  DebugLoc dl = N->getDebugLoc();
   unsigned NumOps = N->getNumOperands();
   for (unsigned i = 0; i != NumOps-1; ++i) {
     SDValue Op = N->getOperand(i);
@@ -2393,7 +2394,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     MVT VT = *RC->vt_begin();
     bool isAligned = (RI.getStackAlignment() >= 16) ||
       RI.needsStackRealignment(MF);
-    Load = DAG.getTargetNode(getLoadRegOpcode(RC, isAligned),
+    Load = DAG.getTargetNode(getLoadRegOpcode(RC, isAligned), dl,
                              VT, MVT::Other,
                              &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
@@ -2416,7 +2417,8 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   if (Load)
     BeforeOps.push_back(SDValue(Load, 0));
   std::copy(AfterOps.begin(), AfterOps.end(), std::back_inserter(BeforeOps));
-  SDNode *NewNode= DAG.getTargetNode(Opc, VTs, &BeforeOps[0], BeforeOps.size());
+  SDNode *NewNode= DAG.getTargetNode(Opc, dl, VTs, &BeforeOps[0],
+                                     BeforeOps.size());
   NewNodes.push_back(NewNode);
 
   // Emit the store instruction.
@@ -2426,7 +2428,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     AddrOps.push_back(Chain);
     bool isAligned = (RI.getStackAlignment() >= 16) ||
       RI.needsStackRealignment(MF);
-    SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(DstRC, isAligned),
+    SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(DstRC, isAligned), dl,
                                       MVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Store);
   }

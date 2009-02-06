@@ -424,8 +424,6 @@ public:
                   const SDUse *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                   const SDUse *Ops, unsigned NumOps);
-  SDValue getNode(unsigned Opcode, MVT VT,
-                  const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                   const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL,
@@ -665,8 +663,6 @@ public:
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
                         SDValue Op1, SDValue Op2, SDValue Op3);
 
-  SDNode *getTargetNode(unsigned Opcode, MVT VT,
-                        const SDValue *Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
                         const SDValue *Ops, unsigned NumOps);
 

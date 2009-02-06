@@ -106,6 +106,7 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
   SDValue Chain = N->getOperand(0);
   SDValue Tmp1 = N->getOperand(0);
   SDValue Tmp2 = N->getOperand(1);
+  DebugLoc dl = N->getDebugLoc();
 
   bool isFP=false;
 
@@ -140,26 +141,28 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
     if(!isFP) {
       // first, load the inputs into FP regs.
       TmpF1 =
-        SDValue(CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, Tmp1), 0);
+        SDValue(CurDAG->getTargetNode(IA64::SETFSIG, dl, MVT::f64, Tmp1), 0);
       Chain = TmpF1.getValue(1);
       TmpF2 =
-        SDValue(CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, Tmp2), 0);
+        SDValue(CurDAG->getTargetNode(IA64::SETFSIG, dl, MVT::f64, Tmp2), 0);
       Chain = TmpF2.getValue(1);
       
       // next, convert the inputs to FP
       if(isSigned) {
         TmpF3 =
-          SDValue(CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF1), 0);
+          SDValue(CurDAG->getTargetNode(IA64::FCVTXF, dl, MVT::f64, TmpF1), 0);
         Chain = TmpF3.getValue(1);
         TmpF4 =
-          SDValue(CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF2), 0);
+          SDValue(CurDAG->getTargetNode(IA64::FCVTXF, dl, MVT::f64, TmpF2), 0);
         Chain = TmpF4.getValue(1);
       } else { // is unsigned
         TmpF3 =
-          SDValue(CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF1), 0);
+          SDValue(CurDAG->getTargetNode(IA64::FCVTXUFS1, dl, MVT::f64, TmpF1), 
+                  0);
         Chain = TmpF3.getValue(1);
         TmpF4 =
-          SDValue(CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF2), 0);
+          SDValue(CurDAG->getTargetNode(IA64::FCVTXUFS1, dl, MVT::f64, TmpF2), 
+                  0);
         Chain = TmpF4.getValue(1);
       }
 
@@ -172,11 +175,11 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
     // we start by computing an approximate reciprocal (good to 9 bits?)
     // note, this instruction writes _both_ TmpF5 (answer) and TmpPR (predicate)
     if(isFP)
-      TmpF5 = SDValue(CurDAG->getTargetNode(IA64::FRCPAS0, MVT::f64, MVT::i1,
-                                              TmpF3, TmpF4), 0);
+      TmpF5 = SDValue(CurDAG->getTargetNode(IA64::FRCPAS0, dl, MVT::f64,
+                                            MVT::i1, TmpF3, TmpF4), 0);
     else
-      TmpF5 = SDValue(CurDAG->getTargetNode(IA64::FRCPAS1, MVT::f64, MVT::i1,
-                                              TmpF3, TmpF4), 0);
+      TmpF5 = SDValue(CurDAG->getTargetNode(IA64::FRCPAS1, dl, MVT::f64,
+                                            MVT::i1, TmpF3, TmpF4), 0);
                                   
     TmpPR = TmpF5.getValue(1);
     Chain = TmpF5.getValue(2);
@@ -184,7 +187,7 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
     SDValue minusB;
     if(isModulus) { // for remainders, it'll be handy to have
                              // copies of -input_b
-      minusB = SDValue(CurDAG->getTargetNode(IA64::SUB, MVT::i64,
+      minusB = SDValue(CurDAG->getTargetNode(IA64::SUB, dl, MVT::i64,
                   CurDAG->getRegister(IA64::r0, MVT::i64), Tmp2), 0);
       Chain = minusB.getValue(1);
     }
@@ -192,19 +195,19 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
     SDValue TmpE0, TmpY1, TmpE1, TmpY2;
 
     SDValue OpsE0[] = { TmpF4, TmpF5, F1, TmpPR };
-    TmpE0 = SDValue(CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
+    TmpE0 = SDValue(CurDAG->getTargetNode(IA64::CFNMAS1, dl, MVT::f64,
                                             OpsE0, 4), 0);
     Chain = TmpE0.getValue(1);
     SDValue OpsY1[] = { TmpF5, TmpE0, TmpF5, TmpPR };
-    TmpY1 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+    TmpY1 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, dl, MVT::f64,
                                             OpsY1, 4), 0);
     Chain = TmpY1.getValue(1);
     SDValue OpsE1[] = { TmpE0, TmpE0, F0, TmpPR };
-    TmpE1 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+    TmpE1 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, dl, MVT::f64,
                                             OpsE1, 4), 0);
     Chain = TmpE1.getValue(1);
     SDValue OpsY2[] = { TmpY1, TmpE1, TmpY1, TmpPR };
-    TmpY2 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+    TmpY2 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, dl, MVT::f64,
                                             OpsY2, 4), 0);
     Chain = TmpY2.getValue(1);
     
@@ -215,30 +218,30 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
       SDValue TmpE2, TmpY3, TmpQ0, TmpR0;
 
       SDValue OpsE2[] = { TmpE1, TmpE1, F0, TmpPR };
-      TmpE2 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpE2 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, dl, MVT::f64,
                                               OpsE2, 4), 0);
       Chain = TmpE2.getValue(1);
       SDValue OpsY3[] = { TmpY2, TmpE2, TmpY2, TmpPR };
-      TmpY3 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpY3 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, dl, MVT::f64,
                                               OpsY3, 4), 0);
       Chain = TmpY3.getValue(1);
       SDValue OpsQ0[] = { Tmp1, TmpY3, F0, TmpPR };
       TmpQ0 =
-        SDValue(CurDAG->getTargetNode(IA64::CFMADS1, MVT::f64, // double prec!
-                                        OpsQ0, 4), 0);
+        SDValue(CurDAG->getTargetNode(IA64::CFMADS1, dl,  // double prec!
+                                      MVT::f64, OpsQ0, 4), 0);
       Chain = TmpQ0.getValue(1);
       SDValue OpsR0[] = { Tmp2, TmpQ0, Tmp1, TmpPR };
       TmpR0 =
-        SDValue(CurDAG->getTargetNode(IA64::CFNMADS1, MVT::f64, // double prec!
-                                        OpsR0, 4), 0);
+        SDValue(CurDAG->getTargetNode(IA64::CFNMADS1, dl, // double prec!
+                                      MVT::f64, OpsR0, 4), 0);
       Chain = TmpR0.getValue(1);
 
 // we want Result to have the same target register as the frcpa, so
 // we two-address hack it. See the comment "for this to work..." on
 // page 48 of Intel application note #245415
       SDValue Ops[] = { TmpF5, TmpY3, TmpR0, TmpQ0, TmpPR };
-      Result = CurDAG->getTargetNode(IA64::TCFMADS0, MVT::f64, // d.p. s0 rndg!
-                                     Ops, 5);
+      Result = CurDAG->getTargetNode(IA64::TCFMADS0, dl, // d.p. s0 rndg!
+                                     MVT::f64, Ops, 5);
       Chain = SDValue(Result, 1);
       return Result; // XXX: early exit!
     } else { // this is *not* an FP divide, so there's a bit left to do:
@@ -246,11 +249,11 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
       SDValue TmpQ2, TmpR2, TmpQ3, TmpQ;
 
       SDValue OpsQ2[] = { TmpF3, TmpY2, F0, TmpPR };
-      TmpQ2 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpQ2 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, dl, MVT::f64,
                                               OpsQ2, 4), 0);
       Chain = TmpQ2.getValue(1);
       SDValue OpsR2[] = { TmpF4, TmpQ2, TmpF3, TmpPR };
-      TmpR2 = SDValue(CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
+      TmpR2 = SDValue(CurDAG->getTargetNode(IA64::CFNMAS1, dl, MVT::f64,
                                               OpsR2, 4), 0);
       Chain = TmpR2.getValue(1);
       
@@ -258,7 +261,7 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
 // should two-address hack it. See the comment "for this to work..." on page
 // 48 of Intel application note #245415
       SDValue OpsQ3[] = { TmpF5, TmpR2, TmpY2, TmpQ2, TmpPR };
-      TmpQ3 = SDValue(CurDAG->getTargetNode(IA64::TCFMAS1, MVT::f64,
+      TmpQ3 = SDValue(CurDAG->getTargetNode(IA64::TCFMAS1, dl, MVT::f64,
                                          OpsQ3, 5), 0);
       Chain = TmpQ3.getValue(1);
 
@@ -267,26 +270,27 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
       // arguments. Other fun bugs may also appear, e.g. 0/x = x, not 0.
       
       if(isSigned)
-        TmpQ = SDValue(CurDAG->getTargetNode(IA64::FCVTFXTRUNCS1,
+        TmpQ = SDValue(CurDAG->getTargetNode(IA64::FCVTFXTRUNCS1, dl,
                                                MVT::f64, TmpQ3), 0);
       else
-        TmpQ = SDValue(CurDAG->getTargetNode(IA64::FCVTFXUTRUNCS1,
+        TmpQ = SDValue(CurDAG->getTargetNode(IA64::FCVTFXUTRUNCS1, dl,
                                                MVT::f64, TmpQ3), 0);
       
       Chain = TmpQ.getValue(1);
 
       if(isModulus) {
         SDValue FPminusB =
-          SDValue(CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, minusB), 0);
+          SDValue(CurDAG->getTargetNode(IA64::SETFSIG, dl, MVT::f64, minusB),
+                  0);
         Chain = FPminusB.getValue(1);
         SDValue Remainder =
-          SDValue(CurDAG->getTargetNode(IA64::XMAL, MVT::f64,
+          SDValue(CurDAG->getTargetNode(IA64::XMAL, dl, MVT::f64,
                                           TmpQ, FPminusB, TmpF1), 0);
         Chain = Remainder.getValue(1);
-        Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, Remainder);
+        Result = CurDAG->getTargetNode(IA64::GETFSIG, dl, MVT::i64, Remainder);
         Chain = SDValue(Result, 1);
       } else { // just an integer divide
-        Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, TmpQ);
+        Result = CurDAG->getTargetNode(IA64::GETFSIG, dl, MVT::i64, TmpQ);
         Chain = SDValue(Result, 1);
       }
 

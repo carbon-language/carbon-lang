@@ -978,7 +978,8 @@ public:
           emitCode("}");
         }
         emitCode("InChains.push_back(" + ChainName + ");");
-        emitCode(ChainName + " = CurDAG->getNode(ISD::TokenFactor, MVT::Other, "
+        emitCode(ChainName + " = CurDAG->getNode(ISD::TokenFactor, "
+                 "N.getDebugLoc(), MVT::Other, "
                  "&InChains[0], InChains.size());");
         if (GenDebug) {
           emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"yellow\");");

@@ -892,7 +892,8 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, MVT VT, bool isT) {
   if (VT.isVector()) {
     SmallVector<SDValue, 8> Ops;
     Ops.assign(VT.getVectorNumElements(), Result);
-    Result = getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
+    Result = getNode(ISD::BUILD_VECTOR, DebugLoc::getUnknownLoc(),
+                     VT, &Ops[0], Ops.size());
   }
   return Result;
 }
@@ -935,7 +936,9 @@ SDValue SelectionDAG::getConstantFP(const ConstantFP& V, MVT VT, bool isTarget){
   if (VT.isVector()) {
     SmallVector<SDValue, 8> Ops;
     Ops.assign(VT.getVectorNumElements(), Result);
-    Result = getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
+    // FIXME DebugLoc info might be appropriate here
+    Result = getNode(ISD::BUILD_VECTOR, DebugLoc::getUnknownLoc(),
+                     VT, &Ops[0], Ops.size());
   }
   return Result;
 }
@@ -3730,11 +3733,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
   return getNode(Opcode, DL, VT, &NewOps[0], NumOps);
 }
 
-SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                              const SDValue *Ops, unsigned NumOps) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VT, Ops, NumOps);
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                               const SDValue *Ops, unsigned NumOps) {
   switch (NumOps) {
@@ -4450,10 +4448,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
   return getNode(~Opcode, dl, VT, Op1, Op2, Op3).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
-                                    const SDValue *Ops, unsigned NumOps) {
-  return getNode(~Opcode, VT, Ops, NumOps).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
                                     const SDValue *Ops, unsigned NumOps) {
   return getNode(~Opcode, dl, VT, Ops, NumOps).getNode();

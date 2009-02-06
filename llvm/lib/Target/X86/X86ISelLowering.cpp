@@ -3973,7 +3973,7 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
     Mask1[2] = PermMask.getOperand(HiIndex^1);
     Mask1[3] = DAG.getNode(ISD::UNDEF, dl, MaskEVT);
     V2 = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, V1, V2,
-                     DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &Mask1[0], 4));
+                     DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT, &Mask1[0], 4));
 
     if (HiIndex >= 2) {
       Mask1[0] = PermMask.getOperand(0);

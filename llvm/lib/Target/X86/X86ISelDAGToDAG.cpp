@@ -441,7 +441,8 @@ static void MoveBelowCallSeqStart(SelectionDAG *CurDAG, SDValue Load,
       else
         Ops.push_back(Chain.getOperand(i));
     SDValue NewChain =
-      CurDAG->getNode(ISD::TokenFactor, MVT::Other, &Ops[0], Ops.size());
+      CurDAG->getNode(ISD::TokenFactor, Load.getDebugLoc(),
+                      MVT::Other, &Ops[0], Ops.size());
     Ops.clear();
     Ops.push_back(NewChain);
   }
