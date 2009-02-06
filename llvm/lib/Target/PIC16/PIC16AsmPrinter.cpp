@@ -217,6 +217,8 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
       O << "\textern "<< Name << "\n";
     else if (I->getLinkage() == GlobalValue::CommonLinkage)
       O << "\tglobal "<< Name << "\n";
+    else if (I->getLinkage() == GlobalValue::ExternalLinkage)
+      O << "\tglobal "<< Name << "\n";
   }
 }
 void PIC16AsmPrinter::EmitInitData (Module &M) {
