@@ -319,7 +319,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
                                        ArrayType::Normal, 0);
 
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
-  return Owned(new (Context) StringLiteral(Literal.GetString(), 
+  return Owned(new (Context) StringLiteral(Context, Literal.GetString(), 
                                  Literal.GetStringLength(),
                                  Literal.AnyWide, StrTy,
                                  StringToks[0].getLocation(),

@@ -38,12 +38,13 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
 }
 
 
-StringLiteral::StringLiteral(const char *strData, unsigned byteLength, 
-                             bool Wide, QualType t, SourceLocation firstLoc,
+StringLiteral::StringLiteral(ASTContext& C, const char *strData,
+                             unsigned byteLength, bool Wide, QualType t,
+                             SourceLocation firstLoc,
                              SourceLocation lastLoc) : 
   Expr(StringLiteralClass, t) {
   // OPTIMIZE: could allocate this appended to the StringLiteral.
-  char *AStrData = new char[byteLength];
+  char *AStrData = new (C, 1) char[byteLength];
   memcpy(AStrData, strData, byteLength);
   StrData = AStrData;
   ByteLength = byteLength;
@@ -52,8 +53,9 @@ StringLiteral::StringLiteral(const char *strData, unsigned byteLength,
   lastTokLoc = lastLoc;
 }
 
-StringLiteral::~StringLiteral() {
-  delete[] StrData;
+void StringLiteral::Destroy(ASTContext &C) {
+  C.Deallocate(const_cast<char*>(StrData));
+  this->~StringLiteral();
 }
 
 bool UnaryOperator::isPostfix(Opcode Op) {

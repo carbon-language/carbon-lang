@@ -40,9 +40,9 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
       p += S->getByteLength();
       delete S;
     }
-    S = new StringLiteral(strBuf, Length,
-                          isWide, Context.getPointerType(Context.CharTy),
-                          AtLoc, EndLoc);
+    S = new (Context, 8) StringLiteral(Context, strBuf, Length, isWide,
+                                       Context.getPointerType(Context.CharTy),
+                                       AtLoc, EndLoc);
   }
   
   if (CheckBuiltinCFStringArgument(S))

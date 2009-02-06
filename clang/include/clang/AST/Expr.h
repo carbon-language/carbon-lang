@@ -479,9 +479,10 @@ class StringLiteral : public Expr {
   // FIXME: if space becomes an issue, we should create a sub-class.
   SourceLocation firstTokLoc, lastTokLoc;
 public:
-  StringLiteral(const char *strData, unsigned byteLength, bool Wide, 
-                QualType t, SourceLocation b, SourceLocation e);
-  virtual ~StringLiteral();
+  StringLiteral(ASTContext& C, const char *strData, unsigned byteLength,
+                bool Wide, QualType t, SourceLocation b, SourceLocation e);
+  
+  void Destroy(ASTContext& C);
   
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }

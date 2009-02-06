@@ -17,6 +17,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/ASTContext.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 
@@ -274,7 +275,8 @@ AddrLabelExpr* AddrLabelExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType t = QualType::ReadVal(D);
   SourceLocation AALoc = SourceLocation::ReadVal(D);
   SourceLocation LLoc = SourceLocation::ReadVal(D);
-  AddrLabelExpr* expr = new AddrLabelExpr(AALoc,LLoc,NULL,t);
+  AddrLabelExpr* expr = new (C, llvm::alignof<AddrLabelExpr>())
+    AddrLabelExpr(AALoc,LLoc,NULL,t);
   D.ReadPtr(expr->Label); // Pointer may be backpatched.
   return expr;
 }
@@ -290,7 +292,8 @@ ArraySubscriptExpr* ArraySubscriptExpr::CreateImpl(Deserializer& D, ASTContext& 
   SourceLocation L = SourceLocation::ReadVal(D);
   Expr *LHS, *RHS;
   D.BatchReadOwnedPtrs(LHS, RHS, C);
-  return new ArraySubscriptExpr(LHS,RHS,t,L);  
+  return new (C, llvm::alignof<ArraySubscriptExpr>())
+    ArraySubscriptExpr(LHS,RHS,t,L);  
 }
 
 void AsmStmt::EmitImpl(Serializer& S) const {
@@ -327,9 +330,8 @@ AsmStmt* AsmStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   
   bool IsVolatile = D.ReadBool();
   bool IsSimple = D.ReadBool();
-  AsmStmt *Stmt = new AsmStmt(ALoc, IsSimple, IsVolatile, 0, 0, 0, 0, 0,  
-                              AsmStr, 
-                              0, 0, PLoc);  
+  AsmStmt *Stmt = new (C, llvm::alignof<AsmStmt>())
+    AsmStmt(ALoc, IsSimple, IsVolatile, 0, 0, 0, 0, 0, AsmStr, 0, 0, PLoc);  
 
   Stmt->NumOutputs = D.ReadInt();
   Stmt->NumInputs = D.ReadInt();
@@ -374,7 +376,8 @@ BinaryOperator* BinaryOperator::CreateImpl(Deserializer& D, ASTContext& C) {
   Expr *LHS, *RHS;
   D.BatchReadOwnedPtrs(LHS, RHS, C);
 
-  return new BinaryOperator(LHS,RHS,Opc,Result,OpLoc);
+  return new (C, llvm::alignof<BinaryOperator>())
+    BinaryOperator(LHS,RHS,Opc,Result,OpLoc);
 }
 
 void BreakStmt::EmitImpl(Serializer& S) const {
@@ -383,7 +386,7 @@ void BreakStmt::EmitImpl(Serializer& S) const {
 
 BreakStmt* BreakStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
-  return new BreakStmt(Loc);
+  return new (C, llvm::alignof<BreakStmt>()) BreakStmt(Loc);
 }
 
 void CallExpr::EmitImpl(Serializer& S) const {
@@ -397,10 +400,10 @@ CallExpr* CallExpr::CreateImpl(Deserializer& D, ASTContext& C, StmtClass SC) {
   QualType t = QualType::ReadVal(D);
   SourceLocation L = SourceLocation::ReadVal(D);
   unsigned NumArgs = D.ReadInt();
-  Stmt** SubExprs = new Stmt*[NumArgs+1];
+  Stmt** SubExprs = new (C, llvm::alignof<Stmt*>()) Stmt*[NumArgs+1];
   D.BatchReadOwnedPtrs(NumArgs+1, SubExprs, C);
 
-  return new CallExpr(SC, SubExprs,NumArgs,t,L);  
+  return new (C, llvm::alignof<CallExpr>()) CallExpr(SC, SubExprs,NumArgs,t,L);  
 }
 
 void CaseStmt::EmitImpl(Serializer& S) const {
@@ -411,7 +414,8 @@ void CaseStmt::EmitImpl(Serializer& S) const {
 
 CaseStmt* CaseStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation CaseLoc = SourceLocation::ReadVal(D);
-  CaseStmt* stmt = new CaseStmt(NULL,NULL,NULL,CaseLoc);  
+  CaseStmt* stmt = new (C, llvm::alignof<CaseStmt>())
+                    CaseStmt(NULL,NULL,NULL,CaseLoc);
   D.ReadPtr(stmt->NextSwitchCase);
   D.BatchReadOwnedPtrs((unsigned) END_EXPR, &stmt->SubExprs[0], C);
   return stmt;
@@ -431,7 +435,8 @@ CStyleCastExpr* CStyleCastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation LPLoc = SourceLocation::ReadVal(D);
   SourceLocation RPLoc = SourceLocation::ReadVal(D);
   Expr* Op = D.ReadOwnedPtr<Expr>(C);
-  return new CStyleCastExpr(t,Op,writtenTy,LPLoc,RPLoc);
+  return new (C, llvm::alignof<CStyleCastExpr>())
+    CStyleCastExpr(t,Op,writtenTy,LPLoc,RPLoc);
 }
 
 void CharacterLiteral::EmitImpl(Serializer& S) const {
@@ -446,7 +451,8 @@ CharacterLiteral* CharacterLiteral::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   bool iswide = D.ReadBool();
   QualType T = QualType::ReadVal(D);
-  return new CharacterLiteral(value,iswide,T,Loc);
+  return new (C, llvm::alignof<CharacterLiteral>())
+    CharacterLiteral(value,iswide,T,Loc);
 }
 
 void CompoundAssignOperator::EmitImpl(Serializer& S) const {
@@ -466,7 +472,8 @@ CompoundAssignOperator::CreateImpl(Deserializer& D, ASTContext& C) {
   Expr* LHS, *RHS;
   D.BatchReadOwnedPtrs(LHS, RHS, C);
   
-  return new CompoundAssignOperator(LHS,RHS,Opc,t,c,L);
+  return new (C, llvm::alignof<CompoundAssignOperator>())
+    CompoundAssignOperator(LHS,RHS,Opc,t,c,L);
 }
 
 void CompoundLiteralExpr::EmitImpl(Serializer& S) const {
@@ -481,7 +488,8 @@ CompoundLiteralExpr* CompoundLiteralExpr::CreateImpl(Deserializer& D, ASTContext
   SourceLocation L = SourceLocation::ReadVal(D);
   bool fileScope = D.ReadBool();
   Expr* Init = D.ReadOwnedPtr<Expr>(C);
-  return new CompoundLiteralExpr(L, Q, Init, fileScope);
+  return new (C, llvm::alignof<CompoundLiteralExpr>())
+    CompoundLiteralExpr(L, Q, Init, fileScope);
 }
 
 void CompoundStmt::EmitImpl(Serializer& S) const {
@@ -498,7 +506,8 @@ CompoundStmt* CompoundStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation RB = SourceLocation::ReadVal(D);
   unsigned size = D.ReadInt();
   
-  CompoundStmt* stmt = new CompoundStmt(NULL,0,LB,RB);
+  CompoundStmt* stmt = new (C, llvm::alignof<CompoundStmt>())
+    CompoundStmt(NULL, 0, LB, RB);
   
   stmt->Body.reserve(size);
   
@@ -517,7 +526,8 @@ ConditionalOperator* ConditionalOperator::CreateImpl(Deserializer& D,
                                                      ASTContext& C) {
 
   QualType t = QualType::ReadVal(D);
-  ConditionalOperator* c = new ConditionalOperator(NULL,NULL,NULL,t);
+  ConditionalOperator* c = new (C, llvm::alignof<ConditionalOperator>())
+    ConditionalOperator(NULL,NULL,NULL,t);
   D.BatchReadOwnedPtrs((unsigned) END_EXPR, c->SubExprs, C);
   return c;
 }
@@ -962,9 +972,10 @@ StringLiteral* StringLiteral::CreateImpl(Deserializer& D, ASTContext& C) {
   bool isWide = D.ReadBool();
   unsigned ByteLength = D.ReadInt();
   
-  StringLiteral* sl = new StringLiteral(NULL,0,isWide,t,firstTokLoc,lastTokLoc);
+  StringLiteral* sl = new (C, llvm::alignof<StringLiteral>())
+    StringLiteral(C, NULL, 0, isWide, t, firstTokLoc, lastTokLoc);
 
-  char* StrData = new char[ByteLength];
+  char* StrData = new (C, llvm::alignof<char>()) char[ByteLength];
   for (unsigned i = 0; i < ByteLength; ++i)
     StrData[i] = (char) D.ReadInt();
 
