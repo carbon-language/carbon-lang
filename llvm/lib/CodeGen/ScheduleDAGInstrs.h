@@ -1,4 +1,4 @@
-//==- llvm/CodeGen/ScheduleDAGInstrs.h - MachineInstr Scheduling -*- C++ -*-==//
+//==- ScheduleDAGInstrs.h - MachineInstr Scheduling --------------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
-#define LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
+#ifndef SCHEDULEDAGINSTRS_H
+#define SCHEDULEDAGINSTRS_H
 
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Target/TargetRegisterInfo.h"
