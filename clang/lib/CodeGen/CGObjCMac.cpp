@@ -4399,10 +4399,6 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   const CGFunctionInfo &FnInfo1 = Types.getFunctionInfo(ResultType, ActualArgs);
   llvm::Value *Callee = CGF.Builder.CreateStructGEP(Arg1, 0);
   Callee = CGF.Builder.CreateLoad(Callee);
-  const llvm::Type *T = llvm::PointerType::getUnqual(ObjCTypes.MessengerTy);
-  T = llvm::PointerType::getUnqual(T);
-  Callee = CGF.Builder.CreateBitCast(Callee, T);
-  Callee = CGF.Builder.CreateLoad(Callee);
   const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo1, false);
   Callee = CGF.Builder.CreateBitCast(Callee,
                                      llvm::PointerType::getUnqual(FTy));
