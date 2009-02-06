@@ -572,6 +572,9 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, MacroBuf);
   }
   
+  if (!TI.isCharSigned())
+    DefineBuiltinMacro(Buf, "__CHAR_UNSIGNED__");  
+  
   // Build configuration options.  FIXME: these should be controlled by
   // command line options or something.
   DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
