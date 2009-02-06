@@ -267,6 +267,7 @@ enum LangKind {
   langkind_c_pch,
   langkind_cxx,
   langkind_cxx_cpp,
+  langkind_cxx_pch,
   langkind_objc,
   langkind_objc_cpp,
   langkind_objc_pch,
@@ -276,9 +277,7 @@ enum LangKind {
 };
 
 /* TODO: GCC also accepts:
-   c-header c++-header objective-c-header objective-c++-header
-   assembler
-   ada, f77*, ratfor (!), f95, java, treelang
+   assembler, ada, f77*, ratfor (!), f95, java, treelang
  */
 static llvm::cl::opt<LangKind>
 BaseLang("x", llvm::cl::desc("Base language to compile"),
@@ -292,15 +291,17 @@ BaseLang("x", llvm::cl::desc("Base language to compile"),
                     clEnumValN(langkind_asm_cpp,     "assembler-with-cpp",
                                "Preprocessed asm"),
                     clEnumValN(langkind_cxx_cpp,   "c++-cpp-output",
-                               "Preprocessed C++"),                    
+                               "Preprocessed C++"),
                     clEnumValN(langkind_objc_cpp,  "objective-c-cpp-output",
                                "Preprocessed Objective C"),
-                    clEnumValN(langkind_objcxx_cpp,"objective-c++-cpp-output",
+                    clEnumValN(langkind_objcxx_cpp, "objective-c++-cpp-output",
                                "Preprocessed Objective C++"),
-                    clEnumValN(langkind_c_pch,"c-header",
+                    clEnumValN(langkind_c_pch, "c-header",
                                "Precompiled C header"),
                     clEnumValN(langkind_objc_pch, "objective-c-header",
                                "Precompiled Objective-C header"),
+                    clEnumValN(langkind_cxx_pch, "c++-header",
+                               "Precompiled C++ header"),
                     clEnumValN(langkind_objcxx_pch, "objective-c++-header",
                                "Precompiled Objective-C++ header"),
                     clEnumValEnd));
@@ -376,20 +377,24 @@ static bool InitializeLangOptions(LangOptions &Options, LangKind LK){
 
   // Test for 'PCH'.
   switch (LK) {
-    default:
-      break;
-    case langkind_c_pch:
-      LK = langkind_c;
-      PCH = true;
-      break;
-    case langkind_objc_pch:
-      LK = langkind_objc;
-      PCH = true;
-      break;
-    case langkind_objcxx_pch:
-      LK = langkind_objcxx;
-      PCH = true;
-      break;
+  default:
+    break;
+  case langkind_c_pch:
+    LK = langkind_c;
+    PCH = true;
+    break;
+  case langkind_objc_pch:
+    LK = langkind_objc;
+    PCH = true;
+    break;
+  case langkind_cxx_pch:
+    LK = langkind_cxx;
+    PCH = true;
+    break;
+  case langkind_objcxx_pch:
+    LK = langkind_objcxx;
+    PCH = true;
+    break;
   }
   
   switch (LK) {
