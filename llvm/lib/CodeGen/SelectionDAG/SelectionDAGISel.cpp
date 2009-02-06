@@ -662,12 +662,12 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   if (ViewSchedDAGs) CurDAG->viewGraph("scheduler input for " + BlockName);
 
   // Schedule machine code.
-  ScheduleDAG *Scheduler;
+  ScheduleDAG *Scheduler = CreateScheduler();
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("Instruction Scheduling", GroupName);
-    Scheduler = Schedule();
+    Scheduler->Run(CurDAG, BB, BB->end(), BB->end());
   } else {
-    Scheduler = Schedule();
+    Scheduler->Run(CurDAG, BB, BB->end(), BB->end());
   }
 
   if (ViewSUnitDAGs) Scheduler->viewGraph();
@@ -1064,10 +1064,11 @@ SelectionDAGISel::FinishBasicBlock() {
 }
 
 
-/// Schedule - Pick a safe ordering for instructions for each
-/// target node in the graph.
+/// Create the scheduler. If a specific scheduler was specified
+/// via the SchedulerRegistry, use it, otherwise select the
+/// one preferred by the target.
 ///
-ScheduleDAG *SelectionDAGISel::Schedule() {
+ScheduleDAG *SelectionDAGISel::CreateScheduler() {
   RegisterScheduler::FunctionPassCtor Ctor = RegisterScheduler::getDefault();
   
   if (!Ctor) {
@@ -1075,12 +1076,8 @@ ScheduleDAG *SelectionDAGISel::Schedule() {
     RegisterScheduler::setDefault(Ctor);
   }
   
-  ScheduleDAG *Scheduler = Ctor(this, Fast);
-  Scheduler->Run(CurDAG, BB, BB->end(), BB->end());
-
-  return Scheduler;
+  return Ctor(this, Fast);
 }
-
 
 ScheduleHazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {
   return new ScheduleHazardRecognizer();
