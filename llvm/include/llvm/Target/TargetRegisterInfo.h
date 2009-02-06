@@ -426,7 +426,6 @@ public:
   /// values.
   virtual const TargetRegisterClass *getPointerRegClass() const {
     assert(0 && "Target didn't implement getPointerRegClass!");
-    abort();
     return 0; // Must return a value in order to compile with VS 2005
   }
 
