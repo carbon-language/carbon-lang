@@ -411,6 +411,23 @@ static void DefineFloatMacros(std::vector<char> &Buf, const char *Prefix,
 }
 
 
+/// DefineTypeSize - Emit a macro to the predefines buffer that declares a macro
+/// named MacroName with the max value for a type with width 'TypeWidth' a
+/// signedness of 'isSigned' and with a value suffix of 'ValSuffix' (e.g. LL).
+static void DefineTypeSize(const char *MacroName, unsigned TypeWidth,
+                           const char *ValSuffix, bool isSigned,
+                           std::vector<char> &Buf) {
+  char MacroBuf[60];
+  uint64_t MaxVal;
+  if (isSigned)
+    MaxVal = (1LL << (TypeWidth - 1)) - 1;
+  else
+    MaxVal = ~0LL >> (64-TypeWidth);
+  
+  sprintf(MacroBuf, "%s=%llu%s", MacroName, MaxVal, ValSuffix);
+  DefineBuiltinMacro(Buf, MacroBuf);
+}
+
 static void InitializePredefinedMacros(Preprocessor &PP, 
                                        std::vector<char> &Buf) {
   // Compiler version introspection macros.
@@ -530,7 +547,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__LONG_MAX__=32767L");
   else
     assert(0 && "Unknown long size");
-  char MacroBuf[60];
+  
   unsigned IntMaxWidth;
   const char *IntMaxSuffix;
   if (TI.getIntMaxType() == TargetInfo::SignedLongLong) {
@@ -545,10 +562,8 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     IntMaxSuffix = "";
   }
   
-  sprintf(MacroBuf, "__INTMAX_MAX__=%lld%s", (1LL << (IntMaxWidth - 1)) - 1,
-          IntMaxSuffix);
-  DefineBuiltinMacro(Buf, MacroBuf);
-  
+  DefineTypeSize("__INTMAX_MAX__", IntMaxWidth, IntMaxSuffix, true, Buf);
+
   if (TI.getIntMaxType() == TargetInfo::UnsignedLongLong)
     DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=unsigned long long int");
   else if (TI.getIntMaxType() == TargetInfo::SignedLongLong)
@@ -611,7 +626,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());
   DefineFloatMacros(Buf, "LDBL", &TI.getLongDoubleFormat());
   
-  
   // Add __builtin_va_list typedef.
   {
     const char *VAList = TI.getVAListDeclaration();
@@ -619,6 +633,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     Buf.push_back('\n');
   }
   
+  char MacroBuf[60];
   if (const char *Prefix = TI.getUserLabelPrefix()) {
     sprintf(MacroBuf, "__USER_LABEL_PREFIX__=%s", Prefix);
     DefineBuiltinMacro(Buf, MacroBuf);
