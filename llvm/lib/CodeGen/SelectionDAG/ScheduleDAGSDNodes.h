@@ -76,8 +76,6 @@ namespace llvm {
     ///
     SUnit *Clone(SUnit *N);
     
-    virtual SelectionDAG *getDAG() { return DAG; }
-
     /// BuildSchedGraph - Build the SUnit graph from the selection dag that we
     /// are input.  This SUnit graph is similar to the SelectionDAG, but
     /// excludes nodes that aren't interesting to scheduling, and represents
