@@ -1139,14 +1139,14 @@ DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
   return DeclarationName();
 }
 
-/// isNearlyMatchingMemberFunction - Determine whether the C++ member
-/// functions Declaration and Definition are "nearly" matching. This
-/// heuristic is used to improve diagnostics in the case where an
-/// out-of-line member function definition doesn't match any
-/// declaration within the class.
-static bool isNearlyMatchingMemberFunction(ASTContext &Context,
-                                           FunctionDecl *Declaration,
-                                           FunctionDecl *Definition) {
+/// isNearlyMatchingFunction - Determine whether the C++ functions
+/// Declaration and Definition are "nearly" matching. This heuristic
+/// is used to improve diagnostics in the case where an out-of-line
+/// function definition doesn't match any declaration within
+/// the class or namespace.
+static bool isNearlyMatchingFunction(ASTContext &Context,
+                                     FunctionDecl *Declaration,
+                                     FunctionDecl *Definition) {
   if (Declaration->param_size() != Definition->param_size())
     return false;
   for (unsigned Idx = 0; Idx < Declaration->param_size(); ++Idx) {
@@ -1219,17 +1219,21 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     // In this case, PrevDecl will point to the overload set
     // containing the two f's declared in X, but neither of them
     // matches. 
-    if (!CurContext->Encloses(DC)) {
+
+    // First check whether we named the global scope.
+    if (isa<TranslationUnitDecl>(DC)) {
+      Diag(D.getIdentifierLoc(), diag::err_invalid_declarator_global_scope) 
+        << Name << D.getCXXScopeSpec().getRange();
+    } else if (!CurContext->Encloses(DC)) {
       // The qualifying scope doesn't enclose the original declaration.
       // Emit diagnostic based on current scope.
       SourceLocation L = D.getIdentifierLoc();
       SourceRange R = D.getCXXScopeSpec().getRange();
-      if (isa<FunctionDecl>(CurContext)) {
+      if (isa<FunctionDecl>(CurContext))
         Diag(L, diag::err_invalid_declarator_in_function) << Name << R;
-      } else {
+      else 
         Diag(L, diag::err_invalid_declarator_scope)
-          << Name << cast<NamedDecl>(DC)->getDeclName() << R;
-      }
+          << Name << cast<NamedDecl>(DC) << R;
       InvalidDecl = true;
     }
   }
@@ -1628,10 +1632,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     
   // Merge the decl with the existing one if appropriate. Since C functions
   // are in a flat namespace, make sure we consider decls in outer scopes.
+  bool Redeclaration = false;
   if (PrevDecl &&
       (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, DC, S))) {
-    bool Redeclaration = false;
-
     // If C++, determine whether NewFD is an overload of PrevDecl or
     // a declaration that requires merging. If it's an overload,
     // there's no more work to do here; we'll just add the new
@@ -1664,40 +1667,46 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         }
       }
     }
+  }
 
-    if (!Redeclaration && D.getCXXScopeSpec().isSet()) {
-      // The user tried to provide an out-of-line definition for a
-      // member function, but there was no such member function
-      // declared (C++ [class.mfct]p2). For example:
-      // 
-      // class X {
-      //   void f() const;
-      // }; 
-      //
-      // void X::f() { } // ill-formed
-      //
-      // Complain about this problem, and attempt to suggest close
-      // matches (e.g., those that differ only in cv-qualifiers and
-      // whether the parameter types are references).
-      Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
-        << cast<CXXRecordDecl>(DC)->getDeclName() 
-        << D.getCXXScopeSpec().getRange();
-      InvalidDecl = true;
-        
-      LookupResult Prev = LookupQualifiedName(DC, Name, LookupOrdinaryName, 
-                                              true);
-      assert(!Prev.isAmbiguous() && 
-             "Cannot have an ambiguity in previous-declaration lookup");
-      for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
-           Func != FuncEnd; ++Func) {
-        if (isa<CXXMethodDecl>(*Func) &&
-            isNearlyMatchingMemberFunction(Context, cast<FunctionDecl>(*Func),
-                                           NewFD))
-          Diag((*Func)->getLocation(), diag::note_member_def_close_match);
-      }
- 
-      PrevDecl = 0;
+  if (D.getCXXScopeSpec().isSet() &&
+      (!PrevDecl || !Redeclaration)) {
+    // The user tried to provide an out-of-line definition for a
+    // function that is a member of a class or namespace, but there
+    // was no such member function declared (C++ [class.mfct]p2, 
+    // C++ [namespace.memdef]p2). For example:
+    // 
+    // class X {
+    //   void f() const;
+    // }; 
+    //
+    // void X::f() { } // ill-formed
+    //
+    // Complain about this problem, and attempt to suggest close
+    // matches (e.g., those that differ only in cv-qualifiers and
+    // whether the parameter types are references).
+    DeclarationName CtxName;
+    if (DC->isRecord())
+      CtxName = cast<RecordDecl>(DC)->getDeclName();
+    else if (DC->isNamespace())
+      CtxName = cast<NamespaceDecl>(DC)->getDeclName();
+    // FIXME: global scope
+    Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
+      << CtxName << D.getCXXScopeSpec().getRange();
+    InvalidDecl = true;
+    
+    LookupResult Prev = LookupQualifiedName(DC, Name, LookupOrdinaryName, 
+                                            true);
+    assert(!Prev.isAmbiguous() && 
+           "Cannot have an ambiguity in previous-declaration lookup");
+    for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
+         Func != FuncEnd; ++Func) {
+      if (isa<FunctionDecl>(*Func) &&
+          isNearlyMatchingFunction(Context, cast<FunctionDecl>(*Func), NewFD))
+        Diag((*Func)->getLocation(), diag::note_member_def_close_match);
     }
+    
+    PrevDecl = 0;
   }
 
   // Handle attributes. We need to have merged decls when handling attributes

@@ -109,4 +109,3 @@ struct Undef { // expected-note{{definition of 'struct Undef' is not complete un
 int Undef::f() {
   return sizeof(Undef);
 }
-

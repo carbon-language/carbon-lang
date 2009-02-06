@@ -123,3 +123,28 @@ Operators Operators::operator+(const Operators&) const {
 Operators::operator bool() {
   return true;
 }
+
+namespace A {
+  void g(int&); // expected-note{{member declaration nearly matches}}
+} 
+
+void A::f() {} // expected-error{{out-of-line definition does not match any declaration in 'A'}}
+
+void A::g(const int&) { } // expected-error{{out-of-line definition does not match any declaration in 'A'}}
+
+struct Struct { };
+
+void Struct::f() { } // expected-error{{out-of-line definition does not match any declaration in 'Struct'}}
+
+void global_func(int);
+void global_func2(int);
+
+namespace N {
+  void ::global_func(int) { } // expected-error{{definition or redeclaration of 'global_func' cannot name the global scope}}
+
+  void f();
+  // FIXME: if we move this to a separate definition of N, things break!
+}
+void ::global_func2(int) { } // expected-error{{definition or redeclaration of 'global_func2' cannot name the global scope}}
+
+void N::f() { } // okay

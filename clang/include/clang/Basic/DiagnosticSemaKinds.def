@@ -860,6 +860,8 @@ DIAG(err_expected_class_or_namespace, ERROR,
      "expected a class or namespace")
 DIAG(err_invalid_declarator_scope, ERROR,
      "definition or redeclaration of %0 not in a namespace enclosing %1")
+DIAG(err_invalid_declarator_global_scope, ERROR,
+     "definition or redeclaration of %0 cannot name the global scope")
 DIAG(err_invalid_declarator_in_function, ERROR,
      "definition or redeclaration of %0 not allowed inside a function")
 DIAG(err_not_tag_in_scope, ERROR,
