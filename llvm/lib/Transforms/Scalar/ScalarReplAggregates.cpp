@@ -1431,7 +1431,7 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
     Value *Res = UndefValue::get(ST);
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
       Value *Elt = ConvertScalar_ExtractValue(FromVal, ST->getElementType(i),
-                                              Offset+Layout.getElementOffset(i),
+                                        Offset+Layout.getElementOffsetInBits(i),
                                               Builder);
       Res = Builder.CreateInsertValue(Res, Elt, i, "tmp");
     }
@@ -1538,7 +1538,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
       Value *Elt = Builder.CreateExtractValue(SV, i, "tmp");
       Old = ConvertScalar_InsertValue(Elt, Old, 
-                                      Offset+Layout.getElementOffset(i),
+                                      Offset+Layout.getElementOffsetInBits(i),
                                       Builder);
     }
     return Old;
