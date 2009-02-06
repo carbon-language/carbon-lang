@@ -438,6 +438,7 @@ static void DefineType(const char *MacroName, TargetInfo::IntType Ty,
 
 static void InitializePredefinedMacros(Preprocessor &PP, 
                                        std::vector<char> &Buf) {
+  char MacroBuf[60];
   // Compiler version introspection macros.
   DefineBuiltinMacro(Buf, "__llvm__=1");   // LLVM Backend
   DefineBuiltinMacro(Buf, "__clang__=1");  // Clang Frontend
@@ -512,10 +513,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   // mode. 
   if (PP.getLangOptions().Microsoft) {
     DefineBuiltinMacro(Buf, "_cdecl=__cdecl");
-    DefineBuiltinMacro(Buf, "__int8=char");
-    DefineBuiltinMacro(Buf, "__int16=short");
-    DefineBuiltinMacro(Buf, "__int32=int");
-    DefineBuiltinMacro(Buf, "__int64=long long");
+    DefineBuiltinMacro(Buf, "__int8=__INT8_TYPE__");
+    DefineBuiltinMacro(Buf, "__int16=__INT16_TYPE__");
+    DefineBuiltinMacro(Buf, "__int32=__INT32_TYPE__");
+    DefineBuiltinMacro(Buf, "__int64=__INT64_TYPE__");
   }
   
   // Initialize target-specific preprocessor defines.
@@ -558,6 +559,30 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineFloatMacros(Buf, "FLT", &TI.getFloatFormat());
   DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());
   DefineFloatMacros(Buf, "LDBL", &TI.getLongDoubleFormat());
+
+  // Define a __POINTER_WIDTH__ macro for stdint.h.
+  sprintf(MacroBuf, "__POINTER_WIDTH__=%d", (int)TI.getPointerWidth(0));
+  DefineBuiltinMacro(Buf, MacroBuf);
+  
+  if (!TI.isCharSigned())
+    DefineBuiltinMacro(Buf, "__CHAR_UNSIGNED__");  
+
+  // Define fixed-sized integer types for stdint.h
+  assert(TI.getCharWidth() == 8 && "unsupported target types");
+  assert(TI.getShortWidth() == 16 && "unsupported target types");
+  DefineBuiltinMacro(Buf, "__INT8_TYPE__=char");
+  DefineBuiltinMacro(Buf, "__INT16_TYPE__=short");
+  
+  if (TI.getIntWidth() == 32)
+    DefineBuiltinMacro(Buf, "__INT32_TYPE__=int");
+  else {
+    assert(TI.getLongLongWidth() == 32 && "unsupported target types");
+    DefineBuiltinMacro(Buf, "__INT32_TYPE__=long long");
+  }
+  
+  // 16-bit targets doesn't necessarily have a 64-bit type.
+  if (TI.getLongLongWidth() == 64)
+    DefineBuiltinMacro(Buf, "__INT64_TYPE__=long long");
   
   // Add __builtin_va_list typedef.
   {
@@ -566,14 +591,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     Buf.push_back('\n');
   }
   
-  char MacroBuf[60];
   if (const char *Prefix = TI.getUserLabelPrefix()) {
     sprintf(MacroBuf, "__USER_LABEL_PREFIX__=%s", Prefix);
     DefineBuiltinMacro(Buf, MacroBuf);
   }
-  
-  if (!TI.isCharSigned())
-    DefineBuiltinMacro(Buf, "__CHAR_UNSIGNED__");  
   
   // Build configuration options.  FIXME: these should be controlled by
   // command line options or something.
