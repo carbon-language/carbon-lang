@@ -481,9 +481,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     return UnknownVal();
   }
 
-  if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
-    // FIXME: Unsupported yet.
-    SR = 0;
+  if (isa<SymbolicRegion>(R)) {
     return UnknownVal();
   }
 
