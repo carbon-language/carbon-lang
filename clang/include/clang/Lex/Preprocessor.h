@@ -247,6 +247,15 @@ public:
   ///
   void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
   
+  /// macro_iterator/macro_begin/macro_end - This allows you to walk the current
+  /// state of the macro table.  This visits every currently-defined macro.
+  typedef llvm::DenseMap<IdentifierInfo*, 
+                         MacroInfo*>::const_iterator macro_iterator;
+  macro_iterator macro_begin() const { return Macros.begin(); }
+  macro_iterator macro_end() const { return Macros.end(); }
+  
+  
+  
   const std::string &getPredefines() const { return Predefines; }
   /// setPredefines - Set the predefines for this Preprocessor.  These
   /// predefines are automatically injected when parsing the main file.
