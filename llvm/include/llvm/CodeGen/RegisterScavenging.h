@@ -125,7 +125,7 @@ public:
   /// setUsed / setUnused - Mark the state of one or a number of registers.
   ///
   void setUsed(unsigned Reg, bool ImpDef = false);
-  void setUsed(BitVector Regs, bool ImpDef = false) {
+  void setUsed(BitVector &Regs, bool ImpDef = false) {
     RegsAvailable &= ~Regs;
     if (ImpDef)
       ImplicitDefed |= Regs;
@@ -133,7 +133,7 @@ public:
       ImplicitDefed &= ~Regs;
   }
   void setUnused(unsigned Reg, const MachineInstr *MI);
-  void setUnused(BitVector Regs) {
+  void setUnused(BitVector &Regs) {
     RegsAvailable |= Regs;
     ImplicitDefed &= ~Regs;
   }
