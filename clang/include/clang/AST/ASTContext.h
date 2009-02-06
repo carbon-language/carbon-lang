@@ -615,8 +615,8 @@ private:
 ///
 /// @param Bytes The number of bytes to allocate. Calculated by the compiler.
 /// @param C The ASTContext that provides the allocator.
-/// @param Alignment The alignment of the allocated memory (if the allocator
-///                  supports it, which the current one doesn't).
+/// @param Alignment The alignment of the allocated memory (if the underlying
+///                  allocator supports it).
 /// @return The allocated memory. Could be NULL.
 inline void *operator new(size_t Bytes, clang::ASTContext &C,
                           size_t Alignment = 16) throw () {
@@ -630,6 +630,40 @@ inline void *operator new(size_t Bytes, clang::ASTContext &C,
 /// the ASTContext throws in the object constructor.
 inline void operator delete(void *Ptr, clang::ASTContext &C)
               throw () {
+  C.Deallocate(Ptr);
+}
+
+/// This placement form of operator new[] uses the ASTContext's allocator for
+/// obtaining memory. It is a non-throwing new[], which means that it returns
+/// null on error.
+/// Usage looks like this (assuming there's an ASTContext 'Context' in scope):
+/// @code
+/// // Default alignment (16)
+/// char *data = new (Context) char[10];
+/// // Specific alignment
+/// char *data = new (Context, 8) char[10];
+/// @endcode
+/// Please note that you cannot use delete on the pointer; it must be
+/// deallocated using an explicit destructor call followed by
+/// @c Context.getAllocator().Deallocate(Ptr)
+///
+/// @param Bytes The number of bytes to allocate. Calculated by the compiler.
+/// @param C The ASTContext that provides the allocator.
+/// @param Alignment The alignment of the allocated memory (if the underlying
+///                  allocator supports it).
+/// @return The allocated memory. Could be NULL.
+inline void *operator new[](size_t Bytes, clang::ASTContext& C,
+                            size_t Alignment = 16) throw () {
+  return C.Allocate(Bytes, Alignment);
+}
+
+/// @brief Placement delete[] companion to the new[] above.
+///
+/// This operator is just a companion to the new[] above. There is no way of
+/// invoking it directly; see the new[] operator for more details. This operator
+/// is called implicitly by the compiler if a placement new[] expression using
+/// the ASTContext throws in the object constructor.
+inline void operator delete[](void *Ptr, clang::ASTContext &C) throw () {
   C.Deallocate(Ptr);
 }
 
