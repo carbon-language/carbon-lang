@@ -112,7 +112,7 @@ void CodeGenModule::ErrorUnsupported(const Stmt *S, const char *Type,
   if (OmitOnError && getDiags().hasErrorOccurred())
     return;
   unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Error, 
-                                               "cannot codegen this %0 yet");
+                                               "cannot compile this %0 yet");
   std::string Msg = Type;
   getDiags().Report(Context.getFullLoc(S->getLocStart()), DiagID)
     << Msg << S->getSourceRange();
@@ -125,7 +125,7 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
   if (OmitOnError && getDiags().hasErrorOccurred())
     return;
   unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Error, 
-                                               "cannot codegen this %0 yet");
+                                               "cannot compile this %0 yet");
   std::string Msg = Type;
   getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID) << Msg;
 }
