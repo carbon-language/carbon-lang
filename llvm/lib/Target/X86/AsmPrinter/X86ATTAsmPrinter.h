@@ -29,6 +29,7 @@ namespace llvm {
 struct MachineJumpTableInfo;
 
 struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
+  MachineFunction *MF;
   DwarfWriter *DW;
   MachineModuleInfo *MMI;
   const X86Subtarget *Subtarget;
