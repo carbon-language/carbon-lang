@@ -597,6 +597,8 @@ private:
   ObjCNonFragileABITypesHelper ObjCTypes;
   llvm::GlobalVariable* ObjCEmptyCacheVar;
   llvm::GlobalVariable* ObjCEmptyVtableVar;
+  /// MetaClassReferences - uniqued meta class references.
+  llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> MetaClassReferences;
   
   /// FinishNonFragileABIModule - Write out global data structures at the end of
   /// processing a translation unit.
@@ -660,7 +662,14 @@ private:
   /// EmitClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
   /// for the given class.
   llvm::Value *EmitClassRef(CGBuilderTy &Builder, 
-                            const ObjCInterfaceDecl *ID);
+                            const ObjCInterfaceDecl *ID,
+                            bool IsSuper = false);
+  
+  /// EmitMetaClassRef - Return a Value * of the address of _class_t
+  /// meta-data
+  llvm::Value *EmitMetaClassRef(CGBuilderTy &Builder, 
+                                const ObjCInterfaceDecl *ID);
+
   
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
@@ -681,7 +690,7 @@ public:
                            const ObjCInterfaceDecl *Class,
                            llvm::Value *Receiver,
                            bool IsClassMessage,
-                           const CallArgList &CallArgs){ return RValue::get(0);}
+                           const CallArgList &CallArgs);
   
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *ID);
@@ -4298,8 +4307,9 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   // FIXME. Even though IsSuper is passes. This function doese not
   // handle calls to 'super' receivers.
   CodeGenTypes &Types = CGM.getTypes();
-  llvm::Value *Arg0 = 
-  CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
+  llvm::Value *Arg0 = Receiver;
+  if (!IsSuper)
+    Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
   
   // Find the message function name.
   // FIXME. This is too much work to get the ABI-specific result type
@@ -4319,6 +4329,11 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     }
     else
 #endif
+    if (IsSuper) {
+        Fn = ObjCTypes.MessageSendSuper2StretFixupFn;
+        Name += "objc_msgSendSuper2_stret_fixup";
+    } 
+    else
     {
       Fn = ObjCTypes.MessageSendStretFixupFn;
       Name += "objc_msgSend_stret_fixup";
@@ -4339,6 +4354,11 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     }
     else 
 #endif
+    if (IsSuper) {
+        Fn = ObjCTypes.MessageSendSuper2FixupFn;
+        Name += "objc_msgSendSuper2_fixup";
+    }
+    else
     {
       Fn = ObjCTypes.MessageSendFixupFn;
       Name += "objc_msgSend_fixup";
@@ -4403,7 +4423,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::GenerateMessageSend(
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder, 
-                                     const ObjCInterfaceDecl *ID) {
+                                     const ObjCInterfaceDecl *ID,
+                                     bool IsSuper) {
   
   llvm::GlobalVariable *&Entry = ClassReferences[ID->getIdentifier()];
   
@@ -4423,15 +4444,58 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
     Entry = 
       new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
                                llvm::GlobalValue::InternalLinkage,
-                               ClassGV, "\01L_OBJC_CLASSLIST_REFERENCES_$_",
+                               ClassGV, 
+                               IsSuper ? "\01L_OBJC_CLASSLIST_SUP_REFS_$_" 
+                                       : "\01L_OBJC_CLASSLIST_REFERENCES_$_",
                                &CGM.getModule());
     Entry->setAlignment(
                      CGM.getTargetData().getPrefTypeAlignment(
                                                   ObjCTypes.ClassnfABIPtrTy));
 
-    Entry->setSection("__OBJC,__objc_classrefs,regular,no_dead_strip");
+    if (IsSuper)
+      Entry->setSection("__OBJC,__objc_superrefs,regular,no_dead_strip");
+    else
+      Entry->setSection("__OBJC,__objc_classrefs,regular,no_dead_strip");
     UsedGlobals.push_back(Entry);
   }
+  
+  return Builder.CreateLoad(Entry, false, "tmp");
+}
+
+/// EmitMetaClassRef - Return a Value * of the address of _class_t
+/// meta-data
+///
+llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder, 
+                                                  const ObjCInterfaceDecl *ID) {
+  llvm::GlobalVariable * &Entry = MetaClassReferences[ID->getIdentifier()];
+  if (Entry)
+    return Builder.CreateLoad(Entry, false, "tmp");
+  
+  std::string MetaClassName("\01_OBJC_METACLASS_$_" + ID->getNameAsString());
+  llvm::GlobalVariable *MetaClassGV = 
+    CGM.getModule().getGlobalVariable(MetaClassName);
+  if (!MetaClassGV) {
+    MetaClassGV =
+      new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                               llvm::GlobalValue::ExternalLinkage,
+                               0,
+                               MetaClassName,
+                               &CGM.getModule());
+      UsedGlobals.push_back(MetaClassGV);
+  }
+
+  Entry = 
+    new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
+                             llvm::GlobalValue::InternalLinkage,
+                             MetaClassGV, 
+                             "\01L_OBJC_CLASSLIST_SUP_REFS_$_",
+                             &CGM.getModule());
+  Entry->setAlignment(
+                      CGM.getTargetData().getPrefTypeAlignment(
+                                                  ObjCTypes.ClassnfABIPtrTy));
+    
+  Entry->setSection("__OBJC,__objc_superrefs,regular,no_dead_strip");
+  UsedGlobals.push_back(Entry);
   
   return Builder.CreateLoad(Entry, false, "tmp");
 }
@@ -4443,6 +4507,45 @@ llvm::Value *CGObjCNonFragileABIMac::GetClass(CGBuilderTy &Builder,
   return EmitClassRef(Builder, ID);
 }
 
+/// Generates a message send where the super is the receiver.  This is
+/// a message send to self with special delivery semantics indicating
+/// which class's method should be called.
+CodeGen::RValue
+CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                                    QualType ResultType,
+                                    Selector Sel,
+                                    const ObjCInterfaceDecl *Class,
+                                    llvm::Value *Receiver,
+                                    bool IsClassMessage,
+                                    const CodeGen::CallArgList &CallArgs) {
+  // ...
+  // Create and init a super structure; this is a (receiver, class)
+  // pair we will pass to objc_msgSendSuper.
+  llvm::Value *ObjCSuper =
+    CGF.Builder.CreateAlloca(ObjCTypes.SuperTy, 0, "objc_super");
+  
+  llvm::Value *ReceiverAsObject =
+    CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy);
+  CGF.Builder.CreateStore(ReceiverAsObject,
+                          CGF.Builder.CreateStructGEP(ObjCSuper, 0));
+  
+  // If this is a class message the metaclass is passed as the target.
+  llvm::Value *Target = 
+    IsClassMessage ? EmitMetaClassRef(CGF.Builder, Class) 
+                   : EmitClassRef(CGF.Builder, Class, true);
+    
+  // FIXME: We shouldn't need to do this cast, rectify the ASTContext
+  // and ObjCTypes types.
+  const llvm::Type *ClassTy =
+    CGM.getTypes().ConvertType(CGF.getContext().getObjCClassType());
+  Target = CGF.Builder.CreateBitCast(Target, ClassTy);
+  CGF.Builder.CreateStore(Target,
+                          CGF.Builder.CreateStructGEP(ObjCSuper, 1));
+  
+  return EmitMessageSend(CGF, ResultType, Sel,
+                         ObjCSuper, ObjCTypes.SuperPtrCTy,
+                         true, CallArgs);
+}
 /* *** */
 
 CodeGen::CGObjCRuntime *
