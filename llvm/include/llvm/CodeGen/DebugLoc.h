@@ -48,6 +48,9 @@ namespace llvm {
     /// isUnknown - Return true if there is no debug info for the SDNode /
     /// MachineInstr.
     bool isUnknown() const { return Idx == 0; }
+
+    bool operator==(const DebugLoc &DL) { return Idx == DL.Idx; }
+    bool operator!=(const DebugLoc &DL) { return !(*this == DL); }
   };
 
   // Partially specialize DenseMapInfo for DebugLocTyple.
