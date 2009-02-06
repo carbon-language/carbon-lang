@@ -540,7 +540,6 @@
 		DEA09A080F302C65000C2258 /* DiagnosticSemaKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticSemaKinds.def; sourceTree = "<group>"; };
 		DEA09A6E0F31756F000C2258 /* ASTDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTDiagnostic.h; path = clang/AST/ASTDiagnostic.h; sourceTree = "<group>"; };
 		DEA09A710F317594000C2258 /* CompileOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CompileOptions.h; path = clang/Driver/CompileOptions.h; sourceTree = "<group>"; };
-		DEA09A720F317594000C2258 /* DriverDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DriverDiagnostic.h; path = clang/Driver/DriverDiagnostic.h; sourceTree = "<group>"; };
 		DEA09A730F317594000C2258 /* ManagerRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ManagerRegistry.h; path = clang/Driver/ManagerRegistry.h; sourceTree = "<group>"; };
 		DEA09A830F3175BF000C2258 /* LexDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LexDiagnostic.h; sourceTree = "<group>"; };
 		DEA09A860F3175CA000C2258 /* ParseDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ParseDiagnostic.h; path = clang/Parse/ParseDiagnostic.h; sourceTree = "<group>"; };
@@ -749,7 +748,6 @@
 			isa = PBXGroup;
 			children = (
 				DEA09A710F317594000C2258 /* CompileOptions.h */,
-				DEA09A720F317594000C2258 /* DriverDiagnostic.h */,
 				DEA09A730F317594000C2258 /* ManagerRegistry.h */,
 				355BD0420EBFAEC7001A9DFF /* PathDiagnosticClients.h */,
 				350F4B490E5F36EE00A21EA9 /* InitHeaderSearch.h */,
