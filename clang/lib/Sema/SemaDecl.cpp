@@ -1682,14 +1682,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // Complain about this problem, and attempt to suggest close
     // matches (e.g., those that differ only in cv-qualifiers and
     // whether the parameter types are references).
-    DeclarationName CtxName;
-    if (DC->isRecord())
-      CtxName = cast<RecordDecl>(DC)->getDeclName();
-    else if (DC->isNamespace())
-      CtxName = cast<NamespaceDecl>(DC)->getDeclName();
-    // FIXME: global scope
     Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
-      << CtxName << D.getCXXScopeSpec().getRange();
+      << cast<NamedDecl>(DC) << D.getCXXScopeSpec().getRange();
     InvalidDecl = true;
     
     LookupResult Prev = LookupQualifiedName(DC, Name, LookupOrdinaryName, 
