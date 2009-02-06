@@ -108,7 +108,7 @@ MemoryBuffer* LTOModule::makeBuffer(const void* mem, size_t length)
 
 
 LTOModule* LTOModule::makeLTOModule(const void* mem, size_t length, 
-                                                        std::string& errMsg)
+                                    std::string& errMsg)
 {
     OwningPtr<MemoryBuffer> buffer(makeBuffer(mem, length));
     if ( !buffer )

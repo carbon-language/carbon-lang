@@ -86,7 +86,7 @@ lto_module_is_object_file(const char* path);
  */
 extern bool
 lto_module_is_object_file_for_target(const char* path, 
-                                            const char* target_triple_prefix);
+                                     const char* target_triple_prefix);
 
 
 /**
