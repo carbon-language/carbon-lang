@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ScheduleDAGSDNodes.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"

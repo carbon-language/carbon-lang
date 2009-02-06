@@ -12,8 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "isel"
-#include "llvm/CodeGen/SelectionDAGISel.h"
+#include "ScheduleDAGSDNodes.h"
 #include "SelectionDAGBuild.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Constants.h"
 #include "llvm/CallingConv.h"
@@ -33,7 +34,6 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"

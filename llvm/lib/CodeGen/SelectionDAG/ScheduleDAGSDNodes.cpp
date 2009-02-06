@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
-#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
+#include "ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"

@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
-#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
+#include "ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

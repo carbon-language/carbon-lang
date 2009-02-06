@@ -1,4 +1,4 @@
-//===---- llvm/CodeGen/ScheduleDAGSDNodes.h - SDNode Scheduling -*- C++ -*-===//
+//===---- ScheduleDAGSDNodes.h - SDNode Scheduling --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_SCHEDULEDAGSDNODES_H
-#define LLVM_CODEGEN_SCHEDULEDAGSDNODES_H
+#ifndef SCHEDULEDAGSDNODES_H
+#define SCHEDULEDAGSDNODES_H
 
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SelectionDAG.h"
