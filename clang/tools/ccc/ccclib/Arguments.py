@@ -745,6 +745,7 @@ class OptionParser:
         # FIXME: Naming convention.
         self.dGroup = OptionGroup('-d')
         self.dAOption = self.addOption(FlagOption('-dA', self.dGroup))
+        self.dMOption = self.addOption(FlagOption('-dM', self.dGroup))
         self.dOption = self.addOption(FlagOption('-d', self.dGroup))
 
         # Use a group for this in anticipation of adding more -d

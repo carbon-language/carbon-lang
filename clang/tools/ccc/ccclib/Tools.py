@@ -321,6 +321,8 @@ class Clang_CompileTool(Tool):
 
         arglist.addAllArgs(cmd_args, arglist.parser.Clang_fGroup)
 
+        arglist.addLastArg(cmd_args, arglist.parser.dMOption)
+
         for arg in arglist.getArgs(arglist.parser.XclangOption):
             cmd_args.extend(arglist.getValues(arg))
 
