@@ -48,6 +48,10 @@ public:
   /// if the register is a single precision VFP register.
   static unsigned getRegisterNumbering(unsigned RegEnum, bool &isSPVFP);
 
+  /// getPointerRegClass - Return the register class to use to hold pointers.
+  /// This is used for addressing modes.
+  const TargetRegisterClass *getPointerRegClass() const;
+
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 

@@ -216,6 +216,13 @@ SPURegisterInfo::getNumArgRegs()
   return sizeof(SPU_ArgRegs) / sizeof(SPU_ArgRegs[0]);
 }
 
+/// getPointerRegClass - Return the register class to use to hold pointers.
+/// This is used for addressing modes.
+const TargetRegisterClass * SPURegisterInfo::getPointerRegClass() const
+{
+  return &SPU::R32CRegClass;
+}
+
 const unsigned *
 SPURegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const
 {

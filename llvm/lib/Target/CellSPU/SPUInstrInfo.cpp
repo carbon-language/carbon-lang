@@ -53,14 +53,6 @@ SPUInstrInfo::SPUInstrInfo(SPUTargetMachine &tm)
     RI(*TM.getSubtargetImpl(), *this)
 { /* NOP */ }
 
-/// getPointerRegClass - Return the register class to use to hold pointers.
-/// This is used for addressing modes.
-const TargetRegisterClass *
-SPUInstrInfo::getPointerRegClass() const
-{
-  return &SPU::R32CRegClass;
-}
-
 bool
 SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
                           unsigned& sourceReg,

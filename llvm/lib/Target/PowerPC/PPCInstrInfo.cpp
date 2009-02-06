@@ -30,16 +30,6 @@ PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
   : TargetInstrInfoImpl(PPCInsts, array_lengthof(PPCInsts)), TM(tm),
     RI(*TM.getSubtargetImpl(), *this) {}
 
-/// getPointerRegClass - Return the register class to use to hold pointers.
-/// This is used for addressing modes.
-const TargetRegisterClass *PPCInstrInfo::getPointerRegClass() const {
-  if (TM.getSubtargetImpl()->isPPC64())
-    return &PPC::G8RCRegClass;
-  else
-    return &PPC::GPRCRegClass;
-}
-
-
 bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
                                unsigned& sourceReg,
                                unsigned& destReg,

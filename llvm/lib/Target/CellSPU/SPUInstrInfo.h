@@ -45,10 +45,6 @@ namespace llvm {
     ///
     virtual const SPURegisterInfo &getRegisterInfo() const { return RI; }
 
-    /// getPointerRegClass - Return the register class to use to hold pointers.
-    /// This is used for addressing modes.
-    virtual const TargetRegisterClass *getPointerRegClass() const;
-
     /// Return true if the instruction is a register to register move and return
     /// the source and dest operands and their sub-register indices by reference.
     virtual bool isMoveInstr(const MachineInstr &MI,

@@ -137,6 +137,15 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
   ImmToIdxMap[PPC::ADDI8] = PPC::ADD8; ImmToIdxMap[PPC::STD_32] = PPC::STDX_32;
 }
 
+/// getPointerRegClass - Return the register class to use to hold pointers.
+/// This is used for addressing modes.
+const TargetRegisterClass *PPCRegisterInfo::getPointerRegClass() const {
+  if (Subtarget.isPPC64())
+    return &PPC::G8RCRegClass;
+  else
+    return &PPC::GPRCRegClass;
+}
+
 const unsigned*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   // 32-bit Darwin calling convention. 

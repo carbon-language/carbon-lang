@@ -32,14 +32,13 @@ using namespace llvm;
 /// instruction of the specified TargetInstrDesc.
 static const TargetRegisterClass*
 getInstrOperandRegClass(const TargetRegisterInfo *TRI, 
-                        const TargetInstrInfo *TII, const TargetInstrDesc &II,
-                        unsigned Op) {
+                        const TargetInstrDesc &II, unsigned Op) {
   if (Op >= II.getNumOperands()) {
     assert(II.isVariadic() && "Invalid operand # of instruction");
     return NULL;
   }
   if (II.OpInfo[Op].isLookupPtrRegClass())
-    return TII->getPointerRegClass();
+    return TRI->getPointerRegClass();
   return TRI->getRegClass(II.OpInfo[Op].RegClass);
 }
 
@@ -91,7 +90,7 @@ void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
           if (User->isMachineOpcode()) {
             const TargetInstrDesc &II = TII->get(User->getMachineOpcode());
             const TargetRegisterClass *RC =
-              getInstrOperandRegClass(TRI,TII,II,i+II.getNumDefs());
+              getInstrOperandRegClass(TRI, II, i+II.getNumDefs());
             if (!UseRC)
               UseRC = RC;
             else if (RC)
@@ -190,7 +189,7 @@ void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     // Create the result registers for this node and add the result regs to
     // the machine instruction.
     if (VRBase == 0) {
-      const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TII, II, i);
+      const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, II, i);
       assert(RC && "Isn't a register operand!");
       VRBase = MRI.createVirtualRegister(RC);
       MI->addOperand(MachineOperand::CreateReg(VRBase, true));
@@ -258,8 +257,7 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
       // There may be no register class for this operand if it is a variadic
       // argument (RC will be NULL in this case).  In this case, we just assume
       // the regclass is ok.
-      const TargetRegisterClass *RC =
-                          getInstrOperandRegClass(TRI, TII, *II, IIOpNum);
+      const TargetRegisterClass *RC= getInstrOperandRegClass(TRI, *II, IIOpNum);
       assert((RC || II->isVariadic()) && "Expected reg class info!");
       const TargetRegisterClass *VRC = MRI.getRegClass(VReg);
       if (RC && VRC != RC) {
@@ -327,7 +325,7 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
     // an FP vreg on x86.
     assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
     if (II && !II->isVariadic()) {
-      assert(getInstrOperandRegClass(TRI, TII, *II, IIOpNum) &&
+      assert(getInstrOperandRegClass(TRI, *II, IIOpNum) &&
              "Don't have operand info for this instruction!");
     }
   }  

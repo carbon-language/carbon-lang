@@ -151,6 +151,14 @@ unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
   }
 }
 
+const TargetRegisterClass *X86RegisterInfo::getPointerRegClass() const {
+  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
+  if (Subtarget->is64Bit())
+    return &X86::GR64RegClass;
+  else
+    return &X86::GR32RegClass;
+}
+
 const TargetRegisterClass *
 X86RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
   if (RC == &X86::CCRRegClass) {

@@ -2270,7 +2270,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   const TargetInstrDesc &TID = get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
   const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
-    ? getPointerRegClass() : RI.getRegClass(TOI.RegClass);
+    ? RI.getPointerRegClass() : RI.getRegClass(TOI.RegClass);
   SmallVector<MachineOperand,4> AddrOps;
   SmallVector<MachineOperand,2> BeforeOps;
   SmallVector<MachineOperand,2> AfterOps;
@@ -2345,7 +2345,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   if (UnfoldStore) {
     const TargetOperandInfo &DstTOI = TID.OpInfo[0];
     const TargetRegisterClass *DstRC = DstTOI.isLookupPtrRegClass()
-      ? getPointerRegClass() : RI.getRegClass(DstTOI.RegClass);
+      ? RI.getPointerRegClass() : RI.getRegClass(DstTOI.RegClass);
     storeRegToAddr(MF, Reg, true, AddrOps, DstRC, NewMIs);
   }
 
@@ -2369,7 +2369,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   const TargetInstrDesc &TID = get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
   const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
-    ? getPointerRegClass() : RI.getRegClass(TOI.RegClass);
+    ? RI.getPointerRegClass() : RI.getRegClass(TOI.RegClass);
   std::vector<SDValue> AddrOps;
   std::vector<SDValue> BeforeOps;
   std::vector<SDValue> AfterOps;
@@ -2406,7 +2406,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   if (TID.getNumDefs() > 0) {
     const TargetOperandInfo &DstTOI = TID.OpInfo[0];
     DstRC = DstTOI.isLookupPtrRegClass()
-      ? getPointerRegClass() : RI.getRegClass(DstTOI.RegClass);
+      ? RI.getPointerRegClass() : RI.getRegClass(DstTOI.RegClass);
     VTs.push_back(*DstRC->vt_begin());
   }
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
@@ -2488,14 +2488,6 @@ isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
   // allow any loads of these registers before FpGet_ST0_80.
   return !(RC == &X86::CCRRegClass || RC == &X86::RFP32RegClass ||
            RC == &X86::RFP64RegClass || RC == &X86::RFP80RegClass);
-}
-
-const TargetRegisterClass *X86InstrInfo::getPointerRegClass() const {
-  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  if (Subtarget->is64Bit())
-    return &X86::GR64RegClass;
-  else
-    return &X86::GR32RegClass;
 }
 
 unsigned X86InstrInfo::sizeOfImm(const TargetInstrDesc *Desc) {

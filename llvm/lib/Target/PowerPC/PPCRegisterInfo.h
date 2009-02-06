@@ -35,6 +35,10 @@ public:
   /// PPC::F14, return the number that it corresponds to (e.g. 14).
   static unsigned getRegisterNumbering(unsigned RegEnum);
 
+  /// getPointerRegClass - Return the register class to use to hold pointers.
+  /// This is used for addressing modes.
+  virtual const TargetRegisterClass *getPointerRegClass() const;  
+
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
 

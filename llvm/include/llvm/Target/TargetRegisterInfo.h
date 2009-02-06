@@ -422,11 +422,13 @@ public:
     return i ? RegClassBegin[i - 1] : NULL;
   }
 
-  //===--------------------------------------------------------------------===//
-  // Interfaces used by the register allocator and stack frame
-  // manipulation passes to move data around between registers,
-  // immediates and memory.  FIXME: Move these to TargetInstrInfo.h.
-  //
+  /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
+  /// values.
+  virtual const TargetRegisterClass *getPointerRegClass() const {
+    assert(0 && "Target didn't implement getPointerRegClass!");
+    abort();
+    return 0; // Must return a value in order to compile with VS 2005
+  }
 
   /// getCrossCopyRegClass - Returns a legal register class to copy a register
   /// in the specified class to or from. Returns NULL if it is possible to copy
@@ -478,7 +480,6 @@ public:
   ///
   int getCallFrameSetupOpcode() const { return CallFrameSetupOpcode; }
   int getCallFrameDestroyOpcode() const { return CallFrameDestroyOpcode; }
-
 
   /// eliminateCallFramePseudoInstr - This method is called during prolog/epilog
   /// code insertion to eliminate call frame setup and destroy pseudo

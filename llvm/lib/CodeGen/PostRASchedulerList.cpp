@@ -237,12 +237,11 @@ void SchedulePostRATDList::Schedule() {
 /// instruction of the specified TargetInstrDesc.
 static const TargetRegisterClass*
 getInstrOperandRegClass(const TargetRegisterInfo *TRI,
-                        const TargetInstrInfo *TII, const TargetInstrDesc &II,
-                        unsigned Op) {
+                         const TargetInstrDesc &II, unsigned Op) {
   if (Op >= II.getNumOperands())
     return NULL;
   if (II.OpInfo[Op].isLookupPtrRegClass())
-    return TII->getPointerRegClass();
+    return TRI->getPointerRegClass();
   return TRI->getRegClass(II.OpInfo[Op].RegClass);
 }
 
@@ -490,7 +489,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
       unsigned Reg = MO.getReg();
       if (Reg == 0) continue;
       const TargetRegisterClass *NewRC =
-        getInstrOperandRegClass(TRI, TII, MI->getDesc(), i);
+        getInstrOperandRegClass(TRI, MI->getDesc(), i);
 
       // If this instruction has a use of AntiDepReg, breaking it
       // is invalid.
@@ -625,7 +624,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
       if (!MO.isUse()) continue;
 
       const TargetRegisterClass *NewRC =
-        getInstrOperandRegClass(TRI, TII, MI->getDesc(), i);
+        getInstrOperandRegClass(TRI, MI->getDesc(), i);
 
       // For now, only allow the register to be changed if its register
       // class is consistent across all uses.

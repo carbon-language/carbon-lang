@@ -191,6 +191,10 @@ void ARMRegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
       .addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
 }
 
+const TargetRegisterClass *ARMRegisterInfo::getPointerRegClass() const {
+  return &ARM::GPRRegClass;
+}
+
 /// isLowRegister - Returns true if the register is low register r0-r7.
 ///
 bool ARMRegisterInfo::isLowRegister(unsigned Reg) const {

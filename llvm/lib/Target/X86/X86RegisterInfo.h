@@ -93,6 +93,10 @@ public:
   /// Code Generation virtual methods...
   /// 
 
+  /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
+  /// values.
+  const TargetRegisterClass *getPointerRegClass() const;
+
   /// getCrossCopyRegClass - Returns a legal register class to copy a register
   /// in the specified class to or from. Returns NULL if it is possible to copy
   /// between a two registers of the specified class.

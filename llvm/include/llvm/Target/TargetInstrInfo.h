@@ -433,14 +433,6 @@ public:
     return true;
   }
 
-  /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
-  /// values.
-  virtual const TargetRegisterClass *getPointerRegClass() const {
-    assert(0 && "Target didn't implement getPointerRegClass!");
-    abort();
-    return 0; // Must return a value in order to compile with VS 2005
-  }
-
   /// GetInstSize - Returns the size of the specified Instruction.
   /// 
   virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const {

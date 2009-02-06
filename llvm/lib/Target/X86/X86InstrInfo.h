@@ -410,8 +410,6 @@ public:
   /// instruction that defines the specified register class.
   bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
 
-  const TargetRegisterClass *getPointerRegClass() const;
-
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified machine instruction.
   //

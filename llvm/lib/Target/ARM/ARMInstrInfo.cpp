@@ -43,9 +43,6 @@ ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
     RI(*this, STI) {
 }
 
-const TargetRegisterClass *ARMInstrInfo::getPointerRegClass() const {
-  return &ARM::GPRRegClass;
-}
 
 /// Return true if the instruction is a register to register move and
 /// leave the source and dest operands in the passed parameters.
