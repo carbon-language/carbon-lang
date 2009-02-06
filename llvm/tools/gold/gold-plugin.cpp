@@ -180,13 +180,10 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                  file->name,
                  file->offset,           
                  strerror(errno));
-      free(buf);
       return LDPS_ERR;
     }
-    if (!lto_module_is_object_file_in_memory(buf, file->filesize)) {
-      free(buf);
+    if (!lto_module_is_object_file_in_memory(buf, file->filesize))
       return LDPS_OK;
-    }
   } else if (!lto_module_is_object_file(file->name))
     return LDPS_OK;
 
@@ -196,6 +193,7 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
 
   cf.M = buf ? lto_module_create_from_memory(buf, file->filesize) :
                lto_module_create(file->name);
+  free(buf);
   if (!cf.M) {
     (*message)(LDPL_ERROR, "Failed to create LLVM module: %s",
                lto_get_error_message());
@@ -229,7 +227,6 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         break;
       default:
         (*message)(LDPL_ERROR, "Unknown scope attribute: %d", scope);
-        free(buf);
         return LDPS_ERR;
     }
 
@@ -249,7 +246,6 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         break;
       default:
         (*message)(LDPL_ERROR, "Unknown definition attribute: %d", definition);
-        free(buf);
         return LDPS_ERR;
     }
 
@@ -265,7 +261,6 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   if (!cf.syms.empty()) {
     if ((*add_symbols)(cf.handle, cf.syms.size(), &cf.syms[0]) != LDPS_OK) {
       (*message)(LDPL_ERROR, "Unable to add symbols!");
-      free(buf);
       return LDPS_ERR;
     }
   }
