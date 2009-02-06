@@ -391,19 +391,20 @@ LowerANDOR(SDValue Op, SelectionDAG &DAG)
 {
   SDValue LHS   = Op.getOperand(0);
   SDValue RHS   = Op.getOperand(1);
-  
+  DebugLoc dl   = Op.getDebugLoc();
+
   if (LHS.getOpcode() != MipsISD::FPCmp || RHS.getOpcode() != MipsISD::FPCmp)
     return Op;
 
   SDValue True  = DAG.getConstant(1, MVT::i32);
   SDValue False = DAG.getConstant(0, MVT::i32);
 
-  SDValue LSEL = DAG.getNode(MipsISD::FPSelectCC, True.getValueType(), 
+  SDValue LSEL = DAG.getNode(MipsISD::FPSelectCC, dl, True.getValueType(), 
                              LHS, True, False, LHS.getOperand(2));
-  SDValue RSEL = DAG.getNode(MipsISD::FPSelectCC, True.getValueType(), 
+  SDValue RSEL = DAG.getNode(MipsISD::FPSelectCC, dl, True.getValueType(), 
                              RHS, True, False, RHS.getOperand(2));
 
-  return DAG.getNode(Op.getOpcode(), MVT::i32, LSEL, RSEL);
+  return DAG.getNode(Op.getOpcode(), dl, MVT::i32, LSEL, RSEL);
 }
 
 SDValue MipsTargetLowering::
@@ -413,6 +414,7 @@ LowerBRCOND(SDValue Op, SelectionDAG &DAG)
   // the block to branch to if the condition is true.
   SDValue Chain = Op.getOperand(0);
   SDValue Dest = Op.getOperand(2);
+  DebugLoc dl = Op.getDebugLoc();
 
   if (Op.getOperand(1).getOpcode() != MipsISD::FPCmp)
     return Op;
@@ -423,7 +425,7 @@ LowerBRCOND(SDValue Op, SelectionDAG &DAG)
     (Mips::CondCode)cast<ConstantSDNode>(CCNode)->getZExtValue();
   SDValue BrCode = DAG.getConstant(GetFPBranchCodeFromCond(CC), MVT::i32); 
 
-  return DAG.getNode(MipsISD::FPBrcond, Op.getValueType(), Chain, BrCode, 
+  return DAG.getNode(MipsISD::FPBrcond, dl, Op.getValueType(), Chain, BrCode, 
              Dest, CondRes);
 }
 
@@ -434,11 +436,12 @@ LowerSETCC(SDValue Op, SelectionDAG &DAG)
   // and #1) and the condition code to compare them with (op #2) as a 
   // CondCodeSDNode.
   SDValue LHS = Op.getOperand(0); 
-  SDValue RHS = Op.getOperand(1); 
+  SDValue RHS = Op.getOperand(1);
+  DebugLoc dl = Op.getDebugLoc();
 
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
   
-  return DAG.getNode(MipsISD::FPCmp, Op.getValueType(), LHS, RHS, 
+  return DAG.getNode(MipsISD::FPCmp, dl, Op.getValueType(), LHS, RHS, 
                  DAG.getConstant(FPCondCCodeToFCC(CC), MVT::i32));
 }
 
@@ -448,6 +451,7 @@ LowerSELECT(SDValue Op, SelectionDAG &DAG)
   SDValue Cond  = Op.getOperand(0); 
   SDValue True  = Op.getOperand(1);
   SDValue False = Op.getOperand(2);
+  DebugLoc dl = Op.getDebugLoc();
 
   // if the incomming condition comes from a integer compare, the select 
   // operation must be SelectCC or a conditional move if the subtarget 
@@ -455,20 +459,21 @@ LowerSELECT(SDValue Op, SelectionDAG &DAG)
   if (Cond.getOpcode() != MipsISD::FPCmp) {
     if (Subtarget->hasCondMov() && !True.getValueType().isFloatingPoint())
       return Op;
-    return DAG.getNode(MipsISD::SelectCC, True.getValueType(), 
+    return DAG.getNode(MipsISD::SelectCC, dl, True.getValueType(), 
                        Cond, True, False);
   }
 
   // if the incomming condition comes from fpcmp, the select
   // operation must use FPSelectCC.
   SDValue CCNode = Cond.getOperand(2);
-  return DAG.getNode(MipsISD::FPSelectCC, True.getValueType(), 
+  return DAG.getNode(MipsISD::FPSelectCC, dl, True.getValueType(), 
                      Cond, True, False, CCNode);
 }
 
 SDValue MipsTargetLowering::
 LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) 
 {
+  // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
@@ -478,7 +483,7 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
     SDValue Ops[] = { GA };
     // %gp_rel relocation
     if (!isa<Function>(GV) && IsGlobalInSmallSection(GV)) { 
-      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, VTs, 1, Ops, 1);
+      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, dl, VTs, 1, Ops, 1);
       SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
       return DAG.getNode(ISD::ADD, dl, MVT::i32, GOT, GPRelNode); 
     }
@@ -514,6 +519,7 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG)
 {
   SDValue ResNode;
   SDValue HiPart; 
+  // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
 
   MVT PtrVT = Op.getValueType();
@@ -540,6 +546,8 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
   Constant *C = N->getConstVal();
   SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment());
+  // FIXME there isn't actually debug info here
+  DebugLoc dl = Op.getDebugLoc();
 
   // gp_rel relocation
   // FIXME: we should reference the constant pool using small data sections, 
@@ -552,9 +560,9 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   //  SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
   //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
   //} else { // %hi/%lo relocation
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, MVT::i32, CP);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, CP);
-    ResNode = DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
+    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, MVT::i32, CP);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CP);
+    ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
   //}
 
   return ResNode;

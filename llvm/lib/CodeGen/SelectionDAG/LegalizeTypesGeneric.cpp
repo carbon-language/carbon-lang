@@ -154,7 +154,7 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   if (Idx.getValueType().bitsLT(TLI.getPointerTy()))
     Idx = DAG.getNode(ISD::ZERO_EXTEND, dl, TLI.getPointerTy(), Idx);
 
-  Idx = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, Idx);
+  Idx = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, Idx);
   Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NewVT, NewVec, Idx);
 
   Idx = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx,

@@ -1110,7 +1110,7 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
     Hi = DAG.getNode(ISD::SRA, dl, NVT, InH,
                      DAG.getConstant(NVTBits-1, ShTy));
   } else {
-    Lo = DAG.getNode(ISD::OR, NVT,
+    Lo = DAG.getNode(ISD::OR, dl, NVT,
                      DAG.getNode(ISD::SRL, dl, NVT, InL,
                                  DAG.getConstant(Amt, ShTy)),
                      DAG.getNode(ISD::SHL, dl, NVT, InH,
@@ -2205,7 +2205,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
                        DAG.getConstant(NVT.getSizeInBits() - ExcessBits,
                                        TLI.getPointerTy()));
       Hi = DAG.getNode(ISD::OR, dl, NVT, Hi,
-                       DAG.getNode(ISD::SRL, NVT, Lo,
+                       DAG.getNode(ISD::SRL, dl, NVT, Lo,
                                    DAG.getConstant(ExcessBits,
                                                    TLI.getPointerTy())));
     }

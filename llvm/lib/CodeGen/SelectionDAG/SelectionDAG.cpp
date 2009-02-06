@@ -2428,11 +2428,6 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode,
   return SDValue();
 }
 
-SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                              SDValue N1, SDValue N2) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VT, N1, N2);
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                               SDValue N1, SDValue N2) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
@@ -2793,11 +2788,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                              SDValue N1, SDValue N2, SDValue N3) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VT, N1, N2, N3);
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                               SDValue N1, SDValue N2, SDValue N3) {
   // Perform various simplifications.
@@ -2879,23 +2869,11 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                              SDValue N1, SDValue N2, SDValue N3,
-                              SDValue N4) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VT, N1, N2, N3, N4);
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                               SDValue N1, SDValue N2, SDValue N3,
                               SDValue N4) {
   SDValue Ops[] = { N1, N2, N3, N4 };
   return getNode(Opcode, DL, VT, Ops, 4);
-}
-
-SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                              SDValue N1, SDValue N2, SDValue N3,
-                              SDValue N4, SDValue N5) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VT, N1, N2, N3, N4, N5);
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,

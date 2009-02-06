@@ -1075,11 +1075,13 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
   Constant *C = CP->getConstVal();
   SDValue CPI = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment());
   SDValue Zero = DAG.getConstant(0, PtrVT);
+  // FIXME there isn't really any debug info here
+  DebugLoc dl = Op.getDebugLoc();
 
   const TargetMachine &TM = DAG.getTarget();
   
-  SDValue Hi = DAG.getNode(PPCISD::Hi, PtrVT, CPI, Zero);
-  SDValue Lo = DAG.getNode(PPCISD::Lo, PtrVT, CPI, Zero);
+  SDValue Hi = DAG.getNode(PPCISD::Hi, dl, PtrVT, CPI, Zero);
+  SDValue Lo = DAG.getNode(PPCISD::Lo, dl, PtrVT, CPI, Zero);
 
   // If this is a non-darwin platform, we don't support non-static relo models
   // yet.
@@ -1087,16 +1089,16 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
       !TM.getSubtarget<PPCSubtarget>().isDarwin()) {
     // Generate non-pic code that has direct accesses to the constant pool.
     // The address of the global is just (hi(&g)+lo(&g)).
-    return DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
+    return DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);
   }
   
   if (TM.getRelocationModel() == Reloc::PIC_) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
-    Hi = DAG.getNode(ISD::ADD, PtrVT,
+    Hi = DAG.getNode(ISD::ADD, dl, PtrVT,
                      DAG.getNode(PPCISD::GlobalBaseReg, PtrVT), Hi);
   }
   
-  Lo = DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
+  Lo = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);
   return Lo;
 }
 
@@ -1105,11 +1107,13 @@ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
   SDValue Zero = DAG.getConstant(0, PtrVT);
+  // FIXME there isn't really any debug loc here
+  DebugLoc dl = Op.getDebugLoc();
   
   const TargetMachine &TM = DAG.getTarget();
 
-  SDValue Hi = DAG.getNode(PPCISD::Hi, PtrVT, JTI, Zero);
-  SDValue Lo = DAG.getNode(PPCISD::Lo, PtrVT, JTI, Zero);
+  SDValue Hi = DAG.getNode(PPCISD::Hi, dl, PtrVT, JTI, Zero);
+  SDValue Lo = DAG.getNode(PPCISD::Lo, dl, PtrVT, JTI, Zero);
 
   // If this is a non-darwin platform, we don't support non-static relo models
   // yet.
@@ -1117,16 +1121,16 @@ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
       !TM.getSubtarget<PPCSubtarget>().isDarwin()) {
     // Generate non-pic code that has direct accesses to the constant pool.
     // The address of the global is just (hi(&g)+lo(&g)).
-    return DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
+    return DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);
   }
   
   if (TM.getRelocationModel() == Reloc::PIC_) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
-    Hi = DAG.getNode(ISD::ADD, PtrVT,
+    Hi = DAG.getNode(ISD::ADD, dl, PtrVT,
                      DAG.getNode(PPCISD::GlobalBaseReg, PtrVT), Hi);
   }
   
-  Lo = DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
+  Lo = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);
   return Lo;
 }
 
@@ -1143,6 +1147,7 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
   GlobalValue *GV = GSDN->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, PtrVT, GSDN->getOffset());
   SDValue Zero = DAG.getConstant(0, PtrVT);
+  // FIXME there isn't really any debug info here
   DebugLoc dl = GSDN->getDebugLoc();
   
   const TargetMachine &TM = DAG.getTarget();
@@ -2771,18 +2776,19 @@ SDValue PPCTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   // Get the inputs.
   SDValue Chain = Op.getOperand(0);
   SDValue Size  = Op.getOperand(1);
-  
+  DebugLoc dl = Op.getDebugLoc(); 
+ 
   // Get the corect type for pointers.
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   // Negate the size.
-  SDValue NegSize = DAG.getNode(ISD::SUB, PtrVT,
+  SDValue NegSize = DAG.getNode(ISD::SUB, dl, PtrVT,
                                   DAG.getConstant(0, PtrVT), Size);
   // Construct a node for the frame pointer save index.
   SDValue FPSIdx = getFramePointerFrameIndex(DAG);
   // Build a DYNALLOC node.
   SDValue Ops[3] = { Chain, NegSize, FPSIdx };
   SDVTList VTs = DAG.getVTList(PtrVT, MVT::Other);
-  return DAG.getNode(PPCISD::DYNALLOC, VTs, Ops, 3);
+  return DAG.getNode(PPCISD::DYNALLOC, dl, VTs, Ops, 3);
 }
 
 /// LowerSELECT_CC - Lower floating point select_cc's into fsel instruction when
@@ -2802,6 +2808,7 @@ SDValue PPCTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   MVT CmpVT = Op.getOperand(0).getValueType();
   SDValue LHS = Op.getOperand(0), RHS = Op.getOperand(1);
   SDValue TV  = Op.getOperand(2), FV  = Op.getOperand(3);
+  DebugLoc dl = Op.getDebugLoc();
   
   // If the RHS of the comparison is a 0.0, we don't need to do the
   // subtraction at all.
@@ -2814,17 +2821,17 @@ SDValue PPCTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
     case ISD::SETOGE:
     case ISD::SETGE:
       if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
-        LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
-      return DAG.getNode(PPCISD::FSEL, ResVT, LHS, TV, FV);
+        LHS = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, LHS);
+      return DAG.getNode(PPCISD::FSEL, dl, ResVT, LHS, TV, FV);
     case ISD::SETUGT:
     case ISD::SETGT:
       std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
     case ISD::SETOLE:
     case ISD::SETLE:
       if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
-        LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
-      return DAG.getNode(PPCISD::FSEL, ResVT,
-                         DAG.getNode(ISD::FNEG, MVT::f64, LHS), TV, FV);
+        LHS = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, LHS);
+      return DAG.getNode(PPCISD::FSEL, dl, ResVT,
+                         DAG.getNode(ISD::FNEG, dl, MVT::f64, LHS), TV, FV);
     }
       
   SDValue Cmp;
@@ -2832,28 +2839,28 @@ SDValue PPCTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   default: break;       // SETUO etc aren't handled by fsel.
   case ISD::SETULT:
   case ISD::SETLT:
-    Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
+    Cmp = DAG.getNode(ISD::FSUB, dl, CmpVT, LHS, RHS);
     if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
-      Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
-      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
+      Cmp = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, dl, ResVT, Cmp, FV, TV);
   case ISD::SETOGE:
   case ISD::SETGE:
-    Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
+    Cmp = DAG.getNode(ISD::FSUB, dl, CmpVT, LHS, RHS);
     if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
-      Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
-      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, TV, FV);
+      Cmp = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, dl, ResVT, Cmp, TV, FV);
   case ISD::SETUGT:
   case ISD::SETGT:
-    Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
+    Cmp = DAG.getNode(ISD::FSUB, dl, CmpVT, RHS, LHS);
     if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
-      Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
-      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
+      Cmp = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, dl, ResVT, Cmp, FV, TV);
   case ISD::SETOLE:
   case ISD::SETLE:
-    Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
+    Cmp = DAG.getNode(ISD::FSUB, dl, CmpVT, RHS, LHS);
     if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
-      Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
-      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, TV, FV);
+      Cmp = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, dl, ResVT, Cmp, TV, FV);
   }
   return SDValue();
 }

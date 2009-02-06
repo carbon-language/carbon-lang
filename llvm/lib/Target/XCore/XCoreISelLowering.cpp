@@ -194,9 +194,10 @@ void XCoreTargetLowering::ReplaceNodeResults(SDNode *N,
 SDValue XCoreTargetLowering::
 LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
 {
-  SDValue Cond = DAG.getNode(ISD::SETCC, MVT::i32, Op.getOperand(2),
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue Cond = DAG.getNode(ISD::SETCC, dl, MVT::i32, Op.getOperand(2),
                              Op.getOperand(3), Op.getOperand(4));
-  return DAG.getNode(ISD::SELECT, MVT::i32, Cond, Op.getOperand(0),
+  return DAG.getNode(ISD::SELECT, dl, MVT::i32, Cond, Op.getOperand(0),
                      Op.getOperand(1));
 }
 
@@ -244,6 +245,8 @@ static inline bool isZeroLengthArray(const Type *Ty) {
 SDValue XCoreTargetLowering::
 LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
 {
+  // FIXME there isn't really debug info here
+  DebugLoc dl = Op.getDebugLoc();
   // transform to label + getid() * size
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
@@ -266,15 +269,17 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
   SDValue base = getGlobalAddressWrapper(GA, GV, DAG);
   const TargetData *TD = TM.getTargetData();
   unsigned Size = TD->getTypePaddedSize(Ty);
-  SDValue offset = DAG.getNode(ISD::MUL, MVT::i32, BuildGetId(DAG),
+  SDValue offset = DAG.getNode(ISD::MUL, dl, MVT::i32, BuildGetId(DAG),
                        DAG.getConstant(Size, MVT::i32));
-  return DAG.getNode(ISD::ADD, MVT::i32, base, offset);
+  return DAG.getNode(ISD::ADD, dl, MVT::i32, base, offset);
 }
 
 SDValue XCoreTargetLowering::
 LowerConstantPool(SDValue Op, SelectionDAG &DAG)
 {
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+  // FIXME there isn't really debug info here
+  DebugLoc dl = CP->getDebugLoc();
   if (Subtarget.isXS1A()) {
     assert(0 && "Lowering of constant pool unimplemented");
     return SDValue();
@@ -288,17 +293,19 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
       Res = DAG.getTargetConstantPool(CP->getConstVal(), PtrVT,
                                       CP->getAlignment());
     }
-    return DAG.getNode(XCoreISD::CPRelativeWrapper, MVT::i32, Res);
+    return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, Res);
   }
 }
 
 SDValue XCoreTargetLowering::
 LowerJumpTable(SDValue Op, SelectionDAG &DAG)
 {
+  // FIXME there isn't really debug info here
+  DebugLoc dl = Op.getDebugLoc();
   MVT PtrVT = Op.getValueType();
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
-  return DAG.getNode(XCoreISD::DPRelativeWrapper, MVT::i32, JTI);
+  return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, JTI);
 }
 
 SDValue XCoreTargetLowering::

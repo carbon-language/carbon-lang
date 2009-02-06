@@ -659,18 +659,19 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
     abort();
   case 1: {
     SDValue LR = DAG.getRegister(ARM::LR, MVT::i32);
-    return DAG.getNode(ARMISD::RET_FLAG, MVT::Other, Chain);
+    return DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other, Chain);
   }
   case 3:
     Op = Op.getOperand(1);
     if (Op.getValueType() == MVT::f32) {
-      Op = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
+      Op = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
     } else if (Op.getValueType() == MVT::f64) {
       // Legalize ret f64 -> ret 2 x i32.  We always have fmrrd if f64 is
       // available.
-      Op = DAG.getNode(ARMISD::FMRRD, DAG.getVTList(MVT::i32, MVT::i32), &Op,1);
+      Op = DAG.getNode(ARMISD::FMRRD, dl, 
+                       DAG.getVTList(MVT::i32, MVT::i32), &Op,1);
       SDValue Sign = DAG.getConstant(0, MVT::i32);
-      return DAG.getNode(ISD::RET, MVT::Other, Chain, Op, Sign, 
+      return DAG.getNode(ISD::RET, dl, MVT::Other, Chain, Op, Sign, 
                          Op.getValue(1), Sign);
     }
     Copy = DAG.getCopyToReg(Chain, dl, ARM::R0, Op, SDValue());
@@ -707,7 +708,7 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
   }
 
   //We must use RET_FLAG instead of BRIND because BRIND doesn't have a flag
-  return DAG.getNode(ARMISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
+  return DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other, Copy, Copy.getValue(1));
 }
 
 // ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as 
@@ -1073,7 +1074,8 @@ static bool isLegalCmpImmediate(unsigned C, bool isThumb) {
 /// Returns appropriate ARM CMP (cmp) and corresponding condition code for
 /// the given operands.
 static SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
-                           SDValue &ARMCC, SelectionDAG &DAG, bool isThumb) {
+                         SDValue &ARMCC, SelectionDAG &DAG, bool isThumb,
+                         DebugLoc dl) {
   if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS.getNode())) {
     unsigned C = RHSC->getZExtValue();
     if (!isLegalCmpImmediate(C, isThumb)) {
@@ -1127,17 +1129,18 @@ static SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
     break;
   }
   ARMCC = DAG.getConstant(CondCode, MVT::i32);
-  return DAG.getNode(CompareType, MVT::Flag, LHS, RHS);
+  return DAG.getNode(CompareType, dl, MVT::Flag, LHS, RHS);
 }
 
 /// Returns a appropriate VFP CMP (fcmp{s|d}+fmstat) for the given operands.
-static SDValue getVFPCmp(SDValue LHS, SDValue RHS, SelectionDAG &DAG) {
+static SDValue getVFPCmp(SDValue LHS, SDValue RHS, SelectionDAG &DAG, 
+                         DebugLoc dl) {
   SDValue Cmp;
   if (!isFloatingPointZero(RHS))
-    Cmp = DAG.getNode(ARMISD::CMPFP, MVT::Flag, LHS, RHS);
+    Cmp = DAG.getNode(ARMISD::CMPFP, dl, MVT::Flag, LHS, RHS);
   else
-    Cmp = DAG.getNode(ARMISD::CMPFPw0, MVT::Flag, LHS);
-  return DAG.getNode(ARMISD::FMSTAT, MVT::Flag, Cmp);
+    Cmp = DAG.getNode(ARMISD::CMPFPw0, dl, MVT::Flag, LHS);
+  return DAG.getNode(ARMISD::FMSTAT, dl, MVT::Flag, Cmp);
 }
 
 static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
@@ -1148,12 +1151,13 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
   SDValue TrueVal = Op.getOperand(2);
   SDValue FalseVal = Op.getOperand(3);
+  DebugLoc dl = Op.getDebugLoc();
 
   if (LHS.getValueType() == MVT::i32) {
     SDValue ARMCC;
     SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb());
-    return DAG.getNode(ARMISD::CMOV, VT, FalseVal, TrueVal, ARMCC, CCR, Cmp);
+    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb(), dl);
+    return DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal, ARMCC, CCR,Cmp);
   }
 
   ARMCC::CondCodes CondCode, CondCode2;
@@ -1162,14 +1166,15 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
 
   SDValue ARMCC = DAG.getConstant(CondCode, MVT::i32);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-  SDValue Cmp = getVFPCmp(LHS, RHS, DAG);
-  SDValue Result = DAG.getNode(ARMISD::CMOV, VT, FalseVal, TrueVal,
+  SDValue Cmp = getVFPCmp(LHS, RHS, DAG, dl);
+  SDValue Result = DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal,
                                  ARMCC, CCR, Cmp);
   if (CondCode2 != ARMCC::AL) {
     SDValue ARMCC2 = DAG.getConstant(CondCode2, MVT::i32);
     // FIXME: Needs another CMP because flag can have but one use.
-    SDValue Cmp2 = getVFPCmp(LHS, RHS, DAG);
-    Result = DAG.getNode(ARMISD::CMOV, VT, Result, TrueVal, ARMCC2, CCR, Cmp2);
+    SDValue Cmp2 = getVFPCmp(LHS, RHS, DAG, dl);
+    Result = DAG.getNode(ARMISD::CMOV, dl, VT, 
+                         Result, TrueVal, ARMCC2, CCR, Cmp2);
   }
   return Result;
 }
@@ -1181,12 +1186,14 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG,
   SDValue    LHS = Op.getOperand(2);
   SDValue    RHS = Op.getOperand(3);
   SDValue   Dest = Op.getOperand(4);
+  DebugLoc dl = Op.getDebugLoc();
 
   if (LHS.getValueType() == MVT::i32) {
     SDValue ARMCC;
     SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb());
-    return DAG.getNode(ARMISD::BRCOND, MVT::Other, Chain, Dest, ARMCC, CCR,Cmp);
+    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb(), dl);
+    return DAG.getNode(ARMISD::BRCOND, dl, MVT::Other, 
+                       Chain, Dest, ARMCC, CCR,Cmp);
   }
 
   assert(LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64);
@@ -1195,16 +1202,16 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG,
     // Swap the LHS/RHS of the comparison if needed.
     std::swap(LHS, RHS);
   
-  SDValue Cmp = getVFPCmp(LHS, RHS, DAG);
+  SDValue Cmp = getVFPCmp(LHS, RHS, DAG, dl);
   SDValue ARMCC = DAG.getConstant(CondCode, MVT::i32);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
   SDVTList VTList = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Ops[] = { Chain, Dest, ARMCC, CCR, Cmp };
-  SDValue Res = DAG.getNode(ARMISD::BRCOND, VTList, Ops, 5);
+  SDValue Res = DAG.getNode(ARMISD::BRCOND, dl, VTList, Ops, 5);
   if (CondCode2 != ARMCC::AL) {
     ARMCC = DAG.getConstant(CondCode2, MVT::i32);
     SDValue Ops[] = { Res, Dest, ARMCC, CCR, Res.getValue(1) };
-    Res = DAG.getNode(ARMISD::BRCOND, VTList, Ops, 5);
+    Res = DAG.getNode(ARMISD::BRCOND, dl, VTList, Ops, 5);
   }
   return Res;
 }
@@ -1220,7 +1227,7 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) {
   ARMFunctionInfo *AFI = DAG.getMachineFunction().getInfo<ARMFunctionInfo>();
   SDValue UId =  DAG.getConstant(AFI->createJumpTableUId(), PTy);
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PTy);
-  Table = DAG.getNode(ARMISD::WrapperJT, MVT::i32, JTI, UId);
+  Table = DAG.getNode(ARMISD::WrapperJT, dl, MVT::i32, JTI, UId);
   Index = DAG.getNode(ISD::MUL, dl, PTy, Index, DAG.getConstant(4, PTy));
   SDValue Addr = DAG.getNode(ISD::ADD, dl, PTy, Index, Table);
   bool isPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
@@ -1233,32 +1240,35 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   unsigned Opc =
     Op.getOpcode() == ISD::FP_TO_SINT ? ARMISD::FTOSI : ARMISD::FTOUI;
-  Op = DAG.getNode(Opc, MVT::f32, Op.getOperand(0));
-  return DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
+  Op = DAG.getNode(Opc, dl, MVT::f32, Op.getOperand(0));
+  return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
 }
 
 static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
   unsigned Opc =
     Op.getOpcode() == ISD::SINT_TO_FP ? ARMISD::SITOF : ARMISD::UITOF;
 
-  Op = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Op.getOperand(0));
-  return DAG.getNode(Opc, VT, Op);
+  Op = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, Op.getOperand(0));
+  return DAG.getNode(Opc, dl, VT, Op);
 }
 
 static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   // Implement fcopysign with a fabs and a conditional fneg.
   SDValue Tmp0 = Op.getOperand(0);
   SDValue Tmp1 = Op.getOperand(1);
+  DebugLoc dl = Op.getDebugLoc();
   MVT VT = Op.getValueType();
   MVT SrcVT = Tmp1.getValueType();
-  SDValue AbsVal = DAG.getNode(ISD::FABS, VT, Tmp0);
-  SDValue Cmp = getVFPCmp(Tmp1, DAG.getConstantFP(0.0, SrcVT), DAG);
+  SDValue AbsVal = DAG.getNode(ISD::FABS, dl, VT, Tmp0);
+  SDValue Cmp = getVFPCmp(Tmp1, DAG.getConstantFP(0.0, SrcVT), DAG, dl);
   SDValue ARMCC = DAG.getConstant(ARMCC::LT, MVT::i32);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-  return DAG.getNode(ARMISD::CNEG, VT, AbsVal, AbsVal, ARMCC, CCR, Cmp);
+  return DAG.getNode(ARMISD::CNEG, dl, VT, AbsVal, AbsVal, ARMCC, CCR, Cmp);
 }
 
 SDValue
@@ -1371,21 +1381,22 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
 
 static SDValue ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
   SDValue Op = N->getOperand(0);
+  DebugLoc dl = N->getDebugLoc();
   if (N->getValueType(0) == MVT::f64) {
     // Turn i64->f64 into FMDRR.
-    SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
+    SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Op,
                              DAG.getConstant(0, MVT::i32));
-    SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
+    SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Op,
                              DAG.getConstant(1, MVT::i32));
-    return DAG.getNode(ARMISD::FMDRR, MVT::f64, Lo, Hi);
+    return DAG.getNode(ARMISD::FMDRR, dl, MVT::f64, Lo, Hi);
   }
   
   // Turn f64->i64 into FMRRD.
-  SDValue Cvt = DAG.getNode(ARMISD::FMRRD, DAG.getVTList(MVT::i32, MVT::i32),
-                            &Op, 1);
+  SDValue Cvt = DAG.getNode(ARMISD::FMRRD, dl, 
+                            DAG.getVTList(MVT::i32, MVT::i32), &Op, 1);
   
   // Merge the pieces into a single i64 value.
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Cvt, Cvt.getValue(1));
+  return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Cvt, Cvt.getValue(1));
 }
 
 static SDValue ExpandSRx(SDNode *N, SelectionDAG &DAG, const ARMSubtarget *ST) {
@@ -1402,21 +1413,22 @@ static SDValue ExpandSRx(SDNode *N, SelectionDAG &DAG, const ARMSubtarget *ST) {
   if (ST->isThumb()) return SDValue();
   
   // Okay, we have a 64-bit SRA or SRL of 1.  Lower this to an RRX expr.
-  SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(0),
+  DebugLoc dl = N->getDebugLoc();
+  SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(0),
                              DAG.getConstant(0, MVT::i32));
-  SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(0),
+  SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(0),
                              DAG.getConstant(1, MVT::i32));
   
   // First, build a SRA_FLAG/SRL_FLAG op, which shifts the top part by one and
   // captures the result into a carry flag.
   unsigned Opc = N->getOpcode() == ISD::SRL ? ARMISD::SRL_FLAG:ARMISD::SRA_FLAG;
-  Hi = DAG.getNode(Opc, DAG.getVTList(MVT::i32, MVT::Flag), &Hi, 1);
+  Hi = DAG.getNode(Opc, dl, DAG.getVTList(MVT::i32, MVT::Flag), &Hi, 1);
   
   // The low part is an ARMISD::RRX operand, which shifts the carry in.
-  Lo = DAG.getNode(ARMISD::RRX, MVT::i32, Lo, Hi.getValue(1));
+  Lo = DAG.getNode(ARMISD::RRX, dl, MVT::i32, Lo, Hi.getValue(1));
   
   // Merge the pieces into a single i64 value.
- return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
+ return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
 }
 
 

@@ -4511,6 +4511,8 @@ X86TargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
 SDValue
 X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+  // FIXME there isn't really any debug info here, should come from the parent
+  DebugLoc dl = CP->getDebugLoc();
   SDValue Result = DAG.getTargetConstantPool(CP->getConstVal(),
                                                getPointerTy(),
                                                CP->getAlignment());
@@ -4518,7 +4520,7 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   // With PIC, the address is actually $g + Offset.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       !Subtarget->isPICStyleRIPRel()) {
-    Result = DAG.getNode(ISD::ADD, getPointerTy(),
+    Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                          Result);
   }
@@ -4693,13 +4695,15 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
+  // FIXME there isn't really any debug info here
+  DebugLoc dl = Op.getDebugLoc();
   const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
   SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy());
   Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
   // With PIC, the address is actually $g + Offset.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       !Subtarget->isPICStyleRIPRel()) {
-    Result = DAG.getNode(ISD::ADD, getPointerTy(),
+    Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                          Result);
   }
@@ -4709,12 +4713,14 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
 
 SDValue X86TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
+  // FIXME there isn't really any debug into here
+  DebugLoc dl = JT->getDebugLoc();
   SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy());
   Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
   // With PIC, the address is actually $g + Offset.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       !Subtarget->isPICStyleRIPRel()) {
-    Result = DAG.getNode(ISD::ADD, getPointerTy(),
+    Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                          Result);
   }

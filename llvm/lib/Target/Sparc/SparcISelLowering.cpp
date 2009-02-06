@@ -736,19 +736,23 @@ static void LookThroughSetCC(SDValue &LHS, SDValue &RHS,
 
 static SDValue LowerGLOBALADDRESS(SDValue Op, SelectionDAG &DAG) {
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  // FIXME there isn't really any debug info here
+  DebugLoc dl = Op.getDebugLoc();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
-  SDValue Hi = DAG.getNode(SPISD::Hi, MVT::i32, GA);
-  SDValue Lo = DAG.getNode(SPISD::Lo, MVT::i32, GA);
-  return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);
+  SDValue Hi = DAG.getNode(SPISD::Hi, dl, MVT::i32, GA);
+  SDValue Lo = DAG.getNode(SPISD::Lo, dl, MVT::i32, GA);
+  return DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
 }
 
 static SDValue LowerCONSTANTPOOL(SDValue Op, SelectionDAG &DAG) {
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
+  // FIXME there isn't really any debug info here
+  DebugLoc dl = Op.getDebugLoc();
   Constant *C = N->getConstVal();
   SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment());
-  SDValue Hi = DAG.getNode(SPISD::Hi, MVT::i32, CP);
-  SDValue Lo = DAG.getNode(SPISD::Lo, MVT::i32, CP);
-  return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);
+  SDValue Hi = DAG.getNode(SPISD::Hi, dl, MVT::i32, CP);
+  SDValue Lo = DAG.getNode(SPISD::Lo, dl, MVT::i32, CP);
+  return DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
 }
 
 static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {

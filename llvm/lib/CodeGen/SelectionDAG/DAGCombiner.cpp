@@ -4075,7 +4075,8 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
   if (UnsafeFPMath && N1CFP && N0.getOpcode() == ISD::FMUL &&
       N0.getNode()->hasOneUse() && isa<ConstantFPSDNode>(N0.getOperand(1)))
     return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT, N0.getOperand(0),
-                       DAG.getNode(ISD::FMUL, VT, N0.getOperand(1), N1));
+                       DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT, 
+                                   N0.getOperand(1), N1));
   
   return SDValue();
 }

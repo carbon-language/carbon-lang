@@ -305,14 +305,16 @@ SDValue PIC16TargetLowering::ExpandFrameIndex(SDNode *N, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   const Function *Func = MF.getFunction();
   const std::string Name = Func->getName();
-
+  
   FrameIndexSDNode *FR = dyn_cast<FrameIndexSDNode>(SDValue(N,0));
+  // FIXME there isn't really debug info here
+  DebugLoc dl = FR->getDebugLoc();
   int Index = FR->getIndex();
 
   SDValue FI[2];
   FI[0] = DAG.getTargetFrameIndex(Index, MVT::i8);
   FI[1] = DAG.getTargetFrameIndex(Index + 1, MVT::i8);
-  return DAG.getNode(ISD::BUILD_PAIR, N->getValueType(0), FI[0], FI[1]);
+  return DAG.getNode(ISD::BUILD_PAIR, dl, N->getValueType(0), FI[0], FI[1]);
 }
 
 
@@ -323,12 +325,13 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
   SDValue Ptr = St->getBasePtr();
   MVT ValueType = Src.getValueType();
   unsigned StoreOffset = 0;
+  DebugLoc dl = N->getDebugLoc();
 
   SDValue PtrLo, PtrHi;
   LegalizeAddress(Ptr, DAG, PtrLo, PtrHi, StoreOffset);
  
   if (ValueType == MVT::i8) {
-    return DAG.getNode (PIC16ISD::PIC16Store, MVT::Other, Chain, Src,
+    return DAG.getNode (PIC16ISD::PIC16Store, dl, MVT::Other, Chain, Src,
                         PtrLo, PtrHi, 
                         DAG.getConstant (0 + StoreOffset, MVT::i8));
   }
@@ -341,16 +344,16 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
       ChainLo = Chain.getOperand(0);
       ChainHi = Chain.getOperand(1);
     }
-    SDValue Store1 = DAG.getNode(PIC16ISD::PIC16Store, MVT::Other,
+    SDValue Store1 = DAG.getNode(PIC16ISD::PIC16Store, dl, MVT::Other,
                                  ChainLo,
                                  SrcLo, PtrLo, PtrHi,
                                  DAG.getConstant (0 + StoreOffset, MVT::i8));
 
-    SDValue Store2 = DAG.getNode(PIC16ISD::PIC16Store, MVT::Other, ChainHi, 
+    SDValue Store2 = DAG.getNode(PIC16ISD::PIC16Store, dl, MVT::Other, ChainHi, 
                                  SrcHi, PtrLo, PtrHi,
                                  DAG.getConstant (1 + StoreOffset, MVT::i8));
 
-    return DAG.getNode(ISD::TokenFactor, MVT::Other, getChain(Store1),
+    return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, getChain(Store1),
                        getChain(Store2));
   }
   else if (ValueType == MVT::i32) {
@@ -378,28 +381,28 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
       ChainHi1 = ChainHi.getOperand(0);
       ChainHi2 = ChainHi.getOperand(1);
     }
-    SDValue Store1 = DAG.getNode(PIC16ISD::PIC16Store, MVT::Other,
+    SDValue Store1 = DAG.getNode(PIC16ISD::PIC16Store, dl, MVT::Other,
                                  ChainLo1,
                                  SrcLo1, PtrLo, PtrHi,
                                  DAG.getConstant (0 + StoreOffset, MVT::i8));
 
-    SDValue Store2 = DAG.getNode(PIC16ISD::PIC16Store, MVT::Other, ChainLo2,
+    SDValue Store2 = DAG.getNode(PIC16ISD::PIC16Store, dl, MVT::Other, ChainLo2,
                                  SrcLo2, PtrLo, PtrHi,
                                  DAG.getConstant (1 + StoreOffset, MVT::i8));
 
-    SDValue Store3 = DAG.getNode(PIC16ISD::PIC16Store, MVT::Other, ChainHi1,
+    SDValue Store3 = DAG.getNode(PIC16ISD::PIC16Store, dl, MVT::Other, ChainHi1,
                                  SrcHi1, PtrLo, PtrHi,
                                  DAG.getConstant (2 + StoreOffset, MVT::i8));
 
-    SDValue Store4 = DAG.getNode(PIC16ISD::PIC16Store, MVT::Other, ChainHi2,
+    SDValue Store4 = DAG.getNode(PIC16ISD::PIC16Store, dl, MVT::Other, ChainHi2,
                                  SrcHi2, PtrLo, PtrHi,
                                  DAG.getConstant (3 + StoreOffset, MVT::i8));
 
-    SDValue RetLo =  DAG.getNode(ISD::TokenFactor, MVT::Other, getChain(Store1),
-                                 getChain(Store2));
-    SDValue RetHi =  DAG.getNode(ISD::TokenFactor, MVT::Other, getChain(Store3),
-                                getChain(Store4));
-    return  DAG.getNode(ISD::TokenFactor, MVT::Other, RetLo, RetHi);
+    SDValue RetLo =  DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
+                                 getChain(Store1), getChain(Store2));
+    SDValue RetHi =  DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
+                                 getChain(Store3), getChain(Store4));
+    return  DAG.getNode(ISD::TokenFactor, dl, MVT::Other, RetLo, RetHi);
 
   }
   else {
@@ -411,26 +414,30 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
 SDValue PIC16TargetLowering::ExpandExternalSymbol(SDNode *N, SelectionDAG &DAG)
 {
   ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(SDValue(N, 0));
+  // FIXME there isn't really debug info here
+  DebugLoc dl = ES->getDebugLoc();
 
   SDValue TES = DAG.getTargetExternalSymbol(ES->getSymbol(), MVT::i8);
 
-  SDValue Lo = DAG.getNode(PIC16ISD::Lo, MVT::i8, TES);
-  SDValue Hi = DAG.getNode(PIC16ISD::Hi, MVT::i8, TES);
+  SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, TES);
+  SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, TES);
 
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i16, Lo, Hi);
+  return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i16, Lo, Hi);
 }
 
 // ExpandGlobalAddress - 
 SDValue PIC16TargetLowering::ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG) {
   GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(SDValue(N, 0));
+  // FIXME there isn't really debug info here
+  DebugLoc dl = G->getDebugLoc();
   
   SDValue TGA = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i8,
                                            G->getOffset());
 
-  SDValue Lo = DAG.getNode(PIC16ISD::Lo, MVT::i8, TGA);
-  SDValue Hi = DAG.getNode(PIC16ISD::Hi, MVT::i8, TGA);
+  SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, TGA);
+  SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, TGA);
 
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i16, Lo, Hi);
+  return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i16, Lo, Hi);
 }
 
 bool PIC16TargetLowering::isDirectAddress(const SDValue &Op) {

@@ -186,10 +186,12 @@ static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
   SDValue Zero = DAG.getConstant(0, PtrVT);
+  // FIXME there isn't really any debug info here
+  DebugLoc dl = Op.getDebugLoc();
   
-  SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, JTI,
+  SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, JTI,
                              DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
-  SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, JTI, Hi);
+  SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, JTI, Hi);
   return Lo;
 }
 
@@ -482,7 +484,8 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     switch (IntNo) {
     default: break;    // Don't custom lower most intrinsics.
     case Intrinsic::alpha_umulh:
-      return DAG.getNode(ISD::MULHU, MVT::i64, Op.getOperand(1), Op.getOperand(2));
+      return DAG.getNode(ISD::MULHU, dl, MVT::i64, 
+                         Op.getOperand(1), Op.getOperand(2));
     }
   }
 
@@ -491,8 +494,8 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
            "Unhandled SINT_TO_FP type in custom expander!");
     SDValue LD;
     bool isDouble = Op.getValueType() == MVT::f64;
-    LD = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
-    SDValue FP = DAG.getNode(isDouble?AlphaISD::CVTQT_:AlphaISD::CVTQS_,
+    LD = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, Op.getOperand(0));
+    SDValue FP = DAG.getNode(isDouble?AlphaISD::CVTQT_:AlphaISD::CVTQS_, dl,
                                isDouble?MVT::f64:MVT::f32, LD);
     return FP;
   }
@@ -501,20 +504,21 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     SDValue src = Op.getOperand(0);
 
     if (!isDouble) //Promote
-      src = DAG.getNode(ISD::FP_EXTEND, MVT::f64, src);
+      src = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, src);
     
-    src = DAG.getNode(AlphaISD::CVTTQ_, MVT::f64, src);
+    src = DAG.getNode(AlphaISD::CVTTQ_, dl, MVT::f64, src);
 
-    return DAG.getNode(ISD::BIT_CONVERT, MVT::i64, src);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i64, src);
   }
   case ISD::ConstantPool: {
     ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
     Constant *C = CP->getConstVal();
     SDValue CPI = DAG.getTargetConstantPool(C, MVT::i64, CP->getAlignment());
+    // FIXME there isn't really any debug info here
     
-    SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, CPI,
+    SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, CPI,
                                DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
-    SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, CPI, Hi);
+    SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, CPI, Hi);
     return Lo;
   }
   case ISD::GlobalTLSAddress:
@@ -523,19 +527,20 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
     GlobalValue *GV = GSDN->getGlobal();
     SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i64, GSDN->getOffset());
+    // FIXME there isn't really any debug info here
 
     //    if (!GV->hasWeakLinkage() && !GV->isDeclaration() && !GV->hasLinkOnceLinkage()) {
     if (GV->hasLocalLinkage()) {
-      SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, GA,
+      SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, GA,
                                 DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
-      SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, GA, Hi);
+      SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, GA, Hi);
       return Lo;
     } else
-      return DAG.getNode(AlphaISD::RelLit, MVT::i64, GA, 
+      return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64, GA, 
                          DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   }
   case ISD::ExternalSymbol: {
-    return DAG.getNode(AlphaISD::RelLit, MVT::i64, 
+    return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64, 
                        DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)
                                                    ->getSymbol(), MVT::i64),
                        DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
@@ -549,8 +554,8 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       SDValue Tmp1 = Op.getNode()->getOpcode() == ISD::UREM ?
         BuildUDIV(Op.getNode(), DAG, NULL) :
         BuildSDIV(Op.getNode(), DAG, NULL);
-      Tmp1 = DAG.getNode(ISD::MUL, VT, Tmp1, Op.getOperand(1));
-      Tmp1 = DAG.getNode(ISD::SUB, VT, Op.getOperand(0), Tmp1);
+      Tmp1 = DAG.getNode(ISD::MUL, dl, VT, Tmp1, Op.getOperand(1));
+      Tmp1 = DAG.getNode(ISD::SUB, dl, VT, Op.getOperand(0), Tmp1);
       return Tmp1;
     }
     //fall through
@@ -570,7 +575,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       SDValue Tmp1 = Op.getOperand(0),
         Tmp2 = Op.getOperand(1),
         Addr = DAG.getExternalSymbol(opstr, MVT::i64);
-      return DAG.getNode(AlphaISD::DivCall, MVT::i64, Addr, Tmp1, Tmp2);
+      return DAG.getNode(AlphaISD::DivCall, dl, MVT::i64, Addr, Tmp1, Tmp2);
     }
     break;
 

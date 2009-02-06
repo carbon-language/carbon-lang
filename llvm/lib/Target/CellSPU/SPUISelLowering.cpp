@@ -534,7 +534,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
         // Simplify the base pointer for this case:
         basePtr = basePtr.getOperand(0);
         if ((offset & ~0xf) > 0) {
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT,
+          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                                 basePtr,
                                 DAG.getConstant((offset & ~0xf), PtrVT));
         }
@@ -573,16 +573,16 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
           // Convert the (add <ptr>, <const>) to an indirect address contained
           // in a register. Note that this is done because we need to avoid
           // creating a 0(reg) d-form address due to the SPU's block loads.
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT, Op0, Op1);
+          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
           the_chain = DAG.getCopyToReg(the_chain, dl, VReg, basePtr, Flag);
           basePtr = DAG.getCopyFromReg(the_chain, dl, VReg, PtrVT);
         } else {
           // Convert the (add <arg1>, <arg2>) to an indirect address, which
           // will likely be lowered as a reg(reg) x-form address.
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT, Op0, Op1);
+          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
         }
       } else {
-        basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT,
+        basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                               basePtr,
                               DAG.getConstant(0, PtrVT));
       }
@@ -690,18 +690,18 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
         // Simplify the base pointer for this case:
         basePtr = basePtr.getOperand(0);
-        insertEltOffs = DAG.getNode(SPUISD::IndirectAddr, PtrVT,
+        insertEltOffs = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                                     basePtr,
                                     DAG.getConstant((offset & 0xf), PtrVT));
 
         if ((offset & ~0xf) > 0) {
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT,
+          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                                 basePtr,
                                 DAG.getConstant((offset & ~0xf), PtrVT));
         }
       } else {
         // Otherwise, assume it's at byte 0 of basePtr
-        insertEltOffs = DAG.getNode(SPUISD::IndirectAddr, PtrVT,
+        insertEltOffs = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                                     basePtr,
                                     DAG.getConstant(0, PtrVT));
       }
@@ -720,16 +720,16 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
           // Convert the (add <ptr>, <const>) to an indirect address contained
           // in a register. Note that this is done because we need to avoid
           // creating a 0(reg) d-form address due to the SPU's block loads.
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT, Op0, Op1);
+          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
           the_chain = DAG.getCopyToReg(the_chain, dl, VReg, basePtr, Flag);
           basePtr = DAG.getCopyFromReg(the_chain, dl, VReg, PtrVT);
         } else {
           // Convert the (add <arg1>, <arg2>) to an indirect address, which
           // will likely be lowered as a reg(reg) x-form address.
-          basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT, Op0, Op1);
+          basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Op0, Op1);
         }
       } else {
-        basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT,
+        basePtr = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                               basePtr,
                               DAG.getConstant(0, PtrVT));
       }
@@ -825,15 +825,17 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   SDValue CPI = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment());
   SDValue Zero = DAG.getConstant(0, PtrVT);
   const TargetMachine &TM = DAG.getTarget();
+  // FIXME there is no actual debug info here
+  DebugLoc dl = Op.getDebugLoc();
 
   if (TM.getRelocationModel() == Reloc::Static) {
     if (!ST->usingLargeMem()) {
       // Just return the SDValue with the constant pool address in it.
-      return DAG.getNode(SPUISD::AFormAddr, PtrVT, CPI, Zero);
+      return DAG.getNode(SPUISD::AFormAddr, dl, PtrVT, CPI, Zero);
     } else {
-      SDValue Hi = DAG.getNode(SPUISD::Hi, PtrVT, CPI, Zero);
-      SDValue Lo = DAG.getNode(SPUISD::Lo, PtrVT, CPI, Zero);
-      return DAG.getNode(SPUISD::IndirectAddr, PtrVT, Hi, Lo);
+      SDValue Hi = DAG.getNode(SPUISD::Hi, dl, PtrVT, CPI, Zero);
+      SDValue Lo = DAG.getNode(SPUISD::Lo, dl, PtrVT, CPI, Zero);
+      return DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Hi, Lo);
     }
   }
 
@@ -856,14 +858,16 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
   SDValue Zero = DAG.getConstant(0, PtrVT);
   const TargetMachine &TM = DAG.getTarget();
+  // FIXME there is no actual debug info here
+  DebugLoc dl = Op.getDebugLoc();
 
   if (TM.getRelocationModel() == Reloc::Static) {
     if (!ST->usingLargeMem()) {
-      return DAG.getNode(SPUISD::AFormAddr, PtrVT, JTI, Zero);
+      return DAG.getNode(SPUISD::AFormAddr, dl, PtrVT, JTI, Zero);
     } else {
-      SDValue Hi = DAG.getNode(SPUISD::Hi, PtrVT, JTI, Zero);
-      SDValue Lo = DAG.getNode(SPUISD::Lo, PtrVT, JTI, Zero);
-      return DAG.getNode(SPUISD::IndirectAddr, PtrVT, Hi, Lo);
+      SDValue Hi = DAG.getNode(SPUISD::Hi, dl, PtrVT, JTI, Zero);
+      SDValue Lo = DAG.getNode(SPUISD::Lo, dl, PtrVT, JTI, Zero);
+      return DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Hi, Lo);
     }
   }
 
@@ -880,14 +884,16 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   SDValue GA = DAG.getTargetGlobalAddress(GV, PtrVT, GSDN->getOffset());
   const TargetMachine &TM = DAG.getTarget();
   SDValue Zero = DAG.getConstant(0, PtrVT);
+  // FIXME there is no actual debug info here
+  DebugLoc dl = Op.getDebugLoc();
 
   if (TM.getRelocationModel() == Reloc::Static) {
     if (!ST->usingLargeMem()) {
-      return DAG.getNode(SPUISD::AFormAddr, PtrVT, GA, Zero);
+      return DAG.getNode(SPUISD::AFormAddr, dl, PtrVT, GA, Zero);
     } else {
-      SDValue Hi = DAG.getNode(SPUISD::Hi, PtrVT, GA, Zero);
-      SDValue Lo = DAG.getNode(SPUISD::Lo, PtrVT, GA, Zero);
-      return DAG.getNode(SPUISD::IndirectAddr, PtrVT, Hi, Lo);
+      SDValue Hi = DAG.getNode(SPUISD::Hi, dl, PtrVT, GA, Zero);
+      SDValue Lo = DAG.getNode(SPUISD::Lo, dl, PtrVT, GA, Zero);
+      return DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Hi, Lo);
     }
   } else {
     cerr << "LowerGlobalAddress: Relocation model other than static not "
@@ -903,6 +909,8 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 static SDValue
 LowerConstantFP(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
+  // FIXME there is no actual debug info here
+  DebugLoc dl = Op.getDebugLoc();
 
   if (VT == MVT::f64) {
     ConstantFPSDNode *FP = cast<ConstantFPSDNode>(Op.getNode());
@@ -912,8 +920,8 @@ LowerConstantFP(SDValue Op, SelectionDAG &DAG) {
 
     uint64_t dbits = DoubleToBits(FP->getValueAPF().convertToDouble());
     SDValue T = DAG.getConstant(dbits, MVT::i64);
-    SDValue Tvec = DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, T, T);
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
+    SDValue Tvec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i64, T, T);
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, dl, VT,
                        DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, Tvec));
   }
 
@@ -1175,14 +1183,14 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       // This may be an unsafe assumption for JIT and really large compilation
       // units.
       if (GV->isDeclaration()) {
-        Callee = DAG.getNode(SPUISD::AFormAddr, CalleeVT, GA, Zero);
+        Callee = DAG.getNode(SPUISD::AFormAddr, dl, CalleeVT, GA, Zero);
       } else {
-        Callee = DAG.getNode(SPUISD::PCRelAddr, CalleeVT, GA, Zero);
+        Callee = DAG.getNode(SPUISD::PCRelAddr, dl, CalleeVT, GA, Zero);
       }
     } else {
       // "Large memory" mode: Turn all calls into indirect calls with a X-form
       // address pairs:
-      Callee = DAG.getNode(SPUISD::IndirectAddr, PtrVT, GA, Zero);
+      Callee = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, GA, Zero);
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     MVT CalleeVT = Callee.getValueType();
@@ -1191,9 +1199,9 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
         Callee.getValueType());
 
     if (!ST->usingLargeMem()) {
-      Callee = DAG.getNode(SPUISD::AFormAddr, CalleeVT, ExtSym, Zero);
+      Callee = DAG.getNode(SPUISD::AFormAddr, dl, CalleeVT, ExtSym, Zero);
     } else {
-      Callee = DAG.getNode(SPUISD::IndirectAddr, PtrVT, ExtSym, Zero);
+      Callee = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, ExtSym, Zero);
     }
   } else if (SDNode *Dest = isLSAAddress(Callee, DAG)) {
     // If this is an absolute destination address that appears to be a legal
@@ -2619,6 +2627,7 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
   SDValue trueval = Op.getOperand(2);
   SDValue falseval = Op.getOperand(3);
   SDValue condition = Op.getOperand(4);
+  DebugLoc dl = Op.getDebugLoc();
 
   // NOTE: SELB's arguments: $rA, $rB, $mask
   //
@@ -2631,10 +2640,10 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
   // legalizer insists on combining SETCC/SELECT into SELECT_CC, so we end up
   // with another "cannot select select_cc" assert:
 
-  SDValue compare = DAG.getNode(ISD::SETCC,
+  SDValue compare = DAG.getNode(ISD::SETCC, dl,
                                 TLI.getSetCCResultType(Op.getValueType()),
                                 lhs, rhs, condition);
-  return DAG.getNode(SPUISD::SELB, VT, falseval, trueval, compare);
+  return DAG.getNode(SPUISD::SELB, dl, VT, falseval, trueval, compare);
 }
 
 //! Custom lower ISD::TRUNCATE
@@ -2643,6 +2652,7 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
   MVT VT = Op.getValueType();
   MVT::SimpleValueType simpleVT = VT.getSimpleVT();
   MVT VecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
+  DebugLoc dl = Op.getDebugLoc();
 
   SDValue Op0 = Op.getOperand(0);
   MVT Op0VT = Op0.getValueType();
@@ -2653,19 +2663,20 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
     unsigned maskHigh = 0x08090a0b;
     unsigned maskLow = 0x0c0d0e0f;
     // Use a shuffle to perform the truncation
-    SDValue shufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+    SDValue shufMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
                                    DAG.getConstant(maskHigh, MVT::i32),
                                    DAG.getConstant(maskLow, MVT::i32),
                                    DAG.getConstant(maskHigh, MVT::i32),
                                    DAG.getConstant(maskLow, MVT::i32));
 
 
-    SDValue PromoteScalar = DAG.getNode(SPUISD::PREFSLOT2VEC, Op0VecVT, Op0);
+    SDValue PromoteScalar = DAG.getNode(SPUISD::PREFSLOT2VEC, dl, 
+                                        Op0VecVT, Op0);
 
-    SDValue truncShuffle = DAG.getNode(SPUISD::SHUFB, Op0VecVT,
+    SDValue truncShuffle = DAG.getNode(SPUISD::SHUFB, dl, Op0VecVT,
                                        PromoteScalar, PromoteScalar, shufMask);
 
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, VT,
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, dl, VT,
                        DAG.getNode(ISD::BIT_CONVERT, VecVT, truncShuffle));
   }
 
@@ -2812,6 +2823,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   MVT NodeVT = N->getValueType(0);      // The node's value type
   MVT Op0VT = Op0.getValueType();       // The first operand's result
   SDValue Result;                       // Initially, empty result
+  DebugLoc dl = N->getDebugLoc();
 
   switch (N->getOpcode()) {
   default: break;
@@ -2862,7 +2874,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
           }
 #endif
 
-          return DAG.getNode(SPUISD::IndirectAddr, Op0VT,
+          return DAG.getNode(SPUISD::IndirectAddr, dl, Op0VT,
                              IndirectArg, combinedValue);
         }
       }
@@ -2920,7 +2932,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
           }
 #endif
 
-          return DAG.getNode(SPUISD::IndirectAddr, Op0VT,
+          return DAG.getNode(SPUISD::IndirectAddr, dl, Op0VT,
                              Op0.getOperand(0), Op0.getOperand(1));
         }
       }

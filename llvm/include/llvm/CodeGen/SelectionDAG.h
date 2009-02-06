@@ -404,19 +404,11 @@ public:
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT);
   SDValue getNode(unsigned Opcode, MVT VT, SDValue N);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT, SDValue N);
-  SDValue getNode(unsigned Opcode, MVT VT, SDValue N1, SDValue N2);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT, SDValue N1, SDValue N2);
-  SDValue getNode(unsigned Opcode, MVT VT,
-                  SDValue N1, SDValue N2, SDValue N3);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                   SDValue N1, SDValue N2, SDValue N3);
-  SDValue getNode(unsigned Opcode, MVT VT,
-                  SDValue N1, SDValue N2, SDValue N3, SDValue N4);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                   SDValue N1, SDValue N2, SDValue N3, SDValue N4);
-  SDValue getNode(unsigned Opcode, MVT VT,
-                  SDValue N1, SDValue N2, SDValue N3, SDValue N4,
-                  SDValue N5);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                   SDValue N1, SDValue N2, SDValue N3, SDValue N4,
                   SDValue N5);
