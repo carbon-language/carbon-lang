@@ -22,19 +22,25 @@ using namespace clang;
 // TemplateParameterList Implementation
 //===----------------------------------------------------------------------===//
 
-TemplateParameterList::TemplateParameterList(Decl **Params, unsigned NumParams)
-  : NumParams(NumParams) {
+TemplateParameterList::TemplateParameterList(SourceLocation TemplateLoc,
+                                             SourceLocation LAngleLoc,
+                                             Decl **Params, unsigned NumParams,
+                                             SourceLocation RAngleLoc)
+  : TemplateLoc(TemplateLoc), LAngleLoc(LAngleLoc), RAngleLoc(RAngleLoc),
+    NumParams(NumParams) {
   for (unsigned Idx = 0; Idx < NumParams; ++Idx)
     begin()[Idx] = Params[Idx];
 }
 
 TemplateParameterList *
-TemplateParameterList::Create(ASTContext &C, Decl **Params,
-                              unsigned NumParams) {
+TemplateParameterList::Create(ASTContext &C, SourceLocation TemplateLoc,
+                              SourceLocation LAngleLoc, Decl **Params,
+                              unsigned NumParams, SourceLocation RAngleLoc) {
   unsigned Size = sizeof(TemplateParameterList) + sizeof(Decl *) * NumParams;
   unsigned Align = llvm::AlignOf<TemplateParameterList>::Alignment;
   void *Mem = C.Allocate(Size, Align);
-  return new (Mem) TemplateParameterList(Params, NumParams);
+  return new (Mem) TemplateParameterList(TemplateLoc, LAngleLoc, Params, 
+                                         NumParams, RAngleLoc);
 }
 
 //===----------------------------------------------------------------------===//

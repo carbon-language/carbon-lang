@@ -27,15 +27,27 @@ class TemplateTemplateParmDecl;
 /// TemplateParameterList - Stores a list of template parameters for a
 /// TemplateDecl and its derived classes.
 class TemplateParameterList {
-  /// NumParams - The number of template parameters in this template
+  /// The location of the 'template' keyword.
+  SourceLocation TemplateLoc;
+
+  /// The locations of the '<' and '>' angle brackets.
+  SourceLocation LAngleLoc, RAngleLoc;
+
+  /// The number of template parameters in this template
   /// parameter list.
   unsigned NumParams;
 
-  TemplateParameterList(Decl **Params, unsigned NumParams);
+  TemplateParameterList(SourceLocation TemplateLoc, SourceLocation LAngleLoc,
+                        Decl **Params, unsigned NumParams,
+                        SourceLocation RAngleLoc);
 
 public:
-  static TemplateParameterList *Create(ASTContext &C, Decl **Params,
-                                       unsigned NumParams);
+  static TemplateParameterList *Create(ASTContext &C, 
+                                       SourceLocation TemplateLoc,
+                                       SourceLocation LAngleLoc,
+                                       Decl **Params,
+                                       unsigned NumParams,
+                                       SourceLocation RAngleLoc);
 
   /// iterator - Iterates through the template parameters in this list.
   typedef Decl** iterator;
@@ -51,6 +63,10 @@ public:
   const_iterator end() const { return begin() + NumParams; }
 
   unsigned size() const { return NumParams; }
+
+  SourceLocation getTemplateLoc() const { return TemplateLoc; }
+  SourceLocation getLAngleLoc() const { return LAngleLoc; }
+  SourceLocation getRAngleLoc() const { return RAngleLoc; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -86,7 +102,7 @@ public:
   ~TemplateDecl();
 
   /// Get the list of template parameters
-  TemplateParameterList *GetTemplateParameters() const {
+  TemplateParameterList *getTemplateParameters() const {
     return TemplateParams;
   }
 

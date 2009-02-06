@@ -231,6 +231,13 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
   return false;
 }
 
+bool DeclSpec::SetTypeSpecError() {
+  TypeSpecType = TST_error;
+  TypeRep = 0;
+  TSTLoc = SourceLocation();
+  return false;
+}
+
 bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                            const LangOptions &Lang) {
   // Duplicates turn into warnings pre-C99.

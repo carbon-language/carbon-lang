@@ -1,4 +1,4 @@
-// RUN: clang -parse-noop -verify %s
+// RUN: clang -fsyntax-only -verify %s
 class C;
 class C {
 public:

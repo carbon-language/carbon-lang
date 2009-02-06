@@ -61,6 +61,7 @@ namespace clang {
   class ExtVectorType;
   class TypedefDecl;
   class TemplateDecl;
+  class TemplateParameterList;
   class ObjCInterfaceDecl;
   class ObjCCompatibleAliasDecl;
   class ObjCProtocolDecl;
@@ -335,8 +336,7 @@ public:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,
                            IdentifierInfo *Name, SourceLocation NameLoc,
-                           AttributeList *Attr,
-                           MultiTemplateParamsArg TemplateParameterLists);
+                           AttributeList *Attr);
   
   virtual void ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
@@ -1505,6 +1505,20 @@ public:
                              DeclTy **Params, unsigned NumParams,
                              SourceLocation RAngleLoc);
   
+  virtual DeclTy *
+  ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
+                     SourceLocation KWLoc, const CXXScopeSpec &SS,
+                     IdentifierInfo *Name, SourceLocation NameLoc,
+                     AttributeList *Attr,
+                     MultiTemplateParamsArg TemplateParameterLists);
+
+  bool TemplateParameterListsAreEqual(TemplateParameterList *New,
+                                      TemplateParameterList *Old,
+                                      bool Complain,
+                                      bool IsTemplateTemplateParm = false);
+  
+  bool CheckTemplateDeclScope(Scope *S, 
+                              MultiTemplateParamsArg &TemplateParameterLists);
 
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,

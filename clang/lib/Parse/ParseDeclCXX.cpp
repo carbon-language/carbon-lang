@@ -345,14 +345,17 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
     return;
   }
 
-  // Create the tag portion of the class, possibly resulting in a template.
-  DeclTy *TagOrTempDecl
-    = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
-                       NameLoc, Attr,
-                       Action::MultiTemplateParamsArg(
-                         Actions,
-                         TemplateParams? &(*TemplateParams)[0] : 0,
-                         TemplateParams? TemplateParams->size() : 0));
+  // Create the tag portion of the class or class template.
+  DeclTy *TagOrTempDecl;
+  if (TemplateParams && TK != Action::TK_Reference)
+    TagOrTempDecl = Actions.ActOnClassTemplate(CurScope, TagType, TK, StartLoc,
+                                               SS, Name, NameLoc, Attr,
+                       Action::MultiTemplateParamsArg(Actions, 
+                                                      &(*TemplateParams)[0],
+                                                      TemplateParams->size()));
+  else
+    TagOrTempDecl = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
+                                     NameLoc, Attr);
 
   // Parse the optional base clause (C++ only).
   if (getLang().CPlusPlus && Tok.is(tok::colon)) {
@@ -372,7 +375,9 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
   }
 
   const char *PrevSpec = 0;
-  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagOrTempDecl))
+  if (!TagOrTempDecl)
+    DS.SetTypeSpecError();
+  else if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagOrTempDecl))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
 
@@ -731,7 +736,12 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   // Enter a scope for the class.
   ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope);
 
-  Actions.ActOnTagStartDefinition(CurScope, TagDecl);
+  if (TagDecl)
+    Actions.ActOnTagStartDefinition(CurScope, TagDecl);
+  else {
+    SkipUntil(tok::r_brace, false, false);
+    return;
+  }
 
   // C++ 11p3: Members of a class defined with the keyword class are private
   // by default. Members of a class defined with the keywords struct or union

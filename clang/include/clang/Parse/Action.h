@@ -335,8 +335,7 @@ public:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,
                            IdentifierInfo *Name, SourceLocation NameLoc,
-                           AttributeList *Attr,
-                           MultiTemplateParamsArg TemplateParameterLists) {
+                           AttributeList *Attr) {
     // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
     // is (struct/union/enum/class).
     return 0;
@@ -1109,6 +1108,17 @@ public:
                              SourceLocation LAngleLoc,
                              DeclTy **Params, unsigned NumParams,
                              SourceLocation RAngleLoc) {
+    return 0;
+  }
+
+  // \brief Process the declaration or definition of a class template
+  // with the given template parameter lists.
+  virtual DeclTy *
+  ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
+                     SourceLocation KWLoc, const CXXScopeSpec &SS,
+                     IdentifierInfo *Name, SourceLocation NameLoc,
+                     AttributeList *Attr,
+                     MultiTemplateParamsArg TemplateParameterLists) {
     return 0;
   }
 

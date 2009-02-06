@@ -80,7 +80,8 @@ public:
     TST_class,        // C++ class type
     TST_typedef,
     TST_typeofType,
-    TST_typeofExpr
+    TST_typeofExpr,
+    TST_error         // erroneous type
   };
   
   // type-qualifiers
@@ -260,7 +261,8 @@ public:
   bool SetTypeSpecSign(TSS S, SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
                        Action::TypeTy *TypeRep = 0);
-  
+  bool SetTypeSpecError();
+
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                    const LangOptions &Lang);
   
@@ -761,7 +763,8 @@ private:
   
 public:
   Declarator(const DeclSpec &ds, TheContext C)
-    : DS(ds), Identifier(0), Context(C), Kind(DK_Abstract), InvalidType(false),
+    : DS(ds), Identifier(0), Context(C), Kind(DK_Abstract), 
+      InvalidType(DS.getTypeSpecType() == DeclSpec::TST_error),
       GroupingParens(false), AttrList(0), AsmLabel(0), Type(0),
       InlineParamsUsed(false) {
   }

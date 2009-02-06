@@ -1213,8 +1213,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   else
     TK = Action::TK_Reference;
   DeclTy *TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TK, StartLoc,
-                                     SS, Name, NameLoc, Attr, 
-                                     Action::MultiTemplateParamsArg(Actions));
+                                     SS, Name, NameLoc, Attr);
   
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);

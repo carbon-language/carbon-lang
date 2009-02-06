@@ -707,7 +707,8 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
       return Tag;
   }
 
-  if (!DS.isMissingDeclaratorOk()) {
+  if (!DS.isMissingDeclaratorOk() && 
+      DS.getTypeSpecType() != DeclSpec::TST_error) {
     // Warn about typedefs of enums without names, since this is an
     // extension in both Microsoft an GNU.
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef &&
@@ -717,10 +718,6 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
       return Tag;
     }
 
-    // FIXME: This diagnostic is emitted even when various previous
-    // errors occurred (see e.g. test/Sema/decl-invalid.c). However,
-    // DeclSpec has no means of communicating this information, and the
-    // responsible parser functions are quite far apart.
     Diag(DS.getSourceRange().getBegin(), diag::err_no_declarators)
       << DS.getSourceRange();
     return 0;
@@ -2798,22 +2795,13 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
 /// former case, Name will be non-null.  In the later case, Name will be null.
 /// TagSpec indicates what kind of tag this is. TK indicates whether this is a
 /// reference/declaration/definition of a tag.
-///
-/// This creates and returns template declarations if any template parameter
-/// lists are given.
 Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
-                             AttributeList *Attr,
-                             MultiTemplateParamsArg TemplateParameterLists) {
+                             AttributeList *Attr) {
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TK == TK_Definition) &&
          "Nameless record must be a definition!");
-  assert((TemplateParameterLists.size() == 0 || TK != TK_Reference) &&
-         "Can't have a reference to a template");
-  assert((TemplateParameterLists.size() == 0 || 
-          TagSpec != DeclSpec::TST_enum) &&
-         "No such thing as an enum template");
 
   TagDecl::TagKind Kind;
   switch (TagSpec) {
@@ -2827,7 +2815,6 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   DeclContext *SearchDC = CurContext;
   DeclContext *DC = CurContext;
   NamedDecl *PrevDecl = 0;
-  TemplateDecl *PrevTemplate = 0;
 
   bool Invalid = false;
 
@@ -2892,11 +2879,6 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   }
 
   if (PrevDecl) {    
-    // If we found a template, keep track of the template and its
-    // underlying declaration.
-    if ((PrevTemplate = dyn_cast_or_null<ClassTemplateDecl>(PrevDecl)))
-      PrevDecl = PrevTemplate->getTemplatedDecl();
-
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
@@ -2911,7 +2893,6 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
           Name = 0;
           PrevDecl = 0;
           Invalid = true;
-          // FIXME: Add template/non-template redecl check
         } else {
           // If this is a use, just return the declaration we found.
 
@@ -3025,7 +3006,6 @@ CreateNewDecl:
   // declaration of the same entity, the two will be linked via
   // PrevDecl.
   TagDecl *New;
-  ClassTemplateDecl *NewTemplate = 0;
 
   if (Kind == TagDecl::TK_enum) {
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
@@ -3039,28 +3019,11 @@ CreateNewDecl:
 
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
-    if (getLangOptions().CPlusPlus) {
+    if (getLangOptions().CPlusPlus)
       // FIXME: Look for a way to use RecordDecl for simple structs.
       New = CXXRecordDecl::Create(Context, Kind, SearchDC, Loc, Name,
                                   cast_or_null<CXXRecordDecl>(PrevDecl));
-
-      // If there's are template parameters, then this must be a class
-      // template. Create the template decl node also.
-      // FIXME: Do we always create template decls? We may not for forward
-      // declarations.
-      // FIXME: What are we actually going to do with the template decl?
-      if (TemplateParameterLists.size() > 0) {
-        // FIXME: The allocation of the parameters is probably incorrect.
-        // FIXME: Does the TemplateDecl have the same name as the class?
-        TemplateParameterList *Params =
-          TemplateParameterList::Create(Context,
-                                        (Decl **)TemplateParameterLists.get(),
-                                        TemplateParameterLists.size());
-        NewTemplate = ClassTemplateDecl::Create(Context, DC, Loc,
-                                                DeclarationName(Name), Params,
-                                                New);
-      }
-    } else
+    else
       New = RecordDecl::Create(Context, Kind, SearchDC, Loc, Name,
                                cast_or_null<RecordDecl>(PrevDecl));
   }

@@ -247,9 +247,9 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   // Handle the template <...> part.
   SourceLocation TemplateLoc = ConsumeToken();
   TemplateParameterList TemplateParams; 
-  SourceLocation LParenLoc, RParenLoc;
-  if(!ParseTemplateParameters(Depth + 1, TemplateParams, LParenLoc,
-                              RParenLoc)) {
+  SourceLocation LAngleLoc, RAngleLoc;
+  if(!ParseTemplateParameters(Depth + 1, TemplateParams, LAngleLoc,
+                              RAngleLoc)) {
     return 0;
   }
 
@@ -288,8 +288,15 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     }
   }
 
+  TemplateParamsTy *ParamList = 
+    Actions.ActOnTemplateParameterList(Depth, SourceLocation(),
+                                       TemplateLoc, LAngleLoc,
+                                       &TemplateParams[0], 
+                                       TemplateParams.size(),
+                                       RAngleLoc);
+
   return Actions.ActOnTemplateTemplateParameter(CurScope, TemplateLoc,
-                                                &TemplateParams, ParamName,
+                                                ParamList, ParamName,
                                                 NameLoc, Depth, Position);
 }
 
