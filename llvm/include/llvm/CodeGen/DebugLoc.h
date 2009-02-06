@@ -49,8 +49,8 @@ namespace llvm {
     /// MachineInstr.
     bool isUnknown() const { return Idx == 0; }
 
-    bool operator==(const DebugLoc &DL) { return Idx == DL.Idx; }
-    bool operator!=(const DebugLoc &DL) { return !(*this == DL); }
+    bool operator==(const DebugLoc &DL) const { return Idx == DL.Idx; }
+    bool operator!=(const DebugLoc &DL) const { return !(*this == DL); }
   };
 
   // Partially specialize DenseMapInfo for DebugLocTyple.
