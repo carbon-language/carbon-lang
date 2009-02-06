@@ -1,4 +1,4 @@
-/*===---- limits.h - Standard header for alternate spellings of operators---===
+/*===---- limits.h - Standard header for integer sizes --------------------===*\
  *
  * Copyright (c) 2009 Chris Lattner
  *
@@ -20,8 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- *===-----------------------------------------------------------------------===
- */
+ *===----------------------------------------------------------------------===*/
 
 #ifndef __LIMITS_H
 #define __LIMITS_H
