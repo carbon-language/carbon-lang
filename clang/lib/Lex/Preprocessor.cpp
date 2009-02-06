@@ -525,9 +525,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   assert(TI.getCharWidth() == 8 && "Only support 8-bit char so far");
   DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
 
-  DefineBuiltinMacro(Buf, "__WCHAR_TYPE__=int");
-  DefineBuiltinMacro(Buf, "__WINT_TYPE__=int");
-  
   unsigned IntMaxWidth;
   const char *IntMaxSuffix;
   if (TI.getIntMaxType() == TargetInfo::SignedLongLong) {
@@ -554,7 +551,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineType("__UINTMAX_TYPE__", TI.getUIntMaxType(), Buf);
   DefineType("__PTRDIFF_TYPE__", TI.getPtrDiffType(0), Buf);
   DefineType("__SIZE_TYPE__", TI.getSizeType(), Buf);
-    
+  DefineType("__WCHAR_TYPE__", TI.getWCharType(), Buf);
+  // FIXME: TargetInfo hookize __WINT_TYPE__.
+  DefineBuiltinMacro(Buf, "__WINT_TYPE__=int");
+  
   DefineFloatMacros(Buf, "FLT", &TI.getFloatFormat());
   DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());
   DefineFloatMacros(Buf, "LDBL", &TI.getLongDoubleFormat());
