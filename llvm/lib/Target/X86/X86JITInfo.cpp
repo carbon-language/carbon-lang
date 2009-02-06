@@ -59,6 +59,16 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 #define ASMCALLSUFFIX
 #endif
 
+// For ELF targets, use a .size and .type directive, to let tools
+// know the extent of functions defined in assembler.
+#if defined(__ELF__)
+# define SIZE(sym) ".size " #sym ", . - " #sym "\n"
+# define TYPE_FUNCTION(sym) ".type " #sym ", @function\n"
+#else
+# define SIZE(sym)
+# define TYPE_FUNCTION(sym)
+#endif
+
 // Provide a convenient way for disabling usage of CFI directives.
 // This is needed for old/broken assemblers (for example, gas on
 // Darwin is pretty old and doesn't support these directives)
@@ -82,6 +92,7 @@ extern "C" {
     ".text\n"
     ".align 8\n"
     ".globl " ASMPREFIX "X86CompilationCallback\n"
+    TYPE_FUNCTION(X86CompilationCallback)
   ASMPREFIX "X86CompilationCallback:\n"
     CFI(".cfi_startproc\n")
     // Save RBP
@@ -160,6 +171,7 @@ extern "C" {
     CFI(".cfi_restore %rbp\n")
     "ret\n"
     CFI(".cfi_endproc\n")
+    SIZE(X86CompilationCallback)
   );
 # else
   // No inline assembler support on this platform. The routine is in external
@@ -173,7 +185,8 @@ extern "C" {
   asm(
     ".text\n"
     ".align 8\n"
-    ".globl " ASMPREFIX  "X86CompilationCallback\n"
+    ".globl " ASMPREFIX "X86CompilationCallback\n"
+    TYPE_FUNCTION(X86CompilationCallback)
   ASMPREFIX "X86CompilationCallback:\n"
     CFI(".cfi_startproc\n")
     "pushl   %ebp\n"
@@ -213,6 +226,7 @@ extern "C" {
     CFI(".cfi_restore %ebp\n")
     "ret\n"
     CFI(".cfi_endproc\n")
+    SIZE(X86CompilationCallback)
   );
 
   // Same as X86CompilationCallback but also saves XMM argument registers.
@@ -220,7 +234,8 @@ extern "C" {
   asm(
     ".text\n"
     ".align 8\n"
-    ".globl " ASMPREFIX  "X86CompilationCallback_SSE\n"
+    ".globl " ASMPREFIX "X86CompilationCallback_SSE\n"
+    TYPE_FUNCTION(X86CompilationCallback_SSE)
   ASMPREFIX "X86CompilationCallback_SSE:\n"
     CFI(".cfi_startproc\n")
     "pushl   %ebp\n"
@@ -276,6 +291,7 @@ extern "C" {
     CFI(".cfi_restore %ebp\n")
     "ret\n"
     CFI(".cfi_endproc\n")
+    SIZE(X86CompilationCallback_SSE)
   );
 # else
   void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr);
@@ -312,7 +328,7 @@ extern "C" {
 #endif
 }
 
-/// X86CompilationCallback - This is the target-specific function invoked by the
+/// X86CompilationCallback2 - This is the target-specific function invoked by the
 /// function stub when we did not know the real target of a call.  This function
 /// must locate the start of the stub or call site and pass it into the JIT
 /// compiler function.
