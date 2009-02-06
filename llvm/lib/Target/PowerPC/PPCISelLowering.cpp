@@ -815,6 +815,8 @@ bool PPCTargetLowering::SelectAddressRegReg(SDValue N, SDValue &Base,
 bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
                                             SDValue &Base,
                                             SelectionDAG &DAG) const {
+  // FIXME dl should come from parent load or store, not from address
+  DebugLoc dl = N.getDebugLoc();
   // If this can be more profitably realized as r+r, fail.
   if (SelectAddressRegReg(N, Disp, Base, DAG))
     return false;
@@ -882,7 +884,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
       
       Base = DAG.getTargetConstant((Addr - (signed short)Addr) >> 16, MVT::i32);
       unsigned Opc = CN->getValueType(0) == MVT::i32 ? PPC::LIS : PPC::LIS8;
-      Base = SDValue(DAG.getTargetNode(Opc, CN->getValueType(0), Base), 0);
+      Base = SDValue(DAG.getTargetNode(Opc, dl, CN->getValueType(0), Base), 0);
       return true;
     }
   }
@@ -927,6 +929,8 @@ bool PPCTargetLowering::SelectAddressRegRegOnly(SDValue N, SDValue &Base,
 bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
                                                  SDValue &Base,
                                                  SelectionDAG &DAG) const {
+  // FIXME dl should come from the parent load or store, not the address
+  DebugLoc dl = N.getDebugLoc();
   // If this can be more profitably realized as r+r, fail.
   if (SelectAddressRegReg(N, Disp, Base, DAG))
     return false;
@@ -990,10 +994,9 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
       
         // Otherwise, break this down into an LIS + disp.
         Disp = DAG.getTargetConstant((short)Addr >> 2, MVT::i32);
-        
         Base = DAG.getTargetConstant((Addr-(signed short)Addr) >> 16, MVT::i32);
         unsigned Opc = CN->getValueType(0) == MVT::i32 ? PPC::LIS : PPC::LIS8;
-        Base = SDValue(DAG.getTargetNode(Opc, CN->getValueType(0), Base), 0);
+        Base = SDValue(DAG.getTargetNode(Opc, dl, CN->getValueType(0), Base),0);
         return true;
       }
     }

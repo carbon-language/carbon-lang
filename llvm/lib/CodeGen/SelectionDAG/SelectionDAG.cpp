@@ -4413,35 +4413,20 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
 /// Note that getTargetNode returns the resultant node.  If there is already a
 /// node of the specified opcode and operands, it returns that node instead of
 /// the current one.
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT) {
-  return getNode(~Opcode, VT).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT) {
   return getNode(~Opcode, dl, VT).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT, SDValue Op1) {
-  return getNode(~Opcode, VT, Op1).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
                                     SDValue Op1) {
   return getNode(~Opcode, dl, VT, Op1).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
-                                    SDValue Op1, SDValue Op2) {
-  return getNode(~Opcode, VT, Op1, Op2).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
                                     SDValue Op1, SDValue Op2) {
   return getNode(~Opcode, dl, VT, Op1, Op2).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
-                                    SDValue Op1, SDValue Op2,
-                                    SDValue Op3) {
-  return getNode(~Opcode, VT, Op1, Op2, Op3).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
                                     SDValue Op1, SDValue Op2,
                                     SDValue Op3) {
@@ -4453,11 +4438,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
   return getNode(~Opcode, dl, VT, Ops, NumOps).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  SDValue Op;
-  return getNode(~Opcode, VTs, 2, &Op, 0).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, 
                                     MVT VT1, MVT VT2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
@@ -4465,24 +4445,12 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
   return getNode(~Opcode, dl, VTs, 2, &Op, 0).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
-                                    MVT VT2, SDValue Op1) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  return getNode(~Opcode, VTs, 2, &Op1, 1).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                                     MVT VT2, SDValue Op1) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   return getNode(~Opcode, dl, VTs, 2, &Op1, 1).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
-                                    MVT VT2, SDValue Op1,
-                                    SDValue Op2) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  SDValue Ops[] = { Op1, Op2 };
-  return getNode(~Opcode, VTs, 2, Ops, 2).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                                     MVT VT2, SDValue Op1,
                                     SDValue Op2) {
@@ -4491,13 +4459,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
   return getNode(~Opcode, dl, VTs, 2, Ops, 2).getNode();
 }
 
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
-                                    MVT VT2, SDValue Op1,
-                                    SDValue Op2, SDValue Op3) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  SDValue Ops[] = { Op1, Op2, Op3 };
-  return getNode(~Opcode, VTs, 2, Ops, 3).getNode();
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                                     MVT VT2, SDValue Op1,
                                     SDValue Op2, SDValue Op3) {

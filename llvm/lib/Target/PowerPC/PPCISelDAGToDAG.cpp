@@ -98,7 +98,7 @@ namespace {
 
     /// SelectCC - Select a comparison of the specified values with the
     /// specified condition code, returning the CR# of the expression.
-    SDValue SelectCC(SDValue LHS, SDValue RHS, ISD::CondCode CC);
+    SDValue SelectCC(SDValue LHS, SDValue RHS, ISD::CondCode CC, DebugLoc dl);
 
     /// SelectAddrImm - Returns true if the address N can be represented by
     /// a base register plus a signed 16-bit displacement [r+imm].
@@ -489,7 +489,7 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
 /// SelectCC - Select a comparison of the specified values with the specified
 /// condition code, returning the CR# of the expression.
 SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
-                                    ISD::CondCode CC) {
+                                    ISD::CondCode CC, DebugLoc dl) {
   // Always select the LHS.
   unsigned Opc;
   
@@ -499,11 +499,11 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
       if (isInt32Immediate(RHS, Imm)) {
         // SETEQ/SETNE comparison with 16-bit immediate, fold it.
         if (isUInt16(Imm))
-          return SDValue(CurDAG->getTargetNode(PPC::CMPLWI, MVT::i32, LHS,
+          return SDValue(CurDAG->getTargetNode(PPC::CMPLWI, dl, MVT::i32, LHS,
                                                  getI32Imm(Imm & 0xFFFF)), 0);
         // If this is a 16-bit signed immediate, fold it.
         if (isInt16((int)Imm))
-          return SDValue(CurDAG->getTargetNode(PPC::CMPWI, MVT::i32, LHS,
+          return SDValue(CurDAG->getTargetNode(PPC::CMPWI, dl, MVT::i32, LHS,
                                                  getI32Imm(Imm & 0xFFFF)), 0);
         
         // For non-equality comparisons, the default code would materialize the
@@ -515,21 +515,21 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
         //   xoris r0,r3,0x1234
         //   cmplwi cr0,r0,0x5678
         //   beq cr0,L6
-        SDValue Xor(CurDAG->getTargetNode(PPC::XORIS, MVT::i32, LHS,
+        SDValue Xor(CurDAG->getTargetNode(PPC::XORIS, dl, MVT::i32, LHS,
                                             getI32Imm(Imm >> 16)), 0);
-        return SDValue(CurDAG->getTargetNode(PPC::CMPLWI, MVT::i32, Xor,
+        return SDValue(CurDAG->getTargetNode(PPC::CMPLWI, dl, MVT::i32, Xor,
                                                getI32Imm(Imm & 0xFFFF)), 0);
       }
       Opc = PPC::CMPLW;
     } else if (ISD::isUnsignedIntSetCC(CC)) {
       if (isInt32Immediate(RHS, Imm) && isUInt16(Imm))
-        return SDValue(CurDAG->getTargetNode(PPC::CMPLWI, MVT::i32, LHS,
+        return SDValue(CurDAG->getTargetNode(PPC::CMPLWI, dl, MVT::i32, LHS,
                                                getI32Imm(Imm & 0xFFFF)), 0);
       Opc = PPC::CMPLW;
     } else {
       short SImm;
       if (isIntS16Immediate(RHS, SImm))
-        return SDValue(CurDAG->getTargetNode(PPC::CMPWI, MVT::i32, LHS,
+        return SDValue(CurDAG->getTargetNode(PPC::CMPWI, dl, MVT::i32, LHS,
                                                getI32Imm((int)SImm & 0xFFFF)),
                          0);
       Opc = PPC::CMPW;
@@ -540,11 +540,11 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
       if (isInt64Immediate(RHS.getNode(), Imm)) {
         // SETEQ/SETNE comparison with 16-bit immediate, fold it.
         if (isUInt16(Imm))
-          return SDValue(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, LHS,
+          return SDValue(CurDAG->getTargetNode(PPC::CMPLDI, dl, MVT::i64, LHS,
                                                  getI32Imm(Imm & 0xFFFF)), 0);
         // If this is a 16-bit signed immediate, fold it.
         if (isInt16(Imm))
-          return SDValue(CurDAG->getTargetNode(PPC::CMPDI, MVT::i64, LHS,
+          return SDValue(CurDAG->getTargetNode(PPC::CMPDI, dl, MVT::i64, LHS,
                                                  getI32Imm(Imm & 0xFFFF)), 0);
         
         // For non-equality comparisons, the default code would materialize the
@@ -557,22 +557,22 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
         //   cmpldi cr0,r0,0x5678
         //   beq cr0,L6
         if (isUInt32(Imm)) {
-          SDValue Xor(CurDAG->getTargetNode(PPC::XORIS8, MVT::i64, LHS,
+          SDValue Xor(CurDAG->getTargetNode(PPC::XORIS8, dl, MVT::i64, LHS,
                                               getI64Imm(Imm >> 16)), 0);
-          return SDValue(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, Xor,
+          return SDValue(CurDAG->getTargetNode(PPC::CMPLDI, dl, MVT::i64, Xor,
                                                  getI64Imm(Imm & 0xFFFF)), 0);
         }
       }
       Opc = PPC::CMPLD;
     } else if (ISD::isUnsignedIntSetCC(CC)) {
       if (isInt64Immediate(RHS.getNode(), Imm) && isUInt16(Imm))
-        return SDValue(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, LHS,
+        return SDValue(CurDAG->getTargetNode(PPC::CMPLDI, dl, MVT::i64, LHS,
                                                getI64Imm(Imm & 0xFFFF)), 0);
       Opc = PPC::CMPLD;
     } else {
       short SImm;
       if (isIntS16Immediate(RHS, SImm))
-        return SDValue(CurDAG->getTargetNode(PPC::CMPDI, MVT::i64, LHS,
+        return SDValue(CurDAG->getTargetNode(PPC::CMPDI, dl, MVT::i64, LHS,
                                                getI64Imm(SImm & 0xFFFF)),
                          0);
       Opc = PPC::CMPD;
@@ -583,7 +583,7 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
     assert(LHS.getValueType() == MVT::f64 && "Unknown vt!");
     Opc = PPC::FCMPUD;
   }
-  return SDValue(CurDAG->getTargetNode(Opc, MVT::i32, LHS, RHS), 0);
+  return SDValue(CurDAG->getTargetNode(Opc, dl, MVT::i32, LHS, RHS), 0);
 }
 
 static PPC::Predicate getPredicateForSetCC(ISD::CondCode CC) {
@@ -729,7 +729,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDValue Op) {
   bool Inv;
   int OtherCondIdx;
   unsigned Idx = getCRIdxForSetCC(CC, Inv, OtherCondIdx);
-  SDValue CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
+  SDValue CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC, dl);
   SDValue IntCR;
   
   // Force the ccreg into CR7.
@@ -1057,7 +1057,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
                                         SDValue(Tmp, 1));
           }
 
-    SDValue CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
+    SDValue CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC, dl);
     unsigned BROpc = getPredicateForSetCC(CC);
 
     unsigned SelectCCOp;
@@ -1091,7 +1091,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
   }
   case ISD::BR_CC: {
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();
-    SDValue CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC);
+    SDValue CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC, dl);
     SDValue Ops[] = { getI32Imm(getPredicateForSetCC(CC)), CondCode, 
                         N->getOperand(4), N->getOperand(0) };
     return CurDAG->SelectNodeTo(N, PPC::BCC, MVT::Other, Ops, 4);

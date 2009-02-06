@@ -648,41 +648,21 @@ public:
   /// Note that getTargetNode returns the resultant node.  If there is already a
   /// node of the specified opcode and operands, it returns that node instead of
   /// the current one.
-  SDNode *getTargetNode(unsigned Opcode, MVT VT);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT, SDValue Op1);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT, SDValue Op1);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT, SDValue Op1, SDValue Op2);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT, SDValue Op1, 
                         SDValue Op2);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT,
-                        SDValue Op1, SDValue Op2, SDValue Op3);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
                         SDValue Op1, SDValue Op2, SDValue Op3);
-
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
                         const SDValue *Ops, unsigned NumOps);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT1, MVT VT2);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1, MVT VT2);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, SDValue Op1);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1, MVT VT2, 
                         SDValue Op1);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT1,
-                        MVT VT2, SDValue Op1, SDValue Op2);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                         MVT VT2, SDValue Op1, SDValue Op2);
-
-  SDNode *getTargetNode(unsigned Opcode, MVT VT1,
-                        MVT VT2, SDValue Op1, SDValue Op2, SDValue Op3);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                         MVT VT2, SDValue Op1, SDValue Op2, SDValue Op3);
-
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1, MVT VT2,
                         const SDValue *Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1, MVT VT2, MVT VT3,
