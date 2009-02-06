@@ -6376,7 +6376,8 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
         VT.getVectorElementType().getSizeInBits() : len;
       SDValue Tmp2 = DAG.getConstant(APInt(EltSize, mask[i]), VT);
       SDValue Tmp3 = DAG.getConstant(1ULL << i, ShVT);
-      Op = DAG.getNode(ISD::ADD, dl, VT, DAG.getNode(ISD::AND, VT, Op, Tmp2),
+      Op = DAG.getNode(ISD::ADD, dl, VT, 
+                       DAG.getNode(ISD::AND, dl, VT, Op, Tmp2),
                        DAG.getNode(ISD::AND, dl, VT,
                                    DAG.getNode(ISD::SRL, dl, VT, Op, Tmp3),
                                    Tmp2));
@@ -6399,7 +6400,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
       SDValue Tmp3 = DAG.getConstant(1ULL << i, ShVT);
       Op = DAG.getNode(ISD::OR, dl, VT, Op, 
-                       DAG.getNode(ISD::SRL, VT, Op, Tmp3));
+                       DAG.getNode(ISD::SRL, dl, VT, Op, Tmp3));
     }
     Op = DAG.getNOT(dl, Op, VT);
     return DAG.getNode(ISD::CTPOP, dl, VT, Op);
@@ -6946,7 +6947,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     // If the target wants custom lowering, do so.
     SDValue ShiftAmt = LegalizeOp(Node->getOperand(1));
     if (TLI.getOperationAction(ISD::SRA, VT) == TargetLowering::Custom) {
-      SDValue Op = DAG.getNode(ISD::SRA, VT, Node->getOperand(0), ShiftAmt);
+      SDValue Op = DAG.getNode(ISD::SRA, dl, VT, Node->getOperand(0), ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
       if (Op.getNode()) {
         // Now that the custom expander is done, expand the result, which is
