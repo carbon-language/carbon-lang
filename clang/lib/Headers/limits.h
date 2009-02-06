@@ -64,11 +64,14 @@
 #define UINT_MAX  (__INT_MAX__  *2U +1U)
 #define ULONG_MAX (__LONG_MAX__ *2UL+1UL)
 
+#ifndef MB_LEN_MAX
 #define MB_LEN_MAX 1
+#endif
+
 #define CHAR_BIT  __CHAR_BIT__
 
 #ifdef __CHAR_UNSIGNED__  /* -funsigned-char */
-#define CHAR_MIN ((char)0)
+#define CHAR_MIN 0
 #define CHAR_MAX UCHAR_MAX
 #else
 #define CHAR_MIN SCHAR_MIN
