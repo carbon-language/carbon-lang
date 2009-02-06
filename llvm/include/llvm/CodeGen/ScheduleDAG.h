@@ -446,29 +446,9 @@ namespace llvm {
              MachineBasicBlock::iterator Begin,
              MachineBasicBlock::iterator End);
 
-    /// BuildSchedGraph - Build SUnits and set up their Preds and Succs
-    /// to form the scheduling dependency graph.
-    ///
-    virtual void BuildSchedGraph() = 0;
-
-    /// ComputeLatency - Compute node latency.
-    ///
-    virtual void ComputeLatency(SUnit *SU) = 0;
-
-  protected:
-    /// EmitNoop - Emit a noop instruction.
-    ///
-    void EmitNoop();
-
-  public:
     virtual MachineBasicBlock *EmitSchedule() = 0;
 
     void dumpSchedule() const;
-
-    /// Schedule - Order nodes according to selected style, filling
-    /// in the Sequence member.
-    ///
-    virtual void Schedule() = 0;
 
     virtual void dumpNode(const SUnit *SU) const = 0;
 
@@ -487,14 +467,32 @@ namespace llvm {
 #endif
 
   protected:
-    void AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO);
+    /// BuildSchedGraph - Build SUnits and set up their Preds and Succs
+    /// to form the scheduling dependency graph.
+    ///
+    virtual void BuildSchedGraph() = 0;
 
-    void EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
+    /// ComputeLatency - Compute node latency.
+    ///
+    virtual void ComputeLatency(SUnit *SU) = 0;
+
+    /// Schedule - Order nodes according to selected style, filling
+    /// in the Sequence member.
+    ///
+    virtual void Schedule() = 0;
 
     /// ForceUnitLatencies - Return true if all scheduling edges should be given a
     /// latency value of one.  The default is to return false; schedulers may
     /// override this as needed.
     virtual bool ForceUnitLatencies() const { return false; }
+
+    /// EmitNoop - Emit a noop instruction.
+    ///
+    void EmitNoop();
+
+    void AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO);
+
+    void EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
 
   private:
     /// EmitLiveInCopy - Emit a copy for a live in physical register. If the
