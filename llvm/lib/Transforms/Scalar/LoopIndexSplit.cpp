@@ -42,6 +42,7 @@
 #define DEBUG_TYPE "loop-index-split"
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/Dominators.h"
@@ -1104,7 +1105,8 @@ bool LoopIndexSplit::cleanBlock(BasicBlock *BB) {
     Instruction *I = BI;
 
     if (isa<PHINode>(I) || I == Terminator || I == ExitCondition
-        || I == SplitCondition || IVBasedValues.count(I))
+        || I == SplitCondition || IVBasedValues.count(I) 
+        || isa<DbgInfoIntrinsic>(I))
       continue;
 
     if (I->mayWriteToMemory())
