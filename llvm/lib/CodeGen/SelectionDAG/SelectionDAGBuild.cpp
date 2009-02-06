@@ -757,6 +757,7 @@ void SelectionDAGLowering::clear() {
   PendingLoads.clear();
   PendingExports.clear();
   DAG.clear();
+  CurDebugLoc = DebugLoc::getUnknownLoc();
 }
 
 /// getRoot - Return the current virtual root of the Selection DAG,
