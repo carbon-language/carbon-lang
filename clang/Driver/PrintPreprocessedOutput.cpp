@@ -502,49 +502,11 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
   }
 }
 
-/// DoPrintPreprocessedInput - This implements -E mode.
-///
-void clang::DoPrintPreprocessedInput(Preprocessor &PP, 
-                                     const std::string &OutFile) {
-  // Inform the preprocessor whether we want it to retain comments or not, due
-  // to -C or -CC.
-  PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
-  InitAvoidConcatTokenInfo();
-
-  
-  // Open the output buffer.
-  std::string Err;
-  llvm::raw_fd_ostream OS(OutFile.empty() ? "-" : OutFile.c_str(), false, Err);
-  if (!Err.empty()) {
-    fprintf(stderr, "%s\n", Err.c_str());
-    exit(1);
-  }
-  
-  OS.SetBufferSize(64*1024);
-  
-  
-  Token Tok, PrevTok;
+static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
+                                    PrintPPOutputPPCallbacks *Callbacks,
+                                    llvm::raw_ostream &OS) {
   char Buffer[256];
-  PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP, OS);
-  PP.setPPCallbacks(Callbacks);
-  
-  PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
-  PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",Callbacks));
-
-  // After we have configured the preprocessor, enter the main file.
-  
-  // Start parsing the specified input file.
-  PP.EnterMainSourceFile();
-
-  // Consume all of the tokens that come from the predefines buffer.  Those
-  // should not be emitted into the output and are guaranteed to be at the
-  // start.
-  const SourceManager &SourceMgr = PP.getSourceManager();
-  do PP.Lex(Tok);
-  while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
-         !strcmp(SourceMgr.getPresumedLoc(Tok.getLocation()).getFilename(),
-                 "<predefines>"));
-
+  Token PrevTok;
   while (1) {
     
     // If this token is at the start of a line, emit newlines if needed.
@@ -575,10 +537,57 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
     Callbacks->SetEmittedTokensOnThisLine();
     
     if (Tok.is(tok::eof)) break;
-   
+    
     PrevTok = Tok;
     PP.Lex(Tok);
   }
+}
+
+
+/// DoPrintPreprocessedInput - This implements -E mode.
+///
+void clang::DoPrintPreprocessedInput(Preprocessor &PP, 
+                                     const std::string &OutFile) {
+  // Inform the preprocessor whether we want it to retain comments or not, due
+  // to -C or -CC.
+  PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
+  InitAvoidConcatTokenInfo();
+
+  
+  // Open the output buffer.
+  std::string Err;
+  llvm::raw_fd_ostream OS(OutFile.empty() ? "-" : OutFile.c_str(), false, Err);
+  if (!Err.empty()) {
+    fprintf(stderr, "%s\n", Err.c_str());
+    exit(1);
+  }
+  
+  OS.SetBufferSize(64*1024);
+  
+  Token Tok;
+  PrintPPOutputPPCallbacks *Callbacks;
+  Callbacks = new PrintPPOutputPPCallbacks(PP, OS);
+  PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
+  PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",Callbacks));
+
+  PP.setPPCallbacks(Callbacks);
+
+  // After we have configured the preprocessor, enter the main file.
+  
+  // Start parsing the specified input file.
+  PP.EnterMainSourceFile();
+
+  // Consume all of the tokens that come from the predefines buffer.  Those
+  // should not be emitted into the output and are guaranteed to be at the
+  // start.
+  const SourceManager &SourceMgr = PP.getSourceManager();
+  do PP.Lex(Tok);
+  while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
+         !strcmp(SourceMgr.getPresumedLoc(Tok.getLocation()).getFilename(),
+                 "<predefines>"));
+
+  // Read all the preprocessed tokens, printing them out to the stream.
+  PrintPreprocessedTokens(PP, Tok, Callbacks, OS);
   OS << '\n';
   
   // Flush the ostream.
