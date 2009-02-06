@@ -339,15 +339,20 @@ SVal RegionStoreManager::getLValueField(const GRState* St, SVal Base,
 SVal RegionStoreManager::getLValueElement(const GRState* St, 
                                           SVal Base, SVal Offset) {
 
-  if (Base.isUnknownOrUndef() || isa<loc::SymbolVal>(Base))
+  if (Base.isUnknownOrUndef())
     return Base;
 
   // Only handle integer offsets... for now.
   if (!isa<nonloc::ConcreteInt>(Offset))
     return UnknownVal();
 
-  const TypedRegion *BaseRegion =
-    cast<TypedRegion>(cast<loc::MemRegionVal>(Base).getRegion());
+  const TypedRegion* BaseRegion = 0;
+
+  if (isa<loc::SymbolVal>(Base))
+    BaseRegion = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(Base).getSymbol(),
+                                         StateMgr.getSymbolManager());
+  else
+    BaseRegion = cast<TypedRegion>(cast<loc::MemRegionVal>(Base).getRegion());
 
   // Pointer of any type can be cast and used as array base.
   const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);
@@ -473,6 +478,12 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R)) {
     // FIXME: Unsupported yet.
     FR = 0;
+    return UnknownVal();
+  }
+
+  if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
+    // FIXME: Unsupported yet.
+    SR = 0;
     return UnknownVal();
   }
 

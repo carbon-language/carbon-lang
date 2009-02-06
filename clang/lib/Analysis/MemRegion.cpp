@@ -114,18 +114,14 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 QualType SymbolicRegion::getRValueType(ASTContext& C) const {
   const SymbolData& data = SymMgr.getSymbolData(sym);
 
-  // FIXME: We could use the SymbolManager::getType() directly. But that
-  // would hide the assumptions we made here. What is the type of a symbolic
-  // region is unclear for other cases.
+  // Get the type of the symbol.
+  QualType T = data.getType(C);
 
-  // For now we assume the symbol is a typed region rvalue.
-  const TypedRegion* R 
-    = cast<TypedRegion>(cast<SymbolRegionRValue>(data).getRegion());
+  // Only when the symbol has pointer type it can have a symbolic region
+  // associated with it.
+  PointerType* PTy = cast<PointerType>(T.getTypePtr()->getDesugaredType());
 
-  // Assume the region rvalue has a pointer type, only then we could have a
-  // symbolic region associated with it.
-  PointerType* PTy = cast<PointerType>(R->getRValueType(C).getTypePtr());
-
+  // The type of the symbolic region is the pointee type of the symbol.
   return PTy->getPointeeType();
 }
 
