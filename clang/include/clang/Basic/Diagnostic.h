@@ -102,9 +102,10 @@ private:
   /// packed into four bits per diagnostic.
   unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/2];
   
-  /// ErrorOccurred - This is set to true when an error is emitted, and is
-  /// sticky.
+  /// ErrorOccurred / FatalErrorOccurred - This is set to true when an error or
+  /// fatal error is emitted, and is sticky.
   bool ErrorOccurred;
+  bool FatalErrorOccurred;
 
   unsigned NumDiagnostics;    // Number of diagnostics reported
   unsigned NumErrors;         // Number of diagnostics that are errors
@@ -179,6 +180,7 @@ public:
   }
   
   bool hasErrorOccurred() const { return ErrorOccurred; }
+  bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
 
   unsigned getNumErrors() const { return NumErrors; }
   unsigned getNumDiagnostics() const { return NumDiagnostics; }

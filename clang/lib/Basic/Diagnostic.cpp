@@ -191,6 +191,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   memset(DiagMappings, 0, sizeof(DiagMappings));
   
   ErrorOccurred = false;
+  FatalErrorOccurred = false;
   NumDiagnostics = 0;
   NumErrors = 0;
   CustomDiagInfo = 0;
@@ -300,6 +301,11 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
 void Diagnostic::ProcessDiag() {
   DiagnosticInfo Info(this);
   
+  // If a fatal error has already been emitted, silence all subsequent
+  // diagnostics.
+  if (FatalErrorOccurred)
+    return;
+  
   // Figure out the diagnostic level of this message.
   Diagnostic::Level DiagLevel = getDiagnosticLevel(Info.getID());
   
@@ -320,8 +326,10 @@ void Diagnostic::ProcessDiag() {
   
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
-
     ++NumErrors;
+    
+    if (DiagLevel == Diagnostic::Fatal)
+      FatalErrorOccurred = true;
   }
 
   // Finally, report it.
