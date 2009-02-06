@@ -611,7 +611,7 @@ private:
 /// @endcode
 /// Please note that you cannot use delete on the pointer; it must be
 /// deallocated using an explicit destructor call followed by
-/// @c Context.getAllocator().Deallocate(Ptr)
+/// @c Context.Deallocate(Ptr).
 ///
 /// @param Bytes The number of bytes to allocate. Calculated by the compiler.
 /// @param C The ASTContext that provides the allocator.
@@ -645,7 +645,7 @@ inline void operator delete(void *Ptr, clang::ASTContext &C)
 /// @endcode
 /// Please note that you cannot use delete on the pointer; it must be
 /// deallocated using an explicit destructor call followed by
-/// @c Context.getAllocator().Deallocate(Ptr)
+/// @c Context.Deallocate(Ptr).
 ///
 /// @param Bytes The number of bytes to allocate. Calculated by the compiler.
 /// @param C The ASTContext that provides the allocator.
