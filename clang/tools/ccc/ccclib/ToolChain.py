@@ -194,6 +194,8 @@ class Darwin_X86_ToolChain(ToolChain):
             elif arg.opt is args.parser.f_indirectVirtualCallsOption:
                 al.append(al.makeFlagArg(args.parser.f_appleKextOption))
                 al.append(al.makeFlagArg(args.parser.staticOption))
+            elif arg.opt is args.parser.sharedOption:
+                al.append(al.makeFlagArg(args.parser.dynamiclibOption))
             elif arg.opt is args.parser.f_constantCfstringsOption:
                 al.append(al.makeFlagArg(args.parser.m_constantCfstringsOption))
             elif arg.opt is args.parser.f_noConstantCfstringsOption:
