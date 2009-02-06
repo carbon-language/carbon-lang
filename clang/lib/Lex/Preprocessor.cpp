@@ -510,43 +510,17 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__int64=long long");
   }
   
-  
   // Initialize target-specific preprocessor defines.
   const TargetInfo &TI = PP.getTargetInfo();
   
   // Define type sizing macros based on the target properties.
   assert(TI.getCharWidth() == 8 && "Only support 8-bit char so far");
   DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
-  DefineBuiltinMacro(Buf, "__SCHAR_MAX__=127");
 
-  assert(TI.getWCharWidth() == 32 && "Only support 32-bit wchar so far");
-  DefineBuiltinMacro(Buf, "__WCHAR_MAX__=2147483647");
   DefineBuiltinMacro(Buf, "__WCHAR_TYPE__=int");
   DefineBuiltinMacro(Buf, "__WINT_TYPE__=int");
   
-  assert(TI.getShortWidth() == 16 && "Only support 16-bit short so far");
-  DefineBuiltinMacro(Buf, "__SHRT_MAX__=32767");
-  
-  if (TI.getIntWidth() == 32)
-    DefineBuiltinMacro(Buf, "__INT_MAX__=2147483647");
-  else if (TI.getIntWidth() == 16)
-    DefineBuiltinMacro(Buf, "__INT_MAX__=32767");
-  else
-    assert(0 && "Unknown integer size");
 
-  if (TI.getLongLongWidth() == 64)
-    DefineBuiltinMacro(Buf, "__LONG_LONG_MAX__=9223372036854775807LL");
-  else if (TI.getLongLongWidth() == 32)
-    DefineBuiltinMacro(Buf, "__LONG_LONG_MAX__=2147483647L");
-
-  if (TI.getLongWidth() == 32)
-    DefineBuiltinMacro(Buf, "__LONG_MAX__=2147483647L");
-  else if (TI.getLongWidth() == 64)
-    DefineBuiltinMacro(Buf, "__LONG_MAX__=9223372036854775807L");
-  else if (TI.getLongWidth() == 16)
-    DefineBuiltinMacro(Buf, "__LONG_MAX__=32767L");
-  else
-    assert(0 && "Unknown long size");
   
   unsigned IntMaxWidth;
   const char *IntMaxSuffix;
@@ -562,6 +536,12 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     IntMaxSuffix = "";
   }
   
+  DefineTypeSize("__SCHAR_MAX__", TI.getCharWidth(), "", true, Buf);
+  DefineTypeSize("__SHRT_MAX__", TI.getShortWidth(), "", true, Buf);
+  DefineTypeSize("__INT_MAX__", TI.getIntWidth(), "", true, Buf);
+  DefineTypeSize("__LONG_MAX__", TI.getLongWidth(), "L", true, Buf);
+  DefineTypeSize("__LONG_LONG_MAX__", TI.getLongLongWidth(), "LL", true, Buf);
+  DefineTypeSize("__WCHAR_MAX__", TI.getWCharWidth(), "", true, Buf);
   DefineTypeSize("__INTMAX_MAX__", IntMaxWidth, IntMaxSuffix, true, Buf);
 
   if (TI.getIntMaxType() == TargetInfo::UnsignedLongLong)
