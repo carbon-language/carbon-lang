@@ -475,9 +475,12 @@ GenericValue JIT::runFunction(Function *F,
 /// GlobalAddress[F] with the address of F's machine code.
 ///
 void JIT::runJITOnFunction(Function *F) {
-  static bool isAlreadyCodeGenerating = false;
-
   MutexGuard locked(lock);
+  runJITOnFunctionUnlocked(F, locked);
+}
+
+void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {
+  static bool isAlreadyCodeGenerating = false;
   assert(!isAlreadyCodeGenerating && "Error: Recursive compilation detected!");
 
   // JIT the function
@@ -537,7 +540,7 @@ void *JIT::getPointerToFunction(Function *F) {
     return Addr;
   }
 
-  runJITOnFunction(F);
+  runJITOnFunctionUnlocked(F, locked);
 
   void *Addr = getPointerToGlobalIfAvailable(F);
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");

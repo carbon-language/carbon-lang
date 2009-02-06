@@ -147,8 +147,9 @@ public:
   
 private:
   static MachineCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
-  void runJITOnFunction (Function *F);
-  
+  void runJITOnFunction(Function *F);
+  void runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked);
+
 protected:
 
   /// getMemoryforGV - Allocate memory for a global variable.
