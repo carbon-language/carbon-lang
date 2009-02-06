@@ -332,7 +332,7 @@ SDValue DAGTypeLegalizer::ExpandOp_SCALAR_TO_VECTOR(SDNode *N) {
   unsigned NumElts = VT.getVectorNumElements();
   SmallVector<SDValue, 16> Ops(NumElts);
   Ops[0] = N->getOperand(0);
-  SDValue UndefVal = DAG.getNode(ISD::UNDEF, dl, Ops[0].getValueType());
+  SDValue UndefVal = DAG.getUNDEF(Ops[0].getValueType());
   for (unsigned i = 1; i < NumElts; ++i)
     Ops[i] = UndefVal;
   return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], NumElts);
@@ -433,6 +433,6 @@ void DAGTypeLegalizer::SplitRes_UNDEF(SDNode *N, SDValue &Lo, SDValue &Hi) {
   MVT LoVT, HiVT;
   DebugLoc dl = N->getDebugLoc();
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
-  Lo = DAG.getNode(ISD::UNDEF, dl, LoVT);
-  Hi = DAG.getNode(ISD::UNDEF, dl, HiVT);
+  Lo = DAG.getUNDEF(LoVT);
+  Hi = DAG.getUNDEF(HiVT);
 }

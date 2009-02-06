@@ -105,7 +105,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
     case MVT::i32:
       if (I->use_empty()) {                // Argument is dead.
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        ArgValues.push_back(DAG.getNode(ISD::UNDEF, dl, ObjectVT));
+        ArgValues.push_back(DAG.getUNDEF(ObjectVT));
       } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
         unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
         MF.getRegInfo().addLiveIn(*CurArgReg++, VReg);
@@ -142,7 +142,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
     case MVT::f32:
       if (I->use_empty()) {                // Argument is dead.
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        ArgValues.push_back(DAG.getNode(ISD::UNDEF, dl, ObjectVT));
+        ArgValues.push_back(DAG.getUNDEF(ObjectVT));
       } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
         // FP value is passed in an integer register.
         unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
@@ -165,7 +165,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
       if (I->use_empty()) {                // Argument is dead.
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        ArgValues.push_back(DAG.getNode(ISD::UNDEF, dl, ObjectVT));
+        ArgValues.push_back(DAG.getUNDEF(ObjectVT));
       } else {
         SDValue HiVal;
         if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR

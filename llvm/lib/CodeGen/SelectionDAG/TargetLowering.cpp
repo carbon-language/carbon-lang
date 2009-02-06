@@ -780,8 +780,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   } else if (DemandedMask == 0) {   
     // Not demanding any bits from Op.
     if (Op.getOpcode() != ISD::UNDEF)
-      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::UNDEF, dl,
-                                               Op.getValueType()));
+      return TLO.CombineTo(Op, TLO.DAG.getUNDEF(Op.getValueType()));
     return false;
   } else if (Depth == 6) {        // Limit search depth.
     return false;
@@ -1704,7 +1703,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
       case 1:  // Known true.
         return DAG.getConstant(1, VT);
       case 2:  // Undefined.
-        return DAG.getNode(ISD::UNDEF, VT);
+        return DAG.getUNDEF(VT);
       }
     }
     

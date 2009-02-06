@@ -581,8 +581,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   }
   if (CallOpc == ARMISD::CALL_NOLINK && !Subtarget->isThumb()) {
     // implicit def LR - LR mustn't be allocated as GRP:$dst of CALL_NOLINK
-    Chain = DAG.getCopyToReg(Chain, dl, ARM::LR,
-                             DAG.getNode(ISD::UNDEF, MVT::i32), InFlag);
+    Chain = DAG.getCopyToReg(Chain, dl, ARM::LR, DAG.getUNDEF(MVT::i32),InFlag);
     InFlag = Chain.getValue(1);
   }
 

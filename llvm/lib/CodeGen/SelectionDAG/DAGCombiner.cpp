@@ -2490,7 +2490,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     return N0;
   // fold (shl x, c >= size(x)) -> undef
   if (N1C && N1C->getZExtValue() >= OpSizeInBits)
-    return DAG.getNode(ISD::UNDEF, N->getDebugLoc(), VT);
+    return DAG.getUNDEF(VT);
   // fold (shl x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -2571,7 +2571,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
     return N0;
   // fold (sra x, (setge c, size(x))) -> undef
   if (N1C && N1C->getZExtValue() >= VT.getSizeInBits())
-    return DAG.getNode(ISD::UNDEF, N->getDebugLoc(), VT);
+    return DAG.getUNDEF(VT);
   // fold (sra x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -2679,7 +2679,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     return N0;
   // fold (srl x, c >= size(x)) -> undef
   if (N1C && N1C->getZExtValue() >= OpSizeInBits)
-    return DAG.getNode(ISD::UNDEF, N->getDebugLoc(), VT);
+    return DAG.getUNDEF(VT);
   // fold (srl x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -2704,7 +2704,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     // Shifting in all undef bits?
     MVT SmallVT = N0.getOperand(0).getValueType();
     if (N1C->getZExtValue() >= SmallVT.getSizeInBits())
-      return DAG.getNode(ISD::UNDEF, N->getDebugLoc(), VT);
+      return DAG.getUNDEF(VT);
 
     SDValue SmallShift = DAG.getNode(ISD::SRL, N0.getDebugLoc(), SmallVT,
                                      N0.getOperand(0), N1);
@@ -3909,7 +3909,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
       }
       
       if (EltIsUndef)
-        Ops.push_back(DAG.getNode(ISD::UNDEF, BV->getDebugLoc(), DstEltVT));
+        Ops.push_back(DAG.getUNDEF(DstEltVT));
       else
         Ops.push_back(DAG.getConstant(NewBits, DstEltVT));
     }
@@ -3929,7 +3929,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
   for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
     if (BV->getOperand(i).getOpcode() == ISD::UNDEF) {
       for (unsigned j = 0; j != NumOutputsPerInput; ++j)
-        Ops.push_back(DAG.getNode(ISD::UNDEF, BV->getDebugLoc(), DstEltVT));
+        Ops.push_back(DAG.getUNDEF(DstEltVT));
       continue;
     }
 
@@ -4810,16 +4810,14 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
       // Indexed loads.
       assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
       if (N->hasNUsesOfValue(0, 0) && N->hasNUsesOfValue(0, 1)) {
-        SDValue Undef = DAG.getNode(ISD::UNDEF, N->getDebugLoc(),
-                                    N->getValueType(0));
+        SDValue Undef = DAG.getUNDEF(N->getValueType(0));
         DOUT << "\nReplacing.6 "; DEBUG(N->dump(&DAG));
         DOUT << "\nWith: "; DEBUG(Undef.getNode()->dump(&DAG));
         DOUT << " and 2 other values\n";
         WorkListRemover DeadNodes(*this);
         DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Undef, &DeadNodes);
         DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1),
-                                      DAG.getNode(ISD::UNDEF, N->getDebugLoc(),
-                                                  N->getValueType(1)),
+                                      DAG.getUNDEF(N->getValueType(1)),
                                       &DeadNodes);
         DAG.ReplaceAllUsesOfValueWith(SDValue(N, 2), Chain, &DeadNodes);
         removeFromWorkList(N);
@@ -5240,9 +5238,7 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     SmallVector<SDValue, 8> BuildVecIndices;
     for (unsigned i = 0; i != NumInScalars; ++i) {
       if (N->getOperand(i).getOpcode() == ISD::UNDEF) {
-        BuildVecIndices.push_back(DAG.getNode(ISD::UNDEF,
-                                              N->getDebugLoc(),
-                                              TLI.getPointerTy()));
+        BuildVecIndices.push_back(DAG.getUNDEF(TLI.getPointerTy()));
         continue;
       }
       
@@ -5273,8 +5269,7 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     } else {
       // Use an undef build_vector as input for the second operand.
       std::vector<SDValue> UnOps(NumInScalars,
-                                 DAG.getNode(ISD::UNDEF, N->getDebugLoc(),
-                                             EltType));
+                                 DAG.getUNDEF(EltType));
       Ops[1] = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
                            &UnOps[0], UnOps.size());
       AddToWorkList(Ops[1].getNode());
@@ -5430,8 +5425,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     AddToWorkList(ShufMask.getNode());
     return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(),
                        N->getValueType(0), N0,
-                       DAG.getNode(ISD::UNDEF, N->getDebugLoc(),
-                                   N->getValueType(0)),
+                       DAG.getUNDEF(N->getValueType(0)),
                        ShufMask);
   }
  

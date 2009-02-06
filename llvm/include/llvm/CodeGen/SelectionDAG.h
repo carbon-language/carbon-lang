@@ -377,15 +377,18 @@ public:
   SDValue getNOT(DebugLoc DL, SDValue Val, MVT VT);
 
   /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have
-  /// a flag result (to ensure it's not CSE'd).
+  /// a flag result (to ensure it's not CSE'd).  CALLSEQ_START does not have a
+  /// useful DebugLoc.
   SDValue getCALLSEQ_START(SDValue Chain, SDValue Op) {
     const MVT *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain,  Op };
-    return getNode(ISD::CALLSEQ_START, VTs, 2, Ops, 2);
+    return getNode(ISD::CALLSEQ_START, DebugLoc::getUnknownLoc(), 
+                   VTs, 2, Ops, 2);
   }
 
   /// getCALLSEQ_END - Return a new CALLSEQ_END node, which always must have a
-  /// flag result (to ensure it's not CSE'd).
+  /// flag result (to ensure it's not CSE'd).  CALLSEQ_END does not have
+  /// a useful DebugLoc.
   SDValue getCALLSEQ_END(SDValue Chain, SDValue Op1, SDValue Op2,
                            SDValue InFlag) {
     SDVTList NodeTys = getVTList(MVT::Other, MVT::Flag);
@@ -394,8 +397,14 @@ public:
     Ops.push_back(Op1);
     Ops.push_back(Op2);
     Ops.push_back(InFlag);
-    return getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0],
+    return getNode(ISD::CALLSEQ_END, DebugLoc::getUnknownLoc(), NodeTys,
+                   &Ops[0], 
                    (unsigned)Ops.size() - (InFlag.getNode() == 0 ? 1 : 0));
+  }
+
+  /// getUNDEF - Return an UNDEF node.  UNDEF does not have a useful DebugLoc.
+  SDValue getUNDEF(MVT VT) {
+    return getNode(ISD::UNDEF, DebugLoc::getUnknownLoc(), VT);
   }
 
   /// getNode - Gets or creates the specified node.
@@ -421,15 +430,10 @@ public:
   SDValue getNode(unsigned Opcode, DebugLoc DL,
                   const std::vector<MVT> &ResultTys,
                   const SDValue *Ops, unsigned NumOps);
-  SDValue getNode(unsigned Opcode, const MVT *VTs, unsigned NumVTs,
-                  const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL, const MVT *VTs, unsigned NumVTs,
-                  const SDValue *Ops, unsigned NumOps);
-  SDValue getNode(unsigned Opcode, SDVTList VTs,
                   const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
                   const SDValue *Ops, unsigned NumOps);
-
   SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs);
   SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs, SDValue N);
   SDValue getNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,

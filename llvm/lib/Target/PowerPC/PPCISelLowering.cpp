@@ -2503,15 +2503,8 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
 
   // Emit callseq_end just before tailcall node.
   if (isTailCall) {
-    SmallVector<SDValue, 8> CallSeqOps;
-    SDVTList CallSeqNodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-    CallSeqOps.push_back(Chain);
-    CallSeqOps.push_back(DAG.getIntPtrConstant(NumBytes, true));
-    CallSeqOps.push_back(DAG.getIntPtrConstant(0, true));
-    if (InFlag.getNode())
-      CallSeqOps.push_back(InFlag);
-    Chain = DAG.getNode(ISD::CALLSEQ_END, CallSeqNodeTys, &CallSeqOps[0],
-                        CallSeqOps.size());
+    Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
+                               DAG.getIntPtrConstant(0, true), InFlag);
     InFlag = Chain.getValue(1);
   }
 

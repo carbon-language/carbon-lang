@@ -1366,29 +1366,29 @@ SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
       switch (Cond) {
       default: break;
       case ISD::SETEQ:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, dl, VT);
+                          return getUNDEF(VT);
                         // fall through
       case ISD::SETOEQ: return getConstant(R==APFloat::cmpEqual, VT);
       case ISD::SETNE:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, dl, VT);
+                          return getUNDEF(VT);
                         // fall through
       case ISD::SETONE: return getConstant(R==APFloat::cmpGreaterThan ||
                                            R==APFloat::cmpLessThan, VT);
       case ISD::SETLT:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, dl, VT);
+                          return getUNDEF(VT);
                         // fall through
       case ISD::SETOLT: return getConstant(R==APFloat::cmpLessThan, VT);
       case ISD::SETGT:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, dl, VT);
+                          return getUNDEF(VT);
                         // fall through
       case ISD::SETOGT: return getConstant(R==APFloat::cmpGreaterThan, VT);
       case ISD::SETLE:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, dl, VT);
+                          return getUNDEF(VT);
                         // fall through
       case ISD::SETOLE: return getConstant(R==APFloat::cmpLessThan ||
                                            R==APFloat::cmpEqual, VT);
       case ISD::SETGE:  if (R==APFloat::cmpUnordered) 
-                          return getNode(ISD::UNDEF, dl, VT);
+                          return getUNDEF(VT);
                         // fall through
       case ISD::SETOGE: return getConstant(R==APFloat::cmpGreaterThan ||
                                            R==APFloat::cmpEqual, VT);
@@ -2133,7 +2133,7 @@ SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
   SDValue PermMask = N->getOperand(2);
   SDValue Idx = PermMask.getOperand(i);
   if (Idx.getOpcode() == ISD::UNDEF)
-    return getNode(ISD::UNDEF, dl, VT.getVectorElementType());
+    return getUNDEF(VT.getVectorElementType());
   unsigned Index = cast<ConstantSDNode>(Idx)->getZExtValue();
   unsigned NumElems = PermMask.getNumOperands();
   SDValue V = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
@@ -2147,7 +2147,7 @@ SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
   }
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
     return (Index == 0) ? V.getOperand(0)
-                      : getNode(ISD::UNDEF, dl, VT.getVectorElementType());
+                      : getUNDEF(VT.getVectorElementType());
   if (V.getOpcode() == ISD::BUILD_VECTOR)
     return V.getOperand(Index);
   if (V.getOpcode() == ISD::VECTOR_SHUFFLE)
@@ -2281,7 +2281,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
            Operand.getValueType().isFloatingPoint() && "Invalid FP cast!");
     if (Operand.getValueType() == VT) return Operand;  // noop conversion.
     if (Operand.getOpcode() == ISD::UNDEF)
-      return getNode(ISD::UNDEF, DL, VT);
+      return getUNDEF(VT);
     break;
   case ISD::SIGN_EXTEND:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
@@ -2339,14 +2339,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     if (OpOpcode == ISD::BIT_CONVERT)  // bitconv(bitconv(x)) -> bitconv(x)
       return getNode(ISD::BIT_CONVERT, DL, VT, Operand.getOperand(0));
     if (OpOpcode == ISD::UNDEF)
-      return getNode(ISD::UNDEF, DL, VT);
+      return getUNDEF(VT);
     break;
   case ISD::SCALAR_TO_VECTOR:
     assert(VT.isVector() && !Operand.getValueType().isVector() &&
            VT.getVectorElementType() == Operand.getValueType() &&
            "Illegal SCALAR_TO_VECTOR node!");
     if (OpOpcode == ISD::UNDEF)
-      return getNode(ISD::UNDEF, DL, VT);
+      return getUNDEF(VT);
     // scalar_to_vector(extract_vector_elt V, 0) -> V, top bits are undefined.
     if (OpOpcode == ISD::EXTRACT_VECTOR_ELT &&
         isa<ConstantSDNode>(Operand.getOperand(1)) &&
@@ -2575,7 +2575,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
   case ISD::EXTRACT_VECTOR_ELT:
     // EXTRACT_VECTOR_ELT of an UNDEF is an UNDEF.
     if (N1.getOpcode() == ISD::UNDEF)
-      return getNode(ISD::UNDEF, DL, VT);
+      return getUNDEF(VT);
       
     // EXTRACT_VECTOR_ELT of CONCAT_VECTORS is often formed while lowering is
     // expanding copies of large vectors from registers.
@@ -3569,7 +3569,7 @@ SDValue SelectionDAG::getLoad(MVT VT, DebugLoc dl,
                               SDValue Chain, SDValue Ptr,
                               const Value *SV, int SVOffset,
                               bool isVolatile, unsigned Alignment) {
-  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDValue Undef = getUNDEF(Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, dl, ISD::NON_EXTLOAD, VT, Chain, Ptr, Undef,
                  SV, SVOffset, VT, isVolatile, Alignment);
 }
@@ -3579,7 +3579,7 @@ SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, MVT VT,
                                  const Value *SV,
                                  int SVOffset, MVT EVT,
                                  bool isVolatile, unsigned Alignment) {
-  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDValue Undef = getUNDEF(Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, dl, ExtType, VT, Chain, Ptr, Undef,
                  SV, SVOffset, EVT, isVolatile, Alignment);
 }
@@ -3605,7 +3605,7 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
     Alignment = getMVTAlignment(VT);
 
   SDVTList VTs = getVTList(MVT::Other);
-  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDValue Undef = getUNDEF(Ptr.getValueType());
   SDValue Ops[] = { Chain, Val, Ptr, Undef };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
@@ -3640,7 +3640,7 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
     Alignment = getMVTAlignment(VT);
 
   SDVTList VTs = getVTList(MVT::Other);
-  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDValue Undef = getUNDEF(Ptr.getValueType());
   SDValue Ops[] = { Chain, Val, Ptr, Undef };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
@@ -3775,12 +3775,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
                  Ops, NumOps);
 }
 
-SDValue SelectionDAG::getNode(unsigned Opcode,
-                              const MVT *VTs, unsigned NumVTs,
-                              const SDValue *Ops, unsigned NumOps) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VTs, NumVTs, Ops, NumOps);
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
                               const MVT *VTs, unsigned NumVTs,
                               const SDValue *Ops, unsigned NumOps) {
@@ -3789,11 +3783,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
   return getNode(Opcode, DL, makeVTList(VTs, NumVTs), Ops, NumOps);
 }  
   
-SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                              const SDValue *Ops, unsigned NumOps) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VTList, Ops, NumOps);
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
                               const SDValue *Ops, unsigned NumOps) {
   if (VTList.NumVTs == 1)

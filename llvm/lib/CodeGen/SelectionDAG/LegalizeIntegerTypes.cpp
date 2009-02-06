@@ -592,8 +592,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_UDIV(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_UNDEF(SDNode *N) {
-  return DAG.getNode(ISD::UNDEF, N->getDebugLoc(),
-                     TLI.getTypeToTransformTo(N->getValueType(0)));
+  return DAG.getUNDEF(TLI.getTypeToTransformTo(N->getValueType(0)));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
@@ -1314,7 +1313,7 @@ void DAGTypeLegalizer::ExpandIntRes_ANY_EXTEND(SDNode *N,
   if (Op.getValueType().bitsLE(NVT)) {
     // The low part is any extension of the input (which degenerates to a copy).
     Lo = DAG.getNode(ISD::ANY_EXTEND, dl, NVT, Op);
-    Hi = DAG.getNode(ISD::UNDEF, dl, NVT);   // The high part is undefined.
+    Hi = DAG.getUNDEF(NVT);   // The high part is undefined.
   } else {
     // For example, extension of an i48 to an i64.  The operand type necessarily
     // promotes to the result type, so will end up being expanded too.
@@ -1495,7 +1494,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     } else {
       assert(ExtType == ISD::EXTLOAD && "Unknown extload!");
       // The high part is undefined.
-      Hi = DAG.getNode(ISD::UNDEF, dl, NVT);
+      Hi = DAG.getUNDEF(NVT);
     }
   } else if (TLI.isLittleEndian()) {
     // Little-endian - low bits are at low addresses.

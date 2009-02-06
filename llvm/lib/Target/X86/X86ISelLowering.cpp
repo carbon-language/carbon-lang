@@ -1624,7 +1624,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
             Arg = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i64, Arg);
             Arg = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2i64, Arg);
             Arg = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v2i64,
-                              DAG.getNode(ISD::UNDEF, dl, MVT::v2i64), Arg,
+                              DAG.getUNDEF(MVT::v2i64), Arg,
                               getMOVLMask(2, DAG, dl));
             break;
           }
@@ -1790,12 +1790,8 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   SmallVector<SDValue, 8> Ops;
 
   if (IsTailCall) {
-    Ops.push_back(Chain);
-    Ops.push_back(DAG.getIntPtrConstant(NumBytes, true));
-    Ops.push_back(DAG.getIntPtrConstant(0, true));
-    if (InFlag.getNode())
-      Ops.push_back(InFlag);
-    Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
+    Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
+                           DAG.getIntPtrConstant(0, true), InFlag);
     InFlag = Chain.getValue(1);
  
     // Returns a chain & a flag for retval copy to use.
@@ -2730,7 +2726,7 @@ static SDValue CommuteVectorShuffle(SDValue Op, SDValue &V1,
   for (unsigned i = 0; i != NumElems; ++i) {
     SDValue Arg = Mask.getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) {
-      MaskVec.push_back(DAG.getNode(ISD::UNDEF, dl, EltVT));
+      MaskVec.push_back(DAG.getUNDEF(EltVT));
       continue;
     }
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
@@ -2757,7 +2753,7 @@ SDValue CommuteVectorShuffleMask(SDValue Mask, SelectionDAG &DAG, DebugLoc dl) {
   for (unsigned i = 0; i != NumElems; ++i) {
     SDValue Arg = Mask.getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) {
-      MaskVec.push_back(DAG.getNode(ISD::UNDEF, dl, EltVT));
+      MaskVec.push_back(DAG.getUNDEF(EltVT));
       continue;
     }
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
@@ -3067,7 +3063,7 @@ static SDValue PromoteSplat(SDValue Op, SelectionDAG &DAG, bool HasSSE2) {
 
   V1 = DAG.getNode(ISD::BIT_CONVERT, dl, PVT, V1);
   SDValue Shuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, PVT, V1,
-                                  DAG.getNode(ISD::UNDEF, PVT), Mask);
+                                  DAG.getUNDEF(PVT), Mask);
   return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Shuffle);
 }
 
@@ -3109,7 +3105,7 @@ static SDValue CanonicalizeMovddup(SDValue Op, SDValue V1, SDValue Mask,
 
   V1 = DAG.getNode(ISD::BIT_CONVERT, dl, PVT, V1);
   SDValue Shuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, PVT, V1,
-                                DAG.getNode(ISD::UNDEF, dl, PVT), Mask);
+                                DAG.getUNDEF(PVT), Mask);
   return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Shuffle);
 }
 
@@ -3123,7 +3119,7 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
   DebugLoc dl = V2.getNode()->getDebugLoc();
   MVT VT = V2.getValueType();
   SDValue V1 = isZero
-    ? getZeroVector(VT, HasSSE2, DAG, dl) : DAG.getNode(ISD::UNDEF, dl, VT);
+    ? getZeroVector(VT, HasSSE2, DAG, dl) : DAG.getUNDEF(VT);
   unsigned NumElems = V2.getValueType().getVectorNumElements();
   MVT MaskVT = MVT::getIntVectorWithNumElements(NumElems);
   MVT EVT = MaskVT.getVectorElementType();
@@ -3219,7 +3215,7 @@ static SDValue LowerBuildVectorv16i8(SDValue Op, unsigned NonZeros,
       if (NumZero)
         V = getZeroVector(MVT::v8i16, true, DAG, dl);
       else
-        V = DAG.getNode(ISD::UNDEF, dl, MVT::v8i16);
+        V = DAG.getUNDEF(MVT::v8i16);
       First = false;
     }
 
@@ -3266,7 +3262,7 @@ static SDValue LowerBuildVectorv8i16(SDValue Op, unsigned NonZeros,
         if (NumZero)
           V = getZeroVector(MVT::v8i16, true, DAG, dl);
         else
-          V = DAG.getNode(ISD::UNDEF, dl, MVT::v8i16);
+          V = DAG.getUNDEF(MVT::v8i16);
         First = false;
       }
       V = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, 
@@ -3337,7 +3333,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
 
   if (NumNonZero == 0) {
     // All undef vector. Return an UNDEF.  All zero vectors were handled above.
-    return DAG.getNode(ISD::UNDEF, dl, VT);
+    return DAG.getUNDEF(VT);
   }
 
   // Special case for single non-zero, non-undef, element.
@@ -3368,7 +3364,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
         // a vector.  If Idx != 0, swizzle it into place.
         if (Idx != 0) {
           SDValue Ops[] = { 
-            Item, DAG.getNode(ISD::UNDEF, dl, Item.getValueType()),
+            Item, DAG.getUNDEF(Item.getValueType()),
             getSwapEltZeroMask(VecElts, Idx, DAG, dl)
           };
           Item = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VecVT, Ops, 3);
@@ -3422,7 +3418,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
       SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT,
                                    &MaskVec[0], MaskVec.size());
       return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, Item,
-                         DAG.getNode(ISD::UNDEF, VT), Mask);
+                         DAG.getUNDEF(VT), Mask);
     }
   }
 
@@ -3752,12 +3748,12 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       for (unsigned i = 0; i < 8; ++i) {
         SDValue Elt = V1Elts[i];
         if (Elt.getOpcode() == ISD::UNDEF) {
-          MaskVec.push_back(DAG.getNode(ISD::UNDEF, dl, MaskEVT));
+          MaskVec.push_back(DAG.getUNDEF(MaskEVT));
           continue;
         }
         unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
         if (EltIdx >= 8)
-          MaskVec.push_back(DAG.getNode(ISD::UNDEF, dl, MaskEVT));
+          MaskVec.push_back(DAG.getUNDEF(MaskEVT));
         else
           MaskVec.push_back(DAG.getConstant(EltIdx, MaskEVT));
       }
@@ -3840,7 +3836,7 @@ SDValue RewriteAsNarrowerShuffle(SDValue V1, SDValue V2,
         return SDValue();
     }
     if (StartIdx == ~0U)
-      MaskVec.push_back(DAG.getNode(ISD::UNDEF, dl, MaskEltVT));
+      MaskVec.push_back(DAG.getUNDEF(MaskEltVT));
     else
       MaskVec.push_back(DAG.getConstant(StartIdx / Scale, MaskEltVT));
   }
@@ -3897,7 +3893,7 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
   MVT MaskEVT = MaskVT.getVectorElementType();
   SmallVector<std::pair<int, int>, 8> Locs;
   Locs.resize(4);
-  SmallVector<SDValue, 8> Mask1(4, DAG.getNode(ISD::UNDEF, dl, MaskEVT));
+  SmallVector<SDValue, 8> Mask1(4, DAG.getUNDEF(MaskEVT));
   unsigned NumHi = 0;
   unsigned NumLo = 0;
   for (unsigned i = 0; i != 4; ++i) {
@@ -3929,7 +3925,7 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
                      DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT,
                                  &Mask1[0], Mask1.size()));
 
-    SmallVector<SDValue, 8> Mask2(4, DAG.getNode(ISD::UNDEF, dl, MaskEVT));
+    SmallVector<SDValue, 8> Mask2(4, DAG.getUNDEF(MaskEVT));
     for (unsigned i = 0; i != 4; ++i) {
       if (Locs[i].first == -1)
         continue;
@@ -3969,9 +3965,9 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
     }
 
     Mask1[0] = PermMask.getOperand(HiIndex);
-    Mask1[1] = DAG.getNode(ISD::UNDEF, dl, MaskEVT);
+    Mask1[1] = DAG.getUNDEF(MaskEVT);
     Mask1[2] = PermMask.getOperand(HiIndex^1);
-    Mask1[3] = DAG.getNode(ISD::UNDEF, dl, MaskEVT);
+    Mask1[3] = DAG.getUNDEF(MaskEVT);
     V2 = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, V1, V2,
                      DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT, &Mask1[0], 4));
 
@@ -4004,8 +4000,8 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
 
   // Break it into (shuffle shuffle_hi, shuffle_lo).
   Locs.clear();
-  SmallVector<SDValue,8> LoMask(4, DAG.getNode(ISD::UNDEF, MaskEVT));
-  SmallVector<SDValue,8> HiMask(4, DAG.getNode(ISD::UNDEF, MaskEVT));
+  SmallVector<SDValue,8> LoMask(4, DAG.getUNDEF(MaskEVT));
+  SmallVector<SDValue,8> HiMask(4, DAG.getUNDEF(MaskEVT));
   SmallVector<SDValue,8> *MaskPtr = &LoMask;
   unsigned MaskIdx = 0;
   unsigned LoIdx = 0;
@@ -4040,7 +4036,7 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
   SmallVector<SDValue, 8> MaskOps;
   for (unsigned i = 0; i != 4; ++i) {
     if (Locs[i].first == -1) {
-      MaskOps.push_back(DAG.getNode(ISD::UNDEF, dl, MaskEVT));
+      MaskOps.push_back(DAG.getUNDEF(MaskEVT));
     } else {
       unsigned Idx = Locs[i].first * 4 + Locs[i].second;
       MaskOps.push_back(DAG.getConstant(Idx, MaskEVT));
@@ -4066,7 +4062,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   bool V2IsSplat = false;
 
   if (isUndefShuffle(Op.getNode()))
-    return DAG.getNode(ISD::UNDEF, dl, VT);
+    return DAG.getUNDEF(VT);
 
   if (isZeroShuffle(Op.getNode()))
     return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
@@ -4232,7 +4228,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   if (isMMX && NumElems == 4 && X86::isPSHUFDMask(PermMask.getNode())) {
     if (V2.getOpcode() != ISD::UNDEF)
       return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, V1,
-                         DAG.getNode(ISD::UNDEF, VT), PermMask);
+                         DAG.getUNDEF(VT), PermMask);
     return Op;
   }
 
@@ -4246,10 +4242,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
         RVT = MVT::v4i32;
         Op = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, RVT,
                          DAG.getNode(ISD::BIT_CONVERT, dl, RVT, V1),
-                         DAG.getNode(ISD::UNDEF, dl, RVT), PermMask);
+                         DAG.getUNDEF(RVT), PermMask);
       } else if (V2.getOpcode() != ISD::UNDEF)
         Op = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, RVT, V1,
-                         DAG.getNode(ISD::UNDEF, dl, RVT), PermMask);
+                         DAG.getUNDEF(RVT), PermMask);
       if (RVT != VT)
         Op = DAG.getNode(ISD::BIT_CONVERT, dl, VT, Op);
       return Op;
@@ -4370,17 +4366,16 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     IdxVec.
       push_back(DAG.getConstant(Idx, MaskVT.getVectorElementType()));
     IdxVec.
-      push_back(DAG.getNode(ISD::UNDEF, dl, MaskVT.getVectorElementType()));
+      push_back(DAG.getUNDEF(MaskVT.getVectorElementType()));
     IdxVec.
-      push_back(DAG.getNode(ISD::UNDEF, dl, MaskVT.getVectorElementType()));
+      push_back(DAG.getUNDEF(MaskVT.getVectorElementType()));
     IdxVec.
-      push_back(DAG.getNode(ISD::UNDEF, dl, MaskVT.getVectorElementType()));
+      push_back(DAG.getUNDEF(MaskVT.getVectorElementType()));
     SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT,
                                  &IdxVec[0], IdxVec.size());
     SDValue Vec = Op.getOperand(0);
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, Vec.getValueType(),
-                      Vec, DAG.getNode(ISD::UNDEF, dl, Vec.getValueType()), 
-                      Mask);
+                      Vec, DAG.getUNDEF(Vec.getValueType()), Mask);
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, VT, Vec,
                        DAG.getIntPtrConstant(0));
   } else if (VT.getSizeInBits() == 64) {
@@ -4398,12 +4393,12 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     SmallVector<SDValue, 8> IdxVec;
     IdxVec.push_back(DAG.getConstant(1, MaskVT.getVectorElementType()));
     IdxVec.
-      push_back(DAG.getNode(ISD::UNDEF, dl, MaskVT.getVectorElementType()));
+      push_back(DAG.getUNDEF(MaskVT.getVectorElementType()));
     SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT,
                                  &IdxVec[0], IdxVec.size());
     SDValue Vec = Op.getOperand(0);
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, Vec.getValueType(),
-                      Vec, DAG.getNode(ISD::UNDEF, dl, Vec.getValueType()), 
+                      Vec, DAG.getUNDEF(Vec.getValueType()), 
                       Mask);
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, VT, Vec,
                        DAG.getIntPtrConstant(0));
@@ -4595,7 +4590,7 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                              GA->getValueType(0),
                                              GA->getOffset());
   SDValue Ops[] = { Chain,  TGA, InFlag };
-  SDValue Result = DAG.getNode(X86ISD::TLSADDR, NodeTys, Ops, 3);
+  SDValue Result = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 3);
   InFlag = Result.getValue(2);
   Chain = Result.getValue(1);
 
@@ -4611,7 +4606,7 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                       DAG.getRegister(X86::EAX, PtrVT),
                       DAG.getRegister(X86::EBX, PtrVT),
                       InFlag };
-  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops1, 5);
+  Chain = DAG.getNode(X86ISD::CALL, dl, NodeTys, Ops1, 5);
   InFlag = Chain.getValue(1);
 
   return DAG.getCopyFromReg(Chain, dl, X86::EAX, PtrVT, InFlag);
@@ -4630,7 +4625,7 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                              GA->getValueType(0),
                                              GA->getOffset());
   SDValue Ops[]  = { DAG.getEntryNode(), TGA};
-  SDValue Result = DAG.getNode(X86ISD::TLSADDR, NodeTys, Ops, 2);
+  SDValue Result = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 2);
   Chain  = Result.getValue(1);
   InFlag = Result.getValue(2);
 
@@ -4645,7 +4640,7 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                                   PtrVT),
                       DAG.getRegister(X86::RDI, PtrVT),
                       InFlag };
-  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops1, 4);
+  Chain = DAG.getNode(X86ISD::CALL, dl, NodeTys, Ops1, 4);
   InFlag = Chain.getValue(1);
 
   return DAG.getCopyFromReg(Chain, dl, X86::RAX, PtrVT, InFlag);

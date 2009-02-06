@@ -882,6 +882,7 @@ PIC16TargetLowering::LowerCallArguments(SDValue Op, SDValue Chain,
                                         SelectionDAG &DAG) {
   CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
   unsigned NumOps = TheCall->getNumArgs();
+  DebugLoc dl = TheCall->getDebugLoc();
   std::string Name;
   SDValue Arg, StoreAt;
   MVT ArgVT;
@@ -917,7 +918,7 @@ PIC16TargetLowering::LowerCallArguments(SDValue Op, SDValue Chain,
     Ops.push_back(DAG.getConstant(StoreOffset, MVT::i8));
     Ops.push_back(InFlag);
 
-    StoreRet = DAG.getNode (PIC16ISD::PIC16StWF, Tys, &Ops[0], Ops.size());
+    StoreRet = DAG.getNode (PIC16ISD::PIC16StWF, dl, Tys, &Ops[0], Ops.size());
 
     Chain = getChain(StoreRet);
     InFlag = getOutFlag(StoreRet);
@@ -1192,15 +1193,16 @@ SDValue PIC16TargetLowering:: LowerFORMAL_ARGUMENTS(SDValue Op,
                                                     SelectionDAG &DAG) {
   SmallVector<SDValue, 8> ArgValues;
   unsigned NumArgs = Op.getNumOperands() - 3;
+  DebugLoc dl = Op.getDebugLoc();
 
   // Creating UNDEF nodes to meet the requirement of MERGE_VALUES node.
   for(unsigned i = 0 ; i<NumArgs ; i++) {
-    SDValue TempNode = DAG.getNode(ISD::UNDEF, Op.getNode()->getValueType(i));
+    SDValue TempNode = DAG.getUNDEF(Op.getNode()->getValueType(i));
     ArgValues.push_back(TempNode);
   }
 
   ArgValues.push_back(Op.getOperand(0));
-  return DAG.getNode(ISD::MERGE_VALUES, Op.getNode()->getVTList(), 
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(), 
                      &ArgValues[0],
                      ArgValues.size()).getValue(Op.getResNo());
 }

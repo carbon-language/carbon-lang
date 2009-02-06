@@ -867,7 +867,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
 
     if (isa<UndefValue>(C) && !isa<VectorType>(V->getType()) &&
         !V->getType()->isAggregateType())
-      return N = DAG.getNode(ISD::UNDEF, getCurDebugLoc(), VT);
+      return N = DAG.getUNDEF(VT);
 
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       visit(CE->getOpcode(), *CE);
@@ -901,7 +901,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
       for (unsigned i = 0; i != NumElts; ++i) {
         MVT EltVT = ValueVTs[i];
         if (isa<UndefValue>(C))
-          Constants[i] = DAG.getNode(ISD::UNDEF, getCurDebugLoc(), EltVT);
+          Constants[i] = DAG.getUNDEF(EltVT);
         else if (EltVT.isFloatingPoint())
           Constants[i] = DAG.getConstantFP(0, EltVT);
         else
@@ -926,7 +926,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
 
       SDValue Op;
       if (isa<UndefValue>(C))
-        Op = DAG.getNode(ISD::UNDEF, getCurDebugLoc(), EltVT);
+        Op = DAG.getUNDEF(EltVT);
       else if (EltVT.isFloatingPoint())
         Op = DAG.getConstantFP(0, EltVT);
       else
@@ -2438,7 +2438,7 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
 
     // Pad both vectors with undefs to make them the same length as the mask.
     unsigned NumConcat = MaskNumElts / SrcNumElts;
-    SDValue UndefVal = DAG.getNode(ISD::UNDEF, getCurDebugLoc(), SrcVT);
+    SDValue UndefVal = DAG.getUNDEF(SrcVT);
 
     SDValue* MOps1 = new SDValue[NumConcat];
     SDValue* MOps2 = new SDValue[NumConcat];
@@ -2540,8 +2540,7 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
     }
 
     if (RangeUse[0] == 0 && RangeUse[0] == 0) {
-      setValue(&I, DAG.getNode(ISD::UNDEF, 
-                          getCurDebugLoc(), VT));  // Vectors are not used.
+      setValue(&I, DAG.getUNDEF(VT));  // Vectors are not used.
       return;
     }
     else if (RangeUse[0] < 2 && RangeUse[1] < 2) {
@@ -2549,7 +2548,7 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
       for (int Input=0; Input < 2; ++Input) {
         SDValue& Src = Input == 0 ? Src1 : Src2;
         if (RangeUse[Input] == 0) {
-          Src = DAG.getNode(ISD::UNDEF, getCurDebugLoc(), VT);
+          Src = DAG.getUNDEF(VT);
         } else {
           Src = DAG.getNode(ISD::EXTRACT_SUBVECTOR, getCurDebugLoc(), VT,
                             Src, DAG.getIntPtrConstant(StartIdx[Input]));
@@ -2589,7 +2588,7 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
   for (int i = 0; i != MaskNumElts; ++i) {
     SDValue Arg = Mask.getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) {
-      Ops.push_back(DAG.getNode(ISD::UNDEF, getCurDebugLoc(), EltVT));
+      Ops.push_back(DAG.getUNDEF(EltVT));
     } else {
       assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
       int Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
@@ -2631,18 +2630,15 @@ void SelectionDAGLowering::visitInsertValue(InsertValueInst &I) {
   unsigned i = 0;
   // Copy the beginning value(s) from the original aggregate.
   for (; i != LinearIndex; ++i)
-    Values[i] = IntoUndef ? DAG.getNode(ISD::UNDEF, getCurDebugLoc(), 
-                                        AggValueVTs[i]) :
+    Values[i] = IntoUndef ? DAG.getUNDEF(AggValueVTs[i]) :
                 SDValue(Agg.getNode(), Agg.getResNo() + i);
   // Copy values from the inserted value(s).
   for (; i != LinearIndex + NumValValues; ++i)
-    Values[i] = FromUndef ? DAG.getNode(ISD::UNDEF, getCurDebugLoc(), 
-                                        AggValueVTs[i]) :
+    Values[i] = FromUndef ? DAG.getUNDEF(AggValueVTs[i]) :
                 SDValue(Val.getNode(), Val.getResNo() + i - LinearIndex);
   // Copy remaining value(s) from the original aggregate.
   for (; i != NumAggValues; ++i)
-    Values[i] = IntoUndef ? DAG.getNode(ISD::UNDEF, getCurDebugLoc(), 
-                                        AggValueVTs[i]) :
+    Values[i] = IntoUndef ? DAG.getUNDEF(AggValueVTs[i]) :
                 SDValue(Agg.getNode(), Agg.getResNo() + i);
 
   setValue(&I, DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(), 
@@ -2670,8 +2666,7 @@ void SelectionDAGLowering::visitExtractValue(ExtractValueInst &I) {
   for (unsigned i = LinearIndex; i != LinearIndex + NumValValues; ++i)
     Values[i - LinearIndex] =
       OutOfUndef ?
-        DAG.getNode(ISD::UNDEF, getCurDebugLoc(), 
-                    Agg.getNode()->getValueType(Agg.getResNo() + i)) :
+        DAG.getUNDEF(Agg.getNode()->getValueType(Agg.getResNo() + i)) :
         SDValue(Agg.getNode(), Agg.getResNo() + i);
 
   setValue(&I, DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(), 
