@@ -116,6 +116,7 @@ public:
   /// Arguments - The list of arguments for a function-like macro.  This can be
   /// empty, for, e.g. "#define X()".
   typedef IdentifierInfo* const *arg_iterator;
+  bool arg_empty() const { return NumArguments == 0; }
   arg_iterator arg_begin() const { return ArgumentList; }
   arg_iterator arg_end() const { return ArgumentList+NumArguments; }
   unsigned getNumArgs() const { return NumArguments; }
@@ -163,6 +164,7 @@ public:
   typedef llvm::SmallVector<Token, 8>::const_iterator tokens_iterator;
   tokens_iterator tokens_begin() const { return ReplacementTokens.begin(); }
   tokens_iterator tokens_end() const { return ReplacementTokens.end(); }
+  bool tokens_empty() const { return ReplacementTokens.empty(); }
   
   /// AddTokenToBody - Add the specified token to the replacement text for the
   /// macro.

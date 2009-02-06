@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang.h"
+#include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Pragma.h"
@@ -39,6 +40,10 @@ static llvm::cl::opt<bool>
 EnableMacroCommentOutput("CC",
                          llvm::cl::desc("Enable comment output in -E mode, "
                                         "even from macro expansions"));
+static llvm::cl::opt<bool>
+DumpMacros("dM", llvm::cl::desc("Print macro definitions in -E mode instead of"
+                                " normal output"));
+
 
 namespace {
 class PrintPPOutputPPCallbacks : public PPCallbacks {
@@ -543,6 +548,49 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
   }
 }
 
+/// PrintMacroDefinition - Print a macro definition in a form that will be
+/// properly accepted back as a definition.
+static void PrintMacroDefinition(IdentifierInfo &II, const MacroInfo &MI,
+                                 Preprocessor &PP, llvm::raw_ostream &OS) {
+  // Ignore computed macros like __LINE__ and friends. 
+  if (MI.isBuiltinMacro()) return;
+  OS << "#define " << II.getName();
+
+  if (MI.isFunctionLike()) {
+    OS << '(';
+    if (MI.arg_empty())
+      ;
+    else if (MI.getNumArgs() == 1) 
+      OS << (*MI.arg_begin())->getName();
+    else {
+      MacroInfo::arg_iterator AI = MI.arg_begin(), E = MI.arg_end();
+      OS << (*AI++)->getName();
+      while (AI != E)
+        OS << ',' << (*AI++)->getName();
+    }
+    
+    if (MI.isVariadic()) {
+      if (!MI.arg_empty())
+        OS << ',';
+      OS << "...";
+    }
+    OS << ')';
+  }
+  
+  // GCC always emits a space, even if the macro body is empty.  However, do not
+  // want to emit two spaces if the first token has a leading space.
+  if (MI.tokens_empty() || !MI.tokens_begin()->hasLeadingSpace())
+    OS << ' ';
+  
+  for (MacroInfo::tokens_iterator I = MI.tokens_begin(), E = MI.tokens_end();
+       I != E; ++I) {
+    if (I->hasLeadingSpace())
+      OS << ' ';
+    OS << PP.getSpelling(*I);
+  }
+  OS << "\n";
+}
+
 
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
@@ -564,31 +612,45 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
   
   OS.SetBufferSize(64*1024);
   
-  Token Tok;
-  PrintPPOutputPPCallbacks *Callbacks;
-  Callbacks = new PrintPPOutputPPCallbacks(PP, OS);
-  PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
-  PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",Callbacks));
+  if (DumpMacros) {
+    // -dM mode just scans and ignores all tokens in the files, then dumps out
+    // the macro table at the end.
+    PP.EnterMainSourceFile();
+    
+    Token Tok;
+    do PP.Lex(Tok);
+    while (Tok.isNot(tok::eof));
+    
+    for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
+         I != E; ++I)
+      PrintMacroDefinition(*I->first, *I->second, PP, OS);
+    
+  } else {
+    PrintPPOutputPPCallbacks *Callbacks;
+    Callbacks = new PrintPPOutputPPCallbacks(PP, OS);
+    PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
+    PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
+                                                        Callbacks));
 
-  PP.setPPCallbacks(Callbacks);
+    PP.setPPCallbacks(Callbacks);
 
-  // After we have configured the preprocessor, enter the main file.
-  
-  // Start parsing the specified input file.
-  PP.EnterMainSourceFile();
+    // After we have configured the preprocessor, enter the main file.
+    PP.EnterMainSourceFile();
 
-  // Consume all of the tokens that come from the predefines buffer.  Those
-  // should not be emitted into the output and are guaranteed to be at the
-  // start.
-  const SourceManager &SourceMgr = PP.getSourceManager();
-  do PP.Lex(Tok);
-  while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
-         !strcmp(SourceMgr.getPresumedLoc(Tok.getLocation()).getFilename(),
-                 "<predefines>"));
+    // Consume all of the tokens that come from the predefines buffer.  Those
+    // should not be emitted into the output and are guaranteed to be at the
+    // start.
+    const SourceManager &SourceMgr = PP.getSourceManager();
+    Token Tok;
+    do PP.Lex(Tok);
+    while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
+           !strcmp(SourceMgr.getPresumedLoc(Tok.getLocation()).getFilename(),
+                   "<predefines>"));
 
-  // Read all the preprocessed tokens, printing them out to the stream.
-  PrintPreprocessedTokens(PP, Tok, Callbacks, OS);
-  OS << '\n';
+    // Read all the preprocessed tokens, printing them out to the stream.
+    PrintPreprocessedTokens(PP, Tok, Callbacks, OS);
+    OS << '\n';
+  }
   
   // Flush the ostream.
   OS.flush();

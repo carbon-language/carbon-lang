@@ -13,7 +13,7 @@
 //
 // Options to support:
 //   -H       - Print the name of each header file used.
-//   -d[MDNI] - Dump various things.
+//   -d[DNI] - Dump various things.
 //   -fworking-directory - #line's with preprocessor's working dir.
 //   -fpreprocessed
 //   -dependency-file,-M,-MM,-MF,-MG,-MP,-MT,-MQ,-MD,-MMD
