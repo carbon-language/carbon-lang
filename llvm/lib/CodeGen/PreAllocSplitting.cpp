@@ -1128,7 +1128,10 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs,
   // by the current barrier.
   SmallVector<LiveInterval*, 8> Intervals;
   for (const TargetRegisterClass **RC = RCs; *RC; ++RC) {
-    if (TII->IgnoreRegisterClassBarriers(*RC))
+    // FIXME: If it's not safe to move any instruction that defines the barrier
+    // register class, then it means there are some special dependencies which
+    // codegen is not modelling. Ignore these barriers for now.
+    if (!TII->isSafeToMoveRegClassDefs(*RC))
       continue;
     std::vector<unsigned> &VRs = MRI->getRegClassVirtRegs(*RC);
     for (unsigned i = 0, e = VRs.size(); i != e; ++i) {

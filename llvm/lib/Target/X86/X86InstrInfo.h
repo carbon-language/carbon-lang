@@ -406,10 +406,9 @@ public:
   virtual
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 
-  /// IgnoreRegisterClassBarriers - Returns true if pre-register allocation
-  /// live interval splitting pass should ignore barriers of the specified
-  /// register class.
-  bool IgnoreRegisterClassBarriers(const TargetRegisterClass *RC) const;
+  /// isSafeToMoveRegClassDefs - Return true if it's safe to move a machine
+  /// instruction that defines the specified register class.
+  bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
 
   const TargetRegisterClass *getPointerRegClass() const;
 

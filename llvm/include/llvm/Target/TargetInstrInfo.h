@@ -427,10 +427,9 @@ public:
     return false;
   }
 
-  /// IgnoreRegisterClassBarriers - Returns true if pre-register allocation
-  /// live interval splitting pass should ignore barriers of the specified
-  /// register class.
-  virtual bool IgnoreRegisterClassBarriers(const TargetRegisterClass *RC) const{
+  /// isSafeToMoveRegClassDefs - Return true if it's safe to move a machine
+  /// instruction that defines the specified register class.
+  virtual bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
     return true;
   }
 
