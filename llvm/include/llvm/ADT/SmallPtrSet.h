@@ -21,6 +21,8 @@
 
 namespace llvm {
 
+class SmallPtrSetIteratorImpl;
+
 /// SmallPtrSetImpl - This is the common code shared among all the
 /// SmallPtrSet<>'s, which is almost everything.  SmallPtrSet has two modes, one
 /// for small and one for large sets.
@@ -40,6 +42,7 @@ namespace llvm {
 /// more.  When this happens, the table is doubled in size.
 ///
 class SmallPtrSetImpl {
+  friend class SmallPtrSetIteratorImpl;
 protected:
   /// CurArray - This is the current set of buckets.  If it points to
   /// SmallArray, then the set is in 'small mode'.
@@ -56,7 +59,6 @@ protected:
 
   // Helper to copy construct a SmallPtrSet.
   SmallPtrSetImpl(const SmallPtrSetImpl& that);
-public:
   explicit SmallPtrSetImpl(unsigned SmallSize) {
     assert(SmallSize && (SmallSize & (SmallSize-1)) == 0 &&
            "Initial size must be a power of two!");
@@ -69,15 +71,9 @@ public:
   }
   ~SmallPtrSetImpl();
 
+public:
   bool empty() const { return size() == 0; }
   unsigned size() const { return NumElements; }
-
-  static void *getTombstoneMarker() { return reinterpret_cast<void*>(-2); }
-  static void *getEmptyMarker() {
-    // Note that -1 is chosen to make clear() efficiently implementable with
-    // memset and because it's not a valid pointer value.
-    return reinterpret_cast<void*>(-1);
-  }
 
   void clear() {
     // If the capacity of the array is huge, and the # elements used is small,
@@ -92,6 +88,13 @@ public:
   }
 
 protected:
+  static void *getTombstoneMarker() { return reinterpret_cast<void*>(-2); }
+  static void *getEmptyMarker() {
+    // Note that -1 is chosen to make clear() efficiently implementable with
+    // memset and because it's not a valid pointer value.
+    return reinterpret_cast<void*>(-1);
+  }
+
   /// insert_imp - This returns true if the pointer was new to the set, false if
   /// it was already in the set.  This is hidden from the client so that the
   /// derived class can check that the right type of pointer is passed in.
