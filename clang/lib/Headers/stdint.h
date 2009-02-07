@@ -104,9 +104,9 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 #if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS)
 
-#define INT8_MAX    ((int8_t)127)
-#define INT8_MIN   ((int8_t)-128)
-#define UINT8_MAX  ((uint8_t)255)
+#define INT8_MAX    127
+#define INT8_MIN   -128
+#define UINT8_MAX   255U
 #define INT_LEAST8_MIN   INT8_MIN
 #define INT_LEAST8_MAX   INT8_MAX
 #define UINT_LEAST8_MAX UINT8_MAX
@@ -114,9 +114,9 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define INT_FAST8_MAX    INT8_MAX
 #define UINT_FAST8_MAX  UINT8_MAX
 
-#define INT16_MAX    ((int16_t)32767)
-#define INT16_MIN   ((int16_t)-32768)
-#define UINT16_MAX ((uint16_t)(65535))
+#define INT16_MAX    32767
+#define INT16_MIN   -32768
+#define UINT16_MAX   65535U
 #define INT_LEAST16_MIN   INT16_MIN
 #define INT_LEAST16_MAX   INT16_MAX
 #define UINT_LEAST16_MAX UINT16_MAX
@@ -124,9 +124,9 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define INT_FAST16_MAX    INT16_MAX
 #define UINT_FAST16_MAX  UINT16_MAX
 
-#define INT32_MAX         ((int32_t)2147483647LL)
-#define INT32_MIN    ((int32_t)(-2147483647LL-1))
-#define UINT32_MAX      ((uint32_t)4294967295ULL)
+#define INT32_MAX         2147483647
+#define INT32_MIN        -2147483647-1
+#define UINT32_MAX        4294967295U
 #define INT_LEAST32_MIN  INT32_MIN
 #define INT_LEAST32_MAX  INT32_MAX
 #define UINT_LEAST32_MAX UINT32_MAX
@@ -136,9 +136,9 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 /* If we do not have 64-bit support, don't define the 64-bit size macros. */
 #ifndef __INT64_TYPE__
-#define INT64_MAX      ((int64_t)9223372036854775807LL)
-#define INT64_MIN ((int64_t)(-9223372036854775807LL-1))
-#define UINT64_MAX  ((uint64_t)18446744073709551615ULL)
+#define INT64_MAX      9223372036854775807LL
+#define INT64_MIN    (-9223372036854775807LL-1)
+#define UINT64_MAX   (18446744073709551615ULL)
 #define INT_LEAST64_MIN  INT64_MIN
 #define INT_LEAST64_MAX  INT64_MAX
 #define UINT_LEAST64_MAX UINT64_MAX
