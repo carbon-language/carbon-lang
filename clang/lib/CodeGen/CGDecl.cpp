@@ -226,6 +226,22 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       EmitAggExpr(Init, DeclPtr, D.getType().isVolatileQualified());
     }
   }
+
+  // Handle the cleanup attribute
+  if (const CleanupAttr *CA = D.getAttr<CleanupAttr>()) {
+    const FunctionDecl *FD = CA->getFunctionDecl();
+    
+    llvm::Constant* F = CGM.GetAddrOfFunction(FD);
+    assert(F && "Could not find function!");
+  
+    CleanupScope scope(*this);
+
+    CallArgList Args;
+    Args.push_back(std::make_pair(RValue::get(DeclPtr), 
+                                  getContext().getPointerType(D.getType())));
+      
+    EmitCall(CGM.getTypes().getFunctionInfo(FD), F, Args);
+  }
 }
 
 /// Emit an alloca (or GlobalValue depending on target) 
