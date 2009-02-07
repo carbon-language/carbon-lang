@@ -466,8 +466,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   EmitBlock(CondBlock);
 
-  // Evaluate the condition if present.  If not, treat it as a non-zero-constant
-  // according to 6.8.5.3p2, aka, true.
+  // Evaluate the condition if present.  If not, treat it as a
+  // non-zero-constant according to 6.8.5.3p2, aka, true.
   if (S.getCond()) {
     // As long as the condition is true, iterate the loop.
     llvm::BasicBlock *ForBody = createBasicBlock("for.body");
