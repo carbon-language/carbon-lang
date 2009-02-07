@@ -71,7 +71,7 @@
 
 // FIXME: atan2 -> binary operation.
 #define cbrt(x)  __builtin_overload(1, x, cbrtl, cbrt, cbrtf)
-#define ceil(x)  __builtin_overload(1, x, ceil, ceil, ceilf)
+#define ceil(x)  __builtin_overload(1, x, ceill, ceil, ceilf)
 // FIXME: copysign -> binary operation.
 #define erf(x)   __builtin_overload(1, x, erfl, erf, erff)
 #define erfc(x)  __builtin_overload(1, x, erfcl, erfc, erfcf)
