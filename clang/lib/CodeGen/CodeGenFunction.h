@@ -151,7 +151,10 @@ private:
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   llvm::DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
   
-  /// BreakContinuePush - Note a new break and continue level.
+  /// BreakContinuePush - Note a new break and continue level.  This
+  /// must be called at the stack depth of the continue block.  In
+  /// particular, this must not be called after the controlling
+  /// condition has possibly started a vla.
   void BreakContinuePush(llvm::BasicBlock *bb, llvm::BasicBlock *cb) {
     BreakContinueStack.push_back(BreakContinue(bb, cb, StackDepth,
                                                ObjCEHStack.size()));

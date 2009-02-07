@@ -357,6 +357,14 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // it.
   llvm::BasicBlock *LoopHeader = createBasicBlock("while.cond");
   EmitBlock(LoopHeader);
+
+  // Create an exit block for when the condition fails, create a block for the
+  // body of the loop.
+  llvm::BasicBlock *ExitBlock = createBasicBlock("while.end");
+  llvm::BasicBlock *LoopBody  = createBasicBlock("while.body");
+
+  // Store the blocks to use for break and continue.
+  BreakContinuePush(ExitBlock, LoopHeader);
   
   // Evaluate the conditional in the while header.  C99 6.8.5.1: The
   // evaluation of the controlling expression takes place before each
@@ -370,17 +378,9 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
     if (C->isOne())
       EmitBoolCondBranch = false;
   
-  // Create an exit block for when the condition fails, create a block for the
-  // body of the loop.
-  llvm::BasicBlock *ExitBlock = createBasicBlock("while.end");
-  llvm::BasicBlock *LoopBody  = createBasicBlock("while.body");
-  
   // As long as the condition is true, go to the loop body.
   if (EmitBoolCondBranch)
     Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
-  
-  // Store the blocks to use for break and continue.
-  BreakContinuePush(ExitBlock, LoopHeader);
   
   // Emit the loop body.
   EmitBlock(LoopBody);
