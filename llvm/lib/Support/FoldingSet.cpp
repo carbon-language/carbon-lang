@@ -62,8 +62,8 @@ void FoldingSetNodeID::AddInteger(unsigned long long I) {
     Bits.push_back(unsigned(I >> 32));
 }
 
-void FoldingSetNodeID::AddString(const char *String) {
-  unsigned Size = static_cast<unsigned>(strlen(String));
+void FoldingSetNodeID::AddString(const char *String, const char *End) {
+  unsigned Size =  static_cast<unsigned>(End - String);
   Bits.push_back(Size);
   if (!Size) return;
 
@@ -77,7 +77,7 @@ void FoldingSetNodeID::AddString(const char *String) {
     Pos = (Units + 1) * 4;
   } else {
     // Otherwise do it the hard way.
-    for ( Pos += 4; Pos <= Size; Pos += 4) {
+    for (Pos += 4; Pos <= Size; Pos += 4) {
       unsigned V = ((unsigned char)String[Pos - 4] << 24) |
                    ((unsigned char)String[Pos - 3] << 16) |
                    ((unsigned char)String[Pos - 2] << 8) |
@@ -99,41 +99,12 @@ void FoldingSetNodeID::AddString(const char *String) {
   Bits.push_back(V);
 }
 
+void FoldingSetNodeID::AddString(const char *String) {
+  AddString(String, String + strlen(String));
+}
+
 void FoldingSetNodeID::AddString(const std::string &String) {
-  unsigned Size = static_cast<unsigned>(String.size());
-  Bits.push_back(Size);
-  if (!Size) return;
-
-  unsigned Units = Size / 4;
-  unsigned Pos = 0;
-  const unsigned *Base = (const unsigned *)String.data();
-  
-  // If the string is aligned do a bulk transfer.
-  if (!((intptr_t)Base & 3)) {
-    Bits.append(Base, Base + Units);
-    Pos = (Units + 1) * 4;
-  } else {
-    // Otherwise do it the hard way.
-    for ( Pos += 4; Pos <= Size; Pos += 4) {
-      unsigned V = ((unsigned char)String[Pos - 4] << 24) |
-                   ((unsigned char)String[Pos - 3] << 16) |
-                   ((unsigned char)String[Pos - 2] << 8) |
-                    (unsigned char)String[Pos - 1];
-      Bits.push_back(V);
-    }
-  }
-  
-  // With the leftover bits.
-  unsigned V = 0;
-  // Pos will have overshot size by 4 - #bytes left over. 
-  switch (Pos - Size) {
-  case 1: V = (V << 8) | (unsigned char)String[Size - 3]; // Fall thru.
-  case 2: V = (V << 8) | (unsigned char)String[Size - 2]; // Fall thru.
-  case 3: V = (V << 8) | (unsigned char)String[Size - 1]; break;
-  default: return; // Nothing left.
-  }
-
-  Bits.push_back(V);
+  AddString(&*String.begin(), &*String.end());
 }
 
 /// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used to 
