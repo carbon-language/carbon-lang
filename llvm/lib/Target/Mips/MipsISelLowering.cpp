@@ -276,8 +276,7 @@ static Mips::CondCode FPCondCCodeToFCC(ISD::CondCode CC) {
 
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                MachineBasicBlock *BB) 
-{
+                                                MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   bool isFPCmp = false;
 

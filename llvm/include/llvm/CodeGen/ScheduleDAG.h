@@ -423,7 +423,7 @@ namespace llvm {
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
     const TargetRegisterInfo *TRI;        // Target processor register info
-    TargetLowering *TLI;                  // Target lowering info
+    const TargetLowering *TLI;            // Target lowering info
     MachineFunction &MF;                  // Machine function
     MachineRegisterInfo &MRI;             // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool

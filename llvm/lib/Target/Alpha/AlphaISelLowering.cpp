@@ -706,7 +706,7 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
 
 MachineBasicBlock *
 AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                 MachineBasicBlock *BB) {
+                                                 MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   assert((MI->getOpcode() == Alpha::CAS32 ||
           MI->getOpcode() == Alpha::CAS64 ||

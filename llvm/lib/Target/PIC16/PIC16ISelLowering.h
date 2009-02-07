@@ -90,7 +90,7 @@ namespace llvm {
     SDValue getPIC16Cmp(SDValue LHS, SDValue RHS, unsigned OrigCC, SDValue &CC,
                         SelectionDAG &DAG, DebugLoc dl);
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                        MachineBasicBlock *MBB);
+                                                  MachineBasicBlock *MBB) const;
 
 
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);

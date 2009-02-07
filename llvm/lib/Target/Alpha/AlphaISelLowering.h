@@ -99,7 +99,7 @@ namespace llvm {
     bool hasITOF() { return useITOF; }
 
     MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                   MachineBasicBlock *BB);
+                                                   MachineBasicBlock *BB) const;
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 

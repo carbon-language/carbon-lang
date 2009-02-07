@@ -3953,7 +3953,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
 
 MachineBasicBlock *
 PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
-                                    bool is64bit, unsigned BinOpcode) {
+                                    bool is64bit, unsigned BinOpcode) const {
   // This also handles ATOMIC_SWAP, indicated by BinOpcode==0.
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
 
@@ -4012,7 +4012,7 @@ MachineBasicBlock *
 PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI, 
                                             MachineBasicBlock *BB,
                                             bool is8bit,    // operation
-                                            unsigned BinOpcode) {
+                                            unsigned BinOpcode) const {
   // This also handles ATOMIC_SWAP, indicated by BinOpcode==0.
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   // In 64 bit mode we have to use 64 bits for addresses, even though the
@@ -4136,7 +4136,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
 
 MachineBasicBlock *
 PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                               MachineBasicBlock *BB) {
+                                               MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
 
   // To "insert" these instructions we actually have to insert their

@@ -285,13 +285,13 @@ namespace llvm {
                                                 unsigned Depth = 0) const;
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                        MachineBasicBlock *MBB);
+                                                  MachineBasicBlock *MBB) const;
     MachineBasicBlock *EmitAtomicBinary(MachineInstr *MI, 
                                         MachineBasicBlock *MBB, bool is64Bit,
-                                        unsigned BinOpcode);
+                                        unsigned BinOpcode) const;
     MachineBasicBlock *EmitPartwordAtomicBinary(MachineInstr *MI, 
                                                 MachineBasicBlock *MBB, 
-                                                bool is8bit, unsigned Opcode);
+                                            bool is8bit, unsigned Opcode) const;
     
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*> 

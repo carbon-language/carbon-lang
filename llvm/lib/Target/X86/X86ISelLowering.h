@@ -392,7 +392,7 @@ namespace llvm {
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                        MachineBasicBlock *MBB);
+                                                  MachineBasicBlock *MBB) const;
 
  
     /// getTargetNodeName - This method returns the name of a target specific
@@ -639,7 +639,7 @@ namespace llvm {
                                                     unsigned notOpc,
                                                     unsigned EAXreg,
                                                     TargetRegisterClass *RC,
-                                                    bool invSrc = false);
+                                                    bool invSrc = false) const;
 
     MachineBasicBlock *EmitAtomicBit6432WithCustomInserter(
                                                     MachineInstr *BInstr,
@@ -648,14 +648,14 @@ namespace llvm {
                                                     unsigned regOpcH,
                                                     unsigned immOpcL,
                                                     unsigned immOpcH,
-                                                    bool invSrc = false);
+                                                    bool invSrc = false) const;
     
     /// Utility function to emit atomic min and max.  It takes the min/max
     // instruction to expand, the associated basic block, and the associated
     // cmov opcode for moving the min or max value.
     MachineBasicBlock *EmitAtomicMinMaxWithCustomInserter(MachineInstr *BInstr,
                                                           MachineBasicBlock *BB,
-                                                          unsigned cmovOpc);
+                                                        unsigned cmovOpc) const;
   };
 
   namespace X86 {

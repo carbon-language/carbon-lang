@@ -157,7 +157,7 @@ namespace llvm {
 // insert.  The specified MachineInstr is created but not inserted into any
 // basic blocks, and the scheduler passes ownership of it to this method.
 MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                       MachineBasicBlock *MBB) {
+                                                 MachineBasicBlock *MBB) const {
   cerr << "If a target marks an instruction with "
        << "'usesCustomDAGSchedInserter', it must implement "
        << "TargetLowering::EmitInstrWithCustomInserter!\n";

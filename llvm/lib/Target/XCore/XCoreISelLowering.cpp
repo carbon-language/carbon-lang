@@ -782,7 +782,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
 
 MachineBasicBlock *
 XCoreTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                               MachineBasicBlock *BB) {
+                                                 MachineBasicBlock *BB) const {
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   assert((MI->getOpcode() == XCore::SELECT_CC) &&
          "Unexpected instr type to insert");

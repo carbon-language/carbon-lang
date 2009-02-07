@@ -61,7 +61,7 @@ namespace llvm {
                                 SmallVectorImpl<SDValue> &ArgValues,
                                 DebugLoc dl);
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                        MachineBasicBlock *MBB);
+                                                   MachineBasicBlock *MBB) const;
 
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 

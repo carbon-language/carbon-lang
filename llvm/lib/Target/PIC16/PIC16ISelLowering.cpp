@@ -1359,7 +1359,7 @@ SDValue PIC16TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 
 MachineBasicBlock *
 PIC16TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                 MachineBasicBlock *BB) {
+                                                 MachineBasicBlock *BB) const {
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   unsigned CC = (PIC16CC::CondCodes)MI->getOperand(3).getImm();
 
