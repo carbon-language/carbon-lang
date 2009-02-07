@@ -847,6 +847,10 @@ static void HandlePureAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 }
 
 static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // Match gcc which ignores cleanup attrs when compiling C++.
+  if (S.getLangOptions().CPlusPlus)
+    return;
+  
   if (!Attr.getParameterName()) {    
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
@@ -868,23 +872,32 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   NamedDecl *CleanupDecl = S.LookupName(S.TUScope, Attr.getParameterName(),
                                         Sema::LookupOrdinaryName);
   if (!CleanupDecl) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_found) << 
+    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_found) <<
       Attr.getParameterName();
     return;
   }
   
   FunctionDecl *FD = dyn_cast<FunctionDecl>(CleanupDecl);
   if (!FD) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_function) << 
+    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_function) <<
       Attr.getParameterName();
     return;
   }
 
-  // FIXME: This needs to work with C++ overloading.
-  // FIXME: This should verify that the function type is compatible
   if (FD->getNumParams() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_must_take_one_arg)<<
+    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_func_must_take_one_arg) <<
       Attr.getParameterName();
+    return;
+  }
+  
+  // We're currently more strict than GCC about what function types we accept.
+  // If this ever proves to be a problem it should be easy to fix.
+  QualType Ty = S.Context.getPointerType(VD->getType());
+  QualType ParamTy = FD->getParamDecl(0)->getType();
+  if (Ty != ParamTy) {
+    S.Diag(Attr.getLoc(), 
+           diag::err_attribute_cleanup_func_arg_incompatible_type) <<
+      Attr.getParameterName() << ParamTy << Ty;
     return;
   }
   

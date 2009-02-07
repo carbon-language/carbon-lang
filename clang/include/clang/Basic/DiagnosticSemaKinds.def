@@ -385,8 +385,10 @@ DIAG(err_attribute_cleanup_arg_not_found, ERROR,
      "'cleanup' argument %0 not found")
 DIAG(err_attribute_cleanup_arg_not_function, ERROR,
      "'cleanup' argument %0 is not a function")
-DIAG(err_attribute_cleanup_arg_must_take_one_arg, ERROR,
+DIAG(err_attribute_cleanup_func_must_take_one_arg, ERROR,
     "'cleanup' function %0 must take 1 parameter")
+DIAG(err_attribute_cleanup_func_arg_incompatible_type, ERROR,
+    "'cleanup' function %0 parameter has type %1, expected type %2")
     
 // Clang-Specific Attributes
 DIAG(err_attribute_iboutlet_non_ivar, ERROR,
