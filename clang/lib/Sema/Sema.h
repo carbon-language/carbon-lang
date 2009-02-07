@@ -1794,7 +1794,7 @@ public:
 
   /// type checking binary operators (subroutines of CreateBuiltinBinOp).
   inline QualType InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
-  inline QualType CheckPointerToMemberOperands( // C++ 5.5
+  QualType CheckPointerToMemberOperands( // C++ 5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isIndirect);
   inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SemaInherit.h"
 #include "Sema.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
@@ -882,4 +883,70 @@ Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
   return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, OTT,
                                       QualType::getFromOpaquePtr(Ty),
                                       RParen, Context.BoolTy));
+}
+
+QualType Sema::CheckPointerToMemberOperands(
+  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isIndirect)
+{
+  const char *OpSpelling = isIndirect ? "->*" : ".*";
+  // C++ 5.5p2
+  //   The binary operator .* [p3: ->*] binds its second operand, which shall
+  //   be of type "pointer to member of T" (where T is a completely-defined
+  //   class type) [...]
+  QualType RType = rex->getType();
+  const MemberPointerType *MemPtr = RType->getAsMemberPointerType();
+  if (!MemPtr || MemPtr->getClass()->isIncompleteType()) {
+    Diag(Loc, diag::err_bad_memptr_rhs)
+      << OpSpelling << RType << rex->getSourceRange();
+    return QualType();
+  }
+  QualType Class(MemPtr->getClass(), 0);
+
+  // C++ 5.5p2
+  //   [...] to its first operand, which shall be of class T or of a class of
+  //   which T is an unambiguous and accessible base class. [p3: a pointer to
+  //   such a class]
+  QualType LType = lex->getType();
+  if (isIndirect) {
+    if (const PointerType *Ptr = LType->getAsPointerType())
+      LType = Ptr->getPointeeType().getNonReferenceType();
+    else {
+      Diag(Loc, diag::err_bad_memptr_lhs)
+        << OpSpelling << 1 << LType << lex->getSourceRange();
+      return QualType();
+    }
+  }
+
+  if (Context.getCanonicalType(Class).getUnqualifiedType() !=
+      Context.getCanonicalType(LType).getUnqualifiedType()) {
+    BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                    /*DetectVirtual=*/false);
+    // FIXME: Would it be useful to print full ambiguity paths,
+    // or is that overkill?
+    if (!IsDerivedFrom(LType, Class, Paths) ||
+        Paths.isAmbiguous(Context.getCanonicalType(Class))) {
+      Diag(Loc, diag::err_bad_memptr_lhs) << OpSpelling
+        << (int)isIndirect << lex->getType() << lex->getSourceRange();
+      return QualType();
+    }
+  }
+
+  // C++ 5.5p2
+  //   The result is an object or a function of the type specified by the
+  //   second operand.
+  // The cv qualifiers are the union of those in the pointer and the left side,
+  // in accordance with 5.5p5 and 5.2.5.
+  // FIXME: This returns a dereferenced member function pointer as a normal
+  // function type. However, the only operation valid on such functions is
+  // calling them. There's also a GCC extension to get a function pointer to
+  // the thing, which is another complication, because this type - unlike the
+  // type that is the result of this expression - takes the class as the first
+  // argument.
+  // We probably need a "MemberFunctionClosureType" or something like that.
+  QualType Result = MemPtr->getPointeeType();
+  if (LType.isConstQualified())
+    Result.addConst();
+  if (LType.isVolatileQualified())
+    Result.addVolatile();
+  return Result;
 }
