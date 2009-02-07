@@ -692,7 +692,7 @@ unsigned TargetLowering::getByValTypeAlignment(const Type *Ty) const {
 SDValue TargetLowering::getPICJumpTableRelocBase(SDValue Table,
                                                  SelectionDAG &DAG) const {
   if (usesGlobalOffsetTable())
-    return DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, getPointerTy());
+    return DAG.getGLOBAL_OFFSET_TABLE(getPointerTy());
   return Table;
 }
 

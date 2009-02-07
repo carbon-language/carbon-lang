@@ -246,10 +246,12 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_PAIR(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntRes_Constant(SDNode *N) {
   MVT VT = N->getValueType(0);
+  // FIXME there is no actual debug info here
+  DebugLoc dl = N->getDebugLoc();
   // Zero extend things like i1, sign extend everything else.  It shouldn't
   // matter in theory which one we pick, but this tends to give better code?
   unsigned Opc = VT.isByteSized() ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
-  SDValue Result = DAG.getNode(Opc, TLI.getTypeToTransformTo(VT),
+  SDValue Result = DAG.getNode(Opc, dl, TLI.getTypeToTransformTo(VT),
                                SDValue(N, 0));
   assert(isa<ConstantSDNode>(Result) && "Didn't constant fold ext?");
   return Result;
@@ -270,11 +272,12 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CONVERT_RNDSAT(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_CTLZ(SDNode *N) {
   // Zero extend to the promoted type and do the count there.
   SDValue Op = ZExtPromotedInteger(N->getOperand(0));
+  DebugLoc dl = N->getDebugLoc();
   MVT OVT = N->getValueType(0);
   MVT NVT = Op.getValueType();
-  Op = DAG.getNode(ISD::CTLZ, NVT, Op);
+  Op = DAG.getNode(ISD::CTLZ, dl, NVT, Op);
   // Subtract off the extra leading bits in the bigger type.
-  return DAG.getNode(ISD::SUB, N->getDebugLoc(), NVT, Op,
+  return DAG.getNode(ISD::SUB, dl, NVT, Op,
                      DAG.getConstant(NVT.getSizeInBits() -
                                      OVT.getSizeInBits(), NVT));
 }
@@ -1408,7 +1411,7 @@ void DAGTypeLegalizer::ExpandIntRes_CTPOP(SDNode *N,
   // ctpop(HiLo) -> ctpop(Hi)+ctpop(Lo)
   GetExpandedInteger(N->getOperand(0), Lo, Hi);
   MVT NVT = Lo.getValueType();
-  Lo = DAG.getNode(ISD::ADD, dl, NVT, DAG.getNode(ISD::CTPOP, NVT, Lo),
+  Lo = DAG.getNode(ISD::ADD, dl, NVT, DAG.getNode(ISD::CTPOP, dl, NVT, Lo),
                    DAG.getNode(ISD::CTPOP, dl, NVT, Hi));
   Hi = DAG.getConstant(0, NVT);
 }

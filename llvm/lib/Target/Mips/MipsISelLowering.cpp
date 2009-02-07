@@ -484,7 +484,7 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
     // %gp_rel relocation
     if (!isa<Function>(GV) && IsGlobalInSmallSection(GV)) { 
       SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, dl, VTs, 1, Ops, 1);
-      SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
+      SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
       return DAG.getNode(ISD::ADD, dl, MVT::i32, GOT, GPRelNode); 
     }
     // %hi/%lo relocation
@@ -557,7 +557,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   //if (!Subtarget->hasABICall() &&  
   //    IsInSmallSection(getTargetData()->getTypePaddedSize(C->getType()))) {
   //  SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, MVT::i32, CP);
-  //  SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
+  //  SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
   //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
   //} else { // %hi/%lo relocation
     SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, MVT::i32, CP);

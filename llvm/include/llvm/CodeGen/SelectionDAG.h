@@ -407,11 +407,15 @@ public:
     return getNode(ISD::UNDEF, DebugLoc::getUnknownLoc(), VT);
   }
 
+  /// getGLOBAL_OFFSET_TABLE - Return a GLOBAL_OFFSET_TABLE node.  This does
+  /// not have a useful DebugLoc.
+  SDValue getGLOBAL_OFFSET_TABLE(MVT VT) {
+    return getNode(ISD::GLOBAL_OFFSET_TABLE, DebugLoc::getUnknownLoc(), VT);
+  }
+
   /// getNode - Gets or creates the specified node.
   ///
-  SDValue getNode(unsigned Opcode, MVT VT);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT);
-  SDValue getNode(unsigned Opcode, MVT VT, SDValue N);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT, SDValue N);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT, SDValue N1, SDValue N2);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
@@ -421,8 +425,6 @@ public:
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                   SDValue N1, SDValue N2, SDValue N3, SDValue N4,
                   SDValue N5);
-  SDValue getNode(unsigned Opcode, MVT VT,
-                  const SDUse *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,
                   const SDUse *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL, MVT VT,

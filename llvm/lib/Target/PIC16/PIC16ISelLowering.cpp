@@ -328,7 +328,7 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
   DebugLoc dl = N->getDebugLoc();
 
   SDValue PtrLo, PtrHi;
-  LegalizeAddress(Ptr, DAG, PtrLo, PtrHi, StoreOffset);
+  LegalizeAddress(Ptr, DAG, PtrLo, PtrHi, StoreOffset, dl);
  
   if (ValueType == MVT::i8) {
     return DAG.getNode (PIC16ISD::PIC16Store, dl, MVT::Other, Chain, Src,
@@ -556,7 +556,7 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
 
 void PIC16TargetLowering:: LegalizeAddress(SDValue Ptr, SelectionDAG &DAG, 
                                            SDValue &Lo, SDValue &Hi,
-                                           unsigned &Offset) {
+                                           unsigned &Offset, DebugLoc dl) {
 
   // Offset, by default, should be 0
   Offset = 0;
@@ -615,8 +615,8 @@ void PIC16TargetLowering:: LegalizeAddress(SDValue Ptr, SelectionDAG &DAG,
   GetExpandedParts(Ptr, DAG, Lo, Hi);
 
   // Put the hi and lo parts into FSR.
-  Lo = DAG.getNode(PIC16ISD::MTLO, MVT::i8, Lo);
-  Hi = DAG.getNode(PIC16ISD::MTHI, MVT::i8, Hi);
+  Lo = DAG.getNode(PIC16ISD::MTLO, dl, MVT::i8, Lo);
+  Hi = DAG.getNode(PIC16ISD::MTHI, dl, MVT::i8, Hi);
 
   return;
 }
@@ -648,7 +648,7 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
 
   // Legalize direct/indirect addresses. This will give the lo and hi parts
   // of the address and the offset.
-  LegalizeAddress(Ptr, DAG, PtrLo, PtrHi, LoadOffset);
+  LegalizeAddress(Ptr, DAG, PtrLo, PtrHi, LoadOffset, dl);
 
   // Load from the pointer (direct address or FSR) 
   VT = N->getValueType(0);
@@ -897,7 +897,7 @@ PIC16TargetLowering::LowerCallArguments(SDValue Op, SDValue Chain,
   SDValue PtrLo, PtrHi;
   unsigned AddressOffset;
   int StoreOffset = 0;
-  LegalizeAddress(FrameAddress, DAG, PtrLo, PtrHi, AddressOffset);
+  LegalizeAddress(FrameAddress, DAG, PtrLo, PtrHi, AddressOffset, dl);
   SDValue StoreRet;
 
   std::vector<SDValue> Ops;
@@ -954,7 +954,7 @@ PIC16TargetLowering::LowerCallReturn(SDValue Op, SDValue Chain,
   // Legalize the address before use
   SDValue LdLo, LdHi;
   unsigned LdOffset;
-  LegalizeAddress(FrameAddress, DAG, LdLo, LdHi, LdOffset);
+  LegalizeAddress(FrameAddress, DAG, LdLo, LdHi, LdOffset, dl);
 
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other, MVT::Flag);
   SDValue LoadRet;

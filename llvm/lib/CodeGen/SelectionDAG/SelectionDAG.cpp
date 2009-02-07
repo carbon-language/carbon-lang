@@ -1280,7 +1280,7 @@ SDValue SelectionDAG::getShiftAmountOperand(SDValue Op) {
   if (OpTy == ShTy || OpTy.isVector()) return Op;
 
   ISD::NodeType Opcode = OpTy.bitsGT(ShTy) ?  ISD::TRUNCATE : ISD::ZERO_EXTEND;
-  return getNode(Opcode, ShTy, Op);
+  return getNode(Opcode, Op.getDebugLoc(), ShTy, Op);
 }
 
 /// CreateStackTemporary - Create a stack temporary, suitable for holding the
@@ -2158,10 +2158,6 @@ SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
 
 /// getNode - Gets or creates the specified node.
 ///
-SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VT);
-}
-
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT) {
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opcode, getVTList(VT), 0, 0);
@@ -2177,10 +2173,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT) {
   VerifyNode(N);
 #endif
   return SDValue(N, 0);
-}
-
-SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VT, Operand);
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
@@ -3688,11 +3680,6 @@ SDValue SelectionDAG::getVAArg(MVT VT, DebugLoc dl,
                                SDValue SV) {
   SDValue Ops[] = { Chain, Ptr, SV };
   return getNode(ISD::VAARG, dl, getVTList(VT, MVT::Other), Ops, 3);
-}
-
-SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                              const SDUse *Ops, unsigned NumOps) {
-  return getNode(Opcode, DebugLoc::getUnknownLoc(), VT, Ops, NumOps);
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,

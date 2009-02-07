@@ -2189,7 +2189,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Tmp1 = DAG.getLoad(NVT, dl, Tmp1, Tmp2, LD->getSrcValue(),
                            LD->getSrcValueOffset(),
                            LD->isVolatile(), LD->getAlignment());
-        Tmp3 = LegalizeOp(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp1));
+        Tmp3 = LegalizeOp(DAG.getNode(ISD::BIT_CONVERT, dl, VT, Tmp1));
         Tmp4 = LegalizeOp(Tmp1.getValue(1));
         break;
       }
@@ -3429,7 +3429,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // Select between the nabs and abs value based on the sign bit of
         // the input.
         Result = DAG.getNode(ISD::SELECT, dl, AbsVal.getValueType(), SignBit,
-                             DAG.getNode(ISD::FNEG, AbsVal.getValueType(), 
+                             DAG.getNode(ISD::FNEG, dl, AbsVal.getValueType(), 
                                          AbsVal),
                              AbsVal);
         Result = LegalizeOp(Result);
@@ -5987,7 +5987,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source, DebugLoc dl) {
     case TargetLowering::Expand:
       break;   // This case is handled below.
     case TargetLowering::Custom: {
-      SDValue NV = TLI.LowerOperation(DAG.getNode(ISD::UINT_TO_FP, DestTy,
+      SDValue NV = TLI.LowerOperation(DAG.getNode(ISD::UINT_TO_FP, dl, DestTy,
                                                     Source), DAG);
       if (NV.getNode())
         return LegalizeOp(NV);

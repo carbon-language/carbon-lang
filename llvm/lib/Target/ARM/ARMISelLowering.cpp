@@ -538,7 +538,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV, ARMPCLabelIndex,
                                                            ARMCP::CPStub, 4);
       SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 2);
-      CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+      CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl, 
                            DAG.getEntryNode(), CPAddr, NULL, 0); 
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
@@ -557,7 +557,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       ARMConstantPoolValue *CPV = new ARMConstantPoolValue(Sym, ARMPCLabelIndex,
                                                            ARMCP::CPStub, 4);
       SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 2);
-      CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+      CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl,
                            DAG.getEntryNode(), CPAddr, NULL, 0); 
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
@@ -718,6 +718,8 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
 // into MOVi.
 static SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   MVT PtrVT = Op.getValueType();
+  // FIXME there is no actual debug info here
+  DebugLoc dl = Op.getDebugLoc();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
   SDValue Res;
   if (CP->isMachineConstantPoolEntry())
@@ -726,7 +728,7 @@ static SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   else
     Res = DAG.getTargetConstantPool(CP->getConstVal(), PtrVT,
                                     CP->getAlignment());
-  return DAG.getNode(ARMISD::Wrapper, MVT::i32, Res);
+  return DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Res);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model
@@ -740,7 +742,7 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
     new ARMConstantPoolValue(GA->getGlobal(), ARMPCLabelIndex, ARMCP::CPValue,
                              PCAdj, "tlsgd", true);
   SDValue Argument = DAG.getTargetConstantPool(CPV, PtrVT, 2);
-  Argument = DAG.getNode(ARMISD::Wrapper, MVT::i32, Argument);
+  Argument = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Argument);
   Argument = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Argument, NULL, 0);
   SDValue Chain = Argument.getValue(1);
 
@@ -781,7 +783,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
       new ARMConstantPoolValue(GA->getGlobal(), ARMPCLabelIndex, ARMCP::CPValue,
                                PCAdj, "gottpoff", true);
     Offset = DAG.getTargetConstantPool(CPV, PtrVT, 2);
-    Offset = DAG.getNode(ARMISD::Wrapper, MVT::i32, Offset);
+    Offset = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Offset);
     Offset = DAG.getLoad(PtrVT, dl, Chain, Offset, NULL, 0);
     Chain = Offset.getValue(1);
 
@@ -794,7 +796,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
     ARMConstantPoolValue *CPV =
       new ARMConstantPoolValue(GV, ARMCP::CPValue, "tpoff");
     Offset = DAG.getTargetConstantPool(CPV, PtrVT, 2);
-    Offset = DAG.getNode(ARMISD::Wrapper, MVT::i32, Offset);
+    Offset = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Offset);
     Offset = DAG.getLoad(PtrVT, dl, Chain, Offset, NULL, 0);
   }
 
@@ -828,18 +830,18 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
     ARMConstantPoolValue *CPV =
       new ARMConstantPoolValue(GV, ARMCP::CPValue, UseGOTOFF ? "GOTOFF":"GOT");
     SDValue CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
-    CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+    CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
     SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), 
                                  CPAddr, NULL, 0);
     SDValue Chain = Result.getValue(1);
-    SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, PtrVT);
+    SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(PtrVT);
     Result = DAG.getNode(ISD::ADD, dl, PtrVT, Result, GOT);
     if (!UseGOTOFF)
       Result = DAG.getLoad(PtrVT, dl, Chain, Result, NULL, 0);
     return Result;
   } else {
     SDValue CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 2);
-    CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+    CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
     return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr, NULL, 0);
   }
 }
@@ -874,7 +876,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
                                                          Kind, PCAdj);
     CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
   }
-  CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+  CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
 
   SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr, NULL, 0);
   SDValue Chain = Result.getValue(1);
@@ -900,7 +902,7 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
                                                        ARMPCLabelIndex,
                                                        ARMCP::CPValue, PCAdj);
   SDValue CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
-  CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+  CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
   SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr, NULL, 0);
   SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
   return DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
@@ -912,7 +914,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   switch (IntNo) {
   default: return SDValue();    // Don't custom lower most intrinsics.
   case Intrinsic::arm_thread_pointer:
-      return DAG.getNode(ARMISD::THREAD_POINTER, PtrVT);
+      return DAG.getNode(ARMISD::THREAD_POINTER, DebugLoc::getUnknownLoc(),
+                         PtrVT);
   }
 }
 

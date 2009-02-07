@@ -138,7 +138,7 @@ namespace llvm {
     // addresses need Banksel and Indirect addresses need to be loaded to
     // FSR first. Handle address specific cases here.
     void LegalizeAddress(SDValue Ptr, SelectionDAG &DAG, SDValue &Chain, 
-                         SDValue &NewPtr, unsigned &Offset);
+                         SDValue &NewPtr, unsigned &Offset, DebugLoc dl);
 
     // FrameIndex should be broken down into ExternalSymbol and FrameOffset. 
     void LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG, SDValue &ES, 

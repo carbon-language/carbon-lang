@@ -1095,7 +1095,8 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
   if (TM.getRelocationModel() == Reloc::PIC_) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, dl, PtrVT,
-                     DAG.getNode(PPCISD::GlobalBaseReg, PtrVT), Hi);
+                     DAG.getNode(PPCISD::GlobalBaseReg, 
+                                 DebugLoc::getUnknownLoc(), PtrVT), Hi);
   }
   
   Lo = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);
@@ -1127,7 +1128,8 @@ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   if (TM.getRelocationModel() == Reloc::PIC_) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, dl, PtrVT,
-                     DAG.getNode(PPCISD::GlobalBaseReg, PtrVT), Hi);
+                     DAG.getNode(PPCISD::GlobalBaseReg, 
+                                 DebugLoc::getUnknownLoc(), PtrVT), Hi);
   }
   
   Lo = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);
@@ -1167,7 +1169,8 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
   if (TM.getRelocationModel() == Reloc::PIC_) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, dl, PtrVT,
-                     DAG.getNode(PPCISD::GlobalBaseReg, PtrVT), Hi);
+                     DAG.getNode(PPCISD::GlobalBaseReg, 
+                                 DebugLoc::getUnknownLoc(), PtrVT), Hi);
   }
   
   Lo = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);

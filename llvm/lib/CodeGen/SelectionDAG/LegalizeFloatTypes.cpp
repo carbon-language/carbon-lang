@@ -1107,7 +1107,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
                         MVT::i64, Src);
       LC = RTLIB::SINTTOFP_I64_PPCF128;
     } else if (SrcVT.bitsLE(MVT::i128)) {
-      Src = DAG.getNode(ISD::SIGN_EXTEND, MVT::i128, Src);
+      Src = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i128, Src);
       LC = RTLIB::SINTTOFP_I128_PPCF128;
     }
     assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported XINT_TO_FP!");

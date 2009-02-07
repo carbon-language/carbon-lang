@@ -190,7 +190,7 @@ static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   
   SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, JTI,
-                             DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                             DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
   SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, JTI, Hi);
   return Lo;
 }
@@ -305,6 +305,7 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   SDValue Copy = DAG.getCopyToReg(Op.getOperand(0), dl, Alpha::R26, 
                                     DAG.getNode(AlphaISD::GlobalRetAddr, 
+                                                DebugLoc::getUnknownLoc(),
                                                 MVT::i64),
                                     SDValue());
   switch (Op.getNumOperands()) {
@@ -517,7 +518,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     // FIXME there isn't really any debug info here
     
     SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, CPI,
-                               DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                               DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
     SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, CPI, Hi);
     return Lo;
   }
@@ -532,18 +533,18 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     //    if (!GV->hasWeakLinkage() && !GV->isDeclaration() && !GV->hasLinkOnceLinkage()) {
     if (GV->hasLocalLinkage()) {
       SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, GA,
-                                DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                                DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
       SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, GA, Hi);
       return Lo;
     } else
       return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64, GA, 
-                         DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                         DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
   }
   case ISD::ExternalSymbol: {
     return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64, 
                        DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)
                                                    ->getSymbol(), MVT::i64),
-                       DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                       DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
   }
 
   case ISD::UREM:
@@ -622,7 +623,8 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
                              SA2, NULL, 0, MVT::i32);
   }
   case ISD::RETURNADDR:        
-    return DAG.getNode(AlphaISD::GlobalRetAddr, MVT::i64);
+    return DAG.getNode(AlphaISD::GlobalRetAddr, DebugLoc::getUnknownLoc(),
+                       MVT::i64);
       //FIXME: implement
   case ISD::FRAMEADDR:          break;
   }

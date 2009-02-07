@@ -922,7 +922,7 @@ LowerConstantFP(SDValue Op, SelectionDAG &DAG) {
     SDValue T = DAG.getConstant(dbits, MVT::i64);
     SDValue Tvec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i64, T, T);
     return DAG.getNode(SPUISD::VEC2PREFSLOT, dl, VT,
-                       DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, Tvec));
+                       DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2f64, Tvec));
   }
 
   return SDValue();
@@ -2536,7 +2536,7 @@ static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
                                     ISD::SETGT));
   }
 
-  SDValue i64rhs = DAG.getNode(ISD::BIT_CONVERT, IntVT, rhs);
+  SDValue i64rhs = DAG.getNode(ISD::BIT_CONVERT, dl, IntVT, rhs);
   SDValue rhsHi32 =
           DAG.getNode(ISD::TRUNCATE, dl, MVT::i32,
                       DAG.getNode(ISD::SRL, dl, IntVT,
@@ -2677,7 +2677,7 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
                                        PromoteScalar, PromoteScalar, shufMask);
 
     return DAG.getNode(SPUISD::VEC2PREFSLOT, dl, VT,
-                       DAG.getNode(ISD::BIT_CONVERT, VecVT, truncShuffle));
+                       DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, truncShuffle));
   }
 
   return SDValue();             // Leave the truncate unmolested

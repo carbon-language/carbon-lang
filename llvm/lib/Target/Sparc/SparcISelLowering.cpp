@@ -756,17 +756,19 @@ static SDValue LowerCONSTANTPOOL(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   // Convert the fp value to integer in an FP register.
   assert(Op.getValueType() == MVT::i32);
-  Op = DAG.getNode(SPISD::FTOI, MVT::f32, Op.getOperand(0));
-  return DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
+  Op = DAG.getNode(SPISD::FTOI, dl, MVT::f32, Op.getOperand(0));
+  return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
 }
 
 static SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   assert(Op.getOperand(0).getValueType() == MVT::i32);
-  SDValue Tmp = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Op.getOperand(0));
+  SDValue Tmp = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, Op.getOperand(0));
   // Convert the int value to FP in an FP register.
-  return DAG.getNode(SPISD::ITOF, Op.getValueType(), Tmp);
+  return DAG.getNode(SPISD::ITOF, dl, Op.getValueType(), Tmp);
 }
 
 static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) {

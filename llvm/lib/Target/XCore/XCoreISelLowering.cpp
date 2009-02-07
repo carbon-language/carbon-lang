@@ -204,8 +204,10 @@ LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
 SDValue XCoreTargetLowering::
 getGlobalAddressWrapper(SDValue GA, GlobalValue *GV, SelectionDAG &DAG)
 {
+  // FIXME there is no actual debug info here
+  DebugLoc dl = GA.getDebugLoc();
   if (isa<Function>(GV)) {
-    return DAG.getNode(XCoreISD::PCRelativeWrapper, MVT::i32, GA);
+    return DAG.getNode(XCoreISD::PCRelativeWrapper, dl, MVT::i32, GA);
   } else if (!Subtarget.isXS1A()) {
     const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
     if (!GVar) {
@@ -215,10 +217,10 @@ getGlobalAddressWrapper(SDValue GA, GlobalValue *GV, SelectionDAG &DAG)
     }
     bool isConst = GVar && GVar->isConstant();
     if (isConst) {
-      return DAG.getNode(XCoreISD::CPRelativeWrapper, MVT::i32, GA);
+      return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, GA);
     }
   }
-  return DAG.getNode(XCoreISD::DPRelativeWrapper, MVT::i32, GA);
+  return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, GA);
 }
 
 SDValue XCoreTargetLowering::
@@ -232,8 +234,8 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
   return getGlobalAddressWrapper(GA, GV, DAG);
 }
 
-static inline SDValue BuildGetId(SelectionDAG &DAG) {
-  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, MVT::i32,
+static inline SDValue BuildGetId(SelectionDAG &DAG, DebugLoc dl) {
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::i32,
                      DAG.getConstant(Intrinsic::xcore_getid, MVT::i32));
 }
 
@@ -269,7 +271,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
   SDValue base = getGlobalAddressWrapper(GA, GV, DAG);
   const TargetData *TD = TM.getTargetData();
   unsigned Size = TD->getTypePaddedSize(Ty);
-  SDValue offset = DAG.getNode(ISD::MUL, dl, MVT::i32, BuildGetId(DAG),
+  SDValue offset = DAG.getNode(ISD::MUL, dl, MVT::i32, BuildGetId(DAG, dl),
                        DAG.getConstant(Size, MVT::i32));
   return DAG.getNode(ISD::ADD, dl, MVT::i32, base, offset);
 }

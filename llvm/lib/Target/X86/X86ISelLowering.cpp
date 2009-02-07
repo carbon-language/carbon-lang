@@ -900,9 +900,12 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned Align,
 SDValue X86TargetLowering::getPICJumpTableRelocBase(SDValue Table,
                                                       SelectionDAG &DAG) const {
   if (usesGlobalOffsetTable())
-    return DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, getPointerTy());
+    return DAG.getGLOBAL_OFFSET_TABLE(getPointerTy());
   if (!Subtarget->isPICStyleRIPRel())
-    return DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy());
+    // This doesn't have DebugLoc associated with it, but is not really the
+    // same as a Register.
+    return DAG.getNode(X86ISD::GlobalBaseReg, DebugLoc::getUnknownLoc(),
+                       getPointerTy());
   return Table;
 }
 
@@ -1663,7 +1666,9 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   // GOT pointer.  
   if (CallRequiresGOTPtrInReg(Is64Bit, IsTailCall)) {
     Chain = DAG.getCopyToReg(Chain, dl, X86::EBX,
-                             DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                             DAG.getNode(X86ISD::GlobalBaseReg, 
+                                         DebugLoc::getUnknownLoc(), 
+                                         getPointerTy()),
                              InFlag);
     InFlag = Chain.getValue(1);
   }
@@ -3392,7 +3397,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
         isZeroNode(Op.getOperand(0)) && !isZeroNode(Op.getOperand(1))) {
       unsigned NumBits = VT.getSizeInBits();
       return getVShift(true, VT,
-                       DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(1)),
+                       DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, 
+                                   VT, Op.getOperand(1)),
                        NumBits/2, DAG, *this, dl);
     }
     
@@ -4511,12 +4517,14 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   SDValue Result = DAG.getTargetConstantPool(CP->getConstVal(),
                                                getPointerTy(),
                                                CP->getAlignment());
-  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
+  Result = DAG.getNode(X86ISD::Wrapper, dl, getPointerTy(), Result);
   // With PIC, the address is actually $g + Offset.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       !Subtarget->isPICStyleRIPRel()) {
     Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
-                         DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                         DAG.getNode(X86ISD::GlobalBaseReg,
+                                     DebugLoc::getUnknownLoc(),
+                                     getPointerTy()),
                          Result);
   }
 
@@ -4539,7 +4547,7 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
     Offset = 0;
   } else
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), 0);
-  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
+  Result = DAG.getNode(X86ISD::Wrapper, dl, getPointerTy(), Result);
 
   // With PIC, the address is actually $g + Offset.
   if (IsPic && !Subtarget->isPICStyleRIPRel()) {
@@ -4581,6 +4589,7 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   DebugLoc dl = GA->getDebugLoc();  // ? function entry point might be better
   SDValue Chain = DAG.getCopyToReg(DAG.getEntryNode(), dl, X86::EBX,
                                      DAG.getNode(X86ISD::GlobalBaseReg,
+                                                 DebugLoc::getUnknownLoc(),
                                                  PtrVT), InFlag);
   InFlag = Chain.getValue(1);
 
@@ -4652,13 +4661,14 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                      const MVT PtrVT) {
   DebugLoc dl = GA->getDebugLoc();
   // Get the Thread Pointer
-  SDValue ThreadPointer = DAG.getNode(X86ISD::THREAD_POINTER, PtrVT);
+  SDValue ThreadPointer = DAG.getNode(X86ISD::THREAD_POINTER,
+                                      DebugLoc::getUnknownLoc(), PtrVT);
   // emit "addl x@ntpoff,%eax" (local exec) or "addl x@indntpoff,%eax" (initial
   // exec)
   SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
                                              GA->getValueType(0),
                                              GA->getOffset());
-  SDValue Offset = DAG.getNode(X86ISD::Wrapper, PtrVT, TGA);
+  SDValue Offset = DAG.getNode(X86ISD::Wrapper, dl, PtrVT, TGA);
 
   if (GA->getGlobal()->isDeclaration()) // initial exec TLS model
     Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
@@ -4694,12 +4704,14 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
   SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy());
-  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
+  Result = DAG.getNode(X86ISD::Wrapper, dl, getPointerTy(), Result);
   // With PIC, the address is actually $g + Offset.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       !Subtarget->isPICStyleRIPRel()) {
     Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
-                         DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                         DAG.getNode(X86ISD::GlobalBaseReg, 
+                                     DebugLoc::getUnknownLoc(),
+                                     getPointerTy()),
                          Result);
   }
 
@@ -4711,12 +4723,14 @@ SDValue X86TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   // FIXME there isn't really any debug into here
   DebugLoc dl = JT->getDebugLoc();
   SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy());
-  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
+  Result = DAG.getNode(X86ISD::Wrapper, dl, getPointerTy(), Result);
   // With PIC, the address is actually $g + Offset.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       !Subtarget->isPICStyleRIPRel()) {
     Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
-                         DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                         DAG.getNode(X86ISD::GlobalBaseReg,
+                                     DebugLoc::getUnknownLoc(),
+                                     getPointerTy()),
                          Result);
   }
 
@@ -6371,7 +6385,7 @@ SDValue X86TargetLowering::LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) {
 
 
   return DAG.getNode((VT.getSizeInBits() < 16 ?
-                      ISD::TRUNCATE : ISD::ZERO_EXTEND), VT, RetVal);
+                      ISD::TRUNCATE : ISD::ZERO_EXTEND), dl, VT, RetVal);
 }
 
 SDValue X86TargetLowering::LowerCTLZ(SDValue Op, SelectionDAG &DAG) {
