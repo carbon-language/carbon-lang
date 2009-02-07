@@ -521,3 +521,24 @@ llvm::BasicBlock *CodeGenFunction::CreateCleanupBlock()
   
   return CleanupBlock;  
 }
+
+void CodeGenFunction::EmitCleanupBlocks(size_t OldCleanupStackSize)
+{
+  assert(CleanupEntries.size() >= OldCleanupStackSize && 
+         "Cleanup stack mismatch!");
+  
+  while (CleanupEntries.size() > OldCleanupStackSize)
+    EmitCleanupBlock();
+}
+
+void CodeGenFunction::EmitCleanupBlock()
+{
+  CleanupEntry &CE = CleanupEntries.back();
+  
+  llvm::BasicBlock *CleanupBlock = CE.CleanupBlock;
+  
+  CleanupEntries.pop_back();
+  
+  EmitBlock(CleanupBlock);
+}
+

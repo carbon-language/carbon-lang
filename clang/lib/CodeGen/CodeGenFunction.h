@@ -151,6 +151,10 @@ public:
     }
   };
 
+  /// EmitCleanupBlocks - Takes the old cleanup stack size and emits the cleanup
+  /// blocks that have been added.
+  void EmitCleanupBlocks(size_t OldCleanupStackSize);
+
 private:
   /// LabelIDs - Track arbitrary ids assigned to labels for use in
   /// implementing the GCC address-of-label extension and indirect
@@ -762,6 +766,9 @@ private:
   llvm::Value* EmitAsmInput(const AsmStmt &S, TargetInfo::ConstraintInfo Info,
                             const Expr *InputExpr, std::string &ConstraintStr);
   
+  /// EmitCleanupBlock - emits a single cleanup block.
+  void EmitCleanupBlock();
+
 };
 }  // end namespace CodeGen
 }  // end namespace clang

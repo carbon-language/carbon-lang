@@ -123,7 +123,7 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
 /// (for use by the statement expression extension).
 RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
                                          llvm::Value *AggLoc, bool isAggVol) {
-  // FIXME: handle vla's etc.
+
   CGDebugInfo *DI = CGM.getDebugInfo();
   if (DI) {
     EnsureInsertPoint();
@@ -131,6 +131,9 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     DI->EmitRegionStart(CurFn, Builder);
   }
 
+  // Keep track of the current cleanup stack depth.
+  size_t CleanupStackDepth = CleanupEntries.size();
+  
   // Push a null stack save value.
   StackSaveValues.push_back(0);
   
@@ -170,6 +173,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
     Builder.CreateCall(F, V);
   }
+  
+  EmitCleanupBlocks(CleanupStackDepth);
   
   return RV;
 }
