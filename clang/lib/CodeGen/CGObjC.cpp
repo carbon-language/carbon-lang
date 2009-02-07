@@ -446,6 +446,10 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::BasicBlock *LoopStart = createBasicBlock("loopstart");
   EmitBlock(LoopStart);
 
+  // We want to ensure there are no vlas between here and when we
+  // push the break and continue context below.
+  llvm::Value *saveStackDepth = StackDepth;
+
   llvm::Value *CounterPtr = CreateTempAlloca(UnsignedLongLTy, "counter.ptr");
   Builder.CreateStore(Zero, CounterPtr);
   
@@ -515,6 +519,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::BasicBlock *LoopEnd = createBasicBlock("loopend");
   llvm::BasicBlock *AfterBody = createBasicBlock("afterbody");
   
+  assert (StackDepth == saveStackDepth && "vla unhandled in for");
+
   BreakContinuePush(LoopEnd, AfterBody);
 
   EmitStmt(S.getBody());
