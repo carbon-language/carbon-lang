@@ -813,8 +813,8 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   R.getRanges(*this, Beg, End);    
   Diagnostic& Diag = getDiagnostic();
   FullSourceLoc L(R.getLocation(), getSourceManager());  
-  const std::string &msg = PD ? R.getBugType().getName() : R.getDescription();  
-  unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, msg.c_str());
+  unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
+                                            R.getDescription().c_str());
 
   switch (End-Beg) {
     default: assert(0 && "Don't handle this many ranges yet!");
