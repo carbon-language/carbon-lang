@@ -202,8 +202,9 @@ void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
 }
 
 void StmtPrinter::PrintRawIfStmt(IfStmt *If) {
-  OS << "if ";
+  OS << "if (";
   PrintExpr(If->getCond());
+  OS << ')';
   
   if (CompoundStmt *CS = dyn_cast<CompoundStmt>(If->getThen())) {
     OS << ' ';
