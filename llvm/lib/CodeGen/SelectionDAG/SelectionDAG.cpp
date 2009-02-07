@@ -4832,27 +4832,6 @@ GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
   TheGlobal = const_cast<GlobalValue*>(GA);
 }
 
-MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs, MVT memvt,
-                     const Value *srcValue, int SVO,
-                     unsigned alignment, bool vol)
- : SDNode(Opc, VTs), MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO) {
-  SubclassData = encodeMemSDNodeFlags(0, ISD::UNINDEXED, vol, alignment);
-  assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
-  assert(getAlignment() == alignment && "Alignment representation error!");
-  assert(isVolatile() == vol && "Volatile representation error!");
-}
-
-MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops,
-                     unsigned NumOps, MVT memvt, const Value *srcValue,
-                     int SVO, unsigned alignment, bool vol)
-   : SDNode(Opc, VTs, Ops, NumOps),
-     MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO) {
-  SubclassData = encodeMemSDNodeFlags(0, ISD::UNINDEXED, vol, alignment);
-  assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
-  assert(getAlignment() == alignment && "Alignment representation error!");
-  assert(isVolatile() == vol && "Volatile representation error!");
-}
-
 MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, MVT memvt,
                      const Value *srcValue, int SVO,
                      unsigned alignment, bool vol)
