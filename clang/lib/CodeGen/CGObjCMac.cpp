@@ -1766,7 +1766,8 @@ The basic framework for a @try-catch-finally is as follows:
 {
   objc_exception_data d;
   id _rethrow = null;
-
+  bool _call_try_exit = true;
+ 
   objc_exception_try_enter(&d);
   if (!setjmp(d.jmp_buf)) {
     ... try body ... 
@@ -1784,16 +1785,16 @@ The basic framework for a @try-catch-finally is as follows:
     } else {
       // exception in catch block
       _rethrow = objc_exception_extract(&d);
-      ... jump-through-finally_no_exit to finally_rethrow ...
+      _call_try_exit = false;
+      ... jump-through-finally to finally_rethrow ...
     }
   }
   ... jump-through-finally to finally_end ...
 
 finally:
-  // match either the initial try_enter or the catch try_enter,
-  // depending on the path followed.
-  objc_exception_try_exit(&d);
-finally_no_exit:
+  if (_call_try_exit)
+    objc_exception_try_exit(&d);
+
   ... finally block ....
   ... dispatch to finally destination ...
 
@@ -1849,6 +1850,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   bool isTry = isa<ObjCAtTryStmt>(S);
   // Create various blocks we refer to for handling @finally.
   llvm::BasicBlock *FinallyBlock = CGF.createBasicBlock("finally");
+  llvm::BasicBlock *FinallyExit = CGF.createBasicBlock("finally.exit");
   llvm::BasicBlock *FinallyNoExit = CGF.createBasicBlock("finally.noexit");
   llvm::BasicBlock *FinallyRethrow = CGF.createBasicBlock("finally.throw");
   llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
@@ -1864,8 +1866,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Push an EH context entry, used for handling rethrows and jumps
   // through finally.
-  CodeGenFunction::ObjCEHEntry EHEntry(FinallyBlock, FinallyNoExit,
-                                       FinallySwitch, DestCode);
+  CodeGenFunction::ObjCEHEntry EHEntry(FinallyBlock, FinallySwitch, DestCode);
   CGF.ObjCEHStack.push_back(&EHEntry);
 
   // Allocate memory for the exception data and rethrow pointer.
@@ -1873,6 +1874,10 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                                     "exceptiondata.ptr");
   llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy, 
                                                  "_rethrow");
+  llvm::Value *CallTryExitPtr = CGF.CreateTempAlloca(llvm::Type::Int1Ty,
+                                                     "_call_try_exit");
+  CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(), CallTryExitPtr);
+  
   if (!isTry) {
     // For @synchronized, call objc_sync_enter(sync.expr)
     llvm::Value *Arg = CGF.EmitScalarExpr(
@@ -1912,6 +1917,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   if (!isTry)
   {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
+    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
     CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);    
   }
   else if (const ObjCAtCatchStmt* CatchStmt = 
@@ -2014,9 +2020,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     CGF.Builder.CreateStore(CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
                                                    ExceptionData), 
                             RethrowPtr);
+    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
     CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);
   } else {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
+    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
     CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);    
   }
   
@@ -2027,6 +2035,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Emit the @finally block.
   CGF.EmitBlock(FinallyBlock);
+  llvm::Value* CallTryExit = CGF.Builder.CreateLoad(CallTryExitPtr, "tmp");
+  
+  CGF.Builder.CreateCondBr(CallTryExit, FinallyExit, FinallyNoExit);
+  
+  CGF.EmitBlock(FinallyExit);
   CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
 
   CGF.EmitBlock(FinallyNoExit);
@@ -2099,7 +2112,7 @@ void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
 
   // Set the destination code and branch.
   Builder.CreateStore(ID, E->DestCode);
-  EmitBranch(ExecuteTryExit ? E->FinallyBlock : E->FinallyNoExit);
+  EmitBranch(E->FinallyBlock);
 }
 
 /// EmitObjCWeakRead - Code gen for loading value of a __weak

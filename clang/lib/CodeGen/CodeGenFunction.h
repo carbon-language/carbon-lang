@@ -95,17 +95,12 @@ public:
   // inside @catch blocks and which @finally block exits from an EH
   // scope should be chained through.
   struct ObjCEHEntry {
-    ObjCEHEntry(llvm::BasicBlock *fb, llvm::BasicBlock *fne, 
-                llvm::SwitchInst *fs, llvm::Value *dc)
-      : FinallyBlock(fb), FinallyNoExit(fne), FinallySwitch(fs), 
+    ObjCEHEntry(llvm::BasicBlock *fb, llvm::SwitchInst *fs, llvm::Value *dc)
+      : FinallyBlock(fb), FinallySwitch(fs), 
         DestCode(dc), Exception(0) {}
 
     /// Entry point to the finally block.
     llvm::BasicBlock *FinallyBlock; 
-
-    /// Entry point to the finally block which skips execution of the
-    /// try_exit runtime function.
-    llvm::BasicBlock *FinallyNoExit; 
 
     /// Switch instruction which runs at the end of the finally block
     /// to forward jumps through the finally block.
