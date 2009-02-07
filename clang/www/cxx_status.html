@@ -961,9 +961,30 @@ welcome!</p>
   <td></td>
 </tr>
 <tr><td>7 [dcl.dcl]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;7.1 [dcl.spec]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;7.1.1 [dcl.stc]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;7.1.2 [dcl.fct.spec]</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>
+  &nbsp;&nbsp;7.1 [dcl.spec]</td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td></td>
+  <td>No support for friend declarations.</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;7.1.1 [dcl.stc]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td></td>
+  <td>Linkage merging has some errors.</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;7.1.2 [dcl.fct.spec]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td></td>
+  <td></td>
+</tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;7.1.3 [dcl.typedef]</td>
   <td class="complete" align="center">&#x2713;</td>
@@ -972,28 +993,126 @@ welcome!</p>
   <td class="advanced"></td>
   <td>Typedefs of anonymous tag types do not use the name of the typedef for linkage purposes.</td>
 </tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;7.1.4 [dcl.friend]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;7.1.5 [dcl.type]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.5.1 [dcl.type.cv]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.5.2 [dcl.type.simple]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.5.3 [dcl.type.elab]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;7.2 [dcl.enum]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;7.3 [basic.namespace]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;7.3.1 [namespace.def]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.3.1.1 [namespace.unnamed]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.3.1.2 [namespace.memdef]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;7.3.2 [namespace.alias]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;7.3.3 [namespace.udecl]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr>
-  <td>&nbsp;&nbsp;&nbsp;&nbsp;7.3.4[namespace.udir]</td>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;7.1.4 [dcl.friend]</td>
+  <td class="broken"></td>
+  <td class="broken"></td>
+  <td class="broken"></td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;7.1.5 [dcl.type]</td>
   <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.5.1 [dcl.type.cv]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="medium"></td>
+  <td></td>
+  <td>Const integral variables with ICE initializers are not ICEs.</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.5.2 [dcl.type.simple]</td>
+  <td class="medium"></td>
+  <td class="advanced"></td>
+  <td class="advanced"></td>
+  <td></td>
+  <td>Cannot parse template IDs.</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.5.3 [dcl.type.elab]</td>
+  <td class="medium"></td>
+  <td class="advanced"></td>
+  <td class="advanced"></td>
+  <td></td>
+  <td>Cannot parse template IDs.</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;7.2 [dcl.enum]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;7.3 [basic.namespace]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;7.3.1 [namespace.def]</td>
+  <td class="medium"></td>
+  <td class="medium"></td>
+  <td class="medium"></td>
+  <td></td>
+  <td>Cannot parse namespace aliases.</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.3.1.1 [namespace.unnamed]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="broken"></td>
+  <td></td>
+  <td>Unnamed namespace members cannot be looked up.</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.3.1.2 [namespace.memdef]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="advanced"></td>
+  <td></td>
+  <td>The friend stuff is not supported.</td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;7.3.2 [namespace.alias]</td>
   <td class="broken" align="center"></td>
   <td class="broken" align="center"></td>
   <td class="broken" align="center"></td>
   <td></td>
+  <td></td>
 </tr>
-<tr><td>&nbsp;&nbsp;7.4 [dcl.asm]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;7.5 [dcl.link]</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;7.3.3 [namespace.udecl]</td>
+  <td class="broken" align="center"></td>
+  <td class="broken" align="center"></td>
+  <td class="broken" align="center"></td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;7.3.4[namespace.udir]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="advanced"></td>
+  <td class="broken" align="center"></td>
+  <td>Example in p4 fails.</td>
+</tr>
+<tr><td>
+  &nbsp;&nbsp;7.4 [dcl.asm]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;7.5 [dcl.link]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="basic"></td>
+  <td class="basic"></td>
+  <td></td>
+  <td></td>
+</tr>
 <tr><td>8 [dcl.decl]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;8.1 [dcl.name]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;8.2 [dcl.ambig.res]</td><td></td><td></td><td></td><td></td><td></td></tr>
