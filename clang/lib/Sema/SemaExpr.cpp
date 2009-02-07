@@ -2731,7 +2731,7 @@ inline QualType Sema::CheckPointerToMemberOperands(
       LType = Ptr->getPointeeType().getNonReferenceType();
     else {
       Diag(Loc, diag::err_bad_memptr_lhs)
-        << 1 << LType << lex->getSourceRange();
+        << OpSpelling << 1 << LType << lex->getSourceRange();
       return QualType();
     }
   }
@@ -2744,7 +2744,7 @@ inline QualType Sema::CheckPointerToMemberOperands(
     // or is that overkill?
     if (!IsDerivedFrom(LType, Class, Paths) ||
         Paths.isAmbiguous(Context.getCanonicalType(Class))) {
-      Diag(Loc, diag::err_bad_memptr_lhs)
+      Diag(Loc, diag::err_bad_memptr_lhs) << OpSpelling
         << (int)isIndirect << lex->getType() << lex->getSourceRange();
       return QualType();
     }

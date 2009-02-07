@@ -80,6 +80,8 @@ void g() {
   void (HasMembers::*pmd)() = &HasMembers::d;
 }
 
+struct Incomplete;
+
 void h() {
   HasMembers hm, *phm = &hm;
 
@@ -93,6 +95,27 @@ void h() {
   void (HasMembers::*pf)() = &HasMembers::f;
   (hm.*pf)();
   (phm->*pf)();
+
+  (void)(hm->*pi); // expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'struct HasMembers'}}
+  (void)(phm.*pi); // expected-error {{left hand operand to .* must be a class compatible with the right hand operand, but is 'struct HasMembers *'}}
+  (void)(i.*pi); // expected-error {{left hand operand to .* must be a class compatible with the right hand operand, but is 'int'}}
+  int *ptr;
+  (void)(ptr->*pi); // expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'int *'}}
+
+  int A::*pai = 0;
+  D d, *pd = &d;
+  (void)(d.*pai);
+  (void)(pd->*pai);
+  F f, *ptrf = &f;
+  (void)(f.*pai); // expected-error {{left hand operand to .* must be a class compatible with the right hand operand, but is 'struct F'}}
+  (void)(ptrf->*pai); // expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'struct F *'}}
+
+  (void)(hm.*i); // expected-error {{right hand operand to .* must be a pointer to member of a complete class but is 'int'}}
+  (void)(phm->*i); // expected-error {{right hand operand to ->* must be a pointer to member of a complete class but is 'int'}}
+
+  Incomplete *inc;
+  int Incomplete::*pii = 0;
+  (void)inc->*pii; // expected-error {{right hand operand to ->* must be a pointer to member of a complete class but is 'int struct Incomplete::*'}}
 }
 
 struct OverloadsPtrMem
