@@ -742,7 +742,7 @@ SPUDAGToDAGISel::Select(SDValue Op) {
     // N.B.: BIT_CONVERT replaces and updates the zextShuffle node, so we
     // re-use it in the VEC2PREFSLOT selection without needing to explicitly
     // call SelectCode (it's already done for us.)
-    SelectCode(CurDAG->getNode(ISD::BIT_CONVERT, OpVecVT, zextShuffle));
+    SelectCode(CurDAG->getNode(ISD::BIT_CONVERT, dl, OpVecVT, zextShuffle));
     return SelectCode(CurDAG->getNode(SPUISD::VEC2PREFSLOT, dl, OpVT,
                                       zextShuffle));
   } else if (Opc == ISD::ADD && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
