@@ -98,7 +98,7 @@ public:
   /// contains - Return true if the specified basic block is in this loop
   ///
   bool contains(const BlockT *BB) const {
-    return std::find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
+    return std::find(block_begin(), block_end(), BB) != block_end();
   }
 
   /// iterator/begin/end - Return the loops contained entirely within this loop.
@@ -173,8 +173,7 @@ public:
     std::sort(LoopBBs.begin(), LoopBBs.end());
 
     typedef GraphTraits<BlockT*> BlockTraits;
-    for (typename std::vector<BlockT*>::const_iterator BI = Blocks.begin(),
-         BE = Blocks.end(); BI != BE; ++BI)
+    for (block_iterator BI = block_begin(), BE = block_end(); BI != BE; ++BI)
       for (typename BlockTraits::ChildIteratorType I =
           BlockTraits::child_begin(*BI), E = BlockTraits::child_end(*BI);
           I != E; ++I)
@@ -195,8 +194,7 @@ public:
     std::sort(LoopBBs.begin(), LoopBBs.end());
 
     typedef GraphTraits<BlockT*> BlockTraits;
-    for (typename std::vector<BlockT*>::const_iterator BI = Blocks.begin(),
-         BE = Blocks.end(); BI != BE; ++BI)
+    for (block_iterator BI = block_begin(), BE = block_end(); BI != BE; ++BI)
       for (typename BlockTraits::ChildIteratorType I =
            BlockTraits::child_begin(*BI), E = BlockTraits::child_end(*BI);
            I != E; ++I)
@@ -217,8 +215,7 @@ public:
 
     std::vector<BlockT*> switchExitBlocks;  
 
-    for (typename std::vector<BlockT*>::const_iterator BI = Blocks.begin(),
-         BE = Blocks.end(); BI != BE; ++BI) {
+    for (block_iterator BI = block_begin(), BE = block_end(); BI != BE; ++BI) {
 
       BlockT *current = *BI;
       switchExitBlocks.clear();
@@ -579,8 +576,7 @@ public:
     assert (getHeader() && "Loop header is missing");
     assert (getLoopPreheader() && "Loop preheader is missing");
     assert (getLoopLatch() && "Loop latch is missing");
-    for (typename std::vector<LoopBase<BlockT>*>::const_iterator I =
-         SubLoops.begin(), E = SubLoops.end(); I != E; ++I)
+    for (iterator I = SubLoops.begin(), E = SubLoops.end(); I != E; ++I)
       (*I)->verifyLoop();
 #endif
   }
