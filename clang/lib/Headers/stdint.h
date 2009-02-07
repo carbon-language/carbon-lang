@@ -100,9 +100,10 @@ typedef __UINTMAX_TYPE__ uintmax_t;
  * C99 7.18.2.2 Limits of minimum-width integer types.
  * Since we map these directly onto fixed-sized types, these values the same.
  * C99 7.18.2.3 Limits of fastest minimum-width integer types.
+ *
+ * Note that C++ should not check __STDC_LIMIT_MACROS here, contrary to the
+ * claims of the C standard (see C++ 18.3.1p2, [cstdint.syn]).
  */
-
-#if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS)
 
 #define INT8_MAX    127
 #define INT8_MIN  (-128)
@@ -202,12 +203,11 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define WCHAR_MIN (-__WCHAR_MAX__-1)
 #endif
 
-#endif /* C++ needs __STDC_LIMIT_MACROS. */
-
-/* C99 7.18.4 Macros for minimum-width integer constants. */
-
-/* C99 Footnote 220: C++ requires __STDC_CONSTANT_MACROS. */
-#if !defined(__cplusplus) || defined(__STDC_CONSTANT_MACROS)
+/* C99 7.18.4 Macros for minimum-width integer constants.
+ *
+ * Note that C++ should not check __STDC_CONSTANT_MACROS here, contrary to the
+ * claims of the C standard (see C++ 18.3.1p2, [cstdint.syn]).
+ */
 
 #define INT8_C(v)   (v)
 #define UINT8_C(v)  (v##U)
@@ -225,7 +225,5 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 /* 7.18.4.2 Macros for greatest-width integer constants. */
 #define INTMAX_C(v)  (v##LL)
 #define UINTMAX_C(v) (v##ULL)
-
-#endif  /* C++ requires __STDC_CONSTANT_MACROS */
 
 #endif /* __STDINT_H */
