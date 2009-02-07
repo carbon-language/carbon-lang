@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv,
                               "LLVM automatic testcase reducer. See\nhttp://"
-                              "llvm.org/docs/CommandGuide/bugpoint.html"
+                              "llvm.org/cmds/bugpoint.html"
                               " for more information.\n");
   sys::PrintStackTraceOnErrorSignal();
   sys::SetInterruptFunction(BugpointInterruptFunction);
