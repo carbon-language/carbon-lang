@@ -164,6 +164,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   }
 
   if (llvm::Value *V = StackSaveValues.pop_back_val()) {
+    StackDepth = V;
     V = Builder.CreateLoad(V, "tmp");
     
     llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
@@ -186,6 +187,41 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
   Builder.SetInsertPoint(BB);
 }
 
+void CodeGenFunction::EmitStackUpdate(const LabelStmt &S) {
+  if (StackDepthMap.find(&S) == StackDepthMap.end()) {
+    // If we can't find it, just remember the depth now,
+    // so we can validate it later.
+    // FIXME: We need to save a place to insert the adjustment,
+    // if needed, here, sa that later in EmitLabel, we can
+    // backpatch the adjustment into that place, instead of
+    // saying unsupported.
+    StackDepthMap[&S] = StackDepth;
+    return;
+  }
+      
+  // Find applicable stack depth, if any...
+  llvm::Value *V = StackDepthMap[&S];
+  // V can be 0 here, if it is, be sure to start searching from the
+  // top of the function, as we want the next save after that point.
+  for (unsigned int i = 0; i < StackSaveValues.size(); ++i)
+    if (StackSaveValues[i] == V) {
+      // The actual depth is actually in the next used slot, if any.
+      while (++i < StackSaveValues.size()
+             && (V = StackSaveValues[i]) == 0) ;
+      // If there were no other depth changes, we don't need any
+      // adjustments.
+      if (V) {
+        V = Builder.CreateLoad(V, "tmp");
+        // and restore it.
+        llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
+        Builder.CreateCall(F, V);
+      }
+    } else
+      // FIXME: Move to semq and assert here, codegen isn't the right
+      // time to be checking.
+      CGM.ErrorUnsupported(&S, "invalid goto to VLA scope that has finished");
+}
+
 void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
   // Emit a branch from the current block to the target one if this
   // was a real block.  If this was just a fall-through block after a
@@ -205,6 +241,22 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
 
 void CodeGenFunction::EmitLabel(const LabelStmt &S) {
   llvm::BasicBlock *NextBB = getBasicBlockForLabel(&S);
+  if (StackDepthMap.find(&S) == StackDepthMap.end()) {
+    // We need to remember the stack depth so that we can readjust the
+    // stack back to the right depth for this label if we want to
+    // transfer here from a different depth.
+    StackDepthMap[&S] = StackDepth;
+  } else {
+    if (StackDepthMap[&S] != StackDepth) {
+      // FIXME: Sema needs to ckeck for jumps that cross decls with
+      // initializations for C++, and all VLAs, not just the first in
+      // a block that does a stacksave.
+      // FIXME: We need to save a place to insert the adjustment
+      // when we do a EmitStackUpdate on a forward jump, and then
+      // backpatch the adjustment into that place.
+      CGM.ErrorUnsupported(&S, "forward goto inside scope with VLA");
+    }
+  }
   EmitBlock(NextBB);
 }
 
@@ -221,18 +273,16 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
     return;
   }
 
-  for (unsigned i = 0; i < StackSaveValues.size(); i++) {
-    if (StackSaveValues[i]) {
-      CGM.ErrorUnsupported(&S, "goto inside scope with VLA");
-      return;
-    }
-  }
-  
   // If this code is reachable then emit a stop point (if generating
   // debug info). We have to do this ourselves because we are on the
   // "simple" statement path.
   if (HaveInsertPoint())
     EmitStopPoint(&S);
+
+  // We need to adjust the stack, if the destination was (will be) at
+  // a different depth.
+  EmitStackUpdate(*S.getLabel());
+
   EmitBranch(getBasicBlockForLabel(S.getLabel()));
 }
 
@@ -330,14 +380,13 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
     Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
   
   // Store the blocks to use for break and continue.
-  BreakContinueStack.push_back(BreakContinue(ExitBlock, LoopHeader, 
-                                             ObjCEHStack.size()));
+  BreakContinuePush(ExitBlock, LoopHeader);
   
   // Emit the loop body.
   EmitBlock(LoopBody);
   EmitStmt(S.getBody());
 
-  BreakContinueStack.pop_back();
+  BreakContinuePop();  
   
   // Cycle to the condition.
   EmitBranch(LoopHeader);
@@ -364,13 +413,12 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
   llvm::BasicBlock *DoCond = createBasicBlock("do.cond");
   
   // Store the blocks to use for break and continue.
-  BreakContinueStack.push_back(BreakContinue(AfterDo, DoCond, 
-                                             ObjCEHStack.size()));
+  BreakContinuePush(AfterDo, DoCond);
   
   // Emit the body of the loop into the block.
   EmitStmt(S.getBody());
   
-  BreakContinueStack.pop_back();
+  BreakContinuePop();
   
   EmitBlock(DoCond);
   
@@ -443,13 +491,12 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     ContinueBlock = CondBlock;  
   
   // Store the blocks to use for break and continue.
-  BreakContinueStack.push_back(BreakContinue(AfterFor, ContinueBlock,
-                                             ObjCEHStack.size()));
+  BreakContinuePush(AfterFor, ContinueBlock);
   
   // If the condition is true, execute the body of the for stmt.
   EmitStmt(S.getBody());
 
-  BreakContinueStack.pop_back();
+  BreakContinuePop();
   
   // If there is an increment, emit it next.
   if (S.getInc()) {
@@ -678,12 +725,11 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   llvm::BasicBlock *ContinueBlock = NULL;
   if (!BreakContinueStack.empty())
     ContinueBlock = BreakContinueStack.back().ContinueBlock;
-  BreakContinueStack.push_back(BreakContinue(NextBlock, ContinueBlock,
-                                             ObjCEHStack.size()));
+  BreakContinuePush(NextBlock, ContinueBlock);
 
   // Emit switch body.
   EmitStmt(S.getBody());
-  BreakContinueStack.pop_back();
+  BreakContinuePop();
 
   // Update the default block in case explicit case range tests have
   // been chained on top.

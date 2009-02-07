@@ -188,7 +188,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       
       Builder.CreateStore(V, Stack);
       
-      StackSaveValues.back() = Stack;
+      StackSaveValues.back() = StackDepth = Stack;
     }
     // Get the element type.
     const llvm::Type *LElemTy = ConvertType(Ty);    

@@ -144,21 +144,36 @@ private:
   /// until all AddrLabelExprs have been seen.
   std::vector<llvm::SwitchInst*> IndirectSwitches;
 
-  /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
-  /// decls.
+  /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local
+  /// C decls.
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   llvm::DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
   
+  /// BreakContinuePush - Note a new break and continue level.
+  void BreakContinuePush(llvm::BasicBlock *bb, llvm::BasicBlock *cb) {
+    BreakContinueStack.push_back(BreakContinue(bb, cb, StackDepth,
+                                               ObjCEHStack.size()));
+  }
+
+  /// BreakContinuePop - Note end of previous break and continue level.
+  void BreakContinuePop() {
+    BreakContinueStack.pop_back();
+  }
+
   // BreakContinueStack - This keeps track of where break and continue 
-  // statements should jump to, as well as the size of the eh stack.
+  // statements should jump to, as well as the depth of the stack and the size
+  // of the eh stack.
   struct BreakContinue {
-    BreakContinue(llvm::BasicBlock *bb, llvm::BasicBlock *cb, size_t ehss)
-      : BreakBlock(bb), ContinueBlock(cb), EHStackSize(ehss) {}
+    BreakContinue(llvm::BasicBlock *bb, llvm::BasicBlock *cb,
+                  llvm::Value *sd, size_t ehss)
+      : BreakBlock(bb), ContinueBlock(cb), SaveStackDepth(sd),
+        EHStackSize(ehss) {}
       
     llvm::BasicBlock *BreakBlock;
     llvm::BasicBlock *ContinueBlock;
+    llvm::Value *SaveStackDepth;
     size_t EHStackSize;
   }; 
   llvm::SmallVector<BreakContinue, 8> BreakContinueStack;
@@ -176,11 +191,23 @@ private:
   // we enter/leave scopes.
   llvm::DenseMap<const VariableArrayType*, llvm::Value*> VLASizeMap;
   
+  /// StackDepth - This keeps track of the stack depth.  It is used to
+  /// notice when control flow results in a change in stack depth and
+  /// to arrange for the appropriate stack depth to be restored.
+  llvm::Value *StackDepth;
+
   /// StackSaveValues - A stack(!) of stack save values. When a new scope is
   /// entered, a null is pushed on this stack. If a VLA is emitted, then 
   /// the return value of llvm.stacksave() is stored at the top of this stack.
   llvm::SmallVector<llvm::Value*, 8> StackSaveValues;
   
+  llvm::DenseMap<const LabelStmt*, llvm::Value *> StackDepthMap;
+
+  /// EmitStackUpdate - Routine to adjust the stack to the depth the
+  /// stack should be at by the time we transfer control flow to the
+  /// label.
+  void EmitStackUpdate(const LabelStmt &S);
+
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
