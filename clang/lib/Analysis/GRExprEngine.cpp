@@ -2515,12 +2515,19 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
     
       assert (B->isCompoundAssignmentOp());
 
-      if (Op >= BinaryOperator::AndAssign) {
-        Op = (BinaryOperator::Opcode) (Op - (BinaryOperator::AndAssign - 
-                                             BinaryOperator::And));
-      }
-      else {
-        Op = (BinaryOperator::Opcode) (Op - BinaryOperator::MulAssign);
+      switch (Op) {
+        default:
+          assert(0 && "Invalid opcode for compound assignment.");
+        case BinaryOperator::MulAssign: Op = BinaryOperator::Mul; break;
+        case BinaryOperator::DivAssign: Op = BinaryOperator::Div; break;
+        case BinaryOperator::RemAssign: Op = BinaryOperator::Rem; break;
+        case BinaryOperator::AddAssign: Op = BinaryOperator::Add; break;
+        case BinaryOperator::SubAssign: Op = BinaryOperator::Sub; break;
+        case BinaryOperator::ShlAssign: Op = BinaryOperator::Shl; break;
+        case BinaryOperator::ShrAssign: Op = BinaryOperator::Shr; break;
+        case BinaryOperator::AndAssign: Op = BinaryOperator::And; break;
+        case BinaryOperator::XorAssign: Op = BinaryOperator::Xor; break;
+        case BinaryOperator::OrAssign:  Op = BinaryOperator::Or;  break;
       }
           
       // Perform a load (the LHS).  This performs the checks for
