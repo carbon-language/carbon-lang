@@ -2045,6 +2045,7 @@ class LabelSDNode : public SDNode {
   unsigned LabelID;
 protected:
   friend class SelectionDAG;
+LabelSDNode(unsigned NodeTy, DebugLoc dl, SDValue ch, unsigned id)
     : SDNode(NodeTy, dl, getSDVTList(MVT::Other)), LabelID(id) {
     InitOperands(&Chain, ch);
   }
