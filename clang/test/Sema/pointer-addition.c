@@ -1,6 +1,6 @@
 // RUN: clang %s -fsyntax-only -verify -pedantic
 
-typedef struct S S; // expected-note{{forward declaration of 'struct S'}}
+typedef struct S S; // expected-note 3 {{forward declaration of 'struct S'}}
 void a(S* b, void* c) {
   void (*fp)(int) = 0;
   b++;       // expected-error {{arithmetic on pointer to incomplete type}}

@@ -43,6 +43,15 @@ static void EmitError(Preprocessor &PP, SourceLocation Pos, const char *String){
 //
 // You can place as many diagnostics on one line as you wish. To make the code
 // more readable, you can use slash-newline to separate out the diagnostics.
+//
+// The simple syntax above allows each specification to match exactly one error.
+// You can use the extended syntax to customize this. The extended syntax is
+// "expected-<type> <n> {{diag text}}", where <type> is one of "error",
+// "warning" or "note", and <n> is a positive integer. This allows the
+// diagnostic to appear as many times as specified. Example:
+//
+//   void f(); // expected-note 2 {{previous declaration is here}}
+//
 
 /// FindDiagnostics - Go through the comment and see if it indicates expected
 /// diagnostics. If so, then put them in a diagnostic list.
@@ -73,6 +82,24 @@ static void FindDiagnostics(const char *CommentStart, unsigned CommentLen,
            isspace(CommentStart[0]))
       ++CommentStart;
     
+    // Default, if we find the '{' now, is 1 time.
+    int Times = 1;
+    int Temp = 0;
+    // In extended syntax, there could be a digit now.
+    while (CommentStart != CommentEnd &&
+           CommentStart[0] >= '0' && CommentStart[0] <= '9') {
+      Temp *= 10;
+      Temp += CommentStart[0] - '0';
+      ++CommentStart;
+    }
+    if (Temp > 0)
+      Times = Temp;
+    
+    // Skip whitespace again.
+    while (CommentStart != CommentEnd &&
+           isspace(CommentStart[0]))
+      ++CommentStart;
+    
     // We should have a {{ now.
     if (CommentEnd-CommentStart < 2 ||
         CommentStart[0] != '{' || CommentStart[1] != '{') {
@@ -81,7 +108,7 @@ static void FindDiagnostics(const char *CommentStart, unsigned CommentLen,
       else
         EmitError(PP, Pos, "cannot find start ('{{') of expected string");
       return;
-    }    
+    }
     CommentStart += 2;
 
     // Find the }}.
@@ -103,8 +130,10 @@ static void FindDiagnostics(const char *CommentStart, unsigned CommentLen,
     std::string::size_type FindPos;
     while ((FindPos = Msg.find("\\n")) != std::string::npos)
       Msg.replace(FindPos, 2, "\n");
-    ExpectedDiags.push_back(std::make_pair(Pos, Msg));
-    
+    // Add is possibly multiple times.
+    for (int i = 0; i < Times; ++i)
+      ExpectedDiags.push_back(std::make_pair(Pos, Msg));
+
     CommentStart = ExpectedEnd;
   }
 }
@@ -178,31 +207,39 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
                              const_diag_iterator d1_end,
                              const_diag_iterator d2_begin,
                              const_diag_iterator d2_end,
-                             const char *Msg) {
-  DiagList DiffList;
+                             const char *MsgLeftOnly,
+                             const char *MsgRightOnly) {
+  DiagList LeftOnly;
+  DiagList Left(d1_begin, d1_end);
+  DiagList Right(d2_begin, d2_end);
 
-  for (const_diag_iterator I = d1_begin, E = d1_end; I != E; ++I) {
+  for (const_diag_iterator I = Left.begin(), E = Left.end(); I != E; ++I) {
     unsigned LineNo1 = SourceMgr.getInstantiationLineNumber(I->first);
     const std::string &Diag1 = I->second;
-    bool Found = false;
 
-    for (const_diag_iterator II = d2_begin, IE = d2_end; II != IE; ++II) {
+    DiagList::iterator II, IE;
+    for (II = Right.begin(), IE = Right.end(); II != IE; ++II) {
       unsigned LineNo2 = SourceMgr.getInstantiationLineNumber(II->first);
       if (LineNo1 != LineNo2) continue;
 
       const std::string &Diag2 = II->second;
       if (Diag2.find(Diag1) != std::string::npos ||
           Diag1.find(Diag2) != std::string::npos) {
-        Found = true;
         break;
       }
     }
-
-    if (!Found)
-      DiffList.push_back(std::make_pair(I->first, Diag1));
+    if (II == IE) {
+      // Not found.
+      LeftOnly.push_back(*I);
+    } else {
+      // Found. The same cannot be found twice.
+      Right.erase(II);
+    }
   }
+  // Now all that's left in Right are those that were not matched.
 
-  return PrintProblem(SourceMgr, DiffList.begin(), DiffList.end(), Msg);
+  return PrintProblem(SourceMgr, LeftOnly.begin(), LeftOnly.end(), MsgLeftOnly)
+       | PrintProblem(SourceMgr, Right.begin(), Right.end(), MsgRightOnly);
 }
 
 /// CheckResults - This compares the expected results to those that
@@ -227,44 +264,27 @@ static bool CheckResults(Preprocessor &PP,
   //   Seen \ Expected - set seen but not expected
   bool HadProblem = false;
 
-  // See if there were errors that were expected but not seen.
+  // See if there are error mismatches.
   HadProblem |= CompareDiagLists(SourceMgr,
                                  ExpectedErrors.begin(), ExpectedErrors.end(),
                                  Diags.err_begin(), Diags.err_end(),
-                                 "Errors expected but not seen:");
-
-  // See if there were errors that were seen but not expected.
-  HadProblem |= CompareDiagLists(SourceMgr,
-                                 Diags.err_begin(), Diags.err_end(),
-                                 ExpectedErrors.begin(), ExpectedErrors.end(),
+                                 "Errors expected but not seen:",
                                  "Errors seen but not expected:");
 
-  // See if there were warnings that were expected but not seen.
+  // See if there are warning mismatches.
   HadProblem |= CompareDiagLists(SourceMgr,
                                  ExpectedWarnings.begin(),
                                  ExpectedWarnings.end(),
                                  Diags.warn_begin(), Diags.warn_end(),
-                                 "Warnings expected but not seen:");
-
-  // See if there were warnings that were seen but not expected.
-  HadProblem |= CompareDiagLists(SourceMgr,
-                                 Diags.warn_begin(), Diags.warn_end(),
-                                 ExpectedWarnings.begin(),
-                                 ExpectedWarnings.end(),
+                                 "Warnings expected but not seen:",
                                  "Warnings seen but not expected:");
 
-  // See if there were notes that were expected but not seen.
+  // See if there are note mismatches.
   HadProblem |= CompareDiagLists(SourceMgr,
                                  ExpectedNotes.begin(),
                                  ExpectedNotes.end(),
                                  Diags.note_begin(), Diags.note_end(),
-                                 "Notes expected but not seen:");
-
-  // See if there were notes that were seen but not expected.
-  HadProblem |= CompareDiagLists(SourceMgr,
-                                 Diags.note_begin(), Diags.note_end(),
-                                 ExpectedNotes.begin(),
-                                 ExpectedNotes.end(),
+                                 "Notes expected but not seen:",
                                  "Notes seen but not expected:");
 
   return HadProblem;

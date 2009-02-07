@@ -15,7 +15,7 @@ struct NonAggregate {
 };
 NonAggregate non_aggregate_test = { 1, 2 }; // expected-error{{initialization of non-aggregate type 'struct NonAggregate' with an initializer list}}
 
-NonAggregate non_aggregate_test2[2] = { { 1, 2 }, { 3, 4 } }; // expected-error{{initialization of non-aggregate type 'struct NonAggregate' with an initializer list}}
+NonAggregate non_aggregate_test2[2] = { { 1, 2 }, { 3, 4 } }; // expected-error 2 {{initialization of non-aggregate type 'struct NonAggregate' with an initializer list}}
 
 
 // C++ [dcl.init.aggr]p3
@@ -40,8 +40,8 @@ char cv[4] = { 'a', 's', 'd', 'f', 0 }; // expected-error{{excess elements in ar
 struct TooFew { int a; char* b; int c; }; 
 TooFew too_few = { 1, "asdf" }; // okay
 
-struct NoDefaultConstructor { // expected-note{{candidate function}}
-  NoDefaultConstructor(int); // expected-note{{candidate function}}
+struct NoDefaultConstructor { // expected-note 5 {{candidate function}}
+  NoDefaultConstructor(int); // expected-note 5 {{candidate function}}
 };
 struct TooFewError {
   int a;
@@ -53,7 +53,7 @@ TooFewError too_few_error = { 1 }; // expected-error{{no matching constructor}}
 TooFewError too_few_okay2[2] = { 1, 1 };
 TooFewError too_few_error2[2] = { 1 }; // expected-error{{no matching constructor}}
 
-NoDefaultConstructor too_few_error3[3] = { }; // expected-error{{no matching constructor}}
+NoDefaultConstructor too_few_error3[3] = { }; // expected-error 3 {{no matching constructor}}
 
 // C++ [dcl.init.aggr]p8
 struct Empty { };

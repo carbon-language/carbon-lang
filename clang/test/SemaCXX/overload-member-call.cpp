@@ -1,8 +1,8 @@
 // RUN: clang -fsyntax-only -verify %s
 
 struct X {
-  int& f(int) const; // expected-note{{candidate function}}
-  float& f(int); // expected-note{{candidate function}}
+  int& f(int) const; // expected-note 2 {{candidate function}}
+  float& f(int); // expected-note 2 {{candidate function}}
 
   void test_f(int x) const {
     int& i = f(x);
@@ -12,9 +12,9 @@ struct X {
     float& f2 = f(x);
   }
 
-  int& g(int) const; // expected-note{{candidate function}}
-  float& g(int); // expected-note{{candidate function}}
-  static double& g(double); // expected-note{{candidate function}}
+  int& g(int) const; // expected-note 2 {{candidate function}}
+  float& g(int); // expected-note 2 {{candidate function}}
+  static double& g(double); // expected-note 2 {{candidate function}}
 
   void h(int);
 

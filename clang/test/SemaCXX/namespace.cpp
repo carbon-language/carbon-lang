@@ -1,5 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s 
-namespace A { // expected-note {{previous definition is here}}
+namespace A { // expected-note 2 {{previous definition is here}}
   int A;
   void f() { A = 0; }
 }

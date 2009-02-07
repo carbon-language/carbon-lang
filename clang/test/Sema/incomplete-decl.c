@@ -1,6 +1,6 @@
 // RUN: clang -fsyntax-only -verify %s
 
-struct foo; // expected-note {{forward declaration of 'struct foo'}}
+struct foo; // expected-note 4 {{forward declaration of 'struct foo'}}
 
 void b;  // expected-error {{variable has incomplete type 'void'}}
 struct foo f; // expected-error {{variable has incomplete type 'struct foo'}}

@@ -10,8 +10,8 @@ struct InitViaConstructor {
 
 // FIXME: error messages for implicitly-declared special member
 // function candidates are very poor
-struct NoValueInit { // expected-note{{candidate function}} 
-  NoValueInit(int i, int j); // expected-note{{candidate function}}
+struct NoValueInit { // expected-note 2 {{candidate function}} 
+  NoValueInit(int i, int j); // expected-note 2 {{candidate function}}
 };
 
 void test_cxx_functional_value_init() {

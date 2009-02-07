@@ -18,13 +18,13 @@ typedef int OBJECT; // expected-note {{previous definition is here}}
 @class OBJECT ;	// expected-error {{redefinition of 'OBJECT' as different kind of symbol}}
 
 
-typedef int Gorf;  // expected-note {{previous definition is here}}
+typedef int Gorf;  // expected-note 2 {{previous definition is here}}
 
 @interface Gorf @end // expected-error {{redefinition of 'Gorf' as different kind of symbol}}
 
 void Gorf() // expected-error {{redefinition of 'Gorf' as different kind of symbol}}
 {
-	int Bar, Foo, FooBar;
+  int Bar, Foo, FooBar;
 }
 
 @protocol P -im1; @end

@@ -12,7 +12,7 @@ void test() {
 
 struct foo { 
   int x; 
-  int y[]; // expected-note{{initialized flexible array member 'y' is here}}
+  int y[]; // expected-note 3 {{initialized flexible array member 'y' is here}}
 }; 
 struct bar { struct foo z; };
      

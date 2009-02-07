@@ -20,7 +20,7 @@ void test() {
   while (struct {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize 'x' with an rvalue of type 'int'}} expected-error {{value of type 'struct <anonymous>' is not contextually convertible to 'bool'}}
   switch (enum {E} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{incompatible type}}
 
-  if (int x=0) { // expected-note {{previous definition is here}}
+  if (int x=0) { // expected-note 2 {{previous definition is here}}
     int x;  // expected-error {{redefinition of 'x'}}
   }
   else

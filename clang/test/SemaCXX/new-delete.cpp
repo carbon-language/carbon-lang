@@ -5,8 +5,8 @@
 struct S // expected-note {{candidate}}
 {
   S(int, int, double); // expected-note {{candidate}}
-  S(double, int); // expected-note {{candidate}} expected-note {{candidate}}
-  S(float, int); // expected-note {{candidate}} expected-note {{candidate}}
+  S(double, int); // expected-note 2 {{candidate}}
+  S(float, int); // expected-note 2 {{candidate}}
 };
 struct T; // expected-note{{forward declaration of 'struct T'}}
 struct U
@@ -18,9 +18,9 @@ struct V : U
 {
 };
 
-void* operator new(size_t); // expected-note {{candidate}}
-void* operator new(size_t, int*); // expected-note {{candidate}}
-void* operator new(size_t, float*); // expected-note {{candidate}}
+void* operator new(size_t); // expected-note 2 {{candidate}}
+void* operator new(size_t, int*); // expected-note 3 {{candidate}}
+void* operator new(size_t, float*); // expected-note 3 {{candidate}}
 
 void good_news()
 {
