@@ -2910,7 +2910,7 @@ static SDValue getMemsetStringVal(MVT VT, DebugLoc dl, SelectionDAG &DAG,
 static SDValue getMemBasePlusOffset(SDValue Base, unsigned Offset,
                                       SelectionDAG &DAG) {
   MVT VT = Base.getValueType();
-  return DAG.getNode(ISD::ADD, Base.getNode()->getDebugLoc(),
+  return DAG.getNode(ISD::ADD, Base.getDebugLoc(),
                      VT, Base, DAG.getConstant(Offset, VT));
 }
 

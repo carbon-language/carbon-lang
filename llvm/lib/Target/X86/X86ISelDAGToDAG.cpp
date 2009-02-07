@@ -736,7 +736,7 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
                                    bool isRoot, unsigned Depth) {
   bool is64Bit = Subtarget->is64Bit();
-  DebugLoc dl = N.getNode()->getDebugLoc();
+  DebugLoc dl = N.getDebugLoc();
   DOUT << "MatchAddress: "; DEBUG(AM.dump());
   // Limit recursion.
   if (Depth > 5)
@@ -1173,7 +1173,7 @@ SDNode *X86DAGToDAGISel::getTruncateTo8Bit(SDValue N0) {
   assert(!Subtarget->is64Bit() &&
          "getTruncateTo8Bit is only needed on x86-32!");
   SDValue SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
-  DebugLoc dl = N0.getNode()->getDebugLoc();
+  DebugLoc dl = N0.getDebugLoc();
 
   // Ensure that the source register has an 8-bit subreg on 32-bit targets
   unsigned Opc;

@@ -470,7 +470,7 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
-  DebugLoc dl = Op.getNode()->getDebugLoc();
+  DebugLoc dl = Op.getDebugLoc();
   switch (Op.getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!");
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG, 

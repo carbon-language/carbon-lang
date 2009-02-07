@@ -352,7 +352,7 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT VT, SDValue Mask) const {
           }
         }
       }
-      Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getNode()->getDebugLoc(),
+      Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getDebugLoc(),
                          NVT, &Ops[0], Ops.size());
     }
     VT = NVT;
@@ -893,7 +893,7 @@ SDValue SelectionDAGLegalize::UnrollVectorOp(SDValue Op) {
          "Can't unroll a vector with multiple results!");
   unsigned NE = VT.getVectorNumElements();
   MVT EltVT = VT.getVectorElementType();
-  DebugLoc dl = Op.getNode()->getDebugLoc();
+  DebugLoc dl = Op.getDebugLoc();
 
   SmallVector<SDValue, 8> Scalars;
   SmallVector<SDValue, 4> Operands(Op.getNumOperands());
@@ -5001,7 +5001,7 @@ SDValue SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDValue Op) {
   // lower to a store then an indexed load.
   SDValue Vec = Op.getOperand(0);
   SDValue Idx = Op.getOperand(1);
-  DebugLoc dl = Op.getNode()->getDebugLoc();
+  DebugLoc dl = Op.getDebugLoc();
   
   MVT TVT = Vec.getValueType();
   unsigned NumElems = TVT.getVectorNumElements();

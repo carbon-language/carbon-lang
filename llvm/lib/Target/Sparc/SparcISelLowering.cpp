@@ -838,7 +838,7 @@ static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
                               SparcTargetLowering &TLI) {
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
-  DebugLoc dl = Op.getNode()->getDebugLoc();
+  DebugLoc dl = Op.getDebugLoc();
   SDValue Offset = DAG.getNode(ISD::ADD, dl, MVT::i32,
                                  DAG.getRegister(SP::I6, MVT::i32),
                                  DAG.getConstant(TLI.getVarArgsFrameOffset(),

@@ -114,7 +114,7 @@ namespace {
     std::pair<SDValue, SDValue> CallInfo =
             TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                             CallingConv::C, false, Callee, Args, DAG,
-                            Op.getNode()->getDebugLoc());
+                            Op.getDebugLoc());
 
     return CallInfo.first;
   }
@@ -2488,7 +2488,7 @@ static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG,
 static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
                           const TargetLowering &TLI) {
   CondCodeSDNode *CC = dyn_cast<CondCodeSDNode>(Op.getOperand(2));
-  DebugLoc dl = Op.getNode()->getDebugLoc();
+  DebugLoc dl = Op.getDebugLoc();
   assert(CC != 0 && "LowerSETCC: CondCodeSDNode should not be null here!\n");
 
   SDValue lhs = Op.getOperand(0);

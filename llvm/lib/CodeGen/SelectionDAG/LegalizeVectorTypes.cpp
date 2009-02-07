@@ -2144,7 +2144,7 @@ SDValue DAGTypeLegalizer::ModifyToType(SDValue InOp, MVT NVT) {
   MVT InVT = InOp.getValueType();
   assert(InVT.getVectorElementType() == NVT.getVectorElementType() &&
          "input and widen element type must match");
-  DebugLoc dl = InOp.getNode()->getDebugLoc();
+  DebugLoc dl = InOp.getDebugLoc();
 
   // Check if InOp already has the right width.
   if (InVT == NVT)
