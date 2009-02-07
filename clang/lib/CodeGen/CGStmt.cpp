@@ -358,9 +358,9 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   llvm::BasicBlock *LoopHeader = createBasicBlock("while.cond");
   EmitBlock(LoopHeader);
   
-  // Evaluate the conditional in the while header.  C99 6.8.5.1: The evaluation
-  // of the controlling expression takes place before each execution of the loop
-  // body. 
+  // Evaluate the conditional in the while header.  C99 6.8.5.1: The
+  // evaluation of the controlling expression takes place before each
+  // execution of the loop body.
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
 
   // while(1) is common, avoid extra exit blocks.  Be sure
