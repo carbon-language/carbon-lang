@@ -865,6 +865,17 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       Result = D->getInitVal();
       break;
     }
+    if (Ctx.getLangOptions().CPlusPlus &&
+        getType().getCVRQualifiers() == QualType::Const) {
+      // C++ 7.1.5.1p2
+      //   A variable of non-volatile const-qualified integral or enumeration
+      //   type initialized by an ICE can be used in ICEs.
+      if (const VarDecl *Dcl =
+              dyn_cast<VarDecl>(cast<DeclRefExpr>(this)->getDecl())) {
+        if (const Expr *Init = Dcl->getInit())
+          return Init->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
+      }
+    }
     if (Loc) *Loc = getLocStart();
     return false;
   case UnaryOperatorClass: {
