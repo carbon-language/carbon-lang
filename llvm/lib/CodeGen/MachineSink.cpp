@@ -167,6 +167,10 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     } else {
       // Virtual register uses are always safe to sink.
       if (MO.isUse()) continue;
+
+      // If it's not safe to move defs of the register class, then abort.
+      if (!TII->isSafeToMoveRegClassDefs(RegInfo->getRegClass(Reg)))
+        return false;
       
       // FIXME: This picks a successor to sink into based on having one
       // successor that dominates all the uses.  However, there are cases where
