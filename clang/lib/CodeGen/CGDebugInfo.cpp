@@ -64,7 +64,7 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   
   // Get source file information.
   const char *FileName = FE ? FE->getName() : "<unknown>";
-  const char *DirName = FE ? FE->getDir()->getName() : "";
+  const char *DirName = FE ? FE->getDir()->getName() : "<unknown>";
   
   // Create new compile unit.
   // FIXME: Handle other language IDs as well.
