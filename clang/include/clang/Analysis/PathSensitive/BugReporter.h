@@ -46,6 +46,7 @@ class ParentMap;
   
 // FIXME: Combine this with RangedBugReport and remove RangedBugReport.
 class BugReport {
+protected:
   BugType& BT;
   std::string Description;
   const ExplodedNode<GRState> *EndNode;
