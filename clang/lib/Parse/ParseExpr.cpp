@@ -33,20 +33,21 @@ using namespace clang;
 /// productions.  Low precedences numbers bind more weakly than high numbers.
 namespace prec {
   enum Level {
-    Unknown        = 0,    // Not binary operator.
-    Comma          = 1,    // ,
-    Assignment     = 2,    // =, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=
-    Conditional    = 3,    // ?
-    LogicalOr      = 4,    // ||
-    LogicalAnd     = 5,    // &&
-    InclusiveOr    = 6,    // |
-    ExclusiveOr    = 7,    // ^
-    And            = 8,    // &
-    Equality       = 9,    // ==, !=
-    Relational     = 10,   //  >=, <=, >, <
-    Shift          = 11,   // <<, >>
-    Additive       = 12,   // -, +
-    Multiplicative = 13    // *, /, %
+    Unknown         = 0,    // Not binary operator.
+    Comma           = 1,    // ,
+    Assignment      = 2,    // =, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=
+    Conditional     = 3,    // ?
+    LogicalOr       = 4,    // ||
+    LogicalAnd      = 5,    // &&
+    InclusiveOr     = 6,    // |
+    ExclusiveOr     = 7,    // ^
+    And             = 8,    // &
+    Equality        = 9,    // ==, !=
+    Relational      = 10,   //  >=, <=, >, <
+    Shift           = 11,   // <<, >>
+    Additive        = 12,   // -, +
+    Multiplicative  = 13,   // *, /, %
+    PointerToMember = 14    // .*, ->*
   };
 }
 
@@ -88,6 +89,8 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
   case tok::percent:
   case tok::slash:
   case tok::star:                 return prec::Multiplicative;
+  case tok::periodstar:
+  case tok::arrowstar:            return prec::PointerToMember;
   }
 }
 
@@ -104,7 +107,13 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
 /// consistency, we parse the LHS as a conditional-expression, then check for
 /// l-value-ness in semantic analysis stages.
 ///
+///       pm-expression: [C++ 5.5]
+///         cast-expression
+///         pm-expression '.*' cast-expression
+///         pm-expression '->*' cast-expression
+///
 ///       multiplicative-expression: [C99 6.5.5]
+///     Note: in C++, apply pm-expression instead of cast-expression
 ///         cast-expression
 ///         multiplicative-expression '*' cast-expression
 ///         multiplicative-expression '/' cast-expression
@@ -270,7 +279,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
     // Consume the operator, saving the operator token for error reporting.
     Token OpToken = Tok;
     ConsumeToken();
-    
+
     // Special case handling for the ternary operator.
     OwningExprResult TernaryMiddle(Actions, true);
     if (NextTokPrec == prec::Conditional) {

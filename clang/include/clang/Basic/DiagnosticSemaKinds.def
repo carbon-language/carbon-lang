@@ -863,6 +863,12 @@ DIAG(err_qualified_catch_declarator, ERROR,
      "exception declarator cannot be qualified")
 DIAG(err_early_catch_all, ERROR,
      "catch-all handler must come last")
+DIAG(err_bad_memptr_rhs, ERROR,
+     "right hand operand to %0 must be a pointer to member of a complete class "
+     "but is %1")
+DIAG(err_bad_memptr_lhs, ERROR,
+     "left hand operand to ->* must be a %select{|pointer to }0class "
+     "compatible with the right hand operand, but is %1")
 
 DIAG(err_invalid_use_of_function_type, ERROR,
      "a function type is not allowed here")

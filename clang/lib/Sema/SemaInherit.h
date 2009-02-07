@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_SEMA_INHERIT_H
 #define LLVM_CLANG_SEMA_INHERIT_H
 
+#include "Sema.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/Type.h"
@@ -25,7 +26,6 @@
 #include <map>
 
 namespace clang {
-  class Sema;
   class CXXBaseSpecifier;
   class CXXRecordType;
 

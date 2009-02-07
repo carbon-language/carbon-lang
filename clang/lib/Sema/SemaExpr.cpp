@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SemaInherit.h"
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -2701,7 +2702,73 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
     << lex->getType() << rex->getType()
     << lex->getSourceRange() << rex->getSourceRange();
   return QualType();
-}    
+}
+
+inline QualType Sema::CheckPointerToMemberOperands(
+  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isIndirect)
+{
+  const char *OpSpelling = isIndirect ? "->*" : ".*";
+  // C++ 5.5p2
+  //   The binary operator .* [p3: ->*] binds its second operand, which shall
+  //   be of type "pointer to member of T" (where T is a completely-defined
+  //   class type) [...]
+  QualType RType = rex->getType();
+  const MemberPointerType *MemPtr = RType->getAsMemberPointerType();
+  if (!MemPtr || MemPtr->getClass()->isIncompleteType()) {
+    Diag(Loc, diag::err_bad_memptr_rhs)
+      << OpSpelling << RType << rex->getSourceRange();
+    return QualType();
+  }
+  QualType Class(MemPtr->getClass(), 0);
+
+  // C++ 5.5p2
+  //   [...] to its first operand, which shall be of class T or of a class of
+  //   which T is an unambiguous and accessible base class. [p3: a pointer to
+  //   such a class]
+  QualType LType = lex->getType();
+  if (isIndirect) {
+    if (const PointerType *Ptr = LType->getAsPointerType())
+      LType = Ptr->getPointeeType().getNonReferenceType();
+    else {
+      Diag(Loc, diag::err_bad_memptr_lhs)
+        << 1 << LType << lex->getSourceRange();
+      return QualType();
+    }
+  }
+
+  if (Context.getCanonicalType(Class).getUnqualifiedType() !=
+      Context.getCanonicalType(LType).getUnqualifiedType()) {
+    BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                    /*DetectVirtual=*/false);
+    // FIXME: Would it be useful to print full ambiguity paths,
+    // or is that overkill?
+    if (!IsDerivedFrom(LType, Class, Paths) ||
+        Paths.isAmbiguous(Context.getCanonicalType(Class))) {
+      Diag(Loc, diag::err_bad_memptr_lhs)
+        << (int)isIndirect << lex->getType() << lex->getSourceRange();
+      return QualType();
+    }
+  }
+
+  // C++ 5.5p2
+  //   The result is an object or a function of the type specified by the
+  //   second operand.
+  // The cv qualifiers are the union of those in the pointer and the left side,
+  // in accordance with 5.5p5 and 5.2.5.
+  // FIXME: This returns a dereferenced member function pointer as a normal
+  // function type. However, the only operation valid on such functions is
+  // calling them. There's also a GCC extension to get a function pointer to
+  // the thing, which is another complication, because this type - unlike the
+  // type that is the result of this expression - takes the class as the first
+  // argument.
+  // We probably need a "MemberFunctionClosureType" or something like that.
+  QualType Result = MemPtr->getPointeeType();
+  if (LType.isConstQualified())
+    Result.addConst();
+  if (LType.isVolatileQualified())
+    Result.addVolatile();
+  return Result;
+}
 
 inline QualType Sema::CheckMultiplyDivideOperands(
   Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) 
@@ -3535,6 +3602,8 @@ static inline BinaryOperator::Opcode ConvertTokenKindToBinaryOpcode(
   BinaryOperator::Opcode Opc;
   switch (Kind) {
   default: assert(0 && "Unknown binop!");
+  case tok::periodstar:           Opc = BinaryOperator::PtrMemD; break;
+  case tok::arrowstar:            Opc = BinaryOperator::PtrMemI; break;
   case tok::star:                 Opc = BinaryOperator::Mul; break;
   case tok::slash:                Opc = BinaryOperator::Div; break;
   case tok::percent:              Opc = BinaryOperator::Rem; break;
@@ -3605,7 +3674,12 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   case BinaryOperator::Assign:
     ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, QualType());
     break;
-  case BinaryOperator::Mul: 
+  case BinaryOperator::PtrMemD:
+  case BinaryOperator::PtrMemI:
+    ResultTy = CheckPointerToMemberOperands(lhs, rhs, OpLoc,
+                                            Opc == BinaryOperator::PtrMemI);
+    break;
+  case BinaryOperator::Mul:
   case BinaryOperator::Div:
     ResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc);
     break;
@@ -3618,7 +3692,7 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   case BinaryOperator::Sub:
     ResultTy = CheckSubtractionOperands(lhs, rhs, OpLoc);
     break;
-  case BinaryOperator::Shl: 
+  case BinaryOperator::Shl:
   case BinaryOperator::Shr:
     ResultTy = CheckShiftOperands(lhs, rhs, OpLoc);
     break;
@@ -3707,11 +3781,11 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                               Context.DependentTy,
                                               Context.DependentTy, TokLoc));
     else
-      return Owned(new (Context) BinaryOperator(lhs, rhs, Opc, Context.DependentTy,
-                                                TokLoc));
+      return Owned(new (Context) BinaryOperator(lhs, rhs, Opc,
+                                                Context.DependentTy, TokLoc));
   }
 
-  if (getLangOptions().CPlusPlus &&
+  if (getLangOptions().CPlusPlus && Opc != BinaryOperator::PtrMemD &&
       (lhs->getType()->isRecordType() || lhs->getType()->isEnumeralType() ||
        rhs->getType()->isRecordType() || rhs->getType()->isEnumeralType())) {
     // If this is one of the assignment operators, we only perform
@@ -3724,6 +3798,8 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
 
     // Determine which overloaded operator we're dealing with.
     static const OverloadedOperatorKind OverOps[] = {
+      // Overloading .* is not possible.
+      static_cast<OverloadedOperatorKind>(0), OO_ArrowStar,
       OO_Star, OO_Slash, OO_Percent,
       OO_Plus, OO_Minus,
       OO_LessLess, OO_GreaterGreater,

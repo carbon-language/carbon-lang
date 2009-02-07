@@ -35,6 +35,8 @@ public:
     if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
       switch (BinOp->getOpcode()) {
       default: assert(0 && "Unknown binary operator!");
+      case BinaryOperator::PtrMemD:   DISPATCH(BinPtrMemD,   BinaryOperator);
+      case BinaryOperator::PtrMemI:   DISPATCH(BinPtrMemI,   BinaryOperator);
       case BinaryOperator::Mul:       DISPATCH(BinMul,       BinaryOperator);
       case BinaryOperator::Div:       DISPATCH(BinDiv,       BinaryOperator);
       case BinaryOperator::Rem:       DISPATCH(BinRem,       BinaryOperator);
@@ -95,7 +97,7 @@ public:
       case UnaryOperator::Imag:         DISPATCH(UnaryImag,      UnaryOperator);
       case UnaryOperator::Extension:    DISPATCH(UnaryExtension, UnaryOperator);
       case UnaryOperator::OffsetOf:     DISPATCH(UnaryOffsetOf,  UnaryOperator);
-      }          
+      }
     }
     
     // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
@@ -119,6 +121,7 @@ public:
   RetTy VisitBin ## NAME(BinaryOperator *S) { \
     DISPATCH(BinaryOperator, BinaryOperator); \
   }
+  BINOP_FALLBACK(PtrMemD)                    BINOP_FALLBACK(PtrMemI)
   BINOP_FALLBACK(Mul)   BINOP_FALLBACK(Div)  BINOP_FALLBACK(Rem)
   BINOP_FALLBACK(Add)   BINOP_FALLBACK(Sub)  BINOP_FALLBACK(Shl)
   BINOP_FALLBACK(Shr)

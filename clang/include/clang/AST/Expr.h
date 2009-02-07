@@ -1085,6 +1085,7 @@ public:
   enum Opcode {
     // Operators listed in order of precedence.
     // Note that additions to this should also update the StmtVisitor class.
+    PtrMemD, PtrMemI, // [C++ 5.5] Pointer-to-member operators.
     Mul, Div, Rem,    // [C99 6.5.5] Multiplicative operators.
     Add, Sub,         // [C99 6.5.6] Additive operators.
     Shl, Shr,         // [C99 6.5.7] Bitwise shift operators.

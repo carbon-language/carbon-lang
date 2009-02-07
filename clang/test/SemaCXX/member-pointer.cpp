@@ -79,3 +79,28 @@ void g() {
 
   void (HasMembers::*pmd)() = &HasMembers::d;
 }
+
+void h() {
+  HasMembers hm, *phm = &hm;
+
+  int HasMembers::*pi = &HasMembers::i;
+  hm.*pi = 0;
+  int i = phm->*pi;
+  (void)&(hm.*pi);
+  (void)&(phm->*pi);
+  (void)&((&hm)->*pi); // expected-error {{address expression must be an lvalue or a function designator}}
+
+  void (HasMembers::*pf)() = &HasMembers::f;
+  (hm.*pf)();
+  (phm->*pf)();
+}
+
+struct OverloadsPtrMem
+{
+  int operator ->*(const char *);
+};
+
+void i() {
+  OverloadsPtrMem m;
+  int foo = m->*"Awesome!";
+}

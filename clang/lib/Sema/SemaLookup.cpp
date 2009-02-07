@@ -610,8 +610,8 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
         // using-directives later.
         for (OutOfLineCtx = Ctx; OutOfLineCtx && !OutOfLineCtx->isFileContext();
              OutOfLineCtx = OutOfLineCtx->getParent()) {
-          if (R = LookupQualifiedName(OutOfLineCtx, Name, NameKind,
-                                      RedeclarationOnly))
+          if ((R = LookupQualifiedName(OutOfLineCtx, Name, NameKind,
+                                      RedeclarationOnly)))
             return std::make_pair(true, R);
         }
       }
@@ -638,7 +638,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   // context as well as walking through the scopes.
 
   LookupResultsTy LookupResults;
-  assert(!OutOfLineCtx || OutOfLineCtx->isFileContext() &&
+  assert((!OutOfLineCtx || OutOfLineCtx->isFileContext()) &&
          "We should have been looking only at file context here already.");
   bool LookedInCtx = false;
   LookupResult Result;

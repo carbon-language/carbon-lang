@@ -1788,16 +1788,18 @@ public:
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const StandardConversionSequence& SCS,
                                  const char *Flavor);
-  
+
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).
-    
-  /// type checking binary operators (subroutines of ActOnBinOp).
+
+  /// type checking binary operators (subroutines of CreateBuiltinBinOp).
   inline QualType InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
+  inline QualType CheckPointerToMemberOperands( // C++ 5.5
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isIndirect);
   inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   inline QualType CheckRemainderOperands( // C99 6.5.5
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   inline QualType CheckAdditionOperands( // C99 6.5.6
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   inline QualType CheckSubtractionOperands( // C99 6.5.6
@@ -1807,7 +1809,7 @@ public:
   inline QualType CheckCompareOperands( // C99 6.5.8/9
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isRelational);
   inline QualType CheckBitwiseOperands( // C99 6.5.[10...12]
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   inline QualType CheckLogicalOperands( // C99 6.5.[13,14]
     Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   // CheckAssignmentOperands is used for both simple and compound assignment.

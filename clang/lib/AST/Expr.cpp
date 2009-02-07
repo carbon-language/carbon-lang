@@ -496,6 +496,12 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
         BinOp->getOpcode() == BinaryOperator::Comma)
       return BinOp->getRHS()->isLvalue(Ctx);
 
+    // C++ [expr.mptr.oper]p6
+    if ((BinOp->getOpcode() == BinaryOperator::PtrMemD ||
+         BinOp->getOpcode() == BinaryOperator::PtrMemI) &&
+        !BinOp->getType()->isFunctionType())
+      return BinOp->getLHS()->isLvalue(Ctx);
+
     if (!BinOp->isAssignmentOp())
       return LV_InvalidExpression;
 
