@@ -786,10 +786,11 @@ unsigned SelectionDAG::getMVTAlignment(MVT VT) const {
   return TLI.getTargetData()->getABITypeAlignment(Ty);
 }
 
+// EntryNode could meaningfully have debug info if we can find it...
 SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
   : TLI(tli), FLI(fli), DW(0),
-    EntryNode(ISD::EntryToken, getVTList(MVT::Other)),
-    Root(getEntryNode()) {
+    EntryNode(ISD::EntryToken, DebugLoc::getUnknownLoc(),
+    getVTList(MVT::Other)), Root(getEntryNode()) {
   AllNodes.push_back(&EntryNode);
 }
 
@@ -1077,20 +1078,6 @@ SDValue SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getBasicBlock(MachineBasicBlock *MBB, DebugLoc dl) {
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BasicBlock, getVTList(MVT::Other), 0, 0);
-  ID.AddPointer(MBB);
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-  SDNode *N = NodeAllocator.Allocate<BasicBlockSDNode>();
-  new (N) BasicBlockSDNode(MBB, dl);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
 SDValue SelectionDAG::getArgFlags(ISD::ArgFlagsTy Flags) {
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::ARG_FLAGS, getVTList(MVT::Other), 0, 0);
@@ -1128,30 +1115,11 @@ SDValue SelectionDAG::getExternalSymbol(const char *Sym, MVT VT) {
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getExternalSymbol(const char *Sym, DebugLoc dl, MVT VT) {
-  SDNode *&N = ExternalSymbols[Sym];
-  if (N) return SDValue(N, 0);
-  N = NodeAllocator.Allocate<ExternalSymbolSDNode>();
-  new (N) ExternalSymbolSDNode(false, dl, Sym, VT);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
 SDValue SelectionDAG::getTargetExternalSymbol(const char *Sym, MVT VT) {
   SDNode *&N = TargetExternalSymbols[Sym];
   if (N) return SDValue(N, 0);
   N = NodeAllocator.Allocate<ExternalSymbolSDNode>();
   new (N) ExternalSymbolSDNode(true, Sym, VT);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
-SDValue SelectionDAG::getTargetExternalSymbol(const char *Sym, DebugLoc dl, 
-                                              MVT VT) {
-  SDNode *&N = TargetExternalSymbols[Sym];
-  if (N) return SDValue(N, 0);
-  N = NodeAllocator.Allocate<ExternalSymbolSDNode>();
-  new (N) ExternalSymbolSDNode(true, dl, Sym, VT);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }
@@ -4828,7 +4796,7 @@ GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
            (isTarget ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress) :
            // Non Thread Local
            (isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress),
-           getSDVTList(VT)), Offset(o) {
+           DebugLoc::getUnknownLoc(), getSDVTList(VT)), Offset(o) {
   TheGlobal = const_cast<GlobalValue*>(GA);
 }
 
