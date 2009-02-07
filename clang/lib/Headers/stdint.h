@@ -184,7 +184,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 /* C99 7.18.2.5 Limits of greatest-width integer types. */
 #define INTMAX_MIN  (-__INTMAX_MAX__-1)
 #define INTMAX_MAX   __INTMAX_MAX__
-#define UINTMAX_MAX (__INTMAX_MAX__*2+1)
+#define UINTMAX_MAX (__INTMAX_MAX__*2ULL+1ULL)
 
 /* C99 7.18.3 Limits of other integer types. */
 #define SIG_ATOMIC_MIN INT32_MIN
