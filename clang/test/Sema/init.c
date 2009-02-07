@@ -1,5 +1,7 @@
 // RUN: clang %s -verify -fsyntax-only
 
+#include <stdint.h>
+
 typedef void (* fp)(void);
 void foo(void);
 
@@ -104,5 +106,5 @@ struct foo2 {
 };
 
 struct foo2 bar2[] = {
-   { (int)bbb }
+   { (intptr_t)bbb }
 };
