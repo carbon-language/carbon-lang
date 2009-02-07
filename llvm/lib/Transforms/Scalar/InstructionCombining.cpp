@@ -11007,8 +11007,14 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
     }
   }
 
-  const Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
+  const PointerType *DestTy = cast<PointerType>(CI->getType());
+  const Type *DestPTy = DestTy->getElementType();
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
+
+    // If the address spaces don't match, don't eliminate the cast.
+    if (DestTy->getAddressSpace() != SrcTy->getAddressSpace())
+      return 0;
+
     const Type *SrcPTy = SrcTy->getElementType();
 
     if (DestPTy->isInteger() || isa<PointerType>(DestPTy) || 
