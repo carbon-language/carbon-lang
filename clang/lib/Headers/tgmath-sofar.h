@@ -99,7 +99,7 @@
 #define lround(x) __builtin_overload(1, x, lroundl, lround, lroundf)
 #define nearbyint(x)__builtin_overload(1, x, nearbyintl, nearbyint, nearbyintf)
 // FIXME: nextafter -> binary operation.
-// FIXME: nexttoward -> binary operation?
+// FIXME: nexttoward -> binary operation?  [second arg is always long double]
 // FIXME: remainder -> binary operation.
 // FIXME: remquo -> fp+fp+ptr
 #define rint(x) __builtin_overload(1, x, rintl, rint, rintf)
