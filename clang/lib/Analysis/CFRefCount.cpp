@@ -2091,6 +2091,7 @@ namespace {
   //===---------===//
   
   class VISIBILITY_HIDDEN CFRefReport : public RangedBugReport {
+  protected:
     SymbolRef Sym;
   public:
     CFRefReport(CFRefBug& D, ExplodedNode<GRState> *n, SymbolRef sym)
@@ -2132,7 +2133,10 @@ namespace {
   public:
     CFRefLeakReport(CFRefBug& D, ExplodedNode<GRState> *n, SymbolRef sym)
       : CFRefReport(D, n, sym) {}
-    
+
+    PathDiagnosticPiece* getEndPath(BugReporter& BR,
+                                    const ExplodedNode<GRState>* N);
+
     SourceLocation getLocation() const;
   };  
 } // end anonymous namespace
@@ -2415,16 +2419,22 @@ PathDiagnosticPiece*
 CFRefReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN) {
 
   GRBugReporter& BR = cast<GRBugReporter>(br);
-  
   // Tell the BugReporter to report cases when the tracked symbol is
   // assigned to different variables, etc.
   cast<GRBugReporter>(BR).addNotableSymbol(Sym);
-  
-  if (!getBugType().isLeak())
-    return RangedBugReport::getEndPath(BR, EndN);
-  
-  // We are a leak.  Walk up the graph to get to the first node where the
-  // symbol appeared, and also get the first VarDecl that tracked object
+  return RangedBugReport::getEndPath(BR, EndN);
+}
+
+PathDiagnosticPiece*
+CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
+
+  GRBugReporter& BR = cast<GRBugReporter>(br);
+  // Tell the BugReporter to report cases when the tracked symbol is
+  // assigned to different variables, etc.
+  cast<GRBugReporter>(BR).addNotableSymbol(Sym);
+    
+  // We are reporting a leak.  Walk up the graph to get to the first node where
+  // the symbol appeared, and also get the first VarDecl that tracked object
   // is stored to.
   const ExplodedNode<GRState>* AllocNode = 0;
   const MemRegion* FirstBinding = 0;
