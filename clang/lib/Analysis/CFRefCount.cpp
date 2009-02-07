@@ -30,7 +30,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/STLExtras.h"
 #include <ostream>
-#include <sstream>
 #include <stdarg.h>
 
 using namespace clang;
@@ -2479,13 +2478,13 @@ CFRefReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN) {
   
   // Generate the diagnostic.
   FullSourceLoc L( S->getLocStart(), SMgr);
-  std::ostringstream os;
+  std::string sbuf;
+  llvm::raw_string_ostream os(sbuf);
   
   os << "Object allocated on line " << AllocLine;
   
   if (FirstBinding)
     os << " and stored into '" << FirstBinding->getString() << '\'';  
-
   
   // Get the retain count.
   const RefVal* RV = EndN->getState()->get<RefBindings>(Sym);
