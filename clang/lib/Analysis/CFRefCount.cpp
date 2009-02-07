@@ -2068,8 +2068,7 @@ namespace {
       : CFRefBug(tf, name), isReturn(isRet) {}
   public:
     
-    // FIXME: Remove once reports have better descriptions.
-    const char* getDescription() const { return "leak"; }
+    const char* getDescription() const { return ""; }
 
     bool isLeak() const { return true; }
   };
@@ -2133,7 +2132,7 @@ namespace {
     const MemRegion* AllocBinding;
   public:
     CFRefLeakReport(CFRefBug& D, ExplodedNode<GRState> *n, SymbolRef sym,
-                    GRStateManager& StateMgr);
+                    GRExprEngine& Eng);
 
     PathDiagnosticPiece* getEndPath(BugReporter& BR,
                                     const ExplodedNode<GRState>* N);
@@ -2519,7 +2518,7 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
 
 
 CFRefLeakReport::CFRefLeakReport(CFRefBug& D, ExplodedNode<GRState> *n,
-                                 SymbolRef sym, GRStateManager& StateMgr)
+                                 SymbolRef sym, GRExprEngine& Eng)
   : CFRefReport(D, n, sym)
 {
   
@@ -2534,13 +2533,19 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, ExplodedNode<GRState> *n,
   const ExplodedNode<GRState>* AllocNode = 0;
   
   llvm::tie(AllocNode, AllocBinding) =  // Set AllocBinding.
-    GetAllocationSite(StateMgr, getEndNode(), getSymbol());
+    GetAllocationSite(Eng.getStateManager(), getEndNode(), getSymbol());
 
-  ProgramPoint P = 
-    GetAllocationSite(StateMgr, getEndNode(), getSymbol()).first->getLocation();  
-  
   // Get the SourceLocation for the allocation site.
+  ProgramPoint P = AllocNode->getLocation();
   AllocSite = cast<PostStmt>(P).getStmt()->getLocStart();
+    
+  // Fill in the description of the bug.
+  Description.clear();
+  llvm::raw_string_ostream os(Description);
+  SourceManager& SMgr = Eng.getContext().getSourceManager();
+  unsigned AllocLine = SMgr.getInstantiationLineNumber(AllocSite);
+  os << "Potential leak of object allocated on line " << AllocLine
+    << " and store into '" << AllocBinding->getString() << '\'';
 }
 
 //===----------------------------------------------------------------------===//
@@ -2581,8 +2586,7 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
     CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
                                                     : leakWithinFunction);
     assert(BT && "BugType not initialized.");
-    CFRefLeakReport* report = new CFRefLeakReport(*BT, N, I->first,
-                                                  Eng.getStateManager());
+    CFRefLeakReport* report = new CFRefLeakReport(*BT, N, I->first, Eng);
     BR->EmitReport(report);
   }
 }
@@ -2631,8 +2635,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
     CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
                                           : leakWithinFunction);
     assert(BT && "BugType not initialized.");
-    CFRefLeakReport* report = new CFRefLeakReport(*BT, N, I->first,
-                                                  Eng.getStateManager());
+    CFRefLeakReport* report = new CFRefLeakReport(*BT, N, I->first, Eng);
     BR->EmitReport(report);
   }
 }
