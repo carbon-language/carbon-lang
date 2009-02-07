@@ -34,22 +34,25 @@ static void EnsureFunctionExists(Module &M, const char *Name,
   M.getOrInsertFunction(Name, FunctionType::get(RetTy, ParamTys, false));
 }
 
-static void EnsureFPIntrinsicsExist(Module &M, Module::iterator I,
-                                 const char *FName,
-                                 const char *DName, const char *LDName) {
+static void EnsureFPIntrinsicsExist(Module &M, Function *Fn,
+                                    const char *FName,
+                                    const char *DName, const char *LDName) {
   // Insert definitions for all the floating point types.
-  switch((int)I->arg_begin()->getType()->getTypeID()) {
+  switch((int)Fn->arg_begin()->getType()->getTypeID()) {
   case Type::FloatTyID:
-    EnsureFunctionExists(M, FName, I->arg_begin(), I->arg_end(),
+    EnsureFunctionExists(M, FName, Fn->arg_begin(), Fn->arg_end(),
                          Type::FloatTy);
+    break;
   case Type::DoubleTyID:
-    EnsureFunctionExists(M, DName, I->arg_begin(), I->arg_end(),
+    EnsureFunctionExists(M, DName, Fn->arg_begin(), Fn->arg_end(),
                          Type::DoubleTy);
+    break;
   case Type::X86_FP80TyID:
   case Type::FP128TyID:
   case Type::PPC_FP128TyID:
-    EnsureFunctionExists(M, LDName, I->arg_begin(), I->arg_end(),
-                         I->arg_begin()->getType());
+    EnsureFunctionExists(M, LDName, Fn->arg_begin(), Fn->arg_end(),
+                         Fn->arg_begin()->getType());
+    break;
   }
 }
 
