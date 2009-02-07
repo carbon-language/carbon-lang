@@ -105,7 +105,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS)
 
 #define INT8_MAX    127
-#define INT8_MIN   -128
+#define INT8_MIN  (-128)
 #define UINT8_MAX   255U
 #define INT_LEAST8_MIN   INT8_MIN
 #define INT_LEAST8_MAX   INT8_MAX
@@ -115,7 +115,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define UINT_FAST8_MAX  UINT8_MAX
 
 #define INT16_MAX    32767
-#define INT16_MIN   -32768
+#define INT16_MIN  (-32768)
 #define UINT16_MAX   65535U
 #define INT_LEAST16_MIN   INT16_MIN
 #define INT_LEAST16_MAX   INT16_MAX
@@ -125,7 +125,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define UINT_FAST16_MAX  UINT16_MAX
 
 #define INT32_MAX         2147483647
-#define INT32_MIN        -2147483647-1
+#define INT32_MIN        (-2147483647-1)
 #define UINT32_MAX        4294967295U
 #define INT_LEAST32_MIN  INT32_MIN
 #define INT_LEAST32_MAX  INT32_MAX
@@ -138,7 +138,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #ifndef __INT64_TYPE__
 #define INT64_MAX      9223372036854775807LL
 #define INT64_MIN    (-9223372036854775807LL-1)
-#define UINT64_MAX   (18446744073709551615ULL)
+#define UINT64_MAX    18446744073709551615ULL
 #define INT_LEAST64_MIN  INT64_MIN
 #define INT_LEAST64_MAX  INT64_MAX
 #define UINT_LEAST64_MAX UINT64_MAX
@@ -223,8 +223,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #endif
 
 /* 7.18.4.2 Macros for greatest-width integer constants. */
-#define INTMAX_C(v)  (v ## LL)
-#define UINTMAX_C(v) (v ## ULL)
+#define INTMAX_C(v)  (v##LL)
+#define UINTMAX_C(v) (v##ULL)
 
 #endif  /* C++ requires __STDC_CONSTANT_MACROS */
 
