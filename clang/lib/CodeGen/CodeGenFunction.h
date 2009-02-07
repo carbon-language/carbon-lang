@@ -128,6 +128,10 @@ public:
   void EmitJumpThroughFinally(ObjCEHEntry *Entry, llvm::BasicBlock *Dest,
                               bool ExecuteTryExit=true);
   
+  /// CreateCleanupBlock - Will push a new cleanup entry on the stack
+  /// and return a BasicBlock where cleanup instructions can be added
+  llvm::BasicBlock *CreateCleanupBlock();
+  
 private:
   /// LabelIDs - Track arbitrary ids assigned to labels for use in
   /// implementing the GCC address-of-label extension and indirect
@@ -205,6 +209,24 @@ private:
   /// stack should be at by the time we transfer control flow to the
   /// label.
   void EmitStackUpdate(const LabelStmt &S);
+
+  struct CleanupEntry {
+    /// CleanupBlock - The block of code that does the actual cleanup.
+    llvm::BasicBlock *CleanupBlock;
+    
+    /// Blocks - Basic blocks that were emitted in the current cleanup scope.
+    std::vector<llvm::BasicBlock *> Blocks;
+
+    /// BranchFixups - Branch instructions to basic blocks that haven't been
+    /// inserted into the current function yet.
+    std::vector<llvm::BranchInst*> BranchFixups;
+
+    explicit CleanupEntry(llvm::BasicBlock *cb)
+      : CleanupBlock(cb) {}
+  };
+  
+  /// CleanupEntries - Stack of cleanup entries.
+  llvm::SmallVector<CleanupEntry, 8> CleanupEntries;
 
 public:
   CodeGenFunction(CodeGenModule &cgm);

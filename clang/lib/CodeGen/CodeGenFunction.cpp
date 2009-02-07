@@ -512,3 +512,12 @@ llvm::Value* CodeGenFunction::EmitVAListRef(const Expr* E) {
   }
   return EmitLValue(E).getAddress();
 }
+
+llvm::BasicBlock *CodeGenFunction::CreateCleanupBlock()
+{
+  llvm::BasicBlock *CleanupBlock = createBasicBlock("cleanup");
+  
+  CleanupEntries.push_back(CleanupEntry(CleanupBlock));
+  
+  return CleanupBlock;  
+}
