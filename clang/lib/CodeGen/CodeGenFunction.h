@@ -97,7 +97,7 @@ public:
   struct ObjCEHEntry {
     ObjCEHEntry(llvm::BasicBlock *fb, llvm::SwitchInst *fs, llvm::Value *dc)
       : FinallyBlock(fb), FinallySwitch(fs), 
-        DestCode(dc), Exception(0) {}
+        DestCode(dc) {}
 
     /// Entry point to the finally block.
     llvm::BasicBlock *FinallyBlock; 
@@ -109,12 +109,12 @@ public:
     /// Variable holding the code for the destination of a jump
     /// through the @finally block.
     llvm::Value *DestCode;
-
-    /// The exception object being handled, during IR generation for a
-    /// @catch block.
-    llvm::Value *Exception; 
   };
 
+  /// ObjCEHValueStack - Stack of exception objects being handled,
+  /// during IR generation for a @catch block.
+  llvm::SmallVector<llvm::Value*, 8> ObjCEHValueStack;
+  
   typedef llvm::SmallVector<ObjCEHEntry*, 8> ObjCEHStackType;
   ObjCEHStackType ObjCEHStack;
 

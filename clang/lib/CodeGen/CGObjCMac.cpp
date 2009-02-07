@@ -1868,7 +1868,8 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // through finally.
   CodeGenFunction::ObjCEHEntry EHEntry(FinallyBlock, FinallySwitch, DestCode);
   CGF.ObjCEHStack.push_back(&EHEntry);
-
+  CGF.ObjCEHValueStack.push_back(0);
+  
   // Allocate memory for the exception data and rethrow pointer.
   llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
                                                     "exceptiondata.ptr");
@@ -1913,7 +1914,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::Value *Caught = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
                                                ExceptionData,
                                                "caught");
-  EHEntry.Exception = Caught;
+  CGF.ObjCEHValueStack.back() = Caught;
   if (!isTry)
   {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
@@ -2032,7 +2033,8 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // this now, because the code in the @finally block is not in this
   // context.
   CGF.ObjCEHStack.pop_back();
-
+  CGF.ObjCEHValueStack.pop_back();
+  
   // Emit the @finally block.
   CGF.EmitBlock(FinallyBlock);
   llvm::Value* CallTryExit = CGF.Builder.CreateLoad(CallTryExitPtr, "tmp");
@@ -2076,9 +2078,9 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
     ExceptionAsObject = 
       CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy, "tmp");
   } else {
-    assert((!CGF.ObjCEHStack.empty() && CGF.ObjCEHStack.back()->Exception) && 
+    assert((!CGF.ObjCEHValueStack.empty() && CGF.ObjCEHValueStack.back()) && 
            "Unexpected rethrow outside @catch block.");
-    ExceptionAsObject = CGF.ObjCEHStack.back()->Exception;
+    ExceptionAsObject = CGF.ObjCEHValueStack.back();
   }
   
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
