@@ -156,6 +156,12 @@ private:
   /// condition has possibly started a vla.
   void BreakContinuePush(llvm::BasicBlock *bb, llvm::BasicBlock *cb) {
     BreakContinueStack.push_back(BreakContinue(bb, cb, StackDepth,
+                                               StackDepth,
+                                               ObjCEHStack.size()));
+  }
+  void BreakContinuePush(llvm::BasicBlock *bb, llvm::BasicBlock *cb,
+                         llvm::Value *bsd, llvm::Value *csd) {
+    BreakContinueStack.push_back(BreakContinue(bb, cb, bsd, csd,
                                                ObjCEHStack.size()));
   }
 
@@ -169,13 +175,14 @@ private:
   // of the eh stack.
   struct BreakContinue {
     BreakContinue(llvm::BasicBlock *bb, llvm::BasicBlock *cb,
-                  llvm::Value *sd, size_t ehss)
-      : BreakBlock(bb), ContinueBlock(cb), SaveStackDepth(sd),
-        EHStackSize(ehss) {}
+                  llvm::Value *bsd, llvm::Value *csd, size_t ehss)
+      : BreakBlock(bb), ContinueBlock(cb),  SaveBreakStackDepth(bsd),
+        SaveContinueStackDepth(csd), EHStackSize(ehss) {}
       
     llvm::BasicBlock *BreakBlock;
     llvm::BasicBlock *ContinueBlock;
-    llvm::Value *SaveStackDepth;
+    llvm::Value *SaveBreakStackDepth;
+    llvm::Value *SaveContinueStackDepth;
     size_t EHStackSize;
   }; 
   llvm::SmallVector<BreakContinue, 8> BreakContinueStack;

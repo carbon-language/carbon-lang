@@ -361,6 +361,11 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
     return;
   }
 
+  // We want to ensure that any vlas between here and when we
+  // push the break and continue context below can be destroyed
+  // when we break 
+  llvm::Value *saveBreakStackDepth = StackDepth;
+
   if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
     EmitStmt(SD);
     assert(HaveInsertPoint() && "DeclStmt destroyed insert point!");
@@ -446,10 +451,6 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::BasicBlock *LoopStart = createBasicBlock("loopstart");
   EmitBlock(LoopStart);
 
-  // We want to ensure there are no vlas between here and when we
-  // push the break and continue context below.
-  llvm::Value *saveStackDepth = StackDepth;
-
   llvm::Value *CounterPtr = CreateTempAlloca(UnsignedLongLTy, "counter.ptr");
   Builder.CreateStore(Zero, CounterPtr);
   
@@ -519,9 +520,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::BasicBlock *LoopEnd = createBasicBlock("loopend");
   llvm::BasicBlock *AfterBody = createBasicBlock("afterbody");
   
-  assert (StackDepth == saveStackDepth && "vla unhandled in for");
-
-  BreakContinuePush(LoopEnd, AfterBody);
+  // Ensure any vlas created between there and here, are undone
+  BreakContinuePush(LoopEnd, AfterBody, saveBreakStackDepth, StackDepth);
 
   EmitStmt(S.getBody());
   

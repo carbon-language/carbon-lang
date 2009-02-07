@@ -466,6 +466,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   EmitBlock(CondBlock);
 
+  llvm::Value *saveStackDepth = StackDepth;
+
   // Evaluate the condition if present.  If not, treat it as a
   // non-zero-constant according to 6.8.5.3p2, aka, true.
   if (S.getCond()) {
@@ -491,8 +493,10 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     ContinueBlock = CondBlock;  
   
   // Store the blocks to use for break and continue.
-  BreakContinuePush(AfterFor, ContinueBlock);
-  
+  // Ensure any vlas created between there and here, are undone
+  BreakContinuePush(AfterFor, ContinueBlock,
+                    saveStackDepth, saveStackDepth);
+
   // If the condition is true, execute the body of the for stmt.
   EmitStmt(S.getBody());
 
@@ -708,6 +712,9 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   llvm::SwitchInst *SavedSwitchInsn = SwitchInsn;
   llvm::BasicBlock *SavedCRBlock = CaseRangeBlock;
 
+  // Ensure any vlas created inside are destroyed on break.
+  llvm::Value *saveBreakStackDepth = StackDepth;
+
   // Create basic block to hold stuff that comes after switch
   // statement. We also need to create a default block now so that
   // explicit case ranges tests can have a place to jump to on
@@ -723,9 +730,14 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   // All break statements jump to NextBlock. If BreakContinueStack is non empty
   // then reuse last ContinueBlock.
   llvm::BasicBlock *ContinueBlock = NULL;
-  if (!BreakContinueStack.empty())
+  llvm::Value *saveContinueStackDepth = NULL;
+  if (!BreakContinueStack.empty()) {
     ContinueBlock = BreakContinueStack.back().ContinueBlock;
-  BreakContinuePush(NextBlock, ContinueBlock);
+    saveContinueStackDepth = BreakContinueStack.back().SaveContinueStackDepth;
+  }
+  // Ensure any vlas created between there and here, are undone
+  BreakContinuePush(NextBlock, ContinueBlock,
+                    saveBreakStackDepth, saveContinueStackDepth);
 
   // Emit switch body.
   EmitStmt(S.getBody());
