@@ -29,6 +29,7 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   
   const char *LevelStr;
   switch (DiagLevel) {
+  default:
   case Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
   case Diagnostic::Note:    LevelStr = "note: "; break;
   case Diagnostic::Warning: LevelStr = "warning: "; break;
