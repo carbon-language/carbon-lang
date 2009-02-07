@@ -2260,7 +2260,7 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
   if (RealDecl == 0) {
-    delete Init;
+    Init->Destroy(Context);
     return;
   }
   
@@ -2697,8 +2697,10 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     MD->setBody((Stmt*)Body);
-  } else
+  } else {
+    Body->Destroy(Context);
     return 0;
+  }
   PopDeclContext();
   // Verify and clean out per-function state.
   
@@ -2717,11 +2719,17 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
       // the function body so that they aren't leaked and that the AST is well
       // formed.
       if (Body) {
-        L->setSubStmt(new NullStmt(L->getIdentLoc()));
-        cast<CompoundStmt>(Body)->push_back(L);
+#if 0
+        // FIXME: Why do this?  Having a 'push_back' in CompoundStmt is ugly,
+        // and the AST is malformed anyway.  We should just blow away 'L'.
+        L->setSubStmt(new (Context) NullStmt(L->getIdentLoc()));
+        cast<CompoundStmt>(Body)->push_back(L);        
+#else
+        L->Destroy(Context);
+#endif
       } else {
         // The whole function wasn't parsed correctly, just delete this.
-        delete L;
+        L->Destroy(Context);
       }
     }
   }
@@ -3516,7 +3524,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
       else
         Diag(IdLoc, diag::err_redefinition) << Id;
       Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-      delete Val;
+      Val->Destroy(Context);
       return 0;
     }
   }
@@ -3530,7 +3538,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
     // C99 6.7.2.2p2: Make sure we have an integer constant expression.
     SourceLocation ExpLoc;
     if (VerifyIntegerConstantExpression(Val, &EnumVal)) {
-      delete Val;
+      Val->Destroy(Context);
       Val = 0;  // Just forget about it.
     } else {
       EltTy = Val->getType();
@@ -3721,8 +3729,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     
     // Adjust the Expr initializer and type.
     if (ECD->getInitExpr())
-      ECD->setInitExpr(new ImplicitCastExpr(NewTy, ECD->getInitExpr(), 
-                                            /*isLvalue=*/false));
+      ECD->setInitExpr(new (Context) ImplicitCastExpr(NewTy, ECD->getInitExpr(), 
+                                                      /*isLvalue=*/false));
     if (getLangOptions().CPlusPlus)
       // C++ [dcl.enum]p4: Following the closing brace of an
       // enum-specifier, each enumerator has the type of its
@@ -3756,7 +3764,7 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
         !Val.isPowerOf2() ||
         Val.getZExtValue() > 16) {
       Diag(PragmaLoc, diag::warn_pragma_pack_invalid_alignment);
-      delete Alignment;
+      Alignment->Destroy(Context);
       return; // Ignore
     }
 

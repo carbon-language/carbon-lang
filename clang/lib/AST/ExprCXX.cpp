@@ -20,9 +20,9 @@ void CXXConditionDeclExpr::Destroy(ASTContext& C) {
   // FIXME: Cannot destroy the decl here, because it is linked into the
   // DeclContext's chain.
   //getVarDecl()->Destroy(C);
-  delete this;
+  this->~CXXConditionDeclExpr();
+  C.Deallocate(this);
 }
-
 
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements

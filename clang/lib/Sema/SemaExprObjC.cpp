@@ -38,7 +38,7 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
         isWide = true;
       memcpy(p, S->getStrData(), S->getByteLength());
       p += S->getByteLength();
-      delete S;
+      S->Destroy(Context);
     }
     S = new (Context, 8) StringLiteral(Context, strBuf, Length, isWide,
                                        Context.getPointerType(Context.CharTy),
@@ -65,7 +65,7 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
   } else {
     t = Context.getPointerType(t);
   }
-  return new ObjCStringLiteral(S, t, AtLoc);
+  return new (Context) ObjCStringLiteral(S, t, AtLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
@@ -76,7 +76,7 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
   QualType EncodedType = QualType::getFromOpaquePtr(Ty);
 
   QualType t = Context.getPointerType(Context.CharTy);
-  return new ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
+  return new (Context) ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
@@ -85,7 +85,7 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
                                                    SourceLocation LParenLoc,
                                                    SourceLocation RParenLoc) {
   QualType t = Context.getObjCSelType();
-  return new ObjCSelectorExpr(t, Sel, AtLoc, RParenLoc);
+  return new (Context) ObjCSelectorExpr(t, Sel, AtLoc, RParenLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
@@ -103,7 +103,7 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
   if (t.isNull())
     return true;
   t = Context.getPointerType(t);
-  return new ObjCProtocolExpr(t, PDecl, AtLoc, RParenLoc);
+  return new (Context) ObjCProtocolExpr(t, PDecl, AtLoc, RParenLoc);
 }
 
 bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs, 
@@ -199,7 +199,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
       if (getCurMethodDecl()->isInstanceMethod()) {
         QualType superTy = Context.getObjCInterfaceType(ClassDecl);
         superTy = Context.getPointerType(superTy);
-        ExprResult ReceiverExpr = new ObjCSuperExpr(SourceLocation(), superTy);
+        ExprResult ReceiverExpr = new (Context) ObjCSuperExpr(SourceLocation(),
+                                                              superTy);
         // We are really in an instance method, redirect.
         return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac, rbrac,
                                     Args, NumArgs);
@@ -212,8 +213,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
       NamedDecl *SuperDecl = LookupName(S, receiverName, LookupOrdinaryName);
       ValueDecl *VD = dyn_cast_or_null<ValueDecl>(SuperDecl);
       if (VD) {
-        ExprResult ReceiverExpr = new DeclRefExpr(VD, VD->getType(), 
-                                                  receiverLoc);
+        ExprResult ReceiverExpr = new (Context) DeclRefExpr(VD, VD->getType(), 
+                                                            receiverLoc);
         // We are really in an instance method, redirect.
         return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac, rbrac,
                                     Args, NumArgs);
@@ -277,11 +278,11 @@ Sema::ExprResult Sema::ActOnClassMessage(
   // For now, we simply pass the "super" identifier through (which isn't
   // consistent with instance methods.
   if (isSuper)
-    return new ObjCMessageExpr(receiverName, Sel, returnType, Method,
-                               lbrac, rbrac, ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(receiverName, Sel, returnType, Method,
+                                         lbrac, rbrac, ArgExprs, NumArgs);
   else
-    return new ObjCMessageExpr(ClassDecl, Sel, returnType, Method,
-                               lbrac, rbrac, ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(ClassDecl, Sel, returnType, Method,
+                                         lbrac, rbrac, ArgExprs, NumArgs);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.
@@ -312,8 +313,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
       return true;
-    return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
-                               ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
+                                         rbrac, ArgExprs, NumArgs);
   }
 
   // Handle messages to id.
@@ -326,8 +327,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false, 
                                   lbrac, rbrac, returnType))
       return true;
-    return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
-                               ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
+                                         rbrac, ArgExprs, NumArgs);
   }
   
   // Handle messages to Class.
@@ -348,8 +349,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
       return true;
-    return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
-                               ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
+                                         rbrac, ArgExprs, NumArgs);
   }
   
   ObjCMethodDecl *Method = 0;
@@ -411,8 +412,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                 lbrac, rbrac, returnType))
     return true;
-  return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
-                             ArgExprs, NumArgs);
+  return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
+                                       rbrac, ArgExprs, NumArgs);
 }
 
 //===----------------------------------------------------------------------===//

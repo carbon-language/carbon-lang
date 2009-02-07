@@ -3600,9 +3600,9 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   // Extract the object argument.
   Expr *ObjectArg = MemExpr->getBase();
   if (MemExpr->isArrow())
-    ObjectArg = new UnaryOperator(ObjectArg, UnaryOperator::Deref,
-                      ObjectArg->getType()->getAsPointerType()->getPointeeType(),
-                      SourceLocation());
+    ObjectArg = new (Context) UnaryOperator(ObjectArg, UnaryOperator::Deref,
+                     ObjectArg->getType()->getAsPointerType()->getPointeeType(),
+                     SourceLocation());
   CXXMethodDecl *Method = 0;
   if (OverloadedFunctionDecl *Ovl 
         = dyn_cast<OverloadedFunctionDecl>(MemExpr->getMemberDecl())) {
@@ -3647,8 +3647,8 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   }
 
   assert(Method && "Member call to something that isn't a method?");
-  llvm::OwningPtr<CXXMemberCallExpr> 
-    TheCall(new CXXMemberCallExpr(MemExpr, Args, NumArgs, 
+  ExprOwningPtr<CXXMemberCallExpr> 
+    TheCall(this, new (Context) CXXMemberCallExpr(MemExpr, Args, NumArgs, 
                                   Method->getResultType().getNonReferenceType(),
                                   RParenLoc));
 
@@ -3759,9 +3759,9 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   if (Best == CandidateSet.end()) {
     // We had an error; delete all of the subexpressions and return
     // the error.
-    delete Object;
+    Object->Destroy(Context);
     for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
-      delete Args[ArgIdx];
+      Args[ArgIdx]->Destroy(Context);
     return true;
   }
 
@@ -3807,22 +3807,23 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
     MethodArgs[ArgIdx + 1] = Args[ArgIdx];
       
-  Expr *NewFn = new DeclRefExpr(Method, Method->getType(), 
-                                SourceLocation());
+  Expr *NewFn = new (Context) DeclRefExpr(Method, Method->getType(), 
+                                          SourceLocation());
   UsualUnaryConversions(NewFn);
 
   // Once we've built TheCall, all of the expressions are properly
   // owned.
   QualType ResultTy = Method->getResultType().getNonReferenceType();
-  llvm::OwningPtr<CXXOperatorCallExpr> 
-    TheCall(new CXXOperatorCallExpr(NewFn, MethodArgs, NumArgs + 1,
-                                    ResultTy, RParenLoc));
+  ExprOwningPtr<CXXOperatorCallExpr> 
+    TheCall(this, new (Context) CXXOperatorCallExpr(NewFn, MethodArgs,
+                                                    NumArgs + 1,
+                                                    ResultTy, RParenLoc));
   delete [] MethodArgs;
 
   // We may have default arguments. If so, we need to allocate more
   // slots in the call for them.
   if (NumArgs < NumArgsInProto)
-    TheCall->setNumArgs(NumArgsInProto + 1);
+    TheCall->setNumArgs(Context, NumArgsInProto + 1);
   else if (NumArgs > NumArgsInProto)
     NumArgsToCheck = NumArgsInProto;
 
@@ -3842,7 +3843,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
         return true;
     } else {
-      Arg = new CXXDefaultArgExpr(Method->getParamDecl(i));
+      Arg = new (Context) CXXDefaultArgExpr(Method->getParamDecl(i));
     }
 
     TheCall->setArg(i + 1, Arg);
@@ -3888,7 +3889,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
     AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Base, 0, 0, CandidateSet,
                        /*SuppressUserConversions=*/false);
 
-  llvm::OwningPtr<Expr> BasePtr(Base);
+  ExprOwningPtr<Expr> BasePtr(this, Base);
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
@@ -3924,9 +3925,10 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
   BasePtr.take();
 
   // Build the operator call.
-  Expr *FnExpr = new DeclRefExpr(Method, Method->getType(), SourceLocation());
+  Expr *FnExpr = new (Context) DeclRefExpr(Method, Method->getType(),
+                                           SourceLocation());
   UsualUnaryConversions(FnExpr);
-  Base = new CXXOperatorCallExpr(FnExpr, &Base, 1, 
+  Base = new (Context) CXXOperatorCallExpr(FnExpr, &Base, 1, 
                                  Method->getResultType().getNonReferenceType(),
                                  OpLoc);
   return ActOnMemberReferenceExpr(S, ExprArg(*this, Base), OpLoc, tok::arrow,

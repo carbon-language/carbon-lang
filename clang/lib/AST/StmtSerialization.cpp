@@ -483,7 +483,8 @@ void CompoundLiteralExpr::EmitImpl(Serializer& S) const {
   S.EmitOwnedPtr(Init);
 }
 
-CompoundLiteralExpr* CompoundLiteralExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+CompoundLiteralExpr* CompoundLiteralExpr::CreateImpl(Deserializer& D,
+                                                     ASTContext& C) {
   QualType Q = QualType::ReadVal(D);
   SourceLocation L = SourceLocation::ReadVal(D);
   bool fileScope = D.ReadBool();
@@ -495,10 +496,8 @@ CompoundLiteralExpr* CompoundLiteralExpr::CreateImpl(Deserializer& D, ASTContext
 void CompoundStmt::EmitImpl(Serializer& S) const {
   S.Emit(LBracLoc);
   S.Emit(RBracLoc);
-  S.Emit(Body.size());
-  
-  for (const_body_iterator I=body_begin(), E=body_end(); I!=E; ++I)
-    S.EmitOwnedPtr(*I);
+  S.Emit(NumStmts);
+  if (NumStmts) S.BatchEmitOwnedPtrs(NumStmts, &Body[0]);
 }
 
 CompoundStmt* CompoundStmt::CreateImpl(Deserializer& D, ASTContext& C) {
@@ -507,13 +506,15 @@ CompoundStmt* CompoundStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   unsigned size = D.ReadInt();
   
   CompoundStmt* stmt = new (C, llvm::alignof<CompoundStmt>())
-    CompoundStmt(NULL, 0, LB, RB);
+    CompoundStmt(C, NULL, 0, LB, RB);
+
+  stmt->NumStmts = size;
   
-  stmt->Body.reserve(size);
-  
-  for (unsigned i = 0; i < size; ++i)
-    stmt->Body.push_back(D.ReadOwnedPtr<Stmt>(C));
-  
+  if (size) {
+    stmt->Body = new (C) Stmt*[size];
+    D.BatchReadOwnedPtrs(size, &stmt->Body[0], C);
+  }
+
   return stmt;
 }
 
@@ -1306,7 +1307,7 @@ ExtVectorElementExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C) {
   Expr *B = D.ReadOwnedPtr<Expr>(C);
   IdentifierInfo *A = D.ReadPtr<IdentifierInfo>();
   SourceLocation AL = SourceLocation::ReadVal(D);
-  return new ExtVectorElementExpr(T, B, *A, AL);
+  return new (C) ExtVectorElementExpr(T, B, *A, AL);
 }
 
 void BlockExpr::EmitImpl(Serializer& S) const {

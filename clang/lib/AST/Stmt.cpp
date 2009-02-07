@@ -219,7 +219,7 @@ Stmt::child_iterator NullStmt::child_end() { return child_iterator(); }
 
 // CompoundStmt
 Stmt::child_iterator CompoundStmt::child_begin() { return &Body[0]; }
-Stmt::child_iterator CompoundStmt::child_end() { return &Body[0]+Body.size(); }
+Stmt::child_iterator CompoundStmt::child_end() { return &Body[0]+NumStmts; }
 
 // CaseStmt
 Stmt::child_iterator CaseStmt::child_begin() { return &SubExprs[0]; }

@@ -107,7 +107,7 @@ void
 Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc, 
                                 ExprTy *defarg) {
   ParmVarDecl *Param = (ParmVarDecl *)param;
-  llvm::OwningPtr<Expr> DefaultArg((Expr *)defarg);
+  ExprOwningPtr<Expr> DefaultArg(this, (Expr *)defarg);
   QualType ParamType = Param->getType();
 
   // Default arguments are only permitted in C++
@@ -1503,7 +1503,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   // the initializer.
   if (RealDecl == 0) {
     for (unsigned i = 0; i != NumExprs; ++i)
-      delete static_cast<Expr *>(ExprTys[i]);
+      static_cast<Expr *>(ExprTys[i])->Destroy(Context);
     return;
   }
   

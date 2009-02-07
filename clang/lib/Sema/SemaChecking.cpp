@@ -306,9 +306,10 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     TheCall->setArg(i, 0);
   }
 
-  return Owned(new ShuffleVectorExpr(exprs.begin(), numElements+2, FAType,
-                                     TheCall->getCallee()->getLocStart(),
-                                     TheCall->getRParenLoc()));
+  return Owned(new (Context) ShuffleVectorExpr(exprs.begin(), numElements+2,
+                                            FAType,
+                                            TheCall->getCallee()->getLocStart(),
+                                            TheCall->getRParenLoc()));
 }
 
 /// SemaBuiltinPrefetch - Handle __builtin_prefetch.

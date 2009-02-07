@@ -1970,7 +1970,7 @@ struct BlockSemaInfo {
   
   BlockDecl *TheDecl;
   
-  /// TheScope - This is the scope for the block itself, which contains
+  /// TheScope - This is the scope for the block itself, which containsfile://localhost/Volumes/Data/Users/kremenek/llvm/tools/clang
   /// arguments etc.
   Scope *TheScope;
   
@@ -1982,8 +1982,23 @@ struct BlockSemaInfo {
   /// to the outer block.
   BlockSemaInfo *PrevBlockInfo;
 };
-
-
+  
+//===--------------------------------------------------------------------===//
+// Typed version of Parser::ExprArg (smart pointer for wrapping Expr pointers).
+template <typename T>
+class ExprOwningPtr : public Action::ExprArg {
+public:
+  ExprOwningPtr(Sema *S, T *expr) : Action::ExprArg(*S, expr) {};
+  
+  void reset(T* p) { Action::ExprArg::operator=(p); }
+  T* get() const { return static_cast<T*>(Action::ExprArg::get()); }
+  T* take() { return static_cast<T*>(Action::ExprArg::take()); }
+  T* release() { return take(); }
+  
+  T& operator*() const { return *get(); }
+  T* operator->() const { return get(); }
+};
+  
 }  // end namespace clang
 
 #endif

@@ -454,8 +454,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   if (BaseObject) {
     // BaseObject is an anonymous struct/union variable (and is,
     // therefore, not part of another non-anonymous record).
-    delete BaseObjectExpr;
-
+    if (BaseObjectExpr) BaseObjectExpr->Destroy(Context);
     BaseObjectExpr = new (Context) DeclRefExpr(BaseObject,BaseObject->getType(),
                                      SourceLocation());
     ExtraQuals 
@@ -1770,7 +1769,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
         << Fn->getType()->isBlockPointerType() << Fn->getSourceRange();
     // Use default arguments for missing arguments
     NumArgsToCheck = NumArgsInProto;
-    Call->setNumArgs(NumArgsInProto);
+    Call->setNumArgs(Context, NumArgsInProto);
   }
 
   // If too many are passed and not variadic, error on the extras and drop
@@ -1783,7 +1782,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
         << SourceRange(Args[NumArgsInProto]->getLocStart(),
                        Args[NumArgs-1]->getLocEnd());
       // This deletes the extra arguments.
-      Call->setNumArgs(NumArgsInProto);
+      Call->setNumArgs(Context, NumArgsInProto);
       Invalid = true;
     }
     NumArgsToCheck = NumArgsInProto;
@@ -1945,7 +1944,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // of arguments and function on error.
   // FIXME: Except that llvm::OwningPtr uses delete, when it really must be
   // Destroy(), or nothing gets cleaned up.
-  llvm::OwningPtr<CallExpr> TheCall(new (Context) CallExpr(Fn, Args, NumArgs,
+  ExprOwningPtr<CallExpr> TheCall(this, new (Context) CallExpr(Fn, Args,NumArgs,
                                                  Context.BoolTy, RParenLoc));
 
   const FunctionType *FuncT;
@@ -4154,7 +4153,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       // Offset of an array sub-field.  TODO: Should we allow vector elements?
       const ArrayType *AT = Context.getAsArrayType(Res->getType());
       if (!AT) {
-        delete Res;
+        Res->Destroy(Context);
         return Diag(OC.LocEnd, diag::err_offsetof_array_type) << Res->getType();
       }
       
@@ -4173,7 +4172,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
     
     const RecordType *RC = Res->getType()->getAsRecordType();
     if (!RC) {
-      delete Res;
+      Res->Destroy(Context);
       return Diag(OC.LocEnd, diag::err_offsetof_record_type) << Res->getType();
     }
       
@@ -4336,7 +4335,7 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
                                           Scope *CurScope) {
   // Ensure that CurBlock is deleted.
   llvm::OwningPtr<BlockSemaInfo> BSI(CurBlock);
-  llvm::OwningPtr<CompoundStmt> Body(static_cast<CompoundStmt*>(body));
+  ExprOwningPtr<CompoundStmt> Body(this, static_cast<CompoundStmt*>(body));
 
   PopDeclContext();
 

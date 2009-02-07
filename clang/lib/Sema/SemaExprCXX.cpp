@@ -70,8 +70,8 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
 
   QualType TypeInfoType = Context.getTypeDeclType(TypeInfoRecordDecl);
 
-  return new CXXTypeidExpr(isType, TyOrExpr, TypeInfoType.withConst(),
-                           SourceRange(OpLoc, RParenLoc));
+  return new (Context) CXXTypeidExpr(isType, TyOrExpr, TypeInfoType.withConst(),
+                                     SourceRange(OpLoc, RParenLoc));
 }
 
 /// ActOnCXXBoolLiteral - Parse {true,false} literals.
@@ -79,13 +79,13 @@ Action::ExprResult
 Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
   assert((Kind == tok::kw_true || Kind == tok::kw_false) &&
          "Unknown C++ Boolean value!");
-  return new CXXBoolLiteralExpr(Kind == tok::kw_true, Context.BoolTy, OpLoc);
+  return new (Context) CXXBoolLiteralExpr(Kind == tok::kw_true, Context.BoolTy, OpLoc);
 }
 
 /// ActOnCXXThrow - Parse throw expressions.
 Action::ExprResult
 Sema::ActOnCXXThrow(SourceLocation OpLoc, ExprTy *E) {
-  return new CXXThrowExpr((Expr*)E, Context.VoidTy, OpLoc);
+  return new (Context) CXXThrowExpr((Expr*)E, Context.VoidTy, OpLoc);
 }
 
 Action::ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
@@ -100,7 +100,7 @@ Action::ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
 
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext))
     if (MD->isInstance())
-      return new CXXThisExpr(ThisLoc, MD->getThisType(Context));
+      return new (Context) CXXThisExpr(ThisLoc, MD->getThisType(Context));
 
   return Diag(ThisLoc, diag::err_invalid_this_use);
 }
@@ -129,8 +129,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   if (NumExprs == 1) {
     if (CheckCastTypes(TypeRange, Ty, Exprs[0]))
       return true;
-    return new CXXFunctionalCastExpr(Ty.getNonReferenceType(), Ty, TyBeginLoc, 
-                                     Exprs[0], RParenLoc);
+    return new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(), Ty,
+                                               TyBeginLoc, Exprs[0], RParenLoc);
   }
 
   if (const RecordType *RT = Ty->getAsRecordType()) {
@@ -148,7 +148,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       if (!Constructor)
         return true;
 
-      return new CXXTemporaryObjectExpr(Constructor, Ty, TyBeginLoc, 
+      return new (Context) CXXTemporaryObjectExpr(Constructor, Ty, TyBeginLoc, 
                                         Exprs, NumExprs, RParenLoc);
     }
 
@@ -178,7 +178,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                              diag::err_invalid_incomplete_type_use, FullRange))
     return true;
 
-  return new CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
+  return new (Context) CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
 }
 
 
@@ -312,8 +312,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
   // FIXME: Also check that the destructor is accessible. (C++ 5.3.4p16)
 
-  return new CXXNewExpr(UseGlobal, OperatorNew, PlaceArgs, NumPlaceArgs,
-                        ParenTypeId, ArraySize, Constructor, Init,
+  return new (Context) CXXNewExpr(UseGlobal, OperatorNew, PlaceArgs,
+                        NumPlaceArgs, ParenTypeId, ArraySize, Constructor, Init,
                         ConsArgs, NumConsArgs, OperatorDelete, ResultType,
                         StartLoc, Init ? ConstructorRParen : SourceLocation());
 }
@@ -384,7 +384,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
   // We don't care about the actual value of this argument.
   // FIXME: Should the Sema create the expression and embed it in the syntax
   // tree? Or should the consumer just recalculate the value?
-  AllocArgs[0] = new IntegerLiteral(llvm::APInt::getNullValue(
+  AllocArgs[0] = new (Context) IntegerLiteral(llvm::APInt::getNullValue(
                                         Context.Target.getPointerWidth(0)),
                                     Context.getSizeType(),
                                     SourceLocation());
@@ -533,7 +533,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
       // FIXME: Do we need to check for default arguments here?
       FunctionDecl *Func = cast<FunctionDecl>(*Alloc);
       if (Func->getNumParams() == 1 &&
-          Context.getCanonicalType(Func->getParamDecl(0)->getType()) == Argument)
+          Context.getCanonicalType(Func->getParamDecl(0)->getType())==Argument)
         return;
     }
   }
@@ -594,8 +594,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   // along.
   // FIXME: Check access and ambiguity of operator delete and destructor.
 
-  return new CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm, 0, Ex,
-                           StartLoc);
+  return new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm, 0,
+                                     Ex, StartLoc);
 }
 
 
@@ -648,7 +648,7 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   if (VarDecl *VD = dyn_cast<VarDecl>((Decl *)Dcl))
     VD->setDeclaredInCondition(true);
 
-  return new CXXConditionDeclExpr(StartLoc, EqualLoc,
+  return new (Context) CXXConditionDeclExpr(StartLoc, EqualLoc,
                                        cast<VarDecl>(static_cast<Decl *>(Dcl)));
 }
 
@@ -879,7 +879,7 @@ Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
   // There is no point in eagerly computing the value. The traits are designed
   // to be used from type trait templates, so Ty will be a template parameter
   // 99% of the time.
-  return Owned(new UnaryTypeTraitExpr(KWLoc, OTT,
+  return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, OTT,
                                       QualType::getFromOpaquePtr(Ty),
                                       RParen, Context.BoolTy));
 }

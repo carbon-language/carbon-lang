@@ -776,9 +776,7 @@ protected:
 public:
   CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t, 
            SourceLocation rparenloc);
-  ~CallExpr() {
-    delete [] SubExprs;
-  }
+  ~CallExpr() { delete [] SubExprs; }
   
   const Expr *getCallee() const { return cast<Expr>(SubExprs[FN]); }
   Expr *getCallee() { return cast<Expr>(SubExprs[FN]); }
@@ -806,7 +804,7 @@ public:
   /// setNumArgs - This changes the number of arguments present in this call.
   /// Any orphaned expressions are deleted by this, and any new operands are set
   /// to null.
-  void setNumArgs(unsigned NumArgs);
+  void setNumArgs(ASTContext& C, unsigned NumArgs);
   
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;

@@ -54,8 +54,8 @@ StringLiteral::StringLiteral(ASTContext& C, const char *strData,
 }
 
 void StringLiteral::Destroy(ASTContext &C) {
-  C.Deallocate(const_cast<char*>(StrData));
   this->~StringLiteral();
+  C.Deallocate(const_cast<char*>(StrData));
 }
 
 bool UnaryOperator::isPostfix(Opcode Op) {
@@ -104,8 +104,8 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 // Postfix Operators.
 //===----------------------------------------------------------------------===//
 
-CallExpr::CallExpr(StmtClass SC, Expr *fn, Expr **args, unsigned numargs, 
-                   QualType t, SourceLocation rparenloc)
+CallExpr::CallExpr(StmtClass SC, Expr *fn, Expr **args,
+                   unsigned numargs, QualType t, SourceLocation rparenloc)
   : Expr(SC, t, 
          fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
          fn->isValueDependent() || hasAnyValueDependentArguments(args, numargs)),
@@ -133,14 +133,14 @@ CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
 /// setNumArgs - This changes the number of arguments present in this call.
 /// Any orphaned expressions are deleted by this, and any new operands are set
 /// to null.
-void CallExpr::setNumArgs(unsigned NumArgs) {
+void CallExpr::setNumArgs(ASTContext& C, unsigned NumArgs) {
   // No change, just return.
   if (NumArgs == getNumArgs()) return;
   
   // If shrinking # arguments, just delete the extras and forgot them.
   if (NumArgs < getNumArgs()) {
     for (unsigned i = NumArgs, e = getNumArgs(); i != e; ++i)
-      delete getArg(i);
+      getArg(i)->Destroy(C);
     this->NumArgs = NumArgs;
     return;
   }
@@ -154,7 +154,7 @@ void CallExpr::setNumArgs(unsigned NumArgs) {
   for (unsigned i = getNumArgs()+ARGS_START; i != NumArgs+ARGS_START; ++i)
     NewSubExprs[i] = 0;
   
-  delete[] SubExprs;
+  delete [] SubExprs;
   SubExprs = NewSubExprs;
   this->NumArgs = NumArgs;
 }
@@ -1391,10 +1391,10 @@ void SizeOfAlignOfExpr::Destroy(ASTContext& C) {
   // will iterate over the size expression. However, this expression belongs
   // to the type, not to this, so we don't want to delete it.
   // We still want to delete this expression.
-  // FIXME: Same as in Stmt::Destroy - will be eventually in ASTContext's
-  // pool allocator.
-  if (isArgumentType())
-    delete this;
+  if (isArgumentType()) {
+    this->~SizeOfAlignOfExpr();
+    C.Deallocate(this);
+  }
   else
     Expr::Destroy(C);
 }

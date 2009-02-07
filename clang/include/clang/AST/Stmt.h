@@ -22,6 +22,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/Bitcode/SerializationFwd.h"
+#include "clang/AST/ASTContext.h"
 #include <string>
 
 using llvm::dyn_cast_or_null;
@@ -102,6 +103,33 @@ public:
 };
 private:
   const StmtClass sClass;
+
+  // Make vanilla 'new' and 'delete' illegal for Stmts.
+protected:
+  void* operator new(size_t bytes) throw() {
+    assert(0 && "Stmts cannot be allocated with regular 'new'.");
+    return 0;
+  }
+  void operator delete(void* data) throw() {
+    assert(0 && "Stmts cannot be released with regular 'delete'.");
+  }
+  
+public:
+  // Only allow allocation of Stmts using the allocator in ASTContext
+  // or by doing a placement new.  
+  void* operator new(size_t bytes, ASTContext& C,
+                     unsigned alignment = 16) throw() {
+    return ::operator new(bytes, C, alignment);
+  }
+  
+  void* operator new(size_t bytes, ASTContext* C,
+                     unsigned alignment = 16) throw() {
+    return ::operator new(bytes, *C, alignment);
+  }
+  
+  void* operator new(size_t bytes, void* mem) throw() {
+    return mem;
+  }
   
 protected:
   /// DestroyChildren - Invoked by destructors of subclasses of Stmt to
@@ -305,37 +333,52 @@ public:
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
 ///
 class CompoundStmt : public Stmt {
-  llvm::SmallVector<Stmt*, 16> Body;
+  Stmt** Body;
+  unsigned NumStmts;
   SourceLocation LBracLoc, RBracLoc;
 public:
-  CompoundStmt(Stmt **StmtStart, unsigned NumStmts, 
-               SourceLocation LB, SourceLocation RB)
-    : Stmt(CompoundStmtClass), Body(StmtStart, StmtStart+NumStmts),
-      LBracLoc(LB), RBracLoc(RB) {}
-    
-  bool body_empty() const { return Body.empty(); }
+  CompoundStmt(ASTContext& C, Stmt **StmtStart, unsigned numStmts, 
+                             SourceLocation LB, SourceLocation RB)
+  : Stmt(CompoundStmtClass), NumStmts(numStmts), LBracLoc(LB), RBracLoc(RB) {
+      if (NumStmts) {
+        Body = new (C) Stmt*[NumStmts];
+        memcpy(Body, StmtStart, numStmts * sizeof(*Body));
+      }
+      else
+        Body = 0;
+  }           
   
-  typedef llvm::SmallVector<Stmt*, 16>::iterator body_iterator;
-  body_iterator body_begin() { return Body.begin(); }
-  body_iterator body_end() { return Body.end(); }
-  Stmt *body_back() { return Body.back(); }
-
-  typedef llvm::SmallVector<Stmt*, 16>::const_iterator const_body_iterator;
-  const_body_iterator body_begin() const { return Body.begin(); }
-  const_body_iterator body_end() const { return Body.end(); }
-  const Stmt *body_back() const { return Body.back(); }
-
-  typedef llvm::SmallVector<Stmt*, 16>::reverse_iterator reverse_body_iterator;
-  reverse_body_iterator body_rbegin() { return Body.rbegin(); }
-  reverse_body_iterator body_rend() { return Body.rend(); }
-
-  typedef llvm::SmallVector<Stmt*, 16>::const_reverse_iterator 
-    const_reverse_body_iterator;
-  const_reverse_body_iterator body_rbegin() const { return Body.rbegin(); }
-  const_reverse_body_iterator body_rend() const { return Body.rend(); }
-    
-  void push_back(Stmt *S) { Body.push_back(S); }
+  bool body_empty() const { return NumStmts == 0; }
   
+  typedef Stmt** body_iterator;
+  body_iterator body_begin() { return Body; }
+  body_iterator body_end() { return Body + NumStmts; }
+  Stmt *body_back() { return NumStmts ? Body[NumStmts-1] : 0; }
+
+  typedef Stmt* const * const_body_iterator;
+  const_body_iterator body_begin() const { return Body; }
+  const_body_iterator body_end() const { return Body + NumStmts; }
+  const Stmt *body_back() const { return NumStmts ? Body[NumStmts-1] : 0; }
+
+  typedef std::reverse_iterator<body_iterator> reverse_body_iterator;
+  reverse_body_iterator body_rbegin() {
+    return reverse_body_iterator(body_end());
+  }
+  reverse_body_iterator body_rend() {
+    return reverse_body_iterator(body_begin());
+  }
+
+  typedef std::reverse_iterator<const_body_iterator>
+          const_reverse_body_iterator;
+
+  const_reverse_body_iterator body_rbegin() const {
+    return const_reverse_body_iterator(body_end());
+  }
+  
+  const_reverse_body_iterator body_rend() const {
+    return const_reverse_body_iterator(body_begin());
+  }
+    
   virtual SourceRange getSourceRange() const { 
     return SourceRange(LBracLoc, RBracLoc); 
   }
