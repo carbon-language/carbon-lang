@@ -106,7 +106,7 @@ class VISIBILITY_HIDDEN BadCall : public BuiltinBug {
 public:
   BadCall(GRExprEngine *eng)
   : BuiltinBug(eng,"invalid function call",
-        "Called function is a NULL or undefined function pointer value.") {}
+        "Called function is a NULL or an undefined function pointer value.") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     Emit(BR, Eng.bad_calls_begin(), Eng.bad_calls_end());
