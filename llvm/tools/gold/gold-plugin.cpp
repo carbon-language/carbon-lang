@@ -161,7 +161,7 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     // Gold has found what might be IR part-way inside of a file, such as
     // an .a archive.
     if (lseek(file->fd, file->offset, SEEK_SET) == -1) {
-      (*message)(LDPL_ERROR, 
+      (*message)(LDPL_ERROR,
                  "Failed to seek to archive member of %s at offset %d: %s\n", 
                  file->name,
                  file->offset, strerror(errno));
@@ -169,21 +169,24 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     }
     buf = malloc(file->filesize);
     if (!buf) {
-      (*message)(LDPL_ERROR, 
+      (*message)(LDPL_ERROR,
                  "Failed to allocate buffer for archive member of size: %d\n", 
                  file->filesize);
       return LDPS_ERR;
     }
     if (read(file->fd, buf, file->filesize) != file->filesize) {
-      (*message)(LDPL_ERROR, 
-                 "Failed to read archive member of %s at offset %d: %s\n", 
+      (*message)(LDPL_ERROR,
+                 "Failed to read archive member of %s at offset %d: %s\n",
                  file->name,
-                 file->offset,           
+                 file->offset,
                  strerror(errno));
+      free(buf);
       return LDPS_ERR;
     }
-    if (!lto_module_is_object_file_in_memory(buf, file->filesize))
+    if (!lto_module_is_object_file_in_memory(buf, file->filesize)) {
+      free(buf);
       return LDPS_OK;
+    }
   } else if (!lto_module_is_object_file(file->name))
     return LDPS_OK;
 
