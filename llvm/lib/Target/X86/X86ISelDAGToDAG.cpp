@@ -76,6 +76,11 @@ namespace {
       : BaseType(RegBase), isRIPRel(false), Scale(1), IndexReg(), Disp(0),
         GV(0), CP(0), ES(0), JT(-1), Align(0) {
     }
+
+    bool hasSymbolicDisplacement() const {
+      return GV != 0 || CP != 0 || ES != 0 || JT != -1;
+    }
+
     void dump() {
       cerr << "X86ISelAddressMode " << this << "\n";
       cerr << "Base.Reg ";
@@ -768,7 +773,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     if (is64Bit && (TM.getCodeModel() != CodeModel::Small ||
                     AM.Base.Reg.getNode() || AM.IndexReg.getNode()))
       break;
-    if (AM.GV != 0 || AM.CP != 0 || AM.ES != 0 || AM.JT != -1)
+    if (AM.hasSymbolicDisplacement())
       break;
     // If value is available in a register both base and index components have
     // been picked, we can't fit the result available in the register in the
@@ -1114,7 +1119,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue Op, SDValue N,
   // optimal (especially for code size consideration). LEA is nice because of
   // its three-address nature. Tweak the cost function again when we can run
   // convertToThreeAddress() at register allocation time.
-  if (AM.GV || AM.CP || AM.ES || AM.JT != -1) {
+  if (AM.hasSymbolicDisplacement()) {
     // For X86-64, we should always use lea to materialize RIP relative
     // addresses.
     if (Subtarget->is64Bit())
