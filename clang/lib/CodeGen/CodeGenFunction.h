@@ -132,6 +132,25 @@ public:
   /// and return a BasicBlock where cleanup instructions can be added
   llvm::BasicBlock *CreateCleanupBlock();
   
+  /// CleanupScope - RAII object that will create a cleanup block and
+  /// set the insert point to that block. When destructed, it sets the insert
+  /// point to the previous block.
+  class CleanupScope {
+    CodeGenFunction& CGF;
+    llvm::BasicBlock *CurBB;
+    
+  public:
+    CleanupScope(CodeGenFunction &cgf)
+      : CGF(cgf), CurBB(CGF.Builder.GetInsertBlock()) {
+      llvm::BasicBlock *FinallyBB = CGF.CreateCleanupBlock();
+      CGF.Builder.SetInsertPoint(FinallyBB);
+    }
+    
+    ~CleanupScope() {
+      CGF.Builder.SetInsertPoint(CurBB);
+    }
+  };
+
 private:
   /// LabelIDs - Track arbitrary ids assigned to labels for use in
   /// implementing the GCC address-of-label extension and indirect
