@@ -424,10 +424,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)
           << ArraySize->getType() << ArraySize->getSourceRange();
         D.setInvalidType(true);
-        
-        Context.Deallocate(ArraySize);
-        ArraySize->~Expr();
-
+        ArraySize->Destroy(Context);
         ATI.NumElts = ArraySize = 0;
       }
       llvm::APSInt ConstVal(32);
