@@ -959,7 +959,10 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   if (SrcSize == DstSize) {
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(SrcPtr, llvm::PointerType::getUnqual(Ty));
-    return CGF.Builder.CreateLoad(Casted);
+    llvm::LoadInst *Load = CGF.Builder.CreateLoad(Casted);
+    // FIXME: Use better alignment / avoid requiring aligned load.
+    Load->setAlignment(1);
+    return Load;
   } else {
     assert(SrcSize < DstSize && "Coercion is losing source bits!");
 
@@ -968,7 +971,10 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
     llvm::Value *Tmp = CGF.CreateTempAlloca(Ty);
     llvm::Value *Casted = 
       CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(SrcTy));
-    CGF.Builder.CreateStore(CGF.Builder.CreateLoad(SrcPtr), Casted);
+    llvm::StoreInst *Store = 
+      CGF.Builder.CreateStore(CGF.Builder.CreateLoad(SrcPtr), Casted);
+    // FIXME: Use better alignment / avoid requiring aligned store.
+    Store->setAlignment(1);
     return CGF.Builder.CreateLoad(Tmp);
   }
 }
@@ -992,7 +998,8 @@ static void CreateCoercedStore(llvm::Value *Src,
   if (SrcSize == DstSize) {
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
-    CGF.Builder.CreateStore(Src, Casted);
+    // FIXME: Use better alignment / avoid requiring aligned store.
+    CGF.Builder.CreateStore(Src, Casted)->setAlignment(1);
   } else {
     assert(SrcSize > DstSize && "Coercion is missing bits!");
     
@@ -1002,7 +1009,10 @@ static void CreateCoercedStore(llvm::Value *Src,
     CGF.Builder.CreateStore(Src, Tmp);
     llvm::Value *Casted = 
       CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(DstTy));
-    CGF.Builder.CreateStore(CGF.Builder.CreateLoad(Casted), DstPtr);
+    llvm::LoadInst *Load = CGF.Builder.CreateLoad(Casted);
+    // FIXME: Use better alignment / avoid requiring aligned load.
+    Load->setAlignment(1);
+    CGF.Builder.CreateStore(Load, DstPtr);
   }
 }
 
