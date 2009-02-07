@@ -70,7 +70,14 @@ typedef uint64_t uint_fast64_t;
 
 /* C99 7.18.1.4 Integer types capable of holding object pointers.
  */
-#if __POINTER_WIDTH__ == 64
+#if (1LL << (__POINTER_WIDTH__-1))-1 == __LONG_MAX__
+/* If the pointer size is equal to long, use long.  This is for compatibility
+ * with many systems which just use long and expect it to work in 32-bit and
+ * 64-bit mode.  If long is not suitable, we use a fixed size type below.
+ */
+typedef long          intptr_t;
+typedef unsigned long uintptr_t;
+#elif __POINTER_WIDTH__ == 64
 typedef int64_t  intptr_t;
 typedef uint64_t uintptr_t;
 #elif __POINTER_WIDTH__ == 32
