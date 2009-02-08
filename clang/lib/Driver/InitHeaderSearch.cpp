@@ -280,18 +280,20 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
   for (unsigned i = 0; i != SearchList.size(); ++i) {
     unsigned DirToRemove = i;
     
-    if (SearchList[i].isNormalDir()) {
+    const DirectoryLookup &CurEntry = SearchList[i];
+    
+    if (CurEntry.isNormalDir()) {
       // If this isn't the first time we've seen this dir, remove it.
-      if (SeenDirs.insert(SearchList[i].getDir()))
+      if (SeenDirs.insert(CurEntry.getDir()))
         continue;
-    } else if (SearchList[i].isFramework()) {
+    } else if (CurEntry.isFramework()) {
       // If this isn't the first time we've seen this framework dir, remove it.
-      if (SeenFrameworkDirs.insert(SearchList[i].getFrameworkDir()))
+      if (SeenFrameworkDirs.insert(CurEntry.getFrameworkDir()))
         continue;
     } else {
-      assert(SearchList[i].isHeaderMap() && "Not a headermap or normal dir?");
+      assert(CurEntry.isHeaderMap() && "Not a headermap or normal dir?");
       // If this isn't the first time we've seen this headermap, remove it.
-      if (SeenHeaderMaps.insert(SearchList[i].getHeaderMap()))
+      if (SeenHeaderMaps.insert(CurEntry.getHeaderMap()))
         continue;
     }
     
@@ -302,27 +304,26 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
     //
     // Since dupes of system dirs are rare, just rescan to find the original
     // that we're nuking instead of using a DenseMap.
-    if (SearchList[i].getDirCharacteristic() != SrcMgr::C_User) {
+    if (CurEntry.getDirCharacteristic() != SrcMgr::C_User) {
       // Find the dir that this is the same of.
       unsigned FirstDir;
       for (FirstDir = 0; ; ++FirstDir) {
         assert(FirstDir != i && "Didn't find dupe?");
         
+        const DirectoryLookup &SearchEntry = SearchList[FirstDir];
+
         // If these are different lookup types, then they can't be the dupe.
-        if (SearchList[FirstDir].getLookupType() !=
-            SearchList[i].getLookupType())
+        if (SearchEntry.getLookupType() != CurEntry.getLookupType())
           continue;
         
         bool isSame;
-        if (SearchList[i].isNormalDir())
-          isSame = SearchList[FirstDir].getDir() == SearchList[i].getDir();
-        else if (SearchList[i].isFramework())
-          isSame = SearchList[FirstDir].getFrameworkDir() ==
-                   SearchList[i].getFrameworkDir();
+        if (CurEntry.isNormalDir())
+          isSame = SearchEntry.getDir() == CurEntry.getDir();
+        else if (CurEntry.isFramework())
+          isSame = SearchEntry.getFrameworkDir() == CurEntry.getFrameworkDir();
         else {
-          assert(SearchList[i].isHeaderMap() && "Not a headermap or normal dir?");
-          isSame = SearchList[FirstDir].getHeaderMap() ==
-            SearchList[i].getHeaderMap();
+          assert(CurEntry.isHeaderMap() && "Not a headermap or normal dir?");
+          isSame = SearchEntry.getHeaderMap() == CurEntry.getHeaderMap();
         }
         
         if (isSame)
@@ -336,8 +337,8 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
     }
 
     if (Verbose) {
-      fprintf(stderr, "ignoring duplicate directory \"%s\"\n", 
-              SearchList[i].getName());
+      fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
+              CurEntry.getName());
       if (DirToRemove != i)
         fprintf(stderr, "  as it is a non-system directory that duplicates"
                 " a system directory\n");
