@@ -1,4 +1,4 @@
-//===-- Alarm.inc - Implement Win32 Alarm Support -------------------------===//
+//===-- Alarm.inc - Implement Win32 Alarm Support ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,7 +14,7 @@
 #include <cassert>
 using namespace llvm;
 
-/// NestedSOI - Sanity check.  Alarms cannot be nested or run in parallel.  
+/// NestedSOI - Sanity check.  Alarms cannot be nested or run in parallel.
 /// This ensures that they never do.
 static bool NestedSOI = false;
 
