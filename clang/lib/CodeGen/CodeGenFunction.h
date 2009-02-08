@@ -264,12 +264,28 @@ private:
   /// the return value of llvm.stacksave() is stored at the top of this stack.
   llvm::SmallVector<llvm::Value*, 8> StackSaveValues;
   
-  llvm::DenseMap<const LabelStmt*, llvm::Value *> StackDepthMap;
+  llvm::DenseMap<const void*, llvm::Value *> StackDepthMap;
+
+  /// StackFixupAtLabel - Routine to adjust the stack to the depth the
+  /// stack should be at by the time we transfer control flow to the
+  /// label.  This is called as we emit destinations for control flow,
+  /// such as user labels for goto statements and compiler generated
+  /// labels for break and continue processsing.  We return true, if
+  /// for any reason we can't generate code for the construct yet.
+  /// See EmitStackUpdate for the paired routine to mark the branch.
+  bool StackFixupAtLabel(const void *);
 
   /// EmitStackUpdate - Routine to adjust the stack to the depth the
   /// stack should be at by the time we transfer control flow to the
-  /// label.
-  void EmitStackUpdate(const LabelStmt &S);
+  /// label.  This is called just before emitting branches for user
+  /// level goto processing, branhes for break or continue processing.
+  /// The llvm::value overload is used when handling break and
+  /// continue, as we know the stack depth directly.  We return true,
+  /// if for any reason we can't generate code for the construct yet.
+  /// See StackFixupAtLabel for the paired routine to mark the
+  /// destinations.
+  bool EmitStackUpdate(llvm::Value *V);
+  bool EmitStackUpdate(const void *S);
 
   struct CleanupEntry {
     /// CleanupBlock - The block of code that does the actual cleanup.

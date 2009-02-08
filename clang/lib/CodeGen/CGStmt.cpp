@@ -198,20 +198,7 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
   Builder.SetInsertPoint(BB);
 }
 
-void CodeGenFunction::EmitStackUpdate(const LabelStmt &S) {
-  if (StackDepthMap.find(&S) == StackDepthMap.end()) {
-    // If we can't find it, just remember the depth now,
-    // so we can validate it later.
-    // FIXME: We need to save a place to insert the adjustment,
-    // if needed, here, sa that later in EmitLabel, we can
-    // backpatch the adjustment into that place, instead of
-    // saying unsupported.
-    StackDepthMap[&S] = StackDepth;
-    return;
-  }
-      
-  // Find applicable stack depth, if any...
-  llvm::Value *V = StackDepthMap[&S];
+bool CodeGenFunction::EmitStackUpdate(llvm::Value *V) {
   // V can be 0 here, if it is, be sure to start searching from the
   // top of the function, as we want the next save after that point.
   for (unsigned int i = 0; i < StackSaveValues.size(); ++i)
@@ -227,10 +214,25 @@ void CodeGenFunction::EmitStackUpdate(const LabelStmt &S) {
         llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
         Builder.CreateCall(F, V);
       }
-    } else
-      // FIXME: Move to semq and assert here, codegen isn't the right
-      // time to be checking.
-      CGM.ErrorUnsupported(&S, "invalid goto to VLA scope that has finished");
+    } else return true;
+  return false;
+}
+
+bool CodeGenFunction::EmitStackUpdate(const void  *S) {
+  if (StackDepthMap.find(S) == StackDepthMap.end()) {
+    // If we can't find it, just remember the depth now,
+    // so we can validate it later.
+    // FIXME: We need to save a place to insert the adjustment,
+    // if needed, here, sa that later in EmitLabel, we can
+    // backpatch the adjustment into that place, instead of
+    // saying unsupported.
+    StackDepthMap[S] = StackDepth;
+    return false;
+  }
+      
+  // Find applicable stack depth, if any...
+  llvm::Value *V = StackDepthMap[S];
+  return EmitStackUpdate(V);
 }
 
 void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
@@ -250,24 +252,30 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
   Builder.ClearInsertionPoint();
 }
 
-void CodeGenFunction::EmitLabel(const LabelStmt &S) {
-  llvm::BasicBlock *NextBB = getBasicBlockForLabel(&S);
-  if (StackDepthMap.find(&S) == StackDepthMap.end()) {
+bool CodeGenFunction::StackFixupAtLabel(const void *S) {
+  if (StackDepthMap.find(S) == StackDepthMap.end()) {
     // We need to remember the stack depth so that we can readjust the
     // stack back to the right depth for this label if we want to
     // transfer here from a different depth.
-    StackDepthMap[&S] = StackDepth;
+    StackDepthMap[S] = StackDepth;
   } else {
-    if (StackDepthMap[&S] != StackDepth) {
+    if (StackDepthMap[S] != StackDepth) {
       // FIXME: Sema needs to ckeck for jumps that cross decls with
       // initializations for C++, and all VLAs, not just the first in
       // a block that does a stacksave.
       // FIXME: We need to save a place to insert the adjustment
       // when we do a EmitStackUpdate on a forward jump, and then
       // backpatch the adjustment into that place.
-      CGM.ErrorUnsupported(&S, "forward goto inside scope with VLA");
+      return true;
     }
   }
+  return false;
+}
+
+void CodeGenFunction::EmitLabel(const LabelStmt &S) {
+  llvm::BasicBlock *NextBB = getBasicBlockForLabel(&S);
+  if (StackFixupAtLabel(&S))
+    CGM.ErrorUnsupported(&S, "forward goto inside scope with VLA");
   EmitBlock(NextBB);
 }
 
@@ -292,7 +300,11 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
 
   // We need to adjust the stack, if the destination was (will be) at
   // a different depth.
-  EmitStackUpdate(*S.getLabel());
+  if (EmitStackUpdate(S.getLabel()))
+    // FIXME: Move to semq and assert here, codegen isn't the right
+    // time to be checking.
+    CGM.ErrorUnsupported(S.getLabel(),
+                         "invalid goto to VLA scope that has finished");
 
   EmitBranch(getBasicBlockForLabel(S.getLabel()));
 }
@@ -595,18 +607,17 @@ void CodeGenFunction::EmitBreakStmt(const BreakStmt &S) {
     return;
   }
 
-  for (unsigned i = 0; i < StackSaveValues.size(); i++) {
-    if (StackSaveValues[i]) {
-      CGM.ErrorUnsupported(&S, "break inside scope with VLA");
-      return;
-    }
-  }
-  
   // If this code is reachable then emit a stop point (if generating
   // debug info). We have to do this ourselves because we are on the
   // "simple" statement path.
   if (HaveInsertPoint())
     EmitStopPoint(&S);
+
+  // We need to adjust the stack, if the destination was (will be) at
+  // a different depth.
+  if (EmitStackUpdate(BreakContinueStack.back().SaveBreakStackDepth))
+    assert (0 && "break vla botch");
+
   llvm::BasicBlock *Block = BreakContinueStack.back().BreakBlock;
   EmitBranch(Block);
 }
@@ -620,18 +631,17 @@ void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
     return;
   }
 
-  for (unsigned i = 0; i < StackSaveValues.size(); i++) {
-    if (StackSaveValues[i]) {
-      CGM.ErrorUnsupported(&S, "continue inside scope with VLA");
-      return;
-    }
-  }
-  
   // If this code is reachable then emit a stop point (if generating
   // debug info). We have to do this ourselves because we are on the
   // "simple" statement path.
   if (HaveInsertPoint())
     EmitStopPoint(&S);
+
+  // We need to adjust the stack, if the destination was (will be) at
+  // a different depth.
+  if (EmitStackUpdate(BreakContinueStack.back().SaveContinueStackDepth))
+    assert (0 && "continue vla botch");
+
   llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
   EmitBranch(Block);
 }
