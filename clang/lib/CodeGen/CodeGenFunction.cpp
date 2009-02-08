@@ -586,7 +586,11 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
     llvm::SwitchInst *SI = Builder.CreateSwitch(DestCode, EndBlock, 
                                                 BranchFixups.size());
 
-    Builder.SetInsertPoint(CurBB);
+    // Restore the current basic block (if any)
+    if (CurBB)
+      Builder.SetInsertPoint(CurBB);
+    else
+      Builder.ClearInsertionPoint();
 
     for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
       llvm::BranchInst *BI = BranchFixups[i];
@@ -658,7 +662,12 @@ void CodeGenFunction::AddBranchFixup(llvm::BranchInst *BI)
 
 void CodeGenFunction::EmitBranchThroughCleanup(llvm::BasicBlock *Dest)
 {
+  if (!HaveInsertPoint())
+    return;
+  
   llvm::BranchInst* BI = Builder.CreateBr(Dest);
+  
+  Builder.ClearInsertionPoint();
   
   // The stack is empty, no need to do any cleanup.
   if (CleanupEntries.empty())
