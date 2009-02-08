@@ -211,11 +211,11 @@
       </li>
       <li><a href="#int_overflow">Arithmetic with Overflow Intrinsics</a>
         <ol>
-          <li><a href="#int_sadd_ovf">'<tt>llvm.sadd.with.overflow.*</tt> Intrinsics</a></li>
-          <li><a href="#int_uadd_ovf">'<tt>llvm.uadd.with.overflow.*</tt> Intrinsics</a></li>
-          <li><a href="#int_ssub_ovf">'<tt>llvm.ssub.with.overflow.*</tt> Intrinsics</a></li>
-          <li><a href="#int_usub_ovf">'<tt>llvm.usub.with.overflow.*</tt> Intrinsics</a></li>
-          <li><a href="#int_smul_ovf">'<tt>llvm.smul.with.overflow.*</tt> Intrinsics</a></li>
+          <li><a href="#int_sadd_overflow">'<tt>llvm.sadd.with.overflow.*</tt> Intrinsics</a></li>
+          <li><a href="#int_uadd_overflow">'<tt>llvm.uadd.with.overflow.*</tt> Intrinsics</a></li>
+          <li><a href="#int_ssub_overflow">'<tt>llvm.ssub.with.overflow.*</tt> Intrinsics</a></li>
+          <li><a href="#int_usub_overflow">'<tt>llvm.usub.with.overflow.*</tt> Intrinsics</a></li>
+          <li><a href="#int_smul_overflow">'<tt>llvm.smul.with.overflow.*</tt> Intrinsics</a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
@@ -5913,9 +5913,21 @@ reversed.  That is, the <tt>0</tt>th bit in <tt>%repl</tt> replaces the
 
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="int_overflow">Arithmetic with Overflow Intrinsics</a>
+</div>
+
+<div class="doc_text">
+<p>
+LLVM provides intrinsics for some arithmetic with overflow operations.
+</p>
+
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_sadd_ovf">'<tt>llvm.sadd.with.overflow.*</tt>' Intrinsics</a>
+  <a name="int_sadd_overflow">'<tt>llvm.sadd.with.overflow.*</tt>' Intrinsics</a>
 </div>
 
 <div class="doc_text">
@@ -5923,7 +5935,7 @@ reversed.  That is, the <tt>0</tt>th bit in <tt>%repl</tt> replaces the
 <h5>Syntax:</h5>
 
 <p>This is an overloaded intrinsic. You can use <tt>llvm.sadd.with.overflow</tt>
-on any integer bit width. However, not all targets support all bit widths.</p>
+on any integer bit width.</p>
 
 <pre>
   declare {i16, i1} @llvm.sadd.with.overflow.i16(i16 %a, i16 %b)
@@ -5963,7 +5975,7 @@ is a bit specifying if the signed summation resulted in an overflow.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_uadd_ovf">'<tt>llvm.uadd.with.overflow.*</tt>' Intrinsics</a>
+  <a name="int_uadd_overflow">'<tt>llvm.uadd.with.overflow.*</tt>' Intrinsics</a>
 </div>
 
 <div class="doc_text">
@@ -5971,7 +5983,7 @@ is a bit specifying if the signed summation resulted in an overflow.</p>
 <h5>Syntax:</h5>
 
 <p>This is an overloaded intrinsic. You can use <tt>llvm.uadd.with.overflow</tt>
-on any integer bit width. However, not all targets support all bit widths.</p>
+on any integer bit width.</p>
 
 <pre>
   declare {i16, i1} @llvm.uadd.with.overflow.i16(i16 %a, i16 %b)
@@ -6011,7 +6023,7 @@ specifying if the unsigned summation resulted in a carry.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_ssub_ovf">'<tt>llvm.ssub.with.overflow.*</tt>' Intrinsics</a>
+  <a name="int_ssub_overflow">'<tt>llvm.ssub.with.overflow.*</tt>' Intrinsics</a>
 </div>
 
 <div class="doc_text">
@@ -6019,7 +6031,7 @@ specifying if the unsigned summation resulted in a carry.</p>
 <h5>Syntax:</h5>
 
 <p>This is an overloaded intrinsic. You can use <tt>llvm.ssub.with.overflow</tt>
-on any integer bit width. However, not all targets support all bit widths.</p>
+on any integer bit width.</p>
 
 <pre>
   declare {i16, i1} @llvm.ssub.with.overflow.i16(i16 %a, i16 %b)
@@ -6059,7 +6071,7 @@ specifying if the signed subtraction resulted in an overflow.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_usub_ovf">'<tt>llvm.usub.with.overflow.*</tt>' Intrinsics</a>
+  <a name="int_usub_overflow">'<tt>llvm.usub.with.overflow.*</tt>' Intrinsics</a>
 </div>
 
 <div class="doc_text">
@@ -6067,7 +6079,7 @@ specifying if the signed subtraction resulted in an overflow.</p>
 <h5>Syntax:</h5>
 
 <p>This is an overloaded intrinsic. You can use <tt>llvm.usub.with.overflow</tt>
-on any integer bit width. However, not all targets support all bit widths.</p>
+on any integer bit width.</p>
 
 <pre>
   declare {i16, i1} @llvm.usub.with.overflow.i16(i16 %a, i16 %b)
@@ -6107,7 +6119,7 @@ specifying if the unsigned subtraction resulted in an overflow.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_smul_ovf">'<tt>llvm.smul.with.overflow.*</tt>' Intrinsics</a>
+  <a name="int_smul_overflow">'<tt>llvm.smul.with.overflow.*</tt>' Intrinsics</a>
 </div>
 
 <div class="doc_text">
@@ -6115,7 +6127,7 @@ specifying if the unsigned subtraction resulted in an overflow.</p>
 <h5>Syntax:</h5>
 
 <p>This is an overloaded intrinsic. You can use <tt>llvm.smul.with.overflow</tt>
-on any integer bit width. However, not all targets support all bit widths.</p>
+on any integer bit width.</p>
 
 <pre>
   declare {i16, i1} @llvm.smul.with.overflow.i16(i16 %a, i16 %b)
