@@ -128,25 +128,27 @@ public:
   void EmitJumpThroughFinally(ObjCEHEntry *Entry, llvm::BasicBlock *Dest,
                               bool ExecuteTryExit=true);
   
-  /// CreateCleanupBlock - Will push a new cleanup entry on the stack
-  /// and return a BasicBlock where cleanup instructions can be added
-  llvm::BasicBlock *CreateCleanupBlock();
+  /// PushCleanupBlock - Push a new cleanup entry on the stack and set the
+  /// passed in block as the cleanup block.
+  void PushCleanupBlock(llvm::BasicBlock *CleanupBlock);
   
   /// CleanupScope - RAII object that will create a cleanup block and
   /// set the insert point to that block. When destructed, it sets the insert
-  /// point to the previous block.
+  /// point to the previous block and pushes a new cleanup entry on the stack.
   class CleanupScope {
     CodeGenFunction& CGF;
     llvm::BasicBlock *CurBB;
+    llvm::BasicBlock *CleanupBB;
     
   public:
     CleanupScope(CodeGenFunction &cgf)
       : CGF(cgf), CurBB(CGF.Builder.GetInsertBlock()) {
-      llvm::BasicBlock *FinallyBB = CGF.CreateCleanupBlock();
-      CGF.Builder.SetInsertPoint(FinallyBB);
+      CleanupBB = CGF.createBasicBlock("cleanup");
+      CGF.Builder.SetInsertPoint(CleanupBB);
     }
     
     ~CleanupScope() {
+      CGF.PushCleanupBlock(CleanupBB);
       CGF.Builder.SetInsertPoint(CurBB);
     }
   };
