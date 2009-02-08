@@ -66,3 +66,7 @@ int sys::AlarmStatus() {
     return 1;
   return 0;
 }
+
+void Sleep(unsigned n) {
+  ::sleep(n);
+}

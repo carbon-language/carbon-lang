@@ -34,3 +34,7 @@ int sys::AlarmStatus() {
   // FIXME: Implement for Win32
   return 0;
 }
+
+void Sleep(unsigned n) {
+  Sleep(n*1000);
+}
