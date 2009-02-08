@@ -466,7 +466,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   }
 
   if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || Ty == Type::VoidTy)
-    return Error(TyLoc, "invald type for global variable");
+    return Error(TyLoc, "invalid type for global variable");
   
   GlobalVariable *GV = 0;
 
