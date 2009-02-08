@@ -38,6 +38,11 @@ static cl::opt<bool> PrintEmittedAsm("print-emitted-asm", cl::Hidden,
 static cl::opt<bool> PrintGCInfo("print-gc", cl::Hidden,
     cl::desc("Dump garbage collector data"));
 
+// Hidden options to help debugging
+static cl::opt<bool>
+EnableSinking("enable-sinking", cl::init(false), cl::Hidden,
+              cl::desc("Perform sinking on machine code"));
+
 // When this works it will be on by default.
 static cl::opt<bool>
 DisablePostRAScheduler("disable-post-RA-scheduler",
@@ -178,10 +183,11 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  if (!Fast) {
+  if (!Fast)
     PM.add(createMachineLICMPass());
+
+  if (EnableSinking)
     PM.add(createMachineSinkingPass());
-  }
 
   // Run pre-ra passes.
   if (addPreRegAlloc(PM, Fast) && PrintMachineCode)
