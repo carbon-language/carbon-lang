@@ -604,6 +604,8 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
           VD->getStorageClass() != VarDecl::PrivateExtern) {
         Diag(VD->getLocation(), diag::err_redefinition) << VD->getDeclName();
         Diag(OldDecl->getLocation(), diag::note_previous_definition);
+        // One redefinition error is enough.
+        break;
       }
     }
   }

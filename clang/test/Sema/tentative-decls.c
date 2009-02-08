@@ -1,6 +1,4 @@
 // RUN: clang %s -verify -fsyntax-only
-// XFAIL
-// fails due to exact diagnostic matching
 
 const int a [1] = {1};
 extern const int a[];
