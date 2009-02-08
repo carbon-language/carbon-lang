@@ -560,3 +560,44 @@ void CodeGenFunction::EmitCleanupBlock()
   }
 }
 
+void CodeGenFunction::AddBranchFixup(llvm::BranchInst *BI)
+{
+  assert(!CleanupEntries.empty() && 
+         "Trying to add branch fixup without cleanup block!");
+  
+  // FIXME: We could be more clever here and check if there's already a 
+  // branch fixup for this destination and recycle it.
+  CleanupEntries.back().BranchFixups.push_back(BI);
+}
+
+void CodeGenFunction::EmitBranchThroughCleanup(llvm::BasicBlock *Dest)
+{
+  llvm::BranchInst* BI = Builder.CreateBr(Dest);
+  
+  // The stack is empty, no need to do any cleanup.
+  if (CleanupEntries.empty())
+    return;
+  
+  if (!Dest->getParent()) {
+    // We are trying to branch to a block that hasn't been inserted yet.
+    AddBranchFixup(BI);
+    return;
+  }
+  
+  BlockScopeMap::iterator I = BlockScopes.find(Dest);
+  if (I == BlockScopes.end()) {
+    // We are trying to jump to a block that is outside of any cleanup scope.
+    AddBranchFixup(BI);
+    return;
+  }
+  
+  assert(I->second < CleanupEntries.size() &&
+         "Trying to branch into cleanup region");
+  
+  if (I->second == CleanupEntries.size() - 1) {
+    // We have a branch to a block in the same scope.
+    return;
+  }
+  
+  AddBranchFixup(BI);
+}

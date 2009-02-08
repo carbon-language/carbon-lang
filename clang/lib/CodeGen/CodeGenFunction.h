@@ -155,6 +155,13 @@ public:
   /// blocks that have been added.
   void EmitCleanupBlocks(size_t OldCleanupStackSize);
 
+  /// EmitBranchThroughCleanup - Emit a branch from the current insert block
+  /// through the cleanup handling code (if any) and then on to \arg Dest.
+  ///
+  /// FIXME: Maybe this should really be in EmitBranch? Don't we always want 
+  /// this behavior for branches?
+  void EmitBranchThroughCleanup(llvm::BasicBlock *Dest);
+  
 private:
   /// LabelIDs - Track arbitrary ids assigned to labels for use in
   /// implementing the GCC address-of-label extension and indirect
@@ -780,6 +787,10 @@ private:
   /// EmitCleanupBlock - emits a single cleanup block.
   void EmitCleanupBlock();
 
+  /// AddBranchFixup - adds a branch instruction to the list of fixups for the
+  /// current cleanup scope.
+  void AddBranchFixup(llvm::BranchInst *BI);
+  
 };
 }  // end namespace CodeGen
 }  // end namespace clang
