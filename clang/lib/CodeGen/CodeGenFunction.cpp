@@ -545,26 +545,24 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
   
   CleanupEntries.pop_back();
 
-  if (!CleanupEntries.empty()) {
-    // Check if any branch fixups pointed to the scope we just popped. If so,
-    // we can remove them.
-    for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
-      llvm::BasicBlock *Dest = BranchFixups[i]->getSuccessor(0);
-      BlockScopeMap::iterator I = BlockScopes.find(Dest);
+  // Check if any branch fixups pointed to the scope we just popped. If so,
+  // we can remove them.
+  for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
+    llvm::BasicBlock *Dest = BranchFixups[i]->getSuccessor(0);
+    BlockScopeMap::iterator I = BlockScopes.find(Dest);
       
-      if (I == BlockScopes.end())
-        continue;
+    if (I == BlockScopes.end())
+      continue;
       
-      assert(I->second <= CleanupEntries.size() && "Invalid branch fixup!");
+    assert(I->second <= CleanupEntries.size() && "Invalid branch fixup!");
       
-      if (I->second == CleanupEntries.size()) {
-        // We don't need to do this branch fixup.
-        BranchFixups[i] = BranchFixups.back();
-        BranchFixups.pop_back();
-        i--;
-        e--;
-        continue;
-      }
+    if (I->second == CleanupEntries.size()) {
+      // We don't need to do this branch fixup.
+      BranchFixups[i] = BranchFixups.back();
+      BranchFixups.pop_back();
+      i--;
+      e--;
+      continue;
     }
   }
   
