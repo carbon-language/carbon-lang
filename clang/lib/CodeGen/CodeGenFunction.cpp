@@ -531,34 +531,22 @@ void CodeGenFunction::EmitCleanupBlocks(size_t OldCleanupStackSize)
     EmitCleanupBlock();
 }
 
-void CodeGenFunction::EmitCleanupBlock()
+void CodeGenFunction::FixupBranches(llvm::BasicBlock *CleanupBlock,
+                                    const BlockVector& Blocks,
+                                    BranchFixupsVector& BranchFixups)
 {
-  CleanupEntry &CE = CleanupEntries.back();
-  
-  llvm::BasicBlock *CleanupBlock = CE.CleanupBlock;
-  
-  std::vector<llvm::BasicBlock *> Blocks;
-  std::swap(Blocks, CE.Blocks);
-
-  std::vector<llvm::BranchInst *> BranchFixups;
-  std::swap(BranchFixups, CE.BranchFixups);
-  
-  CleanupEntries.pop_back();
-  
-  EmitBlock(CleanupBlock);
-
   if (!CleanupEntries.empty()) {
     // Check if any branch fixups pointed to the scope we just popped. If so,
     // we can remove them.
     for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
       llvm::BasicBlock *Dest = BranchFixups[i]->getSuccessor(0);
       BlockScopeMap::iterator I = BlockScopes.find(Dest);
-    
+      
       if (I == BlockScopes.end())
         continue;
       
       assert(I->second <= CleanupEntries.size() && "Invalid branch fixup!");
-
+      
       if (I->second == CleanupEntries.size()) {
         // We don't need to do this branch fixup.
         BranchFixups[i] = BranchFixups.back();
@@ -569,7 +557,7 @@ void CodeGenFunction::EmitCleanupBlock()
       }
     }
   }
-
+  
   if (!BranchFixups.empty()) {
     llvm::BasicBlock *CleanupEnd = createBasicBlock("cleanup.end");
     
@@ -588,12 +576,12 @@ void CodeGenFunction::EmitCleanupBlock()
       
       // Store the jump destination before the branch instruction.
       llvm::ConstantInt *DI = 
-        llvm::ConstantInt::get(llvm::Type::Int32Ty, i + 1);
+      llvm::ConstantInt::get(llvm::Type::Int32Ty, i + 1);
       new llvm::StoreInst(DI, DestCodePtr, BI);
       
       // Fixup the branch instruction to point to the cleanup block.
       BI->setSuccessor(0, CleanupBlock);
-
+      
       if (CleanupEntries.empty()) {
         SI->addCase(DI, Dest);
       } else {
@@ -603,7 +591,7 @@ void CodeGenFunction::EmitCleanupBlock()
         
         // Create the pad block.
         llvm::BasicBlock *CleanupPad = createBasicBlock("cleanup.pad", CurFn);
-
+        
         // Add it as the destination.
         SI->addCase(DI, CleanupPad);
         
@@ -616,7 +604,7 @@ void CodeGenFunction::EmitCleanupBlock()
       }
     }
   }
-
+  
   // Remove all blocks from the block scope map.
   for (size_t i = 0, e = Blocks.size(); i != e; ++i) {
     assert(BlockScopes.count(Blocks[i]) &&
@@ -624,6 +612,34 @@ void CodeGenFunction::EmitCleanupBlock()
     
     BlockScopes.erase(Blocks[i]);
   }
+}
+
+llvm::BasicBlock *
+CodeGenFunction::PopCleanupBlock(BlockVector& Blocks,
+                                 BranchFixupsVector& BranchFixups)
+{
+  CleanupEntry &CE = CleanupEntries.back();
+  
+  llvm::BasicBlock *CleanupBlock = CE.CleanupBlock;
+  
+  std::swap(Blocks, CE.Blocks);
+  std::swap(BranchFixups, CE.BranchFixups);
+  
+  CleanupEntries.pop_back();
+
+  return CleanupBlock;
+}
+
+void CodeGenFunction::EmitCleanupBlock()
+{
+  BlockVector Blocks;
+  BranchFixupsVector BranchFixups;
+  
+  llvm::BasicBlock *CleanupBlock = PopCleanupBlock(Blocks, BranchFixups);
+  
+  EmitBlock(CleanupBlock);
+
+  FixupBranches(CleanupBlock, Blocks, BranchFixups);
 }
 
 void CodeGenFunction::AddBranchFixup(llvm::BranchInst *BI)

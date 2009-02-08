@@ -249,16 +249,19 @@ private:
   /// label.
   void EmitStackUpdate(const LabelStmt &S);
 
+  typedef std::vector<llvm::BasicBlock *> BlockVector;
+  typedef std::vector<llvm::BranchInst *> BranchFixupsVector;
+  
   struct CleanupEntry {
     /// CleanupBlock - The block of code that does the actual cleanup.
     llvm::BasicBlock *CleanupBlock;
     
     /// Blocks - Basic blocks that were emitted in the current cleanup scope.
-    std::vector<llvm::BasicBlock *> Blocks;
+    BlockVector Blocks;
 
     /// BranchFixups - Branch instructions to basic blocks that haven't been
     /// inserted into the current function yet.
-    std::vector<llvm::BranchInst*> BranchFixups;
+    BranchFixupsVector BranchFixups;
 
     explicit CleanupEntry(llvm::BasicBlock *cb)
       : CleanupBlock(cb) {}
@@ -267,7 +270,6 @@ private:
       assert(Blocks.empty() && "Did not empty blocks!");
       assert(BranchFixups.empty() && "Did not empty branch fixups!");
     }
-    
   };
   
   /// CleanupEntries - Stack of cleanup entries.
@@ -789,6 +791,13 @@ private:
   /// EmitCleanupBlock - emits a single cleanup block.
   void EmitCleanupBlock();
 
+  llvm::BasicBlock *PopCleanupBlock(BlockVector& Blocks,
+                                    BranchFixupsVector& BranchFixups);
+  
+  void FixupBranches(llvm::BasicBlock *CleanupBlock,
+                     const BlockVector& Blocks,
+                     BranchFixupsVector& BranchFixups);
+                     
   /// AddBranchFixup - adds a branch instruction to the list of fixups for the
   /// current cleanup scope.
   void AddBranchFixup(llvm::BranchInst *BI);
