@@ -42,6 +42,7 @@ STATISTIC(numExtends  , "Number of copies extended");
 STATISTIC(NumReMats   , "Number of instructions re-materialized");
 STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
 STATISTIC(numAborts   , "Number of times interval joining aborted");
+STATISTIC(numDeadValNo, "Number of valno def marked dead");
 
 char SimpleRegisterCoalescing::ID = 0;
 static cl::opt<bool>
@@ -863,9 +864,15 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
   if (TrimLiveIntervalToLastUse(CopyIdx, CopyMI->getParent(), li, LR))
     return false;
 
-  if (LR->valno->def == RemoveStart)
-    // If the def MI defines the val#, propagate the dead marker.
-    PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
+  if (LR->valno->def == RemoveStart) {
+    // If the def MI defines the val# and this copy is the only kill of the
+    // val#, then propagate the dead marker.
+    if (li.isOnlyKill(LR->valno, RemoveEnd)) {
+      PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
+      ++numDeadValNo;
+    } else
+      li.removeKill(LR->valno, RemoveEnd);
+  }
 
   removeRange(li, RemoveStart, LR->end, li_, tri_);
   return removeIntervalIfEmpty(li, li_, tri_);

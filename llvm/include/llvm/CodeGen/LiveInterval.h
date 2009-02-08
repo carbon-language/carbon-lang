@@ -271,6 +271,19 @@ namespace llvm {
         I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
       return I != kills.end() && *I == KillIdx;
     }
+
+    /// isOnlyKill - Return true if the specified index is the only kill of the
+    /// specified val#.
+    static bool isOnlyKill(const VNInfo *VNI, unsigned KillIdx) {
+      bool Found = false;
+      const SmallVector<unsigned, 4> &kills = VNI->kills;
+      for (unsigned i = 0, e = kills.size(); i != e; ++i) {
+        if (KillIdx != kills[i])
+          return false;
+        Found = true;
+      }
+      return Found;
+    }
     
     /// MergeValueNumberInto - This method is called when two value nubmers
     /// are found to be equivalent.  This eliminates V1, replacing all
