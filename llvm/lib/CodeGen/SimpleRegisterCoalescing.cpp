@@ -867,11 +867,12 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
   if (LR->valno->def == RemoveStart) {
     // If the def MI defines the val# and this copy is the only kill of the
     // val#, then propagate the dead marker.
-    if (li.isOnlyKill(LR->valno, RemoveEnd)) {
+    if (!li.isOnlyKill(LR->valno, RemoveEnd))
+      li.removeKill(LR->valno, RemoveEnd);
+    else {
       PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
       ++numDeadValNo;
-    } else
-      li.removeKill(LR->valno, RemoveEnd);
+    }
   }
 
   removeRange(li, RemoveStart, LR->end, li_, tri_);
