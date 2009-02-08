@@ -574,7 +574,16 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
     Result.setIsUnsigned(!E->getType()->isSignedIntegerType());
     return true;
   }
-  
+
+  // In C++, const, non-volatile integers initialized with ICEs are ICEs.
+  if (Info.Ctx.getLangOptions().CPlusPlus &&
+      E->getType().getCVRQualifiers() == QualType::Const) {
+    if (const VarDecl *D = dyn_cast<VarDecl>(E->getDecl())) {
+      if (const Expr *Init = D->getInit())
+        return Visit(const_cast<Expr*>(Init));
+    }
+  }
+
   // Otherwise, random variable references are not constants.
   return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
 }
