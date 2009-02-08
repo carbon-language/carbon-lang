@@ -199,6 +199,10 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
 }
 
 bool CodeGenFunction::EmitStackUpdate(llvm::Value *V) {
+  // If we're already at the depth we want...
+  if (StackDepth == V)
+    return false;
+
   // V can be 0 here, if it is, be sure to start searching from the
   // top of the function, as we want the next save after that point.
   for (unsigned int i = 0; i < StackSaveValues.size(); ++i)
