@@ -130,7 +130,11 @@ public:
   void* operator new(size_t bytes, void* mem) throw() {
     return mem;
   }
-  
+
+  void operator delete(void*, ASTContext& C) throw() { }
+  void operator delete(void*, ASTContext& C, unsigned alignment) throw() { }
+  void operator delete(void*, std::size_t) throw() { }
+
 protected:
   /// DestroyChildren - Invoked by destructors of subclasses of Stmt to
   ///  recursively release child AST nodes.
