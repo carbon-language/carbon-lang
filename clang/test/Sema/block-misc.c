@@ -42,7 +42,7 @@ int test2(double (^S)()) {
 }
 
 int^ x; // expected-error {{block pointer to non-function type is invalid}}
-int^^ x1; // expected-error {{block pointer to non-function type is invalid}}
+int^^ x1; // expected-error {{block pointer to non-function type is invalid}} expected-error {{block pointer to non-function type is invalid}}
 
 int test3() {
 	char *^ y; // expected-error {{block pointer to non-function type is invalid}}
