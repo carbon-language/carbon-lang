@@ -82,11 +82,19 @@ of <a href="http://llvm.org/docs/SourceLevelDebugging.html">LLVM debug info</a>
 (which the code generator turns into DWARF).  The missing pieces are pretty 
 minor at this point.</li>
 
-<li><b>Overflow detection</b>: an interesting project would be to add a 
+<li><b>Overflow detection</b>: an interesting project would be to add a -ftrapv
 compilation mode that causes -emit-llvm to generate overflow tests for all
 signed integer arithmetic operators, and call abort if they overflow.  Overflow
 is undefined in C and hard for people to reason about.  LLVM IR also has
 intrinsics for generating arithmetic with overflow checks directly.</li>
+
+<li><b>Undefined behavior checking</b>: similar to adding -ftrapv, codegen could
+insert runtime checks for all sorts of different undefined behaviors, from 
+reading uninitialized variables, buffer overflows, and many other things.  This
+checking would be expensive, but the optimizers could eliminate many of the 
+checks in some cases, and it would be very interesting to test code in this mode
+for certain crowds of people.  Because the inserted code is coming from clang,
+the "abort" message could be very detailed about exactly what went wrong.</li>
 
 <li><b>Continue work on C++ support</b>: Implementing all of C++ is a very big
 job, but there are lots of little pieces that can be picked off and implemented.
