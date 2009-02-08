@@ -216,6 +216,7 @@
           <li><a href="#int_ssub_overflow">'<tt>llvm.ssub.with.overflow.*</tt> Intrinsics</a></li>
           <li><a href="#int_usub_overflow">'<tt>llvm.usub.with.overflow.*</tt> Intrinsics</a></li>
           <li><a href="#int_smul_overflow">'<tt>llvm.smul.with.overflow.*</tt> Intrinsics</a></li>
+          <li><a href="#int_umul_overflow">'<tt>llvm.umul.with.overflow.*</tt> Intrinsics</a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
@@ -6163,6 +6164,59 @@ overflow.</p>
 <h5>Examples:</h5>
 <pre>
   %res = call {i32, i1} @llvm.smul.with.overflow.i32(i32 %a, i32 %b)
+  %sum = extractvalue {i32, i1} %res, 0
+  %obit = extractvalue {i32, i1} %res, 1
+  br i1 %obit, label %overflow, label %normal
+</pre>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_umul_overflow">'<tt>llvm.umul.with.overflow.*</tt>' Intrinsics</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<p>This is an overloaded intrinsic. You can use <tt>llvm.umul.with.overflow</tt>
+on any integer bit width.</p>
+
+<pre>
+  declare {i16, i1} @llvm.umul.with.overflow.i16(i16 %a, i16 %b)
+  declare {i32, i1} @llvm.umul.with.overflow.i32(i32 %a, i32 %b)
+  declare {i64, i1} @llvm.umul.with.overflow.i64(i64 %a, i64 %b)
+</pre>
+
+<h5>Overview:</h5>
+
+<p><i><b>Warning:</b> '<tt>llvm.umul.with.overflow</tt>' is badly broken. It is
+actively being fixed, but it should not currently be used!</i></p>
+
+<p>The '<tt>llvm.umul.with.overflow</tt>' family of intrinsic functions perform
+a unsigned multiplication of the two arguments, and indicate whether an overflow
+occurred during the unsigned multiplication.</p>
+
+<h5>Arguments:</h5>
+
+<p>The arguments (%a and %b) and the first element of the result structure may
+be of integer types of any bit width, but they must have the same bit width. The
+second element of the result structure must be of type <tt>i1</tt>. <tt>%a</tt>
+and <tt>%b</tt> are the two values that will undergo unsigned
+multiplication.</p>
+
+<h5>Semantics:</h5>
+
+<p>The '<tt>llvm.umul.with.overflow</tt>' family of intrinsic functions perform
+an unsigned multiplication of the two arguments. They return a structure &mdash;
+the first element of which is the multiplication, and the second element of
+which is a bit specifying if the unsigned multiplication resulted in an
+overflow.</p>
+
+<h5>Examples:</h5>
+<pre>
+  %res = call {i32, i1} @llvm.umul.with.overflow.i32(i32 %a, i32 %b)
   %sum = extractvalue {i32, i1} %res, 0
   %obit = extractvalue {i32, i1} %res, 1
   br i1 %obit, label %overflow, label %normal
