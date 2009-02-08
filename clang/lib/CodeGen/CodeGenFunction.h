@@ -125,8 +125,9 @@ public:
   ///
   /// \param ExecuteTryExit - When true, the try_exit runtime function
   /// should be called prior to executing the finally code.
-  void EmitJumpThroughFinally(ObjCEHEntry *Entry, llvm::BasicBlock *Dest,
-                              bool ExecuteTryExit=true);
+  void EmitJumpThroughFinally(ObjCEHEntry *Entry, llvm::BasicBlock *Dest);
+  
+  void EmitJumpThroughFinally(llvm::BasicBlock *Dest);
   
   /// PushCleanupBlock - Push a new cleanup entry on the stack and set the
   /// passed in block as the cleanup block.

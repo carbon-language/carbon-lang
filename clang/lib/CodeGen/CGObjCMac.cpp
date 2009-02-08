@@ -1904,7 +1904,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   CGF.EmitBlock(TryBlock);
   CGF.EmitStmt(isTry ? cast<ObjCAtTryStmt>(S).getTryBody() 
                      : cast<ObjCAtSynchronizedStmt>(S).getSynchBody());
-  CGF.EmitJumpThroughFinally(&EHEntry, FinallyEnd);
+  CGF.EmitJumpThroughFinally(FinallyEnd);
   
   // Emit the "exception in @try" block.
   CGF.EmitBlock(TryHandler);
@@ -1919,7 +1919,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
     CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
-    CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);    
+    CGF.EmitJumpThroughFinally(FinallyRethrow);
   }
   else if (const ObjCAtCatchStmt* CatchStmt = 
            cast<ObjCAtTryStmt>(S).getCatchStmts()) 
@@ -1973,7 +1973,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         }
         
         CGF.EmitStmt(CatchStmt->getCatchBody());
-        CGF.EmitJumpThroughFinally(&EHEntry, FinallyEnd);
+        CGF.EmitJumpThroughFinally(FinallyEnd);
         break;
       }
       
@@ -2004,7 +2004,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       CGF.Builder.CreateStore(Tmp, CGF.GetAddrOfLocalVar(VD));
       
       CGF.EmitStmt(CatchStmt->getCatchBody());
-      CGF.EmitJumpThroughFinally(&EHEntry, FinallyEnd);
+      CGF.EmitJumpThroughFinally(FinallyEnd);
       
       CGF.EmitBlock(NextCatchBlock);
     }
@@ -2013,7 +2013,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // None of the handlers caught the exception, so store it to be
       // rethrown at the end of the @finally block.
       CGF.Builder.CreateStore(Caught, RethrowPtr);
-      CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow);
+      CGF.EmitJumpThroughFinally(FinallyRethrow);
     }
     
     // Emit the exception handler for the @catch blocks.
@@ -2022,11 +2022,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                                    ExceptionData), 
                             RethrowPtr);
     CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
-    CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);
+    CGF.EmitJumpThroughFinally(FinallyRethrow);
   } else {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
     CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
-    CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);    
+    CGF.EmitJumpThroughFinally(FinallyRethrow);
   }
   
   // Pop the exception-handling stack entry. It is important to do
@@ -2090,9 +2090,12 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.ClearInsertionPoint();
 }
 
+void CodeGenFunction::EmitJumpThroughFinally(llvm::BasicBlock *Dest) {
+  EmitJumpThroughFinally(ObjCEHStack.back(), Dest);
+}
+
 void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
-                                             llvm::BasicBlock *Dst,
-                                             bool ExecuteTryExit) {
+                                             llvm::BasicBlock *Dst) {
   if (!HaveInsertPoint())
     return;
   
