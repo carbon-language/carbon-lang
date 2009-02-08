@@ -531,10 +531,20 @@ void CodeGenFunction::EmitCleanupBlocks(size_t OldCleanupStackSize)
     EmitCleanupBlock();
 }
 
-void CodeGenFunction::FixupBranches(llvm::BasicBlock *CleanupBlock,
-                                    const BlockVector& Blocks,
-                                    BranchFixupsVector& BranchFixups)
+CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
 {
+  CleanupEntry &CE = CleanupEntries.back();
+  
+  llvm::BasicBlock *CleanupBlock = CE.CleanupBlock;
+  
+  std::vector<llvm::BasicBlock *> Blocks;
+  std::swap(Blocks, CE.Blocks);
+  
+  std::vector<llvm::BranchInst *> BranchFixups;
+  std::swap(BranchFixups, CE.BranchFixups);
+  
+  CleanupEntries.pop_back();
+
   if (!CleanupEntries.empty()) {
     // Check if any branch fixups pointed to the scope we just popped. If so,
     // we can remove them.
@@ -558,18 +568,26 @@ void CodeGenFunction::FixupBranches(llvm::BasicBlock *CleanupBlock,
     }
   }
   
+  llvm::BasicBlock *SwitchBlock = 0;
+  llvm::BasicBlock *EndBlock = 0;
   if (!BranchFixups.empty()) {
-    llvm::BasicBlock *CleanupEnd = createBasicBlock("cleanup.end");
+    SwitchBlock = createBasicBlock("cleanup.switch");
+    EndBlock = createBasicBlock("cleanup.end");
     
+    llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
+
+    Builder.SetInsertPoint(SwitchBlock);
+
     llvm::Value *DestCodePtr = CreateTempAlloca(llvm::Type::Int32Ty, 
                                                 "cleanup.dst");
     llvm::Value *DestCode = Builder.CreateLoad(DestCodePtr, "tmp");
     
     // Create a switch instruction to determine where to jump next.
-    llvm::SwitchInst *SI = Builder.CreateSwitch(DestCode, CleanupEnd, 
+    llvm::SwitchInst *SI = Builder.CreateSwitch(DestCode, EndBlock, 
                                                 BranchFixups.size());
-    EmitBlock(CleanupEnd);
-    
+
+    Builder.SetInsertPoint(CurBB);
+
     for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
       llvm::BranchInst *BI = BranchFixups[i];
       llvm::BasicBlock *Dest = BI->getSuccessor(0);
@@ -612,34 +630,20 @@ void CodeGenFunction::FixupBranches(llvm::BasicBlock *CleanupBlock,
     
     BlockScopes.erase(Blocks[i]);
   }
-}
-
-llvm::BasicBlock *
-CodeGenFunction::PopCleanupBlock(BlockVector& Blocks,
-                                 BranchFixupsVector& BranchFixups)
-{
-  CleanupEntry &CE = CleanupEntries.back();
   
-  llvm::BasicBlock *CleanupBlock = CE.CleanupBlock;
-  
-  std::swap(Blocks, CE.Blocks);
-  std::swap(BranchFixups, CE.BranchFixups);
-  
-  CleanupEntries.pop_back();
-
-  return CleanupBlock;
+  return CleanupBlockInfo(CleanupBlock, SwitchBlock, EndBlock);
 }
 
 void CodeGenFunction::EmitCleanupBlock()
 {
-  BlockVector Blocks;
-  BranchFixupsVector BranchFixups;
+  CleanupBlockInfo Info = PopCleanupBlock();
   
-  llvm::BasicBlock *CleanupBlock = PopCleanupBlock(Blocks, BranchFixups);
+  EmitBlock(Info.CleanupBlock);
   
-  EmitBlock(CleanupBlock);
-
-  FixupBranches(CleanupBlock, Blocks, BranchFixups);
+  if (Info.SwitchBlock)
+    EmitBlock(Info.SwitchBlock);
+  if (Info.EndBlock)
+    EmitBlock(Info.EndBlock);
 }
 
 void CodeGenFunction::AddBranchFixup(llvm::BranchInst *BI)

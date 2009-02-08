@@ -131,6 +131,28 @@ public:
   /// PushCleanupBlock - Push a new cleanup entry on the stack and set the
   /// passed in block as the cleanup block.
   void PushCleanupBlock(llvm::BasicBlock *CleanupBlock);
+
+  /// CleanupBlockInfo - A struct representing a popped cleanup block
+  struct CleanupBlockInfo {
+    /// CleanupBlock - the cleanup block
+    llvm::BasicBlock *CleanupBlock;
+    
+    /// SwitchBlock - the block (if any) containing the switch instruction
+    /// used for jumping to the final destination.
+    llvm::BasicBlock *SwitchBlock;
+    
+    /// EndBlock - the default destination for the switch instruction.
+    llvm::BasicBlock *EndBlock;
+    
+    CleanupBlockInfo(llvm::BasicBlock *cb, llvm::BasicBlock *sb, 
+                     llvm::BasicBlock *eb)
+      : CleanupBlock(cb), SwitchBlock(sb), EndBlock(eb) {}
+  };
+
+  /// PopCleanupBlock - Will pop the cleanup entry on the stack, process all
+  /// branch fixups and return a block info struct with the switch block and
+  /// end block.
+  CleanupBlockInfo PopCleanupBlock();
   
   /// CleanupScope - RAII object that will create a cleanup block and
   /// set the insert point to that block. When destructed, it sets the insert
@@ -249,19 +271,16 @@ private:
   /// label.
   void EmitStackUpdate(const LabelStmt &S);
 
-  typedef std::vector<llvm::BasicBlock *> BlockVector;
-  typedef std::vector<llvm::BranchInst *> BranchFixupsVector;
-  
   struct CleanupEntry {
     /// CleanupBlock - The block of code that does the actual cleanup.
     llvm::BasicBlock *CleanupBlock;
     
     /// Blocks - Basic blocks that were emitted in the current cleanup scope.
-    BlockVector Blocks;
+    std::vector<llvm::BasicBlock *> Blocks;
 
     /// BranchFixups - Branch instructions to basic blocks that haven't been
     /// inserted into the current function yet.
-    BranchFixupsVector BranchFixups;
+    std::vector<llvm::BranchInst *> BranchFixups;
 
     explicit CleanupEntry(llvm::BasicBlock *cb)
       : CleanupBlock(cb) {}
@@ -791,13 +810,6 @@ private:
   /// EmitCleanupBlock - emits a single cleanup block.
   void EmitCleanupBlock();
 
-  llvm::BasicBlock *PopCleanupBlock(BlockVector& Blocks,
-                                    BranchFixupsVector& BranchFixups);
-  
-  void FixupBranches(llvm::BasicBlock *CleanupBlock,
-                     const BlockVector& Blocks,
-                     BranchFixupsVector& BranchFixups);
-                     
   /// AddBranchFixup - adds a branch instruction to the list of fixups for the
   /// current cleanup scope.
   void AddBranchFixup(llvm::BranchInst *BI);
