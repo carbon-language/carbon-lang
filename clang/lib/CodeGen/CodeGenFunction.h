@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is the internal per-function state used for llvm translation. 
+// This is the internal per-function state used for llvm translation.
 //
 //===----------------------------------------------------------------------===//
 
@@ -56,18 +56,18 @@ namespace CodeGen {
   class CodeGenModule;
   class CodeGenTypes;
   class CGFunctionInfo;
-  class CGRecordLayout;  
-  
+  class CGRecordLayout;
+
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
 class CodeGenFunction {
 public:
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
-  
+
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
   CGBuilderTy Builder;
-  
+
   // Holds the Decl for the current function or method
   const Decl *CurFuncDecl;
   const CGFunctionInfo *CurFnInfo;
@@ -76,10 +76,10 @@ public:
 
   /// ReturnBlock - Unified return block.
   llvm::BasicBlock *ReturnBlock;
-  /// ReturnValue - The temporary alloca to hold the return value. This
-  /// is null iff the function has no return value.
+  /// ReturnValue - The temporary alloca to hold the return value. This is null
+  /// iff the function has no return value.
   llvm::Instruction *ReturnValue;
-  
+
   /// AllocaInsertPoint - This is an instruction in the entry block before which
   /// we prefer to insert allocas.
   llvm::Instruction *AllocaInsertPt;
@@ -88,88 +88,88 @@ public:
   uint32_t LLVMPointerWidth;
 
 public:
-  // FIXME: The following should be private once EH code is moved out
-  // of NeXT runtime.
+  // FIXME: The following should be private once EH code is moved out of NeXT
+  // runtime.
 
-  // ObjCEHStack - This keeps track of which object to rethrow from
-  // inside @catch blocks and which @finally block exits from an EH
-  // scope should be chained through.
+  // ObjCEHStack - This keeps track of which object to rethrow from inside
+  // @catch blocks and which @finally block exits from an EH scope should be
+  // chained through.
   struct ObjCEHEntry {
     ObjCEHEntry(llvm::BasicBlock *fb, llvm::SwitchInst *fs, llvm::Value *dc)
-      : FinallyBlock(fb), FinallySwitch(fs), 
+      : FinallyBlock(fb), FinallySwitch(fs),
         DestCode(dc) {}
 
     /// Entry point to the finally block.
-    llvm::BasicBlock *FinallyBlock; 
+    llvm::BasicBlock *FinallyBlock;
 
-    /// Switch instruction which runs at the end of the finally block
-    /// to forward jumps through the finally block.
-    llvm::SwitchInst *FinallySwitch; 
+    /// Switch instruction which runs at the end of the finally block to forward
+    /// jumps through the finally block.
+    llvm::SwitchInst *FinallySwitch;
 
-    /// Variable holding the code for the destination of a jump
-    /// through the @finally block.
+    /// Variable holding the code for the destination of a jump through the
+    /// @finally block.
     llvm::Value *DestCode;
   };
 
-  /// ObjCEHValueStack - Stack of exception objects being handled,
-  /// during IR generation for a @catch block.
+  /// ObjCEHValueStack - Stack of exception objects being handled, during IR
+  /// generation for a @catch block.
   llvm::SmallVector<llvm::Value*, 8> ObjCEHValueStack;
-  
+
   typedef llvm::SmallVector<ObjCEHEntry*, 8> ObjCEHStackType;
   ObjCEHStackType ObjCEHStack;
 
-  /// EmitJumpThroughFinally - Emit a branch from the current insert
-  /// point through the finally handling code for \arg Entry and then
-  /// on to \arg Dest. It is legal to call this function even if there
-  /// is no current insertion point.
+  /// EmitJumpThroughFinally - Emit a branch from the current insert point
+  /// through the finally handling code for \arg Entry and then on to \arg
+  /// Dest. It is legal to call this function even if there is no current
+  /// insertion point.
   ///
-  /// \param ExecuteTryExit - When true, the try_exit runtime function
-  /// should be called prior to executing the finally code.
+  /// \param ExecuteTryExit - When true, the try_exit runtime function should be
+  /// called prior to executing the finally code.
   void EmitJumpThroughFinally(ObjCEHEntry *Entry, llvm::BasicBlock *Dest);
-  
+
   void EmitJumpThroughFinally(llvm::BasicBlock *Dest);
   
   /// PushCleanupBlock - Push a new cleanup entry on the stack and set the
   /// passed in block as the cleanup block.
   void PushCleanupBlock(llvm::BasicBlock *CleanupBlock);
 
-  /// CleanupBlockInfo - A struct representing a popped cleanup block
+  /// CleanupBlockInfo - A struct representing a popped cleanup block.
   struct CleanupBlockInfo {
     /// CleanupBlock - the cleanup block
     llvm::BasicBlock *CleanupBlock;
-    
-    /// SwitchBlock - the block (if any) containing the switch instruction
-    /// used for jumping to the final destination.
+
+    /// SwitchBlock - the block (if any) containing the switch instruction used
+    /// for jumping to the final destination.
     llvm::BasicBlock *SwitchBlock;
-    
+
     /// EndBlock - the default destination for the switch instruction.
     llvm::BasicBlock *EndBlock;
-    
-    CleanupBlockInfo(llvm::BasicBlock *cb, llvm::BasicBlock *sb, 
+
+    CleanupBlockInfo(llvm::BasicBlock *cb, llvm::BasicBlock *sb,
                      llvm::BasicBlock *eb)
       : CleanupBlock(cb), SwitchBlock(sb), EndBlock(eb) {}
   };
 
   /// PopCleanupBlock - Will pop the cleanup entry on the stack, process all
-  /// branch fixups and return a block info struct with the switch block and
-  /// end block.
+  /// branch fixups and return a block info struct with the switch block and end
+  /// block.
   CleanupBlockInfo PopCleanupBlock();
-  
-  /// CleanupScope - RAII object that will create a cleanup block and
-  /// set the insert point to that block. When destructed, it sets the insert
-  /// point to the previous block and pushes a new cleanup entry on the stack.
+
+  /// CleanupScope - RAII object that will create a cleanup block and set the
+  /// insert point to that block. When destructed, it sets the insert point to
+  /// the previous block and pushes a new cleanup entry on the stack.
   class CleanupScope {
     CodeGenFunction& CGF;
     llvm::BasicBlock *CurBB;
     llvm::BasicBlock *CleanupBB;
-    
+
   public:
     CleanupScope(CodeGenFunction &cgf)
       : CGF(cgf), CurBB(CGF.Builder.GetInsertBlock()) {
       CleanupBB = CGF.createBasicBlock("cleanup");
       CGF.Builder.SetInsertPoint(CleanupBB);
     }
-    
+
     ~CleanupScope() {
       CGF.PushCleanupBlock(CleanupBB);
       CGF.Builder.SetInsertPoint(CurBB);
@@ -183,32 +183,31 @@ public:
   /// EmitBranchThroughCleanup - Emit a branch from the current insert block
   /// through the cleanup handling code (if any) and then on to \arg Dest.
   ///
-  /// FIXME: Maybe this should really be in EmitBranch? Don't we always want 
+  /// FIXME: Maybe this should really be in EmitBranch? Don't we always want
   /// this behavior for branches?
   void EmitBranchThroughCleanup(llvm::BasicBlock *Dest);
-  
+
 private:
-  /// LabelIDs - Track arbitrary ids assigned to labels for use in
-  /// implementing the GCC address-of-label extension and indirect
-  /// goto. IDs are assigned to labels inside getIDForAddrOfLabel().
+  /// LabelIDs - Track arbitrary ids assigned to labels for use in implementing
+  /// the GCC address-of-label extension and indirect goto. IDs are assigned to
+  /// labels inside getIDForAddrOfLabel().
   std::map<const LabelStmt*, unsigned> LabelIDs;
 
   /// IndirectSwitches - Record the list of switches for indirect
-  /// gotos. Emission of the actual switching code needs to be delayed
-  /// until all AddrLabelExprs have been seen.
+  /// gotos. Emission of the actual switching code needs to be delayed until all
+  /// AddrLabelExprs have been seen.
   std::vector<llvm::SwitchInst*> IndirectSwitches;
 
-  /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local
-  /// C decls.
+  /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
+  /// decls.
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   llvm::DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
-  
-  /// BreakContinuePush - Note a new break and continue level.  This
-  /// must be called at the stack depth of the continue block.  In
-  /// particular, this must not be called after the controlling
-  /// condition has possibly started a vla.
+
+  /// BreakContinuePush - Note a new break and continue level.  This must be
+  /// called at the stack depth of the continue block.  In particular, this must
+  /// not be called after the controlling condition has possibly started a vla.
   void BreakContinuePush(llvm::BasicBlock *bb, llvm::BasicBlock *cb) {
     BreakContinueStack.push_back(BreakContinue(bb, cb, StackDepth,
                                                StackDepth,
@@ -225,7 +224,7 @@ private:
     BreakContinueStack.pop_back();
   }
 
-  // BreakContinueStack - This keeps track of where break and continue 
+  // BreakContinueStack - This keeps track of where break and continue
   // statements should jump to, as well as the depth of the stack and the size
   // of the eh stack.
   struct BreakContinue {
@@ -233,65 +232,69 @@ private:
                   llvm::Value *bsd, llvm::Value *csd, size_t ehss)
       : BreakBlock(bb), ContinueBlock(cb),  SaveBreakStackDepth(bsd),
         SaveContinueStackDepth(csd), EHStackSize(ehss) {}
-      
+
     llvm::BasicBlock *BreakBlock;
     llvm::BasicBlock *ContinueBlock;
     llvm::Value *SaveBreakStackDepth;
     llvm::Value *SaveContinueStackDepth;
     size_t EHStackSize;
-  }; 
+  };
   llvm::SmallVector<BreakContinue, 8> BreakContinueStack;
 
-  /// SwitchInsn - This is nearest current switch instruction. It is null if
-  /// if current context is not in a switch.
+  /// SwitchInsn - This is nearest current switch instruction. It is null if if
+  /// current context is not in a switch.
   llvm::SwitchInst *SwitchInsn;
 
-  /// CaseRangeBlock - This block holds if condition check for last case 
+  /// CaseRangeBlock - This block holds if condition check for last case
   /// statement range in current switch instruction.
   llvm::BasicBlock *CaseRangeBlock;
 
-  // VLASizeMap - This keeps track of the associated size for each VLA type
-  // FIXME: Maybe this could be a stack of maps that is pushed/popped as
-  // we enter/leave scopes.
+  // VLASizeMap - This keeps track of the associated size for each VLA type.
+  // FIXME: Maybe this could be a stack of maps that is pushed/popped as we
+  // enter/leave scopes.
   llvm::DenseMap<const VariableArrayType*, llvm::Value*> VLASizeMap;
-  
-  /// StackDepth - This keeps track of the stack depth.  It is used to
-  /// notice when control flow results in a change in stack depth and
-  /// to arrange for the appropriate stack depth to be restored.
+
+  /// StackDepth - This keeps track of the stack depth.  It is used to notice
+  /// when control flow results in a change in stack depth and to arrange for
+  /// the appropriate stack depth to be restored.  VLAs are the primary means by
+  /// which the stack depth changes.
   llvm::Value *StackDepth;
 
   /// StackSaveValues - A stack(!) of stack save values. When a new scope is
-  /// entered, a null is pushed on this stack. If a VLA is emitted, then 
-  /// the return value of llvm.stacksave() is stored at the top of this stack.
+  /// entered, a null is pushed on this stack. If a VLA is emitted, then the
+  /// return value of llvm.stacksave() is stored at the top of this stack.
   llvm::SmallVector<llvm::Value*, 8> StackSaveValues;
-  
+
+  /// StackDepthMap - A association of stack depth that will be in effect for
+  /// each label.  If control flow is transferred to a label, we have to restore
+  /// the desired stack depth at the destination label, beore we transfer to
+  /// that label.
   llvm::DenseMap<const void*, llvm::Value *> StackDepthMap;
 
-  /// StackFixupAtLabel - Routine to adjust the stack to the depth the
-  /// stack should be at by the time we transfer control flow to the
-  /// label.  This is called as we emit destinations for control flow,
-  /// such as user labels for goto statements and compiler generated
-  /// labels for break and continue processsing.  We return true, if
-  /// for any reason we can't generate code for the construct yet.
-  /// See EmitStackUpdate for the paired routine to mark the branch.
+  /// StackFixupAtLabel - Routine to adjust the stack to the depth the stack
+  /// should be at by the time we transfer control flow to the label.  This is
+  /// called as we emit destinations for control flow, such as user labels for
+  /// goto statements and compiler generated labels for break and continue
+  /// processsing.  We return true, if for any reason we can't generate code for
+  /// the construct yet.  See EmitStackUpdate for the paired routine to mark the
+  /// branch.
   bool StackFixupAtLabel(const void *);
 
-  /// EmitStackUpdate - Routine to adjust the stack to the depth the
-  /// stack should be at by the time we transfer control flow to the
-  /// label.  This is called just before emitting branches for user
-  /// level goto processing, branhes for break or continue processing.
-  /// The llvm::value overload is used when handling break and
-  /// continue, as we know the stack depth directly.  We return true,
-  /// if for any reason we can't generate code for the construct yet.
-  /// See StackFixupAtLabel for the paired routine to mark the
-  /// destinations.
+  /// EmitStackUpdate - Routine to adjust the stack to the depth the stack
+  /// should be at by the time we transfer control flow to the label.  This is
+  /// called just before emitting branches for user level goto processing,
+  /// branhes for break or continue processing.  The llvm::value overload is
+  /// used when handling break and continue, as we know the stack depth
+  /// directly.  We return true, if for any reason we can't generate code for
+  /// the construct yet.  See StackFixupAtLabel for the paired routine to mark
+  /// the destinations.
   bool EmitStackUpdate(llvm::Value *V);
   bool EmitStackUpdate(const void *S);
 
   struct CleanupEntry {
     /// CleanupBlock - The block of code that does the actual cleanup.
     llvm::BasicBlock *CleanupBlock;
-    
+
     /// Blocks - Basic blocks that were emitted in the current cleanup scope.
     std::vector<llvm::BasicBlock *> Blocks;
 
@@ -301,13 +304,13 @@ private:
 
     explicit CleanupEntry(llvm::BasicBlock *cb)
       : CleanupBlock(cb) {}
-    
+
     ~CleanupEntry() {
       assert(Blocks.empty() && "Did not empty blocks!");
       assert(BranchFixups.empty() && "Did not empty branch fixups!");
     }
   };
-  
+
   /// CleanupEntries - Stack of cleanup entries.
   llvm::SmallVector<CleanupEntry, 8> CleanupEntries;
 
@@ -315,63 +318,60 @@ private:
 
   /// BlockScopes - Map of which "cleanup scope" scope basic blocks have.
   BlockScopeMap BlockScopes;
-  
+
 public:
   CodeGenFunction(CodeGenModule &cgm);
-  
+
   ASTContext &getContext() const;
 
   void GenerateObjCMethod(const ObjCMethodDecl *OMD);
 
-  void StartObjCMethod(const ObjCMethodDecl *MD, 
+  void StartObjCMethod(const ObjCMethodDecl *MD,
                        const ObjCContainerDecl *CD);
 
-  /// GenerateObjCGetter - Synthesize an Objective-C property getter
-  /// function.
+  /// GenerateObjCGetter - Synthesize an Objective-C property getter function.
   void GenerateObjCGetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
 
-  /// GenerateObjCSetter - Synthesize an Objective-C property setter
-  /// function for the given property.
+  /// GenerateObjCSetter - Synthesize an Objective-C property setter function
+  /// for the given property.
   void GenerateObjCSetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
 
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);
-  void StartFunction(const Decl *D, QualType RetTy, 
+  void StartFunction(const Decl *D, QualType RetTy,
                      llvm::Function *Fn,
                      const FunctionArgList &Args,
                      SourceLocation StartLoc);
 
-  /// EmitReturnBlock - Emit the unified return block, trying to avoid
-  /// its emission when possible.
+  /// EmitReturnBlock - Emit the unified return block, trying to avoid its
+  /// emission when possible.
   void EmitReturnBlock();
 
-  /// FinishFunction - Complete IR generation of the current
-  /// function. It is legal to call this function even if there is no
-  /// current insertion point.
+  /// FinishFunction - Complete IR generation of the current function. It is
+  /// legal to call this function even if there is no current insertion point.
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
-  /// EmitFunctionProlog - Emit the target specific LLVM code to load
-  /// the arguments for the given function. This is also responsible
-  /// for naming the LLVM function arguments.
+  /// EmitFunctionProlog - Emit the target specific LLVM code to load the
+  /// arguments for the given function. This is also responsible for naming the
+  /// LLVM function arguments.
   void EmitFunctionProlog(const CGFunctionInfo &FI,
                           llvm::Function *Fn,
                           const FunctionArgList &Args);
 
-  /// EmitFunctionEpilog - Emit the target specific LLVM code to
-  /// return the given temporary.
+  /// EmitFunctionEpilog - Emit the target specific LLVM code to return the
+  /// given temporary.
   void EmitFunctionEpilog(const CGFunctionInfo &FI, llvm::Value *ReturnValue);
 
   const llvm::Type *ConvertTypeForMem(QualType T);
   const llvm::Type *ConvertType(QualType T);
 
-  /// LoadObjCSelf - Load the value of self. This function is only
-  /// valid while generating code for an Objective-C method.
+  /// LoadObjCSelf - Load the value of self. This function is only valid while
+  /// generating code for an Objective-C method.
   llvm::Value *LoadObjCSelf();
-  
-  /// TypeOfSelfObject
-  /// Return type of object that this self represents.
+
+  /// TypeOfSelfObject - Return type of object that this self represents.
   QualType TypeOfSelfObject();
 
   /// isObjCPointerType - Return true if the specificed AST type will map onto
@@ -383,7 +383,7 @@ public:
   static bool hasAggregateLLVMType(QualType T);
 
   /// createBasicBlock - Create an LLVM basic block.
-  llvm::BasicBlock *createBasicBlock(const char *Name="", 
+  llvm::BasicBlock *createBasicBlock(const char *Name="",
                                      llvm::Function *Parent=0,
                                      llvm::BasicBlock *InsertBefore=0) {
 #ifdef NDEBUG
@@ -392,49 +392,46 @@ public:
     return llvm::BasicBlock::Create(Name, Parent, InsertBefore);
 #endif
   }
-                                    
+
   /// getBasicBlockForLabel - Return the LLVM basicblock that the specified
   /// label maps to.
   llvm::BasicBlock *getBasicBlockForLabel(const LabelStmt *S);
-  
-  /// EmitBlock - Emit the given block \arg BB and set it as the
-  /// insert point, adding a fall-through branch from the current
-  /// insert block if necessary. It is legal to call this function
-  /// even if there is no current insertion point.
+
+  /// EmitBlock - Emit the given block \arg BB and set it as the insert point,
+  /// adding a fall-through branch from the current insert block if
+  /// necessary. It is legal to call this function even if there is no current
+  /// insertion point.
   ///
-  /// IsFinished - If true, indicates that the caller has finished
-  /// emitting branches to the given block and does not expect to emit
-  /// code into it. This means the block can be ignored if it is
-  /// unreachable.
+  /// IsFinished - If true, indicates that the caller has finished emitting
+  /// branches to the given block and does not expect to emit code into it. This
+  /// means the block can be ignored if it is unreachable.
   void EmitBlock(llvm::BasicBlock *BB, bool IsFinished=false);
 
-  /// EmitBranch - Emit a branch to the specified basic block from the
-  /// current insert block, taking care to avoid creation of branches
-  /// from dummy blocks. It is legal to call this function even if
-  /// there is no current insertion point.
+  /// EmitBranch - Emit a branch to the specified basic block from the current
+  /// insert block, taking care to avoid creation of branches from dummy
+  /// blocks. It is legal to call this function even if there is no current
+  /// insertion point.
   ///
-  /// This function clears the current insertion point. The caller
-  /// should follow calls to this function with calls to Emit*Block
-  /// prior to generation new code.
+  /// This function clears the current insertion point. The caller should follow
+  /// calls to this function with calls to Emit*Block prior to generation new
+  /// code.
   void EmitBranch(llvm::BasicBlock *Block);
 
-  /// HaveInsertPoint - True if an insertion point is defined. If not,
-  /// this indicates that the current code being emitted is
-  /// unreachable.
-  bool HaveInsertPoint() const { 
+  /// HaveInsertPoint - True if an insertion point is defined. If not, this
+  /// indicates that the current code being emitted is unreachable.
+  bool HaveInsertPoint() const {
     return Builder.GetInsertBlock() != 0;
   }
 
-  /// EnsureInsertPoint - Ensure that an insertion point is defined so
-  /// that emitted IR has a place to go. Note that by definition, if
-  /// this function creates a block then that block is unreachable;
-  /// callers may do better to detect when no insertion point is
-  /// defined and simply skip IR generation.
+  /// EnsureInsertPoint - Ensure that an insertion point is defined so that
+  /// emitted IR has a place to go. Note that by definition, if this function
+  /// creates a block then that block is unreachable; callers may do better to
+  /// detect when no insertion point is defined and simply skip IR generation.
   void EnsureInsertPoint() {
     if (!HaveInsertPoint())
       EmitBlock(createBasicBlock());
   }
-  
+
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified stmt yet.
   void ErrorUnsupported(const Stmt *S, const char *Type,
@@ -443,12 +440,12 @@ public:
   //===--------------------------------------------------------------------===//
   //                                  Helpers
   //===--------------------------------------------------------------------===//
-  
+
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
   /// block.
   llvm::AllocaInst *CreateTempAlloca(const llvm::Type *Ty,
                                      const char *Name = "tmp");
-  
+
   /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
   /// expression and compare the result against zero, returning an Int1Ty value.
   llvm::Value *EvaluateExprAsBool(const Expr *E);
@@ -457,18 +454,16 @@ public:
   /// any type.  The result is returned as an RValue struct.  If this is an
   /// aggregate expression, the aggloc/agglocvolatile arguments indicate where
   /// the result should be returned.
-  RValue EmitAnyExpr(const Expr *E, llvm::Value *AggLoc = 0, 
+  RValue EmitAnyExpr(const Expr *E, llvm::Value *AggLoc = 0,
                      bool isAggLocVolatile = false);
 
-  // EmitVAListRef - Emit a "reference" to a va_list; this is either the
-  // address or the value of the expression, depending on how va_list is
-  // defined.
+  // EmitVAListRef - Emit a "reference" to a va_list; this is either the address
+  // or the value of the expression, depending on how va_list is defined.
   llvm::Value *EmitVAListRef(const Expr *E);
 
-  /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result
-  /// will always be accessible even if no aggregate location is
-  /// provided.
-  RValue EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc = 0, 
+  /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result will
+  /// always be accessible even if no aggregate location is provided.
+  RValue EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc = 0,
                            bool isAggLocVolatile = false);
 
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
@@ -488,27 +483,27 @@ public:
 
   /// GetAddrOfLocalVar - Return the address of a local variable.
   llvm::Value *GetAddrOfLocalVar(const VarDecl *VD);
-  
+
   /// getAccessedFieldNo - Given an encoded value and a result number, return
   /// the input field number being accessed.
   static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
 
   unsigned GetIDForAddrOfLabel(const LabelStmt *L);
 
-  /// EmitMemSetToZero - Generate code to memset a value of the given type to 0;
+  /// EmitMemSetToZero - Generate code to memset a value of the given type to 0.
   void EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty);
 
   // EmitVAArg - Generate code to get an argument from the passed in pointer
   // and update it accordingly. The return value is a pointer to the argument.
   // FIXME: We should be able to get rid of this method and use the va_arg
-  // instruction in LLVM instead once it works well enough.  
+  // instruction in LLVM instead once it works well enough.
   llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty);
 
   // EmitVLASize - Generate code for any VLA size expressions that might occur
   // in a variably modified type. If Ty is a VLA, will return the value that
   // corresponds to the size in bytes of the VLA type. Will return 0 otherwise.
   llvm::Value *EmitVLASize(QualType Ty);
-                           
+
   // GetVLASize - Returns an LLVM value that corresponds to the size in bytes
   // of a variable length array type.
   llvm::Value *GetVLASize(const VariableArrayType *);
@@ -516,7 +511,7 @@ public:
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
-  
+
   void EmitDecl(const Decl &D);
   void EmitBlockVarDecl(const VarDecl &D);
   void EmitLocalBlockVarDecl(const VarDecl &D);
@@ -524,29 +519,26 @@ public:
 
   /// EmitParmDecl - Emit a ParmVarDecl or an ImplicitParamDecl.
   void EmitParmDecl(const VarDecl &D, llvm::Value *Arg);
-  
+
   //===--------------------------------------------------------------------===//
   //                             Statement Emission
   //===--------------------------------------------------------------------===//
 
-  /// EmitStopPoint - Emit a debug stoppoint if we are emitting debug
-  /// info.
+  /// EmitStopPoint - Emit a debug stoppoint if we are emitting debug info.
   void EmitStopPoint(const Stmt *S);
 
-  /// EmitStmt - Emit the code for the statement \arg S. It is legal
-  /// to call this function even if there is no current insertion
-  /// point.
-  /// 
-  /// This function may clear the current insertion point; callers
-  /// should use EnsureInsertPoint if they wish to subsequently
-  /// generate code without first calling EmitBlock, EmitBranch, or
-  /// EmitStmt.
+  /// EmitStmt - Emit the code for the statement \arg S. It is legal to call
+  /// this function even if there is no current insertion point.
+  ///
+  /// This function may clear the current insertion point; callers should use
+  /// EnsureInsertPoint if they wish to subsequently generate code without first
+  /// calling EmitBlock, EmitBranch, or EmitStmt.
   void EmitStmt(const Stmt *S);
 
   /// EmitSimpleStmt - Try to emit a "simple" statement which does not
-  /// necessarily require an insertion point or debug information;
-  /// typically because the statement amounts to a jump or a container
-  /// of other statements.
+  /// necessarily require an insertion point or debug information; typically
+  /// because the statement amounts to a jump or a container of other
+  /// statements.
   ///
   /// \return True if the statement was handled.
   bool EmitSimpleStmt(const Stmt *S);
@@ -554,9 +546,8 @@ public:
   RValue EmitCompoundStmt(const CompoundStmt &S, bool GetLast = false,
                           llvm::Value *AggLoc = 0, bool isAggVol = false);
 
-  /// EmitLabel - Emit the block for the given label. It is legal
-  /// to call this function even if there is no current insertion
-  /// point.
+  /// EmitLabel - Emit the block for the given label. It is legal to call this
+  /// function even if there is no current insertion point.
   void EmitLabel(const LabelStmt &S); // helper for EmitLabelStmt.
 
   void EmitLabelStmt(const LabelStmt &S);
@@ -575,12 +566,12 @@ public:
   void EmitCaseStmt(const CaseStmt &S);
   void EmitCaseStmtRange(const CaseStmt &S);
   void EmitAsmStmt(const AsmStmt &S);
-  
+
   void EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S);
   void EmitObjCAtTryStmt(const ObjCAtTryStmt &S);
   void EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S);
   void EmitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt &S);
-  
+
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission
   //===--------------------------------------------------------------------===//
@@ -594,9 +585,8 @@ public:
   RValue EmitUnsupportedRValue(const Expr *E,
                                const char *Name);
 
-  /// EmitUnsupportedLValue - Emit a dummy l-value using the type of E
-  /// and issue an ErrorUnsupported style diagnostic (using the
-  /// provided Name).
+  /// EmitUnsupportedLValue - Emit a dummy l-value using the type of E and issue
+  /// an ErrorUnsupported style diagnostic (using the provided Name).
   LValue EmitUnsupportedLValue(const Expr *E,
                                const char *Name);
 
@@ -617,7 +607,7 @@ public:
   /// variable length type, this is not possible.
   ///
   LValue EmitLValue(const Expr *E);
-  
+
   /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
   /// this method emits the address of the lvalue, then loads the result as an
   /// rvalue, returning the rvalue.
@@ -627,7 +617,7 @@ public:
   RValue EmitLoadOfPropertyRefLValue(LValue LV, QualType ExprType);
   RValue EmitLoadOfKVCRefLValue(LValue LV, QualType ExprType);
 
-  
+
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
   /// lvalue, where both are guaranteed to the have the same type, and that type
   /// is 'Ty'.
@@ -637,15 +627,15 @@ public:
   void EmitStoreThroughPropertyRefLValue(RValue Src, LValue Dst, QualType Ty);
   void EmitStoreThroughKVCRefLValue(RValue Src, LValue Dst, QualType Ty);
 
-  /// EmitStoreThroughLValue - Store Src into Dst with same
-  /// constraints as EmitStoreThroughLValue. 
+  /// EmitStoreThroughLValue - Store Src into Dst with same constraints as
+  /// EmitStoreThroughLValue.
   ///
-  /// \param Result [out] - If non-null, this will be set to a Value*
-  /// for the bit-field contents after the store, appropriate for use
-  /// as the result of an assignment to the bit-field.
+  /// \param Result [out] - If non-null, this will be set to a Value* for the
+  /// bit-field contents after the store, appropriate for use as the result of
+  /// an assignment to the bit-field.
   void EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst, QualType Ty,
                                       llvm::Value **Result=0);
-   
+
   // Note: only availabe for agg return types
   LValue EmitBinaryOperatorLValue(const BinaryOperator *E);
   // Note: only availabe for agg return types
@@ -684,10 +674,9 @@ public:
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//
 
-  /// EmitCall - Generate a call of the given function, expecting the
-  /// given result type, and using the given argument list which
-  /// specifies both the LLVM arguments and the types they were
-  /// derived from.
+  /// EmitCall - Generate a call of the given function, expecting the given
+  /// result type, and using the given argument list which specifies both the
+  /// LLVM arguments and the types they were derived from.
   RValue EmitCall(const CGFunctionInfo &FnInfo,
                   llvm::Value *Callee,
                   const CallArgList &Args);
@@ -700,20 +689,20 @@ public:
   RValue EmitCallExpr(llvm::Value *Callee, QualType FnType,
                       CallExpr::const_arg_iterator ArgBeg,
                       CallExpr::const_arg_iterator ArgEnd);
-  
+
   RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
-  /// EmitTargetBuiltinExpr - Emit the given builtin call. Returns 0
-  /// if the call is unhandled by the current target.
+  /// EmitTargetBuiltinExpr - Emit the given builtin call. Returns 0 if the call
+  /// is unhandled by the current target.
   llvm::Value *EmitTargetBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
   llvm::Value *EmitX86BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitPPCBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
-  
+
   llvm::Value *EmitShuffleVector(llvm::Value* V1, llvm::Value *V2, ...);
   llvm::Value *EmitVector(llvm::Value * const *Vals, unsigned NumVals,
                           bool isSplat = false);
-  
+
   llvm::Value *EmitObjCProtocolExpr(const ObjCProtocolExpr *E);
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
@@ -727,32 +716,32 @@ public:
   //===--------------------------------------------------------------------===//
 
   // Expressions are broken into three classes: scalar, complex, aggregate.
-  
-  /// EmitScalarExpr - Emit the computation of the specified expression of
-  /// LLVM scalar type, returning the result.
+
+  /// EmitScalarExpr - Emit the computation of the specified expression of LLVM
+  /// scalar type, returning the result.
   llvm::Value *EmitScalarExpr(const Expr *E);
-  
+
   /// EmitScalarConversion - Emit a conversion from the specified type to the
   /// specified destination type, both of which are LLVM scalar types.
   llvm::Value *EmitScalarConversion(llvm::Value *Src, QualType SrcTy,
                                     QualType DstTy);
-  
+
   /// EmitComplexToScalarConversion - Emit a conversion from the specified
-  /// complex type to the specified destination type, where the destination
-  /// type is an LLVM scalar type.
+  /// complex type to the specified destination type, where the destination type
+  /// is an LLVM scalar type.
   llvm::Value *EmitComplexToScalarConversion(ComplexPairTy Src, QualType SrcTy,
                                              QualType DstTy);
-  
-  
+
+
   /// EmitAggExpr - Emit the computation of the specified expression of
   /// aggregate type.  The result is computed into DestPtr.  Note that if
   /// DestPtr is null, the value of the aggregate expression is not needed.
   void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest);
-  
+
   /// EmitComplexExpr - Emit the computation of the specified expression of
   /// complex type, returning the result.
   ComplexPairTy EmitComplexExpr(const Expr *E);
-  
+
   /// EmitComplexExprIntoAddr - Emit the computation of the specified expression
   /// of complex type, storing into the specified Value*.
   void EmitComplexExprIntoAddr(const Expr *E, llvm::Value *DestAddr,
@@ -764,41 +753,40 @@ public:
   /// LoadComplexFromAddr - Load a complex number from the specified address.
   ComplexPairTy LoadComplexFromAddr(llvm::Value *SrcAddr, bool SrcIsVolatile);
 
-  /// GenerateStaticBlockVarDecl - return the the static
-  /// declaration of local variable. 
+  /// GenerateStaticBlockVarDecl - return the the static declaration of local
+  /// variable.
   llvm::GlobalValue * GenerateStaticBlockVarDecl(const VarDecl &D,
                                                  bool NoInit,
                                                  const char *Separator,
                                                  llvm::GlobalValue
                                                  ::LinkageTypes Linkage);
 
-  // GenerateStaticCXXBlockVarDecl - return the static declaration of
-  // a local variable. Performs initialization of the variable if necessary.
+  // GenerateStaticCXXBlockVarDecl - return the static declaration of a local
+  // variable. Performs initialization of the variable if necessary.
   llvm::GlobalValue *GenerateStaticCXXBlockVarDecl(const VarDecl &D);
 
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers
   //===--------------------------------------------------------------------===//
- 
+
   /// ContainsLabel - Return true if the statement contains a label in it.  If
   /// this statement is not executed normally, it not containing a label means
   /// that we can just remove the code.
   static bool ContainsLabel(const Stmt *S, bool IgnoreCaseStmts = false);
-  
+
   /// ConstantFoldsToSimpleInteger - If the specified expression does not fold
   /// to a constant, or if it does but contains a label, return 0.  If it
   /// constant folds to 'true' and does not contain a label, return 1, if it
   /// constant folds to 'false' and does not contain a label, return -1.
   int ConstantFoldsToSimpleInteger(const Expr *Cond);
-    
+
   /// EmitBranchOnBoolExpr - Emit a branch on a boolean condition (e.g. for an
   /// if statement) to the specified blocks.  Based on the condition, this might
   /// try to simplify the codegen of the conditional based on the branch.
-  ///
   void EmitBranchOnBoolExpr(const Expr *Cond, llvm::BasicBlock *TrueBlock,
                             llvm::BasicBlock *FalseBlock);
 private:
-  
+
   /// EmitIndirectSwitches - Emit code for all of the switch
   /// instructions in IndirectSwitches.
   void EmitIndirectSwitches();
@@ -811,26 +799,26 @@ private:
   /// \param AI - The first function argument of the expansion.
   /// \return The argument following the last expanded function
   /// argument.
-  llvm::Function::arg_iterator 
+  llvm::Function::arg_iterator
   ExpandTypeFromArgs(QualType Ty, LValue Dst,
                      llvm::Function::arg_iterator AI);
 
-  /// ExpandTypeToArgs - Expand an RValue \arg Src, with the LLVM type
-  /// for \arg Ty, into individual arguments on the provided vector
-  /// \arg Args. See ABIArgInfo::Expand.
-  void ExpandTypeToArgs(QualType Ty, RValue Src, 
+  /// ExpandTypeToArgs - Expand an RValue \arg Src, with the LLVM type for \arg
+  /// Ty, into individual arguments on the provided vector \arg Args. See
+  /// ABIArgInfo::Expand.
+  void ExpandTypeToArgs(QualType Ty, RValue Src,
                         llvm::SmallVector<llvm::Value*, 16> &Args);
 
   llvm::Value* EmitAsmInput(const AsmStmt &S, TargetInfo::ConstraintInfo Info,
                             const Expr *InputExpr, std::string &ConstraintStr);
-  
+
   /// EmitCleanupBlock - emits a single cleanup block.
   void EmitCleanupBlock();
 
   /// AddBranchFixup - adds a branch instruction to the list of fixups for the
   /// current cleanup scope.
   void AddBranchFixup(llvm::BranchInst *BI);
-  
+
 };
 }  // end namespace CodeGen
 }  // end namespace clang
