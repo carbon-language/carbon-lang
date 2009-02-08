@@ -119,7 +119,11 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
 
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
-
+  assert(BlockScopes.empty() &&
+         "did not remove all blocks from block scope map!");
+  assert(CleanupEntries.empty() &&
+         "mismatched push/pop in cleanup stack!");
+  
   // Emit function epilog (to return). 
   EmitReturnBlock();
 
@@ -537,8 +541,22 @@ void CodeGenFunction::EmitCleanupBlock()
   
   llvm::BasicBlock *CleanupBlock = CE.CleanupBlock;
   
+  std::vector<llvm::BasicBlock *> Blocks;
+  std::swap(Blocks, CE.Blocks);
+
+  std::vector<llvm::BranchInst *> BranchFixups;
+  std::swap(BranchFixups, CE.BranchFixups);
+  
   CleanupEntries.pop_back();
   
   EmitBlock(CleanupBlock);
+  
+  // Remove all blocks from the block scope map.
+  for (size_t i = 0, e = Blocks.size(); i != e; ++i) {
+    assert(BlockScopes.count(Blocks[i]) &&
+           "Did not find block in scope map!");
+    
+    BlockScopes.erase(Blocks[i]);
+  }
 }
 

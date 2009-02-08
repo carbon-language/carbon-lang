@@ -188,6 +188,12 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
     return;
   }
 
+  // If necessary, associate the block with the cleanup stack size.
+  if (!CleanupEntries.empty()) {
+    BlockScopes[BB] = CleanupEntries.size() - 1;
+    CleanupEntries.back().Blocks.push_back(BB);
+  }
+  
   CurFn->getBasicBlockList().push_back(BB);
   Builder.SetInsertPoint(BB);
 }

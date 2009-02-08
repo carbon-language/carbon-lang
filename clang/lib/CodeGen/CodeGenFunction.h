@@ -253,11 +253,22 @@ private:
 
     explicit CleanupEntry(llvm::BasicBlock *cb)
       : CleanupBlock(cb) {}
+    
+    ~CleanupEntry() {
+      assert(Blocks.empty() && "Did not empty blocks!");
+      assert(BranchFixups.empty() && "Did not empty branch fixups!");
+    }
+    
   };
   
   /// CleanupEntries - Stack of cleanup entries.
   llvm::SmallVector<CleanupEntry, 8> CleanupEntries;
 
+  typedef llvm::DenseMap<llvm::BasicBlock*, size_t> BlockScopeMap;
+
+  /// BlockScopes - Map of which "cleanup scope" scope basic blocks have.
+  BlockScopeMap BlockScopes;
+  
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
