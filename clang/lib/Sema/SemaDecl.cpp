@@ -1707,8 +1707,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   ProcessDeclAttributes(NewFD, D);
 
   if (getLangOptions().CPlusPlus) {
-    // In C++, check default arguments now that we have merged decls.
-    CheckCXXDefaultArguments(NewFD);
+    // In C++, check default arguments now that we have merged decls. Unless
+    // the lexical context is the class, because in this case this is done
+    // during delayed parsing anyway.
+    if (!CurContext->isRecord())
+      CheckCXXDefaultArguments(NewFD);
 
     // An out-of-line member function declaration must also be a
     // definition (C++ [dcl.meaning]p1).
