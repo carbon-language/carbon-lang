@@ -1831,3 +1831,34 @@ unsigned long f2(struct s2 x) {
 
 //===---------------------------------------------------------------------===//
 
+We currently compile this:
+
+define i32 @func1(i32 %v1, i32 %v2) nounwind {
+entry:
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 %v2)
+  %sum = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  br i1 %obit, label %overflow, label %normal
+normal:
+  ret i32 %sum
+overflow:
+  call void @llvm.trap()
+  unreachable
+}
+declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)
+declare void @llvm.trap()
+
+to:
+
+_func1:
+	movl	4(%esp), %eax
+	addl	8(%esp), %eax
+	jo	LBB1_2	## overflow
+LBB1_1:	## normal
+	ret
+LBB1_2:	## overflow
+	ud2
+
+it would be nice to produce "into" someday.
+
+//===---------------------------------------------------------------------===//
