@@ -284,54 +284,63 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
       // If this isn't the first time we've seen this dir, remove it.
       if (SeenDirs.insert(SearchList[i].getDir()))
         continue;
-      
-      // If we have a normal #include dir that is shadowed later in the chain
-      // by a system include dir, we actually want to ignore the user's request
-      // and drop the user dir... keeping the system dir.  This is weird, but
-      // required to emulate GCC's search path correctly.
-      //
-      // Since dupes of system dirs are rare, just rescan to find the original
-      // that we're nuking instead of using a DenseMap.
-      if (SearchList[i].getDirCharacteristic() != SrcMgr::C_User) {
-        // Find the dir that this is the same of.
-        unsigned FirstDir;
-        for (FirstDir = 0; ; ++FirstDir) {
-          assert(FirstDir != i && "Didn't find dupe?");
-          if (SearchList[FirstDir].getDir() == SearchList[i].getDir())
-            break;
-        }
-        
-        // If the first dir in the search path is a non-system dir, zap it
-        // instead of the system one.
-        if (SearchList[FirstDir].getDirCharacteristic() == SrcMgr::C_User)
-          DirToRemove = FirstDir;
-      }
-      
-      if (Verbose) {
-        fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
-                SearchList[i].getDir()->getName());
-        if (DirToRemove != i)
-          fprintf(stderr, "  as it is a non-system directory that duplicates"
-                  " a system directory\n");
-      }
     } else if (SearchList[i].isFramework()) {
       // If this isn't the first time we've seen this framework dir, remove it.
       if (SeenFrameworkDirs.insert(SearchList[i].getFrameworkDir()))
         continue;
-      
-      if (Verbose)
-        fprintf(stderr, "ignoring duplicate framework \"%s\"\n",
-                SearchList[i].getFrameworkDir()->getName());
-      
     } else {
       assert(SearchList[i].isHeaderMap() && "Not a headermap or normal dir?");
       // If this isn't the first time we've seen this headermap, remove it.
       if (SeenHeaderMaps.insert(SearchList[i].getHeaderMap()))
         continue;
+    }
+    
+    // If we have a normal #include dir/framework/headermap that is shadowed
+    // later in the chain by a system include location, we actually want to
+    // ignore the user's request and drop the user dir... keeping the system
+    // dir.  This is weird, but required to emulate GCC's search path correctly.
+    //
+    // Since dupes of system dirs are rare, just rescan to find the original
+    // that we're nuking instead of using a DenseMap.
+    if (SearchList[i].getDirCharacteristic() != SrcMgr::C_User) {
+      // Find the dir that this is the same of.
+      unsigned FirstDir;
+      for (FirstDir = 0; ; ++FirstDir) {
+        assert(FirstDir != i && "Didn't find dupe?");
+        
+        // If these are different lookup types, then they can't be the dupe.
+        if (SearchList[FirstDir].getLookupType() !=
+            SearchList[i].getLookupType())
+          continue;
+        
+        bool isSame;
+        if (SearchList[i].isNormalDir())
+          isSame = SearchList[FirstDir].getDir() == SearchList[i].getDir();
+        else if (SearchList[i].isFramework())
+          isSame = SearchList[FirstDir].getFrameworkDir() ==
+                   SearchList[i].getFrameworkDir();
+        else {
+          assert(SearchList[i].isHeaderMap() && "Not a headermap or normal dir?");
+          isSame = SearchList[FirstDir].getHeaderMap() ==
+            SearchList[i].getHeaderMap();
+        }
+        
+        if (isSame)
+          break;
+      }
       
-      if (Verbose)
-        fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
-                SearchList[i].getDir()->getName());
+      // If the first dir in the search path is a non-system dir, zap it
+      // instead of the system one.
+      if (SearchList[FirstDir].getDirCharacteristic() == SrcMgr::C_User)
+        DirToRemove = FirstDir;
+    }
+
+    if (Verbose) {
+      fprintf(stderr, "ignoring duplicate directory \"%s\"\n", 
+              SearchList[i].getName());
+      if (DirToRemove != i)
+        fprintf(stderr, "  as it is a non-system directory that duplicates"
+                " a system directory\n");
     }
     
     // This is reached if the current entry is a duplicate.  Remove the
