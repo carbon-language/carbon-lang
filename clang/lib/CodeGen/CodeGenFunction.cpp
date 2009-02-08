@@ -594,16 +594,28 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
       llvm::BranchInst *BI = BranchFixups[i];
       llvm::BasicBlock *Dest = BI->getSuccessor(0);
       
-      // Store the jump destination before the branch instruction.
-      llvm::ConstantInt *DI = 
-      llvm::ConstantInt::get(llvm::Type::Int32Ty, i + 1);
-      new llvm::StoreInst(DI, DestCodePtr, BI);
-      
       // Fixup the branch instruction to point to the cleanup block.
       BI->setSuccessor(0, CleanupBlock);
       
       if (CleanupEntries.empty()) {
-        SI->addCase(DI, Dest);
+        llvm::ConstantInt *ID;
+        
+        // Check if we already have a destination for this block.
+        if (Dest == SI->getDefaultDest())
+          ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+        else {
+          ID = SI->findCaseDest(Dest);
+          if (!ID) {
+            // No code found, get a new unique one by using the number of
+            // switch successors.
+            ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                        SI->getNumSuccessors());
+            SI->addCase(ID, Dest);
+          }
+        }
+        
+        // Store the jump destination before the branch instruction.
+        new llvm::StoreInst(ID, DestCodePtr, BI);
       } else {
         // We need to jump through another cleanup block. Create a pad block
         // with a branch instruction that jumps to the final destination and
@@ -611,9 +623,16 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
         
         // Create the pad block.
         llvm::BasicBlock *CleanupPad = createBasicBlock("cleanup.pad", CurFn);
-        
+
+        // Create a unique case ID.
+        llvm::ConstantInt *ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                                       SI->getNumSuccessors());
+
+        // Store the jump destination before the branch instruction.
+        new llvm::StoreInst(ID, DestCodePtr, BI);
+
         // Add it as the destination.
-        SI->addCase(DI, CleanupPad);
+        SI->addCase(ID, CleanupPad);
         
         // Create the branch to the final destination.
         llvm::BranchInst *BI = llvm::BranchInst::Create(Dest);
