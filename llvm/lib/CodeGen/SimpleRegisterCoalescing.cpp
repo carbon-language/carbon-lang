@@ -489,7 +489,7 @@ static void removeRange(LiveInterval &li, unsigned Start, unsigned End,
 }
 
 /// TrimLiveIntervalToLastUse - If there is a last use in the same basic block
-/// as the copy instruction, trim the ive interval to the last use and return
+/// as the copy instruction, trim the live interval to the last use and return
 /// true.
 bool
 SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(unsigned CopyIdx,
@@ -867,9 +867,10 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
   if (LR->valno->def == RemoveStart) {
     // If the def MI defines the val# and this copy is the only kill of the
     // val#, then propagate the dead marker.
-    if (!li.isOnlyKill(LR->valno, RemoveEnd))
-      li.removeKill(LR->valno, RemoveEnd);
-    else {
+    if (!li.isOnlyLROfValNo(LR)) {
+      if (li.isKill(LR->valno, RemoveEnd))
+        li.removeKill(LR->valno, RemoveEnd);
+    } else {
       PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
       ++numDeadValNo;
     }
