@@ -550,7 +550,77 @@ void CodeGenFunction::EmitCleanupBlock()
   CleanupEntries.pop_back();
   
   EmitBlock(CleanupBlock);
-  
+
+  if (!CleanupEntries.empty()) {
+    // Check if any branch fixups pointed to the scope we just popped. If so,
+    // we can remove them.
+    for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
+      llvm::BasicBlock *Dest = BranchFixups[i]->getSuccessor(0);
+      BlockScopeMap::iterator I = BlockScopes.find(Dest);
+    
+      if (I == BlockScopes.end())
+        continue;
+      
+      assert(I->second <= CleanupEntries.size() && "Invalid branch fixup!");
+
+      if (I->second == CleanupEntries.size()) {
+        // We don't need to do this branch fixup.
+        BranchFixups[i] = BranchFixups.back();
+        BranchFixups.pop_back();
+        i--;
+        e--;
+        continue;
+      }
+    }
+  }
+
+  if (!BranchFixups.empty()) {
+    llvm::BasicBlock *CleanupEnd = createBasicBlock("cleanup.end");
+    
+    llvm::Value *DestCodePtr = CreateTempAlloca(llvm::Type::Int32Ty, 
+                                                "cleanup.dst");
+    llvm::Value *DestCode = Builder.CreateLoad(DestCodePtr, "tmp");
+    
+    // Create a switch instruction to determine where to jump next.
+    llvm::SwitchInst *SI = Builder.CreateSwitch(DestCode, CleanupEnd, 
+                                                BranchFixups.size());
+    EmitBlock(CleanupEnd);
+    
+    for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
+      llvm::BranchInst *BI = BranchFixups[i];
+      llvm::BasicBlock *Dest = BI->getSuccessor(0);
+      
+      // Store the jump destination before the branch instruction.
+      llvm::ConstantInt *DI = 
+        llvm::ConstantInt::get(llvm::Type::Int32Ty, i + 1);
+      new llvm::StoreInst(DI, DestCodePtr, BI);
+      
+      // Fixup the branch instruction to point to the cleanup block.
+      BI->setSuccessor(0, CleanupBlock);
+
+      if (CleanupEntries.empty()) {
+        SI->addCase(DI, Dest);
+      } else {
+        // We need to jump through another cleanup block. Create a pad block
+        // with a branch instruction that jumps to the final destination and
+        // add it as a branch fixup to the current cleanup scope.
+        
+        // Create the pad block.
+        llvm::BasicBlock *CleanupPad = createBasicBlock("cleanup.pad", CurFn);
+
+        // Add it as the destination.
+        SI->addCase(DI, CleanupPad);
+        
+        // Create the branch to the final destination.
+        llvm::BranchInst *BI = llvm::BranchInst::Create(Dest);
+        CleanupPad->getInstList().push_back(BI);
+        
+        // And add it as a branch fixup.
+        CleanupEntries.back().BranchFixups.push_back(BI);
+      }
+    }
+  }
+
   // Remove all blocks from the block scope map.
   for (size_t i = 0, e = Blocks.size(); i != e; ++i) {
     assert(BlockScopes.count(Blocks[i]) &&
