@@ -335,7 +335,8 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 // Branch analysis.
 bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
-                                 SmallVectorImpl<MachineOperand> &Cond) const {
+                                 SmallVectorImpl<MachineOperand> &Cond,
+                                 bool AllowModify) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
@@ -385,7 +386,8 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       (LastOpc == ARM::B || LastOpc == ARM::tB)) {
     TBB = SecondLastInst->getOperand(0).getMBB();
     I = LastInst;
-    I->eraseFromParent();
+    if (AllowModify)
+      I->eraseFromParent();
     return false;
   }
 
@@ -396,7 +398,8 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
        SecondLastOpc == ARM::BR_JTadd || SecondLastOpc==ARM::tBR_JTr) &&
       (LastOpc == ARM::B || LastOpc == ARM::tB)) {
     I = LastInst;
-    I->eraseFromParent();
+    if (AllowModify)
+      I->eraseFromParent();
     return true;
   } 
 
