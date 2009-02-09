@@ -20,5 +20,5 @@ void foo(id x) {
 - (void)m1:(id <MyProtocol> const)arg1;
 
 // FIXME: provide a better diagnostic (no typedef).
-- (void)m2:(id <MyProtocol> short)arg1; // expected-error {{'short typedef' is invalid}}
+- (void)m2:(id <MyProtocol> short)arg1; // expected-error {{'short type-name' is invalid}}
 @end

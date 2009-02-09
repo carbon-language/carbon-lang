@@ -318,7 +318,7 @@ Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
                          TypeTy *basetype, SourceLocation BaseLoc) {
   CXXRecordDecl *Decl = (CXXRecordDecl*)classdecl;
-  QualType BaseType = Context.getTypeDeclType((TypeDecl*)basetype);
+  QualType BaseType = QualType::getFromOpaquePtr(basetype);
 
   // Base specifiers must be record types.
   if (!BaseType->isRecordType())
@@ -481,15 +481,15 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   }
 
   if (!isFunc &&
-      D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typedef &&
+      D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typename &&
       D.getNumTypeObjects() == 0) {
     // Check also for this case:
     //
     // typedef int f();
     // f a;
     //
-    Decl *TD = static_cast<Decl *>(DS.getTypeRep());
-    isFunc = Context.getTypeDeclType(cast<TypeDecl>(TD))->isFunctionType();
+    QualType TDType = QualType::getFromOpaquePtr(DS.getTypeRep());
+    isFunc = TDType->isFunctionType();
   }
 
   bool isInstField = ((DS.getStorageClassSpec() == DeclSpec::SCS_unspecified ||
@@ -696,7 +696,7 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
     return Diag(IdLoc, diag::err_mem_init_not_member_or_class)
       << MemberOrBase << SourceRange(IdLoc, RParenLoc);
   
-  QualType BaseType = Context.getTypeDeclType((TypeDecl *)BaseTy);
+  QualType BaseType = QualType::getFromOpaquePtr(BaseTy);
   if (!BaseType->isRecordType())
     return Diag(IdLoc, diag::err_base_init_does_not_name_class)
       << BaseType << SourceRange(IdLoc, RParenLoc);
@@ -1149,10 +1149,10 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
   //   (7.1.3); however, a typedef-name that names a class shall not
   //   be used as the identifier in the declarator for a destructor
   //   declaration.
-  TypeDecl *DeclaratorTypeD = (TypeDecl *)D.getDeclaratorIdType();
-  if (const TypedefDecl *TypedefD = dyn_cast<TypedefDecl>(DeclaratorTypeD)) {
+  QualType DeclaratorType = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
+  if (DeclaratorType->getAsTypedefType()) {
     Diag(D.getIdentifierLoc(),  diag::err_destructor_typedef_name)
-      << TypedefD->getDeclName();
+      << DeclaratorType;
     isInvalid = true;
   }
 

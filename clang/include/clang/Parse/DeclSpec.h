@@ -78,7 +78,7 @@ public:
     TST_union,
     TST_struct,
     TST_class,        // C++ class type
-    TST_typedef,
+    TST_typename,     // Typedef, C++ class-name or enum name, etc.
     TST_typeofType,
     TST_typeofExpr,
     TST_error         // erroneous type

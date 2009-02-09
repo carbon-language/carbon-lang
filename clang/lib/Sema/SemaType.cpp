@@ -133,36 +133,25 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     Result = Context.getTypeDeclType(cast<TypeDecl>(D));
     break;
   }    
-  case DeclSpec::TST_typedef: {
-    Decl *D = static_cast<Decl *>(DS.getTypeRep());
-    assert(D && "Didn't get a decl for a typedef?");
+  case DeclSpec::TST_typename: {
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
-    DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers();      
+    Result = QualType::getFromOpaquePtr(DS.getTypeRep());
 
-    // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so
-    // we have this "hack" for now... 
-    if (ObjCInterfaceDecl *ObjCIntDecl = dyn_cast<ObjCInterfaceDecl>(D)) {
-      if (PQ == 0) {
-        Result = Context.getObjCInterfaceType(ObjCIntDecl);
-        break;
-      }
-      
-      Result = Context.getObjCQualifiedInterfaceType(ObjCIntDecl,
-                                                     (ObjCProtocolDecl**)PQ,
-                                                 DS.getNumProtocolQualifiers());
-      break;
-    } else if (TypedefDecl *typeDecl = dyn_cast<TypedefDecl>(D)) {
-      if (Context.getObjCIdType() == Context.getTypedefType(typeDecl) && PQ) {
+    if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
+      // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so
+      // we have this "hack" for now... 
+      if (const ObjCInterfaceType *Interface = Result->getAsObjCInterfaceType())
+        Result = Context.getObjCQualifiedInterfaceType(Interface->getDecl(),
+                                                       (ObjCProtocolDecl**)PQ,
+                                               DS.getNumProtocolQualifiers());
+      else if (Result == Context.getObjCIdType())
         // id<protocol-list>
         Result = Context.getObjCQualifiedIdType((ObjCProtocolDecl**)PQ,
                                                 DS.getNumProtocolQualifiers());
-        break;
-      }
     }
     // TypeQuals handled by caller.
-    Result = Context.getTypeDeclType(dyn_cast<TypeDecl>(D));
     break;
   }
   case DeclSpec::TST_typeofType:
@@ -240,7 +229,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     //   cv-qualifiers are introduced through the use of a typedef
     //   (7.1.3) or of a template type argument (14.3), in which
     //   case the cv-qualifiers are ignored.
-    if (DS.getTypeSpecType() == DeclSpec::TST_typedef &&
+    // FIXME: Shouldn't we be checking SCS_typedef here?
+    if (DS.getTypeSpecType() == DeclSpec::TST_typename &&
         TypeQuals && Result->isReferenceType()) {
       TypeQuals &= ~QualType::Const;
       TypeQuals &= ~QualType::Volatile;

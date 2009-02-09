@@ -36,12 +36,13 @@ using namespace clang;
 ///
 /// This routine performs ordinary name lookup of the identifier II
 /// within the given scope, with optional C++ scope specifier SS, to
-/// determine whether the name refers to a type. If so, returns the
-/// declaration corresponding to that type. Otherwise, returns NULL.
+/// determine whether the name refers to a type. If so, returns an
+/// opaque pointer (actually a QualType) corresponding to that
+/// type. Otherwise, returns NULL.
 ///
 /// If name lookup results in an ambiguity, this routine will complain
 /// and then return NULL.
-Sema::DeclTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
+Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                                 Scope *S, const CXXScopeSpec *SS) {
   Decl *IIDecl = 0;
   LookupResult Result = LookupParsedName(S, SS, &II, LookupOrdinaryName, false);
@@ -62,11 +63,10 @@ Sema::DeclTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   }
 
   if (IIDecl) {
-    if (isa<TypedefDecl>(IIDecl) || 
-        isa<ObjCInterfaceDecl>(IIDecl) ||
-        isa<TagDecl>(IIDecl) ||
-        isa<TemplateTypeParmDecl>(IIDecl))
-      return IIDecl;
+    if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl))
+      return Context.getTypeDeclType(TD).getAsOpaquePtr();
+    else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl))
+      return Context.getObjCInterfaceType(IDecl).getAsOpaquePtr();
   }
   return 0;
 }
@@ -695,8 +695,13 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
 /// no declarator (e.g. "struct foo;") is parsed.
 Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
-  TagDecl *Tag 
-    = dyn_cast_or_null<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
+  TagDecl *Tag = 0;
+  if (DS.getTypeSpecType() == DeclSpec::TST_class ||
+      DS.getTypeSpecType() == DeclSpec::TST_struct ||
+      DS.getTypeSpecType() == DeclSpec::TST_union ||
+      DS.getTypeSpecType() == DeclSpec::TST_enum)
+    Tag = dyn_cast<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
+
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
     if (!Record->getDeclName() && Record->isDefinition() &&
         DS.getStorageClassSpec() != DeclSpec::SCS_typedef)
@@ -1111,18 +1116,19 @@ DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
     return DeclarationName(D.getIdentifier());
 
   case Declarator::DK_Constructor: {
-    QualType Ty = Context.getTypeDeclType((TypeDecl *)D.getDeclaratorIdType());
+    QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
     Ty = Context.getCanonicalType(Ty);
     return Context.DeclarationNames.getCXXConstructorName(Ty);
   }
 
   case Declarator::DK_Destructor: {
-    QualType Ty = Context.getTypeDeclType((TypeDecl *)D.getDeclaratorIdType());
+    QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
     Ty = Context.getCanonicalType(Ty);
     return Context.DeclarationNames.getCXXDestructorName(Ty);
   }
 
   case Declarator::DK_Conversion: {
+    // FIXME: We'd like to keep the non-canonical type for diagnostics!
     QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
     Ty = Context.getCanonicalType(Ty);
     return Context.DeclarationNames.getCXXConversionFunctionName(Ty);

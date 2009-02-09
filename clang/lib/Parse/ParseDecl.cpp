@@ -492,7 +492,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       ConsumeToken(); // The C++ scope.
 
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
                                      TypeRep);
       if (isInvalid)
         break;
@@ -504,7 +504,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     }
         
     case tok::annot_typename: {
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
                                      Tok.getAnnotationValue());
       DS.SetRangeEnd(Tok.getAnnotationEndLoc());
       ConsumeToken(); // The typename
@@ -554,7 +554,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
           NextToken().getKind() == tok::l_paren)
         goto DoneWithDeclSpec;
 
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
                                      TypeRep);
       if (isInvalid)
         break;
@@ -834,7 +834,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
       
   // simple-type-specifier:
   case tok::annot_typename: {
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
                                    Tok.getAnnotationValue());
     DS.SetRangeEnd(Tok.getAnnotationEndLoc());
     ConsumeToken(); // The typename

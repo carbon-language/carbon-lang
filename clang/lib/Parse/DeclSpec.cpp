@@ -146,7 +146,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_class:       return "class";
   case DeclSpec::TST_union:       return "union";
   case DeclSpec::TST_struct:      return "struct";
-  case DeclSpec::TST_typedef:     return "typedef";
+  case DeclSpec::TST_typename:    return "type-name";
   case DeclSpec::TST_typeofType:
   case DeclSpec::TST_typeofExpr:  return "typeof";
   }

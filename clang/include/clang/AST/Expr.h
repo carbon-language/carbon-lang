@@ -2001,9 +2001,11 @@ public:
 /// \brief Represents an implicitly-generated value initialization of
 /// an object of a given type.
 ///
-/// Implicit value initializations occur within semantic initialize
-/// list expressions (\see InitListExpr) as placeholders for subobject
+/// Implicit value initializations occur within semantic initializer
+/// list expressions (InitListExpr) as placeholders for subobject
 /// initializations not explicitly specified by the user.
+///
+/// \see InitListExpr
 class ImplicitValueInitExpr : public Expr { 
 public:
   explicit ImplicitValueInitExpr(QualType ty) 

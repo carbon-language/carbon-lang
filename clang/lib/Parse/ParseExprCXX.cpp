@@ -456,7 +456,7 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
 
   // type-name
   case tok::annot_typename: {
-    DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
+    DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
                        Tok.getAnnotationValue());
     break;
   }
