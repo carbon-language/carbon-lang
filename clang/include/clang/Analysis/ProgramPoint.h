@@ -25,47 +25,66 @@ namespace clang {
     
 class ProgramPoint {
 public:
-  enum Kind { BlockEdgeKind=0, BlockEntranceKind, BlockExitKind, 
+  enum Kind { BlockEdgeKind = 0x0,
+              BlockEntranceKind = 0x1,
+              BlockExitKind = 0x2, 
               // Keep the following four together and in this order.
-              PostStmtKind,
-              PostLocationChecksSucceedKind,
-              PostOutOfBoundsCheckFailedKind,
-              PostNullCheckFailedKind,
-              PostUndefLocationCheckFailedKind,
-              PostLoadKind, PostStoreKind,
-              PostPurgeDeadSymbolsKind };
+              PostStmtKind = 0x3,
+              PostLocationChecksSucceedKind = 0x4,
+              PostOutOfBoundsCheckFailedKind = 0x5,
+              PostNullCheckFailedKind = 0x6,
+              PostUndefLocationCheckFailedKind = 0x7,
+              PostLoadKind = 0x8,
+              PostStoreKind = 0x9,
+              PostPurgeDeadSymbolsKind = 0x10,
+              PostStmtCustomKind = 0x11,
+              MinPostStmtKind = PostStmtKind,
+              MaxPostStmtKind = PostStmtCustomKind };
 
 private:
+  enum { TwoPointers = 0x1, Custom = 0x2, Mask = 0x3 };
+  
   std::pair<uintptr_t,uintptr_t> Data;
   
 protected:
   ProgramPoint(const void* P, Kind k)
-    : Data(reinterpret_cast<uintptr_t>(P), (uintptr_t) k) {}
+    : Data(reinterpret_cast<uintptr_t>(P),
+           (uintptr_t) k) {}
     
   ProgramPoint(const void* P1, const void* P2)
-    : Data(reinterpret_cast<uintptr_t>(P1) | 0x1,
+    : Data(reinterpret_cast<uintptr_t>(P1) | TwoPointers,
            reinterpret_cast<uintptr_t>(P2)) {}
-  
+
+  ProgramPoint(const void* P1, const void* P2, bool)
+    : Data(reinterpret_cast<uintptr_t>(P1) | Custom,
+           reinterpret_cast<uintptr_t>(P2)) {}
+
 protected:
   void* getData1NoMask() const {
-    assert (getKind() != BlockEdgeKind);
+    Kind k = getKind(); k = k;
+    assert(k == BlockEntranceKind || k == BlockExitKind);
     return reinterpret_cast<void*>(Data.first);
   }
   
   void* getData1() const {
-    assert (getKind() == BlockEdgeKind);
-    return reinterpret_cast<void*>(Data.first & ~0x1);
+    Kind k = getKind(); k = k;
+    assert(k == BlockEdgeKind || (k >= MinPostStmtKind && k < MaxPostStmtKind));
+    return reinterpret_cast<void*>(Data.first & ~Mask);
   }
 
   void* getData2() const { 
-    assert (getKind() == BlockEdgeKind);
+    Kind k = getKind(); k = k;
+    assert(k == BlockEdgeKind || k == PostStmtCustomKind);
     return reinterpret_cast<void*>(Data.second);
   }
-  
+    
 public:    
-
-  uintptr_t getKind() const {
-    return Data.first & 0x1 ? (uintptr_t) BlockEdgeKind : Data.second;
+  Kind getKind() const {
+    switch (Data.first & Mask) {
+      case TwoPointers: return BlockEdgeKind;
+      case Custom: return PostStmtCustomKind;
+      default: return (Kind) Data.second;
+    }
   }
 
   // For use with DenseMap.
@@ -138,15 +157,17 @@ public:
 
 class PostStmt : public ProgramPoint {
 protected:
-  PostStmt(const Stmt* S, Kind k) : ProgramPoint(S, k) {}    
+  PostStmt(const Stmt* S, Kind k) : ProgramPoint(S, k) {}
+  PostStmt(const Stmt* S, const void* data) : ProgramPoint(S, data, true) {}
+  
 public:
   PostStmt(const Stmt* S) : ProgramPoint(S, PostStmtKind) {}
       
-  Stmt* getStmt() const { return (Stmt*) getData1NoMask(); }
+  Stmt* getStmt() const { return (Stmt*) getData1(); }
 
   static bool classof(const ProgramPoint* Location) {
     unsigned k = Location->getKind();
-    return k >= PostStmtKind && k <= PostPurgeDeadSymbolsKind;
+    return k >= MinPostStmtKind && k <= MaxPostStmtKind;
   }
 };
 
@@ -157,6 +178,19 @@ public:
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostLocationChecksSucceedKind;
+  }
+};
+  
+class PostStmtCustom : public PostStmt {
+  PostStmtCustom(const Stmt* S, const void* Data)
+    : PostStmt(S, Data) {
+    assert(getKind() == PostStmtCustomKind);
+  }
+  
+  void* getCustomData() const { return getData2(); }
+    
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PostStmtCustomKind;
   }
 };
   
