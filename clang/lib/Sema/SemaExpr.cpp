@@ -4369,7 +4369,7 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
           << OE->getFn()->getSourceRange();
       // Remember our match, and continue processing the remaining arguments
       // to catch any errors.
-      OE = new (Context) OverloadExpr(Args, NumArgs, i, 
+      OE = new (Context) OverloadExpr(Context, Args, NumArgs, i, 
                             FnType->getResultType().getNonReferenceType(),
                             BuiltinLoc, RParenLoc);
     }

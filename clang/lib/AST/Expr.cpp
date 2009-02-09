@@ -1410,6 +1410,13 @@ void SizeOfAlignOfExpr::Destroy(ASTContext& C) {
     Expr::Destroy(C);
 }
 
+void OverloadExpr::Destroy(ASTContext& C) {
+  DestroyChildren(C);
+  C.Deallocate(SubExprs);
+  this->~OverloadExpr();
+  C.Deallocate(this);
+}
+
 //===----------------------------------------------------------------------===//
 //  DesignatedInitExpr
 //===----------------------------------------------------------------------===//

@@ -1533,17 +1533,18 @@ class OverloadExpr : public Expr {
   SourceLocation BuiltinLoc;
   SourceLocation RParenLoc;
 public:
-  OverloadExpr(Expr **args, unsigned nexprs, unsigned idx, QualType t, 
-               SourceLocation bloc, SourceLocation rploc)
+  OverloadExpr(ASTContext& C, Expr **args, unsigned nexprs, unsigned idx,
+               QualType t, SourceLocation bloc, SourceLocation rploc)
     : Expr(OverloadExprClass, t), NumExprs(nexprs), FnIndex(idx),
       BuiltinLoc(bloc), RParenLoc(rploc) {
-    SubExprs = new Stmt*[nexprs];
+    SubExprs = new (C) Stmt*[nexprs];
     for (unsigned i = 0; i != nexprs; ++i)
       SubExprs[i] = args[i];
   }
-  ~OverloadExpr() {
-    delete [] SubExprs;
-  }
+
+  ~OverloadExpr() {}
+  
+  void Destroy(ASTContext& C);
 
   /// arg_begin - Return a pointer to the list of arguments that will be passed
   /// to the matching candidate function, skipping over the initial constant

@@ -937,7 +937,7 @@ OverloadExpr* OverloadExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
   // FIXME: Avoid extra allocation.
   llvm::SmallVector<Expr*, 4> Exprs(NumExprs);
   D.BatchReadOwnedPtrs(NumExprs, Exprs.begin(), C);
-  return new OverloadExpr(Exprs.begin(), NumExprs, FnIndex, T, BL, RP);
+  return new OverloadExpr(C, Exprs.begin(), NumExprs, FnIndex, T, BL, RP);
 }
 
 void VAArgExpr::EmitImpl(llvm::Serializer& S) const {
