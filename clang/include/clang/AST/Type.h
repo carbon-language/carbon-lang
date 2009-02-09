@@ -1440,6 +1440,8 @@ class ClassTemplateSpecializationType
   static void 
   packBooleanValues(unsigned NumArgs, bool *Values, uintptr_t *Words);
   
+  virtual void Destroy(ASTContext& C);
+
   friend class ASTContext;  // ASTContext creates these
 
 public:

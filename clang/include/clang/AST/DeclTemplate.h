@@ -336,35 +336,6 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
-class TemplateArg {
-  enum {
-    TypeArg,
-    ExprArg
-  } Kind;
-
-  uintptr_t Ptr;
-
-public:
-  explicit TemplateArg(QualType Type) 
-    : Kind(TypeArg), Ptr(reinterpret_cast<uintptr_t>(Type.getAsOpaquePtr())) { }
-  explicit TemplateArg(Expr *E)
-    : Kind(ExprArg), Ptr(reinterpret_cast<uintptr_t>(E)) { }
-
-  QualType getAsType() const {
-    if (Kind == TypeArg) 
-      return QualType::getFromOpaquePtr(reinterpret_cast<void*>(Ptr));
-    return QualType();
-  }
-
-  Expr *getAsExpr() const {
-    if (Kind == ExprArg) return reinterpret_cast<Expr *>(Ptr);
-    return 0;
-  }
-
-  void Destroy(ASTContext &C);
-};
-
-
 } /* end of namespace clang */
 
 #endif

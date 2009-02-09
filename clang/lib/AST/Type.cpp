@@ -925,6 +925,12 @@ ClassTemplateSpecializationType(TemplateDecl *T, unsigned NumArgs,
     Data[Arg] = Args[Arg];
 }
 
+void ClassTemplateSpecializationType::Destroy(ASTContext& C) {
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
+    if (!isArgType(Arg))
+      getArgAsExpr(Arg)->Destroy(C);
+}
+
 uintptr_t
 ClassTemplateSpecializationType::getArgAsOpaqueValue(unsigned Arg) const {
   const uintptr_t *Data = reinterpret_cast<const uintptr_t *>(this + 1);

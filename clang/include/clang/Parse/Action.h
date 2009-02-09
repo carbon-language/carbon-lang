@@ -74,7 +74,6 @@ public:
   typedef void MemInitTy;
   typedef void CXXScopeTy;
   typedef void TemplateParamsTy;
-  typedef void TemplateArgTy;
 
   /// Expr/Stmt/Type/BaseResult - Provide a unique type to wrap
   /// ExprTy/StmtTy/TypeTy/BaseTy, providing strong typing and
@@ -88,8 +87,6 @@ public:
   /// Same, but with ownership.
   typedef ASTOwningResult<&ActionBase::DeleteExpr> OwningExprResult;
   typedef ASTOwningResult<&ActionBase::DeleteStmt> OwningStmtResult;
-  typedef ASTOwningResult<&ActionBase::DeleteTemplateArg> 
-    OwningTemplateArgResult;
   // Note that these will replace ExprResult and StmtResult when the transition
   // is complete.
 
@@ -97,38 +94,26 @@ public:
 #if !defined(DISABLE_SMART_POINTERS)
   typedef ASTOwningResult<&ActionBase::DeleteExpr> ExprArg;
   typedef ASTOwningResult<&ActionBase::DeleteStmt> StmtArg;
-  typedef ASTOwningResult<&ActionBase::DeleteTemplateArg> TemplateArgArg;
 #else
   typedef ASTOwningPtr<&ActionBase::DeleteExpr> ExprArg;
   typedef ASTOwningPtr<&ActionBase::DeleteStmt> StmtArg;
-  typedef ASTOwningPtr<&ActionBase::DeleteTemplateArg> TemplateArgArg;
 #endif
 
   /// Multiple expressions or statements as arguments.
   typedef ASTMultiPtr<&ActionBase::DeleteExpr> MultiExprArg;
   typedef ASTMultiPtr<&ActionBase::DeleteStmt> MultiStmtArg;
   typedef ASTMultiPtr<&ActionBase::DeleteTemplateParams> MultiTemplateParamsArg;
-  typedef ASTMultiPtr<&ActionBase::DeleteTemplateArg> MultiTemplateArgsArg;
 
   // Utilities for Action implementations to return smart results.
 
   OwningExprResult ExprError() { return OwningExprResult(*this, true); }
   OwningStmtResult StmtError() { return OwningStmtResult(*this, true); }
-  OwningTemplateArgResult TemplateArgError() { 
-    return OwningTemplateArgResult(*this, true); 
-  }
 
   OwningExprResult ExprError(const DiagnosticBuilder&) { return ExprError(); }
   OwningStmtResult StmtError(const DiagnosticBuilder&) { return StmtError(); }
-  OwningTemplateArgResult TemplateArgError(const DiagnosticBuilder&) {
-    return TemplateArgError();
-  }
 
   OwningExprResult ExprEmpty() { return OwningExprResult(*this, false); }
   OwningStmtResult StmtEmpty() { return OwningStmtResult(*this, false); }
-  OwningTemplateArgResult TemplateArgEmpty() { 
-    return OwningTemplateArgResult(*this, false); 
-  }
 
   /// Statistics.
   virtual void PrintStats() const {}
@@ -1126,14 +1111,6 @@ public:
     return 0;
   }
 
-  virtual OwningTemplateArgResult ActOnTypeTemplateArgument(TypeTy *Type) {
-    return TemplateArgError();
-  }
-
-  virtual OwningTemplateArgResult ActOnExprTemplateArgument(ExprArg Value) {
-    return TemplateArgError();
-  }
-
   /// \brief Process the declaration or definition of a class template
   /// with the given template parameter lists.
   virtual DeclTy *
@@ -1158,7 +1135,7 @@ public:
   virtual TypeTy * 
   ActOnClassTemplateSpecialization(DeclTy *Template,
                                    SourceLocation LAngleLoc,
-                                   MultiTemplateArgsArg TemplateArgs,
+                                   ASTTemplateArgsPtr TemplateArgs,
                                    SourceLocation RAngleLoc,
                                    const CXXScopeSpec *SS = 0) {
     return 0;

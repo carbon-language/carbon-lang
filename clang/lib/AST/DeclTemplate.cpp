@@ -44,11 +44,6 @@ TemplateParameterList::Create(ASTContext &C, SourceLocation TemplateLoc,
                                          NumParams, RAngleLoc);
 }
 
-void TemplateArg::Destroy(ASTContext &C) {
-  if (Kind == ExprArg)
-    getAsExpr()->Destroy(C);
-}
-
 //===----------------------------------------------------------------------===//
 // TemplateDecl Implementation
 //===----------------------------------------------------------------------===//

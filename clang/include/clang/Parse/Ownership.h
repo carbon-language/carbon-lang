@@ -132,7 +132,6 @@ namespace clang
     typedef void ExprTy;
     typedef void StmtTy;
     typedef void TemplateParamsTy;
-    typedef void TemplateArgTy;
 
     /// ActionResult - This structure is used while parsing/acting on
     /// expressions, stmts, etc.  It encapsulates both the object returned by
@@ -207,7 +206,6 @@ namespace clang
     virtual void DeleteExpr(ExprTy *E) {}
     virtual void DeleteStmt(StmtTy *E) {}
     virtual void DeleteTemplateParams(TemplateParamsTy *E) {}
-    virtual void DeleteTemplateArg(TemplateArgTy *E) {}
   };
 
   /// ASTDestroyer - The type of an AST node destruction function pointer.
@@ -222,10 +220,6 @@ namespace clang
   template <> struct DestroyerToUID<&ActionBase::DeleteStmt> {
     static const unsigned UID = 1;
   };
-  template <> struct DestroyerToUID<&ActionBase::DeleteTemplateArg> {
-    static const unsigned UID = 5; // FIXME
-  };
-
   /// ASTOwningResult - A moveable smart pointer for AST nodes that also
   /// has an extra flag to indicate an additional success status.
   template <ASTDestroyer Destroyer> class ASTOwningResult;
@@ -535,6 +529,62 @@ namespace clang
       return moving::ASTMultiMover<Destroyer>(*this);
     }
 #endif
+  };
+  
+  class ASTTemplateArgsPtr {
+#if !defined(DISABLE_SMART_POINTERS)
+    ActionBase &Actions;
+#endif
+    void **Args;
+    bool *ArgIsType;
+    mutable unsigned Count;
+
+#if !defined(DISABLE_SMART_POINTERS)
+    void destroy() {
+      if (!Count)
+        return;
+
+      for (unsigned i = 0; i != Count; ++i)
+        if (Args[i] && !ArgIsType[i])
+          Actions.DeleteExpr((ActionBase::ExprTy *)Args[i]);
+
+      Count = 0;
+    }
+#endif
+
+  public:
+    ASTTemplateArgsPtr(ActionBase &actions, void **args, bool *argIsType,
+                       unsigned count) : 
+#if !defined(DISABLE_SMART_POINTERS)
+      Actions(actions), 
+#endif
+      Args(args), ArgIsType(argIsType), Count(count) { }
+
+    // FIXME: Lame, not-fully-type-safe emulation of 'move semantics'.
+    ASTTemplateArgsPtr(ASTTemplateArgsPtr &Other) : 
+#if !defined(DISABLE_SMART_POINTERS)
+      Actions(Other.Actions), 
+#endif
+      Args(Other.Args), ArgIsType(Other.ArgIsType), Count(Other.Count) {
+#if !defined(DISABLE_SMART_POINTERS)
+      Other.destroy();
+#endif
+    }
+
+#if !defined(DISABLE_SMART_POINTERS)
+    ~ASTTemplateArgsPtr() { destroy(); }
+#endif
+
+    void **getArgs() const { return Args; }
+    bool *getArgIsType() const {return ArgIsType; }
+    unsigned size() const { return Count; }
+
+    void **release() const { 
+#if !defined(DISABLE_SMART_POINTERS)
+      Count = 0;
+#endif
+      return Args;
+    }
   };
 
 #if !defined(DISABLE_SMART_POINTERS)

@@ -231,15 +231,6 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
                                        (Decl**)Params, NumParams, RAngleLoc);
 }
 
-Sema::OwningTemplateArgResult Sema::ActOnTypeTemplateArgument(TypeTy *Type) {
-  return Owned(new (Context) TemplateArg(QualType::getFromOpaquePtr(Type)));
-}
-
-Sema::OwningTemplateArgResult 
-Sema::ActOnExprTemplateArgument(ExprArg Value) {
-  return Owned(new (Context) TemplateArg(static_cast<Expr *>(Value.release())));
-}
-
 Sema::DeclTy *
 Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                          SourceLocation KWLoc, const CXXScopeSpec &SS,
@@ -368,37 +359,21 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
 Action::TypeTy * 
 Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,
                                        SourceLocation LAngleLoc,
-                                       MultiTemplateArgsArg TemplateArgsIn,
+                                       ASTTemplateArgsPtr TemplateArgs,
                                        SourceLocation RAngleLoc,
                                        const CXXScopeSpec *SS) {
   TemplateDecl *Template = cast<TemplateDecl>(static_cast<Decl *>(TemplateD));
 
-  // FIXME: Not happy about this. We should teach the parser to pass
-  // us opaque pointers + bools for template argument lists.
-  // FIXME: Also not happy about the fact that we leak these
-  // TemplateArg structures. Fixing the above will fix this, too.
-  llvm::SmallVector<uintptr_t, 16> Args;
-  llvm::SmallVector<bool, 16> ArgIsType;
-  unsigned NumArgs = TemplateArgsIn.size();
-  TemplateArg **TemplateArgs 
-    = reinterpret_cast<TemplateArg **>(TemplateArgsIn.release());
-  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
-    if (Expr *ExprArg = TemplateArgs[Arg]->getAsExpr()) {
-      Args.push_back(reinterpret_cast<uintptr_t>(ExprArg));
-      ArgIsType.push_back(false);
-    } else {
-      QualType T = TemplateArgs[Arg]->getAsType();
-      Args.push_back(reinterpret_cast<uintptr_t>(T.getAsOpaquePtr()));
-      ArgIsType.push_back(true);
-    }
-  }
-
   // Yes, all class template specializations are just silly sugar for
   // 'int'. Gotta problem wit dat?
-  return Context.getClassTemplateSpecializationType(Template, NumArgs,
-                                                    &Args[0], &ArgIsType[0],
-                                                    Context.IntTy)
-    .getAsOpaquePtr();
+  QualType Result
+    = Context.getClassTemplateSpecializationType(Template, 
+                                                 TemplateArgs.size(),
+                    reinterpret_cast<uintptr_t *>(TemplateArgs.getArgs()), 
+                                                 TemplateArgs.getArgIsType(),
+                                                 Context.IntTy);
+  TemplateArgs.release();
+  return Result.getAsOpaquePtr();
 }
 
 /// \brief Determine whether the given template parameter lists are

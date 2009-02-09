@@ -368,10 +368,12 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
   SourceLocation LAngleLoc = ConsumeToken();
 
   // Parse the optional template-argument-list.
-  ASTVector<&ActionBase::DeleteTemplateArg, 8> TemplateArgs(Actions);
+  TemplateArgList TemplateArgs;
+  TemplateArgIsTypeList TemplateArgIsType;
   {
     MakeGreaterThanTemplateArgumentListTerminator G(GreaterThanIsOperator);
-    if (Tok.isNot(tok::greater) && ParseTemplateArgumentList(TemplateArgs)) {
+    if (Tok.isNot(tok::greater) && 
+        ParseTemplateArgumentList(TemplateArgs, TemplateArgIsType)) {
       // Try to find the closing '>'.
       SkipUntil(tok::greater, true, true);
       
@@ -391,16 +393,15 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
   if (TNK == Action::TNK_Function_template) {
     // This is a function template. We'll be building a template-id
     // annotation token.
-    TemplateArgs.take(); // Annotation token takes ownership
     Tok.setKind(tok::annot_template_id);    
     TemplateIdAnnotation *TemplateId 
       = (TemplateIdAnnotation *)malloc(sizeof(TemplateIdAnnotation) + 
-                                  sizeof(TemplateArgTy*) * TemplateArgs.size());
+                                  sizeof(void*) * TemplateArgs.size());
     TemplateId->TemplateNameLoc = TemplateNameLoc;
     TemplateId->Template = Template;
     TemplateId->LAngleLoc = LAngleLoc;
     TemplateId->NumArgs = TemplateArgs.size();
-    TemplateArgTy **Args = (TemplateArgTy**)(TemplateId + 1);
+    void **Args = (void**)(TemplateId + 1);
     for (unsigned Arg = 0, ArgEnd = TemplateArgs.size(); Arg != ArgEnd; ++Arg)
       Args[Arg] = TemplateArgs[Arg];
     Tok.setAnnotationValue(TemplateId);
@@ -408,9 +409,12 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
     // This is a type template, e.g., a class template, template
     // template parameter, or template alias. We'll be building a
     // "typename" annotation token.
+    ASTTemplateArgsPtr TemplateArgsPtr(Actions, &TemplateArgs[0],
+                                       &TemplateArgIsType[0],
+                                       TemplateArgs.size());
     TypeTy *Ty 
-      = Actions.ActOnClassTemplateSpecialization(Template,LAngleLoc,
-                                                 move_arg(TemplateArgs),
+      = Actions.ActOnClassTemplateSpecialization(Template, LAngleLoc,
+                                                 TemplateArgsPtr,
                                                  RAngleLoc, SS);
     Tok.setKind(tok::annot_typename);
     Tok.setAnnotationValue(Ty);
@@ -433,7 +437,7 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
 ///         assignment-expression
 ///         type-id
 ///         id-expression
-Parser::OwningTemplateArgResult Parser::ParseTemplateArgument() {
+void *Parser::ParseTemplateArgument(bool &ArgIsType) {
   // C++ [temp.arg]p2:
   //   In a template-argument, an ambiguity between a type-id and an
   //   expression is resolved to a type-id, regardless of the form of
@@ -441,15 +445,16 @@ Parser::OwningTemplateArgResult Parser::ParseTemplateArgument() {
   //
   // Therefore, we initially try to parse a type-id.
   if (isTypeIdInParens()) {
-    TypeTy *TypeArg = ParseTypeName();
-    return Actions.ActOnTypeTemplateArgument(TypeArg);
+    ArgIsType = true;
+    return ParseTypeName();
   }
 
   OwningExprResult ExprArg = ParseExpression();
   if (ExprArg.isInvalid())
-    return TemplateArgError();
+    return 0;
 
-  return Actions.ActOnExprTemplateArgument(move(ExprArg));
+  ArgIsType = false;
+  return ExprArg.release();
 }
 
 /// ParseTemplateArgumentList - Parse a C++ template-argument-list
@@ -458,16 +463,20 @@ Parser::OwningTemplateArgResult Parser::ParseTemplateArgument() {
 ///       template-argument-list: [C++ 14.2]
 ///         template-argument
 ///         template-argument-list ',' template-argument
-bool Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
+bool 
+Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
+                                  TemplateArgIsTypeList &TemplateArgIsType) {
   while (true) {
-    OwningTemplateArgResult Arg = ParseTemplateArgument();
-    if (Arg.isInvalid()) {
+    bool IsType = false;
+    void *Arg = ParseTemplateArgument(IsType);
+    if (Arg) {
+      TemplateArgs.push_back(Arg);
+      TemplateArgIsType.push_back(IsType);
+    } else {
       SkipUntil(tok::comma, tok::greater, true, true);
       return true;
     }
-    else
-      TemplateArgs.push_back(Arg.release());
-    
+
     // If the next token is a comma, consume it and keep reading
     // arguments.
     if (Tok.isNot(tok::comma)) break;

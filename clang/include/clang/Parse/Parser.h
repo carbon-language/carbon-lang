@@ -114,7 +114,6 @@ public:
   typedef Action::MemInitTy MemInitTy;
   typedef Action::CXXScopeTy CXXScopeTy;
   typedef Action::TemplateParamsTy TemplateParamsTy;
-  typedef Action::TemplateArgTy TemplateArgTy;
 
   typedef llvm::SmallVector<TemplateParamsTy *, 4> TemplateParameterLists;
 
@@ -125,7 +124,6 @@ public:
 
   typedef Action::OwningExprResult OwningExprResult;
   typedef Action::OwningStmtResult OwningStmtResult;
-  typedef Action::OwningTemplateArgResult OwningTemplateArgResult;
 
   typedef Action::ExprArg ExprArg;
   typedef Action::MultiStmtArg MultiStmtArg;
@@ -141,15 +139,9 @@ public:
 
   OwningExprResult ExprError() { return OwningExprResult(Actions, true); }
   OwningStmtResult StmtError() { return OwningStmtResult(Actions, true); }
-  OwningTemplateArgResult TemplateArgError() { 
-    return OwningTemplateArgResult(Actions, true); 
-  }
 
   OwningExprResult ExprError(const DiagnosticBuilder &) { return ExprError(); }
   OwningStmtResult StmtError(const DiagnosticBuilder &) { return StmtError(); }
-  OwningTemplateArgResult TemplateArgError(const DiagnosticBuilder &) {
-    return TemplateArgError();
-  }
 
   // Parsing methods.
   
@@ -1029,11 +1021,13 @@ private:
   DeclTy *ParseTemplateTemplateParameter(unsigned Depth, unsigned Position);
   DeclTy *ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position);
   // C++ 14.3: Template arguments [temp.arg]
-  typedef llvm::SmallVector<TemplateArgTy*, 8> TemplateArgList;
+  typedef llvm::SmallVector<void *, 16> TemplateArgList;
+  typedef llvm::SmallVector<bool, 16> TemplateArgIsTypeList;
   void AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
                                const CXXScopeSpec *SS = 0);
-  bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs);
-  OwningTemplateArgResult ParseTemplateArgument();
+  bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
+                                 TemplateArgIsTypeList &TemplateArgIsType);
+  void *ParseTemplateArgument(bool &ArgIsType);
 
   //===--------------------------------------------------------------------===//
   // GNU G++: Type Traits [Type-Traits.html in the GCC manual]
