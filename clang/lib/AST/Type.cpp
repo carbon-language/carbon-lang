@@ -96,7 +96,7 @@ bool Type::isVoidType() const {
 }
 
 bool Type::isObjectType() const {
-  if (isa<FunctionType>(CanonicalType))
+  if (isa<FunctionType>(CanonicalType) || isa<ReferenceType>(CanonicalType))
     return false;
   if (const ASQualType *AS = dyn_cast<ASQualType>(CanonicalType))
     return AS->getBaseType()->isObjectType();

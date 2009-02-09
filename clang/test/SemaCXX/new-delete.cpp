@@ -64,6 +64,9 @@ void bad_news(int *ip)
   (void)new (0L) int; // expected-error {{call to 'operator new' is ambiguous}}
   // This must fail, because the member version shouldn't be found.
   (void)::new ((S*)0) U; // expected-error {{no matching function for call to 'operator new'}}
+  (void)new (int[]); // expected-error {{array size must be specified in new expressions}}
+  (void)new int&; // expected-error {{cannot allocate reference type 'int &' with new}}
+  (void)new (void ()); // expected-error {{cannot allocate function type 'void (void)' with new}}
   // Some lacking cases due to lack of sema support.
 }
 

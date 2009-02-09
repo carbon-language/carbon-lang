@@ -197,10 +197,6 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   ExprTy **ConstructorArgs, unsigned NumConsArgs,
                   SourceLocation ConstructorRParen)
 {
-  // FIXME: Throughout this function, we have rather bad location information.
-  // Implementing Declarator::getSourceRange() would go a long way toward
-  // fixing that.
-
   Expr *ArraySize = 0;
   unsigned Skip = 0;
   // If the specified type is an array, unwrap it and save the expression.
@@ -208,9 +204,11 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       D.getTypeObject(0).Kind == DeclaratorChunk::Array) {
     DeclaratorChunk &Chunk = D.getTypeObject(0);
     if (Chunk.Arr.hasStatic)
-      return Diag(Chunk.Loc, diag::err_static_illegal_in_new);
+      return Diag(Chunk.Loc, diag::err_static_illegal_in_new)
+        << D.getSourceRange();
     if (!Chunk.Arr.NumElts)
-      return Diag(Chunk.Loc, diag::err_array_new_needs_size);
+      return Diag(Chunk.Loc, diag::err_array_new_needs_size)
+        << D.getSourceRange();
     ArraySize = static_cast<Expr*>(Chunk.Arr.NumElts);
     Skip = 1;
   }
@@ -251,9 +249,10 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   FunctionDecl *OperatorNew = 0;
   FunctionDecl *OperatorDelete = 0;
   Expr **PlaceArgs = (Expr**)PlacementArgs;
-  if (FindAllocationFunctions(StartLoc, UseGlobal, AllocType, ArraySize,
-                              PlaceArgs, NumPlaceArgs, OperatorNew,
-                              OperatorDelete))
+  if (FindAllocationFunctions(StartLoc,
+                              SourceRange(PlacementLParen, PlacementRParen),
+                              UseGlobal, AllocType, ArraySize, PlaceArgs,
+                              NumPlaceArgs, OperatorNew, OperatorDelete))
     return true;
 
   bool Init = ConstructorLParen.isValid();
@@ -276,13 +275,14 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   // 2) Otherwise, the object is direct-initialized.
   CXXConstructorDecl *Constructor = 0;
   Expr **ConsArgs = (Expr**)ConstructorArgs;
+  // FIXME: Should check for primitive/aggregate here, not record.
   if (const RecordType *RT = AllocType->getAsRecordType()) {
     // FIXME: This is incorrect for when there is an empty initializer and
     // no user-defined constructor. Must zero-initialize, not default-construct.
     Constructor = PerformInitializationByConstructor(
                       AllocType, ConsArgs, NumConsArgs,
-                      D.getDeclSpec().getSourceRange().getBegin(),
-                      SourceRange(D.getDeclSpec().getSourceRange().getBegin(),
+                      D.getSourceRange().getBegin(),
+                      SourceRange(D.getSourceRange().getBegin(),
                                   ConstructorRParen),
                       RT->getDecl()->getDeclName(),
                       NumConsArgs != 0 ? IK_Direct : IK_Default);
@@ -336,15 +336,11 @@ bool Sema::CheckAllocatedType(QualType AllocType, const Declarator &D)
     } else if(AllocType->isIncompleteType()) {
       type = 1;
     } else {
-      assert(AllocType->isReferenceType() && "What else could it be?");
+      assert(AllocType->isReferenceType() && "Unhandled non-object type.");
       type = 2;
     }
-    SourceRange TyR = D.getDeclSpec().getSourceRange();
-    // FIXME: This is very much a guess and won't work for, e.g., pointers.
-    if (D.getNumTypeObjects() > 0)
-      TyR.setEnd(D.getTypeObject(0).Loc);
-    Diag(TyR.getBegin(), diag::err_bad_new_type)
-      << AllocType.getAsString() << type << TyR;
+    Diag(D.getSourceRange().getBegin(), diag::err_bad_new_type)
+      << AllocType << type << D.getSourceRange();
     return true;
   }
 
@@ -365,9 +361,10 @@ bool Sema::CheckAllocatedType(QualType AllocType, const Declarator &D)
 
 /// FindAllocationFunctions - Finds the overloads of operator new and delete
 /// that are appropriate for the allocation.
-bool Sema::FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
-                                   QualType AllocType, bool IsArray,
-                                   Expr **PlaceArgs, unsigned NumPlaceArgs,
+bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
+                                   bool UseGlobal, QualType AllocType,
+                                   bool IsArray, Expr **PlaceArgs,
+                                   unsigned NumPlaceArgs,
                                    FunctionDecl *&OperatorNew,
                                    FunctionDecl *&OperatorDelete)
 {
@@ -397,7 +394,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
     CXXRecordDecl *Record = cast<CXXRecordType>(AllocType->getAsRecordType())
                                 ->getDecl();
     // FIXME: We fail to find inherited overloads.
-    if (FindAllocationOverload(StartLoc, NewName, &AllocArgs[0],
+    if (FindAllocationOverload(StartLoc, Range, NewName, &AllocArgs[0],
                           AllocArgs.size(), Record, /*AllowMissing=*/true,
                           OperatorNew))
       return true;
@@ -406,7 +403,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
     // Didn't find a member overload. Look for a global one.
     DeclareGlobalNewDelete();
     DeclContext *TUDecl = Context.getTranslationUnitDecl();
-    if (FindAllocationOverload(StartLoc, NewName, &AllocArgs[0],
+    if (FindAllocationOverload(StartLoc, Range, NewName, &AllocArgs[0],
                           AllocArgs.size(), TUDecl, /*AllowMissing=*/false,
                           OperatorNew))
       return true;
@@ -420,19 +417,18 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
 
 /// FindAllocationOverload - Find an fitting overload for the allocation
 /// function in the specified scope.
-bool Sema::FindAllocationOverload(SourceLocation StartLoc, DeclarationName Name,
-                                  Expr** Args, unsigned NumArgs,
-                                  DeclContext *Ctx, bool AllowMissing,
-                                  FunctionDecl *&Operator)
+bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
+                                  DeclarationName Name, Expr** Args,
+                                  unsigned NumArgs, DeclContext *Ctx,
+                                  bool AllowMissing, FunctionDecl *&Operator)
 {
   DeclContext::lookup_iterator Alloc, AllocEnd;
   llvm::tie(Alloc, AllocEnd) = Ctx->lookup(Name);
   if (Alloc == AllocEnd) {
     if (AllowMissing)
       return false;
-    // FIXME: Bad location information.
     return Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
-      << Name << 0;
+      << Name << 0 << Range;
   }
 
   OverloadCandidateSet Candidates;
@@ -467,16 +463,14 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, DeclarationName Name,
   case OR_No_Viable_Function:
     if (AllowMissing)
       return false;
-    // FIXME: Bad location information.
     Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
-      << Name << (unsigned)Candidates.size();
+      << Name << (unsigned)Candidates.size() << Range;
     PrintOverloadCandidates(Candidates, /*OnlyViable=*/false);
     return true;
 
   case OR_Ambiguous:
-    // FIXME: Bad location information.
     Diag(StartLoc, diag::err_ovl_ambiguous_call)
-      << Name;
+      << Name << Range;
     PrintOverloadCandidates(Candidates, /*OnlyViable=*/true);
     return true;
   }

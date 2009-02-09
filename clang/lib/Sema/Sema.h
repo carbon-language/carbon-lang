@@ -1305,13 +1305,14 @@ public:
                                  ExprTy **ConstructorArgs, unsigned NumConsArgs,
                                  SourceLocation ConstructorRParen);
   bool CheckAllocatedType(QualType AllocType, const Declarator &D);
-  bool FindAllocationFunctions(SourceLocation StartLoc, bool UseGlobal,
-                               QualType AllocType, bool IsArray,
+  bool FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
+                               bool UseGlobal, QualType AllocType, bool IsArray,
                                Expr **PlaceArgs, unsigned NumPlaceArgs,
                                FunctionDecl *&OperatorNew,
                                FunctionDecl *&OperatorDelete);
-  bool FindAllocationOverload(SourceLocation StartLoc, DeclarationName Name,
-                              Expr** Args, unsigned NumArgs, DeclContext *Ctx,
+  bool FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
+                              DeclarationName Name, Expr** Args,
+                              unsigned NumArgs, DeclContext *Ctx,
                               bool AllowMissing, FunctionDecl *&Operator);
   void DeclareGlobalNewDelete();
   void DeclareGlobalAllocationFunction(DeclarationName Name, QualType Return,
