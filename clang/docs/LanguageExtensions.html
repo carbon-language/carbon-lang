@@ -1,0 +1,147 @@
+<html>
+<head>
+<title>Clang Language Extensions</title>
+<link type="text/css" rel="stylesheet" href="../menu.css" />
+<link type="text/css" rel="stylesheet" href="../content.css" />
+<style type="text/css">
+td {
+	vertical-align: top;
+}
+</style>
+</head>
+<body>
+
+<!--#include virtual="../menu.html.incl"-->
+
+<div id="content">
+
+<h1>Clang Language Extensions</h1>
+
+<ul>
+<li><a href="#intro">Introduction</a></li>
+<li><a href="#vectors">Vectors and Extended Vectors</a></li>
+<li><a href="#blocks">Blocks</a></li>
+<li><a href="#builtins">Builtin Functions</a>
+  <ul>
+  <li><a href="#__builtin_overload">__builtin_overload</a></li>
+  <li><a href="#__builtin_shufflevector">__builtin_shufflevector</a></li>
+  </ul>
+</li>
+</ul>
+
+
+<!-- ======================================================================= -->
+<h2 id="intro">Introduction</h2>
+<!-- ======================================================================= -->
+
+<p>This document describes the language extensions provided by Clang.  In
+addition to the langauge extensions listed here, Clang aims to support a broad
+range of GCC extensions.  Please see the <a 
+href="http://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html">GCC manual</a> for
+more information on these extensions.</p>
+
+<!-- ======================================================================= -->
+<h2 id="vectors">Vectors and Extended Vectors</h2>
+<!-- ======================================================================= -->
+
+<p>Supports the GCC vector extensions, plus some stuff like V[1].  ext_vector
+with V.xyzw syntax and other tidbits.  See also <a 
+href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
+
+<!-- ======================================================================= -->
+<h2 id="blocks">Blocks</h2>
+<!-- ======================================================================= -->
+
+<p>The idea, syntax, and semantics.</p>
+
+<!-- ======================================================================= -->
+<h2 id="builtins">Builtin Functions</h2>
+<!-- ======================================================================= -->
+
+<p>Clang supports a number of builtin library functions with the same syntax as
+GCC, including things like <tt>__builtin_nan</tt>,
+<tt>__builtin_constant_p</tt>, <tt>__builtin_choose_expr</tt>, 
+<tt>__builtin_types_compatible_p</tt>, <tt>__sync_fetch_and_add</tt>, etc.  In
+addition to the GCC builtins, Clang supports a number of builtins that GCC does
+not, which are listed here.</p>
+
+<p>Please note that Clang does not and will not support all of the GCC builtins
+for vector operations.  Instead of using builtins, you should use the functions
+defined in target-specific header files like <tt>&lt;xmmintrin.h&gt;</tt>, which
+define portable wrappers for these.  Many of the Clang versions of these
+functions are implemented directly in terms of <a href="#vectors">extended
+vector support</a> instead of builtins, in order to reduce the number of
+builtins that we need to implement.</p>
+
+
+<!-- ======================================================================= -->
+<h3 id="__builtin_overload">__builtin_overload</h3>
+<!-- ======================================================================= -->
+
+<p><tt>__builtin_overload</tt> is used to implement type-generic "overloaded"
+functions in C.  This builtin is used to implement the <tt>&lt;tgmath.h&gt;</tt>
+header file, but is intended to be usable for a broad variety of other similar
+situations, like the <tt>&lt;altivec.h&gt;</tt> header.
+</p>
+
+<p><b>Syntax:</b></p>
+
+<pre>
+__builtin_overload(FnNameStr, PromotionRuleStr, NumArgs, arg1, arg2, ...
+                   overloadcandidate1, overloadcandidate2, ...)
+</pre>
+
+<p><b>Examples:</b></p>
+
+<pre>
+#define sin(x) \
+  (__builtin_overload("sin", "tgmath", 1, x, sinf, sin, sinl,
+                      csinf, csin, csinl)(x))
+#define fma(x,y,z) \
+  (__builtin_overload("fma", "tgmath", 3, x, y, z, fmaf, fma, fmal)(x,y,z))
+#define ldexp(x, y) \
+  (__builtin_overload("ldexp", "tgmath1", 2, x, 0, ldexpf, ldexp, ldexpl)(x,y))
+</pre>
+
+<p><b>Description:</b></p>
+
+<p>The first argument to __builtin_overload is a string that is the name of the
+"function" being implemented.  This is used to produce diagnostics that make
+sense to the user.  For example, if you accidentally pass a pointer argument to
+"sin" in GCC, it emits 6 errors about incompatible types.  This name allows
+Clang to diagnose the error in a way the user can understand.
+</p>
+
+<p>The second argument is a string that indicates a set of promotion rules to
+apply to the arguments before prototype matching occurs.  The currently
+supported rules are:</p>
+
+<dl>
+  <dt>tgmath</dt>
+  <dd>Follow the rules of C99 7.22 to determine a single common type, and use it
+      for every argument.</dd>
+  <dt>tgmath1</dt>
+  <dd>Follow the rules of C99 7.22 to determine a single common type of just the
+      first argument (e.g. treat ints as doubles).</dd>
+</dl>
+
+<p>The third argument is an integer that specifies the arity of the function
+   being overloaded.  After this are N expression arguments which are promoted
+   according to the rules specified by the promotion rule string.</p>
+   
+<p>The final arguments are functions or function pointers with different
+   signatures.  __builtin_overload will match and evaluate to the first function
+   pointer whose signature is compatible and does not cause value truncation of
+   any arguments to the function.</p>
+
+
+<!-- ======================================================================= -->
+<h3 id="__builtin_shufflevector">__builtin_shufflevector</h3>
+<!-- ======================================================================= -->
+
+<p>todo describe me.</p>
+
+
+</div>
+</body>
+</html>
