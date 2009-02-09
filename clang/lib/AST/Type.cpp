@@ -746,6 +746,7 @@ bool Type::isPODType() const {
   case MemberPointer:
   case Vector:
   case ExtVector:
+  case ObjCQualifiedId:
     return true;
 
   case Tagged:
