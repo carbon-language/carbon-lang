@@ -314,7 +314,7 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
     CGM.ErrorUnsupported(S.getLabel(),
                          "invalid goto to VLA scope that has finished");
 
-  EmitBranch(getBasicBlockForLabel(S.getLabel()));
+  EmitBranchThroughCleanup(getBasicBlockForLabel(S.getLabel()));
 }
 
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
@@ -554,7 +554,7 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
   } else {
     StoreComplexToAddr(RV.getComplexVal(), ReturnValue, false);
   }
-  EmitBranch(ReturnBlock);
+  EmitBranchThroughCleanup(ReturnBlock);
 }
 
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
@@ -597,7 +597,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     }
   } 
 
-  EmitBranch(ReturnBlock);
+  EmitBranchThroughCleanup(ReturnBlock);
 }
 
 void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
@@ -627,7 +627,7 @@ void CodeGenFunction::EmitBreakStmt(const BreakStmt &S) {
     assert (0 && "break vla botch");
 
   llvm::BasicBlock *Block = BreakContinueStack.back().BreakBlock;
-  EmitBranch(Block);
+  EmitBranchThroughCleanup(Block);
 }
 
 void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
@@ -651,7 +651,7 @@ void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
     assert (0 && "continue vla botch");
 
   llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
-  EmitBranch(Block);
+  EmitBranchThroughCleanup(Block);
 }
 
 /// EmitCaseStmtRange - If case statement range is not too big then
