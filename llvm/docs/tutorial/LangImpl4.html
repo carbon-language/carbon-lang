@@ -501,6 +501,11 @@ LLVM JIT and optimizer.  To build this example, use:
 </pre>
 </div>
 
+<p>
+If you are compiling this on Linux, make sure to add the "-rdynamic" option 
+as well.  This makes sure that the external functions are resolved properly 
+at runtime.</p>
+
 <p>Here is the code:</p>
 
 <div class="doc_code">
