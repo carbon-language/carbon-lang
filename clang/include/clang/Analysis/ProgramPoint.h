@@ -20,6 +20,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include <cassert>
+#include <utility>
 
 namespace clang {
     
@@ -182,12 +183,19 @@ public:
 };
   
 class PostStmtCustom : public PostStmt {
-  PostStmtCustom(const Stmt* S, const void* Data)
-    : PostStmt(S, Data) {
+  PostStmtCustom(const Stmt* S,
+                 const std::pair<const void*, const void*>* TaggedData)
+    : PostStmt(S, TaggedData) {
     assert(getKind() == PostStmtCustomKind);
   }
+
+  const std::pair<const void*, const void*>& getTaggedPair() const {
+    return *reinterpret_cast<std::pair<const void*, const void*>*>(getData2());
+  }
   
-  void* getCustomData() const { return getData2(); }
+  const void* getTag() const { return getTaggedPair().first; }
+  
+  const void* getTaggedData() const { return getTaggedPair().second; }
     
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostStmtCustomKind;
