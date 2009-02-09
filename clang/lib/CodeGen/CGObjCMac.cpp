@@ -1854,20 +1854,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::BasicBlock *FinallyNoExit = CGF.createBasicBlock("finally.noexit");
   llvm::BasicBlock *FinallyRethrow = CGF.createBasicBlock("finally.throw");
   llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
-  llvm::Value *DestCode = 
-    CGF.CreateTempAlloca(llvm::Type::Int32Ty, "finally.dst");
-
-  // Generate jump code. Done here so we can directly add things to
-  // the switch instruction.
-  llvm::BasicBlock *FinallyJump = CGF.createBasicBlock("finally.jump");
-  llvm::SwitchInst *FinallySwitch = 
-    llvm::SwitchInst::Create(new llvm::LoadInst(DestCode, "", FinallyJump), 
-                             FinallyEnd, 10, FinallyJump);
 
   // Push an EH context entry, used for handling rethrows and jumps
   // through finally.
-  CodeGenFunction::ObjCEHEntry EHEntry(FinallyBlock, FinallySwitch, DestCode);
-  CGF.ObjCEHStack.push_back(&EHEntry);
+  CGF.PushCleanupBlock(FinallyBlock);
+
   CGF.ObjCEHValueStack.push_back(0);
   
   // Allocate memory for the exception data and rethrow pointer.
@@ -1904,7 +1895,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   CGF.EmitBlock(TryBlock);
   CGF.EmitStmt(isTry ? cast<ObjCAtTryStmt>(S).getTryBody() 
                      : cast<ObjCAtSynchronizedStmt>(S).getSynchBody());
-  CGF.EmitJumpThroughFinally(FinallyEnd);
+  CGF.EmitBranchThroughCleanup(FinallyEnd);
   
   // Emit the "exception in @try" block.
   CGF.EmitBlock(TryHandler);
@@ -1919,7 +1910,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
     CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
-    CGF.EmitJumpThroughFinally(FinallyRethrow);
+    CGF.EmitBranchThroughCleanup(FinallyRethrow);
   }
   else if (const ObjCAtCatchStmt* CatchStmt = 
            cast<ObjCAtTryStmt>(S).getCatchStmts()) 
@@ -1973,7 +1964,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         }
         
         CGF.EmitStmt(CatchStmt->getCatchBody());
-        CGF.EmitJumpThroughFinally(FinallyEnd);
+        CGF.EmitBranchThroughCleanup(FinallyEnd);
         break;
       }
       
@@ -2004,7 +1995,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       CGF.Builder.CreateStore(Tmp, CGF.GetAddrOfLocalVar(VD));
       
       CGF.EmitStmt(CatchStmt->getCatchBody());
-      CGF.EmitJumpThroughFinally(FinallyEnd);
+      CGF.EmitBranchThroughCleanup(FinallyEnd);
       
       CGF.EmitBlock(NextCatchBlock);
     }
@@ -2013,7 +2004,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // None of the handlers caught the exception, so store it to be
       // rethrown at the end of the @finally block.
       CGF.Builder.CreateStore(Caught, RethrowPtr);
-      CGF.EmitJumpThroughFinally(FinallyRethrow);
+      CGF.EmitBranchThroughCleanup(FinallyRethrow);
     }
     
     // Emit the exception handler for the @catch blocks.
@@ -2022,17 +2013,18 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                                    ExceptionData), 
                             RethrowPtr);
     CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
-    CGF.EmitJumpThroughFinally(FinallyRethrow);
+    CGF.EmitBranchThroughCleanup(FinallyRethrow);
   } else {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
     CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
-    CGF.EmitJumpThroughFinally(FinallyRethrow);
+    CGF.EmitBranchThroughCleanup(FinallyRethrow);
   }
   
   // Pop the exception-handling stack entry. It is important to do
   // this now, because the code in the @finally block is not in this
   // context.
-  CGF.ObjCEHStack.pop_back();
+  CodeGenFunction::CleanupBlockInfo Info = CGF.PopCleanupBlock();
+
   CGF.ObjCEHValueStack.pop_back();
   
   // Emit the @finally block.
@@ -2059,8 +2051,12 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     CGF.Builder.CreateCall(ObjCTypes.SyncExitFn, Arg);
   }
 
-  CGF.EmitBlock(FinallyJump);
- 
+  // Emit the switch block
+  if (Info.SwitchBlock)
+    CGF.EmitBlock(Info.SwitchBlock);
+  if (Info.EndBlock)
+    CGF.EmitBlock(Info.EndBlock);
+  
   CGF.EmitBlock(FinallyRethrow);
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, 
                          CGF.Builder.CreateLoad(RethrowPtr));
