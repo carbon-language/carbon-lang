@@ -747,12 +747,6 @@ class OptionParser:
         self.dAOption = self.addOption(FlagOption('-dA', self.dGroup))
         self.dMOption = self.addOption(FlagOption('-dM', self.dGroup))
         self.dOption = self.addOption(FlagOption('-d', self.dGroup))
-
-        # Use a group for this in anticipation of adding more -d
-        # options explicitly. Note that we don't put many -d things in
-        # the -d group (like -dylinker, or '-d' by itself) because it
-        # is really a gcc bug that it ships these to cc1.
-        self.dGroup = OptionGroup('-d')
         self.addOption(JoinedOption('-d', group=self.dGroup))
 
         self.gGroup = OptionGroup('-g')
