@@ -861,22 +861,29 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
 
   // If there is a last use in the same bb, we can't remove the live range.
   // Shorten the live interval and return.
-  if (TrimLiveIntervalToLastUse(CopyIdx, CopyMI->getParent(), li, LR))
+  MachineBasicBlock *CopyMBB = CopyMI->getParent();
+  if (TrimLiveIntervalToLastUse(CopyIdx, CopyMBB, li, LR))
     return false;
+
+  MachineBasicBlock *StartMBB = li_->getMBBFromIndex(RemoveStart);
+  if (!isSameOrFallThroughBB(StartMBB, CopyMBB, tii_))
+    // If the live range starts in another mbb and the copy mbb is not a fall
+    // through mbb, then we can only cut the range from the beginning of the
+    // copy mbb.
+    RemoveStart = li_->getMBBStartIdx(CopyMBB) + 1;
 
   if (LR->valno->def == RemoveStart) {
     // If the def MI defines the val# and this copy is the only kill of the
     // val#, then propagate the dead marker.
-    if (!li.isOnlyLROfValNo(LR)) {
-      if (li.isKill(LR->valno, RemoveEnd))
-        li.removeKill(LR->valno, RemoveEnd);
-    } else {
+    if (li.isOnlyLROfValNo(LR)) {
       PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
       ++numDeadValNo;
     }
+    if (li.isKill(LR->valno, RemoveEnd))
+      li.removeKill(LR->valno, RemoveEnd);
   }
 
-  removeRange(li, RemoveStart, LR->end, li_, tri_);
+  removeRange(li, RemoveStart, RemoveEnd, li_, tri_);
   return removeIntervalIfEmpty(li, li_, tri_);
 }
 
