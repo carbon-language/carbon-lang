@@ -32,9 +32,9 @@ namespace clang {
 /// better information about the syntactic representation of the call.
 class CXXOperatorCallExpr : public CallExpr {
 public:
-  CXXOperatorCallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
-                      SourceLocation operatorloc)
-    : CallExpr(CXXOperatorCallExprClass, fn, args, numargs, t, operatorloc) { }
+  CXXOperatorCallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
+                      QualType t, SourceLocation operatorloc)
+    : CallExpr(C, CXXOperatorCallExprClass, fn, args, numargs, t, operatorloc){}
 
   /// getOperator - Returns the kind of overloaded operator that this
   /// expression refers to.
@@ -65,9 +65,9 @@ public:
 /// the object argument).
 class CXXMemberCallExpr : public CallExpr {
 public:
-  CXXMemberCallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
-                      SourceLocation rparenloc)
-    : CallExpr(CXXMemberCallExprClass, fn, args, numargs, t, rparenloc) { }
+  CXXMemberCallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
+                    QualType t, SourceLocation rparenloc)
+    : CallExpr(C, CXXMemberCallExprClass, fn, args, numargs, t, rparenloc) {}
 
   /// getImplicitObjectArgument - Retrieves the implicit object
   /// argument for the member call. For example, in "x.f(5)", this

@@ -105,30 +105,41 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 // Postfix Operators.
 //===----------------------------------------------------------------------===//
 
-CallExpr::CallExpr(StmtClass SC, Expr *fn, Expr **args,
+CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args,
                    unsigned numargs, QualType t, SourceLocation rparenloc)
   : Expr(SC, t, 
          fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
          fn->isValueDependent() || hasAnyValueDependentArguments(args, numargs)),
     NumArgs(numargs) {
-  SubExprs = new Stmt*[numargs+1];
+      
+  SubExprs = new (C) Stmt*[numargs+1];
   SubExprs[FN] = fn;
   for (unsigned i = 0; i != numargs; ++i)
     SubExprs[i+ARGS_START] = args[i];
+
   RParenLoc = rparenloc;
 }
 
-CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
-                   SourceLocation rparenloc)
+CallExpr::CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
+                   QualType t, SourceLocation rparenloc)
   : Expr(CallExprClass, t,
          fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
          fn->isValueDependent() || hasAnyValueDependentArguments(args, numargs)),
     NumArgs(numargs) {
-  SubExprs = new Stmt*[numargs+1];
+
+  SubExprs = new (C) Stmt*[numargs+1];
   SubExprs[FN] = fn;
   for (unsigned i = 0; i != numargs; ++i)
     SubExprs[i+ARGS_START] = args[i];
+
   RParenLoc = rparenloc;
+}
+
+void CallExpr::Destroy(ASTContext& C) {
+  DestroyChildren(C);
+  if (SubExprs) C.Deallocate(SubExprs);
+  this->~CallExpr();
+  C.Deallocate(this);
 }
 
 /// setNumArgs - This changes the number of arguments present in this call.

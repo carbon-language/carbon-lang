@@ -770,13 +770,16 @@ class CallExpr : public Expr {
 
 protected:
   // This version of the constructor is for derived classes.
-  CallExpr(StmtClass SC, Expr *fn, Expr **args, unsigned numargs, QualType t, 
-           SourceLocation rparenloc);
+  CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args, unsigned numargs,
+           QualType t, SourceLocation rparenloc);
   
 public:
-  CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t, 
+  CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs, QualType t, 
            SourceLocation rparenloc);
-  ~CallExpr() { delete [] SubExprs; }
+  
+  ~CallExpr() {}
+  
+  void Destroy(ASTContext& C);
   
   const Expr *getCallee() const { return cast<Expr>(SubExprs[FN]); }
   Expr *getCallee() { return cast<Expr>(SubExprs[FN]); }
@@ -795,12 +798,19 @@ public:
     assert(Arg < NumArgs && "Arg access out of range!");
     return cast<Expr>(SubExprs[Arg+ARGS_START]);
   }
+  
+  // FIXME: Why is this needed?  Why not just create the CallExpr with the
+  // corect number of arguments?  It makes the ASTs less brittle.
   /// setArg - Set the specified argument.
   void setArg(unsigned Arg, Expr *ArgExpr) {
     assert(Arg < NumArgs && "Arg access out of range!");
     SubExprs[Arg+ARGS_START] = ArgExpr;
   }
   
+  // FIXME: It would be great to just get rid of this.  There is only one
+  // callee of this method, and it probably could be refactored to not use
+  // this method and instead just create a CallExpr with the right number of
+  // arguments.
   /// setNumArgs - This changes the number of arguments present in this call.
   /// Any orphaned expressions are deleted by this, and any new operands are set
   /// to null.

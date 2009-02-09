@@ -1226,8 +1226,8 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
         UsualUnaryConversions(FnExpr);
 
         Input.release();
-        return Owned(new (Context)CXXOperatorCallExpr(FnExpr, Args, 2, ResultTy, 
-                                                   OpLoc));
+        return Owned(new (Context) CXXOperatorCallExpr(Context, FnExpr, Args, 2,
+                                                       ResultTy, OpLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
@@ -1326,7 +1326,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
 
         Base.release();
         Idx.release();
-        return Owned(new (Context) CXXOperatorCallExpr(FnExpr, Args, 2, 
+        return Owned(new (Context) CXXOperatorCallExpr(Context, FnExpr, Args, 2, 
                                                        ResultTy, LLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then
@@ -1850,7 +1850,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       Dependent = true;
 
     if (Dependent)
-      return Owned(new (Context) CallExpr(Fn, Args, NumArgs,
+      return Owned(new (Context) CallExpr(Context, Fn, Args, NumArgs,
                                           Context.DependentTy, RParenLoc));
 
     // Determine whether this is a call to an object (C++ [over.call.object]).
@@ -1943,8 +1943,10 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // of arguments and function on error.
   // FIXME: Except that llvm::OwningPtr uses delete, when it really must be
   // Destroy(), or nothing gets cleaned up.
-  ExprOwningPtr<CallExpr> TheCall(this, new (Context) CallExpr(Fn, Args,NumArgs,
-                                                 Context.BoolTy, RParenLoc));
+  ExprOwningPtr<CallExpr> TheCall(this, new (Context) CallExpr(Context, Fn,
+                                                               Args, NumArgs,
+                                                               Context.BoolTy,
+                                                               RParenLoc));
 
   const FunctionType *FuncT;
   if (!Fn->getType()->isBlockPointerType()) {
@@ -3795,7 +3797,7 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                                  SourceLocation());
         UsualUnaryConversions(FnExpr);
 
-        return Owned(new (Context) CXXOperatorCallExpr(FnExpr, Args, 2, 
+        return Owned(new (Context) CXXOperatorCallExpr(Context, FnExpr, Args, 2, 
                                                        ResultTy, TokLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then
@@ -3897,7 +3899,7 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
         UsualUnaryConversions(FnExpr);
 
         input.release();
-        return Owned(new (Context) CXXOperatorCallExpr(FnExpr, &Input, 1,
+        return Owned(new (Context) CXXOperatorCallExpr(Context, FnExpr, &Input, 1,
                                                        ResultTy, OpLoc));
       } else {
         // We matched a built-in operator. Convert the arguments, then

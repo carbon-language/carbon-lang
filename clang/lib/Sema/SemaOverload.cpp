@@ -2123,7 +2123,11 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
                             SourceLocation());
   ImplicitCastExpr ConversionFn(Context.getPointerType(Conversion->getType()),
                                 &ConversionRef, false);
-  CallExpr Call(&ConversionFn, 0, 0, 
+  
+  // Note that it is safe to allocate CallExpr on the stack here because 
+  // there are 0 arguments (i.e., nothing is allocated using ASTContext's
+  // allocator).
+  CallExpr Call(Context, &ConversionFn, 0, 0, 
                 Conversion->getConversionType().getNonReferenceType(),
                 SourceLocation());
   ImplicitConversionSequence ICS = TryCopyInitialization(&Call, ToType, true);
@@ -3648,7 +3652,8 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
   assert(Method && "Member call to something that isn't a method?");
   ExprOwningPtr<CXXMemberCallExpr> 
-    TheCall(this, new (Context) CXXMemberCallExpr(MemExpr, Args, NumArgs, 
+    TheCall(this, new (Context) CXXMemberCallExpr(Context, MemExpr, Args,
+                                                  NumArgs, 
                                   Method->getResultType().getNonReferenceType(),
                                   RParenLoc));
 
@@ -3815,7 +3820,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   // owned.
   QualType ResultTy = Method->getResultType().getNonReferenceType();
   ExprOwningPtr<CXXOperatorCallExpr> 
-    TheCall(this, new (Context) CXXOperatorCallExpr(NewFn, MethodArgs,
+    TheCall(this, new (Context) CXXOperatorCallExpr(Context, NewFn, MethodArgs,
                                                     NumArgs + 1,
                                                     ResultTy, RParenLoc));
   delete [] MethodArgs;
@@ -3928,7 +3933,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
   Expr *FnExpr = new (Context) DeclRefExpr(Method, Method->getType(),
                                            SourceLocation());
   UsualUnaryConversions(FnExpr);
-  Base = new (Context) CXXOperatorCallExpr(FnExpr, &Base, 1, 
+  Base = new (Context) CXXOperatorCallExpr(Context, FnExpr, &Base, 1, 
                                  Method->getResultType().getNonReferenceType(),
                                  OpLoc);
   return ActOnMemberReferenceExpr(S, ExprArg(*this, Base), OpLoc, tok::arrow,

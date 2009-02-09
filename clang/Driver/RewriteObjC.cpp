@@ -1778,7 +1778,8 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
   
   const FunctionType *FT = msgSendType->getAsFunctionType();
   
-  return new (Context) CallExpr(ICE, args, nargs, FT->getResultType(), SourceLocation());
+  return new (Context) CallExpr(*Context, ICE, args, nargs, FT->getResultType(),
+                                SourceLocation());
 }
 
 static bool scanForProtocolRefs(const char *startBuf, const char *endBuf,
@@ -2311,8 +2312,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         // Simulate a contructor call...
         DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl, 
                                            superType, SourceLocation());
-        SuperRep = new (Context) CallExpr(DRE, &InitExprs[0], InitExprs.size(), 
-                                superType, SourceLocation());
+        SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
+                                          InitExprs.size(), 
+                                          superType, SourceLocation());
         // The code for super is a little tricky to prevent collision with
         // the structure definition in the header. The rewriter has it's own
         // internal definition (__rw_objc_super) that is uses. This is why
@@ -2394,8 +2396,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         // Simulate a contructor call...
         DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl, 
                                            superType, SourceLocation());
-        SuperRep = new (Context) CallExpr(DRE, &InitExprs[0], InitExprs.size(), 
-                                superType, SourceLocation());
+        SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
+                                          InitExprs.size(), 
+                                          superType, SourceLocation());
         // The code for super is a little tricky to prevent collision with
         // the structure definition in the header. The rewriter has it's own
         // internal definition (__rw_objc_super) that is uses. This is why
@@ -2521,8 +2524,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
   
   const FunctionType *FT = msgSendType->getAsFunctionType();
-  CallExpr *CE = new (Context) CallExpr(PE, &MsgExprs[0], MsgExprs.size(), 
-                              FT->getResultType(), SourceLocation());
+  CallExpr *CE = new (Context) CallExpr(*Context, PE, &MsgExprs[0],
+                                        MsgExprs.size(), 
+                                        FT->getResultType(), SourceLocation());
   Stmt *ReplacingStmt = CE;
   if (MsgSendStretFlavor) {
     // We have the method which returns a struct/union. Must also generate
@@ -2548,8 +2552,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
     
     FT = msgSendType->getAsFunctionType();
-    CallExpr *STCE = new (Context) CallExpr(PE, &MsgExprs[0], MsgExprs.size(), 
-                                  FT->getResultType(), SourceLocation());
+    CallExpr *STCE = new (Context) CallExpr(*Context, PE, &MsgExprs[0],
+                                            MsgExprs.size(), 
+                                            FT->getResultType(), SourceLocation());
     
     // Build sizeof(returnType)
     SizeOfAlignOfExpr *sizeofExpr = new (Context) SizeOfAlignOfExpr(true, true,
@@ -3864,7 +3869,8 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
        E = Exp->arg_end(); I != E; ++I) {
     BlkExprs.push_back(*I);
   }
-  CallExpr *CE = new (Context) CallExpr(PE, &BlkExprs[0], BlkExprs.size(),
+  CallExpr *CE = new (Context) CallExpr(*Context, PE, &BlkExprs[0],
+                                        BlkExprs.size(),
                                         Exp->getType(), SourceLocation());
   return CE;
 }
@@ -4157,8 +4163,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
       InitExprs.push_back(Exp); 
     }
   }
-  NewRep = new (Context) CallExpr(DRE, &InitExprs[0], InitExprs.size(),
-                        FType, SourceLocation());
+  NewRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0], InitExprs.size(),
+                                  FType, SourceLocation());
   NewRep = new (Context) UnaryOperator(NewRep, UnaryOperator::AddrOf,
                              Context->getPointerType(NewRep->getType()), 
                              SourceLocation());

@@ -402,7 +402,6 @@ CallExpr* CallExpr::CreateImpl(Deserializer& D, ASTContext& C, StmtClass SC) {
   unsigned NumArgs = D.ReadInt();
   Stmt** SubExprs = new (C, llvm::alignof<Stmt*>()) Stmt*[NumArgs+1];
   D.BatchReadOwnedPtrs(NumArgs+1, SubExprs, C);
-
   return new (C, llvm::alignof<CallExpr>()) CallExpr(SC, SubExprs,NumArgs,t,L);  
 }
 
