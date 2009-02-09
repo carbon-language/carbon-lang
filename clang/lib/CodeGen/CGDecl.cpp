@@ -178,7 +178,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (Ty->isVariablyModifiedType())
       EmitVLASize(Ty);
   } else {
-    if (!StackSaveValues.back()) {
+    if (!DidCallStackSave) {
       // Save the stack.
       const llvm::Type *LTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
       llvm::Value *Stack = CreateTempAlloca(LTy, "saved_stack");
@@ -187,9 +187,19 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       llvm::Value *V = Builder.CreateCall(F);
       
       Builder.CreateStore(V, Stack);
+
+      DidCallStackSave = true;
       
-      StackSaveValues.back() = StackDepth = Stack;
+      {
+        // Push a cleanup block and restore the stack there.
+        CleanupScope scope(*this);
+      
+        V = Builder.CreateLoad(Stack, "tmp");
+        llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
+        Builder.CreateCall(F, V);
+      }
     }
+    
     // Get the element type.
     const llvm::Type *LElemTy = ConvertType(Ty);    
     const llvm::Type *LElemPtrTy =
