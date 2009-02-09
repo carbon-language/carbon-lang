@@ -1112,7 +1112,7 @@ Parser::OwningExprResult
 Parser::ParseParenExpression(ParenParseOption &ExprType,
                              TypeTy *&CastTy, SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
-  MakeGreaterThanAnOperator G(GreaterThanIsOperator);
+  GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
   SourceLocation OpenLoc = ConsumeParen();
   OwningExprResult Result(Actions, true);
   CastTy = 0;

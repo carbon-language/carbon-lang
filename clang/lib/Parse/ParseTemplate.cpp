@@ -371,13 +371,17 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
   TemplateArgList TemplateArgs;
   TemplateArgIsTypeList TemplateArgIsType;
   {
-    MakeGreaterThanTemplateArgumentListTerminator G(GreaterThanIsOperator);
+    GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);
     if (Tok.isNot(tok::greater) && 
         ParseTemplateArgumentList(TemplateArgs, TemplateArgIsType)) {
       // Try to find the closing '>'.
       SkipUntil(tok::greater, true, true);
+
+      // Clean up any template arguments that we successfully parsed.
+      ASTTemplateArgsPtr TemplateArgsPtr(Actions, &TemplateArgs[0],
+                                         &TemplateArgIsType[0],
+                                         TemplateArgs.size());
       
-      // FIXME: What's our recovery strategy for failed template-argument-lists?
       return;
     }
   }

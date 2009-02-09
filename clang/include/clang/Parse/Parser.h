@@ -64,34 +64,18 @@ class Parser {
   /// argument list.
   bool GreaterThanIsOperator;
 
-  /// \brief RAII object that makes '>' behave like the closing angle
-  /// bracket for a template argument list.
-  struct MakeGreaterThanTemplateArgumentListTerminator {
+  /// \brief RAII object that makes '>' behave either as an operator
+  /// or as the closing angle bracket for a template argument list.
+  struct GreaterThanIsOperatorScope {
     bool &GreaterThanIsOperator;
     bool OldGreaterThanIsOperator;
    
-    MakeGreaterThanTemplateArgumentListTerminator(bool &GTIO)
+    GreaterThanIsOperatorScope(bool &GTIO, bool Val)
       : GreaterThanIsOperator(GTIO), OldGreaterThanIsOperator(GTIO) { 
-      GTIO = false;
+      GreaterThanIsOperator = Val;
     }
 
-    ~MakeGreaterThanTemplateArgumentListTerminator() {
-      GreaterThanIsOperator = OldGreaterThanIsOperator;
-    }
-  };
-
-  /// \brief RAII object that makes '>' behave like an
-  /// operator. Occurs, for example, inside parentheses.
-  struct MakeGreaterThanAnOperator {
-    bool &GreaterThanIsOperator;
-    bool OldGreaterThanIsOperator;
-   
-    MakeGreaterThanAnOperator(bool &GTIO)
-      : GreaterThanIsOperator(GTIO), OldGreaterThanIsOperator(GTIO) { 
-      GTIO = true;
-    }
-
-    ~MakeGreaterThanAnOperator() {
+    ~GreaterThanIsOperatorScope() {
       GreaterThanIsOperator = OldGreaterThanIsOperator;
     }
   };
