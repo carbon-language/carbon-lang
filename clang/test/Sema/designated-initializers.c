@@ -151,3 +151,24 @@ struct XY { int before; struct XX xx, *xp; float* after; } xy[] = {
   0, // expected-warning{{initializer overrides prior initialization of this subobject}}
   &xy[2].xx.a, &xy[2].xx, &global_float
 };
+
+// PR3519
+struct foo {
+  int arr[10];
+};
+
+struct foo Y[10] = {
+  [1] .arr [1] = 2,
+  [4] .arr [2] = 4
+};
+
+struct bar {
+  struct foo f;
+  float *arr[10];
+};
+
+extern float f;
+struct bar saloon = {
+  .f.arr[3] = 1,
+  .arr = { &f }
+};

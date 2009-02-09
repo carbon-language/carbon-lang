@@ -1197,7 +1197,7 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
 
   // Check the remaining elements within this array subobject.
   bool prevHadError = hadError;
-  CheckArrayType(IList, CurrentObjectType, DesignatedStartIndex, true, Index,
+  CheckArrayType(IList, CurrentObjectType, DesignatedStartIndex, false, Index,
                  StructuredList, ElementIndex);
   return hadError && !prevHadError;  
 }
