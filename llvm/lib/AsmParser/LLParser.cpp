@@ -1025,7 +1025,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
       if (Result.get() == Type::LabelTy)
         return TokError("basic block pointers are invalid");
       if (Result.get() == Type::VoidTy)
-        return TokError("pointers to void are invalid, use i8* instead");
+        return TokError("pointers to void are invalid; use i8* instead");
       Result = HandleUpRefs(PointerType::getUnqual(Result.get()));
       Lex.Lex();
       break;
@@ -1035,7 +1035,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
       if (Result.get() == Type::LabelTy)
         return TokError("basic block pointers are invalid");
       if (Result.get() == Type::VoidTy)
-        return TokError("pointers to void are invalid, use i8* instead");
+        return TokError("pointers to void are invalid; use i8* instead");
       unsigned AddrSpace;
       if (ParseOptionalAddrSpace(AddrSpace) ||
           ParseToken(lltok::star, "expected '*' in address space"))
