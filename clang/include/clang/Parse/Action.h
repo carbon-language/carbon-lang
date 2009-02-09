@@ -108,7 +108,7 @@ public:
   typedef ASTMultiPtr<&ActionBase::DeleteExpr> MultiExprArg;
   typedef ASTMultiPtr<&ActionBase::DeleteStmt> MultiStmtArg;
   typedef ASTMultiPtr<&ActionBase::DeleteTemplateParams> MultiTemplateParamsArg;
-  typedef ASTMultiPtr<&ActionBase::DeleteTemplateArg> MultiTemplateArgArg;
+  typedef ASTMultiPtr<&ActionBase::DeleteTemplateArg> MultiTemplateArgsArg;
 
   // Utilities for Action implementations to return smart results.
 
@@ -149,13 +149,28 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
                                   const CXXScopeSpec *SS = 0) = 0;
 
-  /// isTemplateName - Determines whether the identifier II is a
-  /// template name in the current scope, and returns the template
-  /// declaration if II names a template. An optional CXXScope can be
-  /// passed to indicate the C++ scope in which the identifier will be
-  /// found. 
-  virtual DeclTy *isTemplateName(IdentifierInfo &II, Scope *S,
-                                 const CXXScopeSpec *SS = 0) = 0;
+  /// \brief Specifies the kind of template name. Returned from
+  /// isTemplateName.
+  enum TemplateNameKind {
+    /// The name does not refer to a template.
+    TNK_Non_template,
+    /// The name refers to a function template or a set of overloaded
+    /// functions that includes at least one function template.
+    TNK_Function_template,
+    /// The name refers to a class template.
+    TNK_Class_template,
+    /// The name referes to a template template parameter.
+    TNK_Template_template_parm
+  };
+
+  /// \brief Determines whether the identifier II is a template name
+  /// in the current scope. If so, the kind of template name is
+  /// returned, and \p TemplateDecl receives the declaration. An
+  /// optional CXXScope can be passed to indicate the C++ scope in
+  /// which the identifier will be found.
+  virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
+                                          DeclTy *&TemplateDecl,
+                                          const CXXScopeSpec *SS = 0) = 0;
 
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
@@ -1111,8 +1126,16 @@ public:
     return 0;
   }
 
-  // \brief Process the declaration or definition of a class template
-  // with the given template parameter lists.
+  virtual OwningTemplateArgResult ActOnTypeTemplateArgument(TypeTy *Type) {
+    return TemplateArgError();
+  }
+
+  virtual OwningTemplateArgResult ActOnExprTemplateArgument(ExprArg Value) {
+    return TemplateArgError();
+  }
+
+  /// \brief Process the declaration or definition of a class template
+  /// with the given template parameter lists.
   virtual DeclTy *
   ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                      SourceLocation KWLoc, const CXXScopeSpec &SS,
@@ -1122,7 +1145,25 @@ public:
     return 0;
   }
 
-  
+  /// \brief Form a class template specialization from a template and
+  /// a list of template arguments.
+  ///
+  /// \param Template  A template whose specialization results in a
+  /// type, e.g., a class template or template template parameter.
+  ///
+  /// \todo "Class template specialization" is the standard term for
+  /// the types that we're forming, but the name
+  /// ActOnClassTemplateSpecialization sounds like we're declaring a
+  /// new class template specialization.
+  virtual TypeTy * 
+  ActOnClassTemplateSpecialization(DeclTy *Template,
+                                   SourceLocation LAngleLoc,
+                                   MultiTemplateArgsArg TemplateArgs,
+                                   SourceLocation RAngleLoc,
+                                   const CXXScopeSpec *SS = 0) {
+    return 0;
+  };
+
   //===----------------------- Obj-C Declarations -------------------------===//
   
   // ActOnStartClassInterface - this action is called immediately after parsing
@@ -1372,13 +1413,9 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo& II, Scope *S,
                                   const CXXScopeSpec *SS);
 
-  /// isTemplateName - Determines whether the identifier II is a
-  /// template name in the current scope, and returns the template
-  /// declaration if II names a template. An optional CXXScope can be
-  /// passed to indicate the C++ scope in which the identifier will be
-  /// found. 
-  virtual DeclTy *isTemplateName(IdentifierInfo &II, Scope *S,
-                                 const CXXScopeSpec *SS = 0);
+  virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
+                                          DeclTy *&TemplateDecl,
+                                          const CXXScopeSpec *SS = 0);
 
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is

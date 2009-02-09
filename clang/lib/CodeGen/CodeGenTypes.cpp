@@ -176,6 +176,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   switch (Ty.getTypeClass()) {
   case Type::TypeName:        // typedef isn't canonical.
   case Type::TemplateTypeParm:// template type parameters never generated
+  case Type::ClassTemplateSpecialization: // these types are always sugar
   case Type::DependentSizedArray: // dependent types are never generated
   case Type::TypeOfExp:       // typeof isn't canonical.
   case Type::TypeOfTyp:       // typeof isn't canonical.

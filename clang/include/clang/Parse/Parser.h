@@ -58,6 +58,44 @@ class Parser {
 
   PragmaHandler *PackHandler;
 
+  /// Whether the '>' token acts as an operator or not. This will be
+  /// true except when we are parsing an expression within a C++
+  /// template argument list, where the '>' closes the template
+  /// argument list.
+  bool GreaterThanIsOperator;
+
+  /// \brief RAII object that makes '>' behave like the closing angle
+  /// bracket for a template argument list.
+  struct MakeGreaterThanTemplateArgumentListTerminator {
+    bool &GreaterThanIsOperator;
+    bool OldGreaterThanIsOperator;
+   
+    MakeGreaterThanTemplateArgumentListTerminator(bool &GTIO)
+      : GreaterThanIsOperator(GTIO), OldGreaterThanIsOperator(GTIO) { 
+      GTIO = false;
+    }
+
+    ~MakeGreaterThanTemplateArgumentListTerminator() {
+      GreaterThanIsOperator = OldGreaterThanIsOperator;
+    }
+  };
+
+  /// \brief RAII object that makes '>' behave like an
+  /// operator. Occurs, for example, inside parentheses.
+  struct MakeGreaterThanAnOperator {
+    bool &GreaterThanIsOperator;
+    bool OldGreaterThanIsOperator;
+   
+    MakeGreaterThanAnOperator(bool &GTIO)
+      : GreaterThanIsOperator(GTIO), OldGreaterThanIsOperator(GTIO) { 
+      GTIO = true;
+    }
+
+    ~MakeGreaterThanAnOperator() {
+      GreaterThanIsOperator = OldGreaterThanIsOperator;
+    }
+  };
+
 public:
   Parser(Preprocessor &PP, Action &Actions);
   ~Parser();
@@ -976,6 +1014,7 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 14: Templates [temp]
   typedef llvm::SmallVector<DeclTy *, 4> TemplateParameterList;
+  typedef Action::TemplateNameKind TemplateNameKind;
 
   // C++ 14.1: Template Parameters [temp.param]
   DeclTy *ParseTemplateDeclaration(unsigned Context);
@@ -991,7 +1030,8 @@ private:
   DeclTy *ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position);
   // C++ 14.3: Template arguments [temp.arg]
   typedef llvm::SmallVector<TemplateArgTy*, 8> TemplateArgList;
-  void AnnotateTemplateIdToken(DeclTy *Template, const CXXScopeSpec *SS = 0);
+  void AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
+                               const CXXScopeSpec *SS = 0);
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs);
   OwningTemplateArgResult ParseTemplateArgument();
 

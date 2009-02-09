@@ -13,6 +13,7 @@
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/STLExtras.h"
@@ -41,6 +42,11 @@ TemplateParameterList::Create(ASTContext &C, SourceLocation TemplateLoc,
   void *Mem = C.Allocate(Size, Align);
   return new (Mem) TemplateParameterList(TemplateLoc, LAngleLoc, Params, 
                                          NumParams, RAngleLoc);
+}
+
+void TemplateArg::Destroy(ASTContext &C) {
+  if (Kind == ExprArg)
+    getAsExpr()->Destroy(C);
 }
 
 //===----------------------------------------------------------------------===//

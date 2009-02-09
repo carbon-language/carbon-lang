@@ -30,6 +30,7 @@ namespace clang {
   class ASTContext;
   class Type;
   class TypedefDecl;
+  class TemplateDecl;
   class TemplateTypeParmDecl;
   class NonTypeTemplateParmDecl;
   class TemplateTemplateParamDecl;
@@ -69,6 +70,7 @@ namespace clang {
   class ObjCQualifiedIdType;
   class ObjCQualifiedInterfaceType;
   class StmtIteratorBase;
+  class ClassTemplateSpecializationType;
 
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -245,7 +247,7 @@ public:
     Vector, ExtVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, ASQual,
-    TemplateTypeParm,
+    TemplateTypeParm, ClassTemplateSpecialization,
     ObjCInterface, ObjCQualifiedInterface,
     ObjCQualifiedId,
     TypeOfExp, TypeOfTyp, // GNU typeof extension.
@@ -391,6 +393,9 @@ public:
   const ObjCQualifiedIdType *getAsObjCQualifiedIdType() const;
   const TemplateTypeParmType *getAsTemplateTypeParmType() const;
 
+  const ClassTemplateSpecializationType *
+    getClassTemplateSpecializationType() const;
+  
   /// getAsPointerToObjCInterfaceType - If this is a pointer to an ObjC
   /// interface, return the interface type, otherwise return null.
   const ObjCInterfaceType *getAsPointerToObjCInterfaceType() const;
@@ -399,8 +404,6 @@ public:
   /// element type of the array, potentially with type qualifiers missing.
   /// This method should never be used when type qualifiers are meaningful.
   const Type *getArrayElementTypeNoTypeQual() const;
-  
-
   
   /// getDesugaredType - Return the specified type with any "sugar" removed from
   /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
@@ -1388,6 +1391,127 @@ public:
     return T->getTypeClass() == TemplateTypeParm; 
   }
   static bool classof(const TemplateTypeParmType *T) { return true; }
+
+protected:
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  friend class Type;
+};
+
+/// \brief Represents the type of a class template specialization as
+/// written in the source code.
+///
+/// Class template specialization types represent the syntactic form
+/// of a template-id that refers to a type, e.g., @c vector<int>. All
+/// class template specialization types are syntactic sugar, whose
+/// canonical type will point to some other type node that represents
+/// the instantiation or class template specialization. For example, a
+/// class template specialization type of @c vector<int> will refer to
+/// a tag type for the instantiation
+/// @c std::vector<int, std::allocator<int>>.
+class ClassTemplateSpecializationType 
+  : public Type, public llvm::FoldingSetNode {
+
+  // FIXME: Do we want templates to have a representation in the type
+  // system? It will probably help with dependent templates and
+  // possibly with template-names preceded by a nested-name-specifier.
+  TemplateDecl *Template;
+
+  unsigned NumArgs;
+
+  ClassTemplateSpecializationType(TemplateDecl *T, unsigned NumArgs,
+                                  uintptr_t *Args, bool *ArgIsType,
+                                  QualType Canon);
+
+  /// \brief Retrieve the number of packed words that precede the
+  /// actual arguments.
+  ///
+  /// The flags that specify whether each argument is a type or an
+  /// expression are packed into the
+  /// ClassTemplateSpecializationType. This routine computes the
+  /// number of pointer-sized words we need to store this information,
+  /// based on the number of template arguments
+  static unsigned getNumPackedWords(unsigned NumArgs) {
+    const unsigned BitsPerWord = sizeof(uintptr_t) * CHAR_BIT;
+    return NumArgs / BitsPerWord + (NumArgs % BitsPerWord > 0);
+  }
+
+  /// \brief Pack the given boolean values into words.
+  static void 
+  packBooleanValues(unsigned NumArgs, bool *Values, uintptr_t *Words);
+  
+  friend class ASTContext;  // ASTContext creates these
+
+public:
+  /// \brief Retrieve the template that we are specializing.
+  TemplateDecl *getTemplate() const { return Template; }
+
+  /// \briefe Retrieve the number of template arguments.
+  unsigned getNumArgs() const { return NumArgs; }
+
+  /// \brief Retrieve a specific template argument as a type.
+  /// \precondition @c isArgType(Arg)
+  QualType getArgAsType(unsigned Arg) const {
+    assert(isArgType(Arg) && "Argument is not a type");
+    return QualType::getFromOpaquePtr(
+                          reinterpret_cast<void *>(getArgAsOpaqueValue(Arg)));
+  }
+
+  /// \brief Retrieve a specific template argument as an expression.
+  /// \precondition @c !isArgType(Arg)
+  Expr *getArgAsExpr(unsigned Arg) const {
+    assert(!isArgType(Arg) && "Argument is not an expression");
+    return reinterpret_cast<Expr *>(getArgAsOpaqueValue(Arg));
+  }
+
+  /// \brief Retrieve the specified template argument as an opaque value.
+  uintptr_t getArgAsOpaqueValue(unsigned Arg) const;
+
+  /// \brief Determine whether the given template argument is a type.
+  bool isArgType(unsigned Arg) const;
+
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    // Add the template
+    ID.AddPointer(Template);
+
+    // Add the packed words describing what kind of template arguments
+    // we have.
+    uintptr_t *Data = reinterpret_cast<uintptr_t *>(this + 1);
+    for (unsigned Packed = 0, NumPacked = getNumPackedWords(NumArgs); 
+         Packed != NumPacked; ++Packed)
+      ID.AddInteger(Data[Packed]);
+
+    // Add the template arguments themselves.
+    for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
+      ID.AddInteger(getArgAsOpaqueValue(Arg));
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID, TemplateDecl *T,
+                      unsigned NumArgs, uintptr_t *Args, bool *ArgIsType) {
+    // Add the template
+    ID.AddPointer(T);
+
+    // Add the packed words describing what kind of template arguments
+    // we have.
+    unsigned NumPackedWords = getNumPackedWords(NumArgs);
+    unsigned NumPackedBytes = NumPackedWords * sizeof(uintptr_t);
+    uintptr_t *PackedWords 
+      = reinterpret_cast<uintptr_t *>(alloca(NumPackedBytes));
+    packBooleanValues(NumArgs, ArgIsType, PackedWords);
+    for (unsigned Packed = 0; Packed != NumPackedWords; ++Packed)
+      ID.AddInteger(PackedWords[Packed]);
+
+    // Add the template arguments themselves.
+    for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
+      ID.AddInteger(Args[Arg]);
+  }
+
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == ClassTemplateSpecialization; 
+  }
+  static bool classof(const ClassTemplateSpecializationType *T) { return true; }
 
 protected:
   virtual void EmitImpl(llvm::Serializer& S) const;

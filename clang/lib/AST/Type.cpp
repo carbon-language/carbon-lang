@@ -489,6 +489,14 @@ const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
   return dyn_cast<TemplateTypeParmType>(CanonicalType);
 }
 
+const ClassTemplateSpecializationType *
+Type::getClassTemplateSpecializationType() const {
+  // There is no sugar for class template specialization types, so
+  // just return the canonical type pointer if it is the right class.
+  return dyn_cast<ClassTemplateSpecializationType>(CanonicalType);
+}
+
+
 bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
@@ -882,6 +890,54 @@ bool EnumType::classof(const TagType *TT) {
   return isa<EnumDecl>(TT->getDecl());
 }
 
+void 
+ClassTemplateSpecializationType::
+packBooleanValues(unsigned NumArgs, bool *Values, uintptr_t *Words) {
+  const unsigned BitsPerWord = sizeof(uintptr_t) * CHAR_BIT;
+
+  for (unsigned PW = 0, NumPackedWords = getNumPackedWords(NumArgs), Arg = 0;
+       PW != NumPackedWords; ++PW) {
+    uintptr_t Word = 0;
+    for (unsigned Bit = 0; Bit < BitsPerWord && Arg < NumArgs; ++Bit, ++Arg) {
+      Word <<= 1;
+      Word |= Values[Arg];
+    }
+    Words[PW] = Word;
+  }
+}
+
+ClassTemplateSpecializationType::
+ClassTemplateSpecializationType(TemplateDecl *T, unsigned NumArgs,
+                                uintptr_t *Args, bool *ArgIsType,
+                                QualType Canon)
+  : Type(ClassTemplateSpecialization, Canon, /*FIXME:Dependent=*/false),
+    Template(T), NumArgs(NumArgs) 
+{
+  uintptr_t *Data = reinterpret_cast<uintptr_t *>(this + 1);
+
+  // Pack the argument-is-type values into the words just after the
+  // class template specialization type.
+  packBooleanValues(NumArgs, ArgIsType, Data);
+
+  // Copy the template arguments after the packed words.
+  Data += getNumPackedWords(NumArgs);
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
+    Data[Arg] = Args[Arg];
+}
+
+uintptr_t
+ClassTemplateSpecializationType::getArgAsOpaqueValue(unsigned Arg) const {
+  const uintptr_t *Data = reinterpret_cast<const uintptr_t *>(this + 1);
+  Data += getNumPackedWords(NumArgs);
+  return Data[Arg];
+}
+
+bool ClassTemplateSpecializationType::isArgType(unsigned Arg) const {
+  const unsigned BitsPerWord = sizeof(uintptr_t) * CHAR_BIT;
+  const uintptr_t *Data = reinterpret_cast<const uintptr_t *>(this + 1);
+  Data += Arg / BitsPerWord;
+  return (*Data >> (Arg % BitsPerWord)) & 0x01;
+}
 
 //===----------------------------------------------------------------------===//
 // Type Printing
@@ -1144,6 +1200,47 @@ void TemplateTypeParmType::getAsStringInternal(std::string &InnerString) const {
       llvm::utostr_32(Index) + InnerString;
   else
     InnerString = Name->getName() + InnerString;
+}
+
+void 
+ClassTemplateSpecializationType::
+getAsStringInternal(std::string &InnerString) const {
+  std::string SpecString = Template->getNameAsString();
+  SpecString += '<';
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
+    if (Arg)
+      SpecString += ", ";
+    
+    // Print the argument into a string.
+    std::string ArgString;
+    if (isArgType(Arg))
+      getArgAsType(Arg).getAsStringInternal(ArgString);
+    else {
+      llvm::raw_string_ostream s(ArgString);
+      getArgAsExpr(Arg)->printPretty(s);
+    }
+
+    // If this is the first argument and its string representation
+    // begins with the global scope specifier ('::foo'), add a space
+    // to avoid printing the diagraph '<:'.
+    if (!Arg && !ArgString.empty() && ArgString[0] == ':')
+      SpecString += ' ';
+
+    SpecString += ArgString;
+  }
+
+  // If the last character of our string is '>', add another space to
+  // keep the two '>''s separate tokens. We don't *have* to do this in
+  // C++0x, but it's still good hygiene.
+  if (SpecString[SpecString.size() - 1] == '>')
+    SpecString += ' ';
+
+  SpecString += '>';
+
+  if (InnerString.empty())
+    InnerString.swap(SpecString);
+  else
+    InnerString = SpecString + ' ' + InnerString;
 }
 
 void ObjCInterfaceType::getAsStringInternal(std::string &InnerString) const {

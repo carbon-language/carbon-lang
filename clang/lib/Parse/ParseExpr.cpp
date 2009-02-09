@@ -55,8 +55,17 @@ namespace prec {
 /// getBinOpPrecedence - Return the precedence of the specified binary operator
 /// token.  This returns:
 ///
-static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
+static prec::Level getBinOpPrecedence(tok::TokenKind Kind, 
+                                      bool GreaterThanIsOperator) {
   switch (Kind) {
+  case tok::greater:
+    // The '>' token can act as either an operator or as the ending
+    // token for a template argument list.  
+    // FIXME: '>>' is similar, for error recovery and C++0x.
+    if (GreaterThanIsOperator)
+      return prec::Relational;
+    return prec::Unknown;
+      
   default:                        return prec::Unknown;
   case tok::comma:                return prec::Comma;
   case tok::equal:
@@ -80,8 +89,7 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
   case tok::equalequal:           return prec::Equality;
   case tok::lessequal:
   case tok::less:
-  case tok::greaterequal:
-  case tok::greater:              return prec::Relational;
+  case tok::greaterequal:         return prec::Relational;
   case tok::lessless:
   case tok::greatergreater:       return prec::Shift;
   case tok::plus:
@@ -266,7 +274,7 @@ Parser::OwningExprResult Parser::ParseConstantExpression() {
 /// LHS and has a precedence of at least MinPrec.
 Parser::OwningExprResult
 Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
-  unsigned NextTokPrec = getBinOpPrecedence(Tok.getKind());
+  unsigned NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator);
   SourceLocation ColonLoc;
 
   while (1) {
@@ -316,7 +324,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
     unsigned ThisPrec = NextTokPrec;
-    NextTokPrec = getBinOpPrecedence(Tok.getKind());
+    NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator);
 
     // Assignment and conditional expressions are right-associative.
     bool isRightAssoc = ThisPrec == prec::Conditional ||
@@ -335,7 +343,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
       if (RHS.isInvalid())
         return move(RHS);
 
-      NextTokPrec = getBinOpPrecedence(Tok.getKind());
+      NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator);
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
 
@@ -1104,6 +1112,7 @@ Parser::OwningExprResult
 Parser::ParseParenExpression(ParenParseOption &ExprType,
                              TypeTy *&CastTy, SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
+  MakeGreaterThanAnOperator G(GreaterThanIsOperator);
   SourceLocation OpenLoc = ConsumeParen();
   OwningExprResult Result(Actions, true);
   CastTy = 0;

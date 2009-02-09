@@ -13,6 +13,7 @@
 
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/Bitcode/Serialize.h"
@@ -374,6 +375,48 @@ Type* TemplateTypeParmType::CreateImpl(ASTContext& Context, Deserializer& D) {
   unsigned Index = D.ReadInt();
   IdentifierInfo *Name = D.ReadPtr<IdentifierInfo>();
   return Context.getTemplateTypeParmType(Depth, Index, Name).getTypePtr();
+}
+
+//===----------------------------------------------------------------------===//
+// ClassTemplateSpecializationType
+//===----------------------------------------------------------------------===//
+
+void ClassTemplateSpecializationType::EmitImpl(Serializer& S) const {
+  S.Emit(getCanonicalTypeInternal());
+  S.EmitPtr(Template);
+  S.EmitInt(NumArgs);
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
+    S.EmitBool(isArgType(Arg));
+    if (isArgType(Arg))
+      S.Emit(getArgAsType(Arg));
+    else
+      S.EmitOwnedPtr(getArgAsExpr(Arg));
+  }
+}
+
+Type* 
+ClassTemplateSpecializationType::
+CreateImpl(ASTContext& Context, Deserializer& D) {
+  llvm::SmallVector<uintptr_t, 16> Args;
+  llvm::SmallVector<bool, 16> ArgIsType;
+
+  QualType Canon = QualType::ReadVal(D);
+  TemplateDecl *Template = cast<TemplateDecl>(D.ReadPtr<Decl>());
+  unsigned NumArgs = D.ReadInt();
+
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
+    bool IsType = D.ReadBool();
+    ArgIsType.push_back(IsType);
+    if (IsType)
+      Args.push_back(
+         reinterpret_cast<uintptr_t>(QualType::ReadVal(D).getAsOpaquePtr()));
+    else
+      Args.push_back(reinterpret_cast<uintptr_t>(D.ReadOwnedPtr<Expr>(Context)));
+  }
+
+  return Context.getClassTemplateSpecializationType(Template, NumArgs,
+                                                    &Args[0], &ArgIsType[0],
+                                                    Canon).getTypePtr();
 }
 
 //===----------------------------------------------------------------------===//

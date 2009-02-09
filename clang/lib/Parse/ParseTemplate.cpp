@@ -15,6 +15,7 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "AstGuard.h"
 
 using namespace clang;
 
@@ -354,7 +355,8 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
 /// AnnotateTemplateIdToken - The current token is an identifier that
 /// refers to the template declaration Template, and is followed by a
 /// '<'. Turn this template-id into a template-id annotation token.
-void Parser::AnnotateTemplateIdToken(DeclTy *Template, const CXXScopeSpec *SS) {
+void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
+                                     const CXXScopeSpec *SS) {
   assert(getLang().CPlusPlus && "Can only annotate template-ids in C++");
   assert(Template && Tok.is(tok::identifier) && NextToken().is(tok::less) &&
          "Parser isn't at the beginning of a template-id");
@@ -366,13 +368,16 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, const CXXScopeSpec *SS) {
   SourceLocation LAngleLoc = ConsumeToken();
 
   // Parse the optional template-argument-list.
-  TemplateArgList TemplateArgs;
-  if (Tok.isNot(tok::greater) && ParseTemplateArgumentList(TemplateArgs)) {
-    // Try to find the closing '>'.
-    SkipUntil(tok::greater, true, true);
-
-    // FIXME: What's our recovery strategy for failed template-argument-lists?
-    return;
+  ASTVector<&ActionBase::DeleteTemplateArg, 8> TemplateArgs(Actions);
+  {
+    MakeGreaterThanTemplateArgumentListTerminator G(GreaterThanIsOperator);
+    if (Tok.isNot(tok::greater) && ParseTemplateArgumentList(TemplateArgs)) {
+      // Try to find the closing '>'.
+      SkipUntil(tok::greater, true, true);
+      
+      // FIXME: What's our recovery strategy for failed template-argument-lists?
+      return;
+    }
   }
 
   if (Tok.isNot(tok::greater))
@@ -382,23 +387,40 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, const CXXScopeSpec *SS) {
   // token, because we'll be replacing it with the template-id.
   SourceLocation RAngleLoc = Tok.getLocation();
   
-  Tok.setKind(tok::annot_template_id);
+  // Build the annotation token.
+  if (TNK == Action::TNK_Function_template) {
+    // This is a function template. We'll be building a template-id
+    // annotation token.
+    TemplateArgs.take(); // Annotation token takes ownership
+    Tok.setKind(tok::annot_template_id);    
+    TemplateIdAnnotation *TemplateId 
+      = (TemplateIdAnnotation *)malloc(sizeof(TemplateIdAnnotation) + 
+                                  sizeof(TemplateArgTy*) * TemplateArgs.size());
+    TemplateId->TemplateNameLoc = TemplateNameLoc;
+    TemplateId->Template = Template;
+    TemplateId->LAngleLoc = LAngleLoc;
+    TemplateId->NumArgs = TemplateArgs.size();
+    TemplateArgTy **Args = (TemplateArgTy**)(TemplateId + 1);
+    for (unsigned Arg = 0, ArgEnd = TemplateArgs.size(); Arg != ArgEnd; ++Arg)
+      Args[Arg] = TemplateArgs[Arg];
+    Tok.setAnnotationValue(TemplateId);
+  } else {
+    // This is a type template, e.g., a class template, template
+    // template parameter, or template alias. We'll be building a
+    // "typename" annotation token.
+    TypeTy *Ty 
+      = Actions.ActOnClassTemplateSpecialization(Template,LAngleLoc,
+                                                 move_arg(TemplateArgs),
+                                                 RAngleLoc, SS);
+    Tok.setKind(tok::annot_typename);
+    Tok.setAnnotationValue(Ty);
+  }
+
+  // Common fields for the annotation token
   Tok.setAnnotationEndLoc(RAngleLoc);
   Tok.setLocation(TemplateNameLoc);
   if (SS && SS->isNotEmpty())
     Tok.setLocation(SS->getBeginLoc());
-
-  TemplateIdAnnotation *TemplateId 
-    = (TemplateIdAnnotation *)malloc(sizeof(TemplateIdAnnotation) + 
-                                  sizeof(TemplateArgTy*) * TemplateArgs.size());
-  TemplateId->TemplateNameLoc = TemplateNameLoc;
-  TemplateId->Template = Template;
-  TemplateId->LAngleLoc = LAngleLoc;
-  TemplateId->NumArgs = TemplateArgs.size();
-  TemplateArgTy **Args = (TemplateArgTy**)(TemplateId + 1);
-  for (unsigned Arg = 0, ArgEnd = TemplateArgs.size(); Arg != ArgEnd; ++Arg)
-    Args[Arg] = TemplateArgs[Arg];
-  Tok.setAnnotationValue(TemplateId);
 
   // In case the tokens were cached, have Preprocessor replace them with the
   // annotation token.
@@ -412,8 +434,22 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, const CXXScopeSpec *SS) {
 ///         type-id
 ///         id-expression
 Parser::OwningTemplateArgResult Parser::ParseTemplateArgument() {
-  // FIXME: Implement this!
-  return TemplateArgError();
+  // C++ [temp.arg]p2:
+  //   In a template-argument, an ambiguity between a type-id and an
+  //   expression is resolved to a type-id, regardless of the form of
+  //   the corresponding template-parameter.
+  //
+  // Therefore, we initially try to parse a type-id.
+  if (isTypeIdInParens()) {
+    TypeTy *TypeArg = ParseTypeName();
+    return Actions.ActOnTypeTemplateArgument(TypeArg);
+  }
+
+  OwningExprResult ExprArg = ParseExpression();
+  if (ExprArg.isInvalid())
+    return TemplateArgError();
+
+  return Actions.ActOnExprTemplateArgument(move(ExprArg));
 }
 
 /// ParseTemplateArgumentList - Parse a C++ template-argument-list

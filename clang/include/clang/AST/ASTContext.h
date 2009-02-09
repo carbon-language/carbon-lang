@@ -69,6 +69,8 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::FoldingSet<TemplateTypeParmType> TemplateTypeParmTypes;
+  llvm::FoldingSet<ClassTemplateSpecializationType> 
+    ClassTemplateSpecializationTypes;
   llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
   llvm::FoldingSet<ObjCQualifiedIdType> ObjCQualifiedIdTypes;
   /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
@@ -261,6 +263,11 @@ public:
 
   QualType getTemplateTypeParmType(unsigned Depth, unsigned Index, 
                                    IdentifierInfo *Name = 0);
+
+  QualType getClassTemplateSpecializationType(TemplateDecl *Template,
+                                              unsigned NumArgs,
+                                              uintptr_t *Args, bool *ArgIsType,
+                                              QualType Canon);
 
   /// getObjCQualifiedInterfaceType - Return a 
   /// ObjCQualifiedInterfaceType type for the given interface decl and

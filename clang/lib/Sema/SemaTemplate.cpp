@@ -25,38 +25,43 @@ using namespace clang;
 /// declaration if II names a template. An optional CXXScope can be
 /// passed to indicate the C++ scope in which the identifier will be
 /// found. 
-Sema::DeclTy *Sema::isTemplateName(IdentifierInfo &II, Scope *S,
-                                   const CXXScopeSpec *SS) {
-  DeclContext *DC = 0;
-  
-  if (SS) {
-    if (SS->isInvalid())
-      return 0;
-    DC = static_cast<DeclContext*>(SS->getScopeRep());
-  }
+Sema::TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
+                                            DeclTy *&Template,
+                                            const CXXScopeSpec *SS) {
   NamedDecl *IIDecl = LookupParsedName(S, SS, &II, LookupOrdinaryName);
 
   if (IIDecl) {
-    // FIXME: We need to represent templates via some kind of
-    // TemplateDecl, because what follows is a hack that only works in
-    // one specific case.
-    if (isa<TemplateDecl>(IIDecl))
-      return IIDecl;
+    if (isa<TemplateDecl>(IIDecl)) {
+      Template = IIDecl;
+      if (isa<FunctionTemplateDecl>(IIDecl))
+        return TNK_Function_template;
+      else if (isa<ClassTemplateDecl>(IIDecl))
+        return TNK_Class_template;
+      else if (isa<TemplateTemplateParmDecl>(IIDecl))
+        return TNK_Template_template_parm;
+      else
+        assert(false && "Unknown TemplateDecl");
+    }
 
+    // FIXME: What follows is a gross hack.
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(IIDecl)) {
-      if (FD->getType()->isDependentType())
-        return FD;
+      if (FD->getType()->isDependentType()) {
+        Template = FD;
+        return TNK_Function_template;
+      }
     } else if (OverloadedFunctionDecl *Ovl 
                  = dyn_cast<OverloadedFunctionDecl>(IIDecl)) {
       for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
                                                   FEnd = Ovl->function_end();
            F != FEnd; ++F) {
-        if ((*F)->getType()->isDependentType())
-          return Ovl;
+        if ((*F)->getType()->isDependentType()) {
+          Template = Ovl;
+          return TNK_Function_template;
+        }
       }
     }
   }
-  return 0;
+  return TNK_Non_template;
 }
 
 /// DiagnoseTemplateParameterShadow - Produce a diagnostic complaining
@@ -226,6 +231,15 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
                                        (Decl**)Params, NumParams, RAngleLoc);
 }
 
+Sema::OwningTemplateArgResult Sema::ActOnTypeTemplateArgument(TypeTy *Type) {
+  return Owned(new (Context) TemplateArg(QualType::getFromOpaquePtr(Type)));
+}
+
+Sema::OwningTemplateArgResult 
+Sema::ActOnExprTemplateArgument(ExprArg Value) {
+  return Owned(new (Context) TemplateArg(static_cast<Expr *>(Value.release())));
+}
+
 Sema::DeclTy *
 Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                          SourceLocation KWLoc, const CXXScopeSpec &SS,
@@ -349,6 +363,42 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   PushOnScopeChains(NewTemplate, S);
 
   return NewTemplate;
+}
+
+Action::TypeTy * 
+Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,
+                                       SourceLocation LAngleLoc,
+                                       MultiTemplateArgsArg TemplateArgsIn,
+                                       SourceLocation RAngleLoc,
+                                       const CXXScopeSpec *SS) {
+  TemplateDecl *Template = cast<TemplateDecl>(static_cast<Decl *>(TemplateD));
+
+  // FIXME: Not happy about this. We should teach the parser to pass
+  // us opaque pointers + bools for template argument lists.
+  // FIXME: Also not happy about the fact that we leak these
+  // TemplateArg structures. Fixing the above will fix this, too.
+  llvm::SmallVector<uintptr_t, 16> Args;
+  llvm::SmallVector<bool, 16> ArgIsType;
+  unsigned NumArgs = TemplateArgsIn.size();
+  TemplateArg **TemplateArgs 
+    = reinterpret_cast<TemplateArg **>(TemplateArgsIn.release());
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
+    if (Expr *ExprArg = TemplateArgs[Arg]->getAsExpr()) {
+      Args.push_back(reinterpret_cast<uintptr_t>(ExprArg));
+      ArgIsType.push_back(false);
+    } else {
+      QualType T = TemplateArgs[Arg]->getAsType();
+      Args.push_back(reinterpret_cast<uintptr_t>(T.getAsOpaquePtr()));
+      ArgIsType.push_back(true);
+    }
+  }
+
+  // Yes, all class template specializations are just silly sugar for
+  // 'int'. Gotta problem wit dat?
+  return Context.getClassTemplateSpecializationType(Template, NumArgs,
+                                                    &Args[0], &ArgIsType[0],
+                                                    Context.IntTy)
+    .getAsOpaquePtr();
 }
 
 /// \brief Determine whether the given template parameter lists are

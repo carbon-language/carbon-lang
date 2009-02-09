@@ -20,7 +20,8 @@
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, Action &actions)
-  : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {
+  : PP(pp), Actions(actions), Diags(PP.getDiagnostics()), 
+    GreaterThanIsOperator(true) {
   Tok.setKind(tok::eof);
   CurScope = 0;
   NumCachedScopes = 0;
@@ -785,10 +786,15 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
     }
     
     // If this is a template-id, annotate the template-id token.
-    if (NextToken().is(tok::less))
-      if (DeclTy *Template =
-          Actions.isTemplateName(*Tok.getIdentifierInfo(), CurScope, &SS))
-        AnnotateTemplateIdToken(Template, &SS);
+    if (NextToken().is(tok::less)) {
+      DeclTy *Template;
+      if (TemplateNameKind TNK 
+            = Actions.isTemplateName(*Tok.getIdentifierInfo(),
+                                     CurScope, Template, &SS)) {
+        AnnotateTemplateIdToken(Template, TNK, &SS);
+        return true;
+      }
+    }
 
     // We either have an identifier that is not a type name or we have
     // just created a template-id that might be a type name. Both

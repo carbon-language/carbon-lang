@@ -1220,6 +1220,34 @@ QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
   return QualType(TypeParm, 0);
 }
 
+QualType 
+ASTContext::getClassTemplateSpecializationType(TemplateDecl *Template,
+                                               unsigned NumArgs,
+                                               uintptr_t *Args, bool *ArgIsType,
+                                               QualType Canon) {
+  llvm::FoldingSetNodeID ID;
+  ClassTemplateSpecializationType::Profile(ID, Template, NumArgs, Args, 
+                                           ArgIsType);
+  void *InsertPos = 0;
+  ClassTemplateSpecializationType *Spec
+    = ClassTemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (Spec)
+    return QualType(Spec, 0);
+  
+  void *Mem = Allocate(sizeof(ClassTemplateSpecializationType) + 
+                       (sizeof(uintptr_t) * 
+                        (ClassTemplateSpecializationType::
+                           getNumPackedWords(NumArgs) + 
+                         NumArgs)), 8);
+  Spec = new (Mem) ClassTemplateSpecializationType(Template, NumArgs, Args,
+                                                   ArgIsType, Canon);
+  Types.push_back(Spec);
+  ClassTemplateSpecializationTypes.InsertNode(Spec, InsertPos);
+
+  return QualType(Spec, 0);  
+}
+
 /// CmpProtocolNames - Comparison predicate for sorting protocols
 /// alphabetically.
 static bool CmpProtocolNames(const ObjCProtocolDecl *LHS,

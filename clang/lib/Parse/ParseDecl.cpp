@@ -499,6 +499,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       Token Next = NextToken();
       TypeTy *TypeRep = Actions.getTypeName(*Next.getIdentifierInfo(),
                                             Next.getLocation(), CurScope, &SS);
+
       if (TypeRep == 0)
         goto DoneWithDeclSpec;
 
@@ -553,9 +554,23 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // It has to be available as a typedef too!
       TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(), 
                                             Tok.getLocation(), CurScope);
+
+      if (TypeRep == 0 && getLang().CPlusPlus && NextToken().is(tok::less)) {
+        // If we have a template name, annotate the token and try again.
+        DeclTy *Template = 0;
+        if (TemplateNameKind TNK =
+              Actions.isTemplateName(*Tok.getIdentifierInfo(), CurScope,
+                                     Template)) {
+          AnnotateTemplateIdToken(Template, TNK, 0);
+          continue;
+        }
+      }
+
       if (TypeRep == 0)
         goto DoneWithDeclSpec;
       
+
+
       // C++: If the identifier is actually the name of the class type
       // being defined and the next token is a '(', then this is a
       // constructor declaration. We're done with the decl-specifiers
@@ -1752,11 +1767,12 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
         // If this identifier is followed by a '<', we may have a template-id.
         DeclTy *Template;
+        Action::TemplateNameKind TNK;
         if (getLang().CPlusPlus && NextToken().is(tok::less) &&
-            (Template = Actions.isTemplateName(*Tok.getIdentifierInfo(), 
-                                               CurScope))) {
+            (TNK = Actions.isTemplateName(*Tok.getIdentifierInfo(), 
+                                          CurScope, Template))) {
           IdentifierInfo *II = Tok.getIdentifierInfo();
-          AnnotateTemplateIdToken(Template, 0);
+          AnnotateTemplateIdToken(Template, TNK, 0);
           // FIXME: Set the declarator to a template-id. How? I don't
           // know... for now, just use the identifier.
           D.SetIdentifier(II, Tok.getLocation());

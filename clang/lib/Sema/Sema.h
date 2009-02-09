@@ -62,6 +62,7 @@ namespace clang {
   class TypedefDecl;
   class TemplateDecl;
   class TemplateParameterList;
+  class TemplateArg;
   class ObjCInterfaceDecl;
   class ObjCCompatibleAliasDecl;
   class ObjCProtocolDecl;
@@ -258,6 +259,9 @@ public:
     return OwningExprResult(*this, R.get());
   }
   OwningStmtResult Owned(Stmt* S) { return OwningStmtResult(*this, S); }
+  OwningTemplateArgResult Owned(TemplateArg *Arg) { 
+    return OwningTemplateArgResult(*this, Arg);
+  }
 
   virtual void ActOnEndOfTranslationUnit();
 
@@ -1478,8 +1482,9 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Templates [C++ 14]
   //
-  virtual DeclTy *isTemplateName(IdentifierInfo &II, Scope *S,
-                                 const CXXScopeSpec *SS = 0);
+  virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
+                                          DeclTy *&TemplateDecl,
+                                          const CXXScopeSpec *SS = 0);
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
   TemplateDecl *AdjustDeclIfTemplate(DeclTy *&Decl);
 
@@ -1506,12 +1511,23 @@ public:
                              DeclTy **Params, unsigned NumParams,
                              SourceLocation RAngleLoc);
   
+  virtual OwningTemplateArgResult ActOnTypeTemplateArgument(TypeTy *Type);
+
+  virtual OwningTemplateArgResult ActOnExprTemplateArgument(ExprArg Value);
+
   virtual DeclTy *
   ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                      SourceLocation KWLoc, const CXXScopeSpec &SS,
                      IdentifierInfo *Name, SourceLocation NameLoc,
                      AttributeList *Attr,
                      MultiTemplateParamsArg TemplateParameterLists);
+
+  virtual TypeTy * 
+  ActOnClassTemplateSpecialization(DeclTy *Template,
+                                   SourceLocation LAngleLoc,
+                                   MultiTemplateArgsArg TemplateArgs,
+                                   SourceLocation RAngleLoc,
+                                   const CXXScopeSpec *SS = 0);
 
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
                                       TemplateParameterList *Old,
