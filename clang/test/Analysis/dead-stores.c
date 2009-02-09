@@ -147,3 +147,19 @@ int f18() {
 
    return (x = 10); // expected-warning{{Although the value stored to 'x' is used in the enclosing expression, the value is never actually read from 'x'}}
 }
+
+// PR 3514: false positive `dead initialization` warning for init to global
+//  http://llvm.org/bugs/show_bug.cgi?id=3514
+extern const int MyConstant;
+int f19(void) {
+  int x = MyConstant;  // no-warning
+  x = 1;
+  return x;
+}
+
+int f19b(void) { // FIXME: Should this case be considered the same as f19?
+  const int MyConstant = 0;
+  int x = MyConstant; // expected-warning{{never read}}
+  x = 1;
+  return x;  
+}

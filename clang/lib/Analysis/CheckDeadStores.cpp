@@ -195,8 +195,21 @@ public:
               // If x is EVER assigned a new value later, don't issue
               // a warning.  This is because such initialization can be
               // due to defensive programming.
-              if (!E->isConstantInitializer(Ctx))
-                Report(V, DeadInit, V->getLocation(), E->getSourceRange());
+              if (E->isConstantInitializer(Ctx))
+                return;
+              
+              // Special case: check for initializations from constant
+              //  variables.
+              //
+              //  e.g. extern const int MyConstant;
+              //       int x = MyConstant;
+              //
+              if (DeclRefExpr *DRE=dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))
+                if (VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
+                  if (VD->hasGlobalStorage() &&
+                      VD->getType().isConstQualified()) return;
+              
+              Report(V, DeadInit, V->getLocation(), E->getSourceRange());
             }
           }
       }
