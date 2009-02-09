@@ -464,7 +464,7 @@ DIAG(err_ovl_surrogate_cand, NOTE,
 DIAG(err_member_call_without_object, ERROR,
      "call to non-static member function without an object argument")
 
-/// C++ Templates Semantic Analysis
+// C++ Template Declarations
 DIAG(err_template_param_shadow, ERROR,
      "declaration of %0 shadows template parameter")
 DIAG(note_template_param_here, NOTE,
@@ -487,6 +487,26 @@ DIAG(err_template_nontype_parm_different_type, ERROR,
      "template non-type parameter has a different type %0 in template %select{|template parameter }1redeclaration")
 DIAG(note_template_nontype_parm_prev_declaration, NOTE,
      "previous non-type template parameter with type %0 is here")
+
+// C++ Template Argument Lists
+DIAG(err_template_arg_list_different_arity, ERROR,
+     "%select{too few|too many}0 template arguments for %select{class template|function template|template template parameter|template}1 %2")
+DIAG(note_template_parameter_here, ERROR,
+     "template parameter is declared here")
+DIAG(err_template_arg_must_be_type, ERROR,
+     "template argument for template type parameter must be a type")
+DIAG(err_template_arg_must_be_expr, ERROR,
+     "template argument for non-type template parameter must be an expression")
+DIAG(err_template_arg_nontype_ambig, ERROR,
+     "template argument for non-type template parameter is treated as type %0")
+DIAG(err_template_arg_must_be_template, ERROR,
+     "template argument for template template parameter must be a template")
+DIAG(err_template_arg_local_type, ERROR,
+     "template argument uses local type %0")
+DIAG(err_template_arg_unnamed_type, ERROR,
+     "template argument uses unnamed type")
+DIAG(note_template_unnamed_type_here, NOTE,
+     "unnamed type used in template argument was declared here")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")

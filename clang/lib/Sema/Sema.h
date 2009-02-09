@@ -62,6 +62,7 @@ namespace clang {
   class TypedefDecl;
   class TemplateDecl;
   class TemplateParameterList;
+  class TemplateTemplateParmDecl;
   class ObjCInterfaceDecl;
   class ObjCCompatibleAliasDecl;
   class ObjCProtocolDecl;
@@ -1515,12 +1516,25 @@ public:
                      MultiTemplateParamsArg TemplateParameterLists);
 
   virtual TypeTy * 
-  ActOnClassTemplateSpecialization(DeclTy *Template,
+  ActOnClassTemplateSpecialization(DeclTy *Template, 
+                                   SourceLocation TemplateLoc,
                                    SourceLocation LAngleLoc,
                                    ASTTemplateArgsPtr TemplateArgs,
+                                   SourceLocation *TemplateArgLocs,
                                    SourceLocation RAngleLoc,
                                    const CXXScopeSpec *SS = 0);
 
+  bool CheckTemplateArgumentList(TemplateDecl *Template,
+                                 SourceLocation TemplateLoc,
+                                 SourceLocation LAngleLoc,
+                                 ASTTemplateArgsPtr& TemplateArgs,
+                                 SourceLocation *TemplateArgLocs,
+                                 SourceLocation RAngleLoc);
+
+  bool CheckTemplateArgument(TemplateTypeParmDecl *Param, QualType Arg,
+                             SourceLocation ArgLoc);
+  bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, Expr *Arg);
+  bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, DeclRefExpr *Arg);
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
                                       TemplateParameterList *Old,
                                       bool Complain,

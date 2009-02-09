@@ -356,13 +356,23 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   return NewTemplate;
 }
 
+
+
 Action::TypeTy * 
 Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,
+                                       SourceLocation TemplateLoc,
                                        SourceLocation LAngleLoc,
                                        ASTTemplateArgsPtr TemplateArgs,
+                                       SourceLocation *TemplateArgLocs,
                                        SourceLocation RAngleLoc,
                                        const CXXScopeSpec *SS) {
   TemplateDecl *Template = cast<TemplateDecl>(static_cast<Decl *>(TemplateD));
+
+  // Check that the template argument list is well-formed for this
+  // template.
+  if (!CheckTemplateArgumentList(Template, TemplateLoc, LAngleLoc, 
+                                 TemplateArgs, TemplateArgLocs, RAngleLoc))
+    return 0;
 
   // Yes, all class template specializations are just silly sugar for
   // 'int'. Gotta problem wit dat?
@@ -374,6 +384,178 @@ Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,
                                                  Context.IntTy);
   TemplateArgs.release();
   return Result.getAsOpaquePtr();
+}
+
+/// \brief Check that the given template argument list is well-formed
+/// for specializing the given template.
+bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
+                                     SourceLocation TemplateLoc,
+                                     SourceLocation LAngleLoc,
+                                     ASTTemplateArgsPtr& Args,
+                                     SourceLocation *TemplateArgLocs,
+                                     SourceLocation RAngleLoc) {
+  TemplateParameterList *Params = Template->getTemplateParameters();
+  unsigned NumParams = Params->size();
+  unsigned NumArgs = Args.size();
+  bool Invalid = false;
+
+  if (NumArgs > NumParams ||
+      NumArgs < NumParams /*FIXME: default arguments! */) {
+    // FIXME: point at either the first arg beyond what we can handle,
+    // or the '>', depending on whether we have too many or too few
+    // arguments.
+    SourceRange Range;
+    if (NumArgs > NumParams)
+      Range = SourceRange(TemplateArgLocs[NumParams], RAngleLoc);
+    Diag(TemplateLoc, diag::err_template_arg_list_different_arity)
+      << (NumArgs > NumParams)
+      << (isa<ClassTemplateDecl>(Template)? 0 :
+          isa<FunctionTemplateDecl>(Template)? 1 :
+          isa<TemplateTemplateParmDecl>(Template)? 2 : 3)
+      << Template << Range;
+
+    Invalid = true;
+  }
+  
+  // C++ [temp.arg]p1: 
+  //   [...] The type and form of each template-argument specified in
+  //   a template-id shall match the type and form specified for the
+  //   corresponding parameter declared by the template in its
+  //   template-parameter-list.
+  unsigned ArgIdx = 0;
+  for (TemplateParameterList::iterator Param = Params->begin(),
+                                       ParamEnd = Params->end();
+       Param != ParamEnd; ++Param, ++ArgIdx) {
+    // Decode the template argument
+    QualType ArgType;
+    Expr *ArgExpr = 0;
+    SourceLocation ArgLoc;
+    if (ArgIdx >= NumArgs) {
+      // FIXME: Get the default argument here, which might
+      // (eventually) require instantiation.
+      break;
+    } else
+      ArgLoc = TemplateArgLocs[ArgIdx];
+
+    if (Args.getArgIsType()[ArgIdx])
+      ArgType = QualType::getFromOpaquePtr(Args.getArgs()[ArgIdx]);
+    else
+      ArgExpr = reinterpret_cast<Expr *>(Args.getArgs()[ArgIdx]);
+
+    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
+      // Check template type parameters.
+      if (!ArgType.isNull()) {
+        if (!CheckTemplateArgument(TTP, ArgType, ArgLoc))
+          Invalid = true;
+        continue;
+      }
+
+      // C++ [temp.arg.type]p1:
+      //   A template-argument for a template-parameter which is a
+      //   type shall be a type-id.
+
+      // We have a template type parameter but the template argument
+      // is an expression.
+      Diag(ArgExpr->getSourceRange().getBegin(), 
+           diag::err_template_arg_must_be_type);
+      Diag((*Param)->getLocation(), diag::note_template_parameter_here);
+      Invalid = true;
+    } else if (NonTypeTemplateParmDecl *NTTP 
+                 = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
+      // Check non-type template parameters.
+      if (ArgExpr) {
+        if (!CheckTemplateArgument(NTTP, ArgExpr))
+          Invalid = true;
+        continue;
+      }
+
+      // We have a non-type template parameter but the template
+      // argument is a type.
+
+      // C++ [temp.arg]p2:
+      //   In a template-argument, an ambiguity between a type-id and
+      //   an expression is resolved to a type-id, regardless of the
+      //   form of the corresponding template-parameter.
+      //
+      // We warn specifically about this case, since it can be rather
+      // confusing for users.
+      if (ArgType->isFunctionType())
+        Diag(ArgLoc, diag::err_template_arg_nontype_ambig)
+          << ArgType;
+      else
+        Diag(ArgLoc, diag::err_template_arg_must_be_expr);
+      Diag((*Param)->getLocation(), diag::note_template_parameter_here);
+      Invalid = true;
+    } else { 
+      // Check template template parameters.
+      TemplateTemplateParmDecl *TempParm 
+        = cast<TemplateTemplateParmDecl>(*Param);
+     
+      if (ArgExpr && isa<DeclRefExpr>(ArgExpr) &&
+          isa<TemplateDecl>(cast<DeclRefExpr>(ArgExpr)->getDecl())) {
+        if (!CheckTemplateArgument(TempParm, cast<DeclRefExpr>(ArgExpr)))
+          Invalid = true;
+        continue;
+      }
+
+      // We have a template template parameter but the template
+      // argument does not refer to a template.
+      Diag(ArgLoc, diag::err_template_arg_must_be_template);
+      Invalid = true;
+    }
+  }
+
+  return Invalid;
+}
+
+/// \brief Check a template argument against its corresponding
+/// template type parameter.
+///
+/// This routine implements the semantics of C++ [temp.arg.type]. It
+/// returns true if an error occurred, and false otherwise.
+bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param, 
+                                 QualType Arg, SourceLocation ArgLoc) {
+  // C++ [temp.arg.type]p2:
+  //   A local type, a type with no linkage, an unnamed type or a type
+  //   compounded from any of these types shall not be used as a
+  //   template-argument for a template type-parameter.
+  //
+  // FIXME: Perform the recursive and no-linkage type checks.
+  const TagType *Tag = 0;
+  if (const EnumType *EnumT = Arg->getAsEnumType())
+    Tag = EnumT;
+  else if (const RecordType *RecordT = Arg->getAsRecordType())
+    Tag = RecordT;
+  if (Tag && Tag->getDecl()->getDeclContext()->isFunctionOrMethod())
+    return Diag(ArgLoc, diag::err_template_arg_local_type)
+      << QualType(Tag, 0);
+  else if (Tag && !Tag->getDecl()->getDeclName()) {
+    Diag(ArgLoc, diag::err_template_arg_unnamed_type);
+    Diag(Tag->getDecl()->getLocation(), diag::note_template_unnamed_type_here);
+    return true;
+  }
+
+  return false;
+}
+
+/// \brief Check a template argument against its corresponding
+/// non-type template parameter.
+///
+/// This routine implements the semantics of C++ [temp.arg.nontype]. 
+/// It returns true if an error occurred, and false otherwise.
+bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
+                                 Expr *Arg) {
+  return false;
+}
+
+/// \brief Check a template argument against its corresponding
+/// template template parameter.
+///
+/// This routine implements the semantics of C++ [temp.arg.template].
+/// It returns true if an error occurred, and false otherwise.
+bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
+                                 DeclRefExpr *Arg) {
+  return false;
 }
 
 /// \brief Determine whether the given template parameter lists are

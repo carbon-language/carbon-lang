@@ -567,7 +567,7 @@ namespace clang
 #endif
       Args(Other.Args), ArgIsType(Other.ArgIsType), Count(Other.Count) {
 #if !defined(DISABLE_SMART_POINTERS)
-      Other.destroy();
+      Other.Count = 0;
 #endif
     }
 

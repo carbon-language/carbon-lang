@@ -943,7 +943,7 @@ bool ClassTemplateSpecializationType::isArgType(unsigned Arg) const {
   const unsigned BitsPerWord = sizeof(uintptr_t) * CHAR_BIT;
   const uintptr_t *Data = reinterpret_cast<const uintptr_t *>(this + 1);
   Data += Arg / BitsPerWord;
-  return (*Data >> (Arg % BitsPerWord)) & 0x01;
+  return (*Data >> ((NumArgs - Arg) % BitsPerWord - 1)) & 0x01;
 }
 
 //===----------------------------------------------------------------------===//

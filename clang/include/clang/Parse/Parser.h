@@ -1007,10 +1007,12 @@ private:
   // C++ 14.3: Template arguments [temp.arg]
   typedef llvm::SmallVector<void *, 16> TemplateArgList;
   typedef llvm::SmallVector<bool, 16> TemplateArgIsTypeList;
+  typedef llvm::SmallVector<SourceLocation, 16> TemplateArgLocationList;
   void AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
                                const CXXScopeSpec *SS = 0);
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
-                                 TemplateArgIsTypeList &TemplateArgIsType);
+                                 TemplateArgIsTypeList &TemplateArgIsType,
+                                 TemplateArgLocationList &TemplateArgLocations);
   void *ParseTemplateArgument(bool &ArgIsType);
 
   //===--------------------------------------------------------------------===//

@@ -746,7 +746,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
     return Owned(BuildDeclRefExpr(Ovl, Context.OverloadTy, Loc,
                                   false, false, SS));
-
+  else if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D))
+    return Owned(BuildDeclRefExpr(Template, Context.OverloadTy, Loc,
+                                  false, false, SS));
   ValueDecl *VD = cast<ValueDecl>(D);
 
   // check if referencing an identifier with __attribute__((deprecated)).

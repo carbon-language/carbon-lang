@@ -370,10 +370,13 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
   // Parse the optional template-argument-list.
   TemplateArgList TemplateArgs;
   TemplateArgIsTypeList TemplateArgIsType;
+  TemplateArgLocationList TemplateArgLocations;
+
   {
     GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);
     if (Tok.isNot(tok::greater) && 
-        ParseTemplateArgumentList(TemplateArgs, TemplateArgIsType)) {
+        ParseTemplateArgumentList(TemplateArgs, TemplateArgIsType,
+                                  TemplateArgLocations)) {
       // Try to find the closing '>'.
       SkipUntil(tok::greater, true, true);
 
@@ -417,9 +420,14 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
                                        &TemplateArgIsType[0],
                                        TemplateArgs.size());
     TypeTy *Ty 
-      = Actions.ActOnClassTemplateSpecialization(Template, LAngleLoc,
-                                                 TemplateArgsPtr,
+      = Actions.ActOnClassTemplateSpecialization(Template, TemplateNameLoc,
+                                                 LAngleLoc, TemplateArgsPtr,
+                                                 &TemplateArgLocations[0],
                                                  RAngleLoc, SS);
+
+    if (!Ty) // Something went wrong; don't annotate
+      return;
+
     Tok.setKind(tok::annot_typename);
     Tok.setAnnotationValue(Ty);
   }
@@ -453,8 +461,8 @@ void *Parser::ParseTemplateArgument(bool &ArgIsType) {
     return ParseTypeName();
   }
 
-  OwningExprResult ExprArg = ParseExpression();
-  if (ExprArg.isInvalid())
+  OwningExprResult ExprArg = ParseAssignmentExpression();
+  if (ExprArg.isInvalid() || !ExprArg.get())
     return 0;
 
   ArgIsType = false;
@@ -469,13 +477,16 @@ void *Parser::ParseTemplateArgument(bool &ArgIsType) {
 ///         template-argument-list ',' template-argument
 bool 
 Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
-                                  TemplateArgIsTypeList &TemplateArgIsType) {
+                                  TemplateArgIsTypeList &TemplateArgIsType,
+                              TemplateArgLocationList &TemplateArgLocations) {
   while (true) {
     bool IsType = false;
+    SourceLocation Loc = Tok.getLocation();
     void *Arg = ParseTemplateArgument(IsType);
     if (Arg) {
       TemplateArgs.push_back(Arg);
       TemplateArgIsType.push_back(IsType);
+      TemplateArgLocations.push_back(Loc);
     } else {
       SkipUntil(tok::comma, tok::greater, true, true);
       return true;

@@ -1134,8 +1134,10 @@ public:
   /// new class template specialization.
   virtual TypeTy * 
   ActOnClassTemplateSpecialization(DeclTy *Template,
+                                   SourceLocation TemplateLoc,
                                    SourceLocation LAngleLoc,
                                    ASTTemplateArgsPtr TemplateArgs,
+                                   SourceLocation *TemplateArgLocs,
                                    SourceLocation RAngleLoc,
                                    const CXXScopeSpec *SS = 0) {
     return 0;
