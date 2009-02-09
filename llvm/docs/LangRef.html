@@ -1677,7 +1677,7 @@ pointer to any of the types it is lexically a member of.  Example of up
 references (with their equivalent as named type declarations) include:</p>
 
 <pre>
-   { \2 * }                %x = type { %t* }
+   { \2 * }                %x = type { %x* }
    { \2 }*                 %y = type { %y }*
    \1*                     %z = type %z*
 </pre>
