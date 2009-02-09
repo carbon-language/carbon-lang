@@ -528,6 +528,7 @@ public:
     if (IID-Intrinsics.size()-1 < TgtIntrinsics.size())
       return TgtIntrinsics[IID-Intrinsics.size()-1];
     assert(0 && "Bad intrinsic ID!");
+    abort();
   }
   
   unsigned getIntrinsicID(Record *R) const {
