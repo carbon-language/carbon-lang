@@ -54,8 +54,9 @@ StringLiteral::StringLiteral(ASTContext& C, const char *strData,
 }
 
 void StringLiteral::Destroy(ASTContext &C) {
-  this->~StringLiteral();
   C.Deallocate(const_cast<char*>(StrData));
+  this->~StringLiteral();
+  C.Deallocate(this);
 }
 
 bool UnaryOperator::isPostfix(Opcode Op) {
