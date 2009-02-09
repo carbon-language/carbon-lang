@@ -125,10 +125,11 @@ void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   } else {
     // Create the reg, emit the copy.
     VRBase = MRI.createVirtualRegister(DstRC);
-    bool Emitted =
-      TII->copyRegToReg(*BB, End, VRBase, SrcReg, DstRC, SrcRC);
-    Emitted = Emitted; // Silence compiler warning.
-    assert(Emitted && "Unable to issue a copy instruction!");
+    bool Emitted = TII->copyRegToReg(*BB, End, VRBase, SrcReg, DstRC, SrcRC);
+    if (!Emitted) {
+      cerr << "Unable to issue a copy instruction!\n";
+      abort();
+    }
   }
 
   SDValue Op(Node, ResNo);
@@ -529,7 +530,11 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     else
       DstTRC = TRI->getPhysicalRegisterRegClass(DestReg,
                                             Node->getOperand(1).getValueType());
-    TII->copyRegToReg(*BB, End, DestReg, SrcReg, DstTRC, SrcTRC);
+    bool Emitted = TII->copyRegToReg(*BB, End, DestReg, SrcReg, DstTRC, SrcTRC);
+    if (!Emitted) {
+      cerr << "Unable to issue a copy instruction!\n";
+      abort();
+    }
     break;
   }
   case ISD::CopyFromReg: {
