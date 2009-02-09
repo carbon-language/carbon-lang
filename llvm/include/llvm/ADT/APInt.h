@@ -1125,13 +1125,13 @@ public:
   /// Considers the APInt to be unsigned and converts it into a string in the
   /// radix given. The radix can be 2, 8, 10 or 16.
   void toStringUnsigned(SmallVectorImpl<char> &Str, unsigned Radix = 10) const {
-    return toString(Str, Radix, false);
+    toString(Str, Radix, false);
   }
 
   /// Considers the APInt to be signed and converts it into a string in the
   /// radix given. The radix can be 2, 8, 10 or 16.
   void toStringSigned(SmallVectorImpl<char> &Str, unsigned Radix = 10) const {
-    return toString(Str, Radix, true);
+    toString(Str, Radix, true);
   }
 
   /// toString - This returns the APInt as a std::string.  Note that this is an
