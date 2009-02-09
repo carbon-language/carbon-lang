@@ -176,8 +176,8 @@ echo "#define LLVM_MINOR_VERSION ${RC_ProjectSourceSubversion}" >> $DEST_DIR$DES
 if [ "x$LLVM_DEBUG" != "x1" ]; then
     # Strip local symbols from llvm libraries.
     strip -S $DEST_DIR$DEST_ROOT/lib/*.[oa]
-    for file in $DEST_DIR$DEST_ROOT/lib/*.so; do
-        strip -Sx $file
+    for f in `ls $DEST_DIR$DEST_ROOT/lib/*.so`; do
+        strip -Sx $f
     done
 fi
 
