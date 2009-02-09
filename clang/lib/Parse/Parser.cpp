@@ -522,6 +522,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
     D.getMutableDeclSpec().SetTypeSpecType(DeclSpec::TST_int,
                                            D.getIdentifierLoc(),
                                            PrevSpec);
+    D.SetRangeBegin(D.getDeclSpec().getSourceRange().getBegin());
   }
 
   // If this declaration was formed with a K&R-style identifier list for the
@@ -702,7 +703,7 @@ Parser::OwningExprResult Parser::ParseAsmStringLiteral() {
 /// [GNU] simple-asm-expr:
 ///         'asm' '(' asm-string-literal ')'
 ///
-Parser::OwningExprResult Parser::ParseSimpleAsm() {
+Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
   assert(Tok.is(tok::kw_asm) && "Not an asm!");
   SourceLocation Loc = ConsumeToken();
 
@@ -711,14 +712,20 @@ Parser::OwningExprResult Parser::ParseSimpleAsm() {
     return ExprError();
   }
 
-  ConsumeParen();
+  Loc = ConsumeParen();
 
   OwningExprResult Result(ParseAsmStringLiteral());
 
-  if (Result.isInvalid())
-    SkipUntil(tok::r_paren);
-  else
-    MatchRHSPunctuation(tok::r_paren, Loc);
+  if (Result.isInvalid()) {
+    SkipUntil(tok::r_paren, true, true);
+    if (EndLoc)
+      *EndLoc = Tok.getLocation();
+    ConsumeAnyToken();
+  } else {
+    Loc = MatchRHSPunctuation(tok::r_paren, Loc);
+    if (EndLoc)
+      *EndLoc = Loc;
+  }
 
   return move(Result);
 }

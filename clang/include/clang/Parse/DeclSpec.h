@@ -717,7 +717,8 @@ private:
   CXXScopeSpec SS;
   IdentifierInfo *Identifier;
   SourceLocation IdentifierLoc;
-  
+  SourceRange Range;
+
   /// Context - Where we are parsing this declarator.
   ///
   TheContext Context;
@@ -731,7 +732,7 @@ private:
   /// DeclTypeInfo.back() will be the least closely bound.
   llvm::SmallVector<DeclaratorChunk, 8> DeclTypeInfo;
 
-  // InvalidType - Set by Sema::GetTypeForDeclarator().
+  /// InvalidType - Set by Sema::GetTypeForDeclarator().
   bool InvalidType : 1;
 
   /// GroupingParens - Set by Parser::ParseParenDeclarator().
@@ -757,13 +758,15 @@ private:
   /// InlineParams - This is a local array used for the first function decl
   /// chunk to avoid going to the heap for the common case when we have one
   /// function chunk in the declarator.
-  friend class DeclaratorChunk;
   DeclaratorChunk::ParamInfo InlineParams[16];
   bool InlineParamsUsed;
-  
+
+  friend class DeclaratorChunk;
+
 public:
   Declarator(const DeclSpec &ds, TheContext C)
-    : DS(ds), Identifier(0), Context(C), Kind(DK_Abstract), 
+    : DS(ds), Identifier(0), Range(ds.getSourceRange()), Context(C),
+      Kind(DK_Abstract),
       InvalidType(DS.getTypeSpecType() == DeclSpec::TST_error),
       GroupingParens(false), AttrList(0), AsmLabel(0), Type(0),
       InlineParamsUsed(false) {
@@ -792,14 +795,38 @@ public:
   TheContext getContext() const { return Context; }
   DeclaratorKind getKind() const { return Kind; }
 
-  // getSourceRange - FIXME: This should be implemented.
-  const SourceRange getSourceRange() const { return SourceRange(); }
-  
+  /// getSourceRange - Get the source range that spans this declarator.
+  const SourceRange &getSourceRange() const { return Range; }
+
+  void SetSourceRange(SourceRange R) { Range = R; }
+  /// SetRangeBegin - Set the start of the source range to Loc, unless it's
+  /// invalid.
+  void SetRangeBegin(SourceLocation Loc) {
+    if (!Loc.isInvalid())
+      Range.setBegin(Loc);
+  }
+  /// SetRangeEnd - Set the end of the source range to Loc, unless it's invalid.
+  void SetRangeEnd(SourceLocation Loc) {
+    if (!Loc.isInvalid())
+      Range.setEnd(Loc);
+  }
+  /// ExtendWithDeclSpec - Extend the declarator source range to include the
+  /// given declspec, unless its location is invalid. Adopts the range start if
+  /// the current range start is invalid.
+  void ExtendWithDeclSpec(const DeclSpec &DS) {
+    const SourceRange &SR = DS.getSourceRange();
+    if (Range.getBegin().isInvalid())
+      Range.setBegin(SR.getBegin());
+    if (!SR.getEnd().isInvalid())
+      Range.setEnd(SR.getEnd());
+  }
+
   /// clear - Reset the contents of this Declarator.
   void clear() {
     SS.clear();
     Identifier = 0;
     IdentifierLoc = SourceLocation();
+    Range = DS.getSourceRange();
     Kind = DK_Abstract;
 
     for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i)
@@ -856,45 +883,66 @@ public:
       Kind = DK_Normal;
     else
       Kind = DK_Abstract;
+    SetRangeEnd(Loc);
   }
   
   /// setConstructor - Set this declarator to be a C++ constructor
-  /// declarator.
+  /// declarator. Also extends the range.
   void setConstructor(Action::TypeTy *Ty, SourceLocation Loc) {
     IdentifierLoc = Loc;
     Kind = DK_Constructor;
     Type = Ty;
+    SetRangeEnd(Loc);
   }
 
   /// setDestructor - Set this declarator to be a C++ destructor
-  /// declarator.
-  void setDestructor(Action::TypeTy *Ty, SourceLocation Loc) {
+  /// declarator. Also extends the range to End, which should be the identifier
+  /// token.
+  void setDestructor(Action::TypeTy *Ty, SourceLocation Loc,
+                     SourceLocation EndLoc)
+  {
     IdentifierLoc = Loc;
     Kind = DK_Destructor;
     Type = Ty;
+    if (!EndLoc.isInvalid())
+      SetRangeEnd(EndLoc);
   }
 
-  // setConversionFunction - Set this declarator to be a C++
-  // conversion function declarator (e.g., @c operator int const *).
-  void setConversionFunction(Action::TypeTy *Ty, SourceLocation Loc) {
+  /// setConversionFunction - Set this declarator to be a C++
+  /// conversion function declarator (e.g., @c operator int const *).
+  /// Also extends the range to EndLoc, which should be the last token of the
+  /// type name.
+  void setConversionFunction(Action::TypeTy *Ty, SourceLocation Loc,
+                             SourceLocation EndLoc) {
     Identifier = 0;
     IdentifierLoc = Loc;
     Kind = DK_Conversion;
     Type = Ty;
+    if (!EndLoc.isInvalid())
+      SetRangeEnd(EndLoc);
   }
 
-  // setOverloadedOperator - Set this declaration to be a C++
-  // overloaded operator declarator (e.g., @c operator+).
-  void setOverloadedOperator(OverloadedOperatorKind Op, SourceLocation Loc) {
+  /// setOverloadedOperator - Set this declaration to be a C++
+  /// overloaded operator declarator (e.g., @c operator+).
+  /// Also extends the range to EndLoc, which should be the last token of the
+  /// operator.
+  void setOverloadedOperator(OverloadedOperatorKind Op, SourceLocation Loc,
+                             SourceLocation EndLoc) {
     IdentifierLoc = Loc;
     Kind = DK_Operator;
     OperatorKind = Op;
+    if (!EndLoc.isInvalid())
+      SetRangeEnd(EndLoc);
   }
- 
-  void AddTypeInfo(const DeclaratorChunk &TI) {
+
+  /// AddTypeInfo - Add a chunk to this declarator. Also extend the range to
+  /// EndLoc, which should be the last token of the chunk.
+  void AddTypeInfo(const DeclaratorChunk &TI, SourceLocation EndLoc) {
     DeclTypeInfo.push_back(TI);
+    if (!EndLoc.isInvalid())
+      SetRangeEnd(EndLoc);
   }
-  
+
   /// getNumTypeObjects() - Return the number of types applied to this
   /// declarator.
   unsigned getNumTypeObjects() const { return DeclTypeInfo.size(); }
@@ -923,13 +971,17 @@ public:
   ///  short int x, __attribute__((aligned(16)) var
   ///                                 __attribute__((common,deprecated));
   ///
-  void AddAttributes(AttributeList *alist) { 
+  /// Also extends the range of the declarator.
+  void AddAttributes(AttributeList *alist, SourceLocation LastLoc) { 
     if (!alist)
       return; // we parsed __attribute__(()) or had a syntax error
-    
+
     if (AttrList) 
       alist->addAttributeList(AttrList); 
     AttrList = alist;
+
+    if (!LastLoc.isInvalid())
+      SetRangeEnd(LastLoc);
   }
   
   const AttributeList *getAttributes() const { return AttrList; }

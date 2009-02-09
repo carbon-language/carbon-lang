@@ -630,8 +630,11 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     }
 
     // If attributes exist after the declarator, parse them.
-    if (Tok.is(tok::kw___attribute))
-      DeclaratorInfo.AddAttributes(ParseAttributes());
+    if (Tok.is(tok::kw___attribute)) {
+      SourceLocation Loc;
+      AttributeList *AttrList = ParseAttributes(&Loc);
+      DeclaratorInfo.AddAttributes(AttrList, Loc);
+    }
 
     // NOTE: If Sema is the Action module and declarator is an instance field,
     // this call will *not* return the created decl; LastDeclInGroup will be
@@ -691,8 +694,11 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     Init = 0;
     
     // Attributes are only allowed on the second declarator.
-    if (Tok.is(tok::kw___attribute))
-      DeclaratorInfo.AddAttributes(ParseAttributes());
+    if (Tok.is(tok::kw___attribute)) {
+      SourceLocation Loc;
+      AttributeList *AttrList = ParseAttributes(&Loc);
+      DeclaratorInfo.AddAttributes(AttrList, Loc);
+    }
 
     if (Tok.isNot(tok::colon))
       ParseDeclarator(DeclaratorInfo);
@@ -921,7 +927,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclTy *ConstructorDecl) {
 ///         type-id
 ///         type-id-list ',' type-id
 ///
-bool Parser::ParseExceptionSpecification() {
+bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc) {
   assert(Tok.is(tok::kw_throw) && "expected throw");
   
   SourceLocation ThrowLoc = ConsumeToken();
@@ -937,7 +943,7 @@ bool Parser::ParseExceptionSpecification() {
     SourceLocation EllipsisLoc = ConsumeToken();
     if (!getLang().Microsoft)
       Diag(EllipsisLoc, diag::ext_ellipsis_exception_spec);
-    SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    EndLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
     return false;
   }
 
@@ -950,6 +956,6 @@ bool Parser::ParseExceptionSpecification() {
       break;
   }
 
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  EndLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
   return false;
 }

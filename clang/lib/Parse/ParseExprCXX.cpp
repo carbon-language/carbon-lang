@@ -390,17 +390,22 @@ Parser::OwningExprResult Parser::ParseCXXCondition() {
 
   // simple-asm-expr[opt]
   if (Tok.is(tok::kw_asm)) {
-    OwningExprResult AsmLabel(ParseSimpleAsm());
+    SourceLocation Loc;
+    OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
     if (AsmLabel.isInvalid()) {
       SkipUntil(tok::semi);
       return ExprError();
     }
     DeclaratorInfo.setAsmLabel(AsmLabel.release());
+    DeclaratorInfo.SetRangeEnd(Loc);
   }
 
   // If attributes are present, parse them.
-  if (Tok.is(tok::kw___attribute))
-    DeclaratorInfo.AddAttributes(ParseAttributes());
+  if (Tok.is(tok::kw___attribute)) {
+    SourceLocation Loc;
+    AttributeList *AttrList = ParseAttributes(&Loc);
+    DeclaratorInfo.AddAttributes(AttrList, Loc);
+  }
 
   // '=' assignment-expression
   if (Tok.isNot(tok::equal))
@@ -552,33 +557,41 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
 ///            ^=    &=   |= <<   >> >>= <<=  ==  !=
 ///            <=    >=   && ||   ++ --   ,   ->* ->
 ///            ()    []
-OverloadedOperatorKind Parser::TryParseOperatorFunctionId() {
+OverloadedOperatorKind
+Parser::TryParseOperatorFunctionId(SourceLocation *EndLoc) {
   assert(Tok.is(tok::kw_operator) && "Expected 'operator' keyword");
+  SourceLocation Loc;
 
   OverloadedOperatorKind Op = OO_None;
   switch (NextToken().getKind()) {
   case tok::kw_new:
     ConsumeToken(); // 'operator'
-    ConsumeToken(); // 'new'
+    Loc = ConsumeToken(); // 'new'
     if (Tok.is(tok::l_square)) {
       ConsumeBracket(); // '['
+      Loc = Tok.getLocation();
       ExpectAndConsume(tok::r_square, diag::err_expected_rsquare); // ']'
       Op = OO_Array_New;
     } else {
       Op = OO_New;
     }
+    if (EndLoc)
+      *EndLoc = Loc;
     return Op;
 
   case tok::kw_delete:
     ConsumeToken(); // 'operator'
-    ConsumeToken(); // 'delete'
+    Loc = ConsumeToken(); // 'delete'
     if (Tok.is(tok::l_square)) {
       ConsumeBracket(); // '['
+      Loc = Tok.getLocation();
       ExpectAndConsume(tok::r_square, diag::err_expected_rsquare); // ']'
       Op = OO_Array_Delete;
     } else {
       Op = OO_Delete;
     }
+    if (EndLoc)
+      *EndLoc = Loc;
     return Op;
 
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly)  \
@@ -589,13 +602,19 @@ OverloadedOperatorKind Parser::TryParseOperatorFunctionId() {
   case tok::l_paren:
     ConsumeToken(); // 'operator'
     ConsumeParen(); // '('
+    Loc = Tok.getLocation();
     ExpectAndConsume(tok::r_paren, diag::err_expected_rparen); // ')'
+    if (EndLoc)
+      *EndLoc = Loc;
     return OO_Call;
 
   case tok::l_square:
     ConsumeToken(); // 'operator'
     ConsumeBracket(); // '['
+    Loc = Tok.getLocation();
     ExpectAndConsume(tok::r_square, diag::err_expected_rsquare); // ']'
+    if (EndLoc)
+      *EndLoc = Loc;
     return OO_Subscript;
 
   default:
@@ -603,7 +622,9 @@ OverloadedOperatorKind Parser::TryParseOperatorFunctionId() {
   }
 
   ConsumeToken(); // 'operator'
-  ConsumeAnyToken(); // the operator itself
+  Loc = ConsumeAnyToken(); // the operator itself
+  if (EndLoc)
+    *EndLoc = Loc;
   return Op;
 }
 
@@ -620,7 +641,7 @@ OverloadedOperatorKind Parser::TryParseOperatorFunctionId() {
 ///
 ///        conversion-declarator:
 ///                   ptr-operator conversion-declarator[opt]
-Parser::TypeTy *Parser::ParseConversionFunctionId() {
+Parser::TypeTy *Parser::ParseConversionFunctionId(SourceLocation *EndLoc) {
   assert(Tok.is(tok::kw_operator) && "Expected 'operator' keyword");
   ConsumeToken(); // 'operator'
 
@@ -633,6 +654,8 @@ Parser::TypeTy *Parser::ParseConversionFunctionId() {
   // ptr-operators.
   Declarator D(DS, Declarator::TypeNameContext);
   ParseDeclaratorInternal(D, /*DirectDeclParser=*/0);
+  if (EndLoc)
+    *EndLoc = D.getSourceRange().getEnd();
 
   // Finish up the type.
   Action::TypeResult Result = Actions.ActOnTypeName(CurScope, D);
@@ -706,15 +729,18 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
       if (Tok.is(tok::l_paren)) {
         SourceLocation LParen = ConsumeParen();
         ParseSpecifierQualifierList(DS);
+        DeclaratorInfo.SetSourceRange(DS.getSourceRange());
         ParseDeclarator(DeclaratorInfo);
         MatchRHSPunctuation(tok::r_paren, LParen);
         ParenTypeId = true;
       } else {
         if (ParseCXXTypeSpecifierSeq(DS))
           DeclaratorInfo.setInvalidType(true);
-        else
+        else {
+          DeclaratorInfo.SetSourceRange(DS.getSourceRange());
           ParseDeclaratorInternal(DeclaratorInfo,
                                   &Parser::ParseDirectNewDeclarator);
+        }
         ParenTypeId = false;
       }
     }
@@ -723,9 +749,11 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
     // direct-declarator is replaced by a direct-new-declarator.
     if (ParseCXXTypeSpecifierSeq(DS))
       DeclaratorInfo.setInvalidType(true);
-    else
+    else {
+      DeclaratorInfo.SetSourceRange(DS.getSourceRange());
       ParseDeclaratorInternal(DeclaratorInfo,
                               &Parser::ParseDirectNewDeclarator);
+    }
     ParenTypeId = false;
   }
   if (DeclaratorInfo.getInvalidType()) {
@@ -780,10 +808,12 @@ void Parser::ParseDirectNewDeclarator(Declarator &D) {
     }
     first = false;
 
+    SourceLocation RLoc = MatchRHSPunctuation(tok::r_square, LLoc);
     D.AddTypeInfo(DeclaratorChunk::getArray(0, /*static=*/false, /*star=*/false,
-                                            Size.release(), LLoc));
+                                            Size.release(), LLoc),
+                  RLoc);
 
-    if (MatchRHSPunctuation(tok::r_square, LLoc).isInvalid())
+    if (RLoc.isInvalid())
       return;
   }
 }
@@ -803,6 +833,7 @@ bool Parser::ParseExpressionListOrTypeId(ExprListTy &PlacementArgs,
   // The '(' was already consumed.
   if (isTypeIdInParens()) {
     ParseSpecifierQualifierList(D.getMutableDeclSpec());
+    D.SetSourceRange(D.getDeclSpec().getSourceRange());
     ParseDeclarator(D);
     return D.getInvalidType();
   }

@@ -22,10 +22,6 @@
 
 namespace clang {
   class AttributeList;
-  class DeclSpec;
-  class Declarator;
-  class FieldDeclarator;
-  class ObjCDeclSpec;
   class PragmaHandler;
   class Scope;
   class DiagnosticBuilder;
@@ -511,7 +507,9 @@ private:
             TemplateParameterLists *TemplateParams = 0);
   DeclTy *ParseFunctionDefinition(Declarator &D);
   void ParseKNRParamDeclarations(Declarator &D);
-  OwningExprResult ParseSimpleAsm();
+  // EndLoc, if non-NULL, is filled with the location of the last token of
+  // the simple-asm.
+  OwningExprResult ParseSimpleAsm(SourceLocation *EndLoc = 0);
   OwningExprResult ParseAsmStringLiteral();
 
   // Objective-C External Declarations
@@ -634,7 +632,8 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 15: C++ Throw Expression
   OwningExprResult ParseThrowExpression();
-  bool ParseExceptionSpecification();
+  // EndLoc is filled with the location of the last token of the specification.
+  bool ParseExceptionSpecification(SourceLocation &EndLoc);
 
   //===--------------------------------------------------------------------===//
   // C++ 2.13.5: C++ Boolean Literals
@@ -899,7 +898,9 @@ private:
 
   TypeTy *ParseTypeName();
   void ParseBlockId();
-  AttributeList *ParseAttributes();
+  // EndLoc, if non-NULL, is filled with the location of the last token of
+  // the attribute list.
+  AttributeList *ParseAttributes(SourceLocation *EndLoc = 0);
   void FuzzyParseMicrosoftDeclSpec();
   void ParseTypeofSpecifier(DeclSpec &DS);
 
@@ -967,8 +968,10 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 13.5: Overloaded operators [over.oper]
-  OverloadedOperatorKind TryParseOperatorFunctionId();
-  TypeTy *ParseConversionFunctionId();
+  // EndLoc, if non-NULL, is filled with the location of the last token of
+  // the ID.
+  OverloadedOperatorKind TryParseOperatorFunctionId(SourceLocation *EndLoc = 0);
+  TypeTy *ParseConversionFunctionId(SourceLocation *EndLoc = 0);
 
   //===--------------------------------------------------------------------===//
   // C++ 14: Templates [temp]

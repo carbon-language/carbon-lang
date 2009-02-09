@@ -1251,8 +1251,9 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
   // argument decls, decls within the compound expression, etc.  This also
   // allows determining whether a variable reference inside the block is
   // within or outside of the block.
-  ParseScope BlockScope(this, Scope::BlockScope|Scope::FnScope|Scope::BreakScope|
-                              Scope::ContinueScope|Scope::DeclScope);
+  ParseScope BlockScope(this, Scope::BlockScope | Scope::FnScope |
+                              Scope::BreakScope | Scope::ContinueScope |
+                              Scope::DeclScope);
 
   // Inform sema that we are starting a block.
   Actions.ActOnBlockStart(CaretLoc, CurScope);
@@ -1260,13 +1261,20 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
   // Parse the return type if present.
   DeclSpec DS;
   Declarator ParamInfo(DS, Declarator::BlockLiteralContext);
+  // FIXME: Since the return type isn't actually parsed, it can't be used to
+  // fill ParamInfo with an initial valid range, so do it manually.
+  ParamInfo.SetSourceRange(SourceRange(Tok.getLocation(), Tok.getLocation()));
 
   // If this block has arguments, parse them.  There is no ambiguity here with
   // the expression case, because the expression case requires a parameter list.
   if (Tok.is(tok::l_paren)) {
     ParseParenDeclarator(ParamInfo);
     // Parse the pieces after the identifier as if we had "int(...)".
+    // SetIdentifier sets the source range end, but in this case we're past
+    // that location.
+    SourceLocation Tmp = ParamInfo.getSourceRange().getEnd();
     ParamInfo.SetIdentifier(0, CaretLoc);
+    ParamInfo.SetRangeEnd(Tmp);
     if (ParamInfo.getInvalidType()) {
       // If there was an error parsing the arguments, they may have
       // tried to use ^(x+y) which requires an argument list.  Just
@@ -1281,7 +1289,8 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     // Otherwise, pretend we saw (void).
     ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false,
                                                        0, 0, 0, CaretLoc,
-                                                       ParamInfo));
+                                                       ParamInfo),
+                          CaretLoc);
     // Inform sema that we are starting a block.
     Actions.ActOnBlockArguments(ParamInfo, CurScope);
   }

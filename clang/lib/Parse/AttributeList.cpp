@@ -16,7 +16,7 @@ using namespace clang;
 
 AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
                              IdentifierInfo *pName, SourceLocation pLoc,
-                             Action::ExprTy **elist, unsigned numargs, 
+                             Action::ExprTy **elist, unsigned numargs,
                              AttributeList *n)
   : AttrName(aName), AttrLoc(aLoc), ParmName(pName), ParmLoc(pLoc),
     NumArgs(numargs), Next(n) {
