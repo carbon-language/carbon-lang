@@ -2699,8 +2699,15 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
         if (CI->getZExtValue() == 0) continue;
         uint64_t Offs =
             TD->getTypePaddedSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
+        SDValue OffsVal = DAG.getConstant(Offs, MVT::i64);
+        unsigned PtrBits = TLI.getPointerTy().getSizeInBits();
+        if (PtrBits < 64)
+          OffsVal = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(), 
+                                TLI.getPointerTy(), OffsVal);
+        else
+          OffsVal = DAG.getIntPtrConstant(Offs);
         N = DAG.getNode(ISD::ADD, getCurDebugLoc(), N.getValueType(), N,
-                        DAG.getIntPtrConstant(Offs));
+                        OffsVal);
         continue;
       }
 
