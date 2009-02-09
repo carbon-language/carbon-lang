@@ -184,16 +184,19 @@ cp `find $DIR -name tblgen` $DT_HOME/local/bin
 
 # Remove .dir files 
 cd $DEST_DIR$DEST_ROOT
-rm bin/.dir etc/llvm/.dir lib/.dir
+rm -f bin/.dir etc/llvm/.dir lib/.dir
 
 # Remove PPC64 fat slices.
 cd $DEST_DIR$DEST_ROOT/bin
 if [ $MACOSX_DEPLOYMENT_TARGET = "10.4" ]; then
-    find . -perm 755 -type f -exec lipo -extract ppc -extract i386 {} -output {} \;
+    find . -perm 755 -type f \! \( -name '*gccas' -o -name '*gccld' -o -name llvm-config \) \
+        -exec lipo -extract ppc -extract i386 {} -output {} \;
 elif [ $MACOSX_DEPLOYMENT_TARGET = "10.5" ]; then
-    find . -perm 755 -type f -exec lipo -extract ppc7400 -extract i386 {} -output {} \;
+    find . -perm 755 -type f \! \( -name '*gccas' -o -name '*gccld' -o -name llvm-config \) \
+        -exec lipo -extract ppc7400 -extract i386 {} -output {} \;
 else
-    find . -perm 755 -type f -exec lipo -extract ppc7400 -extract i386 -extract x86_64 {} -output {} \;
+    find . -perm 755 -type f \! \( -name '*gccas' -o -name '*gccld' -o -name llvm-config \) \
+        -exec lipo -extract ppc7400 -extract i386 -extract x86_64 {} -output {} \;
 fi
 
 cd $DEST_DIR$DEST_ROOT
