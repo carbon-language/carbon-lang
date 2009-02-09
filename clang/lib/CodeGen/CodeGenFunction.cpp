@@ -144,6 +144,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args,
                                     SourceLocation StartLoc) {
+  DidCallStackSave = false;
   CurFuncDecl = D;
   FnRetTy = RetTy;
   CurFn = Fn;

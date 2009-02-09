@@ -260,6 +260,10 @@ private:
   /// which the stack depth changes.
   llvm::Value *StackDepth;
 
+  /// DidCallStackSave - Whether llvm.stacksave has been called. Used to avoid
+  /// calling llvm.stacksave for multiple VLAs in the same scope.
+  bool DidCallStackSave;
+  
   /// StackSaveValues - A stack(!) of stack save values. When a new scope is
   /// entered, a null is pushed on this stack. If a VLA is emitted, then the
   /// return value of llvm.stacksave() is stored at the top of this stack.
