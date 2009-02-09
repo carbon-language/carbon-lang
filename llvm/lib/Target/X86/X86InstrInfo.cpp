@@ -1753,19 +1753,20 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   // Moving to ST(0) turns into FpSET_ST0_32 etc.
   if (DestRC == &X86::RSTRegClass) {
-    // Copying to ST(0).  FIXME: handle ST(1) also
-    if (DestReg != X86::ST0)
+    // Copying to ST(0) / ST(1).
+    if (DestReg != X86::ST0 && DestReg != X86::ST1)
       // Can only copy to TOS right now
       return false;
+    bool isST0 = DestReg == X86::ST0;
     unsigned Opc;
     if (SrcRC == &X86::RFP32RegClass)
-      Opc = X86::FpSET_ST0_32;
+      Opc = isST0 ? X86::FpSET_ST0_32 : X86::FpSET_ST1_32;
     else if (SrcRC == &X86::RFP64RegClass)
-      Opc = X86::FpSET_ST0_64;
+      Opc = isST0 ? X86::FpSET_ST0_64 : X86::FpSET_ST1_64;
     else {
       if (SrcRC != &X86::RFP80RegClass)
         return false;
-      Opc = X86::FpSET_ST0_80;
+      Opc = isST0 ? X86::FpSET_ST0_80 : X86::FpSET_ST1_80;
     }
     BuildMI(MBB, MI, get(Opc)).addReg(SrcReg);
     return true;
