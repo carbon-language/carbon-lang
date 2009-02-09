@@ -13,3 +13,8 @@ int c(int n)
 {
   return sizeof(int[n]);
 }
+
+int f0(int x) {
+  int vla[x];
+  return vla[x-1];
+}
