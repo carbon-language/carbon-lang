@@ -134,6 +134,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   // Keep track of the current cleanup stack depth.
   size_t CleanupStackDepth = CleanupEntries.size();
   
+  bool OldDidCallStackSave = DidCallStackSave;
+  
   // Push a null stack save value.
   StackSaveValues.push_back(0);
   
@@ -173,6 +175,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
     Builder.CreateCall(F, V);
   }
+  
+  DidCallStackSave = OldDidCallStackSave;
   
   EmitCleanupBlocks(CleanupStackDepth);
   
