@@ -1,6 +1,3 @@
 // RUN: clang -verify -emit-llvm -o - %s 
 
-int f0(int x) {
-  int vla[x];
-  return vla[x-1]; // expected-error {{cannot compile this return inside scope with VLA yet}}
-}
+void *x = L"foo"; // expected-error {{cannot compile this wide string yet}}
