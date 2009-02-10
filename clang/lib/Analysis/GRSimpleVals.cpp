@@ -74,6 +74,11 @@ SVal GRSimpleVals::EvalCast(GRExprEngine& Eng, Loc X, QualType T) {
   if (Loc::IsLocType(T) || T->isReferenceType())
     return X;
   
+  // FIXME: Handle transparent unions where a value can be "transparently"
+  //  lifted into a union type.
+  if (T->isUnionType())
+    return UnknownVal();
+  
   assert (T->isIntegerType());
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   unsigned BitWidth = Eng.getContext().getTypeSize(T);
