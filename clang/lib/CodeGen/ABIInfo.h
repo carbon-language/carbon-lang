@@ -21,6 +21,7 @@ namespace clang {
   // down. Fortunately CGFunctionInfo has no real tie to CodeGen.
   namespace CodeGen {
     class CGFunctionInfo;
+    class CodeGenFunction;
   }
 
   /* FIXME: All of this stuff should be part of the target interface
@@ -116,6 +117,16 @@ namespace clang {
 
     virtual void computeInfo(CodeGen::CGFunctionInfo &FI,
                              ASTContext &Ctx) const = 0;
+
+    /// EmitVAArg - Emit the target dependent code to load a value of
+    /// \arg Ty from the va_list pointed to by \arg VAListAddr.
+    
+    // FIXME: This is a gaping layering violation if we wanted to drop
+    // the ABI information any lower than CodeGen. Of course, for
+    // VAArg handling it has to be at this level; there is no way to
+    // abstract this out.
+    virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                   CodeGen::CodeGenFunction &CGF) const = 0;
   };
 }  // end namespace clang
 
