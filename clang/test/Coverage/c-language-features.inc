@@ -103,6 +103,7 @@ void f4(int a0, int a1, int a2, va_list ap) {
   int t12_0 = __builtin_classify_type(t0);
   int t12_1 = __builtin_classify_type(t1);
   int t12_2 = __builtin_classify_type(t2);
+  // FIXME: Add _Complex and aggregate cases.
   int t13 = va_arg(ap, int);
   va_list t13_0;
   va_copy(t13_0, ap);

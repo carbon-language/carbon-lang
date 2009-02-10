@@ -192,6 +192,8 @@ public:
   ComplexPairTy VisitChooseExpr(ChooseExpr *CE);
 
   ComplexPairTy VisitInitListExpr(InitListExpr *E);
+
+  ComplexPairTy VisitVAArgExpr(VAArgExpr *E);
 };
 }  // end anonymous namespace.
 
@@ -526,6 +528,22 @@ ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {
   const llvm::Type* LTy = CGF.ConvertType(Ty);
   llvm::Value* zeroConstant = llvm::Constant::getNullValue(LTy);
   return ComplexPairTy(zeroConstant, zeroConstant);
+}
+
+ComplexPairTy ComplexExprEmitter::VisitVAArgExpr(VAArgExpr *E) {
+  llvm::Value *ArgValue = CGF.EmitLValue(E->getSubExpr()).getAddress();
+  llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, E->getType());
+
+  if (!ArgPtr) {
+    CGF.ErrorUnsupported(E, "complex va_arg expression");
+    const llvm::Type *EltTy = 
+      CGF.ConvertType(E->getType()->getAsComplexType()->getElementType());
+    llvm::Value *U = llvm::UndefValue::get(EltTy);
+    return ComplexPairTy(U, U);
+  }
+
+  // FIXME Volatility.
+  return EmitLoadOfComplex(ArgPtr, false);
 }
 
 //===----------------------------------------------------------------------===//
