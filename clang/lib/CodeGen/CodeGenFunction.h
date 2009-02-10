@@ -88,47 +88,10 @@ public:
   uint32_t LLVMPointerWidth;
 
 public:
-  // FIXME: The following should be private once EH code is moved out of NeXT
-  // runtime.
-
-  // ObjCEHStack - This keeps track of which object to rethrow from inside
-  // @catch blocks and which @finally block exits from an EH scope should be
-  // chained through.
-  struct ObjCEHEntry {
-    ObjCEHEntry(llvm::BasicBlock *fb, llvm::SwitchInst *fs, llvm::Value *dc)
-      : FinallyBlock(fb), FinallySwitch(fs),
-        DestCode(dc) {}
-
-    /// Entry point to the finally block.
-    llvm::BasicBlock *FinallyBlock;
-
-    /// Switch instruction which runs at the end of the finally block to forward
-    /// jumps through the finally block.
-    llvm::SwitchInst *FinallySwitch;
-
-    /// Variable holding the code for the destination of a jump through the
-    /// @finally block.
-    llvm::Value *DestCode;
-  };
-
-  /// ObjCEHValueStack - Stack of exception objects being handled, during IR
-  /// generation for a @catch block.
+  /// ObjCEHValueStack - Stack of Objective-C exception values, used for
+  /// rethrows.
   llvm::SmallVector<llvm::Value*, 8> ObjCEHValueStack;
 
-  typedef llvm::SmallVector<ObjCEHEntry*, 8> ObjCEHStackType;
-  ObjCEHStackType ObjCEHStack;
-
-  /// EmitJumpThroughFinally - Emit a branch from the current insert point
-  /// through the finally handling code for \arg Entry and then on to \arg
-  /// Dest. It is legal to call this function even if there is no current
-  /// insertion point.
-  ///
-  /// \param ExecuteTryExit - When true, the try_exit runtime function should be
-  /// called prior to executing the finally code.
-  void EmitJumpThroughFinally(ObjCEHEntry *Entry, llvm::BasicBlock *Dest);
-
-  void EmitJumpThroughFinally(llvm::BasicBlock *Dest);
-  
   /// PushCleanupBlock - Push a new cleanup entry on the stack and set the
   /// passed in block as the cleanup block.
   void PushCleanupBlock(llvm::BasicBlock *CleanupBlock);
@@ -229,47 +192,10 @@ private:
   // enter/leave scopes.
   llvm::DenseMap<const VariableArrayType*, llvm::Value*> VLASizeMap;
 
-  /// StackDepth - This keeps track of the stack depth.  It is used to notice
-  /// when control flow results in a change in stack depth and to arrange for
-  /// the appropriate stack depth to be restored.  VLAs are the primary means by
-  /// which the stack depth changes.
-  llvm::Value *StackDepth;
-
   /// DidCallStackSave - Whether llvm.stacksave has been called. Used to avoid
   /// calling llvm.stacksave for multiple VLAs in the same scope.
   bool DidCallStackSave;
   
-  /// StackSaveValues - A stack(!) of stack save values. When a new scope is
-  /// entered, a null is pushed on this stack. If a VLA is emitted, then the
-  /// return value of llvm.stacksave() is stored at the top of this stack.
-  llvm::SmallVector<llvm::Value*, 8> StackSaveValues;
-
-  /// StackDepthMap - A association of stack depth that will be in effect for
-  /// each label.  If control flow is transferred to a label, we have to restore
-  /// the desired stack depth at the destination label, beore we transfer to
-  /// that label.
-  llvm::DenseMap<const void*, llvm::Value *> StackDepthMap;
-
-  /// StackFixupAtLabel - Routine to adjust the stack to the depth the stack
-  /// should be at by the time we transfer control flow to the label.  This is
-  /// called as we emit destinations for control flow, such as user labels for
-  /// goto statements and compiler generated labels for break and continue
-  /// processsing.  We return true, if for any reason we can't generate code for
-  /// the construct yet.  See EmitStackUpdate for the paired routine to mark the
-  /// branch.
-  bool StackFixupAtLabel(const void *);
-
-  /// EmitStackUpdate - Routine to adjust the stack to the depth the stack
-  /// should be at by the time we transfer control flow to the label.  This is
-  /// called just before emitting branches for user level goto processing,
-  /// branhes for break or continue processing.  The llvm::value overload is
-  /// used when handling break and continue, as we know the stack depth
-  /// directly.  We return true, if for any reason we can't generate code for
-  /// the construct yet.  See StackFixupAtLabel for the paired routine to mark
-  /// the destinations.
-  bool EmitStackUpdate(llvm::Value *V);
-  bool EmitStackUpdate(const void *S);
-
   struct CleanupEntry {
     /// CleanupBlock - The block of code that does the actual cleanup.
     llvm::BasicBlock *CleanupBlock;

@@ -133,11 +133,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
 
   // Keep track of the current cleanup stack depth.
   size_t CleanupStackDepth = CleanupEntries.size();
-  
   bool OldDidCallStackSave = DidCallStackSave;
-  
-  // Push a null stack save value.
-  StackSaveValues.push_back(0);
   
   for (CompoundStmt::const_body_iterator I = S.body_begin(),
        E = S.body_end()-GetLast; I != E; ++I)
@@ -168,14 +164,6 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     RV = EmitAnyExpr(cast<Expr>(LastStmt), AggLoc);
   }
 
-  if (llvm::Value *V = StackSaveValues.pop_back_val()) {
-    StackDepth = V;
-    V = Builder.CreateLoad(V, "tmp");
-    
-    llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
-    Builder.CreateCall(F, V);
-  }
-  
   DidCallStackSave = OldDidCallStackSave;
   
   EmitCleanupBlocks(CleanupStackDepth);
@@ -202,47 +190,6 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
   Builder.SetInsertPoint(BB);
 }
 
-bool CodeGenFunction::EmitStackUpdate(llvm::Value *V) {
-  // If we're already at the depth we want...
-  if (StackDepth == V)
-    return false;
-
-  // V can be 0 here, if it is, be sure to start searching from the
-  // top of the function, as we want the next save after that point.
-  for (unsigned int i = 0; i < StackSaveValues.size(); ++i)
-    if (StackSaveValues[i] == V) {
-      // The actual depth is actually in the next used slot, if any.
-      while (++i < StackSaveValues.size()
-             && (V = StackSaveValues[i]) == 0) ;
-      // If there were no other depth changes, we don't need any
-      // adjustments.
-      if (V) {
-        V = Builder.CreateLoad(V, "tmp");
-        // and restore it.
-        llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
-        Builder.CreateCall(F, V);
-      }
-    } else return true;
-  return false;
-}
-
-bool CodeGenFunction::EmitStackUpdate(const void  *S) {
-  if (StackDepthMap.find(S) == StackDepthMap.end()) {
-    // If we can't find it, just remember the depth now,
-    // so we can validate it later.
-    // FIXME: We need to save a place to insert the adjustment,
-    // if needed, here, sa that later in EmitLabel, we can
-    // backpatch the adjustment into that place, instead of
-    // saying unsupported.
-    StackDepthMap[S] = StackDepth;
-    return false;
-  }
-      
-  // Find applicable stack depth, if any...
-  llvm::Value *V = StackDepthMap[S];
-  return EmitStackUpdate(V);
-}
-
 void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
   // Emit a branch from the current block to the target one if this
   // was a real block.  If this was just a fall-through block after a
@@ -260,31 +207,8 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
   Builder.ClearInsertionPoint();
 }
 
-bool CodeGenFunction::StackFixupAtLabel(const void *S) {
-  if (StackDepthMap.find(S) == StackDepthMap.end()) {
-    // We need to remember the stack depth so that we can readjust the
-    // stack back to the right depth for this label if we want to
-    // transfer here from a different depth.
-    StackDepthMap[S] = StackDepth;
-  } else {
-    if (StackDepthMap[S] != StackDepth) {
-      // FIXME: Sema needs to ckeck for jumps that cross decls with
-      // initializations for C++, and all VLAs, not just the first in
-      // a block that does a stacksave.
-      // FIXME: We need to save a place to insert the adjustment
-      // when we do a EmitStackUpdate on a forward jump, and then
-      // backpatch the adjustment into that place.
-      return true;
-    }
-  }
-  return false;
-}
-
 void CodeGenFunction::EmitLabel(const LabelStmt &S) {
-  llvm::BasicBlock *NextBB = getBasicBlockForLabel(&S);
-  if (StackFixupAtLabel(&S))
-    CGM.ErrorUnsupported(&S, "forward goto inside scope with VLA");
-  EmitBlock(NextBB);
+  EmitBlock(getBasicBlockForLabel(&S));
 }
 
 
@@ -294,36 +218,16 @@ void CodeGenFunction::EmitLabelStmt(const LabelStmt &S) {
 }
 
 void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
-  // FIXME: Implement goto out in @try or @catch blocks.
-  if (!ObjCEHStack.empty()) {
-    CGM.ErrorUnsupported(&S, "goto inside an Obj-C exception block");
-    return;
-  }
-
   // If this code is reachable then emit a stop point (if generating
   // debug info). We have to do this ourselves because we are on the
   // "simple" statement path.
   if (HaveInsertPoint())
     EmitStopPoint(&S);
 
-  // We need to adjust the stack, if the destination was (will be) at
-  // a different depth.
-  if (EmitStackUpdate(S.getLabel()))
-    // FIXME: Move to semq and assert here, codegen isn't the right
-    // time to be checking.
-    CGM.ErrorUnsupported(S.getLabel(),
-                         "invalid goto to VLA scope that has finished");
-
   EmitBranchThroughCleanup(getBasicBlockForLabel(S.getLabel()));
 }
 
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
-  // FIXME: Implement indirect goto in @try or @catch blocks.
-  if (!ObjCEHStack.empty()) {
-    CGM.ErrorUnsupported(&S, "goto inside an Obj-C exception block");
-    return;
-  }
-
   // Emit initial switch which will be patched up later by
   // EmitIndirectSwitches(). We need a default dest, so we use the
   // current BB, but this is overwritten.
@@ -557,13 +461,6 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
 /// if the function returns void, or may be missing one if the function returns
 /// non-void.  Fun stuff :).
 void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
-  for (unsigned i = 0; i < StackSaveValues.size(); i++) {
-    if (StackSaveValues[i]) {
-      CGM.ErrorUnsupported(&S, "return inside scope with VLA");
-      return;
-    }
-  }
-  
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
   
@@ -583,15 +480,6 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else {
     EmitAggExpr(RV, ReturnValue, false);
   }
-
-  if (!ObjCEHStack.empty()) {
-    for (ObjCEHStackType::reverse_iterator i = ObjCEHStack.rbegin(), 
-           e = ObjCEHStack.rend(); i != e; ++i) {
-      llvm::BasicBlock *ReturnPad = createBasicBlock("return.pad");
-      EmitJumpThroughFinally(*i, ReturnPad);
-      EmitBlock(ReturnPad);
-    }
-  } 
 
   EmitBranchThroughCleanup(ReturnBlock);
 }

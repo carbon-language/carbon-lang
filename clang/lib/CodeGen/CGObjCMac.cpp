@@ -2086,36 +2086,6 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.ClearInsertionPoint();
 }
 
-void CodeGenFunction::EmitJumpThroughFinally(llvm::BasicBlock *Dest) {
-  EmitJumpThroughFinally(ObjCEHStack.back(), Dest);
-}
-
-void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
-                                             llvm::BasicBlock *Dst) {
-  if (!HaveInsertPoint())
-    return;
-  
-  // Find the destination code for this block. We always use 0 for the
-  // fallthrough block (default destination).
-  llvm::SwitchInst *SI = E->FinallySwitch;
-  llvm::ConstantInt *ID;
-  if (Dst == SI->getDefaultDest()) {
-    ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-  } else {
-    ID = SI->findCaseDest(Dst);
-    if (!ID) {
-      // No code found, get a new unique one by just using the number
-      // of switch successors.
-      ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, SI->getNumSuccessors());
-      SI->addCase(ID, Dst);
-    }
-  }
-
-  // Set the destination code and branch.
-  Builder.CreateStore(ID, E->DestCode);
-  EmitBranch(E->FinallyBlock);
-}
-
 /// EmitObjCWeakRead - Code gen for loading value of a __weak
 /// object: objc_read_weak (id *src)
 ///
