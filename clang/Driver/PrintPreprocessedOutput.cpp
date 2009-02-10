@@ -583,7 +583,6 @@ static void PrintMacroDefinition(IdentifierInfo &II, const MacroInfo &MI,
     OS << ' ';
   
   llvm::SmallVector<char, 128> SpellingBuffer;
-  
   for (MacroInfo::tokens_iterator I = MI.tokens_begin(), E = MI.tokens_end();
        I != E; ++I) {
     if (I->hasLeadingSpace())
@@ -599,6 +598,14 @@ static void PrintMacroDefinition(IdentifierInfo &II, const MacroInfo &MI,
   OS << "\n";
 }
 
+namespace {
+  struct SortMacrosByID {
+    typedef std::pair<IdentifierInfo*, MacroInfo*> id_macro_pair;
+    bool operator()(const id_macro_pair &LHS, const id_macro_pair &RHS) const {
+      return strcmp(LHS.first->getName(), RHS.first->getName()) < 0;
+    }
+  };
+}
 
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
@@ -629,9 +636,14 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
     do PP.Lex(Tok);
     while (Tok.isNot(tok::eof));
     
+    std::vector<std::pair<IdentifierInfo*, MacroInfo*> > MacrosByID;
     for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
          I != E; ++I)
-      PrintMacroDefinition(*I->first, *I->second, PP, OS);
+      MacrosByID.push_back(*I);
+    std::sort(MacrosByID.begin(), MacrosByID.end(), SortMacrosByID());
+    
+    for (unsigned i = 0, e = MacrosByID.size(); i != e; ++i)
+      PrintMacroDefinition(*MacrosByID[i].first, *MacrosByID[i].second, PP, OS);
     
   } else {
     PrintPPOutputPPCallbacks *Callbacks;
