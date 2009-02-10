@@ -555,7 +555,27 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 /// It returns true if an error occurred, and false otherwise.
 bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
                                  DeclRefExpr *Arg) {
-  return false;
+  assert(isa<TemplateDecl>(Arg->getDecl()) && "Only template decls allowed");
+  TemplateDecl *Template = cast<TemplateDecl>(Arg->getDecl());
+
+  // C++ [temp.arg.template]p1:
+  //   A template-argument for a template template-parameter shall be
+  //   the name of a class template, expressed as id-expression. Only
+  //   primary class templates are considered when matching the
+  //   template template argument with the corresponding parameter;
+  //   partial specializations are not considered even if their
+  //   parameter lists match that of the template template parameter.
+  if (!isa<ClassTemplateDecl>(Template)) {
+    assert(isa<FunctionTemplateDecl>(Template) && 
+           "Only function templates are possible here");
+    Diag(Arg->getSourceRange().getBegin(), diag::note_template_arg_refers_here)
+      << Template;
+  }
+
+  return !TemplateParameterListsAreEqual(Template->getTemplateParameters(),
+                                         Param->getTemplateParameters(),
+                                         true, true,
+                                         Arg->getSourceRange().getBegin());
 }
 
 /// \brief Determine whether the given template parameter lists are
@@ -571,19 +591,35 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
 /// \param Complain  If true, this routine will produce a diagnostic if
 /// the template parameter lists are not equivalent.
 ///
+/// \param IsTemplateTemplateParm  If true, this routine is being
+/// called to compare the template parameter lists of a template
+/// template parameter.
+///
+/// \param TemplateArgLoc If this source location is valid, then we
+/// are actually checking the template parameter list of a template
+/// argument (New) against the template parameter list of its
+/// corresponding template template parameter (Old). We produce
+/// slightly different diagnostics in this scenario.
+///
 /// \returns True if the template parameter lists are equal, false
 /// otherwise.
 bool 
 Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
                                      TemplateParameterList *Old,
                                      bool Complain,
-                                     bool IsTemplateTemplateParm) {
+                                     bool IsTemplateTemplateParm,
+                                     SourceLocation TemplateArgLoc) {
   if (Old->size() != New->size()) {
     if (Complain) {
-      Diag(New->getTemplateLoc(), diag::err_template_param_list_different_arity)
-        << (New->size() > Old->size())
-        << IsTemplateTemplateParm
-        << SourceRange(New->getTemplateLoc(), New->getRAngleLoc());
+      unsigned NextDiag = diag::err_template_param_list_different_arity;
+      if (TemplateArgLoc.isValid()) {
+        Diag(TemplateArgLoc, diag::err_template_arg_template_params_mismatch);
+        NextDiag = diag::note_template_param_list_different_arity;
+      } 
+      Diag(New->getTemplateLoc(), NextDiag)
+          << (New->size() > Old->size())
+          << IsTemplateTemplateParm
+          << SourceRange(New->getTemplateLoc(), New->getRAngleLoc());
       Diag(Old->getTemplateLoc(), diag::note_template_prev_declaration)
         << IsTemplateTemplateParm
         << SourceRange(Old->getTemplateLoc(), Old->getRAngleLoc());
@@ -596,7 +632,12 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
          OldParmEnd = Old->end(), NewParm = New->begin();
        OldParm != OldParmEnd; ++OldParm, ++NewParm) {
     if ((*OldParm)->getKind() != (*NewParm)->getKind()) {
-      Diag((*NewParm)->getLocation(), diag::err_template_param_different_kind)
+      unsigned NextDiag = diag::err_template_param_different_kind;
+      if (TemplateArgLoc.isValid()) {
+        Diag(TemplateArgLoc, diag::err_template_arg_template_params_mismatch);
+        NextDiag = diag::note_template_param_different_kind;
+      }
+      Diag((*NewParm)->getLocation(), NextDiag)
         << IsTemplateTemplateParm;
       Diag((*OldParm)->getLocation(), diag::note_template_prev_declaration)
         << IsTemplateTemplateParm;
@@ -605,8 +646,15 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
 
     if (isa<TemplateTypeParmDecl>(*OldParm)) {
       // Okay; all template type parameters are equivalent (since we
-      // know we're at the same depth/level).
-#ifndef NDEBUG
+      // know we're at the same index).
+#if 0
+      // FIXME: Enable this code in debug mode *after* we properly go
+      // through and "instantiate" the template parameter lists of
+      // template template parameters. It's only after this
+      // instantiation that (1) any dependent types within the
+      // template parameter list of the template template parameter
+      // can be checked, and (2) the template type parameter depths
+      // will match up.
       QualType OldParmType 
         = Context.getTypeDeclType(cast<TemplateTypeParmDecl>(*OldParm));
       QualType NewParmType 
@@ -623,8 +671,13 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
       if (Context.getCanonicalType(OldNTTP->getType()) !=
             Context.getCanonicalType(NewNTTP->getType())) {
         if (Complain) {
-          Diag(NewNTTP->getLocation(), 
-               diag::err_template_nontype_parm_different_type)
+          unsigned NextDiag = diag::err_template_nontype_parm_different_type;
+          if (TemplateArgLoc.isValid()) {
+            Diag(TemplateArgLoc, 
+                 diag::err_template_arg_template_params_mismatch);
+            NextDiag = diag::note_template_nontype_parm_different_type;
+          }
+          Diag(NewNTTP->getLocation(), NextDiag)
             << NewNTTP->getType()
             << IsTemplateTemplateParm;
           Diag(OldNTTP->getLocation(), 
@@ -646,7 +699,8 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
       if (!TemplateParameterListsAreEqual(NewTTP->getTemplateParameters(),
                                           OldTTP->getTemplateParameters(),
                                           Complain,
-                                          /*IsTemplateTemplateParm=*/true))
+                                          /*IsTemplateTemplateParm=*/true,
+                                          TemplateArgLoc))
         return false;
     }
   }

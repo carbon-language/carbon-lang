@@ -1538,7 +1538,9 @@ public:
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
                                       TemplateParameterList *Old,
                                       bool Complain,
-                                      bool IsTemplateTemplateParm = false);
+                                      bool IsTemplateTemplateParm = false,
+                                      SourceLocation TemplateArgLoc
+                                       = SourceLocation());
   
   bool CheckTemplateDeclScope(Scope *S, 
                               MultiTemplateParamsArg &TemplateParameterLists);

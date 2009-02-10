@@ -479,12 +479,18 @@ DIAG(err_template_unnamed_class, ERROR,
      "cannot declare a class template with no name")
 DIAG(err_template_param_list_different_arity, ERROR,
      "%select{too few|too many}0 template parameters in template %select{|template parameter }1redeclaration")
+DIAG(note_template_param_list_different_arity, NOTE,
+     "%select{too few|too many}0 template parameters in template template argument")
 DIAG(note_template_prev_declaration, NOTE,
      "previous template %select{declaration|template parameter}0 is here")
 DIAG(err_template_param_different_kind, ERROR,
      "template parameter has a different kind in template %select{|template parameter }0redeclaration")
+DIAG(note_template_param_different_kind, NOTE,
+     "template parameter has a different kind in template argument")
 DIAG(err_template_nontype_parm_different_type, ERROR,
      "template non-type parameter has a different type %0 in template %select{|template parameter }1redeclaration")
+DIAG(note_template_nontype_parm_different_type, NOTE,
+     "template non-type parameter has a different type %0 in template argument")
 DIAG(note_template_nontype_parm_prev_declaration, NOTE,
      "previous non-type template parameter with type %0 is here")
 
@@ -507,6 +513,12 @@ DIAG(err_template_arg_unnamed_type, ERROR,
      "template argument uses unnamed type")
 DIAG(note_template_unnamed_type_here, NOTE,
      "unnamed type used in template argument was declared here")
+DIAG(err_template_arg_not_class_template, ERROR,
+     "template argument does not refer to a class template")
+DIAG(note_template_arg_refers_here, NOTE,
+     "template argument refers to function template %0, here")
+DIAG(err_template_arg_template_params_mismatch, ERROR,
+     "template template argument has different template parameters than its corresponding template template parameter")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")
