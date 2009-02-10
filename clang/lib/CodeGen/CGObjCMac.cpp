@@ -720,7 +720,7 @@ public:
     return ObjCTypes.SetPropertyFn; 
   }
   virtual llvm::Function *EnumerationMutationFunction()
-    { return 0; }
+    { return ObjCTypes.EnumerationMutationFn; }
   
   virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                          const Stmt &S)
