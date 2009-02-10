@@ -437,7 +437,7 @@ EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 void FieldDecl::EmitImpl(Serializer& S) const {
   S.EmitBool(Mutable);
   S.Emit(getType());
-  NamedDecl::EmitInRec(S);
+  ValueDecl::EmitInRec(S);
   S.EmitOwnedPtr(BitWidth);  
 }
 
@@ -445,8 +445,7 @@ FieldDecl* FieldDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   FieldDecl* decl = new (C) FieldDecl(Field, 0, SourceLocation(), NULL, 
                                         QualType(), 0, false);
   decl->Mutable = D.ReadBool();
-  decl->DeclType.ReadBackpatch(D);  
-  decl->ReadInRec(D, C);
+  decl->ValueDecl::ReadInRec(D, C);
   decl->BitWidth = D.ReadOwnedPtr<Expr>(C);
   return decl;
 }

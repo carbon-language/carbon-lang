@@ -662,23 +662,19 @@ protected:
 
 /// FieldDecl - An instance of this class is created by Sema::ActOnField to 
 /// represent a member of a struct/union/class.
-class FieldDecl : public NamedDecl {
+class FieldDecl : public ValueDecl {
   bool Mutable : 1;
-  QualType DeclType;  
   Expr *BitWidth;
 protected:
   FieldDecl(Kind DK, DeclContext *DC, SourceLocation L, 
             IdentifierInfo *Id, QualType T, Expr *BW, bool Mutable)
-    : NamedDecl(DK, DC, L, Id), Mutable(Mutable), DeclType(T), 
-      BitWidth(BW)
+    : ValueDecl(DK, DC, L, Id, T), Mutable(Mutable), BitWidth(BW)
       { }
 
 public:
   static FieldDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L, 
                            IdentifierInfo *Id, QualType T, Expr *BW, 
                            bool Mutable);
-
-  QualType getType() const { return DeclType; }
 
   /// isMutable - Determines whether this field is mutable (C++ only).
   bool isMutable() const { return Mutable; }
