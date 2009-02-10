@@ -161,6 +161,41 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                            PrevDecl);
   }
 
+  // C++ [temp.param]p4:
+  //
+  // A non-type template-parameter shall have one of the following
+  // (optionally cv-qualified) types:
+  //
+  //       -- integral or enumeration type,
+  if (T->isIntegralType() || T->isEnumeralType() ||
+      //   -- pointer to object or pointer to function, 
+      T->isPointerType() ||
+      //   -- reference to object or reference to function, 
+      T->isReferenceType() ||
+      //   -- pointer to member.
+      T->isMemberPointerType() ||
+      // If T is a dependent type, we can't do the check now, so we
+      // assume that it is well-formed.
+      T->isDependentType()) {
+    // Okay: The template parameter is well-formed.
+  } 
+  // C++ [temp.param]p8:
+  //
+  //   A non-type template-parameter of type "array of T" or
+  //   "function returning T" is adjusted to be of type "pointer to
+  //   T" or "pointer to function returning T", respectively.
+  else if (T->isArrayType())
+    // FIXME: Keep the type prior to promotion?
+    T = Context.getArrayDecayedType(T);
+  else if (T->isFunctionType())
+    // FIXME: Keep the type prior to promotion?
+    T = Context.getPointerType(T);
+  else {
+    Diag(D.getIdentifierLoc(), diag::err_template_nontype_parm_bad_type)
+      << T;
+    return 0;
+  }
+
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(Context, CurContext, D.getIdentifierLoc(),
                                       Depth, Position, ParamName, T);

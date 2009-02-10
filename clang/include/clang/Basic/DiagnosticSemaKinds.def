@@ -493,6 +493,8 @@ DIAG(note_template_nontype_parm_different_type, NOTE,
      "template non-type parameter has a different type %0 in template argument")
 DIAG(note_template_nontype_parm_prev_declaration, NOTE,
      "previous non-type template parameter with type %0 is here")
+DIAG(err_template_nontype_parm_bad_type, ERROR,
+     "a non-type template parameter cannot have type %0")
 
 // C++ Template Argument Lists
 DIAG(err_template_arg_list_different_arity, ERROR,
