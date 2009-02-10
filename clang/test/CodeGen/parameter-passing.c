@@ -8,9 +8,8 @@
 // RUN: clang %s -triple i386-unknown-unknown -O3 -emit-llvm -o %t &&
 // RUN: not grep '@g0' %t &&
 
-// FIXME: Enable once PR3489 is fixed.
-// RUNX: clang %s -triple x86_64-unknown-unknown -O3 -emit-llvm -o %t &&
-// RUNX: not grep '@g0' %t &&
+// RUN: clang %s -triple x86_64-unknown-unknown -O3 -emit-llvm -o %t &&
+// RUN: not grep '@g0' %t &&
 
 // RUN: clang %s -triple ppc-unknown-unknown -O3 -emit-llvm -o %t &&
 // RUN: not grep '@g0' %t &&
