@@ -427,7 +427,8 @@ PCHEntry PTHWriter::LexTokens(Lexer& L) {
   
   do {
     L.LexFromRawLexer(Tok);
-    
+  NextToken:
+
     if ((Tok.isAtStartOfLine() || Tok.is(tok::eof)) &&
         ParsingPreprocessorDirective) {
       // Insert an eom token into the token cache.  It has the same
@@ -513,7 +514,15 @@ PCHEntry PTHWriter::LexTokens(Lexer& L) {
         PPStartCond.pop_back();        
         // Add the new entry to PPCond.      
         PPCond.push_back(std::make_pair(HashOff, index));
-        break;
+        EmitToken(Tok);
+        
+        // Some files have gibberish on the same line as '#endif'.
+        // Discard these tokens.
+        do L.LexFromRawLexer(Tok); while (!Tok.is(tok::eof) &&
+                                          !Tok.isAtStartOfLine());
+        // We have the next token in hand.
+        // Don't immediately lex the next one.
+        goto NextToken;        
       }
       case tok::pp_elif:
       case tok::pp_else: {
