@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -219,6 +220,15 @@ static bool isSchedulingBoundary(const MachineInstr *MI,
                                  const MachineFunction &MF) {
   // Terminators and labels can't be scheduled around.
   if (MI->getDesc().isTerminator() || MI->isLabel())
+    return true;
+
+  // Don't attempt to schedule around any instruction that modifies
+  // a stack-oriented pointer, as it's unlikely to be profitable. This
+  // saves compile time, because it doesn't require every single
+  // stack slot reference to depend on the instruction that does the
+  // modification.
+  const TargetLowering &TLI = *MF.getTarget().getTargetLowering();
+  if (MI->modifiesRegister(TLI.getStackPointerRegisterToSaveRestore()))
     return true;
 
   return false;
