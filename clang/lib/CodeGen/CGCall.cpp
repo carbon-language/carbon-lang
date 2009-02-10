@@ -1266,6 +1266,13 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     }
 
     case ABIArgInfo::Ignore:
+      // Initialize the local variable appropriately.
+      if (hasAggregateLLVMType(Ty)) { 
+        EmitParmDecl(*Arg, CreateTempAlloca(ConvertType(Ty)));
+      } else {
+        EmitParmDecl(*Arg, llvm::UndefValue::get(ConvertType(Arg->getType())));
+      }
+      
       // Skip increment, no matching LLVM parameter.
       continue; 
 
