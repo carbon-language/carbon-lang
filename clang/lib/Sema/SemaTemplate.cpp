@@ -458,7 +458,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       // is an expression.
       Diag(ArgExpr->getSourceRange().getBegin(), 
            diag::err_template_arg_must_be_type);
-      Diag((*Param)->getLocation(), diag::note_template_parameter_here);
+      Diag((*Param)->getLocation(), diag::note_template_param_here);
       Invalid = true;
     } else if (NonTypeTemplateParmDecl *NTTP 
                  = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
@@ -484,7 +484,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
           << ArgType;
       else
         Diag(ArgLoc, diag::err_template_arg_must_be_expr);
-      Diag((*Param)->getLocation(), diag::note_template_parameter_here);
+      Diag((*Param)->getLocation(), diag::note_template_param_here);
       Invalid = true;
     } else { 
       // Check template template parameters.

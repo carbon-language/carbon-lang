@@ -456,7 +456,7 @@ void *Parser::ParseTemplateArgument(bool &ArgIsType) {
   //   the corresponding template-parameter.
   //
   // Therefore, we initially try to parse a type-id.
-  if (isTypeIdInParens()) {
+  if (isCXXTypeId(TypeIdAsTemplateArgument)) {
     ArgIsType = true;
     return ParseTypeName();
   }

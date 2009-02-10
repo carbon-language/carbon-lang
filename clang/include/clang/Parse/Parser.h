@@ -819,12 +819,20 @@ private:
     return isDeclarationSpecifier();
   }
 
+  /// \brief Specifies the context in which type-id/expression
+  /// disambiguation will occur.
+  enum TentativeCXXTypeIdContext {
+    TypeIdInParens,
+    TypeIdAsTemplateArgument
+  };
+
+
   /// isTypeIdInParens - Assumes that a '(' was parsed and now we want to know
   /// whether the parens contain an expression or a type-id.
   /// Returns true for a type-id and false for an expression.
   bool isTypeIdInParens() {
     if (getLang().CPlusPlus)
-      return isCXXTypeIdInParens();
+      return isCXXTypeId(TypeIdInParens);
     return isTypeSpecifierQualifier();
   }
 
@@ -855,12 +863,7 @@ private:
   /// the function returns true to let the declaration parsing code handle it.
   bool isCXXConditionDeclaration();
 
-  /// isCXXTypeIdInParens - Assumes that a '(' was parsed and now we want to
-  /// know whether the parens contain an expression or a type-id.
-  /// Returns true for a type-id and false for an expression.
-  /// If during the disambiguation process a parsing error is encountered,
-  /// the function returns true to let the declaration parsing code handle it.
-  bool isCXXTypeIdInParens();
+  bool isCXXTypeId(TentativeCXXTypeIdContext Context);
 
   /// TPResult - Used as the result value for functions whose purpose is to
   /// disambiguate C++ constructs by "tentatively parsing" them.

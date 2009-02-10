@@ -1,5 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
-template<typename T> class A; // expected-error 2 {{template parameter is declared here}}
+template<typename T> class A; // expected-note 2 {{template parameter is declared here}}
 
 // [temp.arg.type]p1
 A<0> *a1; // expected-error{{template argument for template type parameter must be a type}}
@@ -7,9 +7,8 @@ A<0> *a1; // expected-error{{template argument for template type parameter must 
 A<A> *a2; // expected-error{{template argument for template type parameter must be a type}}
 
 A<int> *a3;
-// FIXME: The two below are well-formed, but we're not parsing them as type-ids.
-// A<int()> *a4; 
-// A<int(float)> *a5;
+A<int()> *a4; 
+A<int(float)> *a5;
 A<A<int> > *a6;
 
 // [temp.arg.type]p2

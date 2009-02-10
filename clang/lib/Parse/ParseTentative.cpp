@@ -270,16 +270,24 @@ bool Parser::isCXXConditionDeclaration() {
   return TPR == TPResult::True();
 }
 
-/// isCXXTypeIdInParens - Assumes that a '(' was parsed and now we want to
-/// know whether the parens contain an expression or a type-id.
-/// Returns true for a type-id and false for an expression.
-/// If during the disambiguation process a parsing error is encountered,
-/// the function returns true to let the declaration parsing code handle it.
-///
-/// type-id:
-///   type-specifier-seq abstract-declarator[opt]
-///
-bool Parser::isCXXTypeIdInParens() {
+  /// \brief Determine whether the next set of tokens contains a type-id. 
+  ///
+  /// The context parameter states what context we're parsing right
+  /// now, which affects how this routine copes with the token
+  /// following the type-id. If the context is TypeIdInParens, we have
+  /// already parsed the '(' and we will cease lookahead when we hit
+  /// the corresponding ')'. If the context is
+  /// TypeIdAsTemplateArgument, we've already parsed the '<' or ','
+  /// before this template argument, and will cease lookahead when we
+  /// hit a '>', '>>' (in C++0x), or ','. Returns true for a type-id
+  /// and false for an expression.  If during the disambiguation
+  /// process a parsing error is encountered, the function returns
+  /// true to let the declaration parsing code handle it.
+  ///
+  /// type-id:
+  ///   type-specifier-seq abstract-declarator[opt]
+  ///
+bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context) {
 
   // C++ 8.2p2:
   // The ambiguity arising from the similarity between a function-style cast and
@@ -318,7 +326,14 @@ bool Parser::isCXXTypeIdInParens() {
   if (TPR == TPResult::Ambiguous()) {
     // We are supposed to be inside parens, so if after the abstract declarator
     // we encounter a ')' this is a type-id, otherwise it's an expression.
-    if (Tok.is(tok::r_paren))
+    if (Context == TypeIdInParens && Tok.is(tok::r_paren))
+      TPR = TPResult::True();
+    // We are supposed to be inside a template argument, so if after
+    // the abstract declarator we encounter a '>', '>>' (in C++0x), or
+    // ',', this is a type-id. Otherwise, it's an expression.
+    else if (Context == TypeIdAsTemplateArgument &&
+             (Tok.is(tok::greater) || Tok.is(tok::comma) ||
+              (getLang().CPlusPlus0x && Tok.is(tok::greatergreater))))
       TPR = TPResult::True();
     else
       TPR = TPResult::False();
