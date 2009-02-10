@@ -24,7 +24,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
-#include <sstream>
 
 using namespace clang;
 
@@ -75,27 +74,26 @@ static inline Stmt* GetStmt(const ExplodedNode<GRState>* N) {
   return isa<BlockEntrance>(ProgP) ? GetLastStmt(N) : GetStmt(ProgP);
 }
 
-static void ExecutionContinues(std::ostringstream& os, SourceManager& SMgr,
-                               const Stmt* S) {
-  
+static void ExecutionContinues(llvm::raw_string_ostream& os,
+                               SourceManager& SMgr,
+                               const Stmt* S) {  
   if (!S)
     return;
   
   // Slow, but probably doesn't matter.
-  if (os.str().empty())
-    os << ' ';
+  if (os.str().empty()) os << ' ';
   
   os << "Execution continues on line "
-  << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
+     << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
 }
 
-static inline void ExecutionContinues(std::ostringstream& os,
+static inline void ExecutionContinues(llvm::raw_string_ostream& os,
                                       SourceManager& SMgr,
                                       const ExplodedNode<GRState>* N) {
   ExecutionContinues(os, SMgr, GetStmt(N->getLocation()));
 }
 
-static inline void ExecutionContinues(std::ostringstream& os,
+static inline void ExecutionContinues(llvm::raw_string_ostream& os,
                                       SourceManager& SMgr,
                                       const CFGBlock* B) {  
   ExecutionContinues(os, SMgr, GetStmt(B));
@@ -603,7 +601,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           if (!S)
             continue;
           
-          std::ostringstream os;
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);
           
           os << "Control jumps to line "
              << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
@@ -612,11 +611,10 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           break;
         }
           
-        case Stmt::SwitchStmtClass: {
-          
+        case Stmt::SwitchStmtClass: {          
           // Figure out what case arm we took.
-
-          std::ostringstream os;
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);
 
           if (Stmt* S = Dst->getLabel())
             switch (S->getStmtClass()) {
@@ -663,9 +661,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                   continue;
                 }
                 
-                llvm::raw_os_ostream OS(os);
-                OS << V;
-              }              
+                os << V;
+              }       
               
               os << ":'  at line " 
                  << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
@@ -684,15 +681,16 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           
         case Stmt::BreakStmtClass:
         case Stmt::ContinueStmtClass: {
-          std::ostringstream os;
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);
           ExecutionContinues(os, SMgr, LastNode);
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
           break;
         }
 
         case Stmt::ConditionalOperatorClass: {
-          
-          std::ostringstream os;
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);
           os << "'?' condition evaluates to ";
 
           if (*(Src->succ_begin()+1) == Dst)
@@ -700,16 +698,15 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           else
             os << "true.";
           
-          PD.push_front(new PathDiagnosticPiece(L, os.str()));
-          
+          PD.push_front(new PathDiagnosticPiece(L, os.str()));          
           break;
         }
           
         case Stmt::DoStmtClass:  {
           
           if (*(Src->succ_begin()) == Dst) {
-            
-            std::ostringstream os;          
+            std::string sbuf;
+            llvm::raw_string_ostream os(sbuf);
             
             os << "Loop condition is true. ";
             ExecutionContinues(os, SMgr, Dst);
@@ -727,12 +724,12 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         case Stmt::ForStmtClass: {
           
           if (*(Src->succ_begin()+1) == Dst) {
-            
-            std::ostringstream os;          
+            std::string sbuf;
+            llvm::raw_string_ostream os(sbuf);
 
             os << "Loop condition is false. ";
             ExecutionContinues(os, SMgr, Dst);
-          
+
             PD.push_front(new PathDiagnosticPiece(L, os.str()));
           }
           else
@@ -742,8 +739,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           break;
         }
           
-        case Stmt::IfStmtClass: {
-          
+        case Stmt::IfStmtClass: {          
           if (*(Src->succ_begin()+1) == Dst)
             PD.push_front(new PathDiagnosticPiece(L, "Taking false branch."));
           else 
