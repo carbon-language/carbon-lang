@@ -244,6 +244,9 @@ class DefaultABIInfo : public ABIInfo {
          it != ie; ++it)
       it->info = classifyArgumentType(it->type, Context);
   }
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
 };
 
 /// X86_32ABIInfo - The X86-32 ABI information.
@@ -261,6 +264,9 @@ public:
          it != ie; ++it)
       it->info = classifyArgumentType(it->type, Context);
   }
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
 };
 }
 
@@ -312,7 +318,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 }
 
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
-                                              ASTContext &Context) const {
+                                               ASTContext &Context) const {
   // FIXME: Set alignment on indirect arguments.
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
     // Structures with flexible arrays are always indirect.
@@ -338,6 +344,33 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
   } else {
     return ABIArgInfo::getDirect();
   }
+}
+
+llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                      CodeGenFunction &CGF) const {
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
+
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP, 
+                                                       "ap");
+  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+  llvm::Type *PTy = 
+    llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
+  llvm::Value *AddrTyped = Builder.CreateBitCast(Addr, PTy);
+  
+  uint64_t SizeInBytes = CGF.getContext().getTypeSize(Ty) / 8;
+  const unsigned ArgumentSizeInBytes = 4;
+  if (SizeInBytes < ArgumentSizeInBytes)
+    SizeInBytes = ArgumentSizeInBytes;
+
+  llvm::Value *NextAddr = 
+    Builder.CreateGEP(Addr, 
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, SizeInBytes),
+                      "ap.next");
+  Builder.CreateStore(NextAddr, VAListAddrAsBPP);
+
+  return AddrTyped;
 }
 
 namespace {
@@ -399,6 +432,9 @@ class X86_64ABIInfo : public ABIInfo {
 
 public:
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context) const;
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
 };
 }
 
@@ -815,8 +851,13 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
   }
 }
 
+llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                      CodeGenFunction &CGF) const {
+  return 0;
+}
+
 ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
-                                            ASTContext &Context) const {
+                                              ASTContext &Context) const {
   if (RetTy->isVoidType()) {
     return ABIArgInfo::getIgnore();
   } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
@@ -827,12 +868,17 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
 }
 
 ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
-                                              ASTContext &Context) const {
+                                                ASTContext &Context) const {
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
     return ABIArgInfo::getIndirect(0);
   } else {
     return ABIArgInfo::getDirect();
   }
+}
+
+llvm::Value *DefaultABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                       CodeGenFunction &CGF) const {
+  return 0;
 }
 
 const ABIInfo &CodeGenTypes::getABIInfo() const {
@@ -1489,4 +1535,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   assert(0 && "Unhandled ABIArgInfo::Kind");
   return RValue::get(0);
+}
+
+/* VarArg handling */
+
+llvm::Value *CodeGenFunction::EmitVAArg(llvm::Value *VAListAddr, QualType Ty) {
+  return CGM.getTypes().getABIInfo().EmitVAArg(VAListAddr, Ty, *this);
 }
