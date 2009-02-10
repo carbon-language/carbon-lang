@@ -395,7 +395,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   llvm::BasicBlock *LoopBody  = createBasicBlock("while.body");
 
   // Store the blocks to use for break and continue.
-  BreakContinuePush(ExitBlock, LoopHeader);
+  BreakContinueStack.push_back(BreakContinue(ExitBlock, LoopHeader));
   
   // Evaluate the conditional in the while header.  C99 6.8.5.1: The
   // evaluation of the controlling expression takes place before each
@@ -417,7 +417,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   EmitBlock(LoopBody);
   EmitStmt(S.getBody());
 
-  BreakContinuePop();  
+  BreakContinueStack.pop_back();  
   
   // Cycle to the condition.
   EmitBranch(LoopHeader);
@@ -444,12 +444,12 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
   llvm::BasicBlock *DoCond = createBasicBlock("do.cond");
   
   // Store the blocks to use for break and continue.
-  BreakContinuePush(AfterDo, DoCond);
+  BreakContinueStack.push_back(BreakContinue(AfterDo, DoCond));
   
   // Emit the body of the loop into the block.
   EmitStmt(S.getBody());
   
-  BreakContinuePop();
+  BreakContinueStack.pop_back();
   
   EmitBlock(DoCond);
   
@@ -497,8 +497,6 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   EmitBlock(CondBlock);
 
-  llvm::Value *saveStackDepth = StackDepth;
-
   // Evaluate the condition if present.  If not, treat it as a
   // non-zero-constant according to 6.8.5.3p2, aka, true.
   if (S.getCond()) {
@@ -524,14 +522,12 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     ContinueBlock = CondBlock;  
   
   // Store the blocks to use for break and continue.
-  // Ensure any vlas created between there and here, are undone
-  BreakContinuePush(AfterFor, ContinueBlock,
-                    saveStackDepth, saveStackDepth);
+  BreakContinueStack.push_back(BreakContinue(AfterFor, ContinueBlock));
 
   // If the condition is true, execute the body of the for stmt.
   EmitStmt(S.getBody());
 
-  BreakContinuePop();
+  BreakContinueStack.pop_back();
   
   // If there is an increment, emit it next.
   if (S.getInc()) {
@@ -609,22 +605,11 @@ void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
 void CodeGenFunction::EmitBreakStmt(const BreakStmt &S) {
   assert(!BreakContinueStack.empty() && "break stmt not in a loop or switch!");
 
-  // FIXME: Implement break in @try or @catch blocks.
-  if (ObjCEHStack.size() != BreakContinueStack.back().EHStackSize) {
-    CGM.ErrorUnsupported(&S, "break inside an Obj-C exception block");
-    return;
-  }
-
   // If this code is reachable then emit a stop point (if generating
   // debug info). We have to do this ourselves because we are on the
   // "simple" statement path.
   if (HaveInsertPoint())
     EmitStopPoint(&S);
-
-  // We need to adjust the stack, if the destination was (will be) at
-  // a different depth.
-  if (EmitStackUpdate(BreakContinueStack.back().SaveBreakStackDepth))
-    assert (0 && "break vla botch");
 
   llvm::BasicBlock *Block = BreakContinueStack.back().BreakBlock;
   EmitBranchThroughCleanup(Block);
@@ -633,22 +618,11 @@ void CodeGenFunction::EmitBreakStmt(const BreakStmt &S) {
 void CodeGenFunction::EmitContinueStmt(const ContinueStmt &S) {
   assert(!BreakContinueStack.empty() && "continue stmt not in a loop!");
 
-  // FIXME: Implement continue in @try or @catch blocks.
-  if (ObjCEHStack.size() != BreakContinueStack.back().EHStackSize) {
-    CGM.ErrorUnsupported(&S, "continue inside an Obj-C exception block");
-    return;
-  }
-
   // If this code is reachable then emit a stop point (if generating
   // debug info). We have to do this ourselves because we are on the
   // "simple" statement path.
   if (HaveInsertPoint())
     EmitStopPoint(&S);
-
-  // We need to adjust the stack, if the destination was (will be) at
-  // a different depth.
-  if (EmitStackUpdate(BreakContinueStack.back().SaveContinueStackDepth))
-    assert (0 && "continue vla botch");
 
   llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
   EmitBranchThroughCleanup(Block);
@@ -741,9 +715,6 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   llvm::SwitchInst *SavedSwitchInsn = SwitchInsn;
   llvm::BasicBlock *SavedCRBlock = CaseRangeBlock;
 
-  // Ensure any vlas created inside are destroyed on break.
-  llvm::Value *saveBreakStackDepth = StackDepth;
-
   // Create basic block to hold stuff that comes after switch
   // statement. We also need to create a default block now so that
   // explicit case ranges tests can have a place to jump to on
@@ -758,19 +729,17 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 
   // All break statements jump to NextBlock. If BreakContinueStack is non empty
   // then reuse last ContinueBlock.
-  llvm::BasicBlock *ContinueBlock = NULL;
-  llvm::Value *saveContinueStackDepth = NULL;
-  if (!BreakContinueStack.empty()) {
+  llvm::BasicBlock *ContinueBlock = 0;
+  if (!BreakContinueStack.empty())
     ContinueBlock = BreakContinueStack.back().ContinueBlock;
-    saveContinueStackDepth = BreakContinueStack.back().SaveContinueStackDepth;
-  }
+
   // Ensure any vlas created between there and here, are undone
-  BreakContinuePush(NextBlock, ContinueBlock,
-                    saveBreakStackDepth, saveContinueStackDepth);
+  BreakContinueStack.push_back(BreakContinue(NextBlock, ContinueBlock));
 
   // Emit switch body.
   EmitStmt(S.getBody());
-  BreakContinuePop();
+  
+  BreakContinueStack.pop_back();
 
   // Update the default block in case explicit case range tests have
   // been chained on top.

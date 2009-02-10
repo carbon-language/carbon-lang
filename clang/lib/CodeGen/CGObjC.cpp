@@ -361,11 +361,6 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
     return;
   }
 
-  // We want to ensure that any vlas between here and when we
-  // push the break and continue context below can be destroyed
-  // when we break 
-  llvm::Value *saveBreakStackDepth = StackDepth;
-
   if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
     EmitStmt(SD);
     assert(HaveInsertPoint() && "DeclStmt destroyed insert point!");
@@ -520,8 +515,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::BasicBlock *LoopEnd = createBasicBlock("loopend");
   llvm::BasicBlock *AfterBody = createBasicBlock("afterbody");
   
-  // Ensure any vlas created between there and here, are undone
-  BreakContinuePush(LoopEnd, AfterBody, saveBreakStackDepth, StackDepth);
+  BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody));
 
   EmitStmt(S.getBody());
   

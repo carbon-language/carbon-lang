@@ -205,39 +205,14 @@ private:
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   llvm::DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
 
-  /// BreakContinuePush - Note a new break and continue level.  This must be
-  /// called at the stack depth of the continue block.  In particular, this must
-  /// not be called after the controlling condition has possibly started a vla.
-  void BreakContinuePush(llvm::BasicBlock *bb, llvm::BasicBlock *cb) {
-    BreakContinueStack.push_back(BreakContinue(bb, cb, StackDepth,
-                                               StackDepth,
-                                               ObjCEHStack.size()));
-  }
-  void BreakContinuePush(llvm::BasicBlock *bb, llvm::BasicBlock *cb,
-                         llvm::Value *bsd, llvm::Value *csd) {
-    BreakContinueStack.push_back(BreakContinue(bb, cb, bsd, csd,
-                                               ObjCEHStack.size()));
-  }
-
-  /// BreakContinuePop - Note end of previous break and continue level.
-  void BreakContinuePop() {
-    BreakContinueStack.pop_back();
-  }
-
   // BreakContinueStack - This keeps track of where break and continue
-  // statements should jump to, as well as the depth of the stack and the size
-  // of the eh stack.
+  // statements should jump to.
   struct BreakContinue {
-    BreakContinue(llvm::BasicBlock *bb, llvm::BasicBlock *cb,
-                  llvm::Value *bsd, llvm::Value *csd, size_t ehss)
-      : BreakBlock(bb), ContinueBlock(cb),  SaveBreakStackDepth(bsd),
-        SaveContinueStackDepth(csd), EHStackSize(ehss) {}
+    BreakContinue(llvm::BasicBlock *bb, llvm::BasicBlock *cb)
+      : BreakBlock(bb), ContinueBlock(cb) {}
 
     llvm::BasicBlock *BreakBlock;
     llvm::BasicBlock *ContinueBlock;
-    llvm::Value *SaveBreakStackDepth;
-    llvm::Value *SaveContinueStackDepth;
-    size_t EHStackSize;
   };
   llvm::SmallVector<BreakContinue, 8> BreakContinueStack;
 
