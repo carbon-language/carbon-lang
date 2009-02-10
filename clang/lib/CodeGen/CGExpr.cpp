@@ -178,6 +178,39 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   }
 }
 
+llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
+                                               QualType Ty) {
+  llvm::Value *V = Builder.CreateLoad(Addr, Volatile, "tmp");
+
+  // Bool can have different representation in memory than in
+  // registers.
+  if (Ty->isBooleanType())
+    if (V->getType() != llvm::Type::Int1Ty)
+      V = Builder.CreateTrunc(V, llvm::Type::Int1Ty, "tobool");
+  
+  return V;
+}
+
+void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
+                                        bool Volatile) {
+  // Handle stores of types which have different representations in
+  // memory and as LLVM values.
+
+  // FIXME: We shouldn't be this loose, we should only do this
+  // conversion when we have a type we know has a different memory
+  // representation (e.g., bool).
+
+  const llvm::Type *SrcTy = Value->getType();
+  const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
+  if (DstPtr->getElementType() != SrcTy) {
+    const llvm::Type *MemTy = 
+      llvm::PointerType::get(SrcTy, DstPtr->getAddressSpace());
+    Addr = Builder.CreateBitCast(Addr, MemTy, "storetmp");
+  }
+
+  Builder.CreateStore(Value, Addr, Volatile);  
+}
+
 /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
 /// this method emits the address of the lvalue, then loads the result as an
 /// rvalue, returning the rvalue.
@@ -196,17 +229,9 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
       cast<llvm::PointerType>(Ptr->getType())->getElementType();
     
     // Simple scalar l-value.
-    if (EltTy->isSingleValueType()) {
-      llvm::Value *V = Builder.CreateLoad(Ptr, LV.isVolatileQualified(),"tmp");
-      
-      // Bool can have different representation in memory than in registers.
-      if (ExprType->isBooleanType()) {
-        if (V->getType() != llvm::Type::Int1Ty)
-          V = Builder.CreateTrunc(V, llvm::Type::Int1Ty, "tobool");
-      }
-      
-      return RValue::get(V);
-    }
+    if (EltTy->isSingleValueType())
+      return RValue::get(EmitLoadOfScalar(Ptr, LV.isVolatileQualified(), 
+                                          ExprType));
     
     assert(ExprType->isFunctionType() && "Unknown scalar value");
     return RValue::get(Ptr);
@@ -401,19 +426,9 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     return;
   }
   
-  llvm::Value *DstAddr = Dst.getAddress();
   assert(Src.isScalar() && "Can't emit an agg store with this method");
-  // FIXME: Handle volatility etc.
-  const llvm::Type *SrcTy = Src.getScalarVal()->getType();
-  const llvm::PointerType *DstPtr = cast<llvm::PointerType>(DstAddr->getType());
-  const llvm::Type *AddrTy = DstPtr->getElementType();
-  unsigned AS = DstPtr->getAddressSpace();
-  
-  if (AddrTy != SrcTy)
-    DstAddr = Builder.CreateBitCast(DstAddr, 
-                                    llvm::PointerType::get(SrcTy, AS),
-                                    "storetmp");
-  Builder.CreateStore(Src.getScalarVal(), DstAddr, Dst.isVolatileQualified());
+  EmitStoreOfScalar(Src.getScalarVal(), Dst.getAddress(), 
+                    Dst.isVolatileQualified());
 }
 
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,

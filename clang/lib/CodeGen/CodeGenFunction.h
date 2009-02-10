@@ -612,6 +612,18 @@ public:
   ///
   LValue EmitLValue(const Expr *E);
 
+  /// EmitLoadOfScalar - Load a scalar value from an address, taking
+  /// care to appropriately convert from the memory representation to
+  /// the LLVM value representation.
+  llvm::Value *EmitLoadOfScalar(llvm::Value *Addr, bool Volatile, 
+                                QualType Ty);
+
+  /// EmitStoreOfScalar - Store a scalar value to an address, taking
+  /// care to appropriately convert from the memory representation to
+  /// the LLVM value representation.
+  void EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr, 
+                         bool Volatile);
+
   /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
   /// this method emits the address of the lvalue, then loads the result as an
   /// rvalue, returning the rvalue.
