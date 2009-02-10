@@ -1339,7 +1339,8 @@ static bool isTerminatorFirstRelevantInsn(BasicBlock *BB, Instruction *Term) {
     if (!isa<DbgInfoIntrinsic>(BBI))
       break;
   }
-  if (isa<PHINode>(BBI) || &*BBI == Term)
+
+  if (isa<PHINode>(BBI) || &*BBI == Term || isa<DbgInfoIntrinsic>(BBI))
     return true;
   return false;
 }
