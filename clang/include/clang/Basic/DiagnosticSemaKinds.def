@@ -525,6 +525,12 @@ DIAG(note_template_arg_refers_here, NOTE,
      "template argument refers to function template %0, here")
 DIAG(err_template_arg_template_params_mismatch, ERROR,
      "template template argument has different template parameters than its corresponding template template parameter")
+DIAG(err_template_arg_not_integral_or_enumeral, ERROR,
+     "non-type template argument of type %0 must have an integral or enumeration type")
+DIAG(err_template_arg_not_ice, ERROR,
+     "non-type template argument of type %0 is not an integral constant expression")
+DIAG(err_template_arg_not_convertible, ERROR,
+     "non-type template argument of type %0 cannot be converted to a value of type %1")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")

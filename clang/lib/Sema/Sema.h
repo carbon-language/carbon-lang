@@ -281,6 +281,9 @@ public:
                               SourceRange Range2 = SourceRange(),
                               QualType PrintType = QualType());
 
+  bool hasSameType(QualType T1, QualType T2);
+  bool hasSameUnqualifiedType(QualType T1, QualType T2);
+
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
@@ -1547,7 +1550,7 @@ public:
 
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param, QualType Arg,
                              SourceLocation ArgLoc);
-  bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, Expr *Arg);
+  bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, Expr *&Arg);
   bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, DeclRefExpr *Arg);
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
                                       TemplateParameterList *Old,

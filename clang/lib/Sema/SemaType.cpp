@@ -835,3 +835,17 @@ bool Sema::DiagnoseIncompleteType(SourceLocation Loc, QualType T, unsigned diag,
 
   return true;
 }
+
+/// \brief Determine whether the given types are equivalent.
+bool Sema::hasSameType(QualType T1, QualType T2) {
+  return Context.getCanonicalType(T1) == Context.getCanonicalType(T2);
+}
+
+/// \brief Determine whether the given types are equivalent after
+/// cvr-qualifiers have been removed.
+bool Sema::hasSameUnqualifiedType(QualType T1, QualType T2) {
+  T1 = Context.getCanonicalType(T1);
+  T2 = Context.getCanonicalType(T2);
+  return T1.getUnqualifiedType() == T2.getUnqualifiedType();
+}
+

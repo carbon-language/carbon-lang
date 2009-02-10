@@ -827,7 +827,75 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
 /// This routine implements the semantics of C++ [temp.arg.nontype]. 
 /// It returns true if an error occurred, and false otherwise.
 bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
-                                 Expr *Arg) {
+                                 Expr *&Arg) {
+  // If either the parameter has a dependent type or the argument is
+  // type-dependent, there's nothing we can check now.
+  if (Param->getType()->isDependentType() || Arg->isTypeDependent())
+    return false;
+
+  // C++ [temp.arg.nontype]p5:
+  //   The following conversions are performed on each expression used
+  //   as a non-type template-argument. If a non-type
+  //   template-argument cannot be converted to the type of the
+  //   corresponding template-parameter then the program is
+  //   ill-formed.
+  //
+  //     -- for a non-type template-parameter of integral or
+  //        enumeration type, integral promotions (4.5) and integral
+  //        conversions (4.7) are applied.
+  QualType ParamType = Param->getType();
+  if (ParamType->isIntegralType() || ParamType->isEnumeralType()) {
+    QualType ArgType = Arg->getType();
+
+    // C++ [temp.arg.nontype]p1:
+    //   A template-argument for a non-type, non-template
+    //   template-parameter shall be one of:
+    //
+    //     -- an integral constant-expression of integral or enumeration
+    //        type; or
+    //     -- the name of a non-type template-parameter; or
+    SourceLocation NonConstantLoc;
+    if (!ArgType->isIntegralType() && !ArgType->isEnumeralType()) {
+      Diag(Arg->getSourceRange().getBegin(), 
+           diag::err_template_arg_not_integral_or_enumeral)
+        << ArgType << Arg->getSourceRange();
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+    } else if (!Arg->isValueDependent() &&
+               !Arg->isIntegerConstantExpr(Context, &NonConstantLoc)) {
+      Diag(NonConstantLoc, diag::err_template_arg_not_ice)
+        << ArgType << Arg->getSourceRange();
+      return true;
+    }
+
+    // FIXME: We need some way to more easily get the unqualified form
+    // of the types without going all the way to the
+    // canonical type.
+    if (Context.getCanonicalType(ParamType).getCVRQualifiers())
+      ParamType = Context.getCanonicalType(ParamType).getUnqualifiedType();
+    if (Context.getCanonicalType(ArgType).getCVRQualifiers())
+      ArgType = Context.getCanonicalType(ArgType).getUnqualifiedType();
+
+    // Try to convert the argument to the parameter's type.
+    if (ParamType == ArgType) {
+      // Okay: no conversion necessary
+    } else if (IsIntegralPromotion(Arg, ArgType, ParamType) ||
+               !ParamType->isEnumeralType()) {
+      // This is an integral promotion or conversion.
+      ImpCastExprToType(Arg, ParamType);
+    } else {
+      // We can't perform this conversion.
+      Diag(Arg->getSourceRange().getBegin(), 
+           diag::err_template_arg_not_convertible)
+        << Arg->getType() << Param->getType() << Arg->getSourceRange();
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+    }
+
+    return false;
+  }
+  // FIXME: p5 has a lot more checks to perform!
+
   return false;
 }
 
