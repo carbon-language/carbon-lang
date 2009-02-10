@@ -331,8 +331,10 @@ bool LLParser::ParseGlobalType(bool &IsConstant) {
     IsConstant = true;
   else if (Lex.getKind() == lltok::kw_global)
     IsConstant = false;
-  else
+  else {
+    IsConstant = false;
     return TokError("expected 'global' or 'constant'");
+  }
   Lex.Lex();
   return false;
 }
