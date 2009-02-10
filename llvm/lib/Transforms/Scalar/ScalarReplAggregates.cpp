@@ -1142,46 +1142,51 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
   gep_type_iterator I = gep_type_begin(GEPI);
   ++I;
   
-  if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
-    uint64_t NumElements = AT->getNumElements();
+  const ArrayType *AT = dyn_cast<ArrayType>(*I);
+  if (!AT) 
+    return;
+
+  uint64_t NumElements = AT->getNumElements();
+  
+  if (isa<ConstantInt>(I.getOperand()))
+    return;
+
+  if (NumElements == 1) {
+    GEPI->setOperand(2, Constant::getNullValue(Type::Int32Ty));
+    return;
+  } 
     
-    if (!isa<ConstantInt>(I.getOperand())) {
-      if (NumElements == 1) {
-        GEPI->setOperand(2, Constant::getNullValue(Type::Int32Ty));
-      } else {
-        assert(NumElements == 2 && "Unhandled case!");
-        // All users of the GEP must be loads.  At each use of the GEP, insert
-        // two loads of the appropriate indexed GEP and select between them.
-        Value *IsOne = new ICmpInst(ICmpInst::ICMP_NE, I.getOperand(), 
-                                    Constant::getNullValue(I.getOperand()->getType()),
-                                    "isone", GEPI);
-        // Insert the new GEP instructions, which are properly indexed.
-        SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
-        Indices[1] = Constant::getNullValue(Type::Int32Ty);
-        Value *ZeroIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
-                                                   Indices.begin(),
-                                                   Indices.end(),
-                                                   GEPI->getName()+".0", GEPI);
-        Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
-        Value *OneIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
-                                                  Indices.begin(),
-                                                  Indices.end(),
-                                                  GEPI->getName()+".1", GEPI);
-        // Replace all loads of the variable index GEP with loads from both
-        // indexes and a select.
-        while (!GEPI->use_empty()) {
-          LoadInst *LI = cast<LoadInst>(GEPI->use_back());
-          Value *Zero = new LoadInst(ZeroIdx, LI->getName()+".0", LI);
-          Value *One  = new LoadInst(OneIdx , LI->getName()+".1", LI);
-          Value *R = SelectInst::Create(IsOne, One, Zero, LI->getName(), LI);
-          LI->replaceAllUsesWith(R);
-          LI->eraseFromParent();
-        }
-        GEPI->eraseFromParent();
-      }
-    }
+  assert(NumElements == 2 && "Unhandled case!");
+  // All users of the GEP must be loads.  At each use of the GEP, insert
+  // two loads of the appropriate indexed GEP and select between them.
+  Value *IsOne = new ICmpInst(ICmpInst::ICMP_NE, I.getOperand(), 
+                              Constant::getNullValue(I.getOperand()->getType()),
+                              "isone", GEPI);
+  // Insert the new GEP instructions, which are properly indexed.
+  SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
+  Indices[1] = Constant::getNullValue(Type::Int32Ty);
+  Value *ZeroIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
+                                             Indices.begin(),
+                                             Indices.end(),
+                                             GEPI->getName()+".0", GEPI);
+  Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
+  Value *OneIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
+                                            Indices.begin(),
+                                            Indices.end(),
+                                            GEPI->getName()+".1", GEPI);
+  // Replace all loads of the variable index GEP with loads from both
+  // indexes and a select.
+  while (!GEPI->use_empty()) {
+    LoadInst *LI = cast<LoadInst>(GEPI->use_back());
+    Value *Zero = new LoadInst(ZeroIdx, LI->getName()+".0", LI);
+    Value *One  = new LoadInst(OneIdx , LI->getName()+".1", LI);
+    Value *R = SelectInst::Create(IsOne, One, Zero, LI->getName(), LI);
+    LI->replaceAllUsesWith(R);
+    LI->eraseFromParent();
   }
+  GEPI->eraseFromParent();
 }
+
 
 /// CleanupAllocaUsers - If SROA reported that it can promote the specified
 /// allocation, but only if cleaned up, perform the cleanups required.
