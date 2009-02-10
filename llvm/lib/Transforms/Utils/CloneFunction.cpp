@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
@@ -181,7 +182,7 @@ namespace {
     const char *NameSuffix;
     ClonedCodeInfo *CodeInfo;
     const TargetData *TD;
-
+    Value *DbgFnStart;
   public:
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
                           DenseMap<const Value*, Value*> &valueMap,
@@ -190,7 +191,7 @@ namespace {
                           ClonedCodeInfo *codeInfo,
                           const TargetData *td)
     : NewFunc(newFunc), OldFunc(oldFunc), ValueMap(valueMap), Returns(returns),
-      NameSuffix(nameSuffix), CodeInfo(codeInfo), TD(td) {
+      NameSuffix(nameSuffix), CodeInfo(codeInfo), TD(td), DbgFnStart(NULL) {
     }
 
     /// CloneBlock - The specified block is found to be reachable, clone it and
@@ -231,7 +232,17 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
       ValueMap[II] = C;
       continue;
     }
-    
+
+    // Do not clone llvm.dbg.func.start and corresponding llvm.dbg.region.end.
+    if (const DbgFuncStartInst *DFSI = dyn_cast<DbgFuncStartInst>(II)) {
+      DbgFnStart = DFSI->getSubprogram();
+      continue;
+    } 
+    if (const DbgRegionEndInst *DREIS = dyn_cast<DbgRegionEndInst>(II)) {
+      if (DREIS->getContext() == DbgFnStart)
+        continue;
+    }
+      
     Instruction *NewInst = II->clone();
     if (II->hasName())
       NewInst->setName(II->getName()+NameSuffix);
