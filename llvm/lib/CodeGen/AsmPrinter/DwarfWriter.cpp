@@ -1554,6 +1554,7 @@ private:
     unsigned Line = V->getLineNumber();
     CompileUnit *Unit = FindCompileUnit(V->getCompileUnit());
     FileID = Unit->getID();
+    assert (FileID && "Invalid file id");
     AddUInt(Die, DW_AT_decl_file, 0, FileID);
     AddUInt(Die, DW_AT_decl_line, 0, Line);
   }
@@ -1565,6 +1566,7 @@ private:
     unsigned Line = G->getLineNumber();
     CompileUnit *Unit = FindCompileUnit(G->getCompileUnit());
     FileID = Unit->getID();
+    assert (FileID && "Invalid file id");
     AddUInt(Die, DW_AT_decl_file, 0, FileID);
     AddUInt(Die, DW_AT_decl_line, 0, Line);
   }
@@ -1577,6 +1579,7 @@ private:
       return;
     CompileUnit *Unit = FindCompileUnit(CU);
     FileID = Unit->getID();
+    assert (FileID && "Invalid file id");
     AddUInt(Die, DW_AT_decl_file, 0, FileID);
     AddUInt(Die, DW_AT_decl_line, 0, Line);
   }
