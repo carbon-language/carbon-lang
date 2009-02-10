@@ -176,7 +176,8 @@ public:
   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
   /// back to its original source language syntax.
   void dumpPretty() const;
-  void printPretty(llvm::raw_ostream &OS, PrinterHelper* = NULL) const;
+  void printPretty(llvm::raw_ostream &OS, PrinterHelper* = NULL, unsigned = 0,
+                   bool NoIndent=false) const;
   
   /// viewAST - Visualize an AST rooted at this Stmt* using GraphViz.  Only
   ///   works on systems with GraphViz (Mac OS X) or dot+gv installed.

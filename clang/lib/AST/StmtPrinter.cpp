@@ -29,10 +29,12 @@ namespace  {
   class VISIBILITY_HIDDEN StmtPrinter : public StmtVisitor<StmtPrinter> {
     llvm::raw_ostream &OS;
     unsigned IndentLevel;
+    bool NoIndent;
     clang::PrinterHelper* Helper;
   public:
-    StmtPrinter(llvm::raw_ostream &os, PrinterHelper* helper) : 
-      OS(os), IndentLevel(0), Helper(helper) {}
+    StmtPrinter(llvm::raw_ostream &os, PrinterHelper* helper, unsigned I=0,
+                bool noIndent=false) :
+      OS(os), IndentLevel(I), NoIndent(noIndent), Helper(helper) {}
     
     void PrintStmt(Stmt *S, int SubIndent = 1) {
       IndentLevel += SubIndent;
@@ -52,6 +54,7 @@ namespace  {
     void PrintRawCompoundStmt(CompoundStmt *S);
     void PrintRawDecl(Decl *D);
     void PrintRawDeclStmt(DeclStmt *S);
+    void PrintFieldDecl(FieldDecl *FD);
     void PrintRawIfStmt(IfStmt *If);
     void PrintRawCXXCatchStmt(CXXCatchStmt *Catch);
     
@@ -62,9 +65,11 @@ namespace  {
         OS << "<null expr>";
     }
     
-    llvm::raw_ostream &Indent(int Delta = 0) const {
-      for (int i = 0, e = IndentLevel+Delta; i < e; ++i)
-        OS << "  ";
+    llvm::raw_ostream &Indent(int Delta = 0) {
+      if (!NoIndent) {
+        for (int i = 0, e = IndentLevel+Delta; i < e; ++i)
+          OS << "  ";
+      } else NoIndent = false;
       return OS;
     }
     
@@ -139,16 +144,25 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
     OS << " ";
     if (const IdentifierInfo *II = TD->getIdentifier())
       OS << II->getName();
-    else
-      OS << "<anonymous>";
-    // FIXME: print tag bodies.
+    if (RecordDecl *RD = dyn_cast<RecordDecl>(TD)) {
+      OS << "{\n";
+      IndentLevel += 1;
+      for (RecordDecl::field_iterator i = RD->field_begin(); i != RD->field_end(); ++i) {
+        PrintFieldDecl(*i);
+      IndentLevel -= 1;
+      }
+    }
   } else {
     assert(0 && "Unexpected decl");
   }
 }
 
+void StmtPrinter::PrintFieldDecl(FieldDecl *FD) {
+  Indent() << FD->getNameAsString() << "\n";
+}
+
 void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
-  bool isFirst = false;
+  bool isFirst = true;
   
   for (DeclStmt::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
@@ -1222,13 +1236,14 @@ void Stmt::dumpPretty() const {
   OS.flush();
 }
 
-void Stmt::printPretty(llvm::raw_ostream &OS, PrinterHelper* Helper) const {
+void Stmt::printPretty(llvm::raw_ostream &OS, PrinterHelper* Helper,
+                       unsigned I, bool NoIndent) const {
   if (this == 0) {
     OS << "<NULL>";
     return;
   }
 
-  StmtPrinter P(OS, Helper);
+  StmtPrinter P(OS, Helper, I, NoIndent);
   P.Visit(const_cast<Stmt*>(this));
 }
 

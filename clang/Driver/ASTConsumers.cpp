@@ -34,12 +34,26 @@ namespace {
   class DeclPrinter {
   public:
     llvm::raw_ostream& Out;
+    unsigned Indentation;
 
-    DeclPrinter(llvm::raw_ostream* out) : Out(out ? *out : llvm::errs()) {}
-    DeclPrinter() : Out(llvm::errs()) {}
+    DeclPrinter(llvm::raw_ostream* out) : Out(out ? *out : llvm::errs()),
+                                          Indentation(0) {}
+    DeclPrinter() : Out(llvm::errs()), Indentation(0) {}
     virtual ~DeclPrinter();
     
+    void ChangeIndent(int I) {
+      Indentation += I;
+    }
+    
+    llvm::raw_ostream& Indent() {
+      for (unsigned i = 0; i < Indentation; ++i)
+        Out << "  ";
+      return Out;
+    }
+
     void PrintDecl(Decl *D);
+    void Print(NamedDecl *ND);
+    void Print(NamespaceDecl *NS);
     void PrintFunctionDeclStart(FunctionDecl *FD);    
     void PrintTypeDefDecl(TypedefDecl *TD);    
     void PrintLinkageSpec(LinkageSpecDecl *LS);
@@ -62,12 +76,13 @@ DeclPrinter::~DeclPrinter() {
 }
 
 void DeclPrinter:: PrintDecl(Decl *D) {
+  Indent();
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     PrintFunctionDeclStart(FD);
 
     if (FD->getBody()) {
       Out << ' ';
-      FD->getBody()->printPretty(Out);
+      FD->getBody()->printPretty(Out, 0, Indentation, true);
       Out << '\n';
     }
   } else if (isa<ObjCMethodDecl>(D)) {
@@ -117,7 +132,23 @@ void DeclPrinter:: PrintDecl(Decl *D) {
       Out << "  " << (*E)->getNameAsString() << ",\n";
     Out << "};\n";
   } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
-    Out << "Read top-level tag decl: '" << TD->getNameAsString() << "'\n";
+    // print a free standing tag decl (e.g. "struct x;"). 
+    Out << TD->getKindName();
+    Out << " ";
+    if (const IdentifierInfo *II = TD->getIdentifier())
+      Out << II->getName();
+
+    Out << " {\n";
+    ChangeIndent(1);
+    for (DeclContext::decl_iterator i = TD->decls_begin();
+         i != TD->decls_end();
+         ++i)
+      PrintDecl(*i);    
+    ChangeIndent(-1);
+    Indent();
+    Out << "}";
+
+    Out << "\n";
   } else if (TemplateDecl *TempD = dyn_cast<TemplateDecl>(D)) {
     PrintTemplateDecl(TempD);
   } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
@@ -127,10 +158,53 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     AD->getAsmString()->printPretty(Out);
     Out << ")\n";
   } else if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-    Out << "Read top-level variable decl: '" << ND->getNameAsString() << "'\n";
+    Print(ND);
   } else {
     assert(0 && "Unknown decl type!");
   }
+}
+
+void DeclPrinter::Print(NamedDecl *ND) {
+  switch (ND->getKind()) {
+  default:
+    // FIXME: Handle the rest of the NamedDecls.
+    Out << "### NamedDecl " << ND->getNameAsString() << "\n";
+    break;
+  case Decl::Field:
+  case Decl::Var: {
+    // Emit storage class for vardecls.
+    if (VarDecl *V = dyn_cast<VarDecl>(ND)) {
+      switch (V->getStorageClass()) {
+      default: assert(0 && "Unknown storage class!");
+      case VarDecl::None:     break;
+      case VarDecl::Extern:   Out << "extern "; break;
+      case VarDecl::Static:   Out << "static "; break; 
+      case VarDecl::Auto:     Out << "auto "; break;
+      case VarDecl::Register: Out << "register "; break;
+      }
+    }
+    std::string Name = ND->getNameAsString();
+    // This forms: "int a".
+    dyn_cast<ValueDecl>(ND)->getType().getAsStringInternal(Name);
+    Out << Name << ";\n";
+    break;
+  }
+  case Decl::Namespace:
+    Print(dyn_cast<NamespaceDecl>(ND));
+    break;
+  }
+}
+
+void DeclPrinter::Print(NamespaceDecl *NS) {
+  Out << "namespace " << NS->getNameAsString() << " {\n";
+  ChangeIndent(1);
+  for (DeclContext::decl_iterator i = NS->decls_begin();
+       i != NS->decls_end();
+       ++i)
+    PrintDecl(*i);    
+  ChangeIndent(-1);
+  Indent();
+  Out << "}\n";
 }
 
 void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
@@ -138,6 +212,7 @@ void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
   
   Out << '\n';
 
+  Indent();
   switch (FD->getStorageClass()) {
   default: assert(0 && "Unknown storage class");
   case FunctionDecl::None: break;
@@ -198,16 +273,20 @@ void DeclPrinter::PrintLinkageSpec(LinkageSpecDecl *LS) {
   }
 
   Out << "extern \"" << l << "\" ";
-  if (LS->hasBraces()) 
+  if (LS->hasBraces()) {
     Out << "{\n";
+    ChangeIndent(1);
+  }
 
   for (LinkageSpecDecl::decl_iterator D = LS->decls_begin(), 
                                    DEnd = LS->decls_end();
        D != DEnd; ++D)
     PrintDecl(*D);
 
-  if (LS->hasBraces())
-    Out << "}";
+  if (LS->hasBraces()) {
+    ChangeIndent(-1);
+    Indent() << "}";
+  }
   Out << "\n";
 }
 
@@ -774,7 +853,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
        I != E; ++I) {
     for (unsigned i = 0; i < Indentation; ++i)
-      Out << " ";
+      Out << "  ";
 
     Decl::Kind DK = I->getKind();
     switch (DK) {
@@ -797,7 +876,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     case Decl::CXXConversion:
     {
       DeclContext* DC = Decl::castToDeclContext(*I);
-      PrintDeclContext(DC, Indentation+4);
+      PrintDeclContext(DC, Indentation+2);
       break;
     }
     case Decl::Field: {
