@@ -1067,10 +1067,12 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
       ArgTys.push_back(AI.getCoerceToType());
       break;
 
-    case ABIArgInfo::Indirect:
+    case ABIArgInfo::Indirect: {
       // indirect arguments are always on the stack, which is addr space #0.
-      ArgTys.push_back(llvm::PointerType::getUnqual(ConvertType(it->type)));
+      const llvm::Type *LTy = ConvertTypeForMem(it->type);
+      ArgTys.push_back(llvm::PointerType::getUnqual(LTy));
       break;
+    }
       
     case ABIArgInfo::Direct:
       ArgTys.push_back(ConvertType(it->type));
@@ -1215,7 +1217,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         // reference.
       } else {
         // Load scalar value from indirect argument.
-        V = Builder.CreateLoad(V);
+        V = EmitLoadOfScalar(V, false, Ty);
         if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
           // This must be a promotion, for something like
           // "void a(x) short x; {..."
@@ -1233,7 +1235,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         // Create a temporary alloca to hold the argument; the rest of
         // codegen expects to access aggregates & complex values by
         // reference.
-        V = CreateTempAlloca(ConvertType(Ty));
+        V = CreateTempAlloca(ConvertTypeForMem(Ty));
         Builder.CreateStore(AI, V);
       } else {
         if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
@@ -1251,7 +1253,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // we need to create a temporary and reconstruct it from the
       // arguments.
       std::string Name = Arg->getNameAsString();
-      llvm::Value *Temp = CreateTempAlloca(ConvertType(Ty), 
+      llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(Ty), 
                                            (Name + ".addr").c_str());
       // FIXME: What are the right qualifiers here?
       llvm::Function::arg_iterator End = 
@@ -1268,7 +1270,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     case ABIArgInfo::Ignore:
       // Initialize the local variable appropriately.
       if (hasAggregateLLVMType(Ty)) { 
-        EmitParmDecl(*Arg, CreateTempAlloca(ConvertType(Ty)));
+        EmitParmDecl(*Arg, CreateTempAlloca(ConvertTypeForMem(Ty)));
       } else {
         EmitParmDecl(*Arg, llvm::UndefValue::get(ConvertType(Arg->getType())));
       }
@@ -1282,11 +1284,11 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // drop the result in a new alloca anyway, so we could just
       // store into that directly if we broke the abstraction down
       // more.
-      llvm::Value *V = CreateTempAlloca(ConvertType(Ty), "coerce");
+      llvm::Value *V = CreateTempAlloca(ConvertTypeForMem(Ty), "coerce");
       CreateCoercedStore(AI, V, *this);
       // Match to what EmitParmDecl is expecting for this type.
       if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
-        V = Builder.CreateLoad(V);
+        V = EmitLoadOfScalar(V, false, Ty);
         if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
           // This must be a promotion, for something like
           // "void a(x) short x; {..."
@@ -1320,8 +1322,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
         EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
       } else {
-        Builder.CreateStore(Builder.CreateLoad(ReturnValue), 
-                            CurFn->arg_begin());
+        EmitStoreOfScalar(Builder.CreateLoad(ReturnValue), CurFn->arg_begin(), 
+                          false);
       }
       break;
 
@@ -1334,10 +1336,9 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
     case ABIArgInfo::Ignore:
       break;
       
-    case ABIArgInfo::Coerce: {
+    case ABIArgInfo::Coerce:
       RV = CreateCoercedLoad(ReturnValue, RetAI.getCoerceToType(), *this);
       break;
-    }
 
     case ABIArgInfo::Expand:
       assert(0 && "Invalid ABI kind for return argument");    
@@ -1364,7 +1365,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   const ABIArgInfo &RetAI = CallInfo.getReturnInfo();
   if (CGM.ReturnTypeUsesSret(CallInfo)) {
     // Create a temporary alloca to hold the result of the call. :(
-    Args.push_back(CreateTempAlloca(ConvertType(RetTy)));
+    Args.push_back(CreateTempAlloca(ConvertTypeForMem(RetTy)));
   }
   
   assert(CallInfo.arg_size() == CallArgs.size() &&
@@ -1379,9 +1380,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     case ABIArgInfo::Indirect:
       if (RV.isScalar() || RV.isComplex()) {
         // Make a temporary alloca to pass the argument.
-        Args.push_back(CreateTempAlloca(ConvertType(I->second)));
+        Args.push_back(CreateTempAlloca(ConvertTypeForMem(I->second)));
         if (RV.isScalar())
-          Builder.CreateStore(RV.getScalarVal(), Args.back());
+          EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false);
         else
           StoreComplexToAddr(RV.getComplexVal(), Args.back(), false); 
       } else {
@@ -1410,9 +1411,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       llvm::Value *SrcPtr;
       if (RV.isScalar()) {
         SrcPtr = CreateTempAlloca(ConvertTypeForMem(I->second), "coerce");
-        Builder.CreateStore(RV.getScalarVal(), SrcPtr);
+        EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false);
       } else if (RV.isComplex()) {
-        SrcPtr = CreateTempAlloca(ConvertType(I->second), "coerce");
+        SrcPtr = CreateTempAlloca(ConvertTypeForMem(I->second), "coerce");
         StoreComplexToAddr(RV.getComplexVal(), SrcPtr, false);
       } else 
         SrcPtr = RV.getAggregateAddr();
@@ -1447,7 +1448,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     else if (CodeGenFunction::hasAggregateLLVMType(RetTy))
       return RValue::getAggregate(Args[0]);
     else 
-      return RValue::get(Builder.CreateLoad(Args[0]));
+      return RValue::get(EmitLoadOfScalar(Args[0], false, RetTy));
 
   case ABIArgInfo::Direct:
     if (RetTy->isAnyComplexType()) {
@@ -1455,7 +1456,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       llvm::Value *Imag = Builder.CreateExtractValue(CI, 1);
       return RValue::getComplex(std::make_pair(Real, Imag));
     } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
-      llvm::Value *V = CreateTempAlloca(ConvertType(RetTy), "agg.tmp");
+      llvm::Value *V = CreateTempAlloca(ConvertTypeForMem(RetTy), "agg.tmp");
       Builder.CreateStore(CI, V);
       return RValue::getAggregate(V);
     } else
@@ -1468,14 +1469,14 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   case ABIArgInfo::Coerce: {
     // FIXME: Avoid the conversion through memory if possible.
-    llvm::Value *V = CreateTempAlloca(ConvertType(RetTy), "coerce");
+    llvm::Value *V = CreateTempAlloca(ConvertTypeForMem(RetTy), "coerce");
     CreateCoercedStore(CI, V, *this);
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(V, false));
     else if (CodeGenFunction::hasAggregateLLVMType(RetTy))
       return RValue::getAggregate(V);
     else
-      return RValue::get(Builder.CreateLoad(V));
+      return RValue::get(EmitLoadOfScalar(V, false, RetTy));
   }
 
   case ABIArgInfo::Expand:
