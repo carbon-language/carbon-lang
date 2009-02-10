@@ -34,9 +34,18 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 static inline uint16_t ReadUnalignedLE16(const unsigned char *&Data) {
-  uint16_t V = ((uint16_t)Data[0] <<  0) |
+  uint16_t V = ((uint16_t)Data[0]) |
                ((uint16_t)Data[1] <<  8);
   Data += 2;
+  return V;
+}
+
+static inline uint32_t ReadUnalignedLE32(const unsigned char *&Data) {
+  uint32_t V = ((uint32_t)Data[0])  |
+               ((uint32_t)Data[1] << 8)  |
+               ((uint32_t)Data[2] << 16) |
+               ((uint32_t)Data[3] << 24);
+  Data += 4;
   return V;
 }
 
@@ -306,70 +315,166 @@ SourceLocation PTHLexer::getSourceLocation() {
 }
 
 //===----------------------------------------------------------------------===//
-// Internal Data Structures for PTH file lookup and resolving identifiers.
+// OnDiskChainedHashTable
 //===----------------------------------------------------------------------===//
 
+template<typename Info>
+class OnDiskChainedHashTable {
+  const unsigned NumBuckets;
+  const unsigned NumEntries;
+  const unsigned char* const Buckets;
+  const unsigned char* const Base;
+public:
+  typedef typename Info::internal_key_type internal_key_type;
+  typedef typename Info::external_key_type external_key_type;
+  typedef typename Info::data_type         data_type;
+  
+  OnDiskChainedHashTable(unsigned numBuckets, unsigned numEntries,
+                         const unsigned char* buckets,
+                         const unsigned char* base)
+    : NumBuckets(numBuckets), NumEntries(numEntries),
+      Buckets(buckets), Base(base) {        
+        assert((reinterpret_cast<uintptr_t>(buckets) & 0x3) == 0 &&
+               "'buckets' must have a 4-byte alignment");
+      }
+
+  
+  bool isEmpty() const { return NumEntries == 0; }
+  
+  class iterator {
+    const unsigned char* const data;
+    const unsigned len;
+  public:
+    iterator() : data(0), len(0) {}
+    iterator(const unsigned char* d, unsigned l) : data(d), len(l) {}
+    
+    data_type operator*() const { return Info::ReadData(data, len); }    
+    bool operator==(const iterator& X) const { return X.data == data; }    
+    bool operator!=(const iterator& X) const { return X.data != data; }
+  };    
+  
+  iterator find(const external_key_type& eKey) {
+    const internal_key_type& iKey = Info::GetInternalKey(eKey);
+    unsigned key_hash = Info::ComputeHash(iKey);
+    
+    // Each bucket is just a 32-bit offset into the PTH file.
+    unsigned idx = key_hash & (NumBuckets - 1);
+    const unsigned char* Bucket = Buckets + sizeof(uint32_t)*idx;
+    
+    unsigned offset = ReadLE32(Bucket);
+    if (offset == 0) return iterator(); // Empty bucket.
+    const unsigned char* Items = Base + offset;
+    
+    // 'Items' starts with a 16-bit unsigned integer representing the
+    // number of items in this bucket.
+    unsigned len = ReadUnalignedLE16(Items);
+    
+    for (unsigned i = 0; i < len; ++i) {
+      // Read the hash.
+      uint32_t item_hash = ReadUnalignedLE32(Items);
+      
+      // Determine the length of the key and the data.
+      const std::pair<unsigned, unsigned>& L = Info::ReadKeyDataLength(Items);      
+      unsigned item_len = L.first + L.second;
+
+      // Compare the hashes.  If they are not the same, skip the entry entirely.
+      if (item_hash != key_hash) {
+        Items += item_len;
+        continue;
+      }
+      
+      // Read the key.
+      const internal_key_type& X =
+        Info::ReadKey((const unsigned char* const) Items, L.first);
+
+      // If the key doesn't match just skip reading the value.
+      if (!Info::EqualKey(X, iKey)) {
+        Items += item_len;
+        continue;
+      }
+      
+      // The key matches!
+      return iterator(Items + L.first, L.second);
+    }
+    
+    return iterator();
+  }
+  
+  iterator end() const { return iterator(); }
+  
+  
+  static OnDiskChainedHashTable* Create(const unsigned char* buckets,
+                                        const unsigned char* const base) {
+
+    assert(buckets > base);
+    assert((reinterpret_cast<uintptr_t>(buckets) & 0x3) == 0 &&
+           "buckets should be 4-byte aligned.");
+    
+    unsigned numBuckets = ReadLE32(buckets);
+    unsigned numEntries = ReadLE32(buckets);
+    return new OnDiskChainedHashTable<Info>(numBuckets, numEntries, buckets,
+                                            base);
+  }  
+};
+
+//===----------------------------------------------------------------------===//
+// PTH file lookup: map from strings to file data.
+//===----------------------------------------------------------------------===//
 
 /// PTHFileLookup - This internal data structure is used by the PTHManager
 ///  to map from FileEntry objects managed by FileManager to offsets within
 ///  the PTH file.
 namespace {
-class VISIBILITY_HIDDEN PTHFileLookup {
+class VISIBILITY_HIDDEN PTHFileData {
+  const uint32_t TokenOff;
+  const uint32_t PPCondOff;
 public:
-  class Val {
-    uint32_t TokenOff;
-    uint32_t PPCondOff;
-  public:
-    Val() : TokenOff(~0) {}
-    Val(uint32_t toff, uint32_t poff)
-      : TokenOff(toff), PPCondOff(poff) {}
+  PTHFileData(uint32_t tokenOff, uint32_t ppCondOff)
+    : TokenOff(tokenOff), PPCondOff(ppCondOff) {}
     
-    bool isValid() const { return TokenOff != ~((uint32_t)0); }
+  uint32_t getTokenOffset() const { return TokenOff; }  
+  uint32_t getPPCondOffset() const { return PPCondOff; }  
+};
+  
+class VISIBILITY_HIDDEN PTHFileLookupTrait {
+public:
+  typedef PTHFileData      data_type;
+  typedef const FileEntry* external_key_type;
+  typedef const char*      internal_key_type;
+  
+  static bool EqualKey(const char* a, const char* b) {
+    return strcmp(a, b) == 0;
+  }
 
-    uint32_t getTokenOffset() const {
-      assert(isValid() && "PTHFileLookup entry initialized.");
-      return TokenOff;
-    }
-    
-    uint32_t getPPCondOffset() const {
-      assert(isValid() && "PTHFileLookup entry initialized.");
-      return PPCondOff;
-    }    
-  };
-  
-private:
-  llvm::StringMap<Val> FileMap;
-  
-public:
-  PTHFileLookup() {};
-  
-  bool isEmpty() const {
-    return FileMap.empty();
+  static unsigned ComputeHash(const char* x) {
+    // More copy-paste nonsense.  Will refactor.
+    unsigned int R = 0;
+    for (; *x != '\0' ; ++x) R = R * 33 + *x;
+    return R + (R >> 5);
+  }
+
+  static const char* GetInternalKey(const FileEntry* FE) {
+    return FE->getName();
   }
   
-  Val Lookup(const FileEntry* FE) {
-    const char* s = FE->getName();
-    unsigned size = strlen(s);
-    return FileMap.GetOrCreateValue(s, s+size).getValue();
+  static std::pair<unsigned, unsigned>
+  ReadKeyDataLength(const unsigned char*& d) {
+    return std::make_pair((unsigned) ReadUnalignedLE16(d), 8U);
   }
   
-  void ReadTable(const unsigned char* D) {    
-    uint32_t N = ReadLE32(D);     // Read the length of the table.
-    
-    for ( ; N > 0; --N) {       // The rest of the data is the table itself.
-      uint32_t Len = ReadLE32(D);
-      const char* s = (const char *)D;
-      D += Len;
-
-      uint32_t TokenOff = ReadLE32(D);
-      uint32_t PPCondOff = ReadLE32(D);
-
-      FileMap.GetOrCreateValue(s, s+Len).getValue() =
-        Val(TokenOff, PPCondOff);
-    }
+  static const char* ReadKey(const unsigned char* d, unsigned) {
+    return (const char*) d;
+  }
+  
+  static PTHFileData ReadData(const unsigned char* d, unsigned) {
+    uint32_t x = ::ReadUnalignedLE32(d);
+    uint32_t y = ::ReadUnalignedLE32(d);
+    return PTHFileData(x, y); 
   }
 };
-} // end anonymous namespace
+} // end anonymous namespace  
+
+typedef OnDiskChainedHashTable<PTHFileLookupTrait> PTHFileLookup;
 
 //===----------------------------------------------------------------------===//
 // PTHManager methods.
@@ -454,9 +559,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
     return 0; // FIXME: Proper error diagnostic?
   }
   
-  llvm::OwningPtr<PTHFileLookup> FL(new PTHFileLookup());
-  FL->ReadTable(FileTable);
-
+  llvm::OwningPtr<PTHFileLookup> FL(PTHFileLookup::Create(FileTable, BufBeg));
   if (FL->isEmpty()) {
     InvalidPTH(Diags, "PTH file contains no cached source data");
     return 0;
@@ -579,10 +682,13 @@ PTHLexer *PTHManager::CreateLexer(FileID FID) {
   // Lookup the FileEntry object in our file lookup data structure.  It will
   // return a variant that indicates whether or not there is an offset within
   // the PTH file that contains cached tokens.
-  PTHFileLookup::Val FileData = ((PTHFileLookup*)FileLookup)->Lookup(FE);
+  PTHFileLookup& PFL = *((PTHFileLookup*)FileLookup);
+  PTHFileLookup::iterator I = PFL.find(FE);
   
-  if (!FileData.isValid()) // No tokens available.
+  if (I == PFL.end()) // No tokens available?
     return 0;
+  
+  const PTHFileData& FileData = *I;  
   
   const unsigned char *BufStart = (const unsigned char *)Buf->getBufferStart();
   // Compute the offset of the token data within the buffer.

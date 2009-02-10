@@ -47,9 +47,10 @@ static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V >> 24);
 }
 
-static void Pad(llvm::raw_fd_ostream& Out, unsigned Alignment) {
-  Offset off = (Offset) Out.tell();  
-  for (unsigned Pad = off % Alignment ; Pad != 0 ; --Pad, ++off) Emit8(Out, 0);
+static void Pad(llvm::raw_fd_ostream& Out, unsigned A) {
+  Offset off = (Offset) Out.tell();
+  uint32_t n = ((uintptr_t)(off+A-1) & ~(uintptr_t)(A-1)) - off;
+  for ( ; n ; --n ) Emit8(Out, 0);
 }
 
 //===----------------------------------------------------------------------===//
@@ -65,13 +66,13 @@ class OnDiskChainedHashTableGenerator {
   
   class Item {
   public:
-    typename Info::KeyT key;
-    typename Info::DataT data;
+    typename Info::key_type key;
+    typename Info::data_type data;
     Item *next;
     const uint32_t hash;
     
-    Item(typename Info::KeyT_ref k, typename Info::DataT_ref d)
-    : key(k), data(d), next(0), hash(Info::getHash(k)) {}
+    Item(typename Info::key_type_ref k, typename Info::data_type_ref d)
+    : key(k), data(d), next(0), hash(Info::ComputeHash(k)) {}
   };
   
   class Bucket { 
@@ -86,7 +87,7 @@ class OnDiskChainedHashTableGenerator {
   Bucket* Buckets;
   
 private:
-  void insert(Item** b, size_t size, Item* E) {
+  void insert(Bucket* b, size_t size, Item* E) {
     unsigned idx = E->hash & (size - 1);
     Bucket& B = b[idx];
     E->next = B.head;
@@ -95,12 +96,12 @@ private:
   }
   
   void resize(size_t newsize) {
-    Bucket* newBuckets = calloc(newsize, sizeof(Bucket));
-    
+    Bucket* newBuckets = (Bucket*) calloc(newsize, sizeof(Bucket));
+    // Populate newBuckets with the old entries.
     for (unsigned i = 0; i < NumBuckets; ++i)
-      for (Item* E = Buckets[i]; E ; ) {
+      for (Item* E = Buckets[i].head; E ; ) {
         Item* N = E->next;
-        E->Next = 0;
+        E->next = 0;
         insert(newBuckets, newsize, E);
         E = N;
       }
@@ -112,7 +113,9 @@ private:
   
 public:
   
-  void insert(typename Info::Key_ref key, typename Info::DataT_ref data) {
+  void insert(typename Info::key_type_ref key,
+              typename Info::data_type_ref data) {
+
     ++NumEntries;
     if (4*NumEntries >= 3*NumBuckets) resize(NumBuckets*2);
     insert(Buckets, NumBuckets, new (BA.Allocate<Item>()) Item(key, data));
@@ -125,25 +128,26 @@ public:
       if (!B.head) continue;
       
       // Store the offset for the data of this bucket.
-      Pad(out, 4); // 4-byte alignment.
       B.off = out.tell();
       
-      // Write out the number of items in the bucket.  We just write out
-      // 4 bytes to keep things 4-byte aligned.
-      Emit32(out, B.length);
+      // Write out the number of items in the bucket.
+      Emit16(out, B.length);
       
       // Write out the entries in the bucket.
       for (Item *I = B.head; I ; I = I->next) {
         Emit32(out, I->hash);
-        Info::EmitKey(out, I->key);
-        Info::EmitData(out, I->data);
+        const std::pair<unsigned, unsigned>& Len = 
+          Info::EmitKeyDataLength(out, I->key, I->data);
+        Info::EmitKey(out, I->key, Len.first);
+        Info::EmitData(out, I->data, Len.second);
       }
     }
     
     // Emit the hashtable itself.
     Pad(out, 4);
     Offset TableOff = out.tell();
-    Emit32(out, NumBuckets);    
+    Emit32(out, NumBuckets);
+    Emit32(out, NumEntries);
     for (unsigned i = 0; i < NumBuckets; ++i) Emit32(out, Buckets[i].off);
     
     return TableOff;
@@ -151,8 +155,10 @@ public:
   
   OnDiskChainedHashTableGenerator() {
     NumEntries = 0;
-    NumBuckets = 64;
-    Buckets = calloc(NumBuckets, sizeof(Bucket));
+    NumBuckets = 64;    
+    // Note that we do not need to run the constructors of the individual
+    // Bucket objects since 'calloc' returns bytes that are all 0.
+    Buckets = (Bucket*) calloc(NumBuckets, sizeof(Bucket));
   }
   
   ~OnDiskChainedHashTableGenerator() {
@@ -178,6 +184,44 @@ public:
   Offset getPPCondTableOffset() const { return PPCondData; }
 };
   
+class VISIBILITY_HIDDEN FileEntryPCHEntryInfo {
+public:
+  typedef const FileEntry* key_type;
+  typedef key_type key_type_ref;
+  
+  typedef PCHEntry data_type;
+  typedef const PCHEntry& data_type_ref;
+  
+  static unsigned ComputeHash(const FileEntry* FE) {
+    // Bernstein hash function:
+    // This is basically copy-and-paste from StringMap.  This likely won't
+    // stay here, which is why I didn't both to expose this function from
+    // String Map.  There are plenty of other hash functions which are likely
+    // to perform better and be faster.
+    unsigned int R = 0;
+    for (const char* x = FE->getName(); *x != '\0' ; ++x) R = R * 33 + *x;
+    return R + (R >> 5);
+  }
+  
+  static std::pair<unsigned,unsigned> 
+  EmitKeyDataLength(llvm::raw_ostream& Out, const FileEntry* FE,
+                    const PCHEntry& E) {
+
+    unsigned n = strlen(FE->getName()) + 1;
+    ::Emit16(Out, n);
+    return std::make_pair(n, 8);
+  }
+  
+  static void EmitKey(llvm::raw_ostream& Out, const FileEntry* FE, unsigned n) {
+    Out.write(FE->getName(), n);
+  }
+  
+  static void EmitData(llvm::raw_ostream& Out, const PCHEntry& E, unsigned) {
+    ::Emit32(Out, E.getTokenOffset());
+    ::Emit32(Out, E.getPPCondTableOffset());
+  }        
+};
+  
 class OffsetOpt {
   bool valid;
   Offset off;
@@ -189,7 +233,7 @@ public:
 };
 } // end anonymous namespace
 
-typedef llvm::DenseMap<const FileEntry*, PCHEntry> PCHMap;
+typedef OnDiskChainedHashTableGenerator<FileEntryPCHEntryInfo> PCHMap;
 typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
 typedef llvm::StringMap<OffsetOpt, llvm::BumpPtrAllocator> CachedStrsTy;
 
@@ -547,14 +591,14 @@ void PTHWriter::GeneratePTH() {
     if (!P.isAbsolute())
       continue;
 
-    assert(!PM.count(FE) && "fileinfo's are not uniqued on FileEntry?");
+    // assert(!PM.count(FE) && "fileinfo's are not uniqued on FileEntry?");
     
     const llvm::MemoryBuffer *B = C.getBuffer();
     if (!B) continue;
 
     FileID FID = SM.createFileID(FE, SourceLocation(), SrcMgr::C_User);
     Lexer L(FID, SM, LOpts);
-    PM[FE] = LexTokens(L);
+    PM.insert(FE, LexTokens(L));
   }
 
   // Write out the identifier table.
@@ -607,22 +651,5 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
 //===----------------------------------------------------------------------===//
 
 Offset PTHWriter::EmitFileTable() {
-  // Determine the offset where this table appears in the PTH file.
-  Offset off = (Offset) Out.tell();
-  
-  // Output the size of the table.
-  Emit32(PM.size());
-  
-  for (PCHMap::iterator I=PM.begin(), E=PM.end(); I!=E; ++I) {
-    const FileEntry* FE = I->first;
-    const char* Name = FE->getName();
-    unsigned size = strlen(Name);
-    Emit32(size);
-    EmitBuf(Name, Name+size);
-    Emit32(I->second.getTokenOffset());
-    Emit32(I->second.getPPCondTableOffset());
-  }
-  
-  return off;
+  return PM.Emit(Out);
 }
-
