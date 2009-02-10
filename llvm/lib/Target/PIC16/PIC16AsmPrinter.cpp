@@ -212,15 +212,19 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
   // Emit declarations for external globals.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; I++) {
+    // Any variables reaching here with ".auto." in its name is a local scope
+    // variable and should not be printed in global data section.
     std::string Name = Mang->getValueName(I);
+    if (Name.find(".auto.") != std::string::npos)
+      continue;
+
     if (I->isDeclaration())
       O << "\textern "<< Name << "\n";
-    else if (I->getLinkage() == GlobalValue::CommonLinkage)
-      O << "\tglobal "<< Name << "\n";
-    else if (I->getLinkage() == GlobalValue::ExternalLinkage)
+    else if (I->hasCommonLinkage() || I->hasExternalLinkage())
       O << "\tglobal "<< Name << "\n";
   }
 }
+
 void PIC16AsmPrinter::EmitInitData (Module &M) {
   SwitchToSection(TAI->getDataSection());
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -240,7 +244,7 @@ void PIC16AsmPrinter::EmitInitData (Module &M) {
       // Any variables reaching here with "." in its name is a local scope
       // variable and should not be printed in global data section.
       std::string name = Mang->getValueName(I);
-      if (name.find(".") != std::string::npos)
+      if (name.find(".auto.") != std::string::npos)
         continue;
 
       O << name;
@@ -352,9 +356,12 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     
     // The variables of a function are of form FuncName.* . If this variable
     // does not belong to this function then continue. 
-    if (!(VarName.find(FuncName + ".") == 0 ? true : false))
+    // Static local varilabes of a function does not have .auto. in their
+    // name. They are not printed as part of function data but module
+    // level global data.
+    if (!(VarName.find(FuncName + ".auto.") == 0 ? true : false))
       continue;
-   
+
     Constant *C = I->getInitializer();
     const Type *Ty = C->getType();
     unsigned Size = TD->getTypePaddedSize(Ty);
@@ -362,9 +369,14 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     // Emit memory reserve directive.
     O << VarName << "  RES  " << Size << "\n";
   }
-  emitFunctionTempData(MF, FrameSize);
+
+  // Return value can not overlap with temp data, becasue a temp slot
+  // may be read/written after a return value is calculated and saved 
+  // within the function.
   if (RetSize > FrameSize)
-    O << CurrentFnName << ".dummy" << "RES" << (RetSize - FrameSize); 
+    O << CurrentFnName << ".dummy" << " RES " << (RetSize - FrameSize) << "\n";
+
+  emitFunctionTempData(MF, FrameSize);
 }
 
 void PIC16AsmPrinter::emitFunctionTempData(MachineFunction &MF,
