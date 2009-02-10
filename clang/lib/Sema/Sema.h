@@ -1490,9 +1490,17 @@ public:
                                      IdentifierInfo *ParamName,
                                      SourceLocation ParamNameLoc,
                                      unsigned Depth, unsigned Position);
+  virtual void ActOnTypeParameterDefault(DeclTy *TypeParam, 
+                                         SourceLocation EqualLoc,
+                                         SourceLocation DefaultLoc,
+                                         TypeTy *Default);
+
   virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                 unsigned Depth,
                                                 unsigned Position);
+  virtual void ActOnNonTypeTemplateParameterDefault(DeclTy *TemplateParam,
+                                                    SourceLocation EqualLoc,
+                                                    ExprArg Default);
   virtual DeclTy *ActOnTemplateTemplateParameter(Scope *S,
                                                  SourceLocation TmpLoc,
                                                  TemplateParamsTy *Params,
@@ -1500,6 +1508,10 @@ public:
                                                  SourceLocation ParamNameLoc,
                                                  unsigned Depth,
                                                  unsigned Position);
+  virtual void ActOnTemplateTemplateParameterDefault(DeclTy *TemplateParam,
+                                                     SourceLocation EqualLoc,
+                                                     ExprArg Default);
+
   virtual TemplateParamsTy *
   ActOnTemplateParameterList(unsigned Depth,
                              SourceLocation ExportLoc,
@@ -1507,7 +1519,9 @@ public:
                              SourceLocation LAngleLoc,
                              DeclTy **Params, unsigned NumParams,
                              SourceLocation RAngleLoc);
-  
+  bool CheckTemplateParameterList(TemplateParameterList *NewParams,
+                                  TemplateParameterList *OldParams);
+
   virtual DeclTy *
   ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                      SourceLocation KWLoc, const CXXScopeSpec &SS,

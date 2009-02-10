@@ -32,8 +32,8 @@ template <typename = int> X2;
 // Forward declarations w/template template parameters
 template <template <typename> class T> class TTP1;
 template <template <typename> class> class TTP2;
-template <template <typename> class T = foo> class TTP3;
-template <template <typename> class = foo> class TTP3;
+template <template <typename> class T = foo> class TTP3; // FIXME:expected-error{{template argument for template template parameter must be a template}}
+template <template <typename> class = foo> class TTP3; // FIXME:expected-error{{template argument for template template parameter must be a template}}
 template <template <typename X, typename Y> class T> class TTP5;
 
 // Forward declararations with non-type params

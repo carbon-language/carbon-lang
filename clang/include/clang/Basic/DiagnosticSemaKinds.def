@@ -495,6 +495,12 @@ DIAG(note_template_nontype_parm_prev_declaration, NOTE,
      "previous non-type template parameter with type %0 is here")
 DIAG(err_template_nontype_parm_bad_type, ERROR,
      "a non-type template parameter cannot have type %0")
+DIAG(err_template_param_default_arg_redefinition, ERROR,
+     "template parameter redefines default argument")
+DIAG(note_template_param_prev_default_arg, NOTE,
+     "previous default template argument defined here")
+DIAG(err_template_param_default_arg_missing, ERROR,
+     "template parameter missing a default argument")
 
 // C++ Template Argument Lists
 DIAG(err_template_arg_list_different_arity, ERROR,

@@ -140,6 +140,29 @@ Sema::DeclTy *Sema::ActOnTypeParameter(Scope *S, bool Typename,
   return Param;
 }
 
+/// ActOnTypeParameterDefault - Adds a default argument (the type
+/// Default) to the given template type parameter (TypeParam). 
+void Sema::ActOnTypeParameterDefault(DeclTy *TypeParam, 
+                                     SourceLocation EqualLoc,
+                                     SourceLocation DefaultLoc, 
+                                     TypeTy *DefaultT) {
+  TemplateTypeParmDecl *Parm 
+    = cast<TemplateTypeParmDecl>(static_cast<Decl *>(TypeParam));
+  QualType Default = QualType::getFromOpaquePtr(DefaultT);
+
+  // C++ [temp.param]p14:
+  //   A template-parameter shall not be used in its own default argument.
+  // FIXME: Implement this check! Needs a recursive walk over the types.
+  
+  // Check the template argument itself.
+  if (CheckTemplateArgument(Parm, Default, DefaultLoc)) {
+    Parm->setInvalidDecl();
+    return;
+  }
+
+  Parm->setDefaultArgument(Default, DefaultLoc, false);
+}
+
 /// ActOnNonTypeTemplateParameter - Called when a C++ non-type
 /// template parameter (e.g., "int Size" in "template<int Size>
 /// class Array") has been parsed. S is the current scope and D is
@@ -210,6 +233,28 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   return Param;
 }
 
+/// \brief Adds a default argument to the given non-type template
+/// parameter.
+void Sema::ActOnNonTypeTemplateParameterDefault(DeclTy *TemplateParamD,
+                                                SourceLocation EqualLoc,
+                                                ExprArg DefaultE) {
+  NonTypeTemplateParmDecl *TemplateParm 
+    = cast<NonTypeTemplateParmDecl>(static_cast<Decl *>(TemplateParamD));
+  Expr *Default = static_cast<Expr *>(DefaultE.get());
+  
+  // C++ [temp.param]p14:
+  //   A template-parameter shall not be used in its own default argument.
+  // FIXME: Implement this check! Needs a recursive walk over the types.
+  
+  // Check the well-formedness of the default template argument.
+  if (CheckTemplateArgument(TemplateParm, Default)) {
+    TemplateParm->setInvalidDecl();
+    return;
+  }
+
+  TemplateParm->setDefaultArgument(static_cast<Expr *>(DefaultE.release()));
+}
+
 
 /// ActOnTemplateTemplateParameter - Called when a C++ template template
 /// parameter (e.g. T in template <template <typename> class T> class array)
@@ -250,6 +295,40 @@ Sema::DeclTy *Sema::ActOnTemplateTemplateParameter(Scope* S,
   return Param;
 }
 
+/// \brief Adds a default argument to the given template template
+/// parameter.
+void Sema::ActOnTemplateTemplateParameterDefault(DeclTy *TemplateParamD,
+                                                 SourceLocation EqualLoc,
+                                                 ExprArg DefaultE) {
+  TemplateTemplateParmDecl *TemplateParm 
+    = cast<TemplateTemplateParmDecl>(static_cast<Decl *>(TemplateParamD));
+
+  // Since a template-template parameter's default argument is an
+  // id-expression, it must be a DeclRefExpr.
+  DeclRefExpr *Default 
+    = cast<DeclRefExpr>(static_cast<Expr *>(DefaultE.get()));
+
+  // C++ [temp.param]p14:
+  //   A template-parameter shall not be used in its own default argument.
+  // FIXME: Implement this check! Needs a recursive walk over the types.
+
+  // Check the well-formedness of the template argument.
+  if (!isa<TemplateDecl>(Default->getDecl())) {
+    Diag(Default->getSourceRange().getBegin(), 
+         diag::err_template_arg_must_be_template)
+      << Default->getSourceRange();
+    TemplateParm->setInvalidDecl();
+    return;
+  } 
+  if (CheckTemplateArgument(TemplateParm, Default)) {
+    TemplateParm->setInvalidDecl();
+    return;
+  }
+
+  DefaultE.release();
+  TemplateParm->setDefaultArgument(Default);
+}
+
 /// ActOnTemplateParameterList - Builds a TemplateParameterList that
 /// contains the template parameters in Params/NumParams.
 Sema::TemplateParamsTy *
@@ -274,6 +353,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                          MultiTemplateParamsArg TemplateParameterLists) {
   assert(TemplateParameterLists.size() > 0 && "No template parameter lists?");
   assert(TK != TK_Reference && "Can only declare or define class templates");
+  bool Invalid = false;
 
   // Check that we can declare a template here.
   if (CheckTemplateDeclScope(S, TemplateParameterLists))
@@ -363,6 +443,13 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
     return 0;
   }
 
+  // Check the template parameter list of this declaration, possibly
+  // merging in the template parameter list from the previous class
+  // template declaration.
+  if (CheckTemplateParameterList(TemplateParams,
+            PrevClassTemplate? PrevClassTemplate->getTemplateParameters() : 0))
+    Invalid = true;
+    
   // If we had a scope specifier, we better have a previous template
   // declaration!
 
@@ -388,10 +475,171 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
 
   PushOnScopeChains(NewTemplate, S);
 
+  if (Invalid) {
+    NewTemplate->setInvalidDecl();
+    NewClass->setInvalidDecl();
+  }
   return NewTemplate;
 }
 
+/// \brief Checks the validity of a template parameter list, possibly
+/// considering the template parameter list from a previous
+/// declaration.
+///
+/// If an "old" template parameter list is provided, it must be
+/// equivalent (per TemplateParameterListsAreEqual) to the "new"
+/// template parameter list.
+///
+/// \param NewParams Template parameter list for a new template
+/// declaration. This template parameter list will be updated with any
+/// default arguments that are carried through from the previous
+/// template parameter list.
+///
+/// \param OldParams If provided, template parameter list from a
+/// previous declaration of the same template. Default template
+/// arguments will be merged from the old template parameter list to
+/// the new template parameter list.
+///
+/// \returns true if an error occurred, false otherwise.
+bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
+                                      TemplateParameterList *OldParams) {
+  bool Invalid = false;
+  
+  // C++ [temp.param]p10:
+  //   The set of default template-arguments available for use with a
+  //   template declaration or definition is obtained by merging the
+  //   default arguments from the definition (if in scope) and all
+  //   declarations in scope in the same way default function
+  //   arguments are (8.3.6).
+  bool SawDefaultArgument = false;
+  SourceLocation PreviousDefaultArgLoc;
 
+  TemplateParameterList::iterator OldParam;
+  if (OldParams)
+    OldParam = OldParams->begin();
+
+  for (TemplateParameterList::iterator NewParam = NewParams->begin(),
+                                    NewParamEnd = NewParams->end();
+       NewParam != NewParamEnd; ++NewParam) {
+    // Variables used to diagnose redundant default arguments
+    bool RedundantDefaultArg = false;
+    SourceLocation OldDefaultLoc;
+    SourceLocation NewDefaultLoc;
+
+    // Variables used to diagnose missing default arguments
+    bool MissingDefaultArg = false;
+
+    // Merge default arguments for template type parameters.
+    if (TemplateTypeParmDecl *NewTypeParm
+          = dyn_cast<TemplateTypeParmDecl>(*NewParam)) {
+      TemplateTypeParmDecl *OldTypeParm 
+          = OldParams? cast<TemplateTypeParmDecl>(*OldParam) : 0;
+      
+      if (OldTypeParm && OldTypeParm->hasDefaultArgument() && 
+          NewTypeParm->hasDefaultArgument()) {
+        OldDefaultLoc = OldTypeParm->getDefaultArgumentLoc();
+        NewDefaultLoc = NewTypeParm->getDefaultArgumentLoc();
+        SawDefaultArgument = true;
+        RedundantDefaultArg = true;
+        PreviousDefaultArgLoc = NewDefaultLoc;
+      } else if (OldTypeParm && OldTypeParm->hasDefaultArgument()) {
+        // Merge the default argument from the old declaration to the
+        // new declaration.
+        SawDefaultArgument = true;
+        NewTypeParm->setDefaultArgument(OldTypeParm->getDefaultArgument(),
+                                        OldTypeParm->getDefaultArgumentLoc(),
+                                        true);
+        PreviousDefaultArgLoc = OldTypeParm->getDefaultArgumentLoc();
+      } else if (NewTypeParm->hasDefaultArgument()) {
+        SawDefaultArgument = true;
+        PreviousDefaultArgLoc = NewTypeParm->getDefaultArgumentLoc();
+      } else if (SawDefaultArgument)
+        MissingDefaultArg = true;
+    } 
+    // Merge default arguments for non-type template parameters
+    else if (NonTypeTemplateParmDecl *NewNonTypeParm
+               = dyn_cast<NonTypeTemplateParmDecl>(*NewParam)) {
+      NonTypeTemplateParmDecl *OldNonTypeParm
+        = OldParams? cast<NonTypeTemplateParmDecl>(*OldParam) : 0;
+      if (OldNonTypeParm && OldNonTypeParm->hasDefaultArgument() && 
+          NewNonTypeParm->hasDefaultArgument()) {
+        OldDefaultLoc = OldNonTypeParm->getDefaultArgumentLoc();
+        NewDefaultLoc = NewNonTypeParm->getDefaultArgumentLoc();
+        SawDefaultArgument = true;
+        RedundantDefaultArg = true;
+        PreviousDefaultArgLoc = NewDefaultLoc;
+      } else if (OldNonTypeParm && OldNonTypeParm->hasDefaultArgument()) {
+        // Merge the default argument from the old declaration to the
+        // new declaration.
+        SawDefaultArgument = true;
+        // FIXME: We need to create a new kind of "default argument"
+        // expression that points to a previous template template
+        // parameter.
+        NewNonTypeParm->setDefaultArgument(
+                                        OldNonTypeParm->getDefaultArgument());
+        PreviousDefaultArgLoc = OldNonTypeParm->getDefaultArgumentLoc();
+      } else if (NewNonTypeParm->hasDefaultArgument()) {
+        SawDefaultArgument = true;
+        PreviousDefaultArgLoc = NewNonTypeParm->getDefaultArgumentLoc();
+      } else if (SawDefaultArgument)
+        MissingDefaultArg = true;      
+    }
+    // Merge default arguments for template template parameters
+    else {
+      TemplateTemplateParmDecl *NewTemplateParm
+        = cast<TemplateTemplateParmDecl>(*NewParam);
+      TemplateTemplateParmDecl *OldTemplateParm
+        = OldParams? cast<TemplateTemplateParmDecl>(*OldParam) : 0;
+      if (OldTemplateParm && OldTemplateParm->hasDefaultArgument() && 
+          NewTemplateParm->hasDefaultArgument()) {
+        OldDefaultLoc = OldTemplateParm->getDefaultArgumentLoc();
+        NewDefaultLoc = NewTemplateParm->getDefaultArgumentLoc();
+        SawDefaultArgument = true;
+        RedundantDefaultArg = true;
+        PreviousDefaultArgLoc = NewDefaultLoc;
+      } else if (OldTemplateParm && OldTemplateParm->hasDefaultArgument()) {
+        // Merge the default argument from the old declaration to the
+        // new declaration.
+        SawDefaultArgument = true;
+        // FIXME: We need to create a new kind of "default argument"
+        // expression that points to a previous template template
+        // parameter.
+        NewTemplateParm->setDefaultArgument(
+                                        OldTemplateParm->getDefaultArgument());
+        PreviousDefaultArgLoc = OldTemplateParm->getDefaultArgumentLoc();
+      } else if (NewTemplateParm->hasDefaultArgument()) {
+        SawDefaultArgument = true;
+        PreviousDefaultArgLoc = NewTemplateParm->getDefaultArgumentLoc();
+      } else if (SawDefaultArgument)
+        MissingDefaultArg = true;      
+    }
+
+    if (RedundantDefaultArg) {
+      // C++ [temp.param]p12:
+      //   A template-parameter shall not be given default arguments
+      //   by two different declarations in the same scope.
+      Diag(NewDefaultLoc, diag::err_template_param_default_arg_redefinition);
+      Diag(OldDefaultLoc, diag::note_template_param_prev_default_arg);
+      Invalid = true;
+    } else if (MissingDefaultArg) {
+      // C++ [temp.param]p11:
+      //   If a template-parameter has a default template-argument,
+      //   all subsequent template-parameters shall have a default
+      //   template-argument supplied.
+      Diag((*NewParam)->getLocation(), 
+           diag::err_template_param_default_arg_missing);
+      Diag(PreviousDefaultArgLoc, diag::note_template_param_prev_default_arg);
+      Invalid = true;
+    }
+
+    // If we have an old template parameter list that we're merging
+    // in, move on to the next parameter.
+    if (OldParams)
+      ++OldParam;
+  }
+
+  return Invalid;
+}
 
 Action::TypeTy * 
 Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,

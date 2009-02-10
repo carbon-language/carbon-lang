@@ -225,9 +225,20 @@ class TemplateTypeParmDecl : public TypeDecl {
   /// 'class' keyword.
   bool Typename : 1;
 
+  /// \brief Whether this template type parameter inherited its
+  /// default argument.
+  bool InheritedDefault : 1;
+
+  /// \brief The location of the default argument, if any.
+  SourceLocation DefaultArgumentLoc;
+
+  /// \brief The default template argument, if any.
+  QualType DefaultArgument;
+
   TemplateTypeParmDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
                        bool Typename, QualType Type)
-    : TypeDecl(TemplateTypeParm, DC, L, Id), Typename(Typename) { 
+    : TypeDecl(TemplateTypeParm, DC, L, Id), Typename(Typename),
+      InheritedDefault(false), DefaultArgument() { 
     TypeForDecl = Type.getTypePtr();
   }
 
@@ -240,6 +251,30 @@ public:
   /// the 'typename' keyword. If not, it was declared with the 'class'
   /// keyword.
   bool wasDeclaredWithTypename() const { return Typename; }
+
+  /// \brief Determine whether this template parameter has a default
+  /// argument.
+  bool hasDefaultArgument() const { return !DefaultArgument.isNull(); }
+
+  /// \brief Retrieve the default argument, if any.
+  QualType getDefaultArgument() const { return DefaultArgument; }
+
+  /// \brief Retrieve the location of the default argument, if any.
+  SourceLocation getDefaultArgumentLoc() const { return DefaultArgumentLoc; }
+
+  /// \brief Determines whether the default argument was inherited
+  /// from a previous declaration of this template.
+  bool defaultArgumentWasInherited() const { return InheritedDefault; }
+
+  /// \brief Set the default argument for this template parameter, and
+  /// whether that default argument was inherited from another
+  /// declaration.
+  void setDefaultArgument(QualType DefArg, SourceLocation DefArgLoc,
+                          bool Inherited) {
+    DefaultArgument = DefArg;
+    DefaultArgumentLoc = DefArgLoc;
+    InheritedDefault = Inherited;
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -264,11 +299,16 @@ protected:
 /// @endcode
 class NonTypeTemplateParmDecl
   : public VarDecl, protected TemplateParmPosition {
+  /// \brief The default template argument, if any.
+  Expr *DefaultArgument;
+
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
                           unsigned P, IdentifierInfo *Id, QualType T,
                           SourceLocation TSSL = SourceLocation())
     : VarDecl(NonTypeTemplateParm, DC, L, Id, T, VarDecl::None, TSSL),
-      TemplateParmPosition(D, P) { }
+      TemplateParmPosition(D, P), DefaultArgument(0) 
+  { }
+
 public:
   static NonTypeTemplateParmDecl *
   Create(ASTContext &C, DeclContext *DC, SourceLocation L, unsigned D,
@@ -277,6 +317,21 @@ public:
 
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::getPosition;
+
+  /// \brief Determine whether this template parameter has a default
+  /// argument.
+  bool hasDefaultArgument() const { return DefaultArgument; }
+
+  /// \brief Retrieve the default argument, if any.
+  Expr *getDefaultArgument() const { return DefaultArgument; }
+
+  /// \brief Retrieve the location of the default argument, if any.
+  SourceLocation getDefaultArgumentLoc() const;
+
+  /// \brief Set the default argument for this template parameter.
+  void setDefaultArgument(Expr *DefArg) {
+    DefaultArgument = DefArg;
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -304,12 +359,17 @@ protected:
 /// name of a template and the template parameters allowable for substitution.
 class TemplateTemplateParmDecl
   : public TemplateDecl, protected TemplateParmPosition {
+
+  /// \brief The default template argument, if any.
+  Expr *DefaultArgument;
+
   TemplateTemplateParmDecl(DeclContext *DC, SourceLocation L,
                            unsigned D, unsigned P,
                            IdentifierInfo *Id, TemplateParameterList *Params)
     : TemplateDecl(TemplateTemplateParm, DC, L, Id, Params),
-      TemplateParmPosition(D, P)
+      TemplateParmPosition(D, P), DefaultArgument(0)
     { }
+
 public:
   static TemplateTemplateParmDecl *Create(ASTContext &C, DeclContext *DC,
                                           SourceLocation L, unsigned D,
@@ -318,6 +378,21 @@ public:
 
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::getPosition;
+
+  /// \brief Determine whether this template parameter has a default
+  /// argument.
+  bool hasDefaultArgument() const { return DefaultArgument; }
+
+  /// \brief Retrieve the default argument, if any.
+  Expr *getDefaultArgument() const { return DefaultArgument; }
+
+  /// \brief Retrieve the location of the default argument, if any.
+  SourceLocation getDefaultArgumentLoc() const;
+
+  /// \brief Set the default argument for this template parameter.
+  void setDefaultArgument(Expr *DefArg) {
+    DefaultArgument = DefArg;
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

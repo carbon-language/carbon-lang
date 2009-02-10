@@ -1040,7 +1040,10 @@ public:
 
   /// ActOnTypeParameterDefault - Adds a default argument (the type
   /// Default) to the given template type parameter (TypeParam). 
-  virtual void ActOnTypeParameterDefault(DeclTy *TypeParam, TypeTy *Default) {
+  virtual void ActOnTypeParameterDefault(DeclTy *TypeParam, 
+                                         SourceLocation EqualLoc,
+                                         SourceLocation DefaultLoc,
+                                         TypeTy *Default) {
   }
 
   /// ActOnNonTypeTemplateParameter - Called when a C++ non-type
@@ -1054,6 +1057,13 @@ public:
                                                 unsigned Depth, 
                                                 unsigned Position) {
     return 0;
+  }
+
+  /// \brief Adds a default argument to the given non-type template
+  /// parameter.
+  virtual void ActOnNonTypeTemplateParameterDefault(DeclTy *TemplateParam,
+                                                    SourceLocation EqualLoc,
+                                                    ExprArg Default) {
   }
 
   /// ActOnTemplateTemplateParameter - Called when a C++ template template
@@ -1070,6 +1080,13 @@ public:
                                                  unsigned Depth,
                                                  unsigned Position) {
     return 0;
+  }
+
+  /// \brief Adds a default argument to the given template template
+  /// parameter.
+  virtual void ActOnTemplateTemplateParameterDefault(DeclTy *TemplateParam,
+                                                     SourceLocation EqualLoc,
+                                                     ExprArg Default) {
   }
 
   /// ActOnTemplateParameterList - Called when a complete template

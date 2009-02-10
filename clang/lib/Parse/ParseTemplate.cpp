@@ -228,8 +228,10 @@ Parser::DeclTy *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
   // Grab a default type id (if given).
   if(Tok.is(tok::equal)) {
     SourceLocation EqualLoc = ConsumeToken();
+    SourceLocation DefaultLoc = Tok.getLocation();
     if (TypeTy *DefaultType = ParseTypeName())
-      Actions.ActOnTypeParameterDefault(TypeParam, DefaultType);
+      Actions.ActOnTypeParameterDefault(TypeParam, EqualLoc, DefaultLoc,
+                                        DefaultType);
   }
   
   return TypeParam;
@@ -277,18 +279,6 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     return 0;
   }
 
-  // Get the a default value, if given.
-  // FIXME: I think that the results of this block need to be passed to the
-  // act-on call, so we can assemble the parameter correctly.
-  OwningExprResult DefaultExpr(Actions);
-  if(Tok.is(tok::equal)) {
-    ConsumeToken();
-    DefaultExpr = ParseCXXIdExpression();
-    if(DefaultExpr.isInvalid()) {
-      return 0;
-    }
-  }
-
   TemplateParamsTy *ParamList = 
     Actions.ActOnTemplateParameterList(Depth, SourceLocation(),
                                        TemplateLoc, LAngleLoc,
@@ -296,9 +286,23 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
                                        TemplateParams.size(),
                                        RAngleLoc);
 
-  return Actions.ActOnTemplateTemplateParameter(CurScope, TemplateLoc,
-                                                ParamList, ParamName,
-                                                NameLoc, Depth, Position);
+  Parser::DeclTy * Param
+    = Actions.ActOnTemplateTemplateParameter(CurScope, TemplateLoc,
+                                             ParamList, ParamName,
+                                             NameLoc, Depth, Position);
+
+  // Get the a default value, if given.
+  if (Tok.is(tok::equal)) {
+    SourceLocation EqualLoc = ConsumeToken();
+    OwningExprResult DefaultExpr = ParseCXXIdExpression();
+    if (DefaultExpr.isInvalid())
+      return Param;
+    else if (Param)
+      Actions.ActOnTemplateTemplateParameterDefault(Param, EqualLoc,
+                                                    move(DefaultExpr));
+  }
+
+  return Param;
 }
 
 /// ParseNonTypeTemplateParameter - Handle the parsing of non-type
@@ -341,12 +345,23 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   DeclTy *Param = Actions.ActOnNonTypeTemplateParameter(CurScope, ParamDecl,
                                                         Depth, Position);
 
-  // Is there a default value? Parsing this can be fairly annoying because
-  // we have to stop on the first non-nested (paren'd) '>' as the closure
-  // for the template parameter list. Or a ','.
+  // If there is a default value, parse it.
   if (Tok.is(tok::equal)) {
-    // TODO: Implement default non-type values.
-    SkipUntil(tok::comma, tok::greater, true, true);
+    SourceLocation EqualLoc = ConsumeToken();
+
+    // C++ [temp.param]p15:
+    //   When parsing a default template-argument for a non-type
+    //   template-parameter, the first non-nested > is taken as the
+    //   end of the template-parameter-list rather than a greater-than
+    //   operator.
+    GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);   
+
+    OwningExprResult DefaultArg = ParseAssignmentExpression();
+    if (DefaultArg.isInvalid())
+      SkipUntil(tok::comma, tok::greater, true, true);
+    else if (Param)
+      Actions.ActOnNonTypeTemplateParameterDefault(Param, EqualLoc, 
+                                                   move(DefaultArg));
   }
   
   return Param;

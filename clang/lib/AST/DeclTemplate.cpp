@@ -102,6 +102,11 @@ NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
                                          TypeSpecStartLoc);
 }
 
+SourceLocation NonTypeTemplateParmDecl::getDefaultArgumentLoc() const {
+  return DefaultArgument? DefaultArgument->getSourceRange().getBegin()
+                        : SourceLocation(); 
+}
+
 //===----------------------------------------------------------------------===//
 // TemplateTemplateParmDecl Method Implementations
 //===----------------------------------------------------------------------===//
@@ -114,3 +119,7 @@ TemplateTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) TemplateTemplateParmDecl(DC, L, D, P, Id, Params);
 }
 
+SourceLocation TemplateTemplateParmDecl::getDefaultArgumentLoc() const {
+  return DefaultArgument? DefaultArgument->getSourceRange().getBegin()
+                        : SourceLocation(); 
+}
