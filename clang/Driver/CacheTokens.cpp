@@ -444,6 +444,7 @@ PCHEntry PTHWriter::LexTokens(Lexer& L) {
     
     if (Tok.is(tok::identifier)) {
       Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+      EmitToken(Tok);
       continue;
     }
 
@@ -460,8 +461,10 @@ PCHEntry PTHWriter::LexTokens(Lexer& L) {
       assert(!Tok.isAtStartOfLine());
       
       // Did we see 'include'/'import'/'include_next'?
-      if (!Tok.is(tok::identifier))
+      if (!Tok.is(tok::identifier)) {
+        EmitToken(Tok);
         continue;
+      }
       
       IdentifierInfo* II = PP.LookUpIdentifierInfo(Tok);
       Tok.setIdentifierInfo(II);
@@ -491,8 +494,8 @@ PCHEntry PTHWriter::LexTokens(Lexer& L) {
       case tok::pp_if:
       case tok::pp_ifdef:
       case tok::pp_ifndef: {
-        // Ad an entry for '#if' and friends.  We initially set the target index
-        // to 0.  This will get backpatched when we hit #endif.
+        // Add an entry for '#if' and friends.  We initially set the target
+        // index to 0.  This will get backpatched when we hit #endif.
         PPStartCond.push_back(PPCond.size());
         PPCond.push_back(std::make_pair(HashOff, 0U));
         break;
@@ -530,9 +533,11 @@ PCHEntry PTHWriter::LexTokens(Lexer& L) {
         break;
       }
       }
-    }    
+    }
+    
+    EmitToken(Tok);
   }
-  while (EmitToken(Tok), Tok.isNot(tok::eof));
+  while (Tok.isNot(tok::eof));
 
   assert(PPStartCond.empty() && "Error: imblanced preprocessor conditionals.");
 
