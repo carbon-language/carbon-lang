@@ -176,11 +176,12 @@ void DeclPrinter::Print(NamedDecl *ND) {
     if (VarDecl *V = dyn_cast<VarDecl>(ND)) {
       switch (V->getStorageClass()) {
       default: assert(0 && "Unknown storage class!");
-      case VarDecl::None:     break;
-      case VarDecl::Extern:   Out << "extern "; break;
-      case VarDecl::Static:   Out << "static "; break; 
-      case VarDecl::Auto:     Out << "auto "; break;
-      case VarDecl::Register: Out << "register "; break;
+      case VarDecl::None:          break;
+      case VarDecl::Auto:          Out << "auto "; break;
+      case VarDecl::Register:      Out << "register "; break;
+      case VarDecl::Extern:        Out << "extern "; break;
+      case VarDecl::Static:        Out << "static "; break; 
+      case VarDecl::PrivateExtern: Out << "static "; break; 
       }
     }
     std::string Name = ND->getNameAsString();

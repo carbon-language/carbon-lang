@@ -119,11 +119,12 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
       switch (V->getStorageClass()) {
         default: assert(0 && "Unknown storage class!");
-        case VarDecl::None:     break;
-        case VarDecl::Extern:   OS << "extern "; break;
-        case VarDecl::Static:   OS << "static "; break; 
-        case VarDecl::Auto:     OS << "auto "; break;
-        case VarDecl::Register: OS << "register "; break;
+        case VarDecl::None:          break;
+        case VarDecl::Extern:        OS << "extern "; break;
+        case VarDecl::Static:        OS << "static "; break; 
+        case VarDecl::Auto:          OS << "auto "; break;
+        case VarDecl::Register:      OS << "register "; break;
+        case VarDecl::PrivateExtern: OS << "__private_extern "; break; 
       }
     }
     
