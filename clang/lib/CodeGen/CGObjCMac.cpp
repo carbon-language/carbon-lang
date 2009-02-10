@@ -633,7 +633,7 @@ private:
   /// IvarListnfABIPtrTy.
   llvm::Constant *EmitIvarList(const ObjCImplementationDecl *ID);
   
-  llvm::Constant *EmitIvarOffsetVar(const ObjCImplementationDecl *ID,
+  llvm::Constant *EmitIvarOffsetVar(const ObjCInterfaceDecl *ID,
                                     const ObjCIvarDecl *Ivar,
                                     unsigned long int offset);
   
@@ -673,6 +673,12 @@ private:
   llvm::Value *EmitMetaClassRef(CGBuilderTy &Builder, 
                                 const ObjCInterfaceDecl *ID);
 
+  /// ObjCIvarOffsetVariable - Returns the ivar offset variable for
+  /// the given ivar.
+  ///
+  llvm::GlobalVariable * ObjCIvarOffsetVariable(std::string &Name, 
+                              const NamedDecl *IDName,
+                              const ObjCIvarDecl *Ivar);
   
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
@@ -746,7 +752,6 @@ public:
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                       ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar);
-  virtual bool LateBoundIVars() const { return true; }
 };
   
 } // end anonymous namespace
@@ -3907,11 +3912,34 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
                                         ObjCTypes.MethodListnfABIPtrTy);
 }
 
+/// ObjCIvarOffsetVariable - Returns the ivar offset variable for
+/// the given ivar.
+///
+llvm::GlobalVariable * CGObjCNonFragileABIMac::ObjCIvarOffsetVariable(
+                              std::string &Name, 
+                              const NamedDecl *IDName,
+                              const ObjCIvarDecl *Ivar) {
+  Name += "\01_OBJC_IVAR_$_" + IDName->getNameAsString() + '.'
+          + Ivar->getNameAsString();
+  llvm::GlobalVariable *IvarOffsetGV = 
+    CGM.getModule().getGlobalVariable(Name);
+  if (!IvarOffsetGV)
+    IvarOffsetGV = 
+      new llvm::GlobalVariable(ObjCTypes.LongTy,
+                               false,
+                               llvm::GlobalValue::ExternalLinkage,
+                               0,
+                               Name,
+                               &CGM.getModule());
+  return IvarOffsetGV;
+}
+
 llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
-                                              const ObjCImplementationDecl *ID,
+                                              const ObjCInterfaceDecl *ID,
                                               const ObjCIvarDecl *Ivar,
                                               unsigned long int Offset) {
   
+  assert(ID && "EmitIvarOffsetVar - null interface decl.");
   std::string ExternalName("\01_OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
                            + Ivar->getNameAsString());
   llvm::Constant *Init = llvm::ConstantInt::get(ObjCTypes.LongTy, Offset);
@@ -3943,9 +3971,8 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
   if (!globalVisibility)
     IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   else 
-    if (const ObjCInterfaceDecl *OID = ID->getClassInterface()) 
-      if (IsClassHidden(OID))
-       IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    if (IsClassHidden(ID))
+      IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
 
   IvarOffsetGV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(IvarOffsetGV);
@@ -3994,7 +4021,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
     unsigned long offset = Layout->getElementOffset(CGM.getTypes().
                                                     getLLVMFieldNo(Field));
     const ObjCIvarDecl *ivarDecl = *I++;
-    Ivar[0] = EmitIvarOffsetVar(ID, ivarDecl, offset);
+    Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), ivarDecl, offset);
     if (Field->getIdentifier())
       Ivar[1] = GetMethodVarName(Field->getIdentifier());
     else
@@ -4268,21 +4295,9 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
   assert(ObjectTy->isObjCInterfaceType() && 
          "CGObjCNonFragileABIMac::EmitObjCValueForIvar");
   NamedDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
-  // NOTE. This name must match one in EmitIvarOffsetVar.
-  // FIXME. Consolidate into one naming routine.
-  std::string ExternalName("\01_OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
-                           + Ivar->getNameAsString());
-  
-  llvm::GlobalVariable *IvarOffsetGV = 
-    CGM.getModule().getGlobalVariable(ExternalName);
-  if (!IvarOffsetGV)
-    IvarOffsetGV = 
-      new llvm::GlobalVariable(ObjCTypes.LongTy,
-                               false,
-                               llvm::GlobalValue::ExternalLinkage,
-                               0,
-                               ExternalName,
-                               &CGM.getModule());
+  std::string ExternalName;
+  llvm::GlobalVariable *IvarOffsetGV =
+    ObjCIvarOffsetVariable(ExternalName, ID, Ivar);
   
   // (char *) BaseValue
   llvm::Value *V =  CGF.Builder.CreateBitCast(BaseValue,
@@ -4310,7 +4325,11 @@ llvm::Value *CGObjCNonFragileABIMac::EmitIvarOffset(
                                        CodeGen::CodeGenFunction &CGF,
                                        ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
-  return 0;
+  std::string ExternalName;
+  llvm::GlobalVariable *IvarOffsetGV =  
+    ObjCIvarOffsetVariable(ExternalName, Interface, Ivar);
+  
+  return CGF.Builder.CreateLoad(IvarOffsetGV, false, "ivar");
 }
 
 CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
