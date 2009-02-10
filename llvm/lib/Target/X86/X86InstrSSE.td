@@ -2231,6 +2231,11 @@ def MASKMOVDQU : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
                      "maskmovdqu\t{$mask, $src|$src, $mask}",
                      [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)]>;
 
+let Uses = [RDI] in
+def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
+                     "maskmovdqu\t{$mask, $src|$src, $mask}",
+                     [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, RDI)]>;
+
 // Non-temporal stores
 def MOVNTPDmr : PDI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                     "movntpd\t{$src, $dst|$dst, $src}",
