@@ -20,6 +20,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Bitcode/SerializationFwd.h"
+#include <climits>
 using llvm::isa;
 using llvm::cast;
 using llvm::cast_or_null;
