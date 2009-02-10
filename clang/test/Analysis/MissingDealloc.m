@@ -63,3 +63,23 @@ IBOutlet NSWindow *window;
 @implementation HasOutlet // no-warning
 @end
 
+//===------------------------------------------------------------------------===
+// <rdar://problem/6380411>
+// Was bogus warning: "The '_myproperty' instance variable was not retained by a
+//  synthesized property but was released in 'dealloc'"
+
+@interface MyObject_rdar6380411 : NSObject {
+    id _myproperty;
+}
+@property(assign) id myproperty;
+@end
+
+@implementation MyObject_rdar6380411
+@synthesize myproperty=_myproperty;
+- (void)dealloc {
+    // Don't claim that myproperty is released since it the property
+    // has the 'assign' attribute.
+    self.myproperty = 0; // no-warning
+    [super dealloc];
+}
+@end
