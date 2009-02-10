@@ -182,8 +182,14 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
 
   // If necessary, associate the block with the cleanup stack size.
   if (!CleanupEntries.empty()) {
-    BlockScopes[BB] = CleanupEntries.size() - 1;
-    CleanupEntries.back().Blocks.push_back(BB);
+    // Check if the basic block has already been inserted.
+    BlockScopeMap::iterator I = BlockScopes.find(BB);
+    if (I != BlockScopes.end()) {
+      assert(I->second == CleanupEntries.size() - 1);
+    } else {
+      BlockScopes[BB] = CleanupEntries.size() - 1;
+      CleanupEntries.back().Blocks.push_back(BB);
+    }
   }
   
   CurFn->getBasicBlockList().push_back(BB);
