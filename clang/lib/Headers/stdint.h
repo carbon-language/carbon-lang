@@ -216,8 +216,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define INT32_C(v)  (v)
 #define UINT32_C(v) (v##U)
 
-/* If we do not have 64-bit support, don't define the 64-bit size macros. */
-#ifndef __INT64_TYPE__
+/* Only define the 64-bit size macros if we have 64-bit support. */
+#ifdef __INT64_TYPE__
 #define INT64_C(v)  (v##LL)
 #define UINT64_C(v) (v##ULL)
 #endif
