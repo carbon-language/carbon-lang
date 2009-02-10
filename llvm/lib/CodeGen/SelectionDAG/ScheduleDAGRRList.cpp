@@ -114,7 +114,9 @@ public:
 
 private:
   void ReleasePred(SUnit *SU, const SDep *PredEdge);
+  void ReleasePredecessors(SUnit *SU, unsigned CurCycle);
   void ReleaseSucc(SUnit *SU, const SDep *SuccEdge);
+  void ReleaseSuccessors(SUnit *SU);
   void CapturePred(SDep *PredEdge);
   void ScheduleNodeBottomUp(SUnit*, unsigned);
   void ScheduleNodeTopDown(SUnit*, unsigned);
@@ -204,23 +206,15 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
   }
 #endif
   
-  if (PredSU->NumSuccsLeft == 0) {
+  // If all the node's successors are scheduled, this node is ready
+  // to be scheduled. Ignore the special EntrySU node.
+  if (PredSU->NumSuccsLeft == 0 && PredSU != &EntrySU) {
     PredSU->isAvailable = true;
     AvailableQueue->push(PredSU);
   }
 }
 
-/// ScheduleNodeBottomUp - Add the node to the schedule. Decrement the pending
-/// count of its predecessors. If a predecessor pending count is zero, add it to
-/// the Available queue.
-void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
-  DOUT << "*** Scheduling [" << CurCycle << "]: ";
-  DEBUG(SU->dump(this));
-
-  assert(CurCycle >= SU->getHeight() && "Node scheduled below its height!");
-  SU->setHeightToAtLeast(CurCycle);
-  Sequence.push_back(SU);
-
+void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU, unsigned CurCycle) {
   // Bottom up: release predecessors
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
@@ -237,6 +231,20 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
       }
     }
   }
+}
+
+/// ScheduleNodeBottomUp - Add the node to the schedule. Decrement the pending
+/// count of its predecessors. If a predecessor pending count is zero, add it to
+/// the Available queue.
+void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
+  DOUT << "*** Scheduling [" << CurCycle << "]: ";
+  DEBUG(SU->dump(this));
+
+  assert(CurCycle >= SU->getHeight() && "Node scheduled below its height!");
+  SU->setHeightToAtLeast(CurCycle);
+  Sequence.push_back(SU);
+
+  ReleasePredecessors(SU, CurCycle);
 
   // Release all the implicit physical register defs that are live.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
@@ -627,6 +635,10 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
 /// schedulers.
 void ScheduleDAGRRList::ListScheduleBottomUp() {
   unsigned CurCycle = 0;
+
+  // Release any predecessors of the special Exit node.
+  ReleasePredecessors(&ExitSU, CurCycle);
+
   // Add root to Available queue.
   if (!SUnits.empty()) {
     SUnit *RootSU = &SUnits[DAG->getRoot().getNode()->getNodeId()];
@@ -789,9 +801,22 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, const SDep *SuccEdge) {
   }
 #endif
   
-  if (SuccSU->NumPredsLeft == 0) {
+  // If all the node's predecessors are scheduled, this node is ready
+  // to be scheduled. Ignore the special ExitSU node.
+  if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU) {
     SuccSU->isAvailable = true;
     AvailableQueue->push(SuccSU);
+  }
+}
+
+void ScheduleDAGRRList::ReleaseSuccessors(SUnit *SU) {
+  // Top down: release successors
+  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    assert(!I->isAssignedRegDep() &&
+           "The list-tdrr scheduler doesn't yet support physreg dependencies!");
+
+    ReleaseSucc(SU, &*I);
   }
 }
 
@@ -806,15 +831,7 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   SU->setDepthToAtLeast(CurCycle);
   Sequence.push_back(SU);
 
-  // Top down: release successors
-  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    assert(!I->isAssignedRegDep() &&
-           "The list-tdrr scheduler doesn't yet support physreg dependencies!");
-
-    ReleaseSucc(SU, &*I);
-  }
-
+  ReleaseSuccessors(SU);
   SU->isScheduled = true;
   AvailableQueue->ScheduledNode(SU);
 }
@@ -823,6 +840,9 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 /// schedulers.
 void ScheduleDAGRRList::ListScheduleTopDown() {
   unsigned CurCycle = 0;
+
+  // Release any successors of the special Entry node.
+  ReleaseSuccessors(&EntrySU);
 
   // All leaves to Available queue.
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {

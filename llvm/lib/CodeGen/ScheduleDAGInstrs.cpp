@@ -15,86 +15,22 @@
 #define DEBUG_TYPE "sched-instrs"
 #include "ScheduleDAGInstrs.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtarget.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallSet.h"
-#include <map>
 using namespace llvm;
-
-namespace {
-  class VISIBILITY_HIDDEN LoopDependencies {
-    const MachineLoopInfo &MLI;
-    const MachineDominatorTree &MDT;
-
-  public:
-    typedef std::map<unsigned, std::pair<const MachineOperand *, unsigned> >
-      LoopDeps;
-    LoopDeps Deps;
-
-    LoopDependencies(const MachineLoopInfo &mli,
-                     const MachineDominatorTree &mdt) :
-      MLI(mli), MDT(mdt) {}
-
-    void VisitLoop(const MachineLoop *Loop) {
-      Deps.clear();
-      MachineBasicBlock *Header = Loop->getHeader();
-      SmallSet<unsigned, 8> LoopLiveIns;
-      for (MachineBasicBlock::livein_iterator LI = Header->livein_begin(),
-           LE = Header->livein_end(); LI != LE; ++LI)
-        LoopLiveIns.insert(*LI);
-
-      const MachineDomTreeNode *Node = MDT.getNode(Header);
-      const MachineBasicBlock *MBB = Node->getBlock();
-      assert(Loop->contains(MBB) &&
-             "Loop does not contain header!");
-      VisitRegion(Node, MBB, Loop, LoopLiveIns);
-    }
-
-  private:
-    void VisitRegion(const MachineDomTreeNode *Node,
-                     const MachineBasicBlock *MBB,
-                     const MachineLoop *Loop,
-                     const SmallSet<unsigned, 8> &LoopLiveIns) {
-      unsigned Count = 0;
-      for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
-           I != E; ++I, ++Count) {
-        const MachineInstr *MI = I;
-        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-          const MachineOperand &MO = MI->getOperand(i);
-          if (!MO.isReg() || !MO.isUse())
-            continue;
-          unsigned MOReg = MO.getReg();
-          if (LoopLiveIns.count(MOReg))
-            Deps.insert(std::make_pair(MOReg, std::make_pair(&MO, Count)));
-        }
-      }
-
-      const std::vector<MachineDomTreeNode*> &Children = Node->getChildren();
-      for (std::vector<MachineDomTreeNode*>::const_iterator I =
-           Children.begin(), E = Children.end(); I != E; ++I) {
-        const MachineDomTreeNode *ChildNode = *I;
-        MachineBasicBlock *ChildBlock = ChildNode->getBlock();
-        if (Loop->contains(ChildBlock))
-          VisitRegion(ChildNode, ChildBlock, Loop, LoopLiveIns);
-      }
-    }
-  };
-}
 
 ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineLoopInfo &mli,
                                      const MachineDominatorTree &mdt)
-  : ScheduleDAG(mf), MLI(mli), MDT(mdt) {}
+  : ScheduleDAG(mf), MLI(mli), MDT(mdt), LoopRegs(MLI, MDT) {}
 
 /// getOpcode - If this is an Instruction or a ConstantExpr, return the
 /// opcode value. Otherwise return UserOp1.
@@ -172,7 +108,20 @@ static const Value *getUnderlyingObjectForInstr(const MachineInstr *MI) {
   return V;
 }
 
+void ScheduleDAGInstrs::StartBlock(MachineBasicBlock *BB) {
+  if (MachineLoop *ML = MLI.getLoopFor(BB))
+    if (BB == ML->getLoopLatch()) {
+      MachineBasicBlock *Header = ML->getHeader();
+      for (MachineBasicBlock::livein_iterator I = Header->livein_begin(),
+           E = Header->livein_end(); I != E; ++I)
+        LoopLiveInRegs.insert(*I);
+      LoopRegs.VisitLoop(ML);
+    }
+}
+
 void ScheduleDAGInstrs::BuildSchedGraph() {
+  // We'll be allocating one SUnit for each instruction, plus one for
+  // the region exit node.
   SUnits.reserve(BB->size());
 
   // We build scheduling units by walking a block's instruction list from bottom
@@ -189,30 +138,6 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
   std::map<const Value *, SUnit *> MemDefs;
   std::map<const Value *, std::vector<SUnit *> > MemUses;
 
-  // If we have an SUnit which is representing a terminator instruction, we
-  // can use it as a place-holder successor for inter-block dependencies.
-  SUnit *Terminator = 0;
-
-  // Terminators can perform control transfers, we we need to make sure that
-  // all the work of the block is done before the terminator. Labels can
-  // mark points of interest for various types of meta-data (eg. EH data),
-  // and we need to make sure nothing is scheduled around them.
-  SUnit *SchedulingBarrier = 0;
-
-  LoopDependencies LoopRegs(MLI, MDT);
-
-  // Track which regs are live into a loop, to help guide back-edge-aware
-  // scheduling.
-  SmallSet<unsigned, 8> LoopLiveInRegs;
-  if (MachineLoop *ML = MLI.getLoopFor(BB))
-    if (BB == ML->getLoopLatch()) {
-      MachineBasicBlock *Header = ML->getHeader();
-      for (MachineBasicBlock::livein_iterator I = Header->livein_begin(),
-           E = Header->livein_end(); I != E; ++I)
-        LoopLiveInRegs.insert(*I);
-      LoopRegs.VisitLoop(ML);
-    }
-
   // Check to see if the scheduler cares about latencies.
   bool UnitLatencies = ForceUnitLatencies();
 
@@ -220,10 +145,14 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
   unsigned SpecialAddressLatency =
     TM.getSubtarget<TargetSubtarget>().getSpecialAddressLatency();
 
+  // Walk the list of instructions, from bottom moving up.
   for (MachineBasicBlock::iterator MII = End, MIE = Begin;
        MII != MIE; --MII) {
     MachineInstr *MI = prior(MII);
     const TargetInstrDesc &TID = MI->getDesc();
+    assert(!TID.isTerminator() && !MI->isLabel() &&
+           "Cannot schedule terminators or labels!");
+    // Create the SUnit for this MI.
     SUnit *SU = NewSUnit(MI);
 
     // Assign the Latency field of SU using target-provided information.
@@ -298,8 +227,7 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
 
         // If a def is going to wrap back around to the top of the loop,
         // backschedule it.
-        // TODO: Blocks in loops without terminators can benefit too.
-        if (!UnitLatencies && Terminator && DefList.empty()) {
+        if (!UnitLatencies && DefList.empty()) {
           LoopDependencies::LoopDeps::iterator I = LoopRegs.Deps.find(Reg);
           if (I != LoopRegs.Deps.end()) {
             const MachineOperand *UseMO = I->second.first;
@@ -323,10 +251,10 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
                 // scheduling region.
                 Latency -= std::min(Latency, Count);
                 // Add the artifical edge.
-                Terminator->addPred(SDep(SU, SDep::Order, Latency,
-                                         /*Reg=*/0, /*isNormalMemory=*/false,
-                                         /*isMustAlias=*/false,
-                                         /*isArtificial=*/true));
+                ExitSU.addPred(SDep(SU, SDep::Order, Latency,
+                                    /*Reg=*/0, /*isNormalMemory=*/false,
+                                    /*isMustAlias=*/false,
+                                    /*isArtificial=*/true));
               } else if (SpecialAddressLatency > 0 &&
                          UseTID.OpInfo[UseMOIdx].isLookupPtrRegClass()) {
                 // The entire loop body is within the current scheduling region
@@ -355,7 +283,7 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
     // after stack slots are lowered to actual addresses.
     // TODO: Use an AliasAnalysis and do real alias-analysis queries, and
     // produce more precise dependence information.
-    if (TID.isCall() || TID.isTerminator() || TID.hasUnmodeledSideEffects()) {
+    if (TID.isCall() || TID.hasUnmodeledSideEffects()) {
     new_chain:
       // This is the conservative case. Add dependencies on all memory
       // references.
@@ -379,7 +307,7 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
       // See if it is known to just have a single memory reference.
       MachineInstr *ChainMI = Chain->getInstr();
       const TargetInstrDesc &ChainTID = ChainMI->getDesc();
-      if (!ChainTID.isCall() && !ChainTID.isTerminator() &&
+      if (!ChainTID.isCall() &&
           !ChainTID.hasUnmodeledSideEffects() &&
           ChainMI->hasOneMemOperand() &&
           !ChainMI->memoperands_begin()->isVolatile() &&
@@ -452,28 +380,6 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
         PendingLoads.push_back(SU);
       }
     }
-
-    // Add chain edges from terminators and labels to ensure that no
-    // instructions are scheduled past them.
-    if (SchedulingBarrier && SU->Succs.empty())
-      SchedulingBarrier->addPred(SDep(SU, SDep::Order, SU->Latency));
-    // If we encounter a mid-block label, we need to go back and add
-    // dependencies on SUnits we've already processed to prevent the
-    // label from moving downward.
-    if (MI->isLabel())
-      for (SUnit *I = SU; I != &SUnits[0]; --I) {
-        SUnit *SuccSU = SU-1;
-        SuccSU->addPred(SDep(SU, SDep::Order, SU->Latency));
-        MachineInstr *SuccMI = SuccSU->getInstr();
-        if (SuccMI->getDesc().isTerminator() || SuccMI->isLabel())
-          break;
-      }
-    // If this instruction obstructs all scheduling, remember it.
-    if (TID.isTerminator() || MI->isLabel())
-      SchedulingBarrier = SU;
-    // If this instruction is a terminator, remember it.
-    if (TID.isTerminator())
-      Terminator = SU;
   }
 
   for (int i = 0, e = TRI->getNumRegs(); i != e; ++i) {
@@ -481,6 +387,10 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
     Uses[i].clear();
   }
   PendingLoads.clear();
+}
+
+void ScheduleDAGInstrs::FinishBlock() {
+  // Nothing to do.
 }
 
 void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {
@@ -505,7 +415,12 @@ void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {
 std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
   std::string s;
   raw_string_ostream oss(s);
-  SU->getInstr()->print(oss);
+  if (SU == &EntrySU)
+    oss << "<entry>";
+  else if (SU == &ExitSU)
+    oss << "<exit>";
+  else
+    SU->getInstr()->print(oss);
   return oss.str();
 }
 
@@ -530,6 +445,11 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
 
     BB->insert(End, SU->getInstr());
   }
+
+  // Update the Begin iterator, as the first instruction in the block
+  // may have been scheduled later.
+  if (!Sequence.empty())
+    Begin = Sequence[0]->getInstr();
 
   return BB;
 }

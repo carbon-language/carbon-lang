@@ -28,7 +28,8 @@ ScheduleDAG::ScheduleDAG(MachineFunction &mf)
     TRI(TM.getRegisterInfo()),
     TLI(TM.getTargetLowering()),
     MF(mf), MRI(mf.getRegInfo()),
-    ConstPool(MF.getConstantPool()) {
+    ConstPool(MF.getConstantPool()),
+    EntrySU(), ExitSU() {
 }
 
 ScheduleDAG::~ScheduleDAG() {}
@@ -58,6 +59,8 @@ void ScheduleDAG::Run(SelectionDAG *dag, MachineBasicBlock *bb,
   BB = bb;
   Begin = begin;
   End = end;
+  EntrySU = SUnit();
+  ExitSU = SUnit();
 
   Schedule();
   

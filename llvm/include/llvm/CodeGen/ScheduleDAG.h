@@ -282,6 +282,16 @@ namespace llvm {
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
 
+    /// SUnit - Construct a placeholder SUnit.
+    SUnit()
+      : Node(0), Instr(0), OrigNode(0), NodeNum(~0u), NodeQueueId(0),
+        Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
+        isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
+        isPending(false), isAvailable(false), isScheduled(false),
+        isScheduleHigh(false), isCloned(false),
+        isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
+        CopyDstRC(NULL), CopySrcRC(NULL) {}
+
     /// setNode - Assign the representative SDNode for this SUnit.
     /// This may be used during pre-regalloc scheduling.
     void setNode(SDNode *N) {
@@ -430,6 +440,8 @@ namespace llvm {
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
                                           // represent noop instructions.
     std::vector<SUnit> SUnits;            // The scheduling units.
+    SUnit EntrySU;                        // Special node for the region entry.
+    SUnit ExitSU;                         // Special node for the region exit.
 
     explicit ScheduleDAG(MachineFunction &mf);
 
@@ -446,6 +458,9 @@ namespace llvm {
              MachineBasicBlock::iterator Begin,
              MachineBasicBlock::iterator End);
 
+    /// EmitSchedule - Insert MachineInstrs into the MachineBasicBlock
+    /// according to the order specified in Sequence.
+    ///
     virtual MachineBasicBlock *EmitSchedule() = 0;
 
     void dumpSchedule() const;

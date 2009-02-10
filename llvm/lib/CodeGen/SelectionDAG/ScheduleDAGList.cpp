@@ -78,6 +78,7 @@ public:
 
 private:
   void ReleaseSucc(SUnit *SU, const SDep &D);
+  void ReleaseSuccessors(SUnit *SU);
   void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
   void ListScheduleTopDown();
 };
@@ -118,8 +119,20 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, const SDep &D) {
   
   SuccSU->setDepthToAtLeast(SU->getDepth() + D.getLatency());
   
-  if (SuccSU->NumPredsLeft == 0) {
+  // If all the node's predecessors are scheduled, this node is ready
+  // to be scheduled. Ignore the special ExitSU node.
+  if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU)
     PendingQueue.push_back(SuccSU);
+}
+
+void ScheduleDAGList::ReleaseSuccessors(SUnit *SU) {
+  // Top down: release successors.
+  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    assert(!I->isAssignedRegDep() &&
+           "The list-td scheduler doesn't yet support physreg dependencies!");
+
+    ReleaseSucc(SU, *I);
   }
 }
 
@@ -134,15 +147,7 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   assert(CurCycle >= SU->getDepth() && "Node scheduled above its depth!");
   SU->setDepthToAtLeast(CurCycle);
 
-  // Top down: release successors.
-  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    assert(!I->isAssignedRegDep() &&
-           "The list-td scheduler doesn't yet support physreg dependencies!");
-
-    ReleaseSucc(SU, *I);
-  }
-
+  ReleaseSuccessors(SU);
   SU->isScheduled = true;
   AvailableQueue->ScheduledNode(SU);
 }
@@ -151,6 +156,9 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 /// schedulers.
 void ScheduleDAGList::ListScheduleTopDown() {
   unsigned CurCycle = 0;
+
+  // Release any successors of the special Entry node.
+  ReleaseSuccessors(&EntrySU);
 
   // All leaves to Available queue.
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
