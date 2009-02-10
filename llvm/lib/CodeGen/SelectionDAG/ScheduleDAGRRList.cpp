@@ -30,7 +30,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <climits>
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 STATISTIC(NumBacktracks, "Number of times scheduler backtracked");
@@ -1047,6 +1046,7 @@ static unsigned closestSucc(const SUnit *SU) {
   unsigned MaxHeight = 0;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
+    if (I->isCtrl()) continue;  // ignore chain succs
     unsigned Height = I->getSUnit()->getHeight();
     // If there are bunch of CopyToRegs stacked up, they should be considered
     // to be at the same position.

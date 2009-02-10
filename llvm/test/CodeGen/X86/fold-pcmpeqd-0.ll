@@ -1,8 +1,10 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin   | grep pcmpeqd | count 1
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin   | not grep pcmpeqd
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin   | grep orps | grep CPI1_2  | count 2
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep pcmpeqd | count 1
 
 ; This testcase shouldn't need to spill the -1 value,
 ; so it should just use pcmpeqd to materialize an all-ones vector.
+; For i386, cp load of -1 are folded.
 
 	%struct.__ImageExecInfo = type <{ <4 x i32>, <4 x float>, <2 x i64>, i8*, i8*, i8*, i32, i32, i32, i32, i32 }>
 	%struct._cl_image_format_t = type <{ i32, i32, i32 }>
