@@ -52,6 +52,118 @@ static void Pad(llvm::raw_fd_ostream& Out, unsigned Alignment) {
   for (unsigned Pad = off % Alignment ; Pad != 0 ; --Pad, ++off) Emit8(Out, 0);
 }
 
+//===----------------------------------------------------------------------===//
+// On Disk Hashtable Logic.  This will eventually get refactored and put
+// elsewhere.
+//===----------------------------------------------------------------------===//
+
+template<typename Info>
+class OnDiskChainedHashTableGenerator {
+  unsigned NumBuckets;
+  unsigned NumEntries;
+  llvm::BumpPtrAllocator BA;
+  
+  class Item {
+  public:
+    typename Info::KeyT key;
+    typename Info::DataT data;
+    Item *next;
+    const uint32_t hash;
+    
+    Item(typename Info::KeyT_ref k, typename Info::DataT_ref d)
+    : key(k), data(d), next(0), hash(Info::getHash(k)) {}
+  };
+  
+  class Bucket { 
+  public:
+    Offset off;
+    Item*  head;
+    unsigned length;
+    
+    Bucket() {}
+  };
+  
+  Bucket* Buckets;
+  
+private:
+  void insert(Item** b, size_t size, Item* E) {
+    unsigned idx = E->hash & (size - 1);
+    Bucket& B = b[idx];
+    E->next = B.head;
+    ++B.length;
+    B.head = E;
+  }
+  
+  void resize(size_t newsize) {
+    Bucket* newBuckets = calloc(newsize, sizeof(Bucket));
+    
+    for (unsigned i = 0; i < NumBuckets; ++i)
+      for (Item* E = Buckets[i]; E ; ) {
+        Item* N = E->next;
+        E->Next = 0;
+        insert(newBuckets, newsize, E);
+        E = N;
+      }
+    
+    free(Buckets);
+    NumBuckets = newsize;
+    Buckets = newBuckets;
+  }  
+  
+public:
+  
+  void insert(typename Info::Key_ref key, typename Info::DataT_ref data) {
+    ++NumEntries;
+    if (4*NumEntries >= 3*NumBuckets) resize(NumBuckets*2);
+    insert(Buckets, NumBuckets, new (BA.Allocate<Item>()) Item(key, data));
+  }
+  
+  Offset Emit(llvm::raw_fd_ostream& out) {
+    // Emit the payload of the table.
+    for (unsigned i = 0; i < NumBuckets; ++i) {
+      Bucket& B = Buckets[i];
+      if (!B.head) continue;
+      
+      // Store the offset for the data of this bucket.
+      Pad(out, 4); // 4-byte alignment.
+      B.off = out.tell();
+      
+      // Write out the number of items in the bucket.  We just write out
+      // 4 bytes to keep things 4-byte aligned.
+      Emit32(out, B.length);
+      
+      // Write out the entries in the bucket.
+      for (Item *I = B.head; I ; I = I->next) {
+        Emit32(out, I->hash);
+        Info::EmitKey(out, I->key);
+        Info::EmitData(out, I->data);
+      }
+    }
+    
+    // Emit the hashtable itself.
+    Pad(out, 4);
+    Offset TableOff = out.tell();
+    Emit32(out, NumBuckets);    
+    for (unsigned i = 0; i < NumBuckets; ++i) Emit32(out, Buckets[i].off);
+    
+    return TableOff;
+  }
+  
+  OnDiskChainedHashTableGenerator() {
+    NumEntries = 0;
+    NumBuckets = 64;
+    Buckets = calloc(NumBuckets, sizeof(Bucket));
+  }
+  
+  ~OnDiskChainedHashTableGenerator() {
+    free(Buckets);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// PTH-specific stuff.
+//===----------------------------------------------------------------------===//
+
 namespace {
 class VISIBILITY_HIDDEN PCHEntry {
   Offset TokenData, PPCondData;  
@@ -489,113 +601,6 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   PW.GeneratePTH();
 }
 
-//===----------------------------------------------------------------------===//
-// On Disk Hashtable Logic.  This will eventually get refactored and put
-// elsewhere.
-//===----------------------------------------------------------------------===//
-
-template<typename Info>
-class OnDiskChainedHashTableGenerator {
-  unsigned NumBuckets;
-  unsigned NumEntries;
-  llvm::BumpPtrAllocator BA;
-  
-  class Item {
-  public:
-    typename Info::KeyT key;
-    typename Info::DataT data;
-    Item *next;
-    const uint32_t hash;
-    
-    Item(typename Info::KeyT_ref k, typename Info::DataT_ref d)
-      : key(k), data(d), next(0), hash(Info::getHash(k)) {}
-  };
-  
-  class Bucket { 
-  public:
-    Offset off;
-    Item*  head;
-    unsigned length;
-    
-    Bucket() {}
-  };
-  
-  Bucket* Buckets;
-  
-private:
-  void insert(Item** b, size_t size, Item* E) {
-    unsigned idx = E->hash & (size - 1);
-    Bucket& B = b[idx];
-    E->next = B.head;
-    ++B.length;
-    B.head = E;
-  }
-  
-  void resize(size_t newsize) {
-    Bucket* newBuckets = calloc(newsize, sizeof(Bucket));
-    
-    for (unsigned i = 0; i < NumBuckets; ++i)
-      for (Item* E = Buckets[i]; E ; ) {
-        Item* N = E->next;
-        E->Next = 0;
-        insert(newBuckets, newsize, E);
-        E = N;
-      }
-    
-    free(Buckets);
-    NumBuckets = newsize;
-    Buckets = newBuckets;
-  }  
-  
-public:
-  
-  void insert(typename Info::Key_ref key, typename Info::DataT_ref data) {
-    ++NumEntries;
-    if (4*NumEntries >= 3*NumBuckets) resize(NumBuckets*2);
-    insert(Buckets, NumBuckets, new (BA.Allocate<Item>()) Item(key, data));
-  }
-  
-  Offset Emit(llvm::raw_fd_ostream& out) {
-    // Emit the payload of the table.
-    for (unsigned i = 0; i < NumBuckets; ++i) {
-      Bucket& B = Buckets[i];
-      if (!B.head) continue;
-
-      // Store the offset for the data of this bucket.
-      Pad(out, 4); // 4-byte alignment.
-      B.off = out.tell();
-      
-      // Write out the number of items in the bucket.  We just write out
-      // 4 bytes to keep things 4-byte aligned.
-      Emit32(out, B.length);
-      
-      // Write out the entries in the bucket.
-      for (Item *I = B.head; I ; I = I->next) {
-        Emit32(out, I->hash);
-        Info::EmitKey(out, I->key);
-        Info::EmitData(out, I->data);
-      }
-    }
-    
-    // Emit the hashtable itself.
-    Pad(out, 4);
-    Offset TableOff = out.tell();
-    Emit32(out, NumBuckets);    
-    for (unsigned i = 0; i < NumBuckets; ++i) Emit32(out, Buckets[i].off);
-    
-    return TableOff;
-  }
-  
-  OnDiskChainedHashTableGenerator() {
-    NumEntries = 0;
-    NumBuckets = 64;
-    Buckets = calloc(NumBuckets, sizeof(Bucket));
-  }
-  
-  ~OnDiskChainedHashTableGenerator() {
-    free(Buckets);
-  }
-};
 
 //===----------------------------------------------------------------------===//
 // Client code of on-disk hashtable logic.
