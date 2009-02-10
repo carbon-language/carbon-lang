@@ -251,9 +251,12 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   SourceLocation TemplateLoc = ConsumeToken();
   TemplateParameterList TemplateParams; 
   SourceLocation LAngleLoc, RAngleLoc;
-  if(!ParseTemplateParameters(Depth + 1, TemplateParams, LAngleLoc,
-                              RAngleLoc)) {
-    return 0;
+  {
+    ParseScope TemplateParmScope(this, Scope::TemplateParamScope);
+    if(!ParseTemplateParameters(Depth + 1, TemplateParams, LAngleLoc,
+                                RAngleLoc)) {
+      return 0;
+    }
   }
 
   // Generate a meaningful error if the user forgot to put class before the

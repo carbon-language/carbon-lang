@@ -39,10 +39,10 @@ template<int N = 5,  // expected-note{{previous default template argument define
          int M>  // expected-error{{template parameter missing a default argument}}
   class B1n;
 
-// FIXME: spurious "shadow" warning!
-//template<template<class T> class = Y1,
-//         template<class T> class>
-//  class B1fixme;
+// Check for bogus template parameter shadow warning.
+template<template<class T> class,
+         template<class T> class>
+  class B1noshadow;
 
 // C++ [temp.param]p10:
 template<class T1, class T2 = int> class B2; 
