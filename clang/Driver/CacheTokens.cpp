@@ -30,6 +30,28 @@ using namespace clang;
 
 typedef uint32_t Offset;
 
+static void Emit8(llvm::raw_ostream& Out, uint32_t V) {
+  Out << (unsigned char)(V);
+}
+
+static void Emit16(llvm::raw_ostream& Out, uint32_t V) {
+  Out << (unsigned char)(V);
+  Out << (unsigned char)(V >>  8);
+  assert((V >> 16) == 0);
+}
+
+static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
+  Out << (unsigned char)(V);
+  Out << (unsigned char)(V >>  8);
+  Out << (unsigned char)(V >> 16);
+  Out << (unsigned char)(V >> 24);
+}
+
+static void Pad(llvm::raw_fd_ostream& Out, unsigned Alignment) {
+  Offset off = (Offset) Out.tell();  
+  for (unsigned Pad = off % Alignment ; Pad != 0 ; --Pad, ++off) Emit8(Out, 0);
+}
+
 namespace {
 class VISIBILITY_HIDDEN PCHEntry {
   Offset TokenData, PPCondData;  
@@ -80,11 +102,7 @@ class VISIBILITY_HIDDEN PTHWriter {
     Out << (unsigned char)(V);
   }
     
-  void Emit16(uint32_t V) {
-    Out << (unsigned char)(V);
-    Out << (unsigned char)(V >>  8);
-    assert((V >> 16) == 0);
-  }
+  void Emit16(uint32_t V) { ::Emit16(Out, V); }
   
   void Emit24(uint32_t V) {
     Out << (unsigned char)(V);
@@ -93,13 +111,8 @@ class VISIBILITY_HIDDEN PTHWriter {
     assert((V >> 24) == 0);
   }
 
-  void Emit32(uint32_t V) {
-    Out << (unsigned char)(V);
-    Out << (unsigned char)(V >>  8);
-    Out << (unsigned char)(V >> 16);
-    Out << (unsigned char)(V >> 24);
-  }
-  
+  void Emit32(uint32_t V) { ::Emit32(Out, V); }
+
   void EmitBuf(const char* I, const char* E) {
     for ( ; I != E ; ++I) Out << *I;
   }
@@ -242,31 +255,12 @@ PTHWriter::EmitIdentifierTable() {
   return std::make_pair(DataOff, std::make_pair(IDOff, LexicalOff));
 }
 
-Offset PTHWriter::EmitFileTable() {
-  // Determine the offset where this table appears in the PTH file.
-  Offset off = (Offset) Out.tell();
-
-  // Output the size of the table.
-  Emit32(PM.size());
-
-  for (PCHMap::iterator I=PM.begin(), E=PM.end(); I!=E; ++I) {
-    const FileEntry* FE = I->first;
-    const char* Name = FE->getName();
-    unsigned size = strlen(Name);
-    Emit32(size);
-    EmitBuf(Name, Name+size);
-    Emit32(I->second.getTokenOffset());
-    Emit32(I->second.getPPCondTableOffset());
-  }
-
-  return off;
-}
 
 PCHEntry PTHWriter::LexTokens(Lexer& L) {
   // Pad 0's so that we emit tokens to a 4-byte alignment.
   // This speed up reading them back in.
-  Offset off = (Offset) Out.tell();  
-  for (unsigned Pad = off % 4 ; Pad != 0 ; --Pad, ++off) Emit8(0);
+  Pad(Out, 4);
+  Offset off = (Offset) Out.tell();
   
   // Keep track of matching '#if' ... '#endif'.
   typedef std::vector<std::pair<Offset, unsigned> > PPCondTable;
@@ -494,3 +488,136 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   PTHWriter PW(Out, PP);
   PW.GeneratePTH();
 }
+
+//===----------------------------------------------------------------------===//
+// On Disk Hashtable Logic.  This will eventually get refactored and put
+// elsewhere.
+//===----------------------------------------------------------------------===//
+
+template<typename Info>
+class OnDiskChainedHashTableGenerator {
+  unsigned NumBuckets;
+  unsigned NumEntries;
+  llvm::BumpPtrAllocator BA;
+  
+  class Item {
+  public:
+    typename Info::KeyT key;
+    typename Info::DataT data;
+    Item *next;
+    const uint32_t hash;
+    
+    Item(typename Info::KeyT_ref k, typename Info::DataT_ref d)
+      : key(k), data(d), next(0), hash(Info::getHash(k)) {}
+  };
+  
+  class Bucket { 
+  public:
+    Offset off;
+    Item*  head;
+    unsigned length;
+    
+    Bucket() {}
+  };
+  
+  Bucket* Buckets;
+  
+private:
+  void insert(Item** b, size_t size, Item* E) {
+    unsigned idx = E->hash & (size - 1);
+    Bucket& B = b[idx];
+    E->next = B.head;
+    ++B.length;
+    B.head = E;
+  }
+  
+  void resize(size_t newsize) {
+    Bucket* newBuckets = calloc(newsize, sizeof(Bucket));
+    
+    for (unsigned i = 0; i < NumBuckets; ++i)
+      for (Item* E = Buckets[i]; E ; ) {
+        Item* N = E->next;
+        E->Next = 0;
+        insert(newBuckets, newsize, E);
+        E = N;
+      }
+    
+    free(Buckets);
+    NumBuckets = newsize;
+    Buckets = newBuckets;
+  }  
+  
+public:
+  
+  void insert(typename Info::Key_ref key, typename Info::DataT_ref data) {
+    ++NumEntries;
+    if (4*NumEntries >= 3*NumBuckets) resize(NumBuckets*2);
+    insert(Buckets, NumBuckets, new (BA.Allocate<Item>()) Item(key, data));
+  }
+  
+  Offset Emit(llvm::raw_fd_ostream& out) {
+    // Emit the payload of the table.
+    for (unsigned i = 0; i < NumBuckets; ++i) {
+      Bucket& B = Buckets[i];
+      if (!B.head) continue;
+
+      // Store the offset for the data of this bucket.
+      Pad(out, 4); // 4-byte alignment.
+      B.off = out.tell();
+      
+      // Write out the number of items in the bucket.  We just write out
+      // 4 bytes to keep things 4-byte aligned.
+      Emit32(out, B.length);
+      
+      // Write out the entries in the bucket.
+      for (Item *I = B.head; I ; I = I->next) {
+        Emit32(out, I->hash);
+        Info::EmitKey(out, I->key);
+        Info::EmitData(out, I->data);
+      }
+    }
+    
+    // Emit the hashtable itself.
+    Pad(out, 4);
+    Offset TableOff = out.tell();
+    Emit32(out, NumBuckets);    
+    for (unsigned i = 0; i < NumBuckets; ++i) Emit32(out, Buckets[i].off);
+    
+    return TableOff;
+  }
+  
+  OnDiskChainedHashTableGenerator() {
+    NumEntries = 0;
+    NumBuckets = 64;
+    Buckets = calloc(NumBuckets, sizeof(Bucket));
+  }
+  
+  ~OnDiskChainedHashTableGenerator() {
+    free(Buckets);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// Client code of on-disk hashtable logic.
+//===----------------------------------------------------------------------===//
+
+Offset PTHWriter::EmitFileTable() {
+  // Determine the offset where this table appears in the PTH file.
+  Offset off = (Offset) Out.tell();
+  
+  // Output the size of the table.
+  Emit32(PM.size());
+  
+  for (PCHMap::iterator I=PM.begin(), E=PM.end(); I!=E; ++I) {
+    const FileEntry* FE = I->first;
+    const char* Name = FE->getName();
+    unsigned size = strlen(Name);
+    Emit32(size);
+    EmitBuf(Name, Name+size);
+    Emit32(I->second.getTokenOffset());
+    Emit32(I->second.getPPCondTableOffset());
+  }
+  
+  return off;
+}
+
