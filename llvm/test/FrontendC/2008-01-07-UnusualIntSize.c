@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -o - -O | grep {and.*8589934591}
+// RUN: %llvmgcc %s -S -o - -O | grep i33
 // PR1721
 
 struct s {
