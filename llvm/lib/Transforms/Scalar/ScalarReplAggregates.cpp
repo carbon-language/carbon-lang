@@ -31,6 +31,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/IRBuilder.h"
@@ -80,9 +81,9 @@ namespace {
       /// isUnsafe - This is set to true if the alloca cannot be SROA'd.
       bool isUnsafe : 1;
       
-      /// needsCanon - This is set to true if there is some use of the alloca
-      /// that requires canonicalization.
-      bool needsCanon : 1;
+      /// needsCleanup - This is set to true if there is some use of the alloca
+      /// that requires cleanup.
+      bool needsCleanup : 1;
       
       /// isMemCpySrc - This is true if this aggregate is memcpy'd from.
       bool isMemCpySrc : 1;
@@ -91,7 +92,7 @@ namespace {
       bool isMemCpyDst : 1;
 
       AllocaInfo()
-        : isUnsafe(false), needsCanon(false), 
+        : isUnsafe(false), needsCleanup(false), 
           isMemCpySrc(false), isMemCpyDst(false) {}
     };
     
@@ -112,7 +113,8 @@ namespace {
     
     void DoScalarReplacement(AllocationInst *AI, 
                              std::vector<AllocationInst*> &WorkList);
-    void CanonicalizeAllocaUsers(AllocationInst *AI);
+    void CleanupGEP(GetElementPtrInst *GEP);
+    void CleanupAllocaUsers(AllocationInst *AI);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocationInst *Base);
     
     void RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
@@ -265,7 +267,7 @@ bool SROA::performScalarRepl(Function &F) {
       case 0:  // Not safe to scalar replace.
         break;
       case 1:  // Safe, but requires cleanup/canonicalizations first
-        CanonicalizeAllocaUsers(AI);
+        CleanupAllocaUsers(AI);
         // FALL THROUGH.
       case 3:  // Safe to scalar replace.
         DoScalarReplacement(AI, WorkList);
@@ -548,7 +550,7 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
       // out if this is the only problem.
       if ((NumElements == 1 || NumElements == 2) &&
           AllUsersAreLoads(GEPI)) {
-        Info.needsCanon = true;
+        Info.needsCleanup = true;
         return;  // Canonicalization required!
       }
       return MarkUnsafe(Info);
@@ -655,7 +657,17 @@ void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
         continue;
       }
       return MarkUnsafe(Info);
-    } else {
+    } else if (isa<DbgInfoIntrinsic>(UI)) {
+      // If one user is DbgInfoIntrinsic then check if all users are
+      // DbgInfoIntrinsics.
+      if (OnlyUsedByDbgInfoIntrinsics(BC)) {
+        Info.needsCleanup = true;
+        return;
+      }
+      else
+        MarkUnsafe(Info);
+    }
+    else {
       return MarkUnsafe(Info);
     }
     if (Info.isUnsafe) return;
@@ -1121,59 +1133,76 @@ int SROA::isSafeAllocaToScalarRepl(AllocationInst *AI) {
     return 0;
 
   // If we require cleanup, return 1, otherwise return 3.
-  return Info.needsCanon ? 1 : 3;
+  return Info.needsCleanup ? 1 : 3;
 }
 
-/// CanonicalizeAllocaUsers - If SROA reported that it can promote the specified
+/// CleanupGEP - GEP is used by an Alloca, which can be prompted after the GEP
+/// is canonicalized here.
+void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
+  gep_type_iterator I = gep_type_begin(GEPI);
+  ++I;
+  
+  if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
+    uint64_t NumElements = AT->getNumElements();
+    
+    if (!isa<ConstantInt>(I.getOperand())) {
+      if (NumElements == 1) {
+        GEPI->setOperand(2, Constant::getNullValue(Type::Int32Ty));
+      } else {
+        assert(NumElements == 2 && "Unhandled case!");
+        // All users of the GEP must be loads.  At each use of the GEP, insert
+        // two loads of the appropriate indexed GEP and select between them.
+        Value *IsOne = new ICmpInst(ICmpInst::ICMP_NE, I.getOperand(), 
+                                    Constant::getNullValue(I.getOperand()->getType()),
+                                    "isone", GEPI);
+        // Insert the new GEP instructions, which are properly indexed.
+        SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
+        Indices[1] = Constant::getNullValue(Type::Int32Ty);
+        Value *ZeroIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
+                                                   Indices.begin(),
+                                                   Indices.end(),
+                                                   GEPI->getName()+".0", GEPI);
+        Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
+        Value *OneIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
+                                                  Indices.begin(),
+                                                  Indices.end(),
+                                                  GEPI->getName()+".1", GEPI);
+        // Replace all loads of the variable index GEP with loads from both
+        // indexes and a select.
+        while (!GEPI->use_empty()) {
+          LoadInst *LI = cast<LoadInst>(GEPI->use_back());
+          Value *Zero = new LoadInst(ZeroIdx, LI->getName()+".0", LI);
+          Value *One  = new LoadInst(OneIdx , LI->getName()+".1", LI);
+          Value *R = SelectInst::Create(IsOne, One, Zero, LI->getName(), LI);
+          LI->replaceAllUsesWith(R);
+          LI->eraseFromParent();
+        }
+        GEPI->eraseFromParent();
+      }
+    }
+  }
+}
+
+/// CleanupAllocaUsers - If SROA reported that it can promote the specified
 /// allocation, but only if cleaned up, perform the cleanups required.
-void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
+void SROA::CleanupAllocaUsers(AllocationInst *AI) {
   // At this point, we know that the end result will be SROA'd and promoted, so
   // we can insert ugly code if required so long as sroa+mem2reg will clean it
   // up.
   for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
        UI != E; ) {
-    GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI++);
-    if (!GEPI) continue;
-    gep_type_iterator I = gep_type_begin(GEPI);
-    ++I;
-
-    if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
-      uint64_t NumElements = AT->getNumElements();
-
-      if (!isa<ConstantInt>(I.getOperand())) {
-        if (NumElements == 1) {
-          GEPI->setOperand(2, Constant::getNullValue(Type::Int32Ty));
-        } else {
-          assert(NumElements == 2 && "Unhandled case!");
-          // All users of the GEP must be loads.  At each use of the GEP, insert
-          // two loads of the appropriate indexed GEP and select between them.
-          Value *IsOne = new ICmpInst(ICmpInst::ICMP_NE, I.getOperand(), 
-                              Constant::getNullValue(I.getOperand()->getType()),
-             "isone", GEPI);
-          // Insert the new GEP instructions, which are properly indexed.
-          SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
-          Indices[1] = Constant::getNullValue(Type::Int32Ty);
-          Value *ZeroIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
-                                                     Indices.begin(),
-                                                     Indices.end(),
-                                                     GEPI->getName()+".0", GEPI);
-          Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
-          Value *OneIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
-                                                    Indices.begin(),
-                                                    Indices.end(),
-                                                    GEPI->getName()+".1", GEPI);
-          // Replace all loads of the variable index GEP with loads from both
-          // indexes and a select.
-          while (!GEPI->use_empty()) {
-            LoadInst *LI = cast<LoadInst>(GEPI->use_back());
-            Value *Zero = new LoadInst(ZeroIdx, LI->getName()+".0", LI);
-            Value *One  = new LoadInst(OneIdx , LI->getName()+".1", LI);
-            Value *R = SelectInst::Create(IsOne, One, Zero, LI->getName(), LI);
-            LI->replaceAllUsesWith(R);
-            LI->eraseFromParent();
-          }
-          GEPI->eraseFromParent();
+    User *U = *UI++;
+    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U))
+      CleanupGEP(GEPI);
+    else if (Instruction *I = dyn_cast<Instruction>(U)) {
+      SmallVector<DbgInfoIntrinsic *, 2> DbgInUses;
+      if (OnlyUsedByDbgInfoIntrinsics(I, &DbgInUses)) {
+        // Safe to remove debug info uses.
+        while (!DbgInUses.empty()) {
+          DbgInfoIntrinsic *DI = DbgInUses.back(); DbgInUses.pop_back();
+          DI->eraseFromParent();
         }
+        I->eraseFromParent();
       }
     }
   }
