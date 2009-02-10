@@ -582,11 +582,19 @@ static void PrintMacroDefinition(IdentifierInfo &II, const MacroInfo &MI,
   if (MI.tokens_empty() || !MI.tokens_begin()->hasLeadingSpace())
     OS << ' ';
   
+  llvm::SmallVector<char, 128> SpellingBuffer;
+  
   for (MacroInfo::tokens_iterator I = MI.tokens_begin(), E = MI.tokens_end();
        I != E; ++I) {
     if (I->hasLeadingSpace())
       OS << ' ';
-    OS << PP.getSpelling(*I);
+    
+    // Make sure we have enough space in the spelling buffer.
+    if (I->getLength() < SpellingBuffer.size())
+      SpellingBuffer.resize(I->getLength());
+    const char *Buffer = &SpellingBuffer[0];
+    unsigned SpellingLen = PP.getSpelling(*I, Buffer);
+    OS.write(Buffer, SpellingLen);
   }
   OS << "\n";
 }
