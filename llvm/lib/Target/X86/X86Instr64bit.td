@@ -120,19 +120,22 @@ let isCall = 1 in
 
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-def TCRETURNdi64 : I<0, Pseudo, (outs), (ins i64imm:$dst, i32imm:$offset, variable_ops),
+def TCRETURNdi64 : I<0, Pseudo, (outs), (ins i64imm:$dst, i32imm:$offset,
+                                         variable_ops),
                  "#TC_RETURN $dst $offset",
                  []>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-def TCRETURNri64 : I<0, Pseudo, (outs), (ins GR64:$dst, i32imm:$offset, variable_ops),
+def TCRETURNri64 : I<0, Pseudo, (outs), (ins GR64:$dst, i32imm:$offset,
+                                         variable_ops),
                  "#TC_RETURN $dst $offset",
                  []>;
 
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins GR64:$dst), "jmp{q}\t{*}$dst  # TAILCALL",
-                 []>;     
+  def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins GR64:$dst),
+                   "jmp{q}\t{*}$dst  # TAILCALL",
+                   []>;     
 
 // Branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
