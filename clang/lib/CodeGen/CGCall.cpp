@@ -394,8 +394,8 @@ class X86_64ABIInfo : public ABIInfo {
 
   ABIArgInfo classifyArgumentType(QualType Ty,
                                   ASTContext &Context,
-                                  unsigned &freeIntRegs,
-                                  unsigned &freeSSERegs) const;
+                                  unsigned &neededInt,
+                                  unsigned &neededSSE) const;
 
 public:
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context) const;
@@ -700,8 +700,8 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
 }
 
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
-                                               unsigned &freeIntRegs,
-                                               unsigned &freeSSERegs) const {
+                                               unsigned &neededInt,
+                                               unsigned &neededSSE) const {
   X86_64ABIInfo::Class Lo, Hi;
   classify(Ty, Context, 0, Lo, Hi);
   
@@ -711,7 +711,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
   assert((Lo != NoClass || Hi == NoClass) && "Invalid null classification.");
   assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
 
-  unsigned neededInt = 0, neededSSE = 0;
+  neededInt = 0;
+  neededSSE = 0;
   const llvm::Type *ResType = 0;
   switch (Lo) {
   case NoClass:
@@ -781,21 +782,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     break;
   }
 
-  // AMD64-ABI 3.2.3p3: If there are no registers available for any
-  // eightbyte of an argument, the whole argument is passed on the
-  // stack. If registers have already been assigned for some
-  // eightbytes of such an argument, the assignments get reverted.
-  if (freeIntRegs >= neededInt && freeSSERegs >= neededSSE) {
-    freeIntRegs -= neededInt;
-    freeSSERegs -= neededSSE;
-    return ABIArgInfo::getCoerce(ResType);
-  } else {
-    // Choose appropriate in memory type.
-    if (CodeGenFunction::hasAggregateLLVMType(Ty))
-      return ABIArgInfo::getIndirect(0);
-    else
-      return ABIArgInfo::getDirect();
-  }
+  return ABIArgInfo::getCoerce(ResType);
 }
 
 void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
@@ -807,8 +794,25 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
   // AMD64-ABI 3.2.3p3: Once arguments are classified, the registers
   // get assigned (in left-to-right order) for passing as follows...
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
-       it != ie; ++it)
-    it->info = classifyArgumentType(it->type, Context, freeIntRegs, freeSSERegs);
+       it != ie; ++it) {
+    unsigned neededInt, neededSSE;
+    it->info = classifyArgumentType(it->type, Context, neededInt, neededSSE);
+
+    // AMD64-ABI 3.2.3p3: If there are no registers available for any
+    // eightbyte of an argument, the whole argument is passed on the
+    // stack. If registers have already been assigned for some
+    // eightbytes of such an argument, the assignments get reverted.
+    if (freeIntRegs >= neededInt && freeSSERegs >= neededSSE) {
+      freeIntRegs -= neededInt;
+      freeSSERegs -= neededSSE;
+    } else {
+      // Choose appropriate in memory type.
+      if (CodeGenFunction::hasAggregateLLVMType(it->type))
+        it->info = ABIArgInfo::getIndirect(0);
+      else
+        it->info = ABIArgInfo::getDirect();
+    }
+  }
 }
 
 ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
