@@ -20,7 +20,7 @@ struct vari {
   int b[];
 };
 
-struct vari *func(struct vari a[]) { // expected-error {{'struct vari' may not be used as an array element due to flexible array member}}
+struct vari *func(struct vari a[]) { // expected-warning {{'struct vari' may not be used as an array element due to flexible array member}}
   return a;
 }
 

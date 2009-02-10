@@ -651,7 +651,7 @@ DIAG(err_flexible_array_empty_struct, ERROR,
      "flexible array %0 not allowed in otherwise empty struct")
 DIAG(ext_flexible_array_in_struct, EXTENSION,
      "%0 may not be nested in a struct due to flexible array member")
-DIAG(err_flexible_array_in_array, ERROR,
+DIAG(ext_flexible_array_in_array, EXTENSION,
      "%0 may not be used as an array element due to flexible array member")
 DIAG(err_flexible_array_init_nonempty, ERROR,
      "non-empty initialization of flexible array member inside subobject")

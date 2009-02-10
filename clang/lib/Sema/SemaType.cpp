@@ -399,12 +399,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         D.setInvalidType(true);
       } else if (const RecordType *EltTy = T->getAsRecordType()) {
         // If the element type is a struct or union that contains a variadic
-        // array, reject it: C99 6.7.2.1p2.
-        if (EltTy->getDecl()->hasFlexibleArrayMember()) {
-          Diag(DeclType.Loc, diag::err_flexible_array_in_array) << T;
-          T = Context.IntTy;
-          D.setInvalidType(true);
-        }
+        // array, accept it as a GNU extension: C99 6.7.2.1p2.
+        if (EltTy->getDecl()->hasFlexibleArrayMember())
+          Diag(DeclType.Loc, diag::ext_flexible_array_in_array) << T;
       } else if (T->isObjCInterfaceType()) {
         Diag(DeclType.Loc, diag::warn_objc_array_of_interfaces) << T;
       }
