@@ -1025,17 +1025,7 @@ llvm::Value *CodeGenFunction::EmitIvarOffset(ObjCInterfaceDecl *Interface,
   // implement the lookup itself.
   if (CGM.getObjCRuntime().LateBoundIVars())
     assert(0 && "late-bound ivars are unsupported");
-
-  const llvm::Type *InterfaceLTy = 
-    CGM.getTypes().ConvertType(getContext().getObjCInterfaceType(Interface));
-  const llvm::StructLayout *Layout =
-    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceLTy));
-  FieldDecl *Field = Interface->lookupFieldDeclForIvar(getContext(), Ivar);
-  uint64_t Offset = 
-    Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
-  
-  return llvm::ConstantInt::get(CGM.getTypes().ConvertType(getContext().LongTy),
-                                Offset);                                                             
+  return CGM.getObjCRuntime().EmitIvarOffset(*this, Interface, Ivar);
 }
 
 LValue CodeGenFunction::EmitLValueForIvar(QualType ObjectTy,

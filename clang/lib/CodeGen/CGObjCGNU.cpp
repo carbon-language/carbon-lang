@@ -146,6 +146,9 @@ public:
                                       const ObjCIvarDecl *Ivar,
                                       const FieldDecl *Field,
                                       unsigned CVRQualifiers);
+  virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
+                                      ObjCInterfaceDecl *Interface,
+                                      const ObjCIvarDecl *Ivar);
 };
 } // end anonymous namespace
 
@@ -1033,6 +1036,23 @@ LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                 Ivar->getType().getCVRQualifiers()|CVRQualifiers);
   LValue::SetObjCIvar(LV, true);
   return LV;
+}
+
+llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
+                         ObjCInterfaceDecl *Interface,
+                         const ObjCIvarDecl *Ivar) {
+  const llvm::Type *InterfaceLTy =
+    CGM.getTypes().ConvertType(
+                            CGM.getContext().getObjCInterfaceType(Interface));
+  const llvm::StructLayout *Layout =
+    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceLTy));
+  FieldDecl *Field = Interface->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
+  uint64_t Offset =
+    Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+  
+  return llvm::ConstantInt::get(
+                            CGM.getTypes().ConvertType(CGM.getContext().LongTy),
+                            Offset);
 }
 
 CodeGen::CGObjCRuntime *CodeGen::CreateGNUObjCRuntime(CodeGen::CodeGenModule &CGM){

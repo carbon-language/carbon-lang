@@ -163,6 +163,9 @@ public:
                                       const ObjCIvarDecl *Ivar,
                                       const FieldDecl *Field,
                                       unsigned CVRQualifiers) = 0;
+  virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
+                                      ObjCInterfaceDecl *Interface,
+                                      const ObjCIvarDecl *Ivar) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.  
