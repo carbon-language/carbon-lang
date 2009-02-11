@@ -680,6 +680,10 @@ private:
                               const NamedDecl *IDName,
                               const ObjCIvarDecl *Ivar);
   
+  /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
+  /// for the given selector.
+  llvm::Value *EmitSelector(CGBuilderTy &Builder, Selector Sel);
+  
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
   // FIXME. All stubs for now!
@@ -705,7 +709,7 @@ public:
                                 const ObjCInterfaceDecl *ID);
   
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel)
-    { return 0; }
+    { return EmitSelector(Builder, Sel); }
   
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
   
@@ -4578,6 +4582,27 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                          ObjCSuper, ObjCTypes.SuperPtrCTy,
                          true, CallArgs);
 }
+
+llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder, 
+                                                  Selector Sel) {
+  llvm::GlobalVariable *&Entry = SelectorReferences[Sel];
+  
+  if (!Entry) {
+    llvm::Constant *Casted = 
+    llvm::ConstantExpr::getBitCast(GetMethodVarName(Sel),
+                                   ObjCTypes.SelectorPtrTy);
+    Entry = 
+    new llvm::GlobalVariable(ObjCTypes.SelectorPtrTy, false,
+                             llvm::GlobalValue::InternalLinkage,
+                             Casted, "\01L_OBJC_SELECTOR_REFERENCES_",
+                             &CGM.getModule());
+    Entry->setSection("__DATA,__objc_selrefs,literal_pointers,no_dead_strip");
+    UsedGlobals.push_back(Entry);
+  }
+  
+  return Builder.CreateLoad(Entry, false, "tmp");
+}
+
 /* *** */
 
 CodeGen::CGObjCRuntime *
