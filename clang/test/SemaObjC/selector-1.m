@@ -1,5 +1,13 @@
 // RUN: clang -verify %s 
 
+@interface Lancelot @end
+@implementation Lancelot
+
+- (void):(int)x {}
+- (void)xx:(int)x :(int)y { }
+
+@end
+
 int main() {
  SEL s = @selector(retain);
  SEL s1 = @selector(meth1:);

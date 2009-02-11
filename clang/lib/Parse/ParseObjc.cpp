@@ -687,7 +687,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   SourceLocation selLoc;
   IdentifierInfo *SelIdent = ParseObjCSelector(selLoc);
 
-  if (!SelIdent) { // missing selector name.
+  // An unnamed colon is valid.
+  if (!SelIdent && Tok.isNot(tok::colon)) { // missing selector name.
     Diag(Tok, diag::err_expected_selector_for_method)
       << SourceRange(mLoc, Tok.getLocation());
     // Skip until we get a ; or {}.
