@@ -899,12 +899,6 @@ namespace {
   };
 }  // end anonymous namespace
 
-static inline bool isCopyFromLiveIn(const SUnit *SU) {
-  SDNode *N = SU->getNode();
-  return N && N->getOpcode() == ISD::CopyFromReg &&
-    N->getOperand(N->getNumOperands()-1).getValueType() != MVT::Flag;
-}
-
 /// CalcNodeSethiUllmanNumber - Compute Sethi Ullman number.
 /// Smaller number is the higher priority.
 static unsigned
@@ -986,11 +980,6 @@ namespace {
     unsigned getNodePriority(const SUnit *SU) const {
       assert(SU->NodeNum < SethiUllmanNumbers.size());
       unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
-      if (Opc == ISD::CopyFromReg && !isCopyFromLiveIn(SU))
-        // CopyFromReg should be close to its def because it restricts
-        // allocation choices. But if it is a livein then perhaps we want it
-        // closer to its uses so it can be coalesced.
-        return 0xffff;
       if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
         // CopyToReg should be close to its uses to facilitate coalescing and
         // avoid spilling.
