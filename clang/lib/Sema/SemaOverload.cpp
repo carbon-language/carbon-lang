@@ -3953,7 +3953,7 @@ void Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     assert(UnOp->getOpcode() == UnaryOperator::AddrOf && 
            "Can only take the address of an overloaded function");
     FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
-    E->setType(Context.getPointerType(E->getType()));
+    E->setType(Context.getPointerType(UnOp->getSubExpr()->getType()));
   } else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E)) {
     assert(isa<OverloadedFunctionDecl>(DR->getDecl()) && 
            "Expected overloaded function");

@@ -192,7 +192,9 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   //       -- integral or enumeration type,
   if (T->isIntegralType() || T->isEnumeralType() ||
       //   -- pointer to object or pointer to function, 
-      T->isPointerType() ||
+      (T->isPointerType() && 
+       (T->getAsPointerType()->getPointeeType()->isObjectType() ||
+        T->getAsPointerType()->getPointeeType()->isFunctionType())) ||
       //   -- reference to object or reference to function, 
       T->isReferenceType() ||
       //   -- pointer to member.
@@ -844,9 +846,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   //        enumeration type, integral promotions (4.5) and integral
   //        conversions (4.7) are applied.
   QualType ParamType = Param->getType();
+  QualType ArgType = Arg->getType();
   if (ParamType->isIntegralType() || ParamType->isEnumeralType()) {
-    QualType ArgType = Arg->getType();
-
     // C++ [temp.arg.nontype]p1:
     //   A template-argument for a non-type, non-template
     //   template-parameter shall be one of:
@@ -894,6 +895,71 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 
     return false;
   }
+
+  if (const PointerType *ParamPtrType = ParamType->getAsPointerType()) {
+    //   -- for a non-type template-parameter of type pointer to
+    //      object, qualification conversions (4.4) and the
+    //      array-to-pointer conversion (4.2) are applied.
+    if (ParamPtrType->getPointeeType()->isObjectType()) {
+      if (ArgType->isArrayType()) {
+        ArgType = Context.getArrayDecayedType(ArgType);
+        ImpCastExprToType(Arg, ArgType);
+      }
+
+      if (IsQualificationConversion(ArgType, ParamType)) {
+        ArgType = ParamType;
+        ImpCastExprToType(Arg, ParamType);
+      }
+
+      if (!hasSameUnqualifiedType(ArgType, ParamType)) {
+        // We can't perform this conversion.
+        Diag(Arg->getSourceRange().getBegin(), 
+             diag::err_template_arg_not_convertible)
+          << Arg->getType() << Param->getType() << Arg->getSourceRange();
+        Diag(Param->getLocation(), diag::note_template_param_here);
+        return true;
+      }
+
+      // FIXME: Check the restrictions in p1!
+      return false;
+    }
+    
+    assert(ParamPtrType->getPointeeType()->isFunctionType() &&
+           "Only function pointers remain");
+    //   -- For a non-type template-parameter of type pointer to
+    //      function, only the function-to-pointer conversion (4.3) is
+    //      applied. If the template-argument represents a set of
+    //      overloaded functions (or a pointer to such), the matching
+    //      function is selected from the set (13.4).
+    if (hasSameUnqualifiedType(ArgType, ParamType)) {
+      // We don't have to do anything: the types already match.
+    }
+    else if (ArgType->isFunctionType()) {
+      ArgType = Context.getPointerType(ArgType);
+      ImpCastExprToType(Arg, ArgType);
+    } else if (FunctionDecl *Fn 
+                 = ResolveAddressOfOverloadedFunction(Arg, ParamType, true)) {
+      FixOverloadedFunctionReference(Arg, Fn);
+      ArgType = Arg->getType();
+      if (ArgType->isFunctionType()) {
+        ArgType = Context.getPointerType(Arg->getType());
+        ImpCastExprToType(Arg, ArgType);
+      }
+    }
+
+    if (!hasSameUnqualifiedType(ArgType, ParamType)) {
+      // We can't perform this conversion.
+      Diag(Arg->getSourceRange().getBegin(), 
+           diag::err_template_arg_not_convertible)
+        << Arg->getType() << Param->getType() << Arg->getSourceRange();
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+    }
+
+    // FIXME: Check the restrictions in p1!
+    return false;
+  }
+
   // FIXME: p5 has a lot more checks to perform!
 
   return false;

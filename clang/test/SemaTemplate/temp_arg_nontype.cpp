@@ -33,8 +33,37 @@ A<f(17)> *a10; // expected-error{{non-type template argument of type 'int' is no
 
 class X {
 public:
+  X();
   X(int, int);
   operator int() const;
 };
 A<X(17, 42)> *a11; // expected-error{{non-type template argument of type 'class X' must have an integral or enumeration type}} \
                    // FIXME:expected-error{{expected unqualified-id}}
+
+template<X const *Ptr> struct A2;
+
+X *X_ptr;
+X array_of_Xs[10];
+A2<X_ptr> *a12;
+A2<array_of_Xs> *a13;
+
+float f(float);
+
+float g(float);
+double g(double);
+
+int h(int);
+float h2(float);
+
+template<int fp(int)> struct A3; // expected-note 2{{template parameter is declared here}}
+A3<h> *a14_1;
+A3<&h> *a14_2;
+A3<f> *a14_3;
+A3<&f> *a14_4;
+A3<((&f))> *a14_5;
+A3<h2> *a14_6;  // expected-error{{non-type template argument of type 'float (*)(float)' cannot be converted to a value of type 'int (*)(int)'}} \
+// FIXME: expected-error{{expected unqualified-id}}
+A3<g> *a14_7; // expected-error{{non-type template argument of type '<overloaded function type>' cannot be converted to a value of type 'int (*)(int)'}}\
+// FIXME: expected-error{{expected unqualified-id}}
+// FIXME: the first error includes the string <overloaded function
+// type>, which makes Doug slightly unhappy.
