@@ -1344,8 +1344,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         int SSorRMId = DoReMat
           ? VRM.getReMatId(VirtReg) : VRM.getStackSlot(VirtReg);
         unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
-        assert((!InReg || !RegKills[InReg]) &&
-               "Restoring a value that's previously defined in the same BB?");
         if (InReg == Phys) {
           // If the value is already available in the expected register, save
           // a reload / remat.
