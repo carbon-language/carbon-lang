@@ -35,3 +35,9 @@ typedef struct _NSZone NSZone;
     // the exception name is optional (weird)
     @catch (NSException *) {}
 }
+@end
+
+int foo() {
+  @throw 42; // expected-warning {{invalid 'int' argument (expected an ObjC object type)}}
+  @throw; // FIXME: error: ‘@throw’ (rethrow) used outside of a @catch block
+}

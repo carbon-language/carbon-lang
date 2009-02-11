@@ -981,9 +981,22 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
 }
 
 Action::OwningStmtResult
-Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg Throw) {
-  return Owned(new (Context) ObjCAtThrowStmt(AtLoc,
-                                          static_cast<Expr*>(Throw.release())));
+Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr) {
+  Expr *ThrowExpr = static_cast<Expr*>(expr.release());
+  if (!ThrowExpr) {
+    // FIXME: verify the 'rethrow' is within a @catch block
+  } else {
+    QualType ThrowType = ThrowExpr->getType();
+    // Make sure the expression type is an ObjC pointer or "void *".
+    if (!Context.isObjCObjectPointerType(ThrowType)) {
+      const PointerType *PT = ThrowType->getAsPointerType();
+      if (!PT || !PT->getPointeeType()->isVoidType())
+        // This should be an error, however GCC only yields a warning.
+        Diag(AtLoc, diag::warn_objc_throw_expects_object)
+                    << ThrowExpr->getType() << ThrowExpr->getSourceRange();
+    }
+  }
+  return Owned(new (Context) ObjCAtThrowStmt(AtLoc, ThrowExpr));
 }
 
 Action::OwningStmtResult

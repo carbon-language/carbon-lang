@@ -27,7 +27,7 @@ void * foo()
       return proc();
     }
     @catch (Frob* ex) {
-      @throw 1,2;
+      @throw 1,2; // expected-warning {{invalid 'int' argument (expected an ObjC object type)}}
     }
     @catch(...) {
       @throw (4,3,proc());
