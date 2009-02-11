@@ -727,7 +727,6 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     } else {                // Cannot output in string format...
       Out << '[';
       if (CA->getNumOperands()) {
-        Out << ' ';
         printTypeInt(Out, ETy, TypeTable);
         Out << ' ';
         WriteAsOperandInternal(Out, CA->getOperand(0),
@@ -738,7 +737,6 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
           Out << ' ';
           WriteAsOperandInternal(Out, CA->getOperand(i), TypeTable, Machine);
         }
-        Out << ' ';
       }
       Out << ']';
     }
@@ -777,7 +775,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     const Type *ETy = CP->getType()->getElementType();
     assert(CP->getNumOperands() > 0 &&
            "Number of operands for a PackedConst must be > 0");
-    Out << "< ";
+    Out << '<';
     printTypeInt(Out, ETy, TypeTable);
     Out << ' ';
     WriteAsOperandInternal(Out, CP->getOperand(0), TypeTable, Machine);
@@ -787,7 +785,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
       Out << ' ';
       WriteAsOperandInternal(Out, CP->getOperand(i), TypeTable, Machine);
     }
-    Out << " >";
+    Out << '>';
     return;
   }
   
