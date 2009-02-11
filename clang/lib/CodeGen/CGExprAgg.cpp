@@ -289,7 +289,7 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
 }
 
 void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
-  llvm::Value *ArgValue = CGF.EmitLValue(VE->getSubExpr()).getAddress();
+  llvm::Value *ArgValue = CGF.EmitVAListRef(VE->getSubExpr());
   llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
 
   if (!ArgPtr) {

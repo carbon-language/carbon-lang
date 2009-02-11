@@ -53,7 +53,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
   case Builtin::BI__builtin_va_end: {
-    Value *ArgValue = EmitVAListRef(E->getArg(0));;
+    Value *ArgValue = EmitVAListRef(E->getArg(0));
     const llvm::Type *DestType = 
       llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     if (ArgValue->getType() != DestType)

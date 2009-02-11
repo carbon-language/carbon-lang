@@ -531,7 +531,7 @@ ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitVAArgExpr(VAArgExpr *E) {
-  llvm::Value *ArgValue = CGF.EmitLValue(E->getSubExpr()).getAddress();
+  llvm::Value *ArgValue = CGF.EmitVAListRef(E->getSubExpr());
   llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, E->getType());
 
   if (!ArgPtr) {

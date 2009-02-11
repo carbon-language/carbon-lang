@@ -1336,7 +1336,6 @@ Value *ScalarExprEmitter::VisitOverloadExpr(OverloadExpr *E) {
 
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   llvm::Value *ArgValue = CGF.EmitVAListRef(VE->getSubExpr());
-
   llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
 
   // If EmitVAArg fails, we fall back to the LLVM instruction.
