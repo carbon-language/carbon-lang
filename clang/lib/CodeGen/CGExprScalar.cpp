@@ -619,6 +619,13 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     // FIXME: This isn't right for VLAs.
     NextVal = llvm::ConstantInt::get(llvm::Type::Int32Ty, AmountVal);
     NextVal = Builder.CreateGEP(InVal, NextVal, "ptrincdec");
+  } else if (InVal->getType() == llvm::Type::Int1Ty && isInc) {
+    // Bool++ is an interesting case, due to promotion rules, we get:
+    // Bool++ -> Bool = Bool+1 -> Bool = (int)Bool+1 ->
+    // Bool = ((int)Bool+1) != 0
+    // An interesting aspect of this is that increment is always true.
+    // Decrement does not have this property.
+    NextVal = llvm::ConstantInt::getTrue();
   } else {
     // Add the inc/dec to the real part.
     if (isa<llvm::IntegerType>(InVal->getType()))
