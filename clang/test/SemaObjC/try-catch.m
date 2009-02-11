@@ -39,5 +39,5 @@ typedef struct _NSZone NSZone;
 
 int foo() {
   @throw 42; // expected-warning {{invalid 'int' argument (expected an ObjC object type)}}
-  @throw; // expected-error {{‘@throw’ (rethrow) used outside of a @catch block}}
+  @throw; // expected-error {{@throw (rethrow) used outside of a @catch block}}
 }
