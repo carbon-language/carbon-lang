@@ -67,3 +67,15 @@ A3<g> *a14_7; // expected-error{{non-type template argument of type '<overloaded
 // FIXME: expected-error{{expected unqualified-id}}
 // FIXME: the first error includes the string <overloaded function
 // type>, which makes Doug slightly unhappy.
+
+
+struct Y { } y;
+
+volatile X * X_volatile_ptr;
+template<X const &AnX> struct A4; // expected-note 2{{template parameter is declared here}}
+A4<*X_ptr> *a15_1; // okay
+A4<*X_volatile_ptr> *a15_2; // expected-error{{reference binding of non-type template parameter of type 'class X const &' to template argument of type 'class X volatile' ignores qualifiers}} \
+                  // FIXME: expected-error{{expected unqualified-id}}
+A4<y> *15_3; //  expected-error{{non-type template parameter of reference type 'class X const &' cannot bind to template argument of type 'struct Y'}}\
+                  // FIXME: expected-error{{expected unqualified-id}}
+

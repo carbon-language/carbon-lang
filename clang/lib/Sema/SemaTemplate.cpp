@@ -897,10 +897,10 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   }
 
   if (const PointerType *ParamPtrType = ParamType->getAsPointerType()) {
-    //   -- for a non-type template-parameter of type pointer to
-    //      object, qualification conversions (4.4) and the
-    //      array-to-pointer conversion (4.2) are applied.
     if (ParamPtrType->getPointeeType()->isObjectType()) {
+      // -- for a non-type template-parameter of type pointer to
+      //    object, qualification conversions (4.4) and the
+      //    array-to-pointer conversion (4.2) are applied.
       if (ArgType->isArrayType()) {
         ArgType = Context.getArrayDecayedType(ArgType);
         ImpCastExprToType(Arg, ArgType);
@@ -958,6 +958,43 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 
     // FIXME: Check the restrictions in p1!
     return false;
+  }
+
+  if (const ReferenceType *ParamRefType = ParamType->getAsReferenceType()) {
+    if (ParamRefType->getPointeeType()->isObjectType()) {
+      // -- For a non-type template-parameter of type reference to
+      //    object, no conversions apply. The type referred to by the
+      //    reference may be more cv-qualified than the (otherwise
+      //    identical) type of the template-argument. The
+      //    template-parameter is bound directly to the
+      //    template-argument, which must be an lvalue.
+      if (!hasSameUnqualifiedType(ParamRefType->getPointeeType(), ArgType)) {
+        Diag(Arg->getSourceRange().getBegin(), 
+             diag::err_template_arg_no_ref_bind)
+          << Param->getType() << Arg->getType()
+          << Arg->getSourceRange();
+        Diag(Param->getLocation(), diag::note_template_param_here);
+        return true;
+      }
+
+      unsigned ParamQuals 
+        = Context.getCanonicalType(ParamType).getCVRQualifiers();
+      unsigned ArgQuals = Context.getCanonicalType(ArgType).getCVRQualifiers();
+        
+      if ((ParamQuals | ArgQuals) != ParamQuals) {
+        Diag(Arg->getSourceRange().getBegin(),
+             diag::err_template_arg_ref_bind_ignores_quals)
+          << Param->getType() << Arg->getType()
+          << Arg->getSourceRange();
+        Diag(Param->getLocation(), diag::note_template_param_here);
+        return true;
+      }
+
+      // FIXME: Check the restrictions in p1!
+      // CheckAddressConstantExpression(Lvalue) can be modified to do
+      // this.
+      return false;
+    }
   }
 
   // FIXME: p5 has a lot more checks to perform!
