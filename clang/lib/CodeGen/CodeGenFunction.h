@@ -555,8 +555,10 @@ public:
 
   // Note: only availabe for agg return types
   LValue EmitBinaryOperatorLValue(const BinaryOperator *E);
-  // Note: only availabe for agg return types
+  // Note: only available for agg return types
   LValue EmitCallExprLValue(const CallExpr *E);
+  // Note: only available for agg return types
+  LValue EmitVAArgExprLValue(const VAArgExpr *E);
   LValue EmitDeclRefLValue(const DeclRefExpr *E);
   LValue EmitStringLiteralLValue(const StringLiteral *E);
   LValue EmitPredefinedFunctionName(unsigned Type);

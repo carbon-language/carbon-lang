@@ -137,6 +137,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CallExprClass: 
   case Expr::CXXOperatorCallExprClass:
     return EmitCallExprLValue(cast<CallExpr>(E));
+  case Expr::VAArgExprClass:
+    return EmitVAArgExprLValue(cast<VAArgExpr>(E));
   case Expr::DeclRefExprClass: 
   case Expr::QualifiedDeclRefExprClass:
     return EmitDeclRefLValue(cast<DeclRefExpr>(E));
@@ -996,9 +998,15 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
   // Can only get l-value for call expression returning aggregate type
   RValue RV = EmitCallExpr(E);
-  // FIXME: can this be volatile?
   return LValue::MakeAddr(RV.getAggregateAddr(),
                           E->getType().getCVRQualifiers());
+}
+
+LValue CodeGenFunction::EmitVAArgExprLValue(const VAArgExpr *E) {
+  // FIXME: This shouldn't require another copy.
+  llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
+  EmitAggExpr(E, Temp, false);
+  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers());
 }
 
 LValue
