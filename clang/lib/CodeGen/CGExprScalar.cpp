@@ -965,8 +965,9 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   
     uint64_t ElementSize;
 
-    // Handle GCC extension for pointer arithmetic on void* types.
-    if (LHSElementType->isVoidType()) {
+    // Handle GCC extension for pointer arithmetic on void* and function pointer
+    // types.
+    if (LHSElementType->isVoidType() || LHSElementType->isFunctionType()) {
       ElementSize = 1;
     } else {
       ElementSize = CGF.getContext().getTypeSize(LHSElementType) / 8;
@@ -976,6 +977,10 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     LHS = Builder.CreatePtrToInt(LHS, ResultType, "sub.ptr.lhs.cast");
     RHS = Builder.CreatePtrToInt(RHS, ResultType, "sub.ptr.rhs.cast");
     Value *BytesBetween = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
+    
+    // Optimize out the shift for element size of 1.
+    if (ElementSize == 1)
+      return BytesBetween;
     
     // HACK: LLVM doesn't have an divide instruction that 'knows' there is no
     // remainder.  As such, we handle common power-of-two cases here to generate

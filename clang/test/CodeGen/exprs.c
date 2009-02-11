@@ -52,3 +52,10 @@ void eMaisUma() {
 	if (*t)
 		return;
 }
+
+// rdar://6520707
+void f0(void (*fp)(void), void (*fp2)(void)) {
+  int x = fp - fp2;
+}
+
+
