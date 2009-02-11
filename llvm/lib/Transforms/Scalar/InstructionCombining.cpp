@@ -1538,11 +1538,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       }
     }
 
+    APInt UndefElts4(LHSVWidth, 0);
     TmpV = SimplifyDemandedVectorElts(I->getOperand(0), LeftDemanded,
-                                      UndefElts2, Depth+1);
+                                      UndefElts4, Depth+1);
     if (TmpV) { I->setOperand(0, TmpV); MadeChange = true; }
 
-    APInt UndefElts3(VWidth, 0);
+    APInt UndefElts3(LHSVWidth, 0);
     TmpV = SimplifyDemandedVectorElts(I->getOperand(1), RightDemanded,
                                       UndefElts3, Depth+1);
     if (TmpV) { I->setOperand(1, TmpV); MadeChange = true; }
@@ -1553,7 +1554,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       if (MaskVal == -1u) {
         UndefElts.set(i);
       } else if (MaskVal < LHSVWidth) {
-        if (UndefElts2[MaskVal]) {
+        if (UndefElts4[MaskVal]) {
           NewUndefElts = true;
           UndefElts.set(i);
         }
