@@ -306,6 +306,7 @@ class Driver(object):
         # FIXME: Print default target triple.
         vers = '$HeadURL$'
         vers = vers.split('/tools/ccc')[0]
+        vers = vers.split('/clang/tools/clang')[0]
         vers = ' (' + vers[10:] + ')'
         print >>sys.stderr,'ccc version 1.0' + vers
 
