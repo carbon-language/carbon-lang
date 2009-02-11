@@ -25,11 +25,10 @@ PARALLEL_DIRS := llvm-config  \
 
 include $(LEVEL)/Makefile.config
 
-# build lto project on Darwin or if PIC is enabled
+# only build new lto project on Darwin for now
 ifeq ($(OS),Darwin)
 PARALLEL_DIRS += lto
-else ($(ENABLE_PIC),1)
-PARALLEL_DIRS += lto
+
 ifdef BINUTILS_INCDIR
 PARALLEL_DIRS += gold
 endif
