@@ -304,7 +304,10 @@ class Driver(object):
         
     def printVersion(self):
         # FIXME: Print default target triple.
-        print >>sys.stderr,'ccc version 1.0 ($HeadURL$)'
+        vers = '$HeadURL$'
+        vers = vers.split('/tools/ccc')[0]
+        vers = ' (' + vers[10:] + ')'
+        print >>sys.stderr,'ccc version 1.0' + vers
 
     def handleImmediateOptions(self, args):
         # FIXME: Some driver Arguments are consumed right off the bat,
