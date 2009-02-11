@@ -53,6 +53,16 @@ static void Pad(llvm::raw_fd_ostream& Out, unsigned A) {
   for ( ; n ; --n ) Emit8(Out, 0);
 }
 
+// Bernstein hash function:
+// This is basically copy-and-paste from StringMap.  This likely won't
+// stay here, which is why I didn't both to expose this function from
+// String Map.
+static unsigned BernsteinHash(const char* x) {  
+  unsigned int R = 0;
+  for ( ; *x != '\0' ; ++x) R = R * 33 + *x;
+  return R + (R >> 5);
+}
+
 //===----------------------------------------------------------------------===//
 // On Disk Hashtable Logic.  This will eventually get refactored and put
 // elsewhere.
@@ -193,14 +203,7 @@ public:
   typedef const PCHEntry& data_type_ref;
   
   static unsigned ComputeHash(const FileEntry* FE) {
-    // Bernstein hash function:
-    // This is basically copy-and-paste from StringMap.  This likely won't
-    // stay here, which is why I didn't both to expose this function from
-    // String Map.  There are plenty of other hash functions which are likely
-    // to perform better and be faster.
-    unsigned int R = 0;
-    for (const char* x = FE->getName(); *x != '\0' ; ++x) R = R * 33 + *x;
-    return R + (R >> 5);
+    return BernsteinHash(FE->getName());
   }
   
   static std::pair<unsigned,unsigned> 
@@ -273,6 +276,10 @@ class VISIBILITY_HIDDEN PTHWriter {
     for ( ; I != E ; ++I) Out << *I;
   }
   
+  /// EmitIdentifierTable - Emits two tables to the PTH file.  The first is
+  ///  a hashtable mapping from identifier strings to persistent IDs.
+  ///  The second is a straight table mapping from persistent IDs to string data
+  ///  (the keys of the first table).
   std::pair<Offset, Offset> EmitIdentifierTable();
   
   /// EmitFileTable - Emit a table mapping from file name strings to PTH
@@ -334,83 +341,6 @@ void PTHWriter::EmitToken(const Token& T) {
     
   Emit32(PP.getSourceManager().getFileOffset(T.getLocation()));
 }
-
-namespace {
-struct VISIBILITY_HIDDEN IDData {
-  const IdentifierInfo* II;
-  uint32_t FileOffset;
-};
-  
-class VISIBILITY_HIDDEN CompareIDDataIndex {
-  IDData* Table;
-public:  
-  CompareIDDataIndex(IDData* table) : Table(table) {}
-
-  bool operator()(unsigned i, unsigned j) const {
-    const IdentifierInfo* II_i = Table[i].II;
-    const IdentifierInfo* II_j = Table[j].II;
-
-    unsigned i_len = II_i->getLength();
-    unsigned j_len = II_j->getLength();
-    
-    if (i_len > j_len)
-      return false;
-    
-    if (i_len < j_len)
-      return true;
-
-    // Otherwise, compare the strings themselves!
-    return strncmp(II_i->getName(), II_j->getName(), i_len) < 0;    
-  }
-};
-}
-
-std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {  
-  llvm::BumpPtrAllocator Alloc;
-
-  // Build an inverse map from persistent IDs -> IdentifierInfo*.
-  IDData* IIDMap = Alloc.Allocate<IDData>(idcount);
-  
-  // Generate mapping from persistent IDs -> IdentifierInfo*.
-  for (IDMap::iterator I=IM.begin(), E=IM.end(); I!=E; ++I) {
-    // Decrement by 1 because we are using a vector for the lookup and
-    // 0 is reserved for NULL.
-    assert(I->second > 0);
-    assert(I->second-1 < idcount);
-    unsigned idx = I->second-1;
-    IIDMap[idx].II = I->first;
-  }  
-  
-  // We want to write out the strings in lexical order to support binary
-  // search of strings to identifiers.  Create such a table.
-  unsigned *LexicalOrder = Alloc.Allocate<unsigned>(idcount);
-  for (unsigned i = 0; i < idcount ; ++i ) LexicalOrder[i] = i;
-  std::sort(LexicalOrder, LexicalOrder+idcount, CompareIDDataIndex(IIDMap));
-  
-  // Write out the lexically-sorted table of persistent ids.
-  Offset LexicalOff = Out.tell();
-  for (unsigned i = 0; i < idcount ; ++i) Emit32(LexicalOrder[i]);
-  
-  for (unsigned i = 0; i < idcount; ++i) {
-    IDData& d = IIDMap[i];
-    d.FileOffset = Out.tell();            // Record the location for this data.  
-    unsigned len = d.II->getLength(); // Write out the string length.
-    Emit32(len);
-    const char* buf = d.II->getName(); // Write out the string data.
-    EmitBuf(buf, buf+len);
-    // Emit a null character for those clients expecting that IdentifierInfo
-    // strings are null terminated.
-    Emit8('\0');
-  }
-  
-  // Now emit the table mapping from persistent IDs to PTH file offsets.  
-  Offset IDOff = Out.tell();
-  Emit32(idcount);  // Emit the number of identifiers.
-  for (unsigned i = 0 ; i < idcount; ++i) Emit32(IIDMap[i].FileOffset);
-
-  return std::make_pair(IDOff, LexicalOff);
-}
-
 
 PCHEntry PTHWriter::LexTokens(Lexer& L) {
   // Pad 0's so that we emit tokens to a 4-byte alignment.
@@ -656,4 +586,93 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   PTHWriter PW(Out, PP);
   PW.GeneratePTH();
 }
+
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN PCHIdKey {
+public:
+  const IdentifierInfo* II;
+  uint32_t FileOffset;
+};
+
+class VISIBILITY_HIDDEN PCHIdentifierTableTrait {
+public:
+  typedef PCHIdKey* key_type;
+  typedef key_type  key_type_ref;
+  
+  typedef uint32_t  data_type;
+  typedef data_type data_type_ref;
+  
+  static unsigned ComputeHash(PCHIdKey* key) {
+    return BernsteinHash(key->II->getName());
+  }
+  
+  static std::pair<unsigned,unsigned> 
+  EmitKeyDataLength(llvm::raw_ostream& Out, const PCHIdKey* key, uint32_t) {    
+    unsigned n = strlen(key->II->getName()) + 1;
+    ::Emit16(Out, n);
+    return std::make_pair(n, sizeof(uint32_t));
+  }
+  
+  static void EmitKey(llvm::raw_fd_ostream& Out, PCHIdKey* key, unsigned n) {
+    // Record the location of the key data.  This is used when generating
+    // the mapping from persistent IDs to strings.
+    key->FileOffset = Out.tell();
+    Out.write(key->II->getName(), n);
+  }
+  
+  static void EmitData(llvm::raw_ostream& Out, uint32_t pID, unsigned) {
+    ::Emit32(Out, pID);
+  }        
+};
+} // end anonymous namespace
+
+/// EmitIdentifierTable - Emits two tables to the PTH file.  The first is
+///  a hashtable mapping from identifier strings to persistent IDs.  The second
+///  is a straight table mapping from persistent IDs to string data (the
+///  keys of the first table).
+///
+std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
+  // Build two maps:
+  //  (1) an inverse map from persistent IDs -> (IdentifierInfo*,Offset)
+  //  (2) a map from (IdentifierInfo*, Offset)* -> persistent IDs
+
+  // Note that we use 'calloc', so all the bytes are 0.
+  PCHIdKey* IIDMap = (PCHIdKey*) calloc(idcount, sizeof(PCHIdKey));
+
+  // Create the hashtable.
+  OnDiskChainedHashTableGenerator<PCHIdentifierTableTrait> IIOffMap;
+  
+  // Generate mapping from persistent IDs -> IdentifierInfo*.
+  for (IDMap::iterator I=IM.begin(), E=IM.end(); I!=E; ++I) {
+    // Decrement by 1 because we are using a vector for the lookup and
+    // 0 is reserved for NULL.
+    assert(I->second > 0);
+    assert(I->second-1 < idcount);
+    unsigned idx = I->second-1;
+    
+    // Store the mapping from persistent ID to IdentifierInfo*
+    IIDMap[idx].II = I->first;
+    
+    // Store the reverse mapping in a hashtable.
+    IIOffMap.insert(&IIDMap[idx], I->second);
+  }
+  
+  // Write out the inverse map first.  This causes the PCIDKey entries to
+  // record PTH file offsets for the string data.  This is used to write
+  // the second table.
+  Offset StringTableOffset = IIOffMap.Emit(Out);
+  
+  // Now emit the table mapping from persistent IDs to PTH file offsets.  
+  Offset IDOff = Out.tell();
+  Emit32(idcount);  // Emit the number of identifiers.
+  for (unsigned i = 0 ; i < idcount; ++i) Emit32(IIDMap[i].FileOffset);
+  
+  // Finally, release the inverse map.
+  free(IIDMap);
+  
+  return std::make_pair(IDOff, StringTableOffset);
+}
+
 

@@ -59,6 +59,21 @@ static inline uint32_t ReadLE32(const unsigned char *&Data) {
   return V;
 }
 
+// Bernstein hash function:
+// This is basically copy-and-paste from StringMap.  This likely won't
+// stay here, which is why I didn't both to expose this function from
+// String Map.
+static unsigned BernsteinHash(const char* x) {
+  unsigned int R = 0;
+  for ( ; *x != '\0' ; ++x) R = R * 33 + *x;
+  return R + (R >> 5);
+}
+
+static unsigned BernsteinHash(const char* x, unsigned n) {
+  unsigned int R = 0;
+  for (unsigned i = 0 ; i < n ; ++i, ++x) R = R * 33 + *x;
+  return R + (R >> 5);
+}
 
 //===----------------------------------------------------------------------===//
 // PTHLexer methods.
@@ -447,10 +462,7 @@ public:
   }
 
   static unsigned ComputeHash(const char* x) {
-    // More copy-paste nonsense.  Will refactor.
-    unsigned int R = 0;
-    for (; *x != '\0' ; ++x) R = R * 33 + *x;
-    return R + (R >> 5);
+    return BernsteinHash(x);
   }
 
   static const char* GetInternalKey(const FileEntry* FE) {
@@ -472,9 +484,51 @@ public:
     return PTHFileData(x, y); 
   }
 };
+
+class VISIBILITY_HIDDEN PTHStringLookupTrait {
+public:
+  typedef uint32_t 
+          data_type;
+
+  typedef const std::pair<const char*, unsigned>
+          external_key_type;
+
+  typedef external_key_type internal_key_type;
+  
+  static bool EqualKey(const internal_key_type& a,
+                       const internal_key_type& b) {
+    return (a.second == b.second) ? memcmp(a.first, b.first, a.second) == 0
+                                  : false;
+  }
+  
+  static unsigned ComputeHash(const internal_key_type& a) {
+    return BernsteinHash(a.first, a.second);
+  }
+  
+  // This hopefully will just get inlined and removed by the optimizer.
+  static const internal_key_type&
+  GetInternalKey(const external_key_type& x) { return x; }
+  
+  static std::pair<unsigned, unsigned>
+  ReadKeyDataLength(const unsigned char*& d) {
+    return std::make_pair((unsigned) ReadUnalignedLE16(d), sizeof(uint32_t));
+  }
+    
+  static std::pair<const char*, unsigned>
+  ReadKey(const unsigned char* d, unsigned n) {
+      assert(n >= 2 && d[n-1] == '\0');
+      return std::make_pair((const char*) d, n-1);
+    }
+    
+  static uint32_t ReadData(const unsigned char* d, unsigned) {
+    return ::ReadUnalignedLE32(d);
+  }
+};
+  
 } // end anonymous namespace  
 
-typedef OnDiskChainedHashTable<PTHFileLookupTrait> PTHFileLookup;
+typedef OnDiskChainedHashTable<PTHFileLookupTrait>   PTHFileLookup;
+typedef OnDiskChainedHashTable<PTHStringLookupTrait> PTHStringIdLookup;
 
 //===----------------------------------------------------------------------===//
 // PTHManager methods.
@@ -483,15 +537,16 @@ typedef OnDiskChainedHashTable<PTHFileLookupTrait> PTHFileLookup;
 PTHManager::PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
                        const unsigned char* idDataTable,
                        IdentifierInfo** perIDCache, 
-                       const unsigned char* sortedIdTable, unsigned numIds,
+                       void* stringIdLookup, unsigned numIds,
                        const unsigned char* spellingBase)
 : Buf(buf), PerIDCache(perIDCache), FileLookup(fileLookup),
-  IdDataTable(idDataTable), SortedIdTable(sortedIdTable),
+  IdDataTable(idDataTable), StringIdLookup(stringIdLookup),
   NumIds(numIds), PP(0), SpellingBase(spellingBase) {}
 
 PTHManager::~PTHManager() {
   delete Buf;
   delete (PTHFileLookup*) FileLookup;
+  delete (PTHStringIdLookup*) StringIdLookup;
   free(PerIDCache);
 }
 
@@ -513,7 +568,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
                                                "PTH file %0 could not be read");
       Diags->Report(FullSourceLoc(), DiagID) << file;
     }
-    
+
     return 0;
   }
   
@@ -575,11 +630,19 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
     return 0;
   }
   
-  // Get the location of the lexigraphically-sorted table of persistent IDs.
-  const unsigned char* SortedIdTableOffset = EndTable + sizeof(uint32_t)*1;
-  const unsigned char* SortedIdTable = BufBeg + ReadLE32(SortedIdTableOffset);
-  if (!(SortedIdTable >= BufBeg && SortedIdTable < BufEnd)) {
+  // Get the location of the hashtable mapping between strings and
+  // persistent IDs.
+  const unsigned char* StringIdTableOffset = EndTable + sizeof(uint32_t)*1;
+  const unsigned char* StringIdTable = BufBeg + ReadLE32(StringIdTableOffset);
+  if (!(StringIdTable >= BufBeg && StringIdTable < BufEnd)) {
     InvalidPTH(Diags);
+    return 0;
+  }
+
+  llvm::OwningPtr<PTHStringIdLookup> SL(PTHStringIdLookup::Create(StringIdTable,
+                                                                  BufBeg));
+  if (SL->isEmpty()) {
+    InvalidPTH(Diags, "PTH file contains no identifiers.");
     return 0;
   }
   
@@ -609,7 +672,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
 
   // Create the new PTHManager.
   return new PTHManager(File.take(), FL.take(), IData, PerIDCache,
-                        SortedIdTable, NumIds, spellingBase);
+                        SL.take(), NumIds, spellingBase);
 }
 IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
   // Look in the PTH file for the string data for the IdentifierInfo object.
@@ -623,56 +686,28 @@ IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
     Alloc.Allocate<std::pair<IdentifierInfo,const unsigned char*> >();
 
   Mem->second = IDData;
+  assert(IDData[0] != '\0');
   IdentifierInfo *II = new ((void*) Mem) IdentifierInfo();
   
   // Store the new IdentifierInfo in the cache.
   PerIDCache[PersistentID] = II;
+  assert(II->getName() && II->getName()[0] != '\0');
   return II;
 }
 
 IdentifierInfo* PTHManager::get(const char *NameStart, const char *NameEnd) {
-  unsigned min = 0;
-  unsigned max = NumIds;
-  unsigned Len = NameEnd - NameStart;
-  
-  do {
-    unsigned i = (max - min) / 2 + min;
-    const unsigned char *Ptr = SortedIdTable + (i * 4);
-    
-    // Read the persistentID.
-    unsigned perID = ReadLE32(Ptr);
-    
-    // Get the IdentifierInfo.
-    IdentifierInfo* II = GetIdentifierInfo(perID);
-    
-    // First compare the lengths.
-    unsigned IILen = II->getLength();
-    if (Len < IILen) goto IsLess;
-    if (Len > IILen) goto IsGreater;
-    
-    // Now compare the strings!
-    {
-      signed comp = strncmp(NameStart, II->getName(), Len);
-      if (comp < 0) goto IsLess;
-      if (comp > 0) goto IsGreater;
-    }    
-    // We found a match!
-    return II;
-    
-  IsGreater:
-    if (i == min) break;
-    min = i;
-    continue;
-    
-  IsLess:
-    max = i;
-    assert(!(max == min) || (min == i));
-  }
-  while (min != max);
-  
-  return 0;
-}
+  PTHStringIdLookup& SL = *((PTHStringIdLookup*)StringIdLookup);
+  // Double check our assumption that the last character isn't '\0'.
+  assert(NameStart[NameEnd-NameStart-1] != '\0');
+  PTHStringIdLookup::iterator I = SL.find(std::make_pair(NameStart,
+                                                         NameEnd - NameStart));
+  if (I == SL.end()) // No identifier found?
+    return 0;
 
+  // Match found.  Return the identifier!
+  assert(*I > 0);
+  return GetIdentifierInfo(*I-1);
+}
 
 PTHLexer *PTHManager::CreateLexer(FileID FID) {
   const FileEntry *FE = PP->getSourceManager().getFileEntryForID(FID);

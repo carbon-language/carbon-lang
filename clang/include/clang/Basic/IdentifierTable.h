@@ -83,24 +83,26 @@ public:
   ///
   const char *getName() const {    
     if (Entry) return Entry->getKeyData();
+    // FIXME: This is gross. It would be best not to embed specific details
+    // of the PTH file format here.
     // The 'this' pointer really points to a 
     // std::pair<IdentifierInfo, const char*>, where internal pointer
     // points to the external string data.
-    return ((std::pair<IdentifierInfo, const char*>*) this)->second + 4;
+    return ((std::pair<IdentifierInfo, const char*>*) this)->second;
   }
   
   /// getLength - Efficiently return the length of this identifier info.
   ///
   unsigned getLength() const {
     if (Entry) return Entry->getKeyLength();
+    // FIXME: This is gross. It would be best not to embed specific details
+    // of the PTH file format here.
     // The 'this' pointer really points to a 
     // std::pair<IdentifierInfo, const char*>, where internal pointer
     // points to the external string data.
-    const char* p = ((std::pair<IdentifierInfo, const char*>*) this)->second;
-    return ((unsigned) p[0])
-      | (((unsigned) p[1]) << 8)
-      | (((unsigned) p[2]) << 16)
-      | (((unsigned) p[3]) << 24);   
+    const char* p = ((std::pair<IdentifierInfo, const char*>*) this)->second-2;
+    return (((unsigned) p[0])
+        | (((unsigned) p[1]) << 8)) - 1;
   }
   
   /// hasMacroDefinition - Return true if this identifier is #defined to some

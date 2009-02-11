@@ -53,9 +53,9 @@ class PTHManager : public IdentifierInfoLookup {
   ///  reconsitute an IdentifierInfo.
   const unsigned char* const IdDataTable;
   
-  /// SortedIdTable - Array ordering persistent identifier IDs by the lexical
-  ///  order of their corresponding strings.  This is used by get().
-  const unsigned char* const SortedIdTable;
+  /// SortedIdTable - Abstract data structure mapping from strings to
+  ///  persistent IDs.  This is used by get().
+  void* StringIdLookup;
 
   /// NumIds - The number of identifiers in the PTH file.
   const unsigned NumIds;
@@ -72,7 +72,7 @@ class PTHManager : public IdentifierInfoLookup {
   /// method.
   PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
              const unsigned char* idDataTable, IdentifierInfo** perIDCache,
-             const unsigned char* sortedIdTable, unsigned numIds,
+             void* stringIdLookup, unsigned numIds,
              const unsigned char* spellingBase);
 
   // Do not implement.
@@ -82,7 +82,6 @@ class PTHManager : public IdentifierInfoLookup {
   /// getSpellingAtPTHOffset - Used by PTHLexer classes to get the cached 
   ///  spelling for a token.
   unsigned getSpellingAtPTHOffset(unsigned PTHOffset, const char*& Buffer);
-  
   
   /// GetIdentifierInfo - Used to reconstruct IdentifierInfo objects from the
   ///  PTH file.
@@ -96,7 +95,7 @@ class PTHManager : public IdentifierInfoLookup {
   
 public:
   // The current PTH version.
-  enum { Version = 3 };
+  enum { Version = 5 };
 
   ~PTHManager();
   
