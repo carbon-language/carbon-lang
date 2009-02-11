@@ -1,6 +1,7 @@
 ; RUN: llvm-as < %s | opt -std-compile-opts | llvm-dis | grep nocapture | count 2
 ; Check that nocapture attributes are added when run after an SCC pass.
 ; PR3520
+; XFAIL: *
 
 define i32 @use(i8* %x) nounwind readonly {
 entry:

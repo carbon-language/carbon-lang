@@ -1140,7 +1140,7 @@ BBPassManager::runOnFunction(Function &F) {
 }
 
 // Implement doInitialization and doFinalization
-bool BBPassManager::doInitialization(Module &M) {
+inline bool BBPassManager::doInitialization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
@@ -1151,7 +1151,7 @@ bool BBPassManager::doInitialization(Module &M) {
   return Changed;
 }
 
-bool BBPassManager::doFinalization(Module &M) {
+inline bool BBPassManager::doFinalization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
@@ -1162,7 +1162,7 @@ bool BBPassManager::doFinalization(Module &M) {
   return Changed;
 }
 
-bool BBPassManager::doInitialization(Function &F) {
+inline bool BBPassManager::doInitialization(Function &F) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
@@ -1173,7 +1173,7 @@ bool BBPassManager::doInitialization(Function &F) {
   return Changed;
 }
 
-bool BBPassManager::doFinalization(Function &F) {
+inline bool BBPassManager::doFinalization(Function &F) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
@@ -1242,7 +1242,7 @@ bool FunctionPassManager::doFinalization() {
 //===----------------------------------------------------------------------===//
 // FunctionPassManagerImpl implementation
 //
-bool FunctionPassManagerImpl::doInitialization(Module &M) {
+inline bool FunctionPassManagerImpl::doInitialization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
@@ -1253,7 +1253,7 @@ bool FunctionPassManagerImpl::doInitialization(Module &M) {
   return Changed;
 }
 
-bool FunctionPassManagerImpl::doFinalization(Module &M) {
+inline bool FunctionPassManagerImpl::doFinalization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
@@ -1348,7 +1348,7 @@ bool FPPassManager::runOnModule(Module &M) {
   return Changed |= doFinalization(M);
 }
 
-bool FPPassManager::doInitialization(Module &M) {
+inline bool FPPassManager::doInitialization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
@@ -1359,7 +1359,7 @@ bool FPPassManager::doInitialization(Module &M) {
   return Changed;
 }
 
-bool FPPassManager::doFinalization(Module &M) {
+inline bool FPPassManager::doFinalization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
