@@ -523,7 +523,7 @@ DIAG(note_template_unnamed_type_here, NOTE,
      "unnamed type used in template argument was declared here")
 DIAG(err_template_arg_not_class_template, ERROR,
      "template argument does not refer to a class template")
-DIAG(note_template_arg_refers_here, NOTE,
+DIAG(note_template_arg_refers_here_func, NOTE,
      "template argument refers to function template %0, here")
 DIAG(err_template_arg_template_params_mismatch, ERROR,
      "template template argument has different template parameters than its corresponding template template parameter")
@@ -537,7 +537,26 @@ DIAG(err_template_arg_no_ref_bind, ERROR,
      "non-type template parameter of reference type %0 cannot bind to template argument of type %1") 
 DIAG(err_template_arg_ref_bind_ignores_quals, ERROR,
      "reference binding of non-type template parameter of type %0 to template argument of type %1 ignores qualifiers")
-
+DIAG(err_template_arg_not_object_or_func_form, ERROR,
+     "non-type template argument does not directly refer to an object or function")
+DIAG(err_template_arg_field, ERROR,
+     "non-type template argument refers to non-static data member %0")
+DIAG(err_template_arg_method, ERROR,
+     "non-type template argument refers to non-static member function %0")
+DIAG(err_template_arg_function_not_extern, ERROR,
+     "non-template argument refers to function %0 with internal linkage")
+DIAG(err_template_arg_object_not_extern, ERROR,
+     "non-template argument refers to object %0 that does not have external linkage")
+DIAG(note_template_arg_internal_object, NOTE,
+     "non-template argument refers to %select{function|object}0 here")
+DIAG(note_template_arg_refers_here, NOTE,
+     "non-template argument refers here")
+DIAG(err_template_arg_not_object_or_func, ERROR,
+     "non-type template argument does not refer to an object or function")
+DIAG(err_template_arg_not_pointer_to_member_form, ERROR,
+     "non-type template argument is not a pointer to member constant")
+DIAG(err_template_arg_extra_parens, ERROR,
+     "non-type template argument cannot be surrounded by parentheses")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")

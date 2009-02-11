@@ -45,9 +45,13 @@ A<X(17, 42)> *a11; // expected-error{{non-type template argument of type 'class 
 template<X const *Ptr> struct A2;
 
 X *X_ptr;
+X an_X;
 X array_of_Xs[10];
 A2<X_ptr> *a12;
 A2<array_of_Xs> *a13;
+A2<&an_X> *a13_2;
+A2<(&an_X)> *a13_2; // expected-error{{non-type template argument cannot be surrounded by parentheses}} \
+                    // FIXME: expected-error{{unqualified-id}}
 
 float f(float);
 
@@ -62,7 +66,6 @@ A3<h> *a14_1;
 A3<&h> *a14_2;
 A3<f> *a14_3;
 A3<&f> *a14_4;
-A3<((&f))> *a14_5;
 A3<h2> *a14_6;  // expected-error{{non-type template argument of type 'float (*)(float)' cannot be converted to a value of type 'int (*)(int)'}} \
 // FIXME: expected-error{{expected unqualified-id}}
 A3<g> *a14_7; // expected-error{{non-type template argument of type '<overloaded function type>' cannot be converted to a value of type 'int (*)(int)'}}\
@@ -75,7 +78,7 @@ struct Y { } y;
 
 volatile X * X_volatile_ptr;
 template<X const &AnX> struct A4; // expected-note 2{{template parameter is declared here}}
-A4<*X_ptr> *a15_1; // okay
+A4<an_X> *a15_1; // okay
 A4<*X_volatile_ptr> *a15_2; // expected-error{{reference binding of non-type template parameter of type 'class X const &' to template argument of type 'class X volatile' ignores qualifiers}} \
                   // FIXME: expected-error{{expected unqualified-id}}
 A4<y> *15_3; //  expected-error{{non-type template parameter of reference type 'class X const &' cannot bind to template argument of type 'struct Y'}}\
@@ -83,9 +86,7 @@ A4<y> *15_3; //  expected-error{{non-type template parameter of reference type '
 
 template<int (&fr)(int)> struct A5; // expected-note 2{{template parameter is declared here}}
 A5<h> *a16_1;
-A5<(h)> *a16_2;
 A5<f> *a16_3;
-A5<(f)> *a16_4;
 A5<h2> *a16_6;  // expected-error{{non-type template argument of type 'float (float)' cannot be converted to a value of type 'int (&)(int)'}} \
 // FIXME: expected-error{{expected unqualified-id}}
 A5<g> *a14_7; // expected-error{{non-type template argument of type '<overloaded function type>' cannot be converted to a value of type 'int (&)(int)'}}\
@@ -115,3 +116,5 @@ A7<&Z::int_member> *a18_1;
 A7c<&Z::int_member> *a18_2;
 A7<&Z::float_member> *a18_3; // expected-error{{non-type template argument of type 'float struct Z::*' cannot be converted to a value of type 'int struct Z::*'}} \
               // FIXME: expected-error{{unqualified-id}}
+A7c<(&Z::int_member)> *a18_3; // expected-error{{non-type template argument cannot be surrounded by parentheses}} \
+          // FIXME: expected-error{{expected unqualified-id}}

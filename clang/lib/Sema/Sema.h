@@ -1547,6 +1547,8 @@ public:
 
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param, QualType Arg,
                              SourceLocation ArgLoc);
+  bool CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg);
+  bool CheckTemplateArgumentPointerToMember(Expr *Arg);
   bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, Expr *&Arg);
   bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, DeclRefExpr *Arg);
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,

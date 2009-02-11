@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
@@ -825,6 +826,158 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   return false;
 }
 
+/// \brief Checks whether the given template argument is the address
+/// of an object or function according to C++ [temp.arg.nontype]p1.
+bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg) {
+  bool Invalid = false;
+
+  // See through any implicit casts we added to fix the type.
+  if (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
+    Arg = Cast->getSubExpr();
+
+  // C++ [temp.arg.nontype]p1:
+  // 
+  //   A template-argument for a non-type, non-template
+  //   template-parameter shall be one of: [...]
+  //
+  //     -- the address of an object or function with external
+  //        linkage, including function templates and function
+  //        template-ids but excluding non-static class members,
+  //        expressed as & id-expression where the & is optional if
+  //        the name refers to a function or array, or if the
+  //        corresponding template-parameter is a reference; or
+  DeclRefExpr *DRE = 0;
+  
+  // Ignore (and complain about) any excess parentheses.
+  while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
+    if (!Invalid) {
+      Diag(Arg->getSourceRange().getBegin(), 
+           diag::err_template_arg_extra_parens)
+        << Arg->getSourceRange();
+      Invalid = true;
+    }
+
+    Arg = Parens->getSubExpr();
+  }
+
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
+    if (UnOp->getOpcode() == UnaryOperator::AddrOf)
+      DRE = dyn_cast<DeclRefExpr>(UnOp->getSubExpr());
+  } else
+    DRE = dyn_cast<DeclRefExpr>(Arg);
+
+  if (!DRE || !isa<ValueDecl>(DRE->getDecl()))
+    return Diag(Arg->getSourceRange().getBegin(), 
+                diag::err_template_arg_not_object_or_func_form)
+      << Arg->getSourceRange();
+
+  // Cannot refer to non-static data members
+  if (FieldDecl *Field = dyn_cast<FieldDecl>(DRE->getDecl()))
+    return Diag(Arg->getSourceRange().getBegin(), diag::err_template_arg_field)
+      << Field << Arg->getSourceRange();
+
+  // Cannot refer to non-static member functions
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(DRE->getDecl()))
+    if (!Method->isStatic())
+      return Diag(Arg->getSourceRange().getBegin(), 
+                  diag::err_template_arg_method)
+        << Method << Arg->getSourceRange();
+   
+  // Functions must have external linkage.
+  if (FunctionDecl *Func = dyn_cast<FunctionDecl>(DRE->getDecl())) {
+    if (Func->getStorageClass() == FunctionDecl::Static) {
+      Diag(Arg->getSourceRange().getBegin(), 
+           diag::err_template_arg_function_not_extern)
+        << Func << Arg->getSourceRange();
+      Diag(Func->getLocation(), diag::note_template_arg_internal_object)
+        << true;
+      return true;
+    }
+
+    // Okay: we've named a function with external linkage.
+    return Invalid;
+  }
+
+  if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
+    if (!Var->hasGlobalStorage()) {
+      Diag(Arg->getSourceRange().getBegin(), 
+           diag::err_template_arg_object_not_extern)
+        << Var << Arg->getSourceRange();
+      Diag(Var->getLocation(), diag::note_template_arg_internal_object)
+        << true;
+      return true;
+    }
+
+    // Okay: we've named an object with external linkage
+    return Invalid;
+  }
+  
+  // We found something else, but we don't know specifically what it is.
+  Diag(Arg->getSourceRange().getBegin(), 
+       diag::err_template_arg_not_object_or_func)
+      << Arg->getSourceRange();
+  Diag(DRE->getDecl()->getLocation(), 
+       diag::note_template_arg_refers_here);
+  return true;
+}
+
+/// \brief Checks whether the given template argument is a pointer to
+/// member constant according to C++ [temp.arg.nontype]p1.
+bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg) {
+  bool Invalid = false;
+
+  // See through any implicit casts we added to fix the type.
+  if (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
+    Arg = Cast->getSubExpr();
+
+  // C++ [temp.arg.nontype]p1:
+  // 
+  //   A template-argument for a non-type, non-template
+  //   template-parameter shall be one of: [...]
+  //
+  //     -- a pointer to member expressed as described in 5.3.1.
+  QualifiedDeclRefExpr *DRE = 0;
+
+  // Ignore (and complain about) any excess parentheses.
+  while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
+    if (!Invalid) {
+      Diag(Arg->getSourceRange().getBegin(), 
+           diag::err_template_arg_extra_parens)
+        << Arg->getSourceRange();
+      Invalid = true;
+    }
+
+    Arg = Parens->getSubExpr();
+  }
+
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg))
+    if (UnOp->getOpcode() == UnaryOperator::AddrOf)
+      DRE = dyn_cast<QualifiedDeclRefExpr>(UnOp->getSubExpr());
+
+  if (!DRE)
+    return Diag(Arg->getSourceRange().getBegin(),
+                diag::err_template_arg_not_pointer_to_member_form)
+      << Arg->getSourceRange();
+
+  if (isa<FieldDecl>(DRE->getDecl()) || isa<CXXMethodDecl>(DRE->getDecl())) {
+    assert((isa<FieldDecl>(DRE->getDecl()) ||
+            !cast<CXXMethodDecl>(DRE->getDecl())->isStatic()) &&
+           "Only non-static member pointers can make it here");
+
+    // Okay: this is the address of a non-static member, and therefore
+    // a member pointer constant.
+    return Invalid;
+  }
+
+  // We found something else, but we don't know specifically what it is.
+  Diag(Arg->getSourceRange().getBegin(), 
+       diag::err_template_arg_not_pointer_to_member_form)
+      << Arg->getSourceRange();
+  Diag(DRE->getDecl()->getLocation(), 
+       diag::note_template_arg_refers_here);
+  return true;
+}
+
 /// \brief Check a template argument against its corresponding
 /// non-type template parameter.
 ///
@@ -921,7 +1074,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       (ParamType->isMemberPointerType() &&
        ParamType->getAsMemberPointerType()->getPointeeType()
          ->isFunctionType())) {
-    if (Context.hasSameUnqualifiedType(ArgType, ParamType.getNonReferenceType())) {
+    if (Context.hasSameUnqualifiedType(ArgType, 
+                                       ParamType.getNonReferenceType())) {
       // We don't have to do anything: the types already match.
     } else if (ArgType->isFunctionType() && ParamType->isPointerType()) {
       ArgType = Context.getPointerType(ArgType);
@@ -936,7 +1090,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       }
     }
 
-    if (!Context.hasSameUnqualifiedType(ArgType, ParamType.getNonReferenceType())) {
+    if (!Context.hasSameUnqualifiedType(ArgType, 
+                                        ParamType.getNonReferenceType())) {
       // We can't perform this conversion.
       Diag(Arg->getSourceRange().getBegin(), 
            diag::err_template_arg_not_convertible)
@@ -944,9 +1099,11 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       Diag(Param->getLocation(), diag::note_template_param_here);
       return true;
     }
-
-    // FIXME: Check the restrictions in p1!
-    return false;
+    
+    if (ParamType->isMemberPointerType())
+      return CheckTemplateArgumentPointerToMember(Arg);
+    
+    return CheckTemplateArgumentAddressOfObjectOrFunction(Arg);
   }
 
   if (const PointerType *ParamPtrType = ParamType->getAsPointerType()) {
@@ -975,8 +1132,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
     }
     
-    // FIXME: Check the restrictions in p1!
-    return false;
+    return CheckTemplateArgumentAddressOfObjectOrFunction(Arg);
   }
     
   if (const ReferenceType *ParamRefType = ParamType->getAsReferenceType()) {
@@ -1011,10 +1167,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
     }
     
-    // FIXME: Check the restrictions in p1!
-    // CheckAddressConstantExpression(Lvalue) can be modified to do
-    // this.
-    return false;
+    return CheckTemplateArgumentAddressOfObjectOrFunction(Arg);
   }
 
   //     -- For a non-type template-parameter of type pointer to data
@@ -1034,9 +1187,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return true;    
   }
 
-  // FIXME: Check the restrictions in p1.
-
-  return false;
+  return CheckTemplateArgumentPointerToMember(Arg);
 }
 
 /// \brief Check a template argument against its corresponding
@@ -1059,7 +1210,8 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
   if (!isa<ClassTemplateDecl>(Template)) {
     assert(isa<FunctionTemplateDecl>(Template) && 
            "Only function templates are possible here");
-    Diag(Arg->getSourceRange().getBegin(), diag::note_template_arg_refers_here)
+    Diag(Arg->getSourceRange().getBegin(), 
+         diag::note_template_arg_refers_here_func)
       << Template;
   }
 
