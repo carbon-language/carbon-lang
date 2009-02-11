@@ -204,7 +204,7 @@ fi
 cd $DEST_DIR$DEST_ROOT
 mkdir -p $DT_HOME/lib
 mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
-strip -S lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
+strip -S $DT_HOME/lib/libLTO.dylib
 rm -f lib/libLTO.a lib/libLTO.la
 
 # Compress manpages
