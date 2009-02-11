@@ -35,9 +35,16 @@ namespace llvm {
   ///
   class ScheduleDAGSDNodes : public ScheduleDAG {
   public:
+    SelectionDAG *DAG;                    // DAG of the current basic block
+
     explicit ScheduleDAGSDNodes(MachineFunction &mf);
 
     virtual ~ScheduleDAGSDNodes() {}
+
+    /// Run - perform scheduling.
+    ///
+    void Run(SelectionDAG *dag, MachineBasicBlock *bb,
+             MachineBasicBlock::iterator insertPos);
 
     /// isPassiveNode - Return true if the node is a non-scheduled leaf.
     ///

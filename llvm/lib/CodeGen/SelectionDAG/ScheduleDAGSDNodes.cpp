@@ -26,6 +26,14 @@ ScheduleDAGSDNodes::ScheduleDAGSDNodes(MachineFunction &mf)
   : ScheduleDAG(mf) {
 }
 
+/// Run - perform scheduling.
+///
+void ScheduleDAGSDNodes::Run(SelectionDAG *dag, MachineBasicBlock *bb,
+                             MachineBasicBlock::iterator insertPos) {
+  DAG = dag;
+  ScheduleDAG::Run(bb, insertPos);
+}
+
 SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
   SUnit *SU = NewSUnit(Old->getNode());
   SU->OrigNode = Old->OrigNode;

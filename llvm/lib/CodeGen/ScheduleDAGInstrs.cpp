@@ -32,6 +32,19 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineDominatorTree &mdt)
   : ScheduleDAG(mf), MLI(mli), MDT(mdt), LoopRegs(MLI, MDT) {}
 
+/// Run - perform scheduling.
+///
+void ScheduleDAGInstrs::Run(MachineBasicBlock *bb,
+                            MachineBasicBlock::iterator begin,
+                            MachineBasicBlock::iterator end,
+                            unsigned endcount) {
+  BB = bb;
+  Begin = begin;
+  InsertPosIndex = endcount;
+
+  ScheduleDAG::Run(bb, end);
+}
+
 /// getOpcode - If this is an Instruction or a ConstantExpr, return the
 /// opcode value. Otherwise return UserOp1.
 static unsigned getOpcode(const Value *V) {
@@ -146,7 +159,7 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
     TM.getSubtarget<TargetSubtarget>().getSpecialAddressLatency();
 
   // Walk the list of instructions, from bottom moving up.
-  for (MachineBasicBlock::iterator MII = End, MIE = Begin;
+  for (MachineBasicBlock::iterator MII = InsertPos, MIE = Begin;
        MII != MIE; --MII) {
     MachineInstr *MI = prior(MII);
     const TargetInstrDesc &TID = MI->getDesc();
@@ -428,7 +441,7 @@ std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
 MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
   // For MachineInstr-based scheduling, we're rescheduling the instructions in
   // the block, so start by removing them from the block.
-  while (Begin != End) {
+  while (Begin != InsertPos) {
     MachineBasicBlock::iterator I = Begin;
     ++Begin;
     BB->remove(I);
@@ -443,7 +456,7 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
       continue;
     }
 
-    BB->insert(End, SU->getInstr());
+    BB->insert(InsertPos, SU->getInstr());
   }
 
   // Update the Begin iterator, as the first instruction in the block

@@ -137,8 +137,8 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// createDefaultScheduler - This creates an instruction scheduler appropriate
   /// for the target.
-  ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
-                                      bool Fast) {
+  ScheduleDAGSDNodes* createDefaultScheduler(SelectionDAGISel *IS,
+                                             bool Fast) {
     const TargetLowering &TLI = IS->getTargetLowering();
 
     if (Fast)
@@ -662,12 +662,12 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   if (ViewSchedDAGs) CurDAG->viewGraph("scheduler input for " + BlockName);
 
   // Schedule machine code.
-  ScheduleDAG *Scheduler = CreateScheduler();
+  ScheduleDAGSDNodes *Scheduler = CreateScheduler();
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("Instruction Scheduling", GroupName);
-    Scheduler->Run(CurDAG, BB, BB->end(), BB->end());
+    Scheduler->Run(CurDAG, BB, BB->end());
   } else {
-    Scheduler->Run(CurDAG, BB, BB->end(), BB->end());
+    Scheduler->Run(CurDAG, BB, BB->end());
   }
 
   if (ViewSUnitDAGs) Scheduler->viewGraph();
@@ -1068,7 +1068,7 @@ SelectionDAGISel::FinishBasicBlock() {
 /// via the SchedulerRegistry, use it, otherwise select the
 /// one preferred by the target.
 ///
-ScheduleDAG *SelectionDAGISel::CreateScheduler() {
+ScheduleDAGSDNodes *SelectionDAGISel::CreateScheduler() {
   RegisterScheduler::FunctionPassCtor Ctor = RegisterScheduler::getDefault();
   
   if (!Ctor) {

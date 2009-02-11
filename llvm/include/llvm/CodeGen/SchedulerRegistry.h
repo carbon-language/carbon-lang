@@ -26,13 +26,13 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 class SelectionDAGISel;
-class ScheduleDAG;
+class ScheduleDAGSDNodes;
 class SelectionDAG;
 class MachineBasicBlock;
 
 class RegisterScheduler : public MachinePassRegistryNode {
 public:
-  typedef ScheduleDAG *(*FunctionPassCtor)(SelectionDAGISel*, bool);
+  typedef ScheduleDAGSDNodes *(*FunctionPassCtor)(SelectionDAGISel*, bool);
 
   static MachinePassRegistry Registry;
 
@@ -63,28 +63,28 @@ public:
 
 /// createBURRListDAGScheduler - This creates a bottom up register usage
 /// reduction list scheduler.
-ScheduleDAG* createBURRListDAGScheduler(SelectionDAGISel *IS,
-                                        bool Fast);
+ScheduleDAGSDNodes *createBURRListDAGScheduler(SelectionDAGISel *IS,
+                                               bool Fast);
 
 /// createTDRRListDAGScheduler - This creates a top down register usage
 /// reduction list scheduler.
-ScheduleDAG* createTDRRListDAGScheduler(SelectionDAGISel *IS,
-                                        bool Fast);
+ScheduleDAGSDNodes *createTDRRListDAGScheduler(SelectionDAGISel *IS,
+                                               bool Fast);
 
 /// createTDListDAGScheduler - This creates a top-down list scheduler with
 /// a hazard recognizer.
-ScheduleDAG* createTDListDAGScheduler(SelectionDAGISel *IS,
-                                      bool Fast);
+ScheduleDAGSDNodes *createTDListDAGScheduler(SelectionDAGISel *IS,
+                                             bool Fast);
 
 /// createFastDAGScheduler - This creates a "fast" scheduler.
 ///
-ScheduleDAG *createFastDAGScheduler(SelectionDAGISel *IS,
-                                    bool Fast);
+ScheduleDAGSDNodes *createFastDAGScheduler(SelectionDAGISel *IS,
+                                           bool Fast);
 
 /// createDefaultScheduler - This creates an instruction scheduler appropriate
 /// for the target.
-ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
-                                    bool Fast);
+ScheduleDAGSDNodes *createDefaultScheduler(SelectionDAGISel *IS,
+                                           bool Fast);
 
 } // end namespace llvm
 

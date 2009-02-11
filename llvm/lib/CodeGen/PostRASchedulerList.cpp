@@ -139,7 +139,7 @@ namespace {
     /// Observe - Update liveness information to account for the current
     /// instruction, which will not be scheduled.
     ///
-    void Observe(MachineInstr *MI);
+    void Observe(MachineInstr *MI, unsigned Count);
 
     /// FinishBlock - Clean up register live-range state.
     ///
@@ -254,19 +254,26 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     // Schedule each sequence of instructions not interrupted by a label
     // or anything else that effectively needs to shut down scheduling.
     MachineBasicBlock::iterator Current = MBB->end();
+    unsigned Count = MBB->size(), CurrentCount = Count;
     for (MachineBasicBlock::iterator I = Current; I != MBB->begin(); ) {
       MachineInstr *MI = prior(I);
       if (isSchedulingBoundary(MI, Fn)) {
         if (I != Current) {
-          Scheduler.Run(0, MBB, I, Current);
+          Scheduler.Run(MBB, I, Current, CurrentCount);
           Scheduler.EmitSchedule();
         }
-        Scheduler.Observe(MI);
+        Scheduler.Observe(MI, Count);
         Current = MI;
+        CurrentCount = Count - 1;
       }
       I = MI;
+      --Count;
     }
-    Scheduler.Run(0, MBB, MBB->begin(), Current);
+    assert(Count == 0 && "Instruction count mismatch!");
+    if (MBB->begin() != Current) {
+      assert(CurrentCount != 0 && "Instruction count mismatch!");
+      Scheduler.Run(MBB, MBB->begin(), Current, CurrentCount);
+    }
     Scheduler.EmitSchedule();
 
     // Clean up register live-range state.
@@ -311,7 +318,7 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
   else
     // In a non-return block, examine the live-in regs of all successors.
     for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-         SE = BB->succ_end(); SI != SE; ++SI) 
+         SE = BB->succ_end(); SI != SE; ++SI)
       for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
            E = (*SI)->livein_end(); I != E; ++I) {
         unsigned Reg = *I;
@@ -384,9 +391,9 @@ void SchedulePostRATDList::Schedule() {
 /// Observe - Update liveness information to account for the current
 /// instruction, which will not be scheduled.
 ///
-void SchedulePostRATDList::Observe(MachineInstr *MI) {
+void SchedulePostRATDList::Observe(MachineInstr *MI, unsigned Count) {
   PrescanInstruction(MI);
-  ScanInstruction(MI, 0);
+  ScanInstruction(MI, Count);
 }
 
 /// FinishBlock - Clean up register live-range state.
@@ -484,6 +491,9 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
 
     DefIndices[Reg] = Count;
     KillIndices[Reg] = ~0u;
+          assert(((KillIndices[Reg] == ~0u) !=
+                  (DefIndices[Reg] == ~0u)) &&
+               "Kill and Def maps aren't consistent for Reg!");
     Classes[Reg] = 0;
     RegRefs.erase(Reg);
     // Repeat, for all subregs.
@@ -525,6 +535,9 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
     if (KillIndices[Reg] == ~0u) {
       KillIndices[Reg] = Count;
       DefIndices[Reg] = ~0u;
+          assert(((KillIndices[Reg] == ~0u) !=
+                  (DefIndices[Reg] == ~0u)) &&
+               "Kill and Def maps aren't consistent for Reg!");
     }
     // Repeat, for all aliases.
     for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
@@ -608,8 +621,8 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // instructions from the bottom up, tracking information about liveness
   // as we go to help determine which registers are available.
   bool Changed = false;
-  unsigned Count = SUnits.size() - 1;
-  for (MachineBasicBlock::iterator I = End, E = Begin;
+  unsigned Count = InsertPosIndex - 1;
+  for (MachineBasicBlock::iterator I = InsertPos, E = Begin;
        I != E; --Count) {
     MachineInstr *MI = --I;
 
@@ -739,10 +752,16 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
           Classes[NewReg] = Classes[AntiDepReg];
           DefIndices[NewReg] = DefIndices[AntiDepReg];
           KillIndices[NewReg] = KillIndices[AntiDepReg];
+          assert(((KillIndices[NewReg] == ~0u) !=
+                  (DefIndices[NewReg] == ~0u)) &&
+               "Kill and Def maps aren't consistent for NewReg!");
 
           Classes[AntiDepReg] = 0;
           DefIndices[AntiDepReg] = KillIndices[AntiDepReg];
           KillIndices[AntiDepReg] = ~0u;
+          assert(((KillIndices[AntiDepReg] == ~0u) !=
+                  (DefIndices[AntiDepReg] == ~0u)) &&
+               "Kill and Def maps aren't consistent for AntiDepReg!");
 
           RegRefs.erase(AntiDepReg);
           Changed = true;
@@ -754,7 +773,6 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
 
     ScanInstruction(MI, Count);
   }
-  assert(Count == ~0u && "Count mismatch!");
 
   return Changed;
 }

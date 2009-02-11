@@ -629,6 +629,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-llvm::ScheduleDAG* llvm::createFastDAGScheduler(SelectionDAGISel *IS, bool) {
+llvm::ScheduleDAGSDNodes *
+llvm::createFastDAGScheduler(SelectionDAGISel *IS, bool) {
   return new ScheduleDAGFast(*IS->MF);
 }

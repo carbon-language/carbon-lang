@@ -35,7 +35,7 @@ namespace llvm {
   class FunctionLoweringInfo;
   class ScheduleHazardRecognizer;
   class GCFunctionInfo;
-  class ScheduleDAG;
+  class ScheduleDAGSDNodes;
  
 /// SelectionDAGISel - This is the common base class used for SelectionDAG-based
 /// pattern-matching instruction selectors.
@@ -133,7 +133,7 @@ private:
   /// via the SchedulerRegistry, use it, otherwise select the
   /// one preferred by the target.
   ///
-  ScheduleDAG *CreateScheduler();
+  ScheduleDAGSDNodes *CreateScheduler();
 };
 
 }

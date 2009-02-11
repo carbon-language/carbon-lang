@@ -120,6 +120,12 @@ namespace llvm {
     SmallSet<unsigned, 8> LoopLiveInRegs;
 
   public:
+    MachineBasicBlock *BB;                // Current basic block
+    MachineBasicBlock::iterator Begin;    // The beginning of the range to
+                                          // be scheduled. The range extends
+                                          // to InsertPos.
+    unsigned InsertPosIndex;              // The index in BB of InsertPos.
+
     explicit ScheduleDAGInstrs(MachineFunction &mf,
                                const MachineLoopInfo &mli,
                                const MachineDominatorTree &mdt);
@@ -138,6 +144,13 @@ namespace llvm {
       SUnits.back().OrigNode = &SUnits.back();
       return &SUnits.back();
     }
+
+    /// Run - perform scheduling.
+    ///
+    void Run(MachineBasicBlock *bb,
+             MachineBasicBlock::iterator begin,
+             MachineBasicBlock::iterator end,
+             unsigned endindex);
 
     /// BuildSchedGraph - Build SUnits from the MachineBasicBlock that we are
     /// input.

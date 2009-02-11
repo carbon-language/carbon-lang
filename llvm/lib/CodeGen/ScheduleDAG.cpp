@@ -23,7 +23,7 @@
 using namespace llvm;
 
 ScheduleDAG::ScheduleDAG(MachineFunction &mf)
-  : DAG(0), BB(0), TM(mf.getTarget()),
+  : TM(mf.getTarget()),
     TII(TM.getInstrInfo()),
     TRI(TM.getRegisterInfo()),
     TLI(TM.getTargetLowering()),
@@ -47,23 +47,18 @@ void ScheduleDAG::dumpSchedule() const {
 
 /// Run - perform scheduling.
 ///
-void ScheduleDAG::Run(SelectionDAG *dag, MachineBasicBlock *bb,
-                      MachineBasicBlock::iterator begin,
-                      MachineBasicBlock::iterator end) {
-  assert((!dag || begin == end) &&
-         "An instruction range was given for SelectionDAG scheduling!");
+void ScheduleDAG::Run(MachineBasicBlock *bb,
+                      MachineBasicBlock::iterator insertPos) {
+  BB = bb;
+  InsertPos = insertPos;
 
   SUnits.clear();
   Sequence.clear();
-  DAG = dag;
-  BB = bb;
-  Begin = begin;
-  End = end;
   EntrySU = SUnit();
   ExitSU = SUnit();
 
   Schedule();
-  
+
   DOUT << "*** Final schedule ***\n";
   DEBUG(dumpSchedule());
   DOUT << "\n";
