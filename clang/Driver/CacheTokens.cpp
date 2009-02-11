@@ -517,8 +517,10 @@ void PTHWriter::GeneratePTH() {
   // Generate the prologue.
   Out << "cfe-pth";
   Emit32(PTHManager::Version);
-  Offset JumpOffset = Out.tell();
-  Emit32(0);
+  
+  // Leave 4 words for the prologue.
+  Offset PrologueOffset = Out.tell();
+  for (unsigned i = 0; i < 4 * sizeof(uint32_t); ++i) Emit8(0);
   
   // Iterate over all the files in SourceManager.  Create a lexer
   // for each file and cache the tokens.
@@ -554,16 +556,12 @@ void PTHWriter::GeneratePTH() {
   // Write out the file table.
   Offset FileTableOff = EmitFileTable();  
   
-  // Finally, write out the offset table at the end.
-  Offset JumpTargetOffset = Out.tell();    
+  // Finally, write the prologue.
+  Out.seek(PrologueOffset);
   Emit32(IdTableOff.first);
   Emit32(IdTableOff.second);
   Emit32(FileTableOff);
   Emit32(SpellingOff);
-  
-  // Now write the offset in the prologue.
-  Out.seek(JumpOffset);
-  Emit32(JumpTargetOffset);
 }
 
 void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {

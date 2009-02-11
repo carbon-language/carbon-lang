@@ -597,16 +597,16 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   }
 
   // Compute the address of the index table at the end of the PTH file.  
-  const unsigned char *EndTable = BufBeg + ReadLE32(p);
+  const unsigned char *PrologueOffset = p;
   
-  if (EndTable >= BufEnd) {
+  if (PrologueOffset >= BufEnd) {
     InvalidPTH(Diags);
     return 0;
   }
   
   // Construct the file lookup table.  This will be used for mapping from
   // FileEntry*'s to cached tokens.
-  const unsigned char* FileTableOffset = EndTable + sizeof(uint32_t)*2;
+  const unsigned char* FileTableOffset = PrologueOffset + sizeof(uint32_t)*2;
   const unsigned char* FileTable = BufBeg + ReadLE32(FileTableOffset);
   
   if (!(FileTable > BufBeg && FileTable < BufEnd)) {
@@ -622,7 +622,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   
   // Get the location of the table mapping from persistent ids to the
   // data needed to reconstruct identifiers.
-  const unsigned char* IDTableOffset = EndTable + sizeof(uint32_t)*0;
+  const unsigned char* IDTableOffset = PrologueOffset + sizeof(uint32_t)*0;
   const unsigned char* IData = BufBeg + ReadLE32(IDTableOffset);
   
   if (!(IData >= BufBeg && IData < BufEnd)) {
@@ -632,7 +632,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   
   // Get the location of the hashtable mapping between strings and
   // persistent IDs.
-  const unsigned char* StringIdTableOffset = EndTable + sizeof(uint32_t)*1;
+  const unsigned char* StringIdTableOffset = PrologueOffset + sizeof(uint32_t)*1;
   const unsigned char* StringIdTable = BufBeg + ReadLE32(StringIdTableOffset);
   if (!(StringIdTable >= BufBeg && StringIdTable < BufEnd)) {
     InvalidPTH(Diags);
@@ -647,7 +647,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   }
   
   // Get the location of the spelling cache.
-  const unsigned char* spellingBaseOffset = EndTable + sizeof(uint32_t)*3;
+  const unsigned char* spellingBaseOffset = PrologueOffset + sizeof(uint32_t)*3;
   const unsigned char* spellingBase = BufBeg + ReadLE32(spellingBaseOffset);
   if (!(spellingBase >= BufBeg && spellingBase < BufEnd)) {
     InvalidPTH(Diags);
