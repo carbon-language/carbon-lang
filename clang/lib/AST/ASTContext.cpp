@@ -1915,15 +1915,18 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
 
 /// getLegacyIntegralTypeEncoding -
 /// Another legacy compatibility encoding: 32-bit longs are encoded as 
-/// 'l' or 'L', but not always.  For typedefs, we need to use 
+/// 'l' or 'L' , but not always.  For typedefs, we need to use 
 /// 'i' or 'I' instead if encoding a struct field, or a pointer!
 ///
 void ASTContext::getLegacyIntegralTypeEncoding (QualType &PointeeTy) const {
   if (dyn_cast<TypedefType>(PointeeTy.getTypePtr())) {
     if (const BuiltinType *BT = PointeeTy->getAsBuiltinType()) {
-      if (BT->getKind() == BuiltinType::ULong)
+      if (BT->getKind() == BuiltinType::ULong &&
+          ((const_cast<ASTContext *>(this))->getIntWidth(PointeeTy) == 32))
         PointeeTy = UnsignedIntTy;
-        else if (BT->getKind() == BuiltinType::Long)
+      else 
+        if (BT->getKind() == BuiltinType::Long &&
+            ((const_cast<ASTContext *>(this))->getIntWidth(PointeeTy) == 32))
           PointeeTy = IntTy;
     }
   }
