@@ -989,15 +989,16 @@ namespace {
         // EXTRACT_SUBREG / INSERT_SUBREG should be close to its use to
         // facilitate coalescing.
         return 0;
-      if (SU->NumSuccs == 0)
-        // If SU does not have a use, i.e. it doesn't produce a value that would
-        // be consumed (e.g. store), then it terminates a chain of computation.
-        // Give it a large SethiUllman number so it will be scheduled right
-        // before its predecessors that it doesn't lengthen their live ranges.
+      if (SU->NumSuccs == 0 && SU->NumPreds != 0)
+        // If SU does not have a register use, i.e. it doesn't produce a value
+        // that would be consumed (e.g. store), then it terminates a chain of
+        // computation.  Give it a large SethiUllman number so it will be
+        // scheduled right before its predecessors that it doesn't lengthen
+        // their live ranges.
         return 0xffff;
-      if (SU->NumPreds == 0)
-        // If SU does not have a def, schedule it close to its uses because it
-        // does not lengthen any live ranges.
+      if (SU->NumPreds == 0 && SU->NumSuccs != 0)
+        // If SU does not have a register def, schedule it close to its uses
+        // because it does not lengthen any live ranges.
         return 0;
       return SethiUllmanNumbers[SU->NodeNum];
     }
