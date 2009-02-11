@@ -776,8 +776,29 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
     for (IdentifierResolver::iterator I = IdResolver.begin(Name),
                                    IEnd = IdResolver.end(); 
          I != IEnd; ++I)
-      if ((*I)->isInIdentifierNamespace(IDNS))
+      if ((*I)->isInIdentifierNamespace(IDNS)) {
+        if ((*I)->getAttr<OverloadableAttr>()) {
+          // If this declaration has the "overloadable" attribute, we
+          // might have a set of overloaded functions.
+
+          // Figure out what scope the identifier is in.
+          while (!(S->getFlags() & Scope::DeclScope) || !S->isDeclScope(*I))
+            S = S->getParent();
+
+          // Find the last declaration in this scope (with the same
+          // name, naturally).
+          IdentifierResolver::iterator LastI = I;
+          for (++LastI; LastI != IEnd; ++LastI) {
+            if (!S->isDeclScope(*LastI))
+              break;
+          }
+
+          return LookupResult::CreateLookupResult(Context, I, LastI);
+        }
+
+        // We have a single lookup result.
         return LookupResult::CreateLookupResult(Context, *I);
+      }
   } else {
     // Perform C++ unqualified name lookup.
     std::pair<bool, LookupResult> MaybeResult =

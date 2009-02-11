@@ -43,6 +43,7 @@ public:
     NoThrow,
     ObjCGC,
     ObjCNSObject,
+    Overloadable, // Clang-specific
     Packed,
     StdCall,
     TransparentUnion,
@@ -429,6 +430,14 @@ static bool classof(const Attr *A) { return A->getKind() == ObjCNSObject; }
 static bool classof(const ObjCNSObjectAttr *A) { return true; }
 };
   
+class OverloadableAttr : public Attr {
+public:
+  OverloadableAttr() : Attr(Overloadable) { }
+
+  static bool classof(const Attr *A) { return A->getKind() == Overloadable; }
+  static bool classof(const OverloadableAttr *) { return true; }
+};
+
 class BlocksAttr : public Attr {
 public:
   enum BlocksAttrTypes {

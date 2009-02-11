@@ -393,6 +393,12 @@ DIAG(err_attribute_cleanup_func_arg_incompatible_type, ERROR,
 // Clang-Specific Attributes
 DIAG(err_attribute_iboutlet_non_ivar, ERROR,
      "'iboutlet' attribute can only be applied to instance variables")
+DIAG(err_attribute_overloadable_not_function, ERROR,
+     "'overloadable' attribute can only be applied to a function")
+DIAG(err_attribute_overloadable_missing, ERROR,
+     "overloaded function %0 must have the 'overloadable' attribute")
+DIAG(note_attribute_overloadable_prev_overload, NOTE,
+     "previous overload of function is here")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_param_with_void_type, ERROR,

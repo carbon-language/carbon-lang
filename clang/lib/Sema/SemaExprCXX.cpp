@@ -809,6 +809,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   case ICK_Integral_Conversion:
   case ICK_Floating_Conversion:
   case ICK_Floating_Integral:
+  case ICK_Compatible_Conversion:
+      // FIXME: Go deeper to get the unqualified type!
     FromType = ToType.getUnqualifiedType();
     ImpCastExprToType(From, FromType);
     break;

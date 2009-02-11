@@ -45,6 +45,7 @@ GetConversionCategory(ImplicitConversionKind Kind) {
     ICC_Conversion,
     ICC_Conversion,
     ICC_Conversion,
+    ICC_Conversion,
     ICC_Conversion
   };
   return Category[(int)Kind];
@@ -62,6 +63,7 @@ ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind) {
     ICR_Exact_Match,
     ICR_Promotion,
     ICR_Promotion,
+    ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
@@ -90,6 +92,7 @@ const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
     "Pointer conversion",
     "Pointer-to-member conversion",
     "Boolean conversion",
+    "Compatible-types conversion",
     "Derived-to-base conversion"
   };
   return Name[Kind];
@@ -371,7 +374,8 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
   ImplicitConversionSequence ICS;
   if (IsStandardConversion(From, ToType, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
-  else if (IsUserDefinedConversion(From, ToType, ICS.UserDefined, 
+  else if (getLangOptions().CPlusPlus &&
+           IsUserDefinedConversion(From, ToType, ICS.UserDefined, 
                                    !SuppressUserConversions, AllowExplicit)) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
     // C++ [over.ics.user]p4:
@@ -429,16 +433,21 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
 {
   QualType FromType = From->getType();
 
-  // There are no standard conversions for class types, so abort early.
-  if (FromType->isRecordType() || ToType->isRecordType())
-    return false;
-
   // Standard conversions (C++ [conv])
   SCS.setAsIdentityConversion();
   SCS.Deprecated = false;
   SCS.IncompatibleObjC = false;
   SCS.FromTypePtr = FromType.getAsOpaquePtr();
   SCS.CopyConstructor = 0;
+
+  // There are no standard conversions for class types in C++, so
+  // abort early. When overloading in C, however, we do permit 
+  if (FromType->isRecordType() || ToType->isRecordType()) {
+    if (getLangOptions().CPlusPlus)
+      return false;
+
+    // When we're overloading in C, we allow, as standard conversions, 
+  }
 
   // The first conversion can be an lvalue-to-rvalue conversion,
   // array-to-pointer conversion, or function-to-pointer conversion
@@ -455,7 +464,10 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
 
     // If T is a non-class type, the type of the rvalue is the
     // cv-unqualified version of T. Otherwise, the type of the rvalue
-    // is T (C++ 4.1p1).
+    // is T (C++ 4.1p1). C++ can't get here with class types; in C, we
+    // just strip the qualifiers because they don't matter.
+
+    // FIXME: Doesn't see through to qualifiers behind a typedef!
     FromType = FromType.getUnqualifiedType();
   }
   // Array-to-pointer conversion (C++ 4.2)
@@ -522,9 +534,10 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   // point promotion, integral conversion, floating point conversion,
   // floating-integral conversion, pointer conversion,
   // pointer-to-member conversion, or boolean conversion (C++ 4p1).
+  // For overloading in C, this can also be a "compatible-type"
+  // conversion.
   bool IncompatibleObjC = false;
-  if (Context.getCanonicalType(FromType).getUnqualifiedType() ==
-      Context.getCanonicalType(ToType).getUnqualifiedType()) {
+  if (Context.hasSameUnqualifiedType(FromType, ToType)) {
     // The unqualified versions of the types are the same: there's no
     // conversion to do.
     SCS.Second = ICK_Identity;
@@ -580,6 +593,11 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
             FromType->isMemberPointerType())) {
     SCS.Second = ICK_Boolean_Conversion;
     FromType = Context.BoolTy;
+  }
+  // Compatible conversions (Clang extension for C function overloading)
+  else if (!getLangOptions().CPlusPlus && 
+           Context.typesAreCompatible(ToType, FromType)) {
+    SCS.Second = ICK_Compatible_Conversion;
   } else {
     // No second conversion required.
     SCS.Second = ICK_Identity;
@@ -847,6 +865,16 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
   }
 
+  // When we're overloading in C, we allow a special kind of pointer
+  // conversion for compatible-but-not-identical pointee types.
+  if (!getLangOptions().CPlusPlus && 
+      Context.typesAreCompatible(FromPointeeType, ToPointeeType)) {
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
+                                                       ToPointeeType,
+                                                       ToType, Context);    
+    return true;
+  }
+
   // C++ [conv.ptr]p3:
   // 
   //   An rvalue of type "pointer to cv D," where D is a class type,
@@ -860,7 +888,8 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   //
   // Note that we do not check for ambiguity or inaccessibility
   // here. That is handled by CheckPointerConversion.
-  if (FromPointeeType->isRecordType() && ToPointeeType->isRecordType() &&
+  if (getLangOptions().CPlusPlus &&
+      FromPointeeType->isRecordType() && ToPointeeType->isRecordType() &&
       IsDerivedFrom(FromPointeeType, ToPointeeType)) {
     ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
                                                        ToPointeeType,
@@ -1756,18 +1785,7 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
 ImplicitConversionSequence 
 Sema::TryCopyInitialization(Expr *From, QualType ToType, 
                             bool SuppressUserConversions) {
-  if (!getLangOptions().CPlusPlus) {
-    // In C, copy initialization is the same as performing an assignment.
-    AssignConvertType ConvTy =
-      CheckSingleAssignmentConstraints(ToType, From);
-    ImplicitConversionSequence ICS;
-    if (getLangOptions().NoExtensions? ConvTy != Compatible
-                                     : ConvTy == Incompatible)
-      ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
-    else
-      ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
-    return ICS;
-  } else if (ToType->isReferenceType()) {
+  if (ToType->isReferenceType()) {
     ImplicitConversionSequence ICS;
     CheckReferenceInit(From, ToType, &ICS, SuppressUserConversions);
     return ICS;

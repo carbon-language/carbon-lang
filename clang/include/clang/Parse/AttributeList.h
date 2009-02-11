@@ -62,6 +62,7 @@ public:
     AT_nonnull,
     AT_noreturn,
     AT_nothrow,
+    AT_overloadable,      // Clang-specific
     AT_packed,
     AT_pure,
     AT_stdcall,

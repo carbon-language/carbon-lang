@@ -1909,10 +1909,14 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     Ovl = dyn_cast<OverloadedFunctionDecl>(DRExpr->getDecl());
   }
 
-  if (getLangOptions().CPlusPlus && (FDecl || Ovl || UnqualifiedName)) {
+  if (Ovl || (getLangOptions().CPlusPlus && (FDecl || UnqualifiedName))) {
     // We don't perform ADL for builtins.
     if (FDecl && FDecl->getIdentifier() && 
         FDecl->getIdentifier()->getBuiltinID())
+      ADL = false;
+
+    // We don't perform ADL in C.
+    if (!getLangOptions().CPlusPlus)
       ADL = false;
 
     if (Ovl || ADL) {

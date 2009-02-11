@@ -98,6 +98,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "constructor", 11)) return AT_constructor;
     if (!memcmp(Str, "unavailable", 11)) return AT_unavailable;
     break;
+  case 12:
+    if (!memcmp(Str, "overloadable", 12)) return AT_overloadable;
+    break;
   case 13:
     if (!memcmp(Str, "address_space", 13)) return AT_address_space;
     if (!memcmp(Str, "always_inline", 13)) return AT_always_inline;

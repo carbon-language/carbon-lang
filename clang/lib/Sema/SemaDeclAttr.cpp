@@ -593,6 +593,21 @@ static void HandleObjCNSObject(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new ObjCNSObjectAttr);
 }
 
+static void 
+HandleOverloadableAttr(Decl *D, const AttributeList &Attr, Sema &S) {
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+
+  if (!isa<FunctionDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_overloadable_not_function);
+    return;
+  }
+
+  D->addAttr(new OverloadableAttr);
+}
+
 static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (!Attr.getParameterName()) {    
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
@@ -1301,6 +1316,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
     HandleTransparentUnionAttr(D, Attr, S);
     break;
   case AttributeList::AT_objc_gc:     HandleObjCGCAttr    (D, Attr, S); break;
+  case AttributeList::AT_overloadable:HandleOverloadableAttr(D, Attr, S); break;
   case AttributeList::AT_nsobject:    HandleObjCNSObject  (D, Attr, S); break;
   case AttributeList::AT_blocks:      HandleBlocksAttr    (D, Attr, S); break;
   case AttributeList::AT_sentinel:    HandleSentinelAttr  (D, Attr, S); break;

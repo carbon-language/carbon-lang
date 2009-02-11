@@ -113,6 +113,25 @@ void Sema::PopDeclContext() {
   CurContext = getContainingDC(CurContext);
 }
 
+/// \brief Determine whether we allow overloading of the function
+/// PrevDecl with another declaration.
+///
+/// This routine determines whether overloading is possible, not
+/// whether some new function is actually an overload. It will return
+/// true in C++ (where we can always provide overloads) or, as an
+/// extension, in C when the previous function is already an
+/// overloaded function declaration or has the "overloadable"
+/// attribute.
+static bool AllowOverloadingOfFunction(Decl *PrevDecl, ASTContext &Context) {
+  if (Context.getLangOptions().CPlusPlus)
+    return true;
+
+  if (isa<OverloadedFunctionDecl>(PrevDecl))
+    return true;
+
+  return PrevDecl->getAttr<OverloadableAttr>() != 0;
+}
+
 /// Add this decl to the scope shadowed decl chains.
 void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
   // Move up the scope chain until we find the nearest enclosing
@@ -173,7 +192,8 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
         return;
       }
     }
-  } else if (getLangOptions().CPlusPlus && isa<FunctionDecl>(D)) {
+  } else if (isa<FunctionDecl>(D) &&
+             AllowOverloadingOfFunction(D, Context)) {
     // We are pushing the name of a function, which might be an
     // overloaded name.
     FunctionDecl *FD = cast<FunctionDecl>(D);
@@ -1637,15 +1657,16 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     
   // Merge the decl with the existing one if appropriate. Since C functions
   // are in a flat namespace, make sure we consider decls in outer scopes.
+  bool OverloadableAttrRequired = false;
   bool Redeclaration = false;
   if (PrevDecl &&
       (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, DC, S))) {
-    // If C++, determine whether NewFD is an overload of PrevDecl or
+    // Determine whether NewFD is an overload of PrevDecl or
     // a declaration that requires merging. If it's an overload,
     // there's no more work to do here; we'll just add the new
     // function to the scope.
     OverloadedFunctionDecl::function_iterator MatchedDecl;
-    if (!getLangOptions().CPlusPlus ||
+    if (!AllowOverloadingOfFunction(PrevDecl, Context) || 
         !IsOverload(NewFD, PrevDecl, MatchedDecl)) {
       Decl *OldDecl = PrevDecl;
 
@@ -1672,6 +1693,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         }
       }
     }
+
+    // If we're in C, this new declaration better have the
+    // "overloadable" attribute on it.
+    if (!getLangOptions().CPlusPlus && 
+        PrevDecl->getAttr<OverloadableAttr>())
+      OverloadableAttrRequired = true;
   }
 
   if (D.getCXXScopeSpec().isSet() &&
@@ -1711,6 +1738,17 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Handle attributes. We need to have merged decls when handling attributes
   // (for example to check for conflicts, etc).
   ProcessDeclAttributes(NewFD, D);
+
+  if (OverloadableAttrRequired && !NewFD->getAttr<OverloadableAttr>()) {
+    // If a function name is overloadable in C, then every function
+    // with that name must be marked "overloadable".
+    Diag(NewFD->getLocation(), diag::err_attribute_overloadable_missing)
+      << NewFD;
+    if (PrevDecl)
+      Diag(PrevDecl->getLocation(), 
+           diag::note_attribute_overloadable_prev_overload);
+    NewFD->addAttr(new OverloadableAttr);
+  }
 
   if (getLangOptions().CPlusPlus) {
     // In C++, check default arguments now that we have merged decls. Unless
