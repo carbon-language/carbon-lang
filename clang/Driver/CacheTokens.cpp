@@ -273,8 +273,12 @@ class VISIBILITY_HIDDEN PTHWriter {
     for ( ; I != E ; ++I) Out << *I;
   }
   
-  std::pair<Offset,std::pair<Offset, Offset> > EmitIdentifierTable();
-  Offset EmitFileTable();
+  std::pair<Offset, Offset> EmitIdentifierTable();
+  
+  /// EmitFileTable - Emit a table mapping from file name strings to PTH
+  /// token data.
+  Offset EmitFileTable() { return PM.Emit(Out); }
+
   PCHEntry LexTokens(Lexer& L);
   Offset EmitCachedSpellings();
   
@@ -361,8 +365,7 @@ public:
 };
 }
 
-std::pair<Offset,std::pair<Offset,Offset> >
-PTHWriter::EmitIdentifierTable() {  
+std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {  
   llvm::BumpPtrAllocator Alloc;
 
   // Build an inverse map from persistent IDs -> IdentifierInfo*.
@@ -388,9 +391,6 @@ PTHWriter::EmitIdentifierTable() {
   Offset LexicalOff = Out.tell();
   for (unsigned i = 0; i < idcount ; ++i) Emit32(LexicalOrder[i]);
   
-  // Write out the string data itself.
-  Offset DataOff = Out.tell();
-    
   for (unsigned i = 0; i < idcount; ++i) {
     IDData& d = IIDMap[i];
     d.FileOffset = Out.tell();            // Record the location for this data.  
@@ -408,7 +408,7 @@ PTHWriter::EmitIdentifierTable() {
   Emit32(idcount);  // Emit the number of identifiers.
   for (unsigned i = 0 ; i < idcount; ++i) Emit32(IIDMap[i].FileOffset);
 
-  return std::make_pair(DataOff, std::make_pair(IDOff, LexicalOff));
+  return std::make_pair(IDOff, LexicalOff);
 }
 
 
@@ -616,8 +616,7 @@ void PTHWriter::GeneratePTH() {
   }
 
   // Write out the identifier table.
-  const std::pair<Offset, std::pair<Offset,Offset> >& IdTableOff 
-    = EmitIdentifierTable();
+  const std::pair<Offset,Offset>& IdTableOff = EmitIdentifierTable();
   
   // Write out the cached strings table.
   Offset SpellingOff = EmitCachedSpellings();
@@ -628,8 +627,7 @@ void PTHWriter::GeneratePTH() {
   // Finally, write out the offset table at the end.
   Offset JumpTargetOffset = Out.tell();    
   Emit32(IdTableOff.first);
-  Emit32(IdTableOff.second.first);
-  Emit32(IdTableOff.second.second);
+  Emit32(IdTableOff.second);
   Emit32(FileTableOff);
   Emit32(SpellingOff);
   
@@ -659,11 +657,3 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   PW.GeneratePTH();
 }
 
-
-//===----------------------------------------------------------------------===//
-// Client code of on-disk hashtable logic.
-//===----------------------------------------------------------------------===//
-
-Offset PTHWriter::EmitFileTable() {
-  return PM.Emit(Out);
-}

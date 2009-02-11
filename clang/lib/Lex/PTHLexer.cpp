@@ -551,7 +551,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   
   // Construct the file lookup table.  This will be used for mapping from
   // FileEntry*'s to cached tokens.
-  const unsigned char* FileTableOffset = EndTable + sizeof(uint32_t)*3;
+  const unsigned char* FileTableOffset = EndTable + sizeof(uint32_t)*2;
   const unsigned char* FileTable = BufBeg + ReadLE32(FileTableOffset);
   
   if (!(FileTable > BufBeg && FileTable < BufEnd)) {
@@ -567,7 +567,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   
   // Get the location of the table mapping from persistent ids to the
   // data needed to reconstruct identifiers.
-  const unsigned char* IDTableOffset = EndTable + sizeof(uint32_t)*1;
+  const unsigned char* IDTableOffset = EndTable + sizeof(uint32_t)*0;
   const unsigned char* IData = BufBeg + ReadLE32(IDTableOffset);
   
   if (!(IData >= BufBeg && IData < BufEnd)) {
@@ -576,7 +576,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   }
   
   // Get the location of the lexigraphically-sorted table of persistent IDs.
-  const unsigned char* SortedIdTableOffset = EndTable + sizeof(uint32_t)*2;
+  const unsigned char* SortedIdTableOffset = EndTable + sizeof(uint32_t)*1;
   const unsigned char* SortedIdTable = BufBeg + ReadLE32(SortedIdTableOffset);
   if (!(SortedIdTable >= BufBeg && SortedIdTable < BufEnd)) {
     InvalidPTH(Diags);
@@ -584,7 +584,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   }
   
   // Get the location of the spelling cache.
-  const unsigned char* spellingBaseOffset = EndTable + sizeof(uint32_t)*4;
+  const unsigned char* spellingBaseOffset = EndTable + sizeof(uint32_t)*3;
   const unsigned char* spellingBase = BufBeg + ReadLE32(spellingBaseOffset);
   if (!(spellingBase >= BufBeg && spellingBase < BufEnd)) {
     InvalidPTH(Diags);
