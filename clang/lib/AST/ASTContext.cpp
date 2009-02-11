@@ -1969,13 +1969,19 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       case BuiltinType::UChar:      encoding = 'C'; break;
       case BuiltinType::UShort:     encoding = 'S'; break;
       case BuiltinType::UInt:       encoding = 'I'; break;
-      case BuiltinType::ULong:      encoding = 'L'; break;
+      case BuiltinType::ULong:      
+          encoding = 
+            (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'L' : 'Q'; 
+          break;
       case BuiltinType::ULongLong:  encoding = 'Q'; break;
       case BuiltinType::Char_S:
       case BuiltinType::SChar:      encoding = 'c'; break;
       case BuiltinType::Short:      encoding = 's'; break;
       case BuiltinType::Int:        encoding = 'i'; break;
-      case BuiltinType::Long:       encoding = 'l'; break;
+      case BuiltinType::Long:       
+        encoding = 
+          (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'l' : 'q'; 
+        break;
       case BuiltinType::LongLong:   encoding = 'q'; break;
       case BuiltinType::Float:      encoding = 'f'; break;
       case BuiltinType::Double:     encoding = 'd'; break;
