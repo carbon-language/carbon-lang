@@ -3952,6 +3952,25 @@ void Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
   } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E)) {
     assert(UnOp->getOpcode() == UnaryOperator::AddrOf && 
            "Can only take the address of an overloaded function");
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
+      if (Method->isStatic()) {
+        // Do nothing: static member functions aren't any different
+        // from non-member functions.
+      }
+      else if (QualifiedDeclRefExpr *DRE 
+                 = dyn_cast<QualifiedDeclRefExpr>(UnOp->getSubExpr())) {
+        // We have taken the address of a pointer to member
+        // function. Perform the computation here so that we get the
+        // appropriate pointer to member type.
+        DRE->setDecl(Fn);
+        DRE->setType(Fn->getType());
+        QualType ClassType
+          = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
+        E->setType(Context.getMemberPointerType(Fn->getType(), 
+                                                ClassType.getTypePtr()));
+        return;
+      }
+    }
     FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
     E->setType(Context.getPointerType(UnOp->getSubExpr()->getType()));
   } else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E)) {

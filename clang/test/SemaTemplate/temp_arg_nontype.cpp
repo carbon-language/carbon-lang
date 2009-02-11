@@ -79,3 +79,26 @@ A4<*X_volatile_ptr> *a15_2; // expected-error{{reference binding of non-type tem
 A4<y> *15_3; //  expected-error{{non-type template parameter of reference type 'class X const &' cannot bind to template argument of type 'struct Y'}}\
                   // FIXME: expected-error{{expected unqualified-id}}
 
+template<int (&fr)(int)> struct A5; // expected-note 2{{template parameter is declared here}}
+A5<h> *a16_1;
+A5<(h)> *a16_2;
+A5<f> *a16_3;
+A5<(f)> *a16_4;
+A5<h2> *a16_6;  // expected-error{{non-type template argument of type 'float (float)' cannot be converted to a value of type 'int (&)(int)'}} \
+// FIXME: expected-error{{expected unqualified-id}}
+A5<g> *a14_7; // expected-error{{non-type template argument of type '<overloaded function type>' cannot be converted to a value of type 'int (&)(int)'}}\
+// FIXME: expected-error{{expected unqualified-id}}
+// FIXME: the first error includes the string <overloaded function
+// type>, which makes Doug slightly unhappy.
+
+struct Z {
+  int foo(int);
+  float bar(float);
+  int bar(int);
+  double baz(double);
+};
+template<int (Z::*pmf)(int)> struct A6; // expected-note{{template parameter is declared here}}
+A6<&Z::foo> *a17_1;
+A6<&Z::bar> *a17_2;
+A6<&Z::baz> *a17_3; // expected-error{{non-type template argument of type 'double (struct Z::*)(double)' cannot be converted to a value of type 'int (struct Z::*)(int)'}} \
+// FIXME: expected-error{{expected unqualified-id}}

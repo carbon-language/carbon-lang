@@ -896,58 +896,45 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return false;
   }
 
-  if (const PointerType *ParamPtrType = ParamType->getAsPointerType()) {
-    if (ParamPtrType->getPointeeType()->isObjectType()) {
-      // -- for a non-type template-parameter of type pointer to
-      //    object, qualification conversions (4.4) and the
-      //    array-to-pointer conversion (4.2) are applied.
-      if (ArgType->isArrayType()) {
-        ArgType = Context.getArrayDecayedType(ArgType);
-        ImpCastExprToType(Arg, ArgType);
-      }
-
-      if (IsQualificationConversion(ArgType, ParamType)) {
-        ArgType = ParamType;
-        ImpCastExprToType(Arg, ParamType);
-      }
-
-      if (!hasSameUnqualifiedType(ArgType, ParamType)) {
-        // We can't perform this conversion.
-        Diag(Arg->getSourceRange().getBegin(), 
-             diag::err_template_arg_not_convertible)
-          << Arg->getType() << Param->getType() << Arg->getSourceRange();
-        Diag(Param->getLocation(), diag::note_template_param_here);
-        return true;
-      }
-
-      // FIXME: Check the restrictions in p1!
-      return false;
-    }
-    
-    assert(ParamPtrType->getPointeeType()->isFunctionType() &&
-           "Only function pointers remain");
-    //   -- For a non-type template-parameter of type pointer to
-    //      function, only the function-to-pointer conversion (4.3) is
-    //      applied. If the template-argument represents a set of
-    //      overloaded functions (or a pointer to such), the matching
-    //      function is selected from the set (13.4).
-    if (hasSameUnqualifiedType(ArgType, ParamType)) {
+  // Handle pointer-to-function, reference-to-function, and
+  // pointer-to-member-function all in (roughly) the same way.
+  if (// -- For a non-type template-parameter of type pointer to
+      //    function, only the function-to-pointer conversion (4.3) is
+      //    applied. If the template-argument represents a set of
+      //    overloaded functions (or a pointer to such), the matching
+      //    function is selected from the set (13.4).
+      (ParamType->isPointerType() &&
+       ParamType->getAsPointerType()->getPointeeType()->isFunctionType()) ||
+      // -- For a non-type template-parameter of type reference to
+      //    function, no conversions apply. If the template-argument
+      //    represents a set of overloaded functions, the matching
+      //    function is selected from the set (13.4).
+      (ParamType->isReferenceType() &&
+       ParamType->getAsReferenceType()->getPointeeType()->isFunctionType()) ||
+      // -- For a non-type template-parameter of type pointer to
+      //    member function, no conversions apply. If the
+      //    template-argument represents a set of overloaded member
+      //    functions, the matching member function is selected from
+      //    the set (13.4).
+      (ParamType->isMemberPointerType() &&
+       ParamType->getAsMemberPointerType()->getPointeeType()
+         ->isFunctionType())) {
+    if (hasSameUnqualifiedType(ArgType, ParamType.getNonReferenceType())) {
       // We don't have to do anything: the types already match.
-    }
-    else if (ArgType->isFunctionType()) {
+    } else if (ArgType->isFunctionType() && ParamType->isPointerType()) {
       ArgType = Context.getPointerType(ArgType);
       ImpCastExprToType(Arg, ArgType);
     } else if (FunctionDecl *Fn 
                  = ResolveAddressOfOverloadedFunction(Arg, ParamType, true)) {
       FixOverloadedFunctionReference(Arg, Fn);
       ArgType = Arg->getType();
-      if (ArgType->isFunctionType()) {
+      if (ArgType->isFunctionType() && ParamType->isPointerType()) {
         ArgType = Context.getPointerType(Arg->getType());
         ImpCastExprToType(Arg, ArgType);
       }
     }
 
-    if (!hasSameUnqualifiedType(ArgType, ParamType)) {
+    if (!hasSameUnqualifiedType(ArgType, ParamType.getNonReferenceType())) {
       // We can't perform this conversion.
       Diag(Arg->getSourceRange().getBegin(), 
            diag::err_template_arg_not_convertible)
@@ -960,43 +947,73 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return false;
   }
 
-  if (const ReferenceType *ParamRefType = ParamType->getAsReferenceType()) {
-    if (ParamRefType->getPointeeType()->isObjectType()) {
-      // -- For a non-type template-parameter of type reference to
-      //    object, no conversions apply. The type referred to by the
-      //    reference may be more cv-qualified than the (otherwise
-      //    identical) type of the template-argument. The
-      //    template-parameter is bound directly to the
-      //    template-argument, which must be an lvalue.
-      if (!hasSameUnqualifiedType(ParamRefType->getPointeeType(), ArgType)) {
-        Diag(Arg->getSourceRange().getBegin(), 
-             diag::err_template_arg_no_ref_bind)
-          << Param->getType() << Arg->getType()
-          << Arg->getSourceRange();
-        Diag(Param->getLocation(), diag::note_template_param_here);
-        return true;
-      }
+  if (const PointerType *ParamPtrType = ParamType->getAsPointerType()) {
+    //   -- for a non-type template-parameter of type pointer to
+    //      object, qualification conversions (4.4) and the
+    //      array-to-pointer conversion (4.2) are applied.
+    assert(ParamPtrType->getPointeeType()->isObjectType() &&
+           "Only object pointers allowed here");
 
-      unsigned ParamQuals 
-        = Context.getCanonicalType(ParamType).getCVRQualifiers();
-      unsigned ArgQuals = Context.getCanonicalType(ArgType).getCVRQualifiers();
-        
-      if ((ParamQuals | ArgQuals) != ParamQuals) {
-        Diag(Arg->getSourceRange().getBegin(),
-             diag::err_template_arg_ref_bind_ignores_quals)
-          << Param->getType() << Arg->getType()
-          << Arg->getSourceRange();
-        Diag(Param->getLocation(), diag::note_template_param_here);
-        return true;
-      }
-
-      // FIXME: Check the restrictions in p1!
-      // CheckAddressConstantExpression(Lvalue) can be modified to do
-      // this.
-      return false;
+    if (ArgType->isArrayType()) {
+      ArgType = Context.getArrayDecayedType(ArgType);
+      ImpCastExprToType(Arg, ArgType);
     }
+    
+    if (IsQualificationConversion(ArgType, ParamType)) {
+      ArgType = ParamType;
+      ImpCastExprToType(Arg, ParamType);
+    }
+    
+    if (!hasSameUnqualifiedType(ArgType, ParamType)) {
+      // We can't perform this conversion.
+      Diag(Arg->getSourceRange().getBegin(), 
+           diag::err_template_arg_not_convertible)
+        << Arg->getType() << Param->getType() << Arg->getSourceRange();
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+    }
+    
+    // FIXME: Check the restrictions in p1!
+    return false;
   }
+    
+  if (const ReferenceType *ParamRefType = ParamType->getAsReferenceType()) {
+    //   -- For a non-type template-parameter of type reference to
+    //      object, no conversions apply. The type referred to by the
+    //      reference may be more cv-qualified than the (otherwise
+    //      identical) type of the template-argument. The
+    //      template-parameter is bound directly to the
+    //      template-argument, which must be an lvalue.
+    assert(ParamRefType->getPointeeType()->isObjectType() &&
+           "Only object references allowed here");
 
+    if (!hasSameUnqualifiedType(ParamRefType->getPointeeType(), ArgType)) {
+      Diag(Arg->getSourceRange().getBegin(), 
+           diag::err_template_arg_no_ref_bind)
+        << Param->getType() << Arg->getType()
+        << Arg->getSourceRange();
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+    }
+
+    unsigned ParamQuals 
+      = Context.getCanonicalType(ParamType).getCVRQualifiers();
+    unsigned ArgQuals = Context.getCanonicalType(ArgType).getCVRQualifiers();
+    
+    if ((ParamQuals | ArgQuals) != ParamQuals) {
+      Diag(Arg->getSourceRange().getBegin(),
+           diag::err_template_arg_ref_bind_ignores_quals)
+        << Param->getType() << Arg->getType()
+        << Arg->getSourceRange();
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+    }
+    
+    // FIXME: Check the restrictions in p1!
+    // CheckAddressConstantExpression(Lvalue) can be modified to do
+    // this.
+    return false;
+  }
   // FIXME: p5 has a lot more checks to perform!
 
   return false;
