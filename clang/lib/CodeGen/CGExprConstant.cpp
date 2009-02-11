@@ -238,7 +238,6 @@ public:
   }
 
   llvm::Constant *EmitUnionInitialization(InitListExpr *ILE) {
-    RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
     const llvm::Type *Ty = ConvertType(ILE->getType());
 
     // If this is an empty initializer list, we value-initialize the
@@ -252,6 +251,7 @@ public:
 #ifndef NDEBUG
       // Make sure that it's really an empty and not a failure of
       // semantic analysis.
+      RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
       for (RecordDecl::field_iterator Field = RD->field_begin(),
                                    FieldEnd = RD->field_end();
            Field != FieldEnd; ++Field)
