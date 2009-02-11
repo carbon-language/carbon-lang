@@ -518,7 +518,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
   SourceLocation PreviousDefaultArgLoc;
 
   // Self initialization to avoid warnings.
-  TemplateParameterList::iterator OldParam = OldParam;
+  TemplateParameterList::iterator OldParam = NewParams->end();
   if (OldParams)
     OldParam = OldParams->begin();
 
