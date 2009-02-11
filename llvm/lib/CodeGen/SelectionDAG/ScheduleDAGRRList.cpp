@@ -1252,8 +1252,8 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           if (canClobberPhysRegDefs(SuccSU, SU, TII, TRI))
             continue;
         }
-        // Don't constraint extract_subreg / insert_subreg these may be
-        // coalesced away. We don't them close to their uses.
+        // Don't constrain extract_subreg / insert_subreg; these may be
+        // coalesced away. We want them close to their uses.
         unsigned SuccOpc = SuccSU->getNode()->getMachineOpcode();
         if (SuccOpc == TargetInstrInfo::EXTRACT_SUBREG ||
             SuccOpc == TargetInstrInfo::INSERT_SUBREG)
