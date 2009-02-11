@@ -82,16 +82,11 @@ namespace llvm {
     ///
     std::vector<DebugLocTuple> DebugLocations;
 
-    /// DebugIdsMap - This maps DebugLocTuple's to indices into DebugLocations
-    /// vector.
+    /// DebugIdMap - This maps DebugLocTuple's to indices into the
+    /// DebugLocations vector.
     DenseMap<DebugLocTuple, unsigned> DebugIdMap;
 
     DebugLocTracker() {}
-
-    ~DebugLocTracker() {
-      DebugLocations.clear();
-      DebugIdMap.clear();
-    }
   };
   
 } // end namespace llvm
