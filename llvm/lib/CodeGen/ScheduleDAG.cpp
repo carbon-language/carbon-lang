@@ -74,8 +74,9 @@ void ScheduleDAG::Run(SelectionDAG *dag, MachineBasicBlock *bb,
 /// specified node.
 void SUnit::addPred(const SDep &D) {
   // If this node already has this depenence, don't add a redundant one.
-  for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
-    if (Preds[i] == D)
+  for (SmallVector<SDep, 4>::const_iterator I = Preds.begin(), E = Preds.end();
+       I != E; ++I)
+    if (*I == D)
       return;
   // Now add a corresponding succ to N.
   SDep P = D;
