@@ -919,7 +919,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       (ParamType->isMemberPointerType() &&
        ParamType->getAsMemberPointerType()->getPointeeType()
          ->isFunctionType())) {
-    if (hasSameUnqualifiedType(ArgType, ParamType.getNonReferenceType())) {
+    if (ArgType.isSameIgnoringQualifiers(ParamType.getNonReferenceType())) {
       // We don't have to do anything: the types already match.
     } else if (ArgType->isFunctionType() && ParamType->isPointerType()) {
       ArgType = Context.getPointerType(ArgType);
@@ -934,7 +934,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       }
     }
 
-    if (!hasSameUnqualifiedType(ArgType, ParamType.getNonReferenceType())) {
+    if (!ArgType.isSameIgnoringQualifiers(ParamType.getNonReferenceType())) {
       // We can't perform this conversion.
       Diag(Arg->getSourceRange().getBegin(), 
            diag::err_template_arg_not_convertible)
@@ -964,7 +964,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       ImpCastExprToType(Arg, ParamType);
     }
     
-    if (!hasSameUnqualifiedType(ArgType, ParamType)) {
+    if (!ArgType.isSameIgnoringQualifiers(ParamType)) {
       // We can't perform this conversion.
       Diag(Arg->getSourceRange().getBegin(), 
            diag::err_template_arg_not_convertible)
@@ -987,7 +987,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     assert(ParamRefType->getPointeeType()->isObjectType() &&
            "Only object references allowed here");
 
-    if (!hasSameUnqualifiedType(ParamRefType->getPointeeType(), ArgType)) {
+    if (!ArgType.isSameIgnoringQualifiers(ParamRefType->getPointeeType())) {
       Diag(Arg->getSourceRange().getBegin(), 
            diag::err_template_arg_no_ref_bind)
         << Param->getType() << Arg->getType()
@@ -1019,7 +1019,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   //        member, qualification conversions (4.4) are applied.
   assert(ParamType->isMemberPointerType() && "Only pointers to members remain");
 
-  if (hasSameUnqualifiedType(ParamType, ArgType)) {
+  if (ParamType.isSameIgnoringQualifiers(ArgType)) {
     // Types match exactly: nothing more to do here.
   } else if (IsQualificationConversion(ArgType, ParamType)) {
     ImpCastExprToType(Arg, ParamType);

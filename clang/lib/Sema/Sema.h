@@ -281,9 +281,6 @@ public:
                               SourceRange Range2 = SourceRange(),
                               QualType PrintType = QualType());
 
-  bool hasSameType(QualType T1, QualType T2);
-  bool hasSameUnqualifiedType(QualType T1, QualType T2);
-
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
