@@ -244,14 +244,14 @@ let test_constants () =
   let three = const_int i32_type 3 in
   let four = const_int i32_type 4 in
   
-  (* RUN: grep {Const07.*\\\[ i32 3, i32 4 \\\]} < %t.ll
+  (* RUN: grep {Const07.*\\\[i32 3, i32 4\\\]} < %t.ll
    *)
   group "array";
   let c = const_array i32_type [| three; four |] in
   ignore (define_global "Const07" c m);
   insist ((array_type i32_type 2) = (type_of c));
   
-  (* RUN: grep {Const08.*< i16 1, i16 2.* >} < %t.ll
+  (* RUN: grep {Const08.*<i16 1, i16 2.*>} < %t.ll
    *)
   group "vector";
   let c = const_vector [| one; two; one; two;
