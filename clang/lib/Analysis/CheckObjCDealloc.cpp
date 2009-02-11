@@ -121,11 +121,23 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   
   // Determine if the class subclasses NSObject.
   IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
+  IdentifierInfo* SenTestCaseII = &Ctx.Idents.get("SenTestCase");
+
   
-  for ( ; ID ; ID = ID->getSuperClass())
-    if (ID->getIdentifier() == NSObjectII)
+  for ( ; ID ; ID = ID->getSuperClass()) {
+    IdentifierInfo *II = ID->getIdentifier();
+
+    if (II == NSObjectII)
       break;
-  
+
+    // FIXME: For now, ignore classes that subclass SenTestCase, as these don't
+    // need to implement -dealloc.  They implement tear down in another way,
+    // which we should try and catch later.
+    //  http://llvm.org/bugs/show_bug.cgi?id=3187
+    if (II == SenTestCaseII)
+      return;
+  }
+    
   if (!ID)
     return;
   
