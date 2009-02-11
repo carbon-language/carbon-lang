@@ -83,9 +83,13 @@ std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
 void ScheduleDAG::viewGraph() {
 // This code is only for debugging!
 #ifndef NDEBUG
-  ViewGraph(this, "dag." + MF.getFunction()->getName(),
-            "Scheduling-Units Graph for " + MF.getFunction()->getName() + ':' +
-            BB->getBasicBlock()->getName());
+  if (BB->getBasicBlock())
+    ViewGraph(this, "dag." + MF.getFunction()->getName(),
+              "Scheduling-Units Graph for " + MF.getFunction()->getName() + ':' +
+              BB->getBasicBlock()->getName());
+  else
+    ViewGraph(this, "dag." + MF.getFunction()->getName(),
+              "Scheduling-Units Graph for " + MF.getFunction()->getName());
 #else
   cerr << "ScheduleDAG::viewGraph is only available in debug builds on "
        << "systems with Graphviz or gv!\n";
