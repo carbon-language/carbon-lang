@@ -20,7 +20,6 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Bitcode/SerializationFwd.h"
-#include <climits>
 using llvm::isa;
 using llvm::cast;
 using llvm::cast_or_null;
@@ -1433,7 +1432,7 @@ class ClassTemplateSpecializationType
   /// number of pointer-sized words we need to store this information,
   /// based on the number of template arguments
   static unsigned getNumPackedWords(unsigned NumArgs) {
-    const unsigned BitsPerWord = sizeof(uintptr_t) * CHAR_BIT;
+    const unsigned BitsPerWord = sizeof(uintptr_t) * 8;
     return NumArgs / BitsPerWord + (NumArgs % BitsPerWord > 0);
   }
 

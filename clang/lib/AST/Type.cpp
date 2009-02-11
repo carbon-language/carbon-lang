@@ -894,7 +894,7 @@ bool EnumType::classof(const TagType *TT) {
 void 
 ClassTemplateSpecializationType::
 packBooleanValues(unsigned NumArgs, bool *Values, uintptr_t *Words) {
-  const unsigned BitsPerWord = sizeof(uintptr_t) * CHAR_BIT;
+  const unsigned BitsPerWord = sizeof(uintptr_t) * 8;
 
   for (unsigned PW = 0, NumPackedWords = getNumPackedWords(NumArgs), Arg = 0;
        PW != NumPackedWords; ++PW) {
@@ -940,7 +940,7 @@ ClassTemplateSpecializationType::getArgAsOpaqueValue(unsigned Arg) const {
 }
 
 bool ClassTemplateSpecializationType::isArgType(unsigned Arg) const {
-  const unsigned BitsPerWord = sizeof(uintptr_t) * CHAR_BIT;
+  const unsigned BitsPerWord = sizeof(uintptr_t) * 8;
   const uintptr_t *Data = reinterpret_cast<const uintptr_t *>(this + 1);
   Data += Arg / BitsPerWord;
   return (*Data >> ((NumArgs - Arg) % BitsPerWord - 1)) & 0x01;
