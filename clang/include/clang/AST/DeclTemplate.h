@@ -66,9 +66,19 @@ public:
 
   unsigned size() const { return NumParams; }
 
+  /// \btief Returns the minimum number of arguments needed to form a
+  /// template specialization. This may be fewer than the number of
+  /// template parameters, if some of the parameters have default
+  /// arguments.
+  unsigned getMinRequiredArguments() const;
+
   SourceLocation getTemplateLoc() const { return TemplateLoc; }
   SourceLocation getLAngleLoc() const { return LAngleLoc; }
   SourceLocation getRAngleLoc() const { return RAngleLoc; }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(TemplateLoc, RAngleLoc);
+  }
 };
 
 //===----------------------------------------------------------------------===//

@@ -505,6 +505,8 @@ DIAG(err_template_param_default_arg_missing, ERROR,
 // C++ Template Argument Lists
 DIAG(err_template_arg_list_different_arity, ERROR,
      "%select{too few|too many}0 template arguments for %select{class template|function template|template template parameter|template}1 %2")
+DIAG(note_template_decl_here, NOTE,
+     "template is declared here")
 DIAG(err_template_arg_must_be_type, ERROR,
      "template argument for template type parameter must be a type")
 DIAG(err_template_arg_must_be_expr, ERROR,

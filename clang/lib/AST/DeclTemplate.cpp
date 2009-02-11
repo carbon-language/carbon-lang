@@ -44,6 +44,26 @@ TemplateParameterList::Create(ASTContext &C, SourceLocation TemplateLoc,
                                          NumParams, RAngleLoc);
 }
 
+unsigned TemplateParameterList::getMinRequiredArguments() const {
+  unsigned NumRequiredArgs = size();
+  iterator Param = const_cast<TemplateParameterList *>(this)->end(), 
+      ParamBegin = const_cast<TemplateParameterList *>(this)->begin();
+  while (Param != ParamBegin) {
+    --Param;
+    if (!(isa<TemplateTypeParmDecl>(*Param) && 
+          cast<TemplateTypeParmDecl>(*Param)->hasDefaultArgument()) &&
+        !(isa<NonTypeTemplateParmDecl>(*Param) &&
+          cast<NonTypeTemplateParmDecl>(*Param)->hasDefaultArgument()) &&
+        !(isa<TemplateTemplateParmDecl>(*Param) &&
+          cast<TemplateTemplateParmDecl>(*Param)->hasDefaultArgument()))
+      break;
+        
+    --NumRequiredArgs;
+  }
+
+  return NumRequiredArgs;
+}
+
 //===----------------------------------------------------------------------===//
 // TemplateDecl Implementation
 //===----------------------------------------------------------------------===//

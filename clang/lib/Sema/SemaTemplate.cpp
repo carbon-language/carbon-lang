@@ -685,7 +685,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   bool Invalid = false;
 
   if (NumArgs > NumParams ||
-      NumArgs < NumParams /*FIXME: default arguments! */) {
+      NumArgs < Params->getMinRequiredArguments()) {
     // FIXME: point at either the first arg beyond what we can handle,
     // or the '>', depending on whether we have too many or too few
     // arguments.
@@ -698,7 +698,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
           isa<FunctionTemplateDecl>(Template)? 1 :
           isa<TemplateTemplateParmDecl>(Template)? 2 : 3)
       << Template << Range;
-
+    Diag(Template->getLocation(), diag::note_template_decl_here)
+      << Params->getSourceRange();
     Invalid = true;
   }
   

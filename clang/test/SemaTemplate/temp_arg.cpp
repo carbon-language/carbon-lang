@@ -2,7 +2,7 @@
 template<typename T, 
          int I, 
          template<typename> class TT>
-  class A;
+  class A; // expected-note 2 {{template is declared here}}
 
 template<typename> class X;
 
