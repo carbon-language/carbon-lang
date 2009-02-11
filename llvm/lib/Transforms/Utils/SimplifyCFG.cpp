@@ -1806,7 +1806,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         // If we eliminated all predecessors of the block, delete the block now.
         if (pred_begin(BB) == pred_end(BB))
           // We know there are no successors, so just nuke the block.
-          M->getBasicBlockList().erase(BB);
+          DeleteDeadBlock(BB);
 
         return true;
       }
