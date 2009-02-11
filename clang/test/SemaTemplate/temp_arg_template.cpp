@@ -35,7 +35,8 @@ template<typename T> void f(int);
 // FIXME: we're right to provide an error message, but it should say
 // that we need a class template. We won't get this right until name
 // lookup of 'f' returns a TemplateDecl.
-A<f> *a9; // expected-error{{template argument for template template parameter must be a template}}
+A<f> *a9; // expected-error{{template argument for template template parameter must be a template}} \
+          // expected-error{{unqualified-id}}
 
 // FIXME: The code below is ill-formed, because of the evil digraph '<:'. 
 // We should provide a much better error message than we currently do.

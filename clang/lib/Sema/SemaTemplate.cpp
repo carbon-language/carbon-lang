@@ -655,8 +655,8 @@ Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,
 
   // Check that the template argument list is well-formed for this
   // template.
-  if (!CheckTemplateArgumentList(Template, TemplateLoc, LAngleLoc, 
-                                 TemplateArgs, TemplateArgLocs, RAngleLoc))
+  if (CheckTemplateArgumentList(Template, TemplateLoc, LAngleLoc, 
+                                TemplateArgs, TemplateArgLocs, RAngleLoc))
     return 0;
 
   // Yes, all class template specializations are just silly sugar for
@@ -730,7 +730,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
       // Check template type parameters.
       if (!ArgType.isNull()) {
-        if (!CheckTemplateArgument(TTP, ArgType, ArgLoc))
+        if (CheckTemplateArgument(TTP, ArgType, ArgLoc))
           Invalid = true;
         continue;
       }
@@ -749,7 +749,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                  = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       // Check non-type template parameters.
       if (ArgExpr) {
-        if (!CheckTemplateArgument(NTTP, ArgExpr))
+        if (CheckTemplateArgument(NTTP, ArgExpr))
           Invalid = true;
         continue;
       }
@@ -778,7 +778,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
      
       if (ArgExpr && isa<DeclRefExpr>(ArgExpr) &&
           isa<TemplateDecl>(cast<DeclRefExpr>(ArgExpr)->getDecl())) {
-        if (!CheckTemplateArgument(TempParm, cast<DeclRefExpr>(ArgExpr)))
+        if (CheckTemplateArgument(TempParm, cast<DeclRefExpr>(ArgExpr)))
           Invalid = true;
         continue;
       }
@@ -1014,7 +1014,25 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     // this.
     return false;
   }
-  // FIXME: p5 has a lot more checks to perform!
+
+  //     -- For a non-type template-parameter of type pointer to data
+  //        member, qualification conversions (4.4) are applied.
+  assert(ParamType->isMemberPointerType() && "Only pointers to members remain");
+
+  if (hasSameUnqualifiedType(ParamType, ArgType)) {
+    // Types match exactly: nothing more to do here.
+  } else if (IsQualificationConversion(ArgType, ParamType)) {
+    ImpCastExprToType(Arg, ParamType);
+  } else {
+    // We can't perform this conversion.
+    Diag(Arg->getSourceRange().getBegin(), 
+         diag::err_template_arg_not_convertible)
+      << Arg->getType() << Param->getType() << Arg->getSourceRange();
+    Diag(Param->getLocation(), diag::note_template_param_here);
+    return true;    
+  }
+
+  // FIXME: Check the restrictions in p1.
 
   return false;
 }

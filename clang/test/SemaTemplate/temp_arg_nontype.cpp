@@ -3,9 +3,11 @@ template<int N> struct A; // expected-note 5{{template parameter is declared her
 
 A<0> *a0;
 
-A<int()> *a1; // expected-error{{template argument for non-type template parameter is treated as type 'int (void)'}}
+A<int()> *a1; // expected-error{{template argument for non-type template parameter is treated as type 'int (void)'}} \
+              // FIXME: expected-error{{unqualified-id}}
 
-A<int> *a2; // expected-error{{template argument for non-type template parameter must be an expression}}
+A<int> *a2; // expected-error{{template argument for non-type template parameter must be an expression}} \
+              // FIXME: expected-error{{unqualified-id}}
 
 A<1 >> 2> *a3;
 
@@ -15,8 +17,8 @@ A<A> *a4; // expected-error{{must have an integral or enumeration type}} \
           // FIXME: expected-error{{expected unqualified-id}}
 
 enum E { Enumerator = 17 };
-A<E> *a5; // expected-error{{template argument for non-type template parameter must be an expression}}
-
+A<E> *a5; // expected-error{{template argument for non-type template parameter must be an expression}} \
+          // FIXME: expected-error{{unqualified-id}}
 template<E Value> struct A1; // expected-note{{template parameter is declared here}}
 A1<Enumerator> *a6; // okay
 A1<17> *a7; // expected-error{{non-type template argument of type 'int' cannot be converted to a value of type 'enum E'}} \
@@ -96,9 +98,20 @@ struct Z {
   float bar(float);
   int bar(int);
   double baz(double);
+
+  int int_member;
+  float float_member;
 };
 template<int (Z::*pmf)(int)> struct A6; // expected-note{{template parameter is declared here}}
 A6<&Z::foo> *a17_1;
 A6<&Z::bar> *a17_2;
 A6<&Z::baz> *a17_3; // expected-error{{non-type template argument of type 'double (struct Z::*)(double)' cannot be converted to a value of type 'int (struct Z::*)(int)'}} \
 // FIXME: expected-error{{expected unqualified-id}}
+
+
+template<int Z::*pm> struct A7;  // expected-note{{template parameter is declared here}}
+template<int Z::*pm> struct A7c;
+A7<&Z::int_member> *a18_1;
+A7c<&Z::int_member> *a18_2;
+A7<&Z::float_member> *a18_3; // expected-error{{non-type template argument of type 'float struct Z::*' cannot be converted to a value of type 'int struct Z::*'}} \
+              // FIXME: expected-error{{unqualified-id}}

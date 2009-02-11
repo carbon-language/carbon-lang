@@ -2,9 +2,11 @@
 template<typename T> class A; // expected-note 2 {{template parameter is declared here}}
 
 // [temp.arg.type]p1
-A<0> *a1; // expected-error{{template argument for template type parameter must be a type}}
+A<0> *a1; // expected-error{{template argument for template type parameter must be a type}} \
+          // expected-error{{unqualified-id}}
 
-A<A> *a2; // expected-error{{template argument for template type parameter must be a type}}
+A<A> *a2; // expected-error{{template argument for template type parameter must be a type}} \
+          // expected-error{{unqualified-id}}
 
 A<int> *a3;
 A<int()> *a4; 
