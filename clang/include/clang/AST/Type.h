@@ -155,8 +155,6 @@ public:
   QualType withRestrict() const { return getWithAdditionalQualifiers(Restrict);}
   
   QualType getUnqualifiedType() const;
-  bool isSameAs(QualType Other) const;
-  bool isSameIgnoringQualifiers(QualType Other) const;
   bool isMoreQualifiedThan(QualType Other) const;
   bool isAtLeastAsQualifiedAs(QualType Other) const;
   QualType getNonReferenceType() const;
@@ -1700,23 +1698,6 @@ inline unsigned QualType::getAddressSpace() const {
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CT))
     return ASQT->getAddressSpace();
   return 0;
-}
-
-/// \brief Determine whether this type and Other represent the same type.
-inline bool QualType::isSameAs(QualType Other) const {
-  return getTypePtr()->getCanonicalTypeInternal() == 
-      Other.getTypePtr()->getCanonicalTypeInternal();
-}
-
-/// \brief Determine whether the unqualified forms of this type and
-/// Other represent the same type.
-///
-/// Only top-level CVR qualifiers are stripped.
-inline bool 
-QualType::isSameIgnoringQualifiers(QualType Other) const {
-  QualType ThisCanon = getTypePtr()->getCanonicalTypeInternal();
-  QualType OtherCanon = Other->getCanonicalTypeInternal();
-  return ThisCanon.getUnqualifiedType() == OtherCanon.getUnqualifiedType();
 }
 
 /// isMoreQualifiedThan - Determine whether this type is more

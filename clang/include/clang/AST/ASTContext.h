@@ -463,6 +463,19 @@ public:
     return T->getCanonicalTypeInternal().getTypePtr();
   }
 
+  /// \brief Determine whether the given types are equivalent.
+  bool hasSameType(QualType T1, QualType T2) {
+    return getCanonicalType(T1) == getCanonicalType(T2);
+  }
+  
+  /// \brief Determine whether the given types are equivalent after
+  /// cvr-qualifiers have been removed.
+  bool hasSameUnqualifiedType(QualType T1, QualType T2) {
+    T1 = getCanonicalType(T1);
+    T2 = getCanonicalType(T2);
+    return T1.getUnqualifiedType() == T2.getUnqualifiedType();
+  }
+
   /// \brief Retrieves the "canonical" declaration of the given tag
   /// declaration.
   ///
