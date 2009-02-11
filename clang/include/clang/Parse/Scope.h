@@ -64,7 +64,11 @@ public:
 
     /// FunctionPrototypeScope - This is a scope that corresponds to the
     /// parameters within a function prototype.
-    FunctionPrototypeScope = 0x100
+    FunctionPrototypeScope = 0x100,
+    
+    /// AtCatchScope - This is a scope that corresponds to the Objective-C
+    /// @catch statement.
+    AtCatchScope = 0x200
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -77,7 +81,7 @@ private:
   
   /// Flags - This contains a set of ScopeFlags, which indicates how the scope
   /// interrelates with other control flow statements.
-  unsigned Flags : 9;
+  unsigned Flags : 10;
   
   /// WithinElse - Whether this scope is part of the "else" branch in
   /// its parent ControlScope.
@@ -229,6 +233,11 @@ public:
   /// function prototype scope.
   bool isFunctionPrototypeScope() const {
     return getFlags() & Scope::FunctionPrototypeScope;
+  }
+
+  /// isAtCatchScope - Return true if this scope is @catch.
+  bool isAtCatchScope() const {
+    return getFlags() & Scope::AtCatchScope;
   }
 
   /// isWithinElse - Whether we are within the "else" of the

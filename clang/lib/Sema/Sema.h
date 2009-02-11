@@ -1033,7 +1033,8 @@ public:
                                               StmtArg Catch, StmtArg Finally);
 
   virtual OwningStmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
-                                                ExprArg Throw);
+                                                ExprArg Throw, 
+                                                Scope *CurScope);
   virtual OwningStmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc,
                                                        ExprArg SynchExpr,
                                                        StmtArg SynchBody);

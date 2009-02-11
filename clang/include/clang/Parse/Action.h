@@ -514,7 +514,8 @@ public:
   }
 
   virtual OwningStmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
-                                                ExprArg Throw) {
+                                                ExprArg Throw,
+                                                Scope *CurScope) {
     return StmtEmpty();
   }
 

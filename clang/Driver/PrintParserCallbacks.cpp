@@ -402,7 +402,8 @@ namespace {
     }
 
     virtual OwningStmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
-                                                  ExprArg Throw) {
+                                                  ExprArg Throw,
+                                                  Scope *CurScope) {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();
     }

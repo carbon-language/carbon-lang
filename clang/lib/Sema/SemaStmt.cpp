@@ -981,10 +981,17 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
 }
 
 Action::OwningStmtResult
-Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr) {
+Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,
+                           Scope *CurScope) {
   Expr *ThrowExpr = static_cast<Expr*>(expr.release());
   if (!ThrowExpr) {
-    // FIXME: verify the 'rethrow' is within a @catch block
+    // @throw without an expression designates a rethrow (which much occur
+    // in the context of an @catch clause).
+    Scope *AtCatchParent = CurScope;
+    while (AtCatchParent && !AtCatchParent->isAtCatchScope())
+      AtCatchParent = AtCatchParent->getParent();
+    if (!AtCatchParent)
+      Diag(AtLoc, diag::error_rethrow_used_outside_catch);
   } else {
     QualType ThrowType = ThrowExpr->getType();
     // Make sure the expression type is an ObjC pointer or "void *".

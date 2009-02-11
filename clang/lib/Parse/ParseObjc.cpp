@@ -1202,7 +1202,7 @@ Parser::OwningStmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
     }
   }
   ConsumeToken(); // consume ';'
-  return Actions.ActOnObjCAtThrowStmt(atLoc, move(Res));
+  return Actions.ActOnObjCAtThrowStmt(atLoc, move(Res), CurScope);
 }
 
 /// objc-synchronized-statement:
@@ -1284,7 +1284,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       ConsumeToken(); // consume catch
       if (Tok.is(tok::l_paren)) {
         ConsumeParen();
-        ParseScope CatchScope(this, Scope::DeclScope);
+        ParseScope CatchScope(this, Scope::DeclScope|Scope::AtCatchScope);
         if (Tok.isNot(tok::ellipsis)) {
           DeclSpec DS;
           ParseDeclarationSpecifiers(DS);
