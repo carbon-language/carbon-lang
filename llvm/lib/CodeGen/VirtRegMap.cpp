@@ -26,10 +26,11 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
@@ -47,6 +48,8 @@ STATISTIC(NumDSE     , "Number of dead stores elided");
 STATISTIC(NumDCE     , "Number of copies elided");
 STATISTIC(NumDSS     , "Number of dead spill slots removed");
 STATISTIC(NumCommutes, "Number of instructions commuted");
+STATISTIC(NumOmitted , "Number of reloads omited");
+STATISTIC(NumCopified, "Number of available reloads turned into copies");
 
 namespace {
   enum SpillerName { simple, local };
@@ -308,79 +311,6 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
 //  Local Spiller Implementation
 //===----------------------------------------------------------------------===//
 
-namespace {
-  class AvailableSpills;
-
-  /// LocalSpiller - This spiller does a simple pass over the machine basic
-  /// block to attempt to keep spills in registers as much as possible for
-  /// blocks that have low register pressure (the vreg may be spilled due to
-  /// register pressure in other blocks).
-  class VISIBILITY_HIDDEN LocalSpiller : public Spiller {
-    MachineRegisterInfo *RegInfo;
-    const TargetRegisterInfo *TRI;
-    const TargetInstrInfo *TII;
-    DenseMap<MachineInstr*, unsigned> DistanceMap;
-  public:
-    bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
-      RegInfo = &MF.getRegInfo(); 
-      TRI = MF.getTarget().getRegisterInfo();
-      TII = MF.getTarget().getInstrInfo();
-      DOUT << "\n**** Local spiller rewriting function '"
-           << MF.getFunction()->getName() << "':\n";
-      DOUT << "**** Machine Instrs (NOTE! Does not include spills and reloads!)"
-              " ****\n";
-      DEBUG(MF.dump());
-
-      for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
-           MBB != E; ++MBB)
-        RewriteMBB(*MBB, VRM);
-
-      // Mark unused spill slots.
-      MachineFrameInfo *MFI = MF.getFrameInfo();
-      int SS = VRM.getLowSpillSlot();
-      if (SS != VirtRegMap::NO_STACK_SLOT)
-        for (int e = VRM.getHighSpillSlot(); SS <= e; ++SS)
-          if (!VRM.isSpillSlotUsed(SS)) {
-            MFI->RemoveStackObject(SS);
-            ++NumDSS;
-          }
-
-      DOUT << "**** Post Machine Instrs ****\n";
-      DEBUG(MF.dump());
-
-      return true;
-    }
-  private:
-    void TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
-                          unsigned Reg, BitVector &RegKills,
-                          std::vector<MachineOperand*> &KillOps);
-    bool PrepForUnfoldOpti(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator &MII,
-                           std::vector<MachineInstr*> &MaybeDeadStores,
-                           AvailableSpills &Spills, BitVector &RegKills,
-                           std::vector<MachineOperand*> &KillOps,
-                           VirtRegMap &VRM);
-    bool CommuteToFoldReload(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator &MII,
-                             unsigned VirtReg, unsigned SrcReg, int SS,
-                             BitVector &RegKills,
-                             std::vector<MachineOperand*> &KillOps,
-                             const TargetRegisterInfo *TRI,
-                             VirtRegMap &VRM);
-    void SpillRegToStackSlot(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator &MII,
-                             int Idx, unsigned PhysReg, int StackSlot,
-                             const TargetRegisterClass *RC,
-                             bool isAvailable, MachineInstr *&LastStore,
-                             AvailableSpills &Spills,
-                             SmallSet<MachineInstr*, 4> &ReMatDefs,
-                             BitVector &RegKills,
-                             std::vector<MachineOperand*> &KillOps,
-                             VirtRegMap &VRM);
-    void RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM);
-  };
-}
-
 /// AvailableSpills - As the local spiller is scanning and rewriting an MBB from
 /// top down, keep track of which spills slots or remat are available in each
 /// register.
@@ -415,6 +345,12 @@ public:
   AvailableSpills(const TargetRegisterInfo *tri, const TargetInstrInfo *tii)
     : TRI(tri), TII(tii) {
   }
+
+  /// clear - Reset the state.
+  void clear() {
+    SpillSlotsOrReMatsAvailable.clear();
+    PhysRegsAvailable.clear();
+  }
   
   const TargetRegisterInfo *getRegInfo() const { return TRI; }
 
@@ -433,8 +369,7 @@ public:
   /// addAvailable - Mark that the specified stack slot / remat is available in
   /// the specified physreg.  If CanClobber is true, the physreg can be modified
   /// at any time without changing the semantics of the program.
-  void addAvailable(int SlotOrReMat, MachineInstr *MI, unsigned Reg,
-                    bool CanClobber = true) {
+  void addAvailable(int SlotOrReMat, unsigned Reg, bool CanClobber = true) {
     // If this stack slot is thought to be available in some other physreg, 
     // remove its record.
     ModifyStackSlotOrReMat(SlotOrReMat);
@@ -551,7 +486,126 @@ void AvailableSpills::ModifyStackSlotOrReMat(int SlotOrReMat) {
   PhysRegsAvailable.erase(I);
 }
 
+static void findSinglePredSuccessor(MachineBasicBlock *MBB,
+                                   SmallVectorImpl<MachineBasicBlock *> &Succs) {
+  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI) {
+    MachineBasicBlock *SuccMBB = *SI;
+    if (SuccMBB->pred_size() == 1)
+      Succs.push_back(SuccMBB);
+  }
+}
 
+namespace {
+  class AvailableSpills;
+
+  /// LocalSpiller - This spiller does a simple pass over the machine basic
+  /// block to attempt to keep spills in registers as much as possible for
+  /// blocks that have low register pressure (the vreg may be spilled due to
+  /// register pressure in other blocks).
+  class VISIBILITY_HIDDEN LocalSpiller : public Spiller {
+    MachineRegisterInfo *RegInfo;
+    const TargetRegisterInfo *TRI;
+    const TargetInstrInfo *TII;
+    DenseMap<MachineInstr*, unsigned> DistanceMap;
+  public:
+    bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
+      RegInfo = &MF.getRegInfo(); 
+      TRI = MF.getTarget().getRegisterInfo();
+      TII = MF.getTarget().getInstrInfo();
+      DOUT << "\n**** Local spiller rewriting function '"
+           << MF.getFunction()->getName() << "':\n";
+      DOUT << "**** Machine Instrs (NOTE! Does not include spills and reloads!)"
+              " ****\n";
+      DEBUG(MF.dump());
+
+      // Spills - Keep track of which spilled values are available in physregs
+      // so that we can choose to reuse the physregs instead of emitting
+      // reloads. This is usually refreshed per basic block.
+      AvailableSpills Spills(TRI, TII);
+
+      // SingleEntrySuccs - Successor blocks which have a single predecessor.
+      SmallVector<MachineBasicBlock*, 4> SinglePredSuccs;
+      SmallPtrSet<MachineBasicBlock*,16> EarlyVisited;
+
+      // Traverse the basic blocks depth first.
+      MachineBasicBlock *Entry = MF.begin();
+      SmallPtrSet<MachineBasicBlock*,16> Visited;
+      for (df_ext_iterator<MachineBasicBlock*,
+             SmallPtrSet<MachineBasicBlock*,16> >
+             DFI = df_ext_begin(Entry, Visited), E = df_ext_end(Entry, Visited);
+           DFI != E; ++DFI) {
+        MachineBasicBlock *MBB = *DFI;
+        if (!EarlyVisited.count(MBB))
+          RewriteMBB(*MBB, VRM, Spills);
+
+        // If this MBB is the only predecessor of a successor. Keep the
+        // availability information and visit it next.
+        do {
+          // Keep visiting single predecessor successor as long as possible.
+          SinglePredSuccs.clear();
+          findSinglePredSuccessor(MBB, SinglePredSuccs);
+          if (SinglePredSuccs.empty())
+            MBB = 0;
+          else {
+            // FIXME: More than one successors, each of which has MBB has
+            // the only predecessor.
+            MBB = SinglePredSuccs[0];
+            if (!Visited.count(MBB) && EarlyVisited.insert(MBB))
+              RewriteMBB(*MBB, VRM, Spills);
+          }
+        } while (MBB);
+
+        // Clear the availability info.
+        Spills.clear();
+      }
+
+      DOUT << "**** Post Machine Instrs ****\n";
+      DEBUG(MF.dump());
+
+      // Mark unused spill slots.
+      MachineFrameInfo *MFI = MF.getFrameInfo();
+      int SS = VRM.getLowSpillSlot();
+      if (SS != VirtRegMap::NO_STACK_SLOT)
+        for (int e = VRM.getHighSpillSlot(); SS <= e; ++SS)
+          if (!VRM.isSpillSlotUsed(SS)) {
+            MFI->RemoveStackObject(SS);
+            ++NumDSS;
+          }
+
+      return true;
+    }
+  private:
+    void TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
+                          unsigned Reg, BitVector &RegKills,
+                          std::vector<MachineOperand*> &KillOps);
+    bool PrepForUnfoldOpti(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator &MII,
+                           std::vector<MachineInstr*> &MaybeDeadStores,
+                           AvailableSpills &Spills, BitVector &RegKills,
+                           std::vector<MachineOperand*> &KillOps,
+                           VirtRegMap &VRM);
+    bool CommuteToFoldReload(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator &MII,
+                             unsigned VirtReg, unsigned SrcReg, int SS,
+                             BitVector &RegKills,
+                             std::vector<MachineOperand*> &KillOps,
+                             const TargetRegisterInfo *TRI,
+                             VirtRegMap &VRM);
+    void SpillRegToStackSlot(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator &MII,
+                             int Idx, unsigned PhysReg, int StackSlot,
+                             const TargetRegisterClass *RC,
+                             bool isAvailable, MachineInstr *&LastStore,
+                             AvailableSpills &Spills,
+                             SmallSet<MachineInstr*, 4> &ReMatDefs,
+                             BitVector &RegKills,
+                             std::vector<MachineOperand*> &KillOps,
+                             VirtRegMap &VRM);
+    void RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
+                    AvailableSpills &Spills);
+  };
+}
 
 /// InvalidateKills - MI is going to be deleted. If any of its operands are
 /// marked kill, then invalidate the information.
@@ -843,7 +897,7 @@ namespace {
             unsigned RReg = SubIdx ? TRI->getSubReg(NewPhysReg, SubIdx) : NewPhysReg;
             MI->getOperand(NewOp.Operand).setReg(RReg);
             
-            Spills.addAvailable(NewOp.StackSlotOrReMat, MI, NewPhysReg);
+            Spills.addAvailable(NewOp.StackSlotOrReMat, NewPhysReg);
             --MII;
             UpdateKills(*MII, RegKills, KillOps, TRI);
             DOUT << '\t' << *MII;
@@ -1152,7 +1206,7 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
   // in PhysReg.
   Spills.ModifyStackSlotOrReMat(StackSlot);
   Spills.ClobberPhysReg(PhysReg);
-  Spills.addAvailable(StackSlot, LastStore, PhysReg, isAvailable);
+  Spills.addAvailable(StackSlot, PhysReg, isAvailable);
   ++NumStores;
 }
 
@@ -1201,14 +1255,12 @@ void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
 
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avid reloading vregs.
-void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
-  DOUT << MBB.getBasicBlock()->getName() << ":\n";
+void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
+                              AvailableSpills &Spills) {
+  DOUT << "\n**** Local spiller rewriting MBB '"
+       << MBB.getBasicBlock()->getName() << ":\n";
 
   MachineFunction &MF = *MBB.getParent();
-  
-  // Spills - Keep track of which spilled values are available in physregs so
-  // that we can choose to reuse the physregs instead of emitting reloads.
-  AvailableSpills Spills(TRI, TII);
   
   // MaybeDeadStores - When we need to write a value back into a stack slot,
   // keep track of the inserted store.  If the stack slot value is never read
@@ -1277,18 +1329,82 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           continue; // Split interval spilled again.
         unsigned Phys = VRM.getPhys(VirtReg);
         RegInfo->setPhysRegUsed(Phys);
+
+        // Check if the value being restored if available. If so, it must be
+        // from a predecessor BB that fallthrough into this BB. We do not
+        // expect:
+        // BB1:
+        // r1 = load fi#1
+        // ...
+        //    = r1<kill>
+        // ... # r1 not clobbered
+        // ...
+        //    = load fi#1
+        bool DoReMat = VRM.isReMaterialized(VirtReg);
+        int SSorRMId = DoReMat
+          ? VRM.getReMatId(VirtReg) : VRM.getStackSlot(VirtReg);
+        unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
+        assert((!InReg || !RegKills[InReg]) &&
+               "Restoring a value that's previously defined in the same BB?");
+        if (InReg == Phys) {
+          // If the value is already available in the expected register, save
+          // a reload / remat.
+          if (SSorRMId)
+            DOUT << "Reusing RM#" << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1;
+          else
+            DOUT << "Reusing SS#" << SSorRMId;
+          DOUT << " from physreg "
+               << TRI->getName(InReg) << " for vreg"
+               << VirtReg <<" instead of reloading into physreg "
+               << TRI->getName(Phys) << "\n";
+          ++NumOmitted;
+          continue;
+        } else if (InReg && InReg != Phys) {
+          if (SSorRMId)
+            DOUT << "Reusing RM#" << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1;
+          else
+            DOUT << "Reusing SS#" << SSorRMId;
+          DOUT << " from physreg "
+               << TRI->getName(InReg) << " for vreg"
+               << VirtReg <<" by copying it into physreg "
+               << TRI->getName(Phys) << "\n";
+
+          // If the reloaded / remat value is available in another register,
+          // copy it to the desired register.
+          const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
+          TII->copyRegToReg(MBB, &MI, Phys, InReg, RC, RC);
+
+          // This invalidates Phys.
+          Spills.ClobberPhysReg(Phys);
+          // Remember it's available.
+          Spills.addAvailable(SSorRMId, Phys);
+
+          // Mark is killed.
+          MachineInstr *CopyMI = prior(MII);
+          MachineOperand *KillOpnd = CopyMI->findRegisterUseOperand(InReg);
+          KillOpnd->setIsKill();
+          UpdateKills(*CopyMI, RegKills, KillOps, TRI);
+
+          DOUT << '\t' << *CopyMI;
+          ++NumCopified;
+          continue;
+        }
+
         if (VRM.isReMaterialized(VirtReg)) {
           ReMaterialize(MBB, MII, Phys, VirtReg, TII, TRI, VRM);
         } else {
           const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
-          int SS = VRM.getStackSlot(VirtReg);
-          TII->loadRegFromStackSlot(MBB, &MI, Phys, SS, RC);
+          TII->loadRegFromStackSlot(MBB, &MI, Phys, SSorRMId, RC);
           MachineInstr *LoadMI = prior(MII);
-          VRM.addSpillSlotUse(SS, LoadMI);
+          VRM.addSpillSlotUse(SSorRMId, LoadMI);
           ++NumLoads;
         }
+
         // This invalidates Phys.
         Spills.ClobberPhysReg(Phys);
+        // Remember it's available.
+        Spills.addAvailable(SSorRMId, Phys);
+
         UpdateKills(*prior(MII), RegKills, KillOps, TRI);
         DOUT << '\t' << *prior(MII);
       }
@@ -1510,7 +1626,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // This invalidates DesignatedReg.
         Spills.ClobberPhysReg(DesignatedReg);
         
-        Spills.addAvailable(ReuseSlot, &MI, DesignatedReg);
+        Spills.addAvailable(ReuseSlot, DesignatedReg);
         unsigned RReg =
           SubIdx ? TRI->getSubReg(DesignatedReg, SubIdx) : DesignatedReg;
         MI.getOperand(i).setReg(RReg);
@@ -1548,7 +1664,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       // Any stores to this stack slot are not dead anymore.
       if (!DoReMat)
         MaybeDeadStores[SSorRMId] = NULL;
-      Spills.addAvailable(SSorRMId, &MI, PhysReg);
+      Spills.addAvailable(SSorRMId, PhysReg);
       // Assumes this is the last use. IsKill will be unset if reg is reused
       // unless it's a two-address operand.
       if (TID.getOperandConstraint(i, TOI::TIED_TO) == -1)
@@ -1738,7 +1854,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             // If the stack slot value was previously available in some other
             // register, change it now.  Otherwise, make the register
             // available in PhysReg.
-            Spills.addAvailable(StackSlot, &MI, SrcReg, false/*!clobber*/);
+            Spills.addAvailable(StackSlot, SrcReg, false/*!clobber*/);
           }
         }
       }
@@ -1788,7 +1904,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // If it is a folded reference, then it's not safe to clobber.
           bool Folded = FoldedSS.count(FrameIdx);
           // Otherwise, if it wasn't available, remember that it is now!
-          Spills.addAvailable(FrameIdx, &MI, DestReg, !Folded);
+          Spills.addAvailable(FrameIdx, DestReg, !Folded);
           goto ProcessNextInst;
         }
             
@@ -1863,6 +1979,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     }
     MII = NextMII;
   }
+
 }
 
 llvm::Spiller* llvm::createSpiller() {
