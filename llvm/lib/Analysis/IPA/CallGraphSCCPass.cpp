@@ -40,8 +40,8 @@ public:
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnModule(Module &M);
 
-  bool doInitialization(CallGraph &CG);
-  bool doFinalization(CallGraph &CG);
+  bool doInitialization(CallGraph &CG, Module &M);
+  bool doFinalization(CallGraph &CG, Module &M);
 
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
@@ -82,7 +82,7 @@ char CGPassManager::ID = 0;
 /// whether any of the passes modifies the module, and if so, return true.
 bool CGPassManager::runOnModule(Module &M) {
   CallGraph &CG = getAnalysis<CallGraph>();
-  bool Changed = doInitialization(CG);
+  bool Changed = doInitialization(CG, M);
 
   // Walk SCC
   for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG);
@@ -126,28 +126,38 @@ bool CGPassManager::runOnModule(Module &M) {
       removeDeadPasses(P, "", ON_CG_MSG);
     }
   }
-  Changed |= doFinalization(CG);
+  Changed |= doFinalization(CG, M);
   return Changed;
 }
 
 /// Initialize CG
-bool CGPassManager::doInitialization(CallGraph &CG) {
+bool CGPassManager::doInitialization(CallGraph &CG, Module &M) {
   bool Changed = false;
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
     Pass *P = getContainedPass(Index);
-    if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P)) 
+    if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P)) {
       Changed |= CGSP->doInitialization(CG);
+    } else {
+      FPPassManager *FP = dynamic_cast<FPPassManager *>(P);
+      assert (FP && "Invalid CGPassManager member");
+      Changed |= FP->doInitialization(M);
+    }
   }
   return Changed;
 }
 
 /// Finalize CG
-bool CGPassManager::doFinalization(CallGraph &CG) {
+bool CGPassManager::doFinalization(CallGraph &CG, Module &M) {
   bool Changed = false;
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
     Pass *P = getContainedPass(Index);
-    if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P)) 
+    if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P)) {
       Changed |= CGSP->doFinalization(CG);
+    } else {
+      FPPassManager *FP = dynamic_cast<FPPassManager *>(P);
+      assert (FP && "Invalid CGPassManager member");
+      Changed |= FP->doFinalization(M);
+    }
   }
   return Changed;
 }
