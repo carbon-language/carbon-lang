@@ -2245,9 +2245,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         // incompatible then make sure to use 'id' as the composite
         // type so the result is acceptable for sending messages to.
 
-        // FIXME: This code should not be localized to here. Also this
-        // should use a compatible check instead of abusing the
-        // canAssignObjCInterfaces code.
+        // FIXME: Consider unifying with 'areComparableObjCPointerTypes'.
+        // It could return the composite type.      
         const ObjCInterfaceType* LHSIface = lhptee->getAsObjCInterfaceType();
         const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
         if (LHSIface && RHSIface &&
@@ -2258,11 +2257,11 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
           compositeType = rexT;
         } else if (Context.isObjCIdStructType(lhptee) || 
                    Context.isObjCIdStructType(rhptee)) { 
-          // FIXME: This code looks wrong, because isObjCIdStructType checks
-          // the struct but getObjCIdType returns the pointer to
-          // struct. This is horrible and should be fixed.
           compositeType = Context.getObjCIdType();
         } else {
+          Diag(questionLoc, diag::ext_typecheck_comparison_of_distinct_pointers)
+               << lexT << rexT 
+               << lex->getSourceRange() << rex->getSourceRange();
           QualType incompatTy = Context.getObjCIdType();
           ImpCastExprToType(lex, incompatTy);
           ImpCastExprToType(rex, incompatTy);
