@@ -677,7 +677,7 @@ private:
   /// the given ivar.
   ///
   llvm::GlobalVariable * ObjCIvarOffsetVariable(std::string &Name, 
-                              const NamedDecl *IDName,
+                              const ObjCInterfaceDecl *ID,
                               const ObjCIvarDecl *Ivar);
   
   /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
@@ -1598,6 +1598,26 @@ static int countInheritedIvars(const ObjCInterfaceDecl *OI) {
        E = OI->ivar_end(); I != E; ++I)
     ++count;
   return count;
+}
+
+/// getInterfaceDeclForIvar - Get the interface declaration node where
+/// this ivar is declared in.
+/// FIXME. Ideally, this info should be in the ivar node. But currently 
+/// it is not and prevailing wisdom is that ASTs should not have more
+/// info than is absolutely needed, even though this info reflects the
+/// source language. 
+///
+static const ObjCInterfaceDecl *getInterfaceDeclForIvar(
+                                  const ObjCInterfaceDecl *OI,
+                                  const ObjCIvarDecl *IVD) {
+  if (!OI)
+    return 0;
+  assert(isa<ObjCInterfaceDecl>(OI) && "OI is not an interface");
+  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
+       E = OI->ivar_end(); I != E; ++I)
+    if ((*I)->getIdentifier() == IVD->getIdentifier())
+      return OI;
+  return getInterfaceDeclForIvar(OI->getSuperClass(), IVD);
 }
 
 /*
@@ -3921,9 +3941,10 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
 ///
 llvm::GlobalVariable * CGObjCNonFragileABIMac::ObjCIvarOffsetVariable(
                               std::string &Name, 
-                              const NamedDecl *IDName,
+                              const ObjCInterfaceDecl *ID,
                               const ObjCIvarDecl *Ivar) {
-  Name += "\01_OBJC_IVAR_$_" + IDName->getNameAsString() + '.'
+  Name += "\01_OBJC_IVAR_$_" + 
+          getInterfaceDeclForIvar(ID, Ivar)->getNameAsString() + '.'
           + Ivar->getNameAsString();
   llvm::GlobalVariable *IvarOffsetGV = 
     CGM.getModule().getGlobalVariable(Name);
@@ -4298,7 +4319,7 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
                                              unsigned CVRQualifiers) {
   assert(ObjectTy->isObjCInterfaceType() && 
          "CGObjCNonFragileABIMac::EmitObjCValueForIvar");
-  NamedDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
+  ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
   std::string ExternalName;
   llvm::GlobalVariable *IvarOffsetGV =
     ObjCIvarOffsetVariable(ExternalName, ID, Ivar);
