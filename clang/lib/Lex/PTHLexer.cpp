@@ -721,7 +721,7 @@ IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
 IdentifierInfo* PTHManager::get(const char *NameStart, const char *NameEnd) {
   PTHStringIdLookup& SL = *((PTHStringIdLookup*)StringIdLookup);
   // Double check our assumption that the last character isn't '\0'.
-  assert(NameStart[NameEnd-NameStart-1] != '\0');
+  assert(NameEnd==NameStart || NameStart[NameEnd-NameStart-1] != '\0');
   PTHStringIdLookup::iterator I = SL.find(std::make_pair(NameStart,
                                                          NameEnd - NameStart));
   if (I == SL.end()) // No identifier found?
