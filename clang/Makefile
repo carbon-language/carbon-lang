@@ -20,4 +20,7 @@ report::
 clean::
 	@ $(MAKE) -C test clean
 
+tags::
+	$(Verb) etags `find . -type f -name \*.h | grep -v /lib/Headers | grep -v /test/` `find . -type f -name \*.cpp | grep -v /lib/Headers | grep -v /test/`
+
 .PHONY: test report clean
