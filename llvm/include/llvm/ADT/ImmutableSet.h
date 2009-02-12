@@ -61,7 +61,6 @@ public:
   ///  NULL if there is no right subtree.
   ImutAVLTree* getRight() const { return Right; }
 
-
   /// getHeight - Returns the height of the tree.  A tree with no subtrees
   ///  has a height of 1.
   unsigned getHeight() const { return Height; }
@@ -1001,6 +1000,10 @@ public:
 
   /// isEmpty - Return true if the set contains no elements.
   bool isEmpty() const { return !Root; }
+  
+  /// isSingleton - Return true if the set contains exactly one element.
+  ///   This method runs in constant time.
+  bool isSingleton() const { return getHeight() == 1; }
 
   template <typename Callback>
   void foreach(Callback& C) { if (Root) Root->foreach(C); }
