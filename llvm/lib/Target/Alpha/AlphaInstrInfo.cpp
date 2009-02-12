@@ -213,8 +213,9 @@ void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     Opc = Alpha::STQ;
   else
     abort();
+  DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = 
-    BuildMI(MF, get(Opc)).addReg(SrcReg, false, false, isKill);
+    BuildMI(MF, DL, get(Opc)).addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isReg())
@@ -261,8 +262,9 @@ void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     Opc = Alpha::LDQ;
   else
     abort();
+  DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = 
-    BuildMI(MF, get(Opc), DestReg);
+    BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isReg())
