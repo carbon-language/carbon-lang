@@ -1563,17 +1563,29 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       SDValue N1 = Node->getOperand(1);
       SDValue N2 = Node->getOperand(2);
       FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N1);
-      if (!FINode)
-        break;
+      
+      // FIXME: We need to handle this for VLAs.
+      if (!FINode) {
+        ReplaceUses(N.getValue(0), Chain);
+        return NULL;
+      }
+      
       if (N2.getOpcode() == ISD::ADD &&
           N2.getOperand(0).getOpcode() == X86ISD::GlobalBaseReg)
         N2 = N2.getOperand(1);
-      if (N2.getOpcode() != X86ISD::Wrapper)
-        break;
+      
+      // If N2 is not Wrapper(decriptor) then the llvm.declare is mangled
+      // somehow, just ignore it.
+      if (N2.getOpcode() != X86ISD::Wrapper) {
+        ReplaceUses(N.getValue(0), Chain);
+        return NULL;
+      }
       GlobalAddressSDNode *GVNode =
         dyn_cast<GlobalAddressSDNode>(N2.getOperand(0));
-      if (!GVNode)
-        break;
+      if (GVNode == 0) {
+        ReplaceUses(N.getValue(0), Chain);
+        return NULL;
+      }
       SDValue Tmp1 = CurDAG->getTargetFrameIndex(FINode->getIndex(),
                                                  TLI.getPointerTy());
       SDValue Tmp2 = CurDAG->getTargetGlobalAddress(GVNode->getGlobal(),
@@ -1581,7 +1593,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       SDValue Ops[] = { Tmp1, Tmp2, Chain };
       return CurDAG->getTargetNode(TargetInstrInfo::DECLARE, dl,
                                    MVT::Other, Ops, 3);
-      break;
     }
   }
 
