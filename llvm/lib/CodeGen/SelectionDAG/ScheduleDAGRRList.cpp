@@ -1074,9 +1074,10 @@ static unsigned closestSucc(const SUnit *SU) {
 static unsigned calcMaxScratches(const SUnit *SU) {
   unsigned Scratches = 0;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I)
+       I != E; ++I) {
     if (I->isCtrl()) continue;  // ignore chain preds
-      Scratches++;
+    Scratches++;
+  }
   return Scratches;
 }
 
