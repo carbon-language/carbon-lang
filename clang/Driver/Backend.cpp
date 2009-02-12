@@ -369,6 +369,13 @@ ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
                                           const std::string& InFile,
                                           const std::string& OutFile,
                                           bool GenerateDebugInfo) {
+  // FIXME: If optimizing, disable all debug info generation.  The LLVM
+  // optimizer and backend is not ready to handle it when optimizations
+  // are enabled.
+  if (CompileOpts.OptimizationLevel > 0)
+    GenerateDebugInfo = false;
+  
+  
   return new BackendConsumer(Action, Diags, Features, CompileOpts,
                              InFile, OutFile, GenerateDebugInfo);  
 }
