@@ -785,9 +785,6 @@ void LICM::FindPromotableValuesInLoop(
                              std::map<Value*, AllocaInst*> &ValueToAllocaMap) {
   Instruction *FnStart = CurLoop->getHeader()->getParent()->begin()->begin();
 
-  SmallVector<BasicBlock*, 4> ExitingBlocks;
-  CurLoop->getExitingBlocks(ExitingBlocks);
-
   // Loop over all of the alias sets in the tracker object.
   for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
        I != E; ++I) {
