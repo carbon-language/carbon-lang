@@ -206,7 +206,7 @@ public:
   IdentifierTable &getIdentifierTable() { return Identifiers; }
   SelectorTable &getSelectorTable() { return Selectors; }
   
-  void setPTHManager(PTHManager* pm) { PTH.reset(pm); }
+  void setPTHManager(PTHManager* pm);
 
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.

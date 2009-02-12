@@ -47,6 +47,17 @@ static void Emit32(llvm::raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V >> 24);
 }
 
+static void Emit64(llvm::raw_ostream& Out, uint64_t V) {
+  Out << (unsigned char)(V);
+  Out << (unsigned char)(V >>  8);
+  Out << (unsigned char)(V >> 16);
+  Out << (unsigned char)(V >> 24);
+  Out << (unsigned char)(V >> 32);
+  Out << (unsigned char)(V >> 40);
+  Out << (unsigned char)(V >> 48);
+  Out << (unsigned char)(V >> 56);
+}
+
 static void Pad(llvm::raw_fd_ostream& Out, unsigned A) {
   Offset off = (Offset) Out.tell();
   uint32_t n = ((uintptr_t)(off+A-1) & ~(uintptr_t)(A-1)) - off;
@@ -149,7 +160,7 @@ public:
         const std::pair<unsigned, unsigned>& Len = 
           Info::EmitKeyDataLength(out, I->key, I->data);
         Info::EmitKey(out, I->key, Len.first);
-        Info::EmitData(out, I->data, Len.second);
+        Info::EmitData(out, I->key, I->data, Len.second);
       }
     }
     
@@ -212,16 +223,23 @@ public:
 
     unsigned n = strlen(FE->getName()) + 1;
     ::Emit16(Out, n);
-    return std::make_pair(n, 8);
+    return std::make_pair(n,(4*2)+(4+4+2+8+8));
   }
   
   static void EmitKey(llvm::raw_ostream& Out, const FileEntry* FE, unsigned n) {
     Out.write(FE->getName(), n);
   }
   
-  static void EmitData(llvm::raw_ostream& Out, const PCHEntry& E, unsigned) {
+  static void EmitData(llvm::raw_ostream& Out, const FileEntry* FE, 
+                       const PCHEntry& E, unsigned) {
     ::Emit32(Out, E.getTokenOffset());
     ::Emit32(Out, E.getPPCondTableOffset());
+    // Emit stat information.
+    ::Emit32(Out, FE->getInode());
+    ::Emit32(Out, FE->getDevice());
+    ::Emit16(Out, FE->getFileMode());
+    ::Emit64(Out, FE->getModificationTime());
+    ::Emit64(Out, FE->getSize());
   }        
 };
   
@@ -537,8 +555,6 @@ void PTHWriter::GeneratePTH() {
     if (!P.isAbsolute())
       continue;
 
-    // assert(!PM.count(FE) && "fileinfo's are not uniqued on FileEntry?");
-    
     const llvm::MemoryBuffer *B = C.getBuffer();
     if (!B) continue;
 
@@ -620,7 +636,8 @@ public:
     Out.write(key->II->getName(), n);
   }
   
-  static void EmitData(llvm::raw_ostream& Out, uint32_t pID, unsigned) {
+  static void EmitData(llvm::raw_ostream& Out, PCHIdKey*, uint32_t pID,
+                       unsigned) {
     ::Emit32(Out, pID);
   }        
 };

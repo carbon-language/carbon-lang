@@ -25,6 +25,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Host.h"
+#include <sys/stat.h>
 using namespace clang;
 
 #define DISK_TOKEN_SIZE (1+1+2+4+4)
@@ -46,6 +47,19 @@ static inline uint32_t ReadUnalignedLE32(const unsigned char *&Data) {
                ((uint32_t)Data[2] << 16) |
                ((uint32_t)Data[3] << 24);
   Data += 4;
+  return V;
+}
+
+static inline uint64_t ReadUnalignedLE64(const unsigned char *&Data) {
+  uint64_t V = ((uint64_t)Data[0])  |
+    ((uint64_t)Data[1] << 8)  |
+    ((uint64_t)Data[2] << 16) |
+    ((uint64_t)Data[3] << 24) |
+    ((uint64_t)Data[1] << 32) |
+    ((uint64_t)Data[2] << 40) |
+    ((uint64_t)Data[3] << 48) |
+    ((uint64_t)Data[3] << 56);
+  Data += 8;
   return V;
 }
 
@@ -353,7 +367,11 @@ public:
                "'buckets' must have a 4-byte alignment");
       }
 
-  
+  unsigned getNumBuckets() const { return NumBuckets; }
+  unsigned getNumEntries() const { return NumEntries; }
+  const unsigned char* const getBase() const { return Base; }
+  const unsigned char* const getBuckets() const { return Buckets; }
+
   bool isEmpty() const { return NumEntries == 0; }
   
   class iterator {
@@ -451,31 +469,36 @@ public:
   uint32_t getPPCondOffset() const { return PPCondOff; }  
 };
   
-class VISIBILITY_HIDDEN PTHFileLookupTrait {
+  
+class VISIBILITY_HIDDEN PTHFileLookupCommonTrait {
 public:
-  typedef PTHFileData      data_type;
-  typedef const FileEntry* external_key_type;
   typedef const char*      internal_key_type;
   
   static bool EqualKey(const char* a, const char* b) {
     return strcmp(a, b) == 0;
   }
-
+  
   static unsigned ComputeHash(const char* x) {
     return BernsteinHash(x);
-  }
-
-  static const char* GetInternalKey(const FileEntry* FE) {
-    return FE->getName();
   }
   
   static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d) {
-    return std::make_pair((unsigned) ReadUnalignedLE16(d), 8U);
+    return std::make_pair((unsigned) ReadUnalignedLE16(d), 8U + (4+4+2+8+8));
   }
   
   static const char* ReadKey(const unsigned char* d, unsigned) {
     return (const char*) d;
+  }
+};
+  
+class VISIBILITY_HIDDEN PTHFileLookupTrait : public PTHFileLookupCommonTrait {
+public:
+  typedef const FileEntry* external_key_type;
+  typedef PTHFileData      data_type;
+  
+  static const char* GetInternalKey(const FileEntry* FE) {
+    return FE->getName();
   }
   
   static PTHFileData ReadData(const unsigned char* d, unsigned) {
@@ -736,4 +759,71 @@ PTHLexer *PTHManager::CreateLexer(FileID FID) {
   
   assert(PP && "No preprocessor set yet!");
   return new PTHLexer(*PP, FID, data, ppcond, *this); 
+}
+
+//===----------------------------------------------------------------------===//
+// 'stat' caching.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN PTHStatData {
+public:
+  const ino_t ino;
+  const dev_t dev;
+  const mode_t mode;
+  const time_t mtime;
+  const off_t size;
+  
+  PTHStatData(ino_t i, dev_t d, mode_t mo, time_t m, off_t s)
+  : ino(i), dev(d), mode(mo), mtime(m), size(s) {}  
+};
+  
+class VISIBILITY_HIDDEN PTHStatLookupTrait : public PTHFileLookupCommonTrait {
+public:
+  typedef internal_key_type external_key_type;  // const char*
+  typedef PTHStatData data_type;
+    
+  static const char* GetInternalKey(external_key_type x) { return x; }
+  
+  static data_type ReadData(const unsigned char* d, unsigned) {
+    d += 4 * 2; // Skip the first 2 words.
+    ino_t ino = (ino_t) ReadUnalignedLE32(d);
+    dev_t dev = (dev_t) ReadUnalignedLE32(d);
+    mode_t mode = (mode_t) ReadUnalignedLE16(d);
+    time_t mtime = (time_t) ReadUnalignedLE64(d);    
+    return data_type(ino, dev, mode, mtime, (off_t) ReadUnalignedLE64(d));
+  }
+};
+}
+
+class VISIBILITY_HIDDEN PTHStatCache : public StatSysCallCache {
+  typedef OnDiskChainedHashTable<PTHStatLookupTrait> CacheTy;
+  CacheTy Cache;
+
+public:  
+  PTHStatCache(PTHFileLookup &FL) :
+    Cache(FL.getNumBuckets(), FL.getNumEntries(), FL.getBuckets(),
+          FL.getBase()) {}
+
+  ~PTHStatCache() {}
+  
+  int stat(const char *path, struct stat *buf) {
+    // Do the lookup for the file's data in the PTH file.
+    CacheTy::iterator I = Cache.find(path);
+
+    // If we don't get a hit in the PTH file just forward to 'stat'.
+    if (I == Cache.end()) return ::stat(path, buf);
+    
+    const PTHStatData& Data = *I;
+    buf->st_ino = Data.ino;
+    buf->st_dev = Data.dev;
+    buf->st_mtime = Data.mtime;
+    buf->st_mode = Data.mode;
+    buf->st_size = Data.size;
+    return 0;
+  }
+};
+
+StatSysCallCache *PTHManager::createStatCache() {
+  return new PTHStatCache(*((PTHFileLookup*) FileLookup));
 }

@@ -32,6 +32,7 @@
 #include "clang/Lex/ScratchBuffer.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
@@ -115,6 +116,11 @@ Preprocessor::~Preprocessor() {
   delete ScratchBuf;
 
   delete Callbacks;
+}
+
+void Preprocessor::setPTHManager(PTHManager* pm) {
+  PTH.reset(pm);
+  FileMgr.setStatCache(PTH->createStatCache());
 }
 
 void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {

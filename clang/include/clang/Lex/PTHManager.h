@@ -30,6 +30,7 @@ namespace clang {
 class FileEntry;
 class PTHLexer;
 class Diagnostic;
+class StatSysCallCache;
   
 class PTHManager : public IdentifierInfoLookup {
   friend class PTHLexer;
@@ -95,7 +96,7 @@ class PTHManager : public IdentifierInfoLookup {
   
 public:
   // The current PTH version.
-  enum { Version = 6 };
+  enum { Version = 7 };
 
   ~PTHManager();
   
@@ -115,6 +116,12 @@ public:
   ///  specified file.  This method returns NULL if no cached tokens exist.
   ///  It is the responsibility of the caller to 'delete' the returned object.
   PTHLexer *CreateLexer(FileID FID);  
+  
+  /// createStatCache - Returns a StatSysCallCache object for use with
+  ///  FileManager objects.  These objects use the PTH data to speed up
+  ///  calls to stat by memoizing their results from when the PTH file
+  ///  was generated.
+  StatSysCallCache *createStatCache();
 };
   
 }  // end namespace clang
