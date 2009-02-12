@@ -1583,16 +1583,9 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotCapture(F, 2);
         } else if ((NameLen == 6 && !strcmp(NameStr, "strcmp")) ||
                    (NameLen == 6 && !strcmp(NameStr, "strspn")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "strtol")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "strtod")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "strtof")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strtoul")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strtoll")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strtold")) ||
                    (NameLen == 7 && !strcmp(NameStr, "strncmp")) ||
                    (NameLen == 7 && !strcmp(NameStr, "strcspn")) ||
                    (NameLen == 7 && !strcmp(NameStr, "strcoll")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "strtoull")) ||
                    (NameLen == 10 && !strcmp(NameStr, "strcasecmp")) ||
                    (NameLen == 11 && !strcmp(NameStr, "strncasecmp"))) {
           if (FTy->getNumParams() < 2 ||
