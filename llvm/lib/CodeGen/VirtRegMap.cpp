@@ -1053,7 +1053,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
       NewMIs.clear();
       int Idx = NewMI->findRegisterUseOperandIdx(VirtReg, false);
       assert(Idx != -1);
-      SmallVector<unsigned, 2> Ops;
+      SmallVector<unsigned, 1> Ops;
       Ops.push_back(Idx);
       MachineInstr *FoldedMI = TII->foldMemoryOperand(MF, NewMI, Ops, SS);
       if (FoldedMI) {
@@ -1124,7 +1124,7 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
     MachineInstr *CommutedMI = TII->commuteInstruction(DefMI, true);
     if (!CommutedMI)
       return false;
-    SmallVector<unsigned, 2> Ops;
+    SmallVector<unsigned, 1> Ops;
     Ops.push_back(NewDstIdx);
     MachineInstr *FoldedMI = TII->foldMemoryOperand(MF, CommutedMI, Ops, SS);
     // Not needed since foldMemoryOperand returns new MI.

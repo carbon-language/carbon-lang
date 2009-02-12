@@ -518,7 +518,7 @@ MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI
     assignVirtToPhysReg(VirtReg, PhysReg);
   } else {  // no free registers available.
     // try to fold the spill into the instruction
-    SmallVector<unsigned, 2> Ops;
+    SmallVector<unsigned, 1> Ops;
     Ops.push_back(OpNum);
     if(MachineInstr* FMI = TII->foldMemoryOperand(*MF, MI, Ops, FrameIndex)) {
       ++NumFolded;
