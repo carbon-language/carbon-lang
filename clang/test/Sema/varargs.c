@@ -52,3 +52,11 @@ foo(__builtin_va_list authors, ...) {
   __builtin_va_end (authors);
 }
 
+void f7(int a, ...) {
+  __builtin_va_list ap;
+  __builtin_va_start(ap, a);
+  // FIXME: This error message is sub-par.
+  __builtin_va_arg(ap, int) = 1; // expected-error {{non-object type 'int' is not assignable}}
+  int *x = &__builtin_va_arg(ap, int); // expected-error {{address expression must be an lvalue or a function designator}}
+  __builtin_va_end(ap);
+}

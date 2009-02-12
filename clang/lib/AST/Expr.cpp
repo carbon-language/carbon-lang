@@ -565,7 +565,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case PredefinedExprClass:
     return LV_Valid;
   case VAArgExprClass:
-    return LV_Valid;
+    return LV_NotObjectType;
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue(Ctx);
   case CXXConditionDeclExprClass:
