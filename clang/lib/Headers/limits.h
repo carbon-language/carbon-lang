@@ -22,8 +22,14 @@
  *
 \*===----------------------------------------------------------------------===*/
 
-#ifndef __LIMITS_H
-#define __LIMITS_H
+#ifndef __CLANG_LIMITS_H
+#define __CLANG_LIMITS_H
+
+/* The system's limits.h may, in turn, try to #include_next GCC's limits.h.
+   Avert this #include_next madness. */
+#if defined __GNUC__ && !defined _GCC_LIMITS_H_
+#define _GCC_LIMITS_H_
+#endif
 
 /* System headers include a number of constants from POSIX in <limits.h>. */
 #include_next <limits.h>
@@ -90,4 +96,4 @@
 #define ULLONG_MAX (__LONG_LONG_MAX__*2ULL+1ULL)
 #endif
 
-#endif /* __LIMITS_H */
+#endif /* __CLANG_LIMITS_H */
