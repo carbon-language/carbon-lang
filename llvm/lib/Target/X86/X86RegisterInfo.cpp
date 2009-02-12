@@ -396,7 +396,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New = 0;
       if (Old->getOpcode() == getCallFrameSetupOpcode()) {
-        New = BuildMI(MF, TII.get(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri),
+        New = BuildMI(MF, Old->getDebugLoc(),
+                      TII.get(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri),
                       StackPtr).addReg(StackPtr).addImm(Amount);
       } else {
         assert(Old->getOpcode() == getCallFrameDestroyOpcode());
@@ -407,7 +408,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
           unsigned Opc = (Amount < 128) ?
             (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
             (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-          New = BuildMI(MF, TII.get(Opc), StackPtr)
+          New = BuildMI(MF, Old->getDebugLoc(), TII.get(Opc), StackPtr)
             .addReg(StackPtr).addImm(Amount);
         }
       }
@@ -428,8 +429,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       unsigned Opc = (CalleeAmt < 128) ?
         (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
         (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
+      MachineInstr *Old = I;
       MachineInstr *New =
-        BuildMI(MF, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(CalleeAmt);
+        BuildMI(MF, Old->getDebugLoc(), TII.get(Opc), 
+                StackPtr).addReg(StackPtr).addImm(CalleeAmt);
       // The EFLAGS implicit def is dead.
       New->getOperand(3).setIsDead();
 
@@ -723,6 +726,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
                           !Fn->doesNotThrow() ||
                           UnwindTablesMandatory;
+  DebugLoc DL = DebugLoc::getUnknownLoc();
   // Prepare for frame info.
   unsigned FrameLabelId = 0;
 
@@ -757,7 +761,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // size is bigger than the callers.
   if (TailCallReturnAddrDelta < 0) {
     MachineInstr *MI =
-      BuildMI(MBB, MBBI, TII.get(Is64Bit? X86::SUB64ri32 : X86::SUB32ri),
+      BuildMI(MBB, MBBI, DL, TII.get(Is64Bit? X86::SUB64ri32 : X86::SUB32ri),
               StackPtr).addReg(StackPtr).addImm(-TailCallReturnAddrDelta);
     // The EFLAGS implicit def is dead.
     MI->getOperand(3).setIsDead();
@@ -778,18 +782,19 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MFI->setOffsetAdjustment(-NumBytes);
 
     // Save EBP into the appropriate stack slot...
-    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::PUSH64r : X86::PUSH32r))
+    BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::PUSH64r : X86::PUSH32r))
       .addReg(FramePtr, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
 
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
       FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(X86::DBG_LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(FrameLabelId);
     }
 
     // Update EBP with the new base value...
-    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr)
-      .addReg(StackPtr);
+    BuildMI(MBB, MBBI, DL,
+            TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr)
+        .addReg(StackPtr);
 
     // Mark the FramePtr as live-in in every block except the entry.
     for (MachineFunction::iterator I = next(MF.begin()), E = MF.end();
@@ -799,7 +804,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Realign stack
     if (needsStackRealignment(MF)) {
       MachineInstr *MI =
-        BuildMI(MBB, MBBI,
+        BuildMI(MBB, MBBI, DL,
                 TII.get(Is64Bit ? X86::AND64ri32 : X86::AND32ri),
                 StackPtr).addReg(StackPtr).addImm(-MaxAlign);
       // The EFLAGS implicit def is dead.
@@ -812,7 +817,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (needsFrameMoves) {
     // Mark effective beginning of when frame pointer is ready.
     ReadyLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(X86::DBG_LABEL)).addImm(ReadyLabelId);
+    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(ReadyLabelId);
   }
 
   // Skip the callee-saved push instructions.
@@ -838,20 +843,22 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       // necessary to ensure that the guard pages used by the OS virtual memory
       // manager are allocated in correct sequence.
       if (!isEAXAlive) {
-        BuildMI(MBB, MBBI, TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes);
-        BuildMI(MBB, MBBI, TII.get(X86::CALLpcrel32))
+        BuildMI(MBB, MBBI,DL, TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes);
+        BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
           .addExternalSymbol("_alloca");
       } else {
         // Save EAX
-        BuildMI(MBB, MBBI, TII.get(X86::PUSH32r))
+        BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH32r))
           .addReg(X86::EAX, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
         // Allocate NumBytes-4 bytes on stack. We'll also use 4 already
         // allocated bytes for EAX.
-        BuildMI(MBB, MBBI, TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes-4);
-        BuildMI(MBB, MBBI, TII.get(X86::CALLpcrel32))
+        BuildMI(MBB, MBBI, DL, 
+                TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes-4);
+        BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
           .addExternalSymbol("_alloca");
         // Restore EAX
-        MachineInstr *MI = addRegOffset(BuildMI(MF, TII.get(X86::MOV32rm),X86::EAX),
+        MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),
+                                                X86::EAX),
                                         StackPtr, false, NumBytes-4);
         MBB.insert(MBBI, MI);
       }
@@ -879,6 +886,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   unsigned RetOpcode = MBBI->getOpcode();
+  DebugLoc DL = DebugLoc::getUnknownLoc();
 
   switch (RetOpcode) {
   case X86::RET:
@@ -911,7 +919,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     NumBytes = FrameSize - CSSize;
 
     // pop EBP.
-    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::POP64r : X86::POP32r), FramePtr);
+    BuildMI(MBB, MBBI, DL, 
+            TII.get(Is64Bit ? X86::POP64r : X86::POP32r), FramePtr);
   } else
     NumBytes = StackSize - CSSize;
 
@@ -942,17 +951,17 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       MBBI = prior(LastCSPop);
     }
 
-    BuildMI(MBB, MBBI,
+    BuildMI(MBB, MBBI, DL,
             TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),
             StackPtr).addReg(FramePtr);
   } else if (MFI->hasVarSizedObjects()) {
     if (CSSize) {
       unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
-      MachineInstr *MI = addRegOffset(BuildMI(MF, TII.get(Opc), StackPtr),
+      MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(Opc), StackPtr),
                                       FramePtr, false, -CSSize);
       MBB.insert(MBBI, MI);
     } else
-      BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),
+      BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),
               StackPtr).addReg(FramePtr);
 
   } else {
@@ -966,7 +975,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     MBBI = prior(MBB.end());
     MachineOperand &DestAddr  = MBBI->getOperand(0);
     assert(DestAddr.isReg() && "Offset should be in register!");
-    BuildMI(MBB, MBBI,
+    BuildMI(MBB, MBBI, DL,
             TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),
             StackPtr).addReg(DestAddr.getReg());
   // Tail call return: adjust the stack pointer and jump to callee
@@ -992,12 +1001,12 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     }
     // Jump to label or value in register.
     if (RetOpcode == X86::TCRETURNdi|| RetOpcode == X86::TCRETURNdi64)
-      BuildMI(MBB, MBBI, TII.get(X86::TAILJMPd)).
+      BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPd)).
         addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset());
     else if (RetOpcode== X86::TCRETURNri64) {
-      BuildMI(MBB, MBBI, TII.get(X86::TAILJMPr64), JumpTarget.getReg());
+      BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr64), JumpTarget.getReg());
     } else
-       BuildMI(MBB, MBBI, TII.get(X86::TAILJMPr), JumpTarget.getReg());
+       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr), JumpTarget.getReg());
     // Delete the pseudo instruction TCRETURN.
     MBB.erase(MBBI);
   } else if ((RetOpcode == X86::RET || RetOpcode == X86::RETI) &&

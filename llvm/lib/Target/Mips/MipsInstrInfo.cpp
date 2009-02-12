@@ -225,7 +225,8 @@ void MipsInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   else 
     assert(0 && "Can't store this register");
 
-  MachineInstrBuilder MIB = BuildMI(MF, get(Opc))
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
     .addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
@@ -278,7 +279,8 @@ void MipsInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   else 
     assert(0 && "Can't load this register");
 
-  MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isReg())

@@ -167,6 +167,7 @@ void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                     const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = 0;
+  DebugLoc DL = DebugLoc::getUnknownLoc();
   if (RC == SP::IntRegsRegisterClass)
     Opc = SP::STri;
   else if (RC == SP::FPRegsRegisterClass)
@@ -175,7 +176,7 @@ void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     Opc = SP::STDFri;
   else
     assert(0 && "Can't load this register");
-  MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isReg())
@@ -222,7 +223,8 @@ void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     Opc = SP::LDDFri;
   else
     assert(0 && "Can't load this register");
-  MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isReg())

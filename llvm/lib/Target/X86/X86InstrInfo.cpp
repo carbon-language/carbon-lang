@@ -1850,7 +1850,8 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   bool isAligned = (RI.getStackAlignment() >= 16) ||
     RI.needsStackRealignment(MF);
   unsigned Opc = getStoreRegOpcode(RC, isAligned);
-  MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
   MIB.addReg(SrcReg, false, false, isKill);
@@ -1915,7 +1916,8 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   bool isAligned = (RI.getStackAlignment() >= 16) ||
     RI.needsStackRealignment(MF);
   unsigned Opc = getLoadRegOpcode(RC, isAligned);
-  MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
   NewMIs.push_back(MIB);
@@ -2287,6 +2289,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     MemOp2RegOpTable.find((unsigned*)MI->getOpcode());
   if (I == MemOp2RegOpTable.end())
     return false;
+  DebugLoc dl = MI->getDebugLoc();
   unsigned Opc = I->second.first;
   unsigned Index = I->second.second & 0xf;
   bool FoldedLoad = I->second.second & (1 << 4);

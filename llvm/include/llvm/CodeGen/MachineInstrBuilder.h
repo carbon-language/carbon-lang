@@ -99,11 +99,6 @@ public:
 /// itself.
 ///
 inline MachineInstrBuilder BuildMI(MachineFunction &MF,
-                                   const TargetInstrDesc &TID) {
-  return MachineInstrBuilder(MF.CreateMachineInstr(TID,
-                                                   DebugLoc::getUnknownLoc()));
-}
-inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
                                    const TargetInstrDesc &TID) {
   return MachineInstrBuilder(MF.CreateMachineInstr(TID, DL));
@@ -112,13 +107,6 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF,
 /// BuildMI - This version of the builder sets up the first operand as a
 /// destination virtual register.
 ///
-inline MachineInstrBuilder BuildMI(MachineFunction &MF,
-                                   const TargetInstrDesc &TID,
-                                   unsigned DestReg) {
-  return MachineInstrBuilder(MF.CreateMachineInstr(TID,
-                                                   DebugLoc::getUnknownLoc()))
-            .addReg(DestReg, true);
-}
 inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
                                    const TargetInstrDesc &TID,

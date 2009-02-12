@@ -555,13 +555,14 @@ void ARMInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   SmallVectorImpl<MachineOperand> &Addr,
                                   const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const{
+  DebugLoc DL = DebugLoc::getUnknownLoc();
   unsigned Opc = 0;
   if (RC == ARM::GPRRegisterClass) {
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     if (AFI->isThumbFunction()) {
       Opc = Addr[0].isFI() ? ARM::tSpill : ARM::tSTR;
       MachineInstrBuilder MIB = 
-        BuildMI(MF, get(Opc)).addReg(SrcReg, false, false, isKill);
+        BuildMI(MF, DL,  get(Opc)).addReg(SrcReg, false, false, isKill);
       for (unsigned i = 0, e = Addr.size(); i != e; ++i)
         MIB = ARMInstrAddOperand(MIB, Addr[i]);
       NewMIs.push_back(MIB);
@@ -576,7 +577,7 @@ void ARMInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   }
 
   MachineInstrBuilder MIB = 
-    BuildMI(MF, get(Opc)).addReg(SrcReg, false, false, isKill);
+    BuildMI(MF, DL, get(Opc)).addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = ARMInstrAddOperand(MIB, Addr[i]);
   AddDefaultPred(MIB);
@@ -614,12 +615,13 @@ void ARMInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                    SmallVectorImpl<MachineOperand> &Addr,
                                    const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
   unsigned Opc = 0;
   if (RC == ARM::GPRRegisterClass) {
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     if (AFI->isThumbFunction()) {
       Opc = Addr[0].isFI() ? ARM::tRestore : ARM::tLDR;
-      MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
+      MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
       for (unsigned i = 0, e = Addr.size(); i != e; ++i)
         MIB = ARMInstrAddOperand(MIB, Addr[i]);
       NewMIs.push_back(MIB);
@@ -633,7 +635,7 @@ void ARMInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     Opc = ARM::FLDS;
   }
 
-  MachineInstrBuilder MIB =  BuildMI(MF, get(Opc), DestReg);
+  MachineInstrBuilder MIB =  BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = ARMInstrAddOperand(MIB, Addr[i]);
   AddDefaultPred(MIB);

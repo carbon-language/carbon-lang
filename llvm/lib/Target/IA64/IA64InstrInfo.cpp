@@ -130,7 +130,8 @@ void IA64InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
       "sorry, I don't know how to store this sort of reg\n");
   }
 
-  MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isReg())
@@ -185,10 +186,11 @@ void IA64InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     Opc = IA64::LD1;
   } else {
     assert(0 &&
-      "sorry, I don't know how to store this sort of reg\n");
+      "sorry, I don't know how to load this sort of reg\n");
   }
 
-  MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isReg())

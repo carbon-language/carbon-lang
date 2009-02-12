@@ -150,12 +150,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       MachineInstr *New;
       if (Old->getOpcode() == XCore::ADJCALLSTACKDOWN) {
         int Opcode = isU6 ? XCore::EXTSP_u6 : XCore::EXTSP_lu6;
-        New=BuildMI(MF, TII.get(Opcode))
+        New=BuildMI(MF, Old->getDebugLoc(), TII.get(Opcode))
           .addImm(Amount);
       } else {
         assert(Old->getOpcode() == XCore::ADJCALLSTACKUP);
         int Opcode = isU6 ? XCore::LDAWSP_ru6_RRegs : XCore::LDAWSP_lru6_RRegs;
-        New=BuildMI(MF, TII.get(Opcode), XCore::SP)
+        New=BuildMI(MF, Old->getDebugLoc(), TII.get(Opcode), XCore::SP)
           .addImm(Amount);
       }
 

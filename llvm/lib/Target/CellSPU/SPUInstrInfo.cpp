@@ -349,7 +349,8 @@ void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
       assert(0 && "Unknown regclass!");
       abort();
     }
-    MachineInstrBuilder MIB = BuildMI(MF, get(Opc))
+    DebugLoc DL = DebugLoc::getUnknownLoc();
+    MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
       .addReg(SrcReg, false, false, isKill);
     for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
       MachineOperand &MO = Addr[i];
@@ -431,7 +432,8 @@ void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
       assert(0 && "Unknown regclass!");
       abort();
     }
-    MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
+    DebugLoc DL = DebugLoc::getUnknownLoc();
+    MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
     for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
       MachineOperand &MO = Addr[i];
       if (MO.isReg())
