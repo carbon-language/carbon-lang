@@ -8152,6 +8152,9 @@ X86TargetLowering::getConstraintType(const std::string &Constraint) const {
     case 'y':
     case 'Y':
       return C_RegisterClass;
+    case 'e':
+    case 'Z':
+      return C_Other;
     default:
       break;
     }
@@ -8211,10 +8214,38 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       }
     }
     return;
+  case 'e': {
+    // 32-bit signed value
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      const ConstantInt *CI = C->getConstantIntValue();
+      if (CI->isValueValidForType(Type::Int32Ty, C->getSExtValue())) {
+        // Widen to 64 bits here to get it sign extended.
+        Result = DAG.getTargetConstant(C->getSExtValue(), MVT::i64);
+        break;
+      }
+    // FIXME gcc accepts some relocatable values here too, but only in certain
+    // memory models; it's complicated.
+    }
+    return;
+  }
+  case 'Z': {
+    // 32-bit unsigned value
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      const ConstantInt *CI = C->getConstantIntValue();
+      if (CI->isValueValidForType(Type::Int32Ty, C->getZExtValue())) {
+        Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
+        break;
+      }
+    }
+    // FIXME gcc accepts some relocatable values here too, but only in certain
+    // memory models; it's complicated.
+    return;
+  }
   case 'i': {
     // Literal immediates are always ok.
     if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Op)) {
-      Result = DAG.getTargetConstant(CST->getZExtValue(), Op.getValueType());
+      // Widen to 64 bits here to get it sign extended.
+      Result = DAG.getTargetConstant(CST->getSExtValue(), MVT::i64);
       break;
     }
 

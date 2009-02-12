@@ -2082,8 +2082,11 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     if (C) {   // just C, no GV.
       // Simple constants are not allowed for 's'.
       if (ConstraintLetter != 's') {
-        Ops.push_back(DAG.getTargetConstant(C->getAPIntValue(),
-                                            Op.getValueType()));
+        // gcc prints these as sign extended.  Sign extend value to 64 bits
+        // now; without this it would get ZExt'd later in
+        // ScheduleDAGSDNodes::EmitNode, which is very generic.
+        Ops.push_back(DAG.getTargetConstant(C->getAPIntValue().getSExtValue(),
+                                            MVT::i64));
         return;
       }
     }
