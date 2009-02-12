@@ -968,7 +968,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
           return EmitBuiltinExpr(builtinID, E);
 
   if (E->getCallee()->getType()->isBlockPointerType())
-    return EmitUnsupportedRValue(E, "block pointer reference");
+    return EmitBlockCallExpr(E);
 
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
   return EmitCallExpr(Callee, E->getCallee()->getType(),

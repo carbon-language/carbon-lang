@@ -611,6 +611,8 @@ public:
 
   RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
+  RValue EmitBlockCallExpr(const CallExpr *E);
+  
   /// EmitTargetBuiltinExpr - Emit the given builtin call. Returns 0 if the call
   /// is unhandled by the current target.
   llvm::Value *EmitTargetBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
