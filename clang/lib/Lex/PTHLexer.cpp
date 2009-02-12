@@ -55,10 +55,10 @@ static inline uint64_t ReadUnalignedLE64(const unsigned char *&Data) {
     ((uint64_t)Data[1] << 8)  |
     ((uint64_t)Data[2] << 16) |
     ((uint64_t)Data[3] << 24) |
-    ((uint64_t)Data[1] << 32) |
-    ((uint64_t)Data[2] << 40) |
-    ((uint64_t)Data[3] << 48) |
-    ((uint64_t)Data[3] << 56);
+    ((uint64_t)Data[4] << 32) |
+    ((uint64_t)Data[5] << 40) |
+    ((uint64_t)Data[6] << 48) |
+    ((uint64_t)Data[7] << 56);
   Data += 8;
   return V;
 }
