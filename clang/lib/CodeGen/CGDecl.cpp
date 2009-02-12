@@ -126,6 +126,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   GV = GenerateStaticBlockVarDecl(D, false, ".",
                                   llvm::GlobalValue::InternalLinkage);
 
+  // FIXME: Merge attribute handling.
   if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
     SourceManager &SM = CGM.getContext().getSourceManager();
     llvm::Constant *Ann =
@@ -134,6 +135,9 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
     CGM.AddAnnotation(Ann);
   }
 
+  if (const SectionAttr *SA = D.getAttr<SectionAttr>())
+    GV->setSection(SA->getName());
+  
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
   const llvm::Type *LPtrTy =
     llvm::PointerType::get(LTy, D.getType().getAddressSpace());

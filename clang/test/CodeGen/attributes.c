@@ -11,7 +11,8 @@
 // RUN: grep '@t10().*section "SECT"' %t &&
 // RUN: grep '@t11().*section "SECT"' %t &&
 // RUN: grep '@t12 =.*section "SECT"' %t &&
-// RUN: grep '@t13 =.*section "SECT"' %t
+// RUN: grep '@t13 =.*section "SECT"' %t &&
+// RUN: grep '@t14.x =.*section "SECT"' %t
 
 void t1() __attribute__((noreturn));
 void t1() {}
@@ -41,4 +42,8 @@ void __attribute__((section("SECT"))) t11(void) {}
 
 int t12 __attribute__((section("SECT")));
 struct s0 { int x; };
-struct s0 t13 __attribute__ ((section ("SECT"))) = { 0 };
+struct s0 t13 __attribute__((section("SECT"))) = { 0 };
+
+void t14(void) {
+  static int x __attribute__((section("SECT"))) = 0;
+}
