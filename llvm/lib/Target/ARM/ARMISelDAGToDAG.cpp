@@ -837,13 +837,18 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     SDValue N1 = Op.getOperand(1);
     SDValue N2 = Op.getOperand(2);
     FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N1);
-    if (!FINode)
-      break;
+    // FIXME: handle VLAs.
+    if (!FINode) {
+      ReplaceUses(Op.getValue(0), Chain);
+      return NULL;
+    }
     if (N2.getOpcode() == ARMISD::PIC_ADD && isa<LoadSDNode>(N2.getOperand(0)))
       N2 = N2.getOperand(0);
     LoadSDNode *Ld = dyn_cast<LoadSDNode>(N2);
-    if (!Ld)
-      break;
+    if (!Ld) {
+      ReplaceUses(Op.getValue(0), Chain);
+      return NULL;
+    }
     SDValue BasePtr = Ld->getBasePtr();
     assert(BasePtr.getOpcode() == ARMISD::Wrapper &&
            isa<ConstantPoolSDNode>(BasePtr.getOperand(0)) &&
@@ -855,15 +860,17 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       GV = ACPV->getGV();
     } else
       GV = dyn_cast<GlobalValue>(CP->getConstVal());
-    if (GV) {
-      SDValue Tmp1 = CurDAG->getTargetFrameIndex(FINode->getIndex(),
-                                                 TLI.getPointerTy());
-      SDValue Tmp2 = CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());
-      SDValue Ops[] = { Tmp1, Tmp2, Chain };
-      return CurDAG->getTargetNode(TargetInstrInfo::DECLARE, dl,
-                                   MVT::Other, Ops, 3);
+    if (!GV) {
+      ReplaceUses(Op.getValue(0), Chain);
+      return NULL;
     }
-    break;
+    
+    SDValue Tmp1 = CurDAG->getTargetFrameIndex(FINode->getIndex(),
+                                               TLI.getPointerTy());
+    SDValue Tmp2 = CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());
+    SDValue Ops[] = { Tmp1, Tmp2, Chain };
+    return CurDAG->getTargetNode(TargetInstrInfo::DECLARE, dl,
+                                 MVT::Other, Ops, 3);
   }
   }
 
