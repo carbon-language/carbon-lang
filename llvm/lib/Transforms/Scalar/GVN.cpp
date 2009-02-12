@@ -1035,7 +1035,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
     LI->replaceAllUsesWith(v);
     
-    if (!isa<GlobalValue>(v))
+    if (isa<PHINode>(v))
       v->takeName(LI);
     if (isa<PointerType>(v->getType()))
       MD->invalidateCachedPointerInfo(v);
@@ -1132,7 +1132,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // Perform PHI construction.
   Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
   LI->replaceAllUsesWith(v);
-  if (!isa<GlobalValue>(v))
+  if (isa<PHINode>(v))
     v->takeName(LI);
   if (isa<PointerType>(v->getType()))
     MD->invalidateCachedPointerInfo(v);
