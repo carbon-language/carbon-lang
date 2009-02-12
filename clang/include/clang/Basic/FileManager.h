@@ -15,6 +15,7 @@
 #define LLVM_CLANG_FILEMANAGER_H
 
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/Support/Allocator.h"
 #include <map>
@@ -47,11 +48,13 @@ class FileEntry {
   unsigned UID;               // A unique (small) ID for the file.
   dev_t Device;               // ID for the device containing the file.
   ino_t Inode;                // Inode number for the file.
+  mode_t FileMode;            // The file mode as returned by 'stat'.
   friend class FileManager;
 public:
-  FileEntry(dev_t device, ino_t inode) : Name(0), Device(device), Inode(inode){}
+  FileEntry(dev_t device, ino_t inode, mode_t m)
+    : Name(0), Device(device), Inode(inode), FileMode(m) {}
   // Add a default constructor for use with llvm::StringMap
-  FileEntry() : Name(0), Device(0), Inode(0) {}
+  FileEntry() : Name(0), Device(0), Inode(0), FileMode(0) {}
   
   const char *getName() const { return Name; }
   off_t getSize() const { return Size; }
@@ -59,6 +62,7 @@ public:
   ino_t getInode() const { return Inode; }
   dev_t getDevice() const { return Device; }
   time_t getModificationTime() const { return ModTime; }
+  mode_t getFileMode() const { return FileMode; }
   
   /// getDir - Return the directory the file lives in.
   ///
@@ -108,15 +112,21 @@ class FileManager {
   unsigned NumDirCacheMisses, NumFileCacheMisses;
   
   // Caching.
-  StatSysCallCache *StatCache;
+  llvm::OwningPtr<StatSysCallCache> StatCache;
+
   int stat_cached(const char* path, struct stat* buf) {
-    return StatCache ? StatCache->stat(path, buf) : stat(path, buf);
+    return StatCache.get() ? StatCache->stat(path, buf) : stat(path, buf);
   }
   
 public:
-  FileManager(StatSysCallCache *statCache = 0);
+  FileManager();
   ~FileManager();
 
+  /// setStatCache - Installs the provided StatSysCallCache object within
+  ///  the FileManager.  Ownership of this object is transferred to the
+  ///  FileManager.
+  void setStatCache(StatSysCallCache *statCache) { StatCache.reset(statCache); }
+  
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.
   /// 

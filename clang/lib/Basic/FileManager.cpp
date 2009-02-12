@@ -122,7 +122,8 @@ public:
     return
       const_cast<FileEntry&>(
                     *UniqueFiles.insert(FileEntry(StatBuf.st_dev,
-                                                  StatBuf.st_ino)).first);
+                                                  StatBuf.st_ino,
+                                                  StatBuf.st_mode)).first);
   }
 
   size_t size() { return UniqueFiles.size(); }
@@ -134,11 +135,10 @@ public:
 // Common logic.
 //===----------------------------------------------------------------------===//
 
-FileManager::FileManager(StatSysCallCache* statCache)
+FileManager::FileManager()
   : UniqueDirs(*new UniqueDirContainer),
     UniqueFiles(*new UniqueFileContainer),
-    DirEntries(64), FileEntries(64), NextFileUID(0),
-    StatCache(statCache) {
+    DirEntries(64), FileEntries(64), NextFileUID(0) {
   NumDirLookups = NumFileLookups = 0;
   NumDirCacheMisses = NumFileCacheMisses = 0;
 }
@@ -146,9 +146,7 @@ FileManager::FileManager(StatSysCallCache* statCache)
 FileManager::~FileManager() {
   delete &UniqueDirs;
   delete &UniqueFiles;
-  delete StatCache;
 }
-
 
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
 /// returns null if the directory doesn't exist.
