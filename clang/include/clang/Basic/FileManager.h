@@ -22,6 +22,7 @@
 #include <string>
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>
+#include <sys/stat.h>
 
 namespace clang {
 class FileManager;
@@ -68,6 +69,14 @@ public:
   }
 };
 
+// FIXME: This is a lightweight shim that is used by FileManager to cache
+//  'stat' system calls.  We will use it with PTH to identify if caching
+//  stat calls in PTH files is a performance win.
+class StatSysCallCache {
+public:
+  virtual ~StatSysCallCache() {}
+  virtual int stat(const char *path, struct stat *buf) = 0;
+};
  
 /// FileManager - Implements support for file system lookup, file system
 /// caching, and directory search management.  This also handles more advanced
@@ -97,8 +106,15 @@ class FileManager {
   // Statistics.
   unsigned NumDirLookups, NumFileLookups;
   unsigned NumDirCacheMisses, NumFileCacheMisses;
+  
+  // Caching.
+  StatSysCallCache *StatCache;
+  int stat_cached(const char* path, struct stat* buf) {
+    return StatCache ? StatCache->stat(path, buf) : stat(path, buf);
+  }
+  
 public:
-  FileManager();
+  FileManager(StatSysCallCache *statCache = 0);
   ~FileManager();
 
   /// getDirectory - Lookup, cache, and verify the specified directory.  This

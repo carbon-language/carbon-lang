@@ -29,7 +29,7 @@ using namespace clang;
 #include <sys/stat.h>
 
 #if defined(_MSC_VER)
-#define S_ISDIR(s) (_S_IFDIR & s)
+#defisstne S_ISDIR(s) (_S_IFDIR & s)
 #endif
 
 /// NON_EXISTENT_DIR - A special value distinct from null that is used to
@@ -134,10 +134,11 @@ public:
 // Common logic.
 //===----------------------------------------------------------------------===//
 
-FileManager::FileManager() : UniqueDirs(*new UniqueDirContainer),
-                             UniqueFiles(*new UniqueFileContainer),
-                             DirEntries(64), FileEntries(64), NextFileUID(0)
-{
+FileManager::FileManager(StatSysCallCache* statCache)
+  : UniqueDirs(*new UniqueDirContainer),
+    UniqueFiles(*new UniqueFileContainer),
+    DirEntries(64), FileEntries(64), NextFileUID(0),
+    StatCache(statCache) {
   NumDirLookups = NumFileLookups = 0;
   NumDirCacheMisses = NumFileCacheMisses = 0;
 }
@@ -145,6 +146,7 @@ FileManager::FileManager() : UniqueDirs(*new UniqueDirContainer),
 FileManager::~FileManager() {
   delete &UniqueDirs;
   delete &UniqueFiles;
+  delete StatCache;
 }
 
 
@@ -173,7 +175,7 @@ const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
   
   // Check to see if the directory exists.
   struct stat StatBuf;
-  if (stat(InterndDirName, &StatBuf) ||   // Error stat'ing.
+  if (stat_cached(InterndDirName, &StatBuf) ||   // Error stat'ing.
       !S_ISDIR(StatBuf.st_mode))          // Not a directory?
     return 0;
 
@@ -246,8 +248,8 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
   //llvm::cerr << "STATING: " << Filename;
-  if (stat(InterndFileName, &StatBuf) ||   // Error stat'ing.
-      S_ISDIR(StatBuf.st_mode)) {           // A directory?
+  if (stat_cached(InterndFileName, &StatBuf) ||   // Error stat'ing.
+        S_ISDIR(StatBuf.st_mode)) {           // A directory?
     // If this file doesn't exist, we leave a null in FileEntries for this path.
     //llvm::cerr << ": Not existing\n";
     return 0;
