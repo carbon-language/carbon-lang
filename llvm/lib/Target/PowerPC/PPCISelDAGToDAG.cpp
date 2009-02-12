@@ -1110,8 +1110,13 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     SDValue N1 = N->getOperand(1);
     SDValue N2 = N->getOperand(2);
     FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N1);
-    if (!FINode)
-      break;
+    
+    // FIXME: We need to handle this for VLAs.
+    if (!FINode) {
+      ReplaceUses(Op.getValue(0), Chain);
+      return NULL;
+    }
+    
     if (N2.getOpcode() == ISD::ADD) {
       if (N2.getOperand(0).getOpcode() == ISD::ADD &&
           N2.getOperand(0).getOperand(0).getOpcode() == PPCISD::GlobalBaseReg &&
@@ -1127,8 +1132,13 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
                N2.getOperand(1).getOpcode() == PPCISD::Lo)
         N2 = N2.getOperand(0).getOperand(0);
     }
-    if (!isa<GlobalAddressSDNode>(N2))
-      break;
+    
+    // If we don't have a global address here, the debug info is mangled, just
+    // drop it.
+    if (!isa<GlobalAddressSDNode>(N2)) {
+      ReplaceUses(Op.getValue(0), Chain);
+      return NULL;
+    }
     int FI = cast<FrameIndexSDNode>(N1)->getIndex();
     GlobalValue *GV = cast<GlobalAddressSDNode>(N2)->getGlobal();
     SDValue Tmp1 = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
