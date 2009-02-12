@@ -496,6 +496,12 @@ void AvailableSpills::AddAvailableRegsToLiveIn(MachineBasicBlock &MBB) {
          I = PhysRegsAvailable.begin(), E = PhysRegsAvailable.end();
        I != E; ++I) {
     unsigned Reg = (*I).first;
+    const TargetRegisterClass* RC = TRI->getPhysicalRegisterRegClass(Reg);
+    // FIXME: A temporary workaround. We can't reuse available value if it's
+    // not safe to move the def of the virtual register's class. e.g.
+    // X86::RFP* register classes. Do not add it as a live-in.
+    if (!TII->isSafeToMoveRegClassDefs(RC))
+      continue;
     if (!MBB.isLiveIn(Reg))
       MBB.addLiveIn(Reg);
   }
@@ -1361,7 +1367,12 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         bool DoReMat = VRM.isReMaterialized(VirtReg);
         int SSorRMId = DoReMat
           ? VRM.getReMatId(VirtReg) : VRM.getStackSlot(VirtReg);
-        unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
+        const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
+        // FIXME: A temporary workaround. Don't reuse available value if it's
+        // not safe to move the def of the virtual register's class. e.g.
+        // X86::RFP* register classes.
+        unsigned InReg = TII->isSafeToMoveRegClassDefs(RC) ?
+          Spills.getSpillSlotOrReMatPhysReg(SSorRMId) : 0;
         if (InReg == Phys) {
           // If the value is already available in the expected register, save
           // a reload / remat.
@@ -1387,7 +1398,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
 
           // If the reloaded / remat value is available in another register,
           // copy it to the desired register.
-          const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
           TII->copyRegToReg(MBB, &MI, Phys, InReg, RC, RC);
 
           // This invalidates Phys.
