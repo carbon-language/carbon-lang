@@ -149,8 +149,12 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
     return;
   
   // Blocks default to on for 10.6 (darwin10) and beyond.
-  if (Maj > 9)
+  // As does nonfragile-abi for 64bit mode
+  if (Maj > 9) {
     Opts.Blocks = 1;
+    if (Opts.ObjC1 && !strncmp(Triple, "x86_64", 6))
+      Opts.ObjCNonFragileABI = 1;
+  }
 }
 
 
