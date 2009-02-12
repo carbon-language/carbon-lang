@@ -738,7 +738,9 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
   // the bit-field is larger yet, no integral promotion applies to
   // it. If the bit-field has an enumerated type, it is treated as any
   // other value of that type for promotion purposes (C++ 4.5p3).
-  if (MemberExpr *MemRef = dyn_cast<MemberExpr>(From)) {
+  // FIXME: We should delay checking of bit-fields until we actually
+  // perform the conversion.
+  if (MemberExpr *MemRef = dyn_cast_or_null<MemberExpr>(From)) {
     using llvm::APSInt;
     if (FieldDecl *MemberDecl = dyn_cast<FieldDecl>(MemRef->getMemberDecl())) {
       APSInt BitWidth;
@@ -803,7 +805,7 @@ bool Sema::IsFloatingPointPromotion(QualType FromType, QualType ToType)
 ///
 /// A complex promotion is defined as a complex -> complex conversion
 /// where the conversion between the underlying real types is a
-/// floating-point conversion.
+/// floating-point or integral promotion.
 bool Sema::IsComplexPromotion(QualType FromType, QualType ToType) {
   const ComplexType *FromComplex = FromType->getAsComplexType();
   if (!FromComplex)
@@ -814,7 +816,9 @@ bool Sema::IsComplexPromotion(QualType FromType, QualType ToType) {
     return false;
 
   return IsFloatingPointPromotion(FromComplex->getElementType(),
-                                  ToComplex->getElementType());
+                                  ToComplex->getElementType()) ||
+    IsIntegralPromotion(0, FromComplex->getElementType(),
+                        ToComplex->getElementType());
 }
 
 /// BuildSimilarlyQualifiedPointerType - In a pointer conversion from

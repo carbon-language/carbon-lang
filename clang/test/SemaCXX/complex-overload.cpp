@@ -38,6 +38,13 @@ void test_promote_or_convert(float f, float _Complex fc) {
 char *promote_or_convert2(float);
 int *promote_or_convert2(double _Complex);
 
-void test_promote_or_convert(float _Complex fc) {
+void test_promote_or_convert2(float _Complex fc) {
   int *cp = promote_or_convert2(fc);
+}
+
+char *promote_or_convert3(int _Complex);
+int *promote_or_convert3(long _Complex);
+
+void test_promote_or_convert3(short _Complex sc) {
+  char *cp = promote_or_convert3(sc);
 }
