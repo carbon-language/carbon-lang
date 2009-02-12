@@ -990,15 +990,15 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,Scope *CurScope) {
     while (AtCatchParent && !AtCatchParent->isAtCatchScope())
       AtCatchParent = AtCatchParent->getParent();
     if (!AtCatchParent)
-      Diag(AtLoc, diag::error_rethrow_used_outside_catch);
+      return StmtError(Diag(AtLoc, diag::error_rethrow_used_outside_catch));
   } else {
     QualType ThrowType = ThrowExpr->getType();
     // Make sure the expression type is an ObjC pointer or "void *".
     if (!Context.isObjCObjectPointerType(ThrowType)) {
       const PointerType *PT = ThrowType->getAsPointerType();
       if (!PT || !PT->getPointeeType()->isVoidType())
-        Diag(AtLoc, diag::error_objc_throw_expects_object)
-                    << ThrowExpr->getType() << ThrowExpr->getSourceRange();
+        return StmtError(Diag(AtLoc, diag::error_objc_throw_expects_object)
+                        << ThrowExpr->getType() << ThrowExpr->getSourceRange());
     }
   }
   return Owned(new (Context) ObjCAtThrowStmt(AtLoc, ThrowExpr));
