@@ -259,6 +259,9 @@ static void SetGlobalValueAttributes(const Decl *D,
     // should not be munged.
     GV->setName("\01" + ALA->getLabel());
   }
+
+  if (const SectionAttr *SA = D->getAttr<SectionAttr>())
+    GV->setSection(SA->getName());
 }
 
 void CodeGenModule::SetFunctionAttributes(const Decl *D,
@@ -652,6 +655,9 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       break;
     }
   }
+
+  if (const SectionAttr *SA = D->getAttr<SectionAttr>())
+    GV->setSection(SA->getName());
 
   // Emit global variable debug information.
   CGDebugInfo *DI = getDebugInfo();

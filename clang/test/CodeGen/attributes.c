@@ -7,7 +7,11 @@
 // RUN: grep 't6.*protected' %t &&
 // RUN: grep 't7.*noreturn' %t &&
 // RUN: grep 't7.*nounwind' %t &&
-// RUN: grep 't9.*alias.*weak.*t8' %t
+// RUN: grep 't9.*alias.*weak.*t8' %t &&
+// RUN: grep '@t10().*section "SECT"' %t &&
+// RUN: grep '@t11().*section "SECT"' %t &&
+// RUN: grep '@t12 =.*section "SECT"' %t &&
+// RUN: grep '@t13 =.*section "SECT"' %t
 
 void t1() __attribute__((noreturn));
 void t1() {}
@@ -30,3 +34,11 @@ void t7() {}
 
 void __t8() {}
 void t9() __attribute__((weak, alias("__t8")));
+
+void t10(void) __attribute__((section("SECT")));
+void t10(void) {}
+void __attribute__((section("SECT"))) t11(void) {}
+
+int t12 __attribute__((section("SECT")));
+struct s0 { int x; };
+struct s0 t13 __attribute__ ((section ("SECT"))) = { 0 };

@@ -784,6 +784,26 @@ static void HandleDLLExportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new DLLExportAttr());
 }
 
+static void HandleSectionAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // Attribute has no arguments.
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+
+  // Make sure that there is a string literal as the sections's single
+  // argument.
+  StringLiteral *SE = 
+    dyn_cast<StringLiteral>(static_cast<Expr *>(Attr.getArg(0)));
+  if (!SE) {
+    // FIXME
+    S.Diag(Attr.getLoc(), diag::err_attribute_annotate_no_string);
+    return;
+  }
+  d->addAttr(new SectionAttr(std::string(SE->getStrData(),
+                                         SE->getByteLength())));
+}
+
 static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // Attribute has no arguments.
   if (Attr.getNumArgs() != 0) {
@@ -1306,6 +1326,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
+  case AttributeList::AT_section:     HandleSectionAttr   (D, Attr, S); break;
   case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;
   case AttributeList::AT_unavailable: HandleUnavailableAttr(D, Attr, S); break;
   case AttributeList::AT_unused:      HandleUnusedAttr    (D, Attr, S); break;

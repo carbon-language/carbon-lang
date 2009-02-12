@@ -45,6 +45,7 @@ public:
     ObjCNSObject,
     Overloadable, // Clang-specific
     Packed,
+    Section,
     StdCall,
     TransparentUnion,
     Unavailable,
@@ -225,6 +226,20 @@ public:
 
   static bool classof(const Attr *A) { return A->getKind() == Deprecated; }
   static bool classof(const DeprecatedAttr *A) { return true; }
+};
+
+class SectionAttr : public Attr {
+  std::string Name;
+public:
+  SectionAttr(const std::string &N) : Attr(Section), Name(N) {}
+  
+  const std::string& getName() const { return Name; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() == Section;
+  }
+  static bool classof(const SectionAttr *A) { return true; }
 };
 
 class UnavailableAttr : public Attr {

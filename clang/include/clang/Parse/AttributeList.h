@@ -65,6 +65,7 @@ public:
     AT_overloadable,      // Clang-specific
     AT_packed,
     AT_pure,
+    AT_section,
     AT_stdcall,
     AT_transparent_union,
     AT_unavailable,
