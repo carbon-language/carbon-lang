@@ -23,6 +23,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 
@@ -851,9 +852,160 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
   }
 }
 
+static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr, 
+                                        QualType Ty,
+                                        CodeGenFunction &CGF) {
+  llvm::Value *overflow_arg_area_p = 
+    CGF.Builder.CreateStructGEP(VAListAddr, 2, "overflow_arg_area_p");
+  llvm::Value *overflow_arg_area = 
+    CGF.Builder.CreateLoad(overflow_arg_area_p, "overflow_arg_area");
+
+  // AMD64-ABI 3.5.7p5: Step 7. Align l->overflow_arg_area upwards to a 16
+  // byte boundary if alignment needed by type exceeds 8 byte boundary.
+  uint64_t Align = llvm::NextPowerOf2(CGF.getContext().getTypeAlign(Ty) / 8);
+  if (Align > 8) {
+    // Note align to type alignment instead of assuming it must be 16.
+
+    // FIXME: Implement alignment in x86_64 va_arg.
+  }
+
+  // AMD64-ABI 3.5.7p5: Step 8. Fetch type from l->overflow_arg_area.
+  const llvm::Type *LTy = CGF.ConvertTypeForMem(Ty);
+  llvm::Value *Res = 
+    CGF.Builder.CreateBitCast(overflow_arg_area, 
+                              llvm::PointerType::getUnqual(LTy));
+
+  // AMD64-ABI 3.5.7p5: Step 9. Set l->overflow_arg_area to:
+  // l->overflow_arg_area + sizeof(type).
+  // AMD64-ABI 3.5.7p5: Step 10. Align l->overflow_arg_area upwards to
+  // an 8 byte boundary.
+
+  uint64_t SizeInBytes = (CGF.getContext().getTypeSize(Ty) + 7) / 8;
+  llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                               (SizeInBytes + 7)  & ~7);
+  overflow_arg_area = CGF.Builder.CreateGEP(overflow_arg_area, Offset,
+                                            "overflow_arg_area.next");
+  CGF.Builder.CreateStore(overflow_arg_area, overflow_arg_area_p);
+
+  // AMD64-ABI 3.5.7p5: Step 11. Return the fetched type.  
+  return Res;
+}
+
 llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                       CodeGenFunction &CGF) const {
-  return 0;
+  // Assume that va_list type is correct; should be pointer to LLVM type:
+  // struct {
+  //   i32 gp_offset;
+  //   i32 fp_offset;
+  //   i8* overflow_arg_area;
+  //   i8* reg_save_area;
+  // }; 
+  unsigned neededInt, neededSSE;
+  ABIArgInfo AI = classifyArgumentType(Ty, CGF.getContext(), 
+                                       neededInt, neededSSE);
+
+  // AMD64-ABI 3.5.7p5: Step 1. Determine whether type may be passed
+  // in the registers. If not go to step 7.
+  if (!neededInt && !neededSSE)
+    return EmitVAArgFromMemory(VAListAddr, Ty, CGF);
+
+  // AMD64-ABI 3.5.7p5: Step 2. Compute num_gp to hold the number of
+  // general purpose registers needed to pass type and num_fp to hold
+  // the number of floating point registers needed.
+
+  // AMD64-ABI 3.5.7p5: Step 3. Verify whether arguments fit into
+  // registers. In the case: l->gp_offset > 48 - num_gp * 8 or
+  // l->fp_offset > 304 - num_fp * 16 go to step 7.
+  // 
+  // NOTE: 304 is a typo, there are (6 * 8 + 8 * 16) = 176 bytes of
+  // register save space).
+
+  llvm::Value *InRegs = 0;
+  llvm::Value *gp_offset_p = 0, *gp_offset = 0;
+  llvm::Value *fp_offset_p = 0, *fp_offset = 0;
+  if (neededInt) {
+    gp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 0, "gp_offset_p");
+    gp_offset = CGF.Builder.CreateLoad(gp_offset_p, "gp_offset");
+    InRegs = 
+      CGF.Builder.CreateICmpULE(gp_offset,
+                                llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                                       48 - neededInt * 8),
+                                "fits_in_gp");
+  }
+
+  if (neededSSE) {
+    fp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 1, "fp_offset_p");
+    fp_offset = CGF.Builder.CreateLoad(fp_offset_p, "fp_offset");
+    llvm::Value *FitsInFP = 
+      CGF.Builder.CreateICmpULE(fp_offset,
+                                llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                                       176 - neededSSE * 8),
+                                "fits_in_fp");
+    InRegs = InRegs ? CGF.Builder.CreateOr(InRegs, FitsInFP) : FitsInFP;
+  }
+
+  llvm::BasicBlock *InRegBlock = CGF.createBasicBlock("vaarg.in_reg");
+  llvm::BasicBlock *InMemBlock = CGF.createBasicBlock("vaarg.in_mem");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("vaarg.end");
+  CGF.Builder.CreateCondBr(InRegs, InRegBlock, InMemBlock);
+  
+  // Emit code to load the value if it was passed in registers.
+  
+  CGF.EmitBlock(InRegBlock);
+
+  // AMD64-ABI 3.5.7p5: Step 4. Fetch type from l->reg_save_area with
+  // an offset of l->gp_offset and/or l->fp_offset. This may require
+  // copying to a temporary location in case the parameter is passed
+  // in different register classes or requires an alignment greater
+  // than 8 for general purpose registers and 16 for XMM registers.
+  const llvm::Type *LTy = CGF.ConvertTypeForMem(Ty);
+  llvm::Value *RegAddr = 
+    CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(VAListAddr, 3), 
+                           "reg_save_area");
+  if (neededInt && neededSSE) {
+    assert(0 && "FIXME: Implement support for va_arg in mixed regs");
+  } else if (neededInt) {
+    RegAddr = CGF.Builder.CreateGEP(RegAddr, gp_offset);
+    RegAddr = CGF.Builder.CreateBitCast(RegAddr, 
+                                        llvm::PointerType::getUnqual(LTy));
+  } else {
+    RegAddr = CGF.Builder.CreateGEP(RegAddr, fp_offset);
+    RegAddr = CGF.Builder.CreateBitCast(RegAddr, 
+                                        llvm::PointerType::getUnqual(LTy));
+  }
+
+  // AMD64-ABI 3.5.7p5: Step 5. Set: 
+  // l->gp_offset = l->gp_offset + num_gp * 8 
+  // l->fp_offset = l->fp_offset + num_fp * 16.
+  if (neededInt) {
+    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                                 neededInt * 8);
+    CGF.Builder.CreateStore(CGF.Builder.CreateAdd(gp_offset, Offset),
+                            gp_offset_p);
+  }
+  if (neededSSE) {
+    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                                 neededSSE * 16);
+    CGF.Builder.CreateStore(CGF.Builder.CreateAdd(fp_offset, Offset),
+                            fp_offset_p);
+  }
+  CGF.EmitBranch(ContBlock);
+
+  // Emit code to load the value if it was passed in memory.
+  
+  CGF.EmitBlock(InMemBlock);
+  llvm::Value *MemAddr = EmitVAArgFromMemory(VAListAddr, Ty, CGF);
+
+  // Return the appropriate result.
+
+  CGF.EmitBlock(ContBlock);  
+  llvm::PHINode *ResAddr = CGF.Builder.CreatePHI(RegAddr->getType(), 
+                                                 "vaarg.addr");
+  ResAddr->reserveOperandSpace(2);
+  ResAddr->addIncoming(RegAddr, InRegBlock);
+  ResAddr->addIncoming(MemAddr, InMemBlock);
+  
+  return ResAddr;
 }
 
 ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
