@@ -172,3 +172,17 @@ struct bar saloon = {
   .f.arr[3] = 1,
   .arr = { &f }
 };
+
+typedef unsigned char u_char;
+typedef unsigned short u_short;
+
+union wibble {
+        u_char  arr1[6];
+        u_short arr2[3];
+};
+
+const union wibble wobble = { .arr2[0] = 0xffff,
+                              .arr2[1] = 0xffff,
+                              .arr2[2] = 0xffff };
+
+const union wibble wobble2 = { .arr2 = {4, 5, 6}, 7 }; // expected-error{{excess elements in union initializer}}

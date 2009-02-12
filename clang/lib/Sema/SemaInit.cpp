@@ -742,14 +742,13 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
     return;
   }
 
-
-
   // If structDecl is a forward declaration, this loop won't do
   // anything except look at designated initializers; That's okay,
   // because an error should get printed out elsewhere. It might be
   // worthwhile to skip over the rest of the initializer, though.
   RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
   RecordDecl::field_iterator FieldEnd = RD->field_end();
+  bool InitializedSomething = false;
   while (Index < IList->getNumInits()) {
     Expr *Init = IList->getInit(Index);
 
@@ -768,11 +767,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
                                      true, TopLevelObject))
         hadError = true;
 
-      // Abort early for unions: the designator handled the
-      // initialization of the appropriate field.
-      if (DeclType->isUnionType())
-        break;
-
+      InitializedSomething = true;
       continue;
     }
 
@@ -780,6 +775,10 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
       // We've run out of fields. We're done.
       break;
     }
+
+    // We've already initialized a member of a union. We're done.
+    if (InitializedSomething && DeclType->isUnionType())
+      break;
 
     // If we've hit the flexible array member at the end, we're done.
     if (Field->getType()->isIncompleteArrayType())
@@ -793,11 +792,11 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
 
     CheckSubElementType(IList, Field->getType(), Index,
                         StructuredList, StructuredIndex);
+    InitializedSomething = true;
 
     if (DeclType->isUnionType()) {
       // Initialize the first field within the union.
       StructuredList->setInitializedFieldInUnion(*Field);
-      break;
     }
 
     ++Field;
