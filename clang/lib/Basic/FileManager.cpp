@@ -29,7 +29,7 @@ using namespace clang;
 #include <sys/stat.h>
 
 #if defined(_MSC_VER)
-#defisstne S_ISDIR(s) (_S_IFDIR & s)
+#define S_ISDIR(s) (_S_IFDIR & s)
 #endif
 
 /// NON_EXISTENT_DIR - A special value distinct from null that is used to
