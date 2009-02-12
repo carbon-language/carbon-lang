@@ -933,11 +933,23 @@ bool BitcodeReader::ParseConstants() {
     case bitc::CST_CODE_CE_SHUFFLEVEC: { // CE_SHUFFLEVEC: [opval, opval, opval]
       const VectorType *OpTy = dyn_cast<VectorType>(CurTy);
       if (Record.size() < 3 || OpTy == 0)
-        return Error("Invalid CE_INSERTELT record");
+        return Error("Invalid CE_SHUFFLEVEC record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[1], OpTy);
       const Type *ShufTy=VectorType::get(Type::Int32Ty, OpTy->getNumElements());
       Constant *Op2 = ValueList.getConstantFwdRef(Record[2], ShufTy);
+      V = ConstantExpr::getShuffleVector(Op0, Op1, Op2);
+      break;
+    }
+    case bitc::CST_CODE_CE_SHUFVEC_EX: { // [opty, opval, opval, opval]
+      const VectorType *RTy = dyn_cast<VectorType>(CurTy);
+      const VectorType *OpTy = dyn_cast<VectorType>(getTypeByID(Record[0]));
+      if (Record.size() < 4 || RTy == 0 || OpTy == 0)
+        return Error("Invalid CE_SHUFVEC_EX record");
+      Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
+      Constant *Op1 = ValueList.getConstantFwdRef(Record[2], OpTy);
+      const Type *ShufTy=VectorType::get(Type::Int32Ty, RTy->getNumElements());
+      Constant *Op2 = ValueList.getConstantFwdRef(Record[3], ShufTy);
       V = ConstantExpr::getShuffleVector(Op0, Op1, Op2);
       break;
     }

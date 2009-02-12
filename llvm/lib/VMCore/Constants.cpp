@@ -554,7 +554,10 @@ public:
     return User::operator new(s, 3);
   }
   ShuffleVectorConstantExpr(Constant *C1, Constant *C2, Constant *C3)
-  : ConstantExpr(C1->getType(), Instruction::ShuffleVector, 
+  : ConstantExpr(VectorType::get(
+                   cast<VectorType>(C1->getType())->getElementType(),
+                   cast<VectorType>(C3->getType())->getNumElements()),
+                 Instruction::ShuffleVector, 
                  &Op<0>(), 3) {
     Op<0>() = C1;
     Op<1>() = C2;
@@ -2349,7 +2352,11 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
                                          Constant *Mask) {
   assert(ShuffleVectorInst::isValidOperands(V1, V2, Mask) &&
          "Invalid shuffle vector constant expr operands!");
-  return getShuffleVectorTy(V1->getType(), V1, V2, Mask);
+
+  unsigned NElts = cast<VectorType>(Mask->getType())->getNumElements();
+  const Type *EltTy = cast<VectorType>(V1->getType())->getElementType();
+  const Type *ShufTy = VectorType::get(EltTy, NElts);
+  return getShuffleVectorTy(ShufTy, V1, V2, Mask);
 }
 
 Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,

@@ -643,7 +643,16 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         Record.push_back(VE.getValueID(C->getOperand(2)));
         break;
       case Instruction::ShuffleVector:
-        Code = bitc::CST_CODE_CE_SHUFFLEVEC;
+        // If the return type and argument types are the same, this is a
+        // standard shufflevector instruction.  If the types are different,
+        // then the shuffle is widening or truncating the input vectors, and
+        // the argument type must also be encoded.
+        if (C->getType() == C->getOperand(0)->getType()) {
+          Code = bitc::CST_CODE_CE_SHUFFLEVEC;
+        } else {
+          Code = bitc::CST_CODE_CE_SHUFVEC_EX;
+          Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
+        }
         Record.push_back(VE.getValueID(C->getOperand(0)));
         Record.push_back(VE.getValueID(C->getOperand(1)));
         Record.push_back(VE.getValueID(C->getOperand(2)));
