@@ -39,6 +39,9 @@ GetConversionCategory(ImplicitConversionKind Kind) {
     ICC_Qualification_Adjustment,
     ICC_Promotion,
     ICC_Promotion,
+    ICC_Promotion,
+    ICC_Conversion,
+    ICC_Conversion,
     ICC_Conversion,
     ICC_Conversion,
     ICC_Conversion,
@@ -63,6 +66,9 @@ ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind) {
     ICR_Exact_Match,
     ICR_Promotion,
     ICR_Promotion,
+    ICR_Promotion,
+    ICR_Conversion,
+    ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
@@ -86,9 +92,12 @@ const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
     "Qualification",
     "Integral promotion",
     "Floating point promotion",
+    "Complex promotion",
     "Integral conversion",
     "Floating conversion",
+    "Complex conversion",
     "Floating-integral conversion",
+    "Complex-real conversion",
     "Pointer conversion",
     "Pointer-to-member conversion",
     "Boolean conversion",
@@ -552,6 +561,11 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     SCS.Second = ICK_Floating_Promotion;
     FromType = ToType.getUnqualifiedType();
   } 
+  // Complex promotion (Clang extension)
+  else if (IsComplexPromotion(FromType, ToType)) {
+    SCS.Second = ICK_Complex_Promotion;
+    FromType = ToType.getUnqualifiedType();
+  }
   // Integral conversions (C++ 4.7).
   // FIXME: isIntegralType shouldn't be true for enums in C++.
   else if ((FromType->isIntegralType() || FromType->isEnumeralType()) &&
@@ -564,6 +578,11 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     SCS.Second = ICK_Floating_Conversion;
     FromType = ToType.getUnqualifiedType();
   }
+  // Complex conversions (C99 6.3.1.6)
+  else if (FromType->isComplexType() && ToType->isComplexType()) {
+    SCS.Second = ICK_Complex_Conversion;
+    FromType = ToType.getUnqualifiedType();
+  }
   // Floating-integral conversions (C++ 4.9).
   // FIXME: isIntegralType shouldn't be true for enums in C++.
   else if ((FromType->isFloatingType() &&
@@ -572,6 +591,12 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
            ((FromType->isIntegralType() || FromType->isEnumeralType()) && 
             ToType->isFloatingType())) {
     SCS.Second = ICK_Floating_Integral;
+    FromType = ToType.getUnqualifiedType();
+  }
+  // Complex-real conversions (C99 6.3.1.7)
+  else if ((FromType->isComplexType() && ToType->isArithmeticType()) ||
+           (ToType->isComplexType() && FromType->isArithmeticType())) {
+    SCS.Second = ICK_Complex_Real;
     FromType = ToType.getUnqualifiedType();
   }
   // Pointer conversions (C++ 4.10).
@@ -756,12 +781,40 @@ bool Sema::IsFloatingPointPromotion(QualType FromType, QualType ToType)
   /// An rvalue of type float can be converted to an rvalue of type
   /// double. (C++ 4.6p1).
   if (const BuiltinType *FromBuiltin = FromType->getAsBuiltinType())
-    if (const BuiltinType *ToBuiltin = ToType->getAsBuiltinType())
+    if (const BuiltinType *ToBuiltin = ToType->getAsBuiltinType()) {
       if (FromBuiltin->getKind() == BuiltinType::Float &&
           ToBuiltin->getKind() == BuiltinType::Double)
         return true;
 
+      // C99 6.3.1.5p1:
+      //   When a float is promoted to double or long double, or a
+      //   double is promoted to long double [...].
+      if (!getLangOptions().CPlusPlus &&
+          (FromBuiltin->getKind() == BuiltinType::Float ||
+           FromBuiltin->getKind() == BuiltinType::Double) &&
+          (ToBuiltin->getKind() == BuiltinType::LongDouble))
+        return true;
+    }
+
   return false;
+}
+
+/// \brief Determine if a conversion is a complex promotion.
+///
+/// A complex promotion is defined as a complex -> complex conversion
+/// where the conversion between the underlying real types is a
+/// floating-point conversion.
+bool Sema::IsComplexPromotion(QualType FromType, QualType ToType) {
+  const ComplexType *FromComplex = FromType->getAsComplexType();
+  if (!FromComplex)
+    return false;
+
+  const ComplexType *ToComplex = ToType->getAsComplexType();
+  if (!ToComplex)
+    return false;
+
+  return IsFloatingPointPromotion(FromComplex->getElementType(),
+                                  ToComplex->getElementType());
 }
 
 /// BuildSimilarlyQualifiedPointerType - In a pointer conversion from

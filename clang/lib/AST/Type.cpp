@@ -82,6 +82,10 @@ QualType Type::getDesugaredType() const {
     return TOE->getUnderlyingExpr()->getType();
   if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
     return TOT->getUnderlyingType();
+  if (const ClassTemplateSpecializationType *Spec 
+        = dyn_cast<ClassTemplateSpecializationType>(this))
+    return Spec->getCanonicalTypeInternal();
+
   // FIXME: remove this cast.
   return QualType(const_cast<Type*>(this), 0);
 }
