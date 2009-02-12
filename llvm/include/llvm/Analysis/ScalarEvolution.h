@@ -29,9 +29,7 @@
 namespace llvm {
   class APInt;
   class ConstantInt;
-  class Instruction;
   class Type;
-  class ConstantRange;
   class SCEVHandle;
   class ScalarEvolution;
 
@@ -281,6 +279,11 @@ namespace llvm {
     /// If this value is not computable at this scope, a SCEVCouldNotCompute
     /// object is returned.
     SCEVHandle getSCEVAtScope(Value *V, const Loop *L) const;
+
+    /// isLoopGuardedByCond - Test whether entry to the loop is protected by
+    /// a conditional between LHS and RHS.
+    bool isLoopGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
+                             SCEV *LHS, SCEV *RHS);
 
     /// getIterationCount - If the specified loop has a predictable iteration
     /// count, return it, otherwise return a SCEVCouldNotCompute object.

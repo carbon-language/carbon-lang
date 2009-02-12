@@ -53,6 +53,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -89,13 +90,14 @@ namespace {
 
     void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
                                     SmallPtrSet<Instruction*, 16> &DeadInsts);
-    Instruction *LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
-                                           SCEVExpander &RW);
+    void LinearFunctionTestReplace(Loop *L, SCEVHandle IterationCount, Value *IndVar,
+                                   BasicBlock *ExitingBlock,
+                                   BranchInst *BI,
+                                   SCEVExpander &Rewriter);
     void RewriteLoopExitValues(Loop *L, SCEV *IterationCount);
 
     void DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*, 16> &Insts);
 
-    void OptimizeCanonicalIVType(Loop *L);
     void HandleFloatingPointIV(Loop *L, PHINode *PH, 
                                SmallPtrSet<Instruction*, 16> &DeadInsts);
   };
@@ -225,68 +227,54 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
 /// variable.  This pass is able to rewrite the exit tests of any loop where the
 /// SCEV analysis can determine a loop-invariant trip count of the loop, which
 /// is actually a much broader range than just linear tests.
-///
-/// This method returns a "potentially dead" instruction whose computation chain
-/// should be deleted when convenient.
-Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
-                                                       SCEV *IterationCount,
-                                                       SCEVExpander &RW) {
-  // Find the exit block for the loop.  We can currently only handle loops with
-  // a single exit.
-  SmallVector<BasicBlock*, 8> ExitBlocks;
-  L->getExitBlocks(ExitBlocks);
-  if (ExitBlocks.size() != 1) return 0;
-  BasicBlock *ExitBlock = ExitBlocks[0];
-
-  // Make sure there is only one predecessor block in the loop.
-  BasicBlock *ExitingBlock = 0;
-  for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
-       PI != PE; ++PI)
-    if (L->contains(*PI)) {
-      if (ExitingBlock == 0)
-        ExitingBlock = *PI;
-      else
-        return 0;  // Multiple exits from loop to this block.
-    }
-  assert(ExitingBlock && "Loop info is broken");
-
-  if (!isa<BranchInst>(ExitingBlock->getTerminator()))
-    return 0;  // Can't rewrite non-branch yet
-  BranchInst *BI = cast<BranchInst>(ExitingBlock->getTerminator());
-  assert(BI->isConditional() && "Must be conditional to be part of loop!");
-
-  Instruction *PotentiallyDeadInst = dyn_cast<Instruction>(BI->getCondition());
-  
+void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
+                                   SCEVHandle IterationCount,
+                                   Value *IndVar,
+                                   BasicBlock *ExitingBlock,
+                                   BranchInst *BI,
+                                   SCEVExpander &Rewriter) {
   // If the exiting block is not the same as the backedge block, we must compare
   // against the preincremented value, otherwise we prefer to compare against
   // the post-incremented value.
-  BasicBlock *Header = L->getHeader();
-  pred_iterator HPI = pred_begin(Header);
-  assert(HPI != pred_end(Header) && "Loop with zero preds???");
-  if (!L->contains(*HPI)) ++HPI;
-  assert(HPI != pred_end(Header) && L->contains(*HPI) &&
-         "No backedge in loop?");
+  Value *CmpIndVar;
+  if (ExitingBlock == L->getLoopLatch()) {
+    // What ScalarEvolution calls the "iteration count" is actually the
+    // number of times the branch is taken. Add one to get the number
+    // of times the branch is executed. If this addition may overflow,
+    // we have to be more pessimistic and cast the induction variable
+    // before doing the add.
+    SCEVHandle Zero = SE->getIntegerSCEV(0, IterationCount->getType());
+    SCEVHandle N =
+      SE->getAddExpr(IterationCount,
+                     SE->getIntegerSCEV(1, IterationCount->getType()));
+    if ((isa<SCEVConstant>(N) && !N->isZero()) ||
+        SE->isLoopGuardedByCond(L, ICmpInst::ICMP_NE, N, Zero)) {
+      // No overflow. Cast the sum.
+      IterationCount = SE->getTruncateOrZeroExtend(N, IndVar->getType());
+    } else {
+      // Potential overflow. Cast before doing the add.
+      IterationCount = SE->getTruncateOrZeroExtend(IterationCount,
+                                                   IndVar->getType());
+      IterationCount =
+        SE->getAddExpr(IterationCount,
+                       SE->getIntegerSCEV(1, IndVar->getType()));
+    }
 
-  SCEVHandle TripCount = IterationCount;
-  Value *IndVar;
-  if (*HPI == ExitingBlock) {
     // The IterationCount expression contains the number of times that the
     // backedge actually branches to the loop header.  This is one less than the
     // number of times the loop executes, so add one to it.
-    ConstantInt *OneC = ConstantInt::get(IterationCount->getType(), 1);
-    TripCount = SE->getAddExpr(IterationCount, SE->getConstant(OneC));
-    IndVar = L->getCanonicalInductionVariableIncrement();
+    CmpIndVar = L->getCanonicalInductionVariableIncrement();
   } else {
     // We have to use the preincremented value...
-    IndVar = L->getCanonicalInductionVariable();
+    IterationCount = SE->getTruncateOrZeroExtend(IterationCount,
+                                                 IndVar->getType());
+    CmpIndVar = IndVar;
   }
-  
-  DOUT << "INDVARS: LFTR: TripCount = " << *TripCount
-       << "  IndVar = " << *IndVar << "\n";
 
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
-  Value *ExitCnt = RW.expandCodeFor(TripCount, Preheader->getTerminator());
+  Value *ExitCnt = Rewriter.expandCodeFor(IterationCount,
+                                          Preheader->getTerminator());
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
   ICmpInst::Predicate Opcode;
@@ -295,13 +283,17 @@ Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
   else
     Opcode = ICmpInst::ICMP_EQ;
 
-  Value *Cond = new ICmpInst(Opcode, IndVar, ExitCnt, "exitcond", BI);
+  DOUT << "INDVARS: Rewriting loop exit condition to:\n"
+       << "      LHS:" << *CmpIndVar // includes a newline
+       << "       op:\t"
+       << (Opcode == ICmpInst::ICMP_NE ? "!=" : "=") << "\n"
+       << "      RHS:\t" << *IterationCount << "\n";
+
+  Value *Cond = new ICmpInst(Opcode, CmpIndVar, ExitCnt, "exitcond", BI);
   BI->setCondition(Cond);
   ++NumLFTR;
   Changed = true;
-  return PotentiallyDeadInst;
 }
-
 
 /// RewriteLoopExitValues - Check to see if this loop has a computable
 /// loop-invariant execution count.  If so, this means that we can compute the
@@ -444,15 +436,100 @@ bool IndVarSimplify::doInitialization(Loop *L, LPPassManager &LPM) {
   return Changed;
 }
 
-bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
+/// getEffectiveIndvarType - Determine the widest type that the
+/// induction-variable PHINode Phi is cast to.
+///
+static const Type *getEffectiveIndvarType(const PHINode *Phi) {
+  const Type *Ty = Phi->getType();
 
+  for (Value::use_const_iterator UI = Phi->use_begin(), UE = Phi->use_end();
+       UI != UE; ++UI) {
+    const Type *CandidateType = NULL;
+    if (const ZExtInst *ZI = dyn_cast<ZExtInst>(UI))
+      CandidateType = ZI->getDestTy();
+    else if (const SExtInst *SI = dyn_cast<SExtInst>(UI))
+      CandidateType = SI->getDestTy();
+    if (CandidateType &&
+        CandidateType->getPrimitiveSizeInBits() >
+          Ty->getPrimitiveSizeInBits())
+      Ty = CandidateType;
+  }
+
+  return Ty;
+}
+
+/// isOrigIVAlwaysNonNegative - Analyze the original induction variable
+/// in the loop to determine whether it would ever have a negative
+/// value.
+///
+/// TODO: This duplicates a fair amount of ScalarEvolution logic.
+/// Perhaps this can be merged with ScalarEvolution::getIterationCount.
+///
+static bool isOrigIVAlwaysNonNegative(const Loop *L,
+                                      const Instruction *OrigCond) {
+  // Verify that the loop is sane and find the exit condition.
+  const ICmpInst *Cmp = dyn_cast<ICmpInst>(OrigCond);
+  if (!Cmp) return false;
+
+  // For now, analyze only SLT loops for signed overflow.
+  if (Cmp->getPredicate() != ICmpInst::ICMP_SLT) return false;
+
+  // Get the increment instruction. Look past SExtInsts if we will
+  // be able to prove that the original induction variable doesn't
+  // undergo signed overflow.
+  const Value *OrigIncrVal = Cmp->getOperand(0);
+  const Value *IncrVal = OrigIncrVal;
+  if (SExtInst *SI = dyn_cast<SExtInst>(Cmp->getOperand(0))) {
+    if (!isa<ConstantInt>(Cmp->getOperand(1)) ||
+        !cast<ConstantInt>(Cmp->getOperand(1))->getValue()
+          .isSignedIntN(IncrVal->getType()->getPrimitiveSizeInBits()))
+      return false;
+    IncrVal = SI->getOperand(0);
+  }
+
+  // For now, only analyze induction variables that have simple increments.
+  const BinaryOperator *IncrOp = dyn_cast<BinaryOperator>(IncrVal);
+  if (!IncrOp ||
+      IncrOp->getOpcode() != Instruction::Add ||
+      !isa<ConstantInt>(IncrOp->getOperand(1)) ||
+      !cast<ConstantInt>(IncrOp->getOperand(1))->equalsInt(1))
+    return false;
+
+  // Make sure the PHI looks like a normal IV.
+  const PHINode *PN = dyn_cast<PHINode>(IncrOp->getOperand(0));
+  if (!PN || PN->getNumIncomingValues() != 2)
+    return false;
+  unsigned IncomingEdge = L->contains(PN->getIncomingBlock(0));
+  unsigned BackEdge = !IncomingEdge;
+  if (!L->contains(PN->getIncomingBlock(BackEdge)) ||
+      PN->getIncomingValue(BackEdge) != IncrOp)
+    return false;
+
+  // For now, only analyze loops with a constant start value, so that
+  // we can easily determine if the start value is non-negative and
+  // not a maximum value which would wrap on the first iteration.
+  const Value *InitialVal = PN->getIncomingValue(IncomingEdge);
+  if (!isa<ConstantInt>(InitialVal) ||
+      cast<ConstantInt>(InitialVal)->getValue().isNegative() ||
+      cast<ConstantInt>(InitialVal)->getValue().isMaxSignedValue())
+    return false;
+
+  // The original induction variable will start at some non-negative
+  // non-max value, it counts up by one, and the loop iterates only
+  // while it remans less than (signed) some value in the same type.
+  // As such, it will always be non-negative.
+  return true;
+}
+
+bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
 
   Changed = false;
-  BasicBlock *Header    = L->getHeader();
+  BasicBlock *Header       = L->getHeader();
+  BasicBlock *ExitingBlock = L->getExitingBlock();
   SmallPtrSet<Instruction*, 16> DeadInsts;
-  
+
   // Verify the input to the pass in already in LCSSA form.
   assert(L->isLCSSAForm());
 
@@ -486,35 +563,23 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     }
   }
 
-  // If there are no induction variables in the loop, there is nothing more to
-  // do.
-  if (IndVars.empty()) {
-    // Actually, if we know how many times the loop iterates, lets insert a
-    // canonical induction variable to help subsequent passes.
-    if (!isa<SCEVCouldNotCompute>(IterationCount)) {
-      SCEVExpander Rewriter(*SE, *LI);
-      Rewriter.getOrInsertCanonicalInductionVariable(L,
-                                                     IterationCount->getType());
-      if (Instruction *I = LinearFunctionTestReplace(L, IterationCount,
-                                                     Rewriter)) {
-        SmallPtrSet<Instruction*, 16> InstructionsToDelete;
-        InstructionsToDelete.insert(I);
-        DeleteTriviallyDeadInstructions(InstructionsToDelete);
-      }
-    }
-    return Changed;
+  // Compute the type of the largest recurrence expression, and collect
+  // the set of the types of the other recurrence expressions.
+  const Type *LargestType = 0;
+  SmallSetVector<const Type *, 4> SizesToInsert;
+  if (!isa<SCEVCouldNotCompute>(IterationCount)) {
+    LargestType = IterationCount->getType();
+    SizesToInsert.insert(IterationCount->getType());
   }
-
-  // Compute the type of the largest recurrence expression.
-  //
-  const Type *LargestType = IndVars[0].first->getType();
-  bool DifferingSizes = false;
-  for (unsigned i = 1, e = IndVars.size(); i != e; ++i) {
-    const Type *Ty = IndVars[i].first->getType();
-    DifferingSizes |= 
-      Ty->getPrimitiveSizeInBits() != LargestType->getPrimitiveSizeInBits();
-    if (Ty->getPrimitiveSizeInBits() > LargestType->getPrimitiveSizeInBits())
-      LargestType = Ty;
+  for (unsigned i = 0, e = IndVars.size(); i != e; ++i) {
+    const PHINode *PN = IndVars[i].first;
+    SizesToInsert.insert(PN->getType());
+    const Type *EffTy = getEffectiveIndvarType(PN);
+    SizesToInsert.insert(EffTy);
+    if (!LargestType ||
+        EffTy->getPrimitiveSizeInBits() >
+          LargestType->getPrimitiveSizeInBits())
+      LargestType = EffTy;
   }
 
   // Create a rewriter object which we'll use to transform the code with.
@@ -522,16 +587,31 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Now that we know the largest of of the induction variables in this loop,
   // insert a canonical induction variable of the largest size.
-  Value *IndVar = Rewriter.getOrInsertCanonicalInductionVariable(L,LargestType);
-  ++NumInserted;
-  Changed = true;
-  DOUT << "INDVARS: New CanIV: " << *IndVar;
-
-  if (!isa<SCEVCouldNotCompute>(IterationCount)) {
-    IterationCount = SE->getTruncateOrZeroExtend(IterationCount, LargestType);
-    if (Instruction *DI = LinearFunctionTestReplace(L, IterationCount,Rewriter))
-      DeadInsts.insert(DI);
+  Value *IndVar = 0;
+  if (!SizesToInsert.empty()) {
+    IndVar = Rewriter.getOrInsertCanonicalInductionVariable(L,LargestType);
+    ++NumInserted;
+    Changed = true;
+    DOUT << "INDVARS: New CanIV: " << *IndVar;
   }
+
+  // If we have a trip count expression, rewrite the loop's exit condition
+  // using it.  We can currently only handle loops with a single exit.
+  bool OrigIVAlwaysNonNegative = false;
+  if (!isa<SCEVCouldNotCompute>(IterationCount) && ExitingBlock)
+    // Can't rewrite non-branch yet.
+    if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator())) {
+      if (Instruction *OrigCond = dyn_cast<Instruction>(BI->getCondition())) {
+        // Determine if the OrigIV will ever have a non-zero sign bit.
+        OrigIVAlwaysNonNegative = isOrigIVAlwaysNonNegative(L, OrigCond);
+
+        // We'll be replacing the original condition, so it'll be dead.
+        DeadInsts.insert(OrigCond);
+      }
+
+      LinearFunctionTestReplace(L, IterationCount, IndVar,
+                                ExitingBlock, BI, Rewriter);
+    }
 
   // Now that we have a canonical induction variable, we can rewrite any
   // recurrences in terms of the induction variable.  Start with the auxillary
@@ -541,21 +621,13 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // If there were induction variables of other sizes, cast the primary
   // induction variable to the right size for them, avoiding the need for the
   // code evaluation methods to insert induction variables of different sizes.
-  if (DifferingSizes) {
-    SmallVector<unsigned,4> InsertedSizes;
-    InsertedSizes.push_back(LargestType->getPrimitiveSizeInBits());
-    for (unsigned i = 0, e = IndVars.size(); i != e; ++i) {
-      unsigned ithSize = IndVars[i].first->getType()->getPrimitiveSizeInBits();
-      if (std::find(InsertedSizes.begin(), InsertedSizes.end(), ithSize)
-          == InsertedSizes.end()) {
-        PHINode *PN = IndVars[i].first;
-        InsertedSizes.push_back(ithSize);
-        Instruction *New = new TruncInst(IndVar, PN->getType(), "indvar",
-                                         InsertPt);
-        Rewriter.addInsertedValue(New, SE->getSCEV(New));
-        DOUT << "INDVARS: Made trunc IV for " << *PN
-             << "   NewVal = " << *New << "\n";
-      }
+  for (unsigned i = 0, e = SizesToInsert.size(); i != e; ++i) {
+    const Type *Ty = SizesToInsert[i];
+    if (Ty != LargestType) {
+      Instruction *New = new TruncInst(IndVar, Ty, "indvar", InsertPt);
+      Rewriter.addInsertedValue(New, SE->getSCEV(New));
+      DOUT << "INDVARS: Made trunc IV for type " << *Ty << ": "
+           << *New << "\n";
     }
   }
 
@@ -567,6 +639,23 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     DOUT << "INDVARS: Rewrote IV '" << *IndVars.back().second << "' " << *PN
          << "   into = " << *NewVal << "\n";
     NewVal->takeName(PN);
+
+    /// If the new canonical induction variable is wider than the original,
+    /// and the original has uses that are casts to wider types, see if the
+    /// truncate and extend can be omitted.
+    if (isa<TruncInst>(NewVal))
+      for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
+           UI != UE; ++UI)
+        if (isa<ZExtInst>(UI) ||
+            (isa<SExtInst>(UI) && OrigIVAlwaysNonNegative)) {
+          Value *TruncIndVar = IndVar;
+          if (TruncIndVar->getType() != UI->getType())
+            TruncIndVar = new TruncInst(IndVar, UI->getType(), "truncindvar",
+                                        InsertPt);
+          UI->replaceAllUsesWith(TruncIndVar);
+          if (Instruction *DeadUse = dyn_cast<Instruction>(*UI))
+            DeadInsts.insert(DeadUse);
+        }
 
     // Replace the old PHI Node with the inserted computation.
     PN->replaceAllUsesWith(NewVal);
@@ -603,123 +692,8 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 #endif
 
   DeleteTriviallyDeadInstructions(DeadInsts);
-  OptimizeCanonicalIVType(L);
   assert(L->isLCSSAForm());
   return Changed;
-}
-
-/// OptimizeCanonicalIVType - If loop induction variable is always
-/// sign or zero extended then extend the type of the induction 
-/// variable.
-void IndVarSimplify::OptimizeCanonicalIVType(Loop *L) {
-  PHINode *PH = L->getCanonicalInductionVariable();
-  if (!PH) return;
-  
-  // Check loop iteration count.
-  SCEVHandle IC = SE->getIterationCount(L);
-  if (isa<SCEVCouldNotCompute>(IC)) return;
-  SCEVConstant *IterationCount = dyn_cast<SCEVConstant>(IC);
-  if (!IterationCount) return;
-
-  unsigned IncomingEdge = L->contains(PH->getIncomingBlock(0));
-  unsigned BackEdge     = IncomingEdge^1;
-  
-  // Check IV uses. If all IV uses are either SEXT or ZEXT (except
-  // IV increment instruction) then this IV is suitable for this
-  // transformation.
-  bool isSEXT = false;
-  BinaryOperator *Incr = NULL;
-  const Type *NewType = NULL;
-  for(Value::use_iterator UI = PH->use_begin(), UE = PH->use_end(); 
-      UI != UE; ++UI) {
-    const Type *CandidateType = NULL;
-    if (ZExtInst *ZI = dyn_cast<ZExtInst>(UI))
-      CandidateType = ZI->getDestTy();
-    else if (SExtInst *SI = dyn_cast<SExtInst>(UI)) {
-      CandidateType = SI->getDestTy();
-      isSEXT = true;
-    }
-    else if ((Incr = dyn_cast<BinaryOperator>(UI))) {
-      // Validate IV increment instruction.
-      if (PH->getIncomingValue(BackEdge) == Incr)
-        continue;
-    }
-    if (!CandidateType) {
-      NewType = NULL;
-      break;
-    }
-    if (!NewType)
-      NewType = CandidateType;
-    else if (NewType != CandidateType) {
-      NewType = NULL;
-      break;
-    }
-  }
-
-  // IV uses are not suitable then avoid this transformation.
-  if (!NewType || !Incr)
-    return;
-
-  // IV increment instruction has two uses, one is loop exit condition
-  // and second is the IV (phi node) itself.
-  ICmpInst *Exit = NULL;
-  for(Value::use_iterator II = Incr->use_begin(), IE = Incr->use_end();
-      II != IE; ++II) {
-    if (PH == *II)  continue;
-    Exit = dyn_cast<ICmpInst>(*II);
-    break;
-  }
-  if (!Exit) return;
-  ConstantInt *EV = dyn_cast<ConstantInt>(Exit->getOperand(0));
-  if (!EV) 
-    EV = dyn_cast<ConstantInt>(Exit->getOperand(1));
-  if (!EV) return;
-
-  // Check iteration count max value to avoid loops that wrap around IV.
-  APInt ICount = IterationCount->getValue()->getValue();
-  if (ICount.isNegative()) return;
-  uint32_t BW = PH->getType()->getPrimitiveSizeInBits();
-  APInt Max = (isSEXT ? APInt::getSignedMaxValue(BW) : APInt::getMaxValue(BW));
-  if (ICount.getZExtValue() > Max.getZExtValue())  return;                         
-
-  // Extend IV type.
-
-  SCEVExpander Rewriter(*SE, *LI);
-  Value *NewIV = Rewriter.getOrInsertCanonicalInductionVariable(L,NewType);
-  PHINode *NewPH = cast<PHINode>(NewIV);
-  Instruction *NewIncr = cast<Instruction>(NewPH->getIncomingValue(BackEdge));
-
-  // Replace all SEXT or ZEXT uses.
-  SmallVector<Instruction *, 4> PHUses;
-  for(Value::use_iterator UI = PH->use_begin(), UE = PH->use_end(); 
-      UI != UE; ++UI) {
-      Instruction *I = cast<Instruction>(UI);
-      PHUses.push_back(I);
-  }
-  while (!PHUses.empty()){
-    Instruction *Use = PHUses.back(); PHUses.pop_back();
-    if (Incr == Use) continue;
-    
-    SE->deleteValueFromRecords(Use);
-    Use->replaceAllUsesWith(NewIV);
-    Use->eraseFromParent();
-  }
-
-  // Replace exit condition.
-  ConstantInt *NEV = ConstantInt::get(NewType, EV->getZExtValue());
-  Instruction *NE = new ICmpInst(Exit->getPredicate(),
-                                 NewIncr, NEV, "new.exit", 
-                                 Exit->getParent()->getTerminator());
-  SE->deleteValueFromRecords(Exit);
-  Exit->replaceAllUsesWith(NE);
-  Exit->eraseFromParent();
-  
-  // Remove old IV and increment instructions.
-  SE->deleteValueFromRecords(PH);
-  PH->removeIncomingValue((unsigned)0);
-  PH->removeIncomingValue((unsigned)0);
-  SE->deleteValueFromRecords(Incr);
-  Incr->eraseFromParent();
 }
 
 /// Return true if it is OK to use SIToFPInst for an inducation variable

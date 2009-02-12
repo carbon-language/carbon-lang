@@ -1404,6 +1404,11 @@ namespace {
     SCEVHandle getSCEVAtScope(SCEV *V, const Loop *L);
 
 
+    /// isLoopGuardedByCond - Test whether entry to the loop is protected by
+    /// a conditional between LHS and RHS.
+    bool isLoopGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
+                             SCEV *LHS, SCEV *RHS);
+
     /// hasLoopInvariantIterationCount - Return true if the specified loop has
     /// an analyzable loop-invariant iteration count.
     bool hasLoopInvariantIterationCount(const Loop *L);
@@ -1475,10 +1480,6 @@ namespace {
     /// successor from which BB is reachable, or null if no such block is
     /// found.
     BasicBlock* getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB);
-
-    /// executesAtLeastOnce - Test whether entry to the loop is protected by
-    /// a conditional between LHS and RHS.
-    bool executesAtLeastOnce(const Loop *L, bool isSigned, SCEV *LHS, SCEV *RHS);
 
     /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
     /// in the header of its containing loop, we know the loop executes a
@@ -2726,9 +2727,10 @@ ScalarEvolutionsImpl::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
   return 0;
 }
 
-/// executesAtLeastOnce - Test whether entry to the loop is protected by
+/// isLoopGuardedByCond - Test whether entry to the loop is protected by
 /// a conditional between LHS and RHS.
-bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
+bool ScalarEvolutionsImpl::isLoopGuardedByCond(const Loop *L,
+                                               ICmpInst::Predicate Pred,
                                                SCEV *LHS, SCEV *RHS) {
   BasicBlock *Preheader = L->getLoopPreheader();
   BasicBlock *PreheaderDest = L->getHeader();
@@ -2759,26 +2761,62 @@ bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
     else
       Cond = ICI->getInversePredicate();
 
-    switch (Cond) {
-    case ICmpInst::ICMP_UGT:
-      if (isSigned) continue;
-      std::swap(PreCondLHS, PreCondRHS);
-      Cond = ICmpInst::ICMP_ULT;
-      break;
-    case ICmpInst::ICMP_SGT:
-      if (!isSigned) continue;
-      std::swap(PreCondLHS, PreCondRHS);
-      Cond = ICmpInst::ICMP_SLT;
-      break;
-    case ICmpInst::ICMP_ULT:
-      if (isSigned) continue;
-      break;
-    case ICmpInst::ICMP_SLT:
-      if (!isSigned) continue;
-      break;
-    default:
-      continue;
-    }
+    if (Cond == Pred)
+      ; // An exact match.
+    else if (!ICmpInst::isTrueWhenEqual(Cond) && Pred == ICmpInst::ICMP_NE)
+      ; // The actual condition is beyond sufficient.
+    else
+      // Check a few special cases.
+      switch (Cond) {
+      case ICmpInst::ICMP_UGT:
+        if (Pred == ICmpInst::ICMP_ULT) {
+          std::swap(PreCondLHS, PreCondRHS);
+          Cond = ICmpInst::ICMP_ULT;
+          break;
+        }
+        continue;
+      case ICmpInst::ICMP_SGT:
+        if (Pred == ICmpInst::ICMP_SLT) {
+          std::swap(PreCondLHS, PreCondRHS);
+          Cond = ICmpInst::ICMP_SLT;
+          break;
+        }
+        continue;
+      case ICmpInst::ICMP_NE:
+        // Expressions like (x >u 0) are often canonicalized to (x != 0),
+        // so check for this case by checking if the NE is comparing against
+        // a minimum or maximum constant.
+        if (!ICmpInst::isTrueWhenEqual(Pred))
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(PreCondRHS)) {
+            const APInt &A = CI->getValue();
+            switch (Pred) {
+            case ICmpInst::ICMP_SLT:
+              if (A.isMaxSignedValue()) break;
+              continue;
+            case ICmpInst::ICMP_SGT:
+              if (A.isMinSignedValue()) break;
+              continue;
+            case ICmpInst::ICMP_ULT:
+              if (A.isMaxValue()) break;
+              continue;
+            case ICmpInst::ICMP_UGT:
+              if (A.isMinValue()) break;
+              continue;
+            default:
+              continue;
+            }
+            Cond = ICmpInst::ICMP_NE;
+            // NE is symmetric but the original comparison may not be. Swap
+            // the operands if necessary so that they match below.
+            if (isa<SCEVConstant>(LHS))
+              std::swap(PreCondLHS, PreCondRHS);
+            break;
+          }
+        continue;
+      default:
+        // We weren't able to reconcile the condition.
+        continue;
+      }
 
     if (!PreCondLHS->getType()->isInteger()) continue;
 
@@ -2819,7 +2857,8 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
     // First, we get the value of the LHS in the first iteration: n
     SCEVHandle Start = AddRec->getOperand(0);
 
-    if (executesAtLeastOnce(L, isSigned,
+    if (isLoopGuardedByCond(L,
+                            isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                             SE.getMinusSCEV(AddRec->getOperand(0), One), RHS)) {
       // Since we know that the condition is true in order to enter the loop,
       // we know that it will run exactly m-n times.
@@ -2996,6 +3035,13 @@ void ScalarEvolution::setSCEV(Value *V, const SCEVHandle &H) {
   ((ScalarEvolutionsImpl*)Impl)->setSCEV(V, H);
 }
 
+
+bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
+                                          ICmpInst::Predicate Pred,
+                                          SCEV *LHS, SCEV *RHS) {
+  return ((ScalarEvolutionsImpl*)Impl)->isLoopGuardedByCond(L, Pred,
+                                                            LHS, RHS);
+}
 
 SCEVHandle ScalarEvolution::getIterationCount(const Loop *L) const {
   return ((ScalarEvolutionsImpl*)Impl)->getIterationCount(L);
