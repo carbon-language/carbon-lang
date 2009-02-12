@@ -259,22 +259,25 @@ bool SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   // we instruction select bitconvert i64 -> f64 as a noop for example, so our
   // types have no specific meaning.
 
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
   if (DestRC == SPU::R8CRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::LRr8), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, DL, get(SPU::LRr8), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R16CRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::LRr16), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, DL, get(SPU::LRr16), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R32CRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::LRr32), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, DL, get(SPU::LRr32), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R32FPRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::LRf32), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, DL, get(SPU::LRf32), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R64CRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::LRr64), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, DL, get(SPU::LRr64), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::R64FPRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::LRf64), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, DL, get(SPU::LRf64), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::GPRCRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::LRr128), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, DL, get(SPU::LRr128), DestReg).addReg(SrcReg);
   } else if (DestRC == SPU::VECREGRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::LRv16i8), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, DL, get(SPU::LRv16i8), DestReg).addReg(SrcReg);
   } else {
     // Attempt to copy unknown/unsupported register class!
     return false;
@@ -312,15 +315,17 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     abort();
   }
 
-  addFrameReference(BuildMI(MBB, MI, get(opc))
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+  addFrameReference(BuildMI(MBB, MI, DL, get(opc))
                     .addReg(SrcReg, false, false, isKill), FrameIdx);
 }
 
 void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                     bool isKill,
-                                     SmallVectorImpl<MachineOperand> &Addr,
-                                     const TargetRegisterClass *RC,
-                                     SmallVectorImpl<MachineInstr*> &NewMIs) const {
+                                  bool isKill,
+                                  SmallVectorImpl<MachineOperand> &Addr,
+                                  const TargetRegisterClass *RC,
+                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   cerr << "storeRegToAddr() invoked!\n";
   abort();
 
@@ -388,7 +393,9 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     abort();
   }
 
-  addFrameReference(BuildMI(MBB, MI, get(opc)).addReg(DestReg), FrameIdx);
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+  addFrameReference(BuildMI(MBB, MI, DL, get(opc)).addReg(DestReg), FrameIdx);
 }
 
 /*!
@@ -495,7 +502,8 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       unsigned InReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
       if (FrameIndex < SPUFrameInfo::maxFrameOffset()) {
-        MachineInstrBuilder MIB = BuildMI(MF, get(SPU::STQDr32));
+        MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(),
+                                          get(SPU::STQDr32));
 
         MIB.addReg(InReg, false, false, isKill);
         NewMI = addFrameReference(MIB, FrameIndex);
@@ -503,7 +511,7 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
-      MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
+      MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc));
 
       MIB.addReg(OutReg, true, false, false, isDead);
       Opc = (FrameIndex < SPUFrameInfo::maxFrameOffset())

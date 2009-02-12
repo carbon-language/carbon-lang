@@ -69,6 +69,8 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator I,
                                          unsigned SrcReg, bool isKill, int FI,
                                          const TargetRegisterClass *RC) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
 
   const Function *Func = MBB.getParent()->getFunction();
   const std::string FuncName = Func->getName();
@@ -80,7 +82,7 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   if (RC == PIC16::GPRRegisterClass) {
     //MachineFunction &MF = *MBB.getParent();
     //MachineRegisterInfo &RI = MF.getRegInfo();
-    BuildMI(MBB, I, get(PIC16::movwf))
+    BuildMI(MBB, I, DL, get(PIC16::movwf))
       .addReg(SrcReg, false, false, isKill)
       .addImm(FI)
       .addExternalSymbol(tmpName)
@@ -96,6 +98,8 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator I,
                                           unsigned DestReg, int FI,
                                           const TargetRegisterClass *RC) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
 
   const Function *Func = MBB.getParent()->getFunction();
   const std::string FuncName = Func->getName();
@@ -107,7 +111,7 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   if (RC == PIC16::GPRRegisterClass) {
     //MachineFunction &MF = *MBB.getParent();
     //MachineRegisterInfo &RI = MF.getRegInfo();
-    BuildMI(MBB, I, get(PIC16::movf), DestReg)
+    BuildMI(MBB, I, DL, get(PIC16::movf), DestReg)
       .addImm(FI)
       .addExternalSymbol(tmpName)
       .addImm(1); // Emit banksel for it.
@@ -123,13 +127,16 @@ bool PIC16InstrInfo::copyRegToReg (MachineBasicBlock &MBB,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *DestRC,
                                    const TargetRegisterClass *SrcRC) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
+
   if (DestRC == PIC16::FSR16RegisterClass) {
-    BuildMI(MBB, I, get(PIC16::copy_fsr), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(PIC16::copy_fsr), DestReg).addReg(SrcReg);
     return true;
   }
 
   if (DestRC == PIC16::GPRRegisterClass) {
-    BuildMI(MBB, I, get(PIC16::copy_w), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(PIC16::copy_w), DestReg).addReg(SrcReg);
     return true;
   }
 

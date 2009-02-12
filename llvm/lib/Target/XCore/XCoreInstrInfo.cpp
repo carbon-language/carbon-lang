@@ -353,13 +353,18 @@ XCoreInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 }
 
 bool XCoreInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I,
-                                     unsigned DestReg, unsigned SrcReg,
-                                     const TargetRegisterClass *DestRC,
-                                     const TargetRegisterClass *SrcRC) const {
+                                  MachineBasicBlock::iterator I,
+                                  unsigned DestReg, unsigned SrcReg,
+                                  const TargetRegisterClass *DestRC,
+                                  const TargetRegisterClass *SrcRC) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
+
   if (DestRC == SrcRC) {
     if (DestRC == XCore::GRRegsRegisterClass) {
-      BuildMI(MBB, I, get(XCore::ADD_2rus), DestReg).addReg(SrcReg).addImm(0);
+      BuildMI(MBB, I, DL, get(XCore::ADD_2rus), DestReg)
+        .addReg(SrcReg)
+        .addImm(0);
       return true;
     } else {
       return false;
@@ -368,24 +373,31 @@ bool XCoreInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   
   if (SrcRC == XCore::RRegsRegisterClass && SrcReg == XCore::SP &&
     DestRC == XCore::GRRegsRegisterClass) {
-    BuildMI(MBB, I, get(XCore::LDAWSP_ru6), DestReg).addImm(0);
+    BuildMI(MBB, I, DL, get(XCore::LDAWSP_ru6), DestReg)
+      .addImm(0);
     return true;
   }
   if (DestRC == XCore::RRegsRegisterClass && DestReg == XCore::SP &&
     SrcRC == XCore::GRRegsRegisterClass) {
-    BuildMI(MBB, I, get(XCore::SETSP_1r)).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(XCore::SETSP_1r))
+      .addReg(SrcReg);
     return true;
   }
   return false;
 }
 
 void XCoreInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator I,
-                                  unsigned SrcReg, bool isKill, int FrameIndex,
-                                  const TargetRegisterClass *RC) const
+                                         MachineBasicBlock::iterator I,
+                                         unsigned SrcReg, bool isKill,
+                                         int FrameIndex,
+                                         const TargetRegisterClass *RC) const
 {
-  BuildMI(MBB, I, get(XCore::STWFI)).addReg(SrcReg, false, false, isKill)
-                                    .addFrameIndex(FrameIndex).addImm(0);
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
+  BuildMI(MBB, I, DL, get(XCore::STWFI))
+    .addReg(SrcReg, false, false, isKill)
+    .addFrameIndex(FrameIndex)
+    .addImm(0);
 }
 
 void XCoreInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
@@ -397,12 +409,15 @@ void XCoreInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
 }
 
 void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator I,
-                                  unsigned DestReg, int FrameIndex,
-                                  const TargetRegisterClass *RC) const
+                                          MachineBasicBlock::iterator I,
+                                          unsigned DestReg, int FrameIndex,
+                                          const TargetRegisterClass *RC) const
 {
-  BuildMI(MBB, I, get(XCore::LDWFI), DestReg).addFrameIndex(FrameIndex)
-                                             .addImm(0);
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
+  BuildMI(MBB, I, DL, get(XCore::LDWFI), DestReg)
+    .addFrameIndex(FrameIndex)
+    .addImm(0);
 }
 
 void XCoreInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
@@ -426,6 +441,9 @@ bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   XCoreFunctionInfo *XFI = MF->getInfo<XCoreFunctionInfo>();
   
   bool emitFrameMoves = XCoreRegisterInfo::needsFrameMoves(*MF);
+
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
   
   for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
                                                     it != CSI.end(); ++it) {
@@ -433,10 +451,10 @@ bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     MBB.addLiveIn(it->getReg());
 
     storeRegToStackSlot(MBB, MI, it->getReg(), true,
-                                   it->getFrameIdx(), it->getRegClass());
+                        it->getFrameIdx(), it->getRegClass());
     if (emitFrameMoves) {
       unsigned SaveLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MI, get(XCore::DBG_LABEL)).addImm(SaveLabelId);
+      BuildMI(MBB, MI, DL, get(XCore::DBG_LABEL)).addImm(SaveLabelId);
       XFI->getSpillLabels().push_back(
           std::pair<unsigned, CalleeSavedInfo>(SaveLabelId, *it));
     }

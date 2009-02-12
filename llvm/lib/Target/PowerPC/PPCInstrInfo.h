@@ -69,7 +69,7 @@ class PPCInstrInfo : public TargetInstrInfoImpl {
                            unsigned SrcReg, bool isKill, int FrameIdx,
                            const TargetRegisterClass *RC,
                            SmallVectorImpl<MachineInstr*> &NewMIs) const;
-  void LoadRegFromStackSlot(MachineFunction &MF,
+  void LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL, 
                             unsigned DestReg, int FrameIdx,
                             const TargetRegisterClass *RC,
                             SmallVectorImpl<MachineInstr*> &NewMIs) const;
