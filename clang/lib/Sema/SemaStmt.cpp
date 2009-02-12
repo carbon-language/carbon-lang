@@ -981,8 +981,7 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
 }
 
 Action::OwningStmtResult
-Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,
-                           Scope *CurScope) {
+Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,Scope *CurScope) {
   Expr *ThrowExpr = static_cast<Expr*>(expr.release());
   if (!ThrowExpr) {
     // @throw without an expression designates a rethrow (which much occur
@@ -998,8 +997,7 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,
     if (!Context.isObjCObjectPointerType(ThrowType)) {
       const PointerType *PT = ThrowType->getAsPointerType();
       if (!PT || !PT->getPointeeType()->isVoidType())
-        // This should be an error, however GCC only yields a warning.
-        Diag(AtLoc, diag::warn_objc_throw_expects_object)
+        Diag(AtLoc, diag::error_objc_throw_expects_object)
                     << ThrowExpr->getType() << ThrowExpr->getSourceRange();
     }
   }

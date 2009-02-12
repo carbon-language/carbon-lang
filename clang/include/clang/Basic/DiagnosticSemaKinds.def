@@ -873,7 +873,7 @@ DIAG(warn_method_not_found_in_protocol, WARNING,
      "method %objcinstance0 not found in protocol (return type defaults to 'id')")
 DIAG(error_bad_receiver_type, ERROR,
      "bad receiver type %0")
-DIAG(warn_objc_throw_expects_object, WARNING,
+DIAG(error_objc_throw_expects_object, ERROR,
      "invalid %0 argument (expected an ObjC object type)")
 DIAG(error_rethrow_used_outside_catch, ERROR,
      "@throw (rethrow) used outside of a @catch block")

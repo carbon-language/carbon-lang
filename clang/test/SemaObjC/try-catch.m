@@ -38,6 +38,10 @@ typedef struct _NSZone NSZone;
 @end
 
 int foo() {
-  @throw 42; // expected-warning {{invalid 'int' argument (expected an ObjC object type)}}
+  struct s { int a, b; } agg, *pagg;
+
+  @throw 42; // expected-error {{invalid 'int' argument (expected an ObjC object type)}}
+  @throw agg; // expected-error {{invalid 'struct s' argument (expected an ObjC object type)}}
+  @throw pagg; // expected-error {{invalid 'struct s *' argument (expected an ObjC object type)}}
   @throw; // expected-error {{@throw (rethrow) used outside of a @catch block}}
 }
