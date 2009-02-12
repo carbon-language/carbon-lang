@@ -388,11 +388,11 @@ bool FastISel::SelectCall(User *I) {
       if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
         Address = BCI->getOperand(0);
       AllocaInst *AI = dyn_cast<AllocaInst>(Address);
-      // Don't handle byval struct arguments, for example.
+      // Don't handle byval struct arguments or VLAs, for example.
       if (!AI) break;
       DenseMap<const AllocaInst*, int>::iterator SI =
         StaticAllocaMap.find(AI);
-      assert(SI != StaticAllocaMap.end() && "Invalid dbg.declare!");
+      if (SI == StaticAllocaMap.end()) break; // VLAs.
       int FI = SI->second;
 
       // Determine the debug globalvariable.
