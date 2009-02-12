@@ -916,7 +916,7 @@ CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
     if (PredSethiUllman > SethiUllmanNumber) {
       SethiUllmanNumber = PredSethiUllman;
       Extra = 0;
-    } else if (PredSethiUllman == SethiUllmanNumber && !I->isCtrl())
+    } else if (PredSethiUllman == SethiUllmanNumber)
       ++Extra;
   }
 
@@ -1070,24 +1070,13 @@ static unsigned closestSucc(const SUnit *SU) {
 }
 
 /// calcMaxScratches - Returns an cost estimate of the worse case requirement
-/// for scratch registers. Live-in operands and live-out results don't count
-/// since they are "fixed".
+/// for scratch registers, i.e. number of data dependencies.
 static unsigned calcMaxScratches(const SUnit *SU) {
   unsigned Scratches = 0;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I) {
+       I != E; ++I)
     if (I->isCtrl()) continue;  // ignore chain preds
-    if (!I->getSUnit()->getNode() ||
-        I->getSUnit()->getNode()->getOpcode() != ISD::CopyFromReg)
       Scratches++;
-  }
-  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    if (I->isCtrl()) continue;  // ignore chain succs
-    if (!I->getSUnit()->getNode() ||
-        I->getSUnit()->getNode()->getOpcode() != ISD::CopyToReg)
-      Scratches += 10;
-  }
   return Scratches;
 }
 
@@ -1120,10 +1109,7 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (LDist != RDist)
     return LDist < RDist;
 
-  // Intuitively, it's good to push down instructions whose results are
-  // liveout so their long live ranges won't conflict with other values
-  // which are needed inside the BB. Further prioritize liveout instructions
-  // by the number of operands which are calculated within the BB.
+  // How many registers becomes live when the node is scheduled.
   unsigned LScratch = calcMaxScratches(left);
   unsigned RScratch = calcMaxScratches(right);
   if (LScratch != RScratch)

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -disable-fp-elim -stats -info-output-file - | grep {Number of dead stores elided} | count 1
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -disable-fp-elim -stats |& grep asm-printer | grep 57
 ; PR2568
 
 @g_3 = external global i16		; <i16*> [#uses=1]
