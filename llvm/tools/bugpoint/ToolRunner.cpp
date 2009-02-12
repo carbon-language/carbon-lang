@@ -80,7 +80,7 @@ static void ProcessFailure(sys::Path ProgPath, const char** Args) {
   OS << "\n";
 
   // Rerun the compiler, capturing any error messages to print them.
-  sys::Path ErrorFilename("error_messages");
+  sys::Path ErrorFilename("bugpoint.program_error_messages");
   std::string ErrMsg;
   if (ErrorFilename.makeUnique(true, &ErrMsg)) {
     std::cerr << "Error making unique filename: " << ErrMsg << "\n";
