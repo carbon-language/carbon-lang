@@ -184,6 +184,16 @@ public:
         }
   }
 
+  /// getExitingBlock - If getExitingBlocks would return exactly one block,
+  /// return that block. Otherwise return null.
+  BlockT *getExitingBlock() const {
+    SmallVector<BlockT*, 8> ExitingBlocks;
+    getExitingBlocks(ExitingBlocks);
+    if (ExitingBlocks.size() == 1)
+      return ExitingBlocks[0];
+    return 0;
+  }
+
   /// getExitBlocks - Return all of the successor blocks of this loop.  These
   /// are the blocks _outside of the current loop_ which are branched to.
   ///

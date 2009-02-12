@@ -236,15 +236,14 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
     }
 
   // Reject loop if loop exit condition is not suitable.
-  SmallVector<BasicBlock *, 2> EBs;
-  L->getExitingBlocks(EBs);
-  if (EBs.size() != 1)
+  BasicBlock *ExitingBlock = L->getExitingBlock();
+  if (!ExitingBlock)
     return false;
-  BranchInst *EBR = dyn_cast<BranchInst>(EBs[0]->getTerminator());
+  BranchInst *EBR = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
   if (!EBR) return false;
   ExitCondition = dyn_cast<ICmpInst>(EBR->getCondition());
   if (!ExitCondition) return false;
-  if (EBs[0] != L->getLoopLatch()) return false;
+  if (ExitingBlock != L->getLoopLatch()) return false;
   IVExitValue = ExitCondition->getOperand(1);
   if (!L->isLoopInvariant(IVExitValue))
     IVExitValue = ExitCondition->getOperand(0);
