@@ -1241,11 +1241,13 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   // computation.
   Value *&SunkAddr = SunkAddrs[Addr];
   if (SunkAddr) {
-    DEBUG(cerr << "CGP: Reusing nonlocal addrmode: " << AddrMode << "\n");
+    DEBUG(cerr << "CGP: Reusing nonlocal addrmode: " << AddrMode << " for "
+               << *MemoryInst);
     if (SunkAddr->getType() != Addr->getType())
       SunkAddr = new BitCastInst(SunkAddr, Addr->getType(), "tmp", InsertPt);
   } else {
-    DEBUG(cerr << "CGP: SINKING nonlocal addrmode: " << AddrMode << "\n");
+    DEBUG(cerr << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
+               << *MemoryInst);
     const Type *IntPtrTy = TLI->getTargetData()->getIntPtrType();
 
     Value *Result = 0;
@@ -1505,9 +1507,12 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
       if (TLI && isa<InlineAsm>(CI->getCalledValue()))
         if (const TargetAsmInfo *TAI =
             TLI->getTargetMachine().getTargetAsmInfo()) {
-          if (TAI->ExpandInlineAsm(CI))
+          if (TAI->ExpandInlineAsm(CI)) {
             BBI = BB.begin();
-          else
+            // Avoid processing instructions out of order, which could cause
+            // reuse before a value is defined.
+            SunkAddrs.clear();
+          } else
             // Sink address computing for memory operands into the block.
             MadeChange |= OptimizeInlineAsmInst(I, &(*CI), SunkAddrs);
         }
