@@ -407,6 +407,8 @@ public:
   /// slot changes.  This removes information about which register the previous
   /// value for this slot lives in (as the previous value is dead now).
   void ModifyStackSlotOrReMat(int SlotOrReMat);
+
+  void AddAvailableRegsToLiveIn(MachineBasicBlock &MBB);
 };
 }
 
@@ -486,6 +488,22 @@ void AvailableSpills::ModifyStackSlotOrReMat(int SlotOrReMat) {
   PhysRegsAvailable.erase(I);
 }
 
+/// AddAvailableRegsToLiveIn - Availability information is being kept coming
+/// into the specified MBB. Add available physical registers as live-in's
+/// so register scavenger and post-allocation scheduler are happy.
+void AvailableSpills::AddAvailableRegsToLiveIn(MachineBasicBlock &MBB) {
+  for (std::multimap<unsigned, int>::iterator
+         I = PhysRegsAvailable.begin(), E = PhysRegsAvailable.end();
+       I != E; ++I) {
+    unsigned Reg = (*I).first;
+    if (!MBB.isLiveIn(Reg))
+      MBB.addLiveIn(Reg);
+  }
+}
+
+/// findSinglePredSuccessor - Return via reference a vector of machine basic
+/// blocks each of which is a successor of the specified BB and has no other
+/// predecessor.
 static void findSinglePredSuccessor(MachineBasicBlock *MBB,
                                    SmallVectorImpl<MachineBasicBlock *> &Succs) {
   for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
@@ -497,8 +515,6 @@ static void findSinglePredSuccessor(MachineBasicBlock *MBB,
 }
 
 namespace {
-  class AvailableSpills;
-
   /// LocalSpiller - This spiller does a simple pass over the machine basic
   /// block to attempt to keep spills in registers as much as possible for
   /// blocks that have low register pressure (the vreg may be spilled due to
@@ -551,8 +567,10 @@ namespace {
             // FIXME: More than one successors, each of which has MBB has
             // the only predecessor.
             MBB = SinglePredSuccs[0];
-            if (!Visited.count(MBB) && EarlyVisited.insert(MBB))
+            if (!Visited.count(MBB) && EarlyVisited.insert(MBB)) {
+              Spills.AddAvailableRegsToLiveIn(*MBB);
               RewriteMBB(*MBB, VRM, Spills);
+            }
           }
         } while (MBB);
 
