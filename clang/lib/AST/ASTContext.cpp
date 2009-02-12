@@ -2046,7 +2046,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         S.replace(S.end()-2, S.end(), replace);
       }
     }
-    if (isObjCIdType(PointeeTy)) {
+    if (isObjCIdStructType(PointeeTy)) {
       S += '@';
       return;
     }
@@ -2076,7 +2076,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         S += '"';
       }
       return;
-    } else if (isObjCClassType(PointeeTy)) {
+    } else if (isObjCClassStructType(PointeeTy)) {
       S += '#';
       return;
     } else if (isObjCSelType(PointeeTy)) {
@@ -2411,6 +2411,29 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
   return false;
 }
 
+bool ASTContext::areComparableObjCPointerTypes(QualType LHS, QualType RHS) {
+  // get the "pointed to" types
+  const PointerType *LHSPT = LHS->getAsPointerType();
+  const PointerType *RHSPT = RHS->getAsPointerType();
+  
+  if (!LHSPT || !RHSPT)
+    return false;
+    
+  QualType lhptee = LHSPT->getPointeeType();
+  QualType rhptee = RHSPT->getPointeeType();
+  const ObjCInterfaceType* LHSIface = lhptee->getAsObjCInterfaceType();
+  const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
+  // ID acts sort of like void* for ObjC interfaces
+  if (LHSIface && isObjCIdStructType(rhptee))
+    return true;
+  if (RHSIface && isObjCIdStructType(lhptee))
+    return true;
+  if (!LHSIface || !RHSIface)
+    return false;
+  return canAssignObjCInterfaces(LHSIface, RHSIface) ||
+         canAssignObjCInterfaces(RHSIface, LHSIface);
+}
+
 /// typesAreCompatible - C99 6.7.3p9: For two qualified types to be compatible, 
 /// both shall have the identically qualified version of a compatible type.
 /// C99 6.2.7p1: Two types have compatible types if their types are the 
@@ -2552,7 +2575,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     if (LHS->isObjCQualifiedIdType()) {
       if (const PointerType *PT = RHS->getAsPointerType()) {
         QualType pType = PT->getPointeeType();
-        if (isObjCIdType(pType))
+        if (isObjCIdStructType(pType))
           return LHS;
         // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
         // Unfortunately, this API is part of Sema (which we don't have access
@@ -2565,7 +2588,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     if (RHS->isObjCQualifiedIdType()) {
       if (const PointerType *PT = LHS->getAsPointerType()) {
         QualType pType = PT->getPointeeType();
-        if (isObjCIdType(pType))
+        if (isObjCIdStructType(pType))
           return RHS;
         // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
         // Unfortunately, this API is part of Sema (which we don't have access
@@ -2662,8 +2685,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return mergeFunctionTypes(LHS, RHS);
   case Type::Tagged:
     // FIXME: Why are these compatible?
-    if (isObjCIdType(LHS) && isObjCClassType(RHS)) return LHS;
-    if (isObjCClassType(LHS) && isObjCIdType(RHS)) return LHS;
+    if (isObjCIdStructType(LHS) && isObjCClassStructType(RHS)) return LHS;
+    if (isObjCClassStructType(LHS) && isObjCIdStructType(RHS)) return LHS;
     return QualType();
   case Type::Builtin:
     // Only exactly equal builtin types are compatible, which is tested above.

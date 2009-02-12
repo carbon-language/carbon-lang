@@ -541,11 +541,17 @@ public:
   bool typesAreBlockCompatible(QualType lhs, QualType rhs);
   
   bool isObjCIdType(QualType T) const {
+    return T == ObjCIdType;
+  }
+  bool isObjCIdStructType(QualType T) const {
     if (!IdStructType) // ObjC isn't enabled
       return false;
     return T->getAsStructureType() == IdStructType;
   }
   bool isObjCClassType(QualType T) const {
+    return T == ObjCClassType;
+  }
+  bool isObjCClassStructType(QualType T) const {
     if (!ClassStructType) // ObjC isn't enabled
       return false;
     return T->getAsStructureType() == ClassStructType;
@@ -558,6 +564,7 @@ public:
   // Check the safety of assignment from LHS to RHS
   bool canAssignObjCInterfaces(const ObjCInterfaceType *LHS, 
                                const ObjCInterfaceType *RHS);
+  bool areComparableObjCPointerTypes(QualType LHS, QualType RHS);
 
   // Functions for calculating composite types
   QualType mergeTypes(QualType, QualType);

@@ -2256,9 +2256,9 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         } else if (LHSIface && RHSIface &&
                    Context.canAssignObjCInterfaces(RHSIface, LHSIface)) {
           compositeType = rexT;
-        } else if (Context.isObjCIdType(lhptee) || 
-                   Context.isObjCIdType(rhptee)) { 
-          // FIXME: This code looks wrong, because isObjCIdType checks
+        } else if (Context.isObjCIdStructType(lhptee) || 
+                   Context.isObjCIdStructType(rhptee)) { 
+          // FIXME: This code looks wrong, because isObjCIdStructType checks
           // the struct but getObjCIdType returns the pointer to
           // struct. This is horrible and should be fixed.
           compositeType = Context.getObjCIdType();
@@ -2412,9 +2412,9 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
     return ConvTy;
 
   // ID acts sort of like void* for ObjC interfaces
-  if (LHSIface && Context.isObjCIdType(rhptee))
+  if (LHSIface && Context.isObjCIdStructType(rhptee))
     return ConvTy;
-  if (RHSIface && Context.isObjCIdType(lhptee))
+  if (RHSIface && Context.isObjCIdStructType(lhptee))
     return ConvTy;
 
   // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or 
@@ -2903,21 +2903,6 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   return lex->getType();
 }
 
-static bool areComparableObjCInterfaces(QualType LHS, QualType RHS,
-                                        ASTContext& Context) {
-  const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
-  const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
-  // ID acts sort of like void* for ObjC interfaces
-  if (LHSIface && Context.isObjCIdType(RHS))
-    return true;
-  if (RHSIface && Context.isObjCIdType(LHS))
-    return true;
-  if (!LHSIface || !RHSIface)
-    return false;
-  return Context.canAssignObjCInterfaces(LHSIface, RHSIface) ||
-         Context.canAssignObjCInterfaces(RHSIface, LHSIface);
-}
-
 // C99 6.5.8
 QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                     bool isRelational) {
@@ -2977,7 +2962,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         !LCanPointeeTy->isVoidType() && !RCanPointeeTy->isVoidType() &&
         !Context.typesAreCompatible(LCanPointeeTy.getUnqualifiedType(),
                                     RCanPointeeTy.getUnqualifiedType()) &&
-        !areComparableObjCInterfaces(LCanPointeeTy, RCanPointeeTy, Context)) {
+        !Context.areComparableObjCPointerTypes(lType, rType)) {
       Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }

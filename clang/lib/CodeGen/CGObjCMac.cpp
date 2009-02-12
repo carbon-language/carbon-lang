@@ -1970,7 +1970,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         // catch(id e) always matches. 
         // FIXME: For the time being we also match id<X>; this should
         // be rejected by Sema instead.
-        if ((PT && CGF.getContext().isObjCIdType(PT->getPointeeType())) ||
+        if ((PT && CGF.getContext().isObjCIdStructType(PT->getPointeeType())) ||
             VD->getType()->isObjCQualifiedIdType())
           AllMatched = true;
       }

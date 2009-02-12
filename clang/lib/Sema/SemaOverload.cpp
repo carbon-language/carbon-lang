@@ -1019,8 +1019,8 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
 
   // Objective C++: We're able to convert between "id" and a pointer
   // to any interface (in both directions).
-  if ((FromIface && Context.isObjCIdType(ToPointeeType))
-      || (ToIface && Context.isObjCIdType(FromPointeeType))) {
+  if ((FromIface && Context.isObjCIdStructType(ToPointeeType))
+      || (ToIface && Context.isObjCIdStructType(FromPointeeType))) {
     ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
                                                        ToPointeeType,
                                                        ToType, Context);
@@ -1029,10 +1029,10 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
 
   // Objective C++: Allow conversions between the Objective-C "id" and
   // "Class", in either direction.
-  if ((Context.isObjCIdType(FromPointeeType) && 
-       Context.isObjCClassType(ToPointeeType)) ||
-      (Context.isObjCClassType(FromPointeeType) &&
-       Context.isObjCIdType(ToPointeeType))) {
+  if ((Context.isObjCIdStructType(FromPointeeType) && 
+       Context.isObjCClassStructType(ToPointeeType)) ||
+      (Context.isObjCClassStructType(FromPointeeType) &&
+       Context.isObjCIdStructType(ToPointeeType))) {
     ConvertedType = ToType;
     return true;
   }
@@ -1131,10 +1131,10 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
       // Objective-C++ conversions are always okay.
       // FIXME: We should have a different class of conversions for
       // the Objective-C++ implicit conversions.
-      if (Context.isObjCIdType(FromPointeeType) || 
-          Context.isObjCIdType(ToPointeeType) ||
-          Context.isObjCClassType(FromPointeeType) ||
-          Context.isObjCClassType(ToPointeeType))
+      if (Context.isObjCIdStructType(FromPointeeType) || 
+          Context.isObjCIdStructType(ToPointeeType) ||
+          Context.isObjCClassStructType(FromPointeeType) ||
+          Context.isObjCClassStructType(ToPointeeType))
         return false;
 
       if (FromPointeeType->isRecordType() &&

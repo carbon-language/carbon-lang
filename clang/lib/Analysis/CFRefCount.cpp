@@ -1449,7 +1449,7 @@ static QualType GetReturnType(Expr* RetE, ASTContext& Ctx) {
   
   ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(RetE);
   
-  if (!ME || !Ctx.isObjCIdType(PT->getPointeeType()))
+  if (!ME || !Ctx.isObjCIdStructType(PT->getPointeeType()))
     return RetTy;
   
   ObjCInterfaceDecl* D = ME->getClassInfo().first;  
