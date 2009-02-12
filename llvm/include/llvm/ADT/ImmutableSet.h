@@ -1029,6 +1029,7 @@ public:
     inline iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
     inline bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
     inline bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }
+    inline value_type *operator->() const { return &(operator*()); }
   };
 
   iterator begin() const { return iterator(Root); }
