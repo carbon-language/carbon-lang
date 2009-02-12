@@ -371,6 +371,10 @@ public:
     return Visit(E->getSubExpr());
   }
     
+  llvm::Constant *VisitBlockExpr(const BlockExpr *E) {
+    return CGM.GetAddrOfGlobalBlock(E);
+  }
+  
   // Utility methods
   const llvm::Type *ConvertType(QualType T) {
     return CGM.getTypes().ConvertType(T);

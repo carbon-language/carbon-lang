@@ -243,6 +243,18 @@ public:
   void GenerateObjCSetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
 
+  struct BlockInfo {
+    const llvm::Type *BlockLiteralTy;
+    
+    const char *NameSuffix;
+
+    BlockInfo(const llvm::Type *blt, const char *ns) 
+      :  BlockLiteralTy(blt), NameSuffix(ns) {}
+  };
+  
+  llvm::Function *GenerateBlockFunction(const BlockExpr *Expr,
+                                        const BlockInfo& Info);
+  
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);
   void StartFunction(const Decl *D, QualType RetTy,

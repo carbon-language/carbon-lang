@@ -14,18 +14,24 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "llvm/Module.h"
+#include "llvm/Target/TargetData.h"
 
 #include <algorithm>
 
 using namespace clang;
 using namespace CodeGen;
 
-static const llvm::Type *getBlockDescriptorType(CodeGenFunction &CGF) {
+// Block flags
+enum {
+  IsGlobal = 1 << 28
+};
+
+static const llvm::Type *getBlockDescriptorType(CodeGenModule &CGM) {
   static const llvm::Type *Ty = 0;
     
   if (!Ty) {
     const llvm::Type *UnsignedLongTy = 
-      CGF.ConvertType(CGF.getContext().UnsignedLongTy);
+      CGM.getTypes().ConvertType(CGM.getContext().UnsignedLongTy);
         
     // struct __block_descriptor {
     //   unsigned long reserved;
@@ -35,13 +41,13 @@ static const llvm::Type *getBlockDescriptorType(CodeGenFunction &CGF) {
                                UnsignedLongTy, 
                                NULL);
         
-    CGF.CGM.getModule().addTypeName("struct.__block_descriptor", Ty);
+    CGM.getModule().addTypeName("struct.__block_descriptor", Ty);
   }
     
   return Ty;
 }
 
-static const llvm::Type *getGenericBlockLiteralType(CodeGenFunction &CGF) {
+static const llvm::Type *getGenericBlockLiteralType(CodeGenModule &CGM) {
   static const llvm::Type *Ty = 0;
     
   if (!Ty) {
@@ -49,7 +55,7 @@ static const llvm::Type *getGenericBlockLiteralType(CodeGenFunction &CGF) {
       llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
         
     const llvm::Type *BlockDescPtrTy = 
-      llvm::PointerType::getUnqual(getBlockDescriptorType(CGF));
+      llvm::PointerType::getUnqual(getBlockDescriptorType(CGM));
         
     // struct __block_literal_generic {
     //   void *isa;
@@ -65,7 +71,7 @@ static const llvm::Type *getGenericBlockLiteralType(CodeGenFunction &CGF) {
                                BlockDescPtrTy,
                                NULL);
         
-    CGF.CGM.getModule().addTypeName("struct.__block_literal_generic", Ty);
+    CGM.getModule().addTypeName("struct.__block_literal_generic", Ty);
   }
   
   return Ty;
@@ -74,8 +80,7 @@ static const llvm::Type *getGenericBlockLiteralType(CodeGenFunction &CGF) {
 /// getBlockFunctionType - Given a BlockPointerType, will return the 
 /// function type for the block, including the first block literal argument.
 static QualType getBlockFunctionType(ASTContext &Ctx,
-                                     const BlockPointerType *BPT)
-{
+                                     const BlockPointerType *BPT) {
   const FunctionTypeProto *FTy = cast<FunctionTypeProto>(BPT->getPointeeType());
   
   llvm::SmallVector<QualType, 8> Types;
@@ -90,8 +95,7 @@ static QualType getBlockFunctionType(ASTContext &Ctx,
                              FTy->isVariadic(), 0);
 }
 
-RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E)
-{
+RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   const BlockPointerType *BPT = 
     E->getCallee()->getType()->getAsBlockPointerType();
   
@@ -99,7 +103,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E)
 
   // Get a pointer to the generic block literal.
   const llvm::Type *BlockLiteralTy =
-    llvm::PointerType::getUnqual(getGenericBlockLiteralType(*this));
+    llvm::PointerType::getUnqual(getGenericBlockLiteralType(CGM));
 
   // Bitcast the callee to a block literal.
   llvm::Value *BlockLiteral = 
@@ -135,3 +139,117 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E)
   return EmitCall(CGM.getTypes().getFunctionInfo(E->getType(), Args), 
                   Func, Args);
 }
+
+llvm::Constant *CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE) {
+  if (!NSConcreteGlobalBlock) {
+    const llvm::Type *Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+
+    // FIXME: Wee should have a CodeGenModule::AddRuntimeVariable that does the 
+    // same thing as CreateRuntimeFunction if there's already a variable with
+    // the same name.
+    NSConcreteGlobalBlock = 
+      new llvm::GlobalVariable(Ty, false,
+                              llvm::GlobalVariable::ExternalLinkage, 0, 
+                              "_NSConcreteGlobalBlock", &getModule());      
+  }
+
+  // Generate the block descriptor.
+  const llvm::Type *UnsignedLongTy = Types.ConvertType(Context.UnsignedLongTy);
+  
+  llvm::Constant *DescriptorFields[2];
+  
+  // Reserved
+  DescriptorFields[0] = llvm::Constant::getNullValue(UnsignedLongTy);
+  
+  // Block literal size. For global blocks we just use the size of the generic
+  // block literal struct.
+  uint64_t BlockLiteralSize = 
+    TheTargetData.getTypeStoreSizeInBits(getGenericBlockLiteralType(*this)) / 8;
+  DescriptorFields[1] = llvm::ConstantInt::get(UnsignedLongTy,BlockLiteralSize);
+  
+  llvm::Constant *DescriptorStruct = 
+    llvm::ConstantStruct::get(&DescriptorFields[0], 2);
+  
+  llvm::GlobalVariable *Descriptor =
+    new llvm::GlobalVariable(DescriptorStruct->getType(), true,
+                             llvm::GlobalVariable::InternalLinkage, 
+                             DescriptorStruct, "__block_descriptor_global", 
+                             &getModule());
+  
+  // Generate the constants for the block literal.
+  llvm::Constant *LiteralFields[5];
+  
+  CodeGenFunction::BlockInfo Info(0, "global");
+  llvm::Function *Fn = CodeGenFunction(*this).GenerateBlockFunction(BE, Info);
+  
+  // isa
+  LiteralFields[0] = NSConcreteGlobalBlock;
+  
+  // Flags
+  LiteralFields[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, IsGlobal);
+  
+  // Reserved
+  LiteralFields[2] = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  
+  // Function
+  LiteralFields[3] = Fn;
+  
+  // Descriptor
+  LiteralFields[4] = Descriptor;
+  
+  llvm::Constant *BlockLiteralStruct = 
+    llvm::ConstantStruct::get(&LiteralFields[0], 5);
+  
+  llvm::GlobalVariable *BlockLiteral = 
+    new llvm::GlobalVariable(BlockLiteralStruct->getType(), true,
+                             llvm::GlobalVariable::InternalLinkage, 
+                             BlockLiteralStruct, "__block_literal_global", 
+                             &getModule());
+  
+  return BlockLiteral;
+}
+
+llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
+                                                       const BlockInfo& Info)
+{
+  const FunctionTypeProto *FTy = 
+    cast<FunctionTypeProto>(Expr->getFunctionType());
+  
+  FunctionArgList Args;
+  
+  const BlockDecl *BD = Expr->getBlockDecl();
+
+  // FIXME: This leaks
+  ImplicitParamDecl *SelfDecl = 
+    ImplicitParamDecl::Create(getContext(), 0,
+                              SourceLocation(), 0,
+                              getContext().getPointerType(getContext().VoidTy));
+  
+  Args.push_back(std::make_pair(SelfDecl, SelfDecl->getType()));
+  
+  for (BlockDecl::param_iterator i = BD->param_begin(), 
+       e = BD->param_end(); i != e; ++i)
+    Args.push_back(std::make_pair(*e, (*e)->getType()));
+  
+  const CGFunctionInfo &FI = 
+    CGM.getTypes().getFunctionInfo(FTy->getResultType(), Args);
+
+  std::string Name = std::string("__block_function_") + Info.NameSuffix;
+
+  CodeGenTypes &Types = CGM.getTypes();
+  const llvm::FunctionType *LTy = Types.GetFunctionType(FI, FTy->isVariadic());
+  
+  llvm::Function *Fn = 
+    llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
+                           Name,
+                           &CGM.getModule());
+  
+  StartFunction(BD, FTy->getResultType(), Fn, Args, 
+                Expr->getBody()->getLocEnd());
+  EmitStmt(Expr->getBody());
+  FinishFunction(cast<CompoundStmt>(Expr->getBody())->getRBracLoc());
+
+  return Fn;
+}
+
+

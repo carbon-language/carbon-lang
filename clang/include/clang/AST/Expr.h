@@ -2098,6 +2098,7 @@ public:
   BlockExpr(BlockDecl *BD, QualType ty) : Expr(BlockExprClass, ty), 
             TheBlock(BD) {}
 
+  const BlockDecl *getBlockDecl() const { return TheBlock; }
   BlockDecl *getBlockDecl() { return TheBlock; }
   
   // Convenience functions for probing the underlying BlockDecl.

@@ -40,6 +40,7 @@ namespace clang {
   class ObjCImplementationDecl;
   class ObjCCategoryImplDecl;
   class ObjCProtocolDecl;
+  class BlockExpr;
   class Decl;
   class Expr;
   class Stmt;
@@ -121,6 +122,10 @@ class CodeGenModule {
   /// Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
   
+  /// NSConcreteGlobalBlock - Cached reference to the clas pointer for 
+  /// global blocks.
+  llvm::Constant *NSConcreteGlobalBlock;
+  
   std::vector<llvm::Function *> BuiltinFunctions;
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M, 
@@ -195,6 +200,8 @@ public:
   /// (if one is created).
   llvm::Constant *GetAddrOfConstantCString(const std::string &str,
                                            const char *GlobalName=0);
+  
+  llvm::Constant *GetAddrOfGlobalBlock(const BlockExpr *BE);
   
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
