@@ -825,6 +825,5 @@ public:
 };
 
 StatSysCallCache *PTHManager::createStatCache() {
-  return 0;
-//  return new PTHStatCache(*((PTHFileLookup*) FileLookup));
+  return new PTHStatCache(*((PTHFileLookup*) FileLookup));
 }
