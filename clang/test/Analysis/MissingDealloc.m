@@ -1,6 +1,10 @@
 // RUN: clang -analyze -warn-objc-missing-dealloc '-DIBOutlet=__attribute__((iboutlet))' %s --verify
 typedef signed char BOOL;
-@protocol NSObject  - (BOOL)isEqual:(id)object; @end
+@protocol NSObject
+- (BOOL)isEqual:(id)object;
+- (Class)class;
+@end
+
 @interface NSObject <NSObject> {}
 - (void)dealloc;
 - (id)init;
@@ -81,5 +85,33 @@ IBOutlet NSWindow *window;
     // has the 'assign' attribute.
     self.myproperty = 0; // no-warning
     [super dealloc];
+}
+@end
+
+//===------------------------------------------------------------------------===
+// PR 3187: http://llvm.org/bugs/show_bug.cgi?id=3187
+// - Disable the missing -dealloc check for classes that subclass SenTestCase
+
+@class NSString;
+
+@interface SenTestCase : NSObject {}
+@end
+
+@interface MyClassTest : SenTestCase {
+  NSString *resourcePath;
+}
+@end
+
+@interface NSBundle : NSObject {}
++ (NSBundle *)bundleForClass:(Class)aClass;
+- (NSString *)resourcePath;
+@end
+
+@implementation MyClassTest
+- (void)setUp {
+  resourcePath = [[NSBundle bundleForClass:[self class]] resourcePath];
+}
+- (void)testXXX {
+  // do something which uses resourcepath
 }
 @end
