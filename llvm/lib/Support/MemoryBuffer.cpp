@@ -109,6 +109,7 @@ MemoryBuffer *MemoryBuffer::getMemBufferCopy(const char *StartPtr,
 MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
                                                   const char *BufferName) {
   char *Buf = new char[Size+1];
+  if (!Buf) return 0;
   Buf[Size] = 0;
   MemoryBufferMem *SB = new MemoryBufferMem(Buf, Buf+Size, BufferName);
   // The memory for this buffer is owned by the MemoryBuffer.
@@ -123,6 +124,7 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
 MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size,
                                             const char *BufferName) {
   MemoryBuffer *SB = getNewUninitMemBuffer(Size, BufferName);
+  if (!SB) return 0;
   memset(const_cast<char*>(SB->getBufferStart()), 0, Size+1);
   return SB;
 }
@@ -209,9 +211,16 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
       return new MemoryBufferMMapFile(Filename, Pages, FileSize);
     }
   }
-  
-  OwningPtr<MemoryBuffer> SB;
-  SB.reset(MemoryBuffer::getNewUninitMemBuffer(FileSize, Filename));
+
+  MemoryBuffer *Buf = MemoryBuffer::getNewUninitMemBuffer(FileSize, Filename);
+  if (!Buf) {
+    // Failed to create a buffer.
+    if (ErrStr) *ErrStr = "could not allocate buffer";
+    ::close(FD);
+    return 0;
+  }
+
+  OwningPtr<MemoryBuffer> SB(Buf);
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
   
   size_t BytesLeft = FileSize;
