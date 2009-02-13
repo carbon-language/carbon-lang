@@ -75,6 +75,24 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl() {
   return C;
 }
 
+llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
+  if (NSConcreteGlobalBlock)
+    return NSConcreteGlobalBlock;
+
+  const llvm::PointerType *PtrToInt8Ty
+    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  // FIXME: Wee should have a CodeGenModule::AddRuntimeVariable that does the
+  // same thing as CreateRuntimeFunction if there's already a variable with
+  // the same name.
+  NSConcreteGlobalBlock
+    = new llvm::GlobalVariable(PtrToInt8Ty, false, 
+                               llvm::GlobalValue::ExternalLinkage,
+                               0, "_NSConcreteGlobalBlock",
+                               &getModule());
+
+  return NSConcreteGlobalBlock;
+}
+
 llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
   // FIXME: Push up
   bool BlockHasCopyDispose = false;
@@ -99,11 +117,6 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
       = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     // FIXME: static?  What if we start up a new, unrelated module?
     // logically we want 1 per module.
-    static llvm::Constant *NSConcreteGlobalBlock_decl
-      = new llvm::GlobalVariable(PtrToInt8Ty, false, 
-                                 llvm::GlobalValue::ExternalLinkage,
-                                 0, "_NSConcreteGlobalBlock",
-                                 &CGM.getModule());
     static llvm::Constant *NSConcreteStackBlock_decl
       = new llvm::GlobalVariable(PtrToInt8Ty, false, 
                                  llvm::GlobalValue::ExternalLinkage,
@@ -112,7 +125,7 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
     C = NSConcreteStackBlock_decl;
     if (!insideFunction ||
         (!BlockRefDeclList && !BlockByrefDeclList)) {
-      C = NSConcreteGlobalBlock_decl;
+      C = CGM.getNSConcreteGlobalBlock();
       flags |= BLOCK_IS_GLOBAL;
     }
     C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
@@ -272,18 +285,6 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
 }
 
 llvm::Constant *CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE) {
-  if (!NSConcreteGlobalBlock) {
-    const llvm::Type *Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-
-    // FIXME: Wee should have a CodeGenModule::AddRuntimeVariable that does the
-    // same thing as CreateRuntimeFunction if there's already a variable with
-    // the same name.
-    NSConcreteGlobalBlock =
-      new llvm::GlobalVariable(Ty, false,
-                              llvm::GlobalVariable::ExternalLinkage, 0,
-                              "_NSConcreteGlobalBlock", &getModule());
-  }
-
   // Generate the block descriptor.
   const llvm::Type *UnsignedLongTy = Types.ConvertType(Context.UnsignedLongTy);
   const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
@@ -316,7 +317,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE) {
   llvm::Function *Fn = CodeGenFunction(*this).GenerateBlockFunction(BE, Info);
 
   // isa
-  LiteralFields[0] = NSConcreteGlobalBlock;
+  LiteralFields[0] = getNSConcreteGlobalBlock();
 
   // Flags
   LiteralFields[1] = llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL);

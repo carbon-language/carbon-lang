@@ -141,6 +141,8 @@ public:
   /// Release - Finalize LLVM code generation.
   void Release();
 
+  llvm::Constant *getNSConcreteGlobalBlock();
+
   const llvm::Type *getBlockDescriptorType();
 
   const llvm::Type *getGenericBlockLiteralType();
