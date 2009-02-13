@@ -633,6 +633,11 @@ protected:
     getTF().EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
   
+  /// EvalBind - Handle the semantics of binding a value to a specific location.
+  ///  This method is used by EvalStore, VisitDeclStmt, and others.
+  void EvalBind(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
+                const GRState* St, SVal location, SVal Val);
+  
   void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, const GRState* St,
                  SVal TargetLV, SVal Val);
   
