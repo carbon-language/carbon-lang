@@ -3912,18 +3912,24 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_start: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
-
-    if (DW && DW->ValidDebugInfo(RSI.getContext()))
-      DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
+    if (DW && DW->ValidDebugInfo(RSI.getContext())) {
+      unsigned LabelID =
+        DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
+      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                               getRoot(), LabelID));
+    }
 
     return 0;
   }
   case Intrinsic::dbg_region_end: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
-
-    if (DW && DW->ValidDebugInfo(REI.getContext()))
-      DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
+    if (DW && DW->ValidDebugInfo(REI.getContext())) {
+      unsigned LabelID =
+        DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
+      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                               getRoot(), LabelID));
+    }
 
     return 0;
   }
@@ -3944,15 +3950,27 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // function start. It will be emitted at asm emission time. However,
       // create a label if this is a beginning of inlined function.
       unsigned Line = Subprogram.getLineNumber();
+      unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
+
+      if (DW->getRecordSourceLineCount() != 1)
+        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                                 getRoot(), LabelID));
+
       setCurDebugLoc(DebugLoc::get(DAG.getMachineFunction().
-                                   getOrCreateDebugLocID(SrcFile, Line, 0)));
+                         getOrCreateDebugLocID(SrcFile, Line, 0)));
     }
 
     return 0;
   }
-  case Intrinsic::dbg_declare:
-    // FIXME: Do something correct here when declare stuff is working again.
+  case Intrinsic::dbg_declare: {
+    DwarfWriter *DW = DAG.getDwarfWriter();
+    DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
+    Value *Variable = DI.getVariable();
+    if (DW && DW->ValidDebugInfo(Variable))
+      DAG.setRoot(DAG.getNode(ISD::DECLARE, dl, MVT::Other, getRoot(),
+                              getValue(DI.getAddress()), getValue(Variable)));
     return 0;
+  }
 
   case Intrinsic::eh_exception: {
     if (!CurMBB->isLandingPad()) {

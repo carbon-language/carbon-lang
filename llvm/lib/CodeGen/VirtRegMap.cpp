@@ -1278,7 +1278,7 @@ void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
 }
 
 /// rewriteMBB - Keep track of which spills are available even after the
-/// register allocator is done with them.  If possible, avoid reloading vregs.
+/// register allocator is done with them.  If possible, avid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                               AvailableSpills &Spills) {
   DOUT << "\n**** Local spiller rewriting MBB '"

@@ -785,6 +785,12 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::PUSH64r : X86::PUSH32r))
       .addReg(FramePtr, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
 
+    if (needsFrameMoves) {
+      // Mark effective beginning of when frame pointer becomes valid.
+      FrameLabelId = MMI->NextLabelID();
+      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(FrameLabelId);
+    }
+
     // Update EBP with the new base value...
     BuildMI(MBB, MBBI, DL,
             TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr)
@@ -808,9 +814,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
 
   unsigned ReadyLabelId = 0;
-  if (needsFrameMoves)
+  if (needsFrameMoves) {
     // Mark effective beginning of when frame pointer is ready.
     ReadyLabelId = MMI->NextLabelID();
+    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(ReadyLabelId);
+  }
 
   // Skip the callee-saved push instructions.
   while (MBBI != MBB.end() &&
