@@ -20,4 +20,5 @@ add_clang_library(clangLex
   PTHLexer.cpp
   ScratchBuffer.cpp
   TokenLexer.cpp
+  TokenConcatenation.cpp
   )
