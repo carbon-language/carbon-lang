@@ -1772,12 +1772,19 @@ namespace {
         int64_t  RV = RHSC->getValue()->getSExtValue();
         uint64_t ALV = (LV < 0) ? -LV : LV;
         uint64_t ARV = (RV < 0) ? -RV : RV;
-        if (ALV == ARV)
-          return LV > RV;
-        else
+        if (ALV == ARV) {
+          if (LV != RV)
+            return LV > RV;
+        } else {
           return ALV < ARV;
+        }
+
+        // If it's the same value but different type, sort by bit width so
+        // that we emit larger induction variables before smaller
+        // ones, letting the smaller be re-written in terms of larger ones.
+        return RHS->getBitWidth() < LHS->getBitWidth();
       }
-      return (LHSC && !RHSC);
+      return LHSC && !RHSC;
     }
   };
 }
