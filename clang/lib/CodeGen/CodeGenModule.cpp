@@ -60,7 +60,7 @@ CodeGenModule::~CodeGenModule() {
 }
 
 void CodeGenModule::Release() {
-  EmitStatics();
+  EmitDeferred();
   EmitAliases();
   if (Runtime)
     if (llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction())
@@ -68,6 +68,7 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
+  EmitLLVMUsed();
   BindRuntimeFunctions();
 }
 
@@ -388,16 +389,40 @@ void CodeGenModule::EmitAliases() {
   }
 }
 
-void CodeGenModule::EmitStatics() {
-  // Emit code for each used static decl encountered.  Since a previously unused
-  // static decl may become used during the generation of code for a static
-  // function, iterate until no changes are made.
+void CodeGenModule::AddUsedGlobal(llvm::GlobalValue *GV) {
+  assert(!GV->isDeclaration() && 
+         "Only globals with definition can force usage.");
+  llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  LLVMUsed.push_back(llvm::ConstantExpr::getBitCast(GV, i8PTy));
+}
+
+void CodeGenModule::EmitLLVMUsed() {
+  // Don't create llvm.used if there is no need.
+  if (LLVMUsed.empty())
+    return;
+
+  llvm::ArrayType *ATy = llvm::ArrayType::get(LLVMUsed[0]->getType(), 
+                                              LLVMUsed.size());
+  llvm::GlobalVariable *GV = 
+    new llvm::GlobalVariable(ATy, false, 
+                             llvm::GlobalValue::AppendingLinkage,
+                             llvm::ConstantArray::get(ATy, LLVMUsed),
+                             "llvm.used", &getModule());
+
+  GV->setSection("llvm.metadata");
+}
+
+void CodeGenModule::EmitDeferred() {
+  // Emit code for any deferred decl which was used.  Since a
+  // previously unused static decl may become used during the
+  // generation of code for a static function, iterate until no
+  // changes are made.
   bool Changed;
   do {
     Changed = false;
     
-    for (std::list<const ValueDecl*>::iterator i = StaticDecls.begin(),
-         e = StaticDecls.end(); i != e; ) {
+    for (std::list<const ValueDecl*>::iterator i = DeferredDecls.begin(),
+         e = DeferredDecls.end(); i != e; ) {
       const ValueDecl *D = *i;
       
       // Check if we have used a decl with the same name
@@ -414,7 +439,7 @@ void CodeGenModule::EmitStatics() {
       EmitGlobalDefinition(D);
 
       // Erase the used decl from the list.
-      i = StaticDecls.erase(i);
+      i = DeferredDecls.erase(i);
 
       // Remember that we made a change.
       Changed = true;
@@ -481,16 +506,14 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
 
     isDef = FD->isThisDeclarationADefinition();
     isStatic = FD->getStorageClass() == FunctionDecl::Static;
-  } else if (const VarDecl *VD = cast<VarDecl>(Global)) {
+  } else {
+    const VarDecl *VD = cast<VarDecl>(Global);
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
 
     isDef = !((VD->getStorageClass() == VarDecl::Extern ||
                VD->getStorageClass() == VarDecl::PrivateExtern) && 
               VD->getInit() == 0);
     isStatic = VD->getStorageClass() == VarDecl::Static;
-  } else {
-    assert(0 && "Invalid argument to EmitGlobal");
-    return;
   }
 
   // Forward declarations are emitted lazily on first use.
@@ -500,7 +523,7 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
   // If the global is a static, defer code generation until later so
   // we can easily omit unused statics.
   if (isStatic && !Features.EmitAllDecls) {
-    StaticDecls.push_back(Global);
+    DeferredDecls.push_back(Global);
     return;
   }
 

@@ -95,12 +95,18 @@ class CodeGenModule {
   /// and may reference forward.
   std::vector<const FunctionDecl*> Aliases;
 
-  /// StaticDecls - List of static global for which code generation is
-  /// delayed. When the translation unit has been fully processed we will lazily
-  /// emit definitions for only the decls that were actually used.  This should
-  /// contain only Function and Var decls, and only those which actually define
-  /// something.
-  std::list<const ValueDecl*> StaticDecls;
+  /// DeferredDecls - List of decls for which code generation has been
+  /// deferred. When the translation unit has been fully processed we
+  /// will lazily emit definitions for only the decls that were
+  /// actually used.  This should contain only Function and Var decls,
+  /// and only those which actually define something.
+  std::list<const ValueDecl*> DeferredDecls;
+
+  /// LLVMUsed - List of global values which are required to be
+  /// present in the object file; bitcast to i8*. This is used for
+  /// forcing visibility of symbols which may otherwise be optimized
+  /// out.
+  std::vector<llvm::Constant*> LLVMUsed;
 
   /// GlobalCtors - Store the list of global constructors and their respective
   /// priorities to be emitted when the translation unit is complete.
@@ -228,6 +234,11 @@ public:
   /// EmitTopLevelDecl - Emit code for a single top level declaration.
   void EmitTopLevelDecl(Decl *D);
 
+  /// AddUsedGlobal - Add a global which should be forced to be
+  /// present in the object file; these are emitted to the llvm.used
+  /// metadata global.
+  void AddUsedGlobal(llvm::GlobalValue *GV);
+
   void AddAnnotation(llvm::Constant *C) { Annotations.push_back(C); }
 
   /// CreateRuntimeFunction - Create a new runtime function whose name must be
@@ -303,7 +314,14 @@ private:
 
   void EmitAliases(void);
   void EmitAnnotations(void);
-  void EmitStatics(void);
+
+  /// EmitDeferred - Emit any needed decls for which code generation
+  /// was deferred.
+  void EmitDeferred(void);
+
+  /// EmitLLVMUsed - Emit the llvm.used metadata used to force
+  /// references to global which may otherwise be optimized out.
+  void EmitLLVMUsed(void);
 
   void BindRuntimeFunctions();
 };
