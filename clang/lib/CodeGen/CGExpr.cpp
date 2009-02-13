@@ -964,7 +964,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
         dyn_cast<const DeclRefExpr>(IcExpr->getSubExpr()))
       if (const FunctionDecl *FDecl = 
           dyn_cast<const FunctionDecl>(DRExpr->getDecl()))
-        if (unsigned builtinID = FDecl->getIdentifier()->getBuiltinID())
+        if (unsigned builtinID = FDecl->getBuiltinID())
           return EmitBuiltinExpr(builtinID, E);
 
   if (E->getCallee()->getType()->isBlockPointerType())

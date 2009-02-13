@@ -24,8 +24,9 @@ static inline bool isCallBuiltin(CallExpr* cexp) {
   Expr* sub = cexp->getCallee()->IgnoreParenCasts();
   
   if (DeclRefExpr* E = dyn_cast<DeclRefExpr>(sub))
-    if (E->getDecl()->getIdentifier()->getBuiltinID() > 0)
-      return true;
+    if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(E->getDecl()))
+      if (Fn->getBuiltinID() > 0)
+        return true;
   
   return false;
 }

@@ -728,21 +728,17 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
 ///
 /// @param Name     The name of the entity that we are searching for.
 ///
-/// @param Criteria The criteria that this routine will use to
-/// determine which names are visible and which names will be
-/// found. Note that name lookup will find a name that is visible by
-/// the given criteria, but the entity itself may not be semantically
-/// correct or even the kind of entity expected based on the
-/// lookup. For example, searching for a nested-name-specifier name
-/// might result in an EnumDecl, which is visible but is not permitted
-/// as a nested-name-specifier in C++03.
+/// @param Loc      If provided, the source location where we're performing
+/// name lookup. At present, this is only used to produce diagnostics when 
+/// C library functions (like "malloc") are implicitly declared.
 ///
 /// @returns The result of name lookup, which includes zero or more
 /// declarations and possibly additional information used to diagnose
 /// ambiguities.
 Sema::LookupResult 
 Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
-                 bool RedeclarationOnly) {
+                 bool RedeclarationOnly, bool AllowBuiltinCreation,
+                 SourceLocation Loc) {
   if (!Name) return LookupResult::CreateLookupResult(Context, 0);
 
   if (!getLangOptions().CPlusPlus) {
@@ -812,12 +808,19 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
   // now, injecting it into translation unit scope, and return it.
   if (NameKind == LookupOrdinaryName) {
     IdentifierInfo *II = Name.getAsIdentifierInfo();
-    if (II) {
+    if (II && AllowBuiltinCreation) {
       // If this is a builtin on this (or all) targets, create the decl.
-      if (unsigned BuiltinID = II->getBuiltinID())
+      if (unsigned BuiltinID = II->getBuiltinID()) {
+        // In C++, we don't have any predefined library functions like
+        // 'malloc'. Instead, we'll just error.
+        if (getLangOptions().CPlusPlus && 
+            Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
+          return LookupResult::CreateLookupResult(Context, 0);
+
         return LookupResult::CreateLookupResult(Context,
                             LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
-                                                S));
+                                                S, RedeclarationOnly, Loc));
+      }
     }
     if (getLangOptions().ObjC1 && II) {
       // @interface and @compatibility_alias introduce typedef-like names.
@@ -995,11 +998,16 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 /// @param Name     The name of the entity that name lookup will
 /// search for.
 ///
+/// @param Loc      If provided, the source location where we're performing
+/// name lookup. At present, this is only used to produce diagnostics when 
+/// C library functions (like "malloc") are implicitly declared.
+///
 /// @returns The result of qualified or unqualified name lookup.
 Sema::LookupResult
 Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS, 
                        DeclarationName Name, LookupNameKind NameKind,
-                       bool RedeclarationOnly) {
+                       bool RedeclarationOnly, bool AllowBuiltinCreation,
+                       SourceLocation Loc) {
   if (SS) {
     if (SS->isInvalid())
       return LookupResult::CreateLookupResult(Context, 0);
@@ -1009,7 +1017,8 @@ Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS,
                                  Name, NameKind, RedeclarationOnly);
   }
 
-  return LookupName(S, Name, NameKind, RedeclarationOnly);
+  return LookupName(S, Name, NameKind, RedeclarationOnly, 
+                    AllowBuiltinCreation, Loc);
 }
 
 

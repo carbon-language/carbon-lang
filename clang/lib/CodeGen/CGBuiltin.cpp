@@ -327,7 +327,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   
   // If this is an alias for a libm function (e.g. __builtin_sin) turn it into
   // that function.
-  if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
+  if (getContext().BuiltinInfo.isLibFunction(BuiltinID) ||
+      getContext().BuiltinInfo.isPredefinedLibFunction(BuiltinID))
     return EmitCallExpr(CGM.getBuiltinLibFunction(BuiltinID), 
                         E->getCallee()->getType(), E->arg_begin(),
                         E->arg_end());

@@ -842,10 +842,14 @@ llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
   if (FunctionSlot)
     return FunctionSlot;
   
-  assert(Context.BuiltinInfo.isLibFunction(BuiltinID) && "isn't a lib fn");
+  assert((Context.BuiltinInfo.isLibFunction(BuiltinID) ||
+          Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) && 
+         "isn't a lib fn");
   
-  // Get the name, skip over the __builtin_ prefix.
-  const char *Name = Context.BuiltinInfo.GetName(BuiltinID)+10;
+  // Get the name, skip over the __builtin_ prefix (if necessary).
+  const char *Name = Context.BuiltinInfo.GetName(BuiltinID);
+  if (Context.BuiltinInfo.isLibFunction(BuiltinID))
+    Name += 10;
   
   // Get the type for the builtin.
   QualType Type = Context.BuiltinInfo.GetBuiltinType(BuiltinID, Context);

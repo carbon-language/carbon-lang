@@ -54,6 +54,10 @@
 //  n -> nothrow
 //  c -> const
 //  F -> this is a libc/libm function with a '__builtin_' prefix added.
+//  f -> this is a libc/libm function without the '__builtin_' prefix. It can
+//       be followed by ':headername' to state which header this function
+//       comes from, but only if 'f:headername' is the last part of the
+//       string.
 //  FIXME: gcc has nonnull
 
 // Standard libc/libm functions:
@@ -171,5 +175,24 @@ BUILTIN(__sync_val_compare_and_swap,"ii*ii", "n")
 
 // LLVM instruction builtin
 BUILTIN(__builtin_llvm_memory_barrier,"vbbbbb", "n")
+
+// Builtin library functions
+BUILTIN(alloca, "v*z", "f:stdlib.h")
+BUILTIN(calloc, "v*zz", "f:stdlib.h")
+BUILTIN(malloc, "v*z", "f:stdlib.h")
+BUILTIN(memcpy, "v*v*vC*z", "f:string.h")
+BUILTIN(memmove, "v*v*vC*z", "f:string.h")
+BUILTIN(memset, "v*v*iz", "f:string.h")
+BUILTIN(strcat, "c*c*cC*", "f:string.h")
+BUILTIN(strchr, "c*cC*i", "f:string.h")
+BUILTIN(strcpy, "c*c*cC*", "f:string.h")
+BUILTIN(strcspn, "zcC*cC*", "f:string.h")
+BUILTIN(strlen, "zcC*", "f:string.h")
+BUILTIN(strncat, "c*c*cC*z", "f:string.h")
+BUILTIN(strncpy, "c*c*cC*z", "f:string.h")
+BUILTIN(strpbrk, "c*cC*cC*", "f:string.h")
+BUILTIN(strrchr, "c*cC*i", "f:string.h")
+BUILTIN(strspn, "zcC*cC*", "f:string.h")
+BUILTIN(strstr, "c*cC*cC*", "f:string.h")
 
 #undef BUILTIN

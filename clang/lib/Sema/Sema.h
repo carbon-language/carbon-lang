@@ -864,14 +864,18 @@ public:
 
   LookupResult LookupName(Scope *S, DeclarationName Name, 
                           LookupNameKind NameKind, 
-                          bool RedeclarationOnly = false);
+                          bool RedeclarationOnly = false,
+                          bool AllowBuiltinCreation = true,
+                          SourceLocation Loc = SourceLocation());
   LookupResult LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
                                    LookupNameKind NameKind, 
                                    bool RedeclarationOnly = false);
   LookupResult LookupParsedName(Scope *S, const CXXScopeSpec *SS, 
                                 DeclarationName Name,
                                 LookupNameKind NameKind, 
-                                bool RedeclarationOnly = false);
+                                bool RedeclarationOnly = false,
+                                bool AllowBuiltinCreation = true,
+                                SourceLocation Loc = SourceLocation());
   
   typedef llvm::SmallPtrSet<NamespaceDecl *, 16> AssociatedNamespaceSet;
   typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
@@ -887,7 +891,8 @@ public:
   
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   NamedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, 
-                                 Scope *S);
+                                 Scope *S, bool ForRedeclaration,
+                                 SourceLocation Loc);
   NamedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                       Scope *S);
 

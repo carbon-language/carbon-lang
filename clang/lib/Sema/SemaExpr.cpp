@@ -547,7 +547,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // Could be enum-constant, value decl, instance variable, etc.
   if (SS && SS->isInvalid())
     return ExprError();
-  LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName);
+  LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName,
+                                         false, true, Loc);
 
   if (getLangOptions().CPlusPlus && (!SS || !SS->isSet()) && 
       HasTrailingLParen && Lookup.getKind() == LookupResult::NotFound) {
@@ -1922,9 +1923,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   }
 
   if (Ovl || (getLangOptions().CPlusPlus && (FDecl || UnqualifiedName))) {
-    // We don't perform ADL for builtins.
-    if (FDecl && FDecl->getIdentifier() && 
-        FDecl->getIdentifier()->getBuiltinID())
+    // We don't perform ADL for implicit declarations of builtins.
+    if (FDecl && FDecl->getBuiltinID() && FDecl->isImplicit())
       ADL = false;
 
     // We don't perform ADL in C.

@@ -34,7 +34,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   if (!FnInfo)
     return move(TheCallResult);
 
-  switch (FnInfo->getBuiltinID()) {
+  switch (FDecl->getBuiltinID()) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");

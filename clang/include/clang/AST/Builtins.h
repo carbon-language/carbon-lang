@@ -78,6 +78,27 @@ public:
     return strchr(GetRecord(ID).Attributes, 'F') != 0;
   }
   
+  /// \brief Determines whether this builtin is a predefined libc/libm
+  /// function, such as "malloc", where we know the signature a
+  /// priori.
+  bool isPredefinedLibFunction(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'f') != 0;
+  }
+
+  /// \brief If this is a library function that comes from a specific
+  /// header, retrieve that header name.
+  const char *getHeaderName(unsigned ID) const {
+    char *Name = strchr(GetRecord(ID).Attributes, 'f');
+    if (!Name)
+      return 0;
+    ++Name;
+
+    if (*Name != ':')
+      return 0;
+
+    return ++Name;
+  }
+
   /// hasVAListUse - Return true of the specified builtin uses __builtin_va_list
   /// as an operand or return type.
   bool hasVAListUse(unsigned ID) const {

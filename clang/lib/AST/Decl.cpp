@@ -250,6 +250,28 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   return 0;
 }
 
+/// \brief Returns a value indicating whether this function
+/// corresponds to a builtin function.
+///
+/// The function corresponds to a built-in function if it is
+/// declared at translation scope or within an extern "C" block and
+/// its name matches with the name of a builtin. The returned value
+/// will be 0 for functions that do not correspond to a builtin, a
+/// value of type \c Builtin::ID if in the target-independent range 
+/// \c [1,Builtin::First), or a target-specific builtin value.
+unsigned FunctionDecl::getBuiltinID() const {
+  if (getIdentifier() && 
+      (getDeclContext()->isTranslationUnit() ||
+       (isa<LinkageSpecDecl>(getDeclContext()) &&
+        cast<LinkageSpecDecl>(getDeclContext())->getLanguage() 
+          == LinkageSpecDecl::lang_c)))
+    return getIdentifier()->getBuiltinID();
+    
+  // Not a builtin.
+  return 0;
+}
+
+
 // Helper function for FunctionDecl::getNumParams and FunctionDecl::setParams()
 static unsigned getNumTypeParams(QualType T) {
   const FunctionType *FT = T->getAsFunctionType();

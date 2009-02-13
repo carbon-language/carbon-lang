@@ -45,7 +45,8 @@ using namespace clang;
 Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                                 Scope *S, const CXXScopeSpec *SS) {
   Decl *IIDecl = 0;
-  LookupResult Result = LookupParsedName(S, SS, &II, LookupOrdinaryName, false);
+  LookupResult Result = LookupParsedName(S, SS, &II, LookupOrdinaryName, 
+                                         false, false);
   switch (Result.getKind()) {
     case LookupResult::NotFound:
     case LookupResult::FoundOverloaded:
@@ -285,21 +286,38 @@ void Sema::InitBuiltinVaListType() {
   Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
 }
 
-/// LazilyCreateBuiltin - The specified Builtin-ID was first used at file scope.
-/// lazily create a decl for it.
+/// LazilyCreateBuiltin - The specified Builtin-ID was first used at
+/// file scope.  lazily create a decl for it. ForRedeclaration is true
+/// if we're creating this built-in in anticipation of redeclaring the
+/// built-in.
 NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
-                                     Scope *S) {
+                                     Scope *S, bool ForRedeclaration,
+                                     SourceLocation Loc) {
   Builtin::ID BID = (Builtin::ID)bid;
 
   if (Context.BuiltinInfo.hasVAListUse(BID))
     InitBuiltinVaListType();
-    
+
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);  
+
+  if (!ForRedeclaration && Context.BuiltinInfo.isPredefinedLibFunction(BID)) {
+    Diag(Loc, diag::ext_implicit_lib_function_decl)
+      << Context.BuiltinInfo.GetName(BID)
+      << R;
+    if (Context.BuiltinInfo.getHeaderName(BID) &&
+        Diags.getDiagnosticMapping(diag::ext_implicit_lib_function_decl)
+          != diag::MAP_IGNORE)
+      Diag(Loc, diag::note_please_include_header)
+        << Context.BuiltinInfo.getHeaderName(BID)
+        << Context.BuiltinInfo.GetName(BID);
+  }
+
   FunctionDecl *New = FunctionDecl::Create(Context,
                                            Context.getTranslationUnitDecl(),
-                                           SourceLocation(), II, R,
+                                           Loc, II, R,
                                            FunctionDecl::Extern, false);
-  
+  New->setImplicit();
+
   // Create Decl objects for each parameter, adding them to the
   // FunctionDecl.
   if (FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(R)) {
@@ -491,9 +509,12 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   diag::kind PrevDiag;
   if (Old->isThisDeclarationADefinition())
     PrevDiag = diag::note_previous_definition;
-  else if (Old->isImplicit())
-    PrevDiag = diag::note_previous_implicit_declaration;
-  else 
+  else if (Old->isImplicit()) {
+    if (Old->getBuiltinID())
+      PrevDiag = diag::note_previous_builtin_declaration;
+    else
+      PrevDiag = diag::note_previous_implicit_declaration;
+  } else 
     PrevDiag = diag::note_previous_declaration;
   
   QualType OldQType = Context.getCanonicalType(Old->getType());
@@ -510,7 +531,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
       = cast<FunctionType>(NewQType.getTypePtr())->getResultType();
     if (OldReturnType != NewReturnType) {
       Diag(New->getLocation(), diag::err_ovl_diff_return_type);
-      Diag(Old->getLocation(), PrevDiag);
+      Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
       Redeclaration = true;
       return New;
     }
@@ -523,7 +544,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
       //       is a static member function declaration.
       if (OldMethod->isStatic() || NewMethod->isStatic()) {
         Diag(New->getLocation(), diag::err_ovl_static_nonstatic_member);
-        Diag(Old->getLocation(), PrevDiag);
+        Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
         return New;
       }
 
@@ -544,7 +565,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
           NewDiag = diag::err_member_redeclared;
 
         Diag(New->getLocation(), NewDiag);
-        Diag(Old->getLocation(), PrevDiag);
+        Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
       }
     }
 
@@ -577,7 +598,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
   Diag(New->getLocation(), diag::err_conflicting_types) << New->getDeclName();
-  Diag(Old->getLocation(), PrevDiag);
+  Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
   return New;
 }
 
@@ -1217,10 +1238,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   // See if this is a redefinition of a variable in the same scope.
   if (!D.getCXXScopeSpec().isSet() && !D.getCXXScopeSpec().isInvalid()) {
     DC = CurContext;
-    PrevDecl = LookupName(S, Name, LookupOrdinaryName);
+    PrevDecl = LookupName(S, Name, LookupOrdinaryName, true, true,
+                          D.getIdentifierLoc());
   } else { // Something like "int foo::x;"
     DC = static_cast<DeclContext*>(D.getCXXScopeSpec().getScopeRep());
-    PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName);
+    PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
 
     // C++ 7.3.1.2p2:
     // Members (including explicit specializations of templates) of a named

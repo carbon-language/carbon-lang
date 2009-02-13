@@ -84,6 +84,14 @@ DIAG(err_declarator_need_ident, ERROR,
 DIAG(err_bad_language, ERROR,
      "unknown linkage language")
 
+/// Built-in functions.
+DIAG(ext_implicit_lib_function_decl, EXTWARN,
+     "implicitly declaring C library function '%0' with type %1")
+DIAG(note_please_include_header, NOTE,
+     "please include the header <%0> or explicitly provide a declaration for '%1'")
+DIAG(note_previous_builtin_declaration, NOTE,
+     "%0 was implicitly declared here with type %1")
+
 /// parser diagnostics
 DIAG(ext_typedef_without_a_name, EXTWARN,
      "typedef requires a name")

@@ -192,7 +192,7 @@ unsigned CallExpr::isBuiltinCall() const {
   if (!FDecl->getIdentifier())
     return 0;
 
-  return FDecl->getIdentifier()->getBuiltinID();
+  return FDecl->getBuiltinID();
 }
 
 

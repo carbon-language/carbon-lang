@@ -600,6 +600,8 @@ public:
     PreviousDeclaration = PrevDecl;
   }
 
+  unsigned getBuiltinID() const;
+
   // Iterator access to formal parameters.
   unsigned param_size() const { return getNumParams(); }
   typedef ParmVarDecl **param_iterator;
