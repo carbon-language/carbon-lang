@@ -21,6 +21,7 @@ td {
 <li><a href="#intro">Introduction</a></li>
 <li><a href="#vectors">Vectors and Extended Vectors</a></li>
 <li><a href="#blocks">Blocks</a></li>
+<li><a href="#overloading-in-c">Function Overloading in C</a></li>
 <li><a href="#builtins">Builtin Functions</a>
   <ul>
   <li><a href="#__builtin_overload">__builtin_overload</a></li>
@@ -55,6 +56,80 @@ href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
 <p>The idea, syntax, and semantics.</p>
 
 <!-- ======================================================================= -->
+<h2 id="overloading-in-c">Function Overloading in C</h2>
+<!-- ======================================================================= -->
+
+<p>Clang provides support for C++ function overloading in C. Function overloading in C is introduced using the <tt>overloadable</tt> attribute. For example, one might provide several overloaded versions of a <tt>tgsin</tt> function that invokes the appropriate standard function computing the sine of a value with <tt>float</tt>, <tt>double</tt>, or <tt>long double</tt> precision:</p>
+
+<blockquote>
+<pre>
+#include &lt;math.h&gt;
+float <b>__attribute__((overloadable))</b> tgsin(float x) { return sinf(x); }
+double <b>__attribute__((overloadable))</b> tgsin(double x) { return sin(x); }
+long double <b>__attribute__((overloadable))</b> tgsin(long double x) { return sinl(x); }
+</pre>
+</blockquote>
+
+<p>Given these declarations, one can call <tt>tgsin</tt> with a
+<tt>float</tt> value to receive a <tt>float</tt> result, with a
+<tt>double</tt> to receive a <tt>double</tt> result, etc. Function
+overloading in C follows the rules of C++ function overloading to pick
+the best overload given the call arguments, with a few C-specific
+semantics:</p>
+<ul>
+  <li>Conversion from <tt>float</tt> or <tt>double</tt> to <tt>long
+  double</tt> is ranked as a floating-point promotion (per C99) rather
+  than as a floating-point conversion (as in C++).</li>
+  
+  <li>A conversion from a pointer of type <tt>T*</tt> to a pointer of type
+  <tt>U*</tt> is considered a pointer conversion (with conversion
+  rank) if <tt>T</tt> and <tt>U</tt> are compatible types.</li>
+
+  <li>A conversion from type <tt>T</tt> to a value of type <tt>U</tt>
+  is permitted if <tt>T</tt> and <tt>U</tt> are compatible types. This
+  conversion is given "conversion" rank.</li>
+</ul>
+
+<p>The declaration of <tt>overloadable</tt> functions is restricted to
+function declarations and definitions. Most importantly, if any
+function with a given name is given the <tt>overloadable</tt>
+attribute, then all function declarations and definitions with that
+name (and in that scope) must have the <tt>overloadable</tt>
+attribute. This rule even applies to redeclarations of functions whose original declaration had the <tt>overloadable</tt> attribute, e.g.,</p>
+
+<blockquote>
+<pre>
+int f(int) __attribute__((overloadable));
+float f(float); <i>// error: declaration of "f" must have the "overloadable" attribute</i>
+
+int g(int) __attribute__((overloadable));
+int g(int) { } <i>// error: redeclaration of "g" must also have the "overloadable" attribute</i>
+</pre>
+</blockquote>
+
+<p>Functions declared with the <tt>overloadable</tt> attribute have
+their names mangled according to the same rules as C++ function
+names. For example, the three <tt>tgsin</tt> functions in our
+motivating example get the mangled names <tt>_Z5tgsinf</tt>,
+<tt>_Z5tgsind</tt>, and <tt>Z5tgsine</tt>, respectively. There are two
+caveats to this use of name mangling:</p>
+
+<ul>
+  
+  <li>Future versions of Clang may change the name mangling of
+  functions overloaded in C, so you should not depend on an specific
+  mangling. To be completely safe, we strongly urge the use of
+  <tt>static inline</tt> with <tt>overloadable</tt> functions.</li>
+
+  <li>The <tt>overloadable</tt> attribute has almost no meaning when
+  used in C++, because names will already be mangled and functions are
+  already overloadable. However, when an <tt>overloadable</tt>
+  function occurs within an <tt>extern "C"</tt> linkage specification,
+  it's name <i>will</i> be mangled in the same way as it would in
+  C.</li>
+</ul>
+
+<!-- ======================================================================= -->
 <h2 id="builtins">Builtin Functions</h2>
 <!-- ======================================================================= -->
 
@@ -82,6 +157,7 @@ builtins that we need to implement.</p>
 functions in C.  This builtin is used to implement the <tt>&lt;tgmath.h&gt;</tt>
 header file, but is intended to be usable for a broad variety of other similar
 situations, like the <tt>&lt;altivec.h&gt;</tt> header.
+<b>In the future, we intend to eliminate <tt>__builtin_overload</tt> in favor of <a href="#overloading-in-c">function overloading in C</a>, which provides a better solution for type-generic "overloaded" functions.</b>
 </p>
 
 <p><b>Syntax:</b></p>
