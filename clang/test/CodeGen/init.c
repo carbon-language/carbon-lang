@@ -1,4 +1,5 @@
-// RUN: clang -emit-llvm %s -o -
+// RUN: clang -triple i386-unknown-unknown -emit-llvm %s -o %t &&
+
 void f1() {
   // Scalars in braces.
   int a = { 1 };
@@ -20,3 +21,11 @@ void f3() {
   struct S a[1] = { { foo } };
 }
 
+// Constants
+// RUN: grep '@g3 = constant i32 10' %t &&
+// RUN: grep '@f4.g4 = internal constant i32 12' %t
+const int g3 = 10;
+int f4() {
+  static const int g4 = 12;
+  return g4;
+}

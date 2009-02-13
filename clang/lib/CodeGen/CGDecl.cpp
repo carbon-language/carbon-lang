@@ -109,7 +109,7 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
     assert(0 && "Unknown context for block var decl");
 
   llvm::GlobalValue *GV =
-    new llvm::GlobalVariable(Init->getType(), false,
+    new llvm::GlobalVariable(Init->getType(), Ty.isConstant(getContext()),
                              Linkage,
                              Init, ContextName + Separator +D.getNameAsString(),
                              &CGM.getModule(), 0, Ty.getAddressSpace());
