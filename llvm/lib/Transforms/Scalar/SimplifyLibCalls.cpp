@@ -733,8 +733,10 @@ struct VISIBILITY_HIDDEN StrToOpt : public LibCallOptimization {
       return 0;
 
     Value *EndPtr = CI->getOperand(2);
-    if (isa<ConstantPointerNull>(EndPtr))
+    if (isa<ConstantPointerNull>(EndPtr)) {
+      CI->setOnlyReadsMemory();
       CI->addAttribute(1, Attribute::NoCapture);
+    }
 
     return 0;
   }
