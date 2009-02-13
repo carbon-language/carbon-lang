@@ -55,9 +55,11 @@ unsigned
 IA64InstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
                             const SmallVectorImpl<MachineOperand> &Cond)const {
+  // FIXME this should probably have a DebugLoc argument
+  DebugLoc dl = DebugLoc::getUnknownLoc();
   // Can only insert uncond branches so far.
   assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
-  BuildMI(&MBB, get(IA64::BRL_NOTCALL)).addMBB(TBB);
+  BuildMI(&MBB, dl, get(IA64::BRL_NOTCALL)).addMBB(TBB);
   return 1;
 }
 

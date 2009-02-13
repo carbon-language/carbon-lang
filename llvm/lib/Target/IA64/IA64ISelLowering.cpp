@@ -243,7 +243,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
   // Create a vreg to hold the output of (what will become)
   // the "alloc" instruction
   VirtGPR = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
-  BuildMI(&BB, TII->get(IA64::PSEUDO_ALLOC), VirtGPR);
+  BuildMI(&BB, dl, TII->get(IA64::PSEUDO_ALLOC), VirtGPR);
   // we create a PSEUDO_ALLOC (pseudo)instruction for now
 /*
   BuildMI(&BB, IA64::IDEF, 0, IA64::r1);
@@ -273,14 +273,14 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
   // here we actually do the moving of args, and store them to the stack
   // too if this is a varargs function:
   for (int i = 0; i < count && i < 8; ++i) {
-    BuildMI(&BB, TII->get(argOpc[i]), argVreg[i]).addReg(argPreg[i]);
+    BuildMI(&BB, dl, TII->get(argOpc[i]), argVreg[i]).addReg(argPreg[i]);
     if(F.isVarArg()) {
       // if this is a varargs function, we copy the input registers to the stack
       int FI = MFI->CreateFixedObject(8, tempOffset);
       tempOffset+=8;   //XXX: is it safe to use r22 like this?
-      BuildMI(&BB, TII->get(IA64::MOV), IA64::r22).addFrameIndex(FI);
+      BuildMI(&BB, dl, TII->get(IA64::MOV), IA64::r22).addFrameIndex(FI);
       // FIXME: we should use st8.spill here, one day
-      BuildMI(&BB, TII->get(IA64::ST8), IA64::r22).addReg(argPreg[i]);
+      BuildMI(&BB, dl, TII->get(IA64::ST8), IA64::r22).addReg(argPreg[i]);
     }
   }
 

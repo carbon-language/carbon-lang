@@ -554,6 +554,8 @@ unsigned MipsInstrInfo::
 InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB, 
              MachineBasicBlock *FBB,
              const SmallVectorImpl<MachineOperand> &Cond) const {
+  // FIXME this should probably have a DebugLoc argument
+  DebugLoc dl = DebugLoc::getUnknownLoc();
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 3 || Cond.size() == 2 || Cond.size() == 0) &&
@@ -562,18 +564,18 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   if (FBB == 0) { // One way branch.
     if (Cond.empty()) {
       // Unconditional branch?
-      BuildMI(&MBB, get(Mips::J)).addMBB(TBB);
+      BuildMI(&MBB, dl, get(Mips::J)).addMBB(TBB);
     } else {
       // Conditional branch.
       unsigned Opc = GetCondBranchFromCond((Mips::CondCode)Cond[0].getImm());
       const TargetInstrDesc &TID = get(Opc);
 
       if (TID.getNumOperands() == 3)
-        BuildMI(&MBB, TID).addReg(Cond[1].getReg())
+        BuildMI(&MBB, dl, TID).addReg(Cond[1].getReg())
                           .addReg(Cond[2].getReg())
                           .addMBB(TBB);
       else
-        BuildMI(&MBB, TID).addReg(Cond[1].getReg())
+        BuildMI(&MBB, dl, TID).addReg(Cond[1].getReg())
                           .addMBB(TBB);
 
     }                             
@@ -585,12 +587,12 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   const TargetInstrDesc &TID = get(Opc);
 
   if (TID.getNumOperands() == 3)
-    BuildMI(&MBB, TID).addReg(Cond[1].getReg()).addReg(Cond[2].getReg())
+    BuildMI(&MBB, dl, TID).addReg(Cond[1].getReg()).addReg(Cond[2].getReg())
                       .addMBB(TBB);
   else
-    BuildMI(&MBB, TID).addReg(Cond[1].getReg()).addMBB(TBB);
+    BuildMI(&MBB, dl, TID).addReg(Cond[1].getReg()).addMBB(TBB);
 
-  BuildMI(&MBB, get(Mips::J)).addMBB(FBB);
+  BuildMI(&MBB, dl, get(Mips::J)).addMBB(FBB);
   return 2;
 }
 

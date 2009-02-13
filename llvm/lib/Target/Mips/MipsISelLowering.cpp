@@ -279,6 +279,7 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   bool isFPCmp = false;
+  DebugLoc dl = MI->getDebugLoc();
 
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
@@ -316,9 +317,9 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       Mips::CondCode CC = (Mips::CondCode)MI->getOperand(4).getImm();
       // Get the branch opcode from the branch code.
       unsigned Opc = FPBranchCodeToOpc(GetFPBranchCodeFromCond(CC));
-      BuildMI(BB, TII->get(Opc)).addMBB(sinkMBB);
+      BuildMI(BB, dl, TII->get(Opc)).addMBB(sinkMBB);
     } else
-      BuildMI(BB, TII->get(Mips::BNE)).addReg(MI->getOperand(1).getReg())
+      BuildMI(BB, dl, TII->get(Mips::BNE)).addReg(MI->getOperand(1).getReg())
         .addReg(Mips::ZERO).addMBB(sinkMBB);
 
     F->insert(It, copy0MBB);
@@ -347,7 +348,7 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
     //  ...
     BB = sinkMBB;
-    BuildMI(BB, TII->get(Mips::PHI), MI->getOperand(0).getReg())
+    BuildMI(BB, dl, TII->get(Mips::PHI), MI->getOperand(0).getReg())
       .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
       .addReg(MI->getOperand(3).getReg()).addMBB(thisMBB);
 

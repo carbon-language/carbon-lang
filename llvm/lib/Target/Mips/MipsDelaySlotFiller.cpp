@@ -62,7 +62,7 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB)
     if (I->getDesc().hasDelaySlot()) {
       MachineBasicBlock::iterator J = I;
       ++J;
-      BuildMI(MBB, J, TII->get(Mips::NOP));
+      BuildMI(MBB, J, I->getDebugLoc(), TII->get(Mips::NOP));
       ++FilledSlots;
       Changed = true;
     }
