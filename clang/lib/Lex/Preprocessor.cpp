@@ -626,7 +626,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
 /// EnterMainSourceFile - Enter the specified FileID as the main source file,
 /// which implicitly adds the builtin defines etc.
 void Preprocessor::EnterMainSourceFile() {
-  
+  // We do not allow the preprocessor to reenter the main file.  Doing so will
+  // cause FileID's to accumulate information from both runs (e.g. #line
+  // information) and predefined macros aren't guaranteed to be set properly.
+  assert(NumEnteredSourceFiles == 0 && "Cannot reenter the main file!");
   FileID MainFileID = SourceMgr.getMainFileID();
   
   // Enter the main file source buffer.

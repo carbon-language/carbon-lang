@@ -344,8 +344,8 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID,
 void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
   RewriteBuffer &RB = R.getEditBuffer(FID);
 
-  const SourceManager &SourceMgr = PP.getSourceManager();
-  Lexer L(FID, SourceMgr, PP.getLangOptions());
+  const SourceManager &SM = PP.getSourceManager();
+  Lexer L(FID, SM, PP.getLangOptions());
   const char *BufferStart = L.getBufferStart();
   
   // Inform the preprocessor that we want to retain comments as tokens, so we 
@@ -360,7 +360,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
   while (Tok.isNot(tok::eof)) {
     // Since we are lexing unexpanded tokens, all tokens are from the main
     // FileID.
-    unsigned TokOffs = SourceMgr.getFileOffset(Tok.getLocation());
+    unsigned TokOffs = SM.getFileOffset(Tok.getLocation());
     unsigned TokLen = Tok.getLength();
     switch (Tok.getKind()) {
     default: break;
@@ -398,7 +398,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
       unsigned TokEnd = TokOffs+TokLen;
       L.LexFromRawLexer(Tok);
       while (!Tok.isAtStartOfLine() && Tok.isNot(tok::eof)) {
-        TokEnd = SourceMgr.getFileOffset(Tok.getLocation())+Tok.getLength();
+        TokEnd = SM.getFileOffset(Tok.getLocation())+Tok.getLength();
         L.LexFromRawLexer(Tok);
       }
       
@@ -416,23 +416,55 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
 }
 
 /// HighlightMacros - This uses the macro table state from the end of the
-/// file, to reexpand macros and insert (into the HTML) information about the
+/// file, to re-expand macros and insert (into the HTML) information about the
 /// macro expansions.  This won't be perfectly perfect, but it will be
 /// reasonably close.
 void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
   
   RewriteBuffer &RB = R.getEditBuffer(FID);
   
+  // Re-lex the raw token stream into a token buffer.
+  const SourceManager &SM = PP.getSourceManager();
+  std::vector<Token> TokenStream;
+  
+  Lexer L(FID, SM, PP.getLangOptions());
+  
+  // Lex all the tokens in raw mode, to avoid entering #includes or expanding
+  // macros.
+  while (1) {
+    Token Tok;
+    L.LexFromRawLexer(Tok);
+    
+    // If this is a # at the start of a line, discard it from the token stream.
+    // We don't want the re-preprocess step to see #defines, #includes or other
+    // preprocessor directives.
+    if (Tok.is(tok::hash) && Tok.isAtStartOfLine())
+      continue;
+    
+    // If this raw token is an identifier, the raw lexer won't have looked up
+    // the corresponding identifier info for it.  Do this now so that it will be
+    // macro expanded when we re-preprocess it.
+    if (Tok.is(tok::identifier)) {
+      // Change the kind of this identifier to the appropriate token kind, e.g.
+      // turning "for" into a keyword.
+      Tok.setKind(PP.LookUpIdentifierInfo(Tok)->getTokenID());
+    }    
+      
+    TokenStream.push_back(Tok);
+    
+    if (Tok.is(tok::eof)) break;
+  }
+  
   // Inform the preprocessor that we don't want comments.
   PP.SetCommentRetentionState(false, false);
-  
-  // Start parsing the specified input file.
-  PP.EnterMainSourceFile();
+
+  // Enter the tokens we just lexed.  This will cause them to be macro expanded
+  // but won't enter sub-files (because we removed #'s).
+  PP.EnterTokenStream(&TokenStream[0], TokenStream.size(), false, false);
   
   TokenConcatenation ConcatInfo(PP);
   
   // Lex all the tokens.
-  const SourceManager &SourceMgr = PP.getSourceManager();
   Token Tok;
   PP.Lex(Tok);
   while (Tok.isNot(tok::eof)) {
@@ -443,8 +475,8 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     }
     
     // Ignore tokens whose instantiation location was not the main file.
-    SourceLocation LLoc = SourceMgr.getInstantiationLoc(Tok.getLocation());
-    std::pair<FileID, unsigned> LLocInfo = SourceMgr.getDecomposedLoc(LLoc);
+    SourceLocation LLoc = SM.getInstantiationLoc(Tok.getLocation());
+    std::pair<FileID, unsigned> LLocInfo = SM.getDecomposedLoc(LLoc);
     
     if (LLocInfo.first != FID) {
       PP.Lex(Tok);
@@ -457,7 +489,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     // Get the size of current macro call itself.
     // FIXME: This should highlight the args of a function-like
     // macro, using a heuristic.
-    unsigned TokLen = Lexer::MeasureTokenLength(LLoc, SourceMgr);
+    unsigned TokLen = Lexer::MeasureTokenLength(LLoc, SM);
     
     unsigned TokOffs = LLocInfo.second;
     // Highlight the macro invocation itself.
@@ -476,7 +508,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     // instantiation.  It would be really nice to pop up a window with all the
     // spelling of the tokens or something.
     while (!Tok.is(tok::eof) &&
-           SourceMgr.getInstantiationLoc(Tok.getLocation()) == LLoc) {
+           SM.getInstantiationLoc(Tok.getLocation()) == LLoc) {
       // Insert a newline if the macro expansion is getting large.
       if (LineLen > 60) {
         Expansion += "<br>";
