@@ -103,9 +103,6 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
   std::vector<llvm::Constant*> Elts;
   llvm::Constant *C;
 
-  bool staticBlockTmp = (BlockRefDeclList == 0
-                         && BlockByrefDeclList == 0);
-
   {
     // C = BuildBlockStructInitlist();
     unsigned int flags = BLOCK_HAS_DESCRIPTOR;
