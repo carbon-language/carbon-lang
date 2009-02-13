@@ -56,6 +56,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "weak", 4)) return AT_weak;
     if (!memcmp(Str, "pure", 4)) return AT_pure;
     if (!memcmp(Str, "mode", 4)) return AT_mode;
+    if (!memcmp(Str, "used", 4)) return AT_used;
     break;
   case 5:
     if (!memcmp(Str, "alias", 5)) return AT_alias;

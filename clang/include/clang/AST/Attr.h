@@ -50,6 +50,7 @@ public:
     TransparentUnion,
     Unavailable,
     Unused,    
+    Used,
     Visibility,
     Weak,
     Blocks,
@@ -264,6 +265,15 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) { return A->getKind() == Unused; }  
   static bool classof(const UnusedAttr *A) { return true; }
+};  
+  
+class UsedAttr : public Attr {
+public:
+  UsedAttr() : Attr(Used) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == Used; }  
+  static bool classof(const UsedAttr *A) { return true; }
 };  
   
 class WeakAttr : public Attr {

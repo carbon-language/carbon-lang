@@ -70,6 +70,7 @@ public:
     AT_transparent_union,
     AT_unavailable,
     AT_unused,
+    AT_used,
     AT_vector_size,
     AT_visibility,
     AT_warn_unused_result,

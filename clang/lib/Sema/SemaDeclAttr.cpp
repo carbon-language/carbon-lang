@@ -431,6 +431,27 @@ static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new UnusedAttr());
 }
 
+static void HandleUsedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  
+  if (const VarDecl *VD = dyn_cast<VarDecl>(d)) {
+    if (VD->hasLocalStorage()) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "used";
+      return;
+    }
+  } else if (!isFunctionOrMethod(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "used" << "variable and function";
+    return;
+  }
+  
+  d->addAttr(new UsedAttr());
+}
+
 static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0 && Attr.getNumArgs() != 1) {
@@ -1357,6 +1378,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;
   case AttributeList::AT_unavailable: HandleUnavailableAttr(D, Attr, S); break;
   case AttributeList::AT_unused:      HandleUnusedAttr    (D, Attr, S); break;
+  case AttributeList::AT_used:        HandleUsedAttr      (D, Attr, S); break;
   case AttributeList::AT_vector_size: HandleVectorSizeAttr(D, Attr, S); break;
   case AttributeList::AT_visibility:  HandleVisibilityAttr(D, Attr, S); break;
   case AttributeList::AT_weak:        HandleWeakAttr      (D, Attr, S); break;
