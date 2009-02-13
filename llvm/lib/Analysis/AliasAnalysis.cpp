@@ -120,9 +120,13 @@ AliasAnalysis::getModRefBehavior(CallSite CS,
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(Function *F,
                                  std::vector<PointerAccessInfo> *Info) {
-  if (F && F->doesNotAccessMemory())
-    // Can't do better than this.
-    return DoesNotAccessMemory;
+  if (F) {
+    if (F->doesNotAccessMemory())
+      // Can't do better than this.
+      return DoesNotAccessMemory;
+    else if (F->onlyReadsMemory())
+      return OnlyReadsMemory;
+  }
   return UnknownModRefBehavior;
 }
 
@@ -130,10 +134,10 @@ AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   ModRefResult Mask = ModRef;
   ModRefBehavior MRB = getModRefBehavior(CS);
-  if (MRB == OnlyReadsMemory)
-    Mask = Ref;
-  else if (MRB == DoesNotAccessMemory)
+  if (MRB == DoesNotAccessMemory)
     return NoModRef;
+  else if (MRB == OnlyReadsMemory)
+    Mask = Ref;
   else if (MRB == AliasAnalysis::AccessesArguments) {
     bool doesAlias = false;
     for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
@@ -142,7 +146,7 @@ AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
         doesAlias = true;
         break;
       }
-    
+
     if (!doesAlias)
       return NoModRef;
   }
