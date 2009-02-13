@@ -80,6 +80,7 @@ public:
     AT_const,
     AT_nsobject,
     AT_cleanup,
+    AT_nodebug,
     UnknownAttribute
   };
   

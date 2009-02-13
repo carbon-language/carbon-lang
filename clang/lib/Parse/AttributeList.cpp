@@ -70,6 +70,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 7:
     if (!memcmp(Str, "aligned", 7)) return AT_aligned;
     if (!memcmp(Str, "cleanup", 7)) return AT_cleanup;
+    if (!memcmp(Str, "nodebug", 7)) return AT_nodebug;
     if (!memcmp(Str, "nonnull", 7)) return AT_nonnull;
     if (!memcmp(Str, "nothrow", 7)) return AT_nothrow;
     if (!memcmp(Str, "objc_gc", 7)) return AT_objc_gc;

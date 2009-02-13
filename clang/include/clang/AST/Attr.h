@@ -55,7 +55,8 @@ public:
     Blocks,
     Const,
     Pure,
-    Cleanup
+    Cleanup,
+    Nodebug
   };
     
 private:
@@ -493,6 +494,16 @@ public:
   static bool classof(const CleanupAttr *A) { return true; }
 };
 
+class NodebugAttr : public Attr {
+public:
+  NodebugAttr() : Attr(Nodebug) {}
+    
+  // Implement isa/cast/dyncast/etc.
+    
+  static bool classof(const Attr *A) { return A->getKind() == Nodebug; }
+  static bool classof(const DeprecatedAttr *A) { return true; }
+};
+  
 }  // end namespace clang
 
 #endif

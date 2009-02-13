@@ -1304,6 +1304,22 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     cast<ValueDecl>(D)->setType(NewTy);
 }
 
+static void HandleNodebugAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() > 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
+  if (!Fn) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "nodebug" << "function";
+    return;
+  }
+  
+  d->addAttr(new NodebugAttr());
+}
+
 //===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
@@ -1355,10 +1371,11 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_const:       HandleConstAttr     (D, Attr, S); break;
   case AttributeList::AT_pure:        HandlePureAttr      (D, Attr, S); break;
   case AttributeList::AT_cleanup:     HandleCleanupAttr   (D, Attr, S); break;
+  case AttributeList::AT_nodebug:     HandleNodebugAttr   (D, Attr, S); break;
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.
-    S.Diag(Attr->getLoc(), diag::warn_attribute_ignored) << Attr->getName();
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
 #endif
     break;
   }
