@@ -926,6 +926,7 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   unsigned BROpcode;
   unsigned CC;
+  DebugLoc dl = MI->getDebugLoc();
   // Figure out the conditional branch opcode to use for this select_cc.
   switch (MI->getOpcode()) {
   default: assert(0 && "Unknown SELECT_CC!");
@@ -960,7 +961,7 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   MachineFunction *F = BB->getParent();
   MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
-  BuildMI(BB, TII.get(BROpcode)).addMBB(sinkMBB).addImm(CC);
+  BuildMI(BB, dl, TII.get(BROpcode)).addMBB(sinkMBB).addImm(CC);
   F->insert(It, copy0MBB);
   F->insert(It, sinkMBB);
   // Update machine-CFG edges by transferring all successors of the current
@@ -982,7 +983,7 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
   BB = sinkMBB;
-  BuildMI(BB, TII.get(SP::PHI), MI->getOperand(0).getReg())
+  BuildMI(BB, dl, TII.get(SP::PHI), MI->getOperand(0).getReg())
     .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
     .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB);
 

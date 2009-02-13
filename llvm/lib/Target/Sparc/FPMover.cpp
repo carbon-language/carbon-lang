@@ -84,6 +84,7 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ) {
     MachineInstr *MI = I++;
+    DebugLoc dl = MI->getDebugLoc();
     if (MI->getOpcode() == SP::FpMOVD || MI->getOpcode() == SP::FpABSD ||
         MI->getOpcode() == SP::FpNEGD) {
       Changed = true;
@@ -114,7 +115,7 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       DOUT << "FPMover: the modified instr is: " << *MI;
       // Insert copy for the other half of the double.
       if (DestDReg != SrcDReg) {
-        MI = BuildMI(MBB, I, TM.getInstrInfo()->get(SP::FMOVS), OddDestReg)
+        MI = BuildMI(MBB, I, dl, TM.getInstrInfo()->get(SP::FMOVS), OddDestReg)
           .addReg(OddSrcReg);
         DOUT << "FPMover: the inserted instr is: " << *MI;
       }
