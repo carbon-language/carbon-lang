@@ -963,7 +963,28 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(VAListAddr, 3), 
                            "reg_save_area");
   if (neededInt && neededSSE) {
-    assert(0 && "FIXME: Implement support for va_arg in mixed regs");
+    // FIXME: Cleanup.
+    assert(AI.isCoerce() && "Unexpected ABI info for mixed regs");
+    const llvm::StructType *ST = cast<llvm::StructType>(AI.getCoerceToType());
+    llvm::Value *Tmp = CGF.CreateTempAlloca(ST);
+    assert(ST->getNumElements() == 2 && "Unexpected ABI info for mixed regs");
+    const llvm::Type *TyLo = ST->getElementType(0);
+    const llvm::Type *TyHi = ST->getElementType(1);
+    assert((TyLo->isFloatingPoint() ^ TyHi->isFloatingPoint()) &&
+           "Unexpected ABI info for mixed regs");
+    const llvm::Type *PTyLo = llvm::PointerType::getUnqual(TyLo);
+    const llvm::Type *PTyHi = llvm::PointerType::getUnqual(TyHi);
+    llvm::Value *GPAddr = CGF.Builder.CreateGEP(RegAddr, gp_offset);
+    llvm::Value *FPAddr = CGF.Builder.CreateGEP(RegAddr, fp_offset);
+    llvm::Value *RegLoAddr = TyLo->isFloatingPoint() ? FPAddr : GPAddr;
+    llvm::Value *RegHiAddr = TyLo->isFloatingPoint() ? GPAddr : FPAddr;
+    llvm::Value *V = 
+      CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegLoAddr, PTyLo));
+    CGF.Builder.CreateStore(V, CGF.Builder.CreateStructGEP(Tmp, 0));
+    V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegHiAddr, PTyHi));
+    CGF.Builder.CreateStore(V, CGF.Builder.CreateStructGEP(Tmp, 1));
+    
+    RegAddr = CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(LTy));
   } else if (neededInt) {
     RegAddr = CGF.Builder.CreateGEP(RegAddr, gp_offset);
     RegAddr = CGF.Builder.CreateBitCast(RegAddr, 
