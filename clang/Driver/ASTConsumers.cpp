@@ -181,7 +181,7 @@ void DeclPrinter::Print(NamedDecl *ND) {
       case VarDecl::Register:      Out << "register "; break;
       case VarDecl::Extern:        Out << "extern "; break;
       case VarDecl::Static:        Out << "static "; break; 
-      case VarDecl::PrivateExtern: Out << "static "; break; 
+      case VarDecl::PrivateExtern: Out << "__private_extern__ "; break; 
       }
     }
     std::string Name = ND->getNameAsString();
