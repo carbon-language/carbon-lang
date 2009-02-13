@@ -147,10 +147,11 @@ void ARMInstrInfo::reMaterialize(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I,
                                  unsigned DestReg,
                                  const MachineInstr *Orig) const {
+  DebugLoc dl = Orig->getDebugLoc();
   if (Orig->getOpcode() == ARM::MOVi2pieces) {
     RI.emitLoadConstPool(MBB, I, DestReg, Orig->getOperand(1).getImm(),
                          Orig->getOperand(2).getImm(),
-                         Orig->getOperand(3).getReg(), this, false);
+                         Orig->getOperand(3).getReg(), this, false, dl);
     return;
   }
 
@@ -447,6 +448,8 @@ unsigned ARMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 unsigned ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                             const SmallVectorImpl<MachineOperand> &Cond) const {
+  // FIXME this should probably have a DebugLoc argument
+  DebugLoc dl = DebugLoc::getUnknownLoc();
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   int BOpc   = AFI->isThumbFunction() ? ARM::tB : ARM::B;
@@ -459,17 +462,17 @@ unsigned ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *T
   
   if (FBB == 0) {
     if (Cond.empty()) // Unconditional branch?
-      BuildMI(&MBB, get(BOpc)).addMBB(TBB);
+      BuildMI(&MBB, dl, get(BOpc)).addMBB(TBB);
     else
-      BuildMI(&MBB, get(BccOpc)).addMBB(TBB)
+      BuildMI(&MBB, dl, get(BccOpc)).addMBB(TBB)
         .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
     return 1;
   }
   
   // Two-way conditional branch.
-  BuildMI(&MBB, get(BccOpc)).addMBB(TBB)
+  BuildMI(&MBB, dl, get(BccOpc)).addMBB(TBB)
     .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
-  BuildMI(&MBB, get(BOpc)).addMBB(FBB);
+  BuildMI(&MBB, dl, get(BOpc)).addMBB(FBB);
   return 2;
 }
 

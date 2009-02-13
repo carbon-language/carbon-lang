@@ -1498,6 +1498,7 @@ MachineBasicBlock *
 ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
   case ARM::tMOVCCr: {
@@ -1519,7 +1520,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MachineFunction *F = BB->getParent();
     MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
-    BuildMI(BB, TII->get(ARM::tBcc)).addMBB(sinkMBB)
+    BuildMI(BB, dl, TII->get(ARM::tBcc)).addMBB(sinkMBB)
       .addImm(MI->getOperand(3).getImm()).addReg(MI->getOperand(4).getReg());
     F->insert(It, copy0MBB);
     F->insert(It, sinkMBB);
@@ -1547,7 +1548,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
     //  ...
     BB = sinkMBB;
-    BuildMI(BB, TII->get(ARM::PHI), MI->getOperand(0).getReg())
+    BuildMI(BB, dl, TII->get(ARM::PHI), MI->getOperand(0).getReg())
       .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
       .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 

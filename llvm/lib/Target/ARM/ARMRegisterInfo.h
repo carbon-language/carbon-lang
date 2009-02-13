@@ -38,7 +38,8 @@ public:
                          MachineBasicBlock::iterator &MBBI,
                          unsigned DestReg, int Val,
                          unsigned Pred, unsigned PredReg,
-                         const TargetInstrInfo *TII, bool isThumb) const;
+                         const TargetInstrInfo *TII, bool isThumb,
+                         DebugLoc dl) const;
 
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// ARM::LR, return the number that it corresponds to (e.g. 14).

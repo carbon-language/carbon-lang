@@ -301,7 +301,7 @@ void ARMConstantIslands::DoInitialPlacement(MachineFunction &Fn,
     // aligned.
     assert((Size & 3) == 0 && "CP Entry not multiple of 4 bytes!");
     MachineInstr *CPEMI =
-      BuildMI(BB, TII->get(ARM::CONSTPOOL_ENTRY))
+      BuildMI(BB, DebugLoc::getUnknownLoc(), TII->get(ARM::CONSTPOOL_ENTRY))
                            .addImm(i).addConstantPoolIndex(i).addImm(Size);
     CPEMIs.push_back(CPEMI);
 
@@ -567,7 +567,10 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   
   // Add an unconditional branch from OrigBB to NewBB.
   // Note the new unconditional branch is not being recorded.
-  BuildMI(OrigBB, TII->get(isThumb ? ARM::tB : ARM::B)).addMBB(NewBB);
+  // There doesn't seem to be meaningful DebugInfo available; this doesn't
+  // correspond to anything in the source.
+  BuildMI(OrigBB, DebugLoc::getUnknownLoc(),
+          TII->get(isThumb ? ARM::tB : ARM::B)).addMBB(NewBB);
   NumSplit++;
   
   // Update the CFG.  All succs of OrigBB are now succs of NewBB.
@@ -931,7 +934,8 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     // targets will be exchanged, and the altered branch may be out of
     // range, so the machinery has to know about it.
     int UncondBr = isThumb ? ARM::tB : ARM::B;
-    BuildMI(UserMBB, TII->get(UncondBr)).addMBB(*NewMBB);
+    BuildMI(UserMBB, DebugLoc::getUnknownLoc(),
+            TII->get(UncondBr)).addMBB(*NewMBB);
     unsigned MaxDisp = getUnconditionalBrDisp(UncondBr);
     ImmBranches.push_back(ImmBranch(&UserMBB->back(), 
                           MaxDisp, false, UncondBr));
@@ -1042,7 +1046,8 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
 
   // Now that we have an island to add the CPE to, clone the original CPE and
   // add it to the island.
-  U.CPEMI = BuildMI(NewIsland, TII->get(ARM::CONSTPOOL_ENTRY))
+  U.CPEMI = BuildMI(NewIsland, DebugLoc::getUnknownLoc(),
+                    TII->get(ARM::CONSTPOOL_ENTRY))
                 .addImm(ID).addConstantPoolIndex(CPI).addImm(Size);
   CPEntries[CPI].push_back(CPEntry(U.CPEMI, ID, 1));
   NumCPEs++;
@@ -1240,11 +1245,12 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
 
   // Insert a new conditional branch and a new unconditional branch.
   // Also update the ImmBranch as well as adding a new entry for the new branch.
-  BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB)
-    .addImm(CC).addReg(CCReg);
+  BuildMI(MBB, DebugLoc::getUnknownLoc(),
+          TII->get(MI->getOpcode()))
+    .addMBB(NextBB).addImm(CC).addReg(CCReg);
   Br.MI = &MBB->back();
   BBSizes[MBB->getNumber()] += TII->GetInstSizeInBytes(&MBB->back());
-  BuildMI(MBB, TII->get(Br.UncondBr)).addMBB(DestBB);
+  BuildMI(MBB, DebugLoc::getUnknownLoc(), TII->get(Br.UncondBr)).addMBB(DestBB);
   BBSizes[MBB->getNumber()] += TII->GetInstSizeInBytes(&MBB->back());
   unsigned MaxDisp = getUnconditionalBrDisp(Br.UncondBr);
   ImmBranches.push_back(ImmBranch(&MBB->back(), MaxDisp, false, Br.UncondBr));
@@ -1268,7 +1274,7 @@ bool ARMConstantIslands::UndoLRSpillRestore() {
     if (MI->getOpcode() == ARM::tPOP_RET &&
         MI->getOperand(0).getReg() == ARM::PC &&
         MI->getNumExplicitOperands() == 1) {
-      BuildMI(MI->getParent(), TII->get(ARM::tBX_RET));
+      BuildMI(MI->getParent(), MI->getDebugLoc(), TII->get(ARM::tBX_RET));
       MI->eraseFromParent();
       MadeChange = true;
     }

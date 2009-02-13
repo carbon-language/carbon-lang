@@ -116,6 +116,8 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                      ARMCC::CondCodes Pred, unsigned PredReg, unsigned Scratch,
                      SmallVector<std::pair<unsigned, bool>, 8> &Regs,
                      const TargetInstrInfo *TII) {
+  // FIXME would it be better to take a DL from one of the loads arbitrarily?
+  DebugLoc dl = DebugLoc::getUnknownLoc();
   // Only a single register to load / store. Don't bother.
   unsigned NumRegs = Regs.size();
   if (NumRegs <= 1)
@@ -156,7 +158,7 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
     if (ImmedOffset == -1)
       return false;  // Probably not worth it then.
 
-    BuildMI(MBB, MBBI, TII->get(BaseOpc), NewBase)
+    BuildMI(MBB, MBBI, dl, TII->get(BaseOpc), NewBase)
       .addReg(Base, false, false, BaseKill).addImm(ImmedOffset)
       .addImm(Pred).addReg(PredReg).addReg(0);
     Base = NewBase;
@@ -167,9 +169,11 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
   bool isDef = Opcode == ARM::LDR || Opcode == ARM::FLDS || Opcode == ARM::FLDD;
   Opcode = getLoadStoreMultipleOpcode(Opcode);
   MachineInstrBuilder MIB = (isAM4)
-    ? BuildMI(MBB, MBBI, TII->get(Opcode)).addReg(Base, false, false, BaseKill)
+    ? BuildMI(MBB, MBBI, dl, TII->get(Opcode))
+        .addReg(Base, false, false, BaseKill)
         .addImm(ARM_AM::getAM4ModeImm(Mode)).addImm(Pred).addReg(PredReg)
-    : BuildMI(MBB, MBBI, TII->get(Opcode)).addReg(Base, false, false, BaseKill)
+    : BuildMI(MBB, MBBI, dl, TII->get(Opcode))
+        .addReg(Base, false, false, BaseKill)
         .addImm(ARM_AM::getAM5Opc(Mode, false, isDPR ? NumRegs<<1 : NumRegs))
         .addImm(Pred).addReg(PredReg);
   for (unsigned i = 0; i != NumRegs; ++i)
@@ -450,6 +454,7 @@ static bool mergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   bool BaseKill = MI->getOperand(1).isKill();
   unsigned Bytes = getLSMultipleTransferSize(MI);
   int Opcode = MI->getOpcode();
+  DebugLoc dl = MI->getDebugLoc();
   bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
   if ((isAM2 && ARM_AM::getAM2Offset(MI->getOperand(3).getImm()) != 0) ||
       (!isAM2 && ARM_AM::getAM5Offset(MI->getOperand(2).getImm()) != 0))
@@ -510,24 +515,25 @@ static bool mergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   if (isLd) {
     if (isAM2)
       // LDR_PRE, LDR_POST;
-      BuildMI(MBB, MBBI, TII->get(NewOpc), MI->getOperand(0).getReg())
+      BuildMI(MBB, MBBI, dl, TII->get(NewOpc), MI->getOperand(0).getReg())
         .addReg(Base, true)
         .addReg(Base).addReg(0).addImm(Offset).addImm(Pred).addReg(PredReg);
     else
       // FLDMS, FLDMD
-      BuildMI(MBB, MBBI, TII->get(NewOpc)).addReg(Base, false, false, BaseKill)
+      BuildMI(MBB, MBBI, dl, TII->get(NewOpc))
+        .addReg(Base, false, false, BaseKill)
         .addImm(Offset).addImm(Pred).addReg(PredReg)
         .addReg(MI->getOperand(0).getReg(), true);
   } else {
     MachineOperand &MO = MI->getOperand(0);
     if (isAM2)
       // STR_PRE, STR_POST;
-      BuildMI(MBB, MBBI, TII->get(NewOpc), Base)
+      BuildMI(MBB, MBBI, dl, TII->get(NewOpc), Base)
         .addReg(MO.getReg(), false, false, MO.isKill())
         .addReg(Base).addReg(0).addImm(Offset).addImm(Pred).addReg(PredReg);
     else
       // FSTMS, FSTMD
-      BuildMI(MBB, MBBI, TII->get(NewOpc)).addReg(Base).addImm(Offset)
+      BuildMI(MBB, MBBI, dl, TII->get(NewOpc)).addReg(Base).addImm(Offset)
         .addImm(Pred).addReg(PredReg)
         .addReg(MO.getReg(), false, false, MO.isKill());
   }
