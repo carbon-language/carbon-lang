@@ -284,6 +284,13 @@ public:
 
 
 private:
+  /// SetGlobalValueAttributes - Set attributes for a global decl.
+  void SetGlobalValueAttributes(const Decl *D, 
+                                bool IsInternal,
+                                bool IsInline,
+                                llvm::GlobalValue *GV,
+                                bool ForDefinition);
+    
   /// SetFunctionAttributesForDefinition - Set function attributes specific to a
   /// function definition.
   /// \param D - The ObjCMethodDecl or FunctionDecl defining \arg F.

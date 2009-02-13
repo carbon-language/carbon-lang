@@ -138,6 +138,9 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   if (const SectionAttr *SA = D.getAttr<SectionAttr>())
     GV->setSection(SA->getName());
   
+  if (D.getAttr<UsedAttr>())
+    CGM.AddUsedGlobal(GV);
+
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
   const llvm::Type *LPtrTy =
     llvm::PointerType::get(LTy, D.getType().getAddressSpace());
@@ -149,7 +152,6 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
     DI->setLocation(D.getLocation());
     DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(GV), &D);
   }
-
 }
   
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a

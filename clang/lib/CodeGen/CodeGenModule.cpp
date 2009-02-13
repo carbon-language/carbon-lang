@@ -238,11 +238,11 @@ void CodeGenModule::EmitAnnotations() {
   gv->setSection("llvm.metadata");
 }
 
-static void SetGlobalValueAttributes(const Decl *D, 
-                                     bool IsInternal,
-                                     bool IsInline,
-                                     llvm::GlobalValue *GV,
-                                     bool ForDefinition) {
+void CodeGenModule::SetGlobalValueAttributes(const Decl *D, 
+                                             bool IsInternal,
+                                             bool IsInline,
+                                             llvm::GlobalValue *GV,
+                                             bool ForDefinition) {
   // FIXME: Set up linkage and many other things.  Note, this is a simple 
   // approximation of what we really want.
   if (!ForDefinition) {
@@ -290,6 +290,14 @@ static void SetGlobalValueAttributes(const Decl *D,
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GV->setSection(SA->getName());
+
+  // Only add to llvm.used when we see a definition, otherwise we
+  // might add multiple times or risk the value being replaced by a
+  // subsequent RAUW.
+  if (ForDefinition) {
+    if (D->getAttr<UsedAttr>())
+      AddUsedGlobal(GV);
+  }
 }
 
 void CodeGenModule::SetFunctionAttributes(const Decl *D,
@@ -492,8 +500,9 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
 }
 
 bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
-  // Never defer when EmitAllDecls is specified.
-  if (Features.EmitAllDecls)
+  // Never defer when EmitAllDecls is specified or the decl has
+  // attribute used.
+  if (Features.EmitAllDecls || Global->getAttr<UsedAttr>())
     return false;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
@@ -727,6 +736,9 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GV->setSection(SA->getName());
+
+  if (D->getAttr<UsedAttr>())
+    AddUsedGlobal(GV);
 
   // Emit global variable debug information.
   CGDebugInfo *DI = getDebugInfo();
