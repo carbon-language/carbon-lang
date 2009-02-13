@@ -123,6 +123,10 @@ class CodeGenModule {
   /// blocks.
   llvm::Constant *NSConcreteGlobalBlock;
 
+  /// NSConcreteStackBlock - Cached reference to the class poinnter for stack
+  /// blocks.
+  llvm::Constant *NSConcreteStackBlock;
+  
   const llvm::Type *BlockDescriptorType;
   const llvm::Type * GenericBlockLiteralType;
   struct {
@@ -141,6 +145,7 @@ public:
   void Release();
 
   llvm::Constant *getNSConcreteGlobalBlock();
+  llvm::Constant *getNSConcreteStackBlock();
   int getGlobalUniqueCount() { return ++Block.GlobalUniqueCount; }
   const llvm::Type *getBlockDescriptorType();
 

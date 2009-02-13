@@ -93,6 +93,24 @@ llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
   return NSConcreteGlobalBlock;
 }
 
+llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
+  if (NSConcreteStackBlock)
+    return NSConcreteStackBlock;
+
+  const llvm::PointerType *PtrToInt8Ty
+    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  // FIXME: Wee should have a CodeGenModule::AddRuntimeVariable that does the
+  // same thing as CreateRuntimeFunction if there's already a variable with
+  // the same name.
+  NSConcreteStackBlock
+    = new llvm::GlobalVariable(PtrToInt8Ty, false, 
+                               llvm::GlobalValue::ExternalLinkage,
+                               0, "_NSConcreteStackBlock",
+                               &getModule());
+
+  return NSConcreteStackBlock;
+}
+
 llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
   // FIXME: Push up
   bool BlockHasCopyDispose = false;
@@ -110,21 +128,14 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
     if (BlockHasCopyDispose)
       flags |= BLOCK_HAS_COPY_DISPOSE;
 
-    const llvm::PointerType *PtrToInt8Ty
-      = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-    // FIXME: static?  What if we start up a new, unrelated module?
-    // logically we want 1 per module.
-    static llvm::Constant *NSConcreteStackBlock_decl
-      = new llvm::GlobalVariable(PtrToInt8Ty, false, 
-                                 llvm::GlobalValue::ExternalLinkage,
-                                 0, "_NSConcreteStackBlock",
-                                 &CGM.getModule());
-    C = NSConcreteStackBlock_decl;
+    C = CGM.getNSConcreteStackBlock();
     if (!insideFunction ||
         (!BlockRefDeclList && !BlockByrefDeclList)) {
       C = CGM.getNSConcreteGlobalBlock();
       flags |= BLOCK_IS_GLOBAL;
     }
+    const llvm::PointerType *PtrToInt8Ty
+      = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
     Elts.push_back(C);
 
