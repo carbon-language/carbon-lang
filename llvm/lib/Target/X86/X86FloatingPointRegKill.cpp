@@ -128,7 +128,7 @@ bool FPRegKiller::runOnMachineFunction(MachineFunction &MF) {
     }
     // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
     if (ContainsFPCode) {
-      BuildMI(*MBB, MBBI->getFirstTerminator(),
+      BuildMI(*MBB, MBBI->getFirstTerminator(), DebugLoc::getUnknownLoc(),
               MF.getTarget().getInstrInfo()->get(X86::FP_REG_KILL));
       ++NumFPKill;
       Changed = true;

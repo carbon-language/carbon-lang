@@ -542,11 +542,14 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
        (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
        (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri));
   uint64_t Chunk = (1LL << 31) - 1;
+  // We could pass in a DebugLoc, but this is only called from prolog/epilog.
+  DebugLoc DL = DebugLoc::getUnknownLoc();
 
   while (Offset) {
     uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
     MachineInstr *MI =
-      BuildMI(MBB, MBBI, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(ThisVal);
+      BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr)
+         .addReg(StackPtr).addImm(ThisVal);
     // The EFLAGS implicit def is dead.
     MI->getOperand(3).setIsDead();
     Offset -= ThisVal;

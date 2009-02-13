@@ -231,7 +231,7 @@ bool X86FastISel::X86FastEmitLoad(MVT VT, const X86AddressMode &AM,
   }
 
   ResultReg = createResultReg(RC);
-  addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
+  addFullAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), AM);
   return true;
 }
 
@@ -259,7 +259,7 @@ X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
     break;
   }
   
-  addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Val);
+  addFullAddress(BuildMI(MBB, DL, TII.get(Opc)), AM).addReg(Val);
   return true;
 }
 
@@ -285,7 +285,8 @@ bool X86FastISel::X86FastEmitStore(MVT VT, Value *Val,
     }
     
     if (Opc) {
-      addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addImm(CI->getSExtValue());
+      addFullAddress(BuildMI(MBB, DL, TII.get(Opc)), AM)
+                             .addImm(CI->getSExtValue());
       return true;
     }
   }
@@ -463,7 +464,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
       StubAM.Base.Reg = AM.Base.Reg;
       StubAM.GV = AM.GV;
       unsigned ResultReg = createResultReg(RC);
-      addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), StubAM);
+      addFullAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), StubAM);
 
       // Now construct the final address. Note that the Disp, Scale,
       // and Index values may already be set here.
@@ -568,7 +569,7 @@ bool X86FastISel::X86FastEmitCompare(Value *Op0, Value *Op1, MVT VT) {
   // CMPri, otherwise use CMPrr.
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     if (unsigned CompareImmOpc = X86ChooseCmpImmediateOpcode(VT, Op1C)) {
-      BuildMI(MBB, TII.get(CompareImmOpc)).addReg(Op0Reg)
+      BuildMI(MBB, DL, TII.get(CompareImmOpc)).addReg(Op0Reg)
                                           .addImm(Op1C->getSExtValue());
       return true;
     }
@@ -579,7 +580,7 @@ bool X86FastISel::X86FastEmitCompare(Value *Op0, Value *Op1, MVT VT) {
     
   unsigned Op1Reg = getRegForValue(Op1);
   if (Op1Reg == 0) return false;
-  BuildMI(MBB, TII.get(CompareOpc)).addReg(Op0Reg).addReg(Op1Reg);
+  BuildMI(MBB, DL, TII.get(CompareOpc)).addReg(Op0Reg).addReg(Op1Reg);
   
   return true;
 }
@@ -601,9 +602,10 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
     
     unsigned EReg = createResultReg(&X86::GR8RegClass);
     unsigned NPReg = createResultReg(&X86::GR8RegClass);
-    BuildMI(MBB, TII.get(X86::SETEr), EReg);
-    BuildMI(MBB, TII.get(X86::SETNPr), NPReg);
-    BuildMI(MBB, TII.get(X86::AND8rr), ResultReg).addReg(NPReg).addReg(EReg);
+    BuildMI(MBB, DL, TII.get(X86::SETEr), EReg);
+    BuildMI(MBB, DL, TII.get(X86::SETNPr), NPReg);
+    BuildMI(MBB, DL, 
+            TII.get(X86::AND8rr), ResultReg).addReg(NPReg).addReg(EReg);
     UpdateValueMap(I, ResultReg);
     return true;
   }
@@ -613,9 +615,9 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
 
     unsigned NEReg = createResultReg(&X86::GR8RegClass);
     unsigned PReg = createResultReg(&X86::GR8RegClass);
-    BuildMI(MBB, TII.get(X86::SETNEr), NEReg);
-    BuildMI(MBB, TII.get(X86::SETPr), PReg);
-    BuildMI(MBB, TII.get(X86::OR8rr), ResultReg).addReg(PReg).addReg(NEReg);
+    BuildMI(MBB, DL, TII.get(X86::SETNEr), NEReg);
+    BuildMI(MBB, DL, TII.get(X86::SETPr), PReg);
+    BuildMI(MBB, DL, TII.get(X86::OR8rr), ResultReg).addReg(PReg).addReg(NEReg);
     UpdateValueMap(I, ResultReg);
     return true;
   }
@@ -654,7 +656,7 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
   if (!X86FastEmitCompare(Op0, Op1, VT))
     return false;
   
-  BuildMI(MBB, TII.get(SetCCOpc), ResultReg);
+  BuildMI(MBB, DL, TII.get(SetCCOpc), ResultReg);
   UpdateValueMap(I, ResultReg);
   return true;
 }
@@ -737,12 +739,12 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       if (!X86FastEmitCompare(Op0, Op1, VT))
         return false;
       
-      BuildMI(MBB, TII.get(BranchOpc)).addMBB(TrueMBB);
+      BuildMI(MBB, DL, TII.get(BranchOpc)).addMBB(TrueMBB);
 
       if (Predicate == CmpInst::FCMP_UNE) {
         // X86 requires a second branch to handle UNE (and OEQ,
         // which is mapped to UNE above).
-        BuildMI(MBB, TII.get(X86::JP)).addMBB(TrueMBB);
+        BuildMI(MBB, DL, TII.get(X86::JP)).addMBB(TrueMBB);
       }
 
       FastEmitBranch(FalseMBB);
@@ -816,7 +818,7 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
             unsigned OpCode = SetMI->getOpcode();
 
             if (OpCode == X86::SETOr || OpCode == X86::SETBr) {
-              BuildMI(MBB, TII.get((OpCode == X86::SETOr) ? 
+              BuildMI(MBB, DL, TII.get((OpCode == X86::SETOr) ? 
                                    X86::JO : X86::JB)).addMBB(TrueMBB);
               FastEmitBranch(FalseMBB);
               MBB->addSuccessor(TrueMBB);
@@ -833,8 +835,8 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
   unsigned OpReg = getRegForValue(BI->getCondition());
   if (OpReg == 0) return false;
 
-  BuildMI(MBB, TII.get(X86::TEST8rr)).addReg(OpReg).addReg(OpReg);
-  BuildMI(MBB, TII.get(X86::JNE)).addMBB(TrueMBB);
+  BuildMI(MBB, DL, TII.get(X86::TEST8rr)).addReg(OpReg).addReg(OpReg);
+  BuildMI(MBB, DL, TII.get(X86::JNE)).addMBB(TrueMBB);
   FastEmitBranch(FalseMBB);
   MBB->addSuccessor(TrueMBB);
   return true;
@@ -893,7 +895,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
   // Fold immediate in shl(x,3).
   if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
     unsigned ResultReg = createResultReg(RC);
-    BuildMI(MBB, TII.get(OpImm), 
+    BuildMI(MBB, DL, TII.get(OpImm), 
             ResultReg).addReg(Op0Reg).addImm(CI->getZExtValue() & 0xff);
     UpdateValueMap(I, ResultReg);
     return true;
@@ -907,11 +909,11 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
   // of X86::CL, emit an EXTRACT_SUBREG to precisely describe what
   // we're doing here.
   if (CReg != X86::CL)
-    BuildMI(MBB, TII.get(TargetInstrInfo::EXTRACT_SUBREG), X86::CL)
+    BuildMI(MBB, DL, TII.get(TargetInstrInfo::EXTRACT_SUBREG), X86::CL)
       .addReg(CReg).addImm(X86::SUBREG_8BIT);
 
   unsigned ResultReg = createResultReg(RC);
-  BuildMI(MBB, TII.get(OpReg), ResultReg).addReg(Op0Reg);
+  BuildMI(MBB, DL, TII.get(OpReg), ResultReg).addReg(Op0Reg);
   UpdateValueMap(I, ResultReg);
   return true;
 }
@@ -943,9 +945,9 @@ bool X86FastISel::X86SelectSelect(Instruction *I) {
   unsigned Op2Reg = getRegForValue(I->getOperand(2));
   if (Op2Reg == 0) return false;
 
-  BuildMI(MBB, TII.get(X86::TEST8rr)).addReg(Op0Reg).addReg(Op0Reg);
+  BuildMI(MBB, DL, TII.get(X86::TEST8rr)).addReg(Op0Reg).addReg(Op0Reg);
   unsigned ResultReg = createResultReg(RC);
-  BuildMI(MBB, TII.get(Opc), ResultReg).addReg(Op1Reg).addReg(Op2Reg);
+  BuildMI(MBB, DL, TII.get(Opc), ResultReg).addReg(Op1Reg).addReg(Op2Reg);
   UpdateValueMap(I, ResultReg);
   return true;
 }
@@ -958,7 +960,7 @@ bool X86FastISel::X86SelectFPExt(Instruction *I) {
       unsigned OpReg = getRegForValue(V);
       if (OpReg == 0) return false;
       unsigned ResultReg = createResultReg(X86::FR64RegisterClass);
-      BuildMI(MBB, TII.get(X86::CVTSS2SDrr), ResultReg).addReg(OpReg);
+      BuildMI(MBB, DL, TII.get(X86::CVTSS2SDrr), ResultReg).addReg(OpReg);
       UpdateValueMap(I, ResultReg);
       return true;
     }
@@ -975,7 +977,7 @@ bool X86FastISel::X86SelectFPTrunc(Instruction *I) {
         unsigned OpReg = getRegForValue(V);
         if (OpReg == 0) return false;
         unsigned ResultReg = createResultReg(X86::FR32RegisterClass);
-        BuildMI(MBB, TII.get(X86::CVTSD2SSrr), ResultReg).addReg(OpReg);
+        BuildMI(MBB, DL, TII.get(X86::CVTSD2SSrr), ResultReg).addReg(OpReg);
         UpdateValueMap(I, ResultReg);
         return true;
       }
@@ -1008,7 +1010,7 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
   const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16)
     ? X86::GR16_RegisterClass : X86::GR32_RegisterClass;
   unsigned CopyReg = createResultReg(CopyRC);
-  BuildMI(MBB, TII.get(CopyOpc), CopyReg).addReg(InputReg);
+  BuildMI(MBB, DL, TII.get(CopyOpc), CopyReg).addReg(InputReg);
 
   // Then issue an extract_subreg.
   unsigned ResultReg = FastEmitInst_extractsubreg(DstVT.getSimpleVT(),
@@ -1083,11 +1085,11 @@ bool X86FastISel::X86VisitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       return false;
 
     unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
-    BuildMI(MBB, TII.get(OpC), ResultReg).addReg(Reg1).addReg(Reg2);
+    BuildMI(MBB, DL, TII.get(OpC), ResultReg).addReg(Reg1).addReg(Reg2);
     UpdateValueMap(&I, ResultReg);
 
     ResultReg = createResultReg(TLI.getRegClassFor(MVT::i8));
-    BuildMI(MBB, TII.get((Intrinsic == Intrinsic::sadd_with_overflow) ?
+    BuildMI(MBB, DL, TII.get((Intrinsic == Intrinsic::sadd_with_overflow) ?
                          X86::SETOr : X86::SETBr), ResultReg);
     return true;
   }
@@ -1204,7 +1206,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
   // Issue CALLSEQ_START
   unsigned AdjStackDown = TM.getRegisterInfo()->getCallFrameSetupOpcode();
-  BuildMI(MBB, TII.get(AdjStackDown)).addImm(NumBytes);
+  BuildMI(MBB, DL, TII.get(AdjStackDown)).addImm(NumBytes);
 
   // Process argument: walk the register/memloc assignments, inserting
   // copies / loads.
@@ -1291,8 +1293,8 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     ? (Subtarget->is64Bit() ? X86::CALL64r       : X86::CALL32r)
     : (Subtarget->is64Bit() ? X86::CALL64pcrel32 : X86::CALLpcrel32);
   MachineInstrBuilder MIB = CalleeOp
-    ? BuildMI(MBB, TII.get(CallOpc)).addReg(CalleeOp)
-    : BuildMI(MBB, TII.get(CallOpc)).addGlobalAddress(GV);
+    ? BuildMI(MBB, DL, TII.get(CallOpc)).addReg(CalleeOp)
+    : BuildMI(MBB, DL, TII.get(CallOpc)).addGlobalAddress(GV);
 
   // Add an implicit use GOT pointer in EBX.
   if (!Subtarget->is64Bit() &&
@@ -1306,7 +1308,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
-  BuildMI(MBB, TII.get(AdjStackUp)).addImm(NumBytes).addImm(0);
+  BuildMI(MBB, DL, TII.get(AdjStackUp)).addImm(NumBytes).addImm(0);
 
   // Now handle call return value (if any).
   if (RetVT.getSimpleVT() != MVT::isVoid) {
@@ -1344,18 +1346,19 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       unsigned Opc = ResVT == MVT::f32 ? X86::ST_Fp80m32 : X86::ST_Fp80m64;
       unsigned MemSize = ResVT.getSizeInBits()/8;
       int FI = MFI.CreateStackObject(MemSize, MemSize);
-      addFrameReference(BuildMI(MBB, TII.get(Opc)), FI).addReg(ResultReg);
+      addFrameReference(BuildMI(MBB, DL, TII.get(Opc)), FI).addReg(ResultReg);
       DstRC = ResVT == MVT::f32
         ? X86::FR32RegisterClass : X86::FR64RegisterClass;
       Opc = ResVT == MVT::f32 ? X86::MOVSSrm : X86::MOVSDrm;
       ResultReg = createResultReg(DstRC);
-      addFrameReference(BuildMI(MBB, TII.get(Opc), ResultReg), FI);
+      addFrameReference(BuildMI(MBB, DL, TII.get(Opc), ResultReg), FI);
     }
 
     if (AndToI1) {
       // Mask out all but lowest bit for some call which produces an i1.
       unsigned AndResult = createResultReg(X86::GR8RegisterClass);
-      BuildMI(MBB, TII.get(X86::AND8ri), AndResult).addReg(ResultReg).addImm(1);
+      BuildMI(MBB, DL, 
+              TII.get(X86::AND8ri), AndResult).addReg(ResultReg).addImm(1);
       ResultReg = AndResult;
     }
 
@@ -1461,7 +1464,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
       else
         Opc = X86::LEA64r;
       unsigned ResultReg = createResultReg(RC);
-      addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
+      addFullAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), AM);
       return ResultReg;
     }
     return 0;
@@ -1484,7 +1487,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   // Create the load from the constant pool.
   unsigned MCPOffset = MCP.getConstantPoolIndex(C, Align);
   unsigned ResultReg = createResultReg(RC);
-  addConstantPoolReference(BuildMI(MBB, TII.get(Opc), ResultReg), MCPOffset,
+  addConstantPoolReference(BuildMI(MBB, DL, TII.get(Opc), ResultReg), MCPOffset,
                            PICBase);
 
   return ResultReg;
@@ -1507,7 +1510,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(AllocaInst *C) {
   unsigned Opc = Subtarget->is64Bit() ? X86::LEA64r : X86::LEA32r;
   TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
   unsigned ResultReg = createResultReg(RC);
-  addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
+  addFullAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), AM);
   return ResultReg;
 }
 

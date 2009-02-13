@@ -115,6 +115,8 @@ namespace {
 
     bool isAtTop(unsigned RegNo) const { return getSlot(RegNo) == StackTop-1; }
     void moveToTop(unsigned RegNo, MachineBasicBlock::iterator I) {
+      MachineInstr *MI = I;
+      DebugLoc dl = MI->getDebugLoc();
       if (isAtTop(RegNo)) return;
       
       unsigned STReg = getSTReg(RegNo);
@@ -128,15 +130,16 @@ namespace {
       std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
 
       // Emit an fxch to update the runtime processors version of the state.
-      BuildMI(*MBB, I, TII->get(X86::XCH_F)).addReg(STReg);
+      BuildMI(*MBB, I, dl, TII->get(X86::XCH_F)).addReg(STReg);
       NumFXCH++;
     }
 
     void duplicateToTop(unsigned RegNo, unsigned AsReg, MachineInstr *I) {
+      DebugLoc dl = I->getDebugLoc();
       unsigned STReg = getSTReg(RegNo);
       pushReg(AsReg);   // New register on top of stack
 
-      BuildMI(*MBB, I, TII->get(X86::LD_Frr)).addReg(STReg);
+      BuildMI(*MBB, I, dl, TII->get(X86::LD_Frr)).addReg(STReg);
     }
 
     // popStackAfter - Pop the current value off of the top of the FP stack
@@ -549,6 +552,8 @@ static const TableEntry PopTable[] = {
 /// instruction if it was modified in place.
 ///
 void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
+  MachineInstr* MI = I;
+  DebugLoc dl = MI->getDebugLoc();
   ASSERT_SORTED(PopTable);
   assert(StackTop > 0 && "Cannot pop empty stack!");
   RegMap[Stack[--StackTop]] = ~0;     // Update state
@@ -560,7 +565,7 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
     if (Opcode == X86::UCOM_FPPr)
       I->RemoveOperand(0);
   } else {    // Insert an explicit pop
-    I = BuildMI(*MBB, ++I, TII->get(X86::ST_FPrr)).addReg(X86::ST0);
+    I = BuildMI(*MBB, ++I, dl, TII->get(X86::ST_FPrr)).addReg(X86::ST0);
   }
 }
 
@@ -584,7 +589,9 @@ void FPS::freeStackSlotAfter(MachineBasicBlock::iterator &I, unsigned FPRegNo) {
   RegMap[TopReg]    = OldSlot;
   RegMap[FPRegNo]   = ~0;
   Stack[--StackTop] = ~0;
-  I = BuildMI(*MBB, ++I, TII->get(X86::ST_FPrr)).addReg(STReg);
+  MachineInstr *MI  = I;
+  DebugLoc dl = MI->getDebugLoc();
+  I = BuildMI(*MBB, ++I, dl, TII->get(X86::ST_FPrr)).addReg(STReg);
 }
 
 
@@ -788,6 +795,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   unsigned Op1 = getFPReg(MI->getOperand(NumOperands-1));
   bool KillsOp0 = MI->killsRegister(X86::FP0+Op0);
   bool KillsOp1 = MI->killsRegister(X86::FP0+Op1);
+  DebugLoc dl = MI->getDebugLoc();
 
   unsigned TOS = getStackEntry(0);
 
@@ -853,7 +861,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
   // Replace the old instruction with a new instruction
   MBB->remove(I++);
-  I = BuildMI(*MBB, I, TII->get(Opcode)).addReg(getSTReg(NotTOS));
+  I = BuildMI(*MBB, I, dl, TII->get(Opcode)).addReg(getSTReg(NotTOS));
 
   // If both operands are killed, pop one off of the stack in addition to
   // overwriting the other one.
@@ -935,6 +943,7 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
 ///
 void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
+  DebugLoc dl = MI->getDebugLoc();
   switch (MI->getOpcode()) {
   default: assert(0 && "Unknown SpecialFP instruction!");
   case X86::FpGET_ST0_32:// Appears immediately after a call returning FP type!
@@ -991,7 +1000,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   case X86::FpSET_ST1_80:
     // StackTop can be 1 if a FpSET_ST0_* was before this. Exchange them.
     if (StackTop == 1) {
-      BuildMI(*MBB, I, TII->get(X86::XCH_F)).addReg(X86::ST1);
+      BuildMI(*MBB, I, dl, TII->get(X86::XCH_F)).addReg(X86::ST1);
       NumFXCH++;
       StackTop = 0;
       break;

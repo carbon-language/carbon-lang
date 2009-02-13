@@ -1630,6 +1630,8 @@ unsigned
 X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                            MachineBasicBlock *FBB,
                            const SmallVectorImpl<MachineOperand> &Cond) const {
+  // FIXME this should probably have a DebugLoc operand
+  DebugLoc dl = DebugLoc::getUnknownLoc();
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
@@ -1638,7 +1640,7 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   if (Cond.empty()) {
     // Unconditional branch?
     assert(!FBB && "Unconditional branch with multiple successors!");
-    BuildMI(&MBB, get(X86::JMP)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JMP)).addMBB(TBB);
     return 1;
   }
 
@@ -1648,27 +1650,27 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   switch (CC) {
   case X86::COND_NP_OR_E:
     // Synthesize NP_OR_E with two branches.
-    BuildMI(&MBB, get(X86::JNP)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JNP)).addMBB(TBB);
     ++Count;
-    BuildMI(&MBB, get(X86::JE)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JE)).addMBB(TBB);
     ++Count;
     break;
   case X86::COND_NE_OR_P:
     // Synthesize NE_OR_P with two branches.
-    BuildMI(&MBB, get(X86::JNE)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JNE)).addMBB(TBB);
     ++Count;
-    BuildMI(&MBB, get(X86::JP)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JP)).addMBB(TBB);
     ++Count;
     break;
   default: {
     unsigned Opc = GetCondBranchFromCond(CC);
-    BuildMI(&MBB, get(Opc)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(Opc)).addMBB(TBB);
     ++Count;
   }
   }
   if (FBB) {
     // Two-way Conditional branch. Insert the second branch.
-    BuildMI(&MBB, get(X86::JMP)).addMBB(FBB);
+    BuildMI(&MBB, dl, get(X86::JMP)).addMBB(FBB);
     ++Count;
   }
   return Count;
@@ -1944,7 +1946,7 @@ bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     unsigned Reg = CSI[i-1].getReg();
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
-    BuildMI(MBB, MI, get(Opc))
+    BuildMI(MBB, MI, DL, get(Opc))
       .addReg(Reg, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
   }
   return true;

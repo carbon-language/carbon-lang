@@ -720,7 +720,8 @@ void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
                                              MachineFrameInfo *MFI) {
   const TargetInstrInfo *TII = TM.getInstrInfo();
   if (Subtarget->isTargetCygMing())
-    BuildMI(BB, TII->get(X86::CALLpcrel32)).addExternalSymbol("__main");
+    BuildMI(BB, DebugLoc::getUnknownLoc(),
+            TII->get(X86::CALLpcrel32)).addExternalSymbol("__main");
 }
 
 void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
