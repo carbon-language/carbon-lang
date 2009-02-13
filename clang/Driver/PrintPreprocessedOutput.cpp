@@ -12,11 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/SourceManager.h"
 #include "clang.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Pragma.h"
+#include "clang/Lex/TokenConcatenation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallString.h"
@@ -48,6 +50,7 @@ DumpMacros("dM", llvm::cl::desc("Print macro definitions in -E mode instead of"
 namespace {
 class PrintPPOutputPPCallbacks : public PPCallbacks {
   Preprocessor &PP;
+  TokenConcatenation ConcatInfo;
 public:
   llvm::raw_ostream &OS;
 private:
@@ -58,7 +61,7 @@ private:
   bool Initialized;
 public:
   PrintPPOutputPPCallbacks(Preprocessor &pp, llvm::raw_ostream &os)
-     : PP(pp), OS(os) {
+     : PP(pp), ConcatInfo(PP), OS(os) {
     CurLine = 0;
     CurFilename += "<uninit>";
     EmittedTokensOnThisLine = false;
@@ -78,7 +81,9 @@ public:
 
   bool HandleFirstTokOnLine(Token &Tok);
   bool MoveToLine(SourceLocation Loc);
-  bool AvoidConcat(const Token &PrevTok, const Token &Tok);
+  bool AvoidConcat(const Token &PrevTok, const Token &Tok) {
+    return ConcatInfo.AvoidConcat(PrevTok, Tok);
+  }
   void WriteLineInfo(unsigned LineNo, const char *Extra=0, unsigned ExtraLen=0);
 };
 }  // end anonymous namespace
@@ -291,222 +296,6 @@ struct UnknownPragmaHandler : public PragmaHandler {
 } // end anonymous namespace
 
 
-enum AvoidConcatInfo {
-  /// By default, a token never needs to avoid concatenation.  Most tokens (e.g.
-  /// ',', ')', etc) don't cause a problem when concatenated.
-  aci_never_avoid_concat = 0,
-
-  /// aci_custom_firstchar - AvoidConcat contains custom code to handle this
-  /// token's requirements, and it needs to know the first character of the
-  /// token.
-  aci_custom_firstchar = 1,
-
-  /// aci_custom - AvoidConcat contains custom code to handle this token's
-  /// requirements, but it doesn't need to know the first character of the
-  /// token.
-  aci_custom = 2,
-  
-  /// aci_avoid_equal - Many tokens cannot be safely followed by an '='
-  /// character.  For example, "<<" turns into "<<=" when followed by an =.
-  aci_avoid_equal = 4
-};
-
-/// This array contains information for each token on what action to take when
-/// avoiding concatenation of tokens in the AvoidConcat method.
-static char TokenInfo[tok::NUM_TOKENS];
-
-/// InitAvoidConcatTokenInfo - Tokens that must avoid concatenation should be
-/// marked by this function.
-static void InitAvoidConcatTokenInfo() {
-  // These tokens have custom code in AvoidConcat.
-  TokenInfo[tok::identifier      ] |= aci_custom;
-  TokenInfo[tok::numeric_constant] |= aci_custom_firstchar;
-  TokenInfo[tok::period          ] |= aci_custom_firstchar;
-  TokenInfo[tok::amp             ] |= aci_custom_firstchar;
-  TokenInfo[tok::plus            ] |= aci_custom_firstchar;
-  TokenInfo[tok::minus           ] |= aci_custom_firstchar;
-  TokenInfo[tok::slash           ] |= aci_custom_firstchar;
-  TokenInfo[tok::less            ] |= aci_custom_firstchar;
-  TokenInfo[tok::greater         ] |= aci_custom_firstchar;
-  TokenInfo[tok::pipe            ] |= aci_custom_firstchar;
-  TokenInfo[tok::percent         ] |= aci_custom_firstchar;
-  TokenInfo[tok::colon           ] |= aci_custom_firstchar;
-  TokenInfo[tok::hash            ] |= aci_custom_firstchar;
-  TokenInfo[tok::arrow           ] |= aci_custom_firstchar;
-  
-  // These tokens change behavior if followed by an '='.
-  TokenInfo[tok::amp         ] |= aci_avoid_equal;           // &=
-  TokenInfo[tok::plus        ] |= aci_avoid_equal;           // +=
-  TokenInfo[tok::minus       ] |= aci_avoid_equal;           // -=
-  TokenInfo[tok::slash       ] |= aci_avoid_equal;           // /=
-  TokenInfo[tok::less        ] |= aci_avoid_equal;           // <=
-  TokenInfo[tok::greater     ] |= aci_avoid_equal;           // >=
-  TokenInfo[tok::pipe        ] |= aci_avoid_equal;           // |=
-  TokenInfo[tok::percent     ] |= aci_avoid_equal;           // %=
-  TokenInfo[tok::star        ] |= aci_avoid_equal;           // *=
-  TokenInfo[tok::exclaim     ] |= aci_avoid_equal;           // !=
-  TokenInfo[tok::lessless    ] |= aci_avoid_equal;           // <<=
-  TokenInfo[tok::greaterequal] |= aci_avoid_equal;           // >>=
-  TokenInfo[tok::caret       ] |= aci_avoid_equal;           // ^=
-  TokenInfo[tok::equal       ] |= aci_avoid_equal;           // ==
-}
-
-/// StartsWithL - Return true if the spelling of this token starts with 'L'.
-static bool StartsWithL(const Token &Tok, Preprocessor &PP) {
-  if (!Tok.needsCleaning()) {
-    SourceManager &SrcMgr = PP.getSourceManager();
-    return *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()))
-               == 'L';
-  }
-  
-  if (Tok.getLength() < 256) {
-    char Buffer[256];
-    const char *TokPtr = Buffer;
-    PP.getSpelling(Tok, TokPtr);
-    return TokPtr[0] == 'L';
-  }
-
-  return PP.getSpelling(Tok)[0] == 'L';
-}
-
-/// IsIdentifierL - Return true if the spelling of this token is literally 'L'.
-static bool IsIdentifierL(const Token &Tok, Preprocessor &PP) {
-  if (!Tok.needsCleaning()) {
-    if (Tok.getLength() != 1)
-      return false;
-    SourceManager &SrcMgr = PP.getSourceManager();
-    return *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()))
-               == 'L';
-  }
-  
-  if (Tok.getLength() < 256) {
-    char Buffer[256];
-    const char *TokPtr = Buffer;
-    if (PP.getSpelling(Tok, TokPtr) != 1) 
-      return false;
-    return TokPtr[0] == 'L';
-  }
-  
-  return PP.getSpelling(Tok) == "L";
-}
-
-
-/// AvoidConcat - If printing PrevTok immediately followed by Tok would cause
-/// the two individual tokens to be lexed as a single token, return true (which
-/// causes a space to be printed between them).  This allows the output of -E
-/// mode to be lexed to the same token stream as lexing the input directly
-/// would.
-///
-/// This code must conservatively return true if it doesn't want to be 100%
-/// accurate.  This will cause the output to include extra space characters, but
-/// the resulting output won't have incorrect concatenations going on.  Examples
-/// include "..", which we print with a space between, because we don't want to
-/// track enough to tell "x.." from "...".
-bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
-                                           const Token &Tok) {
-  char Buffer[256];
-  
-  tok::TokenKind PrevKind = PrevTok.getKind();
-  if (PrevTok.getIdentifierInfo())  // Language keyword or named operator.
-    PrevKind = tok::identifier;
- 
-  // Look up information on when we should avoid concatenation with prevtok.
-  unsigned ConcatInfo = TokenInfo[PrevKind];
-  
-  // If prevtok never causes a problem for anything after it, return quickly.
-  if (ConcatInfo == 0) return false;
-
-  if (ConcatInfo & aci_avoid_equal) {
-    // If the next token is '=' or '==', avoid concatenation.
-    if (Tok.is(tok::equal) || Tok.is(tok::equalequal))
-      return true;
-    ConcatInfo &= ~aci_avoid_equal;
-  }
-  
-  if (ConcatInfo == 0) return false;
-
-  
-  
-  // Basic algorithm: we look at the first character of the second token, and
-  // determine whether it, if appended to the first token, would form (or would
-  // contribute) to a larger token if concatenated.
-  char FirstChar = 0;
-  if (ConcatInfo & aci_custom) {
-    // If the token does not need to know the first character, don't get it.
-  } else if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
-    // Avoid spelling identifiers, the most common form of token.
-    FirstChar = II->getName()[0];
-  } else if (!Tok.needsCleaning()) {
-    if (Tok.isLiteral() && Tok.getLiteralData()) {
-      FirstChar = *Tok.getLiteralData();
-    } else {
-      SourceManager &SrcMgr = PP.getSourceManager();
-      FirstChar =
-        *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()));
-    }
-  } else if (Tok.getLength() < 256) {
-    const char *TokPtr = Buffer;
-    PP.getSpelling(Tok, TokPtr);
-    FirstChar = TokPtr[0];
-  } else {
-    FirstChar = PP.getSpelling(Tok)[0];
-  }
- 
-  switch (PrevKind) {
-  default: assert(0 && "InitAvoidConcatTokenInfo built wrong");
-  case tok::identifier:   // id+id or id+number or id+L"foo".
-    if (Tok.is(tok::numeric_constant) || Tok.getIdentifierInfo() ||
-        Tok.is(tok::wide_string_literal) /* ||
-        Tok.is(tok::wide_char_literal)*/)
-      return true;
-
-    // If this isn't identifier + string, we're done.
-    if (Tok.isNot(tok::char_constant) && Tok.isNot(tok::string_literal))
-      return false;
-      
-    // FIXME: need a wide_char_constant!
-
-    // If the string was a wide string L"foo" or wide char L'f', it would concat
-    // with the previous identifier into fooL"bar".  Avoid this.
-    if (StartsWithL(Tok, PP))
-      return true;
-
-    // Otherwise, this is a narrow character or string.  If the *identifier* is
-    // a literal 'L', avoid pasting L "foo" -> L"foo".
-    return IsIdentifierL(PrevTok, PP);
-  case tok::numeric_constant:
-    return isalnum(FirstChar) || Tok.is(tok::numeric_constant) ||
-           FirstChar == '+' || FirstChar == '-' || FirstChar == '.';
-  case tok::period:          // ..., .*, .1234
-    return FirstChar == '.' || isdigit(FirstChar) ||
-           (FirstChar == '*' && PP.getLangOptions().CPlusPlus);
-  case tok::amp:             // &&
-    return FirstChar == '&';
-  case tok::plus:            // ++
-    return FirstChar == '+';
-  case tok::minus:           // --, ->, ->*
-    return FirstChar == '-' || FirstChar == '>';
-  case tok::slash:           //, /*, //
-    return FirstChar == '*' || FirstChar == '/';
-  case tok::less:            // <<, <<=, <:, <%
-    return FirstChar == '<' || FirstChar == ':' || FirstChar == '%';
-  case tok::greater:         // >>, >>=
-    return FirstChar == '>';
-  case tok::pipe:            // ||
-    return FirstChar == '|';
-  case tok::percent:         // %>, %:
-    return (FirstChar == '>' || FirstChar == ':') &&
-           PP.getLangOptions().Digraphs;
-  case tok::colon:           // ::, :>
-    return (FirstChar == ':' && PP.getLangOptions().CPlusPlus) ||
-           (FirstChar == '>' && PP.getLangOptions().Digraphs);
-  case tok::hash:            // ##, #@, %:%:
-    return FirstChar == '#' || FirstChar == '@' || FirstChar == '%';
-  case tok::arrow:           // ->*
-    return FirstChar == '*';
-  }
-}
-
 static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
                                     PrintPPOutputPPCallbacks *Callbacks,
                                     llvm::raw_ostream &OS) {
@@ -614,8 +403,6 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
-  InitAvoidConcatTokenInfo();
-
   
   // Open the output buffer.
   std::string Err;
@@ -646,8 +433,8 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
       PrintMacroDefinition(*MacrosByID[i].first, *MacrosByID[i].second, PP, OS);
     
   } else {
-    PrintPPOutputPPCallbacks *Callbacks;
-    Callbacks = new PrintPPOutputPPCallbacks(PP, OS);
+    PrintPPOutputPPCallbacks *Callbacks
+      = new PrintPPOutputPPCallbacks(PP, OS);
     PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
     PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
                                                         Callbacks));
