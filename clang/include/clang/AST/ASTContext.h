@@ -78,7 +78,10 @@ class ASTContext {
   llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
   llvm::DenseMap<const ObjCInterfaceDecl*, 
                  const ASTRecordLayout*> ASTObjCInterfaces;
-  
+
+  llvm::DenseMap<unsigned, FixedWidthIntType*> SignedFixedWidthIntTypes;
+  llvm::DenseMap<unsigned, FixedWidthIntType*> UnsignedFixedWidthIntTypes;
+
   // FIXME: Shouldn't ASTRecordForInterface/ASTFieldForIvarRef and
   // addRecordToClass/getFieldDecl be part of the backend (i.e. CodeGenTypes and
   // CodeGenFunction)?
@@ -369,7 +372,9 @@ public:
   
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
-    
+
+  QualType getFixedWidthIntType(unsigned Width, bool Signed);
+
 private:
   QualType getFromTargetType(unsigned Type) const;
 
@@ -531,6 +536,12 @@ public:
   /// 'typeSize' is a real floating point or complex type.
   QualType getFloatingTypeOfSizeWithinDomain(QualType typeSize, 
                                              QualType typeDomain) const;
+
+private:
+  // Helper for integer ordering
+  unsigned getIntegerRank(Type* T);
+
+public:
 
   //===--------------------------------------------------------------------===//
   //                    Type Compatibility Predicates

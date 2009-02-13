@@ -1238,7 +1238,12 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  // FIXME: Need proper fixed-width types
+  // FIXME: Sync this with InitializePredefinedMacros; we need to match
+  // int8_t and friends, at least with glibc.
+  // FIXME: Make sure 32/64-bit integers don't get defined to types of
+  // the wrong width on unusual platforms.
+  // FIXME: Make sure floating-point mappings are accurate
+  // FIXME: Support XF and TF types
   QualType NewTy;
   switch (DestWidth) {
   case 0:
@@ -1277,6 +1282,12 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     else
       NewTy = S.Context.UnsignedLongLongTy;
     break;
+  case 128:
+    if (!IntegerMode) {
+      S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
+      return;
+    }
+    NewTy = S.Context.getFixedWidthIntType(128, OldTy->isSignedIntegerType());
   }
 
   if (!OldTy->getAsBuiltinType())

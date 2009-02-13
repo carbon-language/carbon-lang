@@ -373,6 +373,13 @@ ASTContext::getTypeInfo(const Type *T) {
       break;
     }
     break;
+  case Type::FixedWidthInt:
+    // FIXME: This isn't precisely correct; the width/alignment should depend
+    // on the available types for the target
+    Width = cast<FixedWidthIntType>(T)->getWidth();
+    Width = std::max(llvm::NextPowerOf2(Width - 1), 8ULL);
+    Align = Width;
+    break;
   case Type::ASQual:
     // FIXME: Pointers into different addr spaces could have different sizes and
     // alignment requirements: getPointerInfo should take an AddrSpace.
@@ -769,6 +776,14 @@ QualType ASTContext::getComplexType(QualType T) {
   return QualType(New, 0);
 }
 
+QualType ASTContext::getFixedWidthIntType(unsigned Width, bool Signed) {
+  llvm::DenseMap<unsigned, FixedWidthIntType*> &Map = Signed ?
+     SignedFixedWidthIntTypes : UnsignedFixedWidthIntTypes;
+  FixedWidthIntType *&Entry = Map[Width];
+  if (!Entry)
+    Entry = new FixedWidthIntType(Width, Signed);
+  return QualType(Entry, 0);
+}
 
 /// getPointerType - Return the uniqued reference to the type for a pointer to
 /// the specified type.
@@ -1599,32 +1614,39 @@ int ASTContext::getFloatingTypeOrder(QualType LHS, QualType RHS) {
 /// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1). This
 /// routine will assert if passed a built-in type that isn't an integer or enum,
 /// or if it is not canonicalized.
-static unsigned getIntegerRank(Type *T) {
+unsigned ASTContext::getIntegerRank(Type *T) {
   assert(T->isCanonical() && "T should be canonicalized");
-  if (isa<EnumType>(T))
-    return 4;
-  
+  if (EnumType* ET = dyn_cast<EnumType>(T))
+    T = ET->getDecl()->getIntegerType().getTypePtr();
+
+  // There are two things which impact the integer rank: the width, and
+  // the ordering of builtins.  The builtin ordering is encoded in the
+  // bottom three bits; the width is encoded in the bits above that.
+  if (FixedWidthIntType* FWIT = dyn_cast<FixedWidthIntType>(T)) {
+    return FWIT->getWidth() << 3;
+  }
+
   switch (cast<BuiltinType>(T)->getKind()) {
   default: assert(0 && "getIntegerRank(): not a built-in integer");
   case BuiltinType::Bool:
-    return 1;
+    return 1 + (getIntWidth(BoolTy) << 3);
   case BuiltinType::Char_S:
   case BuiltinType::Char_U:
   case BuiltinType::SChar:
   case BuiltinType::UChar:
-    return 2;
+    return 2 + (getIntWidth(CharTy) << 3);
   case BuiltinType::Short:
   case BuiltinType::UShort:
-    return 3;
+    return 3 + (getIntWidth(ShortTy) << 3);
   case BuiltinType::Int:
   case BuiltinType::UInt:
-    return 4;
+    return 4 + (getIntWidth(IntTy) << 3);
   case BuiltinType::Long:
   case BuiltinType::ULong:
-    return 5;
+    return 5 + (getIntWidth(LongTy) << 3);
   case BuiltinType::LongLong:
   case BuiltinType::ULongLong:
-    return 6;
+    return 6 + (getIntWidth(LongLongTy) << 3);
   }
 }
 
@@ -2718,7 +2740,10 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 unsigned ASTContext::getIntWidth(QualType T) {
   if (T == BoolTy)
     return 1;
-  // At the moment, only bool has padding bits
+  if (FixedWidthIntType* FWIT = dyn_cast<FixedWidthIntType>(T)) {
+    return FWIT->getWidth();
+  }
+  // For builtin types, just use the standard type sizing method
   return (unsigned)getTypeSize(T);
 }
 

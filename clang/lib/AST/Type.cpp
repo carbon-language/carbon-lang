@@ -510,6 +510,8 @@ bool Type::isIntegerType() const {
     // FIXME: In C++, enum types are never integer types.
     if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
       return true;
+  if (isa<FixedWidthIntType>(CanonicalType))
+    return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
@@ -525,6 +527,8 @@ bool Type::isIntegralType() const {
     if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
       return true;  // Complete enum types are integral.
                     // FIXME: In C++, enum types are never integral.
+  if (isa<FixedWidthIntType>(CanonicalType))
+    return true;
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isIntegralType();
   return false;
@@ -578,6 +582,10 @@ bool Type::isSignedIntegerType() const {
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     return ET->getDecl()->getIntegerType()->isSignedIntegerType();
   
+  if (const FixedWidthIntType *FWIT =
+          dyn_cast<FixedWidthIntType>(CanonicalType))
+    return FWIT->isSigned();
+  
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isSignedIntegerType();
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
@@ -597,6 +605,10 @@ bool Type::isUnsignedIntegerType() const {
 
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     return ET->getDecl()->getIntegerType()->isUnsignedIntegerType();
+
+  if (const FixedWidthIntType *FWIT =
+          dyn_cast<FixedWidthIntType>(CanonicalType))
+    return !FWIT->isSigned();
 
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isUnsignedIntegerType();
@@ -635,6 +647,8 @@ bool Type::isRealType() const {
            BT->getKind() <= BuiltinType::LongDouble;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     return TT->getDecl()->isEnum() && TT->getDecl()->isDefinition();
+  if (isa<FixedWidthIntType>(CanonicalType))
+    return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealType();
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
@@ -650,6 +664,8 @@ bool Type::isArithmeticType() const {
     // GCC allows forward declaration of enum types (forbid by C99 6.7.2.3p2).
     // If a body isn't seen by the time we get here, return false.
     return ET->getDecl()->isDefinition();
+  if (isa<FixedWidthIntType>(CanonicalType))
+    return true;
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isArithmeticType();
   return isa<ComplexType>(CanonicalType) || isa<VectorType>(CanonicalType);
@@ -667,6 +683,8 @@ bool Type::isScalarType() const {
   }
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isScalarType();
+  if (isa<FixedWidthIntType>(CanonicalType))
+    return true;
   return isa<PointerType>(CanonicalType) ||
          isa<BlockPointerType>(CanonicalType) ||
          isa<MemberPointerType>(CanonicalType) ||
@@ -1013,6 +1031,21 @@ void BuiltinType::getAsStringInternal(std::string &S) const {
     S = getName() + S;
   }
 }
+
+void FixedWidthIntType::getAsStringInternal(std::string &S) const {
+  // FIXME: Once we get bitwidth attribute, write as
+  // "int __attribute__((bitwidth(x)))".
+  std::string prefix = "__clang_fixedwidth";
+  prefix += llvm::utostr_32(Width);
+  prefix += (char)(Signed ? 'S' : 'U');
+  if (S.empty()) {
+    S = prefix;
+  } else {
+    // Prefix the basic type, e.g. 'int X'.
+    S = prefix + S;
+  }
+}
+
 
 void ComplexType::getAsStringInternal(std::string &S) const {
   ElementType->getAsStringInternal(S);
