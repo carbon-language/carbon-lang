@@ -355,14 +355,15 @@ void AnalysisConsumer::HandleTranslationUnit(TranslationUnit& TU) {
       (*I)(mgr);  
   }
 
-  if (ObjCImplementationActions.empty())
-    return;
-    
-  for (TranslationUnit::iterator I = TU.begin(), E = TU.end(); I!=E; ++I) {
-    
-    if (ObjCImplementationDecl* ID = dyn_cast<ObjCImplementationDecl>(*I))
-      HandleCode(ID, 0, ObjCImplementationActions);
-  }
+  if (!ObjCImplementationActions.empty())
+    for (TranslationUnit::iterator I = TU.begin(), E = TU.end(); I!=E; ++I)
+      if (ObjCImplementationDecl* ID = dyn_cast<ObjCImplementationDecl>(*I))
+        HandleCode(ID, 0, ObjCImplementationActions);
+  
+  // Delete the PathDiagnosticClient here just in case the AnalysisConsumer
+  // object doesn't get released.  This will cause any side-effects in the
+  // destructor of the PathDiagnosticClient to get executed.
+  PD.reset();
 }
 
 void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
