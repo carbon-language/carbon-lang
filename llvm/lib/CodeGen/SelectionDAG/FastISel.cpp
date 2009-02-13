@@ -323,32 +323,21 @@ bool FastISel::SelectCall(User *I) {
                                           CU.getFilename());
       unsigned Line = SPI->getLine();
       unsigned Col = SPI->getColumn();
-      unsigned ID = DW->RecordSourceLine(Line, Col, SrcFile);
       unsigned Idx = MF.getOrCreateDebugLocID(SrcFile, Line, Col);
       setCurDebugLoc(DebugLoc::get(Idx));
-      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-      BuildMI(MBB, DL, II).addImm(ID);
     }
     return true;
   }
   case Intrinsic::dbg_region_start: {
     DbgRegionStartInst *RSI = cast<DbgRegionStartInst>(I);
-    if (DW && DW->ValidDebugInfo(RSI->getContext())) {
-      unsigned ID = 
-        DW->RecordRegionStart(cast<GlobalVariable>(RSI->getContext()));
-      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-      BuildMI(MBB, DL, II).addImm(ID);
-    }
+    if (DW && DW->ValidDebugInfo(RSI->getContext()))
+      DW->RecordRegionStart(cast<GlobalVariable>(RSI->getContext()));
     return true;
   }
   case Intrinsic::dbg_region_end: {
     DbgRegionEndInst *REI = cast<DbgRegionEndInst>(I);
-    if (DW && DW->ValidDebugInfo(REI->getContext())) {
-      unsigned ID = 
-        DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
-      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-      BuildMI(MBB, DL, II).addImm(ID);
-    }
+    if (DW && DW->ValidDebugInfo(REI->getContext()))
+      DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
     return true;
   }
   case Intrinsic::dbg_func_start: {
@@ -368,42 +357,14 @@ bool FastISel::SelectCall(User *I) {
       // function start. It will be emitted at asm emission time. However,
       // create a label if this is a beginning of inlined function.
       unsigned Line = Subprogram.getLineNumber();
-      unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
       setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
-
-      if (DW->getRecordSourceLineCount() != 1) {
-        const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-        BuildMI(MBB, DL, II).addImm(LabelID);
-      }
     }
 
     return true;
   }
-  case Intrinsic::dbg_declare: {
-    DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
-    Value *Variable = DI->getVariable();
-    if (DW && DW->ValidDebugInfo(Variable)) {
-      // Determine the address of the declared object.
-      Value *Address = DI->getAddress();
-      if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
-        Address = BCI->getOperand(0);
-      AllocaInst *AI = dyn_cast<AllocaInst>(Address);
-      // Don't handle byval struct arguments or VLAs, for example.
-      if (!AI) break;
-      DenseMap<const AllocaInst*, int>::iterator SI =
-        StaticAllocaMap.find(AI);
-      if (SI == StaticAllocaMap.end()) break; // VLAs.
-      int FI = SI->second;
-
-      // Determine the debug globalvariable.
-      GlobalValue *GV = cast<GlobalVariable>(Variable);
-
-      // Build the DECLARE instruction.
-      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DECLARE);
-      BuildMI(MBB, DL, II).addFrameIndex(FI).addGlobalAddress(GV);
-    }
+  case Intrinsic::dbg_declare:
+    // FIXME: Do something correct here when declare stuff is working again.
     return true;
-  }
   case Intrinsic::eh_exception: {
     MVT VT = TLI.getValueType(I->getType());
     switch (TLI.getOperationAction(ISD::EXCEPTIONADDR, VT)) {

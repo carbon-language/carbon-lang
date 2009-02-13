@@ -1274,38 +1274,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     switch (TLI.getOperationAction(ISD::DBG_STOPPOINT, MVT::Other)) {
     case TargetLowering::Promote:
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Expand: {
-      DwarfWriter *DW = DAG.getDwarfWriter();
-      bool useDEBUG_LOC = TLI.isOperationLegalOrCustom(ISD::DEBUG_LOC,
-                                                       MVT::Other);
-      bool useLABEL = TLI.isOperationLegalOrCustom(ISD::DBG_LABEL, MVT::Other);
-      
-      const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(Node);
-      GlobalVariable *CU_GV = cast<GlobalVariable>(DSP->getCompileUnit());
-      if (DW && (useDEBUG_LOC || useLABEL) && !CU_GV->isDeclaration()) {
-        DICompileUnit CU(cast<GlobalVariable>(DSP->getCompileUnit()));
-        unsigned SrcFile = DW->RecordSource(CU.getDirectory(),
-                                            CU.getFilename());
-        
-        unsigned Line = DSP->getLine();
-        unsigned Col = DSP->getColumn();
-        
-        // A bit self-referential to have DebugLoc on Debug_Loc nodes, but
-        // it won't hurt anything.
-        if (useDEBUG_LOC) {
-          SDValue Ops[] = { Tmp1, DAG.getConstant(Line, MVT::i32),
-                              DAG.getConstant(Col, MVT::i32),
-                              DAG.getConstant(SrcFile, MVT::i32) };
-          Result = DAG.getNode(ISD::DEBUG_LOC, dl, MVT::Other, Ops, 4);
-        } else {
-          unsigned ID = DW->RecordSourceLine(Line, Col, SrcFile);
-          Result = DAG.getLabel(ISD::DBG_LABEL, dl, Tmp1, ID);
-        }
-      } else {
-        Result = Tmp1;  // chain
-      }
+    case TargetLowering::Expand:
+      Result = Tmp1;  // chain
       break;
-    }
     case TargetLowering::Legal: {
       LegalizeAction Action = getTypeAction(Node->getOperand(1).getValueType());
       if (Action == Legal && Tmp1 == Node->getOperand(0))
