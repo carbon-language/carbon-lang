@@ -428,6 +428,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  DebugLoc dl = DebugLoc::getUnknownLoc();
 
   // Prepare for debug frame info.
   bool hasDebugInfo = MMI && MMI->hasDebugInfo();
@@ -448,38 +449,38 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     if (hasDebugInfo) {
       // Mark effective beginning of when frame pointer becomes valid.
       FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(SPU::DBG_LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addImm(FrameLabelId);
     }
 
     // Adjust stack pointer, spilling $lr -> 16($sp) and $sp -> -FrameSize($sp)
     // for the ABI
-    BuildMI(MBB, MBBI, TII.get(SPU::STQDr32), SPU::R0).addImm(16)
+    BuildMI(MBB, MBBI, dl, TII.get(SPU::STQDr32), SPU::R0).addImm(16)
       .addReg(SPU::R1);
     if (isS10Constant(FrameSize)) {
       // Spill $sp to adjusted $sp
-      BuildMI(MBB, MBBI, TII.get(SPU::STQDr32), SPU::R1).addImm(FrameSize)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::STQDr32), SPU::R1).addImm(FrameSize)
         .addReg(SPU::R1);
       // Adjust $sp by required amout
-      BuildMI(MBB, MBBI, TII.get(SPU::AIr32), SPU::R1).addReg(SPU::R1)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::AIr32), SPU::R1).addReg(SPU::R1)
         .addImm(FrameSize);
     } else if (FrameSize <= (1 << 16) - 1 && FrameSize >= -(1 << 16)) {
       // Frame size can be loaded into ILr32n, so temporarily spill $r2 and use
       // $r2 to adjust $sp:
-      BuildMI(MBB, MBBI, TII.get(SPU::STQDr128), SPU::R2)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::STQDr128), SPU::R2)
         .addImm(-16)
         .addReg(SPU::R1);
-      BuildMI(MBB, MBBI, TII.get(SPU::ILr32), SPU::R2)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::ILr32), SPU::R2)
         .addImm(FrameSize);
-      BuildMI(MBB, MBBI, TII.get(SPU::STQDr32), SPU::R1)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::STQDr32), SPU::R1)
         .addReg(SPU::R2)
         .addReg(SPU::R1);
-      BuildMI(MBB, MBBI, TII.get(SPU::Ar32), SPU::R1)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::Ar32), SPU::R1)
         .addReg(SPU::R1)
         .addReg(SPU::R2);
-      BuildMI(MBB, MBBI, TII.get(SPU::SFIr32), SPU::R2)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::SFIr32), SPU::R2)
         .addReg(SPU::R2)
         .addImm(16);
-      BuildMI(MBB, MBBI, TII.get(SPU::LQXr128), SPU::R2)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::LQXr128), SPU::R2)
         .addReg(SPU::R2)
         .addReg(SPU::R1);
     } else {
@@ -508,7 +509,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
 
       // Mark effective beginning of when frame pointer is ready.
       unsigned ReadyLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(SPU::DBG_LABEL)).addImm(ReadyLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addImm(ReadyLabelId);
 
       MachineLocation FPDst(SPU::R1);
       MachineLocation FPSrc(MachineLocation::VirtualFP);
@@ -522,7 +523,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
       MachineBasicBlock::iterator MBBI = prior(MBB.end());
       // Insert terminator label
       unsigned BranchLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(SPU::DBG_LABEL)).addImm(BranchLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addImm(BranchLabelId);
     }
   }
 }
@@ -534,6 +535,7 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   int FrameSize = MFI->getStackSize();
   int LinkSlotOffset = SPUFrameInfo::stackSlotSize();
+  DebugLoc dl = DebugLoc::getUnknownLoc();
 
   assert(MBBI->getOpcode() == SPU::RET &&
          "Can only insert epilog into returning blocks");
@@ -545,30 +547,30 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
       // Reload $lr, adjust $sp by required amount
       // Note: We do this to slightly improve dual issue -- not by much, but it
       // is an opportunity for dual issue.
-      BuildMI(MBB, MBBI, TII.get(SPU::LQDr128), SPU::R0)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::LQDr128), SPU::R0)
         .addImm(FrameSize + LinkSlotOffset)
         .addReg(SPU::R1);
-      BuildMI(MBB, MBBI, TII.get(SPU::AIr32), SPU::R1)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::AIr32), SPU::R1)
         .addReg(SPU::R1)
         .addImm(FrameSize);
     } else if (FrameSize <= (1 << 16) - 1 && FrameSize >= -(1 << 16)) {
       // Frame size can be loaded into ILr32n, so temporarily spill $r2 and use
       // $r2 to adjust $sp:
-      BuildMI(MBB, MBBI, TII.get(SPU::STQDr128), SPU::R2)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::STQDr128), SPU::R2)
         .addImm(16)
         .addReg(SPU::R1);
-      BuildMI(MBB, MBBI, TII.get(SPU::ILr32), SPU::R2)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::ILr32), SPU::R2)
         .addImm(FrameSize);
-      BuildMI(MBB, MBBI, TII.get(SPU::Ar32), SPU::R1)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::Ar32), SPU::R1)
         .addReg(SPU::R1)
         .addReg(SPU::R2);
-      BuildMI(MBB, MBBI, TII.get(SPU::LQDr128), SPU::R0)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::LQDr128), SPU::R0)
         .addImm(16)
         .addReg(SPU::R2);
-      BuildMI(MBB, MBBI, TII.get(SPU::SFIr32), SPU::R2).
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::SFIr32), SPU::R2).
         addReg(SPU::R2)
         .addImm(16);
-      BuildMI(MBB, MBBI, TII.get(SPU::LQXr128), SPU::R2)
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::LQXr128), SPU::R2)
         .addReg(SPU::R2)
         .addReg(SPU::R1);
     } else {

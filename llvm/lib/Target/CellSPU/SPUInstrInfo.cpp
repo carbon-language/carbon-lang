@@ -627,6 +627,8 @@ unsigned
 SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                            MachineBasicBlock *FBB,
                            const SmallVectorImpl<MachineOperand> &Cond) const {
+  // FIXME this should probably have a DebugLoc argument
+  DebugLoc dl = DebugLoc::getUnknownLoc();
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&
@@ -636,14 +638,14 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   if (FBB == 0) {
     if (Cond.empty()) {
       // Unconditional branch
-      MachineInstrBuilder MIB = BuildMI(&MBB, get(SPU::BR));
+      MachineInstrBuilder MIB = BuildMI(&MBB, dl, get(SPU::BR));
       MIB.addMBB(TBB);
 
       DEBUG(cerr << "Inserted one-way uncond branch: ");
       DEBUG((*MIB).dump());
     } else {
       // Conditional branch
-      MachineInstrBuilder  MIB = BuildMI(&MBB, get(Cond[0].getImm()));
+      MachineInstrBuilder  MIB = BuildMI(&MBB, dl, get(Cond[0].getImm()));
       MIB.addReg(Cond[1].getReg()).addMBB(TBB);
 
       DEBUG(cerr << "Inserted one-way cond branch:   ");
@@ -651,8 +653,8 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     }
     return 1;
   } else {
-    MachineInstrBuilder MIB = BuildMI(&MBB, get(Cond[0].getImm()));
-    MachineInstrBuilder MIB2 = BuildMI(&MBB, get(SPU::BR));
+    MachineInstrBuilder MIB = BuildMI(&MBB, dl, get(Cond[0].getImm()));
+    MachineInstrBuilder MIB2 = BuildMI(&MBB, dl, get(SPU::BR));
 
     // Two-way Conditional Branch.
     MIB.addReg(Cond[1].getReg()).addMBB(TBB);

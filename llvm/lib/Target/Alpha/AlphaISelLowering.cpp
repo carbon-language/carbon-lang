@@ -728,6 +728,7 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   //test sc and maybe branck to start
   //exit:
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  DebugLoc dl = MI->getDebugLoc();
   MachineFunction::iterator It = BB;
   ++It;
   
@@ -741,46 +742,46 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   F->insert(It, llscMBB);
   F->insert(It, sinkMBB);
 
-  BuildMI(thisMBB, TII->get(Alpha::BR)).addMBB(llscMBB);
+  BuildMI(thisMBB, dl, TII->get(Alpha::BR)).addMBB(llscMBB);
   
   unsigned reg_res = MI->getOperand(0).getReg(),
     reg_ptr = MI->getOperand(1).getReg(),
     reg_v2 = MI->getOperand(2).getReg(),
     reg_store = F->getRegInfo().createVirtualRegister(&Alpha::GPRCRegClass);
 
-  BuildMI(llscMBB, TII->get(is32 ? Alpha::LDL_L : Alpha::LDQ_L), 
+  BuildMI(llscMBB, dl, TII->get(is32 ? Alpha::LDL_L : Alpha::LDQ_L), 
           reg_res).addImm(0).addReg(reg_ptr);
   switch (MI->getOpcode()) {
   case Alpha::CAS32:
   case Alpha::CAS64: {
     unsigned reg_cmp 
       = F->getRegInfo().createVirtualRegister(&Alpha::GPRCRegClass);
-    BuildMI(llscMBB, TII->get(Alpha::CMPEQ), reg_cmp)
+    BuildMI(llscMBB, dl, TII->get(Alpha::CMPEQ), reg_cmp)
       .addReg(reg_v2).addReg(reg_res);
-    BuildMI(llscMBB, TII->get(Alpha::BEQ))
+    BuildMI(llscMBB, dl, TII->get(Alpha::BEQ))
       .addImm(0).addReg(reg_cmp).addMBB(sinkMBB);
-    BuildMI(llscMBB, TII->get(Alpha::BISr), reg_store)
+    BuildMI(llscMBB, dl, TII->get(Alpha::BISr), reg_store)
       .addReg(Alpha::R31).addReg(MI->getOperand(3).getReg());
     break;
   }
   case Alpha::LAS32:
   case Alpha::LAS64: {
-    BuildMI(llscMBB, TII->get(is32 ? Alpha::ADDLr : Alpha::ADDQr), reg_store)
+    BuildMI(llscMBB, dl,TII->get(is32 ? Alpha::ADDLr : Alpha::ADDQr), reg_store)
       .addReg(reg_res).addReg(reg_v2);
     break;
   }
   case Alpha::SWAP32:
   case Alpha::SWAP64: {
-    BuildMI(llscMBB, TII->get(Alpha::BISr), reg_store)
+    BuildMI(llscMBB, dl, TII->get(Alpha::BISr), reg_store)
       .addReg(reg_v2).addReg(reg_v2);
     break;
   }
   }
-  BuildMI(llscMBB, TII->get(is32 ? Alpha::STL_C : Alpha::STQ_C), reg_store)
+  BuildMI(llscMBB, dl, TII->get(is32 ? Alpha::STL_C : Alpha::STQ_C), reg_store)
     .addReg(reg_store).addImm(0).addReg(reg_ptr);
-  BuildMI(llscMBB, TII->get(Alpha::BEQ))
+  BuildMI(llscMBB, dl, TII->get(Alpha::BEQ))
     .addImm(0).addReg(reg_store).addMBB(llscMBB);
-  BuildMI(llscMBB, TII->get(Alpha::BR)).addMBB(sinkMBB);
+  BuildMI(llscMBB, dl, TII->get(Alpha::BR)).addMBB(sinkMBB);
 
   thisMBB->addSuccessor(llscMBB);
   llscMBB->addSuccessor(llscMBB);
