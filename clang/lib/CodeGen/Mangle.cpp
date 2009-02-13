@@ -161,7 +161,9 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
     break;
 
   case DeclarationName::CXXConversionFunctionName:
-    assert(false && "Not sure how to mangle conversion functions yet");
+    // <operator-name> ::= cv <type>	# (cast) 
+    Out << "cv";
+    mangleType(Context.getCanonicalType(Name.getCXXNameType()));
     break;
 
   case DeclarationName::CXXOperatorName:
@@ -171,6 +173,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
 
   case DeclarationName::CXXUsingDirective:
     assert(false && "Can't mangle a using directive name!");
+    break;
   }
 }
 
@@ -398,7 +401,6 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   //                 ::= d  # double
   //                 ::= e  # long double, __float80
   // UNSUPPORTED:    ::= g  # __float128
-  // NOT HERE:       ::= z  # ellipsis
   // UNSUPPORTED:    ::= Dd # IEEE 754r decimal floating point (64 bits)
   // UNSUPPORTED:    ::= De # IEEE 754r decimal floating point (128 bits)
   // UNSUPPORTED:    ::= Df # IEEE 754r decimal floating point (32 bits)
@@ -455,6 +457,10 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
                                          ArgEnd = Proto->arg_type_end(); 
        Arg != ArgEnd; ++Arg)
     mangleType(*Arg);
+
+  // <builtin-type>      ::= z  # ellipsis
+  if (Proto->isVariadic())
+    Out << 'z';
 }
 
 void CXXNameMangler::mangleType(const TagType *T) {

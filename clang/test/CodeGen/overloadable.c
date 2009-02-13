@@ -9,6 +9,8 @@ v4hi __attribute__((overloadable)) f(v4hi x) { return x; }
 struct X { };
 void  __attribute__((overloadable)) f(struct X (*ptr)[10]) { }
 
+void __attribute__((overloadable)) f(int x, int y, ...) { }
+
 int main() {
   int iv = 17;
   float fv = 3.0f;
