@@ -802,10 +802,13 @@ class Driver(object):
             if phase.type is Types.ImageType:
                 namedOutput = "a.out"
             else:
-                inputName = args.getValue(baseInput)
-                base,_ = os.path.splitext(inputName)
                 assert phase.type.tempSuffix is not None
-                namedOutput = base + '.' + phase.type.tempSuffix
+                inputName = args.getValue(baseInput)
+                if phase.type.appendSuffix:
+                    namedOutput = inputName + '.' + phase.type.tempSuffix
+                else:
+                    base,_ = os.path.splitext(inputName)
+                    namedOutput = base + '.' + phase.type.tempSuffix
 
             # Output to user requested destination?
             if atTopLevel and finalOutput:

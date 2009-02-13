@@ -4,7 +4,7 @@ class InputType(object):
     
     def __init__(self, name, preprocess=None, onlyAssemble=False, 
                  onlyPrecompile=False, tempSuffix=None, 
-                 canBeUserSpecified=False):
+                 canBeUserSpecified=False, appendSuffix=False):
         assert preprocess is None or isinstance(preprocess, InputType)
         self.name = name
         self.preprocess = preprocess
@@ -12,6 +12,7 @@ class InputType(object):
         self.onlyPrecompile = onlyPrecompile
         self.tempSuffix = tempSuffix
         self.canBeUserSpecified = canBeUserSpecified
+        self.appendSuffix = appendSuffix
 
     def __repr__(self):
         return '%s(%r, %r, %r, %r, %r, %r)' % (self.__class__.__name__,
@@ -72,7 +73,7 @@ JavaType = InputType('java', canBeUserSpecified=True)
 LLVMAsmType = InputType('llvm-asm', tempSuffix='ll')
 LLVMBCType = InputType('llvm-bc', tempSuffix='bc')
 PlistType = InputType('plist', tempSuffix='plist')
-PCHType = InputType('precompiled-header', tempSuffix='gch')
+PCHType = InputType('precompiled-header', tempSuffix='gch', appendSuffix=True)
 ObjectType = InputType('object', tempSuffix='o')
 TreelangType = InputType('treelang', canBeUserSpecified=True)
 ImageType = InputType('image', tempSuffix='out')
