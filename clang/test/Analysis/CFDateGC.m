@@ -1,7 +1,6 @@
 // RUN: clang -analyze -checker-cfref -verify -fobjc-gc %s &&
+// RUN: clang -analyze -checker-cfref -verify -fobjc-gc -disable-free %s &&
 // RUN: clang -analyze -checker-cfref -analyzer-store-region -verify -fobjc-gc %s
-// XFAIL
-// fails due to exact diagnostic matching
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -71,7 +70,7 @@ CFAbsoluteTime f2_noleak() {
 }
 
 void f3_leak_with_gc() {
-  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent()); // expected-warning{{leak}}
+  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent()); // expected-warning 2 {{leak}}
   [[(id) date retain] release];
 }
 
