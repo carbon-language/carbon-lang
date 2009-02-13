@@ -79,7 +79,7 @@ llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
 
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  // FIXME: Wee should have a CodeGenModule::AddRuntimeVariable that does the
+  // FIXME: We should have a CodeGenModule::AddRuntimeVariable that does the
   // same thing as CreateRuntimeFunction if there's already a variable with
   // the same name.
   NSConcreteGlobalBlock
@@ -97,7 +97,7 @@ llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
 
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  // FIXME: Wee should have a CodeGenModule::AddRuntimeVariable that does the
+  // FIXME: We should have a CodeGenModule::AddRuntimeVariable that does the
   // same thing as CreateRuntimeFunction if there's already a variable with
   // the same name.
   NSConcreteStackBlock
