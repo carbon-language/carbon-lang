@@ -1,5 +1,5 @@
-// RUN: cp %s %t &&
-// RUN: xcc -x c-header %t -o %t.pth &&
-// RUN: xcc -### -S -include %t -x c /dev/null &> %t.log &&
-// RUN: grep '"-token-cache" ".*/pth.c.out.tmp.pth"' %t.log
+// RUN: cp %s %t.h &&
+// RUN: xcc %t.h &&
+// RUN: xcc -### -S -include %t.h -x c /dev/null &> %t.log &&
+// RUN: grep '"-token-cache" ".*/pth.c.out.tmp.h.pth"' %t.log
 // RUN: true
