@@ -26,25 +26,25 @@ enum {
   IsGlobal = 1 << 28
 };
 
-static const llvm::Type *getBlockDescriptorType(CodeGenModule &CGM) {
-  static const llvm::Type *Ty = 0;
-    
-  if (!Ty) {
-    const llvm::Type *UnsignedLongTy = 
-      CGM.getTypes().ConvertType(CGM.getContext().UnsignedLongTy);
+const llvm::Type *CodeGenModule::getBlockDescriptorType() {
+  if (BlockDescriptorType)
+    return BlockDescriptorType;
+
+  const llvm::Type *UnsignedLongTy = 
+    getTypes().ConvertType(getContext().UnsignedLongTy);
         
-    // struct __block_descriptor {
-    //   unsigned long reserved;
-    //   unsigned long block_size;
-    // };
-    Ty = llvm::StructType::get(UnsignedLongTy, 
-                               UnsignedLongTy, 
-                               NULL);
-        
-    CGM.getModule().addTypeName("struct.__block_descriptor", Ty);
-  }
-    
-  return Ty;
+  // struct __block_descriptor {
+  //   unsigned long reserved;
+  //   unsigned long block_size;
+  // };
+  BlockDescriptorType = llvm::StructType::get(UnsignedLongTy, 
+                                              UnsignedLongTy, 
+                                              NULL);
+
+  getModule().addTypeName("struct.__block_descriptor",
+                          BlockDescriptorType);
+
+  return BlockDescriptorType;
 }
 
 static const llvm::Type *getGenericBlockLiteralType(CodeGenModule &CGM) {
@@ -55,7 +55,7 @@ static const llvm::Type *getGenericBlockLiteralType(CodeGenModule &CGM) {
       llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
         
     const llvm::Type *BlockDescPtrTy = 
-      llvm::PointerType::getUnqual(getBlockDescriptorType(CGM));
+      llvm::PointerType::getUnqual(CGM.getBlockDescriptorType());
         
     // struct __block_literal_generic {
     //   void *isa;

@@ -123,10 +123,12 @@ class CodeGenModule {
   /// Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
   
-  /// NSConcreteGlobalBlock - Cached reference to the clas pointer for 
+  /// NSConcreteGlobalBlock - Cached reference to the class pointer for 
   /// global blocks.
   llvm::Constant *NSConcreteGlobalBlock;
   
+  const llvm::Type *BlockDescriptorType;
+
   std::vector<llvm::Function *> BuiltinFunctions;
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M, 
@@ -137,6 +139,8 @@ public:
   
   /// Release - Finalize LLVM code generation.
   void Release();
+
+  const llvm::Type *getBlockDescriptorType();
 
   /// getObjCRuntime() - Return a reference to the configured
   /// Objective-C runtime.
