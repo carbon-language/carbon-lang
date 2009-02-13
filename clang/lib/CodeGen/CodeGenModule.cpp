@@ -542,9 +542,7 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
 
     // Forward declarations are emitted lazily on first use.
-    if ((VD->getStorageClass() == VarDecl::Extern ||
-         VD->getStorageClass() == VarDecl::PrivateExtern) && 
-        VD->getInit() == 0)
+    if (!VD->getInit() && VD->hasExternalStorage())
       return;
   }
 
