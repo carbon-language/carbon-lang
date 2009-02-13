@@ -58,7 +58,12 @@ href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
 <h2 id="overloading-in-c">Function Overloading in C</h2>
 <!-- ======================================================================= -->
 
-<p>Clang provides support for C++ function overloading in C. Function overloading in C is introduced using the <tt>overloadable</tt> attribute. For example, one might provide several overloaded versions of a <tt>tgsin</tt> function that invokes the appropriate standard function computing the sine of a value with <tt>float</tt>, <tt>double</tt>, or <tt>long double</tt> precision:</p>
+<p>Clang provides support for C++ function overloading in C. Function
+overloading in C is introduced using the <tt>overloadable</tt> attribute. For
+example, one might provide several overloaded versions of a <tt>tgsin</tt>
+function that invokes the appropriate standard function computing the sine of a
+value with <tt>float</tt>, <tt>double</tt>, or <tt>long double</tt>
+precision:</p>
 
 <blockquote>
 <pre>
@@ -94,7 +99,8 @@ function declarations and definitions. Most importantly, if any
 function with a given name is given the <tt>overloadable</tt>
 attribute, then all function declarations and definitions with that
 name (and in that scope) must have the <tt>overloadable</tt>
-attribute. This rule even applies to redeclarations of functions whose original declaration had the <tt>overloadable</tt> attribute, e.g.,</p>
+attribute. This rule even applies to redeclarations of functions whose original
+declaration had the <tt>overloadable</tt> attribute, e.g.,</p>
 
 <blockquote>
 <pre>
