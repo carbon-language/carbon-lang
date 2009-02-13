@@ -36,29 +36,28 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl() {
 
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *UnsignedLongTy
+    = CGM.getTypes().ConvertType(getContext().UnsignedLongTy);
   llvm::Constant *C;
   std::vector<llvm::Constant*> Elts;
 
   // reserved
-  const llvm::IntegerType *LongTy
-    = cast<llvm::IntegerType>(
-        CGM.getTypes().ConvertType(CGM.getContext().LongTy));
-  C = llvm::ConstantInt::get(LongTy, 0);
+  C = llvm::ConstantInt::get(UnsignedLongTy, 0);
   Elts.push_back(C);
 
   // Size
   // FIXME: This should be the size of BlockStructType
-  C = llvm::ConstantInt::get(LongTy, 20);
+  C = llvm::ConstantInt::get(UnsignedLongTy, 20);
   Elts.push_back(C);
 
   if (BlockHasCopyDispose) {
     // copy_func_helper_decl
-    C = llvm::ConstantInt::get(LongTy, 0);
+    C = llvm::ConstantInt::get(UnsignedLongTy, 0);
     C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
     Elts.push_back(C);
 
     // destroy_func_decl
-    C = llvm::ConstantInt::get(LongTy, 0);
+    C = llvm::ConstantInt::get(UnsignedLongTy, 0);
     C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
     Elts.push_back(C);
   }
