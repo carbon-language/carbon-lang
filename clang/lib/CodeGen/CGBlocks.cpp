@@ -65,10 +65,8 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl() {
 
   C = llvm::ConstantStruct::get(Elts);
 
-  // FIXME: Should be in module?
-  static int desc_unique_count;
   char Name[32];
-  sprintf(Name, "__block_descriptor_tmp_%d", ++desc_unique_count);
+  sprintf(Name, "__block_descriptor_tmp_%d", CGM.getDescriptorUniqueCount());
   C = new llvm::GlobalVariable(C->getType(), true,
                                llvm::GlobalValue::InternalLinkage,
                                C, Name, &CGM.getModule());
