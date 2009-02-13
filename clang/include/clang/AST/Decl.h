@@ -306,6 +306,12 @@ public:
     return getStorageClass() <= Register;
   }
 
+  /// hasExternStorage - Returns true if a variable has extern or
+  /// __private_extern__ storage.
+  bool hasExternalStorage() const {
+    return getStorageClass() == Extern || getStorageClass() == PrivateExtern;
+  }
+
   /// hasGlobalStorage - Returns true for all variables that do not
   ///  have local storage.  This includs all global variables as well
   ///  as static variables declared within a function.
