@@ -1270,20 +1270,30 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
   Value *CondVal = 0;
 
-  // If we have the GNU missing condition extension, evaluate the conditional
-  // and then convert it to bool the hard way.  We do this explicitly
-  // because we need the unconverted value for the missing middle value of
-  // the ?:.
-  if (E->getLHS() == 0) {
+  // If we don't have the GNU missing condition extension, emit a branch on
+  // bool the normal way.
+  if (E->getLHS()) {
+    // Otherwise, just use EmitBranchOnBoolExpr to get small and simple code for
+    // the branch on bool.
+    CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
+  } else {
+    // Otherwise, for the ?: extension, evaluate the conditional and then
+    // convert it to bool the hard way.  We do this explicitly because we need
+    // the unconverted value for the missing middle value of the ?:.
     CondVal = CGF.EmitScalarExpr(E->getCond());
+    
+    // In some cases, EmitScalarConversion will delete the "CondVal" expression
+    // if there are no extra uses (an optimization).  Inhibit this by making an
+    // extra dead use, because we're going to add a use of CondVal later.  We
+    // don't use the builder for this, because we don't want it to get optimized
+    // away.  This leaves dead code, but the ?: extension isn't common.
+    new llvm::BitCastInst(CondVal, CondVal->getType(), "dummy?:holder",
+                          Builder.GetInsertBlock());
+    
     Value *CondBoolVal =
       CGF.EmitScalarConversion(CondVal, E->getCond()->getType(),
                                CGF.getContext().BoolTy);
     Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
-  } else {
-    // Otherwise, just use EmitBranchOnBoolExpr to get small and simple code for
-    // the branch on bool.
-    CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
   }
   
   CGF.EmitBlock(LHSBlock);
