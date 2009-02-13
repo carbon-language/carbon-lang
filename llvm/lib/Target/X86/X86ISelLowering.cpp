@@ -375,7 +375,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   else
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
-  if (X86ScalarSSEf64) {
+  if (!UseSoftFloat && X86ScalarSSEf64) {
     // f32 and f64 use SSE.
     // Set up the FP register classes.
     addRegisterClass(MVT::f32, X86::FR32RegisterClass);
@@ -413,7 +413,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setConvertAction(MVT::f80, MVT::f32, Expand);
       setConvertAction(MVT::f80, MVT::f64, Expand);
     }
-  } else if (X86ScalarSSEf32) {
+  } else if (!UseSoftFloat && X86ScalarSSEf32) {
     // Use SSE for f32, x87 for f64.
     // Set up the FP register classes.
     addRegisterClass(MVT::f32, X86::FR32RegisterClass);
@@ -458,7 +458,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
     }
-  } else {
+  } else if (!UseSoftFloat) {
     // f32 and f64 in x87.
     // Set up the FP register classes.
     addRegisterClass(MVT::f64, X86::RFP64RegisterClass);
@@ -493,28 +493,30 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   // Long double always uses X87.
-  addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
-  setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
-  setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
-  {
-    bool ignored;
-    APFloat TmpFlt(+0.0);
-    TmpFlt.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
-                   &ignored);
-    addLegalFPImmediate(TmpFlt);  // FLD0
-    TmpFlt.changeSign();
-    addLegalFPImmediate(TmpFlt);  // FLD0/FCHS
-    APFloat TmpFlt2(+1.0);
-    TmpFlt2.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
-                    &ignored);
-    addLegalFPImmediate(TmpFlt2);  // FLD1
-    TmpFlt2.changeSign();
-    addLegalFPImmediate(TmpFlt2);  // FLD1/FCHS
-  }
+  if (!UseSoftFloat) {
+    addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
+    setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
+    setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
+    {
+      bool ignored;
+      APFloat TmpFlt(+0.0);
+      TmpFlt.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
+                     &ignored);
+      addLegalFPImmediate(TmpFlt);  // FLD0
+      TmpFlt.changeSign();
+      addLegalFPImmediate(TmpFlt);  // FLD0/FCHS
+      APFloat TmpFlt2(+1.0);
+      TmpFlt2.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
+                      &ignored);
+      addLegalFPImmediate(TmpFlt2);  // FLD1
+      TmpFlt2.changeSign();
+      addLegalFPImmediate(TmpFlt2);  // FLD1/FCHS
+    }
     
-  if (!UnsafeFPMath) {
-    setOperationAction(ISD::FSIN           , MVT::f80  , Expand);
-    setOperationAction(ISD::FCOS           , MVT::f80  , Expand);
+    if (!UnsafeFPMath) {
+      setOperationAction(ISD::FSIN           , MVT::f80  , Expand);
+      setOperationAction(ISD::FCOS           , MVT::f80  , Expand);
+    }
   }
 
   // Always use a library call for pow.
@@ -578,7 +580,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FEXP2, (MVT::SimpleValueType)VT, Expand);
   }
 
-  if (!DisableMMX && Subtarget->hasMMX()) {
+  // FIXME: In order to prevent SSE instructions being expanded to MMX ones
+  // with -msoft-float, disable use of MMX as well.
+  if (!UseSoftFloat && !DisableMMX && Subtarget->hasMMX()) {
     addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
     addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
@@ -660,7 +664,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SELECT,             MVT::v1i64, Custom);
   }
 
-  if (Subtarget->hasSSE1()) {
+  if (!UseSoftFloat && Subtarget->hasSSE1()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
     setOperationAction(ISD::FADD,               MVT::v4f32, Legal);
@@ -677,8 +681,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSETCC,             MVT::v4f32, Custom);
   }
 
-  if (Subtarget->hasSSE2()) {
+  if (!UseSoftFloat && Subtarget->hasSSE2()) {
     addRegisterClass(MVT::v2f64, X86::VR128RegisterClass);
+
+    // FIXME: Unfortunately -soft-float means XMM registers cannot be used even
+    // for integer operations.
     addRegisterClass(MVT::v16i8, X86::VR128RegisterClass);
     addRegisterClass(MVT::v8i16, X86::VR128RegisterClass);
     addRegisterClass(MVT::v4i32, X86::VR128RegisterClass);
@@ -756,7 +763,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SELECT,             MVT::v2i64, Custom);
     
   }
-  
+
   if (Subtarget->hasSSE41()) {
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
@@ -1399,9 +1406,11 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs,
                                                        TotalNumXMMRegs);
 
-      assert((Subtarget->hasSSE1() || !NumXMMRegs) &&
+      assert(!(NumXMMRegs && !Subtarget->hasSSE1()) &&
              "SSE register cannot be used when SSE is disabled!");
-      if (!Subtarget->hasSSE1()) {
+      assert(!(NumXMMRegs && UseSoftFloat) &&
+             "SSE register cannot be used when SSE is disabled!");
+      if (UseSoftFloat || !Subtarget->hasSSE1()) {
         // Kernel mode asks for SSE to be disabled, so don't push them
         // on the stack.
         TotalNumXMMRegs = 0;
