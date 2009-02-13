@@ -227,8 +227,8 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     
     // We're done with the #included file.
     CurLexer.reset();
-  }
-  else {
+  } else {
+    assert(CurPTHLexer && "Got EOF but no current lexer set!");
     CurPTHLexer->getEOF(Result);
     CurPTHLexer.reset();
   }
