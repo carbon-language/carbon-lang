@@ -72,7 +72,7 @@ public:
     UnsignedLongLong
   };
 protected:
-  IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, WCharType;
+  IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType;
 public:
   IntType getSizeType() const { return SizeType; }
   IntType getIntMaxType() const { return IntMaxType; }
@@ -80,6 +80,7 @@ public:
   IntType getPtrDiffType(unsigned AddrSpace) const {
     return AddrSpace == 0 ? PtrDiffType : getPtrDiffTypeV(AddrSpace);
   }
+  IntType getIntPtrType() const { return IntPtrType; }
   IntType getWCharType() const { return WCharType; }
 
   /// isCharSigned - Return true if 'char' is 'signed char' or false if it is

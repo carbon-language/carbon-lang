@@ -557,6 +557,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Buf);
   DefineType("__UINTMAX_TYPE__", TI.getUIntMaxType(), Buf);
   DefineType("__PTRDIFF_TYPE__", TI.getPtrDiffType(0), Buf);
+  DefineType("__INTPTR_TYPE__", TI.getIntPtrType(), Buf);
   DefineType("__SIZE_TYPE__", TI.getSizeType(), Buf);
   DefineType("__WCHAR_TYPE__", TI.getWCharType(), Buf);
   // FIXME: TargetInfo hookize __WINT_TYPE__.

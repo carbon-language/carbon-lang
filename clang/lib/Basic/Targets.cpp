@@ -629,6 +629,7 @@ public:
     UserLabelPrefix = "";
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
+    IntPtrType = SignedInt;
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Defines);
@@ -937,6 +938,7 @@ namespace {
       SizeType = UnsignedInt;
       IntMaxType = SignedLong;
       UIntMaxType = UnsignedLong;
+      IntPtrType = SignedShort;
       PtrDiffType = SignedInt;
       DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8";
     }
