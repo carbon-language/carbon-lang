@@ -429,7 +429,7 @@ void CodeGenModule::EmitDeferred() {
       // FIXME: The AST should have some sort of aggregate decls or
       // global symbol map.
       // FIXME: This is missing some important cases. For example, we
-      // need to check for uses in an alias and in a constructor.
+      // need to check for uses in an alias.
       if (!GlobalDeclMap.count(getMangledName(D))) {
         i++;
         continue;
@@ -491,9 +491,30 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
   return llvm::ConstantStruct::get(Fields, 4, false);
 }
 
-void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
-  bool isDef, isStatic;
+bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
+  // Never defer when EmitAllDecls is specified.
+  if (Features.EmitAllDecls)
+    return false;
 
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
+    // Constructors and destructors should never be deferred.
+    if (FD->getAttr<ConstructorAttr>() || FD->getAttr<DestructorAttr>())
+      return false;
+
+    if (FD->getStorageClass() != FunctionDecl::Static)
+      return false;
+  } else {
+    const VarDecl *VD = cast<VarDecl>(Global);
+    assert(VD->isFileVarDecl() && "Invalid decl.");
+
+    if (VD->getStorageClass() != VarDecl::Static)
+      return false;
+  }
+
+  return true;
+}
+
+void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
     // Aliases are deferred until code for everything else has been
     // emitted.
@@ -504,25 +525,22 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
       return;
     }
 
-    isDef = FD->isThisDeclarationADefinition();
-    isStatic = FD->getStorageClass() == FunctionDecl::Static;
+    // Forward declarations are emitted lazily on first use.
+    if (!FD->isThisDeclarationADefinition())
+      return;
   } else {
     const VarDecl *VD = cast<VarDecl>(Global);
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
 
-    isDef = !((VD->getStorageClass() == VarDecl::Extern ||
-               VD->getStorageClass() == VarDecl::PrivateExtern) && 
-              VD->getInit() == 0);
-    isStatic = VD->getStorageClass() == VarDecl::Static;
+    // Forward declarations are emitted lazily on first use.
+    if ((VD->getStorageClass() == VarDecl::Extern ||
+         VD->getStorageClass() == VarDecl::PrivateExtern) && 
+        VD->getInit() == 0)
+      return;
   }
 
-  // Forward declarations are emitted lazily on first use.
-  if (!isDef)
-    return;
-
-  // If the global is a static, defer code generation until later so
-  // we can easily omit unused statics.
-  if (isStatic && !Features.EmitAllDecls) {
+  // Defer code generation when possible.
+  if (MayDeferGeneration(Global)) {
     DeferredDecls.push_back(Global);
     return;
   }

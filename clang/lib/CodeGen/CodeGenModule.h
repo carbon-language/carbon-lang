@@ -324,6 +324,11 @@ private:
   void EmitLLVMUsed(void);
 
   void BindRuntimeFunctions();
+
+  /// MayDeferGeneration - Determine if the given decl can be emitted
+  /// lazily; this is only relevant for definitions. The given decl
+  /// must be either a function or var decl.
+  bool MayDeferGeneration(const ValueDecl *D);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

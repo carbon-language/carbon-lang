@@ -1,6 +1,8 @@
 // RUN: clang -emit-llvm -o %t %s &&
 // RUN: grep -e "global_ctors.*@A" %t &&
-// RUN: grep -e "global_dtors.*@B" %t
+// RUN: grep -e "global_dtors.*@B" %t &&
+// RUN: grep -e "global_ctors.*@C" %t &&
+// RUN: grep -e "global_dtors.*@D" %t
 
 #include <stdio.h>
 
@@ -12,6 +14,22 @@ void A() {
 }
 
 void B() {
+  printf("B\n");
+}
+
+static void C() __attribute__((constructor));
+
+static void D() __attribute__((destructor));
+
+static int foo() {
+  return 10;
+}
+
+static void C() {
+  printf("A: %d\n", foo());
+}
+
+static void D() {
   printf("B\n");
 }
 
