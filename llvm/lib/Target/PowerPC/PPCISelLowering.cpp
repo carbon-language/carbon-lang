@@ -3966,6 +3966,7 @@ PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   unsigned ptrA = MI->getOperand(1).getReg();
   unsigned ptrB = MI->getOperand(2).getReg();
   unsigned incr = MI->getOperand(3).getReg();
+  DebugLoc dl = MI->getDebugLoc();
 
   MachineBasicBlock *loopMBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
@@ -3991,13 +3992,13 @@ PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   //   bne- loopMBB
   //   fallthrough --> exitMBB
   BB = loopMBB;
-  BuildMI(BB, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
+  BuildMI(BB, dl, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
     .addReg(ptrA).addReg(ptrB);
   if (BinOpcode)
-    BuildMI(BB, TII->get(BinOpcode), TmpReg).addReg(incr).addReg(dest);
-  BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+    BuildMI(BB, dl, TII->get(BinOpcode), TmpReg).addReg(incr).addReg(dest);
+  BuildMI(BB, dl, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
     .addReg(TmpReg).addReg(ptrA).addReg(ptrB);
-  BuildMI(BB, TII->get(PPC::BCC))
+  BuildMI(BB, dl, TII->get(PPC::BCC))
     .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);    
   BB->addSuccessor(loopMBB);
   BB->addSuccessor(exitMBB);
@@ -4030,6 +4031,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
   unsigned ptrA = MI->getOperand(1).getReg();
   unsigned ptrB = MI->getOperand(2).getReg();
   unsigned incr = MI->getOperand(3).getReg();
+  DebugLoc dl = MI->getDebugLoc();
 
   MachineBasicBlock *loopMBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
@@ -4082,47 +4084,47 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
 
   if (ptrA!=PPC::R0) {
     Ptr1Reg = RegInfo.createVirtualRegister(RC);
-    BuildMI(BB, TII->get(is64bit ? PPC::ADD8 : PPC::ADD4), Ptr1Reg)
+    BuildMI(BB, dl, TII->get(is64bit ? PPC::ADD8 : PPC::ADD4), Ptr1Reg)
       .addReg(ptrA).addReg(ptrB);
   } else {
     Ptr1Reg = ptrB;
   }
-  BuildMI(BB, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
+  BuildMI(BB, dl, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
       .addImm(3).addImm(27).addImm(is8bit ? 28 : 27);
-  BuildMI(BB, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
+  BuildMI(BB, dl, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
       .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
   if (is64bit)
-    BuildMI(BB, TII->get(PPC::RLDICR), PtrReg)
+    BuildMI(BB, dl, TII->get(PPC::RLDICR), PtrReg)
       .addReg(Ptr1Reg).addImm(0).addImm(61);
   else
-    BuildMI(BB, TII->get(PPC::RLWINM), PtrReg)
+    BuildMI(BB, dl, TII->get(PPC::RLWINM), PtrReg)
       .addReg(Ptr1Reg).addImm(0).addImm(0).addImm(29);
-  BuildMI(BB, TII->get(PPC::SLW), Incr2Reg)
+  BuildMI(BB, dl, TII->get(PPC::SLW), Incr2Reg)
       .addReg(incr).addReg(ShiftReg);
   if (is8bit)
-    BuildMI(BB, TII->get(PPC::LI), Mask2Reg).addImm(255);
+    BuildMI(BB, dl, TII->get(PPC::LI), Mask2Reg).addImm(255);
   else {
-    BuildMI(BB, TII->get(PPC::LI), Mask3Reg).addImm(0);
-    BuildMI(BB, TII->get(PPC::ORI), Mask2Reg).addReg(Mask3Reg).addImm(65535);
+    BuildMI(BB, dl, TII->get(PPC::LI), Mask3Reg).addImm(0);
+    BuildMI(BB, dl, TII->get(PPC::ORI),Mask2Reg).addReg(Mask3Reg).addImm(65535);
   }
-  BuildMI(BB, TII->get(PPC::SLW), MaskReg)
+  BuildMI(BB, dl, TII->get(PPC::SLW), MaskReg)
       .addReg(Mask2Reg).addReg(ShiftReg);
 
   BB = loopMBB;
-  BuildMI(BB, TII->get(PPC::LWARX), TmpDestReg)
+  BuildMI(BB, dl, TII->get(PPC::LWARX), TmpDestReg)
     .addReg(PPC::R0).addReg(PtrReg);
   if (BinOpcode)
-    BuildMI(BB, TII->get(BinOpcode), TmpReg)
+    BuildMI(BB, dl, TII->get(BinOpcode), TmpReg)
       .addReg(Incr2Reg).addReg(TmpDestReg);
-  BuildMI(BB, TII->get(is64bit ? PPC::ANDC8 : PPC::ANDC), Tmp2Reg)
+  BuildMI(BB, dl, TII->get(is64bit ? PPC::ANDC8 : PPC::ANDC), Tmp2Reg)
     .addReg(TmpDestReg).addReg(MaskReg);
-  BuildMI(BB, TII->get(is64bit ? PPC::AND8 : PPC::AND), Tmp3Reg)
+  BuildMI(BB, dl, TII->get(is64bit ? PPC::AND8 : PPC::AND), Tmp3Reg)
     .addReg(TmpReg).addReg(MaskReg);
-  BuildMI(BB, TII->get(is64bit ? PPC::OR8 : PPC::OR), Tmp4Reg)
+  BuildMI(BB, dl, TII->get(is64bit ? PPC::OR8 : PPC::OR), Tmp4Reg)
     .addReg(Tmp3Reg).addReg(Tmp2Reg);
-  BuildMI(BB, TII->get(PPC::STWCX))
+  BuildMI(BB, dl, TII->get(PPC::STWCX))
     .addReg(Tmp4Reg).addReg(PPC::R0).addReg(PtrReg);
-  BuildMI(BB, TII->get(PPC::BCC))
+  BuildMI(BB, dl, TII->get(PPC::BCC))
     .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);    
   BB->addSuccessor(loopMBB);
   BB->addSuccessor(exitMBB);
@@ -4130,7 +4132,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
   //  exitMBB:
   //   ...
   BB = exitMBB;
-  BuildMI(BB, TII->get(PPC::SRW), dest).addReg(TmpDestReg).addReg(ShiftReg);
+  BuildMI(BB, dl, TII->get(PPC::SRW), dest).addReg(TmpDestReg).addReg(ShiftReg);
   return BB;
 }
 
@@ -4167,7 +4169,8 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
     unsigned SelectPred = MI->getOperand(4).getImm();
-    BuildMI(BB, TII->get(PPC::BCC))
+    DebugLoc dl = MI->getDebugLoc();
+    BuildMI(BB, dl, TII->get(PPC::BCC))
       .addImm(SelectPred).addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
     F->insert(It, copy0MBB);
     F->insert(It, sinkMBB);
@@ -4190,7 +4193,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
     //  ...
     BB = sinkMBB;
-    BuildMI(BB, TII->get(PPC::PHI), MI->getOperand(0).getReg())
+    BuildMI(BB, dl, TII->get(PPC::PHI), MI->getOperand(0).getReg())
       .addReg(MI->getOperand(3).getReg()).addMBB(copy0MBB)
       .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
   }
@@ -4266,6 +4269,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     unsigned ptrB   = MI->getOperand(2).getReg();
     unsigned oldval = MI->getOperand(3).getReg();
     unsigned newval = MI->getOperand(4).getReg();
+    DebugLoc dl     = MI->getDebugLoc();
 
     MachineBasicBlock *loop1MBB = F->CreateMachineBasicBlock(LLVM_BB);
     MachineBasicBlock *loop2MBB = F->CreateMachineBasicBlock(LLVM_BB);
@@ -4294,26 +4298,26 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //   st[wd]cx. dest, ptr
     // exitBB:
     BB = loop1MBB;
-    BuildMI(BB, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
+    BuildMI(BB, dl, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
       .addReg(ptrA).addReg(ptrB);
-    BuildMI(BB, TII->get(is64bit ? PPC::CMPD : PPC::CMPW), PPC::CR0)
+    BuildMI(BB, dl, TII->get(is64bit ? PPC::CMPD : PPC::CMPW), PPC::CR0)
       .addReg(oldval).addReg(dest);
-    BuildMI(BB, TII->get(PPC::BCC))
+    BuildMI(BB, dl, TII->get(PPC::BCC))
       .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(midMBB);
     BB->addSuccessor(loop2MBB);
     BB->addSuccessor(midMBB);
 
     BB = loop2MBB;
-    BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+    BuildMI(BB, dl, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
       .addReg(newval).addReg(ptrA).addReg(ptrB);
-    BuildMI(BB, TII->get(PPC::BCC))
+    BuildMI(BB, dl, TII->get(PPC::BCC))
       .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loop1MBB);
-    BuildMI(BB, TII->get(PPC::B)).addMBB(exitMBB);
+    BuildMI(BB, dl, TII->get(PPC::B)).addMBB(exitMBB);
     BB->addSuccessor(loop1MBB);
     BB->addSuccessor(exitMBB);
     
     BB = midMBB;
-    BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+    BuildMI(BB, dl, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
       .addReg(dest).addReg(ptrA).addReg(ptrB);
     BB->addSuccessor(exitMBB);
 
@@ -4333,6 +4337,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     unsigned ptrB   = MI->getOperand(2).getReg();
     unsigned oldval = MI->getOperand(3).getReg();
     unsigned newval = MI->getOperand(4).getReg();
+    DebugLoc dl     = MI->getDebugLoc();
 
     MachineBasicBlock *loop1MBB = F->CreateMachineBasicBlock(LLVM_BB);
     MachineBasicBlock *loop2MBB = F->CreateMachineBasicBlock(LLVM_BB);
@@ -4397,69 +4402,73 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //   srw dest, tmpDest, shift
     if (ptrA!=PPC::R0) {
       Ptr1Reg = RegInfo.createVirtualRegister(RC);
-      BuildMI(BB, TII->get(is64bit ? PPC::ADD8 : PPC::ADD4), Ptr1Reg)
+      BuildMI(BB, dl, TII->get(is64bit ? PPC::ADD8 : PPC::ADD4), Ptr1Reg)
         .addReg(ptrA).addReg(ptrB);
     } else {
       Ptr1Reg = ptrB;
     }
-    BuildMI(BB, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
+    BuildMI(BB, dl, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
         .addImm(3).addImm(27).addImm(is8bit ? 28 : 27);
-    BuildMI(BB, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
+    BuildMI(BB, dl, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
         .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
     if (is64bit)
-      BuildMI(BB, TII->get(PPC::RLDICR), PtrReg)
+      BuildMI(BB, dl, TII->get(PPC::RLDICR), PtrReg)
         .addReg(Ptr1Reg).addImm(0).addImm(61);
     else
-      BuildMI(BB, TII->get(PPC::RLWINM), PtrReg)
+      BuildMI(BB, dl, TII->get(PPC::RLWINM), PtrReg)
         .addReg(Ptr1Reg).addImm(0).addImm(0).addImm(29);
-    BuildMI(BB, TII->get(PPC::SLW), NewVal2Reg)
+    BuildMI(BB, dl, TII->get(PPC::SLW), NewVal2Reg)
         .addReg(newval).addReg(ShiftReg);
-    BuildMI(BB, TII->get(PPC::SLW), OldVal2Reg)
+    BuildMI(BB, dl, TII->get(PPC::SLW), OldVal2Reg)
         .addReg(oldval).addReg(ShiftReg);
     if (is8bit)
-      BuildMI(BB, TII->get(PPC::LI), Mask2Reg).addImm(255);
+      BuildMI(BB, dl, TII->get(PPC::LI), Mask2Reg).addImm(255);
     else {
-      BuildMI(BB, TII->get(PPC::LI), Mask3Reg).addImm(0);
-      BuildMI(BB, TII->get(PPC::ORI), Mask2Reg).addReg(Mask3Reg).addImm(65535);
+      BuildMI(BB, dl, TII->get(PPC::LI), Mask3Reg).addImm(0);
+      BuildMI(BB, dl, TII->get(PPC::ORI), Mask2Reg)
+        .addReg(Mask3Reg).addImm(65535);
     }
-    BuildMI(BB, TII->get(PPC::SLW), MaskReg)
+    BuildMI(BB, dl, TII->get(PPC::SLW), MaskReg)
         .addReg(Mask2Reg).addReg(ShiftReg);
-    BuildMI(BB, TII->get(PPC::AND), NewVal3Reg)
+    BuildMI(BB, dl, TII->get(PPC::AND), NewVal3Reg)
         .addReg(NewVal2Reg).addReg(MaskReg);
-    BuildMI(BB, TII->get(PPC::AND), OldVal3Reg)
+    BuildMI(BB, dl, TII->get(PPC::AND), OldVal3Reg)
         .addReg(OldVal2Reg).addReg(MaskReg);
 
     BB = loop1MBB;
-    BuildMI(BB, TII->get(PPC::LWARX), TmpDestReg)
+    BuildMI(BB, dl, TII->get(PPC::LWARX), TmpDestReg)
         .addReg(PPC::R0).addReg(PtrReg);
-    BuildMI(BB, TII->get(PPC::AND),TmpReg).addReg(TmpDestReg).addReg(MaskReg);
-    BuildMI(BB, TII->get(PPC::CMPW), PPC::CR0)
+    BuildMI(BB, dl, TII->get(PPC::AND),TmpReg)
+        .addReg(TmpDestReg).addReg(MaskReg);
+    BuildMI(BB, dl, TII->get(PPC::CMPW), PPC::CR0)
         .addReg(TmpReg).addReg(OldVal3Reg);
-    BuildMI(BB, TII->get(PPC::BCC))
+    BuildMI(BB, dl, TII->get(PPC::BCC))
         .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(midMBB);
     BB->addSuccessor(loop2MBB);
     BB->addSuccessor(midMBB);
 
     BB = loop2MBB;
-    BuildMI(BB, TII->get(PPC::ANDC),Tmp2Reg).addReg(TmpDestReg).addReg(MaskReg);
-    BuildMI(BB, TII->get(PPC::OR),Tmp4Reg).addReg(Tmp2Reg).addReg(NewVal3Reg);
-    BuildMI(BB, TII->get(PPC::STWCX)).addReg(Tmp4Reg)
+    BuildMI(BB, dl, TII->get(PPC::ANDC),Tmp2Reg)
+        .addReg(TmpDestReg).addReg(MaskReg);
+    BuildMI(BB, dl, TII->get(PPC::OR),Tmp4Reg)
+        .addReg(Tmp2Reg).addReg(NewVal3Reg);
+    BuildMI(BB, dl, TII->get(PPC::STWCX)).addReg(Tmp4Reg)
         .addReg(PPC::R0).addReg(PtrReg);
-    BuildMI(BB, TII->get(PPC::BCC))
+    BuildMI(BB, dl, TII->get(PPC::BCC))
       .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loop1MBB);
-    BuildMI(BB, TII->get(PPC::B)).addMBB(exitMBB);
+    BuildMI(BB, dl, TII->get(PPC::B)).addMBB(exitMBB);
     BB->addSuccessor(loop1MBB);
     BB->addSuccessor(exitMBB);
     
     BB = midMBB;
-    BuildMI(BB, TII->get(PPC::STWCX)).addReg(TmpDestReg)
+    BuildMI(BB, dl, TII->get(PPC::STWCX)).addReg(TmpDestReg)
       .addReg(PPC::R0).addReg(PtrReg);
     BB->addSuccessor(exitMBB);
 
     //  exitMBB:
     //   ...
     BB = exitMBB;
-    BuildMI(BB, TII->get(PPC::SRW),dest).addReg(TmpReg).addReg(ShiftReg);
+    BuildMI(BB, dl, TII->get(PPC::SRW),dest).addReg(TmpReg).addReg(ShiftReg);
   } else {
     assert(0 && "Unexpected instr type to insert");
   }

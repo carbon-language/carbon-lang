@@ -145,13 +145,14 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
         unsigned CRReg = I->getOperand(1).getReg();
         
         MachineInstr *OldBranch = I;
+        DebugLoc dl = OldBranch->getDebugLoc();
         
         // Jump over the uncond branch inst (i.e. $PC+8) on opposite condition.
-        BuildMI(MBB, I, TII->get(PPC::BCC))
+        BuildMI(MBB, I, dl, TII->get(PPC::BCC))
           .addImm(PPC::InvertPredicate(Pred)).addReg(CRReg).addImm(2);
         
         // Uncond branch to the real destination.
-        I = BuildMI(MBB, I, TII->get(PPC::B)).addMBB(Dest);
+        I = BuildMI(MBB, I, dl, TII->get(PPC::B)).addMBB(Dest);
 
         // Remove the old branch from the function.
         OldBranch->eraseFromParent();

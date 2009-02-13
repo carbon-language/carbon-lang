@@ -426,18 +426,20 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       unsigned ADDInstr = is64Bit ? PPC::ADD8 : PPC::ADD4;
       unsigned LISInstr = is64Bit ? PPC::LIS8 : PPC::LIS;
       unsigned ORIInstr = is64Bit ? PPC::ORI8 : PPC::ORI;
+      MachineInstr *MI = I;
+      DebugLoc dl = MI->getDebugLoc();
 
       if (isInt16(CalleeAmt)) {
-        BuildMI(MBB, I, TII.get(ADDIInstr), StackReg).addReg(StackReg).
+        BuildMI(MBB, I, dl, TII.get(ADDIInstr), StackReg).addReg(StackReg).
           addImm(CalleeAmt);
       } else {
         MachineBasicBlock::iterator MBBI = I;
-        BuildMI(MBB, MBBI, TII.get(LISInstr), TmpReg)
+        BuildMI(MBB, MBBI, dl, TII.get(LISInstr), TmpReg)
           .addImm(CalleeAmt >> 16);
-        BuildMI(MBB, MBBI, TII.get(ORIInstr), TmpReg)
+        BuildMI(MBB, MBBI, dl, TII.get(ORIInstr), TmpReg)
           .addReg(TmpReg, false, false, true)
           .addImm(CalleeAmt & 0xFFFF);
-        BuildMI(MBB, MBBI, TII.get(ADDInstr))
+        BuildMI(MBB, MBBI, dl, TII.get(ADDInstr))
           .addReg(StackReg)
           .addReg(StackReg)
           .addReg(TmpReg);
@@ -481,6 +483,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   // Determine whether 64-bit pointers are used.
   bool LP64 = Subtarget.isPPC64();
+  DebugLoc dl = MI.getDebugLoc();
 
   // Get the maximum call stack size.
   unsigned maxCallFrameSize = MFI->getMaxCallFrameSize();
@@ -511,20 +514,20 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
     Reg = PPC::R0;
   
   if (MaxAlign < TargetAlign && isInt16(FrameSize)) {
-    BuildMI(MBB, II, TII.get(PPC::ADDI), Reg)
+    BuildMI(MBB, II, dl, TII.get(PPC::ADDI), Reg)
       .addReg(PPC::R31)
       .addImm(FrameSize);
   } else if (LP64) {
     if (EnableRegisterScavenging) // FIXME (64-bit): Use "true" part.
-      BuildMI(MBB, II, TII.get(PPC::LD), Reg)
+      BuildMI(MBB, II, dl, TII.get(PPC::LD), Reg)
         .addImm(0)
         .addReg(PPC::X1);
     else
-      BuildMI(MBB, II, TII.get(PPC::LD), PPC::X0)
+      BuildMI(MBB, II, dl, TII.get(PPC::LD), PPC::X0)
         .addImm(0)
         .addReg(PPC::X1);
   } else {
-    BuildMI(MBB, II, TII.get(PPC::LWZ), Reg)
+    BuildMI(MBB, II, dl, TII.get(PPC::LWZ), Reg)
       .addImm(0)
       .addReg(PPC::R1);
   }
@@ -533,39 +536,39 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   // address of new allocated space.
   if (LP64) {
     if (EnableRegisterScavenging) // FIXME (64-bit): Use "true" part.
-      BuildMI(MBB, II, TII.get(PPC::STDUX))
+      BuildMI(MBB, II, dl, TII.get(PPC::STDUX))
         .addReg(Reg, false, false, true)
         .addReg(PPC::X1)
         .addReg(MI.getOperand(1).getReg());
     else
-      BuildMI(MBB, II, TII.get(PPC::STDUX))
+      BuildMI(MBB, II, dl, TII.get(PPC::STDUX))
         .addReg(PPC::X0, false, false, true)
         .addReg(PPC::X1)
         .addReg(MI.getOperand(1).getReg());
 
     if (!MI.getOperand(1).isKill())
-      BuildMI(MBB, II, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
+      BuildMI(MBB, II, dl, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
         .addReg(PPC::X1)
         .addImm(maxCallFrameSize);
     else
       // Implicitly kill the register.
-      BuildMI(MBB, II, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
+      BuildMI(MBB, II, dl, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
         .addReg(PPC::X1)
         .addImm(maxCallFrameSize)
         .addReg(MI.getOperand(1).getReg(), false, true, true);
   } else {
-    BuildMI(MBB, II, TII.get(PPC::STWUX))
+    BuildMI(MBB, II, dl, TII.get(PPC::STWUX))
       .addReg(Reg, false, false, true)
       .addReg(PPC::R1)
       .addReg(MI.getOperand(1).getReg());
 
     if (!MI.getOperand(1).isKill())
-      BuildMI(MBB, II, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
+      BuildMI(MBB, II, dl, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
         .addReg(PPC::R1)
         .addImm(maxCallFrameSize);
     else
       // Implicitly kill the register.
-      BuildMI(MBB, II, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
+      BuildMI(MBB, II, dl, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
         .addReg(PPC::R1)
         .addImm(maxCallFrameSize)
         .addReg(MI.getOperand(1).getReg(), false, true, true);
@@ -590,6 +593,7 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;       // ; SPILL_CR <SrcReg>, <offset>, <FI>
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
+  DebugLoc dl = MI.getDebugLoc();
 
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
@@ -599,10 +603,10 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   // We need to store the CR in the low 4-bits of the saved value. First, issue
   // an MFCR to save all of the CRBits. Add an implicit kill of the CR.
   if (!MI.getOperand(0).isKill())
-    BuildMI(MBB, II, TII.get(PPC::MFCR), Reg);
+    BuildMI(MBB, II, dl, TII.get(PPC::MFCR), Reg);
   else
     // Implicitly kill the CR register.
-    BuildMI(MBB, II, TII.get(PPC::MFCR), Reg)
+    BuildMI(MBB, II, dl, TII.get(PPC::MFCR), Reg)
       .addReg(MI.getOperand(0).getReg(), false, true, true);
     
   // If the saved register wasn't CR0, shift the bits left so that they are in
@@ -610,13 +614,13 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   unsigned SrcReg = MI.getOperand(0).getReg();
   if (SrcReg != PPC::CR0)
     // rlwinm rA, rA, ShiftBits, 0, 31.
-    BuildMI(MBB, II, TII.get(PPC::RLWINM), Reg)
+    BuildMI(MBB, II, dl, TII.get(PPC::RLWINM), Reg)
       .addReg(Reg, false, false, true)
       .addImm(PPCRegisterInfo::getRegisterNumbering(SrcReg) * 4)
       .addImm(0)
       .addImm(31);
 
-  addFrameReference(BuildMI(MBB, II, TII.get(PPC::STW))
+  addFrameReference(BuildMI(MBB, II, dl, TII.get(PPC::STW))
                     .addReg(Reg, false, false, MI.getOperand(1).getImm()),
                     FrameIndex);
 
@@ -636,6 +640,7 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineFunction &MF = *MBB.getParent();
   // Get the frame info.
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  DebugLoc dl = MI.getDebugLoc();
 
   // Find out which operand is the frame index.
   unsigned FIOperandNo = 0;
@@ -727,9 +732,9 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     SReg = PPC::R0;
 
   // Insert a set of rA with the full offset value before the ld, st, or add
-  BuildMI(MBB, II, TII.get(PPC::LIS), SReg)
+  BuildMI(MBB, II, dl, TII.get(PPC::LIS), SReg)
     .addImm(Offset >> 16);
-  BuildMI(MBB, II, TII.get(PPC::ORI), SReg)
+  BuildMI(MBB, II, dl, TII.get(PPC::ORI), SReg)
     .addReg(SReg, false, false, true)
     .addImm(Offset);
 
@@ -815,6 +820,7 @@ static void RemoveVRSaveCode(MachineInstr *MI) {
 // transform this into the appropriate ORI instruction.
 static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
   MachineFunction *MF = MI->getParent()->getParent();
+  DebugLoc dl = MI->getDebugLoc();
 
   unsigned UsedRegMask = 0;
   for (unsigned i = 0; i != 32; ++i)
@@ -850,33 +856,33 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
 
   if ((UsedRegMask & 0xFFFF) == UsedRegMask) {
     if (DstReg != SrcReg)
-      BuildMI(*MI->getParent(), MI, TII.get(PPC::ORI), DstReg)
+      BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORI), DstReg)
         .addReg(SrcReg)
         .addImm(UsedRegMask);
     else
-      BuildMI(*MI->getParent(), MI, TII.get(PPC::ORI), DstReg)
+      BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORI), DstReg)
         .addReg(SrcReg, false, false, true)
         .addImm(UsedRegMask);
   } else if ((UsedRegMask & 0xFFFF0000) == UsedRegMask) {
     if (DstReg != SrcReg)
-      BuildMI(*MI->getParent(), MI, TII.get(PPC::ORIS), DstReg)
+      BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORIS), DstReg)
         .addReg(SrcReg)
         .addImm(UsedRegMask >> 16);
     else
-      BuildMI(*MI->getParent(), MI, TII.get(PPC::ORIS), DstReg)
+      BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORIS), DstReg)
         .addReg(SrcReg, false, false, true)
         .addImm(UsedRegMask >> 16);
   } else {
     if (DstReg != SrcReg)
-      BuildMI(*MI->getParent(), MI, TII.get(PPC::ORIS), DstReg)
+      BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORIS), DstReg)
         .addReg(SrcReg)
         .addImm(UsedRegMask >> 16);
     else
-      BuildMI(*MI->getParent(), MI, TII.get(PPC::ORIS), DstReg)
+      BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORIS), DstReg)
         .addReg(SrcReg, false, false, true)
         .addImm(UsedRegMask >> 16);
 
-    BuildMI(*MI->getParent(), MI, TII.get(PPC::ORI), DstReg)
+    BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORI), DstReg)
       .addReg(DstReg, false, false, true)
       .addImm(UsedRegMask & 0xFFFF);
   }
@@ -997,6 +1003,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  DebugLoc dl = DebugLoc::getUnknownLoc();
   bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
        !MF.getFunction()->doesNotThrow() ||
        UnwindTablesMandatory;
@@ -1037,31 +1044,31 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   if (IsPPC64) {
     if (MustSaveLR)
-      BuildMI(MBB, MBBI, TII.get(PPC::MFLR8), PPC::X0);
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::MFLR8), PPC::X0);
       
     if (HasFP)
-      BuildMI(MBB, MBBI, TII.get(PPC::STD))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STD))
         .addReg(PPC::X31)
         .addImm(FPOffset/4)
         .addReg(PPC::X1);
     
     if (MustSaveLR)
-      BuildMI(MBB, MBBI, TII.get(PPC::STD))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STD))
         .addReg(PPC::X0)
         .addImm(LROffset / 4)
         .addReg(PPC::X1);
   } else {
     if (MustSaveLR)
-      BuildMI(MBB, MBBI, TII.get(PPC::MFLR), PPC::R0);
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::MFLR), PPC::R0);
       
     if (HasFP)
-      BuildMI(MBB, MBBI, TII.get(PPC::STW))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STW))
         .addReg(PPC::R31)
         .addImm(FPOffset)
         .addReg(PPC::R1);
 
     if (MustSaveLR)
-      BuildMI(MBB, MBBI, TII.get(PPC::STW))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STW))
         .addReg(PPC::R0)
         .addImm(LROffset)
         .addReg(PPC::R1);
@@ -1077,7 +1084,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (needsFrameMoves) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(PPC::DBG_LABEL)).addImm(FrameLabelId);
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addImm(FrameLabelId);
   }
   
   // Adjust stack pointer: r1 += NegFrameSize.
@@ -1088,30 +1095,30 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
       assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
 
-      BuildMI(MBB, MBBI, TII.get(PPC::RLWINM), PPC::R0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::RLWINM), PPC::R0)
         .addReg(PPC::R1)
         .addImm(0)
         .addImm(32 - Log2_32(MaxAlign))
         .addImm(31);
-      BuildMI(MBB, MBBI, TII.get(PPC::SUBFIC) ,PPC::R0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::SUBFIC) ,PPC::R0)
         .addReg(PPC::R0, false, false, true)
         .addImm(NegFrameSize);
-      BuildMI(MBB, MBBI, TII.get(PPC::STWUX))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STWUX))
         .addReg(PPC::R1)
         .addReg(PPC::R1)
         .addReg(PPC::R0);
     } else if (isInt16(NegFrameSize)) {
-      BuildMI(MBB, MBBI, TII.get(PPC::STWU), PPC::R1)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STWU), PPC::R1)
         .addReg(PPC::R1)
         .addImm(NegFrameSize)
         .addReg(PPC::R1);
     } else {
-      BuildMI(MBB, MBBI, TII.get(PPC::LIS), PPC::R0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS), PPC::R0)
         .addImm(NegFrameSize >> 16);
-      BuildMI(MBB, MBBI, TII.get(PPC::ORI), PPC::R0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI), PPC::R0)
         .addReg(PPC::R0, false, false, true)
         .addImm(NegFrameSize & 0xFFFF);
-      BuildMI(MBB, MBBI, TII.get(PPC::STWUX))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STWUX))
         .addReg(PPC::R1)
         .addReg(PPC::R1)
         .addReg(PPC::R0);
@@ -1121,29 +1128,29 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
       assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
 
-      BuildMI(MBB, MBBI, TII.get(PPC::RLDICL), PPC::X0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::RLDICL), PPC::X0)
         .addReg(PPC::X1)
         .addImm(0)
         .addImm(64 - Log2_32(MaxAlign));
-      BuildMI(MBB, MBBI, TII.get(PPC::SUBFIC8), PPC::X0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::SUBFIC8), PPC::X0)
         .addReg(PPC::X0)
         .addImm(NegFrameSize);
-      BuildMI(MBB, MBBI, TII.get(PPC::STDUX))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STDUX))
         .addReg(PPC::X1)
         .addReg(PPC::X1)
         .addReg(PPC::X0);
     } else if (isInt16(NegFrameSize)) {
-      BuildMI(MBB, MBBI, TII.get(PPC::STDU), PPC::X1)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STDU), PPC::X1)
         .addReg(PPC::X1)
         .addImm(NegFrameSize / 4)
         .addReg(PPC::X1);
     } else {
-      BuildMI(MBB, MBBI, TII.get(PPC::LIS8), PPC::X0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS8), PPC::X0)
         .addImm(NegFrameSize >> 16);
-      BuildMI(MBB, MBBI, TII.get(PPC::ORI8), PPC::X0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI8), PPC::X0)
         .addReg(PPC::X0, false, false, true)
         .addImm(NegFrameSize & 0xFFFF);
-      BuildMI(MBB, MBBI, TII.get(PPC::STDUX))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STDUX))
         .addReg(PPC::X1)
         .addReg(PPC::X1)
         .addReg(PPC::X0);
@@ -1186,7 +1193,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     
     // Mark effective beginning of when frame pointer is ready.
     unsigned ReadyLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(PPC::DBG_LABEL)).addImm(ReadyLabelId);
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addImm(ReadyLabelId);
     
     MachineLocation FPDst(HasFP ? (IsPPC64 ? PPC::X31 : PPC::R31) :
                                   (IsPPC64 ? PPC::X1 : PPC::R1));
@@ -1197,11 +1204,11 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If there is a frame pointer, copy R1 into R31
   if (HasFP) {
     if (!IsPPC64) {
-      BuildMI(MBB, MBBI, TII.get(PPC::OR), PPC::R31)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::OR), PPC::R31)
         .addReg(PPC::R1)
         .addReg(PPC::R1);
     } else {
-      BuildMI(MBB, MBBI, TII.get(PPC::OR8), PPC::X31)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::OR8), PPC::X31)
         .addReg(PPC::X1)
         .addReg(PPC::X1);
     }
@@ -1212,6 +1219,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   unsigned RetOpcode = MBBI->getOpcode();
+  DebugLoc dl = DebugLoc::getUnknownLoc();
 
   assert( (RetOpcode == PPC::BLR ||
            RetOpcode == PPC::TCRETURNri ||
@@ -1274,73 +1282,75 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
       // value of R31 in this case.
       if (FI->hasFastCall() && isInt16(FrameSize)) {
         assert(hasFP(MF) && "Expecting a valid the frame pointer.");
-        BuildMI(MBB, MBBI, TII.get(PPC::ADDI), PPC::R1)
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI), PPC::R1)
           .addReg(PPC::R31).addImm(FrameSize);
       } else if(FI->hasFastCall()) {
-        BuildMI(MBB, MBBI, TII.get(PPC::LIS), PPC::R0)
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS), PPC::R0)
           .addImm(FrameSize >> 16);
-        BuildMI(MBB, MBBI, TII.get(PPC::ORI), PPC::R0)
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI), PPC::R0)
           .addReg(PPC::R0, false, false, true)
           .addImm(FrameSize & 0xFFFF);
-        BuildMI(MBB, MBBI, TII.get(PPC::ADD4))
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADD4))
           .addReg(PPC::R1)
           .addReg(PPC::R31)
           .addReg(PPC::R0);
       } else if (isInt16(FrameSize) &&
                  (!ALIGN_STACK || TargetAlign >= MaxAlign) &&
                  !MFI->hasVarSizedObjects()) {
-        BuildMI(MBB, MBBI, TII.get(PPC::ADDI), PPC::R1)
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI), PPC::R1)
           .addReg(PPC::R1).addImm(FrameSize);
       } else {
-        BuildMI(MBB, MBBI, TII.get(PPC::LWZ),PPC::R1).addImm(0).addReg(PPC::R1);
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::LWZ),PPC::R1)
+          .addImm(0).addReg(PPC::R1);
       }
     } else {
       if (FI->hasFastCall() && isInt16(FrameSize)) {
         assert(hasFP(MF) && "Expecting a valid the frame pointer.");
-        BuildMI(MBB, MBBI, TII.get(PPC::ADDI8), PPC::X1)
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI8), PPC::X1)
           .addReg(PPC::X31).addImm(FrameSize);
       } else if(FI->hasFastCall()) {
-        BuildMI(MBB, MBBI, TII.get(PPC::LIS8), PPC::X0)
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS8), PPC::X0)
           .addImm(FrameSize >> 16);
-        BuildMI(MBB, MBBI, TII.get(PPC::ORI8), PPC::X0)
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI8), PPC::X0)
           .addReg(PPC::X0, false, false, true)
           .addImm(FrameSize & 0xFFFF);
-        BuildMI(MBB, MBBI, TII.get(PPC::ADD8))
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADD8))
           .addReg(PPC::X1)
           .addReg(PPC::X31)
           .addReg(PPC::X0);
       } else if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
             !MFI->hasVarSizedObjects()) {
-        BuildMI(MBB, MBBI, TII.get(PPC::ADDI8), PPC::X1)
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI8), PPC::X1)
            .addReg(PPC::X1).addImm(FrameSize);
       } else {
-        BuildMI(MBB, MBBI, TII.get(PPC::LD), PPC::X1).addImm(0).addReg(PPC::X1);
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::LD), PPC::X1)
+           .addImm(0).addReg(PPC::X1);
       }
     }
   }
 
   if (IsPPC64) {
     if (MustSaveLR)
-      BuildMI(MBB, MBBI, TII.get(PPC::LD), PPC::X0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::LD), PPC::X0)
         .addImm(LROffset/4).addReg(PPC::X1);
         
     if (HasFP)
-      BuildMI(MBB, MBBI, TII.get(PPC::LD), PPC::X31)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::LD), PPC::X31)
         .addImm(FPOffset/4).addReg(PPC::X1);
         
     if (MustSaveLR)
-      BuildMI(MBB, MBBI, TII.get(PPC::MTLR8)).addReg(PPC::X0);
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::MTLR8)).addReg(PPC::X0);
   } else {
     if (MustSaveLR)
-      BuildMI(MBB, MBBI, TII.get(PPC::LWZ), PPC::R0)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::LWZ), PPC::R0)
           .addImm(LROffset).addReg(PPC::R1);
         
     if (HasFP)
-      BuildMI(MBB, MBBI, TII.get(PPC::LWZ), PPC::R31)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::LWZ), PPC::R31)
           .addImm(FPOffset).addReg(PPC::R1);
           
     if (MustSaveLR)
-      BuildMI(MBB, MBBI, TII.get(PPC::MTLR)).addReg(PPC::R0);
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::MTLR)).addReg(PPC::R0);
   }
 
   // Callee pop calling convention. Pop parameter/linkage area. Used for tail
@@ -1358,15 +1368,15 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
      unsigned ORIInstr = IsPPC64 ? PPC::ORI8 : PPC::ORI;
 
      if (CallerAllocatedAmt && isInt16(CallerAllocatedAmt)) {
-       BuildMI(MBB, MBBI, TII.get(ADDIInstr), StackReg)
+       BuildMI(MBB, MBBI, dl, TII.get(ADDIInstr), StackReg)
          .addReg(StackReg).addImm(CallerAllocatedAmt);
      } else {
-        BuildMI(MBB, MBBI, TII.get(LISInstr), TmpReg)
+       BuildMI(MBB, MBBI, dl, TII.get(LISInstr), TmpReg)
           .addImm(CallerAllocatedAmt >> 16);
-        BuildMI(MBB, MBBI, TII.get(ORIInstr), TmpReg)
+       BuildMI(MBB, MBBI, dl, TII.get(ORIInstr), TmpReg)
           .addReg(TmpReg, false, false, true)
           .addImm(CallerAllocatedAmt & 0xFFFF);
-        BuildMI(MBB, MBBI, TII.get(ADDInstr))
+       BuildMI(MBB, MBBI, dl, TII.get(ADDInstr))
           .addReg(StackReg)
           .addReg(FPReg)
           .addReg(TmpReg);
@@ -1374,31 +1384,31 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   } else if (RetOpcode == PPC::TCRETURNdi) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
-    BuildMI(MBB, MBBI, TII.get(PPC::TAILB)).
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILB)).
       addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset());
   } else if (RetOpcode == PPC::TCRETURNri) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     assert(JumpTarget.isReg() && "Expecting register operand.");
-    BuildMI(MBB, MBBI, TII.get(PPC::TAILBCTR));
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBCTR));
   } else if (RetOpcode == PPC::TCRETURNai) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
-    BuildMI(MBB, MBBI, TII.get(PPC::TAILBA)).addImm(JumpTarget.getImm());
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBA)).addImm(JumpTarget.getImm());
   } else if (RetOpcode == PPC::TCRETURNdi8) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
-    BuildMI(MBB, MBBI, TII.get(PPC::TAILB8)).
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILB8)).
       addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset());
   } else if (RetOpcode == PPC::TCRETURNri8) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     assert(JumpTarget.isReg() && "Expecting register operand.");
-    BuildMI(MBB, MBBI, TII.get(PPC::TAILBCTR8));
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBCTR8));
   } else if (RetOpcode == PPC::TCRETURNai8) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
-    BuildMI(MBB, MBBI, TII.get(PPC::TAILBA8)).addImm(JumpTarget.getImm());
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBA8)).addImm(JumpTarget.getImm());
   }
 }
 

@@ -292,6 +292,8 @@ unsigned
 PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                            MachineBasicBlock *FBB,
                            const SmallVectorImpl<MachineOperand> &Cond) const {
+  // FIXME this should probably have a DebugLoc argument
+  DebugLoc dl = DebugLoc::getUnknownLoc();
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) && 
@@ -300,17 +302,17 @@ PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   // One-way branch.
   if (FBB == 0) {
     if (Cond.empty())   // Unconditional branch
-      BuildMI(&MBB, get(PPC::B)).addMBB(TBB);
+      BuildMI(&MBB, dl, get(PPC::B)).addMBB(TBB);
     else                // Conditional branch
-      BuildMI(&MBB, get(PPC::BCC))
+      BuildMI(&MBB, dl, get(PPC::BCC))
         .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
     return 1;
   }
   
   // Two-way Conditional Branch.
-  BuildMI(&MBB, get(PPC::BCC))
+  BuildMI(&MBB, dl, get(PPC::BCC))
     .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
-  BuildMI(&MBB, get(PPC::B)).addMBB(FBB);
+  BuildMI(&MBB, dl, get(PPC::B)).addMBB(FBB);
   return 2;
 }
 
