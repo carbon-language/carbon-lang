@@ -57,3 +57,10 @@ int test9(struct f *P) {
   return R;
 }
 
+// PR3562
+void test10(int n,...) {
+  struct S {
+    double          a[n];  // expected-error {{fields must have a constant size}}
+  }               s;
+  double x = s.a[0];  // should not get another error here.
+}

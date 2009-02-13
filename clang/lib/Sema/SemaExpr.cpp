@@ -1571,6 +1571,12 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     } else
       MemberDecl = Result;
 
+    // If the decl being referenced had an error, return an error for this
+    // sub-expr without emitting another error, in order to avoid cascading
+    // error cases.
+    if (MemberDecl->isInvalidDecl())
+      return ExprError();
+
     if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl)) {
       // We may have found a field within an anonymous union or struct
       // (C++ [class.union]).
@@ -1623,6 +1629,12 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // (*Obj).ivar.
   if (const ObjCInterfaceType *IFTy = BaseType->getAsObjCInterfaceType()) {
     if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member)) {
+      // If the decl being referenced had an error, return an error for this
+      // sub-expr without emitting another error, in order to avoid cascading
+      // error cases.
+      if (IV->isInvalidDecl())
+        return ExprError();
+      
       ObjCIvarRefExpr *MRef= new (Context) ObjCIvarRefExpr(IV, IV->getType(), 
                                                  MemberLoc, BaseExpr,
                                                  OpKind == tok::arrow);
