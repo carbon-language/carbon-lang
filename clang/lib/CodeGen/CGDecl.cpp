@@ -144,7 +144,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   DMEntry = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
 
   // Emit global variable debug descriptor for static vars.
-  CGDebugInfo *DI = CGM.getDebugInfo();
+  CGDebugInfo *DI = getDebugInfo();
   if(DI) {
     DI->setLocation(D.getLocation());
     DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(GV), &D);
@@ -224,7 +224,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   DMEntry = DeclPtr;
 
   // Emit debug info for local var declaration.
-  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
+  if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(D.getLocation());
     DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
   }
@@ -299,7 +299,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
   DMEntry = DeclPtr;
 
   // Emit debug info for param declaration.
-  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
+  if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(D.getLocation());
     DI->EmitDeclareOfArgVariable(&D, DeclPtr, Builder);
   }

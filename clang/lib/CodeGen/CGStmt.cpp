@@ -28,7 +28,7 @@ using namespace CodeGen;
 //===----------------------------------------------------------------------===//
 
 void CodeGenFunction::EmitStopPoint(const Stmt *S) {
-  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
+  if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(S->getLocStart());
     DI->EmitStopPoint(CurFn, Builder);
   }
@@ -124,7 +124,7 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
 RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
                                          llvm::Value *AggLoc, bool isAggVol) {
 
-  CGDebugInfo *DI = CGM.getDebugInfo();
+  CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     EnsureInsertPoint();
     DI->setLocation(S.getLBracLoc());

@@ -1310,8 +1310,8 @@ static void HandleNodebugAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
-  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
-  if (!Fn) {
+
+  if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << "nodebug" << "function";
     return;

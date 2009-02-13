@@ -55,6 +55,7 @@ namespace clang {
 namespace CodeGen {
   class CodeGenModule;
   class CodeGenTypes;
+  class CGDebugInfo;
   class CGFunctionInfo;
   class CGRecordLayout;
 
@@ -151,6 +152,8 @@ public:
   void EmitBranchThroughCleanup(llvm::BasicBlock *Dest);
 
 private:
+  CGDebugInfo* DebugInfo;
+  
   /// LabelIDs - Track arbitrary ids assigned to labels for use in implementing
   /// the GCC address-of-label extension and indirect goto. IDs are assigned to
   /// labels inside getIDForAddrOfLabel().
@@ -228,6 +231,7 @@ public:
   CodeGenFunction(CodeGenModule &cgm);
 
   ASTContext &getContext() const;
+  CGDebugInfo *getDebugInfo() { return DebugInfo; }
 
   void GenerateObjCMethod(const ObjCMethodDecl *OMD);
 

@@ -23,8 +23,8 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm) 
-  : CGM(cgm), Target(CGM.getContext().Target), SwitchInsn(NULL), 
-    CaseRangeBlock(NULL) {
+  : CGM(cgm), Target(CGM.getContext().Target), DebugInfo(0), SwitchInsn(0), 
+  CaseRangeBlock(0) {
     LLVMIntTy = ConvertType(getContext().IntTy);
     LLVMPointerWidth = Target.getPointerWidth(0);
 }
@@ -128,7 +128,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   EmitReturnBlock();
 
   // Emit debug descriptor for function end.
-  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
+  if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(EndLoc);
     DI->EmitRegionEnd(CurFn, Builder);
   }
@@ -168,7 +168,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   
   // Emit subprogram debug descriptor.
   // FIXME: The cast here is a huge hack.
-  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
+  if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(StartLoc);
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       DI->EmitFunctionStart(CGM.getMangledName(FD)->getName(),
@@ -197,6 +197,10 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
                                    llvm::Function *Fn) {
+  // Check if we should generate debug info for this function.
+  if (CGM.getDebugInfo() && !FD->getAttr<NodebugAttr>())
+    DebugInfo = CGM.getDebugInfo();
+  
   FunctionArgList Args;
   if (FD->getNumParams()) {
     const FunctionTypeProto* FProto = FD->getType()->getAsFunctionTypeProto();
