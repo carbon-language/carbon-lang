@@ -15,6 +15,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/Rewrite/HTMLRewrite.h"
+#include "clang/Lex/TokenConcatenation.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
@@ -428,6 +429,8 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
   // Start parsing the specified input file.
   PP.EnterMainSourceFile();
   
+  TokenConcatenation ConcatInfo(PP);
+  
   // Lex all the tokens.
   const SourceManager &SourceMgr = PP.getSourceManager();
   Token Tok;
@@ -465,6 +468,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     std::string Expansion = PP.getSpelling(Tok);
     unsigned LineLen = Expansion.size();
     
+    Token PrevTok = Tok;
     // Okay, eat this token, getting the next one.
     PP.Lex(Tok);
     
@@ -480,9 +484,18 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
       }
       
       LineLen -= Expansion.size();
+      
+      // If the tokens were already space separated, or if they must be to avoid
+      // them being implicitly pasted, add a space between them.
+      if (Tok.hasLeadingSpace() ||
+          ConcatInfo.AvoidConcat(PrevTok, Tok))
+        Expansion += ' ';
+      
       // Escape any special characters in the token text.
-      Expansion += ' ' + EscapeText(PP.getSpelling(Tok));
+      Expansion += EscapeText(PP.getSpelling(Tok));
       LineLen += Expansion.size();
+      
+      PrevTok = Tok;
       PP.Lex(Tok);
     }
     
