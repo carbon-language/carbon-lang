@@ -432,7 +432,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
   // If Start contains an SCEVAddRecExpr from a different loop, other than an
   // outer loop of the current loop, reject it.  SCEV has no concept of 
   // operating on one loop at a time so don't confuse it with such expressions.
-  if (containsAddRecFromDifferentLoop(Start, L))
+  if (containsAddRecFromDifferentLoop(AddRec->getOperand(0), L))
     return false;
 
   Start = SE->getAddExpr(Start, AddRec->getOperand(0));
