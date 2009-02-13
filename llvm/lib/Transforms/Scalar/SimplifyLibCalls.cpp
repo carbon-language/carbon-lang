@@ -722,6 +722,26 @@ struct VISIBILITY_HIDDEN StrLenOpt : public LibCallOptimization {
 };
 
 //===---------------------------------------===//
+// 'strto*' Optimizations
+
+struct VISIBILITY_HIDDEN StrToOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    const FunctionType *FT = Callee->getFunctionType();
+    if ((FT->getNumParams() != 2 && FT->getNumParams() != 3) ||
+        !isa<PointerType>(FT->getParamType(0)) ||
+        !isa<PointerType>(FT->getParamType(1)))
+      return 0;
+
+    Value *EndPtr = CI->getOperand(2);
+    if (isa<ConstantPointerNull>(EndPtr))
+      CI->addAttribute(1, Attribute::NoCapture);
+
+    return 0;
+  }
+};
+
+
+//===---------------------------------------===//
 // 'memcmp' Optimizations
 
 struct VISIBILITY_HIDDEN MemCmpOpt : public LibCallOptimization {
@@ -1329,8 +1349,8 @@ namespace {
     ExitOpt Exit; 
     // String and Memory LibCall Optimizations
     StrCatOpt StrCat; StrChrOpt StrChr; StrCmpOpt StrCmp; StrNCmpOpt StrNCmp;
-    StrCpyOpt StrCpy; StrLenOpt StrLen; MemCmpOpt MemCmp; MemCpyOpt  MemCpy;
-    MemMoveOpt MemMove; MemSetOpt MemSet;
+    StrCpyOpt StrCpy; StrLenOpt StrLen; StrToOpt StrTo; MemCmpOpt MemCmp;
+    MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
     PowOpt Pow; Exp2Opt Exp2; UnaryDoubleFPOpt UnaryDoubleFP;
     // Integer Optimizations
@@ -1383,6 +1403,13 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["strncmp"] = &StrNCmp;
   Optimizations["strcpy"] = &StrCpy;
   Optimizations["strlen"] = &StrLen;
+  Optimizations["strtol"] = &StrTo;
+  Optimizations["strtod"] = &StrTo;
+  Optimizations["strtof"] = &StrTo;
+  Optimizations["strtoul"] = &StrTo;
+  Optimizations["strtoll"] = &StrTo;
+  Optimizations["strtold"] = &StrTo;
+  Optimizations["strtoull"] = &StrTo;
   Optimizations["memcmp"] = &MemCmp;
   Optimizations["memcpy"] = &MemCpy;
   Optimizations["memmove"] = &MemMove;
@@ -1566,8 +1593,15 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         } else if ((NameLen == 6 && !strcmp(NameStr, "strcpy")) ||
                    (NameLen == 6 && !strcmp(NameStr, "stpcpy")) ||
                    (NameLen == 6 && !strcmp(NameStr, "strcat")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "strtol")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "strtod")) ||
+                   (NameLen == 6 && !strcmp(NameStr, "strtof")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strtoul")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strtoll")) ||
+                   (NameLen == 7 && !strcmp(NameStr, "strtold")) ||
                    (NameLen == 7 && !strcmp(NameStr, "strncat")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strncpy"))) {
+                   (NameLen == 7 && !strcmp(NameStr, "strncpy")) ||
+                   (NameLen == 8 && !strcmp(NameStr, "strtoull"))) {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
