@@ -494,7 +494,8 @@ DIAG(err_template_param_different_kind, ERROR,
 DIAG(note_template_param_different_kind, NOTE,
      "template parameter has a different kind in template argument")
 DIAG(err_template_nontype_parm_different_type, ERROR,
-     "template non-type parameter has a different type %0 in template %select{|template parameter }1redeclaration")
+     "template non-type parameter has a different type %0 in template "
+     "%select{|template parameter }1redeclaration")
 DIAG(note_template_nontype_parm_different_type, NOTE,
      "template non-type parameter has a different type %0 in template argument")
 DIAG(note_template_nontype_parm_prev_declaration, NOTE,
@@ -510,7 +511,9 @@ DIAG(err_template_param_default_arg_missing, ERROR,
 
 // C++ Template Argument Lists
 DIAG(err_template_arg_list_different_arity, ERROR,
-     "%select{too few|too many}0 template arguments for %select{class template|function template|template template parameter|template}1 %2")
+     "%select{too few|too many}0 template arguments for "
+     "%select{class template|function template|template template parameter"
+     "|template}1 %2")
 DIAG(note_template_decl_here, NOTE,
      "template is declared here")
 DIAG(err_template_arg_must_be_type, ERROR,
@@ -532,9 +535,11 @@ DIAG(err_template_arg_not_class_template, ERROR,
 DIAG(note_template_arg_refers_here_func, NOTE,
      "template argument refers to function template %0, here")
 DIAG(err_template_arg_template_params_mismatch, ERROR,
-     "template template argument has different template parameters than its corresponding template template parameter")
+     "template template argument has different template parameters than its "
+     "corresponding template template parameter")
 DIAG(err_template_arg_not_integral_or_enumeral, ERROR,
-     "non-type template argument of type %0 must have an integral or enumeration type")
+     "non-type template argument of type %0 must have an integral or enumeration"
+     " type")
 DIAG(err_template_arg_not_ice, ERROR,
      "non-type template argument of type %0 is not an integral constant expression")
 DIAG(err_template_arg_not_convertible, ERROR,
@@ -619,7 +624,8 @@ DIAG(err_vm_decl_in_file_scope, ERROR,
 DIAG(err_vm_decl_has_extern_linkage, ERROR,
      "variably modified type declaration can not have 'extern' linkage")
 DIAG(err_typecheck_field_variable_size, ERROR,
-     "fields must have a constant size")
+     "fields must have a constant size: 'variable length array in structure'"
+     " extension will never be supported")
 DIAG(err_typecheck_negative_array_size, ERROR,
      "array size is negative")
 DIAG(warn_typecheck_function_qualifiers, WARNING,
