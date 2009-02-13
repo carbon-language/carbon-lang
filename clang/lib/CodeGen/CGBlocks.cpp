@@ -65,11 +65,9 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl() {
 
   C = llvm::ConstantStruct::get(Elts);
 
-  char Name[32];
-  sprintf(Name, "__block_descriptor_tmp_%d", CGM.getDescriptorUniqueCount());
   C = new llvm::GlobalVariable(C->getType(), true,
                                llvm::GlobalValue::InternalLinkage,
-                               C, Name, &CGM.getModule());
+                               C, "__block_descriptor_tmp", &CGM.getModule());
   return C;
 }
 
@@ -126,6 +124,7 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
     if (BlockHasCopyDispose)
       flags |= BLOCK_HAS_COPY_DISPOSE;
 
+    // __isa
     C = CGM.getNSConcreteStackBlock();
     if (!insideFunction ||
         (!BlockRefDeclList && !BlockByrefDeclList)) {

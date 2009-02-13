@@ -52,7 +52,6 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
   DebugInfo = GenerateDebugInfo ? new CGDebugInfo(this) : 0;
 
   Block.GlobalUniqueCount = 0;
-  Block.DescriptorUniqueCount = 0;
 }
 
 CodeGenModule::~CodeGenModule() {
