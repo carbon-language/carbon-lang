@@ -808,15 +808,17 @@ public:
   
   static data_type ReadData(const internal_key_type& k, const unsigned char* d,
                             unsigned) {    
-    if (k.first == 0x1 /* File */) {
-      d += 4 * 2; // Skip the first 2 words.
+    
+    if (k.first /* File or Directory */) {
+      if (k.first == 0x1 /* File */) d += 4 * 2; // Skip the first 2 words.
       ino_t ino = (ino_t) ReadUnalignedLE32(d);
       dev_t dev = (dev_t) ReadUnalignedLE32(d);
       mode_t mode = (mode_t) ReadUnalignedLE16(d);
       time_t mtime = (time_t) ReadUnalignedLE64(d);    
       return data_type(ino, dev, mode, mtime, (off_t) ReadUnalignedLE64(d));
     }
-    
+
+    // Negative stat.  Don't read anything.
     return data_type();
   }
 };
@@ -841,6 +843,10 @@ public:
     if (I == Cache.end()) return ::stat(path, buf);
     
     const PTHStatData& Data = *I;
+    
+    if (!Data.hasStat)
+      return 1;
+
     buf->st_ino = Data.ino;
     buf->st_dev = Data.dev;
     buf->st_mtime = Data.mtime;

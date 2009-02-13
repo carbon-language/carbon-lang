@@ -207,25 +207,23 @@ public:
   
   
 class VISIBILITY_HIDDEN PTHEntryKeyVariant {
-  union { const FileEntry* FE; const DirectoryEntry* DE; const char* Path; };
+  union { const FileEntry* FE; const char* Path; };
   enum { IsFE = 0x1, IsDE = 0x2, IsNoExist = 0x0 } Kind;
+  struct stat *StatBuf;
 public:
-  PTHEntryKeyVariant(const FileEntry *fe) : FE(fe), Kind(IsFE) {}
-  PTHEntryKeyVariant(const DirectoryEntry *de) : DE(de), Kind(IsDE) {}
-  PTHEntryKeyVariant(const char* path) : Path(path), Kind(IsNoExist) {}
+  PTHEntryKeyVariant(const FileEntry *fe)
+    : FE(fe), Kind(IsFE), StatBuf(0) {}
+
+  PTHEntryKeyVariant(struct stat* statbuf, const char* path)
+    : Path(path), Kind(IsDE), StatBuf(new struct stat(*statbuf)) {}
+
+  PTHEntryKeyVariant(const char* path)
+    : Path(path), Kind(IsNoExist), StatBuf(0) {}
   
-  const FileEntry *getFile() const { return Kind == IsFE ? FE : 0; }
-  const DirectoryEntry *getDir() const { return Kind == IsDE ? DE : 0; }
-  const char* getNameOfNonExistantFile() const {
-    return Kind == IsNoExist ? Path : 0;
-  }
+  bool isFile() const { return Kind == IsFE; }
   
   const char* getCString() const {
-    switch (Kind) {
-      case IsFE: return FE->getName();
-      case IsDE: return DE->getName();
-      default: return Path;
-    }
+    return Kind == IsFE ? FE->getName() : Path;
   }
   
   unsigned getKind() const { return (unsigned) Kind; }
@@ -241,18 +239,21 @@ public:
         ::Emit64(Out, FE->getSize());
         break;
       case IsDE:
-        // FIXME
-      default: break;
-        // Emit nothing.        
+        // Emit stat information.
+        ::Emit32(Out, (uint32_t) StatBuf->st_ino);
+        ::Emit32(Out, (uint32_t) StatBuf->st_dev);
+        ::Emit16(Out, (uint16_t) StatBuf->st_mode);
+        ::Emit64(Out, (uint64_t) StatBuf->st_mtime);
+        ::Emit64(Out, (uint64_t) StatBuf->st_size);
+        delete StatBuf;
+        break;
+      default:
+        break;
     }
   }
   
   unsigned getRepresentationLength() const {
-    switch (Kind) {
-      case IsFE: return 4 + 4 + 2 + 8 + 8;
-      case IsDE: // FIXME
-      default: return 0;
-    }
+    return Kind == IsNoExist ? 0 : 4 + 4 + 2 + 8 + 8;
   }
 };
   
@@ -275,7 +276,7 @@ public:
     unsigned n = strlen(V.getCString()) + 1 + 1;
     ::Emit16(Out, n);
     
-    unsigned m = V.getRepresentationLength() + (V.getFile() ? 4 + 4 : 0);
+    unsigned m = V.getRepresentationLength() + (V.isFile() ? 4 + 4 : 0);
     ::Emit8(Out, m);
 
     return std::make_pair(n, m);
@@ -294,7 +295,7 @@ public:
 
     // For file entries emit the offsets into the PTH file for token data
     // and the preprocessor blocks table.
-    if (V.getFile()) {
+    if (V.isFile()) {
       ::Emit32(Out, E.getTokenOffset());
       ::Emit32(Out, E.getPPCondTableOffset());
     }
@@ -367,12 +368,44 @@ class VISIBILITY_HIDDEN PTHWriter {
 
   PTHEntry LexTokens(Lexer& L);
   Offset EmitCachedSpellings();
+
+  /// StatListener - A simple "interpose" object used to monitor stat calls
+  /// invoked by FileManager while processing the original sources used
+  /// as input to PTH generation.  StatListener populates the PTHWriter's
+  /// file map with stat information for directories as well as negative stats.
+  /// Stat information for files are populated elsewhere.
+  class StatListener : public StatSysCallCache {
+    PTHMap& PM;
+  public:
+    StatListener(PTHMap& pm) : PM(pm) {}
+    ~StatListener() {}
+    
+    int stat(const char *path, struct stat *buf) {
+      int result = ::stat(path, buf);
+      
+      if (result != 0) // Failed 'stat'.
+        PM.insert(path, PTHEntry());
+      else if (S_ISDIR(buf->st_mode)) {
+        // Only cache directories with absolute paths.
+        if (!llvm::sys::Path(path).isAbsolute())
+          return result;
+
+        PM.insert(PTHEntryKeyVariant(buf, path), PTHEntry());
+      }
+        
+      return result;
+    }
+  };
   
 public:
   PTHWriter(llvm::raw_fd_ostream& out, Preprocessor& pp) 
     : Out(out), PP(pp), idcount(0), CurStrOffset(0) {}
     
   void GeneratePTH();
+
+  StatSysCallCache *createStatListener() {
+    return new StatListener(PM);
+  }
 };
 } // end anonymous namespace
   
@@ -642,12 +675,6 @@ void PTHWriter::GeneratePTH() {
 }
 
 void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
-  // Lex through the entire file.  This will populate SourceManager with
-  // all of the header information.
-  Token Tok;
-  PP.EnterMainSourceFile();
-  do { PP.Lex(Tok); } while (Tok.isNot(tok::eof));
-  
   // Open up the PTH file.
   std::string ErrMsg;
   llvm::raw_fd_ostream Out(OutFile.c_str(), true, ErrMsg);
@@ -656,9 +683,23 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
     llvm::errs() << "PTH error: " << ErrMsg << "\n";
     return;
   }
-  
-  // Create the PTHWriter and generate the PTH file.
+
+  // Create the PTHWriter.
   PTHWriter PW(Out, PP);
+  
+  // Install the 'stat' system call listener in the FileManager.
+  PP.getFileManager().setStatCache(PW.createStatListener());
+  
+  // Lex through the entire file.  This will populate SourceManager with
+  // all of the header information.
+  Token Tok;
+  PP.EnterMainSourceFile();
+  do { PP.Lex(Tok); } while (Tok.isNot(tok::eof));
+  
+
+  
+  // Generate the PTH file.
+  PP.getFileManager().setStatCache(0);
   PW.GeneratePTH();
 }
 
@@ -750,5 +791,3 @@ std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
   
   return std::make_pair(IDOff, StringTableOffset);
 }
-
-
