@@ -58,7 +58,6 @@ void Stmt::Destroy(ASTContext& C) {
 }
 
 void DeclStmt::Destroy(ASTContext& C) {
-  DG.Destroy(C);
   this->~DeclStmt();
   C.Deallocate((void *)this);
 }

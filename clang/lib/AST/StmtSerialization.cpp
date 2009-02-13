@@ -550,8 +550,7 @@ void DeclStmt::EmitImpl(Serializer& S) const {
 DeclStmt* DeclStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation StartLoc = SourceLocation::ReadVal(D);
   SourceLocation EndLoc = SourceLocation::ReadVal(D); 
-  DeclGroupOwningRef DG;
-  return new DeclStmt(DG.Read(D, C), StartLoc, EndLoc);
+  return new DeclStmt(DeclGroupRef::ReadVal(D), StartLoc, EndLoc);
 }
 
 void DeclRefExpr::EmitImpl(Serializer& S) const {

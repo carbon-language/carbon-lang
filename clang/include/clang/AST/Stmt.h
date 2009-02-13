@@ -226,10 +226,10 @@ public:
 ///
 class DeclStmt : public Stmt {
 protected:
-  DeclGroupOwningRef DG;
+  DeclGroupRef DG;
   SourceLocation StartLoc, EndLoc;
 public:
-  DeclStmt(DeclGroupOwningRef& dg, SourceLocation startLoc, 
+  DeclStmt(DeclGroupRef dg, SourceLocation startLoc, 
            SourceLocation endLoc) : Stmt(DeclStmtClass), DG(dg),
                                     StartLoc(startLoc), EndLoc(endLoc) {}
   

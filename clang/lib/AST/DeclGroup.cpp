@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the DeclGroup, DeclGroupRef, and OwningDeclGroup classes.
+//  This file defines the DeclGroup and DeclGroupRef classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -36,7 +36,7 @@ void DeclGroup::Emit(llvm::Serializer& S) const {
 }
 
 /// Read - Deserialize a DeclGroup from Bitcode.
-DeclGroup* DeclGroup::Create(llvm::Deserializer& D, ASTContext& C) {
+DeclGroup* DeclGroup::Read(llvm::Deserializer& D, ASTContext& C) {
   unsigned NumDecls = (unsigned) D.ReadInt();
   unsigned size = sizeof(DeclGroup) + sizeof(Decl*) * NumDecls;
   unsigned alignment = llvm::AlignOf<DeclGroup>::Alignment;  
@@ -54,30 +54,8 @@ DeclGroup::DeclGroup(unsigned numdecls, Decl** decls) : NumDecls(numdecls) {
 }
 
 void DeclGroup::Destroy(ASTContext& C) {
-  Decl** Decls = (Decl**) (this + 1);
-  
-  for (unsigned i = 0; i < NumDecls; ++i)
-    Decls[i]->Destroy(C);
-  
   this->~DeclGroup();
   C.Deallocate((void*) this);
-}
-
-DeclGroupOwningRef::~DeclGroupOwningRef() {
-  assert (D == 0 && "Destroy method not called.");
-}
-
-void DeclGroupOwningRef::Destroy(ASTContext& C) {
-  if (!D)
-    return;
-  
-  if (getKind() == DeclKind)
-    D->Destroy(C);
-  else    
-    reinterpret_cast<DeclGroup*>(reinterpret_cast<uintptr_t>(D) &
-                                 ~Mask)->Destroy(C);
-  
-  D = 0;
 }
 
 void DeclGroupRef::Emit(llvm::Serializer& S) const {
@@ -97,29 +75,4 @@ DeclGroupRef DeclGroupRef::ReadVal(llvm::Deserializer& D) {
     return DeclGroupRef(D.ReadPtr<Decl>());
   
   return DeclGroupRef(D.ReadPtr<DeclGroup>());
-}
-
-void DeclGroupOwningRef::Emit(llvm::Serializer& S) const {
-  if (getKind() == DeclKind) {
-    S.EmitBool(false);
-    S.EmitOwnedPtr(D);
-  }
-  else {
-    S.EmitBool(true);
-    S.EmitOwnedPtr(reinterpret_cast<DeclGroup*>(reinterpret_cast<uintptr_t>(D)
-                                                & ~Mask));        
-  }
-}
-
-DeclGroupOwningRef& DeclGroupOwningRef::Read(llvm::Deserializer& Dezr, 
-                                             ASTContext& C) {
-  
-  if (!Dezr.ReadBool())
-    D = Dezr.ReadOwnedPtr<Decl>(C);
-  else {
-    uintptr_t x = reinterpret_cast<uintptr_t>(Dezr.ReadOwnedPtr<DeclGroup>(C));
-    D = reinterpret_cast<Decl*>(x | DeclGroupKind);
-  }
-  
-  return *this;
 }

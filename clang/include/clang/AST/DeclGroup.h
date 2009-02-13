@@ -53,7 +53,7 @@ public:
   void Emit(llvm::Serializer& S) const;
   
   /// Read - Deserialize a DeclGroup from Bitcode.
-  static DeclGroup* Create(llvm::Deserializer& D, ASTContext& C);
+  static DeclGroup* Read(llvm::Deserializer& D, ASTContext& C);
 };
     
 class DeclGroupRef {
@@ -110,30 +110,5 @@ public:
   static DeclGroupRef ReadVal(llvm::Deserializer& D);
 };
   
-class DeclGroupOwningRef : public DeclGroupRef {
-public:
-  explicit DeclGroupOwningRef() : DeclGroupRef((Decl*)0) {}
-  explicit DeclGroupOwningRef(Decl* d) : DeclGroupRef(d) {}
-  explicit DeclGroupOwningRef(DeclGroup* dg) : DeclGroupRef(dg) {}
-
-  ~DeclGroupOwningRef();  
-  void Destroy(ASTContext& C);
-  
-  DeclGroupOwningRef(DeclGroupOwningRef& R)
-    : DeclGroupRef(R) { R.D = 0; }
-  
-  DeclGroupOwningRef& operator=(DeclGroupOwningRef& R) {
-    D = R.D;
-    R.D = 0;
-    return *this;
-  }
-  
-  /// Emit - Serialize a DeclGroupOwningRef to Bitcode.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// Read - Deserialize a DeclGroupOwningRef from Bitcode.
-  DeclGroupOwningRef& Read(llvm::Deserializer& D, ASTContext& C);
-};
-
 } // end clang namespace
 #endif

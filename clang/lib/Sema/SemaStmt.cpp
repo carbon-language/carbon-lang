@@ -58,11 +58,11 @@ Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclTy *decl,
   assert (!decls.empty());
 
   if (decls.size() == 1) {
-    DeclGroupOwningRef DG(*decls.begin());                      
+    DeclGroupRef DG(*decls.begin());                      
     return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
   }
   else {
-    DeclGroupOwningRef DG(DeclGroup::Create(Context, decls.size(), &decls[0]));
+    DeclGroupRef DG(DeclGroup::Create(Context, decls.size(), &decls[0]));
     return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
   }
 }

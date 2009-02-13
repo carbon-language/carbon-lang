@@ -379,11 +379,8 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
                        ? 8 : llvm::AlignOf<DeclStmt>::Alignment;
           
           // Allocate the DeclStmt using the BumpPtrAllocator.  It will
-          // get automatically freed with the CFG.  Note that even though
-          // we are using a DeclGroupOwningRef that wraps a singe Decl*,
-          // that Decl* will not get deallocated because the destroy method
-          // of DG is never called.
-          DeclGroupOwningRef DG(*I);
+          // get automatically freed with the CFG. 
+          DeclGroupRef DG(*I);
           Decl* D = *I;
           void* Mem = cfg->getAllocator().Allocate(sizeof(DeclStmt), A);
           
