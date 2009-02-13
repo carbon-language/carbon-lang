@@ -29,6 +29,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
@@ -574,19 +575,28 @@ static inline OStream &operator<<(OStream &OS, const ExtAddrMode &AM) {
 void ExtAddrMode::print(OStream &OS) const {
   bool NeedPlus = false;
   OS << "[";
-  if (BaseGV)
+  if (BaseGV) {
     OS << (NeedPlus ? " + " : "")
-       << "GV:%" << BaseGV->getName(), NeedPlus = true;
+       << "GV:";
+    WriteAsOperand(*OS.stream(), BaseGV, /*PrintType=*/false);
+    NeedPlus = true;
+  }
 
   if (BaseOffs)
     OS << (NeedPlus ? " + " : "") << BaseOffs, NeedPlus = true;
 
-  if (BaseReg)
+  if (BaseReg) {
     OS << (NeedPlus ? " + " : "")
-       << "Base:%" << BaseReg->getName(), NeedPlus = true;
-  if (Scale)
+       << "Base:";
+    WriteAsOperand(*OS.stream(), BaseReg, /*PrintType=*/false);
+    NeedPlus = true;
+  }
+  if (Scale) {
     OS << (NeedPlus ? " + " : "")
-       << Scale << "*%" << ScaledReg->getName(), NeedPlus = true;
+       << Scale << "*";
+    WriteAsOperand(*OS.stream(), ScaledReg, /*PrintType=*/false);
+    NeedPlus = true;
+  }
 
   OS << ']';
 }
