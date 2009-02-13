@@ -154,9 +154,7 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
   C = llvm::ConstantStruct::get(Elts);
 
   char Name[32];
-  // FIXME: Boost in CGM?
-  static int global_unique_count;
-  sprintf(Name, "__block_holder_tmp_%d", ++global_unique_count);
+  sprintf(Name, "__block_holder_tmp_%d", CGM.getGlobalUniqueCount());
   C = new llvm::GlobalVariable(C->getType(), true,
                                llvm::GlobalValue::InternalLinkage,
                                C, Name, &CGM.getModule());

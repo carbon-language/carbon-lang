@@ -129,6 +129,9 @@ class CodeGenModule {
   
   const llvm::Type *BlockDescriptorType;
   const llvm::Type * GenericBlockLiteralType;
+  struct {
+    int GlobalUniqueCount;
+  } Block;
 
   std::vector<llvm::Function *> BuiltinFunctions;
 public:
@@ -142,7 +145,7 @@ public:
   void Release();
 
   llvm::Constant *getNSConcreteGlobalBlock();
-
+  int getGlobalUniqueCount() { return ++Block.GlobalUniqueCount; }
   const llvm::Type *getBlockDescriptorType();
 
   const llvm::Type *getGenericBlockLiteralType();

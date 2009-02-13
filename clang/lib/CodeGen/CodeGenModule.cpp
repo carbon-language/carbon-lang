@@ -49,7 +49,9 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
   }
 
   // If debug info generation is enabled, create the CGDebugInfo object.
-  DebugInfo = GenerateDebugInfo ? new CGDebugInfo(this) : 0;      
+  DebugInfo = GenerateDebugInfo ? new CGDebugInfo(this) : 0;
+
+  Block.GlobalUniqueCount = 0;
 }
 
 CodeGenModule::~CodeGenModule() {
