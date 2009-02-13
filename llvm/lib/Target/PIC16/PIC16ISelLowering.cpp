@@ -1362,6 +1362,7 @@ PIC16TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                  MachineBasicBlock *BB) const {
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   unsigned CC = (PIC16CC::CondCodes)MI->getOperand(3).getImm();
+  DebugLoc dl = MI->getDebugLoc();
 
   // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
   // control-flow pattern.  The incoming instruction knows the destination vreg
@@ -1380,7 +1381,7 @@ PIC16TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   MachineFunction *F = BB->getParent();
   MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
-  BuildMI(BB, TII.get(PIC16::pic16brcond)).addMBB(sinkMBB).addImm(CC);
+  BuildMI(BB, dl, TII.get(PIC16::pic16brcond)).addMBB(sinkMBB).addImm(CC);
   F->insert(It, copy0MBB);
   F->insert(It, sinkMBB);
 
@@ -1403,7 +1404,7 @@ PIC16TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
   BB = sinkMBB;
-  BuildMI(BB, TII.get(PIC16::PHI), MI->getOperand(0).getReg())
+  BuildMI(BB, dl, TII.get(PIC16::PHI), MI->getOperand(0).getReg())
     .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
     .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB);
 

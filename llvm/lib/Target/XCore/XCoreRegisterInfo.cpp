@@ -171,6 +171,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                             int SPAdj, RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
   MachineInstr &MI = *II;
+  DebugLoc dl = MI.getDebugLoc();
   unsigned i = 0;
 
   while (!MI.getOperand(i).isFI()) {
@@ -231,21 +232,21 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       }
       unsigned ScratchReg = RS->scavengeRegister(XCore::GRRegsRegisterClass, II,
                                                  SPAdj);
-      loadConstant(MBB, II, ScratchReg, Offset);
+      loadConstant(MBB, II, ScratchReg, Offset, dl);
       switch (MI.getOpcode()) {
       case XCore::LDWFI:
-        New = BuildMI(MBB, II, TII.get(XCore::LDW_3r), Reg)
+        New = BuildMI(MBB, II, dl, TII.get(XCore::LDW_3r), Reg)
               .addReg(FramePtr)
               .addReg(ScratchReg, false, false, true);
         break;
       case XCore::STWFI:
-        New = BuildMI(MBB, II, TII.get(XCore::STW_3r))
+        New = BuildMI(MBB, II, dl, TII.get(XCore::STW_3r))
               .addReg(Reg, false, false, isKill)
               .addReg(FramePtr)
               .addReg(ScratchReg, false, false, true);
         break;
       case XCore::LDAWFI:
-        New = BuildMI(MBB, II, TII.get(XCore::LDAWF_l3r), Reg)
+        New = BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l3r), Reg)
               .addReg(FramePtr)
               .addReg(ScratchReg, false, false, true);
         break;
@@ -255,18 +256,18 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     } else {
       switch (MI.getOpcode()) {
       case XCore::LDWFI:
-        New = BuildMI(MBB, II, TII.get(XCore::LDW_2rus), Reg)
+        New = BuildMI(MBB, II, dl, TII.get(XCore::LDW_2rus), Reg)
               .addReg(FramePtr)
               .addImm(Offset);
         break;
       case XCore::STWFI:
-        New = BuildMI(MBB, II, TII.get(XCore::STW_2rus))
+        New = BuildMI(MBB, II, dl, TII.get(XCore::STW_2rus))
               .addReg(Reg, false, false, isKill)
               .addReg(FramePtr)
               .addImm(Offset);
         break;
       case XCore::LDAWFI:
-        New = BuildMI(MBB, II, TII.get(XCore::LDAWF_l2rus), Reg)
+        New = BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l2rus), Reg)
               .addReg(FramePtr)
               .addImm(Offset);
         break;
@@ -286,18 +287,18 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     int NewOpcode;
     case XCore::LDWFI:
       NewOpcode = (isU6) ? XCore::LDWSP_ru6 : XCore::LDWSP_lru6;
-      BuildMI(MBB, II, TII.get(NewOpcode), Reg)
+      BuildMI(MBB, II, dl, TII.get(NewOpcode), Reg)
             .addImm(Offset);
       break;
     case XCore::STWFI:
       NewOpcode = (isU6) ? XCore::STWSP_ru6 : XCore::STWSP_lru6;
-      BuildMI(MBB, II, TII.get(NewOpcode))
+      BuildMI(MBB, II, dl, TII.get(NewOpcode))
             .addReg(Reg, false, false, isKill)
             .addImm(Offset);
       break;
     case XCore::LDAWFI:
       NewOpcode = (isU6) ? XCore::LDAWSP_ru6 : XCore::LDAWSP_lru6;
-      BuildMI(MBB, II, TII.get(NewOpcode), Reg)
+      BuildMI(MBB, II, dl, TII.get(NewOpcode), Reg)
             .addImm(Offset);
       break;
     default:
@@ -349,7 +350,7 @@ processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
 
 void XCoreRegisterInfo::
 loadConstant(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-            unsigned DstReg, int64_t Value) const {
+            unsigned DstReg, int64_t Value, DebugLoc dl) const {
   // TODO use mkmsk if possible.
   if (!isImmU16(Value)) {
     // TODO use constant pool.
@@ -357,12 +358,12 @@ loadConstant(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     abort();
   }
   int Opcode = isImmU6(Value) ? XCore::LDC_ru6 : XCore::LDC_lru6;
-  BuildMI(MBB, I, TII.get(Opcode), DstReg).addImm(Value);
+  BuildMI(MBB, I, dl, TII.get(Opcode), DstReg).addImm(Value);
 }
 
 void XCoreRegisterInfo::
 storeToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                  unsigned SrcReg, int Offset) const {
+                  unsigned SrcReg, int Offset, DebugLoc dl) const {
   assert(Offset%4 == 0 && "Misaligned stack offset");
   Offset/=4;
   bool isU6 = isImmU6(Offset);
@@ -371,23 +372,23 @@ storeToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     abort();
   }
   int Opcode = isU6 ? XCore::STWSP_ru6 : XCore::STWSP_lru6;
-  BuildMI(MBB, I, TII.get(Opcode))
+  BuildMI(MBB, I, dl, TII.get(Opcode))
     .addReg(SrcReg)
     .addImm(Offset);
 }
 
 void XCoreRegisterInfo::
 loadFromStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                  unsigned DstReg, int Offset) const {
+                  unsigned DstReg, int Offset, DebugLoc dl) const {
   assert(Offset%4 == 0 && "Misaligned stack offset");
   Offset/=4;
   bool isU6 = isImmU6(Offset);
   if (!isU6 && !isImmU16(Offset)) {
-    cerr << "storeToStack offset too big " << Offset << "\n";
+    cerr << "loadFromStack offset too big " << Offset << "\n";
     abort();
   }
   int Opcode = isU6 ? XCore::LDWSP_ru6 : XCore::LDWSP_lru6;
-  BuildMI(MBB, I, TII.get(Opcode), DstReg)
+  BuildMI(MBB, I, dl, TII.get(Opcode), DstReg)
     .addImm(Offset);
 }
 
@@ -397,6 +398,7 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
+  DebugLoc dl = DebugLoc::getUnknownLoc();
 
   bool FP = hasFP(MF);
 
@@ -429,14 +431,14 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
     } else {
       Opcode = (isU6) ? XCore::EXTSP_u6 : XCore::EXTSP_lu6;
     }
-    BuildMI(MBB, MBBI, TII.get(Opcode)).addImm(FrameSize);
+    BuildMI(MBB, MBBI, dl, TII.get(Opcode)).addImm(FrameSize);
     
     if (emitFrameMoves) {
       std::vector<MachineMove> &Moves = MMI->getFrameMoves();
       
       // Show update of SP.
       unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(XCore::DBG_LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addImm(FrameLabelId);
       
       MachineLocation SPDst(MachineLocation::VirtualFP);
       MachineLocation SPSrc(MachineLocation::VirtualFP, -FrameSize * 4);
@@ -450,12 +452,12 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
     if (saveLR) {
       int LRSpillOffset = MFI->getObjectOffset(XFI->getLRSpillSlot());
-      storeToStack(MBB, MBBI, XCore::LR, LRSpillOffset + FrameSize*4);
+      storeToStack(MBB, MBBI, XCore::LR, LRSpillOffset + FrameSize*4, dl);
       MBB.addLiveIn(XCore::LR);
       
       if (emitFrameMoves) {
         unsigned SaveLRLabelId = MMI->NextLabelID();
-        BuildMI(MBB, MBBI, TII.get(XCore::DBG_LABEL)).addImm(SaveLRLabelId);
+        BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addImm(SaveLRLabelId);
         MachineLocation CSDst(MachineLocation::VirtualFP, LRSpillOffset);
         MachineLocation CSSrc(XCore::LR);
         MMI->getFrameMoves().push_back(MachineMove(SaveLRLabelId,
@@ -467,12 +469,12 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (FP) {
     // Save R10 to the stack.
     int FPSpillOffset = MFI->getObjectOffset(XFI->getFPSpillSlot());
-    storeToStack(MBB, MBBI, XCore::R10, FPSpillOffset + FrameSize*4);
+    storeToStack(MBB, MBBI, XCore::R10, FPSpillOffset + FrameSize*4, dl);
     // R10 is live-in. It is killed at the spill.
     MBB.addLiveIn(XCore::R10);
     if (emitFrameMoves) {
       unsigned SaveR10LabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(XCore::DBG_LABEL)).addImm(SaveR10LabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addImm(SaveR10LabelId);
       MachineLocation CSDst(MachineLocation::VirtualFP, FPSpillOffset);
       MachineLocation CSSrc(XCore::R10);
       MMI->getFrameMoves().push_back(MachineMove(SaveR10LabelId,
@@ -480,12 +482,12 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
     // Set the FP from the SP.
     unsigned FramePtr = XCore::R10;
-    BuildMI(MBB, MBBI, TII.get(XCore::LDAWSP_ru6), FramePtr)
+    BuildMI(MBB, MBBI, dl, TII.get(XCore::LDAWSP_ru6), FramePtr)
       .addImm(0);
     if (emitFrameMoves) {
       // Show FP is now valid.
       unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(XCore::DBG_LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addImm(FrameLabelId);
       MachineLocation SPDst(FramePtr);
       MachineLocation SPSrc(MachineLocation::VirtualFP);
       MMI->getFrameMoves().push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
@@ -513,13 +515,14 @@ void XCoreRegisterInfo::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   MachineFrameInfo *MFI            = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  DebugLoc dl = DebugLoc::getUnknownLoc();
   
   bool FP = hasFP(MF);
   
   if (FP) {
     // Restore the stack pointer.
     unsigned FramePtr = XCore::R10;
-    BuildMI(MBB, MBBI, TII.get(XCore::SETSP_1r))
+    BuildMI(MBB, MBBI, dl, TII.get(XCore::SETSP_1r))
       .addReg(FramePtr);
   }
 
@@ -545,13 +548,13 @@ void XCoreRegisterInfo::emitEpilogue(MachineFunction &MF,
       // Restore R10
       int FPSpillOffset = MFI->getObjectOffset(XFI->getFPSpillSlot());
       FPSpillOffset += FrameSize*4;
-      loadFromStack(MBB, MBBI, XCore::R10, FPSpillOffset);
+      loadFromStack(MBB, MBBI, XCore::R10, FPSpillOffset, dl);
     }
     bool restoreLR = XFI->getUsesLR();
     if (restoreLR && MFI->getObjectOffset(XFI->getLRSpillSlot()) != 0) {
       int LRSpillOffset = MFI->getObjectOffset(XFI->getLRSpillSlot());
       LRSpillOffset += FrameSize*4;
-      loadFromStack(MBB, MBBI, XCore::LR, LRSpillOffset);
+      loadFromStack(MBB, MBBI, XCore::LR, LRSpillOffset, dl);
       restoreLR = false;
     }
     if (restoreLR) {
@@ -559,11 +562,11 @@ void XCoreRegisterInfo::emitEpilogue(MachineFunction &MF,
       assert(MBBI->getOpcode() == XCore::RETSP_u6
         || MBBI->getOpcode() == XCore::RETSP_lu6);
       int Opcode = (isU6) ? XCore::RETSP_u6 : XCore::RETSP_lu6;
-      BuildMI(MBB, MBBI, TII.get(Opcode)).addImm(FrameSize);
+      BuildMI(MBB, MBBI, dl, TII.get(Opcode)).addImm(FrameSize);
       MBB.erase(MBBI);
     } else {
       int Opcode = (isU6) ? XCore::LDAWSP_ru6_RRegs : XCore::LDAWSP_lru6_RRegs;
-      BuildMI(MBB, MBBI, TII.get(Opcode), XCore::SP).addImm(FrameSize);
+      BuildMI(MBB, MBBI, dl, TII.get(Opcode), XCore::SP).addImm(FrameSize);
     }
   }
 }
