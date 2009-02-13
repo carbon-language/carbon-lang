@@ -784,6 +784,7 @@ MachineBasicBlock *
 XCoreTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                  MachineBasicBlock *BB) const {
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
   assert((MI->getOpcode() == XCore::SELECT_CC) &&
          "Unexpected instr type to insert");
   
@@ -805,7 +806,7 @@ XCoreTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   MachineFunction *F = BB->getParent();
   MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
-  BuildMI(BB, TII.get(XCore::BRFT_lru6))
+  BuildMI(BB, dl, TII.get(XCore::BRFT_lru6))
     .addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
   F->insert(It, copy0MBB);
   F->insert(It, sinkMBB);
@@ -828,7 +829,7 @@ XCoreTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
   BB = sinkMBB;
-  BuildMI(BB, TII.get(XCore::PHI), MI->getOperand(0).getReg())
+  BuildMI(BB, dl, TII.get(XCore::PHI), MI->getOperand(0).getReg())
     .addReg(MI->getOperand(3).getReg()).addMBB(copy0MBB)
     .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
   
