@@ -21,10 +21,137 @@
 using namespace clang;
 using namespace CodeGen;
 
-// Block flags
 enum {
-  IsGlobal = 1 << 28
+  BLOCK_NEEDS_FREE =        (1 << 24),
+  BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
+  BLOCK_HAS_CXX_OBJ =       (1 << 26),
+  BLOCK_IS_GC =             (1 << 27),
+  BLOCK_IS_GLOBAL =         (1 << 28),
+  BLOCK_HAS_DESCRIPTOR =    (1 << 29)
 };
+
+llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl() {
+  // FIXME: Push up.
+  bool BlockHasCopyDispose = false;
+
+  const llvm::PointerType *PtrToInt8Ty
+    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  llvm::Constant *C;
+  std::vector<llvm::Constant*> Elts;
+
+  // reserved
+  const llvm::IntegerType *LongTy
+    = cast<llvm::IntegerType>(
+        CGM.getTypes().ConvertType(CGM.getContext().LongTy));
+  C = llvm::ConstantInt::get(LongTy, 0);
+  Elts.push_back(C);
+
+  // Size
+  // FIXME: This should be the size of BlockStructType
+  C = llvm::ConstantInt::get(LongTy, 20);
+  Elts.push_back(C);
+
+  if (BlockHasCopyDispose) {
+    // copy_func_helper_decl
+    C = llvm::ConstantInt::get(LongTy, 0);
+    C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
+    Elts.push_back(C);
+
+    // destroy_func_decl
+    C = llvm::ConstantInt::get(LongTy, 0);
+    C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
+    Elts.push_back(C);
+  }
+
+  C = llvm::ConstantStruct::get(Elts);
+
+  // FIXME: Should be in module?
+  static int desc_unique_count;
+  char Name[32];
+  sprintf(Name, "__block_descriptor_tmp_%d", ++desc_unique_count);
+  C = new llvm::GlobalVariable(C->getType(), true,
+                               llvm::GlobalValue::InternalLinkage,
+                               C, Name, &CGM.getModule());
+  return C;
+}
+
+llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
+  // FIXME: Push up
+  bool BlockHasCopyDispose = false;
+  bool insideFunction = false;
+  bool BlockRefDeclList = false;
+  bool BlockByrefDeclList = false;
+
+  std::vector<llvm::Constant*> Elts;
+  llvm::Constant *C;
+
+  bool staticBlockTmp = (BlockRefDeclList == 0
+                         && BlockByrefDeclList == 0);
+
+  {
+    // C = BuildBlockStructInitlist();
+    unsigned int flags = BLOCK_HAS_DESCRIPTOR;
+
+    if (BlockHasCopyDispose)
+      flags |= BLOCK_HAS_COPY_DISPOSE;
+
+    const llvm::PointerType *PtrToInt8Ty
+      = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    // FIXME: static?  What if we start up a new, unrelated module?
+    // logically we want 1 per module.
+    static llvm::Constant *NSConcreteGlobalBlock_decl
+      = new llvm::GlobalVariable(PtrToInt8Ty, false, 
+                                 llvm::GlobalValue::ExternalLinkage,
+                                 0, "_NSConcreteGlobalBlock",
+                                 &CGM.getModule());
+    static llvm::Constant *NSConcreteStackBlock_decl
+      = new llvm::GlobalVariable(PtrToInt8Ty, false, 
+                                 llvm::GlobalValue::ExternalLinkage,
+                                 0, "_NSConcreteStackBlock",
+                                 &CGM.getModule());
+    C = NSConcreteStackBlock_decl;
+    if (!insideFunction ||
+        (!BlockRefDeclList && !BlockByrefDeclList)) {
+      C = NSConcreteGlobalBlock_decl;
+      flags |= BLOCK_IS_GLOBAL;
+    }
+    C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
+    Elts.push_back(C);
+
+    // __flags
+    const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
+      CGM.getTypes().ConvertType(CGM.getContext().IntTy));
+    C = llvm::ConstantInt::get(IntTy, flags);
+    Elts.push_back(C);
+
+    // __reserved
+    C = llvm::ConstantInt::get(IntTy, 0);
+    Elts.push_back(C);
+
+    // __FuncPtr
+    // FIXME: Build this up.
+    Elts.push_back(C);
+
+    // __descriptor
+    Elts.push_back(BuildDescriptorBlockDecl());
+
+    // FIXME: Add block_original_ref_decl_list and block_byref_decl_list.
+  }
+  
+  C = llvm::ConstantStruct::get(Elts);
+
+  char Name[32];
+  // FIXME: Boost in CGM?
+  static int global_unique_count;
+  sprintf(Name, "__block_holder_tmp_%d", ++global_unique_count);
+  C = new llvm::GlobalVariable(C->getType(), true,
+                               llvm::GlobalValue::InternalLinkage,
+                               C, Name, &CGM.getModule());
+  return C;
+}
+
+
+
 
 const llvm::Type *CodeGenModule::getBlockDescriptorType() {
   if (BlockDescriptorType)
@@ -192,7 +319,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE) {
   LiteralFields[0] = NSConcreteGlobalBlock;
 
   // Flags
-  LiteralFields[1] = llvm::ConstantInt::get(IntTy, IsGlobal);
+  LiteralFields[1] = llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL);
 
   // Reserved
   LiteralFields[2] = llvm::Constant::getNullValue(IntTy);

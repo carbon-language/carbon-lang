@@ -88,6 +88,9 @@ public:
   const llvm::Type *LLVMIntTy;
   uint32_t LLVMPointerWidth;
 
+  llvm::Constant *BuildBlockLiteralTmp();
+  llvm::Constant *BuildDescriptorBlockDecl();
+
 public:
   /// ObjCEHValueStack - Stack of Objective-C exception values, used for
   /// rethrows.
