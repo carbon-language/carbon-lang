@@ -1912,6 +1912,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
                                               UsersToProcess);
       // Avoid rewriting the compare instruction with an iv of new stride
       // if it's likely the new stride uses will be rewritten using the
+      // stride of the compare instruction.
       if (AllUsesAreAddresses &&
           ValidStride(!CommonExprs->isZero(), Scale, UsersToProcess)) {
         NewCmpVal = CmpVal;
