@@ -25,7 +25,7 @@ typedef struct objc_object {
 @implementation MyList (BasicTest)
 - (void)compilerTestAgainst {
     static i;
-        for (id el, elem in self)  // expected-error {{Only one element declaration is allowed}}
+        for (id el, elem in self)  // expected-error {{only one element declaration is allowed}}
            ++i;
         for (id el in self) 
            ++i;

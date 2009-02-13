@@ -1330,7 +1330,7 @@ DIAG(ext_mixed_decls_code, EXTENSION,
 DIAG(err_non_variable_decl_in_for, ERROR,
      "declaration of non-local variable in 'for' loop")
 DIAG(err_toomany_element_decls, ERROR,
-     "Only one element declaration is allowed")
+     "only one element declaration is allowed")
 DIAG(err_selector_element_not_lvalue, ERROR,
     "selector element is not a valid lvalue") 
 DIAG(err_selector_element_type, ERROR,
