@@ -58,6 +58,9 @@ CodeGenModule::getGenericBlockLiteralType() {
   const llvm::Type *BlockDescPtrTy =
     llvm::PointerType::getUnqual(getBlockDescriptorType());
 
+  const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
+    getTypes().ConvertType(getContext().IntTy));
+
   // struct __block_literal_generic {
   //   void *isa;
   //   int flags;
@@ -66,8 +69,8 @@ CodeGenModule::getGenericBlockLiteralType() {
   //   struct __block_descriptor *descriptor;
   // };
   GenericBlockLiteralType = llvm::StructType::get(Int8PtrTy,
-                                                  llvm::Type::Int32Ty,
-                                                  llvm::Type::Int32Ty,
+                                                  IntTy,
+                                                  IntTy,
                                                   Int8PtrTy,
                                                   BlockDescPtrTy,
                                                   NULL);
@@ -156,6 +159,8 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE) {
 
   // Generate the block descriptor.
   const llvm::Type *UnsignedLongTy = Types.ConvertType(Context.UnsignedLongTy);
+  const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
+    getTypes().ConvertType(getContext().IntTy));
 
   llvm::Constant *DescriptorFields[2];
 
@@ -187,10 +192,10 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE) {
   LiteralFields[0] = NSConcreteGlobalBlock;
 
   // Flags
-  LiteralFields[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, IsGlobal);
+  LiteralFields[1] = llvm::ConstantInt::get(IntTy, IsGlobal);
 
   // Reserved
-  LiteralFields[2] = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  LiteralFields[2] = llvm::Constant::getNullValue(IntTy);
 
   // Function
   LiteralFields[3] = Fn;
