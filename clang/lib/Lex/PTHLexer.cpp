@@ -369,8 +369,8 @@ public:
 
   unsigned getNumBuckets() const { return NumBuckets; }
   unsigned getNumEntries() const { return NumEntries; }
-  const unsigned char* const getBase() const { return Base; }
-  const unsigned char* const getBuckets() const { return Buckets; }
+  const unsigned char* getBase() const { return Base; }
+  const unsigned char* getBuckets() const { return Buckets; }
 
   bool isEmpty() const { return NumEntries == 0; }
   
