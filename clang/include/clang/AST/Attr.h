@@ -70,6 +70,10 @@ public:
     delete Next;
   }
 
+  /// \brief Whether this attribute should be merged to new
+  /// declarations.
+  virtual bool isMerged() const { return true; }
+
   Kind getKind() const { return AttrKind; }
 
   Attr *getNext() { return Next; }
@@ -448,6 +452,8 @@ static bool classof(const ObjCNSObjectAttr *A) { return true; }
 class OverloadableAttr : public Attr {
 public:
   OverloadableAttr() : Attr(Overloadable) { }
+
+  virtual bool isMerged() const { return false; }
 
   static bool classof(const Attr *A) { return A->getKind() == Overloadable; }
   static bool classof(const OverloadableAttr *) { return true; }

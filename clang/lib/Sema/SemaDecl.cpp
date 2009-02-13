@@ -446,15 +446,15 @@ static void MergeAttributes(Decl *New, Decl *Old) {
   Attr *attr = const_cast<Attr*>(Old->getAttrs()), *tmp;
 
   while (attr) {
-     tmp = attr;
-     attr = attr->getNext();
+    tmp = attr;
+    attr = attr->getNext();
 
-    if (!DeclHasAttr(New, tmp)) {
-       tmp->setInherited(true);
-       New->addAttr(tmp);
+    if (!DeclHasAttr(New, tmp) && tmp->isMerged()) {
+      tmp->setInherited(true);
+      New->addAttr(tmp);
     } else {
-       tmp->setNext(0);
-       delete(tmp);
+      tmp->setNext(0);
+      delete(tmp);
     }
   }
 
@@ -1666,6 +1666,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // there's no more work to do here; we'll just add the new
     // function to the scope.
     OverloadedFunctionDecl::function_iterator MatchedDecl;
+
+    if (!getLangOptions().CPlusPlus &&
+        AllowOverloadingOfFunction(PrevDecl, Context))
+      OverloadableAttrRequired = true;
+
     if (!AllowOverloadingOfFunction(PrevDecl, Context) || 
         !IsOverload(NewFD, PrevDecl, MatchedDecl)) {
       Decl *OldDecl = PrevDecl;
@@ -1693,12 +1698,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         }
       }
     }
-
-    // If we're in C, this new declaration better have the
-    // "overloadable" attribute on it.
-    if (!getLangOptions().CPlusPlus && 
-        PrevDecl->getAttr<OverloadableAttr>())
-      OverloadableAttrRequired = true;
   }
 
   if (D.getCXXScopeSpec().isSet() &&
@@ -1743,7 +1742,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // If a function name is overloadable in C, then every function
     // with that name must be marked "overloadable".
     Diag(NewFD->getLocation(), diag::err_attribute_overloadable_missing)
-      << NewFD;
+      << Redeclaration << NewFD;
     if (PrevDecl)
       Diag(PrevDecl->getLocation(), 
            diag::note_attribute_overloadable_prev_overload);

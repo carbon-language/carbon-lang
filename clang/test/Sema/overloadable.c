@@ -2,9 +2,10 @@
 
 int var __attribute__((overloadable)); // expected-error{{'overloadable' attribute can only be applied to a function}}
 
-int *f(int) __attribute__((overloadable)); // expected-note{{previous overload of function is here}}
+int *f(int) __attribute__((overloadable)); // expected-note 2{{previous overload of function is here}}
 float *f(float); // expected-error{{overloaded function 'f' must have the 'overloadable' attribute}}
-int *f(int); // expected-note{{previous declaration is here}}
+int *f(int); // expected-error{{redeclaration of 'f' must have the 'overloadable' attribute}} \
+             // expected-note{{previous declaration is here}}
 double *f(double) __attribute__((overloadable)); // okay, new
 
 void test_f(int iv, float fv, double dv) {
@@ -35,3 +36,5 @@ void test_struct(struct X x, struct Y y) {
 }
 
 double *f(int) __attribute__((overloadable)); // expected-error{{conflicting types for 'f'}}
+
+

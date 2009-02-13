@@ -396,7 +396,7 @@ DIAG(err_attribute_iboutlet_non_ivar, ERROR,
 DIAG(err_attribute_overloadable_not_function, ERROR,
      "'overloadable' attribute can only be applied to a function")
 DIAG(err_attribute_overloadable_missing, ERROR,
-     "overloaded function %0 must have the 'overloadable' attribute")
+     "%select{overloaded function|redeclaration of}0 %1 must have the 'overloadable' attribute")
 DIAG(note_attribute_overloadable_prev_overload, NOTE,
      "previous overload of function is here")
 
