@@ -4,7 +4,7 @@ int f() __attribute__((deprecated));
 void g() __attribute__((deprecated));
 void g();
 
-void z() __attribute__((bogusattr)); // todo-warning {{'bogusattr' attribute ignored}}
+void z() __attribute__((bogusattr)); // expected-warning {{'bogusattr' attribute ignored}}
 
 extern int var __attribute__((deprecated));
 

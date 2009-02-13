@@ -1376,10 +1376,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
     // Just ignore
     break;
   default:
-#if 0
-    // TODO: when we have the full set of attributes, warn about unknown ones.
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
-#endif
     break;
   }
 }
