@@ -176,8 +176,6 @@ class Clang_CompileTool(Tool):
                      output, outputType, arglist, linkingOutput):
         cmd_args = []
 
-        patchOutputNameForPTH = False
-
         if isinstance(phase.phase, Phases.AnalyzePhase):
             assert outputType is Types.PlistType
             cmd_args.append('-analyze')
@@ -194,9 +192,9 @@ class Clang_CompileTool(Tool):
               outputType is inputs[0].type.preprocess):
             cmd_args.append('-E')
         elif outputType is Types.PCHType:
-            # No special option needed, driven by -x. However, we
-            # patch the output name to try and not conflict with gcc.
-            patchOutputNameForPTH = True
+            # No special option needed, driven by -x.
+            #
+            # FIXME: Don't drive this by -x, that is gross.
 
             # FIXME: This is a total hack. Copy the input header file
             # to the output, so that it can be -include'd by clang.
@@ -337,15 +335,8 @@ class Clang_CompileTool(Tool):
 
         if isinstance(output, Jobs.PipedJob):
             cmd_args.extend(['-o', '-'])
-        else:
-            if patchOutputNameForPTH:
-                base,suffix = os.path.splitext(arglist.getValue(output))
-                if suffix == '.gch':
-                    suffix = '.pth'
-                cmd_args.append('-o')
-                cmd_args.append(base + suffix)
-            elif output:
-                cmd_args.extend(arglist.render(output))
+        elif output:
+            cmd_args.extend(arglist.render(output))
 
         for input in inputs:
             cmd_args.append('-x')
