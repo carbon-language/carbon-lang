@@ -46,8 +46,9 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl() {
   Elts.push_back(C);
 
   // Size
-  // FIXME: This should be the size of BlockStructType
-  C = llvm::ConstantInt::get(UnsignedLongTy, 20);
+  int sz = CGM.getTargetData()
+    .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;
+  C = llvm::ConstantInt::get(UnsignedLongTy, sz);
   Elts.push_back(C);
 
   if (BlockHasCopyDispose) {
