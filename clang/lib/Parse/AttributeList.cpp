@@ -89,6 +89,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 9:
     if (!memcmp(Str, "dllimport", 9)) return AT_dllimport;
     if (!memcmp(Str, "dllexport", 9)) return AT_dllexport;
+    if (!memcmp(Str, "may_alias", 9)) return IgnoredAttribute;
     break;
   case 10:
     if (!memcmp(Str, "deprecated", 10)) return AT_deprecated;

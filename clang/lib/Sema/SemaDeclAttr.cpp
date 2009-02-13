@@ -1372,6 +1372,9 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_pure:        HandlePureAttr      (D, Attr, S); break;
   case AttributeList::AT_cleanup:     HandleCleanupAttr   (D, Attr, S); break;
   case AttributeList::AT_nodebug:     HandleNodebugAttr   (D, Attr, S); break;
+  case AttributeList::IgnoredAttribute: 
+    // Just ignore
+    break;
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.

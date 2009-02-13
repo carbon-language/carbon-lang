@@ -81,6 +81,7 @@ public:
     AT_nsobject,
     AT_cleanup,
     AT_nodebug,
+    IgnoredAttribute,
     UnknownAttribute
   };
   
