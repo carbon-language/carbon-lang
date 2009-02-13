@@ -96,7 +96,7 @@ class PTHManager : public IdentifierInfoLookup {
   
 public:
   // The current PTH version.
-  enum { Version = 7 };
+  enum { Version = 8 };
 
   ~PTHManager();
   

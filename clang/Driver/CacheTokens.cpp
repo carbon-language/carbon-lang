@@ -1,4 +1,4 @@
-//===--- CacheTokens.cpp - Caching of lexer tokens for PCH support --------===//
+//===--- CacheTokens.cpp - Caching of lexer tokens for PTH support --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This provides a possible implementation of PCH support for Clang that is
+// This provides a possible implementation of PTH support for Clang that is
 // based on caching lexed tokens and identifiers.
 //
 //===----------------------------------------------------------------------===//
@@ -192,54 +192,115 @@ public:
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN PCHEntry {
+class VISIBILITY_HIDDEN PTHEntry {
   Offset TokenData, PPCondData;  
 
 public:  
-  PCHEntry() {}
+  PTHEntry() {}
 
-  PCHEntry(Offset td, Offset ppcd)
+  PTHEntry(Offset td, Offset ppcd)
     : TokenData(td), PPCondData(ppcd) {}
   
   Offset getTokenOffset() const { return TokenData; }  
   Offset getPPCondTableOffset() const { return PPCondData; }
 };
   
-class VISIBILITY_HIDDEN FileEntryPCHEntryInfo {
+  
+class VISIBILITY_HIDDEN PTHEntryKeyVariant {
+  union { const FileEntry* FE; const DirectoryEntry* DE; const char* Path; };
+  enum { IsFE = 0x1, IsDE = 0x2, IsNoExist = 0x0 } Kind;
 public:
-  typedef const FileEntry* key_type;
+  PTHEntryKeyVariant(const FileEntry *fe) : FE(fe), Kind(IsFE) {}
+  PTHEntryKeyVariant(const DirectoryEntry *de) : DE(de), Kind(IsDE) {}
+  PTHEntryKeyVariant(const char* path) : Path(path), Kind(IsNoExist) {}
+  
+  const FileEntry *getFile() const { return Kind == IsFE ? FE : 0; }
+  const DirectoryEntry *getDir() const { return Kind == IsDE ? DE : 0; }
+  const char* getNameOfNonExistantFile() const {
+    return Kind == IsNoExist ? Path : 0;
+  }
+  
+  const char* getCString() const {
+    switch (Kind) {
+      case IsFE: return FE->getName();
+      case IsDE: return DE->getName();
+      default: return Path;
+    }
+  }
+  
+  unsigned getKind() const { return (unsigned) Kind; }
+  
+  void EmitData(llvm::raw_ostream& Out) {
+    switch (Kind) {
+      case IsFE:
+        // Emit stat information.
+        ::Emit32(Out, FE->getInode());
+        ::Emit32(Out, FE->getDevice());
+        ::Emit16(Out, FE->getFileMode());
+        ::Emit64(Out, FE->getModificationTime());
+        ::Emit64(Out, FE->getSize());
+        break;
+      case IsDE:
+        // FIXME
+      default: break;
+        // Emit nothing.        
+    }
+  }
+  
+  unsigned getRepresentationLength() const {
+    switch (Kind) {
+      case IsFE: return 4 + 4 + 2 + 8 + 8;
+      case IsDE: // FIXME
+      default: return 0;
+    }
+  }
+};
+  
+class VISIBILITY_HIDDEN FileEntryPTHEntryInfo {
+public:
+  typedef PTHEntryKeyVariant key_type;
   typedef key_type key_type_ref;
   
-  typedef PCHEntry data_type;
-  typedef const PCHEntry& data_type_ref;
+  typedef PTHEntry data_type;
+  typedef const PTHEntry& data_type_ref;
   
-  static unsigned ComputeHash(const FileEntry* FE) {
-    return BernsteinHash(FE->getName());
+  static unsigned ComputeHash(PTHEntryKeyVariant V) {
+    return BernsteinHash(V.getCString());
   }
   
   static std::pair<unsigned,unsigned> 
-  EmitKeyDataLength(llvm::raw_ostream& Out, const FileEntry* FE,
-                    const PCHEntry& E) {
+  EmitKeyDataLength(llvm::raw_ostream& Out, PTHEntryKeyVariant V,
+                    const PTHEntry& E) {
 
-    unsigned n = strlen(FE->getName()) + 1;
+    unsigned n = strlen(V.getCString()) + 1 + 1;
     ::Emit16(Out, n);
-    return std::make_pair(n,(4*2)+(4+4+2+8+8));
+    
+    unsigned m = V.getRepresentationLength() + (V.getFile() ? 4 + 4 : 0);
+    ::Emit8(Out, m);
+
+    return std::make_pair(n, m);
   }
   
-  static void EmitKey(llvm::raw_ostream& Out, const FileEntry* FE, unsigned n) {
-    Out.write(FE->getName(), n);
+  static void EmitKey(llvm::raw_ostream& Out, PTHEntryKeyVariant V, unsigned n){
+    // Emit the entry kind.
+    ::Emit8(Out, (unsigned) V.getKind());
+    // Emit the string.
+    Out.write(V.getCString(), n - 1);
   }
   
-  static void EmitData(llvm::raw_ostream& Out, const FileEntry* FE, 
-                       const PCHEntry& E, unsigned) {
-    ::Emit32(Out, E.getTokenOffset());
-    ::Emit32(Out, E.getPPCondTableOffset());
-    // Emit stat information.
-    ::Emit32(Out, FE->getInode());
-    ::Emit32(Out, FE->getDevice());
-    ::Emit16(Out, FE->getFileMode());
-    ::Emit64(Out, FE->getModificationTime());
-    ::Emit64(Out, FE->getSize());
+  static void EmitData(llvm::raw_ostream& Out, PTHEntryKeyVariant V, 
+                       const PTHEntry& E, unsigned) {
+
+
+    // For file entries emit the offsets into the PTH file for token data
+    // and the preprocessor blocks table.
+    if (V.getFile()) {
+      ::Emit32(Out, E.getTokenOffset());
+      ::Emit32(Out, E.getPPCondTableOffset());
+    }
+    
+    // Emit any other data associated with the key (i.e., stat information).
+    V.EmitData(Out);
   }        
 };
   
@@ -254,7 +315,7 @@ public:
 };
 } // end anonymous namespace
 
-typedef OnDiskChainedHashTableGenerator<FileEntryPCHEntryInfo> PCHMap;
+typedef OnDiskChainedHashTableGenerator<FileEntryPTHEntryInfo> PTHMap;
 typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
 typedef llvm::StringMap<OffsetOpt, llvm::BumpPtrAllocator> CachedStrsTy;
 
@@ -264,7 +325,7 @@ class VISIBILITY_HIDDEN PTHWriter {
   llvm::raw_fd_ostream& Out;
   Preprocessor& PP;
   uint32_t idcount;
-  PCHMap PM;
+  PTHMap PM;
   CachedStrsTy CachedStrs;
   Offset CurStrOffset;
   std::vector<llvm::StringMapEntry<OffsetOpt>*> StrEntries;
@@ -304,7 +365,7 @@ class VISIBILITY_HIDDEN PTHWriter {
   /// token data.
   Offset EmitFileTable() { return PM.Emit(Out); }
 
-  PCHEntry LexTokens(Lexer& L);
+  PTHEntry LexTokens(Lexer& L);
   Offset EmitCachedSpellings();
   
 public:
@@ -360,7 +421,7 @@ void PTHWriter::EmitToken(const Token& T) {
   Emit32(PP.getSourceManager().getFileOffset(T.getLocation()));
 }
 
-PCHEntry PTHWriter::LexTokens(Lexer& L) {
+PTHEntry PTHWriter::LexTokens(Lexer& L) {
   // Pad 0's so that we emit tokens to a 4-byte alignment.
   // This speed up reading them back in.
   Pad(Out, 4);
@@ -513,7 +574,7 @@ PCHEntry PTHWriter::LexTokens(Lexer& L) {
     Emit32(x == i ? 0 : x);
   }
 
-  return PCHEntry(off, PPCondOff);
+  return PTHEntry(off, PPCondOff);
 }
 
 Offset PTHWriter::EmitCachedSpellings() {
@@ -604,39 +665,39 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN PCHIdKey {
+class VISIBILITY_HIDDEN PTHIdKey {
 public:
   const IdentifierInfo* II;
   uint32_t FileOffset;
 };
 
-class VISIBILITY_HIDDEN PCHIdentifierTableTrait {
+class VISIBILITY_HIDDEN PTHIdentifierTableTrait {
 public:
-  typedef PCHIdKey* key_type;
+  typedef PTHIdKey* key_type;
   typedef key_type  key_type_ref;
   
   typedef uint32_t  data_type;
   typedef data_type data_type_ref;
   
-  static unsigned ComputeHash(PCHIdKey* key) {
+  static unsigned ComputeHash(PTHIdKey* key) {
     return BernsteinHash(key->II->getName());
   }
   
   static std::pair<unsigned,unsigned> 
-  EmitKeyDataLength(llvm::raw_ostream& Out, const PCHIdKey* key, uint32_t) {    
+  EmitKeyDataLength(llvm::raw_ostream& Out, const PTHIdKey* key, uint32_t) {    
     unsigned n = strlen(key->II->getName()) + 1;
     ::Emit16(Out, n);
     return std::make_pair(n, sizeof(uint32_t));
   }
   
-  static void EmitKey(llvm::raw_fd_ostream& Out, PCHIdKey* key, unsigned n) {
+  static void EmitKey(llvm::raw_fd_ostream& Out, PTHIdKey* key, unsigned n) {
     // Record the location of the key data.  This is used when generating
     // the mapping from persistent IDs to strings.
     key->FileOffset = Out.tell();
     Out.write(key->II->getName(), n);
   }
   
-  static void EmitData(llvm::raw_ostream& Out, PCHIdKey*, uint32_t pID,
+  static void EmitData(llvm::raw_ostream& Out, PTHIdKey*, uint32_t pID,
                        unsigned) {
     ::Emit32(Out, pID);
   }        
@@ -654,10 +715,10 @@ std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
   //  (2) a map from (IdentifierInfo*, Offset)* -> persistent IDs
 
   // Note that we use 'calloc', so all the bytes are 0.
-  PCHIdKey* IIDMap = (PCHIdKey*) calloc(idcount, sizeof(PCHIdKey));
+  PTHIdKey* IIDMap = (PTHIdKey*) calloc(idcount, sizeof(PTHIdKey));
 
   // Create the hashtable.
-  OnDiskChainedHashTableGenerator<PCHIdentifierTableTrait> IIOffMap;
+  OnDiskChainedHashTableGenerator<PTHIdentifierTableTrait> IIOffMap;
   
   // Generate mapping from persistent IDs -> IdentifierInfo*.
   for (IDMap::iterator I=IM.begin(), E=IM.end(); I!=E; ++I) {

@@ -375,13 +375,15 @@ public:
   bool isEmpty() const { return NumEntries == 0; }
   
   class iterator {
+    internal_key_type key;
     const unsigned char* const data;
     const unsigned len;
   public:
     iterator() : data(0), len(0) {}
-    iterator(const unsigned char* d, unsigned l) : data(d), len(l) {}
+    iterator(const internal_key_type k, const unsigned char* d, unsigned l)
+      : key(k), data(d), len(l) {}
     
-    data_type operator*() const { return Info::ReadData(data, len); }    
+    data_type operator*() const { return Info::ReadData(key, data, len); }    
     bool operator==(const iterator& X) const { return X.data == data; }    
     bool operator!=(const iterator& X) const { return X.data != data; }
   };    
@@ -427,7 +429,7 @@ public:
       }
       
       // The key matches!
-      return iterator(Items + L.first, L.second);
+      return iterator(X, Items + L.first, L.second);
     }
     
     return iterator();
@@ -472,23 +474,22 @@ public:
   
 class VISIBILITY_HIDDEN PTHFileLookupCommonTrait {
 public:
-  typedef const char*      internal_key_type;
-  
-  static bool EqualKey(const char* a, const char* b) {
-    return strcmp(a, b) == 0;
-  }
-  
-  static unsigned ComputeHash(const char* x) {
-    return BernsteinHash(x);
+  typedef std::pair<unsigned char, const char*> internal_key_type;
+
+  static unsigned ComputeHash(internal_key_type x) {
+    return BernsteinHash(x.second);
   }
   
   static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d) {
-    return std::make_pair((unsigned) ReadUnalignedLE16(d), 8U + (4+4+2+8+8));
+    unsigned keyLen = (unsigned) ReadUnalignedLE16(d);
+    unsigned dataLen = (unsigned) *(d++);
+    return std::make_pair(keyLen, dataLen);
   }
   
-  static const char* ReadKey(const unsigned char* d, unsigned) {
-    return (const char*) d;
+  static internal_key_type ReadKey(const unsigned char* d, unsigned) {
+    unsigned char k = *(d++); // Read the entry kind.
+    return std::make_pair(k, (const char*) d);
   }
 };
   
@@ -497,11 +498,17 @@ public:
   typedef const FileEntry* external_key_type;
   typedef PTHFileData      data_type;
   
-  static const char* GetInternalKey(const FileEntry* FE) {
-    return FE->getName();
+  static internal_key_type GetInternalKey(const FileEntry* FE) {
+    return std::make_pair((unsigned char) 0x1, FE->getName());
   }
+
+  static bool EqualKey(internal_key_type a, internal_key_type b) {
+    return a.first == b.first && strcmp(a.second, b.second) == 0;
+  }  
   
-  static PTHFileData ReadData(const unsigned char* d, unsigned) {
+  static PTHFileData ReadData(const internal_key_type& k, 
+                              const unsigned char* d, unsigned) {    
+    assert(k.first == 0x1 && "Only file lookups can match!");
     uint32_t x = ::ReadUnalignedLE32(d);
     uint32_t y = ::ReadUnalignedLE32(d);
     return PTHFileData(x, y); 
@@ -543,7 +550,8 @@ public:
       return std::make_pair((const char*) d, n-1);
     }
     
-  static uint32_t ReadData(const unsigned char* d, unsigned) {
+  static uint32_t ReadData(const internal_key_type& k, const unsigned char* d,
+                           unsigned) {
     return ::ReadUnalignedLE32(d);
   }
 };
@@ -768,6 +776,7 @@ PTHLexer *PTHManager::CreateLexer(FileID FID) {
 namespace {
 class VISIBILITY_HIDDEN PTHStatData {
 public:
+  const bool hasStat;
   const ino_t ino;
   const dev_t dev;
   const mode_t mode;
@@ -775,23 +784,40 @@ public:
   const off_t size;
   
   PTHStatData(ino_t i, dev_t d, mode_t mo, time_t m, off_t s)
-  : ino(i), dev(d), mode(mo), mtime(m), size(s) {}  
+  : hasStat(true), ino(i), dev(d), mode(mo), mtime(m), size(s) {}  
+  
+  PTHStatData()
+    : hasStat(false), ino(0), dev(0), mode(0), mtime(0), size(0) {}
 };
   
 class VISIBILITY_HIDDEN PTHStatLookupTrait : public PTHFileLookupCommonTrait {
 public:
-  typedef internal_key_type external_key_type;  // const char*
+  typedef const char* external_key_type;  // const char*
   typedef PTHStatData data_type;
     
-  static const char* GetInternalKey(external_key_type x) { return x; }
+  static internal_key_type GetInternalKey(const char *path) {
+    // The key 'kind' doesn't matter here because it is ignored in EqualKey.
+    return std::make_pair((unsigned char) 0x0, path);
+  }
+
+  static bool EqualKey(internal_key_type a, internal_key_type b) {
+    // When doing 'stat' lookups we don't care about the kind of 'a' and 'b',
+    // just the paths.
+    return strcmp(a.second, b.second) == 0;
+  }  
   
-  static data_type ReadData(const unsigned char* d, unsigned) {
-    d += 4 * 2; // Skip the first 2 words.
-    ino_t ino = (ino_t) ReadUnalignedLE32(d);
-    dev_t dev = (dev_t) ReadUnalignedLE32(d);
-    mode_t mode = (mode_t) ReadUnalignedLE16(d);
-    time_t mtime = (time_t) ReadUnalignedLE64(d);    
-    return data_type(ino, dev, mode, mtime, (off_t) ReadUnalignedLE64(d));
+  static data_type ReadData(const internal_key_type& k, const unsigned char* d,
+                            unsigned) {    
+    if (k.first == 0x1 /* File */) {
+      d += 4 * 2; // Skip the first 2 words.
+      ino_t ino = (ino_t) ReadUnalignedLE32(d);
+      dev_t dev = (dev_t) ReadUnalignedLE32(d);
+      mode_t mode = (mode_t) ReadUnalignedLE16(d);
+      time_t mtime = (time_t) ReadUnalignedLE64(d);    
+      return data_type(ino, dev, mode, mtime, (off_t) ReadUnalignedLE64(d));
+    }
+    
+    return data_type();
   }
 };
 }
