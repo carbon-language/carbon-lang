@@ -18,5 +18,6 @@ add_clang_library(clangCodeGen
   CodeGenFunction.cpp
   CodeGenModule.cpp
   CodeGenTypes.cpp
+  Mangle.cpp
   ModuleBuilder.cpp
   )

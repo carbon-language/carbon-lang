@@ -88,6 +88,7 @@ class CodeGenModule {
   /// decl, they should be bitcasted on retrieval. Also note that the
   /// globals are keyed on their source name, not the global name
   /// (which may change with attributes such as asm-labels).
+  /// This key to this map should be generated using getMangledName().
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalValue*> GlobalDeclMap;
 
   /// Aliases - List of aliases in module. These cannot be emitted
@@ -256,6 +257,9 @@ public:
   void ConstructAttributeList(const CGFunctionInfo &Info,
                               const Decl *TargetDecl,
                               AttributeListType &PAL);
+
+  IdentifierInfo *getMangledName(const NamedDecl *ND) const;
+
 
 private:
   /// SetFunctionAttributesForDefinition - Set function attributes

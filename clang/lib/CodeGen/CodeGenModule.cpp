@@ -16,6 +16,7 @@
 #include "CodeGenFunction.h"
 #include "CGCall.h"
 #include "CGObjCRuntime.h"
+#include "Mangle.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
@@ -146,6 +147,29 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
     GV->setVisibility(llvm::GlobalValue::ProtectedVisibility);
     break;
   }
+}
+
+/// \brief Retrieves the mangled name for the given declaration.
+///
+/// If the given declaration requires a mangled name, returns an
+/// IdentifierInfo* containing the mangled name. Otherwise, returns
+/// the name of the declaration as an identifier.
+///
+/// FIXME: Returning an IdentifierInfo* here is a total hack. We
+/// really need some kind of string abstraction that either stores a
+/// mangled name or stores an IdentifierInfo*. This will require
+/// changes to the GlobalDeclMap, too.
+///
+/// FIXME: Performance here is going to be terribly until we start
+/// caching mangled names. However, we should fix the problem above
+/// first.
+IdentifierInfo *CodeGenModule::getMangledName(const NamedDecl *ND) const {
+  std::string Name;
+  llvm::raw_string_ostream Out(Name);
+  if (!mangleName(ND, Context, Out))
+    return ND->getIdentifier();
+
+  return &Context.Idents.get(Out.str());
 }
 
 /// AddGlobalCtor - Add a function to the list that will be called before
@@ -340,9 +364,10 @@ void CodeGenModule::EmitAliases() {
     llvm::GlobalValue *GA = 
       new llvm::GlobalAlias(aliasee->getType(),
                             llvm::Function::ExternalLinkage,
-                            D->getNameAsString(), aliasee, &getModule());
+                            getMangledName(D)->getName(), aliasee, 
+                            &getModule());
     
-    llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
+    llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
     if (Entry) {
       // If we created a dummy function for this then replace it.
       GA->takeName(Entry);
@@ -377,7 +402,7 @@ void CodeGenModule::EmitStatics() {
       // global symbol map.
       // FIXME: This is missing some important cases. For example, we
       // need to check for uses in an alias and in a constructor.
-      if (!GlobalDeclMap.count(D->getIdentifier())) {
+      if (!GlobalDeclMap.count(getMangledName(D))) {
         i++;
         continue;
       }
@@ -498,13 +523,13 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
   const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
 
   // Lookup the entry, lazily creating it if necessary.
-  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
+  llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   if (!Entry) {
     llvm::GlobalVariable *GV = 
       new llvm::GlobalVariable(Ty, false, 
                                llvm::GlobalValue::ExternalLinkage,
-                               0, D->getNameAsString(), &getModule(), 0,
-                               ASTTy.getAddressSpace());
+                               0, getMangledName(D)->getName(), &getModule(), 
+                               0, ASTTy.getAddressSpace());
     Entry = GV;
 
     // Handle things which are present even on external declarations.
@@ -545,14 +570,14 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   }
   const llvm::Type* InitType = Init->getType();
 
-  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
+  llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   llvm::GlobalVariable *GV = cast_or_null<llvm::GlobalVariable>(Entry);
   
   if (!GV) {
     GV = new llvm::GlobalVariable(InitType, false, 
                                   llvm::GlobalValue::ExternalLinkage,
-                                  0, D->getNameAsString(), &getModule(), 0,
-                                  ASTTy.getAddressSpace());
+                                  0, getMangledName(D)->getName(), 
+                                  &getModule(), 0, ASTTy.getAddressSpace());
   } else if (GV->getType() != 
              llvm::PointerType::get(InitType, ASTTy.getAddressSpace())) {
     // We have a definition after a prototype with the wrong type.
@@ -575,8 +600,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     // Make a new global with the correct type
     GV = new llvm::GlobalVariable(InitType, false, 
                                   llvm::GlobalValue::ExternalLinkage,
-                                  0, D->getNameAsString(), &getModule(), 0,
-                                  ASTTy.getAddressSpace());
+                                  0, getMangledName(D)->getName(), 
+                                  &getModule(), 0, ASTTy.getAddressSpace());
     // Steal the name of the old global
     GV->takeName(OldGV);
 
@@ -672,7 +697,8 @@ CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D) {
   const llvm::Type *Ty = getTypes().ConvertType(D->getType());
   llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
                                              llvm::Function::ExternalLinkage,
-                                             D->getNameAsString(),&getModule());
+                                             getMangledName(D)->getName(),
+                                             &getModule());
   SetFunctionAttributes(D, F);
   return F;
 }
@@ -683,7 +709,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
   const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
   
   // Lookup the entry, lazily creating it if necessary.
-  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
+  llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   if (!Entry)
     Entry = EmitForwardFunctionDefinition(D);
 
@@ -691,7 +717,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
 }
 
 void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
-  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
+  llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   if (!Entry) {
     Entry = EmitForwardFunctionDefinition(D);
   } else {

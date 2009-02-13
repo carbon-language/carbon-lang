@@ -474,6 +474,10 @@ public:
     return DeclKind == Decl::TranslationUnit || DeclKind == Decl::Namespace;
   }
 
+  bool isTranslationUnit() const {
+    return DeclKind == Decl::TranslationUnit;
+  }
+
   bool isRecord() const {
     return DeclKind == Decl::Record || DeclKind == Decl::CXXRecord;
   }
