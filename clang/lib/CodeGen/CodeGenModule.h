@@ -128,6 +128,7 @@ class CodeGenModule {
   llvm::Constant *NSConcreteGlobalBlock;
   
   const llvm::Type *BlockDescriptorType;
+  const llvm::Type * GenericBlockLiteralType;
 
   std::vector<llvm::Function *> BuiltinFunctions;
 public:
@@ -141,6 +142,8 @@ public:
   void Release();
 
   const llvm::Type *getBlockDescriptorType();
+
+  const llvm::Type *getGenericBlockLiteralType();
 
   /// getObjCRuntime() - Return a reference to the configured
   /// Objective-C runtime.

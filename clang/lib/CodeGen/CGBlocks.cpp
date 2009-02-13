@@ -47,34 +47,35 @@ const llvm::Type *CodeGenModule::getBlockDescriptorType() {
   return BlockDescriptorType;
 }
 
-static const llvm::Type *getGenericBlockLiteralType(CodeGenModule &CGM) {
-  static const llvm::Type *Ty = 0;
-    
-  if (!Ty) {
-    const llvm::Type *Int8PtrTy = 
-      llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+const llvm::Type *
+CodeGenModule::getGenericBlockLiteralType() {
+  if (GenericBlockLiteralType)
+    return GenericBlockLiteralType;
+
+  const llvm::Type *Int8PtrTy = 
+    llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
         
-    const llvm::Type *BlockDescPtrTy = 
-      llvm::PointerType::getUnqual(CGM.getBlockDescriptorType());
+  const llvm::Type *BlockDescPtrTy = 
+    llvm::PointerType::getUnqual(getBlockDescriptorType());
         
-    // struct __block_literal_generic {
-    //   void *isa;
-    //   int flags;
-    //   int reserved;
-    //   void (*invoke)(void *);
-    //   struct __block_descriptor *descriptor;
-    // };
-    Ty = llvm::StructType::get(Int8PtrTy,
-                               llvm::Type::Int32Ty,
-                               llvm::Type::Int32Ty,
-                               Int8PtrTy,
-                               BlockDescPtrTy,
-                               NULL);
+  // struct __block_literal_generic {
+  //   void *isa;
+  //   int flags;
+  //   int reserved;
+  //   void (*invoke)(void *);
+  //   struct __block_descriptor *descriptor;
+  // };
+  GenericBlockLiteralType = llvm::StructType::get(Int8PtrTy,
+                                                  llvm::Type::Int32Ty,
+                                                  llvm::Type::Int32Ty,
+                                                  Int8PtrTy,
+                                                  BlockDescPtrTy,
+                                                  NULL);
         
-    CGM.getModule().addTypeName("struct.__block_literal_generic", Ty);
-  }
+  getModule().addTypeName("struct.__block_literal_generic",
+                          GenericBlockLiteralType);
   
-  return Ty;
+  return GenericBlockLiteralType;
 }
 
 /// getBlockFunctionType - Given a BlockPointerType, will return the 
@@ -103,7 +104,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
 
   // Get a pointer to the generic block literal.
   const llvm::Type *BlockLiteralTy =
-    llvm::PointerType::getUnqual(getGenericBlockLiteralType(CGM));
+    llvm::PointerType::getUnqual(CGM.getGenericBlockLiteralType());
 
   // Bitcast the callee to a block literal.
   llvm::Value *BlockLiteral = 
@@ -164,7 +165,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE) {
   // Block literal size. For global blocks we just use the size of the generic
   // block literal struct.
   uint64_t BlockLiteralSize = 
-    TheTargetData.getTypeStoreSizeInBits(getGenericBlockLiteralType(*this)) / 8;
+    TheTargetData.getTypeStoreSizeInBits(getGenericBlockLiteralType()) / 8;
   DescriptorFields[1] = llvm::ConstantInt::get(UnsignedLongTy,BlockLiteralSize);
   
   llvm::Constant *DescriptorStruct = 
