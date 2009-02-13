@@ -3849,17 +3849,23 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
                              Methods);
   const ObjCCategoryDecl *Category = 
     Interface->FindCategoryDeclaration(OCD->getIdentifier());
-  Values[4] = EmitProtocolList("\01l_OBJC_CATEGORY_PROTOCOLS_$_"
-                               + Interface->getNameAsString() + "_$_"
-                               + Category->getNameAsString(),
-                                Category->protocol_begin(),
-                                Category->protocol_end());
-  
-  std::string ExtName(Interface->getNameAsString() + "_$_" +
-                      OCD->getNameAsString());
-  Values[5] =
-    EmitPropertyList(std::string("\01l_OBJC_$_PROP_LIST_") + ExtName,
-                                OCD, Category, ObjCTypes);
+  if (Category) {
+    std::string ExtName(Interface->getNameAsString() + "_$_" +
+                        OCD->getNameAsString());
+    Values[4] = EmitProtocolList("\01l_OBJC_CATEGORY_PROTOCOLS_$_"
+                                 + Interface->getNameAsString() + "_$_"
+                                 + Category->getNameAsString(),
+                                 Category->protocol_begin(),
+                                 Category->protocol_end());
+    Values[5] =
+      EmitPropertyList(std::string("\01l_OBJC_$_PROP_LIST_") + ExtName,
+                       OCD, Category, ObjCTypes);
+  }
+  else {
+    Values[4] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
+    Values[5] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
+  }
+    
   llvm::Constant *Init = 
     llvm::ConstantStruct::get(ObjCTypes.CategorynfABITy, 
                               Values);
