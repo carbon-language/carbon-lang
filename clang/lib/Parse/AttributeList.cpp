@@ -60,6 +60,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     break;
   case 5:
     if (!memcmp(Str, "alias", 5)) return AT_alias;
+    if (!memcmp(Str, "const", 5)) return IgnoredAttribute;  // FIXME!
     break;
   case 6:
     if (!memcmp(Str, "packed", 6)) return AT_packed;
