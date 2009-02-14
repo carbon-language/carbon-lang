@@ -87,7 +87,7 @@ _mm_hsub_pd(__m128d a, __m128d b)
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_loaddup_pd(double const *dp)
 {
-  return __builtin_shufflevector(*(__m128d *)dp, *(__m128d *)dp, 0, 0);
+  return (__m128d){ *dp, *dp };
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
