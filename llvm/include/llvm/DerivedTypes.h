@@ -75,7 +75,7 @@ public:
 
 /// Class to represent integer types. Note that this class is also used to
 /// represent the built-in integer types: Int1Ty, Int8Ty, Int16Ty, Int32Ty and
-/// Int64Ty. 
+/// Int64Ty.
 /// @brief Integer representation type
 class IntegerType : public DerivedType {
 protected:
@@ -92,7 +92,7 @@ public:
       ///< which has 23 bits. This yields a maximum bit width of 8,388,607 bits.
   };
 
-  /// This static method is the primary way of constructing an IntegerType. 
+  /// This static method is the primary way of constructing an IntegerType.
   /// If an IntegerType with the same NumBits value was previously instantiated,
   /// that instance will be returned. Otherwise a new one will be created. Only
   /// one instance with a given NumBits value is ever created.
@@ -114,14 +114,14 @@ public:
   uint64_t getSignBit() const {
     return 1ULL << (getBitWidth()-1);
   }
-  
+
   /// For example, this is 0xFF for an 8 bit integer, 0xFFFF for i16, etc.
   /// @returns a bit mask with ones set for all the bits of this type.
   /// @brief Get a bit mask for this type.
   APInt getMask() const;
 
   /// This method determines if the width of this IntegerType is a power-of-2
-  /// in terms of 8 bit bytes. 
+  /// in terms of 8 bit bytes.
   /// @returns true if this is a power-of-2 byte width.
   /// @brief Is this a power-of-2 byte-width IntegerType ?
   bool isPowerOf2ByteWidth() const;
@@ -147,14 +147,14 @@ class FunctionType : public DerivedType {
 
 public:
   /// FunctionType::get - This static method is the primary way of constructing
-  /// a FunctionType. 
+  /// a FunctionType.
   ///
   static FunctionType *get(
     const Type *Result, ///< The result type
     const std::vector<const Type*> &Params, ///< The types of the parameters
     bool isVarArg  ///< Whether this is a variable argument length function
   );
-  
+
   /// isValidReturnType - Return true if the specified type is valid as a return
   /// type.
   static bool isValidReturnType(const Type *RetTy);
@@ -223,7 +223,7 @@ public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
   ///
-  static StructType *get(const std::vector<const Type*> &Params, 
+  static StructType *get(const std::vector<const Type*> &Params,
                          bool isPacked=false);
 
   /// StructType::get - This static method is a convenience method for
@@ -282,9 +282,9 @@ class SequentialType : public CompositeType {
   // avoiding warning: 'this' : used in base member initializer list
   SequentialType* this_() { return this; }
 protected:
-  SequentialType(TypeID TID, const Type *ElType) 
+  SequentialType(TypeID TID, const Type *ElType)
     : CompositeType(TID), ContainedType(ElType, this_()) {
-    ContainedTys = &ContainedType; 
+    ContainedTys = &ContainedType;
     NumContainedTys = 1;
   }
 
@@ -395,7 +395,7 @@ public:
   inline unsigned getNumElements() const { return NumElements; }
 
   /// @brief Return the number of bits in the Vector type.
-  inline unsigned getBitWidth() const { 
+  inline unsigned getBitWidth() const {
     return NumElements *getElementType()->getPrimitiveSizeInBits();
   }
 
@@ -416,21 +416,21 @@ public:
 class PointerType : public SequentialType {
   friend class TypeMap<PointerValType, PointerType>;
   unsigned AddressSpace;
-  
+
   PointerType(const PointerType &);                   // Do not implement
   const PointerType &operator=(const PointerType &);  // Do not implement
   explicit PointerType(const Type *ElType, unsigned AddrSpace);
 public:
-  /// PointerType::get - This constructs a pointer to an object of the specified 
+  /// PointerType::get - This constructs a pointer to an object of the specified
   /// type in a numbered address space.
   static PointerType *get(const Type *ElementType, unsigned AddressSpace);
-  
-  /// PointerType::getUnqual - This constructs a pointer to an object of the  
+
+  /// PointerType::getUnqual - This constructs a pointer to an object of the
   /// specified type in the generic address space (address space zero).
-  static PointerType *getUnqual(const Type *ElementType) { 
+  static PointerType *getUnqual(const Type *ElementType) {
     return PointerType::get(ElementType, 0);
   }
-  
+
   /// @brief Return the address space of the Pointer type.
   inline unsigned getAddressSpace() const { return AddressSpace; }
 
