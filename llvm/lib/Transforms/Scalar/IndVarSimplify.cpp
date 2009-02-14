@@ -286,7 +286,7 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
   DOUT << "INDVARS: Rewriting loop exit condition to:\n"
        << "      LHS:" << *CmpIndVar // includes a newline
        << "       op:\t"
-       << (Opcode == ICmpInst::ICMP_NE ? "!=" : "=") << "\n"
+       << (Opcode == ICmpInst::ICMP_NE ? "!=" : "==") << "\n"
        << "      RHS:\t" << *IterationCount << "\n";
 
   Value *Cond = new ICmpInst(Opcode, CmpIndVar, ExitCnt, "exitcond", BI);
