@@ -43,6 +43,7 @@ public:
     NoThrow,
     ObjCGC,
     ObjCNSObject,
+    ObjCException,
     Overloadable, // Clang-specific
     Packed,
     Section,
@@ -290,7 +291,6 @@ public:
   NoThrowAttr() : Attr(NoThrow) {}
 
   // Implement isa/cast/dyncast/etc.
-
   static bool classof(const Attr *A) { return A->getKind() == NoThrow; }
   static bool classof(const NoThrowAttr *A) { return true; }
 };
@@ -300,7 +300,6 @@ public:
   ConstAttr() : Attr(Const) {}
 
   // Implement isa/cast/dyncast/etc.
-
   static bool classof(const Attr *A) { return A->getKind() == Const; }
   static bool classof(const ConstAttr *A) { return true; }
 };
@@ -310,7 +309,6 @@ public:
   PureAttr() : Attr(Pure) {}
 
   // Implement isa/cast/dyncast/etc.
-
   static bool classof(const Attr *A) { return A->getKind() == Pure; }
   static bool classof(const PureAttr *A) { return true; }
 };
@@ -322,12 +320,11 @@ public:
   NonNullAttr(unsigned* arg_nums = 0, unsigned size = 0) : Attr(NonNull),
     ArgNums(0), Size(0) {
   
-    if (size) {
-      assert (arg_nums);
-      ArgNums = new unsigned[size];
-      Size = size;
-      memcpy(ArgNums, arg_nums, sizeof(*ArgNums)*size);
-    }
+    if (size == 0) return;
+    assert(arg_nums);
+    ArgNums = new unsigned[size];
+    Size = size;
+    memcpy(ArgNums, arg_nums, sizeof(*ArgNums)*size);
   }
   
   virtual ~NonNullAttr() {
@@ -458,6 +455,17 @@ public:
 static bool classof(const Attr *A) { return A->getKind() == ObjCNSObject; }
 static bool classof(const ObjCNSObjectAttr *A) { return true; }
 };
+  
+  
+class ObjCExceptionAttr : public Attr {
+public:
+  ObjCExceptionAttr() : Attr(ObjCException) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == ObjCException; }
+  static bool classof(const ObjCExceptionAttr *A) { return true; }
+};
+  
   
 class OverloadableAttr : public Attr {
 public:

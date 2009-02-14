@@ -75,6 +75,7 @@ public:
     AT_warn_unused_result,
     AT_weak,
     AT_objc_gc,
+    AT_objc_exception,
     AT_blocks,
     AT_sentinel,
     AT_const,

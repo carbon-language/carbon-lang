@@ -568,7 +568,7 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new VisibilityAttr(type));
 }
 
-static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleObjCGCAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   if (!Attr.getParameterName()) {    
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
       << "objc_gc" << 1;
@@ -579,11 +579,10 @@ static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
-  
-  
+
   ObjCGCAttr::GCAttrTypes type;
   if (Attr.getParameterName()->isStr("weak")) {
-    if (isa<FieldDecl>(d) && !isa<ObjCIvarDecl>(d))
+    if (isa<FieldDecl>(D) && !isa<ObjCIvarDecl>(D))
       S.Diag(Attr.getLoc(), diag::warn_attribute_weak_on_field);
     type = ObjCGCAttr::Weak;
   }
@@ -595,15 +594,31 @@ static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(new ObjCGCAttr(type));
+  D->addAttr(new ObjCGCAttr(type));
 }
 
-static void HandleObjCNSObject(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleObjCExceptionAttr(Decl *D, const AttributeList &Attr,
+                                    Sema &S) {
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  
+  ObjCInterfaceDecl *OCI = dyn_cast<ObjCInterfaceDecl>(D);
+  if (OCI == 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_requires_objc_interface);
+    return;
+  }
+  
+  D->addAttr(new ObjCExceptionAttr());
+}
+
+static void HandleObjCNSObject(Decl *D, const AttributeList &Attr, Sema &S) {
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
-  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(d)) {
+  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
     QualType T = TD->getUnderlyingType();
     if (!T->isPointerType() ||
         !T->getAsPointerType()->getPointeeType()->isRecordType()) {
@@ -611,7 +626,7 @@ static void HandleObjCNSObject(Decl *d, const AttributeList &Attr, Sema &S) {
       return;
     }
   }
-  d->addAttr(new ObjCNSObjectAttr);
+  D->addAttr(new ObjCNSObjectAttr);
 }
 
 static void 
@@ -1406,6 +1421,9 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
     HandleTransparentUnionAttr(D, Attr, S);
     break;
   case AttributeList::AT_objc_gc:     HandleObjCGCAttr    (D, Attr, S); break;
+  case AttributeList::AT_objc_exception:
+    HandleObjCExceptionAttr(D, Attr, S);
+    break;
   case AttributeList::AT_overloadable:HandleOverloadableAttr(D, Attr, S); break;
   case AttributeList::AT_nsobject:    HandleObjCNSObject  (D, Attr, S); break;
   case AttributeList::AT_blocks:      HandleBlocksAttr    (D, Attr, S); break;

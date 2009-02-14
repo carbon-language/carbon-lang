@@ -110,6 +110,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "address_space", 13)) return AT_address_space;
     if (!memcmp(Str, "always_inline", 13)) return AT_always_inline;
     break;
+  case 14:
+    if (!memcmp(Str, "objc_exception", 14)) return AT_objc_exception;
+    break;
   case 15:
     if (!memcmp(Str, "ext_vector_type", 15)) return AT_ext_vector_type;
     break;
