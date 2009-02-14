@@ -350,7 +350,8 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
 }  
 
 APValue PointerExprEvaluator::VisitCallExpr(CallExpr *E) {
-  if (E->isBuiltinCall() == Builtin::BI__builtin___CFStringMakeConstantString)
+  if (E->isBuiltinCall(Info.Ctx) == 
+        Builtin::BI__builtin___CFStringMakeConstantString)
     return APValue(E, 0);
   return APValue();
 }
@@ -646,7 +647,7 @@ static int EvaluateBuiltinClassifyType(const CallExpr *E) {
 bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
   
-  switch (E->isBuiltinCall()) {
+  switch (E->isBuiltinCall(Info.Ctx)) {
   default:
     return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
   case Builtin::BI__builtin_classify_type:
@@ -1173,7 +1174,7 @@ static bool EvaluateFloat(const Expr* E, APFloat& Result, EvalInfo &Info) {
 }
 
 bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
-  switch (E->isBuiltinCall()) {
+  switch (E->isBuiltinCall(Info.Ctx)) {
   default: return false;
   case Builtin::BI__builtin_huge_val:
   case Builtin::BI__builtin_huge_valf:

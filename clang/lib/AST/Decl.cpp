@@ -259,15 +259,33 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
 /// will be 0 for functions that do not correspond to a builtin, a
 /// value of type \c Builtin::ID if in the target-independent range 
 /// \c [1,Builtin::First), or a target-specific builtin value.
-unsigned FunctionDecl::getBuiltinID() const {
-  if (getIdentifier() && 
-      (getDeclContext()->isTranslationUnit() ||
-       (isa<LinkageSpecDecl>(getDeclContext()) &&
-        cast<LinkageSpecDecl>(getDeclContext())->getLanguage() 
-          == LinkageSpecDecl::lang_c)))
-    return getIdentifier()->getBuiltinID();
-    
-  // Not a builtin.
+unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
+  if (!getIdentifier() || !getIdentifier()->getBuiltinID())
+    return 0;
+
+  unsigned BuiltinID = getIdentifier()->getBuiltinID();
+  if (!Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
+    return BuiltinID;
+
+  // This function has the name of a known C library
+  // function. Determine whether it actually refers to the C library
+  // function or whether it just has the same name.
+
+  // If this function is at translation-unit scope and we're not in
+  // C++, it refers to the C library function.
+  if (!Context.getLangOptions().CPlusPlus &&
+      getDeclContext()->isTranslationUnit())
+    return BuiltinID;
+
+  // If the function is in an extern "C" linkage specification and is
+  // not marked "overloadable", it's the real function.
+  if (isa<LinkageSpecDecl>(getDeclContext()) &&
+      cast<LinkageSpecDecl>(getDeclContext())->getLanguage() 
+        == LinkageSpecDecl::lang_c &&
+      !getAttr<OverloadableAttr>())
+    return BuiltinID;
+
+  // Not a builtin
   return 0;
 }
 

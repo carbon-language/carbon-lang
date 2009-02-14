@@ -18,7 +18,6 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/Lex/Preprocessor.h"
-#include "SemaUtil.h"
 using namespace clang;
 
 /// CheckFunctionCall - Check a direct function call for various correctness
@@ -34,7 +33,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   if (!FnInfo)
     return move(TheCallResult);
 
-  switch (FDecl->getBuiltinID()) {
+  switch (FDecl->getBuiltinID(Context)) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");
@@ -78,26 +77,16 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   // handlers.
 
   // Printf checking.
-  unsigned format_idx = 0;
-  bool HasVAListArg = false;
-  if (FDecl->getBuiltinID() &&
-      Context.BuiltinInfo.isPrintfLike(FDecl->getBuiltinID(), format_idx,
-                                       HasVAListArg)) {
-    // Found a printf builtin.
-  } else if (FnInfo == KnownFunctionIDs[id_NSLog]) {
-    format_idx = 0;
-    HasVAListArg = false;
-  } else if (FnInfo == KnownFunctionIDs[id_asprintf]) {
-    format_idx = 1;
-    HasVAListArg = false;
-  } else if (FnInfo == KnownFunctionIDs[id_vasprintf]) {
-    format_idx = 1;
-    HasVAListArg = true;
-  } else {
-    return move(TheCallResult);
+  if (const FormatAttr *Format = FDecl->getAttr<FormatAttr>()) {
+    if (Format->getType() == "printf") {
+      bool HasVAListArg = false;
+      if (const FunctionTypeProto *Proto 
+          = FDecl->getType()->getAsFunctionTypeProto())
+        HasVAListArg = !Proto->isVariadic();
+      CheckPrintfArguments(TheCall, HasVAListArg, Format->getFormatIdx() - 1,
+                           Format->getFirstArg() - 1);
+    }
   }
-
-  CheckPrintfArguments(TheCall, HasVAListArg, format_idx);
 
   return move(TheCallResult);
 }
@@ -364,27 +353,27 @@ bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
 
 // Handle i > 1 ? "x" : "y", recursivelly
 bool Sema::SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
-                                  unsigned format_idx) {
+                                  unsigned format_idx, unsigned firstDataArg) {
 
   switch (E->getStmtClass()) {
   case Stmt::ConditionalOperatorClass: {
     ConditionalOperator *C = cast<ConditionalOperator>(E);
     return SemaCheckStringLiteral(C->getLHS(), TheCall,
-                                  HasVAListArg, format_idx)
+                                  HasVAListArg, format_idx, firstDataArg)
         && SemaCheckStringLiteral(C->getRHS(), TheCall,
-                                  HasVAListArg, format_idx);
+                                  HasVAListArg, format_idx, firstDataArg);
   }
 
   case Stmt::ImplicitCastExprClass: {
     ImplicitCastExpr *Expr = dyn_cast<ImplicitCastExpr>(E);
     return SemaCheckStringLiteral(Expr->getSubExpr(), TheCall, HasVAListArg,
-                                  format_idx);
+                                  format_idx, firstDataArg);
   }
 
   case Stmt::ParenExprClass: {
     ParenExpr *Expr = dyn_cast<ParenExpr>(E);
     return SemaCheckStringLiteral(Expr->getSubExpr(), TheCall, HasVAListArg,
-                                  format_idx);
+                                  format_idx, firstDataArg);
   }
 
   default: {
@@ -397,7 +386,8 @@ bool Sema::SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
       StrE = dyn_cast<StringLiteral>(E);
 
     if (StrE) {
-      CheckPrintfString(StrE, E, TheCall, HasVAListArg, format_idx);
+      CheckPrintfString(StrE, E, TheCall, HasVAListArg, format_idx, 
+                        firstDataArg);
       return true;
     }
     
@@ -458,7 +448,7 @@ bool Sema::SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
 /// For now, we ONLY do (1), (3), (5), (6), (7), and (8).
 void
 Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg, 
-                           unsigned format_idx) {
+                           unsigned format_idx, unsigned firstDataArg) {
   Expr *Fn = TheCall->getCallee();
 
   // CHECK: printf-like function is called with no format string.  
@@ -482,7 +472,9 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
   // C string (e.g. "%d")
   // ObjC string uses the same format specifiers as C string, so we can use 
   // the same format string checking logic for both ObjC and C strings.
-  bool isFExpr = SemaCheckStringLiteral(OrigFormatExpr, TheCall, HasVAListArg, format_idx);
+  bool isFExpr = SemaCheckStringLiteral(OrigFormatExpr, TheCall, 
+                                        HasVAListArg, format_idx,
+                                        firstDataArg);
 
   if (!isFExpr) {
     // For vprintf* functions (i.e., HasVAListArg==true), we add a
@@ -516,7 +508,8 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
 }
 
 void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
-      CallExpr *TheCall, bool HasVAListArg, unsigned format_idx) {
+      CallExpr *TheCall, bool HasVAListArg, unsigned format_idx,
+                             unsigned firstDataArg) {
 
   ObjCStringLiteral *ObjCFExpr = dyn_cast<ObjCStringLiteral>(OrigFormatExpr);
   // CHECK: is the format string a wide literal?
@@ -554,7 +547,7 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
   //  string.  This can only be determined for non vprintf-like
   //  functions.  For those functions, this value is 1 (the sole
   //  va_arg argument).
-  unsigned numDataArgs = TheCall->getNumArgs()-(format_idx+1);
+  unsigned numDataArgs = TheCall->getNumArgs()-firstDataArg;
 
   // Inspect the format string.
   unsigned StrIdx = 0;
@@ -1025,12 +1018,12 @@ void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
   // Check for comparisons with builtin types.
   if (EmitWarning)
     if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
-      if (isCallBuiltin(CL))
+      if (CL->isBuiltinCall(Context))
         EmitWarning = false;
   
   if (EmitWarning)
     if (CallExpr* CR = dyn_cast<CallExpr>(RightExprSansParen))
-      if (isCallBuiltin(CR))
+      if (CR->isBuiltinCall(Context))
         EmitWarning = false;
   
   // Emit the diagnostic.

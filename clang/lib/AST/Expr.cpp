@@ -173,7 +173,7 @@ void CallExpr::setNumArgs(ASTContext& C, unsigned NumArgs) {
 
 /// isBuiltinCall - If this is a call to a builtin, return the builtin ID.  If
 /// not, return 0.
-unsigned CallExpr::isBuiltinCall() const {
+unsigned CallExpr::isBuiltinCall(ASTContext &Context) const {
   // All simple function calls (e.g. func()) are implicitly cast to pointer to
   // function. As a result, we try and obtain the DeclRefExpr from the 
   // ImplicitCastExpr.
@@ -192,7 +192,7 @@ unsigned CallExpr::isBuiltinCall() const {
   if (!FDecl->getIdentifier())
     return 0;
 
-  return FDecl->getBuiltinID();
+  return FDecl->getBuiltinID(Context);
 }
 
 
@@ -922,7 +922,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     
     // If this is a call to a builtin function, constant fold it otherwise
     // reject it.
-    if (CE->isBuiltinCall()) {
+    if (CE->isBuiltinCall(Ctx)) {
       EvalResult EvalResult;
       if (CE->Evaluate(EvalResult, Ctx)) {
         assert(!EvalResult.HasSideEffects && 
@@ -1205,7 +1205,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     // expression, and it is fully evaluated.  This is an important GNU
     // extension.  See GCC PR38377 for discussion.
     if (const CallExpr *CallCE = dyn_cast<CallExpr>(Cond->IgnoreParenCasts()))
-      if (CallCE->isBuiltinCall() == Builtin::BI__builtin_constant_p) {
+      if (CallCE->isBuiltinCall(Ctx) == Builtin::BI__builtin_constant_p) {
         EvalResult EVResult;
         if (!Evaluate(EVResult, Ctx) || EVResult.HasSideEffects)
           return false;

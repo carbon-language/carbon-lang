@@ -132,6 +132,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   IdentifierTable &IT = PP.getIdentifierTable();  
 
   KnownFunctionIDs[id_NSLog]         = &IT.get("NSLog");
+  KnownFunctionIDs[id_NSLogv]         = &IT.get("NSLogv");
   KnownFunctionIDs[id_asprintf]      = &IT.get("asprintf");
   KnownFunctionIDs[id_vasprintf]     = &IT.get("vasprintf");
 

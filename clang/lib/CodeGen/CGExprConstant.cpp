@@ -582,7 +582,8 @@ public:
     }
     case Expr::CallExprClass: {
       CallExpr* CE = cast<CallExpr>(E);
-      if (CE->isBuiltinCall() != Builtin::BI__builtin___CFStringMakeConstantString)
+      if (CE->isBuiltinCall(CGM.getContext()) != 
+            Builtin::BI__builtin___CFStringMakeConstantString)
         break;
       const Expr *Arg = CE->getArg(0)->IgnoreParenCasts();
       const StringLiteral *Literal = cast<StringLiteral>(Arg);

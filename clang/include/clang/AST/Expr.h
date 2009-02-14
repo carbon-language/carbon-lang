@@ -834,7 +834,7 @@ public:
 
   /// isBuiltinCall - If this is a call to a builtin, return the builtin ID.  If
   /// not, return 0.
-  unsigned isBuiltinCall() const;
+  unsigned isBuiltinCall(ASTContext &Context) const;
   
   SourceLocation getRParenLoc() const { return RParenLoc; }
 

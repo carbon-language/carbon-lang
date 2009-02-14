@@ -85,3 +85,9 @@ void check_asterisk_precision_width(int x) {
   printf("%*d","foo",x); // expected-warning {{field width should have type 'int', but argument has type 'char *'}}
   printf("%.*d","foo",x); // expected-warning {{field precision should have type 'int', but argument has type 'char *'}}
 }
+
+void __attribute__((format(printf,1,3))) myprintf(const char*, int blah, ...);
+
+void test_myprintf() {
+  myprintf("%d", 17, 18); // okay
+}

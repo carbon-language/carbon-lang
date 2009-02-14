@@ -600,7 +600,7 @@ public:
     PreviousDeclaration = PrevDecl;
   }
 
-  unsigned getBuiltinID() const;
+  unsigned getBuiltinID(ASTContext &Context) const;
 
   // Iterator access to formal parameters.
   unsigned param_size() const { return getNumParams(); }

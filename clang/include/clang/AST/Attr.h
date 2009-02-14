@@ -347,6 +347,7 @@ public:
              Type(type), formatIdx(idx), firstArg(first) {}
 
   const std::string& getType() const { return Type; }
+  void setType(const std::string &type) { Type = type; }
   int getFormatIdx() const { return formatIdx; }
   int getFirstArg() const { return firstArg; }
 

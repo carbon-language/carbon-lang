@@ -340,7 +340,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     New->setParams(Context, &Params[0], Params.size());
   }
   
-  
+  AddKnownFunctionAttributes(New);  
   
   // TUScope is the translation-unit scope to insert this function into.
   // FIXME: This is hideous. We need to teach PushOnScopeChains to
@@ -522,7 +522,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   if (Old->isThisDeclarationADefinition())
     PrevDiag = diag::note_previous_definition;
   else if (Old->isImplicit()) {
-    if (Old->getBuiltinID())
+    if (Old->getBuiltinID(Context))
       PrevDiag = diag::note_previous_builtin_declaration;
     else
       PrevDiag = diag::note_previous_implicit_declaration;
@@ -1771,6 +1771,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Handle attributes. We need to have merged decls when handling attributes
   // (for example to check for conflicts, etc).
   ProcessDeclAttributes(NewFD, D);
+  AddKnownFunctionAttributes(NewFD);
 
   if (OverloadableAttrRequired && !NewFD->getAttr<OverloadableAttr>()) {
     // If a function name is overloadable in C, then every function
@@ -1872,7 +1873,7 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
   case Expr::CallExprClass:
   case Expr::CXXOperatorCallExprClass:
     // __builtin___CFStringMakeConstantString is a valid constant l-value.
-    if (cast<CallExpr>(Init)->isBuiltinCall() == 
+    if (cast<CallExpr>(Init)->isBuiltinCall(Context) == 
            Builtin::BI__builtin___CFStringMakeConstantString)
       return false;
       
@@ -2071,7 +2072,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     const CallExpr *CE = cast<CallExpr>(Init);
 
     // Allow any constant foldable calls to builtins.
-    if (CE->isBuiltinCall() && CE->isEvaluatable(Context))
+    if (CE->isBuiltinCall(Context) && CE->isEvaluatable(Context))
       return false;
     
     InitializerElementNotConstant(Init);
@@ -2856,9 +2857,73 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
 
   CurContext = PrevDC;
 
+  AddKnownFunctionAttributes(FD);
+
   return FD;
 }
 
+/// \brief Adds any function attributes that we know a priori based on
+/// the declaration of this function.
+///
+/// These attributes can apply both to implicitly-declared builtins
+/// (like __builtin___printf_chk) or to library-declared functions
+/// like NSLog or printf.
+void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
+  if (FD->isInvalidDecl())
+    return;
+
+  // If this is a built-in function, map its builtin attributes to
+  // actual attributes.
+  if (unsigned BuiltinID = FD->getBuiltinID(Context)) {
+    // Handle printf-formatting attributes.
+    unsigned FormatIdx;
+    bool HasVAListArg;
+    if (Context.BuiltinInfo.isPrintfLike(BuiltinID, FormatIdx, HasVAListArg)) {
+      if (!FD->getAttr<FormatAttr>())
+        FD->addAttr(new FormatAttr("printf", FormatIdx + 1, FormatIdx + 2));
+    }
+  }
+
+  IdentifierInfo *Name = FD->getIdentifier();
+  if (!Name)
+    return;
+  if ((!getLangOptions().CPlusPlus && 
+       FD->getDeclContext()->isTranslationUnit()) ||
+      (isa<LinkageSpecDecl>(FD->getDeclContext()) &&
+       cast<LinkageSpecDecl>(FD->getDeclContext())->getLanguage() == 
+       LinkageSpecDecl::lang_c)) {
+    // Okay: this could be a libc/libm/Objective-C function we know
+    // about.
+  } else
+    return;
+
+  unsigned KnownID;
+  for (KnownID = 0; KnownID != id_num_known_functions; ++KnownID)
+    if (KnownFunctionIDs[KnownID] == Name)
+      break;
+
+  switch (KnownID) {
+  case id_NSLog:
+  case id_NSLogv:
+    if (const FormatAttr *Format = FD->getAttr<FormatAttr>()) {
+      // FIXME: We known better than our headers.
+      const_cast<FormatAttr *>(Format)->setType("printf");
+    } else 
+      FD->addAttr(new FormatAttr("printf", 1, 2));
+    break;
+
+  case id_asprintf:
+  case id_vasprintf:
+    if (!FD->getAttr<FormatAttr>())
+      FD->addAttr(new FormatAttr("printf", 2, 3));
+    break;
+
+  default:
+    // Unknown function or known function without any attributes to
+    // add. Do nothing.
+    break;
+  }
+}
 
 TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                     Decl *LastDeclarator) {

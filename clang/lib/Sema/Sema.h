@@ -181,6 +181,7 @@ public:
   // Enum values used by KnownFunctionIDs (see below).
   enum {
     id_NSLog,
+    id_NSLogv,
     id_asprintf,
     id_vasprintf,
     id_num_known_functions
@@ -883,6 +884,7 @@ public:
                                  SourceLocation Loc);
   NamedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                       Scope *S);
+  void AddKnownFunctionAttributes(FunctionDecl *FD);
 
   // More parsing and symbol table subroutines.
 
@@ -1986,12 +1988,12 @@ private:
   bool SemaBuiltinPrefetch(CallExpr *TheCall); 
   bool SemaBuiltinObjectSize(CallExpr *TheCall); 
   bool SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
-                              unsigned format_idx);
+                              unsigned format_idx, unsigned firstDataArg);
   void CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
                          CallExpr *TheCall, bool HasVAListArg,
-                         unsigned format_idx);
-  void CheckPrintfArguments(CallExpr *TheCall,
-                            bool HasVAListArg, unsigned format_idx);
+                         unsigned format_idx, unsigned firstDataArg);
+  void CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg, 
+                            unsigned format_idx, unsigned firstDataArg);
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);

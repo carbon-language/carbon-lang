@@ -1263,7 +1263,8 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
 
     if (isa<loc::FuncVal>(L)) {
       
-      if (unsigned id = cast<loc::FuncVal>(L).getDecl()->getBuiltinID())
+      if (unsigned id 
+            = cast<loc::FuncVal>(L).getDecl()->getBuiltinID(getContext()))
         switch (id) {
           case Builtin::BI__builtin_expect: {
             // For __builtin_expect, just return the value of the subexpression.
