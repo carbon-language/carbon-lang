@@ -58,7 +58,7 @@ static void getFreeBSDDefines(std::vector<char> &Defs, bool is64Bit,
   Define(Defs, "__FreeBSD_cc_version", version);
   Define(Defs, "__KPRINTF_ATTRIBUTE__");
   Define(Defs, "unix");
-  Define(Defs, "bsd");
+  Define(Defs, "__ELF__", "1");
   if (is64Bit) {
     Define(Defs, "__LP64__");
   }
