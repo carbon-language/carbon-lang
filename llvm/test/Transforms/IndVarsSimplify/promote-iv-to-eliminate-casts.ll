@@ -60,3 +60,41 @@ bb1.return_crit_edge:		; preds = %bb1
 return:		; preds = %bb1.return_crit_edge, %entry
 	ret void
 }
+
+; Test cases from PR1301:
+
+define void @kinds__srangezero([21 x i32]* nocapture %a) nounwind {
+bb.thread:
+  br label %bb
+
+bb:             ; preds = %bb, %bb.thread
+  %i.0.reg2mem.0 = phi i8 [ -10, %bb.thread ], [ %tmp7, %bb ]           ; <i8> [#uses=2]
+  %tmp12 = sext i8 %i.0.reg2mem.0 to i32                ; <i32> [#uses=1]
+  %tmp4 = add i32 %tmp12, 10            ; <i32> [#uses=1]
+  %tmp5 = getelementptr [21 x i32]* %a, i32 0, i32 %tmp4                ; <i32*> [#uses=1]
+  store i32 0, i32* %tmp5
+  %tmp7 = add i8 %i.0.reg2mem.0, 1              ; <i8> [#uses=2]
+  %0 = icmp sgt i8 %tmp7, 10            ; <i1> [#uses=1]
+  br i1 %0, label %return, label %bb
+
+return:         ; preds = %bb
+  ret void
+}
+
+define void @kinds__urangezero([21 x i32]* nocapture %a) nounwind {
+bb.thread:
+  br label %bb
+
+bb:             ; preds = %bb, %bb.thread
+  %i.0.reg2mem.0 = phi i8 [ 10, %bb.thread ], [ %tmp7, %bb ]            ; <i8> [#uses=2]
+  %tmp12 = sext i8 %i.0.reg2mem.0 to i32                ; <i32> [#uses=1]
+  %tmp4 = add i32 %tmp12, -10           ; <i32> [#uses=1]
+  %tmp5 = getelementptr [21 x i32]* %a, i32 0, i32 %tmp4                ; <i32*> [#uses=1]
+  store i32 0, i32* %tmp5
+  %tmp7 = add i8 %i.0.reg2mem.0, 1              ; <i8> [#uses=2]
+  %0 = icmp sgt i8 %tmp7, 30            ; <i1> [#uses=1]
+  br i1 %0, label %return, label %bb
+
+return:         ; preds = %bb
+  ret void
+}

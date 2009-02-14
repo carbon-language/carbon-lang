@@ -458,33 +458,98 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi) {
   return Ty;
 }
 
-/// isOrigIVAlwaysNonNegative - Analyze the original induction variable
-/// in the loop to determine whether it would ever have a negative
-/// value.
+/// TestOrigIVForWrap - Analyze the original induction variable
+/// in the loop to determine whether it would ever undergo signed
+/// or unsigned overflow.
 ///
 /// TODO: This duplicates a fair amount of ScalarEvolution logic.
-/// Perhaps this can be merged with ScalarEvolution::getIterationCount.
+/// Perhaps this can be merged with ScalarEvolution::getIterationCount
+/// and/or ScalarEvolution::get{Sign,Zero}ExtendExpr.
 ///
-static bool isOrigIVAlwaysNonNegative(const Loop *L,
-                                      const Instruction *OrigCond) {
+static void TestOrigIVForWrap(const Loop *L,
+                              const BranchInst *BI,
+                              const Instruction *OrigCond,
+                              bool &NoSignedWrap,
+                              bool &NoUnsignedWrap) {
   // Verify that the loop is sane and find the exit condition.
   const ICmpInst *Cmp = dyn_cast<ICmpInst>(OrigCond);
-  if (!Cmp) return false;
+  if (!Cmp) return;
 
-  // For now, analyze only SLT loops for signed overflow.
-  if (Cmp->getPredicate() != ICmpInst::ICMP_SLT) return false;
+  const Value *CmpLHS = Cmp->getOperand(0);
+  const Value *CmpRHS = Cmp->getOperand(1);
+  const BasicBlock *TrueBB = BI->getSuccessor(0);
+  const BasicBlock *FalseBB = BI->getSuccessor(1);
+  ICmpInst::Predicate Pred = Cmp->getPredicate();
 
-  // Get the increment instruction. Look past SExtInsts if we will
+  // Canonicalize a constant to the RHS.
+  if (isa<ConstantInt>(CmpLHS)) {
+    Pred = ICmpInst::getSwappedPredicate(Pred);
+    std::swap(CmpLHS, CmpRHS);
+  }
+  // Canonicalize SLE to SLT.
+  if (Pred == ICmpInst::ICMP_SLE)
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(CmpRHS))
+      if (!CI->getValue().isMaxSignedValue()) {
+        CmpRHS = ConstantInt::get(CI->getValue() + 1);
+        Pred = ICmpInst::ICMP_SLT;
+      }
+  // Canonicalize SGT to SGE.
+  if (Pred == ICmpInst::ICMP_SGT)
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(CmpRHS))
+      if (!CI->getValue().isMaxSignedValue()) {
+        CmpRHS = ConstantInt::get(CI->getValue() + 1);
+        Pred = ICmpInst::ICMP_SGE;
+      }
+  // Canonicalize SGE to SLT.
+  if (Pred == ICmpInst::ICMP_SGE) {
+    std::swap(TrueBB, FalseBB);
+    Pred = ICmpInst::ICMP_SLT;
+  }
+  // Canonicalize ULE to ULT.
+  if (Pred == ICmpInst::ICMP_ULE)
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(CmpRHS))
+      if (!CI->getValue().isMaxValue()) {
+        CmpRHS = ConstantInt::get(CI->getValue() + 1);
+        Pred = ICmpInst::ICMP_ULT;
+      }
+  // Canonicalize UGT to UGE.
+  if (Pred == ICmpInst::ICMP_UGT)
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(CmpRHS))
+      if (!CI->getValue().isMaxValue()) {
+        CmpRHS = ConstantInt::get(CI->getValue() + 1);
+        Pred = ICmpInst::ICMP_UGE;
+      }
+  // Canonicalize UGE to ULT.
+  if (Pred == ICmpInst::ICMP_UGE) {
+    std::swap(TrueBB, FalseBB);
+    Pred = ICmpInst::ICMP_ULT;
+  }
+  // For now, analyze only LT loops for signed overflow.
+  if (Pred != ICmpInst::ICMP_SLT && Pred != ICmpInst::ICMP_ULT)
+    return;
+
+  bool isSigned = Pred == ICmpInst::ICMP_SLT;
+
+  // Get the increment instruction. Look past casts if we will
   // be able to prove that the original induction variable doesn't
-  // undergo signed overflow.
-  const Value *OrigIncrVal = Cmp->getOperand(0);
-  const Value *IncrVal = OrigIncrVal;
-  if (SExtInst *SI = dyn_cast<SExtInst>(Cmp->getOperand(0))) {
-    if (!isa<ConstantInt>(Cmp->getOperand(1)) ||
-        !cast<ConstantInt>(Cmp->getOperand(1))->getValue()
-          .isSignedIntN(IncrVal->getType()->getPrimitiveSizeInBits()))
-      return false;
-    IncrVal = SI->getOperand(0);
+  // undergo signed or unsigned overflow, respectively.
+  const Value *IncrVal = CmpLHS;
+  if (isSigned) {
+    if (const SExtInst *SI = dyn_cast<SExtInst>(CmpLHS)) {
+      if (!isa<ConstantInt>(CmpRHS) ||
+          !cast<ConstantInt>(CmpRHS)->getValue()
+            .isSignedIntN(IncrVal->getType()->getPrimitiveSizeInBits()))
+        return;
+      IncrVal = SI->getOperand(0);
+    }
+  } else {
+    if (const ZExtInst *ZI = dyn_cast<ZExtInst>(CmpLHS)) {
+      if (!isa<ConstantInt>(CmpRHS) ||
+          !cast<ConstantInt>(CmpRHS)->getValue()
+            .isIntN(IncrVal->getType()->getPrimitiveSizeInBits()))
+        return;
+      IncrVal = ZI->getOperand(0);
+    }
   }
 
   // For now, only analyze induction variables that have simple increments.
@@ -493,32 +558,36 @@ static bool isOrigIVAlwaysNonNegative(const Loop *L,
       IncrOp->getOpcode() != Instruction::Add ||
       !isa<ConstantInt>(IncrOp->getOperand(1)) ||
       !cast<ConstantInt>(IncrOp->getOperand(1))->equalsInt(1))
-    return false;
+    return;
 
   // Make sure the PHI looks like a normal IV.
   const PHINode *PN = dyn_cast<PHINode>(IncrOp->getOperand(0));
   if (!PN || PN->getNumIncomingValues() != 2)
-    return false;
+    return;
   unsigned IncomingEdge = L->contains(PN->getIncomingBlock(0));
   unsigned BackEdge = !IncomingEdge;
   if (!L->contains(PN->getIncomingBlock(BackEdge)) ||
       PN->getIncomingValue(BackEdge) != IncrOp)
-    return false;
+    return;
+  if (!L->contains(TrueBB))
+    return;
 
   // For now, only analyze loops with a constant start value, so that
-  // we can easily determine if the start value is non-negative and
-  // not a maximum value which would wrap on the first iteration.
+  // we can easily determine if the start value is not a maximum value
+  // which would wrap on the first iteration.
   const Value *InitialVal = PN->getIncomingValue(IncomingEdge);
-  if (!isa<ConstantInt>(InitialVal) ||
-      cast<ConstantInt>(InitialVal)->getValue().isNegative() ||
-      cast<ConstantInt>(InitialVal)->getValue().isMaxSignedValue())
-    return false;
+  if (!isa<ConstantInt>(InitialVal))
+    return;
 
-  // The original induction variable will start at some non-negative
-  // non-max value, it counts up by one, and the loop iterates only
-  // while it remans less than (signed) some value in the same type.
-  // As such, it will always be non-negative.
-  return true;
+  // The original induction variable will start at some non-max value,
+  // it counts up by one, and the loop iterates only while it remans
+  // less than some value in the same type. As such, it will never wrap.
+  if (isSigned &&
+      !cast<ConstantInt>(InitialVal)->getValue().isMaxSignedValue())
+    NoSignedWrap = true;
+  else if (!isSigned &&
+           !cast<ConstantInt>(InitialVal)->getValue().isMaxValue())
+    NoUnsignedWrap = true;
 }
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
@@ -596,13 +665,15 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // If we have a trip count expression, rewrite the loop's exit condition
   // using it.  We can currently only handle loops with a single exit.
-  bool OrigIVAlwaysNonNegative = false;
+  bool NoSignedWrap = false;
+  bool NoUnsignedWrap = false;
   if (!isa<SCEVCouldNotCompute>(IterationCount) && ExitingBlock)
     // Can't rewrite non-branch yet.
     if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator())) {
       if (Instruction *OrigCond = dyn_cast<Instruction>(BI->getCondition())) {
-        // Determine if the OrigIV will ever have a non-zero sign bit.
-        OrigIVAlwaysNonNegative = isOrigIVAlwaysNonNegative(L, OrigCond);
+        // Determine if the OrigIV will ever undergo overflow.
+        TestOrigIVForWrap(L, BI, OrigCond,
+                          NoSignedWrap, NoUnsignedWrap);
 
         // We'll be replacing the original condition, so it'll be dead.
         DeadInsts.insert(OrigCond);
@@ -642,19 +713,38 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     /// If the new canonical induction variable is wider than the original,
     /// and the original has uses that are casts to wider types, see if the
     /// truncate and extend can be omitted.
-    if (isa<TruncInst>(NewVal))
+    if (PN->getType() != LargestType)
       for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
-           UI != UE; ++UI)
-        if (isa<ZExtInst>(UI) ||
-            (isa<SExtInst>(UI) && OrigIVAlwaysNonNegative)) {
-          Value *TruncIndVar = IndVar;
-          if (TruncIndVar->getType() != UI->getType())
-            TruncIndVar = new TruncInst(IndVar, UI->getType(), "truncindvar",
-                                        InsertPt);
+           UI != UE; ++UI) {
+        if (isa<SExtInst>(UI) && NoSignedWrap) {
+          SCEVHandle ExtendedStart =
+            SE->getSignExtendExpr(cast<SCEVAddRecExpr>(IndVars.back().second)->getStart(), LargestType);
+          SCEVHandle ExtendedStep =
+            SE->getSignExtendExpr(cast<SCEVAddRecExpr>(IndVars.back().second)->getStepRecurrence(*SE), LargestType);
+          SCEVHandle ExtendedAddRec =
+            SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
+          if (LargestType != UI->getType())
+            ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, UI->getType());
+          Value *TruncIndVar = Rewriter.expandCodeFor(ExtendedAddRec, InsertPt);
           UI->replaceAllUsesWith(TruncIndVar);
           if (Instruction *DeadUse = dyn_cast<Instruction>(*UI))
             DeadInsts.insert(DeadUse);
         }
+        if (isa<ZExtInst>(UI) && NoUnsignedWrap) {
+          SCEVHandle ExtendedStart =
+            SE->getZeroExtendExpr(cast<SCEVAddRecExpr>(IndVars.back().second)->getStart(), LargestType);
+          SCEVHandle ExtendedStep =
+            SE->getZeroExtendExpr(cast<SCEVAddRecExpr>(IndVars.back().second)->getStepRecurrence(*SE), LargestType);
+          SCEVHandle ExtendedAddRec =
+            SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
+          if (LargestType != UI->getType())
+            ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, UI->getType());
+          Value *TruncIndVar = Rewriter.expandCodeFor(ExtendedAddRec, InsertPt);
+          UI->replaceAllUsesWith(TruncIndVar);
+          if (Instruction *DeadUse = dyn_cast<Instruction>(*UI))
+            DeadInsts.insert(DeadUse);
+        }
+      }
 
     // Replace the old PHI Node with the inserted computation.
     PN->replaceAllUsesWith(NewVal);
