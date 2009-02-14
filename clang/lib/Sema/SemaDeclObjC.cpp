@@ -264,14 +264,13 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
         << ProtocolId[i].first;
       continue;
     }
-    for (const Attr *attr = PDecl->getAttrs(); attr; attr = attr->getNext()) {
-      if (attr->getKind() == Attr::Unavailable)
-        Diag(ProtocolId[i].second, diag::warn_unavailable) << 
-          PDecl->getDeclName();
-      if (attr->getKind() == Attr::Deprecated)
-        Diag(ProtocolId[i].second, diag::warn_deprecated) << 
-          PDecl->getDeclName();
-    }
+    
+    if (PDecl->getAttr<UnavailableAttr>())
+      Diag(ProtocolId[i].second, diag::warn_unavailable) << 
+           PDecl->getDeclName();
+    if (PDecl->getAttr<DeprecatedAttr>())
+      Diag(ProtocolId[i].second, diag::warn_deprecated) << 
+        PDecl->getDeclName();
 
     // If this is a forward declaration and we are supposed to warn in this
     // case, do it.
