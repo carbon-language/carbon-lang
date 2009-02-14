@@ -48,6 +48,11 @@ PurgeDead("analyzer-purge-dead",
           llvm::cl::init(true),
           llvm::cl::desc("Remove dead symbols, bindings, and constraints before"
                          " processing a statement."));
+static llvm::cl::opt<bool>
+UseRanges("analyzer-range-constraints",
+          llvm::cl::init(true),
+          llvm::cl::desc("Use the range constraint manager instead of the basic"
+                         " constraint manager"));
   
 //===----------------------------------------------------------------------===//
 // Basic type definitions.
@@ -288,6 +293,8 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.HTMLDir, C.PP, C.PPF)); break;
 
       if (ManagerRegistry::ConstraintMgrCreator != 0)
         CreateConstraintMgr = ManagerRegistry::ConstraintMgrCreator;
+      else if (UseRanges)
+        CreateConstraintMgr = CreateRangeConstraintManager;
       else
         CreateConstraintMgr = CreateBasicConstraintManager;
       

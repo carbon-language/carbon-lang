@@ -38,7 +38,8 @@ public:
                                        SVal UpperBound, bool Assumption,
                                        bool& isFeasible) = 0;
 
-  virtual const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) = 0;
+  virtual const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym)
+    const = 0;
 
   virtual bool isEqual(const GRState* St, SymbolRef sym, 
                        const llvm::APSInt& V) const = 0;
@@ -53,6 +54,7 @@ public:
 };
 
 ConstraintManager* CreateBasicConstraintManager(GRStateManager& statemgr);
+ConstraintManager* CreateRangeConstraintManager(GRStateManager& statemgr);
 
 } // end clang namespace
 
