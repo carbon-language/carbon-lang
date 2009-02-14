@@ -307,7 +307,7 @@ def int_annotation : Intrinsic<[llvm_anyint_ty],
 //
 def int_init_trampoline : Intrinsic<[llvm_ptr_ty],
                                     [llvm_ptr_ty, llvm_ptr_ty, llvm_ptr_ty],
-                                    []>,
+                                    [IntrWriteArgMem]>,
                           GCCBuiltin<"__builtin_init_trampoline">;
 
 //===------------------------ Overflow Intrinsics -------------------------===//
