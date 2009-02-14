@@ -12,7 +12,8 @@ void f1() {
 void f2(void *b) {
  char *c = (char*)b; // no-warning
  char *d = b+1; // expected-warning {{never read}}
- printf("%s", c);
+ printf("%s", c); // expected-warning{{implicitly declaring C library function 'printf' with type 'int (char const *, ...)'}} \
+ // expected-note{{please include the header <stdio.h> or explicitly provide a declaration for 'printf'}}
 }
 
 void f3() {

@@ -77,39 +77,29 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   // more efficient. For example, just map function ids to custom
   // handlers.
 
-  // Search the KnownFunctionIDs for the identifier.
-  unsigned i = 0, e = id_num_known_functions;
-  for (; i != e; ++i) { if (KnownFunctionIDs[i] == FnInfo) break; }
-  if (i == e) return move(TheCallResult);
-
   // Printf checking.
-  if (i <= id_vprintf) {
-    // Retrieve the index of the format string parameter and determine
-    // if the function is passed a va_arg argument.
-    unsigned format_idx = 0;
-    bool HasVAListArg = false;
-
-    switch (i) {
-    default: assert(false && "No format string argument index.");
-    case id_NSLog:         format_idx = 0; break;
-    case id_asprintf:      format_idx = 1; break;
-    case id_fprintf:       format_idx = 1; break;
-    case id_printf:        format_idx = 0; break;
-    case id_snprintf:      format_idx = 2; break;
-    case id_snprintf_chk:  format_idx = 4; break;
-    case id_sprintf:       format_idx = 1; break;
-    case id_sprintf_chk:   format_idx = 3; break;
-    case id_vasprintf:     format_idx = 1; HasVAListArg = true; break;
-    case id_vfprintf:      format_idx = 1; HasVAListArg = true; break;
-    case id_vsnprintf:     format_idx = 2; HasVAListArg = true; break;
-    case id_vsnprintf_chk: format_idx = 4; HasVAListArg = true; break;
-    case id_vsprintf:      format_idx = 1; HasVAListArg = true; break;
-    case id_vsprintf_chk:  format_idx = 3; HasVAListArg = true; break;
-    case id_vprintf:       format_idx = 0; HasVAListArg = true; break;
-    }
-
-    CheckPrintfArguments(TheCall, HasVAListArg, format_idx);
+  unsigned format_idx = 0;
+  bool HasVAListArg = false;
+  if (FDecl->getBuiltinID() &&
+      Context.BuiltinInfo.isPrintfLike(FDecl->getBuiltinID(), format_idx,
+                                       HasVAListArg)) {
+    // Found a printf builtin.
+  } else if (FnInfo == KnownFunctionIDs[id_NSLog]) {
+    format_idx = 0;
+    HasVAListArg = false;
+  } else if (FnInfo == KnownFunctionIDs[id_asprintf] ||
+             FnInfo == KnownFunctionIDs[id_fprintf]) {
+    format_idx = 1;
+    HasVAListArg = false;
+  } else if (FnInfo == KnownFunctionIDs[id_vasprintf] ||
+             FnInfo == KnownFunctionIDs[id_vfprintf]) {
+    format_idx = 1;
+    HasVAListArg = true;
+  } else {
+    return move(TheCallResult);
   }
+
+  CheckPrintfArguments(TheCall, HasVAListArg, format_idx);
 
   return move(TheCallResult);
 }

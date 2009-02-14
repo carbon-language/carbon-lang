@@ -55,9 +55,13 @@
 //  c -> const
 //  F -> this is a libc/libm function with a '__builtin_' prefix added.
 //  f -> this is a libc/libm function without the '__builtin_' prefix. It can
-//       be followed by ':headername' to state which header this function
-//       comes from, but only if 'f:headername' is the last part of the
-//       string.
+//       be followed by ':headername:' to state which header this function
+//       comes from.
+//  p:N: -> this is a printf-like function whose Nth argument is the format 
+//          string.
+//  P:N: -> similar to the p:N: attribute, but the function is like vprintf
+//          in that it accepts its arguments as a va_list rather than 
+//          through an ellipsis
 //  FIXME: gcc has nonnull
 
 // Standard libc/libm functions:
@@ -143,12 +147,12 @@ BUILTIN(__builtin___strcat_chk, "c*c*cC*z", "nF")
 BUILTIN(__builtin___strcpy_chk, "c*c*cC*z", "nF")
 BUILTIN(__builtin___strncat_chk, "c*c*cC*zz", "nF")
 BUILTIN(__builtin___strncpy_chk, "c*c*cC*zz", "nF")
-BUILTIN(__builtin___snprintf_chk, "ic*zizcC*.", "F") // FIXME: format printf attribute
-BUILTIN(__builtin___sprintf_chk, "ic*izcC*.", "F") // FIXME: format printf attribute
-BUILTIN(__builtin___vsnprintf_chk, "ic*zizcC*a", "F") // FIXME: format printf attribute
-BUILTIN(__builtin___vsprintf_chk, "ic*izcC*a", "F") // FIXME: format printf attribute
+BUILTIN(__builtin___snprintf_chk, "ic*zizcC*.", "Fp:4:")
+BUILTIN(__builtin___sprintf_chk, "ic*izcC*.", "Fp:3:")
+BUILTIN(__builtin___vsnprintf_chk, "ic*zizcC*a", "FP:4:")
+BUILTIN(__builtin___vsprintf_chk, "ic*izcC*a", "FP:3:")
 //BUILTIN(__builtin___fprintf_chk, "i(FIXME:FILEPTR)icC*.", "F") // FIXME: format printf attribute
-BUILTIN(__builtin___printf_chk, "iicC*.", "F")
+BUILTIN(__builtin___printf_chk, "iicC*.", "F") // FIXME: format printf attribute
 //BUILTIN(__builtin___vfprintf_chk, "i(FIXME:FILEPTR)icC*a", "F") // FIXME: format printf attribute
 BUILTIN(__builtin___vprintf_chk, "iicC*a", "F") // FIXME: format printf attribute
 
@@ -177,22 +181,33 @@ BUILTIN(__sync_val_compare_and_swap,"ii*ii", "n")
 BUILTIN(__builtin_llvm_memory_barrier,"vbbbbb", "n")
 
 // Builtin library functions
-BUILTIN(alloca, "v*z", "f:stdlib.h")
-BUILTIN(calloc, "v*zz", "f:stdlib.h")
-BUILTIN(malloc, "v*z", "f:stdlib.h")
-BUILTIN(memcpy, "v*v*vC*z", "f:string.h")
-BUILTIN(memmove, "v*v*vC*z", "f:string.h")
-BUILTIN(memset, "v*v*iz", "f:string.h")
-BUILTIN(strcat, "c*c*cC*", "f:string.h")
-BUILTIN(strchr, "c*cC*i", "f:string.h")
-BUILTIN(strcpy, "c*c*cC*", "f:string.h")
-BUILTIN(strcspn, "zcC*cC*", "f:string.h")
-BUILTIN(strlen, "zcC*", "f:string.h")
-BUILTIN(strncat, "c*c*cC*z", "f:string.h")
-BUILTIN(strncpy, "c*c*cC*z", "f:string.h")
-BUILTIN(strpbrk, "c*cC*cC*", "f:string.h")
-BUILTIN(strrchr, "c*cC*i", "f:string.h")
-BUILTIN(strspn, "zcC*cC*", "f:string.h")
-BUILTIN(strstr, "c*cC*cC*", "f:string.h")
+BUILTIN(alloca, "v*z", "f:stdlib.h:")
+BUILTIN(calloc, "v*zz", "f:stdlib.h:")
+BUILTIN(malloc, "v*z", "f:stdlib.h:")
+BUILTIN(memcpy, "v*v*vC*z", "f:string.h:")
+BUILTIN(memmove, "v*v*vC*z", "f:string.h:")
+BUILTIN(memset, "v*v*iz", "f:string.h:")
+BUILTIN(strcat, "c*c*cC*", "f:string.h:")
+BUILTIN(strchr, "c*cC*i", "f:string.h:")
+BUILTIN(strcpy, "c*c*cC*", "f:string.h:")
+BUILTIN(strcspn, "zcC*cC*", "f:string.h:")
+BUILTIN(strlen, "zcC*", "f:string.h:")
+BUILTIN(strncat, "c*c*cC*z", "f:string.h:")
+BUILTIN(strncpy, "c*c*cC*z", "f:string.h:")
+BUILTIN(strpbrk, "c*cC*cC*", "f:string.h:")
+BUILTIN(strrchr, "c*cC*i", "f:string.h:")
+BUILTIN(strspn, "zcC*cC*", "f:string.h:")
+BUILTIN(strstr, "c*cC*cC*", "f:string.h:")
+BUILTIN(printf, "icC*.", "f:stdio.h:p:0:")
+//BUILTIN(fprintf, "i<FIXME:FILEPTR>cC*.", "f:stdio.h:p:1:")
+BUILTIN(snprintf, "ic*zcC*.", "f:stdio.h:p:2:")
+BUILTIN(sprintf, "ic*cC*.", "f:stdio.h:p:1:")
+BUILTIN(vprintf, "icC*a", "f:stdio.h:P:0:")
+//BUILTIN(vfprintf, "i<FIXME:FILEPTR>cC*a", "f:stdio.h:P:1:")
+BUILTIN(vsnprintf, "ic*zcC*a", "f:stdio.h:P:2:")
+BUILTIN(vsprintf, "ic*cC*a", "f:stdio.h:P:1:")
+
+// FIXME: asprintf and vasprintf aren't C99 functions. Should they be
+// target-specific builtins, perhaps? What about NSLog?
 
 #undef BUILTIN

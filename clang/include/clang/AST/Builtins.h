@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_BUILTINS_H
 
 #include <cstring>
+#include <string>
 
 namespace clang {
   class TargetInfo;
@@ -87,17 +88,12 @@ public:
 
   /// \brief If this is a library function that comes from a specific
   /// header, retrieve that header name.
-  const char *getHeaderName(unsigned ID) const {
-    char *Name = strchr(GetRecord(ID).Attributes, 'f');
-    if (!Name)
-      return 0;
-    ++Name;
+  std::string getHeaderName(unsigned ID) const;
 
-    if (*Name != ':')
-      return 0;
-
-    return ++Name;
-  }
+  /// \brief Determine whether this builtin is like printf in its
+  /// formatting rules and, if so, set the index to the format string
+  /// argument and whether this function as a va_list argument.
+  bool isPrintfLike(unsigned ID, unsigned &FormatIdx, bool &HasVAListArg);
 
   /// hasVAListUse - Return true of the specified builtin uses __builtin_va_list
   /// as an operand or return type.

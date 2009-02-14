@@ -80,5 +80,6 @@ void foo4() {
   int (^xx)(const char *s) = ^(char *s) { return 1; }; // expected-warning {{incompatible block pointer types initializing 'int (^)(char *)', expected 'int (^)(char const *)'}}
   int (*yy)(const char *s) = funk; // expected-warning {{incompatible pointer types initializing 'int (char *)', expected 'int (*)(char const *)'}}
   
-  int (^nested)(char *s) = ^(char *str) { void (^nest)(void) = ^(void) { printf("%s\n", str); }; next(); return 1; };
+  int (^nested)(char *s) = ^(char *str) { void (^nest)(void) = ^(void) { printf("%s\n", str); }; next(); return 1; }; // expected-warning{{implicitly declaring C library function 'printf' with type 'int (char const *, ...)'}} \
+  // expected-note{{please include the header <stdio.h> or explicitly provide a declaration for 'printf'}}
 }

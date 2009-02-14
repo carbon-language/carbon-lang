@@ -49,6 +49,41 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
     Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
 }
 
+std::string Builtin::Context::getHeaderName(unsigned ID) const {
+  char *Name = strchr(GetRecord(ID).Attributes, 'f');
+  if (!Name)
+    return 0;
+  ++Name;
+
+  if (*Name != ':')
+    return 0;
+
+  ++Name;
+  char *NameEnd = strchr(Name, ':');
+  assert(NameEnd && "Missing ':' after header name");
+  return std::string(Name, NameEnd);
+}
+
+bool 
+Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx, 
+                               bool &HasVAListArg) {
+  char *Printf = strpbrk(GetRecord(ID).Attributes, "pP");
+  if (!Printf)
+    return false;
+
+  HasVAListArg = (*Printf == 'P');
+
+  ++Printf;
+  assert(*Printf == ':' && "p or P specifier must have be followed by a ':'");
+  ++Printf;
+
+  char *PrintfEnd = strchr(Printf, ':');
+  assert(PrintfEnd && "printf specifier must end with a ':'");
+
+  FormatIdx = strtol(Printf, 0, 10);
+  return true;
+}
+
 /// DecodeTypeFromStr - This decodes one type descriptor from Str, advancing the
 /// pointer over the consumed characters.  This returns the resultant type.
 static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context, 

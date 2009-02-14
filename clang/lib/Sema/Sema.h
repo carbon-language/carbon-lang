@@ -183,18 +183,8 @@ public:
     id_NSLog,
     id_asprintf,
     id_fprintf,
-    id_printf,
-    id_snprintf,
-    id_snprintf_chk,
-    id_sprintf,
-    id_sprintf_chk,
     id_vasprintf,
-    id_vfprintf,    
-    id_vsnprintf,
-    id_vsnprintf_chk,
-    id_vsprintf,
-    id_vsprintf_chk,
-    id_vprintf,
+    id_vfprintf,
     id_num_known_functions
   };
   
