@@ -1794,6 +1794,40 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
     const GRState* state = GetState(*I);
     unsigned Count = Builder->getCurrentBlockCount();
 
+    // Check if 'VD' is a VLA and if so check if has a non-zero size.
+    QualType T = getContext().getCanonicalType(VD->getType());
+    if (VariableArrayType* VLA = dyn_cast<VariableArrayType>(T)) {
+      // FIXME: Handle multi-dimensional VLAs.
+      
+      Expr* SE = VLA->getSizeExpr();
+      SVal Size = GetSVal(state, SE);
+      
+      if (Size.isUndef()) {
+        if (NodeTy* N = Builder->generateNode(DS, state, Pred)) {
+          N->markAsSink();          
+          ExplicitBadSizedVLA.insert(N);
+        }
+        continue;
+      }
+      
+      bool isFeasibleZero = false;
+      const GRState* ZeroSt =  Assume(state, Size, false, isFeasibleZero);
+      
+      bool isFeasibleNotZero = false;
+      state = Assume(state, Size, true, isFeasibleNotZero);
+      
+      if (isFeasibleZero) {
+        if (NodeTy* N = Builder->generateNode(DS, ZeroSt, Pred)) {
+          N->markAsSink();          
+          if (isFeasibleNotZero) ImplicitBadSizedVLA.insert(N);
+          else ExplicitBadSizedVLA.insert(N);
+        }
+      }
+      
+      if (!isFeasibleNotZero)
+        continue;      
+    }
+    
     // Decls without InitExpr are not initialized explicitly.
     if (InitEx) {
       SVal InitVal = GetSVal(state, InitEx);
@@ -1813,44 +1847,18 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
       }        
       
       state = StateMgr.BindDecl(state, VD, InitVal);
-    } else
+      
+      // The next thing to do is check if the GRTransferFuncs object wants to
+      // update the state based on the new binding.  If the GRTransferFunc
+      // object doesn't do anything, just auto-propagate the current state.
+      GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, state, DS,true);
+      getTF().EvalBind(BuilderRef, loc::MemRegionVal(StateMgr.getRegion(VD)),
+                       InitVal);      
+    } 
+    else {
       state = StateMgr.BindDeclWithNoInit(state, VD);
-    
-    // Check if 'VD' is a VLA and if so check if has a non-zero size.
-    QualType T = getContext().getCanonicalType(VD->getType());
-    if (VariableArrayType* VLA = dyn_cast<VariableArrayType>(T)) {
-      // FIXME: Handle multi-dimensional VLAs.
-      
-      Expr* SE = VLA->getSizeExpr();
-      SVal Size = GetSVal(state, SE);
-      
-      if (Size.isUndef()) {
-        if (NodeTy* N = Builder->generateNode(DS, state, Pred)) {
-          N->markAsSink();          
-          ExplicitBadSizedVLA.insert(N);
-        }
-        continue;
-      }
-
-      bool isFeasibleZero = false;
-      const GRState* ZeroSt =  Assume(state, Size, false, isFeasibleZero);
-            
-      bool isFeasibleNotZero = false;
-      state = Assume(state, Size, true, isFeasibleNotZero);
-      
-      if (isFeasibleZero) {
-        if (NodeTy* N = Builder->generateNode(DS, ZeroSt, Pred)) {
-          N->markAsSink();          
-          if (isFeasibleNotZero) ImplicitBadSizedVLA.insert(N);
-          else ExplicitBadSizedVLA.insert(N);
-        }
-      }
-      
-      if (!isFeasibleNotZero)
-        continue;      
+      MakeNode(Dst, DS, *I, state);
     }
-
-    MakeNode(Dst, DS, *I, state);
   }
 }
 
