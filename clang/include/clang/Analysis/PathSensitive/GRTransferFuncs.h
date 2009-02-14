@@ -25,6 +25,7 @@ namespace clang {
   class GRExprEngine;
   class BugReporter;
   class ObjCMessageExpr;
+  class GRStmtNodeBuilderRef;
   
 class GRTransferFuncs {
   friend class GRExprEngine;  
@@ -84,15 +85,7 @@ public:
   
   // Stores.
   
-  /// EvalStore - Evaluate the effects of a store, creating a new node
-  ///  the represents the effect of binding 'Val' to the location 'TargetLV'.
-  //   TargetLV is guaranteed to either be an UnknownVal or an Loc.
-  virtual void EvalStore(ExplodedNodeSet<GRState>& Dst,
-                         GRExprEngine& Engine,
-                         GRStmtNodeBuilder<GRState>& Builder,
-                         Expr* E, ExplodedNode<GRState>* Pred,
-                         const GRState* St, SVal TargetLV, SVal Val);
-                         
+  virtual void EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {}
   
   // End-of-path and dead symbol notification.
   

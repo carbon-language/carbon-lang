@@ -15,7 +15,7 @@
 #include "GRSimpleVals.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Analysis/PathSensitive/GRState.h"
+#include "clang/Analysis/PathSensitive/GRExprEngineBuilders.h"
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
@@ -1360,13 +1360,9 @@ public:
                               ObjCMessageExpr* ME,
                               ExplodedNode<GRState>* Pred);
 
-  // Stores.
-  
-  virtual void EvalStore(ExplodedNodeSet<GRState>& Dst,
-                         GRExprEngine& Engine,
-                         GRStmtNodeBuilder<GRState>& Builder,
-                         Expr* E, ExplodedNode<GRState>* Pred,
-                         const GRState* St, SVal TargetLV, SVal Val);
+  // Stores.  
+  virtual void EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val);
+
   // End-of-path.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
@@ -1741,22 +1737,13 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
               ME->arg_begin(), ME->arg_end(), Pred);
 }
   
-// Stores.
-
-void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
-                           GRExprEngine& Eng,
-                           GRStmtNodeBuilder<GRState>& Builder,
-                           Expr* E, ExplodedNode<GRState>* Pred,
-                           const GRState* St, SVal TargetLV, SVal Val) {
-  
+void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {  
   // Check if we have a binding for "Val" and if we are storing it to something
-  // we don't understand or otherwise the value "escapes" the function.
-  
-  if (!isa<loc::SymbolVal>(Val))
+  // we don't understand or otherwise the value "escapes" the function.  
+  if (!isa<loc::SymbolVal>(val))
     return;
   
-  // Are we storing to something that causes the value to "escape"?
-  
+  // Are we storing to something that causes the value to "escape"?  
   bool escapes = false;
   
   // A value escapes in three possible cases (this may change):
@@ -1764,43 +1751,34 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
   // (1) we are binding to something that is not a memory region.
   // (2) we are binding to a memregion that does not have stack storage
   // (3) we are binding to a memregion with stack storage that the store
-  //     does not understand.
-  
-  SymbolRef Sym = cast<loc::SymbolVal>(Val).getSymbol();
-  GRStateRef state(St, Eng.getStateManager());
+  //     does not understand.  
+  SymbolRef Sym = cast<loc::SymbolVal>(val).getSymbol();
+  GRStateRef state = B.getState();
 
-  if (!isa<loc::MemRegionVal>(TargetLV))
+  if (!isa<loc::MemRegionVal>(location))
     escapes = true;
   else {
-    const MemRegion* R = cast<loc::MemRegionVal>(TargetLV).getRegion();
-    escapes = !Eng.getStateManager().hasStackStorage(R);
+    const MemRegion* R = cast<loc::MemRegionVal>(location).getRegion();
+    escapes = !B.getStateManager().hasStackStorage(R);
     
     if (!escapes) {
       // To test (3), generate a new state with the binding removed.  If it is
       // the same state, then it escapes (since the store cannot represent
       // the binding).
-      GRStateRef stateNew = state.BindLoc(cast<Loc>(TargetLV), Val);
-      escapes = (stateNew == state);
+      escapes = (state == (state.BindLoc(cast<Loc>(location), UnknownVal())));
     }
   }
-  
-  if (!escapes)
+
+  // Our store can represent the binding and we aren't storing to something
+  // that doesn't have local storage.  Just return and have the simulation
+  // state continue as is.  We should also just return if the tracked symbol
+  // is not associated with a reference count.
+  if (!escapes || !state.get<RefBindings>(Sym))
     return;
 
-  // Do we have a reference count binding?
-  // FIXME: Is this step even needed?  We do blow away the binding anyway.
-  if (!state.get<RefBindings>(Sym))
-    return;
-  
-  // Nuke the binding.
-  state = state.remove<RefBindings>(Sym);
-
-  // Hand of the remaining logic to the parent implementation.
-  GRSimpleVals::EvalStore(Dst, Eng, Builder, E, Pred, state, TargetLV, Val);
+  // The tracked object excapes. Stop tracking the object.
+  B.MakeNode(state.remove<RefBindings>(Sym));
 }
-
-// End-of-path.
-
 
 std::pair<GRStateRef,bool>
 CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,

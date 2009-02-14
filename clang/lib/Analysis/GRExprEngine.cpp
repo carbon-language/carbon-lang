@@ -14,6 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "clang/Analysis/PathSensitive/GRExprEngineBuilders.h"
+
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Streams.h"
@@ -125,28 +127,6 @@ GRExprEngine::~GRExprEngine() {
 // Utility methods.
 //===----------------------------------------------------------------------===//
 
-// SaveAndRestore - A utility class that uses RIIA to save and restore
-//  the value of a variable.
-template<typename T>
-struct VISIBILITY_HIDDEN SaveAndRestore {
-  SaveAndRestore(T& x) : X(x), old_value(x) {}
-  ~SaveAndRestore() { X = old_value; }
-  T get() { return old_value; }
-  
-  T& X;
-  T old_value;
-};
-
-// SaveOr - Similar to SaveAndRestore.  Operates only on bools; the old
-//  value of a variable is saved, and during the dstor the old value is
-//  or'ed with the new value.
-struct VISIBILITY_HIDDEN SaveOr {
-  SaveOr(bool& x) : X(x), old_value(x) { x = false; }
-  ~SaveOr() { X |= old_value; }
-  
-  bool& X;
-  bool old_value;
-};
 
 void GRExprEngine::setTransferFunctions(GRTransferFuncs* tf) {
   StateMgr.TF = tf;
@@ -920,17 +900,27 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
 void GRExprEngine::EvalBind(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
                              const GRState* state, SVal location, SVal Val) {
 
-  unsigned size = Dst.size();    
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-  SaveOr OldHasGen(Builder->HasGeneratedNode);
+  const GRState* newState = 0;
+  
+  if (location.isUnknown()) {
+    // We know that the new state will be the same as the old state since
+    // the location of the binding is "unknown".  Consequently, there
+    // is no reason to just create a new node.
+    newState = state;
+  }
+  else {
+    // We are binding to a value other than 'unknown'.  Perform the binding
+    // using the StoreManager.
+    newState = StateMgr.BindLoc(state, cast<Loc>(location), Val);
+  }
 
-  getTF().EvalStore(Dst, *this, *Builder, Ex, Pred, state, location, Val);
-
-  // Handle the case where no nodes where generated.  Auto-generate that
-  // contains the updated state if we aren't generating sinks.  
-  if (!Builder->BuildSinks && Dst.size() == size && !Builder->HasGeneratedNode)
-    getTF().GRTransferFuncs::EvalStore(Dst, *this, *Builder, Ex, Pred, state,
-                                       location, Val);
+  // The next thing to do is check if the GRTransferFuncs object wants to
+  // update the state based on the new binding.  If the GRTransferFunc object
+  // doesn't do anything, just auto-propagate the current state.
+  GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, Pred, newState, Ex,
+                                  newState != state);
+    
+  getTF().EvalBind(BuilderRef, location, Val);
 }
 
 /// EvalStore - Handle the semantics of a store via an assignment.
