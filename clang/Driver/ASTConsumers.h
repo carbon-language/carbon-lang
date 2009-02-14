@@ -30,7 +30,7 @@ class FileManager;
 class Preprocessor;
 class PreprocessorFactory;
 struct CompileOptions;
-struct LangOptions;
+class LangOptions;
 
 ASTConsumer *CreateASTPrinter(llvm::raw_ostream* OS = NULL);
 

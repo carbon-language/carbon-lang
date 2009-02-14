@@ -18,6 +18,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Config/config.h" // for mode_t
 #include <map>
 #include <set>
 #include <string>

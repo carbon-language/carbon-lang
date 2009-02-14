@@ -29,7 +29,7 @@ namespace llvm {
 }
 
 namespace clang {
-  struct LangOptions;
+  class LangOptions;
   class IdentifierInfo;
   class IdentifierTable;
   class SourceLocation;

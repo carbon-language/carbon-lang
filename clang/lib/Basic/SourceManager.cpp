@@ -94,6 +94,12 @@ struct LineEntry {
   }
 };
 
+// needed for FindNearestLineEntry (upper_bound of LineEntry)
+inline bool operator<(const LineEntry &lhs, const LineEntry &rhs) {
+  // FIXME: should check the other field?
+  return lhs.FileOffset < rhs.FileOffset;
+}
+
 inline bool operator<(const LineEntry &E, unsigned Offset) {
   return E.FileOffset < Offset;
 }

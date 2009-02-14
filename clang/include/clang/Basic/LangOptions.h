@@ -20,8 +20,8 @@ namespace clang {
 
 /// LangOptions - This class keeps track of the various options that can be
 /// enabled, which controls the dialect of C that is accepted.
-struct LangOptions {
-  
+class LangOptions {
+public:
   unsigned Trigraphs         : 1;  // Trigraphs in source files.
   unsigned BCPLComment       : 1;  // BCPL-style '//' comments.
   unsigned DollarIdents      : 1;  // '$' allowed in identifiers.

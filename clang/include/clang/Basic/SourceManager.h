@@ -571,7 +571,7 @@ public:
                                           FileManager &FMgr);
   
 private:
-  friend struct SrcMgr::ContentCache; // Used for deserialization.
+  friend class SrcMgr::ContentCache; // Used for deserialization.
   
   /// isOffsetInFileID - Return true if the specified FileID contains the
   /// specified SourceLocation offset.  This is a very hot method.

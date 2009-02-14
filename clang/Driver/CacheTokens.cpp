@@ -26,6 +26,11 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
 
+// FIXME: put this somewhere else?
+#ifndef S_ISDIR
+#define S_ISDIR(x) (((x)&_S_IFDIR)!=0)
+#endif
+
 using namespace clang;
 
 typedef uint32_t Offset;

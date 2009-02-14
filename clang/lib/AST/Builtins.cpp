@@ -50,7 +50,7 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
 }
 
 std::string Builtin::Context::getHeaderName(unsigned ID) const {
-  char *Name = strchr(GetRecord(ID).Attributes, 'f');
+  const char *Name = strchr(GetRecord(ID).Attributes, 'f');
   if (!Name)
     return 0;
   ++Name;
@@ -59,7 +59,7 @@ std::string Builtin::Context::getHeaderName(unsigned ID) const {
     return 0;
 
   ++Name;
-  char *NameEnd = strchr(Name, ':');
+  const char *NameEnd = strchr(Name, ':');
   assert(NameEnd && "Missing ':' after header name");
   return std::string(Name, NameEnd);
 }
@@ -67,7 +67,7 @@ std::string Builtin::Context::getHeaderName(unsigned ID) const {
 bool 
 Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx, 
                                bool &HasVAListArg) {
-  char *Printf = strpbrk(GetRecord(ID).Attributes, "pP");
+  const char *Printf = strpbrk(GetRecord(ID).Attributes, "pP");
   if (!Printf)
     return false;
 
@@ -77,7 +77,7 @@ Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx,
   assert(*Printf == ':' && "p or P specifier must have be followed by a ':'");
   ++Printf;
 
-  char *PrintfEnd = strchr(Printf, ':');
+  const char *PrintfEnd = strchr(Printf, ':');
   assert(PrintfEnd && "printf specifier must end with a ':'");
 
   FormatIdx = strtol(Printf, 0, 10);
