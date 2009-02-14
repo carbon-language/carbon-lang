@@ -27,7 +27,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-static inline void *__attribute__((__always_inline__)) _mm_malloc(size_t size, size_t align)
+static inline void *__attribute__((__always_inline__, __nodebug__)) _mm_malloc(size_t size, size_t align)
 {
   if (align & (align - 1)) {
     errno = EINVAL;
@@ -50,7 +50,7 @@ static inline void *__attribute__((__always_inline__)) _mm_malloc(size_t size, s
   return alignedMemory;
 }
 
-static inline void __attribute__((__always_inline__)) _mm_free(void *p)
+static inline void __attribute__((__always_inline__, __nodebug__)) _mm_free(void *p)
 {
   if (p)
     free(((void **)p)[-1]);
