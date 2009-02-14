@@ -1370,7 +1370,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
                      Interface->protocol_begin(),
                      Interface->protocol_end());
   const llvm::Type *InterfaceTy = 
-   CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(Interface));
+   CGM.getTypes().ConvertType(CGM.getContext().buildObjCInterfaceType(Interface));
   unsigned Flags = eClassFlags_Factory;
   unsigned Size = CGM.getTargetData().getTypePaddedSize(InterfaceTy);
 
@@ -3717,7 +3717,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
       const_cast<ObjCInterfaceDecl*>(ID->getClassInterface())) {
     // FIXME. Share this with the one in EmitIvarList.
     const llvm::Type *InterfaceTy = 
-    CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(OID));
+    CGM.getTypes().ConvertType(CGM.getContext().buildObjCInterfaceType(OID));
     const llvm::StructLayout *Layout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
     
