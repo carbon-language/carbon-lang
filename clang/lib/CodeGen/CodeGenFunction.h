@@ -88,7 +88,7 @@ public:
   const llvm::Type *LLVMIntTy;
   uint32_t LLVMPointerWidth;
 
-  llvm::Constant *BuildBlockLiteralTmp();
+  llvm::Constant *BuildBlockLiteralTmp(const BlockExpr *);
   llvm::Constant *BuildDescriptorBlockDecl();
 
 public:
@@ -250,13 +250,16 @@ public:
   void GenerateObjCSetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
 
+  /// BlockInfo - Information to generate a block literal.
   struct BlockInfo {
+    /// BlockLiteralTy - The type of the block literal.
     const llvm::Type *BlockLiteralTy;
-    
-    const char *NameSuffix;
 
-    BlockInfo(const llvm::Type *blt, const char *ns) 
-      :  BlockLiteralTy(blt), NameSuffix(ns) {}
+    /// Name - the name of the function this block was created for, if any
+    std::string Name;
+
+    BlockInfo(const llvm::Type *blt, std::string n)
+      : BlockLiteralTy(blt), Name(n) {}
   };
   
   llvm::Function *GenerateBlockFunction(const BlockExpr *Expr,

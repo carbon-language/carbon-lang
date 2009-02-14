@@ -107,7 +107,7 @@ llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
   return NSConcreteStackBlock;
 }
 
-llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
+llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   // FIXME: Push up
   bool BlockHasCopyDispose = false;
   bool insideFunction = false;
@@ -147,8 +147,12 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp() {
     Elts.push_back(C);
 
     // __FuncPtr
-    // FIXME: Build this up.
-    Elts.push_back(C);
+    std::string Name;
+    if (const NamedDecl *ND = dyn_cast<NamedDecl>(CurFuncDecl))
+      Name = ND->getNameAsString();
+    BlockInfo Info(0, Name);
+    llvm::Function *Fn = CodeGenFunction(*this).GenerateBlockFunction(BE, Info);
+    Elts.push_back(Fn);
 
     // __descriptor
     Elts.push_back(BuildDescriptorBlockDecl());
@@ -287,7 +291,8 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
                   Func, Args);
 }
 
-llvm::Constant *CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE) {
+llvm::Constant *
+CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, std::string n) {
   // Generate the block descriptor.
   const llvm::Type *UnsignedLongTy = Types.ConvertType(Context.UnsignedLongTy);
   const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
@@ -316,7 +321,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE) {
   // Generate the constants for the block literal.
   llvm::Constant *LiteralFields[5];
 
-  CodeGenFunction::BlockInfo Info(0, "global");
+  CodeGenFunction::BlockInfo Info(0, n);
   llvm::Function *Fn = CodeGenFunction(*this).GenerateBlockFunction(BE, Info);
 
   // isa
@@ -371,8 +376,7 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(FTy->getResultType(), Args);
 
-  std::string Name = std::string("__block_function_") + Info.NameSuffix;
-
+  std::string Name = std::string("__") + Info.Name + "_block_invoke_";
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, FTy->isVariadic());
 

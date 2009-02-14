@@ -372,7 +372,10 @@ public:
   }
     
   llvm::Constant *VisitBlockExpr(const BlockExpr *E) {
-    return CGM.GetAddrOfGlobalBlock(E);
+    const char *Name = "";
+    if (const NamedDecl *ND = dyn_cast<NamedDecl>(CGF->CurFuncDecl))
+      Name = ND->getNameAsString().c_str();
+    return CGM.GetAddrOfGlobalBlock(E, Name);
   }
   
   // Utility methods
