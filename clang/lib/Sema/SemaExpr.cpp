@@ -1897,21 +1897,18 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
                cast<UnaryOperator>(FnExpr)->getOpcode() 
                  == UnaryOperator::AddrOf) {
       FnExpr = cast<UnaryOperator>(FnExpr)->getSubExpr();
+    } else if ((DRExpr = dyn_cast<DeclRefExpr>(FnExpr))) {
+      // Qualified names disable ADL (C++0x [basic.lookup.argdep]p1).
+      ADL &= !isa<QualifiedDeclRefExpr>(DRExpr);
+      break;
+    } else if (UnresolvedFunctionNameExpr *DepName 
+                 = dyn_cast<UnresolvedFunctionNameExpr>(FnExpr)) {
+      UnqualifiedName = DepName->getName();
+      break;
     } else {
-      if (isa<DeclRefExpr>(FnExpr)) {
-        DRExpr = cast<DeclRefExpr>(FnExpr);
-
-        // Qualified names disable ADL (C++0x [basic.lookup.argdep]p1).
-        ADL = ADL && !isa<QualifiedDeclRefExpr>(DRExpr);
-      }
-      else if (UnresolvedFunctionNameExpr *DepName 
-                 = dyn_cast<UnresolvedFunctionNameExpr>(FnExpr))
-        UnqualifiedName = DepName->getName();
-      else {
-        // Any kind of name that does not refer to a declaration (or
-        // set of declarations) disables ADL (C++0x [basic.lookup.argdep]p3).
-        ADL = false;
-      }
+      // Any kind of name that does not refer to a declaration (or
+      // set of declarations) disables ADL (C++0x [basic.lookup.argdep]p3).
+      ADL = false;
       break;
     }
   }
