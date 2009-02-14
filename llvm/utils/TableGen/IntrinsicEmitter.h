@@ -42,6 +42,8 @@ namespace llvm {
                        std::ostream &OS);
     void EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints,
                         std::ostream &OS);
+    void EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints,
+                            std::ostream &OS);
     void EmitGCCBuiltinList(const std::vector<CodeGenIntrinsic> &Ints, 
                             std::ostream &OS);
     void EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints, 

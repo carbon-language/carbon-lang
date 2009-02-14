@@ -48,6 +48,9 @@ void IntrinsicEmitter::run(std::ostream &OS) {
   // Emit the intrinsic parameter attributes.
   EmitAttributes(Ints, OS);
 
+  // Emit intrinsic alias analysis mod/ref behavior.
+  EmitModRefBehavior(Ints, OS);
+
   // Emit a list of intrinsics with corresponding GCC builtins.
   EmitGCCBuiltinList(Ints, OS);
 
@@ -479,6 +482,37 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
   OS << "  return AttrListPtr::get(AWI, NumAttrs+1);\n";
   OS << "}\n";
   OS << "#endif // GET_INTRINSIC_ATTRIBUTES\n\n";
+}
+
+/// EmitModRefBehavior - Determine intrinsic alias analysis mod/ref behavior.
+void IntrinsicEmitter::
+EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS){
+  OS << "// Determine intrinsic alias analysis mod/ref behavior.\n";
+  OS << "#ifdef GET_INTRINSIC_MODREF_BEHAVIOR\n";
+  OS << "switch (id) {\n";
+  OS << "default:\n    return UnknownModRefBehavior;\n";
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    if (Ints[i].ModRef == CodeGenIntrinsic::WriteMem)
+      continue;
+    OS << "case " << TargetPrefix << "Intrinsic::" << Ints[i].EnumName
+      << ":\n";
+    switch (Ints[i].ModRef) {
+    default:
+      assert(false && "Unknown Mod/Ref type!");
+    case CodeGenIntrinsic::NoMem:
+      OS << "  return DoesNotAccessMemory;\n";
+      break;
+    case CodeGenIntrinsic::ReadArgMem:
+    case CodeGenIntrinsic::ReadMem:
+      OS << "  return OnlyReadsMemory;\n";
+      break;
+    case CodeGenIntrinsic::WriteArgMem:
+      OS << "  return AccessesArguments;\n";
+      break;
+    }
+  }
+  OS << "}\n";
+  OS << "#endif // GET_INTRINSIC_MODREF_BEHAVIOR\n\n";
 }
 
 void IntrinsicEmitter::

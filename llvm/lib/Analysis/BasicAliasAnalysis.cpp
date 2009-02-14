@@ -201,13 +201,7 @@ namespace {
 
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
     ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
-    
-    virtual ModRefBehavior getModRefBehavior(CallSite CS,
-                                     std::vector<PointerAccessInfo> *Info = 0);
 
-    virtual ModRefBehavior getModRefBehavior(Function *F,
-                                     std::vector<PointerAccessInfo> *Info = 0);
-    
     /// hasNoModRefInfoForCalls - We can provide mod/ref information against
     /// non-escaping allocations.
     virtual bool hasNoModRefInfoForCalls() const { return false; }
@@ -250,51 +244,6 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
   return false;
 }
 
-
-static bool isAtomicRMW(Function* F) {
-  if (!F) return false;
-  if (F->isIntrinsic()) {
-    switch (F->getIntrinsicID()) {
-      case Intrinsic::atomic_cmp_swap:
-      case Intrinsic::atomic_load_add:
-      case Intrinsic::atomic_load_and:
-      case Intrinsic::atomic_load_max:
-      case Intrinsic::atomic_load_min:
-      case Intrinsic::atomic_load_nand:
-      case Intrinsic::atomic_load_or:
-      case Intrinsic::atomic_load_sub:
-      case Intrinsic::atomic_load_umax:
-      case Intrinsic::atomic_load_umin:
-      case Intrinsic::atomic_load_xor:
-      case Intrinsic::atomic_swap:
-        return true;
-      default:
-        return false;
-    }
-  }
-  
-  return false;
-}
-
-AliasAnalysis::ModRefBehavior
-BasicAliasAnalysis::getModRefBehavior(CallSite CS,
-                                 std::vector<PointerAccessInfo> *Info) {
-  if (isAtomicRMW(CS.getCalledFunction()))
-    // CAS and related intrinsics only access their arguments.
-    return AliasAnalysis::AccessesArguments;
-  
-  return AliasAnalysis::getModRefBehavior(CS, Info);
-}
-
-AliasAnalysis::ModRefBehavior
-BasicAliasAnalysis::getModRefBehavior(Function *F,
-                                 std::vector<PointerAccessInfo> *Info) {
-  if (isAtomicRMW(F))
-    // CAS and related intrinsics only access their arguments.
-    return AliasAnalysis::AccessesArguments;
-
-  return AliasAnalysis::getModRefBehavior(F, Info);
-}
 
 // getModRefInfo - Check to see if the specified callsite can clobber the
 // specified memory object.  Since we only look at local properties of this

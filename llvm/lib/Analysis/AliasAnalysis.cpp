@@ -124,8 +124,13 @@ AliasAnalysis::getModRefBehavior(Function *F,
     if (F->doesNotAccessMemory())
       // Can't do better than this.
       return DoesNotAccessMemory;
-    else if (F->onlyReadsMemory())
+    if (F->onlyReadsMemory())
       return OnlyReadsMemory;
+    if (unsigned id = F->getIntrinsicID()) {
+#define GET_INTRINSIC_MODREF_BEHAVIOR
+#include "llvm/Intrinsics.gen"
+#undef GET_INTRINSIC_MODREF_BEHAVIOR
+    }
   }
   return UnknownModRefBehavior;
 }
