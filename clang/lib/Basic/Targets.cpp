@@ -85,6 +85,7 @@ static void getLinuxDefines(std::vector<char> &Defs) {
   Define(Defs, "__linux");
   Define(Defs, "linux");
   Define(Defs, "__gnu_linux__");
+  Define(Defs, "__ELF__", "1");
 }
 
 /// getDarwinNumber - Parse the 'darwin number' out of the specific targe
