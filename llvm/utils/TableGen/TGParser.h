@@ -23,7 +23,7 @@ namespace llvm {
   struct RecTy;
   struct Init;
   struct MultiClass;
-  struct SubClassReference;
+  class SubClassReference;
   
   struct LetRecord {
     std::string Name;
@@ -66,7 +66,7 @@ private:  // Semantic analysis methods.
   bool AddValue(Record *TheRec, LocTy Loc, const RecordVal &RV);
   bool SetValue(Record *TheRec, LocTy Loc, const std::string &ValName, 
                 const std::vector<unsigned> &BitList, Init *V);
-  bool AddSubClass(Record *Rec, class SubClassReference &SubClass);
+  bool AddSubClass(Record *Rec, SubClassReference &SubClass);
 
 private:  // Parser methods.
   bool ParseObjectList();

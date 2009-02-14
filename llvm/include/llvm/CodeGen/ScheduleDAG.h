@@ -217,7 +217,7 @@ namespace llvm {
   };
 
   /// SUnit - Scheduling unit. This is a node in the scheduling DAG.
-  struct SUnit {
+  class SUnit {
   private:
     SDNode *Node;                       // Representative node.
     MachineInstr *Instr;                // Alternatively, a MachineInstr.

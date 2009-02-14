@@ -27,8 +27,8 @@ namespace llvm {
   class Module;
   class Type;
   class Value;
-  class DbgStopPointInst;
-  class DbgDeclareInst;
+  struct DbgStopPointInst;
+  struct DbgDeclareInst;
   class Instruction;
 
   class DIDescriptor {

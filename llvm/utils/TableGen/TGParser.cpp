@@ -124,7 +124,7 @@ bool TGParser::SetValue(Record *CurRec, LocTy Loc, const std::string &ValName,
 
 /// AddSubClass - Add SubClass as a subclass to CurRec, resolving its template
 /// args as SubClass's template arguments.
-bool TGParser::AddSubClass(Record *CurRec, class SubClassReference &SubClass) {
+bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
   Record *SC = SubClass.Rec;
   // Add all of the values in the subclass into the current class.
   const std::vector<RecordVal> &Vals = SC->getValues();

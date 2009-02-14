@@ -36,7 +36,7 @@ int sys::AlarmStatus() {
 }
 
 // Don't pull in all of the Windows headers.
-extern "C" _stdcall void Sleep(unsigned long);
+extern "C"  void __stdcall Sleep(unsigned long);
 
 void sys::Sleep(unsigned n) {
   Sleep(n*1000);

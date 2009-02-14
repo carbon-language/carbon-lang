@@ -1239,7 +1239,7 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
   case convolve(fcInfinity, fcInfinity):
     /* Differently signed infinities can only be validly
        subtracted.  */
-    if((sign ^ rhs.sign) != subtract) {
+    if(((sign ^ rhs.sign)!=0) != subtract) {
       makeNaN();
       return opInvalidOp;
     }
