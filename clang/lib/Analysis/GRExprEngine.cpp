@@ -356,15 +356,19 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       
     case Stmt::StmtExprClass: {
       StmtExpr* SE = cast<StmtExpr>(S);
-      
-      const GRState* state = GetState(Pred);
-      
-      // FIXME: Not certain if we can have empty StmtExprs.  If so, we should
-      // probably just remove these from the CFG.
-      assert (!SE->getSubStmt()->body_empty());
-      
-      if (Expr* LastExpr = dyn_cast<Expr>(*SE->getSubStmt()->body_rbegin()))
+
+      if (SE->getSubStmt()->body_empty()) {
+        // Empty statement expression.
+        assert(SE->getType() == getContext().VoidTy
+               && "Empty statement expression must have void type.");
+        Dst.Add(Pred);
+        break;
+      }
+               
+      if (Expr* LastExpr = dyn_cast<Expr>(*SE->getSubStmt()->body_rbegin())) {
+        const GRState* state = GetState(Pred);
         MakeNode(Dst, SE, Pred, BindExpr(state, SE, GetSVal(state, LastExpr)));
+      }
       else
         Dst.Add(Pred);
       

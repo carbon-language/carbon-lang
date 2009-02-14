@@ -108,3 +108,9 @@ void pr3422() {
   pr3422_helper(&q[1]);
 }
 
+// PR 3543 (handle empty statement expressions)
+int pr_3543(void) {
+  ({});
+}
+
+
