@@ -551,15 +551,14 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     PHINode *PN = cast<PHINode>(I);
     if (PN->getType()->isInteger()) { // FIXME: when we have fast-math, enable!
       SCEVHandle SCEV = SE->getSCEV(PN);
-      if (SCEV->hasComputableLoopEvolution(L))
-        // FIXME: It is an extremely bad idea to indvar substitute anything more
-        // complex than affine induction variables.  Doing so will put expensive
-        // polynomial evaluations inside of the loop, and the str reduction pass
-        // currently can only reduce affine polynomials.  For now just disable
-        // indvar subst on anything more complex than an affine addrec.
-        if (SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SCEV))
-          if (AR->isAffine())
-            IndVars.push_back(std::make_pair(PN, SCEV));
+      // FIXME: It is an extremely bad idea to indvar substitute anything more
+      // complex than affine induction variables.  Doing so will put expensive
+      // polynomial evaluations inside of the loop, and the str reduction pass
+      // currently can only reduce affine polynomials.  For now just disable
+      // indvar subst on anything more complex than an affine addrec.
+      if (SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SCEV))
+        if (AR->getLoop() == L && AR->isAffine())
+          IndVars.push_back(std::make_pair(PN, SCEV));
     }
   }
 
