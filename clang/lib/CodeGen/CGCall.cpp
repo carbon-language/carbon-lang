@@ -423,6 +423,20 @@ class X86_64ABIInfo : public ABIInfo {
   void classify(QualType T, ASTContext &Context, uint64_t OffsetBase,
                 Class &Lo, Class &Hi) const;
   
+  /// getCoerceResult - Given a source type \arg Ty and an LLVM type
+  /// to coerce to, chose the best way to pass Ty in the same place
+  /// that \arg CoerceTo would be passed, but while keeping the
+  /// emitted code as simple as possible.
+  ///
+  /// FIXME: Note, this should be cleaned up to just take an
+  /// enumeration of all the ways we might want to pass things,
+  /// instead of constructing an LLVM type. This makes this code more
+  /// explicit, and it makes it clearer that we are also doing this
+  /// for correctness in the case of passing scalar types.
+  ABIArgInfo getCoerceResult(QualType Ty,
+                             const llvm::Type *CoerceTo,
+                             ASTContext &Context) const;
+
   ABIArgInfo classifyReturnType(QualType RetTy, 
                                 ASTContext &Context) const;  
 
@@ -647,6 +661,22 @@ void X86_64ABIInfo::classify(QualType Ty,
   }
 }
 
+ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
+                                          const llvm::Type *CoerceTo,
+                                          ASTContext &Context) const {
+  if (CoerceTo == llvm::Type::Int64Ty) {
+    // Integer and pointer types will end up in a general purpose
+    // register.
+    if (Ty->isIntegerType() || Ty->isPointerType())
+      return ABIArgInfo::getDirect();
+  } else if (CoerceTo == llvm::Type::DoubleTy) {
+    // Float and double end up in a single SSE reg.
+    if (Ty == Context.FloatTy || Ty == Context.DoubleTy)
+      return ABIArgInfo::getDirect();
+  }
+
+  return ABIArgInfo::getCoerce(CoerceTo);
+}
 
 ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context) const {
@@ -733,7 +763,7 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     break;
   }
 
-  return ABIArgInfo::getCoerce(ResType);
+  return getCoerceResult(RetTy, ResType, Context);
 }
 
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
@@ -819,7 +849,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     break;
   }
 
-  return ABIArgInfo::getCoerce(ResType);
+  return getCoerceResult(Ty, ResType, Context);
 }
 
 void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
