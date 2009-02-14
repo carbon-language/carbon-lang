@@ -23,3 +23,12 @@ extern int var;
 int w() {
 	return var; // expected-warning {{'var' is deprecated}}
 }
+
+int old_fn() __attribute__ ((deprecated));
+int old_fn();
+int (*fn_ptr)() = old_fn; // expected-warning {{'old_fn' is deprecated}}
+
+int old_fn() {
+  return old_fn()+1;  // expected-warning {{'old_fn' is deprecated}}
+}
+
