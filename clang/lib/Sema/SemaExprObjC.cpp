@@ -177,7 +177,8 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 Sema::ExprResult Sema::ActOnClassMessage(
   Scope *S,
   IdentifierInfo *receiverName, Selector Sel,
-  SourceLocation lbrac, SourceLocation receiverLoc, SourceLocation rbrac, 
+  SourceLocation lbrac, SourceLocation receiverLoc,
+  SourceLocation selectorLoc, SourceLocation rbrac, 
   ExprTy **Args, unsigned NumArgs)
 {
   assert(receiverName && "missing receiver class name");
@@ -202,8 +203,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
         ExprResult ReceiverExpr = new (Context) ObjCSuperExpr(SourceLocation(),
                                                               superTy);
         // We are really in an instance method, redirect.
-        return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac, rbrac,
-                                    Args, NumArgs);
+        return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac, 
+                                    selectorLoc, rbrac, Args, NumArgs);
       }
       // We are sending a message to 'super' within a class method. Do nothing,
       // the receiver will pass through as 'super' (how convenient:-).
@@ -216,8 +217,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
         ExprResult ReceiverExpr = new (Context) DeclRefExpr(VD, VD->getType(), 
                                                             receiverLoc);
         // We are really in an instance method, redirect.
-        return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac, rbrac,
-                                    Args, NumArgs);
+        return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac, 
+                                    selectorLoc, rbrac, Args, NumArgs);
       }
       return Diag(receiverLoc, diag::err_undeclared_var_use) << receiverName;
     }      
@@ -290,6 +291,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
 // is obtained from Sel.getNumArgs().
 Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
                                             SourceLocation lbrac, 
+                                            SourceLocation receiverLoc,
                                             SourceLocation rbrac,
                                             ExprTy **Args, unsigned NumArgs) {
   assert(receiver && "missing receiver expression");
@@ -310,6 +312,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         if (ObjCInterfaceDecl *SuperDecl = ClassDecl->getSuperClass())
           Method = SuperDecl->lookupInstanceMethod(Sel);
     }
+
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
       return true;

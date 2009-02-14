@@ -1491,6 +1491,8 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
   SourceLocation Loc;
   IdentifierInfo *selIdent = ParseObjCSelector(Loc);
 
+  SourceLocation SelectorLoc = Loc;
+    
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   ExprVector KeyExprs(Actions);
 
@@ -1573,10 +1575,11 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
   // We've just parsed a keyword message.
   if (ReceiverName)
     return Owned(Actions.ActOnClassMessage(CurScope, ReceiverName, Sel,
-                                           LBracLoc, NameLoc, RBracLoc,
+                                           LBracLoc, NameLoc, SelectorLoc, 
+                                           RBracLoc,
                                            KeyExprs.take(), KeyExprs.size()));
   return Owned(Actions.ActOnInstanceMessage(ReceiverExpr.release(), Sel,
-                                            LBracLoc, RBracLoc,
+                                            LBracLoc, SelectorLoc, RBracLoc,
                                             KeyExprs.take(), KeyExprs.size()));
 }
 

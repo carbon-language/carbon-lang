@@ -1667,8 +1667,8 @@ public:
   // is obtained from NumArgs.
   virtual ExprResult ActOnClassMessage(
     Scope *S,
-    IdentifierInfo *receivingClassName, Selector Sel,
-    SourceLocation lbrac, SourceLocation receiverLoc, SourceLocation rbrac, 
+    IdentifierInfo *receivingClassName, Selector Sel, SourceLocation lbrac, 
+    SourceLocation receiverLoc, SourceLocation selectorLoc,SourceLocation rbrac, 
     ExprTy **ArgExprs, unsigned NumArgs);
 
   // ActOnInstanceMessage - used for both unary and keyword messages.
@@ -1676,7 +1676,7 @@ public:
   // is obtained from NumArgs.
   virtual ExprResult ActOnInstanceMessage(
     ExprTy *receiver, Selector Sel,
-    SourceLocation lbrac, SourceLocation rbrac, 
+    SourceLocation lbrac, SourceLocation receiverLoc, SourceLocation rbrac, 
     ExprTy **ArgExprs, unsigned NumArgs);
   
   /// ActOnPragmaPack - Called on well formed #pragma pack(...).

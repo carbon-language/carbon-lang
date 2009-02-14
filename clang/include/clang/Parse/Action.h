@@ -1292,8 +1292,8 @@ public:
     Scope *S,
     IdentifierInfo *receivingClassName, 
     Selector Sel,
-    SourceLocation lbrac,
-    SourceLocation receiverLoc,
+    SourceLocation lbrac, SourceLocation receiverLoc,
+    SourceLocation selectorLoc,
     SourceLocation rbrac, 
     ExprTy **ArgExprs, unsigned NumArgs) {
     return 0;
@@ -1303,7 +1303,7 @@ public:
   // is obtained from NumArgs.
   virtual ExprResult ActOnInstanceMessage(
     ExprTy *receiver, Selector Sel,
-    SourceLocation lbrac, SourceLocation rbrac, 
+    SourceLocation lbrac, SourceLocation selectorLoc, SourceLocation rbrac, 
     ExprTy **ArgExprs, unsigned NumArgs) {
     return 0;
   }
