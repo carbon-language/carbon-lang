@@ -113,6 +113,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 15:
     if (!memcmp(Str, "ext_vector_type", 15)) return AT_ext_vector_type;
     break;
+  case 16:
+    if (!memcmp(Str, "warnunusedresult", 16)) return AT_warn_unused_result;
+    break;
   case 17:
     if (!memcmp(Str, "transparent_union", 17)) return AT_transparent_union;
     break;

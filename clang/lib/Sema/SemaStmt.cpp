@@ -95,25 +95,17 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
     Expr *E = dyn_cast<Expr>(Elts[i]);
     if (!E) continue;
     
-    // Warn about expressions with unused results.
-    if (E->hasLocalSideEffect() || E->getType()->isVoidType())
+    // Warn about expressions with unused results if they are non-void and if
+    // this not the last stmt in a stmt expr.
+    if (E->getType()->isVoidType() || (isStmtExpr && i == NumElts-1))
       continue;
     
-    // The last expr in a stmt expr really is used.
-    if (isStmtExpr && i == NumElts-1)
+    SourceLocation Loc;
+    SourceRange R1, R2;
+    if (!E->isUnusedResultAWarning(Loc, R1, R2))
       continue;
-    
-    /// DiagnoseDeadExpr - This expression is side-effect free and evaluated in
-    /// a context where the result is unused.  Emit a diagnostic to warn about
-    /// this.
-    if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E))
-      Diag(BO->getOperatorLoc(), diag::warn_unused_expr)
-        << BO->getLHS()->getSourceRange() << BO->getRHS()->getSourceRange();
-    else if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E))
-      Diag(UO->getOperatorLoc(), diag::warn_unused_expr)
-        << UO->getSubExpr()->getSourceRange();
-    else
-      Diag(E->getExprLoc(), diag::warn_unused_expr) << E->getSourceRange();
+
+    Diag(Loc, diag::warn_unused_expr) << R1 << R2;
   }
 
   return Owned(new (Context) CompoundStmt(Context, Elts, NumElts, L, R));

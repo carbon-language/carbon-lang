@@ -353,7 +353,8 @@ DIAG(warn_attribute_ignored, WARNING,
 DIAG(warn_attribute_weak_on_field, WARNING,
      "__weak attribute cannot be specified on a field declaration")
 DIAG(warn_attribute_wrong_decl_type, WARNING,
-     "'%0' attribute only applies to %1 types")
+     "'%0' attribute only applies to %select{function|union|"
+     "variable and function|function or method}1 types")
 DIAG(warn_attribute_ignored_for_field_of_type, WARNING,
      "%0 attribute ignored for field of type %1")
 DIAG(warn_transparent_union_attribute_field_size, WARNING,

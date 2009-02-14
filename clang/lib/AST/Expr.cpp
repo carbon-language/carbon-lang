@@ -280,69 +280,118 @@ Stmt *BlockExpr::getBody() { return TheBlock->getBody(); }
 // Generic Expression Routines
 //===----------------------------------------------------------------------===//
 
-/// hasLocalSideEffect - Return true if this immediate expression has side
-/// effects, not counting any sub-expressions.
-bool Expr::hasLocalSideEffect() const {
+/// isUnusedResultAWarning - Return true if this immediate expression should
+/// be warned about if the result is unused.  If so, fill in Loc and Ranges
+/// with location to warn on and the source range[s] to report with the
+/// warning.
+bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
+                                  SourceRange &R2) const {
   switch (getStmtClass()) {
   default:
-    return false;
+    Loc = getExprLoc();
+    R1 = getSourceRange();
+    return true;
   case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->hasLocalSideEffect();
+    return cast<ParenExpr>(this)->getSubExpr()->
+      isUnusedResultAWarning(Loc, R1, R2);
   case UnaryOperatorClass: {
     const UnaryOperator *UO = cast<UnaryOperator>(this);
     
     switch (UO->getOpcode()) {
-    default: return false;
+    default: break;
     case UnaryOperator::PostInc:
     case UnaryOperator::PostDec:
     case UnaryOperator::PreInc:
-    case UnaryOperator::PreDec:
-      return true;                     // ++/--
-
+    case UnaryOperator::PreDec:                 // ++/--
+      return false;  // Not a warning.
     case UnaryOperator::Deref:
       // Dereferencing a volatile pointer is a side-effect.
-      return getType().isVolatileQualified();
+      if (getType().isVolatileQualified())
+        return false;
+      break;
     case UnaryOperator::Real:
     case UnaryOperator::Imag:
       // accessing a piece of a volatile complex is a side-effect.
-      return UO->getSubExpr()->getType().isVolatileQualified();
-
+      if (UO->getSubExpr()->getType().isVolatileQualified())
+        return false;
+      break;
     case UnaryOperator::Extension:
-      return UO->getSubExpr()->hasLocalSideEffect();
+      return UO->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2);
     }
+    Loc = UO->getOperatorLoc();
+    R1 = UO->getSubExpr()->getSourceRange();
+    return true;
   }
   case BinaryOperatorClass: {
-    const BinaryOperator *BinOp = cast<BinaryOperator>(this);
-    // Consider comma to have side effects if the LHS and RHS both do.
-    if (BinOp->getOpcode() == BinaryOperator::Comma)
-      return BinOp->getLHS()->hasLocalSideEffect() &&
-             BinOp->getRHS()->hasLocalSideEffect();
+    const BinaryOperator *BO = cast<BinaryOperator>(this);
+    // Consider comma to have side effects if the LHS or RHS does.
+    if (BO->getOpcode() == BinaryOperator::Comma)
+      return BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2) ||
+             BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2);
       
-    return BinOp->isAssignmentOp();
+    if (BO->isAssignmentOp())
+      return false;
+    Loc = BO->getOperatorLoc();
+    R1 = BO->getLHS()->getSourceRange();
+    R2 = BO->getRHS()->getSourceRange();
+    return true;
   }
   case CompoundAssignOperatorClass:
-    return true;
+    return false;
 
   case ConditionalOperatorClass: {
+    // The condition must be evaluated, but if either the LHS or RHS is a
+    // warning, warn about them.
     const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
-    return Exp->getCond()->hasLocalSideEffect()
-           || (Exp->getLHS() && Exp->getLHS()->hasLocalSideEffect())
-           || (Exp->getRHS() && Exp->getRHS()->hasLocalSideEffect());
+    if (Exp->getLHS()->isUnusedResultAWarning(Loc, R1, R2))
+      return true;
+    return Exp->getRHS()->isUnusedResultAWarning(Loc, R1, R2);
   }
 
   case MemberExprClass:
+    // If the base pointer or element is to a volatile pointer/field, accessing
+    // it is a side effect.
+    if (getType().isVolatileQualified())
+      return false;
+    Loc = cast<MemberExpr>(this)->getMemberLoc();
+    R1 = SourceRange(Loc, Loc);
+    R2 = cast<MemberExpr>(this)->getBase()->getSourceRange();
+    return true;
+      
   case ArraySubscriptExprClass:
     // If the base pointer or element is to a volatile pointer/field, accessing
-    // if is a side effect.
-    return getType().isVolatileQualified();
+    // it is a side effect.
+    if (getType().isVolatileQualified())
+      return false;
+    Loc = cast<ArraySubscriptExpr>(this)->getRBracketLoc();
+    R1 = cast<ArraySubscriptExpr>(this)->getLHS()->getSourceRange();
+    R2 = cast<ArraySubscriptExpr>(this)->getRHS()->getSourceRange();
+    return true;
 
   case CallExprClass:
-  case CXXOperatorCallExprClass:
-    // TODO: check attributes for pure/const.   "void foo() { strlen("bar"); }"
-    // should warn.
-    return true;
+  case CXXOperatorCallExprClass: {
+    // If this is a direct call, get the callee.
+    const CallExpr *CE = cast<CallExpr>(this);
+    const Expr *CalleeExpr = CE->getCallee()->IgnoreParenCasts();
+    if (const DeclRefExpr *CalleeDRE = dyn_cast<DeclRefExpr>(CalleeExpr)) {
+      // If the callee has attribute pure, const, or warn_unused_result, warn
+      // about it. void foo() { strlen("bar"); } should warn.
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CalleeDRE->getDecl()))
+        if (FD->getAttr<WarnUnusedResultAttr>() ||
+            FD->getAttr<PureAttr>() || FD->getAttr<ConstAttr>()) {
+          Loc = CE->getCallee()->getLocStart();
+          R1 = CE->getCallee()->getSourceRange();
+          
+          if (unsigned NumArgs = CE->getNumArgs())
+            R2 = SourceRange(CE->getArg(0)->getLocStart(),
+                             CE->getArg(NumArgs-1)->getLocEnd());
+          return true;
+        }
+    }
+    return false;
+  }
   case ObjCMessageExprClass:
-    return true;
+    return false;
   case StmtExprClass: {
     // Statement exprs don't logically have side effects themselves, but are
     // sometimes used in macros in ways that give them a type that is unused.
@@ -352,29 +401,45 @@ bool Expr::hasLocalSideEffect() const {
     const CompoundStmt *CS = cast<StmtExpr>(this)->getSubStmt();
     if (!CS->body_empty())
       if (const Expr *E = dyn_cast<Expr>(CS->body_back()))
-        return E->hasLocalSideEffect();
-    return false;
+        return E->isUnusedResultAWarning(Loc, R1, R2);
+    
+    Loc = cast<StmtExpr>(this)->getLParenLoc();
+    R1 = getSourceRange();
+    return true;
   }
   case CStyleCastExprClass:
+    // If this is a cast to void, check the operand.  Otherwise, the result of
+    // the cast is unused.
+    if (getType()->isVoidType())
+      return cast<CastExpr>(this)->getSubExpr()->isUnusedResultAWarning(Loc,
+                                                                        R1, R2);
+    Loc = cast<CStyleCastExpr>(this)->getLParenLoc();
+    R1 = cast<CStyleCastExpr>(this)->getSubExpr()->getSourceRange();
+    return true;
   case CXXFunctionalCastExprClass:
     // If this is a cast to void, check the operand.  Otherwise, the result of
     // the cast is unused.
     if (getType()->isVoidType())
-      return cast<CastExpr>(this)->getSubExpr()->hasLocalSideEffect();
-    return false;
-
+      return cast<CastExpr>(this)->getSubExpr()->isUnusedResultAWarning(Loc,
+                                                                        R1, R2);
+    Loc = cast<CXXFunctionalCastExpr>(this)->getTypeBeginLoc();
+    R1 = cast<CXXFunctionalCastExpr>(this)->getSubExpr()->getSourceRange();
+    return true;
+      
   case ImplicitCastExprClass:
     // Check the operand, since implicit casts are inserted by Sema
-    return cast<ImplicitCastExpr>(this)->getSubExpr()->hasLocalSideEffect();
+    return cast<ImplicitCastExpr>(this)
+      ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2);
 
   case CXXDefaultArgExprClass:
-    return cast<CXXDefaultArgExpr>(this)->getExpr()->hasLocalSideEffect();
+    return cast<CXXDefaultArgExpr>(this)
+      ->getExpr()->isUnusedResultAWarning(Loc, R1, R2);
 
   case CXXNewExprClass:
     // FIXME: In theory, there might be new expressions that don't have side
     // effects (e.g. a placement new with an uninitialized POD).
   case CXXDeleteExprClass:
-    return true;
+    return false;
   }
 }
 

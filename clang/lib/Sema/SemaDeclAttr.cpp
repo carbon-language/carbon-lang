@@ -298,7 +298,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // prototypes, so we ignore it as well
   if (!isFunctionOrMethod(d) || !hasFunctionProto(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "nonnull" << "function";
+      << "nonnull" << 0 /*function*/;
     return;
   }
   
@@ -408,7 +408,7 @@ static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   if (!isFunctionOrMethod(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "noreturn" << "function";
+      << "noreturn" << 0 /*function*/;
     return;
   }
   
@@ -424,7 +424,7 @@ static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   
   if (!isa<VarDecl>(d) && !isFunctionOrMethod(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "unused" << "variable and function";
+      << "unused" << 2 /*variable and function*/;
     return;
   }
   
@@ -445,7 +445,7 @@ static void HandleUsedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     }
   } else if (!isFunctionOrMethod(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "used" << "variable and function";
+      << "used" << 2 /*variable and function*/;
     return;
   }
   
@@ -475,7 +475,7 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
   if (!Fn) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "constructor" << "function";
+      << "constructor" << 0 /*function*/;
     return;
   }
 
@@ -504,7 +504,7 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   
   if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "destructor" << "function";
+      << "destructor" << 0 /*function*/;
     return;
   }
 
@@ -712,24 +712,42 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     }    
   } else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "sentinel" << "function or method";
+      << "sentinel" << 3 /*function or method*/;
     return;
   }
   
   // FIXME: Actually create the attribute.
 }
 
-static void HandleWeakAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleWarnUnusedResult(Decl *D, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  // TODO: could also be applied to methods?
+  FunctionDecl *Fn = dyn_cast<FunctionDecl>(D);
+  if (!Fn) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+    << "warn_unused_result" << 0 /*function*/;
+    return;
+  }
+  
+  Fn->addAttr(new WarnUnusedResultAttr());
+}
+
+static void HandleWeakAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
   
-  d->addAttr(new WeakAttr());
+  D->addAttr(new WeakAttr());
 }
 
-static void HandleDLLImportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
@@ -737,15 +755,15 @@ static void HandleDLLImportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // Attribute can be applied only to functions or variables.
-  if (isa<VarDecl>(d)) {
-    d->addAttr(new DLLImportAttr());
+  if (isa<VarDecl>(D)) {
+    D->addAttr(new DLLImportAttr());
     return;
   }
 
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(d);
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
   if (!FD) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "dllimport" << "function or variable";
+      << "dllimport" << 2 /*variable and function*/;
     return;
   }
 
@@ -766,15 +784,15 @@ static void HandleDLLImportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     }
   }
 
-  if (d->getAttr<DLLExportAttr>()) {
+  if (D->getAttr<DLLExportAttr>()) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
     return;
   }
 
-  d->addAttr(new DLLImportAttr());
+  D->addAttr(new DLLImportAttr());
 }
 
-static void HandleDLLExportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
@@ -782,15 +800,15 @@ static void HandleDLLExportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // Attribute can be applied only to functions or variables.
-  if (isa<VarDecl>(d)) {
-    d->addAttr(new DLLExportAttr());
+  if (isa<VarDecl>(D)) {
+    D->addAttr(new DLLExportAttr());
     return;
   }
 
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(d);
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
   if (!FD) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "dllexport" << "function or variable";
+      << "dllexport" << 2 /*variable and function*/;
     return;
   }
 
@@ -802,10 +820,10 @@ static void HandleDLLExportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(new DLLExportAttr());
+  D->addAttr(new DLLExportAttr());
 }
 
-static void HandleSectionAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // Attribute has no arguments.
   if (Attr.getNumArgs() != 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
@@ -821,7 +839,7 @@ static void HandleSectionAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_annotate_no_string);
     return;
   }
-  d->addAttr(new SectionAttr(std::string(SE->getStrData(),
+  D->addAttr(new SectionAttr(std::string(SE->getStrData(),
                                          SE->getByteLength())));
 }
 
@@ -835,7 +853,7 @@ static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // Attribute can be applied only to functions.
   if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "stdcall" << "function";
+      << "stdcall" << 0 /*function*/;
     return;
   }
 
@@ -858,7 +876,7 @@ static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "fastcall" << "function";
+      << "fastcall" << 0 /*function*/;
     return;
   }
 
@@ -977,7 +995,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   if (!isFunctionOrMethod(d) || !hasFunctionProto(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "format" << "function";
+      << "format" << 0 /*function*/;
     return;
   }
 
@@ -1116,7 +1134,7 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
   TypedefDecl *TD = dyn_cast<TypedefDecl>(d);
   if (!TD || !TD->getUnderlyingType()->isUnionType()) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "transparent_union" << "union";
+      << "transparent_union" << 1 /*union*/;
     return;
   }
 
@@ -1334,7 +1352,7 @@ static void HandleNodebugAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "nodebug" << "function";
+      << "nodebug" << 0 /*function*/;
     return;
   }
   
@@ -1381,6 +1399,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_used:        HandleUsedAttr      (D, Attr, S); break;
   case AttributeList::AT_vector_size: HandleVectorSizeAttr(D, Attr, S); break;
   case AttributeList::AT_visibility:  HandleVisibilityAttr(D, Attr, S); break;
+  case AttributeList::AT_warn_unused_result: HandleWarnUnusedResult(D,Attr,S);
+    break;
   case AttributeList::AT_weak:        HandleWeakAttr      (D, Attr, S); break;
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);

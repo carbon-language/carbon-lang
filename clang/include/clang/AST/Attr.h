@@ -52,6 +52,7 @@ public:
     Unused,    
     Used,
     Visibility,
+    WarnUnusedResult,
     Weak,
     Blocks,
     Const,
@@ -219,7 +220,6 @@ public:
   NoReturnAttr() : Attr(NoReturn) {}
   
   // Implement isa/cast/dyncast/etc.
-  
   static bool classof(const Attr *A) { return A->getKind() == NoReturn; }  
   static bool classof(const NoReturnAttr *A) { return true; }
 };
@@ -229,7 +229,6 @@ public:
   DeprecatedAttr() : Attr(Deprecated) {}
 
   // Implement isa/cast/dyncast/etc.
-
   static bool classof(const Attr *A) { return A->getKind() == Deprecated; }
   static bool classof(const DeprecatedAttr *A) { return true; }
 };
@@ -512,6 +511,15 @@ public:
     
   static bool classof(const Attr *A) { return A->getKind() == Nodebug; }
   static bool classof(const DeprecatedAttr *A) { return true; }
+};
+  
+class WarnUnusedResultAttr : public Attr {
+public:
+  WarnUnusedResultAttr() : Attr(WarnUnusedResult) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == WarnUnusedResult;}  
+  static bool classof(const WarnUnusedResultAttr *A) { return true; }
 };
   
 }  // end namespace clang

@@ -345,12 +345,13 @@ public:
   CompoundStmt(ASTContext& C, Stmt **StmtStart, unsigned numStmts, 
                              SourceLocation LB, SourceLocation RB)
   : Stmt(CompoundStmtClass), NumStmts(numStmts), LBracLoc(LB), RBracLoc(RB) {
-      if (NumStmts) {
-        Body = new (C) Stmt*[NumStmts];
-        memcpy(Body, StmtStart, numStmts * sizeof(*Body));
-      }
-      else
-        Body = 0;
+    if (NumStmts == 0) {
+      Body = 0;
+      return;
+    }
+  
+    Body = new (C) Stmt*[NumStmts];
+    memcpy(Body, StmtStart, numStmts * sizeof(*Body));
   }           
   
   bool body_empty() const { return NumStmts == 0; }

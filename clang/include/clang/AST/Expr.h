@@ -110,9 +110,12 @@ public:
   /// a problem with a generic expression.
   virtual SourceLocation getExprLoc() const { return getLocStart(); }
   
-  /// hasLocalSideEffect - Return true if this immediate expression has side
-  /// effects, not counting any sub-expressions.
-  bool hasLocalSideEffect() const;
+  /// isUnusedResultAWarning - Return true if this immediate expression should
+  /// be warned about if the result is unused.  If so, fill in Loc and Ranges
+  /// with location to warn on and the source range[s] to report with the
+  /// warning.
+  bool isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
+                              SourceRange &R2) const;
   
   /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or
   /// incomplete type other than void. Nonarray expressions that can be lvalues:
@@ -734,6 +737,7 @@ public:
     return SourceRange(getLHS()->getLocStart(), RBracketLoc);
   }
   
+  SourceLocation getRBracketLoc() const { return RBracketLoc; }
   virtual SourceLocation getExprLoc() const { return getBase()->getExprLoc(); }
 
   static bool classof(const Stmt *T) { 
@@ -874,6 +878,7 @@ public:
   NamedDecl *getMemberDecl() const { return MemberDecl; }
   void setMemberDecl(NamedDecl *D) { MemberDecl = D; }
   bool isArrow() const { return IsArrow; }
+  SourceLocation getMemberLoc() const { return MemberLoc; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), MemberLoc);
@@ -1317,6 +1322,9 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(LParenLoc, RParenLoc);
   }
+  
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == StmtExprClass; 

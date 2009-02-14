@@ -10,9 +10,9 @@ void __attribute__((dllimport, dllexport)) foo4(); // expected-warning{{dllimpor
 void __attribute__((dllexport)) foo5();
 void __attribute__((dllimport)) foo5(); // expected-warning{{dllimport attribute ignored}}
 
-typedef int __attribute__((dllexport)) type6; // expected-warning{{'dllexport' attribute only applies to function or variable types}}
+typedef int __attribute__((dllexport)) type6; // expected-warning{{'dllexport' attribute only applies to variable and function types}}
 
-typedef int __attribute__((dllimport)) type7; // expected-warning{{'dllimport' attribute only applies to function or variable}}
+typedef int __attribute__((dllimport)) type7; // expected-warning{{'dllimport' attribute only applies to variable and function}}
 
 void __attribute__((dllimport)) foo6();
 void foo6(){} // expected-warning {{'foo6' redeclared without dllimport attribute: previous dllimport ignored}}
