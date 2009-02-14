@@ -787,6 +787,7 @@ class OptionParser:
         self.f_encodingOption = self.addOption(JoinedOption('-fencoding=', self.fGroup))
         self.f_exceptionsOption = self.addOption(FlagOption('-fexceptions', self.Clang_fGroup))
         self.f_extdirsOption = self.addOption(JoinedOption('-fextdirs=', self.fGroup))
+        self.f_freestandingOption = self.addOption(FlagOption('-ffreestanding', self.Clang_fGroup))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.Clang_fGroup))
         self.f_indirectVirtualCallsOption = self.addOption(FlagOption('-findirect-virtual-calls', self.fGroup))
         self.f_laxVectorConversionsOption = self.addOption(FlagOption('-flax-vector-conversions', self.Clang_fGroup))

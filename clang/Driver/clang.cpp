@@ -209,6 +209,14 @@ InheritanceViewCls("cxx-inheritance-view",
                   llvm::cl::desc("View C++ inheritance for a specified class"));
 
 //===----------------------------------------------------------------------===//
+// Builtin Options
+//===----------------------------------------------------------------------===//
+static llvm::cl::opt<bool>
+Freestanding("ffreestanding",
+             llvm::cl::desc("Assert that the compiler takes place in a "
+                            "freestanding environment"));
+
+//===----------------------------------------------------------------------===//
 // Analyzer Options.
 //===----------------------------------------------------------------------===//
 
@@ -635,6 +643,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   Options.Exceptions = Exceptions;
   if (EnableBlocks.getPosition())
     Options.Blocks = EnableBlocks;
+
+  if (Freestanding)
+    Options.Freestanding = 1;
 
   // Override the default runtime if the user requested it.
   if (NeXTRuntime)

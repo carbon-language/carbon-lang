@@ -65,6 +65,10 @@
 //          through an ellipsis
 //  FIXME: gcc has nonnull
 
+#if defined(BUILTIN) && !defined(LIBBUILTIN)
+#  define LIBBUILTIN(ID, TYPE, ATTRS) BUILTIN(ID, TYPE, ATTRS)
+#endif
+
 // Standard libc/libm functions:
 BUILTIN(__builtin_huge_val, "d", "nc")
 BUILTIN(__builtin_huge_valf, "f", "nc")
@@ -182,33 +186,34 @@ BUILTIN(__sync_val_compare_and_swap,"ii*ii", "n")
 BUILTIN(__builtin_llvm_memory_barrier,"vbbbbb", "n")
 
 // Builtin library functions
-BUILTIN(alloca, "v*z", "f:stdlib.h:")
-BUILTIN(calloc, "v*zz", "f:stdlib.h:")
-BUILTIN(malloc, "v*z", "f:stdlib.h:")
-BUILTIN(memcpy, "v*v*vC*z", "f:string.h:")
-BUILTIN(memmove, "v*v*vC*z", "f:string.h:")
-BUILTIN(memset, "v*v*iz", "f:string.h:")
-BUILTIN(strcat, "c*c*cC*", "f:string.h:")
-BUILTIN(strchr, "c*cC*i", "f:string.h:")
-BUILTIN(strcpy, "c*c*cC*", "f:string.h:")
-BUILTIN(strcspn, "zcC*cC*", "f:string.h:")
-BUILTIN(strlen, "zcC*", "f:string.h:")
-BUILTIN(strncat, "c*c*cC*z", "f:string.h:")
-BUILTIN(strncpy, "c*c*cC*z", "f:string.h:")
-BUILTIN(strpbrk, "c*cC*cC*", "f:string.h:")
-BUILTIN(strrchr, "c*cC*i", "f:string.h:")
-BUILTIN(strspn, "zcC*cC*", "f:string.h:")
-BUILTIN(strstr, "c*cC*cC*", "f:string.h:")
-BUILTIN(printf, "icC*.", "f:stdio.h:p:0:")
-BUILTIN(fprintf, "iP*cC*.", "f:stdio.h:p:1:")
-BUILTIN(snprintf, "ic*zcC*.", "f:stdio.h:p:2:")
-BUILTIN(sprintf, "ic*cC*.", "f:stdio.h:p:1:")
-BUILTIN(vprintf, "icC*a", "f:stdio.h:P:0:")
-BUILTIN(vfprintf, "iP*cC*a", "f:stdio.h:P:1:")
-BUILTIN(vsnprintf, "ic*zcC*a", "f:stdio.h:P:2:")
-BUILTIN(vsprintf, "ic*cC*a", "f:stdio.h:P:1:")
+LIBBUILTIN(alloca, "v*z", "f:stdlib.h:")
+LIBBUILTIN(calloc, "v*zz", "f:stdlib.h:")
+LIBBUILTIN(malloc, "v*z", "f:stdlib.h:")
+LIBBUILTIN(memcpy, "v*v*vC*z", "f:string.h:")
+LIBBUILTIN(memmove, "v*v*vC*z", "f:string.h:")
+LIBBUILTIN(memset, "v*v*iz", "f:string.h:")
+LIBBUILTIN(strcat, "c*c*cC*", "f:string.h:")
+LIBBUILTIN(strchr, "c*cC*i", "f:string.h:")
+LIBBUILTIN(strcpy, "c*c*cC*", "f:string.h:")
+LIBBUILTIN(strcspn, "zcC*cC*", "f:string.h:")
+LIBBUILTIN(strlen, "zcC*", "f:string.h:")
+LIBBUILTIN(strncat, "c*c*cC*z", "f:string.h:")
+LIBBUILTIN(strncpy, "c*c*cC*z", "f:string.h:")
+LIBBUILTIN(strpbrk, "c*cC*cC*", "f:string.h:")
+LIBBUILTIN(strrchr, "c*cC*i", "f:string.h:")
+LIBBUILTIN(strspn, "zcC*cC*", "f:string.h:")
+LIBBUILTIN(strstr, "c*cC*cC*", "f:string.h:")
+LIBBUILTIN(printf, "icC*.", "f:stdio.h:p:0:")
+LIBBUILTIN(fprintf, "iP*cC*.", "f:stdio.h:p:1:")
+LIBBUILTIN(snprintf, "ic*zcC*.", "f:stdio.h:p:2:")
+LIBBUILTIN(sprintf, "ic*cC*.", "f:stdio.h:p:1:")
+LIBBUILTIN(vprintf, "icC*a", "f:stdio.h:P:0:")
+LIBBUILTIN(vfprintf, "iP*cC*a", "f:stdio.h:P:1:")
+LIBBUILTIN(vsnprintf, "ic*zcC*a", "f:stdio.h:P:2:")
+LIBBUILTIN(vsprintf, "ic*cC*a", "f:stdio.h:P:1:")
 
 // FIXME: asprintf and vasprintf aren't C99 functions. Should they be
-// target-specific builtins, perhaps? What about NSLog?
+// target-specific builtins, perhaps? 
 
 #undef BUILTIN
+#undef LIBBUILTIN

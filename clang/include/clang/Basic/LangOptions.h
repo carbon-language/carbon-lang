@@ -47,6 +47,7 @@ public:
   unsigned Exceptions        : 1;  // Support exception handling.
 
   unsigned NeXTRuntime       : 1; // Use NeXT runtime.
+  unsigned Freestanding      : 1; // Freestanding implementation
 
   unsigned ThreadsafeStatics : 1; // Whether static initializers are protected
                                   // by locks.
@@ -68,7 +69,7 @@ public:
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
     CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
-    Exceptions = NeXTRuntime = 0;
+    Exceptions = NeXTRuntime = Freestanding = 0;
     LaxVectorConversions = 1;
     
     // FIXME: The default should be 1.

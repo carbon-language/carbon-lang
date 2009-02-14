@@ -296,7 +296,7 @@ public:
 };
 
 const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, false },
 #include "clang/AST/PPCBuiltins.def"
 };
 
@@ -438,7 +438,7 @@ public:
 namespace {
 // Namespace for x86 abstract base class
 const Builtin::Info BuiltinInfo[] = {
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, false },
 #include "clang/AST/X86Builtins.def"
 };
 

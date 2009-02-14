@@ -19,8 +19,8 @@
 using namespace clang;
 
 static const Builtin::Info BuiltinInfo[] = {
-  { "not a builtin function", 0, 0 },
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
+  { "not a builtin function", 0, 0, false },
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, false },
 #include "clang/AST/Builtins.def"
 };
 
@@ -36,17 +36,25 @@ const Builtin::Info &Builtin::Context::GetRecord(unsigned ID) const {
 /// appropriate builtin ID # and mark any non-portable builtin identifiers as
 /// such.
 void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
-                                          const TargetInfo &Target) {
+                                          const TargetInfo &Target,
+                                          bool Freestanding) {
   // Step #1: mark all target-independent builtins with their ID's.
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
-    Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
+    if (!BuiltinInfo[i].Suppressed &&
+        (!Freestanding || 
+         !strchr(BuiltinInfo[i].Attributes, 'f')))
+      Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
   
   // Step #2: Get target builtins.
   Target.getTargetBuiltins(TSRecords, NumTSRecords);
 
   // Step #3: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
-    Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
+    if (!TSRecords[i].Suppressed &&
+        (!Freestanding || 
+         (BuiltinInfo[i].Attributes && 
+          !strchr(BuiltinInfo[i].Attributes, 'f'))))
+      Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
 }
 
 std::string Builtin::Context::getHeaderName(unsigned ID) const {

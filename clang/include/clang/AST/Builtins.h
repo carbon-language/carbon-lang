@@ -34,7 +34,8 @@ enum ID {
 
 struct Info {
   const char *Name, *Type, *Attributes;
-  
+  bool Suppressed;
+
   bool operator==(const Info &RHS) const {
     return !strcmp(Name, RHS.Name) &&
            !strcmp(Type, RHS.Type) &&
@@ -54,7 +55,8 @@ public:
   /// InitializeBuiltins - Mark the identifiers for all the builtins with their
   /// appropriate builtin ID # and mark any non-portable builtin identifiers as
   /// such.
-  void InitializeBuiltins(IdentifierTable &Table, const TargetInfo &Target);
+  void InitializeBuiltins(IdentifierTable &Table, const TargetInfo &Target,
+                          bool Freestanding = false);
   
   /// Builtin::GetName - Return the identifier name for the specified builtin,
   /// e.g. "__builtin_abs".
