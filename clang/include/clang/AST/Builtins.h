@@ -102,7 +102,12 @@ public:
   }
   
   /// GetBuiltinType - Return the type for the specified builtin.
-  QualType GetBuiltinType(unsigned ID, ASTContext &Context) const;
+  enum GetBuiltinTypeError {
+    GE_None, //< No error
+    GE_Missing_FILE //< Missing the FILE type from <stdio.h>
+  };
+  QualType GetBuiltinType(unsigned ID, ASTContext &Context,
+                          GetBuiltinTypeError &Error) const;
 private:
   const Info &GetRecord(unsigned ID) const;
 };

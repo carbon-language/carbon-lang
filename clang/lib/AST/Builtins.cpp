@@ -87,6 +87,7 @@ Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx,
 /// DecodeTypeFromStr - This decodes one type descriptor from Str, advancing the
 /// pointer over the consumed characters.  This returns the resultant type.
 static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context, 
+                                  Builtin::Context::GetBuiltinTypeError &Error,
                                   bool AllowTypeModifiers = true) {
   // Modifiers.
   bool Long = false, LongLong = false, Signed = false, Unsigned = false;
@@ -202,9 +203,22 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     
     Str = End;
     
-    QualType ElementType = DecodeTypeFromStr(Str, Context, false);
+    QualType ElementType = DecodeTypeFromStr(Str, Context, Error, false);
     Type = Context.getVectorType(ElementType, NumElements);
     break;
+  }
+  case 'P': {
+    IdentifierInfo *II = &Context.Idents.get("FILE");
+    DeclContext::lookup_result Lookup 
+      = Context.getTranslationUnitDecl()->lookup(II);
+    if (Lookup.first != Lookup.second && isa<TypeDecl>(*Lookup.first)) {
+      Type = Context.getTypeDeclType(cast<TypeDecl>(*Lookup.first));
+      break;
+    }
+    else {
+      Error = Builtin::Context::GE_Missing_FILE;
+      return QualType();
+    }
   }
   }
   
@@ -231,16 +245,21 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
 }
 
 /// GetBuiltinType - Return the type for the specified builtin.
-QualType Builtin::Context::GetBuiltinType(unsigned id,
-                                          ASTContext &Context) const {
+QualType Builtin::Context::GetBuiltinType(unsigned id, ASTContext &Context,
+                                          GetBuiltinTypeError &Error) const {
   const char *TypeStr = GetRecord(id).Type;
   
   llvm::SmallVector<QualType, 8> ArgTypes;
   
-  QualType ResType = DecodeTypeFromStr(TypeStr, Context);
+  Error = GE_None;
+  QualType ResType = DecodeTypeFromStr(TypeStr, Context, Error);
+  if (Error != GE_None)
+    return QualType();
   while (TypeStr[0] && TypeStr[0] != '.') {
-    QualType Ty = DecodeTypeFromStr(TypeStr, Context);
-    
+    QualType Ty = DecodeTypeFromStr(TypeStr, Context, Error);
+    if (Error != GE_None)
+      return QualType();
+
     // Do array -> pointer decay.  The builtin should use the decayed type.
     if (Ty->isArrayType())
       Ty = Context.getArrayDecayedType(Ty);

@@ -91,6 +91,8 @@ DIAG(note_please_include_header, NOTE,
      "please include the header <%0> or explicitly provide a declaration for '%1'")
 DIAG(note_previous_builtin_declaration, NOTE,
      "%0 was implicitly declared here with type %1")
+DIAG(err_implicit_decl_requires_stdio, ERROR,
+     "implicit declaration of '%0' requires inclusion of the header <stdio.h>")
 
 /// parser diagnostics
 DIAG(ext_typedef_without_a_name, EXTWARN,

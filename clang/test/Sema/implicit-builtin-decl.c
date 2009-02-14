@@ -20,3 +20,7 @@ void h() {
   int strcpy(int); // expected-error{{conflicting types for 'strcpy'}} \
   // expected-note{{'strcpy' was implicitly declared here with type 'char *(char *, char const *)'}}
 }
+
+void f2() {
+  fprintf(0, "foo"); // expected-error{{implicit declaration of 'fprintf' requires inclusion of the header <stdio.h>}}
+}

@@ -35,6 +35,7 @@
 //  a -> __builtin_va_list
 //  A -> "reference" to __builtin_va_list
 //  V -> Vector, following num elements and a base type.
+//  P -> FILE
 //  . -> "...".  This may only occur at the end of the function list.
 //
 // Types maybe prefixed with the following modifiers:
@@ -151,10 +152,10 @@ BUILTIN(__builtin___snprintf_chk, "ic*zizcC*.", "Fp:4:")
 BUILTIN(__builtin___sprintf_chk, "ic*izcC*.", "Fp:3:")
 BUILTIN(__builtin___vsnprintf_chk, "ic*zizcC*a", "FP:4:")
 BUILTIN(__builtin___vsprintf_chk, "ic*izcC*a", "FP:3:")
-//BUILTIN(__builtin___fprintf_chk, "i(FIXME:FILEPTR)icC*.", "F") // FIXME: format printf attribute
-BUILTIN(__builtin___printf_chk, "iicC*.", "F") // FIXME: format printf attribute
-//BUILTIN(__builtin___vfprintf_chk, "i(FIXME:FILEPTR)icC*a", "F") // FIXME: format printf attribute
-BUILTIN(__builtin___vprintf_chk, "iicC*a", "F") // FIXME: format printf attribute
+BUILTIN(__builtin___fprintf_chk, "iP*icC*.", "Fp:2:")
+BUILTIN(__builtin___printf_chk, "iicC*.", "Fp:1:")
+BUILTIN(__builtin___vfprintf_chk, "iP*icC*a", "FP:2:")
+BUILTIN(__builtin___vprintf_chk, "iicC*a", "FP:1:")
 
 BUILTIN(__builtin_expect, "iii"   , "nc")
 BUILTIN(__builtin_prefetch, "vCv*.", "nc")
@@ -199,11 +200,11 @@ BUILTIN(strrchr, "c*cC*i", "f:string.h:")
 BUILTIN(strspn, "zcC*cC*", "f:string.h:")
 BUILTIN(strstr, "c*cC*cC*", "f:string.h:")
 BUILTIN(printf, "icC*.", "f:stdio.h:p:0:")
-//BUILTIN(fprintf, "i<FIXME:FILEPTR>cC*.", "f:stdio.h:p:1:")
+BUILTIN(fprintf, "iP*cC*.", "f:stdio.h:p:1:")
 BUILTIN(snprintf, "ic*zcC*.", "f:stdio.h:p:2:")
 BUILTIN(sprintf, "ic*cC*.", "f:stdio.h:p:1:")
 BUILTIN(vprintf, "icC*a", "f:stdio.h:P:0:")
-//BUILTIN(vfprintf, "i<FIXME:FILEPTR>cC*a", "f:stdio.h:P:1:")
+BUILTIN(vfprintf, "iP*cC*a", "f:stdio.h:P:1:")
 BUILTIN(vsnprintf, "ic*zcC*a", "f:stdio.h:P:2:")
 BUILTIN(vsprintf, "ic*cC*a", "f:stdio.h:P:1:")
 

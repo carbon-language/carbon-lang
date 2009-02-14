@@ -182,9 +182,7 @@ public:
   enum {
     id_NSLog,
     id_asprintf,
-    id_fprintf,
     id_vasprintf,
-    id_vfprintf,
     id_num_known_functions
   };
   

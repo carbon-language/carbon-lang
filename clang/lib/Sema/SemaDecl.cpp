@@ -298,7 +298,19 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   if (Context.BuiltinInfo.hasVAListUse(BID))
     InitBuiltinVaListType();
 
-  QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);  
+  Builtin::Context::GetBuiltinTypeError Error;
+  QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context, Error);  
+  switch (Error) {
+  case Builtin::Context::GE_None:
+    // Okay
+    break;
+
+  case Builtin::Context::GE_Missing_FILE:
+    if (ForRedeclaration)
+      Diag(Loc, diag::err_implicit_decl_requires_stdio)
+        << Context.BuiltinInfo.GetName(BID);
+    return 0;
+  }
 
   if (!ForRedeclaration && Context.BuiltinInfo.isPredefinedLibFunction(BID)) {
     Diag(Loc, diag::ext_implicit_lib_function_decl)

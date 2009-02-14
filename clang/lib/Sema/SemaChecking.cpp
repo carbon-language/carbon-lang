@@ -87,12 +87,10 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   } else if (FnInfo == KnownFunctionIDs[id_NSLog]) {
     format_idx = 0;
     HasVAListArg = false;
-  } else if (FnInfo == KnownFunctionIDs[id_asprintf] ||
-             FnInfo == KnownFunctionIDs[id_fprintf]) {
+  } else if (FnInfo == KnownFunctionIDs[id_asprintf]) {
     format_idx = 1;
     HasVAListArg = false;
-  } else if (FnInfo == KnownFunctionIDs[id_vasprintf] ||
-             FnInfo == KnownFunctionIDs[id_vfprintf]) {
+  } else if (FnInfo == KnownFunctionIDs[id_vasprintf]) {
     format_idx = 1;
     HasVAListArg = true;
   } else {
