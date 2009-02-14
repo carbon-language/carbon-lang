@@ -170,8 +170,11 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
   }
   
   // Handle complex types.
-  if (DS.getTypeSpecComplex() == DeclSpec::TSC_complex)
+  if (DS.getTypeSpecComplex() == DeclSpec::TSC_complex) {
+    if (getLangOptions().Freestanding)
+      Diag(DS.getTypeSpecComplexLoc(), diag::ext_freestanding_complex);
     Result = Context.getComplexType(Result);
+  }
   
   assert(DS.getTypeSpecComplex() != DeclSpec::TSC_imaginary &&
          "FIXME: imaginary types not supported yet!");

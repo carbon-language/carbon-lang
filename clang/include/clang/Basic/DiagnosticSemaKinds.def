@@ -876,6 +876,9 @@ DIAG(ext_integer_complement_complex, EXTENSION,
 DIAG(error_nosetter_property_assignment, ERROR,
      "setter method is needed to assign to object using property"
      " assignment syntax")
+DIAG(ext_freestanding_complex, EXTENSION,
+     "complex numbers are an extension in a freestanding C99 implementation")
+
 
 // Obj-c expressions
 DIAG(warn_class_method_not_found, WARNING,
