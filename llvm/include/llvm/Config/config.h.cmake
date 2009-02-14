@@ -551,6 +551,9 @@
 /* Define to a type to use for `error_t' if it is not otherwise available. */
 #cmakedefine error_t ${error_t}
 
+/* Define to a type to use for `mode_t' if it is not otherwise available. */
+#cmakedefine mode_t ${mode_t}
+
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
