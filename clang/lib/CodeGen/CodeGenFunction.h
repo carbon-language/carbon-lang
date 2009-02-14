@@ -256,15 +256,15 @@ public:
     const llvm::Type *BlockLiteralTy;
 
     /// Name - the name of the function this block was created for, if any
-    std::string Name;
+    const char *Name;
 
-    BlockInfo(const llvm::Type *blt, std::string n)
+    BlockInfo(const llvm::Type *blt, const char *n)
       : BlockLiteralTy(blt), Name(n) {}
   };
   
   llvm::Function *GenerateBlockFunction(const BlockExpr *Expr,
                                         const BlockInfo& Info);
-  
+
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);
   void StartFunction(const Decl *D, QualType RetTy,

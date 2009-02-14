@@ -147,9 +147,9 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     Elts.push_back(C);
 
     // __FuncPtr
-    std::string Name;
+    const char *Name;
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(CurFuncDecl))
-      Name = ND->getNameAsString();
+      Name = ND->getNameAsCString();
     BlockInfo Info(0, Name);
     llvm::Function *Fn = CodeGenFunction(*this).GenerateBlockFunction(BE, Info);
     Elts.push_back(Fn);
@@ -292,7 +292,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
 }
 
 llvm::Constant *
-CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, std::string n) {
+CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   // Generate the block descriptor.
   const llvm::Type *UnsignedLongTy = Types.ConvertType(Context.UnsignedLongTy);
   const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
