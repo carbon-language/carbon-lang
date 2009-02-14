@@ -64,7 +64,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     break;
   case 6:
     if (!memcmp(Str, "packed", 6)) return AT_packed;
-    if (!memcmp(Str, "malloc", 6)) return IgnoredAttribute;
+    if (!memcmp(Str, "malloc", 6)) return IgnoredAttribute; // FIXME: noalias.
     if (!memcmp(Str, "format", 6)) return AT_format;
     if (!memcmp(Str, "unused", 6)) return AT_unused;
     if (!memcmp(Str, "blocks", 6)) return AT_blocks;
@@ -91,12 +91,14 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 9:
     if (!memcmp(Str, "dllimport", 9)) return AT_dllimport;
     if (!memcmp(Str, "dllexport", 9)) return AT_dllexport;
-    if (!memcmp(Str, "may_alias", 9)) return IgnoredAttribute;
+    if (!memcmp(Str, "may_alias", 9)) return IgnoredAttribute; // FIXME: TBAA
     break;
   case 10:
     if (!memcmp(Str, "deprecated", 10)) return AT_deprecated;
     if (!memcmp(Str, "visibility", 10)) return AT_visibility;
     if (!memcmp(Str, "destructor", 10)) return AT_destructor;
+    if (!memcmp(Str, "format_arg", 10))
+      return IgnoredAttribute; // FIXME: printf format string checking.
     break;
   case 11:
     if (!memcmp(Str, "vector_size", 11)) return AT_vector_size;
