@@ -99,4 +99,5 @@ bool SymbolReaper::isLive(SymbolRef sym) {
   // the analyzed function/method.
   return isa<SymbolRegionRValue>(SymMgr.getSymbolData(sym));
 }
-  
+
+SymbolVisitor::~SymbolVisitor() {}

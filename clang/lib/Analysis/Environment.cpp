@@ -10,11 +10,11 @@
 //  This file defined the Environment and EnvironmentManager classes.
 //
 //===----------------------------------------------------------------------===//
-
-#include "clang/Analysis/PathSensitive/Environment.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
@@ -106,9 +106,19 @@ Environment EnvironmentManager::BindExpr(const Environment& Env, Stmt* E,SVal V,
   return isBlkExpr ? AddBlkExpr(Env, E, V) : AddSubExpr(Env, E, V);
 }
 
+namespace {
+class VISIBILITY_HIDDEN MarkLiveCallback : public SymbolVisitor {
+  SymbolReaper &SymReaper;
+public:
+  MarkLiveCallback(SymbolReaper &symreaper) : SymReaper(symreaper) {}  
+  bool VisitSymbol(SymbolRef sym) { SymReaper.markLive(sym); return true; }
+};
+} // end anonymous namespace
+
 Environment 
 EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
                                        SymbolReaper& SymReaper,
+                                       GRStateManager& StateMgr,
                               llvm::SmallVectorImpl<const MemRegion*>& DRoots) {
   
   // Drop bindings for subexpressions.
@@ -126,11 +136,9 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
       if (isa<loc::MemRegionVal>(X))
         DRoots.push_back(cast<loc::MemRegionVal>(X).getRegion());
 
-      // Mark all symbols in the block expr's value.
-      for (SVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
-           SI != SE; ++SI)
-        SymReaper.markLive(*SI);
-
+      // Mark all symbols in the block expr's value live.
+      MarkLiveCallback cb(SymReaper);
+      StateMgr.scanReachableSymbols(X, cb);
     } else {
       // The block expr is dead.
       SVal X = I.getData();

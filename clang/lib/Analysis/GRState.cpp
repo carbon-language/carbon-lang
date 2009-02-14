@@ -45,7 +45,7 @@ GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   llvm::SmallVector<const MemRegion*, 10> RegionRoots;
   GRState NewState = *state;
 
-  NewState.Env = EnvMgr.RemoveDeadBindings(NewState.Env, Loc, SymReaper,
+  NewState.Env = EnvMgr.RemoveDeadBindings(NewState.Env, Loc, SymReaper, *this,
                                            RegionRoots);
 
   // Clean up the store.
@@ -202,6 +202,35 @@ const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
   GRState NewSt = *St;
   NewSt.GDM = M2;
   return getPersistentState(NewSt);
+}
+
+//===----------------------------------------------------------------------===//
+// Utility.
+//===----------------------------------------------------------------------===//
+
+bool GRStateManager::scanReachableSymbols(nonloc::CompoundVal val,
+                                          SymbolVisitor& visitor) {
+  for (nonloc::CompoundVal::iterator I=val.begin(), E=val.end(); I!=E; ++I)
+    if (!scanReachableSymbols(*I, visitor)) return false;
+
+  return true;
+}
+
+bool GRStateManager::scanReachableSymbols(SVal val, SymbolVisitor& visitor) {
+  
+  // FIXME: Scan through through the reachable regions.
+  // if (isa<Loc>(val)) { ... }
+  
+  if (loc::SymbolVal *X = dyn_cast<loc::SymbolVal>(&val))
+    return visitor.VisitSymbol(X->getSymbol());
+  
+  if (nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(&val))
+    return visitor.VisitSymbol(X->getSymbol());
+  
+  if (nonloc::CompoundVal *X = dyn_cast<nonloc::CompoundVal>(&val))
+    return scanReachableSymbols(*X, visitor);
+  
+  return true;
 }
 
 //===----------------------------------------------------------------------===//

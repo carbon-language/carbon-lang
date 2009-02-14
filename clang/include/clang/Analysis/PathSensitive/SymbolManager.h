@@ -263,6 +263,15 @@ public:
   }
 };
   
+class SymbolVisitor {
+public:
+  // VisitSymbol - A visitor method invoked by
+  //  GRStateManager::scanReachableSymbols.  The method returns \c true if
+  //  symbols should continue be scanned and \c false otherwise.
+  virtual bool VisitSymbol(SymbolRef sym) = 0;
+  virtual ~SymbolVisitor();
+};
+  
 } // end clang namespace
 
 #endif

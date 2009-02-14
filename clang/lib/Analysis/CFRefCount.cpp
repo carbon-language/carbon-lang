@@ -21,6 +21,7 @@
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "clang/Analysis/PathSensitive/SymbolManager.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -1736,13 +1737,25 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
   EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), Summ,
               ME->arg_begin(), ME->arg_end(), Pred);
 }
+
+namespace {
+class VISIBILITY_HIDDEN StopTrackingCallback : public SymbolVisitor {
+  GRStateRef state;
+public:
+  StopTrackingCallback(GRStateRef st) : state(st) {}
+  GRStateRef getState() { return state; }
+
+  bool VisitSymbol(SymbolRef sym) {
+    state = state.remove<RefBindings>(sym);
+    return true;
+  }
   
+  const GRState* getState() const { return state.getState(); }
+};
+} // end anonymous namespace
+  
+
 void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {  
-  // Check if we have a binding for "Val" and if we are storing it to something
-  // we don't understand or otherwise the value "escapes" the function.  
-  if (!isa<loc::SymbolVal>(val))
-    return;
-  
   // Are we storing to something that causes the value to "escape"?  
   bool escapes = false;
   
@@ -1752,7 +1765,6 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
   // (2) we are binding to a memregion that does not have stack storage
   // (3) we are binding to a memregion with stack storage that the store
   //     does not understand.  
-  SymbolRef Sym = cast<loc::SymbolVal>(val).getSymbol();
   GRStateRef state = B.getState();
 
   if (!isa<loc::MemRegionVal>(location))
@@ -1769,15 +1781,15 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
     }
   }
 
-  // Our store can represent the binding and we aren't storing to something
-  // that doesn't have local storage.  Just return and have the simulation
-  // state continue as is.  We should also just return if the tracked symbol
-  // is not associated with a reference count.
-  if (!escapes || !state.get<RefBindings>(Sym))
-    return;
+  // If our store can represent the binding and we aren't storing to something
+  // that doesn't have local storage then just return and have the simulation
+  // state continue as is.
+  if (!escapes)
+      return;
 
-  // The tracked object excapes. Stop tracking the object.
-  B.MakeNode(state.remove<RefBindings>(Sym));
+  // Otherwise, find all symbols referenced by 'val' that we are tracking
+  // and stop tracking them.
+  B.MakeNode(state.scanReachableSymbols<StopTrackingCallback>(val).getState());
 }
 
 std::pair<GRStateRef,bool>

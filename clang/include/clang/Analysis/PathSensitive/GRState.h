@@ -610,6 +610,9 @@ public:
   void EndPath(const GRState* St) {
     ConstraintMgr->EndPath(St);
   }
+
+  bool scanReachableSymbols(nonloc::CompoundVal val, SymbolVisitor& vistor);
+  bool scanReachableSymbols(SVal val, SymbolVisitor& visitor);
 };
   
 //===----------------------------------------------------------------------===//
@@ -730,6 +733,13 @@ public:
     
   GRStateRef Assume(SVal Cond, bool Assumption, bool& isFeasible) {
     return GRStateRef(Mgr->Assume(St, Cond, Assumption, isFeasible), *Mgr);  
+  }
+  
+  template <typename CB>
+  CB scanReachableSymbols(SVal val) {
+    CB cb(*this);
+    Mgr->scanReachableSymbols(val, cb);
+    return cb;
   }
   
   // Pretty-printing.
