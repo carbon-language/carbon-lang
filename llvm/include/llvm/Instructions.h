@@ -108,7 +108,8 @@ public:
   MallocInst(const Type *Ty, const std::string &NameStr,
              Instruction *InsertBefore = 0)
     : AllocationInst(Ty, 0, Malloc, 0, NameStr, InsertBefore) {}
-  MallocInst(const Type *Ty, const std::string &NameStr, BasicBlock *InsertAtEnd)
+  MallocInst(const Type *Ty, const std::string &NameStr,
+             BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, 0, Malloc, 0, NameStr, InsertAtEnd) {}
 
   MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
