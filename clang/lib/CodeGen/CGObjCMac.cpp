@@ -230,6 +230,9 @@ public:
   // ProtocolnfABITy = LLVM for struct _protocol_t
   const llvm::StructType *ProtocolnfABITy;
   
+  // ProtocolnfABIPtrTy = LLVM for struct _protocol_t*
+  const llvm::Type *ProtocolnfABIPtrTy;
+
   // ProtocolListnfABITy - LLVM for struct _objc_protocol_list
   const llvm::StructType *ProtocolListnfABITy;
   
@@ -3122,24 +3125,25 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                                           NULL);
   CGM.getModule().addTypeName("struct._protocol_t",
                               ProtocolnfABITy);
+
+  // struct _protocol_t*
+  ProtocolnfABIPtrTy = llvm::PointerType::getUnqual(ProtocolnfABITy);
   
   // struct _protocol_list_t {
   //   long protocol_count;   // Note, this is 32/64 bit
-  //   struct _protocol_t[protocol_count];
+  //   struct _protocol_t *[protocol_count];
   // }
   ProtocolListnfABITy = llvm::StructType::get(LongTy,
                                               llvm::ArrayType::get(
-                                                ProtocolnfABITy, 0),
+                                                ProtocolnfABIPtrTy, 0),
                                               NULL);
   CGM.getModule().addTypeName("struct._objc_protocol_list",
                               ProtocolListnfABITy);
+  cast<llvm::OpaqueType>(ProtocolListTyHolder.get())->refineAbstractTypeTo(
+                                                      ProtocolListnfABITy);
   
   // struct _objc_protocol_list*
   ProtocolListnfABIPtrTy = llvm::PointerType::getUnqual(ProtocolListnfABITy);
-  
-  // FIXME! Is this doing the right thing?
-  cast<llvm::OpaqueType>(ProtocolListTyHolder.get())->refineAbstractTypeTo(
-                                                      ProtocolListnfABIPtrTy);
   
   // struct _ivar_t {
   //   unsigned long int *offset;  // pointer to ivar offset location
@@ -3605,7 +3609,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   std::string ClassName = ID->getNameAsString();
   if (!ObjCEmptyCacheVar) {
     ObjCEmptyCacheVar = new llvm::GlobalVariable(
-                                            ObjCTypes.CachePtrTy,
+                                            ObjCTypes.CacheTy,
                                             false,
                                             llvm::GlobalValue::ExternalLinkage,
                                             0,
@@ -3614,8 +3618,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     UsedGlobals.push_back(ObjCEmptyCacheVar);
     
     ObjCEmptyVtableVar = new llvm::GlobalVariable(
-                            llvm::PointerType::getUnqual(
-                                                  ObjCTypes.ImpnfABITy),
+                            ObjCTypes.ImpnfABITy,
                             false,
                             llvm::GlobalValue::ExternalLinkage,
                             0,
@@ -4228,16 +4231,15 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   
   // Use this protocol meta-data to build protocol list table in section
   // __DATA, __objc_protolist
-  llvm::Type *ptype = llvm::PointerType::getUnqual(ObjCTypes.ProtocolnfABITy);
   llvm::GlobalVariable *PTGV = new llvm::GlobalVariable(
-                                      ptype, false,
+                                      ObjCTypes.ProtocolnfABIPtrTy, false,
                                       llvm::GlobalValue::WeakLinkage,
                                       Entry, 
                                       std::string("\01l_OBJC_LABEL_PROTOCOL_$_")
                                                   +ProtocolName,
                                       &CGM.getModule());
   PTGV->setAlignment(
-    CGM.getTargetData().getPrefTypeAlignment(ptype));
+    CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.ProtocolnfABIPtrTy));
   PTGV->setSection("__DATA, __objc_protolist");
   PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   UsedGlobals.push_back(PTGV);
@@ -4258,24 +4260,27 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
                             ObjCProtocolDecl::protocol_iterator end) {
   std::vector<llvm::Constant*> ProtocolRefs;
   
-  for (; begin != end; ++begin)
-    ProtocolRefs.push_back(GetProtocolRef(*begin));  // Implemented???
-  
   // Just return null for empty protocol lists
-  if (ProtocolRefs.empty()) 
+  if (begin == end) 
     return llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
   
+  // FIXME: We shouldn't need to do this lookup here, should we?
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name, true);
   if (GV)
-    return GV;
+    return llvm::ConstantExpr::getBitCast(GV, 
+                                          ObjCTypes.ProtocolListnfABIPtrTy);
+  
+  for (; begin != end; ++begin)
+    ProtocolRefs.push_back(GetProtocolRef(*begin));  // Implemented???
+
   // This list is null terminated.
   ProtocolRefs.push_back(llvm::Constant::getNullValue(
-                                            ObjCTypes.ProtocolListnfABIPtrTy));
+                                            ObjCTypes.ProtocolnfABIPtrTy));
   
   std::vector<llvm::Constant*> Values(2);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, ProtocolRefs.size() - 1);
   Values[1] = 
-    llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.ProtocolListnfABIPtrTy, 
+    llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.ProtocolnfABIPtrTy,
                                                   ProtocolRefs.size()), 
                                                   ProtocolRefs);
   
@@ -4289,7 +4294,8 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
   GV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
   UsedGlobals.push_back(GV);
-  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListnfABIPtrTy);
+  return llvm::ConstantExpr::getBitCast(GV, 
+                                        ObjCTypes.ProtocolListnfABIPtrTy);
 }
 
 /// GetMethodDescriptionConstant - This routine build following meta-data:
