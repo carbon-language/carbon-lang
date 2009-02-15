@@ -3472,7 +3472,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
                                         : ObjCIvarDecl::None;
 
   // Construct the decl.
-  ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, Loc, II, T, ac,                                             
+  ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, Loc, II, T, ac,
                                              (Expr *)BitfieldWidth);
   
   if (II) {
