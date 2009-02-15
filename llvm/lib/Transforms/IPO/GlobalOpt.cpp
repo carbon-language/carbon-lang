@@ -2405,26 +2405,16 @@ bool GlobalOpt::ResolveAliases(Module &M) {
     if (J->hasInternalLinkage())
       continue;
 
-    // Be conservative and do not perform the transform if multiple aliases
-    // potentially target the aliasee.  TODO: Make this more aggressive.
+    // Do not perform the transform if multiple aliases potentially target the
+    // aliasee.  This check also ensures that it is safe to replace the section
+    // and other attributes of the aliasee with those of the alias.
     if (!hasOneUse)
       continue;
 
-    // Do not perform the transform if it would change the visibility.
-    if (J->getVisibility() != Target->getVisibility())
-      continue;
-
-    // Do not perform the transform if it would change the section.
-    if (J->hasSection() != Target->hasSection() ||
-        (J->hasSection() && J->getSection() != Target->getSection()))
-      continue;
-
-    // Give the aliasee the name and linkage of the alias.
+    // Give the aliasee the name, linkage and other attributes of the alias.
     Target->takeName(J);
     Target->setLinkage(J->getLinkage());
-
-    // The alignment is the only remaining attribute that may not match.
-    Target->setAlignment(std::max(J->getAlignment(), Target->getAlignment()));
+    Target->GlobalValue::copyAttributesFrom(J);
 
     // Delete the alias.
     M.getAliasList().erase(J);
