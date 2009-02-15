@@ -474,28 +474,32 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
       continue;
     }
     
-    // Ignore tokens whose instantiation location was not the main file.
-    SourceLocation LLoc = SM.getInstantiationLoc(Tok.getLocation());
-    std::pair<FileID, unsigned> LLocInfo = SM.getDecomposedLoc(LLoc);
+    // Okay, we have the first token of a macro expansion: highlight the
+    // instantiation by inserting a start tag before the macro instantiation and
+    // end tag after it.
+    std::pair<SourceLocation, SourceLocation> LLoc =
+      SM.getInstantiationRange(Tok.getLocation());
     
-    if (LLocInfo.first != FID) {
+    // Ignore tokens whose instantiation location was not the main file.
+    if (SM.getFileID(LLoc.first) != FID) {
       PP.Lex(Tok);
       continue;
     }
-    
-    // Okay, we have the first token of a macro expansion: highlight the
-    // instantiation.
-  
-    // Get the size of current macro call itself.
-    // FIXME: This should highlight the args of a function-like
-    // macro, using a heuristic.
-    unsigned TokLen = Lexer::MeasureTokenLength(LLoc, SM);
-    
-    unsigned TokOffs = LLocInfo.second;
+
+    unsigned StartOffs = SM.getFileOffset(LLoc.first);
+
     // Highlight the macro invocation itself.
-    RB.InsertTextAfter(TokOffs, "<span class='macro'>",
+    RB.InsertTextAfter(StartOffs, "<span class='macro'>",
                        strlen("<span class='macro'>"));
-    RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
+
+    assert(SM.getFileID(LLoc.second) == FID &&
+           "Start and end of expansion must be in the same ultimate file!");
+    unsigned EndOffs = SM.getFileOffset(LLoc.second);
+    
+    // Get the size of current macro call itself.
+    unsigned TokLen = Lexer::MeasureTokenLength(LLoc.second, SM);
+    RB.InsertTextBefore(EndOffs+TokLen, "</span>", strlen("</span>"));
+    
     
     std::string Expansion = PP.getSpelling(Tok);
     unsigned LineLen = Expansion.size();
@@ -508,7 +512,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     // instantiation.  It would be really nice to pop up a window with all the
     // spelling of the tokens or something.
     while (!Tok.is(tok::eof) &&
-           SM.getInstantiationLoc(Tok.getLocation()) == LLoc) {
+           SM.getInstantiationLoc(Tok.getLocation()) == LLoc.first) {
       // Insert a newline if the macro expansion is getting large.
       if (LineLen > 60) {
         Expansion += "<br>";
@@ -533,7 +537,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     
     // Insert the information about the expansion inside the macro span.
     Expansion = "<span class='expansion'>" + Expansion + "</span>";
-    RB.InsertTextBefore(TokOffs+TokLen, Expansion.c_str(), Expansion.size());
+    RB.InsertTextBefore(EndOffs+TokLen, Expansion.c_str(), Expansion.size());
   }
 }
 
