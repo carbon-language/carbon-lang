@@ -658,7 +658,10 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   if (remove_contents) {
     // Recursively descend the directory to remove its contents.
     std::string cmd = "/bin/rm -rf " + path;
-    system(cmd.c_str());
+    if (system(cmd.c_str()) != 0) {
+      MakeErrMsg(ErrStr, path + ": failed to recursively remove directory.");
+      return true;
+    }
     return false;
   }
 
