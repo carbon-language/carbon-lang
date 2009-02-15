@@ -437,9 +437,11 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
 
   Start = SE->getAddExpr(Start, AddRec->getOperand(0));
   
+#ifndef NDEBUG
   if (!isa<SCEVConstant>(AddRec->getOperand(1)))
     DOUT << "[" << L->getHeader()->getName()
          << "] Variable stride: " << *AddRec << "\n";
+#endif
 
   Stride = AddRec->getOperand(1);
   return true;
