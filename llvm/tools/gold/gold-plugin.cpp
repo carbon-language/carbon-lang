@@ -290,8 +290,6 @@ ld_plugin_status all_symbols_read_hook(void) {
          E = Modules.end(); I != E; ++I) {
       (*get_symbols)(I->handle, I->syms.size(), &I->syms[0]);
       for (unsigned i = 0, e = I->syms.size(); i != e; i++) {
-        (*message)(LDPL_WARNING, "def: %d visibility: %d resolution %d",
-                   I->syms[i].def, I->syms[i].visibility, I->syms[i].resolution);
         if (I->syms[i].resolution == LDPR_PREVAILING_DEF ||
             (I->syms[i].def == LDPK_COMMON &&
              I->syms[i].resolution == LDPR_RESOLVED_IR)) {
