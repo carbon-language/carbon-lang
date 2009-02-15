@@ -519,14 +519,20 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   MCE->emitByte(RI->getDwarfRegNum(RI->getRARegister(), true));
   
   if (Personality) {
-    MCE->emitULEB128Bytes(7);
+    // Augmentation Size: 3 small ULEBs of one byte each, and the personality
+    // function which size is PointerSize.
+    MCE->emitULEB128Bytes(3 + PointerSize); 
     
-    // Direct encoding, because we use the function pointer. Not relative,
-    // because the current PC value may be bigger than the personality
-    // function pointer.
-    MCE->emitByte(dwarf::DW_EH_PE_sdata4);
-     
-    MCE->emitInt32(((intptr_t)Jit.getPointerToGlobal(Personality)));
+    // We set the encoding of the personality as direct encoding because we use
+    // the function pointer. The encoding is not relative because the current
+    // PC value may be bigger than the personality function pointer.
+    if (PointerSize == 4) {
+      MCE->emitByte(dwarf::DW_EH_PE_sdata4); 
+      MCE->emitInt32(((intptr_t)Jit.getPointerToGlobal(Personality)));
+    } else {
+      MCE->emitByte(dwarf::DW_EH_PE_sdata8);
+      MCE->emitInt64(((intptr_t)Jit.getPointerToGlobal(Personality)));
+    }
     
     MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
     MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
