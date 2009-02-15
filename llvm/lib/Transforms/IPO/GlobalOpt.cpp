@@ -50,6 +50,8 @@ STATISTIC(NumShrunkToBool  , "Number of global vars shrunk to booleans");
 STATISTIC(NumFastCallFns   , "Number of functions converted to fastcc");
 STATISTIC(NumCtorsEvaluated, "Number of static ctors evaluated");
 STATISTIC(NumNestRemoved   , "Number of nest attributes removed");
+STATISTIC(NumAliasesResolved, "Number of global aliases resolved");
+STATISTIC(NumAliasesRemoved, "Number of global aliases eliminated");
 
 namespace {
   struct VISIBILITY_HIDDEN GlobalOpt : public ModulePass {
@@ -2373,15 +2375,61 @@ bool GlobalOpt::ResolveAliases(Module &M) {
   bool Changed = false;
 
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
-       I != E; ++I) {
-    if (I->use_empty())
+       I != E;) {
+    Module::alias_iterator J = I++;
+    // If the aliasee may change at link time, nothing can be done - bail out.
+    if (J->mayBeOverridden())
       continue;
 
-    if (const GlobalValue *GV = I->resolveAliasedGlobal())
-      if (GV != I) {
-        I->replaceAllUsesWith(const_cast<GlobalValue*>(GV));
-        Changed = true;
-      }
+    Constant *Aliasee = J->getAliasee();
+    GlobalValue *Target = cast<GlobalValue>(Aliasee->stripPointerCasts());
+    bool hasOneUse = Target->hasOneUse() && Aliasee->hasOneUse();
+
+    // Make all users of the alias use the aliasee instead.
+    if (!J->use_empty()) {
+      J->replaceAllUsesWith(Aliasee);
+      ++NumAliasesResolved;
+      Changed = true;
+    }
+
+    // If the aliasee has internal linkage, give it the name and linkage
+    // of the alias, and delete the alias.  This turns:
+    //   define internal ... @f(...)
+    //   @a = alias ... @f
+    // into:
+    //   define ... @a(...)
+    if (!Target->hasInternalLinkage())
+      continue;
+
+    // The transform is only useful if the alias does not have internal linkage.
+    if (J->hasInternalLinkage())
+      continue;
+
+    // Be conservative and do not perform the transform if multiple aliases
+    // potentially target the aliasee.  TODO: Make this more aggressive.
+    if (!hasOneUse)
+      continue;
+
+    // Do not perform the transform if it would change the visibility.
+    if (J->getVisibility() != Target->getVisibility())
+      continue;
+
+    // Do not perform the transform if it would change the section.
+    if (J->hasSection() != Target->hasSection() ||
+        (J->hasSection() && J->getSection() != Target->getSection()))
+      continue;
+
+    // Give the aliasee the name and linkage of the alias.
+    Target->takeName(J);
+    Target->setLinkage(J->getLinkage());
+
+    // The alignment is the only remaining attribute that may not match.
+    Target->setAlignment(std::max(J->getAlignment(), Target->getAlignment()));
+
+    // Delete the alias.
+    M.getAliasList().erase(J);
+    ++NumAliasesRemoved;
+    Changed = true;
   }
 
   return Changed;
