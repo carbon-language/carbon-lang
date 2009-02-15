@@ -52,8 +52,8 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
     if (!TSRecords[i].Suppressed &&
         (!Freestanding || 
-         (BuiltinInfo[i].Attributes && 
-          !strchr(BuiltinInfo[i].Attributes, 'f'))))
+         (TSRecords[i].Attributes && 
+          !strchr(TSRecords[i].Attributes, 'f'))))
       Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
 }
 
