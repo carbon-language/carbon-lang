@@ -752,10 +752,16 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                   false, false, SS));
   ValueDecl *VD = cast<ValueDecl>(D);
 
-  // check if referencing an identifier with __attribute__((deprecated)).
-  if (VD->getAttr<DeprecatedAttr>())
-    ExprError(Diag(Loc, diag::warn_deprecated) << VD->getDeclName());
-
+  // Check if referencing an identifier with __attribute__((deprecated)).
+  if (VD->getAttr<DeprecatedAttr>()) {
+    // If this reference happens *in* a deprecated function or method, don't
+    // warn.  Implementing deprecated stuff requires referencing depreated
+    // stuff.
+    NamedDecl *ND = getCurFunctionOrMethodDecl();
+    if (ND == 0 || !ND->getAttr<DeprecatedAttr>())
+      Diag(Loc, diag::warn_deprecated) << VD->getDeclName();
+  }
+  
   if (VarDecl *Var = dyn_cast<VarDecl>(VD)) {
     if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
       Scope *CheckS = S;

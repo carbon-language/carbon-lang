@@ -29,6 +29,6 @@ int old_fn();
 int (*fn_ptr)() = old_fn; // expected-warning {{'old_fn' is deprecated}}
 
 int old_fn() {
-  return old_fn()+1;  // expected-warning {{'old_fn' is deprecated}}
+  return old_fn()+1;  // no warning, deprecated functions can use deprecated symbols.
 }
 
