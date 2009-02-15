@@ -1346,14 +1346,31 @@ unsigned TargetLowering::ComputeNumSignBitsForTargetNode(SDValue Op,
   return 1;
 }
 
+/// ValueHasExactlyOneBitSet - Test if the given value is known to have exactly
+/// one bit set. This differs from ComputeMaskedBits in that it doesn't need to
+/// determine which bit is set.
+///
 static bool ValueHasExactlyOneBitSet(SDValue Val, const SelectionDAG &DAG) {
-  // Logical shift right or left won't ever introduce new set bits.
-  // We check for this case because we don't care which bits are
-  // set, but ComputeMaskedBits won't know anything unless it can
-  // determine which specific bits may be set.
-  if (Val.getOpcode() == ISD::SHL || Val.getOpcode() == ISD::SRL)
-    return ValueHasExactlyOneBitSet(Val.getOperand(0), DAG);
+  // A left-shift of a constant one will have exactly one bit set, because
+  // shifting the bit off the end is undefined.
+  if (Val.getOpcode() == ISD::SHL)
+    if (ConstantSDNode *C =
+         dyn_cast<ConstantSDNode>(Val.getNode()->getOperand(0)))
+      if (C->getAPIntValue() == 1)
+        return true;
 
+  // Similarly, a right-shift of a constant sign-bit will have exactly
+  // one bit set.
+  if (Val.getOpcode() == ISD::SRL)
+    if (ConstantSDNode *C =
+         dyn_cast<ConstantSDNode>(Val.getNode()->getOperand(0)))
+      if (C->getAPIntValue().isSignBit())
+        return true;
+
+  // More could be done here, though the above checks are enough
+  // to handle some common cases.
+
+  // Fall back to ComputeMaskedBits to catch other known cases.
   MVT OpVT = Val.getValueType();
   unsigned BitWidth = OpVT.getSizeInBits();
   APInt Mask = APInt::getAllOnesValue(BitWidth);
