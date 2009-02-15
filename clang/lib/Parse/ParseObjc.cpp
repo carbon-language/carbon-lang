@@ -239,7 +239,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       allMethods.push_back(methodPrototype);
       // Consume the ';' here, since ParseObjCMethodPrototype() is re-used for
       // method definitions.
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_method_proto);
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_method_proto,
+                       "", tok::semi);
       continue;
     }
     
