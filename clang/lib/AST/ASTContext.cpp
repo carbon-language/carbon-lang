@@ -377,7 +377,7 @@ ASTContext::getTypeInfo(const Type *T) {
     // FIXME: This isn't precisely correct; the width/alignment should depend
     // on the available types for the target
     Width = cast<FixedWidthIntType>(T)->getWidth();
-    Width = std::max(llvm::NextPowerOf2(Width - 1), 8ULL);
+    Width = std::max(llvm::NextPowerOf2(Width - 1), (uint64_t)8);
     Align = Width;
     break;
   case Type::ASQual:
