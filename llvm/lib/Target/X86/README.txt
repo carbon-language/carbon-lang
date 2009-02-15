@@ -233,94 +233,9 @@ Optimize copysign(x, *y) to use an integer load from y.
 
 //===---------------------------------------------------------------------===//
 
-%X = weak global int 0
-
-void %foo(int %N) {
-	%N = cast int %N to uint
-	%tmp.24 = setgt int %N, 0
-	br bool %tmp.24, label %no_exit, label %return
-
-no_exit:
-	%indvar = phi uint [ 0, %entry ], [ %indvar.next, %no_exit ]
-	%i.0.0 = cast uint %indvar to int
-	volatile store int %i.0.0, int* %X
-	%indvar.next = add uint %indvar, 1
-	%exitcond = seteq uint %indvar.next, %N
-	br bool %exitcond, label %return, label %no_exit
-
-return:
-	ret void
-}
-
-compiles into:
-
-	.text
-	.align	4
-	.globl	_foo
-_foo:
-	movl 4(%esp), %eax
-	cmpl $1, %eax
-	jl LBB_foo_4	# return
-LBB_foo_1:	# no_exit.preheader
-	xorl %ecx, %ecx
-LBB_foo_2:	# no_exit
-	movl L_X$non_lazy_ptr, %edx
-	movl %ecx, (%edx)
-	incl %ecx
-	cmpl %eax, %ecx
-	jne LBB_foo_2	# no_exit
-LBB_foo_3:	# return.loopexit
-LBB_foo_4:	# return
-	ret
-
-We should hoist "movl L_X$non_lazy_ptr, %edx" out of the loop after
-remateralization is implemented. This can be accomplished with 1) a target
-dependent LICM pass or 2) makeing SelectDAG represent the whole function. 
-
-//===---------------------------------------------------------------------===//
-
 The following tests perform worse with LSR:
 
 lambda, siod, optimizer-eval, ackermann, hash2, nestedloop, strcat, and Treesor.
-
-//===---------------------------------------------------------------------===//
-
-We are generating far worse code than gcc:
-
-volatile short X, Y;
-
-void foo(int N) {
-  int i;
-  for (i = 0; i < N; i++) { X = i; Y = i*4; }
-}
-
-LBB1_1:	# entry.bb_crit_edge
-	xorl	%ecx, %ecx
-	xorw	%dx, %dx
-LBB1_2:	# bb
-	movl	L_X$non_lazy_ptr, %esi
-	movw	%cx, (%esi)
-	movl	L_Y$non_lazy_ptr, %esi
-	movw	%dx, (%esi)
-	addw	$4, %dx
-	incl	%ecx
-	cmpl	%eax, %ecx
-	jne	LBB1_2	# bb
-
-vs.
-
-	xorl	%edx, %edx
-	movl	L_X$non_lazy_ptr-"L00000000001$pb"(%ebx), %esi
-	movl	L_Y$non_lazy_ptr-"L00000000001$pb"(%ebx), %ecx
-L4:
-	movw	%dx, (%esi)
-	leal	0(,%edx,4), %eax
-	movw	%ax, (%ecx)
-	addl	$1, %edx
-	cmpl	%edx, %edi
-	jne	L4
-
-This is due to the lack of post regalloc LICM.
 
 //===---------------------------------------------------------------------===//
 
