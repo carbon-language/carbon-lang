@@ -894,7 +894,7 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
 
 <div class="doc_code">
 <pre>
-declare i32 @printf(i8* noalias , ...)
+declare i32 @printf(i8* noalias nocapture, ...)
 declare i32 @atoi(i8 zeroext)
 declare signext i8 @returns_signed_char()
 </pre>
