@@ -471,9 +471,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     // can matter for a function-like macro that expands to contain __LINE__.
     // Skip down through instantiation points until we find a file loc for the
     // end of the instantiation history.
-    while (!Loc.isFileID())
-      Loc = SourceMgr.getImmediateInstantiationRange(Loc).second;
-    
+    Loc = SourceMgr.getInstantiationRange(Loc).second;
     PresumedLoc PLoc = SourceMgr.getPresumedLoc(Loc);
     
     // __LINE__ expands to a simple numeric value.  Add a space after it so that

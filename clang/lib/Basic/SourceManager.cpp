@@ -606,6 +606,24 @@ SourceManager::getImmediateInstantiationRange(SourceLocation Loc) const {
   return II.getInstantiationLocRange();
 }
 
+/// getInstantiationRange - Given a SourceLocation object, return the
+/// range of tokens covered by the instantiation in the ultimate file.
+std::pair<SourceLocation,SourceLocation>
+SourceManager::getInstantiationRange(SourceLocation Loc) const {
+  if (Loc.isFileID()) return std::make_pair(Loc, Loc);
+  
+  std::pair<SourceLocation,SourceLocation> Res =
+    getImmediateInstantiationRange(Loc);
+  
+  // Fully resolve the start and end locations to their ultimate instantiation
+  // points.
+  while (!Res.first.isFileID())
+    Res.first = getImmediateInstantiationRange(Res.first).first;
+  while (!Res.second.isFileID())
+    Res.second = getImmediateInstantiationRange(Res.second).second;
+  return Res;
+}
+
 
 
 //===----------------------------------------------------------------------===//

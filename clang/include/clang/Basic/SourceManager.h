@@ -425,8 +425,8 @@ public:
     return SourceLocation::getFileLoc(FileOffset);
   }
   
-  /// Given a SourceLocation object, return the instantiation location
-  /// referenced by the ID.
+  /// getInstantiationLoc - Given a SourceLocation object, return the
+  /// instantiation location referenced by the ID.
   SourceLocation getInstantiationLoc(SourceLocation Loc) const {
     // Handle the non-mapped case inline, defer to out of line code to handle
     // instantiations.
@@ -438,6 +438,12 @@ public:
   /// location.  Return the start/end of the instantiation information.
   std::pair<SourceLocation,SourceLocation>
   getImmediateInstantiationRange(SourceLocation Loc) const;
+  
+  /// getInstantiationRange - Given a SourceLocation object, return the
+  /// range of tokens covered by the instantiation in the ultimate file.
+  std::pair<SourceLocation,SourceLocation>
+  getInstantiationRange(SourceLocation Loc) const;
+  
   
   /// getSpellingLoc - Given a SourceLocation object, return the spelling
   /// location referenced by the ID.  This is the place where the characters
