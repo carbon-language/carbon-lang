@@ -464,7 +464,17 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     // C99 6.10.8: "__LINE__: The presumed line number (within the current
     // source file) of the current source line (an integer constant)".  This can
     // be affected by #line.
-    PresumedLoc PLoc = SourceMgr.getPresumedLoc(Tok.getLocation());
+    SourceLocation Loc = Tok.getLocation();
+    
+    // One wrinkle here is that GCC expands __LINE__ to location of the *end* of
+    // a macro instantiation.  This doesn't matter for object-like macros, but
+    // can matter for a function-like macro that expands to contain __LINE__.
+    // Skip down through instantiation points until we find a file loc for the
+    // end of the instantiation history.
+    while (!Loc.isFileID())
+      Loc = SourceMgr.getImmediateInstantiationRange(Loc).second;
+    
+    PresumedLoc PLoc = SourceMgr.getPresumedLoc(Loc);
     
     // __LINE__ expands to a simple numeric value.  Add a space after it so that
     // it will tokenize as a number (and not run into stuff after it in the temp
