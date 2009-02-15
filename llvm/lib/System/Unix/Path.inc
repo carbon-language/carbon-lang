@@ -1,10 +1,10 @@
 //===- llvm/System/Unix/Path.cpp - Unix Path Implementation -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Unix specific portion of the Path class.
@@ -87,10 +87,10 @@ Path::operator=(const std::string &that) {
   return *this;
 }
 
-bool 
+bool
 Path::isValid() const {
   // Check some obvious things
-  if (path.empty()) 
+  if (path.empty())
     return false;
   else if (path.length() >= MAXPATHLEN)
     return false;
@@ -98,17 +98,17 @@ Path::isValid() const {
   // Check that the characters are ascii chars
   size_t len = path.length();
   unsigned i = 0;
-  while (i < len && isascii(path[i])) 
+  while (i < len && isascii(path[i]))
     ++i;
-  return i >= len; 
+  return i >= len;
 }
 
-bool 
+bool
 Path::isAbsolute() const {
   if (path.empty())
     return false;
   return path[0] == '/';
-} 
+}
 Path
 Path::GetRootDirectory() {
   Path result;
@@ -119,12 +119,12 @@ Path::GetRootDirectory() {
 Path
 Path::GetTemporaryDirectory(std::string* ErrMsg ) {
 #if defined(HAVE_MKDTEMP)
-  // The best way is with mkdtemp but that's not available on many systems, 
+  // The best way is with mkdtemp but that's not available on many systems,
   // Linux and FreeBSD have it. Others probably won't.
   char pathname[MAXPATHLEN];
   strcpy(pathname,"/tmp/llvm_XXXXXX");
   if (0 == mkdtemp(pathname)) {
-    MakeErrMsg(ErrMsg, 
+    MakeErrMsg(ErrMsg,
       std::string(pathname) + ": can't create temporary directory");
     return Path();
   }
@@ -137,19 +137,19 @@ Path::GetTemporaryDirectory(std::string* ErrMsg ) {
   // which is then removed and created as a directory. We prefer this over
   // mktemp because of mktemp's inherent security and threading risks. We still
   // have a slight race condition from the time the temporary file is created to
-  // the time it is re-created as a directoy. 
+  // the time it is re-created as a directoy.
   char pathname[MAXPATHLEN];
   strcpy(pathname, "/tmp/llvm_XXXXXX");
   int fd = 0;
   if (-1 == (fd = mkstemp(pathname))) {
-    MakeErrMsg(ErrMsg, 
+    MakeErrMsg(ErrMsg,
       std::string(pathname) + ": can't create temporary directory");
     return Path();
   }
   ::close(fd);
   ::unlink(pathname); // start race condition, ignore errors
   if (-1 == ::mkdir(pathname, S_IRWXU)) { // end race condition
-    MakeErrMsg(ErrMsg, 
+    MakeErrMsg(ErrMsg,
       std::string(pathname) + ": can't create temporary directory");
     return Path();
   }
@@ -167,12 +167,12 @@ Path::GetTemporaryDirectory(std::string* ErrMsg ) {
   strcpy(pathname, "/tmp/llvm_XXXXXX");
   char *TmpName = ::mktemp(pathname);
   if (TmpName == 0) {
-    MakeErrMsg(ErrMsg, 
+    MakeErrMsg(ErrMsg,
       std::string(TmpName) + ": can't create unique directory name");
     return Path();
   }
   if (-1 == ::mkdir(TmpName, S_IRWXU)) {
-    MakeErrMsg(ErrMsg, 
+    MakeErrMsg(ErrMsg,
         std::string(TmpName) + ": can't create temporary directory");
     return Path();
   }
@@ -184,7 +184,7 @@ Path::GetTemporaryDirectory(std::string* ErrMsg ) {
   // This is the worst case implementation. tempnam(3) leaks memory unless its
   // on an SVID2 (or later) system. On BSD 4.3 it leaks. tmpnam(3) has thread
   // issues. The mktemp(3) function doesn't have enough variability in the
-  // temporary name generated. So, we provide our own implementation that 
+  // temporary name generated. So, we provide our own implementation that
   // increments an integer from a random number seeded by the current time. This
   // should be sufficiently unique that we don't have many collisions between
   // processes. Generally LLVM processes don't run very long and don't use very
@@ -196,7 +196,7 @@ Path::GetTemporaryDirectory(std::string* ErrMsg ) {
     sprintf(pathname, "/tmp/llvm_%010u", unsigned(num));
   } while ( 0 == access(pathname, F_OK ) );
   if (-1 == ::mkdir(pathname, S_IRWXU)) {
-    MakeErrMsg(ErrMsg, 
+    MakeErrMsg(ErrMsg,
       std::string(pathname) + ": can't create temporary directory");
     return Path();
   }
@@ -207,7 +207,7 @@ Path::GetTemporaryDirectory(std::string* ErrMsg ) {
 #endif
 }
 
-void 
+void
 Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
 #ifdef LTDL_SHLIBPATH_VAR
   char* env_var = getenv(LTDL_SHLIBPATH_VAR);
@@ -239,7 +239,7 @@ Path::GetBitcodeLibraryPaths(std::vector<sys::Path>& Paths) {
   GetSystemLibraryPaths(Paths);
 }
 
-Path 
+Path
 Path::GetLLVMDefaultConfigDir() {
   return Path("/etc/llvm/");
 }
@@ -262,7 +262,7 @@ Path::GetCurrentDirectory() {
     assert (false && "Could not query current working directory.");
     return Path("");
   }
-  
+
   return Path(pathname);
 }
 
@@ -374,7 +374,7 @@ Path::canExecute() const {
   return true;
 }
 
-std::string 
+std::string
 Path::getLast() const {
   // Find the last slash
   size_t pos = path.rfind('/');
@@ -427,7 +427,7 @@ static bool AddPermissionBits(const Path &File, int bits) {
 
   // Get the file's current mode.
   struct stat buf;
-  if (0 != stat(File.toString().c_str(), &buf)) 
+  if (0 != stat(File.toString().c_str(), &buf))
     return false;
   // Change the file to have whichever permissions bits from 'bits'
   // that the umask would not disable.
@@ -437,7 +437,7 @@ static bool AddPermissionBits(const Path &File, int bits) {
 }
 
 bool Path::makeReadableOnDisk(std::string* ErrMsg) {
-  if (!AddPermissionBits(*this, 0444)) 
+  if (!AddPermissionBits(*this, 0444))
     return MakeErrMsg(ErrMsg, path + ": can't make file readable");
   return false;
 }
@@ -473,13 +473,13 @@ Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
       if (0 != lstat(aPath.path.c_str(), &st)) {
         if (S_ISLNK(st.st_mode))
           continue; // dangling symlink -- ignore
-        return MakeErrMsg(ErrMsg, 
+        return MakeErrMsg(ErrMsg,
                           aPath.path +  ": can't determine file object type");
       }
       result.insert(aPath);
     }
   }
-  
+
   closedir(direntries);
   return false;
 }
@@ -558,30 +558,30 @@ Path::eraseSuffix() {
 }
 
 static bool createDirectoryHelper(char* beg, char* end, bool create_parents) {
-  
+
   if (access(beg, F_OK | R_OK | W_OK) == 0)
     return false;
-    
+
   if (create_parents) {
-    
+
     char* c = end;
-        
+
     for (; c != beg; --c)
       if (*c == '/') {
-        
+
         // Recurse to handling the parent directory.
-        *c = '\0';          
+        *c = '\0';
         bool x = createDirectoryHelper(beg, c, create_parents);
         *c = '/';
-        
+
         // Return if we encountered an error.
         if (x)
           return true;
-          
+
         break;
       }
-  }      
-  
+  }
+
   return mkdir(beg, S_IRWXU | S_IRWXG) != 0;
 }
 
@@ -593,16 +593,16 @@ Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
 
   // Null-terminate the last component
   size_t lastchar = path.length() - 1 ;
-  
+
   if (pathname[lastchar] != '/')
     ++lastchar;
-    
+
   pathname[lastchar] = 0;
-    
+
   if (createDirectoryHelper(pathname, pathname+lastchar, create_parents))
-    return MakeErrMsg(ErrMsg, 
+    return MakeErrMsg(ErrMsg,
                       std::string(pathname) + ": can't create directory");
-  
+
   return false;
 }
 
@@ -624,7 +624,7 @@ Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
 
   // create the file
   int fd = ::open(path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
-  if (fd < 0) 
+  if (fd < 0)
     return MakeErrMsg(ErrMsg, path + ": can't create temporary file");
   ::close(fd);
   return false;
@@ -639,17 +639,17 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
     return true;
   }
 
-  // Note: this check catches strange situations. In all cases, LLVM should 
-  // only be involved in the creation and deletion of regular files.  This 
-  // check ensures that what we're trying to erase is a regular file. It 
-  // effectively prevents LLVM from erasing things like /dev/null, any block 
-  // special file, or other things that aren't "regular" files. 
+  // Note: this check catches strange situations. In all cases, LLVM should
+  // only be involved in the creation and deletion of regular files.  This
+  // check ensures that what we're trying to erase is a regular file. It
+  // effectively prevents LLVM from erasing things like /dev/null, any block
+  // special file, or other things that aren't "regular" files.
   if (S_ISREG(buf.st_mode)) {
     if (unlink(path.c_str()) != 0)
       return MakeErrMsg(ErrStr, path + ": can't destroy file");
     return false;
   }
-  
+
   if (!S_ISDIR(buf.st_mode)) {
     if (ErrStr) *ErrStr = "not a file or directory";
     return true;
@@ -666,13 +666,13 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   char pathname[MAXPATHLEN];
   path.copy(pathname, MAXPATHLEN);
   size_t lastchar = path.length() - 1;
-  if (pathname[lastchar] == '/') 
+  if (pathname[lastchar] == '/')
     pathname[lastchar] = 0;
   else
     pathname[lastchar+1] = 0;
-    
+
   if (rmdir(pathname) != 0)
-    return MakeErrMsg(ErrStr, 
+    return MakeErrMsg(ErrStr,
       std::string(pathname) + ": can't erase directory");
   return false;
 }
@@ -680,12 +680,12 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
 bool
 Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
   if (0 != ::rename(path.c_str(), newName.c_str()))
-    return MakeErrMsg(ErrMsg, std::string("can't rename '") + path + "' as '" + 
+    return MakeErrMsg(ErrMsg, std::string("can't rename '") + path + "' as '" +
                newName.toString() + "' ");
   return false;
 }
 
-bool 
+bool
 Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
   struct utimbuf utb;
   utb.actime = si.modTime.toPosixTime();
@@ -697,13 +697,13 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
   return false;
 }
 
-bool 
+bool
 sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
   int inFile = -1;
   int outFile = -1;
   inFile = ::open(Src.c_str(), O_RDONLY);
   if (inFile == -1)
-    return MakeErrMsg(ErrMsg, Src.toString() + 
+    return MakeErrMsg(ErrMsg, Src.toString() +
       ": can't open source file to copy");
 
   outFile = ::open(Dest.c_str(), O_WRONLY|O_CREAT, 0666);
@@ -729,7 +729,7 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
           if (errno != EINTR && errno != EAGAIN) {
             ::close(inFile);
             ::close(outFile);
-            return MakeErrMsg(ErrMsg, Dest.toString() + 
+            return MakeErrMsg(ErrMsg, Dest.toString() +
               ": can't write destination file: ");
           }
         } else {
@@ -744,12 +744,12 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
   return false;
 }
 
-bool 
+bool
 Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   if (reuse_current && !exists())
     return false; // File doesn't exist already, just use it!
 
-  // Append an XXXXXX pattern to the end of the file for use with mkstemp, 
+  // Append an XXXXXX pattern to the end of the file for use with mkstemp,
   // mktemp or our own implementation.
   char *FNBuffer = (char*) alloca(path.size()+8);
     path.copy(FNBuffer,path.size());
@@ -785,7 +785,7 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
     path = FNBuffer;
   }
   if (FCounter > 999999)
-    return MakeErrMsg(ErrMsg, 
+    return MakeErrMsg(ErrMsg,
       path + ": can't make unique filename: too many files");
 #endif
   return false;
