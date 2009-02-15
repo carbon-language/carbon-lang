@@ -275,7 +275,7 @@ public:
   //
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc, 
                               Scope *S, const CXXScopeSpec *SS);
-  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
+  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup){
     return ActOnDeclarator(S, D, LastInGroup, false);
   }
   DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
@@ -1046,6 +1046,15 @@ public:
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
+  /// DiagnoseUseOfDeprecatedDecl - If the specified decl is deprecated or
+  // unavailable, emit the corresponding diagnostics. 
+  inline void DiagnoseUseOfDeprecatedDecl(NamedDecl *D, SourceLocation Loc) {
+    if (D->hasAttrs())
+      DiagnoseUseOfDeprecatedDeclImpl(D, Loc);
+  }
+  void DiagnoseUseOfDeprecatedDeclImpl(NamedDecl *D, SourceLocation Loc);
+
+  
   // Primary Expressions.
   virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                                IdentifierInfo &II,
@@ -1217,6 +1226,8 @@ public:
   /// literal was successfully completed.  ^(int x){...}
   virtual ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *Body,
                                         Scope *CurScope);
+
+  //===---------------------------- C++ Features --------------------------===//
 
   // Act on C++ namespaces
   virtual DeclTy *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,

@@ -268,12 +268,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (!Method)
     Method = ClassDecl->lookupInstanceMethod(Sel);
 
-  if (Method) {
-    if (Method->getAttr<DeprecatedAttr>())
-      Diag(receiverLoc, diag::warn_deprecated) << Method->getDeclName();
-    if (Method->getAttr<UnavailableAttr>())
-      Diag(receiverLoc, diag::warn_unavailable) << Method->getDeclName();
-  }
+  if (Method)
+    DiagnoseUseOfDeprecatedDecl(Method, receiverLoc);
   
   if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, true, 
                                 lbrac, rbrac, returnType))
@@ -320,12 +316,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
           Method = SuperDecl->lookupInstanceMethod(Sel);
     }
 
-    if (Method) {
-      if (Method->getAttr<DeprecatedAttr>())
-        Diag(receiverLoc, diag::warn_deprecated) << Method->getDeclName();
-      if (Method->getAttr<UnavailableAttr>())
-        Diag(receiverLoc, diag::warn_unavailable) << Method->getDeclName();
-    }
+    if (Method)
+      DiagnoseUseOfDeprecatedDecl(Method, receiverLoc);
 
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
@@ -358,12 +350,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
               ObjCImplementations[ClassDecl->getIdentifier()])
           Method = ImpDecl->getClassMethod(Sel);
       
-      if (Method) {
-        if (Method->getAttr<DeprecatedAttr>())
-          Diag(receiverLoc, diag::warn_deprecated) << Method->getDeclName();
-        if (Method->getAttr<UnavailableAttr>())
-          Diag(receiverLoc, diag::warn_unavailable) << Method->getDeclName();
-      }
+      if (Method)
+        DiagnoseUseOfDeprecatedDecl(Method, receiverLoc);
     }
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
@@ -415,12 +403,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       Diag(lbrac, diag::warn_method_not_found_in_protocol)
         << Sel << SourceRange(lbrac, rbrac);
     
-    if (Method) {
-      if (Method->getAttr<DeprecatedAttr>())
-        Diag(receiverLoc, diag::warn_deprecated) << Method->getDeclName();
-      if (Method->getAttr<UnavailableAttr>())
-        Diag(receiverLoc, diag::warn_unavailable) << Method->getDeclName();
-    }    
+    if (Method)
+      DiagnoseUseOfDeprecatedDecl(Method, receiverLoc);
   } else {
     Diag(lbrac, diag::error_bad_receiver_type)
       << RExpr->getType() << RExpr->getSourceRange();

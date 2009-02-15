@@ -177,6 +177,7 @@ public:
   void setAccess(AccessSpecifier AS) { Access = AS; }
   AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
 
+  bool hasAttrs() const { return HasAttrs; }
   void addAttr(Attr *attr);
   const Attr *getAttrs() const;
   void swapAttrs(Decl *D);

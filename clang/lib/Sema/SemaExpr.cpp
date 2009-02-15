@@ -26,6 +26,25 @@
 #include "clang/Parse/Scope.h"
 using namespace clang;
 
+
+/// DiagnoseUseOfDeprecatedDeclImpl - If the specified decl is deprecated or
+// unavailable, emit the corresponding diagnostics. 
+void Sema::DiagnoseUseOfDeprecatedDeclImpl(NamedDecl *D, SourceLocation Loc) {
+  // See if the decl is deprecated.
+  if (D->getAttr<DeprecatedAttr>()) {
+    // If this reference happens *in* a deprecated function or method, don't
+    // warn.  Implementing deprecated stuff requires referencing depreated
+    // stuff.
+    NamedDecl *ND = getCurFunctionOrMethodDecl();
+    if (ND == 0 || !ND->getAttr<DeprecatedAttr>())
+      Diag(Loc, diag::warn_deprecated) << D->getDeclName();
+  }
+
+  // See if hte decl is unavailable.
+  if (D->getAttr<UnavailableAttr>())
+    Diag(Loc, diag::warn_unavailable) << D->getDeclName();
+}
+
 //===----------------------------------------------------------------------===//
 //  Standard Promotions and Conversions
 //===----------------------------------------------------------------------===//
@@ -89,9 +108,7 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
 
 // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
 // will warn if the resulting type is not a POD type.
-void Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT)
-
-{
+void Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
   DefaultArgumentPromotion(Expr);
   
   if (!Expr->getType()->isPODType()) {
@@ -145,10 +162,14 @@ QualType Sema::UsualArithmeticConversionsType(QualType lhs, QualType rhs) {
   // lhs == rhs check. Also, for conversion purposes, we ignore any
   // qualifiers.  For example, "const float" and "float" are
   // equivalent.
-  if (lhs->isPromotableIntegerType()) lhs = Context.IntTy;
-  else                                lhs = lhs.getUnqualifiedType();
-  if (rhs->isPromotableIntegerType()) rhs = Context.IntTy;
-  else                                rhs = rhs.getUnqualifiedType();
+  if (lhs->isPromotableIntegerType())
+    lhs = Context.IntTy;
+  else
+    lhs = lhs.getUnqualifiedType();
+  if (rhs->isPromotableIntegerType())
+    rhs = Context.IntTy;
+  else
+    rhs = rhs.getUnqualifiedType();
 
   // If both types are identical, no conversion is needed.
   if (lhs == rhs)
@@ -223,14 +244,10 @@ QualType Sema::UsualArithmeticConversionsType(QualType lhs, QualType rhs) {
     // We have two real floating types, float/complex combos were handled above.
     // Convert the smaller operand to the bigger result.
     int result = Context.getFloatingTypeOrder(lhs, rhs);
-    
-    if (result > 0) { // convert the rhs
+    if (result > 0) // convert the rhs
       return lhs;
-    }
-    if (result < 0) { // convert the lhs
-      return rhs;
-    }
-    assert(0 && "Sema::UsualArithmeticConversionsType(): illegal float comparison");
+    assert(result < 0 && "illegal float comparison");
+    return rhs;   // convert the lhs
   }
   if (lhs->isComplexIntegerType() || rhs->isComplexIntegerType()) {
     // Handle GCC complex int extension.
@@ -239,10 +256,8 @@ QualType Sema::UsualArithmeticConversionsType(QualType lhs, QualType rhs) {
 
     if (lhsComplexInt && rhsComplexInt) {
       if (Context.getIntegerTypeOrder(lhsComplexInt->getElementType(), 
-                                      rhsComplexInt->getElementType()) >= 0) {
-        // convert the rhs
-        return lhs;
-      }
+                                      rhsComplexInt->getElementType()) >= 0)
+        return lhs; // convert the rhs
       return rhs;
     } else if (lhsComplexInt && rhs->isIntegerType()) {
       // convert the rhs to the lhs complex type.
@@ -753,14 +768,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   ValueDecl *VD = cast<ValueDecl>(D);
 
   // Check if referencing an identifier with __attribute__((deprecated)).
-  if (VD->getAttr<DeprecatedAttr>()) {
-    // If this reference happens *in* a deprecated function or method, don't
-    // warn.  Implementing deprecated stuff requires referencing depreated
-    // stuff.
-    NamedDecl *ND = getCurFunctionOrMethodDecl();
-    if (ND == 0 || !ND->getAttr<DeprecatedAttr>())
-      Diag(Loc, diag::warn_deprecated) << VD->getDeclName();
-  }
+  DiagnoseUseOfDeprecatedDecl(VD, Loc);
   
   if (VarDecl *Var = dyn_cast<VarDecl>(VD)) {
     if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
@@ -1509,6 +1517,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   }
   return VT; // should never get here (a typedef type should always be found).
 }
+
 
 /// constructSetterName - Return the setter name for the given
 /// identifier, i.e. "set" + Name where the initial character of Name

@@ -28,7 +28,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <functional>
-
 using namespace clang;
 
 /// \brief If the identifier refers to a type name within this scope,
@@ -78,8 +77,8 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
     if (MD->isOutOfLineDefinition())
       return MD->getLexicalDeclContext();
 
-    // A C++ inline method is parsed *after* the topmost class it was declared in
-    // is fully parsed (it's "complete").
+    // A C++ inline method is parsed *after* the topmost class it was declared
+    // in is fully parsed (it's "complete").
     // The parsing of a C++ inline method happens at the declaration context of
     // the topmost (non-nested) class it is lexically declared in.
     assert(isa<CXXRecordDecl>(MD->getParent()) && "C++ method not in Record.");
