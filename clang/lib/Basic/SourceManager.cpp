@@ -352,7 +352,7 @@ void SourceManager::clearIDTables() {
   
   // Use up FileID #0 as an invalid instantiation.
   NextOffset = 0;
-  createInstantiationLoc(SourceLocation(), SourceLocation(), 1);
+  createInstantiationLoc(SourceLocation(),SourceLocation(),SourceLocation(), 1);
 }
 
 /// getOrCreateContentCache - Create or return a cached ContentCache for the
@@ -418,11 +418,11 @@ FileID SourceManager::createFileID(const ContentCache *File,
 /// that a token from SpellingLoc should actually be referenced from
 /// InstantiationLoc.
 SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
-                                                     SourceLocation InstantLoc,
+                                                     SourceLocation ILocStart,
+                                                     SourceLocation ILocEnd,
                                                      unsigned TokLength) {
-  SLocEntryTable.push_back(SLocEntry::get(NextOffset, 
-                                          InstantiationInfo::get(InstantLoc,
-                                                                 SpellingLoc)));
+  InstantiationInfo II = InstantiationInfo::get(ILocStart,ILocEnd, SpellingLoc);
+  SLocEntryTable.push_back(SLocEntry::get(NextOffset, II));
   assert(NextOffset+TokLength+1 > NextOffset && "Ran out of source locations!");
   NextOffset += TokLength+1;
   return SourceLocation::getMacroLoc(NextOffset-(TokLength+1));
@@ -543,7 +543,8 @@ SourceLocation SourceManager::
 getInstantiationLocSlowCase(SourceLocation Loc) const {
   do {
     std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
-    Loc =getSLocEntry(LocInfo.first).getInstantiation().getInstantiationLoc();
+    Loc = getSLocEntry(LocInfo.first).getInstantiation()
+                   .getInstantiationLocStart();
     Loc = Loc.getFileLocWithOffset(LocInfo.second);
   } while (!Loc.isFileID());
 
@@ -568,7 +569,7 @@ SourceManager::getDecomposedInstantiationLocSlowCase(const SrcMgr::SLocEntry *E,
   FileID FID;
   SourceLocation Loc;
   do {
-    Loc = E->getInstantiation().getInstantiationLoc();
+    Loc = E->getInstantiation().getInstantiationLocStart();
     
     FID = getFileID(Loc);
     E = &getSLocEntry(FID);
@@ -595,6 +596,16 @@ SourceManager::getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
   
   return std::make_pair(FID, Offset);
 }
+
+/// getImmediateInstantiationRange - Loc is required to be an instantiation
+/// location.  Return the start/end of the instantiation information.
+std::pair<SourceLocation,SourceLocation>
+SourceManager::getImmediateInstantiationRange(SourceLocation Loc) const {
+  assert(Loc.isMacroID() && "Not an instantiation loc!");
+  const InstantiationInfo &II = getSLocEntry(getFileID(Loc)).getInstantiation();
+  return II.getInstantiationLocRange();
+}
+
 
 
 //===----------------------------------------------------------------------===//

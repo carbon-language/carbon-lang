@@ -151,7 +151,8 @@ Lexer::Lexer(FileID FID, const SourceManager &SM, const LangOptions &features)
 /// out of the critical path of the lexer!
 ///
 Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc, 
-                                 SourceLocation InstantiationLoc,
+                                 SourceLocation InstantiationLocStart,
+                                 SourceLocation InstantiationLocEnd,
                                  unsigned TokLen, Preprocessor &PP) {
   SourceManager &SM = PP.getSourceManager();
 
@@ -170,7 +171,8 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
   // Set the SourceLocation with the remapping information.  This ensures that
   // GetMappedTokenLoc will remap the tokens as they are lexed.
   L->FileLoc = SM.createInstantiationLoc(SM.getLocForStartOfFile(SpellingFID),
-                                         InstantiationLoc, TokLen);
+                                         InstantiationLocStart,
+                                         InstantiationLocEnd, TokLen);
   
   // Ensure that the lexer thinks it is inside a directive, so that end \n will
   // return an EOM token.
@@ -315,16 +317,24 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
 static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
                                         SourceLocation FileLoc,
                                         unsigned CharNo, unsigned TokLen) {
+  assert(FileLoc.isMacroID() && "Must be an instantiation");
+  
   // Otherwise, we're lexing "mapped tokens".  This is used for things like
   // _Pragma handling.  Combine the instantiation location of FileLoc with the
   // spelling location.
-  SourceManager &SourceMgr = PP.getSourceManager();
+  SourceManager &SM = PP.getSourceManager();
   
   // Create a new SLoc which is expanded from Instantiation(FileLoc) but whose
   // characters come from spelling(FileLoc)+Offset.
-  SourceLocation SpellingLoc = SourceMgr.getSpellingLoc(FileLoc);
+  SourceLocation SpellingLoc = SM.getSpellingLoc(FileLoc);
   SpellingLoc = SpellingLoc.getFileLocWithOffset(CharNo);
-  return SourceMgr.createInstantiationLoc(SpellingLoc, FileLoc, TokLen);
+  
+  // Figure out the expansion loc range, which is the range covered by the
+  // original _Pragma(...) sequence.
+  std::pair<SourceLocation,SourceLocation> II =
+    SM.getImmediateInstantiationRange(FileLoc);
+  
+  return SM.createInstantiationLoc(SpellingLoc, II.first, II.second, TokLen);
 }
 
 /// getSourceLocation - Return a source location identifier for the specified

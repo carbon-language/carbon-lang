@@ -23,7 +23,7 @@ using namespace clang;
 
 /// Create a TokenLexer for the specified macro with the specified actual
 /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
-void TokenLexer::Init(Token &Tok, MacroArgs *Actuals) {
+void TokenLexer::Init(Token &Tok, SourceLocation ILEnd, MacroArgs *Actuals) {
   // If the client is reusing a TokenLexer, make sure to free any memory
   // associated with it.
   destroy();
@@ -32,7 +32,8 @@ void TokenLexer::Init(Token &Tok, MacroArgs *Actuals) {
   ActualArgs = Actuals;
   CurToken = 0;
   
-  InstantiateLoc = Tok.getLocation();
+  InstantiateLocStart = Tok.getLocation();
+  InstantiateLocEnd = ILEnd;
   AtStartOfLine = Tok.isAtStartOfLine();
   HasLeadingSpace = Tok.hasLeadingSpace();
   Tokens = &*Macro->tokens_begin();
@@ -68,7 +69,7 @@ void TokenLexer::Init(const Token *TokArray, unsigned NumToks,
   DisableMacroExpansion = disableMacroExpansion;
   NumTokens = NumToks;
   CurToken = 0;
-  InstantiateLoc = SourceLocation();
+  InstantiateLocStart = InstantiateLocEnd = SourceLocation();
   AtStartOfLine = false;
   HasLeadingSpace = false;
       
@@ -313,11 +314,12 @@ void TokenLexer::Lex(Token &Tok) {
   // diagnostics for the expanded token should appear as if they came from
   // InstantiationLoc.  Pull this information together into a new SourceLocation
   // that captures all of this.
-  if (InstantiateLoc.isValid()) {   // Don't do this for token streams.
-    SourceManager &SrcMgr = PP.getSourceManager();
-    Tok.setLocation(SrcMgr.createInstantiationLoc(Tok.getLocation(), 
-                                                  InstantiateLoc,
-                                                  Tok.getLength()));
+  if (InstantiateLocStart.isValid()) {   // Don't do this for token streams.
+    SourceManager &SM = PP.getSourceManager();
+    Tok.setLocation(SM.createInstantiationLoc(Tok.getLocation(), 
+                                              InstantiateLocStart,
+                                              InstantiateLocEnd,
+                                              Tok.getLength()));
   }
   
   // If this is the first token, set the lexical properties of the token to

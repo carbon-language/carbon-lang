@@ -177,23 +177,43 @@ namespace SrcMgr {
   /// location - where the token was ultimately instantiated, and the
   /// SpellingLoc - where the actual character data for the token came from.
   class InstantiationInfo {
-    unsigned InstantiationLoc, SpellingLoc; // Really these are SourceLocations.
+     // Really these are all SourceLocations.
+    
+    /// SpellingLoc - Where the spelling for the token can be found.
+    unsigned SpellingLoc;
+    
+    /// InstantiationLocStart/InstantiationLocEnd - In a macro expansion, these
+    /// indicate the start and end of the instantiation.  In object-line macros,
+    /// these will be the same.  In a function-like macro instantiation, the
+    /// start will be the identifier and the end will be the ')'.
+    unsigned InstantiationLocStart, InstantiationLocEnd;
   public:
-    SourceLocation getInstantiationLoc() const {
-      return SourceLocation::getFromRawEncoding(InstantiationLoc);
-    }
     SourceLocation getSpellingLoc() const {
       return SourceLocation::getFromRawEncoding(SpellingLoc);
     }
+    SourceLocation getInstantiationLocStart() const {
+      return SourceLocation::getFromRawEncoding(InstantiationLocStart);
+    }
+    SourceLocation getInstantiationLocEnd() const {
+      return SourceLocation::getFromRawEncoding(InstantiationLocEnd);
+    }
     
-    /// get - Return a InstantiationInfo for an expansion.  VL specifies
+    std::pair<SourceLocation,SourceLocation> getInstantiationLocRange() const {
+      return std::make_pair(getInstantiationLocStart(),
+                            getInstantiationLocEnd());
+    }
+    
+    /// get - Return a InstantiationInfo for an expansion.  IL specifies
     /// the instantiation location (where the macro is expanded), and SL
     /// specifies the spelling location (where the characters from the token
-    /// come from).  Both VL and PL refer to normal File SLocs.
-    static InstantiationInfo get(SourceLocation IL, SourceLocation SL) {
+    /// come from).  IL and PL can both refer to normal File SLocs or
+    /// instantiation locations.
+    static InstantiationInfo get(SourceLocation ILStart, SourceLocation ILEnd,
+                                 SourceLocation SL) {
       InstantiationInfo X;
-      X.InstantiationLoc = IL.getRawEncoding();
       X.SpellingLoc = SL.getRawEncoding();
+      X.InstantiationLocStart = ILStart.getRawEncoding();
+      X.InstantiationLocEnd = ILEnd.getRawEncoding();
       return X;
     }
   };
@@ -354,7 +374,8 @@ public:
   /// that a token at Loc should actually be referenced from InstantiationLoc.
   /// TokLength is the length of the token being instantiated.
   SourceLocation createInstantiationLoc(SourceLocation Loc,
-                                        SourceLocation InstantiationLoc,
+                                        SourceLocation InstantiationLocStart,
+                                        SourceLocation InstantiationLocEnd,
                                         unsigned TokLength);
   
   //===--------------------------------------------------------------------===//
@@ -412,6 +433,11 @@ public:
     if (Loc.isFileID()) return Loc;
     return getInstantiationLocSlowCase(Loc);
   }
+  
+  /// getImmediateInstantiationRange - Loc is required to be an instantiation
+  /// location.  Return the start/end of the instantiation information.
+  std::pair<SourceLocation,SourceLocation>
+  getImmediateInstantiationRange(SourceLocation Loc) const;
   
   /// getSpellingLoc - Given a SourceLocation object, return the spelling
   /// location referenced by the ID.  This is the place where the characters

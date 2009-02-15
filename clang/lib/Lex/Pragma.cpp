@@ -117,7 +117,6 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   
   // Remember the string.
   std::string StrVal = getSpelling(Tok);
-  SourceLocation StrLoc = Tok.getLocation();
 
   // Read the ')'.
   Lex(Tok);
@@ -125,6 +124,8 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
     Diag(PragmaLoc, diag::err__Pragma_malformed);
     return;
   }
+  
+  SourceLocation RParenLoc = Tok.getLocation();
   
   // The _Pragma is lexically sound.  Destringize according to C99 6.10.9.1:
   // "The string literal is destringized by deleting the L prefix, if present,
@@ -163,7 +164,7 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
 
   // Make and enter a lexer object so that we lex and expand the tokens just
   // like any others.
-  Lexer *TL = Lexer::Create_PragmaLexer(TokLoc, StrLoc,
+  Lexer *TL = Lexer::Create_PragmaLexer(TokLoc, PragmaLoc, RParenLoc,
                                         // do not include the null in the count.
                                         StrVal.size()-1, *this);
 

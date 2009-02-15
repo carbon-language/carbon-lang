@@ -165,6 +165,10 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   /// invocation.
   MacroArgs *Args = 0;
   
+  // Remember where the end of the instantiation occurred.  For an object-like
+  // macro, this is the identifier.  For a function-like macro, this is the ')'.
+  SourceLocation InstantiationEnd = Identifier.getLocation();
+  
   // If this is a function-like macro, read the arguments.
   if (MI->isFunctionLike()) {
     // C99 6.10.3p10: If the preprocessing token immediately after the the macro
@@ -177,7 +181,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // Preprocessor directives used inside macro arguments are not portable, and
     // this enables the warning.
     InMacroArgs = true;
-    Args = ReadFunctionLikeMacroArgs(Identifier, MI);
+    Args = ReadFunctionLikeMacroArgs(Identifier, MI, InstantiationEnd);
     
     // Finished parsing args.
     InMacroArgs = false;
@@ -248,7 +252,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // locations.
     SourceLocation Loc =
       SourceMgr.createInstantiationLoc(Identifier.getLocation(), InstantiateLoc,
-                                       Identifier.getLength());
+                                       InstantiationEnd,Identifier.getLength());
     Identifier.setLocation(Loc);
     
     // If this is #define X X, we must mark the result as unexpandible.
@@ -263,7 +267,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   }
   
   // Start expanding the macro.
-  EnterMacro(Identifier, Args);
+  EnterMacro(Identifier, InstantiationEnd, Args);
   
   // Now that the macro is at the top of the include stack, ask the
   // preprocessor to read the next token from it.
@@ -275,7 +279,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
 /// invoked to read all of the actual arguments specified for the macro
 /// invocation.  This returns null on error.
 MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
-                                                   MacroInfo *MI) {
+                                                   MacroInfo *MI,
+                                                   SourceLocation &MacroEnd) {
   // The number of fixed arguments to parse.
   unsigned NumFixedArgsLeft = MI->getNumArgs();
   bool isVariadic = MI->isVariadic();
@@ -308,8 +313,10 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
         return 0;
       } else if (Tok.is(tok::r_paren)) {
         // If we found the ) token, the macro arg list is done.
-        if (NumParens-- == 0)
+        if (NumParens-- == 0) {
+          MacroEnd = Tok.getLocation();
           break;
+        }
       } else if (Tok.is(tok::l_paren)) {
         ++NumParens;
       } else if (Tok.is(tok::comma) && NumParens == 0) {
@@ -357,7 +364,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     ArgTokens.push_back(EOFTok);
     ++NumActuals;
     --NumFixedArgsLeft;
-  };
+  }
   
   // Okay, we either found the r_paren.  Check to see if we parsed too few
   // arguments.
@@ -494,6 +501,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     Tok.setKind(tok::string_literal);
     Tok.setLength(strlen("\"Mmm dd yyyy\""));
     Tok.setLocation(SourceMgr.createInstantiationLoc(DATELoc, Tok.getLocation(),
+                                                     Tok.getLocation(),
                                                      Tok.getLength()));
   } else if (II == Ident__TIME__) {
     if (!TIMELoc.isValid())
@@ -501,6 +509,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     Tok.setKind(tok::string_literal);
     Tok.setLength(strlen("\"hh:mm:ss\""));
     Tok.setLocation(SourceMgr.createInstantiationLoc(TIMELoc, Tok.getLocation(),
+                                                     Tok.getLocation(),
                                                      Tok.getLength()));
   } else if (II == Ident__INCLUDE_LEVEL__) {
     Diag(Tok, diag::ext_pp_include_level);

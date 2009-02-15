@@ -298,7 +298,10 @@ public:
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
   /// tokens from it instead of the current buffer.  Args specifies the
   /// tokens input to a function-like macro.
-  void EnterMacro(Token &Identifier, MacroArgs *Args);
+  ///
+  /// ILEnd specifies the location of the ')' for a function-like macro or the
+  /// identifier for an object-like macro.
+  void EnterMacro(Token &Identifier, SourceLocation ILEnd, MacroArgs *Args);
   
   /// EnterTokenStream - Add a "macro" context to the top of the include stack,
   /// which will cause the lexer to start returning the specified tokens.
@@ -637,7 +640,8 @@ private:
   /// ReadFunctionLikeMacroArgs - After reading "MACRO(", this method is
   /// invoked to read all of the formal arguments specified for the macro
   /// invocation.  This returns null on error.
-  MacroArgs *ReadFunctionLikeMacroArgs(Token &MacroName, MacroInfo *MI);
+  MacroArgs *ReadFunctionLikeMacroArgs(Token &MacroName, MacroInfo *MI,
+                                       SourceLocation &InstantiationEnd);
 
   /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
   /// as a builtin macro, handle it and return the next token as 'Tok'.
