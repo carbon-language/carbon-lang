@@ -3485,10 +3485,10 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
       }
     }
   // Check for Apple extension for accessing vector components.
-  } else if (isa<ArraySubscriptExpr>(op) &&
-           cast<ArraySubscriptExpr>(op)->getBase()->getType()->isVectorType()) {
+  } else if (isa<ExtVectorElementExpr>(op) || (isa<ArraySubscriptExpr>(op) &&
+           cast<ArraySubscriptExpr>(op)->getBase()->getType()->isVectorType())){
     Diag(OpLoc, diag::err_typecheck_address_of)
-      << "vector" << op->getSourceRange();
+      << "vector element" << op->getSourceRange();
     return QualType();
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared 

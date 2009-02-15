@@ -28,9 +28,14 @@ void foo() {
 void testVectorComponentAccess() {
   typedef float v4sf __attribute__ ((vector_size (16)));
   static v4sf q;
-  float* r = &q[0]; // expected-error {{address of vector requested}}
+  float* r = &q[0]; // expected-error {{address of vector element requested}}
 }
 
+typedef __attribute__(( ext_vector_type(4) ))  float float4;
+
+float *testExtVectorComponentAccess(float4 x) { 
+  return &x.w; // expected-error {{address of vector element requested}}
+}
 
 void f0() {
   register int *x0;
