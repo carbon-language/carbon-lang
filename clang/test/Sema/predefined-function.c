@@ -11,7 +11,7 @@ int foo();
 int foo()
 {
     int eli(int (int)); // expected-error {{conflicting types for 'eli'}}
-    eli(b);
+    eli(b); // expected-error{{incompatible type passing}}
 	return 0;	
 }
 
@@ -25,13 +25,11 @@ int bar() // expected-error {{redefinition of 'bar'}}
 	return 0;
 }
 
-#if 0
 int foobar(int); // note {{previous declaration is here}}
 int foobar() // error {{conflicting types for 'foobar'}}
 {
 	return 0;
 }
-#endif
 
 int wibble(); // expected-note {{previous declaration is here}}
 float wibble() // expected-error {{conflicting types for 'wibble'}}

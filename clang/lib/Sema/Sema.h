@@ -282,14 +282,16 @@ public:
                           bool IsFunctionDefinition);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                     QualType R, Decl* LastDeclarator,
-                                    Decl* PrevDecl, bool& InvalidDecl);
+                                    Decl* PrevDecl, bool& InvalidDecl,
+                                    bool &Redeclaration);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                      QualType R, Decl* LastDeclarator,
-                                      Decl* PrevDecl, bool& InvalidDecl);
+                                     QualType R, Decl* LastDeclarator,
+                                     Decl* PrevDecl, bool& InvalidDecl,
+                                     bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, Decl *LastDeclarator,
                                      Decl* PrevDecl, bool IsFunctionDefinition,
-                                     bool& InvalidDecl);
+                                     bool& InvalidDecl, bool &Redeclaration);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
                                          SourceLocation EqualLoc,
@@ -395,11 +397,10 @@ public:
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 Decl *LastDecl);
-  TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
-  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old, 
-                                  bool &Redeclaration);
-  VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
-  FunctionDecl *MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
+  bool MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
+  bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
+  bool MergeVarDecl(VarDecl *New, Decl *Old);
+  bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
   void CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD);
 
   /// C++ Overloading.

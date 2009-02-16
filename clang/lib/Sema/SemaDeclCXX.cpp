@@ -201,9 +201,11 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
 
 // MergeCXXFunctionDecl - Merge two declarations of the same C++
 // function, once we already know that they have the same
-// type. Subroutine of MergeFunctionDecl.
-FunctionDecl * 
-Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
+// type. Subroutine of MergeFunctionDecl. Returns true if there was an
+// error, false otherwise.
+bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
+  bool Invalid = false;
+
   // C++ [dcl.fct.default]p4:
   //
   //   For non-template functions, default arguments can be added in
@@ -226,13 +228,14 @@ Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
            diag::err_param_default_argument_redefinition)
         << NewParam->getDefaultArg()->getSourceRange();
       Diag(OldParam->getLocation(), diag::note_previous_definition);
+      Invalid = true;
     } else if (OldParam->getDefaultArg()) {
       // Merge the old default argument into the new parameter
       NewParam->setDefaultArg(OldParam->getDefaultArg());
     }
   }
 
-  return New;  
+  return Invalid;
 }
 
 /// CheckCXXDefaultArguments - Verify that the default arguments for a

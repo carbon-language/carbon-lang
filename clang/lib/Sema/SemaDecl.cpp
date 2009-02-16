@@ -364,11 +364,13 @@ NamespaceDecl *Sema::GetStdNamespace() {
   return StdNamespace;
 }
 
-/// MergeTypeDefDecl - We just parsed a typedef 'New' which has the same name
-/// and scope as a previous declaration 'Old'.  Figure out how to resolve this
-/// situation, merging decls or emitting diagnostics as appropriate.
+/// MergeTypeDefDecl - We just parsed a typedef 'New' which has the
+/// same name and scope as a previous declaration 'Old'.  Figure out
+/// how to resolve this situation, merging decls or emitting
+/// diagnostics as appropriate. Returns true if there was an error,
+/// false otherwise.
 ///
-TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
+bool Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   bool objc_types = false;
   // Allow multiple definitions for ObjC built-in typedefs.
   // FIXME: Verify the underlying types are equivalent!
@@ -387,19 +389,19 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
         break;
       Context.setObjCClassType(New);
       objc_types = true;
-      return New;
+      return false;
     case 3:
       if (!TypeID->isStr("SEL"))
         break;
       Context.setObjCSelType(New);
       objc_types = true;
-      return New;
+      return false;
     case 8:
       if (!TypeID->isStr("Protocol"))
         break;
       Context.setObjCProtoType(New->getUnderlyingType());
       objc_types = true;
-      return New;
+      return false;
     }
     // Fall through - the typedef name was not a builtin type.
   }
@@ -410,7 +412,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
       << New->getDeclName();
     if (!objc_types)
       Diag(OldD->getLocation(), diag::note_previous_definition);
-    return New;
+    return true;
   }
 
   // Determine the "old" type we'll use for checking and diagnostics.  
@@ -430,17 +432,17 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
       << New->getUnderlyingType() << OldType;
     if (!objc_types)
       Diag(Old->getLocation(), diag::note_previous_definition);
-    return New;
+    return true;
   }
-  if (objc_types) return New;
-  if (getLangOptions().Microsoft) return New;
+  if (objc_types) return false;
+  if (getLangOptions().Microsoft) return false;
 
   // C++ [dcl.typedef]p2:
   //   In a given non-class scope, a typedef specifier can be used to
   //   redefine the name of any type declared in that scope to refer
   //   to the type to which it already refers.
   if (getLangOptions().CPlusPlus && !isa<CXXRecordDecl>(CurContext))
-    return New;
+    return false;
 
   // In C, redeclaration of a type is a constraint violation (6.7.2.3p1).
   // Apparently GCC, Intel, and Sun all silently ignore the redeclaration if
@@ -450,14 +452,14 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   if (PP.getDiagnostics().getSuppressSystemWarnings()) {
     SourceManager &SrcMgr = Context.getSourceManager();
     if (SrcMgr.isInSystemHeader(Old->getLocation()))
-      return New;
+      return false;
     if (SrcMgr.isInSystemHeader(New->getLocation()))
-      return New;
+      return false;
   }
 
   Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
   Diag(Old->getLocation(), diag::note_previous_definition);
-  return New;
+  return true;
 }
 
 /// DeclhasAttr - returns true if decl Declaration already has the target
@@ -494,25 +496,24 @@ static void MergeAttributes(Decl *New, Decl *Old) {
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
 /// merging decls or emitting diagnostics as appropriate.
-/// Redeclaration will be set true if this New is a redeclaration OldD.
 ///
 /// In C++, New and Old must be declarations that are not
 /// overloaded. Use IsOverload to determine whether New and Old are
 /// overloaded, and to select the Old declaration that New should be
 /// merged with.
-FunctionDecl *
-Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
+///
+/// Returns true if there was an error, false otherwise.
+bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   assert(!isa<OverloadedFunctionDecl>(OldD) && 
          "Cannot merge with an overloaded function declaration");
 
-  Redeclaration = false;
   // Verify the old decl was also a function.
   FunctionDecl *Old = dyn_cast<FunctionDecl>(OldD);
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
       << New->getDeclName();
     Diag(OldD->getLocation(), diag::note_previous_definition);
-    return New;
+    return true;
   }
 
   // Determine whether the previous declaration was a definition,
@@ -520,12 +521,9 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   diag::kind PrevDiag;
   if (Old->isThisDeclarationADefinition())
     PrevDiag = diag::note_previous_definition;
-  else if (Old->isImplicit()) {
-    if (Old->getBuiltinID(Context))
-      PrevDiag = diag::note_previous_builtin_declaration;
-    else
-      PrevDiag = diag::note_previous_implicit_declaration;
-  } else 
+  else if (Old->isImplicit())
+    PrevDiag = diag::note_previous_implicit_declaration;
+  else 
     PrevDiag = diag::note_previous_declaration;
   
   QualType OldQType = Context.getCanonicalType(Old->getType());
@@ -543,8 +541,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
     if (OldReturnType != NewReturnType) {
       Diag(New->getLocation(), diag::err_ovl_diff_return_type);
       Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
-      Redeclaration = true;
-      return New;
+      return true;
     }
 
     const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
@@ -556,7 +553,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
       if (OldMethod->isStatic() || NewMethod->isStatic()) {
         Diag(New->getLocation(), diag::err_ovl_static_nonstatic_member);
         Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
-        return New;
+        return true;
       }
 
       // C++ [class.mem]p1:
@@ -586,7 +583,6 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
     if (OldQType == NewQType) {
       // We have a redeclaration.
       MergeAttributes(New, Old);
-      Redeclaration = true;
       return MergeCXXFunctionDecl(New, Old);
     } 
 
@@ -598,19 +594,30 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   if (!getLangOptions().CPlusPlus &&
       Context.typesAreCompatible(OldQType, NewQType)) {
     MergeAttributes(New, Old);
-    Redeclaration = true;
-    return New;
+    return false;
   }
 
   // A function that has already been declared has been redeclared or defined
   // with a different type- show appropriate diagnostic
+  if (unsigned BuiltinID = Old->getBuiltinID(Context)) {
+    // The user has declared a builtin function with an incompatible
+    // signature.
+    if (Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) {
+      // The function the user is redeclaring is a library-defined
+      // function like 'malloc' or 'printf'. Warn about the
+      // redeclaration, then ignore it.
+      Diag(New->getLocation(), diag::warn_redecl_library_builtin) << New;
+      Diag(Old->getLocation(), diag::note_previous_builtin_declaration)
+        << Old << Old->getType();
+      return false;
+    }
 
-  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
-  // TODO: This is totally simplistic.  It should handle merging functions
-  // together etc, merging extern int X; int X; ...
+    PrevDiag = diag::note_previous_builtin_declaration;
+  }
+
   Diag(New->getLocation(), diag::err_conflicting_types) << New->getDeclName();
   Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
-  return New;
+  return true;
 }
 
 /// Predicate for C "tentative" external object definitions (C99 6.9.2).
@@ -671,14 +678,14 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
 /// FinalizeDeclaratorGroup. Unfortunately, we can't analyze tentative 
 /// definitions here, since the initializer hasn't been attached.
 /// 
-VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
+bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   // Verify the old decl was also a variable.
   VarDecl *Old = dyn_cast<VarDecl>(OldD);
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
       << New->getDeclName();
     Diag(OldD->getLocation(), diag::note_previous_definition);
-    return New;
+    return true;
   }
 
   MergeAttributes(New, Old);
@@ -689,7 +696,7 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     Diag(New->getLocation(), diag::err_redefinition_different_type) 
       << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
-    return New;
+    return true;
   }
   New->setType(MergedT);
   // C99 6.2.2p4: Check if we have a static decl followed by a non-static.
@@ -698,21 +705,22 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
        Old->getStorageClass() == VarDecl::Extern)) {
     Diag(New->getLocation(), diag::err_static_non_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
-    return New;
+    return true;
   }
   // C99 6.2.2p4: Check if we have a non-static decl followed by a static.
   if (New->getStorageClass() != VarDecl::Static &&
       Old->getStorageClass() == VarDecl::Static) {
     Diag(New->getLocation(), diag::err_non_static_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
-    return New;
+    return true;
   }
   // Variables with external linkage are analyzed in FinalizeDeclaratorGroup.
   if (New->getStorageClass() != VarDecl::Extern && !New->isFileVarDecl()) {
     Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
+    return true;
   }
-  return New;
+  return false;
 }
 
 /// CheckParmsForFunctionDef - Check that the parameters of the given
@@ -1245,7 +1253,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   NamedDecl *PrevDecl;
   NamedDecl *New;
   bool InvalidDecl = false;
- 
+
   // See if this is a redefinition of a variable in the same scope.
   if (!D.getCXXScopeSpec().isSet() && !D.getCXXScopeSpec().isInvalid()) {
     DC = CurContext;
@@ -1315,15 +1323,17 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   QualType R = GetTypeForDeclarator(D, S);
   assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
 
+  bool Redeclaration = false;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
     New = ActOnTypedefDeclarator(S, D, DC, R, LastDeclarator, PrevDecl,
-                                 InvalidDecl);
+                                 InvalidDecl, Redeclaration);
   } else if (R.getTypePtr()->isFunctionType()) {
     New = ActOnFunctionDeclarator(S, D, DC, R, LastDeclarator, PrevDecl, 
-                                  IsFunctionDefinition, InvalidDecl);
+                                  IsFunctionDefinition, InvalidDecl,
+                                  Redeclaration);
   } else {
     New = ActOnVariableDeclarator(S, D, DC, R, LastDeclarator, PrevDecl, 
-                                  InvalidDecl);
+                                  InvalidDecl, Redeclaration);
   }
 
   if (New == 0)
@@ -1333,8 +1343,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   // lexical context will be different from the semantic context.
   New->setLexicalDeclContext(CurContext);
 
-  // If this has an identifier, add it to the scope stack.
-  if (Name)
+  // If this has an identifier and is not an invalid redeclaration,
+  // add it to the scope stack.
+  if (Name && !(Redeclaration && InvalidDecl))
     PushOnScopeChains(New, S);
   // If any semantic error occurred, mark the decl as invalid.
   if (D.getInvalidType() || InvalidDecl)
@@ -1346,7 +1357,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
 NamedDecl*
 Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                              QualType R, Decl* LastDeclarator,
-                             Decl* PrevDecl, bool& InvalidDecl) {
+                             Decl* PrevDecl, bool& InvalidDecl, 
+                             bool &Redeclaration) {
   // Typedef declarators cannot be qualified (C++ [dcl.meaning]p1).
   if (D.getCXXScopeSpec().isSet()) {
     Diag(D.getIdentifierLoc(), diag::err_qualified_typedef_declarator)
@@ -1368,8 +1380,9 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Merge the decl with the existing one if appropriate. If the decl is
   // in an outer scope, it isn't the same thing.
   if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
-    NewTD = MergeTypeDefDecl(NewTD, PrevDecl);
-    if (NewTD == 0) return 0;
+    Redeclaration = true;
+    if (MergeTypeDefDecl(NewTD, PrevDecl))
+      InvalidDecl = true;
   }
 
   if (S->getFnParent() == 0) {
@@ -1390,7 +1403,8 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 NamedDecl*
 Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, Decl* LastDeclarator,
-                              Decl* PrevDecl, bool& InvalidDecl) {
+                              Decl* PrevDecl, bool& InvalidDecl,
+                              bool &Redeclaration) {
   DeclarationName Name = GetNameForDeclarator(D);
 
   // Check that there are no default arguments (C++ only).
@@ -1483,8 +1497,9 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       return 0;
     }
 
-    NewVD = MergeVarDecl(NewVD, PrevDecl);
-    if (NewVD == 0) return 0;
+    Redeclaration = true;
+    if (MergeVarDecl(NewVD, PrevDecl))
+      InvalidDecl = true;
 
     if (D.getCXXScopeSpec().isSet()) {
       // No previous declaration in the qualifying scope.
@@ -1500,7 +1515,7 @@ NamedDecl*
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, Decl *LastDeclarator,
                               Decl* PrevDecl, bool IsFunctionDefinition,
-                              bool& InvalidDecl) {
+                              bool& InvalidDecl, bool &Redeclaration) {
   assert(R.getTypePtr()->isFunctionType());
 
   DeclarationName Name = GetNameForDeclarator(D);
@@ -1691,7 +1706,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Merge the decl with the existing one if appropriate. Since C functions
   // are in a flat namespace, make sure we consider decls in outer scopes.
   bool OverloadableAttrRequired = false;
-  bool Redeclaration = false;
   if (PrevDecl &&
       (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, DC, S))) {
     // Determine whether NewFD is an overload of PrevDecl or
@@ -1706,6 +1720,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     if (!AllowOverloadingOfFunction(PrevDecl, Context) || 
         !IsOverload(NewFD, PrevDecl, MatchedDecl)) {
+      Redeclaration = true;
       Decl *OldDecl = PrevDecl;
 
       // If PrevDecl was an overloaded function, extract the
@@ -1715,10 +1730,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       // NewFD and PrevDecl represent declarations that need to be
       // merged. 
-      NewFD = MergeFunctionDecl(NewFD, OldDecl, Redeclaration);
+      if (MergeFunctionDecl(NewFD, OldDecl))
+        InvalidDecl = true;
 
-      if (NewFD == 0) return 0;
-      if (Redeclaration) {
+      if (!InvalidDecl) {
         NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
 
         // An out-of-line member function declaration must also be a
@@ -2732,6 +2747,16 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   if (FD->getBody(Definition)) {
     Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
     Diag(Definition->getLocation(), diag::note_previous_definition);
+  }
+
+  // Builtin functions cannot be defined.
+  if (unsigned BuiltinID = FD->getBuiltinID(Context)) {
+    if (Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) {
+      Diag(FD->getLocation(), diag::err_builtin_lib_definition) << FD;
+      Diag(FD->getLocation(), diag::note_builtin_lib_def_freestanding);
+    } else 
+      Diag(FD->getLocation(), diag::err_builtin_definition) << FD;
+    FD->setInvalidDecl();
   }
 
   PushDeclContext(FnBodyScope, FD);
