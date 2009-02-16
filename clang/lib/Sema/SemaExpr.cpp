@@ -565,20 +565,6 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName,
                                          false, true, Loc);
 
-  if (getLangOptions().CPlusPlus && (!SS || !SS->isSet()) && 
-      HasTrailingLParen && Lookup.getKind() == LookupResult::NotFound) {
-    // We've seen something of the form
-    //
-    //   identifier(
-    //
-    // and we did not find any entity by the name
-    // "identifier". However, this identifier is still subject to
-    // argument-dependent lookup, so keep track of the name.
-    return Owned(new (Context) UnresolvedFunctionNameExpr(Name,
-                                                          Context.OverloadTy,
-                                                          Loc));
-  }
-
   NamedDecl *D = 0;
   if (Lookup.isAmbiguous()) {
     DiagnoseAmbiguousLookup(Lookup, Name, Loc,
@@ -621,6 +607,21 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       return Owned(new (Context) ObjCSuperExpr(Loc, T));
     }
   }
+
+  if (getLangOptions().CPlusPlus && (!SS || !SS->isSet()) && 
+      HasTrailingLParen && D == 0) {
+    // We've seen something of the form
+    //
+    //   identifier(
+    //
+    // and we did not find any entity by the name
+    // "identifier". However, this identifier is still subject to
+    // argument-dependent lookup, so keep track of the name.
+    return Owned(new (Context) UnresolvedFunctionNameExpr(Name,
+                                                          Context.OverloadTy,
+                                                          Loc));
+  }
+
   if (D == 0) {
     // Otherwise, this could be an implicitly declared function reference (legal
     // in C90, extension in C99).

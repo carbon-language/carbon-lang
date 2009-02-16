@@ -24,3 +24,23 @@ void foo4(id (^objectCreationBlock)(int)) {
 void foo5(id (^x)(int)) {
   if (x) { }
 }
+
+// <rdar://problem/6590445>
+@interface Foo {
+    @private
+    void (^_block)(void);
+}
+- (void)bar;
+@end
+
+namespace N {
+  class X { };      
+  void foo(X);
+}
+
+@implementation Foo
+- (void)bar {
+    _block();
+    foo(N::X()); // okay
+}
+@end
