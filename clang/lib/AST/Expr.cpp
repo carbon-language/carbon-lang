@@ -246,7 +246,7 @@ InitListExpr::InitListExpr(SourceLocation lbraceloc,
 
 void InitListExpr::resizeInits(ASTContext &Context, unsigned NumInits) {
   for (unsigned Idx = NumInits, LastIdx = InitExprs.size();
-       Idx != LastIdx; ++Idx)
+       Idx < LastIdx; ++Idx)
     delete InitExprs[Idx];
   InitExprs.resize(NumInits, 0);
 }
