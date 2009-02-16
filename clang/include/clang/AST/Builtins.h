@@ -33,7 +33,7 @@ enum ID {
 };
 
 struct Info {
-  const char *Name, *Type, *Attributes;
+  const char *Name, *Type, *Attributes, *HeaderName;
   bool Suppressed;
 
   bool operator==(const Info &RHS) const {
@@ -90,7 +90,9 @@ public:
 
   /// \brief If this is a library function that comes from a specific
   /// header, retrieve that header name.
-  std::string getHeaderName(unsigned ID) const;
+  const char *getHeaderName(unsigned ID) const {
+    return GetRecord(ID).HeaderName;
+  }
 
   /// \brief Determine whether this builtin is like printf in its
   /// formatting rules and, if so, set the index to the format string

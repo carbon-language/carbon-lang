@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+// FIXME: Layering violation
 #include "clang/AST/Builtins.h"
 #include "clang/AST/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
@@ -296,7 +297,8 @@ public:
 };
 
 const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, false },
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, false },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER, false },
 #include "clang/AST/PPCBuiltins.def"
 };
 
@@ -438,7 +440,8 @@ public:
 namespace {
 // Namespace for x86 abstract base class
 const Builtin::Info BuiltinInfo[] = {
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, false },
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, false },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER, false },
 #include "clang/AST/X86Builtins.def"
 };
 

@@ -315,7 +315,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     Diag(Loc, diag::ext_implicit_lib_function_decl)
       << Context.BuiltinInfo.GetName(BID)
       << R;
-    if (!Context.BuiltinInfo.getHeaderName(BID).empty() &&
+    if (Context.BuiltinInfo.getHeaderName(BID) &&
         Diags.getDiagnosticMapping(diag::ext_implicit_lib_function_decl)
           != diag::MAP_IGNORE)
       Diag(Loc, diag::note_please_include_header)

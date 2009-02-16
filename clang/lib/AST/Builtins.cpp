@@ -19,8 +19,9 @@
 using namespace clang;
 
 static const Builtin::Info BuiltinInfo[] = {
-  { "not a builtin function", 0, 0, false },
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, false },
+  { "not a builtin function", 0, 0, 0, false },
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, false },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER, false },
 #include "clang/AST/Builtins.def"
 };
 
@@ -55,21 +56,6 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
          (TSRecords[i].Attributes && 
           !strchr(TSRecords[i].Attributes, 'f'))))
       Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
-}
-
-std::string Builtin::Context::getHeaderName(unsigned ID) const {
-  const char *Name = strchr(GetRecord(ID).Attributes, 'f');
-  if (!Name)
-    return 0;
-  ++Name;
-
-  if (*Name != ':')
-    return 0;
-
-  ++Name;
-  const char *NameEnd = strchr(Name, ':');
-  assert(NameEnd && "Missing ':' after header name");
-  return std::string(Name, NameEnd);
 }
 
 bool 
