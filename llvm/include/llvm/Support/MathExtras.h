@@ -412,6 +412,18 @@ static inline uint64_t NextPowerOf2(uint64_t A) {
   A |= (A >> 32);
   return A + 1;
 }
+
+/// RoundUpToAlignment - Returns the next integer (mod 2**64) that is
+/// greater than or equal to \arg Value and is a multiple of \arg
+/// Align. Align must be non-zero.
+///
+/// Examples:
+/// RoundUpToAlignment(5, 8) = 8
+/// RoundUpToAlignment(17, 8) = 24
+/// RoundUpToAlignment(~0LL, 8) = 0
+inline uint64_t RoundUpToAlignment(uint64_t Value, uint64_t Align) {
+  return ((Value + Align - 1) / Align) * Align;
+}
   
 } // End llvm namespace
 
