@@ -726,30 +726,39 @@ public:
   virtual llvm::Function *GetPropertySetFunction(){ 
     return ObjCTypes.SetPropertyFn; 
   }
-  virtual llvm::Function *EnumerationMutationFunction()
-    { return ObjCTypes.EnumerationMutationFn; }
+  virtual llvm::Function *EnumerationMutationFunction() {
+    return ObjCTypes.EnumerationMutationFn;
+  }
   
   virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
-                                         const Stmt &S)
-    { return; }
+                                         const Stmt &S) {
+    CGF.ErrorUnsupported(&S, "try or synchronized statement");
+  }
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
-                             const ObjCAtThrowStmt &S)
-    { return; }
+                             const ObjCAtThrowStmt &S) {
+    CGF.ErrorUnsupported(&S, "throw statement");
+  }
   virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
-                                         llvm::Value *AddrWeakObj)
-    { return 0; }
+                                         llvm::Value *AddrWeakObj) {
+    assert(0 && "FIXME: Implement EmitObjCWeakRead for non-fragile ABI");
+    return 0;
+  }
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
-                                  llvm::Value *src, llvm::Value *dst)
-    { return; } 
+                                  llvm::Value *src, llvm::Value *dst) {
+    assert(0 && "FIXME: Implement EmitObjCWeakAssign for non-fragile ABI");
+  }
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                    llvm::Value *src, llvm::Value *dest)
-    { return; }
+                                    llvm::Value *src, llvm::Value *dest) {
+    assert(0 && "FIXME: Implement EmitObjCGlobalAssign for non-fragile ABI");
+  }
   virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                  llvm::Value *src, llvm::Value *dest)
-  { return; }
+                                  llvm::Value *src, llvm::Value *dest) {
+    assert(0 && "FIXME: Implement EmitObjCIvarAssign for non-fragile ABI");
+  }
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
-                                        llvm::Value *src, llvm::Value *dest)
-    { return; }
+                                        llvm::Value *src, llvm::Value *dest) {
+    assert(0 && "FIXME: Implement EmitObjCStrongCastAssign for non-fragile ABI");
+  }
   virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                       QualType ObjectTy,
                                       llvm::Value *BaseValue,
