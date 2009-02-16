@@ -462,8 +462,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   
   // Initialize language-specific preprocessor defines.
   
-  // FIXME: Implement magic like cpp_init_builtins for things like __STDC__
-  // and __DATE__ etc.
   // These should all be defined in the preprocessor according to the
   // current language configuration.
   if (!PP.getLangOptions().Microsoft)

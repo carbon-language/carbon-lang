@@ -32,3 +32,11 @@ int old_fn() {
   return old_fn()+1;  // no warning, deprecated functions can use deprecated symbols.
 }
 
+
+struct foo {
+  int x __attribute__((deprecated));
+};
+
+void test1(struct foo *F) {
+  ++F->x;  // expected-warning {{'x' is deprecated}}
+}

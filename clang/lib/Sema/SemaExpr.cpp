@@ -1592,6 +1592,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     // error cases.
     if (MemberDecl->isInvalidDecl())
       return ExprError();
+    
+    // Check if referencing a field with __attribute__((deprecated)).
+    DiagnoseUseOfDeprecatedDecl(MemberDecl, MemberLoc);
 
     if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl)) {
       // We may have found a field within an anonymous union or struct
