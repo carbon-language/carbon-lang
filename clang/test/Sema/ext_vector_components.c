@@ -7,7 +7,7 @@ typedef __attribute__(( ext_vector_type(4) )) float float4;
 static void test() {
     float2 vec2, vec2_2;
     float3 vec3;
-    float4 vec4, vec4_2;
+    float4 vec4, vec4_2, *vec4p;
     float f;
 
     vec2.z; // expected-error {{vector component access exceeds type 'float2'}}
@@ -32,4 +32,6 @@ static void test() {
     vec4 = (float4){ 1,2,3,4 };
     vec4.xy.w; // expected-error {{vector component access exceeds type 'float2'}}
     vec4.s06; // expected-error {{vector component access exceeds type 'float4'}}
+  
+    vec4p->yz = vec4p->xy;
 }

@@ -2053,6 +2053,9 @@ public:
 /// vector, and may occur on the left hand side or right hand side.  For example
 /// the following is legal:  "V.xy = V.zw" if V is a 4 element extended vector.
 ///
+/// Note that the base may have either vector or pointer to vector type, just
+/// like a struct field reference.
+///
 class ExtVectorElementExpr : public Expr {
   Stmt *Base;
   IdentifierInfo &Accessor;

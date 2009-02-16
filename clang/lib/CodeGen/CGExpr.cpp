@@ -257,13 +257,8 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
   if (LV.isPropertyRef())
     return EmitLoadOfPropertyRefLValue(LV, ExprType);
 
-  if (LV.isKVCRef())
-    return EmitLoadOfKVCRefLValue(LV, ExprType);
-
-  assert(0 && "Unknown LValue type!");
-  //an invalid RValue, but the assert will
-  //ensure that this point is never reached
-  return RValue();
+  assert(LV.isKVCRef() && "Unknown LValue type!");
+  return EmitLoadOfKVCRefLValue(LV, ExprType);
 }
 
 RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
@@ -799,7 +794,16 @@ llvm::Constant *GenerateConstantVector(llvm::SmallVector<unsigned, 4> &Elts) {
 LValue CodeGenFunction::
 EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   // Emit the base vector as an l-value.
-  LValue Base = EmitLValue(E->getBase());
+  LValue Base;
+
+  // ExtVectorElementExpr's base can either be a vector or pointer to vector.
+  if (const PointerType *PT = E->getBase()->getType()->getAsPointerType()) {
+    llvm::Value *Ptr = EmitScalarExpr(E->getBase());
+    Base = LValue::MakeAddr(Ptr, PT->getPointeeType().getCVRQualifiers());
+  } else {
+    assert(E->getBase()->getType()->isVectorType());
+    Base = EmitLValue(E->getBase());
+  }
 
   // Encode the element access list into a vector of unsigned indices.
   llvm::SmallVector<unsigned, 4> Indices;

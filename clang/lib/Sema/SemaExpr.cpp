@@ -1815,7 +1815,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                        << &Member << BaseType);
   } 
   // Handle 'field access' to vectors, such as 'V.xx'.
-  if (BaseType->isExtVectorType() && OpKind == tok::period) {
+  if (BaseType->isExtVectorType()) {
     QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return ExprError();
