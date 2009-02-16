@@ -15,7 +15,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Parse/DeclSpec.h"
-
 using namespace clang;
 
 /// ObjCActOnStartOfMethodDef - This routine sets up parameters; invisible
@@ -49,8 +48,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   // Introduce all of the other parameters into this scope.
   for (unsigned i = 0, e = MDecl->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
-    IdentifierInfo *II = PDecl->getIdentifier();
-    if (II)
+    if (IdentifierInfo *II = PDecl->getIdentifier())
       PushOnScopeChains(PDecl, FnBodyScope);
   }
 }
@@ -814,20 +812,22 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
   
   bool IncompleteImpl = false;
   for (ObjCInterfaceDecl::instmeth_iterator I = IDecl->instmeth_begin(),
-       E = IDecl->instmeth_end(); I != E; ++I)
-    if (!(*I)->isSynthesized() && !InsMap.count((*I)->getSelector()))
+       E = IDecl->instmeth_end(); I != E; ++I) {
+    if (!(*I)->isSynthesized() && !InsMap.count((*I)->getSelector())) {
       WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
-    else {
-      ObjCMethodDecl *ImpMethodDecl = 
-        IMPDecl->getInstanceMethod((*I)->getSelector());
-      ObjCMethodDecl *IntfMethodDecl = 
-        IDecl->getInstanceMethod((*I)->getSelector());
-      assert(IntfMethodDecl && 
-             "IntfMethodDecl is null in ImplMethodsVsClassMethods");
-      // ImpMethodDecl may be null as in a @dynamic property.
-      if (ImpMethodDecl)
-        WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+      continue;
     }
+    
+    ObjCMethodDecl *ImpMethodDecl = 
+      IMPDecl->getInstanceMethod((*I)->getSelector());
+    ObjCMethodDecl *IntfMethodDecl = 
+      IDecl->getInstanceMethod((*I)->getSelector());
+    assert(IntfMethodDecl && 
+           "IntfMethodDecl is null in ImplMethodsVsClassMethods");
+    // ImpMethodDecl may be null as in a @dynamic property.
+    if (ImpMethodDecl)
+      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+  }
       
   llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in class interface have been
@@ -917,8 +917,8 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
 /// ActOnForwardClassDeclaration - 
 Action::DeclTy *
 Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
-                                   IdentifierInfo **IdentList, unsigned NumElts) 
-{
+                                   IdentifierInfo **IdentList,
+                                   unsigned NumElts) {
   llvm::SmallVector<ObjCInterfaceDecl*, 32> Interfaces;
   
   for (unsigned i = 0; i != NumElts; ++i) {
