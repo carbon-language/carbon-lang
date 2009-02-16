@@ -1264,9 +1264,9 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     // ProcessPropertyDecl is responsible for diagnosing conflicts with any
     // user-defined setter/getter. It also synthesizes setter/getter methods
     // and adds them to the DeclContext and global method pools.
-    for (ObjCContainerDecl::prop_iterator i = CDecl->prop_begin(),
-                                          e = CDecl->prop_end(); i != e; ++i)
-      ProcessPropertyDecl((*i), CDecl);
+    for (ObjCContainerDecl::prop_iterator I = CDecl->prop_begin(),
+                                          E = CDecl->prop_end(); I != E; ++I)
+      ProcessPropertyDecl(*I, CDecl);
     CDecl->setAtEndLoc(AtEndLoc);
   }
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
@@ -1276,10 +1276,10 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
   } else if (ObjCCategoryImplDecl* CatImplClass = 
                                    dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
     CatImplClass->setLocEnd(AtEndLoc);
-    ObjCInterfaceDecl* IDecl = CatImplClass->getClassInterface();
+    
     // Find category interface decl and then check that all methods declared
     // in this interface are implemented in the category @implementation.
-    if (IDecl) {
+    if (ObjCInterfaceDecl* IDecl = CatImplClass->getClassInterface()) {
       for (ObjCCategoryDecl *Categories = IDecl->getCategoryList();
            Categories; Categories = Categories->getNextClassCategory()) {
         if (Categories->getIdentifier() == CatImplClass->getIdentifier()) {
@@ -1586,6 +1586,8 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC, AtLoc, 
                                                      FD.D.getIdentifier(), T);
   DC->addDecl(PDecl);
+  
+  ProcessDeclAttributes(PDecl, FD.D);
 
   // Regardless of setter/getter attribute, we save the default getter/setter
   // selector names in anticipation of declaration of setter/getter methods.
