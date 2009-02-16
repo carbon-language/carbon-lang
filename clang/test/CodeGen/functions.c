@@ -15,3 +15,5 @@ void test3(T f) {
   f();
 }
 
+int a(int);
+int a() {return 1;}

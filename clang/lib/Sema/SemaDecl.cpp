@@ -607,6 +607,23 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
                                          OldProto->getTypeQuals());
       New->setType(NewQType);
       New->setInheritedPrototype();
+
+      // Synthesize a parameter for each argument type.
+      llvm::SmallVector<ParmVarDecl*, 16> Params;
+      for (FunctionTypeProto::arg_type_iterator 
+             ParamType = OldProto->arg_type_begin(), 
+             ParamEnd = OldProto->arg_type_end();
+           ParamType != ParamEnd; ++ParamType) {
+        ParmVarDecl *Param = ParmVarDecl::Create(Context, New,
+                                                 SourceLocation(), 0,
+                                                 *ParamType, VarDecl::None,
+                                                 0);
+        Param->setImplicit();
+        Params.push_back(Param);
+      }
+
+      New->setParams(Context, &Params[0], Params.size());
+
     }
 
     MergeAttributes(New, Old);
@@ -762,7 +779,9 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
     
     // C99 6.9.1p5: If the declarator includes a parameter type list, the
     // declaration of each parameter shall include an identifier.
-    if (Param->getIdentifier() == 0 && !getLangOptions().CPlusPlus)
+    if (Param->getIdentifier() == 0 && 
+        !Param->isImplicit() &&
+        !getLangOptions().CPlusPlus)
       Diag(Param->getLocation(), diag::err_parameter_name_omitted);
   }
 
@@ -1693,10 +1712,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       llvm::SmallVector<ParmVarDecl*, 16> Params;
       for (FunctionTypeProto::arg_type_iterator ArgType = FT->arg_type_begin();
            ArgType != FT->arg_type_end(); ++ArgType) {
-        Params.push_back(ParmVarDecl::Create(Context, DC,
-                                             SourceLocation(), 0,
-                                             *ArgType, VarDecl::None,
-                                             0));
+        ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
+                                                 SourceLocation(), 0,
+                                                 *ArgType, VarDecl::None,
+                                                 0);
+        Param->setImplicit();
+        Params.push_back(Param);
       }
 
       NewFD->setParams(Context, &Params[0], Params.size());
