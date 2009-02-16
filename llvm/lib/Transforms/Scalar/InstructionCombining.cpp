@@ -9275,7 +9275,7 @@ unsigned InstCombiner::GetOrEnforceKnownAlignment(Value *V,
 
 Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   unsigned DstAlign = GetOrEnforceKnownAlignment(MI->getOperand(1));
-  unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getOperand(2));
+  unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getOperand(2), DstAlign);
   unsigned MinAlign = std::min(DstAlign, SrcAlign);
   unsigned CopyAlign = MI->getAlignment()->getZExtValue();
 
@@ -11097,7 +11097,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
   // Attempt to improve the alignment.
-  unsigned KnownAlign = GetOrEnforceKnownAlignment(Op);
+  unsigned KnownAlign =
+    GetOrEnforceKnownAlignment(Op, TD->getPrefTypeAlignment(LI.getType()));
   if (KnownAlign >
       (LI.getAlignment() == 0 ? TD->getABITypeAlignment(LI.getType()) :
                                 LI.getAlignment()))
@@ -11376,7 +11377,8 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   }
 
   // Attempt to improve the alignment.
-  unsigned KnownAlign = GetOrEnforceKnownAlignment(Ptr);
+  unsigned KnownAlign =
+    GetOrEnforceKnownAlignment(Ptr, TD->getPrefTypeAlignment(Val->getType()));
   if (KnownAlign >
       (SI.getAlignment() == 0 ? TD->getABITypeAlignment(Val->getType()) :
                                 SI.getAlignment()))

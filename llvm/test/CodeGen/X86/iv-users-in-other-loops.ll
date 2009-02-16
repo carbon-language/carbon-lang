@@ -160,23 +160,23 @@ bb9:		; preds = %bb9, %bb10.preheader
 	%B_addr.0.sum = add i64 %B_addr.0.rec, %A_addr.440.rec		; <i64> [#uses=2]
 	%B_addr.438 = getelementptr float* %B, i64 %B_addr.0.sum		; <float*> [#uses=1]
 	%A_addr.440 = getelementptr float* %A, i64 %B_addr.0.sum		; <float*> [#uses=1]
-	%61 = bitcast float* %B_addr.438 to i8*		; <i8*> [#uses=1]
-	%62 = tail call <4 x float> @llvm.x86.sse.loadu.ps(i8* %61) nounwind readonly		; <<4 x float>> [#uses=1]
+	%61 = bitcast float* %B_addr.438 to <4 x float>*		; <i8*> [#uses=1]
+	%62 = load <4 x float>* %61, align 1
 	%B_addr.438.sum169 = or i64 %A_addr.440.rec, 4		; <i64> [#uses=1]
 	%B_addr.0.sum187 = add i64 %B_addr.0.rec, %B_addr.438.sum169		; <i64> [#uses=2]
 	%63 = getelementptr float* %B, i64 %B_addr.0.sum187		; <float*> [#uses=1]
-	%64 = bitcast float* %63 to i8*		; <i8*> [#uses=1]
-	%65 = tail call <4 x float> @llvm.x86.sse.loadu.ps(i8* %64) nounwind readonly		; <<4 x float>> [#uses=1]
+	%64 = bitcast float* %63 to <4 x float>*		; <i8*> [#uses=1]
+	%65 = load <4 x float>* %64, align 1
 	%B_addr.438.sum168 = or i64 %A_addr.440.rec, 8		; <i64> [#uses=1]
 	%B_addr.0.sum186 = add i64 %B_addr.0.rec, %B_addr.438.sum168		; <i64> [#uses=2]
 	%66 = getelementptr float* %B, i64 %B_addr.0.sum186		; <float*> [#uses=1]
-	%67 = bitcast float* %66 to i8*		; <i8*> [#uses=1]
-	%68 = tail call <4 x float> @llvm.x86.sse.loadu.ps(i8* %67) nounwind readonly		; <<4 x float>> [#uses=1]
+	%67 = bitcast float* %66 to <4 x float>*		; <i8*> [#uses=1]
+	%68 = load <4 x float>* %67, align 1
 	%B_addr.438.sum167 = or i64 %A_addr.440.rec, 12		; <i64> [#uses=1]
 	%B_addr.0.sum185 = add i64 %B_addr.0.rec, %B_addr.438.sum167		; <i64> [#uses=2]
 	%69 = getelementptr float* %B, i64 %B_addr.0.sum185		; <float*> [#uses=1]
-	%70 = bitcast float* %69 to i8*		; <i8*> [#uses=1]
-	%71 = tail call <4 x float> @llvm.x86.sse.loadu.ps(i8* %70) nounwind readonly		; <<4 x float>> [#uses=1]
+	%70 = bitcast float* %69 to <4 x float>*		; <i8*> [#uses=1]
+	%71 = load <4 x float>* %70, align 1
 	%72 = bitcast float* %A_addr.440 to <4 x float>*		; <<4 x float>*> [#uses=1]
 	%73 = load <4 x float>* %72, align 16		; <<4 x float>> [#uses=1]
 	%74 = mul <4 x float> %73, %62		; <<4 x float>> [#uses=1]
@@ -214,8 +214,8 @@ bb11:		; preds = %bb11, %bb12.loopexit
 	%A_addr.529.rec = shl i64 %indvar, 2		; <i64> [#uses=3]
 	%B_addr.527 = getelementptr float* %B_addr.4.lcssa, i64 %A_addr.529.rec		; <float*> [#uses=1]
 	%A_addr.529 = getelementptr float* %A_addr.4.lcssa, i64 %A_addr.529.rec		; <float*> [#uses=1]
-	%95 = bitcast float* %B_addr.527 to i8*		; <i8*> [#uses=1]
-	%96 = tail call <4 x float> @llvm.x86.sse.loadu.ps(i8* %95) nounwind readonly		; <<4 x float>> [#uses=1]
+	%95 = bitcast float* %B_addr.527 to <4 x float>*		; <i8*> [#uses=1]
+	%96 = load <4 x float>* %95, align 1
 	%97 = bitcast float* %A_addr.529 to <4 x float>*		; <<4 x float>*> [#uses=1]
 	%98 = load <4 x float>* %97, align 16		; <<4 x float>> [#uses=1]
 	%99 = mul <4 x float> %98, %96		; <<4 x float>> [#uses=1]
@@ -288,5 +288,3 @@ bb16:		; preds = %bb14, %bb13
 	store float %Sum0.2.lcssa, float* %C, align 4
 	ret void
 }
-
-declare <4 x float> @llvm.x86.sse.loadu.ps(i8*) nounwind readonly

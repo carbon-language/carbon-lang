@@ -14,8 +14,8 @@ cond_true:		; preds = %cond_true, %entry
 	%k.0.0 = bitcast i32 %tmp.10 to i32		; <i32> [#uses=2]
 	%tmp31 = add i32 %k.0.0, -1		; <i32> [#uses=4]
 	%tmp32 = getelementptr i32* %mpp, i32 %tmp31		; <i32*> [#uses=1]
-	%tmp34 = bitcast i32* %tmp32 to i8*		; <i8*> [#uses=1]
-	%tmp = tail call <16 x i8> @llvm.x86.sse2.loadu.dq( i8* %tmp34 )		; <<16 x i8>> [#uses=1]
+	%tmp34 = bitcast i32* %tmp32 to <16 x i8>*		; <i8*> [#uses=1]
+	%tmp = load <16 x i8>* %tmp34, align 1
 	%tmp42 = getelementptr i32* %tpmm, i32 %tmp31		; <i32*> [#uses=1]
 	%tmp42.upgrd.1 = bitcast i32* %tmp42 to <4 x i32>*		; <<4 x i32>*> [#uses=1]
 	%tmp46 = load <4 x i32>* %tmp42.upgrd.1		; <<4 x i32>> [#uses=1]
@@ -23,8 +23,8 @@ cond_true:		; preds = %cond_true, %entry
 	%tmp55 = add <4 x i32> %tmp54, %tmp46		; <<4 x i32>> [#uses=2]
 	%tmp55.upgrd.2 = bitcast <4 x i32> %tmp55 to <2 x i64>		; <<2 x i64>> [#uses=1]
 	%tmp62 = getelementptr i32* %ip, i32 %tmp31		; <i32*> [#uses=1]
-	%tmp65 = bitcast i32* %tmp62 to i8*		; <i8*> [#uses=1]
-	%tmp66 = tail call <16 x i8> @llvm.x86.sse2.loadu.dq( i8* %tmp65 )		; <<16 x i8>> [#uses=1]
+	%tmp65 = bitcast i32* %tmp62 to <16 x i8>*		; <i8*> [#uses=1]
+	%tmp66 = load <16 x i8>* %tmp65, align 1
 	%tmp73 = getelementptr i32* %tpim, i32 %tmp31		; <i32*> [#uses=1]
 	%tmp73.upgrd.3 = bitcast i32* %tmp73 to <4 x i32>*		; <<4 x i32>*> [#uses=1]
 	%tmp77 = load <4 x i32>* %tmp73.upgrd.3		; <<4 x i32>> [#uses=1]
@@ -49,7 +49,5 @@ cond_true:		; preds = %cond_true, %entry
 return:		; preds = %cond_true, %entry
 	ret void
 }
-
-declare <16 x i8> @llvm.x86.sse2.loadu.dq(i8*)
 
 declare <4 x i32> @llvm.x86.sse2.pcmpgt.d(<4 x i32>, <4 x i32>)
