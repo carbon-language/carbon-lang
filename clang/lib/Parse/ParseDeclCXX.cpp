@@ -358,9 +358,8 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
                                      NameLoc, Attr);
 
   // Parse the optional base clause (C++ only).
-  if (getLang().CPlusPlus && Tok.is(tok::colon)) {
+  if (getLang().CPlusPlus && Tok.is(tok::colon))
     ParseBaseClause(TagOrTempDecl);
-  }
 
   // If there is a body, parse it and inform the actions module.
   if (Tok.is(tok::l_brace))

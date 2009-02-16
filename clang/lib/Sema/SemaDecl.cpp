@@ -43,30 +43,41 @@ using namespace clang;
 /// and then return NULL.
 Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                                 Scope *S, const CXXScopeSpec *SS) {
-  Decl *IIDecl = 0;
+  NamedDecl *IIDecl = 0;
   LookupResult Result = LookupParsedName(S, SS, &II, LookupOrdinaryName, 
                                          false, false);
   switch (Result.getKind()) {
-    case LookupResult::NotFound:
-    case LookupResult::FoundOverloaded:
-      return 0;
+  case LookupResult::NotFound:
+  case LookupResult::FoundOverloaded:
+    return 0;
 
-    case LookupResult::AmbiguousBaseSubobjectTypes:
-    case LookupResult::AmbiguousBaseSubobjects:
-    case LookupResult::AmbiguousReference:
-      DiagnoseAmbiguousLookup(Result, DeclarationName(&II), NameLoc);
-      return 0;
+  case LookupResult::AmbiguousBaseSubobjectTypes:
+  case LookupResult::AmbiguousBaseSubobjects:
+  case LookupResult::AmbiguousReference:
+    DiagnoseAmbiguousLookup(Result, DeclarationName(&II), NameLoc);
+    return 0;
 
-    case LookupResult::Found:
-      IIDecl = Result.getAsDecl();
-      break;
+  case LookupResult::Found:
+    IIDecl = Result.getAsDecl();
+    break;
   }
 
   if (IIDecl) {
-    if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl))
+    if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
+      // If this typename is deprecated, emit a warning.
+      DiagnoseUseOfDeprecatedDecl(IIDecl, NameLoc);
+      
       return Context.getTypeDeclType(TD).getAsOpaquePtr();
-    else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl))
+    }
+    
+    if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
+      // If this typename is deprecated, emit a warning.
+      DiagnoseUseOfDeprecatedDecl(IIDecl, NameLoc);
+      
       return Context.getObjCInterfaceType(IDecl).getAsOpaquePtr();
+    }
+
+    // Otherwise, could be a variable, function etc.
   }
   return 0;
 }
@@ -3091,7 +3102,10 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     PrevDecl = 0;
   }
 
-  if (PrevDecl) {    
+  if (PrevDecl) {
+    // If the previous declaration was deprecated, emit a warning.
+    DiagnoseUseOfDeprecatedDecl(PrevDecl, NameLoc);
+    
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or

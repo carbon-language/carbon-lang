@@ -41,3 +41,5 @@ void test1(struct foo *F) {
   ++F->x;  // expected-warning {{'x' is deprecated}}
 }
 
+typedef struct foo foo_dep __attribute__((deprecated));
+foo_dep *test2;    // expected-warning {{'foo_dep' is deprecated}}
