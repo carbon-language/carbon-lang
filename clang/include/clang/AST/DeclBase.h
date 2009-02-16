@@ -371,33 +371,6 @@ class DeclContext {
   /// another pointer.
   Decl *LastDecl;
 
-  // Used in the CastTo template to get the DeclKind
-  // from a Decl or a DeclContext. DeclContext doesn't have a getKind() method
-  // to avoid 'ambiguous access' compiler errors.
-  template<typename T> struct KindTrait {
-    static Decl::Kind getKind(const T *D) { return D->getKind(); }
-  };
-
-  // Used only by the ToDecl and FromDecl methods
-  template<typename To, typename From>
-  static To *CastTo(const From *D) {
-    Decl::Kind DK = KindTrait<From>::getKind(D);
-    switch(DK) {
-#define DECL_CONTEXT(Name) \
-      case Decl::Name:     \
-        return static_cast<Name##Decl*>(const_cast<From*>(D));
-#define DECL_CONTEXT_BASE(Name)
-#include "clang/AST/DeclNodes.def"
-      default:
-#define DECL_CONTEXT_BASE(Name)                                   \
-        if (DK >= Decl::Name##First && DK <= Decl::Name##Last)    \
-          return static_cast<Name##Decl*>(const_cast<From*>(D));
-#include "clang/AST/DeclNodes.def"
-        assert(false && "a decl that inherits DeclContext isn't handled");
-        return 0;
-    }
-  }
-
   /// isLookupMap - Determine if the lookup structure is a
   /// DenseMap. Othewise, it is an array.
   bool isLookupMap() const { return LookupPtr.getInt() == LookupIsMap; }
@@ -780,21 +753,7 @@ public:
     return getUsingDirectives().second;
   }
 
-  static bool classof(const Decl *D) {
-    switch (D->getKind()) {
-#define DECL_CONTEXT(Name) case Decl::Name:
-#define DECL_CONTEXT_BASE(Name)
-#include "clang/AST/DeclNodes.def"
-        return true;
-      default:
-#define DECL_CONTEXT_BASE(Name)                   \
-        if (D->getKind() >= Decl::Name##First &&  \
-            D->getKind() <= Decl::Name##Last)     \
-          return true;
-#include "clang/AST/DeclNodes.def"
-        return false;
-    }
-  }
+  static bool classof(const Decl *D);
   static bool classof(const DeclContext *D) { return true; }
 #define DECL_CONTEXT(Name) \
   static bool classof(const Name##Decl *D) { return true; }
@@ -808,10 +767,6 @@ private:
   void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
 
   friend class Decl;
-};
-
-template<> struct DeclContext::KindTrait<DeclContext> {
-  static Decl::Kind getKind(const DeclContext *D) { return D->DeclKind; }
 };
 
 inline bool Decl::isTemplateParameter() const {

@@ -213,16 +213,60 @@ void Decl::Destroy(ASTContext& C) {
 }
 
 Decl *Decl::castFromDeclContext (const DeclContext *D) {
-  return DeclContext::CastTo<Decl>(D);
+  Decl::Kind DK = D->getDeclKind();
+  switch(DK) {
+#define DECL_CONTEXT(Name) \
+    case Decl::Name:     \
+      return static_cast<Name##Decl*>(const_cast<DeclContext*>(D));
+#define DECL_CONTEXT_BASE(Name)
+#include "clang/AST/DeclNodes.def"
+    default:
+#define DECL_CONTEXT_BASE(Name)                                   \
+      if (DK >= Decl::Name##First && DK <= Decl::Name##Last)    \
+        return static_cast<Name##Decl*>(const_cast<DeclContext*>(D));
+#include "clang/AST/DeclNodes.def"
+      assert(false && "a decl that inherits DeclContext isn't handled");
+      return 0;
+  }
 }
 
 DeclContext *Decl::castToDeclContext(const Decl *D) {
-  return DeclContext::CastTo<DeclContext>(D);
+  Decl::Kind DK = D->getKind();
+  switch(DK) {
+#define DECL_CONTEXT(Name) \
+    case Decl::Name:     \
+      return static_cast<Name##Decl*>(const_cast<Decl*>(D));
+#define DECL_CONTEXT_BASE(Name)
+#include "clang/AST/DeclNodes.def"
+    default:
+#define DECL_CONTEXT_BASE(Name)                                   \
+      if (DK >= Decl::Name##First && DK <= Decl::Name##Last)    \
+        return static_cast<Name##Decl*>(const_cast<Decl*>(D));
+#include "clang/AST/DeclNodes.def"
+      assert(false && "a decl that inherits DeclContext isn't handled");
+      return 0;
+  }
 }
 
 //===----------------------------------------------------------------------===//
 // DeclContext Implementation
 //===----------------------------------------------------------------------===//
+
+bool DeclContext::classof(const Decl *D) {
+  switch (D->getKind()) {
+#define DECL_CONTEXT(Name) case Decl::Name:
+#define DECL_CONTEXT_BASE(Name)
+#include "clang/AST/DeclNodes.def"
+      return true;
+    default:
+#define DECL_CONTEXT_BASE(Name)                   \
+      if (D->getKind() >= Decl::Name##First &&  \
+          D->getKind() <= Decl::Name##Last)     \
+        return true;
+#include "clang/AST/DeclNodes.def"
+      return false;
+  }
+}
 
 const DeclContext *DeclContext::getParent() const {
   if (const Decl *D = dyn_cast<Decl>(this))
