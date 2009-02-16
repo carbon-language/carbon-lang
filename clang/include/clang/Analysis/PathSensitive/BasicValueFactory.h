@@ -90,15 +90,15 @@ public:
   }
 
   inline const llvm::APSInt& getMaxValue(QualType T) {
-    assert(T->isIntegerType());
-    return getValue(llvm::APSInt::getMaxValue(Ctx.getTypeSize(T),
-                                              T->isUnsignedIntegerType()));
+    assert(T->isIntegerType() || T->isPointerType());
+    bool isUnsigned = T->isUnsignedIntegerType() || T->isPointerType();
+    return getValue(llvm::APSInt::getMaxValue(Ctx.getTypeSize(T), isUnsigned));
   }
   
   inline const llvm::APSInt& getMinValue(QualType T) {
-    assert(T->isIntegerType());
-    return getValue(llvm::APSInt::getMinValue(Ctx.getTypeSize(T),
-                                              T->isUnsignedIntegerType()));
+    assert(T->isIntegerType() || T->isPointerType());
+    bool isUnsigned = T->isUnsignedIntegerType() || T->isPointerType();
+    return getValue(llvm::APSInt::getMinValue(Ctx.getTypeSize(T), isUnsigned));
   }
   
   inline const llvm::APSInt& Add1(const llvm::APSInt& V) {
