@@ -1568,8 +1568,8 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
         }
         // No matching property found in the main class. Just fall thru
         // and add property to the anonymous category. It looks like
-	// it works as is. This category becomes just like a category
-	// for its primary class.
+        // it works as is. This category becomes just like a category
+        // for its primary class.
       } else {
           Diag(CDecl->getLocation(), diag::err_continuation_class);
           *isOverridingProperty = true;
