@@ -813,7 +813,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   if (Base.isSimple()) {
     llvm::Constant *CV = GenerateConstantVector(Indices);
     return LValue::MakeExtVectorElt(Base.getAddress(), CV,
-                                   E->getBase()->getType().getCVRQualifiers());
+                                    Base.getQualifiers());
   }
   assert(Base.isExtVectorElt() && "Can only subscript lvalue vec elts here!");
 
@@ -828,7 +828,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   }
   llvm::Constant *CV = llvm::ConstantVector::get(&CElts[0], CElts.size());
   return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV,
-                                  E->getBase()->getType().getCVRQualifiers());
+                                  Base.getQualifiers());
 }
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
@@ -846,16 +846,14 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     if (PTy->getPointeeType()->isUnionType())
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
-  }
-  else if (BaseExpr->getStmtClass() == Expr::ObjCPropertyRefExprClass ||
-           BaseExpr->getStmtClass() == Expr::ObjCKVCRefExprClass) {
+  } else if (isa<ObjCPropertyRefExpr>(BaseExpr) ||
+             isa<ObjCKVCRefExpr>(BaseExpr)) {
     RValue RV = EmitObjCPropertyGet(BaseExpr);
     BaseValue = RV.getAggregateAddr();
     if (BaseExpr->getType()->isUnionType())
       isUnion = true;
     CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
-  }
-  else {
+  } else {
     LValue BaseLV = EmitLValue(BaseExpr);
     if (BaseLV.isObjCIvar())
       isIvar = true;
@@ -869,7 +867,8 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   FieldDecl *Field = dyn_cast<FieldDecl>(E->getMemberDecl());
   // FIXME: Handle non-field member expressions
   assert(Field && "No code generation for non-field member references");
-  LValue MemExpLV =  EmitLValueForField(BaseValue, Field, isUnion, CVRQualifiers);
+  LValue MemExpLV = EmitLValueForField(BaseValue, Field, isUnion,
+                                       CVRQualifiers);
   LValue::SetObjCIvar(MemExpLV, isIvar);
   return MemExpLV;
 }

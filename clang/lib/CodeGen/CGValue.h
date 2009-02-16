@@ -169,6 +169,10 @@ public:
 
   bool isVolatileQualified() const { return Volatile; }
   bool isRestrictQualified() const { return Restrict; }
+  unsigned getQualifiers() const {
+    return (Volatile ? QualType::Volatile : 0) | 
+           (Restrict ? QualType::Restrict : 0);
+  }
   
   bool isObjCIvar() const { return Ivar; }
   bool isObjCWeak() const { return ObjCType == Weak; }
@@ -275,8 +279,8 @@ public:
     SetQualifiers(Qualifiers,R);
     return R;
   }
-  static LValue MakeKVCRef(const ObjCKVCRefExpr *E,
-                                unsigned Qualifiers) {
+  
+  static LValue MakeKVCRef(const ObjCKVCRefExpr *E, unsigned Qualifiers) {
     LValue R;
     R.LVType = KVCRef;
     R.KVCRefExpr = E;
