@@ -101,6 +101,18 @@ public:
                                               T->isUnsignedIntegerType()));
   }
   
+  inline const llvm::APSInt& Add1(const llvm::APSInt& V) {
+    llvm::APSInt X = V;
+    ++X;
+    return getValue(X);
+  }
+  
+  inline const llvm::APSInt& Sub1(const llvm::APSInt& V) {
+    llvm::APSInt X = V;
+    --X;
+    return getValue(X);
+  }
+  
   inline const llvm::APSInt& getZeroWithPtrWidth(bool isUnsigned = true) {
     return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy), isUnsigned);
   }
