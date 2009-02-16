@@ -1294,6 +1294,12 @@ bool Expr::isBitField() {
   return false;
 }
 
+/// isArrow - Return true if the base expression is a pointer to vector,
+/// return false if the base expression is a vector.
+bool ExtVectorElementExpr::isArrow() const {
+  return getBase()->getType()->isPointerType();
+}
+
 unsigned ExtVectorElementExpr::getNumElements() const {
   if (const VectorType *VT = getType()->getAsVectorType())
     return VT->getNumElements();

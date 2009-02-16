@@ -797,12 +797,13 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   LValue Base;
 
   // ExtVectorElementExpr's base can either be a vector or pointer to vector.
-  if (const PointerType *PT = E->getBase()->getType()->getAsPointerType()) {
-    llvm::Value *Ptr = EmitScalarExpr(E->getBase());
-    Base = LValue::MakeAddr(Ptr, PT->getPointeeType().getCVRQualifiers());
-  } else {
+  if (!E->isArrow()) {
     assert(E->getBase()->getType()->isVectorType());
     Base = EmitLValue(E->getBase());
+  } else {
+    const PointerType *PT = E->getBase()->getType()->getAsPointerType();
+    llvm::Value *Ptr = EmitScalarExpr(E->getBase());
+    Base = LValue::MakeAddr(Ptr, PT->getPointeeType().getCVRQualifiers());
   }
 
   // Encode the element access list into a vector of unsigned indices.

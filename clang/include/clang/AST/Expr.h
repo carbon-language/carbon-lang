@@ -2086,6 +2086,10 @@ public:
     return SourceRange(getBase()->getLocStart(), AccessorLoc);
   }
   
+  /// isArrow - Return true if the base expression is a pointer to vector,
+  /// return false if the base expression is a vector.
+  bool isArrow() const;
+  
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ExtVectorElementExprClass; 
   }
