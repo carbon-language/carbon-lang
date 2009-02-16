@@ -326,17 +326,20 @@ protected:
 };
 
 /// DeclContext - This is used only as base class of specific decl types that
-/// can act as declaration contexts. These decls are:
+/// can act as declaration contexts. These decls are (only the top classes
+/// that directly derive from DeclContext are mentioned, not their subclasses):
 ///
 ///   TranslationUnitDecl
 ///   NamespaceDecl
 ///   FunctionDecl
-///   RecordDecl/CXXRecordDecl
-///   EnumDecl
+///   TagDecl
 ///   ObjCMethodDecl
-///   ObjCInterfaceDecl
+///   ObjCContainerDecl
+///   ObjCCategoryImplDecl
+///   ObjCImplementationDecl
 ///   LinkageSpecDecl
 ///   BlockDecl
+///
 class DeclContext {
   /// DeclKind - This indicates which class this is.
   Decl::Kind DeclKind   :  8;
@@ -380,36 +383,16 @@ class DeclContext {
   static To *CastTo(const From *D) {
     Decl::Kind DK = KindTrait<From>::getKind(D);
     switch(DK) {
-      case Decl::TranslationUnit:
-        return static_cast<TranslationUnitDecl*>(const_cast<From*>(D));
-      case Decl::Namespace:
-        return static_cast<NamespaceDecl*>(const_cast<From*>(D));
-      case Decl::Enum:
-        return static_cast<EnumDecl*>(const_cast<From*>(D));
-      case Decl::Record:
-        return static_cast<RecordDecl*>(const_cast<From*>(D));
-      case Decl::CXXRecord:
-        return static_cast<CXXRecordDecl*>(const_cast<From*>(D));
-      case Decl::ObjCMethod:
-        return static_cast<ObjCMethodDecl*>(const_cast<From*>(D));
-      case Decl::ObjCInterface:
-        return static_cast<ObjCInterfaceDecl*>(const_cast<From*>(D));
-      case Decl::ObjCCategory:
-        return static_cast<ObjCCategoryDecl*>(const_cast<From*>(D));
-      case Decl::ObjCProtocol:
-        return static_cast<ObjCProtocolDecl*>(const_cast<From*>(D));
-      case Decl::ObjCImplementation:
-        return static_cast<ObjCImplementationDecl*>(const_cast<From*>(D));
-      case Decl::ObjCCategoryImpl:
-        return static_cast<ObjCCategoryImplDecl*>(const_cast<From*>(D));
-      case Decl::LinkageSpec:
-        return static_cast<LinkageSpecDecl*>(const_cast<From*>(D));
-      case Decl::Block:
-        return static_cast<BlockDecl*>(const_cast<From*>(D));
+#define DECL_CONTEXT(Name) \
+      case Decl::Name:     \
+        return static_cast<Name##Decl*>(const_cast<From*>(D));
+#define DECL_CONTEXT_BASE(Name)
+#include "clang/AST/DeclNodes.def"
       default:
-        if (DK >= Decl::FunctionFirst && DK <= Decl::FunctionLast)
-          return static_cast<FunctionDecl*>(const_cast<From*>(D));
-
+#define DECL_CONTEXT_BASE(Name)                                   \
+        if (DK >= Decl::Name##First && DK <= Decl::Name##Last)    \
+          return static_cast<Name##Decl*>(const_cast<From*>(D));
+#include "clang/AST/DeclNodes.def"
         assert(false && "a decl that inherits DeclContext isn't handled");
         return 0;
     }
@@ -800,12 +783,15 @@ public:
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
 #define DECL_CONTEXT(Name) case Decl::Name:
+#define DECL_CONTEXT_BASE(Name)
 #include "clang/AST/DeclNodes.def"
         return true;
       default:
-        if (D->getKind() >= Decl::FunctionFirst &&
-            D->getKind() <= Decl::FunctionLast)
+#define DECL_CONTEXT_BASE(Name)                   \
+        if (D->getKind() >= Decl::Name##First &&  \
+            D->getKind() <= Decl::Name##Last)     \
           return true;
+#include "clang/AST/DeclNodes.def"
         return false;
     }
   }

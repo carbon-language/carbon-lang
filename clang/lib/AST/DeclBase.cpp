@@ -50,7 +50,7 @@ const char *Decl::getDeclKindName() const {
 const char *DeclContext::getDeclKindName() const {
   switch (DeclKind) {
   default: assert(0 && "Declaration context not in DeclNodes.def!");
-#define DECL_CONTEXT(Node) case Decl::Node: return #Node;
+#define DECL(Derived, Base) case Decl::Derived: return #Derived;
 #include "clang/AST/DeclNodes.def"
   }
 }

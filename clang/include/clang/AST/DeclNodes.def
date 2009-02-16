@@ -56,6 +56,10 @@
 #  define DECL_CONTEXT(Decl)
 #endif
 
+#ifndef DECL_CONTEXT_BASE
+#  define DECL_CONTEXT_BASE(Decl) DECL_CONTEXT(Decl)
+#endif
+
 #ifndef LAST_DECL_CONTEXT
 #  define LAST_DECL_CONTEXT(Decl) DECL_CONTEXT(Decl)
 #endif
@@ -117,21 +121,16 @@ DECL(ObjCClass, Decl)
 DECL(FileScopeAsm, Decl)
 LAST_DECL(Block, Decl)
 
-// Declaration contexts
+// Declaration contexts. DECL_CONTEXT_BASE indicates that it has subclasses.
 DECL_CONTEXT(TranslationUnit)
 DECL_CONTEXT(Namespace)
-DECL_CONTEXT(Enum)
-DECL_CONTEXT(Record)
-DECL_CONTEXT(CXXRecord)
-DECL_CONTEXT(Function)
-DECL_CONTEXT(ObjCMethod)
-DECL_CONTEXT(ObjCContainer)
-DECL_CONTEXT(ObjCInterface)
-DECL_CONTEXT(ObjCProtocol)
-DECL_CONTEXT(ObjCCategory)
-DECL_CONTEXT(ObjCCategoryImpl)
 DECL_CONTEXT(LinkageSpec)
+DECL_CONTEXT(ObjCMethod)
+DECL_CONTEXT(ObjCCategoryImpl)
 DECL_CONTEXT(ObjCImplementation)
+DECL_CONTEXT_BASE(Tag)
+DECL_CONTEXT_BASE(Function)
+DECL_CONTEXT_BASE(ObjCContainer)
 LAST_DECL_CONTEXT(Block)
 
 // Declaration ranges
@@ -149,6 +148,7 @@ LAST_DECL_RANGE(Var, Var, NonTypeTemplateParm)
 #undef LAST_DECL_RANGE
 #undef DECL_RANGE
 #undef LAST_DECL_CONTEXT
+#undef DECL_CONTEXT_BASE
 #undef DECL_CONTEXT
 #undef ABSTRACT_DECL
 #undef LAST_DECL
