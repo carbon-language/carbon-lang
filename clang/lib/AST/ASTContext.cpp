@@ -2085,7 +2085,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       return;
     }
     else if (PointeeTy->isObjCInterfaceType()) {
-      if (dyn_cast<TypedefType>(PointeeTy.getTypePtr())) {
+      if (!EncodingProperty &&
+          dyn_cast<TypedefType>(PointeeTy.getTypePtr())) {
         // Another historical/compatibility reason.
         // We encode the underlying type which comes out as 
         // {...};
