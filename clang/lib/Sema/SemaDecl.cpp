@@ -2820,6 +2820,7 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
     FD->setBody(Body);
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
+    assert(MD == getCurMethodDecl() && "Method parsing confused");
     MD->setBody((Stmt*)Body);
   } else {
     Body->Destroy(Context);
