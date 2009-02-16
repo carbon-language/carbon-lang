@@ -1218,6 +1218,12 @@ static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       << "aligned" << alignmentExpr->getSourceRange();
     return;
   }
+  if (!llvm::isPowerOf2_64(Alignment.getZExtValue())) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_aligned_not_power_of_two) 
+      << alignmentExpr->getSourceRange();
+    return;
+  }
+
   d->addAttr(new AlignedAttr(Alignment.getZExtValue() * 8));
 }
 

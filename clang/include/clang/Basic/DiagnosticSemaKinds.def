@@ -356,6 +356,8 @@ DIAG(err_as_qualified_auto_decl, ERROR,
      "automatic variable qualified with an address space")
 DIAG(err_attribute_annotate_no_string, ERROR,
      "argument to annotate attribute was not a string literal")
+DIAG(err_attribute_aligned_not_power_of_two, ERROR,
+     "requested alignment is not a power of 2")
 DIAG(warn_redeclaration_without_attribute_prev_attribute_ignored, WARNING,
   "'%0' redeclared without %1 attribute: previous %1 ignored")
 DIAG(warn_attribute_ignored, WARNING,
