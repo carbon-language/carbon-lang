@@ -461,8 +461,6 @@ ConstraintManager* clang::CreateRangeConstraintManager(GRStateManager& StateMgr)
   return new RangeConstraintManager(StateMgr);
 }
 
-RegisterConstraintManager X(CreateRangeConstraintManager);
-
 const GRState*
 RangeConstraintManager::AssumeSymNE(const GRState* St, SymbolRef sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
