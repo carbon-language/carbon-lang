@@ -50,7 +50,7 @@ PurgeDead("analyzer-purge-dead",
                          " processing a statement."));
 static llvm::cl::opt<bool>
 UseRanges("analyzer-range-constraints",
-          llvm::cl::init(true),
+          llvm::cl::init(false),
           llvm::cl::desc("Use the range constraint manager instead of the basic"
                          " constraint manager"));
   
