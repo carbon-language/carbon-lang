@@ -101,7 +101,10 @@ public:
   
   /// GcAssignStrongCastFn -- LLVM objc_assign_strongCast function.
   llvm::Function *GcAssignStrongCastFn;
-    
+
+  /// ExceptionThrowFn - LLVM objc_exception_throw function.
+  llvm::Function *ExceptionThrowFn;
+  
   ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCCommonTypesHelper(){}
 };
@@ -169,9 +172,6 @@ public:
   
   /// ExceptionDataTy - LLVM type for struct _objc_exception_data.
   const llvm::Type *ExceptionDataTy;
-  
-  /// ExceptionThrowFn - LLVM objc_exception_throw function.
-  llvm::Function *ExceptionThrowFn;
   
   /// ExceptionTryEnterFn - LLVM objc_exception_try_enter function.
   llvm::Function *ExceptionTryEnterFn;
@@ -735,9 +735,7 @@ public:
     CGF.ErrorUnsupported(&S, "try or synchronized statement");
   }
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
-                             const ObjCAtThrowStmt &S) {
-    CGF.ErrorUnsupported(&S, "throw statement");
-  }
+                             const ObjCAtThrowStmt &S);
   virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *AddrWeakObj);
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
@@ -2735,6 +2733,15 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   GcAssignIvarFn = CGM.CreateRuntimeFunction(FTy, "objc_assign_ivar");
   GcAssignStrongCastFn = 
     CGM.CreateRuntimeFunction(FTy, "objc_assign_strongCast");
+  
+  // void objc_exception_throw(id)
+  Params.clear();
+  Params.push_back(IdType);
+  
+  FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
+
+  ExceptionThrowFn =
+    CGM.CreateRuntimeFunction(FTy, "objc_exception_throw");
 }
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
@@ -3014,14 +3021,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_exception_data", 
                               ExceptionDataTy);
 
-  Params.clear();
-  Params.push_back(ObjectPtrTy);
-  ExceptionThrowFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                      Params,
-                                                      false),
-                              "objc_exception_throw");
-  
   Params.clear();
   Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
   ExceptionTryEnterFn = 
@@ -4699,6 +4698,26 @@ void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
   return;
 }
 
+/// EmitThrowStmt - Generate code for a throw statement.
+void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
+                                           const ObjCAtThrowStmt &S) {
+  llvm::Value *ExceptionAsObject;
+  
+  if (const Expr *ThrowExpr = S.getThrowExpr()) {
+    llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
+    ExceptionAsObject = 
+      CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy, "tmp");
+    
+    CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
+    CGF.Builder.CreateUnreachable();
+  } else {
+    CGF.ErrorUnsupported(&S, "rethrow statement");
+  }
+
+  // Clear the insertion point to indicate we are in unreachable code.
+  CGF.Builder.ClearInsertionPoint();
+}
+  
 /* *** */
 
 CodeGen::CGObjCRuntime *
