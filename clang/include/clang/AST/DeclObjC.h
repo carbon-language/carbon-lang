@@ -302,6 +302,9 @@ public:
   // Get the local instance/class method declared in this interface.
   ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
   ObjCMethodDecl *getClassMethod(Selector Sel) const;
+  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const {
+    return isInstance ? getInstanceMethod(Sel) : getClassMethod(Sel);
+  }
 
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
 
@@ -854,11 +857,13 @@ public:
   void addClassMethod(ObjCMethodDecl *method) {
     ClassMethods.push_back(method);
   }   
-  // Get the instance method definition for this implementation.
+
+  // Get the local instance/class method declared in this interface.
   ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
-  
-  // Get the class method definition for this implementation.
   ObjCMethodDecl *getClassMethod(Selector Sel) const;
+  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const {
+    return isInstance ? getInstanceMethod(Sel) : getClassMethod(Sel);
+  }
   
   void addPropertyImplementation(ObjCPropertyImplDecl *property) {
     PropertyImplementations.push_back(property);
@@ -917,11 +922,8 @@ public:
 ///
 /// Typically, instance variables are specified in the class interface, 
 /// *not* in the implementation. Nevertheless (for legacy reasons), we
-/// allow instance variables to be specified in the implementation. When
-/// specified, they need to be *identical* to the interface. Now that we
-/// have support for non-fragile ivars in ObjC 2.0, we can consider removing
-/// the legacy semantics and allow developers to move private ivar declarations
-/// from the class interface to the class implementation (but I digress:-)
+/// allow instance variables to be specified in the implementation.  When
+/// specified, they need to be *identical* to the interface.
 ///
 class ObjCImplementationDecl : public Decl, public DeclContext {
   /// Class interface for this implementation
@@ -1031,11 +1033,12 @@ public:
   classmeth_iterator classmeth_begin() const { return ClassMethods.begin(); }
   classmeth_iterator classmeth_end() const { return ClassMethods.end(); }
   
-  // Get the instance method definition for this implementation.
+  // Get the local instance/class method declared in this interface.
   ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
-  
-  // Get the class method definition for this implementation.
   ObjCMethodDecl *getClassMethod(Selector Sel) const;
+  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const {
+    return isInstance ? getInstanceMethod(Sel) : getClassMethod(Sel);
+  }
   
   typedef ObjCIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
