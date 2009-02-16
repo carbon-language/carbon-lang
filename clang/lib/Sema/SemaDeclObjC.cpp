@@ -48,7 +48,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   // Introduce all of the other parameters into this scope.
   for (unsigned i = 0, e = MDecl->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
-    if (IdentifierInfo *II = PDecl->getIdentifier())
+    if (PDecl->getIdentifier())
       PushOnScopeChains(PDecl, FnBodyScope);
   }
 }
