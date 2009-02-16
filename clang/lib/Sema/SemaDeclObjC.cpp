@@ -325,8 +325,7 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
 /// declarations in base and its super class, if any, and issues
 /// diagnostics in a variety of inconsistant situations.
 ///
-void 
-Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
+void Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
   ObjCInterfaceDecl *SDecl = IDecl->getSuperClass();
   if (!SDecl)
     return;
@@ -390,10 +389,8 @@ Sema::MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
 /// declared in 'MergeItsProtocols' objects (which can be a class or an
 /// inherited protocol into the list of properties for class/category 'CDecl'
 ///
-
-void
-Sema::MergeProtocolPropertiesIntoClass(Decl *CDecl,
-                                       DeclTy *MergeItsProtocols) {
+void Sema::MergeProtocolPropertiesIntoClass(Decl *CDecl,
+                                            DeclTy *MergeItsProtocols) {
   Decl *ClassDecl = static_cast<Decl *>(MergeItsProtocols);
   ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDecl);
 
@@ -478,32 +475,34 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                             DeclTy * const *ProtoRefs,
                             unsigned NumProtoRefs,
                             SourceLocation EndProtoLoc) {
-  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
-  
   ObjCCategoryDecl *CDecl = 
     ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc, CategoryName);
   // FIXME: PushOnScopeChains?
   CurContext->addDecl(CDecl);
-  CDecl->setClassInterface(IDecl);
-  
+
+  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
   /// Check that class of this category is already completely declared.
-  if (!IDecl || IDecl->isForwardDecl())
+  if (!IDecl || IDecl->isForwardDecl()) {
+    CDecl->setInvalidDecl();
     Diag(ClassLoc, diag::err_undef_interface) << ClassName;
-  else {
-    /// Check for duplicate interface declaration for this category
-    ObjCCategoryDecl *CDeclChain;
-    for (CDeclChain = IDecl->getCategoryList(); CDeclChain;
-         CDeclChain = CDeclChain->getNextClassCategory()) {
-      if (CategoryName && CDeclChain->getIdentifier() == CategoryName) {
-        Diag(CategoryLoc, diag::warn_dup_category_def)
-          << ClassName << CategoryName;
-        Diag(CDeclChain->getLocation(), diag::note_previous_definition);
-        break;
-      }
-    }
-    if (!CDeclChain)
-      CDecl->insertNextClassCategory();
+    return CDecl;
   }
+
+  CDecl->setClassInterface(IDecl);
+
+  /// Check for duplicate interface declaration for this category
+  ObjCCategoryDecl *CDeclChain;
+  for (CDeclChain = IDecl->getCategoryList(); CDeclChain;
+       CDeclChain = CDeclChain->getNextClassCategory()) {
+    if (CategoryName && CDeclChain->getIdentifier() == CategoryName) {
+      Diag(CategoryLoc, diag::warn_dup_category_def)
+      << ClassName << CategoryName;
+      Diag(CDeclChain->getLocation(), diag::note_previous_definition);
+      break;
+    }
+  }
+  if (!CDeclChain)
+    CDecl->insertNextClassCategory();
 
   if (NumProtoRefs) {
     CDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
