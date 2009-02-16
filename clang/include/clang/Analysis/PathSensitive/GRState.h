@@ -742,6 +742,9 @@ public:
     return cb;
   }
   
+  SymbolManager& getSymbolManager() { return Mgr->getSymbolManager(); }
+  BasicValueFactory& getBasicVals() { return Mgr->getBasicVals(); }
+  
   // Pretty-printing.
   void print(std::ostream& Out, const char* nl = "\n",
              const char *sep = "") const;
