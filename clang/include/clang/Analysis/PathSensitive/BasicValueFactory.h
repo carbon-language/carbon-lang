@@ -80,7 +80,27 @@ public:
     QualType T = isUnsigned ? Ctx.UnsignedIntTy : Ctx.IntTy;
     return getValue(X, T);
   }
+  
+  inline const llvm::APSInt& getMaxValue(const llvm::APSInt &v) {
+    return getValue(llvm::APSInt::getMaxValue(v.getBitWidth(), v.isUnsigned()));
+  }
+  
+  inline const llvm::APSInt& getMinValue(const llvm::APSInt &v) {
+    return getValue(llvm::APSInt::getMinValue(v.getBitWidth(), v.isUnsigned()));
+  }
 
+  inline const llvm::APSInt& getMaxValue(QualType T) {
+    assert(T->isIntegerType());
+    return getValue(llvm::APSInt::getMaxValue(Ctx.getTypeSize(T),
+                                              T->isUnsignedIntegerType()));
+  }
+  
+  inline const llvm::APSInt& getMinValue(QualType T) {
+    assert(T->isIntegerType());
+    return getValue(llvm::APSInt::getMinValue(Ctx.getTypeSize(T),
+                                              T->isUnsignedIntegerType()));
+  }
+  
   inline const llvm::APSInt& getZeroWithPtrWidth(bool isUnsigned = true) {
     return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy), isUnsigned);
   }
@@ -88,7 +108,7 @@ public:
   inline const llvm::APSInt& getTruthValue(bool b) {
     return getValue(b ? 1 : 0, Ctx.getTypeSize(Ctx.IntTy), false);
   }
-
+  
   const SymIntConstraint& getConstraint(SymbolRef sym, BinaryOperator::Opcode Op,
                                         const llvm::APSInt& V);
 
