@@ -79,14 +79,16 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
                                        DeclSpec::PQ_TypeSpecifier |
                                        DeclSpec::PQ_TypeQualifier)) == 0)
         Diag(DS.getSourceRange().getBegin(), diag::ext_missing_declspec);
-    } else {
+    } else if (!DS.hasTypeSpecifier()) {
       // C99 and C++ require a type specifier.  For example, C99 6.7.2p2 says:
       // "At least one type specifier shall be given in the declaration
       // specifiers in each declaration, and in the specifier-qualifier list in
       // each struct declaration and type name."
-      // FIXME: this should be a hard error in C++
-      if (!DS.hasTypeSpecifier())
-        Diag(DS.getSourceRange().getBegin(), diag::ext_missing_type_specifier);
+      // FIXME: Does Microsoft really have the implicit int extension in C++?
+      unsigned DK = getLangOptions().CPlusPlus && !getLangOptions().Microsoft?
+          diag::err_missing_type_specifier
+        : diag::ext_missing_type_specifier;
+      Diag(DS.getSourceRange().getBegin(), DK);
     }
       
     // FALL THROUGH.  

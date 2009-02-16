@@ -2,9 +2,11 @@
 
 // Errors
 export class foo { };   // expected-error {{expected template}}
-template  x;            // expected-error {{expected '<' after 'template'}}
+template  x;            // expected-error {{expected '<' after 'template'}} \
+// expected-error {{C++ requires a type specifier for all declarations}}
 export template x;      // expected-error {{expected '<' after 'template'}} \
-                        // expected-note {{exported templates are unsupported}}
+                        // expected-note {{exported templates are unsupported}} \
+// expected-error {{C++ requires a type specifier for all declarations}}
 // See Sema::ParsedFreeStandingDeclSpec about the double diagnostic. This is
 // because ParseNonTypeTemplateParameter starts parsing a DeclSpec.
 template < ;            // expected-error {{parse error}} expected-error {{declaration does not declare anything}}
@@ -26,8 +28,8 @@ template <typename> struct C;
 template <typename, typename> struct D;
 
 // Forward declarations with default parameters?
-template <typename T = int> X1;
-template <typename = int> X2;
+template <typename T = int> class X1;
+template <typename = int> class X2;
 
 // Forward declarations w/template template parameters
 template <template <typename> class T> class TTP1;
@@ -41,10 +43,10 @@ template <int> class NTP0;
 template <int N> class NTP1;
 template <int N = 5> class NTP2;
 template <int = 10> class NTP3;
-template <unsigned int N = 12u> NTP4;;
-template <unsigned int = 12u> NTP5;
-template <unsigned = 15u> NTP6;
-template <typename T, T Obj> NTP7;
+template <unsigned int N = 12u> class NTP4; 
+template <unsigned int = 12u> class NTP5;
+template <unsigned = 15u> class NTP6;
+template <typename T, T Obj> class NTP7;
 
 // Template class declarations
 template <typename T> struct A { };

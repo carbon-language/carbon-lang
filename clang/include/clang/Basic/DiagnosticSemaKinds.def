@@ -1375,6 +1375,8 @@ DIAG(ext_missing_declspec, EXTENSION,
      "declaration specifier missing, defaulting to 'int'")
 DIAG(ext_missing_type_specifier, EXTENSION,
      "type specifier missing, defaults to 'int'")
+DIAG(err_missing_type_specifier, ERROR,
+     "C++ requires a type specifier for all declarations")
 DIAG(warn_objc_array_of_interfaces, WARNING,
      "array of interface %0 should probably be an array of pointers")
 DIAG(ext_c99_array_usage, EXTENSION,
