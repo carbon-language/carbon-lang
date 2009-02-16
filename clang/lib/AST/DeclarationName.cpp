@@ -302,7 +302,7 @@ DeclarationNameTable::getCXXSpecialName(DeclarationName::NameKind Kind,
   switch (Kind) {
   case DeclarationName::CXXConstructorName: 
     EKind = DeclarationNameExtra::CXXConstructor;
-    assert(Ty.getCVRQualifiers() == 0 && "Constructor type must be unqualified");
+    assert(Ty.getCVRQualifiers() == 0 &&"Constructor type must be unqualified");
     break;
   case DeclarationName::CXXDestructorName:
     EKind = DeclarationNameExtra::CXXDestructor;

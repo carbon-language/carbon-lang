@@ -109,7 +109,7 @@ CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args,
                    unsigned numargs, QualType t, SourceLocation rparenloc)
   : Expr(SC, t, 
          fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
-         fn->isValueDependent() || hasAnyValueDependentArguments(args, numargs)),
+         fn->isValueDependent() || hasAnyValueDependentArguments(args,numargs)),
     NumArgs(numargs) {
       
   SubExprs = new (C) Stmt*[numargs+1];
@@ -124,7 +124,7 @@ CallExpr::CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
                    QualType t, SourceLocation rparenloc)
   : Expr(CallExprClass, t,
          fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
-         fn->isValueDependent() || hasAnyValueDependentArguments(args, numargs)),
+         fn->isValueDependent() || hasAnyValueDependentArguments(args,numargs)),
     NumArgs(numargs) {
 
   SubExprs = new (C) Stmt*[numargs+1];
@@ -245,7 +245,8 @@ InitListExpr::InitListExpr(SourceLocation lbraceloc,
 }
 
 void InitListExpr::resizeInits(ASTContext &Context, unsigned NumInits) {
-  for (unsigned Idx = NumInits, LastIdx = InitExprs.size(); Idx < LastIdx; ++Idx)
+  for (unsigned Idx = NumInits, LastIdx = InitExprs.size();
+       Idx != LastIdx; ++Idx)
     delete InitExprs[Idx];
   InitExprs.resize(NumInits, 0);
 }
@@ -1030,7 +1031,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
 
     // Initialize result to have correct signedness and width.
     Result = llvm::APSInt(static_cast<uint32_t>(Ctx.getTypeSize(getType())),
-                          !getType()->isSignedIntegerType());                          
+                          !getType()->isSignedIntegerType());
     
     // The LHS of a constant expr is always evaluated and needed.
     if (!Exp->getLHS()->isIntegerConstantExpr(LHS, Ctx, Loc, isEvaluated))
@@ -1549,18 +1550,21 @@ DesignatedInitExpr::Create(ASTContext &C, Designator *Designators,
 
 SourceRange DesignatedInitExpr::getSourceRange() const {
   SourceLocation StartLoc;
-  Designator &First = *const_cast<DesignatedInitExpr*>(this)->designators_begin();
+  Designator &First =
+    *const_cast<DesignatedInitExpr*>(this)->designators_begin();
   if (First.isFieldDesignator()) {
     if (UsesColonSyntax)
       StartLoc = SourceLocation::getFromRawEncoding(First.Field.FieldLoc);
     else
       StartLoc = SourceLocation::getFromRawEncoding(First.Field.DotLoc);
   } else
-    StartLoc = SourceLocation::getFromRawEncoding(First.ArrayOrRange.LBracketLoc);
+    StartLoc =
+      SourceLocation::getFromRawEncoding(First.ArrayOrRange.LBracketLoc);
   return SourceRange(StartLoc, getInit()->getSourceRange().getEnd());
 }
 
-DesignatedInitExpr::designators_iterator DesignatedInitExpr::designators_begin() {
+DesignatedInitExpr::designators_iterator
+DesignatedInitExpr::designators_begin() {
   char* Ptr = static_cast<char*>(static_cast<void *>(this));
   Ptr += sizeof(DesignatedInitExpr);
   return static_cast<Designator*>(static_cast<void*>(Ptr));
@@ -1645,7 +1649,7 @@ Stmt::child_iterator IntegerLiteral::child_begin() { return child_iterator(); }
 Stmt::child_iterator IntegerLiteral::child_end() { return child_iterator(); }
 
 // CharacterLiteral
-Stmt::child_iterator CharacterLiteral::child_begin() { return child_iterator(); }
+Stmt::child_iterator CharacterLiteral::child_begin() { return child_iterator();}
 Stmt::child_iterator CharacterLiteral::child_end() { return child_iterator(); }
 
 // FloatingLiteral

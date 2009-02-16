@@ -231,7 +231,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   
   // For Selectors, we must read the identifier table first because the
   //  SelectorTable depends on the identifiers being already deserialized.
-  llvm::Deserializer::Location SelectorBlkLoc = Dezr.getCurrentBlockLocation();  
+  llvm::Deserializer::Location SelectorBlkLoc = Dezr.getCurrentBlockLocation();
   Dezr.SkipBlock();
   
   // Read the identifier table.
