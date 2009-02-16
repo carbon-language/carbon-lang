@@ -478,12 +478,6 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCInterface; }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const ObjCInterfaceDecl *D) {
-    return static_cast<DeclContext *>(const_cast<ObjCInterfaceDecl*>(D));
-  }
-  static ObjCInterfaceDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<ObjCInterfaceDecl *>(const_cast<DeclContext*>(DC));
-  }
 };
 
 /// ObjCIvarDecl - Represents an ObjC instance variable. In general, ObjC
@@ -633,12 +627,6 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCProtocol; }
   static bool classof(const ObjCProtocolDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const ObjCProtocolDecl *D) {
-    return static_cast<DeclContext *>(const_cast<ObjCProtocolDecl*>(D));
-  }
-  static ObjCProtocolDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<ObjCProtocolDecl *>(const_cast<DeclContext*>(DC));
-  }
 };
   
 /// ObjCClassDecl - Specifies a list of forward class declarations. For example:
@@ -816,12 +804,6 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategory; }
   static bool classof(const ObjCCategoryDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const ObjCCategoryDecl *D) {
-    return static_cast<DeclContext *>(const_cast<ObjCCategoryDecl*>(D));
-  }
-  static ObjCCategoryDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<ObjCCategoryDecl *>(const_cast<DeclContext*>(DC));
-  }
 };
 
 /// ObjCCategoryImplDecl - An object of this class encapsulates a category 

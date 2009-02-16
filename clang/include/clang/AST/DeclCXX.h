@@ -357,12 +357,6 @@ public:
 
   static bool classof(const Decl *D) { return D->getKind() == CXXRecord; }
   static bool classof(const CXXRecordDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const CXXRecordDecl *D) {
-    return static_cast<DeclContext *>(const_cast<CXXRecordDecl*>(D));
-  }
-  static CXXRecordDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<CXXRecordDecl *>(const_cast<DeclContext*>(DC));
-  }
 
 protected:
   /// EmitImpl - Serialize this CXXRecordDecl.  Called by Decl::Emit.
@@ -425,12 +419,6 @@ public:
     return D->getKind() >= CXXMethod && D->getKind() <= CXXConversion;
   }
   static bool classof(const CXXMethodDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const CXXMethodDecl *D) {
-    return static_cast<DeclContext *>(const_cast<CXXMethodDecl*>(D));
-  }
-  static CXXMethodDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<CXXMethodDecl *>(const_cast<DeclContext*>(DC));
-  }
 
 protected:
   /// EmitImpl - Serialize this CXXMethodDecl.  Called by Decl::Emit.
@@ -638,12 +626,6 @@ public:
     return D->getKind() == CXXConstructor;
   }
   static bool classof(const CXXConstructorDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const CXXConstructorDecl *D) {
-    return static_cast<DeclContext *>(const_cast<CXXConstructorDecl*>(D));
-  }
-  static CXXConstructorDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<CXXConstructorDecl *>(const_cast<DeclContext*>(DC));
-  }
   /// EmitImpl - Serialize this CXXConstructorDecl.  Called by Decl::Emit.
   // FIXME: Implement this.
   //virtual void EmitImpl(llvm::Serializer& S) const;
@@ -708,12 +690,6 @@ public:
     return D->getKind() == CXXDestructor;
   }
   static bool classof(const CXXDestructorDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const CXXDestructorDecl *D) {
-    return static_cast<DeclContext *>(const_cast<CXXDestructorDecl*>(D));
-  }
-  static CXXDestructorDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<CXXDestructorDecl *>(const_cast<DeclContext*>(DC));
-  }
   /// EmitImpl - Serialize this CXXDestructorDecl.  Called by Decl::Emit.
   // FIXME: Implement this.
   //virtual void EmitImpl(llvm::Serializer& S) const;
@@ -766,12 +742,6 @@ public:
     return D->getKind() == CXXConversion;
   }
   static bool classof(const CXXConversionDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const CXXConversionDecl *D) {
-    return static_cast<DeclContext *>(const_cast<CXXConversionDecl*>(D));
-  }
-  static CXXConversionDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<CXXConversionDecl *>(const_cast<DeclContext*>(DC));
-  }
   /// EmitImpl - Serialize this CXXConversionDecl.  Called by Decl::Emit.
   // FIXME: Implement this.
   //virtual void EmitImpl(llvm::Serializer& S) const;
@@ -878,6 +848,12 @@ public:
     return D->getKind() == LinkageSpec;
   }
   static bool classof(const LinkageSpecDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const LinkageSpecDecl *D) {
+    return static_cast<DeclContext *>(const_cast<LinkageSpecDecl*>(D));
+  }
+  static LinkageSpecDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<LinkageSpecDecl *>(const_cast<DeclContext*>(DC));
+  }
   
 protected:
   void EmitInRec(llvm::Serializer& S) const;
