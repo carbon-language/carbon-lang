@@ -81,3 +81,14 @@ int t5() {
   return f.FooBar; // expected-warning {{warning: 'FooBar' is deprecated}}
 }
 
+
+__attribute ((deprecated))  
+@interface DEPRECATED {
+  @public int ivar; 
+} 
+- (int) instancemethod;
+@property  int prop; 
+@end
+
+@interface DEPRECATED (Category) // expected-warning {{warning: 'DEPRECATED' is deprecated}}
+@end

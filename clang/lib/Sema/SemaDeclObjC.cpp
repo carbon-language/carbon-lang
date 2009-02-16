@@ -263,12 +263,7 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
       continue;
     }
     
-    if (PDecl->getAttr<UnavailableAttr>())
-      Diag(ProtocolId[i].second, diag::warn_unavailable) << 
-           PDecl->getDeclName();
-    if (PDecl->getAttr<DeprecatedAttr>())
-      Diag(ProtocolId[i].second, diag::warn_deprecated) << 
-        PDecl->getDeclName();
+    DiagnoseUseOfDeprecatedDeclImpl(PDecl, ProtocolId[i].second);
 
     // If this is a forward declaration and we are supposed to warn in this
     // case, do it.
@@ -489,6 +484,9 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
   }
 
   CDecl->setClassInterface(IDecl);
+  
+  // If the interface is deprecated, warn about it.
+  DiagnoseUseOfDeprecatedDeclImpl(IDecl, ClassLoc);
 
   /// Check for duplicate interface declaration for this category
   ObjCCategoryDecl *CDeclChain;
