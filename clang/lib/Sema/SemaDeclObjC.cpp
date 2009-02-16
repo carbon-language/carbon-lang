@@ -108,6 +108,11 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
 
     ObjCInterfaceDecl *SuperClassDecl = 
                                   dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
+
+    // Diagnose classes that inherit from deprecated classes.
+    if (SuperClassDecl)
+      DiagnoseUseOfDeprecatedDeclImpl(SuperClassDecl, SuperLoc);
+    
     if (PrevDecl && SuperClassDecl == 0) {
       // The previous declaration was not a class decl. Check if we have a
       // typedef. If we do, get the underlying class type.
@@ -118,6 +123,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
             SuperClassDecl = dyn_cast<ObjCInterfaceDecl>(IDecl);
         }
       }
+      
       // This handles the following case:
       //
       // typedef int SuperClass;
@@ -128,6 +134,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
         Diag(PrevDecl->getLocation(), diag::note_previous_definition);
       }
     }
+    
     if (!dyn_cast_or_null<TypedefDecl>(PrevDecl)) {
       if (!SuperClassDecl)
         Diag(SuperLoc, diag::err_undef_superclass)

@@ -92,3 +92,8 @@ __attribute ((deprecated))
 
 @interface DEPRECATED (Category) // expected-warning {{warning: 'DEPRECATED' is deprecated}}
 @end
+
+@interface NS : DEPRECATED  // expected-warning {{warning: 'DEPRECATED' is deprecated}}
+@end
+
+
