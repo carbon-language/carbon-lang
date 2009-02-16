@@ -514,11 +514,12 @@ ObjCPropertyImplDecl *ObjCImplementationDecl::FindPropertyImplIvarDecl(Identifie
 }
 
 /// FindPropertyImplIvarDecl - This method lookup the ivar in the list of
-/// properties implemented in this category @implementation block and returns the 
-/// implemented property that uses it.
+/// properties implemented in this category @implementation block and returns
+/// the implemented property that uses it.
 ///
-ObjCPropertyImplDecl *ObjCCategoryImplDecl::FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
-  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i) {
+ObjCPropertyImplDecl *ObjCCategoryImplDecl::
+FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
+  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
     ObjCPropertyImplDecl *PID = *i;
     if (PID->getPropertyIvarDecl() &&
         PID->getPropertyIvarDecl()->getIdentifier() == ivarId)
@@ -531,8 +532,9 @@ ObjCPropertyImplDecl *ObjCCategoryImplDecl::FindPropertyImplIvarDecl(IdentifierI
 /// added to the list of those properties @synthesized/@dynamic in this
 /// category @implementation block.
 ///
-ObjCPropertyImplDecl *ObjCCategoryImplDecl::FindPropertyImplDecl(IdentifierInfo *Id) const {
-  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i) {
+ObjCPropertyImplDecl *ObjCCategoryImplDecl::
+FindPropertyImplDecl(IdentifierInfo *Id) const {
+  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
     ObjCPropertyImplDecl *PID = *i;
     if (PID->getPropertyDecl()->getIdentifier() == Id)
       return PID;
