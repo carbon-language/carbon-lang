@@ -233,22 +233,6 @@ ObjCCategoryDecl *
     return 0;
 }
 
-/// FindIvarDeclaration - Find an Ivar declaration in this class given its
-/// name in 'IvarId'. On failure to find, return 0;
-///
-ObjCIvarDecl *
-  ObjCInterfaceDecl::FindIvarDeclaration(IdentifierInfo *IvarId) const {
-  for (ObjCInterfaceDecl::ivar_iterator IVI = ivar_begin(), 
-       IVE = ivar_end(); IVI != IVE; ++IVI) {
-    ObjCIvarDecl* Ivar = (*IVI);
-    if (Ivar->getIdentifier() == IvarId)
-      return Ivar;
-  }
-  if (getSuperClass())
-    return getSuperClass()->FindIvarDeclaration(IvarId);
-  return 0;
-}
-
 /// ObjCAddInstanceVariablesToClass - Inserts instance variables
 /// into ObjCInterfaceDecl's fields.
 ///

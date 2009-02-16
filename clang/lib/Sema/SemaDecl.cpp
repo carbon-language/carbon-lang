@@ -3660,7 +3660,7 @@ void Sema::ActOnFields(Scope* S,
              IVE = ID->ivar_end(); IVI != IVE; ++IVI) {
           ObjCIvarDecl* Ivar = (*IVI);
           IdentifierInfo *II = Ivar->getIdentifier();
-          ObjCIvarDecl* prevIvar = ID->getSuperClass()->FindIvarDeclaration(II);
+          ObjCIvarDecl* prevIvar = ID->getSuperClass()->lookupInstanceVariable(II);
           if (prevIvar) {
             Diag(Ivar->getLocation(), diag::err_duplicate_member) << II;
             Diag(prevIvar->getLocation(), diag::note_previous_declaration);

@@ -407,7 +407,6 @@ public:
   }
   
   ObjCCategoryDecl *FindCategoryDeclaration(IdentifierInfo *CategoryId) const;
-  ObjCIvarDecl *FindIvarDeclaration(IdentifierInfo *IvarId) const;
 
   typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}

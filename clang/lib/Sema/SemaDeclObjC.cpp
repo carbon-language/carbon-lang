@@ -1698,7 +1698,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     if (!PropertyIvar)
       PropertyIvar = PropertyId;
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
-    Ivar = IDecl->FindIvarDeclaration(PropertyIvar);
+    Ivar = IDecl->lookupInstanceVariable(PropertyIvar);
     if (!Ivar) {
       Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
       return 0;
