@@ -680,8 +680,7 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
 /// qualifiers on T1 and T2 are ignored. This function will typically
 /// be called in a loop that successively "unwraps" pointer and
 /// pointer-to-member types to compare them at each level.
-bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2)
-{
+bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2) {
   const PointerType *T1PtrType = T1->getAsPointerType(),
                     *T2PtrType = T2->getAsPointerType();
   if (T1PtrType && T2PtrType) {
