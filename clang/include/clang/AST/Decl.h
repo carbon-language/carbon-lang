@@ -535,6 +535,7 @@ private:
   bool IsInline : 1;
   bool IsVirtual : 1;
   bool IsPure : 1;
+  bool InheritedPrototype : 1;
 
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
@@ -547,7 +548,7 @@ protected:
       DeclContext(DK),
       ParamInfo(0), Body(0), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), IsVirtual(false), IsPure(false),
-      TypeSpecStartLoc(TSSL) {}
+      InheritedPrototype(false), TypeSpecStartLoc(TSSL) {}
 
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
@@ -589,6 +590,11 @@ public:
   /// abstract.
   bool isPure() { return IsPure; }
   void setPure() { IsPure = true; }
+
+  /// \brief Whether this function inherited its prototype from a
+  /// previous declaration.
+  bool inheritedPrototype() { return InheritedPrototype; }
+  void setInheritedPrototype() { InheritedPrototype = true; }
 
   /// getPreviousDeclaration - Return the previous declaration of this
   /// function.

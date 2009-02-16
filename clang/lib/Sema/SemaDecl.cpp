@@ -593,7 +593,24 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // duplicate function decls like "void f(int); void f(enum X);" properly.
   if (!getLangOptions().CPlusPlus &&
       Context.typesAreCompatible(OldQType, NewQType)) {
+    const FunctionType *NewFuncType = NewQType->getAsFunctionType();
+    const FunctionTypeProto *OldProto = 0;
+    if (isa<FunctionTypeNoProto>(NewFuncType) &&
+        (OldProto = OldQType->getAsFunctionTypeProto())) {
+      // The old declaration provided a function prototype, but the
+      // new declaration does not. Merge in the prototype.
+      llvm::SmallVector<QualType, 16> ParamTypes(OldProto->arg_type_begin(),
+                                                 OldProto->arg_type_end());
+      NewQType = Context.getFunctionType(NewFuncType->getResultType(),
+                                         &ParamTypes[0], ParamTypes.size(),
+                                         OldProto->isVariadic(),
+                                         OldProto->getTypeQuals());
+      New->setType(NewQType);
+      New->setInheritedPrototype();
+    }
+
     MergeAttributes(New, Old);
+    
     return false;
   }
 
