@@ -105,6 +105,14 @@ public:
     return strpbrk(GetRecord(ID).Type, "Aa") != 0;
   }
   
+  /// isConstWithoutErrno - Return true if this function has no side
+  /// effects and doesn't read memory, except for possibly errno. Such
+  /// functions can be const when the MathErrno lang option is
+  /// disabled.
+  bool isConstWithoutErrno(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'e') != 0;
+  }
+
   /// GetBuiltinType - Return the type for the specified builtin.
   enum GetBuiltinTypeError {
     GE_None, //< No error

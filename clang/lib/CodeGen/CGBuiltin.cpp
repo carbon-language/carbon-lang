@@ -36,7 +36,8 @@ static RValue EmitBinaryAtomic(CodeGenFunction& CFG,
                                              CFG.EmitScalarExpr(E->getArg(1))));
 }
 
-RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
+RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD, 
+                                        unsigned BuiltinID, const CallExpr *E) {
   // See if we can constant fold this builtin.  If so, don't emit it at all.
   Expr::EvalResult Result;
   if (E->Evaluate(Result, CGM.getContext())) {
@@ -324,6 +325,34 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   }
   case Builtin::BI__sync_lock_test_and_set:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
+
+
+    // Library functions with special handling.
+
+  case Builtin::BIsqrt:
+  case Builtin::BIsqrtf:
+  case Builtin::BIsqrtl: {
+    // Rewrite sqrt to intrinsic if allowed.
+    if (!FD->getAttr<ConstAttr>())
+      break;
+    Value *Arg0 = EmitScalarExpr(E->getArg(0));
+    const llvm::Type *ArgType = Arg0->getType();
+    Value *F = CGM.getIntrinsic(Intrinsic::sqrt, &ArgType, 1);
+    return RValue::get(Builder.CreateCall(F, Arg0, "tmp"));
+  }
+
+  case Builtin::BIpow:
+  case Builtin::BIpowf:
+  case Builtin::BIpowl: {
+    // Rewrite sqrt to intrinsic if allowed.
+    if (!FD->getAttr<ConstAttr>())
+      break;
+    Value *Base = EmitScalarExpr(E->getArg(0));
+    Value *Exponent = EmitScalarExpr(E->getArg(1));
+    const llvm::Type *ArgType = Base->getType();
+    Value *F = CGM.getIntrinsic(Intrinsic::pow, &ArgType, 1);
+    return RValue::get(Builder.CreateCall2(F, Base, Exponent, "tmp"));
+  }
   }
   
   // If this is an alias for a libm function (e.g. __builtin_sin) turn it into

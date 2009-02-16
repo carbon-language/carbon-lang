@@ -63,6 +63,7 @@
 //  P:N: -> similar to the p:N: attribute, but the function is like vprintf
 //          in that it accepts its arguments as a va_list rather than 
 //          through an ellipsis
+//  e -> const, but only when -fmath-errno=0
 //  FIXME: gcc has nonnull
 
 #if defined(BUILTIN) && !defined(LIBBUILTIN)
@@ -176,7 +177,7 @@ BUILTIN(__sync_fetch_and_min,"ii*i", "n")
 BUILTIN(__sync_fetch_and_max,"ii*i", "n")
 BUILTIN(__sync_fetch_and_umin,"UiUi*Ui", "n")
 BUILTIN(__sync_fetch_and_umax,"UiUi*Ui", "n")
-BUILTIN(__sync_fetch_and_and,"ii*i", "n")                                                        
+BUILTIN(__sync_fetch_and_and,"ii*i", "n")
 BUILTIN(__sync_fetch_and_or,"ii*i", "n")
 BUILTIN(__sync_fetch_and_xor,"ii*i", "n")
 BUILTIN(__sync_lock_test_and_set,"ii*i", "n")
@@ -215,6 +216,15 @@ LIBBUILTIN(vsprintf, "ic*cC*a",   "fP:1:", "stdio.h")
 
 // FIXME: asprintf and vasprintf aren't C99 functions. Should they be
 // target-specific builtins, perhaps? 
+
+// Builtin math library functions
+LIBBUILTIN(pow, "ddd", "fe", "math.h")
+LIBBUILTIN(powl, "LdLdLd", "fe", "math.h")
+LIBBUILTIN(powf, "fff", "fe", "math.h")
+
+LIBBUILTIN(sqrt, "dd", "fe", "math.h")
+LIBBUILTIN(sqrtl, "LdLd", "fe", "math.h")
+LIBBUILTIN(sqrtf, "ff", "fe", "math.h")
 
 #undef BUILTIN
 #undef LIBBUILTIN

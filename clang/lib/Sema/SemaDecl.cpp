@@ -2956,6 +2956,15 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
       if (!FD->getAttr<FormatAttr>())
         FD->addAttr(new FormatAttr("printf", FormatIdx + 1, FormatIdx + 2));
     }
+
+    // Mark const if we don't care about errno and that is the only
+    // thing preventing the function from being const. This allows
+    // IRgen to use LLVM intrinsics for such functions.
+    if (!getLangOptions().MathErrno &&
+        Context.BuiltinInfo.isConstWithoutErrno(BuiltinID)) {
+      if (!FD->getAttr<ConstAttr>())
+        FD->addAttr(new ConstAttr());
+    }
   }
 
   IdentifierInfo *Name = FD->getIdentifier();

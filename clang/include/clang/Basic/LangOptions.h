@@ -54,6 +54,9 @@ public:
   unsigned Blocks            : 1; // block extension to C
   unsigned EmitAllDecls      : 1; // Emit all declarations, even if
                                   // they are unused.
+  unsigned MathErrno         : 1; // Math functions must respect errno
+                                  // (modulo the platform support).
+
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -76,6 +79,7 @@ public:
     ThreadsafeStatics = 0;
     Blocks = 0;
     EmitAllDecls = 0;
+    MathErrno = 1;
   }
   
   GCMode getGCMode() const { return (GCMode) GC; }

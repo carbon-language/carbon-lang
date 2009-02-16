@@ -213,8 +213,13 @@ InheritanceViewCls("cxx-inheritance-view",
 //===----------------------------------------------------------------------===//
 static llvm::cl::opt<bool>
 Freestanding("ffreestanding",
-             llvm::cl::desc("Assert that the compiler takes place in a "
+             llvm::cl::desc("Assert that the compilation takes place in a "
                             "freestanding environment"));
+
+static llvm::cl::opt<bool>
+MathErrno("fmath-errno", 
+          llvm::cl::desc("Require math functions to respect errno."),
+          llvm::cl::init(true));
 
 //===----------------------------------------------------------------------===//
 // Analyzer Options.
@@ -646,6 +651,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   if (Freestanding)
     Options.Freestanding = 1;
+
+  Options.MathErrno = MathErrno;
 
   // Override the default runtime if the user requested it.
   if (NeXTRuntime)
@@ -1238,8 +1245,7 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
 //===----------------------------------------------------------------------===//
 
 static llvm::cl::opt<bool>
-OptSize("Os", 
-       llvm::cl::desc("Optimize for size"));
+OptSize("Os", llvm::cl::desc("Optimize for size"));
 
 // It might be nice to add bounds to the CommandLine library directly.
 struct OptLevelParser : public llvm::cl::parser<unsigned> {

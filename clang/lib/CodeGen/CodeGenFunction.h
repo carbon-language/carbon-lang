@@ -631,7 +631,8 @@ public:
                       CallExpr::const_arg_iterator ArgBeg,
                       CallExpr::const_arg_iterator ArgEnd);
 
-  RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
+  RValue EmitBuiltinExpr(const FunctionDecl *FD, 
+                         unsigned BuiltinID, const CallExpr *E);
 
   RValue EmitBlockCallExpr(const CallExpr *E);
   
