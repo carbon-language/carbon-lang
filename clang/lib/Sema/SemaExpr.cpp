@@ -600,6 +600,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     if (D == 0 || D->isDefinedOutsideFunctionOrMethod()) {
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
       if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II)) {
+        // Check if referencing a field with __attribute__((deprecated)).
+        DiagnoseUseOfDeprecatedDecl(IV, Loc);
+
         // FIXME: This should use a new expr for a direct reference, don't turn
         // this into Self->ivar, just return a BareIVarExpr or something.
         IdentifierInfo &II = Context.Idents.get("self");
@@ -771,6 +774,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   DiagnoseUseOfDeprecatedDecl(VD, Loc);
   
   if (VarDecl *Var = dyn_cast<VarDecl>(VD)) {
+    // Warn about constructs like:
+    //   if (void *X = foo()) { ... } else { X }.
+    // In the else block, the pointer is always false.
     if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
       Scope *CheckS = S;
       while (CheckS) {
@@ -1653,6 +1659,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // error cases.
       if (IV->isInvalidDecl())
         return ExprError();
+      
+      // Check if referencing a field with __attribute__((deprecated)).
+      DiagnoseUseOfDeprecatedDecl(IV, MemberLoc);
       
       ObjCIvarRefExpr *MRef= new (Context) ObjCIvarRefExpr(IV, IV->getType(), 
                                                  MemberLoc, BaseExpr,

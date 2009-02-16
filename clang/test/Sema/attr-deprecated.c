@@ -40,3 +40,4 @@ struct foo {
 void test1(struct foo *F) {
   ++F->x;  // expected-warning {{'x' is deprecated}}
 }
+

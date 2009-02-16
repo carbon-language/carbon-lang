@@ -1,6 +1,8 @@
 // RUN: clang %s -fsyntax-only -verify
 
-@interface A
+@interface A {
+  int X __attribute__((deprecated));
+}
 + (void)F __attribute__((deprecated));
 - (void)f __attribute__((deprecated));
 @end
@@ -13,6 +15,8 @@
 
 - (void)g
 {
+  X++;        // expected-warning{{'X' is deprecated}}
+  self->X++;  // expected-warning{{'X' is deprecated}}
   [self f]; // expected-warning{{'f' is deprecated}}
 }
 
