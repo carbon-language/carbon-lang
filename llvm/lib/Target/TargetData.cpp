@@ -302,14 +302,14 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
       BestMatchIdx = LargestInt;
     } else {
       assert(AlignType == VECTOR_ALIGN && "Unknown alignment type!");
-      
+
       // If we didn't find a vector size that is smaller or equal to this type,
       // then we will end up scalarizing this to its element type.  Just return
       // the alignment of the element.
       return getAlignment(cast<VectorType>(Ty)->getElementType(), ABIInfo);
-    }    
+    }
   }
-    
+
   // Since we got a "best match" index, just return it.
   return ABIInfo ? Alignments[BestMatchIdx].ABIAlign
                  : Alignments[BestMatchIdx].PrefAlign;
@@ -475,12 +475,12 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
             : getPointerPrefAlignment());
   case Type::ArrayTyID:
     return getAlignment(cast<ArrayType>(Ty)->getElementType(), abi_or_pref);
-    
+
   case Type::StructTyID: {
     // Packed structure types always have an ABI alignment of one.
     if (cast<StructType>(Ty)->isPacked() && abi_or_pref)
       return 1;
-    
+
     // Get the layout annotation... which is lazily created on demand.
     const StructLayout *Layout = getStructLayout(cast<StructType>(Ty));
     unsigned Align = getAlignmentInfo(AGGREGATE_ALIGN, 0, abi_or_pref, Ty);
