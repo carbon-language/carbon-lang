@@ -675,44 +675,16 @@ RangeConstraintManager::RemoveDeadBindings(const GRState* St,
 
 void RangeConstraintManager::print(const GRState* St, std::ostream& Out, 
                                    const char* nl, const char *sep) {
-#if 0
-  // Print equality constraints.
-
-  ConstEqTy CE = St->get<ConstEq>();
-
-  if (!CE.isEmpty()) {
-    Out << nl << sep << "'==' constraints:";
-
-    for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I) {
-      Out << nl << " $" << I.getKey();
-      llvm::raw_os_ostream OS(Out);
-      OS << " : "   << *I.getData();
-    }
+  
+  ConstRangeTy Ranges = St->get<ConstRange>();
+  
+  if (Ranges.isEmpty())
+    return;
+  
+  Out << nl << sep << "ranges of symbol values:";
+  
+  for (ConstRangeTy::iterator I=Ranges.begin(), E=Ranges.end(); I!=E; ++I) {
+    Out << nl << " $" << I.getKey() << " : ";
+    I.getData().Print(Out);
   }
-
-  // Print != constraints.
-  
-  ConstNotEqTy CNE = St->get<ConstNotEq>();
-  
-  if (!CNE.isEmpty()) {
-    Out << nl << sep << "'!=' constraints:";
-  
-    for (ConstNotEqTy::iterator I = CNE.begin(), EI = CNE.end(); I!=EI; ++I) {
-      Out << nl << " $" << I.getKey() << " : ";
-      bool isFirst = true;
-    
-      GRState::IntSetTy::iterator J = I.getData().begin(), 
-                                  EJ = I.getData().end();      
-      
-      for ( ; J != EJ; ++J) {        
-        if (isFirst) isFirst = false;
-        else Out << ", ";
-      
-        Out << (*J)->getSExtValue(); // Hack: should print to raw_ostream.
-      }
-    }
-  }
-#endif  // 0
-
-  Out << nl << "Implement range printing";
 }
