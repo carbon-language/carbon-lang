@@ -8,7 +8,7 @@
 @implementation A
 + (void)F __attribute__((deprecated))
 {
-  [self F]; // expected-warning{{'F' is deprecated}}
+  [self F]; // no warning, since the caller is also deprecated.
 }
 
 - (void)g
