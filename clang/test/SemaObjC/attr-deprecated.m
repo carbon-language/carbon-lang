@@ -22,7 +22,7 @@
 
 - (void)f
 {
-  [self f]; // expected-warning{{'f' is deprecated}}
+  [self f]; // no warning, the caller is deprecated in its interface.
 }
 @end
 
@@ -80,5 +80,4 @@ int t5() {
   f.FooBar = 1;	   // expected-warning {{warning: 'FooBar' is deprecated}}
   return f.FooBar; // expected-warning {{warning: 'FooBar' is deprecated}}
 }
-
 
