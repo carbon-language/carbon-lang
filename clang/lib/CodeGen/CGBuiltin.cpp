@@ -280,7 +280,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__builtin_memset: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Builder.CreateCall4(CGM.getMemSetFn(), Address,
-                        EmitScalarExpr(E->getArg(1)),
+                        Builder.CreateTrunc(EmitScalarExpr(E->getArg(1)),
+                                            llvm::Type::Int8Ty),
                         EmitScalarExpr(E->getArg(2)),
                         llvm::ConstantInt::get(llvm::Type::Int32Ty, 1));
     return RValue::get(Address);

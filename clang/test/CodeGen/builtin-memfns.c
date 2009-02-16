@@ -1,4 +1,8 @@
-// RUN: clang -emit-llvm -o - %s | not grep __builtin
+// RUN: clang -arch i386 -emit-llvm -o %t %s &&
+// RUN: grep '@llvm.memset.i32' %t &&
+// RUN: grep '@llvm.memcpy.i32' %t &&
+// RUN: grep '@llvm.memmove.i32' %t &&
+// RUN: grep __builtin %t | count 0
 
 int main(int argc, char **argv) {
   unsigned char a = 0x11223344;
