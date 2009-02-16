@@ -1683,16 +1683,24 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     ObjCInterfaceDecl *IFace = IFTy->getDecl();
 
     // Search for a declared property first.
-    if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member))
+    if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member)) {
+      // Check if referencing a property with __attribute__((deprecated)).
+      DiagnoseUseOfDeprecatedDecl(PD, MemberLoc);
+
       return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
-                                           MemberLoc, BaseExpr));
+                                                     MemberLoc, BaseExpr));
+    }
 
     // Check protocols on qualified interfaces.
     for (ObjCInterfaceType::qual_iterator I = IFTy->qual_begin(),
          E = IFTy->qual_end(); I != E; ++I)
-      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member))
+      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+        // Check if referencing a property with __attribute__((deprecated)).
+        DiagnoseUseOfDeprecatedDecl(PD, MemberLoc);
+
         return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
-                                             MemberLoc, BaseExpr));
+                                                       MemberLoc, BaseExpr));
+      }
 
     // If that failed, look for an "implicit" property by seeing if the nullary
     // selector is implemented.
@@ -1719,6 +1727,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       }
     }
     if (Getter) {
+      // Check if referencing a property with __attribute__((deprecated)).
+      DiagnoseUseOfDeprecatedDecl(Getter, MemberLoc);
+      
       // If we found a getter then this may be a valid dot-reference, we
       // will look for the matching setter, in case it is needed.
       IdentifierInfo *SetterName = constructSetterName(PP.getIdentifierTable(),
@@ -1742,6 +1753,11 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         }
       }
 
+      if (Setter)
+        // Check if referencing a property with __attribute__((deprecated)).
+        DiagnoseUseOfDeprecatedDecl(Setter, MemberLoc);
+
+      
       // FIXME: we must check that the setter has property type.
       return Owned(new (Context) ObjCKVCRefExpr(Getter, Getter->getResultType(), 
                                       Setter, MemberLoc, BaseExpr));
@@ -1756,12 +1772,19 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     // Check protocols on qualified interfaces.
     for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
          E = QIdTy->qual_end(); I != E; ++I) {
-      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member))
+      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+        // Check if referencing a property with __attribute__((deprecated)).
+        DiagnoseUseOfDeprecatedDecl(PD, MemberLoc);
+        
         return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
-                                             MemberLoc, BaseExpr));
+                                                       MemberLoc, BaseExpr));
+      }
       // Also must look for a getter name which uses property syntax.
       Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
       if (ObjCMethodDecl *OMD = (*I)->getInstanceMethod(Sel)) {
+        // Check if referencing a property with __attribute__((deprecated)).
+        DiagnoseUseOfDeprecatedDecl(OMD, MemberLoc);
+        
         return Owned(new (Context) ObjCMessageExpr(BaseExpr, Sel, 
                         OMD->getResultType(), OMD, OpLoc, MemberLoc, NULL, 0));
       }

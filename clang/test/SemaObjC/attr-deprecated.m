@@ -67,3 +67,18 @@ void t4(Class c)
   [c F];
 }
 
+
+
+@interface Bar 
+
+@property (assign, setter = MySetter:) int FooBar __attribute__ ((deprecated));
+- (void) MySetter : (int) value;
+@end
+
+int t5() {
+  Bar *f;
+  f.FooBar = 1;	   // expected-warning {{warning: 'FooBar' is deprecated}}
+  return f.FooBar; // expected-warning {{warning: 'FooBar' is deprecated}}
+}
+
+
