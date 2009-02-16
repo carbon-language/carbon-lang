@@ -9237,15 +9237,23 @@ static unsigned EnforceKnownAlignment(Value *V,
     // If there is a large requested alignment and we can, bump up the alignment
     // of the global.
     if (!GV->isDeclaration()) {
-      GV->setAlignment(PrefAlign);
-      Align = PrefAlign;
+      if (GV->getAlignment() >= PrefAlign)
+        Align = GV->getAlignment();
+      else {
+        GV->setAlignment(PrefAlign);
+        Align = PrefAlign;
+      }
     }
   } else if (AllocationInst *AI = dyn_cast<AllocationInst>(V)) {
     // If there is a requested alignment and if this is an alloca, round up.  We
     // don't do this for malloc, because some systems can't respect the request.
     if (isa<AllocaInst>(AI)) {
-      AI->setAlignment(PrefAlign);
-      Align = PrefAlign;
+      if (AI->getAlignment() >= PrefAlign)
+        Align = AI->getAlignment();
+      else {
+        AI->setAlignment(PrefAlign);
+        Align = PrefAlign;
+      }
     }
   }
 
