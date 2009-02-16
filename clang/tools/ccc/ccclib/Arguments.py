@@ -1,3 +1,4 @@
+import os
 
 ###
 
@@ -1114,8 +1115,13 @@ class OptionParser:
                 # still take them as arguments).
                 pass
             elif a[0] == '@':
-                # FIXME: Handle '@'
-                raise InvalidArgumentsError('@ style argument lists are unsupported')
+                # @<filename> is only an argument list if it actually
+                # exists, otherwise it is treated like an input.
+                if os.path.exists(a[1:]):
+                    # FIXME: Handle '@'
+                    raise InvalidArgumentsError('@ style argument lists are unsupported')
+                else:
+                    args.append(PositionalArg(i, self.inputOption))
             elif a[0] == '-' and a != '-':
                 args.append(self.lookupOptForArg(i, a, it))
             else:
