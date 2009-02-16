@@ -476,6 +476,8 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
   if (PP.getLangOptions().ObjC1) {
     DefineBuiltinMacro(Buf, "__OBJC__=1");
+    if (PP.getLangOptions().ObjCNonFragileABI)
+      DefineBuiltinMacro(Buf, "__OBJC2__=1");
 
     if (PP.getLangOptions().getGCMode() == LangOptions::NonGC) {
       DefineBuiltinMacro(Buf, "__weak=");
