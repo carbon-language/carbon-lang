@@ -754,32 +754,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     Changed = true;
   }
 
-#if 0
-  // Now replace all derived expressions in the loop body with simpler
-  // expressions.
-  for (LoopInfo::block_iterator I = L->block_begin(), E = L->block_end();
-       I != E; ++I) {
-    BasicBlock *BB = *I;
-    if (LI->getLoopFor(BB) == L) {  // Not in a subloop...
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-        if (I->getType()->isInteger() &&      // Is an integer instruction
-            !I->use_empty() &&
-            !Rewriter.isInsertedInstruction(I)) {
-          SCEVHandle SH = SE->getSCEV(I);
-          Value *V = Rewriter.expandCodeFor(SH, I, I->getType());
-          if (V != I) {
-            if (isa<Instruction>(V))
-              V->takeName(I);
-            I->replaceAllUsesWith(V);
-            DeadInsts.insert(I);
-            ++NumRemoved;
-            Changed = true;
-          }
-        }
-    }
-  }
-#endif
-
   DeleteTriviallyDeadInstructions(DeadInsts);
   assert(L->isLCSSAForm());
   return Changed;
