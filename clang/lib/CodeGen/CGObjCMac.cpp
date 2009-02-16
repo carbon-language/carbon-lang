@@ -739,26 +739,15 @@ public:
     CGF.ErrorUnsupported(&S, "throw statement");
   }
   virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
-                                         llvm::Value *AddrWeakObj) {
-    assert(0 && "FIXME: Implement EmitObjCWeakRead for non-fragile ABI");
-    return 0;
-  }
+                                         llvm::Value *AddrWeakObj);
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
-                                  llvm::Value *src, llvm::Value *dst) {
-    assert(0 && "FIXME: Implement EmitObjCWeakAssign for non-fragile ABI");
-  }
+                                  llvm::Value *src, llvm::Value *dst);
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                    llvm::Value *src, llvm::Value *dest) {
-    assert(0 && "FIXME: Implement EmitObjCGlobalAssign for non-fragile ABI");
-  }
+                                    llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                  llvm::Value *src, llvm::Value *dest) {
-    assert(0 && "FIXME: Implement EmitObjCIvarAssign for non-fragile ABI");
-  }
+                                  llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
-                                        llvm::Value *src, llvm::Value *dest) {
-    assert(0 && "FIXME: Implement EmitObjCStrongCastAssign for non-fragile ABI");
-  }
+                                        llvm::Value *src, llvm::Value *dest);
   virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                       QualType ObjectTy,
                                       llvm::Value *BaseValue,
@@ -4643,6 +4632,71 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
   }
   
   return Builder.CreateLoad(Entry, false, "tmp");
+}
+/// EmitObjCIvarAssign - Code gen for assigning to a __strong object.
+/// objc_assign_ivar (id src, id *dst)
+///
+void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
+                                   llvm::Value *src, llvm::Value *dst)
+{
+  src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
+  dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
+  CGF.Builder.CreateCall2(ObjCTypes.GcAssignIvarFn,
+                          src, dst, "assignivar");
+  return;
+}
+
+/// EmitObjCStrongCastAssign - Code gen for assigning to a __strong cast object.
+/// objc_assign_strongCast (id src, id *dst)
+///
+void CGObjCNonFragileABIMac::EmitObjCStrongCastAssign(
+                                         CodeGen::CodeGenFunction &CGF,
+                                         llvm::Value *src, llvm::Value *dst)
+{
+  src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
+  dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
+  CGF.Builder.CreateCall2(ObjCTypes.GcAssignStrongCastFn,
+                          src, dst, "weakassign");
+  return;
+}
+
+/// EmitObjCWeakRead - Code gen for loading value of a __weak
+/// object: objc_read_weak (id *src)
+///
+llvm::Value * CGObjCNonFragileABIMac::EmitObjCWeakRead(
+                                          CodeGen::CodeGenFunction &CGF,
+                                          llvm::Value *AddrWeakObj)
+{
+  AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj, ObjCTypes.PtrObjectPtrTy); 
+  llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.GcReadWeakFn,
+                                                  AddrWeakObj, "weakread");
+  return read_weak;
+}
+
+/// EmitObjCWeakAssign - Code gen for assigning to a __weak object.
+/// objc_assign_weak (id src, id *dst)
+///
+void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
+                                   llvm::Value *src, llvm::Value *dst)
+{
+  src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
+  dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
+  CGF.Builder.CreateCall2(ObjCTypes.GcAssignWeakFn,
+                          src, dst, "weakassign");
+  return;
+}
+
+/// EmitObjCGlobalAssign - Code gen for assigning to a __strong object.
+/// objc_assign_global (id src, id *dst)
+///
+void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
+                                     llvm::Value *src, llvm::Value *dst)
+{
+  src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
+  dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
+  CGF.Builder.CreateCall2(ObjCTypes.GcAssignGlobalFn,
+                          src, dst, "globalassign");
+  return;
 }
 
 /* *** */
