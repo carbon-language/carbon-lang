@@ -1599,6 +1599,12 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
 
             PotentialDeadStoreSlots.push_back(ReuseSlot);
           }
+
+          // Assumes this is the last use. IsKill will be unset if reg is reused
+          // unless it's a two-address operand.
+          if (ti == -1)
+            MI.getOperand(i).setIsKill();
+
           continue;
         }  // CanReuse
         
@@ -1764,6 +1770,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                 DefMO = NextMII->findRegisterDefOperand(DestReg);
                 DefMO->setSubReg(SubIdx);
               }
+
+              // Mark is killed.
+              MachineOperand *KillOpnd = NextMII->findRegisterUseOperand(InReg);
+              KillOpnd->setIsKill();
+
               BackTracked = true;
             } else {
               DOUT << "Removing now-noop copy: " << MI;

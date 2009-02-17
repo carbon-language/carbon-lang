@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin9
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin9 -stats |& grep asm-printer | grep 186
+; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin9 -stats |& grep asm-printer | grep 185
 
 	%"struct.Adv5::Ekin<3>" = type <{ i8 }>
 	%"struct.Adv5::X::Energyflux<3>" = type { double }
