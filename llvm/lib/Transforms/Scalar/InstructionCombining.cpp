@@ -8271,32 +8271,35 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
 
   Value *Src = CI.getOperand(0);
 
-  // If this is a cast of a cast
-  if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {   // A->B->C cast
-    // If this is a TRUNC followed by a ZEXT then we are dealing with integral
-    // types and if the sizes are just right we can convert this into a logical
-    // 'and' which will be much cheaper than the pair of casts.
-    if (isa<TruncInst>(CSrc)) {
-      // Get the sizes of the types involved
-      Value *A = CSrc->getOperand(0);
-      uint32_t SrcSize = A->getType()->getPrimitiveSizeInBits();
-      uint32_t MidSize = CSrc->getType()->getPrimitiveSizeInBits();
-      uint32_t DstSize = CI.getType()->getPrimitiveSizeInBits();
-      // If we're actually extending zero bits and the trunc is a no-op
-      if (MidSize < DstSize && SrcSize == DstSize) {
-        // Replace both of the casts with an And of the type mask.
-        APInt AndValue(APInt::getLowBitsSet(SrcSize, MidSize));
-        Constant *AndConst = ConstantInt::get(AndValue);
-        Instruction *And = 
-          BinaryOperator::CreateAnd(CSrc->getOperand(0), AndConst);
-        // Unfortunately, if the type changed, we need to cast it back.
-        if (And->getType() != CI.getType()) {
-          And->setName(CSrc->getName()+".mask");
-          InsertNewInstBefore(And, CI);
-          And = CastInst::CreateIntegerCast(And, CI.getType(), false/*ZExt*/);
-        }
-        return And;
-      }
+  // If this is a TRUNC followed by a ZEXT then we are dealing with integral
+  // types and if the sizes are just right we can convert this into a logical
+  // 'and' which will be much cheaper than the pair of casts.
+  if (TruncInst *CSrc = dyn_cast<TruncInst>(Src)) {   // A->B->C cast
+    // Get the sizes of the types involved.  We know that the intermediate type
+    // will be smaller than A or C, but don't know the relation between A and C.
+    Value *A = CSrc->getOperand(0);
+    unsigned SrcSize = A->getType()->getPrimitiveSizeInBits();
+    unsigned MidSize = CSrc->getType()->getPrimitiveSizeInBits();
+    unsigned DstSize = CI.getType()->getPrimitiveSizeInBits();
+    // If we're actually extending zero bits, then if
+    // SrcSize <  DstSize: zext(a & mask)
+    // SrcSize == DstSize: a & mask
+    // SrcSize  > DstSize: trunc(a) & mask
+    if (SrcSize < DstSize) {
+      APInt AndValue(APInt::getLowBitsSet(SrcSize, MidSize));
+      Constant *AndConst = ConstantInt::get(AndValue);
+      Instruction *And =
+        BinaryOperator::CreateAnd(A, AndConst, CSrc->getName()+".mask");
+      InsertNewInstBefore(And, CI);
+      return new ZExtInst(And, CI.getType());
+    } else if (SrcSize == DstSize) {
+      APInt AndValue(APInt::getLowBitsSet(SrcSize, MidSize));
+      return BinaryOperator::CreateAnd(A, ConstantInt::get(AndValue));
+    } else if (SrcSize > DstSize) {
+      Instruction *Trunc = new TruncInst(A, CI.getType(), "tmp");
+      InsertNewInstBefore(Trunc, CI);
+      APInt AndValue(APInt::getLowBitsSet(DstSize, MidSize));
+      return BinaryOperator::CreateAnd(Trunc, ConstantInt::get(AndValue));
     }
   }
 
