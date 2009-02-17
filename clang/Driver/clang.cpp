@@ -218,7 +218,7 @@ Freestanding("ffreestanding",
 
 static llvm::cl::opt<bool>
 MathErrno("fmath-errno", 
-          llvm::cl::desc("Require math functions to respect errno."),
+          llvm::cl::desc("Require math functions to respect errno"),
           llvm::cl::init(true));
 
 //===----------------------------------------------------------------------===//
