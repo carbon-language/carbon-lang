@@ -108,9 +108,10 @@ class GCC_PrecompileTool(GCC_Common_Tool):
 
 class GCC_AssembleTool(GCC_Common_Tool):
     def __init__(self):
-        # We can't generally assume the assembler can take or output
-        # on pipes.
-        super(GCC_AssembleTool, self).__init__('gcc (as)')
+        # Assume that gcc will do any magic necessary to let the
+        # assembler take piped input.
+        super(GCC_AssembleTool, self).__init__('gcc (as)',
+                                               Tool.eFlagsPipedInput)
 
     def getGCCExtraArgs(self):
         return ['-c']
