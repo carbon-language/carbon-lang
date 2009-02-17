@@ -89,6 +89,10 @@ namespace llvm {
                                       const SCEVHandle &Conc,
                                       ScalarEvolution &SE) const = 0;
 
+    /// dominates - Return true if elements that makes up this SCEV dominates
+    /// the specified basic block.
+    virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const = 0;
+
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
     /// purposes.
@@ -123,6 +127,10 @@ namespace llvm {
     replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                       const SCEVHandle &Conc,
                                       ScalarEvolution &SE) const;
+
+    virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const {
+      return true;
+    }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVCouldNotCompute *S) { return true; }

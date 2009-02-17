@@ -438,16 +438,11 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
   Start = SE->getAddExpr(Start, AddRec->getOperand(0));
   
   if (!isa<SCEVConstant>(AddRec->getOperand(1))) {
-    // If stride is an instruction, make sure it dominates the loop header.
+    // If stride is an instruction, make sure it dominates the loop preheader.
     // Otherwise we could end up with a use before def situation.
-    if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(AddRec->getOperand(1))) {
-      if (Instruction *I = dyn_cast<Instruction>(SU->getValue())) {
-        BasicBlock *StrideBB = I->getParent();
-        BasicBlock *Preheader = L->getLoopPreheader();
-        if (!DT->dominates(StrideBB, Preheader))
-          return false;
-      }
-    }
+    BasicBlock *Preheader = L->getLoopPreheader();
+    if (!AddRec->getOperand(1)->dominates(Preheader, DT))
+      return false;
 
     DOUT << "[" << L->getHeader()->getName()
          << "] Variable stride: " << *AddRec << "\n";

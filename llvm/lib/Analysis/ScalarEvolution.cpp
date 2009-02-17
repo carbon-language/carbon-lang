@@ -66,6 +66,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Transforms/Scalar.h"
@@ -205,6 +206,10 @@ SCEVTruncateExpr::~SCEVTruncateExpr() {
   SCEVTruncates->erase(std::make_pair(Op, Ty));
 }
 
+bool SCEVTruncateExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
+  return Op->dominates(BB, DT);
+}
+
 void SCEVTruncateExpr::print(std::ostream &OS) const {
   OS << "(truncate " << *Op << " to " << *Ty << ")";
 }
@@ -227,6 +232,10 @@ SCEVZeroExtendExpr::~SCEVZeroExtendExpr() {
   SCEVZeroExtends->erase(std::make_pair(Op, Ty));
 }
 
+bool SCEVZeroExtendExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
+  return Op->dominates(BB, DT);
+}
+
 void SCEVZeroExtendExpr::print(std::ostream &OS) const {
   OS << "(zeroextend " << *Op << " to " << *Ty << ")";
 }
@@ -247,6 +256,10 @@ SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty)
 
 SCEVSignExtendExpr::~SCEVSignExtendExpr() {
   SCEVSignExtends->erase(std::make_pair(Op, Ty));
+}
+
+bool SCEVSignExtendExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
+  return Op->dominates(BB, DT);
 }
 
 void SCEVSignExtendExpr::print(std::ostream &OS) const {
@@ -306,6 +319,14 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
   return this;
 }
 
+bool SCEVCommutativeExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    if (!getOperand(i)->dominates(BB, DT))
+      return false;
+  }
+  return true;
+}
+
 
 // SCEVUDivs - Only allow the creation of one SCEVUDivExpr for any particular
 // input.  Don't use a SCEVHandle here, or else the object will never be
@@ -315,6 +336,10 @@ static ManagedStatic<std::map<std::pair<SCEV*, SCEV*>,
 
 SCEVUDivExpr::~SCEVUDivExpr() {
   SCEVUDivs->erase(std::make_pair(LHS, RHS));
+}
+
+bool SCEVUDivExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
+  return LHS->dominates(BB, DT) && RHS->dominates(BB, DT);
 }
 
 void SCEVUDivExpr::print(std::ostream &OS) const {
@@ -336,6 +361,15 @@ SCEVAddRecExpr::~SCEVAddRecExpr() {
                                         std::vector<SCEV*>(Operands.begin(),
                                                            Operands.end())));
 }
+
+bool SCEVAddRecExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    if (!getOperand(i)->dominates(BB, DT))
+      return false;
+  }
+  return true;
+}
+
 
 SCEVHandle SCEVAddRecExpr::
 replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
@@ -388,6 +422,12 @@ bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
   // invariant if they are not contained in the specified loop.
   if (Instruction *I = dyn_cast<Instruction>(V))
     return !L->contains(I->getParent());
+  return true;
+}
+
+bool SCEVUnknown::dominates(BasicBlock *BB, DominatorTree *DT) const {
+  if (Instruction *I = dyn_cast<Instruction>(getValue()))
+    return DT->dominates(I->getParent(), BB);
   return true;
 }
 
