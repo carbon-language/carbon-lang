@@ -78,37 +78,6 @@ namespace clang {
   class BasePaths;
   class MemberLookupCriteria;
 
-/// PragmaPackStack - Simple class to wrap the stack used by #pragma
-/// pack.
-class PragmaPackStack {
-  typedef std::vector< std::pair<unsigned, IdentifierInfo*> > stack_ty;
-
-  /// Alignment - The current user specified alignment.
-  unsigned Alignment;
-
-  /// Stack - Entries in the #pragma pack stack, consisting of saved
-  /// alignments and optional names.
-  stack_ty Stack;
-  
-public:  
-  PragmaPackStack(unsigned A) : Alignment(A) {}
-
-  void setAlignment(unsigned A) { Alignment = A; }
-  unsigned getAlignment() { return Alignment; }
-
-  /// push - Push the current alignment onto the stack, optionally
-  /// using the given \arg Name for the record, if non-zero.
-  void push(IdentifierInfo *Name) {
-    Stack.push_back(std::make_pair(Alignment, Name));
-  }
-
-  /// pop - Pop a record from the stack and restore the current
-  /// alignment to the previous value. If \arg Name is non-zero then
-  /// the first such named record is popped, otherwise the top record
-  /// is popped. Returns true if the pop succeeded.
-  bool pop(IdentifierInfo *Name);
-};
-
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
   Sema(const Sema&);           // DO NOT IMPLEMENT
@@ -134,7 +103,7 @@ public:
 
   /// PackContext - Manages the stack for #pragma pack. An alignment
   /// of 0 indicates default alignment.
-  PragmaPackStack PackContext;
+  void *PackContext; // Really a "PragmaPackStack*"
 
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced
@@ -231,6 +200,9 @@ public:
   llvm::DenseMap<Selector, ObjCMethodList> FactoryMethodPool;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer);
+  ~Sema() {
+    if (PackContext) FreePackedContext();
+  }
   
   const LangOptions &getLangOptions() const { return LangOpts; }
   Diagnostic &getDiagnostics() const { return Diags; }
@@ -1706,6 +1678,13 @@ public:
                                SourceLocation PragmaLoc, 
                                SourceLocation LParenLoc,
                                SourceLocation RParenLoc);
+  
+  /// getPragmaPackAlignment() - Return the current alignment as specified by
+  /// the current #pragma pack directive, or 0 if none is currently active.
+  unsigned getPragmaPackAlignment() const;
+  
+  /// FreePackedContext - Deallocate and null out PackContext.
+  void FreePackedContext();
 
   /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
   /// cast.  If there is already an implicit cast, merge into the existing one.

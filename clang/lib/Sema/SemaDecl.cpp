@@ -3276,7 +3276,7 @@ CreateNewDecl:
     // many points during the parsing of a struct declaration (because
     // the #pragma tokens are effectively skipped over during the
     // parsing of the struct).
-    if (unsigned Alignment = PackContext.getAlignment())
+    if (unsigned Alignment = getPragmaPackAlignment())
       New->addAttr(new PackedAttr(Alignment * 8));
   }
 

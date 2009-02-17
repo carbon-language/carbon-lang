@@ -7,13 +7,91 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements semantic analysis for non-trivial attributes.
+// This file implements semantic analysis for non-trivial attributes and
+// pragmas.
 //
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
 #include "clang/AST/Expr.h"
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Pragma Packed
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// PragmaPackStack - Simple class to wrap the stack used by #pragma
+  /// pack.
+  class PragmaPackStack {
+    typedef std::vector< std::pair<unsigned, IdentifierInfo*> > stack_ty;
+
+    /// Alignment - The current user specified alignment.
+    unsigned Alignment;
+
+    /// Stack - Entries in the #pragma pack stack, consisting of saved
+    /// alignments and optional names.
+    stack_ty Stack;
+    
+  public:  
+    PragmaPackStack() : Alignment(0) {}
+
+    void setAlignment(unsigned A) { Alignment = A; }
+    unsigned getAlignment() { return Alignment; }
+
+    /// push - Push the current alignment onto the stack, optionally
+    /// using the given \arg Name for the record, if non-zero.
+    void push(IdentifierInfo *Name) {
+      Stack.push_back(std::make_pair(Alignment, Name));
+    }
+
+    /// pop - Pop a record from the stack and restore the current
+    /// alignment to the previous value. If \arg Name is non-zero then
+    /// the first such named record is popped, otherwise the top record
+    /// is popped. Returns true if the pop succeeded.
+    bool pop(IdentifierInfo *Name);
+  };
+}  // end anonymous namespace.
+
+bool PragmaPackStack::pop(IdentifierInfo *Name) {
+  if (Stack.empty())
+    return false;
+  
+  // If name is empty just pop top.
+  if (!Name) {
+    Alignment = Stack.back().first;
+    Stack.pop_back();
+    return true;
+  } 
+  
+  // Otherwise, find the named record.
+  for (unsigned i = Stack.size(); i != 0; ) {
+    --i;
+    if (Stack[i].second == Name) {
+      // Found it, pop up to and including this record.
+      Alignment = Stack[i].first;
+      Stack.erase(Stack.begin() + i, Stack.end());
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+
+/// FreePackedContext - Deallocate and null out PackContext.
+void Sema::FreePackedContext() {
+  delete static_cast<PragmaPackStack*>(PackContext);
+  PackContext = 0;
+}
+
+/// getPragmaPackAlignment() - Return the current alignment as specified by
+/// the current #pragma pack directive, or 0 if none is currently active.
+unsigned Sema::getPragmaPackAlignment() const {
+  if (PackContext)
+    return static_cast<PragmaPackStack*>(PackContext)->getAlignment();
+  return 0;
+}
 
 void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name, 
                            ExprTy *alignment, SourceLocation PragmaLoc, 
@@ -34,16 +112,22 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
 
     AlignmentVal = (unsigned) Val.getZExtValue();
   }
+  
+  if (PackContext == 0)
+    PackContext = new PragmaPackStack();
 
+  
+  PragmaPackStack *Context = static_cast<PragmaPackStack*>(PackContext);
+  
   switch (Kind) {
   case Action::PPK_Default: // pack([n])
-    PackContext.setAlignment(AlignmentVal);
+    Context->setAlignment(AlignmentVal);
     break;
 
   case Action::PPK_Show: // pack(show)
     // Show the current alignment, making sure to show the right value
     // for the default.
-    AlignmentVal = PackContext.getAlignment();
+    AlignmentVal = Context->getAlignment();
     // FIXME: This should come from the target.
     if (AlignmentVal == 0)
       AlignmentVal = 8;
@@ -51,10 +135,10 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
     break;
 
   case Action::PPK_Push: // pack(push [, id] [, [n])
-    PackContext.push(Name);
+    Context->push(Name);
     // Set the new alignment if specified.
     if (Alignment)
-      PackContext.setAlignment(AlignmentVal);    
+      Context->setAlignment(AlignmentVal);    
     break;
 
   case Action::PPK_Pop: // pack(pop [, id] [,  n])
@@ -64,7 +148,7 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
       Diag(PragmaLoc, diag::warn_pragma_pack_pop_identifer_and_alignment);    
     
     // Do the pop.
-    if (!PackContext.pop(Name)) {
+    if (!Context->pop(Name)) {
       // If a name was specified then failure indicates the name
       // wasn't found. Otherwise failure indicates the stack was
       // empty.
@@ -75,7 +159,7 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
     } else {
       // Pop succeeded, set the new alignment if specified.
       if (Alignment)
-        PackContext.setAlignment(AlignmentVal);
+        Context->setAlignment(AlignmentVal);
     }
     break;
 
@@ -84,27 +168,3 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
   }
 }
 
-bool PragmaPackStack::pop(IdentifierInfo *Name) {
-  if (Stack.empty())
-    return false;
-
-  // If name is empty just pop top.
-  if (!Name) {
-    Alignment = Stack.back().first;
-    Stack.pop_back();
-    return true;
-  } 
-
-  // Otherwise, find the named record.
-  for (unsigned i = Stack.size(); i != 0; ) {
-    --i;
-    if (Stack[i].second == Name) {
-      // Found it, pop up to and including this record.
-      Alignment = Stack[i].first;
-      Stack.erase(Stack.begin() + i, Stack.end());
-      return true;
-    }
-  }
-
-  return false;
-}
