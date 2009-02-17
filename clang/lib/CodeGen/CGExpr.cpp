@@ -573,9 +573,10 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
         ExtMask.push_back(llvm::UndefValue::get(llvm::Type::Int32Ty));
       llvm::Value *ExtMaskV = llvm::ConstantVector::get(&ExtMask[0],
                                                         ExtMask.size());
-      llvm::Value *ExtSrcVal = Builder.CreateShuffleVector(SrcVal,
-                                        llvm::UndefValue::get(SrcVal->getType()),
-                                        ExtMaskV, "tmp");
+      llvm::Value *ExtSrcVal = 
+        Builder.CreateShuffleVector(SrcVal,
+                                    llvm::UndefValue::get(SrcVal->getType()),
+                                    ExtMaskV, "tmp");
       // build identity
       llvm::SmallVector<llvm::Constant*, 4> Mask;
       for (unsigned i = 0; i != NumDstElts; ++i) {
@@ -876,10 +877,11 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
                                               FieldDecl* Field,
                                               unsigned CVRQualifiers) {
-   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);                                         
+   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
   // FIXME: CodeGenTypes should expose a method to get the appropriate
   // type for FieldTy (the appropriate type is ABI-dependent).
-  const llvm::Type *FieldTy = CGM.getTypes().ConvertTypeForMem(Field->getType());
+  const llvm::Type *FieldTy = 
+    CGM.getTypes().ConvertTypeForMem(Field->getType());
   const llvm::PointerType *BaseTy =
   cast<llvm::PointerType>(BaseValue->getType());
   unsigned AS = BaseTy->getAddressSpace();
@@ -1049,10 +1051,10 @@ LValue CodeGenFunction::EmitLValueForIvar(QualType ObjectTy,
   if (CGM.getObjCRuntime().LateBoundIVars())
     assert(0 && "late-bound ivars are unsupported");
   
-  LValue LV =  CGM.getObjCRuntime().EmitObjCValueForIvar(*this,
-                                                         ObjectTy,
-                                                         BaseValue, Ivar, Field, 
-                                                         CVRQualifiers);
+  LValue LV = CGM.getObjCRuntime().EmitObjCValueForIvar(*this,
+                                                        ObjectTy,
+                                                        BaseValue, Ivar, Field,
+                                                        CVRQualifiers);
   SetVarDeclObjCAttribute(getContext(), Ivar, Ivar->getType(), LV);
   return LV;
 }
