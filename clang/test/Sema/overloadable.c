@@ -27,7 +27,7 @@ void test_funcptr(int (*f1)(int, double),
 
 struct X { int x; float y; };
 struct Y { int x; float y; };
-int* accept_struct(struct X x) __attribute__((overloadable));
+int* accept_struct(struct X x) __attribute__((__overloadable__));
 float* accept_struct(struct Y y) __attribute__((overloadable));
 
 void test_struct(struct X x, struct Y y) {
