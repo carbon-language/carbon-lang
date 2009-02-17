@@ -533,6 +533,11 @@ public:
   unsigned getInstantiationLineNumber(SourceLocation Loc) const;
   unsigned getSpellingLineNumber(SourceLocation Loc) const;
   
+  /// Return the filename or buffer identifier of the buffer the location is in.
+  /// Note that this name does not respect #line directives.  Use getPresumedLoc
+  /// for normal clients.
+  const char *getBufferName(SourceLocation Loc) const;
+  
   /// getFileCharacteristic - return the file characteristic of the specified
   /// source location, indicating whether this is a normal file, a system 
   /// header, or an "implicit extern C" system header.
@@ -551,8 +556,6 @@ public:
   /// Note that a presumed location is always given as the instantiation point
   /// of an instantiation location, not at the spelling location.
   PresumedLoc getPresumedLoc(SourceLocation Loc) const;
-  
-  
   
   /// isFromSameFile - Returns true if both SourceLocations correspond to
   ///  the same file.

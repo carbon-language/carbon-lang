@@ -857,6 +857,15 @@ SourceManager::getFileCharacteristic(SourceLocation Loc) const {
   return Entry->FileKind;
 }
 
+/// Return the filename or buffer identifier of the buffer the location is in.
+/// Note that this name does not respect #line directives.  Use getPresumedLoc
+/// for normal clients.
+const char *SourceManager::getBufferName(SourceLocation Loc) const {
+  if (Loc.isInvalid()) return "<invalid loc>";
+  
+  return getBuffer(getFileID(Loc))->getBufferIdentifier();
+}
+
 
 /// getPresumedLoc - This method returns the "presumed" location of a
 /// SourceLocation specifies.  A "presumed location" can be modified by #line
