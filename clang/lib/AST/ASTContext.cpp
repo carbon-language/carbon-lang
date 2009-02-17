@@ -263,7 +263,7 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
 /// getDeclAlign - Return a conservative estimate of the alignment of the
 /// specified decl.  Note that bitfields do not have a valid alignment, so
 /// this method will assert on them.
-unsigned ASTContext::getDeclAlign(const Decl *D) {
+unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
   // FIXME: If attribute(align) is specified on the decl, round up to it.
   
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
@@ -275,7 +275,7 @@ unsigned ASTContext::getDeclAlign(const Decl *D) {
     while (isa<VariableArrayType>(T) || isa<IncompleteArrayType>(T))
       T = cast<ArrayType>(T)->getElementType();
     
-    return getTypeAlign(T);
+    return getTypeAlign(T) / Target.getCharWidth();
   }
   
   return 1;
