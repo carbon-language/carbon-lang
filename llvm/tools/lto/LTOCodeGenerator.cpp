@@ -356,10 +356,6 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
     // Add an appropriate TargetData instance for this module...
     passes.add(new TargetData(*_target->getTargetData()));
     
-    std::string targetTriple = _linker.getModule()->getTargetTriple();
-//    if ( targetTriple.find("darwin") != targetTriple.size() ) 
-        passes.add(createStripSymbolsPass(true /* strip debug info only */));
-
     // Propagate constants at call sites into the functions they call.  This
     // opens opportunities for globalopt (and inlining) by substituting function
     // pointers passed as arguments to direct uses of functions.  
@@ -415,8 +411,6 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
 
     // Make sure everything is still good.
     passes.add(createVerifierPass());
-
-    setCodeGenDebugOptions("-debug-pass=Structure");
 
     FunctionPassManager* codeGenPasses =
             new FunctionPassManager(new ExistingModuleProvider(mergedModule));
