@@ -41,4 +41,3 @@ void * realloc(void *p, int size) { // expected-warning{{incompatible redeclarat
   // expected-note{{use -ffreestanding to compile as a freestanding implementation}}
   return p;
 }
-

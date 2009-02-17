@@ -271,6 +271,10 @@ unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
   // function. Determine whether it actually refers to the C library
   // function or whether it just has the same name.
 
+  // If this is a static function, it's not a builtin.
+  if (getStorageClass() == Static)
+    return 0;
+
   // If this function is at translation-unit scope and we're not in
   // C++, it refers to the C library function.
   if (!Context.getLangOptions().CPlusPlus &&

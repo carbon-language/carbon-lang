@@ -1304,7 +1304,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   // See if this is a redefinition of a variable in the same scope.
   if (!D.getCXXScopeSpec().isSet() && !D.getCXXScopeSpec().isInvalid()) {
     DC = CurContext;
-    PrevDecl = LookupName(S, Name, LookupOrdinaryName, true, true,
+    PrevDecl = LookupName(S, Name, LookupOrdinaryName, true, 
+                          D.getDeclSpec().getStorageClassSpec() != 
+                            DeclSpec::SCS_static,
                           D.getIdentifierLoc());
   } else { // Something like "int foo::x;"
     DC = static_cast<DeclContext*>(D.getCXXScopeSpec().getScopeRep());
