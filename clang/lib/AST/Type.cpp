@@ -1054,17 +1054,15 @@ void ComplexType::getAsStringInternal(std::string &S) const {
 
 void ExtQualType::getAsStringInternal(std::string &S) const {
   bool space = false;
-  if (ExtQualTypeKind & ASQUAL) {
+  if (AddressSpace) {
     S = "__attribute__((address_space("+llvm::utostr_32(AddressSpace)+")))" + S;
     space = true;
   }
-  if (ExtQualTypeKind & GCQUAL) {
+  if (GCAttrType != GCNone) {
     if (space)
       S += ' ';
     S += "__attribute__((objc_gc(";
-    ObjCGCAttr *gcattr = getGCAttr();
-    ObjCGCAttr::GCAttrTypes attr = gcattr->getType();
-    if (attr & ObjCGCAttr::Weak)
+    if (GCAttrType == Weak)
       S += "weak";
     else
       S += "strong";

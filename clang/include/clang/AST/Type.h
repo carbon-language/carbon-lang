@@ -462,55 +462,43 @@ protected:
 ///
 class ExtQualType : public Type, public llvm::FoldingSetNode {
 public:
-  enum EQT {
-    EXTNONE = 0x0,
-    ASQUAL  = 0x01,
-    GCQUAL  = 0x10
+  enum GCAttrTypes {
+    GCNone = 0,
+    Weak,
+    Strong
   };
+  
 private:
   /// BaseType - This is the underlying type that this qualifies.  All CVR
   /// qualifiers are stored on the QualType that references this type, so we
   /// can't have any here.
   Type *BaseType;
-  unsigned ExtQualTypeKind : 2;
 
   /// Address Space ID - The address space ID this type is qualified with.
   unsigned AddressSpace;
   /// GC __weak/__strong attributes
-  ObjCGCAttr *GCAttr;
+  GCAttrTypes GCAttrType;
   
   ExtQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace,
-              ObjCGCAttr *gcAttr,
-              unsigned ExtKind) :
+              GCAttrTypes gcAttr) :
     Type(ExtQual, CanonicalPtr, Base->isDependentType()), BaseType(Base),
-    ExtQualTypeKind(ExtKind), AddressSpace(0), GCAttr(0) {
-      if (ExtKind & ASQUAL)
-        AddressSpace = AddrSpace;
-      if (ExtKind & GCQUAL)
-        GCAttr = gcAttr;
-  }
+    AddressSpace(AddrSpace), GCAttrType(gcAttr) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
   Type *getBaseType() const { return BaseType; }
-  ObjCGCAttr *getGCAttr() const {
-    assert((ExtQualTypeKind & GCQUAL) && "Bad ExtQualType Kind - not GCQUAL");
-    return GCAttr; 
-  }
-  unsigned getAddressSpace() const {
-    assert((ExtQualTypeKind & ASQUAL) && "Bad ExtQualType Kind - not ASQUAL");
-    return AddressSpace; 
-  }
+  GCAttrTypes getType() const { return GCAttrType; }
+  unsigned getAddressSpace() const { return AddressSpace; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getBaseType(), AddressSpace, GCAttr);
+    Profile(ID, getBaseType(), AddressSpace, GCAttrType);
   }
   static void Profile(llvm::FoldingSetNodeID &ID, Type *Base, 
-                      unsigned AddrSpace, ObjCGCAttr *gcAttr) {
+                      unsigned AddrSpace, GCAttrTypes gcAttr) {
     ID.AddPointer(Base);
-    ID.AddPointer(gcAttr);
     ID.AddInteger(AddrSpace);
+    ID.AddInteger(gcAttr);
   }
   
   static bool classof(const Type *T) { return T->getTypeClass() == ExtQual; }
