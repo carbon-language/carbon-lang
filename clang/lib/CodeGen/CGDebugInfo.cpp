@@ -397,7 +397,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::Reference:
   case Type::Vector:
   case Type::ExtVector:
-  case Type::ASQual:
+  case Type::ExtQual:
   case Type::ObjCInterface:
   case Type::ObjCQualifiedInterface:
   case Type::ObjCQualifiedId:

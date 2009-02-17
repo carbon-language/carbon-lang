@@ -959,8 +959,8 @@ unsigned IntExprEvaluator::GetAlignOfType(QualType T) {
   if (Ty->isFunctionType())
     return 4;
   
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(Ty))
-    return GetAlignOfType(QualType(ASQT->getBaseType(), 0));
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(Ty))
+    return GetAlignOfType(QualType(EXTQT->getBaseType(), 0));
 
   // alignof VLA/incomplete array.
   if (const ArrayType *VAT = dyn_cast<ArrayType>(Ty))

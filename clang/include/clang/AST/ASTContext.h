@@ -55,7 +55,7 @@ namespace clang {
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {  
   std::vector<Type*> Types;
-  llvm::FoldingSet<ASQualType> ASQualTypes;
+  llvm::FoldingSet<ExtQualType> ExtQualTypes;
   llvm::FoldingSet<ComplexType> ComplexTypes;
   llvm::FoldingSet<PointerType> PointerTypes;
   llvm::FoldingSet<BlockPointerType> BlockPointerTypes;
@@ -183,11 +183,12 @@ public:
   //                           Type Constructors
   //===--------------------------------------------------------------------===//
   
-  /// getASQualType - Return the uniqued reference to the type for an address
-  /// space qualified type with the specified type and address space.  The
-  /// resulting type has a union of the qualifiers from T and the address space.
-  // If T already has an address space specifier, it is silently replaced.
-  QualType getASQualType(QualType T, unsigned AddressSpace);
+  /// getAddSpaceQualType - Return the uniqued reference to the type for an 
+  /// address space qualified type with the specified type and address space.  
+  /// The resulting type has a union of the qualifiers from T and the address 
+  /// space. If T already has an address space specifier, it is silently 
+  /// replaced.
+  QualType getAddrSpaceQualType(QualType T, unsigned AddressSpace);
   
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.

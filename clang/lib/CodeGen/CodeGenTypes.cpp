@@ -266,9 +266,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return GetFunctionType(getFunctionInfo(FTP), FTP->isVariadic());
   }
   
-  case Type::ASQual:
+  case Type::ExtQual:
     return
-      ConvertTypeRecursive(QualType(cast<ASQualType>(Ty).getBaseType(), 0));
+      ConvertTypeRecursive(QualType(cast<ExtQualType>(Ty).getBaseType(), 0));
 
   case Type::ObjCInterface: {
     // Warning: Use of this is strongly discouraged.  Late binding of instance

@@ -246,7 +246,7 @@ public:
     ConstantArray, VariableArray, IncompleteArray, DependentSizedArray,
     Vector, ExtVector,
     FunctionNoProto, FunctionProto,
-    TypeName, Tagged, ASQual,
+    TypeName, Tagged, ExtQual,
     TemplateTypeParm, ClassTemplateSpecialization,
     ObjCInterface, ObjCQualifiedInterface,
     ObjCQualifiedId,
@@ -454,18 +454,20 @@ protected:
   }
 };
 
-/// ASQualType - TR18037 (C embedded extensions) 6.2.5p26 
-/// This supports address space qualified types.
+/// ExtQualType - TR18037 (C embedded extensions) 6.2.5p26 
+/// This supports all kinds of type attributes; including,
+/// address space qualified types, objective-c's __weak and
+/// __strong attributes.
 ///
-class ASQualType : public Type, public llvm::FoldingSetNode {
+class ExtQualType : public Type, public llvm::FoldingSetNode {
   /// BaseType - This is the underlying type that this qualifies.  All CVR
   /// qualifiers are stored on the QualType that references this type, so we
   /// can't have any here.
   Type *BaseType;
   /// Address Space ID - The address space ID this type is qualified with.
   unsigned AddressSpace;
-  ASQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace) :
-    Type(ASQual, CanonicalPtr, Base->isDependentType()), BaseType(Base), 
+  ExtQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace) :
+    Type(ExtQual, CanonicalPtr, Base->isDependentType()), BaseType(Base), 
     AddressSpace(AddrSpace) {
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -484,8 +486,8 @@ public:
     ID.AddInteger(AddrSpace);
   }
   
-  static bool classof(const Type *T) { return T->getTypeClass() == ASQual; }
-  static bool classof(const ASQualType *) { return true; }
+  static bool classof(const Type *T) { return T->getTypeClass() == ExtQual; }
+  static bool classof(const ExtQualType *) { return true; }
   
 protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
@@ -1707,8 +1709,8 @@ public:
 /// getUnqualifiedType - Return the type without any qualifiers.
 inline QualType QualType::getUnqualifiedType() const {
   Type *TP = getTypePtr();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(TP))
-    TP = ASQT->getBaseType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(TP))
+    TP = EXTQT->getBaseType();
   return QualType(TP, 0);
 }
 
@@ -1719,8 +1721,8 @@ inline unsigned QualType::getAddressSpace() const {
     return AT->getElementType().getAddressSpace();
   if (const RecordType *RT = dyn_cast<RecordType>(CT))
     return RT->getAddressSpace();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CT))
-    return ASQT->getAddressSpace();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CT))
+    return EXTQT->getAddressSpace();
   return 0;
 }
 

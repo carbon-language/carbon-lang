@@ -94,7 +94,7 @@ QualType Type::getDesugaredType() const {
 bool Type::isVoidType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Void;
-  if (const ASQualType *AS = dyn_cast<ASQualType>(CanonicalType))
+  if (const ExtQualType *AS = dyn_cast<ExtQualType>(CanonicalType))
     return AS->getBaseType()->isVoidType();
   return false;
 }
@@ -102,15 +102,15 @@ bool Type::isVoidType() const {
 bool Type::isObjectType() const {
   if (isa<FunctionType>(CanonicalType) || isa<ReferenceType>(CanonicalType))
     return false;
-  if (const ASQualType *AS = dyn_cast<ASQualType>(CanonicalType))
+  if (const ExtQualType *AS = dyn_cast<ExtQualType>(CanonicalType))
     return AS->getBaseType()->isObjectType();
   return !CanonicalType->isIncompleteType();
 }
 
 bool Type::isDerivedType() const {
   switch (CanonicalType->getTypeClass()) {
-  case ASQual:
-    return cast<ASQualType>(CanonicalType)->getBaseType()->isDerivedType();
+  case ExtQual:
+    return cast<ExtQualType>(CanonicalType)->getBaseType()->isDerivedType();
   case Pointer:
   case VariableArray:
   case ConstantArray:
@@ -145,7 +145,7 @@ bool Type::isUnionType() const {
 bool Type::isComplexType() const {
   if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
     return CT->getElementType()->isFloatingType();
-  if (const ASQualType *AS = dyn_cast<ASQualType>(CanonicalType))
+  if (const ExtQualType *AS = dyn_cast<ExtQualType>(CanonicalType))
     return AS->getBaseType()->isComplexType();
   return false;
 }
@@ -154,7 +154,7 @@ bool Type::isComplexIntegerType() const {
   // Check for GCC complex integer extension.
   if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
     return CT->getElementType()->isIntegerType();
-  if (const ASQualType *AS = dyn_cast<ASQualType>(CanonicalType))
+  if (const ExtQualType *AS = dyn_cast<ExtQualType>(CanonicalType))
     return AS->getBaseType()->isComplexIntegerType();
   return false;
 }
@@ -169,7 +169,7 @@ const ComplexType *Type::getAsComplexIntegerType() const {
   
   // If the canonical form of this type isn't what we want, reject it.
   if (!isa<ComplexType>(CanonicalType)) {
-    // Look through type qualifiers (e.g. ASQualType's).
+    // Look through type qualifiers (e.g. ExtQualType's).
     if (isa<ComplexType>(CanonicalType.getUnqualifiedType()))
       return CanonicalType.getUnqualifiedType()->getAsComplexIntegerType();
     return 0;
@@ -187,7 +187,7 @@ const BuiltinType *Type::getAsBuiltinType() const {
 
   // If the canonical form of this type isn't a builtin type, reject it.
   if (!isa<BuiltinType>(CanonicalType)) {
-    // Look through type qualifiers (e.g. ASQualType's).
+    // Look through type qualifiers (e.g. ExtQualType's).
     if (isa<BuiltinType>(CanonicalType.getUnqualifiedType()))
       return CanonicalType.getUnqualifiedType()->getAsBuiltinType();
     return 0;
@@ -514,8 +514,8 @@ bool Type::isIntegerType() const {
     return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isIntegerType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isIntegerType();
   return false;
 }
 
@@ -529,24 +529,24 @@ bool Type::isIntegralType() const {
                     // FIXME: In C++, enum types are never integral.
   if (isa<FixedWidthIntType>(CanonicalType))
     return true;
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isIntegralType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isIntegralType();
   return false;
 }
 
 bool Type::isEnumeralType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     return TT->getDecl()->isEnum();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isEnumeralType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isEnumeralType();
   return false;
 }
 
 bool Type::isBooleanType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Bool;
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isBooleanType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isBooleanType();
   return false;
 }
 
@@ -556,16 +556,16 @@ bool Type::isCharType() const {
            BT->getKind() == BuiltinType::UChar ||
            BT->getKind() == BuiltinType::Char_S ||
            BT->getKind() == BuiltinType::SChar;
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isCharType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isCharType();
   return false;
 }
 
 bool Type::isWideCharType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::WChar;
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isWideCharType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isWideCharType();
   return false;
 }
 
@@ -588,8 +588,8 @@ bool Type::isSignedIntegerType() const {
   
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isSignedIntegerType();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isSignedIntegerType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isSignedIntegerType();
   return false;
 }
 
@@ -612,8 +612,8 @@ bool Type::isUnsignedIntegerType() const {
 
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isUnsignedIntegerType();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isUnsignedIntegerType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isUnsignedIntegerType();
   return false;
 }
 
@@ -625,8 +625,8 @@ bool Type::isFloatingType() const {
     return CT->getElementType()->isFloatingType();
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isFloatingType();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isFloatingType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isFloatingType();
   return false;
 }
 
@@ -636,8 +636,8 @@ bool Type::isRealFloatingType() const {
            BT->getKind() <= BuiltinType::LongDouble;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealFloatingType();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isRealFloatingType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isRealFloatingType();
   return false;
 }
 
@@ -651,8 +651,8 @@ bool Type::isRealType() const {
     return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealType();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isRealType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isRealType();
   return false;
 }
 
@@ -666,8 +666,8 @@ bool Type::isArithmeticType() const {
     return ET->getDecl()->isDefinition();
   if (isa<FixedWidthIntType>(CanonicalType))
     return true;
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isArithmeticType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isArithmeticType();
   return isa<ComplexType>(CanonicalType) || isa<VectorType>(CanonicalType);
 }
 
@@ -681,8 +681,8 @@ bool Type::isScalarType() const {
       return true;
     return false;
   }
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isScalarType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isScalarType();
   if (isa<FixedWidthIntType>(CanonicalType))
     return true;
   return isa<PointerType>(CanonicalType) ||
@@ -706,8 +706,8 @@ bool Type::isAggregateType() const {
     return CXXClassType->getDecl()->isAggregate();
   if (isa<RecordType>(CanonicalType))
     return true;
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isAggregateType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isAggregateType();
   return isa<ArrayType>(CanonicalType);
 }
 
@@ -715,8 +715,8 @@ bool Type::isAggregateType() const {
 /// according to the rules of C99 6.7.5p3.  It is not legal to call this on
 /// incomplete types or dependent types.
 bool Type::isConstantSizeType() const {
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isConstantSizeType();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
+    return EXTQT->getBaseType()->isConstantSizeType();
   assert(!isIncompleteType() && "This doesn't make sense for incomplete types");
   assert(!isDependentType() && "This doesn't make sense for dependent types");
   // The VAT must have a size, as it is known to be complete.
@@ -729,8 +729,8 @@ bool Type::isConstantSizeType() const {
 bool Type::isIncompleteType() const { 
   switch (CanonicalType->getTypeClass()) { 
   default: return false;
-  case ASQual:
-    return cast<ASQualType>(CanonicalType)->getBaseType()->isIncompleteType();
+  case ExtQual:
+    return cast<ExtQualType>(CanonicalType)->getBaseType()->isIncompleteType();
   case Builtin:
     // Void is the only incomplete builtin type.  Per C99 6.2.5p19, it can never
     // be completed.
@@ -755,8 +755,8 @@ bool Type::isPODType() const {
   switch (CanonicalType->getTypeClass()) {
     // Everything not explicitly mentioned is not POD.
   default: return false;
-  case ASQual:
-    return cast<ASQualType>(CanonicalType)->getBaseType()->isPODType();
+  case ExtQual:
+    return cast<ExtQualType>(CanonicalType)->getBaseType()->isPODType();
   case VariableArray:
   case ConstantArray:
     // IncompleteArray is caught by isIncompleteType() above.
@@ -886,7 +886,7 @@ QualType TypedefType::LookThroughTypedefs() const {
     
     
     /// FIXME:
-    /// FIXME: This is incorrect for ASQuals!
+    /// FIXME: This is incorrect for ExtQuals!
     /// FIXME:
     TypeQuals |= CurType.getCVRQualifiers();
 
@@ -1052,7 +1052,7 @@ void ComplexType::getAsStringInternal(std::string &S) const {
   S = "_Complex " + S;
 }
 
-void ASQualType::getAsStringInternal(std::string &S) const {
+void ExtQualType::getAsStringInternal(std::string &S) const {
   S = "__attribute__((address_space("+llvm::utostr_32(AddressSpace)+")))" + S;
   BaseType->getAsStringInternal(S);
 }

@@ -380,10 +380,10 @@ ASTContext::getTypeInfo(const Type *T) {
     Width = std::max(llvm::NextPowerOf2(Width - 1), (uint64_t)8);
     Align = Width;
     break;
-  case Type::ASQual:
+  case Type::ExtQual:
     // FIXME: Pointers into different addr spaces could have different sizes and
     // alignment requirements: getPointerInfo should take an AddrSpace.
-    return getTypeInfo(QualType(cast<ASQualType>(T)->getBaseType(), 0));
+    return getTypeInfo(QualType(cast<ExtQualType>(T)->getBaseType(), 0));
   case Type::ObjCQualifiedId:
     Width = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
@@ -712,12 +712,12 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 //                   Type creation/memoization methods
 //===----------------------------------------------------------------------===//
 
-QualType ASTContext::getASQualType(QualType T, unsigned AddressSpace) {
+QualType ASTContext::getAddrSpaceQualType(QualType T, unsigned AddressSpace) {
   QualType CanT = getCanonicalType(T);
   if (CanT.getAddressSpace() == AddressSpace)
     return T;
   
-  // Type's cannot have multiple ASQuals, therefore we know we only have to deal
+  // Type's cannot have multiple ExtQuals, therefore we know we only have to deal
   // with CVR qualifiers from here on out.
   assert(CanT.getAddressSpace() == 0 &&
          "Type is already address space qualified");
@@ -725,24 +725,24 @@ QualType ASTContext::getASQualType(QualType T, unsigned AddressSpace) {
   // Check if we've already instantiated an address space qual'd type of this
   // type.
   llvm::FoldingSetNodeID ID;
-  ASQualType::Profile(ID, T.getTypePtr(), AddressSpace);      
+  ExtQualType::Profile(ID, T.getTypePtr(), AddressSpace);      
   void *InsertPos = 0;
-  if (ASQualType *ASQy = ASQualTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(ASQy, 0);
+  if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(EXTQy, 0);
     
   // If the base type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
   if (!T->isCanonical()) {
-    Canonical = getASQualType(CanT, AddressSpace);
+    Canonical = getAddrSpaceQualType(CanT, AddressSpace);
     
     // Get the new insert position for the node we care about.
-    ASQualType *NewIP = ASQualTypes.FindNodeOrInsertPos(ID, InsertPos);
+    ExtQualType *NewIP = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  ASQualType *New = new (*this, 8) ASQualType(T.getTypePtr(), Canonical, 
-                                              AddressSpace);
-  ASQualTypes.InsertNode(New, InsertPos);
+  ExtQualType *New = new (*this, 8) ExtQualType(T.getTypePtr(), Canonical, 
+                                                AddressSpace);
+  ExtQualTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, T.getCVRQualifiers());
 }
@@ -1470,7 +1470,7 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
   // Handle the common negative case fast, ignoring CVR qualifiers.
   QualType CType = T->getCanonicalTypeInternal();
     
-  // Make sure to look through type qualifiers (like ASQuals) for the negative
+  // Make sure to look through type qualifiers (like ExtQuals) for the negative
   // test.
   if (!isa<ArrayType>(CType) &&
       !isa<ArrayType>(CType.getUnqualifiedType()))
@@ -1487,11 +1487,11 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
   unsigned AddrSpace = 0;
   Type *Ty = T.getTypePtr();
   
-  // Rip through ASQualType's and typedefs to get to a concrete type.
+  // Rip through ExtQualType's and typedefs to get to a concrete type.
   while (1) {
-    if (const ASQualType *ASQT = dyn_cast<ASQualType>(Ty)) {
-      AddrSpace = ASQT->getAddressSpace();
-      Ty = ASQT->getBaseType();
+    if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(Ty)) {
+      AddrSpace = EXTQT->getAddressSpace();
+      Ty = EXTQT->getBaseType();
     } else {
       T = Ty->getDesugaredType();
       if (T.getTypePtr() == Ty && T.getCVRQualifiers() == 0)
@@ -1512,7 +1512,7 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
   // This can recursively sink qualifiers through multiple levels of arrays.
   QualType NewEltTy = ATy->getElementType();
   if (AddrSpace)
-    NewEltTy = getASQualType(NewEltTy, AddrSpace);
+    NewEltTy = getAddrSpaceQualType(NewEltTy, AddrSpace);
   NewEltTy = NewEltTy.getWithAdditionalQualifiers(CVRQuals);
   
   if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(ATy))

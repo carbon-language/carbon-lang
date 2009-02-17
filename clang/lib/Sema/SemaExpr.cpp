@@ -2459,7 +2459,7 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   // C99 6.5.16.1p1: This following citation is common to constraints 
   // 3 & 4 (below). ...and the type *pointed to* by the left has all the 
   // qualifiers of the type *pointed to* by the right; 
-  // FIXME: Handle ASQualType
+  // FIXME: Handle ExtQualType
   if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
     ConvTy = CompatiblePointerDiscardsQualifiers;
 

@@ -71,8 +71,8 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       D.RegisterPtr(PtrID,Context.getTypes()[i]); 
       break;
       
-    case Type::ASQual:
-      D.RegisterPtr(PtrID,ASQualType::CreateImpl(Context,D));
+    case Type::ExtQual:
+      D.RegisterPtr(PtrID,ExtQualType::CreateImpl(Context,D));
       break;
     
     case Type::Complex:
@@ -138,18 +138,18 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
 }
 
 //===----------------------------------------------------------------------===//
-// ASQualType
+// ExtQualType
 //===----------------------------------------------------------------------===//
 
-void ASQualType::EmitImpl(Serializer& S) const {
+void ExtQualType::EmitImpl(Serializer& S) const {
   S.EmitPtr(getBaseType());
   S.EmitInt(getAddressSpace());
 }
 
-Type* ASQualType::CreateImpl(ASTContext& Context, Deserializer& D) {
+Type* ExtQualType::CreateImpl(ASTContext& Context, Deserializer& D) {
   QualType BaseTy = QualType::ReadVal(D);
   unsigned AddressSpace = D.ReadInt();
-  return Context.getASQualType(BaseTy, AddressSpace).getTypePtr();
+  return Context.getAddrSpaceQualType(BaseTy, AddressSpace).getTypePtr();
 }
 
 //===----------------------------------------------------------------------===//

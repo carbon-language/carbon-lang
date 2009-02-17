@@ -755,7 +755,7 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   }
 
   unsigned ASIdx = static_cast<unsigned>(addrSpace.getZExtValue()); 
-  Type = S.Context.getASQualType(Type, ASIdx);
+  Type = S.Context.getAddrSpaceQualType(Type, ASIdx);
 }
 
 void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
