@@ -82,7 +82,7 @@ bool GlobalDCE::runOnModule(Module &M) {
        I != E; ++I) {
     Changed |= RemoveUnusedGlobalValue(*I);
     // Externally visible aliases are needed.
-    if (!I->hasInternalLinkage() && !I->hasLinkOnceLinkage())
+    if (!I->hasLocalLinkage() && !I->hasLinkOnceLinkage())
       GlobalIsNeeded(I);
   }
 
@@ -107,6 +107,15 @@ bool GlobalDCE::runOnModule(Module &M) {
         I->deleteBody();
     }
 
+  // The third pass drops targets of aliases which are dead...
+  std::vector<GlobalAlias*> DeadAliases;
+  for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end(); I != E;
+       ++I)
+    if (!AliveGlobals.count(I)) {
+      DeadAliases.push_back(I);
+      I->setAliasee(0);
+    }
+
   if (!DeadFunctions.empty()) {
     // Now that all interferences have been dropped, delete the actual objects
     // themselves.
@@ -128,14 +137,13 @@ bool GlobalDCE::runOnModule(Module &M) {
   }
 
   // Now delete any dead aliases.
-  for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end(); I != E;) {
-    Module::alias_iterator J = I++;
-    if (!AliveGlobals.count(J)) {
-      RemoveUnusedGlobalValue(*J);
-      M.getAliasList().erase(J);
-      ++NumAliases;
-      Changed = true;
+  if (!DeadAliases.empty()) {
+    for (unsigned i = 0, e = DeadAliases.size(); i != e; ++i) {
+      RemoveUnusedGlobalValue(*DeadAliases[i]);
+      M.getAliasList().erase(DeadAliases[i]);
     }
+    NumAliases += DeadAliases.size();
+    Changed = true;
   }
 
   // Make sure that all memory is released
