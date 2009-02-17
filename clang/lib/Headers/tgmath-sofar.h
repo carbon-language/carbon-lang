@@ -32,11 +32,26 @@
 #ifndef __cplusplus
 #include <complex.h>
 
+#define __TG_UNARY_OVERLOAD(TYPE, SRCFN, DSTFN) \
+  static TYPE __attribute__((overloadable, always_inline)) __tg_ ## SRCFN(TYPE x) { return DSTFN(x); }
+
+
+/* __TG_RC_1 - Unary functions defined on both real and complex values. */
+#define __TG_RC_1(op, REALFN, COMPLEXFN) \
+  __TG_UNARY_OVERLOAD(float, REALFN, REALFN ## f)                     \
+  __TG_UNARY_OVERLOAD(double, REALFN, REALFN)                         \
+  __TG_UNARY_OVERLOAD(long double, REALFN, REALFN ## l)               \
+  __TG_UNARY_OVERLOAD(_Complex float, REALFN, COMPLEXFN ## f)         \
+  __TG_UNARY_OVERLOAD(_Complex double, REALFN, COMPLEXFN)             \
+  __TG_UNARY_OVERLOAD(_Complex long double, REALFN, COMPLEXFN ## l)
+
 /* C99 7.22p4, functions in both math.h and complex.h. */
-#define acos(x) \
-  __builtin_overload(1, x, cacosl, cacos, cacosf, acosl, acos, acosf)
-#define asin(x) \
-  __builtin_overload(1, x, casinl, casin, casinf, asinl, asin, asinf)
+__TG_RC_1(x, acos, cacos)
+#define acos(x) __tg_acos(x)
+__TG_RC_1(x, asin, casin)
+#define asin(x) __tg_asin(x)
+
+
 #define atan(x) \
   __builtin_overload(1, x, catanl, catan, catanf, atanl, atan, atanf)
 #define acosh(x) \
