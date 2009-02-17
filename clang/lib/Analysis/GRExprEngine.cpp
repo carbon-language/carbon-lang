@@ -1213,7 +1213,7 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
               }
             }
             break;
-          
+
           case 6:
             if (!memcmp(s, "Assert", 6)) {
               Builder->BuildSinks = true;
@@ -1231,7 +1231,9 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
             break;
             
           case 8:
-            if (!memcmp(s ,"db_error", 8)) Builder->BuildSinks = true;
+            if (!memcmp(s ,"db_error", 8) || 
+                !memcmp(s, "__assert", 8))
+              Builder->BuildSinks = true;
             break;
           
           case 12:
