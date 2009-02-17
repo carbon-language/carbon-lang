@@ -110,6 +110,8 @@ public:
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
+  Sema(const Sema&);           // DO NOT IMPLEMENT
+  void operator=(const Sema&); // DO NOT IMPLEMENT
 public:
   const LangOptions &LangOpts;
   Preprocessor &PP;
