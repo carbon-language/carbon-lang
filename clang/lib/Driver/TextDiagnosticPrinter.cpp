@@ -101,6 +101,70 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     CaretLine[i] = '~';
 }
 
+void TextDiagnosticPrinter::EmitCaretDiagnostic(FullSourceLoc ILoc,
+                                                const DiagnosticInfo &Info) {
+  unsigned ColNo = ILoc.getInstantiationColumnNumber();
+  
+  // Rewind from the current position to the start of the line.
+  const char *TokInstantiationPtr = ILoc.getCharacterData();
+  const char *LineStart = TokInstantiationPtr-ColNo+1; // Column # is 1-based.
+  
+  // Compute the line end.  Scan forward from the error position to the end of
+  // the line.
+  const char *BufEnd = ILoc.getBufferData().second;
+  const char *LineEnd = TokInstantiationPtr;
+  while (LineEnd != BufEnd && 
+         *LineEnd != '\n' && *LineEnd != '\r')
+    ++LineEnd;
+  
+  // Copy the line of code into an std::string for ease of manipulation.
+  std::string SourceLine(LineStart, LineEnd);
+  
+  // Create a line for the caret that is filled with spaces that is the same
+  // length as the line of source code.
+  std::string CaretLine(LineEnd-LineStart, ' ');
+  
+  // Highlight all of the characters covered by Ranges with ~ characters.
+  for (unsigned i = 0; i != Info.getNumRanges(); ++i)
+    HighlightRange(Info.getRange(i), ILoc.getManager(),
+                   ILoc.getInstantiationLineNumber(),
+                   ILoc.getFileID(), CaretLine, SourceLine);
+  
+  // Next, insert the caret itself.
+  if (ColNo-1 < CaretLine.size())
+    CaretLine[ColNo-1] = '^';
+  else
+    CaretLine.push_back('^');
+  
+  // Scan the source line, looking for tabs.  If we find any, manually expand
+  // them to 8 characters and update the CaretLine to match.
+  for (unsigned i = 0; i != SourceLine.size(); ++i) {
+    if (SourceLine[i] != '\t') continue;
+    
+    // Replace this tab with at least one space.
+    SourceLine[i] = ' ';
+    
+    // Compute the number of spaces we need to insert.
+    unsigned NumSpaces = ((i+8)&~7) - (i+1);
+    assert(NumSpaces < 8 && "Invalid computation of space amt");
+    
+    // Insert spaces into the SourceLine.
+    SourceLine.insert(i+1, NumSpaces, ' ');
+    
+    // Insert spaces or ~'s into CaretLine.
+    CaretLine.insert(i+1, NumSpaces, CaretLine[i] == '~' ? '~' : ' ');
+  }
+  
+  // Finally, remove any blank spaces from the end of CaretLine.
+  while (CaretLine[CaretLine.size()-1] == ' ')
+    CaretLine.erase(CaretLine.end()-1);
+  
+  // Emit what we have computed.
+  OS << SourceLine << '\n';
+  OS << CaretLine << '\n';
+}
+
+
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
                                              const DiagnosticInfo &Info) {
   // If the location is specified, print out a file/line/col and include trace
@@ -152,66 +216,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     // Inspect the actual instantiation point of the diagnostic, we don't care
     // about presumed locations anymore.
     FullSourceLoc ILoc = Info.getLocation().getInstantiationLoc();
-
-    unsigned ColNo = ILoc.getInstantiationColumnNumber();
     
-    // Rewind from the current position to the start of the line.
-    const char *TokInstantiationPtr = ILoc.getCharacterData();
-    const char *LineStart = TokInstantiationPtr-ColNo+1; // Column # is 1-based.
-    
-    // Compute the line end.  Scan forward from the error position to the end of
-    // the line.
-    const char *BufEnd = ILoc.getBufferData().second;
-    const char *LineEnd = TokInstantiationPtr;
-    while (LineEnd != BufEnd && 
-           *LineEnd != '\n' && *LineEnd != '\r')
-      ++LineEnd;
-    
-    // Copy the line of code into an std::string for ease of manipulation.
-    std::string SourceLine(LineStart, LineEnd);
-    
-    // Create a line for the caret that is filled with spaces that is the same
-    // length as the line of source code.
-    std::string CaretLine(LineEnd-LineStart, ' ');
-
-    // Highlight all of the characters covered by Ranges with ~ characters.
-    for (unsigned i = 0; i != Info.getNumRanges(); ++i)
-      HighlightRange(Info.getRange(i), ILoc.getManager(),
-                     ILoc.getInstantiationLineNumber(),
-                     ILoc.getFileID(), CaretLine, SourceLine);
-    
-    // Next, insert the caret itself.
-    if (ColNo-1 < CaretLine.size())
-      CaretLine[ColNo-1] = '^';
-    else
-      CaretLine.push_back('^');
-    
-    // Scan the source line, looking for tabs.  If we find any, manually expand
-    // them to 8 characters and update the CaretLine to match.
-    for (unsigned i = 0; i != SourceLine.size(); ++i) {
-      if (SourceLine[i] != '\t') continue;
-      
-      // Replace this tab with at least one space.
-      SourceLine[i] = ' ';
-      
-      // Compute the number of spaces we need to insert.
-      unsigned NumSpaces = ((i+8)&~7) - (i+1);
-      assert(NumSpaces < 8 && "Invalid computation of space amt");
-      
-      // Insert spaces into the SourceLine.
-      SourceLine.insert(i+1, NumSpaces, ' ');
-      
-      // Insert spaces or ~'s into CaretLine.
-      CaretLine.insert(i+1, NumSpaces, CaretLine[i] == '~' ? '~' : ' ');
-    }
-    
-    // Finally, remove any blank spaces from the end of CaretLine.
-    while (CaretLine[CaretLine.size()-1] == ' ')
-      CaretLine.erase(CaretLine.end()-1);
-    
-    // Emit what we have computed.
-    OS << SourceLine << '\n';
-    OS << CaretLine << '\n';
+    EmitCaretDiagnostic(ILoc, Info);
   }
   
   OS.flush();
