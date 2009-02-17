@@ -645,14 +645,13 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
   return Invalid;
 }
 
-Action::TypeTy * 
-Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,
-                                       SourceLocation TemplateLoc,
-                                       SourceLocation LAngleLoc,
-                                       ASTTemplateArgsPtr TemplateArgs,
-                                       SourceLocation *TemplateArgLocs,
-                                       SourceLocation RAngleLoc,
-                                       const CXXScopeSpec *SS) {
+Action::TypeResult
+Sema::ActOnClassTemplateId(DeclTy *TemplateD, SourceLocation TemplateLoc,
+                           SourceLocation LAngleLoc, 
+                           ASTTemplateArgsPtr TemplateArgs,
+                           SourceLocation *TemplateArgLocs,
+                           SourceLocation RAngleLoc,
+                           const CXXScopeSpec *SS) {
   TemplateDecl *Template = cast<TemplateDecl>(static_cast<Decl *>(TemplateD));
   ClassTemplateDecl *ClassTemplate = cast<ClassTemplateDecl>(Template);
 
@@ -662,7 +661,7 @@ Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,
   if (CheckTemplateArgumentList(Template, TemplateLoc, LAngleLoc, 
                                 TemplateArgs, TemplateArgLocs, RAngleLoc,
                                 ConvertedTemplateArgs))
-    return 0;
+    return true;
 
   assert((ConvertedTemplateArgs.size() == 
             Template->getTemplateParameters()->size()) &&
@@ -678,15 +677,15 @@ Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,
     = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
   if (!Decl) {
     // This is the first time we have referenced this class template
-    // specialization. Create an appropriate declaration node and add
-    // it to the list of specializations. This is the canonical
-    // declaration of the class template.
+    // specialization. Create the canonical declaration and add it to
+    // the set of specializations.
     Decl = ClassTemplateSpecializationDecl::Create(Context, 
                                            ClassTemplate->getDeclContext(),
                                                    TemplateLoc,
                                                    ClassTemplate,
                                                    &ConvertedTemplateArgs[0],
-                                           ConvertedTemplateArgs.size());
+                                                ConvertedTemplateArgs.size(),
+                                                   0);
     ClassTemplate->getSpecializations().InsertNode(Decl, InsertPos);
   }
 
@@ -1516,4 +1515,137 @@ Sema::CheckTemplateDeclScope(Scope *S,
 
   return Diag(TemplateLoc, diag::err_template_outside_namespace_or_class_scope)
     << TemplateRange;
+}
+
+Sema::DeclTy *
+Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
+                                       SourceLocation KWLoc, 
+                                       const CXXScopeSpec &SS,
+                                       DeclTy *TemplateD,
+                                       SourceLocation TemplateNameLoc,
+                                       SourceLocation LAngleLoc,
+                                       ASTTemplateArgsPtr TemplateArgs,
+                                       SourceLocation *TemplateArgLocs,
+                                       SourceLocation RAngleLoc,
+                                       AttributeList *Attr,
+                               MultiTemplateParamsArg TemplateParameterLists) {
+  // FIXME: We need to match up the scope-specifier with the template
+  // parameter lists, and will eventually end up with a single
+  // template parameter list remaining (which applies to
+  // TemplateIdType).
+  assert(TemplateParameterLists.size() == 1 && 
+         "Clang doesn't handle with ill-formed specializations yet.");
+
+  TemplateParameterList *TemplateParams = 
+    static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
+  assert(TemplateParams->size() == 0 &&
+         "Clang doesn't handle class template partial specializations yet");
+
+  // Find the class template we're specializing
+  ClassTemplateDecl *ClassTemplate 
+    = dyn_cast_or_null<ClassTemplateDecl>(static_cast<Decl *>(TemplateD));
+  if (!ClassTemplate)
+    return 0;
+
+  // Check that the specialization uses the same tag kind as the
+  // original template.
+  TagDecl::TagKind Kind;
+  switch (TagSpec) {
+  default: assert(0 && "Unknown tag type!");
+  case DeclSpec::TST_struct: Kind = TagDecl::TK_struct; break;
+  case DeclSpec::TST_union:  Kind = TagDecl::TK_union; break;
+  case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
+  }
+  if (ClassTemplate->getTemplatedDecl()->getTagKind() != Kind) {
+    Diag(KWLoc, diag::err_use_with_wrong_tag) << ClassTemplate;
+    Diag(ClassTemplate->getTemplatedDecl()->getLocation(), 
+         diag::note_previous_use);
+    Kind = ClassTemplate->getTemplatedDecl()->getTagKind();
+  }
+
+  // Check that the template argument list is well-formed for this
+  // template.
+  llvm::SmallVector<TemplateArgument, 16> ConvertedTemplateArgs;
+  if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
+                                TemplateArgs, TemplateArgLocs, RAngleLoc,
+                                ConvertedTemplateArgs))
+    return 0;
+
+  assert((ConvertedTemplateArgs.size() == 
+            ClassTemplate->getTemplateParameters()->size()) &&
+         "Converted template argument list is too short!");
+  
+  // Find the class template specialization declaration that
+  // corresponds to these arguments.
+  llvm::FoldingSetNodeID ID;
+  ClassTemplateSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
+                                           ConvertedTemplateArgs.size());
+  void *InsertPos = 0;
+  ClassTemplateSpecializationDecl *PrevDecl
+    = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+
+  ClassTemplateSpecializationDecl *Specialization = 0;
+
+  if (PrevDecl && PrevDecl->getSpecializationKind() == TSK_Undeclared) {
+    // Since the only prior class template specialization with these
+    // arguments was referenced but not declared, reuse that
+    // declaration node as our own, updating its source location to
+    // reflect our new declaration.
+    // FIXME: update source locations
+    Specialization = PrevDecl;
+    PrevDecl = 0;
+  } else {
+    // Create a new class template specialization declaration node for
+    // this explicit specialization.
+    Specialization
+      = ClassTemplateSpecializationDecl::Create(Context, 
+                                             ClassTemplate->getDeclContext(),
+                                                TemplateNameLoc,
+                                                ClassTemplate,
+                                                &ConvertedTemplateArgs[0],
+                                                ConvertedTemplateArgs.size(),
+                                                PrevDecl);
+
+    if (PrevDecl) {
+      ClassTemplate->getSpecializations().RemoveNode(PrevDecl);
+      ClassTemplate->getSpecializations().GetOrInsertNode(Specialization);
+    } else {
+      ClassTemplate->getSpecializations().InsertNode(Specialization, 
+                                                     InsertPos);
+    }
+  }
+
+  // Note that this is an explicit specialization.
+  Specialization->setSpecializationKind(TSK_ExplicitSpecialization);
+
+  // Check that this isn't a redefinition of this specialization.
+  if (TK == TK_Definition) {
+    if (RecordDecl *Def = Specialization->getDefinition(Context)) {
+      // FIXME: Should also handle explicit specialization after 
+      // implicit instantiation with a special diagnostic.
+      SourceRange Range(TemplateNameLoc, RAngleLoc);
+      Diag(TemplateNameLoc, diag::err_redefinition) 
+        << Specialization << Range;
+      Diag(Def->getLocation(), diag::note_previous_definition);
+      Specialization->setInvalidDecl();
+      return 0;
+    }
+  }
+
+  // FIXME: Do we want to create a nicely sugared type to use as the
+  // type for this explicit specialization?
+
+  // Set the lexical context. If the tag has a C++ scope specifier,
+  // the lexical context will be different from the semantic context.
+  Specialization->setLexicalDeclContext(CurContext);
+  
+  // We may be starting the definition of this specialization.
+  if (TK == TK_Definition)
+    Specialization->startDefinition();
+
+  // Add the specialization into its lexical context, so that it can
+  // be seen when iterating through the list of declarations in that
+  // context. However, specializations are not found by name lookup.
+  CurContext->addDecl(Specialization);
+  return Specialization;
 }

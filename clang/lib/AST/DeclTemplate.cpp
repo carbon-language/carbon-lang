@@ -159,7 +159,7 @@ ClassTemplateSpecializationDecl(DeclContext *DC, SourceLocation L,
                   // class template specializations?
                   SpecializedTemplate->getIdentifier()),
     SpecializedTemplate(SpecializedTemplate),
-    NumTemplateArgs(NumTemplateArgs) {
+    NumTemplateArgs(NumTemplateArgs), SpecializationKind(TSK_Undeclared) {
   TemplateArgument *Arg = reinterpret_cast<TemplateArgument *>(this + 1);
   for (unsigned ArgIdx = 0; ArgIdx < NumTemplateArgs; ++ArgIdx, ++Arg)
     *Arg = TemplateArgs[ArgIdx];
@@ -170,12 +170,16 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context,
                                         DeclContext *DC, SourceLocation L,
                                         ClassTemplateDecl *SpecializedTemplate,
                                         TemplateArgument *TemplateArgs, 
-                                        unsigned NumTemplateArgs) {
+                                        unsigned NumTemplateArgs,
+                                   ClassTemplateSpecializationDecl *PrevDecl) {
   unsigned Size = sizeof(ClassTemplateSpecializationDecl) + 
                   sizeof(TemplateArgument) * NumTemplateArgs;
   unsigned Align = llvm::AlignOf<ClassTemplateSpecializationDecl>::Alignment;
   void *Mem = Context.Allocate(Size, Align);
-  return new (Mem) ClassTemplateSpecializationDecl(DC, L, SpecializedTemplate,
-                                                   TemplateArgs, 
-                                                   NumTemplateArgs);
+  ClassTemplateSpecializationDecl *Result
+    = new (Mem) ClassTemplateSpecializationDecl(DC, L, SpecializedTemplate,
+                                                TemplateArgs, NumTemplateArgs);
+  // FIXME: Do we want a prettier type here?
+  Context.getTypeDeclType(Result, PrevDecl);
+  return Result;
 }

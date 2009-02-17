@@ -521,6 +521,23 @@ public:
   }
 };
 
+// \brief Describes the kind of template specialization that a
+// particular template specialization declaration represents.
+enum TemplateSpecializationKind {
+  /// This template specialization was formed from a template-id but
+  /// has not yet been declared, defined, or instantiated.
+  TSK_Undeclared = 0,
+  /// This template specialization was declared or defined by an
+  /// explicit specialization (C++ [temp.expl.spec]).
+  TSK_ExplicitSpecialization,
+  /// This template specialization was implicitly instantiated from a
+  /// template. (C++ [temp.inst]).
+  TSK_ImplicitInstantiation,
+  /// This template specialization was instantiated from a template
+  /// due to an explicit instantiation request (C++ [temp.explicit]).
+  TSK_ExplicitInstantiation
+};
+
 /// \brief Represents a class template specialization, which refers to
 /// a class template with a given set of template arguments.
 ///
@@ -541,8 +558,12 @@ class ClassTemplateSpecializationDecl
 
   /// \brief The number of template arguments. The actual arguments
   /// are allocated after the ClassTemplateSpecializationDecl object.
-  unsigned NumTemplateArgs;
-  
+  unsigned NumTemplateArgs : 16;
+
+  /// \brief The kind of specialization this declaration refers to.
+  /// Really a value of type TemplateSpecializationKind.
+  unsigned SpecializationKind : 2;
+
   ClassTemplateSpecializationDecl(DeclContext *DC, SourceLocation L,
                                   ClassTemplateDecl *SpecializedTemplate,
                                   TemplateArgument *TemplateArgs, 
@@ -552,7 +573,8 @@ public:
   static ClassTemplateSpecializationDecl *
   Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
          ClassTemplateDecl *SpecializedTemplate,
-         TemplateArgument *TemplateArgs, unsigned NumTemplateArgs);
+         TemplateArgument *TemplateArgs, unsigned NumTemplateArgs,
+         ClassTemplateSpecializationDecl *PrevDecl);
 
   /// \brief Retrieve the template that this specialization specializes.
   ClassTemplateDecl *getSpecializedTemplate() const { 
@@ -569,6 +591,16 @@ public:
   }
 
   unsigned getNumTemplateArgs() const { return NumTemplateArgs; }
+
+  /// \brief Determine the kind of specialization that this
+  /// declaration represents.
+  TemplateSpecializationKind getSpecializationKind() const {
+    return static_cast<TemplateSpecializationKind>(SpecializationKind);
+  }
+
+  void setSpecializationKind(TemplateSpecializationKind TSK) {
+    SpecializationKind = TSK;
+  }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     Profile(ID, template_arg_begin(), getNumTemplateArgs());

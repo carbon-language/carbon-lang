@@ -996,7 +996,7 @@ private:
   typedef Action::TemplateNameKind TemplateNameKind;
 
   // C++ 14.1: Template Parameters [temp.param]
-  DeclTy *ParseTemplateDeclaration(unsigned Context);
+  DeclTy *ParseTemplateDeclarationOrSpecialization(unsigned Context);
   bool ParseTemplateParameters(unsigned Depth, 
                                TemplateParameterList &TemplateParams,
                                SourceLocation &LAngleLoc, 
@@ -1011,6 +1011,17 @@ private:
   typedef llvm::SmallVector<void *, 16> TemplateArgList;
   typedef llvm::SmallVector<bool, 16> TemplateArgIsTypeList;
   typedef llvm::SmallVector<SourceLocation, 16> TemplateArgLocationList;
+
+  bool ParseTemplateIdAfterTemplateName(DeclTy *Template,
+                                        SourceLocation TemplateNameLoc, 
+                                        const CXXScopeSpec *SS,
+                                        bool ConsumeLastToken,
+                                        SourceLocation &LAngleLoc,
+                                        TemplateArgList &TemplateArgs,
+                                    TemplateArgIsTypeList &TemplateArgIsType,
+                               TemplateArgLocationList &TemplateArgLocations,
+                                        SourceLocation &RAngleLoc);
+
   void AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
                                const CXXScopeSpec *SS = 0);
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs,

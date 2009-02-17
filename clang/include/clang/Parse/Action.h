@@ -138,7 +138,7 @@ public:
   /// isTemplateName.
   enum TemplateNameKind {
     /// The name does not refer to a template.
-    TNK_Non_template,
+    TNK_Non_template = 0,
     /// The name refers to a function template or a set of overloaded
     /// functions that includes at least one function template.
     TNK_Function_template,
@@ -1143,23 +1143,86 @@ public:
   /// \brief Form a class template specialization from a template and
   /// a list of template arguments.
   ///
+  /// This action merely forms the type for the template-id, possibly
+  /// checking well-formedness of the template arguments. It does not
+  /// imply the declaration of any entity.
+  ///
   /// \param Template  A template whose specialization results in a
   /// type, e.g., a class template or template template parameter.
+  /// 
+  /// \param IsSpecialization true when we are naming the class
+  /// template specialization as part of an explicit class
+  /// specialization or class template partial specialization.
+  virtual TypeResult ActOnClassTemplateId(DeclTy *Template,
+                                          SourceLocation TemplateLoc,
+                                          SourceLocation LAngleLoc,
+                                          ASTTemplateArgsPtr TemplateArgs,
+                                          SourceLocation *TemplateArgLocs,
+                                          SourceLocation RAngleLoc,
+                                          const CXXScopeSpec *SS) {
+    return 0;
+  };
+
+  /// \brief Process the declaration or definition of an explicit
+  /// class template specialization or a class template partial
+  /// specialization.
   ///
-  /// \todo "Class template specialization" is the standard term for
-  /// the types that we're forming, but the name
-  /// ActOnClassTemplateSpecialization sounds like we're declaring a
-  /// new class template specialization.
-  virtual TypeTy * 
-  ActOnClassTemplateSpecialization(DeclTy *Template,
-                                   SourceLocation TemplateLoc,
+  /// This routine is invoked when an explicit class template
+  /// specialization or a class template partial specialization is
+  /// declared or defined, to introduce the (partial) specialization
+  /// and produce a declaration for it. In the following example,
+  /// ActOnClassTemplateSpecialization will be invoked for the
+  /// declarations at both A and B:
+  ///
+  /// \code
+  /// template<typename T> class X;
+  /// template<> class X<int> { }; // A: explicit specialization
+  /// template<typename T> class X<T*> { }; // B: partial specialization
+  /// \endcode
+  ///
+  /// Note that it is the job of semantic analysis to determine which
+  /// of the two cases actually occurred in the source code, since
+  /// they are parsed through the same path. The formulation of the
+  /// template parameter lists describes which case we are in.
+  ///
+  /// \param S the current scope
+  ///
+  /// \param TagSpec whether this declares a class, struct, or union
+  /// (template)
+  ///
+  /// \param TK whether this is a declaration or a definition
+  /// 
+  /// \param KWLoc the location of the 'class', 'struct', or 'union'
+  /// keyword.
+  ///
+  /// \param SS the scope specifier preceding the template-id
+  ///
+  /// \param Template the declaration of the class template that we
+  /// are specializing.
+  ///
+  /// \param Attr attributes on the specialization
+  ///
+  /// \param TemplateParameterLists the set of template parameter
+  /// lists that apply to this declaration. In a well-formed program,
+  /// the number of template parameter lists will be one more than the
+  /// number of template-ids in the scope specifier. However, it is
+  /// common for users to provide the wrong number of template
+  /// parameter lists (such as a missing \c template<> prior to a
+  /// specialization); the parser does not check this condition.
+  virtual DeclTy *
+  ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
+                                   SourceLocation KWLoc, 
+                                   const CXXScopeSpec &SS,
+                                   DeclTy *Template,
+                                   SourceLocation TemplateNameLoc,
                                    SourceLocation LAngleLoc,
                                    ASTTemplateArgsPtr TemplateArgs,
                                    SourceLocation *TemplateArgLocs,
                                    SourceLocation RAngleLoc,
-                                   const CXXScopeSpec *SS = 0) {
+                                   AttributeList *Attr,
+                              MultiTemplateParamsArg TemplateParameterLists) {
     return 0;
-  };
+  }
 
   //===----------------------- Obj-C Declarations -------------------------===//
   

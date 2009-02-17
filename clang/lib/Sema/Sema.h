@@ -1513,14 +1513,26 @@ public:
                      AttributeList *Attr,
                      MultiTemplateParamsArg TemplateParameterLists);
 
-  virtual TypeTy * 
-  ActOnClassTemplateSpecialization(DeclTy *Template, 
-                                   SourceLocation TemplateLoc,
+  virtual TypeResult
+  ActOnClassTemplateId(DeclTy *Template, SourceLocation TemplateLoc,
+                       SourceLocation LAngleLoc,
+                       ASTTemplateArgsPtr TemplateArgs,
+                       SourceLocation *TemplateArgLocs,
+                       SourceLocation RAngleLoc,
+                       const CXXScopeSpec *SS);
+  
+  virtual DeclTy *
+  ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
+                                   SourceLocation KWLoc, 
+                                   const CXXScopeSpec &SS,
+                                   DeclTy *Template,
+                                   SourceLocation TemplateNameLoc,
                                    SourceLocation LAngleLoc,
                                    ASTTemplateArgsPtr TemplateArgs,
                                    SourceLocation *TemplateArgLocs,
                                    SourceLocation RAngleLoc,
-                                   const CXXScopeSpec *SS = 0);
+                                   AttributeList *Attr,
+                                 MultiTemplateParamsArg TemplateParameterLists);
 
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,

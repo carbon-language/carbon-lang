@@ -995,7 +995,9 @@ public:
   OverloadedOperatorKind getOverloadedOperator() const { return OperatorKind; }
 
   void setInvalidType(bool flag) { InvalidType = flag; }
-  bool getInvalidType() const { return InvalidType; }
+  bool getInvalidType() const { 
+    return InvalidType || DS.getTypeSpecType() == DeclSpec::TST_error; 
+  }
 
   void setGroupingParens(bool flag) { GroupingParens = flag; }
   bool hasGroupingParens() const { return GroupingParens; }

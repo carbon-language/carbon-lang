@@ -228,7 +228,7 @@ Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
   switch (Tok.getKind()) {
   case tok::kw_export:
   case tok::kw_template:
-    return ParseTemplateDeclaration(Context);
+    return ParseTemplateDeclarationOrSpecialization(Context);
   case tok::kw_namespace:
     return ParseNamespace(Context);
   case tok::kw_using:
@@ -2095,7 +2095,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       DS.AddAttributes(AttrList);
       AttrList = 0;  // Only apply the attributes to the first parameter.
     }
-    ParseDeclarationSpecifiers(DS);
+    ParseDeclarationSpecifiers(DS);    
 
     // Parse the declarator.  This is "PrototypeContext", because we must
     // accept either 'declarator' or 'abstract-declarator' here.

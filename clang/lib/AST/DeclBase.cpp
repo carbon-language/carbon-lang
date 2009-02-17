@@ -319,17 +319,6 @@ DeclContext *DeclContext::getPrimaryContext() {
     // The original namespace is our primary context.
     return static_cast<NamespaceDecl*>(this)->getOriginalNamespace();
 
-  case Decl::Enum:
-  case Decl::Record:
-  case Decl::CXXRecord:
-    // If this is a tag type that has a definition or is currently
-    // being defined, that definition is our primary context.
-    if (TagType *TagT = cast_or_null<TagType>(cast<TagDecl>(this)->TypeForDecl))
-      if (TagT->isBeingDefined() || 
-          (TagT->getDecl() && TagT->getDecl()->isDefinition()))
-        return TagT->getDecl();
-    return this;
-
   case Decl::ObjCMethod:
     return this;
 
@@ -344,6 +333,17 @@ DeclContext *DeclContext::getPrimaryContext() {
     return this;
 
   default:
+    if (DeclKind >= Decl::TagFirst && DeclKind <= Decl::TagLast) {
+      // If this is a tag type that has a definition or is currently
+      // being defined, that definition is our primary context.
+      if (TagType *TagT 
+            = cast_or_null<TagType>(cast<TagDecl>(this)->TypeForDecl))
+        if (TagT->isBeingDefined() || 
+            (TagT->getDecl() && TagT->getDecl()->isDefinition()))
+          return TagT->getDecl();
+      return this;
+    }
+
     assert(DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast &&
           "Unknown DeclContext kind");
     return this;
@@ -352,28 +352,11 @@ DeclContext *DeclContext::getPrimaryContext() {
 
 DeclContext *DeclContext::getNextContext() {
   switch (DeclKind) {
-  case Decl::TranslationUnit:
-  case Decl::Enum:
-  case Decl::Record:
-  case Decl::CXXRecord:
-  case Decl::ObjCMethod:
-  case Decl::ObjCInterface:
-  case Decl::ObjCCategory:
-  case Decl::ObjCProtocol:
-  case Decl::ObjCImplementation:
-  case Decl::ObjCCategoryImpl:
-  case Decl::LinkageSpec:
-  case Decl::Block:
-    // There is only one DeclContext for these entities.
-    return 0;
-
   case Decl::Namespace:
     // Return the next namespace
     return static_cast<NamespaceDecl*>(this)->getNextNamespace();
 
   default:
-    assert(DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast &&
-          "Unknown DeclContext kind");
     return 0;
   }
 }
@@ -463,6 +446,12 @@ const DeclContext *DeclContext::getLookupContext() const {
 }
 
 void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
+  // FIXME: This feels like a hack. Should DeclarationName support
+  // template-ids, or is there a better way to keep specializations
+  // from being visible?
+  if (isa<ClassTemplateSpecializationDecl>(D))
+    return;
+
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this) {
     PrimaryContext->makeDeclVisibleInContext(D);
@@ -484,6 +473,12 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
 void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   // Skip unnamed declarations.
   if (!D->getDeclName())
+    return;
+
+  // FIXME: This feels like a hack. Should DeclarationName support
+  // template-ids, or is there a better way to keep specializations
+  // from being visible?
+  if (isa<ClassTemplateSpecializationDecl>(D))
     return;
 
   bool MayBeRedeclaration = true;

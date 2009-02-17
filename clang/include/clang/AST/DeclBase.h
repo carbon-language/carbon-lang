@@ -202,7 +202,7 @@ public:
   bool isImplicit() const { return Implicit; }
   void setImplicit(bool I = true) { Implicit = I; }
   
-  IdentifierNamespace getIdentifierNamespace() const {
+  unsigned getIdentifierNamespace() const {
     switch (DeclKind) {
     default: 
       if (DeclKind >= FunctionFirst && DeclKind <= FunctionLast)
@@ -245,7 +245,10 @@ public:
     case FunctionTemplate:
     case ClassTemplate:
     case TemplateTemplateParm:
-      return IdentifierNamespace(IDNS_Tag | IDNS_Ordinary);
+      return IDNS_Tag | IDNS_Ordinary;
+
+    case ClassTemplateSpecialization:
+      return 0;
     }
   }
   

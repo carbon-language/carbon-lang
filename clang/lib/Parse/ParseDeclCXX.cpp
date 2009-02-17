@@ -310,17 +310,69 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec SS;
   if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS)) {
+    // FIXME: can we get a class template specialization or
+    // template-id token here?
     if (Tok.isNot(tok::identifier))
       Diag(Tok, diag::err_expected_ident);
   }
 
-  // Parse the (optional) class name.
-  // FIXME: Alternatively, parse a simple-template-id.
+
+  // These variables encode the simple-template-id that we might end
+  // up parsing below. We don't translate this into a type
+  // automatically because (1) we want to create a separate
+  // declaration for each specialization, and (2) we want to retain
+  // more information about source locations that types provide.
+  DeclTy *Template = 0;
+  SourceLocation LAngleLoc, RAngleLoc;
+  TemplateArgList TemplateArgs;
+  TemplateArgIsTypeList TemplateArgIsType;
+  TemplateArgLocationList TemplateArgLocations;
+  ASTTemplateArgsPtr TemplateArgsPtr(Actions, 0, 0, 0);
+  
+
+  // Parse the (optional) class name or simple-template-id.
   IdentifierInfo *Name = 0;
   SourceLocation NameLoc;
   if (Tok.is(tok::identifier)) {
     Name = Tok.getIdentifierInfo();
     NameLoc = ConsumeToken();
+
+    if (Tok.is(tok::less)) {
+      // This is a simple-template-id.
+      Action::TemplateNameKind TNK 
+        = Actions.isTemplateName(*Name, CurScope, Template, &SS);
+
+      bool Invalid = false;
+
+      // Parse the enclosed template argument list.
+      if (TNK != Action::TNK_Non_template)
+        Invalid = ParseTemplateIdAfterTemplateName(Template, NameLoc,
+                                                   &SS, true, LAngleLoc, 
+                                                   TemplateArgs,
+                                                   TemplateArgIsType,
+                                                   TemplateArgLocations,
+                                                   RAngleLoc);
+      
+      TemplateArgsPtr.reset(&TemplateArgs[0], &TemplateArgIsType[0],
+                            TemplateArgs.size());
+
+      if (TNK != Action::TNK_Class_template) {
+        // The template-name in the simple-template-id refers to
+        // something other than a class template. Give an appropriate
+        // error message and skip to the ';'.
+        SourceRange Range(NameLoc);
+        if (SS.isNotEmpty())
+          Range.setBegin(SS.getBeginLoc());
+        else if (!Invalid)
+          
+        Diag(LAngleLoc, diag::err_template_spec_syntax_non_template)
+          << Name << static_cast<int>(TNK) << Range;
+
+        DS.SetTypeSpecError();
+        SkipUntil(tok::semi, false, true);
+        return;
+      }
+    }
   }
 
   // There are three options here.  If we have 'struct foo;', then
@@ -347,7 +399,23 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
 
   // Create the tag portion of the class or class template.
   DeclTy *TagOrTempDecl;
-  if (TemplateParams && TK != Action::TK_Reference)
+  if (Template && TK != Action::TK_Reference)
+    // Explicit specialization or class template partial
+    // specialization. Let semantic analysis decide.
+
+    // FIXME: we want a source range covering the simple-template-id.
+    TagOrTempDecl 
+      = Actions.ActOnClassTemplateSpecialization(CurScope, TagType, TK,
+                                                 StartLoc, SS, /*Range*/
+                                                 Template, NameLoc, 
+                                                 LAngleLoc, TemplateArgsPtr,
+                                                 &TemplateArgLocations[0],
+                                                 RAngleLoc, Attr,
+                       Action::MultiTemplateParamsArg(Actions, 
+                                    TemplateParams? &(*TemplateParams)[0] : 0,
+                                 TemplateParams? TemplateParams->size() : 0));
+
+  else if (TemplateParams && TK != Action::TK_Reference)
     TagOrTempDecl = Actions.ActOnClassTemplate(CurScope, TagType, TK, StartLoc,
                                                SS, Name, NameLoc, Attr,
                        Action::MultiTemplateParamsArg(Actions, 

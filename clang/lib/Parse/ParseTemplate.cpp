@@ -19,12 +19,23 @@
 
 using namespace clang;
 
-/// ParseTemplateDeclaration - Parse a template declaration, which includes 
-/// the template parameter list and either a function of class declaration.
+/// \brief Parse a template declaration or an explicit specialization.
+///
+/// Template declarations include one or more template parameter lists
+/// and either the function or class template declaration. Explicit
+/// specializations contain one or more 'template < >' prefixes
+/// followed by a (possibly templated) declaration. Since the
+/// syntactic form of both features is nearly identical, we parse all
+/// of the template headers together and let semantic analysis sort
+/// the declarations from the explicit specializations.
 ///
 ///       template-declaration: [C++ temp]
 ///         'export'[opt] 'template' '<' template-parameter-list '>' declaration
-Parser::DeclTy *Parser::ParseTemplateDeclaration(unsigned Context) {
+///
+///       explicit-specialization: [ C++ temp.expl.spec]
+///         'template' '<' '>' declaration
+Parser::DeclTy *
+Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context) {
   assert((Tok.is(tok::kw_export) || Tok.is(tok::kw_template)) && 
 	 "Token does not start a template declaration.");
   
@@ -40,7 +51,7 @@ Parser::DeclTy *Parser::ParseTemplateDeclaration(unsigned Context) {
   //
   // We parse multiple levels non-recursively so that we can build a
   // single data structure containing all of the template parameter
-  // lists easily differentiate between the case above and:
+  // lists to easily differentiate between the case above and:
   //
   //   template<typename T>
   //   class A {
@@ -370,6 +381,68 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   return Param;
 }
 
+/// \brief Parses a template-id that after the template name has
+/// already been parsed.
+///
+/// This routine takes care of parsing the enclosed template argument
+/// list ('<' template-parameter-list [opt] '>') and placing the
+/// results into a form that can be transferred to semantic analysis.
+///
+/// \param Template the template declaration produced by isTemplateName
+///
+/// \param TemplateNameLoc the source location of the template name
+///
+/// \param SS if non-NULL, the nested-name-specifier preceding the
+/// template name.
+///
+/// \param ConsumeLastToken if true, then we will consume the last
+/// token that forms the template-id. Otherwise, we will leave the
+/// last token in the stream (e.g., so that it can be replaced with an
+/// annotation token).
+bool 
+Parser::ParseTemplateIdAfterTemplateName(DeclTy *Template,
+                                         SourceLocation TemplateNameLoc, 
+                                         const CXXScopeSpec *SS,
+                                         bool ConsumeLastToken,
+                                         SourceLocation &LAngleLoc,
+                                         TemplateArgList &TemplateArgs,
+                                    TemplateArgIsTypeList &TemplateArgIsType,
+                               TemplateArgLocationList &TemplateArgLocations,
+                                         SourceLocation &RAngleLoc) {
+  assert(Tok.is(tok::less) && "Must have already parsed the template-name");
+
+  // Consume the '<'.
+  LAngleLoc = ConsumeToken();
+
+  // Parse the optional template-argument-list.
+  bool Invalid = false;
+  {
+    GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);
+    if (Tok.isNot(tok::greater))
+      Invalid = ParseTemplateArgumentList(TemplateArgs, TemplateArgIsType,
+                                          TemplateArgLocations);
+
+    if (Invalid) {
+      // Try to find the closing '>'.
+      SkipUntil(tok::greater, true, !ConsumeLastToken);
+
+      return true;
+    }
+  }
+
+  if (Tok.isNot(tok::greater))
+    return true;
+
+  // Determine the location of the '>'. Only consume this token if the
+  // caller asked us to.
+  RAngleLoc = Tok.getLocation();
+
+  if (ConsumeLastToken)
+    ConsumeToken();
+
+  return false;
+}
+                                              
 /// AnnotateTemplateIdToken - The current token is an identifier that
 /// refers to the template declaration Template, and is followed by a
 /// '<'. Turn this template-id into a template-id annotation token.
@@ -382,46 +455,44 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
   // Consume the template-name.
   SourceLocation TemplateNameLoc = ConsumeToken();
 
-  // Consume the '<'.
-  SourceLocation LAngleLoc = ConsumeToken();
-
-  // Parse the optional template-argument-list.
+  // Parse the enclosed template argument list.
+  SourceLocation LAngleLoc, RAngleLoc;
   TemplateArgList TemplateArgs;
   TemplateArgIsTypeList TemplateArgIsType;
   TemplateArgLocationList TemplateArgLocations;
+  bool Invalid = ParseTemplateIdAfterTemplateName(Template, TemplateNameLoc,
+                                                  SS, false, LAngleLoc, 
+                                                  TemplateArgs, 
+                                                  TemplateArgIsType,
+                                                  TemplateArgLocations,
+                                                  RAngleLoc);
 
-  {
-    GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);
-    if (Tok.isNot(tok::greater) && 
-        ParseTemplateArgumentList(TemplateArgs, TemplateArgIsType,
-                                  TemplateArgLocations)) {
-      // Try to find the closing '>'.
-      SkipUntil(tok::greater, true, true);
+  ASTTemplateArgsPtr TemplateArgsPtr(Actions, &TemplateArgs[0],
+                                     &TemplateArgIsType[0],
+                                     TemplateArgs.size());
 
-      // Clean up any template arguments that we successfully parsed.
-      ASTTemplateArgsPtr TemplateArgsPtr(Actions, &TemplateArgs[0],
-                                         &TemplateArgIsType[0],
-                                         TemplateArgs.size());
-      
-      return;
-    }
-  }
+  if (Invalid) // FIXME: How to recover from a broken template-id?
+    return; 
 
-  if (Tok.isNot(tok::greater))
-    return;
-
-  // Determine the location of the '>'. We won't actually consume this
-  // token, because we'll be replacing it with the template-id.
-  SourceLocation RAngleLoc = Tok.getLocation();
-  
   // Build the annotation token.
-  if (TNK == Action::TNK_Function_template) {
+  if (TNK == Action::TNK_Class_template) {
+    Action::TypeResult Type 
+      = Actions.ActOnClassTemplateId(Template, TemplateNameLoc,
+                                     LAngleLoc, TemplateArgsPtr,
+                                     &TemplateArgLocations[0],
+                                     RAngleLoc, SS);
+    if (Type.isInvalid()) // FIXME: better recovery?
+      return;
+
+    Tok.setKind(tok::annot_typename);
+    Tok.setAnnotationValue(Type.get());
+  } else {
     // This is a function template. We'll be building a template-id
     // annotation token.
     Tok.setKind(tok::annot_template_id);    
     TemplateIdAnnotation *TemplateId 
       = (TemplateIdAnnotation *)malloc(sizeof(TemplateIdAnnotation) + 
-                                  sizeof(void*) * TemplateArgs.size());
+                                       sizeof(void*) * TemplateArgs.size());
     TemplateId->TemplateNameLoc = TemplateNameLoc;
     TemplateId->Template = Template;
     TemplateId->LAngleLoc = LAngleLoc;
@@ -430,24 +501,6 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
     for (unsigned Arg = 0, ArgEnd = TemplateArgs.size(); Arg != ArgEnd; ++Arg)
       Args[Arg] = TemplateArgs[Arg];
     Tok.setAnnotationValue(TemplateId);
-  } else {
-    // This is a type template, e.g., a class template, template
-    // template parameter, or template alias. We'll be building a
-    // "typename" annotation token.
-    ASTTemplateArgsPtr TemplateArgsPtr(Actions, &TemplateArgs[0],
-                                       &TemplateArgIsType[0],
-                                       TemplateArgs.size());
-    TypeTy *Ty 
-      = Actions.ActOnClassTemplateSpecialization(Template, TemplateNameLoc,
-                                                 LAngleLoc, TemplateArgsPtr,
-                                                 &TemplateArgLocations[0],
-                                                 RAngleLoc, SS);
-
-    if (!Ty) // Something went wrong; don't annotate
-      return;
-
-    Tok.setKind(tok::annot_typename);
-    Tok.setAnnotationValue(Ty);
   }
 
   // Common fields for the annotation token

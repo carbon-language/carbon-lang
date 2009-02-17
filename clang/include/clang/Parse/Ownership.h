@@ -571,6 +571,20 @@ namespace clang
 #endif
     }
 
+    // FIXME: Lame, not-fully-type-safe emulation of 'move semantics'.
+    ASTTemplateArgsPtr& operator=(ASTTemplateArgsPtr &Other)  {
+#if !defined(DISABLE_SMART_POINTERS)
+      Actions = Other.Actions;
+#endif
+      Args = Other.Args;
+      ArgIsType = Other.ArgIsType;
+      Count = Other.Count;
+#if !defined(DISABLE_SMART_POINTERS)
+      Other.Count = 0;
+#endif
+      return *this;
+    }
+
 #if !defined(DISABLE_SMART_POINTERS)
     ~ASTTemplateArgsPtr() { destroy(); }
 #endif
@@ -578,6 +592,16 @@ namespace clang
     void **getArgs() const { return Args; }
     bool *getArgIsType() const {return ArgIsType; }
     unsigned size() const { return Count; }
+
+    void reset(void **args, bool *argIsType, unsigned count) {
+      destroy();
+
+      Args = args;
+      ArgIsType = argIsType;
+      Count = count;
+    }
+
+    void *operator[](unsigned Arg) const { return Args[Arg]; }
 
     void **release() const { 
 #if !defined(DISABLE_SMART_POINTERS)

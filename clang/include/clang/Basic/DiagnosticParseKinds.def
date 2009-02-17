@@ -274,6 +274,8 @@ DIAG(err_expected_type_id_after, ERROR,
       "expected type-id after '%0'")
 DIAG(err_expected_class_before, ERROR,
       "expected 'class' before '%0'")
+DIAG(err_template_spec_syntax_non_template, ERROR,
+     "identifier followed by '<' indicates a class template specialization but %0 %select{does not refer to a template|refers to a function template|<unused>|refers to a template template parameter}1")
 
 // Language specific pragmas
 
