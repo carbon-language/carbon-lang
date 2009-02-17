@@ -44,7 +44,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -70,7 +70,6 @@ namespace {
     bool runOnLoop(Loop *L, LPPassManager &LPM);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
@@ -174,7 +173,6 @@ namespace {
     Loop *L;
     LPPassManager *LPM;
     LoopInfo *LI;
-    ScalarEvolution *SE;
     DominatorTree *DT;
     DominanceFrontier *DF;
 
@@ -205,7 +203,6 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   if (!L->getSubLoops().empty())
     return false;
 
-  SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
   DF = &getAnalysis<DominanceFrontier>();
