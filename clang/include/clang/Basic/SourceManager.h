@@ -454,6 +454,12 @@ public:
     if (Loc.isFileID()) return Loc;
     return getSpellingLocSlowCase(Loc);
   }
+  
+  /// getImmediateSpellingLoc - Given a SourceLocation object, return the
+  /// spelling location referenced by the ID.  This is the first level down
+  /// towards the place where the characters that make up the lexed token can be
+  /// found.  This should not generally be used by clients.
+  SourceLocation getImmediateSpellingLoc(SourceLocation Loc) const;  
 
   /// getDecomposedLoc - Decompose the specified location into a raw FileID +
   /// Offset pair.  The first element is the FileID, the second is the

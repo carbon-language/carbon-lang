@@ -597,6 +597,18 @@ SourceManager::getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
   return std::make_pair(FID, Offset);
 }
 
+/// getImmediateSpellingLoc - Given a SourceLocation object, return the
+/// spelling location referenced by the ID.  This is the first level down
+/// towards the place where the characters that make up the lexed token can be
+/// found.  This should not generally be used by clients.
+SourceLocation SourceManager::getImmediateSpellingLoc(SourceLocation Loc) const{
+  if (Loc.isFileID()) return Loc;
+  std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
+  Loc = getSLocEntry(LocInfo.first).getInstantiation().getSpellingLoc();
+  return Loc.getFileLocWithOffset(LocInfo.second);
+}
+
+
 /// getImmediateInstantiationRange - Loc is required to be an instantiation
 /// location.  Return the start/end of the instantiation information.
 std::pair<SourceLocation,SourceLocation>
