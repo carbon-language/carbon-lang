@@ -25,379 +25,203 @@
 
 using namespace clang;
 
-namespace { class VISIBILITY_HIDDEN ConstRange {}; }
+namespace { class VISIBILITY_HIDDEN ConstraintRange {}; }
+static int ConstraintRangeIndex = 0;
 
-static int ConstRangeIndex = 0;
-
-// A Range represents the closed range [from, to].  The caller must
-// guarantee that from <= to.  Note that Range is immutable, so as not
-// to subvert RangeSet's immutability.
-class Range : public std::pair<llvm::APSInt, llvm::APSInt> {
+/// A Range represents the closed range [from, to].  The caller must
+/// guarantee that from <= to.  Note that Range is immutable, so as not
+/// to subvert RangeSet's immutability.
+class Range : public std::pair<const llvm::APSInt*, const llvm::APSInt*> {
 public:
   Range(const llvm::APSInt &from, const llvm::APSInt &to)
-    : std::pair<llvm::APSInt, llvm::APSInt>(from, to) {
+    : std::pair<const llvm::APSInt*, const llvm::APSInt*>(&from, &to) {
     assert(from <= to);
   }
   bool Includes(const llvm::APSInt &v) const {
-    return first <= v && v <= second;
+    return *first <= v && v <= *second;
   }
   const llvm::APSInt &From() const {
-    return first;
+    return *first;
   }
   const llvm::APSInt &To() const {
-    return second;
+    return *second;
   }
-  const llvm::APSInt *HasConcreteValue() const {
-    return From() == To() ? &From() : NULL;
+  const llvm::APSInt *getConcreteValue() const {
+    return &From() == &To() ? &From() : NULL;
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
-    From().Profile(ID);
-    To().Profile(ID);
+    ID.AddPointer(&From());
+    ID.AddPointer(&To());
   }
 };
 
-struct RangeCmp {
-  bool operator()(const Range &r1, const Range &r2) {
-    if (r1.From() < r2.From()) {
-      assert(!r1.Includes(r2.From()));
-      assert(!r2.Includes(r1.To()));
-      return true;
-    } else if (r1.From() > r2.From()) {
-      assert(!r1.Includes(r2.To()));
-      assert(!r2.Includes(r1.From()));
-      return false;
-    } else
-      assert(!"Ranges should never be equal in the same set");
-  }
-};
-
-typedef llvm::ImmutableSet<Range> PrimRangeSet;
-
-class RangeSet;
-std::ostream &operator<<(std::ostream &os, const RangeSet &r);
-
-
-// A RangeSet contains a set of ranges. If the set is empty, then
-//   noValues -> Nothing matches.
-//  !noValues -> Everything (in range of the bit representation) matches.
+/// RangeSet contains a set of ranges. If the set is empty, then
+///  there the value of a symbol is overly constrained and there are no
+///  possible values for that symbol.
 class RangeSet {
+  typedef llvm::ImmutableSet<Range> PrimRangeSet;
   PrimRangeSet ranges; // no need to make const, since it is an
                        // ImmutableSet - this allows default operator=
-                       // to work.
-  bool noValues;  // if true, no value is possible (should never happen)
-
-  static const llvm::APSInt Max(const llvm::APSInt &v) {
-    return llvm::APSInt::getMaxValue(v.getBitWidth(), v.isUnsigned());
-  }
-  static const llvm::APSInt Min(const llvm::APSInt &v) {
-     return llvm::APSInt::getMinValue(v.getBitWidth(), v.isUnsigned());
-  }
-  static const llvm::APSInt One(const llvm::APSInt &v) {
-    return llvm::APSInt(llvm::APInt(v.getBitWidth(), 1), v.isUnsigned());
-  }
-
+                       // to work.    
 public:
-  // Create a RangeSet that allows all possible values.
-  RangeSet(PrimRangeSet::Factory *factory) : ranges(factory->GetEmptySet()),
-                                             noValues(false) {
-  }
-  // Note that if the empty set is passed, then there are no possible
-  // values.  To create a RangeSet that covers all values when the
-  // empty set is passed, use RangeSet(r, false).
-  RangeSet(const PrimRangeSet &r) : ranges(r), noValues(r.isEmpty()) {
-  }
-  // Allow an empty set to be passed meaning "all values" instead of
-  // "no values".
-  RangeSet(const PrimRangeSet &r, bool n) : ranges(r), noValues(n) {
-    assert(!n);
-  }
-  void Profile(llvm::FoldingSetNodeID &ID) const {
-    ranges.Profile(ID);
-    ID.AddBoolean(noValues);
+  typedef PrimRangeSet::Factory Factory;
+  typedef PrimRangeSet::iterator iterator;
+
+  RangeSet(PrimRangeSet RS) : ranges(RS) {}
+  RangeSet(Factory& F) : ranges(F.GetEmptySet()) {}
+
+  iterator begin() const { return ranges.begin(); }
+  iterator end() const { return ranges.end(); }
+  
+  bool isEmpty() const { return ranges.isEmpty(); }
+  
+  /// Construct a new RangeSet representing '{ [from, to] }'.
+  RangeSet(Factory &F, const llvm::APSInt &from, const llvm::APSInt &to)
+    : ranges(F.Add(F.GetEmptySet(), Range(from, to))) {}
+  
+  /// Profile - Generates a hash profile of this RangeSet for use
+  ///  by FoldingSet.
+  void Profile(llvm::FoldingSetNodeID &ID) const { ranges.Profile(ID); }
+
+  /// getConcreteValue - If a symbol is contrained to equal a specific integer
+  ///  constant then this method returns that value.  Otherwise, it returns
+  ///  NULL.
+  const llvm::APSInt* getConcreteValue() const {
+    return ranges.isSingleton() ? ranges.begin()->getConcreteValue() : 0;
   }
 
-  const llvm::APSInt *HasConcreteValue() const {
-    if (!ranges.isSingleton())
-      return NULL;
-    return ranges.begin()->HasConcreteValue();
+  /// AddEQ - Create a new RangeSet with the additional constraint that the
+  ///  value be equal to V.
+  RangeSet AddEQ(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
+    // Search for a range that includes 'V'.  If so, return a new RangeSet
+    // representing { [V, V] }.
+    for (PrimRangeSet::iterator i = begin(), e = end(); i!=e; ++i)
+      if (i->Includes(V))
+        return RangeSet(F, V, V);
+
+    return RangeSet(F);
   }
 
-  bool CouldBeNE(const llvm::APSInt &ne) const {
-    DOUT << "CouldBeNE(" << ne.toString(10) << ") " << *this << std::endl;
-    assert(!noValues);
-    const llvm::APSInt *v = HasConcreteValue();
-    if (v && *v == ne)
-        return false;
-    return true;
-  }
-
-  bool CouldBeEQ(const llvm::APSInt &eq) const {
-    DOUT << "CouldBeEQ(" << eq.toString(10) << ") " << *this << std::endl;
-    assert(!noValues);
-    if (ranges.isEmpty())
-      return true;
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i)
-      if (i->Includes(eq))
-        return true;
-    return false;
-  }
-
-  bool CouldBeLT(const llvm::APSInt &lt) const {
-    DOUT << "CouldBeLT(" << lt.toString(10) << ") " << *this << std::endl;
-    assert(!noValues);
-    // FIXME: should test if lt == min -> false here, since that's
-    // impossible to meet.
-    if (ranges.isEmpty())
-      return true;
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i)
-      if (i->From() < lt)
-        return true;
-    return false;
-  }
-
-  bool CouldBeLE(const llvm::APSInt &le) const {
-    DOUT << "CouldBeLE(" << le.toString(10) << ") " << *this << std::endl;
-    assert(!noValues);
-    if (ranges.isEmpty())
-      return true;
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i)
-      if (i->From() <= le)
-        return true;
-    return false;
-  }
-
-  bool CouldBeGT(const llvm::APSInt &gt) const {
-    DOUT << "CouldBeGT(" << gt.toString(10) << ") " << *this << std::endl;
-    assert(!noValues);
-    // FIXME: should we test if gt == max -> false here, since that's
-    // impossible to meet.
-    if (ranges.isEmpty())
-      return true;
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i)
-      if (i->To() > gt)
-        return true;
-    return false;
-  }
-
-  bool CouldBeGE(const llvm::APSInt &ge) const {
-    DOUT << "CouldBeGE(" << ge.toString(10) << ") " << *this << std::endl;
-    assert(!noValues);
-    if (ranges.isEmpty())
-      return true;
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i)
-      if (i->To() >= ge)
-        return true;
-    return false;
-  }
-
-  // Make all existing ranges fall within this new range
-  RangeSet Restrict(PrimRangeSet::Factory *factory, const llvm::APSInt &from,
-                    const llvm::APSInt &to) const {
-    if (ranges.isEmpty())
-      return factory->Add(ranges, Range(from, to));;
-
-    PrimRangeSet newRanges = factory->GetEmptySet();
-
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i) {
-      if (i->Includes(from)) {
-        if (i->Includes(to)) {
-          newRanges = factory->Add(newRanges, Range(from, to));
-        } else {
-          newRanges = factory->Add(newRanges, Range(from, i->To()));
-        }
-      } else if (i->Includes(to)) {
-        newRanges = factory->Add(newRanges, Range(i->From(), to));
+  /// AddNE - Create a new RangeSet with the additional constraint that the
+  ///  value be not be equal to V.
+  RangeSet AddNE(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
+    PrimRangeSet newRanges = ranges;
+    
+    // FIXME: We can perhaps enhance ImmutableSet to do this search for us
+    // in log(N) time using the sorted property of the internal AVL tree.
+    for (iterator i = begin(), e = end(); i != e; ++i) {
+      if (i->Includes(V)) {
+        // Remove the old range.
+        newRanges = F.Remove(newRanges, *i);
+        // Split the old range into possibly one or two ranges.
+        if (V != i->From())
+          newRanges = F.Add(newRanges, Range(i->From(), BV.Sub1(V)));
+        if (V != i->To())
+          newRanges = F.Add(newRanges, Range(BV.Add1(V), i->To()));
+        // All of the ranges are non-overlapping, so we can stop.        
+        break;
       }
     }
-    return RangeSet(newRanges);
+    
+    return newRanges;
   }
 
-  // Create a new RangeSet with the additional constraint that the
-  // range must be == eq. In other words the range becomes [eq,
-  // eq]. Note that this RangeSet must have included eq in the first
-  // place, or we shouldn't be here.
-  RangeSet AddEQ(PrimRangeSet::Factory *factory, const llvm::APSInt &eq) {
-    DOUT << "AddEQ(" << eq.toString(10) << ") " << *this << " -> ";
-    assert(CouldBeEQ(eq));
-    RangeSet r(factory->Add(factory->GetEmptySet(), Range(eq, eq)));
-    DOUT << r << std::endl;
-    return r;
+  /// AddNE - Create a new RangeSet with the additional constraint that the
+  ///  value be less than V.
+  RangeSet AddLT(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
+    PrimRangeSet newRanges = F.GetEmptySet();
+
+    for (iterator i = begin(), e = end() ; i != e ; ++i) {
+      if (i->Includes(V) && i->From() < V)
+        newRanges = F.Add(newRanges, Range(i->From(), BV.Sub1(V)));
+      else if (i->To() < V)
+        newRanges = F.Add(newRanges, *i);
+    }
+    
+    return newRanges;
   }
 
-  RangeSet AddNE(PrimRangeSet::Factory *factory, const llvm::APSInt &ne) {
-    DOUT << "AddNE(" << ne.toString(10) << ") " << *this << " -> ";
+  RangeSet AddLE(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
+    PrimRangeSet newRanges = F.GetEmptySet();
 
-    const llvm::APSInt max = Max(ne);
-    const llvm::APSInt min = Min(ne);
-    const llvm::APSInt one = One(ne);
-
-    PrimRangeSet newRanges = factory->GetEmptySet();
-
-    if (ranges.isEmpty()) {
-      if (ne != max)
-        newRanges = factory->Add(newRanges, Range(ne + one, max));
-      if (ne != min)
-        newRanges = factory->Add(newRanges, Range(min, ne - one));
-      RangeSet r(newRanges);
-      DOUT << r << std::endl;
-      return r;
-    }
-
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i) {
-      if (i->Includes(ne)) {
-        if (ne != i->From())
-          newRanges = factory->Add(newRanges, Range(i->From(), ne - one));
-        if (ne != i->To())
-          newRanges = factory->Add(newRanges, Range(ne + one, i->To()));
-      } else {
-        newRanges = factory->Add(newRanges, *i);
-      }
-    }
-    RangeSet r(newRanges);
-    DOUT << r << std::endl;
-    return r;
-  }
-
-  RangeSet AddLT(PrimRangeSet::Factory *factory, const llvm::APSInt &lt) {
-    DOUT << "AddLT(" << lt.toString(10) << ") " << *this << " -> ";
-    const llvm::APSInt min = Min(lt);
-    const llvm::APSInt one = One(lt);
-
-    if (ranges.isEmpty()) {
-      PrimRangeSet pr = factory->GetEmptySet();
-      if (lt != min)
-        pr = factory->Add(pr, Range(min, lt - one));
-      RangeSet r(pr, false);
-      DOUT << r << std::endl;
-      return r;
-    }
-
-    PrimRangeSet newRanges = factory->GetEmptySet();
-
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i) {
-      if (i->Includes(lt) && i->From() < lt)
-        newRanges = factory->Add(newRanges, Range(i->From(), lt - one));
-      else if (i->To() < lt)
-        newRanges = factory->Add(newRanges, *i);
-    }
-    RangeSet r(newRanges);
-    DOUT << r << std::endl;
-    return r;
-  }
-
-  RangeSet AddLE(PrimRangeSet::Factory *factory, const llvm::APSInt &le) {
-    DOUT << "AddLE(" << le.toString(10) << ") " << *this << " -> ";
-    const llvm::APSInt min = Min(le);
-
-    if (ranges.isEmpty()) {
-      RangeSet r(factory->Add(ranges, Range(min, le)));
-      DOUT << r << std::endl;
-      return r;
-    }
-
-    PrimRangeSet newRanges = factory->GetEmptySet();
-
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i) {
-      // Strictly we should test for includes le + 1, but no harm is
+    for (iterator i = begin(), e = end(); i != e; ++i) {
+      // Strictly we should test for includes *V + 1, but no harm is
       // done by this formulation
-      if (i->Includes(le))
-        newRanges = factory->Add(newRanges, Range(i->From(), le));
-      else if (i->To() <= le)
-        newRanges = factory->Add(newRanges, *i);
+      if (i->Includes(V))
+        newRanges = F.Add(newRanges, Range(i->From(), V));
+      else if (i->To() <= V)
+        newRanges = F.Add(newRanges, *i);
     }
-    RangeSet r(newRanges);
-    DOUT << r << std::endl;
-    return r;
+    
+    return newRanges;
   }
 
-  RangeSet AddGT(PrimRangeSet::Factory *factory, const llvm::APSInt &gt) {
-    DOUT << "AddGT(" << gt.toString(10) << ") " << *this << " -> ";
-    const llvm::APSInt max = Max(gt);
-    const llvm::APSInt one = One(gt);
+  RangeSet AddGT(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
+    PrimRangeSet newRanges = F.GetEmptySet();
 
-    if (ranges.isEmpty()) {
-      RangeSet r(factory->Add(ranges, Range(gt + one, max)));
-      DOUT << r << std::endl;
-      return r;
+    for (PrimRangeSet::iterator i = begin(), e = end(); i != e; ++i) {
+      if (i->Includes(V) && i->To() > V)
+        newRanges = F.Add(newRanges, Range(BV.Add1(V), i->To()));
+      else if (i->From() > V)
+        newRanges = F.Add(newRanges, *i);
     }
-
-    PrimRangeSet newRanges = factory->GetEmptySet();
-
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i) {
-      if (i->Includes(gt) && i->To() > gt)
-        newRanges = factory->Add(newRanges, Range(gt + one, i->To()));
-      else if (i->From() > gt)
-        newRanges = factory->Add(newRanges, *i);
-    }
-    RangeSet r(newRanges);
-    DOUT << r << std::endl;
-    return r;
+    
+    return newRanges;
   }
 
-  RangeSet AddGE(PrimRangeSet::Factory *factory, const llvm::APSInt &ge) {
-    DOUT << "AddGE(" << ge.toString(10) << ") " << *this << " -> ";
-    const llvm::APSInt max = Max(ge);
+  RangeSet AddGE(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
+    PrimRangeSet newRanges = F.GetEmptySet();
 
-    if (ranges.isEmpty()) {
-      RangeSet r(factory->Add(ranges, Range(ge, max)));
-      DOUT << r << std::endl;
-      return r;
-    }
-
-    PrimRangeSet newRanges = factory->GetEmptySet();
-
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i) {
-      // Strictly we should test for includes ge - 1, but no harm is
+    for (PrimRangeSet::iterator i = begin(), e = end(); i != e; ++i) {
+      // Strictly we should test for includes *V - 1, but no harm is
       // done by this formulation
-      if (i->Includes(ge))
-        newRanges = factory->Add(newRanges, Range(ge, i->To()));
-      else if (i->From() >= ge)
-        newRanges = factory->Add(newRanges, *i);
+      if (i->Includes(V))
+        newRanges = F.Add(newRanges, Range(V, i->To()));
+      else if (i->From() >= V)
+        newRanges = F.Add(newRanges, *i);
     }
 
-    RangeSet r(newRanges);
-    DOUT << r << std::endl;
-    return r;
+    return newRanges;
   }
 
   void Print(std::ostream &os) const {
+    bool isFirst = true;
     os << "{ ";
-    if (noValues) {
-      os << "**no values** }";
-      return;
-    }
-    for (PrimRangeSet::iterator i = ranges.begin() ; i != ranges.end() ; ++i) {
-      if (i != ranges.begin())
+    for (iterator i = begin(), e = end(); i != e; ++i) {
+      if (isFirst)
+        isFirst = false;
+      else
         os << ", ";
+      
       os << '[' << i->From().toString(10) << ", " << i->To().toString(10)
          << ']';
     }
-    os << " }";
+    os << " }";  
+  }
   
-}
   bool operator==(const RangeSet &other) const {
     return ranges == other.ranges;
   }
 };
 
-std::ostream &operator<<(std::ostream &os, const RangeSet &r) {
-  r.Print(os);
-  return os;
-}
-
-typedef llvm::ImmutableMap<SymbolRef,RangeSet> ConstRangeTy;
+typedef llvm::ImmutableMap<SymbolRef,RangeSet> ConstraintRangeTy;
 
 namespace clang {
 template<>
-struct GRStateTrait<ConstRange> : public GRStatePartialTrait<ConstRangeTy> {
-  static inline void* GDMIndex() { return &ConstRangeIndex; }  
+struct GRStateTrait<ConstraintRange>
+  : public GRStatePartialTrait<ConstraintRangeTy> {
+  static inline void* GDMIndex() { return &ConstraintRangeIndex; }  
 };
 }  
   
 namespace {
 class VISIBILITY_HIDDEN RangeConstraintManager
   : public SimpleConstraintManager {
+    
+    
+  RangeSet GetRange(GRStateRef state, SymbolRef sym);
+      
 public:
   RangeConstraintManager(GRStateManager& statemgr) 
       : SimpleConstraintManager(statemgr) {}
@@ -420,38 +244,21 @@ public:
   const GRState* AssumeSymLE(const GRState* St, SymbolRef sym,
                              const llvm::APSInt& V, bool& isFeasible);
 
-  const GRState* AddEQ(const GRState* St, SymbolRef sym, const llvm::APSInt& V);
-
-  const GRState* AddNE(const GRState* St, SymbolRef sym, const llvm::APSInt& V);
-
-  const GRState* AddLT(const GRState* St, SymbolRef sym, const llvm::APSInt& V);
-
-  const GRState* AddLE(const GRState* St, SymbolRef sym, const llvm::APSInt& V);
-
-  const GRState* AddGT(const GRState* St, SymbolRef sym, const llvm::APSInt& V);
-
-  const GRState* AddGE(const GRState* St, SymbolRef sym, const llvm::APSInt& V);
-
-  // FIXME: these two are required because they are pure virtual, but
-  // are they useful with ranges? Neither is used in this file.
   const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) const;
-  bool isEqual(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
+    
+  // FIXME: Refactor into SimpleConstraintManager?
+  bool isEqual(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const {
+    const llvm::APSInt *i = getSymVal(St, sym);
+    return i ? *i == V : false;
+  }
 
-  bool CouldBeEQ(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
-  bool CouldBeNE(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
-
-  bool CouldBeLT(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
-  bool CouldBeLE(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
-  bool CouldBeGT(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
-  bool CouldBeGE(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const;
   const GRState* RemoveDeadBindings(const GRState* St, SymbolReaper& SymReaper);
 
   void print(const GRState* St, std::ostream& Out, 
              const char* nl, const char *sep);
 
 private:
-  PrimRangeSet::Factory factory;
-  BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
+  RangeSet::Factory F;
 };
 
 } // end anonymous namespace
@@ -461,197 +268,10 @@ ConstraintManager* clang::CreateRangeConstraintManager(GRStateManager& StateMgr)
   return new RangeConstraintManager(StateMgr);
 }
 
-const GRState*
-RangeConstraintManager::AssumeSymNE(const GRState* St, SymbolRef sym,
-                                    const llvm::APSInt& V, bool& isFeasible) {
-  isFeasible = CouldBeNE(St, sym, V);
-  if (isFeasible)
-    return AddNE(St, sym, V);
-  return St;
-}
-
-const GRState*
-RangeConstraintManager::AssumeSymEQ(const GRState* St, SymbolRef sym,
-                                    const llvm::APSInt& V, bool& isFeasible) {
-  isFeasible = CouldBeEQ(St, sym, V);
-  if (isFeasible)
-    return AddEQ(St, sym, V);
-  return St;
-}
-
-const GRState*
-RangeConstraintManager::AssumeSymLT(const GRState* St, SymbolRef sym,
-                                    const llvm::APSInt& V, bool& isFeasible) {
-  
-  // Is 'V' the smallest possible value?
-  if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isUnsigned())) {
-    // sym cannot be any value less than 'V'.  This path is infeasible.
-    isFeasible = false;
-    return St;
-  }
-
-  isFeasible = CouldBeLT(St, sym, V);
-  if (isFeasible)
-    return AddLT(St, sym, V);
-
-  return St;
-}
-
-const GRState*
-RangeConstraintManager::AssumeSymGT(const GRState* St, SymbolRef sym,
-                                    const llvm::APSInt& V, bool& isFeasible) {
-
-  // Is 'V' the largest possible value?
-  if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isUnsigned())) {
-    // sym cannot be any value greater than 'V'.  This path is infeasible.
-    isFeasible = false;
-    return St;
-  }
-
-  isFeasible = CouldBeGT(St, sym, V);
-  if (isFeasible)
-    return AddGT(St, sym, V);
-
-  return St;
-}
-
-const GRState*
-RangeConstraintManager::AssumeSymGE(const GRState* St, SymbolRef sym,
-                                    const llvm::APSInt& V, bool& isFeasible) {
-
-  isFeasible = CouldBeGE(St, sym, V);
-  if (isFeasible)
-    return AddGE(St, sym, V);
-
-  return St;
-}
-
-const GRState*
-RangeConstraintManager::AssumeSymLE(const GRState* St, SymbolRef sym,
-                                    const llvm::APSInt& V, bool& isFeasible) {
-
-  isFeasible = CouldBeLT(St, sym, V);
-  if (isFeasible)
-    return AddLE(St, sym, V);
-    
-  return St;
-}
-
-const GRState* RangeConstraintManager::AddEQ(const GRState* St, SymbolRef sym,
-                                             const llvm::APSInt& V) {
-  // Create a new state with the old binding replaced.
-  GRStateRef state(St, StateMgr);
-  RangeSet R(&factory);
-  R = R.AddEQ(&factory, V);
-  return state.set<ConstRange>(sym, R);
-}
-
-const GRState* RangeConstraintManager::AddNE(const GRState* St, SymbolRef sym,
-                                             const llvm::APSInt& V) {
-  GRStateRef state(St, StateMgr);
-
-  ConstRangeTy::data_type* T = state.get<ConstRange>(sym);
-  RangeSet R(&factory);
-  if (T)
-    R = *T;
-  R = R.AddNE(&factory, V);
-  return state.set<ConstRange>(sym, R);
-}
-
-const GRState* RangeConstraintManager::AddLT(const GRState* St, SymbolRef sym,
-                                             const llvm::APSInt& V) {
-  GRStateRef state(St, StateMgr);
-
-  ConstRangeTy::data_type* T = state.get<ConstRange>(sym);
-  RangeSet R(&factory);
-  if (T)
-    R = *T;
-  R = R.AddLT(&factory, V);
-  return state.set<ConstRange>(sym, R);
-}
-
-const GRState* RangeConstraintManager::AddLE(const GRState* St, SymbolRef sym,
-                                             const llvm::APSInt& V) {
-  GRStateRef state(St, StateMgr);
-
-  ConstRangeTy::data_type* T = state.get<ConstRange>(sym);
-  RangeSet R(&factory);
-  if (T)
-    R = *T;
-  R = R.AddLE(&factory, V);
-  return state.set<ConstRange>(sym, R);
-}
-
-const GRState* RangeConstraintManager::AddGT(const GRState* St, SymbolRef sym,
-                                             const llvm::APSInt& V) {
-  GRStateRef state(St, StateMgr);
-
-  ConstRangeTy::data_type* T = state.get<ConstRange>(sym);
-  RangeSet R(&factory);
-  if (T)
-    R = *T;
-  R = R.AddGT(&factory, V);
-  return state.set<ConstRange>(sym, R);
-}
-
-const GRState* RangeConstraintManager::AddGE(const GRState* St, SymbolRef sym,
-                                             const llvm::APSInt& V) {
-  GRStateRef state(St, StateMgr);
-
-  ConstRangeTy::data_type* T = state.get<ConstRange>(sym);
-  RangeSet R(&factory);
-  if (T)
-    R = *T;
-  R = R.AddGE(&factory, V);
-  return state.set<ConstRange>(sym, R);
-}
-
 const llvm::APSInt* RangeConstraintManager::getSymVal(const GRState* St,
                                                       SymbolRef sym) const {
-  const ConstRangeTy::data_type *T = St->get<ConstRange>(sym);
-  return T ? T->HasConcreteValue() : NULL;
-}
-
-bool RangeConstraintManager::CouldBeLT(const GRState* St, SymbolRef sym, 
-                                       const llvm::APSInt& V) const {
-  const ConstRangeTy::data_type *T = St->get<ConstRange>(sym);
-  return T ? T->CouldBeLT(V) : true;
-}
-
-bool RangeConstraintManager::CouldBeLE(const GRState* St, SymbolRef sym, 
-                                       const llvm::APSInt& V) const {
-  const ConstRangeTy::data_type *T = St->get<ConstRange>(sym);
-  return T ? T->CouldBeLE(V) : true;
-}
-
-bool RangeConstraintManager::CouldBeGT(const GRState* St, SymbolRef sym, 
-                                       const llvm::APSInt& V) const {
-  const ConstRangeTy::data_type *T = St->get<ConstRange>(sym);
-  return T ? T->CouldBeGT(V) : true;
-}
-
-bool RangeConstraintManager::CouldBeGE(const GRState* St, SymbolRef sym, 
-                                       const llvm::APSInt& V) const {
-  const ConstRangeTy::data_type *T = St->get<ConstRange>(sym);
-  return T ? T->CouldBeGE(V) : true;
-}
-
-bool RangeConstraintManager::CouldBeNE(const GRState* St, SymbolRef sym, 
-                                        const llvm::APSInt& V) const {
-  const ConstRangeTy::data_type *T = St->get<ConstRange>(sym);
-  return T ? T->CouldBeNE(V) : true;
-}
-
-bool RangeConstraintManager::CouldBeEQ(const GRState* St, SymbolRef sym, 
-                                        const llvm::APSInt& V) const {
-  const ConstRangeTy::data_type *T = St->get<ConstRange>(sym);
-  return T ? T->CouldBeEQ(V) : true;
-}
-
-bool RangeConstraintManager::isEqual(const GRState* St, SymbolRef sym,
-                                     const llvm::APSInt& V) const {
-  const llvm::APSInt *i = getSymVal(St, sym);
-  return i ? *i == V : false;
+  const ConstraintRangeTy::data_type *T = St->get<ConstraintRange>(sym);
+  return T ? T->getConcreteValue() : NULL;
 }
 
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
@@ -661,29 +281,70 @@ RangeConstraintManager::RemoveDeadBindings(const GRState* St,
                                            SymbolReaper& SymReaper) {
   GRStateRef state(St, StateMgr);
 
-  ConstRangeTy CR = state.get<ConstRange>();
-  ConstRangeTy::Factory& CRFactory = state.get_context<ConstRange>();
+  ConstraintRangeTy CR = state.get<ConstraintRange>();
+  ConstraintRangeTy::Factory& CRFactory = state.get_context<ConstraintRange>();
 
-  for (ConstRangeTy::iterator I = CR.begin(), E = CR.end(); I != E; ++I) {
+  for (ConstraintRangeTy::iterator I = CR.begin(), E = CR.end(); I != E; ++I) {
     SymbolRef sym = I.getKey();    
     if (SymReaper.maybeDead(sym))
       CR = CRFactory.Remove(CR, sym);
   }
   
-  return state.set<ConstRange>(CR);
+  return state.set<ConstraintRange>(CR);
 }
+
+//===------------------------------------------------------------------------===
+// AssumeSymX methods: public interface for RangeConstraintManager.
+//===------------------------------------------------------------------------===/
+
+RangeSet
+RangeConstraintManager::GetRange(GRStateRef state, SymbolRef sym) {
+  if (ConstraintRangeTy::data_type* V = state.get<ConstraintRange>(sym))
+    return *V;
+  
+  // Lazily generate a new RangeSet representing all possible values for the
+  // given symbol type.
+  QualType T = state.getSymbolManager().getType(sym);
+  BasicValueFactory& BV = state.getBasicVals();  
+  return RangeSet(F, BV.getMinValue(T), BV.getMaxValue(T));
+}
+
+//===------------------------------------------------------------------------===
+// AssumeSymX methods: public interface for RangeConstraintManager.
+//===------------------------------------------------------------------------===/
+
+#define AssumeX(OP)\
+const GRState*\
+RangeConstraintManager::AssumeSym ## OP(const GRState* St, SymbolRef sym,\
+  const llvm::APSInt& V, bool& isFeasible){\
+  GRStateRef state(St, StateMgr);\
+  const RangeSet& R = GetRange(state, sym).Add##OP(state.getBasicVals(), F, V);\
+  isFeasible = !R.isEmpty();\
+  return isFeasible ? state.set<ConstraintRange>(sym, R).getState() : 0;\
+}
+
+AssumeX(EQ)
+AssumeX(NE)
+AssumeX(LT)
+AssumeX(GT)
+AssumeX(LE)
+AssumeX(GE)
+
+//===------------------------------------------------------------------------===
+// Pretty-printing.
+//===------------------------------------------------------------------------===/
 
 void RangeConstraintManager::print(const GRState* St, std::ostream& Out, 
                                    const char* nl, const char *sep) {
   
-  ConstRangeTy Ranges = St->get<ConstRange>();
+  ConstraintRangeTy Ranges = St->get<ConstraintRange>();
   
   if (Ranges.isEmpty())
     return;
   
   Out << nl << sep << "ranges of symbol values:";
   
-  for (ConstRangeTy::iterator I=Ranges.begin(), E=Ranges.end(); I!=E; ++I) {
+  for (ConstraintRangeTy::iterator I=Ranges.begin(), E=Ranges.end(); I!=E; ++I){
     Out << nl << " $" << I.getKey() << " : ";
     I.getData().Print(Out);
   }
