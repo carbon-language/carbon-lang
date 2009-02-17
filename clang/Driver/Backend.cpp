@@ -29,6 +29,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
+#include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
@@ -74,7 +75,7 @@ namespace {
     
   public:  
     BackendConsumer(BackendAction action, Diagnostic &Diags, 
-                    const LangOptions &Features, const CompileOptions &compopts,
+                    const LangOptions &langopts, const CompileOptions &compopts,
                     const std::string& infile, const std::string& outfile,
                     bool debug)  :
       Action(action), 
@@ -82,7 +83,7 @@ namespace {
       InputFile(infile), 
       OutputFile(outfile), 
       GenerateDebugInfo(debug),
-      Gen(CreateLLVMCodeGen(Diags, Features, InputFile, GenerateDebugInfo)),
+      Gen(CreateLLVMCodeGen(Diags, langopts, InputFile, GenerateDebugInfo)),
       TheModule(0), TheTargetData(0), AsmOutStream(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {}
 
@@ -187,10 +188,18 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
       Error = std::string("Unable to get target machine: ") + Error;
       return false;
     }
-      
-    // FIXME: Support features?
-    std::string FeatureStr;
-    TargetMachine *TM = TME->CtorFn(*TheModule, FeatureStr);
+
+    std::string FeaturesStr;
+    if (CompileOpts.CPU.size() || CompileOpts.Features.size()) {
+      SubtargetFeatures Features;
+      Features.setCPU(CompileOpts.CPU);
+      for (std::vector<std::string>::iterator 
+             it = CompileOpts.Features.begin(),
+             ie = CompileOpts.Features.end(); it != ie; ++it)
+        Features.AddFeature(*it);
+      FeaturesStr = Features.getString();
+    }
+    TargetMachine *TM = TME->CtorFn(*TheModule, FeaturesStr);
     
     // Set register scheduler & allocation policy.
     RegisterScheduler::setDefault(createDefaultScheduler);
@@ -364,7 +373,7 @@ void BackendConsumer::EmitAssembly() {
 
 ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
                                           Diagnostic &Diags,
-                                          const LangOptions &Features,
+                                          const LangOptions &LangOpts,
                                           const CompileOptions &CompileOpts,
                                           const std::string& InFile,
                                           const std::string& OutFile,
@@ -374,8 +383,7 @@ ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
   // are enabled.
   if (CompileOpts.OptimizationLevel > 0)
     GenerateDebugInfo = false;
-  
-  
-  return new BackendConsumer(Action, Diags, Features, CompileOpts,
+    
+  return new BackendConsumer(Action, Diags, LangOpts, CompileOpts,
                              InFile, OutFile, GenerateDebugInfo);  
 }

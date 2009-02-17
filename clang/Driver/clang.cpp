@@ -1204,6 +1204,14 @@ OptLevel("O", llvm::cl::Prefix,
          llvm::cl::desc("Optimization level"),
          llvm::cl::init(0));
 
+static llvm::cl::opt<std::string>
+TargetCPU("mcpu",
+         llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
+
+static llvm::cl::list<std::string>
+TargetFeatures("mattr",
+        llvm::cl::desc("Target specific attributes (-mattr=help for details)"));
+
 static void InitializeCompileOptions(CompileOptions &Opts) {
   Opts.OptimizeSize = OptSize;
   if (OptSize) {
@@ -1222,6 +1230,10 @@ static void InitializeCompileOptions(CompileOptions &Opts) {
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
 #endif
+
+  Opts.CPU = TargetCPU;
+  Opts.Features.insert(Opts.Features.end(),
+                       TargetFeatures.begin(), TargetFeatures.end());
 }
 
 //===----------------------------------------------------------------------===//

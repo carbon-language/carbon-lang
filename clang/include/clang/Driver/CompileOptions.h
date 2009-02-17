@@ -30,6 +30,13 @@ struct CompileOptions {
   unsigned VerifyModule      : 1; /// Control whether the module
                                   /// should be run through the LLVM Verifier.
 
+  /// CPU - An optional CPU to target.
+  std::string CPU;
+
+  /// Features - A list of subtarget features to pass to the code
+  /// generator.
+  std::vector<std::string> Features;
+
 public:
   CompileOptions() {
     OptimizationLevel = 0;
@@ -37,7 +44,7 @@ public:
     UnitAtATime = 1;
     InlineFunctions = SimplifyLibCalls = UnrollLoops = 0;
     VerifyModule = 1;
-  }
+  }  
 };
 
 }  // end namespace clang
