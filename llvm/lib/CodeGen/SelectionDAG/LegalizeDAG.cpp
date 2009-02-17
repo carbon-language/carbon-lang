@@ -28,6 +28,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
@@ -1289,17 +1290,23 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         
         unsigned Line = DSP->getLine();
         unsigned Col = DSP->getColumn();
-        
-        // A bit self-referential to have DebugLoc on Debug_Loc nodes, but
-        // it won't hurt anything.
-        if (useDEBUG_LOC) {
-          SDValue Ops[] = { Tmp1, DAG.getConstant(Line, MVT::i32),
+
+        const Function *F = DAG.getMachineFunction().getFunction();
+
+        if (!F->hasFnAttr(Attribute::OptimizeForSize)) {
+          // A bit self-referential to have DebugLoc on Debug_Loc nodes, but it
+          // won't hurt anything.
+          if (useDEBUG_LOC) {
+            SDValue Ops[] = { Tmp1, DAG.getConstant(Line, MVT::i32),
                               DAG.getConstant(Col, MVT::i32),
                               DAG.getConstant(SrcFile, MVT::i32) };
-          Result = DAG.getNode(ISD::DEBUG_LOC, dl, MVT::Other, Ops, 4);
+            Result = DAG.getNode(ISD::DEBUG_LOC, dl, MVT::Other, Ops, 4);
+          } else {
+            unsigned ID = DW->RecordSourceLine(Line, Col, SrcFile);
+            Result = DAG.getLabel(ISD::DBG_LABEL, dl, Tmp1, ID);
+          }
         } else {
-          unsigned ID = DW->RecordSourceLine(Line, Col, SrcFile);
-          Result = DAG.getLabel(ISD::DBG_LABEL, dl, Tmp1, ID);
+          Result = Tmp1;  // chain
         }
       } else {
         Result = Tmp1;  // chain

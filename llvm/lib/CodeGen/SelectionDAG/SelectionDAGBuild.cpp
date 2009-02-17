@@ -3915,8 +3915,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (DW && DW->ValidDebugInfo(RSI.getContext())) {
       unsigned LabelID =
         DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
-      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                               getRoot(), LabelID));
+      const Function *F = I.getParent()->getParent();
+
+      // FIXME: Support more than just -Os.
+      if (!F->hasFnAttr(Attribute::OptimizeForSize))
+        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                                 getRoot(), LabelID));
     }
 
     return 0;
@@ -3927,8 +3931,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (DW && DW->ValidDebugInfo(REI.getContext())) {
       unsigned LabelID =
         DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
-      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                               getRoot(), LabelID));
+      const Function *F = I.getParent()->getParent();
+
+      // FIXME: Support more than just -Os.
+      if (!F->hasFnAttr(Attribute::OptimizeForSize))
+        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                                 getRoot(), LabelID));
     }
 
     return 0;
@@ -3950,28 +3958,36 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // function start. It will be emitted at asm emission time. However,
       // create a label if this is a beginning of inlined function.
       unsigned Line = Subprogram.getLineNumber();
-      unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
 
-      if (DW->getRecordSourceLineCount() != 1)
-        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                                 getRoot(), LabelID));
+      // FIXME: Support more than just -Os.
+      const Function *F = I.getParent()->getParent();
+      if (!F->hasFnAttr(Attribute::OptimizeForSize)) {
+        unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
+        if (DW->getRecordSourceLineCount() != 1)
+          DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                                   getRoot(), LabelID));
+      }
 
       setCurDebugLoc(DebugLoc::get(DAG.getMachineFunction().
-                         getOrCreateDebugLocID(SrcFile, Line, 0)));
+                                   getOrCreateDebugLocID(SrcFile, Line, 0)));
     }
 
     return 0;
   }
   case Intrinsic::dbg_declare: {
-    DwarfWriter *DW = DAG.getDwarfWriter();
-    DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-    Value *Variable = DI.getVariable();
-    if (DW && DW->ValidDebugInfo(Variable))
-      DAG.setRoot(DAG.getNode(ISD::DECLARE, dl, MVT::Other, getRoot(),
-                              getValue(DI.getAddress()), getValue(Variable)));
+    const Function *F = I.getParent()->getParent();
+    if (!F->hasFnAttr(Attribute::OptimizeForSize)) {
+      DwarfWriter *DW = DAG.getDwarfWriter();
+      DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
+      Value *Variable = DI.getVariable();
+      if (DW && DW->ValidDebugInfo(Variable))
+        DAG.setRoot(DAG.getNode(ISD::DECLARE, dl, MVT::Other, getRoot(),
+                                getValue(DI.getAddress()), getValue(Variable)));
+    } else {
+      // FIXME: Do something sensible here when we support debug declare.
+    }
     return 0;
   }
-
   case Intrinsic::eh_exception: {
     if (!CurMBB->isLandingPad()) {
       // FIXME: Mark exception register as live in.  Hack for PR1508.
