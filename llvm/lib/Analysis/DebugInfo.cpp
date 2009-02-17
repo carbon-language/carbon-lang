@@ -169,8 +169,8 @@ bool DIVariable::isVariable(unsigned Tag) {
   }
 }
 
-DIVariable::DIVariable(GlobalVariable *GV) : DIDescriptor(GV) {
-  if (GV && !isVariable(getTag()))
+DIVariable::DIVariable(GlobalVariable *gv) : DIDescriptor(gv) {
+  if (gv && !isVariable(getTag()))
     GV = 0;
 }
 
@@ -273,7 +273,16 @@ bool DIVariable::Verify() const {
   return true;
 }
 
-
+/// getOriginalTypeSize - If this type is derived from a base type then
+/// return base type size.
+uint64_t DIDerivedType::getOriginalTypeSize() const {
+  if (getTag() != dwarf::DW_TAG_member)
+    return getSizeInBits();
+  DIType BT = getTypeDerivedFrom();
+  if (BT.getTag() != dwarf::DW_TAG_base_type)
+    return getSizeInBits();
+  return BT.getSizeInBits();
+}
 
 //===----------------------------------------------------------------------===//
 // DIFactory: Basic Helpers

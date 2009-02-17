@@ -118,9 +118,9 @@ namespace llvm {
     /// code generator accepts maximum one main compile unit per module. If a
     /// module does not contain any main compile unit then the code generator 
     /// will emit multiple compile units in the output object file.
-    bool isMain() const             { return getUnsignedField(6); }
-    bool isOptimized() const         { return getUnsignedField(7); }
-    std::string getFlags() const     { return getStringField(8); }
+    bool isMain() const                { return getUnsignedField(6); }
+    bool isOptimized() const           { return getUnsignedField(7); }
+    std::string getFlags() const       { return getStringField(8); }
 
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
@@ -217,6 +217,9 @@ namespace llvm {
     explicit DIDerivedType(GlobalVariable *GV);
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
 
+    /// getOriginalTypeSize - If this type is derived from a base type then
+    /// return base type size.
+    uint64_t getOriginalTypeSize() const;
     /// dump - print derived type.
     void dump() const;
   };

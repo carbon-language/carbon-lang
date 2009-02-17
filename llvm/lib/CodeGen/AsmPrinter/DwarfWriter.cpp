@@ -1873,7 +1873,24 @@ private:
 
     AddSourceLine(MemberDie, &DT);
 
-    // FIXME _ Handle bitfields
+    uint64_t Size = DT.getSizeInBits();
+    uint64_t FieldSize = DT.getOriginalTypeSize();
+
+    if (Size != FieldSize) {
+      // Handle bitfield.
+      AddUInt(MemberDie, DW_AT_byte_size, 0, DT.getOriginalTypeSize() >> 3);
+      AddUInt(MemberDie, DW_AT_bit_size, 0, DT.getSizeInBits());
+
+      uint64_t Offset = DT.getOffsetInBits();
+      uint64_t FieldOffset = Offset;
+      uint64_t AlignMask = ~(DT.getAlignInBits() - 1);
+      uint64_t HiMark = (Offset + FieldSize) & AlignMask;
+      FieldOffset = (HiMark - FieldSize);
+      Offset -= FieldOffset;
+      // Maybe we need to work from the other end.
+      if (TD->isLittleEndian()) Offset = FieldSize - (Offset + Size);
+      AddUInt(MemberDie, DW_AT_bit_offset, 0, Offset);
+    }
     DIEBlock *Block = new DIEBlock();
     AddUInt(Block, 0, DW_FORM_data1, DW_OP_plus_uconst);
     AddUInt(Block, 0, DW_FORM_udata, DT.getOffsetInBits() >> 3);
