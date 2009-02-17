@@ -1252,7 +1252,8 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
             
           case 26:
             if (!memcmp(s, "_XCAssertionFailureHandler", 26) ||
-                !memcmp(s, "_DTAssertionFailureHandler", 26))
+                !memcmp(s, "_DTAssertionFailureHandler", 26) ||
+                !memcmp(s, "_TSAssertionFailureHandler", 26))
               Builder->BuildSinks = true;
 
             break;
