@@ -56,34 +56,36 @@
 /* C99 7.22p4, functions in both math.h and complex.h. */
 // acos
 __TG_ATTRS float                __tg_acos(float x)                { return  acosf(x); }
-__TG_ATTRS double               __tg_acos(double x)               { return  acos(x); }
+__TG_ATTRS double               __tg_acos(double x)               { return  acos (x); }
 __TG_ATTRS long double          __tg_acos(long double x)          { return  acosl(x); }
-__TG_ATTRS double               __tg_acos(long long x)            { return  acos(x); }
-__TG_ATTRS double               __tg_acos(long x)                 { return  acos(x); }
-__TG_ATTRS double               __tg_acos(int x)                  { return  acos(x); }
-__TG_ATTRS double               __tg_acos(unsigned long long x)   { return  acos(x); }
-__TG_ATTRS double               __tg_acos(unsigned long x)        { return  acos(x); }
-__TG_ATTRS double               __tg_acos(unsigned x)             { return  acos(x); }
+__TG_ATTRS double               __tg_acos(long long x)            { return  acos ((double)x); }
+__TG_ATTRS double               __tg_acos(long x)                 { return  acos ((double)x); }
+__TG_ATTRS double               __tg_acos(int x)                  { return  acos ((double)x); }
+__TG_ATTRS double               __tg_acos(unsigned long long x)   { return  acos ((double)x); }
+__TG_ATTRS double               __tg_acos(unsigned long x)        { return  acos ((double)x); }
+__TG_ATTRS double               __tg_acos(unsigned x)             { return  acos ((double)x); }
 __TG_ATTRS _Complex float       __tg_acos(_Complex float x)       { return cacosf(x); }
-__TG_ATTRS _Complex double      __tg_acos(_Complex double x)      { return cacos(x); }
+__TG_ATTRS _Complex double      __tg_acos(_Complex double x)      { return cacos (x); }
 __TG_ATTRS _Complex long double __tg_acos(_Complex long double x) { return cacosl(x); }
 #define acos(x) __tg_acos(x)
 
 // asin
 __TG_ATTRS float                __tg_asin(float x)                { return  asinf(x); }
-__TG_ATTRS double               __tg_asin(double x)               { return  asin(x); }
-__TG_ATTRS long double          __tg_asin(long double x)          { return  asinl(x); }
-__TG_ATTRS double               __tg_asin(long long x)            { return  asin(x); }
-__TG_ATTRS double               __tg_asin(long x)                 { return  asin(x); }
-__TG_ATTRS double               __tg_asin(int x)                  { return  asin(x); }
-__TG_ATTRS double               __tg_asin(unsigned long long x)   { return  asin(x); }
-__TG_ATTRS double               __tg_asin(unsigned long x)        { return  asin(x); }
-__TG_ATTRS double               __tg_asin(unsigned x)             { return  asin(x); }
+__TG_ATTRS double               __tg_asin(double x)               { return  asin (x); }
+__TG_ATTRS long double          __tg_asin(long double x)          { return  asinl((double)x); }
+__TG_ATTRS double               __tg_asin(long long x)            { return  asin ((double)x); }
+__TG_ATTRS double               __tg_asin(long x)                 { return  asin ((double)x); }
+__TG_ATTRS double               __tg_asin(int x)                  { return  asin ((double)x); }
+__TG_ATTRS double               __tg_asin(unsigned long long x)   { return  asin ((double)x); }
+__TG_ATTRS double               __tg_asin(unsigned long x)        { return  asin ((double)x); }
+__TG_ATTRS double               __tg_asin(unsigned x)             { return  asin ((double)x); }
 __TG_ATTRS _Complex float       __tg_asin(_Complex float x)       { return casinf(x); }
-__TG_ATTRS _Complex double      __tg_asin(_Complex double x)      { return casin(x); }
+__TG_ATTRS _Complex double      __tg_asin(_Complex double x)      { return casin (x); }
 __TG_ATTRS _Complex long double __tg_asin(_Complex long double x) { return casinl(x); }
 #define asin(x) __tg_asin(x)
 
+
+#undef __TG_ATTRS
 
 #define atan(x) \
   __builtin_overload(1, x, catanl, catan, catanf, atanl, atan, atanf)
