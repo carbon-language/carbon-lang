@@ -419,7 +419,7 @@ class X86_64ABIInfo : public ABIInfo {
   /// The \arg Lo class will be NoClass iff the argument is ignored.
   ///
   /// If the \arg Lo class is ComplexX87, then the \arg Hi class will
-  /// be NoClass.
+  /// also be ComplexX87.
   void classify(QualType T, ASTContext &Context, uint64_t OffsetBase,
                 Class &Lo, Class &Hi) const;
   
@@ -751,20 +751,21 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // part of the value is returned in %st0 and the imaginary part in
     // %st1.
   case ComplexX87:
-    assert(Hi == NoClass && "Unexpected ComplexX87 classification.");
+    assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
     ResType = llvm::VectorType::get(llvm::Type::X86_FP80Ty, 2);
     break;    
   }
 
   switch (Hi) {
-    // Memory was handled previously, and ComplexX87 and X87 should
-    // never occur as hi classes.
+    // Memory was handled previously and X87 should
+    // never occur as a hi class.
   case Memory:
   case X87:
-  case ComplexX87:
     assert(0 && "Invalid classification for hi word.");
 
+  case ComplexX87: // Previously handled.
   case NoClass: break;
+
   case Integer:
     ResType = llvm::StructType::get(ResType, llvm::Type::Int64Ty, NULL);
     break;
