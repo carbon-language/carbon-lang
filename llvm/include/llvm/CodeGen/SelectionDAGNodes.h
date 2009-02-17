@@ -78,7 +78,7 @@ namespace ISD {
     // DELETED_NODE - This is an illegal flag value that is used to catch
     // errors.  This opcode is not a legal opcode for any node.
     DELETED_NODE,
-    
+
     // EntryToken - This is the marker used to indicate the start of the region.
     EntryToken,
 
@@ -86,10 +86,10 @@ namespace ISD {
     // single token result.  This is used to represent the fact that the operand
     // operators are independent of each other.
     TokenFactor,
-    
-    // AssertSext, AssertZext - These nodes record if a register contains a 
-    // value that has already been zero or sign extended from a narrower type.  
-    // These nodes take two operands.  The first is the node that has already 
+
+    // AssertSext, AssertZext - These nodes record if a register contains a
+    // value that has already been zero or sign extended from a narrower type.
+    // These nodes take two operands.  The first is the node that has already
     // been extended, and the second is a value type node indicating the width
     // of the extension
     AssertSext, AssertZext,
@@ -102,7 +102,7 @@ namespace ISD {
 
     // The address of the GOT
     GLOBAL_OFFSET_TABLE,
-    
+
     // FRAMEADDR, RETURNADDR - These nodes represent llvm.frameaddress and
     // llvm.returnaddress on the DAG.  These nodes take one operand, the index
     // of the frame or return address to return.  An index of zero corresponds
@@ -114,11 +114,11 @@ namespace ISD {
     // first (possible) on-stack argument. This is needed for correct stack
     // adjustment during unwind.
     FRAME_TO_ARGS_OFFSET,
-    
+
     // RESULT, OUTCHAIN = EXCEPTIONADDR(INCHAIN) - This node represents the
     // address of the exception block on entry to an landing pad block.
     EXCEPTIONADDR,
-    
+
     // RESULT, OUTCHAIN = EHSELECTION(INCHAIN, EXCEPTION) - This node represents
     // the selection index of the exception thrown.
     EHSELECTION,
@@ -133,7 +133,7 @@ namespace ISD {
     // simplification of the constant.
     TargetConstant,
     TargetConstantFP,
-    
+
     // TargetGlobalAddress - Like GlobalAddress, but the DAG does no folding or
     // anything else with this node, and this is valid in the target-specific
     // dag, turning into a GlobalAddress operand.
@@ -143,14 +143,14 @@ namespace ISD {
     TargetJumpTable,
     TargetConstantPool,
     TargetExternalSymbol,
-    
+
     /// RESULT = INTRINSIC_WO_CHAIN(INTRINSICID, arg1, arg2, ...)
     /// This node represents a target intrinsic function with no side effects.
     /// The first operand is the ID number of the intrinsic from the
     /// llvm::Intrinsic namespace.  The operands to the intrinsic follow.  The
     /// node has returns the result of the intrinsic.
     INTRINSIC_WO_CHAIN,
-    
+
     /// RESULT,OUTCHAIN = INTRINSIC_W_CHAIN(INCHAIN, INTRINSICID, arg1, ...)
     /// This node represents a target intrinsic function with side effects that
     /// returns a result.  The first operand is a chain pointer.  The second is
@@ -165,9 +165,9 @@ namespace ISD {
     /// second is the ID number of the intrinsic from the llvm::Intrinsic
     /// namespace.  The operands to the intrinsic follow.
     INTRINSIC_VOID,
-    
+
     // CopyToReg - This node has three operands: a chain, a register number to
-    // set to this value, and a value.  
+    // set to this value, and a value.
     CopyToReg,
 
     // CopyFromReg - This node indicates that the input value is a virtual or
@@ -177,7 +177,7 @@ namespace ISD {
 
     // UNDEF - An undefined node
     UNDEF,
-    
+
     /// FORMAL_ARGUMENTS(CHAIN, CC#, ISVARARG, FLAG0, ..., FLAGn) - This node
     /// represents the formal arguments for a function.  CC# is a Constant value
     /// indicating the calling convention of the function, and ISVARARG is a
@@ -185,9 +185,9 @@ namespace ISD {
     /// has one result value for each incoming argument, plus one for the output
     /// chain. It must be custom legalized. See description of CALL node for
     /// FLAG argument contents explanation.
-    /// 
+    ///
     FORMAL_ARGUMENTS,
-    
+
     /// RV1, RV2...RVn, CHAIN = CALL(CHAIN, CALLEE,
     ///                              ARG0, FLAG0, ARG1, FLAG1, ... ARGn, FLAGn)
     /// This node represents a fully general function call, before the legalizer
@@ -239,17 +239,17 @@ namespace ISD {
     // SDIVREM/UDIVREM - Divide two integers and produce both a quotient and
     // remainder result.
     SDIVREM, UDIVREM,
-    
+
     // CARRY_FALSE - This node is used when folding other nodes,
     // like ADDC/SUBC, which indicate the carry result is always false.
     CARRY_FALSE,
-    
+
     // Carry-setting nodes for multiple precision addition and subtraction.
     // These nodes take two operands of the same value type, and produce two
     // results.  The first result is the normal add or sub result, the second
     // result is the carry flag result.
     ADDC, SUBC,
-    
+
     // Carry-using nodes for multiple precision addition and subtraction.  These
     // nodes take three operands: The first two are the normal lhs and rhs to
     // the add or sub, and the third is the input carry flag.  These nodes
@@ -286,12 +286,12 @@ namespace ISD {
     // INT = FGETSIGN(FP) - Return the sign bit of the specified floating point
     // value as an integer 0/1 value.
     FGETSIGN,
-    
+
     /// BUILD_VECTOR(ELT0, ELT1, ELT2, ELT3,...) - Return a vector
     /// with the specified, possibly variable, elements.  The number of elements
     /// is required to be a power of two.
     BUILD_VECTOR,
-    
+
     /// INSERT_VECTOR_ELT(VECTOR, VAL, IDX) - Returns VECTOR with the element
     /// at IDX replaced with VAL.  If the type of VAL is larger than the vector
     /// element type then VAL is truncated before replacement.
@@ -300,13 +300,13 @@ namespace ISD {
     /// EXTRACT_VECTOR_ELT(VECTOR, IDX) - Returns a single element from VECTOR
     /// identified by the (potentially variable) element number IDX.
     EXTRACT_VECTOR_ELT,
-    
+
     /// CONCAT_VECTORS(VECTOR0, VECTOR1, ...) - Given a number of values of
     /// vector type with the same length and element type, this produces a
     /// concatenated vector result value, with length equal to the sum of the
     /// lengths of the input vectors.
     CONCAT_VECTORS,
-    
+
     /// EXTRACT_SUBVECTOR(VECTOR, IDX) - Returns a subvector from VECTOR (an
     /// vector value) starting with the (potentially variable) element number
     /// IDX, which must be a multiple of the result vector length.
@@ -325,19 +325,19 @@ namespace ISD {
     /// scalar value into element 0 of the resultant vector type.  The top
     /// elements 1 to N-1 of the N-element vector are undefined.
     SCALAR_TO_VECTOR,
-    
-    // EXTRACT_SUBREG - This node is used to extract a sub-register value. 
+
+    // EXTRACT_SUBREG - This node is used to extract a sub-register value.
     // This node takes a superreg and a constant sub-register index as operands.
     // Note sub-register indices must be increasing. That is, if the
     // sub-register index of a 8-bit sub-register is N, then the index for a
     // 16-bit sub-register must be at least N+1.
     EXTRACT_SUBREG,
-    
-    // INSERT_SUBREG - This node is used to insert a sub-register value. 
+
+    // INSERT_SUBREG - This node is used to insert a sub-register value.
     // This node takes a superreg, a subreg value, and a constant sub-register
     // index as operands.
     INSERT_SUBREG,
-    
+
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
     // an unsigned/signed value of type i[2*N], then return the top part.
     MULHU, MULHS,
@@ -354,9 +354,9 @@ namespace ISD {
     // i1 then the high bits must conform to getBooleanContents.
     SELECT,
 
-    // Select with condition operator - This selects between a true value and 
+    // Select with condition operator - This selects between a true value and
     // a false value (ops #2 and #3) based on the boolean result of comparing
-    // the lhs and rhs (ops #0 and #1) of a conditional expression with the 
+    // the lhs and rhs (ops #0 and #1) of a conditional expression with the
     // condition code in op #4, a CondCodeSDNode.
     SELECT_CC,
 
@@ -369,7 +369,7 @@ namespace ISD {
 
     // Vector SetCC operator - This evaluates to a vector of integer elements
     // with the high bit in each element set to true if the comparison is true
-    // and false if the comparison is false.  All other bits in each element 
+    // and false if the comparison is false.  All other bits in each element
     // are undefined.  The operands to this are the left and right operands
     // to compare (ops #0, and #1) and the condition code to compare them with
     // (op #2) as a CondCodeSDNode.
@@ -395,7 +395,7 @@ namespace ISD {
 
     // ANY_EXTEND - Used for integer types.  The high bits are undefined.
     ANY_EXTEND,
-    
+
     // TRUNCATE - Completely drop the high bits.
     TRUNCATE,
 
@@ -425,10 +425,10 @@ namespace ISD {
     /// The TRUNC = 1 case is used in cases where we know that the value will
     /// not be modified by the node, because Y is not using any of the extra
     /// precision of source type.  This allows certain transformations like
-    /// FP_EXTEND(FP_ROUND(X,1)) -> X which are not safe for 
+    /// FP_EXTEND(FP_ROUND(X,1)) -> X which are not safe for
     /// FP_EXTEND(FP_ROUND(X,0)) because the extra bits aren't removed.
     FP_ROUND,
-    
+
     // FLT_ROUNDS_ - Returns current rounding mode:
     // -1 Undefined
     //  0 Round to 0
@@ -449,12 +449,12 @@ namespace ISD {
 
     // BIT_CONVERT - Theis operator converts between integer and FP values, as
     // if one was stored to memory as integer and the other was loaded from the
-    // same address (or equivalently for vector format conversions, etc).  The 
-    // source and result are required to have the same bit size (e.g. 
-    // f32 <-> i32).  This can also be used for int-to-int or fp-to-fp 
+    // same address (or equivalently for vector format conversions, etc).  The
+    // source and result are required to have the same bit size (e.g.
+    // f32 <-> i32).  This can also be used for int-to-int or fp-to-fp
     // conversions, but that is a noop, deleted by getNode().
     BIT_CONVERT,
-    
+
     // CONVERT_RNDSAT - This operator is used to support various conversions
     // between various types (float, signed, unsigned and vectors of those
     // types) with rounding and saturation. NOTE: Avoid using this operator as
@@ -467,7 +467,7 @@ namespace ISD {
     //   4) saturation imm
     //   5) ISD::CvtCode indicating the type of conversion to do
     CONVERT_RNDSAT,
-    
+
     // FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     // FLOG, FLOG2, FLOG10, FEXP, FEXP2,
     // FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR - Perform various unary floating
@@ -475,7 +475,7 @@ namespace ISD {
     FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     FLOG, FLOG2, FLOG10, FEXP, FEXP2,
     FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR,
-    
+
     // LOAD and STORE have token chains as their first operand, then the same
     // operands as an LLVM load/store instruction, then an offset node that
     // is added / subtracted from the base pointer to form the address (for
@@ -517,7 +517,7 @@ namespace ISD {
     // compare, rather than as a combined SetCC node.  The operands in order are
     // chain, cc, lhs, rhs, block to branch to if condition is true.
     BR_CC,
-    
+
     // RET - Return from function.  The first operand is the chain,
     // and any subsequent operands are pairs of return value and return value
     // attributes (see CALL for description of attributes) for the function.
@@ -532,7 +532,7 @@ namespace ISD {
     //   Operand #2n+3: A TargetConstant, indicating if the reg is a use/def
     //   Operand #last: Optional, an incoming flag.
     INLINEASM,
-    
+
     // DBG_LABEL, EH_LABEL - Represents a label in mid basic block used to track
     // locations needed for debug and exception handling tables.  These nodes
     // take a chain as input and return a chain.
@@ -544,16 +544,16 @@ namespace ISD {
     // a chain, while the next two operands are first two arguments (address
     // and variable) of a llvm.dbg.declare instruction.
     DECLARE,
-    
+
     // STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a
     // value, the same type as the pointer type for the system, and an output
     // chain.
     STACKSAVE,
-    
+
     // STACKRESTORE has two operands, an input chain and a pointer to restore to
     // it returns an output chain.
     STACKRESTORE,
-    
+
     // CALLSEQ_START/CALLSEQ_END - These operators mark the beginning and end of
     // a call sequence, and carry arbitrary information that target might want
     // to know.  The first operand is a chain, the rest are specified by the
@@ -561,16 +561,16 @@ namespace ISD {
     // CALLSEQ_START..CALLSEQ_END pairs may not be nested.
     CALLSEQ_START,  // Beginning of a call sequence
     CALLSEQ_END,    // End of a call sequence
-    
-    // VAARG - VAARG has three operands: an input chain, a pointer, and a 
+
+    // VAARG - VAARG has three operands: an input chain, a pointer, and a
     // SRCVALUE.  It returns a pair of values: the vaarg value and a new chain.
     VAARG,
-    
+
     // VACOPY - VACOPY has five operands: an input chain, a destination pointer,
     // a source pointer, a SRCVALUE for the destination, and a SRCVALUE for the
     // source.
     VACOPY,
-    
+
     // VAEND, VASTART - VAEND and VASTART have three operands: an input chain, a
     // pointer, and a SRCVALUE.
     VAEND, VASTART,
@@ -589,7 +589,7 @@ namespace ISD {
 
     // READCYCLECOUNTER - This corresponds to the readcyclecounter intrinsic.
     // The only operand is a chain and a value and a chain are produced.  The
-    // value is the contents of the architecture specific cycle counter like 
+    // value is the contents of the architecture specific cycle counter like
     // register (or other high accuracy low latency clock source)
     READCYCLECOUNTER,
 
@@ -601,7 +601,7 @@ namespace ISD {
     // column number, and a pointer to a CompileUnit object identifying
     // the containing compilation unit.  It produces a token chain as output.
     DBG_STOPPOINT,
-    
+
     // DEBUG_LOC - This node is used to represent source line information
     // embedded in the code.  It takes a token chain as input, then a line
     // number, then a column then a file id (provided by MachineModuleInfo.) It
@@ -625,7 +625,7 @@ namespace ISD {
     // read / write specifier, and locality specifier.
     PREFETCH,
 
-    // OUTCHAIN = MEMBARRIER(INCHAIN, load-load, load-store, store-load, 
+    // OUTCHAIN = MEMBARRIER(INCHAIN, load-load, load-store, store-load,
     //                       store-store, device)
     // This corresponds to the memory.barrier intrinsic.
     // it takes an input chain, 4 operands to specify the type of barrier, an
@@ -659,7 +659,7 @@ namespace ISD {
     ATOMIC_LOAD_MAX,
     ATOMIC_LOAD_UMIN,
     ATOMIC_LOAD_UMAX,
-    
+
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END
   };
@@ -682,9 +682,9 @@ namespace ISD {
   /// isDebugLabel - Return true if the specified node represents a debug
   /// label (i.e. ISD::DBG_LABEL or TargetInstrInfo::DBG_LABEL node).
   bool isDebugLabel(const SDNode *N);
-  
+
   //===--------------------------------------------------------------------===//
-  /// MemIndexedMode enum - This enum defines the load / store indexed 
+  /// MemIndexedMode enum - This enum defines the load / store indexed
   /// addressing modes.
   ///
   /// UNINDEXED    "Normal" load / store. The effective address is already
@@ -729,7 +729,7 @@ namespace ISD {
   ///          integer result type.
   /// ZEXTLOAD loads the integer operand and zero extends it to a larger
   ///          integer result type.
-  /// EXTLOAD  is used for three things: floating point extending loads, 
+  /// EXTLOAD  is used for three things: floating point extending loads,
   ///          integer extending loads [the top bits are undefined], and vector
   ///          extending loads [load into low elt].
   ///
@@ -834,7 +834,7 @@ namespace ISD {
   CondCode getSetCCAndOperation(CondCode Op1, CondCode Op2, bool isInteger);
 
   //===--------------------------------------------------------------------===//
-  /// CvtCode enum - This enum defines the various converts CONVERT_RNDSAT 
+  /// CvtCode enum - This enum defines the various converts CONVERT_RNDSAT
   /// supports.
   enum CvtCode {
     CVT_FF,     // Float from Float
@@ -915,15 +915,15 @@ public:
   inline unsigned getMachineOpcode() const;
   inline const DebugLoc getDebugLoc() const;
 
-  
+
   /// reachesChainWithoutSideEffects - Return true if this operand (which must
-  /// be a chain) reaches the specified operand without crossing any 
+  /// be a chain) reaches the specified operand without crossing any
   /// side-effecting instructions.  In practice, this looks through token
   /// factors and non-volatile loads.  In order to remain efficient, this only
   /// looks a couple of nodes in, it does not do an exhaustive search.
-  bool reachesChainWithoutSideEffects(SDValue Dest, 
+  bool reachesChainWithoutSideEffects(SDValue Dest,
                                       unsigned Depth = 2) const;
-  
+
   /// use_empty - Return true if there are no nodes using value ResNo
   /// of Node.
   ///
@@ -937,10 +937,10 @@ public:
 
 
 template<> struct DenseMapInfo<SDValue> {
-  static inline SDValue getEmptyKey() { 
-    return SDValue((SDNode*)-1, -1U); 
+  static inline SDValue getEmptyKey() {
+    return SDValue((SDNode*)-1, -1U);
   }
-  static inline SDValue getTombstoneKey() { 
+  static inline SDValue getTombstoneKey() {
     return SDValue((SDNode*)-1, 0);
   }
   static unsigned getHashValue(const SDValue &Val) {
@@ -978,7 +978,7 @@ class SDUse {
   SDValue Val;
   /// User - The user of this value.
   SDNode *User;
-  /// Prev, Next - Pointers to the uses list of the SDNode referred by 
+  /// Prev, Next - Pointers to the uses list of the SDNode referred by
   /// this operand.
   SDUse **Prev, *Next;
 
@@ -994,7 +994,7 @@ public:
   /// If implicit conversion to SDValue doesn't work, the get() method returns
   /// the SDValue.
   const SDValue &get() const { return Val; }
-  
+
   /// getUser - This returns the SDNode that contains this Use.
   SDNode *getUser() { return User; }
 
@@ -1012,7 +1012,7 @@ public:
   bool operator==(const SDValue &V) const {
     return Val == V;
   }
-  
+
   /// operator!= - Convenience function for get().operator!=
   bool operator!=(const SDValue &V) const {
     return Val != V;
@@ -1075,7 +1075,7 @@ private:
   /// NodeType - The operation that this node performs.
   ///
   short NodeType;
-  
+
   /// OperandsNeedDelete - This is true if OperandList was new[]'d.  If true,
   /// then they will be delete[]'d when the node is destroyed.
   unsigned short OperandsNeedDelete : 1;
@@ -1093,7 +1093,7 @@ private:
   /// OperandList - The values that are used by this operation.
   ///
   SDUse *OperandList;
-  
+
   /// ValueList - The types of the values this node defines.  SDNode's may
   /// define multiple values simultaneously.
   const MVT *ValueList;
@@ -1170,7 +1170,7 @@ public:
   void setDebugLoc(const DebugLoc dl) { debugLoc = dl; }
 
   /// use_iterator - This class provides iterator support for SDUse
-  /// operands that use a specific SDNode. 
+  /// operands that use a specific SDNode.
   class use_iterator
     : public forward_iterator<SDUse, ptrdiff_t> {
     SDUse *Op;
@@ -1190,7 +1190,7 @@ public:
     bool operator!=(const use_iterator &x) const {
       return !operator==(x);
     }
- 
+
     /// atEnd - return true if this iterator is at the end of uses list.
     bool atEnd() const { return Op == 0; }
 
@@ -1260,7 +1260,7 @@ public:
   ///
   unsigned getNumOperands() const { return NumOperands; }
 
-  /// getConstantOperandVal - Helper method returns the integer value of a 
+  /// getConstantOperandVal - Helper method returns the integer value of a
   /// ConstantSDNode operand.
   uint64_t getConstantOperandVal(unsigned Num) const;
 
@@ -1353,7 +1353,7 @@ protected:
     return Ret;
   }
 
-  SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs, const SDValue *Ops, 
+  SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs, const SDValue *Ops,
          unsigned NumOps)
     : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
       NodeId(-1),
@@ -1374,7 +1374,7 @@ protected:
       NodeId(-1), OperandList(0), ValueList(VTs.VTs), UseList(NULL),
       NumOperands(0), NumValues(VTs.NumVTs),
       debugLoc(dl) {}
-  
+
   /// InitOperands - Initialize the operands list of this with 1 operand.
   void InitOperands(SDUse *Ops, const SDValue &Op0) {
     Ops[0].setUser(this);
@@ -1545,7 +1545,7 @@ public:
              getSDVTList(MVT::Other)) {
     InitOperands(&Op, X);
   }
-  ~HandleSDNode();  
+  ~HandleSDNode();
   const SDValue &getValue() const { return Op; }
 };
 
@@ -1713,7 +1713,7 @@ class ConstantSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   ConstantSDNode(bool isTarget, const ConstantInt *val, MVT VT)
-    : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant, 
+    : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant,
              DebugLoc::getUnknownLoc(), getSDVTList(VT)), Value(val) {
   }
 public:
@@ -1752,7 +1752,7 @@ public:
   /// two floating point values.
 
   /// We leave the version with the double argument here because it's just so
-  /// convenient to write "2.0" and the like.  Without this function we'd 
+  /// convenient to write "2.0" and the like.  Without this function we'd
   /// have to duplicate its logic everywhere it's called.
   bool isExactlyValue(double V) const {
     bool ignored;
@@ -1770,7 +1770,7 @@ public:
 
   static bool classof(const ConstantFPSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::ConstantFP || 
+    return N->getOpcode() == ISD::ConstantFP ||
            N->getOpcode() == ISD::TargetConstantFP;
   }
 };
@@ -1801,7 +1801,7 @@ class FrameIndexSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   FrameIndexSDNode(int fi, MVT VT, bool isTarg)
-    : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex, 
+    : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex,
       DebugLoc::getUnknownLoc(), getSDVTList(VT)), FI(fi) {
   }
 public:
@@ -1824,9 +1824,9 @@ protected:
       DebugLoc::getUnknownLoc(), getSDVTList(VT)), JTI(jti) {
   }
 public:
-    
+
   int getIndex() const { return JTI; }
-  
+
   static bool classof(const JumpTableSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::JumpTable ||
@@ -1859,7 +1859,7 @@ protected:
   }
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
                      MVT VT, int o=0)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
              DebugLoc::getUnknownLoc(),
              getSDVTList(VT)), Offset(o), Alignment(0) {
     assert((int)Offset >= 0 && "Offset is too large");
@@ -1894,7 +1894,7 @@ public:
   int getOffset() const {
     return Offset & ~(1 << (sizeof(unsigned)*8-1));
   }
-  
+
   // Return the alignment of this constant pool object, which is either 0 (for
   // default alignment) or log2 of the desired value.
   unsigned getAlignment() const { return Alignment; }
@@ -2087,7 +2087,7 @@ protected:
   friend class SelectionDAG;
   explicit CvtRndSatSDNode(MVT VT, DebugLoc dl, const SDValue *Ops,
                            unsigned NumOps, ISD::CvtCode Code)
-    : SDNode(ISD::CONVERT_RNDSAT, dl, getSDVTList(VT), Ops, NumOps), 
+    : SDNode(ISD::CONVERT_RNDSAT, dl, getSDVTList(VT), Ops, NumOps),
       CvtCode(Code) {
     assert(NumOps == 5 && "wrong number of operations");
   }
@@ -2150,14 +2150,14 @@ namespace ISD {
     void setNest()  { Flags |= One << NestOffs; }
 
     unsigned getByValAlign() const {
-      return (unsigned) 
+      return (unsigned)
         ((One << ((Flags & ByValAlign) >> ByValAlignOffs)) / 2);
     }
     void setByValAlign(unsigned A) {
       Flags = (Flags & ~ByValAlign) |
         (uint64_t(Log2_32(A) + 1) << ByValAlignOffs);
     }
-            
+
     bool isSplit()   const { return Flags & Split; }
     void setSplit()  { Flags |= One << SplitOffs; }
 
@@ -2214,8 +2214,8 @@ class CallSDNode : public SDNode {
   bool Inreg;
 protected:
   friend class SelectionDAG;
-  CallSDNode(unsigned cc, DebugLoc dl, bool isvararg, bool istailcall, 
-             bool isinreg, SDVTList VTs, const SDValue *Operands, 
+  CallSDNode(unsigned cc, DebugLoc dl, bool isvararg, bool istailcall,
+             bool isinreg, SDVTList VTs, const SDValue *Operands,
              unsigned numOperands)
     : SDNode(ISD::CALL, dl, VTs, Operands, numOperands),
       CallingConv(cc), IsVarArg(isvararg), IsTailCall(istailcall),

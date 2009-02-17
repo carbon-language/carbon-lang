@@ -150,7 +150,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Atomic1(AtomicSDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_Atomic2(AtomicSDNode *N) {
   SDValue Op2 = GetPromotedInteger(N->getOperand(2));
   SDValue Op3 = GetPromotedInteger(N->getOperand(3));
-  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getDebugLoc(), 
+  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getDebugLoc(),
                               N->getMemoryVT(), N->getChain(), N->getBasePtr(),
                               Op2, Op3, N->getSrcValue(), N->getAlignment());
   // Legalized the chain result - switch anything that used the old chain to
@@ -2067,7 +2067,7 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
   }
 
   NewLHS = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi.getValueType()),
-                             LHSHi, RHSHi, ISD::SETEQ, false, 
+                             LHSHi, RHSHi, ISD::SETEQ, false,
                              DagCombineInfo, dl);
   if (!NewLHS.getNode())
     NewLHS = DAG.getSetCC(dl, TLI.getSetCCResultType(LHSHi.getValueType()),
