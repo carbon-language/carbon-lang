@@ -32,6 +32,7 @@ void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic::Level Level,
     Warnings.push_back(std::make_pair(Info.getLocation(), Str));
     break;
   case Diagnostic::Error:
+  case Diagnostic::Fatal:
     Errors.push_back(std::make_pair(Info.getLocation(), Str));
     break;
   }
