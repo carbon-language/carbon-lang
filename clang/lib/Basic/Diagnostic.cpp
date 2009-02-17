@@ -196,6 +196,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   NumErrors = 0;
   CustomDiagInfo = 0;
   CurDiagID = ~0U;
+  LastDiagLevel = Fatal;
   
   ArgToStringFn = DummyArgToStringFn;
 }
@@ -214,10 +215,11 @@ unsigned Diagnostic::getCustomDiagID(Level L, const char *Message) {
 }
 
 
-/// isBuiltinNoteWarningOrExtension - Return true if the unmapped diagnostic
-/// level of the specified diagnostic ID is a Note, Warning, or Extension.
-/// Note that this only works on builtin diagnostics, not custom ones.
-bool Diagnostic::isBuiltinNoteWarningOrExtension(unsigned DiagID) {
+/// isBuiltinWarningOrExtension - Return true if the unmapped diagnostic
+/// level of the specified diagnostic ID is a Warning or Extension.
+/// This only works on builtin diagnostics, not custom ones, and is not legal to
+/// call on NOTEs.
+bool Diagnostic::isBuiltinWarningOrExtension(unsigned DiagID) {
   return DiagID < diag::DIAG_UPPER_LIMIT && getBuiltinDiagClass(DiagID) < ERROR;
 }
 
@@ -225,21 +227,18 @@ bool Diagnostic::isBuiltinNoteWarningOrExtension(unsigned DiagID) {
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
 const char *Diagnostic::getDescription(unsigned DiagID) const {
-  if (DiagID < diag::DIAG_UPPER_LIMIT) {
-    if (DiagID < diag::DIAG_START_LEX)
-      return DiagnosticTextCommon[DiagID];
-    else if (DiagID < diag::DIAG_START_PARSE)
-      return DiagnosticTextLex[DiagID - diag::DIAG_START_LEX - 1];
-    else if (DiagID < diag::DIAG_START_AST)
-      return DiagnosticTextParse[DiagID - diag::DIAG_START_PARSE - 1];
-    else if (DiagID < diag::DIAG_START_SEMA)
-      return DiagnosticTextAST[DiagID - diag::DIAG_START_AST - 1];
-    else if (DiagID < diag::DIAG_START_ANALYSIS)
-      return DiagnosticTextSema[DiagID - diag::DIAG_START_SEMA - 1];
-    else if (DiagID < diag::DIAG_UPPER_LIMIT)
-      return DiagnosticTextAnalysis[DiagID - diag::DIAG_START_ANALYSIS - 1];
-  }
-   
+  if (DiagID < diag::DIAG_START_LEX)
+    return DiagnosticTextCommon[DiagID];
+  else if (DiagID < diag::DIAG_START_PARSE)
+    return DiagnosticTextLex[DiagID - diag::DIAG_START_LEX - 1];
+  else if (DiagID < diag::DIAG_START_AST)
+    return DiagnosticTextParse[DiagID - diag::DIAG_START_PARSE - 1];
+  else if (DiagID < diag::DIAG_START_SEMA)
+    return DiagnosticTextAST[DiagID - diag::DIAG_START_AST - 1];
+  else if (DiagID < diag::DIAG_START_ANALYSIS)
+    return DiagnosticTextSema[DiagID - diag::DIAG_START_SEMA - 1];
+  else if (DiagID < diag::DIAG_UPPER_LIMIT)
+    return DiagnosticTextAnalysis[DiagID - diag::DIAG_START_ANALYSIS - 1];
   return CustomDiagInfo->getDescription(DiagID);
 }
 
@@ -252,19 +251,23 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
     return CustomDiagInfo->getLevel(DiagID);
   
   unsigned DiagClass = getBuiltinDiagClass(DiagID);
-  
+  assert(DiagClass != NOTE && "Cannot get the diagnostic level of a note!");
+  return getDiagnosticLevel(DiagID, DiagClass);
+}
+
+/// getDiagnosticLevel - Based on the way the client configured the Diagnostic
+/// object, classify the specified diagnostic ID into a Level, consumable by
+/// the DiagnosticClient.
+Diagnostic::Level
+Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
   // Specific non-error diagnostics may be mapped to various levels from ignored
-  // to error.
-  if (DiagClass < ERROR) {
-    switch (getDiagnosticMapping((diag::kind)DiagID)) {
-    case diag::MAP_DEFAULT: break;
-    case diag::MAP_IGNORE:  return Diagnostic::Ignored;
-    case diag::MAP_WARNING: DiagClass = WARNING; break;
-    case diag::MAP_ERROR:   DiagClass = ERROR; break;
-    case diag::MAP_FATAL:   DiagClass = FATAL; break;
-    }
-  } else if (getDiagnosticMapping((diag::kind)DiagID) == diag::MAP_FATAL) {
-    DiagClass = FATAL;
+  // to error.  Errors can only be mapped to fatal.
+  switch (getDiagnosticMapping((diag::kind)DiagID)) {
+  case diag::MAP_DEFAULT: break;
+  case diag::MAP_IGNORE:  return Diagnostic::Ignored;
+  case diag::MAP_WARNING: DiagClass = WARNING; break;
+  case diag::MAP_ERROR:   DiagClass = ERROR; break;
+  case diag::MAP_FATAL:   DiagClass = FATAL; break;
   }
   
   // Map diagnostic classes based on command line argument settings.
@@ -289,7 +292,6 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
   
   switch (DiagClass) {
   default: assert(0 && "Unknown diagnostic class!");
-  case NOTE:        return Diagnostic::Note;
   case WARNING:     return Diagnostic::Warning;
   case ERROR:       return Diagnostic::Error;
   case FATAL:       return Diagnostic::Fatal;
@@ -307,23 +309,55 @@ void Diagnostic::ProcessDiag() {
     return;
   
   // Figure out the diagnostic level of this message.
-  Diagnostic::Level DiagLevel = getDiagnosticLevel(Info.getID());
+  Diagnostic::Level DiagLevel;
+  unsigned DiagID = Info.getID();
   
-  // If the client doesn't care about this message, don't issue it.
-  if (DiagLevel == Diagnostic::Ignored)
+  // ShouldEmitInSystemHeader - True if this diagnostic should be produced even
+  // in a system header.
+  bool ShouldEmitInSystemHeader;
+  
+  if (DiagID >= diag::DIAG_UPPER_LIMIT) {
+    // Handle custom diagnostics, which cannot be mapped.
+    DiagLevel = CustomDiagInfo->getLevel(DiagID);
+    
+    // Custom diagnostics always are emitted in system headers.
+    ShouldEmitInSystemHeader = true;
+  } else {
+    // Get the class of the diagnostic.  If this is a NOTE, map it onto whatever
+    // the diagnostic level was for the previous diagnostic so that it is
+    // filtered the same as the previous diagnostic.
+    unsigned DiagClass = getBuiltinDiagClass(DiagID);
+    if (DiagClass == NOTE) {
+      DiagLevel = Diagnostic::Note;
+      ShouldEmitInSystemHeader = false;  // extra consideration is needed
+    } else {
+      // If this is not an error and we are in a system header, we ignore it. 
+      // Check the original Diag ID here, because we also want to ignore
+      // extensions and warnings in -Werror and -pedantic-errors modes, which
+      // *map* warnings/extensions to errors.
+      ShouldEmitInSystemHeader = DiagClass == ERROR;
+      
+      DiagLevel = getDiagnosticLevel(DiagID, DiagClass);
+    }
+  }
+
+  if (DiagLevel != Diagnostic::Note)
+    LastDiagLevel = DiagLevel;
+  
+  // If the client doesn't care about this message, don't issue it.  If this is
+  // a note and the last real diagnostic was ignored, ignore it too.
+  if (DiagLevel == Diagnostic::Ignored ||
+      (DiagLevel == Diagnostic::Note && LastDiagLevel == Diagnostic::Ignored))
     return;
 
-  // If this is not an error and we are in a system header, ignore it.  We
-  // have to check on the original Diag ID here, because we also want to
-  // ignore extensions and warnings in -Werror and -pedantic-errors modes,
-  // which *map* warnings/extensions to errors.
-  if (SuppressSystemWarnings &&
-      Info.getID() < diag::DIAG_UPPER_LIMIT &&
-      getBuiltinDiagClass(Info.getID()) != ERROR &&
+  // If this diagnostic is in a system header and is not a clang error, suppress
+  // it.
+  if (SuppressSystemWarnings && !ShouldEmitInSystemHeader &&
       Info.getLocation().isValid() &&
-      Info.getLocation().getSpellingLoc().isInSystemHeader())
+      Info.getLocation().getSpellingLoc().isInSystemHeader() &&
+      (DiagLevel != Diagnostic::Note || LastDiagLevel == Diagnostic::Ignored))
     return;
-  
+
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
     ++NumErrors;
@@ -331,7 +365,7 @@ void Diagnostic::ProcessDiag() {
     if (DiagLevel == Diagnostic::Fatal)
       FatalErrorOccurred = true;
   }
-
+  
   // Finally, report it.
   Client->HandleDiagnostic(DiagLevel, Info);
   if (Client->IncludeInDiagnosticCounts()) ++NumDiagnostics;

@@ -106,6 +106,11 @@ private:
   /// fatal error is emitted, and is sticky.
   bool ErrorOccurred;
   bool FatalErrorOccurred;
+  
+  /// LastDiagLevel - This is the level of the last diagnostic emitted.  This is
+  /// used to emit continuation diagnostics with the same level as the
+  /// diagnostic that they follow.
+  Diagnostic::Level LastDiagLevel;
 
   unsigned NumDiagnostics;    // Number of diagnostics reported
   unsigned NumErrors;         // Number of diagnostics that are errors
@@ -161,11 +166,11 @@ public:
   bool getSuppressSystemWarnings() const { return SuppressSystemWarnings; }
 
   /// setDiagnosticMapping - This allows the client to specify that certain
-  /// warnings are ignored.  Only NOTEs, WARNINGs, and EXTENSIONs can be mapped.
+  /// warnings are ignored.  Only WARNINGs and EXTENSIONs can be mapped.
   void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
     assert(Diag < diag::DIAG_UPPER_LIMIT &&
            "Can only map builtin diagnostics");
-    assert((isBuiltinNoteWarningOrExtension(Diag) || Map == diag::MAP_FATAL) &&
+    assert((isBuiltinWarningOrExtension(Diag) || Map == diag::MAP_FATAL) &&
            "Cannot map errors!");
     unsigned char &Slot = DiagMappings[Diag/2];
     unsigned Bits = (Diag & 1)*4;
@@ -212,16 +217,16 @@ public:
   /// issue.
   const char *getDescription(unsigned DiagID) const;
   
-  /// isBuiltinNoteWarningOrExtension - Return true if the unmapped diagnostic
-  /// level of the specified diagnostic ID is a Note, Warning, or Extension.
-  /// Note that this only works on builtin diagnostics, not custom ones.
-  static bool isBuiltinNoteWarningOrExtension(unsigned DiagID);
+  /// isNoteWarningOrExtension - Return true if the unmapped diagnostic
+  /// level of the specified diagnostic ID is a Warning or Extension.
+  /// This only works on builtin diagnostics, not custom ones, and is not legal to
+  /// call on NOTEs.
+  static bool isBuiltinWarningOrExtension(unsigned DiagID);
 
   /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
-  Level getDiagnosticLevel(unsigned DiagID) const;
-  
+  Level getDiagnosticLevel(unsigned DiagID) const;  
   
   /// Report - Issue the message to the client.  @c DiagID is a member of the
   /// @c diag::kind enum.  This actually returns aninstance of DiagnosticBuilder
@@ -231,6 +236,10 @@ public:
   inline DiagnosticBuilder Report(FullSourceLoc Pos, unsigned DiagID);
   
 private:
+  /// getDiagnosticLevel - This is an internal implementation helper used when
+  /// DiagClass is already known.
+  Level getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const;
+
   // This is private state used by DiagnosticBuilder.  We put it here instead of
   // in DiagnosticBuilder in order to keep DiagnosticBuilder a small lightweight
   // object.  This implementation choice means that we can only have one
