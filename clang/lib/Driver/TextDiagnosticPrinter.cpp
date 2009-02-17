@@ -45,6 +45,14 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   SourceLocation Begin = SM.getInstantiationLoc(R.getBegin());
   SourceLocation End = SM.getInstantiationLoc(R.getEnd());
   
+  // If the End location and the start location are the same and are a macro
+  // location, then the range was something that came from a macro expansion
+  // or _Pragma.  If this is an object-like macro, the best we can do is to
+  // highlight the range.  If this is a function-like macro, we'd also like to
+  // highlight the arguments.
+  if (Begin == End && R.getEnd().isMacroID())
+    End = SM.getInstantiationRange(R.getEnd()).second;
+  
   unsigned StartLineNo = SM.getInstantiationLineNumber(Begin);
   if (StartLineNo > LineNo || SM.getFileID(Begin) != FID)
     return;  // No intersection.
