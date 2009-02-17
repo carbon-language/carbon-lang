@@ -156,7 +156,7 @@ public:
 
 private:
   CGDebugInfo* DebugInfo;
-  
+
   /// LabelIDs - Track arbitrary ids assigned to labels for use in implementing
   /// the GCC address-of-label extension and indirect goto. IDs are assigned to
   /// labels inside getIDForAddrOfLabel().
@@ -201,7 +201,7 @@ private:
   /// DidCallStackSave - Whether llvm.stacksave has been called. Used to avoid
   /// calling llvm.stacksave for multiple VLAs in the same scope.
   bool DidCallStackSave;
-  
+
   struct CleanupEntry {
     /// CleanupBlock - The block of code that does the actual cleanup.
     llvm::BasicBlock *CleanupBlock;
@@ -261,7 +261,7 @@ public:
     BlockInfo(const llvm::Type *blt, const char *n)
       : BlockLiteralTy(blt), Name(n) {}
   };
-  
+
   llvm::Function *GenerateBlockFunction(const BlockExpr *Expr,
                                         const BlockInfo& Info);
 
@@ -538,13 +538,13 @@ public:
   /// EmitLoadOfScalar - Load a scalar value from an address, taking
   /// care to appropriately convert from the memory representation to
   /// the LLVM value representation.
-  llvm::Value *EmitLoadOfScalar(llvm::Value *Addr, bool Volatile, 
+  llvm::Value *EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                 QualType Ty);
 
   /// EmitStoreOfScalar - Store a scalar value to an address, taking
   /// care to appropriately convert from the memory representation to
   /// the LLVM value representation.
-  void EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr, 
+  void EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                          bool Volatile);
 
   /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
@@ -635,7 +635,7 @@ public:
                          unsigned BuiltinID, const CallExpr *E);
 
   RValue EmitBlockCallExpr(const CallExpr *E);
-  
+
   /// EmitTargetBuiltinExpr - Emit the given builtin call. Returns 0 if the call
   /// is unhandled by the current target.
   llvm::Value *EmitTargetBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
