@@ -1777,3 +1777,44 @@ LBB1_2:	## overflow
 it would be nice to produce "into" someday.
 
 //===---------------------------------------------------------------------===//
+
+This code:
+
+void vec_mpys1(int y[], const int x[], int scaler) {
+int i;
+for (i = 0; i < 150; i++)
+ y[i] += (((long long)scaler * (long long)x[i]) >> 31);
+}
+
+Compiles to this loop with GCC 3.x:
+
+.L5:
+	movl	%ebx, %eax
+	imull	(%edi,%ecx,4)
+	shrdl	$31, %edx, %eax
+	addl	%eax, (%esi,%ecx,4)
+	incl	%ecx
+	cmpl	$149, %ecx
+	jle	.L5
+
+llvm-gcc compiles it to the much uglier:
+
+LBB1_1:	## bb1
+	movl	24(%esp), %eax
+	movl	(%eax,%edi,4), %ebx
+	movl	%ebx, %ebp
+	imull	%esi, %ebp
+	movl	%ebx, %eax
+	mull	%ecx
+	addl	%ebp, %edx
+	sarl	$31, %ebx
+	imull	%ecx, %ebx
+	addl	%edx, %ebx
+	shldl	$1, %eax, %ebx
+	movl	20(%esp), %eax
+	addl	%ebx, (%eax,%edi,4)
+	incl	%edi
+	cmpl	$150, %edi
+	jne	LBB1_1	## bb1
+
+//===---------------------------------------------------------------------===//
