@@ -105,9 +105,6 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
   if (isa<ObjCMethodDecl>(DC))
     return Context.getTranslationUnitDecl();
 
-  if (Decl *D = dyn_cast<Decl>(DC))
-    return D->getLexicalDeclContext();
-
   return DC->getLexicalParent();
 }
 
