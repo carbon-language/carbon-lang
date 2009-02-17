@@ -620,10 +620,13 @@ void X86_64ABIInfo::classify(QualType Ty,
     for (RecordDecl::field_iterator i = RD->field_begin(), 
            e = RD->field_end(); i != e; ++i, ++idx) {
       uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
+      bool BitField = i->isBitField();
 
       // AMD64-ABI 3.2.3p2: Rule 1. If ..., or it contains unaligned
       // fields, it has class MEMORY.
-      if (Offset % Context.getTypeAlign(i->getType())) {
+      //
+      // Note, skip this test for bitfields, see below.
+      if (!BitField && Offset % Context.getTypeAlign(i->getType())) {
         Lo = Memory;
         return;
       }
@@ -635,7 +638,28 @@ void X86_64ABIInfo::classify(QualType Ty,
       // separately. Each eightbyte gets initialized to class
       // NO_CLASS.
       Class FieldLo, FieldHi;
-      classify(i->getType(), Context, Offset, FieldLo, FieldHi);
+      
+      // Bitfields require special handling, they do not force the
+      // structure to be passed in memory even if unaligned, and
+      // therefore they can straddle an eightbyte.
+      if (BitField) {
+        uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
+        uint64_t Size = 
+          i->getBitWidth()->getIntegerConstantExprValue(Context).getZExtValue();
+
+        uint64_t EB_Lo = Offset / 64;
+        uint64_t EB_Hi = (Offset + Size - 1) / 64;
+        FieldLo = FieldHi = NoClass;
+        if (EB_Lo) {
+          assert(EB_Hi == EB_Lo && "Invalid classification, type > 16 bytes.");
+          FieldLo = NoClass;
+          FieldHi = Integer;
+        } else { 
+          FieldLo = Integer;
+          FieldHi = EB_Hi ? Integer : NoClass;
+        }
+      } else
+        classify(i->getType(), Context, Offset, FieldLo, FieldHi);
       Lo = merge(Lo, FieldLo);
       Hi = merge(Hi, FieldHi);
       if (Lo == Memory || Hi == Memory)
