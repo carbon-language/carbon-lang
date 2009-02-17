@@ -138,7 +138,7 @@ Stmt::child_iterator UnaryTypeTraitExpr::child_end() {
   return child_iterator();
 }
 
-bool UnaryTypeTraitExpr::Evaluate() const {
+bool UnaryTypeTraitExpr::EvaluateTrait() const {
   switch(UTT) {
   default: assert(false && "Unknown type trait or not implemented");
   case UTT_IsPOD: return QueriedType->isPODType();

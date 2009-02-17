@@ -806,7 +806,7 @@ public:
 
   QualType getQueriedType() const { return QueriedType; }
 
-  bool Evaluate() const;
+  bool EvaluateTrait() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnaryTypeTraitExprClass;

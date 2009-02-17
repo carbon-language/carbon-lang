@@ -552,7 +552,7 @@ public:
 
   bool VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
     Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    Result = E->Evaluate();
+    Result = E->EvaluateTrait();
     return true;
   }
 

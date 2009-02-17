@@ -1230,7 +1230,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
              ->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
 
   case UnaryTypeTraitExprClass:
-    Result = cast<UnaryTypeTraitExpr>(this)->Evaluate();
+    Result = cast<UnaryTypeTraitExpr>(this)->EvaluateTrait();
     return true;
   }
 
