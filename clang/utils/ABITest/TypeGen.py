@@ -10,6 +10,9 @@ from Enumeration import *
 #  - anonymous / transparent unions
 #  - VLAs
 #  - block types
+#  - K&R functions
+#  - pass arguments of different types (test extension, transparent union)
+#  - varargs
 
 ###
 # Actual type types
