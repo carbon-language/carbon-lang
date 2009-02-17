@@ -24,7 +24,9 @@ add_clang_library(clangAnalysis
   LiveVariables.cpp
   MemRegion.cpp
   PathDiagnostic.cpp
+  RangeConstraintManager.cpp
   RegionStore.cpp
+  SimpleConstraintManager.cpp
   SVals.cpp
   SymbolManager.cpp
   UninitializedValues.cpp
