@@ -76,6 +76,9 @@ class ToolChain(object):
 
         return True
         
+    def isMathErrnoDefault(self):
+        return True
+
 class Darwin_X86_ToolChain(ToolChain):
     def __init__(self, driver, darwinVersion, gccVersion, archName):
         super(Darwin_X86_ToolChain, self).__init__(driver)
@@ -223,6 +226,9 @@ class Darwin_X86_ToolChain(ToolChain):
                                        args.parser.m_tuneOption))
 
         return al
+
+    def isMathErrnoDefault(self):
+        return False
 
 class Generic_GCC_ToolChain(ToolChain):
     """Generic_GCC_ToolChain - A tool chain using the 'gcc' command to

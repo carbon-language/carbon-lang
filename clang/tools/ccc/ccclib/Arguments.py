@@ -364,9 +364,30 @@ class ArgList(object):
                 arg.opt.matches(optionC)):
                 yield arg
 
-    def getLastArg(self, option):
-        return self.lastArgs.get(option)
+    def getLastArgAndPosition(self, option):
+        return self.lastArgs.get(option, (None,-1))
 
+    def getLastArg(self, option):
+        return self.getLastArgAndPosition(option)[0]
+
+    def hasFFlag(self, option, negativeOption, default):
+        """hasFFlag - Given an option and its corresponding negative
+        option, return True if the option is present, False if the
+        negation is present, and default if neither option is
+        given. If both the option and its negation are present, the
+        last one wins.
+        """
+        arg,argPos = self.getLastArgAndPosition(option)
+        neg,negPos = self.getLastArgAndPosition(negativeOption)
+        if arg and neg:
+            return negPos < argPos
+        elif arg:
+            return True
+        elif neg:
+            return False
+        else:
+            return default
+            
     def getInputString(self, index, offset=0):
         # Source 0 is argv.
         if index.sourceId == 0:
@@ -457,9 +478,9 @@ class ArgList(object):
         opt = arg.opt
         if opt.alias:
             opt = opt.alias
-        self.lastArgs[opt] = arg
+        self.lastArgs[opt] = (arg, len(self.args) - 1)
         if opt.group is not None:
-            self.lastArgs[opt.group] = arg
+            self.lastArgs[opt.group] = (arg, len(self.args) - 1)
 
     # Forwarding methods.
     #
@@ -793,6 +814,8 @@ class OptionParser:
         self.f_indirectVirtualCallsOption = self.addOption(FlagOption('-findirect-virtual-calls', self.fGroup))
         self.f_laxVectorConversionsOption = self.addOption(FlagOption('-flax-vector-conversions', self.Clang_fGroup))
         self.f_limitedPrecisionOption = self.addOption(JoinedOption('-flimited-precision=', self.fGroup))
+        self.f_mathErrnoOption = self.addOption(FlagOption('-fmath-errno', self.fGroup))
+        self.f_noMathErrnoOption = self.addOption(FlagOption('-fno-math-errno', self.fGroup))
         self.f_msExtensionsOption = self.addOption(FlagOption('-fms-extensions', self.Clang_fGroup))
         self.f_mudflapOption = self.addOption(FlagOption('-fmudflap', self.fGroup))
         self.f_mudflapthOption = self.addOption(FlagOption('-fmudflapth', self.fGroup))

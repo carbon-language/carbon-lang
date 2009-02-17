@@ -280,6 +280,13 @@ class Clang_CompileTool(Tool):
             if arglist.getLastArg(arglist.parser.f_unwindTablesOption):
                 cmd_args.append('--unwind-tables')
 
+            if arglist.hasFFlag(arglist.parser.f_mathErrnoOption,
+                                arglist.parser.f_noMathErrnoOption,
+                                self.toolChain.isMathErrnoDefault()):
+                cmd_args.append('--fmath-errno=1')
+            else:
+                cmd_args.append('--fmath-errno=0')
+
             arg = arglist.getLastArg(arglist.parser.f_limitedPrecisionOption)
             if arg:
                 cmd_args.append('--limit-float-precision')
