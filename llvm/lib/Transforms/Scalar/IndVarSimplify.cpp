@@ -90,7 +90,8 @@ namespace {
 
     void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
                                     SmallPtrSet<Instruction*, 16> &DeadInsts);
-    void LinearFunctionTestReplace(Loop *L, SCEVHandle IterationCount, Value *IndVar,
+    void LinearFunctionTestReplace(Loop *L, SCEVHandle IterationCount,
+                                   Value *IndVar,
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
                                    SCEVExpander &Rewriter);
