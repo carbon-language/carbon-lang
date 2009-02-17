@@ -1180,7 +1180,7 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
                                                Range.getEnd()));
 }
 
-QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc) {
+QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {
   DefaultFunctionArrayConversion(V);
   
   // These operators return the element type of a complex type.
@@ -1192,7 +1192,8 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc) {
     return V->getType();
   
   // Reject anything else.
-  Diag(Loc, diag::err_realimag_invalid_type) << V->getType();
+  Diag(Loc, diag::err_realimag_invalid_type) << V->getType()
+    << (isReal ? "__real" : "__imag");
   return QualType();
 }
 
@@ -4058,7 +4059,7 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
     break;
   case UnaryOperator::Real:
   case UnaryOperator::Imag:
-    resultType = CheckRealImagOperand(Input, OpLoc);
+    resultType = CheckRealImagOperand(Input, OpLoc, Opc == UnaryOperator::Real);
     break;
   case UnaryOperator::Extension:
     resultType = Input->getType();

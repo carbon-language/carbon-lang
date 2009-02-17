@@ -1868,7 +1868,7 @@ public:
                                           bool isInc);
   QualType CheckAddressOfOperand(Expr *op, SourceLocation OpLoc);
   QualType CheckIndirectionOperand(Expr *op, SourceLocation OpLoc);
-  QualType CheckRealImagOperand(Expr *&Op, SourceLocation OpLoc);
+  QualType CheckRealImagOperand(Expr *&Op, SourceLocation OpLoc, bool isReal);
   
   /// type checking primary expressions.
   QualType CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,

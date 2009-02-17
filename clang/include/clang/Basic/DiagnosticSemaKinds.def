@@ -813,9 +813,8 @@ DIAG(err_typecheck_pointer_arith_void_type, ERROR,
      "arithmetic on pointer to void type")
 DIAG(err_typecheck_decl_incomplete_type, ERROR,
      "variable has incomplete type %0")
-// FIXME: Use %select
 DIAG(err_realimag_invalid_type, ERROR,
-     "invalid type %0 to __real or __imag operator")
+     "invalid type %0 to %1 operator")
 DIAG(err_typecheck_sclass_fscope, ERROR,
      "illegal storage class on file-scoped variable")
 DIAG(err_typecheck_sclass_func, ERROR,
