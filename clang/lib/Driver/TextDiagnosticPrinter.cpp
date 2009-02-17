@@ -101,18 +101,31 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     CaretLine[i] = '~';
 }
 
-void TextDiagnosticPrinter::EmitCaretDiagnostic(FullSourceLoc ILoc,
-                                                const DiagnosticInfo &Info) {
-  unsigned ColNo = ILoc.getInstantiationColumnNumber();
+void TextDiagnosticPrinter::EmitCaretDiagnostic(const DiagnosticInfo &Info,
+                                                SourceLocation Loc,
+                                                SourceManager &SM) {
+  assert(Loc.isFileID() && "Shouldn't have instantiation locs here");
+  
+  // Decompose the location into a FID/Offset pair.
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
+  FileID FID = LocInfo.first;
+  unsigned FileOffset = LocInfo.second;
+  
+  // Get information about the buffer it points into.
+  std::pair<const char*, const char*> BufferInfo = SM.getBufferData(FID);
+  const char *BufStart = BufferInfo.first;
+  const char *BufEnd = BufferInfo.second;
+
+  unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
   
   // Rewind from the current position to the start of the line.
-  const char *TokInstantiationPtr = ILoc.getCharacterData();
-  const char *LineStart = TokInstantiationPtr-ColNo+1; // Column # is 1-based.
+  const char *TokPtr = BufStart+FileOffset;
+  const char *LineStart = TokPtr-ColNo+1; // Column # is 1-based.
+  
   
   // Compute the line end.  Scan forward from the error position to the end of
   // the line.
-  const char *BufEnd = ILoc.getBufferData().second;
-  const char *LineEnd = TokInstantiationPtr;
+  const char *LineEnd = TokPtr;
   while (LineEnd != BufEnd && 
          *LineEnd != '\n' && *LineEnd != '\r')
     ++LineEnd;
@@ -125,10 +138,12 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(FullSourceLoc ILoc,
   std::string CaretLine(LineEnd-LineStart, ' ');
   
   // Highlight all of the characters covered by Ranges with ~ characters.
-  for (unsigned i = 0; i != Info.getNumRanges(); ++i)
-    HighlightRange(Info.getRange(i), ILoc.getManager(),
-                   ILoc.getInstantiationLineNumber(),
-                   ILoc.getFileID(), CaretLine, SourceLine);
+  if (Info.getNumRanges()) {
+    unsigned LineNo = SM.getLineNumber(FID, FileOffset);
+    
+    for (unsigned i = 0; i != Info.getNumRanges(); ++i)
+      HighlightRange(Info.getRange(i), SM, LineNo, FID, CaretLine, SourceLine);
+  }
   
   // Next, insert the caret itself.
   if (ColNo-1 < CaretLine.size())
@@ -216,8 +231,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     // Inspect the actual instantiation point of the diagnostic, we don't care
     // about presumed locations anymore.
     FullSourceLoc ILoc = Info.getLocation().getInstantiationLoc();
-    
-    EmitCaretDiagnostic(ILoc, Info);
+    EmitCaretDiagnostic(Info, ILoc, ILoc.getManager());
   }
   
   OS.flush();

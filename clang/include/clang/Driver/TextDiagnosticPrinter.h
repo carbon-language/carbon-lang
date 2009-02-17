@@ -46,7 +46,8 @@ public:
                       std::string &CaretLine,
                       const std::string &SourceLine);
 
-  void EmitCaretDiagnostic(FullSourceLoc Loc, const DiagnosticInfo &Info);
+  void EmitCaretDiagnostic(const DiagnosticInfo &Info,
+                           SourceLocation Loc, SourceManager &SM);
   
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
