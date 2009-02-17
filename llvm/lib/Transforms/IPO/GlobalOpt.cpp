@@ -2398,11 +2398,11 @@ bool GlobalOpt::ResolveAliases(Module &M) {
     //   @a = alias ... @f
     // into:
     //   define ... @a(...)
-    if (!Target->hasInternalLinkage())
+    if (!Target->hasLocalLinkage())
       continue;
 
     // The transform is only useful if the alias does not have internal linkage.
-    if (J->hasInternalLinkage())
+    if (J->hasLocalLinkage())
       continue;
 
     // Do not perform the transform if multiple aliases potentially target the
