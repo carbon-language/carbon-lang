@@ -97,15 +97,8 @@ public:
     return "Loop Pass Manager";
   }
 
-  // Print passes managed by this manager
-  void dumpPassStructure(unsigned Offset) {
-    llvm::cerr << std::string(Offset*2, ' ') << "Loop Pass Manager\n";
-    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
-      Pass *P = getContainedPass(Index);
-      P->dumpPassStructure(Offset + 1);
-      dumpLastUses(P, Offset+1);
-    }
-  }
+  /// Print passes managed by this manager
+  void dumpPassStructure(unsigned Offset);
 
   Pass *getContainedPass(unsigned N) {
     assert(N < PassVector.size() && "Pass number out of range!");
