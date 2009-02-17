@@ -104,7 +104,9 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 void TextDiagnosticPrinter::EmitCaretDiagnostic(const DiagnosticInfo &Info,
                                                 SourceLocation Loc,
                                                 SourceManager &SM) {
-  assert(Loc.isFileID() && "Shouldn't have instantiation locs here");
+  // We always emit diagnostics about the instantiation points, not the spelling
+  // points.  This more closely correlates to what the user writes.
+  Loc = SM.getInstantiationLoc(Loc);
   
   // Decompose the location into a FID/Offset pair.
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
@@ -228,10 +230,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Info.getLocation();
 
-    // Inspect the actual instantiation point of the diagnostic, we don't care
+    // Inspect the actual source location of the diagnostic, we don't care
     // about presumed locations anymore.
-    FullSourceLoc ILoc = Info.getLocation().getInstantiationLoc();
-    EmitCaretDiagnostic(Info, ILoc, ILoc.getManager());
+    EmitCaretDiagnostic(Info, LastLoc, LastLoc.getManager());
   }
   
   OS.flush();
