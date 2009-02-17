@@ -275,7 +275,7 @@ if (!defined $ConstraintsModel) { $ConstraintsModel = "basic"; }
 
 # Get the output format.
 my $OutputFormat = $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'};
-if (!defined OutputFormat) { $OutputFormat = "html"; }
+if (!defined $OutputFormat) { $OutputFormat = "html"; }
 
 # Determine the level of verbosity.
 my $Verbose = 0;
