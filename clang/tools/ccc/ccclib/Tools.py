@@ -211,6 +211,9 @@ class Clang_CompileTool(Tool):
         else:
             raise ValueError,"Unexpected output type for clang tool."
 
+        # The make clang go fast button.
+        cmd_args.append('-disable-free')
+
         if isinstance(phase.phase, Phases.AnalyzePhase):
             # Add default argument set.
             #
@@ -227,12 +230,6 @@ class Clang_CompileTool(Tool):
             for arg in arglist.getArgs(arglist.parser.XanalyzerOption):
                 cmd_args.extend(arglist.getValues(arg))
         else:
-            # The make clang go fast button.
-            # 
-            # FIXME: Always pass this, once analyzer is fixed to still
-            # write plist output with it.
-            cmd_args.append('-disable-free')
-
             # Perform argument translation for LLVM backend. This
             # takes some care in reconciling with llvm-gcc. The
             # issue is that llvm-gcc translates these options based on
