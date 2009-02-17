@@ -1,5 +1,7 @@
-// RUN: clang -analyze -checker-cfref --analyzer-store=basic -verify %s &&
-// RUN: clang -analyze -checker-cfref --analyzer-store=region -verify %s
+// RUN: clang -analyze -checker-cfref --analyzer-store=basic -analyzer-constraints=basic -verify %s &&
+// RUN: clang -analyze -checker-cfref --analyzer-store=basic -analyzer-constraints=range -verify %s &&
+// RUN: clang -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=basic -verify %s &&
+// RUN: clang -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=range -verify %s
 
 typedef unsigned char Boolean;
 typedef signed long CFIndex;
