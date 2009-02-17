@@ -428,7 +428,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     if (AllowMissing)
       return false;
     return Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
-      << Name << 0 << Range;
+      << Name << Range;
   }
 
   OverloadCandidateSet Candidates;
@@ -464,7 +464,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     if (AllowMissing)
       return false;
     Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
-      << Name << (unsigned)Candidates.size() << Range;
+      << Name << Range;
     PrintOverloadCandidates(Candidates, /*OnlyViable=*/false);
     return true;
 

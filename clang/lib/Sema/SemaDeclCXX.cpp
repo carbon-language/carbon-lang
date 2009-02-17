@@ -1636,10 +1636,10 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
   case OR_No_Viable_Function:
     if (InitEntity)
       Diag(Loc, diag::err_ovl_no_viable_function_in_init)
-        << InitEntity << (unsigned)CandidateSet.size() << Range;
+        << InitEntity << Range;
     else
       Diag(Loc, diag::err_ovl_no_viable_function_in_init)
-        << ClassType << (unsigned)CandidateSet.size() << Range;
+        << ClassType << Range;
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     return 0;
     

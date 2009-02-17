@@ -461,33 +461,29 @@ DIAG(err_ovl_static_nonstatic_member, ERROR,
      "static and non-static member functions with the same parameter types "
      "cannot be overloaded")
 DIAG(err_ovl_no_viable_function_in_call, ERROR,
-     "no matching function for call to %0"
-     "%plural{0:|1:; candidate is|:; candidates are:}1")
+     "no matching function for call to %0")
 DIAG(err_ovl_no_viable_member_function_in_call, ERROR,
-     "no matching member function for call to %0"
-     "%plural{0:|1:; candidate is|:; candidates are:}1")
+     "no matching member function for call to %0")
 DIAG(err_ovl_ambiguous_call, ERROR,
-     "call to %0 is ambiguous; candidates are:")
+     "call to %0 is ambiguous")
 DIAG(err_ovl_ambiguous_member_call, ERROR,
-     "call to member function %0 is ambiguous; candidates are:")
+     "call to member function %0 is ambiguous")
 DIAG(err_ovl_candidate, NOTE,
      "candidate function")
 DIAG(err_ovl_builtin_candidate, NOTE,
      "built-in candidate function %0")
 DIAG(err_ovl_no_viable_function_in_init, ERROR,
-     "no matching constructor for initialization of %0"
-     "%plural{0:|1:; candidate is|:; candidates are:}1")
+     "no matching constructor for initialization of %0")
 DIAG(err_ovl_ambiguous_init, ERROR,
-     "call to constructor of %0 is ambiguous; candidates are:")
+     "call to constructor of %0 is ambiguous")
 DIAG(err_ovl_ambiguous_oper, ERROR,
-     "use of overloaded operator '%0' is ambiguous; candidates are:")
+     "use of overloaded operator '%0' is ambiguous")
 DIAG(err_ovl_no_viable_oper, ERROR,
-     "no viable overloaded '%0'; candidate%plural{1: is|:s are}1:")
+     "no viable overloaded '%0'")
 DIAG(err_ovl_no_viable_object_call, ERROR,
-     "no matching function for call to object of type %0"
-     "%plural{0:|1:; candidate is|:; candidates are:}1")
+     "no matching function for call to object of type %0")
 DIAG(err_ovl_ambiguous_object_call, ERROR,
-     "call to object of type %0 is ambiguous; candidates are:")
+     "call to object of type %0 is ambiguous")
 DIAG(err_ovl_surrogate_cand, NOTE,
      "conversion candidate of type %0")
 DIAG(err_member_call_without_object, ERROR,

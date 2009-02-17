@@ -3633,10 +3633,9 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
     return Best->Function;
 
   case OR_No_Viable_Function:
-    Diag(Fn->getSourceRange().getBegin(), 
+    Diag(Fn->getSourceRange().getBegin(),
          diag::err_ovl_no_viable_function_in_call)
-      << UnqualifiedName << (unsigned)CandidateSet.size()
-      << Fn->getSourceRange();
+      << UnqualifiedName << Fn->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     break;
 
@@ -3705,8 +3704,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     case OR_No_Viable_Function:
       Diag(MemExpr->getSourceRange().getBegin(), 
            diag::err_ovl_no_viable_member_function_in_call)
-        << Ovl->getDeclName() << (unsigned)CandidateSet.size()
-        << MemExprE->getSourceRange();
+        << Ovl->getDeclName() << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       // FIXME: Leaking incoming expressions!
       return true;
@@ -3823,8 +3821,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   case OR_No_Viable_Function:
     Diag(Object->getSourceRange().getBegin(), 
          diag::err_ovl_no_viable_object_call)
-      << Object->getType() << (unsigned)CandidateSet.size()
-      << Object->getSourceRange();
+      << Object->getType() << Object->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     break;
 
@@ -3984,8 +3981,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
         << BasePtr->getType() << BasePtr->getSourceRange();
     else
       Diag(OpLoc, diag::err_ovl_no_viable_oper)
-        << "operator->" << (unsigned)CandidateSet.size()
-        << BasePtr->getSourceRange();
+        << "operator->" << BasePtr->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     return true;
 
