@@ -620,6 +620,7 @@ class OptionParser:
         self.idirafterOption = self.addOption(JoinedOrSeparateOption('-idirafter', self.iGroup))
         self.imacrosOption = self.addOption(JoinedOrSeparateOption('-imacros', self.iGroup))
         self.iprefixOption = self.addOption(JoinedOrSeparateOption('-iprefix', self.iGroup))
+        self.isystem = self.addOption(JoinedOrSeparateOption('-isystem', self.iGroup))
         self.iwithprefixOption = self.addOption(JoinedOrSeparateOption('-iwithprefix', self.iGroup))
         self.iwithprefixbeforeOption = self.addOption(JoinedOrSeparateOption('-iwithprefixbefore', self.iGroup))
         self.addOption(JoinedOrSeparateOption('-iquote', self.iGroup))
