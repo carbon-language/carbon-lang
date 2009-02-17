@@ -27,21 +27,20 @@ class Function;
 class PMStack;
 
 class LoopPass : public Pass {
-
- public:
+public:
   explicit LoopPass(intptr_t pid) : Pass(pid) {}
   explicit LoopPass(void *pid) : Pass(pid) {}
 
   // runOnLoop - This method should be implemented by the subclass to perform
   // whatever action is necessary for the specified Loop.
-  virtual bool runOnLoop (Loop *L, LPPassManager &LPM) = 0;
-  virtual bool runOnFunctionBody (Function &F, LPPassManager &LPM) { 
-    return false; 
+  virtual bool runOnLoop(Loop *L, LPPassManager &LPM) = 0;
+  virtual bool runOnFunctionBody(Function &F, LPPassManager &LPM) {
+    return false;
   }
 
   // Initialization and finalization hooks.
-  virtual bool doInitialization(Loop *L, LPPassManager &LPM) { 
-    return false; 
+  virtual bool doInitialization(Loop *L, LPPassManager &LPM) {
+    return false;
   }
 
   // Finalization hook does not supply Loop because at this time
@@ -82,7 +81,6 @@ class LoopPass : public Pass {
 };
 
 class LPPassManager : public FunctionPass, public PMDataManager {
-
 public:
   static char ID;
   explicit LPPassManager(int Depth);
@@ -92,13 +90,13 @@ public:
   bool runOnFunction(Function &F);
 
   /// Pass Manager itself does not invalidate any analysis info.
-  // LPPassManager needs LoopInfo. 
-  void getAnalysisUsage(AnalysisUsage &Info) const; 
-  
+  // LPPassManager needs LoopInfo.
+  void getAnalysisUsage(AnalysisUsage &Info) const;
+
   virtual const char *getPassName() const {
     return "Loop Pass Manager";
   }
-  
+
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
     llvm::cerr << std::string(Offset*2, ' ') << "Loop Pass Manager\n";
@@ -108,21 +106,21 @@ public:
       dumpLastUses(P, Offset+1);
     }
   }
-  
+
   Pass *getContainedPass(unsigned N) {
-    assert ( N < PassVector.size() && "Pass number out of range!");
+    assert(N < PassVector.size() && "Pass number out of range!");
     Pass *FP = static_cast<Pass *>(PassVector[N]);
     return FP;
   }
 
-  virtual PassManagerType getPassManagerType() const { 
-    return PMT_LoopPassManager; 
+  virtual PassManagerType getPassManagerType() const {
+    return PMT_LoopPassManager;
   }
 
 public:
   // Delete loop from the loop queue and loop nest (LoopInfo).
   void deleteLoopFromQueue(Loop *L);
-  
+
   // Insert loop into the loop nest(LoopInfo) and loop queue(LQ).
   void insertLoop(Loop *L, Loop *ParentLoop);
 
@@ -145,6 +143,7 @@ public:
   /// deleteSimpleAnalysisValue - Invoke deleteAnalysisValue hook for all passes
   /// that implement simple analysis interface.
   void deleteSimpleAnalysisValue(Value *V, Loop *L);
+
 private:
   std::deque<Loop *> LQ;
   bool skipThisLoop;
