@@ -142,11 +142,16 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
     }
   }
 
-  if (!registeredClaimFile || !registeredAllSymbolsRead || !registeredCleanup ||
-      !add_symbols || !get_symbols || !add_input_file) {
-    (*message)(LDPL_ERROR, "Not all hooks registered for LLVMgold.");
-    return LDPS_ERR;
-  }
+  if (!registeredClaimFile)
+    {
+      (*message)(LDPL_ERROR, "register_claim_file not passed to LLVMgold.");
+      return LDPS_ERR;
+    }
+  if (!add_symbols)
+    {
+      (*message)(LDPL_ERROR, "add_symbols not passed to LLVMgold.");
+      return LDPS_ERR;
+    }
 
   return LDPS_OK;
 }
