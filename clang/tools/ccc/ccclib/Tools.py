@@ -292,6 +292,19 @@ class Clang_CompileTool(Tool):
             
             # FIXME: Add --stack-protector-buffer-size=<xxx> on -fstack-protect.
 
+            arglist.addLastArg(cmd_args, arglist.parser.MDOption)
+            arglist.addLastArg(cmd_args, arglist.parser.MMDOption)
+            arglist.addAllArgs(cmd_args, arglist.parser.MFOption)
+            arglist.addLastArg(cmd_args, arglist.parser.MPOption)
+            arglist.addAllArgs(cmd_args, arglist.parser.MTOption)
+
+            unsupported = (arglist.getLastArg(arglist.parser.MOption) or
+                           arglist.getLastArg(arglist.parser.MMOption) or
+                           arglist.getLastArg(arglist.parser.MGOption) or
+                           arglist.getLastArg(arglist.parser.MQOption))
+            if unsupported:
+                raise NotImplementedError('clang support for "%s"' % unsupported.opt.name)
+
         arglist.addAllArgs(cmd_args, arglist.parser.vOption)
         arglist.addAllArgs2(cmd_args, arglist.parser.DOption, arglist.parser.UOption)
         arglist.addAllArgs2(cmd_args, arglist.parser.IGroup, arglist.parser.FOption)
