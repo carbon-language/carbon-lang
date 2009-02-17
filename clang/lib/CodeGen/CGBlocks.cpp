@@ -149,7 +149,8 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // __FuncPtr
     const char *Name = "";
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(CurFuncDecl))
-      Name = ND->getNameAsCString();
+      if (ND->getIdentifier())
+        Name = ND->getNameAsCString();
     BlockInfo Info(0, Name);
     llvm::Function *Fn = CodeGenFunction(*this).GenerateBlockFunction(BE, Info);
     Elts.push_back(Fn);
@@ -371,7 +372,7 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
 
   for (BlockDecl::param_iterator i = BD->param_begin(),
        e = BD->param_end(); i != e; ++i)
-    Args.push_back(std::make_pair(*e, (*e)->getType()));
+    Args.push_back(std::make_pair(*i, (*i)->getType()));
 
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(FTy->getResultType(), Args);
