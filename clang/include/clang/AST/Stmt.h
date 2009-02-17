@@ -244,13 +244,13 @@ public:
   const Decl* getSolitaryDecl() const {
     assert (hasSolitaryDecl() &&
             "Caller assumes this DeclStmt points to one Decl*");
-    return llvm::cast<Decl>(*DG.begin());
+    return *DG.begin();
   }
   
   Decl* getSolitaryDecl() {
     assert (hasSolitaryDecl() &&
             "Caller assumes this DeclStmt points to one Decl*");
-    return llvm::cast<Decl>(*DG.begin());
+    return *DG.begin();
   }  
 
   SourceLocation getStartLoc() const { return StartLoc; }
@@ -281,7 +281,7 @@ public:
       return R.I != I;
     }
     Decl* operator*() const {
-      return llvm::cast<Decl>(*I);
+      return *I;
     }
   };
     
@@ -297,7 +297,7 @@ public:
       return R.I != I;
     }
     Decl* operator*() const {
-      return llvm::cast<Decl>(*I);
+      return *I;
     }
   };
   

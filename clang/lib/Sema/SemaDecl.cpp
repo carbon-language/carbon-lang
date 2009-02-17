@@ -2552,11 +2552,10 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
 /// The declarators are chained together backwards, reverse the list.
 Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   // Often we have single declarators, handle them quickly.
-  Decl *GroupDecl = static_cast<Decl*>(group);
-  if (GroupDecl == 0)
+  Decl *Group = static_cast<Decl*>(group);
+  if (Group == 0)
     return 0;
   
-  Decl *Group = dyn_cast<Decl>(GroupDecl);
   Decl *NewGroup = 0;
   if (Group->getNextDeclarator() == 0) 
     NewGroup = Group;

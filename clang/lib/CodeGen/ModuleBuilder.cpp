@@ -68,12 +68,8 @@ namespace {
     
     virtual void HandleTopLevelDecl(Decl *D) {
       // Make sure to emit all elements of a Decl.
-      if (Decl *SD = dyn_cast<Decl>(D)) {
-        for (; SD; SD = SD->getNextDeclarator())
-          Builder->EmitTopLevelDecl(SD);
-      } else {
+      for (; D; D = D->getNextDeclarator())
         Builder->EmitTopLevelDecl(D);
-      }
     }
 
     /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
