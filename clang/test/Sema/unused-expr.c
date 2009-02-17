@@ -19,9 +19,8 @@ void bar(volatile int *VP, int *P, int A,
   P[4];                // expected-warning {{expression result unused}}
   VP[4];               // no warning.
 
-  // FIXME: SEMA explodes on these.
-  //__real__ C;
-  //__real__ VC;
+  __real__ C;          // expected-warning {{expression result unused}}
+  __real__ VC;
 }
 
 extern void t1();
