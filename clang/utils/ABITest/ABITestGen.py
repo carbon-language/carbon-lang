@@ -31,7 +31,9 @@ class TypePrinter:
         if self.writeBody:
             print >>self.output, '#include <stdio.h>\n'
             if self.outputTests:
-                print >>self.outputTests, '#include <stdio.h>\n'
+                print >>self.outputTests, '#include <stdio.h>'
+                print >>self.outputTests, '#include <string.h>'
+                print >>self.outputTests, '#include <assert.h>\n'
 
         if headerName:
             for f in (self.output,self.outputTests,self.outputDriver):
@@ -39,6 +41,7 @@ class TypePrinter:
                     print >>f, '#include "%s"\n'%(headerName,)
         
         if self.outputDriver:
+            print >>self.outputDriver, '#include <stdio.h>\n'
             print >>self.outputDriver, 'int main(int argc, char **argv) {'
             
     def finish(self):
@@ -50,6 +53,7 @@ class TypePrinter:
             print >>self.output, '}' 
 
         if self.outputDriver:
+            print >>self.outputDriver, '  printf("DONE\\n");'
             print >>self.outputDriver, '  return 0;'
             print >>self.outputDriver, '}'        
 
@@ -139,6 +143,7 @@ class TypePrinter:
                 print >>self.outputTests, '    %s = %s[i];'%(retvalName, retvalTests[0])
                 print >>self.outputTests, '    RV = %s(%s);'%(fnName, args)
                 self.printValueOfType('  %s_RV'%fnName, 'RV', FT.returnType, output=self.outputTests, indent=4)
+                self.checkTypeValues('RV', '%s[i]' % retvalTests[0], FT.returnType, output=self.outputTests, indent=4)
                 print >>self.outputTests, '  }'
             
             if tests:
@@ -267,6 +272,35 @@ class TypePrinter:
                     self.printValueOfType(prefix, '((%s*) &%s)[%d]'%(t.elementType,name,i), t.elementType, output=output,indent=indent)
                 else:
                     self.printValueOfType(prefix, '%s[%d]'%(name,i), t.elementType, output=output,indent=indent)                    
+        else:
+            raise NotImplementedError,'Cannot print value of type: "%s"'%(t,)
+
+    def checkTypeValues(self, nameLHS, nameRHS, t, output=None, indent=2):
+        prefix = 'foo'
+        if output is None:
+            output = self.output
+        if isinstance(t, BuiltinType):
+            print >>output, '%*sassert(%s == %s);' % (indent, '', nameLHS, nameRHS)
+        elif isinstance(t, RecordType):
+            for i,f in enumerate(t.fields):
+                self.checkTypeValues('%s.field%d'%(nameLHS,i), '%s.field%d'%(nameRHS,i), 
+                                     f, output=output, indent=indent)
+                if t.isUnion:
+                    break
+        elif isinstance(t, ComplexType):
+            self.checkTypeValues('(__real %s)'%nameLHS, '(__real %s)'%nameRHS, t.elementType, output=output,indent=indent)
+            self.checkTypeValues('(__imag %s)'%nameLHS, '(__imag %s)'%nameRHS, t.elementType, output=output,indent=indent)
+        elif isinstance(t, ArrayType):
+            for i in range(t.numElements):
+                # Access in this fashion as a hackish way to portably
+                # access vectors.
+                if t.isVector:
+                    self.checkTypeValues('((%s*) &%s)[%d]'%(t.elementType,nameLHS,i), 
+                                         '((%s*) &%s)[%d]'%(t.elementType,nameRHS,i), 
+                                         t.elementType, output=output,indent=indent)
+                else:
+                    self.checkTypeValues('%s[%d]'%(nameLHS,i), '%s[%d]'%(nameRHS,i), 
+                                         t.elementType, output=output,indent=indent)                    
         else:
             raise NotImplementedError,'Cannot print value of type: "%s"'%(t,)
 
