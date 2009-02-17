@@ -28,58 +28,6 @@ namespace clang {
 /// implements efficent decl lookup based on a declaration name.
 class IdentifierResolver {
 
-  /// LookupContext - A wrapper for DeclContext. DeclContext is only part of
-  /// Decls, LookupContext can be used with all decls (assumes
-  /// translation unit context for non Decls).
-  class LookupContext {
-    const DeclContext *Ctx;
-
-    /// TUCtx - Provides a common value for translation unit context for all
-    /// decls.
-    /// FIXME: When (if ?) all decls can point to their translation unit context
-    /// remove this hack.
-    static inline DeclContext *TUCtx() {
-      return reinterpret_cast<DeclContext*>(-1);
-    }
-
-    /// getContext - Returns translation unit context for non Decls and
-    /// for EnumConstantDecls returns the parent context of their EnumDecl.
-    static DeclContext *getContext(Decl *D);
-
-  public:
-    LookupContext(Decl *D) {
-      Ctx = getContext(D);
-    }
-    LookupContext(const DeclContext *DC) {
-      if (!DC || isa<TranslationUnitDecl>(DC))
-        Ctx = TUCtx();
-      else
-        Ctx = DC;
-    }
-
-    bool isTU() const {
-      return (Ctx == TUCtx());
-    }
-
-    /// getParent - Returns the parent context. This should not be called for
-    /// a translation unit context.
-    LookupContext getParent() const {
-      assert(!isTU() && "TU has no parent!");
-      return LookupContext(Ctx->getParent());
-    }
-
-    /// isEqOrContainedBy - Returns true of the given context is the same or a
-    /// parent of this one.
-    bool isEqOrContainedBy(const LookupContext &PC) const;
-
-    bool operator==(const LookupContext &RHS) const {
-      return Ctx == RHS.Ctx;
-    }
-    bool operator!=(const LookupContext &RHS) const {
-      return Ctx != RHS.Ctx;
-    }
-  };
-
   /// IdDeclInfo - Keeps track of information about decls associated
   /// to a particular declaration name. IdDeclInfos are lazily
   /// constructed and assigned to a declaration name the first time a

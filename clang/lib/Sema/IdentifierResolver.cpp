@@ -43,39 +43,6 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-// LookupContext Implementation
-//===----------------------------------------------------------------------===//
-
-/// getContext - Returns translation unit context for non Decls and
-/// for EnumConstantDecls returns the parent context of their EnumDecl.
-DeclContext *IdentifierResolver::LookupContext::getContext(Decl *D) {
-  DeclContext *Ctx = D->getDeclContext();
-
-  if (!Ctx) // FIXME: HACK! We shouldn't end up with a NULL context here.
-    return TUCtx();
-
-  Ctx = Ctx->getLookupContext();
-
-  if (isa<TranslationUnitDecl>(Ctx))
-    return TUCtx();
-
-  return Ctx;
-}
-
-/// isEqOrContainedBy - Returns true of the given context is the same or a
-/// parent of this one.
-bool IdentifierResolver::LookupContext::isEqOrContainedBy(
-                                                const LookupContext &PC) const {
-  if (PC.isTU()) return true;
-
-  for (LookupContext Next = *this; !Next.isTU();  Next = Next.getParent())
-    if (Next.Ctx == PC.Ctx) return true;
-
-  return false;
-}
-
-
-//===----------------------------------------------------------------------===//
 // IdDeclInfo Implementation
 //===----------------------------------------------------------------------===//
 
@@ -155,7 +122,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
     return false;
   }
 
-  return LookupContext(D) == LookupContext(Ctx->getPrimaryContext());
+  return D->getDeclContext()->getLookupContext() == Ctx->getPrimaryContext();
 }
 
 /// AddDecl - Link the decl to its shadowed decl chain.
