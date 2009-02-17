@@ -103,8 +103,6 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
                                              const DiagnosticInfo &Info) {
-  unsigned ColNo = 0;
-  
   // If the location is specified, print out a file/line/col and include trace
   // if enabled.
   if (Info.getLocation().isValid()) {
@@ -120,11 +118,11 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     }
   
     // Compute the column number.
-    ColNo = PLoc.getColumn();
     if (ShowLocation) {
       OS << PLoc.getFilename() << ':' << LineNo << ':';
-      if (ColNo && ShowColumn) 
-        OS << ColNo << ':';
+      if (ShowColumn)
+        if (unsigned ColNo = PLoc.getColumn())
+          OS << ColNo << ':';
       OS << ' ';
     }
   }
@@ -155,6 +153,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     // about presumed locations anymore.
     FullSourceLoc ILoc = Info.getLocation().getInstantiationLoc();
 
+    unsigned ColNo = ILoc.getInstantiationColumnNumber();
+    
     // Rewind from the current position to the start of the line.
     const char *TokInstantiationPtr = ILoc.getCharacterData();
     const char *LineStart = TokInstantiationPtr-ColNo+1; // Column # is 1-based.
