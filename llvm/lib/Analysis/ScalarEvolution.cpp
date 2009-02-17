@@ -1453,6 +1453,11 @@ namespace {
     /// an analyzable loop-invariant iteration count.
     bool hasLoopInvariantIterationCount(const Loop *L);
 
+    /// forgetLoopIterationCount - This method should be called by the
+    /// client when it has changed a loop in a way that may effect
+    /// ScalarEvolution's ability to compute a trip count.
+    void forgetLoopIterationCount(const Loop *L);
+
     /// getIterationCount - If the specified loop has a predictable iteration
     /// count, return it.  Note that it is not valid to call this method on a
     /// loop without a loop-invariant iteration count.
@@ -1929,6 +1934,13 @@ SCEVHandle ScalarEvolutionsImpl::getIterationCount(const Loop *L) {
     }
   }
   return I->second;
+}
+
+/// forgetLoopIterationCount - This method should be called by the
+/// client when it has changed a loop in a way that may effect
+/// ScalarEvolution's ability to compute a trip count.
+void ScalarEvolutionsImpl::forgetLoopIterationCount(const Loop *L) {
+  IterationCounts.erase(L);
 }
 
 /// ComputeIterationCount - Compute the number of times the specified loop
@@ -3089,6 +3101,10 @@ SCEVHandle ScalarEvolution::getIterationCount(const Loop *L) const {
 
 bool ScalarEvolution::hasLoopInvariantIterationCount(const Loop *L) const {
   return !isa<SCEVCouldNotCompute>(getIterationCount(L));
+}
+
+void ScalarEvolution::forgetLoopIterationCount(const Loop *L) {
+  return ((ScalarEvolutionsImpl*)Impl)->forgetLoopIterationCount(L);
 }
 
 SCEVHandle ScalarEvolution::getSCEVAtScope(Value *V, const Loop *L) const {

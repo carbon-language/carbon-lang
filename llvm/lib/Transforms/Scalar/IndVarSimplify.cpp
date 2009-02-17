@@ -74,8 +74,8 @@ namespace {
    static char ID; // Pass identification, replacement for typeid
    IndVarSimplify() : LoopPass(&ID) {}
 
-   bool runOnLoop(Loop *L, LPPassManager &LPM);
-   bool doInitialization(Loop *L, LPPassManager &LPM);
+   virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
+
    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
      AU.addRequired<ScalarEvolution>();
      AU.addRequiredID(LCSSAID);
@@ -87,6 +87,8 @@ namespace {
    }
 
   private:
+
+    void RewriteNonIntegerIVs(Loop *L);
 
     void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
                                     SmallPtrSet<Instruction*, 16> &DeadInsts);
@@ -411,16 +413,13 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
   DeleteTriviallyDeadInstructions(InstructionsToDelete);
 }
 
-bool IndVarSimplify::doInitialization(Loop *L, LPPassManager &LPM) {
-
-  Changed = false;
+void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
   // First step.  Check to see if there are any trivial GEP pointer recurrences.
   // If there are, change them into integer recurrences, permitting analysis by
   // the SCEV routines.
   //
   BasicBlock *Header    = L->getHeader();
   BasicBlock *Preheader = L->getLoopPreheader();
-  SE = &LPM.getAnalysis<ScalarEvolution>();
 
   SmallPtrSet<Instruction*, 16> DeadInsts;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
@@ -431,10 +430,14 @@ bool IndVarSimplify::doInitialization(Loop *L, LPPassManager &LPM) {
       HandleFloatingPointIV(L, PN, DeadInsts);
   }
 
+  // If the loop previously had a pointer or floating-point IV, ScalarEvolution
+  // may not have been able to compute a trip count. Now that we've done some
+  // re-writing, the trip count may be computable.
+  if (Changed)
+    SE->forgetLoopIterationCount(L);
+
   if (!DeadInsts.empty())
     DeleteTriviallyDeadInstructions(DeadInsts);
-
-  return Changed;
 }
 
 /// getEffectiveIndvarType - Determine the widest type that the
@@ -594,8 +597,12 @@ static void TestOrigIVForWrap(const Loop *L,
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
-
   Changed = false;
+
+  // If there are any floating-point or pointer recurrences, attempt to
+  // transform them to use integer recurrences.
+  RewriteNonIntegerIVs(L);
+
   BasicBlock *Header       = L->getHeader();
   BasicBlock *ExitingBlock = L->getExitingBlock();
   SmallPtrSet<Instruction*, 16> DeadInsts;

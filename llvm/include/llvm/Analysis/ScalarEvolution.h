@@ -301,6 +301,11 @@ namespace llvm {
     /// an analyzable loop-invariant iteration count.
     bool hasLoopInvariantIterationCount(const Loop *L) const;
 
+    /// forgetLoopIterationCount - This method should be called by the
+    /// client when it has changed a loop in a way that may effect
+    /// ScalarEvolution's ability to compute a trip count.
+    void forgetLoopIterationCount(const Loop *L);
+
     /// deleteValueFromRecords - This method should be called by the
     /// client before it removes a Value from the program, to make sure
     /// that no dangling references are left around.
