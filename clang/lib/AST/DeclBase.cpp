@@ -268,14 +268,6 @@ bool DeclContext::classof(const Decl *D) {
   }
 }
 
-const DeclContext *DeclContext::getParent() const {
-  return cast<Decl>(this)->getDeclContext();
-}
-
-const DeclContext *DeclContext::getLexicalParent() const {
-  return cast<Decl>(this)->getLexicalDeclContext();
-}
-
 // FIXME: We really want to use a DenseSet here to eliminate the
 // redundant storage of the declaration names, but (1) it doesn't give
 // us the ability to search based on DeclarationName, (2) we really

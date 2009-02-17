@@ -391,9 +391,10 @@ public:
   }
   const char *getDeclKindName() const;
 
-  /// getParent - Returns the containing DeclContext if this is a Decl,
-  /// else returns NULL.
-  const DeclContext *getParent() const;
+  /// getParent - Returns the containing DeclContext.
+  const DeclContext *getParent() const {
+    return cast<Decl>(this)->getDeclContext();
+  }
   DeclContext *getParent() {
     return const_cast<DeclContext*>(
                              const_cast<const DeclContext*>(this)->getParent());
@@ -408,7 +409,9 @@ public:
   ///   struct A::S {}; // getParent() == namespace 'A'
   ///                   // getLexicalParent() == translation unit
   ///
-  const DeclContext *getLexicalParent() const;
+  const DeclContext *getLexicalParent() const {
+    return cast<Decl>(this)->getLexicalDeclContext();
+  }    
   DeclContext *getLexicalParent() {
     return const_cast<DeclContext*>(
                       const_cast<const DeclContext*>(this)->getLexicalParent());
