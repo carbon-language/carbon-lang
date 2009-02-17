@@ -200,6 +200,8 @@ const char *AttributeString(unsigned Attribute) {
     case DW_AT_hi_user:                    return "DW_AT_hi_user";
     case DW_AT_APPLE_optimized:            return "DW_AT_APPLE_optimized";
     case DW_AT_APPLE_flags:                return "DW_AT_APPLE_flags";
+    case DW_AT_APPLE_major_runtime_vers:   return "DW_AT_APPLE_major_runtime_vers";
+    case DW_AT_APPLE_runtime_class:        return "DW_AT_APPLE_runtime_class";
   }
   assert(0 && "Unknown Dwarf Attribute");
   return "";

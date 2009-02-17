@@ -1770,6 +1770,9 @@ private:
                                       DIDerivedType(Element.getGV()));
           Buffer.AddChild(ElemDie);
         }
+        unsigned RLang = CTy.getRunTimeLang();
+        if (RLang) 
+          AddUInt(&Buffer, DW_AT_APPLE_runtime_class, DW_FORM_data1, RLang);
       }
       break;
     default:
@@ -2800,6 +2803,9 @@ private:
       const std::string &Flags = DIUnit.getFlags();
       if (!Flags.empty())
         AddString(Die, DW_AT_APPLE_flags, DW_FORM_string, Flags);
+      unsigned RVer = DIUnit.getRunTimeVersion();
+      if (RVer)
+        AddUInt(Die, DW_AT_APPLE_major_runtime_vers, DW_FORM_data1, RVer);
 
       CompileUnit *Unit = new CompileUnit(ID, Die);
       if (DIUnit.isMain()) {
