@@ -355,8 +355,10 @@ void Diagnostic::ProcessDiag() {
   if (SuppressSystemWarnings && !ShouldEmitInSystemHeader &&
       Info.getLocation().isValid() &&
       Info.getLocation().getSpellingLoc().isInSystemHeader() &&
-      (DiagLevel != Diagnostic::Note || LastDiagLevel == Diagnostic::Ignored))
+      (DiagLevel != Diagnostic::Note || LastDiagLevel == Diagnostic::Ignored)) {
+    LastDiagLevel = Diagnostic::Ignored;
     return;
+  }
 
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
