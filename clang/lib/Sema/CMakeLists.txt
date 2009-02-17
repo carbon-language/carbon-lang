@@ -3,8 +3,9 @@ set(LLVM_NO_RTTI 1)
 add_clang_library(clangSema
   IdentifierResolver.cpp
   ParseAST.cpp
-  SemaChecking.cpp
   Sema.cpp
+  SemaAttr.cpp
+  SemaChecking.cpp
   SemaCXXScopeSpec.cpp
   SemaDeclAttr.cpp
   SemaDecl.cpp
