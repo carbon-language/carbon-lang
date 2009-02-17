@@ -654,21 +654,51 @@ Sema::ActOnClassTemplateSpecialization(DeclTy *TemplateD,
                                        SourceLocation RAngleLoc,
                                        const CXXScopeSpec *SS) {
   TemplateDecl *Template = cast<TemplateDecl>(static_cast<Decl *>(TemplateD));
+  ClassTemplateDecl *ClassTemplate = cast<ClassTemplateDecl>(Template);
 
   // Check that the template argument list is well-formed for this
   // template.
+  llvm::SmallVector<TemplateArgument, 16> ConvertedTemplateArgs;
   if (CheckTemplateArgumentList(Template, TemplateLoc, LAngleLoc, 
-                                TemplateArgs, TemplateArgLocs, RAngleLoc))
+                                TemplateArgs, TemplateArgLocs, RAngleLoc,
+                                ConvertedTemplateArgs))
     return 0;
 
-  // Yes, all class template specializations are just silly sugar for
-  // 'int'. Gotta problem wit dat?
+  assert((ConvertedTemplateArgs.size() == 
+            Template->getTemplateParameters()->size()) &&
+         "Converted template argument list is too short!");
+
+  // Find the class template specialization declaration that
+  // corresponds to these arguments.
+  llvm::FoldingSetNodeID ID;
+  ClassTemplateSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
+                                           ConvertedTemplateArgs.size());
+  void *InsertPos = 0;
+  ClassTemplateSpecializationDecl *Decl
+    = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+  if (!Decl) {
+    // This is the first time we have referenced this class template
+    // specialization. Create an appropriate declaration node and add
+    // it to the list of specializations. This is the canonical
+    // declaration of the class template.
+    Decl = ClassTemplateSpecializationDecl::Create(Context, 
+                                           ClassTemplate->getDeclContext(),
+                                                   TemplateLoc,
+                                                   ClassTemplate,
+                                                   &ConvertedTemplateArgs[0],
+                                           ConvertedTemplateArgs.size());
+    ClassTemplate->getSpecializations().InsertNode(Decl, InsertPos);
+  }
+
+  // Build the fully-sugared type for this class template
+  // specialization, which refers back to the class template
+  // specialization we created or found.
   QualType Result
     = Context.getClassTemplateSpecializationType(Template, 
                                                  TemplateArgs.size(),
                     reinterpret_cast<uintptr_t *>(TemplateArgs.getArgs()), 
                                                  TemplateArgs.getArgIsType(),
-                                                 Context.IntTy);
+                                               Context.getTypeDeclType(Decl));
   TemplateArgs.release();
   return Result.getAsOpaquePtr();
 }
@@ -680,7 +710,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                      SourceLocation LAngleLoc,
                                      ASTTemplateArgsPtr& Args,
                                      SourceLocation *TemplateArgLocs,
-                                     SourceLocation RAngleLoc) {
+                                     SourceLocation RAngleLoc,
+                          llvm::SmallVectorImpl<TemplateArgument> &Converted) {
   TemplateParameterList *Params = Template->getTemplateParameters();
   unsigned NumParams = Params->size();
   unsigned NumArgs = Args.size();
@@ -719,22 +750,51 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     Expr *ArgExpr = 0;
     SourceLocation ArgLoc;
     if (ArgIdx >= NumArgs) {
-      // FIXME: Get the default argument here, which might
-      // (eventually) require instantiation.
-      break;
-    } else
+      // Retrieve the default template argument from the template
+      // parameter.
+      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
+        if (!TTP->hasDefaultArgument())
+          break;
+
+        ArgType = TTP->getDefaultArgument();
+        ArgLoc = TTP->getDefaultArgumentLoc();
+      } else if (NonTypeTemplateParmDecl *NTTP 
+                   = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
+        if (!NTTP->hasDefaultArgument())
+          break;
+
+        ArgExpr = NTTP->getDefaultArgument();
+        ArgLoc = NTTP->getDefaultArgumentLoc();
+      } else {
+        TemplateTemplateParmDecl *TempParm 
+          = cast<TemplateTemplateParmDecl>(*Param);      
+
+        if (!TempParm->hasDefaultArgument())
+          break;
+
+        ArgExpr = TempParm->getDefaultArgument();
+        ArgLoc = TempParm->getDefaultArgumentLoc();
+      }
+    } else {
+      // Retrieve the template argument produced by the user.
       ArgLoc = TemplateArgLocs[ArgIdx];
 
-    if (Args.getArgIsType()[ArgIdx])
-      ArgType = QualType::getFromOpaquePtr(Args.getArgs()[ArgIdx]);
-    else
-      ArgExpr = reinterpret_cast<Expr *>(Args.getArgs()[ArgIdx]);
+      if (Args.getArgIsType()[ArgIdx])
+        ArgType = QualType::getFromOpaquePtr(Args.getArgs()[ArgIdx]);
+      else
+        ArgExpr = reinterpret_cast<Expr *>(Args.getArgs()[ArgIdx]);
+    }
+
 
     if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
       // Check template type parameters.
       if (!ArgType.isNull()) {
         if (CheckTemplateArgument(TTP, ArgType, ArgLoc))
           Invalid = true;
+
+        // Add the converted template type argument.
+        Converted.push_back(
+                      TemplateArgument(Context.getCanonicalType(ArgType)));
         continue;
       }
 
@@ -752,7 +812,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                  = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       // Check non-type template parameters.
       if (ArgExpr) {
-        if (CheckTemplateArgument(NTTP, ArgExpr))
+        if (CheckTemplateArgument(NTTP, ArgExpr, &Converted))
           Invalid = true;
         continue;
       }
@@ -783,6 +843,11 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
           isa<TemplateDecl>(cast<DeclRefExpr>(ArgExpr)->getDecl())) {
         if (CheckTemplateArgument(TempParm, cast<DeclRefExpr>(ArgExpr)))
           Invalid = true;
+
+        // Add the converted template argument.
+        // FIXME: Need the "canonical" template declaration!
+        Converted.push_back(
+                   TemplateArgument(cast<DeclRefExpr>(ArgExpr)->getDecl()));
         continue;
       }
 
@@ -828,7 +893,8 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
 
 /// \brief Checks whether the given template argument is the address
 /// of an object or function according to C++ [temp.arg.nontype]p1.
-bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg) {
+bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
+                                                          NamedDecl *&Entity) {
   bool Invalid = false;
 
   // See through any implicit casts we added to fix the type.
@@ -895,6 +961,7 @@ bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg) {
     }
 
     // Okay: we've named a function with external linkage.
+    Entity = Func;
     return Invalid;
   }
 
@@ -909,6 +976,7 @@ bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg) {
     }
 
     // Okay: we've named an object with external linkage
+    Entity = Var;
     return Invalid;
   }
   
@@ -923,7 +991,8 @@ bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg) {
 
 /// \brief Checks whether the given template argument is a pointer to
 /// member constant according to C++ [temp.arg.nontype]p1.
-bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg) {
+bool 
+Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
   bool Invalid = false;
 
   // See through any implicit casts we added to fix the type.
@@ -966,6 +1035,7 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg) {
 
     // Okay: this is the address of a non-static member, and therefore
     // a member pointer constant.
+    Member = DRE->getDecl();
     return Invalid;
   }
 
@@ -983,10 +1053,15 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg) {
 ///
 /// This routine implements the semantics of C++ [temp.arg.nontype]. 
 /// It returns true if an error occurred, and false otherwise.
+///
+/// If Converted is non-NULL and no errors occur, the value
+/// of this argument will be added to the end of the Converted vector.
 bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
-                                 Expr *&Arg) {
+                                 Expr *&Arg, 
+                         llvm::SmallVectorImpl<TemplateArgument> *Converted) {
   // If either the parameter has a dependent type or the argument is
   // type-dependent, there's nothing we can check now.
+  // FIXME: Add template argument to Converted!
   if (Param->getType()->isDependentType() || Arg->isTypeDependent())
     return false;
 
@@ -1011,6 +1086,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //        type; or
     //     -- the name of a non-type template-parameter; or
     SourceLocation NonConstantLoc;
+    llvm::APSInt Value;
     if (!ArgType->isIntegralType() && !ArgType->isEnumeralType()) {
       Diag(Arg->getSourceRange().getBegin(), 
            diag::err_template_arg_not_integral_or_enumeral)
@@ -1018,7 +1094,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       Diag(Param->getLocation(), diag::note_template_param_here);
       return true;
     } else if (!Arg->isValueDependent() &&
-               !Arg->isIntegerConstantExpr(Context, &NonConstantLoc)) {
+               !Arg->isIntegerConstantExpr(Value, Context, &NonConstantLoc)) {
       Diag(NonConstantLoc, diag::err_template_arg_not_ice)
         << ArgType << Arg->getSourceRange();
       return true;
@@ -1046,6 +1122,23 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
         << Arg->getType() << Param->getType() << Arg->getSourceRange();
       Diag(Param->getLocation(), diag::note_template_param_here);
       return true;
+    }
+
+    // FIXME: Check overflow of template arguments?
+
+    if (Converted) {
+      // Add the value of this argument to the list of converted
+      // arguments. We use the bitwidth and signedness of the template
+      // parameter.
+      QualType IntegerType = Context.getCanonicalType(ParamType);
+      if (const EnumType *Enum = IntegerType->getAsEnumType())
+        IntegerType = Enum->getDecl()->getIntegerType();
+      
+      llvm::APInt CanonicalArg(Context.getTypeSize(IntegerType), 0, 
+                               IntegerType->isSignedIntegerType());
+      CanonicalArg = Value;
+
+      Converted->push_back(TemplateArgument(CanonicalArg));
     }
 
     return false;
@@ -1100,10 +1193,24 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
     }
     
-    if (ParamType->isMemberPointerType())
-      return CheckTemplateArgumentPointerToMember(Arg);
+    if (ParamType->isMemberPointerType()) {
+      NamedDecl *Member = 0;
+      if (CheckTemplateArgumentPointerToMember(Arg, Member))
+        return true;
+
+      if (Converted)
+        Converted->push_back(TemplateArgument(Member));
+
+      return false;
+    }
     
-    return CheckTemplateArgumentAddressOfObjectOrFunction(Arg);
+    NamedDecl *Entity = 0;
+    if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
+      return true;
+
+    if (Converted)
+      Converted->push_back(TemplateArgument(Entity));
+    return false;
   }
 
   if (const PointerType *ParamPtrType = ParamType->getAsPointerType()) {
@@ -1132,7 +1239,14 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
     }
     
-    return CheckTemplateArgumentAddressOfObjectOrFunction(Arg);
+    NamedDecl *Entity = 0;
+    if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
+      return true;
+
+    if (Converted)
+      Converted->push_back(TemplateArgument(Entity));
+
+    return false;
   }
     
   if (const ReferenceType *ParamRefType = ParamType->getAsReferenceType()) {
@@ -1167,7 +1281,14 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
     }
     
-    return CheckTemplateArgumentAddressOfObjectOrFunction(Arg);
+    NamedDecl *Entity = 0;
+    if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
+      return true;
+
+    if (Converted)
+      Converted->push_back(TemplateArgument(Entity));
+
+    return false;
   }
 
   //     -- For a non-type template-parameter of type pointer to data
@@ -1187,7 +1308,14 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return true;    
   }
 
-  return CheckTemplateArgumentPointerToMember(Arg);
+  NamedDecl *Member = 0;
+  if (CheckTemplateArgumentPointerToMember(Arg, Member))
+    return true;
+  
+  if (Converted)
+    Converted->push_back(TemplateArgument(Member));
+  
+  return false;
 }
 
 /// \brief Check a template argument against its corresponding

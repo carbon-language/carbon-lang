@@ -1502,6 +1502,8 @@ public:
 
     // Add the packed words describing what kind of template arguments
     // we have.
+    // FIXME: Would like to be smarter about the profile of expressions, 
+    // so that we can combine expression nodes more effectively.
     uintptr_t *Data = reinterpret_cast<uintptr_t *>(this + 1);
     for (unsigned Packed = 0, NumPacked = getNumPackedWords(NumArgs); 
          Packed != NumPacked; ++Packed)

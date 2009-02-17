@@ -61,6 +61,7 @@ namespace clang {
   class ExtVectorType;
   class TypedefDecl;
   class TemplateDecl;
+  class TemplateArgument;
   class TemplateParameterList;
   class TemplateTemplateParmDecl;
   class ObjCInterfaceDecl;
@@ -1554,13 +1555,16 @@ public:
                                  SourceLocation LAngleLoc,
                                  ASTTemplateArgsPtr& TemplateArgs,
                                  SourceLocation *TemplateArgLocs,
-                                 SourceLocation RAngleLoc);
+                                 SourceLocation RAngleLoc,
+                       llvm::SmallVectorImpl<TemplateArgument> &Converted);
 
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param, QualType Arg,
                              SourceLocation ArgLoc);
-  bool CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg);
-  bool CheckTemplateArgumentPointerToMember(Expr *Arg);
-  bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, Expr *&Arg);
+  bool CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg, 
+                                                      NamedDecl *&Entity);
+  bool CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member);
+  bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, Expr *&Arg,
+                       llvm::SmallVectorImpl<TemplateArgument> *Converted = 0);
   bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, DeclRefExpr *Arg);
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
                                       TemplateParameterList *Old,

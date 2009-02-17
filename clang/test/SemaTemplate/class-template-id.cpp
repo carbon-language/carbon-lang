@@ -1,17 +1,29 @@
 // RUN: clang -fsyntax-only -verify %s
-template<typename T> struct A { };
+template<typename T, typename U = float> struct A { };
 
 typedef A<int> A_int;
 
-float *foo(A<int> *ptr, A<int> const *ptr2) {
+typedef float FLOAT;
+
+A<int, FLOAT> *foo(A<int> *ptr, A<int> const *ptr2, A<int, double> *ptr3) {
   if (ptr)
-    return ptr; // expected-error{{incompatible type returning 'A<int> *', expected 'float *'}}
+    return ptr; // okay
   else if (ptr2)
-    return ptr2; // expected-error{{incompatible type returning 'A<int> const *', expected 'float *'}}
+    return ptr2; // expected-error{{incompatible type returning 'A<int> const *', expected 'A<int, FLOAT> *'}}
   else {
-    // FIXME: This is completely bogus, but we're using it temporarily
-    // to test the syntactic sugar for class template specializations.
-    int *ip = ptr;
-    return 0;
+    return ptr3; // expected-error{{incompatible type returning 'A<int, double> *', expected 'A<int, FLOAT> *'}}
   }
 }
+
+template<int I> struct B;
+
+const int value = 12;
+B<17 + 2> *bar(B<(19)> *ptr1, B< (::value + 7) > *ptr2, B<19 - 3> *ptr3) {
+  if (ptr1)
+    return ptr1;
+  else if (ptr2)
+    return ptr2;
+  else
+    return ptr3; // expected-error{{incompatible type returning 'B<19 - 3> *', expected 'B<17 + 2> *'}}
+}
+

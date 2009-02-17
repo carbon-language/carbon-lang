@@ -15,6 +15,8 @@
 #define LLVM_CLANG_AST_DECLTEMPLATE_H
 
 #include "clang/AST/DeclCXX.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/FoldingSet.h"
 
 namespace clang {
 
@@ -161,36 +163,9 @@ public:
   { return true; }
 };
 
-/// Declaration of a template class.
-class ClassTemplateDecl : public TemplateDecl {
-protected:
-  ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
-                    TemplateParameterList *Params, NamedDecl *Decl)
-    : TemplateDecl(ClassTemplate, DC, L, Name, Params, Decl) { }
-public:
-  /// Get the underlying class declarations of the template.
-  CXXRecordDecl *getTemplatedDecl() const {
-    return static_cast<CXXRecordDecl *>(TemplatedDecl);
-  }
-
-  /// Create a class teplate node.
-  static ClassTemplateDecl *Create(ASTContext &C, DeclContext *DC,
-                                   SourceLocation L,
-                                   DeclarationName Name,
-                                   TemplateParameterList *Params,
-                                   NamedDecl *Decl);
-
-  // Implement isa/cast/dyncast support
-  static bool classof(const Decl *D)
-  { return D->getKind() == ClassTemplate; }
-  static bool classof(const ClassTemplateDecl *D)
-  { return true; }
-};
-
 //===----------------------------------------------------------------------===//
 // Kinds of Template Parameters
 //===----------------------------------------------------------------------===//
-
 
 /// The TemplateParmPosition class defines the position of a template parameter
 /// within a template parameter list. Because template parameter can be listed
@@ -419,6 +394,236 @@ protected:
                                               ASTContext& C);
 
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// \brief Represents a template argument within a class template
+/// specialization.
+class TemplateArgument {
+  union {
+    uintptr_t TypeOrDeclaration;
+    char IntegralValue[sizeof(llvm::APInt)];
+  };
+
+public:
+  /// \brief The type of template argument we're storing.
+  enum ArgKind {
+    /// The template argument is a type. It's value is stored in the
+    /// TypeOrDeclaration field.
+    Type = 0,
+    /// The template argument is a declaration
+    Declaration = 1,
+    /// The template argument is an integral value stored in an llvm::APInt.
+    Integral = 2
+  } Kind;
+
+  /// \brief Construct a template type argument.
+  TemplateArgument(QualType T) : Kind(Type) {
+    assert(T->isCanonical() && 
+           "Template arguments always use the canonical type");
+    TypeOrDeclaration = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
+  }
+
+  /// \brief Construct a template argument that refers to a
+  /// declaration, which is either an external declaration or a
+  /// template declaration.
+  TemplateArgument(Decl *D) : Kind(Declaration) {
+    // FIXME: Need to be sure we have the "canonical" declaration!
+    TypeOrDeclaration = reinterpret_cast<uintptr_t>(D);
+  }
+
+  /// \brief Construct an integral constant template argument.
+  TemplateArgument(const llvm::APInt &Value) : Kind(Integral) {
+    new (IntegralValue) llvm::APInt(Value);
+  }
+
+  /// \brief Copy constructor for a template argument.
+  TemplateArgument(const TemplateArgument &Other) : Kind(Other.Kind) {
+    if (Kind == Integral)
+      new (IntegralValue) llvm::APInt(*Other.getAsIntegral());
+    else
+      TypeOrDeclaration = Other.TypeOrDeclaration;
+  }
+
+  TemplateArgument& operator=(const TemplateArgument& Other) {
+    using llvm::APInt;
+
+    if (Kind == Other.Kind && Kind == Integral) {
+      // Copy integral values.
+      *this->getAsIntegral() = *Other.getAsIntegral();
+    } else {
+      // Destroy the current integral value, if that's what we're holding.
+      if (Kind == Integral)
+        getAsIntegral()->~APInt();
+      
+      Kind = Other.Kind;
+      
+      if (Other.Kind == Integral)
+        new (IntegralValue) llvm::APInt(*Other.getAsIntegral());
+      else
+        TypeOrDeclaration = Other.TypeOrDeclaration;
+    }
+    return *this;
+  }
+
+  ~TemplateArgument() {
+    using llvm::APInt;
+
+    if (Kind == Integral)
+      getAsIntegral()->~APInt();
+  }
+
+  /// \brief Return the kind of stored template argument.
+  ArgKind getKind() const { return Kind; }
+
+  /// \brief Retrieve the template argument as a type.
+  QualType getAsType() const {
+    if (Kind != Type)
+      return QualType();
+
+    return QualType::getFromOpaquePtr(
+                                 reinterpret_cast<void*>(TypeOrDeclaration));
+  }
+
+  /// \brief Retrieve the template argument as a declaration.
+  Decl *getAsDecl() const {
+    if (Kind != Declaration)
+      return 0;
+    return reinterpret_cast<Decl *>(TypeOrDeclaration);
+  }
+
+  /// \brief Retrieve the template argument as an integral value.
+  llvm::APInt *getAsIntegral() {
+    if (Kind != Integral)
+      return 0;
+    return reinterpret_cast<llvm::APInt*>(&IntegralValue[0]);
+  }
+
+  const llvm::APInt *getAsIntegral() const {
+    return const_cast<TemplateArgument*>(this)->getAsIntegral();
+  }
+
+  /// \brief Used to insert TemplateArguments into FoldingSets.
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddInteger(Kind);
+    switch (Kind) {
+    case Type:
+      getAsType().Profile(ID);
+      break;
+
+    case Declaration:
+      ID.AddPointer(getAsDecl()); // FIXME: Must be canonical!
+      break;
+
+    case Integral:
+      getAsIntegral()->Profile(ID);
+      break;
+    }
+  }
+};
+
+/// \brief Represents a class template specialization, which refers to
+/// a class template with a given set of template arguments.
+///
+/// Class template specializations represent both explicit
+/// specialization of class templates, as in the example below, and
+/// implicit instantiations of class templates.
+///
+/// \code
+/// template<typename T> class array;
+/// 
+/// template<> 
+/// class array<bool> { }; // class template specialization array<bool>
+/// \endcode
+class ClassTemplateSpecializationDecl 
+  : public CXXRecordDecl, public llvm::FoldingSetNode {
+  /// \brief The template that this specialization specializes
+  ClassTemplateDecl *SpecializedTemplate;
+
+  /// \brief The number of template arguments. The actual arguments
+  /// are allocated after the ClassTemplateSpecializationDecl object.
+  unsigned NumTemplateArgs;
+  
+  ClassTemplateSpecializationDecl(DeclContext *DC, SourceLocation L,
+                                  ClassTemplateDecl *SpecializedTemplate,
+                                  TemplateArgument *TemplateArgs, 
+                                  unsigned NumTemplateArgs);
+                                  
+public:
+  static ClassTemplateSpecializationDecl *
+  Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
+         ClassTemplateDecl *SpecializedTemplate,
+         TemplateArgument *TemplateArgs, unsigned NumTemplateArgs);
+
+  /// \brief Retrieve the template that this specialization specializes.
+  ClassTemplateDecl *getSpecializedTemplate() const { 
+    return SpecializedTemplate; 
+  }
+
+  typedef const TemplateArgument * template_arg_iterator;
+  template_arg_iterator template_arg_begin() const {
+    return reinterpret_cast<template_arg_iterator>(this + 1);
+  }
+
+  template_arg_iterator template_arg_end() const {
+    return template_arg_begin() + NumTemplateArgs;
+  }
+
+  unsigned getNumTemplateArgs() const { return NumTemplateArgs; }
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    Profile(ID, template_arg_begin(), getNumTemplateArgs());
+  }
+
+  static void 
+  Profile(llvm::FoldingSetNodeID &ID, const TemplateArgument *TemplateArgs, 
+          unsigned NumTemplateArgs) {
+    for (unsigned Arg = 0; Arg != NumTemplateArgs; ++Arg)
+      TemplateArgs[Arg].Profile(ID);
+  }
+
+  static bool classof(const Decl *D) { 
+    return D->getKind() == ClassTemplateSpecialization;
+  }
+
+  static bool classof(const ClassTemplateSpecializationDecl *) {
+    return true;
+  }
+};
+
+/// Declaration of a class template.
+class ClassTemplateDecl : public TemplateDecl {
+protected:
+  ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
+                    TemplateParameterList *Params, NamedDecl *Decl)
+    : TemplateDecl(ClassTemplate, DC, L, Name, Params, Decl) { }
+
+  /// \brief The class template specializations for this class
+  /// template, including explicit specializations and instantiations.
+  llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
+
+public:
+  /// Get the underlying class declarations of the template.
+  CXXRecordDecl *getTemplatedDecl() const {
+    return static_cast<CXXRecordDecl *>(TemplatedDecl);
+  }
+
+  /// Create a class teplate node.
+  static ClassTemplateDecl *Create(ASTContext &C, DeclContext *DC,
+                                   SourceLocation L,
+                                   DeclarationName Name,
+                                   TemplateParameterList *Params,
+                                   NamedDecl *Decl);
+
+  /// \brief Retrieve the set of specializations of this class template.
+  llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations() {
+    return Specializations;
+  }
+
+  // Implement isa/cast/dyncast support
+  static bool classof(const Decl *D)
+  { return D->getKind() == ClassTemplate; }
+  static bool classof(const ClassTemplateDecl *D)
+  { return true; }
 };
 
 } /* end of namespace clang */

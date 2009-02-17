@@ -21,9 +21,9 @@ using namespace clang;
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
 
-CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,
+CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id) 
-  : RecordDecl(CXXRecord, TK, DC, L, Id),
+  : RecordDecl(K, TK, DC, L, Id),
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Polymorphic(false), Bases(0),
@@ -32,7 +32,7 @@ CXXRecordDecl::CXXRecordDecl(TagKind TK, DeclContext *DC,
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
                                      CXXRecordDecl* PrevDecl) {
-  CXXRecordDecl* R = new (C) CXXRecordDecl(TK, DC, L, Id);
+  CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TK, DC, L, Id);
   C.getTypeDeclType(R, PrevDecl);  
   return R;
 }

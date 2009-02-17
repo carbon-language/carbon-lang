@@ -23,6 +23,7 @@ class CXXConstructorDecl;
 class CXXDestructorDecl;
 class CXXConversionDecl;
 class CXXMethodDecl;
+class ClassTemplateSpecializationDecl;
 
 /// OverloadedFunctionDecl - An instance of this class represents a
 /// set of overloaded functions. All of the functions have the same
@@ -231,7 +232,8 @@ class CXXRecordDecl : public RecordDecl {
   /// CXXConversionDecl.
   OverloadedFunctionDecl Conversions;
 
-  CXXRecordDecl(TagKind TK, DeclContext *DC,
+protected:
+  CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id);
 
   ~CXXRecordDecl();
@@ -355,8 +357,14 @@ public:
   /// GraphViz.
   void viewInheritance(ASTContext& Context) const;
 
-  static bool classof(const Decl *D) { return D->getKind() == CXXRecord; }
+  static bool classof(const Decl *D) { 
+    return D->getKind() == CXXRecord || 
+           D->getKind() == ClassTemplateSpecialization; 
+  }
   static bool classof(const CXXRecordDecl *D) { return true; }
+  static bool classof(const ClassTemplateSpecializationDecl *D) { 
+    return true; 
+  }
 
 protected:
   /// EmitImpl - Serialize this CXXRecordDecl.  Called by Decl::Emit.

@@ -143,3 +143,39 @@ SourceLocation TemplateTemplateParmDecl::getDefaultArgumentLoc() const {
   return DefaultArgument? DefaultArgument->getSourceRange().getBegin()
                         : SourceLocation(); 
 }
+
+//===----------------------------------------------------------------------===//
+// ClassTemplateSpecializationDecl Implementation
+//===----------------------------------------------------------------------===//
+ClassTemplateSpecializationDecl::
+ClassTemplateSpecializationDecl(DeclContext *DC, SourceLocation L,
+                                ClassTemplateDecl *SpecializedTemplate,
+                                TemplateArgument *TemplateArgs, 
+                                unsigned NumTemplateArgs)
+  : CXXRecordDecl(ClassTemplateSpecialization, 
+                  SpecializedTemplate->getTemplatedDecl()->getTagKind(), 
+                  DC, L,
+                  // FIXME: Should we use DeclarationName for the name of
+                  // class template specializations?
+                  SpecializedTemplate->getIdentifier()),
+    SpecializedTemplate(SpecializedTemplate),
+    NumTemplateArgs(NumTemplateArgs) {
+  TemplateArgument *Arg = reinterpret_cast<TemplateArgument *>(this + 1);
+  for (unsigned ArgIdx = 0; ArgIdx < NumTemplateArgs; ++ArgIdx, ++Arg)
+    *Arg = TemplateArgs[ArgIdx];
+}
+                  
+ClassTemplateSpecializationDecl *
+ClassTemplateSpecializationDecl::Create(ASTContext &Context, 
+                                        DeclContext *DC, SourceLocation L,
+                                        ClassTemplateDecl *SpecializedTemplate,
+                                        TemplateArgument *TemplateArgs, 
+                                        unsigned NumTemplateArgs) {
+  unsigned Size = sizeof(ClassTemplateSpecializationDecl) + 
+                  sizeof(TemplateArgument) * NumTemplateArgs;
+  unsigned Align = llvm::AlignOf<ClassTemplateSpecializationDecl>::Alignment;
+  void *Mem = Context.Allocate(Size, Align);
+  return new (Mem) ClassTemplateSpecializationDecl(DC, L, SpecializedTemplate,
+                                                   TemplateArgs, 
+                                                   NumTemplateArgs);
+}
