@@ -147,7 +147,7 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     Elts.push_back(C);
 
     // __FuncPtr
-    const char *Name;
+    const char *Name = "";
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(CurFuncDecl))
       Name = ND->getNameAsCString();
     BlockInfo Info(0, Name);
