@@ -269,17 +269,11 @@ bool DeclContext::classof(const Decl *D) {
 }
 
 const DeclContext *DeclContext::getParent() const {
-  if (const Decl *D = dyn_cast<Decl>(this))
-    return D->getDeclContext();
-
-  return NULL;
+  return cast<Decl>(this)->getDeclContext();
 }
 
 const DeclContext *DeclContext::getLexicalParent() const {
-  if (const Decl *D = dyn_cast<Decl>(this))
-    return D->getLexicalDeclContext();
-
-  return getParent();
+  return cast<Decl>(this)->getLexicalDeclContext();
 }
 
 // FIXME: We really want to use a DenseSet here to eliminate the
