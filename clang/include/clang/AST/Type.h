@@ -29,6 +29,7 @@ using llvm::dyn_cast_or_null;
 namespace clang {
   class ASTContext;
   class Type;
+  class ObjCGCAttr;
   class TypedefDecl;
   class TemplateDecl;
   class TemplateTypeParmDecl;
@@ -460,29 +461,55 @@ protected:
 /// __strong attributes.
 ///
 class ExtQualType : public Type, public llvm::FoldingSetNode {
+public:
+  enum EQT {
+    EXTNONE = 0x0,
+    ASQUAL  = 0x01,
+    GCQUAL  = 0x10
+  };
+private:
   /// BaseType - This is the underlying type that this qualifies.  All CVR
   /// qualifiers are stored on the QualType that references this type, so we
   /// can't have any here.
   Type *BaseType;
+  unsigned ExtQualTypeKind : 2;
+
   /// Address Space ID - The address space ID this type is qualified with.
   unsigned AddressSpace;
-  ExtQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace) :
-    Type(ExtQual, CanonicalPtr, Base->isDependentType()), BaseType(Base), 
-    AddressSpace(AddrSpace) {
+  /// GC __weak/__strong attributes
+  ObjCGCAttr *GCAttr;
+  
+  ExtQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace,
+              ObjCGCAttr *gcAttr,
+              unsigned ExtKind) :
+    Type(ExtQual, CanonicalPtr, Base->isDependentType()), BaseType(Base),
+    ExtQualTypeKind(ExtKind), AddressSpace(0), GCAttr(0) {
+      if (ExtKind & ASQUAL)
+        AddressSpace = AddrSpace;
+      if (ExtKind & GCQUAL)
+        GCAttr = gcAttr;
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
   Type *getBaseType() const { return BaseType; }
-  unsigned getAddressSpace() const { return AddressSpace; }
+  ObjCGCAttr *getGCAttr() const {
+    assert((ExtQualTypeKind & GCQUAL) && "Bad ExtQualType Kind - not GCQUAL");
+    return GCAttr; 
+  }
+  unsigned getAddressSpace() const {
+    assert((ExtQualTypeKind & ASQUAL) && "Bad ExtQualType Kind - not ASQUAL");
+    return AddressSpace; 
+  }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getBaseType(), AddressSpace);
+    Profile(ID, getBaseType(), AddressSpace, GCAttr);
   }
   static void Profile(llvm::FoldingSetNodeID &ID, Type *Base, 
-                      unsigned AddrSpace) {
+                      unsigned AddrSpace, ObjCGCAttr *gcAttr) {
     ID.AddPointer(Base);
+    ID.AddPointer(gcAttr);
     ID.AddInteger(AddrSpace);
   }
   

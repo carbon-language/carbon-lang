@@ -725,7 +725,7 @@ QualType ASTContext::getAddrSpaceQualType(QualType T, unsigned AddressSpace) {
   // Check if we've already instantiated an address space qual'd type of this
   // type.
   llvm::FoldingSetNodeID ID;
-  ExtQualType::Profile(ID, T.getTypePtr(), AddressSpace);      
+  ExtQualType::Profile(ID, T.getTypePtr(), AddressSpace, 0);      
   void *InsertPos = 0;
   if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(EXTQy, 0);
@@ -741,7 +741,8 @@ QualType ASTContext::getAddrSpaceQualType(QualType T, unsigned AddressSpace) {
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   ExtQualType *New = new (*this, 8) ExtQualType(T.getTypePtr(), Canonical, 
-                                                AddressSpace);
+                                                AddressSpace, 0, 
+                                                ExtQualType::ASQUAL);
   ExtQualTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, T.getCVRQualifiers());
