@@ -287,10 +287,10 @@ static void HandleIBOutletAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   
   // The IBOutlet attribute only applies to instance variables of Objective-C
   // classes.
-  if (ObjCIvarDecl *ID = dyn_cast<ObjCIvarDecl>(d))
-    ID->addAttr(new IBOutletAttr());
+  if (isa<ObjCIvarDecl>(d) || isa<ObjCPropertyDecl>(d))
+    d->addAttr(new IBOutletAttr());
   else
-    S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet_non_ivar);
+    S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet);
 }
 
 static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {

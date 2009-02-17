@@ -410,8 +410,8 @@ DIAG(err_attribute_cleanup_func_arg_incompatible_type, ERROR,
     "'cleanup' function %0 parameter has type %1, expected type %2")
     
 // Clang-Specific Attributes
-DIAG(err_attribute_iboutlet_non_ivar, ERROR,
-     "'iboutlet' attribute can only be applied to instance variables")
+DIAG(err_attribute_iboutlet, ERROR,
+     "'iboutlet' attribute can only be applied to instance variables or properties")
 DIAG(err_attribute_overloadable_not_function, ERROR,
      "'overloadable' attribute can only be applied to a function")
 DIAG(err_attribute_overloadable_missing, ERROR,
