@@ -705,8 +705,9 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // variable.
   while (!IndVars.empty()) {
     PHINode *PN = IndVars.back().first;
-    Value *NewVal = Rewriter.expandCodeFor(IndVars.back().second, InsertPt);
-    DOUT << "INDVARS: Rewrote IV '" << *IndVars.back().second << "' " << *PN
+    SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(IndVars.back().second);
+    Value *NewVal = Rewriter.expandCodeFor(AR, InsertPt);
+    DOUT << "INDVARS: Rewrote IV '" << *AR << "' " << *PN
          << "   into = " << *NewVal << "\n";
     NewVal->takeName(PN);
 
@@ -718,9 +719,9 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
            UI != UE; ++UI) {
         if (isa<SExtInst>(UI) && NoSignedWrap) {
           SCEVHandle ExtendedStart =
-            SE->getSignExtendExpr(cast<SCEVAddRecExpr>(IndVars.back().second)->getStart(), LargestType);
+            SE->getSignExtendExpr(AR->getStart(), LargestType);
           SCEVHandle ExtendedStep =
-            SE->getSignExtendExpr(cast<SCEVAddRecExpr>(IndVars.back().second)->getStepRecurrence(*SE), LargestType);
+            SE->getSignExtendExpr(AR->getStepRecurrence(*SE), LargestType);
           SCEVHandle ExtendedAddRec =
             SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
           if (LargestType != UI->getType())
@@ -732,9 +733,9 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         }
         if (isa<ZExtInst>(UI) && NoUnsignedWrap) {
           SCEVHandle ExtendedStart =
-            SE->getZeroExtendExpr(cast<SCEVAddRecExpr>(IndVars.back().second)->getStart(), LargestType);
+            SE->getZeroExtendExpr(AR->getStart(), LargestType);
           SCEVHandle ExtendedStep =
-            SE->getZeroExtendExpr(cast<SCEVAddRecExpr>(IndVars.back().second)->getStepRecurrence(*SE), LargestType);
+            SE->getZeroExtendExpr(AR->getStepRecurrence(*SE), LargestType);
           SCEVHandle ExtendedAddRec =
             SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
           if (LargestType != UI->getType())
