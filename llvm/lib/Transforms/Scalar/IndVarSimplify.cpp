@@ -99,7 +99,7 @@ namespace {
 
     void DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*, 16> &Insts);
 
-    void HandleFloatingPointIV(Loop *L, PHINode *PH, 
+    void HandleFloatingPointIV(Loop *L, PHINode *PH,
                                SmallPtrSet<Instruction*, 16> &DeadInsts);
   };
 }
@@ -147,7 +147,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
     if (GEPI->getOperand(0) == PN) {
       assert(GEPI->getNumOperands() == 2 && "GEP types must match!");
       DOUT << "INDVARS: Eliminating pointer recurrence: " << *GEPI;
-      
+
       // Okay, we found a pointer recurrence.  Transform this pointer
       // recurrence into an integer recurrence.  Compute the value that gets
       // added to the pointer at every iteration.
@@ -191,7 +191,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
               Idx[0] = Constant::getNullValue(Type::Int32Ty);
               Idx[1] = NewAdd;
               GetElementPtrInst *NGEPI = GetElementPtrInst::Create(
-                  NCE, Idx, Idx + 2, 
+                  NCE, Idx, Idx + 2,
                   GEPI->getName(), GEPI);
               SE->deleteValueFromRecords(GEPI);
               GEPI->replaceAllUsesWith(NGEPI);
@@ -329,18 +329,18 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
   // the exit blocks of the loop to find them.
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBB = ExitBlocks[i];
-    
+
     // If there are no PHI nodes in this exit block, then no values defined
     // inside the loop are used on this path, skip it.
     PHINode *PN = dyn_cast<PHINode>(ExitBB->begin());
     if (!PN) continue;
-    
+
     unsigned NumPreds = PN->getNumIncomingValues();
-    
+
     // Iterate over all of the PHI nodes.
     BasicBlock::iterator BBI = ExitBB->begin();
     while ((PN = dyn_cast<PHINode>(BBI++))) {
-      
+
       // Iterate over all of the values in all the PHI nodes.
       for (unsigned i = 0; i != NumPreds; ++i) {
         // If the value being merged in is not integer or is not defined
@@ -352,14 +352,14 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
           continue;
 
         // If this pred is for a subloop, not L itself, skip it.
-        if (LI->getLoopFor(PN->getIncomingBlock(i)) != L) 
+        if (LI->getLoopFor(PN->getIncomingBlock(i)) != L)
           continue; // The Block is in a subloop, skip it.
 
         // Check that InVal is defined in the loop.
         Instruction *Inst = cast<Instruction>(InVal);
         if (!L->contains(Inst->getParent()))
           continue;
-        
+
         // We require that this value either have a computable evolution or that
         // the loop have a constant iteration count.  In the case where the loop
         // has a constant iteration count, we can sometimes force evaluation of
@@ -367,7 +367,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
         SCEVHandle SH = SE->getSCEV(Inst);
         if (!SH->hasComputableLoopEvolution(L) && !HasConstantItCount)
           continue;          // Cannot get exit evolution for the loop value.
-        
+
         // Okay, this instruction has a user outside of the current loop
         // and varies predictably *inside* the loop.  Evaluate the value it
         // contains when the loop exits, if possible.
@@ -378,22 +378,22 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
 
         Changed = true;
         ++NumReplaced;
-        
+
         // See if we already computed the exit value for the instruction, if so,
         // just reuse it.
         Value *&ExitVal = ExitValues[Inst];
         if (!ExitVal)
           ExitVal = Rewriter.expandCodeFor(ExitValue, InsertPt);
-        
+
         DOUT << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal
              << "  LoopVal = " << *Inst << "\n";
 
         PN->setIncomingValue(i, ExitVal);
-        
+
         // If this instruction is dead now, schedule it to be removed.
         if (Inst->use_empty())
           InstructionsToDelete.insert(Inst);
-        
+
         // See if this is a single-entry LCSSA PHI node.  If so, we can (and
         // have to) remove
         // the PHI entirely.  This is safe, because the NewVal won't be variant
@@ -407,7 +407,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
       }
     }
   }
-  
+
   DeleteTriviallyDeadInstructions(InstructionsToDelete);
 }
 
@@ -766,14 +766,14 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 static bool useSIToFPInst(ConstantFP &InitV, ConstantFP &ExitV,
                           uint64_t intIV, uint64_t intEV) {
 
-  if (InitV.getValueAPF().isNegative() || ExitV.getValueAPF().isNegative()) 
+  if (InitV.getValueAPF().isNegative() || ExitV.getValueAPF().isNegative())
     return true;
 
   // If the iteration range can be handled by SIToFPInst then use it.
   APInt Max = APInt::getSignedMaxValue(32);
   if (Max.getZExtValue() > static_cast<uint64_t>(abs(intEV - intIV)))
     return true;
-  
+
   return false;
 }
 
@@ -783,11 +783,11 @@ static bool convertToInt(const APFloat &APF, uint64_t *intVal) {
   bool isExact = false;
   if (&APF.getSemantics() == &APFloat::PPCDoubleDouble)
     return false;
-  if (APF.convertToInteger(intVal, 32, APF.isNegative(), 
+  if (APF.convertToInteger(intVal, 32, APF.isNegative(),
                            APFloat::rmTowardZero, &isExact)
       != APFloat::opOK)
     return false;
-  if (!isExact) 
+  if (!isExact)
     return false;
   return true;
 
@@ -802,12 +802,12 @@ static bool convertToInt(const APFloat &APF, uint64_t *intVal) {
 /// for(int i = 0; i < 10000; ++i)
 ///   bar((double)i);
 ///
-void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH, 
+void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
                                    SmallPtrSet<Instruction*, 16> &DeadInsts) {
 
   unsigned IncomingEdge = L->contains(PH->getIncomingBlock(0));
   unsigned BackEdge     = IncomingEdge^1;
-  
+
   // Check incoming value.
   ConstantFP *InitValue = dyn_cast<ConstantFP>(PH->getIncomingValue(IncomingEdge));
   if (!InitValue) return;
@@ -817,7 +817,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
 
   // Check IV increment. Reject this PH if increement operation is not
   // an add or increment value can not be represented by an integer.
-  BinaryOperator *Incr = 
+  BinaryOperator *Incr =
     dyn_cast<BinaryOperator>(PH->getIncomingValue(BackEdge));
   if (!Incr) return;
   if (Incr->getOpcode() != Instruction::Add) return;
@@ -830,7 +830,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
   uint64_t newIncrValue = Type::Int32Ty->getPrimitiveSizeInBits();
   if (!convertToInt(IncrValue->getValueAPF(), &newIncrValue))
     return;
-  
+
   // Check Incr uses. One user is PH and the other users is exit condition used
   // by the conditional terminator.
   Value::use_iterator IncrUse = Incr->use_begin();
@@ -838,7 +838,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
   if (IncrUse == Incr->use_end()) return;
   Instruction *U2 = cast<Instruction>(IncrUse++);
   if (IncrUse != Incr->use_end()) return;
-  
+
   // Find exit condition.
   FCmpInst *EC = dyn_cast<FCmpInst>(U1);
   if (!EC)
@@ -861,7 +861,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
   uint64_t intEV = Type::Int32Ty->getPrimitiveSizeInBits();
   if (!convertToInt(EV->getValueAPF(), &intEV))
     return;
-  
+
   // Find new predicate for integer comparison.
   CmpInst::Predicate NewPred = CmpInst::BAD_ICMP_PREDICATE;
   switch (EC->getPredicate()) {
@@ -889,15 +889,15 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
     break;
   }
   if (NewPred == CmpInst::BAD_ICMP_PREDICATE) return;
-  
+
   // Insert new integer induction variable.
   PHINode *NewPHI = PHINode::Create(Type::Int32Ty,
                                     PH->getName()+".int", PH);
   NewPHI->addIncoming(ConstantInt::get(Type::Int32Ty, newInitValue),
                       PH->getIncomingBlock(IncomingEdge));
 
-  Value *NewAdd = BinaryOperator::CreateAdd(NewPHI, 
-                                            ConstantInt::get(Type::Int32Ty, 
+  Value *NewAdd = BinaryOperator::CreateAdd(NewPHI,
+                                            ConstantInt::get(Type::Int32Ty,
                                                              newIncrValue),
                                             Incr->getName()+".int", Incr);
   NewPHI->addIncoming(NewAdd, PH->getIncomingBlock(BackEdge));
@@ -905,25 +905,25 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
   ConstantInt *NewEV = ConstantInt::get(Type::Int32Ty, intEV);
   Value *LHS = (EVIndex == 1 ? NewPHI->getIncomingValue(BackEdge) : NewEV);
   Value *RHS = (EVIndex == 1 ? NewEV : NewPHI->getIncomingValue(BackEdge));
-  ICmpInst *NewEC = new ICmpInst(NewPred, LHS, RHS, EC->getNameStart(), 
+  ICmpInst *NewEC = new ICmpInst(NewPred, LHS, RHS, EC->getNameStart(),
                                  EC->getParent()->getTerminator());
-  
+
   // Delete old, floating point, exit comparision instruction.
   EC->replaceAllUsesWith(NewEC);
   DeadInsts.insert(EC);
-  
+
   // Delete old, floating point, increment instruction.
   Incr->replaceAllUsesWith(UndefValue::get(Incr->getType()));
   DeadInsts.insert(Incr);
-  
+
   // Replace floating induction variable. Give SIToFPInst preference over
   // UIToFPInst because it is faster on platforms that are widely used.
   if (useSIToFPInst(*InitValue, *EV, newInitValue, intEV)) {
-    SIToFPInst *Conv = new SIToFPInst(NewPHI, PH->getType(), "indvar.conv", 
+    SIToFPInst *Conv = new SIToFPInst(NewPHI, PH->getType(), "indvar.conv",
                                       PH->getParent()->getFirstNonPHI());
     PH->replaceAllUsesWith(Conv);
   } else {
-    UIToFPInst *Conv = new UIToFPInst(NewPHI, PH->getType(), "indvar.conv", 
+    UIToFPInst *Conv = new UIToFPInst(NewPHI, PH->getType(), "indvar.conv",
                                       PH->getParent()->getFirstNonPHI());
     PH->replaceAllUsesWith(Conv);
   }
