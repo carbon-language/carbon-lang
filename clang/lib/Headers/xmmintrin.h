@@ -521,25 +521,25 @@ _mm_setr_ps(float z, float y, float x, float w)
   return (__m128){ z, y, x, w };
 }
 
-static inline __m128 __attribute__((__always__inline__))
+static inline __m128 __attribute__((__always_inline__))
 _mm_setzero_ps(void)
 {
   return (__m128){ 0, 0, 0, 0 };
 }
 
-static inline void __attribute__((__always__inline__))
+static inline void __attribute__((__always_inline__))
 _mm_storeh_pi(__m64 *p, __m128 a)
 {
   __builtin_ia32_storehps((__v2si *)p, a);
 }
 
-static inline void __attribute__((__always__inline__))
+static inline void __attribute__((__always_inline__))
 _mm_storel_pi(__m64 *p, __m128 a)
 {
   __builtin_ia32_storelps((__v2si *)p, a);
 }
 
-static inline void __attribute__((__always__inline__))
+static inline void __attribute__((__always_inline__))
 _mm_store_ss(float *p, __m128 a)
 {
   *p = a[0];
