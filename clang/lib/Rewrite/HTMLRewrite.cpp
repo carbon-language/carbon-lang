@@ -420,9 +420,6 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
 /// macro expansions.  This won't be perfectly perfect, but it will be
 /// reasonably close.
 void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
-  
-  RewriteBuffer &RB = R.getEditBuffer(FID);
-  
   // Re-lex the raw token stream into a token buffer.
   const SourceManager &SM = PP.getSourceManager();
   std::vector<Token> TokenStream;
@@ -486,21 +483,9 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
       continue;
     }
 
-    unsigned StartOffs = SM.getFileOffset(LLoc.first);
-
-    // Highlight the macro invocation itself.
-    RB.InsertTextAfter(StartOffs, "<span class='macro'>",
-                       strlen("<span class='macro'>"));
-
     assert(SM.getFileID(LLoc.second) == FID &&
            "Start and end of expansion must be in the same ultimate file!");
-    unsigned EndOffs = SM.getFileOffset(LLoc.second);
-    
-    // Get the size of current macro call itself.
-    unsigned TokLen = Lexer::MeasureTokenLength(LLoc.second, SM);
-    RB.InsertTextBefore(EndOffs+TokLen, "</span>", strlen("</span>"));
-    
-    
+
     std::string Expansion = PP.getSpelling(Tok);
     unsigned LineLen = Expansion.size();
     
@@ -535,9 +520,13 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
       PP.Lex(Tok);
     }
     
-    // Insert the information about the expansion inside the macro span.
-    Expansion = "<span class='expansion'>" + Expansion + "</span>";
-    RB.InsertTextBefore(EndOffs+TokLen, Expansion.c_str(), Expansion.size());
+
+    // Insert the expansion as the end tag, so that multi-line macros all get
+    // highlighted.
+    Expansion = "<span class='expansion'>" + Expansion + "</span></span>";
+
+    HighlightRange(R, LLoc.first, LLoc.second,
+                   "<span class='macro'>", Expansion.c_str());
   }
 }
 
