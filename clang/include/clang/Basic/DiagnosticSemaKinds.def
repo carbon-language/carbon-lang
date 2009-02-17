@@ -97,10 +97,6 @@ DIAG(warn_redecl_library_builtin, WARNING,
      "incompatible redeclaration of library function %0 will be ignored")
 DIAG(err_builtin_definition, ERROR,
      "definition of builtin function %0")
-DIAG(err_builtin_lib_definition, ERROR,
-     "definition of library function %0 in a hosted implementation")
-DIAG(note_builtin_lib_def_freestanding, NOTE,
-     "use -ffreestanding to compile as a freestanding implementation")
 
 /// parser diagnostics
 DIAG(ext_typedef_without_a_name, EXTWARN,

@@ -2802,12 +2802,10 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
 
   // Builtin functions cannot be defined.
   if (unsigned BuiltinID = FD->getBuiltinID(Context)) {
-    if (Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) {
-      Diag(FD->getLocation(), diag::err_builtin_lib_definition) << FD;
-      Diag(FD->getLocation(), diag::note_builtin_lib_def_freestanding);
-    } else 
+    if (!Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) {
       Diag(FD->getLocation(), diag::err_builtin_definition) << FD;
-    FD->setInvalidDecl();
+      FD->setInvalidDecl();
+    }
   }
 
   PushDeclContext(FnBodyScope, FD);
