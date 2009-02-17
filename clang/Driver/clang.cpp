@@ -219,7 +219,7 @@ Freestanding("ffreestanding",
 static llvm::cl::opt<bool>
 MathErrno("fmath-errno", 
           llvm::cl::desc("Require math functions to respect errno"),
-          llvm::cl::init(true));
+          llvm::cl::init(true), llvm::cl::AllowInverse);
 
 //===----------------------------------------------------------------------===//
 // Analyzer Options.
