@@ -504,13 +504,13 @@ public:
   };
   
 private:
-  ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
-               AccessControl ac, Expr *BW)
-    : FieldDecl(ObjCIvar, 0, L, Id, T, BW, /*Mutable=*/false), 
+  ObjCIvarDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
+               QualType T, AccessControl ac, Expr *BW)
+    : FieldDecl(ObjCIvar, DC, L, Id, T, BW, /*Mutable=*/false), 
       DeclAccess(ac) {}
   
 public:
-  static ObjCIvarDecl *Create(ASTContext &C, SourceLocation L,
+  static ObjCIvarDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               IdentifierInfo *Id, QualType T,
                               AccessControl ac, Expr *BW = NULL);
     

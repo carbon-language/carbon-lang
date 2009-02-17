@@ -78,10 +78,10 @@ void ObjCInterfaceDecl::Destroy(ASTContext& C) {
 }
 
 
-ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
-                                   IdentifierInfo *Id, QualType T, 
-                                   AccessControl ac, Expr *BW) {
-  return new (C) ObjCIvarDecl(L, Id, T, ac, BW);
+ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, DeclContext *DC,
+                                   SourceLocation L, IdentifierInfo *Id,
+                                   QualType T, AccessControl ac, Expr *BW) {
+  return new (C) ObjCIvarDecl(DC, L, Id, T, ac, BW);
 }
 
 
