@@ -1,7 +1,8 @@
-// RUN: clang -analyze -checker-cfref -verify -fobjc-gc %s &&
+// RUN: clang -analyze -checker-cfref -verify -fobjc-gc -analyzer-constraints=basic %s &&
 // RUN: clang -analyze -checker-cfref -verify -fobjc-gc -analyzer-constraints=range %s &&
 // RUN: clang -analyze -checker-cfref -verify -fobjc-gc -disable-free %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store=region -verify -fobjc-gc %s
+// RUN: clang -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify -fobjc-gc %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify -fobjc-gc %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

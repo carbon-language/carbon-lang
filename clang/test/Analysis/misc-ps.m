@@ -1,5 +1,7 @@
-// RUN: clang -analyze -checker-cfref --analyzer-store=basic --verify -fblocks %s &&
-// RUN: clang -analyze -checker-cfref --analyzer-store=region --verify -fblocks %s
+// RUN: clang -analyze -checker-cfref --analyzer-store=basic -analyzer-constraints=basic --verify -fblocks %s &&
+// RUN: clang -analyze -checker-cfref --analyzer-store=basic -analyzer-constraints=range --verify -fblocks %s &&
+// RUN: clang -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=basic --verify -fblocks %s &&
+// RUN: clang -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=range --verify -fblocks %s
 
 
 // Reduced test case from crash in <rdar://problem/6253157>
