@@ -1,9 +1,9 @@
-// RUN: clang -analyze -checker-simple -verify -I../../../include %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store=basic -verify -I../../../include %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store=region -verify -I../../../include %s
+// RUN: clang -analyze -checker-simple -verify %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store=basic -verify %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store=region -verify %s
 
 #include <stdlib.h>
-#include <llvm/Config/config.h>
+#include "../../../../include/llvm/Config/config.h"
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
 #endif
