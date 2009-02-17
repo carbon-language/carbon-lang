@@ -32,18 +32,24 @@
 #ifndef __cplusplus
 #include <complex.h>
 
-#define __TG_UNARY_OVERLOAD(TYPE, SRCFN, DSTFN) \
-  static TYPE __attribute__((overloadable, always_inline)) __tg_ ## SRCFN(TYPE x) { return DSTFN(x); }
+#define __TG_UNARY_OVERLOAD(DSTTYPE, TYPE, SRCFN, DSTFN) \
+  static DSTTYPE __attribute__((overloadable, always_inline)) __tg_ ## SRCFN(TYPE x) { return DSTFN(x); }
 
 
 /* __TG_RC_1 - Unary functions defined on both real and complex values. */
 #define __TG_RC_1(op, REALFN, COMPLEXFN) \
-  __TG_UNARY_OVERLOAD(float, REALFN, REALFN ## f)                     \
-  __TG_UNARY_OVERLOAD(double, REALFN, REALFN)                         \
-  __TG_UNARY_OVERLOAD(long double, REALFN, REALFN ## l)               \
-  __TG_UNARY_OVERLOAD(_Complex float, REALFN, COMPLEXFN ## f)         \
-  __TG_UNARY_OVERLOAD(_Complex double, REALFN, COMPLEXFN)             \
-  __TG_UNARY_OVERLOAD(_Complex long double, REALFN, COMPLEXFN ## l)
+  __TG_UNARY_OVERLOAD(float, float, REALFN, REALFN ## f)                     \
+  __TG_UNARY_OVERLOAD(double, double, REALFN, REALFN)                         \
+  __TG_UNARY_OVERLOAD(long double, long double, REALFN, REALFN ## l)               \
+  __TG_UNARY_OVERLOAD(double, long long, REALFN, REALFN)                  \
+  __TG_UNARY_OVERLOAD(double, long, REALFN, REALFN)                  \
+  __TG_UNARY_OVERLOAD(double, int, REALFN, REALFN)                  \
+  __TG_UNARY_OVERLOAD(double, unsigned long long, REALFN, REALFN)                  \
+  __TG_UNARY_OVERLOAD(double, unsigned long, REALFN, REALFN)                  \
+  __TG_UNARY_OVERLOAD(double, unsigned int, REALFN, REALFN)                  \
+  __TG_UNARY_OVERLOAD(_Complex float, _Complex float, REALFN, COMPLEXFN ## f)         \
+  __TG_UNARY_OVERLOAD(_Complex double, _Complex double, REALFN, COMPLEXFN)             \
+  __TG_UNARY_OVERLOAD(_Complex long double, _Complex long double, REALFN, COMPLEXFN ## l)
 
 /* C99 7.22p4, functions in both math.h and complex.h. */
 __TG_RC_1(x, acos, cacos)
