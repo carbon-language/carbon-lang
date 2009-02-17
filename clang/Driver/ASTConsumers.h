@@ -75,8 +75,11 @@ ASTConsumer *CreateBlockRewriter(const std::string& InFile,
   
 ASTConsumer *CreateInheritanceViewer(const std::string& clsname);
 
-} // end clang namespace
+ASTConsumer* CreateAnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
+                                    PreprocessorFactory* ppf,
+                                    const LangOptions& lopts,
+                                    const std::string& output);
 
-#include "AnalysisConsumer.h"
+} // end clang namespace
 
 #endif

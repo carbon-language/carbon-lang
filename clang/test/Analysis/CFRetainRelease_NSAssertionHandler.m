@@ -1,4 +1,5 @@
-// RUN: clang -analyze -checker-cfref -verify %s
+// RUN: clang -analyze -checker-cfref -verify %s &&
+// RUN: clang -analyze -checker-cfref -verify %s -analyzer-constraints=range
 
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;

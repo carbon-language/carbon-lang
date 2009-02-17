@@ -1,5 +1,6 @@
-// RUN: clang -analyze -checker-cfref -analyzer-store-basic -verify -triple x86_64-apple-darwin9 %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store-region -verify -triple x86_64-apple-darwin9 %s
+// RUN: clang -analyze -checker-cfref -analyzer-store=basic -verify -triple x86_64-apple-darwin9 %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store=basic -verify -triple x86_64-apple-darwin9 -analyzer-constraints=range %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store=region -verify -triple x86_64-apple-darwin9 %s
 
 typedef signed long CFIndex;
 typedef const struct __CFAllocator * CFAllocatorRef;

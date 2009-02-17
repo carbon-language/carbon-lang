@@ -1,4 +1,4 @@
-// RUN: clang -analyze -checker-cfref --analyzer-store-region --verify -fblocks %s
+// RUN: clang -analyze -checker-cfref --analyzer-store=region --verify -fblocks %s
 
 //---------------------------------------------------------------------------
 // Test case 'checkaccess_union' differs for region store and basic store.

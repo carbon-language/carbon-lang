@@ -1,5 +1,5 @@
-// RUN: clang -analyze -checker-cfref --analyzer-store-basic --verify -fblocks %s &&
-// RUN: clang -analyze -checker-cfref --analyzer-store-region --verify -fblocks %s
+// RUN: clang -analyze -checker-cfref --analyzer-store=basic --verify -fblocks %s &&
+// RUN: clang -analyze -checker-cfref --analyzer-store=region --verify -fblocks %s
 
 
 // Reduced test case from crash in <rdar://problem/6253157>

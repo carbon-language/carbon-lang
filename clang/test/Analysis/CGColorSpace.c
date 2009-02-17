@@ -1,5 +1,6 @@
-// RUN: clang -analyze -checker-cfref -analyzer-store-basic -verify %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store-region -verify %s
+// RUN: clang -analyze -checker-cfref -analyzer-store=basic -verify %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store=region -verify %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
 typedef struct CGColorSpace *CGColorSpaceRef;
 extern CGColorSpaceRef CGColorSpaceCreateDeviceRGB(void);

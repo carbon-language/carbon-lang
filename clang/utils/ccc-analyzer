@@ -267,9 +267,15 @@ if (!defined($Analyses)) { $Analyses = '-checker-cfref'; }
 
 # Get the store model.
 my $StoreModel = $ENV{'CCC_ANALYZER_STORE_MODEL'};
+if (!defined $StoreModel) { $StoreModel = "basic"; }
+
+# Get the constraints engine.
+my $ConstraintsModel = $ENV{'CCC_ANALYZER_CONSTRAINTS_MODEL'};
+if (!defined $ConstraintsModel) { $ConstraintsModel = "basic"; }
 
 # Get the output format.
 my $OutputFormat = $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'};
+if (!defined OutputFormat) { $OutputFormat = "html"; }
 
 # Determine the level of verbosity.
 my $Verbose = 0;
@@ -447,11 +453,15 @@ if ($Action eq 'compile' or $Action eq 'link') {
     }
 
     if (defined $StoreModel) {
-      push @AnalyzeArgs, $StoreModel;
+      push @AnalyzeArgs, "-analyzer-store=$StoreModel";
     }
-    
+
+    if (defined $ConstraintsModel) {
+      push @AnalyzeArgs, "-analyzer-constraints=$ConstraintsModel";
+    }
+
     if (defined $OutputFormat) {
-      push @AnalyzeArgs, "-analyzer-output-" . $OutputFormat;
+      push @AnalyzeArgs, "-analyzer-output=" . $OutputFormat;
       if ($OutputFormat eq "plist") {
         # Change "Output" to be a file.
         my ($h, $f) = tempfile("report-XXXXXX", SUFFIX => ".plist",
@@ -459,7 +469,6 @@ if ($Action eq 'compile' or $Action eq 'link') {
         $ResultFile = $f;
         $CleanupFile = $f;
       }
-      
     }
 
     push @AnalyzeArgs,@CompileOpts;

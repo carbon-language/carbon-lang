@@ -1,6 +1,6 @@
 // RUN: clang -analyze -checker-simple -verify %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store-basic -verify %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store-region -verify %s
+// RUN: clang -analyze -checker-cfref -analyzer-store=basic -verify %s &&
+// RUN: clang -analyze -checker-cfref -analyzer-store=region -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

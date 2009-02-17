@@ -221,7 +221,7 @@ class Clang_CompileTool(Tool):
                              '-warn-objc-missing-dealloc',
                              '-warn-objc-unused-ivars'])
             
-            cmd_args.append('-analyzer-output-plist')
+            cmd_args.append('-analyzer-output=plist')
 
             # Add -Xanalyzer arguments when running as analyzer.
             for arg in arglist.getArgs(arglist.parser.XanalyzerOption):

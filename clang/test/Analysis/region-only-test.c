@@ -1,4 +1,4 @@
-// RUN: clang -analyze -checker-simple -analyzer-store-region -verify %s
+// RUN: clang -analyze -checker-simple -analyzer-store=region -verify %s
 
 // Region store must be enabled for tests in this file.
 

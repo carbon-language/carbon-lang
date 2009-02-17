@@ -850,11 +850,6 @@ OPTIONS:
 
  -analyze-headers - Also analyze functions in #included files.
 
- -store [model] - Specify the store model used by the analyzer. By default,
-                  the 'basic' store model is used. 'region' specifies a field-
-                  sensitive store model. Be warned that the 'region' model
-                  is still in very early testing phase and may often crash.
-
  -o             - Target directory for HTML report files.  Subdirectories
                   will be created as needed to represent separate "runs" of
                   the analyzer.  If this option is not specified, a directory
@@ -893,6 +888,16 @@ OPTIONS:
  -V             - View analysis results in a web browser when the build
  --view           completes.
 
+ADVANCED OPTIONS:
+
+ -constraints [model] - Specify the contraint model used by the analyzer.
+                        By default the 'basic' model is used.  'range' adds
+                        experimental range tracking for program values.
+
+ -store [model] - Specify the store model used by the analyzer. By default,
+                  the 'basic' store model is used. 'region' specifies a field-
+                  sensitive store model. Be warned that the 'region' model
+                  is still in very early testing phase and may often crash.
 
 AVAILABLE ANALYSES (multiple analyses may be specified):
 
@@ -966,6 +971,7 @@ my $ViewResults  = 0;  # View results when the build terminates.
 my $ExitStatusFoundBugs = 0; # Exit status reflects whether bugs were found
 my @AnalysesToRun;
 my $StoreModel;
+my $ConstraintsModel;
 my $OutputFormat;
 
 if (!@ARGV) {
@@ -1082,7 +1088,13 @@ while (@ARGV) {
 
   if ($arg eq "-store") {
     shift @ARGV;
-    $StoreModel = '-analyzer-store-' . shift @ARGV;
+    $StoreModel = shift @ARGV;
+    next;
+  }
+  
+  if ($arg eq "-constraints") {
+    shift @ARGV;
+    $ConstraintsModel = shift @ARGV;
     next;
   }
   
@@ -1157,6 +1169,10 @@ $ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
 
 if (defined $StoreModel) {
   $ENV{'CCC_ANALYZER_STORE_MODEL'} = $StoreModel;
+}
+
+if (defined $ConstraintsModel) {
+  $ENV{'CCC_ANALYZER_CONSTRAINTS_MODEL'} = $ConstraintsModel;
 }
 
 if (defined $OutputFormat) {

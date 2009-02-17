@@ -1,4 +1,4 @@
-// RUN: clang -analyze -checker-simple -analyzer-store-region -verify %s
+// RUN: clang -analyze -checker-simple -analyzer-store=region -verify %s
 
 struct s {
   int data;

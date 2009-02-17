@@ -222,53 +222,6 @@ MathErrno("fmath-errno",
           llvm::cl::init(true), llvm::cl::AllowInverse);
 
 //===----------------------------------------------------------------------===//
-// Analyzer Options.
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<bool>
-VisualizeEGDot("analyzer-viz-egraph-graphviz",
-               llvm::cl::desc("Display exploded graph using GraphViz"));
-
-static llvm::cl::opt<bool>
-VisualizeEGUbi("analyzer-viz-egraph-ubigraph",
-               llvm::cl::desc("Display exploded graph using Ubigraph"));
-
-static llvm::cl::opt<bool>
-AnalyzeAll("analyzer-opt-analyze-headers",
-    llvm::cl::desc("Force the static analyzer to analyze "
-                   "functions defined in header files"));
-
-static llvm::cl::opt<bool>
-AnalyzerDisplayProgress("analyzer-display-progress",
-          llvm::cl::desc("Emit verbose output about the analyzer's progress."));
-
-static llvm::cl::list<Analyses>
-AnalysisList(llvm::cl::desc("SCA Checks/Analyses:"),
-llvm::cl::values(
-#define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
-clEnumValN(NAME, CMDFLAG, DESC),
-#include "Analyses.def"
-clEnumValEnd));
-
-static llvm::cl::opt<AnalysisStores> 
-AnalysisStoreOpt(llvm::cl::desc("SCA Low-Level Options (Store):"),
-                  llvm::cl::init(BasicStoreModel),
-                  llvm::cl::values(
-#define ANALYSIS_STORE(NAME, CMDFLAG, DESC)\
-clEnumValN(NAME##Model, "analyzer-store-" CMDFLAG, DESC),
-#include "Analyses.def"
-clEnumValEnd));
-
-static llvm::cl::opt<AnalysisDiagClients>
-AnalysisDiagOpt(llvm::cl::desc("SCA Output Options:"),
-                llvm::cl::init(PD_HTML),
-                llvm::cl::values(
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREATE)\
-clEnumValN(PD_##NAME, "analyzer-output-" CMDFLAG, DESC),
-#include "Analyses.def"
-clEnumValEnd));                                
-
-//===----------------------------------------------------------------------===//
 // Language Options
 //===----------------------------------------------------------------------===//
 
@@ -683,7 +636,6 @@ void InitializeGCMode(LangOptions &Options) {
     Options.setGCMode(LangOptions::HybridGC);
 }
 
-
 //===----------------------------------------------------------------------===//
 // Our DiagnosticClient implementation
 //===----------------------------------------------------------------------===//
@@ -778,18 +730,6 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   
   Diags.setDiagnosticMapping(diag::err_pp_file_not_found, diag::MAP_FATAL);
 }
-
-//===----------------------------------------------------------------------===//
-// Analysis-specific options.
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<std::string>
-AnalyzeSpecificFunction("analyze-function",
-                llvm::cl::desc("Run analysis on specific function"));
-
-static llvm::cl::opt<bool>
-TrimGraph("trim-egraph",
-      llvm::cl::desc("Only show error-related paths in the analysis graph"));
 
 //===----------------------------------------------------------------------===//
 // Target Triple Processing.
@@ -1349,14 +1289,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateBlockRewriter(InFile, OutputFile, Diag, LangOpts);
       
     case RunAnalysis:
-      return CreateAnalysisConsumer(&AnalysisList[0],
-                                    &AnalysisList[0]+AnalysisList.size(),
-                                    AnalysisStoreOpt, AnalysisDiagOpt,
-                                    Diag, PP, PPF, LangOpts,
-                                    AnalyzeSpecificFunction,
-                                    OutputFile, VisualizeEGDot, VisualizeEGUbi,
-                                    TrimGraph, AnalyzeAll,
-                                    AnalyzerDisplayProgress);
+      return CreateAnalysisConsumer(Diag, PP, PPF, LangOpts, OutputFile);
   }
 }
 
