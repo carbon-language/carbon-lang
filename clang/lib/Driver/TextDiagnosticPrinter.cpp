@@ -104,9 +104,25 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 void TextDiagnosticPrinter::EmitCaretDiagnostic(const DiagnosticInfo &Info,
                                                 SourceLocation Loc,
                                                 SourceManager &SM) {
+  assert(!Loc.isInvalid() && "must have a valid source location here");
+  
   // We always emit diagnostics about the instantiation points, not the spelling
   // points.  This more closely correlates to what the user writes.
-  Loc = SM.getInstantiationLoc(Loc);
+  if (!Loc.isFileID()) {
+    SourceLocation OneLevelUp;
+    OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
+    
+    EmitCaretDiagnostic(Info, OneLevelUp, SM);
+    
+    Loc = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(Loc));
+    
+    // Emit the file/line/column that this expansion came from.
+    OS << SM.getBufferName(Loc) << ':' << SM.getInstantiationLineNumber(Loc)
+       << ':';
+    if (ShowColumn)
+      OS << SM.getInstantiationColumnNumber(Loc) << ':';
+    OS << " note: instantiated from:\n";
+  }
   
   // Decompose the location into a FID/Offset pair.
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
