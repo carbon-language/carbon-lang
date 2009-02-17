@@ -61,7 +61,6 @@ public:
     }
 
     llvm::Constant *C = Visit(E->getSubExpr());
-    
     return EmitConversion(C, E->getSubExpr()->getType(), E->getType());    
   }
 
@@ -90,6 +89,8 @@ public:
     bool RewriteType = false;
     for (; i < NumInitableElts; ++i) {
       llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(i), CGF);
+      if (!C)
+        return 0;
       RewriteType |= (C->getType() != ElemTy);
       Elts.push_back(C);
     }
@@ -114,6 +115,9 @@ public:
                                 FieldDecl* Field, Expr* E) {
     // Calculate the value to insert
     llvm::Constant *C = CGM.EmitConstantExpr(E, CGF);
+    if (!C)
+      return;
+
     llvm::ConstantInt *CI = dyn_cast<llvm::ConstantInt>(C);
     if (!CI) {
       CGM.ErrorUnsupported(E, "bitfield initialization");
@@ -198,6 +202,7 @@ public:
       } else {
         unsigned FieldNo = CGM.getTypes().getLLVMFieldNo(*Field);
         llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(EltNo), CGF);
+        if (!C) return 0;
         RewriteType |= (C->getType() != Elts[FieldNo]->getType());
         Elts[FieldNo] = C;
       }
@@ -217,6 +222,9 @@ public:
   }
 
   llvm::Constant *EmitUnion(llvm::Constant *C, const llvm::Type *Ty) {
+    if (!C)
+      return 0;
+
     // Build a struct with the union sub-element as the first member,
     // and padded to the appropriate size
     std::vector<llvm::Constant*> Elts;
@@ -289,6 +297,8 @@ public:
     unsigned i = 0;
     for (; i < NumInitableElts; ++i) {
       llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(i), CGF);
+      if (!C)
+        return 0;
       Elts.push_back(C);
     }
 
@@ -402,6 +412,9 @@ public:
   
   llvm::Constant *EmitConversion(llvm::Constant *Src, QualType SrcType, 
                                  QualType DstType) {
+    if (!Src)
+      return 0;
+
     SrcType = CGM.getContext().getCanonicalType(SrcType);
     DstType = CGM.getContext().getCanonicalType(DstType);
     if (SrcType == DstType) return Src;
@@ -488,9 +501,12 @@ public:
       // to be the only use of the variable, so we just generate it here.
       CompoundLiteralExpr *CLE = cast<CompoundLiteralExpr>(E);
       llvm::Constant* C = Visit(CLE->getInitializer());
-      C = new llvm::GlobalVariable(C->getType(),E->getType().isConstQualified(), 
-                                   llvm::GlobalValue::InternalLinkage,
-                                   C, ".compoundliteral", &CGM.getModule());
+      // FIXME: "Leaked" on failure.
+      if (C)
+        C = new llvm::GlobalVariable(C->getType(),
+                                     E->getType().isConstQualified(), 
+                                     llvm::GlobalValue::InternalLinkage,
+                                     C, ".compoundliteral", &CGM.getModule());
       return C;
     }
     case Expr::DeclRefExprClass: 
@@ -515,6 +531,8 @@ public:
         Base = Visit(ME->getBase());
       else
         Base = EmitLValue(ME->getBase());
+      if (!Base)
+        return 0;
 
       FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl());
       // FIXME: Handle other kinds of member expressions.
@@ -528,10 +546,13 @@ public:
     }
     case Expr::ArraySubscriptExprClass: {
       ArraySubscriptExpr* ASExpr = cast<ArraySubscriptExpr>(E);
-      llvm::Constant *Base = Visit(ASExpr->getBase());
-      llvm::Constant *Index = Visit(ASExpr->getIdx());
       assert(!ASExpr->getBase()->getType()->isVectorType() &&
              "Taking the address of a vector component is illegal!");
+
+      llvm::Constant *Base = Visit(ASExpr->getBase());
+      llvm::Constant *Index = Visit(ASExpr->getIdx());
+      if (!Base || !Index)
+        return 0;
       return llvm::ConstantExpr::getGetElementPtr(Base, &Index, 1);
     }
     case Expr::StringLiteralClass:
@@ -594,9 +615,8 @@ public:
       return CGM.GetAddrOfConstantCFString(S);
     }
     }
-    CGM.ErrorUnsupported(E, "constant l-value expression");
-    llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
-    return llvm::UndefValue::get(Ty);
+
+    return 0;
   }
 };
   
@@ -604,8 +624,6 @@ public:
 
 llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                                 CodeGenFunction *CGF) {
-  QualType type = Context.getCanonicalType(E->getType());
-
   Expr::EvalResult Result;
   
   if (E->Evaluate(Result, Context)) {
@@ -613,8 +631,8 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
            "Constant expr should not have any side effects!");
     switch (Result.Val.getKind()) {
     case APValue::Uninitialized:
-      assert(0 && "Constant expressions should be uninitialized.");
-      return llvm::UndefValue::get(getTypes().ConvertType(type));
+      assert(0 && "Constant expressions should be initialized.");
+      return 0;
     case APValue::LValue: {
       llvm::Constant *Offset = 
         llvm::ConstantInt::get(llvm::Type::Int64Ty, 
@@ -637,7 +655,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       }
       
       return llvm::ConstantExpr::getIntToPtr(Offset, 
-                                             getTypes().ConvertType(type));
+                                          getTypes().ConvertType(E->getType()));
     }
     case APValue::Int: {
       llvm::Constant *C = llvm::ConstantInt::get(Result.Val.getInt());
@@ -683,7 +701,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   }
 
   llvm::Constant* C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
-  if (C->getType() == llvm::Type::Int1Ty) {
+  if (C && C->getType() == llvm::Type::Int1Ty) {
     const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
     C = llvm::ConstantExpr::getZExt(C, BoolTy);
   }

@@ -247,7 +247,12 @@ public:
                                         const std::string &Name);
 
   void UpdateCompletedType(const TagDecl *D);
+
+  /// EmitConstantExpr - Try to emit the given expression as a
+  /// constant; returns 0 if the expression cannot be emitted as a
+  /// constant.
   llvm::Constant *EmitConstantExpr(const Expr *E, CodeGenFunction *CGF = 0);
+
   llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
                                    const AnnotateAttr *AA, unsigned LineNo);
 

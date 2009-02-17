@@ -1,4 +1,5 @@
-// RUN: clang -emit-llvm < %s | grep "g.b = internal global i8. getelementptr"
+// RUN: clang -arch i386 -emit-llvm -o %t %s &&
+// RUN: grep "g.b = internal global i8. getelementptr" %t &&
 
 struct AStruct { 
 	int i;
@@ -24,3 +25,7 @@ struct s { void *p; };
 void foo(void) {
   static struct s var = {((void*)&((char*)0)[0])};
 }
+
+// RUN: grep "f1.l0 = internal global i32 ptrtoint (i32 ()\* @f1 to i32)" %t
+int f1(void) { static int l0 = (unsigned) f1; }
+
