@@ -42,14 +42,20 @@ sub GetPPExt {
 }
 
 my $ParserRejects = "Parser Rejects";
+my $AttributeIgnored = "Attribute Ignored";
 
 sub ProcessClangFailure {
   my ($Clang, $Lang, $file, $Args, $HtmlDir, $ErrorType, $ofile) = @_;
-  my $Dir = "$HtmlDir/crashes";
+  my $Dir = "$HtmlDir/failures";
   mkpath $Dir;
   
   my $prefix = "clang_crash";
-  if ($ErrorType eq $ParserRejects) { $prefix = "clang_parser_rejects"; }
+  if ($ErrorType eq $ParserRejects) {
+    $prefix = "clang_parser_rejects";
+  }
+  elsif ($ErrorType eq $AttributeIgnored) {
+    $prefix = "clang_attribute_ignored";
+  }
 
   # Generate the preprocessed file with cc (i.e., gcc).
   my ($PPH, $PPFile) = tempfile( $prefix . "_XXXXXX",
@@ -73,6 +79,7 @@ sub ProcessClangFailure {
   `uname -a >> $PPFile.info.txt 2>&1`;
   `$CC -v >> $PPFile.info.txt 2>&1`;
   system 'mv',$ofile,"$PPFile.stderr.txt";
+  return (basename $PPFile);
 }
 
 ##----------------------------------------------------------------------------##
@@ -104,8 +111,9 @@ sub Analyze {
     push @CmdArgs,'-DIBOutlet=__attribute__((iboutlet))';
     push @CmdArgs,@$Args;
     @CmdArgsSansAnalyses = @CmdArgs;
-    push @CmdArgs,'--analyze';
-    push @CmdArgs,"--analyzer-display-progress";
+    push @CmdArgs,'-analyze';
+    push @CmdArgs,"-analyzer-display-progress";
+    push @CmdArgs,"-disable-free";
     push @CmdArgs,(split /\s/,$Analyses);
     $RunAnalyzer = 1;
   }
@@ -177,6 +185,36 @@ sub Analyze {
   elsif ($Result) {
     ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
                         $ParserRejects, $ofile);
+  }
+  else {
+    # Check if there were any unhandled attributes.
+    if (open(CHILD, $ofile)) {
+      my %attributes_not_handled;
+      my $ppfile;
+      while (<CHILD>) {
+        next if (! /warning: '([^\']+)' attribute ignored/);
+
+        # Have we already spotted this unhandled attribute?
+        next if (defined $attributes_not_handled{$1});
+        $attributes_not_handled{$1} = 1;
+        
+        # Add this file to the list of files that contained this attribute.
+        # Generate a preprocessed file if we haven't already.
+        if (!(defined $ppfile)) {
+          $ppfile = ProcessClangFailure($Clang, $Lang, $file,
+                                        \@CmdArgsSansAnalyses,
+                                        $HtmlDir, $AttributeIgnored, $ofile);
+        }
+
+        my $dir = "$HtmlDir/failures";
+        mkpath $dir;
+        my $afile = "$dir/attribute_ignored_$1.txt";
+        open(AFILE, ">>$afile");
+        print AFILE "$ppfile\n";
+        close(AFILE);
+      }
+      close CHILD;
+    }
   }
   
   `rm -f $ofile`;

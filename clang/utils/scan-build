@@ -59,8 +59,8 @@ sub Diag {
 
 sub DiagCrashes {
   my $Dir = shift;
-  Diag ("The analyzer crashed on some source files.\n");
-  Diag ("Preprocessed versions of crashed files were deposited in '$Dir/crashes'.\n");
+  Diag ("The analyzer encountered problems on some source files.\n");
+  Diag ("Preprocessed versions of these sources were deposited in '$Dir/failures'.\n");
   Diag ("Please consider submitting a bug report using these files:\n");
   Diag ("  http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs\n")
 }
@@ -98,10 +98,9 @@ my $FoundAnalysis = 0;
 
 while(<PIPE>) {
   if ($FoundAnalysis == 0) {
-    if (/SCA Checks\/Analyses/) {
+    if (/Checks and Analyses/) {
       $FoundAnalysis = 1;
     }
-
     next;
   }
     
@@ -111,8 +110,7 @@ while(<PIPE>) {
              
     $AvailableAnalyses{$1} = $2;
     next;
-  }
-  
+  }  
   last;
 }
 
@@ -440,12 +438,10 @@ sub Postprocess {
   }
   
   opendir(DIR, $Dir);
-  my $Crashes = 0;
-  my @files = grep { if ($_ eq "crashes") { $Crashes++; }
-                     /^report-.*\.html$/; } readdir(DIR);
+  my @files = grep { /^report-.*\.html$/ } readdir(DIR);
   closedir(DIR);
 
-  if (scalar(@files) == 0 and $Crashes == 0) {
+  if (scalar(@files) == 0 and ! -e "$Dir/failures") {
     Diag("Removing directory '$Dir' because it contains no reports.\n");
     system ("rm", "-fR", $Dir);
     return 0;
@@ -455,14 +451,19 @@ sub Postprocess {
   my @Index;    
   foreach my $file (@files) { ScanFile(\@Index, $Dir, $file); }
   
-  # Scan the crashes directory and use the information in the .info files
+  # Scan the failures directory and use the information in the .info files
   # to update the common prefix directory.
-  if (-d "$Dir/crashes") {
-    opendir(DIR, "$Dir/crashes");
-    my @files = grep { /[.]info.txt$/; } readdir(DIR);
+  my @failures;
+  my @attributes_ignored;
+  if (-d "$Dir/failures") {
+    opendir(DIR, "$Dir/failures");
+    @failures = grep { /[.]info.txt$/ && !/attribute_ignored/; } readdir(DIR);
     closedir(DIR);
-    foreach my $file (@files) {
-      open IN, "$Dir/crashes/$file" or DieDiag("cannot open $file\n");
+    opendir(DIR, "$Dir/failures");        
+    @attributes_ignored = grep { /^attribute_ignored/; } readdir(DIR);
+    closedir(DIR);
+    foreach my $file (@failures) {
+      open IN, "$Dir/failures/$file" or DieDiag("cannot open $file\n");
       my $Path = <IN>;
       if (defined $Path) { UpdatePrefix($Path); }
       close IN;
@@ -567,7 +568,6 @@ ENDTEXT
     if (defined $BuildName) {
       print OUT "\n<p>Results in this analysis run are based on analyzer build <b>$BuildName</b>.</p>\n"
     }
-  
   
   my $TotalBugs = scalar(@Index);
 print OUT <<ENDTEXT;
@@ -693,29 +693,50 @@ ENDTEXT
     print OUT "</tbody>\n</table>\n\n";
   }
 
-  if ($Crashes) {
-    # Read the crash directory for files.
-    opendir(DIR, "$Dir/crashes");
-    my @files = grep { /[.]info.txt$/ } readdir(DIR);
-    closedir(DIR);
-
-    if (scalar(@files)) {
-      print OUT <<ENDTEXT;
-<h2>Analyzer Failures</h2>
-
-<p>The analyzer had problems processing the following files:</p>
-
-<table>
-<thead><tr><td>Problem</td><td>Source File</td><td>Preprocessed File</td><td>STDERR Output</td></tr></thead>
-ENDTEXT
-  
-      foreach my $file (sort @files) {
+  if (scalar (@failures) || scalar(@attributes_ignored)) {
+    print OUT "<h2>Analyzer Failures</h2>\n";
+    
+    if (scalar @attributes_ignored) {
+      print OUT "The analyzer's parser ignored the following attributes:<p>\n";
+      print OUT "<table>\n";
+      print OUT "<thead><tr><td>Attribute</td><td>Source File</td><td>Preprocessed File</td><td>STDERR Output</td></tr></thead>\n";
+      foreach my $file (sort @attributes_ignored) {
+        die "cannot demangle attribute name\n" if (! ($file =~ /^attribute_ignored_(.+).txt/));
+        my $attribute = $1;
+        # Open the attribute file to get the first file that failed.
+        next if (!open (ATTR, "$Dir/failures/$file"));
+        my $ppfile = <ATTR>;
+        chomp $ppfile;
+        close ATTR;
+        next if (! -e "$Dir/failures/$ppfile");
+        # Open the info file and get the name of the source file.
+        open (INFO, "$Dir/failures/$ppfile.info.txt") or
+          die "Cannot open $Dir/failures/$ppfile.info.txt\n";
+        my $srcfile = <INFO>;
+        chomp $srcfile;
+        close (INFO);
+        # Print the information in the table.
+        my $prefix = GetPrefix();
+        if (defined $prefix) { $srcfile =~ s/^\Q$prefix//; }
+        print OUT "<tr><td>$attribute</td><td>$srcfile</td><td><a href=\"failures/$ppfile\">$ppfile</a></td><td><a href=\"failures/$ppfile.stderr.txt\">$ppfile.stderr.txt</a></td></tr>\n";
+        my $ppfile_clang = $ppfile;
+        $ppfile_clang =~ s/[.](.+)$/.clang.$1/;
+        print OUT "  <!-- REPORTPROBLEM src=\"$srcfile\" file=\"failures/$ppfile\" clangfile=\"failures/$ppfile_clang\" stderr=\"failures/$ppfile.stderr.txt\" info=\"failures/$ppfile.info.txt\" -->\n";
+      }
+      print OUT "</table>\n";
+    }
+    
+    if (scalar @failures) {
+      print OUT "<p>The analyzer had problems processing the following files:</p>\n";
+      print OUT "<table>\n";
+      print OUT "<thead><tr><td>Problem</td><td>Source File</td><td>Preprocessed File</td><td>STDERR Output</td></tr></thead>\n";
+      foreach my $file (sort @failures) {
         $file =~ /(.+).info.txt$/;
         # Get the preprocessed file.
         my $ppfile = $1;
         # Open the info file and get the name of the source file.
-        open (INFO, "$Dir/crashes/$file") or
-          die "Cannot open $Dir/crashes/$file\n";
+        open (INFO, "$Dir/failures/$file") or
+          die "Cannot open $Dir/failures/$file\n";
         my $srcfile = <INFO>;
         chomp $srcfile;
         my $problem = <INFO>;
@@ -724,17 +745,14 @@ ENDTEXT
         # Print the information in the table.
         my $prefix = GetPrefix();
         if (defined $prefix) { $srcfile =~ s/^\Q$prefix//; }
-        print OUT "<tr><td>$problem</td><td>$srcfile</td><td><a href=\"crashes/$ppfile\">$ppfile</a></td><td><a href=\"crashes/$ppfile.stderr.txt\">$ppfile.stderr.txt</a></td></tr>\n";
+        print OUT "<tr><td>$problem</td><td>$srcfile</td><td><a href=\"failures/$ppfile\">$ppfile</a></td><td><a href=\"failures/$ppfile.stderr.txt\">$ppfile.stderr.txt</a></td></tr>\n";
         my $ppfile_clang = $ppfile;
         $ppfile_clang =~ s/[.](.+)$/.clang.$1/;
-        print OUT "  <!-- REPORTPROBLEM src=\"$srcfile\" file=\"crashes/$ppfile\" clangfile=\"crashes/$ppfile_clang\" stderr=\"crashes/$ppfile.stderr.txt\" info=\"crashes/$ppfile.info.txt\" -->\n";
+        print OUT "  <!-- REPORTPROBLEM src=\"$srcfile\" file=\"failures/$ppfile\" clangfile=\"failures/$ppfile_clang\" stderr=\"failures/$ppfile.stderr.txt\" info=\"failures/$ppfile.info.txt\" -->\n";
       }
-
-      print OUT <<ENDTEXT;
-</table>
-<p>Please consider submitting preprocessed files as <a href="http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs">bug reports</a>. <!-- REPORTCRASHES --> </p>
-ENDTEXT
-    }
+      print OUT "</table>\n";
+    }    
+    print OUT "<p>Please consider submitting preprocessed files as <a href=\"http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs\">bug reports</a>. <!-- REPORTCRASHES --> </p>\n";
   }
   
   print OUT "</body></html>\n";  
@@ -751,7 +769,7 @@ ENDTEXT
     Diag("Run 'scan-view $Dir' to examine bug reports.\n");
   }
   
-  DiagCrashes($Dir) if ($Crashes);
+  DiagCrashes($Dir) if (scalar @failures || scalar @attributes_ignored);
   
   return $Num;
 }
