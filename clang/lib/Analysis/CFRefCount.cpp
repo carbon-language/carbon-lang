@@ -2595,7 +2595,6 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   
   Stmt* S = getStmt(BR);  // This is the statement where the leak occured.
   assert (S);
-  unsigned EndLine = SMgr.getInstantiationLineNumber(S->getLocStart());
 
   // Generate the diagnostic.
   FullSourceLoc L(S->getLocStart(), SMgr);
