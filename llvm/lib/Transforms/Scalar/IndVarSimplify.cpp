@@ -96,7 +96,8 @@ namespace {
                                    Value *IndVar,
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
-                                   SCEVExpander &Rewriter);
+                                   SCEVExpander &Rewriter,
+                                   bool SignExtendTripCount);
     void RewriteLoopExitValues(Loop *L, SCEV *IterationCount);
 
     void DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*, 16> &Insts);
@@ -235,7 +236,8 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
                                    Value *IndVar,
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
-                                   SCEVExpander &Rewriter) {
+                                   SCEVExpander &Rewriter,
+                                   bool SignExtendTripCount) {
   // If the exiting block is not the same as the backedge block, we must compare
   // against the preincremented value, otherwise we prefer to compare against
   // the post-incremented value.
@@ -253,11 +255,18 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     if ((isa<SCEVConstant>(N) && !N->isZero()) ||
         SE->isLoopGuardedByCond(L, ICmpInst::ICMP_NE, N, Zero)) {
       // No overflow. Cast the sum.
-      IterationCount = SE->getTruncateOrZeroExtend(N, IndVar->getType());
+      if (SignExtendTripCount)
+        IterationCount = SE->getTruncateOrSignExtend(N, IndVar->getType());
+      else
+        IterationCount = SE->getTruncateOrZeroExtend(N, IndVar->getType());
     } else {
       // Potential overflow. Cast before doing the add.
-      IterationCount = SE->getTruncateOrZeroExtend(IterationCount,
-                                                   IndVar->getType());
+      if (SignExtendTripCount)
+        IterationCount = SE->getTruncateOrSignExtend(IterationCount,
+                                                     IndVar->getType());
+      else
+        IterationCount = SE->getTruncateOrZeroExtend(IterationCount,
+                                                     IndVar->getType());
       IterationCount =
         SE->getAddExpr(IterationCount,
                        SE->getIntegerSCEV(1, IndVar->getType()));
@@ -269,8 +278,12 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     CmpIndVar = L->getCanonicalInductionVariableIncrement();
   } else {
     // We have to use the preincremented value...
-    IterationCount = SE->getTruncateOrZeroExtend(IterationCount,
-                                                 IndVar->getType());
+    if (SignExtendTripCount)
+      IterationCount = SE->getTruncateOrSignExtend(IterationCount,
+                                                   IndVar->getType());
+    else
+      IterationCount = SE->getTruncateOrZeroExtend(IterationCount,
+                                                   IndVar->getType());
     CmpIndVar = IndVar;
   }
 
@@ -464,10 +477,13 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi) {
 
 /// TestOrigIVForWrap - Analyze the original induction variable
 /// that controls the loop's iteration to determine whether it
-/// would ever undergo signed or unsigned overflow.
+/// would ever undergo signed or unsigned overflow. Also, check
+/// whether an induction variable in the same type that starts
+/// at 0 would undergo signed overflow.
 ///
-/// In addition to setting the NoSignedWrap and NoUnsignedWrap
-/// variables, return the PHI for this induction variable.
+/// In addition to setting the NoSignedWrap, NoUnsignedWrap, and
+/// SignExtendTripCount variables, return the PHI for this induction
+/// variable.
 ///
 /// TODO: This duplicates a fair amount of ScalarEvolution logic.
 /// Perhaps this can be merged with ScalarEvolution::getIterationCount
@@ -477,7 +493,8 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
                                         const BranchInst *BI,
                                         const Instruction *OrigCond,
                                         bool &NoSignedWrap,
-                                        bool &NoUnsignedWrap) {
+                                        bool &NoUnsignedWrap,
+                                        bool &SignExtendTripCount) {
   // Verify that the loop is sane and find the exit condition.
   const ICmpInst *Cmp = dyn_cast<ICmpInst>(OrigCond);
   if (!Cmp) return 0;
@@ -590,9 +607,13 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
   // The original induction variable will start at some non-max value,
   // it counts up by one, and the loop iterates only while it remans
   // less than some value in the same type. As such, it will never wrap.
-  if (isSigned && !InitialVal->getValue().isMaxSignedValue())
+  if (isSigned && !InitialVal->getValue().isMaxSignedValue()) {
     NoSignedWrap = true;
-  else if (!isSigned && !InitialVal->getValue().isMaxValue())
+    // If the original induction variable starts at zero or greater,
+    // the trip count can be considered signed.
+    if (InitialVal->getValue().isNonNegative())
+      SignExtendTripCount = true;
+  } else if (!isSigned && !InitialVal->getValue().isMaxValue())
     NoUnsignedWrap = true;
   return PN;
 }
@@ -678,6 +699,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // using it.  We can currently only handle loops with a single exit.
   bool NoSignedWrap = false;
   bool NoUnsignedWrap = false;
+  bool SignExtendTripCount = false;
   const PHINode *OrigControllingPHI = 0;
   if (!isa<SCEVCouldNotCompute>(IterationCount) && ExitingBlock)
     // Can't rewrite non-branch yet.
@@ -686,14 +708,16 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         // Determine if the OrigIV will ever undergo overflow.
         OrigControllingPHI =
           TestOrigIVForWrap(L, BI, OrigCond,
-                            NoSignedWrap, NoUnsignedWrap);
+                            NoSignedWrap, NoUnsignedWrap,
+                            SignExtendTripCount);
 
         // We'll be replacing the original condition, so it'll be dead.
         DeadInsts.insert(OrigCond);
       }
 
       LinearFunctionTestReplace(L, IterationCount, IndVar,
-                                ExitingBlock, BI, Rewriter);
+                                ExitingBlock, BI, Rewriter,
+                                SignExtendTripCount);
     }
 
   // Now that we have a canonical induction variable, we can rewrite any

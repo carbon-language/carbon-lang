@@ -1,6 +1,7 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | not grep sext
-
-target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
+; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
+; RUN: grep sext %t | count 2
+; RUN: grep { = sext i16 %N to i64} %t
+; RUN: grep { = sext i32 %count to i64} %t
 
 define i64 @test(i64* nocapture %first, i32 %count) nounwind readonly {
 entry:

@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
-; RUN: grep sext %t | count 1
+; RUN: grep sext %t | count 2
+; RUN: grep { = sext i32 %n to i64} %t
 ; RUN: grep phi %t | count 1
 ; RUN: grep {phi i64} %t
 

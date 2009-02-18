@@ -755,6 +755,21 @@ SCEVHandle ScalarEvolution::getTruncateOrZeroExtend(const SCEVHandle &V,
   return getZeroExtendExpr(V, Ty);
 }
 
+/// getTruncateOrSignExtend - Return a SCEV corresponding to a conversion
+/// of the input value to the specified type.  If the type must be
+/// extended, it is sign extended.
+SCEVHandle ScalarEvolution::getTruncateOrSignExtend(const SCEVHandle &V,
+                                                    const Type *Ty) {
+  const Type *SrcTy = V->getType();
+  assert(SrcTy->isInteger() && Ty->isInteger() &&
+         "Cannot truncate or sign extend with non-integer arguments!");
+  if (SrcTy->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return V;  // No conversion
+  if (SrcTy->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits())
+    return getTruncateExpr(V, Ty);
+  return getSignExtendExpr(V, Ty);
+}
+
 // get - Get a canonical add expression, or something simpler if possible.
 SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty add!");
