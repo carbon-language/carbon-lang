@@ -56,6 +56,14 @@ namespace llvm {
       assert(0 && "This target doesn't implement emitFunctionStub!");
       return 0;
     }
+    
+    /// emitFunctionStubAtAddr - Use the specified MachineCodeEmitter object to
+    /// emit a small native function that simply calls Fn. Emit the stub into
+    /// the supplied buffer.
+    virtual void emitFunctionStubAtAddr(const Function* F, void *Fn,
+                                        void *Buffer, MachineCodeEmitter &MCE) {
+      assert(0 && "This target doesn't implement emitFunctionStubAtAddr!");
+    }
 
     /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
     /// specific basic block.

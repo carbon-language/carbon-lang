@@ -121,6 +121,10 @@ namespace llvm {
       assert(0 && "JIT specific function called!");
       abort();
     }
+    void startGVStub(const GlobalValue* F,  void *Buffer, unsigned StubSize) {
+      assert(0 && "JIT specific function called!");
+      abort();
+    }
     void *finishGVStub(const GlobalValue *F) {
       assert(0 && "JIT specific function called!");
       abort();

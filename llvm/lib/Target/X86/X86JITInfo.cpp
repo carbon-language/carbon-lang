@@ -490,6 +490,21 @@ void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
   return MCE.finishGVStub(F);
 }
 
+void X86JITInfo::emitFunctionStubAtAddr(const Function* F, void *Fn, void *Stub,
+                                        MachineCodeEmitter &MCE) {
+  // Note, we cast to intptr_t here to silence a -pedantic warning that 
+  // complains about casting a function pointer to a normal pointer.
+  MCE.startGVStub(F, Stub, 5);
+  MCE.emitByte(0xE9);
+#if defined (X86_64_JIT)
+  assert(((((intptr_t)Fn-MCE.getCurrentPCValue()-5) << 32) >> 32) == 
+          ((intptr_t)Fn-MCE.getCurrentPCValue()-5) 
+         && "PIC displacement does not fit in displacement field!");
+#endif
+  MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
+  MCE.finishGVStub(F);
+}
+
 /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
 /// specific basic block.
 uintptr_t X86JITInfo::getPICJumpTableEntry(uintptr_t BB, uintptr_t Entry) {

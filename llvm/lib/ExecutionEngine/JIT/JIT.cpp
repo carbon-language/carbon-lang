@@ -289,11 +289,28 @@ Module *JIT::removeModuleProvider(ModuleProvider *MP, std::string *E) {
   Module *result = ExecutionEngine::removeModuleProvider(MP, E);
   
   MutexGuard locked(lock);
-  if (Modules.empty()) {
+  
+  if (jitstate->getMP() == MP) {
     delete jitstate;
     jitstate = 0;
   }
   
+  if (!jitstate && !Modules.empty()) {
+    jitstate = new JITState(Modules[0]);
+
+    FunctionPassManager &PM = jitstate->getPM(locked);
+    PM.add(new TargetData(*TM.getTargetData()));
+    
+    // Turn the machine code intermediate representation into bytes in memory
+    // that may be executed.
+    if (TM.addPassesToEmitMachineCode(PM, *MCE, false /*fast*/)) {
+      cerr << "Target does not support machine code emission!\n";
+      abort();
+    }
+    
+    // Initialize passes.
+    PM.doInitialization();
+  }    
   return result;
 }
 
@@ -304,10 +321,28 @@ void JIT::deleteModuleProvider(ModuleProvider *MP, std::string *E) {
   ExecutionEngine::deleteModuleProvider(MP, E);
   
   MutexGuard locked(lock);
-  if (Modules.empty()) {
+  
+  if (jitstate->getMP() == MP) {
     delete jitstate;
     jitstate = 0;
   }
+
+  if (!jitstate && !Modules.empty()) {
+    jitstate = new JITState(Modules[0]);
+    
+    FunctionPassManager &PM = jitstate->getPM(locked);
+    PM.add(new TargetData(*TM.getTargetData()));
+    
+    // Turn the machine code intermediate representation into bytes in memory
+    // that may be executed.
+    if (TM.addPassesToEmitMachineCode(PM, *MCE, false /*fast*/)) {
+      cerr << "Target does not support machine code emission!\n";
+      abort();
+    }
+    
+    // Initialize passes.
+    PM.doInitialization();
+  }    
 }
 
 /// run - Start execution with the specified function and arguments.
@@ -488,14 +523,26 @@ void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {
   jitstate->getPM(locked).run(*F);
   isAlreadyCodeGenerating = false;
 
-  // If the function referred to a global variable that had not yet been
-  // emitted, it allocates memory for the global, but doesn't emit it yet.  Emit
-  // all of these globals now.
-  while (!jitstate->getPendingGlobals(locked).empty()) {
-    const GlobalVariable *GV = jitstate->getPendingGlobals(locked).back();
-    jitstate->getPendingGlobals(locked).pop_back();
-    EmitGlobalVariable(GV);
+  // If the function referred to another function that had not yet been
+  // read from bitcode, but we are jitting non-lazily, emit it now.
+  while (!jitstate->getPendingFunctions(locked).empty()) {
+    Function *PF = jitstate->getPendingFunctions(locked).back();
+    jitstate->getPendingFunctions(locked).pop_back();
+
+    // JIT the function
+    isAlreadyCodeGenerating = true;
+    jitstate->getPM(locked).run(*PF);
+    isAlreadyCodeGenerating = false;
+    
+    // Now that the function has been jitted, ask the JITEmitter to rewrite
+    // the stub with real address of the function.
+    updateFunctionStub(PF);
   }
+  
+  // If the JIT is configured to emit info so that dlsym can be used to
+  // rewrite stubs to external globals, do so now.
+  if (areDlsymStubsEnabled() && isLazyCompilationDisabled())
+    updateDlsymStubTable();
 }
 
 /// getPointerToFunction - This method is used to get the address of the
@@ -643,4 +690,9 @@ char* JIT::getMemoryForGV(const GlobalVariable* GV) {
   } else {
     return new char[GVSize];
   }
+}
+
+void JIT::addPendingFunction(Function *F) {
+  MutexGuard locked(lock);
+  jitstate->getPendingFunctions(locked).push_back(F);
 }

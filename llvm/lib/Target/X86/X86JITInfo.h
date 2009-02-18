@@ -49,6 +49,12 @@ namespace llvm {
     virtual void *emitFunctionStub(const Function* F, void *Fn,
                                    MachineCodeEmitter &MCE);
 
+    /// emitFunctionStubAtAddr - Use the specified MachineCodeEmitter object to
+    /// emit a small native function that simply calls Fn. Emit the stub into
+    /// the supplied buffer.
+    virtual void emitFunctionStubAtAddr(const Function* F, void *Fn,
+                                        void *Buffer, MachineCodeEmitter &MCE);
+
     /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
     /// specific basic block.
     virtual uintptr_t getPICJumpTableEntry(uintptr_t BB, uintptr_t JTBase);

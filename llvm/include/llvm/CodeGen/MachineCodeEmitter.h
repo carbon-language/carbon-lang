@@ -82,6 +82,13 @@ public:
   virtual void startGVStub(const GlobalValue* GV, unsigned StubSize,
                            unsigned Alignment = 1) = 0;
 
+  /// startGVStub - This callback is invoked when the JIT needs the address of a 
+  /// GV (e.g. function) that has not been code generated yet.  Buffer points to
+  /// memory already allocated for this stub.
+  ///
+  virtual void startGVStub(const GlobalValue* GV, void *Buffer,
+                           unsigned StubSize) = 0;
+  
   /// finishGVStub - This callback is invoked to terminate a GV stub.
   ///
   virtual void *finishGVStub(const GlobalValue* F) = 0;

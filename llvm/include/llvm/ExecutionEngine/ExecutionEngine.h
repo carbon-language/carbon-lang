@@ -66,6 +66,7 @@ class ExecutionEngine {
   bool LazyCompilationDisabled;
   bool GVCompilationDisabled;
   bool SymbolSearchingDisabled;
+  bool DlsymStubsEnabled;
 
 protected:
   /// Modules - This is a list of ModuleProvider's that we are JIT'ing from.  We
@@ -288,6 +289,13 @@ public:
     return SymbolSearchingDisabled;
   }
   
+  /// EnableDlsymStubs - 
+  void EnableDlsymStubs(bool Enabled = true) {
+    DlsymStubsEnabled = Enabled;
+  }
+  bool areDlsymStubsEnabled() const {
+    return DlsymStubsEnabled;
+  }
   
   /// InstallLazyFunctionCreator - If an unknown function is needed, the
   /// specified function pointer is invoked to create it.  If it returns null,

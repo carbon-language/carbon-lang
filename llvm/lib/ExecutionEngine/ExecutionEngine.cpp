@@ -42,6 +42,7 @@ ExecutionEngine::ExecutionEngine(ModuleProvider *P) : LazyFunctionCreator(0) {
   LazyCompilationDisabled = false;
   GVCompilationDisabled   = false;
   SymbolSearchingDisabled = false;
+  DlsymStubsEnabled       = false;
   Modules.push_back(P);
   assert(P && "ModuleProvider is null?");
 }
