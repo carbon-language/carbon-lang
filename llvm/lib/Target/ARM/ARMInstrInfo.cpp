@@ -509,20 +509,6 @@ bool ARMInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   return true;
 }
 
-static const MachineInstrBuilder &ARMInstrAddOperand(MachineInstrBuilder &MIB,
-                                                     MachineOperand &MO) {
-  if (MO.isReg())
-    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
-  else if (MO.isImm())
-    MIB = MIB.addImm(MO.getImm());
-  else if (MO.isFI())
-    MIB = MIB.addFrameIndex(MO.getIndex());
-  else
-    assert(0 && "Unknown operand for ARMInstrAddOperand!");
-
-  return MIB;
-}
-
 void ARMInstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
@@ -567,7 +553,7 @@ void ARMInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
       MachineInstrBuilder MIB = 
         BuildMI(MF, DL,  get(Opc)).addReg(SrcReg, false, false, isKill);
       for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-        MIB = ARMInstrAddOperand(MIB, Addr[i]);
+        MIB.addOperand(Addr[i]);
       NewMIs.push_back(MIB);
       return;
     }
@@ -582,7 +568,7 @@ void ARMInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   MachineInstrBuilder MIB = 
     BuildMI(MF, DL, get(Opc)).addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB = ARMInstrAddOperand(MIB, Addr[i]);
+    MIB.addOperand(Addr[i]);
   AddDefaultPred(MIB);
   NewMIs.push_back(MIB);
   return;
@@ -626,7 +612,7 @@ void ARMInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
       Opc = Addr[0].isFI() ? ARM::tRestore : ARM::tLDR;
       MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
       for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-        MIB = ARMInstrAddOperand(MIB, Addr[i]);
+        MIB.addOperand(Addr[i]);
       NewMIs.push_back(MIB);
       return;
     }
@@ -640,7 +626,7 @@ void ARMInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 
   MachineInstrBuilder MIB =  BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB = ARMInstrAddOperand(MIB, Addr[i]);
+    MIB.addOperand(Addr[i]);
   AddDefaultPred(MIB);
   NewMIs.push_back(MIB);
   return;

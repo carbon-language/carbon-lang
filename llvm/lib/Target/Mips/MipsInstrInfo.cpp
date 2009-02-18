@@ -228,15 +228,8 @@ void MipsInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
     .addReg(SrcReg, false, false, isKill);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
-    MachineOperand &MO = Addr[i];
-    if (MO.isReg())
-      MIB.addReg(MO.getReg());
-    else if (MO.isImm())
-      MIB.addImm(MO.getImm());
-    else
-      MIB.addFrameIndex(MO.getIndex());
-  }
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB.addOperand(Addr[i]);
   NewMIs.push_back(MIB);
   return;
 }
@@ -281,15 +274,8 @@ void MipsInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
-    MachineOperand &MO = Addr[i];
-    if (MO.isReg())
-      MIB.addReg(MO.getReg());
-    else if (MO.isImm())
-      MIB.addImm(MO.getImm());
-    else
-      MIB.addFrameIndex(MO.getIndex());
-  }
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB.addOperand(Addr[i]);
   NewMIs.push_back(MIB);
   return;
 }

@@ -179,17 +179,8 @@ void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   else
     assert(0 && "Can't load this register");
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
-    MachineOperand &MO = Addr[i];
-    if (MO.isReg())
-      MIB.addReg(MO.getReg());
-    else if (MO.isImm())
-      MIB.addImm(MO.getImm());
-    else {
-      assert(MO.isFI());
-      MIB.addFrameIndex(MO.getIndex());
-    }
-  }
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB.addOperand(Addr[i]);
   MIB.addReg(SrcReg, false, false, isKill);
   NewMIs.push_back(MIB);
   return;
@@ -227,17 +218,8 @@ void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     assert(0 && "Can't load this register");
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
-    MachineOperand &MO = Addr[i];
-    if (MO.isReg())
-      MIB.addReg(MO.getReg());
-    else if (MO.isImm())
-      MIB.addImm(MO.getImm());
-    else {
-      assert(MO.isFI());
-      MIB.addFrameIndex(MO.getIndex());
-    }
-  }
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB.addOperand(Addr[i]);
   NewMIs.push_back(MIB);
   return;
 }

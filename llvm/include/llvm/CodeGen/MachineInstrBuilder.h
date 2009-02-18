@@ -38,9 +38,10 @@ public:
   const
   MachineInstrBuilder &addReg(unsigned RegNo, bool isDef = false, 
                               bool isImp = false, bool isKill = false, 
-                              bool isDead = false, unsigned SubReg = 0) const {
+                              bool isDead = false, unsigned SubReg = 0,
+                              bool isEarlyClobber = false) const {
     MI->addOperand(MachineOperand::CreateReg(RegNo, isDef, isImp, isKill,
-                                             isDead, SubReg));
+                                             isDead, SubReg, isEarlyClobber));
     return *this;
   }
 
@@ -91,6 +92,28 @@ public:
 
   const MachineInstrBuilder &addMemOperand(const MachineMemOperand &MMO) const {
     MI->addMemOperand(*MI->getParent()->getParent(), MMO);
+    return *this;
+  }
+
+  const MachineInstrBuilder &addOperand(const MachineOperand &MO) const {
+    if (MO.isReg())
+      return addReg(MO.getReg(), MO.isDef(), MO.isImplicit(),
+                    MO.isKill(), MO.isDead(), MO.getSubReg(),
+                    MO.isEarlyClobber());
+    if (MO.isImm())
+      return addImm(MO.getImm());
+    if (MO.isFI())
+      return addFrameIndex(MO.getIndex());
+    if (MO.isGlobal())
+      return addGlobalAddress(MO.getGlobal(), MO.getOffset());
+    if (MO.isCPI())
+      return addConstantPoolIndex(MO.getIndex(), MO.getOffset());
+    if (MO.isSymbol())
+      return addExternalSymbol(MO.getSymbolName());
+    if (MO.isJTI())
+      return addJumpTableIndex(MO.getIndex());
+
+    assert(0 && "Unknown operand for MachineInstrBuilder::AddOperand!");
     return *this;
   }
 };

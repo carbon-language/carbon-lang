@@ -1603,29 +1603,6 @@ unsigned X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   return Count;
 }
 
-static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
-                                                     const MachineOperand &MO) {
-  if (MO.isReg())
-    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit(),
-                     MO.isKill(), MO.isDead(), MO.getSubReg());
-  else if (MO.isImm())
-    MIB = MIB.addImm(MO.getImm());
-  else if (MO.isFI())
-    MIB = MIB.addFrameIndex(MO.getIndex());
-  else if (MO.isGlobal())
-    MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
-  else if (MO.isCPI())
-    MIB = MIB.addConstantPoolIndex(MO.getIndex(), MO.getOffset());
-  else if (MO.isJTI())
-    MIB = MIB.addJumpTableIndex(MO.getIndex());
-  else if (MO.isSymbol())
-    MIB = MIB.addExternalSymbol(MO.getSymbolName());
-  else
-    assert(0 && "Unknown operand for X86InstrAddOperand!");
-
-  return MIB;
-}
-
 unsigned
 X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                            MachineBasicBlock *FBB,
@@ -1855,7 +1832,7 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB = X86InstrAddOperand(MIB, Addr[i]);
+    MIB.addOperand(Addr[i]);
   MIB.addReg(SrcReg, false, false, isKill);
   NewMIs.push_back(MIB);
 }
@@ -1921,7 +1898,7 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB = X86InstrAddOperand(MIB, Addr[i]);
+    MIB.addOperand(Addr[i]);
   NewMIs.push_back(MIB);
 }
 
@@ -1981,7 +1958,7 @@ static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
   MachineInstrBuilder MIB(NewMI);
   unsigned NumAddrOps = MOs.size();
   for (unsigned i = 0; i != NumAddrOps; ++i)
-    MIB = X86InstrAddOperand(MIB, MOs[i]);
+    MIB.addOperand(MOs[i]);
   if (NumAddrOps < 4)  // FrameIndex only
     MIB.addImm(1).addReg(0).addImm(0);
   
@@ -1989,11 +1966,11 @@ static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
   unsigned NumOps = MI->getDesc().getNumOperands()-2;
   for (unsigned i = 0; i != NumOps; ++i) {
     MachineOperand &MO = MI->getOperand(i+2);
-    MIB = X86InstrAddOperand(MIB, MO);
+    MIB.addOperand(MO);
   }
   for (unsigned i = NumOps+2, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    MIB = X86InstrAddOperand(MIB, MO);
+    MIB.addOperand(MO);
   }
   return MIB;
 }
@@ -2012,11 +1989,11 @@ static MachineInstr *FuseInst(MachineFunction &MF,
       assert(MO.isReg() && "Expected to fold into reg operand!");
       unsigned NumAddrOps = MOs.size();
       for (unsigned i = 0; i != NumAddrOps; ++i)
-        MIB = X86InstrAddOperand(MIB, MOs[i]);
+        MIB.addOperand(MOs[i]);
       if (NumAddrOps < 4)  // FrameIndex only
         MIB.addImm(1).addReg(0).addImm(0);
     } else {
-      MIB = X86InstrAddOperand(MIB, MO);
+      MIB.addOperand(MO);
     }
   }
   return MIB;
@@ -2030,7 +2007,7 @@ static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
 
   unsigned NumAddrOps = MOs.size();
   for (unsigned i = 0; i != NumAddrOps; ++i)
-    MIB = X86InstrAddOperand(MIB, MOs[i]);
+    MIB.addOperand(MOs[i]);
   if (NumAddrOps < 4)  // FrameIndex only
     MIB.addImm(1).addReg(0).addImm(0);
   return MIB.addImm(0);
@@ -2343,11 +2320,11 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   if (FoldedStore)
     MIB.addReg(Reg, true);
   for (unsigned i = 0, e = BeforeOps.size(); i != e; ++i)
-    MIB = X86InstrAddOperand(MIB, BeforeOps[i]);
+    MIB.addOperand(BeforeOps[i]);
   if (FoldedLoad)
     MIB.addReg(Reg);
   for (unsigned i = 0, e = AfterOps.size(); i != e; ++i)
-    MIB = X86InstrAddOperand(MIB, AfterOps[i]);
+    MIB.addOperand(AfterOps[i]);
   for (unsigned i = 0, e = ImpOps.size(); i != e; ++i) {
     MachineOperand &MO = ImpOps[i];
     MIB.addReg(MO.getReg(), MO.isDef(), true, MO.isKill(), MO.isDead());
