@@ -32,8 +32,6 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
                                                     unsigned ByteNo) const {
   assert(!SL->isWide() && "This doesn't work for wide strings yet");
   
-  llvm::SmallString<16> SpellingBuffer;
-  
   // Loop over all of the tokens in this string until we find the one that
   // contains the byte we're looking for.
   unsigned TokNo = 0;
@@ -64,21 +62,10 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     Token TheTok;
     TheLexer.LexFromRawLexer(TheTok);
     
-    // We generally care about the length of the token, which is known by the 
-    // lexer as long as we don't need to clean it (trigraphs/newlines).
-    unsigned TokNumBytes;
-    if (!TheTok.needsCleaning()) {
-      TokNumBytes = TheTok.getLength();
-    } else {
-      // Get the spelling of the token to remove trigraphs and escaped newlines.
-      SpellingBuffer.resize(TheTok.getLength());
-      const char *SpellingPtr = &SpellingBuffer[0];
-      TokNumBytes = PP.getSpelling(TheTok, SpellingPtr);
-    }
+    // Use the StringLiteralParser to compute the length of the string in bytes.
+    StringLiteralParser SLP(&TheTok, 1, PP);
+    unsigned TokNumBytes = SLP.GetStringLength();
     
-    // The length of the string is the token length minus the two quotes.
-    TokNumBytes -= 2;
-
     // If the byte is in this token, return the location of the byte.
     if (ByteNo < TokNumBytes ||
         (ByteNo == TokNumBytes && TokNo == SL->getNumConcatenated())) {
