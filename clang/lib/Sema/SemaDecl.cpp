@@ -660,7 +660,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       Diag(New->getLocation(), diag::warn_redecl_library_builtin) << New;
       Diag(Old->getLocation(), diag::note_previous_builtin_declaration)
         << Old << Old->getType();
-      return false;
+      return true;
     }
 
     PrevDiag = diag::note_previous_builtin_declaration;
