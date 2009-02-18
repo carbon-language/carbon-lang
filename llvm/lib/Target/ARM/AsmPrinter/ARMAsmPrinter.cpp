@@ -835,7 +835,9 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type " << name << ",%object\n";
 
-  if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal()) {
+  if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal() &&
+      !(isDarwin &&
+        TAI->SectionKindForGlobal(GVar) == SectionKind::RODataMergeStr)) {
     // FIXME: This seems to be pretty darwin-specific
 
     if (GVar->hasExternalLinkage()) {

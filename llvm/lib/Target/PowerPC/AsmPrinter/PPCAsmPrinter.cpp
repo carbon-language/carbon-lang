@@ -915,7 +915,8 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
       (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
-       GVar->mayBeOverridden())) {
+       GVar->mayBeOverridden()) &&
+      TAI->SectionKindForGlobal(GVar) != SectionKind::RODataMergeStr) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     if (GVar->hasExternalLinkage()) {

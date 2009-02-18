@@ -799,7 +799,9 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   SwitchToSection(TAI->SectionForGlobal(GVar));
 
-  if (C->isNullValue() && !GVar->hasSection()) {
+  if (C->isNullValue() && !GVar->hasSection() &&
+      !(Subtarget->isTargetDarwin() &&
+        TAI->SectionKindForGlobal(GVar) == SectionKind::RODataMergeStr)) {
     // FIXME: This seems to be pretty darwin-specific
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = TAI->getZeroFillDirective()) {
