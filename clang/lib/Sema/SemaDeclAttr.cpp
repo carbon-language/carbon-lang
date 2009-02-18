@@ -1177,8 +1177,9 @@ static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   unsigned Align = 0;
   if (Attr.getNumArgs() == 0) {
     // FIXME: This should be the target specific maximum alignment.
-    // (For now we just use 128 bits which is the maximum on X86.
+    // (For now we just use 128 bits which is the maximum on X86).
     Align = 128;
+    d->addAttr(new AlignedAttr(Align));
     return;
   }
   
