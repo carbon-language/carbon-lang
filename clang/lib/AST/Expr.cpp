@@ -886,40 +886,36 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                      isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
   case IntegerLiteralClass:
     Result = cast<IntegerLiteral>(this)->getValue();
+    Result.setIsUnsigned(getType()->isUnsignedIntegerType());    
     break;
   case CharacterLiteralClass: {
     const CharacterLiteral *CL = cast<CharacterLiteral>(this);
-    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
-    Result = CL->getValue();
-    Result.setIsUnsigned(!getType()->isSignedIntegerType());
+    Result = Ctx.MakeIntValue(CL->getValue(), getType());
     break;
   }
   case CXXBoolLiteralExprClass: {
     const CXXBoolLiteralExpr *BL = cast<CXXBoolLiteralExpr>(this);
-    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
-    Result = BL->getValue();
-    Result.setIsUnsigned(!getType()->isSignedIntegerType());
+    Result = Ctx.MakeIntValue(BL->getValue(), getType());
     break;
   }
   case CXXZeroInitValueExprClass:
-    Result.clear();
+    Result = Ctx.MakeIntValue(0, getType());
     break;
   case TypesCompatibleExprClass: {
     const TypesCompatibleExpr *TCE = cast<TypesCompatibleExpr>(this);
-    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
     // Per gcc docs "this built-in function ignores top level
     // qualifiers".  We need to use the canonical version to properly
     // be able to strip CRV qualifiers from the type.
     QualType T0 = Ctx.getCanonicalType(TCE->getArgType1());
     QualType T1 = Ctx.getCanonicalType(TCE->getArgType2());
-    Result = Ctx.typesAreCompatible(T0.getUnqualifiedType(), 
-                                    T1.getUnqualifiedType());
+    Result = Ctx.MakeIntValue(Ctx.typesAreCompatible(T0.getUnqualifiedType(), 
+                                                     T1.getUnqualifiedType()),
+                              getType());
     break;
   }
   case CallExprClass: 
   case CXXOperatorCallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
-    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
     
     // If this is a call to a builtin function, constant fold it otherwise
     // reject it.
@@ -974,9 +970,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     case UnaryOperator::Extension:
       return true;  // FIXME: this is wrong.
     case UnaryOperator::LNot: {
-      bool Val = Result == 0;
-      Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
-      Result = Val;
+      Result = Ctx.MakeIntValue(Result == 0, getType());
       break;
     }
     case UnaryOperator::Plus:
@@ -988,21 +982,18 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       Result = ~Result;
       break;
     case UnaryOperator::OffsetOf:
-      Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
-      Result = Exp->evaluateOffsetOf(Ctx);
+      Result = Ctx.MakeIntValue(Exp->evaluateOffsetOf(Ctx), getType());
+      break;
     }
     break;
   }
   case SizeOfAlignOfExprClass: {
     const SizeOfAlignOfExpr *Exp = cast<SizeOfAlignOfExpr>(this);
     
-    // Return the result in the right width.
-    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
-    
     QualType ArgTy = Exp->getTypeOfArgument();
     // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
     if (ArgTy->isVoidType()) {
-      Result = 1;
+      Result = Ctx.MakeIntValue(1, getType());
       break;
     }
     
@@ -1015,13 +1006,13 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     // Get information about the size or align.
     if (ArgTy->isFunctionType()) {
       // GCC extension: sizeof(function) = 1.
-      Result = Exp->isSizeOf() ? 1 : 4;
+      Result = Ctx.MakeIntValue(Exp->isSizeOf() ? 1 : 4, getType());
     } else { 
       unsigned CharSize = Ctx.Target.getCharWidth();
       if (Exp->isSizeOf())
-        Result = Ctx.getTypeSize(ArgTy) / CharSize;
+        Result = Ctx.MakeIntValue(Ctx.getTypeSize(ArgTy)/CharSize, getType());
       else
-        Result = Ctx.getTypeAlign(ArgTy) / CharSize;
+        Result = Ctx.MakeIntValue(Ctx.getTypeAlign(ArgTy)/CharSize, getType());
     }
     break;
   }
@@ -1030,8 +1021,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     llvm::APSInt LHS, RHS;
 
     // Initialize result to have correct signedness and width.
-    Result = llvm::APSInt(static_cast<uint32_t>(Ctx.getTypeSize(getType())),
-                          !getType()->isSignedIntegerType());
+    Result = Ctx.MakeIntValue(0, getType());
     
     // The LHS of a constant expr is always evaluated and needed.
     if (!Exp->getLHS()->isIntegerConstantExpr(LHS, Ctx, Loc, isEvaluated))
@@ -1119,7 +1109,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       Result = RHS;
       return true;
     }
-    
+
     assert(!Exp->isAssignmentOp() && "LHS can't be a constant expr!");
     break;
   }
@@ -1147,20 +1137,21 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       // If the input is signed, do a sign extend, noop, or truncate.
       if (getType()->isBooleanType()) {
         // Conversion to bool compares against zero.
-        Result = Result != 0;
-        Result.zextOrTrunc(DestWidth);
-      } else if (SubExpr->getType()->isSignedIntegerType())
+        Result = Ctx.MakeIntValue(Result != 0, getType());
+      } else if (SubExpr->getType()->isSignedIntegerType()) {
         Result.sextOrTrunc(DestWidth);
-      else  // If the input is unsigned, do a zero extend, noop, or truncate.
+        Result.setIsUnsigned(getType()->isUnsignedIntegerType());        
+      } else {  // If the input is unsigned, do a zero extend, noop,
+                // or truncate.
         Result.zextOrTrunc(DestWidth);
+        Result.setIsUnsigned(getType()->isUnsignedIntegerType());        
+      }
       break;
     }
     
     // Allow floating constants that are the immediate operands of casts or that
     // are parenthesized.
-    const Expr *Operand = SubExpr;
-    while (const ParenExpr *PE = dyn_cast<ParenExpr>(Operand))
-      Operand = PE->getSubExpr();
+    const Expr *Operand = SubExpr->IgnoreParens();
 
     // If this isn't a floating literal, we can't handle it.
     const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(Operand);
@@ -1171,8 +1162,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
 
     // If the destination is boolean, compare against zero.
     if (getType()->isBooleanType()) {
-      Result = !FL->getValue().isZero();
-      Result.zextOrTrunc(DestWidth);
+      Result = Ctx.MakeIntValue(!FL->getValue().isZero(), getType());
       break;
     }     
     
@@ -1187,6 +1177,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                                           llvm::APFloat::rmTowardZero,
                                           &ignored);
     Result = llvm::APInt(DestWidth, 4, Space);
+    Result.setIsUnsigned(getType()->isUnsignedIntegerType());
     break;
   }
   case ConditionalOperatorClass: {
@@ -1230,12 +1221,11 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
              ->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
 
   case UnaryTypeTraitExprClass:
-    Result = cast<UnaryTypeTraitExpr>(this)->EvaluateTrait();
-    return true;
+    Result = Ctx.MakeIntValue(cast<UnaryTypeTraitExpr>(this)->EvaluateTrait(),
+                              getType());
+    break;
   }
 
-  // Cases that are valid constant exprs fall through to here.
-  Result.setIsUnsigned(getType()->isUnsignedIntegerType());
   return true;
 }
 
