@@ -2462,7 +2462,10 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     if (Expr* Exp = dyn_cast_or_null<Expr>(*I)) {
       SVal X = CurrSt.GetSVal(Exp);      
       if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&X))
-        if (SV->getSymbol() == Sym) P->addRange(Exp->getSourceRange()); break;
+        if (SV->getSymbol() == Sym) {
+            P->addRange(Exp->getSourceRange());
+            break;
+        }
     }
   
   return P;
