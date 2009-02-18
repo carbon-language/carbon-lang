@@ -240,9 +240,10 @@ Parser::DeclTy *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
   if(Tok.is(tok::equal)) {
     SourceLocation EqualLoc = ConsumeToken();
     SourceLocation DefaultLoc = Tok.getLocation();
-    if (TypeTy *DefaultType = ParseTypeName())
+    TypeResult DefaultType = ParseTypeName();
+    if (!DefaultType.isInvalid())
       Actions.ActOnTypeParameterDefault(TypeParam, EqualLoc, DefaultLoc,
-                                        DefaultType);
+                                        DefaultType.get());
   }
   
   return TypeParam;
@@ -529,7 +530,10 @@ void *Parser::ParseTemplateArgument(bool &ArgIsType) {
   // Therefore, we initially try to parse a type-id.
   if (isCXXTypeId(TypeIdAsTemplateArgument)) {
     ArgIsType = true;
-    return ParseTypeName();
+    TypeResult TypeArg = ParseTypeName();
+    if (TypeArg.isInvalid())
+      return 0;
+    return TypeArg.get();
   }
 
   OwningExprResult ExprArg = ParseAssignmentExpression();

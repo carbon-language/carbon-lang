@@ -939,18 +939,22 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprError();
 
-    TypeTy *Ty = ParseTypeName();
+    TypeResult Ty = ParseTypeName();
 
     if (Tok.isNot(tok::r_paren)) {
       Diag(Tok, diag::err_expected_rparen);
       return ExprError();
     }
-    Res = Actions.ActOnVAArg(StartLoc, Expr.release(), Ty, ConsumeParen());
+    if (Ty.isInvalid())
+      Res = ExprError();
+    else
+      Res = Actions.ActOnVAArg(StartLoc, Expr.release(), Ty.get(), 
+                               ConsumeParen());
     break;
   }
   case tok::kw___builtin_offsetof: {
     SourceLocation TypeLoc = Tok.getLocation();
-    TypeTy *Ty = ParseTypeName();
+    TypeResult Ty = ParseTypeName();
 
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprError();
@@ -1001,9 +1005,12 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
         Comps.back().LocEnd =
           MatchRHSPunctuation(tok::r_square, Comps.back().LocStart);
       } else if (Tok.is(tok::r_paren)) {
-        Res = Actions.ActOnBuiltinOffsetOf(CurScope, StartLoc, TypeLoc, Ty, 
-                                           &Comps[0], Comps.size(), 
-                                           ConsumeParen());
+        if (Ty.isInvalid())
+          Res = ExprError();
+        else
+          Res = Actions.ActOnBuiltinOffsetOf(CurScope, StartLoc, TypeLoc, 
+                                             Ty.get(), &Comps[0], 
+                                             Comps.size(), ConsumeParen());
         break;
       } else {
         // Error occurred.
@@ -1075,18 +1082,23 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
     break;
   }
   case tok::kw___builtin_types_compatible_p:
-    TypeTy *Ty1 = ParseTypeName();
+    TypeResult Ty1 = ParseTypeName();
 
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprError();
 
-    TypeTy *Ty2 = ParseTypeName();
+    TypeResult Ty2 = ParseTypeName();
 
     if (Tok.isNot(tok::r_paren)) {
       Diag(Tok, diag::err_expected_rparen);
       return ExprError();
     }
-    Res = Actions.ActOnTypesCompatibleExpr(StartLoc, Ty1, Ty2, ConsumeParen());
+
+    if (Ty1.isInvalid() || Ty2.isInvalid())
+      Res = ExprError();
+    else
+      Res = Actions.ActOnTypesCompatibleExpr(StartLoc, Ty1.get(), Ty2.get(),
+                                             ConsumeParen());
     break;
   }
 
@@ -1129,7 +1141,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
 
   } else if (ExprType >= CompoundLiteral && isTypeIdInParens()) {
     // Otherwise, this is a compound literal expression or cast expression.
-    TypeTy *Ty = ParseTypeName();
+    TypeResult Ty = ParseTypeName();
 
     // Match the ')'.
     if (Tok.is(tok::r_paren))
@@ -1142,17 +1154,21 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
         Diag(OpenLoc, diag::ext_c99_compound_literal);
       Result = ParseInitializer();
       ExprType = CompoundLiteral;
-      if (!Result.isInvalid())
-        return Actions.ActOnCompoundLiteral(OpenLoc, Ty, RParenLoc,
+      if (!Result.isInvalid() && !Ty.isInvalid())
+        return Actions.ActOnCompoundLiteral(OpenLoc, Ty.get(), RParenLoc,
                                             move(Result));
       return move(Result);
     }
 
     if (ExprType == CastExpr) {
-      // Note that this doesn't parse the subsequence cast-expression, it just
+      // Note that this doesn't parse the subsequent cast-expression, it just
       // returns the parsed type to the callee.
       ExprType = CastExpr;
-      CastTy = Ty;
+
+      if (Ty.isInvalid())
+        return ExprError();
+
+      CastTy = Ty.get();
       return OwningExprResult(Actions);
     }
 

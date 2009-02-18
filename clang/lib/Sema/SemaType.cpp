@@ -29,7 +29,6 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
   QualType Result;
   
   switch (DS.getTypeSpecType()) {
-  default: assert(0 && "Unknown TypeSpecType!");
   case DeclSpec::TST_void:
     Result = Context.VoidTy;
     break;
@@ -169,6 +168,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     Result = Context.getTypeOfExpr(E);
     break;
   }
+  case DeclSpec::TST_error:
+    return QualType();
   }
   
   // Handle complex types.
@@ -277,8 +278,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
       // We default to a dependent type initially.  Can be modified by
       // the first return statement.
       T = Context.DependentTy;
-    else
+    else {
       T = ConvertDeclSpecToType(DS);
+      if (T.isNull())
+        return T;
+    }
     break;
   }
 
@@ -725,16 +729,13 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
   
   QualType T = GetTypeForDeclarator(D, S);
+  if (T.isNull())
+    return true;
 
-  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
-  
   // Check that there are no default arguments (C++ only).
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
 
-  // In this context, we *do not* check D.getInvalidType(). If the declarator
-  // type was invalid, GetTypeForDeclarator() still returns a "valid" type,
-  // though it will not reflect the user specified type.
   return T.getAsOpaquePtr();
 }
 

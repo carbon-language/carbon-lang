@@ -629,8 +629,11 @@ Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS) {
   ParseObjCTypeQualifierList(DS);
 
   TypeTy *Ty = 0;
-  if (isTypeSpecifierQualifier())
-    Ty = ParseTypeName();
+  if (isTypeSpecifierQualifier()) {
+    TypeResult TypeSpec = ParseTypeName();
+    if (!TypeSpec.isInvalid())
+      Ty = TypeSpec.get();
+  }
   
   if (Tok.is(tok::r_paren))
     ConsumeParen();
@@ -1627,12 +1630,15 @@ Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
 
   SourceLocation LParenLoc = ConsumeParen();
 
-  TypeTy *Ty = ParseTypeName();
+  TypeResult Ty = ParseTypeName();
 
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-  return Owned(Actions.ParseObjCEncodeExpression(AtLoc, EncLoc, LParenLoc, Ty,
-                                                 RParenLoc));
+  if (Ty.isInvalid())
+    return ExprError();
+
+  return Owned(Actions.ParseObjCEncodeExpression(AtLoc, EncLoc, LParenLoc, 
+                                                 Ty.get(), RParenLoc));
 }
 
 ///     objc-protocol-expression

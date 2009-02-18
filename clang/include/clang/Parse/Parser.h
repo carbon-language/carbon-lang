@@ -105,6 +105,7 @@ public:
   typedef Action::StmtResult        StmtResult;
   typedef Action::BaseResult        BaseResult;
   typedef Action::MemInitResult     MemInitResult;
+  typedef Action::TypeResult        TypeResult;
 
   typedef Action::OwningExprResult OwningExprResult;
   typedef Action::OwningStmtResult OwningStmtResult;
@@ -912,8 +913,7 @@ private:
   TPResult TryParseFunctionDeclarator();
   TPResult TryParseBracketDeclarator();
 
-
-  TypeTy *ParseTypeName();
+  TypeResult ParseTypeName();
   void ParseBlockId();
   // EndLoc, if non-NULL, is filled with the location of the last token of
   // the attribute list.

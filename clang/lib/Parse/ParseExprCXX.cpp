@@ -211,7 +211,7 @@ Parser::OwningExprResult Parser::ParseCXXCasts() {
   if (ExpectAndConsume(tok::less, diag::err_expected_less_after, CastName))
     return ExprError();
 
-  TypeTy *CastTy = ParseTypeName();
+  TypeResult CastTy = ParseTypeName();
   SourceLocation RAngleBracketLoc = Tok.getLocation();
 
   if (ExpectAndConsume(tok::greater, diag::err_expected_greater))
@@ -224,9 +224,10 @@ Parser::OwningExprResult Parser::ParseCXXCasts() {
 
   OwningExprResult Result(ParseSimpleParenExpression(RParenLoc));
 
-  if (!Result.isInvalid())
+  if (!Result.isInvalid() && !CastTy.isInvalid())
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
-                                       LAngleBracketLoc, CastTy, RAngleBracketLoc,
+                                       LAngleBracketLoc, CastTy.get(), 
+                                       RAngleBracketLoc,
                                        LParenLoc, Result.release(), RParenLoc);
 
   return move(Result);
@@ -253,16 +254,16 @@ Parser::OwningExprResult Parser::ParseCXXTypeid() {
   OwningExprResult Result(Actions);
 
   if (isTypeIdInParens()) {
-    TypeTy *Ty = ParseTypeName();
+    TypeResult Ty = ParseTypeName();
 
     // Match the ')'.
     MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-    if (!Ty)
+    if (Ty.isInvalid())
       return ExprError();
 
     Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/true,
-                                    Ty, RParenLoc);
+                                    Ty.get(), RParenLoc);
   } else {
     Result = ParseExpression();
 
@@ -919,9 +920,12 @@ Parser::OwningExprResult Parser::ParseUnaryTypeTrait()
   // FIXME: Error reporting absolutely sucks! If the this fails to parse a type
   // there will be cryptic errors about mismatched parentheses and missing
   // specifiers.
-  TypeTy *Ty = ParseTypeName();
+  TypeResult Ty = ParseTypeName();
 
   SourceLocation RParen = MatchRHSPunctuation(tok::r_paren, LParen);
 
-  return Actions.ActOnUnaryTypeTrait(UTT, Loc, LParen, Ty, RParen);
+  if (Ty.isInvalid())
+    return ExprError();
+
+  return Actions.ActOnUnaryTypeTrait(UTT, Loc, LParen, Ty.get(), RParen);
 }

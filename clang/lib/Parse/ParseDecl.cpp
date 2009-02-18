@@ -28,7 +28,7 @@ using namespace clang;
 ///         specifier-qualifier-list abstract-declarator[opt]
 ///
 /// Called type-id in C++.
-Parser::TypeTy *Parser::ParseTypeName() {
+Action::TypeResult Parser::ParseTypeName() {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseSpecifierQualifierList(DS);
@@ -37,7 +37,10 @@ Parser::TypeTy *Parser::ParseTypeName() {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
   
-  return Actions.ActOnTypeName(CurScope, DeclaratorInfo).get();
+  if (DeclaratorInfo.getInvalidType())
+    return true;
+
+  return Actions.ActOnTypeName(CurScope, DeclaratorInfo);
 }
 
 /// ParseAttributes - Parse a non-empty attributes list.
@@ -2383,8 +2386,10 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     }
 
     OwningExprResult Result(ParseCastExpression(true/*isUnaryExpression*/));
-    if (Result.isInvalid())
+    if (Result.isInvalid()) {
+      DS.SetTypeSpecError();
       return;
+    }
 
     const char *PrevSpec = 0;
     // Check for duplicate type specifiers.
@@ -2400,24 +2405,32 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
   
   if (isTypeIdInParens()) {
-    TypeTy *Ty = ParseTypeName();
+    Action::TypeResult Ty = ParseTypeName();
 
-    assert(Ty && "Parser::ParseTypeofSpecifier(): missing type");
+    assert((Ty.isInvalid() || Ty.get()) && 
+           "Parser::ParseTypeofSpecifier(): missing type");
 
     if (Tok.isNot(tok::r_paren)) {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);
       return;
     }
     RParenLoc = ConsumeParen();
-    const char *PrevSpec = 0;
-    // Check for duplicate type specifiers (e.g. "int typeof(int)").
-    if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec, Ty))
-      Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+
+    if (Ty.isInvalid())
+      DS.SetTypeSpecError();
+    else {
+      const char *PrevSpec = 0;
+      // Check for duplicate type specifiers (e.g. "int typeof(int)").
+      if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec, 
+                             Ty.get()))
+        Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+    }
   } else { // we have an expression.
     OwningExprResult Result(ParseExpression());
 
     if (Result.isInvalid() || Tok.isNot(tok::r_paren)) {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);
+      DS.SetTypeSpecError();
       return;
     }
     RParenLoc = ConsumeParen();
