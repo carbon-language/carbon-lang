@@ -265,7 +265,7 @@ time.</p>
 
 <div class="doc_code"><pre>
      static char ID;
-     Hello() : FunctionPass((intptr_t)&amp;ID) {}
+     Hello() : FunctionPass(&amp;ID) {}
 </pre></div><p>
 
 <p> This declares pass identifier used by LLVM to identify pass. This allows LLVM to
@@ -319,7 +319,7 @@ is supplied as fourth argument. </p>
   <b>struct Hello</b> : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
     
     static char ID;
-    Hello() : FunctionPass((intptr_t)&amp;ID) {}
+    Hello() : FunctionPass(&amp;ID) {}
 
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
       llvm::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";

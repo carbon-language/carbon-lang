@@ -77,7 +77,7 @@ class MachineLoopInfo : public MachineFunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  MachineLoopInfo() : MachineFunctionPass(intptr_t(&ID)) {
+  MachineLoopInfo() : MachineFunctionPass(&ID) {
     LI = new LoopInfoBase<MachineBasicBlock>();
   }
   

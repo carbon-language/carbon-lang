@@ -129,7 +129,7 @@ FunctionPass *llvm::createGCInfoPrinter(std::ostream &OS) {
 }
 
 Printer::Printer(std::ostream &OS)
-  : FunctionPass(intptr_t(&ID)), OS(OS) {}
+  : FunctionPass(&ID), OS(OS) {}
 
 const char *Printer::getPassName() const {
   return "Print Garbage Collector Information";
@@ -189,7 +189,7 @@ FunctionPass *llvm::createGCInfoDeleter() {
   return new Deleter();
 }
 
-Deleter::Deleter() : FunctionPass(intptr_t(&ID)) {}
+Deleter::Deleter() : FunctionPass(&ID) {}
 
 const char *Deleter::getPassName() const {
   return "Delete Garbage Collector Information";

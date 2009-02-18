@@ -122,7 +122,7 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
   static char ID;
   const PassInfo *PassToPrint;
   CallGraphSCCPassPrinter(const PassInfo *PI) : 
-    CallGraphSCCPass((intptr_t)&ID), PassToPrint(PI) {}
+    CallGraphSCCPass(&ID), PassToPrint(PI) {}
 
   virtual bool runOnSCC(const std::vector<CallGraphNode *>&SCC) {
     if (!Quiet) {
@@ -151,7 +151,7 @@ char CallGraphSCCPassPrinter::ID = 0;
 struct ModulePassPrinter : public ModulePass {
   static char ID;
   const PassInfo *PassToPrint;
-  ModulePassPrinter(const PassInfo *PI) : ModulePass((intptr_t)&ID),
+  ModulePassPrinter(const PassInfo *PI) : ModulePass(&ID),
                                           PassToPrint(PI) {}
 
   virtual bool runOnModule(Module &M) {
@@ -176,7 +176,7 @@ char ModulePassPrinter::ID = 0;
 struct FunctionPassPrinter : public FunctionPass {
   const PassInfo *PassToPrint;
   static char ID;
-  FunctionPassPrinter(const PassInfo *PI) : FunctionPass((intptr_t)&ID),
+  FunctionPassPrinter(const PassInfo *PI) : FunctionPass(&ID),
                                             PassToPrint(PI) {}
 
   virtual bool runOnFunction(Function &F) {
@@ -203,7 +203,7 @@ struct LoopPassPrinter : public LoopPass {
   static char ID;
   const PassInfo *PassToPrint;
   LoopPassPrinter(const PassInfo *PI) : 
-    LoopPass((intptr_t)&ID), PassToPrint(PI) {}
+    LoopPass(&ID), PassToPrint(PI) {}
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     if (!Quiet) {
@@ -229,7 +229,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
   const PassInfo *PassToPrint;
   static char ID;
   BasicBlockPassPrinter(const PassInfo *PI) 
-    : BasicBlockPass((intptr_t)&ID), PassToPrint(PI) {}
+    : BasicBlockPass(&ID), PassToPrint(PI) {}
 
   virtual bool runOnBasicBlock(BasicBlock &BB) {
     if (!Quiet) {

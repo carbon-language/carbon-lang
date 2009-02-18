@@ -313,7 +313,7 @@ FunctionPass *llvm::createGCMachineCodeAnalysisPass() {
 char MachineCodeAnalysis::ID = 0;
 
 MachineCodeAnalysis::MachineCodeAnalysis()
-  : MachineFunctionPass(intptr_t(&ID)) {}
+  : MachineFunctionPass(&ID) {}
 
 const char *MachineCodeAnalysis::getPassName() const {
   return "Analyze Machine Code For Garbage Collection";

@@ -937,7 +937,7 @@ class LoopInfo : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  LoopInfo() : FunctionPass(intptr_t(&ID)) {
+  LoopInfo() : FunctionPass(&ID) {
     LI = new LoopInfoBase<BasicBlock>();
   }
   
