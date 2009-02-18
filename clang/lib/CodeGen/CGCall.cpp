@@ -752,7 +752,9 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // %st1.
   case ComplexX87:
     assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
-    ResType = llvm::VectorType::get(llvm::Type::X86_FP80Ty, 2);
+    ResType = llvm::StructType::get(llvm::Type::X86_FP80Ty,
+                                    llvm::Type::X86_FP80Ty,
+                                    NULL);
     break;    
   }
 
@@ -1028,6 +1030,12 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   // copying to a temporary location in case the parameter is passed
   // in different register classes or requires an alignment greater
   // than 8 for general purpose registers and 16 for XMM registers.
+  //
+  // FIXME: This really results in shameful code when we end up
+  // needing to collect arguments from different places; often what
+  // should result in a simple assembling of a structure from
+  // scattered addresses has many more loads than necessary. Can we
+  // clean this up?
   const llvm::Type *LTy = CGF.ConvertTypeForMem(Ty);
   llvm::Value *RegAddr = 
     CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(VAListAddr, 3), 
@@ -1060,9 +1068,33 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     RegAddr = CGF.Builder.CreateBitCast(RegAddr, 
                                         llvm::PointerType::getUnqual(LTy));
   } else {
-    RegAddr = CGF.Builder.CreateGEP(RegAddr, fp_offset);
-    RegAddr = CGF.Builder.CreateBitCast(RegAddr, 
-                                        llvm::PointerType::getUnqual(LTy));
+    if (neededSSE == 1) {
+      RegAddr = CGF.Builder.CreateGEP(RegAddr, fp_offset);
+      RegAddr = CGF.Builder.CreateBitCast(RegAddr, 
+                                          llvm::PointerType::getUnqual(LTy));
+    } else {
+      assert(neededSSE == 2 && "Invalid number of needed registers!");
+      // SSE registers are spaced 16 bytes apart in the register save
+      // area, we need to collect the two eightbytes together.
+      llvm::Value *RegAddrLo = CGF.Builder.CreateGEP(RegAddr, fp_offset);
+      llvm::Value *RegAddrHi = 
+        CGF.Builder.CreateGEP(RegAddrLo, 
+                              llvm::ConstantInt::get(llvm::Type::Int32Ty, 16));
+      const llvm::Type *DblPtrTy = 
+        llvm::PointerType::getUnqual(llvm::Type::DoubleTy);
+      const llvm::StructType *ST = llvm::StructType::get(llvm::Type::DoubleTy,
+                                                         llvm::Type::DoubleTy,
+                                                         NULL);
+      llvm::Value *V, *Tmp = CGF.CreateTempAlloca(ST);
+      V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrLo, 
+                                                           DblPtrTy));
+      CGF.Builder.CreateStore(V, CGF.Builder.CreateStructGEP(Tmp, 0));
+      V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrHi, 
+                                                           DblPtrTy));
+      CGF.Builder.CreateStore(V, CGF.Builder.CreateStructGEP(Tmp, 1));
+      RegAddr = CGF.Builder.CreateBitCast(Tmp, 
+                                          llvm::PointerType::getUnqual(LTy));
+    }
   }
 
   // AMD64-ABI 3.5.7p5: Step 5. Set: 
