@@ -109,9 +109,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(const DiagnosticInfo &Info,
   // We always emit diagnostics about the instantiation points, not the spelling
   // points.  This more closely correlates to what the user writes.
   if (!Loc.isFileID()) {
-    SourceLocation OneLevelUp;
-    OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
-    
+    SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
     EmitCaretDiagnostic(Info, OneLevelUp, SM);
     
     Loc = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(Loc));
