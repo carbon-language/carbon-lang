@@ -51,36 +51,38 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
   // Verify that this composite string is acceptable for ObjC strings.
   if (CheckObjCString(S))
     return true;
-  
-  if (Context.getObjCConstantStringInterface().isNull()) {
-    // Initialize the constant string interface lazily. This assumes
-    // the NSConstantString interface is seen in this translation unit.
-    IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
-    NamedDecl *IFace = LookupName(TUScope, NSIdent, LookupOrdinaryName);
-    ObjCInterfaceDecl *strIFace = dyn_cast_or_null<ObjCInterfaceDecl>(IFace);
-    if (strIFace)
-      Context.setObjCConstantStringInterface(strIFace);
-  }
-  QualType t = Context.getObjCConstantStringInterface();
-  // If there is no NSConstantString interface defined then treat constant
-  // strings as untyped objects and let the runtime figure it out later.
-  if (t == QualType()) {
-    t = Context.getObjCIdType();
+
+  // Initialize the constant string interface lazily. This assumes
+  // the NSConstantString interface is seen in this translation unit.
+  QualType Ty = Context.getObjCConstantStringInterface();
+  if (!Ty.isNull()) {
+    Ty = Context.getPointerType(Ty);
   } else {
-    t = Context.getPointerType(t);
+    IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
+    NamedDecl *IF = LookupName(TUScope, NSIdent, LookupOrdinaryName);
+    if (ObjCInterfaceDecl *StrIF = dyn_cast_or_null<ObjCInterfaceDecl>(IF)) {
+      Context.setObjCConstantStringInterface(StrIF);
+      Ty = Context.getObjCConstantStringInterface();
+      Ty = Context.getPointerType(Ty);
+    } else {
+      // If there is no NSConstantString interface defined then treat constant
+      // strings as untyped objects and let the runtime figure it out later.
+      Ty = Context.getObjCIdType();
+    }
   }
-  return new (Context) ObjCStringLiteral(S, t, AtLoc);
+  
+  return new (Context) ObjCStringLiteral(S, Ty, AtLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                  SourceLocation EncodeLoc,
                                                  SourceLocation LParenLoc,
-                                                 TypeTy *Ty,
+                                                 TypeTy *ty,
                                                  SourceLocation RParenLoc) {
-  QualType EncodedType = QualType::getFromOpaquePtr(Ty);
+  QualType EncodedType = QualType::getFromOpaquePtr(ty);
 
-  QualType t = Context.getPointerType(Context.CharTy);
-  return new (Context) ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
+  QualType Ty = Context.getPointerType(Context.CharTy);
+  return new (Context) ObjCEncodeExpr(Ty, EncodedType, AtLoc, RParenLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
@@ -88,8 +90,8 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
                                                    SourceLocation SelLoc,
                                                    SourceLocation LParenLoc,
                                                    SourceLocation RParenLoc) {
-  QualType t = Context.getObjCSelType();
-  return new (Context) ObjCSelectorExpr(t, Sel, AtLoc, RParenLoc);
+  QualType Ty = Context.getObjCSelType();
+  return new (Context) ObjCSelectorExpr(Ty, Sel, AtLoc, RParenLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
@@ -103,11 +105,11 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
     return true;
   }
   
-  QualType t = Context.getObjCProtoType();
-  if (t.isNull())
+  QualType Ty = Context.getObjCProtoType();
+  if (Ty.isNull())
     return true;
-  t = Context.getPointerType(t);
-  return new (Context) ObjCProtocolExpr(t, PDecl, AtLoc, RParenLoc);
+  Ty = Context.getPointerType(Ty);
+  return new (Context) ObjCProtocolExpr(Ty, PDecl, AtLoc, RParenLoc);
 }
 
 bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs, 
