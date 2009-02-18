@@ -112,6 +112,24 @@ int g(int) { } <i>// error: redeclaration of "g" must also have the "overloadabl
 </pre>
 </blockquote>
 
+<p>Functions marked <tt>overloadable</tt> must have
+prototypes. Therefore, the following code is ill-formed:</p>
+
+<blockquote>
+<pre>
+int h() __attribute__((overloadable)); <i>// error: h does not have a prototype</i>
+</pre>
+</blockquote>
+
+<p>However, <tt>overloadable</tt> functions are allowed to use a
+ellipsis even if there are no named parameters (as is permitted in C++). This feature is particularly useful when combined with the <tt>unavailable</tt> attribute:</p>
+
+<blockquote>
+<pre>
+void honeypot(..) __attribute__((overloadable, unavailable)); <i>// calling me is an error</i>
+</pre>
+</blockquote>
+
 <p>Functions declared with the <tt>overloadable</tt> attribute have
 their names mangled according to the same rules as C++ function
 names. For example, the three <tt>tgsin</tt> functions in our

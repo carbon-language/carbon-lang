@@ -2036,6 +2036,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // int() -> no prototype, no '...'.
     D.AddTypeInfo(DeclaratorChunk::getFunction(/*prototype*/getLang().CPlusPlus,
                                                /*variadic*/ false,
+                                               SourceLocation(),
                                                /*arglist*/ 0, 0,
                                                DS.getTypeQualifiers(),
                                                LParenLoc, D),
@@ -2069,19 +2070,11 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   ParseScope PrototypeScope(this, Scope::FunctionPrototypeScope|Scope::DeclScope);
   
   bool IsVariadic = false;
+  SourceLocation EllipsisLoc;
   while (1) {
     if (Tok.is(tok::ellipsis)) {
       IsVariadic = true;
-      
-      // Check to see if this is "void(...)" which is not allowed.
-      if (!getLang().CPlusPlus && ParamInfo.empty()) {
-        // Otherwise, parse parameter type list.  If it starts with an
-        // ellipsis,  diagnose the malformed function.
-        Diag(Tok, diag::err_ellipsis_first_arg);
-        IsVariadic = false;       // Treat this like 'void()'.
-      }
-
-      ConsumeToken();     // Consume the ellipsis.
+      EllipsisLoc = ConsumeToken();     // Consume the ellipsis.
       break;
     }
     
@@ -2201,6 +2194,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
   // Remember that we parsed a function type, and remember the attributes.
   D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/true, IsVariadic,
+                                             EllipsisLoc,
                                              &ParamInfo[0], ParamInfo.size(),
                                              DS.getTypeQualifiers(),
                                              LParenLoc, D),
@@ -2273,6 +2267,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
   // function type is always a K&R style function type, which is not varargs and
   // has no prototype.
   D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/false, /*varargs*/false,
+                                             SourceLocation(),
                                              &ParamInfo[0], ParamInfo.size(),
                                              /*TypeQuals*/0, LParenLoc, D),
                 RLoc);

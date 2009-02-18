@@ -42,9 +42,12 @@ double promote(double) __attribute__((__overloadable__));
 long double promote(long double) __attribute__((__overloadable__));
 
 void promote() __attribute__((__overloadable__)); // expected-error{{'overloadable' function 'promote' must have a prototype}}
+void promote(...) __attribute__((__overloadable__, __unavailable__)); // \
+    // expected-note{{unavailable function is declared here}}
 
 void test_promote(short* sp) {
   promote(1.0);
+  promote(sp); // expected-error{{call to function 'promote' that has been intentionally made unavailable}}
 }
 
 

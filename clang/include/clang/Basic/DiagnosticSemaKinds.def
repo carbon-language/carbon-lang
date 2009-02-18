@@ -78,7 +78,8 @@ DIAG(warn_decl_in_param_list, WARNING,
      "declaration of %0 will not be visible outside of this function")
 DIAG(warn_implicit_function_decl, WARNING,
      "implicit declaration of function %0")
-
+DIAG(err_ellipsis_first_arg, ERROR,
+     "ISO C requires a named argument before '...'")
 DIAG(err_declarator_need_ident, ERROR,
      "declarator requires an identifier")
 DIAG(err_bad_language, ERROR,

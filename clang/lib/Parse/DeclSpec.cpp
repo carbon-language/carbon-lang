@@ -27,6 +27,7 @@ static DiagnosticBuilder Diag(Diagnostic &D, SourceLocation Loc,
 /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
 /// "TheDeclarator" is the declarator that this will be added to.
 DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
+                                             SourceLocation EllipsisLoc,
                                              ParamInfo *ArgInfo,
                                              unsigned NumArgs,
                                              unsigned TypeQuals,
@@ -37,6 +38,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
   I.Loc              = Loc;
   I.Fun.hasPrototype = hasProto;
   I.Fun.isVariadic   = isVariadic;
+  I.Fun.EllipsisLoc  = EllipsisLoc.getRawEncoding();
   I.Fun.DeleteArgInfo = false;
   I.Fun.TypeQuals    = TypeQuals;
   I.Fun.NumArgs      = NumArgs;

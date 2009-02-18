@@ -503,9 +503,13 @@ struct DeclaratorChunk {
     /// and is treated as a K&R-style function.
     bool hasPrototype : 1;
     
-    /// isVariadic - If this function has a prototype, and if that proto ends
-    /// with ',...)', this is true.
+    /// isVariadic - If this function has a prototype, and if that
+    /// proto ends with ',...)', this is true. When true, EllipsisLoc
+    /// contains the location of the ellipsis.
     bool isVariadic : 1;
+
+    /// When isVariadic is true, the location of the ellipsis in the source.
+    unsigned EllipsisLoc;
 
     /// The type qualifiers: const/volatile/restrict.
     /// The qualifier bitmask values are the same as in QualType. 
@@ -536,6 +540,10 @@ struct DeclaratorChunk {
     void destroy() {
       if (DeleteArgInfo)
         delete[] ArgInfo;
+    }
+
+    SourceLocation getEllipsisLoc() const {
+      return SourceLocation::getFromRawEncoding(EllipsisLoc);
     }
   };
 
@@ -646,6 +654,7 @@ struct DeclaratorChunk {
   /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
   /// "TheDeclarator" is the declarator that this will be added to.
   static DeclaratorChunk getFunction(bool hasProto, bool isVariadic,
+                                     SourceLocation EllipsisLoc,
                                      ParamInfo *ArgInfo, unsigned NumArgs,
                                      unsigned TypeQuals, SourceLocation Loc,
                                      Declarator &TheDeclarator);

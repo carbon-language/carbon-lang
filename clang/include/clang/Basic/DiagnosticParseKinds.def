@@ -162,8 +162,6 @@ DIAG(err_illegal_decl_reference_to_reference, ERROR,
      "%0 declared as a reference to a reference")
 DIAG(err_argument_required_after_attribute, ERROR,
      "argument required after attribute")
-DIAG(err_ellipsis_first_arg, ERROR,
-     "ISO C requires a named argument before '...'")
 DIAG(err_missing_param, ERROR,
      "expected parameter declarator")
 DIAG(err_unexpected_typedef_ident, ERROR,

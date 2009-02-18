@@ -474,6 +474,22 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
           // C++ 8.3.5p2: If the parameter-declaration-clause is empty, the
           // function takes no arguments.
           T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic,FTI.TypeQuals);
+        } else if (FTI.isVariadic) {
+          // We allow a zero-parameter variadic function in C if the
+          // function is marked with the "overloadable"
+          // attribute. Scan for this attribute now.
+          bool Overloadable = false;
+          for (const AttributeList *Attrs = D.getAttributes();
+               Attrs; Attrs = Attrs->getNext()) {
+            if (Attrs->getKind() == AttributeList::AT_overloadable) {
+              Overloadable = true;
+              break;
+            }
+          }
+
+          if (!Overloadable)
+            Diag(FTI.getEllipsisLoc(), diag::err_ellipsis_first_arg);
+          T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic, 0);
         } else {
           // Simple void foo(), where the incoming T is the result type.
           T = Context.getFunctionTypeNoProto(T);

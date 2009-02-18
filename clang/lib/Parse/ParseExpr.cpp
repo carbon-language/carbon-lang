@@ -1296,7 +1296,8 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     ParseBlockId();
   } else {
     // Otherwise, pretend we saw (void).
-    ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false,
+    ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false, 
+                                                       SourceLocation(),
                                                        0, 0, 0, CaretLoc,
                                                        ParamInfo),
                           CaretLoc);
