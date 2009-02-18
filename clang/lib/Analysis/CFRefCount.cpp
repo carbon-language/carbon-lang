@@ -131,7 +131,9 @@ static bool isRefType(QualType RetTy, const char* prefix,
 namespace {
 /// ArgEffect is used to summarize a function/method call's effect on a
 /// particular argument.
-enum ArgEffect { IncRef, DecRef, DoNothing, DoNothingByRef,
+enum ArgEffect { IncRefMsg, IncRef,  
+                 DecRefMsg, DecRef,
+                 DoNothing, DoNothingByRef,
                  StopTracking, MayEscape, SelfOwn, Autorelease };
 
 /// ArgEffects summarizes the effects of a function/method call on all of
@@ -1025,11 +1027,11 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   
   // Create the "retain" selector.
   E = RetEffect::MakeReceiverAlias();
-  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : IncRef);
+  Summ = getPersistentSummary(E, IncRefMsg);
   addNSObjectMethSummary(GetNullarySelector("retain", Ctx), Summ);
   
   // Create the "release" selector.
-  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
+  Summ = getPersistentSummary(E, DecRefMsg);
   addNSObjectMethSummary(GetNullarySelector("release", Ctx), Summ);
   
   // Create the "drain" selector.
@@ -1936,9 +1938,13 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
                                RefVal V, ArgEffect E,
                                RefVal::Kind& hasErr,
                                RefBindings::Factory& RefBFactory) {
-  
-  // FIXME: This dispatch can potentially be sped up by unifiying it into
-  //  a single switch statement.  Opt for simplicity for now.
+
+  // In GC mode [... release] and [... retain] do nothing.
+  switch (E) {
+    default: break;
+    case IncRefMsg: E = isGCEnabled() ? DoNothing : IncRef; break;
+    case DecRefMsg: E = isGCEnabled() ? DoNothing : DecRef; break;
+  }
   
   switch (E) {
     default:
@@ -1987,7 +1993,7 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
       
     case SelfOwn:
       V = V ^ RefVal::NotOwned;
-      // Fall-through.      
+      // Fall-through.
     case DecRef:
       switch (V.getKind()) {
         default:
@@ -2344,11 +2350,20 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     for (llvm::SmallVectorImpl<ArgEffect>::iterator I=AEffects.begin(),
           E=AEffects.end(); I != E; ++I) {
 
-      // Did we do an 'autorelease' in GC mode?
-      if (TF.isGCEnabled() && *I == Autorelease) {
-        os << "In GC mode an 'autorelease' has no effect.";
-        continue;
-      }
+      // A bunch of things have alternate behavior under GC.
+      if (TF.isGCEnabled())
+        switch (*I) {
+          default: break;
+          case Autorelease:
+            os << "In GC mode an 'autorelease' has no effect.";
+            continue;
+          case IncRefMsg:
+            os << "In GC mode the 'retain' message has no effect.";
+            continue;
+          case DecRefMsg:
+            os << "In GC mode the 'release' message has no effect.";
+            continue;
+        }
     }
   }
 
