@@ -29,7 +29,6 @@ using llvm::dyn_cast_or_null;
 namespace clang {
   class ASTContext;
   class Type;
-  class ObjCGCAttr;
   class TypedefDecl;
   class TemplateDecl;
   class TemplateTypeParmDecl;

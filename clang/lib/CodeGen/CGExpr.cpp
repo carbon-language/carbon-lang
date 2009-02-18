@@ -609,12 +609,16 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 static void SetVarDeclObjCAttribute(ASTContext &Ctx, const Decl *VD, 
                                     const QualType &Ty, LValue &LV)
 {
+#if 0
+// FIXME. ObjCGCAttr no more.
   if (const ObjCGCAttr *A = VD->getAttr<ObjCGCAttr>()) {
     ObjCGCAttr::GCAttrTypes attrType = A->getType();
     LValue::SetObjCType(attrType == ObjCGCAttr::Weak, 
                         attrType == ObjCGCAttr::Strong, LV);
   }
-  else if (Ctx.getLangOptions().ObjC1 &&
+  else 
+#endif
+  if (Ctx.getLangOptions().ObjC1 &&
            Ctx.getLangOptions().getGCMode() != LangOptions::NonGC) {
     // Default behavious under objective-c's gc is for objective-c pointers
     // be treated as though they were declared as __strong.
@@ -925,12 +929,16 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   LValue LV =  
     LValue::MakeAddr(V, 
                      Field->getType().getCVRQualifiers()|CVRQualifiers);
+#if 0
+// FIXME. ObjCGCAttr is no more.
   if (const ObjCGCAttr *A = Field->getAttr<ObjCGCAttr>()) {
     ObjCGCAttr::GCAttrTypes attrType = A->getType();
     // __weak attribute on a field is ignored.
     LValue::SetObjCType(false, attrType == ObjCGCAttr::Strong, LV);
   }
-  else if (CGM.getLangOptions().ObjC1 &&
+  else 
+#endif
+  if (CGM.getLangOptions().ObjC1 &&
            CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
     QualType ExprTy = Field->getType();
     if (getContext().isObjCObjectPointerType(ExprTy))

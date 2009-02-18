@@ -779,15 +779,20 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
 /// specified type.  The attribute contains 1 argument, weak or strong.
 static void HandleObjCGCTypeAttribute(QualType &Type, 
                                       const AttributeList &Attr, Sema &S){
-  // FIXME. Needs more work for this to make sense.
+  // FIXME. change error code.
   if (Type.getObjCGCAttr() != QualType::GCNone) {
     S.Diag(Attr.getLoc(), diag::err_attribute_address_multiple_qualifiers);
     return;
   }
   
   // Check the attribute arguments.
+  if (!Attr.getParameterName()) {    
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "objc_gc" << 1;
+    return;
+  }
   QualType::GCAttrTypes attr;
-  if (!Attr.getParameterName() || Attr.getNumArgs() != 0) {
+  if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }

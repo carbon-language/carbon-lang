@@ -41,7 +41,6 @@ public:
     NonNull,
     NoReturn,
     NoThrow,
-    ObjCGC,
     ObjCNSObject,
     ObjCException,
     Overloadable, // Clang-specific
@@ -427,25 +426,6 @@ public:
 
   static bool classof(const Attr *A) { return A->getKind() == TransparentUnion; }
   static bool classof(const TransparentUnionAttr *A) { return true; }
-};
-
-class ObjCGCAttr : public Attr {
-public:
-  enum GCAttrTypes {
-    Weak = 0,
-    Strong
-  };
-private:
-  GCAttrTypes GCAttrType;
-public:
-  ObjCGCAttr(GCAttrTypes t) : Attr(ObjCGC), GCAttrType(t) {}
-
-  GCAttrTypes getType() const { return GCAttrType; }
-
-  // Implement isa/cast/dyncast/etc.
-
-  static bool classof(const Attr *A) { return A->getKind() == ObjCGC; }
-  static bool classof(const ObjCGCAttr *A) { return true; }
 };
 
 class ObjCNSObjectAttr : public Attr {

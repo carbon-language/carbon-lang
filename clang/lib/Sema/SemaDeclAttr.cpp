@@ -568,35 +568,6 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new VisibilityAttr(type));
 }
 
-static void HandleObjCGCAttr(Decl *D, const AttributeList &Attr, Sema &S) {
-  if (!Attr.getParameterName()) {    
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << "objc_gc" << 1;
-    return;
-  }
-  
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
-    return;
-  }
-
-  ObjCGCAttr::GCAttrTypes type;
-  if (Attr.getParameterName()->isStr("weak")) {
-    if (isa<FieldDecl>(D) && !isa<ObjCIvarDecl>(D))
-      S.Diag(Attr.getLoc(), diag::warn_attribute_weak_on_field);
-    type = ObjCGCAttr::Weak;
-  }
-  else if (Attr.getParameterName()->isStr("strong"))
-    type = ObjCGCAttr::Strong;
-  else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
-      << "objc_gc" << Attr.getParameterName();
-    return;
-  }
-  
-  D->addAttr(new ObjCGCAttr(type));
-}
-
 static void HandleObjCExceptionAttr(Decl *D, const AttributeList &Attr,
                                     Sema &S) {
   if (Attr.getNumArgs() != 0) {
@@ -1391,7 +1362,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   switch (Attr.getKind()) {
   case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;
   case AttributeList::AT_address_space:
-    // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
+  case AttributeList::AT_objc_gc:
+    // Ignore these, these are type attributes, handled by ProcessTypeAttributes.
     break;
   case AttributeList::AT_alias:       HandleAliasAttr     (D, Attr, S); break;
   case AttributeList::AT_aligned:     HandleAlignedAttr   (D, Attr, S); break;
@@ -1426,7 +1398,6 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);
     break;
-  case AttributeList::AT_objc_gc:     HandleObjCGCAttr    (D, Attr, S); break;
   case AttributeList::AT_objc_exception:
     HandleObjCExceptionAttr(D, Attr, S);
     break;
