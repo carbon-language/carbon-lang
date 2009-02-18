@@ -1013,7 +1013,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                 llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                                        176 - neededSSE * 8),
                                 "fits_in_fp");
-    InRegs = InRegs ? CGF.Builder.CreateOr(InRegs, FitsInFP) : FitsInFP;
+    InRegs = InRegs ? CGF.Builder.CreateAnd(InRegs, FitsInFP) : FitsInFP;
   }
 
   llvm::BasicBlock *InRegBlock = CGF.createBasicBlock("vaarg.in_reg");
