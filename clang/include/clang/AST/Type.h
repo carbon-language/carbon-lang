@@ -463,7 +463,7 @@ protected:
   ///  be serialized.
   // FIXME: Make this abstract once implemented.
   virtual void EmitImpl(llvm::Serializer& S) const {
-    assert (false && "Serializization for type not supported.");
+    assert(false && "Serializization for type not supported.");
   }
 };
 
@@ -926,7 +926,7 @@ public:
   friend class StmtIteratorBase;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
-    assert (0 && "Cannnot unique VariableArrayTypes.");
+    assert(0 && "Cannnot unique VariableArrayTypes.");
   }
   
 protected:  
@@ -974,7 +974,7 @@ public:
   friend class StmtIteratorBase;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
-    assert (0 && "Cannnot unique DependentSizedArrayTypes.");
+    assert(0 && "Cannnot unique DependentSizedArrayTypes.");
   }
   
 protected:  
@@ -1752,7 +1752,7 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
       return AT->getElementType().getObjCGCAttr();
   if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CT))
     return EXTQT->getObjCGCAttr();
-    return GCNone;
+  return GCNone;
 }
   
 /// isMoreQualifiedThan - Determine whether this type is more
