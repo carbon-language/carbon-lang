@@ -265,7 +265,8 @@ public:
 } // end anonymous namespace
 
 static bool EvaluatePointer(const Expr* E, APValue& Result, EvalInfo &Info) {
-  if (!E->getType()->isPointerType())
+  if (!E->getType()->isPointerType()
+      && !E->getType()->isBlockPointerType())
     return false;
   Result = PointerExprEvaluator(Info).Visit(const_cast<Expr*>(E));
   return Result.isLValue();
@@ -1533,7 +1534,8 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
       return false;
     
     Result.Val = APValue(sInt);
-  } else if (getType()->isPointerType()) {
+  } else if (getType()->isPointerType()
+             || getType()->isBlockPointerType()) {
     if (!EvaluatePointer(this, Result.Val, Info))
       return false;
   } else if (getType()->isRealFloatingType()) {
