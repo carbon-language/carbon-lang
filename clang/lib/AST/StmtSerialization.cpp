@@ -971,8 +971,8 @@ StringLiteral* StringLiteral::CreateImpl(Deserializer& D, ASTContext& C) {
   bool isWide = D.ReadBool();
   unsigned ByteLength = D.ReadInt();
   
-  StringLiteral* sl = new (C, llvm::alignof<StringLiteral>())
-    StringLiteral(C, NULL, 0, isWide, t, SourceLocation());
+  StringLiteral* sl = StringLiteral::Create(C, NULL, 0, isWide, t,
+                                            SourceLocation());
 
   char* StrData = new (C, llvm::alignof<char>()) char[ByteLength];
   for (unsigned i = 0; i < ByteLength; ++i)

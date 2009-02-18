@@ -37,35 +37,29 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
   return V.convertToDouble();
 }
 
-
-StringLiteral::StringLiteral(ASTContext& C, const char *strData,
-                             unsigned byteLength, bool Wide, QualType Ty,
-                             SourceLocation Loc) : 
-    Expr(StringLiteralClass, Ty) {
+StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
+                                     unsigned ByteLength, bool Wide,
+                                     QualType Ty,
+                                     SourceLocation *Loc, unsigned NumStrs) {
+  // Allocate enough space for the StringLiteral plus an array of locations for
+  // any concatenated string tokens.
+  void *Mem = C.Allocate(sizeof(StringLiteral)+
+                         sizeof(SourceLocation)*(NumStrs-1),
+                         llvm::alignof<StringLiteral>());
+  StringLiteral *SL = new (Mem) StringLiteral(Ty);
+  
   // OPTIMIZE: could allocate this appended to the StringLiteral.
-  char *AStrData = new (C, 1) char[byteLength];
-  memcpy(AStrData, strData, byteLength);
-  StrData = AStrData;
-  ByteLength = byteLength;
-  IsWide = Wide;
-  TokLocs[0] = Loc;
-  NumConcatenated = 1;
-}
+  char *AStrData = new (C, 1) char[ByteLength];
+  memcpy(AStrData, StrData, ByteLength);
+  SL->StrData = AStrData;
+  SL->ByteLength = ByteLength;
+  SL->IsWide = Wide;
+  SL->TokLocs[0] = Loc[0];
+  SL->NumConcatenated = NumStrs;
 
-StringLiteral::StringLiteral(ASTContext &C, const char *strData, 
-                             unsigned byteLength, bool Wide, QualType Ty,
-                             SourceLocation *Loc, unsigned NumStrs) : 
-    Expr(StringLiteralClass, Ty) {
-  // OPTIMIZE: could allocate this appended to the StringLiteral.
-  char *AStrData = new (C, 1) char[byteLength];
-  memcpy(AStrData, strData, byteLength);
-  StrData = AStrData;
-  ByteLength = byteLength;
-  IsWide = Wide;
-  TokLocs[0] = Loc[0];
-  NumConcatenated = NumStrs;
   if (NumStrs != 1)
-    memcpy(&TokLocs[1], Loc+1, sizeof(SourceLocation)*(NumStrs-1));
+    memcpy(&SL->TokLocs[1], Loc+1, sizeof(SourceLocation)*(NumStrs-1));
+  return SL;
 }
 
 
@@ -73,26 +67,6 @@ void StringLiteral::Destroy(ASTContext &C) {
   C.Deallocate(const_cast<char*>(StrData));
   this->~StringLiteral();
   C.Deallocate(this);
-}
-
-bool UnaryOperator::isPostfix(Opcode Op) {
-  switch (Op) {
-  case PostInc:
-  case PostDec:
-    return true;
-  default:
-    return false;
-  }
-}
-
-bool UnaryOperator::isPrefix(Opcode Op) {
-  switch (Op) {
-    case PreInc:
-    case PreDec:
-      return true;
-    default:
-      return false;
-  }
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it

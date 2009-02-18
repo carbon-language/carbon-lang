@@ -51,9 +51,9 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
       S->Destroy(Context);
     }
     // FIXME: PASS LOCATIONS PROPERLY.
-    S = new (Context) StringLiteral(Context, strBuf, Length, false,
-                                    Context.getPointerType(Context.CharTy),
-                                    AtLocs[0]);
+    S = StringLiteral::Create(Context, strBuf, Length, false,
+                              Context.getPointerType(Context.CharTy),
+                              AtLocs[0]);
   }
   
   // Verify that this composite string is acceptable for ObjC strings.

@@ -1734,9 +1734,9 @@ Stmt *RewriteObjC::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   QualType StrType = Context->getPointerType(Context->CharTy);
   std::string StrEncoding;
   Context->getObjCEncodingForType(Exp->getEncodedType(), StrEncoding);
-  Expr *Replacement = new (Context) StringLiteral(*Context,StrEncoding.c_str(),
-                                        StrEncoding.length(), false, StrType, 
-                                        SourceLocation());
+  Expr *Replacement = StringLiteral::Create(*Context,StrEncoding.c_str(),
+                                            StrEncoding.length(), false,StrType,
+                                            SourceLocation());
   ReplaceStmt(Exp, Replacement);
   
   // Replace this subexpr in the parent.
@@ -1751,7 +1751,7 @@ Stmt *RewriteObjC::RewriteAtSelector(ObjCSelectorExpr *Exp) {
   // Create a call to sel_registerName("selName").
   llvm::SmallVector<Expr*, 8> SelExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
-  SelExprs.push_back(new (Context) StringLiteral((*Context), 
+  SelExprs.push_back(StringLiteral::Create(*Context, 
                                        Exp->getSelector().getAsString().c_str(),
                                        Exp->getSelector().getAsString().size(),
                                        false, argType, SourceLocation()));
@@ -2289,7 +2289,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
             SourceLocation())); 
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
-      ClsExprs.push_back(new (Context) StringLiteral(*Context,
+      ClsExprs.push_back(StringLiteral::Create(*Context,
                                         SuperDecl->getIdentifier()->getName(), 
                                         SuperDecl->getIdentifier()->getLength(),
                                         false, argType, SourceLocation()));
@@ -2341,10 +2341,11 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     } else {
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
-      ClsExprs.push_back(new (Context) StringLiteral(*Context,
-                                           clsName->getName(), 
-                                           clsName->getLength(),
-                                           false, argType, SourceLocation()));
+      ClsExprs.push_back(StringLiteral::Create(*Context,
+                                               clsName->getName(), 
+                                               clsName->getLength(),
+                                               false, argType,
+                                               SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                    &ClsExprs[0], 
                                                    ClsExprs.size());
@@ -2371,7 +2372,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
-      ClsExprs.push_back(new (Context) StringLiteral(*Context, 
+      ClsExprs.push_back(StringLiteral::Create(*Context, 
                                         SuperDecl->getIdentifier()->getName(), 
                                         SuperDecl->getIdentifier()->getLength(),
                                         false, argType, SourceLocation()));
@@ -2429,7 +2430,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   // Create a call to sel_registerName("selName"), it will be the 2nd argument.
   llvm::SmallVector<Expr*, 8> SelExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
-  SelExprs.push_back(new (Context) StringLiteral(*Context, 
+  SelExprs.push_back(StringLiteral::Create(*Context, 
                                        Exp->getSelector().getAsString().c_str(),
                                        Exp->getSelector().getAsString().size(),
                                        false, argType, SourceLocation()));
@@ -2596,8 +2597,7 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   // Create a call to objc_getProtocol("ProtocolName").
   llvm::SmallVector<Expr*, 8> ProtoExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
-  ProtoExprs.push_back(new (Context) 
-                       StringLiteral(*Context,
+  ProtoExprs.push_back(StringLiteral::Create(*Context,
                                 Exp->getProtocol()->getNameAsCString(),
                                 strlen(Exp->getProtocol()->getNameAsCString()),
                                 false, argType, SourceLocation()));

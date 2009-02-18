@@ -486,11 +486,21 @@ class StringLiteral : public Expr {
   bool IsWide;
   unsigned NumConcatenated;
   SourceLocation TokLocs[1];
+
+  StringLiteral(QualType Ty) : Expr(StringLiteralClass, Ty) {}
 public:
-  StringLiteral(ASTContext &C, const char *StrData, unsigned ByteLength,
-                bool Wide, QualType t, SourceLocation Loc);
-  StringLiteral(ASTContext &C, const char *StrData, unsigned ByteLength,
-                bool Wide, QualType t, SourceLocation *Loc, unsigned NumStrs);
+  /// This is the "fully general" constructor that allows representation of
+  /// strings formed from multiple concatenated tokens.
+  static StringLiteral *Create(ASTContext &C, const char *StrData,
+                               unsigned ByteLength, bool Wide, QualType Ty,
+                               SourceLocation *Loc, unsigned NumStrs);
+
+  /// Simple constructor for string literals made from one token.
+  static StringLiteral *Create(ASTContext &C, const char *StrData, 
+                               unsigned ByteLength,
+                               bool Wide, QualType Ty, SourceLocation Loc) {
+    return Create(C, StrData, ByteLength, Wide, Ty, &Loc, 1);
+  }
   
   void Destroy(ASTContext &C);
   
@@ -598,10 +608,14 @@ public:
   SourceLocation getOperatorLoc() const { return Loc; }
   
   /// isPostfix - Return true if this is a postfix operation, like x++.
-  static bool isPostfix(Opcode Op);
+  static bool isPostfix(Opcode Op) {
+    return Op == PostInc || Op == PostDec;
+  }
 
   /// isPostfix - Return true if this is a prefix operation, like --x.
-  static bool isPrefix(Opcode Op);
+  static bool isPrefix(Opcode Op) {
+    return Op == PreInc || Op == PreDec;
+  }
 
   bool isPrefix() const { return isPrefix(Opc); }
   bool isPostfix() const { return isPostfix(Opc); }

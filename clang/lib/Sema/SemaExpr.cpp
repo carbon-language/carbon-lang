@@ -352,17 +352,13 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   StrTy = Context.getConstantArrayType(StrTy,
                                    llvm::APInt(32, Literal.GetStringLength()+1),
                                        ArrayType::Normal, 0);
-  // Allocate enough space for the StringLiteral plus an array of locations for
-  // any concatenated strings.
-  void *Mem = Context.Allocate(sizeof(StringLiteral)+
-                               sizeof(SourceLocation)*(NumStringToks-1));
   
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
-  return Owned(new (Mem) StringLiteral(Context, Literal.GetString(), 
-                                       Literal.GetStringLength(),
-                                       Literal.AnyWide, StrTy,
-                                       &StringTokLocs[0],
-                                       StringTokLocs.size()));
+  return Owned(StringLiteral::Create(Context, Literal.GetString(), 
+                                     Literal.GetStringLength(),
+                                     Literal.AnyWide, StrTy,
+                                     &StringTokLocs[0],
+                                     StringTokLocs.size()));
 }
 
 /// ShouldSnapshotBlockValueReference - Return true if a reference inside of
