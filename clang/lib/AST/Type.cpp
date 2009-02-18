@@ -1053,13 +1053,13 @@ void ComplexType::getAsStringInternal(std::string &S) const {
 }
 
 void ExtQualType::getAsStringInternal(std::string &S) const {
-  bool space = false;
+  bool NeedsSpace = false;
   if (AddressSpace) {
     S = "__attribute__((address_space("+llvm::utostr_32(AddressSpace)+")))" + S;
-    space = true;
+    NeedsSpace = true;
   }
   if (GCAttrType != QualType::GCNone) {
-    if (space)
+    if (NeedsSpace)
       S += ' ';
     S += "__attribute__((objc_gc(";
     if (GCAttrType == QualType::Weak)

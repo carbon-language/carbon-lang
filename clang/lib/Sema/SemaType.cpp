@@ -778,7 +778,7 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
 /// HandleObjCGCTypeAttribute - Process an objc's gc attribute on the
 /// specified type.  The attribute contains 1 argument, weak or strong.
 static void HandleObjCGCTypeAttribute(QualType &Type, 
-                                      const AttributeList &Attr, Sema &S){
+                                      const AttributeList &Attr, Sema &S) {
   // FIXME. change error code.
   if (Type.getObjCGCAttr() != QualType::GCNone) {
     S.Diag(Attr.getLoc(), diag::err_attribute_multiple_objc_gc);
@@ -791,22 +791,22 @@ static void HandleObjCGCTypeAttribute(QualType &Type,
       << "objc_gc" << 1;
     return;
   }
-  QualType::GCAttrTypes attr;
+  QualType::GCAttrTypes GCAttr;
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
   if (Attr.getParameterName()->isStr("weak")) 
-    attr = QualType::Weak;
+    GCAttr = QualType::Weak;
   else if (Attr.getParameterName()->isStr("strong"))
-    attr = QualType::Strong;
+    GCAttr = QualType::Strong;
   else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
       << "objc_gc" << Attr.getParameterName();
     return;
   }
   
-  Type = S.Context.getObjCGCQualType(Type, attr);
+  Type = S.Context.getObjCGCQualType(Type, GCAttr);
 }
 
 void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
