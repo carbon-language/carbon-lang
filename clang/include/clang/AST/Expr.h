@@ -480,22 +480,33 @@ class StringLiteral : public Expr {
   const char *StrData;
   unsigned ByteLength;
   bool IsWide;
-  // if the StringLiteral was composed using token pasting, both locations
+  // If the StringLiteral was composed using token pasting, both locations
   // are needed. If not (the common case), firstTokLoc == lastTokLoc.
-  // FIXME: if space becomes an issue, we should create a sub-class.
-  SourceLocation firstTokLoc, lastTokLoc;
+  unsigned NumConcatenated;
+  SourceLocation TokLocs[1];
 public:
-  StringLiteral(ASTContext& C, const char *strData, unsigned byteLength,
-                bool Wide, QualType t, SourceLocation b, SourceLocation e);
+  StringLiteral(ASTContext &C, const char *StrData, unsigned ByteLength,
+                bool Wide, QualType t, SourceLocation Loc);
+  StringLiteral(ASTContext &C, const char *StrData, unsigned ByteLength,
+                bool Wide, QualType t, SourceLocation *Loc, unsigned NumStrs);
   
-  void Destroy(ASTContext& C);
+  void Destroy(ASTContext &C);
   
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
   bool isWide() const { return IsWide; }
+  
+  /// getNumConcatenated - Get the number of string literal tokens that were
+  /// concatenated in translation phase #6 to form this string literal.
+  unsigned getNumConcatenated() const { return NumConcatenated; }
+  
+  SourceLocation getStrTokenLoc(unsigned TokNum) const {
+    assert(TokNum < NumConcatenated && "Invalid tok number");
+    return TokLocs[TokNum];
+  }
 
   virtual SourceRange getSourceRange() const { 
-    return SourceRange(firstTokLoc,lastTokLoc); 
+    return SourceRange(TokLocs[0], TokLocs[NumConcatenated-1]); 
   }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == StringLiteralClass; 

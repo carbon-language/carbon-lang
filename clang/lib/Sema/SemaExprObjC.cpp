@@ -29,10 +29,12 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
     unsigned Length = 0;
     for (unsigned i = 0; i < NumStrings; i++)
       Length += static_cast<StringLiteral *>(Strings[i])->getByteLength();
-    char *strBuf = new char [Length];
+    
+    // FIXME: This should not be allocated by SEMA!
+    char *strBuf = new char[Length];
     char *p = strBuf;
     bool isWide = false;
-    for (unsigned i = 0; i < NumStrings; i++) {
+    for (unsigned i = 0; i != NumStrings; ++i) {
       S = static_cast<StringLiteral *>(Strings[i]);
       if (S->isWide())
         isWide = true;
@@ -40,9 +42,10 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
       p += S->getByteLength();
       S->Destroy(Context);
     }
-    S = new (Context, 8) StringLiteral(Context, strBuf, Length, isWide,
-                                       Context.getPointerType(Context.CharTy),
-                                       AtLoc, EndLoc);
+    // FIXME: PASS LOCATIONS PROPERLY.
+    S = new (Context) StringLiteral(Context, strBuf, Length, isWide,
+                                    Context.getPointerType(Context.CharTy),
+                                    AtLoc);
   }
   
   if (CheckBuiltinCFStringArgument(S))

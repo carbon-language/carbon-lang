@@ -39,19 +39,35 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
 
 
 StringLiteral::StringLiteral(ASTContext& C, const char *strData,
-                             unsigned byteLength, bool Wide, QualType t,
-                             SourceLocation firstLoc,
-                             SourceLocation lastLoc) : 
-  Expr(StringLiteralClass, t) {
+                             unsigned byteLength, bool Wide, QualType Ty,
+                             SourceLocation Loc) : 
+    Expr(StringLiteralClass, Ty) {
   // OPTIMIZE: could allocate this appended to the StringLiteral.
   char *AStrData = new (C, 1) char[byteLength];
   memcpy(AStrData, strData, byteLength);
   StrData = AStrData;
   ByteLength = byteLength;
   IsWide = Wide;
-  firstTokLoc = firstLoc;
-  lastTokLoc = lastLoc;
+  TokLocs[0] = Loc;
+  NumConcatenated = 1;
 }
+
+StringLiteral::StringLiteral(ASTContext &C, const char *strData, 
+                             unsigned byteLength, bool Wide, QualType Ty,
+                             SourceLocation *Loc, unsigned NumStrs) : 
+    Expr(StringLiteralClass, Ty) {
+  // OPTIMIZE: could allocate this appended to the StringLiteral.
+  char *AStrData = new (C, 1) char[byteLength];
+  memcpy(AStrData, strData, byteLength);
+  StrData = AStrData;
+  ByteLength = byteLength;
+  IsWide = Wide;
+  TokLocs[0] = Loc[0];
+  NumConcatenated = NumStrs;
+  if (NumStrs != 1)
+    memcpy(&TokLocs[1], Loc+1, sizeof(SourceLocation)*(NumStrs-1));
+}
+
 
 void StringLiteral::Destroy(ASTContext &C) {
   C.Deallocate(const_cast<char*>(StrData));

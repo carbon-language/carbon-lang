@@ -955,8 +955,7 @@ VAArgExpr* VAArgExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
 
 void StringLiteral::EmitImpl(Serializer& S) const {
   S.Emit(getType());
-  S.Emit(firstTokLoc);
-  S.Emit(lastTokLoc);
+  assert(0 && "Unimpl loc serialization");
   S.EmitBool(isWide());
   S.Emit(getByteLength());
 
@@ -966,13 +965,14 @@ void StringLiteral::EmitImpl(Serializer& S) const {
 
 StringLiteral* StringLiteral::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType t = QualType::ReadVal(D);
-  SourceLocation firstTokLoc = SourceLocation::ReadVal(D);
-  SourceLocation lastTokLoc = SourceLocation::ReadVal(D);
+  assert(0 && "Unimpl loc serialization");
+  //SourceLocation firstTokLoc = SourceLocation::ReadVal(D);
+  //SourceLocation lastTokLoc = SourceLocation::ReadVal(D);
   bool isWide = D.ReadBool();
   unsigned ByteLength = D.ReadInt();
   
   StringLiteral* sl = new (C, llvm::alignof<StringLiteral>())
-    StringLiteral(C, NULL, 0, isWide, t, firstTokLoc, lastTokLoc);
+    StringLiteral(C, NULL, 0, isWide, t, SourceLocation());
 
   char* StrData = new (C, llvm::alignof<char>()) char[ByteLength];
   for (unsigned i = 0; i < ByteLength; ++i)

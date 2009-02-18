@@ -1736,7 +1736,7 @@ Stmt *RewriteObjC::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   Context->getObjCEncodingForType(Exp->getEncodedType(), StrEncoding);
   Expr *Replacement = new (Context) StringLiteral(*Context,StrEncoding.c_str(),
                                         StrEncoding.length(), false, StrType, 
-                                        SourceLocation(), SourceLocation());
+                                        SourceLocation());
   ReplaceStmt(Exp, Replacement);
   
   // Replace this subexpr in the parent.
@@ -1754,8 +1754,7 @@ Stmt *RewriteObjC::RewriteAtSelector(ObjCSelectorExpr *Exp) {
   SelExprs.push_back(new (Context) StringLiteral((*Context), 
                                        Exp->getSelector().getAsString().c_str(),
                                        Exp->getSelector().getAsString().size(),
-                                       false, argType, SourceLocation(),
-                                       SourceLocation()));
+                                       false, argType, SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
                                                  &SelExprs[0], SelExprs.size());
   ReplaceStmt(Exp, SelExp);
@@ -2293,8 +2292,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       ClsExprs.push_back(new (Context) StringLiteral(*Context,
                                         SuperDecl->getIdentifier()->getName(), 
                                         SuperDecl->getIdentifier()->getLength(),
-                                        false, argType, SourceLocation(),
-                                        SourceLocation()));
+                                        false, argType, SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
                                                    &ClsExprs[0], 
                                                    ClsExprs.size());
@@ -2346,8 +2344,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       ClsExprs.push_back(new (Context) StringLiteral(*Context,
                                            clsName->getName(), 
                                            clsName->getLength(),
-                                           false, argType, SourceLocation(),
-                                           SourceLocation()));
+                                           false, argType, SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                    &ClsExprs[0], 
                                                    ClsExprs.size());
@@ -2377,8 +2374,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       ClsExprs.push_back(new (Context) StringLiteral(*Context, 
                                         SuperDecl->getIdentifier()->getName(), 
                                         SuperDecl->getIdentifier()->getLength(),
-                                        false, argType, SourceLocation(),
-                                        SourceLocation()));
+                                        false, argType, SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                    &ClsExprs[0], 
                                                    ClsExprs.size());
@@ -2436,8 +2432,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   SelExprs.push_back(new (Context) StringLiteral(*Context, 
                                        Exp->getSelector().getAsString().c_str(),
                                        Exp->getSelector().getAsString().size(),
-                                       false, argType, SourceLocation(),
-                                       SourceLocation()));
+                                       false, argType, SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
                                                  &SelExprs[0], SelExprs.size());
   MsgExprs.push_back(SelExp);
@@ -2605,8 +2600,7 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
                        StringLiteral(*Context,
                                 Exp->getProtocol()->getNameAsCString(),
                                 strlen(Exp->getProtocol()->getNameAsCString()),
-                                false, argType, SourceLocation(),
-                                       SourceLocation()));
+                                false, argType, SourceLocation()));
   CallExpr *ProtoExp = SynthesizeCallToFunctionDecl(GetProtocolFunctionDecl,
                                                     &ProtoExprs[0], 
                                                     ProtoExprs.size());
