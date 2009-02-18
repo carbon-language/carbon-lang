@@ -604,22 +604,15 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   Builder.CreateStore(Vec, Dst.getExtVectorAddr(), Dst.isVolatileQualified());
 }
 
-/// SetVarDeclObjCAttribute - Set __weak/__strong attributes into the LValue
+/// SetDeclObjCGCAttrInLvalue - Set __weak/__strong attributes into the LValue
 /// object.
-static void SetVarDeclObjCAttribute(ASTContext &Ctx, const Decl *VD, 
-                                    const QualType &Ty, LValue &LV)
+static void SetDeclObjCGCAttrInLvalue(ASTContext &Ctx, const QualType &Ty, 
+                                      LValue &LV)
 {
-  if (Ctx.getLangOptions().ObjC1 &&
-      Ctx.getLangOptions().getGCMode() != LangOptions::NonGC) {
-    QualType::GCAttrTypes attr = Ty.getObjCGCAttr();
-    if (attr != QualType::GCNone)
-      LValue::SetObjCType(attr == QualType::Weak, 
-                          attr == QualType::Strong, LV);
-    // Default behavious under objective-c's gc is for objective-c pointers
-    // be treated as though they were declared as __strong.
-    else if (Ctx.isObjCObjectPointerType(Ty))
-      LValue::SetObjCType(false, true, LV);
-  }
+  QualType::GCAttrTypes attr = Ctx.getObjCGCAttrKind(Ty);
+  if (attr != QualType::GCNone)
+    LValue::SetObjCType(attr == QualType::Weak, 
+                        attr == QualType::Strong, LV);
 }
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
@@ -640,12 +633,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     if (VD->isBlockVarDecl() && 
         (VD->getStorageClass() == VarDecl::Static || 
          VD->getStorageClass() == VarDecl::Extern))
-      SetVarDeclObjCAttribute(getContext(), VD, E->getType(), LV);
+      SetDeclObjCGCAttrInLvalue(getContext(), E->getType(), LV);
     return LV;
   } else if (VD && VD->isFileVarDecl()) {
     LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
                                  E->getType().getCVRQualifiers());
-    SetVarDeclObjCAttribute(getContext(), VD, E->getType(), LV);
+    SetDeclObjCGCAttrInLvalue(getContext(), E->getType(), LV);
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     return LValue::MakeAddr(CGM.GetAddrOfFunction(FD),
@@ -1054,7 +1047,7 @@ LValue CodeGenFunction::EmitLValueForIvar(QualType ObjectTy,
                                                         ObjectTy,
                                                         BaseValue, Ivar, Field,
                                                         CVRQualifiers);
-  SetVarDeclObjCAttribute(getContext(), Ivar, Ivar->getType(), LV);
+  SetDeclObjCGCAttrInLvalue(getContext(), Ivar->getType(), LV);
   return LV;
 }
 

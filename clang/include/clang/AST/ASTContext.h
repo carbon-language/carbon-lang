@@ -395,6 +395,11 @@ public:
   /// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
   /// ID type).
   bool isObjCObjectPointerType(QualType Ty) const;
+
+  /// getObjCGCAttr - Returns one of GCNone, Weak or Strong objc's
+  /// garbage collection attribute.
+  ///
+  QualType::GCAttrTypes getObjCGCAttrKind(const QualType &Ty) const;
   
   /// isObjCNSObjectType - Return true if this is an NSObject object with
   /// its NSObject attribute set.

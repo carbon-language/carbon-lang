@@ -2390,6 +2390,22 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
   return isObjCNSObjectType(Ty);
 }
 
+/// getObjCGCAttr - Returns one of GCNone, Weak or Strong objc's
+/// garbage collection attribute.
+///
+QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
+  QualType::GCAttrTypes attr = QualType::GCNone;
+  if (getLangOptions().ObjC1 &&
+      getLangOptions().getGCMode() != LangOptions::NonGC) {
+    attr = Ty.getObjCGCAttr();
+    // Default behavious under objective-c's gc is for objective-c pointers
+    // be treated as though they were declared as __strong.
+    if (attr == QualType::GCNone && isObjCObjectPointerType(Ty))
+      attr = QualType::Strong;
+  }
+  return attr;
+}
+
 //===----------------------------------------------------------------------===//
 //                        Type Compatibility Testing
 //===----------------------------------------------------------------------===//
