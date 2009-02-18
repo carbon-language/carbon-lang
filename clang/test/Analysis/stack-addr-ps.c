@@ -3,10 +3,6 @@
 // RUN: clang -analyze -checker-cfref -analyzer-store=region -verify %s
 
 #include <stdlib.h>
-#include "../../../../include/llvm/Config/config.h"
-#ifdef HAVE_ALLOCA_H
-# include <alloca.h>
-#endif
 
 int* f1() {
   int x = 0;
@@ -42,7 +38,7 @@ void* compound_literal(int x, int y) {
 }
 
 void* alloca_test() {
-  void* p = alloca(10);
+  void* p = __builtin_alloca(10);
   return p; // expected-warning{{Address of stack memory}}
 }
 
