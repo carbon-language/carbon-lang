@@ -31,7 +31,9 @@ static int ConstraintRangeIndex = 0;
 /// A Range represents the closed range [from, to].  The caller must
 /// guarantee that from <= to.  Note that Range is immutable, so as not
 /// to subvert RangeSet's immutability.
-class Range : public std::pair<const llvm::APSInt*, const llvm::APSInt*> {
+namespace {
+class VISIBILITY_HIDDEN Range : public std::pair<const llvm::APSInt*,
+                                                const llvm::APSInt*> {
 public:
   Range(const llvm::APSInt &from, const llvm::APSInt &to)
     : std::pair<const llvm::APSInt*, const llvm::APSInt*>(&from, &to) {
@@ -56,11 +58,26 @@ public:
   }
 };
 
+
+class VISIBILITY_HIDDEN RangeTrait : public llvm::ImutContainerInfo<Range> {
+public:
+  // When comparing if one Range is less than another, we should compare
+  // the actual APSInt values instead of their pointers.  This ensures that
+  // ImmutableSets based on Range objects always are constructed
+  // with the same ordering between Ranges.  The definition if 'isEqual' can
+  // remain as it is (compare pointers) because all APSInt objects within
+  // Range are uniqued by BasicValueManager.
+  static inline bool isLess(key_type_ref lhs, key_type_ref rhs) {
+    return *lhs.first < *rhs.first || (!(*rhs.first < *lhs.first) && 
+                                       *lhs.second < *rhs.second);
+  }
+};
+
 /// RangeSet contains a set of ranges. If the set is empty, then
 ///  there the value of a symbol is overly constrained and there are no
 ///  possible values for that symbol.
-class RangeSet {
-  typedef llvm::ImmutableSet<Range> PrimRangeSet;
+class VISIBILITY_HIDDEN RangeSet {
+  typedef llvm::ImmutableSet<Range, RangeTrait> PrimRangeSet;
   PrimRangeSet ranges; // no need to make const, since it is an
                        // ImmutableSet - this allows default operator=
                        // to work.    
@@ -204,6 +221,7 @@ public:
     return ranges == other.ranges;
   }
 };
+} // end anonymous namespace
 
 typedef llvm::ImmutableMap<SymbolRef,RangeSet> ConstraintRangeTy;
 
@@ -216,12 +234,8 @@ struct GRStateTrait<ConstraintRange>
 }  
   
 namespace {
-class VISIBILITY_HIDDEN RangeConstraintManager
-  : public SimpleConstraintManager {
-    
-    
-  RangeSet GetRange(GRStateRef state, SymbolRef sym);
-      
+class VISIBILITY_HIDDEN RangeConstraintManager : public SimpleConstraintManager{
+  RangeSet GetRange(GRStateRef state, SymbolRef sym);      
 public:
   RangeConstraintManager(GRStateManager& statemgr) 
       : SimpleConstraintManager(statemgr) {}
