@@ -296,7 +296,7 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   // the instantiation point (the name).  We could point to the source
   // character, but without also pointing to instantiation info, this is
   // confusing.
-  if (CharNo == 0 || TokStart.isMacroID()) return TokStart;
+  if (CharNo == 0) return TokStart;
   
   // Figure out how many physical characters away the specified instantiation
   // character is.  This needs to take into consideration newlines and

@@ -77,17 +77,12 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     
     // The length of the string is the token length minus the two quotes.
     TokNumBytes -= 2;
-    
-    // If we found the token we're looking for, return the location.
+
     // FIXME: This should consider character escapes!
+
+    // If the byte is in this token, return the location of the byte.
     if (ByteNo < TokNumBytes ||
         (ByteNo == TokNumBytes && TokNo == SL->getNumConcatenated())) {
-      // If the original token came from a macro expansion, just return the
-      // start of the token.  We don't want to magically jump to the spelling
-      // for a diagnostic.  We do the above business in case some tokens come
-      // from a macro expansion but others don't.
-      if (!StrTokLoc.isFileID()) return StrTokLoc;
-      
       // We advance +1 to step over the '"'.
       return PP.AdvanceToTokenCharacter(StrTokLoc, ByteNo+1);
     }
