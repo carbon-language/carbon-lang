@@ -360,14 +360,11 @@ llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
   llvm::Value *AddrTyped = Builder.CreateBitCast(Addr, PTy);
   
-  uint64_t SizeInBytes = CGF.getContext().getTypeSize(Ty) / 8;
-  const unsigned ArgumentSizeInBytes = 4;
-  if (SizeInBytes < ArgumentSizeInBytes)
-    SizeInBytes = ArgumentSizeInBytes;
-
+  uint64_t Offset = 
+    llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, 4);
   llvm::Value *NextAddr = 
     Builder.CreateGEP(Addr, 
-                      llvm::ConstantInt::get(llvm::Type::Int32Ty, SizeInBytes),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset),
                       "ap.next");
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
 
