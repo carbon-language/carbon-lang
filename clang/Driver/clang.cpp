@@ -17,7 +17,7 @@
 //
 // TODO: Options to support:
 //
-//   -ffatal-errors
+//   -Wfatal-errors
 //   -ftabstop=width
 //
 //===----------------------------------------------------------------------===//
@@ -249,9 +249,6 @@ enum LangKind {
   langkind_objcxx_pch
 };
 
-/* TODO: GCC also accepts:
-   assembler, ada, f77*, ratfor (!), f95, java, treelang
- */
 static llvm::cl::opt<LangKind>
 BaseLang("x", llvm::cl::desc("Base language to compile"),
          llvm::cl::init(langkind_unspecified),
