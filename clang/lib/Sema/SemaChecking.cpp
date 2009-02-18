@@ -37,7 +37,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");
-    if (CheckBuiltinCFStringArgument(TheCall->getArg(0)))
+    if (CheckObjCString(TheCall->getArg(0)))
       return ExprError();
     return move(TheCallResult);
   case Builtin::BI__builtin_stdarg_start:
@@ -91,11 +91,10 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   return move(TheCallResult);
 }
 
-/// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
+/// CheckObjCString - Checks that the argument to the builtin
 /// CFString constructor is correct
-bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
+bool Sema::CheckObjCString(Expr *Arg) {
   Arg = Arg->IgnoreParenCasts();
-  
   StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);
 
   if (!Literal || Literal->isWide()) {

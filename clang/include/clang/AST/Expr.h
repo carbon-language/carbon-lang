@@ -476,12 +476,14 @@ public:
 /// is NOT null-terminated, and the length of the string is determined by
 /// calling getByteLength().  The C type for a string is always a
 /// ConstantArrayType.
+///
+/// Note that strings in C can be formed by concatenation of multiple string
+/// literal pptokens in trnaslation phase #6.  This keeps track of the locations
+/// of each of these pieces.
 class StringLiteral : public Expr {
   const char *StrData;
   unsigned ByteLength;
   bool IsWide;
-  // If the StringLiteral was composed using token pasting, both locations
-  // are needed. If not (the common case), firstTokLoc == lastTokLoc.
   unsigned NumConcatenated;
   SourceLocation TokLocs[1];
 public:

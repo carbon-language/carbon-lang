@@ -48,7 +48,8 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
                                     AtLoc);
   }
   
-  if (CheckBuiltinCFStringArgument(S))
+  // Verify that this composite string is acceptable for ObjC strings.
+  if (CheckObjCString(S))
     return true;
   
   if (Context.getObjCConstantStringInterface().isNull()) {

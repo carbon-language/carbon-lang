@@ -1989,7 +1989,7 @@ public:
 private:
   Action::OwningExprResult CheckFunctionCall(FunctionDecl *FDecl,
                                              CallExpr *TheCall);
-  bool CheckBuiltinCFStringArgument(Expr* Arg);
+  bool CheckObjCString(Expr *Arg);
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
   bool SemaBuiltinStackAddress(CallExpr *TheCall);
