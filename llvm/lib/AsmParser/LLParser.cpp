@@ -2094,11 +2094,21 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       isa<OpaqueType>(RetType))
     return Error(RetTypeLoc, "invalid function return type");
   
-  if (Lex.getKind() != lltok::GlobalVar)
-    return TokError("expected function name");
-  
   LocTy NameLoc = Lex.getLoc();
-  std::string FunctionName = Lex.getStrVal();
+
+  std::string FunctionName;
+  if (Lex.getKind() == lltok::GlobalVar) {
+    FunctionName = Lex.getStrVal();
+  } else if (Lex.getKind() == lltok::GlobalID) {     // @42 is ok.
+    unsigned NameID = Lex.getUIntVal();
+
+    if (NameID != NumberedVals.size())
+      return TokError("function expected to be numbered '%" +
+                      utostr(NumberedVals.size()) + "'");
+  } else {
+    return TokError("expected function name");
+  }
+  
   Lex.Lex();
   
   if (Lex.getKind() != lltok::lparen)
