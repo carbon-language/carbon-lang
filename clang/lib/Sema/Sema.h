@@ -2017,7 +2017,7 @@ struct BlockSemaInfo {
   
   BlockDecl *TheDecl;
   
-  /// TheScope - This is the scope for the block itself, which containsfile://localhost/Volumes/Data/Users/kremenek/llvm/tools/clang
+  /// TheScope - This is the scope for the block itself, which contains
   /// arguments etc.
   Scope *TheScope;
   
