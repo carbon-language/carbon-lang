@@ -715,71 +715,89 @@ QualType ASTContext::getAddrSpaceQualType(QualType T, unsigned AddressSpace) {
   QualType CanT = getCanonicalType(T);
   if (CanT.getAddressSpace() == AddressSpace)
     return T;
+
+  // If we are composing extended qualifiers together, merge together into one
+  // ExtQualType node.
+  unsigned CVRQuals = T.getCVRQualifiers();
+  QualType::GCAttrTypes GCAttr = QualType::GCNone;
+  Type *TypeNode = T.getTypePtr();
   
-  // Type's cannot have multiple ExtQuals, therefore we know we only have to deal
-  // with CVR qualifiers from here on out.
-  assert(CanT.getAddressSpace() == 0 &&
-         "Type is already address space qualified");
+  if (ExtQualType *EQT = dyn_cast<ExtQualType>(TypeNode)) {
+    // If this type already has an address space specified, it cannot get
+    // another one.
+    assert(EQT->getAddressSpace() == 0 &&
+           "Type cannot be in multiple addr spaces!");
+    GCAttr = EQT->getObjCGCAttr();
+    TypeNode = EQT->getBaseType();
+  }
   
-  // Check if we've already instantiated an address space qual'd type of this
-  // type.
+  // Check if we've already instantiated this type.
   llvm::FoldingSetNodeID ID;
-  ExtQualType::Profile(ID, T.getTypePtr(), AddressSpace, T.getObjCGCAttr());      
+  ExtQualType::Profile(ID, TypeNode, AddressSpace, GCAttr);      
   void *InsertPos = 0;
   if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(EXTQy, 0);
-    
+    return QualType(EXTQy, CVRQuals);
+
   // If the base type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
-  if (!T->isCanonical()) {
+  if (!TypeNode->isCanonical()) {
     Canonical = getAddrSpaceQualType(CanT, AddressSpace);
     
-    // Get the new insert position for the node we care about.
+    // Update InsertPos, the previous call could have invalidated it.
     ExtQualType *NewIP = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  ExtQualType *New = new (*this, 8) ExtQualType(T.getTypePtr(), Canonical, 
-                                                AddressSpace, 
-                                                QualType::GCNone);
+  ExtQualType *New =
+    new (*this, 8) ExtQualType(TypeNode, Canonical, AddressSpace, GCAttr);
   ExtQualTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
-  return QualType(New, T.getCVRQualifiers());
+  return QualType(New, CVRQuals);
 }
 
-QualType ASTContext::getObjCGCQualType(QualType T, 
-                                       QualType::GCAttrTypes attr) {
+QualType ASTContext::getObjCGCQualType(QualType T,
+                                       QualType::GCAttrTypes GCAttr) {
   QualType CanT = getCanonicalType(T);
-  if (CanT.getObjCGCAttr() == attr)
+  if (CanT.getObjCGCAttr() == GCAttr)
     return T;
   
-  // Type's cannot have multiple ExtQuals, therefore we know we only have to deal
-  // with CVR qualifiers from here on out.
-  assert(CanT.getObjCGCAttr() == QualType::GCNone && 
-         "Type is already gc qualified");
+  // If we are composing extended qualifiers together, merge together into one
+  // ExtQualType node.
+  unsigned CVRQuals = T.getCVRQualifiers();
+  Type *TypeNode = T.getTypePtr();
+  unsigned AddressSpace = 0;
+  
+  if (ExtQualType *EQT = dyn_cast<ExtQualType>(TypeNode)) {
+    // If this type already has an address space specified, it cannot get
+    // another one.
+    assert(EQT->getObjCGCAttr() == QualType::GCNone &&
+           "Type cannot be in multiple addr spaces!");
+    AddressSpace = EQT->getAddressSpace();
+    TypeNode = EQT->getBaseType();
+  }
   
   // Check if we've already instantiated an gc qual'd type of this type.
   llvm::FoldingSetNodeID ID;
-  ExtQualType::Profile(ID, T.getTypePtr(), T.getAddressSpace(), attr);      
+  ExtQualType::Profile(ID, TypeNode, AddressSpace, GCAttr);      
   void *InsertPos = 0;
   if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(EXTQy, 0);
+    return QualType(EXTQy, CVRQuals);
   
   // If the base type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
   if (!T->isCanonical()) {
-    Canonical = getObjCGCQualType(CanT, attr);
+    Canonical = getObjCGCQualType(CanT, GCAttr);
     
-    // Get the new insert position for the node we care about.
+    // Update InsertPos, the previous call could have invalidated it.
     ExtQualType *NewIP = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  ExtQualType *New = new (*this, 8) ExtQualType(T.getTypePtr(), Canonical, 
-                                                0, attr);
+  ExtQualType *New =
+    new (*this, 8) ExtQualType(TypeNode, Canonical, AddressSpace, GCAttr);
   ExtQualTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
-  return QualType(New, T.getCVRQualifiers());
+  return QualType(New, CVRQuals);
 }
 
 /// getComplexType - Return the uniqued reference to the type for a complex
@@ -2394,16 +2412,16 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
 /// garbage collection attribute.
 ///
 QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
-  QualType::GCAttrTypes attr = QualType::GCNone;
+  QualType::GCAttrTypes GCAttrs = QualType::GCNone;
   if (getLangOptions().ObjC1 &&
       getLangOptions().getGCMode() != LangOptions::NonGC) {
-    attr = Ty.getObjCGCAttr();
+    GCAttrs = Ty.getObjCGCAttr();
     // Default behavious under objective-c's gc is for objective-c pointers
     // be treated as though they were declared as __strong.
-    if (attr == QualType::GCNone && isObjCObjectPointerType(Ty))
-      attr = QualType::Strong;
+    if (GCAttrs == QualType::GCNone && isObjCObjectPointerType(Ty))
+      GCAttrs = QualType::Strong;
   }
-  return attr;
+  return GCAttrs;
 }
 
 //===----------------------------------------------------------------------===//

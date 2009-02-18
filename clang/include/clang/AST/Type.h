@@ -485,8 +485,11 @@ class ExtQualType : public Type, public llvm::FoldingSetNode {
   
   ExtQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace,
               QualType::GCAttrTypes gcAttr) :
-    Type(ExtQual, CanonicalPtr, Base->isDependentType()), BaseType(Base),
-    AddressSpace(AddrSpace), GCAttrType(gcAttr) { }
+      Type(ExtQual, CanonicalPtr, Base->isDependentType()), BaseType(Base),
+      AddressSpace(AddrSpace), GCAttrType(gcAttr) {
+    assert(!isa<ExtQualType>(BaseType) &&
+           "Cannot have ExtQualType of ExtQualType");
+  }
   friend class ASTContext;  // ASTContext creates these.
 public:
   Type *getBaseType() const { return BaseType; }
