@@ -42,6 +42,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/Pass.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -211,6 +212,12 @@ InheritanceViewCls("cxx-inheritance-view",
 //===----------------------------------------------------------------------===//
 // Builtin Options
 //===----------------------------------------------------------------------===//
+
+static llvm::cl::opt<bool>
+TimeReport("ftime-report",
+           llvm::cl::desc("Print the amount of time each "
+                          "phase of compilation takes"));
+
 static llvm::cl::opt<bool>
 Freestanding("ffreestanding",
              llvm::cl::desc("Assert that the compilation takes place in a "
@@ -1503,6 +1510,10 @@ int main(int argc, char **argv) {
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
+  
+  // Handle -ftime-report.
+  if (TimeReport)
+    llvm::TimePassesIsEnabled = true;
     
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
