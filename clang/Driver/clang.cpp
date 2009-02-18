@@ -50,6 +50,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
@@ -58,6 +59,11 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 // Global options.
 //===----------------------------------------------------------------------===//
+
+/// ClangFrontendTimer - The front-end activities should charge time to it with
+/// TimeRegion.  The -ftime-report option controls whether this will do
+/// anything.
+llvm::Timer *ClangFrontendTimer = 0;
 
 static bool HadErrors = false;
 
@@ -1333,6 +1339,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
       
   case DumpRawTokens: {
+    llvm::TimeRegion Timer(ClangFrontendTimer);
     SourceManager &SM = PP.getSourceManager();
     // Start lexing the specified input file.
     Lexer RawLex(SM.getMainFileID(), SM, PP.getLangOptions());
@@ -1349,6 +1356,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
   }
   case DumpTokens: {                 // Token dump mode.
+    llvm::TimeRegion Timer(ClangFrontendTimer);
     Token Tok;
     // Start preprocessing the specified input file.
     PP.EnterMainSourceFile();
@@ -1361,6 +1369,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
   }
   case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
+    llvm::TimeRegion Timer(ClangFrontendTimer);
     Token Tok;
     // Start parsing the specified input file.
     PP.EnterMainSourceFile();
@@ -1372,39 +1381,49 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   }
       
   case GeneratePCH: {
+    llvm::TimeRegion Timer(ClangFrontendTimer);
     CacheTokens(PP, OutputFile);
     ClearSourceMgr = true;
     break;
   }      
     
-  case PrintPreprocessedInput:       // -E mode.
+  case PrintPreprocessedInput: {      // -E mode.
+    llvm::TimeRegion Timer(ClangFrontendTimer);
     DoPrintPreprocessedInput(PP, OutputFile);
     ClearSourceMgr = true;
     break;
+  }
       
-  case ParseNoop:                    // -parse-noop
+  case ParseNoop: {                  // -parse-noop
+    llvm::TimeRegion Timer(ClangFrontendTimer);
     ParseFile(PP, new MinimalAction(PP));
     ClearSourceMgr = true;
     break;
+  }
     
-  case ParsePrintCallbacks:
+  case ParsePrintCallbacks: {
+    llvm::TimeRegion Timer(ClangFrontendTimer);
     ParseFile(PP, CreatePrintParserActionsAction(PP));
     ClearSourceMgr = true;
     break;
-      
-  case ParseSyntaxOnly:              // -fsyntax-only
+  }
+
+  case ParseSyntaxOnly: {             // -fsyntax-only
+    llvm::TimeRegion Timer(ClangFrontendTimer);
     Consumer.reset(new ASTConsumer());
     break;
+  }
       
   case RewriteMacros:
     RewriteMacrosInInput(PP, InFile, OutputFile);
     ClearSourceMgr = true;
     break;
       
-  case RewriteTest:
+  case RewriteTest: {
     DoRewriteTest(PP, InFile, OutputFile);
     ClearSourceMgr = true;
     break;
+  }
   }
 
   if (Consumer) {
@@ -1505,6 +1524,10 @@ static bool isSerializedFile(const std::string& InFile) {
 int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv, " llvm clang cfe\n");
   llvm::sys::PrintStackTraceOnErrorSignal();
+  
+  if (TimeReport)
+    ClangFrontendTimer = new llvm::Timer("Clang front-end time");
+  
   
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())
@@ -1636,6 +1659,8 @@ int main(int argc, char **argv) {
   // If verifying diagnostics and we reached here, all is well.
   if (VerifyDiagnostics)
     return 0;
+  
+  delete ClangFrontendTimer;
 
   // Managed static deconstruction. Useful for making things like
   // -time-passes usable.
