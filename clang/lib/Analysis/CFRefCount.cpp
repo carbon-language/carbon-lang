@@ -1284,6 +1284,7 @@ public:
 
 private:
   RetainSummaryManager Summaries;  
+  llvm::DenseMap<const GRExprEngine::NodeTy*, const RetainSummary*> SummaryLog;
   const LangOptions&   LOpts;
 
   BugType *useAfterRelease, *releaseNotOwned;
@@ -1655,11 +1656,15 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
     }
   }
   
-  // Is this a sink?
-  if (IsEndPath(Summ))
-    Builder.MakeSinkNode(Dst, Ex, Pred, state);
-  else
-    Builder.MakeNode(Dst, Ex, Pred, state);
+  // Generate a sink node if we are at the end of a path.
+  GRExprEngine::NodeTy *NewNode =
+    IsEndPath(Summ) ? Builder.MakeSinkNode(Dst, Ex, Pred, state)
+                    : Builder.MakeNode(Dst, Ex, Pred, state);
+  
+  // Annotate the edge with summary we used.
+  // FIXME: This assumes that we always use the same summary when generating
+  //  this node.
+  if (NewNode) SummaryLog[NewNode] = Summ;
 }
 
 
