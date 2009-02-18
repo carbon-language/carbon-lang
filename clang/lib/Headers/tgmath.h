@@ -37,6 +37,9 @@
 
 // promotion
 
+typedef void _Argument_type_is_not_arithmetic;
+static _Argument_type_is_not_arithmetic __tg_promote(...) \
+  __attribute__((__unavailable__,__overloadable__));
 static double               _TG_ATTRSp __tg_promote(int);
 static double               _TG_ATTRSp __tg_promote(unsigned int);
 static double               _TG_ATTRSp __tg_promote(long);
