@@ -843,7 +843,7 @@ class OptionParser:
         self.f_profileArcsOption = self.addOption(FlagOption('-fprofile-arcs', self.fGroup))
         self.f_profileGenerateOption = self.addOption(FlagOption('-fprofile-generate', self.fGroup))
         self.f_terminatedVtablesOption = self.addOption(FlagOption('-fterminated-vtables', self.fGroup))
-        self.f_timeReportOption = self.addOption(FlagOption('-ftime-report', self.fGroup))
+        self.f_timeReportOption = self.addOption(FlagOption('-ftime-report', self.Clang_fGroup))
         self.f_traditionalOption = self.addOption(FlagOption('-ftraditional', self.fGroup))
         self.f_unwindTablesOption = self.addOption(FlagOption('-funwind-tables', self.fGroup))
         self.f_writableStringsOption = self.addOption(FlagOption('-fwritable-strings', self.Clang_fGroup))
