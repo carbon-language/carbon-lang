@@ -15,45 +15,51 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs, 
-                                              ExprTy **Strings,
+                                              ExprTy **strings,
                                               unsigned NumStrings) {
+  StringLiteral **Strings = reinterpret_cast<StringLiteral**>(strings);
+
   // Most ObjC strings are formed out of a single piece.  However, we *can*
   // have strings formed out of multiple @ strings with multiple pptokens in
   // each one, e.g. @"foo" "bar" @"baz" "qux"   which need to be turned into one
   // StringLiteral for ObjCStringLiteral to hold onto.
-  StringLiteral *S = static_cast<StringLiteral *>(Strings[0]);
+  StringLiteral *S = Strings[0];
   
   // If we have a multi-part string, merge it all together.
   if (NumStrings != 1) {
     // Concatenate objc strings.
-    StringLiteral* ES = static_cast<StringLiteral *>(Strings[NumStrings-1]);
-    SourceLocation EndLoc = ES->getSourceRange().getEnd();
-    unsigned Length = 0;
-    for (unsigned i = 0; i < NumStrings; i++)
-      Length += static_cast<StringLiteral *>(Strings[i])->getByteLength();
+    llvm::SmallString<128> StrBuf;
+    llvm::SmallVector<SourceLocation, 8> StrLocs;
     
-    // FIXME: This should not be allocated by SEMA!
-    char *strBuf = new char[Length];
-    char *p = strBuf;
     for (unsigned i = 0; i != NumStrings; ++i) {
-      S = static_cast<StringLiteral *>(Strings[i]);
+      S = Strings[i];
+      
+      // ObjC strings can't be wide.
       if (S->isWide()) {
         Diag(S->getLocStart(), diag::err_cfstring_literal_not_string_constant)
           << S->getSourceRange();
         return true;
       }
       
-      memcpy(p, S->getStrData(), S->getByteLength());
-      p += S->getByteLength();
+      // Get the string data.
+      StrBuf.append(S->getStrData(), S->getStrData()+S->getByteLength());
+      
+      // Get the locations of the string tokens.
+      StrLocs.append(S->tokloc_begin(), S->tokloc_end());
+      
+      // Free the temporary string.
       S->Destroy(Context);
     }
-    // FIXME: PASS LOCATIONS PROPERLY.
-    S = StringLiteral::Create(Context, strBuf, Length, false,
+    
+    // Create the aggregate string with the appropriate content and location
+    // information.
+    S = StringLiteral::Create(Context, &StrBuf[0], StrBuf.size(), false,
                               Context.getPointerType(Context.CharTy),
-                              AtLocs[0]);
+                              &StrLocs[0], StrLocs.size());
   }
   
   // Verify that this composite string is acceptable for ObjC strings.
