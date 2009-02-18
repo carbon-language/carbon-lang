@@ -351,20 +351,14 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   const char *TokInstantiationPtr =Pos.getInstantiationLoc().getCharacterData();
   const char *LineStart = TokInstantiationPtr-ColNo;
 
-  // Only compute LineEnd if we display below a line.
+  // Compute LineEnd.
   const char *LineEnd = TokInstantiationPtr;
-  
-  if (P.getDisplayHint() == PathDiagnosticPiece::Below) {
-    const char* FileEnd = Buf->getBufferEnd();
-
-    while (*LineEnd != '\n' && LineEnd != FileEnd)
-      ++LineEnd;
-  }
+  const char* FileEnd = Buf->getBufferEnd();
+  while (*LineEnd != '\n' && LineEnd != FileEnd)
+    ++LineEnd;
   
   // Compute the margin offset by counting tabs and non-tabs.
-  
-  unsigned PosNo = 0;
-  
+  unsigned PosNo = 0;  
   for (const char* c = LineStart; c != TokInstantiationPtr; ++c)
     PosNo += *c == '\t' ? 8 : 1;
   
@@ -432,19 +426,10 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     os << html::EscapeText(Msg) << "</div></td></tr>";
 
     // Insert the new html.
-    unsigned DisplayPos;
-    switch (P.getDisplayHint()) {
-    default: assert(0 && "Unhandled hint.");
-    case PathDiagnosticPiece::Above:
-      DisplayPos = LineStart - FileStart;
-      break;
-    case PathDiagnosticPiece::Below:
-      DisplayPos = LineEnd - FileStart;
-      break;
-    }
-    
+    unsigned DisplayPos = LineEnd - FileStart;    
     SourceLocation Loc = 
       SM.getLocForStartOfFile(LPosInfo.first).getFileLocWithOffset(DisplayPos);
+
     R.InsertStrBefore(Loc, os.str());
   }
   
