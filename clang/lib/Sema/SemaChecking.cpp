@@ -31,6 +31,8 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
                                                     unsigned ByteNo) const {
   assert(!SL->isWide() && "This doesn't work for wide strings yet");
   
+  llvm::SmallString<32> SpellingBuffer;
+  
   // Loop over all of the tokens in this string until we find the one that
   // contains the byte we're looking for.
   unsigned TokNo = 0;
@@ -61,8 +63,13 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     Token TheTok;
     TheLexer.LexFromRawLexer(TheTok);
     
+    // Get the spelling of the token to remove trigraphs and escaped newlines.
+    SpellingBuffer.resize(TheTok.getLength());
+    const char *SpellingPtr = &SpellingBuffer[0];
+    unsigned TokLen = PP.getSpelling(TheTok, SpellingPtr);
+    
     // The length of the string is the token length minus the two quotes.
-    unsigned TokNumBytes = TheTok.getLength()-2;
+    unsigned TokNumBytes = TokLen-2;
     
     // If we found the token we're looking for, return the location.
     // FIXME: This should consider character escapes!
