@@ -108,13 +108,15 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
 #ifdef LLVM_ON_WIN32
   if (Lang.CPlusPlus) {
     // Mingw32 GCC version 4
-    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++", System, true, false, false);
-    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/mingw32", System, true, false, false);
-    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/backward", System, true, false, false);
+    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++",
+            System, true, false, false);
+    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/mingw32",
+            System, true, false, false);
+    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/backward",
+            System, true, false, false);
   }
 
   // Mingw32 GCC version 4
-  AddPath("C:/mingw/lib/gcc/mingw32/4.3.0/include", System, false, false, false);
   AddPath("C:/mingw/include", System, false, false, false);
 #else
 
@@ -176,84 +178,9 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
 
   AddPath("/usr/local/include", System, false, false, false);
 
-  AddPath("/usr/lib/gcc/i686-apple-darwin10/4.2.1/include", System, 
-      false, false, false);
-  AddPath("/usr/lib/gcc/powerpc-apple-darwin10/4.2.1/include", 
-      System, false, false, false);
-
-  // leopard
-  AddPath("/usr/lib/gcc/i686-apple-darwin9/4.0.1/include", System, 
-      false, false, false);
-  AddPath("/usr/lib/gcc/powerpc-apple-darwin9/4.0.1/include", 
-      System, false, false, false);
-  AddPath("/usr/lib/gcc/powerpc-apple-darwin9/"
-      "4.0.1/../../../../powerpc-apple-darwin0/include", 
-      System, false, false, false);
-
-  // tiger
-  AddPath("/usr/lib/gcc/i686-apple-darwin8/4.0.1/include", System, 
-      false, false, false);
-  AddPath("/usr/lib/gcc/powerpc-apple-darwin8/4.0.1/include", 
-      System, false, false, false);
-  AddPath("/usr/lib/gcc/powerpc-apple-darwin8/"
-      "4.0.1/../../../../powerpc-apple-darwin8/include", 
-      System, false, false, false);
-
-  // Ubuntu 7.10 - Gutsy Gibbon
-  AddPath("/usr/lib/gcc/i486-linux-gnu/4.1.3/include", System,
-      false, false, false);
-
-  // Fedora 8
-  AddPath("/usr/lib/gcc/i386-redhat-linux/4.1.2/include", System,
-      false, false, false);
-
-  // Fedora 9
-  AddPath("/usr/lib/gcc/i386-redhat-linux/4.3.0/include", System,
-      false, false, false);
-
-  // Fedora 10
-  AddPath("/usr/lib/gcc/i386-redhat-linux/4.3.2/include", System,
-      false, false, false);
-
-  //Debian testing/lenny x86
-  AddPath("/usr/lib/gcc/i486-linux-gnu/4.2.3/include", System,
-      false, false, false);
-
-  //Debian testing/lenny amd64
-  AddPath("/usr/lib/gcc/x86_64-linux-gnu/4.2.3/include", System,
-      false, false, false);
-
-  // Debian sid amd64
-  AddPath("/usr/lib/gcc/x86_64-linux-gnu/4.3/include", System,
-      false, false, false);
-  AddPath("/usr/lib/gcc/x86_64-linux-gnu/4.3/include-fixed",
-      System, false, false, false);
-
-  // Arch Linux 2008-06-24
-  AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.3.1/include", System,
-      false, false, false);
-  AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.3.1/include-fixed", System,
-      false, false, false);
-  AddPath("/usr/lib/gcc/x86_64-unknown-linux-gnu/4.3.1/include", System,
-      false, false, false);
-  AddPath("/usr/lib/gcc/x86_64-unknown-linux-gnu/4.3.1/include-fixed",
-      System, false, false, false);
-
-  // Debian testing/lenny ppc32
-  AddPath("/usr/lib/gcc/powerpc-linux-gnu/4.2.3/include", System,
-      false, false, false);
-
-  // Gentoo x86 stable
-  AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include", System,
-      false, false, false);
-
-  // DragonFly
-  AddPath("/usr/libdata/gcc41", System, true, false, false);
-
   AddPath("/usr/include", System, false, false, false);
   AddPath("/System/Library/Frameworks", System, true, false, true);
   AddPath("/Library/Frameworks", System, true, false, true);
-
 #endif
 }
 
