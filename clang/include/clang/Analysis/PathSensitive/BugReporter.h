@@ -61,6 +61,13 @@ protected:
   }
   
 public:
+  class NodeResolver {
+  public:
+    virtual ~NodeResolver() {}
+    virtual const ExplodedNode<GRState>*
+            getOriginalNode(const ExplodedNode<GRState>* N) = 0;
+  };
+  
   BugReport(BugType& bt, const char* desc, const ExplodedNode<GRState> *n)
     : BT(bt), Description(desc), EndNode(n) {}
 
@@ -101,7 +108,8 @@ public:
   virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
                                          const ExplodedNode<GRState>* PrevN,
                                          const ExplodedGraph<GRState>& G,
-                                         BugReporter& BR);
+                                         BugReporter& BR,
+                                         NodeResolver& NR);
 };
 
 //===----------------------------------------------------------------------===//

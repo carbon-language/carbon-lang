@@ -167,7 +167,8 @@ SourceLocation BugReport::getLocation() const {
 PathDiagnosticPiece* BugReport::VisitNode(const ExplodedNode<GRState>* N,
                                           const ExplodedNode<GRState>* PrevN,
                                           const ExplodedGraph<GRState>& G,
-                                          BugReporter& BR) {
+                                          BugReporter& BR,
+                                          NodeResolver &NR) {
   return NULL;
 }
 
@@ -226,7 +227,10 @@ void BugReporter::FlushReports() {
 // PathDiagnostics generation.
 //===----------------------------------------------------------------------===//
 
-static std::pair<ExplodedGraph<GRState>*,
+typedef llvm::DenseMap<const ExplodedNode<GRState>*,
+                       const ExplodedNode<GRState>*> NodeBackMap;
+
+static std::pair<std::pair<ExplodedGraph<GRState>*, NodeBackMap*>,
                  std::pair<ExplodedNode<GRState>*, unsigned> >
 MakeReportGraph(const ExplodedGraph<GRState>* G,
                 const ExplodedNode<GRState>** NStart,
@@ -238,7 +242,9 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   // path length.
   ExplodedGraph<GRState>* GTrim;
   InterExplodedGraphMap<GRState>* NMap;
-  llvm::tie(GTrim, NMap) = G->Trim(NStart, NEnd);
+
+  llvm::DenseMap<const void*, const void*> InverseMap;
+  llvm::tie(GTrim, NMap) = G->Trim(NStart, NEnd, &InverseMap);
   
   // Create owning pointers for GTrim and NMap just to ensure that they are
   // released when this function exists.
@@ -262,8 +268,8 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   // Create a new (third!) graph with a single path.  This is the graph
   // that will be returned to the caller.
   ExplodedGraph<GRState> *GNew =
-  new ExplodedGraph<GRState>(GTrim->getCFG(), GTrim->getCodeDecl(),
-                             GTrim->getContext());
+    new ExplodedGraph<GRState>(GTrim->getCFG(), GTrim->getCodeDecl(),
+                               GTrim->getContext());
   
   // Sometimes the trimmed graph can contain a cycle.  Perform a reverse DFS
   // to the root node, and then construct a new graph that contains only
@@ -298,6 +304,7 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   // Now walk from the root down the DFS path, always taking the successor
   // with the lowest number.
   ExplodedNode<GRState> *Last = 0, *First = 0;  
+  NodeBackMap *BM = new NodeBackMap();
   
   for ( N = Root ;;) {
     // Lookup the number associated with the current node.
@@ -307,7 +314,12 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
     // Create the equivalent node in the new graph with the same state
     // and location.
     ExplodedNode<GRState>* NewN =
-    GNew->getNode(N->getLocation(), N->getState());    
+      GNew->getNode(N->getLocation(), N->getState());
+    
+    // Store the mapping to the original node.
+    llvm::DenseMap<const void*, const void*>::iterator IMitr=InverseMap.find(N);
+    assert(IMitr != InverseMap.end() && "No mapping to original node.");
+    (*BM)[NewN] = (const ExplodedNode<GRState>*) IMitr->second;
     
     // Link up the new node with the previous node.
     if (Last)
@@ -344,7 +356,8 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   }
   
   assert (First);
-  return std::make_pair(GNew, std::make_pair(First, NodeIndex));
+  return std::make_pair(std::make_pair(GNew, BM),
+                        std::make_pair(First, NodeIndex));
 }
 
 static const VarDecl*
@@ -527,6 +540,20 @@ public:
 };
 } // end anonymous namespace
 
+namespace {
+class VISIBILITY_HIDDEN NodeMapClosure : public BugReport::NodeResolver {
+  NodeBackMap& M;
+public:
+  NodeMapClosure(NodeBackMap *m) : M(*m) {}
+  ~NodeMapClosure() {}
+  
+  const ExplodedNode<GRState>* getOriginalNode(const ExplodedNode<GRState>* N) {
+    NodeBackMap::iterator I = M.find(N);
+    return I == M.end() ? 0 : I->second;
+  }
+};
+}
+
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                                            BugReportEquivClass& EQ) {
   
@@ -542,7 +569,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   
   // Construct a new graph that contains only a single path from the error
   // node to a root.  
-  const std::pair<ExplodedGraph<GRState>*,
+  const std::pair<std::pair<ExplodedGraph<GRState>*, NodeBackMap*>,
                   std::pair<ExplodedNode<GRState>*, unsigned> >&
     GPair = MakeReportGraph(&getGraph(), &Nodes[0], &Nodes[0] + Nodes.size());
   
@@ -554,7 +581,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   
   assert(R && "No original report found for sliced graph.");
   
-  llvm::OwningPtr<ExplodedGraph<GRState> > ReportGraph(GPair.first);
+  llvm::OwningPtr<ExplodedGraph<GRState> > ReportGraph(GPair.first.first);
+  llvm::OwningPtr<NodeBackMap> BackMap(GPair.first.second);
   const ExplodedNode<GRState> *N = GPair.second.first;
 
   // Start building the path diagnostic...  
@@ -568,6 +596,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   
   ASTContext& Ctx = getContext();
   SourceManager& SMgr = Ctx.getSourceManager();
+  NodeMapClosure NMC(BackMap.get());
   
   while (NextNode) {
     
@@ -750,7 +779,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
       }
     }
 
-    if (PathDiagnosticPiece* p = R->VisitNode(N, NextNode, *ReportGraph, *this))
+    if (PathDiagnosticPiece* p = R->VisitNode(N, NextNode, *ReportGraph, *this,
+                                              NMC))
       PD.push_front(p);
     
     if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {      

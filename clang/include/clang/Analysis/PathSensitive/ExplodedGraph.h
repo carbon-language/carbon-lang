@@ -300,7 +300,9 @@ public:
 
   ExplodedGraphImpl* Trim(const ExplodedNodeImpl* const * NBeg,
                           const ExplodedNodeImpl* const * NEnd,
-                          InterExplodedGraphMapImpl *M) const;
+                          InterExplodedGraphMapImpl *M,
+                          llvm::DenseMap<const void*, const void*> *InverseMap)
+                        const;
 };
   
 class InterExplodedGraphMapImpl {
@@ -447,7 +449,8 @@ public:
   }
   
   std::pair<ExplodedGraph*, InterExplodedGraphMap<STATE>*>
-  Trim(const NodeTy* const* NBeg, const NodeTy* const* NEnd) const {
+  Trim(const NodeTy* const* NBeg, const NodeTy* const* NEnd,
+       llvm::DenseMap<const void*, const void*> *InverseMap = 0) const {
     
     if (NBeg == NEnd)
       return std::make_pair((ExplodedGraph*) 0,
@@ -463,7 +466,8 @@ public:
     llvm::OwningPtr<InterExplodedGraphMap<STATE> > 
       M(new InterExplodedGraphMap<STATE>());
 
-    ExplodedGraphImpl* G = ExplodedGraphImpl::Trim(NBegImpl, NEndImpl, M.get());
+    ExplodedGraphImpl* G = ExplodedGraphImpl::Trim(NBegImpl, NEndImpl, M.get(),
+                                                   InverseMap);
 
     return std::make_pair(static_cast<ExplodedGraph*>(G), M.take());
   }

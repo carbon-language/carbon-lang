@@ -1283,8 +1283,11 @@ public:
   };
 
 private:
+  typedef llvm::DenseMap<const GRExprEngine::NodeTy*, const RetainSummary*>
+          SummaryLogTy;  
+
   RetainSummaryManager Summaries;  
-  llvm::DenseMap<const GRExprEngine::NodeTy*, const RetainSummary*> SummaryLog;
+  SummaryLogTy SummaryLog;
   const LangOptions&   LOpts;
 
   BugType *useAfterRelease, *releaseNotOwned;
@@ -1331,6 +1334,11 @@ public:
   
   bool isGCEnabled() const { return Summaries.isGCEnabled(); }
   const LangOptions& getLangOptions() const { return LOpts; }
+  
+  const RetainSummary *getSummaryOfNode(const ExplodedNode<GRState> *N) const {
+    SummaryLogTy::const_iterator I = SummaryLog.find(N);
+    return I == SummaryLog.end() ? 0 : I->second;
+  }
   
   // Calls.
 
@@ -2087,9 +2095,11 @@ namespace {
   class VISIBILITY_HIDDEN CFRefReport : public RangedBugReport {
   protected:
     SymbolRef Sym;
+    const CFRefCount &TF;
   public:
-    CFRefReport(CFRefBug& D, ExplodedNode<GRState> *n, SymbolRef sym)
-      : RangedBugReport(D, D.getDescription(), n), Sym(sym) {}
+    CFRefReport(CFRefBug& D, const CFRefCount &tf,
+                ExplodedNode<GRState> *n, SymbolRef sym)
+      : RangedBugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
         
     virtual ~CFRefReport() {}
     
@@ -2119,14 +2129,16 @@ namespace {
     PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
                                    const ExplodedNode<GRState>* PrevN,
                                    const ExplodedGraph<GRState>& G,
-                                   BugReporter& BR);
+                                   BugReporter& BR,
+                                   NodeResolver& NR);
   };
   
   class VISIBILITY_HIDDEN CFRefLeakReport : public CFRefReport {
     SourceLocation AllocSite;
     const MemRegion* AllocBinding;
   public:
-    CFRefLeakReport(CFRefBug& D, ExplodedNode<GRState> *n, SymbolRef sym,
+    CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
+                    ExplodedNode<GRState> *n, SymbolRef sym,
                     GRExprEngine& Eng);
 
     PathDiagnosticPiece* getEndPath(BugReporter& BR,
@@ -2215,7 +2227,8 @@ std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
 PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
                                             const ExplodedNode<GRState>* PrevN,
                                             const ExplodedGraph<GRState>& G,
-                                            BugReporter& BR) {
+                                            BugReporter& BR,
+                                            NodeResolver& NR) {
 
   // Check if the type state has changed.  
   GRStateManager &StMgr = cast<GRBugReporter>(BR).getStateManager();
@@ -2228,6 +2241,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   const RefVal& CurrV = *CurrT;
   const RefVal* PrevT = PrevSt.get<RefBindings>(Sym);
 
+  // This is the allocation site since the previous node had no bindings
+  // for this symbol.
   if (!PrevT) {
     std::string sbuf;
     llvm::raw_string_ostream os(sbuf);
@@ -2277,56 +2292,112 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     
     return P;    
   }
-  
-  // Determine if the typestate has changed.  
-  RefVal PrevV = *PrevT;
-  
-  if (PrevV == CurrV)
-    return NULL;
-  
-  // The typestate has changed.
+
+  // Create a string buffer to constain all the useful things we want
+  // to tell the user.
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);
   
-  switch (CurrV.getKind()) {
-    case RefVal::Owned:
-    case RefVal::NotOwned:
+  // Consult the summary to see if there is something special we
+  // should tell the user.
+  if (const RetainSummary *Summ = TF.getSummaryOfNode(NR.getOriginalNode(N))) {
+    // We only have summaries attached to nodes after evaluating CallExpr and
+    // ObjCMessageExprs.
+    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+    
+    llvm::SmallVector<ArgEffect, 2> AEffects;
+    
+    if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+      // Iterate through the parameter expressions and see if the symbol
+      // was ever passed as an argument.
+      unsigned i = 0;
+      
+      for (CallExpr::arg_iterator AI=CE->arg_begin(), AE=CE->arg_end();
+           AI!=AE; ++AI, ++i) {
 
-      if (PrevV.getCount() == CurrV.getCount())
-        return 0;
-      
-      if (PrevV.getCount() > CurrV.getCount())
-        os << "Reference count decremented.";
-      else
-        os << "Reference count incremented.";
-      
-      if (unsigned Count = CurrV.getCount()) {
-        os << " Object has +" << Count;
+        // Retrieve the value of the arugment.
+        SVal X = CurrSt.GetSVal(*AI);
+
+        // Is it the symbol we're interested in?
+        if (!isa<loc::SymbolVal>(X) || 
+            Sym != cast<loc::SymbolVal>(X).getSymbol())
+          continue;
         
-        if (Count > 1)
-          os << " retain counts.";
-        else
-          os << " retain count.";
+        // We have an argument.  Get the effect!
+        AEffects.push_back(Summ->getArg(i));
       }
+    }
+    else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {      
+      if (Expr *receiver = ME->getReceiver()) {
+          SVal RetV = CurrSt.GetSVal(receiver);        
+          if (isa<loc::SymbolVal>(RetV) &&
+              Sym == cast<loc::SymbolVal>(RetV).getSymbol()) {
+            // The symbol we are tracking is the receiver.
+            AEffects.push_back(Summ->getReceiverEffect());
+          }
+      }
+    }
       
-      break;
-      
-    case RefVal::Released:
-      os << "Object released.";
-      break;
-      
-    case RefVal::ReturnedOwned:
-      os << "Object returned to caller as an owning reference (single retain "
-            "count transferred to caller).";
-      break;
-      
-    case RefVal::ReturnedNotOwned:
-      os << "Object returned to caller with a +0 (non-owning) retain count.";
-      break;
+    // Emit diagnostics for the argument effects (if any).
+    // FIXME: The typestate logic below should also be folded into
+    // this block.
+    for (llvm::SmallVectorImpl<ArgEffect>::iterator I=AEffects.begin(),
+          E=AEffects.end(); I != E; ++I) {
 
-    default:
-      return NULL;
+      // Did we do an 'autorelease' in GC mode?
+      if (TF.isGCEnabled() && *I == Autorelease) {
+        os << "In GC mode an 'autorelease' has no effect.";
+        continue;
+      }
+    }
   }
+
+  // Determine if the typestate has changed.  
+  RefVal PrevV = *PrevT;
+  
+  if (!(PrevV == CurrV)) // The typestate has changed.
+    switch (CurrV.getKind()) {
+      case RefVal::Owned:
+      case RefVal::NotOwned:
+
+        if (PrevV.getCount() == CurrV.getCount())
+          return 0;
+        
+        if (PrevV.getCount() > CurrV.getCount())
+          os << "Reference count decremented.";
+        else
+          os << "Reference count incremented.";
+        
+        if (unsigned Count = CurrV.getCount()) {
+          os << " Object has +" << Count;
+          
+          if (Count > 1)
+            os << " retain counts.";
+          else
+            os << " retain count.";
+        }
+        
+        break;
+        
+      case RefVal::Released:
+        os << "Object released.";
+        break;
+        
+      case RefVal::ReturnedOwned:
+        os << "Object returned to caller as an owning reference (single retain "
+              "count transferred to caller).";
+        break;
+        
+      case RefVal::ReturnedNotOwned:
+        os << "Object returned to caller with a +0 (non-owning) retain count.";
+        break;
+
+      default:
+        return NULL;
+    }
+
+  if (os.str().empty())
+    return 0; // We have nothing to say!
   
   Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
   FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
@@ -2512,9 +2583,10 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
 }
 
 
-CFRefLeakReport::CFRefLeakReport(CFRefBug& D, ExplodedNode<GRState> *n,
+CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
+                                 ExplodedNode<GRState> *n,
                                  SymbolRef sym, GRExprEngine& Eng)
-  : CFRefReport(D, n, sym)
+  : CFRefReport(D, tf, n, sym)
 {
   
   // Most bug reports are cached at the location where they occured.
@@ -2584,7 +2656,7 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
     CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
                                                     : leakWithinFunction);
     assert(BT && "BugType not initialized.");
-    CFRefLeakReport* report = new CFRefLeakReport(*BT, N, I->first, Eng);
+    CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N, I->first, Eng);
     BR->EmitReport(report);
   }
 }
@@ -2633,7 +2705,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
     CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
                                           : leakWithinFunction);
     assert(BT && "BugType not initialized.");
-    CFRefLeakReport* report = new CFRefLeakReport(*BT, N, I->first, Eng);
+    CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N, I->first, Eng);
     BR->EmitReport(report);
   }
 }
@@ -2658,7 +2730,7 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
     BT = static_cast<CFRefBug*>(releaseNotOwned);
   }
     
-  CFRefReport *report = new CFRefReport(*BT, N, Sym);
+  CFRefReport *report = new CFRefReport(*BT, *this, N, Sym);
   report->addRange(ErrorExpr->getSourceRange());
   BR->EmitReport(report);
 }

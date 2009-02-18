@@ -123,7 +123,9 @@ ExplodedNodeImpl::NodeGroup::~NodeGroup() {
 ExplodedGraphImpl*
 ExplodedGraphImpl::Trim(const ExplodedNodeImpl* const* BeginSources,
                         const ExplodedNodeImpl* const* EndSources,
-                        InterExplodedGraphMapImpl* M) const {
+                        InterExplodedGraphMapImpl* M,
+                        llvm::DenseMap<const void*, const void*> *InverseMap) 
+const {
   
   typedef llvm::DenseMap<const ExplodedNodeImpl*,
                          const ExplodedNodeImpl*> Pass1Ty;  
@@ -249,6 +251,7 @@ ExplodedGraphImpl::Trim(const ExplodedNodeImpl* const* BeginSources,
     
     ExplodedNodeImpl* NewN = G->getNodeImpl(N->getLocation(), N->State, NULL);
     Pass2[N] = NewN;
+    if (InverseMap) (*InverseMap)[NewN] = N;
     
     if (N->Preds.empty())
       G->addRoot(NewN);
