@@ -143,13 +143,13 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
   }
 
   if (!registeredClaimFile) {
-      (*message)(LDPL_ERROR, "register_claim_file not passed to LLVMgold.");
-      return LDPS_ERR;
-    }
+    (*message)(LDPL_ERROR, "register_claim_file not passed to LLVMgold.");
+    return LDPS_ERR;
+  }
   if (!add_symbols) {
-      (*message)(LDPL_ERROR, "add_symbols not passed to LLVMgold.");
-      return LDPS_ERR;
-    }
+    (*message)(LDPL_ERROR, "add_symbols not passed to LLVMgold.");
+    return LDPS_ERR;
+  }
 
   return LDPS_OK;
 }
