@@ -903,6 +903,8 @@ DIAG(error_objc_throw_expects_object, ERROR,
      "invalid %0 argument (expected an ObjC object type)")
 DIAG(error_rethrow_used_outside_catch, ERROR,
      "@throw (rethrow) used outside of a @catch block")
+DIAG(err_attribute_multiple_objc_gc, ERROR,
+     "multiple garbage collection attributes specified for type")
 
 
 // C++ casts

@@ -781,7 +781,7 @@ static void HandleObjCGCTypeAttribute(QualType &Type,
                                       const AttributeList &Attr, Sema &S){
   // FIXME. change error code.
   if (Type.getObjCGCAttr() != QualType::GCNone) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_address_multiple_qualifiers);
+    S.Diag(Attr.getLoc(), diag::err_attribute_multiple_objc_gc);
     return;
   }
   

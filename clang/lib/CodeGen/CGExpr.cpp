@@ -609,22 +609,17 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 static void SetVarDeclObjCAttribute(ASTContext &Ctx, const Decl *VD, 
                                     const QualType &Ty, LValue &LV)
 {
-#if 0
-// FIXME. ObjCGCAttr no more.
-  if (const ObjCGCAttr *A = VD->getAttr<ObjCGCAttr>()) {
-    ObjCGCAttr::GCAttrTypes attrType = A->getType();
-    LValue::SetObjCType(attrType == ObjCGCAttr::Weak, 
-                        attrType == ObjCGCAttr::Strong, LV);
-  }
-  else 
-#endif
   if (Ctx.getLangOptions().ObjC1 &&
-           Ctx.getLangOptions().getGCMode() != LangOptions::NonGC) {
+      Ctx.getLangOptions().getGCMode() != LangOptions::NonGC) {
+    QualType::GCAttrTypes attr = Ty.getObjCGCAttr();
+    if (attr != QualType::GCNone)
+      LValue::SetObjCType(attr == QualType::Weak, 
+                          attr == QualType::Strong, LV);
     // Default behavious under objective-c's gc is for objective-c pointers
     // be treated as though they were declared as __strong.
-    if (Ctx.isObjCObjectPointerType(Ty))
+    else if (Ctx.isObjCObjectPointerType(Ty))
       LValue::SetObjCType(false, true, LV);
-  }  
+  }
 }
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
@@ -929,21 +924,17 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   LValue LV =  
     LValue::MakeAddr(V, 
                      Field->getType().getCVRQualifiers()|CVRQualifiers);
-#if 0
-// FIXME. ObjCGCAttr is no more.
-  if (const ObjCGCAttr *A = Field->getAttr<ObjCGCAttr>()) {
-    ObjCGCAttr::GCAttrTypes attrType = A->getType();
-    // __weak attribute on a field is ignored.
-    LValue::SetObjCType(false, attrType == ObjCGCAttr::Strong, LV);
-  }
-  else 
-#endif
   if (CGM.getLangOptions().ObjC1 &&
-           CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
-    QualType ExprTy = Field->getType();
-    if (getContext().isObjCObjectPointerType(ExprTy))
+      CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
+    QualType Ty = Field->getType();
+    QualType::GCAttrTypes attr = Ty.getObjCGCAttr();
+    if (attr != QualType::GCNone)
+      // __weak attribute on a field is ignored.
+      LValue::SetObjCType(false, attr == QualType::Strong, LV);
+    else if (getContext().isObjCObjectPointerType(Ty))
       LValue::SetObjCType(false, true, LV);
-  }  
+    
+  }
   return LV;
 }
 
