@@ -1981,7 +1981,7 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
           break;          
         case RefVal::Released:
           if (isGCEnabled())
-            V = V ^ RefVal::Owned;
+            V = (V ^ RefVal::Owned) + 1;
           else {          
             V = V ^ RefVal::ErrorUseAfterRelease;
             hasErr = V.getKind();
@@ -1999,7 +1999,9 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
           assert (false);
 
         case RefVal::Owned:
-          V = V.getCount() > 1 ? V - 1 : V ^ RefVal::Released;
+          assert(V.getCount() > 0);
+          if (V.getCount() == 1) V = V ^ RefVal::Released;
+          V = V - 1;
           break;
           
         case RefVal::NotOwned:
@@ -2370,9 +2372,11 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
            <<  "' decrements an object's retain count and registers the "
                "object with the garbage collector. ";
 
-        if (CurrV.getKind() == RefVal::Released)
-          os << "The object's visible retain count is now 0 and can be "
+        if (CurrV.getKind() == RefVal::Released) {
+          assert(CurrV.getCount() == 0);
+          os << "Since it now has a 0 retain count the object can be "
                 "automatically collected by the garbage collector.";
+        }
         else
           os << "An object must have a 0 retain count to be garbage collected. "
                 "After this call its retain count is +" << CurrV.getCount()
@@ -2399,16 +2403,22 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
           os << "Reference count decremented.";
         else
           os << "Reference count incremented.";
-        
+                  
         if (unsigned Count = CurrV.getCount()) {
-          os << " Object has +" << Count;
+          os << " The object now has +" << Count;
           
           if (Count > 1)
             os << " retain counts.";
           else
             os << " retain count.";
         }
-        
+          
+        if (PrevV.getKind() == RefVal::Released) {
+          assert(TF.isGCEnabled() && CurrV.getCount() > 0);
+          os << " The object is not eligible for garbage collection until the "
+                "retain count reaches 0 again.";
+        }
+          
         break;
         
       case RefVal::Released:
