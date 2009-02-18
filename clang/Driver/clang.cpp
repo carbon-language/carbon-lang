@@ -1247,65 +1247,65 @@ static void InitializeCompileOptions(CompileOptions &Opts) {
 /// CreateASTConsumer - Create the ASTConsumer for the corresponding program
 ///  action.  These consumers can operate on both ASTs that are freshly
 ///  parsed from source files as well as those deserialized from Bitcode.
-static ASTConsumer* CreateASTConsumer(const std::string& InFile,
+static ASTConsumer *CreateASTConsumer(const std::string& InFile,
                                       Diagnostic& Diag, FileManager& FileMgr, 
                                       const LangOptions& LangOpts,
                                       Preprocessor *PP,
                                       PreprocessorFactory *PPF) {
   switch (ProgAction) {
-    default:
-      return NULL;
-      
-    case ASTPrint:
-      return CreateASTPrinter();
-      
-    case ASTDump:
-      return CreateASTDumper();
-      
-    case ASTView:
-      return CreateASTViewer();   
+  default:
+    return NULL;
+    
+  case ASTPrint:
+    return CreateASTPrinter();
+    
+  case ASTDump:
+    return CreateASTDumper();
+    
+  case ASTView:
+    return CreateASTViewer();   
 
-    case PrintDeclContext:
-      return CreateDeclContextPrinter();
-      
-    case EmitHTML:
-      return CreateHTMLPrinter(OutputFile, Diag, PP, PPF);
+  case PrintDeclContext:
+    return CreateDeclContextPrinter();
+    
+  case EmitHTML:
+    return CreateHTMLPrinter(OutputFile, Diag, PP, PPF);
 
-    case InheritanceView:
-      return CreateInheritanceViewer(InheritanceViewCls);
-      
-    case TestSerialization:
-      return CreateSerializationTest(Diag, FileMgr);
-      
-    case EmitAssembly:
-    case EmitLLVM:
-    case EmitBC: {
-      BackendAction Act;
-      if (ProgAction == EmitAssembly) {
-        Act = Backend_EmitAssembly;
-      } else if (ProgAction == EmitLLVM) {
-        Act = Backend_EmitLL;
-      } else {
-        Act = Backend_EmitBC;        
-      }
-      CompileOptions Opts;
-      InitializeCompileOptions(Opts);
-      return CreateBackendConsumer(Act, Diag, LangOpts, Opts, 
-                                   InFile, OutputFile, GenerateDebugInfo);
-    }
+  case InheritanceView:
+    return CreateInheritanceViewer(InheritanceViewCls);
+    
+  case TestSerialization:
+    return CreateSerializationTest(Diag, FileMgr);
+    
+  case EmitAssembly:
+  case EmitLLVM:
+  case EmitBC: {
+    BackendAction Act;
+    if (ProgAction == EmitAssembly)
+      Act = Backend_EmitAssembly;
+    else if (ProgAction == EmitLLVM)
+      Act = Backend_EmitLL;
+    else
+      Act = Backend_EmitBC;
+    
+    CompileOptions Opts;
+    InitializeCompileOptions(Opts);
+    return CreateBackendConsumer(Act, Diag, LangOpts, Opts, 
+                                 InFile, OutputFile, GenerateDebugInfo);
+  }
 
-    case SerializeAST:
-      // FIXME: Allow user to tailor where the file is written.
-      return CreateASTSerializer(InFile, OutputFile, Diag);
-      
-    case RewriteObjC:
-      return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);
+  case SerializeAST:
+    // FIXME: Allow user to tailor where the file is written.
+    return CreateASTSerializer(InFile, OutputFile, Diag);
+    
+  case RewriteObjC:
+    return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);
 
-    case RewriteBlocks:
-      return CreateBlockRewriter(InFile, OutputFile, Diag, LangOpts);
-      
-    case RunAnalysis:
-      return CreateAnalysisConsumer(Diag, PP, PPF, LangOpts, OutputFile);
+  case RewriteBlocks:
+    return CreateBlockRewriter(InFile, OutputFile, Diag, LangOpts);
+    
+  case RunAnalysis:
+    return CreateAnalysisConsumer(Diag, PP, PPF, LangOpts, OutputFile);
   }
 }
 
