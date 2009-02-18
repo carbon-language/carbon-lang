@@ -93,6 +93,12 @@ public:
     CVRFlags = Const|Restrict|Volatile
   };
   
+  enum GCAttrTypes {
+    GCNone = 0,
+    Weak,
+    Strong
+  };
+  
   QualType() {}
   
   QualType(const Type *Ptr, unsigned Quals)
@@ -188,6 +194,9 @@ public:
   /// getAddressSpace - Return the address space of this type.
   inline unsigned getAddressSpace() const;
   
+  /// GCAttrTypesAttr - Returns gc attribute of this type.
+  inline QualType::GCAttrTypes getObjCGCAttr() const;
+  
   /// Emit - Serialize a QualType to Bitcode.
   void Emit(llvm::Serializer& S) const;
   
@@ -255,6 +264,7 @@ public:
     BlockPointer,          // C extension
     FixedWidthInt
   };
+  
 private:
   QualType CanonicalType;
 
@@ -461,14 +471,6 @@ protected:
 /// __strong attributes.
 ///
 class ExtQualType : public Type, public llvm::FoldingSetNode {
-public:
-  enum GCAttrTypes {
-    GCNone = 0,
-    Weak,
-    Strong
-  };
-  
-private:
   /// BaseType - This is the underlying type that this qualifies.  All CVR
   /// qualifiers are stored on the QualType that references this type, so we
   /// can't have any here.
@@ -477,16 +479,16 @@ private:
   /// Address Space ID - The address space ID this type is qualified with.
   unsigned AddressSpace;
   /// GC __weak/__strong attributes
-  GCAttrTypes GCAttrType;
+  QualType::GCAttrTypes GCAttrType;
   
   ExtQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace,
-              GCAttrTypes gcAttr) :
+              QualType::GCAttrTypes gcAttr) :
     Type(ExtQual, CanonicalPtr, Base->isDependentType()), BaseType(Base),
     AddressSpace(AddrSpace), GCAttrType(gcAttr) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
   Type *getBaseType() const { return BaseType; }
-  GCAttrTypes getType() const { return GCAttrType; }
+  QualType::GCAttrTypes getObjCGCAttr() const { return GCAttrType; }
   unsigned getAddressSpace() const { return AddressSpace; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
@@ -495,7 +497,7 @@ public:
     Profile(ID, getBaseType(), AddressSpace, GCAttrType);
   }
   static void Profile(llvm::FoldingSetNodeID &ID, Type *Base, 
-                      unsigned AddrSpace, GCAttrTypes gcAttr) {
+                      unsigned AddrSpace, QualType::GCAttrTypes gcAttr) {
     ID.AddPointer(Base);
     ID.AddInteger(AddrSpace);
     ID.AddInteger(gcAttr);
@@ -1741,6 +1743,16 @@ inline unsigned QualType::getAddressSpace() const {
   return 0;
 }
 
+/// getObjCGCAttr - Return the gc attribute of this type.
+inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
+  QualType CT = getTypePtr()->getCanonicalTypeInternal();
+  if (const ArrayType *AT = dyn_cast<ArrayType>(CT))
+      return AT->getElementType().getObjCGCAttr();
+  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CT))
+    return EXTQT->getObjCGCAttr();
+    return GCNone;
+}
+  
 /// isMoreQualifiedThan - Determine whether this type is more
 /// qualified than the Other type. For example, "const volatile int"
 /// is more qualified than "const int", "volatile int", and

@@ -758,6 +758,35 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   Type = S.Context.getAddrSpaceQualType(Type, ASIdx);
 }
 
+/// HandleObjCGCTypeAttribute - Process an objc's gc attribute on the
+/// specified type.  The attribute contains 1 argument, weak or strong.
+static void HandleObjCGCTypeAttribute(QualType &Type, 
+                                      const AttributeList &Attr, Sema &S){
+  // FIXME. Needs more work for this to make sense.
+  if (Type.getObjCGCAttr() != QualType::GCNone) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_address_multiple_qualifiers);
+    return;
+  }
+  
+  // Check the attribute arguments.
+  QualType::GCAttrTypes attr;
+  if (!Attr.getParameterName() || Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+  if (Attr.getParameterName()->isStr("weak")) 
+    attr = QualType::Weak;
+  else if (Attr.getParameterName()->isStr("strong"))
+    attr = QualType::Strong;
+  else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+      << "objc_gc" << Attr.getParameterName();
+    return;
+  }
+  
+  Type = S.Context.getObjCGCQualType(Type, attr);
+}
+
 void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
   // Scan through and apply attributes to this type where it makes sense.  Some
   // attributes (such as __address_space__, __vector_size__, etc) apply to the
@@ -770,6 +799,9 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
     default: break;
     case AttributeList::AT_address_space:
       HandleAddressSpaceTypeAttribute(Result, *AL, *this);
+      break;
+    case AttributeList::AT_objc_gc:
+      HandleObjCGCTypeAttribute(Result, *AL, *this);
       break;
     }
   }

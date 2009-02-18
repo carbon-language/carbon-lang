@@ -190,6 +190,11 @@ public:
   /// replaced.
   QualType getAddrSpaceQualType(QualType T, unsigned AddressSpace);
   
+  /// getObjCGCQualType - Returns the uniqued reference to the type for an
+  /// objc gc qualified type. The retulting type has a union of the qualifiers
+  /// from T and the gc attribute.
+  QualType getObjCGCQualType(QualType T, QualType::GCAttrTypes gcAttr);
+  
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.
   QualType getComplexType(QualType T);

@@ -725,7 +725,7 @@ QualType ASTContext::getAddrSpaceQualType(QualType T, unsigned AddressSpace) {
   // Check if we've already instantiated an address space qual'd type of this
   // type.
   llvm::FoldingSetNodeID ID;
-  ExtQualType::Profile(ID, T.getTypePtr(), AddressSpace, ExtQualType::GCNone);      
+  ExtQualType::Profile(ID, T.getTypePtr(), AddressSpace, T.getObjCGCAttr());      
   void *InsertPos = 0;
   if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(EXTQy, 0);
@@ -741,12 +741,47 @@ QualType ASTContext::getAddrSpaceQualType(QualType T, unsigned AddressSpace) {
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   ExtQualType *New = new (*this, 8) ExtQualType(T.getTypePtr(), Canonical, 
-                                                AddressSpace, ExtQualType::GCNone);
+                                                AddressSpace, 
+                                                QualType::GCNone);
   ExtQualTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, T.getCVRQualifiers());
 }
 
+QualType ASTContext::getObjCGCQualType(QualType T, 
+                                       QualType::GCAttrTypes attr) {
+  QualType CanT = getCanonicalType(T);
+  if (CanT.getObjCGCAttr() == attr)
+    return T;
+  
+  // Type's cannot have multiple ExtQuals, therefore we know we only have to deal
+  // with CVR qualifiers from here on out.
+  assert(CanT.getObjCGCAttr() == QualType::GCNone && 
+         "Type is already gc qualified");
+  
+  // Check if we've already instantiated an gc qual'd type of this type.
+  llvm::FoldingSetNodeID ID;
+  ExtQualType::Profile(ID, T.getTypePtr(), T.getAddressSpace(), attr);      
+  void *InsertPos = 0;
+  if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(EXTQy, 0);
+  
+  // If the base type isn't canonical, this won't be a canonical type either,
+  // so fill in the canonical type field.
+  QualType Canonical;
+  if (!T->isCanonical()) {
+    Canonical = getObjCGCQualType(CanT, attr);
+    
+    // Get the new insert position for the node we care about.
+    ExtQualType *NewIP = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+  }
+  ExtQualType *New = new (*this, 8) ExtQualType(T.getTypePtr(), Canonical, 
+                                                0, attr);
+  ExtQualTypes.InsertNode(New, InsertPos);
+  Types.push_back(New);
+  return QualType(New, T.getCVRQualifiers());
+}
 
 /// getComplexType - Return the uniqued reference to the type for a complex
 /// number with the specified element type.

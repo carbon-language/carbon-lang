@@ -1058,11 +1058,11 @@ void ExtQualType::getAsStringInternal(std::string &S) const {
     S = "__attribute__((address_space("+llvm::utostr_32(AddressSpace)+")))" + S;
     space = true;
   }
-  if (GCAttrType != GCNone) {
+  if (GCAttrType != QualType::GCNone) {
     if (space)
       S += ' ';
     S += "__attribute__((objc_gc(";
-    if (GCAttrType == Weak)
+    if (GCAttrType == QualType::Weak)
       S += "weak";
     else
       S += "strong";
