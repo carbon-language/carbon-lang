@@ -871,6 +871,15 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
 /// cast+dereference.
 bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                                  SourceLocation *Loc, bool isEvaluated) const {
+  if (!isIntegerConstantExprInternal(Result, Ctx, Loc, isEvaluated))
+    return false;
+  assert(Result == EvaluateAsInt(Ctx) && "Inconsistent Evaluate() result!");
+  return true;
+}
+
+bool Expr::isIntegerConstantExprInternal(llvm::APSInt &Result, ASTContext &Ctx,
+                                 SourceLocation *Loc, bool isEvaluated) const {
+  
   // Pretest for integral type; some parts of the code crash for types that
   // can't be sized.
   if (!getType()->isIntegralType()) {
@@ -885,6 +894,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     return cast<ParenExpr>(this)->getSubExpr()->
                      isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
   case IntegerLiteralClass:
+    // NOTE: getValue() returns an APInt, we must set sign.
     Result = cast<IntegerLiteral>(this)->getValue();
     Result.setIsUnsigned(getType()->isUnsignedIntegerType());    
     break;
@@ -1107,7 +1117,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       
       // The result of the constant expr is the RHS.
       Result = RHS;
-      return true;
+      break;
     }
 
     assert(!Exp->isAssignmentOp() && "LHS can't be a constant expr!");
@@ -1208,9 +1218,12 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       }
     
     // Evaluate the false one first, discard the result.
-    if (FalseExp && !FalseExp->isIntegerConstantExpr(Result, Ctx, Loc, false))
+    llvm::APSInt Tmp;
+    if (FalseExp && !FalseExp->isIntegerConstantExpr(Tmp, Ctx, Loc, false))
       return false;
-    // Evalute the true one, capture the result.
+    // Evalute the true one, capture the result. Note that if TrueExp
+    // is False then this is an instant of the gcc missing LHS
+    // extension, and we will just reuse Result.
     if (TrueExp && 
         !TrueExp->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
       return false;

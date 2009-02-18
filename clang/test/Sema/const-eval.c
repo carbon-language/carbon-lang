@@ -29,3 +29,6 @@ void f()
 
 // FIXME: Turn into EVAL_EXPR test once we have more folding.
 _Complex float g16 = (1.0f + 1.0fi);
+
+// ?: in constant expressions.
+int g17[(3?:1) - 2]; 

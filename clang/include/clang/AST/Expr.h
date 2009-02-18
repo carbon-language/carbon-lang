@@ -180,6 +180,9 @@ public:
   bool isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                              SourceLocation *Loc = 0,
                              bool isEvaluated = true) const;
+  bool isIntegerConstantExprInternal(llvm::APSInt &Result, ASTContext &Ctx,
+                             SourceLocation *Loc = 0,
+                             bool isEvaluated = true) const;
   bool isIntegerConstantExpr(ASTContext &Ctx, SourceLocation *Loc = 0) const {
     llvm::APSInt X;
     return isIntegerConstantExpr(X, Ctx, Loc);
@@ -190,7 +193,7 @@ public:
   
   /// EvalResult is a struct with detailed info about an evaluated expression.
   struct EvalResult {
-    /// Val - This is the scalar value the expression can be folded to.
+    /// Val - This is the value the expression can be folded to.
     APValue Val;
     
     /// HasSideEffects - Whether the evaluated expression has side effects.
