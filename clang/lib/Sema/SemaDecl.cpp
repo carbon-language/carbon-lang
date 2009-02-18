@@ -64,15 +64,15 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
 
   if (IIDecl) {
     if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
-      // If this typename is deprecated, emit a warning.
-      DiagnoseUseOfDeprecatedDecl(IIDecl, NameLoc);
+      // Check whether we can use this type
+      (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
       
       return Context.getTypeDeclType(TD).getAsOpaquePtr();
     }
     
     if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
-      // If this typename is deprecated, emit a warning.
-      DiagnoseUseOfDeprecatedDecl(IIDecl, NameLoc);
+      // Check whether we can use this interface.
+      (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
       
       return Context.getObjCInterfaceType(IDecl).getAsOpaquePtr();
     }
@@ -591,6 +591,11 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     if (OldQType == NewQType) {
       // We have a redeclaration.
       MergeAttributes(New, Old);
+
+      // Merge the "deleted" flag.
+      if (Old->isDeleted())
+        New->setDeleted();
+
       return MergeCXXFunctionDecl(New, Old);
     } 
 
@@ -635,6 +640,10 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     }
 
     MergeAttributes(New, Old);
+
+    // Merge the "deleted" flag.
+    if (Old->isDeleted())
+      New->setDeleted();
     
     return false;
   }
@@ -3125,8 +3134,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   }
 
   if (PrevDecl) {
-    // If the previous declaration was deprecated, emit a warning.
-    DiagnoseUseOfDeprecatedDecl(PrevDecl, NameLoc);
+    // Check whether the previous declaration is usable.
+    (void)DiagnoseUseOfDecl(PrevDecl, NameLoc);
     
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
       // If this is a use of a previous tag, or if the tag is already declared

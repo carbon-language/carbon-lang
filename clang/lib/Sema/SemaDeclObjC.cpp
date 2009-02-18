@@ -111,7 +111,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
 
     // Diagnose classes that inherit from deprecated classes.
     if (SuperClassDecl)
-      DiagnoseUseOfDeprecatedDecl(SuperClassDecl, SuperLoc);
+      (void)DiagnoseUseOfDecl(SuperClassDecl, SuperLoc);
     
     if (PrevDecl && SuperClassDecl == 0) {
       // The previous declaration was not a class decl. Check if we have a
@@ -270,7 +270,7 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
       continue;
     }
     
-    DiagnoseUseOfDeprecatedDecl(PDecl, ProtocolId[i].second);
+    (void)DiagnoseUseOfDecl(PDecl, ProtocolId[i].second);
 
     // If this is a forward declaration and we are supposed to warn in this
     // case, do it.
@@ -493,7 +493,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
   CDecl->setClassInterface(IDecl);
   
   // If the interface is deprecated, warn about it.
-  DiagnoseUseOfDeprecatedDecl(IDecl, ClassLoc);
+  (void)DiagnoseUseOfDecl(IDecl, ClassLoc);
 
   /// Check for duplicate interface declaration for this category
   ObjCCategoryDecl *CDeclChain;

@@ -26,14 +26,23 @@
 #include "clang/Parse/Scope.h"
 using namespace clang;
 
-
-/// DiagnoseUseOfDeprecatedDeclImpl - If the specified decl is deprecated or
-// unavailable, emit the corresponding diagnostics. 
-void Sema::DiagnoseUseOfDeprecatedDeclImpl(NamedDecl *D, SourceLocation Loc) {
+/// \brief Determine whether the use of this declaration is valid, and
+/// emit any corresponding diagnostics.
+///
+/// This routine diagnoses various problems with referencing
+/// declarations that can occur when using a declaration. For example,
+/// it might warn if a deprecated or unavailable declaration is being
+/// used, or produce an error (and return true) if a C++0x deleted
+/// function is being used.
+///
+/// \returns true if there was an error (this declaration cannot be
+/// referenced), false otherwise.
+bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   // See if the decl is deprecated.
   if (D->getAttr<DeprecatedAttr>()) {
-    // Implementing deprecated stuff requires referencing depreated stuff. Don't
-    // warn if we are implementing a deprecated construct.
+    // Implementing deprecated stuff requires referencing deprecated
+    // stuff. Don't warn if we are implementing a deprecated
+    // construct.
     bool isSilenced = false;
     
     if (NamedDecl *ND = getCurFunctionOrMethodDecl()) {
@@ -60,9 +69,22 @@ void Sema::DiagnoseUseOfDeprecatedDeclImpl(NamedDecl *D, SourceLocation Loc) {
       Diag(Loc, diag::warn_deprecated) << D->getDeclName();
   }
 
-  // See if hte decl is unavailable.
-  if (D->getAttr<UnavailableAttr>())
+  // See if this is a deleted function.
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    if (FD->isDeleted()) {
+      Diag(Loc, diag::err_deleted_function_use);
+      Diag(D->getLocation(), diag::note_unavailable_here) << true;
+      return true;
+    }
+
+  // See if the decl is unavailable
+  if (D->getAttr<UnavailableAttr>()) {
     Diag(Loc, diag::warn_unavailable) << D->getDeclName();
+    Diag(D->getLocation(), diag::note_unavailable_here) << 0;
+  }
+
+
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -607,7 +629,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
       if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II)) {
         // Check if referencing a field with __attribute__((deprecated)).
-        DiagnoseUseOfDeprecatedDecl(IV, Loc);
+        if (DiagnoseUseOfDecl(IV, Loc))
+          return ExprError();
 
         // FIXME: This should use a new expr for a direct reference, don't turn
         // this into Self->ivar, just return a BareIVarExpr or something.
@@ -628,8 +651,12 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     }
   }
 
-  if (getLangOptions().CPlusPlus && (!SS || !SS->isSet()) && 
-      HasTrailingLParen && D == 0) {
+  // Determine whether this name might be a candidate for
+  // argument-dependent lookup.
+  bool ADL = getLangOptions().CPlusPlus && (!SS || !SS->isSet()) && 
+             HasTrailingLParen;
+
+  if (ADL && D == 0) {
     // We've seen something of the form
     //
     //   identifier(
@@ -791,9 +818,13 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                   false, false, SS));
   ValueDecl *VD = cast<ValueDecl>(D);
 
-  // Check if referencing an identifier with __attribute__((deprecated)).
-  DiagnoseUseOfDeprecatedDecl(VD, Loc);
-  
+  // Check whether this declaration can be used. Note that we suppress
+  // this check when we're going to perform argument-dependent lookup
+  // on this function name, because this might not be the function
+  // that overload resolution actually selects.
+  if (!(ADL && isa<FunctionDecl>(VD)) && DiagnoseUseOfDecl(VD, Loc))
+    return ExprError();
+
   if (VarDecl *Var = dyn_cast<VarDecl>(VD)) {
     // Warn about constructs like:
     //   if (void *X = foo()) { ... } else { X }.
@@ -1296,6 +1327,14 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
           << Arg->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return ExprError();
+
+    case OR_Deleted:
+      Diag(OpLoc, diag::err_ovl_deleted_oper)
+        << Best->Function->isDeleted()
+        << UnaryOperator::getOpcodeStr(Opc)
+        << Arg->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return ExprError();
     }
 
     // Either we found no viable overloaded operator or we matched a
@@ -1396,6 +1435,14 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
       Diag(LLoc,  diag::err_ovl_ambiguous_oper)
           << "[]"
           << LHSExp->getSourceRange() << RHSExp->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return ExprError();
+
+    case OR_Deleted:
+      Diag(LLoc, diag::err_ovl_deleted_oper)
+        << Best->Function->isDeleted()
+        << "[]"
+        << LHSExp->getSourceRange() << RHSExp->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return ExprError();
     }
@@ -1621,8 +1668,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     if (MemberDecl->isInvalidDecl())
       return ExprError();
     
-    // Check if referencing a field with __attribute__((deprecated)).
-    DiagnoseUseOfDeprecatedDecl(MemberDecl, MemberLoc);
+    // Check the use of this field
+    if (DiagnoseUseOfDecl(MemberDecl, MemberLoc))
+      return ExprError();
 
     if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl)) {
       // We may have found a field within an anonymous union or struct
@@ -1681,9 +1729,10 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // error cases.
       if (IV->isInvalidDecl())
         return ExprError();
-      
-      // Check if referencing a field with __attribute__((deprecated)).
-      DiagnoseUseOfDeprecatedDecl(IV, MemberLoc);
+
+      // Check whether we can reference this field.
+      if (DiagnoseUseOfDecl(IV, MemberLoc))
+        return ExprError();
       
       ObjCIvarRefExpr *MRef= new (Context) ObjCIvarRefExpr(IV, IV->getType(), 
                                                  MemberLoc, BaseExpr,
@@ -1706,8 +1755,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
     // Search for a declared property first.
     if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member)) {
-      // Check if referencing a property with __attribute__((deprecated)).
-      DiagnoseUseOfDeprecatedDecl(PD, MemberLoc);
+      // Check whether we can reference this property.
+      if (DiagnoseUseOfDecl(PD, MemberLoc))
+        return ExprError();
 
       return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
                                                      MemberLoc, BaseExpr));
@@ -1717,8 +1767,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     for (ObjCInterfaceType::qual_iterator I = IFTy->qual_begin(),
          E = IFTy->qual_end(); I != E; ++I)
       if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
-        // Check if referencing a property with __attribute__((deprecated)).
-        DiagnoseUseOfDeprecatedDecl(PD, MemberLoc);
+        // Check whether we can reference this property.
+        if (DiagnoseUseOfDecl(PD, MemberLoc))
+          return ExprError();
 
         return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
                                                        MemberLoc, BaseExpr));
@@ -1749,8 +1800,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       }
     }
     if (Getter) {
-      // Check if referencing a property with __attribute__((deprecated)).
-      DiagnoseUseOfDeprecatedDecl(Getter, MemberLoc);
+      // Check if we can reference this property.
+      if (DiagnoseUseOfDecl(Getter, MemberLoc))
+        return ExprError();
       
       // If we found a getter then this may be a valid dot-reference, we
       // will look for the matching setter, in case it is needed.
@@ -1775,10 +1827,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         }
       }
 
-      if (Setter)
-        // Check if referencing a property with __attribute__((deprecated)).
-        DiagnoseUseOfDeprecatedDecl(Setter, MemberLoc);
-
+      if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
+        return ExprError();
       
       // FIXME: we must check that the setter has property type.
       return Owned(new (Context) ObjCKVCRefExpr(Getter, Getter->getResultType(), 
@@ -1795,8 +1845,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
          E = QIdTy->qual_end(); I != E; ++I) {
       if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
-        // Check if referencing a property with __attribute__((deprecated)).
-        DiagnoseUseOfDeprecatedDecl(PD, MemberLoc);
+        // Check the use of this declaration
+        if (DiagnoseUseOfDecl(PD, MemberLoc))
+          return ExprError();
         
         return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
                                                        MemberLoc, BaseExpr));
@@ -1804,8 +1855,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // Also must look for a getter name which uses property syntax.
       Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
       if (ObjCMethodDecl *OMD = (*I)->getInstanceMethod(Sel)) {
-        // Check if referencing a property with __attribute__((deprecated)).
-        DiagnoseUseOfDeprecatedDecl(OMD, MemberLoc);
+        // Check the use of this method.
+        if (DiagnoseUseOfDecl(OMD, MemberLoc))
+          return ExprError();
         
         return Owned(new (Context) ObjCMessageExpr(BaseExpr, Sel, 
                         OMD->getResultType(), OMD, OpLoc, MemberLoc, NULL, 0));
@@ -2032,16 +2084,6 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
                                                                Args, NumArgs,
                                                                Context.BoolTy,
                                                                RParenLoc));
-
-  // Check for a call to a (FIXME: deleted) or unavailable function.
-  if (FDecl && FDecl->getAttr<UnavailableAttr>()) {
-    Diag(Fn->getSourceRange().getBegin(), diag::err_call_deleted_function)
-      << FDecl->getAttr<UnavailableAttr>() << FDecl->getDeclName()
-      << Fn->getSourceRange();
-    Diag(FDecl->getLocation(), diag::note_deleted_function_here)
-      << FDecl->getAttr<UnavailableAttr>();
-    return ExprError();
-  }
 
   const FunctionType *FuncT;
   if (!Fn->getType()->isBlockPointerType()) {
@@ -3912,6 +3954,14 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
           << lhs->getSourceRange() << rhs->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return ExprError();
+
+    case OR_Deleted:
+      Diag(TokLoc, diag::err_ovl_deleted_oper)
+        << Best->Function->isDeleted()
+        << BinaryOperator::getOpcodeStr(Opc)
+        << lhs->getSourceRange() << rhs->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return ExprError();
     }
 
     // Either we found no viable overloaded operator or we matched a
@@ -4010,6 +4060,14 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
       Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
           << UnaryOperator::getOpcodeStr(Opc)
           << Input->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return ExprError();
+
+    case OR_Deleted:
+      Diag(OpLoc, diag::err_ovl_deleted_oper)
+        << Best->Function->isDeleted()
+        << UnaryOperator::getOpcodeStr(Opc)
+        << Input->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return ExprError();
     }

@@ -288,8 +288,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (!Method)
     Method = ClassDecl->lookupInstanceMethod(Sel);
 
-  if (Method)
-    DiagnoseUseOfDeprecatedDecl(Method, receiverLoc);
+  if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
+    return true;
   
   if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, true, 
                                 lbrac, rbrac, returnType))
@@ -336,8 +336,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
           Method = SuperDecl->lookupInstanceMethod(Sel);
     }
 
-    if (Method)
-      DiagnoseUseOfDeprecatedDecl(Method, receiverLoc);
+    if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
+      return true;
 
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
@@ -370,8 +370,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
               ObjCImplementations[ClassDecl->getIdentifier()])
           Method = ImpDecl->getClassMethod(Sel);
       
-      if (Method)
-        DiagnoseUseOfDeprecatedDecl(Method, receiverLoc);
+      if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
+        return true;
     }
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
@@ -423,8 +423,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       Diag(lbrac, diag::warn_method_not_found_in_protocol)
         << Sel << SourceRange(lbrac, rbrac);
     
-    if (Method)
-      DiagnoseUseOfDeprecatedDecl(Method, receiverLoc);
+    if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
+      return true;
   } else {
     Diag(lbrac, diag::error_bad_receiver_type)
       << RExpr->getType() << RExpr->getSourceRange();

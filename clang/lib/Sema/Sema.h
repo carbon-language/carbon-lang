@@ -438,7 +438,8 @@ public:
   enum OverloadingResult {
     OR_Success,             ///< Overload resolution succeeded.
     OR_No_Viable_Function,  ///< No viable function found.
-    OR_Ambiguous            ///< Ambiguous candidates found.
+    OR_Ambiguous,           ///< Ambiguous candidates found.
+    OR_Deleted              ///< Overload resoltuion refers to a deleted function.
   };
 
   void AddOverloadCandidate(FunctionDecl *Function, 
@@ -1022,15 +1023,8 @@ public:
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
-  /// DiagnoseUseOfDeprecatedDecl - If the specified decl is deprecated or
-  // unavailable, emit the corresponding diagnostics. 
-  inline void DiagnoseUseOfDeprecatedDecl(NamedDecl *D, SourceLocation Loc) {
-    if (D->hasAttrs())
-      DiagnoseUseOfDeprecatedDeclImpl(D, Loc);
-  }
-  void DiagnoseUseOfDeprecatedDeclImpl(NamedDecl *D, SourceLocation Loc);
+  bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc);
 
-  
   // Primary Expressions.
   virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                                IdentifierInfo &II,

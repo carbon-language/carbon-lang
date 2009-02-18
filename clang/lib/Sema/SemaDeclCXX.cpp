@@ -1650,6 +1650,18 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
       Diag(Loc, diag::err_ovl_ambiguous_init) << ClassType << Range;
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     return 0;
+
+  case OR_Deleted:
+    if (InitEntity)
+      Diag(Loc, diag::err_ovl_deleted_init)
+        << Best->Function->isDeleted()
+        << InitEntity << Range;
+    else
+      Diag(Loc, diag::err_ovl_deleted_init)
+        << Best->Function->isDeleted()
+        << InitEntity << Range;
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    return 0;
   }
   
   return 0;
@@ -1736,8 +1748,12 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
     if (Fn) {
       // Since we're performing this reference-initialization for
       // real, update the initializer with the resulting function.
-      if (!ICS)
+      if (!ICS) {
+        if (DiagnoseUseOfDecl(Fn, Init->getSourceRange().getBegin()))
+          return true;
+
         FixOverloadedFunctionReference(Init, Fn);
+      }
 
       T2 = Fn->getType();
     }
@@ -1864,7 +1880,9 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
       return true;
       
     case OR_No_Viable_Function:
-      // There was no suitable conversion; continue with other checks.
+    case OR_Deleted:
+      // There was no suitable conversion, or we found a deleted
+      // conversion; continue with other checks.
       break;
     }
   }

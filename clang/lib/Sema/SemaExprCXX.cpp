@@ -473,6 +473,13 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
       << Name << Range;
     PrintOverloadCandidates(Candidates, /*OnlyViable=*/true);
     return true;
+
+  case OR_Deleted:
+    Diag(StartLoc, diag::err_ovl_deleted_call)
+      << Best->Function->isDeleted()
+      << Name << Range;
+    PrintOverloadCandidates(Candidates, /*OnlyViable=*/true);
+    return true;
   }
   assert(false && "Unreachable, bad result from BestViableFunction");
   return true;
@@ -775,20 +782,22 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Array_To_Pointer:
+    FromType = Context.getArrayDecayedType(FromType);
+    ImpCastExprToType(From, FromType);
+    break;
+
+  case ICK_Function_To_Pointer:
     if (FromType->isOverloadType()) {
       FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(From, ToType, true);
       if (!Fn)
         return true;
 
+      if (DiagnoseUseOfDecl(Fn, From->getSourceRange().getBegin()))
+        return true;
+
       FixOverloadedFunctionReference(From, Fn);
       FromType = From->getType();
-    } else {
-      FromType = Context.getArrayDecayedType(FromType);
     }
-    ImpCastExprToType(From, FromType);
-    break;
-
-  case ICK_Function_To_Pointer:
     FromType = Context.getPointerType(FromType);
     ImpCastExprToType(From, FromType);
     break;

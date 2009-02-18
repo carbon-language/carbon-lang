@@ -536,6 +536,7 @@ private:
   bool IsVirtual : 1;
   bool IsPure : 1;
   bool InheritedPrototype : 1;
+  bool IsDeleted : 1;
 
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
@@ -548,7 +549,7 @@ protected:
       DeclContext(DK),
       ParamInfo(0), Body(0), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), IsVirtual(false), IsPure(false),
-      InheritedPrototype(false), TypeSpecStartLoc(TSSL) {}
+      InheritedPrototype(false), IsDeleted(false), TypeSpecStartLoc(TSSL) {}
 
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
@@ -595,6 +596,27 @@ public:
   /// previous declaration.
   bool inheritedPrototype() { return InheritedPrototype; }
   void setInheritedPrototype() { InheritedPrototype = true; }
+
+  /// \brief Whether this function has been deleted.
+  ///
+  /// A function that is "deleted" (via the C++0x "= delete" syntax)
+  /// acts like a normal function, except that it cannot actually be
+  /// called or have its address taken. Deleted functions are
+  /// typically used in C++ overload resolution to attract arguments
+  /// whose type or lvalue/rvalue-ness would permit the use of a
+  /// different overload that would behave incorrectly. For example,
+  /// one might use deleted functions to ban implicit conversion from
+  /// a floating-point number to an Integer type:
+  ///
+  /// @code
+  /// struct Integer {
+  ///   Integer(long); // construct from a long
+  ///   Integer(double) = delete; // no construction from float or double
+  ///   Integer(long double) = delete; // no construction from long double
+  /// };
+  /// @endcode
+  bool isDeleted() const { return IsDeleted; }
+  void setDeleted() { IsDeleted = true; }
 
   /// getPreviousDeclaration - Return the previous declaration of this
   /// function.

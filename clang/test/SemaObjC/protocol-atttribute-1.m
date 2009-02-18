@@ -1,7 +1,7 @@
 // RUN: clang -fsyntax-only -verify %s
 
 __attribute ((unavailable))
-@protocol FwProto;
+@protocol FwProto; // expected-note{{marked unavailable}}
 
 Class <FwProto> cFw = 0;  // expected-warning {{'FwProto' is unavailable}}
 
@@ -33,12 +33,12 @@ __attribute ((deprecated)) @protocol MyProto1
 
 Class <MyProto1> clsP1 = 0;  // expected-warning {{'MyProto1' is deprecated}}
 
-@protocol FwProto @end
+@protocol FwProto @end // expected-note{{marked unavailable}}
 
 @interface MyClass2 <FwProto> // expected-warning {{'FwProto' is unavailable}}
 @end
 
-__attribute ((unavailable)) __attribute ((deprecated)) @protocol XProto;
+__attribute ((unavailable)) __attribute ((deprecated)) @protocol XProto; // expected-note{{marked unavailable}}
 
 id <XProto> idX = 0; // expected-warning {{'XProto' is unavailable}} expected-warning {{'XProto' is deprecated}}
 

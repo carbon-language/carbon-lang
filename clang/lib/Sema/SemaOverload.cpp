@@ -1409,6 +1409,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
       }
       
     case OR_No_Viable_Function:
+    case OR_Deleted:
       // No conversion here! We're done.
       return false;
 
@@ -3426,6 +3427,14 @@ Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
   }
   
   // Best is the best viable function.
+  if (Best->Function &&
+      (Best->Function->isDeleted() || 
+       Best->Function->getAttr<UnavailableAttr>()))
+    return OR_Deleted;
+
+  // If Best refers to a function that is either deleted (C++0x) or
+  // unavailable (Clang extension) report an error.
+
   return OR_Success;
 }
 
@@ -3441,8 +3450,16 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
   for (; Cand != LastCand; ++Cand) {
     if (Cand->Viable || !OnlyViable) {
       if (Cand->Function) {
-        // Normal function
-        Diag(Cand->Function->getLocation(), diag::err_ovl_candidate);
+        if (Cand->Function->isDeleted() ||
+            Cand->Function->getAttr<UnavailableAttr>()) {
+          // Deleted or "unavailable" function.
+          Diag(Cand->Function->getLocation(), diag::err_ovl_candidate_deleted)
+            << Cand->Function->isDeleted();
+        } else {
+          // Normal function
+          // FIXME: Give a better reason!
+          Diag(Cand->Function->getLocation(), diag::err_ovl_candidate);
+        }
       } else if (Cand->IsSurrogate) {
         // Desugar the type of the surrogate down to a function type,
         // retaining as many typedefs as possible while still showing
@@ -3644,6 +3661,14 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
       << UnqualifiedName << Fn->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     break;
+
+  case OR_Deleted:
+    Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_deleted_call)
+      << Best->Function->isDeleted()
+      << UnqualifiedName
+      << Fn->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    break;
   }
 
   // Overload resolution failed. Destroy all of the subexpressions and
@@ -3712,6 +3737,15 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     case OR_Ambiguous:
       Diag(MemExpr->getSourceRange().getBegin(), 
            diag::err_ovl_ambiguous_member_call)
+        << Ovl->getDeclName() << MemExprE->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+      // FIXME: Leaking incoming expressions!
+      return true;
+
+    case OR_Deleted:
+      Diag(MemExpr->getSourceRange().getBegin(), 
+           diag::err_ovl_deleted_member_call)
+        << Best->Function->isDeleted()
         << Ovl->getDeclName() << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       // FIXME: Leaking incoming expressions!
@@ -3828,6 +3862,14 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   case OR_Ambiguous:
     Diag(Object->getSourceRange().getBegin(),
          diag::err_ovl_ambiguous_object_call)
+      << Object->getType() << Object->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    break;
+
+  case OR_Deleted:
+    Diag(Object->getSourceRange().getBegin(),
+         diag::err_ovl_deleted_object_call)
+      << Best->Function->isDeleted()
       << Object->getType() << Object->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     break;
@@ -3987,6 +4029,13 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
 
   case OR_Ambiguous:
     Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
+      << "operator->" << BasePtr->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    return true;
+
+  case OR_Deleted:
+    Diag(OpLoc,  diag::err_ovl_deleted_oper)
+      << Best->Function->isDeleted()
       << "operator->" << BasePtr->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     return true;
