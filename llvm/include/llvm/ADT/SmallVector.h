@@ -75,7 +75,7 @@ protected:
   // Space after 'FirstEl' is clobbered, do not add any instance vars after it.
 public:
   // Default ctor - Initialize to empty.
-  SmallVectorImpl(unsigned N)
+  explicit SmallVectorImpl(unsigned N)
     : Begin(reinterpret_cast<T*>(&FirstEl)),
       End(reinterpret_cast<T*>(&FirstEl)),
       Capacity(reinterpret_cast<T*>(&FirstEl)+N) {

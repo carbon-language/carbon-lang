@@ -33,7 +33,7 @@ namespace {
     TargetMachine &TM;
     
     static char ID;
-    FPMover(TargetMachine &tm) 
+    explicit FPMover(TargetMachine &tm) 
       : MachineFunctionPass(&ID), TM(tm) { }
 
     virtual const char *getPassName() const {

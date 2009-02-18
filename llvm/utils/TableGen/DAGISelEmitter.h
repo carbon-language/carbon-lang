@@ -27,7 +27,7 @@ class DAGISelEmitter : public TableGenBackend {
   RecordKeeper &Records;
   CodeGenDAGPatterns CGP;
 public:
-  DAGISelEmitter(RecordKeeper &R) : Records(R), CGP(R) {}
+  explicit DAGISelEmitter(RecordKeeper &R) : Records(R), CGP(R) {}
 
   // run - Output the isel, returning true on failure.
   void run(std::ostream &OS);

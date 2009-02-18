@@ -48,7 +48,7 @@ namespace llvm {
     // To make VS STL happy
     AsmWriterOperand():OperandType(isLiteralTextOperand) {}
 
-    AsmWriterOperand(const std::string &LitStr)
+    explicit AsmWriterOperand(const std::string &LitStr)
       : OperandType(isLiteralTextOperand), Str(LitStr) {}
 
     AsmWriterOperand(const std::string &Printer, unsigned OpNo, 
