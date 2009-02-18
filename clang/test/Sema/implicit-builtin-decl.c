@@ -36,6 +36,6 @@ int f0() {
 }
 
 void * realloc(void *p, int size) { // expected-warning{{incompatible redeclaration of library function 'realloc' will be ignored}} \
-// expected-note{{'realloc' is a builtin with type 'void *(void *, unsigned long)'}}
+// expected-note{{'realloc' is a builtin with type 'void *(void *,}}
   return p;
 }
