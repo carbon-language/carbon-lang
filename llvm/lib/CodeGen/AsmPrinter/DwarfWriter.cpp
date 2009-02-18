@@ -2125,7 +2125,10 @@ private:
 
         // Get the subprogram die.
         DIE *SPDie = Unit->getDieMapSlotFor(SPD.getGV());
-        assert(SPDie && "Missing subprogram descriptor");
+        if (!SPDie)
+          /* A subprogram die may not exist if the corresponding function
+             does not have any debug info.  */
+          continue;
 
         // Add the function bounds.
         AddLabel(SPDie, DW_AT_low_pc, DW_FORM_addr,
