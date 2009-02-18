@@ -2579,22 +2579,44 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   SourceManager& SMgr = BR.getContext().getSourceManager();
   unsigned AllocLine =SMgr.getInstantiationLineNumber(FirstStmt->getLocStart());
 
-  // Get the leak site.  We may have multiple ExplodedNodes (one with the
-  // leak) that occur on the same line number; if the node with the leak
-  // has any immediate predecessor nodes with the same line number, find
-  // any transitive-successors that have a different statement and use that
-  // line number instead.  This avoids emiting a diagnostic like:
-  //
-  //    // 'y' is leaked.
-  //  int x = foo(y);
-  //
-  //  instead we want:
-  //
-  //  int x = foo(y);
-  //   // 'y' is leaked.
+  // Get the leak site.  We want to find the last place where the symbol
+  // was used in an expression.
+  const ExplodedNode<GRState>* LeakN = EndN;
+  Stmt *S = 0;
   
-  Stmt* S = getStmt(BR);  // This is the statement where the leak occured.
-  assert (S);
+  while (LeakN) {
+    ProgramPoint P = LeakN->getLocation();
+
+    
+    if (const PostStmt *PS = dyn_cast<PostStmt>(&P))
+      S = PS->getStmt();
+    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P))
+      S = BE->getSrc()->getTerminator();
+    
+    if (S) {
+      // Scan 'S' for uses of Sym.
+      GRStateRef state(LeakN->getState(), BR.getStateManager());
+      bool foundSymbol = false;
+    
+      for (Stmt::child_iterator I=S->child_begin(), E=S->child_end();
+            I!=E; ++I)
+        if (Expr *Ex = dyn_cast_or_null<Expr>(*I)) {
+          SVal X = state.GetSVal(Ex);
+          if (isa<loc::SymbolVal>(X) && 
+              cast<loc::SymbolVal>(X).getSymbol() == Sym){
+            foundSymbol = true;        
+            break;
+          }
+        }
+
+      if (foundSymbol)
+        break;
+    }
+    
+    LeakN = LeakN->pred_empty() ? 0 : *(LeakN->pred_begin());
+  }
+  
+  assert(LeakN && S && "No leak site found.");
 
   // Generate the diagnostic.
   FullSourceLoc L(S->getLocStart(), SMgr);
