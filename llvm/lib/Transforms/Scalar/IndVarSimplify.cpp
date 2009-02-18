@@ -582,18 +582,17 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
   // For now, only analyze loops with a constant start value, so that
   // we can easily determine if the start value is not a maximum value
   // which would wrap on the first iteration.
-  const Value *InitialVal = PN->getIncomingValue(IncomingEdge);
-  if (!isa<ConstantInt>(InitialVal))
+  const ConstantInt *InitialVal =
+    dyn_cast<ConstantInt>(PN->getIncomingValue(IncomingEdge));
+  if (!InitialVal)
     return 0;
 
   // The original induction variable will start at some non-max value,
   // it counts up by one, and the loop iterates only while it remans
   // less than some value in the same type. As such, it will never wrap.
-  if (isSigned &&
-      !cast<ConstantInt>(InitialVal)->getValue().isMaxSignedValue())
+  if (isSigned && !InitialVal->getValue().isMaxSignedValue())
     NoSignedWrap = true;
-  else if (!isSigned &&
-           !cast<ConstantInt>(InitialVal)->getValue().isMaxValue())
+  else if (!isSigned && !InitialVal->getValue().isMaxValue())
     NoUnsignedWrap = true;
   return PN;
 }
