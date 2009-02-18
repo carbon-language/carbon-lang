@@ -615,6 +615,18 @@ public:
   void Emit(llvm::Serializer& S) const;
   static ASTContext* Create(llvm::Deserializer& D);  
   
+  //===--------------------------------------------------------------------===//
+  //                    Integer Values
+  //===--------------------------------------------------------------------===//
+
+  /// MakeIntValue - Make an APSInt of the appropriate width and
+  /// signedness for the given \arg Value and integer \arg Type.
+  llvm::APSInt MakeIntValue(uint64_t Value, QualType Type) {
+    llvm::APSInt Res(getIntWidth(Type), !Type->isSignedIntegerType());
+    Res = Value;
+    return Res;
+  }
+
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT
