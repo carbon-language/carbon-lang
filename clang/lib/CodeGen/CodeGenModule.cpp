@@ -162,7 +162,10 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 /// FIXME: Returning an IdentifierInfo* here is a total hack. We
 /// really need some kind of string abstraction that either stores a
 /// mangled name or stores an IdentifierInfo*. This will require
-/// changes to the GlobalDeclMap, too.
+/// changes to the GlobalDeclMap, too. (I disagree, I think what we
+/// actually need is for Sema to provide some notion of which Decls
+/// refer to the same semantic decl. We shouldn't need to mangle the
+/// names and see what comes out the same to figure this out. - DWD)
 ///
 /// FIXME: Performance here is going to be terribly until we start
 /// caching mangled names. However, we should fix the problem above
