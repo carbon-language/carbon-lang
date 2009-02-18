@@ -1011,7 +1011,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     llvm::Value *FitsInFP = 
       CGF.Builder.CreateICmpULE(fp_offset,
                                 llvm::ConstantInt::get(llvm::Type::Int32Ty,
-                                                       176 - neededSSE * 8),
+                                                       176 - neededSSE * 16),
                                 "fits_in_fp");
     InRegs = InRegs ? CGF.Builder.CreateAnd(InRegs, FitsInFP) : FitsInFP;
   }
