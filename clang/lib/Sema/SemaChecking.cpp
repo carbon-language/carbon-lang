@@ -63,13 +63,20 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     Token TheTok;
     TheLexer.LexFromRawLexer(TheTok);
     
-    // Get the spelling of the token to remove trigraphs and escaped newlines.
-    SpellingBuffer.resize(TheTok.getLength());
-    const char *SpellingPtr = &SpellingBuffer[0];
-    unsigned TokLen = PP.getSpelling(TheTok, SpellingPtr);
+    // We generally care about the length of the token, which is known by the 
+    // lexer as long as we don't need to clean it (trigraphs/newlines).
+    unsigned TokNumBytes;
+    if (!TheTok.needsCleaning()) {
+      TokNumBytes = TheTok.getLength();
+    } else {
+      // Get the spelling of the token to remove trigraphs and escaped newlines.
+      SpellingBuffer.resize(TheTok.getLength());
+      const char *SpellingPtr = &SpellingBuffer[0];
+      TokNumBytes = PP.getSpelling(TheTok, SpellingPtr);
+    }
     
     // The length of the string is the token length minus the two quotes.
-    unsigned TokNumBytes = TokLen-2;
+    TokNumBytes -= 2;
     
     // If we found the token we're looking for, return the location.
     // FIXME: This should consider character escapes!
