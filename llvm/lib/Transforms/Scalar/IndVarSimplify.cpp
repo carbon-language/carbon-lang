@@ -463,21 +463,24 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi) {
 }
 
 /// TestOrigIVForWrap - Analyze the original induction variable
-/// in the loop to determine whether it would ever undergo signed
-/// or unsigned overflow.
+/// that controls the loop's iteration to determine whether it
+/// would ever undergo signed or unsigned overflow.
+///
+/// In addition to setting the NoSignedWrap and NoUnsignedWrap
+/// variables, return the PHI for this induction variable.
 ///
 /// TODO: This duplicates a fair amount of ScalarEvolution logic.
 /// Perhaps this can be merged with ScalarEvolution::getIterationCount
 /// and/or ScalarEvolution::get{Sign,Zero}ExtendExpr.
 ///
-static void TestOrigIVForWrap(const Loop *L,
-                              const BranchInst *BI,
-                              const Instruction *OrigCond,
-                              bool &NoSignedWrap,
-                              bool &NoUnsignedWrap) {
+static const PHINode *TestOrigIVForWrap(const Loop *L,
+                                        const BranchInst *BI,
+                                        const Instruction *OrigCond,
+                                        bool &NoSignedWrap,
+                                        bool &NoUnsignedWrap) {
   // Verify that the loop is sane and find the exit condition.
   const ICmpInst *Cmp = dyn_cast<ICmpInst>(OrigCond);
-  if (!Cmp) return;
+  if (!Cmp) return 0;
 
   const Value *CmpLHS = Cmp->getOperand(0);
   const Value *CmpRHS = Cmp->getOperand(1);
@@ -530,7 +533,7 @@ static void TestOrigIVForWrap(const Loop *L,
   }
   // For now, analyze only LT loops for signed overflow.
   if (Pred != ICmpInst::ICMP_SLT && Pred != ICmpInst::ICMP_ULT)
-    return;
+    return 0;
 
   bool isSigned = Pred == ICmpInst::ICMP_SLT;
 
@@ -543,7 +546,7 @@ static void TestOrigIVForWrap(const Loop *L,
       if (!isa<ConstantInt>(CmpRHS) ||
           !cast<ConstantInt>(CmpRHS)->getValue()
             .isSignedIntN(IncrVal->getType()->getPrimitiveSizeInBits()))
-        return;
+        return 0;
       IncrVal = SI->getOperand(0);
     }
   } else {
@@ -551,7 +554,7 @@ static void TestOrigIVForWrap(const Loop *L,
       if (!isa<ConstantInt>(CmpRHS) ||
           !cast<ConstantInt>(CmpRHS)->getValue()
             .isIntN(IncrVal->getType()->getPrimitiveSizeInBits()))
-        return;
+        return 0;
       IncrVal = ZI->getOperand(0);
     }
   }
@@ -562,26 +565,26 @@ static void TestOrigIVForWrap(const Loop *L,
       IncrOp->getOpcode() != Instruction::Add ||
       !isa<ConstantInt>(IncrOp->getOperand(1)) ||
       !cast<ConstantInt>(IncrOp->getOperand(1))->equalsInt(1))
-    return;
+    return 0;
 
   // Make sure the PHI looks like a normal IV.
   const PHINode *PN = dyn_cast<PHINode>(IncrOp->getOperand(0));
   if (!PN || PN->getNumIncomingValues() != 2)
-    return;
+    return 0;
   unsigned IncomingEdge = L->contains(PN->getIncomingBlock(0));
   unsigned BackEdge = !IncomingEdge;
   if (!L->contains(PN->getIncomingBlock(BackEdge)) ||
       PN->getIncomingValue(BackEdge) != IncrOp)
-    return;
+    return 0;
   if (!L->contains(TrueBB))
-    return;
+    return 0;
 
   // For now, only analyze loops with a constant start value, so that
   // we can easily determine if the start value is not a maximum value
   // which would wrap on the first iteration.
   const Value *InitialVal = PN->getIncomingValue(IncomingEdge);
   if (!isa<ConstantInt>(InitialVal))
-    return;
+    return 0;
 
   // The original induction variable will start at some non-max value,
   // it counts up by one, and the loop iterates only while it remans
@@ -592,6 +595,7 @@ static void TestOrigIVForWrap(const Loop *L,
   else if (!isSigned &&
            !cast<ConstantInt>(InitialVal)->getValue().isMaxValue())
     NoUnsignedWrap = true;
+  return PN;
 }
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
@@ -675,13 +679,15 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // using it.  We can currently only handle loops with a single exit.
   bool NoSignedWrap = false;
   bool NoUnsignedWrap = false;
+  const PHINode *OrigControllingPHI = 0;
   if (!isa<SCEVCouldNotCompute>(IterationCount) && ExitingBlock)
     // Can't rewrite non-branch yet.
     if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator())) {
       if (Instruction *OrigCond = dyn_cast<Instruction>(BI->getCondition())) {
         // Determine if the OrigIV will ever undergo overflow.
-        TestOrigIVForWrap(L, BI, OrigCond,
-                          NoSignedWrap, NoUnsignedWrap);
+        OrigControllingPHI =
+          TestOrigIVForWrap(L, BI, OrigCond,
+                            NoSignedWrap, NoUnsignedWrap);
 
         // We'll be replacing the original condition, so it'll be dead.
         DeadInsts.insert(OrigCond);
@@ -722,7 +728,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     /// If the new canonical induction variable is wider than the original,
     /// and the original has uses that are casts to wider types, see if the
     /// truncate and extend can be omitted.
-    if (PN->getType() != LargestType)
+    if (PN == OrigControllingPHI && PN->getType() != LargestType)
       for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
            UI != UE; ++UI) {
         if (isa<SExtInst>(UI) && NoSignedWrap) {
