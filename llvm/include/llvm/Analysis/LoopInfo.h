@@ -307,10 +307,10 @@ public:
     return Out;
   }
 
-  /// getLoopLatch - If there is a latch block for this loop, return it.  A
-  /// latch block is the canonical backedge for a loop.  A loop header in normal
-  /// form has two edges into it: one from a preheader and one from a latch
-  /// block.
+  /// getLoopLatch - If there is a single latch block for this loop, return it.
+  /// A latch block is a block that contains a branch back to the header.
+  /// A loop header in normal form has two edges into it: one from a preheader
+  /// and one from a latch block.
   BlockT *getLoopLatch() const {
     BlockT *Header = getHeader();
     typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
