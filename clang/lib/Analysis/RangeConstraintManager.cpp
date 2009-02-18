@@ -62,11 +62,9 @@ public:
 class VISIBILITY_HIDDEN RangeTrait : public llvm::ImutContainerInfo<Range> {
 public:
   // When comparing if one Range is less than another, we should compare
-  // the actual APSInt values instead of their pointers.  This ensures that
-  // ImmutableSets based on Range objects always are constructed
-  // with the same ordering between Ranges.  The definition if 'isEqual' can
-  // remain as it is (compare pointers) because all APSInt objects within
-  // Range are uniqued by BasicValueManager.
+  // the actual APSInt values instead of their pointers.  This keeps the order
+  // consistent (instead of comparing by pointer values) and can potentially
+  // be used to speed up some of the operations in RangeSet.
   static inline bool isLess(key_type_ref lhs, key_type_ref rhs) {
     return *lhs.first < *rhs.first || (!(*rhs.first < *lhs.first) && 
                                        *lhs.second < *rhs.second);
