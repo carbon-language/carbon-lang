@@ -29,6 +29,9 @@ void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
   vsnprintf(buf,2,global_fmt,ap); // expected-warning {{format string is not a string literal}}
   __builtin___vsnprintf_chk(buf,2,0,-1,s,ap); // no-warning
   __builtin___vsnprintf_chk(buf,2,0,-1,global_fmt,ap); // expected-warning {{format string is not a string literal}}
+
+   printf("abc"
+          "%*d", (unsigned) 1, 1); // expected-warning {{field width should have type 'int'}}
 }
 
 void check_conditional_literal(const char* s, int i) {
