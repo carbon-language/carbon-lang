@@ -3501,6 +3501,8 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
   }
 
   ProcessDeclAttributes(NewFD, D);
+  if (T.getObjCGCAttr() == QualType::Weak)
+    Diag(Loc, diag::warn_attribute_weak_on_field);
 
   if (D.getInvalidType() || InvalidDecl)
     NewFD->setInvalidDecl();
