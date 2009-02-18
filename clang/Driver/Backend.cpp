@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTConsumers.h"
-
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/TranslationUnit.h"
@@ -35,7 +34,6 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
-
 using namespace clang;
 using namespace llvm;
 
@@ -85,7 +83,10 @@ namespace {
       GenerateDebugInfo(debug),
       Gen(CreateLLVMCodeGen(Diags, langopts, InputFile, GenerateDebugInfo)),
       TheModule(0), TheTargetData(0), AsmOutStream(0), ModuleProvider(0),
-      CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {}
+      CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
+      
+      llvm::TimePassesIsEnabled = CompileOpts.TimePasses;
+    }
 
     ~BackendConsumer() {
       delete AsmOutStream;

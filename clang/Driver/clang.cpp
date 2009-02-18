@@ -42,7 +42,6 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/Pass.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1238,6 +1237,9 @@ static void InitializeCompileOptions(CompileOptions &Opts) {
   Opts.CPU = TargetCPU;
   Opts.Features.insert(Opts.Features.end(),
                        TargetFeatures.begin(), TargetFeatures.end());
+  
+  // Handle -ftime-report.
+  Opts.TimePasses = TimeReport;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1508,10 +1510,6 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
   
-  // Handle -ftime-report.
-  if (TimeReport)
-    llvm::TimePassesIsEnabled = true;
-    
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
   
