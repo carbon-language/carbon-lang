@@ -520,7 +520,6 @@ public:
   typedef const SourceLocation *tokloc_iterator;
   tokloc_iterator tokloc_begin() const { return TokLocs; }
   tokloc_iterator tokloc_end() const { return TokLocs+NumConcatenated; }
-  
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(TokLocs[0], TokLocs[NumConcatenated-1]); 

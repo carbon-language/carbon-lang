@@ -20,6 +20,71 @@
 #include "clang/Lex/Preprocessor.h"
 using namespace clang;
 
+/// getLocationOfStringLiteralByte - Return a source location that points to the
+/// specified byte of the specified string literal.
+///
+/// Strings are amazingly complex.  They can be formed from multiple tokens and
+/// can have escape sequences in them in addition to the usual trigraph and
+/// escaped newline business.  This routine handles this complexity.
+///
+SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
+                                                    unsigned ByteNo) const {
+  assert(!SL->isWide() && "This doesn't work for wide strings yet");
+  
+  // Loop over all of the tokens in this string until we find the one that
+  // contains the byte we're looking for.
+  unsigned TokNo = 0;
+  while (1) {
+    assert(TokNo < SL->getNumConcatenated() && "Invalid byte number!");
+    SourceLocation StrTokLoc = SL->getStrTokenLoc(TokNo);
+   
+    // Get the spelling of the string so that we can get the data that makes up
+    // the string literal, not the identifier for the macro it is potentially
+    // expanded through.
+    SourceLocation StrTokSpellingLoc = SourceMgr.getSpellingLoc(StrTokLoc);
+
+    // Re-lex the token to get its length and original spelling.
+    std::pair<FileID, unsigned> LocInfo =
+      SourceMgr.getDecomposedLoc(StrTokSpellingLoc);
+    std::pair<const char *,const char *> Buffer =
+      SourceMgr.getBufferData(LocInfo.first);
+    const char *StrData = Buffer.first+LocInfo.second;
+    
+    // Create a langops struct and enable trigraphs.  This is sufficient for
+    // relexing tokens.
+    LangOptions LangOpts;
+    LangOpts.Trigraphs = true;
+    
+    // Create a lexer starting at the beginning of this token.
+    Lexer TheLexer(StrTokSpellingLoc, LangOpts, Buffer.first, StrData,
+                   Buffer.second);
+    Token TheTok;
+    TheLexer.LexFromRawLexer(TheTok);
+    
+    // The length of the string is the token length minus the two quotes.
+    unsigned TokNumBytes = TheTok.getLength()-2;
+    
+    // If we found the token we're looking for, return the location.
+    // FIXME: This should consider character escapes!
+    if (ByteNo < TokNumBytes ||
+        (ByteNo == TokNumBytes && TokNo == SL->getNumConcatenated())) {
+      // If the original token came from a macro expansion, just return the
+      // start of the token.  We don't want to magically jump to the spelling
+      // for a diagnostic.  We do the above business in case some tokens come
+      // from a macro expansion but others don't.
+      if (!StrTokLoc.isFileID()) return StrTokLoc;
+      
+      // We advance +1 to step over the '"'.
+      return PP.AdvanceToTokenCharacter(StrTokLoc, ByteNo+1);
+    }
+    
+    // Move to the next string token.
+    ++TokNo;
+    ByteNo -= TokNumBytes;
+  }
+}
+
+
 /// CheckFunctionCall - Check a direct function call for various correctness
 /// and safety properties not strictly enforced by the C type system.
 Action::OwningExprResult
@@ -108,14 +173,14 @@ bool Sema::CheckObjCString(Expr *Arg) {
   
   for (unsigned i = 0; i < Length; ++i) {
     if (!isascii(Data[i])) {
-      Diag(PP.AdvanceToTokenCharacter(Arg->getLocStart(), i + 1),
+      Diag(getLocationOfStringLiteralByte(Literal, i),
            diag::warn_cfstring_literal_contains_non_ascii_character)
         << Arg->getSourceRange();
       break;
     }
     
     if (!Data[i]) {
-      Diag(PP.AdvanceToTokenCharacter(Arg->getLocStart(), i + 1),
+      Diag(getLocationOfStringLiteralByte(Literal, i),
            diag::warn_cfstring_literal_contains_nul_character)
         << Arg->getSourceRange();
       break;
@@ -565,7 +630,7 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
     if (Str[StrIdx] == '\0') {
       // The string returned by getStrData() is not null-terminated,
       // so the presence of a null character is likely an error.
-      Diag(PP.AdvanceToTokenCharacter(FExpr->getLocStart(), StrIdx+1),
+      Diag(getLocationOfStringLiteralByte(FExpr, StrIdx),
            diag::warn_printf_format_string_contains_null_char)
         <<  OrigFormatExpr->getSourceRange();
       return;
@@ -587,8 +652,7 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
       ++numConversions;
       
       if (!HasVAListArg && numConversions > numDataArgs) {
-        SourceLocation Loc = FExpr->getLocStart();
-        Loc = PP.AdvanceToTokenCharacter(Loc, StrIdx+1);
+        SourceLocation Loc = getLocationOfStringLiteralByte(FExpr, StrIdx);
 
         if (Str[StrIdx-1] == '.')
           Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg)
@@ -607,8 +671,7 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
         if (BT->getKind() == BuiltinType::Int)
           break;
 
-      SourceLocation Loc =
-        PP.AdvanceToTokenCharacter(FExpr->getLocStart(), StrIdx+1);
+      SourceLocation Loc = getLocationOfStringLiteralByte(FExpr, StrIdx);
       
       if (Str[StrIdx-1] == '.')
         Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type)
@@ -655,8 +718,8 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
     case 'n': {
       ++numConversions;
       CurrentState = state_OrdChr;
-      SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
-                                                      LastConversionIdx+1);
+      SourceLocation Loc = getLocationOfStringLiteralByte(FExpr,
+                                                          LastConversionIdx);
                                    
       Diag(Loc, diag::warn_printf_write_back)<<OrigFormatExpr->getSourceRange();
       break;
@@ -669,8 +732,8 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
         CurrentState = state_OrdChr; 
       else {
         // Issue a warning: invalid format conversion.
-        SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
-                                                    LastConversionIdx+1);
+        SourceLocation Loc = 
+          getLocationOfStringLiteralByte(FExpr, LastConversionIdx);
     
         Diag(Loc, diag::warn_printf_invalid_conversion)
           <<  std::string(Str+LastConversionIdx,
@@ -690,8 +753,8 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
         CurrentState = state_OrdChr; 
       else {
         // Issue a warning: invalid format conversion.
-        SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
-                                                        LastConversionIdx+1);
+        SourceLocation Loc =
+          getLocationOfStringLiteralByte(FExpr, LastConversionIdx);
             
         Diag(Loc, diag::warn_printf_invalid_conversion)
           << std::string(Str+LastConversionIdx, Str+StrIdx)
@@ -713,8 +776,8 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
 
   if (CurrentState == state_Conversion) {
     // Issue a warning: invalid format conversion.
-    SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
-                                                    LastConversionIdx+1);
+    SourceLocation Loc =
+      getLocationOfStringLiteralByte(FExpr, LastConversionIdx);
     
     Diag(Loc, diag::warn_printf_invalid_conversion)
       << std::string(Str+LastConversionIdx,
@@ -727,8 +790,8 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
     // CHECK: Does the number of format conversions exceed the number
     //        of data arguments?
     if (numConversions > numDataArgs) {
-      SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
-                                                      LastConversionIdx);
+      SourceLocation Loc =
+        getLocationOfStringLiteralByte(FExpr, LastConversionIdx);
                                    
       Diag(Loc, diag::warn_printf_insufficient_data_args)
         << OrigFormatExpr->getSourceRange();
