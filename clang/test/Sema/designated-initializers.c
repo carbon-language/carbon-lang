@@ -185,4 +185,4 @@ const union wibble wobble = { .arr2[0] = 0xffff,
                               .arr2[1] = 0xffff,
                               .arr2[2] = 0xffff };
 
-const union wibble wobble2 = { .arr2 = {4, 5, 6}, 7 }; // expected-error{{excess elements in union initializer}}
+const union wibble wobble2 = { .arr2 = {4, 5, 6}, 7 }; // expected-warning{{excess elements in union initializer}}

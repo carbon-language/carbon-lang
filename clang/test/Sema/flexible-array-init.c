@@ -4,7 +4,7 @@ struct one {
   int values[];
 } x = {5, {1, 2, 3}};
 
-struct one x2 = { 5, 1, 2, 3 }; // expected-error{{excess elements in struct initializer}}
+struct one x2 = { 5, 1, 2, 3 }; // expected-warning{{excess elements in struct initializer}}
 
 void test() {
   struct one x3 = {5, {1, 2, 3}};

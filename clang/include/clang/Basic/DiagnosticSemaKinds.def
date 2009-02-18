@@ -685,7 +685,11 @@ DIAG(err_array_init_list_required, ERROR,
      "initialization with '{...}' expected for array")
 DIAG(err_excess_initializers, ERROR,
      "excess elements in %select{array|vector|scalar|union|struct}0 initializer")
+DIAG(warn_excess_initializers, WARNING,
+     "excess elements in %select{array|vector|scalar|union|struct}0 initializer")
 DIAG(err_excess_initializers_in_char_array_initializer, ERROR,
+    "excess elements in char array initializer")
+DIAG(warn_excess_initializers_in_char_array_initializer, WARNING,
     "excess elements in char array initializer")
 DIAG(warn_initializer_string_for_char_array_too_long, WARNING,
     "initializer-string for char array is too long")

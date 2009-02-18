@@ -323,9 +323,11 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
     // We have leftover initializers
     if (IList->getNumInits() > 0 &&
         SemaRef->IsStringLiteralInit(IList->getInit(Index), T)) {
+      unsigned DK = diag::warn_excess_initializers_in_char_array_initializer;
+      if (SemaRef->getLangOptions().CPlusPlus)
+        DK = diag::err_excess_initializers_in_char_array_initializer;
       // Special-case
-      SemaRef->Diag(IList->getInit(Index)->getLocStart(),
-                    diag::err_excess_initializers_in_char_array_initializer)
+      SemaRef->Diag(IList->getInit(Index)->getLocStart(), DK)
         << IList->getInit(Index)->getSourceRange();
       hadError = true; 
     } else if (!T->isIncompleteType()) {
@@ -338,8 +340,12 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
         CurrentObjectType->isScalarType()? 2 :
         CurrentObjectType->isUnionType()? 3 :
         4;
-      SemaRef->Diag(IList->getInit(Index)->getLocStart(), 
-                    diag::err_excess_initializers)
+
+      unsigned DK = diag::warn_excess_initializers;
+      if (SemaRef->getLangOptions().CPlusPlus)
+          DK = diag::err_excess_initializers;
+
+      SemaRef->Diag(IList->getInit(Index)->getLocStart(), DK)
         << initKind << IList->getInit(Index)->getSourceRange();
     }
   }

@@ -108,3 +108,5 @@ struct foo2 {
 struct foo2 bar2[] = {
    { (intptr_t)bbb }
 };
+
+struct foo2 bar3 = { 1, 2 }; // expected-warning{{excess elements in struct initializer}}
