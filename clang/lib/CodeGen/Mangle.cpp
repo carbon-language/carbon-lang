@@ -1,4 +1,4 @@
-//===--------------------- Mangle.cpp - Mangle C++ Names ------------------===//
+//===--- Mangle.cpp - Mangle C++ Names --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -61,17 +62,28 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   // FIXME: Actually use a visitor to decode these?
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     bool RequiresMangling = false;
-    // Clang's "overloadable" attribute extension to C/C++
-    if (FD->getAttr<OverloadableAttr>())
+    // No mangled in an "implicit extern C" header.
+    if (Context.getSourceManager().getFileCharacteristic(FD->getLocation())
+          == SrcMgr::C_ExternCSystem)
+      RequiresMangling = false;
+    // Clang's "overloadable" attribute extension to C/C++ implies
+    // name mangling (always).
+    else if (FD->getAttr<OverloadableAttr>())
       RequiresMangling = true;
     else if (Context.getLangOptions().CPlusPlus) {
+      // C++ requires name mangling, unless we're in a C linkage
+      // specification.
       RequiresMangling = true;
-      if (isa<LinkageSpecDecl>(FD->getDeclContext()) &&
-          cast<LinkageSpecDecl>(FD->getDeclContext())->getLanguage() 
-            == LinkageSpecDecl::lang_c) {
-        // Entities with C linkage are not mangled.
-        RequiresMangling = false;
-      } 
+
+      for (const DeclContext *DC = FD->getDeclContext(); 
+           !DC->isTranslationUnit(); DC = DC->getParent()) {
+        if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC)) {
+          // extern "C" functions don't use name mangling
+          if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
+            RequiresMangling = false;
+          break;
+        }
+      }
     }
 
     if (RequiresMangling) {
@@ -95,15 +107,7 @@ static bool isStdNamespace(const DeclContext *DC) {
     return false;
 
   const NamespaceDecl *NS = cast<NamespaceDecl>(DC);
-  const IdentifierInfo *Name = NS->getIdentifier();
-  if (Name->getLength() != 3)
-    return false;
-
-  const char *Str = Name->getName();
-  if (Str[0] != 's' || Str[1] != 't' || Str[2] != 'd')
-    return false;
-      
-  return true;
+  return NS->getOriginalNamespace()->getIdentifier()->isStr("std");
 }
 
 void CXXNameMangler::mangleName(const NamedDecl *ND) {
@@ -307,7 +311,7 @@ CXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity) {
 
   case OO_None: 
   case NUM_OVERLOADED_OPERATORS:
-    assert(false && "Not an ovelroaded operator"); 
+    assert(false && "Not an overloaded operator"); 
     break;
   }
 }
@@ -516,7 +520,11 @@ namespace clang {
   bool mangleName(const NamedDecl *D, ASTContext &Context, 
                   llvm::raw_ostream &os) {
     CXXNameMangler Mangler(Context, os);
-    return Mangler.mangle(D);
+    if (!Mangler.mangle(D))
+      return false;
+    
+    os.flush();
+    return true;
   }
 }
 

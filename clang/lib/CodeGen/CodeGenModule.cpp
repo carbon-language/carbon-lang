@@ -170,13 +170,15 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 /// FIXME: Performance here is going to be terribly until we start
 /// caching mangled names. However, we should fix the problem above
 /// first.
-IdentifierInfo *CodeGenModule::getMangledName(const NamedDecl *ND) const {
-  std::string Name;
-  llvm::raw_string_ostream Out(Name);
+const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
+  llvm::SmallString<256> Name;
+  llvm::raw_svector_ostream Out(Name);
   if (!mangleName(ND, Context, Out))
-    return ND->getIdentifier();
+    return ND->getIdentifier()->getName();
 
-  return &Context.Idents.get(Out.str());
+  Name += '\0';
+  return MangledNames.GetOrCreateValue(Name.begin(), Name.end())
+           .getKeyData();
 }
 
 /// AddGlobalCtor - Add a function to the list that will be called before
@@ -379,7 +381,7 @@ void CodeGenModule::EmitAliases() {
     llvm::GlobalValue *GA = 
       new llvm::GlobalAlias(aliasee->getType(),
                             llvm::Function::ExternalLinkage,
-                            getMangledName(D)->getName(), aliasee, 
+                            getMangledName(D), aliasee, 
                             &getModule());
     
     llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
@@ -582,7 +584,7 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
     llvm::GlobalVariable *GV = 
       new llvm::GlobalVariable(Ty, false, 
                                llvm::GlobalValue::ExternalLinkage,
-                               0, getMangledName(D)->getName(), &getModule(), 
+                               0, getMangledName(D), &getModule(), 
                                0, ASTTy.getAddressSpace());
     Entry = GV;
 
@@ -630,7 +632,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (!GV) {
     GV = new llvm::GlobalVariable(InitType, false, 
                                   llvm::GlobalValue::ExternalLinkage,
-                                  0, getMangledName(D)->getName(), 
+                                  0, getMangledName(D), 
                                   &getModule(), 0, ASTTy.getAddressSpace());
   } else if (GV->getType() != 
              llvm::PointerType::get(InitType, ASTTy.getAddressSpace())) {
@@ -654,7 +656,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     // Make a new global with the correct type
     GV = new llvm::GlobalVariable(InitType, false, 
                                   llvm::GlobalValue::ExternalLinkage,
-                                  0, getMangledName(D)->getName(), 
+                                  0, getMangledName(D), 
                                   &getModule(), 0, ASTTy.getAddressSpace());
     // Steal the name of the old global
     GV->takeName(OldGV);
@@ -753,7 +755,7 @@ CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D) {
   const llvm::Type *Ty = getTypes().ConvertType(D->getType());
   llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
                                              llvm::Function::ExternalLinkage,
-                                             getMangledName(D)->getName(),
+                                             getMangledName(D),
                                              &getModule());
   SetFunctionAttributes(D, F);
   return F;

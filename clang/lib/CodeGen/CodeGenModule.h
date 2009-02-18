@@ -18,6 +18,7 @@
 #include "clang/AST/Attr.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSet.h"
 
 #include "CGCall.h"
 
@@ -81,14 +82,23 @@ class CodeGenModule {
   /// will name them and patch up conflicts when we release the module.
   std::vector< std::pair<llvm::Function*, std::string> > RuntimeFunctions;
 
-  /// GlobalDeclMap - Mapping of decl names global variables we have already
-  /// emitted. Note that the entries in this map are the actual globals and
-  /// therefore may not be of the same type as the decl, they should be
-  /// bitcasted on retrieval. Also note that the globals are keyed on their
-  /// source name, not the global name (which may change with attributes such as
-  /// asm-labels).  This key to this map should be generated using
-  /// getMangledName().
-  llvm::DenseMap<IdentifierInfo*, llvm::GlobalValue*> GlobalDeclMap;
+  /// GlobalDeclMap - Mapping of decl names (represented as unique
+  /// character pointers from either the identifier table or the set
+  /// of mangled names) to global variables we have already
+  /// emitted. Note that the entries in this map are the actual
+  /// globals and therefore may not be of the same type as the decl,
+  /// they should be bitcasted on retrieval. Also note that the
+  /// globals are keyed on their source name, not the global name
+  /// (which may change with attributes such as asm-labels).  This key
+  /// to this map should be generated using getMangledName().
+  llvm::DenseMap<const char*, llvm::GlobalValue*> GlobalDeclMap;
+
+  /// \brief Contains the strings used for mangled names.
+  ///
+  /// FIXME: Eventually, this should map from the semantic/canonical
+  /// declaration for each global entity to its mangled name (if it
+  /// has one).
+  llvm::StringSet<> MangledNames;
 
   /// Aliases - List of aliases in module. These cannot be emitted until all the
   /// code has been seen, as they reference things by name instead of directly
@@ -285,7 +295,7 @@ public:
                               const Decl *TargetDecl,
                               AttributeListType &PAL);
 
-  IdentifierInfo *getMangledName(const NamedDecl *ND) const;
+  const char *getMangledName(const NamedDecl *ND);
 
 
 private:

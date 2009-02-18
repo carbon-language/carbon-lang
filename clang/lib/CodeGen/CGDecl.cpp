@@ -106,7 +106,7 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
 
   std::string ContextName;
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl))
-    ContextName = CGM.getMangledName(FD)->getName();
+    ContextName = CGM.getMangledName(FD);
   else if (isa<ObjCMethodDecl>(CurFuncDecl))
     ContextName = std::string(CurFn->getNameStart(), 
                               CurFn->getNameStart() + CurFn->getNameLen());
@@ -171,7 +171,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       // A normal fixed sized variable becomes an alloca in the entry block.
       const llvm::Type *LTy = ConvertType(Ty);
       llvm::AllocaInst *Alloc =
-        CreateTempAlloca(LTy, CGM.getMangledName(&D)->getName());
+        CreateTempAlloca(LTy, CGM.getMangledName(&D));
       unsigned align = getContext().getTypeAlign(Ty);
       if (const AlignedAttr* AA = D.getAttr<AlignedAttr>())
         align = std::max(align, AA->getAlignment());
