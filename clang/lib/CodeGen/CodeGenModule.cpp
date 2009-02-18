@@ -683,9 +683,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     Align = Context.getTypeAlign(IAT->getElementType());
   else
     Align = Context.getTypeAlign(D->getType());
-  if (const AlignedAttr* AA = D->getAttr<AlignedAttr>()) {
+  if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
     Align = std::max(Align, AA->getAlignment());
-  }
   GV->setAlignment(Align / 8);
 
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
