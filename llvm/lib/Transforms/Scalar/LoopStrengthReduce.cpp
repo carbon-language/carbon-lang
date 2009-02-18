@@ -509,7 +509,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   return true;
 }
 
-/// isAddress - Returns true if the specified instruction is using the
+/// isAddressUse - Returns true if the specified instruction is using the
 /// specified value as an address.
 static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
   bool isAddress = isa<LoadInst>(Inst);
