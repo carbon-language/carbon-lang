@@ -355,7 +355,9 @@ void BackendConsumer::EmitAssembly() {
   if (!TheModule || !TheTargetData)
     return;
   
-  TimeRegion Region(CodeGenerationTime);
+  
+  
+  TimeRegion Region(CompileOpts.TimePasses ? &CodeGenerationTime : 0);
 
   // Make sure IR generation is happy with the module. This is
   // released by the module provider.
