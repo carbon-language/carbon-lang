@@ -748,14 +748,6 @@ public:
                                      SourceLocation RPLoc) {
     return 0;
   }
-  // __builtin_overload(...)
-  virtual ExprResult ActOnOverloadExpr(ExprTy **Args, unsigned NumArgs,
-                                       SourceLocation *CommaLocs,
-                                       SourceLocation BuiltinLoc, 
-                                       SourceLocation RPLoc) {
-    return 0;
-  }
-  
 
   // __builtin_va_arg(expr, type)
   virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,

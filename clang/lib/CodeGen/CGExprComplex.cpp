@@ -94,7 +94,6 @@ public:
   }
   ComplexPairTy VisitCallExpr(const CallExpr *E);
   ComplexPairTy VisitStmtExpr(const StmtExpr *E);
-  ComplexPairTy VisitOverloadExpr(const OverloadExpr *OE);
 
   // Operators.
   ComplexPairTy VisitPrePostIncDec(const UnaryOperator *E,
@@ -258,11 +257,6 @@ VisitImaginaryLiteral(const ImaginaryLiteral *IL) {
 
 ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
   return CGF.EmitCallExpr(E).getComplexVal();
-}
-
-ComplexPairTy ComplexExprEmitter::VisitOverloadExpr(const OverloadExpr *E) {
-  return CGF.EmitCallExpr(E->getFn(), E->arg_begin(), 
-                          E->arg_end(CGF.getContext())).getComplexVal();
 }
 
 ComplexPairTy ComplexExprEmitter::VisitStmtExpr(const StmtExpr *E) {

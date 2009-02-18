@@ -1164,12 +1164,6 @@ public:
                                      ExprTy *cond, ExprTy *expr1, ExprTy *expr2,
                                      SourceLocation RPLoc);
   
-  // __builtin_overload(...)
-  virtual ExprResult ActOnOverloadExpr(ExprTy **Args, unsigned NumArgs,
-                                       SourceLocation *CommaLocs,
-                                       SourceLocation BuiltinLoc, 
-                                       SourceLocation RParenLoc);
-
   // __builtin_va_arg(expr, type)
   virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
                                 ExprTy *expr, TypeTy *type,

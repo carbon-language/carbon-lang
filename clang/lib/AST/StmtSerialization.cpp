@@ -917,27 +917,6 @@ GNUNullExpr *GNUNullExpr::CreateImpl(llvm::Deserializer &D, ASTContext &C) {
   return new GNUNullExpr(T, TL);
 }
 
-void OverloadExpr::EmitImpl(llvm::Serializer& S) const {
-  S.Emit(getType());
-  S.Emit(BuiltinLoc);
-  S.Emit(RParenLoc);
-  S.EmitInt(FnIndex);
-  S.EmitInt(NumExprs);
-  S.BatchEmitOwnedPtrs(NumExprs, &SubExprs[0]);
-}
-
-OverloadExpr* OverloadExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
-  QualType T = QualType::ReadVal(D);
-  SourceLocation BL = SourceLocation::ReadVal(D);
-  SourceLocation RP = SourceLocation::ReadVal(D);
-  unsigned FnIndex = D.ReadInt();
-  unsigned NumExprs = D.ReadInt();
-  // FIXME: Avoid extra allocation.
-  llvm::SmallVector<Expr*, 4> Exprs(NumExprs);
-  D.BatchReadOwnedPtrs(NumExprs, Exprs.begin(), C);
-  return new OverloadExpr(C, Exprs.begin(), NumExprs, FnIndex, T, BL, RP);
-}
-
 void VAArgExpr::EmitImpl(llvm::Serializer& S) const {
   S.Emit(getType());
   S.Emit(BuiltinLoc);

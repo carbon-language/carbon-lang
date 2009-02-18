@@ -81,7 +81,6 @@ public:
   void VisitStmtExpr(const StmtExpr *E);
   void VisitBinaryOperator(const BinaryOperator *BO);
   void VisitBinAssign(const BinaryOperator *E);
-  void VisitOverloadExpr(const OverloadExpr *E);
   void VisitBinComma(const BinaryOperator *E);
 
   void VisitObjCMessageExpr(ObjCMessageExpr *E);
@@ -187,20 +186,6 @@ void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
 
 void AggExprEmitter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
   RValue RV = CGF.EmitObjCPropertyGet(E);
-  assert(RV.isAggregate() && "Return value must be aggregate value!");
-  
-  // If the result is ignored, don't copy from the value.
-  if (DestPtr == 0)
-    // FIXME: If the source is volatile, we must read from it.
-    return;
-  
-  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
-}
-
-void AggExprEmitter::VisitOverloadExpr(const OverloadExpr *E) {
-  RValue RV = CGF.EmitCallExpr(E->getFn(), E->arg_begin(),
-                               E->arg_end(CGF.getContext()));
-  
   assert(RV.isAggregate() && "Return value must be aggregate value!");
   
   // If the result is ignored, don't copy from the value.

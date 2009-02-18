@@ -294,7 +294,6 @@ KEYWORD(__null                      , NOTC90|NOTC99|EXTCPP|EXTCPP0x) // C++-only
 KEYWORD(__alignof                   , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__attribute                 , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__builtin_choose_expr       , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
-KEYWORD(__builtin_overload          , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__builtin_offsetof          , EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__builtin_types_compatible_p, EXTC90|EXTC99|EXTCPP|EXTCPP0x)
 KEYWORD(__builtin_va_arg            , EXTC90|EXTC99|EXTCPP|EXTCPP0x)

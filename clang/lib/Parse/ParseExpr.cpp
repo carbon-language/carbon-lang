@@ -574,7 +574,6 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___builtin_va_arg:
   case tok::kw___builtin_offsetof:
   case tok::kw___builtin_choose_expr:
-  case tok::kw___builtin_overload:
   case tok::kw___builtin_types_compatible_p:
     return ParseBuiltinPrimaryExpression();
   case tok::kw___null:
@@ -905,7 +904,6 @@ Parser::OwningExprResult Parser::ParseSizeofAlignofExpression() {
 /// [GNU]   '__builtin_choose_expr' '(' assign-expr ',' assign-expr ','
 ///                                     assign-expr ')'
 /// [GNU]   '__builtin_types_compatible_p' '(' type-name ',' type-name ')'
-/// [CLANG] '__builtin_overload' '(' expr (',' expr)* ')'
 /// 
 /// [GNU] offsetof-member-designator:
 /// [GNU]   identifier
@@ -1047,38 +1045,6 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
     }
     Res = Actions.ActOnChooseExpr(StartLoc, Cond.release(), Expr1.release(),
                                   Expr2.release(), ConsumeParen());
-    break;
-  }
-  case tok::kw___builtin_overload: {
-    ExprVector ArgExprs(Actions);
-    llvm::SmallVector<SourceLocation, 8> CommaLocs;
-
-    // For each iteration through the loop look for assign-expr followed by a
-    // comma.  If there is no comma, break and attempt to match r-paren.
-    if (Tok.isNot(tok::r_paren)) {
-      while (1) {
-        OwningExprResult ArgExpr(ParseAssignmentExpression());
-        if (ArgExpr.isInvalid()) {
-          SkipUntil(tok::r_paren);
-          return ExprError();
-        } else
-          ArgExprs.push_back(ArgExpr.release());
-
-        if (Tok.isNot(tok::comma))
-          break;
-        // Move to the next argument, remember where the comma was.
-        CommaLocs.push_back(ConsumeToken());
-      }
-    }
-
-    // Attempt to consume the r-paren
-    if (Tok.isNot(tok::r_paren)) {
-      Diag(Tok, diag::err_expected_rparen);
-      SkipUntil(tok::r_paren);
-      return ExprError();
-    }
-    Res = Actions.ActOnOverloadExpr(ArgExprs.take(), ArgExprs.size(),
-                                    &CommaLocs[0], StartLoc, ConsumeParen());
     break;
   }
   case tok::kw___builtin_types_compatible_p:

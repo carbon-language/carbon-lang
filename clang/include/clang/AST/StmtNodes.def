@@ -131,7 +131,6 @@ STMT(ObjCKVCRefExpr       , Expr)
 STMT(ObjCSuperExpr        , Expr)
 
 // Clang Extensions.
-STMT(OverloadExpr         , Expr)
 STMT(ShuffleVectorExpr    , Expr)
 STMT(BlockExpr            , Expr)
 STMT(BlockDeclRefExpr     , Expr)

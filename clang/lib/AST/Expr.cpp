@@ -583,7 +583,6 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     //   An assignment expression [...] is not an lvalue.
     return LV_InvalidExpression;
   }
-  // FIXME: OverloadExprClass
   case CallExprClass: 
   case CXXOperatorCallExprClass:
   case CXXMemberCallExprClass: {
@@ -1487,13 +1486,6 @@ void SizeOfAlignOfExpr::Destroy(ASTContext& C) {
     Expr::Destroy(C);
 }
 
-void OverloadExpr::Destroy(ASTContext& C) {
-  DestroyChildren(C);
-  C.Deallocate(SubExprs);
-  this->~OverloadExpr();
-  C.Deallocate(this);
-}
-
 //===----------------------------------------------------------------------===//
 //  DesignatedInitExpr
 //===----------------------------------------------------------------------===//
@@ -1756,10 +1748,6 @@ Stmt::child_iterator ChooseExpr::child_end() { return &SubExprs[0]+END_EXPR; }
 // GNUNullExpr
 Stmt::child_iterator GNUNullExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator GNUNullExpr::child_end() { return child_iterator(); }
-
-// OverloadExpr
-Stmt::child_iterator OverloadExpr::child_begin() { return &SubExprs[0]; }
-Stmt::child_iterator OverloadExpr::child_end() { return &SubExprs[0]+NumExprs; }
 
 // ShuffleVectorExpr
 Stmt::child_iterator ShuffleVectorExpr::child_begin() {
