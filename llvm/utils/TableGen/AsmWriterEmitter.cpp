@@ -640,6 +640,17 @@ void AsmWriterEmitter::run(std::ostream &O) {
   }
   O << "\";\n\n";
 
+  O << "  {\n"
+    << "    const MachineFunction *MF = MI->getParent()->getParent();\n"
+    << "    static DebugLoc PrevDL = DebugLoc::getUnknownLoc();\n"
+    << "    DebugLoc CurDL = MI->getDebugLoc();\n\n"
+    << "    if (!CurDL.isUnknown() && PrevDL != CurDL) {\n"
+    << "      DebugLocTuple DLT = MF->getDebugLocTuple(CurDL);\n"
+    << "      printLabel(DW->RecordSourceLine(DLT.Line, DLT.Col, DLT.Src));\n"
+    << "    }\n\n"
+    << "    PrevDL = CurDL;\n"
+    << "  }\n";
+
   O << "  if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {\n"
     << "    O << \"\\t\";\n"
     << "    printInlineAsm(MI);\n"

@@ -14,12 +14,13 @@
 
 #include "PIC16AsmPrinter.h"
 #include "PIC16TargetAsmInfo.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Mangler.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
+#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/DerivedTypes.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Mangler.h"
 
 using namespace llvm;
 

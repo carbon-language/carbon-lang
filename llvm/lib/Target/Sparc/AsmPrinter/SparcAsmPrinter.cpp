@@ -19,6 +19,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"

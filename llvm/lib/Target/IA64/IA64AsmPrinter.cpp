@@ -22,6 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
