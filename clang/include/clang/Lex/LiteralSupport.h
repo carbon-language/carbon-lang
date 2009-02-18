@@ -156,6 +156,12 @@ public:
   
   const char *GetString() { return &ResultBuf[0]; }
   unsigned GetStringLength() { return ResultPtr-&ResultBuf[0]; }
+  
+  /// getOffsetOfStringByte - This function returns the offset of the
+  /// specified byte of the string data represented by Token.  This handles
+  /// advancing over escape sequences in the string.
+  static unsigned getOffsetOfStringByte(const Token &TheTok, unsigned ByteNo,
+                                        Preprocessor &PP);
 };
   
 }  // end namespace clang

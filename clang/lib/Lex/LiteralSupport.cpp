@@ -798,3 +798,49 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     return;
   }
 }
+
+
+/// getOffsetOfStringByte - This function returns the offset of the
+/// specified byte of the string data represented by Token.  This handles
+/// advancing over escape sequences in the string.
+unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
+                                                    unsigned ByteNo,
+                                                    Preprocessor &PP) {
+  // Get the spelling of the token.
+  llvm::SmallString<16> SpellingBuffer;
+  SpellingBuffer.resize(Tok.getLength());
+  
+  const char *SpellingPtr = &SpellingBuffer[0];
+  unsigned TokLen = PP.getSpelling(Tok, SpellingPtr);
+
+  assert(SpellingPtr[0] != 'L' && "Doesn't handle wide strings yet");
+
+  
+  const char *SpellingStart = SpellingPtr;
+  const char *SpellingEnd = SpellingPtr+TokLen;
+
+  // Skip over the leading quote.
+  assert(SpellingPtr[0] == '"' && "Should be a string literal!");
+  ++SpellingPtr;
+  
+  // Skip over bytes until we find the offset we're looking for.
+  while (ByteNo) {
+    assert(SpellingPtr < SpellingEnd && "Didn't find byte offset!");
+    
+    // Step over non-escapes simply.
+    if (*SpellingPtr != '\\') {
+      ++SpellingPtr;
+      --ByteNo;
+      continue;
+    }
+    
+    // Otherwise, this is an escape character.  Advance over it.
+    bool HadError = false;
+    ProcessCharEscape(SpellingPtr, SpellingEnd, HadError,
+                      Tok.getLocation(), false, PP);
+    assert(!HadError && "This method isn't valid on erroneous strings");
+    --ByteNo;
+  }
+  
+  return SpellingPtr-SpellingStart;
+}

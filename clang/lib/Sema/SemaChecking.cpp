@@ -17,6 +17,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
 using namespace clang;
 
@@ -31,7 +32,7 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
                                                     unsigned ByteNo) const {
   assert(!SL->isWide() && "This doesn't work for wide strings yet");
   
-  llvm::SmallString<32> SpellingBuffer;
+  llvm::SmallString<16> SpellingBuffer;
   
   // Loop over all of the tokens in this string until we find the one that
   // contains the byte we're looking for.
@@ -78,13 +79,15 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     // The length of the string is the token length minus the two quotes.
     TokNumBytes -= 2;
 
-    // FIXME: This should consider character escapes!
-
     // If the byte is in this token, return the location of the byte.
     if (ByteNo < TokNumBytes ||
         (ByteNo == TokNumBytes && TokNo == SL->getNumConcatenated())) {
-      // We advance +1 to step over the '"'.
-      return PP.AdvanceToTokenCharacter(StrTokLoc, ByteNo+1);
+      unsigned Offset = 
+        StringLiteralParser::getOffsetOfStringByte(TheTok, ByteNo, PP);
+     
+      // Now that we know the offset of the token in the spelling, use the
+      // preprocessor to get the offset in the original source.
+      return PP.AdvanceToTokenCharacter(StrTokLoc, Offset);
     }
     
     // Move to the next string token.
