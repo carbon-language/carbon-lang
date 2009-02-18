@@ -133,6 +133,7 @@ namespace {
 /// particular argument.
 enum ArgEffect { IncRefMsg, IncRef,  
                  DecRefMsg, DecRef,
+                 MakeCollectable,
                  DoNothing, DoNothingByRef,
                  StopTracking, MayEscape, SelfOwn, Autorelease };
 
@@ -879,11 +880,8 @@ RetainSummaryManager::getUnarySummary(FunctionType* FT, UnaryFuncKind func) {
     }
       
     case cfmakecollectable: {
-      if (GCEnabled)
-        ScratchArgs.push_back(std::make_pair(0, DecRef));
-      
-      return getPersistentSummary(RetEffect::MakeAlias(0),
-                                  DoNothing, DoNothing);    
+      ScratchArgs.push_back(std::make_pair(0, MakeCollectable));
+      return getPersistentSummary(RetEffect::MakeAlias(0),DoNothing, DoNothing);    
     }
       
     default:
@@ -1944,6 +1942,7 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
     default: break;
     case IncRefMsg: E = isGCEnabled() ? DoNothing : IncRef; break;
     case DecRefMsg: E = isGCEnabled() ? DoNothing : DecRef; break;
+    case MakeCollectable: E = isGCEnabled() ? DecRef : DoNothing; break;
   }
   
   switch (E) {
@@ -2230,6 +2229,15 @@ std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
   }
 }
 
+static inline bool contains(const llvm::SmallVectorImpl<ArgEffect>& V,
+                              ArgEffect X) {
+  for (llvm::SmallVectorImpl<ArgEffect>::const_iterator I=V.begin(), E=V.end();
+        I!=E; ++I)
+    if (*I == X) return true;
+  
+  return false;
+}
+
 PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
                                             const ExplodedNode<GRState>* PrevN,
                                             const ExplodedGraph<GRState>& G,
@@ -2247,12 +2255,14 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   const RefVal& CurrV = *CurrT;
   const RefVal* PrevT = PrevSt.get<RefBindings>(Sym);
 
+  // Create a string buffer to constain all the useful things we want
+  // to tell the user.
+  std::string sbuf;
+  llvm::raw_string_ostream os(sbuf);
+
   // This is the allocation site since the previous node had no bindings
   // for this symbol.
   if (!PrevT) {
-    std::string sbuf;
-    llvm::raw_string_ostream os(sbuf);
-    
     Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
 
     if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
@@ -2298,20 +2308,15 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     
     return P;    
   }
-
-  // Create a string buffer to constain all the useful things we want
-  // to tell the user.
-  std::string sbuf;
-  llvm::raw_string_ostream os(sbuf);
   
-  // Consult the summary to see if there is something special we
-  // should tell the user.
+  // Gather up the effects that were performed on the object at this
+  // program point
+  llvm::SmallVector<ArgEffect, 2> AEffects;
+
   if (const RetainSummary *Summ = TF.getSummaryOfNode(NR.getOriginalNode(N))) {
     // We only have summaries attached to nodes after evaluating CallExpr and
     // ObjCMessageExprs.
     Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
-    
-    llvm::SmallVector<ArgEffect, 2> AEffects;
     
     if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
       // Iterate through the parameter expressions and see if the symbol
@@ -2320,10 +2325,10 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
       
       for (CallExpr::arg_iterator AI=CE->arg_begin(), AE=CE->arg_end();
            AI!=AE; ++AI, ++i) {
-
+        
         // Retrieve the value of the arugment.
         SVal X = CurrSt.GetSVal(*AI);
-
+        
         // Is it the symbol we're interested in?
         if (!isa<loc::SymbolVal>(X) || 
             Sym != cast<loc::SymbolVal>(X).getSymbol())
@@ -2335,43 +2340,55 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     }
     else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {      
       if (Expr *receiver = ME->getReceiver()) {
-          SVal RetV = CurrSt.GetSVal(receiver);        
-          if (isa<loc::SymbolVal>(RetV) &&
-              Sym == cast<loc::SymbolVal>(RetV).getSymbol()) {
-            // The symbol we are tracking is the receiver.
-            AEffects.push_back(Summ->getReceiverEffect());
-          }
+        SVal RetV = CurrSt.GetSVal(receiver);        
+        if (isa<loc::SymbolVal>(RetV) &&
+            Sym == cast<loc::SymbolVal>(RetV).getSymbol()) {
+          // The symbol we are tracking is the receiver.
+          AEffects.push_back(Summ->getReceiverEffect());
+        }
       }
     }
-      
-    // Emit diagnostics for the argument effects (if any).
-    // FIXME: The typestate logic below should also be folded into
-    // this block.
-    for (llvm::SmallVectorImpl<ArgEffect>::iterator I=AEffects.begin(),
-          E=AEffects.end(); I != E; ++I) {
-
-      // A bunch of things have alternate behavior under GC.
-      if (TF.isGCEnabled())
-        switch (*I) {
-          default: break;
-          case Autorelease:
-            os << "In GC mode an 'autorelease' has no effect.";
-            continue;
-          case IncRefMsg:
-            os << "In GC mode the 'retain' message has no effect.";
-            continue;
-          case DecRefMsg:
-            os << "In GC mode the 'release' message has no effect.";
-            continue;
-        }
-    }
   }
-
-  // Determine if the typestate has changed.  
-  RefVal PrevV = *PrevT;
   
-  if (!(PrevV == CurrV)) // The typestate has changed.
-    switch (CurrV.getKind()) {
+  do {
+    // Get the previous type state.
+    RefVal PrevV = *PrevT;
+
+    // Specially handle CFMakeCollectable and friends.
+    if (contains(AEffects, MakeCollectable)) {
+      // Get the name of the function.
+      Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+      loc::FuncVal FV =
+        cast<loc::FuncVal>(CurrSt.GetSVal(cast<CallExpr>(S)->getCallee()));
+      const std::string& FName = FV.getDecl()->getNameAsString();
+      
+      if (TF.isGCEnabled()) {
+        // Determine if the object's reference count was pushed to zero.
+        assert(!(PrevV == CurrV) && "The typestate *must* have changed.");
+        
+        os << "In GC mode a call to '" << FName
+           <<  "' decrements an object's retain count and registers the "
+               "object with the garbage collector. ";
+
+        if (CurrV.getKind() == RefVal::Released)
+          os << "The object's visible retain count is now 0 and can be "
+                "automatically collected by the garbage collector.";
+        else
+          os << "An object must have a 0 retain count to be garbage collected. "
+                "After this call its retain count is +" << CurrV.getCount()
+             << '.';
+      }
+      else 
+        os << "When GC is not enabled a call to '" << FName
+           << "' has no effect on its argument.";
+
+      // Nothing more to say.
+      break;
+    }
+
+    // Determine if the typestate has changed.  
+    if (!(PrevV == CurrV))
+      switch (CurrV.getKind()) {
       case RefVal::Owned:
       case RefVal::NotOwned:
 
@@ -2409,7 +2426,28 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
 
       default:
         return NULL;
+      }
+    
+    // Emit any remaining diagnostics for the argument effects (if any).
+    for (llvm::SmallVectorImpl<ArgEffect>::iterator I=AEffects.begin(),
+         E=AEffects.end(); I != E; ++I) {
+      
+      // A bunch of things have alternate behavior under GC.
+      if (TF.isGCEnabled())
+        switch (*I) {
+          default: break;
+          case Autorelease:
+            os << "In GC mode an 'autorelease' has no effect.";
+            continue;
+          case IncRefMsg:
+            os << "In GC mode the 'retain' message has no effect.";
+            continue;
+          case DecRefMsg:
+            os << "In GC mode the 'release' message has no effect.";
+            continue;
+        }
     }
+  } while(0);
 
   if (os.str().empty())
     return 0; // We have nothing to say!
