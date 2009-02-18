@@ -2597,27 +2597,8 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   assert (S);
   unsigned EndLine = SMgr.getInstantiationLineNumber(S->getLocStart());
 
-  // Look in the *trimmed* graph at the immediate predecessor of EndN.  Does
-  // it occur on the same line?
-  PathDiagnosticPiece::DisplayHint Hint = PathDiagnosticPiece::Above;
-  
-  assert (!EndN->pred_empty()); // Not possible to have 0 predecessors.
-  const ExplodedNode<GRState> *Pred = *(EndN->pred_begin());
-  ProgramPoint PredPos = Pred->getLocation();
-  
-  if (PostStmt* PredPS = dyn_cast<PostStmt>(&PredPos)) {
-
-    Stmt* SPred = PredPS->getStmt();
-    
-    // Predecessor at same line?
-    if (SMgr.getInstantiationLineNumber(SPred->getLocStart()) != EndLine) {
-      Hint = PathDiagnosticPiece::Below;
-      S = SPred;
-    }
-  }
-  
   // Generate the diagnostic.
-  FullSourceLoc L( S->getLocStart(), SMgr);
+  FullSourceLoc L(S->getLocStart(), SMgr);
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);
   
@@ -2645,7 +2626,7 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
           " +"
        << RV->getCount() << " (object leaked).";
   
-  return new PathDiagnosticPiece(L, os.str(), Hint);
+  return new PathDiagnosticPiece(L, os.str());
 }
 
 
