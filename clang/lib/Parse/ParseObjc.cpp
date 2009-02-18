@@ -1600,12 +1600,10 @@ Parser::OwningExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
     AtLocs.push_back(ConsumeToken()); // eat the @.
 
     // Invalid unless there is a string literal.
-    OwningExprResult Lit(Actions, true);
-    if (isTokenStringLiteral())
-      Lit = ParseStringLiteralExpression();
-    else
-      Diag(Tok, diag::err_objc_concat_string);
+    if (!isTokenStringLiteral())
+      return ExprError(Diag(Tok, diag::err_objc_concat_string));
 
+    OwningExprResult Lit(ParseStringLiteralExpression());
     if (Lit.isInvalid())
       return move(Lit);
 
