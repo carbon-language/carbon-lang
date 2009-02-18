@@ -383,7 +383,6 @@
 		3598EBEB0EDE23EF0070CA16 /* PTHManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTHManager.h; sourceTree = "<group>"; };
 		3599299A0DE2425300A8A33E /* SemaInit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaInit.cpp; path = lib/Sema/SemaInit.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		359DBBD30E1AC9CC00F43FA0 /* AnalysisConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisConsumer.cpp; path = Driver/AnalysisConsumer.cpp; sourceTree = "<group>"; };
-		359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisConsumer.h; path = Driver/AnalysisConsumer.h; sourceTree = "<group>"; };
 		35A057D20EAE2D2B0069249F /* SVals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SVals.h; path = clang/Analysis/PathSensitive/SVals.h; sourceTree = "<group>"; };
 		35A057E00EAE2D950069249F /* RegionStore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegionStore.cpp; path = lib/Analysis/RegionStore.cpp; sourceTree = "<group>"; };
 		35A057E10EAE2D950069249F /* SVals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SVals.cpp; path = lib/Analysis/SVals.cpp; sourceTree = "<group>"; };
@@ -976,7 +975,6 @@
 			children = (
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
-				359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */,
 				359DBBD30E1AC9CC00F43FA0 /* AnalysisConsumer.cpp */,
 				352028460E2C16820096ADE0 /* Analyses.def */,
 				DE3985780CB8ADC800223765 /* ASTConsumers.h */,
