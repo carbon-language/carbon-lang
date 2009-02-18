@@ -2219,74 +2219,75 @@ Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 /// Note that lex is not null here, even if this is the gnu "x ?: y" extension.
 /// In that case, lex = cond.
 inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
-  Expr *&cond, Expr *&lex, Expr *&rex, SourceLocation questionLoc) {
-  UsualUnaryConversions(cond);
-  UsualUnaryConversions(lex);
-  UsualUnaryConversions(rex);
-  QualType condT = cond->getType();
-  QualType lexT = lex->getType();
-  QualType rexT = rex->getType();
+  Expr *&Cond, Expr *&LHS, Expr *&RHS, SourceLocation QuestionLoc) {
+  UsualUnaryConversions(Cond);
+  UsualUnaryConversions(LHS);
+  UsualUnaryConversions(RHS);
+  QualType CondTy = Cond->getType();
+  QualType LHSTy = LHS->getType();
+  QualType RHSTy = RHS->getType();
 
   // first, check the condition.
-  if (!cond->isTypeDependent()) {
-    if (!condT->isScalarType()) { // C99 6.5.15p2
-      Diag(cond->getLocStart(), diag::err_typecheck_cond_expect_scalar) << condT;
+  if (!Cond->isTypeDependent()) {
+    if (!CondTy->isScalarType()) { // C99 6.5.15p2
+      Diag(Cond->getLocStart(), diag::err_typecheck_cond_expect_scalar)
+        << CondTy;
       return QualType();
     }
   }
   
   // Now check the two expressions.
-  if ((lex && lex->isTypeDependent()) || (rex && rex->isTypeDependent()))
+  if ((LHS && LHS->isTypeDependent()) || (RHS && RHS->isTypeDependent()))
     return Context.DependentTy;
 
   // If both operands have arithmetic type, do the usual arithmetic conversions
   // to find a common type: C99 6.5.15p3,5.
-  if (lexT->isArithmeticType() && rexT->isArithmeticType()) {
-    UsualArithmeticConversions(lex, rex);
-    return lex->getType();
+  if (LHSTy->isArithmeticType() && RHSTy->isArithmeticType()) {
+    UsualArithmeticConversions(LHS, RHS);
+    return LHS->getType();
   }
   
   // If both operands are the same structure or union type, the result is that
   // type.
-  if (const RecordType *LHSRT = lexT->getAsRecordType()) {    // C99 6.5.15p3
-    if (const RecordType *RHSRT = rexT->getAsRecordType())
+  if (const RecordType *LHSRT = LHSTy->getAsRecordType()) {    // C99 6.5.15p3
+    if (const RecordType *RHSRT = RHSTy->getAsRecordType())
       if (LHSRT->getDecl() == RHSRT->getDecl())
         // "If both the operands have structure or union type, the result has 
         // that type."  This implies that CV qualifiers are dropped.
-        return lexT.getUnqualifiedType();
+        return LHSTy.getUnqualifiedType();
   }
   
   // C99 6.5.15p5: "If both operands have void type, the result has void type."
   // The following || allows only one side to be void (a GCC-ism).
-  if (lexT->isVoidType() || rexT->isVoidType()) {
-    if (!lexT->isVoidType())
-      Diag(rex->getLocStart(), diag::ext_typecheck_cond_one_void)
-        << rex->getSourceRange();
-    if (!rexT->isVoidType())
-      Diag(lex->getLocStart(), diag::ext_typecheck_cond_one_void)
-        << lex->getSourceRange();
-    ImpCastExprToType(lex, Context.VoidTy);
-    ImpCastExprToType(rex, Context.VoidTy);
+  if (LHSTy->isVoidType() || RHSTy->isVoidType()) {
+    if (!LHSTy->isVoidType())
+      Diag(RHS->getLocStart(), diag::ext_typecheck_cond_one_void)
+        << RHS->getSourceRange();
+    if (!RHSTy->isVoidType())
+      Diag(LHS->getLocStart(), diag::ext_typecheck_cond_one_void)
+        << LHS->getSourceRange();
+    ImpCastExprToType(LHS, Context.VoidTy);
+    ImpCastExprToType(RHS, Context.VoidTy);
     return Context.VoidTy;
   }
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
   // the type of the other operand."
-  if ((lexT->isPointerType() || lexT->isBlockPointerType() ||
-       Context.isObjCObjectPointerType(lexT)) &&
-      rex->isNullPointerConstant(Context)) {
-    ImpCastExprToType(rex, lexT); // promote the null to a pointer.
-    return lexT;
+  if ((LHSTy->isPointerType() || LHSTy->isBlockPointerType() ||
+       Context.isObjCObjectPointerType(LHSTy)) &&
+      RHS->isNullPointerConstant(Context)) {
+    ImpCastExprToType(RHS, LHSTy); // promote the null to a pointer.
+    return LHSTy;
   }
-  if ((rexT->isPointerType() || rexT->isBlockPointerType() ||
-       Context.isObjCObjectPointerType(rexT)) &&
-      lex->isNullPointerConstant(Context)) {
-    ImpCastExprToType(lex, rexT); // promote the null to a pointer.
-    return rexT;
+  if ((RHSTy->isPointerType() || RHSTy->isBlockPointerType() ||
+       Context.isObjCObjectPointerType(RHSTy)) &&
+      LHS->isNullPointerConstant(Context)) {
+    ImpCastExprToType(LHS, RHSTy); // promote the null to a pointer.
+    return RHSTy;
   }
   // Handle the case where both operands are pointers before we handle null
   // pointer constants in case both operands are null pointer constants.
-  if (const PointerType *LHSPT = lexT->getAsPointerType()) { // C99 6.5.15p3,6
-    if (const PointerType *RHSPT = rexT->getAsPointerType()) {
+  if (const PointerType *LHSPT = LHSTy->getAsPointerType()) { // C99 6.5.15p3,6
+    if (const PointerType *RHSPT = RHSTy->getAsPointerType()) {
       // get the "pointed to" types
       QualType lhptee = LHSPT->getPointeeType();
       QualType rhptee = RHSPT->getPointeeType();
@@ -2297,24 +2298,24 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         // Figure out necessary qualifiers (C99 6.5.15p6)
         QualType destPointee=lhptee.getQualifiedType(rhptee.getCVRQualifiers());
         QualType destType = Context.getPointerType(destPointee);
-        ImpCastExprToType(lex, destType); // add qualifiers if necessary
-        ImpCastExprToType(rex, destType); // promote to void*
+        ImpCastExprToType(LHS, destType); // add qualifiers if necessary
+        ImpCastExprToType(RHS, destType); // promote to void*
         return destType;
       }
       if (rhptee->isVoidType() && lhptee->isIncompleteOrObjectType()) {
         QualType destPointee=rhptee.getQualifiedType(lhptee.getCVRQualifiers());
         QualType destType = Context.getPointerType(destPointee);
-        ImpCastExprToType(lex, destType); // add qualifiers if necessary
-        ImpCastExprToType(rex, destType); // promote to void*
+        ImpCastExprToType(LHS, destType); // add qualifiers if necessary
+        ImpCastExprToType(RHS, destType); // promote to void*
         return destType;
       }
 
-      QualType compositeType = lexT;
+      QualType compositeType = LHSTy;
       
       // If either type is an Objective-C object type then check
       // compatibility according to Objective-C.
-      if (Context.isObjCObjectPointerType(lexT) || 
-          Context.isObjCObjectPointerType(rexT)) {
+      if (Context.isObjCObjectPointerType(LHSTy) || 
+          Context.isObjCObjectPointerType(RHSTy)) {
         // If both operands are interfaces and either operand can be
         // assigned to the other, use that type as the composite
         // type. This allows
@@ -2332,32 +2333,32 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
         if (LHSIface && RHSIface &&
             Context.canAssignObjCInterfaces(LHSIface, RHSIface)) {
-          compositeType = lexT;
+          compositeType = LHSTy;
         } else if (LHSIface && RHSIface &&
                    Context.canAssignObjCInterfaces(RHSIface, LHSIface)) {
-          compositeType = rexT;
+          compositeType = RHSTy;
         } else if (Context.isObjCIdStructType(lhptee) || 
                    Context.isObjCIdStructType(rhptee)) { 
           compositeType = Context.getObjCIdType();
         } else {
-          Diag(questionLoc, diag::ext_typecheck_comparison_of_distinct_pointers)
-               << lexT << rexT 
-               << lex->getSourceRange() << rex->getSourceRange();
+          Diag(QuestionLoc, diag::ext_typecheck_comparison_of_distinct_pointers)
+               << LHSTy << RHSTy 
+               << LHS->getSourceRange() << RHS->getSourceRange();
           QualType incompatTy = Context.getObjCIdType();
-          ImpCastExprToType(lex, incompatTy);
-          ImpCastExprToType(rex, incompatTy);
+          ImpCastExprToType(LHS, incompatTy);
+          ImpCastExprToType(RHS, incompatTy);
           return incompatTy;          
         }
       } else if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
                                              rhptee.getUnqualifiedType())) {
-        Diag(questionLoc, diag::warn_typecheck_cond_incompatible_pointers)
-          << lexT << rexT << lex->getSourceRange() << rex->getSourceRange();
+        Diag(QuestionLoc, diag::warn_typecheck_cond_incompatible_pointers)
+          << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
         // In this situation, we assume void* type. No especially good
         // reason, but this is what gcc does, and we do have to pick
         // to get a consistent AST.
         QualType incompatTy = Context.getPointerType(Context.VoidTy);
-        ImpCastExprToType(lex, incompatTy);
-        ImpCastExprToType(rex, incompatTy);
+        ImpCastExprToType(LHS, incompatTy);
+        ImpCastExprToType(RHS, incompatTy);
         return incompatTy;
       }
       // The pointer types are compatible.
@@ -2367,23 +2368,23 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       // type.
       // FIXME: Need to calculate the composite type.
       // FIXME: Need to add qualifiers
-      ImpCastExprToType(lex, compositeType);
-      ImpCastExprToType(rex, compositeType);
+      ImpCastExprToType(LHS, compositeType);
+      ImpCastExprToType(RHS, compositeType);
       return compositeType;
     }
   }
   // Need to handle "id<xx>" explicitly. Unlike "id", whose canonical type
   // evaluates to "struct objc_object *" (and is handled above when comparing
   // id with statically typed objects). 
-  if (lexT->isObjCQualifiedIdType() || rexT->isObjCQualifiedIdType()) {    
+  if (LHSTy->isObjCQualifiedIdType() || RHSTy->isObjCQualifiedIdType()) {    
     // GCC allows qualified id and any Objective-C type to devolve to
     // id. Currently localizing to here until clear this should be
     // part of ObjCQualifiedIdTypesAreCompatible.
-    if (ObjCQualifiedIdTypesAreCompatible(lexT, rexT, true) ||
-        (lexT->isObjCQualifiedIdType() && 
-         Context.isObjCObjectPointerType(rexT)) ||
-        (rexT->isObjCQualifiedIdType() &&
-         Context.isObjCObjectPointerType(lexT))) {
+    if (ObjCQualifiedIdTypesAreCompatible(LHSTy, RHSTy, true) ||
+        (LHSTy->isObjCQualifiedIdType() && 
+         Context.isObjCObjectPointerType(RHSTy)) ||
+        (RHSTy->isObjCQualifiedIdType() &&
+         Context.isObjCObjectPointerType(LHSTy))) {
       // FIXME: This is not the correct composite type. This only
       // happens to work because id can more or less be used anywhere,
       // however this may change the type of method sends.
@@ -2391,20 +2392,20 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       // (confusing) incompatible comparison warnings in some
       // cases. Investigate.
       QualType compositeType = Context.getObjCIdType();
-      ImpCastExprToType(lex, compositeType);
-      ImpCastExprToType(rex, compositeType);
+      ImpCastExprToType(LHS, compositeType);
+      ImpCastExprToType(RHS, compositeType);
       return compositeType;
     }
   }
 
   // Selection between block pointer types is ok as long as they are the same.
-  if (lexT->isBlockPointerType() && rexT->isBlockPointerType() &&
-      Context.getCanonicalType(lexT) == Context.getCanonicalType(rexT))
-    return lexT;
+  if (LHSTy->isBlockPointerType() && RHSTy->isBlockPointerType() &&
+      Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy))
+    return LHSTy;
 
   // Otherwise, the operands are not compatible.
-  Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands)
-    << lexT << rexT << lex->getSourceRange() << rex->getSourceRange();
+  Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
+    << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
   return QualType();
 }
 
