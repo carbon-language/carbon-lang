@@ -321,6 +321,9 @@ public:
   
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs and qualifiers.
+
+  /// isSpecificBuiltinType - Test for a particular builtin type.
+  bool isSpecificBuiltinType(unsigned K) const;
   
   /// isIntegerType() does *not* include complex integers (a GCC extension).
   /// isComplexIntegerType() can be used to test for complex integers.
@@ -1876,11 +1879,15 @@ inline bool Type::isTemplateTypeParmType() const {
   return isa<TemplateTypeParmType>(CanonicalType.getUnqualifiedType());
 }
 
-inline bool Type::isOverloadType() const {
+inline bool Type::isSpecificBuiltinType(unsigned K) const {
   if (const BuiltinType *BT = getAsBuiltinType())
-    return BT->getKind() == BuiltinType::Overload;
-  else
-    return false;
+    if (BT->getKind() == (BuiltinType::Kind) K)
+      return true;
+  return false;
+}
+
+inline bool Type::isOverloadType() const {
+  return isSpecificBuiltinType(BuiltinType::Overload);
 }
 
 /// Insertion operator for diagnostics.  This allows sending QualType's into a

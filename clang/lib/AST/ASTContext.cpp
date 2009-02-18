@@ -468,9 +468,8 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) {
   unsigned ABIAlign = getTypeAlign(T);
   
   // Doubles should be naturally aligned if possible.
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(getCanonicalType(T)))
-    if (BT->getKind() == BuiltinType::Double)
-      return std::max(ABIAlign, 64U);
+  if (T->isSpecificBuiltinType(BuiltinType::Double))
+    return std::max(ABIAlign, 64U);
   
   return ABIAlign;
 }
