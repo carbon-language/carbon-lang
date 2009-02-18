@@ -2383,6 +2383,7 @@ bool GlobalOpt::ResolveAliases(Module &M) {
 
     Constant *Aliasee = J->getAliasee();
     GlobalValue *Target = cast<GlobalValue>(Aliasee->stripPointerCasts());
+    Target->removeDeadConstantUsers();
     bool hasOneUse = Target->hasOneUse() && Aliasee->hasOneUse();
 
     // Make all users of the alias use the aliasee instead.
