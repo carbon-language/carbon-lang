@@ -2218,8 +2218,9 @@ Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
 /// Note that lex is not null here, even if this is the gnu "x ?: y" extension.
 /// In that case, lex = cond.
-inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
-  Expr *&Cond, Expr *&LHS, Expr *&RHS, SourceLocation QuestionLoc) {
+/// C99 6.5.15
+QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
+                                        SourceLocation QuestionLoc) {
   UsualUnaryConversions(Cond);
   UsualUnaryConversions(LHS);
   UsualUnaryConversions(RHS);
@@ -2284,6 +2285,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     ImpCastExprToType(LHS, RHSTy); // promote the null to a pointer.
     return RHSTy;
   }
+  
   // Handle the case where both operands are pointers before we handle null
   // pointer constants in case both operands are null pointer constants.
   if (const PointerType *LHSPT = LHSTy->getAsPointerType()) { // C99 6.5.15p3,6
@@ -2310,6 +2312,11 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         return destType;
       }
 
+      if (Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy)) {
+        // Two identical pointers types are always compatible.
+        return LHSTy;
+      }
+        
       QualType compositeType = LHSTy;
       
       // If either type is an Objective-C object type then check
@@ -2373,6 +2380,12 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       return compositeType;
     }
   }
+  
+  // Selection between block pointer types is ok as long as they are the same.
+  if (LHSTy->isBlockPointerType() && RHSTy->isBlockPointerType() &&
+      Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy))
+    return LHSTy;
+  
   // Need to handle "id<xx>" explicitly. Unlike "id", whose canonical type
   // evaluates to "struct objc_object *" (and is handled above when comparing
   // id with statically typed objects). 
@@ -2397,11 +2410,6 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       return compositeType;
     }
   }
-
-  // Selection between block pointer types is ok as long as they are the same.
-  if (LHSTy->isBlockPointerType() && RHSTy->isBlockPointerType() &&
-      Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy))
-    return LHSTy;
 
   // Otherwise, the operands are not compatible.
   Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
