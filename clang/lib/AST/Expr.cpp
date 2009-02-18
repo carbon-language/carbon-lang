@@ -1803,10 +1803,10 @@ Stmt::child_iterator ImplicitValueInitExpr::child_end() {
 
 // ObjCStringLiteral
 Stmt::child_iterator ObjCStringLiteral::child_begin() { 
-  return child_iterator();
+  return &String;
 }
 Stmt::child_iterator ObjCStringLiteral::child_end() {
-  return child_iterator();
+  return &String+1;
 }
 
 // ObjCEncodeExpr

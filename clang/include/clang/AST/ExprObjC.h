@@ -26,15 +26,14 @@ namespace clang {
 /// ObjCStringLiteral, used for Objective-C string literals
 /// i.e. @"foo".
 class ObjCStringLiteral : public Expr {
-  StringLiteral *String;
+  Stmt *String;
   SourceLocation AtLoc;
 public:
   ObjCStringLiteral(StringLiteral *SL, QualType T, SourceLocation L)
     : Expr(ObjCStringLiteralClass, T), String(SL), AtLoc(L) {}
   
-  StringLiteral* getString() { return String; }
-
-  const StringLiteral* getString() const { return String; }
+  StringLiteral* getString() { return cast<StringLiteral>(String); }
+  const StringLiteral* getString() const { return cast<StringLiteral>(String); }
 
   SourceLocation getAtLoc() const { return AtLoc; }
 
