@@ -68,3 +68,10 @@ extern Class NSClassFromObject(id object);
 int f0(I0 *ob) {
   [ ob nonVararg: 0, 1, 2]; // expected-error {{too many arguments to method call}}
 }
+
+int f2() {
+    const id foo;
+    [foo bar];  // expected-warning {{method '-bar' not found (return type defaults to 'id')}}
+    return 0;
+}
+
