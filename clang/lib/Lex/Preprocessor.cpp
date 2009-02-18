@@ -291,11 +291,7 @@ void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
 /// token, return a new location that specifies a character within the token.
 SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart, 
                                                      unsigned CharNo) {
-  // If they request the first char of the token, we're trivially done.  If this
-  // is a macro expansion, it doesn't make sense to point to a character within
-  // the instantiation point (the name).  We could point to the source
-  // character, but without also pointing to instantiation info, this is
-  // confusing.
+  // If they request the first char of the token, we're trivially done.
   if (CharNo == 0) return TokStart;
   
   // Figure out how many physical characters away the specified instantiation
