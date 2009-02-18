@@ -13,6 +13,7 @@ typedef const struct __CFAllocator * CFAllocatorRef;
 extern const CFAllocatorRef kCFAllocatorDefault;
 extern CFTypeRef CFRetain(CFTypeRef cf);
 extern void CFRelease(CFTypeRef cf);
+CFTypeRef CFMakeCollectable(CFTypeRef cf);
 typedef struct {
 }
   CFArrayCallBacks;
@@ -75,7 +76,20 @@ extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn stat
 //===----------------------------------------------------------------------===//
 
 void f1() {
-  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
   id x = [(id) A autorelease];
-  CFRelease((CFMutableArrayRef) x); // no-warning
+  CFRelease((CFMutableArrayRef) x);
+}
+
+void f2() {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{leak}}
+  id x = [(id) A retain];
+  [x release];
+  [x release];
+}
+
+void f3() {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{leak}}
+  CFMakeCollectable(A);
+  CFRetain(A);
 }
