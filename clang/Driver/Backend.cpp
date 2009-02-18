@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
 #include "llvm/Target/SubtargetFeature.h"
@@ -45,6 +46,9 @@ namespace {
     std::string OutputFile;
     bool GenerateDebugInfo;
 
+    Timer LLVMIRGeneration;
+    Timer CodeGenerationTime;
+    
     llvm::OwningPtr<CodeGenerator> Gen;
     
     llvm::Module *TheModule;
@@ -81,10 +85,13 @@ namespace {
       InputFile(infile), 
       OutputFile(outfile), 
       GenerateDebugInfo(debug),
+      LLVMIRGeneration("LLVM IR Generation Time"),
+      CodeGenerationTime("Code Generation Time"),
       Gen(CreateLLVMCodeGen(Diags, langopts, InputFile, GenerateDebugInfo)),
       TheModule(0), TheTargetData(0), AsmOutStream(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
       
+      // Enable -time-passes if -ftime-report is enabled.
       llvm::TimePassesIsEnabled = CompileOpts.TimePasses;
     }
 
@@ -98,22 +105,43 @@ namespace {
     }
 
     virtual void InitializeTU(TranslationUnit& TU) {
+      
+      if (CompileOpts.TimePasses)
+        LLVMIRGeneration.startTimer();
+      
       Gen->InitializeTU(TU);
 
       TheModule = Gen->GetModule();
       ModuleProvider = new ExistingModuleProvider(TheModule);
       TheTargetData = 
         new llvm::TargetData(TU.getContext().Target.getTargetDescription());
+      
+      if (CompileOpts.TimePasses)
+        LLVMIRGeneration.stopTimer();
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
+      if (CompileOpts.TimePasses)
+        LLVMIRGeneration.startTimer();
+      
       Gen->HandleTopLevelDecl(D);
+
+      if (CompileOpts.TimePasses)
+        LLVMIRGeneration.stopTimer();
     }
     
     virtual void HandleTranslationUnit(TranslationUnit& TU) {
+      if (CompileOpts.TimePasses)
+        LLVMIRGeneration.startTimer();
+
       Gen->HandleTranslationUnit(TU);
 
-      EmitAssembly();      
+      if (CompileOpts.TimePasses)
+        LLVMIRGeneration.stopTimer();
+
+      // EmitAssembly times itself.
+      EmitAssembly();
+      
       // Force a flush here in case we never get released.
       if (AsmOutStream)
         AsmOutStream->flush();
@@ -326,6 +354,8 @@ void BackendConsumer::EmitAssembly() {
   // Silently ignore if we weren't initialized for some reason.
   if (!TheModule || !TheTargetData)
     return;
+  
+  TimeRegion Region(CodeGenerationTime);
 
   // Make sure IR generation is happy with the module. This is
   // released by the module provider.
