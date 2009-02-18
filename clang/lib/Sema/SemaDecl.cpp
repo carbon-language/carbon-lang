@@ -1763,11 +1763,27 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     OverloadedFunctionDecl::function_iterator MatchedDecl;
 
     if (!getLangOptions().CPlusPlus &&
-        AllowOverloadingOfFunction(PrevDecl, Context))
+        AllowOverloadingOfFunction(PrevDecl, Context)) {
       OverloadableAttrRequired = true;
 
-    if (!AllowOverloadingOfFunction(PrevDecl, Context) || 
-        !IsOverload(NewFD, PrevDecl, MatchedDecl)) {
+      // Functions marked "overloadable" must have a prototype (that
+      // we can't get through declaration merging).
+      if (!R->getAsFunctionTypeProto()) {
+        Diag(NewFD->getLocation(), diag::err_attribute_overloadable_no_prototype)
+          << NewFD;
+        InvalidDecl = true;
+        Redeclaration = true;
+
+        // Turn this into a variadic function with no parameters.
+        R = Context.getFunctionType(R->getAsFunctionType()->getResultType(),
+                                    0, 0, true, 0);
+        NewFD->setType(R);
+      }
+    }
+
+    if (PrevDecl && 
+        (!AllowOverloadingOfFunction(PrevDecl, Context) || 
+         !IsOverload(NewFD, PrevDecl, MatchedDecl))) {
       Redeclaration = true;
       Decl *OldDecl = PrevDecl;
 

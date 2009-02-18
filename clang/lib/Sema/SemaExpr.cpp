@@ -2032,12 +2032,20 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
 
   // Make the call expr early, before semantic checks.  This guarantees cleanup
   // of arguments and function on error.
-  // FIXME: Except that llvm::OwningPtr uses delete, when it really must be
-  // Destroy(), or nothing gets cleaned up.
   ExprOwningPtr<CallExpr> TheCall(this, new (Context) CallExpr(Context, Fn,
                                                                Args, NumArgs,
                                                                Context.BoolTy,
                                                                RParenLoc));
+
+  // Check for a call to a (FIXME: deleted) or unavailable function.
+  if (FDecl && FDecl->getAttr<UnavailableAttr>()) {
+    Diag(Fn->getSourceRange().getBegin(), diag::err_call_deleted_function)
+      << FDecl->getAttr<UnavailableAttr>() << FDecl->getDeclName()
+      << Fn->getSourceRange();
+    Diag(FDecl->getLocation(), diag::note_deleted_function_here)
+      << FDecl->getAttr<UnavailableAttr>();
+    return ExprError();
+  }
 
   const FunctionType *FuncT;
   if (!Fn->getType()->isBlockPointerType()) {

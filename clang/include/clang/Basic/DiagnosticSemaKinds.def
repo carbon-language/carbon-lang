@@ -418,6 +418,8 @@ DIAG(err_attribute_overloadable_missing, ERROR,
      "%select{overloaded function|redeclaration of}0 %1 must have the 'overloadable' attribute")
 DIAG(note_attribute_overloadable_prev_overload, NOTE,
      "previous overload of function is here")
+DIAG(err_attribute_overloadable_no_prototype, ERROR,
+     "'overloadable' function %0 must have a prototype")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_param_with_void_type, ERROR,
@@ -1051,6 +1053,10 @@ DIAG(err_typecheck_call_too_few_args, ERROR,
      "too few arguments to %select{function|block|method}0 call")
 DIAG(err_typecheck_call_too_many_args, ERROR,
      "too many arguments to %select{function|block|method}0 call")
+DIAG(err_call_deleted_function, ERROR,
+     "call to function %1 that has been intentionally %select{deleted|made unavailable}0 ")
+DIAG(note_deleted_function_here, NOTE,
+     "%select{deleted|unavailable}0 function is declared here")
 DIAG(warn_cannot_pass_non_pod_arg_to_vararg, WARNING,
      "cannot pass object of non-POD type %0 through variadic "
      "%select{function|block|method}1; call will abort at runtime")
