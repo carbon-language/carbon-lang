@@ -1245,6 +1245,7 @@ void RefVal::print(std::ostream& Out) const {
   
 typedef llvm::ImmutableMap<SymbolRef, RefVal> RefBindings;
 static int RefBIndex = 0;
+static std::pair<const void*, const void*> LeakProgramPointTag(&RefBIndex, 0);
 
 namespace clang {
   template<>
@@ -2745,8 +2746,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
                                  const GRState* St,
                                  SymbolReaper& SymReaper) {
   
-  // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.
-  
+  // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.  
   RefBindings B = St->get<RefBindings>();
   llvm::SmallVector<std::pair<SymbolRef,bool>, 10> Leaked;
   
@@ -2759,7 +2759,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
     bool hasLeak = false;
     
     std::pair<GRStateRef, bool> X
-    = HandleSymbolDeath(Eng.getStateManager(), St, 0, *I, *T, hasLeak);
+      = HandleSymbolDeath(Eng.getStateManager(), St, 0, *I, *T, hasLeak);
     
     St = X.first;
     
@@ -2767,23 +2767,44 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
       Leaked.push_back(std::make_pair(*I,X.second));    
   }
   
-  if (Leaked.empty())
-    return;    
+  if (!Leaked.empty()) {
+    // Create a new intermediate node representing the leak point.  We
+    // use a special program point that represents this checker-specific
+    // transition.  We use the address of RefBIndex as a unique tag for this
+    // checker.  We will create another node (if we don't cache out) that
+    // removes the retain-count bindings from the state.
+    // NOTE: We use 'generateNode' so that it does interplay with the
+    // auto-transition logic.
+    ExplodedNode<GRState>* N =
+      Builder.generateNode(PostStmtCustom(S, &LeakProgramPointTag), St, Pred);
   
-  ExplodedNode<GRState>* N = Builder.MakeNode(Dst, S, Pred, St);  
-  
-  if (!N)
-    return;
-  
-  for (llvm::SmallVector<std::pair<SymbolRef,bool>, 10>::iterator
-       I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
+    if (!N)
+      return;
+
+    // Generate the bug reports.
+    for (llvm::SmallVectorImpl<std::pair<SymbolRef,bool> >::iterator
+         I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
+      
+      CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
+                                            : leakWithinFunction);
+      assert(BT && "BugType not initialized.");
+      CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N, I->first, Eng);
+      BR->EmitReport(report);
+    }
     
-    CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
-                                          : leakWithinFunction);
-    assert(BT && "BugType not initialized.");
-    CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N, I->first, Eng);
-    BR->EmitReport(report);
+    Pred = N;
   }
+  
+  // Now generate a new node that nukes the old bindings.
+  GRStateRef state(St, Eng.getStateManager());
+  RefBindings::Factory& F = state.get_context<RefBindings>();
+
+  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
+        E = SymReaper.dead_end(); I!=E; ++I)
+       B = F.Remove(B, *I);
+
+  state = state.set<RefBindings>(B);
+  Builder.MakeNode(Dst, S, Pred, state);
 }
 
 void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
