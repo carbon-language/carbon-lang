@@ -216,6 +216,10 @@ const FunctionType *Type::getAsFunctionType() const {
   return getDesugaredType()->getAsFunctionType();
 }
 
+const FunctionTypeNoProto *Type::getAsFunctionTypeNoProto() const {
+  return dyn_cast_or_null<FunctionTypeNoProto>(getAsFunctionType());
+}
+
 const FunctionTypeProto *Type::getAsFunctionTypeProto() const {
   return dyn_cast_or_null<FunctionTypeProto>(getAsFunctionType());
 }

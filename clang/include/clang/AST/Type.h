@@ -63,6 +63,7 @@ namespace clang {
   class TypedefType;
   class TemplateTypeParmType;
   class FunctionType;
+  class FunctionTypeNoProto;
   class FunctionTypeProto;
   class ExtVectorType;
   class BuiltinType;
@@ -396,6 +397,7 @@ public:
   // the best type we can.
   const BuiltinType *getAsBuiltinType() const;
   const FunctionType *getAsFunctionType() const;
+  const FunctionTypeNoProto *getAsFunctionTypeNoProto() const;
   const FunctionTypeProto *getAsFunctionTypeProto() const;
   const PointerLikeType *getAsPointerLikeType() const; // Pointer or Reference.
   const PointerType *getAsPointerType() const;
