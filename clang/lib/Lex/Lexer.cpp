@@ -687,7 +687,7 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
       if (!isLexingRawMode())
-        Diag(BufferPtr, diag::err_unterminated_string);
+        Diag(BufferPtr, diag::err_unterminated_angled_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
     } else if (C == 0) {

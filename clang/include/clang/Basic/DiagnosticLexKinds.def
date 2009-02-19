@@ -55,9 +55,11 @@ DIAG(ext_token_used, EXTENSION,
      "extension used")
 
 DIAG(err_unterminated_string, ERROR,
-     "missing terminating \" character")
+     "missing terminating '\"' character")
 DIAG(err_unterminated_char, ERROR,
      "missing terminating ' character")
+DIAG(err_unterminated_angled_string, ERROR,
+     "missing terminating '>' character")
 DIAG(err_empty_character, ERROR,
      "empty character constant")
 DIAG(err_unterminated_block_comment, ERROR,
