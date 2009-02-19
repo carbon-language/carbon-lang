@@ -267,6 +267,12 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   // Do standard promotions between the two arguments, returning their common
   // type.
   QualType Res = UsualArithmeticConversions(OrigArg0, OrigArg1, false);
+
+  // Make sure any conversions are pushed back into the call; this is
+  // type safe since unordered compare builtins are declared as "_Bool
+  // foo(...)".
+  TheCall->setArg(0, OrigArg0);
+  TheCall->setArg(1, OrigArg1);
   
   // If the common type isn't a real floating type, then the arguments were
   // invalid for this operation.
