@@ -64,7 +64,7 @@ public:
   ///  that e.g. stdio.h is found.
   void AddDefaultSystemIncludePaths(const LangOptions &Lang);
 
-  /// Realise - Merges all search path lists into one list and send it to
+  /// Realize - Merges all search path lists into one list and send it to
   /// HeaderSearch.
   void Realize();
 };
