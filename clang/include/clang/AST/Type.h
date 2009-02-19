@@ -475,7 +475,7 @@ protected:
   ///  be serialized.
   // FIXME: Make this abstract once implemented.
   virtual void EmitImpl(llvm::Serializer& S) const {
-    assert(false && "Serializization for type not supported.");
+    assert(false && "Serialization for type not supported.");
   }
 };
 
