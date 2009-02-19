@@ -1,5 +1,6 @@
 import os
 import platform
+import subprocess
 import sys
 import tempfile
 from pprint import pprint
@@ -224,11 +225,12 @@ class Driver(object):
                 if vArg or self.cccEcho:
                     print >>sys.stderr, ' '.join(map(str,j.getArgv()))
                     sys.stderr.flush()
-                res = os.spawnvp(os.P_WAIT, j.executable, j.getArgv())
+                p = self.startSubprocess(j.getArgv(), j.executable)
+                res = p.wait()
                 if res:
                     sys.exit(res)
+
             elif isinstance(j, Jobs.PipedJob):
-                import subprocess
                 procs = []
                 for sj in j.commands:
                     if vArg or self.cccEcho:
@@ -243,16 +245,25 @@ class Driver(object):
                         stdout = None
                     else:
                         stdout = subprocess.PIPE
-                    procs.append(subprocess.Popen(sj.getArgv(), 
-                                                  executable=sj.executable,
-                                                  stdin=stdin,
-                                                  stdout=stdout))
+
+                    procs.append(self.startSubprocess(sj.getArgv(), sj.executable,
+                                                      stdin=stdin,
+                                                      stdout=stdout))
+
                 for proc in procs:
                     res = proc.wait()
                     if res:
                         sys.exit(res)
             else:
                 raise ValueError,'Encountered unknown job.'
+
+    def startSubprocess(self, argv, executable, **kwargs):
+        try:
+            return subprocess.Popen(argv, executable=executable, **kwargs)
+        except OSError, e:
+            self.warning("error trying to exec '%s': %s" % 
+                         (executable, e.args[1]))
+            sys.exit(1)
 
     def claim(self, option):
         # FIXME: Move to OptionList once introduced and implement.
