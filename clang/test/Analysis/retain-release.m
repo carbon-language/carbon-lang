@@ -236,4 +236,8 @@ void f13_autorelease() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
   [(id) A autorelease]; // no-warning
 }
-  
+
+// This case exercises the logic where the leak site is the same as the allocation site.
+void f14_leakimmediately() {
+  CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{leak}}
+}
