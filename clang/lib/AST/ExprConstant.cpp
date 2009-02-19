@@ -292,7 +292,13 @@ APValue PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     return APValue();
 
   QualType PointeeType = PExp->getType()->getAsPointerType()->getPointeeType();
-  uint64_t SizeOfPointee = Info.Ctx.getTypeSize(PointeeType) / 8;
+  uint64_t SizeOfPointee;
+  
+  // Explicitly handle GNU void* and function pointer arithmetic extensions.
+  if (PointeeType->isVoidType() || PointeeType->isFunctionType())
+    SizeOfPointee = 1;
+  else
+    SizeOfPointee = Info.Ctx.getTypeSize(PointeeType) / 8;
 
   uint64_t Offset = ResultLValue.getLValueOffset();
 
