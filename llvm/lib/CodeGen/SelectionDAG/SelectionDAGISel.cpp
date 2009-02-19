@@ -268,7 +268,7 @@ SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, bool fast) :
   FunctionPass(&ID), TM(tm), TLI(*tm.getTargetLowering()),
   FuncInfo(new FunctionLoweringInfo(TLI)),
   CurDAG(new SelectionDAG(TLI, *FuncInfo)),
-  SDL(new SelectionDAGLowering(*CurDAG, TLI, *FuncInfo)),
+  SDL(new SelectionDAGLowering(*CurDAG, TLI, *FuncInfo, fast)),
   GFI(),
   Fast(fast),
   DAGSize(0)
