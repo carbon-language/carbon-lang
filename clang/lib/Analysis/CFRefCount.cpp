@@ -2586,7 +2586,6 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   
   while (LeakN) {
     ProgramPoint P = LeakN->getLocation();
-
     
     if (const PostStmt *PS = dyn_cast<PostStmt>(&P))
       S = PS->getStmt();
@@ -2597,18 +2596,27 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
       // Scan 'S' for uses of Sym.
       GRStateRef state(LeakN->getState(), BR.getStateManager());
       bool foundSymbol = false;
-    
-      for (Stmt::child_iterator I=S->child_begin(), E=S->child_end();
-            I!=E; ++I)
-        if (Expr *Ex = dyn_cast_or_null<Expr>(*I)) {
-          SVal X = state.GetSVal(Ex);
-          if (isa<loc::SymbolVal>(X) && 
-              cast<loc::SymbolVal>(X).getSymbol() == Sym){
-            foundSymbol = true;        
-            break;
+      
+      // First check if 'S' itself binds to the symbol.
+      if (Expr *Ex = dyn_cast<Expr>(S)) {
+        SVal X = state.GetSVal(Ex);
+        if (isa<loc::SymbolVal>(X) && 
+            cast<loc::SymbolVal>(X).getSymbol() == Sym)
+          foundSymbol = true;
+      }
+        
+      if (!foundSymbol)
+        for (Stmt::child_iterator I=S->child_begin(), E=S->child_end();
+             I!=E; ++I)
+          if (Expr *Ex = dyn_cast_or_null<Expr>(*I)) {
+            SVal X = state.GetSVal(Ex);
+            if (isa<loc::SymbolVal>(X) && 
+                cast<loc::SymbolVal>(X).getSymbol() == Sym){
+              foundSymbol = true;        
+              break;
+            }
           }
-        }
-
+      
       if (foundSymbol)
         break;
     }
