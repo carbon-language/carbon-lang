@@ -109,7 +109,8 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
   ErrorUnsupported(E, Name);
   llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
   return LValue::MakeAddr(llvm::UndefValue::get(Ty),
-                          E->getType().getCVRQualifiers());
+                          E->getType().getCVRQualifiers(),
+                          getContext().getObjCGCAttrKind(E->getType()));
 }
 
 /// EmitLValue - Emit code to compute a designator that specifies the location
@@ -611,15 +612,6 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   Builder.CreateStore(Vec, Dst.getExtVectorAddr(), Dst.isVolatileQualified());
 }
 
-/// SetDeclObjCGCAttrInLvalue - Set __weak/__strong attributes into the LValue
-/// object.
-static void SetDeclObjCGCAttrInLvalue(ASTContext &Ctx, const QualType &Ty, 
-                                      LValue &LV)
-{
-  QualType::GCAttrTypes attr = Ctx.getObjCGCAttrKind(Ty);
-  LValue::SetObjCType(attr, LV);
-}
-
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
   
@@ -628,32 +620,32 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     LValue LV;
     if (VD->getStorageClass() == VarDecl::Extern) {
       LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
-                            E->getType().getCVRQualifiers());
+                            E->getType().getCVRQualifiers(),
+                            getContext().getObjCGCAttrKind(E->getType()));
     }
     else {
       llvm::Value *V = LocalDeclMap[VD];
       assert(V && "BlockVarDecl not entered in LocalDeclMap?");
-      LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers());
+      LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
+                            getContext().getObjCGCAttrKind(E->getType()));
     }
-    if (VD->isBlockVarDecl() && 
-        (VD->getStorageClass() == VarDecl::Static || 
-         VD->getStorageClass() == VarDecl::Extern))
-      SetDeclObjCGCAttrInLvalue(getContext(), E->getType(), LV);
     return LV;
   } else if (VD && VD->isFileVarDecl()) {
     LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
-                                 E->getType().getCVRQualifiers());
-    SetDeclObjCGCAttrInLvalue(getContext(), E->getType(), LV);
+                                 E->getType().getCVRQualifiers(),
+                                 getContext().getObjCGCAttrKind(E->getType()));
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     return LValue::MakeAddr(CGM.GetAddrOfFunction(FD),
-                            E->getType().getCVRQualifiers());
+                            E->getType().getCVRQualifiers(),
+                            getContext().getObjCGCAttrKind(E->getType()));
   }
   else if (const ImplicitParamDecl *IPD =
       dyn_cast<ImplicitParamDecl>(E->getDecl())) {
     llvm::Value *V = LocalDeclMap[IPD];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");
-    return LValue::MakeAddr(V, E->getType().getCVRQualifiers());
+    return LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
+                            getContext().getObjCGCAttrKind(E->getType()));
   }
   assert(0 && "Unimp declref");
   //an invalid LValue, but the assert will
@@ -670,9 +662,12 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   switch (E->getOpcode()) {
   default: assert(0 && "Unknown unary operator lvalue!");
   case UnaryOperator::Deref:
-    return LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()),
-                            ExprTy->getAsPointerType()->getPointeeType()
-                                    .getCVRQualifiers());
+    {
+      QualType T = E->getSubExpr()->getType()->getAsPointerType()->getPointeeType();
+      return LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()),
+                              ExprTy->getAsPointerType()->getPointeeType().getCVRQualifiers(), 
+                              getContext().getObjCGCAttrKind(T));
+    }
   case UnaryOperator::Real:
   case UnaryOperator::Imag:
     LValue LV = EmitLValue(E->getSubExpr());
@@ -921,22 +916,23 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                               "tmp");
   }
 
-  LValue LV =  
-    LValue::MakeAddr(V, 
-                     Field->getType().getCVRQualifiers()|CVRQualifiers);
+  QualType::GCAttrTypes attr = QualType::GCNone;
   if (CGM.getLangOptions().ObjC1 &&
       CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
     QualType Ty = Field->getType();
-    QualType::GCAttrTypes attr = Ty.getObjCGCAttr();
+    attr = Ty.getObjCGCAttr();
     if (attr != QualType::GCNone) {
       // __weak attribute on a field is ignored.
-      if (attr == QualType::Strong)
-        LValue::SetObjCType(QualType::Strong, LV);
+      if (attr == QualType::Weak)
+        attr = QualType::GCNone;
     }
     else if (getContext().isObjCObjectPointerType(Ty))
-      LValue::SetObjCType(QualType::Strong, LV);
-    
+      attr = QualType::Strong;
   }
+  LValue LV =  
+    LValue::MakeAddr(V, 
+                     Field->getType().getCVRQualifiers()|CVRQualifiers,
+                     attr);
   return LV;
 }
 
@@ -999,14 +995,16 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
   EmitAggExpr(E, Temp, false);
   // FIXME: Are these qualifiers correct?
-  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers());
+  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
+                          getContext().getObjCGCAttrKind(E->getType()));
 }
 
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
   // Can only get l-value for call expression returning aggregate type
   RValue RV = EmitCallExpr(E);
   return LValue::MakeAddr(RV.getAggregateAddr(),
-                          E->getType().getCVRQualifiers());
+                          E->getType().getCVRQualifiers(),
+                          getContext().getObjCGCAttrKind(E->getType()));
 }
 
 LValue CodeGenFunction::EmitVAArgExprLValue(const VAArgExpr *E) {
@@ -1027,7 +1025,8 @@ LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
   RValue RV = EmitObjCMessageExpr(E);
   // FIXME: can this be volatile?
   return LValue::MakeAddr(RV.getAggregateAddr(),
-                          E->getType().getCVRQualifiers());
+                          E->getType().getCVRQualifiers(),
+                          getContext().getObjCGCAttrKind(E->getType()));
 }
 
 llvm::Value *CodeGenFunction::EmitIvarOffset(ObjCInterfaceDecl *Interface,
@@ -1056,7 +1055,6 @@ LValue CodeGenFunction::EmitLValueForIvar(QualType ObjectTy,
                                                         ObjectTy,
                                                         BaseValue, Ivar, Field,
                                                         CVRQualifiers);
-  SetDeclObjCGCAttrInLvalue(getContext(), Ivar->getType(), LV);
   return LV;
 }
 

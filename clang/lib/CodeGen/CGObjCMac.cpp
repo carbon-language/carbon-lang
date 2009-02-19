@@ -2203,7 +2203,8 @@ LValue CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
   unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
   llvm::Value *V = CGF.Builder.CreateStructGEP(BaseValue, Index, "tmp");
   LValue LV = LValue::MakeAddr(V, 
-               Ivar->getType().getCVRQualifiers()|CVRQualifiers);
+               Ivar->getType().getCVRQualifiers()|CVRQualifiers,
+               CGM.getContext().getObjCGCAttrKind(Ivar->getType()));
   LValue::SetObjCIvar(LV, true);
   return LV;
 }
@@ -4350,7 +4351,8 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
                                      CVRQualifiers);
   
   LValue LV = LValue::MakeAddr(V, 
-              Ivar->getType().getCVRQualifiers()|CVRQualifiers);
+              Ivar->getType().getCVRQualifiers()|CVRQualifiers,
+              CGM.getContext().getObjCGCAttrKind(Ivar->getType()));
   LValue::SetObjCIvar(LV, true);
   return LV;
 }

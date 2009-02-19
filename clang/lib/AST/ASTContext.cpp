@@ -2417,9 +2417,14 @@ QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
       getLangOptions().getGCMode() != LangOptions::NonGC) {
     GCAttrs = Ty.getObjCGCAttr();
     // Default behavious under objective-c's gc is for objective-c pointers
-    // be treated as though they were declared as __strong.
-    if (GCAttrs == QualType::GCNone && isObjCObjectPointerType(Ty))
-      GCAttrs = QualType::Strong;
+    // (or pointers to them) be treated as though they were declared 
+    // as __strong.
+    if (GCAttrs == QualType::GCNone) {
+      if (isObjCObjectPointerType(Ty))
+        GCAttrs = QualType::Strong;
+      else if (Ty->isPointerType())
+        return getObjCGCAttrKind(Ty->getAsPointerType()->getPointeeType());
+    }
   }
   return GCAttrs;
 }
