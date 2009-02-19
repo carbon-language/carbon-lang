@@ -22,19 +22,39 @@ using namespace clang;
 /// ConvertQualTypeToStringFn - This function is used to pretty print the 
 /// specified QualType as a string in diagnostics.
 static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
-                                      const char *Modifier, unsigned ModLen,
-                                      const char *Argument, unsigned ArgLen,
-                                      llvm::SmallVectorImpl<char> &Output) {
+                                 const char *Modifier, unsigned ModLen,
+                                 const char *Argument, unsigned ArgLen,
+                                 llvm::SmallVectorImpl<char> &Output) {
   
   std::string S;
   if (Kind == Diagnostic::ak_qualtype) {
+    assert(ModLen == 0 && ArgLen == 0 &&
+           "Invalid modifier for QualType argument");
+
     QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
 
     // FIXME: Playing with std::string is really slow.
     S = Ty.getAsString();
+    
+    // If this is a sugared type (like a typedef, typeof, etc), then unwrap one
+    // level of the sugar so that the type is more obvious to the user.
+    QualType DesugaredTy = Ty->getDesugaredType();
+    DesugaredTy.setCVRQualifiers(DesugaredTy.getCVRQualifiers() |
+                                 Ty.getCVRQualifiers());
 
-    assert(ModLen == 0 && ArgLen == 0 &&
-           "Invalid modifier for QualType argument");
+    if (Ty != DesugaredTy &&
+        // If the desugared type is a vector type, we don't want to expand it,
+        // it will turn into an attribute mess. People want their "vec4".
+        !isa<VectorType>(DesugaredTy) &&
+      
+        // Don't desugar objc types.  FIXME: THIS IS A HACK.
+        S != "id" && S != "Class") {
+      S = "'"+S+"' (aka '";
+      S += DesugaredTy.getAsString();
+      S += "')";
+      Output.append(S.begin(), S.end());
+      return;
+    }
     
   } else if (Kind == Diagnostic::ak_declarationname) {
    
@@ -58,7 +78,10 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
       S = reinterpret_cast<NamedDecl*>(Val)->getNameAsString();
     }
   }
+  
+  Output.push_back('\'');
   Output.append(S.begin(), S.end());
+  Output.push_back('\'');
 }
 
 

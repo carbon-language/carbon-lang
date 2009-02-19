@@ -64,3 +64,12 @@ void test10(int n,...) {
   }               s;
   double x = s.a[0];  // should not get another error here.
 }
+
+
+#define MYMAX(A,B)    __extension__ ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __b : __a; })
+
+struct mystruct {int A; };
+void foo(struct mystruct P, float F) {
+  MYMAX(P, F);  // expected-error {{invalid operands to binary expression ('typeof(P)' (aka 'struct mystruct') and 'typeof(F)' (aka 'float'))}}
+}
+

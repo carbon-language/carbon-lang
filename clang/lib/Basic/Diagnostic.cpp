@@ -648,9 +648,9 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     }
     // ---- NAMES and TYPES ----
     case Diagnostic::ak_identifierinfo: {
-      OutStr.push_back('\'');
       const IdentifierInfo *II = getArgIdentifier(ArgNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
+      OutStr.push_back('\'');
       OutStr.append(II->getName(), II->getName() + II->getLength());
       OutStr.push_back('\'');
       break;
@@ -658,11 +658,9 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     case Diagnostic::ak_qualtype:
     case Diagnostic::ak_declarationname:
     case Diagnostic::ak_nameddecl:
-      OutStr.push_back('\'');
       getDiags()->ConvertArgToString(getArgKind(ArgNo), getRawArg(ArgNo),
                                      Modifier, ModifierLen,
                                      Argument, ArgumentLen, OutStr);
-      OutStr.push_back('\'');
       break;
     }
   }

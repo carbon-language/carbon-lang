@@ -29,7 +29,7 @@ char ***good_const_cast_test(ccvpcvpp var)
   // Drop reference. Intentionally without qualifier change.
   char *** var5 = const_cast<cppp>(var4);
   const int ar[100] = {0};
-  int (&rar)[100] = const_cast<iarr>(ar); // expected-error {{const_cast from 'int const [100]' to 'iarr' is not allowed}}
+  int (&rar)[100] = const_cast<iarr>(ar); // expected-error {{const_cast from 'int const [100]' to 'iarr' (aka 'iar &') is not allowed}}
   // Array decay. Intentionally without qualifier change.
   int *pi = const_cast<int*>(ar);
   f fp = 0;
@@ -56,7 +56,7 @@ short *bad_const_cast_test(char const *volatile *const volatile *var)
   int *(*rar)[100] = const_cast<int *(*)[100]>(&ar); // expected-error {{const_cast from 'int const *(*)[100]' to 'int *(*)[100]' is not allowed}}
   f fp1 = 0;
   // Function pointers.
-  f fp2 = const_cast<f>(fp1); // expected-error {{const_cast to 'f', which is not a reference, pointer-to-object, or pointer-to-data-member}}
+  f fp2 = const_cast<f>(fp1); // expected-error {{const_cast to 'f' (aka 'int (*)(int)'), which is not a reference, pointer-to-object, or pointer-to-data-member}}
   void (A::*mfn)() = 0;
   (void)const_cast<void (A::*)()>(mfn); // expected-error {{const_cast to 'void (struct A::*)(void)', which is not a reference, pointer-to-object, or pointer-to-data-member}}
   return **var3;

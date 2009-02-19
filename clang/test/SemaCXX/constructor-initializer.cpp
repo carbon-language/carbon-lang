@@ -37,7 +37,7 @@ public:
 
   F() : B(17),
         m(17), // expected-error{{member initializer 'm' does not name a non-static data member or base class}}
-        INT(17) // expected-error{{constructor initializer 'INT' does not name a class}}
+        INT(17) // expected-error{{constructor initializer 'INT' (aka 'int') does not name a class}}
   { 
   }
 };

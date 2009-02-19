@@ -25,7 +25,7 @@ template<int N> class NonTypeTemplateParm;
 
 typedef int INT;
 
-template<INT M> class NonTypeTemplateParm; // expected-note{{previous non-type template parameter with type 'INT' is here}}
+template<INT M> class NonTypeTemplateParm; // expected-note{{previous non-type template parameter with type 'INT' (aka 'int') is here}}
 
 template<long> class NonTypeTemplateParm; // expected-error{{template non-type parameter has a different type 'long' in template redeclaration}}
 

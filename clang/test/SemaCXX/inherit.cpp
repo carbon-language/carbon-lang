@@ -28,5 +28,5 @@ typedef G G_copy;
 typedef G G_copy_2;
 typedef G_copy G_copy_3;
 
-class H : G_copy, A, G_copy_2, // expected-error{{base class 'G_copy' specified more than once as a direct base class}}
-          public G_copy_3 { }; // expected-error{{base class 'G_copy' specified more than once as a direct base class}}
+class H : G_copy, A, G_copy_2, // expected-error{{base class 'G_copy' (aka 'class G') specified more than once as a direct base class}}
+          public G_copy_3 { }; // expected-error{{base class 'G_copy' (aka 'class G') specified more than once as a direct base class}}
