@@ -48,4 +48,32 @@ int g9 = (2 + 3i) * (5 + 7i) != (-11 + 29i);
 int g10 = (2.0 + 3.0i) * (5.0 + 7.0i) != (-11.0 + 29.0i);
 
 
+// Global references
+// RUN: grep '@g11.l0 = internal global i32 ptrtoint (i32 ()\* @g11 to i32)' %t &&
+long g11() { 
+  static long l0 = (long) g11;
+  return l0; 
+}
+
+// RUN: grep '@g12 = global i32 ptrtoint (i8\* @g12_tmp to i32)' %t &&
+static char g12_tmp;
+long g12 = (long) &g12_tmp;
+
+// RUN: grep '@g13 = global \[1 x .struct.g13_s0\] \[.struct.g13_s0 <{ i32 ptrtoint (i8\* @g12_tmp to i32) }>\]' %t &&
+struct g13_s0 {
+   long a;
+};
+struct g13_s0 g13[] = {
+   { (long) &g12_tmp }
+};
+
+// RUN: grep '@g14 = global i8\* inttoptr (i64 100 to i8\*)' %t &&
+void *g14 = (void*) 100;
+
+// RUN: grep '@g15 = global i32 -1' %t &&
+int g15 = (int) (char) ((void*) 0 + 255);
+
+// RUN: grep '@g16 = global i64 4294967295' %t &&
+long long g16 = (long long) ((void*) 0xFFFFFFFF);
+
 // RUN: true

@@ -1057,7 +1057,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     if (!Result.isInt())
       return false;
 
-    return Success(HandleIntToIntCast(DestType, SrcType, 
+    return Success(HandleIntToIntCast(DestType, SrcType,
                                       Result.getInt(), Info.Ctx), E);
   }
   
@@ -1067,10 +1067,17 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     if (!EvaluatePointer(SubExpr, LV, Info))
       return false;
 
-    if (LV.getLValueBase())
-      return false;
+    if (LV.getLValueBase()) {
+      // Only allow based lvalue casts if they are lossless.
+      if (Info.Ctx.getTypeSize(DestType) != Info.Ctx.getTypeSize(SrcType))
+        return false;
 
-    return Success(LV.getLValueOffset(), E);
+      Result = LV;
+      return true;
+    }
+
+    APSInt AsInt = Info.Ctx.MakeIntValue(LV.getLValueOffset(), SrcType);
+    return Success(HandleIntToIntCast(DestType, SrcType, AsInt, Info.Ctx), E);
   }
 
   if (!SrcType->isRealFloatingType())
