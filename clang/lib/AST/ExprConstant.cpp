@@ -457,9 +457,9 @@ namespace {
 class VISIBILITY_HIDDEN IntExprEvaluator
   : public StmtVisitor<IntExprEvaluator, bool> {
   EvalInfo &Info;
-  APSInt &Result;
+  APValue &Result;
 public:
-  IntExprEvaluator(EvalInfo &info, APSInt &result)
+  IntExprEvaluator(EvalInfo &info, APValue &result)
     : Info(info), Result(result) {}
 
   bool Extension(SourceLocation L, diag::kind D, const Expr *E) {
@@ -470,24 +470,24 @@ public:
   }
 
   bool Success(const llvm::APSInt &SI, const Expr *E) {
-    Result = SI;
-    assert(Result.isSigned() == E->getType()->isSignedIntegerType() &&
+    assert(SI.isSigned() == E->getType()->isSignedIntegerType() &&
            "Invalid evaluation result.");
-    assert(Result.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
+    assert(SI.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
            "Invalid evaluation result.");
+    Result = APValue(SI);
     return true;
   }
 
   bool Success(const llvm::APInt &I, const Expr *E) {
-    Result = I;
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    assert(Result.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
+    assert(I.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
            "Invalid evaluation result.");
+    Result = APValue(APSInt(I));
+    Result.getInt().setIsUnsigned(E->getType()->isUnsignedIntegerType());
     return true;
   }
 
   bool Success(uint64_t Value, const Expr *E) {
-    Result = Info.Ctx.MakeIntValue(Value, E->getType());
+    Result = APValue(Info.Ctx.MakeIntValue(Value, E->getType()));
     return true;
   }
 
@@ -501,6 +501,9 @@ public:
     }
     
     // Take the first error.
+
+    // FIXME: This is wrong if we happen to have already emitted an
+    // extension diagnostic; in that case we should report this error.
     if (Info.EvalResult.Diag == 0) {
       Info.EvalResult.DiagLoc = L;
       Info.EvalResult.Diag = D;
@@ -574,7 +577,14 @@ private:
 static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
   if (!E->getType()->isIntegralType())
     return false;
-  return IntExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
+  
+  APValue Val;
+  if (!IntExprEvaluator(Info, Val).Visit(const_cast<Expr*>(E)) ||
+      !Val.isInt())
+    return false;
+
+  Result = Val.getInt();
+  return true;
 }
 
 bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
@@ -842,10 +852,13 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   }
 
   // The LHS of a constant expr is always evaluated and needed.
-  if (!Visit(E->getLHS())) {
+  if (!Visit(E->getLHS()))
     return false; // error in subexpression.
-  }
 
+  // Only support arithmetic on integers for now.
+  if (!Result.isInt())
+    return false;
+  
   llvm::APSInt RHS;
   if (!EvaluateInteger(E->getRHS(), RHS, Info))
     return false;
@@ -853,36 +866,38 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   switch (E->getOpcode()) {
   default:
     return Error(E->getOperatorLoc(), diag::note_invalid_subexpr_in_ice, E);
-  case BinaryOperator::Mul: return Success(Result * RHS, E);
-  case BinaryOperator::Add: return Success(Result + RHS, E);
-  case BinaryOperator::Sub: return Success(Result - RHS, E);
-  case BinaryOperator::And: return Success(Result & RHS, E);
-  case BinaryOperator::Xor: return Success(Result ^ RHS, E);
-  case BinaryOperator::Or:  return Success(Result | RHS, E);
+  case BinaryOperator::Mul: return Success(Result.getInt() * RHS, E);
+  case BinaryOperator::Add: return Success(Result.getInt() + RHS, E);
+  case BinaryOperator::Sub: return Success(Result.getInt() - RHS, E);
+  case BinaryOperator::And: return Success(Result.getInt() & RHS, E);
+  case BinaryOperator::Xor: return Success(Result.getInt() ^ RHS, E);
+  case BinaryOperator::Or:  return Success(Result.getInt() | RHS, E);
   case BinaryOperator::Div:
     if (RHS == 0)
       return Error(E->getOperatorLoc(), diag::note_expr_divide_by_zero, E);
-    return Success(Result / RHS, E);
+    return Success(Result.getInt() / RHS, E);
   case BinaryOperator::Rem:
     if (RHS == 0)
       return Error(E->getOperatorLoc(), diag::note_expr_divide_by_zero, E);
-    return Success(Result % RHS, E);
+    return Success(Result.getInt() % RHS, E);
   case BinaryOperator::Shl: {
     // FIXME: Warn about out of range shift amounts!
-    unsigned SA = (unsigned) RHS.getLimitedValue(Result.getBitWidth()-1);
-    return Success(Result << SA, E);
+    unsigned SA = 
+      (unsigned) RHS.getLimitedValue(Result.getInt().getBitWidth()-1);
+    return Success(Result.getInt() << SA, E);
   }
   case BinaryOperator::Shr: {
-    unsigned SA = (unsigned) RHS.getLimitedValue(Result.getBitWidth()-1);
-    return Success(Result >> SA, E);
+    unsigned SA = 
+      (unsigned) RHS.getLimitedValue(Result.getInt().getBitWidth()-1);
+    return Success(Result.getInt() >> SA, E);
   }
       
-  case BinaryOperator::LT: return Success(Result < RHS, E);
-  case BinaryOperator::GT: return Success(Result > RHS, E);
-  case BinaryOperator::LE: return Success(Result <= RHS, E);
-  case BinaryOperator::GE: return Success(Result >= RHS, E);
-  case BinaryOperator::EQ: return Success(Result == RHS, E);
-  case BinaryOperator::NE: return Success(Result != RHS, E);
+  case BinaryOperator::LT: return Success(Result.getInt() < RHS, E);
+  case BinaryOperator::GT: return Success(Result.getInt() > RHS, E);
+  case BinaryOperator::LE: return Success(Result.getInt() <= RHS, E);
+  case BinaryOperator::GE: return Success(Result.getInt() >= RHS, E);
+  case BinaryOperator::EQ: return Success(Result.getInt() == RHS, E);
+  case BinaryOperator::NE: return Success(Result.getInt() != RHS, E);
   }
 }
 
@@ -1007,9 +1022,11 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     // The result is always just the subexpr. 
     return true;
   case UnaryOperator::Minus:
-    return Success(-Result, E);
+    if (!Result.isInt()) return false;
+    return Success(-Result.getInt(), E);
   case UnaryOperator::Not:
-    return Success(~Result, E);
+    if (!Result.isInt()) return false;
+    return Success(~Result.getInt(), E);
   }
 }
   
@@ -1031,8 +1048,12 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     if (!Visit(SubExpr))
       return false;
 
+    // FIXME: Support cast on LValue results.
+    if (!Result.isInt())
+      return false;
+
     return Success(HandleIntToIntCast(DestType, SubExpr->getType(), 
-                                      Result, Info.Ctx), E);
+                                      Result.getInt(), Info.Ctx), E);
   }
   
   // FIXME: Clean this up!
@@ -1445,11 +1466,8 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
     if (!EvaluateVector(this, Result.Val, Info))
       return false;
   } else if (getType()->isIntegerType()) {
-    llvm::APSInt sInt(32);
-    if (!EvaluateInteger(this, sInt, Info))
+    if (!IntExprEvaluator(Info, Result.Val).Visit(const_cast<Expr*>(this)))
       return false;
-    
-    Result.Val = APValue(sInt);
   } else if (getType()->isPointerType()
              || getType()->isBlockPointerType()) {
     if (!EvaluatePointer(this, Result.Val, Info))
