@@ -125,7 +125,9 @@ private:
   typedef void (*ArgToStringFnTy)(ArgumentKind Kind, intptr_t Val,
                                   const char *Modifier, unsigned ModifierLen,
                                   const char *Argument, unsigned ArgumentLen,
-                                  llvm::SmallVectorImpl<char> &Output);
+                                  llvm::SmallVectorImpl<char> &Output,
+                                  void *Cookie);
+  void *ArgToStringCookie;
   ArgToStringFnTy ArgToStringFn;
 public:
   explicit Diagnostic(DiagnosticClient *client = 0);
@@ -202,11 +204,13 @@ public:
                           const char *Modifier, unsigned ModLen,
                           const char *Argument, unsigned ArgLen,
                           llvm::SmallVectorImpl<char> &Output) const {
-    ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen, Output);
+    ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen, Output,
+                  ArgToStringCookie);
   }
   
-  void SetArgToStringFn(ArgToStringFnTy Fn) {
+  void SetArgToStringFn(ArgToStringFnTy Fn, void *Cookie) {
     ArgToStringFn = Fn;
+    ArgToStringCookie = Cookie;
   }
   
   //===--------------------------------------------------------------------===//

@@ -283,7 +283,8 @@ public:
   /// ObjCQualifiedInterfaceType type for the given interface decl and
   /// the conforming protocol list.
   QualType getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
-             ObjCProtocolDecl **ProtocolList, unsigned NumProtocols);
+                                         ObjCProtocolDecl **ProtocolList,
+                                         unsigned NumProtocols);
   
   /// getObjCQualifiedIdType - Return an ObjCQualifiedIdType for a 
   /// given 'id' and conforming protocol list.

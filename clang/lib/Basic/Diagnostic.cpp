@@ -175,7 +175,8 @@ namespace clang {
 static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
                                const char *Modifier, unsigned ML,
                                const char *Argument, unsigned ArgLen,
-                               llvm::SmallVectorImpl<char> &Output) {
+                               llvm::SmallVectorImpl<char> &Output,
+                               void *Cookie) {
   const char *Str = "<can't format argument>";
   Output.append(Str, Str+strlen(Str));
 }
@@ -199,6 +200,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   LastDiagLevel = Fatal;
   
   ArgToStringFn = DummyArgToStringFn;
+  ArgToStringCookie = 0;
 }
 
 Diagnostic::~Diagnostic() {

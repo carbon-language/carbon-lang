@@ -24,7 +24,9 @@ using namespace clang;
 static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
                                  const char *Modifier, unsigned ModLen,
                                  const char *Argument, unsigned ArgLen,
-                                 llvm::SmallVectorImpl<char> &Output) {
+                                 llvm::SmallVectorImpl<char> &Output,
+                                 void *Cookie) {
+  ASTContext &Context = *static_cast<ASTContext*>(Cookie);
   
   std::string S;
   if (Kind == Diagnostic::ak_qualtype) {
@@ -47,8 +49,14 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
         // it will turn into an attribute mess. People want their "vec4".
         !isa<VectorType>(DesugaredTy) &&
       
-        // Don't desugar objc types.  FIXME: THIS IS A HACK.
-        S != "id" && S != "Class") {
+        // Don't desugar magic Objective-C types.
+        Ty.getUnqualifiedType() != Context.getObjCIdType() &&
+        Ty.getUnqualifiedType() != Context.getObjCSelType() &&
+        Ty.getUnqualifiedType() != Context.getObjCProtoType() &&
+        Ty.getUnqualifiedType() != Context.getObjCClassType() &&
+        
+        // Not va_list.
+        Ty.getUnqualifiedType() != Context.getBuiltinVaListType()) {
       S = "'"+S+"' (aka '";
       S += DesugaredTy.getAsString();
       S += "')";
@@ -165,7 +173,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
     FieldCollector.reset(new CXXFieldCollector());
       
   // Tell diagnostics how to render things from the AST library.
-  PP.getDiagnostics().SetArgToStringFn(ConvertArgToStringFn);
+  PP.getDiagnostics().SetArgToStringFn(ConvertArgToStringFn, &Context);
 }
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast. 
