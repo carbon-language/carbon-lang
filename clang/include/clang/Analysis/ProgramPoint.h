@@ -69,7 +69,7 @@ protected:
   
   void* getData1() const {
     Kind k = getKind(); k = k;
-    assert(k == BlockEdgeKind || (k >= MinPostStmtKind && k < MaxPostStmtKind));
+    assert(k == BlockEdgeKind ||(k >= MinPostStmtKind && k <= MaxPostStmtKind));
     return reinterpret_cast<void*>(Data.first & ~Mask);
   }
 
@@ -111,8 +111,15 @@ public:
   
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddPointer(reinterpret_cast<void*>(Data.first));
-    ID.AddPointer(reinterpret_cast<void*>(Data.second));
-  }    
+    if (getKind() != PostStmtCustomKind)
+      ID.AddPointer(reinterpret_cast<void*>(Data.second));
+    else {
+      const std::pair<const void*, const void*> *P = 
+        reinterpret_cast<std::pair<const void*, const void*>*>(Data.second);
+      ID.AddPointer(P->first);
+      ID.AddPointer(P->second);
+    }
+  }
 };
                
 class BlockEntrance : public ProgramPoint {
@@ -183,6 +190,7 @@ public:
 };
   
 class PostStmtCustom : public PostStmt {
+public:
   PostStmtCustom(const Stmt* S,
                  const std::pair<const void*, const void*>* TaggedData)
     : PostStmt(S, TaggedData) {
