@@ -7,7 +7,7 @@ static void* malloc(int size) {
 }
 
 void *calloc(int, int, int); // expected-warning{{incompatible redeclaration of library function 'calloc' will be ignored}} \
-// expected-note{{'calloc' is a builtin with type 'void *(unsigned long, unsigned long)'}}
+// expected-note{{'calloc' is a builtin with type 'void *}}
 
 void f1(void) { 
   return calloc(0, 0, 0);  // expected-error{{too many arguments to function call}}
