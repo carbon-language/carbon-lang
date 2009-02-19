@@ -462,26 +462,31 @@ public:
   IntExprEvaluator(EvalInfo &info, APSInt &result)
     : Info(info), Result(result) {}
 
-  unsigned getIntTypeSizeInBits(QualType T) const {
-    return (unsigned)Info.Ctx.getIntWidth(T);
-  }
-  
   bool Extension(SourceLocation L, diag::kind D, const Expr *E) {
     Info.EvalResult.DiagLoc = L;
     Info.EvalResult.Diag = D;
     Info.EvalResult.DiagExpr = E;
     return true;  // still a constant.
   }
-    
+
+  bool Success(const llvm::APInt &I, const Expr *E) {
+    Result = I;
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return true;
+  }
+
+  bool Success(uint64_t Value, const Expr *E) {
+    Result = Info.Ctx.MakeIntValue(Value, E->getType());
+    return true;
+  }
+
   bool Error(SourceLocation L, diag::kind D, const Expr *E) {
     // If this is in an unevaluated portion of the subexpression, ignore the
     // error.
     if (Info.ShortCircuit) {
       // If error is ignored because the value isn't evaluated, get the real
       // type at least to prevent errors downstream.
-      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-      return true;
+      return Success(0, E);
     }
     
     // Take the first error.
@@ -509,26 +514,20 @@ public:
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
 
   bool VisitIntegerLiteral(const IntegerLiteral *E) {
-    Result = E->getValue();
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
+    return Success(E->getValue(), E);
   }
   bool VisitCharacterLiteral(const CharacterLiteral *E) {
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    Result = E->getValue();
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
+    return Success(E->getValue(), E);
   }
   bool VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
     // Per gcc docs "this built-in function ignores top level
     // qualifiers".  We need to use the canonical version to properly
     // be able to strip CRV qualifiers from the type.
     QualType T0 = Info.Ctx.getCanonicalType(E->getArgType1());
     QualType T1 = Info.Ctx.getCanonicalType(E->getArgType2());
-    Result = Info.Ctx.typesAreCompatible(T0.getUnqualifiedType(), 
-                                         T1.getUnqualifiedType());
-    return true;
+    return Success(Info.Ctx.typesAreCompatible(T0.getUnqualifiedType(), 
+                                               T1.getUnqualifiedType()),
+                   E);
   }
   bool VisitDeclRefExpr(const DeclRefExpr *E);
   bool VisitCallExpr(const CallExpr *E);
@@ -540,28 +539,19 @@ public:
   bool VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
 
   bool VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    Result = E->getValue();
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
+    return Success(E->getValue(), E);
   }
   
   bool VisitGNUNullExpr(const GNUNullExpr *E) {
-    Result = APSInt::getNullValue(getIntTypeSizeInBits(E->getType()));
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
+    return Success(0, E);
   }
     
   bool VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
-    Result = APSInt::getNullValue(getIntTypeSizeInBits(E->getType()));
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
+    return Success(0, E);
   }
 
   bool VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    Result = E->EvaluateTrait();
-    return true;
+    return Success(E->EvaluateTrait(), E);
   }
 
 private:
@@ -653,21 +643,16 @@ static int EvaluateBuiltinClassifyType(const CallExpr *E) {
 }
 
 bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
-  Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-  
   switch (E->isBuiltinCall(Info.Ctx)) {
   default:
     return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
   case Builtin::BI__builtin_classify_type:
-    Result.setIsSigned(true);
-    Result = EvaluateBuiltinClassifyType(E);
-    return true;
+    return Success(EvaluateBuiltinClassifyType(E), E);
     
   case Builtin::BI__builtin_constant_p:
     // __builtin_constant_p always has one operand: it returns true if that
     // operand can be folded, false otherwise.
-    Result = E->getArg(0)->isEvaluatable(Info.Ctx);
-    return true;
+    return Success(E->getArg(0)->isEvaluatable(Info.Ctx), E);
   }
 }
 
@@ -698,9 +683,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
       if (lhsResult == (E->getOpcode() == BinaryOperator::LOr) || 
           !lhsResult == (E->getOpcode() == BinaryOperator::LAnd)) {
-        Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-        Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-        Result = lhsResult;
+        Result = Info.Ctx.MakeIntValue(lhsResult, E->getType());
         
         Info.ShortCircuit++;
         bool rhsEvaluated = HandleConversionToBool(E->getRHS(), rhsResult, Info);
@@ -715,13 +698,10 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       }
 
       if (HandleConversionToBool(E->getRHS(), rhsResult, Info)) {
-        Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-        Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
         if (E->getOpcode() == BinaryOperator::LOr)
-          Result = lhsResult || rhsResult;
+          return Success(lhsResult || rhsResult, E);
         else
-          Result = lhsResult && rhsResult;
-        return true;
+          return Success(lhsResult && rhsResult, E);
       }
     } else {
       if (HandleConversionToBool(E->getRHS(), rhsResult, Info)) {
@@ -729,15 +709,11 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
         if (rhsResult == (E->getOpcode() == BinaryOperator::LOr) || 
             !rhsResult == (E->getOpcode() == BinaryOperator::LAnd)) {
-          Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-          Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-          Result = rhsResult;
-          
-          // Since we werent able to evaluate the left hand side, it
+          // Since we weren't able to evaluate the left hand side, it
           // must have had side effects.
           Info.EvalResult.HasSideEffects = true;
-          
-          return true;
+
+          return Success(rhsResult, E);
         }
       }
     }
@@ -764,31 +740,27 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       APFloat::cmpResult CR_i = 
         LHS.getComplexFloatImag().compare(RHS.getComplexFloatImag());
 
-      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
       if (E->getOpcode() == BinaryOperator::EQ)
-        Result = (CR_r == APFloat::cmpEqual &&
-                  CR_i == APFloat::cmpEqual);
-      else if (E->getOpcode() == BinaryOperator::NE)
-        Result = ((CR_r == APFloat::cmpGreaterThan || 
-                   CR_r == APFloat::cmpLessThan) &&
-                  (CR_i == APFloat::cmpGreaterThan || 
-                   CR_i == APFloat::cmpLessThan));
-      else
-        assert(0 && "Invalid complex compartison.");
-      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-      return true;
+        return Success((CR_r == APFloat::cmpEqual &&
+                        CR_i == APFloat::cmpEqual), E);
+      else {
+        assert(E->getOpcode() == BinaryOperator::NE &&
+               "Invalid complex comparison.");
+        return Success(((CR_r == APFloat::cmpGreaterThan || 
+                         CR_r == APFloat::cmpLessThan) &&
+                        (CR_i == APFloat::cmpGreaterThan || 
+                         CR_i == APFloat::cmpLessThan)), E);
+      }
     } else {
-      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
       if (E->getOpcode() == BinaryOperator::EQ)
-        Result = (LHS.getComplexIntReal() == RHS.getComplexIntReal() &&
-                  LHS.getComplexIntImag() == RHS.getComplexIntImag());
-      else if (E->getOpcode() == BinaryOperator::NE)
-        Result = (LHS.getComplexIntReal() != RHS.getComplexIntReal() ||
-                  LHS.getComplexIntImag() != RHS.getComplexIntImag());
-      else
-        assert(0 && "Invalid complex compartison.");
-      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-      return true;
+        return Success((LHS.getComplexIntReal() == RHS.getComplexIntReal() &&
+                        LHS.getComplexIntImag() == RHS.getComplexIntImag()), E);
+      else {
+        assert(E->getOpcode() == BinaryOperator::NE &&
+               "Invalid compex comparison.");
+        return Success((LHS.getComplexIntReal() != RHS.getComplexIntReal() ||
+                        LHS.getComplexIntImag() != RHS.getComplexIntImag()), E);
+      }
     }
   }
   
@@ -804,33 +776,24 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     
     APFloat::cmpResult CR = LHS.compare(RHS);
 
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-
     switch (E->getOpcode()) {
     default:
       assert(0 && "Invalid binary operator!");
     case BinaryOperator::LT:
-      Result = CR == APFloat::cmpLessThan;
-      break;
+      return Success(CR == APFloat::cmpLessThan, E);
     case BinaryOperator::GT:
-      Result = CR == APFloat::cmpGreaterThan;
-      break;
+      return Success(CR == APFloat::cmpGreaterThan, E);
     case BinaryOperator::LE:
-      Result = CR == APFloat::cmpLessThan || CR == APFloat::cmpEqual;
-      break;
+      return Success(CR == APFloat::cmpLessThan || CR == APFloat::cmpEqual, E);
     case BinaryOperator::GE:
-      Result = CR == APFloat::cmpGreaterThan || CR == APFloat::cmpEqual;
-      break;
+      return Success(CR == APFloat::cmpGreaterThan || CR == APFloat::cmpEqual, 
+                     E);
     case BinaryOperator::EQ:
-      Result = CR == APFloat::cmpEqual;
-      break;
+      return Success(CR == APFloat::cmpEqual, E);
     case BinaryOperator::NE:
-      Result = CR == APFloat::cmpGreaterThan || CR == APFloat::cmpLessThan;
-      break;
+      return Success(CR == APFloat::cmpGreaterThan 
+                     || CR == APFloat::cmpLessThan, E);
     }
-    
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
   }
   
   if (E->getOpcode() == BinaryOperator::Sub) {
@@ -853,11 +816,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       uint64_t D = LHSValue.getLValueOffset() - RHSValue.getLValueOffset();
       D /= Info.Ctx.getTypeSize(ElementType) / 8;
       
-      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-      Result = D;
-      Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    
-      return true;
+      return Success(D, E);
     }
   }
   if (!LHSTy->isIntegralType() ||
@@ -869,15 +828,11 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   }
 
   // The LHS of a constant expr is always evaluated and needed.
-  llvm::APSInt RHS(32);
   if (!Visit(E->getLHS())) {
     return false; // error in subexpression.
   }
 
-
-  // FIXME Maybe we want to succeed even where we can't evaluate the
-  // right side of LAnd/LOr?
-  // For example, see http://llvm.org/bugs/show_bug.cgi?id=2525 
+  llvm::APSInt RHS;
   if (!EvaluateInteger(E->getRHS(), RHS, Info))
     return false;
 
@@ -908,38 +863,12 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     Result >>= (unsigned)RHS.getLimitedValue(Result.getBitWidth()-1);
     break;
       
-  case BinaryOperator::LT:
-    Result = Result < RHS;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    break;
-  case BinaryOperator::GT:
-    Result = Result > RHS;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    break;
-  case BinaryOperator::LE:
-    Result = Result <= RHS;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    break;
-  case BinaryOperator::GE:
-    Result = Result >= RHS;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    break;
-  case BinaryOperator::EQ:
-    Result = Result == RHS;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    break;
-  case BinaryOperator::NE:
-    Result = Result != RHS;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    break;
-  case BinaryOperator::LAnd:
-    Result = Result != 0 && RHS != 0;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    break;
-  case BinaryOperator::LOr:
-    Result = Result != 0 || RHS != 0;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    break;
+  case BinaryOperator::LT: return Success(Result < RHS, E);
+  case BinaryOperator::GT: return Success(Result > RHS, E);
+  case BinaryOperator::LE: return Success(Result <= RHS, E);
+  case BinaryOperator::GE: return Success(Result >= RHS, E);
+  case BinaryOperator::EQ: return Success(Result == RHS, E);
+  case BinaryOperator::NE: return Success(Result != RHS, E);
   }
 
   Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
@@ -1002,36 +931,25 @@ unsigned IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
 /// expression's type.
 bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   QualType DstTy = E->getType();
-  // Return the result in the right width.
-  Result.zextOrTrunc(getIntTypeSizeInBits(DstTy));
-  Result.setIsUnsigned(DstTy->isUnsignedIntegerType());
 
   // Handle alignof separately.
   if (!E->isSizeOf()) {
     if (E->isArgumentType())
-      Result = GetAlignOfType(E->getArgumentType());
+      return Success(GetAlignOfType(E->getArgumentType()), E);
     else
-      Result = GetAlignOfExpr(E->getArgumentExpr());
-    return true;
+      return Success(GetAlignOfExpr(E->getArgumentExpr()), E);
   }
   
   QualType SrcTy = E->getTypeOfArgument();
 
-  // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
-  if (SrcTy->isVoidType()) {
-    Result = 1;
-    return true;
-  }
+  // sizeof(void), __alignof__(void), sizeof(function) = 1 as a gcc
+  // extension.
+  if (SrcTy->isVoidType() || SrcTy->isFunctionType())
+    return Success(1, E);
   
   // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
   if (!SrcTy->isConstantSizeType())
     return false;
-  
-  // GCC extension: sizeof(function) = 1.
-  if (SrcTy->isFunctionType()) {
-    Result = 1;
-    return true;
-  }
 
   if (SrcTy->isObjCInterfaceType()) {
     // Slightly unusual case: the size of an ObjC interface type is the
@@ -1044,29 +962,21 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
 
   // Get information about the size.
   unsigned CharSize = Info.Ctx.Target.getCharWidth();
-  Result = Info.Ctx.getTypeSize(SrcTy) / CharSize;
-  return true;
+  return Success(Info.Ctx.getTypeSize(SrcTy) / CharSize, E);
 }
 
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   // Special case unary operators that do not need their subexpression
   // evaluated.  offsetof/sizeof/alignof are all special.
-  if (E->isOffsetOfOp()) {
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    Result = E->evaluateOffsetOf(Info.Ctx);
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
-  }
+  if (E->isOffsetOfOp())
+    return Success(E->evaluateOffsetOf(Info.Ctx), E);
 
   if (E->getOpcode() == UnaryOperator::LNot) {
     // LNot's operand isn't necessarily an integer, so we handle it specially.
     bool bres;
     if (!HandleConversionToBool(E->getSubExpr(), bres, Info))
       return false;
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    Result = !bres;
-    return true;
+    return Success(!bres, E);
   }
 
   // Get the operand value into 'Result'.
@@ -1081,6 +991,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   case UnaryOperator::Extension:
     // FIXME: Should extension allow i-c-e extension expressions in its scope?
     // If so, we could clear the diagnostic ID.
+    break;
   case UnaryOperator::Plus:
     // The result is always just the subexpr. 
     break;
@@ -1102,16 +1013,11 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   Expr *SubExpr = E->getSubExpr();
   QualType DestType = E->getType();
 
-  unsigned DestWidth = getIntTypeSizeInBits(DestType);
-
   if (DestType->isBooleanType()) {
     bool BoolResult;
     if (!HandleConversionToBool(SubExpr, BoolResult, Info))
       return false;
-    Result.zextOrTrunc(DestWidth);
-    Result.setIsUnsigned(DestType->isUnsignedIntegerType());
-    Result = BoolResult;
-    return true;
+    return Success(BoolResult, E);
   }
 
   // Handle simple integer->integer casts.
@@ -1132,10 +1038,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     if (LV.getLValueBase())
       return false;
 
-    Result.extOrTrunc(DestWidth);
-    Result = LV.getLValueOffset();
-    Result.setIsUnsigned(DestType->isUnsignedIntegerType());
-    return true;
+    return Success(LV.getLValueOffset(), E);
   }
 
   if (!SubExpr->getType()->isRealFloatingType())
