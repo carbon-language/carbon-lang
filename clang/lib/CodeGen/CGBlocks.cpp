@@ -46,8 +46,13 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl() {
   Elts.push_back(C);
 
   // Size
-  int sz = CGM.getTargetData()
-    .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;
+  int sz;
+  if (!BlockHasCopyDispose)
+    sz = CGM.getTargetData()
+      .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;
+  else
+    sz = CGM.getTargetData()
+      .getTypeStoreSizeInBits(CGM.getGenericExtendedBlockLiteralType()) / 8;
   C = llvm::ConstantInt::get(UnsignedLongTy, sz);
   Elts.push_back(C);
 
@@ -107,6 +112,8 @@ llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
   return NSConcreteStackBlock;
 }
 
+// FIXME: Push most into CGM, passing down a few bits, like current
+// function name.
 llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   // FIXME: Push up
   bool BlockHasCopyDispose = false;
@@ -146,7 +153,7 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     C = llvm::ConstantInt::get(IntTy, 0);
     Elts.push_back(C);
 
-    // __FuncPtr
+    // __invoke
     const char *Name = "";
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(CurFuncDecl))
       if (ND->getIdentifier())
@@ -168,6 +175,8 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   C = new llvm::GlobalVariable(C->getType(), true,
                                llvm::GlobalValue::InternalLinkage,
                                C, Name, &CGM.getModule());
+  QualType BPT = BE->getType();
+  C = llvm::ConstantExpr::getBitCast(C, ConvertType(BPT));
   return C;
 }
 
@@ -210,11 +219,11 @@ CodeGenModule::getGenericBlockLiteralType() {
     getTypes().ConvertType(getContext().IntTy));
 
   // struct __block_literal_generic {
-  //   void *isa;
-  //   int flags;
-  //   int reserved;
-  //   void (*invoke)(void *);
-  //   struct __block_descriptor *descriptor;
+  //   void *__isa;
+  //   int __flags;
+  //   int __reserved;
+  //   void (*__invoke)(void *);
+  //   struct __block_descriptor *__descriptor;
   // };
   GenericBlockLiteralType = llvm::StructType::get(Int8PtrTy,
                                                   IntTy,
@@ -227,6 +236,44 @@ CodeGenModule::getGenericBlockLiteralType() {
                           GenericBlockLiteralType);
 
   return GenericBlockLiteralType;
+}
+
+const llvm::Type *
+CodeGenModule::getGenericExtendedBlockLiteralType() {
+  if (GenericExtendedBlockLiteralType)
+    return GenericExtendedBlockLiteralType;
+
+  const llvm::Type *Int8PtrTy =
+    llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+
+  const llvm::Type *BlockDescPtrTy =
+    llvm::PointerType::getUnqual(getBlockDescriptorType());
+
+  const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
+    getTypes().ConvertType(getContext().IntTy));
+
+  // struct __block_literal_generic {
+  //   void *__isa;
+  //   int __flags;
+  //   int __reserved;
+  //   void (*__invoke)(void *);
+  //   struct __block_descriptor *__descriptor;
+  //   void *__copy_func_helper_decl;
+  //   void *__destroy_func_decl;
+  // };
+  GenericExtendedBlockLiteralType = llvm::StructType::get(Int8PtrTy,
+                                                          IntTy,
+                                                          IntTy,
+                                                          Int8PtrTy,
+                                                          BlockDescPtrTy,
+                                                          Int8PtrTy,
+                                                          Int8PtrTy,
+                                                          NULL);
+
+  getModule().addTypeName("struct.__block_literal_extended_generic",
+                          GenericExtendedBlockLiteralType);
+
+  return GenericExtendedBlockLiteralType;
 }
 
 /// getBlockFunctionType - Given a BlockPointerType, will return the

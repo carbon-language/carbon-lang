@@ -614,6 +614,9 @@ public:
       std::string S(Literal->getStrData(), Literal->getByteLength());
       return CGM.GetAddrOfConstantCFString(S);
     }
+    case Expr::BlockExprClass: {
+      return CGF->BuildBlockLiteralTmp(cast<BlockExpr>(E));
+    }
     }
 
     return 0;

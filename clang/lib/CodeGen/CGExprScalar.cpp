@@ -1364,10 +1364,7 @@ Value *ScalarExprEmitter::VisitObjCEncodeExpr(const ObjCEncodeExpr *E) {
 
 Value *ScalarExprEmitter::VisitBlockExpr(const BlockExpr *BE) {
   llvm::Constant *C = CGF.BuildBlockLiteralTmp(BE);
-
-  const llvm::PointerType *PtrToInt8Ty
-    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  return llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
+  return C;
 }
 
 //===----------------------------------------------------------------------===//

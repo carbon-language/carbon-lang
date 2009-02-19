@@ -145,6 +145,7 @@ class CodeGenModule {
   
   const llvm::Type *BlockDescriptorType;
   const llvm::Type *GenericBlockLiteralType;
+  const llvm::Type *GenericExtendedBlockLiteralType;
   struct {
     int GlobalUniqueCount;
   } Block;
@@ -166,6 +167,7 @@ public:
   const llvm::Type *getBlockDescriptorType();
 
   const llvm::Type *getGenericBlockLiteralType();
+  const llvm::Type *getGenericExtendedBlockLiteralType();
 
   /// getObjCRuntime() - Return a reference to the configured
   /// Objective-C runtime.
