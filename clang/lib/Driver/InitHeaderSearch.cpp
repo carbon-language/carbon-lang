@@ -20,7 +20,6 @@
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
 #include <vector>
-
 using namespace clang;
 
 void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
@@ -75,7 +74,8 @@ void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
   }
   
   if (Verbose)
-    fprintf(stderr, "ignoring nonexistent directory \"%s\"\n", Path.c_str());
+    fprintf(stderr, "ignoring nonexistent directory \"%s\"\n",
+            MappedPath.c_str());
 }
 
 
