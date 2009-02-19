@@ -1514,8 +1514,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
     
     SVal L = GetSVal(state, Receiver);
     
-    // Check for undefined control-flow or calls to NULL.
-    
+    // Check for undefined control-flow.    
     if (L.isUndef()) {
       NodeTy* N = Builder->generateNode(ME, state, Pred);
       
@@ -1525,6 +1524,33 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
       }
       
       return;
+    }
+    
+    // "Assume" that the receiver is not NULL.    
+    bool isFeasibleNotNull = false;
+    Assume(state, L, true, isFeasibleNotNull);
+    
+    // "Assume" that the receiver is NULL.    
+    bool isFeasibleNull = false;
+    const GRState *StNull = Assume(state, L, false, isFeasibleNull);
+    
+    if (isFeasibleNull) {
+      // Check if the receiver was nil and the return value a struct.
+      if (ME->getType()->isRecordType()) {
+        // The [0 ...] expressions will return garbage.  Flag either an
+        // explicit or implicit error.  Because of the structure of this
+        // function we currently do not bifurfacte the state graph at
+        // this point.
+        // FIXME: We should bifurcate and fill the returned struct with
+        //  garbage.                
+        if (NodeTy* N = Builder->generateNode(ME, StNull, Pred)) {
+          N->markAsSink();
+          if (isFeasibleNotNull)
+            NilReceiverStructRetImplicit.insert(N);
+          else
+            NilReceiverStructRetExplicit.insert(N);
+        }
+      }
     }
     
     // Check if the "raise" message was sent.

@@ -94,6 +94,16 @@ public:
   typedef llvm::SmallPtrSet<NodeTy*,2> ErrorNodes;  
   typedef llvm::DenseMap<NodeTy*, Expr*> UndefArgsTy;
   
+  /// NilReceiverStructRetExplicit - Nodes in the ExplodedGraph that resulted
+  ///  from [x ...] with 'x' definitely being nil and the result was a 'struct'
+  //  (an undefined value).
+  ErrorNodes NilReceiverStructRetExplicit;
+  
+  /// NilReceiverStructRetImplicit - Nodes in the ExplodedGraph that resulted
+  ///  from [x ...] with 'x' possibly being nil and the result was a 'struct'
+  //  (an undefined value).
+  ErrorNodes NilReceiverStructRetImplicit;
+  
   /// RetsStackAddr - Nodes in the ExplodedGraph that result from returning
   ///  the address of a stack variable.
   ErrorNodes RetsStackAddr;
@@ -298,6 +308,16 @@ public:
   }
   null_deref_iterator implicit_null_derefs_end() {
     return ImplicitNullDeref.end();
+  }
+  
+  typedef ErrorNodes::iterator nil_receiver_struct_ret_iterator;
+  
+  nil_receiver_struct_ret_iterator nil_receiver_struct_ret_begin() {
+    return NilReceiverStructRetExplicit.begin();
+  }
+
+  nil_receiver_struct_ret_iterator nil_receiver_struct_ret_end() {
+    return NilReceiverStructRetExplicit.end();
   }
   
   typedef ErrorNodes::iterator undef_deref_iterator;

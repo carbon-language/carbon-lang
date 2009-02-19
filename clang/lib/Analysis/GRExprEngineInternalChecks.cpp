@@ -71,6 +71,34 @@ public:
   }
 };
   
+class VISIBILITY_HIDDEN NilReceiverStructRet : public BugType {
+  GRExprEngine &Eng;
+public:
+  NilReceiverStructRet(GRExprEngine* eng) :
+    BugType("nil receiver with struct return type", "Logic Errors"),  
+    Eng(*eng) {}
+
+  void FlushReports(BugReporter& BR) {
+    for (GRExprEngine::nil_receiver_struct_ret_iterator
+          I=Eng.nil_receiver_struct_ret_begin(),
+          E=Eng.nil_receiver_struct_ret_end(); I!=E; ++I) {
+
+      std::string sbuf;
+      llvm::raw_string_ostream os(sbuf);
+      PostStmt P = cast<PostStmt>((*I)->getLocation());
+      ObjCMessageExpr *ME = cast<ObjCMessageExpr>(P.getStmt());
+      os << "The receiver in the message expression is 'nil' and results in the"
+            " returned value (of type '"
+         << ME->getType().getAsString()
+         << "') to be garbage or otherwise undefined.";
+
+      RangedBugReport *R = new RangedBugReport(*this, os.str().c_str(), *I);
+      R->addRange(ME->getReceiver()->getSourceRange());
+      BR.EmitReport(R);
+    }
+  }
+};
+  
 class VISIBILITY_HIDDEN UndefinedDeref : public BuiltinBug {
 public:
   UndefinedDeref(GRExprEngine* eng)
@@ -142,7 +170,8 @@ public:
     for (GRExprEngine::UndefArgsTy::iterator I=Eng.msg_expr_undef_arg_begin(),
          E = Eng.msg_expr_undef_arg_end(); I!=E; ++I) {      
       // Generate a report for this bug.
-      RangedBugReport *report = new RangedBugReport(*this, desc.c_str(), I->first);
+      RangedBugReport *report = new RangedBugReport(*this, desc.c_str(),
+                                                    I->first);
       report->addRange(I->second->getSourceRange());
       BR.EmitReport(report);
     }    
@@ -431,6 +460,7 @@ void GRExprEngine::RegisterInternalChecks() {
   BR.Register(new BadReceiver(this));
   BR.Register(new OutOfBoundMemoryAccess(this));
   BR.Register(new BadSizeVLA(this));
+  BR.Register(new NilReceiverStructRet(this));
   
   // The following checks do not need to have their associated BugTypes
   // explicitly registered with the BugReporter.  If they issue any BugReports,
