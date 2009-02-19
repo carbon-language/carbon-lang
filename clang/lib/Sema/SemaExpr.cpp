@@ -1298,7 +1298,7 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
 
         // Build the actual expression node.
         Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
-                                       SourceLocation());
+                                                 SourceLocation());
         UsualUnaryConversions(FnExpr);
 
         Input.release();
