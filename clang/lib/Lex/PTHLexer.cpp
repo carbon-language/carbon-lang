@@ -595,7 +595,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   
   if (!File) {
     if (Diags) {
-      unsigned DiagID = Diags->getCustomDiagID(Diagnostic::Note,
+      unsigned DiagID = Diags->getCustomDiagID(Diagnostic::Warning,
                                                "PTH file %0 could not be read");
       Diags->Report(FullSourceLoc(), DiagID) << file;
     }
