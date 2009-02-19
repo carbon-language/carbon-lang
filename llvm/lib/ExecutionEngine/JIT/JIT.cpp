@@ -356,8 +356,9 @@ GenericValue JIT::runFunction(Function *F,
   const FunctionType *FTy = F->getFunctionType();
   const Type *RetTy = FTy->getReturnType();
 
-  assert((FTy->getNumParams() <= ArgValues.size() || FTy->isVarArg()) &&
-         "Too many arguments passed into function!");
+  assert((FTy->getNumParams() == ArgValues.size() ||
+          (FTy->isVarArg() && FTy->getNumParams() <= ArgValues.size())) &&
+         "Wrong number of arguments passed into function!");
   assert(FTy->getNumParams() == ArgValues.size() &&
          "This doesn't support passing arguments through varargs (yet)!");
 
