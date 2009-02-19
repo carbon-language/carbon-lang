@@ -580,9 +580,9 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   }
 
   // Put this declaration into the appropriate slot.
-  if (D->getKind() == Decl::UsingDirective ||
-      D->getIdentifierNamespace() == Decl::IDNS_Tag
-      || Pos->second.empty())
+  if (isa<UsingDirectiveDecl>(D) ||
+      D->getIdentifierNamespace() == Decl::IDNS_Tag ||
+      Pos->second.empty())
     Pos->second.push_back(D);
   else if (Pos->second.back()->getIdentifierNamespace() == Decl::IDNS_Tag) {
     NamedDecl *TagD = Pos->second.back();
