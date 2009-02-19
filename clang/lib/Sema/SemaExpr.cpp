@@ -865,6 +865,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // as they do not get snapshotted.
   //
   if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
+    // Blocks that have these can't be constant.
+    CurBlock->hasBlockDeclRefExprs = true;
+
     // The BlocksAttr indicates the variable is bound by-reference.
     if (VD->getAttr<BlocksAttr>())
       return Owned(new (Context) BlockDeclRefExpr(VD, 
@@ -4331,6 +4334,7 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
 
   BSI->ReturnType = 0;
   BSI->TheScope = BlockScope;
+  BSI->hasBlockDeclRefExprs = false;
 
   BSI->TheDecl = BlockDecl::Create(Context, CurContext, CaretLoc);
   PushDeclContext(BlockScope, BSI->TheDecl);
@@ -4442,7 +4446,7 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
   BlockTy = Context.getBlockPointerType(BlockTy);
 
   BSI->TheDecl->setBody(Body.take());
-  return new (Context) BlockExpr(BSI->TheDecl, BlockTy);
+  return new (Context) BlockExpr(BSI->TheDecl, BlockTy, BSI->hasBlockDeclRefExprs);
 }
 
 Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,

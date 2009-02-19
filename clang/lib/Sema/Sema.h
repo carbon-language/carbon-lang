@@ -2004,7 +2004,8 @@ struct BlockSemaInfo {
   llvm::SmallVector<ParmVarDecl*, 8> Params;
   bool hasPrototype;
   bool isVariadic;
-  
+  bool hasBlockDeclRefExprs;
+
   BlockDecl *TheDecl;
   
   /// TheScope - This is the scope for the block itself, which contains

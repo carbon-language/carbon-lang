@@ -260,7 +260,11 @@ public:
   APValue VisitAddrLabelExpr(AddrLabelExpr *E)
       { return APValue(E, 0); }
   APValue VisitCallExpr(CallExpr *E);
-  APValue VisitBlockExpr(BlockExpr *E) { return APValue(E, 0); }
+  APValue VisitBlockExpr(BlockExpr *E) {
+    if (!E->hasBlockDeclRefExprs())
+      return APValue(E, 0);
+    return APValue();
+  }
   APValue VisitConditionalOperator(ConditionalOperator *E);
 };
 } // end anonymous namespace

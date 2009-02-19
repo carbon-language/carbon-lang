@@ -1290,11 +1290,14 @@ ExtVectorElementExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C) {
 void BlockExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
   S.EmitOwnedPtr(TheBlock);
+  S.EmitBool(HasBlockDeclRefExprs);
 }
 
 BlockExpr* BlockExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType T = QualType::ReadVal(D);
-  return new BlockExpr(cast<BlockDecl>(D.ReadOwnedPtr<Decl>(C)),T);
+  BlockDecl *B = cast<BlockDecl>(D.ReadOwnedPtr<Decl>(C));
+  bool H = D.ReadBool();
+  return new BlockExpr(B,T,H);
 }
 
 void BlockDeclRefExpr::EmitImpl(Serializer& S) const {

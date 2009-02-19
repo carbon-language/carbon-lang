@@ -382,6 +382,8 @@ public:
   }
     
   llvm::Constant *VisitBlockExpr(const BlockExpr *E) {
+    assert (!E->hasBlockDeclRefExprs() && "global block with BlockDeclRefs");
+
     const char *Name = "";
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(CGF->CurFuncDecl))
       Name = ND->getNameAsString().c_str();
@@ -615,7 +617,9 @@ public:
       return CGM.GetAddrOfConstantCFString(S);
     }
     case Expr::BlockExprClass: {
-      return CGF->BuildBlockLiteralTmp(cast<BlockExpr>(E));
+      BlockExpr *B = cast<BlockExpr>(E);
+      if (!B->hasBlockDeclRefExprs())
+        return CGF->BuildBlockLiteralTmp(B);
     }
     }
 

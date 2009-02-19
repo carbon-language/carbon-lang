@@ -2051,9 +2051,11 @@ public:
 class BlockExpr : public Expr {
 protected:
   BlockDecl *TheBlock;
+  bool HasBlockDeclRefExprs;
 public:
-  BlockExpr(BlockDecl *BD, QualType ty) : Expr(BlockExprClass, ty), 
-            TheBlock(BD) {}
+  BlockExpr(BlockDecl *BD, QualType ty, bool hasBlockDeclRefExprs)
+    : Expr(BlockExprClass, ty), 
+      TheBlock(BD), HasBlockDeclRefExprs(hasBlockDeclRefExprs) {}
 
   const BlockDecl *getBlockDecl() const { return TheBlock; }
   BlockDecl *getBlockDecl() { return TheBlock; }
@@ -2069,6 +2071,10 @@ public:
 
   /// getFunctionType - Return the underlying function type for this block.
   const FunctionType *getFunctionType() const;
+
+  /// hasBlockDeclRefExprs - Return true iff the block has BlockDeclRefExpr
+  /// contained inside.
+  bool hasBlockDeclRefExprs() const { return HasBlockDeclRefExprs; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BlockExprClass;
