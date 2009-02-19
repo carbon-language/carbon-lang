@@ -584,7 +584,7 @@ PTHManager::~PTHManager() {
 static void InvalidPTH(Diagnostic *Diags, const char* Msg = 0) {
   if (!Diags) return;  
   if (!Msg) Msg = "Invalid or corrupted PTH file";
-  unsigned DiagID = Diags->getCustomDiagID(Diagnostic::Note, Msg);
+  unsigned DiagID = Diags->getCustomDiagID(Diagnostic::Warning, Msg);
   Diags->Report(FullSourceLoc(), DiagID);
 }
 
