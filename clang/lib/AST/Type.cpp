@@ -1184,6 +1184,7 @@ void VectorType::getAsStringInternal(std::string &S) const {
   S += " __attribute__((__vector_size__(";
   S += llvm::utostr_32(NumElements); // convert back to bytes.
   S += " * sizeof(" + ElementType.getAsString() + "))))";
+  ElementType.getAsStringInternal(S);
 }
 
 void ExtVectorType::getAsStringInternal(std::string &S) const {
