@@ -71,9 +71,7 @@ Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx,
   assert(*Printf == ':' && "p or P specifier must have be followed by a ':'");
   ++Printf;
 
-  const char *PrintfEnd = strchr(Printf, ':');
-  assert(PrintfEnd && "printf specifier must end with a ':'");
-
+  assert(strchr(Printf, ':') && "printf specifier must end with a ':'");
   FormatIdx = strtol(Printf, 0, 10);
   return true;
 }
