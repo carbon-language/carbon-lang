@@ -773,8 +773,10 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 }
 
 llvm::GlobalValue *
-CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D) {
-  const llvm::Type *Ty = getTypes().ConvertType(D->getType());
+CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D,
+                                             const llvm::Type *Ty) {
+  if (!Ty)
+    Ty = getTypes().ConvertType(D->getType());
   llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
                                              llvm::Function::ExternalLinkage,
                                              getMangledName(D),
@@ -791,28 +793,40 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   if (!Entry)
-    Entry = EmitForwardFunctionDefinition(D);
+    Entry = EmitForwardFunctionDefinition(D, 0);
 
   return llvm::ConstantExpr::getBitCast(Entry, PTy);
 }
 
 void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
+  const llvm::FunctionType *Ty = 
+    cast<llvm::FunctionType>(getTypes().ConvertType(D->getType()));
+
+  // As a special case, make sure that definitions of K&R function
+  // "type foo()" aren't declared as varargs (which forces the backend
+  // to do unnecessary work).
+  if (Ty->isVarArg() && Ty->getNumParams() == 0 && Ty->isVarArg())
+    Ty = llvm::FunctionType::get(Ty->getReturnType(),
+                                 std::vector<const llvm::Type*>(),
+                                 false);
+
   llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   if (!Entry) {
-    Entry = EmitForwardFunctionDefinition(D);
+    Entry = EmitForwardFunctionDefinition(D, Ty);
   } else {
     // If the types mismatch then we have to rewrite the definition.
-    const llvm::Type *Ty = getTypes().ConvertType(D->getType());
     if (Entry->getType() != llvm::PointerType::getUnqual(Ty)) {
-      // Otherwise, we have a definition after a prototype with the wrong type.
-      // F is the Function* for the one with the wrong type, we must make a new
-      // Function* and update everything that used F (a declaration) with the new
-      // Function* (which will be a definition).
+      // Otherwise, we have a definition after a prototype with the
+      // wrong type.  F is the Function* for the one with the wrong
+      // type, we must make a new Function* and update everything that
+      // used F (a declaration) with the new Function* (which will be
+      // a definition).
       //
-      // This happens if there is a prototype for a function (e.g. "int f()") and
-      // then a definition of a different type (e.g. "int f(int x)").  Start by
-      // making a new function of the correct type, RAUW, then steal the name.
-      llvm::GlobalValue *NewFn = EmitForwardFunctionDefinition(D);
+      // This happens if there is a prototype for a function
+      // (e.g. "int f()") and then a definition of a different type
+      // (e.g. "int f(int x)").  Start by making a new function of the
+      // correct type, RAUW, then steal the name.
+      llvm::GlobalValue *NewFn = EmitForwardFunctionDefinition(D, Ty);
       NewFn->takeName(Entry);
       
       // Replace uses of F with the Function we will endow with a body.

@@ -322,7 +322,16 @@ private:
   void EmitGlobal(const ValueDecl *D);
 
   void EmitGlobalDefinition(const ValueDecl *D);
-  llvm::GlobalValue *EmitForwardFunctionDefinition(const FunctionDecl *D);
+
+  /// EmitForwardFunctionDefinition - Create a new function for the
+  /// given decl and set attributes as appropriate.
+  ///
+  /// \arg Ty - If non-null the LLVM function type to use for the
+  /// decl; it is the callers responsibility to make sure this is
+  /// compatible with the correct type.
+  llvm::GlobalValue *EmitForwardFunctionDefinition(const FunctionDecl *D,
+                                                   const llvm::Type *Ty);
+
   void EmitGlobalFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalVarDefinition(const VarDecl *D);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);

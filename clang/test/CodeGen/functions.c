@@ -1,4 +1,5 @@
-// RUN: clang %s -emit-llvm -o -
+// RUN: clang %s -emit-llvm -o %t &&
+
 int g();
 
 int foo(int i) {
@@ -17,3 +18,14 @@ void test3(T f) {
 
 int a(int);
 int a() {return 1;}
+
+// RUN: grep 'define void @f0()' %t &&
+void f0() {}
+
+void f1();
+// RUN: grep 'call void (...)\* bitcast (void ()\* @f1' %t &&
+void f2(void) {
+  f1(1, 2, 3);
+}
+// RUN: grep 'define void @f1()' %t
+void f1() {}
