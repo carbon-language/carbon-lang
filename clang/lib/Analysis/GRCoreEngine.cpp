@@ -368,7 +368,7 @@ void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
     Eng.WList->Enqueue(Succ, B, Idx+1);
 }
 
-static inline ProgramPoint GetPostLoc(Stmt* S, ProgramPoint::Kind K) {
+static inline PostStmt GetPostLoc(Stmt* S, ProgramPoint::Kind K) {
   switch (K) {
     default:
       assert(false && "Invalid PostXXXKind.");
@@ -403,10 +403,13 @@ ExplodedNodeImpl*
 GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, const void* State,
                                         ExplodedNodeImpl* Pred,
                                         ProgramPoint::Kind K) {
-  
+  return generateNodeImpl(GetPostLoc(S, K), State, Pred); 
+}
+
+ExplodedNodeImpl*
+GRStmtNodeBuilderImpl::generateNodeImpl(PostStmt Loc, const void* State,
+                                        ExplodedNodeImpl* Pred) {  
   bool IsNew;
-  ProgramPoint Loc = GetPostLoc(S, K);
-  
   ExplodedNodeImpl* N = Eng.G->getNodeImpl(Loc, State, &IsNew);
   N->addPredecessor(Pred);
   Deferred.erase(Pred);

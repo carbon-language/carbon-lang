@@ -142,6 +142,9 @@ public:
   }  
     
   ExplodedNodeImpl*
+  generateNodeImpl(PostStmt PP, const void* State, ExplodedNodeImpl* Pred);
+  
+  ExplodedNodeImpl*
   generateNodeImpl(Stmt* S, const void* State, ExplodedNodeImpl* Pred,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind);
 
@@ -191,6 +194,10 @@ public:
     
   NodeTy* getLastNode() const {
     return static_cast<NodeTy*>(NB.getLastNode());
+  }
+  
+  NodeTy* generateNode(PostStmt PP, const StateTy* St, NodeTy* Pred) {
+    return static_cast<NodeTy*>(NB.generateNodeImpl(PP, St, Pred));
   }
   
   NodeTy* generateNode(Stmt* S, const StateTy* St, NodeTy* Pred,
