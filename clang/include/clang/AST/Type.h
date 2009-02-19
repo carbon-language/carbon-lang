@@ -195,6 +195,16 @@ public:
   
   /// GCAttrTypesAttr - Returns gc attribute of this type.
   inline QualType::GCAttrTypes getObjCGCAttr() const;
+
+  /// isObjCGCWeak true when Type is objc's weak.
+  bool isObjCGCWeak() const {
+    return getObjCGCAttr() == Weak;
+  }
+
+  /// isObjCGCStrong true when Type is objc's strong.
+  bool isObjCGCStrong() const {
+    return getObjCGCAttr() == Strong;
+  }
   
   /// Emit - Serialize a QualType to Bitcode.
   void Emit(llvm::Serializer& S) const;
