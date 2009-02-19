@@ -97,3 +97,10 @@ void f11() {
   if (a.data == 0) // no-warning
     a.data = 1;
 }
+
+// Convert unsigned offset to signed when creating ElementRegion from 
+// SymbolicRegion.
+void f12(int *list) {
+  unsigned i = 0;
+  list[i] = 1;
+}
