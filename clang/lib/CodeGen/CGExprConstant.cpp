@@ -637,28 +637,44 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       assert(0 && "Constant expressions should be initialized.");
       return 0;
     case APValue::LValue: {
+      const llvm::Type *DestType = getTypes().ConvertTypeForMem(E->getType());
       llvm::Constant *Offset = 
         llvm::ConstantInt::get(llvm::Type::Int64Ty, 
                                Result.Val.getLValueOffset());
       
+      llvm::Constant *C;
       if (const Expr *LVBase = Result.Val.getLValueBase()) {
-        llvm::Constant *C = 
-          ConstExprEmitter(*this, CGF).EmitLValue(const_cast<Expr*>(LVBase));
+        C = ConstExprEmitter(*this, CGF).EmitLValue(const_cast<Expr*>(LVBase));
 
-        const llvm::Type *Type = 
-          llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-        const llvm::Type *DestType = getTypes().ConvertTypeForMem(E->getType());
-        
-        // FIXME: It's a little ugly that we need to cast to a pointer,
-        // apply the GEP and then cast back.
-        C = llvm::ConstantExpr::getBitCast(C, Type);
-        C = llvm::ConstantExpr::getGetElementPtr(C, &Offset, 1);
-        
-        return llvm::ConstantExpr::getBitCast(C, DestType);
+        // Apply offset if necessary.
+        if (!Offset->isNullValue()) {
+          const llvm::Type *Type = 
+            llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+          llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Type);
+          Casted = llvm::ConstantExpr::getGetElementPtr(Casted, &Offset, 1);
+          C = llvm::ConstantExpr::getBitCast(Casted, C->getType());
+        }
+
+        // Convert to the appropriate type; this could be an lvalue for
+        // an integer.
+        if (isa<llvm::PointerType>(DestType))
+          return llvm::ConstantExpr::getBitCast(C, DestType);
+
+        return llvm::ConstantExpr::getPtrToInt(C, DestType);
+      } else {
+        C = Offset;
+
+        // Convert to the appropriate type; this could be an lvalue for
+        // an integer.
+        if (isa<llvm::PointerType>(DestType))
+          return llvm::ConstantExpr::getIntToPtr(C, DestType);
+
+        // If the types don't match this should only be a truncate.
+        if (C->getType() != DestType)
+          return llvm::ConstantExpr::getTrunc(C, DestType);
+
+        return C;
       }
-      
-      return llvm::ConstantExpr::getIntToPtr(Offset, 
-                                          getTypes().ConvertType(E->getType()));
     }
     case APValue::Int: {
       llvm::Constant *C = llvm::ConstantInt::get(Result.Val.getInt());
