@@ -29,3 +29,14 @@ template<> class A<float, FLOAT>;
 template<> class A<FLOAT, float> { }; // expected-error{{redefinition}}
 
 template<> class A<float, int> { }; // expected-error{{redefinition}}
+
+template<typename T, typename U = int> class X;
+
+template <> class X<int, int> { int foo(); }; // #1
+template <> class X<float> { int bar(); };  // #2
+
+typedef int int_type;
+void testme(X<int_type> *x1, X<float, int> *x2) { 
+  x1->foo(); // okay: refers to #1
+  x2->bar(); // okay: refers to #2
+}

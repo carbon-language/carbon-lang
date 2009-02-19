@@ -3705,7 +3705,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   if (MemExpr->isArrow())
     ObjectArg = new (Context) UnaryOperator(ObjectArg, UnaryOperator::Deref,
                      ObjectArg->getType()->getAsPointerType()->getPointeeType(),
-                     SourceLocation());
+                                            ObjectArg->getLocStart());
   CXXMethodDecl *Method = 0;
   if (OverloadedFunctionDecl *Ovl 
         = dyn_cast<OverloadedFunctionDecl>(MemExpr->getMemberDecl())) {
