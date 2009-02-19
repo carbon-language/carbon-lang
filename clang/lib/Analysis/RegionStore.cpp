@@ -620,8 +620,13 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
     const VarDecl *VD = VR->getDecl();
     
-    if (isa<ParmVarDecl>(VD))
-      return SVal::GetRValueSymbolVal(getSymbolManager(), VR);
+    if (isa<ParmVarDecl>(VD) || VD->hasGlobalStorage()) {
+      QualType VTy = VD->getType();
+      if (Loc::IsLocType(VTy) || VTy->isIntegerType())
+        return SVal::GetRValueSymbolVal(getSymbolManager(), VR);
+      else
+        return UnknownVal();
+    }
     else if (VD == SelfDecl)
       return loc::MemRegionVal(getSelfRegion(0));
   }
