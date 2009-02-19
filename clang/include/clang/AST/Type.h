@@ -838,21 +838,25 @@ public:
 class ConstantArrayType : public ArrayType {
   llvm::APInt Size; // Allows us to unique the type.
   
-  ConstantArrayType(QualType et, QualType can, llvm::APInt sz,
+  ConstantArrayType(QualType et, QualType can, const llvm::APInt &size,
                     ArraySizeModifier sm, unsigned tq)
-    : ArrayType(ConstantArray, et, can, sm, tq), Size(sz) {}
+    : ArrayType(ConstantArray, et, can, sm, tq), Size(size) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   const llvm::APInt &getSize() const { return Size; }
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getElementType(), getSize());
+    Profile(ID, getElementType(), getSize(), 
+            getSizeModifier(), getIndexTypeQualifier());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ET,
-                      llvm::APInt ArraySize) {
+                      const llvm::APInt &ArraySize, ArraySizeModifier SizeMod,
+                      unsigned TypeQuals) {
     ID.AddPointer(ET.getAsOpaquePtr());
     ID.AddInteger(ArraySize.getZExtValue());
+    ID.AddInteger(SizeMod);
+    ID.AddInteger(TypeQuals);
   }
   static bool classof(const Type *T) { 
     return T->getTypeClass() == ConstantArray; 
@@ -885,11 +889,14 @@ public:
   friend class StmtIteratorBase;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getElementType());
+    Profile(ID, getElementType(), getSizeModifier(), getIndexTypeQualifier());
   }
   
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType ET) {
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType ET,
+                      ArraySizeModifier SizeMod, unsigned TypeQuals) {
     ID.AddPointer(ET.getAsOpaquePtr());
+    ID.AddInteger(SizeMod);
+    ID.AddInteger(TypeQuals);
   }
   
 protected:  

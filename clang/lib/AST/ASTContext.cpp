@@ -963,7 +963,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
                                           ArrayType::ArraySizeModifier ASM,
                                           unsigned EltTypeQuals) {
   llvm::FoldingSetNodeID ID;
-  ConstantArrayType::Profile(ID, EltTy, ArySize);
+  ConstantArrayType::Profile(ID, EltTy, ArySize, ASM, EltTypeQuals);
       
   void *InsertPos = 0;
   if (ConstantArrayType *ATP = 
@@ -1031,7 +1031,7 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
                                             ArrayType::ArraySizeModifier ASM,
                                             unsigned EltTypeQuals) {
   llvm::FoldingSetNodeID ID;
-  IncompleteArrayType::Profile(ID, EltTy);
+  IncompleteArrayType::Profile(ID, EltTy, ASM, EltTypeQuals);
 
   void *InsertPos = 0;
   if (IncompleteArrayType *ATP = 
