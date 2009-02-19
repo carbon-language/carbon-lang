@@ -1376,7 +1376,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
     PrevDecl = 0;
 
   QualType R = GetTypeForDeclarator(D, S);
-  assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
+  if (R.isNull()) {
+    InvalidDecl = true;
+    R = Context.IntTy;
+  }
 
   bool Redeclaration = false;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
