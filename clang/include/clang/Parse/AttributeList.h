@@ -35,6 +35,8 @@ class AttributeList {
   Action::ExprTy **Args;
   unsigned NumArgs;
   AttributeList *Next;
+  AttributeList(const AttributeList &); // DO NOT IMPLEMENT
+  void operator=(const AttributeList &); // DO NOT IMPLEMENT
 public:
   AttributeList(IdentifierInfo *AttrName, SourceLocation AttrLoc,
                 IdentifierInfo *ParmName, SourceLocation ParmLoc,
