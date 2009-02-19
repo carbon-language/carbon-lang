@@ -58,7 +58,8 @@ public:
     Const,
     Pure,
     Cleanup,
-    Nodebug
+    Nodebug,
+    Noinline
   };
     
 private:
@@ -499,7 +500,7 @@ public:
   // Implement isa/cast/dyncast/etc.
     
   static bool classof(const Attr *A) { return A->getKind() == Nodebug; }
-  static bool classof(const DeprecatedAttr *A) { return true; }
+  static bool classof(const NodebugAttr *A) { return true; }
 };
   
 class WarnUnusedResultAttr : public Attr {
@@ -510,7 +511,17 @@ public:
   static bool classof(const Attr *A) { return A->getKind() == WarnUnusedResult;}  
   static bool classof(const WarnUnusedResultAttr *A) { return true; }
 };
-  
+
+class NoinlineAttr : public Attr {
+public:
+  NoinlineAttr() : Attr(Noinline) {}
+    
+  // Implement isa/cast/dyncast/etc.
+    
+  static bool classof(const Attr *A) { return A->getKind() == Noinline; }
+  static bool classof(const NoinlineAttr *A) { return true; }
+};
+
 }  // end namespace clang
 
 #endif

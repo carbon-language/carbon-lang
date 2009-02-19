@@ -395,6 +395,12 @@ static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
+
+  if (!isFunctionOrMethod(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+    << "always_inline" << 0 /*function*/;
+    return;
+  }
   
   d->addAttr(new AlwaysInlineAttr());
 }
@@ -1343,13 +1349,29 @@ static void HandleNodebugAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (!isa<FunctionDecl>(d)) {
+  if (!isFunctionOrMethod(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << "nodebug" << 0 /*function*/;
     return;
   }
   
   d->addAttr(new NodebugAttr());
+}
+
+static void HandleNoinlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  
+  if (!isFunctionOrMethod(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+    << "noinline" << 0 /*function*/;
+    return;
+  }
+  
+  d->addAttr(new NoinlineAttr());
 }
 
 //===----------------------------------------------------------------------===//
@@ -1410,6 +1432,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_pure:        HandlePureAttr      (D, Attr, S); break;
   case AttributeList::AT_cleanup:     HandleCleanupAttr   (D, Attr, S); break;
   case AttributeList::AT_nodebug:     HandleNodebugAttr   (D, Attr, S); break;
+  case AttributeList::AT_noinline:    HandleNoinlineAttr  (D, Attr, S); break;
   case AttributeList::IgnoredAttribute: 
     // Just ignore
     break;
