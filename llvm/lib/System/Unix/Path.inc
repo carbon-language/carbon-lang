@@ -117,7 +117,7 @@ Path::GetRootDirectory() {
 }
 
 Path
-Path::GetTemporaryDirectory(std::string* ErrMsg ) {
+Path::GetTemporaryDirectory(std::string *ErrMsg) {
 #if defined(HAVE_MKDTEMP)
   // The best way is with mkdtemp but that's not available on many systems,
   // Linux and FreeBSD have it. Others probably won't.
@@ -280,8 +280,13 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
   // Use dladdr to get executable path if available.
   Dl_info DLInfo;
   int err = dladdr(MainAddr, &DLInfo);
-  if (err != 0)
-    return Path(std::string(DLInfo.dli_fname));
+  if (err == 0)
+    return Path();
+  
+  // If the filename is a symlink, we need to resolve and return the location of
+  // the actual executable.
+  char link_path[MAXPATHLEN];
+  return Path(std::string(realpath(DLInfo.dli_fname, link_path)));
 #endif
   return Path();
 }
