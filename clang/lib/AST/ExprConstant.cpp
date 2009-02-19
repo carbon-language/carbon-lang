@@ -1039,6 +1039,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
 bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   Expr *SubExpr = E->getSubExpr();
   QualType DestType = E->getType();
+  QualType SrcType = SubExpr->getType();
 
   if (DestType->isBooleanType()) {
     bool BoolResult;
@@ -1048,7 +1049,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   }
 
   // Handle simple integer->integer casts.
-  if (SubExpr->getType()->isIntegralType()) {
+  if (SrcType->isIntegralType()) {
     if (!Visit(SubExpr))
       return false;
 
@@ -1056,12 +1057,12 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     if (!Result.isInt())
       return false;
 
-    return Success(HandleIntToIntCast(DestType, SubExpr->getType(), 
+    return Success(HandleIntToIntCast(DestType, SrcType, 
                                       Result.getInt(), Info.Ctx), E);
   }
   
   // FIXME: Clean this up!
-  if (SubExpr->getType()->isPointerType()) {
+  if (SrcType->isPointerType()) {
     APValue LV;
     if (!EvaluatePointer(SubExpr, LV, Info))
       return false;
@@ -1072,15 +1073,14 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     return Success(LV.getLValueOffset(), E);
   }
 
-  if (!SubExpr->getType()->isRealFloatingType())
+  if (!SrcType->isRealFloatingType())
     return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
 
   APFloat F(0.0);
   if (!EvaluateFloat(SubExpr, F, Info))
     return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
   
-  return Success(HandleFloatToIntCast(DestType, SubExpr->getType(), 
-                                      F, Info.Ctx), E);
+  return Success(HandleFloatToIntCast(DestType, SrcType, F, Info.Ctx), E);
 }
 
 //===----------------------------------------------------------------------===//
