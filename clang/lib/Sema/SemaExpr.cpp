@@ -2364,7 +2364,7 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
       }
 
       if (Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy)) {
-        // Two identical pointers types are always compatible.
+        // Two identical pointer types are always compatible.
         return LHSTy;
       }
 
