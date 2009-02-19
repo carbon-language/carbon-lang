@@ -27,6 +27,13 @@ namespace llvm {
 
     DebugLocTuple(unsigned s, unsigned l, unsigned c)
       : Src(s), Line(l), Col(c) {};
+
+    bool operator==(const DebugLocTuple &DLT) const {
+      return Src == DLT.Src && Line == DLT.Line && Col == DLT.Col;
+    }
+    bool operator!=(const DebugLocTuple &DLT) const {
+      return !(*this == DLT);
+    }
   };
 
   /// DebugLoc - Debug location id. This is carried by SDNode and MachineInstr
