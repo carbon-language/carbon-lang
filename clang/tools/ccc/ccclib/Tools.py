@@ -321,12 +321,17 @@ class Clang_CompileTool(Tool):
         # FIXME: Clang isn't going to accept just anything here.
         arglist.addAllArgs(cmd_args, arglist.parser.iGroup)
 
-        # Automatically load .pth files which match -include options.
+        # Automatically load .pth or .gch files which match -include
+        # options. It's wonky, but we include looking for .gch so we
+        # can support seamless replacement into a build system already
+        # set up to be generating .gch files.
         for arg in arglist.getArgs(arglist.parser.includeOption):
-            pthPath = arglist.getValue(arg) + '.pth'
-            if os.path.exists(pthPath):
-                cmd_args.append('-token-cache')
-                cmd_args.append(pthPath)
+            for suffix in ('.pth','.gch'):
+                pthPath = arglist.getValue(arg) + suffix
+                if os.path.exists(pthPath):
+                    cmd_args.append('-token-cache')
+                    cmd_args.append(pthPath)
+                    break
 
         arglist.addAllArgs(cmd_args, arglist.parser.fblocksGroup)
 
