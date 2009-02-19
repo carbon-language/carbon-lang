@@ -16,13 +16,17 @@ using namespace clang;
 
 AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
                              IdentifierInfo *pName, SourceLocation pLoc,
-                             Action::ExprTy **elist, unsigned numargs,
+                             Action::ExprTy **ExprList, unsigned numArgs,
                              AttributeList *n)
   : AttrName(aName), AttrLoc(aLoc), ParmName(pName), ParmLoc(pLoc),
-    NumArgs(numargs), Next(n) {
-  Args = new Action::ExprTy*[numargs];
-  for (unsigned i = 0; i != numargs; ++i)
-    Args[i] = elist[i];
+    NumArgs(numArgs), Next(n) {
+  
+  if (numArgs == 0)
+    Args = 0;
+  else {
+    Args = new Action::ExprTy*[numArgs];
+    memcpy(Args, ExprList, numArgs*sizeof(Args[0]));
+  }
 }
 
 AttributeList::~AttributeList() {
