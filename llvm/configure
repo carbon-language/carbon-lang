@@ -1547,7 +1547,7 @@ Optional Features:
   --enable-doxygen        Build doxygen documentation (default is NO)
   --enable-threads        Use threads if available (default is YES)
   --enable-pic            Build LLVM with Position Independent Code (default
-                          is NO)
+                          is YES)
   --enable-targets        Build specific host targets:
                           all,host-only,{target-name} (default=all)
   --enable-cbe-printf-a   Enable C Backend output with hex floating point via
@@ -4878,7 +4878,7 @@ case "$enableval" in
  ;;
   no)  ENABLE_PIC=0
  ;;
-  default) ENABLE_PIC=0
+  default) ENABLE_PIC=1
  ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-pic. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-pic. Use \"yes\" or \"no\"" >&2;}
