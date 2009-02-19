@@ -33,4 +33,4 @@ _Complex float g16 = (1.0f + 1.0fi);
 // ?: in constant expressions.
 int g17[(3?:1) - 2]; 
 
-EVAL_EXPR(18, (int)((void*)10 + 10));
+EVAL_EXPR(18, ((int)((void*)10 + 10)) == 20 ? 1 : -1);
