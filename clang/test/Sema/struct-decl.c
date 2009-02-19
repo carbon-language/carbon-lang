@@ -6,7 +6,7 @@ struct bar {
 
 struct foo {
 	char name[(int)&((struct bar *)0)->n];
-	char name2[(int)&((struct bar *)0)->n - 1]; //expected-error{{fields must have a constant size}}
+	char name2[(int)&((struct bar *)0)->n - 1]; //expected-error{{array size is negative}}
 };
 
 // PR3430
