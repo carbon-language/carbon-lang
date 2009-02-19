@@ -339,6 +339,9 @@ void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
 
   if (D->getAttr<AlwaysInlineAttr>())
     F->addFnAttr(llvm::Attribute::AlwaysInline);
+  
+  if (D->getAttr<NoinlineAttr>())
+    F->addFnAttr(llvm::Attribute::NoInline);
 }
 
 void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
