@@ -182,11 +182,10 @@ public:
     R.Ivar = iValue;
   }
     
-  static void SetObjCType(bool isWeak, bool isStrong, LValue& R) {
-    assert(!(isWeak == true && isStrong == true));
-    if (isWeak)
+  static void SetObjCType(QualType::GCAttrTypes GCAttrs, LValue& R) {
+    if (GCAttrs == QualType::Weak)
       R.ObjCType = Weak;
-    else if (isStrong)
+    else if (GCAttrs == QualType::Strong)
       R.ObjCType = Strong;
   }
   
@@ -227,11 +226,13 @@ public:
     return KVCRefExpr;
   }
 
-  static LValue MakeAddr(llvm::Value *V, unsigned Qualifiers) {
+  static LValue MakeAddr(llvm::Value *V, unsigned Qualifiers,
+                         QualType::GCAttrTypes GCAttrs = QualType::GCNone) {
     LValue R;
     R.LVType = Simple;
     R.V = V;
     SetQualifiers(Qualifiers,R);
+    SetObjCType(GCAttrs, R);
     return R;
   }
   

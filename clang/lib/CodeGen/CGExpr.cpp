@@ -610,9 +610,7 @@ static void SetDeclObjCGCAttrInLvalue(ASTContext &Ctx, const QualType &Ty,
                                       LValue &LV)
 {
   QualType::GCAttrTypes attr = Ctx.getObjCGCAttrKind(Ty);
-  if (attr != QualType::GCNone)
-    LValue::SetObjCType(attr == QualType::Weak, 
-                        attr == QualType::Strong, LV);
+  LValue::SetObjCType(attr, LV);
 }
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
@@ -767,11 +765,13 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
                                                     BaseTypeSize));
   }
   
-  QualType ExprTy = getContext().getCanonicalType(E->getBase()->getType());
+  QualType T = E->getBase()->getType();
+  QualType ExprTy = getContext().getCanonicalType(T);
+  T = T->getAsPointerType()->getPointeeType();
 
   return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
-                          ExprTy->getAsPointerType()->getPointeeType()
-                               .getCVRQualifiers());
+           ExprTy->getAsPointerType()->getPointeeType().getCVRQualifiers(),
+           getContext().getObjCGCAttrKind(T));
 }
 
 static 
@@ -921,11 +921,13 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
       CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
     QualType Ty = Field->getType();
     QualType::GCAttrTypes attr = Ty.getObjCGCAttr();
-    if (attr != QualType::GCNone)
+    if (attr != QualType::GCNone) {
       // __weak attribute on a field is ignored.
-      LValue::SetObjCType(false, attr == QualType::Strong, LV);
+      if (attr == QualType::Strong)
+        LValue::SetObjCType(QualType::Strong, LV);
+    }
     else if (getContext().isObjCObjectPointerType(Ty))
-      LValue::SetObjCType(false, true, LV);
+      LValue::SetObjCType(QualType::Strong, LV);
     
   }
   return LV;
