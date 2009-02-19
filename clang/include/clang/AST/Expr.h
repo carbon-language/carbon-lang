@@ -478,7 +478,7 @@ public:
 /// ConstantArrayType.
 ///
 /// Note that strings in C can be formed by concatenation of multiple string
-/// literal pptokens in trnaslation phase #6.  This keeps track of the locations
+/// literal pptokens in translation phase #6.  This keeps track of the locations
 /// of each of these pieces.
 class StringLiteral : public Expr {
   const char *StrData;
