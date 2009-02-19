@@ -696,11 +696,11 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
       InsertLoop = InsertLoop->getParentLoop();
     }
   
+  Value *Base = Rewriter.expandCodeFor(NewBase, BaseInsertPt);
+
   // If there is no immediate value, skip the next part.
   if (Imm->isZero())
-    return Rewriter.expandCodeFor(NewBase, BaseInsertPt);
-
-  Value *Base = Rewriter.expandCodeFor(NewBase, BaseInsertPt);
+    return Base;
 
   // If we are inserting the base and imm values in the same block, make sure to
   // adjust the IP position if insertion reused a result.
@@ -761,12 +761,15 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
     }
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
-    DOUT << "    CHANGED: IMM =" << *Imm;
-    DOUT << "  \tNEWBASE =" << *NewBase;
-    DOUT << "  \tInst = " << *Inst;
+
+#ifndef NDEBUG
+    DOUT << "      Replacing with ";
+    WriteAsOperand(*DOUT, NewVal, /*PrintType=*/false);
+    DOUT << ", which has value " << *NewBase << " plus IMM " << *Imm << "\n";
+#endif
     return;
   }
-  
+
   // PHI nodes are more complex.  We have to insert one copy of the NewBase+Imm
   // expression into each operand block that uses it.  Note that PHI nodes can
   // have multiple entries for the same predecessor.  We use a map to make sure
@@ -826,8 +829,14 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                               Code,
                                               PN->getType());
         }
+
+#ifndef NDEBUG
+        DOUT << "      Changing PHI use to ";
+        WriteAsOperand(*DOUT, Code, /*PrintType=*/false);
+        DOUT << ", which has value " << *NewBase << " plus IMM " << *Imm << "\n";
+#endif
       }
-      
+
       // Replace the use of the operand Value with the new Phi we just created.
       PN->setIncomingValue(i, Code);
       Rewriter.clear();
@@ -836,8 +845,6 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
 
   // PHI node might have become a constant value after SplitCriticalEdge.
   DeadInsts.push_back(Inst);
-
-  DOUT << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst;
 }
 
 
@@ -1494,20 +1501,13 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                   AllUsesAreOutsideLoop,
                                   Stride, ReuseIV, CommonExprs->getType(),
                                   UsersToProcess);
-  if (!isa<SCEVConstant>(RewriteFactor) || 
-      !cast<SCEVConstant>(RewriteFactor)->isZero()) {
-    DOUT << "BASED ON IV of STRIDE " << *ReuseIV.Stride
-         << " and BASE " << *ReuseIV.Base << " :\n";
-    NewPHI = ReuseIV.PHI;
-    IncV   = ReuseIV.IncV;
-  }
-
   const Type *ReplacedTy = CommonExprs->getType();
   
   // Now that we know what we need to do, insert the PHI node itself.
   //
-  DOUT << "INSERTING IV of TYPE " << *ReplacedTy << " of STRIDE "
-       << *Stride << " and BASE " << *CommonExprs << ": ";
+  DOUT << "LSR: Examining IVs of TYPE " << *ReplacedTy << " of STRIDE "
+       << *Stride << ":\n"
+       << "  Common base: " << *CommonExprs << "\n";
 
   SCEVExpander Rewriter(*SE, *LI);
   SCEVExpander PreheaderRewriter(*SE, *LI);
@@ -1515,9 +1515,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   BasicBlock  *Preheader = L->getLoopPreheader();
   Instruction *PreInsertPt = Preheader->getTerminator();
   Instruction *PhiInsertBefore = L->getHeader()->begin();
-  
   BasicBlock *LatchBlock = L->getLoopLatch();
-
 
   // Emit the initial base value into the loop preheader.
   Value *CommonBaseV
@@ -1556,9 +1554,20 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
     // Remember this in case a later stride is multiple of this.
     IVsByStride[Stride].addIV(Stride, CommonExprs, NewPHI, IncV);
-    
-    DOUT << " IV=%" << NewPHI->getNameStr() << " INC=%" << IncV->getNameStr();
+
+#ifndef NDEBUG
+    DOUT << "  Inserted new PHI: IV=";
+    WriteAsOperand(*DOUT, NewPHI, /*PrintType=*/false);
+    DOUT << ", INC=";
+    WriteAsOperand(*DOUT, IncV, /*PrintType=*/false);
+    DOUT << "\n";
+#endif
   } else {
+    DOUT << "  Rewriting in terms of existing IV of STRIDE " << *ReuseIV.Stride
+         << " and BASE " << *ReuseIV.Base << "\n";
+    NewPHI = ReuseIV.PHI;
+    IncV   = ReuseIV.IncV;
+
     Constant *C = dyn_cast<Constant>(CommonBaseV);
     if (!C ||
         (!C->isNullValue() &&
@@ -1569,7 +1578,6 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       CommonBaseV = new BitCastInst(CommonBaseV, CommonBaseV->getType(), 
                                     "commonbase", PreInsertPt);
   }
-  DOUT << "\n";
 
   // We want to emit code for users inside the loop first.  To do this, we
   // rearrange BasedUser so that the entries at the end have
@@ -1605,14 +1613,16 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // loop handles all users of a particular base.
   while (!UsersToProcess.empty()) {
     SCEVHandle Base = UsersToProcess.back().Base;
+    Instruction *Inst = UsersToProcess.back().Inst;
 
     // Emit the code for Base into the preheader.
     Value *BaseV = PreheaderRewriter.expandCodeFor(Base, PreInsertPt);
 
-    DOUT << "  INSERTING code for BASE = " << *Base << ":";
-    if (BaseV->hasName())
-      DOUT << " Result value name = %" << BaseV->getNameStr();
-    DOUT << "\n";
+#ifndef NDEBUG
+    DOUT << "  Examining uses with BASE ";
+    WriteAsOperand(*DOUT, BaseV, /*PrintType=*/false);
+    DOUT << ":\n";
+#endif
 
     // If BaseV is a constant other than 0, make sure that it gets inserted into
     // the preheader, instead of being forward substituted into the uses.  We do
@@ -1633,6 +1643,13 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     do {
       // FIXME: Use emitted users to emit other users.
       BasedUser &User = UsersToProcess.back();
+
+#ifndef NDEBUG
+      DOUT << "    Examining use ";
+      WriteAsOperand(*DOUT, UsersToProcess.back().OperandValToReplace,
+                     /*PrintType=*/false);
+      DOUT << " in Inst: " << *Inst;
+#endif
 
       // If this instruction wants to use the post-incremented value, move it
       // after the post-inc and use its value instead of the PHI.
