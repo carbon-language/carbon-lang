@@ -1098,8 +1098,8 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
     MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
     MainExecutablePath.appendComponent("Headers"); // Get foo/Headers
-    Init.AddPath(MainExecutablePath.c_str(), InitHeaderSearch::System,
-        false, false, false);
+    Init.AddPath(MainExecutablePath.c_str(), InitHeaderSearch::After,
+                 false, false, false);
   }
   
   if (!nostdinc) 
