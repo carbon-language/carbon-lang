@@ -367,6 +367,16 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
     //
     //  Observe that 'p' binds to an AnonTypedRegion<AllocaRegion>.
     //
+
+    // Offset might be unsigned. We have to convert it to signed ConcreteInt.
+    if (nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&Offset)) {
+      const llvm::APSInt& OffI = CI->getValue();
+      if (OffI.isUnsigned()) {
+        llvm::APSInt Tmp = OffI;
+        Tmp.setIsSigned(true);
+        Offset = NonLoc::MakeVal(getBasicVals(), Tmp);
+      }
+    }
     return loc::MemRegionVal(MRMgr.getElementRegion(Offset, BaseRegion));
   }
   
@@ -397,7 +407,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
     
     Tmp.setIsSigned(true);
     Tmp += BaseIdxI; // Compute the new offset.    
-    NewIdx = nonloc::ConcreteInt(getBasicVals().getValue(Tmp));    
+    NewIdx = NonLoc::MakeVal(getBasicVals(), Tmp);    
   }
   else
     NewIdx = nonloc::ConcreteInt(getBasicVals().getValue(BaseIdxI + OffI));
