@@ -762,11 +762,9 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
 
-#ifndef NDEBUG
     DOUT << "      Replacing with ";
-    WriteAsOperand(*DOUT, NewVal, /*PrintType=*/false);
+    DEBUG(WriteAsOperand(*DOUT, NewVal, /*PrintType=*/false));
     DOUT << ", which has value " << *NewBase << " plus IMM " << *Imm << "\n";
-#endif
     return;
   }
 
@@ -830,11 +828,9 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                               PN->getType());
         }
 
-#ifndef NDEBUG
         DOUT << "      Changing PHI use to ";
-        WriteAsOperand(*DOUT, Code, /*PrintType=*/false);
+        DEBUG(WriteAsOperand(*DOUT, Code, /*PrintType=*/false));
         DOUT << ", which has value " << *NewBase << " plus IMM " << *Imm << "\n";
-#endif
       }
 
       // Replace the use of the operand Value with the new Phi we just created.
@@ -1555,13 +1551,11 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // Remember this in case a later stride is multiple of this.
     IVsByStride[Stride].addIV(Stride, CommonExprs, NewPHI, IncV);
 
-#ifndef NDEBUG
     DOUT << "  Inserted new PHI: IV=";
-    WriteAsOperand(*DOUT, NewPHI, /*PrintType=*/false);
+    DEBUG(WriteAsOperand(*DOUT, NewPHI, /*PrintType=*/false));
     DOUT << ", INC=";
-    WriteAsOperand(*DOUT, IncV, /*PrintType=*/false);
+    DEBUG(WriteAsOperand(*DOUT, IncV, /*PrintType=*/false));
     DOUT << "\n";
-#endif
   } else {
     DOUT << "  Rewriting in terms of existing IV of STRIDE " << *ReuseIV.Stride
          << " and BASE " << *ReuseIV.Base << "\n";
@@ -1618,11 +1612,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // Emit the code for Base into the preheader.
     Value *BaseV = PreheaderRewriter.expandCodeFor(Base, PreInsertPt);
 
-#ifndef NDEBUG
     DOUT << "  Examining uses with BASE ";
-    WriteAsOperand(*DOUT, BaseV, /*PrintType=*/false);
+    DEBUG(WriteAsOperand(*DOUT, BaseV, /*PrintType=*/false));
     DOUT << ":\n";
-#endif
 
     // If BaseV is a constant other than 0, make sure that it gets inserted into
     // the preheader, instead of being forward substituted into the uses.  We do
@@ -1644,12 +1636,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // FIXME: Use emitted users to emit other users.
       BasedUser &User = UsersToProcess.back();
 
-#ifndef NDEBUG
       DOUT << "    Examining use ";
-      WriteAsOperand(*DOUT, UsersToProcess.back().OperandValToReplace,
-                     /*PrintType=*/false);
+      DEBUG(WriteAsOperand(*DOUT, UsersToProcess.back().OperandValToReplace,
+                           /*PrintType=*/false));
       DOUT << " in Inst: " << *Inst;
-#endif
 
       // If this instruction wants to use the post-incremented value, move it
       // after the post-inc and use its value instead of the PHI.
