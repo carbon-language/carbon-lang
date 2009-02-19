@@ -562,33 +562,34 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   // Insert this declaration into the map.
   StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
   StoredDeclsMap::iterator Pos = Map->find(D->getDeclName());
-  if (Pos != Map->end()) {
-    if (MayBeRedeclaration) {
-      // Determine if this declaration is actually a redeclaration.
-      std::vector<NamedDecl *>::iterator Redecl
-        = std::find_if(Pos->second.begin(), Pos->second.end(),
-                     std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
-                                  D));
-      if (Redecl != Pos->second.end()) {
-        *Redecl = D;
-        return;
-      }
-    }
-
-    // Put this declaration into the appropriate slot.
-    if (D->getKind() == Decl::UsingDirective ||
-        D->getIdentifierNamespace() == Decl::IDNS_Tag
-        || Pos->second.empty())
-      Pos->second.push_back(D);
-    else if (Pos->second.back()->getIdentifierNamespace() == Decl::IDNS_Tag) {
-      NamedDecl *TagD = Pos->second.back();
-      Pos->second.back() = D;
-      Pos->second.push_back(TagD);
-    } else
-      Pos->second.push_back(D);
-  } else {
+  if (Pos == Map->end()) {
     (*Map)[D->getDeclName()].push_back(D);
+    return;
   }
+  
+  if (MayBeRedeclaration) {
+    // Determine if this declaration is actually a redeclaration.
+    std::vector<NamedDecl *>::iterator Redecl
+      = std::find_if(Pos->second.begin(), Pos->second.end(),
+                   std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
+                                D));
+    if (Redecl != Pos->second.end()) {
+      *Redecl = D;
+      return;
+    }
+  }
+
+  // Put this declaration into the appropriate slot.
+  if (D->getKind() == Decl::UsingDirective ||
+      D->getIdentifierNamespace() == Decl::IDNS_Tag
+      || Pos->second.empty())
+    Pos->second.push_back(D);
+  else if (Pos->second.back()->getIdentifierNamespace() == Decl::IDNS_Tag) {
+    NamedDecl *TagD = Pos->second.back();
+    Pos->second.back() = D;
+    Pos->second.push_back(TagD);
+  } else
+    Pos->second.push_back(D);
 }
 
 /// Returns iterator range [First, Last) of UsingDirectiveDecls stored within
