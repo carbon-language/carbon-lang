@@ -469,9 +469,20 @@ public:
     return true;  // still a constant.
   }
 
+  bool Success(const llvm::APSInt &SI, const Expr *E) {
+    Result = SI;
+    assert(Result.isSigned() == E->getType()->isSignedIntegerType() &&
+           "Invalid evaluation result.");
+    assert(Result.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
+           "Invalid evaluation result.");
+    return true;
+  }
+
   bool Success(const llvm::APInt &I, const Expr *E) {
     Result = I;
     Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    assert(Result.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
+           "Invalid evaluation result.");
     return true;
   }
 
@@ -561,17 +572,22 @@ private:
 } // end anonymous namespace
 
 static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
+  if (!E->getType()->isIntegralType())
+    return false;
   return IntExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
 bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   // Enums are integer constant exprs.
   if (const EnumConstantDecl *D = dyn_cast<EnumConstantDecl>(E->getDecl())) {
-    Result = D->getInitVal();
     // FIXME: This is an ugly hack around the fact that enums don't set their
-    // signedness consistently; see PR3173
-    Result.setIsUnsigned(!E->getType()->isSignedIntegerType());
-    return true;
+    // signedness consistently; see PR3173.
+    APSInt SI = D->getInitVal();
+    SI.setIsUnsigned(!E->getType()->isSignedIntegerType());
+    // FIXME: This is an ugly hack around the fact that enums don't
+    // set their width (!?!) consistently; see PR3173.
+    SI.extOrTrunc(Info.Ctx.getIntWidth(E->getType()));
+    return Success(SI, E);
   }
 
   // In C++, const, non-volatile integers initialized with ICEs are ICEs.
@@ -683,18 +699,16 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
       if (lhsResult == (E->getOpcode() == BinaryOperator::LOr) || 
           !lhsResult == (E->getOpcode() == BinaryOperator::LAnd)) {
-        Result = Info.Ctx.MakeIntValue(lhsResult, E->getType());
-        
         Info.ShortCircuit++;
         bool rhsEvaluated = HandleConversionToBool(E->getRHS(), rhsResult, Info);
         Info.ShortCircuit--;
         
-        if (rhsEvaluated)
-          return true;
-        
         // FIXME: Return an extension warning saying that the RHS could not be
         // evaluated.
-        return true;
+        // if (!rhsEvaluated) ...
+        (void) rhsEvaluated;
+        
+        return Success(lhsResult, E);
       }
 
       if (HandleConversionToBool(E->getRHS(), rhsResult, Info)) {
@@ -839,29 +853,29 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   switch (E->getOpcode()) {
   default:
     return Error(E->getOperatorLoc(), diag::note_invalid_subexpr_in_ice, E);
-  case BinaryOperator::Mul: Result *= RHS; return true;
-  case BinaryOperator::Add: Result += RHS; return true;
-  case BinaryOperator::Sub: Result -= RHS; return true;
-  case BinaryOperator::And: Result &= RHS; return true;
-  case BinaryOperator::Xor: Result ^= RHS; return true;
-  case BinaryOperator::Or:  Result |= RHS; return true;
+  case BinaryOperator::Mul: return Success(Result * RHS, E);
+  case BinaryOperator::Add: return Success(Result + RHS, E);
+  case BinaryOperator::Sub: return Success(Result - RHS, E);
+  case BinaryOperator::And: return Success(Result & RHS, E);
+  case BinaryOperator::Xor: return Success(Result ^ RHS, E);
+  case BinaryOperator::Or:  return Success(Result | RHS, E);
   case BinaryOperator::Div:
     if (RHS == 0)
       return Error(E->getOperatorLoc(), diag::note_expr_divide_by_zero, E);
-    Result /= RHS;
-    break;
+    return Success(Result / RHS, E);
   case BinaryOperator::Rem:
     if (RHS == 0)
       return Error(E->getOperatorLoc(), diag::note_expr_divide_by_zero, E);
-    Result %= RHS;
-    break;
-  case BinaryOperator::Shl:
+    return Success(Result % RHS, E);
+  case BinaryOperator::Shl: {
     // FIXME: Warn about out of range shift amounts!
-    Result <<= (unsigned)RHS.getLimitedValue(Result.getBitWidth()-1);
-    break;
-  case BinaryOperator::Shr:
-    Result >>= (unsigned)RHS.getLimitedValue(Result.getBitWidth()-1);
-    break;
+    unsigned SA = (unsigned) RHS.getLimitedValue(Result.getBitWidth()-1);
+    return Success(Result << SA, E);
+  }
+  case BinaryOperator::Shr: {
+    unsigned SA = (unsigned) RHS.getLimitedValue(Result.getBitWidth()-1);
+    return Success(Result >> SA, E);
+  }
       
   case BinaryOperator::LT: return Success(Result < RHS, E);
   case BinaryOperator::GT: return Success(Result > RHS, E);
@@ -870,9 +884,6 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   case BinaryOperator::EQ: return Success(Result == RHS, E);
   case BinaryOperator::NE: return Success(Result != RHS, E);
   }
-
-  Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-  return true;
 }
 
 bool IntExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
@@ -991,20 +1002,15 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   case UnaryOperator::Extension:
     // FIXME: Should extension allow i-c-e extension expressions in its scope?
     // If so, we could clear the diagnostic ID.
-    break;
+    return true;
   case UnaryOperator::Plus:
     // The result is always just the subexpr. 
-    break;
+    return true;
   case UnaryOperator::Minus:
-    Result = -Result;
-    break;
+    return Success(-Result, E);
   case UnaryOperator::Not:
-    Result = ~Result;
-    break;
+    return Success(~Result, E);
   }
-
-  Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-  return true;
 }
   
 /// HandleCast - This is used to evaluate implicit or explicit casts where the
@@ -1025,8 +1031,8 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     if (!Visit(SubExpr))
       return false;
 
-    Result = HandleIntToIntCast(DestType, SubExpr->getType(), Result, Info.Ctx);
-    return true;
+    return Success(HandleIntToIntCast(DestType, SubExpr->getType(), 
+                                      Result, Info.Ctx), E);
   }
   
   // FIXME: Clean this up!
@@ -1048,8 +1054,8 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   if (!EvaluateFloat(SubExpr, F, Info))
     return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
   
-  Result = HandleFloatToIntCast(DestType, SubExpr->getType(), F, Info.Ctx);
-  return true;
+  return Success(HandleFloatToIntCast(DestType, SubExpr->getType(), 
+                                      F, Info.Ctx), E);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1194,7 +1200,7 @@ bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
   
   if (SubExpr->getType()->isIntegralType()) {
     APSInt IntResult;
-    if (!EvaluateInteger(E, IntResult, Info))
+    if (!EvaluateInteger(SubExpr, IntResult, Info))
       return false;
     Result = HandleIntToFloatCast(E->getType(), SubExpr->getType(), 
                                   IntResult, Info.Ctx);
