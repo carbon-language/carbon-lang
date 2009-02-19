@@ -3397,11 +3397,14 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclTy *TagD) {
 /// types into constant array types in certain situations which would otherwise
 /// be errors (for GCC compatibility).
 static QualType TryToFixInvalidVariablyModifiedType(QualType T,
-                                                    ASTContext &Context) {
+                                                    ASTContext &Context,
+                                                    bool &SizeIsNegative) {
   // This method tries to turn a variable array into a constant
   // array even when the size isn't an ICE.  This is necessary
   // for compatibility with code that depends on gcc's buggy
   // constant expression folding, like struct {char x[(int)(char*)2];}
+  SizeIsNegative = false;
+  
   const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T);
   if (!VLATy) return QualType();
   
@@ -3415,6 +3418,8 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
   if (Res >= llvm::APSInt(Res.getBitWidth(), Res.isUnsigned()))
     return Context.getConstantArrayType(VLATy->getElementType(),
                                         Res, ArrayType::Normal, 0);
+
+  SizeIsNegative = true;
   return QualType();
 }
 
@@ -3463,12 +3468,17 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
   if (T->isVariablyModifiedType()) {
-    QualType FixedTy = TryToFixInvalidVariablyModifiedType(T, Context);
+    bool SizeIsNegative;
+    QualType FixedTy = TryToFixInvalidVariablyModifiedType(T, Context,
+                                                           SizeIsNegative);
     if (!FixedTy.isNull()) {
       Diag(Loc, diag::warn_illegal_constant_array_size);
       T = FixedTy;
     } else {
-      Diag(Loc, diag::err_typecheck_field_variable_size);
+      if (SizeIsNegative)
+        Diag(Loc, diag::err_typecheck_negative_array_size);
+      else
+        Diag(Loc, diag::err_typecheck_field_variable_size);
       T = Context.IntTy;
       InvalidDecl = true;
     }

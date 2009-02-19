@@ -34,3 +34,7 @@ _Complex float g16 = (1.0f + 1.0fi);
 int g17[(3?:1) - 2]; 
 
 EVAL_EXPR(18, ((int)((void*)10 + 10)) == 20 ? 1 : -1);
+
+struct s {
+  int a[(int)-1.0f]; // expected-error {{array size is negative}}
+};
