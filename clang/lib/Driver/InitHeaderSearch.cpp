@@ -24,7 +24,7 @@ using namespace clang;
 
 void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
                                bool isCXXAware, bool isUserSupplied,
-                               bool isFramework) {
+                               bool isFramework, bool IgnoreSysRoot) {
   assert(!Path.empty() && "can't handle empty path here");
   FileManager &FM = Headers.getFileMgr();
   
@@ -32,7 +32,7 @@ void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
   llvm::SmallString<256> MappedPath;
   
   // Handle isysroot.
-  if (Group == System) {
+  if (Group == System && !IgnoreSysRoot) {
     // FIXME: Portability.  This should be a sys::Path interface, this doesn't
     // handle things like C:\ right, nor win32 \\network\device\blah.
     if (isysroot.size() != 1 || isysroot[0] != '/') // Add isysroot if present.

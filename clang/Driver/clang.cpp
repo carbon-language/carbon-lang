@@ -1098,8 +1098,11 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
     MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
     MainExecutablePath.appendComponent("Headers"); // Get foo/Headers
-    Init.AddPath(MainExecutablePath.c_str(), InitHeaderSearch::After,
-                 false, false, false);
+    
+    // We pass true to ignore sysroot so that we *always* look for clang headers
+    // relative to our executable, never relative to -isysroot.
+    Init.AddPath(MainExecutablePath.c_str(), InitHeaderSearch::System,
+                 false, false, false, true /*ignore sysroot*/);
   }
   
   if (!nostdinc) 

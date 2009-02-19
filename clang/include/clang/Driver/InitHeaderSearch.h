@@ -50,7 +50,7 @@ public:
   /// AddPath - Add the specified path to the specified group list.
   void AddPath(const std::string &Path, IncludeDirGroup Group,
                bool isCXXAware, bool isUserSupplied,
-               bool isFramework);
+               bool isFramework, bool IgnoreSysRoot = false);
 
   /// AddEnvVarPaths - Add a list of paths from an environment variable to a
   ///  header search list.
