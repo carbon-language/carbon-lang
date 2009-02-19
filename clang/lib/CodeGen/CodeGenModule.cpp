@@ -444,7 +444,7 @@ void CodeGenModule::EmitDeferred() {
       // FIXME: This is missing some important cases. For example, we
       // need to check for uses in an alias.
       if (!GlobalDeclMap.count(getMangledName(D))) {
-        i++;
+        ++i;
         continue;
       }
       
@@ -623,6 +623,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     Init = llvm::Constant::getNullValue(InitTy);
   } else {
     Init = EmitConstantExpr(D->getInit());
+    if (!Init)
+      ErrorUnsupported(D, "static initializer");
   }
   const llvm::Type* InitType = Init->getType();
 
@@ -634,6 +636,26 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
                                   llvm::GlobalValue::ExternalLinkage,
                                   0, getMangledName(D), 
                                   &getModule(), 0, ASTTy.getAddressSpace());
+
+  } else if (GV->hasInitializer() && !GV->getInitializer()->isNullValue()) {
+    // If we already have this global and it has an initializer, then
+    // we are in the rare situation where we emitted the defining
+    // declaration of the global and are now being asked to emit a
+    // definition which would be common. This occurs, for example, in
+    // the following situation because statics can be emitted out of
+    // order:
+    //
+    //  static int x;
+    //  static int *y = &x;
+    //  static int x = 10;
+    //  int **z = &y;
+    //
+    // Bail here so we don't blow away the definition. Note that if we
+    // can't distinguish here if we emitted a definition with a null
+    // initializer, but this case is safe.
+    assert(!D->getInit() && "Emitting multiple definitions of a decl!");
+    return;
+
   } else if (GV->getType() != 
              llvm::PointerType::get(InitType, ASTTy.getAddressSpace())) {
     // We have a definition after a prototype with the wrong type.
