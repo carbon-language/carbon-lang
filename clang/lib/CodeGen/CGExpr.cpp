@@ -416,10 +416,17 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     // load of a __strong object. 
     llvm::Value *LvalueDst = Dst.getAddress();
     llvm::Value *src = Src.getScalarVal();
+#if 0
+    // FIXME. We cannot positively determine if we have an
+    // 'ivar' assignment, object assignment or an unknown 
+    // assignment. For now, generate call to objc_assign_strongCast
+    // assignment which is a safe, but consevative assumption.
     if (Dst.isObjCIvar())
       CGM.getObjCRuntime().EmitObjCIvarAssign(*this, src, LvalueDst);
     else
       CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
+#endif
+    CGM.getObjCRuntime().EmitObjCStrongCastAssign(*this, src, LvalueDst);
     return;
   }
   
