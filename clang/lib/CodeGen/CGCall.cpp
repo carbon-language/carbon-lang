@@ -1676,7 +1676,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
 
 RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  llvm::Value *Callee, 
-                                 const CallArgList &CallArgs) {
+                                 const CallArgList &CallArgs,
+                                 const Decl *TargetDecl) {
   // FIXME: We no longer need the types from CallArgs; lift up and
   // simplify.
   llvm::SmallVector<llvm::Value*, 16> Args;
@@ -1752,9 +1753,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
 
-  // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
   CodeGen::AttributeListType AttributeList;
-  CGM.ConstructAttributeList(CallInfo, 0, AttributeList);
+  CGM.ConstructAttributeList(CallInfo, TargetDecl, AttributeList);
   CI->setAttributes(llvm::AttrListPtr::get(AttributeList.begin(), 
                                            AttributeList.size()));  
   

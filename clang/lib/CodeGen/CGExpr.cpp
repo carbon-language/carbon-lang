@@ -966,29 +966,25 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E)
 
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
-  if (const ImplicitCastExpr *IcExpr = 
-      dyn_cast<const ImplicitCastExpr>(E->getCallee()))
-    if (const DeclRefExpr *DRExpr = 
-        dyn_cast<const DeclRefExpr>(IcExpr->getSubExpr()))
-      if (const FunctionDecl *FDecl = 
-          dyn_cast<const FunctionDecl>(DRExpr->getDecl()))
-        if (unsigned builtinID = FDecl->getBuiltinID(getContext()))
-          return EmitBuiltinExpr(FDecl, builtinID, E);
-
+  // Builtins never have block type.
   if (E->getCallee()->getType()->isBlockPointerType())
     return EmitBlockCallExpr(E);
 
+  const Decl *TargetDecl = 0;
+  if (const ImplicitCastExpr *IcExpr = 
+      dyn_cast<ImplicitCastExpr>(E->getCallee())) {
+    if (const DeclRefExpr *DRExpr = 
+        dyn_cast<DeclRefExpr>(IcExpr->getSubExpr())) {
+      TargetDecl = DRExpr->getDecl();
+      if (const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(TargetDecl))
+        if (unsigned builtinID = FDecl->getBuiltinID(getContext()))
+          return EmitBuiltinExpr(FDecl, builtinID, E);
+    }
+  }
+
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
   return EmitCallExpr(Callee, E->getCallee()->getType(),
-                      E->arg_begin(), E->arg_end());
-}
-
-RValue CodeGenFunction::EmitCallExpr(Expr *FnExpr,
-                                     CallExpr::const_arg_iterator ArgBeg,
-                                     CallExpr::const_arg_iterator ArgEnd) {
-
-  llvm::Value *Callee = EmitScalarExpr(FnExpr);
-  return EmitCallExpr(Callee, FnExpr->getType(), ArgBeg, ArgEnd);
+                      E->arg_begin(), E->arg_end(), TargetDecl);
 }
 
 LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
@@ -1108,7 +1104,8 @@ CodeGenFunction::EmitObjCSuperExpr(const ObjCSuperExpr *E) {
 
 RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType CalleeType, 
                                      CallExpr::const_arg_iterator ArgBeg,
-                                     CallExpr::const_arg_iterator ArgEnd) {
+                                     CallExpr::const_arg_iterator ArgEnd,
+                                     const Decl *TargetDecl) {
   // Get the actual function type. The callee type will always be a
   // pointer to function type or a block pointer type.
   QualType ResultType;
@@ -1127,5 +1124,5 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType CalleeType,
                                   I->getType()));
 
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), 
-                  Callee, Args);
+                  Callee, Args, TargetDecl);
 }
