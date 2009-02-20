@@ -14,12 +14,8 @@
 #ifndef LLVM_CLANG_AST_DECL_H
 #define LLVM_CLANG_AST_DECL_H
 
-#include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/OperatorKinds.h"
-#include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclBase.h"
-#include "clang/Parse/AccessSpecifier.h"
-#include "llvm/ADT/SmallVector.h"
+#include "clang/AST/DeclarationName.h"
 
 namespace clang {
 class Expr;

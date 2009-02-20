@@ -18,8 +18,6 @@
 #include "clang/AST/Type.h"
 // FIXME: Layering violation
 #include "clang/Parse/AccessSpecifier.h"
-#include "clang/Basic/SourceLocation.h"
-#include "llvm/ADT/PointerIntPair.h"
 
 namespace clang {
 class DeclContext;

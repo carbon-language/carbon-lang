@@ -15,8 +15,6 @@
 #define LLVM_CLANG_AST_DECLOBJC_H
 
 #include "clang/AST/Decl.h"
-#include "clang/Basic/IdentifierTable.h"
-#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
 class Expr;
@@ -30,8 +28,7 @@ class ObjCProtocolDecl;
 class ObjCCategoryDecl;
 class ObjCPropertyDecl;
 class ObjCPropertyImplDecl;
-  
-  
+
 /// ObjCList - This is a simple template class used to hold various lists of
 /// decls etc, which is heavily used by the ObjC front-end.  This only use case
 /// this supports is setting the list all at once and then reading elements out
