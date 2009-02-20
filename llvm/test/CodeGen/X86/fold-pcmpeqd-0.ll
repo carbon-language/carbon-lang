@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin   | not grep pcmpeqd
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin   | grep orps | grep CPI1_2  | count 2
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -mcpu=yonah  | not grep pcmpeqd
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -mcpu=yonah  | grep orps | grep CPI1_2  | count 2
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep pcmpeqd | count 1
 
 ; This testcase shouldn't need to spill the -1 value,
