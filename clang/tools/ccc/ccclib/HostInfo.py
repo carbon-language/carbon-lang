@@ -43,11 +43,11 @@ class DarwinHostInfo(HostInfo):
     def getToolChainForArch(self, arch):
         if arch in ('i386', 'x86_64'):
             return ToolChain.Darwin_X86_ToolChain(self.driver,
+                                                  arch,
                                                   self.darwinVersion,
-                                                  self.gccVersion,
-                                                  arch)
+                                                  self.gccVersion)
 
-        return ToolChain.Generic_GCC_ToolChain(self.driver)
+        return ToolChain.Generic_GCC_ToolChain(self.driver, '')
 
 class DarwinPPCHostInfo(DarwinHostInfo):
     def getArchName(self, args):
@@ -92,14 +92,14 @@ def getDarwinHostInfo(driver):
 # Unknown
 
 class UnknownHostInfo(HostInfo):
-    def getArchName(self):
+    def getArchName(self, args):
         raise RuntimeError,'getArchName() unsupported on unknown host.'
 
     def useDriverDriver(self):
         return False
 
     def getToolChain(self):
-        return ToolChain.Generic_GCC_ToolChain(self.driver)
+        return ToolChain.Generic_GCC_ToolChain(self.driver, '')
 
 def getUnknownHostInfo(driver):
     return UnknownHostInfo(driver)

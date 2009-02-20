@@ -10,10 +10,11 @@ import Types
 class ToolChain(object):
     """ToolChain - Provide mappings of Actions to Tools."""
 
-    def __init__(self, driver, 
+    def __init__(self, driver, archName,
                  filePathPrefixes=[],
                  programPathPrefixes=[]):
         self.driver = driver
+        self.archName = archName
         self.filePathPrefixes = list(filePathPrefixes)
         self.programPathPrefixes = list(programPathPrefixes)
 
@@ -80,13 +81,12 @@ class ToolChain(object):
         return True
 
 class Darwin_X86_ToolChain(ToolChain):
-    def __init__(self, driver, darwinVersion, gccVersion, archName):
-        super(Darwin_X86_ToolChain, self).__init__(driver)
+    def __init__(self, driver, archName, darwinVersion, gccVersion):
+        super(Darwin_X86_ToolChain, self).__init__(driver, archName)
         assert isinstance(darwinVersion, tuple) and len(darwinVersion) == 3
         assert isinstance(gccVersion, tuple) and len(gccVersion) == 3
         self.darwinVersion = darwinVersion
         self.gccVersion = gccVersion
-        self.archName = archName
 
         self.clangTool = Tools.Clang_CompileTool(self)
         cc = Tools.Darwin_X86_CompileTool(self)
@@ -235,8 +235,8 @@ class Generic_GCC_ToolChain(ToolChain):
     perform all subcommands; this relies on gcc translating the
     options appropriately."""
 
-    def __init__(self, driver):
-        super(Generic_GCC_ToolChain, self).__init__(driver)
+    def __init__(self, driver, archName):
+        super(Generic_GCC_ToolChain, self).__init__(driver, archName)
         cc = Tools.GCC_CompileTool(self)
         self.clangTool = Tools.Clang_CompileTool(self)
         self.toolMap = {
