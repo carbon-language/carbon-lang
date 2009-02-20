@@ -1215,11 +1215,11 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return false;
   }
 
-  if (const PointerType *ParamPtrType = ParamType->getAsPointerType()) {
+  if (ParamType->isPointerType()) {
     //   -- for a non-type template-parameter of type pointer to
     //      object, qualification conversions (4.4) and the
     //      array-to-pointer conversion (4.2) are applied.
-    assert(ParamPtrType->getPointeeType()->isObjectType() &&
+    assert(ParamType->getAsPointerType()->getPointeeType()->isObjectType() &&
            "Only object pointers allowed here");
 
     if (ArgType->isArrayType()) {
@@ -1539,9 +1539,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   assert(TemplateParameterLists.size() == 1 && 
          "Clang doesn't handle with ill-formed specializations yet.");
 
-  TemplateParameterList *TemplateParams = 
-    static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
-  assert(TemplateParams->size() == 0 &&
+  assert(static_cast<TemplateParameterList*>(*TemplateParameterLists.get())
+         ->size() == 0 &&
          "Clang doesn't handle class template partial specializations yet");
 
   // Find the class template we're specializing
