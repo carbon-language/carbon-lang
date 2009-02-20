@@ -43,24 +43,13 @@ public:
     assert(List == 0 && "Destroy should have been called before dtor");
   }
   
-  void Destroy() {
-    delete[] List;
-    NumElts = 0;
-    List = 0;
-  }
+  void Destroy();
   
   unsigned size() const { return NumElts; }
   bool empty() const { return NumElts == 0; }
   
 protected:
-  void set(void *const* InList, unsigned Elts) {
-    assert(List == 0 && "Elements already set!");
-    if (Elts == 0) return;  // Setting to an empty list is a noop.
-    
-    List = new void*[Elts];
-    NumElts = Elts;
-    memcpy(List, InList, sizeof(void*)*Elts);
-  }
+  void set(void *const* InList, unsigned Elts);
 };
   
   

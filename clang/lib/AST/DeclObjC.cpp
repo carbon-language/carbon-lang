@@ -17,6 +17,26 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
+// ObjCListBase
+//===----------------------------------------------------------------------===//
+
+void ObjCListBase::Destroy() {
+  delete[] List;
+  NumElts = 0;
+  List = 0;
+}
+
+void ObjCListBase::set(void *const* InList, unsigned Elts) {
+  assert(List == 0 && "Elements already set!");
+  if (Elts == 0) return;  // Setting to an empty list is a noop.
+  
+  List = new void*[Elts];
+  NumElts = Elts;
+  memcpy(List, InList, sizeof(void*)*Elts);
+}
+
+
+//===----------------------------------------------------------------------===//
 // ObjCInterfaceDecl
 //===----------------------------------------------------------------------===//
 
