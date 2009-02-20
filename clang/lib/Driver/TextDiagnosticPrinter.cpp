@@ -101,8 +101,9 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     CaretLine[i] = '~';
 }
 
-void TextDiagnosticPrinter::EmitCaretDiagnostic(const DiagnosticInfo &Info,
-                                                SourceLocation Loc,
+void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
+                                                const SourceRange *Ranges,
+                                                unsigned NumRanges,
                                                 SourceManager &SM) {
   assert(!Loc.isInvalid() && "must have a valid source location here");
   
@@ -110,7 +111,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(const DiagnosticInfo &Info,
   // points.  This more closely correlates to what the user writes.
   if (!Loc.isFileID()) {
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
-    EmitCaretDiagnostic(Info, OneLevelUp, SM);
+    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM);
     
     Loc = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(Loc));
     
@@ -154,11 +155,11 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(const DiagnosticInfo &Info,
   std::string CaretLine(LineEnd-LineStart, ' ');
   
   // Highlight all of the characters covered by Ranges with ~ characters.
-  if (Info.getNumRanges()) {
+  if (NumRanges) {
     unsigned LineNo = SM.getLineNumber(FID, FileOffset);
     
-    for (unsigned i = 0; i != Info.getNumRanges(); ++i)
-      HighlightRange(Info.getRange(i), SM, LineNo, FID, CaretLine, SourceLine);
+    for (unsigned i = 0, e = NumRanges; i != e; ++i)
+      HighlightRange(Ranges[i], SM, LineNo, FID, CaretLine, SourceLine);
   }
   
   // Next, insert the caret itself.
@@ -244,9 +245,14 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Info.getLocation();
 
-    // Inspect the actual source location of the diagnostic, we don't care
-    // about presumed locations anymore.
-    EmitCaretDiagnostic(Info, LastLoc, LastLoc.getManager());
+    // Get the ranges into a local array we can hack on.
+    SourceRange Ranges[10];
+    unsigned NumRanges = Info.getNumRanges();
+    assert(NumRanges < 10 && "Out of space");
+    for (unsigned i = 0; i != NumRanges; ++i)
+      Ranges[i] = Info.getRange(i);
+    
+    EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager());
   }
   
   OS.flush();
