@@ -29,50 +29,59 @@ class ObjCCategoryDecl;
 class ObjCPropertyDecl;
 class ObjCPropertyImplDecl;
 
-/// ObjCList - This is a simple template class used to hold various lists of
-/// decls etc, which is heavily used by the ObjC front-end.  This only use case
-/// this supports is setting the list all at once and then reading elements out
-/// of it.
-template <typename T>
-class ObjCList {
-  /// List is a new[]'d array of pointers to objects that are not owned by this
-  /// list.
-  T **List;
+class ObjCListBase {
+  void operator=(const ObjCListBase &);     // DO NOT IMPLEMENT
+  ObjCListBase(const ObjCListBase&);        // DO NOT IMPLEMENT
+protected:
+  /// List is an array of pointers to objects that are not owned by this object.
+  void **List;
   unsigned NumElts;
-  
-  void operator=(const ObjCList &); // DO NOT IMPLEMENT
-  ObjCList(const ObjCList&);        // DO NOT IMPLEMENT
+
 public:
-  ObjCList() : List(0), NumElts(0) {}
-  ~ObjCList() {
+  ObjCListBase() : List(0), NumElts(0) {}
+  ~ObjCListBase() {
     assert(List == 0 && "Destroy should have been called before dtor");
   }
-
+  
   void Destroy() {
     delete[] List;
     NumElts = 0;
     List = 0;
   }
   
-  void set(T* const* InList, unsigned Elts) {
-    assert(List == 0 && "Elements already set!");
-    if (Elts == 0) return;  // Setting to an empty list is a noop.
-    
-    List = new T*[Elts];
-    NumElts = Elts;
-    memcpy(List, InList, sizeof(T*)*Elts);
-  }
-  
-  typedef T* const * iterator;
-  iterator begin() const { return List; }
-  iterator end() const { return List+NumElts; }
-  
   unsigned size() const { return NumElts; }
   bool empty() const { return NumElts == 0; }
   
-  T* operator[](unsigned idx) const {
-    assert(idx < NumElts && "Invalid access");
-    return List[idx];
+protected:
+  void set(void *const* InList, unsigned Elts) {
+    assert(List == 0 && "Elements already set!");
+    if (Elts == 0) return;  // Setting to an empty list is a noop.
+    
+    List = new void*[Elts];
+    NumElts = Elts;
+    memcpy(List, InList, sizeof(void*)*Elts);
+  }
+};
+  
+  
+/// ObjCList - This is a simple template class used to hold various lists of
+/// decls etc, which is heavily used by the ObjC front-end.  This only use case
+/// this supports is setting the list all at once and then reading elements out
+/// of it.
+template <typename T>
+class ObjCList : public ObjCListBase {
+public:
+  void set(T* const* InList, unsigned Elts) {
+    ObjCListBase::set(reinterpret_cast<void*const*>(InList), Elts);
+  }
+  
+  typedef T* const * iterator;
+  iterator begin() const { return (iterator)List; }
+  iterator end() const { return (iterator)List+NumElts; }
+  
+  T* operator[](unsigned Idx) const {
+    assert(Idx < NumElts && "Invalid access");
+    return (T*)List[Idx];
   }
 };
 
