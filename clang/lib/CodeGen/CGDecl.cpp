@@ -153,7 +153,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
 
   // Emit global variable debug descriptor for static vars.
   CGDebugInfo *DI = getDebugInfo();
-  if(DI) {
+  if (DI) {
     DI->setLocation(D.getLocation());
     DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(GV), &D);
   }
