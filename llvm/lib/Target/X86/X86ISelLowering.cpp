@@ -1071,9 +1071,21 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
       CopyVT = MVT::f80;
     }
 
-    Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
-                               CopyVT, InFlag).getValue(1);
-    SDValue Val = Chain.getValue(0);
+    SDValue Val;
+    if (Is64Bit && CopyVT.isVector() && CopyVT.getSizeInBits() == 64) {
+      // For x86-64, MMX values are returned in XMM0 and XMM1. Issue an
+      // extract_vector_elt to i64 and then bit_convert it to the desired type.
+      Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
+                                 MVT::v2i64, InFlag).getValue(1);
+      Val = Chain.getValue(0);
+      Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64,
+                        Val, DAG.getConstant(0, MVT::i64));
+      Val = DAG.getNode(ISD::BIT_CONVERT, dl, CopyVT, Val);
+    } else {
+      Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
+                                 CopyVT, InFlag).getValue(1);
+      Val = Chain.getValue(0);
+    }
     InFlag = Chain.getValue(2);
 
     if (CopyVT != VA.getValVT()) {
