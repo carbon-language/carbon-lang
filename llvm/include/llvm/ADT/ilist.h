@@ -386,7 +386,7 @@ public:
   }
 
   iterator insertAfter(iterator where, NodeTy *New) {
-    if (empty()) 
+    if (empty())
       return insert(begin(), New);
     else
       return insert(++where, New);

@@ -1000,7 +1000,7 @@ public:
 
   /// isEmpty - Return true if the set contains no elements.
   bool isEmpty() const { return !Root; }
-  
+
   /// isSingleton - Return true if the set contains exactly one element.
   ///   This method runs in constant time.
   bool isSingleton() const { return getHeight() == 1; }
