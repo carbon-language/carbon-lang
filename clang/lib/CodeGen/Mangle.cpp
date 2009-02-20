@@ -62,14 +62,14 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   // FIXME: Actually use a visitor to decode these?
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     bool RequiresMangling = false;
-    // No mangled in an "implicit extern C" header.
-    if (Context.getSourceManager().getFileCharacteristic(FD->getLocation())
-          == SrcMgr::C_ExternCSystem)
-      RequiresMangling = false;
     // Clang's "overloadable" attribute extension to C/C++ implies
     // name mangling (always).
-    else if (FD->getAttr<OverloadableAttr>())
+    if (FD->getAttr<OverloadableAttr>())
       RequiresMangling = true;
+    // No mangled in an "implicit extern C" header.
+    else if (Context.getSourceManager().getFileCharacteristic(FD->getLocation())
+          == SrcMgr::C_ExternCSystem)
+      RequiresMangling = false;
     else if (Context.getLangOptions().CPlusPlus) {
       // C++ requires name mangling, unless we're in a C linkage
       // specification.
