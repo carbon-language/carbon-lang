@@ -559,8 +559,13 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   //  of a location but that value is not known.  In the future we should
   //  handle potential aliasing relationships; e.g. a loc::SymbolVal could
   //  be an alias for a particular region.
-  if (isa<loc::SymbolVal>(L))
+  // Example:
+  // void foo(char* buf) {
+  //   char c = *buf;
+  // }
+  if (isa<loc::SymbolVal>(L)) {
     return UnknownVal();
+  }
 
   // FIXME: Is this even possible?  Shouldn't this be treated as a null
   //  dereference at a higher level?
