@@ -971,14 +971,12 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
     return EmitBlockCallExpr(E);
 
   const Decl *TargetDecl = 0;
-  if (const ImplicitCastExpr *IcExpr = 
-      dyn_cast<ImplicitCastExpr>(E->getCallee())) {
-    if (const DeclRefExpr *DRExpr = 
-        dyn_cast<DeclRefExpr>(IcExpr->getSubExpr())) {
-      TargetDecl = DRExpr->getDecl();
-      if (const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(TargetDecl))
-        if (unsigned builtinID = FDecl->getBuiltinID(getContext()))
-          return EmitBuiltinExpr(FDecl, builtinID, E);
+  if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(E->getCallee())) {
+    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr())) {
+      TargetDecl = DRE->getDecl();
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(TargetDecl))
+        if (unsigned builtinID = FD->getBuiltinID(getContext()))
+          return EmitBuiltinExpr(FD, builtinID, E);
     }
   }
 
