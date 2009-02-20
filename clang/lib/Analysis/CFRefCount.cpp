@@ -915,8 +915,11 @@ RetainSummary*
 RetainSummaryManager::getInitMethodSummary(ObjCMessageExpr* ME) {
   assert(ScratchArgs.empty());
     
+  // 'init' methods only return an alias if the return type is a location type.
+  QualType T = ME->getType();
   RetainSummary* Summ =
-    getPersistentSummary(RetEffect::MakeReceiverAlias());
+    getPersistentSummary(Loc::IsLocType(T) ? RetEffect::MakeReceiverAlias()
+                                           : RetEffect::MakeNoRet());
   
   ObjCMethodSummaries[ME] = Summ;
   return Summ;
@@ -1608,7 +1611,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         unsigned Count = Builder.getCurrentBlockCount();
         SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
         
-        SVal X = Loc::IsLocType(Ex->getType())
+        SVal X = Loc::IsLocType(T)
                ? cast<SVal>(loc::SymbolVal(Sym)) 
                : cast<SVal>(nonloc::SymbolVal(Sym));
         
