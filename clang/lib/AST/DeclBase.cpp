@@ -359,7 +359,8 @@ DeclContext *DeclContext::getNextContext() {
 }
 
 void DeclContext::addDecl(Decl *D) {
-  assert(D->getLexicalDeclContext() == this && "Decl inserted into wrong lexical context");
+  assert(D->getLexicalDeclContext() == this &&
+         "Decl inserted into wrong lexical context");
   assert(!D->NextDeclInScope && D != LastDecl && 
          "Decl already inserted into a DeclContext");
 
