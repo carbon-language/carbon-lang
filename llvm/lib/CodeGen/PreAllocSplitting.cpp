@@ -224,6 +224,9 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
   if (RefsInMBB.empty() && !DefMI) {
     MachineBasicBlock::iterator MII = MBB->begin();
     MachineBasicBlock::iterator EndPt = MI;
+    
+    if (MII == EndPt) return Pt;
+    
     do {
       ++MII;
       unsigned Index = LIs->getInstructionIndex(MII);
@@ -303,6 +306,9 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
   if (RefsInMBB.empty() && LastIdx >= EndIdx) {
     MachineBasicBlock::iterator MII = MBB->getFirstTerminator();
     MachineBasicBlock::iterator EndPt = MI;
+    
+    if (MII == EndPt) return Pt;
+    
     --MII;
     do {
       unsigned Index = LIs->getInstructionIndex(MII);
