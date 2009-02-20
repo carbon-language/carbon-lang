@@ -102,7 +102,6 @@ Preprocessor::~Preprocessor() {
     // destroyed. We still need to run the dstor, however, to free
     // memory alocated by MacroInfo.
     I->second->Destroy();
-    I->second->~MacroInfo();    
     I->first->setHasMacroDefinition(false);
   }
   

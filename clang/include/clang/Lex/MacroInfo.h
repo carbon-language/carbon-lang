@@ -72,16 +72,26 @@ private:
   /// been used, or if it is not defined in the main file.  This is used to 
   /// emit -Wunused-macros diagnostics.
   bool IsUsed : 1;
-public:
-  MacroInfo(SourceLocation DefLoc);
   
   ~MacroInfo() {
     assert(ArgumentList == 0 && "Didn't call destroy before dtor!");
   }
   
-  void Destroy() {
+public:
+  MacroInfo(SourceLocation DefLoc);
+  
+  /// FreeArgumentList - Free the argument list of the macro, restoring it to a
+  /// state where it can be reused for other devious purposes.
+  void FreeArgumentList() {
     delete[] ArgumentList;
     ArgumentList = 0;
+    NumArguments = 0;
+  }
+  
+  /// Destroy - destroy this MacroInfo object.
+  void Destroy() {
+    FreeArgumentList();
+    this->~MacroInfo();
   }
   
   /// getDefinitionLoc - Return the location that the macro was defined at.
@@ -107,15 +117,15 @@ public:
 
   /// setArgumentList - Set the specified list of identifiers as the argument
   /// list for this macro.
-  template<typename ItTy>
-  void setArgumentList(ItTy ArgBegin, ItTy ArgEnd) {
-    assert(ArgumentList == 0 && "Argument list already set!");
-    unsigned NumArgs = ArgEnd-ArgBegin;
+  void setArgumentList(IdentifierInfo* const *List, unsigned NumArgs) {
+    assert(ArgumentList == 0 && NumArguments == 0 &&
+           "Argument list already set!");
     if (NumArgs == 0) return;
+    
     NumArguments = NumArgs;
     ArgumentList = new IdentifierInfo*[NumArgs];
-    for (unsigned i = 0; ArgBegin != ArgEnd; ++i, ++ArgBegin)
-      ArgumentList[i] = *ArgBegin;
+    for (unsigned i = 0; i != NumArgs; ++i)
+      ArgumentList[i] = List[i];
   }
   
   /// Arguments - The list of arguments for a function-like macro.  This can be
