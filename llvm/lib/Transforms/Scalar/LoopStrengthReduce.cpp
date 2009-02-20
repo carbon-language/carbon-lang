@@ -1548,8 +1548,7 @@ bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
   // a register for their base, full strength-reduction will increase
   // register pressure.
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i)
-    if (!UsersToProcess[i].Base ||
-        UsersToProcess[i].Base->isZero())
+    if (UsersToProcess[i].Base->isZero())
       return false;
 
   // Otherwise, go for it.
