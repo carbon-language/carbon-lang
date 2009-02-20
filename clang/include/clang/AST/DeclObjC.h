@@ -861,9 +861,8 @@ class ObjCImplementationDecl : public Decl, public DeclContext {
   /// Implementation Class's super class.
   ObjCInterfaceDecl *SuperClass;
     
-  /// Optional Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
-  ObjCIvarDecl **Ivars;   // Null if not specified
-  unsigned NumIvars;      // 0 if none.
+  /// Instance variables declared in the @implementation.
+  ObjCList<ObjCIvarDecl> IVars;
 
   /// implemented instance methods
   llvm::SmallVector<ObjCMethodDecl*, 32> InstanceMethods;
@@ -880,18 +879,20 @@ class ObjCImplementationDecl : public Decl, public DeclContext {
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl)
     : Decl(ObjCImplementation, DC, L), DeclContext(ObjCImplementation),
-      ClassInterface(classInterface), SuperClass(superDecl),
-      Ivars(0), NumIvars(0) {}
+      ClassInterface(classInterface), SuperClass(superDecl){}
 public:  
   static ObjCImplementationDecl *Create(ASTContext &C, DeclContext *DC, 
                                         SourceLocation L, 
                                         ObjCInterfaceDecl *classInterface,
                                         ObjCInterfaceDecl *superDecl);
   
+  /// Destroy - Call destructors and release memory.
+  virtual void Destroy(ASTContext& C);
+
+  void setIVarList(ObjCIvarDecl *const *InArray, unsigned Num) {
+    IVars.set(InArray, Num);
+  }
   
-  void ObjCAddInstanceVariablesToClassImpl(ObjCIvarDecl **ivars, 
-                                           unsigned numIvars);
-    
   void addInstanceMethod(ObjCMethodDecl *method) {
     InstanceMethods.push_back(method);
   }
@@ -963,11 +964,11 @@ public:
     return isInstance ? getInstanceMethod(Sel) : getClassMethod(Sel);
   }
   
-  typedef ObjCIvarDecl * const *ivar_iterator;
-  ivar_iterator ivar_begin() const { return Ivars; }
-  ivar_iterator ivar_end() const { return Ivars+NumIvars; }
-  unsigned ivar_size() const { return NumIvars; }
-  bool ivar_empty() const { return NumIvars == 0; }
+  typedef ObjCList<ObjCIvarDecl>::iterator ivar_iterator;
+  ivar_iterator ivar_begin() const { return IVars.begin(); }
+  ivar_iterator ivar_end() const { return IVars.end(); }
+  unsigned ivar_size() const { return IVars.size(); }
+  bool ivar_empty() const { return IVars.empty(); }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCImplementation;

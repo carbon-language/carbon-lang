@@ -3458,13 +3458,10 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
     
   }
   
-  // FIXME: Chain fielddecls together.
-  FieldDecl *NewFD;
-
-  NewFD = FieldDecl::Create(Context, Record,
-                            Loc, II, T, BitWidth,
-                            D.getDeclSpec().getStorageClassSpec() ==
-                              DeclSpec::SCS_mutable);
+  FieldDecl *NewFD = FieldDecl::Create(Context, Record,
+                                       Loc, II, T, BitWidth,
+                                       D.getDeclSpec().getStorageClassSpec() ==
+                                       DeclSpec::SCS_mutable);
 
   if (II) {
     NamedDecl *PrevDecl = LookupName(S, II, LookupMemberName, true);
@@ -3710,7 +3707,7 @@ void Sema::ActOnFields(Scope* S,
     else if (ObjCImplementationDecl *IMPDecl = 
                dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
       assert(IMPDecl && "ActOnFields - missing ObjCImplementationDecl");
-      IMPDecl->ObjCAddInstanceVariablesToClassImpl(ClsFields, RecFields.size());
+      IMPDecl->setIVarList(ClsFields, RecFields.size());
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);
     }
   }

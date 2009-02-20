@@ -175,6 +175,12 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCImplementationDecl(DC, L, ClassInterface, SuperDecl);
 }
 
+/// Destroy - Call destructors and release memory.
+void ObjCImplementationDecl::Destroy(ASTContext& C) {
+  IVars.clear();
+}
+
+
 ObjCCompatibleAliasDecl *
 ObjCCompatibleAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                 SourceLocation L,
@@ -250,18 +256,6 @@ FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context,
   return MemberDecl;
 }
 
-/// ObjCAddInstanceVariablesToClassImpl - Checks for correctness of Instance 
-/// Variables (Ivars) relative to what declared in @implementation;s class. 
-/// Ivars into ObjCImplementationDecl's fields.
-///
-void ObjCImplementationDecl::ObjCAddInstanceVariablesToClassImpl(
-                               ObjCIvarDecl **ivars, unsigned numIvars) {
-  NumIvars = numIvars;
-  if (numIvars) {
-    Ivars = new ObjCIvarDecl*[numIvars];
-    memcpy(Ivars, ivars, numIvars*sizeof(ObjCIvarDecl*));
-  }
-}
 
 // Get the local instance method declared in this interface.
 // FIXME: handle overloading, instance & class methods can have the same name.
