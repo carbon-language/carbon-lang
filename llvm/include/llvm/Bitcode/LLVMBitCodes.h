@@ -26,7 +26,7 @@ namespace bitc {
   enum BlockIDs {
     // Blocks
     MODULE_BLOCK_ID          = FIRST_APPLICATION_BLOCKID,
-  
+
     // Module sub-block id's.
     PARAMATTR_BLOCK_ID,
     TYPE_BLOCK_ID,
@@ -35,8 +35,8 @@ namespace bitc {
     TYPE_SYMTAB_BLOCK_ID,
     VALUE_SYMTAB_BLOCK_ID
   };
-  
-  
+
+
   /// MODULE blocks have a number of optional fields and subblocks.
   enum ModuleCodes {
     MODULE_CODE_VERSION     = 1,    // VERSION:     [version#]
@@ -46,32 +46,32 @@ namespace bitc {
     MODULE_CODE_SECTIONNAME = 5,    // SECTIONNAME: [strchr x N]
     MODULE_CODE_DEPLIB      = 6,    // DEPLIB:      [strchr x N]
 
-    // GLOBALVAR: [pointer type, isconst, initid, 
+    // GLOBALVAR: [pointer type, isconst, initid,
     //             linkage, alignment, section, visibility, threadlocal]
     MODULE_CODE_GLOBALVAR   = 7,
 
     // FUNCTION:  [type, callingconv, isproto, linkage, paramattrs, alignment,
     //             section, visibility]
     MODULE_CODE_FUNCTION    = 8,
-    
+
     // ALIAS: [alias type, aliasee val#, linkage]
     MODULE_CODE_ALIAS       = 9,
-    
+
     /// MODULE_CODE_PURGEVALS: [numvals]
     MODULE_CODE_PURGEVALS   = 10,
-    
+
     MODULE_CODE_GCNAME      = 11   // GCNAME: [strchr x N]
   };
-  
+
   /// PARAMATTR blocks have code for defining a parameter attribute set.
   enum AttributeCodes {
     PARAMATTR_CODE_ENTRY = 1   // ENTRY: [paramidx0, attr0, paramidx1, attr1...]
   };
-  
+
   /// TYPE blocks have codes for each type primitive they use.
   enum TypeCodes {
     TYPE_CODE_NUMENTRY =  1,   // NUMENTRY: [numentries]
-    
+
     // Type Codes
     TYPE_CODE_VOID     =  2,   // VOID
     TYPE_CODE_FLOAT    =  3,   // FLOAT
@@ -93,18 +93,18 @@ namespace bitc {
     TYPE_CODE_PPC_FP128= 15    // PPC LONG DOUBLE (2 doubles)
     // Any other type code is assumed to be an unknown type.
   };
-  
+
   // The type symbol table only has one code (TST_ENTRY_CODE).
   enum TypeSymtabCodes {
     TST_CODE_ENTRY = 1     // TST_ENTRY: [typeid, namechar x N]
   };
-  
+
   // The value symbol table only has one code (VST_ENTRY_CODE).
   enum ValueSymtabCodes {
     VST_CODE_ENTRY   = 1,  // VST_ENTRY: [valid, namechar x N]
     VST_CODE_BBENTRY = 2   // VST_BBENTRY: [bbid, namechar x N]
   };
-  
+
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
   // constant and maintains an implicit current type value.
   enum ConstantsCodes {
@@ -128,7 +128,7 @@ namespace bitc {
     CST_CODE_INLINEASM     = 18,  // INLINEASM:     [sideeffect,asmstr,conststr]
     CST_CODE_CE_SHUFVEC_EX = 19   // SHUFVEC_EX:    [opty, opval, opval, opval]
   };
-  
+
   /// CastOpcodes - These are values used in the bitcode files to encode which
   /// cast a CST_CODE_CE_CAST or a XXX refers to.  The values of these enums
   /// have no fixed relation to the LLVM IR enum values.  Changing these will
@@ -147,7 +147,7 @@ namespace bitc {
     CAST_INTTOPTR = 10,
     CAST_BITCAST  = 11
   };
-  
+
   /// BinaryOpcodes - These are values used in the bitcode files to encode which
   /// binop a CST_CODE_CE_BINOP or a XXX refers to.  The values of these enums
   /// have no fixed relation to the LLVM IR enum values.  Changing these will
@@ -167,13 +167,13 @@ namespace bitc {
     BINOP_OR   = 11,
     BINOP_XOR  = 12
   };
-  
-  
+
+
   // The function body block (FUNCTION_BLOCK_ID) describes function bodies.  It
   // can contain a constant block (CONSTANTS_BLOCK_ID).
   enum FunctionCodes {
     FUNC_CODE_DECLAREBLOCKS    =  1, // DECLAREBLOCKS: [n]
-    
+
     FUNC_CODE_INST_BINOP       =  2, // BINOP:      [opcode, ty, opval, opval]
     FUNC_CODE_INST_CAST        =  3, // CAST:       [opcode, ty, opty, opval]
     FUNC_CODE_INST_GEP         =  4, // GEP:        [n x operands]
@@ -182,14 +182,14 @@ namespace bitc {
     FUNC_CODE_INST_INSERTELT   =  7, // INSERTELT:  [ty, opval, opval, opval]
     FUNC_CODE_INST_SHUFFLEVEC  =  8, // SHUFFLEVEC: [ty, opval, opval, opval]
     FUNC_CODE_INST_CMP         =  9, // CMP:        [opty, opval, opval, pred]
-    
+
     FUNC_CODE_INST_RET         = 10, // RET:        [opty,opval<both optional>]
     FUNC_CODE_INST_BR          = 11, // BR:         [bb#, bb#, cond] or [bb#]
     FUNC_CODE_INST_SWITCH      = 12, // SWITCH:     [opty, opval, n, n x ops]
     FUNC_CODE_INST_INVOKE      = 13, // INVOKE:     [attr, fnty, op0,op1, ...]
     FUNC_CODE_INST_UNWIND      = 14, // UNWIND
     FUNC_CODE_INST_UNREACHABLE = 15, // UNREACHABLE
-    
+
     FUNC_CODE_INST_PHI         = 16, // PHI:        [ty, val0,bb0, ...]
     FUNC_CODE_INST_MALLOC      = 17, // MALLOC:     [instty, op, align]
     FUNC_CODE_INST_FREE        = 18, // FREE:       [opty, op]

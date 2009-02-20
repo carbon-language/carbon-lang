@@ -17,8 +17,8 @@
 namespace llvm {
 
 class Serializer;
-class Deserializer;  
-template <typename T> struct SerializeTrait;  
+class Deserializer;
+template <typename T> struct SerializeTrait;
 
 typedef unsigned SerializedPtrID;
 

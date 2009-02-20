@@ -18,7 +18,7 @@
 #include "llvm/Bitcode/SerializationFwd.h"
 
 namespace llvm {
-  
+
 /// SerializeTrait - SerializeTrait bridges between the Serializer/Deserializer
 ///  and the functions that serialize objects of specific types.  The default
 ///  behavior is to call static methods of the class for the object being
@@ -38,7 +38,7 @@ struct SerializeTrait {
   static inline void Emit(Serializer& S, const T& X) { X.Emit(S); }
   static inline void Read(Deserializer& D, T& X) { X.Read(D); }
   static inline T* Create(Deserializer& D) { return T::Create(D); }
-  
+
   template <typename Arg1>
   static inline T* Create(Deserializer& D, Arg1& arg1) {
     return T::Create(D, arg1);
@@ -55,14 +55,14 @@ SERIALIZE_INT_TRAIT(unsigned char)
 SERIALIZE_INT_TRAIT(unsigned short)
 SERIALIZE_INT_TRAIT(unsigned int)
 SERIALIZE_INT_TRAIT(unsigned long)
-  
+
 SERIALIZE_INT_TRAIT(signed char)
 SERIALIZE_INT_TRAIT(signed short)
 SERIALIZE_INT_TRAIT(signed int)
 SERIALIZE_INT_TRAIT(signed long)
 
 #undef SERIALIZE_INT_TRAIT
-  
+
 } // end namespace llvm
 
 #endif

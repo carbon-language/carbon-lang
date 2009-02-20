@@ -29,7 +29,7 @@ namespace bitc {
     CodeLenWidth = 4,  // Codelen are VBR-4.
     BlockSizeWidth = 32  // BlockSize up to 2^32 32-bit words = 16GB per block.
   };
-  
+
   // The standard abbrev namespace always has a way to exit a block, enter a
   // nested block, define abbrevs, and define an unabbreviated record.
   enum FixedAbbrevIDs {
@@ -41,16 +41,16 @@ namespace bitc {
     /// single bit to indicate if it is a literal encoding.  If so, the value is
     /// emitted with a vbr8.  If not, the encoding is emitted as 3 bits followed
     /// by the info value as a vbr5 if needed.
-    DEFINE_ABBREV = 2, 
-    
+    DEFINE_ABBREV = 2,
+
     // UNABBREV_RECORDs are emitted with a vbr6 for the record code, followed by
     // a vbr6 for the # operands, followed by vbr6's for each operand.
     UNABBREV_RECORD = 3,
-    
+
     // This is not a code, this is a marker for the first abbrev assignment.
     FIRST_APPLICATION_ABBREV = 4
   };
-  
+
   /// StandardBlockIDs - All bitcode files can optionally include a BLOCKINFO
   /// block, which contains metadata about other blocks in the file.
   enum StandardBlockIDs {
@@ -58,11 +58,11 @@ namespace bitc {
     /// standard abbrevs that should be available to all blocks of a specified
     /// ID.
     BLOCKINFO_BLOCK_ID = 0,
-    
+
     // Block IDs 1-7 are reserved for future expansion.
     FIRST_APPLICATION_BLOCKID = 8
   };
-  
+
   /// BlockInfoCodes - The blockinfo block contains metadata about user-defined
   /// blocks.
   enum BlockInfoCodes {
@@ -71,7 +71,7 @@ namespace bitc {
     // block, instead of the BlockInfo block.
     // BLOCKNAME: give string name to block, if desired.
   };
-  
+
 } // End bitc namespace
 
 /// BitCodeAbbrevOp - This describes one or more operands in an abbreviation.
@@ -90,24 +90,24 @@ public:
     Array = 3,  // A sequence of fields, next field species elt encoding.
     Char6 = 4   // A 6-bit fixed field which maps to [a-zA-Z0-9._].
   };
-    
+
   explicit BitCodeAbbrevOp(uint64_t V) :  Val(V), IsLiteral(true) {}
   explicit BitCodeAbbrevOp(Encoding E, uint64_t Data = 0)
     : Val(Data), IsLiteral(false), Enc(E) {}
-  
+
   bool isLiteral() const { return IsLiteral; }
   bool isEncoding() const { return !IsLiteral; }
 
   // Accessors for literals.
   uint64_t getLiteralValue() const { assert(isLiteral()); return Val; }
-  
+
   // Accessors for encoding info.
   Encoding getEncoding() const { assert(isEncoding()); return (Encoding)Enc; }
   uint64_t getEncodingData() const {
     assert(isEncoding() && hasEncodingData());
     return Val;
   }
-  
+
   bool hasEncodingData() const { return hasEncodingData(getEncoding()); }
   static bool hasEncodingData(Encoding E) {
     switch (E) {
@@ -120,7 +120,7 @@ public:
       return false;
     }
   }
-  
+
   /// isChar6 - Return true if this character is legal in the Char6 encoding.
   static bool isChar6(char C) {
     if (C >= 'a' && C <= 'z') return true;
@@ -138,7 +138,7 @@ public:
     assert(0 && "Not a value Char6 character!");
     return 0;
   }
-  
+
   static char DecodeChar6(unsigned V) {
     assert((V & ~63) == 0 && "Not a Char6 encoded character!");
     if (V < 26) return V+'a';
@@ -149,7 +149,7 @@ public:
     assert(0 && "Not a value Char6 character!");
     return ' ';
   }
-  
+
 };
 
 /// BitCodeAbbrev - This class represents an abbreviation record.  An
@@ -161,7 +161,7 @@ class BitCodeAbbrev {
   ~BitCodeAbbrev() {}
 public:
   BitCodeAbbrev() : RefCount(1) {}
-  
+
   void addRef() { ++RefCount; }
   void dropRef() { if (--RefCount == 0) delete this; }
 
@@ -171,7 +171,7 @@ public:
   const BitCodeAbbrevOp &getOperandInfo(unsigned N) const {
     return OperandList[N];
   }
-  
+
   void Add(const BitCodeAbbrevOp &OpInfo) {
     OperandList.push_back(OpInfo);
   }

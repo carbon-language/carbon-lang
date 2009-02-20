@@ -204,7 +204,7 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
 /// applications and the linkers. Consequently, the implementation of the class
 /// is optimized for reading.
 class Archive {
-  
+
   /// @name Types
   /// @{
   public:
@@ -485,7 +485,7 @@ class Archive {
     void writeSymbolTable(std::ofstream& ARFile);
 
     /// Writes one ArchiveMember to an ofstream. If an error occurs, returns
-    /// false, otherwise true. If an error occurs and error is non-null then 
+    /// false, otherwise true. If an error occurs and error is non-null then
     /// it will be set to an error message.
     /// @returns false Writing member succeeded
     /// @returns true Writing member failed, \p error set to error message

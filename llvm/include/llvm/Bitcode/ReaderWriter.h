@@ -24,7 +24,7 @@ namespace llvm {
   class ModulePass;
   class BitstreamWriter;
   class raw_ostream;
-  
+
   /// getBitcodeModuleProvider - Read the header of the specified bitcode buffer
   /// and prepare for lazy deserialization of function bodies.  If successful,
   /// this takes ownership of 'buffer' and returns a non-null pointer.  On
@@ -37,11 +37,11 @@ namespace llvm {
   /// If an error occurs, this returns null and fills in *ErrMsg if it is
   /// non-null.  This method *never* takes ownership of Buffer.
   Module *ParseBitcodeFile(MemoryBuffer *Buffer, std::string *ErrMsg = 0);
-  
+
   /// WriteBitcodeToFile - Write the specified module to the specified output
   /// stream.
   void WriteBitcodeToFile(const Module *M, std::ostream &Out);
-  
+
   /// WriteBitcodeToFile - Write the specified module to the specified
   /// raw output stream.
   void WriteBitcodeToFile(const Module *M, raw_ostream &Out);
