@@ -47,7 +47,7 @@ class DarwinHostInfo(HostInfo):
                                                   self.darwinVersion,
                                                   self.gccVersion)
 
-        return ToolChain.Generic_GCC_ToolChain(self.driver, '')
+        return ToolChain.Generic_GCC_ToolChain(self.driver, arch)
 
 class DarwinPPCHostInfo(DarwinHostInfo):
     def getArchName(self, args):

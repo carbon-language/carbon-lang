@@ -37,8 +37,13 @@ class GCC_Common_Tool(Tool):
                 cmd_args.extend(arglist.render(arg))
 
         cmd_args.extend(self.getGCCExtraArgs())
-        if arch:
-            cmd_args.extend(arglist.render(arch))
+
+        # If using a driver driver, force the arch.
+        if self.toolChain.driver.hostInfo.useDriverDriver():
+            # FIXME: Remove this branch once ok.
+            cmd_args.append('-arch')
+            cmd_args.append(self.toolChain.archName)
+
         if isinstance(output, Jobs.PipedJob):
             cmd_args.extend(['-o', '-'])
         elif isinstance(phase.phase, Phases.SyntaxOnlyPhase):
@@ -141,8 +146,9 @@ class Darwin_AssembleTool(Tool):
                 cmd_args.append('--gstabs')
 
         # Derived from asm spec.
-        if arch:
-            cmd_args.extend(arglist.render(arch))
+        cmd_args.append('-arch')
+        cmd_args.append(self.toolChain.archName)
+
         cmd_args.append('-force_cpusubtype_ALL')
         if (arglist.getLastArg(arglist.parser.m_kernelOption) or
             arglist.getLastArg(arglist.parser.staticOption) or
@@ -252,13 +258,11 @@ class Clang_CompileTool(Tool):
                           not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption)))
 
             # FIXME: This needs to tie into a platform hook.
-            if arch:
-                archName = arglist.getValue(arch)
-                if (archName == 'x86_64' or 
-                    picEnabled):
-                    cmd_args.append('--relocation-model=pic')
-                elif not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption):
-                    cmd_args.append('--relocation-model=static')
+            if (self.toolChain.archName == 'x86_64' or 
+                picEnabled):
+                cmd_args.append('--relocation-model=pic')
+            elif not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption):
+                cmd_args.append('--relocation-model=static')
 
             if arglist.getLastArg(arglist.parser.f_timeReportOption):
                 cmd_args.append('--time-passes')
@@ -353,8 +357,10 @@ class Clang_CompileTool(Tool):
         for arg in arglist.getArgs(arglist.parser.XclangOption):
             cmd_args.extend(arglist.getValues(arg))
 
-        if arch is not None:
-            cmd_args.extend(arglist.render(arch))
+        # FIXME: We should always pass this once it is always known.
+        if self.toolChain.archName:
+            cmd_args.append('-arch')
+            cmd_args.append(self.toolChain.archName)
 
         if isinstance(output, Jobs.PipedJob):
             cmd_args.extend(['-o', '-'])
@@ -583,7 +589,7 @@ class Darwin_X86_CC1Tool(Tool):
         arglist.addLastArg(cmd_args, arglist.parser.POption)
 
         # FIXME: Handle %I properly.
-        if arglist.getValue(arch) == 'x86_64':
+        if self.toolChain.archName == 'x86_64':
             cmd_args.append('-imultilib')
             cmd_args.append('x86_64')
 
@@ -796,13 +802,7 @@ class Darwin_X86_LinkTool(Tool):
     def addDarwinArch(self, cmd_args, arch, arglist):
         # Derived from darwin_arch spec.
         cmd_args.append('-arch')
-        # FIXME: The actual spec uses -m64 for this, but we want to
-        # respect arch. Figure out what exactly gcc is doing.
-        #if arglist.getLastArg(arglist.parser.m_64Option):
-        if arglist.getValue(arch) == 'x86_64':
-            cmd_args.append('x86_64')
-        else:
-            cmd_args.append('i386')
+        cmd_args.append(self.toolChain.archName)
 
     def addDarwinSubArch(self, cmd_args, arch, arglist):
         # Derived from darwin_subarch spec, not sure what the
@@ -1109,7 +1109,7 @@ class Darwin_X86_LinkTool(Tool):
 
         # FIXME: Derive these correctly.
         tcDir = self.toolChain.getToolChainDir()
-        if arglist.getValue(arch) == 'x86_64':            
+        if self.toolChain.archName == 'x86_64':            
             cmd_args.extend(["-L/usr/lib/gcc/%s/x86_64" % tcDir,
                              "-L/usr/lib/gcc/%s/x86_64" % tcDir])
         cmd_args.extend(["-L/usr/lib/%s" % tcDir,

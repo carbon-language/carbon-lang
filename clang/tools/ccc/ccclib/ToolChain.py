@@ -74,6 +74,12 @@ class ToolChain(object):
         if self.driver.cccNoClangCXX:
             if action.inputs[0].type in Types.cxxTypesSet:
                 return False
+        
+        # Don't use clang if this isn't one of the user specified
+        # archs to build.
+        if (self.driver.cccClangArchs and 
+            self.archName not in self.driver.cccClangArchs):
+            return False
 
         return True
         
@@ -130,18 +136,6 @@ class Darwin_X86_ToolChain(ToolChain):
     def getMacosxVersionMin(self):
         major,minor,minorminor = self.darwinVersion
         return '%d.%d.%d' % (10, major-4, minor)
-
-    def shouldUseClangCompiler(self, action):
-        if not super(Darwin_X86_ToolChain, self).shouldUseClangCompiler(action):
-            return False
-        
-        # Only use clang if user didn't override archs, or this is one
-        # of the ones they provided.
-        if (not self.driver.cccClangArchs or 
-            self.archName in self.driver.cccClangArchs):
-            return True
-        
-        return False
 
     def selectTool(self, action):
         assert isinstance(action, Phases.JobAction)
