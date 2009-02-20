@@ -735,9 +735,6 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
 }
 
 void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
-  int numDecls = ClassDecl->getNumForwardDecls();
-  ObjCInterfaceDecl **ForwardDecls = ClassDecl->getForwardDecls();
-  
   // Get the start location and compute the semi location.
   SourceLocation startLoc = ClassDecl->getLocation();
   const char *startBuf = SM->getCharacterData(startLoc);
@@ -750,8 +747,9 @@ void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
   typedefString += "// ";
   typedefString.append(startBuf, semiPtr-startBuf+1);
   typedefString += "\n";
-  for (int i = 0; i < numDecls; i++) {
-    ObjCInterfaceDecl *ForwardDecl = ForwardDecls[i];
+  for (ObjCClassDecl::iterator I = ClassDecl->begin(), E = ClassDecl->end();
+       I != E; ++I) {
+    ObjCInterfaceDecl *ForwardDecl = *I;
     typedefString += "#ifndef _REWRITER_typedef_";
     typedefString += ForwardDecl->getNameAsString();
     typedefString += "\n";

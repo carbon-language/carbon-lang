@@ -117,11 +117,10 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     PrintObjCCompatibleAliasDecl(OID);
   } else if (ObjCClassDecl *OFCD = dyn_cast<ObjCClassDecl>(D)) {
     Out << "@class ";
-    ObjCInterfaceDecl **ForwardDecls = OFCD->getForwardDecls();
-    for (unsigned i = 0, e = OFCD->getNumForwardDecls(); i != e; ++i) {
-      const ObjCInterfaceDecl *D = ForwardDecls[i];
-      if (i) Out << ", ";
-      Out << D->getNameAsString();
+    for (ObjCClassDecl::iterator I = OFCD->begin(), E = OFCD->end();
+         I != E; ++I) {
+      if (I != OFCD->begin()) Out << ", ";
+      Out << (*I)->getNameAsString();
     }
     Out << ";\n";
   } else if (EnumDecl *ED = dyn_cast<EnumDecl>(D)) {

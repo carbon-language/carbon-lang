@@ -628,34 +628,26 @@ public:
 ///
 /// @class NSCursor, NSImage, NSPasteboard, NSWindow;
 ///
-/// FIXME: This could be a transparent DeclContext (!)
 class ObjCClassDecl : public Decl {
-  ObjCInterfaceDecl **ForwardDecls;
-  unsigned NumForwardDecls;
+  ObjCList<ObjCInterfaceDecl> ForwardDecls;
   
   ObjCClassDecl(DeclContext *DC, SourceLocation L, 
-                ObjCInterfaceDecl **Elts, unsigned nElts);
-  virtual ~ObjCClassDecl() {
-    assert(ForwardDecls == 0 && "Destroy not called?");
+                ObjCInterfaceDecl *const *Elts, unsigned nElts)
+    : Decl(ObjCClass, DC, L) {
+    ForwardDecls.set(Elts, nElts);
   }
+  virtual ~ObjCClassDecl() {}
 public:
   
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
   
   static ObjCClassDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                               ObjCInterfaceDecl **Elts, unsigned nElts);
+                               ObjCInterfaceDecl *const *Elts, unsigned nElts);
   
-  void setInterfaceDecl(unsigned idx, ObjCInterfaceDecl *OID) {
-    assert(idx < NumForwardDecls && "index out of range");
-    ForwardDecls[idx] = OID;
-  }
-  ObjCInterfaceDecl** getForwardDecls() const { return ForwardDecls; }
-  int getNumForwardDecls() const { return NumForwardDecls; }
-  
-  typedef ObjCInterfaceDecl * const * iterator;
-  iterator begin() const { return ForwardDecls; }
-  iterator end() const { return ForwardDecls+NumForwardDecls; }
+  typedef ObjCList<ObjCInterfaceDecl>::iterator iterator;
+  iterator begin() const { return ForwardDecls.begin(); }
+  iterator end() const { return ForwardDecls.end(); }
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCClass; }
   static bool classof(const ObjCClassDecl *D) { return true; }

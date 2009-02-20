@@ -115,20 +115,9 @@ void ObjCProtocolDecl::Destroy(ASTContext &C) {
 
 ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation L,
-                                     ObjCInterfaceDecl **Elts, unsigned nElts) {
+                                     ObjCInterfaceDecl *const *Elts,
+                                     unsigned nElts) {
   return new (C) ObjCClassDecl(DC, L, Elts, nElts);
-}
-
-ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L, 
-                             ObjCInterfaceDecl **Elts, unsigned nElts)
-  : Decl(ObjCClass, DC, L) { 
-  if (nElts) {
-    ForwardDecls = new ObjCInterfaceDecl*[nElts];
-    memcpy(ForwardDecls, Elts, nElts*sizeof(ObjCInterfaceDecl*));
-  } else {
-    ForwardDecls = 0;
-  }
-  NumForwardDecls = nElts;
 }
 
 void ObjCClassDecl::Destroy(ASTContext &C) {
@@ -141,9 +130,7 @@ void ObjCClassDecl::Destroy(ASTContext &C) {
   //  obviating this problem.  Because of this situation, referenced
   //  ObjCInterfaceDecls are destroyed in ~TranslationUnit.
   
-  delete [] ForwardDecls;
-  ForwardDecls = 0;
-
+  ForwardDecls.clear();
   Decl::Destroy(C);
 }
 
