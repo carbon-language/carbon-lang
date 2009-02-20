@@ -268,15 +268,119 @@ bool DeclContext::classof(const Decl *D) {
   }
 }
 
-// FIXME: We really want to use a DenseSet here to eliminate the
-// redundant storage of the declaration names, but (1) it doesn't give
-// us the ability to search based on DeclarationName, (2) we really
-// need something more like a DenseMultiSet, and (3) it's
-// implemented in terms of DenseMap anyway. However, this data
-// structure is really space-inefficient, so we'll have to do
-// something.
-typedef llvm::DenseMap<DeclarationName, std::vector<NamedDecl*> >
-  StoredDeclsMap;
+/// StoredDeclsList - This is an array of decls optimized a common case of only
+/// containing one entry.
+struct StoredDeclsList {
+  /// Data - If the integer is 0, then the pointer is a NamedDecl*.  If the
+  /// integer is 1, then it is a VectorTy;
+  llvm::PointerIntPair<void*, 1, bool> Data;
+  
+  /// VectorTy - When in vector form, this is what the Data pointer points to.
+  typedef llvm::SmallVector<NamedDecl*, 4> VectorTy;
+public:
+  StoredDeclsList() {}
+  StoredDeclsList(const StoredDeclsList &RHS) : Data(RHS.Data) {
+    if (isVector())
+      Data.setPointer(new VectorTy(getVector()));
+  }
+  
+  ~StoredDeclsList() {
+    // If this is a vector-form, free the vector.
+    if (isVector())
+      delete &getVector();
+  }
+  
+  bool isVector() const { return Data.getInt() != 0; }
+  bool isInline() const { return Data.getInt() == 0; }
+  bool isNull() const { return Data.getPointer() == 0; }
+  
+  void setOnlyValue(NamedDecl *ND) {
+    assert(isInline() && "Not inline");
+    Data.setPointer(ND);
+  }
+
+  /// getLookupResult - Return an array of all the decls that this list
+  /// represents.
+  DeclContext::lookup_result getLookupResult() {
+    // If we have a single inline unit, return it.
+    if (isInline()) {
+      assert(!isNull() && "Empty list isn't allowed");
+      
+      // Data is a raw pointer to a NamedDecl*, return it.
+      void *Ptr = &Data;
+      return DeclContext::lookup_result((NamedDecl**)Ptr, (NamedDecl**)Ptr+1);
+    }
+    
+    // Otherwise, we have a range result.
+    VectorTy &V = getVector();
+    return DeclContext::lookup_result(&V[0], &V[0]+V.size());
+  }
+  
+  /// HandleRedeclaration - If this is a redeclaration of an existing decl,
+  /// replace the old one with D and return true.  Otherwise return false.
+  bool HandleRedeclaration(NamedDecl *D) {
+    // Most decls only have one entry in their list, special case it.
+    if (isInline()) {
+      if (!D->declarationReplaces(getInlineValue()))
+        return false;
+      setOnlyValue(D);
+      return true;
+    }
+    
+    // Determine if this declaration is actually a redeclaration.
+    VectorTy &Vec = getVector();
+    VectorTy::iterator RDI
+      = std::find_if(Vec.begin(), Vec.end(),
+                     std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
+                                  D));
+    if (RDI == Vec.end())
+      return false;
+    *RDI = D;
+    return true;
+  }
+  
+  /// AddSubsequentDecl - This is called on the second and later decl when it is
+  /// not a redeclaration to merge it into the appropriate place in our list.
+  /// 
+  void AddSubsequentDecl(NamedDecl *D) {
+    // If this is the second decl added to the list, convert this to vector
+    // form.
+    if (isInline()) {
+      NamedDecl *OldD = getInlineValue();
+      Data.setInt(1);
+      VectorTy *VT = new VectorTy();
+      VT->push_back(OldD);
+      Data.setPointer(VT);
+    }
+    
+    VectorTy &Vec = getVector();
+    if (isa<UsingDirectiveDecl>(D) ||
+        D->getIdentifierNamespace() == Decl::IDNS_Tag)
+      Vec.push_back(D);
+    else if (Vec.back()->getIdentifierNamespace() == Decl::IDNS_Tag) {
+      NamedDecl *TagD = Vec.back();
+      Vec.back() = D;
+      Vec.push_back(TagD);
+    } else
+      Vec.push_back(D);
+  }
+      
+  
+private:
+  VectorTy &getVector() const {
+    assert(isVector() && "Not in vector form");
+    return *static_cast<VectorTy*>(Data.getPointer());
+  }
+  
+  NamedDecl *getInlineValue() const {
+    assert(isInline() && "Not in inline form");
+    return (NamedDecl*)Data.getPointer();
+  }
+};
+
+
+
+typedef llvm::DenseMap<DeclarationName, StoredDeclsList> StoredDeclsMap;
 
 DeclContext::~DeclContext() {
   unsigned Size = LookupPtr.getInt();
@@ -412,9 +516,7 @@ DeclContext::lookup(DeclarationName Name) {
     StoredDeclsMap::iterator Pos = Map->find(Name);
     if (Pos == Map->end())
       return lookup_result(0, 0);
-    
-    return lookup_result(&Pos->second.front(), 
-                         &Pos->second.front() + Pos->second.size());
+    return Pos->second.getLookupResult();
   } 
 
   // We have a small array. Look into it.
@@ -559,46 +661,21 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   }
 
   // Insert this declaration into the map.
-  StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
-  std::vector<NamedDecl *> &DeclNameEntries = (*Map)[D->getDeclName()];
-  if (DeclNameEntries.empty()) {
-    DeclNameEntries.push_back(D);
+  StoredDeclsMap &Map = *static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
+  StoredDeclsList &DeclNameEntries = Map[D->getDeclName()];
+  if (DeclNameEntries.isNull()) {
+    DeclNameEntries.setOnlyValue(D);
     return;
   }
 
   // If it is possible that this is a redeclaration, check to see if there is
   // already a decl for which declarationReplaces returns true.  If there is
   // one, just replace it and return.
-  if (MayBeRedeclaration) {
-    // Most decls only have one entry in their list, special case it.
-    if (DeclNameEntries.size() == 1) {
-      if (D->declarationReplaces(DeclNameEntries[0])) {
-        DeclNameEntries[0] = D;
-        return;
-      }
-    } else {
-      // Determine if this declaration is actually a redeclaration.
-      std::vector<NamedDecl *>::iterator Redecl
-        = std::find_if(DeclNameEntries.begin(), DeclNameEntries.end(),
-                     std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
-                                  D));
-      if (Redecl != DeclNameEntries.end()) {
-        *Redecl = D;
-        return;
-      }
-    }
-  }
+  if (MayBeRedeclaration && DeclNameEntries.HandleRedeclaration(D))
+    return;
   
   // Put this declaration into the appropriate slot.
-  if (isa<UsingDirectiveDecl>(D) ||
-      D->getIdentifierNamespace() == Decl::IDNS_Tag)
-    DeclNameEntries.push_back(D);
-  else if (DeclNameEntries.back()->getIdentifierNamespace() == Decl::IDNS_Tag) {
-    NamedDecl *TagD = DeclNameEntries.back();
-    DeclNameEntries.back() = D;
-    DeclNameEntries.push_back(TagD);
-  } else
-    DeclNameEntries.push_back(D);
+  DeclNameEntries.AddSubsequentDecl(D);
 }
 
 /// Returns iterator range [First, Last) of UsingDirectiveDecls stored within
