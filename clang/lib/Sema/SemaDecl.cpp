@@ -3572,12 +3572,9 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   bool InvalidDecl = false;
   
   if (BitWidth) {
-    // TODO: Validate.
-    //printf("WARNING: BITFIELDS IGNORED!\n");
-    
-    // 6.7.2.1p3
-    // 6.7.2.1p4
-    
+    // 6.7.2.1p3, 6.7.2.1p4
+    if (VerifyBitField(Loc, II, T, BitWidth))
+      InvalidDecl = true;
   } else {
     // Not a bitfield.
     
