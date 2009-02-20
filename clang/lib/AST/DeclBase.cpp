@@ -566,15 +566,26 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
     return;
   }
 
+  // If it is possible that this is a redeclaration, check to see if there is
+  // already a decl for which declarationReplaces returns true.  If there is
+  // one, just replace it and return.
   if (MayBeRedeclaration) {
-    // Determine if this declaration is actually a redeclaration.
-    std::vector<NamedDecl *>::iterator Redecl
-      = std::find_if(DeclNameEntries.begin(), DeclNameEntries.end(),
-                   std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
-                                D));
-    if (Redecl != DeclNameEntries.end()) {
-      *Redecl = D;
-      return;
+    // Most decls only have one entry in their list, special case it.
+    if (DeclNameEntries.size() == 1) {
+      if (D->declarationReplaces(DeclNameEntries[0])) {
+        DeclNameEntries[0] = D;
+        return;
+      }
+    } else {
+      // Determine if this declaration is actually a redeclaration.
+      std::vector<NamedDecl *>::iterator Redecl
+        = std::find_if(DeclNameEntries.begin(), DeclNameEntries.end(),
+                     std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
+                                  D));
+      if (Redecl != DeclNameEntries.end()) {
+        *Redecl = D;
+        return;
+      }
     }
   }
   
