@@ -1053,9 +1053,10 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     if (!Visit(SubExpr))
       return false;
 
-    // FIXME: Support cast on LValue results.
-    if (!Result.isInt())
-      return false;
+    if (!Result.isInt()) {
+      // Only allow casts of lvalues if they are lossless.
+      return Info.Ctx.getTypeSize(DestType) == Info.Ctx.getTypeSize(SrcType);
+    }
 
     return Success(HandleIntToIntCast(DestType, SrcType,
                                       Result.getInt(), Info.Ctx), E);
@@ -1078,6 +1079,20 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
 
     APSInt AsInt = Info.Ctx.MakeIntValue(LV.getLValueOffset(), SrcType);
     return Success(HandleIntToIntCast(DestType, SrcType, AsInt, Info.Ctx), E);
+  }
+
+  if (SrcType->isArrayType() || SrcType->isFunctionType()) {
+    // This handles double-conversion cases, where there's both
+    // an l-value promotion and an implicit conversion to int.
+    APValue LV;
+    if (!EvaluateLValue(SubExpr, LV, Info))
+      return false;
+
+    if (Info.Ctx.getTypeSize(DestType) != Info.Ctx.getTypeSize(Info.Ctx.VoidPtrTy))
+      return false;
+
+    Result = LV;
+    return true;
   }
 
   if (!SrcType->isRealFloatingType())
