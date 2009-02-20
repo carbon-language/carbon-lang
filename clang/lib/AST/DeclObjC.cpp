@@ -21,7 +21,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 void ObjCListBase::Destroy(ASTContext &Ctx) {
-  delete[] List;
+  Ctx.Deallocate(List);
   NumElts = 0;
   List = 0;
 }
@@ -30,7 +30,8 @@ void ObjCListBase::set(void *const* InList, unsigned Elts, ASTContext &Ctx) {
   assert(List == 0 && "Elements already set!");
   if (Elts == 0) return;  // Setting to an empty list is a noop.
   
-  List = new void*[Elts];
+  
+  List = new (Ctx) void*[Elts];
   NumElts = Elts;
   memcpy(List, InList, sizeof(void*)*Elts);
 }
