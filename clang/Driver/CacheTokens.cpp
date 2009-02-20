@@ -430,8 +430,12 @@ uint32_t PTHWriter::ResolveID(const IdentifierInfo* II) {
 }
 
 void PTHWriter::EmitToken(const Token& T) {
+  // When writing out the token data for literals, clear the NeedsCleaning flag.
+  uint32_t CleaningMask = T.isLiteral() ? ~((uint32_t)Token::NeedsCleaning):~0U;
+  
+  // Emit the token kind, flags, and length.
   Emit32(((uint32_t) T.getKind()) |
-         (((uint32_t) T.getFlags()) << 8) |
+         ((((uint32_t) T.getFlags()) & CleaningMask) << 8)|
          (((uint32_t) T.getLength()) << 16));
 
   // Literals (strings, numbers, characters) get cached spellings.
@@ -443,7 +447,7 @@ void PTHWriter::EmitToken(const Token& T) {
     
     // Get the string entry.
     llvm::StringMapEntry<OffsetOpt> *E =
-    &CachedStrs.GetOrCreateValue(s, s+spelling.size());
+      &CachedStrs.GetOrCreateValue(s, s+spelling.size());
     
     if (!E->getValue().hasOffset()) {
       E->getValue().setOffset(CurStrOffset);
