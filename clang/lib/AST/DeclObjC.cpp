@@ -137,26 +137,21 @@ void ObjCClassDecl::Destroy(ASTContext &C) {
 ObjCForwardProtocolDecl *
 ObjCForwardProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                 SourceLocation L, 
-                                ObjCProtocolDecl **Elts, unsigned NumElts) {
+                                ObjCProtocolDecl *const *Elts,
+                                unsigned NumElts) {
   return new (C) ObjCForwardProtocolDecl(DC, L, Elts, NumElts);
 }
 
 ObjCForwardProtocolDecl::
 ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
-                        ObjCProtocolDecl **Elts, unsigned nElts)
+                        ObjCProtocolDecl *const *Elts, unsigned nElts)
   : Decl(ObjCForwardProtocol, DC, L) { 
-  NumReferencedProtocols = nElts;
-  if (nElts) {
-    ReferencedProtocols = new ObjCProtocolDecl*[nElts];
-    memcpy(ReferencedProtocols, Elts, nElts*sizeof(ObjCProtocolDecl*));
-  } else {
-    ReferencedProtocols = 0;
-  }
+  ReferencedProtocols.set(Elts, nElts);
 }
 
 void ObjCForwardProtocolDecl::Destroy(ASTContext &C) {
-  delete [] ReferencedProtocols;
-  ReferencedProtocols = 0;
+  ReferencedProtocols.clear();
+  Decl::Destroy(C);
 }
 
 ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,

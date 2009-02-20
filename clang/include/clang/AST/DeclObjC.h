@@ -658,44 +658,25 @@ public:
 /// 
 /// @protocol NSTextInput, NSChangeSpelling, NSDraggingInfo;
 /// 
-/// FIXME: Should this be a transparent DeclContext?
 class ObjCForwardProtocolDecl : public Decl {
-  ObjCProtocolDecl **ReferencedProtocols;
-  unsigned NumReferencedProtocols;
+  ObjCList<ObjCProtocolDecl> ReferencedProtocols;
   
   ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
-                          ObjCProtocolDecl **Elts, unsigned nElts);  
-  virtual ~ObjCForwardProtocolDecl() {
-    assert(ReferencedProtocols == 0 && "Destroy not called?");
-  }
+                          ObjCProtocolDecl *const *Elts, unsigned nElts);  
+  virtual ~ObjCForwardProtocolDecl() {}
   
 public:
   static ObjCForwardProtocolDecl *Create(ASTContext &C, DeclContext *DC,
                                          SourceLocation L, 
-                                         ObjCProtocolDecl **Elts, unsigned Num);
+                                         ObjCProtocolDecl *const *Elts,
+                                         unsigned Num);
 
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
-
-  void setForwardProtocolDecl(unsigned idx, ObjCProtocolDecl *OID) {
-    assert(idx < NumReferencedProtocols && "index out of range");
-    ReferencedProtocols[idx] = OID;
-  }
   
-  unsigned getNumForwardDecls() const { return NumReferencedProtocols; }
-  
-  ObjCProtocolDecl *getForwardProtocolDecl(unsigned idx) {
-    assert(idx < NumReferencedProtocols && "index out of range");
-    return ReferencedProtocols[idx];
-  }
-  const ObjCProtocolDecl *getForwardProtocolDecl(unsigned idx) const {
-    assert(idx < NumReferencedProtocols && "index out of range");
-    return ReferencedProtocols[idx];
-  }
-  
-  typedef ObjCProtocolDecl * const * iterator;
-  iterator begin() const { return ReferencedProtocols; }
-  iterator end() const { return ReferencedProtocols+NumReferencedProtocols; }
+  typedef ObjCList<ObjCProtocolDecl>::iterator iterator;
+  iterator begin() const { return ReferencedProtocols.begin(); }
+  iterator end() const { return ReferencedProtocols.end(); }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCForwardProtocol;
