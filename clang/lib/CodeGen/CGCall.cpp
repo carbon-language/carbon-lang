@@ -63,7 +63,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
   ArgTys.push_back(MD->getSelfDecl()->getType());
   ArgTys.push_back(Context.getObjCSelType());
   // FIXME: Kill copy?
-  for (ObjCMethodDecl::param_const_iterator i = MD->param_begin(),
+  for (ObjCMethodDecl::param_iterator i = MD->param_begin(),
          e = MD->param_end(); i != e; ++i)
     ArgTys.push_back((*i)->getType());
   return getFunctionInfo(MD->getResultType(), ArgTys);

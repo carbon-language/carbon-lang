@@ -123,10 +123,9 @@ private:
   
   // Type of this method.
   QualType MethodDeclType;
-  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
-  /// parameters of this Method.  This is null if there are no formals.  
-  ParmVarDecl **ParamInfo;
-  unsigned NumMethodParams;
+  /// ParamInfo - List of pointers to VarDecls for the formal parameters of this
+  /// Method.
+  ObjCList<ParmVarDecl> ParamInfo;
   
   /// List of attributes for this method declaration.
   SourceLocation EndLoc; // the location of the ';' or '{'.
@@ -155,12 +154,9 @@ private:
     IsSynthesized(isSynthesized),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     MethodDeclType(T), 
-    ParamInfo(0), NumMethodParams(0), 
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
 
-  virtual ~ObjCMethodDecl() {
-    assert(ParamInfo == 0 && "Destroy not called?");
-  }
+  virtual ~ObjCMethodDecl() {}
   
 public:
   
@@ -198,23 +194,18 @@ public:
   QualType getResultType() const { return MethodDeclType; }
   
   // Iterator access to formal parameters.
-  unsigned param_size() const { return NumMethodParams; }
-  typedef ParmVarDecl **param_iterator;
-  typedef ParmVarDecl * const *param_const_iterator;
-  param_iterator param_begin() { return ParamInfo; }
-  param_iterator param_end() { return ParamInfo+param_size(); }
-  param_const_iterator param_begin() const { return ParamInfo; }
-  param_const_iterator param_end() const { return ParamInfo+param_size(); }
+  unsigned param_size() const { return ParamInfo.size(); }
+  typedef ObjCList<ParmVarDecl>::iterator param_iterator;
+  param_iterator param_begin() const { return ParamInfo.begin(); }
+  param_iterator param_end() const { return ParamInfo.end(); }
   
-  unsigned getNumParams() const { return NumMethodParams; }
+  unsigned getNumParams() const { return ParamInfo.size(); }
   ParmVarDecl *getParamDecl(unsigned i) const {
-    assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
   }  
-  void setParamDecl(int i, ParmVarDecl *pDecl) {
-    ParamInfo[i] = pDecl;
-  }  
-  void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
+  void setMethodParams(ParmVarDecl *const *NewParamInfo, unsigned NumParams) {
+    ParamInfo.set(NewParamInfo, NumParams);
+  }
 
   /// createImplicitParams - Used to lazily create the self and cmd
   /// implict parameters. This must be called prior to using getSelfDecl()

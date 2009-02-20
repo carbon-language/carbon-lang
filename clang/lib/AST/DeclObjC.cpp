@@ -42,8 +42,7 @@ void ObjCMethodDecl::Destroy(ASTContext& C) {
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
 
-  delete [] ParamInfo;
-  ParamInfo = 0;
+  ParamInfo.clear();
 
   Decl::Destroy(C);
 }
@@ -239,18 +238,6 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
                                       SourceLocation(), 
                                       &Context.Idents.get("_cmd"), 
                                       Context.getObjCSelType());
-}
-
-void ObjCMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
-                                     unsigned NumParams) {
-  assert(ParamInfo == 0 && "Already has param info!");
-
-  // Zero params -> null pointer.
-  if (NumParams) {
-    ParamInfo = new ParmVarDecl*[NumParams];
-    memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
-    NumMethodParams = NumParams;
-  }
 }
 
 /// FindCategoryDeclaration - Finds category declaration in the list of
