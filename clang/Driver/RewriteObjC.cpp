@@ -2693,7 +2693,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
       const char *endHeader = SM->getCharacterData(L);
       endHeader += Lexer::MeasureTokenLength(L, *SM);
 
-      if (!CDecl->getReferencedProtocols().empty()) {
+      if (CDecl->protocol_begin() != CDecl->protocol_end()) {
         // advance to the end of the referenced protocols.
         while (endHeader < cursor && *endHeader != '>') endHeader++;
         endHeader++;
@@ -2869,7 +2869,8 @@ RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
       continue;
            
     if (PDecl->instmeth_begin() != PDecl->instmeth_end()) {
-      unsigned NumMethods = PDecl->getNumInstanceMethods();
+      unsigned NumMethods = std::distance(PDecl->instmeth_begin(),
+                                          PDecl->instmeth_end());
       /* struct _objc_protocol_method_list {
        int protocol_method_count;
        struct protocol_methods protocols[];
@@ -2902,7 +2903,8 @@ RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
     }
     
     // Output class methods declared in this protocol.
-    int NumMethods = PDecl->getNumClassMethods();
+    unsigned NumMethods = std::distance(PDecl->classmeth_begin(),
+                                        PDecl->classmeth_end());
     if (NumMethods > 0) {
       /* struct _objc_protocol_method_list {
        int protocol_method_count;
@@ -2973,7 +2975,7 @@ RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
     }
     else
       Result += "0, ";
-    if (PDecl->getNumClassMethods() > 0) {
+    if (PDecl->classmeth_begin() != PDecl->classmeth_end()) {
       Result += "(struct _objc_protocol_method_list *)&_OBJC_PROTOCOL_CLASS_METHODS_";
       Result += PDecl->getNameAsString();
       Result += "\n";
@@ -3085,7 +3087,7 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   Result += ClassDecl->getNameAsString();
   Result += "\"\n";
   
-  if (IDecl->getNumInstanceMethods() > 0) {
+  if (IDecl->instmeth_begin() != IDecl->instmeth_end()) {
     Result += "\t, (struct _objc_method_list *)"
            "&_OBJC_CATEGORY_INSTANCE_METHODS_";
     Result += FullCategoryName;
@@ -3093,7 +3095,7 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   }
   else
     Result += "\t, 0\n";
-  if (IDecl->getNumClassMethods() > 0) {
+  if (IDecl->classmeth_begin() != IDecl->classmeth_end()) {
     Result += "\t, (struct _objc_method_list *)"
            "&_OBJC_CATEGORY_CLASS_METHODS_";
     Result += FullCategoryName;
@@ -3102,7 +3104,7 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   else
     Result += "\t, 0\n";
   
-  if (CDecl && !CDecl->getReferencedProtocols().empty()) {
+  if (CDecl && CDecl->protocol_begin() != CDecl->protocol_end()) {
     Result += "\t, (struct _objc_protocol_list *)&_OBJC_CATEGORY_PROTOCOLS_"; 
     Result += FullCategoryName;
     Result += "\n";
@@ -3303,7 +3305,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   }
   else
     Result += ", 0\n";
-  if (!CDecl->getReferencedProtocols().empty()) {
+  if (CDecl->protocol_begin() != CDecl->protocol_end()) {
     Result += "\t,0, (struct _objc_protocol_list *)&_OBJC_CLASS_PROTOCOLS_";
     Result += CDecl->getNameAsString();
     Result += ",0,0\n";
@@ -3356,7 +3358,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   }
   else
     Result += ",0,0";
-  if (!CDecl->getReferencedProtocols().empty()) {
+  if (CDecl->protocol_begin() != CDecl->protocol_end()) {
     Result += ", (struct _objc_protocol_list*)&_OBJC_CLASS_PROTOCOLS_";
     Result += CDecl->getNameAsString();
     Result += ", 0,0\n";

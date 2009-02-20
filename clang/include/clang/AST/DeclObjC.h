@@ -308,11 +308,6 @@ public:
 
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
 
-  // Get the number of methods, properties. These methods are slow, O(n).
-  unsigned getNumInstanceMethods() const;
-  unsigned getNumClassMethods() const;
-  unsigned getNumProperties() const;
-  
   // Marks the end of the container.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
   void setAtEndLoc(SourceLocation L) { AtEndLoc = L; }
@@ -798,9 +793,6 @@ public:
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   
-  unsigned getNumInstanceMethods() const { return InstanceMethods.size(); }
-  unsigned getNumClassMethods() const { return ClassMethods.size(); }
-
   void addInstanceMethod(ObjCMethodDecl *method) {
     InstanceMethods.push_back(method);
   }

@@ -282,25 +282,6 @@ ObjCMethodDecl *ObjCContainerDecl::getClassMethod(Selector Sel) const {
   return 0;
 }
 
-unsigned ObjCContainerDecl::getNumInstanceMethods() const {
-  unsigned sum = 0;
-  for (instmeth_iterator I=instmeth_begin(), E=instmeth_end(); I != E; ++I)
-    sum++;
-  return sum;
-}
-unsigned ObjCContainerDecl::getNumClassMethods() const { 
-  unsigned sum = 0;
-  for (classmeth_iterator I=classmeth_begin(), E=classmeth_end(); I != E; ++I)
-    sum++;
-  return sum;
-}
-unsigned ObjCContainerDecl::getNumProperties() const { 
-  unsigned sum = 0;
-  for (prop_iterator I=prop_begin(), E=prop_end(); I != E; ++I)
-    sum++;
-  return sum;
-}
-
 /// FindPropertyDeclaration - Finds declaration of the property given its name
 /// in 'PropertyId' and returns it. It returns 0, if not found.
 /// FIXME: Convert to DeclContext lookup...
