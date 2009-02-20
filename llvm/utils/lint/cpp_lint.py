@@ -18,6 +18,8 @@ def VerifyIncludes(filename, lines):
     filename: the file under consideration as string
     lines: contents of the file as string array
   """
+  lint = []
+
   include_gtest_re = re.compile(r'^#include "gtest/(.*)"')
   include_llvm_re = re.compile(r'^#include "llvm/(.*)"')
   include_support_re = re.compile(r'^#include "(Support/.*)"')
@@ -41,8 +43,9 @@ def VerifyIncludes(filename, lines):
       curr_config_header = config_header.group(1)
       if prev_config_header:
         if prev_config_header > curr_config_header:
-          print '%s:%d:Config headers not in order: "%s" before "%s" ' % (
-              filename, line_num, prev_config_header, curr_config_header)
+          lint.append((filename, line_num,
+                       'Config headers not in order: "%s" before "%s"' % (
+                         prev_config_header, curr_config_header)))
 
     # Process system headers
     system_header = include_system_re.match(line)
@@ -51,30 +54,39 @@ def VerifyIncludes(filename, lines):
 
       # Is it blacklisted?
       if curr_system_header in DISALLOWED_SYSTEM_HEADERS:
-        print '%s:%d:Disallowed system header: <%s>' % (
-            filename, line_num, curr_system_header)
+        lint.append((filename, line_num,
+                     'Disallowed system header: <%s>' % curr_system_header))
       elif prev_system_header:
         # Make sure system headers are alphabetized amongst themselves
         if prev_system_header > curr_system_header:
-          print '%s:%d:System headers not in order: <%s> before <%s>' % (
-              filename, line_num, prev_system_header, curr_system_header)
+          lint.append((filename, line_num,
+                       'System headers not in order: <%s> before <%s>' % (
+                         prev_system_header, curr_system_header)))
 
       prev_system_header = curr_system_header
 
     line_num += 1
+
+  return lint
 
 
 class CppLint(common_lint.BaseLint):
   MAX_LINE_LENGTH = 80
 
   def RunOnFile(self, filename, lines):
-    VerifyIncludes(filename, lines)
-    common_lint.VerifyLineLength(filename, lines, CppLint.MAX_LINE_LENGTH)
-    common_lint.VerifyTrailingWhitespace(filename, lines)
+    lint = []
+    lint.extend(VerifyIncludes(filename, lines))
+    lint.extend(common_lint.VerifyLineLength(filename, lines,
+                                             CppLint.MAX_LINE_LENGTH))
+    lint.extend(common_lint.VerifyTabs(filename, lines))
+    lint.extend(common_lint.VerifyTrailingWhitespace(filename, lines))
+    return lint
 
 
 def CppLintMain(filenames):
-  common_lint.RunLintOverAllFiles(CppLint(), filenames)
+  all_lint = common_lint.RunLintOverAllFiles(CppLint(), filenames)
+  for lint in all_lint:
+    print '%s:%d:%s' % (lint[0], lint[1], lint[2])
   return 0
 
 
