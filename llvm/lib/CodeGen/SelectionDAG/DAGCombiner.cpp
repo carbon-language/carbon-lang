@@ -4903,9 +4903,9 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
   // resultant store does not need a higher alignment than the original.
   if (Value.getOpcode() == ISD::BIT_CONVERT && !ST->isTruncatingStore() &&
       ST->isUnindexed()) {
-    unsigned Align = ST->getAlignment();
+    unsigned OrigAlign = ST->getAlignment();
     MVT SVT = Value.getOperand(0).getValueType();
-    unsigned OrigAlign = TLI.getTargetData()->
+    unsigned Align = TLI.getTargetData()->
       getABITypeAlignment(SVT.getTypeForMVT());
     if (Align <= OrigAlign &&
         ((!LegalOperations && !ST->isVolatile()) ||
