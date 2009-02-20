@@ -626,8 +626,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     else {
       llvm::Value *V = LocalDeclMap[VD];
       assert(V && "BlockVarDecl not entered in LocalDeclMap?");
-      LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
-                            getContext().getObjCGCAttrKind(E->getType()));
+      // local variables do not get their gc attribute set.
+      QualType::GCAttrTypes attr = QualType::GCNone;
+      // local static?
+      if (VD->getStorageClass() == VarDecl::Static)
+        attr = getContext().getObjCGCAttrKind(E->getType());
+      LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(), attr);
     }
     return LV;
   } else if (VD && VD->isFileVarDecl()) {
@@ -665,7 +669,8 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     {
       QualType T = E->getSubExpr()->getType()->getAsPointerType()->getPointeeType();
       return LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()),
-                              ExprTy->getAsPointerType()->getPointeeType().getCVRQualifiers(), 
+                              ExprTy->getAsPointerType()->getPointeeType()
+                                      .getCVRQualifiers(), 
                               getContext().getObjCGCAttrKind(T));
     }
   case UnaryOperator::Real:
