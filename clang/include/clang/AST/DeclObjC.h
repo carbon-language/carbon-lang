@@ -151,7 +151,9 @@ private:
     ParamInfo(0), NumMethodParams(0), 
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
 
-  virtual ~ObjCMethodDecl();
+  virtual ~ObjCMethodDecl() {
+    assert(ParamInfo == 0 && "Destroy not called?");
+  }
   
 public:
   
@@ -595,12 +597,17 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
       isForwardProtoDecl(true) {
   }
   
-  virtual ~ObjCProtocolDecl();
+  virtual ~ObjCProtocolDecl() {
+    assert(PropertyDecl == 0 && "Destroy not called?");
+  }
   
 public:
   static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC, 
                                   SourceLocation L, IdentifierInfo *Id);
 
+  /// Destroy - Call destructors and release memory.
+  virtual void Destroy(ASTContext& C);
+  
   const ObjCList<ObjCProtocolDecl> &getReferencedProtocols() const { 
     return ReferencedProtocols;
   }

@@ -35,17 +35,16 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                   isVariadic, isSynthesized, impControl);
 }
 
-ObjCMethodDecl::~ObjCMethodDecl() {  
-  delete [] ParamInfo;
-}
-
 void ObjCMethodDecl::Destroy(ASTContext& C) {
   if (Body) Body->Destroy(C);
   if (SelfDecl) SelfDecl->Destroy(C);
   
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
-  
+
+  delete [] ParamInfo;
+  ParamInfo = 0;
+
   Decl::Destroy(C);
 }
 
@@ -102,9 +101,13 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCProtocolDecl(DC, L, Id);
 }
 
-ObjCProtocolDecl::~ObjCProtocolDecl() {
+void ObjCProtocolDecl::Destroy(ASTContext &C) {
   delete [] PropertyDecl;
+  PropertyDecl = 0;
+  ObjCContainerDecl::Destroy(C);
 }
+
+
 
 
 ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
