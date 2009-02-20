@@ -64,7 +64,7 @@ bool isCurrentDebugType(const char *Type);
 /// getErrorOutputStream - Returns the error output stream (std::cerr). This
 /// places the std::c* I/O streams into one .cpp file and relieves the whole
 /// program from having to have hundreds of static c'tor/d'tors for them.
-/// 
+///
 OStream &getErrorOutputStream(const char *DebugType);
 
 #ifdef NDEBUG

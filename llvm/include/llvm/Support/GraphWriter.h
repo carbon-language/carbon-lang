@@ -67,7 +67,7 @@ namespace DOT {  // Private functions...
 }
 
 void DisplayGraph(const sys::Path& Filename);
-  
+
 template<typename GraphType>
 class GraphWriter {
   std::ostream &O;
@@ -113,7 +113,7 @@ public:
          I != E; ++I)
       writeNode(*I);
   }
-  
+
   void writeNode(NodeType& Node) {
     writeNode(&Node);
   }
@@ -271,7 +271,7 @@ std::ostream &WriteGraph(std::ostream &O, const GraphType &G,
 
 template<typename GraphType>
 sys::Path WriteGraph(const GraphType &G,
-                     const std::string& Name, 
+                     const std::string& Name,
                      const std::string& Title = "") {
   std::string ErrMsg;
   sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
@@ -286,7 +286,7 @@ sys::Path WriteGraph(const GraphType &G,
   }
 
   cerr << "Writing '" << Filename << "'... ";
-  
+
   std::ofstream O(Filename.c_str());
 
   if (O.good()) {
@@ -298,23 +298,23 @@ sys::Path WriteGraph(const GraphType &G,
     cerr << "error opening file for writing!\n";
     Filename.clear();
   }
-  
+
   return Filename;
 }
-  
+
 /// ViewGraph - Emit a dot graph, run 'dot', run gv on the postscript file,
 /// then cleanup.  For use from the debugger.
 ///
 template<typename GraphType>
-void ViewGraph(const GraphType& G, 
-               const std::string& Name, 
+void ViewGraph(const GraphType& G,
+               const std::string& Name,
                const std::string& Title = "") {
   sys::Path Filename =  WriteGraph(G, Name, Title);
 
   if (Filename.isEmpty()) {
     return;
   }
-  
+
   DisplayGraph(Filename);
 }
 

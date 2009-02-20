@@ -54,7 +54,7 @@ struct DefaultDOTGraphTraits {
   static std::string getNodeLabel(const void *Node, const GraphType& Graph) {
     return "";
   }
-  
+
   /// hasNodeAddressLabel - If this method returns true, the address of the node
   /// is added to the label of the node.
   template<typename GraphType>

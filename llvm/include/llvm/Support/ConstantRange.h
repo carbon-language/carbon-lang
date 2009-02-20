@@ -59,7 +59,7 @@ class ConstantRange {
 
   /// getUpper - Return the upper value for this range...
   ///
-  const APInt &getUpper() const { return Upper; } 
+  const APInt &getUpper() const { return Upper; }
 
   /// getBitWidth - get the bit width of this ConstantRange
   ///

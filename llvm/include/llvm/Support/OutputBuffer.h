@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace llvm {
-  
+
   class OutputBuffer {
     /// Output buffer.
     std::vector<unsigned char> &Output;
@@ -37,7 +37,7 @@ namespace llvm {
       assert(Boundary && (Boundary & (Boundary - 1)) == 0 &&
              "Must align to 2^k boundary");
       size_t Size = Output.size();
-      
+
       if (Size & (Boundary - 1)) {
         // Add padding to get alignment to the correct place.
         size_t Pad = Boundary - (Size & (Boundary - 1));
@@ -111,10 +111,10 @@ namespace llvm {
         ? static_cast<unsigned>(S.length()) : Length;
       unsigned len_to_fill = static_cast<unsigned>(S.length()) < Length
         ? Length - static_cast<unsigned>(S.length()) : 0;
-      
+
       for (unsigned i = 0; i < len_to_copy; ++i)
         outbyte(S[i]);
-      
+
       for (unsigned i = 0; i < len_to_fill; ++i)
         outbyte(0);
     }
@@ -148,7 +148,7 @@ namespace llvm {
       return Output[Index];
     }
   };
-  
+
 } // end llvm namespace
 
 #endif // LLVM_SUPPORT_OUTPUTBUFFER_H

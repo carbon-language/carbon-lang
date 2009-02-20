@@ -24,9 +24,9 @@ namespace llvm {
 
   /// BaseStream - Acts like the STL streams. It's a wrapper for the std::cerr,
   /// std::cout, std::cin, etc. streams. However, it doesn't require #including
-  /// @verbatim <iostream> @endverbatm in every file (doing so increases static 
+  /// @verbatim <iostream> @endverbatm in every file (doing so increases static
   /// c'tors & d'tors in the object code).
-  /// 
+  ///
   template <typename StreamTy>
   class BaseStream {
     StreamTy *Stream;
@@ -69,7 +69,7 @@ namespace llvm {
       if (Stream) Stream->write(A, N);
       return *this;
     }
-    
+
     operator StreamTy* () { return Stream; }
 
     bool operator == (const StreamTy &S) { return &S == Stream; }

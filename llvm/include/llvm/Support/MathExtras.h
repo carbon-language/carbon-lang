@@ -18,7 +18,7 @@
 
 namespace llvm {
 
-// NOTE: The following support functions use the _32/_64 extensions instead of  
+// NOTE: The following support functions use the _32/_64 extensions instead of
 // type overloading so that signed and unsigned integers can be used without
 // ambiguity.
 
@@ -33,23 +33,23 @@ inline uint32_t Lo_32(uint64_t Value) {
 }
 
 /// is?Type - these functions produce optimal testing for integer data types.
-inline bool isInt8  (int64_t Value) { 
-  return static_cast<int8_t>(Value) == Value; 
+inline bool isInt8  (int64_t Value) {
+  return static_cast<int8_t>(Value) == Value;
 }
-inline bool isUInt8 (int64_t Value) { 
-  return static_cast<uint8_t>(Value) == Value; 
+inline bool isUInt8 (int64_t Value) {
+  return static_cast<uint8_t>(Value) == Value;
 }
-inline bool isInt16 (int64_t Value) { 
-  return static_cast<int16_t>(Value) == Value; 
+inline bool isInt16 (int64_t Value) {
+  return static_cast<int16_t>(Value) == Value;
 }
-inline bool isUInt16(int64_t Value) { 
-  return static_cast<uint16_t>(Value) == Value; 
+inline bool isUInt16(int64_t Value) {
+  return static_cast<uint16_t>(Value) == Value;
 }
-inline bool isInt32 (int64_t Value) { 
-  return static_cast<int32_t>(Value) == Value; 
+inline bool isInt32 (int64_t Value) {
+  return static_cast<int32_t>(Value) == Value;
 }
-inline bool isUInt32(int64_t Value) { 
-  return static_cast<uint32_t>(Value) == Value; 
+inline bool isUInt32(int64_t Value) {
+  return static_cast<uint32_t>(Value) == Value;
 }
 
 /// isMask_32 - This function returns true if the argument is a sequence of ones
@@ -66,20 +66,20 @@ inline bool isMask_64(uint64_t Value) {
   return Value && ((Value + 1) & Value) == 0;
 }
 
-/// isShiftedMask_32 - This function returns true if the argument contains a  
+/// isShiftedMask_32 - This function returns true if the argument contains a
 /// sequence of ones with the remainder zero (32 bit version.)
 /// Ex. isShiftedMask_32(0x0000FF00U) == true.
 inline bool isShiftedMask_32(uint32_t Value) {
   return isMask_32((Value - 1) | Value);
 }
 
-/// isShiftedMask_64 - This function returns true if the argument contains a  
+/// isShiftedMask_64 - This function returns true if the argument contains a
 /// sequence of ones with the remainder zero (64 bit version.)
 inline bool isShiftedMask_64(uint64_t Value) {
   return isMask_64((Value - 1) | Value);
 }
 
-/// isPowerOf2_32 - This function returns true if the argument is a power of 
+/// isPowerOf2_32 - This function returns true if the argument is a power of
 /// two > 0. Ex. isPowerOf2_32(0x00100000U) == true (32 bit edition.)
 inline bool isPowerOf2_32(uint32_t Value) {
   return Value && !(Value & (Value - 1));
@@ -172,7 +172,7 @@ inline unsigned CountLeadingOnes_32(uint32_t Value) {
 }
 
 /// CountLeadingZeros_64 - This function performs the platform optimal form
-/// of counting the number of zeros from the most significant bit to the first 
+/// of counting the number of zeros from the most significant bit to the first
 /// one bit (64 bit edition.)
 /// Returns 64 if the word is zero.
 inline unsigned CountLeadingZeros_64(uint64_t Value) {
@@ -216,7 +216,7 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
 }
 
 /// CountLeadingOnes_64 - This function performs the operation
-/// of counting the number of ones from the most significant bit to the first 
+/// of counting the number of ones from the most significant bit to the first
 /// zero bit (64 bit edition.)
 /// Returns 64 if the word is all ones.
 inline unsigned CountLeadingOnes_64(uint64_t Value) {
@@ -249,7 +249,7 @@ inline unsigned CountTrailingOnes_32(uint32_t Value) {
 }
 
 /// CountTrailingZeros_64 - This function performs the platform optimal form
-/// of counting the number of zeros from the least significant bit to the first 
+/// of counting the number of zeros from the least significant bit to the first
 /// one bit (64 bit edition.)
 /// Returns 64 if the word is zero.
 inline unsigned CountTrailingZeros_64(uint64_t Value) {
@@ -268,7 +268,7 @@ inline unsigned CountTrailingZeros_64(uint64_t Value) {
 }
 
 /// CountTrailingOnes_64 - This function performs the operation
-/// of counting the number of ones from the least significant bit to the first 
+/// of counting the number of ones from the least significant bit to the first
 /// zero bit (64 bit edition.)
 /// Returns 64 if the word is all ones.
 inline unsigned CountTrailingOnes_64(uint64_t Value) {
@@ -301,14 +301,14 @@ inline unsigned CountPopulation_64(uint64_t Value) {
 #endif
 }
 
-/// Log2_32 - This function returns the floor log base 2 of the specified value, 
+/// Log2_32 - This function returns the floor log base 2 of the specified value,
 /// -1 if the value is zero. (32 bit edition.)
 /// Ex. Log2_32(32) == 5, Log2_32(1) == 0, Log2_32(0) == -1, Log2_32(6) == 2
 inline unsigned Log2_32(uint32_t Value) {
   return 31 - CountLeadingZeros_32(Value);
 }
 
-/// Log2_64 - This function returns the floor log base 2 of the specified value, 
+/// Log2_64 - This function returns the floor log base 2 of the specified value,
 /// -1 if the value is zero. (64 bit edition.)
 inline unsigned Log2_64(uint64_t Value) {
   return 63 - CountLeadingZeros_64(Value);
@@ -321,7 +321,7 @@ inline unsigned Log2_32_Ceil(uint32_t Value) {
   return 32-CountLeadingZeros_32(Value-1);
 }
 
-/// Log2_64 - This function returns the ceil log base 2 of the specified value, 
+/// Log2_64 - This function returns the ceil log base 2 of the specified value,
 /// 64 if the value is zero. (64 bit edition.)
 inline unsigned Log2_64_Ceil(uint64_t Value) {
   return 64-CountLeadingZeros_64(Value-1);
@@ -337,7 +337,7 @@ inline uint64_t GreatestCommonDivisor64(uint64_t A, uint64_t B) {
   }
   return A;
 }
-  
+
 /// BitsToDouble - This function takes a 64-bit integer and returns the bit
 /// equivalent double.
 inline double BitsToDouble(uint64_t Bits) {
@@ -424,7 +424,7 @@ static inline uint64_t NextPowerOf2(uint64_t A) {
 inline uint64_t RoundUpToAlignment(uint64_t Value, uint64_t Align) {
   return ((Value + Align - 1) / Align) * Align;
 }
-  
+
 } // End llvm namespace
 
 #endif

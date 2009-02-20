@@ -108,27 +108,27 @@ inline bind_ty<Value> m_Value(Value *&V) { return V; }
 
 /// m_ConstantInt - Match a ConstantInt, capturing the value if we match.
 inline bind_ty<ConstantInt> m_ConstantInt(ConstantInt *&CI) { return CI; }
-  
+
 /// specificval_ty - Match a specified Value*.
 struct specificval_ty {
   const Value *Val;
   specificval_ty(const Value *V) : Val(V) {}
-  
+
   template<typename ITy>
   bool match(ITy *V) {
     return V == Val;
   }
 };
-  
+
 /// m_Specific - Match if we have a specific specified value.
 inline specificval_ty m_Specific(const Value *V) { return V; }
-  
+
 
 //===----------------------------------------------------------------------===//
 // Matchers for specific binary operators.
 //
 
-template<typename LHS_t, typename RHS_t, 
+template<typename LHS_t, typename RHS_t,
          unsigned Opcode, typename ConcreteTy = BinaryOperator>
 struct BinaryOp_match {
   LHS_t L;
@@ -223,19 +223,19 @@ inline BinaryOp_match<LHS, RHS, Instruction::Xor> m_Xor(const LHS &L,
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Shl> m_Shl(const LHS &L, 
+inline BinaryOp_match<LHS, RHS, Instruction::Shl> m_Shl(const LHS &L,
                                                         const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Shl>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::LShr> m_LShr(const LHS &L, 
+inline BinaryOp_match<LHS, RHS, Instruction::LShr> m_LShr(const LHS &L,
                                                           const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::LShr>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::AShr> m_AShr(const LHS &L, 
+inline BinaryOp_match<LHS, RHS, Instruction::AShr> m_AShr(const LHS &L,
                                                           const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::AShr>(L, R);
 }
@@ -310,14 +310,14 @@ struct BinaryOpClass_match {
 template<typename LHS, typename RHS>
 inline BinaryOpClass_match<LHS, RHS, BinaryOperator, Instruction::BinaryOps>
 m_Shift(Instruction::BinaryOps &Op, const LHS &L, const RHS &R) {
-  return BinaryOpClass_match<LHS, RHS, 
+  return BinaryOpClass_match<LHS, RHS,
                              BinaryOperator, Instruction::BinaryOps>(Op, L, R);
 }
 
 template<typename LHS, typename RHS>
 inline BinaryOpClass_match<LHS, RHS, BinaryOperator, Instruction::BinaryOps>
 m_Shift(const LHS &L, const RHS &R) {
-  return BinaryOpClass_match<LHS, RHS, 
+  return BinaryOpClass_match<LHS, RHS,
                              BinaryOperator, Instruction::BinaryOps>(L, R);
 }
 
@@ -395,7 +395,7 @@ m_Select(const Cond &C, const LHS &L, const RHS &R) {
 template<int64_t L, int64_t R, typename Cond>
 inline SelectClass_match<Cond, constantint_ty<L>, constantint_ty<R> >
 m_SelectCst(const Cond &C) {
-  return SelectClass_match<Cond, constantint_ty<L>, 
+  return SelectClass_match<Cond, constantint_ty<L>,
                            constantint_ty<R> >(C, m_ConstantInt<L>(),
                                            m_ConstantInt<R>());
 }
@@ -408,9 +408,9 @@ m_SelectCst(const Cond &C) {
 template<typename Op_t, typename Class>
 struct CastClass_match {
   Op_t Op;
-  
+
   CastClass_match(const Op_t &OpMatch) : Op(OpMatch) {}
-  
+
   template<typename OpTy>
   bool match(OpTy *V) {
     if (Class *I = dyn_cast<Class>(V))
@@ -424,7 +424,7 @@ inline CastClass_match<OpTy, Class> m_Cast(const OpTy &Op) {
   return CastClass_match<OpTy, Class>(Op);
 }
 
-  
+
 //===----------------------------------------------------------------------===//
 // Matchers for unary operators
 //
@@ -468,9 +468,9 @@ inline not_match<LHS> m_Not(const LHS &L) { return L; }
 template<typename LHS_t>
 struct neg_match {
   LHS_t L;
-  
+
   neg_match(const LHS_t &LHS) : L(LHS) {}
-  
+
   template<typename OpTy>
   bool match(OpTy *V) {
     if (Instruction *I = dyn_cast<Instruction>(V))

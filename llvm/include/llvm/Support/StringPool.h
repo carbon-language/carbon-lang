@@ -9,21 +9,21 @@
 //
 // This file declares an interned string pool, which helps reduce the cost of
 // strings by using the same storage for identical strings.
-// 
+//
 // To intern a string:
-// 
+//
 //   StringPool Pool;
 //   PooledStringPtr Str = Pool.intern("wakka wakka");
-// 
+//
 // To use the value of an interned string, use operator bool and operator*:
-// 
+//
 //   if (Str)
 //     cerr << "the string is" << *Str << "\n";
-// 
+//
 // Pooled strings are immutable, but you can change a PooledStringPtr to point
 // to another instance. So that interned strings can eventually be freed,
 // strings in the string pool are reference-counted (automatically).
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_STRINGPOOL_H
@@ -46,36 +46,36 @@ namespace llvm {
     struct PooledString {
       StringPool *Pool;  ///< So the string can remove itself.
       unsigned Refcount; ///< Number of referencing PooledStringPtrs.
-      
+
     public:
       PooledString() : Pool(0), Refcount(0) { }
     };
-    
+
     friend class PooledStringPtr;
-    
+
     typedef StringMap<PooledString> table_t;
     typedef StringMapEntry<PooledString> entry_t;
     table_t InternTable;
-    
+
   public:
     StringPool();
     ~StringPool();
-    
+
     /// intern - Adds a string to the pool and returns a reference-counted
     /// pointer to it. No additional memory is allocated if the string already
     /// exists in the pool.
     PooledStringPtr intern(const char *Begin, const char *End);
-    
+
     /// intern - Adds a null-terminated string to the pool and returns a
     /// reference-counted pointer to it. No additional memory is allocated if
     /// the string already exists in the pool.
     inline PooledStringPtr intern(const char *Str);
-    
+
     /// empty - Checks whether the pool is empty. Returns true if so.
-    /// 
+    ///
     inline bool empty() const { return InternTable.empty(); }
   };
-  
+
   /// PooledStringPtr - A pointer to an interned string. Use operator bool to
   /// test whether the pointer is valid, and operator * to get the string if so.
   /// This is a lightweight value class with storage requirements equivalent to
@@ -84,18 +84,18 @@ namespace llvm {
   class PooledStringPtr {
     typedef StringPool::entry_t entry_t;
     entry_t *S;
-    
+
   public:
     PooledStringPtr() : S(0) {}
-    
+
     explicit PooledStringPtr(entry_t *E) : S(E) {
       if (S) ++S->getValue().Refcount;
     }
-    
+
     PooledStringPtr(const PooledStringPtr &That) : S(That.S) {
       if (S) ++S->getValue().Refcount;
     }
-    
+
     PooledStringPtr &operator=(const PooledStringPtr &That) {
       if (S != That.S) {
         clear();
@@ -104,7 +104,7 @@ namespace llvm {
       }
       return *this;
     }
-    
+
     void clear() {
       if (!S)
         return;
@@ -114,31 +114,31 @@ namespace llvm {
       }
       S = 0;
     }
-    
+
     ~PooledStringPtr() { clear(); }
-    
+
     inline const char *begin() const {
       assert(*this && "Attempt to dereference empty PooledStringPtr!");
       return S->getKeyData();
     }
-    
+
     inline const char *end() const {
       assert(*this && "Attempt to dereference empty PooledStringPtr!");
       return S->getKeyData() + S->getKeyLength();
     }
-    
+
     inline unsigned size() const {
       assert(*this && "Attempt to dereference empty PooledStringPtr!");
       return S->getKeyLength();
     }
-    
+
     inline const char *operator*() const { return begin(); }
     inline operator bool() const { return S != 0; }
-    
+
     inline bool operator==(const PooledStringPtr &That) { return S == That.S; }
     inline bool operator!=(const PooledStringPtr &That) { return S != That.S; }
   };
-  
+
   PooledStringPtr StringPool::intern(const char *Str) {
     return intern(Str, Str + strlen(Str));
   }

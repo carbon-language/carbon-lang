@@ -28,17 +28,17 @@ class Mangler {
   /// Prefix - This string is added to each symbol that is emitted, unless the
   /// symbol is marked as not needing this prefix.
   const char *Prefix;
-  
+
   const char *PrivatePrefix;
-  /// UseQuotes - If this is set, the target accepts global names in quotes, 
+  /// UseQuotes - If this is set, the target accepts global names in quotes,
   /// e.g. "foo bar" is a legal name.  This syntax is used instead of escaping
   /// the space character.  By default, this is false.
   bool UseQuotes;
-  
+
   /// PreserveAsmNames - If this is set, the asm escape character is not removed
-  /// from names with 'asm' specifiers. 
+  /// from names with 'asm' specifiers.
   bool PreserveAsmNames;
-  
+
   /// Memo - This is used to remember the name that we assign a value.
   ///
   DenseMap<const Value*, std::string> Memo;
@@ -46,7 +46,7 @@ class Mangler {
   /// Count - This simple counter is used to unique value names.
   ///
   unsigned Count;
-  
+
   /// TypeMap - If the client wants us to unique types, this keeps track of the
   /// current assignments and TypeCounter keeps track of the next id to assign.
   DenseMap<const Type*, unsigned> TypeMap;
@@ -64,11 +64,11 @@ public:
   /// setUseQuotes - If UseQuotes is set to true, this target accepts quoted
   /// strings for assembler labels.
   void setUseQuotes(bool Val) { UseQuotes = Val; }
-  
+
   /// setPreserveAsmNames - If the mangler should not strip off the asm name
   /// @verbatim identifier (\001), this should be set. @endverbatim
   void setPreserveAsmNames(bool Val) { PreserveAsmNames = Val; }
-  
+
   /// Acceptable Characters - This allows the target to specify which characters
   /// are acceptable to the assembler without being mangled.  By default we
   /// allow letters, numbers, '_', '$', and '.', which is what GAS accepts.
@@ -81,7 +81,7 @@ public:
   bool isCharAcceptable(unsigned char X) const {
     return (AcceptableChars[X/32] & (1 << (X&31))) != 0;
   }
-  
+
   /// getValueName - Returns the mangled name of V, an LLVM Value,
   /// in the current module.
   ///

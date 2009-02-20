@@ -16,7 +16,7 @@
 #define LLVM_SUPPORT_ALIGNOF_H
 
 namespace llvm {
-  
+
 template <typename T>
 struct AlignmentCalcImpl {
   char x;
@@ -24,7 +24,7 @@ struct AlignmentCalcImpl {
 private:
   AlignmentCalcImpl() {} // Never instantiate.
 };
-  
+
 /// AlignOf - A templated class that contains an enum value representing
 ///  the alignment of the template argument.  For example,
 ///  AlignOf<int>::Alignment represents the alignment of type "int".  The
@@ -41,9 +41,9 @@ struct AlignOf {
   enum { Alignment_GreaterEqual_4Bytes = Alignment >= 4 ? 1 : 0 };
   enum { Alignment_GreaterEqual_8Bytes = Alignment >= 8 ? 1 : 0 };
   enum { Alignment_GreaterEqual_16Bytes = Alignment >= 16 ? 1 : 0 };
-  
+
   enum { Alignment_LessEqual_2Bytes = Alignment <= 2 ? 1 : 0 };
-  enum { Alignment_LessEqual_4Bytes = Alignment <= 4 ? 1 : 0 }; 
+  enum { Alignment_LessEqual_4Bytes = Alignment <= 4 ? 1 : 0 };
   enum { Alignment_LessEqual_8Bytes = Alignment <= 8 ? 1 : 0 };
   enum { Alignment_LessEqual_16Bytes = Alignment <= 16 ? 1 : 0 };
 
@@ -55,6 +55,6 @@ struct AlignOf {
 ///  alignof<int>() returns the alignment of an int.
 template <typename T>
 static inline unsigned alignof() { return AlignOf<T>::Alignment; }
-  
+
 } // end namespace llvm
 #endif

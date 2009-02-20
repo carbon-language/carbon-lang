@@ -39,7 +39,7 @@ protected:
 public:
   format_object_base(const char *fmt) : Fmt(fmt) {}
   virtual ~format_object_base() {}
-  
+
   /// print - Format the object into the specified buffer.  On success, this
   /// returns the length of the formatted string.  If the buffer is too small,
   /// this returns a length to retry with, which will be larger than BufferSize.
@@ -57,7 +57,7 @@ public:
   format_object1(const char *fmt, const T &val)
     : format_object_base(fmt), Val(val) {
   }
-  
+
   /// print - Format the object into the specified buffer.  On success, this
   /// returns the length of the formatted string.  If the buffer is too small,
   /// this returns a length to retry with, which will be larger than BufferSize.
@@ -71,7 +71,7 @@ public:
     return N;
   }
 };
-  
+
 /// format_object2 - This is a templated helper class used by the format
 /// function that captures the object to be formated and the format string. When
 /// actually printed, this synthesizes the string into a temporary buffer
@@ -84,7 +84,7 @@ public:
   format_object2(const char *fmt, const T1 &val1, const T2 &val2)
   : format_object_base(fmt), Val1(val1), Val2(val2) {
   }
-  
+
   /// print - Format the object into the specified buffer.  On success, this
   /// returns the length of the formatted string.  If the buffer is too small,
   /// this returns a length to retry with, which will be larger than BufferSize.
@@ -112,7 +112,7 @@ public:
   format_object3(const char *fmt, const T1 &val1, const T2 &val2,const T3 &val3)
     : format_object_base(fmt), Val1(val1), Val2(val2), Val3(val3) {
   }
-  
+
   /// print - Format the object into the specified buffer.  On success, this
   /// returns the length of the formatted string.  If the buffer is too small,
   /// this returns a length to retry with, which will be larger than BufferSize.
@@ -149,7 +149,7 @@ template <typename T1, typename T2, typename T3>
                                            const T2 &Val2, const T3 &Val3) {
   return format_object3<T1, T2, T3>(Fmt, Val1, Val2, Val3);
 }
-  
+
 } // end namespace llvm
 
 #endif

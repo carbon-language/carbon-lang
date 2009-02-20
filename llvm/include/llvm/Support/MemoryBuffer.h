@@ -37,11 +37,11 @@ protected:
   void initCopyOf(const char *BufStart, const char *BufEnd);
 public:
   virtual ~MemoryBuffer();
-  
+
   const char *getBufferStart() const { return BufferStart; }
   const char *getBufferEnd() const   { return BufferEnd; }
   size_t getBufferSize() const { return BufferEnd-BufferStart; }
-  
+
   /// getBufferIdentifier - Return an identifier for this buffer, typically the
   /// filename it was read from.
   virtual const char *getBufferIdentifier() const {
@@ -60,32 +60,32 @@ public:
   /// that EndPtr[0] must be a null byte and be accessible!
   static MemoryBuffer *getMemBuffer(const char *StartPtr, const char *EndPtr,
                                     const char *BufferName = "");
-  
+
   /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
   /// copying the contents and taking ownership of it.  This has no requirements
   /// on EndPtr[0].
   static MemoryBuffer *getMemBufferCopy(const char *StartPtr,const char *EndPtr,
                                         const char *BufferName = "");
-  
+
   /// getNewMemBuffer - Allocate a new MemoryBuffer of the specified size that
   /// is completely initialized to zeros.  Note that the caller should
   /// initialize the memory allocated by this method.  The memory is owned by
   /// the MemoryBuffer object.
   static MemoryBuffer *getNewMemBuffer(size_t Size,
                                        const char *BufferName = "");
-  
+
   /// getNewUninitMemBuffer - Allocate a new MemoryBuffer of the specified size
   /// that is not initialized.  Note that the caller should initialize the
   /// memory allocated by this method.  The memory is owned by the MemoryBuffer
   /// object.
   static MemoryBuffer *getNewUninitMemBuffer(size_t Size,
                                              const char *BufferName = "");
-  
+
   /// getSTDIN - Read all of stdin into a file buffer, and return it.  This
   /// returns null if stdin is empty.
   static MemoryBuffer *getSTDIN();
-  
-  
+
+
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
   /// if the Filename is "-".  If an error occurs, this returns null and fills
   /// in *ErrStr with a reason.  If stdin is empty, this API (unlike getSTDIN)
@@ -93,7 +93,7 @@ public:
   static MemoryBuffer *getFileOrSTDIN(const char *Filename,
                                       std::string *ErrStr = 0,
                                       int64_t FileSize = -1);
-  
+
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
   /// if the Filename is "-".  If an error occurs, this returns null and fills
   /// in *ErrStr with a reason.

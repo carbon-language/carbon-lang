@@ -31,15 +31,15 @@ namespace llvm {
 /// @brief Base class for instruction visitors
 ///
 /// Instruction visitors are used when you want to perform different action for
-/// different kinds of instruction without without having to use lots of casts 
-/// and a big switch statement (in your code that is). 
+/// different kinds of instruction without without having to use lots of casts
+/// and a big switch statement (in your code that is).
 ///
 /// To define your own visitor, inherit from this class, specifying your
 /// new type for the 'SubClass' template parameter, and "override" visitXXX
-/// functions in your class. I say "overriding" because this class is defined 
-/// in terms of statically resolved overloading, not virtual functions.  
-/// 
-/// For example, here is a visitor that counts the number of malloc 
+/// functions in your class. I say "overriding" because this class is defined
+/// in terms of statically resolved overloading, not virtual functions.
+///
+/// For example, here is a visitor that counts the number of malloc
 /// instructions processed:
 ///
 ///  /// Declare the class.  Note that we derive from InstVisitor instantiated
@@ -65,8 +65,8 @@ namespace llvm {
 /// if instructions are added in the future, they will be automatically
 /// supported, if you handle on of their superclasses.
 ///
-/// The optional second template argument specifies the type that instruction 
-/// visitation functions should return. If you specify this, you *MUST* provide 
+/// The optional second template argument specifies the type that instruction
+/// visitation functions should return. If you specify this, you *MUST* provide
 /// an implementation of visitInstruction though!.
 ///
 /// Note that this class is specifically designed as a template to avoid

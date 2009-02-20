@@ -10,7 +10,7 @@
 // This file contains constants used for implementing Dwarf debug support.  For
 // Details on the Dwarf 3 specfication see DWARF Debugging Information Format
 // V.3 reference manual http://dwarf.freestandards.org ,
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_DWARF_H
@@ -42,23 +42,23 @@ namespace dwarf {
 enum llvm_dwarf_constants {
   // llvm mock tags
   DW_TAG_invalid = ~0U,                 // Tag for invalid results.
-  
+
   DW_TAG_anchor = 0,                    // Tag for descriptor anchors.
   DW_TAG_auto_variable = 0x100,         // Tag for local (auto) variables.
   DW_TAG_arg_variable = 0x101,          // Tag for argument variables.
   DW_TAG_return_variable = 0x102,       // Tag for return variables.
-  
+
   DW_TAG_vector_type = 0x103,           // Tag for vector types.
-  
+
   DW_TAG_user_base = 0x1000,            // Recommended base for user tags.
-  
+
   DW_CIE_VERSION = 1,                   // Common frame information version.
   DW_CIE_ID       = 0xffffffff          // Common frame information mark.
 };
 
 enum dwarf_constants {
   DWARF_VERSION = 2,
-  
+
   // Tags
   DW_TAG_array_type = 0x01,
   DW_TAG_class_type = 0x02,
@@ -357,7 +357,7 @@ enum dwarf_constants {
   DW_ACCESS_protected = 0x02,
   DW_ACCESS_private = 0x03,
 
-  // Visibility codes 
+  // Visibility codes
   DW_VIS_local = 0x01,
   DW_VIS_exported = 0x02,
   DW_VIS_qualified = 0x03,
@@ -366,7 +366,7 @@ enum dwarf_constants {
   DW_VIRTUALITY_none = 0x00,
   DW_VIRTUALITY_virtual = 0x01,
   DW_VIRTUALITY_pure_virtual = 0x02,
-  
+
   // Language names
   DW_LANG_C89 = 0x0001,
   DW_LANG_C = 0x0002,
@@ -389,7 +389,7 @@ enum dwarf_constants {
   DW_LANG_D = 0x0013,
   DW_LANG_lo_user = 0x8000,
   DW_LANG_hi_user = 0xffff,
-  
+
   // Identifier case codes
   DW_ID_case_sensitive = 0x00,
   DW_ID_up_case = 0x01,
@@ -409,7 +409,7 @@ enum dwarf_constants {
   DW_INL_declared_not_inlined = 0x02,
   DW_INL_declared_inlined = 0x03,
 
-  // Array ordering 
+  // Array ordering
   DW_ORD_row_major = 0x00,
   DW_ORD_col_major = 0x01,
 
@@ -565,7 +565,7 @@ const char *DiscriminantString(unsigned Discriminant);
 /// LNStandardString - Return the string for the specified line number standard.
 ///
 const char *LNStandardString(unsigned Standard);
- 
+
 /// LNExtendedString - Return the string for the specified line number extended
 /// opcode encodings.
 const char *LNExtendedString(unsigned Encoding);

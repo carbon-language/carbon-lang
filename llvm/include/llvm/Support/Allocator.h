@@ -18,24 +18,24 @@
 #include <cstdlib>
 
 namespace llvm {
-    
+
 class MallocAllocator {
 public:
   MallocAllocator() {}
   ~MallocAllocator() {}
-  
+
   void Reset() {}
 
   void *Allocate(size_t Size, size_t /*Alignment*/) { return malloc(Size); }
-  
+
   template <typename T>
   T *Allocate() { return static_cast<T*>(malloc(sizeof(T))); }
-  
+
   template <typename T>
-  T *Allocate(size_t Num) { 
+  T *Allocate(size_t Num) {
     return static_cast<T*>(malloc(sizeof(T)*Num));
   }
-  
+
   void Deallocate(const void *Ptr) { free(const_cast<void*>(Ptr)); }
 
   void PrintStats() const {}
@@ -53,7 +53,7 @@ class BumpPtrAllocator {
 public:
   BumpPtrAllocator();
   ~BumpPtrAllocator();
-  
+
   void Reset();
 
   void *Allocate(size_t Size, size_t Alignment);
@@ -61,21 +61,21 @@ public:
   /// Allocate space, but do not construct, one object.
   ///
   template <typename T>
-  T *Allocate() { 
+  T *Allocate() {
     return static_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
   }
-  
+
   /// Allocate space for an array of objects.  This does not construct the
   /// objects though.
   template <typename T>
-  T *Allocate(size_t Num) { 
+  T *Allocate(size_t Num) {
     return static_cast<T*>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
   }
-  
+
   /// Allocate space for a specific count of elements and with a specified
   /// alignment.
   template <typename T>
-  T *Allocate(size_t Num, unsigned Alignment) { 
+  T *Allocate(size_t Num, unsigned Alignment) {
     // Round EltSize up to the specified alignment.
     unsigned EltSize = (sizeof(T)+Alignment-1)&~Alignment;
     return static_cast<T*>(Allocate(Num * EltSize, Alignment));

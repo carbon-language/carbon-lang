@@ -26,7 +26,7 @@ namespace llvm {
   /// option, it will set the string to an error message if an error occurs, or
   /// if the files are different.
   ///
-  int DiffFilesWithTolerance(const sys::PathWithStatus &FileA, 
+  int DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
                              const sys::PathWithStatus &FileB,
                              double AbsTol, double RelTol,
                              std::string *Error = 0);

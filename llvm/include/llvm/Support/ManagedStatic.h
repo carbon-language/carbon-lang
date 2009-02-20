@@ -31,12 +31,12 @@ protected:
   mutable void *Ptr;
   mutable void (*DeleterFn)(void*);
   mutable const ManagedStaticBase *Next;
-  
+
   void RegisterManagedStatic(void *ObjPtr, void (*deleter)(void*)) const;
 public:
-  /// isConstructed - Return true if this object has not been created yet.  
+  /// isConstructed - Return true if this object has not been created yet.
   bool isConstructed() const { return Ptr != 0; }
-  
+
   void destroy() const;
 };
 
@@ -48,7 +48,7 @@ public:
 template<class C>
 class ManagedStatic : public ManagedStaticBase {
 public:
-  
+
   // Accessors.
   C &operator*() {
     if (!Ptr) LazyInit();
@@ -66,7 +66,7 @@ public:
     if (!Ptr) LazyInit();
     return static_cast<C*>(Ptr);
   }
-  
+
 public:
   void LazyInit() const {
     RegisterManagedStatic(new C(), object_deleter<C>);
@@ -83,14 +83,14 @@ public:
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.
 void llvm_shutdown();
 
-  
+
 /// llvm_shutdown_obj - This is a simple helper class that calls
 /// llvm_shutdown() when it is destroyed.
 struct llvm_shutdown_obj {
   llvm_shutdown_obj() {}
   ~llvm_shutdown_obj() { llvm_shutdown(); }
 };
-  
+
 }
 
 #endif
