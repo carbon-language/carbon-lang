@@ -101,6 +101,9 @@ public:
   ///
   void RecordVariable(GlobalVariable *GV, unsigned FrameIndex);
 
+  /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
+  /// be emitted.
+  bool ShouldEmitDwarfDebug() const;
 };
 
 
