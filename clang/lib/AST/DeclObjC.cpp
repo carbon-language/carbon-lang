@@ -178,6 +178,7 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
 /// Destroy - Call destructors and release memory.
 void ObjCImplementationDecl::Destroy(ASTContext& C) {
   IVars.clear();
+  Decl::Destroy(C);
 }
 
 
