@@ -54,6 +54,7 @@ struct EvalInfo {
 static bool EvaluateLValue(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
+static bool EvaluateIntegerOrLValue(const Expr *E, APValue  &Result, EvalInfo &Info);
 static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
 static bool EvaluateComplex(const Expr *E, APValue &Result, EvalInfo &Info);
 
@@ -351,11 +352,17 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
   }
   
   if (SubExpr->getType()->isIntegralType()) {
-    llvm::APSInt Result(32);
-    if (EvaluateInteger(SubExpr, Result, Info)) {
-      Result.extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
-      return APValue(0, Result.getZExtValue());
+    APValue Result;
+    if (!EvaluateIntegerOrLValue(SubExpr, Result, Info))
+      return APValue();
+
+    if (Result.isInt()) {
+      Result.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
+      return APValue(0, Result.getInt().getZExtValue());
     }
+    
+    // Cast is of an lvalue, no need to change value.
+    return Result;
   }
 
   if (SubExpr->getType()->isFunctionType() ||
@@ -587,15 +594,17 @@ private:
 };
 } // end anonymous namespace
 
-static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
+static bool EvaluateIntegerOrLValue(const Expr* E, APValue &Result, EvalInfo &Info) {
   if (!E->getType()->isIntegralType())
     return false;
   
-  APValue Val;
-  if (!IntExprEvaluator(Info, Val).Visit(const_cast<Expr*>(E)) ||
-      !Val.isInt())
-    return false;
+  return IntExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
+}
 
+static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
+  APValue Val;
+  if (!EvaluateIntegerOrLValue(E, Val, Info) || !Val.isInt())
+    return false;
   Result = Val.getInt();
   return true;
 }

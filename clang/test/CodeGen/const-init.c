@@ -76,4 +76,7 @@ int g15 = (int) (char) ((void*) 0 + 255);
 // RUN: grep '@g16 = global i64 4294967295' %t &&
 long long g16 = (long long) ((void*) 0xFFFFFFFF);
 
+// RUN: grep '@g17 = global i32\* @g15' %t &&
+int *g17 = (int *) ((long) &g15);
+
 // RUN: true
