@@ -20,13 +20,13 @@ using namespace clang;
 // ObjCListBase
 //===----------------------------------------------------------------------===//
 
-void ObjCListBase::Destroy() {
+void ObjCListBase::Destroy(ASTContext &Ctx) {
   delete[] List;
   NumElts = 0;
   List = 0;
 }
 
-void ObjCListBase::set(void *const* InList, unsigned Elts) {
+void ObjCListBase::set(void *const* InList, unsigned Elts, ASTContext &Ctx) {
   assert(List == 0 && "Elements already set!");
   if (Elts == 0) return;  // Setting to an empty list is a noop.
   
@@ -206,14 +206,14 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                   isVariadic, isSynthesized, impControl);
 }
 
-void ObjCMethodDecl::Destroy(ASTContext& C) {
+void ObjCMethodDecl::Destroy(ASTContext &C) {
   if (Body) Body->Destroy(C);
   if (SelfDecl) SelfDecl->Destroy(C);
   
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
 
-  ParamInfo.Destroy();
+  ParamInfo.Destroy(C);
 
   Decl::Destroy(C);
 }
@@ -300,7 +300,7 @@ void ObjCInterfaceDecl::Destroy(ASTContext &C) {
   for (ivar_iterator I=ivar_begin(), E=ivar_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
   
-  IVars.Destroy();
+  IVars.Destroy(C);
   // FIXME: CategoryList?
   
   // FIXME: Because there is no clear ownership
@@ -377,7 +377,7 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 void ObjCProtocolDecl::Destroy(ASTContext &C) {
-  ReferencedProtocols.Destroy();
+  ReferencedProtocols.Destroy(C);
   ObjCContainerDecl::Destroy(C);
 }
 
@@ -413,11 +413,19 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupClassMethod(Selector Sel) {
 // ObjCClassDecl
 //===----------------------------------------------------------------------===//
 
+ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L, 
+                             ObjCInterfaceDecl *const *Elts, unsigned nElts,
+                             ASTContext &C)
+  : Decl(ObjCClass, DC, L) {
+  ForwardDecls.set(Elts, nElts, C);
+}
+
+
 ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation L,
                                      ObjCInterfaceDecl *const *Elts,
                                      unsigned nElts) {
-  return new (C) ObjCClassDecl(DC, L, Elts, nElts);
+  return new (C) ObjCClassDecl(DC, L, Elts, nElts, C);
 }
 
 void ObjCClassDecl::Destroy(ASTContext &C) {
@@ -430,7 +438,7 @@ void ObjCClassDecl::Destroy(ASTContext &C) {
   //  obviating this problem.  Because of this situation, referenced
   //  ObjCInterfaceDecls are destroyed in ~TranslationUnit.
   
-  ForwardDecls.Destroy();
+  ForwardDecls.Destroy(C);
   Decl::Destroy(C);
 }
 
@@ -438,23 +446,25 @@ void ObjCClassDecl::Destroy(ASTContext &C) {
 // ObjCForwardProtocolDecl
 //===----------------------------------------------------------------------===//
 
+ObjCForwardProtocolDecl::
+ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
+                        ObjCProtocolDecl *const *Elts, unsigned nElts,
+                        ASTContext &C)
+: Decl(ObjCForwardProtocol, DC, L) { 
+  ReferencedProtocols.set(Elts, nElts, C);
+}
+
+
 ObjCForwardProtocolDecl *
 ObjCForwardProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                 SourceLocation L, 
                                 ObjCProtocolDecl *const *Elts,
                                 unsigned NumElts) {
-  return new (C) ObjCForwardProtocolDecl(DC, L, Elts, NumElts);
-}
-
-ObjCForwardProtocolDecl::
-ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
-                        ObjCProtocolDecl *const *Elts, unsigned nElts)
-  : Decl(ObjCForwardProtocol, DC, L) { 
-  ReferencedProtocols.set(Elts, nElts);
+  return new (C) ObjCForwardProtocolDecl(DC, L, Elts, NumElts, C);
 }
 
 void ObjCForwardProtocolDecl::Destroy(ASTContext &C) {
-  ReferencedProtocols.Destroy();
+  ReferencedProtocols.Destroy(C);
   Decl::Destroy(C);
 }
 
@@ -543,8 +553,8 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 /// Destroy - Call destructors and release memory.
-void ObjCImplementationDecl::Destroy(ASTContext& C) {
-  IVars.Destroy();
+void ObjCImplementationDecl::Destroy(ASTContext &C) {
+  IVars.Destroy(C);
   Decl::Destroy(C);
 }
 

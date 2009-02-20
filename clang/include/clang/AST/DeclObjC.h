@@ -43,13 +43,13 @@ public:
     assert(List == 0 && "Destroy should have been called before dtor");
   }
   
-  void Destroy();
+  void Destroy(ASTContext &Ctx);
   
   unsigned size() const { return NumElts; }
   bool empty() const { return NumElts == 0; }
   
 protected:
-  void set(void *const* InList, unsigned Elts);
+  void set(void *const* InList, unsigned Elts, ASTContext &Ctx);
 };
   
   
@@ -60,8 +60,8 @@ protected:
 template <typename T>
 class ObjCList : public ObjCListBase {
 public:
-  void set(T* const* InList, unsigned Elts) {
-    ObjCListBase::set(reinterpret_cast<void*const*>(InList), Elts);
+  void set(T* const* InList, unsigned Elts, ASTContext &Ctx) {
+    ObjCListBase::set(reinterpret_cast<void*const*>(InList), Elts, Ctx);
   }
   
   typedef T* const * iterator;
@@ -195,8 +195,9 @@ public:
   param_iterator param_begin() const { return ParamInfo.begin(); }
   param_iterator param_end() const { return ParamInfo.end(); }
 
-  void setMethodParams(ParmVarDecl *const *NewParamInfo, unsigned NumParams) {
-    ParamInfo.set(NewParamInfo, NumParams);
+  void setMethodParams(ParmVarDecl *const *List, unsigned Num,
+                       ASTContext &C) {
+    ParamInfo.set(List, Num, C);
   }
 
   /// createImplicitParams - Used to lazily create the self and cmd
@@ -398,16 +399,15 @@ public:
   unsigned ivar_size() const { return IVars.size(); }
   bool ivar_empty() const { return IVars.empty(); }
     
-  /// addReferencedProtocols - Set the list of protocols that this interface
+  /// setProtocolList - Set the list of protocols that this interface
   /// implements.
-  void addReferencedProtocols(ObjCProtocolDecl *const*List, unsigned NumRPs) {
-    ReferencedProtocols.set(List, NumRPs);
+  void setProtocolList(ObjCProtocolDecl *const* List, unsigned Num,
+                       ASTContext &C) {
+    ReferencedProtocols.set(List, Num, C);
   }
    
-  void addInstanceVariablesToClass(ObjCIvarDecl * const* ivars, unsigned Num,
-                                   SourceLocation RBracLoc) {
-    IVars.set(ivars, Num);
-    setLocEnd(RBracLoc);
+  void setIVarList(ObjCIvarDecl * const *List, unsigned Num, ASTContext &C) {
+    IVars.set(List, Num, C);
   }
   FieldDecl *lookupFieldDeclForIvar(ASTContext &Context, 
                                     const ObjCIvarDecl *ivar);
@@ -589,10 +589,11 @@ public:
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   
-  /// addReferencedProtocols - Set the list of protocols that this interface
+  /// setProtocolList - Set the list of protocols that this interface
   /// implements.
-  void addReferencedProtocols(ObjCProtocolDecl *const*List, unsigned NumRPs) {
-    ReferencedProtocols.set(List, NumRPs);
+  void setProtocolList(ObjCProtocolDecl *const*List, unsigned Num,
+                       ASTContext &C) {
+    ReferencedProtocols.set(List, Num, C);
   }
   
   // Lookup a method. First, we search locally. If a method isn't
@@ -620,10 +621,7 @@ class ObjCClassDecl : public Decl {
   ObjCList<ObjCInterfaceDecl> ForwardDecls;
   
   ObjCClassDecl(DeclContext *DC, SourceLocation L, 
-                ObjCInterfaceDecl *const *Elts, unsigned nElts)
-    : Decl(ObjCClass, DC, L) {
-    ForwardDecls.set(Elts, nElts);
-  }
+                ObjCInterfaceDecl *const *Elts, unsigned nElts, ASTContext &C);
   virtual ~ObjCClassDecl() {}
 public:
   
@@ -650,7 +648,8 @@ class ObjCForwardProtocolDecl : public Decl {
   ObjCList<ObjCProtocolDecl> ReferencedProtocols;
   
   ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
-                          ObjCProtocolDecl *const *Elts, unsigned nElts);  
+                          ObjCProtocolDecl *const *Elts, unsigned nElts,
+                          ASTContext &C);  
   virtual ~ObjCForwardProtocolDecl() {}
   
 public:
@@ -715,10 +714,11 @@ public:
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IDecl) { ClassInterface = IDecl; }
   
-  /// addReferencedProtocols - Set the list of protocols that this interface
+  /// setProtocolList - Set the list of protocols that this interface
   /// implements.
-  void addReferencedProtocols(ObjCProtocolDecl *const*List, unsigned NumRPs) {
-    ReferencedProtocols.set(List, NumRPs);
+  void setProtocolList(ObjCProtocolDecl *const*List, unsigned Num,
+                              ASTContext &C) {
+    ReferencedProtocols.set(List, Num, C);
   }
   
   const ObjCList<ObjCProtocolDecl> &getReferencedProtocols() const { 
@@ -890,8 +890,8 @@ public:
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
 
-  void setIVarList(ObjCIvarDecl *const *InArray, unsigned Num) {
-    IVars.set(InArray, Num);
+  void setIVarList(ObjCIvarDecl *const *InArray, unsigned Num, ASTContext &C) {
+    IVars.set(InArray, Num, C);
   }
   
   void addInstanceMethod(ObjCMethodDecl *method) {

@@ -3688,7 +3688,9 @@ void Sema::ActOnFields(Scope* S,
   } else {
     ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl)) {
-      ID->addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
+      ID->setIVarList(ClsFields, RecFields.size(), Context);
+      ID->setLocEnd(RBrac);
+      
       // Must enforce the rule that ivars in the base classes may not be
       // duplicates.
       if (ID->getSuperClass()) {
@@ -3707,7 +3709,7 @@ void Sema::ActOnFields(Scope* S,
     else if (ObjCImplementationDecl *IMPDecl = 
                dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
       assert(IMPDecl && "ActOnFields - missing ObjCImplementationDecl");
-      IMPDecl->setIVarList(ClsFields, RecFields.size());
+      IMPDecl->setIVarList(ClsFields, RecFields.size(), Context);
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);
     }
   }

@@ -152,7 +152,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   
   /// Check then save referenced protocols.
   if (NumProtoRefs) {
-    IDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
+    IDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,
+                           Context);
     IDecl->setLocEnd(EndProtoLoc);
   }
   
@@ -245,7 +246,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     ProcessDeclAttributeList(PDecl, AttrList);
   if (NumProtoRefs) {
     /// Check then save referenced protocols.
-    PDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
+    PDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,Context);
     PDecl->setLocEnd(EndProtoLoc);
   }
   
@@ -509,7 +510,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     CDecl->insertNextClassCategory();
 
   if (NumProtoRefs) {
-    CDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
+    CDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,Context);
     CDecl->setLocEnd(EndProtoLoc);
   }
   
@@ -634,7 +635,8 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
   /// (legacy objective-c @implementation decl without an @interface decl).
   /// Add implementations's ivar to the synthesize class's ivar list.
   if (IDecl->ImplicitInterfaceDecl()) {
-    IDecl->addInstanceVariablesToClass(ivars, numIvars, RBrace);
+    IDecl->setIVarList(ivars, numIvars, Context);
+    IDecl->setLocEnd(RBrace);
     return;
   }
   // If implementation has empty ivar list, just return.
@@ -1166,7 +1168,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   property->getType(),
                                                   VarDecl::None,
                                                   0);
-      SetterMethod->setMethodParams(&Argument, 1);
+      SetterMethod->setMethodParams(&Argument, 1, Context);
       CD->addDecl(SetterMethod);
     } else
       // A user declared setter will be synthesize when @synthesize of
@@ -1395,7 +1397,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     Params.push_back(Param);
   }
 
-  ObjCMethod->setMethodParams(&Params[0], Sel.getNumArgs());
+  ObjCMethod->setMethodParams(&Params[0], Sel.getNumArgs(), Context);
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));
   const ObjCMethodDecl *PrevMethod = 0;
@@ -1560,14 +1562,11 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                                      ICDecl,
                                      true, false, true, 
                                      ObjCMethodDecl::Required);
-            ParmVarDecl *Argument = ParmVarDecl::Create(Context,
-                                                        SetterDecl,
+            ParmVarDecl *Argument = ParmVarDecl::Create(Context, SetterDecl,
                                                         SourceLocation(),
                                                         FD.D.getIdentifier(),
-                                                        T,
-                                                        VarDecl::None,
-                                                        0);
-            SetterDecl->setMethodParams(&Argument, 1);
+                                                        T, VarDecl::None, 0);
+            SetterDecl->setMethodParams(&Argument, 1, Context);
             PIDecl->setSetterMethodDecl(SetterDecl);
           }
           else
