@@ -2457,7 +2457,8 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
         VDecl->setInvalidDecl();
       
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
-      if (!getLangOptions().CPlusPlus) {
+      // Don't check invalid declarations to avoid emitting useless diagnostics.
+      if (!getLangOptions().CPlusPlus && !VDecl->isInvalidDecl()) {
         if (SC == VarDecl::Static) // C99 6.7.8p4.
           CheckForConstantInitializer(Init, DclT);
       }
@@ -2471,7 +2472,8 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
         VDecl->setInvalidDecl();
     
     // C++ 3.6.2p2, allow dynamic initialization of static initializers.
-    if (!getLangOptions().CPlusPlus) {
+    // Don't check invalid declarations to avoid emitting useless diagnostics.
+    if (!getLangOptions().CPlusPlus && !VDecl->isInvalidDecl()) {
       // C99 6.7.8p4. All file scoped initializers need to be constant.
       CheckForConstantInitializer(Init, DclT);
     }
