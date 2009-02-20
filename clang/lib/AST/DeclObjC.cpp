@@ -48,6 +48,7 @@ void ObjCMethodDecl::Destroy(ASTContext& C) {
   Decl::Destroy(C);
 }
 
+
 ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                              DeclContext *DC,
                                              SourceLocation atLoc,
@@ -58,17 +59,22 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                      isInternal);
 }
 
-ObjCContainerDecl::~ObjCContainerDecl() {
+ObjCInterfaceDecl::
+ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
+                  SourceLocation CLoc, bool FD, bool isInternal)
+  : ObjCContainerDecl(ObjCInterface, DC, atLoc, Id),
+    TypeForDecl(0), SuperClass(0), Ivars(0), NumIvars(0),
+    CategoryList(0), ForwardDecl(FD), InternalInterface(isInternal),
+    ClassLoc(CLoc) {
 }
 
-ObjCInterfaceDecl::~ObjCInterfaceDecl() {
-  delete [] Ivars;
-  // FIXME: CategoryList?
-}
-
-void ObjCInterfaceDecl::Destroy(ASTContext& C) {  
+void ObjCInterfaceDecl::Destroy(ASTContext &C) {  
   for (ivar_iterator I=ivar_begin(), E=ivar_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
+  
+  delete [] Ivars;
+  Ivars = 0;
+  // FIXME: CategoryList?
   
   // FIXME: Because there is no clear ownership
   //  role between ObjCInterfaceDecls and the ObjCPropertyDecls that they
@@ -116,11 +122,19 @@ ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCClassDecl(DC, L, Elts, nElts);
 }
 
-ObjCClassDecl::~ObjCClassDecl() {
-  delete [] ForwardDecls;
+ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L, 
+                             ObjCInterfaceDecl **Elts, unsigned nElts)
+  : Decl(ObjCClass, DC, L) { 
+  if (nElts) {
+    ForwardDecls = new ObjCInterfaceDecl*[nElts];
+    memcpy(ForwardDecls, Elts, nElts*sizeof(ObjCInterfaceDecl*));
+  } else {
+    ForwardDecls = 0;
+  }
+  NumForwardDecls = nElts;
 }
 
-void ObjCClassDecl::Destroy(ASTContext& C) {
+void ObjCClassDecl::Destroy(ASTContext &C) {
   
   // FIXME: There is no clear ownership policy now for referenced
   //  ObjCInterfaceDecls.  Some of them can be forward declarations that
@@ -130,6 +144,9 @@ void ObjCClassDecl::Destroy(ASTContext& C) {
   //  obviating this problem.  Because of this situation, referenced
   //  ObjCInterfaceDecls are destroyed in ~TranslationUnit.
   
+  delete [] ForwardDecls;
+  ForwardDecls = 0;
+
   Decl::Destroy(C);
 }
 
@@ -140,8 +157,22 @@ ObjCForwardProtocolDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCForwardProtocolDecl(DC, L, Elts, NumElts);
 }
 
-ObjCForwardProtocolDecl::~ObjCForwardProtocolDecl() {
+ObjCForwardProtocolDecl::
+ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
+                        ObjCProtocolDecl **Elts, unsigned nElts)
+  : Decl(ObjCForwardProtocol, DC, L) { 
+  NumReferencedProtocols = nElts;
+  if (nElts) {
+    ReferencedProtocols = new ObjCProtocolDecl*[nElts];
+    memcpy(ReferencedProtocols, Elts, nElts*sizeof(ObjCProtocolDecl*));
+  } else {
+    ReferencedProtocols = 0;
+  }
+}
+
+void ObjCForwardProtocolDecl::Destroy(ASTContext &C) {
   delete [] ReferencedProtocols;
+  ReferencedProtocols = 0;
 }
 
 ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
