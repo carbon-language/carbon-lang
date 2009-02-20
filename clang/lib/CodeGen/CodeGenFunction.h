@@ -697,7 +697,7 @@ public:
   /// LoadComplexFromAddr - Load a complex number from the specified address.
   ComplexPairTy LoadComplexFromAddr(llvm::Value *SrcAddr, bool SrcIsVolatile);
 
-  /// GenerateStaticBlockVarDecl - return the the static declaration of local
+  /// GenerateStaticBlockVarDecl - Return the the static declaration of local
   /// variable.
   llvm::GlobalValue * GenerateStaticBlockVarDecl(const VarDecl &D,
                                                  bool NoInit,
@@ -705,8 +705,8 @@ public:
                                                  llvm::GlobalValue
                                                  ::LinkageTypes Linkage);
 
-  // GenerateStaticCXXBlockVarDecl - return the static declaration of a local
-  // variable. Performs initialization of the variable if necessary.
+  /// GenerateStaticCXXBlockVarDecl - Return the static declaration of a local
+  /// variable. Performs initialization of the variable if necessary.
   llvm::GlobalValue *GenerateStaticCXXBlockVarDecl(const VarDecl &D);
 
   //===--------------------------------------------------------------------===//
