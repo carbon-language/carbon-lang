@@ -1344,9 +1344,17 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   }
   QualType resultDeclType;
   
-  if (ReturnType)
+  if (ReturnType) {
     resultDeclType = QualType::getFromOpaquePtr(ReturnType);
-  else // get the type for "id".
+    
+    // Methods cannot return interface types. All ObjC objects are
+    // passed by reference.
+    if (resultDeclType->isObjCInterfaceType()) {
+      Diag(MethodLoc, diag::err_object_cannot_be_by_value)
+           << "returned";
+      return 0;
+    }
+  } else // get the type for "id".
     resultDeclType = Context.getObjCIdType();
   
   ObjCMethodDecl* ObjCMethod = 
@@ -1375,7 +1383,9 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
         argType = Context.getPointerType(argType);
       else if (argType->isObjCInterfaceType()) {
         // FIXME! provide more precise location for the parameter
-        Diag(MethodLoc, diag::err_object_as_method_param);
+        Diag(MethodLoc, diag::err_object_cannot_be_by_value)
+             << "passed";
+        ObjCMethod->setInvalidDecl();
         return 0;
       }
     } else

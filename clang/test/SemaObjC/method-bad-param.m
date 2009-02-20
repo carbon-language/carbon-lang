@@ -7,11 +7,15 @@
 @end
 
 @interface bar
--(void) my_method:(foo) my_param; // expected-error {{can not use an object as parameter to a method}}
+-(void) my_method:(foo) my_param; // expected-error {{Objective-C type cannot be passed by value}}
+- (foo)cccccc:(long)ddddd;  // expected-error {{Objective-C type cannot be returned by value}}
 @end
 
 @implementation bar
--(void) my_method:(foo) my_param  // expected-error {{can not use an object as parameter to a method}}
+-(void) my_method:(foo) my_param  // expected-error {{Objective-C type cannot be passed by value}}
+{
+}
+- (foo)cccccc:(long)ddddd // expected-error {{Objective-C type cannot be returned by value}}
 {
 }
 @end

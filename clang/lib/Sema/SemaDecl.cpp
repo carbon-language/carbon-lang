@@ -1470,8 +1470,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     CheckExtraCXXDefaultArguments(D);
 
   if (R.getTypePtr()->isObjCInterfaceType()) {
-    Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object)
-      << D.getIdentifier();
+    Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object);
     InvalidDecl = true;
   }
 
@@ -2761,6 +2760,13 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
       << D.getCXXScopeSpec().getRange();
     New->setInvalidDecl();
   }
+  // Parameter declarators cannot be interface types. All ObjC objects are
+  // passed by reference.
+  if (parmDeclType->isObjCInterfaceType()) {
+    Diag(D.getIdentifierLoc(), diag::err_object_cannot_be_by_value) 
+         << "passed";
+    New->setInvalidDecl();
+  }
 
   // Add the parameter declaration into this scope.
   S->AddDecl(New);
@@ -3671,8 +3677,7 @@ void Sema::ActOnFields(Scope* S,
     }
     /// A field cannot be an Objective-c object
     if (FDTy->isObjCInterfaceType()) {
-      Diag(FD->getLocation(), diag::err_statically_allocated_object)
-        << FD->getDeclName();
+      Diag(FD->getLocation(), diag::err_statically_allocated_object);
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;

@@ -14,8 +14,8 @@ void test1() {
 	id objects[] = {[NSNumber METH]};
 }
 
-void test2(NSNumber x) {
-	id objects[] = {[x METH]}; // expected-error {{bad receiver type}}
+void test2(NSNumber x) { // expected-error {{Objective-C type cannot be passed by value}}
+	id objects[] = {[x METH]};
 }
 
 void test3(NSNumber *x) {
