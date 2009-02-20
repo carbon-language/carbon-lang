@@ -2074,9 +2074,9 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   const Type *NewCmpTy = NULL;
   unsigned TyBits = CmpTy->getPrimitiveSizeInBits();
   unsigned NewTyBits = 0;
-  int64_t NewCmpVal = CmpVal;
   SCEVHandle *NewStride = NULL;
-  Value *NewIncV = NULL;
+  Value *NewCmpLHS = NULL;
+  Value *NewCmpRHS = NULL;
   int64_t Scale = 1;
 
   // Check stride constant and the comparision constant signs to detect
@@ -2096,87 +2096,84 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       continue;
 
     Scale = SSInt / CmpSSInt;
-    NewCmpVal = CmpVal * Scale;
+    int64_t NewCmpVal = CmpVal * Scale;
     APInt Mul = APInt(BitWidth, NewCmpVal);
     // Check for overflow.
-    if (Mul.getSExtValue() != NewCmpVal) {
-      NewCmpVal = CmpVal;
+    if (Mul.getSExtValue() != NewCmpVal)
       continue;
-    }
 
     // Watch out for overflow.
     if (ICmpInst::isSignedPredicate(Predicate) &&
         (CmpVal & SignBit) != (NewCmpVal & SignBit))
-      NewCmpVal = CmpVal;
+      continue;
 
-    if (NewCmpVal != CmpVal) {
-      // Pick the best iv to use trying to avoid a cast.
-      NewIncV = NULL;
-      for (std::vector<IVStrideUse>::iterator UI = SI->second.Users.begin(),
-             E = SI->second.Users.end(); UI != E; ++UI) {
-        NewIncV = UI->OperandValToReplace;
-        if (NewIncV->getType() == CmpTy)
-          break;
-      }
-      if (!NewIncV) {
-        NewCmpVal = CmpVal;
-        continue;
-      }
-
-      NewCmpTy = NewIncV->getType();
-      NewTyBits = isa<PointerType>(NewCmpTy)
-        ? UIntPtrTy->getPrimitiveSizeInBits()
-        : NewCmpTy->getPrimitiveSizeInBits();
-      if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
-        // Check if it is possible to rewrite it using
-        // an iv / stride of a smaller integer type.
-        bool TruncOk = false;
-        if (NewCmpTy->isInteger()) {
-          unsigned Bits = NewTyBits;
-          if (ICmpInst::isSignedPredicate(Predicate))
-            --Bits;
-          uint64_t Mask = (1ULL << Bits) - 1;
-          if (((uint64_t)NewCmpVal & Mask) == (uint64_t)NewCmpVal)
-            TruncOk = true;
-        }
-        if (!TruncOk) {
-          NewCmpVal = CmpVal;
-          continue;
-        }
-      }
-
-      // Don't rewrite if use offset is non-constant and the new type is
-      // of a different type.
-      // FIXME: too conservative?
-      if (NewTyBits != TyBits && !isa<SCEVConstant>(CondUse->Offset)) {
-        NewCmpVal = CmpVal;
-        continue;
-      }
-
-      bool AllUsesAreAddresses = true;
-      bool AllUsesAreOutsideLoop = true;
-      std::vector<BasedUser> UsersToProcess;
-      SCEVHandle CommonExprs = CollectIVUsers(SI->first, SI->second, L,
-                                              AllUsesAreAddresses,
-                                              AllUsesAreOutsideLoop,
-                                              UsersToProcess);
-      // Avoid rewriting the compare instruction with an iv of new stride
-      // if it's likely the new stride uses will be rewritten using the
-      // stride of the compare instruction.
-      if (AllUsesAreAddresses &&
-          ValidStride(!CommonExprs->isZero(), Scale, UsersToProcess)) {
-        NewCmpVal = CmpVal;
-        continue;
-      }
-
-      // If scale is negative, use swapped predicate unless it's testing
-      // for equality.
-      if (Scale < 0 && !Cond->isEquality())
-        Predicate = ICmpInst::getSwappedPredicate(Predicate);
-
-      NewStride = &StrideOrder[i];
-      break;
+    if (NewCmpVal == CmpVal)
+      continue;
+    // Pick the best iv to use trying to avoid a cast.
+    NewCmpLHS = NULL;
+    for (std::vector<IVStrideUse>::iterator UI = SI->second.Users.begin(),
+           E = SI->second.Users.end(); UI != E; ++UI) {
+      NewCmpLHS = UI->OperandValToReplace;
+      if (NewCmpLHS->getType() == CmpTy)
+        break;
     }
+    if (!NewCmpLHS)
+      continue;
+
+    NewCmpTy = NewCmpLHS->getType();
+    NewTyBits = isa<PointerType>(NewCmpTy)
+      ? UIntPtrTy->getPrimitiveSizeInBits()
+      : NewCmpTy->getPrimitiveSizeInBits();
+    if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
+      // Check if it is possible to rewrite it using
+      // an iv / stride of a smaller integer type.
+      bool TruncOk = false;
+      if (NewCmpTy->isInteger()) {
+        unsigned Bits = NewTyBits;
+        if (ICmpInst::isSignedPredicate(Predicate))
+          --Bits;
+        uint64_t Mask = (1ULL << Bits) - 1;
+        if (((uint64_t)NewCmpVal & Mask) == (uint64_t)NewCmpVal)
+          TruncOk = true;
+      }
+      if (!TruncOk)
+        continue;
+    }
+
+    // Don't rewrite if use offset is non-constant and the new type is
+    // of a different type.
+    // FIXME: too conservative?
+    if (NewTyBits != TyBits && !isa<SCEVConstant>(CondUse->Offset))
+      continue;
+
+    bool AllUsesAreAddresses = true;
+    bool AllUsesAreOutsideLoop = true;
+    std::vector<BasedUser> UsersToProcess;
+    SCEVHandle CommonExprs = CollectIVUsers(SI->first, SI->second, L,
+                                            AllUsesAreAddresses,
+                                            AllUsesAreOutsideLoop,
+                                            UsersToProcess);
+    // Avoid rewriting the compare instruction with an iv of new stride
+    // if it's likely the new stride uses will be rewritten using the
+    // stride of the compare instruction.
+    if (AllUsesAreAddresses &&
+        ValidStride(!CommonExprs->isZero(), Scale, UsersToProcess))
+      continue;
+
+    // If scale is negative, use swapped predicate unless it's testing
+    // for equality.
+    if (Scale < 0 && !Cond->isEquality())
+      Predicate = ICmpInst::getSwappedPredicate(Predicate);
+
+    NewStride = &StrideOrder[i];
+    if (!isa<PointerType>(NewCmpTy))
+      NewCmpRHS = ConstantInt::get(NewCmpTy, NewCmpVal);
+    else {
+      NewCmpRHS = ConstantInt::get(UIntPtrTy, NewCmpVal);
+      NewCmpRHS = SCEVExpander::InsertCastOfTo(Instruction::IntToPtr,
+                                               NewCmpRHS, NewCmpTy);
+    }
+    break;
   }
 
   // Forgo this transformation if it the increment happens to be
@@ -2188,22 +2185,15 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   if (!Cond->hasOneUse()) {
     for (BasicBlock::iterator I = Cond, E = Cond->getParent()->end();
          I != E; ++I)
-      if (I == NewIncV)
+      if (I == NewCmpLHS)
         return Cond;
   }
 
-  if (NewCmpVal != CmpVal) {
+  if (NewCmpRHS) {
     // Create a new compare instruction using new stride / iv.
     ICmpInst *OldCond = Cond;
-    Value *RHS;
-    if (!isa<PointerType>(NewCmpTy))
-      RHS = ConstantInt::get(NewCmpTy, NewCmpVal);
-    else {
-      RHS = ConstantInt::get(UIntPtrTy, NewCmpVal);
-      RHS = SCEVExpander::InsertCastOfTo(Instruction::IntToPtr, RHS, NewCmpTy);
-    }
     // Insert new compare instruction.
-    Cond = new ICmpInst(Predicate, NewIncV, RHS,
+    Cond = new ICmpInst(Predicate, NewCmpLHS, NewCmpRHS,
                         L->getHeader()->getName() + ".termcond",
                         OldCond);
 
@@ -2219,7 +2209,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
                        SE->getConstant(ConstantInt::get(CmpTy, Scale)))
       : SE->getConstant(ConstantInt::get(NewCmpTy,
         cast<SCEVConstant>(CondUse->Offset)->getValue()->getSExtValue()*Scale));
-    IVUsesByStride[*NewStride].addUser(NewOffset, Cond, NewIncV);
+    IVUsesByStride[*NewStride].addUser(NewOffset, Cond, NewCmpLHS);
     CondUse = &IVUsesByStride[*NewStride].Users.back();
     CondStride = NewStride;
     ++NumEliminated;
