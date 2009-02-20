@@ -13,8 +13,9 @@ class Tool(object):
     eFlagsPipedOutput = 1 << 1
     eFlagsIntegratedCPP = 1 << 2
 
-    def __init__(self, name, flags = 0):
+    def __init__(self, name, toolChain, flags = 0):
         self.name = name
+        self.toolChain = toolChain
         self.flags = flags
 
     def acceptsPipedInput(self):
@@ -79,8 +80,8 @@ class GCC_Common_Tool(Tool):
         jobs.addJob(Jobs.Command('gcc', cmd_args))
 
 class GCC_PreprocessTool(GCC_Common_Tool):
-    def __init__(self):
-        super(GCC_PreprocessTool, self).__init__('gcc (cpp)',
+    def __init__(self, toolChain):
+        super(GCC_PreprocessTool, self).__init__('gcc (cpp)', toolChain,
                                                  (Tool.eFlagsPipedInput |
                                                   Tool.eFlagsPipedOutput))
 
@@ -88,8 +89,8 @@ class GCC_PreprocessTool(GCC_Common_Tool):
         return ['-E']
 
 class GCC_CompileTool(GCC_Common_Tool):
-    def __init__(self):
-        super(GCC_CompileTool, self).__init__('gcc (cc1)',
+    def __init__(self, toolChain):
+        super(GCC_CompileTool, self).__init__('gcc (cc1)', toolChain,
                                               (Tool.eFlagsPipedInput |
                                                Tool.eFlagsPipedOutput |
                                                Tool.eFlagsIntegratedCPP))
@@ -98,8 +99,8 @@ class GCC_CompileTool(GCC_Common_Tool):
         return ['-S']
 
 class GCC_PrecompileTool(GCC_Common_Tool):
-    def __init__(self):
-        super(GCC_PrecompileTool, self).__init__('gcc (pch)',
+    def __init__(self, toolChain):
+        super(GCC_PrecompileTool, self).__init__('gcc (pch)', toolChain,
                                                  (Tool.eFlagsPipedInput |
                                                   Tool.eFlagsIntegratedCPP))
 
@@ -107,24 +108,23 @@ class GCC_PrecompileTool(GCC_Common_Tool):
         return []
 
 class GCC_AssembleTool(GCC_Common_Tool):
-    def __init__(self):
+    def __init__(self, toolChain):
         # Assume that gcc will do any magic necessary to let the
         # assembler take piped input.
-        super(GCC_AssembleTool, self).__init__('gcc (as)',
+        super(GCC_AssembleTool, self).__init__('gcc (as)', toolChain,
                                                Tool.eFlagsPipedInput)
 
     def getGCCExtraArgs(self):
         return ['-c']
 
 class GCC_LinkTool(GCC_Common_Tool):
-    def __init__(self):
-        super(GCC_LinkTool, self).__init__('gcc (ld)')
+    def __init__(self, toolChain):
+        super(GCC_LinkTool, self).__init__('gcc (ld)', toolChain)
 
 class Darwin_AssembleTool(Tool):
     def __init__(self, toolChain):
-        super(Darwin_AssembleTool, self).__init__('as',
+        super(Darwin_AssembleTool, self).__init__('as', toolChain,
                                                   Tool.eFlagsPipedInput)
-        self.toolChain = toolChain
 
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, arglist, linkingOutput):
@@ -167,11 +167,10 @@ class Darwin_AssembleTool(Tool):
 
 class Clang_CompileTool(Tool):
     def __init__(self, toolChain):
-        super(Clang_CompileTool, self).__init__('clang',
+        super(Clang_CompileTool, self).__init__('clang', toolChain,
                                    (Tool.eFlagsPipedInput |
                                     Tool.eFlagsPipedOutput |
                                     Tool.eFlagsIntegratedCPP))
-        self.toolChain = toolChain
 
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, arglist, linkingOutput):
@@ -674,10 +673,9 @@ class Darwin_X86_CC1Tool(Tool):
         
 class Darwin_X86_PreprocessTool(Darwin_X86_CC1Tool):
     def __init__(self, toolChain):
-        super(Darwin_X86_PreprocessTool, self).__init__('cpp',
+        super(Darwin_X86_PreprocessTool, self).__init__('cpp', toolChain,
                                                         (Tool.eFlagsPipedInput |
                                                          Tool.eFlagsPipedOutput))
-        self.toolChain = toolChain
     
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, arglist, linkingOutput):
@@ -704,11 +702,10 @@ class Darwin_X86_PreprocessTool(Darwin_X86_CC1Tool):
     
 class Darwin_X86_CompileTool(Darwin_X86_CC1Tool):
     def __init__(self, toolChain):
-        super(Darwin_X86_CompileTool, self).__init__('cc1',
+        super(Darwin_X86_CompileTool, self).__init__('cc1', toolChain,
                                                      (Tool.eFlagsPipedInput |
                                                       Tool.eFlagsPipedOutput |
                                                       Tool.eFlagsIntegratedCPP))
-        self.toolChain = toolChain
 
     def constructJob(self, phase, arch, jobs, inputs, 
                      output, outputType, arglist, linkingOutput):
@@ -781,8 +778,7 @@ class Darwin_X86_CompileTool(Darwin_X86_CC1Tool):
 
 class Darwin_X86_LinkTool(Tool):
     def __init__(self, toolChain):
-        super(Darwin_X86_LinkTool, self).__init__('collect2')
-        self.toolChain = toolChain
+        super(Darwin_X86_LinkTool, self).__init__('collect2', toolChain)
 
     def getMacosxVersionTuple(self, arglist):
         arg = arglist.getLastArg(arglist.parser.m_macosxVersionMinOption)
@@ -1197,8 +1193,8 @@ class Darwin_X86_LinkTool(Tool):
                                          arglist.renderAsInput(output)))
 
 class LipoTool(Tool):
-    def __init__(self):
-        super(LipoTool, self).__init__('lipo')
+    def __init__(self, toolChain):
+        super(LipoTool, self).__init__('lipo', toolChain)
 
     def constructJob(self, phase, arch, jobs, inputs,
                      output, outputType, arglist, linkingOutput):
