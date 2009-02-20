@@ -1760,6 +1760,18 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   
   if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
     CI->setCallingConv(F->getCallingConv());
+
+  // If the call doesn't return, finish the basic block and clear the
+  // insertion point; this allows the rest of IRgen to discard
+  // unreachable code.
+  if (CI->doesNotReturn()) {
+    Builder.CreateUnreachable();
+    Builder.ClearInsertionPoint();
+
+    // Return a reasonable RValue.
+    return GetUndefRValue(RetTy);
+  }
+
   if (CI->getType() != llvm::Type::VoidTy)
     CI->setName("call");
 
