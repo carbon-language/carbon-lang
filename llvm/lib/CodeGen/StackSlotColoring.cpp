@@ -19,6 +19,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -30,12 +32,20 @@ DisableSharing("no-stack-slot-sharing",
              cl::init(false), cl::Hidden,
              cl::desc("Surpress slot sharing during stack coloring"));
 
+static cl::opt<bool>
+EnableDCE("enable-ssc-dce",
+               cl::init(false), cl::Hidden,
+               cl::desc("Enable slot coloring DCE"));
+
 STATISTIC(NumEliminated,   "Number of stack slots eliminated due to coloring");
+STATISTIC(NumDeadAccesses,
+                          "Number of trivially dead stack accesses eliminated");
 
 namespace {
   class VISIBILITY_HIDDEN StackSlotColoring : public MachineFunctionPass {
     LiveStacks* LS;
     MachineFrameInfo *MFI;
+    const TargetInstrInfo  *TII;
 
     // SSIntervals - Spill slot intervals.
     std::vector<LiveInterval*> SSIntervals;
@@ -67,6 +77,7 @@ namespace {
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LiveStacks>();
+      
       AU.addPreservedID(MachineLoopInfoID);
       AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -82,6 +93,7 @@ namespace {
     bool OverlapWithAssignments(LiveInterval *li, int Color) const;
     int ColorSlot(LiveInterval *li);
     bool ColorSlots(MachineFunction &MF);
+    bool removeDeadStores(MachineBasicBlock* MBB);
   };
 } // end anonymous namespace
 
@@ -260,10 +272,55 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
   return true;
 }
 
+/// removeDeadStores - Scan through a basic block and look for loads followed
+/// by stores.  If they're both using the same stack slot, then the store is
+/// definitely dead.  This could obviously be much more aggressive (consider
+/// pairs with instructions between them), but such extensions might have a
+/// considerable compile time impact.
+bool StackSlotColoring::removeDeadStores(MachineBasicBlock* MBB) {
+  // FIXME: This could be much more aggressive, but we need to investigate
+  // the compile time impact of doing so.
+  bool changed = false;
+
+  SmallVector<MachineInstr*, 4> toErase;
+
+  for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+       I != E; ++I) {
+    MachineBasicBlock::iterator NextMI = next(I);
+    if (NextMI == MBB->end()) continue;
+    
+    int FirstSS, SecondSS;
+    unsigned LoadReg = 0;
+    unsigned StoreReg = 0;
+    if (!(LoadReg = TII->isLoadFromStackSlot(I, FirstSS))) continue;
+    if (!(StoreReg = TII->isStoreToStackSlot(NextMI, SecondSS))) continue;
+    if (FirstSS != SecondSS || LoadReg != StoreReg || FirstSS == -1) continue;
+    
+    ++NumDeadAccesses;
+    changed = true;
+    
+    if (NextMI->findRegisterUseOperandIdx(LoadReg, true, 0) != -1) {
+      ++NumDeadAccesses;
+      toErase.push_back(I);
+    }
+    
+    toErase.push_back(NextMI);
+    ++I;
+  }
+  
+  for (SmallVector<MachineInstr*, 4>::iterator I = toErase.begin(),
+       E = toErase.end(); I != E; ++I)
+    (*I)->eraseFromParent();
+  
+  return changed;
+}
+
+
 bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
   DOUT << "********** Stack Slot Coloring **********\n";
 
   MFI = MF.getFrameInfo();
+  TII = MF.getTarget().getInstrInfo();
   LS = &getAnalysis<LiveStacks>();
 
   bool Changed = false;
@@ -279,6 +336,11 @@ bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
   for (unsigned i = 0, e = Assignments.size(); i != e; ++i)
     Assignments[i].clear();
   Assignments.clear();
+
+  if (EnableDCE) {
+    for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+      Changed |= removeDeadStores(I);
+  }
 
   return Changed;
 }
