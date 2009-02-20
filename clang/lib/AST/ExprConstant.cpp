@@ -157,6 +157,7 @@ public:
   APValue VisitMemberExpr(MemberExpr *E);
   APValue VisitStringLiteral(StringLiteral *E) { return APValue(E, 0); }
   APValue VisitArraySubscriptExpr(ArraySubscriptExpr *E);
+  APValue VisitUnaryDeref(UnaryOperator *E);
 };
 } // end anonymous namespace
 
@@ -231,6 +232,14 @@ APValue LValueExprEvaluator::VisitArraySubscriptExpr(ArraySubscriptExpr *E)
   uint64_t Offset = Index.getSExtValue() * ElementSize;
   Result.setLValue(Result.getLValueBase(), 
                    Result.getLValueOffset() + Offset);
+  return Result;
+}
+
+APValue LValueExprEvaluator::VisitUnaryDeref(UnaryOperator *E)
+{
+  APValue Result;
+  if (!EvaluatePointer(E->getSubExpr(), Result, Info))
+    return APValue();
   return Result;
 }
 
