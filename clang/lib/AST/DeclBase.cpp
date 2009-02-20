@@ -280,13 +280,10 @@ typedef llvm::DenseMap<DeclarationName, std::vector<NamedDecl*> >
 
 DeclContext::~DeclContext() {
   unsigned Size = LookupPtr.getInt();
-  if (Size == LookupIsMap) {
-    StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
-    delete Map;
-  } else {
-    NamedDecl **Array = static_cast<NamedDecl**>(LookupPtr.getPointer());
-    delete [] Array;
-  }
+  if (Size == LookupIsMap)
+    delete static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
+  else
+    delete [] static_cast<NamedDecl**>(LookupPtr.getPointer());
 }
 
 void DeclContext::DestroyDecls(ASTContext &C) {
@@ -412,10 +409,11 @@ DeclContext::lookup(DeclarationName Name) {
   if (isLookupMap()) {
     StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
     StoredDeclsMap::iterator Pos = Map->find(Name);
-    if (Pos != Map->end())
-      return lookup_result(&Pos->second.front(), 
-                           &Pos->second.front() + Pos->second.size());
-    return lookup_result(0, 0);
+    if (Pos == Map->end())
+      return lookup_result(0, 0);
+    
+    return lookup_result(&Pos->second.front(), 
+                         &Pos->second.front() + Pos->second.size());
   } 
 
   // We have a small array. Look into it.
@@ -566,7 +564,7 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
     DeclNameEntries.push_back(D);
     return;
   }
-  
+
   if (MayBeRedeclaration) {
     // Determine if this declaration is actually a redeclaration.
     std::vector<NamedDecl *>::iterator Redecl
@@ -578,11 +576,10 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
       return;
     }
   }
-
+  
   // Put this declaration into the appropriate slot.
   if (isa<UsingDirectiveDecl>(D) ||
-      D->getIdentifierNamespace() == Decl::IDNS_Tag ||
-      DeclNameEntries.empty())
+      D->getIdentifierNamespace() == Decl::IDNS_Tag)
     DeclNameEntries.push_back(D);
   else if (DeclNameEntries.back()->getIdentifierNamespace() == Decl::IDNS_Tag) {
     NamedDecl *TagD = DeclNameEntries.back();
