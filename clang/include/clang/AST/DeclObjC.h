@@ -48,12 +48,13 @@ class ObjCList {
 public:
   ObjCList() : List(0), NumElts(0) {}
   ~ObjCList() {
-    delete[] List;
+    assert(List == 0 && "Destroy should have been called before dtor");
   }
 
-  void clear() {
+  void Destroy() {
     delete[] List;
     NumElts = 0;
+    List = 0;
   }
   
   void set(T* const* InList, unsigned Elts) {

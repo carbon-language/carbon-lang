@@ -193,7 +193,7 @@ void ObjCMethodDecl::Destroy(ASTContext& C) {
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
 
-  ParamInfo.clear();
+  ParamInfo.Destroy();
 
   Decl::Destroy(C);
 }
@@ -280,7 +280,7 @@ void ObjCInterfaceDecl::Destroy(ASTContext &C) {
   for (ivar_iterator I=ivar_begin(), E=ivar_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
   
-  IVars.clear();
+  IVars.Destroy();
   // FIXME: CategoryList?
   
   // FIXME: Because there is no clear ownership
@@ -357,7 +357,7 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 void ObjCProtocolDecl::Destroy(ASTContext &C) {
-  ReferencedProtocols.clear();
+  ReferencedProtocols.Destroy();
   ObjCContainerDecl::Destroy(C);
 }
 
@@ -410,7 +410,7 @@ void ObjCClassDecl::Destroy(ASTContext &C) {
   //  obviating this problem.  Because of this situation, referenced
   //  ObjCInterfaceDecls are destroyed in ~TranslationUnit.
   
-  ForwardDecls.clear();
+  ForwardDecls.Destroy();
   Decl::Destroy(C);
 }
 
@@ -434,7 +434,7 @@ ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
 }
 
 void ObjCForwardProtocolDecl::Destroy(ASTContext &C) {
-  ReferencedProtocols.clear();
+  ReferencedProtocols.Destroy();
   Decl::Destroy(C);
 }
 
@@ -524,7 +524,7 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
 
 /// Destroy - Call destructors and release memory.
 void ObjCImplementationDecl::Destroy(ASTContext& C) {
-  IVars.clear();
+  IVars.Destroy();
   Decl::Destroy(C);
 }
 
