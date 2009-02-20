@@ -63,7 +63,7 @@ ObjCInterfaceDecl::
 ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
                   SourceLocation CLoc, bool FD, bool isInternal)
   : ObjCContainerDecl(ObjCInterface, DC, atLoc, Id),
-    TypeForDecl(0), SuperClass(0), Ivars(0), NumIvars(0),
+    TypeForDecl(0), SuperClass(0),
     CategoryList(0), ForwardDecl(FD), InternalInterface(isInternal),
     ClassLoc(CLoc) {
 }
@@ -72,8 +72,7 @@ void ObjCInterfaceDecl::Destroy(ASTContext &C) {
   for (ivar_iterator I=ivar_begin(), E=ivar_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
   
-  delete [] Ivars;
-  Ivars = 0;
+  IVars.clear();
   // FIXME: CategoryList?
   
   // FIXME: Because there is no clear ownership
@@ -265,20 +264,6 @@ ObjCCategoryDecl *
       if (Category->getIdentifier() == CategoryId)
         return Category;
     return 0;
-}
-
-/// ObjCAddInstanceVariablesToClass - Inserts instance variables
-/// into ObjCInterfaceDecl's fields.
-///
-void ObjCInterfaceDecl::addInstanceVariablesToClass(ObjCIvarDecl **ivars,
-                                                    unsigned numIvars,
-                                                    SourceLocation RBrac) {
-  NumIvars = numIvars;
-  if (numIvars) {
-    Ivars = new ObjCIvarDecl*[numIvars];
-    memcpy(Ivars, ivars, numIvars*sizeof(ObjCIvarDecl*));
-  }
-  setLocEnd(RBrac);
 }
 
 /// lookupFieldDeclForIvar - looks up a field decl' in the laid out

@@ -51,8 +51,15 @@ public:
     delete[] List;
   }
 
+  void clear() {
+    delete[] List;
+    NumElts = 0;
+  }
+  
   void set(T* const* InList, unsigned Elts) {
     assert(List == 0 && "Elements already set!");
+    if (Elts == 0) return;  // Setting to an empty list is a noop.
+    
     List = new T*[Elts];
     NumElts = Elts;
     memcpy(List, InList, sizeof(T*)*Elts);
@@ -367,9 +374,8 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// Protocols referenced in interface header declaration
   ObjCList<ObjCProtocolDecl> ReferencedProtocols;
   
-  /// Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
-  ObjCIvarDecl **Ivars;   // Null if not defined.
-  unsigned NumIvars;      // 0 if none.
+  /// Instance variables in the interface.
+  ObjCList<ObjCIvarDecl> IVars;
   
   /// List of categories defined for this class.
   ObjCCategoryDecl *CategoryList;
@@ -384,9 +390,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
                     SourceLocation CLoc, bool FD, bool isInternal);
   
-  virtual ~ObjCInterfaceDecl() {
-    assert(Ivars == 0 && "Destroy not called?");
-  }
+  virtual ~ObjCInterfaceDecl() {}
   
 public:
 
@@ -409,11 +413,11 @@ public:
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   
-  typedef ObjCIvarDecl * const *ivar_iterator;
-  ivar_iterator ivar_begin() const { return Ivars; }
-  ivar_iterator ivar_end() const { return Ivars + ivar_size();}
-  unsigned ivar_size() const { return NumIvars; }
-  bool ivar_empty() const { return NumIvars == 0; }
+  typedef ObjCList<ObjCIvarDecl>::iterator ivar_iterator;
+  ivar_iterator ivar_begin() const { return IVars.begin(); }
+  ivar_iterator ivar_end() const { return IVars.end(); }
+  unsigned ivar_size() const { return IVars.size(); }
+  bool ivar_empty() const { return IVars.empty(); }
     
   /// addReferencedProtocols - Set the list of protocols that this interface
   /// implements.
@@ -421,8 +425,11 @@ public:
     ReferencedProtocols.set(List, NumRPs);
   }
    
-  void addInstanceVariablesToClass(ObjCIvarDecl **ivars, unsigned numIvars,
-                                   SourceLocation RBracLoc);
+  void addInstanceVariablesToClass(ObjCIvarDecl * const* ivars, unsigned Num,
+                                   SourceLocation RBracLoc) {
+    IVars.set(ivars, Num);
+    setLocEnd(RBracLoc);
+  }
   FieldDecl *lookupFieldDeclForIvar(ASTContext &Context, 
                                     const ObjCIvarDecl *ivar);
 
