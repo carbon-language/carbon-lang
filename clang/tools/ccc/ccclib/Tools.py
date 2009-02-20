@@ -255,7 +255,16 @@ class Clang_CompileTool(Tool):
                           arglist.getLastArg(arglist.parser.f_pieOption))
             picDisabled = (arglist.getLastArg(arglist.parser.m_kernelOption) or
                            arglist.getLastArg(arglist.parser.staticOption))
-            model = self.toolChain.getRelocationModel(picEnabled, picDisabled)
+            model = self.toolChain.getForcedPicModel()
+            if not model:
+                if arglist.getLastArg(arglist.parser.m_dynamicNoPicOption):
+                    model = 'dynamic-no-pic'
+                elif picDisabled:
+                    model = 'static'
+                elif picEnabled:
+                    model = 'pic'
+                else:
+                    model = self.toolChain.getDefaultRelocationModel()
             cmd_args.append('--relocation-model=%s' % model)
 
             if arglist.getLastArg(arglist.parser.f_timeReportOption):

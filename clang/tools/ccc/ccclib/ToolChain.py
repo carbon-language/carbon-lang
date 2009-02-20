@@ -92,10 +92,11 @@ class ToolChain(object):
             return True
         return False
 
-    def getRelocationModel(self, picEnabled, picDisabled):
-        if picEnabled:
-            return 'pic'
+    def getDefaultRelocationModel(self):
         return 'static'
+    
+    def getForcedPicModel(self):
+        return 
 
 class Darwin_X86_ToolChain(ToolChain):
     def __init__(self, driver, archName, darwinVersion, gccVersion):
@@ -235,16 +236,12 @@ class Darwin_X86_ToolChain(ToolChain):
     def isMathErrnoDefault(self):
         return False
 
-    def getRelocationModel(self, picEnabled, picDisabled):
+    def getDefaultRelocationModel(self):
+        return 'pic'
+    
+    def getForcedPicModel(self):
         if self.archName == 'x86_64':
             return 'pic'
-
-        if picEnabled:
-            return 'pic'
-        elif picDisabled:
-            return 'static'
-        else:
-            return 'dynamic-no-pic'
 
 class Generic_GCC_ToolChain(ToolChain):
     """Generic_GCC_ToolChain - A tool chain using the 'gcc' command to
