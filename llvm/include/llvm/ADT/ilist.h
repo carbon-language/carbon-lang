@@ -370,7 +370,8 @@ public:
   }
 
   iterator insert(iterator where, NodeTy *New) {
-    NodeTy *CurNode = where.getNodePtrUnchecked(), *PrevNode = this->getPrev(CurNode);
+    NodeTy *CurNode = where.getNodePtrUnchecked();
+    NodeTy *PrevNode = this->getPrev(CurNode);
     this->setNext(New, CurNode);
     this->setPrev(New, PrevNode);
 

@@ -36,8 +36,8 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include <vector>
 #include <set>
+#include <vector>
 
 namespace llvm {
 

@@ -26,7 +26,7 @@ namespace llvm {
 template<class T>
 class OwningPtr {
   OwningPtr(OwningPtr const &);             // DO NOT IMPLEMENT
-  OwningPtr &operator=(OwningPtr const &); // DO NOT IMPLEMENT
+  OwningPtr &operator=(OwningPtr const &);  // DO NOT IMPLEMENT
   T *Ptr;
 public:
   explicit OwningPtr(T *P = 0) : Ptr(P) {}

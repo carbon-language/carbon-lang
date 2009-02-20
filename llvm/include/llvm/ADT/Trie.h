@@ -279,9 +279,13 @@ struct GraphTraits<Trie<Payload> > {
   typedef typename TrieType::Node NodeType;
   typedef typename NodeType::iterator ChildIteratorType;
 
-  static inline NodeType *getEntryNode(const TrieType& T) { return T.getRoot(); }
+  static inline NodeType *getEntryNode(const TrieType& T) {
+    return T.getRoot();
+  }
 
-  static inline ChildIteratorType child_begin(NodeType *N) { return N->begin(); }
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->begin();
+  }
   static inline ChildIteratorType child_end(NodeType *N) { return N->end(); }
 
   typedef typename std::vector<NodeType*>::const_iterator nodes_iterator;

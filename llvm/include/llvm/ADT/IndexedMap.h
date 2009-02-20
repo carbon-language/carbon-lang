@@ -20,9 +20,9 @@
 #ifndef LLVM_ADT_INDEXEDMAP_H
 #define LLVM_ADT_INDEXEDMAP_H
 
+#include <cassert>
 #include <functional>
 #include <vector>
-#include <cassert>
 
 namespace llvm {
 

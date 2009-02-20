@@ -17,9 +17,9 @@
 #ifndef LLVM_ADT_STLEXTRAS_H
 #define LLVM_ADT_STLEXTRAS_H
 
+#include <cstddef> // for std::size_t
 #include <functional>
 #include <utility> // for std::pair
-#include <cstddef> // for std::size_t
 #include "llvm/ADT/iterator.h"
 
 namespace llvm {

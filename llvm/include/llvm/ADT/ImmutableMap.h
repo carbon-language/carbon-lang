@@ -18,8 +18,8 @@
 
 namespace llvm {
 
-/// ImutKeyValueInfo -Traits class used by ImmutableMap.  While both the first and
-/// second elements in a pair are used to generate profile information,
+/// ImutKeyValueInfo -Traits class used by ImmutableMap.  While both the first
+/// and second elements in a pair are used to generate profile information,
 /// only the first element (the key) is used by isEqual and isLess.
 template <typename T, typename S>
 struct ImutKeyValueInfo {

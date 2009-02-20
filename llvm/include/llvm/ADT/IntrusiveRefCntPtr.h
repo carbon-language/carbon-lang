@@ -1,4 +1,4 @@
-//== llvm/ADT/IntrusiveRefCntPtr.h - Smart Refcounting Pointer ----*- C++ -*-==//
+//== llvm/ADT/IntrusiveRefCntPtr.h - Smart Refcounting Pointer ---*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //

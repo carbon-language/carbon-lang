@@ -1275,7 +1275,8 @@ public:
   /// srcLSB, to DST, of dstCOUNT parts, such that the bit srcLSB
   /// becomes the least significant bit of DST.  All high bits above
   /// srcBITS in DST are zero-filled.
-  static void tcExtract(integerPart *, unsigned int dstCount, const integerPart *,
+  static void tcExtract(integerPart *, unsigned int dstCount,
+                        const integerPart *,
                         unsigned int srcBits, unsigned int srcLSB);
 
   /// Set the given bit of a bignum.  Zero-based.

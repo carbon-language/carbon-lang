@@ -18,8 +18,8 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator.h"
-#include <stack>
 #include <set>
+#include <stack>
 #include <vector>
 
 namespace llvm {
@@ -165,7 +165,8 @@ ipo_iterator<T> ipo_end(T G){
 }
 
 //Provide global definitions of external inverse postorder iterators...
-template <class T, class SetType = std::set<typename GraphTraits<T>::NodeType*> >
+template <class T,
+          class SetType = std::set<typename GraphTraits<T>::NodeType*> >
 struct ipo_ext_iterator : public ipo_iterator<T, SetType, true> {
   ipo_ext_iterator(const ipo_iterator<T, SetType, true> &V) :
     ipo_iterator<T, SetType, true>(&V) {}

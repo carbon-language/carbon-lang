@@ -17,9 +17,9 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/Support/type_traits.h"
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 #include <memory>
-#include <cassert>
 
 #ifdef _MSC_VER
 namespace std {

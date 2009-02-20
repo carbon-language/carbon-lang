@@ -21,9 +21,9 @@
 #define LLVM_ADT_SETVECTOR_H
 
 #include "llvm/ADT/SmallSet.h"
-#include <vector>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <vector>
 
 namespace llvm {
 

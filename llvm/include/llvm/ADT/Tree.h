@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This class defines a generic N way tree node structure.  The tree structure
+// This class defines a generic N-way tree node structure.  The tree structure
 // is immutable after creation, but the payload contained within it is not.
 //
 //===----------------------------------------------------------------------===//
@@ -21,9 +21,9 @@ namespace llvm {
 
 template<class ConcreteTreeNode, class Payload>
 class Tree {
-  std::vector<ConcreteTreeNode*> Children;        // This nodes children, if any
-  ConcreteTreeNode              *Parent;          // Parent of this node...
-  Payload                        Data;            // Data held in this node...
+  std::vector<ConcreteTreeNode*> Children;      // This node's children, if any.
+  ConcreteTreeNode              *Parent;        // Parent of this node.
+  Payload                        Data;          // Data held in this node.
 
 protected:
   void setChildren(const std::vector<ConcreteTreeNode*> &children) {
