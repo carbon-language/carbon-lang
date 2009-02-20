@@ -1644,8 +1644,9 @@ static void SortUsersToProcess(std::vector<BasedUser> &UsersToProcess) {
   }
 }
 
-/// PrepareToStrengthReduceFully - Prepare to fully strength-reduce UsersToProcess,
-/// meaning lowering addresses all the way down to direct pointer arithmetic.
+/// PrepareToStrengthReduceFully - Prepare to fully strength-reduce
+/// UsersToProcess, meaning lowering addresses all the way down to direct
+/// pointer arithmetic.
 ///
 void
 LoopStrengthReduce::PrepareToStrengthReduceFully(
@@ -1822,8 +1823,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // If all uses are addresses, check if it is possible to reuse an IV with a
     // stride that is a factor of this stride. And that the multiple is a number
     // that can be encoded in the scale field of the target addressing mode. And
-    // that we will have a valid instruction after this substition, including the
-    // immediate field, if any.
+    // that we will have a valid instruction after this substition, including
+    // the immediate field, if any.
     RewriteFactor = CheckForIVReuse(HaveCommonExprs, AllUsesAreAddresses,
                                     AllUsesAreOutsideLoop,
                                     Stride, ReuseIV, CommonExprs->getType(),
