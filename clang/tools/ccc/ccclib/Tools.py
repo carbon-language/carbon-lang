@@ -272,8 +272,67 @@ class Clang_CompileTool(Tool):
             if arglist.getLastArg(arglist.parser.f_debugPassArgumentsOption):
                 cmd_args.append('--debug-pass=Arguments')
             # FIXME: set --inline-threshhold=50 if (optimize_size || optimize < 3)
-            if arglist.getLastArg(arglist.parser.f_unwindTablesOption):
-                cmd_args.append('--unwind-tables')
+            cmd_args.append('--unwind-tables=%d' %
+                            arglist.hasFFlag(arglist.parser.f_unwindTablesOption,
+                                             arglist.parser.f_noUnwindTablesOption,
+                                             self.toolChain.isUnwindTablesDefault()))
+            if not arglist.hasFFlag(arglist.parser.m_redZoneOption,
+                                      arglist.parser.m_noRedZoneOption,
+                                      True):
+                cmd_args.append('--disable-red-zone')
+            if arglist.hasFFlag(arglist.parser.m_softFloatOption,
+                                arglist.parser.m_noSoftFloatOption,
+                                False):
+                cmd_args.append('--soft-float')
+                
+            # FIXME: Need target hooks.
+            if self.toolChain.driver.getHostSystemName() == 'darwin':
+                if self.toolChain.archName == 'x86_64':
+                    cmd_args.append('--mcpu=core2')
+                elif self.toolChain.archName == 'i386':
+                    cmd_args.append('--mcpu=yonah')
+            else:
+                pass
+            
+            # FIXME: Ignores ordering
+            attrs = []
+            for pos,neg,flag in [(arglist.parser.m_mmxOption,
+                                  arglist.parser.m_noMmxOption,
+                                  'mmx'),
+                                 (arglist.parser.m_sseOption,
+                                  arglist.parser.m_noSseOption,
+                                  'sse'),
+                                 (arglist.parser.m_sse2Option,
+                                  arglist.parser.m_noSse2Option,
+                                  'sse2'),
+                                 (arglist.parser.m_sse3Option,
+                                  arglist.parser.m_noSse3Option,
+                                  'sse3'),
+                                 (arglist.parser.m_ssse3Option,
+                                  arglist.parser.m_noSsse3Option,
+                                  'ssse3'),
+                                 (arglist.parser.m_sse41Option,
+                                  arglist.parser.m_noSse41Option,
+                                  'sse41'),
+                                 (arglist.parser.m_sse42Option,
+                                  arglist.parser.m_noSse42Option,
+                                  'sse42'),
+                                 (arglist.parser.m_sse4aOption,
+                                  arglist.parser.m_noSse4aOption,
+                                  'sse4a'),
+                                 (arglist.parser.m_3dnowOption,
+                                  arglist.parser.m_no3dnowOption,
+                                  '3dnow'),
+                                 (arglist.parser.m_3dnowaOption,
+                                  arglist.parser.m_no3dnowaOption,
+                                  '3dnowa'),
+                                 ]:
+                if arglist.getLastArg(pos):
+                    attrs.append('+' + flag)
+                elif arglist.getLastArg(neg):
+                    attrs.append('-' + flag)
+            if attrs:
+                cmd_args.append('--mattrs=%s' % ','.join(attrs))
 
             if arglist.hasFFlag(arglist.parser.f_mathErrnoOption,
                                 arglist.parser.f_noMathErrnoOption,

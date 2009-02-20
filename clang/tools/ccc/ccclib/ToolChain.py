@@ -86,6 +86,12 @@ class ToolChain(object):
     def isMathErrnoDefault(self):
         return True
 
+    def isUnwindTablesDefault(self):
+        # FIXME: Target hook.
+        if self.archName == 'x86_64':
+            return True
+        return False
+
     def getRelocationModel(self, picEnabled, picDisabled):
         if picEnabled:
             return 'pic'
