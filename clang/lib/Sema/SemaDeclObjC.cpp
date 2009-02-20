@@ -1579,9 +1579,9 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
         // it works as is. This category becomes just like a category
         // for its primary class.
       } else {
-          Diag(CDecl->getLocation(), diag::err_continuation_class);
-          *isOverridingProperty = true;
-          return 0;
+        Diag(CDecl->getLocation(), diag::err_continuation_class);
+        *isOverridingProperty = true;
+        return 0;
       }
     }
 
