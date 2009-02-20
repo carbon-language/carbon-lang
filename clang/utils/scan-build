@@ -84,7 +84,7 @@ sub DieDiag {
 my $ClangSB = Cwd::realpath("$RealBin/cbin/clang");
 my $Clang = $ClangSB;
 
-if (! -x $ClangSB) {
+if (!defined $ClangSB || ! -x $ClangSB) {
   $Clang = "clang";
 }
 
