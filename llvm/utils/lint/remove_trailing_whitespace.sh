@@ -3,4 +3,4 @@
 # Sample syntax:
 #   $0 *.cpp
 
-perl -pi -e "s/\s+\$//" $*
+perl -pi -e 's/\s+$/\n/' $*
