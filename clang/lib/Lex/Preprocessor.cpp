@@ -101,6 +101,7 @@ Preprocessor::~Preprocessor() {
     // will be released when the BumpPtrAllocator 'BP' object gets
     // destroyed. We still need to run the dstor, however, to free
     // memory alocated by MacroInfo.
+    I->second->Destroy();
     I->second->~MacroInfo();    
     I->first->setHasMacroDefinition(false);
   }

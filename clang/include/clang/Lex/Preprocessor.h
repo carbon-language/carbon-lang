@@ -579,9 +579,7 @@ private:
   
   /// ReleaseMacroInfo - Release the specified MacroInfo.  This memory will
   ///  be reused for allocating new MacroInfo objects.
-  void ReleaseMacroInfo(MacroInfo* MI) {
-    MICache.push_back(MI);
-  }
+  void ReleaseMacroInfo(MacroInfo* MI);
   
   /// isInPrimaryFile - Return true if we're in the top-level file, not in a
   /// #include.

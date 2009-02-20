@@ -76,7 +76,12 @@ public:
   MacroInfo(SourceLocation DefLoc);
   
   ~MacroInfo() {
+    assert(ArgumentList == 0 && "Didn't call destroy before dtor!");
+  }
+  
+  void Destroy() {
     delete[] ArgumentList;
+    ArgumentList = 0;
   }
   
   /// getDefinitionLoc - Return the location that the macro was defined at.
