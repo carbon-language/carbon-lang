@@ -309,7 +309,7 @@ if (!defined $StoreModel) { $StoreModel = "basic"; }
 
 # Get the constraints engine.
 my $ConstraintsModel = $ENV{'CCC_ANALYZER_CONSTRAINTS_MODEL'};
-if (!defined $ConstraintsModel) { $ConstraintsModel = "basic"; }
+if (!defined $ConstraintsModel) { $ConstraintsModel = "range"; }
 
 # Get the output format.
 my $OutputFormat = $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'};

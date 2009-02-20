@@ -96,7 +96,7 @@ NumConstraints
 static llvm::cl::opt<AnalysisConstraints> 
 AnalysisConstraintsOpt("analyzer-constraints",
   llvm::cl::desc("Source Code Analysis - Symbolic Constraint Engines"),
-  llvm::cl::init(BasicConstraintsModel),
+  llvm::cl::init(RangeConstraintsModel),
   llvm::cl::values(
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATFN)\
 clEnumValN(NAME##Model, CMDFLAG, DESC),

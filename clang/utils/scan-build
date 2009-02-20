@@ -908,9 +908,10 @@ OPTIONS:
 
 ADVANCED OPTIONS:
 
- -constraints [model] - Specify the contraint model used by the analyzer.
-                        By default the 'basic' model is used.  'range' adds
-                        experimental range tracking for program values.
+ -constraints [model] - Specify the contraint engine used by the analyzer.
+                        By default the 'range' model is used.  Specifying 
+                        'basic' uses a simpler, less powerful constraint model
+                        used by checker-0.161 and earlier.
 
  -store [model] - Specify the store model used by the analyzer. By default,
                   the 'basic' store model is used. 'region' specifies a field-
