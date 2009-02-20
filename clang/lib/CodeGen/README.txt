@@ -30,3 +30,20 @@ block.
 
 //===---------------------------------------------------------------------===//
 
+We should try and avoid generating basic blocks which only contain
+jumps. At -O0, this penalizes us all the way from IRgen (malloc &
+instruction overhead), all the way down through code generation and
+assembly time.
+
+On 176.gcc:expr.ll, it looks like over 12% of basic blocks are just
+direct branches.
+
+//===---------------------------------------------------------------------===//
+
+There are some more places where we could avoid generating unreachable code. For
+example:
+  void f0(int a) { abort(); if (a) printf("hi"); }
+still generates a call to printf. This doesn't occur much in real
+code, but would still be nice to clean up.
+
+//===---------------------------------------------------------------------===//
