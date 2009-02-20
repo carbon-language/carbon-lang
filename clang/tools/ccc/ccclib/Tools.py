@@ -252,17 +252,11 @@ class Clang_CompileTool(Tool):
             picEnabled = (arglist.getLastArg(arglist.parser.f_PICOption) or
                           arglist.getLastArg(arglist.parser.f_picOption) or
                           arglist.getLastArg(arglist.parser.f_PIEOption) or
-                          arglist.getLastArg(arglist.parser.f_pieOption) or
-                          (not arglist.getLastArg(arglist.parser.m_kernelOption) and
-                          not arglist.getLastArg(arglist.parser.staticOption) and
-                          not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption)))
-
-            # FIXME: This needs to tie into a platform hook.
-            if (self.toolChain.archName == 'x86_64' or 
-                picEnabled):
-                cmd_args.append('--relocation-model=pic')
-            elif not arglist.getLastArg(arglist.parser.m_dynamicNoPicOption):
-                cmd_args.append('--relocation-model=static')
+                          arglist.getLastArg(arglist.parser.f_pieOption))
+            picDisabled = (arglist.getLastArg(arglist.parser.m_kernelOption) or
+                           arglist.getLastArg(arglist.parser.staticOption))
+            model = self.toolChain.getRelocationModel(picEnabled, picDisabled)
+            cmd_args.append('--relocation-model=%s' % model)
 
             if arglist.getLastArg(arglist.parser.f_timeReportOption):
                 cmd_args.append('--time-passes')
