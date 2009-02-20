@@ -647,11 +647,10 @@ void AsmWriterEmitter::run(std::ostream &O) {
     << "    if (!CurDL.isUnknown()) {\n"
     << "      static DebugLocTuple PrevDLT(~0U, ~0U, ~0U);\n"
     << "      DebugLocTuple CurDLT = MF->getDebugLocTuple(CurDL);\n\n"
-    << "      if (PrevDLT != CurDLT) {\n"
+    << "      if (PrevDLT.Src != ~0U && PrevDLT != CurDLT)\n"
     << "        printLabel(DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,\n"
-    << "                                        CurDLT.Src));\n"
-    << "        PrevDLT = CurDLT;\n"
-    << "      }\n"
+    << "                                        CurDLT.Src));\n\n"
+    << "      PrevDLT = CurDLT;\n"
     << "    }\n"
     << "  }\n\n";
 
