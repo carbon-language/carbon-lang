@@ -95,6 +95,10 @@ class MachineFunction : private Annotation {
   typedef ilist<MachineBasicBlock> BasicBlockListType;
   BasicBlockListType BasicBlocks;
 
+  // Default debug location. Used to print out the debug label at the beginning
+  // of a function.
+  DebugLoc DefaultDebugLoc;
+
   // Tracks debug locations.
   DebugLocTracker DebugLocInfo;
 
@@ -319,6 +323,14 @@ public:
 
   /// getDebugLocTuple - Get the DebugLocTuple for a given DebugLoc object.
   DebugLocTuple getDebugLocTuple(DebugLoc DL) const;
+
+  /// getDefaultDebugLoc - Get the default debug location for the machine
+  /// function.
+  DebugLoc getDefaultDebugLoc() const { return DefaultDebugLoc; }
+
+  /// setDefaultDebugLoc - Get the default debug location for the machine
+  /// function.
+  void setDefaultDebugLoc(DebugLoc DL) { DefaultDebugLoc = DL; }
 };
 
 //===--------------------------------------------------------------------===//
