@@ -16,6 +16,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
@@ -53,6 +54,30 @@ namespace {
 char PromotePass::ID = 0;
 static RegisterPass<PromotePass> X("mem2reg", "Promote Memory to Register");
 
+/// Remove the invalid or redundant debug information.
+static void CleanDbgInfo(Function& F) {
+  std::vector<Instruction*> DeadDbgs;
+  for (Function::iterator BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI) {
+    if (BBI->size() <= 1)
+      continue;
+    for (BasicBlock::iterator I = BBI->begin(), E = BBI->getTerminator(); 
+         I != E; ++I) {
+      BasicBlock::iterator NextI = I;
+      ++NextI;
+      if (isa<DbgStopPointInst>(I) && isa<DbgStopPointInst>(NextI))
+        DeadDbgs.push_back(I);
+      else if (isa<DbgStopPointInst>(I) && isa<BranchInst>(NextI))
+        DeadDbgs.push_back(I);
+    }
+  }
+
+  while (!DeadDbgs.empty()) {
+    Instruction *Inst = DeadDbgs.back();
+    DeadDbgs.pop_back();
+    Inst->eraseFromParent();
+  }
+}
+
 bool PromotePass::runOnFunction(Function &F) {
   std::vector<AllocaInst*> Allocas;
 
@@ -76,6 +101,7 @@ bool PromotePass::runOnFunction(Function &F) {
     if (Allocas.empty()) break;
 
     PromoteMemToReg(Allocas, DT, DF);
+    CleanDbgInfo(F);
     NumPromoted += Allocas.size();
     Changed = true;
   }
