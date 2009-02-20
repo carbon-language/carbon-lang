@@ -332,7 +332,7 @@ class Clang_CompileTool(Tool):
                 elif arglist.getLastArg(neg):
                     attrs.append('-' + flag)
             if attrs:
-                cmd_args.append('--mattrs=%s' % ','.join(attrs))
+                cmd_args.append('--mattr=%s' % ','.join(attrs))
 
             if arglist.hasFFlag(arglist.parser.f_mathErrnoOption,
                                 arglist.parser.f_noMathErrnoOption,
