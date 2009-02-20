@@ -1267,6 +1267,7 @@ class DwarfDebug : public Dwarf {
   /// MainCU - Some platform prefers one compile unit per .o file. In such
   /// cases, all dies are inserted in MainCU.
   CompileUnit *MainCU;
+
   /// AbbreviationsSet - Used to uniquely define abbreviations.
   ///
   FoldingSet<DIEAbbrev> AbbreviationsSet;
@@ -1278,7 +1279,7 @@ class DwarfDebug : public Dwarf {
   /// Directories - Uniquing vector for directories.
   UniqueVector<std::string> Directories;
 
-  /// SourceFiles - Uniquing vector for source files.
+  /// SrcFiles - Uniquing vector for source files.
   UniqueVector<SrcFileInfo> SrcFiles;
 
   /// Lines - List of of source line correspondence.
@@ -1993,28 +1994,32 @@ private:
   ///
   DbgScope *getOrCreateScope(GlobalVariable *V) {
     DbgScope *&Slot = DbgScopeMap[V];
-    if (!Slot) {
-      // FIXME - breaks down when the context is an inlined function.
-      DIDescriptor ParentDesc;
-      DIDescriptor Desc(V);
-      if (Desc.getTag() == dwarf::DW_TAG_lexical_block) {
-        DIBlock Block(V);
-        ParentDesc = Block.getContext();
-      }
-      DbgScope *Parent = ParentDesc.isNull() ? 
-        NULL : getOrCreateScope(ParentDesc.getGV());
-      Slot = new DbgScope(Parent, Desc);
-      if (Parent) {
-        Parent->AddScope(Slot);
-      } else if (RootDbgScope) {
-        // FIXME - Add inlined function scopes to the root so we can delete
-        // them later.  Long term, handle inlined functions properly.
-        RootDbgScope->AddScope(Slot);
-      } else {
-        // First function is top level function.
-        RootDbgScope = Slot;
-      }
+    if (Slot) return Slot;
+
+    // FIXME - breaks down when the context is an inlined function.
+    DIDescriptor ParentDesc;
+    DIDescriptor Desc(V);
+
+    if (Desc.getTag() == dwarf::DW_TAG_lexical_block) {
+      DIBlock Block(V);
+      ParentDesc = Block.getContext();
     }
+
+    DbgScope *Parent = ParentDesc.isNull() ? 
+      NULL : getOrCreateScope(ParentDesc.getGV());
+    Slot = new DbgScope(Parent, Desc);
+
+    if (Parent) {
+      Parent->AddScope(Slot);
+    } else if (RootDbgScope) {
+      // FIXME - Add inlined function scopes to the root so we can delete them
+      // later.  Long term, handle inlined functions properly.
+      RootDbgScope->AddScope(Slot);
+    } else {
+      // First function is top level function.
+      RootDbgScope = Slot;
+    }
+
     return Slot;
   }
 
@@ -3087,7 +3092,6 @@ public:
 
   /// ValidDebugInfo - Return true if V represents valid debug info value.
   bool ValidDebugInfo(Value *V) {
-
     if (!V)
       return false;
 
