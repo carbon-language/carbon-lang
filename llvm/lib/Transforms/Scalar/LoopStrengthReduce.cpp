@@ -35,6 +35,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 #include <set>
@@ -45,6 +46,10 @@ STATISTIC(NumInserted,    "Number of PHIs inserted");
 STATISTIC(NumVariable,    "Number of PHIs with variable strides");
 STATISTIC(NumEliminated,  "Number of strides eliminated");
 STATISTIC(NumShadow,      "Number of Shadow IVs optimized");
+
+static cl::opt<bool> EnableFullLSRMode("enable-full-lsr",
+                                       cl::init(false),
+                                       cl::Hidden);
 
 namespace {
 
@@ -208,6 +213,29 @@ private:
                               bool &AllUsesAreAddresses,
                               bool &AllUsesAreOutsideLoop,
                               std::vector<BasedUser> &UsersToProcess);
+    bool ShouldUseFullStrengthReductionMode(
+                                const std::vector<BasedUser> &UsersToProcess,
+                                const Loop *L,
+                                bool AllUsesAreAddresses,
+                                SCEVHandle Stride);
+    void PrepareToStrengthReduceFully(
+                             std::vector<BasedUser> &UsersToProcess,
+                             SCEVHandle Stride,
+                             SCEVHandle CommonExprs,
+                             const Loop *L,
+                             SCEVExpander &PreheaderRewriter);
+    void PrepareToStrengthReduceFromSmallerStride(
+                                         std::vector<BasedUser> &UsersToProcess,
+                                         Value *CommonBaseV,
+                                         const IVExpr &ReuseIV,
+                                         Instruction *PreInsertPt);
+    void PrepareToStrengthReduceWithNewPhi(
+                                  std::vector<BasedUser> &UsersToProcess,
+                                  SCEVHandle Stride,
+                                  SCEVHandle CommonExprs,
+                                  Value *CommonBaseV,
+                                  const Loop *L,
+                                  SCEVExpander &PreheaderRewriter);
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
@@ -640,6 +668,13 @@ namespace {
     /// before Inst, because it will be folded into the imm field of the
     /// instruction.
     SCEVHandle Imm;
+
+    /// Phi - The induction variable that performs the striding that
+    /// should be used for this user.
+    Value *Phi;
+
+    /// IncV - The post-incremented value of Phi.
+    Value *IncV;
 
     // isUseOfPostIncrementedValue - True if this should use the
     // post-incremented version of this IV, not the preincremented version.
@@ -1445,6 +1480,272 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
   return CommonExprs;
 }
 
+/// ShouldUseFullStrengthReductionMode - Test whether full strength-reduction
+/// is valid and profitable for the given set of users of a stride. In
+/// full strength-reduction mode, all addresses at the current stride are
+/// strength-reduced all the way down to pointer arithmetic.
+///
+bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
+                                   const std::vector<BasedUser> &UsersToProcess,
+                                   const Loop *L,
+                                   bool AllUsesAreAddresses,
+                                   SCEVHandle Stride) {
+  if (!EnableFullLSRMode)
+    return false;
+
+  // The heuristics below aim to avoid increasing register pressure, but
+  // fully strength-reducing all the addresses increases the number of
+  // add instructions, so don't do this when optimizing for size.
+  // TODO: If the loop is large, the savings due to simpler addresses
+  // may oughtweight the costs of the extra increment instructions.
+  if (L->getHeader()->getParent()->hasFnAttr(Attribute::OptimizeForSize))
+    return false;
+
+  // TODO: For now, don't do full strength reduction if there could
+  // potentially be greater-stride multiples of the current stride
+  // which could reuse the current stride IV.
+  if (StrideOrder.back() != Stride)
+    return false;
+
+  // Iterate through the uses to find conditions that automatically rule out
+  // full-lsr mode.
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ) {
+    SCEV *Base = UsersToProcess[i].Base;
+    SCEV *Imm = UsersToProcess[i].Imm;
+    // If any users have a loop-variant component, they can't be fully
+    // strength-reduced.
+    if (Imm && !Imm->isLoopInvariant(L))
+      return false;
+    // If there are to users with the same base and the difference between
+    // the two Imm values can't be folded into the address, full
+    // strength reduction would increase register pressure.
+    do {
+      SCEV *CurImm = UsersToProcess[i].Imm;
+      if (CurImm || Imm && CurImm != Imm) {
+        if (!CurImm) CurImm = SE->getIntegerSCEV(0, Stride->getType());
+        if (!Imm)       Imm = SE->getIntegerSCEV(0, Stride->getType());
+        const Instruction *Inst = UsersToProcess[i].Inst;
+        const Type *UseTy = Inst->getType();
+        if (const StoreInst *SI = dyn_cast<StoreInst>(Inst))
+          UseTy = SI->getOperand(0)->getType();
+        SCEVHandle Diff = SE->getMinusSCEV(UsersToProcess[i].Imm, Imm);
+        if (!Diff->isZero() &&
+            (!AllUsesAreAddresses ||
+             !fitsInAddressMode(Diff, UseTy, TLI, /*HasBaseReg=*/true)))
+          return false;
+      }
+    } while (++i != e && Base == UsersToProcess[i].Base);
+  }
+
+  // If there's exactly one user in this stride, fully strength-reducing it
+  // won't increase register pressure. If it's starting from a non-zero base,
+  // it'll be simpler this way.
+  if (UsersToProcess.size() == 1 && !UsersToProcess[0].Base->isZero())
+    return true;
+
+  // Otherwise, if there are any users in this stride that don't require
+  // a register for their base, full strength-reduction will increase
+  // register pressure.
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i)
+    if (!UsersToProcess[i].Base ||
+        UsersToProcess[i].Base->isZero())
+      return false;
+
+  // Otherwise, go for it.
+  return true;
+}
+
+/// InsertAffinePhi Create and insert a PHI node for an induction variable
+/// with the specified start and step values in the specified loop.
+///
+/// If NegateStride is true, the stride should be negated by using a
+/// subtract instead of an add.
+///
+/// Return the created phi node, and return the step instruction by
+/// reference in IncV.
+///
+static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
+                                const Loop *L,
+                                SCEVExpander &Rewriter,
+                                Value *&IncV) {
+  assert(Start->isLoopInvariant(L) && "New PHI start is not loop invariant!");
+  assert(Step->isLoopInvariant(L) && "New PHI stride is not loop invariant!");
+
+  BasicBlock *Header = L->getHeader();
+  BasicBlock *Preheader = L->getLoopPreheader();
+
+  PHINode *PN = PHINode::Create(Start->getType(), "lsr.iv", Header->begin());
+  PN->addIncoming(Rewriter.expandCodeFor(Start, Preheader->getTerminator()),
+                  Preheader);
+
+  pred_iterator HPI = pred_begin(Header);
+  assert(HPI != pred_end(Header) && "Loop with zero preds???");
+  if (!L->contains(*HPI)) ++HPI;
+  assert(HPI != pred_end(Header) && L->contains(*HPI) &&
+         "No backedge in loop?");
+
+  // If the stride is negative, insert a sub instead of an add for the
+  // increment.
+  bool isNegative = isNonConstantNegative(Step);
+  SCEVHandle IncAmount = Step;
+  if (isNegative)
+    IncAmount = Rewriter.SE.getNegativeSCEV(Step);
+
+  // Insert an add instruction right before the terminator corresponding
+  // to the back-edge.
+  Value *StepV = Rewriter.expandCodeFor(IncAmount, Preheader->getTerminator());
+  if (isNegative) {
+    IncV = BinaryOperator::CreateSub(PN, StepV, "lsr.iv.next",
+                                     (*HPI)->getTerminator());
+  } else {
+    IncV = BinaryOperator::CreateAdd(PN, StepV, "lsr.iv.next",
+                                     (*HPI)->getTerminator());
+  }
+  if (!isa<ConstantInt>(StepV)) ++NumVariable;
+
+  pred_iterator PI = pred_begin(Header);
+  if (*PI == L->getLoopPreheader())
+    ++PI;
+  PN->addIncoming(IncV, *PI);
+
+  ++NumInserted;
+  return PN;
+}
+
+static void SortUsersToProcess(std::vector<BasedUser> &UsersToProcess) {
+  // We want to emit code for users inside the loop first.  To do this, we
+  // rearrange BasedUser so that the entries at the end have
+  // isUseOfPostIncrementedValue = false, because we pop off the end of the
+  // vector (so we handle them first).
+  std::partition(UsersToProcess.begin(), UsersToProcess.end(),
+                 PartitionByIsUseOfPostIncrementedValue);
+
+  // Sort this by base, so that things with the same base are handled
+  // together.  By partitioning first and stable-sorting later, we are
+  // guaranteed that within each base we will pop off users from within the
+  // loop before users outside of the loop with a particular base.
+  //
+  // We would like to use stable_sort here, but we can't.  The problem is that
+  // SCEVHandle's don't have a deterministic ordering w.r.t to each other, so
+  // we don't have anything to do a '<' comparison on.  Because we think the
+  // number of uses is small, do a horrible bubble sort which just relies on
+  // ==.
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
+    // Get a base value.
+    SCEVHandle Base = UsersToProcess[i].Base;
+
+    // Compact everything with this base to be consecutive with this one.
+    for (unsigned j = i+1; j != e; ++j) {
+      if (UsersToProcess[j].Base == Base) {
+        std::swap(UsersToProcess[i+1], UsersToProcess[j]);
+        ++i;
+      }
+    }
+  }
+}
+
+/// PrepareToStrengthReduceFully - Prepare to fully strength-reduce UsersToProcess,
+/// meaning lowering addresses all the way down to direct pointer arithmetic.
+///
+void
+LoopStrengthReduce::PrepareToStrengthReduceFully(
+                                        std::vector<BasedUser> &UsersToProcess,
+                                        SCEVHandle Stride,
+                                        SCEVHandle CommonExprs,
+                                        const Loop *L,
+                                        SCEVExpander &PreheaderRewriter) {
+  DOUT << "  Fully reducing all users\n";
+
+  // Rewrite the UsersToProcess records, creating a separate PHI for each
+  // unique Base value.
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ) {
+    // TODO: The uses are grouped by base, but not sorted. We arbitrarily
+    // pick the first Imm value here to start with, and adjust it for the
+    // other uses.
+    SCEVHandle Imm = UsersToProcess[i].Imm;
+    SCEVHandle Base = UsersToProcess[i].Base;
+    SCEVHandle Start = SE->getAddExpr(CommonExprs, Base, Imm);
+    Value *IncV;
+    PHINode *Phi = InsertAffinePhi(Start, Stride, L,
+                                   PreheaderRewriter,
+                                   IncV);
+    // Loop over all the users with the same base.
+    do {
+      UsersToProcess[i].Base = SE->getIntegerSCEV(0, Stride->getType());
+      UsersToProcess[i].Imm = SE->getMinusSCEV(UsersToProcess[i].Imm, Imm);
+      UsersToProcess[i].Phi = Phi;
+      UsersToProcess[i].IncV = IncV;
+      assert(UsersToProcess[i].Imm->isLoopInvariant(L) &&
+             "ShouldUseFullStrengthReductionMode should reject this!");
+    } while (++i != e && Base == UsersToProcess[i].Base);
+  }
+}
+
+/// PrepareToStrengthReduceWithNewPhi - Insert a new induction variable for the
+/// given users to share.
+///
+void
+LoopStrengthReduce::PrepareToStrengthReduceWithNewPhi(
+                                         std::vector<BasedUser> &UsersToProcess,
+                                         SCEVHandle Stride,
+                                         SCEVHandle CommonExprs,
+                                         Value *CommonBaseV,
+                                         const Loop *L,
+                                         SCEVExpander &PreheaderRewriter) {
+  DOUT << "  Inserting new PHI:\n";
+
+  Value *IncV;
+  PHINode *Phi = InsertAffinePhi(SE->getUnknown(CommonBaseV),
+                                 Stride, L,
+                                 PreheaderRewriter,
+                                 IncV);
+
+  // Remember this in case a later stride is multiple of this.
+  IVsByStride[Stride].addIV(Stride, CommonExprs, Phi, IncV);
+
+  // All the users will share this new IV.
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
+    UsersToProcess[i].Phi = Phi;
+    UsersToProcess[i].IncV = IncV;
+  }
+
+  DOUT << "    IV=";
+  DEBUG(WriteAsOperand(*DOUT, Phi, /*PrintType=*/false));
+  DOUT << ", INC=";
+  DEBUG(WriteAsOperand(*DOUT, IncV, /*PrintType=*/false));
+  DOUT << "\n";
+}
+
+/// PrepareToStrengthReduceWithNewPhi - Prepare for the given users to reuse
+/// an induction variable with a stride that is a factor of the current
+/// induction variable.
+///
+void
+LoopStrengthReduce::PrepareToStrengthReduceFromSmallerStride(
+                                         std::vector<BasedUser> &UsersToProcess,
+                                         Value *CommonBaseV,
+                                         const IVExpr &ReuseIV,
+                                         Instruction *PreInsertPt) {
+  DOUT << "  Rewriting in terms of existing IV of STRIDE " << *ReuseIV.Stride
+       << " and BASE " << *ReuseIV.Base << "\n";
+
+  // All the users will share the reused IV.
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
+    UsersToProcess[i].Phi = ReuseIV.PHI;
+    UsersToProcess[i].IncV = ReuseIV.IncV;
+  }
+
+  Constant *C = dyn_cast<Constant>(CommonBaseV);
+  if (C &&
+      (!C->isNullValue() &&
+       !fitsInAddressMode(SE->getUnknown(CommonBaseV), CommonBaseV->getType(),
+                         TLI, false)))
+    // We want the common base emitted into the preheader! This is just
+    // using cast as a copy so BitCast (no-op cast) is appropriate
+    CommonBaseV = new BitCastInst(CommonBaseV, CommonBaseV->getType(),
+                                  "commonbase", PreInsertPt);
+}
+
 /// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
 /// stride of IV.  All of the users may have different starting values, and this
 /// may not be the only stride (we know it is if isOnlyStride is true).
@@ -1476,29 +1777,18 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                           AllUsesAreOutsideLoop,
                                           UsersToProcess);
 
+  // Sort the UsersToProcess array so that users with common bases are
+  // next to each other.
+  SortUsersToProcess(UsersToProcess);
+
   // If we managed to find some expressions in common, we'll need to carry
   // their value in a register and add it in for each use. This will take up
   // a register operand, which potentially restricts what stride values are
   // valid.
   bool HaveCommonExprs = !CommonExprs->isZero();
-  
-  // If all uses are addresses, check if it is possible to reuse an IV with a
-  // stride that is a factor of this stride. And that the multiple is a number
-  // that can be encoded in the scale field of the target addressing mode. And
-  // that we will have a valid instruction after this substition, including the
-  // immediate field, if any.
-  PHINode *NewPHI = NULL;
-  Value   *IncV   = NULL;
-  IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
-                   SE->getIntegerSCEV(0, Type::Int32Ty),
-                   0, 0);
-  SCEVHandle RewriteFactor = 
-                  CheckForIVReuse(HaveCommonExprs, AllUsesAreAddresses,
-                                  AllUsesAreOutsideLoop,
-                                  Stride, ReuseIV, CommonExprs->getType(),
-                                  UsersToProcess);
+
   const Type *ReplacedTy = CommonExprs->getType();
-  
+
   // Now that we know what we need to do, insert the PHI node itself.
   //
   DOUT << "LSR: Examining IVs of TYPE " << *ReplacedTy << " of STRIDE "
@@ -1507,103 +1797,48 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
   SCEVExpander Rewriter(*SE, *LI);
   SCEVExpander PreheaderRewriter(*SE, *LI);
-  
+
   BasicBlock  *Preheader = L->getLoopPreheader();
   Instruction *PreInsertPt = Preheader->getTerminator();
-  Instruction *PhiInsertBefore = L->getHeader()->begin();
   BasicBlock *LatchBlock = L->getLoopLatch();
 
-  // Emit the initial base value into the loop preheader.
-  Value *CommonBaseV
-    = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt);
+  Value *CommonBaseV = ConstantInt::get(ReplacedTy, 0);
 
-  if (isa<SCEVConstant>(RewriteFactor) &&
-      cast<SCEVConstant>(RewriteFactor)->isZero()) {
-    // Create a new Phi for this base, and stick it in the loop header.
-    NewPHI = PHINode::Create(ReplacedTy, "iv.", PhiInsertBefore);
-    ++NumInserted;
-  
-    // Add common base to the new Phi node.
-    NewPHI->addIncoming(CommonBaseV, Preheader);
+  SCEVHandle RewriteFactor = SE->getIntegerSCEV(0, ReplacedTy);
+  IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
+                   SE->getIntegerSCEV(0, Type::Int32Ty),
+                   0, 0);
 
-    // If the stride is negative, insert a sub instead of an add for the
-    // increment.
-    bool isNegative = isNonConstantNegative(Stride);
-    SCEVHandle IncAmount = Stride;
-    if (isNegative)
-      IncAmount = SE->getNegativeSCEV(Stride);
-    
-    // Insert the stride into the preheader.
-    Value *StrideV = PreheaderRewriter.expandCodeFor(IncAmount, PreInsertPt);
-    if (!isa<ConstantInt>(StrideV)) ++NumVariable;
-
-    // Emit the increment of the base value before the terminator of the loop
-    // latch block, and add it to the Phi node.
-    SCEVHandle IncExp = SE->getUnknown(StrideV);
-    if (isNegative)
-      IncExp = SE->getNegativeSCEV(IncExp);
-    IncExp = SE->getAddExpr(SE->getUnknown(NewPHI), IncExp);
-  
-    IncV = Rewriter.expandCodeFor(IncExp, LatchBlock->getTerminator());
-    IncV->setName(NewPHI->getName()+".inc");
-    NewPHI->addIncoming(IncV, LatchBlock);
-
-    // Remember this in case a later stride is multiple of this.
-    IVsByStride[Stride].addIV(Stride, CommonExprs, NewPHI, IncV);
-
-    DOUT << "  Inserted new PHI: IV=";
-    DEBUG(WriteAsOperand(*DOUT, NewPHI, /*PrintType=*/false));
-    DOUT << ", INC=";
-    DEBUG(WriteAsOperand(*DOUT, IncV, /*PrintType=*/false));
-    DOUT << "\n";
+  /// Choose a strength-reduction strategy and prepare for it by creating
+  /// the necessary PHIs and adjusting the bookkeeping.
+  if (ShouldUseFullStrengthReductionMode(UsersToProcess, L,
+                                         AllUsesAreAddresses, Stride)) {
+    PrepareToStrengthReduceFully(UsersToProcess, Stride, CommonExprs, L,
+                                 PreheaderRewriter);
   } else {
-    DOUT << "  Rewriting in terms of existing IV of STRIDE " << *ReuseIV.Stride
-         << " and BASE " << *ReuseIV.Base << "\n";
-    NewPHI = ReuseIV.PHI;
-    IncV   = ReuseIV.IncV;
+    // Emit the initial base value into the loop preheader.
+    CommonBaseV = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt);
 
-    Constant *C = dyn_cast<Constant>(CommonBaseV);
-    if (!C ||
-        (!C->isNullValue() &&
-         !fitsInAddressMode(SE->getUnknown(CommonBaseV), ReplacedTy, 
-                           TLI, false)))
-      // We want the common base emitted into the preheader! This is just
-      // using cast as a copy so BitCast (no-op cast) is appropriate
-      CommonBaseV = new BitCastInst(CommonBaseV, CommonBaseV->getType(), 
-                                    "commonbase", PreInsertPt);
+    // If all uses are addresses, check if it is possible to reuse an IV with a
+    // stride that is a factor of this stride. And that the multiple is a number
+    // that can be encoded in the scale field of the target addressing mode. And
+    // that we will have a valid instruction after this substition, including the
+    // immediate field, if any.
+    RewriteFactor = CheckForIVReuse(HaveCommonExprs, AllUsesAreAddresses,
+                                    AllUsesAreOutsideLoop,
+                                    Stride, ReuseIV, CommonExprs->getType(),
+                                    UsersToProcess);
+    if (isa<SCEVConstant>(RewriteFactor) &&
+        cast<SCEVConstant>(RewriteFactor)->isZero())
+      PrepareToStrengthReduceWithNewPhi(UsersToProcess, Stride, CommonExprs,
+                                        CommonBaseV, L, PreheaderRewriter);
+    else
+      PrepareToStrengthReduceFromSmallerStride(UsersToProcess, CommonBaseV,
+                                               ReuseIV, PreInsertPt);
   }
 
-  // We want to emit code for users inside the loop first.  To do this, we
-  // rearrange BasedUser so that the entries at the end have
-  // isUseOfPostIncrementedValue = false, because we pop off the end of the
-  // vector (so we handle them first).
-  std::partition(UsersToProcess.begin(), UsersToProcess.end(),
-                 PartitionByIsUseOfPostIncrementedValue);
-  
-  // Sort this by base, so that things with the same base are handled
-  // together.  By partitioning first and stable-sorting later, we are
-  // guaranteed that within each base we will pop off users from within the
-  // loop before users outside of the loop with a particular base.
-  //
-  // We would like to use stable_sort here, but we can't.  The problem is that
-  // SCEVHandle's don't have a deterministic ordering w.r.t to each other, so
-  // we don't have anything to do a '<' comparison on.  Because we think the
-  // number of uses is small, do a horrible bubble sort which just relies on
-  // ==.
-  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
-    // Get a base value.
-    SCEVHandle Base = UsersToProcess[i].Base;
-    
-    // Compact everything with this base to be consecutive with this one.
-    for (unsigned j = i+1; j != e; ++j) {
-      if (UsersToProcess[j].Base == Base) {
-        std::swap(UsersToProcess[i+1], UsersToProcess[j]);
-        ++i;
-      }
-    }
-  }
-
-  // Process all the users now.  This outer loop handles all bases, the inner
+  // Process all the users now, replacing their strided uses with
+  // strength-reduced forms.  This outer loop handles all bases, the inner
   // loop handles all users of a particular base.
   while (!UsersToProcess.empty()) {
     SCEVHandle Base = UsersToProcess.back().Base;
@@ -1643,9 +1878,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
       // If this instruction wants to use the post-incremented value, move it
       // after the post-inc and use its value instead of the PHI.
-      Value *RewriteOp = NewPHI;
+      Value *RewriteOp = User.Phi;
       if (User.isUseOfPostIncrementedValue) {
-        RewriteOp = IncV;
+        RewriteOp = User.IncV;
 
         // If this user is in the loop, make sure it is the last thing in the
         // loop to ensure it is dominated by the increment.
@@ -1670,7 +1905,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // PHI node, we can use the later point to expand the final
       // RewriteExpr.
       Instruction *NewBasePt = dyn_cast<Instruction>(RewriteOp);
-      if (RewriteOp == NewPHI) NewBasePt = 0;
+      if (RewriteOp == User.Phi) NewBasePt = 0;
 
       // Clear the SCEVExpander's expression map so that we are guaranteed
       // to have the code emitted where we expect it.
