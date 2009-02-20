@@ -360,6 +360,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   ObjCList<ObjCIvarDecl> IVars;
   
   /// List of categories defined for this class.
+  /// FIXME: Why is this a linked list??
   ObjCCategoryDecl *CategoryList;
     
   bool ForwardDecl:1; // declared with @class.
@@ -699,7 +700,8 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
   /// referenced protocols in this category.
   ObjCList<ObjCProtocolDecl> ReferencedProtocols;
   
-  /// Next category belonging to this class
+  /// Next category belonging to this class.
+  /// FIXME: this should not be a singly-linked list.  Move storage elsewhere.
   ObjCCategoryDecl *NextClassCategory;
   
   SourceLocation EndLoc; // marks the '>' or identifier.
@@ -727,7 +729,7 @@ public:
     return ReferencedProtocols;
   }
   
-  typedef ObjCProtocolDecl * const * protocol_iterator;
+  typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   
@@ -757,15 +759,18 @@ public:
 ///  @dynamic p1,d1;
 /// @end
 ///
+/// FIXME: Like ObjCImplementationDecl, this should not be a NamedDecl!
+/// FIXME: Introduce a new common base class for ObjCImplementationDecl and
+/// ObjCCategoryImplDecl
 class ObjCCategoryImplDecl : public NamedDecl, public DeclContext {
   /// Class interface for this category implementation
   ObjCInterfaceDecl *ClassInterface;
 
   /// implemented instance methods
-  llvm::SmallVector<ObjCMethodDecl*, 32> InstanceMethods;
+  llvm::SmallVector<ObjCMethodDecl*, 16> InstanceMethods;
   
   /// implemented class methods
-  llvm::SmallVector<ObjCMethodDecl*, 32> ClassMethods;
+  llvm::SmallVector<ObjCMethodDecl*, 16> ClassMethods;
   
   /// Property Implementations in this category
   llvm::SmallVector<ObjCPropertyImplDecl*, 8> PropertyImplementations;
@@ -865,12 +870,12 @@ class ObjCImplementationDecl : public Decl, public DeclContext {
   ObjCList<ObjCIvarDecl> IVars;
 
   /// implemented instance methods
-  llvm::SmallVector<ObjCMethodDecl*, 32> InstanceMethods;
+  llvm::SmallVector<ObjCMethodDecl*, 16> InstanceMethods;
   
   /// implemented class methods
-  llvm::SmallVector<ObjCMethodDecl*, 32> ClassMethods;
+  llvm::SmallVector<ObjCMethodDecl*, 16> ClassMethods;
 
-  /// Propertys' being implemented
+  /// Properties being implemented
   llvm::SmallVector<ObjCPropertyImplDecl*, 8> PropertyImplementations;
   
   SourceLocation EndLoc;
