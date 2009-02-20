@@ -702,16 +702,11 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
   /// Next category belonging to this class
   ObjCCategoryDecl *NextClassCategory;
   
-  /// category properties
-  ObjCPropertyDecl **PropertyDecl;  // Null if no property
-  unsigned NumPropertyDecl;  // 0 if none  
-  
   SourceLocation EndLoc; // marks the '>' or identifier.
   
   ObjCCategoryDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
     : ObjCContainerDecl(ObjCCategory, DC, L, Id),
-      ClassInterface(0),
-      NextClassCategory(0), PropertyDecl(0),  NumPropertyDecl(0) {
+      ClassInterface(0), NextClassCategory(0){
   }
 public:
   
