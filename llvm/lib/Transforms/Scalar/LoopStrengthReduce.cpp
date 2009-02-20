@@ -666,7 +666,8 @@ namespace {
 
     /// Imm - The immediate value that should be added to the base immediately
     /// before Inst, because it will be folded into the imm field of the
-    /// instruction.
+    /// instruction.  This is also sometimes used for loop-variant values that
+    /// must be added inside the loop.
     SCEVHandle Imm;
 
     /// Phi - The induction variable that performs the striding that
