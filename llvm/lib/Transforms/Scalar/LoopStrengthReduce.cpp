@@ -1439,6 +1439,7 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
   // fields of the BasedUsers.  We do this so that it increases the commonality
   // of the remaining uses.
   unsigned NumPHI = 0;
+  bool HasAddress = false;
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
     // If the user is not in the current loop, this means it is using the exit
     // value of the IV.  Do not put anything in the base, make sure it's all in
@@ -1449,7 +1450,6 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
       UsersToProcess[i].Base = 
         SE->getIntegerSCEV(0, UsersToProcess[i].Base->getType());
     } else {
-
       // Addressing modes can be folded into loads and stores.  Be careful that
       // the store is through the expression, not of the expression though.
       bool isPHI = false;
@@ -1462,6 +1462,9 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
 
       // Not all uses are outside the loop.
       AllUsesAreOutsideLoop = false; 
+
+      if (isAddress)
+        HasAddress = true;
      
       // If this use isn't an address, then not all uses are addresses.
       if (!isAddress && !isPHI)
@@ -1476,6 +1479,10 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
   // allow iv reuse. Essentially we are trading one constant multiplication
   // for one fewer iv.
   if (NumPHI > 1)
+    AllUsesAreAddresses = false;
+
+  // There are no in-loop address uses.
+  if (AllUsesAreAddresses && (!HasAddress && !AllUsesAreOutsideLoop))
     AllUsesAreAddresses = false;
 
   return CommonExprs;
