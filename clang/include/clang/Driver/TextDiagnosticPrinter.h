@@ -47,7 +47,7 @@ public:
                       const std::string &SourceLine);
 
   void EmitCaretDiagnostic(SourceLocation Loc, 
-                           const SourceRange *Ranges, unsigned NumRanges,
+                           SourceRange *Ranges, unsigned NumRanges,
                            SourceManager &SM);
   
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,

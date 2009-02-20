@@ -102,7 +102,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 }
 
 void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
-                                                const SourceRange *Ranges,
+                                                SourceRange *Ranges,
                                                 unsigned NumRanges,
                                                 SourceManager &SM) {
   assert(!Loc.isInvalid() && "must have a valid source location here");
@@ -113,7 +113,18 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
     EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM);
     
+    // Map the location through the macro.
     Loc = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(Loc));
+
+    // Map the ranges.
+    for (unsigned i = 0; i != NumRanges; ++i) {
+      SourceLocation S = Ranges[i].getBegin(), E = Ranges[i].getEnd();
+      if (S.isMacroID())
+        S = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(S));
+      if (E.isMacroID())
+        E = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(E));
+      Ranges[i] = SourceRange(S, E);
+    }
     
     // Emit the file/line/column that this expansion came from.
     OS << SM.getBufferName(Loc) << ':' << SM.getInstantiationLineNumber(Loc)
