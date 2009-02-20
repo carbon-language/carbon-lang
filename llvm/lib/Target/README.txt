@@ -1689,3 +1689,18 @@ for next field in struct (which is at same address).
 For example: store of float into { {{}}, float } could be turned into a store to
 the float directly.
 
+//===---------------------------------------------------------------------===//
+#include <math.h>
+double foo(double a) {    return sin(a); }
+
+This compiles into this on x86-64 Linux:
+foo:
+	subq	$8, %rsp
+	call	sin
+	addq	$8, %rsp
+	ret
+vs:
+
+foo:
+        jmp sin
+
