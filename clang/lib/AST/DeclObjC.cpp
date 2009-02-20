@@ -106,8 +106,7 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 void ObjCProtocolDecl::Destroy(ASTContext &C) {
-  delete [] PropertyDecl;
-  PropertyDecl = 0;
+  ReferencedProtocols.clear();
   ObjCContainerDecl::Destroy(C);
 }
 

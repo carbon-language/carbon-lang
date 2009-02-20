@@ -575,10 +575,6 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
   /// Referenced protocols
   ObjCList<ObjCProtocolDecl> ReferencedProtocols;
   
-  /// protocol properties
-  ObjCPropertyDecl **PropertyDecl;  // Null if no property
-  unsigned NumPropertyDecl;  // 0 if none
-  
   bool isForwardProtoDecl; // declared with @protocol.
   
   SourceLocation EndLoc; // marks the '>' or identifier.
@@ -586,13 +582,10 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
   
   ObjCProtocolDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
     : ObjCContainerDecl(ObjCProtocol, DC, L, Id), 
-      PropertyDecl(0), NumPropertyDecl(0),
       isForwardProtoDecl(true) {
   }
   
-  virtual ~ObjCProtocolDecl() {
-    assert(PropertyDecl == 0 && "Destroy not called?");
-  }
+  virtual ~ObjCProtocolDecl() {}
   
 public:
   static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC, 
