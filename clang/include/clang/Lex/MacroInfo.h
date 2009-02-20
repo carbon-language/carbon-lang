@@ -16,6 +16,7 @@
 
 #include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Allocator.h"
 #include <vector>
 #include <cassert>
 
@@ -82,15 +83,15 @@ public:
   
   /// FreeArgumentList - Free the argument list of the macro, restoring it to a
   /// state where it can be reused for other devious purposes.
-  void FreeArgumentList() {
-    delete[] ArgumentList;
+  void FreeArgumentList(llvm::BumpPtrAllocator &PPAllocator) {
+    PPAllocator.Deallocate(ArgumentList);
     ArgumentList = 0;
     NumArguments = 0;
   }
   
   /// Destroy - destroy this MacroInfo object.
-  void Destroy() {
-    FreeArgumentList();
+  void Destroy(llvm::BumpPtrAllocator &PPAllocator) {
+    FreeArgumentList(PPAllocator);
     this->~MacroInfo();
   }
   
@@ -117,13 +118,14 @@ public:
 
   /// setArgumentList - Set the specified list of identifiers as the argument
   /// list for this macro.
-  void setArgumentList(IdentifierInfo* const *List, unsigned NumArgs) {
+  void setArgumentList(IdentifierInfo* const *List, unsigned NumArgs,
+                       llvm::BumpPtrAllocator &PPAllocator) {
     assert(ArgumentList == 0 && NumArguments == 0 &&
            "Argument list already set!");
     if (NumArgs == 0) return;
     
     NumArguments = NumArgs;
-    ArgumentList = new IdentifierInfo*[NumArgs];
+    ArgumentList = PPAllocator.Allocate<IdentifierInfo*>(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
       ArgumentList[i] = List[i];
   }

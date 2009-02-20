@@ -40,7 +40,7 @@ MacroInfo *Preprocessor::AllocateMacroInfo(SourceLocation L) {
 ///  be reused for allocating new MacroInfo objects.
 void Preprocessor::ReleaseMacroInfo(MacroInfo* MI) {
   MICache.push_back(MI);
-  MI->FreeArgumentList();
+  MI->FreeArgumentList(BP);
 }
 
 
@@ -1115,7 +1115,7 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
       // Add the __VA_ARGS__ identifier as an argument.
       Arguments.push_back(Ident__VA_ARGS__);
       MI->setIsC99Varargs();
-      MI->setArgumentList(&Arguments[0], Arguments.size());
+      MI->setArgumentList(&Arguments[0], Arguments.size(), BP);
       return false;
     case tok::eom:  // #define X(
       Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
@@ -1149,7 +1149,7 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
         Diag(Tok, diag::err_pp_expected_comma_in_arg_list);
         return true;
       case tok::r_paren: // #define X(A)
-        MI->setArgumentList(&Arguments[0], Arguments.size());
+        MI->setArgumentList(&Arguments[0], Arguments.size(), BP);
         return false;
       case tok::comma:  // #define X(A,
         break;
@@ -1165,7 +1165,7 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
         }
           
         MI->setIsGNUVarargs();
-        MI->setArgumentList(&Arguments[0], Arguments.size());
+        MI->setArgumentList(&Arguments[0], Arguments.size(), BP);
         return false;
       }
     }
