@@ -662,7 +662,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
 /// ObjCGetTypeForMethodDefinition - Builds the type for a method definition
 /// declarator
 QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
-  ObjCMethodDecl *MDecl = dyn_cast<ObjCMethodDecl>(static_cast<Decl *>(D));
+  ObjCMethodDecl *MDecl = cast<ObjCMethodDecl>(static_cast<Decl *>(D));
   QualType T = MDecl->getResultType();
   llvm::SmallVector<QualType, 16> ArgTys;
   
@@ -671,14 +671,13 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
     QualType selfTy = Context.getObjCInterfaceType(MDecl->getClassInterface());
     selfTy = Context.getPointerType(selfTy);
     ArgTys.push_back(selfTy);
-  }
-  else
+  } else
     ArgTys.push_back(Context.getObjCIdType());
   ArgTys.push_back(Context.getObjCSelType());
       
-  for (int i = 0, e = MDecl->getNumParams(); i != e; ++i) {
-    ParmVarDecl *PDecl = MDecl->getParamDecl(i);
-    QualType ArgTy = PDecl->getType();
+  for (ObjCMethodDecl::param_iterator PI = MDecl->param_begin(),
+       E = MDecl->param_end(); PI != E; ++PI) {
+    QualType ArgTy = (*PI)->getType();
     assert(!ArgTy.isNull() && "Couldn't parse type?");
     // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
     // This matches the conversion that is done in 

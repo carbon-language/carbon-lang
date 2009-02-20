@@ -46,11 +46,10 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   PushOnScopeChains(MDecl->getCmdDecl(), FnBodyScope);
 
   // Introduce all of the other parameters into this scope.
-  for (unsigned i = 0, e = MDecl->getNumParams(); i != e; ++i) {
-    ParmVarDecl *PDecl = MDecl->getParamDecl(i);
-    if (PDecl->getIdentifier())
-      PushOnScopeChains(PDecl, FnBodyScope);
-  }
+  for (ObjCMethodDecl::param_iterator PI = MDecl->param_begin(),
+       E = MDecl->param_end(); PI != E; ++PI)
+    if ((*PI)->getIdentifier())
+      PushOnScopeChains(*PI, FnBodyScope);
 }
 
 Sema::DeclTy *Sema::
@@ -992,9 +991,15 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *Method,
     if (Context.getTypeInfo(T1) != Context.getTypeInfo(T2))
       return false;
   }
-  for (unsigned i = 0, e = Method->getNumParams(); i != e; ++i) {
-    T1 = Context.getCanonicalType(Method->getParamDecl(i)->getType());
-    T2 = Context.getCanonicalType(PrevMethod->getParamDecl(i)->getType());
+  
+  ObjCMethodDecl::param_iterator ParamI = Method->param_begin(),
+       E = Method->param_end();
+  ObjCMethodDecl::param_iterator PrevI = PrevMethod->param_begin();
+  
+  for (; ParamI != E; ++ParamI, ++PrevI) {
+    assert(PrevI != PrevMethod->param_end() && "Param mismatch");
+    T1 = Context.getCanonicalType((*ParamI)->getType());
+    T2 = Context.getCanonicalType((*PrevI)->getType());
     if (T1 != T2) {
       // The result types are different.
       if (!matchBasedOnSizeAndAlignment)
@@ -1103,8 +1108,8 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     if (Context.getCanonicalType(SetterMethod->getResultType()) 
         != Context.VoidTy)
       Diag(SetterMethod->getLocation(), diag::err_setter_type_void);
-    if (SetterMethod->getNumParams() != 1 ||
-        (SetterMethod->getParamDecl(0)->getType() != property->getType())) {
+    if (SetterMethod->param_size() != 1 ||
+        ((*SetterMethod->param_begin())->getType() != property->getType())) {
       Diag(property->getLocation(), 
            diag::err_accessor_property_type_mismatch) 
         << property->getDeclName()

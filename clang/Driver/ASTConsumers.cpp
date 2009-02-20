@@ -300,17 +300,17 @@ void DeclPrinter::PrintObjCMethodDecl(ObjCMethodDecl *OMD) {
   
   std::string name = OMD->getSelector().getAsString();
   std::string::size_type pos, lastPos = 0;
-  for (unsigned i = 0, e = OMD->getNumParams(); i != e; ++i) {
-    ParmVarDecl *PDecl = OMD->getParamDecl(i);
+  for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
+       E = OMD->param_end(); PI != E; ++PI) {
     // FIXME: selector is missing here!    
     pos = name.find_first_of(":", lastPos);
     Out << " " << name.substr(lastPos, pos - lastPos);
-    Out << ":(" << PDecl->getType().getAsString() << ")"
-        << PDecl->getNameAsString(); 
+    Out << ":(" << (*PI)->getType().getAsString() << ")"
+        << (*PI)->getNameAsString(); 
     lastPos = pos + 1;
   }
     
-  if (OMD->getNumParams() == 0)
+  if (OMD->param_begin() == OMD->param_end())
     Out << " " << name;
     
   if (OMD->isVariadic())

@@ -115,10 +115,9 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
   Args.push_back(std::make_pair(OMD->getCmdDecl(),
                                 OMD->getCmdDecl()->getType()));
 
-  for (unsigned i = 0, e = OMD->getNumParams(); i != e; ++i) {
-    ParmVarDecl *IPD = OMD->getParamDecl(i);
-    Args.push_back(std::make_pair(IPD, IPD->getType()));
-  }
+  for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
+       E = OMD->param_end(); PI != E; ++PI)
+    Args.push_back(std::make_pair(*PI, (*PI)->getType()));
 
   StartFunction(OMD, OMD->getResultType(), Fn, Args, OMD->getLocEnd());
 }
@@ -254,7 +253,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     llvm::Value *SelfAsId = 
       Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
     llvm::Value *Offset = EmitIvarOffset(IMP->getClassInterface(), Ivar);
-    llvm::Value *Arg = LocalDeclMap[OMD->getParamDecl(0)];
+    llvm::Value *Arg = LocalDeclMap[*OMD->param_begin()];
     llvm::Value *ArgAsId = 
       Builder.CreateBitCast(Builder.CreateLoad(Arg, "arg"),
                             Types.ConvertType(IdTy));
@@ -280,7 +279,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     ValueDecl *Self = OMD->getSelfDecl();
     ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
     DeclRefExpr Base(Self, Self->getType(), Loc);
-    ParmVarDecl *ArgDecl = OMD->getParamDecl(0);
+    ParmVarDecl *ArgDecl = *OMD->param_begin();
     DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), Loc);
     ObjCInterfaceDecl *OI = IMP->getClassInterface();
     ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,

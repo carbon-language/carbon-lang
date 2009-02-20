@@ -67,21 +67,16 @@ static bool hasFunctionProto(Decl *d) {
 /// arguments. It is an error to call this on a K&R function (use
 /// hasFunctionProto first).
 static unsigned getFunctionOrMethodNumArgs(Decl *d) {
-  if (const FunctionType *FnTy = getFunctionType(d)) {
-    const FunctionTypeProto *proto = cast<FunctionTypeProto>(FnTy);
-    return proto->getNumArgs();
-  } else {
-    return cast<ObjCMethodDecl>(d)->getNumParams();
-  }
+  if (const FunctionType *FnTy = getFunctionType(d))
+    return cast<FunctionTypeProto>(FnTy)->getNumArgs();
+  return cast<ObjCMethodDecl>(d)->param_size();
 }
 
 static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
-  if (const FunctionType *FnTy = getFunctionType(d)) {
-    const FunctionTypeProto *proto = cast<FunctionTypeProto>(FnTy);
-    return proto->getArgType(Idx);
-  } else {
-    return cast<ObjCMethodDecl>(d)->getParamDecl(Idx)->getType();
-  }
+  if (const FunctionType *FnTy = getFunctionType(d))
+    return cast<FunctionTypeProto>(FnTy)->getArgType(Idx);
+  
+  return cast<ObjCMethodDecl>(d)->param_begin()[Idx]->getType();
 }
 
 static bool isFunctionOrMethodVariadic(Decl *d) {

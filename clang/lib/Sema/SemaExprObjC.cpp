@@ -154,7 +154,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     Expr *argExpr = Args[i];
     assert(argExpr && "CheckMessageArgumentTypes(): missing expression");
     
-    QualType lhsType = Method->getParamDecl(i)->getType();
+    QualType lhsType = Method->param_begin()[i]->getType();
     QualType rhsType = argExpr->getType();
 
     // If necessary, apply function/array conversion. C99 6.7.5.3p[7,8]. 

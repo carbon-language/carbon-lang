@@ -198,11 +198,7 @@ public:
   typedef ObjCList<ParmVarDecl>::iterator param_iterator;
   param_iterator param_begin() const { return ParamInfo.begin(); }
   param_iterator param_end() const { return ParamInfo.end(); }
-  
-  unsigned getNumParams() const { return ParamInfo.size(); }
-  ParmVarDecl *getParamDecl(unsigned i) const {
-    return ParamInfo[i];
-  }  
+
   void setMethodParams(ParmVarDecl *const *NewParamInfo, unsigned NumParams) {
     ParamInfo.set(NewParamInfo, NumParams);
   }
@@ -814,10 +810,6 @@ public:
   ObjCPropertyImplDecl *FindPropertyImplDecl(IdentifierInfo *propertyId) const;
   ObjCPropertyImplDecl *FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const;
   
-  unsigned getNumPropertyImplementations() const
-  { return PropertyImplementations.size(); }
-  
-  
   typedef llvm::SmallVector<ObjCPropertyImplDecl*, 8>::const_iterator
     propimpl_iterator;
   propimpl_iterator propimpl_begin() const { 
@@ -959,12 +951,6 @@ public:
   
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
   
-  unsigned getNumInstanceMethods() const { return InstanceMethods.size(); }
-  unsigned getNumClassMethods() const { return ClassMethods.size(); }
-  
-  unsigned getNumPropertyImplementations() const 
-    { return PropertyImplementations.size(); }
-
   typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
        instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods.begin(); }

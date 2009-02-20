@@ -930,8 +930,9 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   ResultStr += " _cmd";
   
   // Method arguments.
-  for (unsigned i = 0; i < OMD->getNumParams(); i++) {
-    ParmVarDecl *PDecl = OMD->getParamDecl(i);
+  for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
+       E = OMD->param_end(); PI != E; ++PI) {
+    ParmVarDecl *PDecl = *PI;
     ResultStr += ", ";
     if (PDecl->getType()->isObjCQualifiedIdType()) {
       ResultStr += "id ";
@@ -2253,8 +2254,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl;
   // May need to use objc_msgSend_stret() as well.
   FunctionDecl *MsgSendStretFlavor = 0;
-  if (ObjCMethodDecl *mDecl = Exp->getMethodDecl()) {
-    QualType resultType = mDecl->getResultType();
+  if (ObjCMethodDecl *OMD = Exp->getMethodDecl()) {
+    QualType resultType = OMD->getResultType();
     if (resultType->isStructureType() || resultType->isUnionType())
       MsgSendStretFlavor = MsgSendStretFunctionDecl;
     else if (resultType->isRealFloatingType())
@@ -2473,12 +2474,13 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   else
     ArgTypes.push_back(Context->getObjCIdType());
   ArgTypes.push_back(Context->getObjCSelType());
-  if (ObjCMethodDecl *mDecl = Exp->getMethodDecl()) {
+  if (ObjCMethodDecl *OMD = Exp->getMethodDecl()) {
     // Push any user argument types.
-    for (unsigned i = 0; i < mDecl->getNumParams(); i++) {
-      QualType t = mDecl->getParamDecl(i)->getType()->isObjCQualifiedIdType()
+    for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
+         E = OMD->param_end(); PI != E; ++PI) {
+      QualType t = (*PI)->getType()->isObjCQualifiedIdType()
                      ? Context->getObjCIdType() 
-                     : mDecl->getParamDecl(i)->getType();
+                     : (*PI)->getType();
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       if (isTopLevelBlockPointerType(t)) {
         const BlockPointerType *BPT = t->getAsBlockPointerType();
@@ -2486,8 +2488,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       }
       ArgTypes.push_back(t);
     }
-    returnType = mDecl->getResultType()->isObjCQualifiedIdType()
-                   ? Context->getObjCIdType() : mDecl->getResultType();
+    returnType = OMD->getResultType()->isObjCQualifiedIdType()
+                   ? Context->getObjCIdType() : OMD->getResultType();
   } else {
     returnType = Context->getObjCIdType();
   }
@@ -3298,7 +3300,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   // Set 'ivars' field for root class to 0. ObjC1 runtime does not use it.
   // 'info' field is initialized to CLS_META(2) for metaclass
   Result += ", 0,2, sizeof(struct _objc_class), 0";
-  if (IDecl->getNumClassMethods() > 0) {
+  if (IDecl->classmeth_begin() != IDecl->classmeth_end()) {
     Result += "\n\t, (struct _objc_method_list *)&_OBJC_CLASS_METHODS_";
     Result += IDecl->getNameAsString();
     Result += "\n"; 
@@ -3351,7 +3353,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   }
   else
     Result += ",0";
-  if (IDecl->getNumInstanceMethods() > 0) {
+  if (IDecl->instmeth_begin() != IDecl->instmeth_end()) {
     Result += ", (struct _objc_method_list *)&_OBJC_INSTANCE_METHODS_";
     Result += CDecl->getNameAsString();
     Result += ", 0\n\t"; 
