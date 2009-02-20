@@ -794,15 +794,24 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   // expressions, and it can't deal with aggregates; we deal with those here,
   // and fall back to isEvaluatable for the other cases.
 
+  // FIXME: This function assumes the variable being assigned to
+  // isn't a reference type!
+
   switch (getStmtClass()) {
   default: break;
   case StringLiteralClass:
     return true;
   case CompoundLiteralExprClass: {
+    // This handles gcc's extension that allows global initializers like
+    // "struct x {int x;} x = (struct x) {};".
+    // FIXME: This accepts other cases it shouldn't!
     const Expr *Exp = cast<CompoundLiteralExpr>(this)->getInitializer();
     return Exp->isConstantInitializer(Ctx);
   }
   case InitListExprClass: {
+    // FIXME: This doesn't deal with fields with reference types correctly.
+    // FIXME: This incorrectly allows pointers cast to integers to be assigned
+    // to bitfields.
     const InitListExpr *Exp = cast<InitListExpr>(this);
     unsigned numInits = Exp->getNumInits();
     for (unsigned i = 0; i < numInits; i++) {
@@ -829,9 +838,6 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
     if (getType()->isRecordType())
       return cast<CastExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
     break;
-  case DesignatedInitExprClass:
-    return cast<DesignatedInitExpr>(this)->
-            getInit()->isConstantInitializer(Ctx);
   }
 
   return isEvaluatable(Ctx);
