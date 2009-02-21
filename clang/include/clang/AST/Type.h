@@ -69,6 +69,7 @@ namespace clang {
   class BuiltinType;
   class ObjCInterfaceType;
   class ObjCQualifiedIdType;
+  class ObjCQualifiedClassType;
   class ObjCQualifiedInterfaceType;
   class StmtIteratorBase;
   class ClassTemplateSpecializationType;
@@ -384,6 +385,7 @@ public:
   bool isObjCInterfaceType() const;             // NSString or NSString<foo>
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
+  bool isObjCQualifiedClassType() const;        // Class<foo>
   bool isTemplateTypeParmType() const;          // C++ template type parameter
 
   /// isDependentType - Whether this type is a dependent type, meaning
@@ -417,6 +419,7 @@ public:
   const ObjCInterfaceType *getAsObjCInterfaceType() const;
   const ObjCQualifiedInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const ObjCQualifiedIdType *getAsObjCQualifiedIdType() const;
+  const ObjCQualifiedClassType *getAsObjCQualifiedClassType() const;
   const TemplateTypeParmType *getAsTemplateTypeParmType() const;
 
   const ClassTemplateSpecializationType *
@@ -1744,6 +1747,49 @@ public:
     
 };
   
+/// ObjCQualifiedClassType - to represent Class<protocol-list>.
+///
+/// Duplicate protocols are removed and protocol list is canonicalized to be in
+/// alphabetical order.
+class ObjCQualifiedClassType : public Type,
+                               public llvm::FoldingSetNode {
+  // List of protocols for this protocol conforming 'id' type
+  // List is sorted on protocol name. No protocol is enterred more than once.
+  llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
+    
+  ObjCQualifiedClassType(ObjCProtocolDecl **Protos, unsigned NumP)
+    : Type(ObjCQualifiedId, QualType()/*these are always canonical*/,
+           /*Dependent=*/false), 
+  Protocols(Protos, Protos+NumP) { }
+  friend class ASTContext;  // ASTContext creates these.
+public:
+    
+  ObjCProtocolDecl *getProtocols(unsigned i) const {
+    return Protocols[i];
+  }
+  unsigned getNumProtocols() const {
+    return Protocols.size();
+  }
+  ObjCProtocolDecl **getReferencedProtocols() {
+    return &Protocols[0];
+  }
+                              
+  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
+  qual_iterator qual_begin() const { return Protocols.begin(); }
+  qual_iterator qual_end() const   { return Protocols.end(); }
+    
+  virtual void getAsStringInternal(std::string &InnerString) const;
+    
+  void Profile(llvm::FoldingSetNodeID &ID);
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
+    
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == ObjCQualifiedId; 
+  }
+  static bool classof(const ObjCQualifiedClassType *) { return true; }
+    
+};
 
 // Inline function definitions.
 
@@ -1898,6 +1944,9 @@ inline bool Type::isObjCQualifiedInterfaceType() const {
 }
 inline bool Type::isObjCQualifiedIdType() const {
   return isa<ObjCQualifiedIdType>(CanonicalType.getUnqualifiedType());
+}
+inline bool Type::isObjCQualifiedClassType() const {
+  return isa<ObjCQualifiedClassType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isTemplateTypeParmType() const {
   return isa<TemplateTypeParmType>(CanonicalType.getUnqualifiedType());

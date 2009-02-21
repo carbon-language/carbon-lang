@@ -73,6 +73,7 @@ class ASTContext {
     ClassTemplateSpecializationTypes;
   llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
   llvm::FoldingSet<ObjCQualifiedIdType> ObjCQualifiedIdTypes;
+  llvm::FoldingSet<ObjCQualifiedClassType> ObjCQualifiedClassTypes;
   /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
   ///  This is lazily created.  This is intentionally not serialized.
   llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
@@ -291,6 +292,10 @@ public:
   QualType getObjCQualifiedIdType(ObjCProtocolDecl **ProtocolList, 
                                   unsigned NumProtocols);
                                   
+  /// getObjCQualifiedClassType - Return an ObjCQualifiedClassType for a 
+  /// given 'Class' and conforming protocol list.
+  QualType getObjCQualifiedClassType(ObjCProtocolDecl **ProtocolList, 
+                                     unsigned NumProtocols);
 
   /// getTypeOfType - GCC extension.
   QualType getTypeOfExpr(Expr *e);
