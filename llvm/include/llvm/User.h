@@ -50,12 +50,11 @@ class User : public Value {
   template <unsigned>
   friend struct HungoffOperandTraits;
 protected:
-  /// OperandList - This is a pointer to the array of Users for this operand.
+  /// OperandList - This is a pointer to the array of Uses for this User.
   /// For nodes of fixed arity (e.g. a binary operator) this array will live
-  /// prefixed to the derived class.  For nodes of resizable variable arity
-  /// (e.g. PHINodes, SwitchInst etc.), this memory will be dynamically
-  /// allocated and should be destroyed by the classes' 
-  /// virtual dtor.
+  /// prefixed to some derived class instance.  For nodes of resizable variable
+  /// arity (e.g. PHINodes, SwitchInst etc.), this memory will be dynamically
+  /// allocated and should be destroyed by the classes' virtual dtor.
   Use *OperandList;
 
   /// NumOperands - The number of values used by this User.
