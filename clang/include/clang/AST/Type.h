@@ -1774,6 +1774,8 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
       return AT->getElementType().getObjCGCAttr();
   if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CT))
     return EXTQT->getObjCGCAttr();
+  if (const PointerType *PT = CT->getAsPointerType())
+    return PT->getPointeeType().getObjCGCAttr(); 
   return GCNone;
 }
   
