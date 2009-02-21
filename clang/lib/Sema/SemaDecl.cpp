@@ -1412,6 +1412,44 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   return New;
 }
 
+/// TryToFixInvalidVariablyModifiedType - Helper method to turn variable array
+/// types into constant array types in certain situations which would otherwise
+/// be errors (for GCC compatibility).
+static QualType TryToFixInvalidVariablyModifiedType(QualType T,
+                                                    ASTContext &Context,
+                                                    bool &SizeIsNegative) {
+  // This method tries to turn a variable array into a constant
+  // array even when the size isn't an ICE.  This is necessary
+  // for compatibility with code that depends on gcc's buggy
+  // constant expression folding, like struct {char x[(int)(char*)2];}
+  SizeIsNegative = false;
+
+  if (const PointerType* PTy = dyn_cast<PointerType>(T)) {
+    QualType Pointee = PTy->getPointeeType();
+    QualType FixedType =
+        TryToFixInvalidVariablyModifiedType(Pointee, Context, SizeIsNegative);
+    if (FixedType.isNull()) return FixedType;
+    return Context.getPointerType(FixedType);
+  }
+
+  const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T);
+  if (!VLATy) return QualType();
+  
+  Expr::EvalResult EvalResult;
+  if (!VLATy->getSizeExpr() ||
+      !VLATy->getSizeExpr()->Evaluate(EvalResult, Context))
+    return QualType();
+    
+  assert(EvalResult.Val.isInt() && "Size expressions must be integers!");
+  llvm::APSInt &Res = EvalResult.Val.getInt();
+  if (Res >= llvm::APSInt(Res.getBitWidth(), Res.isUnsigned()))
+    return Context.getConstantArrayType(VLATy->getElementType(),
+                                        Res, ArrayType::Normal, 0);
+
+  SizeIsNegative = true;
+  return QualType();
+}
+
 NamedDecl*
 Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                              QualType R, Decl* LastDeclarator,
@@ -1444,15 +1482,25 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   if (S->getFnParent() == 0) {
+    QualType T = NewTD->getUnderlyingType();
     // C99 6.7.7p2: If a typedef name specifies a variably modified type
     // then it shall have block scope.
-    if (NewTD->getUnderlyingType()->isVariablyModifiedType()) {
-      if (NewTD->getUnderlyingType()->isVariableArrayType())
-        Diag(D.getIdentifierLoc(), diag::err_vla_decl_in_file_scope);
-      else
-        Diag(D.getIdentifierLoc(), diag::err_vm_decl_in_file_scope);
-
-      InvalidDecl = true;
+    if (T->isVariablyModifiedType()) {
+      bool SizeIsNegative;
+      QualType FixedTy =
+          TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative);
+      if (!FixedTy.isNull()) {
+        Diag(D.getIdentifierLoc(), diag::warn_illegal_constant_array_size);
+        NewTD->setUnderlyingType(FixedTy);
+      } else {
+        if (SizeIsNegative)
+          Diag(D.getIdentifierLoc(), diag::err_typecheck_negative_array_size);
+        else if (T->isVariableArrayType())
+          Diag(D.getIdentifierLoc(), diag::err_vla_decl_in_file_scope);
+        else
+          Diag(D.getIdentifierLoc(), diag::err_vm_decl_in_file_scope);
+        InvalidDecl = true;
+      }
     }
   }
   return NewTD;
@@ -3449,9 +3497,20 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
   if (T->isVariablyModifiedType()) {
-    Diag(Loc, diag::err_typecheck_field_variable_size);
-    T = Context.IntTy;
-    InvalidDecl = true;
+    bool SizeIsNegative;
+    QualType FixedTy = TryToFixInvalidVariablyModifiedType(T, Context,
+                                                           SizeIsNegative);
+    if (!FixedTy.isNull()) {
+      Diag(Loc, diag::warn_illegal_constant_array_size);
+      T = FixedTy;
+    } else {
+      if (SizeIsNegative)
+        Diag(Loc, diag::err_typecheck_negative_array_size);
+      else
+        Diag(Loc, diag::err_typecheck_field_variable_size);
+      T = Context.IntTy;
+      InvalidDecl = true;
+    }
   }
   
   if (BitWidth) {

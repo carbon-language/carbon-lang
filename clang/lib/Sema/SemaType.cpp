@@ -423,26 +423,17 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         ArraySize->Destroy(Context);
         ATI.NumElts = ArraySize = 0;
       }
-      Expr::EvalResult Result;
+      llvm::APSInt ConstVal(32);
       if (!ArraySize) {
         T = Context.getIncompleteArrayType(T, ASM, ATI.TypeQuals);
       } else if (ArraySize->isValueDependent()) {
         T = Context.getDependentSizedArrayType(T, ArraySize, ASM, ATI.TypeQuals);
-      } else if (!ArraySize->Evaluate(Result, Context) || 
+      } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
                  !T->isConstantSizeType()) {
         // Per C99, a variable array is an array with either a non-constant
         // size or an element type that has a non-constant-size
         T = Context.getVariableArrayType(T, ArraySize, ASM, ATI.TypeQuals);
       } else {
-        const llvm::APSInt& ConstVal = Result.Val.getInt();
-        
-        // FIXME: We should really use Result.Diag here - which is supposed
-        // to be nonzero if we have a foldable expression that is not an ICE
-        // but for now we'll just warn if the array size is not an ICE.
-        if (!ArraySize->isIntegerConstantExpr(Context))
-          Diag(ArraySize->getLocStart(), 
-               diag::warn_illegal_constant_array_size);
-
         // C99 6.7.5.2p1: If the expression is a constant expression, it shall
         // have a value greater than zero.
         if (ConstVal.isSigned()) {
@@ -453,8 +444,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
             D.setInvalidType(true);
           } else if (ConstVal == 0) {
             // GCC accepts zero sized static arrays.
-            Diag(ArraySize->getLocStart(),
-                 diag::ext_typecheck_zero_array_size)
+            Diag(ArraySize->getLocStart(), diag::ext_typecheck_zero_array_size)
               << ArraySize->getSourceRange();
           }
         } 
