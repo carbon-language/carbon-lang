@@ -10180,6 +10180,9 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
   
   SmallVector<Value*, 16> FixedOperands(FirstInst->op_begin(), 
                                         FirstInst->op_end());
+  // This is true if all GEP bases are allocas and if all indices into them are
+  // constants.
+  bool AllBasePointersAreAllocas = true;
   
   // Scan to see if all operands are the same opcode, all have one use, and all
   // kill their operands (i.e. the operands have one use).
@@ -10189,6 +10192,12 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
       GEP->getNumOperands() != FirstInst->getNumOperands())
       return 0;
 
+    // Keep track of whether or not all GEPs are of alloca pointers.
+    if (AllBasePointersAreAllocas &&
+        (!isa<AllocaInst>(GEP->getOperand(0)) ||
+         !GEP->hasAllConstantIndices()))
+      AllBasePointersAreAllocas = false;
+    
     // Compare the operand lists.
     for (unsigned op = 0, e = FirstInst->getNumOperands(); op != e; ++op) {
       if (FirstInst->getOperand(op) == GEP->getOperand(op))
@@ -10208,6 +10217,15 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
       FixedOperands[op] = 0;  // Needs a PHI.
     }
   }
+  
+  // If all of the base pointers of the PHI'd GEPs are from allocas, don't
+  // bother doing this transformation.  At best, this will just safe a bit of
+  // offset calculation, but all the predecessors will have to materialize the
+  // stack address into a register anyway.  We'd actually rather *clone* the
+  // load up into the predecessors so that we have a load of a gep of an alloca,
+  // which can usually all be folded into the load.
+  if (AllBasePointersAreAllocas)
+    return 0;
   
   // Otherwise, this is safe to transform.  Insert PHI nodes for each operand
   // that is variable.
@@ -10247,15 +10265,15 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
 }
 
 
-/// isSafeToSinkLoad - Return true if we know that it is safe sink the load out
-/// of the block that defines it.  This means that it must be obvious the value
-/// of the load is not changed from the point of the load to the end of the
-/// block it is in.
+/// isSafeAndProfitableToSinkLoad - Return true if we know that it is safe sink
+/// the load out of the block that defines it.  This means that it must be
+/// obvious the value of the load is not changed from the point of the load to
+/// the end of the block it is in.
 ///
 /// Finally, it is safe, but not profitable, to sink a load targetting a
 /// non-address-taken alloca.  Doing so will cause us to not promote the alloca
 /// to a register.
-static bool isSafeToSinkLoad(LoadInst *L) {
+static bool isSafeAndProfitableToSinkLoad(LoadInst *L) {
   BasicBlock::iterator BBI = L, E = L->getParent()->end();
   
   for (++BBI; BBI != E; ++BBI)
@@ -10277,9 +10295,19 @@ static bool isSafeToSinkLoad(LoadInst *L) {
       break;
     }
     
-    if (!isAddressTaken)
+    if (!isAddressTaken && AI->isStaticAlloca())
       return false;
   }
+  
+  // If this load is a load from a GEP with a constant offset from an alloca,
+  // then we don't want to sink it.  In its present form, it will be
+  // load [constant stack offset].  Sinking it will cause us to have to
+  // materialize the stack addresses in each predecessor in a register only to
+  // do a shared load from register in the successor.
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(L->getOperand(0)))
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(GEP->getOperand(0)))
+      if (AI->isStaticAlloca() && GEP->hasAllConstantIndices())
+        return false;
   
   return true;
 }
@@ -10311,7 +10339,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     // We can't sink the load if the loaded value could be modified between the
     // load and the PHI.
     if (LI->getParent() != PN.getIncomingBlock(0) ||
-        !isSafeToSinkLoad(LI))
+        !isSafeAndProfitableToSinkLoad(LI))
       return 0;
     
     // If the PHI is of volatile loads and the load block has multiple
@@ -10341,7 +10369,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
       // the load and the PHI.
       if (LI->isVolatile() != isVolatile ||
           LI->getParent() != PN.getIncomingBlock(i) ||
-          !isSafeToSinkLoad(LI))
+          !isSafeAndProfitableToSinkLoad(LI))
         return 0;
       
       // If the PHI is of volatile loads and the load block has multiple
@@ -10350,7 +10378,6 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
       if (isVolatile &&
           LI->getParent()->getTerminator()->getNumSuccessors() != 1)
         return 0;
-
       
     } else if (I->getOperand(1) != ConstantOp) {
       return 0;
