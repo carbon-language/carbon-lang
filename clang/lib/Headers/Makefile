@@ -10,7 +10,8 @@
 LEVEL = ../../../..
 include $(LEVEL)/Makefile.common
 
-HeaderDir := $(PROJ_OBJ_ROOT)/$(BuildMode)/Headers
+# FIXME: Get version from a common place.
+HeaderDir := $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/clang/1.0/include
 
 HEADERS := $(notdir $(wildcard $(PROJ_SRC_DIR)/*.h))
 
@@ -19,16 +20,12 @@ OBJHEADERS := $(addprefix $(HeaderDir)/, $(HEADERS))
 
 $(OBJHEADERS): $(HeaderDir)/%.h: $(PROJ_SRC_DIR)/%.h $(HeaderDir)/.dir
 	$(Verb) cp $< $@
-	@echo Copying $(notdir $<) to build dir
-        
-printit:
-	echo $(OBJHEADERS)
-	echo  $(PROJ_SRC_DIR)
- 
+	$(Echo) Copying $(notdir $<) to build dir
+
 # Hook into the standard Makefile rules.
 all-local:: $(OBJHEADERS)
 
-PROJ_headers := $(DESTDIR)$(PROJ_prefix)/Headers
+PROJ_headers := $(DESTDIR)$(PROJ_prefix)/lib/clang/1.0/include
 
 INSTHEADERS := $(addprefix $(PROJ_headers)/, $(HEADERS))
 
@@ -37,6 +34,7 @@ $(PROJ_headers):
 
 $(INSTHEADERS): $(PROJ_headers)/%.h: $(HeaderDir)/%.h | $(PROJ_headers)
 	$(Verb) $(DataInstall) $< $(PROJ_headers)
+	$(Echo) Installing compiler include file: $(notdir $<)
 
 install-local:: $(INSTHEADERS)
 

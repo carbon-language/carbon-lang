@@ -1090,14 +1090,21 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
   Init.AddDefaultEnvVarPaths(Lang);
 
-  // Add the clang headers, which are relative to the clang driver.
+  // Add the clang headers, which are relative to the clang binary.
   llvm::sys::Path MainExecutablePath = 
      llvm::sys::Path::GetMainExecutable(Argv0,
                                     (void*)(intptr_t)InitializeIncludePaths);
   if (!MainExecutablePath.isEmpty()) {
     MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
     MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
-    MainExecutablePath.appendComponent("Headers"); // Get foo/Headers
+
+    // Get foo/lib/clang/1.0/include    
+    // 
+    // FIXME: Don't embed version here.
+    MainExecutablePath.appendComponent("lib");
+    MainExecutablePath.appendComponent("clang");
+    MainExecutablePath.appendComponent("1.0");
+    MainExecutablePath.appendComponent("include");
     
     // We pass true to ignore sysroot so that we *always* look for clang headers
     // relative to our executable, never relative to -isysroot.
