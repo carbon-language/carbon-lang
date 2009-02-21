@@ -871,12 +871,6 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << name << ", " << Size << '\n';
 
-  // If the initializer is a extern weak symbol, remember to emit the weak
-  // reference!
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
-
   EmitGlobalConstant(C);
 }
 
@@ -907,6 +901,25 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
     if (I->hasDLLExportLinkage())
       DLLExportedGVs.insert(Mang->makeNameProper(I->getName(),""));
+
+    // If the global is a extern weak symbol, remember to emit the weak
+    // reference!
+    // FIXME: This is rather hacky, since we'll emit references to ALL weak stuff,
+    // not used. But currently it's the only way to deal with extern weak
+    // initializers hidden deep inside constant expressions.
+    if (I->hasExternalWeakLinkage())
+      ExtWeakSymbols.insert(I);
+  }
+
+  for (Module::const_iterator I = M.begin(), E = M.end();
+       I != E; ++I) {
+    // If the global is a extern weak symbol, remember to emit the weak
+    // reference!
+    // FIXME: This is rather hacky, since we'll emit references to ALL weak stuff,
+    // not used. But currently it's the only way to deal with extern weak
+    // initializers hidden deep inside constant expressions.
+    if (I->hasExternalWeakLinkage())
+      ExtWeakSymbols.insert(I);
   }
 
   // Output linker support code for dllexported globals

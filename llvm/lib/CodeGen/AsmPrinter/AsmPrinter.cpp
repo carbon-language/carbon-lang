@@ -205,16 +205,6 @@ bool AsmPrinter::doFinalization(Module &M) {
       printVisibility(Name, I->getVisibility());
 
       O << TAI->getSetDirective() << ' ' << Name << ", " << Target << '\n';
-
-      // If the aliasee has external weak linkage it can be referenced only by
-      // alias itself. In this case it can be not in ExtWeakSymbols list. Emit
-      // weak reference in such case.
-      if (GV->hasExternalWeakLinkage()) {
-        if (TAI->getWeakRefDirective())
-          O << TAI->getWeakRefDirective() << Target << '\n';
-        else
-          O << "\t.globl\t" << Target << '\n';
-      }
     }
   }
 
