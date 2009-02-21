@@ -264,7 +264,8 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
         } else
           GV->setLinkage(llvm::Function::DLLImportLinkage);
       }
-    }
+    } else if (D->getAttr<WeakAttr>())
+      GV->setLinkage(llvm::Function::ExternalWeakLinkage);
   } else {
     if (IsInternal) {
       GV->setLinkage(llvm::Function::InternalLinkage);
@@ -287,11 +288,10 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
     setGlobalVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
 
-  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
-    // Prefaced with special LLVM marker to indicate that the name
-    // should not be munged.
+  // Prefaced with special LLVM marker to indicate that the name
+  // should not be munged.
+  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>())
     GV->setName("\01" + ALA->getLabel());
-  }
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GV->setSection(SA->getName());
@@ -598,8 +598,13 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
 
     GV->setConstant(D->getType().isConstant(Context));
 
+    // FIXME: Merge with other attribute handling code.
+
     if (D->getStorageClass() == VarDecl::PrivateExtern)
       setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
+
+    if (D->getAttr<WeakAttr>())
+      GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
   }
   
   // Make sure the result is of the correct type.
