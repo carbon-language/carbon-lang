@@ -562,10 +562,6 @@
 /* Define if use udis86 library */
 #undef USE_UDIS86
 
-/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
-   `char[]'. */
-#undef YYTEXT_POINTER
-
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 
