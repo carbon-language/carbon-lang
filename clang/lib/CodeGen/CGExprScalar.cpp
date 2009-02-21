@@ -24,6 +24,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Target/TargetData.h"
 #include <cstdarg>
 
 using namespace clang;
@@ -218,6 +219,8 @@ public:
   }
 
   Value *VisitStmtExpr(const StmtExpr *E);
+
+  Value *VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
   
   // Unary Operators.
   Value *VisitPrePostIncDec(const UnaryOperator *E, bool isInc, bool isPre);
@@ -595,6 +598,48 @@ Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
                               !E->getType()->isVoidType()).getScalarVal();
 }
 
+Value *ScalarExprEmitter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+  if (E->isByRef()) {
+    // FIXME: Add codegen for __block variables.
+    return VisitExpr(E);
+  }
+
+  // FIXME: We have most of the easy codegen for the helper, but we need to
+  // ensure we don't need copy/dispose, and we need to add the variables into
+  // the block literal still.
+  CGF.ErrorUnsupported(E, "scalar expression");
+
+  uint64_t &offset = CGF.BlockDecls[E->getDecl()];
+
+  const llvm::Type *Ty;
+  Ty = CGF.CGM.getTypes().ConvertType(E->getDecl()->getType());
+
+  // See if we have already allocated an offset for this variable.
+  if (offset == 0) {
+    int Size = CGF.CGM.getTargetData().getTypeStoreSizeInBits(Ty) / 8;
+
+    unsigned Align = CGF.CGM.getContext().getTypeAlign(E->getDecl()->getType());
+    if (const AlignedAttr* AA = E->getDecl()->getAttr<AlignedAttr>())
+        Align = std::max(Align, AA->getAlignment());
+
+    // if not, allocate one now.
+    offset = CGF.getBlockOffset(Size, Align);
+  }
+
+  llvm::Value *BlockLiteral = CGF.LoadBlockStruct();
+  llvm::Value *V = Builder.CreateGEP(BlockLiteral,
+                                     llvm::ConstantInt::get(llvm::Type::Int64Ty,
+                                                            offset),
+                                     "tmp");
+  Ty = llvm::PointerType::get(Ty, 0);
+  if (E->isByRef())
+    Ty = llvm::PointerType::get(Ty, 0);
+  V = Builder.CreateBitCast(V, Ty);
+  V = Builder.CreateLoad(V, false, "tmp");
+  if (E->isByRef())
+    V = Builder.CreateLoad(V, false, "tmp");
+  return V;
+}
 
 //===----------------------------------------------------------------------===//
 //                             Unary Operators

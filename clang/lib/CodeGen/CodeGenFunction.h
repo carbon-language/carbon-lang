@@ -88,9 +88,6 @@ public:
   const llvm::Type *LLVMIntTy;
   uint32_t LLVMPointerWidth;
 
-  llvm::Constant *BuildBlockLiteralTmp(const BlockExpr *);
-  llvm::Constant *BuildDescriptorBlockDecl();
-
 public:
   /// ObjCEHValueStack - Stack of Objective-C exception values, used for
   /// rethrows.
@@ -250,6 +247,13 @@ public:
   void GenerateObjCSetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
 
+  //===--------------------------------------------------------------------===//
+  //                                  Block Bits
+  //===--------------------------------------------------------------------===//
+
+  llvm::Constant *BuildBlockLiteralTmp(const BlockExpr *);
+  llvm::Constant *BuildDescriptorBlockDecl(uint64_t Size);
+
   /// BlockInfo - Information to generate a block literal.
   struct BlockInfo {
     /// BlockLiteralTy - The type of the block literal.
@@ -263,7 +267,35 @@ public:
   };
 
   llvm::Function *GenerateBlockFunction(const BlockExpr *Expr,
-                                        const BlockInfo& Info);
+                                        const BlockInfo& Info,
+                                        uint64_t &Size);
+
+  ImplicitParamDecl *BlockStructDecl;
+
+  ImplicitParamDecl *getBlockStructDecl() { return BlockStructDecl; }
+
+  llvm::Value *LoadBlockStruct();
+
+  /// BlockHasCopyDispose - True iff the block uses copy/dispose.
+  bool BlockHasCopyDispose;
+
+  uint64_t BlockOffset;
+  /// getBlockOffset - Offset for next allocated variable use in a BlockExpr.
+  uint64_t getBlockOffset(uint64_t Size, uint64_t Align) {
+    assert (((Align >> 3) > 0) && "alignment must be 1 byte or more");
+    assert (((Align & 7) == 0)
+            && "alignment must be on at least byte boundaries");
+    // Ensure proper alignment, even if it means we have to have a gap
+    if (BlockOffset % (Align >> 3)) {
+      BlockOffset += (Align >> 3) - (BlockOffset % (Align >> 3));
+      assert ((BlockOffset % (Align >> 3)) == 0
+              && "alignment calculation is wrong");
+    }
+      
+    BlockOffset += Size;
+    return BlockOffset-Size;
+  }
+  std::map<Decl*, uint64_t> BlockDecls;
 
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);

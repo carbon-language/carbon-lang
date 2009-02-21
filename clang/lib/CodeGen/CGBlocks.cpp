@@ -30,10 +30,7 @@ enum {
   BLOCK_HAS_DESCRIPTOR =    (1 << 29)
 };
 
-llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl() {
-  // FIXME: Push up.
-  bool BlockHasCopyDispose = false;
-
+llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl(uint64_t Size) {
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   const llvm::Type *UnsignedLongTy
@@ -46,23 +43,18 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl() {
   Elts.push_back(C);
 
   // Size
-  int sz;
-  if (!BlockHasCopyDispose)
-    sz = CGM.getTargetData()
-      .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;
-  else
-    sz = CGM.getTargetData()
-      .getTypeStoreSizeInBits(CGM.getGenericExtendedBlockLiteralType()) / 8;
-  C = llvm::ConstantInt::get(UnsignedLongTy, sz);
+  C = llvm::ConstantInt::get(UnsignedLongTy, Size);
   Elts.push_back(C);
 
   if (BlockHasCopyDispose) {
     // copy_func_helper_decl
+    // FIXME: implement
     C = llvm::ConstantInt::get(UnsignedLongTy, 0);
     C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
     Elts.push_back(C);
 
     // destroy_func_decl
+    // FIXME: implement
     C = llvm::ConstantInt::get(UnsignedLongTy, 0);
     C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
     Elts.push_back(C);
@@ -115,8 +107,6 @@ llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
 // FIXME: Push most into CGM, passing down a few bits, like current
 // function name.
 llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
-  // FIXME: Push up
-  bool BlockHasCopyDispose = false;
   bool insideFunction = false;
   bool BlockRefDeclList = false;
   bool BlockByrefDeclList = false;
@@ -159,11 +149,13 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       if (ND->getIdentifier())
         Name = ND->getNameAsCString();
     BlockInfo Info(0, Name);
-    llvm::Function *Fn = CodeGenFunction(*this).GenerateBlockFunction(BE, Info);
+    uint64_t subBlockSize;
+    llvm::Function *Fn
+      = CodeGenFunction(*this).GenerateBlockFunction(BE, Info, subBlockSize);
     Elts.push_back(Fn);
 
     // __descriptor
-    Elts.push_back(BuildDescriptorBlockDecl());
+    Elts.push_back(BuildDescriptorBlockDecl(subBlockSize));
 
     // FIXME: Add block_original_ref_decl_list and block_byref_decl_list.
   }
@@ -198,8 +190,13 @@ const llvm::Type *CodeGenModule::getBlockDescriptorType() {
                                               UnsignedLongTy,
                                               NULL);
 
+  // FIXME: This breaks an unrelated testcase in the testsuite, we
+  // _want_ llvm to not use structural equality, sometimes.  What
+  // should we do, modify the testcase and do this anyway, or...
+#if 0
   getModule().addTypeName("struct.__block_descriptor",
                           BlockDescriptorType);
+#endif
 
   return BlockDescriptorType;
 }
@@ -232,6 +229,7 @@ CodeGenModule::getGenericBlockLiteralType() {
                                                   BlockDescPtrTy,
                                                   NULL);
 
+  // FIXME: See struct.__block_descriptor
   getModule().addTypeName("struct.__block_literal_generic",
                           GenericBlockLiteralType);
 
@@ -270,6 +268,7 @@ CodeGenModule::getGenericExtendedBlockLiteralType() {
                                                           Int8PtrTy,
                                                           NULL);
 
+  // FIXME: See struct.__block_descriptor
   getModule().addTypeName("struct.__block_literal_extended_generic",
                           GenericExtendedBlockLiteralType);
 
@@ -310,6 +309,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
 
   // Get the function pointer from the literal.
   llvm::Value *FuncPtr = Builder.CreateStructGEP(BlockLiteral, 3, "tmp");
+  // FIXME: second argument should be false?
   llvm::Value *Func = Builder.CreateLoad(FuncPtr, FuncPtr, "tmp");
 
   // Cast the function pointer to the right type.
@@ -370,7 +370,11 @@ CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   llvm::Constant *LiteralFields[5];
 
   CodeGenFunction::BlockInfo Info(0, n);
-  llvm::Function *Fn = CodeGenFunction(*this).GenerateBlockFunction(BE, Info);
+  uint64_t subBlockSize;
+  llvm::Function *Fn
+    = CodeGenFunction(*this).GenerateBlockFunction(BE, Info, subBlockSize);
+  assert(subBlockSize == BlockLiteralSize
+         && "no imports allowed for global block");
 
   // isa
   LiteralFields[0] = getNSConcreteGlobalBlock();
@@ -399,9 +403,13 @@ CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   return BlockLiteral;
 }
 
+llvm::Value *CodeGenFunction::LoadBlockStruct() {
+  return Builder.CreateLoad(LocalDeclMap[getBlockStructDecl()], "self");
+}
+
 llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
-                                                       const BlockInfo& Info)
-{
+                                                       const BlockInfo& Info,
+                                                       uint64_t &Size) {
   const FunctionTypeProto *FTy =
     cast<FunctionTypeProto>(Expr->getFunctionType());
 
@@ -416,6 +424,7 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
                               getContext().getPointerType(getContext().VoidTy));
 
   Args.push_back(std::make_pair(SelfDecl, SelfDecl->getType()));
+  BlockStructDecl = SelfDecl;
 
   for (BlockDecl::param_iterator i = BD->param_begin(),
        e = BD->param_end(); i != e; ++i)
@@ -437,6 +446,8 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
                 Expr->getBody()->getLocEnd());
   EmitStmt(Expr->getBody());
   FinishFunction(cast<CompoundStmt>(Expr->getBody())->getRBracLoc());
+
+  Size = BlockOffset;
 
   return Fn;
 }

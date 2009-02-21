@@ -19,14 +19,25 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm) 
   : CGM(cgm), Target(CGM.getContext().Target), DebugInfo(0), SwitchInsn(0), 
-  CaseRangeBlock(0) {
-    LLVMIntTy = ConvertType(getContext().IntTy);
-    LLVMPointerWidth = Target.getPointerWidth(0);
+    CaseRangeBlock(0) {
+  LLVMIntTy = ConvertType(getContext().IntTy);
+  LLVMPointerWidth = Target.getPointerWidth(0);
+
+  // FIXME: We need to rearrange the code for copy/dispose so we have this
+  // sooner, so we can calculate offsets correctly.
+  BlockHasCopyDispose = false;
+  if (!BlockHasCopyDispose)
+    BlockOffset = CGM.getTargetData()
+      .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;
+  else
+    BlockOffset = CGM.getTargetData()
+      .getTypeStoreSizeInBits(CGM.getGenericExtendedBlockLiteralType()) / 8;
 }
 
 ASTContext &CodeGenFunction::getContext() const {
