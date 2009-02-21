@@ -405,7 +405,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     assert(0 && "Unknown LValue type");
   }
   
-  if (Dst.isObjCWeak()) {
+  if (Dst.isObjCWeak() && !Dst.isNonGC()) {
     // load of a __weak object. 
     llvm::Value *LvalueDst = Dst.getAddress();
     llvm::Value *src = Src.getScalarVal();
@@ -413,7 +413,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     return;
   }
   
-  if (Dst.isObjCStrong()) {
+  if (Dst.isObjCStrong() && !Dst.isNonGC()) {
     // load of a __strong object. 
     llvm::Value *LvalueDst = Dst.getAddress();
     llvm::Value *src = Src.getScalarVal();
@@ -629,10 +629,11 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       // local variables do not get their gc attribute set.
       QualType::GCAttrTypes attr = QualType::GCNone;
       // local static?
-      if (VD->getStorageClass() == VarDecl::Static)
+      if (!VD->hasLocalStorage())
         attr = getContext().getObjCGCAttrKind(E->getType());
       LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(), attr);
     }
+    LValue::SetObjCNonGC(LV, VD->hasLocalStorage());
     return LV;
   } else if (VD && VD->isFileVarDecl()) {
     LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
@@ -834,6 +835,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   bool isUnion = false;
   bool isIvar = false;
+  bool isNonGC = false;
   Expr *BaseExpr = E->getBase();
   llvm::Value *BaseValue = NULL;
   unsigned CVRQualifiers=0;
@@ -857,6 +859,8 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     LValue BaseLV = EmitLValue(BaseExpr);
     if (BaseLV.isObjCIvar())
       isIvar = true;
+    if (BaseLV.isNonGC())
+      isNonGC = true;
     // FIXME: this isn't right for bitfields.
     BaseValue = BaseLV.getAddress();
     if (BaseExpr->getType()->isUnionType())
@@ -870,6 +874,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   LValue MemExpLV = EmitLValueForField(BaseValue, Field, isUnion,
                                        CVRQualifiers);
   LValue::SetObjCIvar(MemExpLV, isIvar);
+  LValue::SetObjCNonGC(MemExpLV, isNonGC);
   return MemExpLV;
 }
 

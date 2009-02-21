@@ -144,6 +144,10 @@ class LValue {
 
   // objective-c's ivar
   bool Ivar:1;
+  
+  // LValue is non-gc'able for any reason, including being a parameter or local
+  // variable.
+  bool NonGC: 1;
 
   // objective-c's gc attributes
   unsigned ObjCType : 2;  
@@ -156,7 +160,7 @@ private:
     // FIXME: Convenient place to set objc flags to 0. This
     // should really be done in a user-defined constructor instead.
     R.ObjCType = None;
-    R.Ivar = false;
+    R.Ivar = R.NonGC = false;
   }
   
 public:
@@ -175,18 +179,24 @@ public:
   }
   
   bool isObjCIvar() const { return Ivar; }
+  bool isNonGC () const { return NonGC; }
   bool isObjCWeak() const { return ObjCType == Weak; }
   bool isObjCStrong() const { return ObjCType == Strong; }
   
   static void SetObjCIvar(LValue& R, bool iValue) {
     R.Ivar = iValue;
   }
-    
+  
+  static void SetObjCNonGC(LValue& R, bool iValue) {
+    R.NonGC = iValue;
+  }
   static void SetObjCType(QualType::GCAttrTypes GCAttrs, LValue& R) {
     if (GCAttrs == QualType::Weak)
       R.ObjCType = Weak;
     else if (GCAttrs == QualType::Strong)
       R.ObjCType = Strong;
+    else
+     R.ObjCType = None;
   }
   
   // simple lvalue
