@@ -43,6 +43,9 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl(uint64_t Size) {
   Elts.push_back(C);
 
   // Size
+  // FIXME: What is the right way to say this doesn't fit?  We should give
+  // a user diagnostic in that case.  Better fix would be to change the
+  // API to size_t.
   C = llvm::ConstantInt::get(UnsignedLongTy, Size);
   Elts.push_back(C);
 
