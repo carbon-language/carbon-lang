@@ -22,3 +22,8 @@ void foo(id x) {
 // FIXME: provide a better diagnostic (no typedef).
 - (void)m2:(id <MyProtocol> short)arg1; // expected-error {{'short type-name' is invalid}}
 @end
+
+typedef int NotAnObjCObjectType;
+
+// GCC doesn't diagnose this.
+NotAnObjCObjectType <SomeProtocol> *obj; // expected-warning {{ignoring protocol qualifiers on non-ObjC type}}
