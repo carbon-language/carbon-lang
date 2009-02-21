@@ -490,6 +490,7 @@ public:
   }
 
   bool Success(const llvm::APSInt &SI, const Expr *E) {
+    assert(E->getType()->isIntegralType() && "Invalid evaluation result.");
     assert(SI.isSigned() == E->getType()->isSignedIntegerType() &&
            "Invalid evaluation result.");
     assert(SI.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
@@ -499,6 +500,7 @@ public:
   }
 
   bool Success(const llvm::APInt &I, const Expr *E) {
+    assert(E->getType()->isIntegralType() && "Invalid evaluation result.");
     assert(I.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
            "Invalid evaluation result.");
     Result = APValue(APSInt(I));
@@ -507,6 +509,7 @@ public:
   }
 
   bool Success(uint64_t Value, const Expr *E) {
+    assert(E->getType()->isIntegralType() && "Invalid evaluation result.");
     Result = APValue(Info.Ctx.MakeIntValue(Value, E->getType()));
     return true;
   }
@@ -1026,6 +1029,10 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
       return false;
     return Success(!bres, E);
   }
+
+  // Only handle integral operations...
+  if (!E->getSubExpr()->getType()->isIntegralType())
+    return false;
 
   // Get the operand value into 'Result'.
   if (!Visit(E->getSubExpr()))

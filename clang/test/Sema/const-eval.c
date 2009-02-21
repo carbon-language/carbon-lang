@@ -40,3 +40,5 @@ struct s {
 };
 
 EVAL_EXPR(19, ((int)&*(char*)10 == 10 ? 1 : -1));
+
+EVAL_EXPR(20, __builtin_constant_p(*((int*) 10), -1, 1));
