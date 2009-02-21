@@ -39,8 +39,6 @@ using namespace clang;
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
-using llvm::CStrInCStrNoCase;
-
 // The "fundamental rule" for naming conventions of methods:
 //  (url broken into two lines)
 //  http://developer.apple.com/documentation/Cocoa/Conceptual/
@@ -53,16 +51,103 @@ using llvm::CStrInCStrNoCase;
 //  or autorelease. Any other time you receive an object, you must
 //  not release it."
 //
+
+using llvm::CStrInCStrNoCase;
+
+enum NamingConvention { NoConvention, CreateRule, InitRule };
+
+static inline bool isWordEnd(char ch, char prev, char next) {
+  return ch == '\0'
+      || (islower(prev) && isupper(ch)) // xxxC
+      || (isupper(prev) && isupper(ch) && islower(next)) // XXCreate
+      || !isalpha(ch);
+}
+  
+static inline const char* parseWord(const char* s) {  
+  char ch = *s, prev = '\0';
+  assert(ch != '\0');
+  char next = *(s+1);
+  while (!isWordEnd(ch, prev, next)) {
+    prev = ch;
+    ch = next;
+    next = *((++s)+1);
+  }
+  return s;
+}
+
+static NamingConvention deriveNamingConvention(const char* s) {
+  // A method/function name may contain a prefix.  We don't know it is there,
+  // however, until we encounter the first '_'.
+  bool InPossiblePrefix = true;
+  bool AtBeginning = true;
+  NamingConvention C = NoConvention;
+  
+  while (*s != '\0') {
+    // Skip '_'.
+    if (*s == '_') {
+      if (InPossiblePrefix) {
+        InPossiblePrefix = false;
+        AtBeginning = true;
+        // Discard whatever 'convention' we
+        // had already derived since it occurs
+        // in the prefix.
+        C = NoConvention;
+      }
+      ++s;
+      continue;
+    }
+    
+    // Skip numbers, ':', etc.
+    if (!isalpha(*s)) {
+      ++s;
+      continue;
+    }
+    
+    const char *wordEnd = parseWord(s);
+    assert(wordEnd > s);
+    unsigned len = wordEnd - s;
+    
+    switch (len) {
+    default:
+      break;
+    case 3:
+      // Methods starting with 'new' follow the create rule.
+      if (AtBeginning && strncasecmp("new", s, len) == 0)
+        C = CreateRule;      
+      break;
+    case 4:
+      // Methods starting with 'alloc' or contain 'copy' follow the
+      // create rule
+      if ((AtBeginning && strncasecmp("alloc", s, len) == 0) ||
+          (strncasecmp("copy", s, len) == 0))
+        C = CreateRule;
+      else // Methods starting with 'init' follow the init rule.
+        if (AtBeginning && strncasecmp("init", s, len) == 0)
+        C = InitRule;      
+      break;
+    }
+    
+    // If we aren't in the prefix and have a derived convention then just
+    // return it now.
+    if (!InPossiblePrefix && C != NoConvention)
+      return C;
+
+    AtBeginning = false;
+    s = wordEnd;
+  }
+
+  // We will get here if there wasn't more than one word
+  // after the prefix.
+  return C;
+}
+
 static bool followsFundamentalRule(const char* s) {
-  while (*s == '_') ++s;  
-  return CStrInCStrNoCase(s, "copy")
-      || CStrInCStrNoCase(s, "new") == s 
-      || CStrInCStrNoCase(s, "alloc") == s;
+  return deriveNamingConvention(s) == CreateRule;
 }
 
 static bool followsReturnRule(const char* s) {
-  while (*s == '_') ++s;  
-  return followsFundamentalRule(s) || CStrInCStrNoCase(s, "init") == s;
+  NamingConvention C = deriveNamingConvention(s);
+  return C == CreateRule || C == InitRule;
 }
 
 //===----------------------------------------------------------------------===//
@@ -942,7 +1027,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
   const char* s = S.getIdentifierInfoForSlot(0)->getName();
   assert (ScratchArgs.empty());
   
-  if (strncmp(s, "init", 4) == 0 || strncmp(s, "_init", 5) == 0)
+  if (deriveNamingConvention(s) == InitRule)
     return getInitMethodSummary(ME);
   
   // Look for methods that return an owned object.

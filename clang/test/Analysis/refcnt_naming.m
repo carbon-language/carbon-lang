@@ -10,6 +10,14 @@ typedef signed char BOOL;
 @interface NSObject <NSObject> {} @end
 @class NSArray, NSString, NSURL;
 
+@interface NamingTest : NSObject {}
+-(NSObject*)photocopy;    // read as "photocopy"
+-(NSObject*)photoCopy;    // read as "photo Copy"
+-(NSObject*)__blebPRCopy; // read as "bleb PRCopy"
+-(NSObject*)__blebPRcopy; // read as "bleb P Rcopy"
+-(NSObject*)new_theprefixdoesnotcount; // read as "theprefixdoesnotcount"
+@end
+
 @interface MyClass : NSObject
 {
   id myObject;
@@ -32,6 +40,14 @@ typedef signed char BOOL;
   NSURL *url = (NSURL *)CFURLCreateWithString(0, (CFStringRef)inString, 0);
   [self addObject:url];
   return url; // no-warning
+}
+
+void testNames(NamingTest* x) {
+  [x photocopy]; // no-warning
+  [x photoCopy]; // expected-warning{{leak}}
+  [x __blebPRCopy]; // expected-warning{{leak}}
+  [x __blebPRcopy]; // no-warning
+  [x new_theprefixdoesnotcount]; // no-warning
 }
 
 
