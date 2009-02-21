@@ -4,29 +4,43 @@
 	%struct.bnode = type { i16, double, [3 x double], i32, i32, [3 x double], [3 x double], [3 x double], double, %struct.bnode*, %struct.bnode* }
 	%struct.node = type { i16, double, [3 x double], i32, i32 }
 
-define fastcc void @old_main() {
+define i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
 entry:
-	%tmp44 = malloc %struct.anon		; <%struct.anon*> [#uses=2]
-	store double 4.000000e+00, double* null, align 4
-	br label %bb41
+	%0 = malloc %struct.anon		; <%struct.anon*> [#uses=2]
+	%1 = getelementptr %struct.anon* %0, i32 0, i32 2		; <%struct.node**> [#uses=1]
+	br label %bb14.i
 
-bb41:		; preds = %uniform_testdata.exit, %entry
-	%i.0110 = phi i32 [ 0, %entry ], [ %tmp48, %uniform_testdata.exit ]		; <i32> [#uses=2]
-	%tmp48 = add i32 %i.0110, 1		; <i32> [#uses=1]
-	br i1 false, label %uniform_testdata.exit, label %bb33.preheader.i
+bb14.i:		; preds = %bb14.i, %entry
+	%i8.0.reg2mem.0.i = phi i32 [ 0, %entry ], [ %2, %bb14.i ]		; <i32> [#uses=1]
+	%2 = add i32 %i8.0.reg2mem.0.i, 1		; <i32> [#uses=2]
+	%exitcond74.i = icmp eq i32 %2, 32		; <i1> [#uses=1]
+	br i1 %exitcond74.i, label %bb32.i, label %bb14.i
 
-bb33.preheader.i:		; preds = %bb41
-	ret void
+bb32.i:		; preds = %bb32.i, %bb14.i
+	%tmp.0.reg2mem.0.i = phi i32 [ %indvar.next63.i, %bb32.i ], [ 0, %bb14.i ]		; <i32> [#uses=1]
+	%indvar.next63.i = add i32 %tmp.0.reg2mem.0.i, 1		; <i32> [#uses=2]
+	%exitcond64.i = icmp eq i32 %indvar.next63.i, 64		; <i1> [#uses=1]
+	br i1 %exitcond64.i, label %bb47.loopexit.i, label %bb32.i
 
-uniform_testdata.exit:		; preds = %bb41
-	%tmp57 = getelementptr %struct.anon* %tmp44, i32 0, i32 3, i32 %i.0110		; <%struct.bnode**> [#uses=1]
-	store %struct.bnode* null, %struct.bnode** %tmp57, align 4
-	br i1 false, label %bb154, label %bb41
+bb.i.i:		; preds = %bb47.loopexit.i
+	unreachable
 
-bb154:		; preds = %bb154, %uniform_testdata.exit
-	br i1 false, label %bb166, label %bb154
+stepsystem.exit.i:		; preds = %bb47.loopexit.i
+	store %struct.node* null, %struct.node** %1, align 4
+	br label %bb.i6.i
 
-bb166:		; preds = %bb154
-	%tmp169 = getelementptr %struct.anon* %tmp44, i32 0, i32 3, i32 0		; <%struct.bnode**> [#uses=0]
-	ret void
+bb.i6.i:		; preds = %bb.i6.i, %stepsystem.exit.i
+	%tmp.0.i.i = add i32 0, -1		; <i32> [#uses=1]
+	%3 = icmp slt i32 %tmp.0.i.i, 0		; <i1> [#uses=1]
+	br i1 %3, label %bb107.i.i, label %bb.i6.i
+
+bb107.i.i:		; preds = %bb107.i.i, %bb.i6.i
+	%q_addr.0.i.i.in = phi %struct.bnode** [ null, %bb107.i.i ], [ %4, %bb.i6.i ]		; <%struct.bnode**> [#uses=1]
+	%q_addr.0.i.i = load %struct.bnode** %q_addr.0.i.i.in		; <%struct.bnode*> [#uses=0]
+	br label %bb107.i.i
+
+bb47.loopexit.i:		; preds = %bb32.i
+	%4 = getelementptr %struct.anon* %0, i32 0, i32 4, i32 0		; <%struct.bnode**> [#uses=1]
+	%5 = icmp eq %struct.node* null, null		; <i1> [#uses=1]
+	br i1 %5, label %stepsystem.exit.i, label %bb.i.i
 }

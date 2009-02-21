@@ -1,14 +1,14 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | grep lea | count 1
+; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | not grep lea
 ; RUN: llvm-as < %s | llc -march=x86-64 | not grep lea
 
-; For x86 there's an lea above the loop. In both cases, there shouldn't
-; be any lea instructions inside the loop.
+; _P should be sunk into the loop and folded into the address mode. There
+; shouldn't be any lea instructions inside the loop.
 
 @B = external global [1000 x i8], align 32
 @A = external global [1000 x i8], align 32
 @P = external global [1000 x i8], align 32
 
-define void @foo(i32 %m, i32 %p) {
+define void @foo(i32 %m, i32 %p) nounwind {
 entry:
 	%tmp1 = icmp sgt i32 %m, 0
 	br i1 %tmp1, label %bb, label %return

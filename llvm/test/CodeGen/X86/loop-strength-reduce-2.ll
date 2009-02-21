@@ -1,8 +1,10 @@
 ; RUN: llvm-as < %s | llc -march=x86 -relocation-model=pic | \
 ; RUN:   grep {, 4} | count 1
+; RUN: llvm-as < %s | llc -march=x86 | not grep lea
 ;
 ; Make sure the common loop invariant A is hoisted up to preheader,
 ; since too many registers are needed to subsume it into the addressing modes.
+; It's safe to sink A in when it's not pic.
 
 @A = global [16 x [16 x i32]] zeroinitializer, align 32		; <[16 x [16 x i32]]*> [#uses=2]
 
