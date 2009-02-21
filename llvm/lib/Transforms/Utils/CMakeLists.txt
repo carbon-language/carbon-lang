@@ -1,4 +1,5 @@
 add_llvm_library(LLVMTransformUtils
+  AddrModeMatcher.cpp
   BasicBlockUtils.cpp
   BasicInliner.cpp
   BreakCriticalEdges.cpp
