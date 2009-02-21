@@ -11028,12 +11028,12 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
         APInt SingleChar(numBits, 0);
         if (TD->isLittleEndian()) {
           for (signed i = len-1; i >= 0; i--) {
-            SingleChar = (uint64_t) Str[i];
+            SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
             StrVal = (StrVal << 8) | SingleChar;
           }
         } else {
           for (unsigned i = 0; i < len; i++) {
-            SingleChar = (uint64_t) Str[i];
+            SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
             StrVal = (StrVal << 8) | SingleChar;
           }
           // Append NULL at the end.
