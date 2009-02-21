@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang -arch i386 -fsyntax-only -verify %s
 static int f = 10;
 static int b = f; // expected-error {{initializer element is not a compile-time constant}}
 
