@@ -159,6 +159,25 @@ static inline bool StringsEqualNoCase(const std::string &LHS,
   }
   return RHS[LHS.size()] == 0;  // Not too long?
 }
+  
+/// StringsEqualNoCase - Return true if the two null-terminated C strings are
+///  equal, ignoring
+
+static inline bool StringsEqualNoCase(const char *LHS, const char *RHS,
+                                      unsigned len) {
+
+  for (unsigned i = 0; i < len; ++i) {
+    if (tolower(LHS[i]) != tolower(RHS[i]))
+      return false;
+    
+    // If RHS[i] == 0 then LHS[i] == 0 or otherwise we would have returned
+    // at the previous branch as tolower('\0') == '\0'.
+    if (RHS[i] == 0)
+      return true;
+  }
+  
+  return true;
+}
 
 /// CStrInCStrNoCase - Portable version of strcasestr.  Locates the first
 ///  occurance of c-string 's2' in string 's1', ignoring case.  Returns
