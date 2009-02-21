@@ -2546,20 +2546,6 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
     assert(lhptee->isFunctionType());
     return FunctionVoidPointer;
   }
-
-  // Check for ObjC interfaces
-  const ObjCInterfaceType* LHSIface = lhptee->getAsObjCInterfaceType();
-  const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
-  if (LHSIface && RHSIface &&
-      Context.canAssignObjCInterfaces(LHSIface, RHSIface))
-    return ConvTy;
-
-  // ID acts sort of like void* for ObjC interfaces
-  if (LHSIface && Context.isObjCIdStructType(rhptee))
-    return ConvTy;
-  if (RHSIface && Context.isObjCIdStructType(lhptee))
-    return ConvTy;
-
   // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or
   // unqualified versions of compatible types, ...
   if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(),

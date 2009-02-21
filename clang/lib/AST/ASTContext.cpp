@@ -2680,6 +2680,15 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 
   // If the canonical type classes don't match.
   if (LHSClass != RHSClass) {
+    const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
+    const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
+
+    // ID acts sort of like void* for ObjC interfaces
+    if (LHSIface && isObjCIdStructType(RHS))
+      return LHS;
+    if (RHSIface && isObjCIdStructType(LHS))
+      return RHS;
+    
     // ID is compatible with all qualified id types.
     if (LHS->isObjCQualifiedIdType()) {
       if (const PointerType *PT = RHS->getAsPointerType()) {
@@ -2808,8 +2817,13 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
       return LHS;
     return QualType();
   case Type::ObjCInterface:
-    // Distinct ObjC interfaces are not compatible; see canAssignObjCInterfaces
-    // for checking assignment/comparison safety
+    // Check if the interfaces are assignment compatible.
+    const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
+    const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
+    if (LHSIface && RHSIface &&
+        canAssignObjCInterfaces(LHSIface, RHSIface))
+      return LHS;
+
     return QualType();
   case Type::ObjCQualifiedId:
     // Distinct qualified id's are not compatible.
