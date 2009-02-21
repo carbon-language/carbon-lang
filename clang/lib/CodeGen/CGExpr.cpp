@@ -776,10 +776,14 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   QualType T = E->getBase()->getType();
   QualType ExprTy = getContext().getCanonicalType(T);
   T = T->getAsPointerType()->getPointeeType();
-
-  return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
+  LValue LV = 
+           LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
            ExprTy->getAsPointerType()->getPointeeType().getCVRQualifiers(),
            getContext().getObjCGCAttrKind(T));
+  if (getContext().getLangOptions().ObjC1 &&
+      getContext().getLangOptions().getGCMode() != LangOptions::NonGC)
+    LValue::SetObjCNonGC(LV, !E->hasGlobalStorage());
+  return LV;
 }
 
 static 
