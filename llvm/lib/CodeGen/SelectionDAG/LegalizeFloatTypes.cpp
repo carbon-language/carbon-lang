@@ -88,6 +88,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::SELECT_CC:   R = SoftenFloatRes_SELECT_CC(N); break;
     case ISD::SINT_TO_FP:
     case ISD::UINT_TO_FP:  R = SoftenFloatRes_XINT_TO_FP(N); break;
+    case ISD::VAARG:       R = SoftenFloatRes_VAARG(N); break;
   }
 
   // If R is null, the sub-method took care of registering the result.
@@ -452,6 +453,22 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_SELECT_CC(SDNode *N) {
   return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(),
                      LHS.getValueType(), N->getOperand(0),
                      N->getOperand(1), LHS, RHS, N->getOperand(4));
+}
+
+SDValue DAGTypeLegalizer::SoftenFloatRes_VAARG(SDNode *N) {
+  SDValue Chain = N->getOperand(0); // Get the chain.
+  SDValue Ptr = N->getOperand(1); // Get the pointer.
+  MVT VT = N->getValueType(0);
+  MVT NVT = TLI.getTypeToTransformTo(VT);
+  DebugLoc dl = N->getDebugLoc();
+
+  SDValue NewVAARG;
+  NewVAARG = DAG.getVAArg(NVT, dl, Chain, Ptr, N->getOperand(2));
+  
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDValue(N, 1), NewVAARG.getValue(1));
+  return NewVAARG;
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_XINT_TO_FP(SDNode *N) {
