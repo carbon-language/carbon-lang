@@ -198,6 +198,14 @@ sub Analyze {
         next if (defined $attributes_not_handled{$1});
         $attributes_not_handled{$1} = 1;
         
+        # Get the name of the attribute file.
+        my $dir = "$HtmlDir/failures";
+        my $afile = "$dir/attribute_ignored_$1.txt";
+        
+        # Only create another preprocessed file if the attribute file
+        # doesn't exist yet.
+        next if (-e $afile);
+        
         # Add this file to the list of files that contained this attribute.
         # Generate a preprocessed file if we haven't already.
         if (!(defined $ppfile)) {
@@ -206,10 +214,8 @@ sub Analyze {
                                         $HtmlDir, $AttributeIgnored, $ofile);
         }
 
-        my $dir = "$HtmlDir/failures";
         mkpath $dir;
-        my $afile = "$dir/attribute_ignored_$1.txt";
-        open(AFILE, ">>$afile");
+        open(AFILE, ">$afile");
         print AFILE "$ppfile\n";
         close(AFILE);
       }
