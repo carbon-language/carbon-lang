@@ -1765,3 +1765,11 @@ printvars::
 	$(Echo) "SubDirs      : " '$(SubDirs)'
 	$(Echo) "ProjLibsPaths: " '$(ProjLibsPaths)'
 	$(Echo) "ProjLibsOptions: " '$(ProjLibsOptions)'
+
+###
+# Debugging
+
+# General debugging rule, use 'make print-XXX' to print the
+# definition, value and origin of XXX.
+print-%: 
+	$(error PRINT: $(value $*) = "$($*)" (from $(origin $*)))
