@@ -2408,7 +2408,7 @@ bool ASTContext::isObjCNSObjectType(QualType Ty) const {
 /// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
 /// ID type).
 bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
-  if (Ty->isObjCQualifiedIdType())
+  if (Ty->isObjCQualifiedIdType() || Ty->isObjCQualifiedClassType())
     return true;
   
   // Blocks are objects.

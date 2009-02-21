@@ -270,7 +270,7 @@ public:
     TypeName, Tagged, ExtQual,
     TemplateTypeParm, ClassTemplateSpecialization,
     ObjCInterface, ObjCQualifiedInterface,
-    ObjCQualifiedId,
+    ObjCQualifiedId, ObjCQualifiedClass,
     TypeOfExp, TypeOfTyp, // GNU typeof extension.
     BlockPointer,          // C extension
     FixedWidthInt
@@ -1758,7 +1758,7 @@ class ObjCQualifiedClassType : public Type,
   llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
     
   ObjCQualifiedClassType(ObjCProtocolDecl **Protos, unsigned NumP)
-    : Type(ObjCQualifiedId, QualType()/*these are always canonical*/,
+    : Type(ObjCQualifiedClass, QualType()/*these are always canonical*/,
            /*Dependent=*/false), 
   Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
@@ -1785,7 +1785,7 @@ public:
                       ObjCProtocolDecl **protocols, unsigned NumProtocols);
     
   static bool classof(const Type *T) { 
-    return T->getTypeClass() == ObjCQualifiedId; 
+    return T->getTypeClass() == ObjCQualifiedClass; 
   }
   static bool classof(const ObjCQualifiedClassType *) { return true; }
     

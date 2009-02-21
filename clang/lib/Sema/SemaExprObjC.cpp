@@ -391,10 +391,23 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   // We allow sending a message to a qualified ID ("id<foo>"), which is ok as 
   // long as one of the protocols implements the selector (if not, warn).
   if (ObjCQualifiedIdType *QIT = dyn_cast<ObjCQualifiedIdType>(ReceiverCType)) {
-    // Search protocols
+    // Search protocols for instance methods.
+    ReceiverCType.dump();
     for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
       ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
       if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
+        break;
+    }
+    if (!Method)
+      Diag(lbrac, diag::warn_method_not_found_in_protocol)
+        << Sel << RExpr->getSourceRange();
+  // Check for GCC extension "Class<foo>".
+  } else if (ObjCQualifiedClassType *QIT = 
+               dyn_cast<ObjCQualifiedClassType>(ReceiverCType)) {
+    // Search protocols for class methods.
+    for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
+      ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
+      if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
         break;
     }
     if (!Method)

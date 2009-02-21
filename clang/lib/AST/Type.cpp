@@ -693,7 +693,8 @@ bool Type::isScalarType() const {
          isa<BlockPointerType>(CanonicalType) ||
          isa<MemberPointerType>(CanonicalType) ||
          isa<ComplexType>(CanonicalType) ||
-         isa<ObjCQualifiedIdType>(CanonicalType);
+         isa<ObjCQualifiedIdType>(CanonicalType) ||
+         isa<ObjCQualifiedClassType>(CanonicalType);
 }
 
 /// \brief Determines whether the type is a C++ aggregate type or C
