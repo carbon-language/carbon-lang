@@ -278,8 +278,19 @@ ifdef ENABLE_EXPENSIVE_CHECKS
 endif
 
 ifeq ($(ENABLE_PIC),1)
-  CXX.Flags += -fPIC
-  C.Flags   += -fPIC
+  ifeq ($(LLVM_ON_WIN32),1)
+    # Nothing. Win32 defaults to PIC and warns when given -fPIC
+  else
+    ifeq ($(OS),Darwin)
+      # common is forbidden in dylib files
+      CXX.Flags += -fno-common
+      C.Flags   += -fno-common
+    else
+      # Linux and others; pass -fPIC
+      CXX.Flags += -fPIC
+      C.Flags   += -fPIC
+    endif
+  endif
 endif
 
 CXX.Flags     += $(CXXFLAGS) -Woverloaded-virtual
