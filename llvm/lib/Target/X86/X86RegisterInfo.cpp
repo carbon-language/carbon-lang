@@ -542,8 +542,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
        (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
        (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri));
   uint64_t Chunk = (1LL << 31) - 1;
-  // We could pass in a DebugLoc, but this is only called from prolog/epilog.
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL = MBBI->getDebugLoc();
 
   while (Offset) {
     uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
@@ -889,7 +888,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   unsigned RetOpcode = MBBI->getOpcode();
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL = MBBI->getDebugLoc();
 
   switch (RetOpcode) {
   case X86::RET:
@@ -924,8 +923,9 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     // pop EBP.
     BuildMI(MBB, MBBI, DL, 
             TII.get(Is64Bit ? X86::POP64r : X86::POP32r), FramePtr);
-  } else
+  } else {
     NumBytes = StackSize - CSSize;
+  }
 
   // Skip the callee-saved pop instructions.
   MachineBasicBlock::iterator LastCSPop = MBBI;
