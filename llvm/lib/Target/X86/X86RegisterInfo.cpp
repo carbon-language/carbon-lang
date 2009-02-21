@@ -728,12 +728,14 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
                           !Fn->doesNotThrow() ||
                           UnwindTablesMandatory;
-  DebugLoc DL = DebugLoc::getUnknownLoc();
+  DebugLoc DL = MBBI->getDebugLoc();
+
   // Prepare for frame info.
   unsigned FrameLabelId = 0;
 
   // Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI->getStackSize();
+
   // Get desired stack alignment
   uint64_t MaxAlign  = MFI->getMaxAlignment();
 
@@ -812,8 +814,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       // The EFLAGS implicit def is dead.
       MI->getOperand(3).setIsDead();
     }
-  } else
+  } else {
     NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
+  }
 
   unsigned ReadyLabelId = 0;
   if (needsFrameMoves) {
@@ -827,6 +830,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
          (MBBI->getOpcode() == X86::PUSH32r ||
           MBBI->getOpcode() == X86::PUSH64r))
     ++MBBI;
+
+  if (MBBI != MBB.end())
+    DL = MBBI->getDebugLoc();
 
   if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
     if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
@@ -845,7 +851,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       // necessary to ensure that the guard pages used by the OS virtual memory
       // manager are allocated in correct sequence.
       if (!isEAXAlive) {
-        BuildMI(MBB, MBBI,DL, TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes);
+        BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
+          .addImm(NumBytes);
         BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
           .addExternalSymbol("_alloca");
       } else {
@@ -921,7 +928,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     NumBytes = FrameSize - CSSize;
 
     // pop EBP.
-    BuildMI(MBB, MBBI, DL, 
+    BuildMI(MBB, MBBI, DL,
             TII.get(Is64Bit ? X86::POP64r : X86::POP32r), FramePtr);
   } else {
     NumBytes = StackSize - CSSize;
@@ -937,6 +944,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       break;
     --MBBI;
   }
+
+  DL = MBBI->getDebugLoc();
 
   // If there is an ADD32ri or SUB32ri of ESP immediately before this
   // instruction, merge the two instructions.
@@ -997,19 +1006,22 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     // Incoporate the retaddr area.
     Offset = StackAdj-MaxTCDelta;
     assert(Offset >= 0 && "Offset should never be negative");
+
     if (Offset) {
       // Check for possible merge with preceeding ADD instruction.
       Offset += mergeSPUpdates(MBB, MBBI, StackPtr, true);
       emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, TII);
     }
+
     // Jump to label or value in register.
     if (RetOpcode == X86::TCRETURNdi|| RetOpcode == X86::TCRETURNdi64)
       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPd)).
         addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset());
-    else if (RetOpcode== X86::TCRETURNri64) {
+    else if (RetOpcode== X86::TCRETURNri64)
       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr64), JumpTarget.getReg());
-    } else
+    else
        BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr), JumpTarget.getReg());
+
     // Delete the pseudo instruction TCRETURN.
     MBB.erase(MBBI);
   } else if ((RetOpcode == X86::RET || RetOpcode == X86::RETI) &&
