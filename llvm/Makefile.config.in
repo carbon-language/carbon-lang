@@ -133,12 +133,10 @@ AR_PATH = @AR@
 NM_PATH = @NM@
 
 # The pathnames of the programs we require to build
-BISON      := @BISON@
 CMP        := @CMP@
 CP         := @CP@
 DATE       := @DATE@
 FIND       := @FIND@
-FLEX       := @LEX@
 GREP       := @GREP@
 INSTALL    := @INSTALL@
 MKDIR      := $(LLVM_SRC_ROOT)/autoconf/mkinstalldirs
@@ -147,7 +145,6 @@ RANLIB     := @RANLIB@
 RM         := @RM@
 SED        := @SED@
 TAR        := @TAR@
-YACC       := @YACC@
 
 # Paths to miscellaneous programs we hope are present but might not be
 PERL       := @PERL@

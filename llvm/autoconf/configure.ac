@@ -542,8 +542,6 @@ dnl Check for compilation tools
 AC_PROG_CPP
 AC_PROG_CC(gcc)
 AC_PROG_CXX(g++)
-AC_PROG_FLEX
-AC_PROG_BISON
 
 AC_PROG_NM
 AC_SUBST(NM)
