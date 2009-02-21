@@ -2151,7 +2151,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       }
       S += '@';
       if (FD || EncodingProperty) {
-        const ObjCInterfaceType *OIT = PointeeTy->getAsObjCInterfaceType();
+        const ObjCInterfaceType *OIT = 
+                PointeeTy.getUnqualifiedType()->getAsObjCInterfaceType();
         ObjCInterfaceDecl *OI = OIT->getDecl();
         S += '"';
         S += OI->getNameAsCString();
