@@ -1592,6 +1592,11 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     Diag(D.getIdentifierLoc(), diag::err_as_qualified_auto_decl);
     InvalidDecl = true;
   }
+
+  if (NewVD->hasLocalStorage() && NewVD->getType().isObjCGCWeak()) {
+    Diag(D.getIdentifierLoc(), diag::warn_attribute_weak_on_local);
+  }
+
   // Merge the decl with the existing one if appropriate. If the decl is
   // in an outer scope, it isn't the same thing.
   if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
