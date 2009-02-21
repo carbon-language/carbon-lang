@@ -35,10 +35,6 @@
 
 using namespace clang;
 
-#ifdef _MSC_VER
-#  define strncasecmp _strnicmp
-#endif // #ifdef _MSC_VER
-
 //===----------------------------------------------------------------------===//
 // Utility functions.
 //===----------------------------------------------------------------------===//
@@ -57,6 +53,7 @@ using namespace clang;
 //
 
 using llvm::CStrInCStrNoCase;
+using llvm::StringsEqualNoCase;
 
 enum NamingConvention { NoConvention, CreateRule, InitRule };
 
@@ -116,17 +113,17 @@ static NamingConvention deriveNamingConvention(const char* s) {
       break;
     case 3:
       // Methods starting with 'new' follow the create rule.
-      if (AtBeginning && strncasecmp("new", s, len) == 0)
+      if (AtBeginning && StringsEqualNoCase("new", s, len))
         C = CreateRule;      
       break;
     case 4:
       // Methods starting with 'alloc' or contain 'copy' follow the
       // create rule
-      if ((AtBeginning && strncasecmp("alloc", s, len) == 0) ||
-          (strncasecmp("copy", s, len) == 0))
+      if ((AtBeginning && StringsEqualNoCase("alloc", s, len)) ||
+          (StringsEqualNoCase("copy", s, len)))
         C = CreateRule;
       else // Methods starting with 'init' follow the init rule.
-        if (AtBeginning && strncasecmp("init", s, len) == 0)
+        if (AtBeginning && StringsEqualNoCase("init", s, len))
         C = InitRule;      
       break;
     }
