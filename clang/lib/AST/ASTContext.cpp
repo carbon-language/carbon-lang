@@ -2816,7 +2816,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     if (areCompatVectorTypes(LHS->getAsVectorType(), RHS->getAsVectorType()))
       return LHS;
     return QualType();
-  case Type::ObjCInterface:
+  case Type::ObjCInterface: {
     // Check if the interfaces are assignment compatible.
     const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
     const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
@@ -2825,6 +2825,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
       return LHS;
 
     return QualType();
+  }
   case Type::ObjCQualifiedId:
     // Distinct qualified id's are not compatible.
     return QualType();

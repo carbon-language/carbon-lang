@@ -35,6 +35,10 @@
 
 using namespace clang;
 
+#ifdef _MSC_VER
+#  define strncasecmp _strnicmp
+#endif // #ifdef _MSC_VER
+
 //===----------------------------------------------------------------------===//
 // Utility functions.
 //===----------------------------------------------------------------------===//
