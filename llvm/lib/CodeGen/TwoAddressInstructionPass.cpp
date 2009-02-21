@@ -53,6 +53,7 @@ STATISTIC(NumAggrCommuted    , "Number of instructions aggressively commuted");
 STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
 STATISTIC(NumReMats,           "Number of instructions re-materialized");
+STATISTIC(NumDeletes,          "Number of dead instructions deleted");
 
 namespace {
   class VISIBILITY_HIDDEN TwoAddressInstructionPass
@@ -371,6 +372,26 @@ TwoAddressInstructionPass::CommuteInstruction(MachineBasicBlock::iterator &mi,
   return true;
 }
 
+/// isSafeToDelete - If the specified instruction does not produce any side
+/// effects and all of its defs are dead, then it's safe to delete.
+static bool isSafeToDelete(MachineInstr *MI, const TargetInstrInfo *TII) {
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (TID.mayStore() || TID.isCall())
+    return false;
+  if (TID.isTerminator() || TID.hasUnmodeledSideEffects())
+    return false;
+
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.isDef())
+      continue;
+    if (!MO.isDead())
+      return false;
+  }
+
+  return true;
+}
+
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
@@ -450,6 +471,15 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // allow us to coalesce A and B together, eliminating the copy we are
           // about to insert.
           if (!mi->killsRegister(regB)) {
+            // If regA is dead and the instruction can be deleted, just delete
+            // it so it doesn't clobber regB.
+            if (mi->getOperand(ti).isDead() && isSafeToDelete(mi, TII)) {
+              mbbi->erase(mi); // Nuke the old inst.
+              mi = nmi;
+              ++NumDeletes;
+              break; // Done with this instruction.
+            }
+
             // If this instruction is commutative, check to see if C dies.  If
             // so, swap the B and C operands.  This makes the live ranges of A
             // and C joinable.
