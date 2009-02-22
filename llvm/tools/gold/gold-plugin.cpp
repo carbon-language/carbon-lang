@@ -22,6 +22,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <list>
 #include <vector>
 
@@ -41,6 +42,8 @@ namespace {
 
   int api_version = 0;
   int gold_version = 0;
+
+  bool generate_api_file = false;
 
   struct claimed_file {
     lto_module_t M;
@@ -96,7 +99,11 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         //output_type = LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC;
         break;
       case LDPT_OPTION:
-        (*message)(LDPL_WARNING, "Ignoring flag %s", tv->tv_u.tv_string);
+        if (strcmp("generate-api-file", tv->tv_u.tv_string) == 0) {
+          generate_api_file = true;
+        } else {
+          (*message)(LDPL_WARNING, "Ignoring flag %s", tv->tv_u.tv_string);
+        }
         break;
       case LDPT_REGISTER_CLAIM_FILE_HOOK: {
         ld_plugin_register_claim_file callback;
@@ -285,6 +292,15 @@ ld_plugin_status all_symbols_read_hook(void) {
        E = Modules.end(); I != E; ++I)
     lto_codegen_add_module(cg, I->M);
 
+  std::ofstream api_file;
+  if (generate_api_file) {
+    api_file.open("apifile.txt", std::ofstream::out | std::ofstream::trunc);
+    if (!api_file.is_open()) {
+      (*message)(LDPL_FATAL, "Unable to open apifile.txt for writing.");
+      abort();
+    }
+  }
+
   // If we don't preserve any symbols, libLTO will assume that all symbols are
   // needed. Keep all symbols unless we're producing a final executable.
   if (output_type == LTO_CODEGEN_PIC_MODEL_STATIC) {
@@ -298,9 +314,15 @@ ld_plugin_status all_symbols_read_hook(void) {
              I->syms[i].resolution == LDPR_RESOLVED_IR)) {
           lto_codegen_add_must_preserve_symbol(cg, I->syms[i].name);
           anySymbolsPreserved = true;
+
+          if (generate_api_file)
+            api_file << I->syms[i].name << "\n";
         }
       }
     }
+
+    if (generate_api_file)
+      api_file.close();
 
     if (!anySymbolsPreserved) {
       // This entire file is unnecessary!
