@@ -27,3 +27,9 @@ void t5(int i)
 {
   asm("nop" : "=r"(i) : "0"(t5));
 }
+
+// PR3641
+void t6(void)
+{
+  __asm__ volatile("" : : "i" (t6));
+}
