@@ -2214,16 +2214,27 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   } else if (const ArrayType *AT =
                // Ignore type qualifiers etc.
                dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
-    S += '[';
+    if (isa<IncompleteArrayType>(AT)) {
+      // Incomplete arrays are encoded as a pointer to the array element.
+      S += '^';
+
+      getObjCEncodingForTypeImpl(AT->getElementType(), S, 
+                                 false, ExpandStructures, FD);
+    } else {
+      S += '[';
     
-    if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
-      S += llvm::utostr(CAT->getSize().getZExtValue());
-    else
-      assert(0 && "Unhandled array type!");
+      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
+        S += llvm::utostr(CAT->getSize().getZExtValue());
+      else {
+        //Variable length arrays are encoded as a regular array with 0 elements.
+        assert(isa<VariableArrayType>(AT) && "Unknown array type!");
+        S += '0';
+      }
     
-    getObjCEncodingForTypeImpl(AT->getElementType(), S, 
-                               false, ExpandStructures, FD);
-    S += ']';
+      getObjCEncodingForTypeImpl(AT->getElementType(), S, 
+                                 false, ExpandStructures, FD);
+      S += ']';
+    }
   } else if (T->getAsFunctionType()) {
     S += '?';
   } else if (const RecordType *RTy = T->getAsRecordType()) {
