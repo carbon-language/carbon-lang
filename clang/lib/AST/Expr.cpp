@@ -994,31 +994,18 @@ bool Expr::isIntegerConstantExprInternal(llvm::APSInt &Result, ASTContext &Ctx,
   }
   case SizeOfAlignOfExprClass: {
     const SizeOfAlignOfExpr *Exp = cast<SizeOfAlignOfExpr>(this);
-    
     QualType ArgTy = Exp->getTypeOfArgument();
-    // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
-    if (ArgTy->isVoidType()) {
-      Result = Ctx.MakeIntValue(1, getType());
-      break;
-    }
-    
-    // alignof always evaluates to a constant, sizeof does if arg is not VLA.
-    if (Exp->isSizeOf() && !ArgTy->isConstantSizeType()) {
+
+    // alignof is always an ICE; sizeof is an ICE if and only if
+    // the operand isn't a VLA
+    if (Exp->isSizeOf() && ArgTy->isVariableArrayType()) {
       if (Loc) *Loc = Exp->getOperatorLoc();
       return false;
     }
 
-    // Get information about the size or align.
-    if (ArgTy->isFunctionType()) {
-      // GCC extension: sizeof(function) = 1.
-      Result = Ctx.MakeIntValue(Exp->isSizeOf() ? 1 : 4, getType());
-    } else { 
-      unsigned CharSize = Ctx.Target.getCharWidth();
-      if (Exp->isSizeOf())
-        Result = Ctx.MakeIntValue(Ctx.getTypeSize(ArgTy)/CharSize, getType());
-      else
-        Result = Ctx.MakeIntValue(Ctx.getTypeAlign(ArgTy)/CharSize, getType());
-    }
+    // Use the Evaluate logic to calculate the value, since the
+    // calculation is non-trivial.
+    Result = EvaluateAsInt(Ctx);
     break;
   }
   case BinaryOperatorClass: {

@@ -264,21 +264,23 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
 /// specified decl.  Note that bitfields do not have a valid alignment, so
 /// this method will assert on them.
 unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
-  // FIXME: If attribute(align) is specified on the decl, round up to it.
-  
+  unsigned Align = Target.getCharWidth();
+
+  if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
+    Align = std::max(Align, AA->getAlignment());
+
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
     // Incomplete or function types default to 1.
-    if (T->isIncompleteType() || T->isFunctionType())
-      return 1;
-    
-    while (isa<VariableArrayType>(T) || isa<IncompleteArrayType>(T))
-      T = cast<ArrayType>(T)->getElementType();
-    
-    return getTypeAlign(T) / Target.getCharWidth();
+    if (!T->isIncompleteType() && !T->isFunctionType()) {
+      while (isa<VariableArrayType>(T) || isa<IncompleteArrayType>(T))
+        T = cast<ArrayType>(T)->getElementType();
+
+      Align = std::max(Align, getPreferredTypeAlign(T.getTypePtr()));
+    }
   }
-  
-  return 1;
+
+  return Align / Target.getCharWidth();
 }
 
 /// getTypeSize - Return the size of the specified type, in bits.  This method
