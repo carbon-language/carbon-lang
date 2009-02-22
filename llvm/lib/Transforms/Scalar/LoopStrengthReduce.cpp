@@ -1828,7 +1828,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
   // If all uses are addresses, consider sinking the immediate part of the
   // common expression back into uses if they can fit in the immediate fields.
-  if (HaveCommonExprs && AllUsesAreAddresses) {
+  if (TLI && HaveCommonExprs && AllUsesAreAddresses) {
     SCEVHandle NewCommon = CommonExprs;
     SCEVHandle Imm = SE->getIntegerSCEV(0, ReplacedTy);
     MoveImmediateValues(TLI, ReplacedTy, NewCommon, Imm, true, L, SE);
