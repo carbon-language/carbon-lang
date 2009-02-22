@@ -745,6 +745,33 @@ bool Expr::hasGlobalStorage() const {
   }
 }
 
+/// isOBJCGCCandidate - Check if an expression is objc gc'able.
+///
+bool Expr::isOBJCGCCandidate() const {
+  switch (getStmtClass()) {
+  default:
+    return false;
+  case ObjCIvarRefExprClass:
+    return true;
+  case ParenExprClass:
+    return cast<ParenExpr>(this)->getSubExpr()->isOBJCGCCandidate();
+  case ImplicitCastExprClass:
+    return cast<ImplicitCastExpr>(this)->getSubExpr()->isOBJCGCCandidate();
+  case DeclRefExprClass:
+  case QualifiedDeclRefExprClass: {
+    const Decl *D = cast<DeclRefExpr>(this)->getDecl();
+    if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+      return VD->hasGlobalStorage();
+    return false;
+  }
+  case MemberExprClass: {
+    const MemberExpr *M = cast<MemberExpr>(this);
+    return !M->isArrow() && M->getBase()->isOBJCGCCandidate();
+  }
+  case ArraySubscriptExprClass:
+    return cast<ArraySubscriptExpr>(this)->getBase()->isOBJCGCCandidate();
+  }
+}
 Expr* Expr::IgnoreParens() {
   Expr* E = this;
   while (ParenExpr* P = dyn_cast<ParenExpr>(E))

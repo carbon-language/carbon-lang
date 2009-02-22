@@ -782,7 +782,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
            getContext().getObjCGCAttrKind(T));
   if (getContext().getLangOptions().ObjC1 &&
       getContext().getLangOptions().getGCMode() != LangOptions::NonGC)
-    LValue::SetObjCNonGC(LV, !E->hasGlobalStorage());
+    LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate());
   return LV;
 }
 

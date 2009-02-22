@@ -238,6 +238,10 @@ public:
   /// duration.  This means that the address of this expression is a link-time
   /// constant.
   bool hasGlobalStorage() const;  
+
+  /// isOBJCGCCandidate - Return true if this expression may be used in a read/
+  /// write barrier. 
+  bool isOBJCGCCandidate() const;
   
   /// IgnoreParens - Ignore parentheses.  If this Expr is a ParenExpr, return
   ///  its subexpression.  If that subexpression is also a ParenExpr, 
