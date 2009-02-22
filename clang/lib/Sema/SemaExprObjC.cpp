@@ -416,12 +416,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     // The idea is to add class info to InstanceMethodPool.
     Method = ClassDecl->lookupInstanceMethod(Sel);
     
-    bool haveQualifiers = false;
     if (!Method) {
       // Search protocol qualifiers.
       for (ObjCQualifiedIdType::qual_iterator QI = OCIReceiver->qual_begin(),
            E = OCIReceiver->qual_end(); QI != E; ++QI) {
-        haveQualifiers = true;
         if ((Method = (*QI)->lookupInstanceMethod(Sel)))
           break;
       }
@@ -435,7 +433,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
           // If we still haven't found a method, look in the global pool. This
           // behavior isn't very desirable, however we need it for GCC
           // compatibility. FIXME: should we deviate??
-          if (!Method && !haveQualifiers)
+          if (!Method && OCIReceiver->qual_empty())
             Method = LookupInstanceMethodInGlobalPool(
                                  Sel, SourceRange(lbrac,rbrac));
     }
