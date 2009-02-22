@@ -519,6 +519,7 @@ SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(unsigned CopyIdx,
     // of last use.
     LastUse->setIsKill();
     removeRange(li, li_->getDefIndex(LastUseIdx), LR->end, li_, tri_);
+    li.addKill(LR->valno, LastUseIdx+1);
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         DstReg == li.reg) {
@@ -967,9 +968,10 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
       LastUse = MO;
     }
   }
-  if (LastUse)
+  if (LastUse) {
     LastUse->setIsKill();
-  else {
+    li.addKill(VNI, LastUseIdx+1);
+  } else {
     // Remove dead implicit_def's.
     while (!ImpDefs.empty()) {
       MachineInstr *ImpDef = ImpDefs.back();
@@ -2331,7 +2333,7 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
       unsigned Idx = li_->getInstructionIndex(UseMI);
       if (Idx >= Start && Idx < End && Idx >= UseIdx) {
         LastUse = &Use;
-        UseIdx = Idx;
+        UseIdx = li_->getUseIndex(Idx);
       }
     }
     return LastUse;
@@ -2357,7 +2359,7 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
         MachineOperand &Use = MI->getOperand(i);
         if (Use.isReg() && Use.isUse() && Use.getReg() &&
             tri_->regsOverlap(Use.getReg(), Reg)) {
-          UseIdx = e;
+          UseIdx = li_->getUseIndex(e);
           return &Use;
         }
       }
