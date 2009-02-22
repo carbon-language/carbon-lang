@@ -37,6 +37,11 @@ class Driver(object):
         # Certain options suppress the 'no input files' warning.
         self.suppressMissingInputWarning = False
 
+        # Temporary files used in compilation, removed on exit.
+        self.tempFiles = []
+        # Result files produced by compilation, removed on error.
+        self.resultFiles = []
+
     # Host queries which can be forcibly over-riden by the user for
     # testing purposes.
     #
@@ -219,6 +224,24 @@ class Driver(object):
                     raise ValueError,'Encountered unknown job.'
             sys.exit(0)
 
+        try:
+            try:
+                self.executeJobs(args, jobs)
+            except:
+                for f in self.resultFiles:
+                    # Fail if removing a result fails:
+                    if os.path.exists(f):
+                        os.remove(f)
+                raise
+        finally:
+            for f in self.tempFiles:
+                # Ignore failures in removing temporary files
+                try:
+                    os.remove(f)
+                except:
+                    pass
+    
+    def executeJobs(self, args, jobs):
         vArg = args.getLastArg(self.parser.vOption)
         for j in jobs.iterjobs():
             if isinstance(j, Jobs.Command):
@@ -807,9 +830,6 @@ class Driver(object):
                 jobs.addJob(output)
         else:
             # Figure out what the derived output location would be.
-            # 
-            # FIXME: gcc has some special case in here so that it doesn't
-            # create output files if they would conflict with an input.
             if phase.type is Types.ImageType:
                 namedOutput = "a.out"
             else:
@@ -821,9 +841,12 @@ class Driver(object):
                     base,_ = os.path.splitext(inputName)
                     namedOutput = base + '.' + phase.type.tempSuffix
 
+            isTemp = False
             # Output to user requested destination?
             if atTopLevel and finalOutput:
                 output = finalOutput
+                self.resultFiles.append(args.getValue(finalOutput))
+
             # Contruct a named destination?
             elif atTopLevel or hasSaveTemps:
                 # As an annoying special case, pch generation
@@ -834,9 +857,12 @@ class Driver(object):
                     outputName = os.path.basename(namedOutput)
                 output = args.makeSeparateArg(outputName,
                                               self.parser.oOption)
+                self.resultFiles.append(outputName)
+
             else:
                 # Output to temp file...
                 fd,filename = tempfile.mkstemp(suffix='.'+phase.type.tempSuffix)
                 output = args.makeSeparateArg(filename,
                                               self.parser.oOption)
+                self.tempFiles.append(filename)
         return output,jobList
