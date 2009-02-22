@@ -59,9 +59,11 @@ public:
       const llvm::Type *Ty = ConvertType(E->getType());
       return EmitUnion(CGM.EmitConstantExpr(E->getSubExpr(), CGF), Ty);
     }
-
-    llvm::Constant *C = Visit(E->getSubExpr());
-    return EmitConversion(C, E->getSubExpr()->getType(), E->getType());    
+    if (CGM.getContext().getCanonicalType(E->getSubExpr()->getType()) ==
+        CGM.getContext().getCanonicalType(E->getType())) {
+      return Visit(E->getSubExpr());
+    }
+    return 0;
   }
 
   llvm::Constant *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
@@ -341,33 +343,6 @@ public:
     return 0;
   }
 
-  llvm::Constant *VisitImplicitCastExpr(ImplicitCastExpr *ICExpr) {
-    Expr* SExpr = ICExpr->getSubExpr();
-    QualType SType = SExpr->getType();
-    llvm::Constant *C; // the intermediate expression
-    QualType T;        // the type of the intermediate expression
-    if (SType->isArrayType()) {
-      // Arrays decay to a pointer to the first element
-      // VLAs would require special handling, but they can't occur here
-      C = EmitLValue(SExpr);
-      llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-      llvm::Constant *Ops[] = {Idx0, Idx0};
-      C = llvm::ConstantExpr::getGetElementPtr(C, Ops, 2);
-      T = CGM.getContext().getArrayDecayedType(SType);
-    } else if (SType->isFunctionType()) {
-      // Function types decay to a pointer to the function
-      C = EmitLValue(SExpr);
-      T = CGM.getContext().getPointerType(SType);
-    } else {
-      C = Visit(SExpr);
-      T = SType;
-    }
-
-    // Perform the conversion; note that an implicit cast can both promote
-    // and convert an array/function
-    return EmitConversion(C, T, ICExpr->getType());
-  }
-
   llvm::Constant *VisitStringLiteral(StringLiteral *E) {
     assert(!E->getType()->isPointerType() && "Strings are always arrays");
     
@@ -380,124 +355,16 @@ public:
   llvm::Constant *VisitUnaryExtension(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
   }
-    
-  llvm::Constant *VisitBlockExpr(const BlockExpr *E) {
-    assert (!E->hasBlockDeclRefExprs() && "global block with BlockDeclRefs");
 
-    const char *Name = "";
-    if (const NamedDecl *ND = dyn_cast<NamedDecl>(CGF->CurFuncDecl))
-      Name = ND->getNameAsString().c_str();
-    return CGM.GetAddrOfGlobalBlock(E, Name);
-  }
-  
   // Utility methods
   const llvm::Type *ConvertType(QualType T) {
     return CGM.getTypes().ConvertType(T);
-  }
-  
-  llvm::Constant *EmitConversionToBool(llvm::Constant *Src, QualType SrcType) {
-    assert(SrcType->isCanonical() && "EmitConversion strips typedefs");
-    
-    if (SrcType->isRealFloatingType()) {
-      // Compare against 0.0 for fp scalars.
-      llvm::Constant *Zero = llvm::Constant::getNullValue(Src->getType());
-      return llvm::ConstantExpr::getFCmp(llvm::FCmpInst::FCMP_UNE, Src, Zero); 
-    }
-    
-    assert((SrcType->isIntegerType() || SrcType->isPointerType()) &&
-           "Unknown scalar type to convert");
-    
-    // Compare against an integer or pointer null.
-    llvm::Constant *Zero = llvm::Constant::getNullValue(Src->getType());
-    return llvm::ConstantExpr::getICmp(llvm::ICmpInst::ICMP_NE, Src, Zero);
-  }    
-  
-  llvm::Constant *EmitConversion(llvm::Constant *Src, QualType SrcType, 
-                                 QualType DstType) {
-    if (!Src)
-      return 0;
-
-    SrcType = CGM.getContext().getCanonicalType(SrcType);
-    DstType = CGM.getContext().getCanonicalType(DstType);
-    if (SrcType == DstType) return Src;
-    
-    // Handle conversions to bool first, they are special: comparisons against 0.
-    if (DstType->isBooleanType())
-      return EmitConversionToBool(Src, SrcType);
-    
-    const llvm::Type *DstTy = ConvertType(DstType);
-    
-    // Ignore conversions like int -> uint.
-    if (Src->getType() == DstTy)
-      return Src;
-
-    // Handle pointer conversions next: pointers can only be converted to/from
-    // other pointers and integers.
-    if (isa<llvm::PointerType>(DstTy)) {
-      // The source value may be an integer, or a pointer.
-      if (isa<llvm::PointerType>(Src->getType()))
-        return llvm::ConstantExpr::getBitCast(Src, DstTy);
-      assert(SrcType->isIntegerType() &&"Not ptr->ptr or int->ptr conversion?");
-      return llvm::ConstantExpr::getIntToPtr(Src, DstTy);
-    }
-    
-    if (isa<llvm::PointerType>(Src->getType())) {
-      // Must be an ptr to int cast.
-      assert(isa<llvm::IntegerType>(DstTy) && "not ptr->int?");
-      return llvm::ConstantExpr::getPtrToInt(Src, DstTy);
-    }
-    
-    // A scalar source can be splatted to a vector of the same element type
-    if (isa<llvm::VectorType>(DstTy) && !isa<VectorType>(SrcType)) {
-      assert((cast<llvm::VectorType>(DstTy)->getElementType()
-              == Src->getType()) &&
-             "Vector element type must match scalar type to splat.");
-      unsigned NumElements = DstType->getAsVectorType()->getNumElements();
-      llvm::SmallVector<llvm::Constant*, 16> Elements;
-      for (unsigned i = 0; i < NumElements; i++)
-        Elements.push_back(Src);
-        
-      return llvm::ConstantVector::get(&Elements[0], NumElements);
-    }
-    
-    if (isa<llvm::VectorType>(Src->getType()) ||
-        isa<llvm::VectorType>(DstTy)) {
-      return llvm::ConstantExpr::getBitCast(Src, DstTy);
-    }
-    
-    // Finally, we have the arithmetic types: real int/float.
-    if (isa<llvm::IntegerType>(Src->getType())) {
-      bool InputSigned = SrcType->isSignedIntegerType();
-      if (isa<llvm::IntegerType>(DstTy))
-        return llvm::ConstantExpr::getIntegerCast(Src, DstTy, InputSigned);
-      else if (InputSigned)
-        return llvm::ConstantExpr::getSIToFP(Src, DstTy);
-      else
-        return llvm::ConstantExpr::getUIToFP(Src, DstTy);
-    }
-    
-    assert(Src->getType()->isFloatingPoint() && "Unknown real conversion");
-    if (isa<llvm::IntegerType>(DstTy)) {
-      if (DstType->isSignedIntegerType())
-        return llvm::ConstantExpr::getFPToSI(Src, DstTy);
-      else
-        return llvm::ConstantExpr::getFPToUI(Src, DstTy);
-    }
-    
-    assert(DstTy->isFloatingPoint() && "Unknown real conversion");
-    if (DstTy->getTypeID() < Src->getType()->getTypeID())
-      return llvm::ConstantExpr::getFPTrunc(Src, DstTy);
-    else
-      return llvm::ConstantExpr::getFPExtend(Src, DstTy);
   }
 
 public:
   llvm::Constant *EmitLValue(Expr *E) {
     switch (E->getStmtClass()) {
     default: break;
-    case Expr::ParenExprClass:
-      // Elide parenthesis
-      return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
     case Expr::CompoundLiteralExprClass: {
       // Note that due to the nature of compound literals, this is guaranteed
       // to be the only use of the variable, so we just generate it here.
@@ -526,37 +393,6 @@ public:
       }
       break;
     }
-    case Expr::MemberExprClass: {
-      MemberExpr* ME = cast<MemberExpr>(E);
-      llvm::Constant *Base;
-      if (ME->isArrow())
-        Base = Visit(ME->getBase());
-      else
-        Base = EmitLValue(ME->getBase());
-      if (!Base)
-        return 0;
-
-      FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl());
-      // FIXME: Handle other kinds of member expressions.
-      assert(Field && "No code generation for non-field member expressions");
-      unsigned FieldNumber = CGM.getTypes().getLLVMFieldNo(Field);
-      llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-      llvm::Constant *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty,
-                                                   FieldNumber);
-      llvm::Value *Ops[] = {Zero, Idx};
-      return llvm::ConstantExpr::getGetElementPtr(Base, Ops, 2);
-    }
-    case Expr::ArraySubscriptExprClass: {
-      ArraySubscriptExpr* ASExpr = cast<ArraySubscriptExpr>(E);
-      assert(!ASExpr->getBase()->getType()->isVectorType() &&
-             "Taking the address of a vector component is illegal!");
-
-      llvm::Constant *Base = Visit(ASExpr->getBase());
-      llvm::Constant *Index = Visit(ASExpr->getIdx());
-      if (!Base || !Index)
-        return 0;
-      return llvm::ConstantExpr::getGetElementPtr(Base, &Index, 1);
-    }
     case Expr::StringLiteralClass:
       return CGM.GetAddrOfConstantStringFromLiteral(cast<StringLiteral>(E));
     case Expr::ObjCStringLiteralClass: {
@@ -566,31 +402,6 @@ public:
       llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(S);
       return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
     }
-    case Expr::UnaryOperatorClass: {
-      UnaryOperator *Exp = cast<UnaryOperator>(E);
-      switch (Exp->getOpcode()) {
-      default: break;
-      case UnaryOperator::Extension:
-        // Extension is just a wrapper for expressions
-        return EmitLValue(Exp->getSubExpr());
-      case UnaryOperator::Real:
-      case UnaryOperator::Imag: {
-        // The address of __real or __imag is just a GEP off the address
-        // of the internal expression
-        llvm::Constant* C = EmitLValue(Exp->getSubExpr());
-        llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-        llvm::Constant *Idx  = llvm::ConstantInt::get(llvm::Type::Int32Ty,
-                                       Exp->getOpcode() == UnaryOperator::Imag);
-        llvm::Value *Ops[] = {Zero, Idx};
-        return llvm::ConstantExpr::getGetElementPtr(C, Ops, 2);
-      }
-      case UnaryOperator::Deref:
-        // The address of a deref is just the value of the expression
-        return Visit(Exp->getSubExpr());
-      }
-      break;
-    }
-        
     case Expr::PredefinedExprClass: {
       // __func__/__FUNCTION__ -> "".  __PRETTY_FUNCTION__ -> "top level".
       std::string Str;
