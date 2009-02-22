@@ -3,6 +3,7 @@
 from pprint import pprint
 import random, atexit, time
 from random import randrange
+import re
 
 from Enumeration import *
 from TypeGen import *
@@ -402,9 +403,9 @@ def main():
     group.add_option("", "--no-function-return", dest="functionUseReturn",
                      help="do not generate return types for functions",
                      action="store_false", default=True)
-    group.add_option("", "--vector-sizes", dest="vectorSizes",
-                     help="comma separated list of sizes for vectors [default %default]",
-                     action="store", type=str, default='8,16', metavar="N")
+    group.add_option("", "--vector-types", dest="vectorTypes",
+                     help="comma separated list of vector types (e.g., v2i32) [default %default]",
+                     action="store", type=str, default='v1i64, v2i32, v4i16, v8i8, v2i64, v4i32, v8i16, v16i8, v2f64, v4f32', metavar="N")
 
     group.add_option("", "--max-args", dest="functionMaxArgs",
                      help="maximum number of arguments per function [default %default]",
@@ -446,10 +447,13 @@ def main():
     if opts.useVoidPointer:  builtins.append(('void*',4))
 
     btg = FixedTypeGenerator([BuiltinType(n,s) for n,s in builtins])
-    sbtg = FixedTypeGenerator([BuiltinType('char',1),
-                               BuiltinType('int',4),
-                               BuiltinType('float',4),
-                               BuiltinType('double',8)])
+    charType = BuiltinType('char',1)
+    shortType = BuiltinType('short',2)
+    intType = BuiltinType('int',4)
+    longlongType = BuiltinType('long long',8)
+    floatType = BuiltinType('float',4)
+    doubleType = BuiltinType('double',8)
+    sbtg = FixedTypeGenerator([charType, intType, floatType, doubleType])
 
     atg = AnyTypeGenerator()
     artg = AnyTypeGenerator()
@@ -466,9 +470,25 @@ def main():
             assert subgen 
             atg.addGenerator(ArrayTypeGenerator(subgen, opts.arrayMaxSize))
         if opts.useVector:
-            atg.addGenerator(VectorTypeGenerator(sbtg, 
-                                                 map(int, opts.vectorSizes.split(','))))
-
+            vTypes = []
+            for i,t in enumerate(opts.vectorTypes.split(',')):
+                m = re.match('v([1-9][0-9]*)([if][1-9][0-9]*)', t.strip())
+                if not m:
+                    parser.error('Invalid vector type: %r' % t)
+                count,kind = m.groups()
+                count = int(count)
+                type = { 'i8'  : charType, 
+                         'i16' : shortType, 
+                         'i32' : intType, 
+                         'i64' : longlongType,
+                         'f32' : floatType, 
+                         'f64' : doubleType,
+                         }.get(kind)
+                if not type:
+                    parser.error('Invalid vector type: %r' % t)
+                vTypes.append(ArrayType(i, True, type, count * type.size))
+                
+            atg.addGenerator(FixedTypeGenerator(vTypes))
 
     if opts.recordMaxDepth is None: 
         # Fully recursive, just avoid top-level arrays.
