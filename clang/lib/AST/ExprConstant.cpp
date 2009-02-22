@@ -960,7 +960,7 @@ unsigned IntExprEvaluator::GetAlignOfType(QualType T) {
 
   // Get information about the alignment.
   unsigned CharSize = Info.Ctx.Target.getCharWidth();
-  return Info.Ctx.getTypeAlign(Ty) / CharSize;
+  return Info.Ctx.getPreferredTypeAlign(Ty) / CharSize;
 }
 
 unsigned IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
