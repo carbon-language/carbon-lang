@@ -1536,7 +1536,7 @@ bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
     // strength reduction would increase register pressure.
     do {
       SCEV *CurImm = UsersToProcess[i].Imm;
-      if (CurImm || Imm && CurImm != Imm) {
+      if ((CurImm || Imm) && CurImm != Imm) {
         if (!CurImm) CurImm = SE->getIntegerSCEV(0, Stride->getType());
         if (!Imm)       Imm = SE->getIntegerSCEV(0, Stride->getType());
         const Instruction *Inst = UsersToProcess[i].Inst;
