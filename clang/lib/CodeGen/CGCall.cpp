@@ -842,11 +842,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     // COMPLEX_X87, it is passed in memory.
   case X87:
   case ComplexX87:
-    // Choose appropriate in memory type.
-    if (Ty->isVectorType() || CodeGenFunction::hasAggregateLLVMType(Ty))
-      return ABIArgInfo::getIndirect(0);
-    else
-      return ABIArgInfo::getDirect();
+    return ABIArgInfo::getIndirect(0);
 
   case SSEUp:
   case X87Up:
@@ -922,11 +918,7 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
       freeIntRegs -= neededInt;
       freeSSERegs -= neededSSE;
     } else {
-      // Choose appropriate in memory type.
-      if (CodeGenFunction::hasAggregateLLVMType(it->type))
-        it->info = ABIArgInfo::getIndirect(0);
-      else
-        it->info = ABIArgInfo::getDirect();
+      it->info = ABIArgInfo::getIndirect(0);
     }
   }
 }
