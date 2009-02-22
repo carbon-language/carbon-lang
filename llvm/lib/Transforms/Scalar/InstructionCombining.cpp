@@ -9286,7 +9286,7 @@ unsigned InstCombiner::GetOrEnforceKnownAlignment(Value *V,
 
 Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   unsigned DstAlign = GetOrEnforceKnownAlignment(MI->getOperand(1));
-  unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getOperand(2), DstAlign);
+  unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getOperand(2));
   unsigned MinAlign = std::min(DstAlign, SrcAlign);
   unsigned CopyAlign = MI->getAlignment()->getZExtValue();
 
