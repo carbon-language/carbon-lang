@@ -72,8 +72,9 @@ def RetCC_X86_64_C : CallingConv<[
   CCIfType<[f32], CCAssignToReg<[XMM0, XMM1]>>,
   CCIfType<[f64], CCAssignToReg<[XMM0, XMM1]>>,
 
-  // MMX vector types are always returned in XMM0.
-  CCIfType<[v8i8, v4i16, v2i32, v1i64, v2f32], CCAssignToReg<[XMM0, XMM1]>>,
+  // MMX vector types are always returned in RAX. This seems to disagree with
+  // ABI documentation but is bug compatible with gcc.
+  CCIfType<[v8i8, v4i16, v2i32, v1i64, v2f32], CCAssignToReg<[RAX]>>,
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
