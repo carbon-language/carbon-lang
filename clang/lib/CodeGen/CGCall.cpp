@@ -497,6 +497,10 @@ void X86_64ABIInfo::classify(QualType Ty,
   // class for Class pairs with appropriate constructor methods for
   // the various situations.
 
+  // FIXME: Some of the split computations are wrong; unaligned
+  // vectors shouldn't be passed in registers for example, so there is
+  // no chance they can straddle an eightbyte. Verify & simplify.
+
   Lo = Hi = NoClass;
 
   Class &Current = OffsetBase < 64 ? Lo : Hi;
@@ -523,7 +527,18 @@ void X86_64ABIInfo::classify(QualType Ty,
     Current = Integer;
   } else if (const VectorType *VT = Ty->getAsVectorType()) {
     uint64_t Size = Context.getTypeSize(VT);
-    if (Size == 64) {
+    if (Size == 32) {
+      // gcc passes all <4 x char>, <2 x short>, <1 x int>, <1 x
+      // float> as integer.      
+      Current = Integer;
+
+      // If this type crosses an eightbyte boundary, it should be
+      // split.
+      uint64_t EB_Real = (OffsetBase) / 64;
+      uint64_t EB_Imag = (OffsetBase + Size - 1) / 64;
+      if (EB_Real != EB_Imag)
+        Hi = Lo;      
+    } else if (Size == 64) {
       // gcc passes <1 x double> in memory. :(
       if (VT->getElementType()->isSpecificBuiltinType(BuiltinType::Double))
         return;
