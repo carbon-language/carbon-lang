@@ -84,6 +84,7 @@ static bool HandleConversionToBool(Expr* E, bool& Result, EvalInfo &Info) {
     Result = PointerResult.getLValueBase() || PointerResult.getLValueOffset();
     return true;
   }
+  // FIXME: Handle pointer-like types, complex types
 
   return false;
 }
@@ -143,11 +144,6 @@ public:
   LValueExprEvaluator(EvalInfo &info) : Info(info) {}
 
   APValue VisitStmt(Stmt *S) {
-#if 0
-    // FIXME: Remove this when we support more expressions.
-    printf("Unhandled pointer statement\n");
-    S->dump();  
-#endif
     return APValue();
   }
 
@@ -159,6 +155,7 @@ public:
   APValue VisitStringLiteral(StringLiteral *E) { return APValue(E, 0); }
   APValue VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   APValue VisitUnaryDeref(UnaryOperator *E);
+  // FIXME: Missing: __extension__, __real__, __imag__, __builtin_choose_expr
 };
 } // end anonymous namespace
 
@@ -264,7 +261,9 @@ public:
 
   APValue VisitBinaryOperator(const BinaryOperator *E);
   APValue VisitCastExpr(const CastExpr* E);
-  APValue VisitUnaryOperator(const UnaryOperator *E);
+  APValue VisitUnaryExtension(const UnaryOperator *E)
+      { return Visit(E->getSubExpr()); }
+  APValue VisitUnaryAddrOf(const UnaryOperator *E);
   APValue VisitObjCStringLiteral(ObjCStringLiteral *E)
       { return APValue(E, 0); }
   APValue VisitAddrLabelExpr(AddrLabelExpr *E)
@@ -276,6 +275,8 @@ public:
     return APValue();
   }
   APValue VisitConditionalOperator(ConditionalOperator *E);
+  // FIXME: Missing: __builtin_choose_expr, ImplicitValueInitExpr, comma,
+  //                 @encode, @protocol, @selector
 };
 } // end anonymous namespace
 
@@ -330,18 +331,10 @@ APValue PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   return APValue(ResultLValue.getLValueBase(), Offset);
 }
 
-APValue PointerExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
-  if (E->getOpcode() == UnaryOperator::Extension) {
-    // FIXME: Deal with warnings?
-    return Visit(E->getSubExpr());
-  }
-
-  if (E->getOpcode() == UnaryOperator::AddrOf) {
-    APValue result;
-    if (EvaluateLValue(E->getSubExpr(), result, Info))
-      return result;
-  }
-
+APValue PointerExprEvaluator::VisitUnaryAddrOf(const UnaryOperator *E) {
+  APValue result;
+  if (EvaluateLValue(E->getSubExpr(), result, Info))
+    return result;
   return APValue();
 }
   
@@ -423,6 +416,13 @@ namespace {
     APValue VisitCastExpr(const CastExpr* E);
     APValue VisitCompoundLiteralExpr(const CompoundLiteralExpr *E);
     APValue VisitInitListExpr(const InitListExpr *E);
+    // FIXME: Missing: __builtin_choose_expr, ImplicitValueInitExpr,
+    //                 __extension__, unary +/-, unary ~,
+    //                 __real__/__imag__, binary add/sub/mul/div,
+    //                 binary comparisons, binary and/or/xor,
+    //                 conditional ?:, shufflevector, ExtVectorElementExpr
+    //        (Note that some of these would require acutually implementing
+    //         conversions between vector types.)
   };
 } // end anonymous namespace
 
@@ -600,6 +600,9 @@ public:
 private:
   unsigned GetAlignOfExpr(const Expr *E);
   unsigned GetAlignOfType(QualType T);
+  // FIXME: Missing: __real__/__imag__, array subscript of vector,
+  //                 member of vector, __builtin_choose_expr,
+  //                 ImplicitValueInitExpr
 };
 } // end anonymous namespace
 
@@ -1126,6 +1129,9 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     return true;
   }
 
+  // FIXME: Handle complex types
+  // FIXME: Handle vectors
+
   if (!SrcType->isRealFloatingType())
     return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
 
@@ -1161,6 +1167,11 @@ public:
   bool VisitFloatingLiteral(const FloatingLiteral *E);
   bool VisitCastExpr(CastExpr *E);
   bool VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
+
+  // FIXME: Missing: __real__/__imag__, __extension__, 
+  //                 array subscript of vector, member of vector, 
+  //                 __builtin_choose_expr, ImplicitValueInitExpr,
+  //                 conditional ?:, comma
 };
 } // end anonymous namespace
 
@@ -1262,9 +1273,6 @@ bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   case BinaryOperator::Div:
     Result.divide(RHS, APFloat::rmNearestTiesToEven);
     return true;
-  case BinaryOperator::Rem:
-    Result.mod(RHS, APFloat::rmNearestTiesToEven);
-    return true;
   }
 }
 
@@ -1291,6 +1299,7 @@ bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
                                     Result, Info.Ctx);
     return true;
   }
+  // FIXME: Handle complex types
 
   return false;
 }
@@ -1422,7 +1431,9 @@ public:
   }
   
   APValue VisitBinaryOperator(const BinaryOperator *E);
-
+  // FIXME Missing: unary +/-/~, __extension__, binary div,
+  //                __builtin_choose_expr, ImplicitValueInitExpr,
+  //                conditional ?:, comma
 };
 } // end anonymous namespace
 
