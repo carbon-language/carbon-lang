@@ -279,9 +279,15 @@ public:
 };
 } // end anonymous namespace
 
+static bool HasPointerEvalType(const Expr* E) {
+  return E->getType()->isPointerType()
+         || E->getType()->isBlockPointerType()
+         || E->getType()->isObjCQualifiedIdType()
+         || E->getType()->isObjCQualifiedClassType();
+}
+
 static bool EvaluatePointer(const Expr* E, APValue& Result, EvalInfo &Info) {
-  if (!E->getType()->isPointerType()
-      && !E->getType()->isBlockPointerType())
+  if (!HasPointerEvalType(E))
     return false;
   Result = PointerExprEvaluator(Info).Visit(const_cast<Expr*>(E));
   return Result.isLValue();
@@ -1519,8 +1525,7 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
   } else if (getType()->isIntegerType()) {
     if (!IntExprEvaluator(Info, Result.Val).Visit(const_cast<Expr*>(this)))
       return false;
-  } else if (getType()->isPointerType()
-             || getType()->isBlockPointerType()) {
+  } else if (HasPointerEvalType(this)) {
     if (!EvaluatePointer(this, Result.Val, Info))
       return false;
   } else if (getType()->isRealFloatingType()) {

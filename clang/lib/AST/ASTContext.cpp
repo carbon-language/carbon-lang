@@ -387,6 +387,7 @@ ASTContext::getTypeInfo(const Type *T) {
     // alignment requirements: getPointerInfo should take an AddrSpace.
     return getTypeInfo(QualType(cast<ExtQualType>(T)->getBaseType(), 0));
   case Type::ObjCQualifiedId:
+  case Type::ObjCQualifiedClass:
     Width = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
     break;
