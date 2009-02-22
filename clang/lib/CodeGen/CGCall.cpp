@@ -524,11 +524,15 @@ void X86_64ABIInfo::classify(QualType Ty,
   } else if (const VectorType *VT = Ty->getAsVectorType()) {
     uint64_t Size = Context.getTypeSize(VT);
     if (Size == 64) {
-      // gcc passes <1 x double> in memory.
-      if (VT->getElementType() == Context.DoubleTy)
+      // gcc passes <1 x double> in memory. :(
+      if (VT->getElementType()->isSpecificBuiltinType(BuiltinType::Double))
         return;
-
-      Current = SSE;
+      
+      // gcc passes <1 x long long> as INTEGER.
+      if (VT->getElementType()->isSpecificBuiltinType(BuiltinType::LongLong))
+        Current = Integer;
+      else
+        Current = SSE;
 
       // If this type crosses an eightbyte boundary, it should be
       // split.
@@ -542,7 +546,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     QualType ET = Context.getCanonicalType(CT->getElementType());
     
     uint64_t Size = Context.getTypeSize(Ty);
-    if (ET->isIntegerType()) {
+    if (ET->isIntegralType()) {
       if (Size <= 64)
         Current = Integer;
       else if (Size <= 128)
@@ -688,8 +692,9 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
   if (CoerceTo == llvm::Type::Int64Ty) {
     // Integer and pointer types will end up in a general purpose
     // register.
-    if (Ty->isIntegerType() || Ty->isPointerType())
+    if (Ty->isIntegralType() || Ty->isPointerType())
       return ABIArgInfo::getDirect();
+
   } else if (CoerceTo == llvm::Type::DoubleTy) {
     // FIXME: It would probably be better to make CGFunctionInfo only
     // map using canonical types than to canonize here.
@@ -698,6 +703,7 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
     // Float and double end up in a single SSE reg.
     if (CTy == Context.FloatTy || CTy == Context.DoubleTy)
       return ABIArgInfo::getDirect();
+
   }
 
   return ABIArgInfo::getCoerce(CoerceTo);
