@@ -1,3 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
 
-char *a = (void*)(unsigned long long)(void*)&a;
+#include <stdint.h>
+
+char *a = (void*)(uintptr_t)(void*)&a;

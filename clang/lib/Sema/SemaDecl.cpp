@@ -2371,6 +2371,12 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
+  if (Init->isConstantInitializer(Context)) {
+    return false;
+  }
+  InitializerElementNotConstant(Init);
+  return true;
+
   if (DesignatedInitExpr *DIE = dyn_cast<DesignatedInitExpr>(Init))
     Init = DIE->getInit();
 
