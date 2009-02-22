@@ -134,6 +134,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   // Keep track of the current cleanup stack depth.
   size_t CleanupStackDepth = CleanupEntries.size();
   bool OldDidCallStackSave = DidCallStackSave;
+  DidCallStackSave = false;
   
   for (CompoundStmt::const_body_iterator I = S.body_begin(),
        E = S.body_end()-GetLast; I != E; ++I)
