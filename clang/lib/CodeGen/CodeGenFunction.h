@@ -293,12 +293,7 @@ public:
   }
   uint64_t getBlockOffset(ValueDecl *D) {
     uint64_t Size = getContext().getTypeSize(D->getType()) / 8;
-
-    unsigned Align = getContext().getTypeAlign(D->getType());
-    if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
-        Align = std::max(Align, AA->getAlignment());
-
-    return getBlockOffset(Size, Align);
+    return getBlockOffset(Size, getContext().getDeclAlignInBytes(D)*8);
   }
   std::map<Decl*, uint64_t> BlockDecls;
 
