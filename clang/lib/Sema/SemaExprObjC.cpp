@@ -392,7 +392,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   // long as one of the protocols implements the selector (if not, warn).
   if (ObjCQualifiedIdType *QIT = dyn_cast<ObjCQualifiedIdType>(ReceiverCType)) {
     // Search protocols for instance methods.
-    ReceiverCType.dump();
     for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
       ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
       if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
