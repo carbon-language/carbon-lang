@@ -120,7 +120,7 @@ static NamingConvention deriveNamingConvention(const char* s) {
       // Methods starting with 'alloc' or contain 'copy' follow the
       // create rule
       if ((AtBeginning && StringsEqualNoCase("alloc", s, len)) ||
-          (StringsEqualNoCase("copy", s, len)))
+          (C == NoConvention && StringsEqualNoCase("copy", s, len)))
         C = CreateRule;
       else // Methods starting with 'init' follow the init rule.
         if (AtBeginning && StringsEqualNoCase("init", s, len))
