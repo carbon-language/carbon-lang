@@ -102,7 +102,7 @@ struct {
 int bbb[10];
 
 struct foo2 {
-   unsigned a;
+   uintptr_t a;
 };
 
 struct foo2 bar2[] = {
