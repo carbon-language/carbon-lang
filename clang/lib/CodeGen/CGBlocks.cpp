@@ -193,13 +193,8 @@ const llvm::Type *CodeGenModule::getBlockDescriptorType() {
                                               UnsignedLongTy,
                                               NULL);
 
-  // FIXME: This breaks an unrelated testcase in the testsuite, we
-  // _want_ llvm to not use structural equality, sometimes.  What
-  // should we do, modify the testcase and do this anyway, or...
-#if 0
   getModule().addTypeName("struct.__block_descriptor",
                           BlockDescriptorType);
-#endif
 
   return BlockDescriptorType;
 }
@@ -232,7 +227,6 @@ CodeGenModule::getGenericBlockLiteralType() {
                                                   BlockDescPtrTy,
                                                   NULL);
 
-  // FIXME: See struct.__block_descriptor
   getModule().addTypeName("struct.__block_literal_generic",
                           GenericBlockLiteralType);
 
@@ -271,7 +265,6 @@ CodeGenModule::getGenericExtendedBlockLiteralType() {
                                                           Int8PtrTy,
                                                           NULL);
 
-  // FIXME: See struct.__block_descriptor
   getModule().addTypeName("struct.__block_literal_extended_generic",
                           GenericExtendedBlockLiteralType);
 
@@ -312,8 +305,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
 
   // Get the function pointer from the literal.
   llvm::Value *FuncPtr = Builder.CreateStructGEP(BlockLiteral, 3, "tmp");
-  // FIXME: second argument should be false?
-  llvm::Value *Func = Builder.CreateLoad(FuncPtr, FuncPtr, "tmp");
+  llvm::Value *Func = Builder.CreateLoad(FuncPtr, false, "tmp");
 
   // Cast the function pointer to the right type.
   const llvm::Type *BlockFTy =

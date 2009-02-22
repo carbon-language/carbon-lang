@@ -616,14 +616,8 @@ Value *ScalarExprEmitter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
 
   // See if we have already allocated an offset for this variable.
   if (offset == 0) {
-    int Size = CGF.CGM.getTargetData().getTypeStoreSizeInBits(Ty) / 8;
-
-    unsigned Align = CGF.CGM.getContext().getTypeAlign(E->getDecl()->getType());
-    if (const AlignedAttr* AA = E->getDecl()->getAttr<AlignedAttr>())
-        Align = std::max(Align, AA->getAlignment());
-
     // if not, allocate one now.
-    offset = CGF.getBlockOffset(Size, Align);
+    offset = CGF.getBlockOffset(E->getDecl());
   }
 
   llvm::Value *BlockLiteral = CGF.LoadBlockStruct();

@@ -286,14 +286,19 @@ public:
     assert (((Align & 7) == 0)
             && "alignment must be on at least byte boundaries");
     // Ensure proper alignment, even if it means we have to have a gap
-    if (BlockOffset % (Align >> 3)) {
-      BlockOffset += (Align >> 3) - (BlockOffset % (Align >> 3));
-      assert ((BlockOffset % (Align >> 3)) == 0
-              && "alignment calculation is wrong");
-    }
+    BlockOffset = llvm::RoundUpToAlignment(BlockOffset, Align/8);
       
     BlockOffset += Size;
     return BlockOffset-Size;
+  }
+  uint64_t getBlockOffset(ValueDecl *D) {
+    uint64_t Size = getContext().getTypeSize(D->getType()) / 8;
+
+    unsigned Align = getContext().getTypeAlign(D->getType());
+    if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
+        Align = std::max(Align, AA->getAlignment());
+
+    return getBlockOffset(Size, Align);
   }
   std::map<Decl*, uint64_t> BlockDecls;
 
