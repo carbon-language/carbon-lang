@@ -843,7 +843,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
   case X87:
   case ComplexX87:
     // Choose appropriate in memory type.
-    if (CodeGenFunction::hasAggregateLLVMType(Ty))
+    if (Ty->isVectorType() || CodeGenFunction::hasAggregateLLVMType(Ty))
       return ABIArgInfo::getIndirect(0);
     else
       return ABIArgInfo::getDirect();
