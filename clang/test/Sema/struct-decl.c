@@ -22,3 +22,14 @@ int foo() {
         struct st *f;
         return f->v + f[0].v;
 }
+
+// PR3642
+struct pppoe_tag {
+ short tag_type;
+ char tag_data[];
+};
+struct datatag {
+ struct pppoe_tag hdr; //expected-error{{variable sized type 'hdr' must be at end of struct}}
+ char data;
+};
+

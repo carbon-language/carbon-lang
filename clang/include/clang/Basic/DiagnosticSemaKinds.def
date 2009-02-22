@@ -728,7 +728,7 @@ DIAG(err_field_declared_as_function, ERROR,
      "field %0 declared as a function")
 DIAG(err_field_incomplete, ERROR,
      "field has incomplete type %0")
-DIAG(err_variable_sized_type_in_struct, EXTENSION,
+DIAG(err_variable_sized_type_in_struct, ERROR,
      "variable sized type %0 must be at end of struct or class")
 DIAG(err_flexible_array_empty_struct, ERROR,
      "flexible array %0 not allowed in otherwise empty struct")
