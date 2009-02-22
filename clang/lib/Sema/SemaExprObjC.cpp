@@ -397,9 +397,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
         break;
     }
-    if (!Method)
-      Diag(lbrac, diag::warn_method_not_found_in_protocol)
-        << Sel << RExpr->getSourceRange();
   // Check for GCC extension "Class<foo>".
   } else if (ObjCQualifiedClassType *QIT = 
                dyn_cast<ObjCQualifiedClassType>(ReceiverCType)) {
@@ -409,9 +406,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
         break;
     }
-    if (!Method)
-      Diag(lbrac, diag::warn_method_not_found_in_protocol)
-        << Sel << RExpr->getSourceRange();
   } else if (const ObjCInterfaceType *OCIReceiver = 
                 ReceiverCType->getAsPointerToObjCInterfaceType()) {
     // We allow sending a message to a pointer to an interface (an object).
@@ -422,19 +416,29 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     // The idea is to add class info to InstanceMethodPool.
     Method = ClassDecl->lookupInstanceMethod(Sel);
     
+    bool haveQualifiers = false;
     if (!Method) {
       // Search protocol qualifiers.
       for (ObjCQualifiedIdType::qual_iterator QI = OCIReceiver->qual_begin(),
            E = OCIReceiver->qual_end(); QI != E; ++QI) {
+        haveQualifiers = true;
         if ((Method = (*QI)->lookupInstanceMethod(Sel)))
           break;
       }
     }
-    
-    if (!Method && !OCIReceiver->qual_empty())
-      Diag(lbrac, diag::warn_method_not_found_in_protocol)
-        << Sel << SourceRange(lbrac, rbrac);
-    
+    if (!Method) {
+      // If we have an implementation in scope, check "private" methods.
+      if (ClassDecl)
+        if (ObjCImplementationDecl *ImpDecl = 
+              ObjCImplementations[ClassDecl->getIdentifier()])
+          Method = ImpDecl->getInstanceMethod(Sel);
+          // If we still haven't found a method, look in the global pool. This
+          // behavior isn't very desirable, however we need it for GCC
+          // compatibility. FIXME: should we deviate??
+          if (!Method && !haveQualifiers)
+            Method = LookupInstanceMethodInGlobalPool(
+                                 Sel, SourceRange(lbrac,rbrac));
+    }
     if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
       return true;
   } else {
@@ -443,19 +447,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     return true;
   }
   
-  if (!Method) {
-    // If we have an implementation in scope, check "private" methods.
-    if (ClassDecl)
-      if (ObjCImplementationDecl *ImpDecl = 
-            ObjCImplementations[ClassDecl->getIdentifier()])
-        Method = ImpDecl->getInstanceMethod(Sel);
-        // If we still haven't found a method, look in the global pool. This
-        // behavior isn't very desirable, however we need it for GCC
-        // compatibility.
-        if (!Method)
-          Method = LookupInstanceMethodInGlobalPool(
-                               Sel, SourceRange(lbrac,rbrac));
-  }
   if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                 lbrac, rbrac, returnType))
     return true;

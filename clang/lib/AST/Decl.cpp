@@ -13,6 +13,7 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
@@ -194,6 +195,10 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
     // For function declarations, we keep track of redeclarations.
     return FD->getPreviousDeclaration() == OldD;
 
+  // For method declarations, we keep track of redeclarations.
+  if (isa<ObjCMethodDecl>(this))
+    return false;
+    
   // For non-function declarations, if the declarations are of the
   // same kind then this must be a redeclaration, or semantic analysis
   // would not have given us the new declaration.

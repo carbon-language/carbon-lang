@@ -916,8 +916,6 @@ DIAG(error_no_super_class, ERROR,
      "no super class declared in @interface for %0")
 DIAG(err_invalid_receiver_to_message, ERROR,
      "invalid receiver to message expression")
-DIAG(warn_method_not_found_in_protocol, WARNING,
-     "method %objcinstance0 not found in protocol (return type defaults to 'id')")
 DIAG(error_bad_receiver_type, ERROR,
      "bad receiver type %0")
 DIAG(error_objc_throw_expects_object, ERROR,

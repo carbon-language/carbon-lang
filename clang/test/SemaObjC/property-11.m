@@ -22,7 +22,10 @@
   NSSound *x;
   id o;
 
-  o = [x foo]; 
+  // GCC does *not* warn about the following. Since foo/setFoo: are not in the
+  // class or category interface for NSSound, the compiler shouldn't find them.
+  // For now, we will support GCC's behavior (sigh).
+  o = [x foo];
   o = x.foo;
   [x setFoo:o];
   x.foo = o;

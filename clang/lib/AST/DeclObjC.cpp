@@ -14,6 +14,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Stmt.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -42,21 +43,42 @@ void ObjCListBase::set(void *const* InList, unsigned Elts, ASTContext &Ctx) {
 //===----------------------------------------------------------------------===//
 
 // Get the local instance method declared in this interface.
-// FIXME: handle overloading, instance & class methods can have the same name.
 ObjCMethodDecl *ObjCContainerDecl::getInstanceMethod(Selector Sel) const {
-  lookup_const_result MethodResult = lookup(Sel);
-  if (MethodResult.first)
-    return const_cast<ObjCMethodDecl*>(
-                        dyn_cast<ObjCMethodDecl>(*MethodResult.first));
+  // Since instance & class methods can have the same name, the loop below
+  // ensures we get the correct method.
+  //
+  // @interface Whatever
+  // - (int) class_method;
+  // + (float) class_method;
+  // @end
+  //
+  lookup_const_iterator Meth, MethEnd;
+  for (llvm::tie(Meth, MethEnd) = lookup(Sel);
+       Meth != MethEnd; ++Meth) {
+    ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
+    if (MD && MD->isInstanceMethod())
+      return MD;
+  }
   return 0;
 }
 
 // Get the local class method declared in this interface.
 ObjCMethodDecl *ObjCContainerDecl::getClassMethod(Selector Sel) const {
-  lookup_const_result MethodResult = lookup(Sel);
-  if (MethodResult.first)
-    return const_cast<ObjCMethodDecl*>(
-                           dyn_cast<ObjCMethodDecl>(*MethodResult.first));
+  // Since instance & class methods can have the same name, the loop below
+  // ensures we get the correct method.
+  //
+  // @interface Whatever
+  // - (int) class_method;
+  // + (float) class_method;
+  // @end
+  //
+  lookup_const_iterator Meth, MethEnd;
+  for (llvm::tie(Meth, MethEnd) = lookup(Sel);
+       Meth != MethEnd; ++Meth) {
+    ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
+    if (MD && MD->isClassMethod())
+      return MD;
+  }
   return 0;
 }
 
