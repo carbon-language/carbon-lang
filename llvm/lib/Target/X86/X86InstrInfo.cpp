@@ -691,7 +691,6 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   case X86::MOVSD2PDrr:
   case X86::MOVPS2SSrr:
   case X86::MOVPD2SDrr:
-  case X86::MMX_MOVD64rr:
   case X86::MMX_MOVQ64rr:
     assert(MI.getNumOperands() >= 2 &&
            MI.getOperand(0).isReg() &&
