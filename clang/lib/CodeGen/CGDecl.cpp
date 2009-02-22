@@ -172,10 +172,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       const llvm::Type *LTy = ConvertType(Ty);
       llvm::AllocaInst *Alloc =
         CreateTempAlloca(LTy, CGM.getMangledName(&D));
-      unsigned align = getContext().getTypeAlign(Ty);
-      if (const AlignedAttr* AA = D.getAttr<AlignedAttr>())
-        align = std::max(align, AA->getAlignment());
-      Alloc->setAlignment(align >> 3);
+      Alloc->setAlignment(getContext().getDeclAlignInBytes(&D));
       DeclPtr = Alloc;
     } else {
       // Targets that don't support recursion emit locals as globals.
