@@ -117,5 +117,4 @@ def getHostInfo(driver):
     if handler:
         return handler(driver)
 
-    driver.warning('Unknown host %r, using generic host information.' % system)
     return UnknownHostInfo(driver)
