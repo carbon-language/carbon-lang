@@ -353,8 +353,7 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT VT, SDValue Mask) const {
           }
         }
       }
-      Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getDebugLoc(),
-                         NVT, &Ops[0], Ops.size());
+      Mask = DAG.getBUILD_VECTOR(NVT, Mask.getDebugLoc(), &Ops[0], Ops.size());
     }
     VT = NVT;
     break;
@@ -931,7 +930,7 @@ SDValue SelectionDAGLegalize::UnrollVectorOp(SDValue Op) {
     }
   }
 
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Scalars[0], Scalars.size());
+  return DAG.getBUILD_VECTOR(VT, dl, &Scalars[0], Scalars.size());
 }
 
 /// GetFPLibCall - Return the right libcall for the given floating point type.
@@ -1290,7 +1289,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
         unsigned Line = DSP->getLine();
         unsigned Col = DSP->getColumn();
-
         const Function *F = DAG.getMachineFunction().getFunction();
 
         if (!F->hasFnAttr(Attribute::OptimizeForSize)) {
@@ -1676,8 +1674,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             else
               ShufOps.push_back(DAG.getConstant(NumElts, ShufMaskEltVT));
           }
-          SDValue ShufMask = DAG.getNode(ISD::BUILD_VECTOR, dl, ShufMaskVT,
-                                           &ShufOps[0], ShufOps.size());
+          SDValue ShufMask = DAG.getBUILD_VECTOR(ShufMaskVT, dl,
+                                                 &ShufOps[0], ShufOps.size());
 
           Result = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, Tmp1.getValueType(),
                                Tmp1, ScVec, ShufMask);
@@ -1756,7 +1754,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                       DAG.getConstant(Idx - NumElems, PtrVT)));
         }
       }
-      Result = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], Ops.size());
+      Result = DAG.getBUILD_VECTOR(VT, dl, &Ops[0], Ops.size());
       break;
     }
     case TargetLowering::Promote: {
@@ -1808,8 +1806,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                   DAG.getConstant(j, PtrVT)));
       }
     }
-    return LegalizeOp(DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0),
-                      &Ops[0], Ops.size()));
+    return LegalizeOp(DAG.getBUILD_VECTOR(Node->getValueType(0), dl,
+                                          &Ops[0], Ops.size()));
   }
 
   case ISD::CALLSEQ_START: {
@@ -3162,7 +3160,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                   APInt::getAllOnesValue(EltVT.getSizeInBits()),
                                   EltVT), DAG.getConstant(0, EltVT));
       }
-      Result = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], NumElems);
+      Result = DAG.getBUILD_VECTOR(VT, dl, &Ops[0], NumElems);
       break;
     }
     }
@@ -5557,8 +5555,8 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     MVT MaskVT = MVT::getIntVectorWithNumElements(NumElems);
     SDValue Zero = DAG.getConstant(0, MaskVT.getVectorElementType());
     std::vector<SDValue> ZeroVec(NumElems, Zero);
-    SDValue SplatMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT,
-                                      &ZeroVec[0], ZeroVec.size());
+    SDValue SplatMask = DAG.getBUILD_VECTOR(MaskVT, dl,
+                                            &ZeroVec[0], ZeroVec.size());
 
     // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
     if (isShuffleLegal(Node->getValueType(0), SplatMask)) {
@@ -5610,8 +5608,8 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
       else
         MaskVec[Val2Elts[i]] = DAG.getUNDEF(MaskEltVT);
 
-    SDValue ShuffleMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT,
-                                        &MaskVec[0], MaskVec.size());
+    SDValue ShuffleMask = DAG.getBUILD_VECTOR(MaskVT, dl,
+                                              &MaskVec[0], MaskVec.size());
 
     // If the target supports SCALAR_TO_VECTOR and this shuffle mask, use it.
     if (TLI.isOperationLegalOrCustom(ISD::SCALAR_TO_VECTOR,
@@ -5957,7 +5955,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source, DebugLoc dl) {
       SDValue Scalar = ScalarizeVectorOp(Source);
       SDValue Result = LegalizeINT_TO_FP(SDValue(), isSigned,
                                          DestEltTy, Scalar, dl);
-      return DAG.getNode(ISD::BUILD_VECTOR, dl, DestTy, Result);
+      return DAG.getBUILD_VECTOR(DestTy, dl, Result);
     }
     SDValue Lo, Hi;
     SplitVectorOp(Source, Lo, Hi);
@@ -7572,7 +7570,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
       Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NewEltVT, InVec,
                                 DAG.getConstant(Idx, PtrVT)));
     }
-    Lo = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT_Lo, &Ops[0], Ops.size());
+    Lo = DAG.getBUILD_VECTOR(NewVT_Lo, dl, &Ops[0], Ops.size());
     Ops.clear();
 
     for (unsigned i = NewNumElts_Lo; i != NumElements; ++i) {
@@ -7590,17 +7588,17 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
       Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NewEltVT, InVec,
                                 DAG.getConstant(Idx, PtrVT)));
     }
-    Hi = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT_Hi, &Ops[0], Ops.size());
+    Hi = DAG.getBUILD_VECTOR(NewVT_Hi, dl, &Ops[0], Ops.size());
     break;
   }
   case ISD::BUILD_VECTOR: {
     SmallVector<SDValue, 8> LoOps(Node->op_begin(),
                                     Node->op_begin()+NewNumElts_Lo);
-    Lo = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT_Lo, &LoOps[0], LoOps.size());
+    Lo = DAG.getBUILD_VECTOR(NewVT_Lo, dl, &LoOps[0], LoOps.size());
 
     SmallVector<SDValue, 8> HiOps(Node->op_begin()+NewNumElts_Lo,
                                     Node->op_end());
-    Hi = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT_Hi, &HiOps[0], HiOps.size());
+    Hi = DAG.getBUILD_VECTOR(NewVT_Hi, dl, &HiOps[0], HiOps.size());
     break;
   }
   case ISD::CONCAT_VECTORS: {
@@ -8066,8 +8064,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
     for (unsigned i = NumElts; i < NewNumElts; ++i) {
       NewOps.push_back(DAG.getUNDEF(EVT));
     }
-    Result = DAG.getNode(ISD::BUILD_VECTOR, dl, WidenVT,
-                         &NewOps[0], NewOps.size());
+    Result = DAG.getBUILD_VECTOR(WidenVT, dl, &NewOps[0], NewOps.size());
     break;
   }
   case ISD::INSERT_VECTOR_ELT: {
@@ -8104,9 +8101,8 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
       NewOps.push_back(DAG.getUNDEF(PVT));
     }
 
-    SDValue Tmp3 = DAG.getNode(ISD::BUILD_VECTOR, dl,
-                               MVT::getVectorVT(PVT, NewOps.size()),
-                               &NewOps[0], NewOps.size());
+    SDValue Tmp3 = DAG.getBUILD_VECTOR(MVT::getVectorVT(PVT, NewOps.size()), dl,
+                                       &NewOps[0], NewOps.size());
 
     Result = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, WidenVT, Tmp1, Tmp2, Tmp3);
     break;
@@ -8152,7 +8148,7 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
         Ops[i] = UndefVal;
 
       MVT NewInVT = MVT::getVectorVT(InVT, NewNumElts);
-      Result = DAG.getNode(ISD::BUILD_VECTOR, dl, NewInVT, &Ops[0], NewNumElts);
+      Result = DAG.getBUILD_VECTOR(NewInVT, dl, &Ops[0], NewNumElts);
       Result = DAG.getNode(ISD::BIT_CONVERT, dl, WidenVT, Result);
     }
     break;

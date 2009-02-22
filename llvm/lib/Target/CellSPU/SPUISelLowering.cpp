@@ -920,7 +920,7 @@ LowerConstantFP(SDValue Op, SelectionDAG &DAG) {
 
     uint64_t dbits = DoubleToBits(FP->getValueAPF().convertToDouble());
     SDValue T = DAG.getConstant(dbits, MVT::i64);
-    SDValue Tvec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i64, T, T);
+    SDValue Tvec = DAG.getBUILD_VECTOR(MVT::v2i64, dl, T, T);
     return DAG.getNode(SPUISD::VEC2PREFSLOT, dl, VT,
                        DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2f64, Tvec));
   }
@@ -1620,8 +1620,7 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     // NOTE: pretend the constant is an integer. LLVM won't load FP constants
     SDValue T = DAG.getConstant(Value32, MVT::i32);
     return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v4f32,
-                       DAG.getNode(ISD::BUILD_VECTOR, dl, 
-                                   MVT::v4i32, T, T, T, T));
+                       DAG.getBUILD_VECTOR(MVT::v4i32, dl, T, T, T, T));
     break;
   }
   case MVT::v2f64: {
@@ -1631,7 +1630,7 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     // NOTE: pretend the constant is an integer. LLVM won't load FP constants
     SDValue T = DAG.getConstant(f64val, MVT::i64);
     return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2f64,
-                       DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i64, T, T));
+                       DAG.getBUILD_VECTOR(MVT::v2i64, dl, T, T));
     break;
   }
   case MVT::v16i8: {
@@ -1641,7 +1640,7 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
    for (int i = 0; i < 8; ++i)
      Ops[i] = DAG.getConstant(Value16, MVT::i16);
    return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
-                      DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i16, Ops, 8));
+                      DAG.getBUILD_VECTOR(MVT::v8i16, dl, Ops, 8));
   }
   case MVT::v8i16: {
     unsigned short Value16;
@@ -1652,17 +1651,17 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     SDValue T = DAG.getConstant(Value16, VT.getVectorElementType());
     SDValue Ops[8];
     for (int i = 0; i < 8; ++i) Ops[i] = T;
-    return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops, 8);
+    return DAG.getBUILD_VECTOR(VT, dl, Ops, 8);
   }
   case MVT::v4i32: {
     unsigned int Value = SplatBits;
     SDValue T = DAG.getConstant(Value, VT.getVectorElementType());
-    return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, T, T, T, T);
+    return DAG.getBUILD_VECTOR(VT, dl, T, T, T, T);
   }
   case MVT::v2i32: {
     unsigned int Value = SplatBits;
     SDValue T = DAG.getConstant(Value, VT.getVectorElementType());
-    return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, T, T);
+    return DAG.getBUILD_VECTOR(VT, dl, T, T);
   }
   case MVT::v2i64: {
     return SPU::LowerSplat_v2i64(VT, DAG, SplatBits, dl);
@@ -1682,8 +1681,8 @@ SPU::LowerSplat_v2i64(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
     // Magic constant that can be matched by IL, ILA, et. al.
     SDValue Val = DAG.getTargetConstant(upper, MVT::i32);
     return DAG.getNode(ISD::BIT_CONVERT, dl, OpVT,
-                       DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                                   Val, Val, Val, Val));
+                       DAG.getBUILD_VECTOR(MVT::v4i32, dl,
+                                           Val, Val, Val, Val));
   } else {
     SDValue LO32;
     SDValue HI32;
@@ -1703,16 +1702,16 @@ SPU::LowerSplat_v2i64(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
     if (!lower_special) {
       SDValue LO32C = DAG.getConstant(lower, MVT::i32);
       LO32 = DAG.getNode(ISD::BIT_CONVERT, dl, OpVT,
-                         DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                                     LO32C, LO32C, LO32C, LO32C));
+                         DAG.getBUILD_VECTOR(MVT::v4i32, dl,
+                                             LO32C, LO32C, LO32C, LO32C));
     }
 
     // Create upper vector if not a special pattern
     if (!upper_special) {
       SDValue HI32C = DAG.getConstant(upper, MVT::i32);
       HI32 = DAG.getNode(ISD::BIT_CONVERT, dl, OpVT,
-                         DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                                     HI32C, HI32C, HI32C, HI32C));
+                         DAG.getBUILD_VECTOR(MVT::v4i32, dl,
+                                             HI32C, HI32C, HI32C, HI32C));
     }
 
     // If either upper or lower are special, then the two input operands are
@@ -1725,8 +1724,8 @@ SPU::LowerSplat_v2i64(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
       // Unhappy situation... both upper and lower are special, so punt with
       // a target constant:
       SDValue Zero = DAG.getConstant(0, MVT::i32);
-      HI32 = LO32 = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Zero, Zero,
-                                Zero, Zero);
+      HI32 = LO32 = DAG.getBUILD_VECTOR(MVT::v4i32, dl, Zero, Zero,
+	  				Zero, Zero);
     }
 
     for (int i = 0; i < 4; ++i) {
@@ -1756,8 +1755,8 @@ SPU::LowerSplat_v2i64(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
     }
 
     return DAG.getNode(SPUISD::SHUFB, dl, OpVT, HI32, LO32,
-                       DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                                   &ShufBytes[0], ShufBytes.size()));
+                       DAG.getBUILD_VECTOR(MVT::v4i32, dl,
+					   &ShufBytes[0], ShufBytes.size()));
   }
 }
 
@@ -1886,8 +1885,8 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       }
     }
 
-    SDValue VPermMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8,
-                                    &ResultMask[0], ResultMask.size());
+    SDValue VPermMask = DAG.getBUILD_VECTOR(MVT::v16i8, dl,
+                                            &ResultMask[0], ResultMask.size());
     return DAG.getNode(SPUISD::SHUFB, dl, V1.getValueType(), V1, V2, VPermMask);
   }
 }
@@ -1921,8 +1920,8 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
     for (size_t j = 0; j < n_copies; ++j)
       ConstVecValues.push_back(CValue);
 
-    return DAG.getNode(ISD::BUILD_VECTOR, dl, Op.getValueType(),
-                       &ConstVecValues[0], ConstVecValues.size());
+    return DAG.getBUILD_VECTOR(Op.getValueType(), dl,
+                               &ConstVecValues[0], ConstVecValues.size());
   } else {
     // Otherwise, copy the value from one register to another:
     switch (Op0.getValueType().getSimpleVT()) {
@@ -2022,9 +2021,9 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
       ShufMask[i] = DAG.getConstant(bits, MVT::i32);
     }
 
-    SDValue ShufMaskVec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                                      &ShufMask[0],
-                                      sizeof(ShufMask) / sizeof(ShufMask[0]));
+    SDValue ShufMaskVec =
+      DAG.getBUILD_VECTOR(MVT::v4i32, dl,
+                          &ShufMask[0], sizeof(ShufMask)/sizeof(ShufMask[0]));
 
     retval = DAG.getNode(SPUISD::VEC2PREFSLOT, dl, VT,
                          DAG.getNode(SPUISD::SHUFB, dl, N.getValueType(),
@@ -2067,29 +2066,29 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
       /*NOTREACHED*/
     case MVT::i8: {
       SDValue factor = DAG.getConstant(0x00000000, MVT::i32);
-      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, factor, factor,
-                              factor, factor);
+      replicate = DAG.getBUILD_VECTOR(MVT::v4i32, dl, factor, factor,
+                                      factor, factor);
       break;
     }
     case MVT::i16: {
       SDValue factor = DAG.getConstant(0x00010001, MVT::i32);
-      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, factor, factor,
-                              factor, factor);
+      replicate = DAG.getBUILD_VECTOR(MVT::v4i32, dl, factor, factor,
+                                      factor, factor);
       break;
     }
     case MVT::i32:
     case MVT::f32: {
       SDValue factor = DAG.getConstant(0x00010203, MVT::i32);
-      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, factor, factor,
-                              factor, factor);
+      replicate = DAG.getBUILD_VECTOR(MVT::v4i32, dl, factor, factor,
+                                      factor, factor);
       break;
     }
     case MVT::i64:
     case MVT::f64: {
       SDValue loFactor = DAG.getConstant(0x00010203, MVT::i32);
       SDValue hiFactor = DAG.getConstant(0x04050607, MVT::i32);
-      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, 
-                              loFactor, hiFactor, loFactor, hiFactor);
+      replicate = DAG.getBUILD_VECTOR(MVT::v4i32, dl,
+                                      loFactor, hiFactor, loFactor, hiFactor);
       break;
     }
     }
@@ -2249,8 +2248,8 @@ SDValue SPU::getCarryGenerateShufMask(SelectionDAG &DAG, DebugLoc dl) {
   ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
   ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
 
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                     &ShufBytes[0], ShufBytes.size());
+  return DAG.getBUILD_VECTOR(MVT::v4i32, dl,
+                             &ShufBytes[0], ShufBytes.size());
 }
 
 //! Generate the borrow-generate shuffle mask
@@ -2264,8 +2263,8 @@ SDValue SPU::getBorrowGenerateShufMask(SelectionDAG &DAG, DebugLoc dl) {
   ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
   ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
 
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                     &ShufBytes[0], ShufBytes.size());
+  return DAG.getBUILD_VECTOR(MVT::v4i32, dl,
+                             &ShufBytes[0], ShufBytes.size());
 }
 
 //! Lower byte immediate operations for v16i8 vectors:
@@ -2309,8 +2308,7 @@ LowerByteImmed(SDValue Op, SelectionDAG &DAG) {
         tcVec[i] = tc;
 
       return DAG.getNode(Op.getNode()->getOpcode(), dl, VT, Arg,
-                         DAG.getNode(ISD::BUILD_VECTOR, dl, VT, 
-                                     tcVec, tcVecSize));
+                         DAG.getBUILD_VECTOR(VT, dl, tcVec, tcVecSize));
     }
   }
 
@@ -2663,11 +2661,11 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
     unsigned maskHigh = 0x08090a0b;
     unsigned maskLow = 0x0c0d0e0f;
     // Use a shuffle to perform the truncation
-    SDValue shufMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                                   DAG.getConstant(maskHigh, MVT::i32),
-                                   DAG.getConstant(maskLow, MVT::i32),
-                                   DAG.getConstant(maskHigh, MVT::i32),
-                                   DAG.getConstant(maskLow, MVT::i32));
+    SDValue shufMask = DAG.getBUILD_VECTOR(MVT::v4i32, dl,
+                                           DAG.getConstant(maskHigh, MVT::i32),
+                                           DAG.getConstant(maskLow, MVT::i32),
+                                           DAG.getConstant(maskHigh, MVT::i32),
+                                           DAG.getConstant(maskLow, MVT::i32));
 
 
     SDValue PromoteScalar = DAG.getNode(SPUISD::PREFSLOT2VEC, dl, 

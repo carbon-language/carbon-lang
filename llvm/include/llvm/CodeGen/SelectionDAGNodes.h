@@ -1929,6 +1929,73 @@ public:
   }
 };
 
+/// BuildVectorSDNode - A container for ISD::BUILD_VECTOR. This is used to
+/// encapsulate common BUILD_VECTOR code and operations such as constant splat
+/// testing.
+class BuildVectorSDNode : public SDNode {
+  //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+  // Constant splat state:
+  //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+  //! We've computed the splat already?
+  bool computedSplat;
+  //! It is a splat?
+  bool isSplatVector;
+  //! Splat has undefined bits in it
+  bool hasUndefSplatBitsFlag;
+  //! The splat value
+  uint64_t SplatBits;
+  //! The undefined part of the splat
+  uint64_t SplatUndef;
+  //! The splat's size (1, 2, 4 or 8 bytes)
+  unsigned SplatSize;
+
+protected:
+  friend class SelectionDAG;
+
+  //! Arbitrary element ISD::BUILD_VECTOR constructor
+  explicit BuildVectorSDNode(MVT vecVT, DebugLoc dl, const SDValue *Elts,
+                             unsigned NumElts);
+
+public:
+  //! Constant splat predicate.
+  /*!
+   Determine if this ISD::BUILD_VECTOR is a constant splat. The results are
+   cached to prevent recomputation.
+
+   @param MinSplatBits: minimum number of bits in the constant splat, defaults
+          to 0 for 'don't care', but normally one of [8, 16, 32, 64].
+   @return true if the splat has the required minimum number of bits and the
+           splat really is a constant splat (accounting for undef bits).
+   */
+  bool isConstantSplat(int MinSplatBits = 0);
+
+  //! Get the splatbits
+  uint64_t getSplatBits() const {
+    assert(computedSplat && "BuildVectorSDNode: compute splat bits first!");
+    return SplatBits;
+  }
+
+  uint64_t getSplatUndef() const {
+    assert(computedSplat && "BuildVectorSDNode: compute splat bits first!");
+    return SplatUndef;
+  }
+
+  unsigned getSplatSize() const {
+    assert(computedSplat && "BuildVectorSDNode: compute splat bits first!");
+    return SplatSize;
+  }
+
+  bool hasAnyUndefBits() const {
+    assert(computedSplat && "BuildVectorSDNode: compute splat bits first!");
+    return hasUndefSplatBitsFlag;
+  }
+
+  static bool classof(const BuildVectorSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::BUILD_VECTOR;
+  }
+};
+
 /// SrcValueSDNode - An SDNode that holds an arbitrary LLVM IR Value. This is
 /// used when the SelectionDAG needs to make a simple reference to something
 /// in the LLVM IR representation.

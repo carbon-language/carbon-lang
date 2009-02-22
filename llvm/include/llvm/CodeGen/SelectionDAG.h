@@ -403,6 +403,14 @@ public:
                    (unsigned)Ops.size() - (InFlag.getNode() == 0 ? 1 : 0));
   }
 
+  /// getBUILD_VECTOR - Return a new BUILD_VECTOR node
+  SDValue getBUILD_VECTOR(MVT vecVT, DebugLoc dl, SDValue E1);
+  SDValue getBUILD_VECTOR(MVT vecVT, DebugLoc dl, SDValue E1, SDValue E2);
+  SDValue getBUILD_VECTOR(MVT vecVT, DebugLoc dl, SDValue E1, SDValue E2,
+                          SDValue E3, SDValue E4);
+  SDValue getBUILD_VECTOR(MVT vecVT, DebugLoc dl, const SDValue *Elts,
+                          unsigned NumElts);
+
   /// getUNDEF - Return an UNDEF node.  UNDEF does not have a useful DebugLoc.
   SDValue getUNDEF(MVT VT) {
     return getNode(ISD::UNDEF, DebugLoc::getUnknownLoc(), VT);
