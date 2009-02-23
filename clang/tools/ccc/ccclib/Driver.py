@@ -228,10 +228,11 @@ class Driver(object):
             try:
                 self.executeJobs(args, jobs)
             except:
-                for f in self.resultFiles:
-                    # Fail if removing a result fails:
-                    if os.path.exists(f):
-                        os.remove(f)
+                if not args.getLastArg(self.parser.saveTempsOption):
+                    for f in self.resultFiles:
+                        # Fail if removing a result fails:
+                        if os.path.exists(f):
+                            os.remove(f)
                 raise
         finally:
             for f in self.tempFiles:
