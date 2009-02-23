@@ -12419,6 +12419,8 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
           DBI_Prev->eraseFromParent();
         }
         DBI_Prev = DBI_Next;
+      } else {
+        DBI_Prev = 0;
       }
 
       IC.AddToWorkList(Inst);
