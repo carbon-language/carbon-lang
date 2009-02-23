@@ -274,9 +274,11 @@ public:
       return APValue(E, 0);
     return APValue();
   }
+  APValue VisitImplicitValueInitExpr(ImplicitValueInitExpr *E)
+      { return APValue((Expr*)0, 0); }
   APValue VisitConditionalOperator(ConditionalOperator *E);
-  // FIXME: Missing: __builtin_choose_expr, ImplicitValueInitExpr, comma,
-  //                 @encode, @protocol, @selector
+  APValue VisitChooseExpr(ChooseExpr *E);
+  // FIXME: Missing: @encode, @protocol, @selector
 };
 } // end anonymous namespace
 
@@ -396,6 +398,15 @@ APValue PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
   return APValue();
 }
 
+APValue PointerExprEvaluator::VisitChooseExpr(ChooseExpr *E) {
+  Expr* EvalExpr = E->isConditionTrue(Info.Ctx) ? E->getLHS() : E->getRHS();
+
+  APValue Result;
+  if (EvaluatePointer(EvalExpr, Result, Info))
+    return Result;
+  return APValue();
+}
+
 //===----------------------------------------------------------------------===//
 // Vector Evaluation
 //===----------------------------------------------------------------------===//
@@ -404,6 +415,7 @@ namespace {
   class VISIBILITY_HIDDEN VectorExprEvaluator
   : public StmtVisitor<VectorExprEvaluator, APValue> {
     EvalInfo &Info;
+    APValue GetZeroVector(QualType VecType);
   public:
     
     VectorExprEvaluator(EvalInfo &info) : Info(info) {}
@@ -412,17 +424,27 @@ namespace {
       return APValue();
     }
     
-    APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+    APValue VisitParenExpr(ParenExpr *E)
+        { return Visit(E->getSubExpr()); }
+    APValue VisitUnaryExtension(const UnaryOperator *E)
+      { return Visit(E->getSubExpr()); }
+    APValue VisitUnaryPlus(const UnaryOperator *E)
+      { return Visit(E->getSubExpr()); }
+    APValue VisitUnaryReal(const UnaryOperator *E)
+      { return Visit(E->getSubExpr()); }
+    APValue VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E)
+      { return GetZeroVector(E->getType()); }
     APValue VisitCastExpr(const CastExpr* E);
     APValue VisitCompoundLiteralExpr(const CompoundLiteralExpr *E);
     APValue VisitInitListExpr(const InitListExpr *E);
-    // FIXME: Missing: __builtin_choose_expr, ImplicitValueInitExpr,
-    //                 __extension__, unary +/-, unary ~,
-    //                 __real__/__imag__, binary add/sub/mul/div,
+    APValue VisitConditionalOperator(const ConditionalOperator *E);
+    APValue VisitChooseExpr(const ChooseExpr *E);
+    APValue VisitUnaryImag(const UnaryOperator *E);
+    // FIXME: Missing: unary -, unary ~, binary add/sub/mul/div,
     //                 binary comparisons, binary and/or/xor,
-    //                 conditional ?:, shufflevector, ExtVectorElementExpr
-    //        (Note that some of these would require acutually implementing
-    //         conversions between vector types.)
+    //                 shufflevector, ExtVectorElementExpr
+    //        (Note that these require implementing conversions
+    //         between vector types.)
   };
 } // end anonymous namespace
 
@@ -452,27 +474,76 @@ APValue
 VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   const VectorType *VT = E->getType()->getAsVectorType();
   unsigned NumInits = E->getNumInits();
-
-  if (!VT || VT->getNumElements() != NumInits)
-    return APValue();
+  unsigned NumElements = VT->getNumElements();
   
   QualType EltTy = VT->getElementType();
   llvm::SmallVector<APValue, 4> Elements;
 
-  for (unsigned i = 0; i < NumInits; i++) {
+  for (unsigned i = 0; i < NumElements; i++) {
     if (EltTy->isIntegerType()) {
       llvm::APSInt sInt(32);
-      if (!EvaluateInteger(E->getInit(i), sInt, Info))
-        return APValue();
+      if (i < NumInits) {
+        if (!EvaluateInteger(E->getInit(i), sInt, Info))
+          return APValue();
+      } else {
+        sInt = Info.Ctx.MakeIntValue(0, EltTy);
+      }
       Elements.push_back(APValue(sInt));
     } else {
       llvm::APFloat f(0.0);
-      if (!EvaluateFloat(E->getInit(i), f, Info))
-        return APValue();
+      if (i < NumInits) {
+        if (!EvaluateFloat(E->getInit(i), f, Info))
+          return APValue();
+      } else {
+        f = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy));
+      }
       Elements.push_back(APValue(f));
     }
   }
   return APValue(&Elements[0], Elements.size());
+}
+
+APValue 
+VectorExprEvaluator::GetZeroVector(QualType T) {
+  const VectorType *VT = T->getAsVectorType();
+  QualType EltTy = VT->getElementType();
+  APValue ZeroElement;
+  if (EltTy->isIntegerType())
+    ZeroElement = APValue(Info.Ctx.MakeIntValue(0, EltTy));
+  else
+    ZeroElement =
+        APValue(APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy)));
+
+  llvm::SmallVector<APValue, 4> Elements(VT->getNumElements(), ZeroElement);
+  return APValue(&Elements[0], Elements.size());
+}
+
+APValue VectorExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
+  bool BoolResult;
+  if (!HandleConversionToBool(E->getCond(), BoolResult, Info))
+    return APValue();
+
+  Expr* EvalExpr = BoolResult ? E->getTrueExpr() : E->getFalseExpr();
+
+  APValue Result;
+  if (EvaluateVector(EvalExpr, Result, Info))
+    return Result;
+  return APValue();
+}
+
+APValue VectorExprEvaluator::VisitChooseExpr(const ChooseExpr *E) {
+  Expr* EvalExpr = E->isConditionTrue(Info.Ctx) ? E->getLHS() : E->getRHS();
+
+  APValue Result;
+  if (EvaluateVector(EvalExpr, Result, Info))
+    return Result;
+  return APValue();
+}
+
+APValue VectorExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
+  if (!E->getSubExpr()->isEvaluatable(Info.Ctx))
+    Info.EvalResult.HasSideEffects = true;
+  return GetZeroVector(E->getType());
 }
 
 //===----------------------------------------------------------------------===//

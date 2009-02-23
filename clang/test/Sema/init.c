@@ -110,3 +110,12 @@ struct foo2 bar2[] = {
 };
 
 struct foo2 bar3 = { 1, 2 }; // expected-warning{{excess elements in struct initializer}}
+
+int* ptest1 = __builtin_choose_expr(1, (int*)0, (int*)0);
+
+typedef int32_t ivector4 __attribute((vector_size(16)));
+ivector4 vtest1 = 1 ? (ivector4){1} : (ivector4){1};
+ivector4 vtest2 = __builtin_choose_expr(1, (ivector4){1}, (ivector4){1});
+ivector4 vtest3 = __real__ (ivector4){1};
+ivector4 vtest4 = __imag__ (ivector4){1};
+
