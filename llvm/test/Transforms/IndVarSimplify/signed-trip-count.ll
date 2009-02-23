@@ -1,7 +1,6 @@
 ; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
-; RUN: grep { = sext i32 %n} %t
+; RUN: not grep sext %t
 ; RUN: grep phi %t | count 1
-; RUN: not grep zext %t
 
 define void @foo(i64* nocapture %x, i32 %n) nounwind {
 entry:

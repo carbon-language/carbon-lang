@@ -1,7 +1,5 @@
 ; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
-; RUN: grep sext %t | count 2
-; RUN: grep { = sext i16 %N to i64} %t
-; RUN: grep { = sext i32 %count to i64} %t
+; RUN: not grep sext %t
 
 define i64 @test(i64* nocapture %first, i32 %count) nounwind readonly {
 entry:
