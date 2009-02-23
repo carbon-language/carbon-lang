@@ -589,8 +589,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     addRegisterClass(MVT::v2f32, X86::VR64RegisterClass);
     addRegisterClass(MVT::v1i64, X86::VR64RegisterClass);
 
-    // FIXME: add MMX packed arithmetics
-
     setOperationAction(ISD::ADD,                MVT::v8i8,  Legal);
     setOperationAction(ISD::ADD,                MVT::v4i16, Legal);
     setOperationAction(ISD::ADD,                MVT::v2i32, Legal);
@@ -997,12 +995,15 @@ SDValue X86TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
       continue;
     }
 
-    // 64-bit vector (MMX) values are returned in RAX.
+    // 64-bit vector (MMX) values are returned in XMM0 / XMM1 except for v1i64
+    // which is returned in RAX / RDX.
     if (Subtarget->is64Bit()) {
       MVT ValVT = ValToCopy.getValueType();
-      if (VA.getLocReg() == X86::RAX &&
-          ValVT.isVector() && ValVT.getSizeInBits() == 64)
+      if (ValVT.isVector() && ValVT.getSizeInBits() == 64) {
         ValToCopy = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i64, ValToCopy);
+        if (VA.getLocReg() == X86::XMM0 || VA.getLocReg() == X86::XMM1)
+          ValToCopy = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2i64, ValToCopy);
+      }
     }
 
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), ValToCopy, Flag);
@@ -1081,10 +1082,18 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
 
     SDValue Val;
     if (Is64Bit && CopyVT.isVector() && CopyVT.getSizeInBits() == 64) {
-      // For x86-64, MMX values are returned in RAX.
-      Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
-                                 MVT::i64, InFlag).getValue(1);
-      Val = Chain.getValue(0);
+      // For x86-64, MMX values are returned in XMM0 / XMM1 except for v1i64.
+      if (VA.getLocReg() == X86::XMM0 || VA.getLocReg() == X86::XMM1) {
+        Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
+                                   MVT::v2i64, InFlag).getValue(1);
+        Val = Chain.getValue(0);
+        Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64,
+                          Val, DAG.getConstant(0, MVT::i64));        
+      } else {
+        Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
+                                   MVT::i64, InFlag).getValue(1);
+        Val = Chain.getValue(0);
+      }
       Val = DAG.getNode(ISD::BIT_CONVERT, dl, CopyVT, Val);
     } else {
       Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
@@ -6706,7 +6715,7 @@ SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Node->getDebugLoc();
   MVT T = Node->getValueType(0);
   SDValue negOp = DAG.getNode(ISD::SUB, dl, T,
-                                DAG.getConstant(0, T), Node->getOperand(2));
+                              DAG.getConstant(0, T), Node->getOperand(2));
   return DAG.getAtomic(ISD::ATOMIC_LOAD_ADD, dl,
                        cast<AtomicSDNode>(Node)->getMemoryVT(),
                        Node->getOperand(0),

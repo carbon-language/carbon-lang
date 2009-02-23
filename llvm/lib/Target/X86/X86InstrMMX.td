@@ -156,10 +156,12 @@ def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR64:$src),
 
 let neverHasSideEffects = 1 in
 def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
-                             "movd\t{$src, $dst|$dst, $src}", []>;
+                             "movd\t{$src, $dst|$dst, $src}",
+                             []>;
 
 let neverHasSideEffects = 1 in
-def MMX_MOVD64from64rr : MMXRI<0x7E, MRMSrcReg, (outs GR64:$dst), (ins VR64:$src),
+def MMX_MOVD64from64rr : MMXRI<0x7E, MRMSrcReg,
+                               (outs GR64:$dst), (ins VR64:$src),
                                "movd\t{$src, $dst|$dst, $src}", []>;
 
 let neverHasSideEffects = 1 in
@@ -186,6 +188,10 @@ def MMX_MOVQ2DQrr : SSDIi8<0xD6, MRMDestMem, (outs VR128:$dst), (ins VR64:$src),
                 (v2i64 (vector_shuffle immAllZerosV,
                         (v2i64 (scalar_to_vector (i64 (bitconvert VR64:$src)))),
                         MOVL_shuffle_mask)))]>;
+
+let neverHasSideEffects = 1 in
+def MMX_MOVQ2FR64rr: SSDIi8<0xD6, MRMDestMem, (outs FR64:$dst), (ins VR64:$src),
+                           "movq2dq\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_MOVNTQmr  : MMXI<0xE7, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
                          "movntq\t{$src, $dst|$dst, $src}",
@@ -575,9 +581,17 @@ def : Pat<(i64 (bitconvert (v4i16 VR64:$src))),
           (MMX_MOVD64from64rr VR64:$src)>;
 def : Pat<(i64  (bitconvert (v8i8 VR64:$src))),
           (MMX_MOVD64from64rr VR64:$src)>;
+def : Pat<(f64 (bitconvert (v1i64 VR64:$src))),
+          (MMX_MOVQ2FR64rr VR64:$src)>;
+def : Pat<(f64 (bitconvert (v2i32 VR64:$src))),
+          (MMX_MOVQ2FR64rr VR64:$src)>;
+def : Pat<(f64 (bitconvert (v4i16 VR64:$src))),
+          (MMX_MOVQ2FR64rr VR64:$src)>;
+def : Pat<(f64 (bitconvert (v8i8 VR64:$src))),
+          (MMX_MOVQ2FR64rr VR64:$src)>;
 
-// Move scalar to XMM zero-extended
-// movd to XMM register zero-extends
+// Move scalar to MMX zero-extended
+// movd to MMX register zero-extends
 let AddedComplexity = 15 in {
   def : Pat<(v8i8 (X86vzmovl (bc_v8i8 (v2i32 (scalar_to_vector GR32:$src))))),
            (MMX_MOVZDI2PDIrr GR32:$src)>; 
@@ -667,7 +681,13 @@ def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV_bc))),
           (MMX_PANDNrm VR64:$src1, addr:$src2)>;
 
 // Move MMX to lower 64-bit of XMM
-def : Pat<(v2i64 (scalar_to_vector (i64 (bitconvert VR64:$src)))),
+def : Pat<(v2i64 (scalar_to_vector (i64 (bitconvert (v8i8 VR64:$src))))),
+          (v2i64 (MMX_MOVQ2DQrr VR64:$src))>;
+def : Pat<(v2i64 (scalar_to_vector (i64 (bitconvert (v4i16 VR64:$src))))),
+          (v2i64 (MMX_MOVQ2DQrr VR64:$src))>;
+def : Pat<(v2i64 (scalar_to_vector (i64 (bitconvert (v2i32 VR64:$src))))),
+          (v2i64 (MMX_MOVQ2DQrr VR64:$src))>;
+def : Pat<(v2i64 (scalar_to_vector (i64 (bitconvert (v1i64 VR64:$src))))),
           (v2i64 (MMX_MOVQ2DQrr VR64:$src))>;
 
 // Move lower 64-bit of XMM to MMX.

@@ -10,8 +10,17 @@ entry:
         ret void
 }
 
+declare <1 x i64> @return_v1di()
+
 define <1 x i64> @t2() nounwind {
 	ret <1 x i64> <i64 1>
 }
 
-declare <1 x i64> @return_v1di()
+define <2 x i32> @t3() nounwind {
+	ret <2 x i32> <i32 1, i32 0>
+}
+
+define double @t4() nounwind {
+	ret double bitcast (<2 x i32> <i32 1, i32 0> to double)
+}
+
