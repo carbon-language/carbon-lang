@@ -596,7 +596,7 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
   
 public:
-  RetainSummary* getUnarySummary(FunctionType* FT, UnaryFuncKind func);
+  RetainSummary* getUnarySummary(const FunctionType* FT, UnaryFuncKind func);
   
   RetainSummary* getCFSummaryCreateRule(FunctionDecl* FD);
   RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);  
@@ -829,9 +829,9 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       break;
     }
     
-    // [PR 3337] Use 'getDesugaredType' to strip away any typedefs on the
+    // [PR 3337] Use 'getAsFunctionType' to strip away any typedefs on the
     // function's type.
-    FunctionType* FT = cast<FunctionType>(FD->getType()->getDesugaredType());
+    const FunctionType* FT = FD->getType()->getAsFunctionType();
     const char* FName = FD->getIdentifier()->getName();
     
     // Inspect the result type.
@@ -943,10 +943,12 @@ RetainSummaryManager::getCFCreateGetRuleSummary(FunctionDecl* FD,
 }
 
 RetainSummary*
-RetainSummaryManager::getUnarySummary(FunctionType* FT, UnaryFuncKind func) {
+RetainSummaryManager::getUnarySummary(const FunctionType* FT,
+                                      UnaryFuncKind func) {
+
   // Sanity check that this is *really* a unary function.  This can
   // happen if people do weird things.
-  FunctionTypeProto* FTP = dyn_cast<FunctionTypeProto>(FT);
+  const FunctionTypeProto* FTP = dyn_cast<FunctionTypeProto>(FT);
   if (!FTP || FTP->getNumArgs() != 1)
     return getPersistentStopSummary();
   
