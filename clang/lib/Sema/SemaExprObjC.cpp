@@ -309,6 +309,22 @@ Sema::ExprResult Sema::ActOnClassMessage(
                                          lbrac, rbrac, ArgExprs, NumArgs);
 }
 
+// This routine makes sure we handle the following:
+//
+// [(Object <Func> *)super class_func0];
+// [(id <Func>)super class_func0];
+//
+static bool isSuperExpr(Stmt *S) {
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI) {
+    if (*CI)
+      return isSuperExpr(*CI);
+  }
+  if (isa<ObjCSuperExpr>(S))
+    return true;
+  return false;
+}
+
 // ActOnInstanceMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
@@ -327,7 +343,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     Context.getCanonicalType(RExpr->getType()).getUnqualifiedType();
 
   // Handle messages to 'super'.
-  if (isa<ObjCSuperExpr>(RExpr)) {
+  if (isSuperExpr(RExpr)) {
     ObjCMethodDecl *Method = 0;
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
       // If we have an interface in scope, check 'super' methods.
@@ -364,17 +380,23 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   if (ReceiverCType == Context.getCanonicalType(Context.getObjCClassType())) {
     ObjCMethodDecl *Method = 0;
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
-      // If we have an implementation in scope, check "private" methods.
-      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCImplementationDecl *ImpDecl = 
-              ObjCImplementations[ClassDecl->getIdentifier()])
-          Method = ImpDecl->getClassMethod(Sel);
-      
+      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface()) {
+        // First check the public methods in the class interface.
+        Method = ClassDecl->lookupClassMethod(Sel);
+        
+        if (!Method) {
+          // If we have an implementation in scope, check "private" methods.
+          if (ObjCImplementationDecl *ImpDecl = 
+                ObjCImplementations[ClassDecl->getIdentifier()])
+            Method = ImpDecl->getClassMethod(Sel);
+        }
+      }
       if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
         return true;
-    }
-    if (!Method)
+    } else {
+      // We're not in a method context, look for any factory method named 'Sel'.
       Method = FactoryMethodPool[Sel].Method;
+    }
     if (!Method)
       Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
