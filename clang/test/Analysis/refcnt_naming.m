@@ -16,6 +16,8 @@ typedef signed char BOOL;
 -(NSObject*)__blebPRCopy; // read as "bleb PRCopy"
 -(NSObject*)__blebPRcopy; // read as "bleb P Rcopy"
 -(NSObject*)new_theprefixdoesnotcount; // read as "theprefixdoesnotcount"
+-(NSObject*)newestAwesomeStuff; // read as "newest awesome stuff"
+
 @end
 
 @interface MyClass : NSObject
@@ -48,6 +50,7 @@ void testNames(NamingTest* x) {
   [x __blebPRCopy]; // expected-warning{{leak}}
   [x __blebPRcopy]; // no-warning
   [x new_theprefixdoesnotcount]; // no-warning
+  [x newestAwesomeStuff]; // no-warning
 }
 
 
