@@ -202,6 +202,13 @@ public:
 
     return 0;
   }
+  
+  /// getMaxElement - Returns the <key,value> pair in the ImmutableMap for
+  ///  which key is the highest in the ordering of keys in the map.  This
+  ///  method returns NULL if the map is empty.
+  value_type* getMaxElement() const {
+    return Root ? &(Root->getMaxElement()) : 0;
+  }
 
   //===--------------------------------------------------===//
   // Utility methods.

@@ -86,6 +86,15 @@ public:
 
     return NULL;
   }
+  
+  /// getMaxElement - Find the subtree associated with the highest ranged
+  ///  key value.
+  ImutAVLTree* getMaxElement() {
+    ImutAVLTree *T = this;
+    ImutAVLTree *Right = T->getRight();    
+    while (Right) { T = Right; Right = T->getRight(); }
+    return T;
+  }
 
   /// size - Returns the number of nodes in the tree, which includes
   ///  both leaves and non-leaf nodes.
