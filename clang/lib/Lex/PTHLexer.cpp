@@ -822,7 +822,6 @@ public:
     return data_type();
   }
 };
-}
 
 class VISIBILITY_HIDDEN PTHStatCache : public StatSysCallCache {
   typedef OnDiskChainedHashTable<PTHStatLookupTrait> CacheTy;
@@ -855,6 +854,7 @@ public:
     return 0;
   }
 };
+} // end anonymous namespace
 
 StatSysCallCache *PTHManager::createStatCache() {
   return new PTHStatCache(*((PTHFileLookup*) FileLookup));
