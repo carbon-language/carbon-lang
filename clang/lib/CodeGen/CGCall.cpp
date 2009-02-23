@@ -1517,7 +1517,6 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   }
   if (FuncAttrs)
     PAL.push_back(llvm::AttributeWithIndex::get(~0, FuncAttrs));
-
 }
 
 void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
@@ -1763,26 +1762,46 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       break;
     }
   }
-  
-  llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
 
+  llvm::BasicBlock *InvokeDest = getInvokeDest();
   CodeGen::AttributeListType AttributeList;
   CGM.ConstructAttributeList(CallInfo, TargetDecl, AttributeList);
-  CI->setAttributes(llvm::AttrListPtr::get(AttributeList.begin(), 
-                                           AttributeList.size()));  
+  llvm::AttrListPtr Attrs = llvm::AttrListPtr::get(AttributeList.begin(),
+                                                   AttributeList.end());
   
-  if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
-    CI->setCallingConv(F->getCallingConv());
+  llvm::Instruction *CI;
+  if (!InvokeDest || Attrs.getFnAttributes() & (llvm::Attribute::NoUnwind ||
+                                                llvm::Attribute::NoReturn)) {
+    llvm::CallInst *CallInstr = 
+      Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
+    CI = CallInstr;
 
-  // If the call doesn't return, finish the basic block and clear the
-  // insertion point; this allows the rest of IRgen to discard
-  // unreachable code.
-  if (CI->doesNotReturn()) {
-    Builder.CreateUnreachable();
-    Builder.ClearInsertionPoint();
+    CallInstr->setAttributes(Attrs);
+    if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
+      CallInstr->setCallingConv(F->getCallingConv());
 
-    // Return a reasonable RValue.
-    return GetUndefRValue(RetTy);
+    // If the call doesn't return, finish the basic block and clear the
+    // insertion point; this allows the rest of IRgen to discard
+    // unreachable code.
+    if (CallInstr->doesNotReturn()) {
+      Builder.CreateUnreachable();
+      Builder.ClearInsertionPoint();
+      
+      // Return a reasonable RValue.
+      return GetUndefRValue(RetTy);
+    }    
+  } else {
+    llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
+    llvm::InvokeInst *InvokeInstr = 
+      Builder.CreateInvoke(Callee, Cont, InvokeDest, 
+                           &Args[0], &Args[0]+Args.size());
+    CI = InvokeInstr;
+
+    InvokeInstr->setAttributes(Attrs);
+    if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
+      InvokeInstr->setCallingConv(F->getCallingConv());
+
+    EmitBlock(Cont);
   }
 
   if (CI->getType() != llvm::Type::VoidTy)

@@ -25,7 +25,7 @@ using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm) 
   : CGM(cgm), Target(CGM.getContext().Target), DebugInfo(0), SwitchInsn(0), 
-    CaseRangeBlock(0) {
+    CaseRangeBlock(0), InvokeDest(0) {
   LLVMIntTy = ConvertType(getContext().IntTy);
   LLVMPointerWidth = Target.getPointerWidth(0);
 

@@ -190,6 +190,10 @@ private:
   /// statement range in current switch instruction.
   llvm::BasicBlock *CaseRangeBlock;
 
+  /// InvokeDest - This is the nearest exception target for calls
+  /// which can unwind, when exceptions are being used.
+  llvm::BasicBlock *InvokeDest;
+
   // VLASizeMap - This keeps track of the associated size for each VLA type.
   // FIXME: Maybe this could be a stack of maps that is pushed/popped as we
   // enter/leave scopes.
@@ -232,6 +236,13 @@ public:
 
   ASTContext &getContext() const;
   CGDebugInfo *getDebugInfo() { return DebugInfo; }
+
+  llvm::BasicBlock *getInvokeDest() { return InvokeDest; }
+  void setInvokeDest(llvm::BasicBlock *B) { InvokeDest = B; }
+
+  //===--------------------------------------------------------------------===//
+  //                                  Objective-C
+  //===--------------------------------------------------------------------===//
 
   void GenerateObjCMethod(const ObjCMethodDecl *OMD);
 
