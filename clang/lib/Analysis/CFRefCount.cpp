@@ -221,7 +221,8 @@ enum ArgEffect { IncRefMsg, IncRef,
                  DecRefMsg, DecRef,
                  MakeCollectable,
                  DoNothing, DoNothingByRef,
-                 StopTracking, MayEscape, SelfOwn, Autorelease };
+                 StopTracking, MayEscape, SelfOwn, Autorelease,
+                 NewAutoreleasePool };
 
 /// ArgEffects summarizes the effects of a function/method call on all of
 /// its arguments.
@@ -1132,6 +1133,12 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   Summ = getPersistentSummary(E, Autorelease);
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
   
+  // Specially handle NSAutoreleasePool.
+  addInstMethSummary("NSAutoreleasePool",
+                     getPersistentSummary(RetEffect::MakeReceiverAlias(),
+                                          NewAutoreleasePool),
+                     "init", NULL);
+  
   // For NSWindow, allocated objects are (initially) self-owned.  
   // FIXME: For now we opt for false negatives with NSWindow, as these objects
   //  self-own themselves.  However, they only do this once they are displayed.
@@ -1354,13 +1361,50 @@ namespace clang {
 // ARBindings - State used to track objects in autorelease pools.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::ImmutableSet<SymbolRef> ARPoolContents;
-typedef llvm::ImmutableList< std::pair<SymbolRef, ARPoolContents*> > ARBindings;
+
+namespace {
+class VISIBILITY_HIDDEN AutoreleasePoolID {
+  unsigned short PoolLevel;
+  SymbolRef Sym;
+
+public:
+  AutoreleasePoolID() : PoolLevel(0) {}
+  AutoreleasePoolID(unsigned short poolLevel, SymbolRef sym)
+    : PoolLevel(poolLevel), Sym(Sym) {}
+  
+  bool operator<(const AutoreleasePoolID &X) const {
+    assert(!(PoolLevel == X.PoolLevel) || Sym == X.Sym);
+    return PoolLevel < X.PoolLevel;
+  }
+  
+  bool operator==(const AutoreleasePoolID &X) const {
+    assert(!(PoolLevel == X.PoolLevel) || Sym == X.Sym);
+    return PoolLevel == X.PoolLevel;
+  }
+  
+  bool matches(SymbolRef sym) {
+    return Sym.isInitialized() ? Sym == sym : false;
+  }
+  
+  static void Profile(llvm::FoldingSetNodeID& ID, const AutoreleasePoolID& AI) {
+    ID.AddInteger(AI.PoolLevel);
+    if (AI.Sym.isInitialized()) ID.Add(AI.Sym);
+  }
+};
+}
+
+typedef llvm::ImmutableSet<SymbolRef> AutoreleasePoolContents;
+typedef llvm::ImmutableMap<AutoreleasePoolID, AutoreleasePoolContents>
+        AutoreleaseBindings;
+
 static int AutoRBIndex = 0;
 
+// We can use 'AutoreleaseBindings' directly as the tag class into the GDM sinc
+// it is an ImmutableMap based on two types private to this source file.
 namespace clang {
   template<>
-  struct GRStateTrait<ARBindings> : public GRStatePartialTrait<ARBindings> {
+  struct GRStateTrait<AutoreleaseBindings>
+    : public GRStatePartialTrait<AutoreleaseBindings> {
     static inline void* GDMIndex() { return &AutoRBIndex; }  
   };
 }
@@ -2040,6 +2084,8 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
     case IncRefMsg: E = isGCEnabled() ? DoNothing : IncRef; break;
     case DecRefMsg: E = isGCEnabled() ? DoNothing : DecRef; break;
     case MakeCollectable: E = isGCEnabled() ? DecRef : DoNothing; break;
+    case NewAutoreleasePool: E = isGCEnabled() ? DoNothing : 
+                                                 NewAutoreleasePool; break;
   }
   
   switch (E) {
@@ -2052,6 +2098,8 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
         break;
       }
       // Fall-through.
+
+    case NewAutoreleasePool: // FIXME: Implement pushing the pool to the stack.
     case DoNothingByRef:
     case DoNothing:
       if (!isGCEnabled() && V.getKind() == RefVal::Released) {
