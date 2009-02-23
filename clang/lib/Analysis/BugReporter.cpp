@@ -83,25 +83,22 @@ static inline Stmt* GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {
 //===----------------------------------------------------------------------===//
 // Diagnostics for 'execution continues on line XXX'.
 //===----------------------------------------------------------------------===//
-        
-static void ExecutionContinues(llvm::raw_string_ostream& os,
-                               SourceManager& SMgr,
-                               const Stmt* S) {  
+
+static inline void ExecutionContinues(llvm::raw_string_ostream& os,
+                                      SourceManager& SMgr,
+                                      const ExplodedNode<GRState>* N,
+                                      const Decl& D) {
+  
   // Slow, but probably doesn't matter.
   if (os.str().empty())
     os << ' ';
   
-  if (S)
+  if (Stmt *S = GetNextStmt(N))
     os << "Execution continues on line "
-       << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
+    << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
   else
-    os << "Execution jumps to the end of the function.";
-}
-
-static inline void ExecutionContinues(llvm::raw_string_ostream& os,
-                                      SourceManager& SMgr,
-                                      const ExplodedNode<GRState>* N) {
-  ExecutionContinues(os, SMgr, GetNextStmt(N));
+    os << "Execution jumps to the end of the "
+       << (isa<ObjCMethodDecl>(D) ? "method" : "function") << '.';
 }
 
 //===----------------------------------------------------------------------===//
@@ -704,7 +701,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           }
           else {
             os << "'Default' branch taken. ";
-            ExecutionContinues(os, SMgr, N);
+            ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
           }
           
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
@@ -715,7 +712,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         case Stmt::ContinueStmtClass: {
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
-          ExecutionContinues(os, SMgr, N);
+          ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
           break;
         }
@@ -741,7 +738,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             llvm::raw_string_ostream os(sbuf);
             
             os << "Loop condition is true. ";
-            ExecutionContinues(os, SMgr, N);
+            ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
             
             PD.push_front(new PathDiagnosticPiece(L, os.str()));
           }
@@ -760,7 +757,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             llvm::raw_string_ostream os(sbuf);
 
             os << "Loop condition is false. ";
-            ExecutionContinues(os, SMgr, N);
+            ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
 
             PD.push_front(new PathDiagnosticPiece(L, os.str()));
           }
