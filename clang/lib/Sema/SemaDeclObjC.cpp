@@ -78,6 +78,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   if (IDecl) {
     // Class already seen. Is it a forward declaration?
     if (!IDecl->isForwardDecl()) {
+      IDecl->setInvalidDecl();
       Diag(AtInterfaceLoc, diag::err_duplicate_class_def)<<IDecl->getDeclName();
       Diag(IDecl->getLocation(), diag::note_previous_definition);
 
@@ -225,6 +226,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
   if (PDecl) {
     // Protocol already seen. Better be a forward protocol declaration
     if (!PDecl->isForwardDecl()) {
+      PDecl->setInvalidDecl();
       Diag(ProtocolLoc, diag::err_duplicate_protocol_def) << ProtocolName;
       Diag(PDecl->getLocation(), diag::note_previous_definition);
       // Just return the protocol we already had.
@@ -555,8 +557,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-  }
-  else {
+  }  else {
     // Is there an interface declaration of this class; if not, warn!
     IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
     if (!IDecl)

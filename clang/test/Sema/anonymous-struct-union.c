@@ -47,8 +47,7 @@ struct Redecl {
   };
 
   int z; // expected-error{{duplicate member 'z'}}
-  void zz(); // expected-error{{duplicate member 'zz'}} \
-            //  expected-error{{field 'zz' declared as a function}}
+  void zz(); // expected-error{{duplicate member 'zz'}} 
 };
 
 union { // expected-error{{anonymous unions must be struct or union members}}

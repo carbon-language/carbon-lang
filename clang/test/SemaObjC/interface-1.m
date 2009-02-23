@@ -25,3 +25,13 @@ void test2() {
     ++c;
 }
 
+
+// rdar://6611778
+@interface FOO  // expected-note {{previous definition is here}}
+- (void)method;
+@end
+
+@interface FOO  // expected-error {{duplicate interface definition for class 'FOO'}}
+- (void)method2;
+@end
+

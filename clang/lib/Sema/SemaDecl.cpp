@@ -3665,12 +3665,20 @@ void Sema::ActOnFields(Scope* S,
                        AttributeList *Attr) {
   Decl *EnclosingDecl = static_cast<Decl*>(RecDecl);
   assert(EnclosingDecl && "missing record or interface decl");
-  RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
+  
+  // If the decl this is being inserted into is invalid, then it may be a
+  // redeclaration or some other bogus case.  Don't try to add fields to it.
+  if (EnclosingDecl->isInvalidDecl()) {
+    // FIXME: Deallocate fields?
+    return;
+  }
+
   
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
   llvm::SmallVector<FieldDecl*, 32> RecFields;
 
+  RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
   for (unsigned i = 0; i != NumFields; ++i) {
     FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
     assert(FD && "missing field decl");
@@ -3782,9 +3790,8 @@ void Sema::ActOnFields(Scope* S,
           }
         }
       }
-    }
-    else if (ObjCImplementationDecl *IMPDecl = 
-               dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
+    } else if (ObjCImplementationDecl *IMPDecl = 
+                  dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
       assert(IMPDecl && "ActOnFields - missing ObjCImplementationDecl");
       IMPDecl->setIVarList(ClsFields, RecFields.size(), Context);
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);

@@ -9,7 +9,8 @@ typedef int FOO();
 	int arr[];  // expected-error {{field has incomplete type}}
 	struct S IC;  // expected-error {{field has incomplete type}}
 	struct T { // expected-note {{previous definition is here}}
-	  struct T {} X;  // expected-error {{nested redefinition of 'T'}}
+	  struct T {} X;  // expected-error {{nested redefinition of 'T'}} \
+                             expected-error {{field has incomplete type}}
 	}YYY; 
 	FOO    BADFUNC;  // expected-error {{field 'BADFUNC' declared as a function}}
 	int kaka;	// expected-note {{previous declaration is here}}
