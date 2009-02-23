@@ -31,72 +31,77 @@ using namespace clang;
 // static functions.
 //===----------------------------------------------------------------------===//
 
-static inline Stmt* GetStmt(const ProgramPoint& P) {
-  if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
+static inline Stmt* GetStmt(ProgramPoint P) {
+  if (const PostStmt* PS = dyn_cast<PostStmt>(&P))
     return PS->getStmt();
-  }
-  else if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
+  else if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P))
     return BE->getSrc()->getTerminator();
-  }
-  else if (const BlockEntrance* BE = dyn_cast<BlockEntrance>(&P)) {
-    return BE->getFirstStmt();
-  }
   
-  assert (false && "Unsupported ProgramPoint.");
-  return NULL;
-}
-
-static inline Stmt* GetStmt(const CFGBlock* B) {
-  if (B->empty())
-    return const_cast<Stmt*>(B->getTerminator());
-  else
-    return (*B)[0];
+  return 0;
 }
 
 static inline const ExplodedNode<GRState>*
-GetNextNode(const ExplodedNode<GRState>* N) {
+GetPredecessorNode(const ExplodedNode<GRState>* N) {
   return N->pred_empty() ? NULL : *(N->pred_begin());
 }
 
-static Stmt* GetLastStmt(const ExplodedNode<GRState>* N) {
-  assert (isa<BlockEntrance>(N->getLocation()));
-  
-  for (N = GetNextNode(N); N; N = GetNextNode(N)) {
-    ProgramPoint P = N->getLocation();
-    if (PostStmt* PS = dyn_cast<PostStmt>(&P)) return PS->getStmt();
-  }
-  
-  return NULL;
+static inline const ExplodedNode<GRState>*
+GetSuccessorNode(const ExplodedNode<GRState>* N) {
+  return N->succ_empty() ? NULL : *(N->succ_begin());
 }
 
-static inline Stmt* GetStmt(const ExplodedNode<GRState>* N) {  
-  ProgramPoint ProgP = N->getLocation();  
-  return isa<BlockEntrance>(ProgP) ? GetLastStmt(N) : GetStmt(ProgP);
+static Stmt* GetPreviousStmt(const ExplodedNode<GRState>* N) {
+  for (N = GetPredecessorNode(N); N; N = GetPredecessorNode(N))
+    if (Stmt *S = GetStmt(N->getLocation()))
+      return S;
+  
+  return 0;
 }
 
+static Stmt* GetNextStmt(const ExplodedNode<GRState>* N) {
+  for (N = GetSuccessorNode(N); N; N = GetSuccessorNode(N))
+    if (Stmt *S = GetStmt(N->getLocation()))
+      return S;
+  
+  return 0;
+}
+
+static inline Stmt* GetCurrentOrPreviousStmt(const ExplodedNode<GRState>* N) {  
+  if (Stmt *S = GetStmt(N->getLocation()))
+    return S;
+  
+  return GetPreviousStmt(N);
+}
+        
+static inline Stmt* GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {  
+  if (Stmt *S = GetStmt(N->getLocation()))
+    return S;
+          
+  return GetNextStmt(N);
+}
+
+//===----------------------------------------------------------------------===//
+// Diagnostics for 'execution continues on line XXX'.
+//===----------------------------------------------------------------------===//
+        
 static void ExecutionContinues(llvm::raw_string_ostream& os,
                                SourceManager& SMgr,
                                const Stmt* S) {  
-  if (!S)
-    return;
-  
   // Slow, but probably doesn't matter.
-  if (os.str().empty()) os << ' ';
+  if (os.str().empty())
+    os << ' ';
   
-  os << "Execution continues on line "
-     << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
+  if (S)
+    os << "Execution continues on line "
+       << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
+  else
+    os << "Execution jumps to the end of the function.";
 }
 
 static inline void ExecutionContinues(llvm::raw_string_ostream& os,
                                       SourceManager& SMgr,
                                       const ExplodedNode<GRState>* N) {
-  ExecutionContinues(os, SMgr, GetStmt(N->getLocation()));
-}
-
-static inline void ExecutionContinues(llvm::raw_string_ostream& os,
-                                      SourceManager& SMgr,
-                                      const CFGBlock* B) {  
-  ExecutionContinues(os, SMgr, GetStmt(B));
+  ExecutionContinues(os, SMgr, GetNextStmt(N));
 }
 
 //===----------------------------------------------------------------------===//
@@ -116,7 +121,7 @@ Stmt* BugReport::getStmt(BugReporter& BR) const {
   Stmt *S = NULL;
   
   if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP)) {
-    if (BE->getBlock() == &BR.getCFG()->getExit()) S = GetLastStmt(EndNode);
+    if (BE->getBlock() == &BR.getCFG()->getExit()) S = GetPreviousStmt(EndNode);
   }
   if (!S) S = GetStmt(ProgP);  
   
@@ -158,7 +163,7 @@ void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
 
 SourceLocation BugReport::getLocation() const {  
   if (EndNode)
-    if (Stmt* S = GetStmt(EndNode))
+    if (Stmt* S = GetCurrentOrPreviousStmt(EndNode))
       return S->getLocStart();
 
   return FullSourceLoc();
@@ -599,10 +604,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   NodeMapClosure NMC(BackMap.get());
   
   while (NextNode) {
-    
-    const ExplodedNode<GRState>* LastNode = N;
     N = NextNode;    
-    NextNode = GetNextNode(N);
+    NextNode = GetPredecessorNode(N);
     
     ProgramPoint P = N->getLocation();
     
@@ -625,7 +628,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         case Stmt::GotoStmtClass:
         case Stmt::IndirectGotoStmtClass: {
           
-          Stmt* S = GetStmt(LastNode->getLocation());
+          Stmt* S = GetNextStmt(N);
           
           if (!S)
             continue;
@@ -701,7 +704,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           }
           else {
             os << "'Default' branch taken. ";
-            ExecutionContinues(os, SMgr, LastNode);
+            ExecutionContinues(os, SMgr, N);
           }
           
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
@@ -712,7 +715,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         case Stmt::ContinueStmtClass: {
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
-          ExecutionContinues(os, SMgr, LastNode);
+          ExecutionContinues(os, SMgr, N);
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
           break;
         }
@@ -738,7 +741,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             llvm::raw_string_ostream os(sbuf);
             
             os << "Loop condition is true. ";
-            ExecutionContinues(os, SMgr, Dst);
+            ExecutionContinues(os, SMgr, N);
             
             PD.push_front(new PathDiagnosticPiece(L, os.str()));
           }
@@ -757,7 +760,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             llvm::raw_string_ostream os(sbuf);
 
             os << "Loop condition is false. ";
-            ExecutionContinues(os, SMgr, Dst);
+            ExecutionContinues(os, SMgr, N);
 
             PD.push_front(new PathDiagnosticPiece(L, os.str()));
           }
