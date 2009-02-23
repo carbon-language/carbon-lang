@@ -669,10 +669,19 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   case UnaryOperator::Deref:
     {
       QualType T = E->getSubExpr()->getType()->getAsPointerType()->getPointeeType();
-      return LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()),
-                              ExprTy->getAsPointerType()->getPointeeType()
+      LValue LV = LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()),
+                                   ExprTy->getAsPointerType()->getPointeeType()
                                       .getCVRQualifiers(), 
-                              getContext().getObjCGCAttrKind(T));
+                                   getContext().getObjCGCAttrKind(T));
+     // We should not generate __weak write barrier on indirect reference
+     // of a pointer to object; as in void foo (__weak id *param); *param = 0;
+     // But, we continue to generate __strong write barrier on indirect write
+     // into a pointer to object.
+     if (getContext().getLangOptions().ObjC1 &&
+         getContext().getLangOptions().getGCMode() != LangOptions::NonGC &&
+         LV.isObjCWeak())
+       LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate());
+     return LV;
     }
   case UnaryOperator::Real:
   case UnaryOperator::Imag:

@@ -753,6 +753,8 @@ bool Expr::isOBJCGCCandidate() const {
     return false;
   case ObjCIvarRefExprClass:
     return true;
+  case Expr::UnaryOperatorClass:
+    return cast<UnaryOperator>(this)->getSubExpr()->isOBJCGCCandidate();
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->isOBJCGCCandidate();
   case ImplicitCastExprClass:
