@@ -309,22 +309,6 @@ Sema::ExprResult Sema::ActOnClassMessage(
                                          lbrac, rbrac, ArgExprs, NumArgs);
 }
 
-// This routine makes sure we handle the following:
-//
-// [(Object <Func> *)super class_func0];
-// [(id <Func>)super class_func0];
-//
-static bool isSuperExpr(Stmt *S) {
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI) {
-    if (*CI)
-      return isSuperExpr(*CI);
-  }
-  if (isa<ObjCSuperExpr>(S))
-    return true;
-  return false;
-}
-
 // ActOnInstanceMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
@@ -343,7 +327,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     Context.getCanonicalType(RExpr->getType()).getUnqualifiedType();
 
   // Handle messages to 'super'.
-  if (isSuperExpr(RExpr)) {
+  if (isa<ObjCSuperExpr>(RExpr)) {
     ObjCMethodDecl *Method = 0;
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
       // If we have an interface in scope, check 'super' methods.
@@ -428,11 +412,11 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
         break;
     }
-  } else if (const ObjCInterfaceType *OCIReceiver = 
+  } else if (const ObjCInterfaceType *OCIType = 
                 ReceiverCType->getAsPointerToObjCInterfaceType()) {
     // We allow sending a message to a pointer to an interface (an object).
     
-    ClassDecl = OCIReceiver->getDecl();
+    ClassDecl = OCIType->getDecl();
     // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
     // faster than the following method (which can do *many* linear searches). 
     // The idea is to add class info to InstanceMethodPool.
@@ -440,8 +424,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     
     if (!Method) {
       // Search protocol qualifiers.
-      for (ObjCQualifiedIdType::qual_iterator QI = OCIReceiver->qual_begin(),
-           E = OCIReceiver->qual_end(); QI != E; ++QI) {
+      for (ObjCQualifiedInterfaceType::qual_iterator QI = OCIType->qual_begin(),
+           E = OCIType->qual_end(); QI != E; ++QI) {
         if ((Method = (*QI)->lookupInstanceMethod(Sel)))
           break;
       }
@@ -455,7 +439,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
           // If we still haven't found a method, look in the global pool. This
           // behavior isn't very desirable, however we need it for GCC
           // compatibility. FIXME: should we deviate??
-          if (!Method && OCIReceiver->qual_empty())
+          if (!Method && OCIType->qual_empty())
             Method = LookupInstanceMethodInGlobalPool(
                                  Sel, SourceRange(lbrac,rbrac));
     }
