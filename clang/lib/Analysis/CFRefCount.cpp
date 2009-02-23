@@ -829,7 +829,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       break;
     }
     
-    // [PR 3337]q Use 'getDesugaredType' to strip away any typedefs on the
+    // [PR 3337] Use 'getDesugaredType' to strip away any typedefs on the
     // function's type.
     FunctionType* FT = cast<FunctionType>(FD->getType()->getDesugaredType());
     const char* FName = FD->getIdentifier()->getName();
