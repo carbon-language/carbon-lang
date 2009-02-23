@@ -290,6 +290,15 @@ public:
       delete &getVector();
   }
   
+  StoredDeclsList &operator=(const StoredDeclsList &RHS) {
+    if (isVector())
+      delete &getVector();
+    Data = RHS.Data;
+    if (isVector())
+      Data.setPointer(new VectorTy(getVector()));
+    return *this;
+  }
+  
   bool isVector() const { return Data.getInt() != 0; }
   bool isInline() const { return Data.getInt() == 0; }
   bool isNull() const { return Data.getPointer() == 0; }
