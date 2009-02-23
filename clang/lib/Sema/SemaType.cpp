@@ -151,9 +151,13 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
         // id<protocol-list>
         Result = Context.getObjCQualifiedIdType((ObjCProtocolDecl**)PQ,
                                                 DS.getNumProtocolQualifiers());
-      else
+      else if (Result == Context.getObjCClassType())
+        // Class<protocol-list>
         Diag(DS.getSourceRange().getBegin(), 
-             diag::warn_ignoring_objc_qualifiers) << DS.getSourceRange();
+             diag::err_qualified_class_unsupported) << DS.getSourceRange();
+      else
+        Diag(DS.getSourceRange().getBegin(),
+             diag::err_invalid_protocol_qualifiers) << DS.getSourceRange();
     }
     // TypeQuals handled by caller.
     break;

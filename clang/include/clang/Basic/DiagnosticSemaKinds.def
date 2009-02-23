@@ -1400,6 +1400,8 @@ DIAG(warn_objc_array_of_interfaces, WARNING,
      "array of interface %0 should probably be an array of pointers")
 DIAG(ext_c99_array_usage, EXTENSION,
      "use of C99-specific array features, accepted as an extension")
-DIAG(warn_ignoring_objc_qualifiers, WARNING,
-     "ignoring protocol qualifiers on non-ObjC type")
+DIAG(err_invalid_protocol_qualifiers, ERROR,
+     "invalid protocol qualifiers on non-ObjC type")
+DIAG(err_qualified_class_unsupported, ERROR,
+     "protocol qualified 'Class' is unsupported")
 

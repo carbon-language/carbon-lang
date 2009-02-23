@@ -26,4 +26,10 @@ void foo(id x) {
 typedef int NotAnObjCObjectType;
 
 // GCC doesn't diagnose this.
-NotAnObjCObjectType <SomeProtocol> *obj; // expected-warning {{ignoring protocol qualifiers on non-ObjC type}}
+NotAnObjCObjectType <SomeProtocol> *obj; // expected-error {{invalid protocol qualifiers on non-ObjC type}}
+
+// Decided not to support the following GCC extension. Found while researching rdar://6497631
+typedef struct objc_class *Class;
+
+Class <SomeProtocol> UnfortunateGCCExtension; // expected-error {{protocol qualified 'Class' is unsupported}}
+
