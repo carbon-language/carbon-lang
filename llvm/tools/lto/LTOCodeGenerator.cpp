@@ -420,7 +420,7 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
     MachineCodeEmitter* mce = NULL;
 
     switch (_target->addPassesToEmitFile(*codeGenPasses, out,
-                                      TargetMachine::AssemblyFile, true)) {
+                                      TargetMachine::AssemblyFile, false)) {
         case FileModel::MachOFile:
             mce = AddMachOWriter(*codeGenPasses, out, *_target);
             break;
@@ -435,7 +435,7 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
             return true;
     }
 
-    if (_target->addPassesToEmitFileFinish(*codeGenPasses, mce, true)) {
+    if (_target->addPassesToEmitFileFinish(*codeGenPasses, mce, false)) {
         errMsg = "target does not support generation of this file type";
         return true;
     }
