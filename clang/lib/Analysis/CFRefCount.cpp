@@ -1099,7 +1099,8 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   
   // Create the "init" selector.  It just acts as a pass-through for the
   // receiver.
-  RetainSummary* InitSumm = getPersistentSummary(RetEffect::MakeReceiverAlias());
+  RetainSummary* InitSumm =
+    getPersistentSummary(RetEffect::MakeReceiverAlias());
   addNSObjectMethSummary(GetNullarySelector("init", Ctx), InitSumm);
   
   // The next methods are allocators.
@@ -2883,7 +2884,8 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
       CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
                                             : leakWithinFunction);
       assert(BT && "BugType not initialized.");
-      CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N, I->first, Eng);
+      CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N,
+                                                    I->first, Eng);
       BR->EmitReport(report);
     }
     
