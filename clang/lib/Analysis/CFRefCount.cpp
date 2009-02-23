@@ -1130,8 +1130,12 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
   
   // For NSWindow, allocated objects are (initially) self-owned.  
+  // FIXME: For now we opt for false negatives with NSWindow, as these objects
+  //  self-own themselves.  However, they only do this once they are displayed.
+  //  Thus, we need to track an NSWindow's display status.
+  //  This is tracked in <rdar://problem/6062711>.
   RetainSummary *NSWindowSumm =
-    getPersistentSummary(RetEffect::MakeReceiverAlias(), SelfOwn);
+    getPersistentSummary(RetEffect::MakeReceiverAlias(), StopTracking);
   
   addInstMethSummary("NSWindow", NSWindowSumm, "initWithContentRect",
                      "styleMask", "backing", "defer", NULL);

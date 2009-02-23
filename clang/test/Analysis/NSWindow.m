@@ -69,7 +69,8 @@ void f2() {
 }
 
 void f2b() {
-  NSWindow *window = [[NSWindow alloc] // expected-warning{{leak}}
+  // FIXME: NSWindow doesn't own itself until it is displayed.
+  NSWindow *window = [[NSWindow alloc] // no-warning
                       initWithContentRect:NSMakeRect(0,0,100,100) 
                         styleMask:NSTitledWindowMask|NSClosableWindowMask
                         backing:NSBackingStoreBuffered
