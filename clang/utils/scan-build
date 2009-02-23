@@ -81,7 +81,7 @@ sub DieDiag {
 # Some initial preprocessing of Clang options.
 ##----------------------------------------------------------------------------##
 
-my $ClangSB = Cwd::realpath("$RealBin/cbin/clang");
+my $ClangSB = Cwd::realpath("$RealBin/bin/clang");
 my $Clang = $ClangSB;
 
 if (!defined $ClangSB || ! -x $ClangSB) {
@@ -1150,8 +1150,8 @@ my $Cmd = Cwd::realpath("$RealBin/ccc-analyzer");
 DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n")
   if (! -x $Cmd);
 
-if (! -x $ClangSB) {
-  Diag("'clang' executable not found in '$RealBin/cbin'.\n");
+if (!defined $ClangSB || ! -x $ClangSB) {
+  Diag("'clang' executable not found in '$RealBin/bin'.\n");
   Diag("Using 'clang' from path.\n");
 }
 
