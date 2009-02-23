@@ -1397,29 +1397,6 @@ QualType ASTContext::getObjCQualifiedIdType(ObjCProtocolDecl **Protocols,
   return QualType(QType, 0);
 }
 
-/// getObjCQualifiedClassType - Return an ObjCQualifiedIdType for the 'Class'
-/// decl and the conforming protocol list.
-QualType ASTContext::getObjCQualifiedClassType(ObjCProtocolDecl **Protocols, 
-                                               unsigned NumProtocols) {
-  // Sort the protocol list alphabetically to canonicalize it.
-  SortAndUniqueProtocols(Protocols, NumProtocols);
-
-  llvm::FoldingSetNodeID ID;
-  ObjCQualifiedIdType::Profile(ID, Protocols, NumProtocols);
-  
-  void *InsertPos = 0;
-  if (ObjCQualifiedClassType *QT =
-        ObjCQualifiedClassTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(QT, 0);
-  
-  // No Match;
-  ObjCQualifiedClassType *QType =
-    new (*this,8) ObjCQualifiedClassType(Protocols, NumProtocols);
-  Types.push_back(QType);
-  ObjCQualifiedClassTypes.InsertNode(QType, InsertPos);
-  return QualType(QType, 0);
-}
-
 /// getTypeOfExpr - Unlike many "get<Type>" functions, we can't unique
 /// TypeOfExpr AST's (since expression's are never shared). For example,
 /// multiple declarations that refer to "typeof(x)" all contain different
@@ -2422,7 +2399,7 @@ bool ASTContext::isObjCNSObjectType(QualType Ty) const {
 /// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
 /// ID type).
 bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
-  if (Ty->isObjCQualifiedIdType() || Ty->isObjCQualifiedClassType())
+  if (Ty->isObjCQualifiedIdType())
     return true;
   
   // Blocks are objects.

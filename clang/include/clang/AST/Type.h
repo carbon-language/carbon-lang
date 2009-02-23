@@ -69,7 +69,6 @@ namespace clang {
   class BuiltinType;
   class ObjCInterfaceType;
   class ObjCQualifiedIdType;
-  class ObjCQualifiedClassType;
   class ObjCQualifiedInterfaceType;
   class StmtIteratorBase;
   class ClassTemplateSpecializationType;
@@ -385,7 +384,6 @@ public:
   bool isObjCInterfaceType() const;             // NSString or NSString<foo>
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
-  bool isObjCQualifiedClassType() const;        // Class<foo>
   bool isTemplateTypeParmType() const;          // C++ template type parameter
 
   /// isDependentType - Whether this type is a dependent type, meaning
@@ -419,7 +417,6 @@ public:
   const ObjCInterfaceType *getAsObjCInterfaceType() const;
   const ObjCQualifiedInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const ObjCQualifiedIdType *getAsObjCQualifiedIdType() const;
-  const ObjCQualifiedClassType *getAsObjCQualifiedClassType() const;
   const TemplateTypeParmType *getAsTemplateTypeParmType() const;
 
   const ClassTemplateSpecializationType *
@@ -1944,9 +1941,6 @@ inline bool Type::isObjCQualifiedInterfaceType() const {
 }
 inline bool Type::isObjCQualifiedIdType() const {
   return isa<ObjCQualifiedIdType>(CanonicalType.getUnqualifiedType());
-}
-inline bool Type::isObjCQualifiedClassType() const {
-  return isa<ObjCQualifiedClassType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isTemplateTypeParmType() const {
   return isa<TemplateTypeParmType>(CanonicalType.getUnqualifiedType());

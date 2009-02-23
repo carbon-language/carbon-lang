@@ -2736,7 +2736,6 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // a null pointer constant.
   if ((lhsType->isPointerType() || 
        lhsType->isObjCQualifiedIdType() || 
-       lhsType->isObjCQualifiedClassType() ||
        lhsType->isBlockPointerType())
       && rExpr->isNullPointerConstant(Context)) {
     ImpCastExprToType(rExpr, lhsType);

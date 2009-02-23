@@ -285,8 +285,7 @@ public:
 static bool HasPointerEvalType(const Expr* E) {
   return E->getType()->isPointerType()
          || E->getType()->isBlockPointerType()
-         || E->getType()->isObjCQualifiedIdType()
-         || E->getType()->isObjCQualifiedClassType();
+         || E->getType()->isObjCQualifiedIdType();
 }
 
 static bool EvaluatePointer(const Expr* E, APValue& Result, EvalInfo &Info) {

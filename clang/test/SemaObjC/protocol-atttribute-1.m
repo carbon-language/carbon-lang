@@ -3,7 +3,7 @@
 __attribute ((unavailable))
 @protocol FwProto; // expected-note{{marked unavailable}}
 
-Class <FwProto> cFw = 0;  // expected-warning {{'FwProto' is unavailable}}
+Class <FwProto> cFw = 0;  // expected-warning {{'FwProto' is unavailable}} expected-warning{{ignoring protocol qualifiers on non-ObjC type}}
 
 
 __attribute ((deprecated)) @protocol MyProto1
@@ -31,7 +31,7 @@ __attribute ((deprecated)) @protocol MyProto1
 
 
 
-Class <MyProto1> clsP1 = 0;  // expected-warning {{'MyProto1' is deprecated}}
+Class <MyProto1> clsP1 = 0;  // expected-warning {{'MyProto1' is deprecated}} expected-warning{{ignoring protocol qualifiers on non-ObjC type}}
 
 @protocol FwProto @end // expected-note{{marked unavailable}}
 

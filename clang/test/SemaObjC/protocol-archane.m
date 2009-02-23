@@ -27,8 +27,3 @@ typedef int NotAnObjCObjectType;
 
 // GCC doesn't diagnose this.
 NotAnObjCObjectType <SomeProtocol> *obj; // expected-warning {{ignoring protocol qualifiers on non-ObjC type}}
-
-// GCC extension (sigh). Found while researching rdar://6497631
-typedef struct objc_class *Class;
-
-Class <SomeProtocol> UnfortunateGCCExtension;
