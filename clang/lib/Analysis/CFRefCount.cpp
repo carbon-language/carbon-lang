@@ -829,7 +829,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       break;
     }
     
-    // [PR 3337] Use 'getDesugaredType' to strip away any typedefs on the
+    // [PR 3337]q Use 'getDesugaredType' to strip away any typedefs on the
     // function's type.
     FunctionType* FT = cast<FunctionType>(FD->getType()->getDesugaredType());
     const char* FName = FD->getIdentifier()->getName();
@@ -1088,7 +1088,7 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   addClsMethSummary(&Ctx.Idents.get("NSAutoreleasePool"),
                     GetUnarySelector("addObject", Ctx),
                     getPersistentSummary(RetEffect::MakeNoRet(),
-                                         DoNothing, DoNothing));
+                                         DoNothing, Autorelease));
 }
 
 void RetainSummaryManager::InitializeMethodSummaries() {
