@@ -398,7 +398,8 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = (MBBI != MBB.end() ?
+                 MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
 
   bool FP = hasFP(MF);
 
@@ -515,7 +516,7 @@ void XCoreRegisterInfo::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   MachineFrameInfo *MFI            = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = MBBI->getDebugLoc();
   
   bool FP = hasFP(MF);
   

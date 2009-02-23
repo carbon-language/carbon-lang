@@ -165,7 +165,8 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   bool FP = hasFP(MF);
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = (MBBI != MBB.end() ?
+                 MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
 
   // first, we handle the 'alloc' instruction, that should be right up the
   // top of any function
@@ -207,6 +208,8 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
       break;
     }
   }
+
+  if (MBBI != MBB.end()) dl = MBBI->getDebugLoc();
 
   BuildMI(MBB, MBBI, dl, TII.get(IA64::ALLOC)).
      addReg(dstRegOfPseudoAlloc).addImm(0).
@@ -261,24 +264,21 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   assert(MBBI->getOpcode() == IA64::RET &&
          "Can only insert epilog into returning blocks");
-  DebugLoc dl = DebugLoc::getUnknownLoc();
-
+  DebugLoc dl = MBBI->getDebugLoc();
   bool FP = hasFP(MF);
 
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
 
   //now if we need to, restore the old FP
-  if (FP)
-  {
+  if (FP) {
     //copy the FP into the SP (discards allocas)
     BuildMI(MBB, MBBI, dl, TII.get(IA64::MOV), IA64::r12).addReg(IA64::r5);
     //restore the FP
     BuildMI(MBB, MBBI, dl, TII.get(IA64::LD8), IA64::r5).addReg(IA64::r5);
   }
 
-  if (NumBytes != 0)
-  {
+  if (NumBytes != 0) {
     if (NumBytes <= 8191) {
       BuildMI(MBB, MBBI, dl, TII.get(IA64::ADDIMM22),IA64::r12).
         addReg(IA64::r12).addImm(NumBytes);
@@ -289,7 +289,6 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
         addReg(IA64::r22);
     }
   }
-
 }
 
 unsigned IA64RegisterInfo::getRARegister() const {

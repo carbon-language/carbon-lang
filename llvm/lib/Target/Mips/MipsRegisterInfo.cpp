@@ -391,7 +391,8 @@ emitPrologue(MachineFunction &MF) const
   MachineFrameInfo *MFI    = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = (MBBI != MBB.end() ?
+                 MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
   bool isPIC = (MF.getTarget().getRelocationModel() == Reloc::PIC_);
 
   // Get the right frame order for Mips.
@@ -449,7 +450,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineFrameInfo *MFI            = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI         = MF.getInfo<MipsFunctionInfo>();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = MBBI->getDebugLoc();
 
   // Get the number of bytes from FrameInfo
   int NumBytes = (int) MFI->getStackSize();

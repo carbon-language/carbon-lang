@@ -428,7 +428,8 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = (MBBI != MBB.end() ?
+                 MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
 
   // Prepare for debug frame info.
   bool hasDebugInfo = MMI && MMI->hasDebugInfo();
@@ -521,6 +522,8 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     // this is just a best guess based on the basic block's size.
     if (MBB.size() >= (unsigned) SPUFrameInfo::branchHintPenalty()) {
       MachineBasicBlock::iterator MBBI = prior(MBB.end());
+      dl = MBBI->getDebugLoc();
+
       // Insert terminator label
       unsigned BranchLabelId = MMI->NextLabelID();
       BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addImm(BranchLabelId);
@@ -535,7 +538,7 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   int FrameSize = MFI->getStackSize();
   int LinkSlotOffset = SPUFrameInfo::stackSlotSize();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = MBBI->getDebugLoc();
 
   assert(MBBI->getOpcode() == SPU::RET &&
          "Can only insert epilog into returning blocks");

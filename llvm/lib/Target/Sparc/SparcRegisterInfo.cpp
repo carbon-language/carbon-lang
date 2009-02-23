@@ -120,7 +120,9 @@ processFunctionBeforeFrameFinalized(MachineFunction &MF) const {}
 void SparcRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  MachineBasicBlock::iterator MBBI = MBB.begin();
+  DebugLoc dl = (MBBI != MBB.end() ?
+                 MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
 
   // Get the number of bytes to allocate from the FrameInfo
   int NumBytes = (int) MFI->getStackSize();
@@ -133,24 +135,24 @@ void SparcRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // ----------
   //   23 words * 4 bytes per word = 92 bytes
   NumBytes += 92;
+
   // Round up to next doubleword boundary -- a double-word boundary
   // is required by the ABI.
   NumBytes = (NumBytes + 7) & ~7;
   NumBytes = -NumBytes;
   
   if (NumBytes >= -4096) {
-    BuildMI(MBB, MBB.begin(), dl, TII.get(SP::SAVEri),
-            SP::O6).addReg(SP::O6).addImm(NumBytes);
+    BuildMI(MBB, MBBI, dl, TII.get(SP::SAVEri), SP::O6)
+      .addReg(SP::O6).addImm(NumBytes);
   } else {
-    MachineBasicBlock::iterator InsertPt = MBB.begin();
     // Emit this the hard way.  This clobbers G1 which we always know is 
     // available here.
     unsigned OffHi = (unsigned)NumBytes >> 10U;
-    BuildMI(MBB, InsertPt, dl, TII.get(SP::SETHIi), SP::G1).addImm(OffHi);
+    BuildMI(MBB, MBBI, dl, TII.get(SP::SETHIi), SP::G1).addImm(OffHi);
     // Emit G1 = G1 + I6
-    BuildMI(MBB, InsertPt, dl, TII.get(SP::ORri), SP::G1)
+    BuildMI(MBB, MBBI, dl, TII.get(SP::ORri), SP::G1)
       .addReg(SP::G1).addImm(NumBytes & ((1 << 10)-1));
-    BuildMI(MBB, InsertPt, dl, TII.get(SP::SAVErr), SP::O6)
+    BuildMI(MBB, MBBI, dl, TII.get(SP::SAVErr), SP::O6)
       .addReg(SP::O6).addReg(SP::G1);
   }
 }
@@ -158,7 +160,7 @@ void SparcRegisterInfo::emitPrologue(MachineFunction &MF) const {
 void SparcRegisterInfo::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = MBBI->getDebugLoc();
   assert(MBBI->getOpcode() == SP::RETL &&
          "Can only put epilog before 'retl' instruction!");
   BuildMI(MBB, MBBI, dl, TII.get(SP::RESTORErr), SP::G0).addReg(SP::G0)

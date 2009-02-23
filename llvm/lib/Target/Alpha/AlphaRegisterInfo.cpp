@@ -202,7 +202,8 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = (MBBI != MBB.end() ?
+                 MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
   bool FP = hasFP(MF);
 
   static int curgpdist = 0;
@@ -268,7 +269,7 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
   assert((MBBI->getOpcode() == Alpha::RETDAG ||
           MBBI->getOpcode() == Alpha::RETDAGp)
          && "Can only insert epilog into returning blocks");
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = MBBI->getDebugLoc();
 
   bool FP = hasFP(MF);
 

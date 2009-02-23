@@ -1222,7 +1222,8 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
   unsigned NumBytes = MFI->getStackSize();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+  DebugLoc dl = (MBBI != MBB.end() ?
+                 MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
 
   if (isThumb) {
     // Check if R3 is live in. It might have to be used as a scratch register.
@@ -1292,8 +1293,11 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Build the new SUBri to adjust SP for integer callee-save spill area 1.
     emitSPUpdate(MBB, MBBI, -GPRCS1Size, ARMCC::AL, 0, isThumb, TII, *this, dl);
     movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, 1, STI);
-  } else if (MBBI != MBB.end() && MBBI->getOpcode() == ARM::tPUSH)
+  } else if (MBBI != MBB.end() && MBBI->getOpcode() == ARM::tPUSH) {
     ++MBBI;
+    if (MBBI != MBB.end())
+      dl = MBBI->getDebugLoc();
+  }
 
   // Darwin ABI requires FP to point to the stack slot that contains the
   // previous FP.
@@ -1358,18 +1362,18 @@ static bool isCSRestore(MachineInstr *MI, const unsigned *CSRegs) {
 
 void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
-  DebugLoc dl = DebugLoc::getUnknownLoc();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   assert((MBBI->getOpcode() == ARM::BX_RET ||
           MBBI->getOpcode() == ARM::tBX_RET ||
           MBBI->getOpcode() == ARM::tPOP_RET) &&
          "Can only insert epilog into returning blocks");
-
+  DebugLoc dl = MBBI->getDebugLoc();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   bool isThumb = AFI->isThumbFunction();
   unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
   int NumBytes = (int)MFI->getStackSize();
+
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)
       emitSPUpdate(MBB, MBBI, NumBytes, ARMCC::AL, 0, isThumb, TII, *this, dl);
