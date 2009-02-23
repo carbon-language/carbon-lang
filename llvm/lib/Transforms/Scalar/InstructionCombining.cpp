@@ -10219,7 +10219,7 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
   }
   
   // If all of the base pointers of the PHI'd GEPs are from allocas, don't
-  // bother doing this transformation.  At best, this will just safe a bit of
+  // bother doing this transformation.  At best, this will just save a bit of
   // offset calculation, but all the predecessors will have to materialize the
   // stack address into a register anyway.  We'd actually rather *clone* the
   // load up into the predecessors so that we have a load of a gep of an alloca,
@@ -10265,8 +10265,8 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
 }
 
 
-/// isSafeAndProfitableToSinkLoad - Return true if we know that it is safe sink
-/// the load out of the block that defines it.  This means that it must be
+/// isSafeAndProfitableToSinkLoad - Return true if we know that it is safe to
+/// sink the load out of the block that defines it.  This means that it must be
 /// obvious the value of the load is not changed from the point of the load to
 /// the end of the block it is in.
 ///
