@@ -81,6 +81,7 @@ namespace {
      AU.addRequiredID(LCSSAID);
      AU.addRequiredID(LoopSimplifyID);
      AU.addRequired<LoopInfo>();
+     AU.addPreserved<ScalarEvolution>();
      AU.addPreservedID(LoopSimplifyID);
      AU.addPreservedID(LCSSAID);
      AU.setPreservesCFG();
