@@ -260,7 +260,10 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI)
     (*LI)->eraseFromParent();
-  
+
+  // Tell ScalarEvolution that the loop is deleted.
+  SE.forgetLoopIterationCount(L);
+
   // Finally, the blocks from loopinfo.  This has to happen late because
   // otherwise our loop iterators won't work.
   LoopInfo& loopInfo = getAnalysis<LoopInfo>();
