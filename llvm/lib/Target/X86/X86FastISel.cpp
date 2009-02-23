@@ -21,6 +21,7 @@
 #include "X86TargetMachine.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/FastISel.h"
@@ -432,6 +433,11 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     if (getTargetMachine()->symbolicAddressesAreRIPRel() &&
         (AM.Base.Reg != 0 || AM.IndexReg != 0))
       return false;
+
+    // Can't handle TLS yet.
+    if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
+      if (GVar->isThreadLocal())
+        return false;
 
     // Set up the basic address.
     AM.GV = GV;
