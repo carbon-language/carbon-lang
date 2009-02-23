@@ -176,6 +176,9 @@ namespace llvm {
       /// corresponds to X86::PINSRW.
       PINSRW,
 
+      /// PSHUFB - Shuffle 16 8-bit values within a vector.
+      PSHUFB,
+
       /// FMAX, FMIN - Floating point max and min.
       ///
       FMAX, FMIN,

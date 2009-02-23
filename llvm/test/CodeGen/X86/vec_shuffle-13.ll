@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 > %t
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah > %t
 ; RUN: grep movlhps %t | count 1
-; RUN: grep movss %t | count 1
 ; RUN: grep pshufd %t | count 1
+; RUN: grep movss %t | count 1
 ; RUN: grep pshuflw %t | count 1
 ; RUN: grep pshufhw %t | count 1
 

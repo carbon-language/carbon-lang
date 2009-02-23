@@ -2710,38 +2710,6 @@ unsigned X86::getShufflePSHUFLWImmediate(SDNode *N) {
   return Mask;
 }
 
-/// isPSHUFHW_PSHUFLWMask - true if the specified VECTOR_SHUFFLE operand
-/// specifies a 8 element shuffle that can be broken into a pair of
-/// PSHUFHW and PSHUFLW.
-static bool isPSHUFHW_PSHUFLWMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
-
-  if (N->getNumOperands() != 8)
-    return false;
-
-  // Lower quadword shuffled.
-  for (unsigned i = 0; i != 4; ++i) {
-    SDValue Arg = N->getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
-    if (Val >= 4)
-      return false;
-  }
-
-  // Upper quadword shuffled.
-  for (unsigned i = 4; i != 8; ++i) {
-    SDValue Arg = N->getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
-    if (Val < 4 || Val > 7)
-      return false;
-  }
-
-  return true;
-}
-
 /// CommuteVectorShuffle - Swap vector_shuffle operands as well as
 /// values in ther permute mask.
 static SDValue CommuteVectorShuffle(SDValue Op, SDValue &V1,
@@ -3556,262 +3524,382 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
+// v8i16 shuffles - Prefer shuffles in the following order:
+// 1. [all]   pshuflw, pshufhw, optional move
+// 2. [ssse3] 1 x pshufb
+// 3. [ssse3] 2 x pshufb + 1 x por
+// 4. [all]   mov + pshuflw + pshufhw + N x (pextrw + pinsrw)
 static
 SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
                                  SDValue PermMask, SelectionDAG &DAG,
-                                 TargetLowering &TLI, DebugLoc dl) {
-  SDValue NewV;
-  MVT MaskVT = MVT::getIntVectorWithNumElements(8);
-  MVT MaskEVT = MaskVT.getVectorElementType();
-  MVT PtrVT = TLI.getPointerTy();
+                                 X86TargetLowering &TLI, DebugLoc dl) {
   SmallVector<SDValue, 8> MaskElts(PermMask.getNode()->op_begin(),
                                    PermMask.getNode()->op_end());
+  SmallVector<int, 8> MaskVals;
 
-  // First record which half of which vector the low elements come from.
-  SmallVector<unsigned, 4> LowQuad(4);
-  for (unsigned i = 0; i < 4; ++i) {
+  // Determine if more than 1 of the words in each of the low and high quadwords
+  // of the result come from the same quadword of one of the two inputs.  Undef
+  // mask values count as coming from any quadword, for better codegen.
+  SmallVector<unsigned, 4> LoQuad(4);
+  SmallVector<unsigned, 4> HiQuad(4);
+  BitVector InputQuads(4);
+  for (unsigned i = 0; i < 8; ++i) {
+    SmallVectorImpl<unsigned> &Quad = i < 4 ? LoQuad : HiQuad;
     SDValue Elt = MaskElts[i];
-    if (Elt.getOpcode() == ISD::UNDEF)
+    int EltIdx = Elt.getOpcode() == ISD::UNDEF ? -1 : 
+                 cast<ConstantSDNode>(Elt)->getZExtValue();
+    MaskVals.push_back(EltIdx);
+    if (EltIdx < 0) {
+      ++Quad[0];
+      ++Quad[1];
+      ++Quad[2];
+      ++Quad[3];
       continue;
-    unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
-    int QuadIdx = EltIdx / 4;
-    ++LowQuad[QuadIdx];
+    }
+    ++Quad[EltIdx / 4];
+    InputQuads.set(EltIdx / 4);
   }
 
-  int BestLowQuad = -1;
+  int BestLoQuad = -1;
   unsigned MaxQuad = 1;
   for (unsigned i = 0; i < 4; ++i) {
-    if (LowQuad[i] > MaxQuad) {
-      BestLowQuad = i;
-      MaxQuad = LowQuad[i];
+    if (LoQuad[i] > MaxQuad) {
+      BestLoQuad = i;
+      MaxQuad = LoQuad[i];
     }
   }
 
-  // Record which half of which vector the high elements come from.
-  SmallVector<unsigned, 4> HighQuad(4);
-  for (unsigned i = 4; i < 8; ++i) {
-    SDValue Elt = MaskElts[i];
-    if (Elt.getOpcode() == ISD::UNDEF)
-      continue;
-    unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
-    int QuadIdx = EltIdx / 4;
-    ++HighQuad[QuadIdx];
-  }
-
-  int BestHighQuad = -1;
+  int BestHiQuad = -1;
   MaxQuad = 1;
   for (unsigned i = 0; i < 4; ++i) {
-    if (HighQuad[i] > MaxQuad) {
-      BestHighQuad = i;
-      MaxQuad = HighQuad[i];
+    if (HiQuad[i] > MaxQuad) {
+      BestHiQuad = i;
+      MaxQuad = HiQuad[i];
     }
   }
 
-  // If it's possible to sort parts of either half with PSHUF{H|L}W, then do it.
-  if (BestLowQuad != -1 || BestHighQuad != -1) {
-    // First sort the 4 chunks in order using shufpd.
-    SmallVector<SDValue, 8> MaskVec;
+  // For SSSE3, If all 8 words of the result come from only 1 quadword of each
+  // of the two input vectors, shuffle them into one input vector so only a 
+  // single pshufb instruction is necessary. If There are more than 2 input
+  // quads, disable the next transformation since it does not help SSSE3.
+  bool V1Used = InputQuads[0] || InputQuads[1];
+  bool V2Used = InputQuads[2] || InputQuads[3];
+  if (TLI.getSubtarget()->hasSSSE3()) {
+    if (InputQuads.count() == 2 && V1Used && V2Used) {
+      BestLoQuad = InputQuads.find_first();
+      BestHiQuad = InputQuads.find_next(BestLoQuad);
+    }
+    if (InputQuads.count() > 2) {
+      BestLoQuad = -1;
+      BestHiQuad = -1;
+    }
+  }
 
-    if (BestLowQuad != -1)
-      MaskVec.push_back(DAG.getConstant(BestLowQuad, MVT::i32));
-    else
-      MaskVec.push_back(DAG.getConstant(0, MVT::i32));
-
-    if (BestHighQuad != -1)
-      MaskVec.push_back(DAG.getConstant(BestHighQuad, MVT::i32));
-    else
-      MaskVec.push_back(DAG.getConstant(1, MVT::i32));
-
-    SDValue Mask= DAG.getBUILD_VECTOR(MVT::v2i32, dl, &MaskVec[0],2);
+  // If BestLoQuad or BestHiQuad are set, shuffle the quads together and update
+  // the shuffle mask.  If a quad is scored as -1, that means that it contains
+  // words from all 4 input quadwords.
+  SDValue NewV;
+  if (BestLoQuad >= 0 || BestHiQuad >= 0) {
+    SmallVector<SDValue,8> MaskV;
+    MaskV.push_back(DAG.getConstant(BestLoQuad < 0 ? 0 : BestLoQuad, MVT::i64));
+    MaskV.push_back(DAG.getConstant(BestHiQuad < 0 ? 1 : BestHiQuad, MVT::i64));
+    SDValue Mask = DAG.getBUILD_VECTOR(MVT::v2i64, dl, &MaskV[0], 2);
+    
     NewV = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v2i64,
-                       DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2i64, V1),
-                       DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2i64, V2), Mask);
+                     DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2i64, V1),
+                     DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2i64, V2), Mask);
     NewV = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v8i16, NewV);
 
-    // Now sort high and low parts separately.
-    BitVector InOrder(8);
-    if (BestLowQuad != -1) {
-      // Sort lower half in order using PSHUFLW.
-      MaskVec.clear();
-      bool AnyOutOrder = false;
-
-      for (unsigned i = 0; i != 4; ++i) {
-        SDValue Elt = MaskElts[i];
-        if (Elt.getOpcode() == ISD::UNDEF) {
-          MaskVec.push_back(Elt);
-          InOrder.set(i);
-        } else {
-          unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
-          if (EltIdx != i)
-            AnyOutOrder = true;
-
-          MaskVec.push_back(DAG.getConstant(EltIdx % 4, MaskEVT));
-
-          // If this element is in the right place after this shuffle, then
-          // remember it.
-          if ((int)(EltIdx / 4) == BestLowQuad)
-            InOrder.set(i);
-        }
-      }
-      if (AnyOutOrder) {
-        for (unsigned i = 4; i != 8; ++i)
-          MaskVec.push_back(DAG.getConstant(i, MaskEVT));
-        SDValue Mask = DAG.getBUILD_VECTOR(MaskVT, dl, &MaskVec[0], 8);
-        NewV = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v8i16,
-                           NewV, NewV, Mask);
-      }
-    }
-
-    if (BestHighQuad != -1) {
-      // Sort high half in order using PSHUFHW if possible.
-      MaskVec.clear();
-
-      for (unsigned i = 0; i != 4; ++i)
-        MaskVec.push_back(DAG.getConstant(i, MaskEVT));
-
-      bool AnyOutOrder = false;
-      for (unsigned i = 4; i != 8; ++i) {
-        SDValue Elt = MaskElts[i];
-        if (Elt.getOpcode() == ISD::UNDEF) {
-          MaskVec.push_back(Elt);
-          InOrder.set(i);
-        } else {
-          unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
-          if (EltIdx != i)
-            AnyOutOrder = true;
-
-          MaskVec.push_back(DAG.getConstant((EltIdx % 4) + 4, MaskEVT));
-
-          // If this element is in the right place after this shuffle, then
-          // remember it.
-          if ((int)(EltIdx / 4) == BestHighQuad)
-            InOrder.set(i);
-        }
-      }
-
-      if (AnyOutOrder) {
-        SDValue Mask = DAG.getBUILD_VECTOR(MaskVT, dl, &MaskVec[0], 8);
-        NewV = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v8i16,
-                           NewV, NewV, Mask);
-      }
-    }
-
-    // The other elements are put in the right place using pextrw and pinsrw.
+    // Rewrite the MaskVals and assign NewV to V1 if NewV now contains all the
+    // source words for the shuffle, to aid later transformations.
+    bool AllWordsInNewV = true;
     for (unsigned i = 0; i != 8; ++i) {
-      if (InOrder[i])
+      int idx = MaskVals[i];
+      if (idx < 0 || (idx/4) == BestLoQuad || (idx/4) == BestHiQuad)
         continue;
-      SDValue Elt = MaskElts[i];
-      if (Elt.getOpcode() == ISD::UNDEF)
-        continue;
-      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
-      SDValue ExtOp = (EltIdx < 8)
-        ? DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V1,
-                      DAG.getConstant(EltIdx, PtrVT))
-        : DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V2,
-                      DAG.getConstant(EltIdx - 8, PtrVT));
-      NewV = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v8i16, NewV, ExtOp,
-                         DAG.getConstant(i, PtrVT));
+      AllWordsInNewV = false;
+      break;
     }
 
-    return NewV;
-  }
-
-  // PSHUF{H|L}W are not used. Lower into extracts and inserts but try to use as
-  // few as possible. First, let's find out how many elements are already in the
-  // right order.
-  unsigned V1InOrder = 0;
-  unsigned V1FromV1 = 0;
-  unsigned V2InOrder = 0;
-  unsigned V2FromV2 = 0;
-  SmallVector<SDValue, 8> V1Elts;
-  SmallVector<SDValue, 8> V2Elts;
-  for (unsigned i = 0; i < 8; ++i) {
-    SDValue Elt = MaskElts[i];
-    if (Elt.getOpcode() == ISD::UNDEF) {
-      V1Elts.push_back(Elt);
-      V2Elts.push_back(Elt);
-      ++V1InOrder;
-      ++V2InOrder;
-      continue;
-    }
-    unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
-    if (EltIdx == i) {
-      V1Elts.push_back(Elt);
-      V2Elts.push_back(DAG.getConstant(i+8, MaskEVT));
-      ++V1InOrder;
-    } else if (EltIdx == i+8) {
-      V1Elts.push_back(Elt);
-      V2Elts.push_back(DAG.getConstant(i, MaskEVT));
-      ++V2InOrder;
-    } else if (EltIdx < 8) {
-      V1Elts.push_back(Elt);
-      V2Elts.push_back(DAG.getConstant(EltIdx+8, MaskEVT));
-      ++V1FromV1;
-    } else {
-      V1Elts.push_back(Elt);
-      V2Elts.push_back(DAG.getConstant(EltIdx-8, MaskEVT));
-      ++V2FromV2;
-    }
-  }
-
-  if (V2InOrder > V1InOrder) {
-    PermMask = CommuteVectorShuffleMask(PermMask, DAG, dl);
-    std::swap(V1, V2);
-    std::swap(V1Elts, V2Elts);
-    std::swap(V1FromV1, V2FromV2);
-  }
-
-  if ((V1FromV1 + V1InOrder) != 8) {
-    // Some elements are from V2.
-    if (V1FromV1) {
-      // If there are elements that are from V1 but out of place,
-      // then first sort them in place
-      SmallVector<SDValue, 8> MaskVec;
-      for (unsigned i = 0; i < 8; ++i) {
-        SDValue Elt = V1Elts[i];
-        if (Elt.getOpcode() == ISD::UNDEF) {
-          MaskVec.push_back(DAG.getUNDEF(MaskEVT));
+    bool pshuflw = AllWordsInNewV, pshufhw = AllWordsInNewV;
+    if (AllWordsInNewV) {
+      for (int i = 0; i != 8; ++i) {
+        int idx = MaskVals[i];
+        if (idx < 0)
           continue;
-        }
-        unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
-        if (EltIdx >= 8)
-          MaskVec.push_back(DAG.getUNDEF(MaskEVT));
-        else
-          MaskVec.push_back(DAG.getConstant(EltIdx, MaskEVT));
+        idx = MaskVals[i] = (idx / 4) == BestLoQuad ? (idx & 3) : (idx & 3) + 4; 
+        if ((idx != i) && idx < 4)
+          pshufhw = false;
+        if ((idx != i) && idx > 3)
+          pshuflw = false;
       }
-      SDValue Mask = DAG.getBUILD_VECTOR(MaskVT, dl, &MaskVec[0], 8);
-      V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v8i16, V1, V1, Mask);
+      V1 = NewV;
+      V2Used = false;
+      BestLoQuad = 0;
+      BestHiQuad = 1;
     }
 
-    NewV = V1;
-    for (unsigned i = 0; i < 8; ++i) {
-      SDValue Elt = V1Elts[i];
-      if (Elt.getOpcode() == ISD::UNDEF)
-        continue;
-      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
-      if (EltIdx < 8)
-        continue;
-      SDValue ExtOp = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V2,
-                                    DAG.getConstant(EltIdx - 8, PtrVT));
-      NewV = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v8i16, NewV, ExtOp,
-                         DAG.getConstant(i, PtrVT));
+    // If we've eliminated the use of V2, and the new mask is a pshuflw or
+    // pshufhw, that's as cheap as it gets.  Return the new shuffle.
+    if (pshufhw || pshuflw) {
+      MaskV.clear();
+      for (unsigned i = 0; i != 8; ++i)
+        MaskV.push_back((MaskVals[i] < 0) ? DAG.getUNDEF(MVT::i16)
+                                          : DAG.getConstant(MaskVals[i],
+                                                            MVT::i16));
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v8i16, NewV, 
+                         DAG.getUNDEF(MVT::v8i16), 
+                         DAG.getBUILD_VECTOR(MVT::v8i16, dl, &MaskV[0], 8));
     }
-    return NewV;
-  } else {
-    // All elements are from V1.
-    NewV = V1;
-    for (unsigned i = 0; i < 8; ++i) {
-      SDValue Elt = V1Elts[i];
-      if (Elt.getOpcode() == ISD::UNDEF)
-        continue;
-      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
-      SDValue ExtOp = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V1,
-                                    DAG.getConstant(EltIdx, PtrVT));
-      NewV = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v8i16, NewV, ExtOp,
-                         DAG.getConstant(i, PtrVT));
-    }
-    return NewV;
   }
+  
+  // If we have SSSE3, and all words of the result are from 1 input vector,
+  // case 2 is generated, otherwise case 3 is generated.  If no SSSE3
+  // is present, fall back to case 4.
+  if (TLI.getSubtarget()->hasSSSE3()) {
+    SmallVector<SDValue,16> pshufbMask;
+    
+    // If we have elements from both input vectors, set the high bit of the
+    // shuffle mask element to zero out elements that come from V2 in the V1 
+    // mask, and elements that come from V1 in the V2 mask, so that the two
+    // results can be OR'd together.
+    bool TwoInputs = V1Used && V2Used;
+    for (unsigned i = 0; i != 8; ++i) {
+      int EltIdx = MaskVals[i] * 2;
+      if (TwoInputs && (EltIdx >= 16)) {
+        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
+        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
+        continue;
+      }
+      pshufbMask.push_back(DAG.getConstant(EltIdx,   MVT::i8));
+      pshufbMask.push_back(DAG.getConstant(EltIdx+1, MVT::i8));
+    }
+    V1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, V1);
+    V1 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V1, 
+                     DAG.getBUILD_VECTOR(MVT::v16i8, dl, &pshufbMask[0], 16));
+    if (!TwoInputs)
+      return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v8i16, V1);
+    
+    // Calculate the shuffle mask for the second input, shuffle it, and
+    // OR it with the first shuffled input.
+    pshufbMask.clear();
+    for (unsigned i = 0; i != 8; ++i) {
+      int EltIdx = MaskVals[i] * 2;
+      if (EltIdx < 16) {
+        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
+        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
+        continue;
+      }
+      pshufbMask.push_back(DAG.getConstant(EltIdx - 16, MVT::i8));
+      pshufbMask.push_back(DAG.getConstant(EltIdx - 15, MVT::i8));
+    }
+    V2 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, V2);
+    V2 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V2, 
+                     DAG.getBUILD_VECTOR(MVT::v16i8, dl, &pshufbMask[0], 16));
+    V1 = DAG.getNode(ISD::OR, dl, MVT::v16i8, V1, V2);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v8i16, V1);
+  }
+
+  // If BestLoQuad >= 0, generate a pshuflw to put the low elements in order,
+  // and update MaskVals with new element order.
+  BitVector InOrder(8);
+  if (BestLoQuad >= 0) {
+    SmallVector<SDValue, 8> MaskV;
+    for (int i = 0; i != 4; ++i) {
+      int idx = MaskVals[i];
+      if (idx < 0) {
+        MaskV.push_back(DAG.getUNDEF(MVT::i16));
+        InOrder.set(i);
+      } else if ((idx / 4) == BestLoQuad) {
+        MaskV.push_back(DAG.getConstant(idx & 3, MVT::i16));
+        InOrder.set(i);
+      } else {
+        MaskV.push_back(DAG.getUNDEF(MVT::i16));
+      }
+    }
+    for (unsigned i = 4; i != 8; ++i)
+      MaskV.push_back(DAG.getConstant(i, MVT::i16));
+    NewV = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v8i16, NewV,
+                       DAG.getUNDEF(MVT::v8i16),
+                       DAG.getBUILD_VECTOR(MVT::v8i16, dl, &MaskV[0], 8));
+  }
+  
+  // If BestHi >= 0, generate a pshufhw to put the high elements in order,
+  // and update MaskVals with the new element order.
+  if (BestHiQuad >= 0) {
+    SmallVector<SDValue, 8> MaskV;
+    for (unsigned i = 0; i != 4; ++i)
+      MaskV.push_back(DAG.getConstant(i, MVT::i16));
+    for (unsigned i = 4; i != 8; ++i) {
+      int idx = MaskVals[i];
+      if (idx < 0) {
+        MaskV.push_back(DAG.getUNDEF(MVT::i16));
+        InOrder.set(i);
+      } else if ((idx / 4) == BestHiQuad) {
+        MaskV.push_back(DAG.getConstant((idx & 3) + 4, MVT::i16));
+        InOrder.set(i);
+      } else {
+        MaskV.push_back(DAG.getUNDEF(MVT::i16));
+      }
+    }
+    NewV = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v8i16, NewV,
+                       DAG.getUNDEF(MVT::v8i16),
+                       DAG.getBUILD_VECTOR(MVT::v8i16, dl, &MaskV[0], 8));
+  }
+  
+  // In case BestHi & BestLo were both -1, which means each quadword has a word
+  // from each of the four input quadwords, calculate the InOrder bitvector now
+  // before falling through to the insert/extract cleanup.
+  if (BestLoQuad == -1 && BestHiQuad == -1) {
+    NewV = V1;
+    for (int i = 0; i != 8; ++i)
+      if (MaskVals[i] < 0 || MaskVals[i] == i)
+        InOrder.set(i);
+  }
+  
+  // The other elements are put in the right place using pextrw and pinsrw.
+  for (unsigned i = 0; i != 8; ++i) {
+    if (InOrder[i])
+      continue;
+    int EltIdx = MaskVals[i];
+    if (EltIdx < 0)
+      continue;
+    SDValue ExtOp = (EltIdx < 8)
+    ? DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V1,
+                  DAG.getIntPtrConstant(EltIdx))
+    : DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V2,
+                  DAG.getIntPtrConstant(EltIdx - 8));
+    NewV = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v8i16, NewV, ExtOp,
+                       DAG.getIntPtrConstant(i));
+  }
+  return NewV;
+}
+
+// v16i8 shuffles - Prefer shuffles in the following order:
+// 1. [ssse3] 1 x pshufb
+// 2. [ssse3] 2 x pshufb + 1 x por
+// 3. [all]   v8i16 shuffle + N x pextrw + rotate + pinsrw
+static
+SDValue LowerVECTOR_SHUFFLEv16i8(SDValue V1, SDValue V2,
+                                 SDValue PermMask, SelectionDAG &DAG,
+                                 X86TargetLowering &TLI, DebugLoc dl) {
+  SmallVector<SDValue, 16> MaskElts(PermMask.getNode()->op_begin(),
+                                    PermMask.getNode()->op_end());
+  SmallVector<int, 16> MaskVals;
+  
+  // If we have SSSE3, case 1 is generated when all result bytes come from
+  // one of  the inputs.  Otherwise, case 2 is generated.  If no SSSE3 is 
+  // present, fall back to case 3.
+  // FIXME: kill V2Only once shuffles are canonizalized by getNode.
+  bool V1Only = true;
+  bool V2Only = true;
+  for (unsigned i = 0; i < 16; ++i) {
+    SDValue Elt = MaskElts[i];
+    int EltIdx = Elt.getOpcode() == ISD::UNDEF ? -1 : 
+                 cast<ConstantSDNode>(Elt)->getZExtValue();
+    MaskVals.push_back(EltIdx);
+    if (EltIdx < 0)
+      continue;
+    if (EltIdx < 16)
+      V2Only = false;
+    else
+      V1Only = false;
+  }
+  
+  // If SSSE3, use 1 pshufb instruction per vector with elements in the result.
+  if (TLI.getSubtarget()->hasSSSE3()) {
+    SmallVector<SDValue,16> pshufbMask;
+    
+    // If all result elements are from one input vector, then only translate
+    // undef mask values to 0x80 (zero out result) in the pshufb mask. 
+    //
+    // Otherwise, we have elements from both input vectors, and must zero out
+    // elements that come from V2 in the first mask, and V1 in the second mask
+    // so that we can OR them together.
+    bool TwoInputs = !(V1Only || V2Only);
+    for (unsigned i = 0; i != 16; ++i) {
+      int EltIdx = MaskVals[i];
+      if (EltIdx < 0 || (TwoInputs && EltIdx >= 16)) {
+        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
+        continue;
+      }
+      pshufbMask.push_back(DAG.getConstant(EltIdx, MVT::i8));
+    }
+    // If all the elements are from V2, assign it to V1 and return after
+    // building the first pshufb.
+    if (V2Only)
+      V1 = V2;
+    V1 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V1,
+                     DAG.getBUILD_VECTOR(MVT::v16i8, dl, &pshufbMask[0], 16));
+    if (!TwoInputs)
+      return V1;
+    
+    // Calculate the shuffle mask for the second input, shuffle it, and
+    // OR it with the first shuffled input.
+    pshufbMask.clear();
+    for (unsigned i = 0; i != 16; ++i) {
+      int EltIdx = MaskVals[i];
+      if (EltIdx < 16) {
+        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
+        continue;
+      }
+      pshufbMask.push_back(DAG.getConstant(EltIdx - 16, MVT::i8));
+    }
+    V2 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V2,
+                     DAG.getBUILD_VECTOR(MVT::v16i8, dl, &pshufbMask[0], 16));
+    return DAG.getNode(ISD::OR, dl, MVT::v16i8, V1, V2);
+  }
+  
+  // No SSSE3 - Calculate in place words and then fix all out of place words
+  // With 0-16 extracts & inserts.  Worst case is 16 bytes out of order from
+  // the 16 different words that comprise the two doublequadword input vectors.
+  V1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v8i16, V1);
+  V2 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v8i16, V2);
+  SDValue NewV = V2Only ? V2 : V1;
+  for (int i = 0; i != 8; ++i) {
+    int Elt0 = MaskVals[i*2];
+    int Elt1 = MaskVals[i*2+1];
+    
+    // This word of the result is all undef, skip it.
+    if (Elt0 < 0 && Elt1 < 0)
+      continue;
+    
+    // This word of the result is already in the correct place, skip it.
+    if (V1Only && (Elt0 == i*2) && (Elt1 == i*2+1))
+      continue;
+    if (V2Only && (Elt0 == i*2+16) && (Elt1 == i*2+17))
+      continue;
+    
+    SDValue Elt0Src = Elt0 < 16 ? V1 : V2;
+    SDValue Elt1Src = Elt1 < 16 ? V1 : V2;
+    SDValue InsElt;
+    
+    // If Elt1 is defined, extract it from the appropriate source.  If the
+    // source byte is not also odd, shift the extracted word left 8 bits.
+    if (Elt1 >= 0) {
+      InsElt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, Elt1Src,
+                           DAG.getIntPtrConstant(Elt1 / 2));
+      if ((Elt1 & 1) == 0)
+        InsElt = DAG.getNode(ISD::SHL, dl, MVT::i16, InsElt,
+                             DAG.getConstant(8, TLI.getShiftAmountTy()));
+    }
+    // If Elt0 is defined, extract it from the appropriate source.  If the
+    // source byte is not also even, shift the extracted word right 8 bits. If
+    // Elt1 was also defined, OR the extracted values together before
+    // inserting them in the result.
+    if (Elt0 >= 0) {
+      SDValue InsElt0 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16,
+                                    Elt0Src, DAG.getIntPtrConstant(Elt0 / 2));
+      if ((Elt0 & 1) != 0)
+        InsElt0 = DAG.getNode(ISD::SRL, dl, MVT::i16, InsElt0,
+                              DAG.getConstant(8, TLI.getShiftAmountTy()));
+      InsElt = Elt1 >= 0 ? DAG.getNode(ISD::OR, dl, MVT::i16, InsElt, InsElt0)
+                         : InsElt0;
+    }
+    NewV = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v8i16, NewV, InsElt,
+                       DAG.getIntPtrConstant(i));
+  }
+  return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, NewV);
 }
 
 /// RewriteAsNarrowerShuffle - Try rewriting v8i16 and v16i8 shuffles as 4 wide
@@ -4078,6 +4166,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   bool V1IsSplat = false;
   bool V2IsSplat = false;
 
+  // FIXME: Check for legal shuffle and return?
+  
   if (isUndefShuffle(Op.getNode()))
     return DAG.getUNDEF(VT);
 
@@ -4239,6 +4329,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       return Op;
   }
 
+  // FIXME: for mmx, bitcast v2i32 to v4i16 for shuffle.
   // Try PSHUF* first, then SHUFP*.
   // MMX doesn't have PSHUFD but it does have PSHUFW. While it's theoretically
   // possible to shuffle a v2i32 using PSHUFW, that's not yet implemented.
@@ -4281,6 +4372,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       return NewOp;
   }
 
+  if (VT == MVT::v16i8) {
+    SDValue NewOp = LowerVECTOR_SHUFFLEv16i8(V1, V2, PermMask, DAG, *this, dl);
+    if (NewOp.getNode())
+      return NewOp;
+  }
+  
   // Handle all 4 wide cases with a number of shuffles except for MMX.
   if (NumElems == 4 && !isMMX)
     return LowerVECTOR_SHUFFLE_4wide(V1, V2, PermMask, VT, DAG, dl);
@@ -4435,7 +4532,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG){
   if ((EVT.getSizeInBits() == 8 || EVT.getSizeInBits() == 16) &&
       isa<ConstantSDNode>(N2)) {
     unsigned Opc = (EVT.getSizeInBits() == 8) ? X86ISD::PINSRB
-                                                  : X86ISD::PINSRW;
+                                              : X86ISD::PINSRW;
     // Transform it so it match pinsr{b,w} which expects a GR32 as its second
     // argument.
     if (N1.getValueType() != MVT::i32)
@@ -6830,6 +6927,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::INSERTPS:           return "X86ISD::INSERTPS";
   case X86ISD::PINSRB:             return "X86ISD::PINSRB";
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
+  case X86ISD::PSHUFB:             return "X86ISD::PSHUFB";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
@@ -6948,12 +7046,14 @@ bool X86TargetLowering::isTruncateFree(MVT VT1, MVT VT2) const {
 bool
 X86TargetLowering::isShuffleMaskLegal(SDValue Mask, MVT VT) const {
   // Only do shuffles on 128-bit vector types for now.
+  // FIXME: pshufb, blends
   if (VT.getSizeInBits() == 64) return false;
   return (Mask.getNode()->getNumOperands() <= 4 ||
           isIdentityMask(Mask.getNode()) ||
           isIdentityMask(Mask.getNode(), true) ||
           isSplatMask(Mask.getNode())  ||
-          isPSHUFHW_PSHUFLWMask(Mask.getNode()) ||
+          X86::isPSHUFHWMask(Mask.getNode()) ||
+          X86::isPSHUFLWMask(Mask.getNode()) ||
           X86::isUNPCKLMask(Mask.getNode()) ||
           X86::isUNPCKHMask(Mask.getNode()) ||
           X86::isUNPCKL_v_undef_Mask(Mask.getNode()) ||

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah -o %t -f
 ; RUN: grep pshuflw %t | count 1
 ; RUN: grep pextrw %t | count 2
 ; RUN: grep pinsrw %t | count 2

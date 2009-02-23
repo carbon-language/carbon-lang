@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 > %t
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah > %t
 ; RUN: not grep punpck %t
 ; RUN: grep pextrw %t | count 4
 ; RUN: grep pinsrw %t | count 6
-; RUN: grep pshuflw %t | count 3
+; RUN: grep pshuflw %t | count 1
 ; RUN: grep pshufhw %t | count 2
 
 define <8 x i16> @t1(<8 x i16>* %A, <8 x i16>* %B) nounwind {
