@@ -207,7 +207,7 @@ public:
   ///  which key is the highest in the ordering of keys in the map.  This
   ///  method returns NULL if the map is empty.
   value_type* getMaxElement() const {
-    return Root ? &(Root->getMaxElement()) : 0;
+    return Root ? &(Root->getMaxElement()->getValue()) : 0;
   }
 
   //===--------------------------------------------------===//
