@@ -412,6 +412,11 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
 
   const BlockDecl *BD = Expr->getBlockDecl();
 
+  // FIXME: there are tons of variables in CGF that are copied, we probably
+  // don't want many of them, any of them.  When we trim that, this can go away.
+  // Help ensure no control flow in or out of the block.
+  BreakContinueStack.clear();
+
   // FIXME: This leaks
   ImplicitParamDecl *SelfDecl =
     ImplicitParamDecl::Create(getContext(), 0,
