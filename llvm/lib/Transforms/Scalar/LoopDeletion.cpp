@@ -53,6 +53,7 @@ namespace {
       AU.addPreserved<LoopInfo>();
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
+      AU.addPreserved<DominanceFrontier>();
     }
   };
 }
@@ -228,6 +229,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // Update the dominator tree and remove the instructions and blocks that will
   // be deleted from the reference counting scheme.
   DominatorTree& DT = getAnalysis<DominatorTree>();
+  DominanceFrontier* DF = getAnalysisIfAvailable<DominanceFrontier>();
   SmallPtrSet<DomTreeNode*, 8> ChildNodes;
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI) {
@@ -235,12 +237,15 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
     // allows us to remove the domtree entry for the block.
     ChildNodes.insert(DT[*LI]->begin(), DT[*LI]->end());
     for (SmallPtrSet<DomTreeNode*, 8>::iterator DI = ChildNodes.begin(),
-         DE = ChildNodes.end(); DI != DE; ++DI)
+         DE = ChildNodes.end(); DI != DE; ++DI) {
       DT.changeImmediateDominator(*DI, DT[preheader]);
+      if (DF) DF->changeImmediateDominator((*DI)->getBlock(), preheader, &DT);
+    }
     
     ChildNodes.clear();
     DT.eraseNode(*LI);
-    
+    if (DF) DF->removeBlock(*LI);
+
     // Remove instructions that we're deleting from ScalarEvolution.
     for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
          BI != BE; ++BI)
