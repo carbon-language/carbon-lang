@@ -105,6 +105,12 @@ public:
   /// ExceptionThrowFn - LLVM objc_exception_throw function.
   llvm::Function *ExceptionThrowFn;
   
+  /// SyncEnterFn - LLVM object_sync_enter function.
+  llvm::Function *SyncEnterFn;
+  
+  /// SyncExitFn - LLVM object_sync_exit function.
+  llvm::Function *SyncExitFn;
+  
   ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCCommonTypesHelper(){}
 };
@@ -187,12 +193,6 @@ public:
   
   /// SetJmpFn - LLVM _setjmp function.
   llvm::Function *SetJmpFn;
-  
-  /// SyncEnterFn - LLVM object_sync_enter function.
-  llvm::Function *SyncEnterFn;
-  
-  /// SyncExitFn - LLVM object_sync_exit function.
-  llvm::Function *SyncExitFn;
   
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
@@ -1892,6 +1892,18 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::BasicBlock *FinallyNoExit = CGF.createBasicBlock("finally.noexit");
   llvm::BasicBlock *FinallyRethrow = CGF.createBasicBlock("finally.throw");
   llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
+  
+  // For @synchronized, call objc_sync_enter(sync.expr). The
+  // evaluation of the expression must occur before we enter the
+  // @synchronized. We can safely avoid a temp here because jumps into
+  // @synchronized are illegal & this will dominate uses.
+  llvm::Value *SyncArg = 0;
+  if (!isTry) {
+    SyncArg = 
+      CGF.EmitScalarExpr(cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
+    SyncArg = CGF.Builder.CreateBitCast(SyncArg, ObjCTypes.ObjectPtrTy);
+    CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn, SyncArg);
+  }
 
   // Push an EH context entry, used for handling rethrows and jumps
   // through finally.
@@ -1907,14 +1919,6 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::Value *CallTryExitPtr = CGF.CreateTempAlloca(llvm::Type::Int1Ty,
                                                      "_call_try_exit");
   CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(), CallTryExitPtr);
-  
-  if (!isTry) {
-    // For @synchronized, call objc_sync_enter(sync.expr)
-    llvm::Value *Arg = CGF.EmitScalarExpr(
-                         cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
-    Arg = CGF.Builder.CreateBitCast(Arg, ObjCTypes.ObjectPtrTy);
-    CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn, Arg);
-  }
   
   // Enter a new try block and call setjmp.
   CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
@@ -2079,14 +2083,10 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     if (const ObjCAtFinallyStmt* FinallyStmt = 
           cast<ObjCAtTryStmt>(S).getFinallyStmt())
       CGF.EmitStmt(FinallyStmt->getFinallyBody());
-  }
-  else {
-    // For @synchronized objc_sync_exit(expr); As finally's sole statement.
-    // For @synchronized, call objc_sync_enter(sync.expr)
-    llvm::Value *Arg = CGF.EmitScalarExpr(
-                         cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
-    Arg = CGF.Builder.CreateBitCast(Arg, ObjCTypes.ObjectPtrTy);
-    CGF.Builder.CreateCall(ObjCTypes.SyncExitFn, Arg);
+  } else {
+    // Emit objc_sync_exit(expr); as finally's sole statement for
+    // @synchronized.
+    CGF.Builder.CreateCall(ObjCTypes.SyncExitFn, SyncArg);
   }
 
   // Emit the switch block
@@ -2740,9 +2740,18 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   Params.push_back(IdType);
   
   FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
-
   ExceptionThrowFn =
     CGM.CreateRuntimeFunction(FTy, "objc_exception_throw");
+
+  // synchronized APIs
+  // void objc_sync_enter (id)
+  // void objc_sync_exit (id)
+  Params.clear();
+  Params.push_back(IdType);
+
+  FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
+  SyncEnterFn = CGM.CreateRuntimeFunction(FTy, "objc_sync_enter");
+  SyncExitFn = CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
 }
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
@@ -3049,23 +3058,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       false),
                               "objc_exception_match");
   
-  // synchronized APIs
-  // void objc_sync_enter (id)
-  Params.clear();
-  Params.push_back(ObjectPtrTy);
-  SyncEnterFn =
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                    Params,
-                                                    false),
-                            "objc_sync_enter");
-  // void objc_sync_exit (id)
-  SyncExitFn =
-  CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                    Params,
-                                                    false),
-                            "objc_sync_exit");
-  
-
   Params.clear();
   Params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int32Ty));
   SetJmpFn =
