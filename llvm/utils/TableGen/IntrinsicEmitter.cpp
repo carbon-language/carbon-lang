@@ -35,7 +35,10 @@ void IntrinsicEmitter::run(std::ostream &OS) {
 
   // Emit the intrinsic ID -> name table.
   EmitIntrinsicToNameTable(Ints, OS);
-  
+
+  // Emit the intrinsic ID -> overload table.
+  EmitIntrinsicToOverloadTable(Ints, OS);
+
   // Emit the function name recognizer.
   EmitFnNameRecognizer(Ints, OS);
   
@@ -117,6 +120,23 @@ EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "  // Note that entry #0 is the invalid intrinsic!\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i)
     OS << "  \"" << Ints[i].Name << "\",\n";
+  OS << "#endif\n\n";
+}
+
+void IntrinsicEmitter::
+EmitIntrinsicToOverloadTable(const std::vector<CodeGenIntrinsic> &Ints, 
+                         std::ostream &OS) {
+  OS << "// Intrinsic ID to overload table\n";
+  OS << "#ifdef GET_INTRINSIC_OVERLOAD_TABLE\n";
+  OS << "  // Note that entry #0 is the invalid intrinsic!\n";
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    OS << "  ";
+    if (Ints[i].isOverloaded)
+      OS << "true";
+    else
+      OS << "false";
+    OS << ",\n";
+  }
   OS << "#endif\n\n";
 }
 

@@ -49,6 +49,10 @@ namespace Intrinsic {
   ///
   const FunctionType *getType(ID id, const Type **Tys = 0, unsigned numTys = 0);
 
+  /// Intrinsic::isOverloaded(ID) - Returns true if the intrinsic can be
+  /// overloaded.
+  bool isOverloaded(ID id);
+
   /// Intrinsic::getAttributes(ID) - Return the attributes for an intrinsic.
   ///
   AttrListPtr getAttributes(ID id);

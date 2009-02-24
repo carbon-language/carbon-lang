@@ -356,6 +356,16 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
   return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
 }
 
+bool Intrinsic::isOverloaded(ID id) {
+  const bool OTable[] = {
+    false,
+#define GET_INTRINSIC_OVERLOAD_TABLE
+#include "llvm/Intrinsics.gen"
+#undef GET_INTRINSIC_OVERLOAD_TABLE
+  };
+  return OTable[id];
+}
+
 /// This defines the "Intrinsic::getAttributes(ID id)" method.
 #define GET_INTRINSIC_ATTRIBUTES
 #include "llvm/Intrinsics.gen"

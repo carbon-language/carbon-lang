@@ -18,6 +18,7 @@ namespace llvm {
 
 class Function;
 class Module;
+class Type;
 
 //---------------------------------------------------------------------------
 ///
@@ -39,7 +40,19 @@ public:
   virtual Function *getDeclaration(Module *M, const char *BuiltinName) const {
     return 0;
   }
-  
+
+  // Returns the Function declaration for intrinsic BuiltinName.  If the
+  // intrinsic can be overloaded, uses Tys to return the correct function.
+  virtual Function *getDeclaration(Module *M, const char *BuiltinName,
+                                   const Type **Tys, unsigned numTys) const {
+    return 0;
+  }
+
+  // Returns true if the Builtin can be overloaded.
+  virtual bool isOverloaded(Module *M, const char *BuiltinName) const {
+    return false;
+  }
+
   virtual unsigned getIntrinsicID(Function *F) const { return 0; }
 };
 
