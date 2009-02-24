@@ -430,21 +430,13 @@ uint32_t PTHWriter::ResolveID(const IdentifierInfo* II) {
 }
 
 void PTHWriter::EmitToken(const Token& T) {
-  // When writing out the token data for literals, clear the NeedsCleaning flag.
-  uint32_t CleaningMask = T.isLiteral() ? ~((uint32_t)Token::NeedsCleaning):~0U;
-  
-  // Emit the token kind, flags, and length.
-  Emit32(((uint32_t) T.getKind()) |
-         ((((uint32_t) T.getFlags()) & CleaningMask) << 8)|
-         (((uint32_t) T.getLength()) << 16));
-
-  // Literals (strings, numbers, characters) get cached spellings.
+  // We handle literals differently since their *cleaned* spellings are cached.
   if (T.isLiteral()) {
     // FIXME: This uses the slow getSpelling().  Perhaps we do better
     // in the future?  This only slows down PTH generation.
     const std::string &spelling = PP.getSpelling(T);
     const char* s = spelling.c_str();
-    
+
     // Get the string entry.
     llvm::StringMapEntry<OffsetOpt> *E =
       &CachedStrs.GetOrCreateValue(s, s+spelling.size());
@@ -455,11 +447,27 @@ void PTHWriter::EmitToken(const Token& T) {
       CurStrOffset += spelling.size() + 1;
     }
     
+    // Emit the token meta data with the cleaning bit reset and the
+    // length of the token equal to the cleaned spelling.
+    // Emit the token kind, flags, and length.
+    Emit32(((uint32_t) T.getKind()) |
+           ((((uint32_t) T.getFlags()) & ~((uint32_t)Token::NeedsCleaning)<<8))|
+           (((uint32_t) spelling.size()) << 16));
+    
+    // Emit the relative offset into the PTH file for the spelling string.
     Emit32(E->getValue().getOffset());
   }
-  else
-    Emit32(ResolveID(T.getIdentifierInfo()));
+  else {
+    // Emit the token kind, flags, and length.
+    Emit32(((uint32_t) T.getKind()) |
+           ((((uint32_t) T.getFlags())) << 8)|
+           (((uint32_t) T.getLength()) << 16));
     
+    Emit32(ResolveID(T.getIdentifierInfo()));
+  }
+  
+  // Emit the offset into the original source file of this token so that we
+  // can reconstruct its SourceLocation.
   Emit32(PP.getSourceManager().getFileOffset(T.getLocation()));
 }
 
