@@ -2698,12 +2698,18 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   Stmt *S = 0;
   
   while (LeakN) {
+    bool atBranch = false;
     ProgramPoint P = LeakN->getLocation();
     
     if (const PostStmt *PS = dyn_cast<PostStmt>(&P))
       S = PS->getStmt();
-    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P))
+    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+      // FIXME: What we really want is to set LeakN to be the node
+      // for the BlockEntrance for the branch we took and have BugReporter
+      // do the right thing.
+      atBranch = true;
       S = BE->getSrc()->getTerminator();
+    }
     
     if (S) {
       // Scan 'S' for uses of Sym.
@@ -2733,6 +2739,10 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
       if (foundSymbol)
         break;
     }
+    
+    // Don't traverse any higher than the branch.
+    if (atBranch)
+      break;
     
     LeakN = LeakN->pred_empty() ? 0 : *(LeakN->pred_begin());
   }
