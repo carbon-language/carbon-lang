@@ -1664,7 +1664,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         Offset = ConstantExpr::getSExt(Offset, Base->getType());
       else if (Base->getType()->getPrimitiveSizeInBits() <
                Offset->getType()->getPrimitiveSizeInBits())
-        Base = ConstantExpr::getZExt(Base, Base->getType());
+        Base = ConstantExpr::getZExt(Base, Offset->getType());
       
       Base = ConstantExpr::getAdd(Base, Offset);
       return ConstantExpr::getIntToPtr(Base, CE->getType());
