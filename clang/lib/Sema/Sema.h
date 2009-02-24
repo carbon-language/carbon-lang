@@ -567,7 +567,12 @@ public:
     /// Look up a namespace name within a C++ using directive or
     /// namespace alias definition, ignoring non-namespace names (C++
     /// [basic.lookup.udir]p1).
-    LookupNamespaceName
+    LookupNamespaceName,
+    // Look up an ordinary name that is going to be redeclared as a
+    // name with linkage. This lookup ignores any declarations that
+    // are outside of the current scope unless they have linkage. See 
+    // C99 6.2.2p4-5 and C++ [basic.link]p6.
+    LookupRedeclarationWithLinkage
   };
 
   /// @brief Represents the results of name lookup.
@@ -807,12 +812,13 @@ private:
 public:
   /// Determines whether D is a suitable lookup result according to the
   /// lookup criteria.
-  static bool isAcceptableLookupResult(Decl *D, LookupNameKind NameKind,
+  static bool isAcceptableLookupResult(NamedDecl *D, LookupNameKind NameKind,
                                        unsigned IDNS) {
     switch (NameKind) {
     case Sema::LookupOrdinaryName:
     case Sema::LookupTagName:
     case Sema::LookupMemberName:
+    case Sema::LookupRedeclarationWithLinkage: // FIXME: check linkage, scoping
       return D->isInIdentifierNamespace(IDNS);
       
     case Sema::LookupOperatorName:

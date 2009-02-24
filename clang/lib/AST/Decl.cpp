@@ -205,6 +205,15 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
   return this->getKind() == OldD->getKind();
 }
 
+bool NamedDecl::hasLinkage() const {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(this))
+    return VD->hasExternalStorage() || VD->isFileVarDecl();
+
+  if (isa<FunctionDecl>(this) && !isa<CXXMethodDecl>(this))
+    return true;
+
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // VarDecl Implementation

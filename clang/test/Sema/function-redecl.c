@@ -46,7 +46,7 @@ extern void g3(int); // expected-note{{previous declaration is here}}
 static void g3(int x) { } // expected-error{{static declaration of 'g3' follows non-static declaration}}
 
 void test2() {
-  extern int f2; // expected-note{{previous definition is here}}
+  extern int f2; // expected-note 2 {{previous definition is here}}
   {
     void f2(int); // expected-error{{redefinition of 'f2' as different kind of symbol}}
   }
@@ -54,7 +54,7 @@ void test2() {
   {
     int f2;
     {
-      void f2(int); // okay
+      void f2(int); // expected-error{{redefinition of 'f2' as different kind of symbol}}
     }
   }
 }

@@ -1334,10 +1334,29 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   NamedDecl *New;
   bool InvalidDecl = false;
 
+  QualType R = GetTypeForDeclarator(D, S);
+  if (R.isNull()) {
+    InvalidDecl = true;
+    R = Context.IntTy;
+  }
+
   // See if this is a redefinition of a variable in the same scope.
   if (!D.getCXXScopeSpec().isSet() && !D.getCXXScopeSpec().isInvalid()) {
+    LookupNameKind NameKind = LookupOrdinaryName;
+
+    // If the declaration we're planning to build will be a function
+    // or object with linkage, then look for another declaration with
+    // linkage (C99 6.2.2p4-5 and C++ [basic.link]p6).
+    if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
+      /* Do nothing*/;
+    else if (R->isFunctionType()) {
+      if (CurContext->isFunctionOrMethod())
+        NameKind = LookupRedeclarationWithLinkage;
+    } else if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_extern)
+      NameKind = LookupRedeclarationWithLinkage;
+
     DC = CurContext;
-    PrevDecl = LookupName(S, Name, LookupOrdinaryName, true, 
+    PrevDecl = LookupName(S, Name, NameKind, true, 
                           D.getDeclSpec().getStorageClassSpec() != 
                             DeclSpec::SCS_static,
                           D.getIdentifierLoc());
@@ -1402,17 +1421,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
       D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef)
     PrevDecl = 0;
 
-  QualType R = GetTypeForDeclarator(D, S);
-  if (R.isNull()) {
-    InvalidDecl = true;
-    R = Context.IntTy;
-  }
-
   bool Redeclaration = false;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
     New = ActOnTypedefDeclarator(S, D, DC, R, LastDeclarator, PrevDecl,
                                  InvalidDecl, Redeclaration);
-  } else if (R.getTypePtr()->isFunctionType()) {
+  } else if (R->isFunctionType()) {
     New = ActOnFunctionDeclarator(S, D, DC, R, LastDeclarator, PrevDecl, 
                                   IsFunctionDefinition, InvalidDecl,
                                   Redeclaration);
@@ -1561,6 +1574,8 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
 
   // FIXME: PrevDecl could be an OverloadedFunctionDecl, in which
   // case we need to check each of the overloaded functions.
+  if (!PrevDecl->hasLinkage())
+    return false;
 
   if (Context.getLangOptions().CPlusPlus) {
     // C++ [basic.link]p6:
@@ -1594,13 +1609,6 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
       }
     }
   }
-
-  // If the declaration we've found has no linkage, ignore it. 
-  if (VarDecl *VD = dyn_cast<VarDecl>(PrevDecl)) {
-    if (!VD->hasGlobalStorage())
-      return false;
-  } else if (!isa<FunctionDecl>(PrevDecl))
-    return false;
 
   return true;
 }
@@ -1755,9 +1763,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // same scope as the new declaration, this may still be an
   // acceptable redeclaration.
   if (PrevDecl && !isDeclInScope(PrevDecl, DC, S) &&
-      !((NewVD->hasExternalStorage() ||
-         (NewVD->isFileVarDecl() && 
-          NewVD->getStorageClass() != VarDecl::Static)) &&
+      !(NewVD->hasLinkage() &&
         isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;     
 
@@ -1788,7 +1794,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // declaration into translation unit scope so that all external
   // declarations are visible.
   if (!getLangOptions().CPlusPlus && CurContext->isFunctionOrMethod() &&
-      NewVD->hasExternalStorage())
+      NewVD->hasLinkage())
     InjectLocallyScopedExternalDeclaration(NewVD);
 
   return NewVD;
@@ -2006,9 +2012,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // same scope as the new declaration, this may still be an
   // acceptable redeclaration.
   if (PrevDecl && !isDeclInScope(PrevDecl, DC, S) &&
-      (isa<CXXMethodDecl>(NewFD) ||
-       NewFD->getStorageClass() == FunctionDecl::Static ||
-       !isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
+      !(NewFD->hasLinkage() &&
+        isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;
 
   // Merge or overload the declaration with an existing declaration of

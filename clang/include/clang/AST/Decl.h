@@ -109,6 +109,9 @@ public:
   /// overloaded function.
   bool declarationReplaces(NamedDecl *OldD) const;
 
+  /// \brief Determine whether this declaration has linkage.
+  bool hasLinkage() const;
+
   static bool classof(const Decl *D) {
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
   }

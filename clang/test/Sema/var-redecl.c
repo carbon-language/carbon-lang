@@ -28,3 +28,24 @@ float outer4; // expected-error{{redefinition of 'outer4' with a different type}
 float outer5;  // expected-error{{redefinition of 'outer5' with a different type}}
 int outer8(int); // expected-error{{redefinition of 'outer8' as different kind of symbol}}
 float outer9; // expected-error{{redefinition of 'outer9' with a different type}}
+
+extern int outer13; // expected-note{{previous definition is here}}
+void outer_shadowing_test() {
+  extern int outer10;
+  extern int outer11; // expected-note{{previous definition is here}}
+  extern int outer12; // expected-note{{previous definition is here}}
+  {
+    float outer10;
+    float outer11;
+    float outer12;
+    {
+      extern int outer10; // okay
+      extern float outer11; // expected-error{{redefinition of 'outer11' with a different type}}
+      static double outer12;
+      {
+        extern float outer12; // expected-error{{redefinition of 'outer12' with a different type}}
+        extern float outer13; // expected-error{{redefinition of 'outer13' with a different type}}
+      }
+    }
+  }
+}

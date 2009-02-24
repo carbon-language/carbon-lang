@@ -271,6 +271,7 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
   switch (NameKind) {
   case Sema::LookupOrdinaryName:
   case Sema::LookupOperatorName:
+  case Sema::LookupRedeclarationWithLinkage:
     IDNS = Decl::IDNS_Ordinary;
     if (CPlusPlus)
       IDNS |= Decl::IDNS_Tag | Decl::IDNS_Member;
@@ -763,16 +764,40 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
     case Sema::LookupNamespaceName:
       assert(false && "C does not perform these kinds of name lookup");
       break;
+
+    case Sema::LookupRedeclarationWithLinkage:
+      // Find the nearest non-transparent declaration scope.
+      while (!(S->getFlags() & Scope::DeclScope) ||
+             (S->getEntity() && 
+              static_cast<DeclContext *>(S->getEntity())
+                ->isTransparentContext()))
+        S = S->getParent();
+      IDNS = Decl::IDNS_Ordinary;
+      break;
     }
 
     // Scan up the scope chain looking for a decl that matches this
     // identifier that is in the appropriate namespace.  This search
     // should not take long, as shadowing of names is uncommon, and
     // deep shadowing is extremely uncommon.
+    bool LeftStartingScope = false;
+
     for (IdentifierResolver::iterator I = IdResolver.begin(Name),
                                    IEnd = IdResolver.end(); 
          I != IEnd; ++I)
       if ((*I)->isInIdentifierNamespace(IDNS)) {
+        if (NameKind == LookupRedeclarationWithLinkage) {
+          // Determine whether this (or a previous) declaration is
+          // out-of-scope.
+          if (!LeftStartingScope && !S->isDeclScope(*I))
+            LeftStartingScope = true;
+
+          // If we found something outside of our starting scope that
+          // does not have linkage, skip it.
+          if (LeftStartingScope && !((*I)->hasLinkage()))
+            continue;
+        }
+
         if ((*I)->getAttr<OverloadableAttr>()) {
           // If this declaration has the "overloadable" attribute, we
           // might have a set of overloaded functions.
@@ -806,7 +831,8 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
   // If we didn't find a use of this identifier, and if the identifier
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
-  if (NameKind == LookupOrdinaryName) {
+  if (NameKind == LookupOrdinaryName || 
+      NameKind == LookupRedeclarationWithLinkage) {
     IdentifierInfo *II = Name.getAsIdentifierInfo();
     if (II && AllowBuiltinCreation) {
       // If this is a builtin on this (or all) targets, create the decl.
