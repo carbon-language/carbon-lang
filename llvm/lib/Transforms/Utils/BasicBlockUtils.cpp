@@ -15,7 +15,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -32,7 +31,7 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
          // Can delete self loop.
          BB->getSinglePredecessor() == BB) && "Block is not dead!");
   TerminatorInst *BBTerm = BB->getTerminator();
-  Value *DbgRegionEndContext = NULL;
+  
   // Loop through all of our successors and make sure they know that one
   // of their predecessors is going away.
   for (unsigned i = 0, e = BBTerm->getNumSuccessors(); i != e; ++i)
@@ -41,10 +40,6 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
   // Zap all the instructions in the block.
   while (!BB->empty()) {
     Instruction &I = BB->back();
-    // It is possible to have multiple llvm.dbg.region.end in a block.
-    if (DbgRegionEndInst *DREI = dyn_cast<DbgRegionEndInst>(&I))
-      DbgRegionEndContext = DREI->getContext();
-
     // If this instruction is used, replace uses with an arbitrary value.
     // Because control flow can't get here, we don't care what we replace the
     // value with.  Note that since this block is unreachable, and all values
@@ -54,22 +49,7 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
       I.replaceAllUsesWith(UndefValue::get(I.getType()));
     BB->getInstList().pop_back();
   }
-
-  if (DbgRegionEndContext) {
-    // Delete corresponding llvm.dbg.func.start from entry block.
-    BasicBlock &Entry = BB->getParent()->getEntryBlock();
-    DbgFuncStartInst *DbgFuncStart = NULL;
-    for (BasicBlock::iterator BI = Entry.begin(), BE = Entry.end();
-           BI != BE; ++BI) {
-      if (DbgFuncStartInst *DFSI = dyn_cast<DbgFuncStartInst>(BI)) {
-        DbgFuncStart = DFSI;
-        break;
-      }
-    }
-    if (DbgFuncStart && DbgFuncStart->getSubprogram() == DbgRegionEndContext)
-      DbgFuncStart->eraseFromParent();
-  }
-    
+  
   // Zap the block!
   BB->eraseFromParent();
 }
