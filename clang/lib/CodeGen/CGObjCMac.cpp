@@ -20,6 +20,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/LangOptions.h"
 
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Target/TargetData.h"
@@ -291,7 +292,13 @@ public:
   
   // SuperMessageRefPtrTy - LLVM for struct _super_message_ref_t*
   const llvm::Type *SuperMessageRefPtrTy;
-  
+
+  /// EHPersonalityPtr - LLVM value for an i8* to the Objective-C
+  /// exception personality function.
+  llvm::Value *EHPersonalityPtr;
+
+  llvm::Function *UnwindResumeOrRethrowFn;
+
   ObjCNonFragileABITypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCNonFragileABITypesHelper(){}
 };
@@ -731,9 +738,7 @@ public:
   }
   
   virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
-                                         const Stmt &S) {
-    CGF.ErrorUnsupported(&S, "try or synchronized statement");
-  }
+                                         const Stmt &S);
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                              const ObjCAtThrowStmt &S);
   virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
@@ -3340,7 +3345,22 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                                                       Params,
                                                       true),
                               "objc_msgSendSuper2_stret_fixup");
-                                          
+
+  Params.clear();
+  llvm::Constant *Personality = 
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+                                                      Params,
+                                                      true),
+                              "__objc_personality_v0");
+  EHPersonalityPtr = llvm::ConstantExpr::getBitCast(Personality, Int8PtrTy);
+
+  Params.clear();
+  Params.push_back(Int8PtrTy);
+  UnwindResumeOrRethrowFn = 
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params,
+                                                      false),
+                              "_Unwind_Resume_or_Rethrow");
 }
 
 llvm::Function *CGObjCNonFragileABIMac::ModuleInitFunction() { 
@@ -4690,6 +4710,115 @@ void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignGlobalFn,
                           src, dst, "globalassign");
   return;
+}
+
+void 
+CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                                  const Stmt &S) {
+  // We don't handle anything interesting yet.
+  if (const ObjCAtTryStmt *TS = dyn_cast<ObjCAtTryStmt>(&S))
+    if (TS->getCatchStmts())
+      return CGF.ErrorUnsupported(&S, "try (with catch) statement");
+
+  bool isTry = isa<ObjCAtTryStmt>(S);
+  llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
+  llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
+  llvm::BasicBlock *LandingPad = CGF.createBasicBlock("try.pad");
+  llvm::BasicBlock *FinallyBlock = CGF.createBasicBlock("finally");
+  llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
+
+  // For @synchronized, call objc_sync_enter(sync.expr). The
+  // evaluation of the expression must occur before we enter the
+  // @synchronized. We can safely avoid a temp here because jumps into
+  // @synchronized are illegal & this will dominate uses.
+  llvm::Value *SyncArg = 0;
+  if (!isTry) {
+    SyncArg = 
+      CGF.EmitScalarExpr(cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
+    SyncArg = CGF.Builder.CreateBitCast(SyncArg, ObjCTypes.ObjectPtrTy);
+    CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn, SyncArg);
+  }
+
+  // Push an EH context entry, used for handling rethrows and jumps
+  // through finally.
+  CGF.PushCleanupBlock(FinallyBlock);
+
+  CGF.setInvokeDest(LandingPad);
+
+  CGF.EmitBlock(TryBlock);
+  CGF.EmitStmt(isTry ? cast<ObjCAtTryStmt>(S).getTryBody() 
+                     : cast<ObjCAtSynchronizedStmt>(S).getSynchBody());
+  CGF.EmitBranchThroughCleanup(FinallyEnd);
+  
+  // Pop the cleanup entry, the @finally is outside this cleanup
+  // scope.
+  CodeGenFunction::CleanupBlockInfo Info = CGF.PopCleanupBlock();
+  CGF.setInvokeDest(PrevLandingPad);
+
+  CGF.EmitBlock(FinallyBlock);
+
+  if (isTry) {
+    if (const ObjCAtFinallyStmt* FinallyStmt = 
+        cast<ObjCAtTryStmt>(S).getFinallyStmt())
+      CGF.EmitStmt(FinallyStmt->getFinallyBody());
+  } else {
+    // Emit 'objc_sync_exit(expr)' as finally's sole statement for
+    // @synchronized.
+    CGF.Builder.CreateCall(ObjCTypes.SyncExitFn, SyncArg);
+  }  
+
+  if (Info.SwitchBlock)
+    CGF.EmitBlock(Info.SwitchBlock);
+  if (Info.EndBlock)
+    CGF.EmitBlock(Info.EndBlock);
+
+  // Branch around the landing pad if necessary.
+  CGF.EmitBranch(FinallyEnd);
+
+  // Emit the landing pad.
+
+  // Clear insertion point to avoid chaining.
+  CGF.Builder.ClearInsertionPoint();
+  CGF.EmitBlock(LandingPad);
+
+  llvm::Value *llvm_eh_exception = 
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
+  llvm::Value *llvm_eh_selector_i64 = 
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector_i64);
+  llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
+
+  llvm::SmallVector<llvm::Value*, 8> Args;
+  Args.push_back(Exc);
+  Args.push_back(ObjCTypes.EHPersonalityPtr);
+  Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+
+  llvm::Value *Selector = 
+    CGF.Builder.CreateCall(llvm_eh_selector_i64, Args.begin(), Args.end());
+
+  // The only valid result for the limited case we are considering is
+  // the cleanup.
+  (void) Selector;
+
+  // Re-emit cleanup code for exceptional case.
+  if (isTry) {
+    // FIXME: This is horrible, in many ways: (a) it is broken because
+    // we are messing with some global data structures (like where
+    // labels point at), (b) it is exponential in the size of code
+    // generated, (c) seriously, its just gross.
+    if (const ObjCAtFinallyStmt* FinallyStmt = 
+        cast<ObjCAtTryStmt>(S).getFinallyStmt())
+      CGF.EmitStmt(FinallyStmt->getFinallyBody());
+  } else {
+    // Emit 'objc_sync_exit(expr)' as finally's sole statement for
+    // @synchronized.
+    CGF.Builder.CreateCall(ObjCTypes.SyncExitFn, SyncArg);
+  }  
+
+  CGF.EnsureInsertPoint();
+  CGF.Builder.CreateCall(ObjCTypes.UnwindResumeOrRethrowFn, Exc);
+  CGF.Builder.CreateUnreachable();
+  
+  CGF.EmitBlock(FinallyEnd);
 }
 
 /// EmitThrowStmt - Generate code for a throw statement.
