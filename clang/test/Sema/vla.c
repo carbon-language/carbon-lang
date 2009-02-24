@@ -19,9 +19,9 @@ int x = sizeof(struct{char qq[x];}); // expected-error {{fields must have a cons
 // PR2352
 void f2(unsigned int m)
 {
-  extern int e[2][m]; // expected-error {{variable length array declaration can not have 'extern' linkage}}
+  extern int e1[2][m]; // expected-error {{variable length array declaration can not have 'extern' linkage}}
 
-  e[0][0] = 0;
+  e1[0][0] = 0;
   
 }
 
@@ -37,7 +37,7 @@ void f3()
   static int a[i]; // expected-error {{variable length array declaration can not have 'static' storage duration}}
   extern int b[i]; // expected-error {{variable length array declaration can not have 'extern' linkage}}
 
-  extern int (*c)[i]; // expected-error {{variably modified type declaration can not have 'extern' linkage}}
+  extern int (*c1)[i]; // expected-error {{variably modified type declaration can not have 'extern' linkage}}
   static int (*d)[i];
 }
 

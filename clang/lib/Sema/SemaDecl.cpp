@@ -1535,10 +1535,137 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   return NewTD;
 }
 
+/// \brief Determines whether the given declaration is an out-of-scope
+/// previous declaration.
+///
+/// This routine should be invoked when name lookup has found a
+/// previous declaration (PrevDecl) that is not in the scope where a
+/// new declaration by the same name is being introduced. If the new
+/// declaration occurs in a local scope, previous declarations with
+/// linkage may still be considered previous declarations (C99
+/// 6.2.2p4-5, C++ [basic.link]p6).
+///
+/// \param PrevDecl the previous declaration found by name
+/// lookup
+/// 
+/// \param DC the context in which the new declaration is being
+/// declared.
+///
+/// \returns true if PrevDecl is an out-of-scope previous declaration
+/// for a new delcaration with the same name.
+static bool 
+isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
+                                ASTContext &Context) {
+  if (!PrevDecl)
+    return 0;
+
+  // FIXME: PrevDecl could be an OverloadedFunctionDecl, in which
+  // case we need to check each of the overloaded functions.
+
+  if (Context.getLangOptions().CPlusPlus) {
+    // C++ [basic.link]p6:
+    //   If there is a visible declaration of an entity with linkage
+    //   having the same name and type, ignoring entities declared
+    //   outside the innermost enclosing namespace scope, the block
+    //   scope declaration declares that same entity and receives the
+    //   linkage of the previous declaration.
+    DeclContext *OuterContext = DC->getLookupContext();
+    if (!OuterContext->isFunctionOrMethod())
+      // This rule only applies to block-scope declarations.
+      return false;
+    else {
+      DeclContext *PrevOuterContext = PrevDecl->getDeclContext();
+      if (PrevOuterContext->isRecord())
+        // We found a member function: ignore it.
+        return false;
+      else {
+        // Find the innermost enclosing namespace for the new and
+        // previous declarations.
+        while (!OuterContext->isFileContext())
+          OuterContext = OuterContext->getParent();
+        while (!PrevOuterContext->isFileContext())
+          PrevOuterContext = PrevOuterContext->getParent();
+          
+        // The previous declaration is in a different namespace, so it
+        // isn't the same function.
+        if (OuterContext->getPrimaryContext() != 
+            PrevOuterContext->getPrimaryContext())
+          return false;
+      }
+    }
+  }
+
+  // If the declaration we've found has no linkage, ignore it. 
+  if (VarDecl *VD = dyn_cast<VarDecl>(PrevDecl)) {
+    if (!VD->hasGlobalStorage())
+      return false;
+  } else if (!isa<FunctionDecl>(PrevDecl))
+    return false;
+
+  return true;
+}
+
+/// \brief Inject a locally-scoped declaration with external linkage
+/// into the appropriate namespace scope.
+///
+/// Given a declaration of an entity with linkage that occurs within a
+/// local scope, this routine inject that declaration into top-level
+/// scope so that it will be visible for later uses and declarations
+/// of the same entity.
+void Sema::InjectLocallyScopedExternalDeclaration(ValueDecl *VD) {
+  // FIXME: We don't do this in C++ because, although we would like
+  // to get the extra checking that this operation implies, 
+  // the declaration itself is not visible according to C++'s rules.
+  assert(!getLangOptions().CPlusPlus && 
+         "Can't inject locally-scoped declarations in C++");
+  IdentifierResolver::iterator I = IdResolver.begin(VD->getDeclName()),
+                            IEnd = IdResolver.end();
+  NamedDecl *PrevDecl = 0;
+  while (I != IEnd && !isa<TranslationUnitDecl>((*I)->getDeclContext())) {
+    PrevDecl = *I;
+    ++I;
+  }
+
+  if (I == IEnd) {
+    // No name with this identifier has been declared at translation
+    // unit scope. Add this name into the appropriate scope.
+    if (PrevDecl)
+      IdResolver.AddShadowedDecl(VD, PrevDecl);
+    else
+      IdResolver.AddDecl(VD);
+    TUScope->AddDecl(VD);
+    return;
+  }
+
+  if (isa<TagDecl>(*I)) {
+    // The first thing we found was a tag declaration, so insert
+    // this function so that it will be found before the tag
+    // declaration.
+    if (PrevDecl)
+      IdResolver.AddShadowedDecl(VD, PrevDecl);
+    else
+      IdResolver.AddDecl(VD);
+    TUScope->AddDecl(VD);
+    return;
+  } 
+
+  if (VD->declarationReplaces(*I)) {
+    // We found a previous declaration of the same entity. Replace
+    // that declaration with this one.
+    TUScope->RemoveDecl(*I);
+    TUScope->AddDecl(VD);
+    IdResolver.RemoveDecl(*I);
+    if (PrevDecl)
+      IdResolver.AddShadowedDecl(VD, PrevDecl);
+    else
+      IdResolver.AddDecl(VD);
+  }
+}
+
 NamedDecl*
 Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, Decl* LastDeclarator,
-                              Decl* PrevDecl, bool& InvalidDecl,
+                              NamedDecl* PrevDecl, bool& InvalidDecl,
                               bool &Redeclaration) {
   DeclarationName Name = GetNameForDeclarator(D);
 
@@ -1624,9 +1751,18 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     Diag(D.getIdentifierLoc(), diag::warn_attribute_weak_on_local);
   }
 
-  // Merge the decl with the existing one if appropriate. If the decl is
-  // in an outer scope, it isn't the same thing.
-  if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
+  // If name lookup finds a previous declaration that is not in the
+  // same scope as the new declaration, this may still be an
+  // acceptable redeclaration.
+  if (PrevDecl && !isDeclInScope(PrevDecl, DC, S) &&
+      !((NewVD->hasExternalStorage() ||
+         (NewVD->isFileVarDecl() && 
+          NewVD->getStorageClass() != VarDecl::Static)) &&
+        isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
+    PrevDecl = 0;     
+
+  // Merge the decl with the existing one if appropriate.
+  if (PrevDecl) {
     if (isa<FieldDecl>(PrevDecl) && D.getCXXScopeSpec().isSet()) {
       // The user tried to define a non-static data member
       // out-of-line (C++ [dcl.meaning]p1).
@@ -1647,6 +1783,14 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       InvalidDecl = true;
     }
   }
+
+  // If this is a locally-scoped extern variable in C, inject a
+  // declaration into translation unit scope so that all external
+  // declarations are visible.
+  if (!getLangOptions().CPlusPlus && CurContext->isFunctionOrMethod() &&
+      NewVD->hasExternalStorage())
+    InjectLocallyScopedExternalDeclaration(NewVD);
+
   return NewVD;
 }
 
@@ -1858,55 +2002,14 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       CheckOverloadedOperatorDeclaration(NewFD))
     NewFD->setInvalidDecl();
     
-  if (PrevDecl && !isDeclInScope(PrevDecl, DC, S)) {
-    // Name lookup has found a previous declaration that is not in the
-    // same scope as the new declaration. However, these two
-    // declarations might still declare the same thing (C99 6.2.2p3-4,
-    // C++ [basic.link]p6).
-
-    // FIXME: PrevDecl could be an OverloadedFunctionDecl, in which
-    // case we need to check each of the overloaded functions.
-
-    if (getLangOptions().CPlusPlus) {
-      // C++ [basic.link]p6:
-      //   If there is a visible declaration of an entity with linkage
-      //   having the same name and type, ignoring entities declared
-      //   outside the innermost enclosing namespace scope, the block
-      //   scope declaration declares that same entity and receives the
-      //   linkage of the previous declaration.
-      DeclContext *OuterContext = DC->getLookupContext();
-      if (!OuterContext->isFunctionOrMethod())
-        // This rule only applies to block-scope declarations.
-        PrevDecl = 0;
-      else {
-        DeclContext *PrevOuterContext = PrevDecl->getDeclContext();
-        if (PrevOuterContext->isRecord())
-          // We found a member function: ignore it.
-          PrevDecl = 0;
-        else {
-          // Find the innermost enclosing namespace for the new and
-          // previous declarations.
-          while (!OuterContext->isFileContext())
-            OuterContext = OuterContext->getParent();
-          while (!PrevOuterContext->isFileContext())
-            PrevOuterContext = PrevOuterContext->getParent();
-          
-          // The previous declaration is in a different namespace, so it
-          // isn't the same function.
-          if (OuterContext->getPrimaryContext() != 
-              PrevOuterContext->getPrimaryContext())
-            PrevDecl = 0;
-        }
-      }
-    }
-
-    // If the declaration we've found has no linkage, ignore it. 
-    if (VarDecl *VD = dyn_cast_or_null<VarDecl>(PrevDecl)) {
-      if (!VD->hasGlobalStorage())
-        PrevDecl = 0;
-    } else if (PrevDecl && !isa<FunctionDecl>(PrevDecl))
-      PrevDecl = 0;
-  }
+  // If name lookup finds a previous declaration that is not in the
+  // same scope as the new declaration, this may still be an
+  // acceptable redeclaration.
+  if (PrevDecl && !isDeclInScope(PrevDecl, DC, S) &&
+      (isa<CXXMethodDecl>(NewFD) ||
+       NewFD->getStorageClass() == FunctionDecl::Static ||
+       !isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
+    PrevDecl = 0;
 
   // Merge or overload the declaration with an existing declaration of
   // the same name, if appropriate.
@@ -2034,56 +2137,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
-  if (!getLangOptions().CPlusPlus && CurContext->isFunctionOrMethod()) {
-    // If this is a function declaration in local scope, inject its
-    // name into the top-level scope so that it will be visible to
-    // later uses and declarations of the same function, since the
-    // function is external.
-    // FIXME: We don't do this in C++ because, although we would like
-    // to get the extra checking that this operation implies, 
-    // the declaration itself is not visible according to C++'s rules.
-    IdentifierResolver::iterator I = IdResolver.begin(Name),
-                              IEnd = IdResolver.end();
-    NamedDecl *PrevIdDecl = 0;
-    while (I != IEnd && !isa<TranslationUnitDecl>((*I)->getDeclContext())) {
-      PrevIdDecl = *I;
-      ++I;
-    }
-
-    if (I == IEnd) {
-      // No name with this identifier has been declared at translation
-      // unit scope. Add this name into the appropriate scope.
-      if (PrevIdDecl)
-        IdResolver.AddShadowedDecl(NewFD, PrevIdDecl);
-      else
-        IdResolver.AddDecl(NewFD);
-      TUScope->AddDecl(NewFD);
-      return NewFD;      
-    }
-
-    if (isa<TagDecl>(*I)) {
-      // The first thing we found was a tag declaration, so insert
-      // this function so that it will be found before the tag
-      // declaration.
-      if (PrevIdDecl)
-        IdResolver.AddShadowedDecl(NewFD, PrevIdDecl);
-      else
-        IdResolver.AddDecl(NewFD);
-      TUScope->AddDecl(NewFD);
-    } else if (isa<FunctionDecl>(*I) && NewFD->declarationReplaces(*I)) {
-      // We found a previous declaration of the same function. Replace
-      // that declaration with this one.
-      TUScope->RemoveDecl(*I);
-      TUScope->AddDecl(NewFD);
-      IdResolver.RemoveDecl(*I);
-      if (PrevIdDecl)
-        IdResolver.AddShadowedDecl(NewFD, PrevIdDecl);
-      else
-        IdResolver.AddDecl(NewFD);
-    }
-
-    return NewFD;
-  }
+  // If this is a locally-scoped function in C, inject a declaration
+  // into translation unit scope so that all external declarations are
+  // visible.
+  if (!getLangOptions().CPlusPlus && CurContext->isFunctionOrMethod())
+    InjectLocallyScopedExternalDeclaration(NewFD);
 
   return NewFD;
 }

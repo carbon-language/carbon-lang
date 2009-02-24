@@ -259,9 +259,10 @@ public:
                                     QualType R, Decl* LastDeclarator,
                                     Decl* PrevDecl, bool& InvalidDecl,
                                     bool &Redeclaration);
+  void InjectLocallyScopedExternalDeclaration(ValueDecl *VD);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, Decl* LastDeclarator,
-                                     Decl* PrevDecl, bool& InvalidDecl,
+                                     NamedDecl* PrevDecl, bool& InvalidDecl,
                                      bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, Decl *LastDeclarator,
