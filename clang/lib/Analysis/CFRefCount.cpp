@@ -1358,56 +1358,30 @@ namespace clang {
 }
 
 //===----------------------------------------------------------------------===//
-// ARBindings - State used to track objects in autorelease pools.
+// AutoreleaseBindings - State used to track objects in autorelease pools.
 //===----------------------------------------------------------------------===//
 
+typedef llvm::ImmutableMap<SymbolRef, unsigned> ARCounts;
+typedef llvm::ImmutableMap<SymbolRef, ARCounts> ARPoolContents;
+typedef llvm::ImmutableList<SymbolRef> ARStack;
 
-namespace {
-class VISIBILITY_HIDDEN AutoreleasePoolID {
-  unsigned short PoolLevel;
-  SymbolRef Sym;
-
-public:
-  AutoreleasePoolID() : PoolLevel(0) {}
-  AutoreleasePoolID(unsigned short poolLevel, SymbolRef sym)
-    : PoolLevel(poolLevel), Sym(Sym) {}
-  
-  bool operator<(const AutoreleasePoolID &X) const {
-    assert(!(PoolLevel == X.PoolLevel) || Sym == X.Sym);
-    return PoolLevel < X.PoolLevel;
-  }
-  
-  bool operator==(const AutoreleasePoolID &X) const {
-    assert(!(PoolLevel == X.PoolLevel) || Sym == X.Sym);
-    return PoolLevel == X.PoolLevel;
-  }
-  
-  bool matches(SymbolRef sym) {
-    return Sym.isInitialized() ? Sym == sym : false;
-  }
-  
-  static void Profile(llvm::FoldingSetNodeID& ID, const AutoreleasePoolID& AI) {
-    ID.AddInteger(AI.PoolLevel);
-    if (AI.Sym.isInitialized()) ID.Add(AI.Sym);
-  }
-};
-}
-
-typedef llvm::ImmutableSet<SymbolRef> AutoreleasePoolContents;
-typedef llvm::ImmutableMap<AutoreleasePoolID, AutoreleasePoolContents>
-        AutoreleaseBindings;
-
+static int AutoRCIndex = 0;
 static int AutoRBIndex = 0;
 
-// We can use 'AutoreleaseBindings' directly as the tag class into the GDM sinc
-// it is an ImmutableMap based on two types private to this source file.
+namespace { class VISIBILITY_HIDDEN AutoreleasePoolContents {}; }
+namespace { class VISIBILITY_HIDDEN AutoreleaseBindings {}; }
+
 namespace clang {
-  template<>
-  struct GRStateTrait<AutoreleaseBindings>
-    : public GRStatePartialTrait<AutoreleaseBindings> {
-    static inline void* GDMIndex() { return &AutoRBIndex; }  
-  };
-}
+template<> struct GRStateTrait<AutoreleaseBindings>
+  : public GRStatePartialTrait<ARStack> {
+  static inline void* GDMIndex() { return &AutoRBIndex; }  
+};
+
+template<> struct GRStateTrait<AutoreleasePoolContents>
+  : public GRStatePartialTrait<ARPoolContents> {
+  static inline void* GDMIndex() { return &AutoRCIndex; }  
+};
+} // end clang namespace
 
 //===----------------------------------------------------------------------===//
 // Transfer functions.
@@ -1430,23 +1404,15 @@ private:
   RetainSummaryManager Summaries;  
   SummaryLogTy SummaryLog;
   const LangOptions&   LOpts;
+  ARCounts::Factory    ARCountFactory;
 
   BugType *useAfterRelease, *releaseNotOwned;
   BugType *leakWithinFunction, *leakAtReturn;
   BugReporter *BR;
   
-  RefBindings Update(RefBindings B, SymbolRef sym, RefVal V, ArgEffect E,
-                     RefVal::Kind& hasErr, RefBindings::Factory& RefBFactory);
-  
-  RefVal::Kind& Update(GRStateRef& state, SymbolRef sym, RefVal V,
-                       ArgEffect E, RefVal::Kind& hasErr) {
-    
-    state = state.set<RefBindings>(Update(state.get<RefBindings>(), sym, V, 
-                                          E, hasErr,
-                                          state.get_context<RefBindings>()));
-    return hasErr;
-  }
-  
+  GRStateRef Update(GRStateRef state, SymbolRef sym, RefVal V, ArgEffect E,
+                    RefVal::Kind& hasErr);
+
   void ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
                            GRStmtNodeBuilder<GRState>& Builder,
                            Expr* NodeExpr, Expr* ErrorExpr,                        
@@ -1458,8 +1424,7 @@ private:
   HandleSymbolDeath(GRStateManager& VMgr, const GRState* St,
                     const Decl* CD, SymbolRef sid, RefVal V, bool& hasLeak);
   
-public:
-  
+public:  
   CFRefCount(ASTContext& Ctx, bool gcenabled, const LangOptions& lopts)
     : Summaries(Ctx, gcenabled),
       LOpts(lopts), useAfterRelease(0), releaseNotOwned(0), 
@@ -1633,12 +1598,14 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
     
     if (isa<loc::SymbolVal>(V)) {
       SymbolRef Sym = cast<loc::SymbolVal>(V).getSymbol();
-      if (RefBindings::data_type* T = state.get<RefBindings>(Sym))
-        if (Update(state, Sym, *T, GetArgE(Summ, idx), hasErr)) {
+      if (RefBindings::data_type* T = state.get<RefBindings>(Sym)) {
+        state = Update(state, Sym, *T, GetArgE(Summ, idx), hasErr);
+        if (hasErr) {
           ErrorExpr = *I;
           ErrorSym = Sym;
           break;
         }
+      }
     }  
     else if (isa<Loc>(V)) {
       if (loc::MemRegionVal* MR = dyn_cast<loc::MemRegionVal>(&V)) {
@@ -1711,11 +1678,13 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
     SVal V = state.GetSVal(Receiver);
     if (isa<loc::SymbolVal>(V)) {
       SymbolRef Sym = cast<loc::SymbolVal>(V).getSymbol();
-      if (const RefVal* T = state.get<RefBindings>(Sym))
-        if (Update(state, Sym, *T, GetReceiverE(Summ), hasErr)) {
+      if (const RefVal* T = state.get<RefBindings>(Sym)) {
+        state = Update(state, Sym, *T, GetReceiverE(Summ), hasErr);
+        if (hasErr) {
           ErrorExpr = Receiver;
           ErrorSym = Sym;
         }
+      }
     }
   }
   
@@ -2073,10 +2042,9 @@ const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
   return state;
 }
 
-RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
-                               RefVal V, ArgEffect E,
-                               RefVal::Kind& hasErr,
-                               RefBindings::Factory& RefBFactory) {
+GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
+                              RefVal V, ArgEffect E,
+                              RefVal::Kind& hasErr) {
 
   // In GC mode [... release] and [... retain] do nothing.
   switch (E) {
@@ -2107,13 +2075,13 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
         hasErr = V.getKind();
         break;
       }      
-      return B;
+      return state;
 
     case Autorelease:
-      if (isGCEnabled()) return B;      
+      if (isGCEnabled()) return state;
       // Fall-through.      
     case StopTracking:
-      return RefBFactory.Remove(B, sym);
+      return state.remove<RefBindings>(sym);
 
     case IncRef:      
       switch (V.getKind()) {
@@ -2165,7 +2133,7 @@ RefBindings CFRefCount::Update(RefBindings B, SymbolRef sym,
       }      
       break;
   }
-  return RefBFactory.Add(B, sym, V);
+  return state.set<RefBindings>(sym, V);
 }
 
 //===----------------------------------------------------------------------===//
