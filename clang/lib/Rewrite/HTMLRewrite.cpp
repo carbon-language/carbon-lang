@@ -437,6 +437,11 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     // preprocessor directives.
     if (Tok.is(tok::hash) && Tok.isAtStartOfLine())
       continue;
+
+    // If this is a ## token, change its kind to unknown so that repreprocessing
+    // it will not produce an error.
+    if (Tok.is(tok::hashhash))
+      Tok.setKind(tok::unknown);
     
     // If this raw token is an identifier, the raw lexer won't have looked up
     // the corresponding identifier info for it.  Do this now so that it will be
