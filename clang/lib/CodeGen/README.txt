@@ -28,6 +28,12 @@ In theory, the same optimization could be a win for block local
 variables as long as the declaration dominates all statements in the
 block.
 
+NOTE: The main case we care about this for is for -O0 -g compile time
+performance, and in that scenario we will need to emit the alloca
+anyway currently to emit proper debug info. So this is blocked by
+being able to emit debug information which refers to an LLVM
+temporary, not an alloca.
+
 //===---------------------------------------------------------------------===//
 
 We should try and avoid generating basic blocks which only contain
@@ -36,7 +42,7 @@ instruction overhead), all the way down through code generation and
 assembly time.
 
 On 176.gcc:expr.ll, it looks like over 12% of basic blocks are just
-direct branches.
+direct branches!
 
 //===---------------------------------------------------------------------===//
 
