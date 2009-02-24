@@ -479,11 +479,18 @@ public:
 /// or L"bar" (wide strings).  The actual string is returned by getStrData()
 /// is NOT null-terminated, and the length of the string is determined by
 /// calling getByteLength().  The C type for a string is always a
-/// ConstantArrayType.
+/// ConstantArrayType.  In C++, the char type is const qualified, in C it is
+/// not.
 ///
 /// Note that strings in C can be formed by concatenation of multiple string
 /// literal pptokens in translation phase #6.  This keeps track of the locations
 /// of each of these pieces.
+///
+/// Strings in C can also be truncated and extended by assigning into arrays,
+/// e.g. with constructs like:
+///   char X[2] = "foobar";
+/// In this case, getByteLength() will return 6, but the string literal will
+/// have type "char[2]".
 class StringLiteral : public Expr {
   const char *StrData;
   unsigned ByteLength;
