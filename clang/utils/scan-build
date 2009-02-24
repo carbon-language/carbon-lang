@@ -145,6 +145,9 @@ sub GetHTMLRunDir {
     
     $TmpMode = 1;
   }
+  
+  # Chop off any trailing '/' characters.
+  while ($Dir =~ /\/$/) { chop $Dir; }
 
   # Get current date and time.
   
