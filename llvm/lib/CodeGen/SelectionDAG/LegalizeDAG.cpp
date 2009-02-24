@@ -56,6 +56,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   TargetLowering &TLI;
   SelectionDAG &DAG;
   bool TypesNeedLegalizing;
+  bool Fast;
 
   // Libcall insertion helpers.
 
@@ -137,7 +138,8 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   }
 
 public:
-  explicit SelectionDAGLegalize(SelectionDAG &DAG, bool TypesNeedLegalizing);
+  explicit SelectionDAGLegalize(SelectionDAG &DAG, bool TypesNeedLegalizing,
+                                bool fast);
 
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal or we need to expand it into multiple registers of
@@ -362,9 +364,10 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT VT, SDValue Mask) const {
   return TLI.isShuffleMaskLegal(Mask, VT) ? Mask.getNode() : 0;
 }
 
-SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag, bool types)
+SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
+                                           bool types, bool fast)
   : TLI(dag.getTargetLoweringInfo()), DAG(dag), TypesNeedLegalizing(types),
-    ValueTypeActions(TLI.getValueTypeActions()) {
+    Fast(fast), ValueTypeActions(TLI.getValueTypeActions()) {
   assert(MVT::LAST_VALUETYPE <= 32 &&
          "Too many value types for ValueTypeActions to hold!");
 }
@@ -1289,9 +1292,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
         unsigned Line = DSP->getLine();
         unsigned Col = DSP->getColumn();
-        const Function *F = DAG.getMachineFunction().getFunction();
 
-        if (!F->hasFnAttr(Attribute::OptimizeForSize)) {
+        if (Fast) {
           // A bit self-referential to have DebugLoc on Debug_Loc nodes, but it
           // won't hurt anything.
           if (useDEBUG_LOC) {
@@ -8640,9 +8642,9 @@ SDValue SelectionDAGLegalize::StoreWidenVectorOp(StoreSDNode *ST,
 
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
-void SelectionDAG::Legalize(bool TypesNeedLegalizing) {
+void SelectionDAG::Legalize(bool TypesNeedLegalizing, bool Fast) {
   /// run - This is the main entry point to this class.
   ///
-  SelectionDAGLegalize(*this, TypesNeedLegalizing).LegalizeDAG();
+  SelectionDAGLegalize(*this, TypesNeedLegalizing, Fast).LegalizeDAG();
 }
 

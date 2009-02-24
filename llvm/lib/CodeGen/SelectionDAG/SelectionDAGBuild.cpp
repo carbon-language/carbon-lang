@@ -3915,6 +3915,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       if (Fast)
         DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
                                  getRoot(), LabelID));
+      DW->setFastCodeGen(Fast);
     }
 
     return 0;
@@ -3950,9 +3951,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // create a label if this is a beginning of inlined function.
       unsigned Line = Subprogram.getLineNumber();
 
-      // FIXME: Support more than just -Os.
-      const Function *F = I.getParent()->getParent();
-      if (!F->hasFnAttr(Attribute::OptimizeForSize)) {
+      if (Fast) {
         unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
         if (DW->getRecordSourceLineCount() != 1)
           DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
@@ -3966,8 +3965,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_declare: {
-    const Function *F = I.getParent()->getParent();
-    if (!F->hasFnAttr(Attribute::OptimizeForSize)) {
+    if (Fast) {
       DwarfWriter *DW = DAG.getDwarfWriter();
       DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
       Value *Variable = DI.getVariable();

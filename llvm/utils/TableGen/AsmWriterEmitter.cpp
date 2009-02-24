@@ -641,7 +641,8 @@ void AsmWriterEmitter::run(std::ostream &O) {
   O << "\";\n\n";
 
   O << "  if (TAI->doesSupportDebugInformation() &&\n"
-    << "      DW->ShouldEmitDwarfDebug()) {\n"
+    << "      DW->ShouldEmitDwarfDebug() &&\n"
+    << "      !DW->getFastCodeGen()) {\n"
     << "    const MachineFunction *MF = MI->getParent()->getParent();\n"
     << "    DebugLoc CurDL = MI->getDebugLoc();\n\n"
     << "    if (!CurDL.isUnknown()) {\n"
