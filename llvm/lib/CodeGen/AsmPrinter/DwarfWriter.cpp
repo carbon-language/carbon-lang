@@ -2826,11 +2826,13 @@ private:
   }
 
   /// ConstructGlobalVariableDIEs - Create DIEs for each of the externally 
-  /// visible global variables.
-  void ConstructGlobalVariableDIEs() {
+  /// visible global variables. Return true if at least one global DIE is
+  /// created.
+  bool ConstructGlobalVariableDIEs() {
     std::string GVName = "llvm.dbg.global_variables";
     std::vector<GlobalVariable*> Result;
     getGlobalVariablesUsing(*M, GVName, Result);
+    bool result = false;
     for (std::vector<GlobalVariable *>::iterator GVI = Result.begin(),
            GVE = Result.end(); GVI != GVE; ++GVI) {
       DIGlobalVariable DI_GV(*GVI);
@@ -2853,22 +2855,24 @@ private:
 
       //Add to map.
       Slot = VariableDie;
-
       //Add to context owner.
       DW_Unit->getDie()->AddChild(VariableDie);
-
       //Expose as global. FIXME - need to check external flag.
       DW_Unit->AddGlobal(DI_GV.getName(), VariableDie);
+     
+      if (!result)
+        result = true;
     }
+    return result;
   }
 
   /// ConstructSubprograms - Create DIEs for each of the externally visible
-  /// subprograms.
-  void ConstructSubprograms() {
-
+  /// subprograms. Return true if at least one subprogram DIE is created.
+  bool ConstructSubprograms() {
     std::string SPName = "llvm.dbg.subprograms";
     std::vector<GlobalVariable*> Result;
     getGlobalVariablesUsing(*M, SPName, Result);
+    bool result = false;
     for (std::vector<GlobalVariable *>::iterator RI = Result.begin(),
            RE = Result.end(); RI != RE; ++RI) {
 
@@ -2894,7 +2898,11 @@ private:
       Unit->getDie()->AddChild(SubprogramDie);
       //Expose as global.
       Unit->AddGlobal(SP.getName(), SubprogramDie);
+      
+      if (!result)
+        result = true;
     }
+    return result;
   }
 
 public:
@@ -2930,15 +2938,20 @@ public:
     if (DW_CUs.empty())
       return;
 
+    // Create DIEs for each of the externally visible global variables.
+    bool globalDIEs = ConstructGlobalVariableDIEs();
+
+    // Create DIEs for each of the externally visible subprograms.
+    bool subprogramDIEs = ConstructSubprograms();
+
+    // If there is not any debug info available for any global variables
+    // and any subprograms then there is not any debug info to emit.
+    if (!globalDIEs && !subprogramDIEs)
+      return;
+
     MMI = mmi;
     shouldEmit = true;
     MMI->setDebugInfoAvailability(true);
-
-    // Create DIEs for each of the externally visible global variables.
-    ConstructGlobalVariableDIEs();
-
-    // Create DIEs for each of the externally visible subprograms.
-    ConstructSubprograms();
 
     // Prime section data.
     SectionMap.insert(TAI->getTextSection());
