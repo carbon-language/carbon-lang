@@ -1897,7 +1897,6 @@ public:
   bool CheckAddressConstantExpressionLValue(const Expr* e);
   void InitializerElementNotConstant(const Expr *e);
   
-  StringLiteral *IsStringLiteralInit(Expr *Init, QualType DeclType);
   bool CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT);
   bool CheckValueInitialization(QualType Type, SourceLocation Loc);
 

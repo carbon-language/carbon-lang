@@ -27,7 +27,8 @@ using namespace clang;
 // Sema Initialization Checking
 //===----------------------------------------------------------------------===//
 
-StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
+static StringLiteral *IsStringInit(Expr *Init, QualType DeclType,
+                                   ASTContext &Context) {
   if (const ArrayType *AT = Context.getAsArrayType(DeclType))
     if (AT->getElementType()->isCharType())
       return dyn_cast<StringLiteral>(Init->IgnoreParens());
@@ -105,7 +106,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList) {
     // FIXME: Handle wide strings
-    if (StringLiteral *StrLiteral = IsStringLiteralInit(Init, DeclType))
+    if (StringLiteral *StrLiteral = IsStringInit(Init, DeclType, Context))
       return CheckStringLiteralInit(StrLiteral, DeclType);
     
     // C++ [dcl.init]p14:
@@ -475,7 +476,7 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
   if (Index < IList->getNumInits()) {
     // We have leftover initializers
     if (IList->getNumInits() > 0 &&
-        SemaRef->IsStringLiteralInit(IList->getInit(Index), T)) {
+        IsStringInit(IList->getInit(Index), T, SemaRef->Context)) {
       unsigned DK = diag::warn_excess_initializers_in_char_array_initializer;
       if (SemaRef->getLangOptions().CPlusPlus)
         DK = diag::err_excess_initializers_in_char_array_initializer;
@@ -579,8 +580,8 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
                           newStructuredList, newStructuredIndex);
     ++StructuredIndex;
     ++Index;
-  } else if (StringLiteral *lit =
-             SemaRef->IsStringLiteralInit(expr, ElemType)) {
+  } else if (StringLiteral *lit = IsStringInit(expr, ElemType,
+                                               SemaRef->Context)) {
     SemaRef->CheckStringLiteralInit(lit, ElemType);
     UpdateStructuredListElement(StructuredList, StructuredIndex, lit);
     ++Index;
@@ -765,8 +766,8 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
                                      unsigned &StructuredIndex) {
   // Check for the special-case of initializing an array with a string.
   if (Index < IList->getNumInits()) {
-    if (StringLiteral *lit = 
-        SemaRef->IsStringLiteralInit(IList->getInit(Index), DeclType)) {
+    if (StringLiteral *lit = IsStringInit(IList->getInit(Index), DeclType,
+                                          SemaRef->Context)) {
       SemaRef->CheckStringLiteralInit(lit, DeclType);
       // We place the string literal directly into the resulting
       // initializer list. This is the only place where the structure
