@@ -7,9 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements semantic analysis for initializers. The entry
-//  point is Sema::CheckInitList(), but all of the work is performed
-//  within the InitListChecker class.
+// This file implements semantic analysis for initializers. The main entry
+// point is Sema::CheckInitList(), but all of the work is performed
+// within the InitListChecker class.
+//
+// This file also includes some miscellaneous other initialization checking
+// code that is part of Sema.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,6 +22,156 @@
 #include "clang/AST/Expr.h"
 #include <map>
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Sema Initialization Checking
+//===----------------------------------------------------------------------===//
+
+StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
+  if (const ArrayType *AT = Context.getAsArrayType(DeclType))
+    if (AT->getElementType()->isCharType())
+      return dyn_cast<StringLiteral>(Init->IgnoreParens());
+  return 0;
+}
+
+bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType, 
+                                  bool DirectInit) {  
+  // Get the type before calling CheckSingleAssignmentConstraints(), since
+  // it can promote the expression.
+  QualType InitType = Init->getType(); 
+  
+  if (getLangOptions().CPlusPlus) {
+    // FIXME: I dislike this error message. A lot.
+    if (PerformImplicitConversion(Init, DeclType, "initializing", DirectInit))
+      return Diag(Init->getSourceRange().getBegin(),
+                  diag::err_typecheck_convert_incompatible)
+      << DeclType << Init->getType() << "initializing" 
+      << Init->getSourceRange();
+    
+    return false;
+  }
+  
+  AssignConvertType ConvTy = CheckSingleAssignmentConstraints(DeclType, Init);
+  return DiagnoseAssignmentResult(ConvTy, Init->getLocStart(), DeclType,
+                                  InitType, Init, "initializing");
+}
+
+bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
+  const ArrayType *AT = Context.getAsArrayType(DeclT);
+  
+  if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
+    // C99 6.7.8p14. We have an array of character type with unknown size 
+    // being initialized to a string literal.
+    llvm::APSInt ConstVal(32);
+    ConstVal = strLiteral->getByteLength() + 1;
+    // Return a new array type (C99 6.7.8p22).
+    DeclT = Context.getConstantArrayType(IAT->getElementType(), ConstVal, 
+                                         ArrayType::Normal, 0);
+  } else {
+    const ConstantArrayType *CAT = cast<ConstantArrayType>(AT);
+    // C99 6.7.8p14. We have an array of character type with known size.
+    // FIXME: Avoid truncation for 64-bit length strings.
+    if (strLiteral->getByteLength() > (unsigned)CAT->getSize().getZExtValue())
+      Diag(strLiteral->getSourceRange().getBegin(),
+           diag::warn_initializer_string_for_char_array_too_long)
+      << strLiteral->getSourceRange();
+  }
+  // Set type from "char *" to "constant array of char".
+  strLiteral->setType(DeclT);
+  // For now, we always return false (meaning success).
+  return false;
+}
+
+bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
+                                 SourceLocation InitLoc,
+                                 DeclarationName InitEntity,
+                                 bool DirectInit) {
+  if (DeclType->isDependentType() || Init->isTypeDependent())
+    return false;
+  
+  // C++ [dcl.init.ref]p1:
+  //   A variable declared to be a T&, that is "reference to type T"
+  //   (8.3.2), shall be initialized by an object, or function, of
+  //   type T or by an object that can be converted into a T.
+  if (DeclType->isReferenceType())
+    return CheckReferenceInit(Init, DeclType, 0, false, DirectInit);
+  
+  // C99 6.7.8p3: The type of the entity to be initialized shall be an array
+  // of unknown size ("[]") or an object type that is not a variable array type.
+  if (const VariableArrayType *VAT = Context.getAsVariableArrayType(DeclType))
+    return Diag(InitLoc,  diag::err_variable_object_no_init)
+    << VAT->getSizeExpr()->getSourceRange();
+  
+  InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
+  if (!InitList) {
+    // FIXME: Handle wide strings
+    if (StringLiteral *StrLiteral = IsStringLiteralInit(Init, DeclType))
+      return CheckStringLiteralInit(StrLiteral, DeclType);
+    
+    // C++ [dcl.init]p14:
+    //   -- If the destination type is a (possibly cv-qualified) class
+    //      type:
+    if (getLangOptions().CPlusPlus && DeclType->isRecordType()) {
+      QualType DeclTypeC = Context.getCanonicalType(DeclType);
+      QualType InitTypeC = Context.getCanonicalType(Init->getType());
+      
+      //   -- If the initialization is direct-initialization, or if it is
+      //      copy-initialization where the cv-unqualified version of the
+      //      source type is the same class as, or a derived class of, the
+      //      class of the destination, constructors are considered.
+      if ((DeclTypeC.getUnqualifiedType() == InitTypeC.getUnqualifiedType()) ||
+          IsDerivedFrom(InitTypeC, DeclTypeC)) {
+        CXXConstructorDecl *Constructor 
+        = PerformInitializationByConstructor(DeclType, &Init, 1,
+                                             InitLoc, Init->getSourceRange(),
+                                             InitEntity, 
+                                             DirectInit? IK_Direct : IK_Copy);
+        return Constructor == 0;
+      }
+      
+      //   -- Otherwise (i.e., for the remaining copy-initialization
+      //      cases), user-defined conversion sequences that can
+      //      convert from the source type to the destination type or
+      //      (when a conversion function is used) to a derived class
+      //      thereof are enumerated as described in 13.3.1.4, and the
+      //      best one is chosen through overload resolution
+      //      (13.3). If the conversion cannot be done or is
+      //      ambiguous, the initialization is ill-formed. The
+      //      function selected is called with the initializer
+      //      expression as its argument; if the function is a
+      //      constructor, the call initializes a temporary of the
+      //      destination type.
+      // FIXME: We're pretending to do copy elision here; return to
+      // this when we have ASTs for such things.
+      if (!PerformImplicitConversion(Init, DeclType, "initializing"))
+        return false;
+      
+      if (InitEntity)
+        return Diag(InitLoc, diag::err_cannot_initialize_decl)
+        << InitEntity << (int)(Init->isLvalue(Context) == Expr::LV_Valid)
+        << Init->getType() << Init->getSourceRange();
+      else
+        return Diag(InitLoc, diag::err_cannot_initialize_decl_noname)
+        << DeclType << (int)(Init->isLvalue(Context) == Expr::LV_Valid)
+        << Init->getType() << Init->getSourceRange();
+    }
+    
+    // C99 6.7.8p16.
+    if (DeclType->isArrayType())
+      return Diag(Init->getLocStart(), diag::err_array_init_list_required)
+      << Init->getSourceRange();
+    
+    return CheckSingleInitializer(Init, DeclType, DirectInit);
+  } 
+  
+  bool hadError = CheckInitList(InitList, DeclType);
+  Init = InitList;
+  return hadError;
+}
+
+//===----------------------------------------------------------------------===//
+// Semantic checking for initializer lists.
+//===----------------------------------------------------------------------===//
 
 /// @brief Semantic checking for initializer lists.
 ///

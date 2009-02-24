@@ -11,4 +11,5 @@ int main() {
 
 // PR3648
 int a[sizeof(@encode(int)) == 2 ? 1 : -1]; // Type is char[2]
+const char *B = @encode(int);
 char (*c)[2] = &@encode(int); // @encode is an lvalue
