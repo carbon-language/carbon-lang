@@ -384,11 +384,14 @@ public:
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
         return CGM.GetAddrOfFunction(FD);
       if (const VarDecl* VD = dyn_cast<VarDecl>(Decl)) {
-        if (VD->isFileVarDecl())
-          return CGM.GetAddrOfGlobalVar(VD);
-        else if (VD->isBlockVarDecl()) {
-          assert(CGF && "Can't access static local vars without CGF");
-          return CGF->GetAddrOfStaticLocalVar(VD);
+        // We can never refer to a variable with local storage.
+        if (!VD->hasLocalStorage()) {          
+          if (VD->isFileVarDecl() || VD->hasExternalStorage())
+            return CGM.GetAddrOfGlobalVar(VD);
+          else if (VD->isBlockVarDecl()) {
+            assert(CGF && "Can't access static local vars without CGF");
+            return CGF->GetAddrOfStaticLocalVar(VD);
+          }
         }
       }
       break;
