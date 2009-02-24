@@ -2707,8 +2707,8 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
       // FIXME: What we really want is to set LeakN to be the node
       // for the BlockEntrance for the branch we took and have BugReporter
       // do the right thing.
-      atBranch = true;
       S = BE->getSrc()->getTerminator();
+      atBranch = (S != 0);
     }
     
     if (S) {
