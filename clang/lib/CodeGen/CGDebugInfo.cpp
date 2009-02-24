@@ -52,10 +52,13 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   // "well formed" debug info.
   const FileEntry *FE = 0;
 
+  SourceManager &SM = M->getContext().getSourceManager();
   if (Loc.isValid()) {
-    SourceManager &SM = M->getContext().getSourceManager();
     Loc = SM.getInstantiationLoc(Loc);
     FE = SM.getFileEntryForID(SM.getFileID(Loc));
+  } else {
+    // If Loc is not valid then use main file id.
+    FE = SM.getFileEntryForID(SM.getMainFileID());
   }
    
   // See if this compile unit has been used before.
