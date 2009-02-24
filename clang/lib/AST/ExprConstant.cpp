@@ -153,6 +153,7 @@ public:
   APValue VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   APValue VisitMemberExpr(MemberExpr *E);
   APValue VisitStringLiteral(StringLiteral *E) { return APValue(E, 0); }
+  APValue VisitObjCEncodeExpr(ObjCEncodeExpr *E) { return APValue(E, 0); }
   APValue VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   APValue VisitUnaryDeref(UnaryOperator *E);
   // FIXME: Missing: __extension__, __real__, __imag__, __builtin_choose_expr

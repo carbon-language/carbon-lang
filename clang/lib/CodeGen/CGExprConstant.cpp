@@ -76,7 +76,10 @@ public:
         cast<llvm::ArrayType>(ConvertType(ILE->getType()));
     unsigned NumInitElements = ILE->getNumInits();
     // FIXME: Check for wide strings
-    if (NumInitElements > 0 && isa<StringLiteral>(ILE->getInit(0)) &&
+    // FIXME: Check for NumInitElements exactly equal to 1??
+    if (NumInitElements > 0 && 
+        (isa<StringLiteral>(ILE->getInit(0)) ||
+         isa<ObjCEncodeExpr>(ILE->getInit(0))) &&
         ILE->getType()->getArrayElementTypeNoTypeQual()->isCharType())
       return Visit(ILE->getInit(0));
     const llvm::Type *ElemTy = AType->getElementType();
@@ -346,12 +349,26 @@ public:
   llvm::Constant *VisitStringLiteral(StringLiteral *E) {
     assert(!E->getType()->isPointerType() && "Strings are always arrays");
     
-    // Otherwise this must be a string initializing an array in a static
-    // initializer.  Don't emit it as the address of the string, emit the string
-    // data itself as an inline array.
+    // This must be a string initializing an array in a static initializer.
+    // Don't emit it as the address of the string, emit the string data itself
+    // as an inline array.
     return llvm::ConstantArray::get(CGM.GetStringForStringLiteral(E), false);
   }
 
+  llvm::Constant *VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
+    // This must be an @encode initializing an array in a static initializer.
+    // Don't emit it as the address of the string, emit the string data itself
+    // as an inline array.
+    std::string Str;
+    CGM.getContext().getObjCEncodingForType(E->getEncodedType(), Str);
+    const ConstantArrayType *CAT = cast<ConstantArrayType>(E->getType());
+    
+    // Resize the string to the right size, adding zeros at the end, or
+    // truncating as needed.
+    Str.resize(CAT->getSize().getZExtValue(), '\0');
+    return llvm::ConstantArray::get(Str, false);
+  }
+    
   llvm::Constant *VisitUnaryExtension(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
   }
@@ -398,6 +415,8 @@ public:
     }
     case Expr::StringLiteralClass:
       return CGM.GetAddrOfConstantStringFromLiteral(cast<StringLiteral>(E));
+    case Expr::ObjCEncodeExprClass:
+      return CGM.GetAddrOfConstantStringFromObjCEncode(cast<ObjCEncodeExpr>(E));
     case Expr::ObjCStringLiteralClass: {
       ObjCStringLiteral* SL = cast<ObjCStringLiteral>(E);
       std::string S(SL->getString()->getStrData(), 

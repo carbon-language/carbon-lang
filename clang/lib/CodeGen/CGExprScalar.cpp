@@ -165,6 +165,10 @@ public:
     return EmitLoadOfLValue(E);
   }
   Value *VisitStringLiteral(Expr *E)  { return EmitLValue(E).getAddress(); }
+  Value *VisitObjCEncodeExpr(const ObjCEncodeExpr *E) {
+     return EmitLValue(E).getAddress();
+  }
+    
   Value *VisitPredefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
 
   Value *VisitInitListExpr(InitListExpr *E) {
@@ -329,7 +333,6 @@ public:
   Value *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     return CGF.EmitObjCStringLiteral(E);
   }
-  Value *VisitObjCEncodeExpr(const ObjCEncodeExpr *E);
 };
 }  // end anonymous namespace.
 
@@ -1384,22 +1387,6 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   // FIXME: volatile?
   return Builder.CreateLoad(ArgPtr);
 }
-
-Value *ScalarExprEmitter::VisitObjCEncodeExpr(const ObjCEncodeExpr *E) {
-  std::string str;
-  CGF.getContext().getObjCEncodingForType(E->getEncodedType(), str);
-  
-  llvm::Constant *C = llvm::ConstantArray::get(str);
-  C = new llvm::GlobalVariable(C->getType(), true, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, ".str", &CGF.CGM.getModule());
-  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
-  llvm::Constant *Zeros[] = { Zero, Zero };
-  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
-  
-  return C;
-}
-
 
 Value *ScalarExprEmitter::VisitBlockExpr(const BlockExpr *BE) {
   llvm::Constant *C = CGF.BuildBlockLiteralTmp(BE);

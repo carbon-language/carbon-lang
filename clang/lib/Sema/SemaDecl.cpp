@@ -1178,8 +1178,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList) {
     // FIXME: Handle wide strings
-    if (StringLiteral *strLiteral = IsStringLiteralInit(Init, DeclType))
-      return CheckStringLiteralInit(strLiteral, DeclType);
+    if (StringLiteral *StrLiteral = IsStringLiteralInit(Init, DeclType))
+      return CheckStringLiteralInit(StrLiteral, DeclType);
 
     // C++ [dcl.init]p14:
     //   -- If the destination type is a (possibly cv-qualified) class

@@ -54,7 +54,9 @@ public:
   static ObjCStringLiteral* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
-/// ObjCEncodeExpr, used for @encode in Objective-C.
+/// ObjCEncodeExpr, used for @encode in Objective-C.  @encode has the same type
+/// and behavior as StringLiteral except that the string initializer is obtained
+/// from ASTContext with the encoding type as an argument.
 class ObjCEncodeExpr : public Expr {
   QualType EncType;
   SourceLocation AtLoc, RParenLoc;

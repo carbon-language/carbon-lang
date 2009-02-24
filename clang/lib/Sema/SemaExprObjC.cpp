@@ -95,8 +95,19 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                  SourceLocation RParenLoc) {
   QualType EncodedType = QualType::getFromOpaquePtr(ty);
 
-  QualType Ty = Context.getPointerType(Context.CharTy);
-  return new (Context) ObjCEncodeExpr(Ty, EncodedType, AtLoc, RParenLoc);
+  std::string Str;
+  Context.getObjCEncodingForType(EncodedType, Str);
+
+  // The type of @encode is the same as the type of the corresponding string,
+  // which is an array type.
+  QualType StrTy = Context.CharTy;
+  // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
+  if (getLangOptions().CPlusPlus)
+    StrTy.addConst();
+  StrTy = Context.getConstantArrayType(StrTy, llvm::APInt(32, Str.size()+1),
+                                       ArrayType::Normal, 0);
+  
+  return new (Context) ObjCEncodeExpr(StrTy, EncodedType, AtLoc, RParenLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,

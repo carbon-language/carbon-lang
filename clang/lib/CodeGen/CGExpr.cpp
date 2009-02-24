@@ -148,6 +148,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitPredefinedLValue(cast<PredefinedExpr>(E));
   case Expr::StringLiteralClass:
     return EmitStringLiteralLValue(cast<StringLiteral>(E));
+  case Expr::ObjCEncodeExprClass:
+    return EmitObjCEncodeExprLValue(cast<ObjCEncodeExpr>(E));
 
   case Expr::CXXConditionDeclExprClass:
     return EmitCXXConditionDeclLValue(cast<CXXConditionDeclExpr>(E));
@@ -668,7 +670,8 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   default: assert(0 && "Unknown unary operator lvalue!");
   case UnaryOperator::Deref:
     {
-      QualType T = E->getSubExpr()->getType()->getAsPointerType()->getPointeeType();
+      QualType T =
+        E->getSubExpr()->getType()->getAsPointerType()->getPointeeType();
       LValue LV = LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()),
                                    ExprTy->getAsPointerType()->getPointeeType()
                                       .getCVRQualifiers(), 
@@ -697,22 +700,27 @@ LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
   return LValue::MakeAddr(CGM.GetAddrOfConstantStringFromLiteral(E), 0);
 }
 
+LValue CodeGenFunction::EmitObjCEncodeExprLValue(const ObjCEncodeExpr *E) {
+  return LValue::MakeAddr(CGM.GetAddrOfConstantStringFromObjCEncode(E), 0);
+}
+
+
 LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
   std::string GlobalVarName;
 
   switch (Type) {
-    default:
-      assert(0 && "Invalid type");
-    case PredefinedExpr::Func:
-      GlobalVarName = "__func__.";
-      break;
-    case PredefinedExpr::Function:
-      GlobalVarName = "__FUNCTION__.";
-      break;
-    case PredefinedExpr::PrettyFunction:
-      // FIXME:: Demangle C++ method names
-      GlobalVarName = "__PRETTY_FUNCTION__.";
-      break;
+  default:
+    assert(0 && "Invalid type");
+  case PredefinedExpr::Func:
+    GlobalVarName = "__func__.";
+    break;
+  case PredefinedExpr::Function:
+    GlobalVarName = "__FUNCTION__.";
+    break;
+  case PredefinedExpr::PrettyFunction:
+    // FIXME:: Demangle C++ method names
+    GlobalVarName = "__PRETTY_FUNCTION__.";
+    break;
   }
 
   std::string FunctionName;

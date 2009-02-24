@@ -41,6 +41,7 @@ namespace clang {
   class ObjCImplementationDecl;
   class ObjCCategoryImplDecl;
   class ObjCProtocolDecl;
+  class ObjCEncodeExpr;
   class BlockExpr;
   class Decl;
   class Expr;
@@ -212,6 +213,10 @@ public:
   /// for the given string literal.
   llvm::Constant *GetAddrOfConstantStringFromLiteral(const StringLiteral *S);
 
+  /// GetAddrOfConstantStringFromObjCEncode - Return a pointer to a constant
+  /// array for the given ObjCEncodeExpr node.
+  llvm::Constant *GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *);
+  
   /// GetAddrOfConstantString - Returns a pointer to a character array
   /// containing the literal. This contents are exactly that of the given
   /// string, i.e. it will not be null terminated automatically; see

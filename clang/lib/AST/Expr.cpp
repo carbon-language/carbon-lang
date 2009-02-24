@@ -478,7 +478,8 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
 
   // the type looks fine, now check the expression
   switch (getStmtClass()) {
-  case StringLiteralClass: // C99 6.5.1p4
+  case StringLiteralClass:  // C99 6.5.1p4
+  case ObjCEncodeExprClass: // @encode behaves like its string in every way.
     return LV_Valid;
   case ArraySubscriptExprClass: // C99 6.5.3p4 (e1[e2] == (*((e1)+(e2))))
     // For vectors, make sure base is an lvalue (i.e. not a function call).
@@ -829,6 +830,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   switch (getStmtClass()) {
   default: break;
   case StringLiteralClass:
+  case ObjCEncodeExprClass:
     return true;
   case CompoundLiteralExprClass: {
     // This handles gcc's extension that allows global initializers like

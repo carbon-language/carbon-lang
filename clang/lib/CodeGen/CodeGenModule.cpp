@@ -1098,6 +1098,21 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   return GetAddrOfConstantString(GetStringForStringLiteral(S));
 }
 
+/// GetAddrOfConstantStringFromObjCEncode - Return a pointer to a constant
+/// array for the given ObjCEncodeExpr node.
+llvm::Constant *
+CodeGenModule::GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *E) {
+  std::string Str;
+  getContext().getObjCEncodingForType(E->getEncodedType(), Str);
+  
+  llvm::Constant *C = llvm::ConstantArray::get(Str);
+  C = new llvm::GlobalVariable(C->getType(), true, 
+                               llvm::GlobalValue::InternalLinkage,
+                               C, ".str", &getModule());
+  return C;
+}
+
+
 /// GenerateWritableString -- Creates storage for a string literal.
 static llvm::Constant *GenerateStringLiteral(const std::string &str, 
                                              bool constant,
@@ -1107,13 +1122,10 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
   llvm::Constant *C = llvm::ConstantArray::get(str, false);
   
   // Create a global variable for this string
-  C = new llvm::GlobalVariable(C->getType(), constant, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, 
-                               GlobalName ? GlobalName : ".str", 
-                               &CGM.getModule());
-
-  return C;
+  return new llvm::GlobalVariable(C->getType(), constant, 
+                                  llvm::GlobalValue::InternalLinkage,
+                                  C, GlobalName ? GlobalName : ".str", 
+                                  &CGM.getModule());
 }
 
 /// GetAddrOfConstantString - Returns a pointer to a character array
@@ -1134,7 +1146,7 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str,
   ConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
 
   if (Entry.getValue())
-      return Entry.getValue();
+    return Entry.getValue();
 
   // Create a global variable for this.
   llvm::Constant *C = GenerateStringLiteral(str, true, *this, GlobalName);
