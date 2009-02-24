@@ -154,7 +154,7 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     BlockInfo Info(0, Name);
     uint64_t subBlockSize;
     llvm::Function *Fn
-      = CodeGenFunction(*this).GenerateBlockFunction(BE, Info, subBlockSize);
+      = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, subBlockSize);
     Elts.push_back(Fn);
 
     // __descriptor
@@ -411,11 +411,6 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
   FunctionArgList Args;
 
   const BlockDecl *BD = Expr->getBlockDecl();
-
-  // FIXME: there are tons of variables in CGF that are copied, we probably
-  // don't want many of them, any of them.  When we trim that, this can go away.
-  // Help ensure no control flow in or out of the block.
-  BreakContinueStack.clear();
 
   // FIXME: This leaks
   ImplicitParamDecl *SelfDecl =
