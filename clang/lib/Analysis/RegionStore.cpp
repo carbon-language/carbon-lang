@@ -591,9 +591,14 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   //
   // Such funny addressing will occur due to layering of regions.
 
-  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
-    if (TR->getRValueType(getContext())->isStructureType())
+  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
+    QualType T =TR->getRValueType(getContext());
+    if (T->isStructureType())
       return RetrieveStruct(St, TR);
+    // FIXME: handle Vector types.
+    if (T->isVectorType())
+      return UnknownVal();
+  }
   
   RegionBindingsTy B = GetRegionBindings(St->getStore());
   RegionBindingsTy::data_type* V = B.lookup(R);
@@ -636,6 +641,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
       return loc::MemRegionVal(getSelfRegion(0));
   }
   
+
   if (MRMgr.onStack(R) || MRMgr.onHeap(R)) {
     // All stack variables are considered to have undefined values
     // upon creation.  All heap allocated blocks are considered to

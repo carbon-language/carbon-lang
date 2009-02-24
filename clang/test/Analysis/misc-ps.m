@@ -115,4 +115,14 @@ int pr_3543(void) {
   ({});
 }
 
+// <rdar://problem/6611677>
+// This test case test the use of a vector type within an array subscript
+// expression.
+typedef long long __a64vector __attribute__((__vector_size__(8)));
+typedef long long __a128vector __attribute__((__vector_size__(16)));
+static inline __a64vector __attribute__((__always_inline__, __nodebug__))  
+my_test_mm_movepi64_pi64(__a128vector a) {
+  return (__a64vector)a[0];
+}
+
 

@@ -850,7 +850,16 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
   Expr* Base = A->getBase()->IgnoreParens();
   Expr* Idx  = A->getIdx()->IgnoreParens();
   NodeSet Tmp;
-  Visit(Base, Pred, Tmp);   // Get Base's rvalue, which should be an LocVal.
+  
+  if (Base->getType()->isVectorType()) {
+    // For vector types get its lvalue.
+    // FIXME: This may not be correct.  Is the rvalue of a vector its location?
+    //  In fact, I think this is just a hack.  We need to get the right
+    // semantics.
+    VisitLValue(Base, Pred, Tmp);
+  }
+  else  
+    Visit(Base, Pred, Tmp);   // Get Base's rvalue, which should be an LocVal.
   
   for (NodeSet::iterator I1=Tmp.begin(), E1=Tmp.end(); I1!=E1; ++I1) {    
     NodeSet Tmp2;
