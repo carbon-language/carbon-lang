@@ -62,6 +62,9 @@ namespace CodeGen {
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
 class CodeGenModule {
+  CodeGenModule(const CodeGenModule&);  // DO NOT IMPLEMENT
+  void operator=(const CodeGenModule&); // DO NOT IMPLEMENT
+
   typedef std::vector< std::pair<llvm::Constant*, int> > CtorList;
 
   ASTContext &Context;
