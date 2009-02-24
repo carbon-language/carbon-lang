@@ -37,6 +37,8 @@ EnableDCE("enable-ssc-dce",
                cl::init(false), cl::Hidden,
                cl::desc("Enable slot coloring DCE"));
 
+static cl::opt<int> DCELimit("ssc-dce-limit", cl::init(-1), cl::Hidden);
+
 STATISTIC(NumEliminated,   "Number of stack slots eliminated due to coloring");
 STATISTIC(NumDeadAccesses,
                           "Number of trivially dead stack accesses eliminated");
@@ -286,6 +288,9 @@ bool StackSlotColoring::removeDeadStores(MachineBasicBlock* MBB) {
 
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
        I != E; ++I) {
+    if (DCELimit != -1 && (int)NumDeadAccesses >= DCELimit)
+      break;
+    
     MachineBasicBlock::iterator NextMI = next(I);
     if (NextMI == MBB->end()) continue;
     
