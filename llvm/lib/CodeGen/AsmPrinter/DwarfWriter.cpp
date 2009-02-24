@@ -1942,6 +1942,11 @@ private:
         }
     }
 
+    unsigned Lang = SP.getCompileUnit().getLanguage();
+    if (Lang == DW_LANG_C99 || Lang == DW_LANG_C89 
+        || Lang == DW_LANG_ObjC)
+      AddUInt(SPDie, DW_AT_prototyped, DW_FORM_flag, 1);
+
     if (!SP.isLocalToUnit())
       AddUInt(SPDie, DW_AT_external, DW_FORM_flag, 1);
     return SPDie;
