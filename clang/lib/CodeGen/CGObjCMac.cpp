@@ -3428,7 +3428,11 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   // FIXME. flags can be 0 | 1 | 2 | 6. For now just use 0
   std::vector<llvm::Constant*> Values(2);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
-  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
+  unsigned int flags = 0;
+  // FIXME -fobjc-gc-only flags is 6.
+  if (CGM.getContext().getLangOptions().getGCMode() != LangOptions::NonGC)
+    flags |= 2;
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
   llvm::Constant* Init = llvm::ConstantArray::get(
                                       llvm::ArrayType::get(ObjCTypes.IntTy, 2),
                                       Values);   
