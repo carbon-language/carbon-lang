@@ -430,41 +430,31 @@ uint32_t PTHWriter::ResolveID(const IdentifierInfo* II) {
 }
 
 void PTHWriter::EmitToken(const Token& T) {
-  // We handle literals differently since their *cleaned* spellings are cached.
+  // Emit the token kind, flags, and length.
+  Emit32(((uint32_t) T.getKind()) | ((((uint32_t) T.getFlags())) << 8)|
+         (((uint32_t) T.getLength()) << 16));
+    
   if (T.isLiteral()) {
-    // FIXME: This uses the slow getSpelling().  Perhaps we do better
-    // in the future?  This only slows down PTH generation.
-    const std::string &spelling = PP.getSpelling(T);
-    const char* s = spelling.c_str();
+    // We cache *un-cleaned* spellings. This gives us 100% fidelity with the
+    // source code.
+    const char* s = T.getLiteralData();
+    unsigned len = T.getLength();
 
     // Get the string entry.
-    llvm::StringMapEntry<OffsetOpt> *E =
-      &CachedStrs.GetOrCreateValue(s, s+spelling.size());
+    llvm::StringMapEntry<OffsetOpt> *E = &CachedStrs.GetOrCreateValue(s, s+len);
     
+    // If this is a new string entry, bump the PTH offset.
     if (!E->getValue().hasOffset()) {
       E->getValue().setOffset(CurStrOffset);
       StrEntries.push_back(E);
-      CurStrOffset += spelling.size() + 1;
+      CurStrOffset += len + 1;
     }
-    
-    // Emit the token meta data with the cleaning bit reset and the
-    // length of the token equal to the cleaned spelling.
-    // Emit the token kind, flags, and length.
-    Emit32(((uint32_t) T.getKind()) |
-           ((((uint32_t) T.getFlags()) & ~((uint32_t)Token::NeedsCleaning)<<8))|
-           (((uint32_t) spelling.size()) << 16));
     
     // Emit the relative offset into the PTH file for the spelling string.
     Emit32(E->getValue().getOffset());
   }
-  else {
-    // Emit the token kind, flags, and length.
-    Emit32(((uint32_t) T.getKind()) |
-           ((((uint32_t) T.getFlags())) << 8)|
-           (((uint32_t) T.getLength()) << 16));
-    
+  else
     Emit32(ResolveID(T.getIdentifierInfo()));
-  }
   
   // Emit the offset into the original source file of this token so that we
   // can reconstruct its SourceLocation.
