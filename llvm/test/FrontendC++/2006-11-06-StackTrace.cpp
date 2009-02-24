@@ -11,7 +11,6 @@
 
 // Only works on ppc, x86 and x86_64.  Should generalize?
 // XFAIL: alpha|ia64|arm
-// XFAIL: *
 
 #include <stdlib.h>
 
