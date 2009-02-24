@@ -155,9 +155,8 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
   if (Maj > 9) 
     Opts.Blocks = 1;
 
-  if (Maj >= 9)
-    if (Opts.ObjC1 && !strncmp(Triple, "x86_64", 6))
-      Opts.ObjCNonFragileABI = 1;
+  if (Maj >= 9 && Opts.ObjC1 && !strncmp(Triple, "x86_64", 6))
+    Opts.ObjCNonFragileABI = 1;
 }
 
 
