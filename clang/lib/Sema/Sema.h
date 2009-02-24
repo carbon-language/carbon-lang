@@ -1884,7 +1884,6 @@ public:
                                    IdentifierInfo &Comp, SourceLocation CmpLoc);
   
   /// type checking declaration initializers (C99 6.7.8)
-  friend class InitListChecker;
   bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType,
                              SourceLocation InitLoc,DeclarationName InitEntity,
                              bool DirectInit);

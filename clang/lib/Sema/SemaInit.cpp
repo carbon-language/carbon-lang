@@ -11,8 +11,7 @@
 // point is Sema::CheckInitList(), but all of the work is performed
 // within the InitListChecker class.
 //
-// This file also includes some miscellaneous other initialization checking
-// code that is part of Sema.
+// This file also implements Sema::CheckInitializerTypes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -202,7 +201,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
 /// point. CheckDesignatedInitializer() recursively steps into the
 /// designated subobject and manages backing out the recursion to
 /// initialize the subobjects after the one designated.
-namespace clang {
+namespace {
 class InitListChecker {
   Sema *SemaRef;
   bool hadError;
@@ -279,7 +278,7 @@ public:
   // semantic analysis and code generation.
   InitListExpr *getFullyStructuredList() const { return FullyStructuredList; }
 };
-}
+} // end anonymous namespace
 
 /// Recursively replaces NULL values within the given initializer list
 /// with expressions that perform value-initialization of the
