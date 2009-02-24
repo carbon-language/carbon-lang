@@ -333,7 +333,9 @@ if (!defined $Clang) { $Clang = 'clang'; }
 # Get the HTML output directory.
 my $HtmlDir = $ENV{'CCC_ANALYZER_HTML'};
 
+my %DisabledArchs = ('ppc' => 1, 'ppc64' => 1);
 my %ArchsSeen;
+my $HadArch = 0;
 
 # Process the arguments.
 foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
@@ -348,7 +350,10 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
   # Specially handle duplicate cases of -arch
   if ($Arg eq "-arch") {
     my $arch = $ARGV[$i+1];
-    $ArchsSeen{$arch} = 1;
+    # We don't want to process 'ppc' because of Clang's lack of support
+    # for Altivec (also some #defines won't likely be defined correctly, etc.)
+    if (!(defined $DisabledArchs{$arch})) { $ArchsSeen{$arch} = 1; }
+    $HadArch = 1;
     ++$i;
     next;
   }
@@ -476,6 +481,10 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
 }
 
 if ($Action eq 'compile' or $Action eq 'link') {
+  my @Archs = keys %ArchsSeen;
+  # Skip the file if we don't support the architectures specified.
+  exit 0 if ($HadArch && scalar(@Archs) > 0);
+  
   foreach my $file (@Files) {
     # Determine the language for the file.
     my $FileLang = $Lang;
@@ -518,7 +527,6 @@ if ($Action eq 'compile' or $Action eq 'link') {
     push @AnalyzeArgs,@CompileOpts;
     push @AnalyzeArgs,$file;
 
-    my @Archs = keys %ArchsSeen;
     if (scalar @Archs) {
       foreach my $arch (@Archs) {
         my @NewArgs;
