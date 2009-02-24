@@ -57,28 +57,29 @@ bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType,
                                   InitType, Init, "initializing");
 }
 
-bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
-  const ArrayType *AT = Context.getAsArrayType(DeclT);
+static bool CheckStringLiteralInit(StringLiteral *Str, QualType &DeclT,
+                                   Sema &S) {
+  const ArrayType *AT = S.Context.getAsArrayType(DeclT);
   
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
     // C99 6.7.8p14. We have an array of character type with unknown size 
     // being initialized to a string literal.
     llvm::APSInt ConstVal(32);
-    ConstVal = strLiteral->getByteLength() + 1;
+    ConstVal = Str->getByteLength() + 1;
     // Return a new array type (C99 6.7.8p22).
-    DeclT = Context.getConstantArrayType(IAT->getElementType(), ConstVal, 
-                                         ArrayType::Normal, 0);
+    DeclT = S.Context.getConstantArrayType(IAT->getElementType(), ConstVal, 
+                                           ArrayType::Normal, 0);
   } else {
     const ConstantArrayType *CAT = cast<ConstantArrayType>(AT);
     // C99 6.7.8p14. We have an array of character type with known size.
     // FIXME: Avoid truncation for 64-bit length strings.
-    if (strLiteral->getByteLength() > (unsigned)CAT->getSize().getZExtValue())
-      Diag(strLiteral->getSourceRange().getBegin(),
-           diag::warn_initializer_string_for_char_array_too_long)
-      << strLiteral->getSourceRange();
+    if (Str->getByteLength() > (unsigned)CAT->getSize().getZExtValue())
+      S.Diag(Str->getSourceRange().getBegin(),
+             diag::warn_initializer_string_for_char_array_too_long)
+        << Str->getSourceRange();
   }
   // Set type from "char *" to "constant array of char".
-  strLiteral->setType(DeclT);
+  Str->setType(DeclT);
   // For now, we always return false (meaning success).
   return false;
 }
@@ -106,8 +107,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList) {
     // FIXME: Handle wide strings
-    if (StringLiteral *StrLiteral = IsStringInit(Init, DeclType, Context))
-      return CheckStringLiteralInit(StrLiteral, DeclType);
+    if (StringLiteral *Str = IsStringInit(Init, DeclType, Context))
+      return CheckStringLiteralInit(Str, DeclType, *this);
     
     // C++ [dcl.init]p14:
     //   -- If the destination type is a (possibly cv-qualified) class
@@ -580,10 +581,10 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
                           newStructuredList, newStructuredIndex);
     ++StructuredIndex;
     ++Index;
-  } else if (StringLiteral *lit = IsStringInit(expr, ElemType,
+  } else if (StringLiteral *Str = IsStringInit(expr, ElemType,
                                                SemaRef->Context)) {
-    SemaRef->CheckStringLiteralInit(lit, ElemType);
-    UpdateStructuredListElement(StructuredList, StructuredIndex, lit);
+    CheckStringLiteralInit(Str, ElemType, *SemaRef);
+    UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
     ++Index;
   } else if (ElemType->isScalarType()) {
     CheckScalarType(IList, ElemType, Index, StructuredList, StructuredIndex);
@@ -766,15 +767,15 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
                                      unsigned &StructuredIndex) {
   // Check for the special-case of initializing an array with a string.
   if (Index < IList->getNumInits()) {
-    if (StringLiteral *lit = IsStringInit(IList->getInit(Index), DeclType,
+    if (StringLiteral *Str = IsStringInit(IList->getInit(Index), DeclType,
                                           SemaRef->Context)) {
-      SemaRef->CheckStringLiteralInit(lit, DeclType);
+      CheckStringLiteralInit(Str, DeclType, *SemaRef);
       // We place the string literal directly into the resulting
       // initializer list. This is the only place where the structure
       // of the structured initializer list doesn't match exactly,
       // because doing so would involve allocating one character
       // constant for each string.
-      UpdateStructuredListElement(StructuredList, StructuredIndex, lit);
+      UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
       StructuredList->resizeInits(SemaRef->Context, StructuredIndex);
       ++Index;
       return;
