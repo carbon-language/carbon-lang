@@ -625,7 +625,7 @@ unsigned llvm::ComputeNumSignBits(Value *V, TargetData *TD, unsigned Depth) {
     if (Tmp == 1) return 1;  // Early out.
       
     // Special case decrementing a value (ADD X, -1):
-    if (ConstantInt *CRHS = dyn_cast<ConstantInt>(U->getOperand(0)))
+    if (ConstantInt *CRHS = dyn_cast<ConstantInt>(U->getOperand(1)))
       if (CRHS->isAllOnesValue()) {
         APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
         APInt Mask = APInt::getAllOnesValue(TyBits);
