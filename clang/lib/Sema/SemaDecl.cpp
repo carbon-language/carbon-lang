@@ -2033,6 +2033,58 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       InvalidDecl = true;
     }
   }
+
+  if (!getLangOptions().CPlusPlus && CurContext->isFunctionOrMethod()) {
+    // If this is a function declaration in local scope, inject its
+    // name into the top-level scope so that it will be visible to
+    // later uses and declarations of the same function, since the
+    // function is external.
+    // FIXME: We don't do this in C++ because, although we would like
+    // to get the extra checking that this operation implies, 
+    // the declaration itself is not visible according to C++'s rules.
+    IdentifierResolver::iterator I = IdResolver.begin(Name),
+                              IEnd = IdResolver.end();
+    NamedDecl *PrevIdDecl = 0;
+    while (I != IEnd && !isa<TranslationUnitDecl>((*I)->getDeclContext())) {
+      PrevIdDecl = *I;
+      ++I;
+    }
+
+    if (I == IEnd) {
+      // No name with this identifier has been declared at translation
+      // unit scope. Add this name into the appropriate scope.
+      if (PrevIdDecl)
+        IdResolver.AddShadowedDecl(NewFD, PrevIdDecl);
+      else
+        IdResolver.AddDecl(NewFD);
+      TUScope->AddDecl(NewFD);
+      return NewFD;      
+    }
+
+    if (isa<TagDecl>(*I)) {
+      // The first thing we found was a tag declaration, so insert
+      // this function so that it will be found before the tag
+      // declaration.
+      if (PrevIdDecl)
+        IdResolver.AddShadowedDecl(NewFD, PrevIdDecl);
+      else
+        IdResolver.AddDecl(NewFD);
+      TUScope->AddDecl(NewFD);
+    } else if (isa<FunctionDecl>(*I) && NewFD->declarationReplaces(*I)) {
+      // We found a previous declaration of the same function. Replace
+      // that declaration with this one.
+      TUScope->RemoveDecl(*I);
+      TUScope->AddDecl(NewFD);
+      IdResolver.RemoveDecl(*I);
+      if (PrevIdDecl)
+        IdResolver.AddShadowedDecl(NewFD, PrevIdDecl);
+      else
+        IdResolver.AddDecl(NewFD);
+    }
+
+    return NewFD;
+  }
+
   return NewFD;
 }
 

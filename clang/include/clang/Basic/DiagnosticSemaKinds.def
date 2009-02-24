@@ -84,6 +84,8 @@ DIAG(err_declarator_need_ident, ERROR,
      "declarator requires an identifier")
 DIAG(err_bad_language, ERROR,
      "unknown linkage language")
+DIAG(warn_use_out_of_scope_declaration, WARNING,
+     "use of out-of-scope declaration of %0")
 
 /// Built-in functions.
 DIAG(ext_implicit_lib_function_decl, EXTWARN,
