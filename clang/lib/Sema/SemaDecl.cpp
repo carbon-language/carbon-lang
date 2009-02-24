@@ -1149,10 +1149,9 @@ bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
 }
 
 StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
-  const ArrayType *AT = Context.getAsArrayType(DeclType);
-  if (AT && AT->getElementType()->isCharType()) {
-    return dyn_cast<StringLiteral>(Init->IgnoreParens());
-  }
+  if (const ArrayType *AT = Context.getAsArrayType(DeclType))
+    if (AT->getElementType()->isCharType())
+      return dyn_cast<StringLiteral>(Init->IgnoreParens());
   return 0;
 }
 
@@ -2194,6 +2193,7 @@ bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
            CheckArithmeticConstantExpression(ASE->getIdx());
   }
   case Expr::StringLiteralClass:
+  case Expr::ObjCEncodeExprClass:
   case Expr::PredefinedExprClass:
     return false;
   case Expr::UnaryOperatorClass: {
@@ -2217,6 +2217,7 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
   case Expr::ParenExprClass:
     return CheckAddressConstantExpression(cast<ParenExpr>(Init)->getSubExpr());
   case Expr::StringLiteralClass:
+  case Expr::ObjCEncodeExprClass:
   case Expr::ObjCStringLiteralClass:
     return false;
   case Expr::CallExprClass:
@@ -2576,9 +2577,8 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
-  if (Init->isConstantInitializer(Context)) {
+  if (Init->isConstantInitializer(Context))
     return false;
-  }
   InitializerElementNotConstant(Init);
   return true;
 
