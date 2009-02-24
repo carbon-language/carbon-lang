@@ -862,7 +862,8 @@ namespace llvm {
 
 /// dump - print compile unit.
 void DICompileUnit::dump() const {
-  cerr << " [" << dwarf::LanguageString(getLanguage()) << "] ";
+  if (getLanguage())
+    cerr << " [" << dwarf::LanguageString(getLanguage()) << "] ";
   cerr << " [" << getDirectory() << "/" << getFilename() << " ]";
 }
 
