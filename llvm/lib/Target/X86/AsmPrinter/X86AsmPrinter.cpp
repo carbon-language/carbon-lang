@@ -24,13 +24,14 @@ using namespace llvm;
 /// machine description.
 ///
 FunctionPass *llvm::createX86CodePrinterPass(raw_ostream &o,
-                                             X86TargetMachine &tm) {
+                                             X86TargetMachine &tm,
+                                             bool fast) {
   const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
 
   if (Subtarget->isFlavorIntel()) {
-    return new X86IntelAsmPrinter(o, tm, tm.getTargetAsmInfo());
+    return new X86IntelAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
   } else {
-    return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo());
+    return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
   }
 }
 

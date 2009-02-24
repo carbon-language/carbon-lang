@@ -122,6 +122,7 @@ void X86IntelAsmPrinter::decorateName(std::string &Name,
 /// method to print assembly for each instruction.
 ///
 bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  this->MF = &MF;
   SetupMachineFunction(MF);
   O << "\n\n";
 

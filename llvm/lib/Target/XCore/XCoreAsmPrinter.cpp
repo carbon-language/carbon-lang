@@ -53,14 +53,14 @@ static cl::opt<unsigned> MaxThreads("xcore-max-threads", cl::Optional,
   cl::init(8));
 
 namespace {
-  struct VISIBILITY_HIDDEN XCoreAsmPrinter : public AsmPrinter {
-    XCoreAsmPrinter(raw_ostream &O, XCoreTargetMachine &TM,
-                    const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T), DW(0),
-        Subtarget(*TM.getSubtargetImpl()) { }
-
+  class VISIBILITY_HIDDEN XCoreAsmPrinter : public AsmPrinter {
     DwarfWriter *DW;
     const XCoreSubtarget &Subtarget;
+  public:
+    XCoreAsmPrinter(raw_ostream &O, XCoreTargetMachine &TM,
+                    const TargetAsmInfo *T, bool F)
+      : AsmPrinter(O, TM, T, F), DW(0),
+        Subtarget(*TM.getSubtargetImpl()) {}
 
     virtual const char *getPassName() const {
       return "XCore Assembly Printer";
@@ -104,8 +104,9 @@ namespace {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createXCoreCodePrinterPass(raw_ostream &o,
-                                               XCoreTargetMachine &tm) {
-  return new XCoreAsmPrinter(o, tm, tm.getTargetAsmInfo());
+                                               XCoreTargetMachine &tm,
+                                               bool fast) {
+  return new XCoreAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
 }
 
 // PrintEscapedString - Print each character of the specified string, escaping
@@ -293,6 +294,8 @@ emitFunctionEnd(MachineFunction &MF)
 ///
 bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 {
+  this->MF = &MF;
+
   SetupMachineFunction(MF);
 
   // Print out constants referenced by the function

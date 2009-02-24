@@ -40,17 +40,17 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  struct VISIBILITY_HIDDEN SparcAsmPrinter : public AsmPrinter {
-    SparcAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T) {
-    }
-
+  class VISIBILITY_HIDDEN SparcAsmPrinter : public AsmPrinter {
     /// We name each basic block in a Function with a unique number, so
     /// that we can consistently refer to them later. This is cleared
     /// at the beginning of each call to runOnMachineFunction().
     ///
     typedef std::map<const Value *, unsigned> ValueMapTy;
     ValueMapTy NumberForBB;
+  public:
+    SparcAsmPrinter(raw_ostream &O, TargetMachine &TM,
+                    const TargetAsmInfo *T, bool F)
+      : AsmPrinter(O, TM, T, F) {}
 
     virtual const char *getPassName() const {
       return "Sparc Assembly Printer";
@@ -81,14 +81,17 @@ namespace {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createSparcCodePrinterPass(raw_ostream &o,
-                                               TargetMachine &tm) {
-  return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo());
+                                               TargetMachine &tm,
+                                               bool fast) {
+  return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
 }
 
 /// runOnMachineFunction - This uses the printInstruction()
 /// method to print assembly for each instruction.
 ///
 bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  this->MF = &MF;
+
   SetupMachineFunction(MF);
 
   // Print out constants referenced by the function

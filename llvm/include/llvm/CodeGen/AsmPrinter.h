@@ -65,6 +65,8 @@ namespace llvm {
     // Necessary for external weak linkage support
     std::set<const GlobalValue*> ExtWeakSymbols;
 
+    /// Fast - Generating code via fast instruction selection.
+    bool Fast;
   public:
     /// Output stream on which we're printing assembly code.
     ///
@@ -81,6 +83,9 @@ namespace llvm {
     /// Target Register Information.
     ///
     const TargetRegisterInfo *TRI;
+
+    /// The current machine function.
+    const MachineFunction *MF;
 
     /// Name-mangler for global names.
     ///
@@ -101,7 +106,8 @@ namespace llvm {
     bool IsInTextSection;
   
   protected:
-    AsmPrinter(raw_ostream &o, TargetMachine &TM, const TargetAsmInfo *T);
+    AsmPrinter(raw_ostream &o, TargetMachine &TM,
+               const TargetAsmInfo *T, bool F);
     
   public:
     virtual ~AsmPrinter();

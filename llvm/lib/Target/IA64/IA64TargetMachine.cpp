@@ -84,7 +84,7 @@ bool IA64TargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
 }
 bool IA64TargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                            raw_ostream &Out) {
-  PM.add(createIA64CodePrinterPass(Out, *this));
+  PM.add(createIA64CodePrinterPass(Out, *this, Fast));
   return false;
 }
 

@@ -49,13 +49,15 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  struct VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
+  class VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
+  protected:
     StringSet<> FnStubs, GVStubs, HiddenGVStubs;
     const PPCSubtarget &Subtarget;
-
-    PPCAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T), Subtarget(TM.getSubtarget<PPCSubtarget>()) {
-    }
+  public:
+    PPCAsmPrinter(raw_ostream &O, TargetMachine &TM,
+                  const TargetAsmInfo *T, bool F)
+      : AsmPrinter(O, TM, T, F),
+        Subtarget(TM.getSubtarget<PPCSubtarget>()) {}
 
     virtual const char *getPassName() const {
       return "PowerPC Assembly Printer";
@@ -291,14 +293,13 @@ namespace {
   };
 
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
-  struct VISIBILITY_HIDDEN PPCLinuxAsmPrinter : public PPCAsmPrinter {
+  class VISIBILITY_HIDDEN PPCLinuxAsmPrinter : public PPCAsmPrinter {
     DwarfWriter *DW;
     MachineModuleInfo *MMI;
-
+  public:
     PPCLinuxAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
-                    const TargetAsmInfo *T)
-      : PPCAsmPrinter(O, TM, T), DW(0), MMI(0) {
-    }
+                       const TargetAsmInfo *T, bool F)
+      : PPCAsmPrinter(O, TM, T, F), DW(0), MMI(0) {}
 
     virtual const char *getPassName() const {
       return "Linux PPC Assembly Printer";
@@ -320,15 +321,14 @@ namespace {
 
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
   /// OS X
-  struct VISIBILITY_HIDDEN PPCDarwinAsmPrinter : public PPCAsmPrinter {
-
+  class VISIBILITY_HIDDEN PPCDarwinAsmPrinter : public PPCAsmPrinter {
     DwarfWriter *DW;
     MachineModuleInfo *MMI;
     raw_ostream &OS;
+  public:
     PPCDarwinAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
-                        const TargetAsmInfo *T)
-      : PPCAsmPrinter(O, TM, T), DW(0), MMI(0), OS(O) {
-    }
+                        const TargetAsmInfo *T, bool F)
+      : PPCAsmPrinter(O, TM, T, F), DW(0), MMI(0), OS(O) {}
 
     virtual const char *getPassName() const {
       return "Darwin PPC Assembly Printer";
@@ -571,6 +571,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  this->MF = &MF;
 
   SetupMachineFunction(MF);
   O << "\n\n";
@@ -764,6 +765,8 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
 /// method to print assembly for each instruction.
 ///
 bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  this->MF = &MF;
+
   SetupMachineFunction(MF);
   O << "\n\n";
 
@@ -1146,13 +1149,14 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 /// Darwin assembler can deal with.
 ///
 FunctionPass *llvm::createPPCAsmPrinterPass(raw_ostream &o,
-                                            PPCTargetMachine &tm) {
+                                            PPCTargetMachine &tm,
+                                            bool fast) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
   if (Subtarget->isDarwin()) {
-    return new PPCDarwinAsmPrinter(o, tm, tm.getTargetAsmInfo());
+    return new PPCDarwinAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
   } else {
-    return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo());
+    return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
   }
 }
 

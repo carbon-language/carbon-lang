@@ -3915,7 +3915,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       if (Fast)
         DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
                                  getRoot(), LabelID));
-      DW->setFastCodeGen(Fast);
     }
 
     return 0;

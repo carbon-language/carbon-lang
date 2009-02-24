@@ -33,13 +33,12 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
   struct VISIBILITY_HIDDEN AlphaAsmPrinter : public AsmPrinter {
-
     /// Unique incrementer for label values for referencing Global values.
     ///
 
-    AlphaAsmPrinter(raw_ostream &o, TargetMachine &tm, const TargetAsmInfo *T)
-      : AsmPrinter(o, tm, T) {
-    }
+    AlphaAsmPrinter(raw_ostream &o, TargetMachine &tm,
+                    const TargetAsmInfo *T, bool F)
+      : AsmPrinter(o, tm, T, F) {}
 
     virtual const char *getPassName() const {
       return "Alpha Assembly Printer";
@@ -68,8 +67,9 @@ namespace {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createAlphaCodePrinterPass(raw_ostream &o,
-                                               TargetMachine &tm) {
-  return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo());
+                                               TargetMachine &tm,
+                                               bool fast) {
+  return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
 }
 
 #include "AlphaGenAsmWriter.inc"
@@ -139,6 +139,8 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
 /// method to print assembly for each instruction.
 ///
 bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  this->MF = &MF;
+
   SetupMachineFunction(MF);
   O << "\n\n";
 

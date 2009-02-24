@@ -46,13 +46,12 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  struct VISIBILITY_HIDDEN MipsAsmPrinter : public AsmPrinter {
-
+  class VISIBILITY_HIDDEN MipsAsmPrinter : public AsmPrinter {
     const MipsSubtarget *Subtarget;
-
+  public:
     MipsAsmPrinter(raw_ostream &O, MipsTargetMachine &TM, 
-                   const TargetAsmInfo *T): 
-                   AsmPrinter(O, TM, T) {
+                   const TargetAsmInfo *T, bool F)
+      : AsmPrinter(O, TM, T, F) {
       Subtarget = &TM.getSubtarget<MipsSubtarget>();
     }
 
@@ -91,9 +90,9 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 FunctionPass *llvm::createMipsCodePrinterPass(raw_ostream &o,
-                                              MipsTargetMachine &tm) 
-{
-  return new MipsAsmPrinter(o, tm, tm.getTargetAsmInfo());
+                                              MipsTargetMachine &tm,
+                                              bool fast) {
+  return new MipsAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
 }
 
 //===----------------------------------------------------------------------===//
@@ -266,6 +265,8 @@ emitFunctionEnd(MachineFunction &MF)
 bool MipsAsmPrinter::
 runOnMachineFunction(MachineFunction &MF) 
 {
+  this->MF = &MF;
+
   SetupMachineFunction(MF);
 
   // Print out constants referenced by the function

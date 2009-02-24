@@ -45,13 +45,12 @@ namespace {
 
   const std::string bss_section(".bss");
 
-  struct VISIBILITY_HIDDEN SPUAsmPrinter : public AsmPrinter {
+  class VISIBILITY_HIDDEN SPUAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;
-
-    SPUAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T) :
-      AsmPrinter(O, TM, T)
-    {
-    }
+  public:
+    SPUAsmPrinter(raw_ostream &O, TargetMachine &TM,
+                  const TargetAsmInfo *T, bool F) :
+      AsmPrinter(O, TM, T, F) {}
 
     virtual const char *getPassName() const {
       return "STI CBEA SPU Assembly Printer";
@@ -285,17 +284,13 @@ namespace {
   };
 
   /// LinuxAsmPrinter - SPU assembly printer, customized for Linux
-  struct VISIBILITY_HIDDEN LinuxAsmPrinter : public SPUAsmPrinter {
-
+  class VISIBILITY_HIDDEN LinuxAsmPrinter : public SPUAsmPrinter {
     DwarfWriter *DW;
     MachineModuleInfo *MMI;
-
+  public:
     LinuxAsmPrinter(raw_ostream &O, SPUTargetMachine &TM,
-                    const TargetAsmInfo *T) :
-      SPUAsmPrinter(O, TM, T),
-      DW(0),
-      MMI(0)
-    { }
+                    const TargetAsmInfo *T, bool F)
+      : SPUAsmPrinter(O, TM, T, F), DW(0), MMI(0) {}
 
     virtual const char *getPassName() const {
       return "STI CBEA SPU Assembly Printer";
@@ -427,6 +422,8 @@ void SPUAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 bool
 LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 {
+  this->MF = &MF;
+
   SetupMachineFunction(MF);
   O << "\n\n";
 
@@ -613,6 +610,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
 /// that the Linux SPU assembler can deal with.
 ///
 FunctionPass *llvm::createSPUAsmPrinterPass(raw_ostream &o,
-                                            SPUTargetMachine &tm) {
-  return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo());
+                                            SPUTargetMachine &tm,
+                                            bool fast) {
+  return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
 }

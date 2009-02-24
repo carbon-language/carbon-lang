@@ -34,12 +34,12 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  struct IA64AsmPrinter : public AsmPrinter {
+  class IA64AsmPrinter : public AsmPrinter {
     std::set<std::string> ExternalFunctionNames, ExternalObjectNames;
-
-    IA64AsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T) {
-    }
+  public:
+    IA64AsmPrinter(raw_ostream &O, TargetMachine &TM,
+                   const TargetAsmInfo *T, bool F)
+      : AsmPrinter(O, TM, T, F) {}
 
     virtual const char *getPassName() const {
       return "IA64 Assembly Printer";
@@ -124,6 +124,8 @@ namespace {
 /// method to print assembly for each instruction.
 ///
 bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  this->MF = &MF;
+
   SetupMachineFunction(MF);
   O << "\n\n";
 
@@ -365,6 +367,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
 /// the given target machine description.
 ///
 FunctionPass *llvm::createIA64CodePrinterPass(raw_ostream &o,
-                                              IA64TargetMachine &tm) {
-  return new IA64AsmPrinter(o, tm, tm.getTargetAsmInfo());
+                                              IA64TargetMachine &tm,
+                                              bool fast) {
+  return new IA64AsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
 }

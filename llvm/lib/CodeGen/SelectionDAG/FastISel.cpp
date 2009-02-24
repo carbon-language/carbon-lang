@@ -370,7 +370,6 @@ bool FastISel::SelectCall(User *I) {
       unsigned Line = Subprogram.getLineNumber();
       unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
       setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
-      DW->setFastCodeGen(true);
 
       if (DW->getRecordSourceLineCount() != 1) {
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);

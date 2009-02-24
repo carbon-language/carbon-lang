@@ -90,6 +90,8 @@ bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  this->MF = &MF;
+
   // This calls the base class function required to be called at beginning
   // of runOnMachineFunction.
   SetupMachineFunction(MF);
@@ -133,8 +135,9 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createPIC16CodePrinterPass(raw_ostream &o,
-                                               PIC16TargetMachine &tm) {
-  return new PIC16AsmPrinter(o, tm, tm.getTargetAsmInfo());
+                                               PIC16TargetMachine &tm,
+                                               bool fast) {
+  return new PIC16AsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
 }
 
 void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {

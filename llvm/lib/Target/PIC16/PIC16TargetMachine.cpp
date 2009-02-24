@@ -64,7 +64,7 @@ bool PIC16TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
 bool PIC16TargetMachine::
 addAssemblyEmitter(PassManagerBase &PM, bool Fast, raw_ostream &Out) {
   // Output assembly language.
-  PM.add(createPIC16CodePrinterPass(Out, *this));
+  PM.add(createPIC16CodePrinterPass(Out, *this, Fast));
   return false;
 }
 

@@ -42,13 +42,7 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  struct VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
-    ARMAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T), DW(0), MMI(NULL), AFI(NULL), MCP(NULL),
-        InCPMode(false) {
-      Subtarget = &TM.getSubtarget<ARMSubtarget>();
-    }
-
+  class VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
     DwarfWriter *DW;
     MachineModuleInfo *MMI;
 
@@ -85,7 +79,14 @@ namespace {
 
     /// True if asm printer is printing a series of CONSTPOOL_ENTRY.
     bool InCPMode;
-    
+  public:
+    ARMAsmPrinter(raw_ostream &O, TargetMachine &TM,
+                  const TargetAsmInfo *T, bool F)
+      : AsmPrinter(O, TM, T, F), DW(0), MMI(NULL), AFI(NULL), MCP(NULL),
+        InCPMode(false) {
+      Subtarget = &TM.getSubtarget<ARMSubtarget>();
+    }
+
     virtual const char *getPassName() const {
       return "ARM Assembly Printer";
     }
@@ -183,6 +184,8 @@ namespace {
 /// method to print assembly for each instruction.
 ///
 bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  this->MF = &MF;
+
   AFI = MF.getInfo<ARMFunctionInfo>();
   MCP = MF.getConstantPool();
 
@@ -1039,8 +1042,9 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createARMCodePrinterPass(raw_ostream &o,
-                                             ARMTargetMachine &tm) {
-  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo());
+                                             ARMTargetMachine &tm,
+                                             bool fast) {
+  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
 }
 
 namespace {

@@ -49,9 +49,6 @@ private:
   ///
   DwarfException *DE;
 
-  /// FastCodeGen - True if generating code via the "fast" isel.
-  /// 
-  bool FastCodeGen;
 public:
   static char ID; // Pass identification, replacement for typeid
 
@@ -107,9 +104,6 @@ public:
   /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
   /// be emitted.
   bool ShouldEmitDwarfDebug() const;
-
-  bool getFastCodeGen() const { return FastCodeGen; }
-  void setFastCodeGen(bool Fast) { FastCodeGen = Fast; }
 };
 
 
