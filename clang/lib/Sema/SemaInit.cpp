@@ -35,25 +35,25 @@ static StringLiteral *IsStringInit(Expr *Init, QualType DeclType,
   return 0;
 }
 
-bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType, 
-                                  bool DirectInit) {  
+static bool CheckSingleInitializer(Expr *&Init, QualType DeclType, 
+                                   bool DirectInit, Sema &S) {
   // Get the type before calling CheckSingleAssignmentConstraints(), since
   // it can promote the expression.
   QualType InitType = Init->getType(); 
   
-  if (getLangOptions().CPlusPlus) {
+  if (S.getLangOptions().CPlusPlus) {
     // FIXME: I dislike this error message. A lot.
-    if (PerformImplicitConversion(Init, DeclType, "initializing", DirectInit))
-      return Diag(Init->getSourceRange().getBegin(),
-                  diag::err_typecheck_convert_incompatible)
-      << DeclType << Init->getType() << "initializing" 
-      << Init->getSourceRange();
-    
+    if (S.PerformImplicitConversion(Init, DeclType, "initializing", DirectInit))
+      return S.Diag(Init->getSourceRange().getBegin(),
+                    diag::err_typecheck_convert_incompatible)
+        << DeclType << Init->getType() << "initializing" 
+        << Init->getSourceRange();
     return false;
   }
   
-  AssignConvertType ConvTy = CheckSingleAssignmentConstraints(DeclType, Init);
-  return DiagnoseAssignmentResult(ConvTy, Init->getLocStart(), DeclType,
+  Sema::AssignConvertType ConvTy =
+    S.CheckSingleAssignmentConstraints(DeclType, Init);
+  return S.DiagnoseAssignmentResult(ConvTy, Init->getLocStart(), DeclType,
                                   InitType, Init, "initializing");
 }
 
@@ -163,7 +163,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       return Diag(Init->getLocStart(), diag::err_array_init_list_required)
       << Init->getSourceRange();
     
-    return CheckSingleInitializer(Init, DeclType, DirectInit);
+    return CheckSingleInitializer(Init, DeclType, DirectInit, *this);
   } 
   
   bool hadError = CheckInitList(InitList, DeclType);
@@ -676,7 +676,7 @@ void InitListChecker::CheckScalarType(InitListExpr *IList, QualType DeclType,
     }
 
     Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
-    if (SemaRef->CheckSingleInitializer(expr, DeclType, false))
+    if (CheckSingleInitializer(expr, DeclType, false, *SemaRef))
       hadError = true; // types weren't compatible.
     else if (savExpr != expr) {
       // The type was promoted, update initializer list.

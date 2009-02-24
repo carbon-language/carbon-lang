@@ -1889,8 +1889,6 @@ public:
                              SourceLocation InitLoc,DeclarationName InitEntity,
                              bool DirectInit);
   bool CheckInitList(InitListExpr *&InitList, QualType &DeclType);
-  bool CheckSingleInitializer(Expr *&simpleInit, QualType declType,
-                              bool DirectInit);
   bool CheckForConstantInitializer(Expr *e, QualType t);
   bool CheckArithmeticConstantExpression(const Expr* e);
   bool CheckAddressConstantExpression(const Expr* e);
