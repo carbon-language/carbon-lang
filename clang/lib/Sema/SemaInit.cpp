@@ -18,7 +18,7 @@
 #include "Sema.h"
 #include "clang/Parse/Designator.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Expr.h"
+#include "clang/AST/ExprObjC.h"
 #include <map>
 using namespace clang;
 
@@ -26,11 +26,13 @@ using namespace clang;
 // Sema Initialization Checking
 //===----------------------------------------------------------------------===//
 
-static StringLiteral *IsStringInit(Expr *Init, QualType DeclType,
-                                   ASTContext &Context) {
+static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
   if (const ArrayType *AT = Context.getAsArrayType(DeclType))
-    if (AT->getElementType()->isCharType())
-      return dyn_cast<StringLiteral>(Init->IgnoreParens());
+    if (AT->getElementType()->isCharType()) {
+      Init = Init->IgnoreParens();
+      if (isa<StringLiteral>(Init) || isa<ObjCEncodeExpr>(Init))
+        return Init;
+    }
   return 0;
 }
 
@@ -56,10 +58,13 @@ static bool CheckSingleInitializer(Expr *&Init, QualType DeclType,
                                   InitType, Init, "initializing");
 }
 
-static void CheckStringInit(Expr *Str, unsigned StrLength,
-                            QualType &DeclT, Sema &S) {
-  const ArrayType *AT = S.Context.getAsArrayType(DeclT);
+static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
+  // Get the length of the string as parsed.
+  uint64_t StrLength =
+    cast<ConstantArrayType>(Str->getType())->getSize().getZExtValue();
+
   
+  const ArrayType *AT = S.Context.getAsArrayType(DeclT);
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
     // C99 6.7.8p14. We have an array of character type with unknown size 
     // being initialized to a string literal.
@@ -76,7 +81,7 @@ static void CheckStringInit(Expr *Str, unsigned StrLength,
   // C99 6.7.8p14. We have an array of character type with known size.  However,
   // the size may be smaller or larger than the string we are initializing.
   // FIXME: Avoid truncation for 64-bit length strings.
-  if (StrLength-1 > (unsigned)CAT->getSize().getZExtValue())
+  if (StrLength-1 > CAT->getSize().getZExtValue())
     S.Diag(Str->getSourceRange().getBegin(),
            diag::warn_initializer_string_for_char_array_too_long)
       << Str->getSourceRange();
@@ -111,8 +116,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList) {
     // FIXME: Handle wide strings
-    if (StringLiteral *Str = IsStringInit(Init, DeclType, Context)) {
-      CheckStringInit(Str, Str->getByteLength() + 1, DeclType, *this);
+    if (Expr *Str = IsStringInit(Init, DeclType, Context)) {
+      CheckStringInit(Str, DeclType, *this);
       return false;
     }
     
@@ -587,9 +592,8 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
                           newStructuredList, newStructuredIndex);
     ++StructuredIndex;
     ++Index;
-  } else if (StringLiteral *Str = IsStringInit(expr, ElemType,
-                                               SemaRef.Context)) {
-    CheckStringInit(Str, Str->getByteLength() + 1, ElemType, SemaRef);
+  } else if (Expr *Str = IsStringInit(expr, ElemType, SemaRef.Context)) {
+    CheckStringInit(Str, ElemType, SemaRef);
     UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
     ++Index;
   } else if (ElemType->isScalarType()) {
@@ -773,9 +777,9 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
                                      unsigned &StructuredIndex) {
   // Check for the special-case of initializing an array with a string.
   if (Index < IList->getNumInits()) {
-    if (StringLiteral *Str = IsStringInit(IList->getInit(Index), DeclType,
-                                          SemaRef.Context)) {
-      CheckStringInit(Str, Str->getByteLength() + 1, DeclType, SemaRef);
+    if (Expr *Str = IsStringInit(IList->getInit(Index), DeclType,
+                                 SemaRef.Context)) {
+      CheckStringInit(Str, DeclType, SemaRef);
       // We place the string literal directly into the resulting
       // initializer list. This is the only place where the structure
       // of the structured initializer list doesn't match exactly,
