@@ -27,7 +27,7 @@ static RegisterPass<LoopVR> X("loopvr", "Loop Value Ranges", true, true);
 
 /// getRange - determine the range for a particular SCEV within a given Loop
 ConstantRange LoopVR::getRange(SCEVHandle S, Loop *L, ScalarEvolution &SE) {
-  SCEVHandle T = SE.getIterationCount(L);
+  SCEVHandle T = SE.getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(T))
     return ConstantRange(cast<IntegerType>(S->getType())->getBitWidth(), true);
 

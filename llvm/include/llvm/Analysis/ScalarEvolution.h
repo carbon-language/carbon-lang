@@ -298,18 +298,28 @@ namespace llvm {
     bool isLoopGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
                              SCEV *LHS, SCEV *RHS);
 
-    /// getIterationCount - If the specified loop has a predictable iteration
-    /// count, return it, otherwise return a SCEVCouldNotCompute object.
-    SCEVHandle getIterationCount(const Loop *L) const;
+    /// getBackedgeTakenCount - If the specified loop has a predictable
+    /// backedge-taken count, return it, otherwise return a SCEVCouldNotCompute
+    /// object. The backedge-taken count is the number of times the loop header
+    /// will be branched to from within the loop. This is one less than the
+    /// trip count of the loop, since it doesn't count the first iteration,
+    /// when the header is branched to from outside the loop.
+    ///
+    /// Note that it is not valid to call this method on a loop without a
+    /// loop-invariant backedge-taken count (see
+    /// hasLoopInvariantBackedgeTakenCount).
+    ///
+    SCEVHandle getBackedgeTakenCount(const Loop *L) const;
 
-    /// hasLoopInvariantIterationCount - Return true if the specified loop has
-    /// an analyzable loop-invariant iteration count.
-    bool hasLoopInvariantIterationCount(const Loop *L) const;
+    /// hasLoopInvariantBackedgeTakenCount - Return true if the specified loop
+    /// has an analyzable loop-invariant backedge-taken count.
+    bool hasLoopInvariantBackedgeTakenCount(const Loop *L) const;
 
-    /// forgetLoopIterationCount - This method should be called by the
+    /// forgetLoopBackedgeTakenCount - This method should be called by the
     /// client when it has changed a loop in a way that may effect
-    /// ScalarEvolution's ability to compute a trip count.
-    void forgetLoopIterationCount(const Loop *L);
+    /// ScalarEvolution's ability to compute a trip count, or if the loop
+    /// is deleted.
+    void forgetLoopBackedgeTakenCount(const Loop *L);
 
     /// deleteValueFromRecords - This method should be called by the
     /// client before it removes a Value from the program, to make sure

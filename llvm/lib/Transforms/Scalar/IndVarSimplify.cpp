@@ -93,12 +93,12 @@ namespace {
 
     void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
                                     SmallPtrSet<Instruction*, 16> &DeadInsts);
-    void LinearFunctionTestReplace(Loop *L, SCEVHandle IterationCount,
+    void LinearFunctionTestReplace(Loop *L, SCEVHandle BackedgeTakenCount,
                                    Value *IndVar,
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
                                    SCEVExpander &Rewriter);
-    void RewriteLoopExitValues(Loop *L, SCEV *IterationCount);
+    void RewriteLoopExitValues(Loop *L, SCEV *BackedgeTakenCount);
 
     void DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*, 16> &Insts);
 
@@ -232,7 +232,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
 /// SCEV analysis can determine a loop-invariant trip count of the loop, which
 /// is actually a much broader range than just linear tests.
 void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
-                                   SCEVHandle IterationCount,
+                                   SCEVHandle BackedgeTakenCount,
                                    Value *IndVar,
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
@@ -241,43 +241,41 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
   // against the preincremented value, otherwise we prefer to compare against
   // the post-incremented value.
   Value *CmpIndVar;
+  SCEVHandle RHS = BackedgeTakenCount;
   if (ExitingBlock == L->getLoopLatch()) {
-    // What ScalarEvolution calls the "iteration count" is actually the
-    // number of times the branch is taken. Add one to get the number
-    // of times the branch is executed. If this addition may overflow,
-    // we have to be more pessimistic and cast the induction variable
-    // before doing the add.
-    SCEVHandle Zero = SE->getIntegerSCEV(0, IterationCount->getType());
+    // Add one to the "backedge-taken" count to get the trip count.
+    // If this addition may overflow, we have to be more pessimistic and
+    // cast the induction variable before doing the add.
+    SCEVHandle Zero = SE->getIntegerSCEV(0, BackedgeTakenCount->getType());
     SCEVHandle N =
-      SE->getAddExpr(IterationCount,
-                     SE->getIntegerSCEV(1, IterationCount->getType()));
+      SE->getAddExpr(BackedgeTakenCount,
+                     SE->getIntegerSCEV(1, BackedgeTakenCount->getType()));
     if ((isa<SCEVConstant>(N) && !N->isZero()) ||
         SE->isLoopGuardedByCond(L, ICmpInst::ICMP_NE, N, Zero)) {
       // No overflow. Cast the sum.
-      IterationCount = SE->getTruncateOrZeroExtend(N, IndVar->getType());
+      RHS = SE->getTruncateOrZeroExtend(N, IndVar->getType());
     } else {
       // Potential overflow. Cast before doing the add.
-      IterationCount = SE->getTruncateOrZeroExtend(IterationCount,
-                                                   IndVar->getType());
-      IterationCount =
-        SE->getAddExpr(IterationCount,
-                       SE->getIntegerSCEV(1, IndVar->getType()));
+      RHS = SE->getTruncateOrZeroExtend(BackedgeTakenCount,
+                                        IndVar->getType());
+      RHS = SE->getAddExpr(RHS,
+                           SE->getIntegerSCEV(1, IndVar->getType()));
     }
 
-    // The IterationCount expression contains the number of times that the
-    // backedge actually branches to the loop header.  This is one less than the
-    // number of times the loop executes, so add one to it.
+    // The BackedgeTaken expression contains the number of times that the
+    // backedge branches to the loop header.  This is one less than the
+    // number of times the loop executes, so use the incremented indvar.
     CmpIndVar = L->getCanonicalInductionVariableIncrement();
   } else {
     // We have to use the preincremented value...
-    IterationCount = SE->getTruncateOrZeroExtend(IterationCount,
-                                                 IndVar->getType());
+    RHS = SE->getTruncateOrZeroExtend(BackedgeTakenCount,
+                                      IndVar->getType());
     CmpIndVar = IndVar;
   }
 
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
-  Value *ExitCnt = Rewriter.expandCodeFor(IterationCount,
+  Value *ExitCnt = Rewriter.expandCodeFor(RHS,
                                           Preheader->getTerminator());
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
@@ -291,7 +289,7 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
        << "      LHS:" << *CmpIndVar // includes a newline
        << "       op:\t"
        << (Opcode == ICmpInst::ICMP_NE ? "!=" : "==") << "\n"
-       << "      RHS:\t" << *IterationCount << "\n";
+       << "      RHS:\t" << *RHS << "\n";
 
   Value *Cond = new ICmpInst(Opcode, CmpIndVar, ExitCnt, "exitcond", BI);
   BI->setCondition(Cond);
@@ -304,7 +302,7 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 /// final value of any expressions that are recurrent in the loop, and
 /// substitute the exit values from the loop into any instructions outside of
 /// the loop that use the final values of the current expressions.
-void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
+void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *BackedgeTakenCount) {
   BasicBlock *Preheader = L->getLoopPreheader();
 
   // Scan all of the instructions in the loop, looking at those that have
@@ -322,7 +320,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
     BlockToInsertInto = Preheader;
   BasicBlock::iterator InsertPt = BlockToInsertInto->getFirstNonPHI();
 
-  bool HasConstantItCount = isa<SCEVConstant>(IterationCount);
+  bool HasConstantItCount = isa<SCEVConstant>(BackedgeTakenCount);
 
   SmallPtrSet<Instruction*, 16> InstructionsToDelete;
   std::map<Instruction*, Value*> ExitValues;
@@ -435,7 +433,7 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
   // may not have been able to compute a trip count. Now that we've done some
   // re-writing, the trip count may be computable.
   if (Changed)
-    SE->forgetLoopIterationCount(L);
+    SE->forgetLoopBackedgeTakenCount(L);
 
   if (!DeadInsts.empty())
     DeleteTriviallyDeadInstructions(DeadInsts);
@@ -473,7 +471,8 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi) {
 /// variables, return the PHI for this induction variable.
 ///
 /// TODO: This duplicates a fair amount of ScalarEvolution logic.
-/// Perhaps this can be merged with ScalarEvolution::getIterationCount
+/// Perhaps this can be merged with
+/// ScalarEvolution::getBackedgeTakenCount
 /// and/or ScalarEvolution::get{Sign,Zero}ExtendExpr.
 ///
 static const PHINode *TestOrigIVForWrap(const Loop *L,
@@ -622,9 +621,9 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // loop into any instructions outside of the loop that use the final values of
   // the current expressions.
   //
-  SCEVHandle IterationCount = SE->getIterationCount(L);
-  if (!isa<SCEVCouldNotCompute>(IterationCount))
-    RewriteLoopExitValues(L, IterationCount);
+  SCEVHandle BackedgeTakenCount = SE->getBackedgeTakenCount(L);
+  if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount))
+    RewriteLoopExitValues(L, BackedgeTakenCount);
 
   // Next, analyze all of the induction variables in the loop, canonicalizing
   // auxillary induction variables.
@@ -649,9 +648,9 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // the set of the types of the other recurrence expressions.
   const Type *LargestType = 0;
   SmallSetVector<const Type *, 4> SizesToInsert;
-  if (!isa<SCEVCouldNotCompute>(IterationCount)) {
-    LargestType = IterationCount->getType();
-    SizesToInsert.insert(IterationCount->getType());
+  if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount)) {
+    LargestType = BackedgeTakenCount->getType();
+    SizesToInsert.insert(BackedgeTakenCount->getType());
   }
   for (unsigned i = 0, e = IndVars.size(); i != e; ++i) {
     const PHINode *PN = IndVars[i].first;
@@ -682,7 +681,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   bool NoSignedWrap = false;
   bool NoUnsignedWrap = false;
   const PHINode *OrigControllingPHI = 0;
-  if (!isa<SCEVCouldNotCompute>(IterationCount) && ExitingBlock)
+  if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount) && ExitingBlock)
     // Can't rewrite non-branch yet.
     if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator())) {
       if (Instruction *OrigCond = dyn_cast<Instruction>(BI->getCondition())) {
@@ -695,7 +694,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         DeadInsts.insert(OrigCond);
       }
 
-      LinearFunctionTestReplace(L, IterationCount, IndVar,
+      LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar,
                                 ExitingBlock, BI, Rewriter);
     }
 

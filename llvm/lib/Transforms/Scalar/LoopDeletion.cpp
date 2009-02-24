@@ -190,7 +190,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // Don't remove loops for which we can't solve the trip count.
   // They could be infinite, in which case we'd be changing program behavior.
   ScalarEvolution& SE = getAnalysis<ScalarEvolution>();
-  SCEVHandle S = SE.getIterationCount(L);
+  SCEVHandle S = SE.getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(S))
     return false;
   
@@ -267,7 +267,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
     (*LI)->eraseFromParent();
 
   // Tell ScalarEvolution that the loop is deleted.
-  SE.forgetLoopIterationCount(L);
+  SE.forgetLoopBackedgeTakenCount(L);
 
   // Finally, the blocks from loopinfo.  This has to happen late because
   // otherwise our loop iterators won't work.

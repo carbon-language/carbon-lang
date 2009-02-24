@@ -2351,13 +2351,13 @@ ICmpInst *LoopStrengthReduce::OptimizeSMax(Loop *L, ICmpInst *Cond,
   SelectInst *Sel = dyn_cast<SelectInst>(Cond->getOperand(1));
   if (!Sel || !Sel->hasOneUse()) return Cond;
 
-  SCEVHandle IterationCount = SE->getIterationCount(L);
-  if (isa<SCEVCouldNotCompute>(IterationCount))
+  SCEVHandle BackedgeTakenCount = SE->getBackedgeTakenCount(L);
+  if (isa<SCEVCouldNotCompute>(BackedgeTakenCount))
     return Cond;
-  SCEVHandle One = SE->getIntegerSCEV(1, IterationCount->getType());
+  SCEVHandle One = SE->getIntegerSCEV(1, BackedgeTakenCount->getType());
 
-  // Adjust for an annoying getIterationCount quirk.
-  IterationCount = SE->getAddExpr(IterationCount, One);
+  // Add one to the backedge-taken count to get the trip count.
+  SCEVHandle IterationCount = SE->getAddExpr(BackedgeTakenCount, One);
 
   // Check for a max calculation that matches the pattern.
   SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(IterationCount);
@@ -2412,8 +2412,8 @@ ICmpInst *LoopStrengthReduce::OptimizeSMax(Loop *L, ICmpInst *Cond,
 /// inside the loop then try to eliminate the cast opeation.
 void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
 
-  SCEVHandle IterationCount = SE->getIterationCount(L);
-  if (isa<SCEVCouldNotCompute>(IterationCount))
+  SCEVHandle BackedgeTakenCount = SE->getBackedgeTakenCount(L);
+  if (isa<SCEVCouldNotCompute>(BackedgeTakenCount))
     return;
 
   for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e;

@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -analyze -scalar-evolution | \
-; RUN:   grep {4 iterations}
+; RUN:   grep {backedge-taken count is 4}
 ; PR1101
 
 @A = weak global [1000 x i32] zeroinitializer, align 32         
