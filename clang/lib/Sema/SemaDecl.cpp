@@ -210,7 +210,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
                      IdResolver.end(),
                      std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
                                   FD));
-    if (Redecl != IdResolver.end()) {
+    if (Redecl != IdResolver.end() && S->isDeclScope(*Redecl)) {
       // There is already a declaration of a function on our
       // IdResolver chain. Replace it with this declaration.
       S->RemoveDecl(*Redecl);
@@ -537,6 +537,15 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   QualType OldQType = Context.getCanonicalType(Old->getType());
   QualType NewQType = Context.getCanonicalType(New->getType());
   
+  if (!isa<CXXMethodDecl>(New) && !isa<CXXMethodDecl>(Old) &&
+      New->getStorageClass() == FunctionDecl::Static &&
+      Old->getStorageClass() != FunctionDecl::Static) {
+    Diag(New->getLocation(), diag::err_static_non_static)
+      << New;
+    Diag(Old->getLocation(), PrevDiag);
+    return true;
+  }
+
   if (getLangOptions().CPlusPlus) {
     // (C++98 13.1p2):
     //   Certain function declarations cannot be overloaded:
@@ -588,16 +597,8 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     // (C++98 8.3.5p3):
     //   All declarations for a function shall agree exactly in both the
     //   return type and the parameter-type-list.
-    if (OldQType == NewQType) {
-      // We have a redeclaration.
-      MergeAttributes(New, Old);
-
-      // Merge the "deleted" flag.
-      if (Old->isDeleted())
-        New->setDeleted();
-
-      return MergeCXXFunctionDecl(New, Old);
-    } 
+    if (OldQType == NewQType)
+      return MergeCompatibleFunctionDecls(New, Old);
 
     // Fall through for conflicting redeclarations and redefinitions.
   }
@@ -639,13 +640,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 
     }
 
-    MergeAttributes(New, Old);
-
-    // Merge the "deleted" flag.
-    if (Old->isDeleted())
-      New->setDeleted();
-    
-    return false;
+    return MergeCompatibleFunctionDecls(New, Old);
   }
 
   // A function that has already been declared has been redeclared or defined
@@ -669,6 +664,38 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   Diag(New->getLocation(), diag::err_conflicting_types) << New->getDeclName();
   Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
   return true;
+}
+
+/// \brief Completes the merge of two function declarations that are
+/// known to be compatible. 
+///
+/// This routine handles the merging of attributes and other
+/// properties of function declarations form the old declaration to
+/// the new declaration, once we know that New is in fact a
+/// redeclaration of Old.
+///
+/// \returns false
+bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
+  // Merge the attributes
+  MergeAttributes(New, Old);
+
+  // Merge the storage class.
+  New->setStorageClass(Old->getStorageClass());
+
+  // FIXME: need to implement inline semantics
+
+  // Merge "pure" flag.
+  if (Old->isPure())
+    New->setPure();
+
+  // Merge the "deleted" flag.
+  if (Old->isDeleted())
+    New->setDeleted();
+  
+  if (getLangOptions().CPlusPlus)
+    return MergeCXXFunctionDecl(New, Old);
+
+  return false;
 }
 
 /// Predicate for C "tentative" external object definitions (C99 6.9.2).
@@ -1626,7 +1653,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 NamedDecl* 
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, Decl *LastDeclarator,
-                              Decl* PrevDecl, bool IsFunctionDefinition,
+                              NamedDecl* PrevDecl, bool IsFunctionDefinition,
                               bool& InvalidDecl, bool &Redeclaration) {
   assert(R.getTypePtr()->isFunctionType());
 
@@ -1637,12 +1664,26 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   case DeclSpec::SCS_auto:
   case DeclSpec::SCS_register:
   case DeclSpec::SCS_mutable:
-    Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func);
+    Diag(D.getDeclSpec().getStorageClassSpecLoc(), 
+         diag::err_typecheck_sclass_func);
     InvalidDecl = true;
     break;
   case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
   case DeclSpec::SCS_extern:      SC = FunctionDecl::Extern; break;
-  case DeclSpec::SCS_static:      SC = FunctionDecl::Static; break;
+  case DeclSpec::SCS_static: {
+    if (DC->getLookupContext()->isFunctionOrMethod()) {
+      // C99 6.7.1p5:
+      //   The declaration of an identifier for a function that has
+      //   block scope shall have no explicit storage-class specifier
+      //   other than extern
+      // See also (C++ [dcl.stc]p4).
+      Diag(D.getDeclSpec().getStorageClassSpecLoc(), 
+           diag::err_static_block_func);
+      SC = FunctionDecl::None;
+    } else
+      SC = FunctionDecl::Static; 
+    break;
+  }
   case DeclSpec::SCS_private_extern: SC = FunctionDecl::PrivateExtern;break;
   }
 
@@ -1817,11 +1858,60 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       CheckOverloadedOperatorDeclaration(NewFD))
     NewFD->setInvalidDecl();
     
-  // Merge the decl with the existing one if appropriate. Since C functions
-  // are in a flat namespace, make sure we consider decls in outer scopes.
+  if (PrevDecl && !isDeclInScope(PrevDecl, DC, S)) {
+    // Name lookup has found a previous declaration that is not in the
+    // same scope as the new declaration. However, these two
+    // declarations might still declare the same thing (C99 6.2.2p3-4,
+    // C++ [basic.link]p6).
+
+    // FIXME: PrevDecl could be an OverloadedFunctionDecl, in which
+    // case we need to check each of the overloaded functions.
+
+    if (getLangOptions().CPlusPlus) {
+      // C++ [basic.link]p6:
+      //   If there is a visible declaration of an entity with linkage
+      //   having the same name and type, ignoring entities declared
+      //   outside the innermost enclosing namespace scope, the block
+      //   scope declaration declares that same entity and receives the
+      //   linkage of the previous declaration.
+      DeclContext *OuterContext = DC->getLookupContext();
+      if (!OuterContext->isFunctionOrMethod())
+        // This rule only applies to block-scope declarations.
+        PrevDecl = 0;
+      else {
+        DeclContext *PrevOuterContext = PrevDecl->getDeclContext();
+        if (PrevOuterContext->isRecord())
+          // We found a member function: ignore it.
+          PrevDecl = 0;
+        else {
+          // Find the innermost enclosing namespace for the new and
+          // previous declarations.
+          while (!OuterContext->isFileContext())
+            OuterContext = OuterContext->getParent();
+          while (!PrevOuterContext->isFileContext())
+            PrevOuterContext = PrevOuterContext->getParent();
+          
+          // The previous declaration is in a different namespace, so it
+          // isn't the same function.
+          if (OuterContext->getPrimaryContext() != 
+              PrevOuterContext->getPrimaryContext())
+            PrevDecl = 0;
+        }
+      }
+    }
+
+    // If the declaration we've found has no linkage, ignore it. 
+    if (VarDecl *VD = dyn_cast_or_null<VarDecl>(PrevDecl)) {
+      if (!VD->hasGlobalStorage())
+        PrevDecl = 0;
+    } else if (PrevDecl && !isa<FunctionDecl>(PrevDecl))
+      PrevDecl = 0;
+  }
+
+  // Merge or overload the declaration with an existing declaration of
+  // the same name, if appropriate.
   bool OverloadableAttrRequired = false;
-  if (PrevDecl &&
-      (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, DC, S))) {
+  if (PrevDecl) {
     // Determine whether NewFD is an overload of PrevDecl or
     // a declaration that requires merging. If it's an overload,
     // there's no more work to do here; we'll just add the new

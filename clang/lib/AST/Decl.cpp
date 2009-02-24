@@ -255,6 +255,11 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   return 0;
 }
 
+bool FunctionDecl::isMain() const {
+  return getDeclContext()->getLookupContext()->isTranslationUnit() &&
+    getIdentifier() && getIdentifier()->isStr("main");
+}
+
 /// \brief Returns a value indicating whether this function
 /// corresponds to a builtin function.
 ///

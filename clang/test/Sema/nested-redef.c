@@ -17,7 +17,7 @@ struct Z {
 
 void f2(void) {
   struct T t;
-  // FIXME: this is well-formed, but Clang breaks on it struct U u;
+  struct U u;
 }
 
 

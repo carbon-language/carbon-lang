@@ -265,7 +265,8 @@ public:
                                      bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, Decl *LastDeclarator,
-                                     Decl* PrevDecl, bool IsFunctionDefinition,
+                                     NamedDecl* PrevDecl, 
+                                     bool IsFunctionDefinition,
                                      bool& InvalidDecl, bool &Redeclaration);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
@@ -374,6 +375,7 @@ public:
                                 Decl *LastDecl);
   bool MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
+  bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
   bool MergeVarDecl(VarDecl *New, Decl *Old);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
   void CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD);

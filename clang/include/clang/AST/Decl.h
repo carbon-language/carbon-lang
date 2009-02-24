@@ -64,10 +64,7 @@ class NamedDecl : public Decl {
 
 protected:
   NamedDecl(Kind DK, DeclContext *DC, SourceLocation L, DeclarationName N)
-    : Decl(DK, DC, L), Name(N) {}
-  
-  NamedDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
-    : Decl(DK, DC, L), Name(Id) {}
+    : Decl(DK, DC, L), Name(N) { }
 
 public:
   /// getIdentifier - Get the identifier that names this declaration,
@@ -614,6 +611,10 @@ public:
   bool isDeleted() const { return IsDeleted; }
   void setDeleted() { IsDeleted = true; }
 
+  /// \brief Determines whether this is a function "main", which is
+  /// the entry point into an executable program.
+  bool isMain() const;
+
   /// getPreviousDeclaration - Return the previous declaration of this
   /// function.
   const FunctionDecl *getPreviousDeclaration() const {
@@ -658,8 +659,10 @@ public:
     return getType()->getAsFunctionType()->getResultType();
   }
   StorageClass getStorageClass() const { return StorageClass(SClass); }
+  void setStorageClass(StorageClass SC) { SClass = SC; }
+
   bool isInline() const { return IsInline; }
- 
+
   /// isOverloadedOperator - Whether this function declaration
   /// represents an C++ overloaded operator, e.g., "operator+".
   bool isOverloadedOperator() const { 

@@ -53,3 +53,8 @@ void f0_3137() {
 void f1_3137() {
   int (*fp)(void) = g0_3137;
 }
+
+void f1static() {
+  static void f2static(int); // expected-error{{function declared in block scope cannot have 'static' storage class}}
+  register void f2register(int); // expected-error{{illegal storage class on function}}
+}

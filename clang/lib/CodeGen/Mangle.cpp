@@ -70,7 +70,7 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
     else if (Context.getSourceManager().getFileCharacteristic(FD->getLocation())
           == SrcMgr::C_ExternCSystem)
       RequiresMangling = false;
-    else if (Context.getLangOptions().CPlusPlus) {
+    else if (Context.getLangOptions().CPlusPlus && !FD->isMain()) {
       // C++ requires name mangling, unless we're in a C linkage
       // specification.
       RequiresMangling = true;

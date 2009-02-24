@@ -839,6 +839,8 @@ DIAG(err_typecheck_sclass_fscope, ERROR,
      "illegal storage class on file-scoped variable")
 DIAG(err_typecheck_sclass_func, ERROR,
      "illegal storage class on function")
+DIAG(err_static_block_func, ERROR,
+     "function declared in block scope cannot have 'static' storage class")
 DIAG(err_typecheck_address_of, ERROR,
      "address of %0 requested")
 DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
