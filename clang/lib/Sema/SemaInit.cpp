@@ -56,31 +56,36 @@ static bool CheckSingleInitializer(Expr *&Init, QualType DeclType,
                                   InitType, Init, "initializing");
 }
 
-static bool CheckStringLiteralInit(StringLiteral *Str, QualType &DeclT,
-                                   Sema &S) {
+static void CheckStringInit(Expr *Str, unsigned StrLength,
+                            QualType &DeclT, Sema &S) {
   const ArrayType *AT = S.Context.getAsArrayType(DeclT);
   
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
     // C99 6.7.8p14. We have an array of character type with unknown size 
     // being initialized to a string literal.
     llvm::APSInt ConstVal(32);
-    ConstVal = Str->getByteLength() + 1;
+    ConstVal = StrLength;
     // Return a new array type (C99 6.7.8p22).
     DeclT = S.Context.getConstantArrayType(IAT->getElementType(), ConstVal, 
                                            ArrayType::Normal, 0);
-  } else {
-    const ConstantArrayType *CAT = cast<ConstantArrayType>(AT);
-    // C99 6.7.8p14. We have an array of character type with known size.
-    // FIXME: Avoid truncation for 64-bit length strings.
-    if (Str->getByteLength() > (unsigned)CAT->getSize().getZExtValue())
-      S.Diag(Str->getSourceRange().getBegin(),
-             diag::warn_initializer_string_for_char_array_too_long)
-        << Str->getSourceRange();
+    return;
   }
-  // Set type from "char *" to "constant array of char".
+  
+  const ConstantArrayType *CAT = cast<ConstantArrayType>(AT);
+  
+  // C99 6.7.8p14. We have an array of character type with known size.  However,
+  // the size may be smaller or larger than the string we are initializing.
+  // FIXME: Avoid truncation for 64-bit length strings.
+  if (StrLength-1 > (unsigned)CAT->getSize().getZExtValue())
+    S.Diag(Str->getSourceRange().getBegin(),
+           diag::warn_initializer_string_for_char_array_too_long)
+      << Str->getSourceRange();
+  
+  // Set the type to the actual size that we are initializing.  If we have
+  // something like:
+  //   char x[1] = "foo";
+  // then this will set the string literal's type to char[1].
   Str->setType(DeclT);
-  // For now, we always return false (meaning success).
-  return false;
 }
 
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
@@ -106,8 +111,10 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList) {
     // FIXME: Handle wide strings
-    if (StringLiteral *Str = IsStringInit(Init, DeclType, Context))
-      return CheckStringLiteralInit(Str, DeclType, *this);
+    if (StringLiteral *Str = IsStringInit(Init, DeclType, Context)) {
+      CheckStringInit(Str, Str->getByteLength() + 1, DeclType, *this);
+      return false;
+    }
     
     // C++ [dcl.init]p14:
     //   -- If the destination type is a (possibly cv-qualified) class
@@ -582,7 +589,7 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
     ++Index;
   } else if (StringLiteral *Str = IsStringInit(expr, ElemType,
                                                SemaRef.Context)) {
-    CheckStringLiteralInit(Str, ElemType, SemaRef);
+    CheckStringInit(Str, Str->getByteLength() + 1, ElemType, SemaRef);
     UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
     ++Index;
   } else if (ElemType->isScalarType()) {
@@ -768,7 +775,7 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
   if (Index < IList->getNumInits()) {
     if (StringLiteral *Str = IsStringInit(IList->getInit(Index), DeclType,
                                           SemaRef.Context)) {
-      CheckStringLiteralInit(Str, DeclType, SemaRef);
+      CheckStringInit(Str, Str->getByteLength() + 1, DeclType, SemaRef);
       // We place the string literal directly into the resulting
       // initializer list. This is the only place where the structure
       // of the structured initializer list doesn't match exactly,
@@ -1019,7 +1026,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
 bool 
 InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
                                       DesignatedInitExpr *DIE, 
-                                      DesignatedInitExpr::designators_iterator D,
+                                     DesignatedInitExpr::designators_iterator D,
                                       QualType &CurrentObjectType,
                                       RecordDecl::field_iterator *NextField,
                                       llvm::APSInt *NextElementIndex,
