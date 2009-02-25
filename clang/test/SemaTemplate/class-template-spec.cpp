@@ -40,3 +40,5 @@ void testme(X<int_type> *x1, X<float, int> *x2) {
   x1->foo(); // okay: refers to #1
   x2->bar(); // okay: refers to #2
 }
+
+// FIXME: diagnose specializations in a different namespace

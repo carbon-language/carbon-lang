@@ -16,6 +16,7 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TypeTraits.h"
 #include "clang/Parse/AccessSpecifier.h"
 #include "clang/Parse/Ownership.h"
@@ -134,20 +135,6 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
                                   const CXXScopeSpec *SS = 0) = 0;
 
-  /// \brief Specifies the kind of template name. Returned from
-  /// isTemplateName.
-  enum TemplateNameKind {
-    /// The name does not refer to a template.
-    TNK_Non_template = 0,
-    /// The name refers to a function template or a set of overloaded
-    /// functions that includes at least one function template.
-    TNK_Function_template,
-    /// The name refers to a class template.
-    TNK_Class_template,
-    /// The name referes to a template template parameter.
-    TNK_Template_template_parm
-  };
-
   /// \brief Determines whether the identifier II is a template name
   /// in the current scope. If so, the kind of template name is
   /// returned, and \p TemplateDecl receives the declaration. An
@@ -176,6 +163,22 @@ public:
                                                   SourceLocation CCLoc,
                                                   IdentifierInfo &II) {
     return 0;
+  }
+
+  /// ActOnCXXNestedNameSpecifier - Called during parsing of a
+  /// nested-name-specifier that involves a template-id, e.g.,
+  /// "foo::bar<int, float>::", and now we need to build a scope
+  /// specifier. \p SS is empty or the previously parsed nested-name
+  /// part ("foo::"), \p Type is the already-parsed class template
+  /// specialization (or other template-id that names a type), \p
+  /// TypeRange is the source range where the type is located, and \p
+  /// CCLoc is the location of the trailing '::'.
+  virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
+                                                  const CXXScopeSpec &SS,
+                                                  TypeTy *Type,
+                                                  SourceRange TypeRange,
+                                                  SourceLocation CCLoc) {
+    return 0; 
   }
 
   /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global

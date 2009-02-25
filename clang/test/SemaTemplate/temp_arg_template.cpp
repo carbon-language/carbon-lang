@@ -20,23 +20,18 @@ A<X> *a1;
 A<N::Z> *a2;
 A< ::N::Z> *a3;
 
-A<Y> *a4; // expected-error{{template template argument has different template parameters than its corresponding template template parameter}} \
-          // FIXME::expected-error{{expected unqualified-id}}
-A<TooMany> *a5; // expected-error{{template template argument has different template parameters than its corresponding template template parameter}} \
-          // FIXME::expected-error{{expected unqualified-id}}
-B<X> *a6; // expected-error{{template template argument has different template parameters than its corresponding template template parameter}} \
-          // FIXME::expected-error{{expected unqualified-id}}
+A<Y> *a4; // expected-error{{template template argument has different template parameters than its corresponding template template parameter}}
+A<TooMany> *a5; // expected-error{{template template argument has different template parameters than its corresponding template template parameter}}
+B<X> *a6; // expected-error{{template template argument has different template parameters than its corresponding template template parameter}}
 C<Y> *a7;
-C<Ylong> *a8; // expected-error{{template template argument has different template parameters than its corresponding template template parameter}} \
-          // FIXME::expected-error{{expected unqualified-id}}
+C<Ylong> *a8; // expected-error{{template template argument has different template parameters than its corresponding template template parameter}}
 
 template<typename T> void f(int);
 
 // FIXME: we're right to provide an error message, but it should say
 // that we need a class template. We won't get this right until name
 // lookup of 'f' returns a TemplateDecl.
-A<f> *a9; // expected-error{{template argument for template template parameter must be a template}} \
-          // expected-error{{unqualified-id}}
+A<f> *a9; // expected-error{{template argument for template template parameter must be a template}}
 
 // FIXME: The code below is ill-formed, because of the evil digraph '<:'. 
 // We should provide a much better error message than we currently do.

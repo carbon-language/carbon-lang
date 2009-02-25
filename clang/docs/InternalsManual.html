@@ -628,12 +628,10 @@ by the Action::ActOnCXXGlobalScopeSpecifier and
 Action::ActOnCXXNestedNameSpecifier callbacks.  In the case of Sema, this is a
 <tt>DeclContext*</tt>.</li>
 
-<li><b>tok::annot_template_id</b>: This annotation token represents a C++
-template-id such as "foo&lt;int, 4&gt;", which may refer to a function or type
-depending on whether foo is a function template or class template.  The
-AnnotationValue pointer is a pointer to a malloc'd TemplateIdAnnotation object.
-FIXME: I don't think the parsing logic is right for this.  Shouldn't type
-templates be turned into annot_typename??</li>
+<li><b>tok::annot_template_id</b>: This annotation token represents a
+C++ template-id such as "foo&lt;int, 4&gt;", where "foo" is the name
+of a template. The AnnotationValue pointer is a pointer to a malloc'd
+TemplateIdAnnotation object. Depending on the context, a parsed template-id that names a type might become a typename annotation token (if all we care about is the named type, e.g., because it occurs in a type specifier) or might remain a template-id token (if we want to retain more source location information or produce a new type, e.g., in a declaration of a class template specialization). template-id annotation tokens that refer to a type can be "upgraded" to typename annotation tokens by the parser.</li>
 
 </ol>
 

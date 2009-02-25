@@ -42,6 +42,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
     return true;
   }
 
+  bool HasScopeSpecifier = false;
+
   if (Tok.is(tok::coloncolon)) {
     // ::new and ::delete aren't nested-name-specifiers.
     tok::TokenKind NextKind = NextToken().getKind();
@@ -53,32 +55,132 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
     SS.setBeginLoc(CCLoc);
     SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
     SS.setEndLoc(CCLoc);
-  } else if (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)) {
-    SS.setBeginLoc(Tok.getLocation());
-  } else {
-    // Not a CXXScopeSpecifier.
-    return false;
+    HasScopeSpecifier = true;
   }
 
-  // nested-name-specifier:
-  //   type-name '::'
-  //   namespace-name '::'
-  //   nested-name-specifier identifier '::'
-  //   nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
-  while (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)) {
-    IdentifierInfo *II = Tok.getIdentifierInfo();
-    SourceLocation IdLoc = ConsumeToken();
-    assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
-    SourceLocation CCLoc = ConsumeToken();
-    if (SS.isInvalid())
+  while (true) {
+    // nested-name-specifier:
+    //   type-name '::'
+    //   namespace-name '::'
+    //   nested-name-specifier identifier '::'
+    if (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)) {
+      // We have an identifier followed by a '::'. Lookup this name
+      // as the name in a nested-name-specifier.
+      IdentifierInfo *II = Tok.getIdentifierInfo();
+      SourceLocation IdLoc = ConsumeToken();
+      assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
+      SourceLocation CCLoc = ConsumeToken();
+      
+      if (!HasScopeSpecifier) {
+        SS.setBeginLoc(IdLoc);
+        HasScopeSpecifier = true;
+      }
+      
+      if (SS.isInvalid())
+        continue;
+      
+      SS.setScopeRep(
+        Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, *II));
+      SS.setEndLoc(CCLoc);
       continue;
+    }
 
-    SS.setScopeRep(
-         Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, *II));
-    SS.setEndLoc(CCLoc);
+    // nested-name-specifier:
+    //   type-name '::'
+    //   nested-name-specifier 'template'[opt] simple-template-id '::'
+    if ((Tok.is(tok::identifier) && NextToken().is(tok::less)) ||
+        Tok.is(tok::kw_template)) {
+      // Parse the optional 'template' keyword, then make sure we have
+      // 'identifier <' after it.
+      SourceLocation TemplateKWLoc;
+      if (Tok.is(tok::kw_template)) {
+        TemplateKWLoc = ConsumeToken();
+        
+        if (Tok.isNot(tok::identifier)) {
+          Diag(Tok.getLocation(), 
+               diag::err_id_after_template_in_nested_name_spec)
+            << SourceRange(TemplateKWLoc);
+          break;
+        }
+
+        if (NextToken().isNot(tok::less)) {
+          Diag(NextToken().getLocation(),
+               diag::err_less_after_template_name_in_nested_name_spec)
+            << Tok.getIdentifierInfo()->getName()
+            << SourceRange(TemplateKWLoc, Tok.getLocation());
+          break;
+        }
+      }
+      else {
+        // FIXME: If the nested-name-specifier thus far is dependent,
+        // we need to break out of here, because this '<' is taken as
+        // an operator and not as part of a simple-template-id.
+      }
+
+      DeclTy *Template = 0;
+      TemplateNameKind TNK = TNK_Non_template;
+      // FIXME: If the nested-name-specifier thus far is dependent,
+      // set TNK = TNK_Dependent_template_name and skip the
+      // "isTemplateName" check.
+      TNK = Actions.isTemplateName(*Tok.getIdentifierInfo(),
+                                   CurScope, Template, &SS);
+      if (TNK) {
+        // We have found a template name, so annotate this this token
+        // with a template-id annotation. We do not permit the
+        // template-id to be translated into a type annotation,
+        // because some clients (e.g., the parsing of class template
+        // specializations) still want to see the original template-id
+        // token.
+        AnnotateTemplateIdToken(Template, TNK, &SS, TemplateKWLoc, false);
+        continue;
+      }
+    }
+
+    if (Tok.is(tok::annot_template_id) && NextToken().is(tok::coloncolon)) {
+      // We have 
+      //
+      //   simple-template-id '::'
+      //
+      // So we need to check whether the simple-template-id is of the
+      // right kind (it should name a type), and then convert it into
+      // a type within the nested-name-specifier.
+      TemplateIdAnnotation *TemplateId 
+        = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+
+      if (TemplateId->Kind == TNK_Class_template) {
+        if (AnnotateTemplateIdTokenAsType(&SS))
+          SS.setScopeRep(0);
+
+        assert(Tok.is(tok::annot_typename) && 
+               "AnnotateTemplateIdTokenAsType isn't working");
+
+        Token TypeToken = Tok;
+        ConsumeToken();
+        assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
+        SourceLocation CCLoc = ConsumeToken();
+        
+        if (!HasScopeSpecifier) {
+          SS.setBeginLoc(TypeToken.getLocation());
+          HasScopeSpecifier = true;
+        }
+
+        SS.setScopeRep(
+          Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, 
+                                              TypeToken.getAnnotationValue(),
+                                              TypeToken.getAnnotationRange(),
+                                              CCLoc));
+        SS.setEndLoc(CCLoc);
+        continue;
+      } else
+        assert(false && "FIXME: Only class template names supported here");
+    }
+
+    // We don't have any tokens that form the beginning of a
+    // nested-name-specifier, so we're done.
+    break;
   }
-
-  return true;
+    
+  return HasScopeSpecifier;
 }
 
 /// ParseCXXIdExpression - Handle id-expression.

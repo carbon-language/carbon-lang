@@ -778,31 +778,41 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
       // them with the annotation token.
       PP.AnnotateCachedTokens(Tok);
       return true;
-    } else if (!getLang().CPlusPlus) {
+    } 
+
+    if (!getLang().CPlusPlus) {
       // If we're in C, we can't have :: tokens at all (the lexer won't return
       // them).  If the identifier is not a type, then it can't be scope either,
       // just early exit. 
       return false;
     }
     
-    // If this is a template-id, annotate the template-id token.
+    // If this is a template-id, annotate with a template-id or type token.
     if (NextToken().is(tok::less)) {
       DeclTy *Template;
       if (TemplateNameKind TNK 
             = Actions.isTemplateName(*Tok.getIdentifierInfo(),
-                                     CurScope, Template, &SS)) {
+                                     CurScope, Template, &SS))
         AnnotateTemplateIdToken(Template, TNK, &SS);
-        return true;
-      }
     }
 
-    // We either have an identifier that is not a type name or we have
-    // just created a template-id that might be a type name. Both
-    // cases will be handled below.
+    // The current token, which is either an identifier or a
+    // template-id, is not part of the annotation. Fall through to
+    // push that token back into the stream and complete the C++ scope
+    // specifier annotation.
   }
 
-  // FIXME: check for a template-id token here, and look it up if it
-  // names a type.
+  if (Tok.is(tok::annot_template_id)) {
+    TemplateIdAnnotation *TemplateId 
+      = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    if (TemplateId->Kind == TNK_Class_template) {
+      // A template-id that refers to a type was parsed into a
+      // template-id annotation in a context where we weren't allowed
+      // to produce a type annotation token. Update the template-id
+      // annotation token to a type annotation token now.
+      return !AnnotateTemplateIdTokenAsType(&SS);
+    }
+  }
 
   if (SS.isEmpty())
     return false;
@@ -825,8 +835,8 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
 }
 
 /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
-/// annotates C++ scope specifiers.  This returns true if the token was
-/// annotated.
+/// annotates C++ scope specifiers and template-ids.  This returns
+/// true if the token was annotated.
 /// 
 /// Note that this routine emits an error if you call it with ::new or ::delete
 /// as the current tokens, so only call it in contexts where these are invalid.
@@ -838,7 +848,7 @@ bool Parser::TryAnnotateCXXScopeToken() {
 
   CXXScopeSpec SS;
   if (!ParseOptionalCXXScopeSpecifier(SS))
-    return false;
+    return Tok.is(tok::annot_template_id);
 
   // Push the current token back into the token stream (or revert it if it is
   // cached) and use an annotation scope token for current token.

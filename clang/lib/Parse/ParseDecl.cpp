@@ -558,21 +558,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(), 
                                             Tok.getLocation(), CurScope);
 
-      if (TypeRep == 0 && getLang().CPlusPlus && NextToken().is(tok::less)) {
-        // If we have a template name, annotate the token and try again.
-        DeclTy *Template = 0;
-        if (TemplateNameKind TNK =
-              Actions.isTemplateName(*Tok.getIdentifierInfo(), CurScope,
-                                     Template)) {
-          AnnotateTemplateIdToken(Template, TNK, 0);
-          continue;
-        }
-      }
-
       if (TypeRep == 0)
         goto DoneWithDeclSpec;
-      
-
 
       // C++: If the identifier is actually the name of the class type
       // being defined and the next token is a '(', then this is a
@@ -610,6 +597,25 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If a type specifier follows, it will be diagnosed elsewhere.
       continue;
     }
+
+      // type-name
+    case tok::annot_template_id: {
+      TemplateIdAnnotation *TemplateId 
+        = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+      if (TemplateId->Kind != TNK_Class_template) {
+        // This template-id does not refer to a type name, so we're
+        // done with the type-specifiers.
+        goto DoneWithDeclSpec;
+      }
+
+      // Turn the template-id annotation token into a type annotation
+      // token, then try again to parse it as a type-specifier.
+      if (AnnotateTemplateIdTokenAsType())
+        DS.SetTypeSpecError();
+
+      continue;
+    }
+
     // GNU attributes support.
     case tok::kw___attribute:
       DS.AddAttributes(ParseAttributes());
@@ -1749,7 +1755,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 ///         operator-function-id
 ///         conversion-function-id  [TODO]
 ///          '~' class-name         
-///         template-id             [TODO]
+///         template-id
 ///
 void Parser::ParseDirectDeclarator(Declarator &D) {
   DeclaratorScopeObj DeclScopeObj(*this, D.getCXXScopeSpec());
@@ -1768,27 +1774,30 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       if (Tok.is(tok::identifier)) {
         assert(Tok.getIdentifierInfo() && "Not an identifier?");
 
-        // If this identifier is followed by a '<', we may have a template-id.
-        DeclTy *Template;
-        Action::TemplateNameKind TNK;
-        if (getLang().CPlusPlus && NextToken().is(tok::less) &&
-            (TNK = Actions.isTemplateName(*Tok.getIdentifierInfo(), 
-                                          CurScope, Template))) {
-          IdentifierInfo *II = Tok.getIdentifierInfo();
-          AnnotateTemplateIdToken(Template, TNK, 0);
-          // FIXME: Set the declarator to a template-id. How? I don't
-          // know... for now, just use the identifier.
-          D.SetIdentifier(II, Tok.getLocation());
-        }
         // If this identifier is the name of the current class, it's a
         // constructor name. 
-        else if (Actions.isCurrentClassName(*Tok.getIdentifierInfo(),CurScope)){
+        if (Actions.isCurrentClassName(*Tok.getIdentifierInfo(),CurScope)){
           D.setConstructor(Actions.getTypeName(*Tok.getIdentifierInfo(),
                                                Tok.getLocation(), CurScope),
                            Tok.getLocation());
         // This is a normal identifier.
         } else
           D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+        ConsumeToken();
+        goto PastIdentifier;
+      } else if (Tok.is(tok::annot_template_id)) {
+        TemplateIdAnnotation *TemplateId 
+          = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+
+        // FIXME: Could this template-id name a constructor?
+
+        // FIXME: This is an egregious hack, where we silently ignore
+        // the specialization (which should be a function template
+        // specialization name) and use the name instead. This hack
+        // will go away when we have support for function
+        // specializations.
+        D.SetIdentifier(TemplateId->Name, Tok.getLocation());
+        TemplateId->Destroy();
         ConsumeToken();
         goto PastIdentifier;
       } else if (Tok.is(tok::kw_operator)) {

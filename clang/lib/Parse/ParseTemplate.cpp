@@ -444,16 +444,49 @@ Parser::ParseTemplateIdAfterTemplateName(DeclTy *Template,
   return false;
 }
                                               
-/// AnnotateTemplateIdToken - The current token is an identifier that
-/// refers to the template declaration Template, and is followed by a
-/// '<'. Turn this template-id into a template-id annotation token.
+/// \brief Replace the tokens that form a simple-template-id with an
+/// annotation token containing the complete template-id.
+///
+/// The first token in the stream must be the name of a template that
+/// is followed by a '<'. This routine will parse the complete
+/// simple-template-id and replace the tokens with a single annotation
+/// token with one of two different kinds: if the template-id names a
+/// type (and \p AllowTypeAnnotation is true), the annotation token is
+/// a type annotation that includes the optional nested-name-specifier
+/// (\p SS). Otherwise, the annotation token is a template-id
+/// annotation that does not include the optional
+/// nested-name-specifier.
+///
+/// \param Template  the declaration of the template named by the first
+/// token (an identifier), as returned from \c Action::isTemplateName().
+///
+/// \param TemplateNameKind the kind of template that \p Template
+/// refers to, as returned from \c Action::isTemplateName().
+///
+/// \param SS if non-NULL, the nested-name-specifier that precedes
+/// this template name.
+///
+/// \param TemplateKWLoc if valid, specifies that this template-id
+/// annotation was preceded by the 'template' keyword and gives the
+/// location of that keyword. If invalid (the default), then this
+/// template-id was not preceded by a 'template' keyword.
+///
+/// \param AllowTypeAnnotation if true (the default), then a
+/// simple-template-id that refers to a class template, template
+/// template parameter, or other template that produces a type will be
+/// replaced with a type annotation token. Otherwise, the
+/// simple-template-id is always replaced with a template-id
+/// annotation token.
 void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
-                                     const CXXScopeSpec *SS) {
+                                     const CXXScopeSpec *SS, 
+                                     SourceLocation TemplateKWLoc,
+                                     bool AllowTypeAnnotation) {
   assert(getLang().CPlusPlus && "Can only annotate template-ids in C++");
   assert(Template && Tok.is(tok::identifier) && NextToken().is(tok::less) &&
          "Parser isn't at the beginning of a template-id");
 
   // Consume the template-name.
+  IdentifierInfo *Name = Tok.getIdentifierInfo();
   SourceLocation TemplateNameLoc = ConsumeToken();
 
   // Parse the enclosed template argument list.
@@ -476,7 +509,7 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
     return; 
 
   // Build the annotation token.
-  if (TNK == Action::TNK_Class_template) {
+  if (TNK == TNK_Class_template && AllowTypeAnnotation) {
     Action::TypeResult Type 
       = Actions.ActOnClassTemplateId(Template, TemplateNameLoc,
                                      LAngleLoc, TemplateArgsPtr,
@@ -487,32 +520,94 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
 
     Tok.setKind(tok::annot_typename);
     Tok.setAnnotationValue(Type.get());
+    if (SS && SS->isNotEmpty())
+      Tok.setLocation(SS->getBeginLoc());
+    else if (TemplateKWLoc.isValid())
+      Tok.setLocation(TemplateKWLoc);
+    else 
+      Tok.setLocation(TemplateNameLoc);
   } else {
     // This is a function template. We'll be building a template-id
     // annotation token.
-    Tok.setKind(tok::annot_template_id);    
+    Tok.setKind(tok::annot_template_id);
     TemplateIdAnnotation *TemplateId 
-      = (TemplateIdAnnotation *)malloc(sizeof(TemplateIdAnnotation) + 
-                                       sizeof(void*) * TemplateArgs.size());
+      = TemplateIdAnnotation::Allocate(TemplateArgs.size());
     TemplateId->TemplateNameLoc = TemplateNameLoc;
+    TemplateId->Name = Name;
     TemplateId->Template = Template;
+    TemplateId->Kind = TNK;
     TemplateId->LAngleLoc = LAngleLoc;
-    TemplateId->NumArgs = TemplateArgs.size();
-    void **Args = (void**)(TemplateId + 1);
-    for (unsigned Arg = 0, ArgEnd = TemplateArgs.size(); Arg != ArgEnd; ++Arg)
+    TemplateId->RAngleLoc = RAngleLoc;
+    void **Args = TemplateId->getTemplateArgs();
+    bool *ArgIsType = TemplateId->getTemplateArgIsType();
+    SourceLocation *ArgLocs = TemplateId->getTemplateArgLocations();
+    for (unsigned Arg = 0, ArgEnd = TemplateArgs.size(); Arg != ArgEnd; ++Arg) {
       Args[Arg] = TemplateArgs[Arg];
+      ArgIsType[Arg] = TemplateArgIsType[Arg];
+      ArgLocs[Arg] = TemplateArgLocations[Arg];
+    }
     Tok.setAnnotationValue(TemplateId);
+    if (TemplateKWLoc.isValid())
+      Tok.setLocation(TemplateKWLoc);
+    else
+      Tok.setLocation(TemplateNameLoc);
+
+    TemplateArgsPtr.release();
   }
 
   // Common fields for the annotation token
   Tok.setAnnotationEndLoc(RAngleLoc);
-  Tok.setLocation(TemplateNameLoc);
-  if (SS && SS->isNotEmpty())
-    Tok.setLocation(SS->getBeginLoc());
 
   // In case the tokens were cached, have Preprocessor replace them with the
   // annotation token.
   PP.AnnotateCachedTokens(Tok);
+}
+
+/// \brief Replaces a template-id annotation token with a type
+/// annotation token.
+///
+/// \returns true if there was an error, false otherwise.
+bool Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
+  assert(Tok.is(tok::annot_template_id) && "Requires template-id tokens");
+
+  TemplateIdAnnotation *TemplateId 
+    = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+  assert(TemplateId->Kind == TNK_Class_template &&
+         "Only works for class templates");
+  
+  ASTTemplateArgsPtr TemplateArgsPtr(Actions, 
+                                     TemplateId->getTemplateArgs(),
+                                     TemplateId->getTemplateArgIsType(),
+                                     TemplateId->NumArgs);
+
+  Action::TypeResult Type 
+    = Actions.ActOnClassTemplateId(TemplateId->Template, 
+                                   TemplateId->TemplateNameLoc,
+                                   TemplateId->LAngleLoc, 
+                                   TemplateArgsPtr,
+                                   TemplateId->getTemplateArgLocations(),
+                                   TemplateId->RAngleLoc, SS);
+  if (Type.isInvalid()) {
+    // FIXME: better recovery?
+    ConsumeToken();
+    TemplateId->Destroy();
+    return true;
+  }
+
+  // Create the new "type" annotation token.
+  Tok.setKind(tok::annot_typename);
+  Tok.setAnnotationValue(Type.get());
+  if (SS && SS->isNotEmpty()) // it was a C++ qualified type name.
+    Tok.setLocation(SS->getBeginLoc());
+
+  // We might be backtracking, in which case we need to replace the
+  // template-id annotation token with the type annotation within the
+  // set of cached tokens. That way, we won't try to form the same
+  // class template specialization again.
+  PP.ReplaceLastTokenWithAnnotation(Tok);
+  TemplateId->Destroy();
+
+  return false;
 }
 
 /// ParseTemplateArgument - Parse a C++ template argument (C++ [temp.names]).

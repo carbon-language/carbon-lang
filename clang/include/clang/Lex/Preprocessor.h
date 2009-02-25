@@ -431,7 +431,21 @@ public:
     if (CachedLexPos != 0 && isBacktrackEnabled())
       AnnotatePreviousCachedTokens(Tok);
   }
-  
+
+  /// \brief Replace the last token with an annotation token. 
+  ///
+  /// Like AnnotateCachedTokens(), this routine replaces an
+  /// already-parsed (and resolved) token with an annotation
+  /// token. However, this routine only replaces the last token with
+  /// the annotation token; it does not affect any other cached
+  /// tokens. This function has no effect if backtracking is not
+  /// enabled.
+  void ReplaceLastTokenWithAnnotation(const Token &Tok) {
+    assert(Tok.isAnnotation() && "Expected annotation token");
+    if (CachedLexPos != 0 && isBacktrackEnabled())
+      CachedTokens[CachedLexPos-1] = Tok;
+  }
+
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.

@@ -993,7 +993,6 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 14: Templates [temp]
   typedef llvm::SmallVector<DeclTy *, 4> TemplateParameterList;
-  typedef Action::TemplateNameKind TemplateNameKind;
 
   // C++ 14.1: Template Parameters [temp.param]
   DeclTy *ParseTemplateDeclarationOrSpecialization(unsigned Context);
@@ -1023,7 +1022,10 @@ private:
                                         SourceLocation &RAngleLoc);
 
   void AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
-                               const CXXScopeSpec *SS = 0);
+                               const CXXScopeSpec *SS,
+                               SourceLocation TemplateKWLoc = SourceLocation(),
+                               bool AllowTypeAnnotation = true);
+  bool AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS = 0);
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
                                  TemplateArgIsTypeList &TemplateArgIsType,
                                  TemplateArgLocationList &TemplateArgLocations);

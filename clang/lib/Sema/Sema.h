@@ -1338,6 +1338,20 @@ public:
                                                   SourceLocation CCLoc,
                                                   IdentifierInfo &II);
 
+  /// ActOnCXXNestedNameSpecifier - Called during parsing of a
+  /// nested-name-specifier that involves a template-id, e.g.,
+  /// "foo::bar<int, float>::", and now we need to build a scope
+  /// specifier. \p SS is empty or the previously parsed nested-name
+  /// part ("foo::"), \p Type is the already-parsed class template
+  /// specialization (or other template-id that names a type), \p
+  /// TypeRange is the source range where the type is located, and \p
+  /// CCLoc is the location of the trailing '::'.
+  virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
+                                                  const CXXScopeSpec &SS,
+                                                  TypeTy *Type,
+                                                  SourceRange TypeRange,
+                                                  SourceLocation CCLoc);
+
   /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
   /// scope or nested-name-specifier) is parsed, part of a declarator-id.
   /// After this method is called, according to [C++ 3.4.3p3], names should be

@@ -5,8 +5,7 @@ template<typename T, int N = 2> struct X; // expected-note{{template is declared
 X<int, 1> *x1;
 X<int> *x2;
 
-X<> *x3; // expected-error{{too few template arguments for class template 'X'}} \
-        // FIXME: expected-error{{expected unqualified-id}}
+X<> *x3; // expected-error{{too few template arguments for class template 'X'}}
 
 template<typename U = float, int M> struct X;
 

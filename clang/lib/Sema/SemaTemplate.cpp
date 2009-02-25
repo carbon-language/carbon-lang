@@ -26,9 +26,9 @@ using namespace clang;
 /// declaration if II names a template. An optional CXXScope can be
 /// passed to indicate the C++ scope in which the identifier will be
 /// found. 
-Sema::TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
-                                            DeclTy *&Template,
-                                            const CXXScopeSpec *SS) {
+TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
+                                      DeclTy *&Template,
+                                      const CXXScopeSpec *SS) {
   NamedDecl *IIDecl = LookupParsedName(S, SS, &II, LookupOrdinaryName);
 
   if (IIDecl) {

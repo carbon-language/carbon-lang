@@ -74,6 +74,17 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   return 0;
 }
 
+Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
+                                                    const CXXScopeSpec &SS,
+                                                    TypeTy *Ty,
+                                                    SourceRange TypeRange,
+                                                    SourceLocation CCLoc) {
+  QualType Type = QualType::getFromOpaquePtr(Ty);
+  assert(Type->isRecordType() && 
+         "Types in a nested-name-specifier always refer to a record type");
+  return cast<DeclContext>(Type->getAsRecordType()->getDecl());
+}
+
 /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
 /// scope or nested-name-specifier) is parsed, part of a declarator-id.
 /// After this method is called, according to [C++ 3.4.3p3], names should be

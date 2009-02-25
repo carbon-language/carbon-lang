@@ -162,7 +162,7 @@ ClassTemplateSpecializationDecl(DeclContext *DC, SourceLocation L,
     NumTemplateArgs(NumTemplateArgs), SpecializationKind(TSK_Undeclared) {
   TemplateArgument *Arg = reinterpret_cast<TemplateArgument *>(this + 1);
   for (unsigned ArgIdx = 0; ArgIdx < NumTemplateArgs; ++ArgIdx, ++Arg)
-    *Arg = TemplateArgs[ArgIdx];
+    new (Arg) TemplateArgument(TemplateArgs[ArgIdx]);
 }
                   
 ClassTemplateSpecializationDecl *

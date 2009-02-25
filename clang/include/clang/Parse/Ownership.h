@@ -538,7 +538,7 @@ namespace clang
     void **Args;
     bool *ArgIsType;
     mutable unsigned Count;
-
+    
 #if !defined(DISABLE_SMART_POINTERS)
     void destroy() {
       if (!Count)

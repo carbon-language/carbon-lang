@@ -274,6 +274,10 @@ DIAG(err_expected_class_before, ERROR,
       "expected 'class' before '%0'")
 DIAG(err_template_spec_syntax_non_template, ERROR,
      "identifier followed by '<' indicates a class template specialization but %0 %select{does not refer to a template|refers to a function template|<unused>|refers to a template template parameter}1")
+DIAG(err_id_after_template_in_nested_name_spec, ERROR,
+     "expected template name after 'template' keyword in nested name specifier")
+DIAG(err_less_after_template_name_in_nested_name_spec, ERROR,
+     "expected '<' after 'template %0' in nested name specifier")
 
 // Language specific pragmas
 

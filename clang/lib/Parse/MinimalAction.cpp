@@ -95,7 +95,7 @@ bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *,
   return false;
 }
 
-Action::TemplateNameKind 
+TemplateNameKind 
 MinimalAction::isTemplateName(IdentifierInfo &II, Scope *S,
                               DeclTy *&TemplateDecl,
                               const CXXScopeSpec *SS) {
