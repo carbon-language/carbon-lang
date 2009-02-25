@@ -556,6 +556,12 @@ href="http://sourceware.org/bugzilla/show_bug.cgi?id=3111">a bug</a> which
 causes huge link times (minutes instead of seconds) when building LLVM.  We
 recommend upgrading to a newer version (2.17.50.0.4 or later).</p>
 
+<p><b>GNU Binutils 2.19.1 Gold</b>: Gold contains
+<a href="http://sourceware.org/bugzilla/show_bug.cgi?id=9836">a bug</a>
+which causes intermittent failures when building LLVM with position independent
+code.  The symptom is an error about cyclic dependencies.  We recommend not
+using Gold to build LLVM until this bug is resolved.</p>
+
 </div>
 
 
