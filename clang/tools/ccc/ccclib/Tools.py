@@ -227,7 +227,8 @@ class Clang_CompileTool(Tool):
             cmd_args.extend(['-warn-dead-stores',
                              '-checker-cfref',
                              '-warn-objc-methodsigs',
-                             '-warn-objc-missing-dealloc',
+                             # Do not enable the missing -dealloc check.
+                             # '-warn-objc-missing-dealloc',
                              '-warn-objc-unused-ivars'])
             
             cmd_args.append('-analyzer-output=plist')
