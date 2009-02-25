@@ -52,8 +52,11 @@ template<> struct ::A<double>;
 namespace N {
   template<typename T> struct B; // expected-note 2{{template is declared here}}
 
+  template<> struct ::N::B<char>; // okay
   template<> struct ::N::B<short>; // okay
   template<> struct ::N::B<int>; // okay
+
+  int f(int);
 }
 
 template<> struct N::B<int> { }; // okay
@@ -65,3 +68,7 @@ namespace M {
 
   template<> struct ::A<long double>; // expected-error{{class template specialization of 'A' must occur in the global scope}}
 }
+
+template<> struct N::B<char> { 
+  int testf(int x) { return f(x); }
+};

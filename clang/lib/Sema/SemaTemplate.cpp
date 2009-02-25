@@ -687,8 +687,9 @@ Sema::ActOnClassTemplateId(DeclTy *TemplateD, SourceLocation TemplateLoc,
                                                 ConvertedTemplateArgs.size(),
                                                    0);
     ClassTemplate->getSpecializations().InsertNode(Decl, InsertPos);
+    Decl->setLexicalDeclContext(CurContext);
   }
-
+  
   // Build the fully-sugared type for this class template
   // specialization, which refers back to the class template
   // specialization we created or found.
@@ -1611,6 +1612,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
 
   // Check the validity of the template headers that introduce this
   // template.
+  // FIXME: Once we have member templates, we'll need to check
+  // C++ [temp.expl.spec]p17-18, where we could have multiple levels of
+  // template<> headers.
   if (TemplateParameterLists.size() == 0) {
     // FIXME: It would be very nifty if we could introduce some kind
     // of "code insertion hint" that could show the code that needs to
@@ -1684,8 +1688,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     // arguments was referenced but not declared, reuse that
     // declaration node as our own, updating its source location to
     // reflect our new declaration.
-    // FIXME: update source locations
     Specialization = PrevDecl;
+    Specialization->setLocation(TemplateNameLoc);
     PrevDecl = 0;
   } else {
     // Create a new class template specialization declaration node for
@@ -1725,11 +1729,17 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     }
   }
 
-  // FIXME: Do we want to create a nicely sugared type to use as the
-  // type for this explicit specialization?
+  // FIXME: We want to create a nicely sugared type to use as the
+  // type of this explicit specialization.
 
-  // Set the lexical context. If the tag has a C++ scope specifier,
-  // the lexical context will be different from the semantic context.
+  // C++ [temp.expl.spec]p9:
+  //   A template explicit specialization is in the scope of the
+  //   namespace in which the template was defined.
+  //
+  // We actually implement this paragraph where we set the semantic
+  // context (in the creation of the ClassTemplateSpecializationDecl),
+  // but we also maintain the lexical context where the actual
+  // definition occurs.
   Specialization->setLexicalDeclContext(CurContext);
   
   // We may be starting the definition of this specialization.
