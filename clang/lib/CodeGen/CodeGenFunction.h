@@ -746,17 +746,25 @@ public:
   /// LoadComplexFromAddr - Load a complex number from the specified address.
   ComplexPairTy LoadComplexFromAddr(llvm::Value *SrcAddr, bool SrcIsVolatile);
 
+  /// CreateStaticBlockVarDecl - Create a zero-initialized LLVM global
+  /// for a static block var decl.
+  llvm::GlobalVariable * CreateStaticBlockVarDecl(const VarDecl &D,
+                                                  const char *Separator,
+                                                  llvm::GlobalValue::LinkageTypes
+                                                  Linkage);
+
   /// GenerateStaticBlockVarDecl - Return the the static declaration of local
   /// variable.
-  llvm::GlobalValue * GenerateStaticBlockVarDecl(const VarDecl &D,
-                                                 bool NoInit,
-                                                 const char *Separator,
-                                                 llvm::GlobalValue
-                                                 ::LinkageTypes Linkage);
+  llvm::GlobalVariable * GenerateStaticBlockVarDecl(const VarDecl &D,
+                                                    bool NoInit,
+                                                    const char *Separator,
+                                                    llvm::GlobalValue
+                                                    ::LinkageTypes Linkage);
 
-  /// GenerateStaticCXXBlockVarDecl - Return the static declaration of a local
-  /// variable. Performs initialization of the variable if necessary.
-  llvm::GlobalValue *GenerateStaticCXXBlockVarDecl(const VarDecl &D);
+  /// GenerateStaticCXXBlockVarDecl - Create the initializer for a C++
+  /// runtime initialized static block var decl.
+  void GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
+                                         llvm::GlobalVariable *GV);
 
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers

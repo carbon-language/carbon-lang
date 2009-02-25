@@ -74,35 +74,13 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
   }
 }
 
-llvm::GlobalValue *
-CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
-                                            bool NoInit,
-                                            const char *Separator,
-                                            llvm::GlobalValue
-					    	::LinkageTypes Linkage) {
+llvm::GlobalVariable *
+CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
+                                          const char *Separator,
+                                          llvm::GlobalValue::LinkageTypes
+                                          Linkage) {
   QualType Ty = D.getType();
   assert(Ty->isConstantSizeType() && "VLAs can't be static");
-  
-  const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
-  llvm::Constant *Init = 0;
-  if ((D.getInit() == 0) || NoInit) {
-    Init = llvm::Constant::getNullValue(LTy);
-  } else {
-    Init = CGM.EmitConstantExpr(D.getInit(), this);
-
-    // If constant emission failed, then this should be a C++ static
-    // initializer.
-    if (!Init) {
-      if (!getContext().getLangOptions().CPlusPlus) {
-        CGM.ErrorUnsupported(D.getInit(), "constant l-value expression");
-        Init = llvm::Constant::getNullValue(LTy);
-      } else {
-        return GenerateStaticCXXBlockVarDecl(D);
-      }
-    }
-  }
-
-  assert(Init && "Unable to create initialiser for static decl");
 
   std::string ContextName;
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl))
@@ -113,11 +91,61 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
   else
     assert(0 && "Unknown context for block var decl");
 
-  llvm::GlobalValue *GV =
-    new llvm::GlobalVariable(Init->getType(), Ty.isConstant(getContext()),
-                             Linkage,
-                             Init, ContextName + Separator +D.getNameAsString(),
-                             &CGM.getModule(), 0, Ty.getAddressSpace());
+  const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
+  return new llvm::GlobalVariable(LTy, Ty.isConstant(getContext()), Linkage,
+                                  llvm::Constant::getNullValue(LTy), 
+                                  ContextName + Separator + D.getNameAsString(),
+                                  &CGM.getModule(), 0, Ty.getAddressSpace());
+}
+
+llvm::GlobalVariable *
+CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
+                                            bool NoInit,
+                                            const char *Separator,
+                                            llvm::GlobalValue
+					    	::LinkageTypes Linkage) {
+  llvm::GlobalVariable *GV = CreateStaticBlockVarDecl(D, Separator, Linkage);
+
+  if (D.getInit() && !NoInit) {
+    llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), this);
+
+    // If constant emission failed, then this should be a C++ static
+    // initializer.
+    if (!Init) {
+      if (!getContext().getLangOptions().CPlusPlus)
+        CGM.ErrorUnsupported(D.getInit(), "constant l-value expression");
+      else
+        GenerateStaticCXXBlockVarDeclInit(D, GV);
+    } else {
+      // The initializer may differ in type from the global. Rewrite
+      // the global to match the initializer!?
+      //
+      // FIXME: This matches what we have been doing historically, but
+      // it seems bad. Shouldn't the init expression have the right
+      // type?
+      if (GV->getType() != Init->getType()) {
+        llvm::GlobalVariable *OldGV = GV;
+        
+        GV = new llvm::GlobalVariable(Init->getType(), OldGV->isConstant(),
+                                      OldGV->getLinkage(), Init, "",
+                                      &CGM.getModule(), 0, 
+                                      D.getType().getAddressSpace());
+
+        // Steal the name of the old global
+        GV->takeName(OldGV);
+
+        // Replace all uses of the old global with the new global
+        llvm::Constant *NewPtrForOldDecl = 
+          llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
+        OldGV->replaceAllUsesWith(NewPtrForOldDecl);
+
+        // Erase the old global, since it is no longer used.
+        OldGV->eraseFromParent();
+      } 
+
+      GV->setInitializer(Init);
+    }
+  }
 
   return GV;
 }

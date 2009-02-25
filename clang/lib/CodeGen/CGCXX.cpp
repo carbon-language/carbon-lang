@@ -83,28 +83,24 @@ static std::string mangleGuardVariable(const VarDecl& D)
   return S;
 }
 
-llvm::GlobalValue *
-CodeGenFunction::GenerateStaticCXXBlockVarDecl(const VarDecl &D)
-{
+void 
+CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D, 
+                                                   llvm::GlobalVariable *GV) {
+  // FIXME: This should use __cxa_guard_{acquire,release}?
+
   assert(!getContext().getLangOptions().ThreadsafeStatics &&
          "thread safe statics are currently not supported!");
-  const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
 
-  // FIXME: If the function is inline, the linkage should be weak.
-  llvm::GlobalValue::LinkageTypes linkage = llvm::GlobalValue::InternalLinkage;
-  
   // Create the guard variable.
   llvm::GlobalValue *GuardV = 
     new llvm::GlobalVariable(llvm::Type::Int64Ty, false,
-                             linkage,
+                             GV->getLinkage(),
                              llvm::Constant::getNullValue(llvm::Type::Int64Ty),
                              mangleGuardVariable(D),
                              &CGM.getModule());
   
-  // FIXME: Address space.
-  const llvm::Type *PtrTy = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
-
   // Load the first byte of the guard variable.
+  const llvm::Type *PtrTy = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
   llvm::Value *V = Builder.CreateLoad(Builder.CreateBitCast(GuardV, PtrTy), 
                                       "tmp");
   
@@ -120,13 +116,8 @@ CodeGenFunction::GenerateStaticCXXBlockVarDecl(const VarDecl &D)
                          
   EmitBlock(InitBlock);
 
-  llvm::GlobalValue *GV =
-    new llvm::GlobalVariable(LTy, false,
-                             llvm::GlobalValue::InternalLinkage,
-                             llvm::Constant::getNullValue(LTy), 
-                             mangleVarDecl(D),
-                             &CGM.getModule(), 0, 
-                             D.getType().getAddressSpace());
+  // Patch the name. FIXME: We shouldn't need to do this.
+  GV->setName(mangleVarDecl(D));
     
   const Expr *Init = D.getInit();
   if (!hasAggregateLLVMType(Init->getType())) {
@@ -142,6 +133,5 @@ CodeGenFunction::GenerateStaticCXXBlockVarDecl(const VarDecl &D)
                       Builder.CreateBitCast(GuardV, PtrTy));
                       
   EmitBlock(EndBlock);
-  return GV;
 }
 

@@ -53,14 +53,15 @@ llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
   return BB = createBasicBlock(S->getName());
 }
 
-llvm::Constant *
-CodeGenFunction::GetAddrOfStaticLocalVar(const VarDecl *BVD) {
-  return cast<llvm::Constant>(LocalDeclMap[BVD]);
+llvm::Value *CodeGenFunction::GetAddrOfLocalVar(const VarDecl *VD) {
+  llvm::Value *Res = LocalDeclMap[VD];
+  assert(Res && "Invalid argument to GetAddrOfLocalVar(), no decl!");
+  return Res;
 }
 
-llvm::Value *CodeGenFunction::GetAddrOfLocalVar(const VarDecl *VD)
-{
-  return LocalDeclMap[VD];
+llvm::Constant *
+CodeGenFunction::GetAddrOfStaticLocalVar(const VarDecl *BVD) {
+  return cast<llvm::Constant>(GetAddrOfLocalVar(BVD));
 }
 
 const llvm::Type *CodeGenFunction::ConvertTypeForMem(QualType T) {
