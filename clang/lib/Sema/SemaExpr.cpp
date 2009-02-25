@@ -2696,7 +2696,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
   if (isa<BlockPointerType>(lhsType)) {
     if (rhsType->isIntegerType())
-      return IntToPointer;
+      return IntToBlockPointer;
 
     // Treat block pointers as objects.
     if (getLangOptions().ObjC1 &&
@@ -2764,10 +2764,6 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
     ImpCastExprToType(rExpr, lhsType);
     return Compatible;
   }
-
-  // We don't allow conversion of non-null-pointer constants to integers.
-  if (lhsType->isBlockPointerType() && rExpr->getType()->isIntegerType())
-    return IntToBlockPointer;
 
   // This check seems unnatural, however it is necessary to ensure the proper
   // conversion of functions/arrays. If the conversion were done for all
