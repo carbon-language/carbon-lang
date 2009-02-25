@@ -17,6 +17,7 @@
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/SourceLocation.h"
+#include <cstdlib>
 
 namespace clang {
 
@@ -295,10 +296,10 @@ struct TemplateIdAnnotation {
 
   static TemplateIdAnnotation* Allocate(unsigned NumArgs) {
     TemplateIdAnnotation *TemplateId 
-      = (TemplateIdAnnotation *)malloc(sizeof(TemplateIdAnnotation) + 
-                                       sizeof(void*) * NumArgs + 
-                                       sizeof(SourceLocation) * NumArgs +
-                                       sizeof(bool) * NumArgs);
+      = (TemplateIdAnnotation *)std::malloc(sizeof(TemplateIdAnnotation) + 
+                                            sizeof(void*) * NumArgs + 
+                                            sizeof(SourceLocation) * NumArgs +
+                                            sizeof(bool) * NumArgs);
     TemplateId->NumArgs = NumArgs;
     return TemplateId;
   }

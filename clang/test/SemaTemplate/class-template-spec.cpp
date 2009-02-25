@@ -41,4 +41,5 @@ void testme(X<int_type> *x1, X<float, int> *x2) {
   x2->bar(); // okay: refers to #2
 }
 
-// FIXME: diagnose specializations in a different namespace
+// Diagnose specializations in a different namespace
+class A<double> { };
