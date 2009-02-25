@@ -90,6 +90,15 @@ protected:
   //   destructor is called before the rest of the GRExprEngine is destroyed.
   GRBugReporter BR;
   
+  /// EargerlyAssume - A flag indicating how the engine should handle
+  //   expressions such as: 'x = (y != 0)'.  When this flag is true then
+  //   the subexpression 'y != 0' will be eagerly assumed to be true or false,
+  //   thus evaluating it to the integers 0 or 1 respectively.  The upside
+  //   is that this can increase analysis precision until we have a better way
+  //   to lazily evaluate such logic.  The downside is that it eagerly
+  //   bifurcates paths.
+  const bool EagerlyAssume;
+  
 public:
   typedef llvm::SmallPtrSet<NodeTy*,2> ErrorNodes;  
   typedef llvm::DenseMap<NodeTy*, Expr*> UndefArgsTy;
@@ -186,7 +195,7 @@ public:
 public:
   GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L,
                BugReporterData& BRD,
-               bool purgeDead,
+               bool purgeDead, bool eagerlyAssume = true,
                StoreManagerCreator SMC = CreateBasicStoreManager,
                ConstraintManagerCreator CMC = CreateBasicConstraintManager);
 
@@ -605,6 +614,11 @@ protected:
  
   const GRState* CheckDivideZero(Expr* Ex, const GRState* St, NodeTy* Pred,
                                  SVal Denom);  
+  
+  /// EvalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
+  ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)
+  ///  with those assumptions.
+  void EvalEagerlyAssume(NodeSet& Dst, NodeSet& Src);
   
   SVal EvalCast(SVal X, QualType CastT) {
     if (X.isUnknownOrUndef())

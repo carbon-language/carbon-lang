@@ -152,6 +152,12 @@ PurgeDead("analyzer-purge-dead",
           llvm::cl::desc("Remove dead symbols, bindings, and constraints before"
                          " processing a statement."));
 
+static llvm::cl::opt<bool>
+EagerlyAssume("analyzer-eagerly-assume",
+          llvm::cl::init(false),
+              llvm::cl::desc("Eagerly assume the truth/falseness of some "
+                             "symbolic constraints."));
+
 static llvm::cl::opt<std::string>
 AnalyzeSpecificFunction("analyze-function",
                llvm::cl::desc("Run analysis on specific function"));
@@ -516,7 +522,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   if (!L) return;
 
   GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L, mgr,
-                   PurgeDead,
+                   PurgeDead, EagerlyAssume,
                    mgr.getStoreManagerCreator(), 
                    mgr.getConstraintManagerCreator());
 

@@ -103,7 +103,7 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 
 GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
                            LiveVariables& L, BugReporterData& BRD,
-                           bool purgeDead,
+                           bool purgeDead, bool eagerlyAssume,
                            StoreManagerCreator SMC,
                            ConstraintManagerCreator CMC)
   : CoreEngine(cfg, CD, Ctx, *this), 
@@ -116,7 +116,8 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", G.getContext())), 
     PurgeDead(purgeDead),
-    BR(BRD, *this)  {}
+    BR(BRD, *this),
+    EagerlyAssume(eagerlyAssume) {}
 
 GRExprEngine::~GRExprEngine() {    
   BR.FlushReports();
@@ -262,7 +263,14 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
         break;
       }
 
-      VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
+      if (EagerlyAssume && (B->isRelationalOp() || B->isEqualityOp())) {
+        NodeSet Tmp;
+        VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Tmp);
+        EvalEagerlyAssume(Dst, Tmp);        
+      }
+      else
+        VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
+
       break;
     }
 
@@ -1342,6 +1350,44 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
     if (!Builder->BuildSinks && Dst.size() == size &&
         !Builder->HasGeneratedNode)
       MakeNode(Dst, CE, *DI, state);
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// Transfer function: Objective-C ivar references.
+//===----------------------------------------------------------------------===//
+
+static std::pair<const void*,const void*> EagerlyAssumeTag(&EagerlyAssumeTag,0);
+
+void GRExprEngine::EvalEagerlyAssume(NodeSet &Dst, NodeSet &Src) {
+  for (NodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {
+    NodeTy *Pred = *I;
+    Stmt *S = cast<PostStmt>(Pred->getLocation()).getStmt();
+    const GRState* state = Pred->getState();    
+    SVal V = GetSVal(state, S);    
+    if (isa<nonloc::SymIntConstraintVal>(V)) {
+      // First assume that the condition is true.
+      bool isFeasible = false;
+      const GRState *stateTrue = Assume(state, V, true, isFeasible);
+      if (isFeasible) {
+        stateTrue = BindExpr(stateTrue, cast<Expr>(S),
+                             MakeConstantVal(1U, cast<Expr>(S)));        
+        Dst.Add(Builder->generateNode(PostStmtCustom(S, &EagerlyAssumeTag),
+                                      stateTrue, Pred));
+      }
+        
+      // Next, assume that the condition is false.
+      isFeasible = false;
+      const GRState *stateFalse = Assume(state, V, false, isFeasible);
+      if (isFeasible) {
+        stateFalse = BindExpr(stateFalse, cast<Expr>(S),
+                              MakeConstantVal(0U, cast<Expr>(S)));
+        Dst.Add(Builder->generateNode(PostStmtCustom(S, &EagerlyAssumeTag),
+                                      stateFalse, Pred));
+      }
+    }
+    else
+      Dst.Add(Pred);
   }
 }
 
