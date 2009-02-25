@@ -201,7 +201,15 @@ in this section.
 <p>LLVM 2.5 includes several major new capabilities:</p>
 
 <ul>
-<li><p> Legalize Types</p></li>
+<li><p>The code generator now supports arbitrary precision integers.
+Types like <tt>i33</tt> have long been valid in the LLVM IR, but previously
+could only be used with the interpreter.
+Now IR using such types can be compiled to native code on all targets.
+All operations are supported if the integer is not bigger than twice the
+target machine word size.
+Simple operations like loads, stores and shifts by a constant amount are
+supported for integers of any size.
+</p></li>
 
 <!--
 Random stuff:
