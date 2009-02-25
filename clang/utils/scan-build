@@ -1149,10 +1149,11 @@ $HtmlDir = GetHTMLRunDir($HtmlDir);
 # Set the appropriate environment variables.
 SetHtmlEnv(\@ARGV, $HtmlDir);
 
-my $Cmd = Cwd::realpath("$RealBin/ccc-analyzer");
-
-DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n")
-  if (! -x $Cmd);
+my $Cmd = Cwd::realpath("$RealBin/bin/ccc-analyzer");
+if (!defined $Cmd || ! -x $Cmd) {
+  $Cmd = Cwd::realpath("$RealBin/ccc-analyzer");
+  DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n");
+}
 
 if (!defined $ClangSB || ! -x $ClangSB) {
   Diag("'clang' executable not found in '$RealBin/bin'.\n");
