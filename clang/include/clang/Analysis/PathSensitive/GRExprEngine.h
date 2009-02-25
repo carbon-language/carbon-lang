@@ -618,7 +618,7 @@ protected:
   /// EvalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)
   ///  with those assumptions.
-  void EvalEagerlyAssume(NodeSet& Dst, NodeSet& Src);
+  void EvalEagerlyAssume(NodeSet& Dst, NodeSet& Src, Expr *Ex);
   
   SVal EvalCast(SVal X, QualType CastT) {
     if (X.isUnknownOrUndef())

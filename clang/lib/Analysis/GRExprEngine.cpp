@@ -266,7 +266,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       if (EagerlyAssume && (B->isRelationalOp() || B->isEqualityOp())) {
         NodeSet Tmp;
         VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Tmp);
-        EvalEagerlyAssume(Dst, Tmp);        
+        EvalEagerlyAssume(Dst, Tmp, cast<Expr>(S));        
       }
       else
         VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
@@ -1359,20 +1359,28 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
 
 static std::pair<const void*,const void*> EagerlyAssumeTag(&EagerlyAssumeTag,0);
 
-void GRExprEngine::EvalEagerlyAssume(NodeSet &Dst, NodeSet &Src) {
+void GRExprEngine::EvalEagerlyAssume(NodeSet &Dst, NodeSet &Src, Expr *Ex) {
   for (NodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {
     NodeTy *Pred = *I;
-    Stmt *S = cast<PostStmt>(Pred->getLocation()).getStmt();
+    
+    // Test if the previous node was as the same expression.  This can happen
+    // when the expression fails to evaluate to anything meaningful and
+    // (as an optimization) we don't generate a node.
+    ProgramPoint P = Pred->getLocation();    
+    if (!isa<PostStmt>(P) || cast<PostStmt>(P).getStmt() != Ex) {
+      Dst.Add(Pred);      
+      continue;
+    }    
+
     const GRState* state = Pred->getState();    
-    SVal V = GetSVal(state, S);    
+    SVal V = GetSVal(state, Ex);    
     if (isa<nonloc::SymIntConstraintVal>(V)) {
       // First assume that the condition is true.
       bool isFeasible = false;
       const GRState *stateTrue = Assume(state, V, true, isFeasible);
       if (isFeasible) {
-        stateTrue = BindExpr(stateTrue, cast<Expr>(S),
-                             MakeConstantVal(1U, cast<Expr>(S)));        
-        Dst.Add(Builder->generateNode(PostStmtCustom(S, &EagerlyAssumeTag),
+        stateTrue = BindExpr(stateTrue, Ex, MakeConstantVal(1U, Ex));        
+        Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag),
                                       stateTrue, Pred));
       }
         
@@ -1380,9 +1388,8 @@ void GRExprEngine::EvalEagerlyAssume(NodeSet &Dst, NodeSet &Src) {
       isFeasible = false;
       const GRState *stateFalse = Assume(state, V, false, isFeasible);
       if (isFeasible) {
-        stateFalse = BindExpr(stateFalse, cast<Expr>(S),
-                              MakeConstantVal(0U, cast<Expr>(S)));
-        Dst.Add(Builder->generateNode(PostStmtCustom(S, &EagerlyAssumeTag),
+        stateFalse = BindExpr(stateFalse, Ex, MakeConstantVal(0U, Ex));
+        Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag),
                                       stateFalse, Pred));
       }
     }
