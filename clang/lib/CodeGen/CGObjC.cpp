@@ -125,6 +125,9 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
 /// Generate an Objective-C method.  An Objective-C method is a C function with
 /// its pointer, name, and types registered in the class struture.  
 void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
+  // Check if we should generate debug info for this method.
+  if (CGM.getDebugInfo() && !OMD->getAttr<NodebugAttr>())
+    DebugInfo = CGM.getDebugInfo();
   StartObjCMethod(OMD, OMD->getClassInterface());
   EmitStmt(OMD->getBody());
   FinishFunction(cast<CompoundStmt>(OMD->getBody())->getRBracLoc());
