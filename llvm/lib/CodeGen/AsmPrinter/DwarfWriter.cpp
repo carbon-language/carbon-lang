@@ -1817,7 +1817,7 @@ private:
   DIE *CreateGlobalVariableDIE(CompileUnit *DW_Unit, const DIGlobalVariable &GV)
   {
     DIE *GVDie = new DIE(DW_TAG_variable);
-    const std::string &Name = GV.getName();
+    const std::string &Name = GV.getDisplayName();
     AddString(GVDie, DW_AT_name, DW_FORM_string, Name);
     const std::string &LinkageName = GV.getLinkageName();
     if (!LinkageName.empty())
