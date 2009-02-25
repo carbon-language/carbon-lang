@@ -171,9 +171,11 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
     AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4/backward",
             System, true, false, false);
 
-
     // DragonFly
     AddPath("/usr/include/c++/4.1", System, true, false, false);
+
+    // FreeBSD
+    AddPath("/usr/include/c++/4.2", System, true, false, false);
   }
 
   AddPath("/usr/local/include", System, false, false, false);
