@@ -56,10 +56,11 @@ current one.  To see the release notes for a specific release, please see the
   Machine Sinking
   target-specific intrinsics
   gold lto plugin
-  pre-alloc splitter
+  pre-alloc splitter, strong phi elim
   llc -enable-value-prop, propagation of value info (sign/zero ext info) from
        one MBB to another
   debug info for optimized code
+  
  -->
 
  <!-- for announcement email:
@@ -205,15 +206,28 @@ in this section.
 <!--
 Random stuff:
 
+xcore backend!
+fortran on darwin!
+
 .ll parser rewrite.
 GCC inliner off.
 cmake mature?
 x86 backend FS/GS segment address spaces?
 nocapture
 memdep is faster / more aggressive.
-how to write a backend doc
+how to write a backend doc docs/WritingAnLLVMBackend.html
 fastisel + exception handling
 vector widening <3 x float> -> <4 x float>
+arm port improvements? arm jit encoding stuff, constant island support?
+JIT TLS support on x86
+mem2reg now faster on code with huge basic blocks
+stack protectors/stack canaries, -fstack-protector, controllable on a 
+  per-function basis with attributes.
+shufflevector is generalized to allow different shuffle mask width than its
+  input vectors.
+loop optimizer improves floating point induction variables
+llvm/Analysis/DebugInfo.h classes, llvm-gcc and clang and codegen use them.
+asmprinters seperate from targets for jits
 -->
 
 </ul>
