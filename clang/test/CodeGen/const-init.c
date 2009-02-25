@@ -85,4 +85,15 @@ void g18(void) {
   static int *p[] = { &g19 };
 }
 
+// RUN: grep '@g20.l0 = internal global .struct.g20_s1 <{ .struct.g20_s0\* null, .struct.g20_s0\*\* getelementptr (.struct.g20_s1\* @g20.l0, i32 0, i32 0) }>'  %t &&
+
+struct g20_s0;
+struct g20_s1 {
+  struct g20_s0 *f0, **f1;
+};
+void *g20(void) {
+  static struct g20_s1 l0 = { ((void*) 0), &l0.f0 };
+  return l0.f1;
+}
+
 // RUN: true

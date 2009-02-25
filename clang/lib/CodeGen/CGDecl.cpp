@@ -106,6 +106,10 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   llvm::GlobalVariable *GV = 
     CreateStaticBlockVarDecl(D, ".", llvm::GlobalValue::InternalLinkage);
 
+  // Store into LocalDeclMap before generating initializer to handle
+  // circular references.
+  DMEntry = GV;
+
   if (D.getInit()) {
     llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), this);
 
@@ -162,6 +166,11 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   if (D.getAttr<UsedAttr>())
     CGM.AddUsedGlobal(GV);
 
+  // We may have to cast the constant because of the initializer
+  // mismatch above.
+  //
+  // FIXME: It is really dangerous to store this in the map; if anyone
+  // RAUW's the GV uses of this constant will be invalid.
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
   const llvm::Type *LPtrTy =
     llvm::PointerType::get(LTy, D.getType().getAddressSpace());
