@@ -4,11 +4,11 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <title>LLVM 2.4 Release Notes</title>
+  <title>LLVM 2.5 Release Notes</title>
 </head>
 <body>
 
-<div class="doc_title">LLVM 2.4 Release Notes</div>
+<div class="doc_title">LLVM 2.5 Release Notes</div>
 
 <ol>
   <li><a href="#intro">Introduction</a></li>
@@ -33,7 +33,7 @@
 <div class="doc_text">
 
 <p>This document contains the release notes for the LLVM Compiler
-Infrastructure, release 2.4.  Here we describe the status of LLVM, including
+Infrastructure, release 2.5.  Here we describe the status of LLVM, including
 major improvements from the previous release and significant known problems.
 All LLVM releases may be downloaded from the <a 
 href="http://llvm.org/releases/">LLVM releases web site</a>.</p>
@@ -51,7 +51,7 @@ current one.  To see the release notes for a specific release, please see the
 
 </div>
 
-<!-- Unfinished features in 2.4:
+<!-- Unfinished features in 2.5:
   Machine LICM
   Machine Sinking
   LegalizeDAGTypes
@@ -72,7 +72,7 @@ current one.  To see the release notes for a specific release, please see the
 
 <div class="doc_text">
 <p>
-The LLVM 2.4 distribution currently consists of code from the core LLVM
+The LLVM 2.5 distribution currently consists of code from the core LLVM
 repository (which roughly includes the LLVM optimizers, code generators and
 supporting tools) and the llvm-gcc repository.  In addition to this code, the
 LLVM Project includes other sub-projects that are in development.  The two which
@@ -170,21 +170,13 @@ The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
 a JVM and a CLI Virtual Machines (Microsoft .NET is an
 implementation of the CLI) using the Just-In-Time compiler of LLVM.</p>
 
-<p>Following LLVM 2.4, VMKit has its first release 0.24 that you can find on its
+<p>Following LLVM 2.5, VMKit has its first release 0.24 that you can find on its
 <a href="http://vmkit.llvm.org/releases/">webpage</a>. The release includes
 bug fixes, cleanup and new features. The major changes are:</p>
 
 <ul>
 
-<li> Support for generics in the .Net virtual machine.</li>
-<li> Initial support for the Mono class libraries. </li>
-<li> Support for MacOSX/x86, following LLVM's support for exceptions in
-JIT on MacOSX/x86. </li>
-<li> A new vmkit driver: a program to run java or .net applications. The driver
-supports llvm command line arguments including the new "-fast" option. </li>
-<li> A new memory allocation scheme in the JVM that makes unloading a
-class loader very fast. </li>
-<li> VMKit now follows the LLVM Makefile machinery. </li>
+<li>?</li>
 
 </ul>
 </div>
@@ -211,29 +203,10 @@ in this section.
 
 <div class="doc_text">
 
-<p>LLVM 2.4 includes several major new capabilities:</p>
+<p>LLVM 2.5 includes several major new capabilities:</p>
 
 <ul>
-<li><p>The most visible end-user change in LLVM 2.4 is that it includes many
-optimizations and changes to make -O0 compile times much faster.  You should see
-improvements in speed on the order of 30% (or more) than in LLVM 2.3.  There are
-many pieces to this change described in more detail below.  The speedups and new
-components can also be used for JIT compilers that want fast
-compilation.</p></li>
-
-<li><p>The biggest change to the LLVM IR is that Multiple Return Values (which
-were introduced in LLVM 2.3) have been generalized to full support for "First
-Class Aggregate" values in LLVM 2.4.  This means that LLVM IR supports using
-structs and arrays as values in a function.  This capability is mostly useful
-for front-end authors, who prefer to treat things like complex numbers, simple
-tuples, dope vectors, etc., as Value*'s instead of as a tuple of Value*'s or as
-memory values.  Bitcode files from LLVM 2.3 will automatically migrate to the
-general representation.</p></li>
-
-<li><p>LLVM 2.4 also includes an initial port for the PIC16 microprocessor. This
-target only has support for 8 bit registers, and a number of other crazy
-constraints.  While the port is still in early development stages, it shows some
-interesting things you can do with LLVM.</p></li>
+<li><p>?</p></li>
 
 </ul>
 
@@ -252,29 +225,7 @@ front-ends and driver with the LLVM optimizer and code generator.  It currently
 includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 
 <ul>
-<li>LLVM 2.4 supports the full set of atomic <tt>__sync_*</tt> builtins.  LLVM
-2.3 only supported those used by OpenMP, but 2.4 supports them all.  Note that
-while llvm-gcc supports all of these builtins, not all targets do.  X86 support
-them all in both 32-bit and 64-bit mode and PowerPC supports them all except for
-the 64-bit operations when in 32-bit mode.</li>
-
-<li>llvm-gcc now supports an <tt>-flimited-precision</tt> option, which tells
-the compiler that it is okay to use low-precision approximations of certain libm
-functions (like <tt>exp</tt>, <tt>log</tt>, etc).  This allows you to get high
-performance if you only need (say) 12-bits of precision.</li>
-
-<li>llvm-gcc now supports a C language extension known as "<a 
-href="http://lists.cs.uiuc.edu/pipermail/cfe-dev/2008-August/002670.html">Blocks</a>".
-This feature is similar to nested functions and closures, but does not
-require stack trampolines (with most ABIs), and supports returning closures 
-from functions that define them.  Note that actually <em>using</em> Blocks
-requires a small runtime that is not included with llvm-gcc.</li>
-
-<li>llvm-gcc now supports a new <tt>-flto</tt> option.  On systems that support
-transparent Link Time Optimization (currently Darwin systems with Xcode 3.1 and
-later) this allows the use of LTO with other optimization levels like -Os.
-Previously, LTO could only be used with -O4, which implied optimizations in
--O3 that can increase code size.</li>
+<li>?</li>
 </ul>
 
 </div>
@@ -289,43 +240,7 @@ Previously, LTO could only be used with -O4, which implied optimizations in
 <p>New features include:</p>
 
 <ul>
-<li>A major change to the <tt>Use</tt> class landed, which shrank it by 25%.  Since
-this is a pervasive part of the LLVM, it ended up reducing the memory use of
-LLVM IR in general by 15% for most programs.</li>
-
-<li>Values with no names are now pretty printed by <tt>llvm-dis</tt> more
-nicely.  They now print as "<tt>%3 = add i32 %A, 4</tt>" instead of
-"<tt>add i32 %A, 4   ; &lt;i32&gt;:3</tt>", which makes it much easier to read.
-</li>
-
-<li>LLVM 2.4 includes some changes for better vector support.  First, the shift
-operations (<tt>shl</tt>, <tt>ashr</tt>, and <tt>lshr</tt>) now all support
-vectors and do an element-by-element shift (shifts of the whole vector can be
-accomplished by bitcasting the vector to <tt>&lt;1 x i128&gt;</tt>, for example). Second,
-there is initial support in development for vector comparisons with the
-<tt><a href="LangRef.html#i_fcmp">fcmp</a>/<a href="LangRef.html#i_icmp">icmp</a></tt>
-instructions.  These instructions compare two vectors and return a vector of
-<tt>i1</tt>'s for each result.  Note that there is very little codegen support
-available for any of these IR features though.</li>
-
-<li>A new <tt>DebugInfoBuilder</tt> class is available, which makes it much
-easier for front-ends to create debug info descriptors, similar to the way that
-<tt>IRBuilder</tt> makes it easier to create LLVM IR.</li>
-
-<li>The <tt>IRBuilder</tt> class is now parameterized by a class responsible
-for constant folding.  The default <tt>ConstantFolder</tt> class does target independent
-constant folding.  The <tt>NoFolder</tt> class does no constant folding at all, which is
-useful when learning how LLVM works.  The <tt>TargetFolder</tt> class folds the most,
-doing target dependent constant folding.</li>
-
-<li>LLVM now supports "function attributes", which allow us to separate return
-value attributes from function attributes.  LLVM now supports attributes on a
-function itself, a return value, and its parameters.  New supported function
-attributes include <tt>noinline/alwaysinline</tt> and the <tt>opt-size</tt> flag,
-which says the function should be optimized for code size.</li>
-
-<li>LLVM IR now directly represents "common" linkage, instead of
-    representing it as a form of weak linkage.</li>
+<li>?</li>
     
 </ul>
 
@@ -343,39 +258,7 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
 
-<li>The Global Value Numbering (GVN) pass now does local Partial Redundancy
-Elimination (PRE) to eliminate some partially redundant expressions in cases
-where doing so won't grow code size.</li>
-
-<li>LLVM 2.4 includes a new loop deletion pass (which removes output-free
-provably-finite loops) and a rewritten Aggressive Dead Code Elimination (ADCE)
-pass that no longer uses control dependence information.  These changes speed up
-the optimizer and also prevent it from deleting output-free infinite
-loops.</li>
-
-<li>The new AddReadAttrs pass works out which functions are read-only or
-read-none (these correspond to 'pure' and 'const' in GCC) and marks them
-with the appropriate attribute.</li>
-
-<li>LLVM 2.4 now includes a new SparsePropagation framework, which makes it
-trivial to build lattice-based dataflow solvers that operate over LLVM IR. Using
-this interface means that you just define objects to represent your lattice
-values and the transfer functions that operate on them.  It handles the
-mechanics of worklist processing, liveness tracking, handling PHI nodes,
-etc.</li>
-
-<li>The Loop Strength Reduction and induction variable optimization passes have
-several improvements to avoid inserting MAX expressions, to optimize simple
-floating point induction variables and to analyze trip counts of more
-loops.</li>
-
-<li>Various helper functions (ComputeMaskedBits, ComputeNumSignBits, etc) were
-pulled out of the Instruction Combining pass and put into a new 
-<tt>ValueTracking.h</tt> header, where they can be reused by other passes.</li>
-
-<li>The tail duplication pass has been removed from the standard optimizer
-sequence used by llvm-gcc.  This pass still exists, but the benefits it once
-provided are now achieved by other passes.</li>
+<li>?</li>
 
 </ul>
 
@@ -393,41 +276,7 @@ which allows us to implement more aggressive algorithms and make it run
 faster:</p>
 
 <ul>
-<li>The target-independent code generator supports (and the X86 backend
-    currently implements) a new interface for "fast" instruction selection. This
-    interface is optimized to produce code as quickly as possible, sacrificing
-    code quality to do it.  This is used by default at -O0 or when using
-    "llc -fast" on X86.  It is straight-forward to add support for
-    other targets if faster -O0 compilation is desired.</li>
-
-<li>In addition to the new 'fast' instruction selection path, many existing
-    pieces of the code generator have been optimized in significant ways.
-    SelectionDAG's are now pool allocated and use better algorithms in many
-    places, the ".s" file printers now use <tt>raw_ostream</tt> to emit text much faster,
-    etc.  The end result of these improvements is that the compiler also takes
-    substantially less time to generate code that is just as good (and often
-    better) than before.</li>
-
-<li>Each target has been split to separate the ".s" file printing logic from the
-    rest of the target.  This enables JIT compilers that don't link in the
-    (somewhat large) code and data tables used for printing a ".s" file.</li>
-
-<li>The code generator now includes a "stack slot coloring" pass, which packs
-    together individual spilled values into common stack slots.  This reduces
-    the size of stack frames with many spills, which tends to increase L1 cache
-    effectiveness.</li>
-
-<li>Various pieces of the register allocator (e.g. the coalescer and two-address
-    operation elimination pass) now know how to rematerialize trivial operations
-    to avoid copies and include several other optimizations.</li>
-
-<li>The <a href="CodeGenerator.html#selectiondag_process">graphs</a> produced by
-    the <tt>llc -view-*-dags</tt> options are now significantly prettier and
-    easier to read.</li>
-
-<li>LLVM 2.4 includes a new register allocator based on Partitioned Boolean
-    Quadratic Programming (PBQP).  This register allocator is still in
-    development, but is very simple and clean.</li>
+<li>?</li>
 
 </ul>
 
@@ -444,17 +293,7 @@ faster:</p>
 </p>
 
 <ul>
-<li>Exception handling is supported by default on Linux/x86-64.</li>
-<li>Position Independent Code (PIC) is now supported on Linux/x86-64.</li>
-<li><tt>@llvm.frameaddress</tt> now supports getting the frame address of stack frames
-    &gt; 0 on x86/x86-64.</li>
-<li>MIPS has improved a lot since last release, the most important changes
-    are: Little endian support, floating point support, allegrex core and
-    intrinsics support. O32 ABI is improved but isn't complete. The EABI 
-    was implemented and is fully supported. We also have support for small
-    sections and gp_rel relocation for its access, a threshold in bytes can be 
-    specified through command line.</li>
-<li>The PowerPC backend now supports trampolines.</li>
+<li>?</li>
 </ul>
 
 </div>
@@ -470,21 +309,7 @@ faster:</p>
 </p>
 
 <ul>
-<li><tt>llvmc2</tt> (the generic compiler driver) gained plugin
-    support. It is now easier to experiment with <tt>llvmc2</tt> and
-    build your own tools based on it.</li>
-
-<li>LLVM 2.4 includes a number of new generic algorithms and data structures,
-    including a scoped hash table, 'immutable' data structures, a simple
-    free-list manager, and a <tt>raw_ostream</tt> class.
-    The <tt>raw_ostream</tt> class and
-    <tt>format</tt> allow for efficient file output, and various pieces of LLVM
-    have switched over to use it.   The eventual goal is to eliminate
-    use of <tt>std::ostream</tt> in favor of it.</li>
-
-<li>LLVM 2.4 includes an optional build system based on CMake. It
-    still is in its early stages but can be useful for Visual C++
-    users who can not use the Visual Studio IDE.</li>
+<li>?</li>
 
 </ul>
 
@@ -498,19 +323,12 @@ faster:</p>
 <div class="doc_text">
 
 <p>If you're already an LLVM user or developer with out-of-tree changes based
-on LLVM 2.3, this section lists some "gotchas" that you may run into upgrading
+on LLVM 2.4, this section lists some "gotchas" that you may run into upgrading
 from the previous release.</p>
 
 <ul>
 
-<li>The LLVM IR generated by llvm-gcc no longer names all instructions.  This
-    makes it run faster, but may be more confusing to some people.  If you
-    prefer to have names, the '<tt>opt -instnamer</tt>' pass will add names to
-    all instructions.</li>
-
-<li>The LoadVN and GCSE passes have been removed from the tree.  They are
-    obsolete and have been replaced with the GVN and MemoryDependence passes.
-    </li>
+<li>?</li>
 </ul>
 
 
@@ -518,51 +336,10 @@ from the previous release.</p>
 API changes are:</p>
 
 <ul>
-
-<li>Now, function attributes and return value attributes are managed 
-separately. Interface exported by <tt>ParameterAttributes.h</tt> header is now
-exported by <tt>Attributes.h</tt> header. The new attributes interface changes are:
-<ul>
-<li><tt>getParamAttrs</tt> method is now replaced by 
-<tt>getParamAttributes</tt>, <tt>getRetAttributes</tt> and 
-<tt>getFnAttributes</tt> methods.</li>
-<li> Return value attributes are stored at index 0. Function attributes are 
-stored at index ~0U. Parameter attributes are stored at index that matches 
-parameter number.</li>
-<li> <tt>ParamAttr</tt> namespace is now renamed as <tt>Attribute</tt>.</li>
-<li> The name of the class that manages reference count of opaque 
-attributes is changed from <tt>PAListPtr</tt> to <tt>AttrListPtr</tt>.</li>
-<li> <tt>ParamAttrsWithIndex</tt> is now renamed as <tt>AttributeWithIndex</tt>. 
-</li>
+<li>?</li>
 </ul>
-</li>
 
-<li>The <tt>DbgStopPointInst</tt> methods <tt>getDirectory</tt> and
-<tt>getFileName</tt> now return <tt>Value*</tt> instead of strings. These can be
-converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via
-"<tt>llvm/Analysis/ValueTracking.h</tt>".</li>
-
-<li>The APIs to create various instructions have changed from lower case
-   "create" methods to upper case "Create" methods (e.g. 
-   <tt>BinaryOperator::create</tt>).  LLVM 2.4 includes both cases, but the
-   lower case ones are removed in mainline (2.5 and later), please migrate.</li>
-
-<li>Various header files like "<tt>llvm/ADT/iterator</tt>" were given a ".h" suffix.
-    Change your code to #include "<tt>llvm/ADT/iterator.h</tt>" instead.</li>
-
-<li>The <tt>getresult</tt> instruction has been removed and replaced with the 
-    <tt>extractvalue</tt> instruction.  This is part of support for first class 
-    aggregates.</li>
-
-<li>In the code generator, many <tt>MachineOperand</tt> predicates were renamed to be
-    shorter (e.g. <tt>isFrameIndex()</tt> -&gt; <tt>isFI()</tt>),
-    <tt>SDOperand</tt> was renamed to <tt>SDValue</tt> (and the "<tt>Val</tt>"
-    member was changed to be the <tt>getNode()</tt> accessor), and the
-    <tt>MVT::ValueType</tt> enum has been replaced with an "<tt>MVT</tt>"
-    struct. The <tt>getSignExtended</tt> and <tt>getValue</tt> methods in the
-    ConstantSDNode class were renamed to <tt>getSExtValue</tt> and
-    <tt>getZExtValue</tt> respectively, to be more consistent with
-    the <tt>ConstantInt</tt> class.</li>
+<li>?</li>
 </ul>
 
 </div>
