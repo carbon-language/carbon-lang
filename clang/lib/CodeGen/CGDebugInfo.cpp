@@ -76,10 +76,10 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
                                                FileName, DirName, "clang");
 }
 
-/// getOrCreateBuiltinType - Get the Basic type from the cache or create a new
+/// CreateType - Get the Basic type from the cache or create a new
 /// one if necessary.
 llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
-                                     llvm::DICompileUnit Unit){
+                                     llvm::DICompileUnit Unit) {
   unsigned Encoding = 0;
   switch (BT->getKind()) {
   default:
@@ -195,7 +195,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
                                           llvm::DIType(), EltTypeArray);
 }
 
-/// getOrCreateRecordType - get structure or union type.
+/// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                      llvm::DICompileUnit Unit) {
   RecordDecl *Decl = Ty->getDecl();
