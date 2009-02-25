@@ -1787,6 +1787,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       Builder.CreateUnreachable();
       Builder.ClearInsertionPoint();
       
+      // FIXME: For now, emit a dummy basic block because expr
+      // emitters in generally are not ready to handle emitting
+      // expressions at unreachable points.
+      EnsureInsertPoint();
+
       // Return a reasonable RValue.
       return GetUndefRValue(RetTy);
     }    

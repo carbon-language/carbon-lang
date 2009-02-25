@@ -35,5 +35,12 @@ void f9(void) { f9_t(); }
 // RUN: grep 'call i32 @f10_t() readnone' %t &&
 int __attribute__((const)) f10_t(void);
 int f10(void) { return f10_t(); }
+int f11(void) {
+ exit:
+  return f10_t();
+}
+int f12(int arg) {
+  return arg ? 0 : f10_t();
+}
 
 // RUN: true
