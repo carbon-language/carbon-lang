@@ -115,7 +115,12 @@ namespace clang {
   template <typename T>
   struct GRStatePartialTrait< llvm::ImmutableList<T> > {
     typedef llvm::ImmutableList<T>            data_type;
+    typedef T                                 key_type;
     typedef typename data_type::Factory&      context_type;  
+    
+    static data_type Add(data_type L, key_type K, context_type F) {
+      return F.Add(K, L);
+    }
     
     static inline data_type MakeData(void* const* p) {
       return p ? data_type((const llvm::ImmutableListImpl<T>*) *p) 
