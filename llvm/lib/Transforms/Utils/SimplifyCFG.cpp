@@ -1887,7 +1887,11 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
       // If the block only contains the switch, see if we can fold the block
       // away into any preds.
-      if (SI == &BB->front())
+      BasicBlock::iterator BBI = BB->begin();
+      // Ignore dbg intrinsics.
+      while (isa<DbgInfoIntrinsic>(BBI))
+        ++BBI;
+      if (SI == &*BBI)
         if (FoldValueComparisonIntoPredecessors(SI))
           return SimplifyCFG(BB) || 1;
     }
