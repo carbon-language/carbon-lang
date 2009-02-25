@@ -2077,16 +2077,16 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
     default:
       assert (false && "Unhandled CFRef transition.");
 
+    case NewAutoreleasePool:
+      assert(!isGCEnabled());
+      return state.add<AutoreleaseStack>(sym);
+      
     case MayEscape:
       if (V.getKind() == RefVal::Owned) {
         V = V ^ RefVal::NotOwned;
         break;
       }
       // Fall-through.
-
-    case NewAutoreleasePool:
-      assert(!isGCEnabled());
-      return state.add<AutoreleaseStack>(sym);
       
     case DoNothingByRef:
     case DoNothing:
