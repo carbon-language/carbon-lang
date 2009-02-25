@@ -483,7 +483,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
 if ($Action eq 'compile' or $Action eq 'link') {
   my @Archs = keys %ArchsSeen;
   # Skip the file if we don't support the architectures specified.
-  exit 0 if ($HadArch && scalar(@Archs) > 0);
+  exit 0 if ($HadArch && scalar(@Archs) == 0);
   
   foreach my $file (@Files) {
     # Determine the language for the file.
