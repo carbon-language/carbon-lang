@@ -54,15 +54,16 @@ current one.  To see the release notes for a specific release, please see the
 <!-- Unfinished features in 2.5:
   Machine LICM
   Machine Sinking
-  LegalizeDAGTypes
+  target-specific intrinsics
+  gold lto plugin
+  pre-alloc splitter
   llc -enable-value-prop, propagation of value info (sign/zero ext info) from
        one MBB to another
+  debug info for optimized code
  -->
 
  <!-- for announcement email:
-    mention dev mtg
-    Xcode 3.1 and 3.1.1.
-  -->
+   -->
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -103,7 +104,7 @@ on templates has recently started.</p>
 <p>While Clang is not yet production quality, it is progressing very nicely and
 is quite usable for building many C and Objective-C applications.  If you are
 interested in fast compiles and good diagnostics, we encourage you to try it out
-by <a href="http://clang.llvm.org/get_started.html">building from mainlnie</a>
+by <a href="http://clang.llvm.org/get_started.html">building from mainline</a>
 and reporting any issues you hit to the <a 
 href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">Clang front-end mailing
 list</a>.</p>
@@ -199,7 +200,21 @@ in this section.
 <p>LLVM 2.5 includes several major new capabilities:</p>
 
 <ul>
-<li><p>?</p></li>
+<li><p> Legalize Types</p></li>
+
+<!--
+Random stuff:
+
+.ll parser rewrite.
+GCC inliner off.
+cmake mature?
+x86 backend FS/GS segment address spaces?
+nocapture
+memdep is faster / more aggressive.
+how to write a backend doc
+fastisel + exception handling
+vector widening <3 x float> -> <4 x float>
+-->
 
 </ul>
 
