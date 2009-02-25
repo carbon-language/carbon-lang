@@ -1822,7 +1822,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         if (Tok.is(tok::identifier)) {
           // FIXME: Inaccurate.
           SourceLocation NameLoc = Tok.getLocation();
-          if (TypeTy *Type = ParseClassName()) {
+          SourceLocation EndLoc;
+          if (TypeTy *Type = ParseClassName(EndLoc)) {
             D.setDestructor(Type, TildeLoc, NameLoc);
           } else {
             D.SetIdentifier(0, TildeLoc);

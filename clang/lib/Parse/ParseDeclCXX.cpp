@@ -216,16 +216,33 @@ Parser::DeclTy *Parser::ParseUsingDeclaration(unsigned Context,
 /// ParseClassName - Parse a C++ class-name, which names a class. Note
 /// that we only check that the result names a type; semantic analysis
 /// will need to verify that the type names a class. The result is
-/// either a type or NULL, dependending on whether a type name was
+/// either a type or NULL, depending on whether a type name was
 /// found.
 ///
 ///       class-name: [C++ 9.1]
 ///         identifier
-///         template-id   [TODO]
+///         simple-template-id
 /// 
-Parser::TypeTy *Parser::ParseClassName(const CXXScopeSpec *SS) {
-  // Parse the class-name.
-  // FIXME: Alternatively, parse a simple-template-id.
+Parser::TypeTy *Parser::ParseClassName(SourceLocation &EndLocation,
+                                       const CXXScopeSpec *SS) {
+  // Check whether we have a template-id that names a type.
+  if (Tok.is(tok::annot_template_id)) {
+    TemplateIdAnnotation *TemplateId 
+      = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    if (TemplateId->Kind == TNK_Class_template) {
+      if (AnnotateTemplateIdTokenAsType(SS))
+        return 0;
+
+      assert(Tok.is(tok::annot_typename) && "template-id -> type failed");
+      TypeTy *Type = Tok.getAnnotationValue();
+      EndLocation = Tok.getAnnotationEndLoc();
+      ConsumeToken();
+      return Type;
+    }
+
+    // Fall through to produce an error below.
+  }
+
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_class_name);
     return 0;
@@ -240,8 +257,7 @@ Parser::TypeTy *Parser::ParseClassName(const CXXScopeSpec *SS) {
   }
 
   // Consume the identifier.
-  ConsumeToken();
-
+  EndLocation = ConsumeToken();
   return Type;
 }
 
@@ -510,12 +526,13 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
   SourceLocation BaseLoc = Tok.getLocation();
 
   // Parse the class-name.
-  TypeTy *BaseType = ParseClassName(&SS);
+  SourceLocation EndLocation;
+  TypeTy *BaseType = ParseClassName(EndLocation, &SS);
   if (!BaseType)
     return true;
   
   // Find the complete source range for the base-specifier.  
-  SourceRange Range(StartLoc, BaseLoc);
+  SourceRange Range(StartLoc, EndLocation);
   
   // Notify semantic analysis that we have parsed a complete
   // base-specifier.

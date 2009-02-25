@@ -968,7 +968,8 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
-  TypeTy *ParseClassName(const CXXScopeSpec *SS = 0);
+  TypeTy *ParseClassName(SourceLocation &EndLocation, 
+                         const CXXScopeSpec *SS = 0);
   void ParseClassSpecifier(DeclSpec &DS, 
                            TemplateParameterLists *TemplateParams = 0);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
