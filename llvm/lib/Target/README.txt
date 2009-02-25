@@ -1690,6 +1690,7 @@ For example: store of float into { {{}}, float } could be turned into a store to
 the float directly.
 
 //===---------------------------------------------------------------------===//
+
 #include <math.h>
 double foo(double a) {    return sin(a); }
 
@@ -1703,4 +1704,20 @@ vs:
 
 foo:
         jmp sin
+
+//===---------------------------------------------------------------------===//
+
+Instcombine should replace the load with a constant in:
+
+  static const char x[4] = {'a', 'b', 'c', 'd'};
+  
+  unsigned int y(void) {
+    return *(unsigned int *)x;
+  }
+
+It currently only does this transformation when the size of the constant 
+is the same as the size of the integer (so, try x[5]) and the last byte 
+is a null (making it a C string). There's no need for these restrictions.
+
+//===---------------------------------------------------------------------===//
 
