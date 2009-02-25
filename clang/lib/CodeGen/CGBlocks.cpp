@@ -109,13 +109,14 @@ llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
 
 // FIXME: Push most into CGM, passing down a few bits, like current
 // function name.
-llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
+llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   bool insideFunction = false;
   bool BlockRefDeclList = false;
   bool BlockByrefDeclList = false;
 
   std::vector<llvm::Constant*> Elts;
   llvm::Constant *C;
+  llvm::Value *V;
 
   {
     // C = BuildBlockStructInitlist();
@@ -152,30 +153,75 @@ llvm::Constant *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       if (ND->getIdentifier())
         Name = ND->getNameAsCString();
     BlockInfo Info(0, Name);
-    uint64_t subBlockSize;
+    uint64_t subBlockSize, subBlockAlign;
+    llvm::SmallVector<ValueDecl *, 8> subBlockDeclRefDecls;
     llvm::Function *Fn
-      = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, subBlockSize);
+      = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, subBlockSize,
+                                                   subBlockAlign, subBlockDeclRefDecls);
     Elts.push_back(Fn);
 
     // __descriptor
     Elts.push_back(BuildDescriptorBlockDecl(subBlockSize));
 
-    // FIXME: Add block_original_ref_decl_list and block_byref_decl_list.
+    // FIXME: Also check to make sure there are no byref variables
+    if (subBlockDeclRefDecls.size() == 0) {
+      C = llvm::ConstantStruct::get(Elts);
+
+      char Name[32];
+      sprintf(Name, "__block_holder_tmp_%d", CGM.getGlobalUniqueCount());
+      C = new llvm::GlobalVariable(C->getType(), true,
+                                   llvm::GlobalValue::InternalLinkage,
+                                   C, Name, &CGM.getModule());
+      QualType BPT = BE->getType();
+      C = llvm::ConstantExpr::getBitCast(C, ConvertType(BPT));
+      return C;
+    }
+      
+    std::vector<const llvm::Type *> Types(5+subBlockDeclRefDecls.size());
+    for (int i=0; i<5; ++i)
+      Types[i] = Elts[i]->getType();
+
+    for (unsigned i=0; i < subBlockDeclRefDecls.size(); ++i)
+      Types[i+5] = ConvertType(subBlockDeclRefDecls[i]->getType());
+
+    llvm::Type *Ty = llvm::StructType::get(Types, true);
+
+    llvm::AllocaInst *A = CreateTempAlloca(Ty);
+    A->setAlignment(subBlockAlign);
+    V = A;
+
+    for (unsigned i=0; i<5; ++i)
+      Builder.CreateStore(Elts[i], Builder.CreateStructGEP(V, i, "block.tmp"));
+    
+    for (unsigned i=0; i < subBlockDeclRefDecls.size(); ++i)
+      {
+        ValueDecl *VD = subBlockDeclRefDecls[i];
+
+        if (VD->getIdentifier() == 0)
+            continue;
+        SourceLocation Loc = VD->getLocation();
+        DeclRefExpr D(VD, VD->getType(), Loc);
+        llvm::Value* Addr = Builder.CreateStructGEP(V, i+5, "tmp");
+        RValue r = EmitAnyExpr(&D, Addr, false);
+        if (r.isScalar())
+          Builder.CreateStore(r.getScalarVal(), Addr);
+        else if (r.isComplex())
+          // FIXME: implement
+          ErrorUnsupported(BE, "complex in block literal");
+        else if (r.isAggregate())
+          ; // Already created into the destination
+        else
+          assert (0 && "bad block variable");
+        // FIXME: Ensure that the offset created by the backend for
+        // the struct matches the previously computed offset in BlockDecls.
+      }
+
+    // FIXME: Add block_byref_decl_list.
   }
   
-  C = llvm::ConstantStruct::get(Elts);
-
-  char Name[32];
-  sprintf(Name, "__block_holder_tmp_%d", CGM.getGlobalUniqueCount());
-  C = new llvm::GlobalVariable(C->getType(), true,
-                               llvm::GlobalValue::InternalLinkage,
-                               C, Name, &CGM.getModule());
   QualType BPT = BE->getType();
-  C = llvm::ConstantExpr::getBitCast(C, ConvertType(BPT));
-  return C;
+  return Builder.CreateBitCast(V, ConvertType(BPT));
 }
-
-
 
 
 const llvm::Type *CodeGenModule::getBlockDescriptorType() {
@@ -365,9 +411,12 @@ CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   llvm::Constant *LiteralFields[5];
 
   CodeGenFunction::BlockInfo Info(0, n);
-  uint64_t subBlockSize;
+  uint64_t subBlockSize, subBlockAlign;
+  llvm::SmallVector<ValueDecl *, 8> subBlockDeclRefDecls;
   llvm::Function *Fn
-    = CodeGenFunction(*this).GenerateBlockFunction(BE, Info, subBlockSize);
+    = CodeGenFunction(*this).GenerateBlockFunction(BE, Info, subBlockSize,
+                                                   subBlockAlign,
+                                                   subBlockDeclRefDecls);
   assert(subBlockSize == BlockLiteralSize
          && "no imports allowed for global block");
 
@@ -404,7 +453,9 @@ llvm::Value *CodeGenFunction::LoadBlockStruct() {
 
 llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
                                                        const BlockInfo& Info,
-                                                       uint64_t &Size) {
+                                                       uint64_t &Size,
+                                                       uint64_t &Align,
+                                                       llvm::SmallVector<ValueDecl *, 8> &subBlockDeclRefDecls) {
   const FunctionTypeProto *FTy =
     cast<FunctionTypeProto>(Expr->getFunctionType());
 
@@ -442,7 +493,13 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
   EmitStmt(Expr->getBody());
   FinishFunction(cast<CompoundStmt>(Expr->getBody())->getRBracLoc());
 
+  // The runtime needs a minimum alignment of a void *.
+  uint64_t MinAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
+  BlockOffset = llvm::RoundUpToAlignment(BlockOffset, MinAlign);
+
   Size = BlockOffset;
+  Align = BlockAlign;
+  subBlockDeclRefDecls = BlockDeclRefDecls;
 
   return Fn;
 }

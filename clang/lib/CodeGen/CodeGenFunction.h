@@ -264,7 +264,7 @@ public:
   //                                  Block Bits
   //===--------------------------------------------------------------------===//
 
-  llvm::Constant *BuildBlockLiteralTmp(const BlockExpr *);
+  llvm::Value *BuildBlockLiteralTmp(const BlockExpr *);
   llvm::Constant *BuildDescriptorBlockDecl(uint64_t Size);
 
   /// BlockInfo - Information to generate a block literal.
@@ -281,7 +281,8 @@ public:
 
   llvm::Function *GenerateBlockFunction(const BlockExpr *Expr,
                                         const BlockInfo& Info,
-                                        uint64_t &Size);
+                                        uint64_t &Size, uint64_t &Align,
+                                        llvm::SmallVector<ValueDecl *, 8> &subBlockDeclRefDecls);
 
   ImplicitParamDecl *BlockStructDecl;
 
@@ -292,21 +293,40 @@ public:
   /// BlockHasCopyDispose - True iff the block uses copy/dispose.
   bool BlockHasCopyDispose;
 
+  /// BlockDeclRefDecls - Decls from BlockDeclRefExprs in apperance order
+  /// in a block literal.  Decls without names are used for padding.
+  llvm::SmallVector<ValueDecl *, 8> BlockDeclRefDecls;
+
+  /// BlockOffset - The offset in bytes for the next allocation of an
+  /// imported block variable.
   uint64_t BlockOffset;
-  /// getBlockOffset - Offset for next allocated variable use in a BlockExpr.
-  uint64_t getBlockOffset(uint64_t Size, uint64_t Align) {
-    assert (((Align >> 3) > 0) && "alignment must be 1 byte or more");
-    assert (((Align & 7) == 0)
-            && "alignment must be on at least byte boundaries");
-    // Ensure proper alignment, even if it means we have to have a gap
-    BlockOffset = llvm::RoundUpToAlignment(BlockOffset, Align/8);
-      
-    BlockOffset += Size;
-    return BlockOffset-Size;
-  }
+  /// BlockAlign - Maximal alignment needed for the Block expressed in bytes.
+  uint64_t BlockAlign;
+  /// getBlockOffset - Offset for next allocated variable used in a BlockExpr.
   uint64_t getBlockOffset(ValueDecl *D) {
     uint64_t Size = getContext().getTypeSize(D->getType()) / 8;
-    return getBlockOffset(Size, getContext().getDeclAlignInBytes(D)*8);
+    uint64_t Align = getContext().getDeclAlignInBytes(D);
+
+    assert ((Align > 0) && "alignment must be 1 byte or more");
+
+    uint64_t OldOffset = BlockOffset;
+
+    // Ensure proper alignment, even if it means we have to have a gap
+    BlockOffset = llvm::RoundUpToAlignment(BlockOffset, Align);
+    BlockAlign = std::max(Align, BlockAlign);
+      
+    uint64_t Pad = BlockOffset - OldOffset;
+    llvm::ArrayType::get(llvm::Type::Int8Ty, Pad);
+    QualType PadTy = getContext().getConstantArrayType(getContext().CharTy,
+                                                       llvm::APInt(32, Pad),
+                                                       ArrayType::Normal, 0);
+    ValueDecl *PadDecl = VarDecl::Create(getContext(), 0, SourceLocation(),
+                                         0, QualType(PadTy), VarDecl::None, SourceLocation());
+    BlockDeclRefDecls.push_back(PadDecl);
+    BlockDeclRefDecls.push_back(D);
+
+    BlockOffset += Size;
+    return BlockOffset-Size;
   }
   std::map<Decl*, uint64_t> BlockDecls;
 

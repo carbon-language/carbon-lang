@@ -38,6 +38,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   else
     BlockOffset = CGM.getTargetData()
       .getTypeStoreSizeInBits(CGM.getGenericExtendedBlockLiteralType()) / 8;
+  BlockAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
 }
 
 ASTContext &CodeGenFunction::getContext() const {

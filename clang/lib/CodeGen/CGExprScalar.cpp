@@ -607,11 +607,7 @@ Value *ScalarExprEmitter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
     return VisitExpr(E);
   }
 
-  // FIXME: We have most of the easy codegen for the helper, but we need to
-  // ensure we don't need copy/dispose, and we need to add the variables into
-  // the block literal still.
-  CGF.ErrorUnsupported(E, "scalar expression");
-
+  // FIXME: ensure we don't need copy/dispose.
   uint64_t &offset = CGF.BlockDecls[E->getDecl()];
 
   const llvm::Type *Ty;
@@ -1389,8 +1385,8 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 }
 
 Value *ScalarExprEmitter::VisitBlockExpr(const BlockExpr *BE) {
-  llvm::Constant *C = CGF.BuildBlockLiteralTmp(BE);
-  return C;
+  llvm::Value *V = CGF.BuildBlockLiteralTmp(BE);
+  return V;
 }
 
 //===----------------------------------------------------------------------===//

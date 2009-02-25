@@ -452,7 +452,7 @@ public:
     case Expr::BlockExprClass: {
       BlockExpr *B = cast<BlockExpr>(E);
       if (!B->hasBlockDeclRefExprs())
-        return CGF->BuildBlockLiteralTmp(B);
+        return cast<llvm::Constant>(CGF->BuildBlockLiteralTmp(B));
     }
     }
 
