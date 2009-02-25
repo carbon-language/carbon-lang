@@ -56,16 +56,29 @@ namespace prec {
 /// token.  This returns:
 ///
 static prec::Level getBinOpPrecedence(tok::TokenKind Kind, 
-                                      bool GreaterThanIsOperator) {
+                                      bool GreaterThanIsOperator,
+                                      bool CPlusPlus0x) {
   switch (Kind) {
   case tok::greater:
-    // The '>' token can act as either an operator or as the ending
-    // token for a template argument list.  
-    // FIXME: '>>' is similar, for error recovery and C++0x.
+    // C++ [temp.names]p3:
+    //   [...] When parsing a template-argument-list, the first
+    //   non-nested > is taken as the ending delimiter rather than a
+    //   greater-than operator. [...]
     if (GreaterThanIsOperator)
       return prec::Relational;
     return prec::Unknown;
       
+  case tok::greatergreater:
+    // C++0x [temp.names]p3:
+    //
+    //   [...] Similarly, the first non-nested >> is treated as two
+    //   consecutive but distinct > tokens, the first of which is
+    //   taken as the end of the template-argument-list and completes
+    //   the template-id. [...]
+    if (GreaterThanIsOperator || !CPlusPlus0x)
+      return prec::Shift;
+    return prec::Unknown;
+
   default:                        return prec::Unknown;
   case tok::comma:                return prec::Comma;
   case tok::equal:
@@ -90,8 +103,7 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
   case tok::lessequal:
   case tok::less:
   case tok::greaterequal:         return prec::Relational;
-  case tok::lessless:
-  case tok::greatergreater:       return prec::Shift;
+  case tok::lessless:             return prec::Shift;
   case tok::plus:
   case tok::minus:                return prec::Additive;
   case tok::percent:
@@ -274,7 +286,9 @@ Parser::OwningExprResult Parser::ParseConstantExpression() {
 /// LHS and has a precedence of at least MinPrec.
 Parser::OwningExprResult
 Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
-  unsigned NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator);
+  unsigned NextTokPrec = getBinOpPrecedence(Tok.getKind(), 
+                                            GreaterThanIsOperator,
+                                            getLang().CPlusPlus0x);
   SourceLocation ColonLoc;
 
   while (1) {
@@ -324,7 +338,8 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
     unsigned ThisPrec = NextTokPrec;
-    NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator);
+    NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator,
+                                     getLang().CPlusPlus0x);
 
     // Assignment and conditional expressions are right-associative.
     bool isRightAssoc = ThisPrec == prec::Conditional ||
@@ -343,7 +358,8 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
       if (RHS.isInvalid())
         return move(RHS);
 
-      NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator);
+      NextTokPrec = getBinOpPrecedence(Tok.getKind(), GreaterThanIsOperator,
+                                       getLang().CPlusPlus0x);
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
 

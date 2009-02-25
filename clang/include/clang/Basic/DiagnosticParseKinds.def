@@ -278,6 +278,8 @@ DIAG(err_id_after_template_in_nested_name_spec, ERROR,
      "expected template name after 'template' keyword in nested name specifier")
 DIAG(err_less_after_template_name_in_nested_name_spec, ERROR,
      "expected '<' after 'template %0' in nested name specifier")
+DIAG(err_two_right_angle_brackets_need_space, ERROR,
+     "a space is required between consecutive right angle brackets (use '> >')")
 
 // Language specific pragmas
 

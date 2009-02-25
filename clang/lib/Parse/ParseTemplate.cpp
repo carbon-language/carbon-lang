@@ -431,14 +431,24 @@ Parser::ParseTemplateIdAfterTemplateName(DeclTy *Template,
     }
   }
 
-  if (Tok.isNot(tok::greater))
+  if (Tok.isNot(tok::greater) && Tok.isNot(tok::greatergreater))
     return true;
 
-  // Determine the location of the '>'. Only consume this token if the
-  // caller asked us to.
+  // Determine the location of the '>' or '>>'. Only consume this
+  // token if the caller asked us to.
   RAngleLoc = Tok.getLocation();
 
-  if (ConsumeLastToken)
+  if (Tok.is(tok::greatergreater)) {
+    if (!getLang().CPlusPlus0x)
+      Diag(Tok.getLocation(), diag::err_two_right_angle_brackets_need_space);
+
+    Tok.setKind(tok::greater);
+    if (!ConsumeLastToken) {
+      // Since we're not supposed to consume the '>>' token, we need
+      // to insert a second '>' token after the first.
+      PP.EnterToken(Tok);
+    }
+  } else if (ConsumeLastToken)
     ConsumeToken();
 
   return false;
@@ -670,6 +680,6 @@ Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
     ConsumeToken();
   }
 
-  return Tok.isNot(tok::greater);
+  return Tok.isNot(tok::greater) && Tok.isNot(tok::greatergreater);
 }
 
