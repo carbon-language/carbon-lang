@@ -1933,13 +1933,6 @@ public:
 /// encapsulate common BUILD_VECTOR code and operations such as constant splat
 /// testing.
 class BuildVectorSDNode : public SDNode {
-  //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
-  // Constant splat state:
-  //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
-  //! We've computed the splat already?
-  bool computedSplat;
-  //! It is a splat?
-  bool isSplatVector;
   //! Splat has undefined bits in it
   bool hasUndefSplatBitsFlag;
   //! The splat value
@@ -1959,36 +1952,25 @@ protected:
 public:
   //! Constant splat predicate.
   /*!
-   Determine if this ISD::BUILD_VECTOR is a constant splat. The results are
-   cached to prevent recomputation.
+   Determine if this ISD::BUILD_VECTOR is a constant splat. This method
+   returns information about the splat in \a hasUndefSplatBitsFlag,
+   \a SplatBits, \a SplatUndef and \a SplatSize if the return value is
+   true.
 
-   @param MinSplatBits: minimum number of bits in the constant splat, defaults
+   \param[out] hasUndefSplatBitsFlag: true if the constant splat contains
+          any undefined bits in the splat.
+   \param[out] SplatBits: The constant splat value
+   \param[out] SplatUndef: The undefined bits in the splat value
+   \param[out] SplatSize: The size of the constant splat in bytes
+   \param MinSplatBits: minimum number of bits in the constant splat, defaults
           to 0 for 'don't care', but normally one of [8, 16, 32, 64].
-   @return true if the splat has the required minimum number of bits and the
+
+   \return true if the splat has the required minimum number of bits and the
            splat really is a constant splat (accounting for undef bits).
    */
-  bool isConstantSplat(int MinSplatBits = 0);
-
-  //! Get the splatbits
-  uint64_t getSplatBits() const {
-    assert(computedSplat && "BuildVectorSDNode: compute splat bits first!");
-    return SplatBits;
-  }
-
-  uint64_t getSplatUndef() const {
-    assert(computedSplat && "BuildVectorSDNode: compute splat bits first!");
-    return SplatUndef;
-  }
-
-  unsigned getSplatSize() const {
-    assert(computedSplat && "BuildVectorSDNode: compute splat bits first!");
-    return SplatSize;
-  }
-
-  bool hasAnyUndefBits() const {
-    assert(computedSplat && "BuildVectorSDNode: compute splat bits first!");
-    return hasUndefSplatBitsFlag;
-  }
+  bool isConstantSplat(bool &hasUndefSplatBitsFlag, uint64_t &SplatBits,
+                       uint64_t &SplatUndef, unsigned &SplatSize,
+		       int MinSplatBits = 0);
 
   static bool classof(const BuildVectorSDNode *) { return true; }
   static bool classof(const SDNode *N) {

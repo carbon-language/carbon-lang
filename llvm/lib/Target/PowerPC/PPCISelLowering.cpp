@@ -3171,16 +3171,16 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
   BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(Op.getNode());
   assert(BVN != 0 && "Expected a BuildVectorSDNode in LowerBUILD_VECTOR");
 
+  uint64_t SplatBits;
+  uint64_t SplatUndef;
+  unsigned SplatSize;
+  bool HasAnyUndefs;
+
   // If this is a splat (repetition) of a value across the whole vector, return
   // the smallest size that splats it.  For example, "0x01010101010101..." is a
   // splat of 0x01, 0x0101, and 0x01010101.  We return SplatBits = 0x01 and
   // SplatSize = 1 byte.
-  if (BVN->isConstantSplat()) {
-    uint64_t SplatBits = BVN->getSplatBits();
-    uint64_t SplatUndef = BVN->getSplatUndef();
-    unsigned SplatSize = BVN->getSplatSize();
-    bool HasAnyUndefs = BVN->hasAnyUndefBits();
-
+  if (BVN->isConstantSplat(HasAnyUndefs, SplatBits, SplatUndef, SplatSize)) {
     // First, handle single instruction cases.
 
     // All zeros?

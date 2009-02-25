@@ -4856,26 +4856,24 @@ MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs,
 
 BuildVectorSDNode::BuildVectorSDNode(MVT vecVT, DebugLoc dl,
 				     const SDValue *Elts, unsigned NumElts)
-  : SDNode(ISD::BUILD_VECTOR, dl, getSDVTList(vecVT), Elts, NumElts),
-    computedSplat(false), isSplatVector(false), hasUndefSplatBitsFlag(false),
-    SplatBits(0LL), SplatUndef(0LL), SplatSize(0)
+  : SDNode(ISD::BUILD_VECTOR, dl, getSDVTList(vecVT), Elts, NumElts)
 { }
 
-bool BuildVectorSDNode::isConstantSplat(int MinSplatBits)  {
+bool BuildVectorSDNode::isConstantSplat(bool &hasUndefSplatBitsFlag,
+                                        uint64_t &SplatBits,
+                                        uint64_t &SplatUndef,
+					unsigned &SplatSize,
+		                        int MinSplatBits) {
   unsigned int nOps = getNumOperands();
   assert(nOps > 0 && "isConstantSplat has 0-size build vector");
 
-  // Return early if we already know the answer:
-  if (computedSplat)
-    return isSplatVector;
+  // Assume that this isn't a constant splat.
+  bool isSplatVector = false;
 
   // The vector's used (non-undef) bits
   uint64_t VectorBits[2] = { 0, 0 };
   // The vector's undefined bits
   uint64_t UndefBits[2] = { 0, 0 };
-
-  // Assume that this isn't a constant splat.
-  isSplatVector = false;
 
   // Gather the constant and undefined bits
   unsigned EltBitSize = getOperand(0).getValueType().getSizeInBits();
@@ -4901,7 +4899,6 @@ bool BuildVectorSDNode::isConstantSplat(int MinSplatBits)  {
 	EltBits = DoubleToBits(apf.convertToDouble());
     } else {
       // Nonconstant element -> not a splat.
-      computedSplat = true;
       return isSplatVector;
     }
 
@@ -4910,7 +4907,6 @@ bool BuildVectorSDNode::isConstantSplat(int MinSplatBits)  {
 
   if ((VectorBits[0] & ~UndefBits[1]) != (VectorBits[1] & ~UndefBits[0])) {
     // Can't be a splat if two pieces don't match.
-    computedSplat = true;
     return isSplatVector;
   }
 
@@ -4954,7 +4950,6 @@ bool BuildVectorSDNode::isConstantSplat(int MinSplatBits)  {
     isSplatVector = true;
   }
 
-  computedSplat = true;
   return isSplatVector;
 }
 
