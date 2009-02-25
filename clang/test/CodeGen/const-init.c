@@ -80,7 +80,6 @@ long long g16 = (long long) ((void*) 0xFFFFFFFF);
 int *g17 = (int *) ((long) &g15);
 
 // RUN: grep '@g18.p = internal global \[1 x i32\*\] \[i32\* @g19\]' %t &&
-// FIXME: Should we really accept this in Sema?
 void g18(void) {
   extern int g19;
   static int *p[] = { &g19 };
