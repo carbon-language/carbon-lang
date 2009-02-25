@@ -98,15 +98,15 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
                                   &CGM.getModule(), 0, Ty.getAddressSpace());
 }
 
-llvm::GlobalVariable *
-CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
-                                            bool NoInit,
-                                            const char *Separator,
-                                            llvm::GlobalValue
-					    	::LinkageTypes Linkage) {
-  llvm::GlobalVariable *GV = CreateStaticBlockVarDecl(D, Separator, Linkage);
+void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) { 
 
-  if (D.getInit() && !NoInit) {
+  llvm::Value *&DMEntry = LocalDeclMap[&D];
+  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
+  
+  llvm::GlobalVariable *GV = 
+    CreateStaticBlockVarDecl(D, ".", llvm::GlobalValue::InternalLinkage);
+
+  if (D.getInit()) {
     llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), this);
 
     // If constant emission failed, then this should be a C++ static
@@ -146,18 +146,6 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
       GV->setInitializer(Init);
     }
   }
-
-  return GV;
-}
-
-void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) { 
-
-  llvm::Value *&DMEntry = LocalDeclMap[&D];
-  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
-  
-  llvm::GlobalValue *GV;
-  GV = GenerateStaticBlockVarDecl(D, false, ".",
-                                  llvm::GlobalValue::InternalLinkage);
 
   // FIXME: Merge attribute handling.
   if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
@@ -206,9 +194,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       // Targets that don't support recursion emit locals as globals.
       const char *Class =
         D.getStorageClass() == VarDecl::Register ? ".reg." : ".auto.";
-      DeclPtr = GenerateStaticBlockVarDecl(D, true, Class, 
-                                           llvm::GlobalValue
-                                           ::InternalLinkage);
+      DeclPtr = CreateStaticBlockVarDecl(D, Class, 
+                                         llvm::GlobalValue
+                                         ::InternalLinkage);
     }
     
     if (Ty->isVariablyModifiedType())
@@ -306,8 +294,8 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
     // Targets that don't have stack use global address space for parameters.
     // Specify external linkage for such globals so that llvm optimizer do
     // not assume there values initialized as zero.
-    DeclPtr = GenerateStaticBlockVarDecl(D, true, ".auto.",
-                                         llvm::GlobalValue::ExternalLinkage);
+    DeclPtr = CreateStaticBlockVarDecl(D, ".auto.",
+                                       llvm::GlobalValue::ExternalLinkage);
   } else {
     // A fixed sized single-value variable becomes an alloca in the entry block.
     const llvm::Type *LTy = ConvertType(Ty);

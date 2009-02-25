@@ -753,14 +753,6 @@ public:
                                                   llvm::GlobalValue::LinkageTypes
                                                   Linkage);
 
-  /// GenerateStaticBlockVarDecl - Return the the static declaration of local
-  /// variable.
-  llvm::GlobalVariable * GenerateStaticBlockVarDecl(const VarDecl &D,
-                                                    bool NoInit,
-                                                    const char *Separator,
-                                                    llvm::GlobalValue
-                                                    ::LinkageTypes Linkage);
-
   /// GenerateStaticCXXBlockVarDecl - Create the initializer for a C++
   /// runtime initialized static block var decl.
   void GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
