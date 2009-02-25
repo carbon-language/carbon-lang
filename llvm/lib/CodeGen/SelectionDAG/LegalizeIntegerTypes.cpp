@@ -810,8 +810,9 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BUILD_VECTOR(SDNode *N) {
     NewElts.push_back(JoinIntegers(Lo, Hi));
   }
 
-  SDValue NewVec = DAG.getBUILD_VECTOR(MVT::getVectorVT(NewVT, NewElts.size()),
-                                       dl, &NewElts[0], NewElts.size());
+  SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR, dl,
+                                 MVT::getVectorVT(NewVT, NewElts.size()),
+                                 &NewElts[0], NewElts.size());
 
   // Convert the new vector to the old vector type.
   return DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, NewVec);

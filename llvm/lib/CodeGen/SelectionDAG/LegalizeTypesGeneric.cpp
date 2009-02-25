@@ -246,7 +246,7 @@ SDValue DAGTypeLegalizer::ExpandOp_BIT_CONVERT(SDNode *N) {
       if (TLI.isBigEndian())
         std::swap(Parts[0], Parts[1]);
 
-      SDValue Vec = DAG.getBUILD_VECTOR(NVT, dl, Parts, 2);
+      SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, NVT, Parts, 2);
       return DAG.getNode(ISD::BIT_CONVERT, dl, N->getValueType(0), Vec);
     }
   }
@@ -277,8 +277,9 @@ SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
     NewElts.push_back(Hi);
   }
 
-  SDValue NewVec = DAG.getBUILD_VECTOR(MVT::getVectorVT(NewVT, NewElts.size()),
-                                       dl, &NewElts[0], NewElts.size());
+  SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR, dl,
+                                 MVT::getVectorVT(NewVT, NewElts.size()),
+                                 &NewElts[0], NewElts.size());
 
   // Convert the new vector to the old vector type.
   return DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, NewVec);
@@ -334,7 +335,7 @@ SDValue DAGTypeLegalizer::ExpandOp_SCALAR_TO_VECTOR(SDNode *N) {
   SDValue UndefVal = DAG.getUNDEF(Ops[0].getValueType());
   for (unsigned i = 1; i < NumElts; ++i)
     Ops[i] = UndefVal;
-  return DAG.getBUILD_VECTOR(VT, dl, &Ops[0], NumElts);
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], NumElts);
 }
 
 SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {

@@ -2386,7 +2386,8 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
       // Produce a vector of zeros.
       SDValue El = DAG.getConstant(0, VT.getVectorElementType());
       std::vector<SDValue> Ops(VT.getVectorNumElements(), El);
-      return DAG.getBUILD_VECTOR(VT, N->getDebugLoc(), &Ops[0], Ops.size());
+      return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
+                         &Ops[0], Ops.size());
     }
   }
 
@@ -3857,7 +3858,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
     }
     MVT VT = MVT::getVectorVT(DstEltVT,
                               BV->getValueType(0).getVectorNumElements());
-    return DAG.getBUILD_VECTOR(VT, BV->getDebugLoc(), &Ops[0], Ops.size());
+    return DAG.getNode(ISD::BUILD_VECTOR, BV->getDebugLoc(), VT,
+                       &Ops[0], Ops.size());
   }
 
   // Otherwise, we're growing or shrinking the elements.  To avoid having to
@@ -3913,7 +3915,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
     }
 
     MVT VT = MVT::getVectorVT(DstEltVT, Ops.size());
-    return DAG.getBUILD_VECTOR(VT, BV->getDebugLoc(), &Ops[0], Ops.size());
+    return DAG.getNode(ISD::BUILD_VECTOR, BV->getDebugLoc(), VT,
+                       &Ops[0], Ops.size());
   }
 
   // Finally, this must be the case where we are shrinking elements: each input
@@ -3947,7 +3950,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
       std::reverse(Ops.end()-NumOutputsPerInput, Ops.end());
   }
 
-  return DAG.getBUILD_VECTOR(VT, BV->getDebugLoc(), &Ops[0], Ops.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, BV->getDebugLoc(), VT,
+                     &Ops[0], Ops.size());
 }
 
 SDValue DAGCombiner::visitFADD(SDNode *N) {
@@ -5080,8 +5084,8 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
                                 InVec.getNode()->op_end());
     if (Elt < Ops.size())
       Ops[Elt] = InVal;
-    return DAG.getBUILD_VECTOR(InVec.getValueType(), N->getDebugLoc(),
-                               &Ops[0], Ops.size());
+    return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                       InVec.getValueType(), &Ops[0], Ops.size());
   }
 
   return SDValue();
@@ -5266,13 +5270,13 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       // Use an undef build_vector as input for the second operand.
       std::vector<SDValue> UnOps(NumInScalars,
                                  DAG.getUNDEF(EltType));
-      Ops[1] = DAG.getBUILD_VECTOR(VT, N->getDebugLoc(),
-                                   &UnOps[0], UnOps.size());
+      Ops[1] = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
+                           &UnOps[0], UnOps.size());
       AddToWorkList(Ops[1].getNode());
     }
 
-    Ops[2] = DAG.getBUILD_VECTOR(BuildVecVT, N->getDebugLoc(),
-                                &BuildVecIndices[0], BuildVecIndices.size());
+    Ops[2] = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), BuildVecVT,
+                         &BuildVecIndices[0], BuildVecIndices.size());
     return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(), VT, Ops, 3);
   }
 
@@ -5415,8 +5419,9 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       }
     }
 
-    ShufMask = DAG.getBUILD_VECTOR(ShufMask.getValueType(), N->getDebugLoc(),
-                                   &MappedOps[0], MappedOps.size());
+    ShufMask = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                           ShufMask.getValueType(),
+                           &MappedOps[0], MappedOps.size());
     AddToWorkList(ShufMask.getNode());
     return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(),
                        N->getValueType(0), N0,
@@ -5466,10 +5471,10 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
       Ops.push_back(LHS);
       AddToWorkList(LHS.getNode());
       std::vector<SDValue> ZeroOps(NumElts, DAG.getConstant(0, EVT));
-      Ops.push_back(DAG.getBUILD_VECTOR(VT, N->getDebugLoc(),
-                                        &ZeroOps[0], ZeroOps.size()));
-      Ops.push_back(DAG.getBUILD_VECTOR(MaskVT, N->getDebugLoc(),
-                                        &IdxOps[0], IdxOps.size()));
+      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                                VT, &ZeroOps[0], ZeroOps.size()));
+      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                                MaskVT, &IdxOps[0], IdxOps.size()));
       SDValue Result = DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(),
                                    VT, &Ops[0], Ops.size());
 
@@ -5538,7 +5543,8 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
 
     if (Ops.size() == LHS.getNumOperands()) {
       MVT VT = LHS.getValueType();
-      return DAG.getBUILD_VECTOR(VT, N->getDebugLoc(), &Ops[0], Ops.size());
+      return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
+                         &Ops[0], Ops.size());
     }
   }
 

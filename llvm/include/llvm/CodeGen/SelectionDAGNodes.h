@@ -1929,55 +1929,6 @@ public:
   }
 };
 
-/// BuildVectorSDNode - A container for ISD::BUILD_VECTOR. This is used to
-/// encapsulate common BUILD_VECTOR code and operations such as constant splat
-/// testing.
-class BuildVectorSDNode : public SDNode {
-  //! Splat has undefined bits in it
-  bool hasUndefSplatBitsFlag;
-  //! The splat value
-  uint64_t SplatBits;
-  //! The undefined part of the splat
-  uint64_t SplatUndef;
-  //! The splat's size (1, 2, 4 or 8 bytes)
-  unsigned SplatSize;
-
-protected:
-  friend class SelectionDAG;
-
-  //! Arbitrary element ISD::BUILD_VECTOR constructor
-  explicit BuildVectorSDNode(MVT vecVT, DebugLoc dl, const SDValue *Elts,
-                             unsigned NumElts);
-
-public:
-  //! Constant splat predicate.
-  /*!
-   Determine if this ISD::BUILD_VECTOR is a constant splat. This method
-   returns information about the splat in \a hasUndefSplatBitsFlag,
-   \a SplatBits, \a SplatUndef and \a SplatSize if the return value is
-   true.
-
-   \param[out] hasUndefSplatBitsFlag: true if the constant splat contains
-          any undefined bits in the splat.
-   \param[out] SplatBits: The constant splat value
-   \param[out] SplatUndef: The undefined bits in the splat value
-   \param[out] SplatSize: The size of the constant splat in bytes
-   \param MinSplatBits: minimum number of bits in the constant splat, defaults
-          to 0 for 'don't care', but normally one of [8, 16, 32, 64].
-
-   \return true if the splat has the required minimum number of bits and the
-           splat really is a constant splat (accounting for undef bits).
-   */
-  bool isConstantSplat(bool &hasUndefSplatBitsFlag, uint64_t &SplatBits,
-                       uint64_t &SplatUndef, unsigned &SplatSize,
-                       int MinSplatBits = 0);
-
-  static bool classof(const BuildVectorSDNode *) { return true; }
-  static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::BUILD_VECTOR;
-  }
-};
-
 /// SrcValueSDNode - An SDNode that holds an arbitrary LLVM IR Value. This is
 /// used when the SelectionDAG needs to make a simple reference to something
 /// in the LLVM IR representation.

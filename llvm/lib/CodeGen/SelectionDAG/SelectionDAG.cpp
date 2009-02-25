@@ -847,7 +847,7 @@ SDValue SelectionDAG::getNOT(DebugLoc DL, SDValue Val, MVT VT) {
     SDValue NegOneElt =
       getConstant(APInt::getAllOnesValue(EltVT.getSizeInBits()), EltVT);
     std::vector<SDValue> NegOnes(VT.getVectorNumElements(), NegOneElt);
-    NegOne = getBUILD_VECTOR(VT, DL, &NegOnes[0], NegOnes.size());
+    NegOne = getNode(ISD::BUILD_VECTOR, DL, VT, &NegOnes[0], NegOnes.size());
   } else {
     NegOne = getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT);
   }
@@ -893,8 +893,8 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, MVT VT, bool isT) {
   if (VT.isVector()) {
     SmallVector<SDValue, 8> Ops;
     Ops.assign(VT.getVectorNumElements(), Result);
-    Result = getBUILD_VECTOR(VT, DebugLoc::getUnknownLoc(),
-                             &Ops[0], Ops.size());
+    Result = getNode(ISD::BUILD_VECTOR, DebugLoc::getUnknownLoc(),
+                     VT, &Ops[0], Ops.size());
   }
   return Result;
 }
@@ -937,8 +937,9 @@ SDValue SelectionDAG::getConstantFP(const ConstantFP& V, MVT VT, bool isTarget){
   if (VT.isVector()) {
     SmallVector<SDValue, 8> Ops;
     Ops.assign(VT.getVectorNumElements(), Result);
-    Result = getBUILD_VECTOR(VT, DebugLoc::getUnknownLoc(),
-                             &Ops[0], Ops.size());
+    // FIXME DebugLoc info might be appropriate here
+    Result = getNode(ISD::BUILD_VECTOR, DebugLoc::getUnknownLoc(),
+                     VT, &Ops[0], Ops.size());
   }
   return Result;
 }
@@ -1074,39 +1075,6 @@ SDValue SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
   new (N) BasicBlockSDNode(MBB);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
-SDValue SelectionDAG::getBUILD_VECTOR(MVT vecVT, DebugLoc dl, SDValue E1) {
-  return getBUILD_VECTOR(vecVT, dl, &E1, 1);
-}
-
-SDValue SelectionDAG::getBUILD_VECTOR(MVT vecVT, DebugLoc dl, SDValue E1,
-                                      SDValue E2) {
-  SDValue Ops[2] = { E1, E2 };
-  return getBUILD_VECTOR(vecVT, dl, &Ops[0], 2);
-}
-
-SDValue SelectionDAG::getBUILD_VECTOR(MVT vecVT, DebugLoc dl, SDValue E1,
-                                      SDValue E2, SDValue E3, SDValue E4) {
-  SDValue Ops[4] = { E1, E2, E3, E4 };
-  return getBUILD_VECTOR(vecVT, dl, &Ops[0], 4);
-}
-
-SDValue SelectionDAG::getBUILD_VECTOR(MVT vecVT, DebugLoc dl,
-                                      const SDValue *Elts, unsigned NumElts) {
-  FoldingSetNodeID ID;
-  void *IP = 0;
-  SDNode *N = 0;
-
-  AddNodeIDNode(ID, ISD::BUILD_VECTOR, getVTList(vecVT), Elts, NumElts);
-  if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)) == 0) {
-    N = NodeAllocator.Allocate<BuildVectorSDNode>();
-    new (N) BuildVectorSDNode(vecVT, dl, Elts, NumElts);
-    CSEMap.InsertNode(N, IP);
-    AllNodes.push_back(N);
-  }
-
   return SDValue(N, 0);
 }
 
@@ -2441,7 +2409,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
         N2.getOpcode() == ISD::BUILD_VECTOR) {
       SmallVector<SDValue, 16> Elts(N1.getNode()->op_begin(), N1.getNode()->op_end());
       Elts.insert(Elts.end(), N2.getNode()->op_begin(), N2.getNode()->op_end());
-      return getBUILD_VECTOR(VT, DL, &Elts[0], Elts.size());
+      return getNode(ISD::BUILD_VECTOR, DL, VT, &Elts[0], Elts.size());
     }
     break;
   case ISD::AND:
@@ -2795,7 +2763,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
       SmallVector<SDValue, 16> Elts(N1.getNode()->op_begin(), N1.getNode()->op_end());
       Elts.insert(Elts.end(), N2.getNode()->op_begin(), N2.getNode()->op_end());
       Elts.insert(Elts.end(), N3.getNode()->op_begin(), N3.getNode()->op_end());
-      return getBUILD_VECTOR(VT, DL, &Elts[0], Elts.size());
+      return getNode(ISD::BUILD_VECTOR, DL, VT, &Elts[0], Elts.size());
     }
     break;
   case ISD::SETCC: {
@@ -4854,106 +4822,6 @@ MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs,
   assert(isVolatile() == vol && "Volatile representation error!");
 }
 
-BuildVectorSDNode::BuildVectorSDNode(MVT vecVT, DebugLoc dl,
-                                     const SDValue *Elts, unsigned NumElts)
-  : SDNode(ISD::BUILD_VECTOR, dl, getSDVTList(vecVT), Elts, NumElts)
-{ }
-
-bool BuildVectorSDNode::isConstantSplat(bool &hasUndefSplatBitsFlag,
-                                        uint64_t &SplatBits,
-                                        uint64_t &SplatUndef,
-                                        unsigned &SplatSize,
-                                        int MinSplatBits) {
-  unsigned int nOps = getNumOperands();
-  assert(nOps > 0 && "isConstantSplat has 0-size build vector");
-
-  // Assume that this isn't a constant splat.
-  bool isSplatVector = false;
-
-  // The vector's used (non-undef) bits
-  uint64_t VectorBits[2] = { 0, 0 };
-  // The vector's undefined bits
-  uint64_t UndefBits[2] = { 0, 0 };
-
-  // Gather the constant and undefined bits
-  unsigned EltBitSize = getOperand(0).getValueType().getSizeInBits();
-  for (unsigned i = 0; i < nOps; ++i) {
-    SDValue OpVal = getOperand(i);
-    unsigned PartNo = i >= nOps/2;     // In the upper 128 bits?
-    unsigned SlotNo = nOps/2 - (i & (nOps/2-1))-1;// Which subpiece of the uint64_t.
-    uint64_t EltBits = 0;
-
-    if (OpVal.getOpcode() == ISD::UNDEF) {
-      uint64_t EltUndefBits = ~0U >> (32-EltBitSize);
-      UndefBits[PartNo] |= EltUndefBits << (SlotNo*EltBitSize);
-      continue;
-    } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
-      EltBits = CN->getZExtValue();
-      if (EltBitSize <= 32)
-        EltBits &= (~0U >> (32-EltBitSize));
-    } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
-      const APFloat &apf = CN->getValueAPF();
-      if (OpVal.getValueType() == MVT::f32)
-        EltBits = FloatToBits(apf.convertToFloat());
-      else
-        EltBits = DoubleToBits(apf.convertToDouble());
-    } else {
-      // Nonconstant element -> not a splat.
-      return isSplatVector;
-    }
-
-    VectorBits[PartNo] |= EltBits << (SlotNo*EltBitSize);
-  }
-
-  if ((VectorBits[0] & ~UndefBits[1]) != (VectorBits[1] & ~UndefBits[0])) {
-    // Can't be a splat if two pieces don't match.
-    return isSplatVector;
-  }
-
-  // Don't let undefs prevent splats from matching. See if the top 64-bits
-  // are the same as the lower 64-bits, ignoring undefs.
-  uint64_t Bits64  = VectorBits[0] | VectorBits[1];
-  uint64_t Undef64 = UndefBits[0] & UndefBits[1];
-  uint32_t Bits32  = uint32_t(Bits64) | uint32_t(Bits64 >> 32);
-  uint32_t Undef32 = uint32_t(Undef64) & uint32_t(Undef64 >> 32);
-  uint16_t Bits16  = uint16_t(Bits32)  | uint16_t(Bits32 >> 16);
-  uint16_t Undef16 = uint16_t(Undef32) & uint16_t(Undef32 >> 16);
-
-  bool splat64 =
-    (VectorBits[0] & ~UndefBits[1]) == (VectorBits[1] & ~UndefBits[0]);
-  bool splat32 = (Bits64 & (~Undef64 >> 32)) == ((Bits64 >> 32) & ~Undef64);
-  bool splat16 = (Bits32 & (~Undef32 >> 16)) == ((Bits32 >> 16) & ~Undef32);
-  bool splat8 =
-    (Bits16 & (uint16_t(~Undef16) >> 8)) == ((Bits16 >> 8) & ~Undef16);
-
-  hasUndefSplatBitsFlag = ((UndefBits[0] | UndefBits[1]) != 0);
-
-  if (splat64 && (MinSplatBits >= 64 || !splat32)) {
-    SplatBits = VectorBits[0];
-    SplatUndef = UndefBits[0];
-    SplatSize = 8;
-    isSplatVector = true;
-  } else if (splat32 && (MinSplatBits >= 32 || !splat16)) {
-    SplatBits = Bits32;
-    SplatUndef = Undef32;
-    SplatSize = 4;
-    isSplatVector = true;
-  } else if (splat16 && (MinSplatBits >= 16 || !splat8)) {
-    SplatBits = Bits16;
-    SplatUndef = Undef16;
-    SplatSize = 2;
-    isSplatVector = true;
-  } else if (splat8) {
-    SplatBits = uint8_t(Bits16) | uint8_t(Bits16 >> 8);
-    SplatUndef = uint8_t(Undef16) & uint8_t(Undef16 >> 8);
-    SplatSize = 1;
-    isSplatVector = true;
-  }
-
-  return isSplatVector;
-}
-
-
 /// getMemOperand - Return a MachineMemOperand object describing the memory
 /// reference performed by this memory reference.
 MachineMemOperand MemSDNode::getMemOperand() const {
@@ -5646,8 +5514,8 @@ void SDNode::printr(raw_ostream &OS, const SelectionDAG *G) const {
 
 typedef SmallPtrSet<const SDNode *, 128> VisitedSDNodeSet;
 static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
-                       const SelectionDAG *G, VisitedSDNodeSet &once) {
-  if (!once.insert(N))  // If we've been here before, return now.
+		       const SelectionDAG *G, VisitedSDNodeSet &once) {
+  if (!once.insert(N))	// If we've been here before, return now.
     return;
   // Dump the current SDNode, but don't end the line yet.
   OS << std::string(indent, ' ');
@@ -5661,10 +5529,10 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
       // This child has no grandchildren; print it inline right here.
       child->printr(OS, G);
       once.insert(child);
-    } else {    // Just the address.  FIXME: also print the child's opcode
+    } else {	// Just the address.  FIXME: also print the child's opcode
       OS << (void*)child;
       if (unsigned RN = N->getOperand(i).getResNo())
-        OS << ":" << RN;
+	OS << ":" << RN;
     }
   }
   OS << "\n";

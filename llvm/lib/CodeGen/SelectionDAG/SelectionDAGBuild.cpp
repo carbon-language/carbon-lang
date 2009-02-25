@@ -533,7 +533,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
     assert(ValueVT.getVectorElementType() == PartVT &&
            ValueVT.getVectorNumElements() == 1 &&
            "Only trivial scalar-to-vector conversions should get here!");
-    return DAG.getBUILD_VECTOR(ValueVT, dl, Val);
+    return DAG.getNode(ISD::BUILD_VECTOR, dl, ValueVT, Val);
   }
 
   if (PartVT.isInteger() &&
@@ -936,8 +936,8 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
     }
 
     // Create a BUILD_VECTOR node.
-    return NodeMap[V] = DAG.getBUILD_VECTOR(VT, getCurDebugLoc(),
-                                            &Ops[0], Ops.size());
+    return NodeMap[V] = DAG.getNode(ISD::BUILD_VECTOR, getCurDebugLoc(),
+                                    VT, &Ops[0], Ops.size());
   }
 
   // If this is a static alloca, generate it as the frameindex instead of
@@ -2471,8 +2471,9 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
                                               MaskEltVT));
       }
     }
-    Mask = DAG.getBUILD_VECTOR(Mask.getValueType(), getCurDebugLoc(),
-                               &MappedOps[0], MappedOps.size());
+    Mask = DAG.getNode(ISD::BUILD_VECTOR, getCurDebugLoc(),
+                       Mask.getValueType(),
+                       &MappedOps[0], MappedOps.size());
 
     setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE, getCurDebugLoc(),
                              VT, Src1, Src2, Mask));
@@ -2570,8 +2571,9 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
           }
         }
       }
-      Mask = DAG.getBUILD_VECTOR(Mask.getValueType(), getCurDebugLoc(),
-                                 &MappedOps[0], MappedOps.size());
+      Mask = DAG.getNode(ISD::BUILD_VECTOR, getCurDebugLoc(),
+                         Mask.getValueType(),
+                         &MappedOps[0], MappedOps.size());
       setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE, getCurDebugLoc(),
                                VT, Src1, Src2, Mask));
       return;
@@ -2600,7 +2602,8 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
                                   DAG.getConstant(Idx - SrcNumElts, PtrVT)));
     }
   }
-  setValue(&I, DAG.getBUILD_VECTOR(VT, getCurDebugLoc(), &Ops[0], Ops.size()));
+  setValue(&I, DAG.getNode(ISD::BUILD_VECTOR, getCurDebugLoc(),
+                           VT, &Ops[0], Ops.size()));
 }
 
 void SelectionDAGLowering::visitInsertValue(InsertValueInst &I) {

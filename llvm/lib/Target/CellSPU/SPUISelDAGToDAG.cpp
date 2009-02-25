@@ -705,7 +705,7 @@ SPUDAGToDAGISel::Select(SDValue Op) {
       /*NOTREACHED*/
       break;
     case MVT::i32:
-      shufMask = CurDAG->getBUILD_VECTOR(MVT::v4i32, dl,
+      shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
                                  CurDAG->getConstant(0x80808080, MVT::i32),
                                  CurDAG->getConstant(0x00010203, MVT::i32),
                                  CurDAG->getConstant(0x80808080, MVT::i32),
@@ -713,7 +713,7 @@ SPUDAGToDAGISel::Select(SDValue Op) {
       break;
 
     case MVT::i16:
-      shufMask = CurDAG->getBUILD_VECTOR(MVT::v4i32, dl,
+      shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
                                  CurDAG->getConstant(0x80808080, MVT::i32),
                                  CurDAG->getConstant(0x80800203, MVT::i32),
                                  CurDAG->getConstant(0x80808080, MVT::i32),
@@ -721,7 +721,7 @@ SPUDAGToDAGISel::Select(SDValue Op) {
       break;
 
     case MVT::i8:
-      shufMask = CurDAG->getBUILD_VECTOR(MVT::v4i32, dl,
+      shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
                                  CurDAG->getConstant(0x80808080, MVT::i32),
                                  CurDAG->getConstant(0x80808003, MVT::i32),
                                  CurDAG->getConstant(0x80808080, MVT::i32),
