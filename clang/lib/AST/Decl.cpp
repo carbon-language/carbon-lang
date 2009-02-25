@@ -75,9 +75,13 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, 
                                    DeclarationName N, QualType T, 
                                    StorageClass S, bool isInline, 
+                                   bool hasPrototype,
                                    SourceLocation TypeSpecStartLoc) {
-  return new (C) FunctionDecl(Function, DC, L, N, T, S, isInline,
-                                TypeSpecStartLoc);
+  FunctionDecl *New 
+    = new (C) FunctionDecl(Function, DC, L, N, T, S, isInline, 
+                           TypeSpecStartLoc);
+  New->HasPrototype = hasPrototype;
+  return New;
 }
 
 BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {

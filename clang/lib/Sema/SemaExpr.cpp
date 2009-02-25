@@ -873,6 +873,19 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           CheckS = CheckS->getParent();
       }
     }
+  } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(VD)) {
+    if (!getLangOptions().CPlusPlus && !Func->hasPrototype()) {
+      // C99 DR 316 says that, if a function type comes from a
+      // function definition (without a prototype), that type is only
+      // used for checking compatibility. Therefore, when referencing
+      // the function, we pretend that we don't have the full function
+      // type.
+      QualType T = Func->getType();
+      QualType NoProtoType = T;
+      if (const FunctionTypeProto *Proto = T->getAsFunctionTypeProto())
+        NoProtoType = Context.getFunctionTypeNoProto(Proto->getResultType());
+      return Owned(BuildDeclRefExpr(VD, NoProtoType, Loc, false, false, SS));
+    }
   }
 
   // Only create DeclRefExpr's for valid Decl's.

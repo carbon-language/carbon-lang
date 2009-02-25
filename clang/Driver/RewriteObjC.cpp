@@ -4063,7 +4063,8 @@ FunctionDecl *RewriteObjC::SynthBlockInitFunctionDecl(const char *name) {
   IdentifierInfo *ID = &Context->Idents.get(name);
   QualType FType = Context->getFunctionTypeNoProto(Context->VoidPtrTy);
   return FunctionDecl::Create(*Context, TUDecl,SourceLocation(), 
-                              ID, FType, FunctionDecl::Extern, false);
+                              ID, FType, FunctionDecl::Extern, false,
+                              false);
 }
 
 Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {

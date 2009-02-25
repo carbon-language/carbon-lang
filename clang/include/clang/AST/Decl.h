@@ -532,6 +532,7 @@ private:
   bool IsVirtual : 1;
   bool IsPure : 1;
   bool InheritedPrototype : 1;
+  bool HasPrototype : 1;
   bool IsDeleted : 1;
 
   // Move to DeclGroup when it is implemented.
@@ -545,7 +546,8 @@ protected:
       DeclContext(DK),
       ParamInfo(0), Body(0), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), IsVirtual(false), IsPure(false),
-      InheritedPrototype(false), IsDeleted(false), TypeSpecStartLoc(TSSL) {}
+      InheritedPrototype(false), HasPrototype(true), IsDeleted(false), 
+      TypeSpecStartLoc(TSSL) {}
 
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
@@ -554,6 +556,7 @@ public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               DeclarationName N, QualType T, 
                               StorageClass S = None, bool isInline = false,
+                              bool hasPrototype = true,
                               SourceLocation TSStartLoc = SourceLocation());  
   
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
@@ -588,9 +591,15 @@ public:
   bool isPure() { return IsPure; }
   void setPure() { IsPure = true; }
 
+  /// \brief Whether this function has a prototype, either because one
+  /// was explicitly written or because it was "inherited" by merging
+  /// a declaration without a prototype with a declaration that has a
+  /// prototype.
+  bool hasPrototype() const { return HasPrototype || InheritedPrototype; }
+
   /// \brief Whether this function inherited its prototype from a
   /// previous declaration.
-  bool inheritedPrototype() { return InheritedPrototype; }
+  bool inheritedPrototype() const { return InheritedPrototype; }
   void setInheritedPrototype() { InheritedPrototype = true; }
 
   /// \brief Whether this function has been deleted.

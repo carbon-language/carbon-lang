@@ -334,7 +334,8 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   FunctionDecl *New = FunctionDecl::Create(Context,
                                            Context.getTranslationUnitDecl(),
                                            Loc, II, R,
-                                           FunctionDecl::Extern, false);
+                                           FunctionDecl::Extern, false,
+                                           /*hasPrototype=*/true);
   New->setImplicit();
 
   // Create Decl objects for each parameter, adding them to the
@@ -1736,6 +1737,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // code path.
       NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
                                    Name, R, SC, isInline, 
+                                   /*hasPrototype=*/true,
                                    // FIXME: Move to DeclGroup...
                                    D.getDeclSpec().getSourceRange().getBegin());
       InvalidDecl = true;
@@ -1765,6 +1767,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     NewFD = FunctionDecl::Create(Context, DC,
                                  D.getIdentifierLoc(),
                                  Name, R, SC, isInline, 
+                                 /*hasPrototype=*/
+                                   (getLangOptions().CPlusPlus ||
+                                    (D.getNumTypeObjects() &&
+                                     D.getTypeObject(0).Fun.hasPrototype)),
                                  // FIXME: Move to DeclGroup...
                                  D.getDeclSpec().getSourceRange().getBegin());
   }
