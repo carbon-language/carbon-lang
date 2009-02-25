@@ -77,11 +77,6 @@ compile it.  If not, please let us know.  Again,
 <a href="get_started.html#ccc"><code>ccc</code></a> might help you.  Once it
 compiles it should run.  If not, that's a bug :)</li>
 
-<li><b>Debug Info Generation</b>: -emit-llvm doesn't fully support emission
-of <a href="http://llvm.org/docs/SourceLevelDebugging.html">LLVM debug info</a>
-(which the code generator turns into DWARF).  The missing pieces are pretty 
-minor at this point.</li>
-
 <li><b>Overflow detection</b>: an interesting project would be to add a -ftrapv
 compilation mode that causes -emit-llvm to generate overflow tests for all
 signed integer arithmetic operators, and call abort if they overflow.  Overflow
@@ -104,25 +99,7 @@ missing and what is already at least partially supported.</li>
 <li><b>Improve target support</b>: The current target interfaces are heavily
 stubbed out and need to be implemented fully.  See the FIXME's in TargetInfo.
 Additionally, the actual target implementations (instances of TargetInfoImpl)
-also need to be completed.  This includes defining builtin macros for linux
-targets and other stuff like that.</li>
-
-<li><b>Implement 'builtin' headers</b>: GCC provides a bunch of builtin headers,
-such as stdbool.h, iso646.h, float.h, limits.h, etc.  It also provides a bunch
-of target-specific headers like altivec.h and xmmintrin.h.  clang will
-eventually need to provide its own copies of these (and there is a <a href=
-"http://lists.cs.uiuc.edu/pipermail/cfe-dev/2007-December/000560.html">lot of 
-improvement</a> that can be made to the GCC ones!) that are clean-room
-implemented to avoid GPL taint.</li>
-
-<li><b>Implement a clang 'libgcc'</b>: As with the headers, clang (or a another
-related subproject of llvm) will need to implement the features that libgcc
-provides. libgcc provides a bunch of routines the code generator uses for
-"fallback" when the chip doesn't support some operation (e.g. 64-bit divide on
-a 32-bit chip).  It also provides software floating point support and many other
-things.  I don't think that there is a specific licensing reason to reimplement
-libgcc, but there is a lot of room for improvement in it in many 
-dimensions.</li>
+also need to be completed.</li>
 
 <li><b>Implement an tool to generate code documentation</b>: Clang's
 library-based design allows it to be used by a variety of tools that reason
