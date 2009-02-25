@@ -27,22 +27,21 @@ involved</a> with the clang community.</p>
 <p>While this work aims to provide a fully functional C/C++/ObjC front-end, it
 is <em>still early work</em> and is under heavy development. In particular,
 there is no real C++ support yet (this is obviously a big project), and C/ObjC
-support is still missing some features. Some of the more notable missing pieces
-of C support are:</p>
+support is still missing some minor features. Some of the more notable missing 
+pieces of C support are:</p>
 
 <ol>
-  <li>The semantic analyzer does not produce all of the warnings and errors it
-      should.</li>
-  <li>The LLVM code generator is still missing important features.  clang is not
-      ready to be used as a general purpose C code generator yet, but if you
-      hit problems and report them to cfe-dev, we'll fix them :).</li>
+  <li>The semantic analyzer does not produce all of the warnings it should.</li>
   <li>We don't consider the API to be stable yet, and reserve the right to
       change fundamental things.</li>
+  <li>The driver is currently implemented in python and is "really slow".</li>
 </ol>
 
-<p>Our plan is to continue chipping away at these issues until C works really
-well, but we'd love help from other interested contributors.  We expect C to be
-in good shape by mid to late 2008.</p>
+<p>At this point, C and Objective-C are generally usable for X86-32 and X86-64 
+targets.  If you run into problems, please file bugs in <a 
+href="http://llvm.org/bugs/">LLVM Bugzilla</a> or bring up the issue on the 
+<a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">Clang development 
+mailing list</a>.</p>
 
 <h2 id="build">Building clang / working with the code</h2>
 
