@@ -576,6 +576,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
   MVT PtrVT = TLI.getPointerTy();
   MVT ValueVT = Val.getValueType();
   unsigned PartBits = PartVT.getSizeInBits();
+  unsigned OrigNumParts = NumParts;
   assert(TLI.isTypeLegal(PartVT) && "Copying to an illegal type!");
 
   if (!NumParts)
@@ -673,7 +674,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
     }
 
     if (TLI.isBigEndian())
-      std::reverse(Parts, Parts + NumParts);
+      std::reverse(Parts, Parts + OrigNumParts);
 
     return;
   }
