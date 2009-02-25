@@ -646,6 +646,13 @@ private:
     ObjCMethodSummaries[S] = Summ;
   }
   
+  void addInstMethSummary(const char* Cls, const char* nullaryName,
+                          RetainSummary *Summ) {
+    IdentifierInfo* ClsII = &Ctx.Idents.get(Cls);
+    Selector S = GetNullarySelector(nullaryName, Ctx);
+    ObjCMethodSummaries[ObjCSummaryKey(ClsII, S)]  = Summ;
+  }
+    
   void addInstMethSummary(const char* Cls, RetainSummary* Summ, va_list argp) {
     
     IdentifierInfo* ClsII = &Ctx.Idents.get(Cls);
@@ -1134,10 +1141,9 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
   
   // Specially handle NSAutoreleasePool.
-  addInstMethSummary("NSAutoreleasePool",
+  addInstMethSummary("NSAutoreleasePool", "init",
                      getPersistentSummary(RetEffect::MakeReceiverAlias(),
-                                          NewAutoreleasePool),
-                     "init", NULL);
+                                          NewAutoreleasePool));
   
   // For NSWindow, allocated objects are (initially) self-owned.  
   // FIXME: For now we opt for false negatives with NSWindow, as these objects
@@ -1369,10 +1375,10 @@ static int AutoRCIndex = 0;
 static int AutoRBIndex = 0;
 
 namespace { class VISIBILITY_HIDDEN AutoreleasePoolContents {}; }
-namespace { class VISIBILITY_HIDDEN AutoreleaseBindings {}; }
+namespace { class VISIBILITY_HIDDEN AutoreleaseStack {}; }
 
 namespace clang {
-template<> struct GRStateTrait<AutoreleaseBindings>
+template<> struct GRStateTrait<AutoreleaseStack>
   : public GRStatePartialTrait<ARStack> {
   static inline void* GDMIndex() { return &AutoRBIndex; }  
 };
@@ -1520,6 +1526,17 @@ void CFRefCount::BindingsPrinter::Print(std::ostream& Out, const GRState* state,
   for (RefBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {
     Out << (*I).first << " : ";
     (*I).second.print(Out);
+    Out << nl;
+  }
+  
+  // Print the autorelease stack.
+  ARStack stack = state->get<AutoreleaseStack>();
+  if (!stack.isEmpty()) {
+    Out << sep << nl << "AR pool stack:";
+  
+    for (ARStack::iterator I=stack.begin(), E=stack.end(); I!=E; ++I)
+      Out << ' ' << (*I);
+    
     Out << nl;
   }
 }
@@ -2067,7 +2084,10 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
       }
       // Fall-through.
 
-    case NewAutoreleasePool: // FIXME: Implement pushing the pool to the stack.
+    case NewAutoreleasePool:
+      assert(!isGCEnabled());
+      return state.add<AutoreleaseStack>(sym);
+      
     case DoNothingByRef:
     case DoNothing:
       if (!isGCEnabled() && V.getKind() == RefVal::Released) {
