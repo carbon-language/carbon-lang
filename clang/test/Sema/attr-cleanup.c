@@ -29,5 +29,5 @@ void c3(struct s a);
 void t2()
 {
     int v1 __attribute__((cleanup(c2))); // expected-error {{'cleanup' function 'c2' must take 1 parameter}}
-    int v2 __attribute__((cleanup(c3))); // expected-error {{'cleanup' function 'c3' parameter has type 'struct s', expected type 'int *'}}
+    int v2 __attribute__((cleanup(c3))); // expected-error {{'cleanup' function 'c3' parameter has type 'struct s' which is incompatible with type 'int *'}}
 }

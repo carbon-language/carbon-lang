@@ -412,8 +412,9 @@ DIAG(err_attribute_cleanup_arg_not_function, ERROR,
 DIAG(err_attribute_cleanup_func_must_take_one_arg, ERROR,
     "'cleanup' function %0 must take 1 parameter")
 DIAG(err_attribute_cleanup_func_arg_incompatible_type, ERROR,
-    "'cleanup' function %0 parameter has type %1, expected type %2")
-    
+    "'cleanup' function %0 parameter has type %1 which is incompatible with "
+    "type %2")
+
 // Clang-Specific Attributes
 DIAG(err_attribute_iboutlet, ERROR,
      "'iboutlet' attribute can only be applied to instance variables or properties")
