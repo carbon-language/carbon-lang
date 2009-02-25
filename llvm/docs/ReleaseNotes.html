@@ -306,6 +306,15 @@ which allows us to implement more aggressive algorithms and make it run
 faster:</p>
 
 <ul>
+<li>The type legalization logic has been completely rewritten, and is now
+more powerful (it supports arbitrary precision integer types for example)
+and hopefully more correct.
+The type legalizer converts operations on types that are not natively
+supported by the target machine into equivalent code sequences that only use
+natively supported types.
+The old type legalizer is still available and will be used if
+<tt>-disable-legalize-types</tt> is passed to <tt>llc</tt>.
+</li>
 <li>?</li>
 
 </ul>
