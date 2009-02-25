@@ -10837,7 +10837,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         // out, perform the transformation. Note, we don't know whether Scale is
         // signed or not. We'll use unsigned version of division/modulo
         // operation after making sure Scale doesn't have the sign bit set.
-        if (Scale && Scale->getSExtValue() >= 0LL &&
+        if (ArrayEltSize && Scale && Scale->getSExtValue() >= 0LL &&
             Scale->getZExtValue() % ArrayEltSize == 0) {
           Scale = ConstantInt::get(Scale->getType(),
                                    Scale->getZExtValue() / ArrayEltSize);
