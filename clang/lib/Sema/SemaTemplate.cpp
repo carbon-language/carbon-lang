@@ -1520,6 +1520,77 @@ Sema::CheckTemplateDeclScope(Scope *S,
     << TemplateRange;
 }
 
+/// \brief Check whether a class template specialization in the
+/// current context is well-formed.
+///
+/// This routine determines whether a class template specialization
+/// can be declared in the current context (C++ [temp.expl.spec]p2)
+/// and emits appropriate diagnostics if there was an error. It
+/// returns true if there was an error that we cannot recover from,
+/// and false otherwise.
+bool 
+Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
+                                   ClassTemplateSpecializationDecl *PrevDecl,
+                                            SourceLocation TemplateNameLoc,
+                                            SourceRange ScopeSpecifierRange) {
+  // C++ [temp.expl.spec]p2:
+  //   An explicit specialization shall be declared in the namespace
+  //   of which the template is a member, or, for member templates, in
+  //   the namespace of which the enclosing class or enclosing class
+  //   template is a member. An explicit specialization of a member
+  //   function, member class or static data member of a class
+  //   template shall be declared in the namespace of which the class
+  //   template is a member. Such a declaration may also be a
+  //   definition. If the declaration is not a definition, the
+  //   specialization may be defined later in the name- space in which
+  //   the explicit specialization was declared, or in a namespace
+  //   that encloses the one in which the explicit specialization was
+  //   declared.
+  if (CurContext->getLookupContext()->isFunctionOrMethod()) {
+    Diag(TemplateNameLoc, diag::err_template_spec_decl_function_scope)
+      << ClassTemplate;
+    return true;
+  }
+
+  DeclContext *DC = CurContext->getEnclosingNamespaceContext();
+  DeclContext *TemplateContext 
+    = ClassTemplate->getDeclContext()->getEnclosingNamespaceContext();
+  if (!PrevDecl || PrevDecl->getSpecializationKind() == TSK_Undeclared) {
+    // There is no prior declaration of this entity, so this
+    // specialization must be in the same context as the template
+    // itself.
+    if (DC != TemplateContext) {
+      if (isa<TranslationUnitDecl>(TemplateContext))
+        Diag(TemplateNameLoc, diag::err_template_spec_decl_out_of_scope_global)
+          << ClassTemplate << ScopeSpecifierRange;
+      else if (isa<NamespaceDecl>(TemplateContext))
+        Diag(TemplateNameLoc, diag::err_template_spec_decl_out_of_scope)
+          << ClassTemplate << cast<NamedDecl>(TemplateContext) 
+          << ScopeSpecifierRange;
+
+      Diag(ClassTemplate->getLocation(), diag::note_template_decl_here);
+    }
+
+    return false;
+  }
+
+  // We have a previous declaration of this entity. Make sure that
+  // this redeclaration (or definition) occurs in an enclosing namespace.
+  if (!CurContext->Encloses(TemplateContext)) {
+    if (isa<TranslationUnitDecl>(TemplateContext))
+      Diag(TemplateNameLoc, diag::err_template_spec_redecl_global_scope)
+        << ClassTemplate << ScopeSpecifierRange;
+    else if (isa<NamespaceDecl>(TemplateContext))
+      Diag(TemplateNameLoc, diag::err_template_spec_redecl_out_of_scope)
+        << ClassTemplate << cast<NamedDecl>(TemplateContext) 
+        << ScopeSpecifierRange;
+    
+    Diag(ClassTemplate->getLocation(), diag::note_template_decl_here);
+  }
+
+  return false;
+}
+
 Sema::DeclTy *
 Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                        SourceLocation KWLoc, 
@@ -1532,22 +1603,35 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                        SourceLocation RAngleLoc,
                                        AttributeList *Attr,
                                MultiTemplateParamsArg TemplateParameterLists) {
-  // FIXME: We need to match up the scope-specifier with the template
-  // parameter lists, and will eventually end up with a single
-  // template parameter list remaining (which applies to
-  // TemplateIdType).
-  assert(TemplateParameterLists.size() == 1 && 
-         "Clang doesn't handle with ill-formed specializations yet.");
-
-  assert(static_cast<TemplateParameterList*>(*TemplateParameterLists.get())
-         ->size() == 0 &&
-         "Clang doesn't handle class template partial specializations yet");
-
   // Find the class template we're specializing
   ClassTemplateDecl *ClassTemplate 
     = dyn_cast_or_null<ClassTemplateDecl>(static_cast<Decl *>(TemplateD));
   if (!ClassTemplate)
     return 0;
+
+  // Check the validity of the template headers that introduce this
+  // template.
+  if (TemplateParameterLists.size() == 0) {
+    // FIXME: It would be very nifty if we could introduce some kind
+    // of "code insertion hint" that could show the code that needs to
+    // be added.
+    Diag(KWLoc, diag::err_template_spec_needs_header);
+  } else {
+    TemplateParameterList *TemplateParams 
+      = static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
+    if (TemplateParameterLists.size() > 1) {
+      Diag(TemplateParams->getTemplateLoc(),
+           diag::err_template_spec_extra_headers);
+      return 0;
+    }
+
+    if (TemplateParams->size() > 0) {
+      // FIXME: No support for class template partial specialization.
+      Diag(TemplateParams->getTemplateLoc(), 
+           diag::unsup_template_partial_spec);
+      return 0;
+    }
+  }
 
   // Check that the specialization uses the same tag kind as the
   // original template.
@@ -1587,6 +1671,13 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
 
   ClassTemplateSpecializationDecl *Specialization = 0;
+
+  // Check whether we can declare a class template specialization in
+  // the current scope.
+  if (CheckClassTemplateSpecializationScope(ClassTemplate, PrevDecl,
+                                            TemplateNameLoc, 
+                                            SS.getRange()))
+    return 0;
 
   if (PrevDecl && PrevDecl->getSpecializationKind() == TSK_Undeclared) {
     // Since the only prior class template specialization with these

@@ -555,6 +555,14 @@ const DeclContext *DeclContext::getLookupContext() const {
   return Ctx;
 }
 
+DeclContext *DeclContext::getEnclosingNamespaceContext() {
+  DeclContext *Ctx = this;
+  // Skip through non-namespace, non-translation-unit contexts.
+  while (!Ctx->isFileContext() || Ctx->isTransparentContext())
+    Ctx = Ctx->getParent();
+  return Ctx->getPrimaryContext();
+}
+
 void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
   // FIXME: This feels like a hack. Should DeclarationName support
   // template-ids, or is there a better way to keep specializations

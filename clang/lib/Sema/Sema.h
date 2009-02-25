@@ -64,6 +64,7 @@ namespace clang {
   class TemplateArgument;
   class TemplateParameterList;
   class TemplateTemplateParmDecl;
+  class ClassTemplateDecl;
   class ObjCInterfaceDecl;
   class ObjCCompatibleAliasDecl;
   class ObjCProtocolDecl;
@@ -1532,6 +1533,11 @@ public:
                        SourceLocation RAngleLoc,
                        const CXXScopeSpec *SS);
   
+  bool CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
+                                    ClassTemplateSpecializationDecl *PrevDecl,
+                                             SourceLocation TemplateNameLoc,
+                                             SourceRange ScopeSpecifierRange);
+
   virtual DeclTy *
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                    SourceLocation KWLoc, 

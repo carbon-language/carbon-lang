@@ -490,6 +490,12 @@ public:
   }
   const DeclContext *getLookupContext() const;
 
+  /// \brief Retrieve the nearest enclosing namespace context.
+  DeclContext *getEnclosingNamespaceContext();
+  const DeclContext *getEnclosingNamespaceContext() const {
+    return const_cast<DeclContext *>(this)->getEnclosingNamespaceContext();
+  }
+
   /// getNextContext - If this is a DeclContext that may have other
   /// DeclContexts that are semantically connected but syntactically
   /// different, such as C++ namespaces, this routine retrieves the

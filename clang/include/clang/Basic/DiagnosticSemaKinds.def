@@ -605,6 +605,24 @@ DIAG(err_template_arg_not_pointer_to_member_form, ERROR,
 DIAG(err_template_arg_extra_parens, ERROR,
      "non-type template argument cannot be surrounded by parentheses")
 
+// C++ class template specialization
+DIAG(err_template_spec_needs_header, ERROR,
+     "template specialization requires 'template<>'")
+DIAG(err_template_spec_extra_headers, ERROR,
+     "template specialization must have a single 'template<>' header")
+DIAG(unsup_template_partial_spec, ERROR,
+     "class template partial specialization is not yet supported")
+DIAG(err_template_spec_decl_out_of_scope_global, ERROR,
+     "class template specialization of %0 must occur in the global scope")
+DIAG(err_template_spec_decl_out_of_scope, ERROR,
+     "class template specialization of %0 not in namespace %1")
+DIAG(err_template_spec_decl_function_scope, ERROR,
+     "class template specialization of %0 in function scope")
+DIAG(err_template_spec_redecl_out_of_scope, ERROR,
+     "class template specialization of %0 not in a namespace enclosing %1")
+DIAG(err_template_spec_redecl_global_scope, ERROR,
+     "class template specialization of %0 must occur in at global scope")
+
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")
 DIAG(err_unexpected_namespace, ERROR,
