@@ -894,7 +894,7 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, MVT VT, bool isT) {
     SmallVector<SDValue, 8> Ops;
     Ops.assign(VT.getVectorNumElements(), Result);
     Result = getBUILD_VECTOR(VT, DebugLoc::getUnknownLoc(),
-			     &Ops[0], Ops.size());
+                             &Ops[0], Ops.size());
   }
   return Result;
 }
@@ -938,7 +938,7 @@ SDValue SelectionDAG::getConstantFP(const ConstantFP& V, MVT VT, bool isTarget){
     SmallVector<SDValue, 8> Ops;
     Ops.assign(VT.getVectorNumElements(), Result);
     Result = getBUILD_VECTOR(VT, DebugLoc::getUnknownLoc(),
-			     &Ops[0], Ops.size());
+                             &Ops[0], Ops.size());
   }
   return Result;
 }
@@ -4855,15 +4855,15 @@ MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs,
 }
 
 BuildVectorSDNode::BuildVectorSDNode(MVT vecVT, DebugLoc dl,
-				     const SDValue *Elts, unsigned NumElts)
+                                     const SDValue *Elts, unsigned NumElts)
   : SDNode(ISD::BUILD_VECTOR, dl, getSDVTList(vecVT), Elts, NumElts)
 { }
 
 bool BuildVectorSDNode::isConstantSplat(bool &hasUndefSplatBitsFlag,
                                         uint64_t &SplatBits,
                                         uint64_t &SplatUndef,
-					unsigned &SplatSize,
-		                        int MinSplatBits) {
+                                        unsigned &SplatSize,
+                                        int MinSplatBits) {
   unsigned int nOps = getNumOperands();
   assert(nOps > 0 && "isConstantSplat has 0-size build vector");
 
@@ -4890,13 +4890,13 @@ bool BuildVectorSDNode::isConstantSplat(bool &hasUndefSplatBitsFlag,
     } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
       EltBits = CN->getZExtValue();
       if (EltBitSize <= 32)
-	EltBits &= (~0U >> (32-EltBitSize));
+        EltBits &= (~0U >> (32-EltBitSize));
     } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
       const APFloat &apf = CN->getValueAPF();
       if (OpVal.getValueType() == MVT::f32)
-	EltBits = FloatToBits(apf.convertToFloat());
+        EltBits = FloatToBits(apf.convertToFloat());
       else
-	EltBits = DoubleToBits(apf.convertToDouble());
+        EltBits = DoubleToBits(apf.convertToDouble());
     } else {
       // Nonconstant element -> not a splat.
       return isSplatVector;
@@ -5646,8 +5646,8 @@ void SDNode::printr(raw_ostream &OS, const SelectionDAG *G) const {
 
 typedef SmallPtrSet<const SDNode *, 128> VisitedSDNodeSet;
 static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
-		       const SelectionDAG *G, VisitedSDNodeSet &once) {
-  if (!once.insert(N))	// If we've been here before, return now.
+                       const SelectionDAG *G, VisitedSDNodeSet &once) {
+  if (!once.insert(N))  // If we've been here before, return now.
     return;
   // Dump the current SDNode, but don't end the line yet.
   OS << std::string(indent, ' ');
@@ -5661,10 +5661,10 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
       // This child has no grandchildren; print it inline right here.
       child->printr(OS, G);
       once.insert(child);
-    } else {	// Just the address.  FIXME: also print the child's opcode
+    } else {    // Just the address.  FIXME: also print the child's opcode
       OS << (void*)child;
       if (unsigned RN = N->getOperand(i).getResNo())
-	OS << ":" << RN;
+        OS << ":" << RN;
     }
   }
   OS << "\n";

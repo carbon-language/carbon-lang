@@ -1970,7 +1970,7 @@ public:
    */
   bool isConstantSplat(bool &hasUndefSplatBitsFlag, uint64_t &SplatBits,
                        uint64_t &SplatUndef, unsigned &SplatSize,
-		       int MinSplatBits = 0);
+                       int MinSplatBits = 0);
 
   static bool classof(const BuildVectorSDNode *) { return true; }
   static bool classof(const SDNode *N) {
