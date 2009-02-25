@@ -335,8 +335,8 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
 
             if (DW && DW->ValidDebugInfo(SPI->getContext())) {
               DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
-              unsigned SrcFile = DW->RecordSource(CU.getDirectory(),
-                                                  CU.getFilename());
+              unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(),
+                                                         CU.getFilename());
               unsigned idx = MF->getOrCreateDebugLocID(SrcFile,
                                                        SPI->getLine(),
                                                        SPI->getColumn());
@@ -354,8 +354,8 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
               if (DW->ValidDebugInfo(SP)) {
                 DISubprogram Subprogram(cast<GlobalVariable>(SP));
                 DICompileUnit CU(Subprogram.getCompileUnit());
-                unsigned SrcFile = DW->RecordSource(CU.getDirectory(),
-                                                    CU.getFilename());
+                unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(),
+                                                           CU.getFilename());
                 unsigned Line = Subprogram.getLineNumber();
                 DL = DebugLoc::get(MF->getOrCreateDebugLocID(SrcFile, Line, 0));
               }
@@ -3892,16 +3892,16 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
     if (DW && DW->ValidDebugInfo(SPI.getContext())) {
+      MachineFunction &MF = DAG.getMachineFunction();
       DAG.setRoot(DAG.getDbgStopPoint(getRoot(),
                                       SPI.getLine(),
                                       SPI.getColumn(),
                                       SPI.getContext()));
       DICompileUnit CU(cast<GlobalVariable>(SPI.getContext()));
-      unsigned SrcFile = DW->RecordSource(CU.getDirectory(), CU.getFilename());
-      unsigned idx = DAG.getMachineFunction().
-                         getOrCreateDebugLocID(SrcFile,
-                                               SPI.getLine(),
-                                               SPI.getColumn());
+      unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(),
+                                                 CU.getFilename());
+      unsigned idx = MF.getOrCreateDebugLocID(SrcFile,
+                                              SPI.getLine(), SPI.getColumn());
       setCurDebugLoc(DebugLoc::get(idx));
     }
     return 0;
@@ -3940,10 +3940,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (SP && DW->ValidDebugInfo(SP)) {
       // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
       // what (most?) gdb expects.
+      MachineFunction &MF = DAG.getMachineFunction();
       DISubprogram Subprogram(cast<GlobalVariable>(SP));
       DICompileUnit CompileUnit = Subprogram.getCompileUnit();
-      unsigned SrcFile = DW->RecordSource(CompileUnit.getDirectory(),
-                                          CompileUnit.getFilename());
+      unsigned SrcFile = DW->getOrCreateSourceID(CompileUnit.getDirectory(),
+                                                 CompileUnit.getFilename());
 
       // Record the source line but does not create a label for the normal
       // function start. It will be emitted at asm emission time. However,
@@ -3957,8 +3958,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                                    getRoot(), LabelID));
       }
 
-      setCurDebugLoc(DebugLoc::get(DAG.getMachineFunction().
-                                   getOrCreateDebugLocID(SrcFile, Line, 0)));
+      setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
     }
 
     return 0;
