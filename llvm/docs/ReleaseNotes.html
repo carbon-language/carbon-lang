@@ -92,39 +92,32 @@ the <a href="#vmkit">VMKit Project</a>.
 
 <p>The <a href="http://clang.llvm.org/">Clang project</a> is an effort to build
 a set of new 'LLVM native' front-end technologies for the LLVM optimizer
-and code generator.  Clang is continuing to make major strides forward in all
-areas.  Its C and Objective-C parsing support is very solid, and the code
-generation support is far enough along to build many C applications.  While not
-yet production quality, it is progressing very nicely.  In addition, C++
-front-end work has started to make significant progress.</p>
+and code generator.  While Clang is not included in the LLVM 2.5 release, it 
+is continuing to make major strides forward in all areas.  Its C and Objective-C
+parsing and code generation support is now very solid.  For example, it is
+capable of successfully building many real applications for X86-32 and X86-64,
+including the FreeBSD kernel.  C++ is also making <a
+href="http://clang.llvm.org/cxx_status.html">incredible progress</a>, and work
+on templates has recently started.</p>
 
-<p>Clang, in conjunction with the <tt>ccc</tt> driver, is now usable as a
-replacement for gcc for building some small- to medium-sized C applications.
-Additionally, Clang now has code generation support for Objective-C on Mac OS X
-platform. Major highlights include:</p>
+<p>While Clang is not yet production quality, it is progressing very nicely and
+is quite usable for building many C and Objective-C applications.  If you are
+interested in fast compiles and good diagnostics, we encourage you to try it out
+by <a href="http://clang.llvm.org/get_started.html">building from mainlnie</a>
+and reporting any issues you hit to the <a 
+href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">Clang front-end mailing
+list</a>.</p>
 
-<ul>
-	<li> Clang/ccc pass almost all of the LLVM test suite on Mac OS X and Linux 
-on the 32-bit x86 architecture. This includes significant C 
-applications such as <a href="http://www.sqlite.org">sqlite3</a>, 
-<a href="http://www.lua.org">lua</a>, and 
-<a href="http://www.clamav.net">Clam AntiVirus</a>. </li>
-
-	<li> Clang can build the majority of Objective-C examples shipped with the 
-Mac OS X Developer Tools. </li>
-</ul>
-
-<p>Clang code generation still needs considerable testing and development,
-however.  Some areas under active development include:</p>
+<p>In the LLVM 2.5 time-frame, the Clang team has made many improvements:</p>
 
 <ul>
-	<li> Improved support for C and Objective-C features, for example
-	variable-length arrays, va_arg, exception handling (Obj-C), and garbage
-	collection (Obj-C). </li>
-	<li> ABI compatibility, especially for platforms other than 32-bit
-	x86. </li>
-</ul>
-
+<li>Clang now has a new driver, which is focused on providing a GCC-compatible
+    interface.</li> 
+<li>The X86-64 ABI is now supported.</li> 
+<li>Precompiled header support is now implemented.</li> 
+<li>Objective-C support is significantly improved beyond LLVM 2.4, supporting
+    many features, such as Objective-C Garbage Collection.</li>
+<li>Many many bugs are fixed.</li>
 </div>
 
 <!--=========================================================================-->
