@@ -27,12 +27,31 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
-  if (const ArrayType *AT = Context.getAsArrayType(DeclType))
-    if (AT->getElementType()->isCharType()) {
-      Init = Init->IgnoreParens();
-      if (isa<StringLiteral>(Init) || isa<ObjCEncodeExpr>(Init))
-        return Init;
-    }
+  const ArrayType *AT = Context.getAsArrayType(DeclType);
+  if (!AT) return 0;
+
+  // See if this is a string literal or @encode.
+  Init = Init->IgnoreParens();
+  
+  // Handle @encode, which is a narrow string.
+  if (isa<ObjCEncodeExpr>(Init) && AT->getElementType()->isCharType())
+    return Init;
+
+  // Otherwise we can only handle string literals.
+  StringLiteral *SL = dyn_cast<StringLiteral>(Init);
+  
+  // char array can be initialized with a narrow string.
+  // Only allow char x[] = "foo";  not char x[] = L"foo";
+  if (!SL->isWide())
+    return AT->getElementType()->isCharType() ? Init : 0;
+
+  // wchar_t array can be initialized with a wide string: C99 6.7.8p15:
+  // "An array with element type compatible with wchar_t may be initialized by a
+  // wide string literal, optionally enclosed in braces."
+  if (Context.typesAreCompatible(Context.WCharTy, AT->getElementType()))
+    // Only allow wchar_t x[] = L"foo";  not wchar_t x[] = "foo";
+    return Init;
+  
   return 0;
 }
 
