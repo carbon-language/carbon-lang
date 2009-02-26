@@ -30,12 +30,7 @@ using namespace llvm;
 static cl::opt<bool>
 DisableSharing("no-stack-slot-sharing",
              cl::init(false), cl::Hidden,
-             cl::desc("Surpress slot sharing during stack coloring"));
-
-static cl::opt<bool>
-EnableDCE("enable-ssc-dce",
-               cl::init(false), cl::Hidden,
-               cl::desc("Enable slot coloring DCE"));
+             cl::desc("Suppress slot sharing during stack coloring"));
 
 static cl::opt<int> DCELimit("ssc-dce-limit", cl::init(-1), cl::Hidden);
 
@@ -342,7 +337,7 @@ bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
     Assignments[i].clear();
   Assignments.clear();
 
-  if (EnableDCE) {
+  if (Changed) {
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
       Changed |= removeDeadStores(I);
   }
