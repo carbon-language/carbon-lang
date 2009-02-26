@@ -75,7 +75,7 @@ public:
   }
 
   /// Return the constant as a 64-bit integer value after it has been sign
-  /// sign extended as appropriate for the type of this constant. Note that
+  /// extended as appropriate for the type of this constant. Note that
   /// this method can assert if the value does not fit in 64 bits.
   /// @deprecated
   /// @brief Return the sign extended value.
