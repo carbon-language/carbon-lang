@@ -41,7 +41,7 @@ VPATH=$(PROJ_SRC_DIR)
 # Reset the list of suffixes we know how to build.
 #--------------------------------------------------------------------
 .SUFFIXES:
-.SUFFIXES: .c .cpp .cc .h .hpp .lo .o .a .bc .td .ps .dot .ll
+.SUFFIXES: .c .cpp .cc .h .hpp .o .a .bc .td .ps .dot .ll
 .SUFFIXES: $(SHLIBEXT) $(SUFFIXES)
 
 #--------------------------------------------------------------------
@@ -277,12 +277,25 @@ ifdef ENABLE_EXPENSIVE_CHECKS
   CPP.Defines += -D_GLIBCXX_DEBUG -DXDEBUG
 endif
 
+# LOADABLE_MODULE implies several other things so we force them to be
+# defined/on.
+ifdef LOADABLE_MODULE
+  SHARED_LIBRARY := 1
+  DONT_BUILD_RELINKED := 1
+  LINK_LIBS_IN_SHARED := 1
+endif
+
+ifdef SHARED_LIBRARY
+  ENABLE_PIC := 1
+  PIC_FLAG = "(PIC)"
+endif
+
 ifeq ($(ENABLE_PIC),1)
   ifeq ($(LLVM_ON_WIN32),1)
     # Nothing. Win32 defaults to PIC and warns when given -fPIC
   else
     ifeq ($(OS),Darwin)
-      # common is forbidden in dylib files
+      # Common symbols not allowed in dylib files
       CXX.Flags += -fno-common
       C.Flags   += -fno-common
     else
@@ -299,7 +312,6 @@ CPP.Defines   += $(CPPFLAGS)
 CPP.BaseFlags += $(CPP.Defines)
 LD.Flags      += $(LDFLAGS)
 AR.Flags      := cru
-LibTool.Flags := --tag=CXX
 
 # Make Floating point IEEE compliant on Alpha.
 ifeq ($(ARCH),Alpha)
@@ -338,9 +350,6 @@ CFERuntimeLibDir := $(LLVMGCCDIR)/lib
 #--------------------------------------------------------------------
 EchoCmd  = $(ECHO) llvm[$(MAKELEVEL)]:
 Echo     = @$(EchoCmd)
-ifndef LIBTOOL
-LIBTOOL  := $(LLVM_OBJ_ROOT)/mklib
-endif
 ifndef LLVMAS
 LLVMAS   := $(LLVMToolDir)/llvm-as$(EXEEXT)
 endif
@@ -389,21 +398,15 @@ endif
 # Adjust to user's request
 #--------------------------------------------------------------------
 
-# Adjust LD.Flags and Libtool.Flags depending on the kind of library that is
-# to be built. Note that if LOADABLE_MODULE is specified then the resulting
-# shared library can be opened with dlopen. Also, LOADABLE_MODULE implies
-# several other things so we force them to be defined/on.
+# Adjust LD.Flags depending on the kind of library that is to be built. Note
+# that if LOADABLE_MODULE is specified then the resulting shared library can
+# be opened with dlopen.
 ifdef LOADABLE_MODULE
-  SHARED_LIBRARY := 1
-  DONT_BUILD_RELINKED := 1
-  LINK_LIBS_IN_SHARED := 1
   LD.Flags += -module
 endif
 
 ifdef SHARED_LIBRARY
-  LD.Flags += -rpath $(LibDir)
-else
-  LibTool.Flags += --tag=disable-shared
+  LD.Flags += -Wl,-rpath -Wl,$(LibDir)
 endif
 
 ifdef TOOL_VERBOSE
@@ -416,7 +419,6 @@ endif
 # Adjust settings for verbose mode
 ifndef VERBOSE
   Verb := @
-  LibTool.Flags += --silent
   AR.Flags += >/dev/null 2>/dev/null
   ConfigureScriptFLAGS += >$(PROJ_OBJ_DIR)/configure.out 2>&1
 else
@@ -431,12 +433,20 @@ ifndef KEEP_SYMBOLS
 endif
 
 # Adjust linker flags for building an executable
+ifndef ($(OS),Darwin)
 ifdef TOOLNAME
 ifdef EXAMPLE_TOOL
-  LD.Flags += -rpath $(ExmplDir) -export-dynamic
+  LD.Flags += -Wl,-rpath -Wl,$(ExmplDir) -export-dynamic
 else
-  LD.Flags += -rpath $(ToolDir) -export-dynamic
+  LD.Flags += -Wl,-rpath -Wl,$(ToolDir) -export-dynamic
 endif
+endif
+endif
+
+ifeq ($(OS),Darwin)
+  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -bundle
+else
+  SharedLinkOptions=-shared
 endif
 
 #----------------------------------------------------------
@@ -508,18 +518,12 @@ else
 		  $(Relink.Flags)
 endif
 
-LTCompile.C   = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.C)
 BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts)
 Preprocess.C  = $(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -E
 
-LTCompile.CXX = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.CXX)
 BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CXX.Flags) \
                 $(CompileCommonOpts)
 
-LTLink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(Link)
-LTRelink      = $(LIBTOOL) $(LibTool.Flags) --mode=link $(Relink)
-LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
-		$(Install.Flags)
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755
 ScriptInstall = $(INSTALL) -m 0755
 DataInstall   = $(INSTALL) -m 0644
@@ -559,7 +563,6 @@ endif
 BaseNameSources := $(sort $(basename $(Sources)))
 
 ObjectsO  := $(BaseNameSources:%=$(ObjDir)/%.o)
-ObjectsLO := $(BaseNameSources:%=$(ObjDir)/%.lo)
 ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
 
 ###############################################################################
@@ -827,11 +830,12 @@ ifdef LIBRARYNAME
 # Make sure there isn't any extranous whitespace on the LIBRARYNAME option
 LIBRARYNAME := $(strip $(LIBRARYNAME))
 ifdef LOADABLE_MODULE
-LibName.LA := $(LibDir)/$(LIBRARYNAME).la
+LibName.A  := $(LibDir)/$(LIBRARYNAME).a
+LibName.SO := $(LibDir)/$(LIBRARYNAME)$(SHLIBEXT)
 else
-LibName.LA := $(LibDir)/lib$(LIBRARYNAME).la
-endif
 LibName.A  := $(LibDir)/lib$(LIBRARYNAME).a
+LibName.SO := $(LibDir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+endif
 LibName.O  := $(LibDir)/$(LIBRARYNAME).o
 LibName.BCA:= $(LibDir)/lib$(LIBRARYNAME).bca
 
@@ -843,7 +847,7 @@ LibName.BCA:= $(LibDir)/lib$(LIBRARYNAME).bca
 #---------------------------------------------------------
 ifdef SHARED_LIBRARY
 
-all-local:: $(LibName.LA)
+all-local:: $(LibName.SO)
 
 ifdef LINK_LIBS_IN_SHARED
 ifdef LOADABLE_MODULE
@@ -851,22 +855,20 @@ SharedLibKindMessage := "Loadable Module"
 else
 SharedLibKindMessage := "Shared Library"
 endif
-$(LibName.LA): $(ObjectsLO) $(ProjLibsPaths) $(LLVMLibsPaths) $(LibDir)/.dir
+$(LibName.SO): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) $(SharedLibKindMessage) \
 	  $(LIBRARYNAME)$(SHLIBEXT)
-	$(Verb) $(LTLink) -o $@ $(ObjectsLO) $(ProjLibsOptions) \
-	  $(LLVMLibsOptions)
-	$(Verb) $(LTInstall) $@ $(LibDir)
+	$(Verb) $(Link) $(SharedLinkOptions) -o $@ $(ObjectsO) \
+	  $(ProjLibsOptions) $(LLVMLibsOptions)
 else
-$(LibName.LA): $(ObjectsLO) $(LibDir)/.dir
+$(LibName.SO): $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) Shared Library $(LIBRARYNAME)$(SHLIBEXT)
-	$(Verb) $(LTLink) -o $@ $(ObjectsLO)
-	$(Verb) $(LTInstall) $@ $(LibDir)
+	$(Verb) $(Link) $(SharedLinkOptions) -o $@ $(ObjectsO)
 endif
 
 clean-local::
-ifneq ($(strip $(LibName.LA)),)
-	-$(Verb) $(RM) -f $(LibName.LA)
+ifneq ($(strip $(LibName.SO)),)
+	-$(Verb) $(RM) -f $(LibName.SO)
 endif
 
 ifdef NO_INSTALL
@@ -879,10 +881,9 @@ DestSharedLib = $(PROJ_libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
 
 install-local:: $(DestSharedLib)
 
-$(DestSharedLib): $(LibName.LA) $(PROJ_libdir)
+$(DestSharedLib): $(LibName.SO) $(PROJ_libdir)
 	$(Echo) Installing $(BuildMode) Shared Library $(DestSharedLib)
-	$(Verb) $(LTInstall) $(LibName.LA) $(DestSharedLib)
-	$(Verb) $(LIBTOOL) --finish $(PROJ_libdir)
+	$(Verb) $(INSTALL) $(LibName.SO) $(DestSharedLib)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
@@ -976,7 +977,7 @@ all-local:: $(LibName.O)
 
 $(LibName.O): $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) Object Library $(notdir $@)
-	$(Verb) $(LTRelink) -o $@ $(ObjectsO)
+	$(Verb) $(Relink) -Wl,-r -nodefaultlibs -nostdlibs -nostartfiles -o $@ $(ObjectsO)
 
 clean-local::
 ifneq ($(strip $(LibName.O)),)
@@ -995,7 +996,7 @@ install-local:: $(DestRelinkedLib)
 
 $(DestRelinkedLib): $(LibName.O) $(PROJ_libdir)
 	$(Echo) Installing $(BuildMode) Object Library $(DestRelinkedLib)
-	$(Verb) $(LTInstall) $(LibName.O) $(DestRelinkedLib)
+	$(Verb) $(INSTALL) $(LibName.O) $(DestRelinkedLib)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Object Library $(DestRelinkedLib)
@@ -1036,7 +1037,7 @@ install-local:: $(DestArchiveLib)
 $(DestArchiveLib): $(LibName.A) $(PROJ_libdir)
 	$(Echo) Installing $(BuildMode) Archive Library $(DestArchiveLib)
 	$(Verb) $(MKDIR) $(PROJ_libdir)
-	$(Verb) $(LTInstall) $(LibName.A) $(DestArchiveLib)
+	$(Verb) $(INSTALL) $(LibName.A) $(DestArchiveLib)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Archive Library $(DestArchiveLib)
@@ -1080,7 +1081,7 @@ endif
 
 $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
-	$(Verb) $(LTLink) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
+	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
 	$(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS)
 	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) \
           $(StripWarnMsg)
@@ -1114,43 +1115,34 @@ ifeq ($(OS),HP-UX)
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
-ifdef SHARED_LIBRARY
-PIC_FLAG = "(PIC)"
-MAYBE_PIC_Compile.CXX = $(LTCompile.CXX)
-MAYBE_PIC_Compile.C = $(LTCompile.C)
-else
-MAYBE_PIC_Compile.CXX = $(Compile.CXX)
-MAYBE_PIC_Compile.C = $(Compile.C)
-endif
-
 # Provide rule sets for when dependency generation is enabled
 ifndef DISABLE_AUTO_DEPENDENCIES
 
 #---------------------------------------------------------
-# Create .lo files in the ObjDir directory from the .cpp and .c files...
+# Create .o files in the ObjDir directory from the .cpp and .c files...
 #---------------------------------------------------------
 
 DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.d.tmp" \
-         -MT "$(ObjDir)/$*.lo" -MT "$(ObjDir)/$*.o" -MT "$(ObjDir)/$*.d"
+         -MT "$(ObjDir)/$*.o" -MT "$(ObjDir)/$*.d"
 
 # If the build succeeded, move the dependency file over.  If it failed, put an
 # empty file there.
 DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.d.tmp" "$(ObjDir)/$*.d"; \
                   else $(RM) "$(ObjDir)/$*.d.tmp"; exit 1; fi
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build " $(PIC_FLAG)
-	$(Verb) if $(MAYBE_PIC_Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
+	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
-	$(Verb) if $(MAYBE_PIC_Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
+	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
-	$(Verb) if $(MAYBE_PIC_Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
+	$(Verb) if $(Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
 #---------------------------------------------------------
@@ -1187,17 +1179,17 @@ $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
 # Provide alternate rule sets if dependencies are disabled
 else
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build" $(PIC_FLAG)
-	$(MAYBE_PIC_Compile.CXX) $< -o $@
+	$(Compile.CXX) $< -o $@
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
-	$(MAYBE_PIC_Compile.CXX) $< -o $@
+	$(Compile.CXX) $< -o $@
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
-	$(MAYBE_PIC_Compile.C) $< -o $@
+	$(Compile.C) $< -o $@
 
 $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
@@ -1236,15 +1228,15 @@ $(BuildMode)/%.i: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 
 $(ObjDir)/%.s: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp to asm for $(BuildMode) build" $(PIC_FLAG)
-	$(MAYBE_PIC_Compile.CXX) $< -o $@ -S
+	$(Compile.CXX) $< -o $@ -S
 
 $(ObjDir)/%.s: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cc to asm for $(BuildMode) build" $(PIC_FLAG)
-	$(MAYBE_PIC_Compile.CXX) $< -o $@ -S
+	$(Compile.CXX) $< -o $@ -S
 
 $(ObjDir)/%.s: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c to asm for $(BuildMode) build" $(PIC_FLAG)
-	$(MAYBE_PIC_Compile.C) $< -o $@ -S
+	$(Compile.C) $< -o $@ -S
 
 
 # make the C and C++ compilers strip debug info out of bytecode libraries.

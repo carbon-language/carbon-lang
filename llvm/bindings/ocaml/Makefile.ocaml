@@ -131,7 +131,7 @@ clean-a::
 install-a:: $(LibraryA)
 	$(Echo) "Installing $(BuildMode) $(DestA)"
 	$(Verb) $(MKDIR) $(PROJ_libocamldir)
-	$(Verb) $(LTInstall) $(LibraryA) $(DestA)
+	$(Verb) $(INSTALL) $(LibraryA) $(DestA)
 	$(Verb) 
 
 uninstall-a::
