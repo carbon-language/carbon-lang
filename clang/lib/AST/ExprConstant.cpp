@@ -42,12 +42,8 @@ struct EvalInfo {
   /// EvalResult - Contains information about the evaluation.
   Expr::EvalResult &EvalResult;
 
-  /// ShortCircuit - will be greater than zero if the current subexpression has
-  /// will not be evaluated because it's short-circuited (according to C rules).
-  unsigned ShortCircuit;
-
   EvalInfo(ASTContext &ctx, Expr::EvalResult& evalresult) : Ctx(ctx), 
-           EvalResult(evalresult), ShortCircuit(0) {}
+           EvalResult(evalresult) {}
 };
 
 
@@ -559,13 +555,6 @@ public:
   IntExprEvaluator(EvalInfo &info, APValue &result)
     : Info(info), Result(result) {}
 
-  bool Extension(SourceLocation L, diag::kind D, const Expr *E) {
-    Info.EvalResult.DiagLoc = L;
-    Info.EvalResult.Diag = D;
-    Info.EvalResult.DiagExpr = E;
-    return true;  // still a constant.
-  }
-
   bool Success(const llvm::APSInt &SI, const Expr *E) {
     assert(E->getType()->isIntegralType() && "Invalid evaluation result.");
     assert(SI.isSigned() == E->getType()->isSignedIntegerType() &&
@@ -592,18 +581,7 @@ public:
   }
 
   bool Error(SourceLocation L, diag::kind D, const Expr *E) {
-    // If this is in an unevaluated portion of the subexpression, ignore the
-    // error.
-    if (Info.ShortCircuit) {
-      // If error is ignored because the value isn't evaluated, get the real
-      // type at least to prevent errors downstream.
-      return Success(0, E);
-    }
-    
     // Take the first error.
-
-    // FIXME: This is wrong if we happen to have already emitted an
-    // extension diagnostic; in that case we should report this error.
     if (Info.EvalResult.Diag == 0) {
       Info.EvalResult.DiagLoc = L;
       Info.EvalResult.Diag = D;
@@ -792,14 +770,10 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     if (!Visit(E->getRHS()))
       return false;
 
-    if (!Info.ShortCircuit) {
-      // If we can't evaluate the LHS, it must be because it has 
-      // side effects.
-      if (!E->getLHS()->isEvaluatable(Info.Ctx))
-        Info.EvalResult.HasSideEffects = true;
-      
-      return Extension(E->getOperatorLoc(), diag::note_comma_in_ice, E);
-    }
+    // If we can't evaluate the LHS, it might have side effects;
+    // conservatively mark it.
+    if (!E->getLHS()->isEvaluatable(Info.Ctx))
+      Info.EvalResult.HasSideEffects = true;
 
     return true;
   }
@@ -812,19 +786,8 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     if (HandleConversionToBool(E->getLHS(), lhsResult, Info)) {
       // We were able to evaluate the LHS, see if we can get away with not
       // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
-      if (lhsResult == (E->getOpcode() == BinaryOperator::LOr) || 
-          !lhsResult == (E->getOpcode() == BinaryOperator::LAnd)) {
-        Info.ShortCircuit++;
-        bool rhsEvaluated = HandleConversionToBool(E->getRHS(), rhsResult, Info);
-        Info.ShortCircuit--;
-        
-        // FIXME: Return an extension warning saying that the RHS could not be
-        // evaluated.
-        // if (!rhsEvaluated) ...
-        (void) rhsEvaluated;
-        
+      if (lhsResult == (E->getOpcode() == BinaryOperator::LOr))
         return Success(lhsResult, E);
-      }
 
       if (HandleConversionToBool(E->getRHS(), rhsResult, Info)) {
         if (E->getOpcode() == BinaryOperator::LOr)
