@@ -3683,9 +3683,23 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     }
   } else {
     // Has a root. Current class is not a root.
-    std::string RootClassName = 
-      ID->getClassInterface()->getSuperClass()->getNameAsString();
-    std::string SuperClassName = ObjCMetaClassName + RootClassName;
+    const ObjCInterfaceDecl *Root = ID->getClassInterface();
+    while (const ObjCInterfaceDecl *Super = Root->getSuperClass())
+      Root = Super;
+    std::string RootClassName = ObjCMetaClassName + Root->getNameAsString();
+    IsAGV = CGM.getModule().getGlobalVariable(RootClassName);
+    if (!IsAGV) {
+      IsAGV = 
+        new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                                 llvm::GlobalValue::ExternalLinkage,
+                                 0,
+                                 RootClassName,
+                                 &CGM.getModule());
+      UsedGlobals.push_back(IsAGV);
+    }
+    // work on super class metadata symbol.
+    std::string SuperClassName =  
+      ObjCMetaClassName + ID->getClassInterface()->getSuperClass()->getNameAsString();
     SuperClassGV = CGM.getModule().getGlobalVariable(SuperClassName);
     if (!SuperClassGV) {
       SuperClassGV = 
@@ -3696,7 +3710,6 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                                  &CGM.getModule());
       UsedGlobals.push_back(SuperClassGV);
     }
-    IsAGV = SuperClassGV;
   }
   llvm::GlobalVariable *CLASS_RO_GV = BuildClassRoTInitializer(flags,
                                                                InstanceStart,
@@ -3716,7 +3729,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   }
   else {
     // Has a root. Current class is not a root.
-    std::string RootClassName = 
+    std::string RootClassName =
       ID->getClassInterface()->getSuperClass()->getNameAsString();
     std::string SuperClassName = ObjCClassName + RootClassName;
     SuperClassGV = CGM.getModule().getGlobalVariable(SuperClassName);
