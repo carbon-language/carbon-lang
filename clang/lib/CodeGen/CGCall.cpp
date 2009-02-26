@@ -523,6 +523,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     // FIXME: _float128 and _Decimal128 are (SSE, SSEUp).
     // FIXME: __int128 is (Integer, Integer).
   } else if (Ty->isPointerLikeType() || Ty->isBlockPointerType() ||
+             Ty->isObjCQualifiedIdType() ||
              Ty->isObjCQualifiedInterfaceType()) {
     Current = Integer;
   } else if (const VectorType *VT = Ty->getAsVectorType()) {
