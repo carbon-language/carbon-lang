@@ -227,12 +227,18 @@ private:
 
 public:
   CXXTypeidExpr(bool isTypeOp, void *op, QualType Ty, const SourceRange r) :
-      Expr(CXXTypeidExprClass, Ty), isTypeOp(isTypeOp), Range(r) {
+      Expr(CXXTypeidExprClass, Ty,
+        // typeid is never type-dependent (C++ [temp.dep.expr]p4)
+        false,
+        // typeid is value-dependent if the type or expression are dependent
+        (isTypeOp ? QualType::getFromOpaquePtr(op)->isDependentType()
+                  : static_cast<Expr*>(op)->isValueDependent())),
+      isTypeOp(isTypeOp), Range(r) {
     if (isTypeOp)
       Operand.Ty = op;
     else
       // op was an Expr*, so cast it back to that to be safe
-      Operand.Ex = static_cast<Stmt*>(op);
+      Operand.Ex = static_cast<Expr*>(op);
   }
 
   bool isTypeOperand() const { return isTypeOp; }
@@ -277,7 +283,11 @@ class CXXThisExpr : public Expr {
 
 public:
   CXXThisExpr(SourceLocation L, QualType Type) 
-    : Expr(CXXThisExprClass, Type), Loc(L) { }
+    : Expr(CXXThisExprClass, Type,
+           // 'this' is type-dependent if the class type of the enclosing
+           // member function is dependent (C++ [temp.dep.expr]p2)
+           Type->isDependentType(), Type->isDependentType()),
+      Loc(L) { }
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
@@ -306,7 +316,7 @@ public:
   // exepression.  The l is the location of the throw keyword.  expr
   // can by null, if the optional expression to throw isn't present.
   CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l) :
-    Expr(CXXThrowExprClass, Ty), Op(expr), ThrowLoc(l) {}
+    Expr(CXXThrowExprClass, Ty, false, false), Op(expr), ThrowLoc(l) {}
   const Expr *getSubExpr() const { return cast_or_null<Expr>(Op); }
   Expr *getSubExpr() { return cast_or_null<Expr>(Op); }
 
@@ -578,7 +588,8 @@ class CXXNewExpr : public Expr {
              Stmt **subExprs, FunctionDecl *operatorNew,
              FunctionDecl *operatorDelete, CXXConstructorDecl *constructor,
              SourceLocation startLoc, SourceLocation endLoc)
-    : Expr(CXXNewExprClass, ty), GlobalNew(globalNew), ParenTypeId(parenTypeId),
+    : Expr(CXXNewExprClass, ty, ty->isDependentType(), ty->isDependentType()),
+      GlobalNew(globalNew), ParenTypeId(parenTypeId),
       Initializer(initializer), Array(array), NumPlacementArgs(numPlaceArgs),
       NumConstructorArgs(numConsArgs), SubExprs(subExprs),
       OperatorNew(operatorNew), OperatorDelete(operatorDelete),
@@ -698,7 +709,7 @@ class CXXDeleteExpr : public Expr {
 public:
   CXXDeleteExpr(QualType ty, bool globalDelete, bool arrayForm,
                 FunctionDecl *operatorDelete, Expr *arg, SourceLocation loc)
-    : Expr(CXXDeleteExprClass, ty), GlobalDelete(globalDelete),
+    : Expr(CXXDeleteExprClass, ty, false, false), GlobalDelete(globalDelete),
       ArrayForm(arrayForm), OperatorDelete(operatorDelete), Argument(arg),
       Loc(loc) { }
 

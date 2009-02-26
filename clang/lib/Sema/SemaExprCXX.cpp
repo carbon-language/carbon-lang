@@ -134,6 +134,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                                TyBeginLoc, Exprs[0], RParenLoc);
   }
 
+  // FIXME: What AST node to create when the type is dependent?
+
   if (const RecordType *RT = Ty->getAsRecordType()) {
     CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
     
@@ -220,14 +222,16 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (CheckAllocatedType(AllocType, D))
     return true;
 
-  QualType ResultType = Context.getPointerType(AllocType);
+  QualType ResultType = AllocType->isDependentType()
+                          ? Context.DependentTy
+                          : Context.getPointerType(AllocType);
 
   // That every array dimension except the first is constant was already
   // checked by the type check above.
 
   // C++ 5.3.4p6: "The expression in a direct-new-declarator shall have integral
   //   or enumeration type with a non-negative value."
-  if (ArraySize) {
+  if (ArraySize && !ArraySize->isTypeDependent()) {
     QualType SizeType = ArraySize->getType();
     if (!SizeType->isIntegralType() && !SizeType->isEnumeralType())
       return Diag(ArraySize->getSourceRange().getBegin(),
@@ -236,20 +240,24 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     // Let's see if this is a constant < 0. If so, we reject it out of hand.
     // We don't care about special rules, so we tell the machinery it's not
     // evaluated - it gives us a result in more cases.
-    llvm::APSInt Value;
-    if (ArraySize->isIntegerConstantExpr(Value, Context, 0, false)) {
-      if (Value < llvm::APSInt(
-                      llvm::APInt::getNullValue(Value.getBitWidth()), false))
-        return Diag(ArraySize->getSourceRange().getBegin(),
-                    diag::err_typecheck_negative_array_size)
-          << ArraySize->getSourceRange();
+    if (!ArraySize->isValueDependent()) {
+      llvm::APSInt Value;
+      if (ArraySize->isIntegerConstantExpr(Value, Context, 0, false)) {
+        if (Value < llvm::APSInt(
+                        llvm::APInt::getNullValue(Value.getBitWidth()), false))
+          return Diag(ArraySize->getSourceRange().getBegin(),
+                      diag::err_typecheck_negative_array_size)
+            << ArraySize->getSourceRange();
+      }
     }
   }
 
   FunctionDecl *OperatorNew = 0;
   FunctionDecl *OperatorDelete = 0;
   Expr **PlaceArgs = (Expr**)PlacementArgs;
-  if (FindAllocationFunctions(StartLoc,
+  if (!AllocType->isDependentType() &&
+      !Expr::hasAnyTypeDependentArguments(PlaceArgs, NumPlaceArgs) &&
+      FindAllocationFunctions(StartLoc,
                               SourceRange(PlacementLParen, PlacementRParen),
                               UseGlobal, AllocType, ArraySize, PlaceArgs,
                               NumPlaceArgs, OperatorNew, OperatorDelete))
@@ -275,8 +283,11 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   // 2) Otherwise, the object is direct-initialized.
   CXXConstructorDecl *Constructor = 0;
   Expr **ConsArgs = (Expr**)ConstructorArgs;
+  if (AllocType->isDependentType()) {
+    // Skip all the checks.
+  }
   // FIXME: Should check for primitive/aggregate here, not record.
-  if (const RecordType *RT = AllocType->getAsRecordType()) {
+  else if (const RecordType *RT = AllocType->getAsRecordType()) {
     // FIXME: This is incorrect for when there is an empty initializer and
     // no user-defined constructor. Must zero-initialize, not default-construct.
     Constructor = PerformInitializationByConstructor(
@@ -570,31 +581,33 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   // DR599 amends "pointer type" to "pointer to object type" in both cases.
 
   Expr *Ex = (Expr *)Operand;
-  QualType Type = Ex->getType();
+  if (!Ex->isTypeDependent()) {
+    QualType Type = Ex->getType();
 
-  if (Type->isRecordType()) {
-    // FIXME: Find that one conversion function and amend the type.
+    if (Type->isRecordType()) {
+      // FIXME: Find that one conversion function and amend the type.
+    }
+
+    if (!Type->isPointerType()) {
+      Diag(StartLoc, diag::err_delete_operand) << Type << Ex->getSourceRange();
+      return true;
+    }
+
+    QualType Pointee = Type->getAsPointerType()->getPointeeType();
+    if (!Pointee->isVoidType() && 
+        DiagnoseIncompleteType(StartLoc, Pointee, diag::warn_delete_incomplete,
+                               Ex->getSourceRange()))
+      return true;
+    else if (!Pointee->isObjectType()) {
+      Diag(StartLoc, diag::err_delete_operand)
+        << Type << Ex->getSourceRange();
+      return true;
+    }
+
+    // FIXME: Look up the correct operator delete overload and pass a pointer
+    // along.
+    // FIXME: Check access and ambiguity of operator delete and destructor.
   }
-
-  if (!Type->isPointerType()) {
-    Diag(StartLoc, diag::err_delete_operand) << Type << Ex->getSourceRange();
-    return true;
-  }
-
-  QualType Pointee = Type->getAsPointerType()->getPointeeType();
-  if (!Pointee->isVoidType() && 
-      DiagnoseIncompleteType(StartLoc, Pointee, diag::warn_delete_incomplete,
-                             Ex->getSourceRange()))
-    return true;
-  else if (!Pointee->isObjectType()) {
-    Diag(StartLoc, diag::err_delete_operand)
-      << Type << Ex->getSourceRange();
-    return true;
-  }
-
-  // FIXME: Look up the correct operator delete overload and pass a pointer
-  // along.
-  // FIXME: Check access and ambiguity of operator delete and destructor.
 
   return new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm, 0,
                                      Ex, StartLoc);

@@ -680,8 +680,12 @@ public:
   SizeOfAlignOfExpr(bool issizeof, bool istype, void *argument,
                     QualType resultType, SourceLocation op,
                     SourceLocation rp) :
-      Expr(SizeOfAlignOfExprClass, resultType), isSizeof(issizeof),
-      isType(istype), OpLoc(op), RParenLoc(rp) {
+      Expr(SizeOfAlignOfExprClass, resultType,
+           false, // Never type-dependent.
+           // Value-dependent if the argument is type-dependent.
+           (istype ? QualType::getFromOpaquePtr(argument)->isDependentType()
+                   : static_cast<Expr*>(argument)->isTypeDependent())),
+      isSizeof(issizeof), isType(istype), OpLoc(op), RParenLoc(rp) {
     if (isType)
       Argument.Ty = argument;
     else
@@ -742,7 +746,10 @@ class ArraySubscriptExpr : public Expr {
 public:
   ArraySubscriptExpr(Expr *lhs, Expr *rhs, QualType t,
                      SourceLocation rbracketloc)
-  : Expr(ArraySubscriptExprClass, t), RBracketLoc(rbracketloc) {
+  : Expr(ArraySubscriptExprClass, t,
+         lhs->isTypeDependent() || rhs->isTypeDependent(),
+         lhs->isValueDependent() || rhs->isValueDependent()),
+    RBracketLoc(rbracketloc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
   }

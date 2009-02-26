@@ -1159,10 +1159,13 @@ Action::OwningExprResult Sema::ActOnParenExpr(SourceLocation L,
 
 /// The UsualUnaryConversions() function is *not* called by this routine.
 /// See C99 6.3.2.1p[2-4] for more details.
-bool Sema::CheckSizeOfAlignOfOperand(QualType exprType, 
+bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
                                      SourceLocation OpLoc,
                                      const SourceRange &ExprRange,
                                      bool isSizeof) {
+  if (exprType->isDependentType())
+    return false;
+
   // C99 6.5.3.4p1:
   if (isa<FunctionType>(exprType)) {
     // alignof(function) is allowed.
@@ -1186,11 +1189,15 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
 bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
                             const SourceRange &ExprRange) {
   E = E->IgnoreParens();
-  
+
   // alignof decl is always ok. 
   if (isa<DeclRefExpr>(E))
     return false;
-  
+
+  // Cannot know anything else if the expression is dependent.
+  if (E->isTypeDependent())
+    return false;
+
   if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
     if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
       if (FD->isBitField()) {
@@ -1252,6 +1259,9 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
 }
 
 QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {
+  if (V->isTypeDependent())
+    return Context.DependentTy;
+
   DefaultFunctionArrayConversion(V);
   
   // These operators return the element type of a complex type.
@@ -1504,7 +1514,11 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
   // and index from the expression types.
   Expr *BaseExpr, *IndexExpr;
   QualType ResultType;
-  if (const PointerType *PTy = LHSTy->getAsPointerType()) {
+  if (LHSTy->isDependentType() || RHSTy->isDependentType()) {
+    BaseExpr = LHSExp;
+    IndexExpr = RHSExp;
+    ResultType = Context.DependentTy;
+  } else if (const PointerType *PTy = LHSTy->getAsPointerType()) {
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
     // FIXME: need to deal with const...
@@ -1526,7 +1540,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
       diag::err_typecheck_subscript_value) << RHSExp->getSourceRange());
   }
   // C99 6.5.2.1p1
-  if (!IndexExpr->getType()->isIntegerType())
+  if (!IndexExpr->getType()->isIntegerType() && !IndexExpr->isTypeDependent())
     return ExprError(Diag(IndexExpr->getLocStart(),
       diag::err_typecheck_subscript) << IndexExpr->getSourceRange());
 
@@ -1534,7 +1548,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
   // the following check catches trying to index a pointer to a function (e.g.
   // void (*)(int)) and pointers to incomplete types.  Functions are not
   // objects in C99.
-  if (!ResultType->isObjectType())
+  if (!ResultType->isObjectType() && !ResultType->isDependentType())
     return ExprError(Diag(BaseExpr->getLocStart(),
                 diag::err_typecheck_subscript_not_object)
       << BaseExpr->getType() << BaseExpr->getSourceRange());
@@ -2306,8 +2320,8 @@ Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                             LParenLoc, RParenLoc));
 }
 
-/// Note that lex is not null here, even if this is the gnu "x ?: y" extension.
-/// In that case, lex = cond.
+/// Note that lhs is not null here, even if this is the gnu "x ?: y" extension.
+/// In that case, lhs = cond.
 /// C99 6.5.15
 QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
                                         SourceLocation QuestionLoc) {
@@ -3442,6 +3456,9 @@ QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
 /// doesn't need to call UsualUnaryConversions or UsualArithmeticConversions.
 QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
                                               bool isInc) {
+  if (Op->isTypeDependent())
+    return Context.DependentTy;
+
   QualType ResType = Op->getType();
   assert(!ResType.isNull() && "no type for increment/decrement expression");
 
@@ -3669,6 +3686,9 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
 }
 
 QualType Sema::CheckIndirectionOperand(Expr *Op, SourceLocation OpLoc) {
+  if (Op->isTypeDependent())
+    return Context.DependentTy;
+
   UsualUnaryConversions(Op);
   QualType Ty = Op->getType();
 
@@ -4120,6 +4140,8 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
   case UnaryOperator::Minus:
     UsualUnaryConversions(Input);
     resultType = Input->getType();
+    if (resultType->isDependentType())
+      break;
     if (resultType->isArithmeticType()) // C99 6.5.3.3p1
       break;
     else if (getLangOptions().CPlusPlus && // C++ [expr.unary.op]p6-7
@@ -4135,6 +4157,8 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
   case UnaryOperator::Not: // bitwise complement
     UsualUnaryConversions(Input);
     resultType = Input->getType();
+    if (resultType->isDependentType())
+      break;
     // C99 6.5.3.3p1. We allow complex int and float as a GCC extension.
     if (resultType->isComplexType() || resultType->isComplexIntegerType())
       // C99 does not support '~' for complex conjugation.
@@ -4148,6 +4172,8 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
     DefaultFunctionArrayConversion(Input);
     resultType = Input->getType();
+    if (resultType->isDependentType())
+      break;
     if (!resultType->isScalarType()) // C99 6.5.3.3p1
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input->getSourceRange());
@@ -4231,10 +4257,12 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   QualType ArgTy = QualType::getFromOpaquePtr(argty);
   assert(!ArgTy.isNull() && "Missing type argument!");
 
+  bool Dependent = ArgTy->isDependentType();
+
   // We must have at least one component that refers to the type, and the first
   // one is known to be a field designator.  Verify that the ArgTy represents
   // a struct/union/class.
-  if (!ArgTy->isRecordType())
+  if (!Dependent && !ArgTy->isRecordType())
     return Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy;
 
   // Otherwise, create a compound literal expression as the base, and
@@ -4251,51 +4279,57 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
     Diag(BuiltinLoc, diag::ext_offsetof_extended_field_designator)
       << SourceRange(CompPtr[1].LocStart, CompPtr[NumComponents-1].LocEnd);
 
-  for (unsigned i = 0; i != NumComponents; ++i) {
-    const OffsetOfComponent &OC = CompPtr[i];
-    if (OC.isBrackets) {
-      // Offset of an array sub-field.  TODO: Should we allow vector elements?
-      const ArrayType *AT = Context.getAsArrayType(Res->getType());
-      if (!AT) {
-        Res->Destroy(Context);
-        return Diag(OC.LocEnd, diag::err_offsetof_array_type) << Res->getType();
+  if (!Dependent) {
+    // FIXME: Dependent case loses a lot of information here. And probably
+    // leaks like a sieve.
+    for (unsigned i = 0; i != NumComponents; ++i) {
+      const OffsetOfComponent &OC = CompPtr[i];
+      if (OC.isBrackets) {
+        // Offset of an array sub-field.  TODO: Should we allow vector elements?
+        const ArrayType *AT = Context.getAsArrayType(Res->getType());
+        if (!AT) {
+          Res->Destroy(Context);
+          return Diag(OC.LocEnd, diag::err_offsetof_array_type)
+            << Res->getType();
+        }
+
+        // FIXME: C++: Verify that operator[] isn't overloaded.
+
+        // C99 6.5.2.1p1
+        Expr *Idx = static_cast<Expr*>(OC.U.E);
+        if (!Idx->isTypeDependent() && !Idx->getType()->isIntegerType())
+          return Diag(Idx->getLocStart(), diag::err_typecheck_subscript)
+            << Idx->getSourceRange();
+
+        Res = new (Context) ArraySubscriptExpr(Res, Idx, AT->getElementType(),
+                                               OC.LocEnd);
+        continue;
       }
 
-      // FIXME: C++: Verify that operator[] isn't overloaded.
+      const RecordType *RC = Res->getType()->getAsRecordType();
+      if (!RC) {
+        Res->Destroy(Context);
+        return Diag(OC.LocEnd, diag::err_offsetof_record_type)
+          << Res->getType();
+      }
 
-      // C99 6.5.2.1p1
-      Expr *Idx = static_cast<Expr*>(OC.U.E);
-      if (!Idx->getType()->isIntegerType())
-        return Diag(Idx->getLocStart(), diag::err_typecheck_subscript)
-          << Idx->getSourceRange();
+      // Get the decl corresponding to this.
+      RecordDecl *RD = RC->getDecl();
+      FieldDecl *MemberDecl
+        = dyn_cast_or_null<FieldDecl>(LookupQualifiedName(RD, OC.U.IdentInfo,
+                                                          LookupMemberName)
+                                        .getAsDecl());
+      if (!MemberDecl)
+        return Diag(BuiltinLoc, diag::err_typecheck_no_member)
+         << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd);
 
-      Res = new (Context) ArraySubscriptExpr(Res, Idx, AT->getElementType(),
-                                             OC.LocEnd);
-      continue;
-    }
-
-    const RecordType *RC = Res->getType()->getAsRecordType();
-    if (!RC) {
-      Res->Destroy(Context);
-      return Diag(OC.LocEnd, diag::err_offsetof_record_type) << Res->getType();
-    }
-
-    // Get the decl corresponding to this.
-    RecordDecl *RD = RC->getDecl();
-    FieldDecl *MemberDecl
-      = dyn_cast_or_null<FieldDecl>(LookupQualifiedName(RD, OC.U.IdentInfo,
-                                                        LookupMemberName)
-                                      .getAsDecl());
-    if (!MemberDecl)
-      return Diag(BuiltinLoc, diag::err_typecheck_no_member)
-       << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd);
-
-    // FIXME: C++: Verify that MemberDecl isn't a static field.
-    // FIXME: Verify that MemberDecl isn't a bitfield.
-    // MemberDecl->getType() doesn't get the right qualifiers, but it doesn't
-    // matter here.
-    Res = new (Context) MemberExpr(Res, false, MemberDecl, OC.LocEnd,
+      // FIXME: C++: Verify that MemberDecl isn't a static field.
+      // FIXME: Verify that MemberDecl isn't a bitfield.
+      // MemberDecl->getType() doesn't get the right qualifiers, but it doesn't
+      // matter here.
+      Res = new (Context) MemberExpr(Res, false, MemberDecl, OC.LocEnd,
                                    MemberDecl->getType().getNonReferenceType());
+    }
   }
 
   return new (Context) UnaryOperator(Res, UnaryOperator::OffsetOf,
@@ -4324,16 +4358,21 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
 
   assert((CondExpr && LHSExpr && RHSExpr) && "Missing type argument(s)");
 
-  // The conditional expression is required to be a constant expression.
-  llvm::APSInt condEval(32);
-  SourceLocation ExpLoc;
-  if (!CondExpr->isIntegerConstantExpr(condEval, Context, &ExpLoc))
-    return Diag(ExpLoc, diag::err_typecheck_choose_expr_requires_constant)
-      << CondExpr->getSourceRange();
+  QualType resType;
+  if (CondExpr->isValueDependent()) {
+    resType = Context.DependentTy;
+  } else {
+    // The conditional expression is required to be a constant expression.
+    llvm::APSInt condEval(32);
+    SourceLocation ExpLoc;
+    if (!CondExpr->isIntegerConstantExpr(condEval, Context, &ExpLoc))
+      return Diag(ExpLoc, diag::err_typecheck_choose_expr_requires_constant)
+        << CondExpr->getSourceRange();
 
-  // If the condition is > zero, then the AST type is the same as the LSHExpr.
-  QualType resType = condEval.getZExtValue() ? LHSExpr->getType() :
-                                               RHSExpr->getType();
+    // If the condition is > zero, then the AST type is the same as the LSHExpr.
+    resType = condEval.getZExtValue() ? LHSExpr->getType() : RHSExpr->getType();
+  }
+
   return new (Context) ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr,
                                   resType, RPLoc);
 }
