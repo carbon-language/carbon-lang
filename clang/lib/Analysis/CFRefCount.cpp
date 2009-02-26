@@ -2189,7 +2189,7 @@ namespace {
       : CFRefBug(tf, "use-after-release") {}
     
     const char* getDescription() const {
-      return "Reference-counted object is used after it is released.";
+      return "Reference-counted object is used after it is released";
     }    
   };
   
@@ -2199,8 +2199,8 @@ namespace {
 
     const char* getDescription() const {
       return "Incorrect decrement of the reference count of a "
-      "CoreFoundation object: "
-      "The object is not owned at this point by the caller.";
+      "Core Foundation object ("
+      "the object is not owned at this point by the caller)";
     }
   };
   
@@ -2329,16 +2329,16 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
 }
 
 static const char* Msgs[] = {
-  "Code is compiled in garbage collection only mode"  // GC only
-  "  (the bug occurs with garbage collection enabled).",
-  
-  "Code is compiled without garbage collection.", // No GC.
-  
-  "Code is compiled for use with and without garbage collection (GC)."
-  "  The bug occurs with GC enabled.", // Hybrid, with GC.
-  
-  "Code is compiled for use with and without garbage collection (GC)."
-  "  The bug occurs in non-GC mode."  // Hyrbird, without GC/
+  // GC only
+  "Code is compiled to only use garbage collection",    
+  // No GC.
+  "Code is compiled to not use reference counts and not garbage collection",
+  // Hybrid, with GC.
+  "Code is compiled to use either garbage collection (GC) or reference counts"
+  " (non-GC).  The bug occurs with GC enabled",  
+  // Hybrid, without GC
+  "Code is compiled to use either garbage collection (GC) or reference counts"
+  " (non-GC).  The bug occurs in non-GC mode"
 };
 
 std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
@@ -2537,14 +2537,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
         else
           os << "Reference count incremented.";
                   
-        if (unsigned Count = CurrV.getCount()) {
-          os << " The object now has +" << Count;
-          
-          if (Count > 1)
-            os << " retain counts.";
-          else
-            os << " retain count.";
-        }
+        if (unsigned Count = CurrV.getCount())
+          os << " The object now has a +" << Count << " retain count.";
           
         if (PrevV.getKind() == RefVal::Released) {
           assert(TF.isGCEnabled() && CurrV.getCount() > 0);
