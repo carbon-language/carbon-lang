@@ -201,8 +201,10 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     // or incomplete types shall not be restrict-qualified."  C++ also allows
     // restrict-qualified references.
     if (TypeQuals & QualType::Restrict) {
-      if (const PointerLikeType *PT = Result->getAsPointerLikeType()) {
-        QualType EltTy = PT->getPointeeType();
+      if (Result->isPointerType() || Result->isReferenceType()) {
+        QualType EltTy = Result->isPointerType() ? 
+          Result->getAsPointerType()->getPointeeType() :
+          Result->getAsReferenceType()->getPointeeType();
       
         // If we have a pointer or reference, the pointee must have an object or
         // incomplete type.

@@ -3519,8 +3519,10 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                          bool Complain) {
   QualType FunctionType = ToType;
   bool IsMember = false;
-  if (const PointerLikeType *ToTypePtr = ToType->getAsPointerLikeType())
+  if (const PointerType *ToTypePtr = ToType->getAsPointerType())
     FunctionType = ToTypePtr->getPointeeType();
+  else if (const ReferenceType *ToTypeRef = ToType->getAsReferenceType())
+    FunctionType = ToTypeRef->getPointeeType();
   else if (const MemberPointerType *MemTypePtr =
                     ToType->getAsMemberPointerType()) {
     FunctionType = MemTypePtr->getPointeeType();
