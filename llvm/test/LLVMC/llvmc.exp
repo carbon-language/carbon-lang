@@ -20,7 +20,7 @@ if [ llvm_gcc_supports objc ] then {
 }
 
 if [ llvm_gcc_supports obj-c++ ] then {
-    RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{m}]]
+    RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{mm}]]
 }
 
 RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{td}]]
