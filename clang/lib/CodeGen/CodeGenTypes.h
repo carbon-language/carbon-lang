@@ -85,7 +85,7 @@ class CodeGenTypes {
   const llvm::TargetData& TheTargetData;
   mutable const ABIInfo* TheABIInfo;
   
-  llvm::SmallVector<std::pair<const PointerLikeType *,
+  llvm::SmallVector<std::pair<QualType,
                               llvm::OpaqueType *>, 8>  PointersToResolve;
 
   llvm::DenseMap<const Type*, llvm::PATypeHolder> TagDeclTypes;

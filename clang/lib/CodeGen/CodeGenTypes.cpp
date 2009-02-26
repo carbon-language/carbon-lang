@@ -85,13 +85,13 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   // circular types.  Loop through all these defered pointees, if any, and
   // resolve them now.
   while (!PointersToResolve.empty()) {
-    std::pair<const PointerLikeType *, llvm::OpaqueType*> P =
+    std::pair<QualType, llvm::OpaqueType*> P =
       PointersToResolve.back();
     PointersToResolve.pop_back();
     // We can handle bare pointers here because we know that the only pointers
     // to the Opaque type are P.second and from other types.  Refining the
     // opqaue type away will invalidate P.second, but we don't mind :).
-    const llvm::Type *NT = ConvertTypeRecursive(P.first->getPointeeType());
+    const llvm::Type *NT = ConvertTypeRecursive(P.first);
     P.second->refineAbstractTypeTo(NT);
   }
 
@@ -223,12 +223,18 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       ConvertTypeRecursive(cast<ComplexType>(Ty).getElementType());
     return llvm::StructType::get(EltTy, EltTy, NULL);
   }
-  case Type::Reference:
+  case Type::Reference: {
+    const ReferenceType &RTy = cast<ReferenceType>(Ty);
+    QualType ETy = RTy.getPointeeType();
+    llvm::OpaqueType *PointeeType = llvm::OpaqueType::get();
+    PointersToResolve.push_back(std::make_pair(ETy, PointeeType));
+    return llvm::PointerType::get(PointeeType, ETy.getAddressSpace());
+  }
   case Type::Pointer: {
-    const PointerLikeType &PTy = cast<PointerLikeType>(Ty);
+    const PointerType &PTy = cast<PointerType>(Ty);
     QualType ETy = PTy.getPointeeType();
     llvm::OpaqueType *PointeeType = llvm::OpaqueType::get();
-    PointersToResolve.push_back(std::make_pair(&PTy, PointeeType));
+    PointersToResolve.push_back(std::make_pair(ETy, PointeeType));
     return llvm::PointerType::get(PointeeType, ETy.getAddressSpace());
   }
     
