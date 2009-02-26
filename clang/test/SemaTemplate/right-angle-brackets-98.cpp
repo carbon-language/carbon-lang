@@ -9,5 +9,4 @@ X<X<X<X<int>> // expected-error{{a space is required between consecutive right a
     >> *x3;   // expected-error{{a space is required between consecutive right angle brackets (use '> >')}}
 
 Y<(1 >> 2)> *y1;
-Y<1 >> 2> *y2;
-// FIXME: when we get a -Wc++0x mode, warn about the use above
+Y<1 >> 2> *y2; // expected-warning{{use of right-shift operator ('>>') in template argument will require parentheses in C++0x}}

@@ -51,7 +51,9 @@ public:
   void HandlePiece(Rewriter& R, FileID BugFileID,
                    const PathDiagnosticPiece& P, unsigned num, unsigned max);
   
-  void HighlightRange(Rewriter& R, FileID BugFileID, SourceRange Range);
+  void HighlightRange(Rewriter& R, FileID BugFileID, SourceRange Range,
+                      const char *HighlightStart = "<span class=\"mrange\">",
+                      const char *HighlightEnd = "</span>");
 
   void ReportDiag(const PathDiagnostic& D);
 };
@@ -438,10 +440,33 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   for (const SourceRange *I = P.ranges_begin(), *E = P.ranges_end();
         I != E; ++I)
     HighlightRange(R, LPosInfo.first, *I);
+
+#if 0
+  // If there is a code insertion hint, insert that code.
+  // FIXME: This code is disabled because it seems to mangle the HTML
+  // output. I'm leaving it here because it's generally the right idea,
+  // but needs some help from someone more familiar with the rewriter.
+  for (const CodeModificationHint *Hint = P.code_modifications_begin(),
+                               *HintEnd = P.code_modifications_end();
+       Hint != HintEnd; ++Hint) {
+    if (Hint->RemoveRange.isValid()) {
+      HighlightRange(R, LPosInfo.first, Hint->RemoveRange,
+                     "<span class=\"CodeRemovalHint\">", "</span>");
+    }
+    if (Hint->InsertionLoc.isValid()) {
+      std::string EscapedCode = html::EscapeText(Hint->CodeToInsert, true);
+      EscapedCode = "<span class=\"CodeInsertionHint\">" + EscapedCode
+        + "</span>";
+      R.InsertStrBefore(Hint->InsertionLoc, EscapedCode);
+    }
+  }
+#endif
 }
 
 void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
-                                     SourceRange Range) {
+                                     SourceRange Range,
+                                     const char *HighlightStart,
+                                     const char *HighlightEnd) {
   
   SourceManager& SM = R.getSourceMgr();
   
@@ -473,6 +498,5 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
   SourceLocation E =
     InstantiationEnd.getFileLocWithOffset(EndColNo - OldEndColNo);
   
-  html::HighlightRange(R, InstantiationStart, E,
-                       "<span class=\"mrange\">", "</span>");
+  html::HighlightRange(R, InstantiationStart, E, HighlightStart, HighlightEnd);
 }

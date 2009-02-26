@@ -365,10 +365,19 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 
     if (!LHS.isInvalid()) {
       // Combine the LHS and RHS into the LHS (e.g. build AST).
-      if (TernaryMiddle.isInvalid())
+      if (TernaryMiddle.isInvalid()) {
+        // If we're using '>>' as an operator within a template
+        // argument list (in C++98), suggest the addition of
+        // parentheses so that the code remains well-formed in C++0x.
+        if (!GreaterThanIsOperator && OpToken.is(tok::greatergreater))
+          SuggestParentheses(OpToken.getLocation(),
+                             diag::warn_cxx0x_right_shift_in_template_arg,
+                         SourceRange(Actions.getExprRange(LHS.get()).getBegin(),
+                                     Actions.getExprRange(RHS.get()).getEnd()));
+
         LHS = Actions.ActOnBinOp(CurScope, OpToken.getLocation(),
                                  OpToken.getKind(), move(LHS), move(RHS));
-      else
+      } else
         LHS = Actions.ActOnConditionalOp(OpToken.getLocation(), ColonLoc,
                                          move(LHS), move(TernaryMiddle),
                                          move(RHS));

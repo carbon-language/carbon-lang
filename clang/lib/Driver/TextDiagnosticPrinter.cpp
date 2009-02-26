@@ -16,6 +16,7 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
+#include <algorithm>
 using namespace clang;
 
 void TextDiagnosticPrinter::
@@ -104,7 +105,9 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 SourceRange *Ranges,
                                                 unsigned NumRanges,
-                                                SourceManager &SM) {
+                                                SourceManager &SM,
+                                          const CodeModificationHint *Hints,
+                                                unsigned NumHints) {
   assert(!Loc.isInvalid() && "must have a valid source location here");
   
   // We always emit diagnostics about the instantiation points, not the spelling
@@ -205,6 +208,36 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   // Emit what we have computed.
   OS << SourceLine << '\n';
   OS << CaretLine << '\n';
+
+  if (NumHints) {
+    std::string InsertionLine;
+    for (const CodeModificationHint *Hint = Hints, 
+                                *LastHint = Hints + NumHints;
+         Hint != LastHint; ++Hint) {
+      if (Hint->InsertionLoc.isValid()) {
+        // We have an insertion hint. Determine whether the inserted
+        // code is on the same line as the caret.
+        std::pair<FileID, unsigned> HintLocInfo 
+          = SM.getDecomposedLoc(Hint->InsertionLoc);
+        if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
+              SM.getLineNumber(FID, FileOffset)) {
+          // Insert the new code into the line just below the code
+          // that the user wrote.
+          unsigned HintColNo 
+            = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second);
+          unsigned LastColumnModified 
+            = HintColNo - 1 + Hint->CodeToInsert.size();
+          if (LastColumnModified > InsertionLine.size())
+            InsertionLine.resize(LastColumnModified, ' ');
+          std::copy(Hint->CodeToInsert.begin(), Hint->CodeToInsert.end(),
+                    InsertionLine.begin() + HintColNo - 1);
+        }
+      }
+    }
+
+    if (!InsertionLine.empty())
+      OS << InsertionLine << '\n';
+  }
 }
 
 
@@ -252,18 +285,30 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // diagnostic, or if the diagnostic has ranges.  We don't want to emit the
   // same caret multiple times if one loc has multiple diagnostics.
   if (CaretDiagnostics && Info.getLocation().isValid() &&
-      ((LastLoc != Info.getLocation()) || Info.getNumRanges())) {
+      ((LastLoc != Info.getLocation()) || Info.getNumRanges() || 
+       Info.getNumCodeModificationHints())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Info.getLocation();
 
     // Get the ranges into a local array we can hack on.
-    SourceRange Ranges[10];
+    SourceRange Ranges[20];
     unsigned NumRanges = Info.getNumRanges();
-    assert(NumRanges < 10 && "Out of space");
+    assert(NumRanges < 20 && "Out of space");
     for (unsigned i = 0; i != NumRanges; ++i)
       Ranges[i] = Info.getRange(i);
     
-    EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager());
+    unsigned NumHints = Info.getNumCodeModificationHints();
+    for (unsigned idx = 0; idx < NumHints; ++idx) {
+      const CodeModificationHint &Hint = Info.getCodeModificationHint(idx);
+      if (Hint.RemoveRange.isValid()) {
+        assert(NumRanges < 20 && "Out of space");
+        Ranges[NumRanges++] = Hint.RemoveRange;
+      }
+    }
+
+    EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
+                        Info.getCodeModificationHints(),
+                        Info.getNumCodeModificationHints());
   }
   
   OS.flush();

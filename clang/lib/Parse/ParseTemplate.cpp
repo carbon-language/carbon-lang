@@ -439,8 +439,14 @@ Parser::ParseTemplateIdAfterTemplateName(DeclTy *Template,
   RAngleLoc = Tok.getLocation();
 
   if (Tok.is(tok::greatergreater)) {
-    if (!getLang().CPlusPlus0x)
-      Diag(Tok.getLocation(), diag::err_two_right_angle_brackets_need_space);
+    if (!getLang().CPlusPlus0x) {
+      const char *ReplaceStr = "> >";
+      if (NextToken().is(tok::greater) || NextToken().is(tok::greatergreater))
+        ReplaceStr = "> > ";
+
+      Diag(Tok.getLocation(), diag::err_two_right_angle_brackets_need_space)
+        << CodeReplacementHint(SourceRange(Tok.getLocation()), ReplaceStr);
+    }
 
     Tok.setKind(tok::greater);
     if (!ConsumeLastToken) {

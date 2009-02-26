@@ -28,8 +28,9 @@ namespace D {
 
 using namespace ! ; // expected-error{{expected namespace name}}
 using namespace A ; // expected-error{{expected namespace name}}
-using namespace ::A // expected-error{{expected namespace name}}
-                    B ; // expected-error{{expected ';' after namespace name}}
+using namespace ::A // expected-error{{expected namespace name}} \
+                    // expected-error{{expected ';' after namespace name}}
+                    B ; 
 
 void test_nslookup() {
   int B;

@@ -110,6 +110,11 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   return false;
 }
 
+SourceRange Sema::getExprRange(ExprTy *E) const {
+  Expr *Ex = (Expr *)E;
+  return Ex? Ex->getSourceRange() : SourceRange();
+}
+
 //===----------------------------------------------------------------------===//
 //  Standard Promotions and Conversions
 //===----------------------------------------------------------------------===//

@@ -1036,6 +1036,8 @@ public:
   bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc);
 
   // Primary Expressions.
+  virtual SourceRange getExprRange(ExprTy *E) const;
+
   virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                                IdentifierInfo &II,
                                                bool HasTrailingLParen,

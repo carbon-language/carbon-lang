@@ -1615,12 +1615,10 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // FIXME: Once we have member templates, we'll need to check
   // C++ [temp.expl.spec]p17-18, where we could have multiple levels of
   // template<> headers.
-  if (TemplateParameterLists.size() == 0) {
-    // FIXME: It would be very nifty if we could introduce some kind
-    // of "code insertion hint" that could show the code that needs to
-    // be added.
-    Diag(KWLoc, diag::err_template_spec_needs_header);
-  } else {
+  if (TemplateParameterLists.size() == 0)
+    Diag(KWLoc, diag::err_template_spec_needs_header)
+      << CodeInsertionHint(KWLoc, "template<> ");
+  else {
     TemplateParameterList *TemplateParams 
       = static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
     if (TemplateParameterLists.size() > 1) {

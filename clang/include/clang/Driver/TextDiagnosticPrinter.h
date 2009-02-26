@@ -48,7 +48,9 @@ public:
 
   void EmitCaretDiagnostic(SourceLocation Loc, 
                            SourceRange *Ranges, unsigned NumRanges,
-                           SourceManager &SM);
+                           SourceManager &SM,
+                           const CodeModificationHint *Hints = 0,
+                           unsigned NumHints = 0);
   
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);

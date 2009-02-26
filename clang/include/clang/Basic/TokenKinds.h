@@ -44,6 +44,7 @@ enum ObjCKeywordKind {
 };
 
 const char *getTokenName(enum TokenKind Kind);
+const char *getTokenSpelling(enum TokenKind Kind);
 
 }  // end namespace tok
 }  // end namespace clang

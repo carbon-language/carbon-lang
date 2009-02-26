@@ -37,6 +37,12 @@ class Parser {
   /// that this is valid.
   Token Tok;
   
+  // PrevTokLocation - The location of the token we previously
+  // consumed. This token is used for diagnostics where we expected to
+  // see a token following another token (e.g., the ';' at the end of
+  // a statement).
+  SourceLocation PrevTokLocation;
+
   unsigned short ParenCount, BracketCount, BraceCount;
 
   /// Actions - These are the callbacks we invoke as we parse various constructs
@@ -175,9 +181,9 @@ private:
     assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
            !isTokenBrace() &&
            "Should consume special tokens with Consume*Token");
-    SourceLocation L = Tok.getLocation();
+    PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
-    return L;
+    return PrevTokLocation;
   }
   
   /// ConsumeAnyToken - Dispatch to the right Consume* method based on the
@@ -204,9 +210,9 @@ private:
       ++ParenCount;
     else if (ParenCount)
       --ParenCount;       // Don't let unbalanced )'s drive the count negative.
-    SourceLocation L = Tok.getLocation();
+    PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
-    return L;
+    return PrevTokLocation;
   }
   
   /// ConsumeBracket - This consume method keeps the bracket count up-to-date.
@@ -218,9 +224,9 @@ private:
     else if (BracketCount)
       --BracketCount;     // Don't let unbalanced ]'s drive the count negative.
     
-    SourceLocation L = Tok.getLocation();
+    PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
-    return L;
+    return PrevTokLocation;
   }
       
   /// ConsumeBrace - This consume method keeps the brace count up-to-date.
@@ -232,9 +238,9 @@ private:
     else if (BraceCount)
       --BraceCount;     // Don't let unbalanced }'s drive the count negative.
     
-    SourceLocation L = Tok.getLocation();
+    PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
-    return L;
+    return PrevTokLocation;
   }
   
   /// ConsumeStringToken - Consume the current 'peek token', lexing a new one
@@ -244,9 +250,9 @@ private:
   SourceLocation ConsumeStringToken() {
     assert(isTokenStringLiteral() &&
            "Should only consume string literals with this method");
-    SourceLocation L = Tok.getLocation();
+    PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
-    return L;
+    return PrevTokLocation;
   }
   
   /// GetLookAheadToken - This peeks ahead N tokens and returns that token
@@ -398,6 +404,9 @@ private:
 
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
   DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID);
+
+  void SuggestParentheses(SourceLocation Loc, unsigned DK, 
+                          SourceRange ParenRange);
 
   /// SkipUntil - Read tokens until we get to the specified token, then consume
   /// it (unless DontConsume is true).  Because we cannot guarantee that the

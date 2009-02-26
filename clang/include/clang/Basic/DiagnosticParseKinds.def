@@ -280,6 +280,9 @@ DIAG(err_less_after_template_name_in_nested_name_spec, ERROR,
      "expected '<' after 'template %0' in nested name specifier")
 DIAG(err_two_right_angle_brackets_need_space, ERROR,
      "a space is required between consecutive right angle brackets (use '> >')")
+DIAG(warn_cxx0x_right_shift_in_template_arg, WARNING,
+     "use of right-shift operator ('>>') in template argument will require "
+     "parentheses in C++0x")
 
 // Language specific pragmas
 

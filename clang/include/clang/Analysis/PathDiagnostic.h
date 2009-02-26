@@ -31,6 +31,7 @@ public:
 private:
   FullSourceLoc Pos;
   std::string str;
+  std::vector<CodeModificationHint> CodeModificationHints;
   DisplayHint Hint;
   std::vector<SourceRange> ranges;
   
@@ -56,6 +57,10 @@ public:
     ranges.push_back(SourceRange(B,E));
   }
   
+  void addCodeModificationHint(const CodeModificationHint& Hint) {
+    CodeModificationHints.push_back(Hint);
+  }
+
   typedef const SourceRange* range_iterator;
   
   range_iterator ranges_begin() const {
@@ -65,7 +70,18 @@ public:
   range_iterator ranges_end() const { 
     return ranges_begin() + ranges.size();
   }
-    
+
+  typedef const CodeModificationHint *code_modifications_iterator;
+
+  code_modifications_iterator code_modifications_begin() const {
+    return CodeModificationHints.empty()? 0 : &CodeModificationHints[0];
+  }
+
+  code_modifications_iterator code_modifications_end() const {
+    return CodeModificationHints.empty()? 0 
+                   : &CodeModificationHints[0] + CodeModificationHints.size();
+  }
+
   const SourceManager& getSourceManager() const {
     return Pos.getManager();
   }

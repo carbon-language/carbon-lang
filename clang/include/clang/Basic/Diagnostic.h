@@ -68,6 +68,69 @@ namespace clang {
     };
   }
   
+/// \brief Annotates a diagnostic with some code that should be
+/// inserted, removed, or replaced to fix the problem.
+///
+/// This kind of hint should be used when we are certain that the
+/// introduction, removal, or modification of a particular (small!)
+/// amount of code will correct a compilation error. The compiler
+/// should also provide full recovery from such errors, such that
+/// suppressing the diagnostic output can still result successful
+/// compilation.
+class CodeModificationHint {
+public:
+  /// \brief Tokens that should be removed to correct the error.
+  SourceRange RemoveRange;
+
+  /// \brief The location at which we should insert code to correct
+  /// the error.
+  SourceLocation InsertionLoc;
+
+  /// \brief The actual code to insert at the insertion location, as a
+  /// string.
+  std::string CodeToInsert;
+
+  /// \brief Empty code modification hint, indicating that no code
+  /// modification is known.
+  CodeModificationHint() : RemoveRange(), InsertionLoc() { }
+
+  /// \brief Create a code modification hint that inserts the given
+  /// code string at a specific location.
+  CodeModificationHint(SourceLocation InsertionLoc, const std::string &Code)
+    : RemoveRange(), InsertionLoc(InsertionLoc), CodeToInsert(Code) { }
+
+  /// \brief Create a code modification hint that removes the given
+  /// source range.
+  CodeModificationHint(SourceRange RemoveRange)
+    : RemoveRange(RemoveRange), InsertionLoc(), CodeToInsert() { }
+
+  /// \brief Create a code modification hint that replaces the given
+  /// source range with the given code string.
+  CodeModificationHint(SourceRange RemoveRange, const std::string &Code)
+    : RemoveRange(RemoveRange), InsertionLoc(RemoveRange.getBegin()),
+      CodeToInsert(Code) { }
+};
+
+/// \brief Creates a code modification hint that inserts the given
+/// string at a particular location in the source code.
+inline CodeModificationHint 
+CodeInsertionHint(SourceLocation InsertionLoc, const std::string &Code) {
+  return CodeModificationHint(InsertionLoc, Code);
+}
+
+/// \brief Creates a code modification hint that removes the given
+/// source range.
+inline CodeModificationHint CodeRemovalHint(SourceRange RemoveRange) {
+  return CodeModificationHint(RemoveRange);
+}
+
+/// \brief Creates a code modification hint that replaces the given
+/// source range with the given code string.
+inline CodeModificationHint 
+CodeReplacementHint(SourceRange RemoveRange, const std::string &Code) {
+  return CodeModificationHint(RemoveRange, Code);
+}
+
 /// Diagnostic - This concrete class is used by the front-end to report
 /// problems and issues.  It massages the diagnostics (e.g. handling things like
 /// "report warnings as errors" and passes them off to the DiagnosticClient for
@@ -272,6 +335,9 @@ private:
   signed char NumDiagArgs;
   /// NumRanges - This is the number of ranges in the DiagRanges array.
   unsigned char NumDiagRanges;
+  /// \brief The number of code modifications hints in the
+  /// CodeModificationHints array.
+  unsigned char NumCodeModificationHints;
   
   /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
   /// values, with one for each argument.  This specifies whether the argument
@@ -293,6 +359,12 @@ private:
   /// only support 10 ranges, could easily be extended if needed.
   const SourceRange *DiagRanges[10];
   
+  enum { MaxCodeModificationHints = 3 };
+
+  /// CodeModificationHints - If valid, provides a hint with some code
+  /// to insert, remove, or modify at a particular position.
+  CodeModificationHint CodeModificationHints[MaxCodeModificationHints];
+
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
   void ProcessDiag();
@@ -315,12 +387,13 @@ private:
 /// for example.
 class DiagnosticBuilder {
   mutable Diagnostic *DiagObj;
-  mutable unsigned NumArgs, NumRanges;
+  mutable unsigned NumArgs, NumRanges, NumCodeModificationHints;
   
   void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
   friend class Diagnostic;
   explicit DiagnosticBuilder(Diagnostic *diagObj)
-    : DiagObj(diagObj), NumArgs(0), NumRanges(0) {}
+    : DiagObj(diagObj), NumArgs(0), NumRanges(0), 
+      NumCodeModificationHints(0) {}
 public:
   
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
@@ -339,6 +412,7 @@ public:
     // the Diagnostic object.
     DiagObj->NumDiagArgs = NumArgs;
     DiagObj->NumDiagRanges = NumRanges;
+    DiagObj->NumCodeModificationHints = NumCodeModificationHints;
 
     // Process the diagnostic, sending the accumulated information to the
     // DiagnosticClient.
@@ -373,6 +447,12 @@ public:
            "Too many arguments to diagnostic!");
     DiagObj->DiagRanges[NumRanges++] = &R;
   }    
+
+  void AddCodeModificationHint(const CodeModificationHint &Hint) const {
+    assert(NumCodeModificationHints < Diagnostic::MaxCodeModificationHints &&
+           "Too many code modification hints!");
+    DiagObj->CodeModificationHints[NumCodeModificationHints++] = Hint;
+  }
 };
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
@@ -416,6 +496,12 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   DB.AddSourceRange(R);
   return DB;
 }
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const CodeModificationHint &Hint) {
+  DB.AddCodeModificationHint(Hint);
+  return DB;
+}
   
 
 /// Report - Issue the message to the client.  DiagID is a member of the
@@ -433,7 +519,7 @@ inline DiagnosticBuilder Diagnostic::Report(FullSourceLoc Loc, unsigned DiagID){
 //===----------------------------------------------------------------------===//
   
 /// DiagnosticInfo - This is a little helper class (which is basically a smart
-/// pointer that forward info from Diagnostic) that allows clients ot enquire
+/// pointer that forward info from Diagnostic) that allows clients to enquire
 /// about the currently in-flight diagnostic.
 class DiagnosticInfo {
   const Diagnostic *DiagObj;
@@ -507,14 +593,25 @@ public:
     return *DiagObj->DiagRanges[Idx];
   }
   
-  
+  unsigned getNumCodeModificationHints() const {
+    return DiagObj->NumCodeModificationHints;
+  }
+
+  const CodeModificationHint &getCodeModificationHint(unsigned Idx) const {
+    return DiagObj->CodeModificationHints[Idx];
+  }
+
+  const CodeModificationHint *getCodeModificationHints() const {
+    return DiagObj->NumCodeModificationHints? 
+             &DiagObj->CodeModificationHints[0] : 0;
+  }
+
   /// FormatDiagnostic - Format this diagnostic into a string, substituting the
   /// formal arguments into the %0 slots.  The result is appended onto the Str
   /// array.
   void FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const;
 };
   
-
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
 class DiagnosticClient {

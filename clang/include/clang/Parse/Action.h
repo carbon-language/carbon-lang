@@ -551,6 +551,12 @@ public:
 
   // Primary Expressions.
 
+  /// \brief Retrieve the source range that corresponds to the given
+  /// expression.
+  virtual SourceRange getExprRange(ExprTy *E) const {
+    return SourceRange();
+  }
+
   /// ActOnIdentifierExpr - Parse an identifier in expression context.
   /// 'HasTrailingLParen' indicates whether or not the identifier has a '('
   /// token immediately after it.

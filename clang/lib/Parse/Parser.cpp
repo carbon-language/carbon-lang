@@ -68,6 +68,28 @@ DiagnosticBuilder Parser::Diag(const Token &Tok, unsigned DiagID) {
   return Diag(Tok.getLocation(), DiagID);
 }
 
+/// \brief Emits a diagnostic suggesting parentheses surrounding a
+/// given range.
+///
+/// \param Loc The location where we'll emit the diagnostic.
+/// \param Loc The kind of diagnostic to emit.
+/// \param ParenRange Source range enclosing code that should be parenthesized.
+void Parser::SuggestParentheses(SourceLocation Loc, unsigned DK,
+                                SourceRange ParenRange) {
+  if (!ParenRange.getEnd().isFileID()) {
+    // We can't display the parentheses, so just dig the
+    // warning/error and return.
+    Diag(Loc, DK);
+    return;
+  }
+    
+  unsigned Len = Lexer::MeasureTokenLength(ParenRange.getEnd(), 
+                                           PP.getSourceManager());
+  Diag(Loc, DK) 
+    << CodeInsertionHint(ParenRange.getBegin(), "(")
+    << CodeInsertionHint(ParenRange.getEnd().getFileLocWithOffset(Len), ")");
+}
+
 /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),
 /// this helper function matches and consumes the specified RHS token if
 /// present.  If not present, it emits the specified diagnostic indicating
@@ -108,7 +130,18 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
     return false;
   }
 
-  Diag(Tok, DiagID) << Msg;
+  const char *Spelling = 0;
+  if (PrevTokLocation.isValid() && PrevTokLocation.isFileID() &&
+      (Spelling = tok::getTokenSpelling(ExpectedTok))) {
+    // Show what code to insert to fix this problem.
+    SourceLocation DiagLoc 
+      = PrevTokLocation.getFileLocWithOffset(strlen(Spelling));
+    Diag(DiagLoc, DiagID) 
+      << Msg
+      << CodeInsertionHint(DiagLoc, Spelling);
+  } else
+    Diag(Tok, DiagID) << Msg;
+
   if (SkipToTok != tok::unknown)
     SkipUntil(SkipToTok);
   return true;
