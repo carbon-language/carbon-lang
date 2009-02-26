@@ -1592,7 +1592,11 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   // If this is a conditional branch in an empty block, and if any
   // predecessors is a conditional branch to one of our destinations,
   // fold the conditions into logical ops and one cond br.
-  if (&BB->front() != BI)
+  BasicBlock::iterator BBI = BB->begin();
+  // Ignore dbg intrinsics.
+  while (isa<DbgInfoIntrinsic>(BBI))
+    ++BBI;
+  if (&*BBI != BI)
     return false;
 
   
