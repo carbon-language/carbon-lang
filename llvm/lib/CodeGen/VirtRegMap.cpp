@@ -408,7 +408,12 @@ public:
   /// value for this slot lives in (as the previous value is dead now).
   void ModifyStackSlotOrReMat(int SlotOrReMat);
 
-  void AddAvailableRegsToLiveIn(MachineBasicBlock &MBB);
+  /// AddAvailableRegsToLiveIn - Availability information is being kept coming
+  /// into the specified MBB. Add available physical registers as potential
+  /// live-in's. If they are reused in the MBB, they will be added to the
+  /// live-in set to make register scavenger and post-allocation scheduler.
+  void AddAvailableRegsToLiveIn(MachineBasicBlock &MBB, BitVector &RegKills,
+                                std::vector<MachineOperand*> &KillOps);
 };
 }
 
@@ -488,22 +493,62 @@ void AvailableSpills::ModifyStackSlotOrReMat(int SlotOrReMat) {
   PhysRegsAvailable.erase(I);
 }
 
+/// InvalidateKill - A MI that defines the specified register is being deleted,
+/// invalidate the register kill information.
+static void InvalidateKill(unsigned Reg, BitVector &RegKills,
+                           std::vector<MachineOperand*> &KillOps) {
+  if (RegKills[Reg]) {
+    KillOps[Reg]->setIsKill(false);
+    KillOps[Reg] = NULL;
+    RegKills.reset(Reg);
+  }
+}
+
 /// AddAvailableRegsToLiveIn - Availability information is being kept coming
-/// into the specified MBB. Add available physical registers as live-in's
-/// so register scavenger and post-allocation scheduler are happy.
-void AvailableSpills::AddAvailableRegsToLiveIn(MachineBasicBlock &MBB) {
+/// into the specified MBB. Add available physical registers as potential
+/// live-in's. If they are reused in the MBB, they will be added to the
+/// live-in set to make register scavenger and post-allocation scheduler.
+void AvailableSpills::AddAvailableRegsToLiveIn(MachineBasicBlock &MBB,
+                                        BitVector &RegKills,
+                                        std::vector<MachineOperand*> &KillOps) {
+  std::set<unsigned> NotAvailable;
   for (std::multimap<unsigned, int>::iterator
          I = PhysRegsAvailable.begin(), E = PhysRegsAvailable.end();
        I != E; ++I) {
-    unsigned Reg = (*I).first;
+    unsigned Reg = I->first;
+    bool MakeAvail = true;
     const TargetRegisterClass* RC = TRI->getPhysicalRegisterRegClass(Reg);
     // FIXME: A temporary workaround. We can't reuse available value if it's
     // not safe to move the def of the virtual register's class. e.g.
     // X86::RFP* register classes. Do not add it as a live-in.
     if (!TII->isSafeToMoveRegClassDefs(RC))
-      continue;
-    if (!MBB.isLiveIn(Reg))
+      MakeAvail = false;
+    if (MBB.isLiveIn(Reg))
+      // It's already livein somehow. Be conservative, do not make it available.
+      MakeAvail = false;
+
+    if (!MakeAvail) 
+      // This is no longer available.
+      NotAvailable.insert(Reg);
+    else {
       MBB.addLiveIn(Reg);
+      InvalidateKill(Reg, RegKills, KillOps);
+    }
+
+    // Skip over the same register.
+    std::multimap<unsigned, int>::iterator NI = next(I);
+    while (NI != E && NI->first == Reg) {
+      ++I;
+      ++NI;
+    }
+  }
+
+  for (std::set<unsigned>::iterator I = NotAvailable.begin(),
+         E = NotAvailable.end(); I != E; ++I) {
+    ClobberPhysReg(*I);
+    for (const unsigned *SubRegs = TRI->getSubRegisters(*I);
+       *SubRegs; ++SubRegs)
+      ClobberPhysReg(*SubRegs);
   }
 }
 
@@ -546,6 +591,11 @@ namespace {
       // reloads. This is usually refreshed per basic block.
       AvailableSpills Spills(TRI, TII);
 
+      // Keep track of kill information.
+      BitVector RegKills(TRI->getNumRegs());
+      std::vector<MachineOperand*> KillOps;
+      KillOps.resize(TRI->getNumRegs(), NULL);
+
       // SingleEntrySuccs - Successor blocks which have a single predecessor.
       SmallVector<MachineBasicBlock*, 4> SinglePredSuccs;
       SmallPtrSet<MachineBasicBlock*,16> EarlyVisited;
@@ -559,7 +609,7 @@ namespace {
            DFI != E; ++DFI) {
         MachineBasicBlock *MBB = *DFI;
         if (!EarlyVisited.count(MBB))
-          RewriteMBB(*MBB, VRM, Spills);
+          RewriteMBB(*MBB, VRM, Spills, RegKills, KillOps);
 
         // If this MBB is the only predecessor of a successor. Keep the
         // availability information and visit it next.
@@ -574,8 +624,8 @@ namespace {
             // the only predecessor.
             MBB = SinglePredSuccs[0];
             if (!Visited.count(MBB) && EarlyVisited.insert(MBB)) {
-              Spills.AddAvailableRegsToLiveIn(*MBB);
-              RewriteMBB(*MBB, VRM, Spills);
+              Spills.AddAvailableRegsToLiveIn(*MBB, RegKills, KillOps);
+              RewriteMBB(*MBB, VRM, Spills, RegKills, KillOps);
             }
           }
         } while (MBB);
@@ -612,6 +662,7 @@ namespace {
     bool CommuteToFoldReload(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator &MII,
                              unsigned VirtReg, unsigned SrcReg, int SS,
+                             AvailableSpills &Spills,
                              BitVector &RegKills,
                              std::vector<MachineOperand*> &KillOps,
                              const TargetRegisterInfo *TRI,
@@ -627,7 +678,8 @@ namespace {
                              std::vector<MachineOperand*> &KillOps,
                              VirtRegMap &VRM);
     void RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
-                    AvailableSpills &Spills);
+                    AvailableSpills &Spills,
+                    BitVector &RegKills, std::vector<MachineOperand*> &KillOps);
   };
 }
 
@@ -650,17 +702,6 @@ static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
       RegKills.reset(Reg);
       KillOps[Reg] = NULL;
     }
-  }
-}
-
-/// InvalidateKill - A MI that defines the specified register is being deleted,
-/// invalidate the register kill information.
-static void InvalidateKill(unsigned Reg, BitVector &RegKills,
-                           std::vector<MachineOperand*> &KillOps) {
-  if (RegKills[Reg]) {
-    KillOps[Reg]->setIsKill(false);
-    KillOps[Reg] = NULL;
-    RegKills.reset(Reg);
   }
 }
 
@@ -1086,6 +1127,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
 bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator &MII,
                                     unsigned VirtReg, unsigned SrcReg, int SS,
+                                    AvailableSpills &Spills,
                                     BitVector &RegKills,
                                     std::vector<MachineOperand*> &KillOps,
                                     const TargetRegisterInfo *TRI,
@@ -1153,6 +1195,11 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
     InvalidateKills(MI, RegKills, KillOps);
     VRM.RemoveMachineInstrFromMaps(&MI);
     MBB.erase(&MI);
+
+    // If NewReg was previously holding value of some SS, it's now clobbered.
+    // This has to be done now because it's a physical register. When this
+    // instruction is re-visited, it's ignored.
+    Spills.ClobberPhysReg(NewReg);
 
     ++NumCommutes;
     return true;
@@ -1280,7 +1327,8 @@ void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
-                              AvailableSpills &Spills) {
+                              AvailableSpills &Spills, BitVector &RegKills,
+                              std::vector<MachineOperand*> &KillOps) {
   DOUT << "\n**** Local spiller rewriting MBB '"
        << MBB.getBasicBlock()->getName() << ":\n";
 
@@ -1298,9 +1346,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
   // ReMatDefs - These are rematerializable def MIs which are not deleted.
   SmallSet<MachineInstr*, 4> ReMatDefs;
 
-  // Keep track of kill information.
-  BitVector RegKills(TRI->getNumRegs());
-  std::vector<MachineOperand*>  KillOps;
+  // Clear kill info.
+  RegKills.reset();
+  KillOps.clear();
   KillOps.resize(TRI->getNumRegs(), NULL);
 
   unsigned Dist = 0;
@@ -1368,11 +1416,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         int SSorRMId = DoReMat
           ? VRM.getReMatId(VirtReg) : VRM.getStackSlot(VirtReg);
         const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
-        // FIXME: A temporary workaround. Don't reuse available value if it's
-        // not safe to move the def of the virtual register's class. e.g.
-        // X86::RFP* register classes.
-        unsigned InReg = TII->isSafeToMoveRegClassDefs(RC) ?
-          Spills.getSpillSlotOrReMatPhysReg(SSorRMId) : 0;
+        unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
         if (InReg == Phys) {
           // If the value is already available in the expected register, save
           // a reload / remat.
@@ -1599,11 +1643,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
 
             PotentialDeadStoreSlots.push_back(ReuseSlot);
           }
-
-          // Assumes this is the last use. IsKill will be unset if reg is reused
-          // unless it's a two-address operand.
-          if (ti == -1)
-            MI.getOperand(i).setIsKill();
 
           continue;
         }  // CanReuse
@@ -1877,7 +1916,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                    "Src hasn't been allocated yet?");
 
             if (CommuteToFoldReload(MBB, MII, VirtReg, SrcReg, StackSlot,
-                                    RegKills, KillOps, TRI, VRM)) {
+                                    Spills, RegKills, KillOps, TRI, VRM)) {
               NextMII = next(MII);
               BackTracked = true;
               goto ProcessNextInst;
