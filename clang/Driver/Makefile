@@ -14,7 +14,7 @@ ifeq ($(OS),Darwin)
 LD.Flags += -Wl,-exported_symbol -Wl,_main
 endif
 
-ifeq ($(OS),Linux)
+ifeq ($(OS), $(filter $(OS), Linux NetBSD FreeBSD))
 LD.Flags += -Wl,--version-script=Driver.map
 endif
 
