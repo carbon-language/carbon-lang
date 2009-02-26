@@ -39,6 +39,7 @@ static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
 
   // Otherwise we can only handle string literals.
   StringLiteral *SL = dyn_cast<StringLiteral>(Init);
+  if (SL == 0) return 0;
   
   // char array can be initialized with a narrow string.
   // Only allow char x[] = "foo";  not char x[] = L"foo";
