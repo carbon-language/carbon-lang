@@ -468,10 +468,9 @@ public:
       return true;
     
     // Create the diagnostic.
-    
     FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
     
-    if (VD->getType()->isPointerType() || VD->getType()->isReferenceType()) {
+    if (Loc::IsLocType(VD->getType())) {
       std::string msg = "'" + std::string(VD->getNameAsString()) +
       "' now aliases '" + MostRecent->getNameAsString() + "'";
       
