@@ -48,7 +48,7 @@ static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
   // wchar_t array can be initialized with a wide string: C99 6.7.8p15:
   // "An array with element type compatible with wchar_t may be initialized by a
   // wide string literal, optionally enclosed in braces."
-  if (Context.typesAreCompatible(Context.WCharTy, AT->getElementType()))
+  if (Context.typesAreCompatible(Context.getWCharType(), AT->getElementType()))
     // Only allow wchar_t x[] = L"foo";  not wchar_t x[] = "foo";
     return Init;
   

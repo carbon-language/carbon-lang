@@ -1444,8 +1444,6 @@ QualType ASTContext::getWCharType() const {
   if (LangOpts.CPlusPlus)
     return WCharTy;
 
-  // FIXME: In C, shouldn't WCharTy just be a typedef of the target's
-  // wide-character type?
   return getFromTargetType(Target.getWCharType());
 }
 
