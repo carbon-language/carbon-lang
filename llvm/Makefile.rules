@@ -1067,6 +1067,24 @@ ToolBuildPath   := $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT)
 endif
 
 #---------------------------------------------------------
+# Prune Exports
+#---------------------------------------------------------
+
+# If the tool opts in with TOOL_NO_EXPORTS, optimize startup time of the app by
+# not exporting all of the weak symbols from the binary.  This reduces dyld
+# startup time by 4x on darwin in some cases.
+ifdef TOOL_NO_EXPORTS
+ifeq ($(OS),Darwin)
+LD.Flags += -Wl,-exported_symbol -Wl,_main
+endif
+
+ifeq ($(OS), $(filter $(OS), Linux NetBSD FreeBSD))
+LD.Flags += -Wl,--version-script=Driver.map
+endif
+endif
+
+
+#---------------------------------------------------------
 # Provide targets for building the tools
 #---------------------------------------------------------
 all-local:: $(ToolBuildPath)
