@@ -171,7 +171,19 @@ bug fixes, cleanup and new features. The major changes are:</p>
 
 <ul>
 
-<li>?</li>
+<li>Ahead of Time compiler: compiles .class files to llvm .bc. VMKit uses this
+functionality to native compile the standard classes (eg java.lang.String).
+Users can compile AOT .class files into dynamic libraries and run them with the
+help of VMKit.</li>
+
+<li>New exception model: the dwarf exception model is very slow for
+exception-intensive applications, so the JVM has had a new implementation of
+exceptions which check at each function call if an exception happened. There is
+a low performance penalty on applications without exceptions, but it is a big
+gain for exception-intensive applications. For example the jack benchmark in
+Spec JVM98 is 6x faster (performance gain of 83%).</li>
+
+<li>New support for OSX/X64, Linux/X64 (with the Boehm GC), Linux/ppc32.</li>
 
 </ul>
 </div>
@@ -227,7 +239,7 @@ how to write a backend doc docs/WritingAnLLVMBackend.html
 fastisel + exception handling
 vector widening <3 x float> -> <4 x float>
 arm port improvements? arm jit encoding stuff, constant island support?
-JIT TLS support on x86
+JIT TLS support on x86-32.
 mem2reg now faster on code with huge basic blocks
 stack protectors/stack canaries, -fstack-protector, controllable on a 
   per-function basis with attributes.
@@ -236,6 +248,8 @@ shufflevector is generalized to allow different shuffle mask width than its
 loop optimizer improves floating point induction variables
 llvm/Analysis/DebugInfo.h classes, llvm-gcc and clang and codegen use them.
 asmprinters seperate from targets for jits
+PBQP register allocator now supports register coalescing.
+
 -->
 
 </ul>
