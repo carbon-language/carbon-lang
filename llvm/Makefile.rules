@@ -444,7 +444,10 @@ endif
 endif
 
 ifeq ($(OS),Darwin)
-  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -bundle
+  DARWIN_VERSION := `sw_vers -productVersion`
+  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -bundle \
+                    -mmacosx-version-min=$(DARWIN_VERSION)
+  CompileCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
 else
   SharedLinkOptions=-shared
 endif
@@ -453,7 +456,7 @@ endif
 # Options To Invoke Tools
 #----------------------------------------------------------
 
-CompileCommonOpts := -pedantic -Wall -W -Wwrite-strings -Wno-long-long \
+CompileCommonOpts += -pedantic -Wall -W -Wwrite-strings -Wno-long-long \
                      -Wunused -Wno-unused-parameter $(EXTRA_OPTIONS)
 
 ifeq ($(OS),HP-UX)
