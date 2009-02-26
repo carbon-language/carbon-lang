@@ -433,7 +433,7 @@ ifndef KEEP_SYMBOLS
 endif
 
 # Adjust linker flags for building an executable
-ifndef ($(OS),Darwin)
+ifneq ($(OS),Darwin)
 ifdef TOOLNAME
 ifdef EXAMPLE_TOOL
   LD.Flags += -Wl,-rpath -Wl,$(ExmplDir) -export-dynamic
