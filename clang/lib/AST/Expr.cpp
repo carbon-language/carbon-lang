@@ -875,383 +875,229 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
 }
 
 /// isIntegerConstantExpr - this recursive routine will test if an expression is
-/// an integer constant expression. Note: With the introduction of VLA's in
-/// C99 the result of the sizeof operator is no longer always a constant
-/// expression. The generalization of the wording to include any subexpression
-/// that is not evaluated (C99 6.6p3) means that nonconstant subexpressions
-/// can appear as operands to other operators (e.g. &&, ||, ?:). For instance,
-/// "0 || f()" can be treated as a constant expression. In C90 this expression,
-/// occurring in a context requiring a constant, would have been a constraint
-/// violation. FIXME: This routine currently implements C90 semantics.
-/// To properly implement C99 semantics this routine will need to evaluate
-/// expressions involving operators previously mentioned.
+/// an integer constant expression.
 
 /// FIXME: Pass up a reason why! Invalid operation in i-c-e, division by zero,
 /// comma, etc
 ///
-/// FIXME: This should ext-warn on overflow during evaluation!  ISO C does not
-/// permit this.  This includes things like (int)1e1000
-///
 /// FIXME: Handle offsetof.  Two things to do:  Handle GCC's __builtin_offsetof
 /// to support gcc 4.0+  and handle the idiom GCC recognizes with a null pointer
 /// cast+dereference.
-bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
-                                 SourceLocation *Loc, bool isEvaluated) const {
-  if (!isIntegerConstantExprInternal(Result, Ctx, Loc, isEvaluated))
-    return false;
-  assert(Result == EvaluateAsInt(Ctx) && "Inconsistent Evaluate() result!");
-  return true;
-}
 
-bool Expr::isIntegerConstantExprInternal(llvm::APSInt &Result, ASTContext &Ctx,
-                                 SourceLocation *Loc, bool isEvaluated) const {
-  
-  // Pretest for integral type; some parts of the code crash for types that
-  // can't be sized.
-  if (!getType()->isIntegralType()) {
-    if (Loc) *Loc = getLocStart();
-    return false;
+// CheckICE - This function does the fundamental ICE checking: the returned
+// ICEDiag contains a Val of 0, 1, or 2, and a possibly null SourceLocation.
+// Note that to reduce code duplication, this helper does no evaluation
+// itself; the caller checks whether the expression is evaluatable, and 
+// in the rare cases where CheckICE actually cares about the evaluated
+// value, it calls into Evalute.  
+//
+// Meanings of Val:
+// 0: This expression is an ICE if it can be evaluated by Evaluate.
+// 1: This expression is not an ICE, but if it isn't evaluated, it's
+//    a legal subexpression for an ICE. This return value is used to handle
+//    the comma operator in C99 mode.
+// 2: This expression is not an ICE, and is not a legal subexpression for one.
+
+struct ICEDiag {
+  unsigned Val;
+  SourceLocation Loc;
+
+  public:
+  ICEDiag(unsigned v, SourceLocation l) : Val(v), Loc(l) {}
+  ICEDiag() : Val(0) {}
+};
+
+ICEDiag NoDiag() { return ICEDiag(); }
+
+static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
+  if (!E->getType()->isIntegralType()) {
+    return ICEDiag(2, E->getLocStart());
   }
-  switch (getStmtClass()) {
+
+  switch (E->getStmtClass()) {
   default:
-    if (Loc) *Loc = getLocStart();
-    return false;
-  case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->
-                     isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
-  case IntegerLiteralClass:
-    // NOTE: getValue() returns an APInt, we must set sign.
-    Result = cast<IntegerLiteral>(this)->getValue();
-    Result.setIsUnsigned(getType()->isUnsignedIntegerType());    
-    break;
-  case CharacterLiteralClass: {
-    const CharacterLiteral *CL = cast<CharacterLiteral>(this);
-    Result = Ctx.MakeIntValue(CL->getValue(), getType());
-    break;
+    return ICEDiag(2, E->getLocStart());
+  case Expr::ParenExprClass:
+    return CheckICE(cast<ParenExpr>(E)->getSubExpr(), Ctx);
+  case Expr::IntegerLiteralClass:
+  case Expr::CharacterLiteralClass:
+  case Expr::CXXBoolLiteralExprClass:
+  case Expr::CXXZeroInitValueExprClass:
+  case Expr::TypesCompatibleExprClass:
+  case Expr::UnaryTypeTraitExprClass:
+    return NoDiag();
+  case Expr::CallExprClass: 
+  case Expr::CXXOperatorCallExprClass: {
+    const CallExpr *CE = cast<CallExpr>(E);
+    if (CE->isBuiltinCall(Ctx) && CE->isEvaluatable(Ctx))
+      return NoDiag();
+    return ICEDiag(2, E->getLocStart());
   }
-  case CXXBoolLiteralExprClass: {
-    const CXXBoolLiteralExpr *BL = cast<CXXBoolLiteralExpr>(this);
-    Result = Ctx.MakeIntValue(BL->getValue(), getType());
-    break;
-  }
-  case CXXZeroInitValueExprClass:
-    Result = Ctx.MakeIntValue(0, getType());
-    break;
-  case TypesCompatibleExprClass: {
-    const TypesCompatibleExpr *TCE = cast<TypesCompatibleExpr>(this);
-    // Per gcc docs "this built-in function ignores top level
-    // qualifiers".  We need to use the canonical version to properly
-    // be able to strip CRV qualifiers from the type.
-    QualType T0 = Ctx.getCanonicalType(TCE->getArgType1());
-    QualType T1 = Ctx.getCanonicalType(TCE->getArgType2());
-    Result = Ctx.MakeIntValue(Ctx.typesAreCompatible(T0.getUnqualifiedType(), 
-                                                     T1.getUnqualifiedType()),
-                              getType());
-    break;
-  }
-  case CallExprClass: 
-  case CXXOperatorCallExprClass: {
-    const CallExpr *CE = cast<CallExpr>(this);
-    
-    // If this is a call to a builtin function, constant fold it otherwise
-    // reject it.
-    if (CE->isBuiltinCall(Ctx)) {
-      EvalResult EvalResult;
-      if (CE->Evaluate(EvalResult, Ctx)) {
-        assert(!EvalResult.HasSideEffects && 
-               "Foldable builtin call should not have side effects!");
-        Result = EvalResult.Val.getInt();
-        break;  // It is a constant, expand it.
-      }
-    }
-    
-    if (Loc) *Loc = getLocStart();
-    return false;
-  }
-  case DeclRefExprClass:
-  case QualifiedDeclRefExprClass:
-    if (const EnumConstantDecl *D = 
-          dyn_cast<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl())) {
-      Result = D->getInitVal();
-      break;
-    }
+  case Expr::DeclRefExprClass:
+  case Expr::QualifiedDeclRefExprClass:
+    if (isa<EnumConstantDecl>(cast<DeclRefExpr>(E)->getDecl()))
+      return NoDiag();
     if (Ctx.getLangOptions().CPlusPlus &&
-        getType().getCVRQualifiers() == QualType::Const) {
+        E->getType().getCVRQualifiers() == QualType::Const) {
       // C++ 7.1.5.1p2
       //   A variable of non-volatile const-qualified integral or enumeration
       //   type initialized by an ICE can be used in ICEs.
       if (const VarDecl *Dcl =
-              dyn_cast<VarDecl>(cast<DeclRefExpr>(this)->getDecl())) {
+              dyn_cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl())) {
         if (const Expr *Init = Dcl->getInit())
-          return Init->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
+          return CheckICE(Init, Ctx);
       }
     }
-    if (Loc) *Loc = getLocStart();
-    return false;
-  case UnaryOperatorClass: {
-    const UnaryOperator *Exp = cast<UnaryOperator>(this);
-    
-    // Get the operand value.  If this is offsetof, do not evalute the
-    // operand.  This affects C99 6.6p3.
-    if (!Exp->isOffsetOfOp() && !Exp->getSubExpr()->
-                        isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
-      return false;
-
+    return ICEDiag(2, E->getLocStart());
+  case Expr::UnaryOperatorClass: {
+    const UnaryOperator *Exp = cast<UnaryOperator>(E);
     switch (Exp->getOpcode()) {
-    // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
-    // See C99 6.6p3.
     default:
-      if (Loc) *Loc = Exp->getOperatorLoc();
-      return false;
+      return ICEDiag(2, E->getLocStart());
     case UnaryOperator::Extension:
-      return true;  // FIXME: this is wrong.
-    case UnaryOperator::LNot: {
-      Result = Ctx.MakeIntValue(Result == 0, getType());
-      break;
-    }
+    case UnaryOperator::LNot:
     case UnaryOperator::Plus:
-      break;
     case UnaryOperator::Minus:
-      Result = -Result;
-      break;
     case UnaryOperator::Not:
-      Result = ~Result;
-      break;
+      return CheckICE(Exp->getSubExpr(), Ctx);
     case UnaryOperator::OffsetOf:
-      Result = Ctx.MakeIntValue(Exp->evaluateOffsetOf(Ctx), getType());
-      break;
+      // Note that per C99, a non-constant offsetof is illegal.
+      // FIXME: Do we need to check whether this is evaluatable?
+      return NoDiag();
     }
-    break;
   }
-  case SizeOfAlignOfExprClass: {
-    const SizeOfAlignOfExpr *Exp = cast<SizeOfAlignOfExpr>(this);
-    QualType ArgTy = Exp->getTypeOfArgument();
-
-    // alignof is always an ICE; sizeof is an ICE if and only if
-    // the operand isn't a VLA
-    if (Exp->isSizeOf() && ArgTy->isVariableArrayType()) {
-      if (Loc) *Loc = Exp->getOperatorLoc();
-      return false;
-    }
-
-    // Use the Evaluate logic to calculate the value, since the
-    // calculation is non-trivial.
-    Result = EvaluateAsInt(Ctx);
-    break;
+  case Expr::SizeOfAlignOfExprClass: {
+    const SizeOfAlignOfExpr *Exp = cast<SizeOfAlignOfExpr>(E);
+    if (Exp->isSizeOf() && Exp->getTypeOfArgument()->isVariableArrayType())
+      return ICEDiag(2, E->getLocStart());
+    return NoDiag();
   }
-  case BinaryOperatorClass: {
-    const BinaryOperator *Exp = cast<BinaryOperator>(this);
-    llvm::APSInt LHS, RHS;
-
-    // Initialize result to have correct signedness and width.
-    Result = Ctx.MakeIntValue(0, getType());
-    
-    // The LHS of a constant expr is always evaluated and needed.
-    if (!Exp->getLHS()->isIntegerConstantExpr(LHS, Ctx, Loc, isEvaluated))
-      return false;
-    
-    // The short-circuiting &&/|| operators don't necessarily evaluate their
-    // RHS.  Make sure to pass isEvaluated down correctly.
-    if (Exp->isLogicalOp()) {
-      bool RHSEval;
-      if (Exp->getOpcode() == BinaryOperator::LAnd)
-        RHSEval = LHS != 0;
-      else {
-        assert(Exp->getOpcode() == BinaryOperator::LOr &&"Unexpected logical");
-        RHSEval = LHS == 0;
-      }
-      
-      if (!Exp->getRHS()->isIntegerConstantExpr(RHS, Ctx, Loc,
-                                                isEvaluated & RHSEval))
-        return false;
-    } else {
-      if (!Exp->getRHS()->isIntegerConstantExpr(RHS, Ctx, Loc, isEvaluated))
-        return false;
-    }
-    
+  case Expr::BinaryOperatorClass: {
+    const BinaryOperator *Exp = cast<BinaryOperator>(E);
     switch (Exp->getOpcode()) {
     default:
-      if (Loc) *Loc = getLocStart();
-      return false;
+      return ICEDiag(2, E->getLocStart());
     case BinaryOperator::Mul:
-      Result = LHS * RHS;
-      break;
     case BinaryOperator::Div:
-      if (RHS == 0) {
-        if (!isEvaluated) break;
-        if (Loc) *Loc = getLocStart();
-        return false;
-      }
-      Result = LHS / RHS;
-      break;
     case BinaryOperator::Rem:
-      if (RHS == 0) {
-        if (!isEvaluated) break;
-        if (Loc) *Loc = getLocStart();
-        return false;
-      }
-      Result = LHS % RHS;
-      break;
-    case BinaryOperator::Add: Result = LHS + RHS; break;
-    case BinaryOperator::Sub: Result = LHS - RHS; break;
+    case BinaryOperator::Add:
+    case BinaryOperator::Sub:
     case BinaryOperator::Shl:
-      Result = LHS << 
-        static_cast<uint32_t>(RHS.getLimitedValue(LHS.getBitWidth()-1));
-    break;
     case BinaryOperator::Shr:
-      Result = LHS >>
-        static_cast<uint32_t>(RHS.getLimitedValue(LHS.getBitWidth()-1));
-      break;
-    case BinaryOperator::LT:  Result = LHS < RHS; break;
-    case BinaryOperator::GT:  Result = LHS > RHS; break;
-    case BinaryOperator::LE:  Result = LHS <= RHS; break;
-    case BinaryOperator::GE:  Result = LHS >= RHS; break;
-    case BinaryOperator::EQ:  Result = LHS == RHS; break;
-    case BinaryOperator::NE:  Result = LHS != RHS; break;
-    case BinaryOperator::And: Result = LHS & RHS; break;
-    case BinaryOperator::Xor: Result = LHS ^ RHS; break;
-    case BinaryOperator::Or:  Result = LHS | RHS; break;
+    case BinaryOperator::LT:
+    case BinaryOperator::GT:
+    case BinaryOperator::LE:
+    case BinaryOperator::GE:
+    case BinaryOperator::EQ:
+    case BinaryOperator::NE:
+    case BinaryOperator::And:
+    case BinaryOperator::Xor:
+    case BinaryOperator::Or:
+    case BinaryOperator::Comma: {
+      ICEDiag LHSResult = CheckICE(Exp->getLHS(), Ctx);
+      ICEDiag RHSResult = CheckICE(Exp->getRHS(), Ctx);
+      if (Exp->getOpcode() == BinaryOperator::Comma &&
+          Ctx.getLangOptions().C99) {
+        // C99 6.6p3 introduces a strange edge case: comma can be in an ICE
+        // if it isn't evaluated.
+        if (LHSResult.Val == 0 && RHSResult.Val == 0)
+          return ICEDiag(1, E->getLocStart());
+      }
+      if (LHSResult.Val >= RHSResult.Val)
+        return LHSResult;
+      return RHSResult;
+    }
     case BinaryOperator::LAnd:
-      Result = LHS != 0 && RHS != 0;
-      break;
-    case BinaryOperator::LOr:
-      Result = LHS != 0 || RHS != 0;
-      break;
-      
-    case BinaryOperator::Comma:
-      // C99 6.6p3: "shall not contain assignment, ..., or comma operators,
-      // *except* when they are contained within a subexpression that is not
-      // evaluated".  Note that Assignment can never happen due to constraints
-      // on the LHS subexpr, so we don't need to check it here.
-      if (isEvaluated) {
-        if (Loc) *Loc = getLocStart();
-        return false;
+    case BinaryOperator::LOr: {
+      ICEDiag LHSResult = CheckICE(Exp->getLHS(), Ctx);
+      ICEDiag RHSResult = CheckICE(Exp->getRHS(), Ctx);
+      if (LHSResult.Val == 0 && RHSResult.Val == 1) {
+        // Rare case where the RHS has a comma "side-effect"; we need
+        // to actually check the condition to see whether the side
+        // with the comma is evaluated.
+        Expr::EvalResult Result;
+        if (!Exp->getLHS()->Evaluate(Result, Ctx))
+          return ICEDiag(1, E->getLocStart());
+        if ((Exp->getOpcode() == BinaryOperator::LAnd) !=
+            (Result.Val.getInt() == 0))
+          return RHSResult;
+        return NoDiag();
       }
       
-      // The result of the constant expr is the RHS.
-      Result = RHS;
-      break;
+      if (LHSResult.Val >= RHSResult.Val)
+        return LHSResult;
+      return RHSResult;
     }
-
-    assert(!Exp->isAssignmentOp() && "LHS can't be a constant expr!");
-    break;
+    }
   }
-  case ImplicitCastExprClass:
-  case CStyleCastExprClass:
-  case CXXFunctionalCastExprClass: {
-    const Expr *SubExpr = cast<CastExpr>(this)->getSubExpr();
-    SourceLocation CastLoc = getLocStart();
-    
-    // C99 6.6p6: shall only convert arithmetic types to integer types.
-    if (!SubExpr->getType()->isArithmeticType() ||
-        !getType()->isIntegerType()) {
-      if (Loc) *Loc = SubExpr->getLocStart();
-      return false;
-    }
-
-    uint32_t DestWidth = static_cast<uint32_t>(Ctx.getTypeSize(getType()));
-    
-    // Handle simple integer->integer casts.
-    if (SubExpr->getType()->isIntegerType()) {
-      if (!SubExpr->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
-        return false;
-      
-      // Figure out if this is a truncate, extend or noop cast.
-      // If the input is signed, do a sign extend, noop, or truncate.
-      if (getType()->isBooleanType()) {
-        // Conversion to bool compares against zero.
-        Result = Ctx.MakeIntValue(Result != 0, getType());
-      } else if (SubExpr->getType()->isSignedIntegerType()) {
-        Result.sextOrTrunc(DestWidth);
-        Result.setIsUnsigned(getType()->isUnsignedIntegerType());        
-      } else {  // If the input is unsigned, do a zero extend, noop,
-                // or truncate.
-        Result.zextOrTrunc(DestWidth);
-        Result.setIsUnsigned(getType()->isUnsignedIntegerType());        
-      }
-      break;
-    }
-    
-    // Allow floating constants that are the immediate operands of casts or that
-    // are parenthesized.
-    const Expr *Operand = SubExpr->IgnoreParens();
-
-    // If this isn't a floating literal, we can't handle it.
-    const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(Operand);
-    if (!FL) {
-      if (Loc) *Loc = Operand->getLocStart();
-      return false;
-    }
-
-    // If the destination is boolean, compare against zero.
-    if (getType()->isBooleanType()) {
-      Result = Ctx.MakeIntValue(!FL->getValue().isZero(), getType());
-      break;
-    }     
-    
-    // Determine whether we are converting to unsigned or signed.
-    bool DestSigned = getType()->isSignedIntegerType();
-
-    // TODO: Warn on overflow, but probably not here: isIntegerConstantExpr can
-    // be called multiple times per AST.
-    uint64_t Space[4];
-    bool ignored;
-    (void)FL->getValue().convertToInteger(Space, DestWidth, DestSigned,
-                                          llvm::APFloat::rmTowardZero,
-                                          &ignored);
-    Result = llvm::APInt(DestWidth, 4, Space);
-    Result.setIsUnsigned(getType()->isUnsignedIntegerType());
-    break;
+  case Expr::ImplicitCastExprClass:
+  case Expr::CStyleCastExprClass:
+  case Expr::CXXFunctionalCastExprClass: {
+    const Expr *SubExpr = cast<CastExpr>(E)->getSubExpr();
+    if (SubExpr->getType()->isIntegralType())
+      return CheckICE(SubExpr, Ctx);
+    if (isa<FloatingLiteral>(SubExpr->IgnoreParens()))
+      return NoDiag();
+    return ICEDiag(2, E->getLocStart());
   }
-  case ConditionalOperatorClass: {
-    const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
-    
-    const Expr *Cond = Exp->getCond();
-    
-    if (!Cond->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
-      return false;
-    
-    const Expr *TrueExp  = Exp->getLHS();
-    const Expr *FalseExp = Exp->getRHS();
-    if (Result == 0) std::swap(TrueExp, FalseExp);
-    
+  case Expr::ConditionalOperatorClass: {
+    const ConditionalOperator *Exp = cast<ConditionalOperator>(E);
     // If the condition (ignoring parens) is a __builtin_constant_p call, 
     // then only the true side is actually considered in an integer constant
     // expression, and it is fully evaluated.  This is an important GNU
     // extension.  See GCC PR38377 for discussion.
-    if (const CallExpr *CallCE = dyn_cast<CallExpr>(Cond->IgnoreParenCasts()))
+    if (const CallExpr *CallCE = dyn_cast<CallExpr>(Exp->getCond()->IgnoreParenCasts()))
       if (CallCE->isBuiltinCall(Ctx) == Builtin::BI__builtin_constant_p) {
-        EvalResult EVResult;
-        if (!Evaluate(EVResult, Ctx) || EVResult.HasSideEffects)
-          return false;
-        assert(EVResult.Val.isInt() && "FP conditional expr not expected");
-        Result = EVResult.Val.getInt();
-        if (Loc) *Loc = EVResult.DiagLoc;
-        return true;
+        Expr::EvalResult EVResult;
+        if (!E->Evaluate(EVResult, Ctx) || EVResult.HasSideEffects ||
+            !EVResult.Val.isInt()) {
+          ICEDiag(2, E->getLocStart());
+        }
+        return NoDiag();
       }
-    
-    // Evaluate the false one first, discard the result.
-    llvm::APSInt Tmp;
-    if (FalseExp && !FalseExp->isIntegerConstantExpr(Tmp, Ctx, Loc, false))
-      return false;
-    // Evalute the true one, capture the result. Note that if TrueExp
-    // is False then this is an instant of the gcc missing LHS
-    // extension, and we will just reuse Result.
-    if (TrueExp && 
-        !TrueExp->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
-      return false;
-    break;
+    ICEDiag CondResult = CheckICE(Exp->getCond(), Ctx);
+    ICEDiag TrueResult = CheckICE(Exp->getTrueExpr(), Ctx);
+    ICEDiag FalseResult = CheckICE(Exp->getFalseExpr(), Ctx);
+    if (CondResult.Val == 2)
+      return CondResult;
+    if (TrueResult.Val == 2)
+      return TrueResult;
+    if (FalseResult.Val == 2)
+      return FalseResult;
+    if (CondResult.Val == 1)
+      return CondResult;
+    if (TrueResult.Val == 0 && FalseResult.Val == 0)
+      return NoDiag();
+    // Rare case where the diagnostics depend on which side is evaluated
+    // Note that if we get here, CondResult is 0, and at least one of
+    // TrueResult and FalseResult is non-zero.
+    Expr::EvalResult Result;
+    if (!Exp->getCond()->Evaluate(Result, Ctx))
+      return ICEDiag(1, E->getLocStart());
+    if (Result.Val.getInt() == 0) {
+      return FalseResult;
+    }
+    return TrueResult;
   }
-  case CXXDefaultArgExprClass:
-    return cast<CXXDefaultArgExpr>(this)
-             ->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
-
-  case UnaryTypeTraitExprClass:
-    Result = Ctx.MakeIntValue(cast<UnaryTypeTraitExpr>(this)->EvaluateTrait(),
-                              getType());
-    break;
+  case Expr::CXXDefaultArgExprClass:
+    return CheckICE(cast<CXXDefaultArgExpr>(E)->getExpr(), Ctx);
   }
+}
 
+bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
+                                 SourceLocation *Loc, bool isEvaluated) const {
+  ICEDiag d = CheckICE(this, Ctx);
+  if (d.Val != 0) {
+    if (Loc) *Loc = d.Loc;
+    return false;
+  }
+  EvalResult EvalResult;
+  if (!Evaluate(EvalResult, Ctx) || EvalResult.HasSideEffects ||
+      !EvalResult.Val.isInt()) {
+    if (Loc) *Loc = EvalResult.DiagLoc;
+    return false;
+  }
+  Result = EvalResult.Val.getInt();
   return true;
 }
 
