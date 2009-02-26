@@ -409,7 +409,7 @@ bool DeclContext::isTransparentContext() const {
     return true; // FIXME: Check for C++0x scoped enums
   else if (DeclKind == Decl::LinkageSpec)
     return true;
-  else if (DeclKind == Decl::Record || DeclKind == Decl::CXXRecord)
+  else if (DeclKind >= Decl::RecordFirst && DeclKind <= Decl::RecordLast)
     return cast<RecordDecl>(this)->isAnonymousStructOrUnion();
   else if (DeclKind == Decl::Namespace)
     return false; // FIXME: Check for C++0x inline namespaces

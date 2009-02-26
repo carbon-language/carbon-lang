@@ -440,7 +440,7 @@ public:
   }
 
   bool isRecord() const {
-    return DeclKind == Decl::Record || DeclKind == Decl::CXXRecord;
+    return DeclKind >= Decl::RecordFirst && DeclKind <= Decl::RecordLast;
   }
 
   bool isNamespace() const {

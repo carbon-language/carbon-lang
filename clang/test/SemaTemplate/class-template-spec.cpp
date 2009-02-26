@@ -37,11 +37,19 @@ template <> struct X<float> { int bar(); };  // #2
 
 typedef int int_type;
 void testme(X<int_type> *x1, X<float, int> *x2) { 
-  x1->foo(); // okay: refers to #1
-  x2->bar(); // okay: refers to #2
+  (void)x1->foo(); // okay: refers to #1
+  (void)x2->bar(); // okay: refers to #2
 }
 
-// Diagnose specializations in a different namespace
+// Make sure specializations are proper classes.
+template<>
+struct A<char> {
+  A();
+};
+
+A<char>::A() { }
+
+// Diagnose specialization errors
 struct A<double> { }; // expected-error{{template specialization requires 'template<>'}}
 
 template<typename T> // expected-error{{class template partial specialization is not yet supported}}
@@ -72,3 +80,4 @@ namespace M {
 template<> struct N::B<char> { 
   int testf(int x) { return f(x); }
 };
+
