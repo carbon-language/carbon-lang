@@ -3,20 +3,13 @@ TOOLNAME = clang
 CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
 CXXFLAGS = -fno-rtti
 
+# Clang has no plugins, optimize startup time.
+TOOL_NO_EXPORTS = 1
+
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
-
-# Optimize startup time of the app by not exporting all of the weak symbols
-# from the binary.  This reduces dyld startup time by 4x.
-ifeq ($(OS),Darwin)
-LD.Flags += -Wl,-exported_symbol -Wl,_main
-endif
-
-ifeq ($(OS), $(filter $(OS), Linux NetBSD FreeBSD))
-LD.Flags += -Wl,--version-script=Driver.map
-endif
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) bitreader bitwriter codegen ipo selectiondag
 USEDLIBS = clangCodeGen.a clangAnalysis.a clangRewrite.a clangSema.a	\
