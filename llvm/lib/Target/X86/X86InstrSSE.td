@@ -526,7 +526,7 @@ def FsANDNPSrm : PSI<0x55, MRMSrcMem,
 /// In addition, we also have a special variant of the scalar form here to
 /// represent the associated intrinsic operation.  This form is unlike the
 /// plain scalar form, in that it takes an entire vector (instead of a scalar)
-/// and leaves the top elements undefined.
+/// and leaves the top elements unmodified (therefore these cannot be commuted).
 ///
 /// These three forms can each be reg+reg or reg+mem, so there are a total of
 /// six "instructions".
@@ -566,9 +566,7 @@ multiclass basic_sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
   def SSrr_Int : SSI<opc, MRMSrcReg, (outs VR128:$dst),
                                      (ins VR128:$src1, VR128:$src2),
                      !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                     [(set VR128:$dst, (F32Int VR128:$src1, VR128:$src2))]> {
-    let isCommutable = Commutable;
-  }
+                     [(set VR128:$dst, (F32Int VR128:$src1, VR128:$src2))]>;
 
   // Intrinsic operation, reg+mem.
   def SSrm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
@@ -1275,7 +1273,7 @@ def FsANDNPDrm : PDI<0x55, MRMSrcMem,
 /// In addition, we also have a special variant of the scalar form here to
 /// represent the associated intrinsic operation.  This form is unlike the
 /// plain scalar form, in that it takes an entire vector (instead of a scalar)
-/// and leaves the top elements undefined.
+/// and leaves the top elements unmodified (therefore these cannot be commuted).
 ///
 /// These three forms can each be reg+reg or reg+mem, so there are a total of
 /// six "instructions".
@@ -1315,9 +1313,7 @@ multiclass basic_sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
   def SDrr_Int : SDI<opc, MRMSrcReg, (outs VR128:$dst),
                                      (ins VR128:$src1, VR128:$src2),
                      !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                     [(set VR128:$dst, (F64Int VR128:$src1, VR128:$src2))]> {
-    let isCommutable = Commutable;
-  }
+                     [(set VR128:$dst, (F64Int VR128:$src1, VR128:$src2))]>;
 
   // Intrinsic operation, reg+mem.
   def SDrm_Int : SDI<opc, MRMSrcMem, (outs VR128:$dst),
