@@ -60,7 +60,7 @@ current one.  To see the release notes for a specific release, please see the
   llc -enable-value-prop, propagation of value info (sign/zero ext info) from
        one MBB to another
   debug info for optimized code
-  
+  interpreter + libffi
  -->
 
  <!-- for announcement email:
@@ -226,13 +226,17 @@ supported for integers of any size.
 <!--
 Random stuff:
 
+Pure project: http://code.google.com/p/pure-lang/
+
+
 xcore backend!
 fortran on darwin!
 
-.ll parser rewrite.
+.ll parser rewrite, caret diags, better errors, less fragile (less likely to
+   crash on strange things).  No longer depends on flex/bison.
 GCC inliner off, llvm handles always-inline.
 cmake mature?
-x86 backend FS/GS segment address spaces?
+x86 backend GS segment -> addr space 256 (r62980)
 nocapture
 memdep (used by GVN and memcpyopt) is faster / more aggressive.
 how to write a backend doc docs/WritingAnLLVMBackend.html
@@ -247,6 +251,7 @@ shufflevector is generalized to allow different shuffle mask width than its
   input vectors.
 loop optimizer improves floating point induction variables
 llvm/Analysis/DebugInfo.h classes, llvm-gcc and clang and codegen use them.
+    DebugInfoBuilder gone.
 asmprinters seperate from targets for jits
 PBQP register allocator now supports register coalescing.
 JIT supports exceptions on linux/x86-64.
@@ -255,7 +260,7 @@ integer overflow intrinsics for [us](add/sub/mul).  Supported on all targets,
 X86 backend now supports -disable-mmx.
 noalias attribute on return value indicates that function returns new memory
   (e.g. malloc).
-postalloc scheduler: anti dependence breaking?
+postalloc scheduler: anti dependence breaking, hazard recognizer?
 llvmc2 renamed to llvmc
 Jump threading more powerful: it is iterative, handles threading based on values
   with fully redundant and partially redundant loads.
@@ -264,7 +269,16 @@ ARM debug info support?
 unit test framework based on Google Test.
 
 vector shift support + X86 backend.
+x86 JIT now detects core i7 and atom, autoconfiguring itself appropriately.
+SROA is more aggressive about promoting unions.
+non-zero __builtin_return_address values on X86.
+x86-64 now uses red zone (unless -mno-red-zone option is specified).
+private linkage.
 
+llvm-gcc defaults to -fno-math-errno on all x86 targets.
+
+initial support for debug line numbers when optimization enabled, not useful in
+  2.5 but will be for 2.6.
 -->
 
 </ul>
