@@ -476,20 +476,20 @@ const ObjCInterfaceType *Type::getAsObjCInterfaceType() const {
   // There is no sugar for ObjCInterfaceType's, just return the canonical
   // type pointer if it is the right class.  There is no typedef information to
   // return and these cannot be Address-space qualified.
-  return dyn_cast<ObjCInterfaceType>(CanonicalType);
+  return dyn_cast<ObjCInterfaceType>(CanonicalType.getUnqualifiedType());
 }
 
 const ObjCQualifiedInterfaceType *
 Type::getAsObjCQualifiedInterfaceType() const {
   // There is no sugar for ObjCQualifiedInterfaceType's, just return the
   // canonical type pointer if it is the right class.
-  return dyn_cast<ObjCQualifiedInterfaceType>(CanonicalType);
+  return dyn_cast<ObjCQualifiedInterfaceType>(CanonicalType.getUnqualifiedType());
 }
 
 const ObjCQualifiedIdType *Type::getAsObjCQualifiedIdType() const {
   // There is no sugar for ObjCQualifiedIdType's, just return the canonical
   // type pointer if it is the right class.
-  return dyn_cast<ObjCQualifiedIdType>(CanonicalType);
+  return dyn_cast<ObjCQualifiedIdType>(CanonicalType.getUnqualifiedType());
 }
 
 const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
