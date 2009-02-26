@@ -82,8 +82,8 @@ bool CodeGenFunction::isObjCPointerType(QualType T) {
 bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
   // FIXME: Use positive checks instead of negative ones to be more
   // robust in the face of extension.
-  return !isObjCPointerType(T) &&!T->isRealType() && !T->isPointerLikeType() &&
-    !T->isVoidType() && !T->isVectorType() && !T->isFunctionType() && 
+  return !isObjCPointerType(T) &&!T->isRealType() && !T->isPointerType() &&
+    !T->isReferenceType() && !T->isVoidType() && !T->isVectorType() && !T->isFunctionType() && 
     !T->isBlockPointerType();
 }
 

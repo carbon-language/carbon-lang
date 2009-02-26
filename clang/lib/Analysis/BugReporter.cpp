@@ -471,7 +471,7 @@ public:
     
     FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
     
-    if (VD->getType()->isPointerLikeType()) {
+    if (VD->getType()->isPointerType() || VD->getType()->isReferenceType()) {
       std::string msg = "'" + std::string(VD->getNameAsString()) +
       "' now aliases '" + MostRecent->getNameAsString() + "'";
       
