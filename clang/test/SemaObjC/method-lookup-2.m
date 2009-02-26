@@ -2,7 +2,10 @@
 typedef signed char BOOL;
 
 @protocol NSObject
++ alloc;
+- init;
 - (BOOL) isEqual:(id) object;
+- (Class)class;
 @end
 
 @interface NSObject < NSObject > {} @end
@@ -37,4 +40,23 @@ extern NSString *const NSWillBecomeMultiThreadedNotification;
 +(int) run {
   return[[self sharedInstance] run];
 }
+@end
+
+@interface XX : NSObject
+
++ classMethod;
+
+@end
+
+@interface YY : NSObject
+- whatever;
+@end
+
+@implementation YY 
+
+- whatever {
+  id obj = [[XX alloc] init];
+  [[obj class] classMethod];
+}
+
 @end

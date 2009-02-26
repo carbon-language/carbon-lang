@@ -395,10 +395,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       }
       if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
         return true;
-    } else {
-      // We're not in a method context, look for any factory method named 'Sel'.
-      Method = FactoryMethodPool[Sel].Method;
     }
+    // Look for any factory method named 'Sel'.
+    if (!Method)
+      Method = FactoryMethodPool[Sel].Method;
     if (!Method)
       Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
