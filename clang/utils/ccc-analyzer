@@ -114,6 +114,7 @@ sub Analyze {
     push @CmdArgs,'-analyze';
     push @CmdArgs,"-analyzer-display-progress";
     push @CmdArgs,"-disable-free";
+    push @CmdArgs,"-analyzer-eagerly-assume";
     push @CmdArgs,(split /\s/,$Analyses);
     $RunAnalyzer = 1;
   }
