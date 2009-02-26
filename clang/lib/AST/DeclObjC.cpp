@@ -157,7 +157,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(Selector Sel) {
       ClassDecl->getReferencedProtocols();
     for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
          E = Protocols.end(); I != E; ++I)
-      if ((MethodDecl = (*I)->getInstanceMethod(Sel)))
+      if ((MethodDecl = (*I)->lookupInstanceMethod(Sel)))
         return MethodDecl;
     
     // Didn't find one yet - now look through categories.
@@ -171,7 +171,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(Selector Sel) {
         CatDecl->getReferencedProtocols();
       for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
            E = Protocols.end(); I != E; ++I)
-        if ((MethodDecl = (*I)->getInstanceMethod(Sel)))
+        if ((MethodDecl = (*I)->lookupInstanceMethod(Sel)))
           return MethodDecl;
       CatDecl = CatDecl->getNextClassCategory();
     }
@@ -193,7 +193,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupClassMethod(Selector Sel) {
     // Didn't find one yet - look through protocols.
     for (ObjCInterfaceDecl::protocol_iterator I = ClassDecl->protocol_begin(),
          E = ClassDecl->protocol_end(); I != E; ++I)
-      if ((MethodDecl = (*I)->getClassMethod(Sel)))
+      if ((MethodDecl = (*I)->lookupClassMethod(Sel)))
         return MethodDecl;
     
     // Didn't find one yet - now look through categories.
@@ -201,6 +201,14 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupClassMethod(Selector Sel) {
     while (CatDecl) {
       if ((MethodDecl = CatDecl->getClassMethod(Sel)))
         return MethodDecl;
+        
+      // Didn't find one yet - look through protocols.
+      const ObjCList<ObjCProtocolDecl> &Protocols =
+        CatDecl->getReferencedProtocols();
+      for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+           E = Protocols.end(); I != E; ++I)
+        if ((MethodDecl = (*I)->lookupClassMethod(Sel)))
+          return MethodDecl;
       CatDecl = CatDecl->getNextClassCategory();
     }
     ClassDecl = ClassDecl->getSuperClass();
