@@ -15,7 +15,34 @@
 #include "llvm/ADT/SmallString.h"
 #include <sstream>
 using namespace clang;
+
+static size_t GetNumCharsToLastNonPeriod(const char *s) {
+  const char *start = s;
+  const char *lastNonPeriod = 0;  
+
+  for ( ; *s != '\0' ; ++s)
+    if (*s != '.') lastNonPeriod = s;
   
+  if (!lastNonPeriod)
+    return 0;
+  
+  return (lastNonPeriod - start) + 1;
+}
+
+static inline size_t GetNumCharsToLastNonPeriod(const std::string &s) {
+  return s.empty () ? 0 : GetNumCharsToLastNonPeriod(&s[0]);
+}
+
+PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
+                                         const std::string& s,
+                                         DisplayHint hint)
+  : Pos(pos), str(s, 0, GetNumCharsToLastNonPeriod(s)), Hint(hint) {}
+
+PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
+                                         const char* s,
+                                         DisplayHint hint)
+  : Pos(pos), str(s, GetNumCharsToLastNonPeriod(s)), Hint(hint) {}
+
 PathDiagnostic::~PathDiagnostic() {
   for (iterator I = begin(), E = end(); I != E; ++I) delete &*I;
 }

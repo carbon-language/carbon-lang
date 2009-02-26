@@ -29,21 +29,19 @@ public:
   enum DisplayHint { Above, Below };
 
 private:
-  FullSourceLoc Pos;
-  std::string str;
+  const FullSourceLoc Pos;
+  const std::string str;
   std::vector<CodeModificationHint> CodeModificationHints;
-  DisplayHint Hint;
+  const DisplayHint Hint;
   std::vector<SourceRange> ranges;
   
 public:
   
   PathDiagnosticPiece(FullSourceLoc pos, const std::string& s,
-                      DisplayHint hint = Above)
-    : Pos(pos), str(s), Hint(hint) {}
+                      DisplayHint hint = Above);
   
   PathDiagnosticPiece(FullSourceLoc pos, const char* s,
-                      DisplayHint hint = Above)
-    : Pos(pos), str(s), Hint(hint) {}
+                      DisplayHint hint = Above);
   
   const std::string& getString() const { return str; }
    
