@@ -390,6 +390,12 @@ public:
   bool isDependentType() const { return Dependent; }
   bool isOverloadType() const;                  // C++ overloaded function
 
+  /// hasPointerRepresentation - Whether this type is represented
+  /// natively as a pointer; this includes pointers, references, block
+  /// pointers, and Objective-C interface, qualified id, and qualified
+  /// interface types.
+  bool hasPointerRepresentation() const;
+
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
   // the best type we can.
@@ -1934,6 +1940,12 @@ inline bool Type::isSpecificBuiltinType(unsigned K) const {
 
 inline bool Type::isOverloadType() const {
   return isSpecificBuiltinType(BuiltinType::Overload);
+}
+
+inline bool Type::hasPointerRepresentation() const {
+  return (isPointerType() || isReferenceType() || isBlockPointerType() ||
+          isObjCInterfaceType() || isObjCQualifiedIdType() || 
+          isObjCQualifiedInterfaceType());
 }
 
 /// Insertion operator for diagnostics.  This allows sending QualType's into a

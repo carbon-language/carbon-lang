@@ -366,10 +366,6 @@ public:
   /// TypeOfSelfObject - Return type of object that this self represents.
   QualType TypeOfSelfObject();
 
-  /// isObjCPointerType - Return true if the specificed AST type will map onto
-  /// some Objective-C pointer type.
-  static bool isObjCPointerType(QualType T);
-
   /// hasAggregateLLVMType - Return true if the specified AST type will map into
   /// an aggregate LLVM type or is void.
   static bool hasAggregateLLVMType(QualType T);

@@ -525,9 +525,7 @@ void X86_64ABIInfo::classify(QualType Ty,
   } else if (const EnumType *ET = Ty->getAsEnumType()) {
     // Classify the underlying integer type.
     classify(ET->getDecl()->getIntegerType(), Context, OffsetBase, Lo, Hi);
-  } else if (Ty->isPointerType() || Ty->isReferenceType() || 
-             Ty->isBlockPointerType() || Ty->isObjCQualifiedIdType() ||
-             Ty->isObjCQualifiedInterfaceType()) {
+  } else if (Ty->hasPointerRepresentation()) {
     Current = Integer;
   } else if (const VectorType *VT = Ty->getAsVectorType()) {
     uint64_t Size = Context.getTypeSize(VT);

@@ -73,17 +73,11 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
   return CGM.getTypes().ConvertType(T);
 }
 
-bool CodeGenFunction::isObjCPointerType(QualType T) {
-  // All Objective-C types are pointers.
-  return T->isObjCInterfaceType() ||
-    T->isObjCQualifiedInterfaceType() || T->isObjCQualifiedIdType();
-}
-
 bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
   // FIXME: Use positive checks instead of negative ones to be more
   // robust in the face of extension.
-  return !isObjCPointerType(T) &&!T->isRealType() && !T->isPointerType() &&
-    !T->isReferenceType() && !T->isVoidType() && !T->isVectorType() && !T->isFunctionType() && 
+  return !T->hasPointerRepresentation() &&!T->isRealType() &&
+    !T->isVoidType() && !T->isVectorType() && !T->isFunctionType() && 
     !T->isBlockPointerType();
 }
 
