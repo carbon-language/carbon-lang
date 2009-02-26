@@ -977,7 +977,7 @@ all-local:: $(LibName.O)
 
 $(LibName.O): $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) Object Library $(notdir $@)
-	$(Verb) $(Relink) -Wl,-r -nodefaultlibs -nostdlibs -nostartfiles -o $@ $(ObjectsO)
+	$(Verb) $(Relink) -Wl,-r -nodefaultlibs -nostdlib -nostartfiles -o $@ $(ObjectsO)
 
 clean-local::
 ifneq ($(strip $(LibName.O)),)
