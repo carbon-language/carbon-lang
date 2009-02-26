@@ -213,8 +213,10 @@ void ASTContext::InitBuiltinTypes() {
   InitBuiltinType(DoubleTy,            BuiltinType::Double);
   InitBuiltinType(LongDoubleTy,        BuiltinType::LongDouble);
 
-  // C++ 3.9.1p5
-  InitBuiltinType(WCharTy,             BuiltinType::WChar);
+  if (LangOpts.CPlusPlus) // C++ 3.9.1p5
+    InitBuiltinType(WCharTy,           BuiltinType::WChar);
+  else // C99
+    WCharTy = getFromTargetType(Target.getWCharType());
 
   // Placeholder type for functions.
   InitBuiltinType(OverloadTy,          BuiltinType::Overload);
@@ -1435,16 +1437,6 @@ QualType ASTContext::getTagDeclType(TagDecl *Decl) {
 /// needs to agree with the definition in <stddef.h>. 
 QualType ASTContext::getSizeType() const {
   return getFromTargetType(Target.getSizeType());
-}
-
-/// getWCharType - Return the unique type for "wchar_t" (C99 7.17), the
-/// width of characters in wide strings, The value is target dependent and 
-/// needs to agree with the definition in <stddef.h>.
-QualType ASTContext::getWCharType() const {
-  if (LangOpts.CPlusPlus)
-    return WCharTy;
-
-  return getFromTargetType(Target.getWCharType());
 }
 
 /// getSignedWCharType - Return the type of "signed wchar_t".

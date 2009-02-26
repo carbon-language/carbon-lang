@@ -160,7 +160,7 @@ public:
   QualType VoidTy;
   QualType BoolTy;
   QualType CharTy;
-  QualType WCharTy; // [C++ 3.9.1p5]
+  QualType WCharTy; // [C++ 3.9.1p5], integer type in C99.
   QualType SignedCharTy, ShortTy, IntTy, LongTy, LongLongTy;
   QualType UnsignedCharTy, UnsignedShortTy, UnsignedIntTy, UnsignedLongTy;
   QualType UnsignedLongLongTy;
@@ -304,9 +304,10 @@ public:
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
   QualType getSizeType() const;
 
-  /// getWCharType - Return the unique type for "wchar_t" (C99 7.17), defined
-  /// in <stddef.h>. Wide strings require this (C99 6.4.5p5).
-  QualType getWCharType() const;
+  /// getWCharType - In C++, this returns the unique wchar_t type.  In C99, this
+  /// returns a type compatible with the type defined in <stddef.h> as defined
+  /// by the target.
+  QualType getWCharType() const { return WCharTy; }
 
   /// getSignedWCharType - Return the type of "signed wchar_t".
   /// Used when in C++, as a GCC extension.
