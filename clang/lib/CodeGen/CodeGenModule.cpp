@@ -1069,11 +1069,6 @@ GetAddrOfConstantCFString(const std::string &str) {
 /// GetStringForStringLiteral - Return the appropriate bytes for a
 /// string literal, properly padded to match the literal type.
 std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
-  if (E->isWide()) {
-    ErrorUnsupported(E, "wide string");
-    return "FIXME";
-  }
-
   const char *StrData = E->getStrData();
   unsigned Len = E->getByteLength();
 
@@ -1081,10 +1076,13 @@ std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
     getContext().getAsConstantArrayType(E->getType());
   assert(CAT && "String isn't pointer or array!");
   
-  // Resize the string to the right size
-  // FIXME: What about wchar_t strings?
+  // Resize the string to the right size.
   std::string Str(StrData, StrData+Len);
   uint64_t RealLen = CAT->getSize().getZExtValue();
+  
+  if (E->isWide())
+    RealLen *= getContext().Target.getWCharWidth()/8;
+  
   Str.resize(RealLen, '\0');
   
   return Str;

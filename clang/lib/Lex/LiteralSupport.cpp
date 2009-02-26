@@ -672,8 +672,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     // Remember if we see any wide strings.
     AnyWide |= StringToks[i].is(tok::wide_string_literal);
   }
-  
-  
+
   // Include space for the null terminator.
   ++SizeBound;
   
@@ -779,13 +778,6 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     }
   }
   
-  // Add zero terminator.
-  *ResultPtr = 0;
-  if (AnyWide) {
-    for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
-    *ResultPtr++ = 0;
-  }
-    
   if (Pascal) {
     ResultBuf[0] = ResultPtr-&ResultBuf[0]-1;
 

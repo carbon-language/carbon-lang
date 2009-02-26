@@ -2,4 +2,6 @@
 
 int main() {
   char a[10] = "abc";
+
+  void *foo = L"AB";
 }

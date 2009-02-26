@@ -400,7 +400,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   // the nul terminator character as well as the string length for pascal
   // strings.
   StrTy = Context.getConstantArrayType(StrTy,
-                                   llvm::APInt(32, Literal.GetStringLength()+1),
+                                 llvm::APInt(32, Literal.GetNumStringChars()+1),
                                        ArrayType::Normal, 0);
   
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
