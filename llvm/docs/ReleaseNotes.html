@@ -230,11 +230,11 @@ xcore backend!
 fortran on darwin!
 
 .ll parser rewrite.
-GCC inliner off.
+GCC inliner off, llvm handles always-inline.
 cmake mature?
 x86 backend FS/GS segment address spaces?
 nocapture
-memdep is faster / more aggressive.
+memdep (used by GVN and memcpyopt) is faster / more aggressive.
 how to write a backend doc docs/WritingAnLLVMBackend.html
 fastisel + exception handling
 vector widening <3 x float> -> <4 x float>
@@ -249,6 +249,21 @@ loop optimizer improves floating point induction variables
 llvm/Analysis/DebugInfo.h classes, llvm-gcc and clang and codegen use them.
 asmprinters seperate from targets for jits
 PBQP register allocator now supports register coalescing.
+JIT supports exceptions on linux/x86-64.
+integer overflow intrinsics for [us](add/sub/mul).  Supported on all targets,
+  but only generates efficient code on x86.
+X86 backend now supports -disable-mmx.
+noalias attribute on return value indicates that function returns new memory
+  (e.g. malloc).
+postalloc scheduler: anti dependence breaking?
+llvmc2 renamed to llvmc
+Jump threading more powerful: it is iterative, handles threading based on values
+  with fully redundant and partially redundant loads.
+LSR improvements?
+ARM debug info support?
+unit test framework based on Google Test.
+
+vector shift support + X86 backend.
 
 -->
 
