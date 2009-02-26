@@ -492,7 +492,7 @@ CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExpr(Decl* D) {
   Expr* Init = VD->getInit();
   
   if (Init) {
-    // Optimization: Don't create separate block-level statements for literals.  
+    // Optimization: Don't create separate block-level statements for literals.
     switch (Init->getStmtClass()) {
       case Stmt::IntegerLiteralClass:
       case Stmt::CharacterLiteralClass:
@@ -515,7 +515,8 @@ CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExpr(Decl* D) {
 ///  children of a Stmt.
 CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* Terminator) {
   CFGBlock* B = Block;
-  for (Stmt::child_iterator I = Terminator->child_begin(), E = Terminator->child_end() ;
+  for (Stmt::child_iterator I = Terminator->child_begin(),
+         E = Terminator->child_end();
        I != E; ++I)
     if (*I) B = WalkAST(*I);
   
