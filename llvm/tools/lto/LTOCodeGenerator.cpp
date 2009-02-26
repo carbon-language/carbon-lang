@@ -391,6 +391,7 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
 
     // Run a few AA driven optimizations here and now, to cleanup the code.
+    passes.add(createFunctionAttrsPass());        // Add nocapture
     passes.add(createGlobalsModRefPass());        // IP alias analysis
     passes.add(createLICMPass());                 // Hoist loop invariants
     passes.add(createGVNPass());                  // Remove common subexprs
