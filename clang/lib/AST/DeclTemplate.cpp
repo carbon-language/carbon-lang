@@ -179,7 +179,6 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context,
   ClassTemplateSpecializationDecl *Result
     = new (Mem) ClassTemplateSpecializationDecl(DC, L, SpecializedTemplate,
                                                 TemplateArgs, NumTemplateArgs);
-  // FIXME: Do we want a prettier type here?
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;
 }

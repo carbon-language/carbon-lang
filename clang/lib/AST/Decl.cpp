@@ -374,22 +374,24 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
 //===----------------------------------------------------------------------===//
 
 void TagDecl::startDefinition() {
-  cast<TagType>(TypeForDecl)->decl.setPointer(this);
-  cast<TagType>(TypeForDecl)->decl.setInt(1);
+  TagType *TagT = const_cast<TagType *>(TypeForDecl->getAsTagType());
+  TagT->decl.setPointer(this);
+  TagT->getAsTagType()->decl.setInt(1);
 }
 
 void TagDecl::completeDefinition() {
   assert((!TypeForDecl || 
-          cast<TagType>(TypeForDecl)->decl.getPointer() == this) &&
+          TypeForDecl->getAsTagType()->decl.getPointer() == this) &&
          "Attempt to redefine a tag definition?");
   IsDefinition = true;
-  cast<TagType>(TypeForDecl)->decl.setPointer(this);
-  cast<TagType>(TypeForDecl)->decl.setInt(0);
+  TagType *TagT = const_cast<TagType *>(TypeForDecl->getAsTagType());
+  TagT->decl.setPointer(this);
+  TagT->decl.setInt(0);
 }
 
 TagDecl* TagDecl::getDefinition(ASTContext& C) const {
   QualType T = C.getTypeDeclType(const_cast<TagDecl*>(this));
-  TagDecl* D = cast<TagDecl>(cast<TagType>(T)->getDecl());  
+  TagDecl* D = cast<TagDecl>(T->getAsTagType()->getDecl());
   return D->isDefinition() ? D : 0;
 }
 

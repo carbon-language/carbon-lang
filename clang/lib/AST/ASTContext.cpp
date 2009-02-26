@@ -1307,6 +1307,8 @@ ASTContext::getClassTemplateSpecializationType(TemplateDecl *Template,
                                                unsigned NumArgs,
                                                uintptr_t *Args, bool *ArgIsType,
                                                QualType Canon) {
+  Canon = getCanonicalType(Canon);
+
   llvm::FoldingSetNodeID ID;
   ClassTemplateSpecializationType::Profile(ID, Template, NumArgs, Args, 
                                            ArgIsType);

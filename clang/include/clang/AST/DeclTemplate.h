@@ -606,6 +606,12 @@ public:
     Profile(ID, template_arg_begin(), getNumTemplateArgs());
   }
 
+  /// \brief Sets the type of this specialization as it was written by
+  /// the user. This will be a class template specialization type.
+  void setTypeAsWritten(QualType T) {
+    TypeForDecl = T.getTypePtr();
+  }
+
   static void 
   Profile(llvm::FoldingSetNodeID &ID, const TemplateArgument *TemplateArgs, 
           unsigned NumTemplateArgs) {

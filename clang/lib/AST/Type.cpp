@@ -331,7 +331,7 @@ bool Type::isVariablyModifiedType() const {
 }
 
 const RecordType *Type::getAsRecordType() const {
-  // If this is directly a reference type, return it.
+  // If this is directly a record type, return it.
   if (const RecordType *RTy = dyn_cast<RecordType>(this))
     return RTy;
   
@@ -346,6 +346,24 @@ const RecordType *Type::getAsRecordType() const {
   // If this is a typedef for a record type, strip the typedef off without
   // losing all typedef information.
   return getDesugaredType()->getAsRecordType();
+}
+
+const TagType *Type::getAsTagType() const {
+  // If this is directly a tag type, return it.
+  if (const TagType *TagTy = dyn_cast<TagType>(this))
+    return TagTy;
+  
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<TagType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<TagType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsTagType();
+    return 0;
+  }
+
+  // If this is a typedef for a tag type, strip the typedef off without
+  // losing all typedef information.
+  return getDesugaredType()->getAsTagType();
 }
 
 const RecordType *Type::getAsStructureType() const {

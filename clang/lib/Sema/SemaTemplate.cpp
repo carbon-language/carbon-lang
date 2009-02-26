@@ -1727,8 +1727,20 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     }
   }
 
-  // FIXME: We want to create a nicely sugared type to use as the
-  // type of this explicit specialization.
+  // Build the fully-sugared type for this class template
+  // specialization as the user wrote in the specialization
+  // itself. This means that we'll pretty-print the type retrieved
+  // from the specialization's declaration the way that the user
+  // actually wrote the specialization, rather than formatting the
+  // name based on the "canonical" representation used to store the
+  // template arguments in the specialization.
+  Specialization->setTypeAsWritten(
+    Context.getClassTemplateSpecializationType(ClassTemplate, 
+                                               TemplateArgs.size(),
+                  reinterpret_cast<uintptr_t *>(TemplateArgs.getArgs()), 
+                                               TemplateArgs.getArgIsType(),
+                                  Context.getTypeDeclType(Specialization)));
+  TemplateArgs.release();
 
   // C++ [temp.expl.spec]p9:
   //   A template explicit specialization is in the scope of the

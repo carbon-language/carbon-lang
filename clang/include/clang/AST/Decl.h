@@ -814,6 +814,7 @@ class TypeDecl : public NamedDecl {
   friend class DeclContext;
   friend class TagDecl;
   friend class TemplateTypeParmDecl;
+  friend class ClassTemplateSpecializationDecl;
 
 protected:
   TypeDecl(Kind DK, DeclContext *DC, SourceLocation L,

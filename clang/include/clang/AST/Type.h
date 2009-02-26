@@ -407,6 +407,7 @@ public:
   const BlockPointerType *getAsBlockPointerType() const;
   const ReferenceType *getAsReferenceType() const;
   const MemberPointerType *getAsMemberPointerType() const;
+  const TagType *getAsTagType() const;
   const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;
   /// NOTE: getAs*ArrayType are methods on ASTContext.
@@ -1309,7 +1310,7 @@ class TagType : public Type {
   /// definition in progress), if there is such a definition. The
   /// single-bit value will be non-zero when this tag is in the
   /// process of being defined.
-  llvm::PointerIntPair<TagDecl *, 1> decl;
+  mutable llvm::PointerIntPair<TagDecl *, 1> decl;
   friend class ASTContext;
   friend class TagDecl;
 
