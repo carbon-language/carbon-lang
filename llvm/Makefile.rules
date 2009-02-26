@@ -480,10 +480,10 @@ ifdef UNIVERSAL
   endif
   UNIVERSAL_ARCH_OPTIONS := $(UNIVERSAL_ARCH:%=-arch %)
   CompileCommonOpts += $(UNIVERSAL_ARCH_OPTIONS)
-  Relink.Flags := $(UNIVERSAL_ARCH_OPTIONS:%=-XCClinker %)
+  Relink.Flags := $(UNIVERSAL_ARCH_OPTIONS)
   ifdef UNIVERSAL_SDK_PATH
     CompileCommonOpts += -isysroot $(UNIVERSAL_SDK_PATH)
-    Relink.Flags      += -XCClinker -isysroot -XCClinker $(UNIVERSAL_SDK_PATH)
+    Relink.Flags      += -isysroot $(UNIVERSAL_SDK_PATH)
   endif
 
   # Building universal cannot compute dependencies automatically.
