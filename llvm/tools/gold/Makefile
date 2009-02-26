@@ -21,6 +21,7 @@ BUILD_ARCHIVE = 0
 DONT_BUILD_RELINKED = 1
 
 LINK_COMPONENTS :=
+LIBS += -llto
 
 include $(LEVEL)/Makefile.common
 
