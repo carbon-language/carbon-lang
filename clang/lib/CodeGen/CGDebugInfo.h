@@ -24,6 +24,7 @@
 
 namespace clang {
   class VarDecl;
+  class ObjCInterfaceDecl;
 
 namespace CodeGen {
   class CodeGenModule;
@@ -54,6 +55,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const FunctionType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const TagType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const RecordType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const EnumType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DICompileUnit U);
 
@@ -94,8 +96,10 @@ public:
   
   /// EmitGlobalVariable - Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *Decl);
- 
-  
+
+  /// EmitGlobalVariable - Emit information about an objective-c interface.
+  void EmitGlobalVariable(llvm::GlobalVariable *GV, ObjCInterfaceDecl *Decl);
+   
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,

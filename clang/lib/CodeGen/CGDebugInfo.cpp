@@ -14,7 +14,7 @@
 #include "CGDebugInfo.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/SourceManager.h"
@@ -247,6 +247,91 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                   E = Decl->field_end(); 
        I != E; ++I, ++FieldNo) {
     FieldDecl *Field = *I;
+    llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
+
+    std::string FieldName = Field->getNameAsString();
+
+    // Get the location for the field.
+    SourceLocation FieldDefLoc = Field->getLocation();
+    llvm::DICompileUnit FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
+    unsigned FieldLine = SM.getInstantiationLineNumber(FieldDefLoc);
+    
+    // Bit size, align and offset of the type.
+    uint64_t FieldSize = M->getContext().getTypeSize(Ty);
+    unsigned FieldAlign = M->getContext().getTypeAlign(Ty);
+    uint64_t FieldOffset = RL.getFieldOffset(FieldNo);    
+    
+    // Create a DW_TAG_member node to remember the offset of this field in the
+    // struct.  FIXME: This is an absolutely insane way to capture this
+    // information.  When we gut debug info, this should be fixed.
+    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                             FieldName, FieldDefUnit,
+                                             FieldLine, FieldSize, FieldAlign,
+                                             FieldOffset, 0, FieldTy);
+    EltTys.push_back(FieldTy);
+  }
+  
+  llvm::DIArray Elements =
+    DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+
+  // Bit size, align and offset of the type.
+  uint64_t Size = M->getContext().getTypeSize(Ty);
+  uint64_t Align = M->getContext().getTypeAlign(Ty);
+  
+  llvm::DIType RealDecl =
+    DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, Size,
+                                     Align, 0, 0, llvm::DIType(), Elements);
+
+  // Now that we have a real decl for the struct, replace anything using the
+  // old decl with the new one.  This will recursively update the debug info.
+  FwdDecl.getGV()->replaceAllUsesWith(RealDecl.getGV());
+  FwdDecl.getGV()->eraseFromParent();
+  
+  return RealDecl;
+}
+
+/// CreateType - get objective-c interface type.
+llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
+                                     llvm::DICompileUnit Unit) {
+  ObjCInterfaceDecl *Decl = Ty->getDecl();
+  
+  unsigned Tag = llvm::dwarf::DW_TAG_structure_type;
+  SourceManager &SM = M->getContext().getSourceManager();
+
+  // Get overall information about the record type for the debug info.
+  std::string Name = Decl->getNameAsString();
+
+  llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(Decl->getLocation());
+  unsigned Line = SM.getInstantiationLineNumber(Decl->getLocation());
+  
+  
+  // To handle recursive interface, we
+  // first generate a debug descriptor for the struct as a forward declaration.
+  // Then (if it is a definition) we go through and get debug info for all of
+  // its members.  Finally, we create a descriptor for the complete type (which
+  // may refer to the forward decl if the struct is recursive) and replace all
+  // uses of the forward declaration with the final definition.
+  llvm::DIType FwdDecl =
+    DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, 0, 0, 0, 0,
+                                     llvm::DIType(), llvm::DIArray());
+  
+  // If this is just a forward declaration, return it.
+  if (Decl->isForwardDecl())
+    return FwdDecl;
+
+  // Otherwise, insert it into the TypeCache so that recursive uses will find
+  // it.
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
+
+  // Convert all the elements.
+  llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
+
+  const ASTRecordLayout &RL = M->getContext().getASTObjCInterfaceLayout(Decl);
+
+  unsigned FieldNo = 0;
+  for (ObjCInterfaceDecl::ivar_iterator I = Decl->ivar_begin(),
+         E = Decl->ivar_end();  I != E; ++I, ++FieldNo) {
+    ObjCIvarDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
     std::string FieldName = Field->getNameAsString();
@@ -541,6 +626,35 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   std::string Name = Decl->getNameAsString();
 
   QualType T = Decl->getType();
+  if (T->isIncompleteArrayType()) {
+    
+    // CodeGen turns int[] into int[1] so we'll do the same here.
+    llvm::APSInt ConstVal(32);
+    
+    ConstVal = 1;
+    QualType ET = M->getContext().getAsArrayType(T)->getElementType();
+    
+    T = M->getContext().getConstantArrayType(ET, ConstVal, 
+                                           ArrayType::Normal, 0);
+  }
+
+  DebugFactory.CreateGlobalVariable(Unit, Name, Name, "", Unit, LineNo,
+                                    getOrCreateType(T, Unit),
+                                    Var->hasInternalLinkage(),
+                                    true/*definition*/, Var);
+}
+
+/// EmitGlobalVariable - Emit information about an objective-c interface.
+void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var, 
+                                     ObjCInterfaceDecl *Decl) {
+  // Create global variable debug descriptor.
+  llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
+  SourceManager &SM = M->getContext().getSourceManager();
+  unsigned LineNo = SM.getInstantiationLineNumber(Decl->getLocation());
+
+  std::string Name = Decl->getNameAsString();
+
+  QualType T = M->getContext().buildObjCInterfaceType(Decl);
   if (T->isIncompleteArrayType()) {
     
     // CodeGen turns int[] into int[1] so we'll do the same here.
