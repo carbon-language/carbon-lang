@@ -1334,14 +1334,18 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
   }
 
   const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T);
-  if (!VLATy) return QualType();
+  if (!VLATy)
+    return QualType();
+  // FIXME: We should probably handle this case
+  if (VLATy->getElementType()->isVariablyModifiedType())
+    return QualType();
   
   Expr::EvalResult EvalResult;
   if (!VLATy->getSizeExpr() ||
-      !VLATy->getSizeExpr()->Evaluate(EvalResult, Context))
+      !VLATy->getSizeExpr()->Evaluate(EvalResult, Context) ||
+      !EvalResult.Val.isInt())
     return QualType();
-    
-  assert(EvalResult.Val.isInt() && "Size expressions must be integers!");
+
   llvm::APSInt &Res = EvalResult.Val.getInt();
   if (Res >= llvm::APSInt(Res.getBitWidth(), Res.isUnsigned()))
     return Context.getConstantArrayType(VLATy->getElementType(),
@@ -2731,43 +2735,43 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     if (!IDecl)
       continue;
     QualType T = IDecl->getType();
-    
-    if (T->isVariableArrayType()) {
-      const VariableArrayType *VAT = Context.getAsVariableArrayType(T);
-      
-      // FIXME: This won't give the correct result for 
-      // int a[10][n];      
-      SourceRange SizeRange = VAT->getSizeExpr()->getSourceRange();
-      if (IDecl->isFileVarDecl()) {
-        Diag(IDecl->getLocation(), diag::err_vla_decl_in_file_scope) <<
-          SizeRange;
-          
+
+    bool isIllegalVLA = T->isVariableArrayType() && IDecl->hasGlobalStorage();
+    bool isIllegalVM = T->isVariablyModifiedType() && IDecl->hasLinkage();
+    if (isIllegalVLA || isIllegalVM) {
+      bool SizeIsNegative;
+      QualType FixedTy =
+          TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative);
+      if (!FixedTy.isNull()) {
+        Diag(IDecl->getLocation(), diag::warn_illegal_constant_array_size);
+        IDecl->setType(FixedTy);
+      } else if (T->isVariableArrayType()) {
         IDecl->setInvalidDecl();
-      } else {
-        // C99 6.7.5.2p2: If an identifier is declared to be an object with 
-        // static storage duration, it shall not have a variable length array.
-        if (IDecl->getStorageClass() == VarDecl::Static) {
+
+        const VariableArrayType *VAT = Context.getAsVariableArrayType(T);
+        // FIXME: This won't give the correct result for 
+        // int a[10][n];      
+        SourceRange SizeRange = VAT->getSizeExpr()->getSourceRange();
+
+        if (IDecl->isFileVarDecl())
+          Diag(IDecl->getLocation(), diag::err_vla_decl_in_file_scope)
+            << SizeRange;
+        else if (IDecl->getStorageClass() == VarDecl::Static)
           Diag(IDecl->getLocation(), diag::err_vla_decl_has_static_storage)
             << SizeRange;
-          IDecl->setInvalidDecl();
-        } else if (IDecl->getStorageClass() == VarDecl::Extern) {
+        else
           Diag(IDecl->getLocation(), diag::err_vla_decl_has_extern_linkage)
-            << SizeRange;
-          IDecl->setInvalidDecl();
-        }
-      }
-    } else if (T->isVariablyModifiedType()) {
-      if (IDecl->isFileVarDecl()) {
-        Diag(IDecl->getLocation(), diag::err_vm_decl_in_file_scope);
-        IDecl->setInvalidDecl();
+              << SizeRange;
       } else {
-        if (IDecl->getStorageClass() == VarDecl::Extern) {
+        IDecl->setInvalidDecl();
+
+        if (IDecl->isFileVarDecl())
+          Diag(IDecl->getLocation(), diag::err_vm_decl_in_file_scope);
+        else
           Diag(IDecl->getLocation(), diag::err_vm_decl_has_extern_linkage);
-          IDecl->setInvalidDecl();
-        }
       }
     }
-     
+
     // Block scope. C99 6.7p7: If an identifier for an object is declared with
     // no linkage (C99 6.2.2p6), the type for the object shall be complete...
     if (IDecl->isBlockVarDecl() && 

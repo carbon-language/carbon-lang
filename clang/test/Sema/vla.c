@@ -1,4 +1,4 @@
-// RUN: clang %s -verify -fsyntax-only
+// RUN: clang %s -verify -fsyntax-only -pedantic
 
 int test1() {
   typedef int x[test1()];  // vla
@@ -41,3 +41,5 @@ void f3()
   static int (*d)[i];
 }
 
+// PR3663
+static const unsigned array[((2 * (int)((((4) / 2) + 1.0/3.0) * (4) - 1e-8)) + 1)]; // expected-warning {{size of static array must be an integer constant expression}}
