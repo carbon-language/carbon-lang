@@ -367,7 +367,42 @@ The old type legalizer is still available and will be used if
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="targetspecific">Target Specific Improvements</a>
+<a name="pic16">PIC16 Target Improvements</a>
+</div>
+
+<div class="doc_text">
+<p>New features of the PIC16 target include:
+</p>
+
+<ul>
+<li>Both direct and indirect load/stores work now.</li>
+<li>Logical, bitwise and conditional operations now work for integer data
+types.</li>
+<li>Function calls involving basic types work now.</li>
+<li>Support for integer arrays.</li>
+<li>Compiler can now emit libcalls for operations not support by m/c insns.</li>
+<li>Support for both data and rom address spaces.</li>
+</li>
+</ul>
+
+<p>Things not yet supported:</p>
+
+<ul>
+<li>Floating point.</li>
+<li>Passing/returning aggregate types to/from functions.</li>
+<li>Variable arguments.</li>
+<li>Indirect function calls.</li>
+<li>Interrupts/prgrams.</li>
+<li>Debug info.</li>
+</li>
+</ul>
+
+</div>
+
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="othertargetspecific">Other Target Specific Improvements</a>
 </div>
 
 <div class="doc_text">
