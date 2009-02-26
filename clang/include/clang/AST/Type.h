@@ -45,7 +45,6 @@ namespace clang {
   class Expr;
   class Stmt;
   class SourceLocation;
-  class PointerLikeType;
   class PointerType;
   class BlockPointerType;
   class ReferenceType;
@@ -362,7 +361,6 @@ public:
   // Type Predicates: Check to see if this type is structurally the specified
   // type, ignoring typedefs and qualifiers.
   bool isFunctionType() const;
-  bool isPointerLikeType() const; // Pointer or Reference.
   bool isPointerType() const;
   bool isBlockPointerType() const;
   bool isReferenceType() const;
@@ -399,7 +397,6 @@ public:
   const FunctionType *getAsFunctionType() const;
   const FunctionTypeNoProto *getAsFunctionTypeNoProto() const;
   const FunctionTypeProto *getAsFunctionTypeProto() const;
-  const PointerLikeType *getAsPointerLikeType() const; // Pointer or Reference.
   const PointerType *getAsPointerType() const;
   const BlockPointerType *getAsBlockPointerType() const;
   const ReferenceType *getAsReferenceType() const;
@@ -626,38 +623,21 @@ protected:
   friend class Type;
 };
 
-/// PointerLikeType - Common base class for pointers and references.
-/// FIXME: Add more documentation on this classes design point. For example,
-/// should BlockPointerType inherit from it? Is the concept of a PointerLikeType
-/// in the C++ standard?
-///
-class PointerLikeType : public Type {
-  QualType PointeeType;
-protected:
-  PointerLikeType(TypeClass K, QualType Pointee, QualType CanonicalPtr) :
-    Type(K, CanonicalPtr, Pointee->isDependentType()), PointeeType(Pointee) {
-  }
-public:
-  
-  QualType getPointeeType() const { return PointeeType; }
-
-  static bool classof(const Type *T) {
-    return T->getTypeClass() == Pointer || T->getTypeClass() == Reference;
-  }
-  static bool classof(const PointerLikeType *) { return true; }
-};
-
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
 ///
-class PointerType : public PointerLikeType, public llvm::FoldingSetNode {
+class PointerType : public Type, public llvm::FoldingSetNode {
+  QualType PointeeType;
+
   PointerType(QualType Pointee, QualType CanonicalPtr) :
-    PointerLikeType(Pointer, Pointee, CanonicalPtr) {
+    Type(Pointer, CanonicalPtr, Pointee->isDependentType()), PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
+  QualType getPointeeType() const { return PointeeType; }
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType());
   }
@@ -677,9 +657,6 @@ protected:
 /// BlockPointerType - pointer to a block type.
 /// This type is to represent types syntactically represented as
 /// "void (^)(int)", etc. Pointee is required to always be a function type.
-/// FIXME: Should BlockPointerType inherit from PointerLikeType? It could
-/// simplfy some type checking code, however PointerLikeType doesn't appear
-/// to be used by the type checker.
 ///
 class BlockPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;  // Block is some kind of pointer type
@@ -715,13 +692,18 @@ public:
 
 /// ReferenceType - C++ 8.3.2 - Reference Declarators.
 ///
-class ReferenceType : public PointerLikeType, public llvm::FoldingSetNode {
+class ReferenceType : public Type, public llvm::FoldingSetNode {
+  QualType PointeeType;
+
   ReferenceType(QualType Referencee, QualType CanonicalRef) :
-    PointerLikeType(Reference, Referencee, CanonicalRef) {
+    Type(Reference, CanonicalRef, Referencee->isDependentType()), 
+    PointeeType(Referencee) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
   virtual void getAsStringInternal(std::string &InnerString) const;
+
+  QualType getPointeeType() const { return PointeeType; }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType());
@@ -1887,9 +1869,6 @@ inline bool Type::isBlockPointerType() const {
 }
 inline bool Type::isReferenceType() const {
   return isa<ReferenceType>(CanonicalType.getUnqualifiedType());
-}
-inline bool Type::isPointerLikeType() const {
-  return isa<PointerLikeType>(CanonicalType.getUnqualifiedType()); 
 }
 inline bool Type::isFunctionPointerType() const {
   if (const PointerType* T = getAsPointerType())

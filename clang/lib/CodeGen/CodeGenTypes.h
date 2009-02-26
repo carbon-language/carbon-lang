@@ -36,7 +36,6 @@ namespace clang {
   class FunctionTypeProto;
   class ObjCInterfaceDecl;
   class ObjCIvarDecl;
-  class PointerLikeType;
   class PointerType;
   class QualType;
   class RecordDecl;

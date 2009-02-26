@@ -225,24 +225,6 @@ const FunctionTypeProto *Type::getAsFunctionTypeProto() const {
 }
 
 
-const PointerLikeType *Type::getAsPointerLikeType() const {
-  // If this is directly a pointer-like type, return it.
-  if (const PointerLikeType *PTy = dyn_cast<PointerLikeType>(this))
-    return PTy;
-  
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<PointerLikeType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<PointerLikeType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsPointerLikeType();
-    return 0;
-  }
-  
-  // If this is a typedef for a pointer type, strip the typedef off without
-  // losing all typedef information.
-  return getDesugaredType()->getAsPointerLikeType();
-}
-
 const PointerType *Type::getAsPointerType() const {
   // If this is directly a pointer type, return it.
   if (const PointerType *PTy = dyn_cast<PointerType>(this))
@@ -331,8 +313,10 @@ bool Type::isVariablyModifiedType() const {
   // Also, C++ references and member pointers can point to a variably modified
   // type, where VLAs appear as an extension to C++, and should be treated
   // correctly.
-  if (const PointerLikeType *PT = getAsPointerLikeType())
+  if (const PointerType *PT = getAsPointerType())
     return PT->getPointeeType()->isVariablyModifiedType();
+  if (const ReferenceType *RT = getAsReferenceType())
+    return RT->getPointeeType()->isVariablyModifiedType();
   if (const MemberPointerType *PT = getAsMemberPointerType())
     return PT->getPointeeType()->isVariablyModifiedType();
 
