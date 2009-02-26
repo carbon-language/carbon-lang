@@ -4552,9 +4552,9 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
                                                   ObjCTypes.ClassnfABIPtrTy));
 
     if (IsSuper)
-      Entry->setSection("__OBJC,__objc_superrefs,regular,no_dead_strip");
+      Entry->setSection("__DATA,__objc_superrefs,regular,no_dead_strip");
     else
-      Entry->setSection("__OBJC,__objc_classrefs,regular,no_dead_strip");
+      Entry->setSection("__DATA,__objc_classrefs,regular,no_dead_strip");
     UsedGlobals.push_back(Entry);
   }
   
