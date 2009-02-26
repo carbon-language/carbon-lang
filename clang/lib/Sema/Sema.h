@@ -1909,10 +1909,6 @@ public:
                              bool DirectInit);
   bool CheckInitList(InitListExpr *&InitList, QualType &DeclType);
   bool CheckForConstantInitializer(Expr *e, QualType t);
-  bool CheckArithmeticConstantExpression(const Expr* e);
-  bool CheckAddressConstantExpression(const Expr* e);
-  bool CheckAddressConstantExpressionLValue(const Expr* e);
-  void InitializerElementNotConstant(const Expr *e);
   
   bool CheckValueInitialization(QualType Type, SourceLocation Loc);
 
