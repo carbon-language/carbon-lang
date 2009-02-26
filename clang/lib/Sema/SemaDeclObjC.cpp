@@ -720,7 +720,7 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
 /// for the property in the class and in its categories and implementations
 ///
 bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
-                              ObjCInterfaceDecl *IDecl) const {
+                              ObjCInterfaceDecl *IDecl) {
   // by far the most common case.
   if (!PDecl->isReadOnly())
     return false;
@@ -758,6 +758,11 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
         return false;
     }
   }
+  // Lastly, look through the implementation (if one is in scope).
+  if (ObjCImplementationDecl *ImpDecl = 
+        ObjCImplementations[IDecl->getIdentifier()])
+    if (ImpDecl->getInstanceMethod(PDecl->getSetterName()))
+      return false;
   return true;
 }
 
