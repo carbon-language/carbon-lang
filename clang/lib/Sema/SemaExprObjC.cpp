@@ -202,6 +202,27 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
   return anyIncompatibleArgs;
 }
 
+// Helper method for ActOnClassMethod/ActOnInstanceMethod.
+// Will search "local" class/category implementations for a method decl.
+// Returns 0 if no method is found.
+ObjCMethodDecl *Sema::LookupPrivateMethod(Selector Sel,
+                                          ObjCInterfaceDecl *ClassDecl) {
+  ObjCMethodDecl *Method = 0;
+  
+  if (ObjCImplementationDecl *ImpDecl = 
+      ObjCImplementations[ClassDecl->getIdentifier()])
+    Method = ImpDecl->getClassMethod(Sel);
+    
+  // Look through local category implementations associated with the class.
+  if (!Method) {
+    for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
+      if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
+        Method = ObjCCategoryImpls[i]->getClassMethod(Sel);
+    }
+  }
+  return Method;
+}
+
 // ActOnClassMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
@@ -282,19 +303,9 @@ Sema::ExprResult Sema::ActOnClassMessage(
   Method = ClassDecl->lookupClassMethod(Sel);
   
   // If we have an implementation in scope, check "private" methods.
-  if (!Method) {
-    if (ObjCImplementationDecl *ImpDecl = 
-        ObjCImplementations[ClassDecl->getIdentifier()])
-      Method = ImpDecl->getClassMethod(Sel);
-      
-    // Look through local category implementations associated with the class.
-    if (!Method) {
-      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
-        if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
-          Method = ObjCCategoryImpls[i]->getClassMethod(Sel);
-      }
-    }
-  }
+  if (!Method)
+    Method = LookupPrivateMethod(Sel, ClassDecl);
+
   // Before we give up, check if the selector is an instance method.
   if (!Method)
     Method = ClassDecl->lookupInstanceMethod(Sel);
@@ -379,12 +390,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         // First check the public methods in the class interface.
         Method = ClassDecl->lookupClassMethod(Sel);
         
-        if (!Method) {
-          // If we have an implementation in scope, check "private" methods.
-          if (ObjCImplementationDecl *ImpDecl = 
-                ObjCImplementations[ClassDecl->getIdentifier()])
-            Method = ImpDecl->getClassMethod(Sel);
-        }
+        if (!Method)
+          Method = LookupPrivateMethod(Sel, ClassDecl);
       }
       if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
         return true;

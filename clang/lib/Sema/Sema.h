@@ -1683,6 +1683,11 @@ public:
     AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind,
     bool isVariadic = false);
 
+  // Helper method for ActOnClassMethod/ActOnInstanceMethod.
+  // Will search "local" class/category implementations for a method decl.
+  // Returns 0 if no method is found.
+  ObjCMethodDecl *LookupPrivateMethod(Selector Sel, ObjCInterfaceDecl *CDecl);
+  
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from NumArgs.
