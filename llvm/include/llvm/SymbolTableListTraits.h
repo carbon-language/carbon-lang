@@ -51,10 +51,6 @@ public:
                                               TraitsClass::getListOffset());
   }
 
-  void deleteNode(ValueSubClass *V) {
-    delete V;
-  }
-
   void addNodeToList(ValueSubClass *V);
   void removeNodeFromList(ValueSubClass *V);
   void transferNodesFromList(ilist_traits<ValueSubClass> &L2,
