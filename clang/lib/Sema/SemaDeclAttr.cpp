@@ -56,7 +56,7 @@ static bool isFunctionOrMethod(Decl *d) {
 /// isFunctionOrMethod.
 static bool hasFunctionProto(Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d)) {
-    return isa<FunctionTypeProto>(FnTy);
+    return isa<FunctionProtoType>(FnTy);
   } else {
     assert(isa<ObjCMethodDecl>(d));
     return true;
@@ -68,20 +68,20 @@ static bool hasFunctionProto(Decl *d) {
 /// hasFunctionProto first).
 static unsigned getFunctionOrMethodNumArgs(Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d))
-    return cast<FunctionTypeProto>(FnTy)->getNumArgs();
+    return cast<FunctionProtoType>(FnTy)->getNumArgs();
   return cast<ObjCMethodDecl>(d)->param_size();
 }
 
 static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
   if (const FunctionType *FnTy = getFunctionType(d))
-    return cast<FunctionTypeProto>(FnTy)->getArgType(Idx);
+    return cast<FunctionProtoType>(FnTy)->getArgType(Idx);
   
   return cast<ObjCMethodDecl>(d)->param_begin()[Idx]->getType();
 }
 
 static bool isFunctionOrMethodVariadic(Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d)) {
-    const FunctionTypeProto *proto = cast<FunctionTypeProto>(FnTy);
+    const FunctionProtoType *proto = cast<FunctionProtoType>(FnTy);
     return proto->isVariadic();
   } else {
     return cast<ObjCMethodDecl>(d)->isVariadic();
@@ -688,7 +688,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(d)) {
     QualType FT = FD->getType();
-    if (!FT->getAsFunctionTypeProto()->isVariadic()) {
+    if (!FT->getAsFunctionProtoType()->isVariadic()) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
       return;
     }    

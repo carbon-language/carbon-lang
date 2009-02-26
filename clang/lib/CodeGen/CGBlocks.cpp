@@ -321,12 +321,12 @@ CodeGenModule::getGenericExtendedBlockLiteralType() {
 /// function type for the block, including the first block literal argument.
 static QualType getBlockFunctionType(ASTContext &Ctx,
                                      const BlockPointerType *BPT) {
-  const FunctionTypeProto *FTy = cast<FunctionTypeProto>(BPT->getPointeeType());
+  const FunctionProtoType *FTy = cast<FunctionProtoType>(BPT->getPointeeType());
 
   llvm::SmallVector<QualType, 8> Types;
   Types.push_back(Ctx.getPointerType(Ctx.VoidTy));
 
-  for (FunctionTypeProto::arg_type_iterator i = FTy->arg_type_begin(),
+  for (FunctionProtoType::arg_type_iterator i = FTy->arg_type_begin(),
        e = FTy->arg_type_end(); i != e; ++i)
     Types.push_back(*i);
 
@@ -455,9 +455,9 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
                                                        const BlockInfo& Info,
                                                        uint64_t &Size,
                                                        uint64_t &Align,
-                                                       llvm::SmallVector<ValueDecl *, 8> &subBlockDeclRefDecls) {
-  const FunctionTypeProto *FTy =
-    cast<FunctionTypeProto>(Expr->getFunctionType());
+                    llvm::SmallVector<ValueDecl *, 8> &subBlockDeclRefDecls) {
+  const FunctionProtoType *FTy =
+    cast<FunctionProtoType>(Expr->getFunctionType());
 
   FunctionArgList Args;
 

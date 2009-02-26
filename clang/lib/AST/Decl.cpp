@@ -320,9 +320,9 @@ unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
 // Helper function for FunctionDecl::getNumParams and FunctionDecl::setParams()
 static unsigned getNumTypeParams(QualType T) {
   const FunctionType *FT = T->getAsFunctionType();
-  if (isa<FunctionTypeNoProto>(FT))
+  if (isa<FunctionNoProtoType>(FT))
     return 0;
-  return cast<FunctionTypeProto>(FT)->getNumArgs();
+  return cast<FunctionProtoType>(FT)->getNumArgs();
 }
 
 unsigned FunctionDecl::getNumParams() const {

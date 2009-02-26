@@ -41,7 +41,7 @@ namespace clang {
   class Decl;
   class EnumConstantDecl;
   class FunctionDecl;
-  class FunctionTypeProto;
+  class FunctionProtoType;
   class LabelStmt;
   class ObjCContainerDecl;
   class ObjCInterfaceDecl;

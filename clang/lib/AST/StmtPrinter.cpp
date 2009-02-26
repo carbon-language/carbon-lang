@@ -1193,9 +1193,9 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
   
   const FunctionType *AFT = Node->getFunctionType();
   
-  if (isa<FunctionTypeNoProto>(AFT)) {
+  if (isa<FunctionNoProtoType>(AFT)) {
     OS << "()";
-  } else if (!BD->param_empty() || cast<FunctionTypeProto>(AFT)->isVariadic()) {
+  } else if (!BD->param_empty() || cast<FunctionProtoType>(AFT)->isVariadic()) {
     OS << '(';
     std::string ParamStr;
     for (BlockDecl::param_iterator AI = BD->param_begin(),
@@ -1206,7 +1206,7 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
       OS << ParamStr;
     }
     
-    const FunctionTypeProto *FT = cast<FunctionTypeProto>(AFT);
+    const FunctionProtoType *FT = cast<FunctionProtoType>(AFT);
     if (FT->isVariadic()) {
       if (!BD->param_empty()) OS << ", ";
       OS << "...";

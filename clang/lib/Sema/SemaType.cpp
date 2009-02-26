@@ -172,7 +172,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     Expr *E = static_cast<Expr *>(DS.getTypeRep());
     assert(E && "Didn't get an expression for typeof?");
     // TypeQuals handled by caller.
-    Result = Context.getTypeOfExpr(E);
+    Result = Context.getTypeOfExprType(E);
     break;
   }
   case DeclSpec::TST_error:
@@ -505,7 +505,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
           T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic, 0);
         } else {
           // Simple void foo(), where the incoming T is the result type.
-          T = Context.getFunctionTypeNoProto(T);
+          T = Context.getFunctionNoProtoType(T);
         }
       } else if (FTI.ArgInfo[0].Param == 0) {
         // C99 6.7.5.3p3: Reject int(x,y,z) when it's not a function definition.
@@ -540,7 +540,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
           
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
-          // int(void) as a FunctionTypeProto with an empty argument list.
+          // int(void) as a FunctionProtoType with an empty argument list.
           else if (ArgTy->isVoidType()) {
             // If this is something like 'float(int, void)', reject it.  'void'
             // is an incomplete type (C99 6.2.5p19) and function decls cannot
@@ -634,8 +634,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
   }
 
   if (getLangOptions().CPlusPlus && T->isFunctionType()) {
-    const FunctionTypeProto *FnTy = T->getAsFunctionTypeProto();
-    assert(FnTy && "Why oh why is there not a FunctionTypeProto here ?");
+    const FunctionProtoType *FnTy = T->getAsFunctionProtoType();
+    assert(FnTy && "Why oh why is there not a FunctionProtoType here ?");
 
     // C++ 8.3.5p4: A cv-qualifier-seq shall only be part of the function type
     // for a nonstatic member function, the function type to which a pointer

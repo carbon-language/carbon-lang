@@ -91,7 +91,7 @@ void ASTContext::PrintStats() const {
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
   unsigned NumObjCInterfaces = 0, NumObjCQualifiedInterfaces = 0;
   unsigned NumObjCQualifiedIds = 0;
-  unsigned NumTypeOfTypes = 0, NumTypeOfExprs = 0;
+  unsigned NumTypeOfTypes = 0, NumTypeOfExprTypes = 0;
   
   for (unsigned i = 0, e = Types.size(); i != e; ++i) {
     Type *T = Types[i];
@@ -111,9 +111,9 @@ void ASTContext::PrintStats() const {
       ++NumArray;
     else if (isa<VectorType>(T))
       ++NumVector;
-    else if (isa<FunctionTypeNoProto>(T))
+    else if (isa<FunctionNoProtoType>(T))
       ++NumFunctionNP;
-    else if (isa<FunctionTypeProto>(T))
+    else if (isa<FunctionProtoType>(T))
       ++NumFunctionP;
     else if (isa<TypedefType>(T))
       ++NumTypeName;
@@ -134,8 +134,8 @@ void ASTContext::PrintStats() const {
       ++NumObjCQualifiedIds;
     else if (isa<TypeOfType>(T))
       ++NumTypeOfTypes;
-    else if (isa<TypeOfExpr>(T))
-      ++NumTypeOfExprs;
+    else if (isa<TypeOfExprType>(T))
+      ++NumTypeOfExprTypes;
     else {
       QualType(T, 0).dump();
       assert(0 && "Unknown type!");
@@ -164,16 +164,16 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "    %d protocol qualified id types\n",
           NumObjCQualifiedIds);
   fprintf(stderr, "    %d typeof types\n", NumTypeOfTypes);
-  fprintf(stderr, "    %d typeof exprs\n", NumTypeOfExprs);
+  fprintf(stderr, "    %d typeof exprs\n", NumTypeOfExprTypes);
   
   fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
     NumComplex*sizeof(ComplexType)+NumVector*sizeof(VectorType)+
     NumMemberPointer*sizeof(MemberPointerType)+
-    NumFunctionP*sizeof(FunctionTypeProto)+
-    NumFunctionNP*sizeof(FunctionTypeNoProto)+
+    NumFunctionP*sizeof(FunctionProtoType)+
+    NumFunctionNP*sizeof(FunctionNoProtoType)+
     NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType)+
-    NumTypeOfTypes*sizeof(TypeOfType)+NumTypeOfExprs*sizeof(TypeOfExpr)));
+    NumTypeOfTypes*sizeof(TypeOfType)+NumTypeOfExprTypes*sizeof(TypeOfExprType)));
 }
 
 
@@ -293,15 +293,20 @@ ASTContext::getTypeInfo(const Type *T) {
   uint64_t Width;
   unsigned Align;
   switch (T->getTypeClass()) {
-  case Type::TypeName: assert(0 && "Not a canonical type!");
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    assert(false && "Should not see non-canonical or dependent types");
+    break;
+
   case Type::FunctionNoProto:
   case Type::FunctionProto:
-  default:
+  case Type::IncompleteArray:
     assert(0 && "Incomplete types have no size!");
   case Type::VariableArray:
     assert(0 && "VLAs not implemented yet!");
-  case Type::DependentSizedArray:
-    assert(0 && "Dependently-sized arrays don't have a known size");
   case Type::ConstantArray: {
     const ConstantArrayType *CAT = cast<ConstantArrayType>(T);
     
@@ -390,6 +395,7 @@ ASTContext::getTypeInfo(const Type *T) {
     return getTypeInfo(QualType(cast<ExtQualType>(T)->getBaseType(), 0));
   case Type::ObjCQualifiedId:
   case Type::ObjCQualifiedClass:
+  case Type::ObjCQualifiedInterface:
     Width = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
     break;
@@ -441,7 +447,9 @@ ASTContext::getTypeInfo(const Type *T) {
     Align = Layout.getAlignment();
     break;
   }
-  case Type::Tagged: {
+  case Type::Record:
+  case Type::CXXRecord:
+  case Type::Enum: {
     const TagType *TT = cast<TagType>(T);
 
     if (TT->getDecl()->isInvalidDecl()) {
@@ -1127,32 +1135,32 @@ QualType ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) {
   return QualType(New, 0);
 }
 
-/// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
+/// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
 ///
-QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {
+QualType ASTContext::getFunctionNoProtoType(QualType ResultTy) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  FunctionTypeNoProto::Profile(ID, ResultTy);
+  FunctionNoProtoType::Profile(ID, ResultTy);
   
   void *InsertPos = 0;
-  if (FunctionTypeNoProto *FT = 
-        FunctionTypeNoProtos.FindNodeOrInsertPos(ID, InsertPos))
+  if (FunctionNoProtoType *FT = 
+        FunctionNoProtoTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(FT, 0);
   
   QualType Canonical;
   if (!ResultTy->isCanonical()) {
-    Canonical = getFunctionTypeNoProto(getCanonicalType(ResultTy));
+    Canonical = getFunctionNoProtoType(getCanonicalType(ResultTy));
     
     // Get the new insert position for the node we care about.
-    FunctionTypeNoProto *NewIP =
-      FunctionTypeNoProtos.FindNodeOrInsertPos(ID, InsertPos);
+    FunctionNoProtoType *NewIP =
+      FunctionNoProtoTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   
-  FunctionTypeNoProto *New =new(*this,8)FunctionTypeNoProto(ResultTy,Canonical);
+  FunctionNoProtoType *New =new(*this,8)FunctionNoProtoType(ResultTy,Canonical);
   Types.push_back(New);
-  FunctionTypeNoProtos.InsertNode(New, InsertPos);
+  FunctionNoProtoTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
 }
 
@@ -1164,12 +1172,12 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  FunctionTypeProto::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic,
+  FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic,
                              TypeQuals);
 
   void *InsertPos = 0;
-  if (FunctionTypeProto *FTP = 
-        FunctionTypeProtos.FindNodeOrInsertPos(ID, InsertPos))
+  if (FunctionProtoType *FTP = 
+        FunctionProtoTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(FTP, 0);
     
   // Determine whether the type being created is already canonical or not.  
@@ -1191,20 +1199,20 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                 isVariadic, TypeQuals);
     
     // Get the new insert position for the node we care about.
-    FunctionTypeProto *NewIP =
-      FunctionTypeProtos.FindNodeOrInsertPos(ID, InsertPos);
+    FunctionProtoType *NewIP =
+      FunctionProtoTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   
-  // FunctionTypeProto objects are allocated with extra bytes after them
+  // FunctionProtoType objects are allocated with extra bytes after them
   // for a variable size array (for parameter types) at the end of them.
-  FunctionTypeProto *FTP = 
-    (FunctionTypeProto*)Allocate(sizeof(FunctionTypeProto) + 
+  FunctionProtoType *FTP = 
+    (FunctionProtoType*)Allocate(sizeof(FunctionProtoType) + 
                                  NumArgs*sizeof(QualType), 8);
-  new (FTP) FunctionTypeProto(ResultTy, ArgArray, NumArgs, isVariadic,
+  new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, isVariadic,
                               TypeQuals, Canonical);
   Types.push_back(FTP);
-  FunctionTypeProtos.InsertNode(FTP, InsertPos);
+  FunctionProtoTypes.InsertNode(FTP, InsertPos);
   return QualType(FTP, 0);
 }
 
@@ -1252,7 +1260,7 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
   QualType Canonical = getCanonicalType(Decl->getUnderlyingType());
-  Decl->TypeForDecl = new(*this,8) TypedefType(Type::TypeName, Decl, Canonical);
+  Decl->TypeForDecl = new(*this,8) TypedefType(Type::Typedef, Decl, Canonical);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }
@@ -1401,14 +1409,14 @@ QualType ASTContext::getObjCQualifiedIdType(ObjCProtocolDecl **Protocols,
   return QualType(QType, 0);
 }
 
-/// getTypeOfExpr - Unlike many "get<Type>" functions, we can't unique
-/// TypeOfExpr AST's (since expression's are never shared). For example,
+/// getTypeOfExprType - Unlike many "get<Type>" functions, we can't unique
+/// TypeOfExprType AST's (since expression's are never shared). For example,
 /// multiple declarations that refer to "typeof(x)" all contain different
 /// DeclRefExpr's. This doesn't effect the type checker, since it operates 
 /// on canonical type's (which are always unique).
-QualType ASTContext::getTypeOfExpr(Expr *tofExpr) {
+QualType ASTContext::getTypeOfExprType(Expr *tofExpr) {
   QualType Canonical = getCanonicalType(tofExpr->getType());
-  TypeOfExpr *toe = new (*this,8) TypeOfExpr(tofExpr, Canonical);
+  TypeOfExprType *toe = new (*this,8) TypeOfExprType(tofExpr, Canonical);
   Types.push_back(toe);
   return QualType(toe, 0);
 }
@@ -2458,8 +2466,8 @@ QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
 bool ASTContext::typesAreBlockCompatible(QualType lhs, QualType rhs) {
   const FunctionType *lbase = lhs->getAsFunctionType();
   const FunctionType *rbase = rhs->getAsFunctionType();
-  const FunctionTypeProto *lproto = dyn_cast<FunctionTypeProto>(lbase);
-  const FunctionTypeProto *rproto = dyn_cast<FunctionTypeProto>(rbase);
+  const FunctionProtoType *lproto = dyn_cast<FunctionProtoType>(lbase);
+  const FunctionProtoType *rproto = dyn_cast<FunctionProtoType>(rbase);
   if (lproto && rproto)
     return !mergeTypes(lhs, rhs).isNull();
   return false;
@@ -2561,8 +2569,8 @@ bool ASTContext::typesAreCompatible(QualType LHS, QualType RHS) {
 QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
   const FunctionType *lbase = lhs->getAsFunctionType();
   const FunctionType *rbase = rhs->getAsFunctionType();
-  const FunctionTypeProto *lproto = dyn_cast<FunctionTypeProto>(lbase);
-  const FunctionTypeProto *rproto = dyn_cast<FunctionTypeProto>(rbase);
+  const FunctionProtoType *lproto = dyn_cast<FunctionProtoType>(lbase);
+  const FunctionProtoType *rproto = dyn_cast<FunctionProtoType>(rbase);
   bool allLTypes = true;
   bool allRTypes = true;
 
@@ -2611,7 +2619,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
   if (lproto) allRTypes = false;
   if (rproto) allLTypes = false;
 
-  const FunctionTypeProto *proto = lproto ? lproto : rproto;
+  const FunctionProtoType *proto = lproto ? lproto : rproto;
   if (proto) {
     if (proto->isVariadic()) return QualType();
     // Check that the types are compatible with the types that
@@ -2636,7 +2644,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
 
   if (allLTypes) return lhs;
   if (allRTypes) return rhs;
-  return getFunctionTypeNoProto(retType);
+  return getFunctionNoProtoType(retType);
 }
 
 QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
@@ -2739,6 +2747,27 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 
   // The canonical type classes match.
   switch (LHSClass) {
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    assert(false && "Non-canonical and dependent types shouldn't get here");
+    return QualType();
+
+  case Type::Reference:
+  case Type::MemberPointer:
+    assert(false && "C++ should never be in mergeTypes");
+    return QualType();
+
+  case Type::IncompleteArray:
+  case Type::VariableArray:
+  case Type::FunctionProto:
+  case Type::ExtVector:
+  case Type::ObjCQualifiedInterface:
+    assert(false && "Types are eliminated above");
+    return QualType();
+
   case Type::Pointer:
   {
     // Merge two pointer types, while trying to preserve typedef info
@@ -2808,7 +2837,9 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   }
   case Type::FunctionNoProto:
     return mergeFunctionTypes(LHS, RHS);
-  case Type::Tagged:
+  case Type::Record:
+  case Type::CXXRecord:
+  case Type::Enum:
     // FIXME: Why are these compatible?
     if (isObjCIdStructType(LHS) && isObjCClassStructType(RHS)) return LHS;
     if (isObjCClassStructType(LHS) && isObjCIdStructType(RHS)) return LHS;
@@ -2836,10 +2867,9 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   case Type::ObjCQualifiedId:
     // Distinct qualified id's are not compatible.
     return QualType();
-  default:
-    assert(0 && "unexpected type");
-    return QualType();
   }
+
+  return QualType();
 }
 
 //===----------------------------------------------------------------------===//

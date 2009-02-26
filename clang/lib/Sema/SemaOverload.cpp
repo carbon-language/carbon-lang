@@ -310,12 +310,12 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
 
     // If either of these functions is a K&R-style function (no
     // prototype), then we consider them to have matching signatures.
-    if (isa<FunctionTypeNoProto>(OldQType.getTypePtr()) ||
-        isa<FunctionTypeNoProto>(NewQType.getTypePtr()))
+    if (isa<FunctionNoProtoType>(OldQType.getTypePtr()) ||
+        isa<FunctionNoProtoType>(NewQType.getTypePtr()))
       return false;
 
-    FunctionTypeProto* OldType = cast<FunctionTypeProto>(OldQType.getTypePtr());
-    FunctionTypeProto* NewType = cast<FunctionTypeProto>(NewQType.getTypePtr());
+    FunctionProtoType* OldType = cast<FunctionProtoType>(OldQType.getTypePtr());
+    FunctionProtoType* NewType = cast<FunctionProtoType>(NewQType.getTypePtr());
 
     // The signature of a function includes the types of its
     // parameters (C++ 1.3.10), which includes the presence or absence
@@ -1052,10 +1052,10 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
   // differences in the argument and result types are in Objective-C
   // pointer conversions. If so, we permit the conversion (but
   // complain about it).
-  const FunctionTypeProto *FromFunctionType 
-    = FromPointeeType->getAsFunctionTypeProto();
-  const FunctionTypeProto *ToFunctionType
-    = ToPointeeType->getAsFunctionTypeProto();
+  const FunctionProtoType *FromFunctionType 
+    = FromPointeeType->getAsFunctionProtoType();
+  const FunctionProtoType *ToFunctionType
+    = ToPointeeType->getAsFunctionProtoType();
   if (FromFunctionType && ToFunctionType) {
     // If the function types are exactly the same, this isn't an
     // Objective-C pointer conversion.
@@ -1985,8 +1985,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
                            OverloadCandidateSet& CandidateSet,
                            bool SuppressUserConversions)
 {
-  const FunctionTypeProto* Proto 
-    = dyn_cast<FunctionTypeProto>(Function->getType()->getAsFunctionType());
+  const FunctionProtoType* Proto 
+    = dyn_cast<FunctionProtoType>(Function->getType()->getAsFunctionType());
   assert(Proto && "Functions without a prototype cannot be overloaded");
   assert(!isa<CXXConversionDecl>(Function) && 
          "Use AddConversionCandidate for conversion functions");
@@ -2075,8 +2075,8 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
                          OverloadCandidateSet& CandidateSet,
                          bool SuppressUserConversions)
 {
-  const FunctionTypeProto* Proto 
-    = dyn_cast<FunctionTypeProto>(Method->getType()->getAsFunctionType());
+  const FunctionProtoType* Proto 
+    = dyn_cast<FunctionProtoType>(Method->getType()->getAsFunctionType());
   assert(Proto && "Methods without a prototype cannot be overloaded");
   assert(!isa<CXXConversionDecl>(Method) && 
          "Use AddConversionCandidate for conversion functions");
@@ -2228,7 +2228,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
 /// with the given arguments (C++ [over.call.object]p2-4). Proto is
 /// the type of function that we'll eventually be calling.
 void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
-                                 const FunctionTypeProto *Proto,
+                                 const FunctionProtoType *Proto,
                                  Expr *Object, Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet) {
   CandidateSet.push_back(OverloadCandidate());
@@ -2318,7 +2318,7 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
   if (T1->isRecordType() || (!T2.isNull() && T2->isRecordType()))
     return true;
 
-  const FunctionTypeProto *Proto = Fn->getType()->getAsFunctionTypeProto();
+  const FunctionProtoType *Proto = Fn->getType()->getAsFunctionProtoType();
   if (Proto->getNumArgs() < 1)
     return false;
 
@@ -3773,7 +3773,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   MemExpr->setBase(ObjectArg);
 
   // Convert the rest of the arguments
-  const FunctionTypeProto *Proto = cast<FunctionTypeProto>(Method->getType());
+  const FunctionProtoType *Proto = cast<FunctionProtoType>(Method->getType());
   if (ConvertArgumentsForCall(&*TheCall, MemExpr, Method, Proto, Args, NumArgs, 
                               RParenLoc))
     return true;
@@ -3842,7 +3842,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     if (const PointerType *ConvPtrType = ConvType->getAsPointerType())
       ConvType = ConvPtrType->getPointeeType();
 
-    if (const FunctionTypeProto *Proto = ConvType->getAsFunctionTypeProto())
+    if (const FunctionProtoType *Proto = ConvType->getAsFunctionProtoType())
       AddSurrogateCandidate(Conv, Proto, Object, Args, NumArgs, CandidateSet);
   }
 
@@ -3909,7 +3909,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   // that calls this method, using Object for the implicit object
   // parameter and passing along the remaining arguments.
   CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
-  const FunctionTypeProto *Proto = Method->getType()->getAsFunctionTypeProto();
+  const FunctionProtoType *Proto = Method->getType()->getAsFunctionProtoType();
 
   unsigned NumArgsInProto = Proto->getNumArgs();
   unsigned NumArgsToCheck = NumArgs;

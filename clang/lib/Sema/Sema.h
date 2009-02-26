@@ -458,7 +458,7 @@ public:
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
   void AddSurrogateCandidate(CXXConversionDecl *Conversion,
-                             const FunctionTypeProto *Proto,
+                             const FunctionProtoType *Proto,
                              Expr *Object, Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet);
   bool AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
@@ -1107,7 +1107,7 @@ public:
                                                     IdentifierInfo &Member);
   bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                                FunctionDecl *FDecl,
-                               const FunctionTypeProto *Proto,
+                               const FunctionProtoType *Proto,
                                Expr **Args, unsigned NumArgs,
                                SourceLocation RParenLoc);
 

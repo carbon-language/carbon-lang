@@ -545,7 +545,7 @@ protected:
                  NodeSet& Dst);
   void VisitCallRec(CallExpr* CE, NodeTy* Pred,
                     CallExpr::arg_iterator AI, CallExpr::arg_iterator AE,
-                    NodeSet& Dst, const FunctionTypeProto *, 
+                    NodeSet& Dst, const FunctionProtoType *, 
                     unsigned ParamIdx = 0);
   
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).

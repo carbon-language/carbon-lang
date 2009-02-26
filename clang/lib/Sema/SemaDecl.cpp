@@ -340,7 +340,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 
   // Create Decl objects for each parameter, adding them to the
   // FunctionDecl.
-  if (FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(R)) {
+  if (FunctionProtoType *FT = dyn_cast<FunctionProtoType>(R)) {
     llvm::SmallVector<ParmVarDecl*, 16> Params;
     for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
       Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
@@ -609,9 +609,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   if (!getLangOptions().CPlusPlus &&
       Context.typesAreCompatible(OldQType, NewQType)) {
     const FunctionType *NewFuncType = NewQType->getAsFunctionType();
-    const FunctionTypeProto *OldProto = 0;
-    if (isa<FunctionTypeNoProto>(NewFuncType) &&
-        (OldProto = OldQType->getAsFunctionTypeProto())) {
+    const FunctionProtoType *OldProto = 0;
+    if (isa<FunctionNoProtoType>(NewFuncType) &&
+        (OldProto = OldQType->getAsFunctionProtoType())) {
       // The old declaration provided a function prototype, but the
       // new declaration does not. Merge in the prototype.
       llvm::SmallVector<QualType, 16> ParamTypes(OldProto->arg_type_begin(),
@@ -625,7 +625,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 
       // Synthesize a parameter for each argument type.
       llvm::SmallVector<ParmVarDecl*, 16> Params;
-      for (FunctionTypeProto::arg_type_iterator 
+      for (FunctionProtoType::arg_type_iterator 
              ParamType = OldProto->arg_type_begin(), 
              ParamEnd = OldProto->arg_type_end();
            ParamType != ParamEnd; ++ParamType) {
@@ -1834,7 +1834,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // typedef void fn(int);
     // fn f;
     // @endcode
-    const FunctionTypeProto *FT = R->getAsFunctionTypeProto();
+    const FunctionProtoType *FT = R->getAsFunctionProtoType();
     if (!FT) {
       // This is a typedef of a function with no prototype, so we
       // don't need to do anything.
@@ -1845,7 +1845,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else {
       // Synthesize a parameter for each argument type.
       llvm::SmallVector<ParmVarDecl*, 16> Params;
-      for (FunctionTypeProto::arg_type_iterator ArgType = FT->arg_type_begin();
+      for (FunctionProtoType::arg_type_iterator ArgType = FT->arg_type_begin();
            ArgType != FT->arg_type_end(); ++ArgType) {
         ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
                                                  SourceLocation(), 0,
@@ -1900,7 +1900,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       // Functions marked "overloadable" must have a prototype (that
       // we can't get through declaration merging).
-      if (!R->getAsFunctionTypeProto()) {
+      if (!R->getAsFunctionProtoType()) {
         Diag(NewFD->getLocation(), diag::err_attribute_overloadable_no_prototype)
           << NewFD;
         InvalidDecl = true;

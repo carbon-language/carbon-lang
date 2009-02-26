@@ -84,11 +84,11 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       break;
       
     case Type::FunctionNoProto:
-      D.RegisterPtr(PtrID,FunctionTypeNoProto::CreateImpl(Context,D));
+      D.RegisterPtr(PtrID,FunctionNoProtoType::CreateImpl(Context,D));
       break;
       
     case Type::FunctionProto:
-      D.RegisterPtr(PtrID,FunctionTypeProto::CreateImpl(Context,D));
+      D.RegisterPtr(PtrID,FunctionProtoType::CreateImpl(Context,D));
       break;
       
     case Type::IncompleteArray:
@@ -111,19 +111,22 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       D.RegisterPtr(PtrID, ReferenceType::CreateImpl(Context, D));
       break;
 
-    case Type::Tagged:
-      D.RegisterPtr(PtrID, TagType::CreateImpl(Context, D));
+    case Type::Record:
+    case Type::CXXRecord:
+    case Type::Enum:
+      // FIXME: Implement this!
+      assert(false && "Can't deserialize tag types!");
       break;
 
-    case Type::TypeName:
+    case Type::Typedef:
       D.RegisterPtr(PtrID, TypedefType::CreateImpl(Context, D));
       break;
 
-    case Type::TypeOfExp:
-      D.RegisterPtr(PtrID, TypeOfExpr::CreateImpl(Context, D));
+    case Type::TypeOfExpr:
+      D.RegisterPtr(PtrID, TypeOfExprType::CreateImpl(Context, D));
       break;
 
-    case Type::TypeOfTyp:
+    case Type::TypeOf:
       D.RegisterPtr(PtrID, TypeOfType::CreateImpl(Context, D));
       break;
 
@@ -199,22 +202,22 @@ Type* ConstantArrayType::CreateImpl(ASTContext& Context, Deserializer& D) {
 }
 
 //===----------------------------------------------------------------------===//
-// FunctionTypeNoProto
+// FunctionNoProtoType
 //===----------------------------------------------------------------------===//
 
-void FunctionTypeNoProto::EmitImpl(Serializer& S) const {
+void FunctionNoProtoType::EmitImpl(Serializer& S) const {
   S.Emit(getResultType());
 }
 
-Type* FunctionTypeNoProto::CreateImpl(ASTContext& Context, Deserializer& D) {
-  return Context.getFunctionTypeNoProto(QualType::ReadVal(D)).getTypePtr();
+Type* FunctionNoProtoType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  return Context.getFunctionNoProtoType(QualType::ReadVal(D)).getTypePtr();
 }
 
 //===----------------------------------------------------------------------===//
-// FunctionTypeProto
+// FunctionProtoType
 //===----------------------------------------------------------------------===//
 
-void FunctionTypeProto::EmitImpl(Serializer& S) const {
+void FunctionProtoType::EmitImpl(Serializer& S) const {
   S.Emit(getResultType());
   S.EmitBool(isVariadic());
   S.EmitInt(getTypeQuals());
@@ -224,7 +227,7 @@ void FunctionTypeProto::EmitImpl(Serializer& S) const {
     S.Emit(*I);
 }
 
-Type* FunctionTypeProto::CreateImpl(ASTContext& Context, Deserializer& D) {
+Type* FunctionProtoType::CreateImpl(ASTContext& Context, Deserializer& D) {
   QualType ResultType = QualType::ReadVal(D);
   bool isVariadic = D.ReadBool();
   unsigned TypeQuals = D.ReadInt();
@@ -290,7 +293,9 @@ Type* TagType::CreateImpl(ASTContext& Context, Deserializer& D) {
   std::vector<Type*>& Types = 
     const_cast<std::vector<Type*>&>(Context.getTypes());
   
-  TagType* T = new TagType(NULL,QualType());
+  // FIXME: This is wrong: we need the subclasses to do the
+  // (de-)serialization.
+  TagType* T = new TagType(Record, NULL,QualType());
   Types.push_back(T);
   
   // Deserialize the decl.
@@ -313,7 +318,7 @@ Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
   std::vector<Type*>& Types = 
     const_cast<std::vector<Type*>&>(Context.getTypes());
   
-  TypedefType* T = new TypedefType(Type::TypeName, NULL, QualType::ReadVal(D));
+  TypedefType* T = new TypedefType(Type::Typedef, NULL, QualType::ReadVal(D));
   Types.push_back(T);
   
   D.ReadPtr(T->Decl); // May be backpatched.
@@ -321,20 +326,21 @@ Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
 }
 
 //===----------------------------------------------------------------------===//
-// TypeOfExpr
+// TypeOfExprType
 //===----------------------------------------------------------------------===//
 
-void TypeOfExpr::EmitImpl(llvm::Serializer& S) const {
+void TypeOfExprType::EmitImpl(llvm::Serializer& S) const {
   S.EmitOwnedPtr(TOExpr);
 }
 
-Type* TypeOfExpr::CreateImpl(ASTContext& Context, Deserializer& D) {
+Type* TypeOfExprType::CreateImpl(ASTContext& Context, Deserializer& D) {
   Expr* E = D.ReadOwnedPtr<Expr>(Context);
   
   std::vector<Type*>& Types = 
     const_cast<std::vector<Type*>&>(Context.getTypes());
 
-  TypeOfExpr* T = new TypeOfExpr(E, Context.getCanonicalType(E->getType()));
+  TypeOfExprType* T 
+    = new TypeOfExprType(E, Context.getCanonicalType(E->getType()));
   Types.push_back(T);
 
   return T;

@@ -174,13 +174,14 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   const clang::Type &Ty = *Context.getCanonicalType(T);
   
   switch (Ty.getTypeClass()) {
-  case Type::TypeName:        // typedef isn't canonical.
-  case Type::TemplateTypeParm:// template type parameters never generated
-  case Type::ClassTemplateSpecialization: // these types are always sugar
-  case Type::DependentSizedArray: // dependent types are never generated
-  case Type::TypeOfExp:       // typeof isn't canonical.
-  case Type::TypeOfTyp:       // typeof isn't canonical.
-    assert(0 && "Non-canonical type, shouldn't happen");
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    assert(false && "Non-canonical or dependent types aren't possible.");
+    break;
+
   case Type::Builtin: {
     switch (cast<BuiltinType>(Ty).getKind()) {
     default: assert(0 && "Unknown builtin type!");
@@ -265,10 +266,10 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
                                  VT.getNumElements());
   }
   case Type::FunctionNoProto:
-    return GetFunctionType(getFunctionInfo(cast<FunctionTypeNoProto>(&Ty)), 
+    return GetFunctionType(getFunctionInfo(cast<FunctionNoProtoType>(&Ty)), 
                            true);
   case Type::FunctionProto: {
-    const FunctionTypeProto *FTP = cast<FunctionTypeProto>(&Ty);
+    const FunctionProtoType *FTP = cast<FunctionProtoType>(&Ty);
     return GetFunctionType(getFunctionInfo(FTP), FTP->isVariadic());
   }
   
@@ -300,7 +301,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // Protocols don't influence the LLVM type.
     return ConvertTypeRecursive(Context.getObjCIdType());
 
-  case Type::Tagged: {
+  case Type::Record:
+  case Type::CXXRecord:
+  case Type::Enum: {
     const TagDecl *TD = cast<TagType>(Ty).getDecl();
     const llvm::Type *Res = ConvertTagDeclType(TD);
     

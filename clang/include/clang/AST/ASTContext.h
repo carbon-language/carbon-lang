@@ -66,8 +66,8 @@ class ASTContext {
   std::vector<VariableArrayType*> VariableArrayTypes;
   std::vector<DependentSizedArrayType*> DependentSizedArrayTypes;
   llvm::FoldingSet<VectorType> VectorTypes;
-  llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
-  llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
+  llvm::FoldingSet<FunctionNoProtoType> FunctionNoProtoTypes;
+  llvm::FoldingSet<FunctionProtoType> FunctionProtoTypes;
   llvm::FoldingSet<TemplateTypeParmType> TemplateTypeParmTypes;
   llvm::FoldingSet<ClassTemplateSpecializationType> 
     ClassTemplateSpecializationTypes;
@@ -251,9 +251,9 @@ public:
   /// type.
   QualType getExtVectorType(QualType VectorType, unsigned NumElts);
 
-  /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
+  /// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
   ///
-  QualType getFunctionTypeNoProto(QualType ResultTy);
+  QualType getFunctionNoProtoType(QualType ResultTy);
   
   /// getFunctionType - Return a normal function type with a typed argument
   /// list.  isVariadic indicates whether the argument list includes '...'.
@@ -293,7 +293,7 @@ public:
                                   
 
   /// getTypeOfType - GCC extension.
-  QualType getTypeOfExpr(Expr *e);
+  QualType getTypeOfExprType(Expr *e);
   QualType getTypeOfType(QualType t);
   
   /// getTagDeclType - Return the unique reference to the type for the

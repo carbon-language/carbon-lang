@@ -1077,7 +1077,7 @@ bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
       << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
       << SourceRange(D.getIdentifierLoc());
   } 
-  if (R->getAsFunctionTypeProto()->getTypeQuals() != 0) {
+  if (R->getAsFunctionProtoType()->getTypeQuals() != 0) {
     DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
     if (FTI.TypeQuals & QualType::Const)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
@@ -1095,7 +1095,7 @@ bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
   // return type, since constructors don't have return types. We
   // *always* have to do this, because GetTypeForDeclarator will
   // put in a result type of "int" when none was specified.
-  const FunctionTypeProto *Proto = R->getAsFunctionTypeProto();
+  const FunctionProtoType *Proto = R->getAsFunctionProtoType();
   R = Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
                               Proto->getNumArgs(),
                               Proto->isVariadic(),
@@ -1187,7 +1187,7 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
       << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
       << SourceRange(D.getIdentifierLoc());
   }
-  if (R->getAsFunctionTypeProto()->getTypeQuals() != 0) {
+  if (R->getAsFunctionProtoType()->getTypeQuals() != 0) {
     DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
     if (FTI.TypeQuals & QualType::Const)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
@@ -1201,7 +1201,7 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
   }
 
   // Make sure we don't have any parameters.
-  if (R->getAsFunctionTypeProto()->getNumArgs() > 0) {
+  if (R->getAsFunctionProtoType()->getNumArgs() > 0) {
     Diag(D.getIdentifierLoc(), diag::err_destructor_with_params);
 
     // Delete the parameters.
@@ -1209,7 +1209,7 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
   }
 
   // Make sure the destructor isn't variadic.  
-  if (R->getAsFunctionTypeProto()->isVariadic())
+  if (R->getAsFunctionProtoType()->isVariadic())
     Diag(D.getIdentifierLoc(), diag::err_destructor_variadic);
 
   // Rebuild the function type "R" without any type qualifiers or
@@ -1258,7 +1258,7 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   }
 
   // Make sure we don't have any parameters.
-  if (R->getAsFunctionTypeProto()->getNumArgs() > 0) {
+  if (R->getAsFunctionProtoType()->getNumArgs() > 0) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_with_params);
 
     // Delete the parameters.
@@ -1266,7 +1266,7 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   }
 
   // Make sure the conversion function isn't variadic.  
-  if (R->getAsFunctionTypeProto()->isVariadic())
+  if (R->getAsFunctionProtoType()->isVariadic())
     Diag(D.getIdentifierLoc(), diag::err_conv_function_variadic);
 
   // C++ [class.conv.fct]p4:
@@ -1285,7 +1285,7 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   // of the errors above fired) and with the conversion type as the
   // return type. 
   R = Context.getFunctionType(ConvType, 0, 0, false, 
-                              R->getAsFunctionTypeProto()->getTypeQuals());
+                              R->getAsFunctionProtoType()->getTypeQuals());
 
   // C++0x explicit conversion operators.
   if (D.getDeclSpec().isExplicitSpecified() && !getLangOptions().CPlusPlus0x)
@@ -2122,7 +2122,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
 
   // Overloaded operators other than operator() cannot be variadic.
   if (Op != OO_Call &&
-      FnDecl->getType()->getAsFunctionTypeProto()->isVariadic()) {
+      FnDecl->getType()->getAsFunctionProtoType()->isVariadic()) {
     return Diag(FnDecl->getLocation(), diag::err_operator_overload_variadic)
       << FnDecl->getDeclName();
   }

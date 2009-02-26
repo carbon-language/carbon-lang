@@ -419,7 +419,7 @@ public:
   QualType getThisType(ASTContext &C) const;
 
   unsigned getTypeQualifiers() const {
-    return getType()->getAsFunctionTypeProto()->getTypeQuals();
+    return getType()->getAsFunctionProtoType()->getTypeQuals();
   }
 
   // Implement isa/cast/dyncast/etc.

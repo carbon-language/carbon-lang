@@ -45,32 +45,11 @@ namespace clang {
   class Expr;
   class Stmt;
   class SourceLocation;
-  class PointerType;
-  class BlockPointerType;
-  class ReferenceType;
-  class MemberPointerType;
-  class VectorType;
-  class ArrayType;
-  class ConstantArrayType;
-  class VariableArrayType;
-  class IncompleteArrayType;
-  class DependentSizedArrayType;
-  class RecordType;
-  class EnumType;
-  class ComplexType;
-  class TagType;
-  class TypedefType;
-  class TemplateTypeParmType;
-  class FunctionType;
-  class FunctionTypeNoProto;
-  class FunctionTypeProto;
-  class ExtVectorType;
-  class BuiltinType;
-  class ObjCInterfaceType;
-  class ObjCQualifiedIdType;
-  class ObjCQualifiedInterfaceType;
   class StmtIteratorBase;
-  class ClassTemplateSpecializationType;
+
+  // Provide forward declarations for all of the *Type classes
+#define TYPE(Class, Base) class Class##Type;
+#include "clang/AST/TypeNodes.def"
 
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -244,10 +223,10 @@ namespace clang {
 ///
 /// There will be a Type object created for 'int'.  Since int is canonical, its
 /// canonicaltype pointer points to itself.  There is also a Type for 'foo' (a
-/// TypeNameType).  Its CanonicalType pointer points to the 'int' Type.  Next
+/// TypedefType).  Its CanonicalType pointer points to the 'int' Type.  Next
 /// there is a PointerType that represents 'int*', which, like 'int', is
 /// canonical.  Finally, there is a PointerType type for 'foo*' whose canonical
-/// type is 'int*', and there is a TypeNameType for 'bar', whose canonical type
+/// type is 'int*', and there is a TypedefType for 'bar', whose canonical type
 /// is also 'int*'.
 ///
 /// Non-canonical types are useful for emitting diagnostics, without losing
@@ -261,17 +240,10 @@ namespace clang {
 class Type {
 public:
   enum TypeClass {
-    Builtin, Complex, Pointer, Reference, MemberPointer,
-    ConstantArray, VariableArray, IncompleteArray, DependentSizedArray,
-    Vector, ExtVector,
-    FunctionNoProto, FunctionProto,
-    TypeName, Tagged, ExtQual,
-    TemplateTypeParm, ClassTemplateSpecialization,
-    ObjCInterface, ObjCQualifiedInterface,
-    ObjCQualifiedId, ObjCQualifiedClass,
-    TypeOfExp, TypeOfTyp, // GNU typeof extension.
-    BlockPointer,          // C extension
-    FixedWidthInt
+#define TYPE(Class, Base) Class,
+#define ABSTRACT_TYPE(Class, Base)
+#include "clang/AST/TypeNodes.def"
+    TagFirst = Record, TagLast = Enum
   };
   
 private:
@@ -401,8 +373,8 @@ public:
   // the best type we can.
   const BuiltinType *getAsBuiltinType() const;
   const FunctionType *getAsFunctionType() const;
-  const FunctionTypeNoProto *getAsFunctionTypeNoProto() const;
-  const FunctionTypeProto *getAsFunctionTypeProto() const;
+  const FunctionNoProtoType *getAsFunctionNoProtoType() const;
+  const FunctionProtoType *getAsFunctionProtoType() const;
   const PointerType *getAsPointerType() const;
   const BlockPointerType *getAsBlockPointerType() const;
   const ReferenceType *getAsReferenceType() const;
@@ -1096,16 +1068,16 @@ public:
 };
 
 /// FunctionType - C99 6.7.5.3 - Function Declarators.  This is the common base
-/// class of FunctionTypeNoProto and FunctionTypeProto.
+/// class of FunctionNoProtoType and FunctionProtoType.
 ///
 class FunctionType : public Type {
   /// SubClassData - This field is owned by the subclass, put here to pack
   /// tightly with the ivars in Type.
   bool SubClassData : 1;
 
-  /// TypeQuals - Used only by FunctionTypeProto, put here to pack with the
+  /// TypeQuals - Used only by FunctionProtoType, put here to pack with the
   /// other bitfields.
-  /// The qualifiers are part of FunctionTypeProto because...
+  /// The qualifiers are part of FunctionProtoType because...
   ///
   /// C++ 8.3.5p4: The return type, the parameter type list and the
   /// cv-qualifier-seq, [...], are part of the function type.
@@ -1133,10 +1105,10 @@ public:
   static bool classof(const FunctionType *) { return true; }
 };
 
-/// FunctionTypeNoProto - Represents a K&R-style 'int foo()' function, which has
+/// FunctionNoProtoType - Represents a K&R-style 'int foo()' function, which has
 /// no information available about its arguments.
-class FunctionTypeNoProto : public FunctionType, public llvm::FoldingSetNode {
-  FunctionTypeNoProto(QualType Result, QualType Canonical)
+class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
+  FunctionNoProtoType(QualType Result, QualType Canonical)
     : FunctionType(FunctionNoProto, Result, false, 0, Canonical, 
                    /*Dependent=*/false) {}
   friend class ASTContext;  // ASTContext creates these.
@@ -1155,7 +1127,7 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto;
   }
-  static bool classof(const FunctionTypeNoProto *) { return true; }
+  static bool classof(const FunctionNoProtoType *) { return true; }
   
 protected:  
   virtual void EmitImpl(llvm::Serializer& S) const;
@@ -1163,10 +1135,10 @@ protected:
   friend class Type;
 };
 
-/// FunctionTypeProto - Represents a prototype with argument type info, e.g.
+/// FunctionProtoType - Represents a prototype with argument type info, e.g.
 /// 'int foo(int)' or 'int foo(void)'.  'void' is represented as having no
 /// arguments, not as having a single void argument.
-class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
+class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
   /// hasAnyDependentType - Determine whether there are any dependent
   /// types within the arguments passed in.
   static bool hasAnyDependentType(const QualType *ArgArray, unsigned numArgs) {
@@ -1177,7 +1149,7 @@ class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
     return false;
   }
 
-  FunctionTypeProto(QualType Result, const QualType *ArgArray, unsigned numArgs,
+  FunctionProtoType(QualType Result, const QualType *ArgArray, unsigned numArgs,
                     bool isVariadic, unsigned typeQuals, QualType Canonical)
     : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
                    (Result->isDependentType() || 
@@ -1218,7 +1190,7 @@ public:
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionProto;
   }
-  static bool classof(const FunctionTypeProto *) { return true; }
+  static bool classof(const FunctionProtoType *) { return true; }
   
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
@@ -1254,7 +1226,7 @@ public:
     
   virtual void getAsStringInternal(std::string &InnerString) const;
 
-  static bool classof(const Type *T) { return T->getTypeClass() == TypeName; }
+  static bool classof(const Type *T) { return T->getTypeClass() == Typedef; }
   static bool classof(const TypedefType *) { return true; }
   
 protected:  
@@ -1263,18 +1235,18 @@ protected:
   friend class Type;
 };
 
-/// TypeOfExpr (GCC extension).
-class TypeOfExpr : public Type {
+/// TypeOfExprType (GCC extension).
+class TypeOfExprType : public Type {
   Expr *TOExpr;
-  TypeOfExpr(Expr *E, QualType can);
+  TypeOfExprType(Expr *E, QualType can);
   friend class ASTContext;  // ASTContext creates these.
 public:
   Expr *getUnderlyingExpr() const { return TOExpr; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
 
-  static bool classof(const Type *T) { return T->getTypeClass() == TypeOfExp; }
-  static bool classof(const TypeOfExpr *) { return true; }
+  static bool classof(const Type *T) { return T->getTypeClass() == TypeOfExpr; }
+  static bool classof(const TypeOfExprType *) { return true; }
 
 protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
@@ -1286,7 +1258,7 @@ protected:
 class TypeOfType : public Type {
   QualType TOType;
   TypeOfType(QualType T, QualType can) 
-    : Type(TypeOfTyp, can, T->isDependentType()), TOType(T) {
+    : Type(TypeOf, can, T->isDependentType()), TOType(T) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -1295,7 +1267,7 @@ public:
   
   virtual void getAsStringInternal(std::string &InnerString) const;
 
-  static bool classof(const Type *T) { return T->getTypeClass() == TypeOfTyp; }
+  static bool classof(const Type *T) { return T->getTypeClass() == TypeOf; }
   static bool classof(const TypeOfType *) { return true; }
 
 protected:
@@ -1318,8 +1290,8 @@ protected:
   // FIXME: We'll need the user to pass in information about whether
   // this type is dependent or not, because we don't have enough
   // information to compute it here.
-  TagType(TagDecl *D, QualType can) 
-    : Type(Tagged, can, /*Dependent=*/false), decl(D, 0) {}
+  TagType(TypeClass TC, TagDecl *D, QualType can) 
+    : Type(TC, can, /*Dependent=*/false), decl(D, 0) {}
 
 public:   
   TagDecl *getDecl() const { return decl.getPointer(); }
@@ -1331,9 +1303,14 @@ public:
 
   virtual void getAsStringInternal(std::string &InnerString) const;
   
-  static bool classof(const Type *T) { return T->getTypeClass() == Tagged; }
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() >= TagFirst && T->getTypeClass() <= TagLast;
+  }
   static bool classof(const TagType *) { return true; }
-  
+  static bool classof(const RecordType *) { return true; }
+  static bool classof(const CXXRecordType *) { return true; } 
+  static bool classof(const EnumType *) { return true; }
+ 
 protected:  
   virtual void EmitImpl(llvm::Serializer& S) const;
   static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
@@ -1345,7 +1322,9 @@ protected:
 class RecordType : public TagType {
 protected:
   explicit RecordType(RecordDecl *D)
-    : TagType(reinterpret_cast<TagDecl*>(D), QualType()) { }
+    : TagType(Record, reinterpret_cast<TagDecl*>(D), QualType()) { }
+  explicit RecordType(TypeClass TC, RecordDecl *D)
+    : TagType(TC, reinterpret_cast<TagDecl*>(D), QualType()) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
     
@@ -1373,7 +1352,7 @@ public:
 /// isa/cast/dyncast to detect TagType objects of C++ structs/unions/classes.
 class CXXRecordType : public RecordType {
   explicit CXXRecordType(CXXRecordDecl *D)
-    : RecordType(reinterpret_cast<RecordDecl*>(D)) { }
+    : RecordType(CXXRecord, reinterpret_cast<RecordDecl*>(D)) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
 
@@ -1392,7 +1371,7 @@ public:
 /// to detect TagType objects of enums.
 class EnumType : public TagType {
   explicit EnumType(EnumDecl *D)
-    : TagType(reinterpret_cast<TagDecl*>(D), QualType()) { }
+    : TagType(Enum, reinterpret_cast<TagDecl*>(D), QualType()) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
     

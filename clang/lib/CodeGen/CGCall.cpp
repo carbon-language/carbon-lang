@@ -37,13 +37,13 @@ using namespace CodeGen;
 // FIXME: Use iterator and sidestep silly type array creation.
 
 const 
-CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionTypeNoProto *FTNP) {
+CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionNoProtoType *FTNP) {
   return getFunctionInfo(FTNP->getResultType(), 
                          llvm::SmallVector<QualType, 16>());
 }
 
 const 
-CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionTypeProto *FTP) {
+CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionProtoType *FTP) {
   llvm::SmallVector<QualType, 16> ArgTys;
   // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
@@ -53,9 +53,9 @@ CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionTypeProto *FTP) {
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
   const FunctionType *FTy = FD->getType()->getAsFunctionType();
-  if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FTy))
+  if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FTy))
     return getFunctionInfo(FTP);
-  return getFunctionInfo(cast<FunctionTypeNoProto>(FTy));
+  return getFunctionInfo(cast<FunctionNoProtoType>(FTy));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {

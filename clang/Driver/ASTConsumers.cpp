@@ -227,7 +227,7 @@ void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
   std::string Proto = FD->getNameAsString();
   const FunctionType *AFT = FD->getType()->getAsFunctionType();
 
-  if (const FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(AFT)) {
+  if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(AFT)) {
     Proto += "(";
     for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
       if (i) Proto += ", ";
@@ -244,7 +244,7 @@ void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
     }
     Proto += ")";
   } else {
-    assert(isa<FunctionTypeNoProto>(AFT));
+    assert(isa<FunctionNoProtoType>(AFT));
     Proto += "()";
   }
 

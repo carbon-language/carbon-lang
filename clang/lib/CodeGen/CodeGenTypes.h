@@ -33,7 +33,7 @@ namespace clang {
   class ABIInfo;
   class ASTContext;
   class FieldDecl;
-  class FunctionTypeProto;
+  class FunctionProtoType;
   class ObjCInterfaceDecl;
   class ObjCIvarDecl;
   class PointerType;
@@ -166,8 +166,8 @@ public:
                                         const llvm::SmallVector<QualType,16> 
                                         &ArgTys);
 
-  const CGFunctionInfo &getFunctionInfo(const FunctionTypeNoProto *FTNP);
-  const CGFunctionInfo &getFunctionInfo(const FunctionTypeProto *FTP);
+  const CGFunctionInfo &getFunctionInfo(const FunctionNoProtoType *FTNP);
+  const CGFunctionInfo &getFunctionInfo(const FunctionProtoType *FTP);
   const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
   const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);
   const CGFunctionInfo &getFunctionInfo(QualType ResTy, 

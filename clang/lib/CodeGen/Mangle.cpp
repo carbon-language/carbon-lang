@@ -454,10 +454,10 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
   if (MangleReturnType)
     mangleType(T->getResultType());
 
-  const FunctionTypeProto *Proto = dyn_cast<FunctionTypeProto>(T);
+  const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(T);
   assert(Proto && "Can't mangle K&R function prototypes");
 
-  for (FunctionTypeProto::arg_type_iterator Arg = Proto->arg_type_begin(),
+  for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
                                          ArgEnd = Proto->arg_type_end(); 
        Arg != ArgEnd; ++Arg)
     mangleType(*Arg);

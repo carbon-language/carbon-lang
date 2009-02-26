@@ -887,8 +887,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       // type.
       QualType T = Func->getType();
       QualType NoProtoType = T;
-      if (const FunctionTypeProto *Proto = T->getAsFunctionTypeProto())
-        NoProtoType = Context.getFunctionTypeNoProto(Proto->getResultType());
+      if (const FunctionProtoType *Proto = T->getAsFunctionProtoType())
+        NoProtoType = Context.getFunctionNoProtoType(Proto->getResultType());
       return Owned(BuildDeclRefExpr(VD, NoProtoType, Loc, false, false, SS));
     }
   }
@@ -1949,7 +1949,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 bool
 Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                               FunctionDecl *FDecl,
-                              const FunctionTypeProto *Proto,
+                              const FunctionProtoType *Proto,
                               Expr **Args, unsigned NumArgs,
                               SourceLocation RParenLoc) {
   // C99 6.5.2.2p7 - the arguments are implicitly converted, as if by
@@ -2164,12 +2164,12 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // We know the result type of the call, set it.
   TheCall->setType(FuncT->getResultType().getNonReferenceType());
 
-  if (const FunctionTypeProto *Proto = dyn_cast<FunctionTypeProto>(FuncT)) {
+  if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FuncT)) {
     if (ConvertArgumentsForCall(&*TheCall, Fn, FDecl, Proto, Args, NumArgs,
                                 RParenLoc))
       return ExprError();
   } else {
-    assert(isa<FunctionTypeNoProto>(FuncT) && "Unknown FunctionType!");
+    assert(isa<FunctionNoProtoType>(FuncT) && "Unknown FunctionType!");
 
     // Promote the arguments (C99 6.5.2.2p6).
     for (unsigned i = 0; i != NumArgs; i++) {
@@ -4501,7 +4501,7 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
 
   QualType BlockTy;
   if (!BSI->hasPrototype)
-    BlockTy = Context.getFunctionTypeNoProto(RetTy);
+    BlockTy = Context.getFunctionNoProtoType(RetTy);
   else
     BlockTy = Context.getFunctionType(RetTy, &ArgTypes[0], ArgTypes.size(),
                                       BSI->isVariadic, 0);

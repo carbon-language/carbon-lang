@@ -144,8 +144,8 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   if (const FormatAttr *Format = FDecl->getAttr<FormatAttr>()) {
     if (Format->getType() == "printf") {
       bool HasVAListArg = false;
-      if (const FunctionTypeProto *Proto 
-          = FDecl->getType()->getAsFunctionTypeProto())
+      if (const FunctionProtoType *Proto 
+          = FDecl->getType()->getAsFunctionProtoType())
         HasVAListArg = !Proto->isVariadic();
       CheckPrintfArguments(TheCall, HasVAListArg, Format->getFormatIdx() - 1,
                            Format->getFirstArg() - 1);
@@ -210,8 +210,8 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   // Determine whether the current function is variadic or not.
   bool isVariadic;
   if (getCurFunctionDecl()) {
-    if (FunctionTypeProto* FTP =
-            dyn_cast<FunctionTypeProto>(getCurFunctionDecl()->getType()))
+    if (FunctionProtoType* FTP =
+            dyn_cast<FunctionProtoType>(getCurFunctionDecl()->getType()))
       isVariadic = FTP->isVariadic();
     else
       isVariadic = false;

@@ -311,7 +311,7 @@ namespace {
     void SynthesizeMetaDataIntoBuffer(std::string &Result);
     
     // Block rewriting.
-    void RewriteBlocksInFunctionTypeProto(QualType funcType, NamedDecl *D);  
+    void RewriteBlocksInFunctionProtoType(QualType funcType, NamedDecl *D);  
     void CheckFunctionPointerDecl(QualType dType, NamedDecl *ND);
     
     void InsertBlockLiteralsWithinFunction(FunctionDecl *FD);
@@ -371,10 +371,10 @@ namespace {
   };
 }
 
-void RewriteObjC::RewriteBlocksInFunctionTypeProto(QualType funcType, 
+void RewriteObjC::RewriteBlocksInFunctionProtoType(QualType funcType, 
                                                    NamedDecl *D) {    
-  if (FunctionTypeProto *fproto = dyn_cast<FunctionTypeProto>(funcType)) {
-    for (FunctionTypeProto::arg_type_iterator I = fproto->arg_type_begin(), 
+  if (FunctionProtoType *fproto = dyn_cast<FunctionProtoType>(funcType)) {
+    for (FunctionProtoType::arg_type_iterator I = fproto->arg_type_begin(), 
          E = fproto->arg_type_end(); I && (I != E); ++I)
       if (isTopLevelBlockPointerType(*I)) {
         // All the args are checked/rewritten. Don't call twice!
@@ -387,7 +387,7 @@ void RewriteObjC::RewriteBlocksInFunctionTypeProto(QualType funcType,
 void RewriteObjC::CheckFunctionPointerDecl(QualType funcType, NamedDecl *ND) {
   const PointerType *PT = funcType->getAsPointerType();
   if (PT && PointerTypeTakesAnyBlockArguments(funcType))
-    RewriteBlocksInFunctionTypeProto(PT->getPointeeType(), ND);
+    RewriteBlocksInFunctionProtoType(PT->getPointeeType(), ND);
 }
 
 static bool IsHeaderFile(const std::string &Filename) {
@@ -956,7 +956,7 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     ResultStr += ")"; // close the precedence "scope" for "*".
     
     // Now, emit the argument types (if any).
-    if (const FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(FPRetType)) {
+    if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FPRetType)) {
       ResultStr += "(";
       for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
         if (i) ResultStr += ", ";
@@ -1855,7 +1855,7 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Expr *E) {
 void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
   SourceLocation Loc;
   QualType Type;
-  const FunctionTypeProto *proto = 0;
+  const FunctionProtoType *proto = 0;
   if (VarDecl *VD = dyn_cast<VarDecl>(Dcl)) {
     Loc = VD->getLocation();
     Type = VD->getType();
@@ -1866,7 +1866,7 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
     // information (id<p>, C<p>*). The protocol references need to be rewritten!
     const FunctionType *funcType = FD->getType()->getAsFunctionType();
     assert(funcType && "missing function type");
-    proto = dyn_cast<FunctionTypeProto>(funcType);
+    proto = dyn_cast<FunctionProtoType>(funcType);
     if (!proto)
       return;
     Type = proto->getResultType();
@@ -3482,14 +3482,14 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
 
   BlockDecl *BD = CE->getBlockDecl();
   
-  if (isa<FunctionTypeNoProto>(AFT)) {
+  if (isa<FunctionNoProtoType>(AFT)) {
     // No user-supplied arguments. Still need to pass in a pointer to the 
     // block (to reference imported block decl refs).
     S += "(" + StructRef + " *__cself)";
   } else if (BD->param_empty()) {
     S += "(" + StructRef + " *__cself)";
   } else {
-    const FunctionTypeProto *FT = cast<FunctionTypeProto>(AFT);
+    const FunctionProtoType *FT = cast<FunctionProtoType>(AFT);
     assert(FT && "SynthesizeBlockFunc: No function proto");
     S += '(';
     // first add the implicit argument.
@@ -3806,7 +3806,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
   assert(CPT && "RewriteBlockClass: Bad type");
   const FunctionType *FT = CPT->getPointeeType()->getAsFunctionType();
   assert(FT && "RewriteBlockClass: Bad type");
-  const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FT);
+  const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FT);
   // FTP will be null for closures that don't take arguments.
   
   RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
@@ -3820,7 +3820,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
   // Push the block argument type.
   ArgTypes.push_back(PtrBlock);
   if (FTP) {
-    for (FunctionTypeProto::arg_type_iterator I = FTP->arg_type_begin(), 
+    for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(), 
          E = FTP->arg_type_end(); I && (I != E); ++I) {
       QualType t = *I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
@@ -3951,17 +3951,17 @@ void RewriteObjC::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
 }
 
 bool RewriteObjC::PointerTypeTakesAnyBlockArguments(QualType QT) {
-  const FunctionTypeProto *FTP;
+  const FunctionProtoType *FTP;
   const PointerType *PT = QT->getAsPointerType();
   if (PT) {
-    FTP = PT->getPointeeType()->getAsFunctionTypeProto();
+    FTP = PT->getPointeeType()->getAsFunctionProtoType();
   } else {
     const BlockPointerType *BPT = QT->getAsBlockPointerType();
     assert(BPT && "BlockPointerTypeTakeAnyBlockArguments(): not a block pointer type");
-    FTP = BPT->getPointeeType()->getAsFunctionTypeProto();
+    FTP = BPT->getPointeeType()->getAsFunctionProtoType();
   }
   if (FTP) {
-    for (FunctionTypeProto::arg_type_iterator I = FTP->arg_type_begin(), 
+    for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(), 
          E = FTP->arg_type_end(); I != E; ++I)
       if (isTopLevelBlockPointerType(*I))
         return true;
@@ -4061,7 +4061,7 @@ void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {
 
 FunctionDecl *RewriteObjC::SynthBlockInitFunctionDecl(const char *name) {
   IdentifierInfo *ID = &Context->Idents.get(name);
-  QualType FType = Context->getFunctionTypeNoProto(Context->VoidPtrTy);
+  QualType FType = Context->getFunctionNoProtoType(Context->VoidPtrTy);
   return FunctionDecl::Create(*Context, TUDecl,SourceLocation(), 
                               ID, FType, FunctionDecl::Extern, false,
                               false);
@@ -4424,7 +4424,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     // Since function prototypes don't have ParmDecl's, we check the function
     // prototype. This enables us to rewrite function declarations and
     // definitions using the same code.
-    RewriteBlocksInFunctionTypeProto(FD->getType(), FD);
+    RewriteBlocksInFunctionProtoType(FD->getType(), FD);
 
     if (Stmt *Body = FD->getBody()) {
       CurFunctionDef = FD;

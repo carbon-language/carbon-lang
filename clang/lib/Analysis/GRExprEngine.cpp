@@ -1127,10 +1127,10 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
                              NodeSet& Dst)
 {
   // Determine the type of function we're calling (if available).
-  const FunctionTypeProto *Proto = NULL;
+  const FunctionProtoType *Proto = NULL;
   QualType FnType = CE->getCallee()->IgnoreParens()->getType();
   if (const PointerType *FnTypePtr = FnType->getAsPointerType())
-    Proto = FnTypePtr->getPointeeType()->getAsFunctionTypeProto();
+    Proto = FnTypePtr->getPointeeType()->getAsFunctionProtoType();
 
   VisitCallRec(CE, Pred, AI, AE, Dst, Proto, /*ParamIdx=*/0);
 }
@@ -1138,7 +1138,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
                                 CallExpr::arg_iterator AI,
                                 CallExpr::arg_iterator AE,
-                                NodeSet& Dst, const FunctionTypeProto *Proto,
+                                NodeSet& Dst, const FunctionProtoType *Proto,
                                 unsigned ParamIdx) {
   
   // Process the arguments.

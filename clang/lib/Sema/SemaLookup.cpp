@@ -1269,12 +1269,12 @@ addAssociatedClassesAndNamespaces(QualType T,
                                       Context,
                                       AssociatedNamespaces, AssociatedClasses);
 
-    const FunctionTypeProto *Proto = dyn_cast<FunctionTypeProto>(FunctionType);
+    const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FunctionType);
     if (!Proto)
       return;
 
     // Argument types
-    for (FunctionTypeProto::arg_type_iterator Arg = Proto->arg_type_begin(),
+    for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
                                            ArgEnd = Proto->arg_type_end(); 
          Arg != ArgEnd; ++Arg)
       addAssociatedClassesAndNamespaces(*Arg, Context,

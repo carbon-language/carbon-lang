@@ -179,7 +179,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   
   // Set up remainder of arguments if there is a prototype.
   // FIXME: IF NOT, HOW IS THIS REPRESENTED?  llvm-gcc doesn't represent '...'!
-  if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(Ty)) {
+  if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(Ty)) {
     for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
       EltTys.push_back(getOrCreateType(FTP->getArgType(i), Unit));
   } else {
@@ -481,6 +481,13 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 
   // Work out details of type.
   switch (Ty->getTypeClass()) {
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_TYPE(Class, Base)
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    assert(false && "Dependent types cannot show up in debug information");
+    
   case Type::Complex:
   case Type::Reference:
   case Type::Vector:
@@ -489,13 +496,16 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::ObjCInterface:
   case Type::ObjCQualifiedInterface:
   case Type::ObjCQualifiedId:
-  default:
     return llvm::DIType();
 
   case Type::Builtin: Slot = CreateType(cast<BuiltinType>(Ty), Unit); break;
   case Type::Pointer: Slot = CreateType(cast<PointerType>(Ty), Unit); break;
-  case Type::TypeName: Slot = CreateType(cast<TypedefType>(Ty), Unit); break;
-  case Type::Tagged: Slot = CreateType(cast<TagType>(Ty), Unit); break;
+  case Type::Typedef: Slot = CreateType(cast<TypedefType>(Ty), Unit); break;
+  case Type::Record:
+  case Type::CXXRecord:
+  case Type::Enum:
+    Slot = CreateType(cast<TagType>(Ty), Unit); 
+    break;
   case Type::FunctionProto:
   case Type::FunctionNoProto:
     return Slot = CreateType(cast<FunctionType>(Ty), Unit);
@@ -504,10 +514,10 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::VariableArray:
   case Type::IncompleteArray:
     return Slot = CreateType(cast<ArrayType>(Ty), Unit);
-  case Type::TypeOfExp:
-    return Slot = getOrCreateType(cast<TypeOfExpr>(Ty)->getUnderlyingExpr()
+  case Type::TypeOfExpr:
+    return Slot = getOrCreateType(cast<TypeOfExprType>(Ty)->getUnderlyingExpr()
                                   ->getType(), Unit);
-  case Type::TypeOfTyp:
+  case Type::TypeOf:
     return Slot = getOrCreateType(cast<TypeOfType>(Ty)->getUnderlyingType(),
                                   Unit);
   }

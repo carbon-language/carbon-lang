@@ -1,0 +1,83 @@
+//===-- TypeNodes.def - Metadata about Type AST nodes -----------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines the AST type info database. Each type node is
+//  enumerated by providing its name (e.g., "Builtin" or "Enum") and
+//  base class (e.g., "Type" or "TagType"). Depending on where in the
+//  abstract syntax tree the type will show up, the enumeration uses
+//  one of four different macros:
+//
+//    TYPE(Class, Base) - A type that can show up anywhere in the AST,
+//    and might be dependent, canonical, or non-canonical. All clients
+//    will need to understand these types.
+//
+//    ABSTRACT_TYPE(Class, Base) - An abstract class that shows up in
+//    the type hierarchy but has no concrete instances.
+//
+//    NON_CANONICAL_TYPE(Class, Base) - A type that can show up
+//    anywhere in the AST but will never be a part of a canonical
+//    type. Clients that only need to deal with canonical types
+//    (ignoring, e.g., typedefs and other type alises used for
+//    pretty-printing) can ignore these types.
+//
+//    DEPENDENT_TYPE(Class, Base) - A type that will only show up
+//    within a C++ template that has not been instantiated, e.g., a
+//    type that is always dependent. Clients that do not need to deal
+//    with uninstantiated C++ templates can ignore these types.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef ABSTRACT_TYPE
+#  define ABSTRACT_TYPE(Class, Base) TYPE(Class, Base)
+#endif
+
+#ifndef NON_CANONICAL_TYPE
+#  define NON_CANONICAL_TYPE(Class, Base) TYPE(Class, Base)
+#endif
+
+#ifndef DEPENDENT_TYPE
+#  define DEPENDENT_TYPE(Class, Base) TYPE(Class, Base)
+#endif
+
+TYPE(ExtQual, Type)
+TYPE(Builtin, Type)
+TYPE(FixedWidthInt, Type)
+TYPE(Complex, Type)
+TYPE(Pointer, Type)
+TYPE(BlockPointer, Type)
+TYPE(Reference, Type)
+TYPE(MemberPointer, Type)
+ABSTRACT_TYPE(Array, Type)
+TYPE(ConstantArray, ArrayType)
+TYPE(IncompleteArray, ArrayType)
+TYPE(VariableArray, ArrayType)
+DEPENDENT_TYPE(DependentSizedArray, ArrayType)
+TYPE(Vector, Type)
+TYPE(ExtVector, VectorType)
+ABSTRACT_TYPE(Function, Type)
+TYPE(FunctionProto, Function)
+TYPE(FunctionNoProto, Function)
+NON_CANONICAL_TYPE(Typedef, Type)
+NON_CANONICAL_TYPE(TypeOfExpr, Type)
+NON_CANONICAL_TYPE(TypeOf, Type)
+ABSTRACT_TYPE(Tag, Type)
+TYPE(Record, TagType)
+TYPE(CXXRecord, RecordType) // FIXME: kill this one
+TYPE(Enum, TagType)
+DEPENDENT_TYPE(TemplateTypeParm, Type)
+NON_CANONICAL_TYPE(ClassTemplateSpecialization, Type)
+TYPE(ObjCInterface, Type)
+TYPE(ObjCQualifiedInterface, ObjCInterfaceType)
+TYPE(ObjCQualifiedId, Type)
+TYPE(ObjCQualifiedClass, Type)
+
+#undef DEPENDENT_TYPE
+#undef NON_CANONICAL_TYPE
+#undef ABSTRACT_TYPE
+#undef TYPE

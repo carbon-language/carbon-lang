@@ -92,8 +92,8 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
     if (Method->isStatic())
       continue;
     // TODO: Skip templates? Or is this implicitly done due to parameter types?
-    const FunctionTypeProto *FnType =
-      Method->getType()->getAsFunctionTypeProto();
+    const FunctionProtoType *FnType =
+      Method->getType()->getAsFunctionProtoType();
     assert(FnType && "Overloaded operator has no prototype.");
     // Don't assert on this; an invalid decl might have been left in the AST.
     if (FnType->getNumArgs() != 1 || FnType->isVariadic())
@@ -146,7 +146,7 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   // We're interested specifically in copy assignment operators.
   // Unlike addedConstructor, this method is not called for implicit
   // declarations.
-  const FunctionTypeProto *FnType = OpDecl->getType()->getAsFunctionTypeProto();
+  const FunctionProtoType *FnType = OpDecl->getType()->getAsFunctionProtoType();
   assert(FnType && "Overloaded operator has no proto function type.");
   assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
   QualType ArgType = FnType->getArgType(0);
@@ -290,7 +290,7 @@ bool CXXConstructorDecl::isConvertingConstructor() const {
     return false;
 
   return (getNumParams() == 0 && 
-          getType()->getAsFunctionTypeProto()->isVariadic()) ||
+          getType()->getAsFunctionProtoType()->isVariadic()) ||
          (getNumParams() == 1) ||
          (getNumParams() > 1 && getParamDecl(1)->getDefaultArg() != 0);
 }

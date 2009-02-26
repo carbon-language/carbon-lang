@@ -78,7 +78,7 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
 QualType Type::getDesugaredType() const {
   if (const TypedefType *TDT = dyn_cast<TypedefType>(this))
     return TDT->LookThroughTypedefs();
-  if (const TypeOfExpr *TOE = dyn_cast<TypeOfExpr>(this))
+  if (const TypeOfExprType *TOE = dyn_cast<TypeOfExprType>(this))
     return TOE->getUnderlyingExpr()->getType();
   if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
     return TOT->getUnderlyingType();
@@ -118,9 +118,9 @@ bool Type::isDerivedType() const {
   case FunctionProto:
   case FunctionNoProto:
   case Reference:
+  case Record:
+  case CXXRecord:
     return true;
-  case Tagged:
-    return !cast<TagType>(CanonicalType)->getDecl()->isEnum();
   default:
     return false;
   }
@@ -216,12 +216,12 @@ const FunctionType *Type::getAsFunctionType() const {
   return getDesugaredType()->getAsFunctionType();
 }
 
-const FunctionTypeNoProto *Type::getAsFunctionTypeNoProto() const {
-  return dyn_cast_or_null<FunctionTypeNoProto>(getAsFunctionType());
+const FunctionNoProtoType *Type::getAsFunctionNoProtoType() const {
+  return dyn_cast_or_null<FunctionNoProtoType>(getAsFunctionType());
 }
 
-const FunctionTypeProto *Type::getAsFunctionTypeProto() const {
-  return dyn_cast_or_null<FunctionTypeProto>(getAsFunctionType());
+const FunctionProtoType *Type::getAsFunctionProtoType() const {
+  return dyn_cast_or_null<FunctionProtoType>(getAsFunctionType());
 }
 
 
@@ -742,7 +742,9 @@ bool Type::isIncompleteType() const {
     // Void is the only incomplete builtin type.  Per C99 6.2.5p19, it can never
     // be completed.
     return isVoidType();
-  case Tagged:
+  case Record:
+  case CXXRecord:
+  case Enum:
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
     return !cast<TagType>(CanonicalType)->getDecl()->isDefinition();
@@ -778,14 +780,15 @@ bool Type::isPODType() const {
   case ObjCQualifiedId:
     return true;
 
-  case Tagged:
-    if (isEnumeralType())
-      return true;
-    if (CXXRecordDecl *RDecl = dyn_cast<CXXRecordDecl>(
-          cast<TagType>(CanonicalType)->getDecl()))
-      return RDecl->isPOD();
+  case Enum:
+    return true;
+
+  case Record:
     // C struct/union is POD.
     return true;
+
+  case CXXRecord:
+    return cast<CXXRecordType>(CanonicalType)->getDecl()->isPOD();
   }
 }
 
@@ -832,7 +835,7 @@ const char *BuiltinType::getName() const {
   }
 }
 
-void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
+void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 arg_type_iterator ArgTys,
                                 unsigned NumArgs, bool isVariadic,
                                 unsigned TypeQuals) {
@@ -843,7 +846,7 @@ void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
   ID.AddInteger(TypeQuals);
 }
 
-void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID) {
+void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic(),
           getTypeQuals());
 }
@@ -903,8 +906,8 @@ QualType TypedefType::LookThroughTypedefs() const {
   }
 }
 
-TypeOfExpr::TypeOfExpr(Expr *E, QualType can)
-  : Type(TypeOfExp, can, E->isTypeDependent()), TOExpr(E) {
+TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
+  : Type(TypeOfExpr, can, E->isTypeDependent()), TOExpr(E) {
   assert(!isa<TypedefType>(can) && "Invalid canonical type");
 }
 
@@ -1197,7 +1200,7 @@ void ExtVectorType::getAsStringInternal(std::string &S) const {
   ElementType.getAsStringInternal(S);
 }
 
-void TypeOfExpr::getAsStringInternal(std::string &InnerString) const {
+void TypeOfExprType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typeof(e) X'.
     InnerString = ' ' + InnerString;
   std::string Str;
@@ -1214,7 +1217,7 @@ void TypeOfType::getAsStringInternal(std::string &InnerString) const {
   InnerString = "typeof(" + Tmp + ")" + InnerString;
 }
 
-void FunctionTypeNoProto::getAsStringInternal(std::string &S) const {
+void FunctionNoProtoType::getAsStringInternal(std::string &S) const {
   // If needed for precedence reasons, wrap the inner part in grouping parens.
   if (!S.empty())
     S = "(" + S + ")";
@@ -1223,7 +1226,7 @@ void FunctionTypeNoProto::getAsStringInternal(std::string &S) const {
   getResultType().getAsStringInternal(S);
 }
 
-void FunctionTypeProto::getAsStringInternal(std::string &S) const {
+void FunctionProtoType::getAsStringInternal(std::string &S) const {
   // If needed for precedence reasons, wrap the inner part in grouping parens.
   if (!S.empty())
     S = "(" + S + ")";
