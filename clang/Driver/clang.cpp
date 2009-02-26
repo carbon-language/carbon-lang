@@ -86,6 +86,7 @@ enum ProgActions {
   EmitAssembly,                 // Emit a .s file.
   EmitLLVM,                     // Emit a .ll file.
   EmitBC,                       // Emit a .bc file.
+  EmitLLVMOnly,                 // Generate LLVM IR, but do not 
   SerializeAST,                 // Emit a .ast file.
   EmitHTML,                     // Translate input source into HTML.
   ASTPrint,                     // Parse ASTs and print them.
@@ -143,6 +144,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValN(EmitBC, "emit-llvm-bc",
                         "Build ASTs then convert to LLVM, emit .bc file"),
+             clEnumValN(EmitLLVMOnly, "emit-llvm-only",
+                        "Build ASTs and convert to LLVM, discarding output"),
              clEnumValN(SerializeAST, "serialize",
                         "Build ASTs and emit .ast file"),
              clEnumValN(RewriteTest, "rewrite-test",
@@ -1297,12 +1300,15 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
     
   case EmitAssembly:
   case EmitLLVM:
-  case EmitBC: {
+  case EmitBC: 
+  case EmitLLVMOnly: {
     BackendAction Act;
     if (ProgAction == EmitAssembly)
       Act = Backend_EmitAssembly;
     else if (ProgAction == EmitLLVM)
       Act = Backend_EmitLL;
+    else if (ProgAction == EmitLLVMOnly)
+      Act = Backend_EmitNothing;
     else
       Act = Backend_EmitBC;
     

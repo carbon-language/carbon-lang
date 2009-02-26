@@ -181,6 +181,9 @@ FunctionPassManager *BackendConsumer::getPerFunctionPasses() const {
 }
 
 bool BackendConsumer::AddEmitPasses(std::string &Error) {
+  if (Action == Backend_EmitNothing)
+    return true;
+
   if (OutputFile == "-" || (InputFile == "-" && OutputFile.empty())) {
     AsmOutStream = new raw_stdout_ostream();
     sys::Program::ChangeStdoutToBinary();

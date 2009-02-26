@@ -48,7 +48,8 @@ ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
 enum BackendAction {
   Backend_EmitAssembly,
   Backend_EmitBC,
-  Backend_EmitLL
+  Backend_EmitLL,
+  Backend_EmitNothing
 };
 ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    Diagnostic &Diags,
