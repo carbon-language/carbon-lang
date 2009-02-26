@@ -19,8 +19,8 @@ DIRS := llvm-config
 PARALLEL_DIRS := opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
-		 lli gccas gccld llvm-extract llvm-db \
-		 bugpoint llvm-bcanalyzer llvm-stub llvmc
+                 lli gccas gccld llvm-extract llvm-db \
+                 bugpoint llvm-bcanalyzer llvm-stub llvmc
 
 include $(LEVEL)/Makefile.config
 
