@@ -516,18 +516,11 @@ void AvailableSpills::AddAvailableRegsToLiveIn(MachineBasicBlock &MBB,
          I = PhysRegsAvailable.begin(), E = PhysRegsAvailable.end();
        I != E; ++I) {
     unsigned Reg = I->first;
-    bool MakeAvail = true;
     const TargetRegisterClass* RC = TRI->getPhysicalRegisterRegClass(Reg);
     // FIXME: A temporary workaround. We can't reuse available value if it's
     // not safe to move the def of the virtual register's class. e.g.
     // X86::RFP* register classes. Do not add it as a live-in.
     if (!TII->isSafeToMoveRegClassDefs(RC))
-      MakeAvail = false;
-    if (MBB.isLiveIn(Reg))
-      // It's already livein somehow. Be conservative, do not make it available.
-      MakeAvail = false;
-
-    if (!MakeAvail) 
       // This is no longer available.
       NotAvailable.insert(Reg);
     else {
