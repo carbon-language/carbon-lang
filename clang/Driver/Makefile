@@ -14,6 +14,10 @@ ifeq ($(OS),Darwin)
 LD.Flags += -Wl,-exported_symbol -Wl,_main
 endif
 
+ifeq ($(OS),Linux)
+LD.Flags += -Wl,--version-script=Driver.map
+endif
+
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) bitreader bitwriter codegen ipo selectiondag
 USEDLIBS = clangCodeGen.a clangAnalysis.a clangRewrite.a clangSema.a	\
            clangDriver.a clangAST.a clangParse.a clangLex.a		\
