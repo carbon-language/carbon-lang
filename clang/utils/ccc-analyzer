@@ -184,8 +184,10 @@ sub Analyze {
                         "Crash", $ofile);
   }
   elsif ($Result) {
-    ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
-                        $ParserRejects, $ofile);
+    if (!($file =~/conftest/)) {
+      ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
+                          $ParserRejects, $ofile);
+    }
   }
   else {
     # Check if there were any unhandled attributes.
