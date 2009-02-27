@@ -1888,8 +1888,12 @@ private:
     DIArray Args = SPTy.getTypeArray();
     
     // Add Return Type.
-    if (!IsConstructor) 
-      AddType(DW_Unit, SPDie, DIType(Args.getElement(0).getGV()));
+    if (!IsConstructor) {
+      if (Args.isNull()) 
+        AddType(DW_Unit, SPDie, SPTy);
+      else
+        AddType(DW_Unit, SPDie, DIType(Args.getElement(0).getGV()));
+    }
 
     if (!SP.isDefinition()) {
       AddUInt(SPDie, DW_AT_declaration, DW_FORM_flag, 1);    
