@@ -886,20 +886,32 @@ not invalidate iterator or pointers to other elements in the list.</p>
 intrusive, because it requires the element to store and provide access to the
 prev/next pointers for the list.</p>
 
-<p>ilist has the same drawbacks as std::list, and additionally requires an
-ilist_traits implementation for the element type, but it provides some novel
-characteristics.  In particular, it can efficiently store polymorphic objects,
-the traits class is informed when an element is inserted or removed from the
-list, and ilists are guaranteed to support a constant-time splice operation.
-</p>
+<p><tt>ilist</tt> has the same drawbacks as <tt>std::list</tt>, and additionally
+requires an <tt>ilist_traits</tt> implementation for the element type, but it
+provides some novel characteristics.  In particular, it can efficiently store
+polymorphic objects, the traits class is informed when an element is inserted or
+removed from the list, and ilists are guaranteed to support a constant-time splice
+operation.</p>
 
-<p>These properties are exactly what we want for things like Instructions and
-basic blocks, which is why these are implemented with ilists.</p>
+<p>These properties are exactly what we want for things like <tt>Instruction</tt>s
+and basic blocks, which is why these are implemented with <tt>ilist</tt>s.</p>
 
 Related classes of interest are explained in the following subsections:
     <ul>
+      <li><a href="#dss_iplist">iplist</a></li>
       <li><a href="#dss_ilist_node">llvm/ADT/ilist_node.h</a></li>
     </ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_iplist">iplist</a>
+</div>
+
+<div class="doc_text">
+<p><tt>iplist&lt;T&gt;</tt> is <tt>ilist&lt;T&gt;</tt>'s base and as such
+supports a slightly narrower interface. Notably, inserters from <tt>T&amp;</tt>
+are absent.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
