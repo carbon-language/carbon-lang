@@ -592,11 +592,16 @@ public:
   }
 
   void print(std::ostream &OS, unsigned Depth = 0) const {
-    OS << std::string(Depth*2, ' ') << "Loop Containing: ";
+    OS << std::string(Depth*2, ' ') << "Loop at depth " << getLoopDepth()
+       << " containing: ";
 
     for (unsigned i = 0; i < getBlocks().size(); ++i) {
       if (i) OS << ",";
-      WriteAsOperand(OS, getBlocks()[i], false);
+      BlockT *BB = getBlocks()[i];
+      WriteAsOperand(OS, BB, false);
+      if (BB == getHeader())    OS << "<header>";
+      if (BB == getLoopLatch()) OS << "<latch>";
+      if (isLoopExit(BB))       OS << "<exit>";
     }
     OS << "\n";
 
