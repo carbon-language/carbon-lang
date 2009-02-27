@@ -94,7 +94,7 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
   // Okay, we decided that we can add ScaleReg+Scale to AddrMode.  Check now
   // to see if ScaleReg is actually X+C.  If so, we can turn this into adding
   // X*Scale + C*Scale to addr mode.
-  ConstantInt *CI; Value *AddLHS;
+  ConstantInt *CI = 0; Value *AddLHS = 0;
   if (isa<Instruction>(ScaleReg) &&  // not a constant expr.
       match(ScaleReg, m_Add(m_Value(AddLHS), m_ConstantInt(CI)))) {
     TestAddrMode.ScaledReg = AddLHS;
