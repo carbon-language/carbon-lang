@@ -600,7 +600,6 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
                                       OpLoc, MemberType);
     BaseObjectIsPointer = false;
     ExtraQuals = Context.getCanonicalType(MemberType).getCVRQualifiers();
-    OpLoc = SourceLocation();
   }
 
   return Owned(Result);
