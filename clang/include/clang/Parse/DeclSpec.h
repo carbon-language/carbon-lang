@@ -248,6 +248,12 @@ public:
   ///
   unsigned getParsedSpecifiers() const;
   
+  /// isEmpty - Return true if this declaration specifier is completely empty:
+  /// no tokens were parsed in the production of it.
+  bool isEmpty() const {
+    return getParsedSpecifiers() == DeclSpec::PQ_None;
+  }
+  
   void SetRangeStart(SourceLocation Loc) { Range.setBegin(Loc); }
   void SetRangeEnd(SourceLocation Loc) { Range.setEnd(Loc); }
   

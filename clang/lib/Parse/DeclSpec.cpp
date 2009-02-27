@@ -65,6 +65,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
 }
 
 /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this
+/// declaration specifier includes.
 ///
 unsigned DeclSpec::getParsedSpecifiers() const {
   unsigned Res = 0;

@@ -549,7 +549,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   // If this is C90 and the declspecs were completely missing, fudge in an
   // implicit int.  We do this here because this is the only place where
   // declaration-specifiers are completely optional in the grammar.
-  if (getLang().ImplicitInt && D.getDeclSpec().getParsedSpecifiers() == 0) {
+  if (getLang().ImplicitInt && D.getDeclSpec().isEmpty()) {
     const char *PrevSpec;
     D.getMutableDeclSpec().SetTypeSpecType(DeclSpec::TST_int,
                                            D.getIdentifierLoc(),
