@@ -54,7 +54,7 @@ option</a></li>
       <li><a href="#dss_vector">&lt;vector&gt;</a></li>
       <li><a href="#dss_deque">&lt;deque&gt;</a></li>
       <li><a href="#dss_list">&lt;list&gt;</a></li>
-      <li><a href="#dss_ilist">llvm/ADT/ilist</a></li>
+      <li><a href="#dss_ilist">llvm/ADT/ilist.h</a></li>
       <li><a href="#dss_other">Other Sequential Container Options</a></li>
     </ul></li>
     <li><a href="#ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a>
@@ -878,7 +878,7 @@ not invalidate iterator or pointers to other elements in the list.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="dss_ilist">llvm/ADT/ilist</a>
+  <a name="dss_ilist">llvm/ADT/ilist.h</a>
 </div>
 
 <div class="doc_text">
@@ -895,6 +895,25 @@ list, and ilists are guaranteed to support a constant-time splice operation.
 
 <p>These properties are exactly what we want for things like Instructions and
 basic blocks, which is why these are implemented with ilists.</p>
+
+Related classes of interest are explained in the following subsections:
+    <ul>
+      <li><a href="#dss_ilist_node">llvm/ADT/ilist_node.h</a></li>
+    </ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_ilist_node">llvm/ADT/ilist_node.h</a>
+</div>
+
+<div class="doc_text">
+<p><tt>ilist_node&lt;T&gt;</tt> implements a the forward and backward links
+that are expected by the <tt>ilist&lt;T&gt;</tt> (and analogous containers)
+in the default manner.</p>
+
+<p><tt>ilist_node&lt;T&gt;</tt>s are meant to be embedded in the node type
+<tt>T</tt>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
