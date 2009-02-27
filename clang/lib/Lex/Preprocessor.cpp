@@ -265,7 +265,6 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
   return OutBuf-Buffer;
 }
 
-
 /// CreateString - Plop the specified string into a scratch buffer and return a
 /// location for it.  If specified, the source location provides a source
 /// location for the token.
@@ -320,6 +319,25 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   
   return TokStart.getFileLocWithOffset(PhysOffset);
 }
+
+/// \brief Computes the source location just past the end of the
+/// token at this source location.
+///
+/// This routine can be used to produce a source location that
+/// points just past the end of the token referenced by \p Loc, and
+/// is generally used when a diagnostic needs to point just after a
+/// token where it expected something different that it received. If
+/// the returned source location would not be meaningful (e.g., if
+/// it points into a macro), this routine returns an invalid
+/// source location.
+SourceLocation Preprocessor::getLocForEndOfToken(SourceLocation Loc) {
+  if (Loc.isInvalid() || !Loc.isFileID())
+    return SourceLocation();
+
+  unsigned Len = Lexer::MeasureTokenLength(Loc, getSourceManager());
+  return AdvanceToTokenCharacter(Loc, Len);
+}
+
 
 
 //===----------------------------------------------------------------------===//

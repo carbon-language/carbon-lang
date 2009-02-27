@@ -75,7 +75,7 @@ namespace clang {
 /// introduction, removal, or modification of a particular (small!)
 /// amount of code will correct a compilation error. The compiler
 /// should also provide full recovery from such errors, such that
-/// suppressing the diagnostic output can still result successful
+/// suppressing the diagnostic output can still result in successful
 /// compilation.
 class CodeModificationHint {
 public:
@@ -96,40 +96,33 @@ public:
 
   /// \brief Create a code modification hint that inserts the given
   /// code string at a specific location.
-  CodeModificationHint(SourceLocation InsertionLoc, const std::string &Code)
-    : RemoveRange(), InsertionLoc(InsertionLoc), CodeToInsert(Code) { }
+  static CodeModificationHint CreateInsertion(SourceLocation InsertionLoc, 
+                                              const std::string &Code) {
+    CodeModificationHint Hint;
+    Hint.InsertionLoc = InsertionLoc;
+    Hint.CodeToInsert = Code;
+    return Hint;
+  }
 
   /// \brief Create a code modification hint that removes the given
   /// source range.
-  CodeModificationHint(SourceRange RemoveRange)
-    : RemoveRange(RemoveRange), InsertionLoc(), CodeToInsert() { }
+  static CodeModificationHint CreateRemoval(SourceRange RemoveRange) {
+    CodeModificationHint Hint;
+    Hint.RemoveRange = RemoveRange;
+    return Hint;
+  }
 
   /// \brief Create a code modification hint that replaces the given
   /// source range with the given code string.
-  CodeModificationHint(SourceRange RemoveRange, const std::string &Code)
-    : RemoveRange(RemoveRange), InsertionLoc(RemoveRange.getBegin()),
-      CodeToInsert(Code) { }
+  static CodeModificationHint CreateReplacement(SourceRange RemoveRange, 
+                                                const std::string &Code) {
+    CodeModificationHint Hint;
+    Hint.RemoveRange = RemoveRange;
+    Hint.InsertionLoc = RemoveRange.getBegin();
+    Hint.CodeToInsert = Code;
+    return Hint;
+  }
 };
-
-/// \brief Creates a code modification hint that inserts the given
-/// string at a particular location in the source code.
-inline CodeModificationHint 
-CodeInsertionHint(SourceLocation InsertionLoc, const std::string &Code) {
-  return CodeModificationHint(InsertionLoc, Code);
-}
-
-/// \brief Creates a code modification hint that removes the given
-/// source range.
-inline CodeModificationHint CodeRemovalHint(SourceRange RemoveRange) {
-  return CodeModificationHint(RemoveRange);
-}
-
-/// \brief Creates a code modification hint that replaces the given
-/// source range with the given code string.
-inline CodeModificationHint 
-CodeReplacementHint(SourceRange RemoveRange, const std::string &Code) {
-  return CodeModificationHint(RemoveRange, Code);
-}
 
 /// Diagnostic - This concrete class is used by the front-end to report
 /// problems and issues.  It massages the diagnostics (e.g. handling things like

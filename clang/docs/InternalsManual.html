@@ -386,6 +386,63 @@ completely independent of how the diagnostic is formatted and in what language
 it is rendered.
 </p>
 
+<!-- ==================================================== -->
+<h4 id="code-modification-hints">Code Modification Hints</h4>
+<!-- ==================================================== -->
+
+<p>In some cases, the front end emits diagnostics when it is clear
+that some small change to the source code would fix the problem. For
+example, a missing semicolon at the end of a statement or a use of
+deprecated syntax that is easily rewritten into a more modern form. In
+these cases, the front end should emit the diagnostic and recover
+gracefully.</p>
+
+<p>In these cases, the diagnostic can be annotation with a code
+modification "hint" that describes how to modify the code referenced
+by the diagnostic to fix the problem. For example, it might add the
+missing semicolon at the end of the statement or rewrite the use of a
+deprecated construct into something more palatable. Here is one such
+example C++ front end, where we warn about the right-shift operator
+changing meaning from C++98 to C++0x:</p>
+
+<pre>
+test.cpp:3:7: warning: use of right-shift operator ('&gt;&gt;') in template argument will require parentheses in C++0x
+A&lt;100 &gt;&gt; 2&gt; *a;
+      ^
+  (       )
+</pre>
+
+<p>Here, the code modification hint is suggesting that parentheses be
+added, and showing exactly where those parentheses would be inserted
+into the source code. The code modification hints themselves describe
+what changes to make to the source code in an abstract manner, which
+the text diagnostic printer renders as a line of "insertions" below
+the caret line. <a href="#DiagnosticClient">Other diagnostic
+clients</a> might choose to render the code differently (e.g., as
+markup inline) or even give the user the ability to automatically fix
+the problem.</p>
+
+<p>All code modification hints are described by the
+<code>CodeModificationHint</code> class, instances of which should be
+attached to the diagnostic using the &lt;&lt; operator in the same way
+that highlighted source ranges and arguments are passed to the
+diagnostic. Code modification hints can be created with one of three
+constructors:</p>
+
+<dl>
+  <dt><code>CodeModificationHint::CreateInsertion(Loc, Code)</code></dt>
+  <dd>Specifies that the given <code>Code</code> (a string) should be inserted
+  before the source location <code>Loc</code>.</dd>
+
+  <dt><code>CodeModificationHint::CreateRemoval(Range)</code></dt>
+  <dd>Specifies that the code in the given source <code>Range</code>
+  should be removed.</dd>
+
+  <dt><code>CodeModificationHint::CreateReplacement(Range, Code)</code></dt>
+  <dd>Specifies that the code in the given source <code>Range</code>
+  should be removed, and replaced with the given <code>Code</code> string.</dd>
+</dl>
+
 <!-- ============================================================= -->
 <h4><a name="DiagnosticClient">The DiagnosticClient Interface</a></h4>
 <!-- ============================================================= -->

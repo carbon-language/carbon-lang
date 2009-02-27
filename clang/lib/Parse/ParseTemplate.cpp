@@ -445,7 +445,8 @@ Parser::ParseTemplateIdAfterTemplateName(DeclTy *Template,
         ReplaceStr = "> > ";
 
       Diag(Tok.getLocation(), diag::err_two_right_angle_brackets_need_space)
-        << CodeReplacementHint(SourceRange(Tok.getLocation()), ReplaceStr);
+        << CodeModificationHint::CreateReplacement(
+                                 SourceRange(Tok.getLocation()), ReplaceStr);
     }
 
     Tok.setKind(tok::greater);

@@ -28,9 +28,7 @@ const char *tok::getTokenName(enum TokenKind Kind) {
   return TokNames[Kind];
 }
 
-/// \brief Determines the spelling of simple punctuation tokens like
-/// '!' or '%', and returns NULL for literal and annotation tokens.
-const char *tok::getTokenSpelling(enum TokenKind Kind) {
+const char *tok::getTokenSimpleSpelling(enum TokenKind Kind) {
   switch (Kind) {
   case tok::l_square:            return "[";
   case tok::r_square:            return "]";

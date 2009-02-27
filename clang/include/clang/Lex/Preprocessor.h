@@ -476,7 +476,7 @@ public:
   /// copy).  The caller is not allowed to modify the returned buffer pointer
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer) const;
-  
+
   /// getSpellingOfSingleCharacterNumericConstant - Tok is a numeric constant
   /// with length 1, return the character.
   char getSpellingOfSingleCharacterNumericConstant(const Token &Tok) const {
@@ -498,7 +498,19 @@ public:
   /// location provides a location of the instantiation point of the token.
   void CreateString(const char *Buf, unsigned Len,
                     Token &Tok, SourceLocation SourceLoc = SourceLocation());
-  
+
+  /// \brief Computes the source location just past the end of the
+  /// token at this source location.
+  ///
+  /// This routine can be used to produce a source location that
+  /// points just past the end of the token referenced by \p Loc, and
+  /// is generally used when a diagnostic needs to point just after a
+  /// token where it expected something different that it received. If
+  /// the returned source location would not be meaningful (e.g., if
+  /// it points into a macro), this routine returns an invalid
+  /// source location.
+  SourceLocation getLocForEndOfToken(SourceLocation Loc);
+    
   /// DumpToken - Print the token to stderr, used for debugging.
   ///
   void DumpToken(const Token &Tok, bool DumpFlags = false) const;

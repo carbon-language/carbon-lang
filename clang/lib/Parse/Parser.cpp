@@ -76,18 +76,17 @@ DiagnosticBuilder Parser::Diag(const Token &Tok, unsigned DiagID) {
 /// \param ParenRange Source range enclosing code that should be parenthesized.
 void Parser::SuggestParentheses(SourceLocation Loc, unsigned DK,
                                 SourceRange ParenRange) {
-  if (!ParenRange.getEnd().isFileID()) {
+  SourceLocation EndLoc = PP.getLocForEndOfToken(ParenRange.getEnd());
+  if (!ParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
     // We can't display the parentheses, so just dig the
     // warning/error and return.
     Diag(Loc, DK);
     return;
   }
     
-  unsigned Len = Lexer::MeasureTokenLength(ParenRange.getEnd(), 
-                                           PP.getSourceManager());
   Diag(Loc, DK) 
-    << CodeInsertionHint(ParenRange.getBegin(), "(")
-    << CodeInsertionHint(ParenRange.getEnd().getFileLocWithOffset(Len), ")");
+    << CodeModificationHint::CreateInsertion(ParenRange.getBegin(), "(")
+    << CodeModificationHint::CreateInsertion(EndLoc, ")");
 }
 
 /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),
@@ -131,14 +130,13 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
   }
 
   const char *Spelling = 0;
-  if (PrevTokLocation.isValid() && PrevTokLocation.isFileID() &&
-      (Spelling = tok::getTokenSpelling(ExpectedTok))) {
+  SourceLocation EndLoc = PP.getLocForEndOfToken(PrevTokLocation);
+  if (EndLoc.isValid() && 
+      (Spelling = tok::getTokenSimpleSpelling(ExpectedTok))) {
     // Show what code to insert to fix this problem.
-    SourceLocation DiagLoc 
-      = PrevTokLocation.getFileLocWithOffset(strlen(Spelling));
-    Diag(DiagLoc, DiagID) 
+    Diag(EndLoc, DiagID) 
       << Msg
-      << CodeInsertionHint(DiagLoc, Spelling);
+      << CodeModificationHint::CreateInsertion(EndLoc, Spelling);
   } else
     Diag(Tok, DiagID) << Msg;
 

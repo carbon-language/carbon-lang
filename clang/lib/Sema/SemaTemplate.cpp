@@ -1617,7 +1617,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // template<> headers.
   if (TemplateParameterLists.size() == 0)
     Diag(KWLoc, diag::err_template_spec_needs_header)
-      << CodeInsertionHint(KWLoc, "template<> ");
+      << CodeModificationHint::CreateInsertion(KWLoc, "template<> ");
   else {
     TemplateParameterList *TemplateParams 
       = static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
