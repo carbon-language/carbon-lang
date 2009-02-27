@@ -2020,6 +2020,14 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
+  // FIXME: Need strict checking.  In C89, we need to check for
+  // any assignment, increment, decrement, function-calls, or
+  // commas outside of a sizeof.  In C99, it's the same list,
+  // except that the aforementioned are allowed in unevaluated
+  // expressions.  Everything else falls under the
+  // "may accept other forms of constant expressions" exception.
+  // (We never end up here for C++, so the constant expression
+  // rules there don't matter.)
   if (Init->isConstantInitializer(Context))
     return false;
   Diag(Init->getExprLoc(), diag::err_init_element_not_constant)
@@ -2036,22 +2044,23 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init) {
 /// initialization rather than copy initialization.
 void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
   Decl *RealDecl = static_cast<Decl *>(dcl);
-  Expr *Init = static_cast<Expr *>(init.release());
-  assert(Init && "missing initializer");
-  
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
-  if (RealDecl == 0) {
-    Init->Destroy(Context);
+  if (RealDecl == 0)
     return;
-  }
   
   VarDecl *VDecl = dyn_cast<VarDecl>(RealDecl);
   if (!VDecl) {
     Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
     RealDecl->setInvalidDecl();
     return;
-  }  
+  }
+
+  // Take ownership of the expression, now that we're sure we have somewhere
+  // to put it.
+  Expr *Init = static_cast<Expr *>(init.release());
+  assert(Init && "missing initializer");
+
   // Get the decls type and save a reference for later, since
   // CheckInitializerTypes may change it.
   QualType DclT = VDecl->getType(), SavT = DclT;
