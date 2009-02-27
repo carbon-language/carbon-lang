@@ -133,28 +133,25 @@ list</a>.</p>
 
 <div class="doc_text">
 
-<p>The Clang project also includes an early stage static source code analysis
-tool for <a href="http://clang.llvm.org/StaticAnalysis.html">automatically
-finding bugs</a> in C and Objective-C programs. The tool performs a growing set
-of checks to find bugs that occur on a specific path within a program.  Examples
-of bugs the tool finds include logic errors such as null dereferences,
-violations of various API rules, dead code, and potential memory leaks in
-Objective-C programs. Since its inception, public feedback on the tool has been
-extremely positive, and conservative estimates put the number of real bugs it
-has found in industrial-quality software on the order of thousands.</p>
+<p>Previously announced in the last LLVM release, the Clang project also
+includes an early stage static source code analysis tool for <a
+href="http://clang.llvm.org/StaticAnalysis.html">automatically finding bugs</a>
+in C and Objective-C programs. The tool performs a growing set of checks to find
+bugs that occur on a specific path within a program.</p>
 
-<p>The tool also provides a simple web GUI to inspect potential bugs found by
-the tool.  While still early in development, the GUI illustrates some of the key
-features of Clang: accurate source location information, which is used by the
-GUI to highlight specific code expressions that relate to a bug (including those
-that span multiple lines); and built-in knowledge of macros, which is used to
-perform inline expansion of macros within the GUI itself.</p>
+<p>In the LLVM 2.5 time-frame there have been many significant improvements to
+the analyzer's core path simulation engine and machinery for generating
+path-based bug reports to end-users. Particularly noteworthy improvements
+include experimental support for full field-sensitivity and reasoning about heap
+objects as well as an improved value-constraints subengine that does a much
+better job of reasoning about inequality relationships (e.g., <tt>x &gt; 2</tt>)
+between variables and constants.
 
-<p>The set of checks performed by the static analyzer is gradually expanding,
-and future plans for the tool include full source-level inter-procedural
-analysis and deeper checks such as buffer overrun detection. There are many
-opportunities to extend and enhance the static analyzer, and anyone interested
-in working on this project is encouraged to get involved!</p>
+<p>The set of checks performed by the static analyzer continue to expand, and
+future plans for the tool include full source-level inter-procedural analysis
+and deeper checks such as buffer overrun detection. There are many opportunities
+to extend and enhance the static analyzer, and anyone interested in working on
+this project is encouraged to get involved!</p>
 
 </div>
 
