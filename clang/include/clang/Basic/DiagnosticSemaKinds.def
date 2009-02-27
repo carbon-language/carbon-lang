@@ -211,6 +211,10 @@ DIAG(error_missing_property_ivar_decl, ERROR,
      " ivar or must explicitly name an ivar")
 DIAG(error_property_ivar_type, ERROR,
      "type of property %0 does not match type of ivar %1") 
+DIAG(error_weak_property, ERROR,
+     "existing ivar %1 for __weak property %0 must be __weak")
+DIAG(error_strong_property, ERROR,
+     "existing ivar %1 for a __strong property %0 must be garbage collectable")
 DIAG(error_dynamic_property_ivar_decl, ERROR,
      "dynamic property can not have ivar specification")
 DIAG(error_duplicate_ivar_use, ERROR,
