@@ -154,7 +154,7 @@ class CodeGenModule {
     int GlobalUniqueCount;
   } Block;
 
-  std::vector<llvm::Function *> BuiltinFunctions;
+  std::vector<llvm::Value *> BuiltinFunctions;
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M,
                 const llvm::TargetData &TD, Diagnostic &Diags,
@@ -243,7 +243,7 @@ public:
 
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
-  llvm::Function *getBuiltinLibFunction(unsigned BuiltinID);
+  llvm::Value *getBuiltinLibFunction(unsigned BuiltinID);
 
   llvm::Function *getMemCpyFn();
   llvm::Function *getMemMoveFn();

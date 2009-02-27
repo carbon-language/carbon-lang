@@ -794,6 +794,8 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   if (!Entry)
+    Entry = getModule().getFunction(getMangledName(D));
+  if (!Entry)
     Entry = EmitForwardFunctionDefinition(D, 0);
 
   return llvm::ConstantExpr::getBitCast(Entry, PTy);
@@ -872,14 +874,14 @@ void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
 
 
 /// getBuiltinLibFunction
-llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
+llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
   if (BuiltinID > BuiltinFunctions.size())
     BuiltinFunctions.resize(BuiltinID);
   
   // Cache looked up functions.  Since builtin id #0 is invalid we don't reserve
   // a slot for it.
   assert(BuiltinID && "Invalid Builtin ID");
-  llvm::Function *&FunctionSlot = BuiltinFunctions[BuiltinID-1];
+  llvm::Value *&FunctionSlot = BuiltinFunctions[BuiltinID-1];
   if (FunctionSlot)
     return FunctionSlot;
   
@@ -913,8 +915,15 @@ llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
     assert(Existing == 0 && "FIXME: Name collision");
   }
 
+  llvm::GlobalValue *&ExitingFn = GlobalDeclMap[getContext().Idents.get(Name).getName()];
+  if (ExitingFn) {
+    llvm::Function *Fn = dyn_cast<llvm::Function>(ExitingFn);
+    assert(Fn && "builting mixing with non-function");
+    return FunctionSlot = llvm::ConstantExpr::getBitCast(Fn, Ty);
+  }
+
   // FIXME: param attributes for sext/zext etc.
-  return FunctionSlot = 
+  return FunctionSlot = ExitingFn =
     llvm::Function::Create(Ty, llvm::Function::ExternalLinkage, Name,
                            &getModule());
 }
