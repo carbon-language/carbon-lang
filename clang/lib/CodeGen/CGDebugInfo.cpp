@@ -496,6 +496,12 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::ObjCInterface:
   case Type::ObjCQualifiedInterface:
   case Type::ObjCQualifiedId:
+  case Type::FixedWidthInt:
+  case Type::BlockPointer:
+  case Type::MemberPointer:
+  case Type::ClassTemplateSpecialization:
+  case Type::ObjCQualifiedClass:
+    // Unsupported types
     return llvm::DIType();
 
   case Type::Builtin: Slot = CreateType(cast<BuiltinType>(Ty), Unit); break;
