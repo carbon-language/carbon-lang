@@ -798,6 +798,8 @@ QualType ASTContext::getObjCGCQualType(QualType T,
   
   // If the base type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
+  // FIXME: Isn't this also not canonical if the base type is a array
+  // or pointer type?  I can't find any documentation for objc_gc, though...
   QualType Canonical;
   if (!T->isCanonical()) {
     Canonical = getObjCGCQualType(CanT, GCAttr);
@@ -2667,8 +2669,9 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return LHS;
 
   // If the qualifiers are different, the types aren't compatible
-  if (LHSCan.getCVRQualifiers() != RHSCan.getCVRQualifiers() ||
-      LHSCan.getAddressSpace() != RHSCan.getAddressSpace())
+  // Note that we handle extended qualifiers later, in the
+  // case for ExtQualType.
+  if (LHSCan.getCVRQualifiers() != RHSCan.getCVRQualifiers())
     return QualType();
 
   Type::TypeClass LHSClass = LHSCan->getTypeClass();
@@ -2851,11 +2854,14 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     // Distinct complex types are incompatible.
     return QualType();
   case Type::Vector:
+    // FIXME: The merged type should be an ExtVector!
     if (areCompatVectorTypes(LHS->getAsVectorType(), RHS->getAsVectorType()))
       return LHS;
     return QualType();
   case Type::ObjCInterface: {
     // Check if the interfaces are assignment compatible.
+    // FIXME: This should be type compatibility, e.g. whether
+    // "LHS x; RHS x;" at global scope is legal.
     const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
     const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
     if (LHSIface && RHSIface &&
@@ -2867,6 +2873,39 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   case Type::ObjCQualifiedId:
     // Distinct qualified id's are not compatible.
     return QualType();
+  case Type::FixedWidthInt:
+    // Distinct fixed-width integers are not compatible.
+    return QualType();
+  case Type::ObjCQualifiedClass:
+    // Distinct qualified classes are not compatible.
+    return QualType();
+  case Type::ExtQual:
+    // FIXME: ExtQual types can be compatible even if they're not
+    // identical!
+    return QualType();
+    // First attempt at an implementation, but I'm not really sure it's
+    // right...
+#if 0
+    ExtQualType* LQual = cast<ExtQualType>(LHSCan);
+    ExtQualType* RQual = cast<ExtQualType>(RHSCan);
+    if (LQual->getAddressSpace() != RQual->getAddressSpace() ||
+        LQual->getObjCGCAttr() != RQual->getObjCGCAttr())
+      return QualType();
+    QualType LHSBase, RHSBase, ResultType, ResCanUnqual;
+    LHSBase = QualType(LQual->getBaseType(), 0);
+    RHSBase = QualType(RQual->getBaseType(), 0);
+    ResultType = mergeTypes(LHSBase, RHSBase);
+    if (ResultType.isNull()) return QualType();
+    ResCanUnqual = getCanonicalType(ResultType).getUnqualifiedType();
+    if (LHSCan.getUnqualifiedType() == ResCanUnqual)
+      return LHS;
+    if (RHSCan.getUnqualifiedType() == ResCanUnqual)
+      return RHS;
+    ResultType = getAddrSpaceQualType(ResultType, LQual->getAddressSpace());
+    ResultType = getObjCGCQualType(ResultType, LQual->getObjCGCAttr());
+    ResultType.setCVRQualifiers(LHSCan.getCVRQualifiers());
+    return ResultType;
+#endif
   }
 
   return QualType();
