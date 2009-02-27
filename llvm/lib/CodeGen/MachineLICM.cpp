@@ -288,6 +288,9 @@ static bool HasPHIUses(unsigned Reg, MachineRegisterInfo *RegInfo) {
 /// IsProfitableToHoist - Return true if it is potentially profitable to hoist
 /// the given loop invariant.
 bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
+  if (MI.getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
+    return false;
+
   const TargetInstrDesc &TID = MI.getDesc();
 
   // FIXME: For now, only hoist re-materilizable instructions. LICM will
@@ -312,7 +315,8 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
 }
 
 static const MachineInstr *LookForDuplicate(const MachineInstr *MI,
-                                      std::vector<const MachineInstr*> &PrevMIs) {
+                                      std::vector<const MachineInstr*> &PrevMIs,
+                                      MachineRegisterInfo *RegInfo) {
   unsigned NumOps = MI->getNumOperands();
   for (unsigned i = 0, e = PrevMIs.size(); i != e; ++i) {
     const MachineInstr *PrevMI = PrevMIs[i];
@@ -322,8 +326,14 @@ static const MachineInstr *LookForDuplicate(const MachineInstr *MI,
     bool IsSame = true;
     for (unsigned j = 0; j != NumOps; ++j) {
       const MachineOperand &MO = MI->getOperand(j);
-      if (MO.isReg() && MO.isDef()) 
+      if (MO.isReg() && MO.isDef()) {
+        if (RegInfo->getRegClass(MO.getReg()) !=
+            RegInfo->getRegClass(PrevMI->getOperand(j).getReg())) {
+          IsSame = false;
+          break;
+        }
         continue;
+      }
       if (!MO.isIdenticalTo(PrevMI->getOperand(j))) {
         IsSame = false;
         break;
@@ -362,7 +372,7 @@ void MachineLICM::Hoist(MachineInstr &MI) {
     std::vector<const MachineInstr*> >::iterator CI = CSEMap.find(BBOpcPair);
   bool DoneCSE = false;
   if (CI != CSEMap.end()) {
-    const MachineInstr *Dup = LookForDuplicate(&MI, CI->second);
+    const MachineInstr *Dup = LookForDuplicate(&MI, CI->second, RegInfo);
     if (Dup) {
       DOUT << "CSEing " << MI;
       DOUT << " with " << *Dup;
