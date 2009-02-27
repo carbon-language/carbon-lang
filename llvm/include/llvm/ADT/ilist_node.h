@@ -30,6 +30,7 @@ template<typename NodeTy>
 class ilist_node {
 private:
   friend struct ilist_nextprev_traits<NodeTy>;
+  friend struct ilist_traits<NodeTy>;
   NodeTy *Prev, *Next;
   NodeTy *getPrev() { return Prev; }
   NodeTy *getNext() { return Next; }
@@ -39,7 +40,6 @@ private:
   void setNext(NodeTy *N) { Next = N; }
 protected:
   ilist_node() : Prev(0), Next(0) {}
-  friend struct ilist_traits<NodeTy>;
 };
 
 } // End llvm namespace
