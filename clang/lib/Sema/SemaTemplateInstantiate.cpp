@@ -433,6 +433,6 @@ QualType Sema::InstantiateType(QualType T,
 #include "clang/AST/TypeNodes.def"
   }
   
-  assert(false && "Not all types hav been decided for template instantiation");
+  assert(false && "Not all types have been decoded for instantiation");
   return QualType();
 }
