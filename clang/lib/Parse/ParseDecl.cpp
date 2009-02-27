@@ -2101,8 +2101,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       DS.AddAttributes(AttrList);
       AttrList = 0;  // Only apply the attributes to the first parameter.
     }
-    ParseDeclarationSpecifiers(DS);    
-
+    ParseDeclarationSpecifiers(DS);
+    
     // Parse the declarator.  This is "PrototypeContext", because we must
     // accept either 'declarator' or 'abstract-declarator' here.
     Declarator ParmDecl(DS, Declarator::PrototypeContext);
@@ -2124,8 +2124,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
     // If no parameter was specified, verify that *something* was specified,
     // otherwise we have a missing type and identifier.
-    if (DS.getParsedSpecifiers() == DeclSpec::PQ_None && 
-        ParmDecl.getIdentifier() == 0 && ParmDecl.getNumTypeObjects() == 0) {
+    if (DS.isEmpty() && ParmDecl.getIdentifier() == 0 &&
+        ParmDecl.getNumTypeObjects() == 0) {
       // Completely missing, emit error.
       Diag(DSStart, diag::err_missing_param);
     } else {
