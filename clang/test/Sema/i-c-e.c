@@ -1,5 +1,8 @@
 // RUN: clang %s -fsyntax-only -verify -pedantic -fpascal-strings
 
+#include <stdint.h>
+#include <limits.h>
+
 int a() {int p; *(1 ? &p : (void*)(0 && (a(),1))) = 10;}
 
 // rdar://6091492 - ?: with __builtin_constant_p as the operand is an i-c-e.
@@ -46,3 +49,18 @@ int expr;
 char y[__builtin_constant_p(expr) ? -1 : 1];
 char z[__builtin_constant_p(4) ? 1 : -1];
 
+// Comma tests
+int comma1[0?1,2:3];
+int comma2[1||(1,2)];
+int comma3[(1,2)]; // expected-warning {{size of static array must be an integer constant expression}}
+
+// Pointer + __builtin_constant_p
+char pbcp[__builtin_constant_p(4) ? (intptr_t)&expr : 0]; // expected-error {{variable length array declaration not allowed at file scope}}
+
+int illegaldiv1[1 || 1/0];
+int illegaldiv2[1/0]; // expected-error {{variable length array declaration not allowed at file scope}}
+int illegaldiv3[INT_MIN / -1]; // expected-error {{variable length array declaration not allowed at file scope}}
+
+int chooseexpr[__builtin_choose_expr(1, 1, expr)]; // expected-warning {{extension used}}
+int realop[(__real__ 4) == 4 ? 1 : -1]; // expected-warning {{extension used}}
+int imagop[(__imag__ 4) == 0 ? 1 : -1]; // expected-warning {{extension used}}
