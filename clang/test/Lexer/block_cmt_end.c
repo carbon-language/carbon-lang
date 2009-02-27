@@ -26,7 +26,7 @@ next comment ends with a trigraph escaped newline: */
 /* expected-warning {{escaped newline between}}   expected-warning {{backslash and newline separated by space}}    expected-warning {{trigraph ends block comment}}   *??/    
 /
 
-foo /* expected-error {{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}} */
+foo /* expected-error {{invalid token after top level declarator}} */
 
 
 // rdar://6060752 - We should not get warnings about trigraphs in comments:

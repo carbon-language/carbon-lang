@@ -499,8 +499,8 @@ Parser::ParseDeclarationOrFunctionDefinition(
     // FALL THROUGH.
   } else if (DeclaratorInfo.isFunctionDeclarator() &&
              (Tok.is(tok::l_brace) ||             // int X() {}
-              ( !getLang().CPlusPlus &&
-                isDeclarationSpecifier() ))) {    // int X(f) int f; {}
+              (!getLang().CPlusPlus &&
+               isDeclarationSpecifier()))) {    // int X(f) int f; {}
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
       Diag(Tok, diag::err_function_declared_typedef);
 
@@ -520,7 +520,7 @@ Parser::ParseDeclarationOrFunctionDefinition(
     if (DeclaratorInfo.isFunctionDeclarator())
       Diag(Tok, diag::err_expected_fn_body);
     else
-      Diag(Tok, diag::err_expected_after_declarator);
+      Diag(Tok, diag::err_invalid_token_after_toplevel_declarator);
     SkipUntil(tok::semi);
     return 0;
   }

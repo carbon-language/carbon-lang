@@ -118,8 +118,8 @@ DIAG(err_expected_fn_body, ERROR,
      "expected function body after function declarator")
 DIAG(err_expected_method_body, ERROR,
      "expected method body")
-DIAG(err_expected_after_declarator, ERROR,
-     "expected '=', ',', ';', 'asm', or '__attribute__' after declarator")
+DIAG(err_invalid_token_after_toplevel_declarator, ERROR,
+     "invalid token after top level declarator")
 DIAG(err_expected_statement, ERROR,
      "expected statement")
 DIAG(err_expected_lparen_after, ERROR,

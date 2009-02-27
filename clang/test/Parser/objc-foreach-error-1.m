@@ -1,6 +1,6 @@
 // RUN: clang -fsyntax-only -verify %s
 
-ce MyList // expected-error {{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}}
+ce MyList // expected-error {{invalid token after top level declarator}}
 @end
 
 
