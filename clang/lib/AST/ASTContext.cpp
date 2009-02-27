@@ -290,8 +290,8 @@ unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
 std::pair<uint64_t, unsigned>
 ASTContext::getTypeInfo(const Type *T) {
   T = getCanonicalType(T);
-  uint64_t Width;
-  unsigned Align;
+  uint64_t Width=0;
+  unsigned Align=8;
   switch (T->getTypeClass()) {
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)
