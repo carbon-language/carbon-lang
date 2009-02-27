@@ -636,16 +636,24 @@ public:
     return Success(0, E);
   }
 
+  bool VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
+    return Success(0, E);
+  }
+
   bool VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
     return Success(E->EvaluateTrait(), E);
   }
 
+  bool VisitChooseExpr(const ChooseExpr *E);
+  bool VisitUnaryReal(const UnaryOperator *E) {
+    return Visit(E->getSubExpr());
+  }
+  bool VisitUnaryImag(const UnaryOperator *E);
+
 private:
   unsigned GetAlignOfExpr(const Expr *E);
   unsigned GetAlignOfType(QualType T);
-  // FIXME: Missing: __real__/__imag__, array subscript of vector,
-  //                 member of vector, __builtin_choose_expr,
-  //                 ImplicitValueInitExpr
+  // FIXME: Missing: array subscript of vector, member of vector
 };
 } // end anonymous namespace
 
@@ -1168,6 +1176,18 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
   
   return Success(HandleFloatToIntCast(DestType, SrcType, F, Info.Ctx), E);
+}
+
+bool IntExprEvaluator::VisitChooseExpr(const ChooseExpr *E) {
+  Expr* EvalExpr = E->isConditionTrue(Info.Ctx) ? E->getLHS() : E->getRHS();
+
+  return Visit(EvalExpr);
+}
+
+bool IntExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
+  if (!E->getSubExpr()->isEvaluatable(Info.Ctx))
+    Info.EvalResult.HasSideEffects = true;
+  return Success(0, E);
 }
 
 //===----------------------------------------------------------------------===//
