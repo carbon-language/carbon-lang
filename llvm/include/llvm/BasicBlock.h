@@ -26,11 +26,15 @@ class TerminatorInst;
 template<> struct ilist_traits<Instruction>
   : public SymbolTableListTraits<Instruction, BasicBlock> {
   // createSentinel is used to create a node that marks the end of the list...
-  static Instruction *createSentinel();
-  static void destroySentinel(Instruction *I) { delete I; }
+  Instruction *createSentinel() const {
+    return const_cast<Instruction*>(static_cast<const Instruction*>(&Sentinel));
+  }
+  static void destroySentinel(Instruction *I) { }
   static iplist<Instruction> &getList(BasicBlock *BB);
   static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);
   static int getListOffset();
+private:
+  ilist_node<Instruction> Sentinel;
 };
 
 /// This represents a single basic block in LLVM. A basic block is simply a
@@ -49,9 +53,10 @@ template<> struct ilist_traits<Instruction>
 /// @brief LLVM Basic Block Representation
 class BasicBlock : public Value, // Basic blocks are data objects also
                    public ilist_node<BasicBlock> {
+
 public:
   typedef iplist<Instruction> InstListType;
-private :
+private:
   InstListType InstList;
   Function *Parent;
 

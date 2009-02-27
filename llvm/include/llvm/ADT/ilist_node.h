@@ -20,6 +20,9 @@ namespace llvm {
 template<typename NodeTy>
 struct ilist_nextprev_traits;
 
+template<typename NodeTy>
+struct ilist_traits;
+
 /// ilist_node - Base class that provides next/prev services for nodes
 /// that use ilist_nextprev_traits or ilist_default_traits.
 ///
@@ -36,6 +39,7 @@ private:
   void setNext(NodeTy *N) { Next = N; }
 protected:
   ilist_node() : Prev(0), Next(0) {}
+  friend struct ilist_traits<NodeTy>;
 };
 
 } // End llvm namespace
