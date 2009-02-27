@@ -151,6 +151,7 @@ void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
   
   if (Expr* E = dyn_cast_or_null<Expr>(getStmt(BR))) {
     R = E->getSourceRange();
+    assert(R.isValid());
     beg = &R;
     end = beg+1;
   }
@@ -160,8 +161,13 @@ void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
 
 SourceLocation BugReport::getLocation() const {  
   if (EndNode)
-    if (Stmt* S = GetCurrentOrPreviousStmt(EndNode))
+    if (Stmt* S = GetCurrentOrPreviousStmt(EndNode)) {
+      // For member expressions, return the location of the '.' or '->'.
+      if (MemberExpr* ME = dyn_cast<MemberExpr>(S))
+        return ME->getMemberLoc();
+
       return S->getLocStart();
+    }
 
   return FullSourceLoc();
 }
