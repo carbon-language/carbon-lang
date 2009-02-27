@@ -1579,6 +1579,13 @@ public:
   bool CheckTemplateDeclScope(Scope *S, 
                               MultiTemplateParamsArg &TemplateParameterLists);
 
+  //===--------------------------------------------------------------------===//
+  // C++ Template Instantiation
+  //
+  QualType InstantiateType(QualType T, const TemplateArgument *TemplateArgs,
+                           unsigned NumTemplateArgs,
+                           SourceLocation Loc, DeclarationName Entity);
+
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                            IdentifierInfo *ClassName,

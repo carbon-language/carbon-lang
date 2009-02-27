@@ -5,11 +5,11 @@
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-//+//===----------------------------------------------------------------------===/
+//===----------------------------------------------------------------------===/
 
 //
 //  This file implements semantic analysis for C++ templates.
-//+//===----------------------------------------------------------------------===/
+//===----------------------------------------------------------------------===/
 
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
@@ -757,6 +757,17 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
           break;
 
         ArgType = TTP->getDefaultArgument();
+
+        // If the argument type is dependent, instantiate it now based
+        // on the previously-computed template arguments.
+        if (ArgType->isDependentType())
+          ArgType = InstantiateType(ArgType, &Converted[0], Converted.size(),
+                                    TTP->getDefaultArgumentLoc(),
+                                    TTP->getDeclName());
+
+        if (ArgType.isNull())
+          break;
+
         ArgLoc = TTP->getDefaultArgumentLoc();
       } else if (NonTypeTemplateParmDecl *NTTP 
                    = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
