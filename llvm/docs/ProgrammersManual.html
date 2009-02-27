@@ -898,9 +898,21 @@ and basic blocks, which is why these are implemented with <tt>ilist</tt>s.</p>
 
 Related classes of interest are explained in the following subsections:
     <ul>
+      <li><a href="#dss_ilist_traits">ilist_traits</a></li>
       <li><a href="#dss_iplist">iplist</a></li>
       <li><a href="#dss_ilist_node">llvm/ADT/ilist_node.h</a></li>
     </ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_ilist_traits">ilist_traits</a>
+</div>
+
+<div class="doc_text">
+<p><tt>ilist_traits&lt;T&gt;</tt> is <tt>ilist&lt;T&gt;</tt>'s customization
+mechanism. <tt>iplist&lt;T&gt;</tt> (and consequently <tt>ilist&lt;T&gt;</tt>)
+publicly derive from this traits class.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -912,6 +924,9 @@ Related classes of interest are explained in the following subsections:
 <p><tt>iplist&lt;T&gt;</tt> is <tt>ilist&lt;T&gt;</tt>'s base and as such
 supports a slightly narrower interface. Notably, inserters from <tt>T&amp;</tt>
 are absent.</p>
+
+<p><tt>ilist_traits&lt;T&gt;</tt> is a public base of this class and can be
+used for a wide variety of customizations.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
