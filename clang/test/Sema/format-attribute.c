@@ -24,3 +24,11 @@ struct _mystruct {
 };
 
 typedef int (*f3_ptr)(char*,...) __attribute__((format(printf,1,0))); // no-error
+
+// <rdar://problem/6623513>
+int rdar6623513(void *, const char*, const char*, ...)
+  __attribute__ ((format (printf, 3, 0)));
+
+int rdar6623513_aux(int len, const char* s) {
+  rdar6623513(0, "hello", "%.*s", len, s);
+}

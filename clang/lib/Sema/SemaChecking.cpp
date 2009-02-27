@@ -143,12 +143,14 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   // Printf checking.
   if (const FormatAttr *Format = FDecl->getAttr<FormatAttr>()) {
     if (Format->getType() == "printf") {
-      bool HasVAListArg = false;
-      if (const FunctionProtoType *Proto 
-          = FDecl->getType()->getAsFunctionProtoType())
+      bool HasVAListArg = Format->getFirstArg() == 0;
+      if (!HasVAListArg) {
+        if (const FunctionProtoType *Proto 
+            = FDecl->getType()->getAsFunctionProtoType())
         HasVAListArg = !Proto->isVariadic();
+      }
       CheckPrintfArguments(TheCall, HasVAListArg, Format->getFormatIdx() - 1,
-                           Format->getFirstArg() - 1);
+                           HasVAListArg ? 0 : Format->getFirstArg() - 1);
     }
   }
 
