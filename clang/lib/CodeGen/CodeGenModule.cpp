@@ -713,17 +713,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   GV->setInitializer(Init);
   GV->setConstant(D->getType().isConstant(Context));
-
-  // FIXME: This is silly; getTypeAlign should just work for incomplete arrays
-  unsigned Align;
-  if (const IncompleteArrayType* IAT =
-        Context.getAsIncompleteArrayType(D->getType()))
-    Align = Context.getTypeAlign(IAT->getElementType());
-  else
-    Align = Context.getTypeAlign(D->getType());
-  if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
-    Align = std::max(Align, AA->getAlignment());
-  GV->setAlignment(Align / 8);
+  GV->setAlignment(getContext().getDeclAlignInBytes(D));
 
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
     setGlobalVisibility(GV, attr->getVisibility());
