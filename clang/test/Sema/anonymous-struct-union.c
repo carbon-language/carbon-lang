@@ -79,3 +79,11 @@ struct s0 { union { int f0; }; };
 
 // <rdar://problem/6481130>
 typedef struct { }; // expected-error{{declaration does not declare anything}}
+
+// PR3675
+struct s1 {
+  int f0; // expected-note{{previous declaration is here}}
+  union {
+    int f0; // expected-error{{member of anonymous union redeclares 'f0'}}
+  };
+};
