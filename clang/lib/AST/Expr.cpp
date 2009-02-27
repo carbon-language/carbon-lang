@@ -334,7 +334,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     // The condition must be evaluated, but if either the LHS or RHS is a
     // warning, warn about them.
     const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
-    if (Exp->getLHS()->isUnusedResultAWarning(Loc, R1, R2))
+    if (Exp->getLHS() && Exp->getLHS()->isUnusedResultAWarning(Loc, R1, R2))
       return true;
     return Exp->getRHS()->isUnusedResultAWarning(Loc, R1, R2);
   }
