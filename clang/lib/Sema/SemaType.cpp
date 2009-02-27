@@ -74,10 +74,10 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     // parser already though by it pretending to have seen an 'int' in this
     // case.
     if (getLangOptions().ImplicitInt) {
-      if ((DS.getParsedSpecifiers() & (DeclSpec::PQ_StorageClassSpecifier |
-                                       DeclSpec::PQ_TypeSpecifier |
-                                       DeclSpec::PQ_TypeQualifier)) == 0)
-        Diag(DS.getSourceRange().getBegin(), diag::ext_missing_declspec);
+      // In C89 mode, we only warn if there is a completely missing declspec
+      // when one is not allowed.
+      if (DS.isEmpty())
+        Diag(DS.getSourceRange().getBegin(), diag::warn_missing_declspec);
     } else if (!DS.hasTypeSpecifier()) {
       // C99 and C++ require a type specifier.  For example, C99 6.7.2p2 says:
       // "At least one type specifier shall be given in the declaration
@@ -86,7 +86,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
       // FIXME: Does Microsoft really have the implicit int extension in C++?
       unsigned DK = getLangOptions().CPlusPlus && !getLangOptions().Microsoft?
           diag::err_missing_type_specifier
-        : diag::ext_missing_type_specifier;
+        : diag::warn_missing_type_specifier;
       Diag(DS.getSourceRange().getBegin(), DK);
     }
       

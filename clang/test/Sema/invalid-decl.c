@@ -6,7 +6,7 @@ void test() {
 
 
 // PR2400
-typedef xtype (*zend_stream_fsizer_t)(void* handle); // expected-error {{function cannot return array or function type}}
+typedef xtype (*zend_stream_fsizer_t)(void* handle); // expected-error {{function cannot return array or function type}} expected-warning {{type specifier missing, defaults to 'int'}} expected-warning {{type specifier missing, defaults to 'int'}}
 
 typedef struct _zend_module_entry zend_module_entry;
 struct _zend_module_entry {

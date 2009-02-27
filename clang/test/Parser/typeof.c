@@ -11,7 +11,7 @@ static void test() {
   typeof(TInt) anInt; 
   short TInt eee; // expected-error{{parse error}}
   void ary[7] fff; // expected-error{{array has incomplete element type 'void'}} expected-error{{parse error}}
-  typeof(void ary[7]) anIntError; // expected-error{{expected ')'}} expected-note {{to match this '('}}
+  typeof(void ary[7]) anIntError; // expected-error{{expected ')'}} expected-note {{to match this '('}}  expected-warning {{type specifier missing, defaults to 'int'}}
   typeof(const int) aci; 
   const typeof (*pi) aConstInt; 
   int xx;

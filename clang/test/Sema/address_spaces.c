@@ -5,7 +5,7 @@
 #define _AS3 __attribute__((address_space(3)))
 
 void foo(_AS3 float *a) {
-  _AS2 *x;
+  _AS2 *x;// expected-warning {{type specifier missing, defaults to 'int'}}
   _AS1 float * _AS2 *B;
 
   int _AS1 _AS2 *Y;   // expected-error {{multiple address spaces specified for type}}

@@ -1413,12 +1413,14 @@ DIAG(err_collection_expr_type, ERROR,
 // Type
 DIAG(ext_invalid_sign_spec, EXTENSION,
      "'%0' cannot be signed or unsigned")
-DIAG(ext_missing_declspec, EXTENSION,
+DIAG(warn_missing_declspec, WARNING,
      "declaration specifier missing, defaulting to 'int'")
-DIAG(ext_missing_type_specifier, EXTENSION,
+DIAG(warn_missing_type_specifier, WARNING,
      "type specifier missing, defaults to 'int'")
 DIAG(err_missing_type_specifier, ERROR,
      "C++ requires a type specifier for all declarations")
+DIAG(err_missing_param_declspec, ERROR,
+     "parameter requires a declaration specifier")
 DIAG(warn_objc_array_of_interfaces, WARNING,
      "array of interface %0 should probably be an array of pointers")
 DIAG(ext_c99_array_usage, EXTENSION,
