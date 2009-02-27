@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+mmx
+; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+mmx,+sse2
 ; rdar://6602459
 
 @g_v1di = external global <1 x i64>
