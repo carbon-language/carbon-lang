@@ -4795,7 +4795,7 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 // Lower ISD::GlobalTLSAddress using the "initial exec" (for no-pic) or
 // "local exec" model.
 static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
-                                     const MVT PtrVT) {
+                                   const MVT PtrVT, TLSModel::Model model) {
   DebugLoc dl = GA->getDebugLoc();
   // Get the Thread Pointer
   SDValue ThreadPointer = DAG.getNode(X86ISD::THREAD_POINTER,
@@ -4807,7 +4807,7 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                              GA->getOffset());
   SDValue Offset = DAG.getNode(X86ISD::Wrapper, dl, PtrVT, TGA);
 
-  if (GA->getGlobal()->isDeclaration()) // initial exec TLS model
+  if (model == TLSModel::InitialExec)
     Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
                          PseudoSourceValue::getGOT(), 0);
 
@@ -4823,15 +4823,31 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) {
   assert(Subtarget->isTargetELF() &&
          "TLS not implemented for non-ELF targets");
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
-  // If the relocation model is PIC, use the "General Dynamic" TLS Model,
-  // otherwise use the "Local Exec"TLS Model
+  GlobalValue *GV = GA->getGlobal();
+  TLSModel::Model model =
+    getTLSModel (GV, getTargetMachine().getRelocationModel());
   if (Subtarget->is64Bit()) {
-    return LowerToTLSGeneralDynamicModel64(GA, DAG, getPointerTy());
+    switch (model) {
+    case TLSModel::GeneralDynamic:
+    case TLSModel::LocalDynamic: // not implemented
+    case TLSModel::InitialExec:  // not implemented
+    case TLSModel::LocalExec:    // not implemented
+      return LowerToTLSGeneralDynamicModel64(GA, DAG, getPointerTy());
+    default:
+      assert (0 && "Unknown TLS model");
+    }
   } else {
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+    switch (model) {
+    case TLSModel::GeneralDynamic:
+    case TLSModel::LocalDynamic: // not implemented
       return LowerToTLSGeneralDynamicModel32(GA, DAG, getPointerTy());
-    else
-      return LowerToTLSExecModel(GA, DAG, getPointerTy());
+
+    case TLSModel::InitialExec:
+    case TLSModel::LocalExec:
+      return LowerToTLSExecModel(GA, DAG, getPointerTy(), model);
+    default:
+      assert (0 && "Unknown TLS model");
+    }
   }
 }
 

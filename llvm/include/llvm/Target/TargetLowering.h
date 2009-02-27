@@ -30,6 +30,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/DebugLoc.h"
+#include "llvm/Target/TargetMachine.h"
 #include <climits>
 #include <map>
 #include <vector>
@@ -53,6 +54,18 @@ namespace llvm {
   class TargetRegisterClass;
   class TargetSubtarget;
   class Value;
+
+  // FIXME: should this be here?
+  namespace TLSModel {
+    enum Model {
+      GeneralDynamic,
+      LocalDynamic,
+      InitialExec,
+      LocalExec
+    };
+  }
+  TLSModel::Model getTLSModel(const GlobalValue *GV, Reloc::Model reloc);
+
 
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to

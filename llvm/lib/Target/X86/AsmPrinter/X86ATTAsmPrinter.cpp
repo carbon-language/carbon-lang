@@ -439,13 +439,30 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     printOffset(MO.getOffset());
 
     if (isThreadLocal) {
-      if (TM.getRelocationModel() == Reloc::PIC_ || Subtarget->is64Bit())
-        O << "@TLSGD"; // general dynamic TLS model
-      else
-        if (GV->isDeclaration())
-          O << "@INDNTPOFF"; // initial exec TLS model
+      TLSModel::Model model = getTLSModel(GVar, TM.getRelocationModel());
+      switch (model) {
+      case TLSModel::GeneralDynamic:
+        O << "@TLSGD";
+        break;
+      case TLSModel::LocalDynamic:
+        // O << "@TLSLD"; // local dynamic not implemented
+	O << "@TLSGD";
+        break;
+      case TLSModel::InitialExec:
+        if (Subtarget->is64Bit())
+          O << "@TLSGD"; // 64 bit intial exec not implemented
         else
-          O << "@NTPOFF"; // local exec TLS model
+          O << "@INDNTPOFF";
+        break;
+      case TLSModel::LocalExec:
+        if (Subtarget->is64Bit())
+          O << "@TLSGD"; // 64 bit local exec not implemented
+        else
+	  O << "@NTPOFF";
+        break;
+      default:
+        assert (0 && "Unknown TLS model");
+      }
     } else if (isMemOp) {
       if (shouldPrintGOT(TM, Subtarget)) {
         if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
