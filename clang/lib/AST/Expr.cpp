@@ -1331,49 +1331,6 @@ bool ChooseExpr::isConditionTrue(ASTContext &C) const {
   return getCond()->getIntegerConstantExprValue(C) != 0;
 }
 
-static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E) {
-  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-    QualType Ty = ME->getBase()->getType();
-    
-    RecordDecl *RD = Ty->getAsRecordType()->getDecl();
-    const ASTRecordLayout &RL = C.getASTRecordLayout(RD);
-    if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
-      // FIXME: This is linear time. And the fact that we're indexing
-      // into the layout by position in the record means that we're
-      // either stuck numbering the fields in the AST or we have to keep
-      // the linear search (yuck and yuck).
-      unsigned i = 0;
-      for (RecordDecl::field_iterator Field = RD->field_begin(),
-                                   FieldEnd = RD->field_end();
-           Field != FieldEnd; (void)++Field, ++i) {
-        if (*Field == FD)
-          break;
-      }
-      
-      return RL.getFieldOffset(i) + evaluateOffsetOf(C, ME->getBase());
-    }
-  } else if (const ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(E)) {
-    const Expr *Base = ASE->getBase();
-    
-    int64_t size = C.getTypeSize(ASE->getType());
-    size *= ASE->getIdx()->getIntegerConstantExprValue(C).getSExtValue();
-    
-    return size + evaluateOffsetOf(C, Base);
-  } else if (isa<CompoundLiteralExpr>(E))
-    return 0;  
-
-  assert(0 && "Unknown offsetof subexpression!");
-  return 0;
-}
-
-int64_t UnaryOperator::evaluateOffsetOf(ASTContext& C) const
-{
-  assert(Opc == OffsetOf && "Unary operator not offsetof!");
-  
-  unsigned CharSize = C.Target.getCharWidth();
-  return ::evaluateOffsetOf(C, cast<Expr>(Val)) / CharSize;
-}
-
 void SizeOfAlignOfExpr::Destroy(ASTContext& C) {
   // Override default behavior of traversing children. If this has a type
   // operand and the type is a variable-length array, the child iteration

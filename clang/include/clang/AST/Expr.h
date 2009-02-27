@@ -656,8 +656,6 @@ public:
   }
   static bool classof(const UnaryOperator *) { return true; }
   
-  int64_t evaluateOffsetOf(ASTContext& C) const;
-  
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();

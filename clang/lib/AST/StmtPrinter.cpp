@@ -724,7 +724,7 @@ void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
 }
 
 bool StmtPrinter::PrintOffsetOfDesignator(Expr *E) {
-  if (isa<CompoundLiteralExpr>(E)) {
+  if (isa<UnaryOperator>(E)) {
     // Base case, print the type and comma.
     OS << E->getType().getAsString() << ", ";
     return true;

@@ -1064,8 +1064,16 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   // Special case unary operators that do not need their subexpression
   // evaluated.  offsetof/sizeof/alignof are all special.
-  if (E->isOffsetOfOp())
-    return Success(E->evaluateOffsetOf(Info.Ctx), E);
+  if (E->isOffsetOfOp()) {
+    // The AST for offsetof is defined in such a way that we can just
+    // directly Evaluate it as an l-value.
+    APValue LV;
+    if (!EvaluateLValue(E->getSubExpr(), LV, Info))
+      return false;
+    if (LV.getLValueBase())
+      return false;
+    return Success(LV.getLValueOffset(), E);
+  }
 
   if (E->getOpcode() == UnaryOperator::LNot) {
     // LNot's operand isn't necessarily an integer, so we handle it specially.

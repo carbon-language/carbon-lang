@@ -4270,16 +4270,17 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   if (!Dependent && !ArgTy->isRecordType())
     return Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy;
 
-  // Otherwise, create a compound literal expression as the base, and
-  // iteratively process the offsetof designators.
-  InitListExpr *IList =
-      new (Context) InitListExpr(SourceLocation(), 0, 0, SourceLocation());
-  IList->setType(ArgTy);
-  Expr *Res =
-      new (Context) CompoundLiteralExpr(SourceLocation(), ArgTy, IList, false);
+  // Otherwise, create a null pointer as the base, and iteratively process
+  // the offsetof designators.
+  QualType ArgTyPtr = Context.getPointerType(ArgTy);
+  Expr* Res = new (Context) ImplicitValueInitExpr(ArgTyPtr);
+  Res = new (Context) UnaryOperator(Res, UnaryOperator::Deref, 
+                                    ArgTy, SourceLocation());
 
   // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
   // GCC extension, diagnose them.
+  // FIXME: This diagnostic isn't actually visible because the location is in
+  // a system header!
   if (NumComponents != 1)
     Diag(BuiltinLoc, diag::ext_offsetof_extended_field_designator)
       << SourceRange(CompPtr[1].LocStart, CompPtr[NumComponents-1].LocEnd);
@@ -4299,6 +4300,10 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         }
 
         // FIXME: C++: Verify that operator[] isn't overloaded.
+
+        // Promote the array so it looks more like a normal array subscript
+        // expression.
+        DefaultFunctionArrayConversion(Res);
 
         // C99 6.5.2.1p1
         Expr *Idx = static_cast<Expr*>(OC.U.E);
