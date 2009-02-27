@@ -393,12 +393,13 @@ it is rendered.
 <p>In some cases, the front end emits diagnostics when it is clear
 that some small change to the source code would fix the problem. For
 example, a missing semicolon at the end of a statement or a use of
-deprecated syntax that is easily rewritten into a more modern form. In
-these cases, the front end should emit the diagnostic and recover
-gracefully.</p>
+deprecated syntax that is easily rewritten into a more modern form. 
+Clang tries very hard to emit the diagnostic and recover gracefully
+in these and other cases.</p>
 
-<p>In these cases, the diagnostic can be annotation with a code
-modification "hint" that describes how to modify the code referenced
+<p>However, for these cases where the fix is obvious, the diagnostic 
+can be annotated with a code
+modification "hint" that describes how to change the code referenced
 by the diagnostic to fix the problem. For example, it might add the
 missing semicolon at the end of the statement or rewrite the use of a
 deprecated construct into something more palatable. Here is one such
