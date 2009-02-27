@@ -77,7 +77,9 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
       // In C89 mode, we only warn if there is a completely missing declspec
       // when one is not allowed.
       if (DS.isEmpty())
-        Diag(DS.getSourceRange().getBegin(), diag::warn_missing_declspec);
+        Diag(DS.getSourceRange().getBegin(), diag::warn_missing_declspec)
+        << CodeModificationHint::CreateInsertion(DS.getSourceRange().getBegin(),
+                                                 "int");
     } else if (!DS.hasTypeSpecifier()) {
       // C99 and C++ require a type specifier.  For example, C99 6.7.2p2 says:
       // "At least one type specifier shall be given in the declaration
@@ -87,7 +89,9 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
       unsigned DK = getLangOptions().CPlusPlus && !getLangOptions().Microsoft?
           diag::err_missing_type_specifier
         : diag::warn_missing_type_specifier;
-      Diag(DS.getSourceRange().getBegin(), DK);
+      Diag(DS.getSourceRange().getBegin(), DK)
+        << CodeModificationHint::CreateInsertion(DS.getSourceRange().getBegin(),
+                                                 "int");
     }
       
     // FALL THROUGH.  
