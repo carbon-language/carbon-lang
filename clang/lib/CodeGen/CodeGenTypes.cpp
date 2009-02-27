@@ -555,6 +555,11 @@ void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
   // of the result doesn't matter because anyone allocating
   // structures should be aligning them appropriately anyway.
   // FIXME: We can be a bit more intuitive in a lot of cases.
-  STy = llvm::ArrayType::get(llvm::Type::Int8Ty, RL.getSize() / 8);
+  // FIXME: Make this a struct type to work around PR2399; the
+  // C backend doesn't like structs using array types.
+  std::vector<const llvm::Type*> LLVMFields;
+  LLVMFields.push_back(llvm::ArrayType::get(llvm::Type::Int8Ty,
+                                            RL.getSize() / 8));
+  STy = llvm::StructType::get(LLVMFields, true);
   assert(CGT.getTargetData().getTypePaddedSizeInBits(STy) == RL.getSize());
 }
