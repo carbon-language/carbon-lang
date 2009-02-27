@@ -108,7 +108,9 @@ public:
   /// getTargetDataString - Return the pointer size and type alignment
   /// properties of this subtarget.
   const char *getTargetDataString() const {
-    return isPPC64() ? "E-p:64:64-f64:32:64-i64:32:64-f128:64:128"
+    // Note, the alignment values for f64 and i64 on ppc64 in Darwin
+    // documentation are wrong; these are correct (i.e. "what gcc does").
+    return isPPC64() ? "E-p:64:64-f64:64:64-i64:64:64-f128:64:128"
                      : "E-p:32:32-f64:32:64-i64:32:64-f128:64:128";
   }
 
