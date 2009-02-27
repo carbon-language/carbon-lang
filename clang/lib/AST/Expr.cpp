@@ -909,6 +909,15 @@ struct ICEDiag {
 
 ICEDiag NoDiag() { return ICEDiag(); }
 
+static ICEDiag CheckEvalInICE(const Expr* E, ASTContext &Ctx) {
+  Expr::EvalResult EVResult;
+  if (!E->Evaluate(EVResult, Ctx) || EVResult.HasSideEffects ||
+      !EVResult.Val.isInt()) {
+    return ICEDiag(2, E->getLocStart());
+  }
+  return NoDiag();
+}
+
 static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   if (!E->getType()->isIntegralType()) {
     return ICEDiag(2, E->getLocStart());
@@ -929,8 +938,8 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CallExprClass: 
   case Expr::CXXOperatorCallExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);
-    if (CE->isBuiltinCall(Ctx) && CE->isEvaluatable(Ctx))
-      return NoDiag();
+    if (CE->isBuiltinCall(Ctx))
+      return CheckEvalInICE(E, Ctx);
     return ICEDiag(2, E->getLocStart());
   }
   case Expr::DeclRefExprClass:
@@ -959,11 +968,17 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case UnaryOperator::Plus:
     case UnaryOperator::Minus:
     case UnaryOperator::Not:
+    case UnaryOperator::Real:
+    case UnaryOperator::Imag:
       return CheckICE(Exp->getSubExpr(), Ctx);
     case UnaryOperator::OffsetOf:
-      // Note that per C99, a non-constant offsetof is illegal.
-      // FIXME: Do we need to check whether this is evaluatable?
-      return NoDiag();
+      // Note that per C99, offsetof must be an ICE. And AFAIK, using
+      // Evaluate matches the proposed gcc behavior for cases like
+      // "offsetof(struct s{int x[4];}, x[!.0])".  This doesn't affect
+      // compliance: we should warn earlier for offsetof expressions with
+      // array subscripts that aren't ICEs, and if the array subscripts
+      // are ICEs, the value of the offsetof must be an integer constant.
+      return CheckEvalInICE(E, Ctx);
     }
   }
   case Expr::SizeOfAlignOfExprClass: {
@@ -996,12 +1011,31 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case BinaryOperator::Comma: {
       ICEDiag LHSResult = CheckICE(Exp->getLHS(), Ctx);
       ICEDiag RHSResult = CheckICE(Exp->getRHS(), Ctx);
-      if (Exp->getOpcode() == BinaryOperator::Comma &&
-          Ctx.getLangOptions().C99) {
-        // C99 6.6p3 introduces a strange edge case: comma can be in an ICE
-        // if it isn't evaluated.
-        if (LHSResult.Val == 0 && RHSResult.Val == 0)
-          return ICEDiag(1, E->getLocStart());
+      if (Exp->getOpcode() == BinaryOperator::Div ||
+          Exp->getOpcode() == BinaryOperator::Rem) {
+        // Evaluate gives an error for undefined Div/Rem, so make sure
+        // we don't evaluate one.
+        if (LHSResult.Val != 2 && RHSResult.Val != 2) {
+          llvm::APSInt REval = Exp->getRHS()->EvaluateAsInt(Ctx);
+          if (REval == 0)
+            return ICEDiag(1, E->getLocStart());
+          if (REval.isSigned() && REval.isAllOnesValue()) {
+            llvm::APSInt LEval = Exp->getLHS()->EvaluateAsInt(Ctx);
+            if (LEval.isMinSignedValue())
+              return ICEDiag(1, E->getLocStart());
+          }
+        }
+      }
+      if (Exp->getOpcode() == BinaryOperator::Comma) {
+        if (Ctx.getLangOptions().C99) {
+          // C99 6.6p3 introduces a strange edge case: comma can be in an ICE
+          // if it isn't evaluated.
+          if (LHSResult.Val == 0 && RHSResult.Val == 0)
+            return ICEDiag(1, E->getLocStart());
+        } else {
+          // In both C89 and C++, commas in ICEs are illegal.
+          return ICEDiag(2, E->getLocStart());
+        }
       }
       if (LHSResult.Val >= RHSResult.Val)
         return LHSResult;
@@ -1015,15 +1049,12 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
         // Rare case where the RHS has a comma "side-effect"; we need
         // to actually check the condition to see whether the side
         // with the comma is evaluated.
-        Expr::EvalResult Result;
-        if (!Exp->getLHS()->Evaluate(Result, Ctx))
-          return ICEDiag(1, E->getLocStart());
         if ((Exp->getOpcode() == BinaryOperator::LAnd) !=
-            (Result.Val.getInt() == 0))
+            (Exp->getLHS()->EvaluateAsInt(Ctx) == 0))
           return RHSResult;
         return NoDiag();
       }
-      
+
       if (LHSResult.Val >= RHSResult.Val)
         return LHSResult;
       return RHSResult;
@@ -1051,7 +1082,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
         Expr::EvalResult EVResult;
         if (!E->Evaluate(EVResult, Ctx) || EVResult.HasSideEffects ||
             !EVResult.Val.isInt()) {
-          ICEDiag(2, E->getLocStart());
+          return ICEDiag(2, E->getLocStart());
         }
         return NoDiag();
       }
@@ -1071,16 +1102,18 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     // Rare case where the diagnostics depend on which side is evaluated
     // Note that if we get here, CondResult is 0, and at least one of
     // TrueResult and FalseResult is non-zero.
-    Expr::EvalResult Result;
-    if (!Exp->getCond()->Evaluate(Result, Ctx))
-      return ICEDiag(1, E->getLocStart());
-    if (Result.Val.getInt() == 0) {
+    if (Exp->getCond()->EvaluateAsInt(Ctx) == 0) {
       return FalseResult;
     }
     return TrueResult;
   }
   case Expr::CXXDefaultArgExprClass:
     return CheckICE(cast<CXXDefaultArgExpr>(E)->getExpr(), Ctx);
+  case Expr::ChooseExprClass: {
+    const ChooseExpr *CE = cast<ChooseExpr>(E);
+    Expr *SubExpr = CE->isConditionTrue(Ctx) ? CE->getLHS() : CE->getRHS();
+    return CheckICE(SubExpr, Ctx);
+  }
   }
 }
 
@@ -1092,11 +1125,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     return false;
   }
   EvalResult EvalResult;
-  if (!Evaluate(EvalResult, Ctx) || EvalResult.HasSideEffects ||
-      !EvalResult.Val.isInt()) {
-    if (Loc) *Loc = EvalResult.DiagLoc;
-    return false;
-  }
+  if (!Evaluate(EvalResult, Ctx))
+    assert(0 && "ICE cannot be evaluated!");
+  assert(!EvalResult.HasSideEffects && "ICE with side effects!");
+  assert(EvalResult.Val.isInt() && "ICE that isn't integer!");
   Result = EvalResult.Val.getInt();
   return true;
 }
