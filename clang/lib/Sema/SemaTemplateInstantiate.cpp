@@ -17,283 +17,246 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
 //===----------------------------------------------------------------------===/
 // Template Instantiation for Types
 //===----------------------------------------------------------------------===/
+namespace {
+  class VISIBILITY_HIDDEN TemplateTypeInstantiator {
+    Sema &SemaRef;
+    const TemplateArgument *TemplateArgs;
+    unsigned NumTemplateArgs;
+    SourceLocation Loc;
+    DeclarationName Entity;
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const ExtQualType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+  public:
+    TemplateTypeInstantiator(Sema &SemaRef, 
+                             const TemplateArgument *TemplateArgs,
+                             unsigned NumTemplateArgs,
+                             SourceLocation Loc,
+                             DeclarationName Entity) 
+      : SemaRef(SemaRef), TemplateArgs(TemplateArgs), 
+        NumTemplateArgs(NumTemplateArgs), Loc(Loc), Entity(Entity) { }
+
+    QualType operator()(QualType T) const { return Instantiate(T); }
+    
+    QualType Instantiate(QualType T) const;
+
+    // Declare instantiate functions for each type.
+#define TYPE(Class, Base)                                       \
+    QualType Instantiate##Class##Type(const Class##Type *T,     \
+                                      unsigned Quals) const;
+#define ABSTRACT_TYPE(Class, Base)
+#include "clang/AST/TypeNodes.def"
+  };
+}
+
+QualType 
+TemplateTypeInstantiator::InstantiateExtQualType(const ExtQualType *T,
+                                                 unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate ExtQualType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const BuiltinType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateBuiltinType(const BuiltinType *T,
+                                                 unsigned Quals) const {
   assert(false && "BuiltinType is never dependent and cannot be instantiated");
-  return QualType(T, CVR);
+  return QualType(T, Quals);
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const FixedWidthIntType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::
+InstantiateFixedWidthIntType(const FixedWidthIntType *T, unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate FixedWidthIntType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const ComplexType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateComplexType(const ComplexType *T,
+                                                 unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate ComplexType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const PointerType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate PointerType yet");
-  return QualType();
+QualType 
+TemplateTypeInstantiator::InstantiatePointerType(const PointerType *T,
+                                                 unsigned Quals) const {
+  QualType PointeeType = Instantiate(T->getPointeeType());
+  if (PointeeType.isNull())
+    return QualType();
+
+  return SemaRef.BuildPointerType(PointeeType, Quals, Loc, Entity);
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const BlockPointerType *T,
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateBlockPointerType(const BlockPointerType *T,
+                                                      unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate BlockPointerType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const ReferenceType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ReferenceType yet");
-  return QualType();
+QualType 
+TemplateTypeInstantiator::InstantiateReferenceType(const ReferenceType *T, 
+                                                   unsigned Quals) const {
+  QualType ReferentType = Instantiate(T->getPointeeType());
+  if (ReferentType.isNull())
+    return QualType();
+
+  return SemaRef.BuildReferenceType(ReferentType, Quals, Loc, Entity);
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const MemberPointerType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::
+InstantiateMemberPointerType(const MemberPointerType *T,
+                             unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate MemberPointerType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const ConstantArrayType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ConstantArrayType yet");
-  return QualType();
+QualType 
+TemplateTypeInstantiator::
+InstantiateConstantArrayType(const ConstantArrayType *T, 
+                             unsigned Quals) const {
+  QualType ElementType = Instantiate(T->getElementType());
+  if (ElementType.isNull())
+    return ElementType;
+  
+  // Build a temporary integer literal to specify the size for
+  // BuildArrayType. Since we have already checked the size as part of
+  // creating the dependent array type in the first place, we know
+  // there aren't any errors.
+  IntegerLiteral ArraySize(T->getSize(), SemaRef.Context.IntTy, Loc);
+  return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(), 
+                                &ArraySize, T->getIndexTypeQualifier(), 
+                                Loc, Entity);
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const IncompleteArrayType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate IncompleteArrayType yet");
-  return QualType();
+QualType 
+TemplateTypeInstantiator::
+InstantiateIncompleteArrayType(const IncompleteArrayType *T,
+                               unsigned Quals) const {
+  QualType ElementType = Instantiate(T->getElementType());
+  if (ElementType.isNull())
+    return ElementType;
+  
+  return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(), 
+                                0, T->getIndexTypeQualifier(), 
+                                Loc, Entity);
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const VariableArrayType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType
+TemplateTypeInstantiator::
+InstantiateVariableArrayType(const VariableArrayType *T,
+                             unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate VariableArrayType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const DependentSizedArrayType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::
+InstantiateDependentSizedArrayType(const DependentSizedArrayType *T,
+                                   unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate DependentSizedArrayType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const VectorType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateVectorType(const VectorType *T,
+                                             unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate VectorType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const ExtVectorType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateExtVectorType(const ExtVectorType *T,
+                                                   unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate ExtVectorType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const FunctionProtoType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::
+InstantiateFunctionProtoType(const FunctionProtoType *T,
+                             unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate FunctionProtoType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const FunctionNoProtoType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::
+InstantiateFunctionNoProtoType(const FunctionNoProtoType *T,
+                               unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate FunctionNoProtoType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const TypedefType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateTypedefType(const TypedefType *T,
+                                                 unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate TypedefType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const TypeOfExprType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateTypeOfExprType(const TypeOfExprType *T,
+                                                    unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate TypeOfExprType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const TypeOfType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateTypeOfType(const TypeOfType *T,
+                                                unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate TypeOfType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const RecordType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateRecordType(const RecordType *T,
+                                                unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate RecordType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const CXXRecordType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateCXXRecordType(const CXXRecordType *T,
+                                                   unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate CXXRecordType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const EnumType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::InstantiateEnumType(const EnumType *T,
+                                              unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate EnumType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const TemplateTypeParmType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::
+InstantiateTemplateTypeParmType(const TemplateTypeParmType *T,
+                                unsigned Quals) const {
   if (T->getDepth() == 0) {
     // Replace the template type parameter with its corresponding
     // template argument.
@@ -301,7 +264,7 @@ static QualType PerformTypeInstantiation(Sema &SemaRef,
     assert(TemplateArgs[T->getIndex()].getKind() == TemplateArgument::Type &&
            "Template argument kind mismatch");
     QualType Result = TemplateArgs[T->getIndex()].getAsType();
-    if (Result.isNull() || !CVR) 
+    if (Result.isNull() || !Quals) 
       return Result;
 
     // C++ [dcl.ref]p1:
@@ -309,10 +272,10 @@ static QualType PerformTypeInstantiation(Sema &SemaRef,
     //   the cv-qualifiers are introduced through the use of a
     //   typedef (7.1.3) or of a template type argument (14.3), in
     //   which case the cv-qualifiers are ignored.
-    if (CVR && Result->isReferenceType())
-      CVR = 0;
+    if (Quals && Result->isReferenceType())
+      Quals = 0;
 
-    return QualType(Result.getTypePtr(), CVR | Result.getCVRQualifiers());
+    return QualType(Result.getTypePtr(), Quals | Result.getCVRQualifiers());
   } 
 
   // The template type parameter comes from an inner template (e.g.,
@@ -321,69 +284,70 @@ static QualType PerformTypeInstantiation(Sema &SemaRef,
   // parameter with the template "level" reduced by one.
   return SemaRef.Context.getTemplateTypeParmType(T->getDepth() - 1,
                                                  T->getIndex(),
-                                                 T->getName());
+                                                 T->getName())
+    .getQualifiedType(Quals);
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                     const ClassTemplateSpecializationType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
+QualType 
+TemplateTypeInstantiator::
+InstantiateClassTemplateSpecializationType(
+                                  const ClassTemplateSpecializationType *T,
+                                  unsigned Quals) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate ClassTemplateSpecializationType yet");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const ObjCInterfaceType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ObjCInterfaceType yet");
+QualType 
+TemplateTypeInstantiator::
+InstantiateObjCInterfaceType(const ObjCInterfaceType *T,
+                             unsigned Quals) const {
+  assert(false && "Objective-C types cannot be dependent");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const ObjCQualifiedInterfaceType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ObjCQualifiedInterfaceType yet");
+QualType 
+TemplateTypeInstantiator::
+InstantiateObjCQualifiedInterfaceType(const ObjCQualifiedInterfaceType *T,
+                                      unsigned Quals) const {
+  assert(false && "Objective-C types cannot be dependent");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const ObjCQualifiedIdType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ObjCQualifiedIdType yet");
+QualType 
+TemplateTypeInstantiator::
+InstantiateObjCQualifiedIdType(const ObjCQualifiedIdType *T,
+                               unsigned Quals) const {
+  assert(false && "Objective-C types cannot be dependent");
   return QualType();
 }
 
-static QualType PerformTypeInstantiation(Sema &SemaRef, 
-                                         const ObjCQualifiedClassType *T, 
-                                         unsigned CVR,
-                                         const TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation Loc,
-                                         DeclarationName Entity) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ObjCQualifiedClassType yet");
+QualType 
+TemplateTypeInstantiator::
+InstantiateObjCQualifiedClassType(const ObjCQualifiedClassType *T,
+                                  unsigned Quals) const {
+  assert(false && "Objective-C types cannot be dependent");
   return QualType();
 }
 
+/// \brief The actual implementation of Sema::InstantiateType().
+QualType TemplateTypeInstantiator::Instantiate(QualType T) const {
+  // If T is not a dependent type, there is nothing to do.
+  if (!T->isDependentType())
+    return T;
+
+  switch (T->getTypeClass()) {
+#define TYPE(Class, Base)                                               \
+  case Type::Class:                                                     \
+    return Instantiate##Class##Type(cast<Class##Type>(T.getTypePtr()),  \
+                                    T.getCVRQualifiers());
+#define ABSTRACT_TYPE(Class, Base)
+#include "clang/AST/TypeNodes.def"
+  }
+  
+  assert(false && "Not all types have been decoded for instantiation");
+  return QualType();
+}
 
 /// \brief Instantiate the type T with a given set of template arguments.
 ///
@@ -422,17 +386,7 @@ QualType Sema::InstantiateType(QualType T,
   if (!T->isDependentType())
     return T;
 
-  switch (T->getTypeClass()) {
-#define TYPE(Class, Base)                                               \
-  case Type::Class:                                                     \
-    return PerformTypeInstantiation(*this,                              \
-                                    cast<Class##Type>(T.getTypePtr()),  \
-                                    T.getCVRQualifiers(), TemplateArgs, \
-                                    NumTemplateArgs, Loc, Entity);
-#define ABSTRACT_TYPE(Class, Base)
-#include "clang/AST/TypeNodes.def"
-  }
-  
-  assert(false && "Not all types have been decoded for instantiation");
-  return QualType();
+  TemplateTypeInstantiator Instantiator(*this, TemplateArgs, NumTemplateArgs,
+                                        Loc, Entity);
+  return Instantiator(T);
 }

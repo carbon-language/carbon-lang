@@ -1,5 +1,4 @@
 // RUN: clang -fsyntax-only -verify %s
-
 template<typename T, typename U = const T> struct Def1;
 
 template<> struct Def1<int> { 
@@ -10,10 +9,72 @@ template<> struct Def1<const int> { // expected-note{{previous definition is her
   void bar();
 };
 
-void test_Def1(Def1<int, const int> *d1, Def1<const int, const int> *d2) {
+template<> struct Def1<int&> {
+  void wibble();
+};
+
+void test_Def1(Def1<int, const int> *d1, Def1<const int, const int> *d2,
+               Def1<int&, int&> *d3) {
   d1->foo();
   d2->bar();
+  d3->wibble();
 }
 
+template<typename T,  // FIXME: bad error message below, needs better location info
+         typename T2 = const T*>  // expected-error{{'T2' declared as a pointer to a reference}}
+  struct Def2;
+
+template<> struct Def2<int> { 
+  void foo();
+};
+
+void test_Def2(Def2<int, int const*> *d2) {
+  d2->foo();
+}
+
+Def2<int&> *d2;
+
+
 template<> struct Def1<const int, const int> { }; // expected-error{{redefinition of 'Def1'}}
+
+template<typename T, typename T2 = T&> struct Def3;
+
+template<> struct Def3<int> { 
+  void foo();
+};
+
+template<> struct Def3<int&> { 
+  void bar();
+};
+
+void test_Def3(Def3<int, int&> *d3a, Def3<int&, int&> *d3b) {
+  d3a->foo();
+  d3b->bar();
+}
+
+
+template<typename T, typename T2 = T[]> struct Def4;
+
+template<> struct Def4<int> {
+  void foo();
+};
+
+void test_Def4(Def4<int, int[]> *d4a) {
+  d4a->foo();
+}
+
+template<typename T, typename T2 = T const[12]> struct Def5;
+
+template<> struct Def5<int> {
+  void foo();
+};
+
+template<> struct Def5<int, int const[13]> {
+  void bar();
+};
+
+void test_Def5(Def5<int, const int[12]> *d5a, Def5<int, const int[13]> *d5b) {
+  d5a->foo();
+  d5b->bar();
+}
 

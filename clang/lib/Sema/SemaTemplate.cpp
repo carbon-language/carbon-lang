@@ -766,7 +766,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                     TTP->getDeclName());
 
         if (ArgType.isNull())
-          break;
+          return true;
 
         ArgLoc = TTP->getDefaultArgumentLoc();
       } else if (NonTypeTemplateParmDecl *NTTP 

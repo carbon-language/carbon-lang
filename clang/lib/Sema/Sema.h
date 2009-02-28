@@ -232,6 +232,13 @@ public:
   //
   QualType ConvertDeclSpecToType(const DeclSpec &DS);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
+  QualType BuildPointerType(QualType T, unsigned Quals, 
+                            SourceLocation Loc, DeclarationName Entity);
+  QualType BuildReferenceType(QualType T, unsigned Quals, 
+                              SourceLocation Loc, DeclarationName Entity);
+  QualType BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
+                          Expr *ArraySize, unsigned Quals,
+                          SourceLocation Loc, DeclarationName Entity);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip = 0);
   DeclarationName GetNameForDeclarator(Declarator &D);
 

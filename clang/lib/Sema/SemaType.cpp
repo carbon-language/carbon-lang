@@ -260,6 +260,215 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
   return Result;
 }
 
+static std::string getPrintableNameForEntity(DeclarationName Entity) {
+  if (Entity)
+    return Entity.getAsString();
+  
+  return "type name";
+}
+
+/// \brief Build a pointer type.
+///
+/// \param T The type to which we'll be building a pointer.
+///
+/// \param Quals The cvr-qualifiers to be applied to the pointer type.
+///
+/// \param Loc The location of the entity whose type involves this
+/// pointer type or, if there is no such entity, the location of the
+/// type that will have pointer type.
+///
+/// \param Entity The name of the entity that involves the pointer
+/// type, if known.
+///
+/// \returns A suitable pointer type, if there are no
+/// errors. Otherwise, returns a NULL type.
+QualType Sema::BuildPointerType(QualType T, unsigned Quals, 
+                                SourceLocation Loc, DeclarationName Entity) {
+  if (T->isReferenceType()) {
+    // C++ 8.3.2p4: There shall be no ... pointers to references ...
+    Diag(Loc, diag::err_illegal_decl_pointer_to_reference)
+      << getPrintableNameForEntity(Entity);
+    return QualType();
+  }
+
+  // Enforce C99 6.7.3p2: "Types other than pointer types derived from
+  // object or incomplete types shall not be restrict-qualified."
+  if ((Quals & QualType::Restrict) && !T->isIncompleteOrObjectType()) {
+    Diag(Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
+      << T;
+    Quals &= ~QualType::Restrict;
+  }
+
+  // Build the pointer type.
+  return Context.getPointerType(T).getQualifiedType(Quals);
+}
+
+/// \brief Build a reference type.
+///
+/// \param T The type to which we'll be building a reference.
+///
+/// \param Quals The cvr-qualifiers to be applied to the reference type.
+///
+/// \param Loc The location of the entity whose type involves this
+/// reference type or, if there is no such entity, the location of the
+/// type that will have reference type.
+///
+/// \param Entity The name of the entity that involves the reference
+/// type, if known.
+///
+/// \returns A suitable reference type, if there are no
+/// errors. Otherwise, returns a NULL type.
+QualType Sema::BuildReferenceType(QualType T, unsigned Quals, 
+                                  SourceLocation Loc, DeclarationName Entity) {
+  if (T->isReferenceType()) {
+    // C++ [dcl.ref]p4: There shall be no references to references.
+    // 
+    // According to C++ DR 106, references to references are only
+    // diagnosed when they are written directly (e.g., "int & &"),
+    // but not when they happen via a typedef:
+    //
+    //   typedef int& intref;
+    //   typedef intref& intref2;
+    //
+    // Parser::ParserDeclaratorInternal diagnoses the case where
+    // references are written directly; here, we handle the
+    // collapsing of references-to-references as described in C++
+    // DR 106 and amended by C++ DR 540.
+    return T;
+  }
+
+  // C++ [dcl.ref]p1:
+  //   A declarator that specifies the type “reference to cv void”
+  //   is ill-formed.
+  if (T->isVoidType()) {
+    Diag(Loc, diag::err_reference_to_void);
+    return QualType();
+  }
+
+  // Enforce C99 6.7.3p2: "Types other than pointer types derived from
+  // object or incomplete types shall not be restrict-qualified."
+  if ((Quals & QualType::Restrict) && !T->isIncompleteOrObjectType()) {
+    Diag(Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
+      << T;
+    Quals &= ~QualType::Restrict;
+  }
+
+  // C++ [dcl.ref]p1:
+  //   [...] Cv-qualified references are ill-formed except when the
+  //   cv-qualifiers are introduced through the use of a typedef
+  //   (7.1.3) or of a template type argument (14.3), in which case
+  //   the cv-qualifiers are ignored.
+  //
+  // We diagnose extraneous cv-qualifiers for the non-typedef,
+  // non-template type argument case within the parser. Here, we just
+  // ignore any extraneous cv-qualifiers.
+  Quals &= ~QualType::Const;
+  Quals &= ~QualType::Volatile;
+
+  // Handle restrict on references.
+  return Context.getReferenceType(T).getQualifiedType(Quals);
+}
+
+/// \brief Build an array type.
+///
+/// \param T The type of each element in the array.
+///
+/// \param ASM C99 array size modifier (e.g., '*', 'static').
+///  
+/// \param ArraySize Expression describing the size of the array. 
+///
+/// \param Quals The cvr-qualifiers to be applied to the array's
+/// element type.
+///
+/// \param Loc The location of the entity whose type involves this
+/// array type or, if there is no such entity, the location of the
+/// type that will have array type.
+///
+/// \param Entity The name of the entity that involves the array
+/// type, if known.
+///
+/// \returns A suitable array type, if there are no errors. Otherwise,
+/// returns a NULL type.
+QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
+                              Expr *ArraySize, unsigned Quals,
+                              SourceLocation Loc, DeclarationName Entity) {
+  // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
+  // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
+  if (DiagnoseIncompleteType(Loc, T, 
+                             diag::err_illegal_decl_array_incomplete_type))
+    return QualType();
+
+  if (T->isFunctionType()) {
+    Diag(Loc, diag::err_illegal_decl_array_of_functions)
+      << getPrintableNameForEntity(Entity);
+    return QualType();
+  }
+    
+  // C++ 8.3.2p4: There shall be no ... arrays of references ...
+  if (T->isReferenceType()) {
+    Diag(Loc, diag::err_illegal_decl_array_of_references)
+      << getPrintableNameForEntity(Entity);
+    return QualType();
+  } 
+
+  if (const RecordType *EltTy = T->getAsRecordType()) {
+    // If the element type is a struct or union that contains a variadic
+    // array, accept it as a GNU extension: C99 6.7.2.1p2.
+    if (EltTy->getDecl()->hasFlexibleArrayMember())
+      Diag(Loc, diag::ext_flexible_array_in_array) << T;
+  } else if (T->isObjCInterfaceType()) {
+    Diag(Loc, diag::warn_objc_array_of_interfaces) << T;
+  }
+      
+  // C99 6.7.5.2p1: The size expression shall have integer type.
+  if (ArraySize && !ArraySize->isTypeDependent() &&
+      !ArraySize->getType()->isIntegerType()) {
+    Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)
+      << ArraySize->getType() << ArraySize->getSourceRange();
+    ArraySize->Destroy(Context);
+    return QualType();
+  }
+  llvm::APSInt ConstVal(32);
+  if (!ArraySize) {
+    T = Context.getIncompleteArrayType(T, ASM, Quals);
+  } else if (ArraySize->isValueDependent()) {
+    T = Context.getDependentSizedArrayType(T, ArraySize, ASM, Quals);
+  } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
+             (!T->isDependentType() && !T->isConstantSizeType())) {
+    // Per C99, a variable array is an array with either a non-constant
+    // size or an element type that has a non-constant-size
+    T = Context.getVariableArrayType(T, ArraySize, ASM, Quals);
+  } else {
+    // C99 6.7.5.2p1: If the expression is a constant expression, it shall
+    // have a value greater than zero.
+    if (ConstVal.isSigned()) {
+      if (ConstVal.isNegative()) {
+        Diag(ArraySize->getLocStart(),
+             diag::err_typecheck_negative_array_size)
+          << ArraySize->getSourceRange();
+        return QualType();
+      } else if (ConstVal == 0) {
+        // GCC accepts zero sized static arrays.
+        Diag(ArraySize->getLocStart(), diag::ext_typecheck_zero_array_size)
+          << ArraySize->getSourceRange();
+      }
+    } 
+    T = Context.getConstantArrayType(T, ConstVal, ASM, Quals);
+  }
+  // If this is not C99, extwarn about VLA's and C99 array size modifiers.
+  if (!getLangOptions().C99) {
+    if (ArraySize && !ArraySize->isTypeDependent() && 
+        !ArraySize->isValueDependent() && 
+        !ArraySize->isIntegerConstantExpr(Context))
+      Diag(Loc, diag::ext_vla);
+    else if (ASM != ArrayType::Normal || Quals != 0)
+      Diag(Loc, diag::ext_c99_array_usage);
+  }
+
+  return T;
+}
+                              
+
 /// GetTypeForDeclarator - Convert the type for the specified
 /// declarator to Type instances. Skip the outermost Skip type
 /// objects.
@@ -309,6 +518,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
     break;
   }
 
+  // The name we're declaring, if any.
+  DeclarationName Name;
+  if (D.getIdentifier())
+    Name = D.getIdentifier();
+
   // Walk the DeclTypeInfo, building the recursive type as we go.
   // DeclTypeInfos are ordered from the identifier out, which is
   // opposite of what we want :).
@@ -325,72 +539,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         T = Context.getBlockPointerType(T);
       break;
     case DeclaratorChunk::Pointer:
-      if (T->isReferenceType()) {
-        // C++ 8.3.2p4: There shall be no ... pointers to references ...
-        Diag(DeclType.Loc, diag::err_illegal_decl_pointer_to_reference)
-         << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
-        D.setInvalidType(true);
-        T = Context.IntTy;
-      }
-
-      // Enforce C99 6.7.3p2: "Types other than pointer types derived from
-      // object or incomplete types shall not be restrict-qualified."
-      if ((DeclType.Ptr.TypeQuals & QualType::Restrict) &&
-          !T->isIncompleteOrObjectType()) {
-        Diag(DeclType.Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
-          << T;
-        DeclType.Ptr.TypeQuals &= ~QualType::Restrict;
-      }
-
-      // Apply the pointer typequals to the pointer object.
-      T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
+      T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);
       break;
-    case DeclaratorChunk::Reference: {
-      // Whether we should suppress the creation of the reference.
-      bool SuppressReference = false;
-      if (T->isReferenceType()) {
-        // C++ [dcl.ref]p4: There shall be no references to references.
-        // 
-        // According to C++ DR 106, references to references are only
-        // diagnosed when they are written directly (e.g., "int & &"),
-        // but not when they happen via a typedef:
-        //
-        //   typedef int& intref;
-        //   typedef intref& intref2;
-        //
-        // Parser::ParserDeclaratorInternal diagnoses the case where
-        // references are written directly; here, we handle the
-        // collapsing of references-to-references as described in C++
-        // DR 106 and amended by C++ DR 540.
-        SuppressReference = true;
-      }
-
-      // C++ [dcl.ref]p1:
-      //   A declarator that specifies the type “reference to cv void”
-      //   is ill-formed.
-      if (T->isVoidType()) {
-        Diag(DeclType.Loc, diag::err_reference_to_void);
-        D.setInvalidType(true);
-        T = Context.IntTy;
-      }
-
-      // Enforce C99 6.7.3p2: "Types other than pointer types derived from
-      // object or incomplete types shall not be restrict-qualified."
-      if (DeclType.Ref.HasRestrict &&
-          !T->isIncompleteOrObjectType()) {
-        Diag(DeclType.Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
-          << T;
-        DeclType.Ref.HasRestrict = false;
-      }        
-
-      if (!SuppressReference)
-        T = Context.getReferenceType(T);
-
-      // Handle restrict on references.
-      if (DeclType.Ref.HasRestrict)
-        T.addRestrict();
+    case DeclaratorChunk::Reference:
+      T = BuildReferenceType(T, 
+                             DeclType.Ref.HasRestrict? QualType::Restrict : 0,
+                             DeclType.Loc, Name);
       break;
-    }
     case DeclaratorChunk::Array: {
       DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
       Expr *ArraySize = static_cast<Expr*>(ATI.NumElts);
@@ -401,76 +556,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         ASM = ArrayType::Static;
       else
         ASM = ArrayType::Normal;
-
-      // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
-      // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
-      if (DiagnoseIncompleteType(D.getIdentifierLoc(), T, 
-                                 diag::err_illegal_decl_array_incomplete_type)) {
-        T = Context.IntTy;
-        D.setInvalidType(true);
-      } else if (T->isFunctionType()) {
-        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions)
-          << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
-        T = Context.getPointerType(T);
-        D.setInvalidType(true);
-      } else if (const ReferenceType *RT = T->getAsReferenceType()) {
-        // C++ 8.3.2p4: There shall be no ... arrays of references ...
-        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references)
-          << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
-        T = RT->getPointeeType();
-        D.setInvalidType(true);
-      } else if (const RecordType *EltTy = T->getAsRecordType()) {
-        // If the element type is a struct or union that contains a variadic
-        // array, accept it as a GNU extension: C99 6.7.2.1p2.
-        if (EltTy->getDecl()->hasFlexibleArrayMember())
-          Diag(DeclType.Loc, diag::ext_flexible_array_in_array) << T;
-      } else if (T->isObjCInterfaceType()) {
-        Diag(DeclType.Loc, diag::warn_objc_array_of_interfaces) << T;
-      }
-      
-      // C99 6.7.5.2p1: The size expression shall have integer type.
-      if (ArraySize && !ArraySize->getType()->isIntegerType()) {
-        Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)
-          << ArraySize->getType() << ArraySize->getSourceRange();
-        D.setInvalidType(true);
-        ArraySize->Destroy(Context);
-        ATI.NumElts = ArraySize = 0;
-      }
-      llvm::APSInt ConstVal(32);
-      if (!ArraySize) {
-        T = Context.getIncompleteArrayType(T, ASM, ATI.TypeQuals);
-      } else if (ArraySize->isValueDependent()) {
-        T = Context.getDependentSizedArrayType(T, ArraySize, ASM, ATI.TypeQuals);
-      } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
-                 !T->isConstantSizeType()) {
-        // Per C99, a variable array is an array with either a non-constant
-        // size or an element type that has a non-constant-size
-        T = Context.getVariableArrayType(T, ArraySize, ASM, ATI.TypeQuals);
-      } else {
-        // C99 6.7.5.2p1: If the expression is a constant expression, it shall
-        // have a value greater than zero.
-        if (ConstVal.isSigned()) {
-          if (ConstVal.isNegative()) {
-            Diag(ArraySize->getLocStart(),
-                 diag::err_typecheck_negative_array_size)
-              << ArraySize->getSourceRange();
-            D.setInvalidType(true);
-          } else if (ConstVal == 0) {
-            // GCC accepts zero sized static arrays.
-            Diag(ArraySize->getLocStart(), diag::ext_typecheck_zero_array_size)
-              << ArraySize->getSourceRange();
-          }
-        } 
-        T = Context.getConstantArrayType(T, ConstVal, ASM, ATI.TypeQuals);
-      }
-      // If this is not C99, extwarn about VLA's and C99 array size modifiers.
-      if (!getLangOptions().C99) {
-        if (ArraySize && !ArraySize->isValueDependent() && 
-            !ArraySize->isIntegerConstantExpr(Context))
-          Diag(D.getIdentifierLoc(), diag::ext_vla);
-        else if (ASM != ArrayType::Normal || ATI.TypeQuals != 0)
-          Diag(D.getIdentifierLoc(), diag::ext_c99_array_usage);
-      }
+      T = BuildArrayType(T, ASM, ArraySize, ATI.TypeQuals, DeclType.Loc, Name);
       break;
     }
     case DeclaratorChunk::Function: {
@@ -630,6 +716,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
                     getQualifiedType(DeclType.Mem.TypeQuals);
 
       break;
+    }
+
+    if (T.isNull()) {
+      D.setInvalidType(true);
+      T = Context.IntTy;
     }
 
     // See if there are any attributes on this declarator chunk.
