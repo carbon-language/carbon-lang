@@ -69,21 +69,29 @@ struct ilist_sentinel_traits {
   static void destroySentinel(NodeTy *N) { delete N; }
 };
 
+/// ilist_node_traits - A fragment for template traits for intrusive list
+/// that provides default node related operations.
+///
+template<typename NodeTy>
+struct ilist_node_traits {
+  static NodeTy *createNode(const NodeTy &V) { return new NodeTy(V); }
+  static void deleteNode(NodeTy *V) { delete V; }
+
+  void addNodeToList(NodeTy *) {}
+  void removeNodeFromList(NodeTy *) {}
+  void transferNodesFromList(ilist_node_traits &    /*SrcTraits*/,
+                             ilist_iterator<NodeTy> /*first*/,
+                             ilist_iterator<NodeTy> /*last*/) {}
+};
+
 /// ilist_default_traits - Default template traits for intrusive list.
 /// By inheriting from this, you can easily use default implementations
 /// for all common operations.
 ///
 template<typename NodeTy>
 struct ilist_default_traits : ilist_nextprev_traits<NodeTy>,
-                              ilist_sentinel_traits<NodeTy> {
-  static NodeTy *createNode(const NodeTy &V) { return new NodeTy(V); }
-  static void deleteNode(NodeTy *V) { delete V; }
-
-  void addNodeToList(NodeTy *) {}
-  void removeNodeFromList(NodeTy *) {}
-  void transferNodesFromList(ilist_default_traits & /*SrcTraits*/,
-                             ilist_iterator<NodeTy> /*first*/,
-                             ilist_iterator<NodeTy> /*last*/) {}
+                              ilist_sentinel_traits<NodeTy>,
+                              ilist_node_traits<NodeTy> {
 };
 
 // Template traits for intrusive list.  By specializing this template class, you
