@@ -29,7 +29,7 @@ template<> struct ilist_traits<Instruction>
   Instruction *createSentinel() const {
     return const_cast<Instruction*>(static_cast<const Instruction*>(&Sentinel));
   }
-  static void destroySentinel(Instruction *I) { }
+  static void destroySentinel(Instruction *I) { I = I; }
   static iplist<Instruction> &getList(BasicBlock *BB);
   static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);
   static int getListOffset();
