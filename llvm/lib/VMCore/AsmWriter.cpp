@@ -137,24 +137,18 @@ static void PrintLLVMName(raw_ostream &OS, const Value *V) {
 // TypePrinting Class: Type printing machinery
 //===----------------------------------------------------------------------===//
 
-namespace {
-  /// TypePrinting - Type printing machinery.
-  class TypePrinting {
-    std::map<const Type *, std::string> TypeNames;
-  public:
-    TypePrinting(const Module *M);
-    
-    void print(const Type *Ty, raw_ostream &OS);
-    void printAtLeastOneLevel(const Type *Ty, raw_ostream &OS);
-    
-  private:
-    void CalcTypeName(const Type *Ty, SmallVectorImpl<const Type *> &TypeStack,
-                      raw_ostream &OS);
-  };
-} // end anonymous namespace.
+static std::map<const Type *, std::string> &getTypeNamesMap(void *M) {
+  return *static_cast<std::map<const Type *, std::string>*>(M);
+}
+
+void TypePrinting::clear() {
+  getTypeNamesMap(TypeNames).clear();
+}
 
 TypePrinting::TypePrinting(const Module *M) {
   if (M == 0) return;
+  
+  TypeNames = new std::map<const Type *, std::string>();
   
   // If the module has a symbol table, take all global types and stuff their
   // names into the TypeNames map.
@@ -180,8 +174,12 @@ TypePrinting::TypePrinting(const Module *M) {
     std::string NameStr;
     raw_string_ostream NameOS(NameStr);
     PrintLLVMName(NameOS, TI->first.c_str(), TI->first.length(), LocalPrefix);
-    TypeNames.insert(std::make_pair(Ty, NameOS.str()));
+    getTypeNamesMap(TypeNames).insert(std::make_pair(Ty, NameOS.str()));
   }
+}
+
+TypePrinting::~TypePrinting() {
+  delete &getTypeNamesMap(TypeNames);
 }
 
 /// CalcTypeName - Write the specified type to the specified raw_ostream, making
@@ -190,8 +188,9 @@ void TypePrinting::CalcTypeName(const Type *Ty,
                                 SmallVectorImpl<const Type *> &TypeStack,
                                 raw_ostream &OS) {
   // Check to see if the type is named.
-  std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-  if (I != TypeNames.end() &&
+  std::map<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
+  std::map<const Type *, std::string>::iterator I = TM.find(Ty);
+  if (I != TM.end() &&
       // If the name wasn't temporarily removed use it.
       !I->second.empty()) {
     OS << I->second;
@@ -296,8 +295,9 @@ void TypePrinting::CalcTypeName(const Type *Ty,
 ///
 void TypePrinting::print(const Type *Ty, raw_ostream &OS) {
   // Check to see if the type is named.
-  std::map<const Type*, std::string>::iterator I = TypeNames.find(Ty);
-  if (I != TypeNames.end()) {
+  std::map<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
+  std::map<const Type*, std::string>::iterator I = TM.find(Ty);
+  if (I != TM.end()) {
     OS << I->second;
     return;
   }
@@ -313,7 +313,7 @@ void TypePrinting::print(const Type *Ty, raw_ostream &OS) {
   OS << TypeOS.str();
 
   // Cache type name for later use.
-  TypeNames.insert(std::make_pair(Ty, TypeOS.str()));
+  TM.insert(std::make_pair(Ty, TypeOS.str()));
 }
 
 /// printAtLeastOneLevel - Print out one level of the possibly complex type
@@ -321,8 +321,9 @@ void TypePrinting::print(const Type *Ty, raw_ostream &OS) {
 void TypePrinting::printAtLeastOneLevel(const Type *Ty, raw_ostream &OS) {
   // If the type does not have a name, then it is already guaranteed to print at
   // least one level.
-  std::map<const Type*, std::string>::iterator I = TypeNames.find(Ty);
-  if (I == TypeNames.end())
+  std::map<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
+  std::map<const Type*, std::string>::iterator I = TM.find(Ty);
+  if (I == TM.end())
     return print(Ty, OS);
   
   // Otherwise, temporarily remove the name and print it.

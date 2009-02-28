@@ -25,6 +25,24 @@ class Type;
 class Module;
 class Value;
 class raw_ostream;
+template <typename T> class SmallVectorImpl;
+  
+/// TypePrinting - Type printing machinery.
+class TypePrinting {
+  void *TypeNames;
+public:
+  TypePrinting(const Module *M);
+  ~TypePrinting();
+  
+  void clear();
+  
+  void print(const Type *Ty, raw_ostream &OS);
+  void printAtLeastOneLevel(const Type *Ty, raw_ostream &OS);
+  
+private:
+  void CalcTypeName(const Type *Ty, SmallVectorImpl<const Type *> &TypeStack,
+                    raw_ostream &OS);
+};
 
 // WriteTypeSymbolic - This attempts to write the specified type as a symbolic
 // type, if there is an entry in the Module's symbol table for the specified
