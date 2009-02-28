@@ -149,8 +149,8 @@ namespace {
     void printAtLeastOneLevel(const Type *Ty);
     
   private:
-    void calcTypeName(const Type *Ty, SmallVectorImpl<const Type *> &TypeStack,
-                      std::string &Result);
+    void CalcTypeName(const Type *Ty, SmallVectorImpl<const Type *> &TypeStack,
+                      raw_ostream &Result);
   };
 } // end anonymous namespace.
 
@@ -181,11 +181,13 @@ TypePrinting::TypePrinting(const Module *M, raw_ostream &os) : OS(os) {
   }
 }
 
-void TypePrinting::calcTypeName(const Type *Ty,
+/// CalcTypeName - Write the specified type to the specified raw_ostream, making
+/// use of type names or up references to shorten the type name where possible.
+void TypePrinting::CalcTypeName(const Type *Ty,
                                 SmallVectorImpl<const Type *> &TypeStack,
-                                std::string &Result) {
+                                raw_ostream &Result) {
   if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
-    Result += Ty->getDescription();  // Base case
+    Result << Ty->getDescription();  // Base case
     return;
   }
   
@@ -194,12 +196,7 @@ void TypePrinting::calcTypeName(const Type *Ty,
   if (I != TypeNames.end() &&
       // If the name wasn't temporarily removed use it.
       !I->second.empty()) {
-    Result += I->second;
-    return;
-  }
-  
-  if (isa<OpaqueType>(Ty)) {
-    Result += "opaque";
+    Result << I->second;
     return;
   }
   
@@ -211,7 +208,7 @@ void TypePrinting::calcTypeName(const Type *Ty,
   // that we have looped back to a type that we have previously visited.
   // Generate the appropriate upreference to handle this.
   if (Slot < CurSize) {
-    Result += "\\" + utostr(CurSize-Slot);     // Here's the upreference
+    Result << '\\' << unsigned(CurSize-Slot);     // Here's the upreference
     return;
   }
   
@@ -220,69 +217,69 @@ void TypePrinting::calcTypeName(const Type *Ty,
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
-    calcTypeName(FTy->getReturnType(), TypeStack, Result);
-    Result += " (";
+    CalcTypeName(FTy->getReturnType(), TypeStack, Result);
+    Result << " (";
     for (FunctionType::param_iterator I = FTy->param_begin(),
          E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
-        Result += ", ";
-      calcTypeName(*I, TypeStack, Result);
+        Result << ", ";
+      CalcTypeName(*I, TypeStack, Result);
     }
     if (FTy->isVarArg()) {
-      if (FTy->getNumParams()) Result += ", ";
-      Result += "...";
+      if (FTy->getNumParams()) Result << ", ";
+      Result << "...";
     }
-    Result += ")";
+    Result << ')';
     break;
   }
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
     if (STy->isPacked())
-      Result += '<';
-    Result += "{ ";
+      Result << '<';
+    Result << "{ ";
     for (StructType::element_iterator I = STy->element_begin(),
          E = STy->element_end(); I != E; ++I) {
-      calcTypeName(*I, TypeStack, Result);
+      CalcTypeName(*I, TypeStack, Result);
       if (next(I) != STy->element_end())
-        Result += ',';
-      Result += ' ';
+        Result << ',';
+      Result << ' ';
     }
-    Result += '}';
+    Result << '}';
     if (STy->isPacked())
-      Result += '>';
+      Result << '>';
     break;
   }
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
-    calcTypeName(PTy->getElementType(), TypeStack, Result);
+    CalcTypeName(PTy->getElementType(), TypeStack, Result);
     if (unsigned AddressSpace = PTy->getAddressSpace())
-      Result += " addrspace(" + utostr(AddressSpace) + ")";
-    Result += "*";
+      Result << " addrspace(" << AddressSpace << ')';
+    Result << '*';
     break;
   }
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    Result += "[" + utostr(ATy->getNumElements()) + " x ";
-    calcTypeName(ATy->getElementType(), TypeStack, Result);
-    Result += "]";
+    Result << "[" << ATy->getNumElements() << " x ";
+    CalcTypeName(ATy->getElementType(), TypeStack, Result);
+    Result << ']';
     break;
   }
   case Type::VectorTyID: {
     const VectorType *PTy = cast<VectorType>(Ty);
-    Result += "<" + utostr(PTy->getNumElements()) + " x ";
-    calcTypeName(PTy->getElementType(), TypeStack, Result);
-    Result += ">";
+    Result << "<" << PTy->getNumElements() << " x ";
+    CalcTypeName(PTy->getElementType(), TypeStack, Result);
+    Result << '>';
     break;
   }
   case Type::OpaqueTyID:
-    Result += "opaque";
+    Result << "opaque";
     break;
   default:
-    Result += "<unrecognized-type>";
+    Result << "<unrecognized-type>";
     break;
   }
   
-  TypeStack.pop_back();       // Remove self from stack...
+  TypeStack.pop_back();       // Remove self from stack.
 }
 
 /// printTypeInt - The internal guts of printing out a type that has a
@@ -308,9 +305,15 @@ void TypePrinting::print(const Type *Ty) {
   // names.
   SmallVector<const Type *, 16> TypeStack;
   std::string TypeName;
-  calcTypeName(Ty, TypeStack, TypeName);
-  TypeNames.insert(std::make_pair(Ty, TypeName));//Cache type name for later use
-  OS << TypeName;
+  
+  raw_string_ostream TypeOS(TypeName);
+
+  
+  CalcTypeName(Ty, TypeStack, TypeOS);
+  OS << TypeOS.str();
+
+  // Cache type name for later use.
+  TypeNames.insert(std::make_pair(Ty, TypeOS.str()));
 }
 
 /// printAtLeastOneLevel - Print out one level of the possibly complex type
@@ -318,24 +321,21 @@ void TypePrinting::print(const Type *Ty) {
 void TypePrinting::printAtLeastOneLevel(const Type *Ty) {
   // If the type does not have a name, then it is already guaranteed to print at
   // least one level.
-  std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
+  std::map<const Type*, std::string>::iterator I = TypeNames.find(Ty);
   if (I == TypeNames.end())
     return print(Ty);
   
   // Otherwise, temporarily remove the name and print it.
   std::string OldName;
   std::swap(OldName, I->second);
-  
+
+  // Print the type without the name.
   SmallVector<const Type *, 16> TypeStack;
-  std::string TypeName;
-  calcTypeName(Ty, TypeStack, TypeName);
-  OS << TypeName;
+  CalcTypeName(Ty, TypeStack, OS);
 
   // Restore the name.
   std::swap(OldName, I->second);
 }
-
-
 
 
 /// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
@@ -346,13 +346,7 @@ void llvm::WriteTypeSymbolic(raw_ostream &Out, const Type *Ty, const Module *M){
   // FIXME: Remove this space.
   Out << ' ';
   
-  // If they want us to print out a type, but there is no context, we can't
-  // print it symbolically.
-  if (!M) {
-    Out << Ty->getDescription();
-  } else {
-    TypePrinting(M, Out).print(Ty);
-  }
+  TypePrinting(M, Out).print(Ty);
 }
 
 // std::ostream adaptor.
