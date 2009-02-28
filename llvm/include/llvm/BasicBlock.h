@@ -25,11 +25,22 @@ class TerminatorInst;
 
 template<> struct ilist_traits<Instruction>
   : public SymbolTableListTraits<Instruction, BasicBlock> {
-  // createSentinel is used to create a node that marks the end of the list...
+  // createSentinel is used to get hold of a node that marks the end of
+  // the list...
+  // The sentinel is relative to this instance, so we use a non-static
+  // method.
   Instruction *createSentinel() const {
+    // since i(p)lists always publicly derive from the corresponding
+    // traits, placing a data member in this class will augment i(p)list.
+    // But since the NodeTy is expected to publicly derive from
+    // ilist_node<NodeTy>, there is a legal viable downcast from it
+    // to NodeTy. We use this trick to superpose i(p)list with a "ghostly"
+    // NodeTy, which becomes the sentinel. Dereferencing the sentinel is
+    // forbidden (save the ilist_node<NodeTy>) so noone will ever notice
+    // the superposition.
     return const_cast<Instruction*>(static_cast<const Instruction*>(&Sentinel));
   }
-  static void destroySentinel(Instruction *I) { I = I; }
+  static void destroySentinel(Instruction*) {}
   static iplist<Instruction> &getList(BasicBlock *BB);
   static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);
   static int getListOffset();
