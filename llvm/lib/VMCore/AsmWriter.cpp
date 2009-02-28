@@ -149,7 +149,7 @@ namespace {
     
   private:
     void CalcTypeName(const Type *Ty, SmallVectorImpl<const Type *> &TypeStack,
-                      raw_ostream &Result);
+                      raw_ostream &OS);
   };
 } // end anonymous namespace.
 
@@ -188,13 +188,13 @@ TypePrinting::TypePrinting(const Module *M) {
 /// use of type names or up references to shorten the type name where possible.
 void TypePrinting::CalcTypeName(const Type *Ty,
                                 SmallVectorImpl<const Type *> &TypeStack,
-                                raw_ostream &Result) {
+                                raw_ostream &OS) {
   // Check to see if the type is named.
   std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
   if (I != TypeNames.end() &&
       // If the name wasn't temporarily removed use it.
       !I->second.empty()) {
-    Result << I->second;
+    OS << I->second;
     return;
   }
   
@@ -206,85 +206,85 @@ void TypePrinting::CalcTypeName(const Type *Ty,
   // that we have looped back to a type that we have previously visited.
   // Generate the appropriate upreference to handle this.
   if (Slot < CurSize) {
-    Result << '\\' << unsigned(CurSize-Slot);     // Here's the upreference
+    OS << '\\' << unsigned(CurSize-Slot);     // Here's the upreference
     return;
   }
   
   TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
   
   switch (Ty->getTypeID()) {
-  case Type::VoidTyID:      Result << "void"; break;
-  case Type::FloatTyID:     Result << "float"; break;
-  case Type::DoubleTyID:    Result << "double"; break;
-  case Type::X86_FP80TyID:  Result << "x86_fp80"; break;
-  case Type::FP128TyID:     Result << "fp128"; break;
-  case Type::PPC_FP128TyID: Result << "ppc_fp128"; break;
-  case Type::LabelTyID:     Result << "label"; break;
+  case Type::VoidTyID:      OS << "void"; break;
+  case Type::FloatTyID:     OS << "float"; break;
+  case Type::DoubleTyID:    OS << "double"; break;
+  case Type::X86_FP80TyID:  OS << "x86_fp80"; break;
+  case Type::FP128TyID:     OS << "fp128"; break;
+  case Type::PPC_FP128TyID: OS << "ppc_fp128"; break;
+  case Type::LabelTyID:     OS << "label"; break;
   case Type::IntegerTyID:
-    Result << 'i' << cast<IntegerType>(Ty)->getBitWidth();
+    OS << 'i' << cast<IntegerType>(Ty)->getBitWidth();
     break;
       
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
-    CalcTypeName(FTy->getReturnType(), TypeStack, Result);
-    Result << " (";
+    CalcTypeName(FTy->getReturnType(), TypeStack, OS);
+    OS << " (";
     for (FunctionType::param_iterator I = FTy->param_begin(),
          E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
-        Result << ", ";
-      CalcTypeName(*I, TypeStack, Result);
+        OS << ", ";
+      CalcTypeName(*I, TypeStack, OS);
     }
     if (FTy->isVarArg()) {
-      if (FTy->getNumParams()) Result << ", ";
-      Result << "...";
+      if (FTy->getNumParams()) OS << ", ";
+      OS << "...";
     }
-    Result << ')';
+    OS << ')';
     break;
   }
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
     if (STy->isPacked())
-      Result << '<';
-    Result << "{ ";
+      OS << '<';
+    OS << "{ ";
     for (StructType::element_iterator I = STy->element_begin(),
          E = STy->element_end(); I != E; ++I) {
-      CalcTypeName(*I, TypeStack, Result);
+      CalcTypeName(*I, TypeStack, OS);
       if (next(I) != STy->element_end())
-        Result << ',';
-      Result << ' ';
+        OS << ',';
+      OS << ' ';
     }
-    Result << '}';
+    OS << '}';
     if (STy->isPacked())
-      Result << '>';
+      OS << '>';
     break;
   }
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
-    CalcTypeName(PTy->getElementType(), TypeStack, Result);
+    CalcTypeName(PTy->getElementType(), TypeStack, OS);
     if (unsigned AddressSpace = PTy->getAddressSpace())
-      Result << " addrspace(" << AddressSpace << ')';
-    Result << '*';
+      OS << " addrspace(" << AddressSpace << ')';
+    OS << '*';
     break;
   }
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    Result << '[' << ATy->getNumElements() << " x ";
-    CalcTypeName(ATy->getElementType(), TypeStack, Result);
-    Result << ']';
+    OS << '[' << ATy->getNumElements() << " x ";
+    CalcTypeName(ATy->getElementType(), TypeStack, OS);
+    OS << ']';
     break;
   }
   case Type::VectorTyID: {
     const VectorType *PTy = cast<VectorType>(Ty);
-    Result << "<" << PTy->getNumElements() << " x ";
-    CalcTypeName(PTy->getElementType(), TypeStack, Result);
-    Result << '>';
+    OS << "<" << PTy->getNumElements() << " x ";
+    CalcTypeName(PTy->getElementType(), TypeStack, OS);
+    OS << '>';
     break;
   }
   case Type::OpaqueTyID:
-    Result << "opaque";
+    OS << "opaque";
     break;
   default:
-    Result << "<unrecognized-type>";
+    OS << "<unrecognized-type>";
     break;
   }
   
