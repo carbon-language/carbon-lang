@@ -141,12 +141,11 @@ namespace {
   /// TypePrinting - Type printing machinery.
   class TypePrinting {
     std::map<const Type *, std::string> TypeNames;
-    raw_ostream &OS;
   public:
-    TypePrinting(const Module *M, raw_ostream &os);
+    TypePrinting(const Module *M);
     
-    void print(const Type *Ty);
-    void printAtLeastOneLevel(const Type *Ty);
+    void print(const Type *Ty, raw_ostream &OS);
+    void printAtLeastOneLevel(const Type *Ty, raw_ostream &OS);
     
   private:
     void CalcTypeName(const Type *Ty, SmallVectorImpl<const Type *> &TypeStack,
@@ -154,7 +153,7 @@ namespace {
   };
 } // end anonymous namespace.
 
-TypePrinting::TypePrinting(const Module *M, raw_ostream &os) : OS(os) {
+TypePrinting::TypePrinting(const Module *M) {
   if (M == 0) return;
   
   // If the module has a symbol table, take all global types and stuff their
@@ -295,7 +294,7 @@ void TypePrinting::CalcTypeName(const Type *Ty,
 /// printTypeInt - The internal guts of printing out a type that has a
 /// potentially named portion.
 ///
-void TypePrinting::print(const Type *Ty) {
+void TypePrinting::print(const Type *Ty, raw_ostream &OS) {
   // Check to see if the type is named.
   std::map<const Type*, std::string>::iterator I = TypeNames.find(Ty);
   if (I != TypeNames.end()) {
@@ -319,12 +318,12 @@ void TypePrinting::print(const Type *Ty) {
 
 /// printAtLeastOneLevel - Print out one level of the possibly complex type
 /// without considering any symbolic types that we may have equal to it.
-void TypePrinting::printAtLeastOneLevel(const Type *Ty) {
+void TypePrinting::printAtLeastOneLevel(const Type *Ty, raw_ostream &OS) {
   // If the type does not have a name, then it is already guaranteed to print at
   // least one level.
   std::map<const Type*, std::string>::iterator I = TypeNames.find(Ty);
   if (I == TypeNames.end())
-    return print(Ty);
+    return print(Ty, OS);
   
   // Otherwise, temporarily remove the name and print it.
   std::string OldName;
@@ -343,8 +342,8 @@ void TypePrinting::printAtLeastOneLevel(const Type *Ty) {
 /// type, iff there is an entry in the modules symbol table for the specified
 /// type or one of it's component types.
 ///
-void llvm::WriteTypeSymbolic(raw_ostream &Out, const Type *Ty, const Module *M){
-  TypePrinting(M, Out).print(Ty);
+void llvm::WriteTypeSymbolic(raw_ostream &OS, const Type *Ty, const Module *M){
+  TypePrinting(M).print(Ty, OS);
 }
 
 //===----------------------------------------------------------------------===//
@@ -740,13 +739,13 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     } else {                // Cannot output in string format...
       Out << '[';
       if (CA->getNumOperands()) {
-        TypePrinter.print(ETy);
+        TypePrinter.print(ETy, Out);
         Out << ' ';
         WriteAsOperandInternal(Out, CA->getOperand(0),
                                TypePrinter, Machine);
         for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
           Out << ", ";
-          TypePrinter.print(ETy);
+          TypePrinter.print(ETy, Out);
           Out << ' ';
           WriteAsOperandInternal(Out, CA->getOperand(i), TypePrinter, Machine);
         }
@@ -763,14 +762,14 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     unsigned N = CS->getNumOperands();
     if (N) {
       Out << ' ';
-      TypePrinter.print(CS->getOperand(0)->getType());
+      TypePrinter.print(CS->getOperand(0)->getType(), Out);
       Out << ' ';
 
       WriteAsOperandInternal(Out, CS->getOperand(0), TypePrinter, Machine);
 
       for (unsigned i = 1; i < N; i++) {
         Out << ", ";
-        TypePrinter.print(CS->getOperand(i)->getType());
+        TypePrinter.print(CS->getOperand(i)->getType(), Out);
         Out << ' ';
 
         WriteAsOperandInternal(Out, CS->getOperand(i), TypePrinter, Machine);
@@ -789,12 +788,12 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     assert(CP->getNumOperands() > 0 &&
            "Number of operands for a PackedConst must be > 0");
     Out << '<';
-    TypePrinter.print(ETy);
+    TypePrinter.print(ETy, Out);
     Out << ' ';
     WriteAsOperandInternal(Out, CP->getOperand(0), TypePrinter, Machine);
     for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
       Out << ", ";
-      TypePrinter.print(ETy);
+      TypePrinter.print(ETy, Out);
       Out << ' ';
       WriteAsOperandInternal(Out, CP->getOperand(i), TypePrinter, Machine);
     }
@@ -819,7 +818,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     Out << " (";
 
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
-      TypePrinter.print((*OI)->getType());
+      TypePrinter.print((*OI)->getType(), Out);
       Out << ' ';
       WriteAsOperandInternal(Out, *OI, TypePrinter, Machine);
       if (OI+1 != CE->op_end())
@@ -834,7 +833,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
 
     if (CE->isCast()) {
       Out << " to ";
-      TypePrinter.print(CE->getType());
+      TypePrinter.print(CE->getType(), Out);
     }
 
     Out << ')';
@@ -919,9 +918,9 @@ void llvm::WriteAsOperand(raw_ostream &Out, const Value *V, bool PrintType,
                           const Module *Context) {
   if (Context == 0) Context = getModuleFromVal(V);
 
-  TypePrinting TypePrinter(Context, Out);
+  TypePrinting TypePrinter(Context);
   if (PrintType) {
-    TypePrinter.print(V->getType());
+    TypePrinter.print(V->getType(), Out);
     Out << ' ';
   }
 
@@ -940,7 +939,7 @@ class AssemblyWriter {
 public:
   inline AssemblyWriter(raw_ostream &o, SlotTracker &Mac, const Module *M,
                         AssemblyAnnotationWriter *AAW)
-    : Out(o), Machine(Mac), TheModule(M), TypePrinter(M, Out),
+    : Out(o), Machine(Mac), TheModule(M), TypePrinter(M),
       AnnotationWriter(AAW) {
   }
 
@@ -959,7 +958,6 @@ public:
   
   void write(const BasicBlock *BB)    { printBasicBlock(BB);  }
   void write(const Instruction *I)    { printInstruction(*I); }
-//  void write(const Type *Ty)          { printType(Ty);        }
 
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, Attributes Attrs);
@@ -976,13 +974,6 @@ private:
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction &I);
 
-  // printType - Go to extreme measures to attempt to print out a short,
-  // symbolic version of a type name.
-  //
-  void printType(const Type *Ty) {
-    TypePrinter.print(Ty);
-  }
-
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
   void printInfoComment(const Value &V);
@@ -995,7 +986,7 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
     Out << "<null operand!>";
   } else {
     if (PrintType) {
-      printType(Operand->getType());
+      TypePrinter.print(Operand->getType(), Out);
       Out << ' ';
     }
     WriteAsOperandInternal(Out, Operand, TypePrinter, &Machine);
@@ -1008,7 +999,7 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
     Out << "<null operand!>";
   } else {
     // Print the type
-    printType(Operand->getType());
+    TypePrinter.print(Operand->getType(), Out);
     // Print parameter attributes list
     if (Attrs != Attribute::None)
       Out << ' ' << Attribute::getAsString(Attrs);
@@ -1127,7 +1118,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (unsigned AddressSpace = GV->getType()->getAddressSpace())
     Out << "addrspace(" << AddressSpace << ") ";
   Out << (GV->isConstant() ? "constant " : "global ");
-  printType(GV->getType()->getElementType());
+  TypePrinter.print(GV->getType()->getElementType(), Out);
 
   if (GV->hasInitializer()) {
     Out << ' ';
@@ -1160,17 +1151,17 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
   const Constant *Aliasee = GA->getAliasee();
     
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Aliasee)) {
-    printType(GV->getType());
+    TypePrinter.print(GV->getType(), Out);
     Out << ' ';
     PrintLLVMName(Out, GV);
   } else if (const Function *F = dyn_cast<Function>(Aliasee)) {
-    printType(F->getFunctionType());
+    TypePrinter.print(F->getFunctionType(), Out);
     Out << "* ";
 
     WriteAsOperandInternal(Out, F, TypePrinter, &Machine);
   } else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Aliasee)) {
-    printType(GA->getType());
-    Out << " ";
+    TypePrinter.print(GA->getType(), Out);
+    Out << ' ';
     PrintLLVMName(Out, GA);
   } else {
     const ConstantExpr *CE = 0;
@@ -1195,7 +1186,7 @@ void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
 
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %FILE = type %FILE
-    TypePrinter.printAtLeastOneLevel(TI->second); 
+    TypePrinter.printAtLeastOneLevel(TI->second, Out);
     Out << '\n';
   }
 }
@@ -1231,7 +1222,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   Attributes RetAttrs = Attrs.getRetAttributes();
   if (RetAttrs != Attribute::None)
     Out <<  Attribute::getAsString(Attrs.getRetAttributes()) << ' ';
-  printType(F->getReturnType());
+  TypePrinter.print(F->getReturnType(), Out);
   Out << ' ';
   WriteAsOperandInternal(Out, F, TypePrinter, &Machine);
   Out << '(';
@@ -1256,7 +1247,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       if (i) Out << ", ";
       
       // Output type...
-      printType(FT->getParamType(i));
+      TypePrinter.print(FT->getParamType(i), Out);
       
       Attributes ArgAttrs = Attrs.getParamAttributes(i+1);
       if (ArgAttrs != Attribute::None)
@@ -1300,7 +1291,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 void AssemblyWriter::printArgument(const Argument *Arg, 
                                    Attributes Attrs) {
   // Output type...
-  printType(Arg->getType());
+  TypePrinter.print(Arg->getType(), Out);
 
   // Output parameter attributes list
   if (Attrs != Attribute::None)
@@ -1366,7 +1357,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 void AssemblyWriter::printInfoComment(const Value &V) {
   if (V.getType() != Type::VoidTy) {
     Out << "\t\t; <";
-    printType(V.getType());
+    TypePrinter.print(V.getType(), Out);
     Out << '>';
 
     if (!V.hasName() && !isa<Instruction>(V)) {
@@ -1449,7 +1440,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << "\n\t]";
   } else if (isa<PHINode>(I)) {
     Out << ' ';
-    printType(I.getType());
+    TypePrinter.print(I.getType(), Out);
     Out << ' ';
 
     for (unsigned op = 0, Eop = I.getNumOperands(); op < Eop; op += 2) {
@@ -1498,7 +1489,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (!FTy->isVarArg() &&
         (!isa<PointerType>(RetTy) ||
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
-      printType(RetTy);
+      TypePrinter.print(RetTy, Out);
       Out << ' ';
       writeOperand(Operand, false);
     } else {
@@ -1540,7 +1531,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (!FTy->isVarArg() &&
         (!isa<PointerType>(RetTy) ||
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
-      printType(RetTy);
+      TypePrinter.print(RetTy, Out);
       Out << ' ';
       writeOperand(Operand, false);
     } else {
@@ -1564,7 +1555,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
   } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(&I)) {
     Out << ' ';
-    printType(AI->getType()->getElementType());
+    TypePrinter.print(AI->getType()->getElementType(), Out);
     if (AI->isArrayAllocation()) {
       Out << ", ";
       writeOperand(AI->getArraySize(), true);
@@ -1578,15 +1569,15 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(Operand, true);   // Work with broken code
     }
     Out << " to ";
-    printType(I.getType());
+    TypePrinter.print(I.getType(), Out);
   } else if (isa<VAArgInst>(I)) {
     if (Operand) {
       Out << ' ';
       writeOperand(Operand, true);   // Work with broken code
     }
     Out << ", ";
-    printType(I.getType());
-  } else if (Operand) {   // Print the normal way...
+    TypePrinter.print(I.getType(), Out);
+  } else if (Operand) {   // Print the normal way.
 
     // PrintAllTypes - Instructions who have operands of all the same type
     // omit the type from all but the first operand.  If the instruction has
@@ -1612,7 +1603,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
     if (!PrintAllTypes) {
       Out << ' ';
-      printType(TheType);
+      TypePrinter.print(TheType, Out);
     }
 
     Out << ' ';
@@ -1658,7 +1649,7 @@ void Type::print(raw_ostream &OS) const {
     OS << "<null Type>";
     return;
   }
-  TypePrinting(0, OS).print(this);
+  TypePrinting(0).print(this, OS);
 }
 
 void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
@@ -1682,8 +1673,8 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     AssemblyWriter W(OS, SlotTable, GV->getParent(), 0);
     W.write(GV);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
-    TypePrinting TypePrinter(0, OS);
-    TypePrinter.print(C->getType());
+    TypePrinting TypePrinter(0);
+    TypePrinter.print(C->getType(), OS);
     OS << ' ';
     WriteConstantInt(OS, C, TypePrinter, 0);
   } else if (const Argument *A = dyn_cast<Argument>(this)) {
