@@ -383,6 +383,19 @@ public:
     return IdResolver.isDeclInScope(D, Ctx, Context, S);
   }
 
+
+  void RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
+                               llvm::DenseMap<void*, Stmt*>& PopScopeMap,
+                               llvm::DenseMap<Stmt*, void*>& GotoScopeMap,
+                               std::vector<void*>& ScopeStack,
+                               Stmt* CurStmt);
+
+  void RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
+                                llvm::DenseMap<void*, Stmt*>& PopScopeMap,
+                                std::vector<void*>& ScopeStack,
+                                Stmt* CurStmt,
+                                Stmt* ParentCompoundStmt);
+
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 Decl *LastDecl);

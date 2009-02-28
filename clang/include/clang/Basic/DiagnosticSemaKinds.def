@@ -744,6 +744,9 @@ DIAG(err_redefinition_of_label, ERROR,
 DIAG(err_undeclared_label_use, ERROR,
      "use of undeclared label '%0'")
 
+DIAG(err_goto_into_scope, ERROR,
+     "illegal jump (scoping violation)")
+
 DIAG(ext_implicit_function_decl, EXTENSION,
      "implicit declaration of function %0 is invalid in C99")
 

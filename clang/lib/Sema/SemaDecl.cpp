@@ -2496,6 +2496,79 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   return FD;
 }
 
+static bool StatementCreatesScope(Stmt* S) {
+  bool result = false;
+  if (DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
+    for (DeclStmt::decl_iterator i = DS->decl_begin();
+         i != DS->decl_end(); ++i) {
+      if (VarDecl* D = dyn_cast<VarDecl>(*i)) {
+        result |= D->getType()->isVariablyModifiedType();
+      }
+    }
+  }
+
+  return result;
+}
+
+void Sema::RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
+                                    llvm::DenseMap<void*, Stmt*>& PopScopeMap,
+                                    std::vector<void*>& ScopeStack,
+                                    Stmt* CurStmt,
+                                    Stmt* ParentCompoundStmt) {
+  for (Stmt::child_iterator i = CurStmt->child_begin();
+       i != CurStmt->child_end(); ++i) {
+    if (!*i) continue;
+    if (StatementCreatesScope(*i))  {
+      ScopeStack.push_back(*i);
+      PopScopeMap[*i] = ParentCompoundStmt;
+    } else if (isa<LabelStmt>(CurStmt)) {
+      LabelScopeMap[CurStmt] = ScopeStack.size() ? ScopeStack.back() : 0;
+    }
+    if (isa<DeclStmt>(*i)) continue;
+    Stmt* CurCompound = isa<CompoundStmt>(*i) ? *i : ParentCompoundStmt;
+    RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack,
+                             *i, CurCompound);
+  }
+
+  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt) {
+    ScopeStack.pop_back();
+  }
+}
+
+void Sema::RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
+                                   llvm::DenseMap<void*, Stmt*>& PopScopeMap,
+                                   llvm::DenseMap<Stmt*, void*>& GotoScopeMap,
+                                   std::vector<void*>& ScopeStack,
+                                   Stmt* CurStmt) {
+  for (Stmt::child_iterator i = CurStmt->child_begin();
+       i != CurStmt->child_end(); ++i) {
+    if (!*i) continue;
+    if (StatementCreatesScope(*i))  {
+      ScopeStack.push_back(*i);
+    } else if (GotoStmt* GS = dyn_cast<GotoStmt>(*i)) {
+      void* LScope = LabelScopeMap[GS->getLabel()];
+      if (LScope) {
+        bool foundScopeInStack = false;
+        for (unsigned i = ScopeStack.size(); i > 0; --i) {
+          if (LScope == ScopeStack[i-1]) {
+            foundScopeInStack = true;
+            break;
+          }
+        }
+        if (!foundScopeInStack) {
+          Diag(GS->getSourceRange().getBegin(), diag::err_goto_into_scope);
+        }
+      }
+    }
+    if (isa<DeclStmt>(*i)) continue;
+    RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap, ScopeStack, *i);
+  }
+
+  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt) {
+    ScopeStack.pop_back();
+  }
+}
+
 Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
   Decl *dcl = static_cast<Decl *>(D);
   Stmt *Body = static_cast<Stmt*>(BodyArg.release());
@@ -2511,7 +2584,8 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
   }
   PopDeclContext();
   // Verify and clean out per-function state.
-  
+
+  bool HaveLabels = !LabelMap.empty();
   // Check goto/label use.
   for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
        I = LabelMap.begin(), E = LabelMap.end(); I != E; ++I) {
@@ -2542,7 +2616,18 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
     }
   }
   LabelMap.clear();
-  
+
+  if (!Body) return D;
+
+  if (HaveLabels) {
+    llvm::DenseMap<Stmt*, void*> LabelScopeMap;
+    llvm::DenseMap<void*, Stmt*> PopScopeMap;
+    llvm::DenseMap<Stmt*, void*> GotoScopeMap;
+    std::vector<void*> ScopeStack;
+    RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack, Body, Body);
+    RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap, ScopeStack, Body);
+  }
+
   return D;
 }
 
