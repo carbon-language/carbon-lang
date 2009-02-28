@@ -472,17 +472,17 @@ llvm::Value *CodeGenFunction::LoadBlockStruct() {
   return Builder.CreateLoad(LocalDeclMap[getBlockStructDecl()], "self");
 }
 
-llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
+llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
                                                        const BlockInfo& Info,
                                                        uint64_t &Size,
                                                        uint64_t &Align,
                          llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls) {
   const FunctionProtoType *FTy =
-    cast<FunctionProtoType>(Expr->getFunctionType());
+    cast<FunctionProtoType>(BExpr->getFunctionType());
 
   FunctionArgList Args;
 
-  const BlockDecl *BD = Expr->getBlockDecl();
+  const BlockDecl *BD = BExpr->getBlockDecl();
 
   // FIXME: This leaks
   ImplicitParamDecl *SelfDecl =
@@ -510,9 +510,9 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
                            &CGM.getModule());
 
   StartFunction(BD, FTy->getResultType(), Fn, Args,
-                Expr->getBody()->getLocEnd());
-  EmitStmt(Expr->getBody());
-  FinishFunction(cast<CompoundStmt>(Expr->getBody())->getRBracLoc());
+                BExpr->getBody()->getLocEnd());
+  EmitStmt(BExpr->getBody());
+  FinishFunction(cast<CompoundStmt>(BExpr->getBody())->getRBracLoc());
 
   // The runtime needs a minimum alignment of a void *.
   uint64_t MinAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;

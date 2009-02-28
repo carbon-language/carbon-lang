@@ -1357,7 +1357,8 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
 // Transfer function: Objective-C ivar references.
 //===----------------------------------------------------------------------===//
 
-static std::pair<const void*,const void*> EagerlyAssumeTag(&EagerlyAssumeTag,0);
+static std::pair<const void*,const void*> EagerlyAssumeTag
+  = std::pair<const void*,const void*>(&EagerlyAssumeTag,0);
 
 void GRExprEngine::EvalEagerlyAssume(NodeSet &Dst, NodeSet &Src, Expr *Ex) {
   for (NodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {

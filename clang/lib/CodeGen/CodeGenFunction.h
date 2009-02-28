@@ -279,7 +279,7 @@ public:
       : BlockLiteralTy(blt), Name(n) {}
   };
 
-  llvm::Function *GenerateBlockFunction(const BlockExpr *Expr,
+  llvm::Function *GenerateBlockFunction(const BlockExpr *BExpr,
                                         const BlockInfo& Info,
                                         uint64_t &Size, uint64_t &Align,
                                         llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls);
