@@ -65,7 +65,7 @@ TemplateTypeInstantiator::InstantiateExtQualType(const ExtQualType *T,
 QualType 
 TemplateTypeInstantiator::InstantiateBuiltinType(const BuiltinType *T,
                                                  unsigned Quals) const {
-  assert(false && "BuiltinType is never dependent and cannot be instantiated");
+  assert(false && "Builtin types are not dependent and cannot be instantiated");
   return QualType(T, Quals);
 }
 
@@ -191,17 +191,32 @@ QualType
 TemplateTypeInstantiator::
 InstantiateFunctionProtoType(const FunctionProtoType *T,
                              unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate FunctionProtoType yet");
-  return QualType();
+  QualType ResultType = Instantiate(T->getResultType());
+  if (ResultType.isNull())
+    return ResultType;
+
+  llvm::SmallVector<QualType, 16> ParamTypes;
+  for (FunctionProtoType::arg_type_iterator Param = T->arg_type_begin(),
+                                         ParamEnd = T->arg_type_end(); 
+       Param != ParamEnd; ++Param) {
+    QualType P = Instantiate(*Param);
+    if (P.isNull())
+      return P;
+
+    ParamTypes.push_back(P);
+  }
+
+  return SemaRef.BuildFunctionType(ResultType, &ParamTypes[0], 
+                                   ParamTypes.size(),
+                                   T->isVariadic(), T->getTypeQuals(),
+                                   Loc, Entity);
 }
 
 QualType 
 TemplateTypeInstantiator::
 InstantiateFunctionNoProtoType(const FunctionNoProtoType *T,
                                unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate FunctionNoProtoType yet");
+  assert(false && "Functions without prototypes cannot be dependent.");
   return QualType();
 }
 

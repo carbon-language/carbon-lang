@@ -78,3 +78,24 @@ void test_Def5(Def5<int, const int[12]> *d5a, Def5<int, const int[13]> *d5b) {
   d5b->bar();
 }
 
+template<typename R, typename Arg1, typename Arg2 = Arg1,
+         typename FuncType = R (*)(Arg1, Arg2)>
+  struct Def6;
+
+template<> struct Def6<int, float> { 
+  void foo();
+};
+
+template<> struct Def6<bool, int[5], float(double, double)> {
+  void bar();
+};
+
+bool test_Def6(Def6<int, float, float> *d6a, 
+               Def6<int, float, float, int (*)(float, float)> *d6b,
+               Def6<bool, int[5], float(double, double),
+                    bool(*)(int*, float(*)(double, double))> *d6c) {
+  d6a->foo();
+  d6b->foo();
+  d6c->bar();
+  return d6a == d6b;
+}

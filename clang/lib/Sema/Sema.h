@@ -239,6 +239,10 @@ public:
   QualType BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                           Expr *ArraySize, unsigned Quals,
                           SourceLocation Loc, DeclarationName Entity);
+  QualType BuildFunctionType(QualType T,
+                             QualType *ParamTypes, unsigned NumParamTypes,
+                             bool Variadic, unsigned Quals,
+                             SourceLocation Loc, DeclarationName Entity);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip = 0);
   DeclarationName GetNameForDeclarator(Declarator &D);
 

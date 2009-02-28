@@ -468,7 +468,67 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   return T;
 }
                               
+/// \brief Build a function type.
+///
+/// This routine checks the function type according to C++ rules and
+/// under the assumption that the result type and parameter types have
+/// just been instantiated from a template. It therefore duplicates
+/// some of the behavior of GetTypeForDeclaration, but in a much
+/// simpler form that is only suitable for this narrow use case.
+///
+/// \param T The return type of the function.
+///
+/// \param ParamTypes The parameter types of the function. This array
+/// will be modified to account for adjustments to the types of the
+/// function parameters.
+///
+/// \param NumParamTypes The number of parameter types in ParamTypes.
+///
+/// \param Variadic Whether this is a variadic function type.
+///
+/// \param Quals The cvr-qualifiers to be applied to the function type.
+///
+/// \param Loc The location of the entity whose type involves this
+/// function type or, if there is no such entity, the location of the
+/// type that will have function type.
+///
+/// \param Entity The name of the entity that involves the function
+/// type, if known.
+///
+/// \returns A suitable function type, if there are no
+/// errors. Otherwise, returns a NULL type.
+QualType Sema::BuildFunctionType(QualType T,
+                                 QualType *ParamTypes, 
+                                 unsigned NumParamTypes,
+                                 bool Variadic, unsigned Quals,
+                                 SourceLocation Loc, DeclarationName Entity) {
+  if (T->isArrayType() || T->isFunctionType()) {
+    Diag(Loc, diag::err_func_returning_array_function) << T;
+    return QualType();
+  }
+  
+  bool Invalid = false;
+  for (unsigned Idx = 0; Idx < NumParamTypes; ++Idx) {
+    QualType ParamType = ParamTypes[Idx];
+    if (ParamType->isArrayType())
+      ParamType = Context.getArrayDecayedType(ParamType);
+    else if (ParamType->isFunctionType())
+      ParamType = Context.getPointerType(ParamType);
+    else if (ParamType->isVoidType()) {
+      Diag(Loc, diag::err_param_with_void_type);
+      Invalid = true;
+    }
 
+    ParamTypes[Idx] = ParamType;
+  }
+
+  if (Invalid)
+    return QualType();
+
+  return Context.getFunctionType(T, ParamTypes, NumParamTypes, Variadic, 
+                                 Quals);
+}
+                                 
 /// GetTypeForDeclarator - Convert the type for the specified
 /// declarator to Type instances. Skip the outermost Skip type
 /// objects.
