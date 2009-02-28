@@ -177,8 +177,8 @@ public:
   ///
   inline TypeID getTypeID() const { return ID; }
 
-  /// getDescription - Return the string representation of the type...
-  const std::string &getDescription() const;
+  /// getDescription - Return the string representation of the type.
+  std::string getDescription() const;
 
   /// isInteger - True if this is an instance of IntegerType.
   ///
