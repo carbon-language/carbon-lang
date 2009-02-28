@@ -262,7 +262,7 @@ public:
     return D;
   }
 
-  virtual void ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
+  virtual void ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclTy *D) {
     return;
   }
 

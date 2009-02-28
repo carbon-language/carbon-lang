@@ -134,7 +134,7 @@ namespace {
       return 0;
     }
 
-    virtual void ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
+    virtual void ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclTy *D) {
       llvm::cout << __FUNCTION__ << "\n";
     }
   

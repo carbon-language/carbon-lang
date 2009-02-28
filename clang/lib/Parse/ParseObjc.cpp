@@ -1377,7 +1377,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   
   // Tell the actions module that we have entered a method definition with the
   // specified Declarator for the method.
-  Actions.ObjCActOnStartOfMethodDef(CurScope, MDecl);
+  Actions.ActOnStartOfObjCMethodDef(CurScope, MDecl);
 
   OwningStmtResult FnBody(ParseCompoundStatementBody());
 

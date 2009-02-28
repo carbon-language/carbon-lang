@@ -295,7 +295,7 @@ public:
   virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D);
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, DeclTy *D);
-  virtual void ObjCActOnStartOfMethodDef(Scope *S, DeclTy *D);
+  virtual void ActOnStartOfObjCMethodDef(Scope *S, DeclTy *D);
 
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body);
   virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);

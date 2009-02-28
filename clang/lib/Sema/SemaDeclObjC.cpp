@@ -17,9 +17,9 @@
 #include "clang/Parse/DeclSpec.h"
 using namespace clang;
 
-/// ObjCActOnStartOfMethodDef - This routine sets up parameters; invisible
+/// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
-void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
+void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclTy *D) {
   assert(getCurMethodDecl() == 0 && "Method parsing confused");
   ObjCMethodDecl *MDecl = dyn_cast_or_null<ObjCMethodDecl>((Decl *)D);
   
