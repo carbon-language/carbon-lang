@@ -122,7 +122,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define UINT_FAST32_MAX  UINT32_MAX
 
 /* If we do not have 64-bit support, don't define the 64-bit size macros. */
-#ifndef __INT64_TYPE__
+#ifdef __INT64_TYPE__
 #define INT64_MAX      9223372036854775807LL
 #define INT64_MIN    (-9223372036854775807LL-1)
 #define UINT64_MAX    18446744073709551615ULL
