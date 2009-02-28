@@ -1262,6 +1262,8 @@ bool LLParser::ParseArrayVectorType(PATypeHolder &Result, bool isVector) {
     return true;
   
   if (isVector) {
+    if (Size == 0)
+      return Error(SizeLoc, "zero element vector is illegal");
     if ((unsigned)Size != Size)
       return Error(SizeLoc, "size too large for vector");
     if (!EltTy->isFloatingPoint() && !EltTy->isInteger())
