@@ -61,7 +61,7 @@
   <li><a href="#constants">Constants</a>
     <ol>
       <li><a href="#simpleconstants">Simple Constants</a></li>
-      <li><a href="#aggregateconstants">Aggregate Constants</a></li>
+      <li><a href="#complexconstants">Complex Constants</a></li>
       <li><a href="#globalconstants">Global Variable and Function Addresses</a></li>
       <li><a href="#undefvalues">Undefined Values</a></li>
       <li><a href="#constantexprs">Constant Expressions</a></li>
@@ -1788,12 +1788,14 @@ the long double format on your target.  All hexadecimal formats are big-endian
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="aggregateconstants">Aggregate Constants</a>
+<div class="doc_subsection">
+<a name="aggregateconstants"> <!-- old anchor -->
+<a name="complexconstants">Complex Constants</a></a>
 </div>
 
 <div class="doc_text">
-<p>Aggregate constants arise from aggregation of simple constants
-and smaller aggregate constants.</p>
+<p>Complex constants are a (potentially recursive) combination of simple
+constants and smaller complex constants.</p>
 
 <dl>
   <dt><b>Structure constants</b></dt>
@@ -2140,7 +2142,7 @@ return value.</p>
 <pre>
   ret i32 5                       <i>; Return an integer value of 5</i>
   ret void                        <i>; Return from a void function</i>
-  ret { i32, i8 } { i32 4, i8 2 } <i>; Return an aggregate of values 4 and 2</i>
+  ret { i32, i8 } { i32 4, i8 2 } <i>; Return an struct of values 4 and 2</i>
 </pre>
 
 <p>Note that the code generator does not yet fully support large
