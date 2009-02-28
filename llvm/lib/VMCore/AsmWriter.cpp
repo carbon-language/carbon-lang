@@ -168,15 +168,18 @@ TypePrinting::TypePrinting(const Module *M, raw_ostream &os) : OS(os) {
   const TypeSymbolTable &ST = M->getTypeSymbolTable();
   for (TypeSymbolTable::const_iterator TI = ST.begin(), E = ST.end();
        TI != E; ++TI) {
+    const Type *Ty = cast<Type>(TI->second);
+    
     // As a heuristic, don't insert pointer to primitive types, because
     // they are used too often to have a single useful name.
-    //
-    const Type *Ty = cast<Type>(TI->second);
-    if (!isa<PointerType>(Ty) ||
-        !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
-        !cast<PointerType>(Ty)->getElementType()->isInteger() ||
-        isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
-      TypeNames.insert(std::make_pair(Ty, '%' + getLLVMName(TI->first)));
+    if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+      const Type *PETy = PTy->getElementType();
+      if ((PETy->isPrimitiveType() || PETy->isInteger()) &&
+          !isa<OpaqueType>(PETy))
+        continue;
+    }
+    
+    TypeNames.insert(std::make_pair(Ty, '%' + getLLVMName(TI->first)));
   }
 }
 
