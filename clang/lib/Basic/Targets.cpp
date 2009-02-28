@@ -279,9 +279,9 @@ public:
                               unsigned &NumNames) const;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
                                 unsigned &NumAliases) const;
-  virtual bool validateAsmConstraint(char c,
+  virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const {
-    switch (c) {
+    switch (*Name) {
     default: return false;
     case 'O': // Zero
       return true;
@@ -491,7 +491,7 @@ public:
     Aliases = GCCRegAliases;
     NumAliases = llvm::array_lengthof(GCCRegAliases);
   }
-  virtual bool validateAsmConstraint(char c,
+  virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const;
   virtual std::string convertConstraint(const char Constraint) const;
   virtual const char *getClobbers() const {
@@ -500,9 +500,9 @@ public:
 };
   
 bool
-X86TargetInfo::validateAsmConstraint(char c,
+X86TargetInfo::validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const {
-  switch (c) {
+  switch (*Name) {
   default: return false;
   case 'a': // eax.
   case 'b': // ebx.
@@ -782,10 +782,10 @@ public:
     Aliases = 0;
     NumAliases = 0;
   }
-  virtual bool validateAsmConstraint(char c,
+  virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const {
     // FIXME: Check if this is complete
-    switch (c) {
+    switch (*Name) {
     default:
     case 'l': // r0-r7
     case 'h': // r8-r15
@@ -847,7 +847,7 @@ public:
                               unsigned &NumNames) const;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
                                 unsigned &NumAliases) const;
-  virtual bool validateAsmConstraint(char c,
+  virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const {
     // FIXME: Implement!
     return false;
@@ -958,7 +958,7 @@ namespace {
     virtual const char *getTargetPrefix() const {return "";}
     virtual void getGCCRegNames(const char * const *&Names, 
                                 unsigned &NumNames) const {} 
-    virtual bool validateAsmConstraint(char c, 
+    virtual bool validateAsmConstraint(const char *&Name, 
                                        TargetInfo::ConstraintInfo &info) const {
       return true;
     }
