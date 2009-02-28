@@ -216,73 +216,68 @@ void TypePrinting::calcTypeName(const Type *Ty,
   TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
   
   switch (Ty->getTypeID()) {
-    case Type::IntegerTyID: {
-      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-      Result += "i" + utostr(BitWidth);
-      break;
+  case Type::FunctionTyID: {
+    const FunctionType *FTy = cast<FunctionType>(Ty);
+    calcTypeName(FTy->getReturnType(), TypeStack, Result);
+    Result += " (";
+    for (FunctionType::param_iterator I = FTy->param_begin(),
+         E = FTy->param_end(); I != E; ++I) {
+      if (I != FTy->param_begin())
+        Result += ", ";
+      calcTypeName(*I, TypeStack, Result);
     }
-    case Type::FunctionTyID: {
-      const FunctionType *FTy = cast<FunctionType>(Ty);
-      calcTypeName(FTy->getReturnType(), TypeStack, Result);
-      Result += " (";
-      for (FunctionType::param_iterator I = FTy->param_begin(),
-           E = FTy->param_end(); I != E; ++I) {
-        if (I != FTy->param_begin())
-          Result += ", ";
-        calcTypeName(*I, TypeStack, Result);
-      }
-      if (FTy->isVarArg()) {
-        if (FTy->getNumParams()) Result += ", ";
-        Result += "...";
-      }
-      Result += ")";
-      break;
+    if (FTy->isVarArg()) {
+      if (FTy->getNumParams()) Result += ", ";
+      Result += "...";
     }
-    case Type::StructTyID: {
-      const StructType *STy = cast<StructType>(Ty);
-      if (STy->isPacked())
-        Result += '<';
-      Result += "{ ";
-      for (StructType::element_iterator I = STy->element_begin(),
-           E = STy->element_end(); I != E; ++I) {
-        calcTypeName(*I, TypeStack, Result);
-        if (next(I) != STy->element_end())
-          Result += ',';
-        Result += ' ';
-      }
-      Result += '}';
-      if (STy->isPacked())
-        Result += '>';
-      break;
+    Result += ")";
+    break;
+  }
+  case Type::StructTyID: {
+    const StructType *STy = cast<StructType>(Ty);
+    if (STy->isPacked())
+      Result += '<';
+    Result += "{ ";
+    for (StructType::element_iterator I = STy->element_begin(),
+         E = STy->element_end(); I != E; ++I) {
+      calcTypeName(*I, TypeStack, Result);
+      if (next(I) != STy->element_end())
+        Result += ',';
+      Result += ' ';
     }
-    case Type::PointerTyID: {
-      const PointerType *PTy = cast<PointerType>(Ty);
-      calcTypeName(PTy->getElementType(), TypeStack, Result);
-      if (unsigned AddressSpace = PTy->getAddressSpace())
-        Result += " addrspace(" + utostr(AddressSpace) + ")";
-      Result += "*";
-      break;
-    }
-    case Type::ArrayTyID: {
-      const ArrayType *ATy = cast<ArrayType>(Ty);
-      Result += "[" + utostr(ATy->getNumElements()) + " x ";
-      calcTypeName(ATy->getElementType(), TypeStack, Result);
-      Result += "]";
-      break;
-    }
-    case Type::VectorTyID: {
-      const VectorType *PTy = cast<VectorType>(Ty);
-      Result += "<" + utostr(PTy->getNumElements()) + " x ";
-      calcTypeName(PTy->getElementType(), TypeStack, Result);
-      Result += ">";
-      break;
-    }
-    case Type::OpaqueTyID:
-      Result += "opaque";
-      break;
-    default:
-      Result += "<unrecognized-type>";
-      break;
+    Result += '}';
+    if (STy->isPacked())
+      Result += '>';
+    break;
+  }
+  case Type::PointerTyID: {
+    const PointerType *PTy = cast<PointerType>(Ty);
+    calcTypeName(PTy->getElementType(), TypeStack, Result);
+    if (unsigned AddressSpace = PTy->getAddressSpace())
+      Result += " addrspace(" + utostr(AddressSpace) + ")";
+    Result += "*";
+    break;
+  }
+  case Type::ArrayTyID: {
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    Result += "[" + utostr(ATy->getNumElements()) + " x ";
+    calcTypeName(ATy->getElementType(), TypeStack, Result);
+    Result += "]";
+    break;
+  }
+  case Type::VectorTyID: {
+    const VectorType *PTy = cast<VectorType>(Ty);
+    Result += "<" + utostr(PTy->getNumElements()) + " x ";
+    calcTypeName(PTy->getElementType(), TypeStack, Result);
+    Result += ">";
+    break;
+  }
+  case Type::OpaqueTyID:
+    Result += "opaque";
+    break;
+  default:
+    Result += "<unrecognized-type>";
+    break;
   }
   
   TypeStack.pop_back();       // Remove self from stack...
