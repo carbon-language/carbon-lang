@@ -1308,7 +1308,6 @@ public:
   }
   static bool classof(const TagType *) { return true; }
   static bool classof(const RecordType *) { return true; }
-  static bool classof(const CXXRecordType *) { return true; } 
   static bool classof(const EnumType *) { return true; }
  
 protected:  
@@ -1346,25 +1345,6 @@ public:
     return isa<TagType>(T) && classof(cast<TagType>(T));
   }
   static bool classof(const RecordType *) { return true; }
-};
-
-/// CXXRecordType - This is a helper class that allows the use of
-/// isa/cast/dyncast to detect TagType objects of C++ structs/unions/classes.
-class CXXRecordType : public RecordType {
-  explicit CXXRecordType(CXXRecordDecl *D)
-    : RecordType(CXXRecord, reinterpret_cast<RecordDecl*>(D)) { }
-  friend class ASTContext;   // ASTContext creates these.
-public:
-
-  CXXRecordDecl *getDecl() const {
-    return reinterpret_cast<CXXRecordDecl*>(RecordType::getDecl());
-  }
-
-  static bool classof(const TagType *T);
-  static bool classof(const Type *T) {
-    return isa<TagType>(T) && classof(cast<TagType>(T));
-  }
-  static bool classof(const CXXRecordType *) { return true; }
 };
 
 /// EnumType - This is a helper class that allows the use of isa/cast/dyncast

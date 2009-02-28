@@ -119,7 +119,6 @@ bool Type::isDerivedType() const {
   case FunctionNoProto:
   case Reference:
   case Record:
-  case CXXRecord:
     return true;
   default:
     return false;
@@ -709,10 +708,13 @@ bool Type::isScalarType() const {
 /// subsumes the notion of C aggregates (C99 6.2.5p21) because it also
 /// includes union types.
 bool Type::isAggregateType() const {
-  if (const CXXRecordType *CXXClassType = dyn_cast<CXXRecordType>(CanonicalType))
-    return CXXClassType->getDecl()->isAggregate();
-  if (isa<RecordType>(CanonicalType))
+  if (const RecordType *Record = dyn_cast<RecordType>(CanonicalType)) {
+    if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(Record->getDecl()))
+      return ClassDecl->isAggregate();
+
     return true;
+  }
+
   if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
     return EXTQT->getBaseType()->isAggregateType();
   return isa<ArrayType>(CanonicalType);
@@ -743,7 +745,6 @@ bool Type::isIncompleteType() const {
     // be completed.
     return isVoidType();
   case Record:
-  case CXXRecord:
   case Enum:
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
@@ -784,11 +785,12 @@ bool Type::isPODType() const {
     return true;
 
   case Record:
+    if (CXXRecordDecl *ClassDecl 
+          = dyn_cast<CXXRecordDecl>(cast<RecordType>(CanonicalType)->getDecl()))
+      return ClassDecl->isPOD();
+
     // C struct/union is POD.
     return true;
-
-  case CXXRecord:
-    return cast<CXXRecordType>(CanonicalType)->getDecl()->isPOD();
   }
 }
 
@@ -913,10 +915,6 @@ TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
 
 bool RecordType::classof(const TagType *TT) {
   return isa<RecordDecl>(TT->getDecl());
-}
-
-bool CXXRecordType::classof(const TagType *TT) {
-  return isa<CXXRecordDecl>(TT->getDecl());
 }
 
 bool EnumType::classof(const TagType *TT) {

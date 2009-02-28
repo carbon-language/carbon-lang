@@ -1612,12 +1612,12 @@ bool Sema::CheckValueInitialization(QualType Type, SourceLocation Loc) {
     return CheckValueInitialization(AT->getElementType(), Loc);
 
   if (const RecordType *RT = Type->getAsRecordType()) {
-    if (const CXXRecordType *CXXRec = dyn_cast<CXXRecordType>(RT)) {
+    if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
       // -- if T is a class type (clause 9) with a user-declared
       //    constructor (12.1), then the default constructor for T is
       //    called (and the initialization is ill-formed if T has no
       //    accessible default constructor);
-      if (CXXRec->getDecl()->hasUserDeclaredConstructor())
+      if (ClassDecl->hasUserDeclaredConstructor())
         // FIXME: Eventually, we'll need to put the constructor decl
         // into the AST.
         return PerformInitializationByConstructor(Type, 0, 0, Loc,

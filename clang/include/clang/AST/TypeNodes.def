@@ -68,7 +68,6 @@ NON_CANONICAL_TYPE(TypeOfExpr, Type)
 NON_CANONICAL_TYPE(TypeOf, Type)
 ABSTRACT_TYPE(Tag, Type)
 TYPE(Record, TagType)
-TYPE(CXXRecord, RecordType) // FIXME: kill this one
 TYPE(Enum, TagType)
 DEPENDENT_TYPE(TemplateTypeParm, Type)
 NON_CANONICAL_TYPE(ClassTemplateSpecialization, Type)

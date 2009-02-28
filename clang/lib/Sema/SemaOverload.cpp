@@ -1233,7 +1233,7 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType) {
     return true;
   }
 
-  if (const CXXRecordType *VBase = Paths.getDetectedVirtual()) {
+  if (const RecordType *VBase = Paths.getDetectedVirtual()) {
     Diag(From->getExprLoc(), diag::err_memptr_conv_via_virtual)
       << FromClass << ToClass << QualType(VBase, 0)
       << From->getSourceRange();
@@ -1317,46 +1317,48 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
                                    bool AllowExplicit)
 {
   OverloadCandidateSet CandidateSet;
-  if (const CXXRecordType *ToRecordType 
-        = dyn_cast_or_null<CXXRecordType>(ToType->getAsRecordType())) {
-    // C++ [over.match.ctor]p1:
-    //   When objects of class type are direct-initialized (8.5), or
-    //   copy-initialized from an expression of the same or a
-    //   derived class type (8.5), overload resolution selects the
-    //   constructor. [...] For copy-initialization, the candidate
-    //   functions are all the converting constructors (12.3.1) of
-    //   that class. The argument list is the expression-list within
-    //   the parentheses of the initializer.
-    CXXRecordDecl *ToRecordDecl = ToRecordType->getDecl();
-    DeclarationName ConstructorName 
-      = Context.DeclarationNames.getCXXConstructorName(
-                        Context.getCanonicalType(ToType).getUnqualifiedType());
-    DeclContext::lookup_iterator Con, ConEnd;
-    for (llvm::tie(Con, ConEnd) = ToRecordDecl->lookup(ConstructorName);
-         Con != ConEnd; ++Con) {
-      CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
-      if (Constructor->isConvertingConstructor())
-        AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
-                             /*SuppressUserConversions=*/true);
+  if (const RecordType *ToRecordType = ToType->getAsRecordType()) {
+    if (CXXRecordDecl *ToRecordDecl 
+          = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
+      // C++ [over.match.ctor]p1:
+      //   When objects of class type are direct-initialized (8.5), or
+      //   copy-initialized from an expression of the same or a
+      //   derived class type (8.5), overload resolution selects the
+      //   constructor. [...] For copy-initialization, the candidate
+      //   functions are all the converting constructors (12.3.1) of
+      //   that class. The argument list is the expression-list within
+      //   the parentheses of the initializer.
+      DeclarationName ConstructorName 
+        = Context.DeclarationNames.getCXXConstructorName(
+                          Context.getCanonicalType(ToType).getUnqualifiedType());
+      DeclContext::lookup_iterator Con, ConEnd;
+      for (llvm::tie(Con, ConEnd) = ToRecordDecl->lookup(ConstructorName);
+           Con != ConEnd; ++Con) {
+        CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+        if (Constructor->isConvertingConstructor())
+          AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
+                               /*SuppressUserConversions=*/true);
+      }
     }
   }
 
   if (!AllowConversionFunctions) {
     // Don't allow any conversion functions to enter the overload set.
-  } else if (const CXXRecordType *FromRecordType
-               = dyn_cast_or_null<CXXRecordType>(
-                                        From->getType()->getAsRecordType())) {
-    // Add all of the conversion functions as candidates.
-    // FIXME: Look for conversions in base classes!
-    CXXRecordDecl *FromRecordDecl = FromRecordType->getDecl();
-    OverloadedFunctionDecl *Conversions 
-      = FromRecordDecl->getConversionFunctions();
-    for (OverloadedFunctionDecl::function_iterator Func 
-           = Conversions->function_begin();
-         Func != Conversions->function_end(); ++Func) {
-      CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
-      if (AllowExplicit || !Conv->isExplicit())
-        AddConversionCandidate(Conv, From, ToType, CandidateSet);
+  } else if (const RecordType *FromRecordType 
+               = From->getType()->getAsRecordType()) {
+    if (CXXRecordDecl *FromRecordDecl 
+          = dyn_cast<CXXRecordDecl>(FromRecordType->getDecl())) {
+      // Add all of the conversion functions as candidates.
+      // FIXME: Look for conversions in base classes!
+      OverloadedFunctionDecl *Conversions 
+        = FromRecordDecl->getConversionFunctions();
+      for (OverloadedFunctionDecl::function_iterator Func 
+             = Conversions->function_begin();
+           Func != Conversions->function_end(); ++Func) {
+        CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+        if (AllowExplicit || !Conv->isExplicit())
+          AddConversionCandidate(Conv, From, ToType, CandidateSet);
+      }
     }
   }
 

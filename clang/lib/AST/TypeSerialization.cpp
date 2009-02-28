@@ -112,7 +112,6 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       break;
 
     case Type::Record:
-    case Type::CXXRecord:
     case Type::Enum:
       // FIXME: Implement this!
       assert(false && "Can't deserialize tag types!");

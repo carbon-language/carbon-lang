@@ -448,7 +448,6 @@ ASTContext::getTypeInfo(const Type *T) {
     break;
   }
   case Type::Record:
-  case Type::CXXRecord:
   case Type::Enum: {
     const TagType *TT = cast<TagType>(T);
 
@@ -1231,13 +1230,7 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
   } else if (ObjCInterfaceDecl *ObjCInterface = dyn_cast<ObjCInterfaceDecl>(Decl))
     return getObjCInterfaceType(ObjCInterface);
 
-  if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(Decl)) {
-    if (PrevDecl)
-      Decl->TypeForDecl = PrevDecl->TypeForDecl;
-    else
-      Decl->TypeForDecl = new (*this,8) CXXRecordType(CXXRecord);
-  }
-  else if (RecordDecl *Record = dyn_cast<RecordDecl>(Decl)) {
+  if (RecordDecl *Record = dyn_cast<RecordDecl>(Decl)) {
     if (PrevDecl)
       Decl->TypeForDecl = PrevDecl->TypeForDecl;
     else
@@ -2841,7 +2834,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   case Type::FunctionNoProto:
     return mergeFunctionTypes(LHS, RHS);
   case Type::Record:
-  case Type::CXXRecord:
   case Type::Enum:
     // FIXME: Why are these compatible?
     if (isObjCIdStructType(LHS) && isObjCClassStructType(RHS)) return LHS;

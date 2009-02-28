@@ -508,7 +508,6 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::Pointer: Slot = CreateType(cast<PointerType>(Ty), Unit); break;
   case Type::Typedef: Slot = CreateType(cast<TypedefType>(Ty), Unit); break;
   case Type::Record:
-  case Type::CXXRecord:
   case Type::Enum:
     Slot = CreateType(cast<TagType>(Ty), Unit); 
     break;

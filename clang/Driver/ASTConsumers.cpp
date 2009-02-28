@@ -944,12 +944,13 @@ public:
   void HandleTranslationUnit(TranslationUnit& TU) {
     ASTContext& C = TU.getContext();
     for (ASTContext::type_iterator I=C.types_begin(),E=C.types_end(); I!=E; ++I)
-      if (CXXRecordType *T = dyn_cast<CXXRecordType>(*I)) {
-        CXXRecordDecl* D = T->getDecl();
-        // FIXME: This lookup needs to be generalized to handle namespaces and
-        // (when we support them) templates.
-        if (D->getNameAsString() == clsname) {
-          D->viewInheritance(C);      
+      if (RecordType *T = dyn_cast<RecordType>(*I)) {
+        if (CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(T->getDecl())) {
+          // FIXME: This lookup needs to be generalized to handle namespaces and
+          // (when we support them) templates.
+          if (D->getNameAsString() == clsname) {
+            D->viewInheritance(C);      
+          }
         }
       }
   }

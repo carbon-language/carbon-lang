@@ -255,14 +255,6 @@ TemplateTypeInstantiator::InstantiateRecordType(const RecordType *T,
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateCXXRecordType(const CXXRecordType *T,
-                                                   unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate CXXRecordType yet");
-  return QualType();
-}
-
-QualType 
 TemplateTypeInstantiator::InstantiateEnumType(const EnumType *T,
                                               unsigned Quals) const {
   // FIXME: Implement this

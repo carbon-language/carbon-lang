@@ -1232,13 +1232,14 @@ addAssociatedClassesAndNamespaces(QualType T,
   //        member, if any; and its direct and indirect base
   //        classes. Its associated namespaces are the namespaces in
   //        which its associated classes are defined. 
-  if (const CXXRecordType *ClassType 
-        = dyn_cast_or_null<CXXRecordType>(T->getAsRecordType())) {
-    addAssociatedClassesAndNamespaces(ClassType->getDecl(), 
-                                      Context, AssociatedNamespaces, 
-                                      AssociatedClasses);
-    return;
-  }
+  if (const RecordType *ClassType = T->getAsRecordType())
+    if (CXXRecordDecl *ClassDecl 
+        = dyn_cast<CXXRecordDecl>(ClassType->getDecl())) {
+      addAssociatedClassesAndNamespaces(ClassDecl, Context, 
+                                        AssociatedNamespaces, 
+                                        AssociatedClasses);
+      return;
+    }
 
   //     -- If T is an enumeration type, its associated namespace is
   //        the namespace in which it is defined. If it is class

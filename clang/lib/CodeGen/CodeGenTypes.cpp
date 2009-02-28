@@ -302,7 +302,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return ConvertTypeRecursive(Context.getObjCIdType());
 
   case Type::Record:
-  case Type::CXXRecord:
   case Type::Enum: {
     const TagDecl *TD = cast<TagType>(Ty).getDecl();
     const llvm::Type *Res = ConvertTagDeclType(TD);

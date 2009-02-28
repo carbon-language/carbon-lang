@@ -402,8 +402,8 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   DeclarationName NewName = Context.DeclarationNames.getCXXOperatorName(
                                         IsArray ? OO_Array_New : OO_New);
   if (AllocType->isRecordType() && !UseGlobal) {
-    CXXRecordDecl *Record = cast<CXXRecordType>(AllocType->getAsRecordType())
-                                ->getDecl();
+    CXXRecordDecl *Record 
+      = cast<CXXRecordDecl>(AllocType->getAsRecordType()->getDecl());
     // FIXME: We fail to find inherited overloads.
     if (FindAllocationOverload(StartLoc, Range, NewName, &AllocArgs[0],
                           AllocArgs.size(), Record, /*AllowMissing=*/true,

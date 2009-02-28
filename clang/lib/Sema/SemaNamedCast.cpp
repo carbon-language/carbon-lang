@@ -706,7 +706,7 @@ TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
     return TSC_Failed;
   }
 
-  if (const CXXRecordType *VBase = Paths.getDetectedVirtual()) {
+  if (const RecordType *VBase = Paths.getDetectedVirtual()) {
     Self.Diag(OpRange.getBegin(), diag::err_memptr_conv_via_virtual)
       << SrcClass << DestClass << QualType(VBase, 0) << OpRange;
     return TSC_Failed;

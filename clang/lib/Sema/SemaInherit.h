@@ -27,7 +27,6 @@
 
 namespace clang {
   class CXXBaseSpecifier;
-  class CXXRecordType;
 
   /// BasePathElement - An element in a path from a derived class to a
   /// base class. Each step in the path references the link from a
@@ -128,7 +127,7 @@ namespace clang {
     BasePath ScratchPath;
 
     /// DetectedVirtual - The base class that is virtual.
-    const CXXRecordType *DetectedVirtual;
+    const RecordType *DetectedVirtual;
 
     friend class Sema;
 
@@ -167,7 +166,7 @@ namespace clang {
     bool isDetectingVirtual() const { return DetectVirtual; }
 
     /// getDetectedVirtual - The virtual base discovered on the path.
-    const CXXRecordType* getDetectedVirtual() const {
+    const RecordType* getDetectedVirtual() const {
       return DetectedVirtual;
     }
 
