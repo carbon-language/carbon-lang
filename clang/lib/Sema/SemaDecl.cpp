@@ -1622,6 +1622,42 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     Diag(D.getIdentifierLoc(), diag::warn_attribute_weak_on_local);
   }
 
+  bool isIllegalVLA = R->isVariableArrayType() && NewVD->hasGlobalStorage();
+  bool isIllegalVM = R->isVariablyModifiedType() && NewVD->hasLinkage();
+  if (isIllegalVLA || isIllegalVM) {
+    bool SizeIsNegative;
+    QualType FixedTy =
+        TryToFixInvalidVariablyModifiedType(R, Context, SizeIsNegative);
+    if (!FixedTy.isNull()) {
+      Diag(NewVD->getLocation(), diag::warn_illegal_constant_array_size);
+      NewVD->setType(FixedTy);
+    } else if (R->isVariableArrayType()) {
+      NewVD->setInvalidDecl();
+
+      const VariableArrayType *VAT = Context.getAsVariableArrayType(R);
+      // FIXME: This won't give the correct result for 
+      // int a[10][n];      
+      SourceRange SizeRange = VAT->getSizeExpr()->getSourceRange();
+
+      if (NewVD->isFileVarDecl())
+        Diag(NewVD->getLocation(), diag::err_vla_decl_in_file_scope)
+          << SizeRange;
+      else if (NewVD->getStorageClass() == VarDecl::Static)
+        Diag(NewVD->getLocation(), diag::err_vla_decl_has_static_storage)
+          << SizeRange;
+      else
+        Diag(NewVD->getLocation(), diag::err_vla_decl_has_extern_linkage)
+            << SizeRange;
+    } else {
+      InvalidDecl = true;
+      
+      if (NewVD->isFileVarDecl())
+        Diag(NewVD->getLocation(), diag::err_vm_decl_in_file_scope);
+      else
+        Diag(NewVD->getLocation(), diag::err_vm_decl_has_extern_linkage);
+    }
+  }
+
   // If name lookup finds a previous declaration that is not in the
   // same scope as the new declaration, this may still be an
   // acceptable redeclaration.

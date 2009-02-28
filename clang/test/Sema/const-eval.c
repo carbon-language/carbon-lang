@@ -47,3 +47,6 @@ EVAL_EXPR(21, (__imag__ 2i) == 2 ? 1 : -1);
 
 EVAL_EXPR(22, (__real__ (2i+3)) == 3 ? 1 : -1);
 
+int g23[(int)(1.0 / 1.0)] = { 1 };
+int g24[(int)(1.0 / 1.0)] = { 1 , 2 }; // expected-warning {{excess elements in array initializer}}
+int g25[(int)(1.0 + 1.0)], g26 = sizeof(g25);
