@@ -259,7 +259,7 @@ void TypePrinting::CalcTypeName(const Type *Ty,
   }
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    Result << "[" << ATy->getNumElements() << " x ";
+    Result << '[' << ATy->getNumElements() << " x ";
     CalcTypeName(ATy->getElementType(), TypeStack, Result);
     Result << ']';
     break;
@@ -307,8 +307,6 @@ void TypePrinting::print(const Type *Ty) {
   std::string TypeName;
   
   raw_string_ostream TypeOS(TypeName);
-
-  
   CalcTypeName(Ty, TypeStack, TypeOS);
   OS << TypeOS.str();
 
@@ -340,22 +338,11 @@ void TypePrinting::printAtLeastOneLevel(const Type *Ty) {
 
 /// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
 /// type, iff there is an entry in the modules symbol table for the specified
-/// type or one of it's component types. This is slower than a simple x << Type
+/// type or one of it's component types.
 ///
 void llvm::WriteTypeSymbolic(raw_ostream &Out, const Type *Ty, const Module *M){
-  // FIXME: Remove this space.
-  Out << ' ';
-  
   TypePrinting(M, Out).print(Ty);
 }
-
-// std::ostream adaptor.
-void llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
-                             const Module *M) {
-  raw_os_ostream RO(Out);
-  WriteTypeSymbolic(RO, Ty, M);
-}
-
 
 //===----------------------------------------------------------------------===//
 // SlotTracker Class: Enumerate slot numbers for unnamed values
@@ -1713,15 +1700,16 @@ void Value::print(std::ostream &O, AssemblyAnnotationWriter *AAW) const {
 void Value::dump() const { print(errs()); errs() << '\n'; errs().flush(); }
 
 // Type::dump - allow easy printing of Types from the debugger.
-void Type::dump() const { print(errs()); errs() << '\n'; errs().flush(); }
-
-// Type::dump - allow easy printing of Types from the debugger.
 // This one uses type names from the given context module
 void Type::dump(const Module *Context) const {
   WriteTypeSymbolic(errs(), this, Context);
   errs() << '\n';
   errs().flush();
 }
+
+// Type::dump - allow easy printing of Types from the debugger.
+void Type::dump() const { dump(0); }
+
 
 // Module::dump() - Allow printing of Modules from the debugger.
 void Module::dump() const { print(errs(), 0); errs().flush(); }

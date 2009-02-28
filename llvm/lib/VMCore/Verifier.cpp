@@ -61,6 +61,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <sstream>
 #include <cstdarg>
@@ -290,8 +291,10 @@ namespace {
     }
 
     void WriteType(const Type *T) {
-      if ( !T ) return;
-      WriteTypeSymbolic(msgs, T, Mod );
+      if (!T) return;
+      raw_os_ostream RO(msgs);
+      RO << ' ';
+      WriteTypeSymbolic(RO, T, Mod);
     }
 
 

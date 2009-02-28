@@ -27,10 +27,9 @@ class Value;
 class raw_ostream;
 
 // WriteTypeSymbolic - This attempts to write the specified type as a symbolic
-// type, iff there is an entry in the Module's symbol table for the specified
-// type or one of its component types.  This is slower than a simple x << Type;
+// type, if there is an entry in the Module's symbol table for the specified
+// type or one of its component types.
 //
-void WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
 void WriteTypeSymbolic(raw_ostream &, const Type *, const Module *M);
 
 // WriteAsOperand - Write the name of the specified value out to the specified

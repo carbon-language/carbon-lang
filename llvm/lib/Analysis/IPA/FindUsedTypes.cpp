@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 char FindUsedTypes::ID = 0;
@@ -91,11 +92,13 @@ bool FindUsedTypes::runOnModule(Module &m) {
 // passed in, then the types are printed symbolically if possible, using the
 // symbol table from the module.
 //
-void FindUsedTypes::print(std::ostream &o, const Module *M) const {
-  o << "Types in use by this module:\n";
+void FindUsedTypes::print(std::ostream &OS, const Module *M) const {
+  raw_os_ostream RO(OS);
+  RO << "Types in use by this module:\n";
   for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
        E = UsedTypes.end(); I != E; ++I) {
-    WriteTypeSymbolic(o << "  ", *I, M);
-    o << "\n";
+    RO << "   ";
+    WriteTypeSymbolic(RO, *I, M);
+    RO << '\n';
   }
 }
