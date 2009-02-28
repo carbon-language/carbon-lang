@@ -137,8 +137,8 @@ static void PrintLLVMName(raw_ostream &OS, const Value *V) {
 // TypePrinting Class: Type printing machinery
 //===----------------------------------------------------------------------===//
 
-static std::map<const Type *, std::string> &getTypeNamesMap(void *M) {
-  return *static_cast<std::map<const Type *, std::string>*>(M);
+static DenseMap<const Type *, std::string> &getTypeNamesMap(void *M) {
+  return *static_cast<DenseMap<const Type *, std::string>*>(M);
 }
 
 void TypePrinting::clear() {
@@ -146,7 +146,7 @@ void TypePrinting::clear() {
 }
 
 TypePrinting::TypePrinting(const Module *M) {
-  TypeNames = new std::map<const Type *, std::string>();
+  TypeNames = new DenseMap<const Type *, std::string>();
   if (M == 0) return;
   
   // If the module has a symbol table, take all global types and stuff their
@@ -187,8 +187,8 @@ void TypePrinting::CalcTypeName(const Type *Ty,
                                 SmallVectorImpl<const Type *> &TypeStack,
                                 raw_ostream &OS) {
   // Check to see if the type is named.
-  std::map<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
-  std::map<const Type *, std::string>::iterator I = TM.find(Ty);
+  DenseMap<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
+  DenseMap<const Type *, std::string>::iterator I = TM.find(Ty);
   if (I != TM.end() &&
       // If the name wasn't temporarily removed use it.
       !I->second.empty()) {
@@ -294,8 +294,8 @@ void TypePrinting::CalcTypeName(const Type *Ty,
 ///
 void TypePrinting::print(const Type *Ty, raw_ostream &OS) {
   // Check to see if the type is named.
-  std::map<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
-  std::map<const Type*, std::string>::iterator I = TM.find(Ty);
+  DenseMap<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
+  DenseMap<const Type*, std::string>::iterator I = TM.find(Ty);
   if (I != TM.end()) {
     OS << I->second;
     return;
@@ -320,8 +320,8 @@ void TypePrinting::print(const Type *Ty, raw_ostream &OS) {
 void TypePrinting::printAtLeastOneLevel(const Type *Ty, raw_ostream &OS) {
   // If the type does not have a name, then it is already guaranteed to print at
   // least one level.
-  std::map<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
-  std::map<const Type*, std::string>::iterator I = TM.find(Ty);
+  DenseMap<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
+  DenseMap<const Type*, std::string>::iterator I = TM.find(Ty);
   if (I == TM.end())
     return print(Ty, OS);
   
