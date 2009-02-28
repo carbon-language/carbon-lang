@@ -151,6 +151,9 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::ObjCEncodeExprClass:
     return EmitObjCEncodeExprLValue(cast<ObjCEncodeExpr>(E));
 
+  case Expr::BlockDeclRefExprClass: 
+    return EmitBlockDeclRefLValue(cast<BlockDeclRefExpr>(E));
+
   case Expr::CXXConditionDeclExprClass:
     return EmitCXXConditionDeclLValue(cast<CXXConditionDeclExpr>(E));
 
@@ -627,7 +630,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     }
     else {
       llvm::Value *V = LocalDeclMap[VD];
-      assert(V && "BlockVarDecl not entered in LocalDeclMap?");
+      assert(V && "DeclRefExpr not entered in LocalDeclMap?");
       // local variables do not get their gc attribute set.
       QualType::GCAttrTypes attr = QualType::GCNone;
       // local static?
@@ -658,6 +661,38 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   //an invalid LValue, but the assert will
   //ensure that this point is never reached.
   return LValue();
+}
+
+LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {
+  return LValue::MakeAddr(GetAddrOfBlockDecl(E), 0);
+}
+
+llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
+  // FIXME: ensure we don't need copy/dispose.
+  uint64_t &offset = BlockDecls[E->getDecl()];
+
+  const llvm::Type *Ty;
+  Ty = CGM.getTypes().ConvertType(E->getDecl()->getType());
+
+  // See if we have already allocated an offset for this variable.
+  if (offset == 0) {
+    // if not, allocate one now.
+    offset = getBlockOffset(E);
+  }
+
+  llvm::Value *BlockLiteral = LoadBlockStruct();
+  llvm::Value *V = Builder.CreateGEP(BlockLiteral,
+                                     llvm::ConstantInt::get(llvm::Type::Int64Ty,
+                                                            offset),
+                                     "tmp");
+  Ty = llvm::PointerType::get(Ty, 0);
+  if (E->isByRef())
+    Ty = llvm::PointerType::get(Ty, 0);
+  V = Builder.CreateBitCast(V, Ty);
+  if (E->isByRef())
+    V = Builder.CreateLoad(V, false, "tmp");
+
+  return V;
 }
 
 LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {

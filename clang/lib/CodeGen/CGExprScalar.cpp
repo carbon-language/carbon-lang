@@ -224,7 +224,7 @@ public:
 
   Value *VisitStmtExpr(const StmtExpr *E);
 
-  Value *VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
+  Value *VisitBlockDeclRefExpr(const BlockDeclRefExpr *E);
   
   // Unary Operators.
   Value *VisitPrePostIncDec(const UnaryOperator *E, bool isInc, bool isPre);
@@ -601,37 +601,8 @@ Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
                               !E->getType()->isVoidType()).getScalarVal();
 }
 
-Value *ScalarExprEmitter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
-  if (E->isByRef()) {
-    // FIXME: Add codegen for __block variables.
-    return VisitExpr(E);
-  }
-
-  // FIXME: ensure we don't need copy/dispose.
-  uint64_t &offset = CGF.BlockDecls[E->getDecl()];
-
-  const llvm::Type *Ty;
-  Ty = CGF.CGM.getTypes().ConvertType(E->getDecl()->getType());
-
-  // See if we have already allocated an offset for this variable.
-  if (offset == 0) {
-    // if not, allocate one now.
-    offset = CGF.getBlockOffset(E->getDecl());
-  }
-
-  llvm::Value *BlockLiteral = CGF.LoadBlockStruct();
-  llvm::Value *V = Builder.CreateGEP(BlockLiteral,
-                                     llvm::ConstantInt::get(llvm::Type::Int64Ty,
-                                                            offset),
-                                     "tmp");
-  Ty = llvm::PointerType::get(Ty, 0);
-  if (E->isByRef())
-    Ty = llvm::PointerType::get(Ty, 0);
-  V = Builder.CreateBitCast(V, Ty);
-  V = Builder.CreateLoad(V, false, "tmp");
-  if (E->isByRef())
-    V = Builder.CreateLoad(V, false, "tmp");
-  return V;
+Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
+  return Builder.CreateLoad(CGF.GetAddrOfBlockDecl(E), false, "tmp");
 }
 
 //===----------------------------------------------------------------------===//

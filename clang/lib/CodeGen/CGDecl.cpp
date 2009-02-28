@@ -88,6 +88,10 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
   else if (isa<ObjCMethodDecl>(CurFuncDecl))
     ContextName = std::string(CurFn->getNameStart(), 
                               CurFn->getNameStart() + CurFn->getNameLen());
+  else if (isa<BlockDecl>(CurFuncDecl))
+    // FIXME: We want to traverse up and pick a name based upon where we came
+    // from.
+    ContextName = "block";
   else
     assert(0 && "Unknown context for block var decl");
 

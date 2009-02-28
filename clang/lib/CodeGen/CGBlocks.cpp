@@ -154,7 +154,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
         Name = ND->getNameAsCString();
     BlockInfo Info(0, Name);
     uint64_t subBlockSize, subBlockAlign;
-    llvm::SmallVector<ValueDecl *, 8> subBlockDeclRefDecls;
+    llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
     llvm::Function *Fn
       = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, subBlockSize,
                                                    subBlockAlign, subBlockDeclRefDecls);
@@ -163,7 +163,6 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // __descriptor
     Elts.push_back(BuildDescriptorBlockDecl(subBlockSize));
 
-    // FIXME: Also check to make sure there are no byref variables
     if (subBlockDeclRefDecls.size() == 0) {
       C = llvm::ConstantStruct::get(Elts);
 
@@ -181,8 +180,14 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     for (int i=0; i<5; ++i)
       Types[i] = Elts[i]->getType();
 
-    for (unsigned i=0; i < subBlockDeclRefDecls.size(); ++i)
-      Types[i+5] = ConvertType(subBlockDeclRefDecls[i]->getType());
+    for (unsigned i=0; i < subBlockDeclRefDecls.size(); ++i) {
+      const Expr *E = subBlockDeclRefDecls[i];
+      const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
+      QualType Ty = E->getType();
+      if (BDRE && BDRE->isByRef())
+        Ty = getContext().getPointerType(Ty);
+      Types[i+5] = ConvertType(Ty);
+    }
 
     llvm::Type *Ty = llvm::StructType::get(Types, true);
 
@@ -195,14 +200,32 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     
     for (unsigned i=0; i < subBlockDeclRefDecls.size(); ++i)
       {
-        ValueDecl *VD = subBlockDeclRefDecls[i];
+        // FIXME: Push const down.
+        Expr *E = const_cast<Expr*>(subBlockDeclRefDecls[i]);
+        DeclRefExpr *DR;
+        ValueDecl *VD;
 
-        if (VD->getIdentifier() == 0)
-            continue;
-        SourceLocation Loc = VD->getLocation();
-        DeclRefExpr D(VD, VD->getType(), Loc);
+        DR = dyn_cast<DeclRefExpr>(E);
+        // Skip padding.
+        if (DR) continue;
+
+        BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
+        VD = BDRE->getDecl();
+
+        // FIXME: I want a better way to do this.
+        if (LocalDeclMap[VD]) {
+          E = new (getContext()) DeclRefExpr (cast<NamedDecl>(VD),
+                                              VD->getType(), SourceLocation(),
+                                              false, false);
+        }
+        if (BDRE->isByRef())
+          E = new (getContext())
+            UnaryOperator(E, UnaryOperator::AddrOf,
+                          getContext().getPointerType(E->getType()),
+                          SourceLocation());
+
         llvm::Value* Addr = Builder.CreateStructGEP(V, i+5, "tmp");
-        RValue r = EmitAnyExpr(&D, Addr, false);
+        RValue r = EmitAnyExpr(E, Addr, false);
         if (r.isScalar())
           Builder.CreateStore(r.getScalarVal(), Addr);
         else if (r.isComplex())
@@ -215,8 +238,6 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
         // FIXME: Ensure that the offset created by the backend for
         // the struct matches the previously computed offset in BlockDecls.
       }
-
-    // FIXME: Add block_byref_decl_list.
   }
   
   QualType BPT = BE->getType();
@@ -412,7 +433,7 @@ CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
 
   CodeGenFunction::BlockInfo Info(0, n);
   uint64_t subBlockSize, subBlockAlign;
-  llvm::SmallVector<ValueDecl *, 8> subBlockDeclRefDecls;
+  llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
   llvm::Function *Fn
     = CodeGenFunction(*this).GenerateBlockFunction(BE, Info, subBlockSize,
                                                    subBlockAlign,
@@ -455,7 +476,7 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
                                                        const BlockInfo& Info,
                                                        uint64_t &Size,
                                                        uint64_t &Align,
-                    llvm::SmallVector<ValueDecl *, 8> &subBlockDeclRefDecls) {
+                         llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls) {
   const FunctionProtoType *FTy =
     cast<FunctionProtoType>(Expr->getFunctionType());
 
@@ -502,4 +523,43 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(const BlockExpr *Expr,
   subBlockDeclRefDecls = BlockDeclRefDecls;
 
   return Fn;
+}
+
+uint64_t CodeGenFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
+  const ValueDecl *D = dyn_cast<ValueDecl>(BDRE->getDecl());
+
+  uint64_t Size = getContext().getTypeSize(D->getType()) / 8;
+  uint64_t Align = getContext().getDeclAlignInBytes(D);
+
+  if (BDRE->isByRef()) {
+    Size = getContext().getTypeSize(getContext().VoidPtrTy) / 8;
+    Align = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
+  }
+
+  assert ((Align > 0) && "alignment must be 1 byte or more");
+
+  uint64_t OldOffset = BlockOffset;
+
+  // Ensure proper alignment, even if it means we have to have a gap
+  BlockOffset = llvm::RoundUpToAlignment(BlockOffset, Align);
+  BlockAlign = std::max(Align, BlockAlign);
+      
+  uint64_t Pad = BlockOffset - OldOffset;
+  if (Pad) {
+    llvm::ArrayType::get(llvm::Type::Int8Ty, Pad);
+    QualType PadTy = getContext().getConstantArrayType(getContext().CharTy,
+                                                       llvm::APInt(32, Pad),
+                                                       ArrayType::Normal, 0);
+    ValueDecl *PadDecl = VarDecl::Create(getContext(), 0, SourceLocation(),
+                                         0, QualType(PadTy), VarDecl::None,
+                                         SourceLocation());
+    Expr *E;
+    E = new (getContext()) DeclRefExpr(PadDecl, PadDecl->getType(),
+                                       SourceLocation(), false, false);
+    BlockDeclRefDecls.push_back(E);
+  }
+  BlockDeclRefDecls.push_back(BDRE);
+
+  BlockOffset += Size;
+  return BlockOffset-Size;
 }
