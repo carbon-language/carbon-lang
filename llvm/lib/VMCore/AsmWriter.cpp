@@ -191,7 +191,9 @@ void TypePrinting::calcTypeName(const Type *Ty,
   
   // Check to see if the type is named.
   std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-  if (I != TypeNames.end()) {
+  if (I != TypeNames.end() &&
+      // If the name wasn't temporarily removed use it.
+      !I->second.empty()) {
     Result += I->second;
     return;
   }
@@ -314,70 +316,23 @@ void TypePrinting::print(const Type *Ty) {
 /// printAtLeastOneLevel - Print out one level of the possibly complex type
 /// without considering any symbolic types that we may have equal to it.
 void TypePrinting::printAtLeastOneLevel(const Type *Ty) {
-  // FIXME: Just call calcTypeName!
-  if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
-    print(FTy->getReturnType());
-    OS << " (";
-    for (FunctionType::param_iterator I = FTy->param_begin(),
-         E = FTy->param_end(); I != E; ++I) {
-      if (I != FTy->param_begin())
-        OS << ", ";
-      print(*I);
-    }
-    if (FTy->isVarArg()) {
-      if (FTy->getNumParams()) OS << ", ";
-      OS << "...";
-    }
-    OS << ')';
-    return;
-  }
+  // If the type does not have a name, then it is already guaranteed to print at
+  // least one level.
+  std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
+  if (I == TypeNames.end())
+    return print(Ty);
   
-  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    if (STy->isPacked())
-      OS << '<';
-    OS << "{ ";
-    for (StructType::element_iterator I = STy->element_begin(),
-         E = STy->element_end(); I != E; ++I) {
-      if (I != STy->element_begin())
-        OS << ", ";
-      print(*I);
-    }
-    OS << " }";
-    if (STy->isPacked())
-      OS << '>';
-    return;
-  }
+  // Otherwise, temporarily remove the name and print it.
+  std::string OldName;
+  std::swap(OldName, I->second);
   
-  if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    print(PTy->getElementType());
-    if (unsigned AddressSpace = PTy->getAddressSpace())
-      OS << " addrspace(" << AddressSpace << ")";
-    OS << '*';
-    return;
-  } 
-  
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    OS << '[' << ATy->getNumElements() << " x ";
-    print(ATy->getElementType());
-    OS << ']';
-    return;
-  }
-  
-  if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
-    OS << '<' << PTy->getNumElements() << " x ";
-    print(PTy->getElementType());
-    OS << '>';
-    return;
-  }
-  
-  if (isa<OpaqueType>(Ty)) {
-    OS << "opaque";
-    return;
-  }
-  
-  if (!Ty->isPrimitiveType() && !isa<IntegerType>(Ty))
-    OS << "<unknown derived type>";
-  print(Ty);
+  SmallVector<const Type *, 16> TypeStack;
+  std::string TypeName;
+  calcTypeName(Ty, TypeStack, TypeName);
+  OS << TypeName;
+
+  // Restore the name.
+  std::swap(OldName, I->second);
 }
 
 
