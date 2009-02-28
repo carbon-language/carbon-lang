@@ -2069,10 +2069,6 @@ struct BlockSemaInfo {
   /// arguments etc.
   Scope *TheScope;
   
-  /// PrevFunctionScope - This is the scope for the enclosing function.
-  /// For global blocks, this will be null.
-  Scope *PrevFunctionScope;
-  
   /// ReturnType - This will get set to block result type, by looking at
   /// return types, if any, in the block body.
   Type *ReturnType;

@@ -4404,7 +4404,6 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
 
   // Add BSI to CurBlock.
   BSI->PrevBlockInfo = CurBlock;
-  BSI->PrevFunctionScope = ActiveScope;
   CurBlock = BSI;
   ActiveScope = BlockScope;
 
@@ -4501,8 +4500,9 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
 
   PopDeclContext();
 
-  ActiveScope = CurBlock->PrevFunctionScope;
-    
+  // Before poping CurBlock, set ActiveScope to this scopes parent.
+  ActiveScope = CurBlock->TheScope->getParent();
+  
   // Pop off CurBlock, handle nested blocks.
   CurBlock = CurBlock->PrevBlockInfo;
 
