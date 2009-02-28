@@ -143,6 +143,274 @@ static void PrintLLVMName(raw_ostream &OS, const Value *V) {
                 isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
 }
 
+//===----------------------------------------------------------------------===//
+// TypePrinting Class: Type printing machinery
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// TypePrinting - Type printing machinery.
+  class TypePrinting {
+    std::map<const Type *, std::string> TypeNames;
+    raw_ostream &OS;
+  public:
+    TypePrinting(const Module *M, raw_ostream &os);
+    
+    void print(const Type *Ty);
+    void printAtLeastOneLevel(const Type *Ty);
+  };
+} // end anonymous namespace.
+
+TypePrinting::TypePrinting(const Module *M, raw_ostream &os) : OS(os) {
+  if (M == 0) return;
+  
+  // If the module has a symbol table, take all global types and stuff their
+  // names into the TypeNames map.
+  const TypeSymbolTable &ST = M->getTypeSymbolTable();
+  for (TypeSymbolTable::const_iterator TI = ST.begin(), E = ST.end();
+       TI != E; ++TI) {
+    // As a heuristic, don't insert pointer to primitive types, because
+    // they are used too often to have a single useful name.
+    //
+    const Type *Ty = cast<Type>(TI->second);
+    if (!isa<PointerType>(Ty) ||
+        !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
+        !cast<PointerType>(Ty)->getElementType()->isInteger() ||
+        isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
+      TypeNames.insert(std::make_pair(Ty, '%' + getLLVMName(TI->first)));
+  }
+}
+
+static void calcTypeName(const Type *Ty,
+                         std::vector<const Type *> &TypeStack,
+                         std::map<const Type *, std::string> &TypeNames,
+                         std::string &Result) {
+  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
+    Result += Ty->getDescription();  // Base case
+    return;
+  }
+  
+  // Check to see if the type is named.
+  std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
+  if (I != TypeNames.end()) {
+    Result += I->second;
+    return;
+  }
+  
+  if (isa<OpaqueType>(Ty)) {
+    Result += "opaque";
+    return;
+  }
+  
+  // Check to see if the Type is already on the stack...
+  unsigned Slot = 0, CurSize = TypeStack.size();
+  while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
+  
+  // This is another base case for the recursion.  In this case, we know
+  // that we have looped back to a type that we have previously visited.
+  // Generate the appropriate upreference to handle this.
+  if (Slot < CurSize) {
+    Result += "\\" + utostr(CurSize-Slot);     // Here's the upreference
+    return;
+  }
+  
+  TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
+  
+  switch (Ty->getTypeID()) {
+    case Type::IntegerTyID: {
+      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+      Result += "i" + utostr(BitWidth);
+      break;
+    }
+    case Type::FunctionTyID: {
+      const FunctionType *FTy = cast<FunctionType>(Ty);
+      calcTypeName(FTy->getReturnType(), TypeStack, TypeNames, Result);
+      Result += " (";
+      for (FunctionType::param_iterator I = FTy->param_begin(),
+           E = FTy->param_end(); I != E; ++I) {
+        if (I != FTy->param_begin())
+          Result += ", ";
+        calcTypeName(*I, TypeStack, TypeNames, Result);
+      }
+      if (FTy->isVarArg()) {
+        if (FTy->getNumParams()) Result += ", ";
+        Result += "...";
+      }
+      Result += ")";
+      break;
+    }
+    case Type::StructTyID: {
+      const StructType *STy = cast<StructType>(Ty);
+      if (STy->isPacked())
+        Result += '<';
+      Result += "{ ";
+      for (StructType::element_iterator I = STy->element_begin(),
+           E = STy->element_end(); I != E; ++I) {
+        calcTypeName(*I, TypeStack, TypeNames, Result);
+        if (next(I) != STy->element_end())
+          Result += ',';
+        Result += ' ';
+      }
+      Result += '}';
+      if (STy->isPacked())
+        Result += '>';
+      break;
+    }
+    case Type::PointerTyID: {
+      const PointerType *PTy = cast<PointerType>(Ty);
+      calcTypeName(PTy->getElementType(), TypeStack, TypeNames, Result);
+      if (unsigned AddressSpace = PTy->getAddressSpace())
+        Result += " addrspace(" + utostr(AddressSpace) + ")";
+      Result += "*";
+      break;
+    }
+    case Type::ArrayTyID: {
+      const ArrayType *ATy = cast<ArrayType>(Ty);
+      Result += "[" + utostr(ATy->getNumElements()) + " x ";
+      calcTypeName(ATy->getElementType(), TypeStack, TypeNames, Result);
+      Result += "]";
+      break;
+    }
+    case Type::VectorTyID: {
+      const VectorType *PTy = cast<VectorType>(Ty);
+      Result += "<" + utostr(PTy->getNumElements()) + " x ";
+      calcTypeName(PTy->getElementType(), TypeStack, TypeNames, Result);
+      Result += ">";
+      break;
+    }
+    case Type::OpaqueTyID:
+      Result += "opaque";
+      break;
+    default:
+      Result += "<unrecognized-type>";
+      break;
+  }
+  
+  TypeStack.pop_back();       // Remove self from stack...
+}
+
+/// printTypeInt - The internal guts of printing out a type that has a
+/// potentially named portion.
+///
+void TypePrinting::print(const Type *Ty) {
+  // Primitive types always print out their description, regardless of whether
+  // they have been named or not.
+  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
+    OS << Ty->getDescription();
+    return;
+  }
+  
+  // Check to see if the type is named.
+  std::map<const Type*, std::string>::iterator I = TypeNames.find(Ty);
+  if (I != TypeNames.end()) {
+    OS << I->second;
+    return;
+  }
+  
+  // Otherwise we have a type that has not been named but is a derived type.
+  // Carefully recurse the type hierarchy to print out any contained symbolic
+  // names.
+  std::vector<const Type *> TypeStack;
+  std::string TypeName;
+  calcTypeName(Ty, TypeStack, TypeNames, TypeName);
+  TypeNames.insert(std::make_pair(Ty, TypeName));//Cache type name for later use
+  OS << TypeName;
+}
+
+/// printAtLeastOneLevel - Print out one level of the possibly complex type
+/// without considering any symbolic types that we may have equal to it.
+void TypePrinting::printAtLeastOneLevel(const Type *Ty) {
+  // FIXME: Just call calcTypeName!
+  if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
+    print(FTy->getReturnType());
+    OS << " (";
+    for (FunctionType::param_iterator I = FTy->param_begin(),
+         E = FTy->param_end(); I != E; ++I) {
+      if (I != FTy->param_begin())
+        OS << ", ";
+      print(*I);
+    }
+    if (FTy->isVarArg()) {
+      if (FTy->getNumParams()) OS << ", ";
+      OS << "...";
+    }
+    OS << ')';
+    return;
+  }
+  
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    if (STy->isPacked())
+      OS << '<';
+    OS << "{ ";
+    for (StructType::element_iterator I = STy->element_begin(),
+         E = STy->element_end(); I != E; ++I) {
+      if (I != STy->element_begin())
+        OS << ", ";
+      print(*I);
+    }
+    OS << " }";
+    if (STy->isPacked())
+      OS << '>';
+    return;
+  }
+  
+  if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+    print(PTy->getElementType());
+    if (unsigned AddressSpace = PTy->getAddressSpace())
+      OS << " addrspace(" << AddressSpace << ")";
+    OS << '*';
+    return;
+  } 
+  
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    OS << '[' << ATy->getNumElements() << " x ";
+    print(ATy->getElementType());
+    OS << ']';
+    return;
+  }
+  
+  if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
+    OS << '<' << PTy->getNumElements() << " x ";
+    print(PTy->getElementType());
+    OS << '>';
+    return;
+  }
+  
+  if (isa<OpaqueType>(Ty)) {
+    OS << "opaque";
+    return;
+  }
+  
+  if (!Ty->isPrimitiveType() && !isa<IntegerType>(Ty))
+    OS << "<unknown derived type>";
+  print(Ty);
+}
+
+
+
+
+/// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
+/// type, iff there is an entry in the modules symbol table for the specified
+/// type or one of it's component types. This is slower than a simple x << Type
+///
+void llvm::WriteTypeSymbolic(raw_ostream &Out, const Type *Ty, const Module *M){
+  // FIXME: Remove this space.
+  Out << ' ';
+  
+  // If they want us to print out a type, but there is no context, we can't
+  // print it symbolically.
+  if (!M) {
+    Out << Ty->getDescription();
+  } else {
+    TypePrinting(M, Out).print(Ty);
+  }
+}
+
+// std::ostream adaptor.
+void llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
+                             const Module *M) {
+  raw_os_ostream RO(Out);
+  WriteTypeSymbolic(RO, Ty, M);
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -394,198 +662,10 @@ void SlotTracker::CreateFunctionSlot(const Value *V) {
 //===----------------------------------------------------------------------===//
 
 static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
-                               std::map<const Type *, std::string> &TypeTable,
+                                   TypePrinting &TypePrinter,
                                    SlotTracker *Machine);
 
 
-
-/// fillTypeNameTable - If the module has a symbol table, take all global types
-/// and stuff their names into the TypeNames map.
-///
-static void fillTypeNameTable(const Module *M,
-                              std::map<const Type *, std::string> &TypeNames) {
-  if (!M) return;
-  const TypeSymbolTable &ST = M->getTypeSymbolTable();
-  TypeSymbolTable::const_iterator TI = ST.begin();
-  for (; TI != ST.end(); ++TI) {
-    // As a heuristic, don't insert pointer to primitive types, because
-    // they are used too often to have a single useful name.
-    //
-    const Type *Ty = cast<Type>(TI->second);
-    if (!isa<PointerType>(Ty) ||
-        !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
-        !cast<PointerType>(Ty)->getElementType()->isInteger() ||
-        isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
-      TypeNames.insert(std::make_pair(Ty, '%' + getLLVMName(TI->first)));
-  }
-}
-
-
-
-static void calcTypeName(const Type *Ty,
-                         std::vector<const Type *> &TypeStack,
-                         std::map<const Type *, std::string> &TypeNames,
-                         std::string &Result) {
-  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
-    Result += Ty->getDescription();  // Base case
-    return;
-  }
-
-  // Check to see if the type is named.
-  std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-  if (I != TypeNames.end()) {
-    Result += I->second;
-    return;
-  }
-
-  if (isa<OpaqueType>(Ty)) {
-    Result += "opaque";
-    return;
-  }
-
-  // Check to see if the Type is already on the stack...
-  unsigned Slot = 0, CurSize = TypeStack.size();
-  while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
-
-  // This is another base case for the recursion.  In this case, we know
-  // that we have looped back to a type that we have previously visited.
-  // Generate the appropriate upreference to handle this.
-  if (Slot < CurSize) {
-    Result += "\\" + utostr(CurSize-Slot);     // Here's the upreference
-    return;
-  }
-
-  TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
-
-  switch (Ty->getTypeID()) {
-  case Type::IntegerTyID: {
-    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-    Result += "i" + utostr(BitWidth);
-    break;
-  }
-  case Type::FunctionTyID: {
-    const FunctionType *FTy = cast<FunctionType>(Ty);
-    calcTypeName(FTy->getReturnType(), TypeStack, TypeNames, Result);
-    Result += " (";
-    for (FunctionType::param_iterator I = FTy->param_begin(),
-         E = FTy->param_end(); I != E; ++I) {
-      if (I != FTy->param_begin())
-        Result += ", ";
-      calcTypeName(*I, TypeStack, TypeNames, Result);
-    }
-    if (FTy->isVarArg()) {
-      if (FTy->getNumParams()) Result += ", ";
-      Result += "...";
-    }
-    Result += ")";
-    break;
-  }
-  case Type::StructTyID: {
-    const StructType *STy = cast<StructType>(Ty);
-    if (STy->isPacked())
-      Result += '<';
-    Result += "{ ";
-    for (StructType::element_iterator I = STy->element_begin(),
-           E = STy->element_end(); I != E; ++I) {
-      calcTypeName(*I, TypeStack, TypeNames, Result);
-      if (next(I) != STy->element_end())
-        Result += ',';
-      Result += ' ';
-    }
-    Result += '}';
-    if (STy->isPacked())
-      Result += '>';
-    break;
-  }
-  case Type::PointerTyID: {
-    const PointerType *PTy = cast<PointerType>(Ty);
-    calcTypeName(PTy->getElementType(), TypeStack, TypeNames, Result);
-    if (unsigned AddressSpace = PTy->getAddressSpace())
-      Result += " addrspace(" + utostr(AddressSpace) + ")";
-    Result += "*";
-    break;
-  }
-  case Type::ArrayTyID: {
-    const ArrayType *ATy = cast<ArrayType>(Ty);
-    Result += "[" + utostr(ATy->getNumElements()) + " x ";
-    calcTypeName(ATy->getElementType(), TypeStack, TypeNames, Result);
-    Result += "]";
-    break;
-  }
-  case Type::VectorTyID: {
-    const VectorType *PTy = cast<VectorType>(Ty);
-    Result += "<" + utostr(PTy->getNumElements()) + " x ";
-    calcTypeName(PTy->getElementType(), TypeStack, TypeNames, Result);
-    Result += ">";
-    break;
-  }
-  case Type::OpaqueTyID:
-    Result += "opaque";
-    break;
-  default:
-    Result += "<unrecognized-type>";
-    break;
-  }
-
-  TypeStack.pop_back();       // Remove self from stack...
-}
-
-
-/// printTypeInt - The internal guts of printing out a type that has a
-/// potentially named portion.
-///
-static void printTypeInt(raw_ostream &Out, const Type *Ty,
-                         std::map<const Type *, std::string> &TypeNames) {
-  // Primitive types always print out their description, regardless of whether
-  // they have been named or not.
-  //
-  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
-    Out << Ty->getDescription();
-    return;
-  }
-
-  // Check to see if the type is named.
-  std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-  if (I != TypeNames.end()) {
-    Out << I->second;
-    return;
-  }
-
-  // Otherwise we have a type that has not been named but is a derived type.
-  // Carefully recurse the type hierarchy to print out any contained symbolic
-  // names.
-  //
-  std::vector<const Type *> TypeStack;
-  std::string TypeName;
-  calcTypeName(Ty, TypeStack, TypeNames, TypeName);
-  TypeNames.insert(std::make_pair(Ty, TypeName));//Cache type name for later use
-  Out << TypeName;
-}
-
-
-/// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
-/// type, iff there is an entry in the modules symbol table for the specified
-/// type or one of it's component types. This is slower than a simple x << Type
-///
-void llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
-                             const Module *M) {
-  raw_os_ostream RO(Out);
-  WriteTypeSymbolic(RO, Ty, M);
-}
-
-void llvm::WriteTypeSymbolic(raw_ostream &Out, const Type *Ty, const Module *M){
-  Out << ' ';
-
-  // If they want us to print out a type, but there is no context, we can't
-  // print it symbolically.
-  if (!M) {
-    Out << Ty->getDescription();
-  } else {
-    std::map<const Type *, std::string> TypeNames;
-    fillTypeNameTable(M, TypeNames);
-    printTypeInt(Out, Ty, TypeNames);
-  }
-}
 
 static const char *getPredicateText(unsigned predicate) {
   const char * pred = "unknown";
@@ -621,8 +701,7 @@ static const char *getPredicateText(unsigned predicate) {
 }
 
 static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
-                             std::map<const Type *, std::string> &TypeTable,
-                             SlotTracker *Machine) {
+                             TypePrinting &TypePrinter, SlotTracker *Machine) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     if (CI->getType() == Type::Int1Ty) {
       Out << (CI->getZExtValue() ? "true" : "false");
@@ -727,15 +806,15 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     } else {                // Cannot output in string format...
       Out << '[';
       if (CA->getNumOperands()) {
-        printTypeInt(Out, ETy, TypeTable);
+        TypePrinter.print(ETy);
         Out << ' ';
         WriteAsOperandInternal(Out, CA->getOperand(0),
-                               TypeTable, Machine);
+                               TypePrinter, Machine);
         for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
           Out << ", ";
-          printTypeInt(Out, ETy, TypeTable);
+          TypePrinter.print(ETy);
           Out << ' ';
-          WriteAsOperandInternal(Out, CA->getOperand(i), TypeTable, Machine);
+          WriteAsOperandInternal(Out, CA->getOperand(i), TypePrinter, Machine);
         }
       }
       Out << ']';
@@ -750,17 +829,17 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     unsigned N = CS->getNumOperands();
     if (N) {
       Out << ' ';
-      printTypeInt(Out, CS->getOperand(0)->getType(), TypeTable);
+      TypePrinter.print(CS->getOperand(0)->getType());
       Out << ' ';
 
-      WriteAsOperandInternal(Out, CS->getOperand(0), TypeTable, Machine);
+      WriteAsOperandInternal(Out, CS->getOperand(0), TypePrinter, Machine);
 
       for (unsigned i = 1; i < N; i++) {
         Out << ", ";
-        printTypeInt(Out, CS->getOperand(i)->getType(), TypeTable);
+        TypePrinter.print(CS->getOperand(i)->getType());
         Out << ' ';
 
-        WriteAsOperandInternal(Out, CS->getOperand(i), TypeTable, Machine);
+        WriteAsOperandInternal(Out, CS->getOperand(i), TypePrinter, Machine);
       }
       Out << ' ';
     }
@@ -776,14 +855,14 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     assert(CP->getNumOperands() > 0 &&
            "Number of operands for a PackedConst must be > 0");
     Out << '<';
-    printTypeInt(Out, ETy, TypeTable);
+    TypePrinter.print(ETy);
     Out << ' ';
-    WriteAsOperandInternal(Out, CP->getOperand(0), TypeTable, Machine);
+    WriteAsOperandInternal(Out, CP->getOperand(0), TypePrinter, Machine);
     for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
       Out << ", ";
-      printTypeInt(Out, ETy, TypeTable);
+      TypePrinter.print(ETy);
       Out << ' ';
-      WriteAsOperandInternal(Out, CP->getOperand(i), TypeTable, Machine);
+      WriteAsOperandInternal(Out, CP->getOperand(i), TypePrinter, Machine);
     }
     Out << '>';
     return;
@@ -806,9 +885,9 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     Out << " (";
 
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
-      printTypeInt(Out, (*OI)->getType(), TypeTable);
+      TypePrinter.print((*OI)->getType());
       Out << ' ';
-      WriteAsOperandInternal(Out, *OI, TypeTable, Machine);
+      WriteAsOperandInternal(Out, *OI, TypePrinter, Machine);
       if (OI+1 != CE->op_end())
         Out << ", ";
     }
@@ -821,7 +900,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
 
     if (CE->isCast()) {
       Out << " to ";
-      printTypeInt(Out, CE->getType(), TypeTable);
+      TypePrinter.print(CE->getType());
     }
 
     Out << ')';
@@ -837,7 +916,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
 /// the whole instruction that generated it.
 ///
 static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
-                                  std::map<const Type*, std::string> &TypeTable,
+                                   TypePrinting &TypePrinter,
                                    SlotTracker *Machine) {
   if (V->hasName()) {
     PrintLLVMName(Out, V);
@@ -846,7 +925,7 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
   
   const Constant *CV = dyn_cast<Constant>(V);
   if (CV && !isa<GlobalValue>(CV)) {
-    WriteConstantInt(Out, CV, TypeTable, Machine);
+    WriteConstantInt(Out, CV, TypePrinter, Machine);
     return;
   }
   
@@ -904,18 +983,15 @@ void llvm::WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
 
 void llvm::WriteAsOperand(raw_ostream &Out, const Value *V, bool PrintType,
                           const Module *Context) {
-  std::map<const Type *, std::string> TypeNames;
   if (Context == 0) Context = getModuleFromVal(V);
 
-  if (Context)
-    fillTypeNameTable(Context, TypeNames);
-
+  TypePrinting TypePrinter(Context, Out);
   if (PrintType) {
-    printTypeInt(Out, V->getType(), TypeNames);
+    TypePrinter.print(V->getType());
     Out << ' ';
   }
 
-  WriteAsOperandInternal(Out, V, TypeNames, 0);
+  WriteAsOperandInternal(Out, V, TypePrinter, 0);
 }
 
 
@@ -925,17 +1001,13 @@ class AssemblyWriter {
   raw_ostream &Out;
   SlotTracker &Machine;
   const Module *TheModule;
-  std::map<const Type *, std::string> TypeNames;
+  TypePrinting TypePrinter;
   AssemblyAnnotationWriter *AnnotationWriter;
 public:
   inline AssemblyWriter(raw_ostream &o, SlotTracker &Mac, const Module *M,
                         AssemblyAnnotationWriter *AAW)
-    : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
-
-    // If the module has a symbol table, take all global types and stuff their
-    // names into the TypeNames map.
-    //
-    fillTypeNameTable(M, TypeNames);
+    : Out(o), Machine(Mac), TheModule(M), TypePrinter(M, Out),
+      AnnotationWriter(AAW) {
   }
 
   void write(const Module *M) { printModule(M);       }
@@ -953,7 +1025,7 @@ public:
   
   void write(const BasicBlock *BB)    { printBasicBlock(BB);  }
   void write(const Instruction *I)    { printInstruction(*I); }
-  void write(const Type *Ty)          { printType(Ty);        }
+//  void write(const Type *Ty)          { printType(Ty);        }
 
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, Attributes Attrs);
@@ -974,93 +1046,14 @@ private:
   // symbolic version of a type name.
   //
   void printType(const Type *Ty) {
-    printTypeInt(Out, Ty, TypeNames);
+    TypePrinter.print(Ty);
   }
-
-  // printTypeAtLeastOneLevel - Print out one level of the possibly complex type
-  // without considering any symbolic types that we may have equal to it.
-  //
-  void printTypeAtLeastOneLevel(const Type *Ty);
 
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
   void printInfoComment(const Value &V);
 };
 }  // end of llvm namespace
-
-/// printTypeAtLeastOneLevel - Print out one level of the possibly complex type
-/// without considering any symbolic types that we may have equal to it.
-///
-void AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
-  if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
-    Out << "i" << utostr(ITy->getBitWidth());
-    return;
-  }
-  
-  if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
-    printType(FTy->getReturnType());
-    Out << " (";
-    for (FunctionType::param_iterator I = FTy->param_begin(),
-           E = FTy->param_end(); I != E; ++I) {
-      if (I != FTy->param_begin())
-        Out << ", ";
-      printType(*I);
-    }
-    if (FTy->isVarArg()) {
-      if (FTy->getNumParams()) Out << ", ";
-      Out << "...";
-    }
-    Out << ')';
-    return;
-  }
-  
-  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    if (STy->isPacked())
-      Out << '<';
-    Out << "{ ";
-    for (StructType::element_iterator I = STy->element_begin(),
-           E = STy->element_end(); I != E; ++I) {
-      if (I != STy->element_begin())
-        Out << ", ";
-      printType(*I);
-    }
-    Out << " }";
-    if (STy->isPacked())
-      Out << '>';
-    return;
-  }
-  
-  if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    printType(PTy->getElementType());
-    if (unsigned AddressSpace = PTy->getAddressSpace())
-      Out << " addrspace(" << AddressSpace << ")";
-    Out << '*';
-    return;
-  } 
-  
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    Out << '[' << ATy->getNumElements() << " x ";
-    printType(ATy->getElementType());
-    Out << ']';
-    return;
-  }
-  
-  if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
-    Out << '<' << PTy->getNumElements() << " x ";
-    printType(PTy->getElementType());
-    Out << '>';
-    return;
-  }
-  
-  if (isa<OpaqueType>(Ty)) {
-    Out << "opaque";
-    return;
-  }
-  
-  if (!Ty->isPrimitiveType())
-    Out << "<unknown derived type>";
-  printType(Ty);
-}
 
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
@@ -1071,7 +1064,7 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
       printType(Operand->getType());
       Out << ' ';
     }
-    WriteAsOperandInternal(Out, Operand, TypeNames, &Machine);
+    WriteAsOperandInternal(Out, Operand, TypePrinter, &Machine);
   }
 }
 
@@ -1087,7 +1080,7 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
       Out << ' ' << Attribute::getAsString(Attrs);
     Out << ' ';
     // Print the operand
-    WriteAsOperandInternal(Out, Operand, TypeNames, &Machine);
+    WriteAsOperandInternal(Out, Operand, TypePrinter, &Machine);
   }
 }
 
@@ -1240,7 +1233,7 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
     printType(F->getFunctionType());
     Out << "* ";
 
-    WriteAsOperandInternal(Out, F, TypeNames, &Machine);
+    WriteAsOperandInternal(Out, F, TypePrinter, &Machine);
   } else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Aliasee)) {
     printType(GA->getType());
     Out << " ";
@@ -1268,8 +1261,7 @@ void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
 
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %FILE = type %FILE
-    //
-    printTypeAtLeastOneLevel(TI->second);
+    TypePrinter.printAtLeastOneLevel(TI->second); 
     Out << '\n';
   }
 }
@@ -1307,7 +1299,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out <<  Attribute::getAsString(Attrs.getRetAttributes()) << ' ';
   printType(F->getReturnType());
   Out << ' ';
-  WriteAsOperandInternal(Out, F, TypeNames, &Machine);
+  WriteAsOperandInternal(Out, F, TypePrinter, &Machine);
   Out << '(';
   Machine.incorporateFunction(F);
 
@@ -1756,8 +1748,8 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     W.write(GV);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
     OS << C->getType()->getDescription() << ' ';
-    std::map<const Type *, std::string> TypeTable;
-    WriteConstantInt(OS, C, TypeTable, 0);
+    TypePrinting TypePrinter(0, OS);
+    WriteConstantInt(OS, C, TypePrinter, 0);
   } else if (const Argument *A = dyn_cast<Argument>(this)) {
     WriteAsOperand(OS, this, true,
                    A->getParent() ? A->getParent()->getParent() : 0);
