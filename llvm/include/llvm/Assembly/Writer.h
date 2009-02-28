@@ -30,6 +30,8 @@ template <typename T> class SmallVectorImpl;
 /// TypePrinting - Type printing machinery.
 class TypePrinting {
   void *TypeNames;
+  TypePrinting(const TypePrinting &);   // DO NOT IMPLEMENT
+  void operator=(const TypePrinting&);  // DO NOT IMPLEMENT
 public:
   TypePrinting(const Module *M);
   ~TypePrinting();
