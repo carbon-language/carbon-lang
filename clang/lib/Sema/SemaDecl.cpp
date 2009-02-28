@@ -2503,6 +2503,9 @@ static bool StatementCreatesScope(Stmt* S) {
          i != DS->decl_end(); ++i) {
       if (VarDecl* D = dyn_cast<VarDecl>(*i)) {
         result |= D->getType()->isVariablyModifiedType();
+        result |= !!D->getAttr<CleanupAttr>();
+      } else if (TypedefDecl* D = dyn_cast<TypedefDecl>(*i)) {
+        result |= D->getUnderlyingType()->isVariablyModifiedType();
       }
     }
   }
