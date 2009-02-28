@@ -33,7 +33,7 @@ class TypePrinting {
   TypePrinting(const TypePrinting &);   // DO NOT IMPLEMENT
   void operator=(const TypePrinting&);  // DO NOT IMPLEMENT
 public:
-  TypePrinting(const Module *M);
+  TypePrinting(const Module *M = 0);
   ~TypePrinting();
   
   void clear();
