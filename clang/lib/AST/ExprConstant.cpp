@@ -645,9 +645,7 @@ public:
   }
 
   bool VisitChooseExpr(const ChooseExpr *E);
-  bool VisitUnaryReal(const UnaryOperator *E) {
-    return Visit(E->getSubExpr());
-  }
+  bool VisitUnaryReal(const UnaryOperator *E);
   bool VisitUnaryImag(const UnaryOperator *E);
 
 private:
@@ -1192,7 +1190,25 @@ bool IntExprEvaluator::VisitChooseExpr(const ChooseExpr *E) {
   return Visit(EvalExpr);
 }
 
+bool IntExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {
+  if (E->getSubExpr()->getType()->isAnyComplexType()) {
+    APValue LV;
+    if (!EvaluateComplex(E->getSubExpr(), LV, Info) || !LV.isComplexInt())
+      return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
+    return Success(LV.getComplexIntReal(), E);
+  }
+
+  return Visit(E->getSubExpr());
+}
+
 bool IntExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
+  if (E->getSubExpr()->getType()->isComplexIntegerType()) {
+    APValue LV;
+    if (!EvaluateComplex(E->getSubExpr(), LV, Info) || !LV.isComplexInt())
+      return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
+    return Success(LV.getComplexIntImag(), E);
+  }
+
   if (!E->getSubExpr()->isEvaluatable(Info.Ctx))
     Info.EvalResult.HasSideEffects = true;
   return Success(0, E);
