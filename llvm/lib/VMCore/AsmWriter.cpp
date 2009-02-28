@@ -1650,11 +1650,12 @@ void Type::print(std::ostream &o) const {
   print(OS);
 }
 
-void Type::print(raw_ostream &o) const {
-  if (this == 0)
-    o << "<null Type>";
-  else
-    o << getDescription();
+void Type::print(raw_ostream &OS) const {
+  if (this == 0) {
+    OS << "<null Type>";
+    return;
+  }
+  TypePrinting(0, OS).print(this);
 }
 
 void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
@@ -1678,8 +1679,9 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     AssemblyWriter W(OS, SlotTable, GV->getParent(), 0);
     W.write(GV);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
-    OS << C->getType()->getDescription() << ' ';
     TypePrinting TypePrinter(0, OS);
+    TypePrinter.print(C->getType());
+    OS << ' ';
     WriteConstantInt(OS, C, TypePrinter, 0);
   } else if (const Argument *A = dyn_cast<Argument>(this)) {
     WriteAsOperand(OS, this, true,
