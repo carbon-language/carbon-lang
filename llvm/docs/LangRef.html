@@ -1947,15 +1947,9 @@ following is the syntax for constant expressions:</p>
   <i>really</i> dangerous!</dd>
 
   <dt><b><tt>bitcast ( CST to TYPE )</tt></b></dt>
-  <dd>Convert a constant, CST, to another TYPE. The size of CST and TYPE must be
-  identical (same number of bits). The conversion is done as if the CST value
-  was stored to memory and read back as TYPE. In other words, no bits change 
-  with this operator, just the type.  This can be used for conversion of
-  aggregate types to any aggregate type, as long as they have the same bit
-  width. Vector types may also be casted to and from any other type as long as
-  they have the same bit width. For pointers it is only valid to cast to
-  another pointer type.
-  </dd>
+  <dd>Convert a constant, CST, to another TYPE. The constraints of the operands
+      are the same as those for the <a href="#i_bitcast">bitcast
+      instruction</a>.</dd>
 
   <dt><b><tt>getelementptr ( CSTPTR, IDX0, IDX1, ... )</tt></b></dt>
 
