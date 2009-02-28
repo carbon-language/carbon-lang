@@ -369,6 +369,10 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     } else if (TT.find("windows") != std::string::npos) {
       TargetType = isWindows;
     }
+    else if (TT.find("-cl") != std::string::npos) {
+      TargetType = isDarwin;
+      DarwinVers = 9;
+    }
   } else if (TT.empty()) {
 #if defined(__CYGWIN__)
     TargetType = isCygwin;
