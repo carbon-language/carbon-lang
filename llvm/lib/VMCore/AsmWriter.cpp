@@ -125,16 +125,6 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
   OS << '"';
 }
 
-/// getLLVMName - Turn the specified string into an 'LLVM name', which is
-/// surrounded with ""'s and escaped if it has special chars in it.
-static std::string getLLVMName(const std::string &Name) {
-  assert(!Name.empty() && "Cannot get empty name!");
-  std::string result;
-  raw_string_ostream OS(result);
-  PrintLLVMName(OS, Name.c_str(), Name.length(), NoPrefix);
-  return OS.str();
-}
-
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
@@ -179,7 +169,10 @@ TypePrinting::TypePrinting(const Module *M, raw_ostream &os) : OS(os) {
         continue;
     }
     
-    TypeNames.insert(std::make_pair(Ty, '%' + getLLVMName(TI->first)));
+    std::string NameStr;
+    raw_string_ostream NameOS(NameStr);
+    PrintLLVMName(NameOS, TI->first.c_str(), TI->first.length(), LocalPrefix);
+    TypeNames.insert(std::make_pair(Ty, NameOS.str()));
   }
 }
 
