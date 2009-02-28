@@ -518,7 +518,16 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr, QualType Ty) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
   
-  // Aggregate assignment turns into llvm.memmove.
+  // Aggregate assignment turns into llvm.memset.  This is almost valid per
+  // C99 6.5.16.1p3, which states "If the value being stored in an object is
+  // read from another object that overlaps in anyway the storage of the first
+  // object, then the overlap shall be exact and the two objects shall have
+  // qualified or unqualified versions of a compatible type."
+  //
+  // memset is not defined if the source and destination pointers are exactly
+  // equal, but other compilers do this optimization, and almost every memcpy
+  // implementation handles this case safely.  If there is a libc that does not
+  // safely handle this, we can add a target hook.
   const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
@@ -531,7 +540,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // FIXME: Handle variable sized types.
   const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
   
-  Builder.CreateCall4(CGM.getMemMoveFn(),
+  Builder.CreateCall4(CGM.getMemCpyFn(),
                       DestPtr, SrcPtr,
                       // TypeInfo.first describes size in bits.
                       llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
