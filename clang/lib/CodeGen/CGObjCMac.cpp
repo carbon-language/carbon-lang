@@ -3394,6 +3394,8 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
                                Init,
                                "\01L_OBJC_LABEL_CLASS_$",
                                &CGM.getModule());
+    GV->setAlignment(
+      CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.Int8PtrTy));
     GV->setSection("__DATA, __objc_classlist, regular, no_dead_strip");
     UsedGlobals.push_back(GV);
   }
