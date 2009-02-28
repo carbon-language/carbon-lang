@@ -306,7 +306,7 @@ Rate encoding scheme. The percentage is relative to # of VBR Expanded Bytes.
 
 =head1 SEE ALSO
 
-L<llvm-dis|llvm-dis>, L<http://llvm.org/docs/BitcodeFormat.html>
+L<llvm-dis|llvm-dis>, L<http://llvm.org/docs/BitCodeFormat.html>
 
 =head1 AUTHORS
 
