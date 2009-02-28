@@ -145,36 +145,17 @@ void TypePrinting::clear() {
   getTypeNamesMap(TypeNames).clear();
 }
 
-TypePrinting::TypePrinting(const Module *M) {
+bool TypePrinting::hasTypeName(const Type *Ty) const {
+  return getTypeNamesMap(TypeNames).count(Ty);
+}
+
+void TypePrinting::addTypeName(const Type *Ty, const std::string &N) {
+  getTypeNamesMap(TypeNames).insert(std::make_pair(Ty, N));
+}
+
+
+TypePrinting::TypePrinting() {
   TypeNames = new DenseMap<const Type *, std::string>();
-  if (M == 0) return;
-  
-  // If the module has a symbol table, take all global types and stuff their
-  // names into the TypeNames map.
-  const TypeSymbolTable &ST = M->getTypeSymbolTable();
-  for (TypeSymbolTable::const_iterator TI = ST.begin(), E = ST.end();
-       TI != E; ++TI) {
-    const Type *Ty = cast<Type>(TI->second);
-    
-    // As a heuristic, don't insert pointer to primitive types, because
-    // they are used too often to have a single useful name.
-    if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-      const Type *PETy = PTy->getElementType();
-      if ((PETy->isPrimitiveType() || PETy->isInteger()) &&
-          !isa<OpaqueType>(PETy))
-        continue;
-    }
-    
-    // Likewise don't insert primitives either.
-    if (Ty->isInteger() || Ty->isPrimitiveType())
-      continue;
-    
-    // Get the name as a string and insert it into TypeNames.
-    std::string NameStr;
-    raw_string_ostream NameOS(NameStr);
-    PrintLLVMName(NameOS, TI->first.c_str(), TI->first.length(), LocalPrefix);
-    getTypeNamesMap(TypeNames).insert(std::make_pair(Ty, NameOS.str()));
-  }
 }
 
 TypePrinting::~TypePrinting() {
@@ -337,13 +318,46 @@ void TypePrinting::printAtLeastOneLevel(const Type *Ty, raw_ostream &OS) {
   std::swap(OldName, I->second);
 }
 
+static void AddModuleTypesToPrinter(TypePrinting &TP, const Module *M) {
+  if (M == 0) return;
+  
+  // If the module has a symbol table, take all global types and stuff their
+  // names into the TypeNames map.
+  const TypeSymbolTable &ST = M->getTypeSymbolTable();
+  for (TypeSymbolTable::const_iterator TI = ST.begin(), E = ST.end();
+       TI != E; ++TI) {
+    const Type *Ty = cast<Type>(TI->second);
+    
+    // As a heuristic, don't insert pointer to primitive types, because
+    // they are used too often to have a single useful name.
+    if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+      const Type *PETy = PTy->getElementType();
+      if ((PETy->isPrimitiveType() || PETy->isInteger()) &&
+          !isa<OpaqueType>(PETy))
+        continue;
+    }
+    
+    // Likewise don't insert primitives either.
+    if (Ty->isInteger() || Ty->isPrimitiveType())
+      continue;
+    
+    // Get the name as a string and insert it into TypeNames.
+    std::string NameStr;
+    raw_string_ostream NameOS(NameStr);
+    PrintLLVMName(NameOS, TI->first.c_str(), TI->first.length(), LocalPrefix);
+    TP.addTypeName(Ty, NameOS.str());
+  }
+}
+
 
 /// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
 /// type, iff there is an entry in the modules symbol table for the specified
 /// type or one of it's component types.
 ///
-void llvm::WriteTypeSymbolic(raw_ostream &OS, const Type *Ty, const Module *M){
-  TypePrinting(M).print(Ty, OS);
+void llvm::WriteTypeSymbolic(raw_ostream &OS, const Type *Ty, const Module *M) {
+  TypePrinting Printer;
+  AddModuleTypesToPrinter(Printer, M);
+  Printer.print(Ty, OS);
 }
 
 //===----------------------------------------------------------------------===//
@@ -918,7 +932,8 @@ void llvm::WriteAsOperand(raw_ostream &Out, const Value *V, bool PrintType,
                           const Module *Context) {
   if (Context == 0) Context = getModuleFromVal(V);
 
-  TypePrinting TypePrinter(Context);
+  TypePrinting TypePrinter;
+  AddModuleTypesToPrinter(TypePrinter, Context);
   if (PrintType) {
     TypePrinter.print(V->getType(), Out);
     Out << ' ';
@@ -939,8 +954,8 @@ class AssemblyWriter {
 public:
   inline AssemblyWriter(raw_ostream &o, SlotTracker &Mac, const Module *M,
                         AssemblyAnnotationWriter *AAW)
-    : Out(o), Machine(Mac), TheModule(M), TypePrinter(M),
-      AnnotationWriter(AAW) {
+    : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
+    AddModuleTypesToPrinter(TypePrinter, M);
   }
 
   void write(const Module *M) { printModule(M);       }
@@ -1649,7 +1664,7 @@ void Type::print(raw_ostream &OS) const {
     OS << "<null Type>";
     return;
   }
-  TypePrinting(0).print(this, OS);
+  TypePrinting().print(this, OS);
 }
 
 void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
@@ -1673,7 +1688,7 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     AssemblyWriter W(OS, SlotTable, GV->getParent(), 0);
     W.write(GV);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
-    TypePrinting TypePrinter(0);
+    TypePrinting TypePrinter;
     TypePrinter.print(C->getType(), OS);
     OS << ' ';
     WriteConstantInt(OS, C, TypePrinter, 0);

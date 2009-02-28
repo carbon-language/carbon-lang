@@ -29,17 +29,26 @@ template <typename T> class SmallVectorImpl;
   
 /// TypePrinting - Type printing machinery.
 class TypePrinting {
-  void *TypeNames;
+  void *TypeNames;  // A map to remember type names.
   TypePrinting(const TypePrinting &);   // DO NOT IMPLEMENT
   void operator=(const TypePrinting&);  // DO NOT IMPLEMENT
 public:
-  TypePrinting(const Module *M = 0);
+  TypePrinting();
   ~TypePrinting();
   
   void clear();
   
   void print(const Type *Ty, raw_ostream &OS);
   void printAtLeastOneLevel(const Type *Ty, raw_ostream &OS);
+  
+  /// hasTypeName - Return true if the type has a name in TypeNames, false
+  /// otherwise.
+  bool hasTypeName(const Type *Ty) const;
+  
+  /// addTypeName - Add a name for the specified type if it doesn't already have
+  /// one.  This name will be printed instead of the structural version of the
+  /// type in order to make the output more concise.
+  void addTypeName(const Type *Ty, const std::string &N);
   
 private:
   void CalcTypeName(const Type *Ty, SmallVectorImpl<const Type *> &TypeStack,
