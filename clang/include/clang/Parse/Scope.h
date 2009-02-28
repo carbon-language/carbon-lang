@@ -16,6 +16,7 @@
 
 #include "clang/Parse/Action.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseSet.h"
 
 namespace clang {
 
@@ -130,6 +131,12 @@ private:
   UsingDirectivesTy UsingDirectives;
 
 public:
+  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
+  /// it (which acts like the label decl in some ways).  Forward referenced
+  /// labels have a LabelStmt created for them with a null location & SubStmt.
+  typedef llvm::DenseMap<IdentifierInfo*, Action::StmtTy*> LabelMapTy;
+  LabelMapTy LabelMap;
+  
   Scope(Scope *Parent, unsigned ScopeFlags) {
     Init(Parent, ScopeFlags);
   }
@@ -301,6 +308,7 @@ public:
     if (Flags & TemplateParamScope) TemplateParamParent = this;
     DeclsInScope.clear();
     UsingDirectives.clear();
+    LabelMap.clear();
     Entity = 0;
   }
 };

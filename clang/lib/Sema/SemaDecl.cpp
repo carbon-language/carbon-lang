@@ -2444,6 +2444,8 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   Decl *decl = static_cast<Decl*>(D);
   FunctionDecl *FD = cast<FunctionDecl>(decl);
 
+  ActiveScope = FnBodyScope;
+    
   // See if this is a redefinition.
   const FunctionDecl *Definition;
   if (FD->getBody(Definition)) {
@@ -2586,17 +2588,29 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
     return 0;
   }
   PopDeclContext();
+
+  // FIXME: Temporary hack to workaround nested C++ functions. For example:
+  // class C2 {
+  //   void f() {
+  //     class LC1 {
+  //       int m() { return 1; }
+  //     };
+  //   }
+  // };
+  if (ActiveScope == 0)
+    return D;
+    
   // Verify and clean out per-function state.
 
-  bool HaveLabels = !LabelMap.empty();
+  bool HaveLabels = !ActiveScope->LabelMap.empty();
   // Check goto/label use.
-  for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
-       I = LabelMap.begin(), E = LabelMap.end(); I != E; ++I) {
+  for (Scope::LabelMapTy::iterator I = ActiveScope->LabelMap.begin(), 
+       E = ActiveScope->LabelMap.end(); I != E; ++I) {
     // Verify that we have no forward references left.  If so, there was a goto
     // or address of a label taken, but no definition of it.  Label fwd
     // definitions are indicated with a null substmt.
-    if (I->second->getSubStmt() == 0) {
-      LabelStmt *L = I->second;
+    LabelStmt *L = static_cast<LabelStmt*>(I->second);
+    if (L->getSubStmt() == 0) {
       // Emit error.
       Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();
       
@@ -2618,7 +2632,8 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
       }
     }
   }
-  LabelMap.clear();
+  // This reset is for both functions and methods.
+  ActiveScope = 0;
 
   if (!Body) return D;
 

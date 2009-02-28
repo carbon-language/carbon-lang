@@ -4204,13 +4204,20 @@ Sema::ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
                                       SourceLocation LabLoc,
                                       IdentifierInfo *LabelII) {
   // Look up the record for this label identifier.
-  LabelStmt *&LabelDecl = LabelMap[LabelII];
+  llvm::DenseMap<IdentifierInfo*, Action::StmtTy*>::iterator I = 
+    ActiveScope->LabelMap.find(LabelII);
 
+  LabelStmt *LabelDecl;
+  
   // If we haven't seen this label yet, create a forward reference. It
   // will be validated and/or cleaned up in ActOnFinishFunctionBody.
-  if (LabelDecl == 0)
+  if (I == ActiveScope->LabelMap.end()) {
     LabelDecl = new (Context) LabelStmt(LabLoc, LabelII, 0);
 
+    ActiveScope->LabelMap.insert(std::make_pair(LabelII, LabelDecl));
+  } else
+    LabelDecl = static_cast<LabelStmt *>(I->second);
+    
   // Create the AST node.  The address of a label always has type 'void*'.
   return new (Context) AddrLabelExpr(OpLoc, LabLoc, LabelDecl,
                                      Context.getPointerType(Context.VoidTy));
@@ -4397,7 +4404,9 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
 
   // Add BSI to CurBlock.
   BSI->PrevBlockInfo = CurBlock;
+  BSI->PrevFunctionScope = ActiveScope;
   CurBlock = BSI;
+  ActiveScope = BlockScope;
 
   BSI->ReturnType = 0;
   BSI->TheScope = BlockScope;
@@ -4492,6 +4501,8 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
 
   PopDeclContext();
 
+  ActiveScope = CurBlock->PrevFunctionScope;
+    
   // Pop off CurBlock, handle nested blocks.
   CurBlock = CurBlock->PrevBlockInfo;
 

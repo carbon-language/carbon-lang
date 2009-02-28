@@ -169,6 +169,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
 
   StdNamespace = 0;
   TUScope = 0;
+  ActiveScope = 0;
+  
   if (getLangOptions().CPlusPlus)
     FieldCollector.reset(new CXXFieldCollector());
       
