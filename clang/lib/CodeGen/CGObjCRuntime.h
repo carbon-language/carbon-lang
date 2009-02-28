@@ -98,6 +98,7 @@ public:
                            QualType ResultType,
                            Selector Sel,
                            const ObjCInterfaceDecl *Class,
+                           bool isCategoryImpl,
                            llvm::Value *Self,
                            bool IsClassMessage,
                            const CallArgList &CallArgs) = 0;

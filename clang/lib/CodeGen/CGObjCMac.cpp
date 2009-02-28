@@ -559,6 +559,7 @@ private:
                            QualType ResultType,
                            Selector Sel,
                            const ObjCInterfaceDecl *Class,
+                           bool isCategoryImpl,
                            llvm::Value *Receiver,
                            bool IsClassMessage,
                            const CallArgList &CallArgs);
@@ -711,6 +712,7 @@ public:
                            QualType ResultType,
                            Selector Sel,
                            const ObjCInterfaceDecl *Class,
+                           bool isCategoryImpl,
                            llvm::Value *Receiver,
                            bool IsClassMessage,
                            const CallArgList &CallArgs);
@@ -821,6 +823,7 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     QualType ResultType,
                                     Selector Sel,
                                     const ObjCInterfaceDecl *Class,
+                                    bool isCategoryImpl,
                                     llvm::Value *Receiver,
                                     bool IsClassMessage,
                                     const CodeGen::CallArgList &CallArgs) {
@@ -836,10 +839,23 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   // If this is a class message the metaclass is passed as the target.
   llvm::Value *Target;
   if (IsClassMessage) {
-    llvm::Value *MetaClassPtr = EmitMetaClassRef(Class);
-    llvm::Value *SuperPtr = CGF.Builder.CreateStructGEP(MetaClassPtr, 1);
-    llvm::Value *Super = CGF.Builder.CreateLoad(SuperPtr);
-    Target = Super;
+    if (isCategoryImpl) {
+      // Message sent to 'super' in a class method defined in a category
+      // implementation requires an odd treatment.
+      // If we are in a class method, we must retrieve the
+      // _metaclass_ for the current class, pointed at by
+      // the class's "isa" pointer.  The following assumes that
+      // isa" is the first ivar in a class (which it must be).
+      Target = EmitClassRef(CGF.Builder, Class->getSuperClass());
+      Target = CGF.Builder.CreateStructGEP(Target, 0);
+      Target = CGF.Builder.CreateLoad(Target);
+    }
+    else {
+      llvm::Value *MetaClassPtr = EmitMetaClassRef(Class);
+      llvm::Value *SuperPtr = CGF.Builder.CreateStructGEP(MetaClassPtr, 1);
+      llvm::Value *Super = CGF.Builder.CreateLoad(SuperPtr);
+      Target = Super;
+   }
   } else {
     Target = EmitClassRef(CGF.Builder, Class->getSuperClass());
   }
@@ -4616,6 +4632,7 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     QualType ResultType,
                                     Selector Sel,
                                     const ObjCInterfaceDecl *Class,
+                                    bool isCategoryImpl,
                                     llvm::Value *Receiver,
                                     bool IsClassMessage,
                                     const CodeGen::CallArgList &CallArgs) {
@@ -4631,9 +4648,20 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                           CGF.Builder.CreateStructGEP(ObjCSuper, 0));
   
   // If this is a class message the metaclass is passed as the target.
-  llvm::Value *Target = 
-    IsClassMessage ? EmitMetaClassRef(CGF.Builder, Class) 
-                   : EmitClassRef(CGF.Builder, Class, true);
+  llvm::Value *Target;
+  if (IsClassMessage) {
+    if (isCategoryImpl) {
+      // Message sent to "super' in a class method defined in
+      // a category implementation.
+      Target = EmitClassRef(CGF.Builder, Class, false);
+      Target = CGF.Builder.CreateStructGEP(Target, 0);
+      Target = CGF.Builder.CreateLoad(Target);
+    }
+    else
+      Target = EmitMetaClassRef(CGF.Builder, Class);
+  }
+  else
+    Target = EmitClassRef(CGF.Builder, Class, true);
     
   // FIXME: We shouldn't need to do this cast, rectify the ASTContext
   // and ObjCTypes types.

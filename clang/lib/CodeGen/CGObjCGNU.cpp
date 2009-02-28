@@ -107,6 +107,7 @@ public:
                            QualType ResultType,
                            Selector Sel,
                            const ObjCInterfaceDecl *Class,
+                           bool isCategoryImpl,
                            llvm::Value *Receiver,
                            bool IsClassMessage,
                            const CallArgList &CallArgs);
@@ -269,6 +270,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     QualType ResultType,
                                     Selector Sel,
                                     const ObjCInterfaceDecl *Class,
+                                    bool isCategoryImpl,
                                     llvm::Value *Receiver,
                                     bool IsClassMessage,
                                     const CallArgList &CallArgs) {

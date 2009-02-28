@@ -89,9 +89,11 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   if (isSuperMessage) {
     // super is only valid in an Objective-C method
     const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
+    bool isCategoryImpl = isa<ObjCCategoryImplDecl>(OMD->getDeclContext());
     return Runtime.GenerateMessageSendSuper(*this, E->getType(),
                                             E->getSelector(),
                                             OMD->getClassInterface(),
+                                            isCategoryImpl,
                                             Receiver,
                                             isClassMessage,
                                             Args);
