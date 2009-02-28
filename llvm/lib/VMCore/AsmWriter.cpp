@@ -146,9 +146,8 @@ void TypePrinting::clear() {
 }
 
 TypePrinting::TypePrinting(const Module *M) {
-  if (M == 0) return;
-  
   TypeNames = new std::map<const Type *, std::string>();
+  if (M == 0) return;
   
   // If the module has a symbol table, take all global types and stuff their
   // names into the TypeNames map.
