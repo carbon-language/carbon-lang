@@ -1637,6 +1637,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
             PotentialDeadStoreSlots.push_back(ReuseSlot);
           }
 
+          // Assumes this is the last use. IsKill will be unset if reg is reused
+          // unless it's a two-address operand.
+          if (ti == -1)
+            MI.getOperand(i).setIsKill();
           continue;
         }  // CanReuse
         
