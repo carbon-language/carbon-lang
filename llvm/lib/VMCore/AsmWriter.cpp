@@ -173,6 +173,10 @@ TypePrinting::TypePrinting(const Module *M, raw_ostream &os) : OS(os) {
         continue;
     }
     
+    // Likewise don't insert primitives either.
+    if (Ty->isInteger() || Ty->isPrimitiveType())
+      continue;
+    
     // Get the name as a string and insert it into TypeNames.
     std::string NameStr;
     raw_string_ostream NameOS(NameStr);
@@ -186,11 +190,6 @@ TypePrinting::TypePrinting(const Module *M, raw_ostream &os) : OS(os) {
 void TypePrinting::CalcTypeName(const Type *Ty,
                                 SmallVectorImpl<const Type *> &TypeStack,
                                 raw_ostream &Result) {
-  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
-    Result << Ty->getDescription();  // Base case
-    return;
-  }
-  
   // Check to see if the type is named.
   std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
   if (I != TypeNames.end() &&
@@ -215,6 +214,17 @@ void TypePrinting::CalcTypeName(const Type *Ty,
   TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
   
   switch (Ty->getTypeID()) {
+  case Type::VoidTyID:      Result << "void"; break;
+  case Type::FloatTyID:     Result << "float"; break;
+  case Type::DoubleTyID:    Result << "double"; break;
+  case Type::X86_FP80TyID:  Result << "x86_fp80"; break;
+  case Type::FP128TyID:     Result << "fp128"; break;
+  case Type::PPC_FP128TyID: Result << "ppc_fp128"; break;
+  case Type::LabelTyID:     Result << "label"; break;
+  case Type::IntegerTyID:
+    Result << 'i' << cast<IntegerType>(Ty)->getBitWidth();
+    break;
+      
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
     CalcTypeName(FTy->getReturnType(), TypeStack, Result);
@@ -286,13 +296,6 @@ void TypePrinting::CalcTypeName(const Type *Ty,
 /// potentially named portion.
 ///
 void TypePrinting::print(const Type *Ty) {
-  // Primitive types always print out their description, regardless of whether
-  // they have been named or not.
-  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
-    OS << Ty->getDescription();
-    return;
-  }
-  
   // Check to see if the type is named.
   std::map<const Type*, std::string>::iterator I = TypeNames.find(Ty);
   if (I != TypeNames.end()) {
